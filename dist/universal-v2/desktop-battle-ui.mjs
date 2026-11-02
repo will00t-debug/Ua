@@ -33,7 +33,8 @@ let inspected=null,logOpen=false;
 const colorNames={blue:'藍',green:'綠',red:'紅',purple:'紫',yellow:'黃',white:'白',black:'黑'};
 
 export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
- cardDefinition,imageSource,imageFallback,printedCard,effectCopy,openCard}){
+ cardDefinition,imageSource,imageFallback,printedCard,effectCopy,openCard,
+ backControl=null,matchupLabel=null}){
  const opponent=arena.querySelector('.playerArea.opponent');
  const mine=arena.querySelector('.playerArea:not(.opponent)');
  const middle=arena.querySelector('.v2-middle-controls');
@@ -122,14 +123,15 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
  header.classList.add('v2-desktop-header');
  const menu=header.querySelector('.v2-mobile-menu-toggle');
  const back=el('a',{class:'v2-desktop-back',href:
-  document.getElementById('exit-battle')?.getAttribute('href')||'/universal-v2-preview.html',text:'‹ 返回設定',
+  backControl?.getAttribute('href')||document.getElementById('exit-battle')?.getAttribute('href')||'/universal-v2-preview.html',
+  text:backControl?'‹ 返回大廳':'‹ 返回設定',
   onClick:event=>{
-   const original=document.getElementById('exit-battle');
+   const original=backControl||document.getElementById('exit-battle');
    if(original){event.preventDefault();original.click();}
   }});
  header.insertBefore(back,menu);
  const matchup=el('span',{class:'v2-desktop-matchup',
-  text:document.getElementById('battle-matchup')?.textContent||'電腦對戰'});
+  text:matchupLabel||document.getElementById('battle-matchup')?.textContent||'電腦對戰'});
  header.insertBefore(matchup,back);
  const logButton=el('button',{type:'button',class:'v2-desktop-log-toggle',
   text:'對戰紀錄','aria-expanded':String(logOpen),onClick:()=>{

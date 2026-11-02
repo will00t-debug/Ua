@@ -127,9 +127,12 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  };
  context.artFixture={titles:[{id:'bleach',cards:[
   {id:'BLC-1-001',image:'https://example.test/ichigo.png',aliases:['UA08ST/BLC-1-001']},
-  {id:'BLC-1-010',image:'https://example.test/energy.png'}
+  {id:'BLC-1-010',image:'https://example.test/energy.png'},
+  {id:'064',number:'UA08ST/BLC-1-064',image:'https://example.test/event.png'}
  ]}]};
  vm.runInContext("coverCatalogue=artFixture;artById=null;app.offline=false;app.user={username:'32928748'};app.room=roomFixture;render();",context);
+ assert.equal(vm.runInContext("cardSrc({cardId:'BLC-1-064'})",context),'https://example.test/event.png',
+  'engine canonical IDs must resolve legacy catalogue artwork');
  const rendered=texts(appRoot);
  assert.match(rendered,/房間 G7MC92Y3/);
  assert.match(rendered,/你的手牌/);
