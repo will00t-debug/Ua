@@ -4,7 +4,8 @@ import {createAotV2Pack} from '../dist/universal-v2/aot-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {effectChoiceProtected} from '../dist/universal-v2/continuous-states.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
- newUniversalMatch, universalBp, universalEnergyByColor, universalPublicView}
+ newUniversalMatch, universalBp, universalCardEnergy, universalEnergyByColor,
+ universalPublicView}
  from '../dist/universal-v2/engine.mjs';
 
 const pack=createAotV2Pack();
@@ -577,8 +578,8 @@ test('Mikasa damage cannot let the opponent activate an ACTIVE trigger',()=>{
  assertUniversalMatch(packs,s);
 });
 
-function lifeRaid(seed,energyIds){
- const counts=deck(['AOT-1-094','AOT-1-102','AOT-1-090','AOT-1-079','AOT-1-001']);
+function lifeRaid(seed,energyIds,extraIds=[]){
+ const counts=deck(['AOT-1-094','AOT-1-102','AOT-1-090','AOT-1-079','AOT-1-001',...extraIds]);
  let s=toPhase(fresh(counts,seed),'attack');
  energyIds.forEach((id,slot)=>put(s,1,id,'energy',slot,true));
  const base=put(s,1,'AOT-1-090','front',0,true);
@@ -593,6 +594,48 @@ function lifeRaid(seed,energyIds){
  assert.equal(s.pending.player,1);
  return {s,base};
 }
+
+test('active Mikasa generates two red, so one printed pip is not three',()=>{
+ // UA23BT/AOT-1-087 prints one red orb and 「アクティブの場合 +赤」.
+ // The list icon is ico_resource_energy_red2.png with alt 赤+.
+ // Storing the filename number and also adding the active sentence showed 3.
+ const counts=deck(['AOT-1-087','AOT-1-069','AOT-1-026','AOT-1-052','AOT-1-090']);
+ let s=toPhase(fresh(counts,1087),'main');
+ const mikasa=put(s,0,'AOT-1-087','energy',0,true);
+ assert.equal(pack.cards['AOT-1-087'].gen,1);
+ assert.equal(pack.cards['AOT-1-087'].activeExtraEnergy,1);
+ assert.equal(universalCardEnergy(packs,s,0,mikasa),2);
+ mikasa.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,mikasa),1);
+ mikasa.ready=true;
+ const hange=put(s,0,'AOT-1-069','energy',1,true);
+ assert.equal(pack.cards['AOT-1-069'].gen,2);
+ assert.equal(universalCardEnergy(packs,s,0,hange),2);
+ hange.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,hange),2);
+ hange.ready=true;
+ for(const [id,slot,readyEnergy,restedEnergy] of [
+  ['AOT-1-026',2,2,1],
+  ['AOT-1-052',3,2,1]
+ ]){
+  const card=put(s,0,id,'energy',slot,true);
+  assert.equal(pack.cards[id].gen,1);
+  assert.equal(universalCardEnergy(packs,s,0,card),readyEnergy);
+  card.ready=false;
+  assert.equal(universalCardEnergy(packs,s,0,card),restedEnergy);
+  card.ready=true;
+ }
+ assert.equal(universalEnergyByColor(packs,s,0).red,4);
+ const line=lifeRaid(10870,['AOT-1-087','AOT-1-069','AOT-1-090','AOT-1-079'],
+  ['AOT-1-087','AOT-1-069']);
+ const shown=line.s.players[1].energy.filter(Boolean);
+ assert.equal(universalCardEnergy(packs,line.s,1,shown.find(c=>c.cardId==='AOT-1-087')),2);
+ assert.equal(universalCardEnergy(packs,line.s,1,shown.find(c=>c.cardId==='AOT-1-069')),2);
+ assert.equal(universalEnergyByColor(packs,line.s,1).red,6);
+ assert.equal(legalUniversalActions(packs,line.s).some(a=>a.mode==='raid'),false);
+ assertUniversalMatch(packs,s);
+ assertUniversalMatch(packs,line.s);
+});
 
 test('life RAID of eight-cost Eren follows printed red energy',()=>{
  const short=lifeRaid(10946,['AOT-1-102','AOT-1-102','AOT-1-090','AOT-1-079']);
