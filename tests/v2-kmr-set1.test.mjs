@@ -7,9 +7,10 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {kmrPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
- universalPrivateChoices,universalPublicView,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
-import {inspectedPendingChoiceCards,publicPendingTargetCard} from '../dist/universal-v2/preview-actions.mjs';
+import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
+ universalImpact,universalPrivateChoices,universalPublicView,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
+import {frontAttackKeywordBadges,inspectedPendingChoiceCards,publicPendingTargetCard} from '../dist/universal-v2/preview-actions.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {verifiedBleachPurplePilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
 
 const pack=createKmrV2Pack();
@@ -97,6 +98,27 @@ function ready(s){
  s.pending=null;
  s.phase='main';
  for(const ap of s.players[0].apCards){ap.inPlay=true;ap.ready=true;}
+}
+function toPhase(s,phase){
+ let guard=0;
+ while(s.phase!==phase){
+  if(s.pending)throw Error('Pending '+s.pending.kind+' blocked '+phase);
+  s=dispatchUniversalAction(packs,s,{type:'next'});
+  if(++guard>8)throw Error('Did not reach '+phase);
+ }
+ return s;
+}
+function stackRaid(s,p,topId,underId,line,slot){
+ const top=put(s,p,topId,line,slot,true);
+ const under=take(s,p,underId);
+ under.faceDown=false;
+ under.ready=false;
+ top.stack=[under];
+ return top;
+}
+function silence(s,card,controller){
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller,sourceUid:card.uid,
+  targetUid:card.uid,sourceLinked:false,until:{player:controller,phase:'start',edge:'start'}});
 }
 test('ARK-ONE hand energy drops by 5 with two outside AP2 trait cards',()=>{
  const s=fresh(countsFor(['KMR-1-001','KMR-1-021','KMR-1-024']));
@@ -254,4 +276,50 @@ test('a Kamen Rider choice does not fall through the AI play path',()=>{
   actions:[{type:'kmr',mode:'skip'},{type:'kmr',mode:'mill'}]};
  const chosen=dispatchUniversalAction(packs,s,{type:'kmr',mode:'skip'});
  assert.equal(chosen.pending,null);
+});
+
+test('KMR-1-079 activates Sword Form on-play as itself, so Impact lands on the liner',()=>{
+ const counts=countsFor(['KMR-1-079','KMR-1-078','KMR-1-077','KMR-1-092','KMR-1-002']);
+ let s=toPhase(fresh(counts),'attack');
+ const liner=stackRaid(s,0,'KMR-1-079','KMR-1-078','front',0);
+ const sword=stackRaid(s,0,'KMR-1-077','KMR-1-092','front',1);
+ const wall=put(s,1,'KMR-1-002','front',0,true);
+ const attack=legalUniversalActions(packs,s).find(a=>a.type==='attack'&&a.uid===liner.uid&&a.targetUid===undefined);
+ assert.ok(attack,'Liner Form should be able to attack');
+ s=dispatchUniversalAction(packs,s,attack);
+ assert.equal(s.pending?.kind,'kmr');
+ assert.equal(s.pending?.id,'KMR-1-079');
+ assert.equal(s.pending.actions.some(a=>a.mode==='own'&&a.uid===sword.uid),true);
+ const skipped=dispatchUniversalAction(packs,structuredClone(s),{type:'kmr',mode:'skip'});
+ assert.equal(universalImpact(packs,skipped,skipped.players[0].front.find(c=>c?.uid===liner.uid)),0);
+ assert.equal(skipped.pending?.kind,'block');
+ s=dispatchUniversalAction(packs,s,{type:'kmr',mode:'own',uid:sword.uid});
+ const linerLive=s.players[0].front.find(c=>c?.uid===liner.uid);
+ const swordLive=s.players[0].front.find(c=>c?.uid===sword.uid);
+ assert.equal(universalImpact(packs,s,linerLive),1,'copied Momotaros Impact belongs to the sniper');
+ assert.equal(universalImpact(packs,s,swordLive),0,'the chosen Sword Form is not the card that activated the effect');
+ assert.deepEqual(frontAttackKeywordBadges(packs,s,0,0).map(b=>b.text),['衝擊1']);
+ assert.deepEqual(frontAttackKeywordBadges(packs,s,0,1).map(b=>b.text),[]);
+ assert.equal(s.pending?.kind,'block');
+ const life=s.players[1].life.length;
+ const block=legalUniversalActions(packs,s).find(a=>a.type==='chooseBlock'&&a.uid===wall.uid);
+ assert.ok(block,'the lower BP character can block');
+ s=dispatchUniversalAction(packs,s,block);
+ assert.equal(s.players[1].front.some(c=>c?.uid===wall.uid),false);
+ assert.equal(s.players[1].life.length,life-1,'winning the battle with Impact deals 1 to the player');
+ assertUniversalMatch(packs,s);
+});
+
+test('KMR-1-079 Q1897 does not activate a silenced Momotaros on-play',()=>{
+ const counts=countsFor(['KMR-1-079','KMR-1-078','KMR-1-077','KMR-1-092']);
+ let s=toPhase(fresh(counts),'attack');
+ const liner=stackRaid(s,0,'KMR-1-079','KMR-1-078','front',0);
+ const sword=stackRaid(s,0,'KMR-1-077','KMR-1-092','front',1);
+ silence(s,sword,1);
+ const attack=legalUniversalActions(packs,s).find(a=>a.type==='attack'&&a.uid===liner.uid&&a.targetUid===undefined);
+ assert.ok(attack);
+ s=dispatchUniversalAction(packs,s,attack);
+ assert.notEqual(s.pending?.kind,'kmr');
+ assert.equal(universalImpact(packs,s,s.players[0].front.find(c=>c?.uid===liner.uid)),0);
+ assertUniversalMatch(packs,s);
 });
