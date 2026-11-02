@@ -32,6 +32,9 @@ jobs:
                           failed.append(path)
               except Exception as error:
                   print(path, type(error).__name__, str(error))
+                  if isinstance(error, urllib.error.HTTPError):
+                      print('public response headers', {key: error.headers.get(key) for key in ['server', 'content-type', 'cf-mitigated', 'cf-ray']})
+                      print('public error body', error.read().decode(errors='replace')[:1800])
                   failed.append(path)
           if failed:
               raise SystemExit('Public verification failed: ' + ', '.join(failed))
