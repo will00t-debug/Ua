@@ -1,3 +1,5 @@
+import * as sharedBattleUi from '../dist/universal-v2/online-battle-ui.mjs';
+import {FakeNode,texts} from './helpers/online-client-dom.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -64,14 +66,6 @@ test('solo and online copy the three-step RAID life prompt',()=>{
 
 test('online RAID life asks activate, then raid or hand, then the base',()=>{
  const source=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
- class FakeNode{
-  constructor(tag='',text=''){this.tag=tag;this.textContent=text;this.children=[];this.attributes={};this.handlers={};this.className='';}
-  append(...nodes){this.children.push(...nodes);}
-  replaceChildren(...nodes){this.children=[...nodes];}
-  setAttribute(name,value){this.attributes[name]=value;}
-  addEventListener(name,callback){this.handlers[name]=callback;}
- }
- const texts=node=>node instanceof FakeNode?node.textContent+' '+node.children.map(texts).join(' '):String(node??'');
  const classes=node=>{
   if(!(node instanceof FakeNode))return [];
   return [node.className,...node.children.flatMap(classes)];
@@ -86,7 +80,7 @@ test('online RAID life asks activate, then raid or hand, then the base',()=>{
   createTextNode:text=>new FakeNode('#text',String(text)),
   querySelector:selector=>selector==='#app'?appRoot:null
  };
- const context=vm.createContext({
+ const context=vm.createContext({sharedBattleUi,
   document,Node:FakeNode,fetch:async()=>{throw new Error('offline');},
   clearInterval(){},setInterval(){},location:{hash:''},history:{replaceState(){}},
   localStorage:{getItem(){return null;}},sessionStorage:{setItem(){}},
@@ -118,7 +112,7 @@ test('online RAID life asks activate, then raid or hand, then the base',()=>{
     apReady:1,apTotal:1,energyTotal:1,outside:[],removed:[]}
   ]}
  };
- vm.runInContext("app.offline=false;app.user={username:'yuwei'};app.lifeRaidActivated=false;app.lifeRaidBoard=false;app.pick=null;app.room=roomFixture;render();",context);
+ vm.runInContext("battleUi=sharedBattleUi;app.offline=false;app.user={username:'yuwei'};app.lifeRaidActivated=false;app.lifeRaidBoard=false;app.pick=null;app.room=roomFixture;render();",context);
  const shown=()=>texts(appRoot);
  assert.match(shown(),/要發動這個突襲觸發嗎？/);
  assert.match(shown(),/發動/);

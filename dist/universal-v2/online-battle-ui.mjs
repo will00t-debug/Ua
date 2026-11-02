@@ -16,7 +16,7 @@ export function setOnlineBattleMode(active,doc=globalThis.document){
   let link=doc.querySelector('link[data-online-battle-style="'+file+'"]');
   if(!link&&active){
    link=doc.createElement('link');link.rel='stylesheet';
-   link.href=file+'?v=20261102sharedtable1';
+  link.href=file+'?v=20261103onlinefix1';
    link.dataset.onlineBattleStyle=file;doc.head.append(link);
   }
   if(link)link.media=active?'all':'not all';

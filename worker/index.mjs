@@ -7,6 +7,7 @@ import {ApiError,dispatchAccount,dispatchRoom} from '../server/domain.mjs';
 import {coachHttp} from '../server/coach.mjs';
 import {SCHEMA,createRepositories,ensureDeckColumns,roomTtl} from '../server/repos.mjs';
 import {durableAct,durableCancel,durableCreate,durableJoin,durableList,durableResign,durableView} from './orchestrate.mjs';
+import {currentPage,ONLINE_UI_VERSION} from './static-pages.mjs';
 
 function adapt(storage){
  const sql=storage.sql;
@@ -149,7 +150,7 @@ export default {
    const path=url.pathname;
    const method=request.method||'GET';
    if(method==='GET'&&path==='/api/health')
-    return send(200,{ok:true,service:'ua-accounts',storage:'durable-object'});
+    return send(200,{ok:true,service:'ua-accounts',storage:'durable-object',uiVersion:ONLINE_UI_VERSION});
    if(path.startsWith('/api/')){
     const token=sessionToken(request);
     const secure=url.protocol==='https:';
@@ -231,9 +232,7 @@ export default {
     '/coach.html':'/coach.html'
    };
    if((method==='GET'||method==='HEAD')&&pages[path]){
-    const page=new URL(request.url);
-    page.pathname=pages[path];
-    return env.ASSETS.fetch(new Request(page,request));
+    return currentPage(request,env.ASSETS,pages[path]);
    }
    if(method==='GET'||method==='HEAD')return env.ASSETS.fetch(request);
    return send(404,{error:'找不到頁面。'});

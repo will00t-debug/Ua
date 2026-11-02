@@ -1,3 +1,5 @@
+import * as sharedBattleUi from '../dist/universal-v2/online-battle-ui.mjs';
+import {FakeNode,texts} from './helpers/online-client-dom.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -202,14 +204,6 @@ test('Beta can bring a character onto an empty energy cell instead of the full f
 
 test('the online table lets Epsilon tap an empty energy cell and marks a full front cell as removal',()=>{
  const source=read('dist/online.mjs');
- class FakeNode{
-  constructor(tag='',text=''){this.tag=tag;this.textContent=text;this.children=[];this.attributes={};this.handlers={};this.className='';}
-  append(...nodes){this.children.push(...nodes);}
-  replaceChildren(...nodes){this.children=[...nodes];}
-  setAttribute(name,value){this.attributes[name]=value;}
-  addEventListener(name,callback){this.handlers[name]=callback;}
- }
- const texts=node=>node instanceof FakeNode?node.textContent+' '+node.children.map(texts).join(' '):String(node??'');
  const labels=node=>{
   if(!(node instanceof FakeNode))return [];
   return [node.attributes['aria-label'],...node.children.flatMap(labels)].filter(Boolean);
@@ -220,7 +214,7 @@ test('the online table lets Epsilon tap an empty energy cell and marks a full fr
   createTextNode:text=>new FakeNode('#text',String(text)),
   querySelector:selector=>selector==='#app'?appRoot:null
  };
- const context=vm.createContext({
+ const context=vm.createContext({sharedBattleUi,
   document,Node:FakeNode,fetch:async()=>{throw new Error('offline');},
   clearInterval(){},setInterval(){},location:{hash:''},history:{replaceState(){}},
   localStorage:{getItem(){return null;}},sessionStorage:{setItem(){}},
@@ -254,7 +248,7 @@ test('the online table lets Epsilon tap an empty energy cell and marks a full fr
    ]}
  };
  context.room=room;
- vm.runInContext('app.offline=false;app.user={username:"yuwei"};app.room=room;app.pick={uid:"zeta",entryMode:null,options:null};app.zone=null;render();',context);
+ vm.runInContext('battleUi=sharedBattleUi;app.offline=false;app.user={username:"yuwei"};app.room=room;app.pick={uid:"zeta",entryMode:null,options:null};app.zone=null;render();',context);
  const spoken=labels(appRoot).join('\n');
  assert.match(spoken,/普通進場/);
  assert.match(spoken,/替換並移入移除區/);

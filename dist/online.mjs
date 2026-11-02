@@ -21,20 +21,25 @@ const DRAFTS=[
  ['inuyasha','ua-iys-draft-v1'],['kjn','ua-kjn-draft-v1'],
  ['aot','ua-aot-draft-v1']
 ];
-const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
-let battleUi=null,battleUiLoading=false;
-function loadBattleUi(){
- if(battleUi||battleUiLoading)return;
- battleUiLoading=true;
- import('./universal-v2/online-battle-ui.mjs?v=20261102sharedtable1').then(module=>{
-  battleUi=module;
+let battleUi=null,battleUiLoading=false,battleUiError=false;
+function loadBattleUi(retry=false){
+ if(battleUi||battleUiLoading||battleUiError&&!retry)return;
+ battleUiLoading=true;battleUiError=false;
+ const url='./universal-v2/online-battle-ui.mjs?v=20261103onlinefix1'+(retry?'&retry='+Date.now():'');
+ import(url).then(module=>{
+  battleUi=module;battleUiLoading=false;
   window.matchMedia?.(module.DESKTOP_BATTLE_QUERY)?.addEventListener?.('change',()=>{
    if(app.room?.view)render();
   });
   render();
- }).catch(()=>{battleUiLoading=false;});
+ }).catch(error=>{
+  if(document.body)battleUi?.setOnlineBattleMode?.(false);
+  battleUi=null;battleUiLoading=false;battleUiError=true;
+  console.error('線上對戰介面載入失敗',error);
+  render();
+ });
 }
 function captureAuthDraft(form){
  if(!form)return;
@@ -1213,9 +1218,12 @@ function matchView(){
     el('button',{type:'button',class:'primary',text:'複製代碼',onClick:()=>copyCode(room.code)}),
     el('button',{type:'button',text:'取消房間',disabled:app.busy,onClick:cancelRoom}))));
  }
- const you=view.players[seat],opp=view.players[1-seat];
- const phase=el('div',{class:'phases'});
- for(const [id,label] of PHASES)phase.append(el('span',{class:view.phase===id?'current':'',text:label}));
+ if(!battleUi)return shell(el('section',{class:'panel',role:'status','aria-live':'polite'},
+  el('h1',{text:battleUiError?'對戰介面載入失敗':'正在載入對戰介面…'}),
+  el('p',{text:battleUiError?'請重新載入對戰介面，再繼續這場對局。':'準備場地與卡片操作，請稍候。'}),
+  battleUiError?el('button',{type:'button',class:'primary',text:'重新載入對戰介面',onClick:()=>{loadBattleUi(true);render();}}):null,
+  el('button',{type:'button',text:'返回大廳',onClick:leaveFinished})));
+ const you=view.players[seat];
  const actions=el('div',{class:'actions'});
  const lifeOrder=onlineLifeOrderGallery(room);
  const hint=playHint(room);
@@ -1330,30 +1338,6 @@ function matchView(){
    definition:(_side,id)=>onlineCardDefinition(id),imageSource:(_side,id)=>cardSrc({cardId:id}),
    openCard:(_side,_line,card)=>openOnlineCard(card),onSelectZone:clickZoneCard});
  }
- return shell(el('div',{class:'online-match'},
-  el('header',{class:'online-match-bar'},
-   el('h1',{text:'房間 '+room.code}),
-   phase,
-   el('span',{class:'tag',text:room.youAreFirst?'你是先手':room.youAreFirst===false?'對方是先手':'先後手順序確認中'}),
-   el('span',{class:'tag turn',text:room.status==='finished'?'對局結束':room.yourTurn?'輪到你':'等待對手'}),
-   consentControl(),
-   app.inspectionPaused?inspection:null),
-  el('div',{class:'online-table'},
-   side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup',engineSeat:1-seat}),
-   side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup',engineSeat:seat}),
-   ownHand(you)),
-  el('aside',{class:'online-dock'},
-   recent,
-   el('section',{class:'panel'},el('h2',{text:room.yourTurn?'輪到你':'對局操作'}),
-    (view.openTriggers||[]).length?el('div',{},el('h3',{text:'公開觸發'}),el('p',{class:'muted',text:'翻開的觸發雙方都看得到。'}),triggers):null,
-    actions,
-    el('div',{class:'row'},el('button',{type:'button',text:'認輸',disabled:app.busy||room.status!=='playing',onClick:resign}),
-     room.status==='finished'?el('button',{type:'button',text:'返回大廳',onClick:leaveFinished}):null)),
-   effectTarget?.node,
-   lifeOrder?.node,
-   visibleChoices?.node,
-   app.inspectionPaused?null:inspection,
-   el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log))));
 }
 function render(){
  const root=document.querySelector('#app');
