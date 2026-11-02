@@ -451,6 +451,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   if(line)return line;
  }
 
+ if(state?.pending?.id==='AOT-2-032'&&step==='mode'){
+  if(mode==='done')return '不選擇後續效果';
+  if(mode==='look')return '查看牌組頂 7 張，可公開 1 張始祖尤米爾';
+  if(mode==='deploy')return '從場外使沒有突襲的黃色吉克・葉卡以休息狀態登場';
+ }
  const table={
   take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',
   retire:'使這張角色退場',retireOwn:'使這張角色退場',outside:'放到場外',bottom:'放到牌組底',
@@ -878,7 +883,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDifferentField':return action.uid===null?'不從場外登場':'以休息狀態登場 '+name()+suffix();
   case 'chooseOwnFieldRetire':return action.uid===null?'不退場場域':'退場場域 '+name();
   case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
-  case 'chooseTopOrder':return '依序放回：'+name();
+  case 'chooseTopOrder':
+   if(action.place==='top')return '下一個放到牌庫頂：'+name();
+   if(action.place==='bottom')return '下一個放到牌庫底：'+name();
+   return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseFacedownFront':return action.mode==='skip'?'不從能源線移到前線':
    '從能源線移到前線 '+(action.slot+1)+(action.replaceUid?'，並將原前線卡除外':'')+'，本回合 BP＋1000';

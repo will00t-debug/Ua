@@ -12,8 +12,8 @@ const basic=(id,name=id,bp=2000)=>({id,name,type:'character',color:'blue',
  energy:0,ap:1,bp,gen:1,traits:[],trigger:null,implementation:'vanilla',effects:{}});
 const provider={id:'provider',name:'provider',type:'event',color:'blue',energy:0,
  ap:1,bp:0,gen:0,traits:[],trigger:null,implementation:'dsl',
- effects:{onPlay:[{op:'deployNamedFromZones',name:'エリス',
- zones:['outside'],line:'front',ready:true,optional:true}]}};
+ effects:{onPlay:[{op:'deployOutsideTraitlessRestOrRaid',color:'blue',energy:3,ap:1,
+  optional:true,perOtherOutsideField:1}]}};
 const mstRaw={id:'MST-1-009',name:'エリス',color:'blue',type:'character',
  energy:3,ap:1,bp:3500,gen:1,traits:[],trigger:'raid',implementation:'dsl',
  raidName:'エリス',raidImpact:1,raidOwnTurnBp:500,effects:m.effects};
@@ -34,7 +34,9 @@ function scene(){
  let s=newUniversalMatch(both,{decks:[deck,deck],first:0,seed:57009});
  const target=take(s,0,'MST-1-009');s.players[0].outside.push(target);
  const event=take(s,0,'provider');s.players[0].hand.push(event);
- const other=take(s,0,'eris-base');other.ready=true;
+ const base=take(s,0,'eris-base');base.ready=true;
+ base.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].front[0]=base;
+ const other=take(s,0,'filler0');other.ready=true;
  other.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].energy[0]=other;
  const defender=take(s,1,'blocker');defender.ready=true;
  defender.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[1].front[0]=defender;
@@ -42,10 +44,11 @@ function scene(){
  const play=legalUniversalActions(both,s).find(x=>x.type==='event'&&x.uid===event.uid);
  assert.ok(play,'paid event itself must be legal');
  s=step(s,play);
- assert.equal(s.pending?.kind,'effect-named-zone-entry');
+ assert.equal(s.pending?.kind,'effect-outside-traitless-rest');
  const entry=legalUniversalActions(both,s).find(a=>
-  a.type==='chooseNamedZoneDeploy'&&a.uid===target.uid&&a.zone==='outside'&&a.line==='front');
- assert.ok(entry,'genuine own-effect named OUTSIDE deployment');
+  a.type==='chooseOutsideTraitlessRest'&&a.mode==='raid'&&a.uid===target.uid&&
+  a.baseUid===base.uid&&a.line==='front');
+ assert.ok(entry,'own-effect Raid onto a face-up Eris');
  s=step(s,entry);
  assert.equal(s.pending?.kind,'effect-choice-mode');
  assert.deepEqual(legalUniversalActions(both,s).map(a=>a.mode).sort(),['bp','swap']);
@@ -67,8 +70,8 @@ test('R57 MST-1-009 Japanese official full print and Q2147 no omitted RAID/LIFE 
 test('R57 genuine free own-effect entry picks mandatory BP mode; survives opponent turn, not next own start',()=>{
  let {s,target}=scene();s=step(s,{type:'chooseEffectMode',mode:'bp'});
  const physical=s.players[0].front.find(c=>c?.uid===target.uid);
- assert.equal(universalBp(both,s,physical),4500);
- assert.equal(universalImpact(both,s,physical),0);
+ assert.equal(universalBp(both,s,physical),5000);
+ assert.equal(universalImpact(both,s,physical),1);
  assert.equal(physical.attackEndSwapGranted,undefined);
  assert.equal(assertUniversalMatch(both,structuredClone(s)),true);
  // One whole turn ends; the opponent's turn does NOT expire the effect.
@@ -76,7 +79,7 @@ test('R57 genuine free own-effect entry picks mandatory BP mode; survives oppone
  assert.equal(s.active,1);assert.equal(universalBp(both,s,physical),4500);
  for(let i=0;i<4;i++)s=step(s,{type:'next'}); // opponent phases through end
  assert.equal(s.active,0);
- assert.equal(universalBp(both,s,s.players[0].front.find(c=>c?.uid===target.uid)),3500);
+ assert.equal(universalBp(both,s,s.players[0].front.find(c=>c?.uid===target.uid)),4000);
  assert.ok(!(s.players[0].front.find(c=>c?.uid===target.uid).buffs||[])
   .some(b=>b.untilOwnTurnStart!==undefined));
  assert.equal(assertUniversalMatch(both,structuredClone(s)),true);
@@ -92,10 +95,15 @@ test('R57 genuine own-effect swap mode waits until normal blocking battle finish
  assert.equal(s.pending?.kind,'block');
  s=step(s,{type:'chooseBlock',uid:defender.uid});
  // The real combat and its retirement must finish before Q2147 swap.
- // Own-effect entry is not Raid, so the Raid-box IMPACT does not deal life.
+ // This entry is an own-effect Raid, so the frame's Impact also deals life.
  assert.equal(s.players[1].front[0],null);
+ while(s.pending&&s.pending.kind!=='attack-end-swap'){
+  const actions=legalUniversalActions(both,s);
+  if(!actions.length)throw Error('No legal LIFE resolution');
+  s=step(s,actions.find(a=>a.uid===null)||actions[0]);
+ }
  assert.equal(s.pending?.kind,'attack-end-swap');
- assert.equal(s.players[1].life.length,7);
+ assert.equal(s.players[1].life.length,6);
  const choices=legalUniversalActions(both,s);
  assert.ok(choices.some(a=>a.type==='chooseAttackEndSwap'&&a.uid===null));
  assert.ok(choices.some(a=>a.type==='chooseAttackEndSwap'&&a.uid===other.uid));

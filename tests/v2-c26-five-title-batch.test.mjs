@@ -228,7 +228,9 @@ test('SAO-1-076 REST-plays an ALO hand character of any color at energy 2 or les
  const packs=[sao,sao];
  const counts=deckOf(sao,['SAO-1-076','SAO-2-063','SAO-1-051','SAO-1-020','SAO-1-057']);
  let s=newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:26076});
+ // EX08BT/SAO-2-063 prints 緑緑 (gen 2). Two copies pay UA15BT/SAO-1-076's green 3.
  place(s,0,'SAO-2-063','energy',0);
+ place(s,0,'SAO-2-063','energy',1);
  const legal=hold(s,0,'SAO-1-051');
  const wrongTrait=hold(s,0,'SAO-1-020');
  const tooCostly=hold(s,0,'SAO-1-057');
@@ -251,7 +253,9 @@ test('SAO-1-083 recovers one outside card only when it is green and ALO',()=>{
  const packs=[sao,sao];
  const counts=deckOf(sao,['SAO-1-083','SAO-2-063','SAO-1-082','SAO-1-051','SAO-1-092']);
  let s=newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:26083});
+ // EX08BT/SAO-2-063 prints 緑緑 (gen 2). Two copies pay UA15BT/SAO-1-083's green 3.
  place(s,0,'SAO-2-063','energy',0);
+ place(s,0,'SAO-2-063','energy',1);
  readyAp(s,0,2);
  const match=take(s,0,'SAO-1-082');
  const blue=take(s,0,'SAO-1-051');

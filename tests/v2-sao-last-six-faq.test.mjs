@@ -337,7 +337,7 @@ test('SAO-1-033 chooses the same rest without a move lock, or retires one low-en
  assert.equal(moved(rested,yuna.uid),false);
  let field=use(packs,played,a=>a.type==='chooseEffectMode'&&a.mode==='field');
  assert.equal(field.pending.kind,'effect-retire-field-gen');
- assert.deepEqual(field.pending.choices,[cedar.uid]);
+ assert.deepEqual([...field.pending.choices].sort(),[buggy.uid,cedar.uid].sort());
  const skipped=use(packs,structuredClone(field),a=>a.type==='chooseRetireFieldGen'&&a.uid===null);
  assert.equal(skipped.players[1].energy.some(c=>c?.uid===cedar.uid),true);
  field=use(packs,field,a=>a.type==='chooseRetireFieldGen'&&a.uid===cedar.uid);

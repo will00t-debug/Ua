@@ -32,7 +32,8 @@ const BY_ID={
   then:[job('KMR-1-008','phase')]}],effects:{}},
  'KMR-1-009':{bpDownImmune:true,ownTurnBp:1000,phaseEffects:[{phase:'attack',edge:'end',turn:'own',
   then:[job('KMR-1-009','phase')]}],effects:{}},
- 'KMR-1-011':{effects:{onPlay:[job('KMR-1-011','onPlay')]}},
+ // Top 2: any number back on top in order, the rest on the bottom. Not a hand take.
+ 'KMR-1-011':{effects:{onPlay:[{op:'inspectTopArrange',count:2,split:true}]}},
  'KMR-1-012':{effects:{onPlay:[job('KMR-1-012','onPlay')]}},
  'KMR-1-013':{raidName:ZIO,raidNameIncludes:true,effects:{onPlay:[job('KMR-1-013','onPlay')]}},
  'KMR-1-014':{effects:{onPlay:[job('KMR-1-014','onPlay')]}},

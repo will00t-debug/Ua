@@ -236,10 +236,10 @@ test('BLC-1-002 ACTIVE life trigger selects own legal character and rejects enem
  assert.equal(assertUniversalMatch(packs,after),true);
 });
 
-test('BLC-4-014 legacy gen=2 import is normalized to official yellow+ base and ACTIVE bonus',()=>{
+test('BLC-4-014 printed REST base is one yellow and ACTIVE adds one',()=>{
  const name='BLC-4-014',p=pack.cards[name];
- assert.equal(BLEACH_V2_ADDON_PROFILES.find(x=>x.id===name).gen,2,
-  'raw repository is known to encode active total in gen');
+ assert.equal(BLEACH_V2_ADDON_PROFILES.find(x=>x.id===name).gen,1,
+  'catalogue gen is the printed REST base, not the ACTIVE total');
  assert.equal(p.gen,1,'printed base is one yellow');
  assert.equal(p.activeExtraEnergy,1,'ACTIVE adds exactly one yellow');
  const deck={...counts};
