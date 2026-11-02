@@ -92,8 +92,10 @@ test('Liluka can sacrifice itself and recover the single attached facedown card 
 });
 
 test('discarded Grimmjow offers AP-paid active deployment with blue energy and legal traits',()=>{
- let s=fixture(['BLC-2-017','BLC-4-027','BLC-4-036','BLC-4-034']);
- const src=put(s,'BLC-2-017','front',0);put(s,'BLC-4-027','energy',0);put(s,'BLC-4-034','energy',1,0,false); // 4 blue energy, no forbidden traits
+ let s=fixture(['BLC-2-017','BLC-4-027','BLC-4-036','BLC-4-034','BLC-4-034']);
+ const src=put(s,'BLC-2-017','front',0);put(s,'BLC-4-027','energy',0);put(s,'BLC-4-034','energy',1,0,false);
+ // EX15BT/BLC-4-027 prints 青青 (gen 2). Two BLC-4-034 (gen 1) keep blue energy at 4.
+ put(s,'BLC-4-034','energy',2,0,false);
  const grim=hand(s,'BLC-4-036');s=dispatch(s,{type:'ability',uid:src.uid});assert.equal(s.pending.effect.kind,'ruleChoice');s=choose(s,grim.uid);
  assert.equal(s.pending.effect.kind,'grimPay');s=choose(s,'yes');assert.equal(s.pending.effect.kind,'grimDeploy');s=choose(s,'front-1');
  assert.equal(s.players[0].front[1].uid,grim.uid);assert.equal(s.players[0].front[1].ready,true);assert.equal(s.players[0].ap,2);assertState(s);

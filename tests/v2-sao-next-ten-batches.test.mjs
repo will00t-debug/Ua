@@ -217,6 +217,8 @@ test('SAO-1-037 gains Impact from Kirito and attack-draw only after a non-move l
  const ids=['SAO-1-037','SAO-1-048','SAO-1-103','SAO-1-102','SAO-1-052','SAO-1-001'];
  const opened=fresh(ids,1037,1,0,'move');
  energize(opened.s,0,['SAO-1-102']);
+ // UA15ST/SAO-1-102 prints 青青 (gen 2). A second copy pays UA15ST/SAO-1-103's blue 3.
+ place(opened.s,0,take(opened.s,0,'SAO-1-102'),'energy',3,true);
  const kirito=place(opened.s,0,take(opened.s,0,'SAO-1-052'),'energy',1,true);
  const asuna=place(opened.s,0,take(opened.s,0,'SAO-1-037'),'energy',2,true);
  const liz=place(opened.s,0,take(opened.s,0,'SAO-1-048'),'front',0,true);
@@ -261,6 +263,7 @@ test('SAO-1-037 gains Impact from Kirito and attack-draw only after a non-move l
 
  const empty=fresh(ids,1048,1,0,'main');
  energize(empty.s,0,['SAO-1-102']);
+ place(empty.s,0,take(empty.s,0,'SAO-1-102'),'energy',3,true);
  const mover=place(empty.s,0,take(empty.s,0,'SAO-1-037'),'front',0,true);
  const watcher=place(empty.s,0,take(empty.s,0,'SAO-1-048'),'front',1,true);
  bury(empty.s,0,mover);
@@ -390,7 +393,8 @@ test('SAO-1-053 raises the rested ALO hand cap only while five cards remain',()=
  const ids=['SAO-1-053','SAO-1-102','SAO-1-058','SAO-1-051','SAO-1-052','SAO-1-050','SAO-1-038','SAO-1-009'];
  function open(seed,handIds){
   const {packs,s}=fresh(ids,seed);
-  energize(s,0,['SAO-1-102','SAO-1-058']);
+  // UA15ST/SAO-1-102 is 青青 (2) and UA15BT/SAO-1-058 is 青 (1). Two 058s make blue 4.
+  energize(s,0,['SAO-1-102','SAO-1-058','SAO-1-058']);
   const actor=take(s,0,'SAO-1-053');
   const cards=[actor,...handIds.map(id=>take(s,0,id))];
   s.players[0].deck.push(...s.players[0].hand.splice(0));
@@ -434,6 +438,9 @@ test('SAO-2-024 discounts required energy for four other hand cards and may boun
  const {packs,s}=fresh(ids,2024,1,0,'main');
  assert.equal(s.players[0].apCards.filter(c=>c.ready).length,2);
  energize(s,0,['SAO-1-102']);
+ // Keep one UA15BT/SAO-1-058 (青, gen 1) so 102's 青青 (2) pays the discounted cost of 3.
+ // The later copy on energy[1] is what raises the line from 3 to 4.
+ place(s,0,take(s,0,'SAO-1-058'),'energy',2,true);
  const leafa=take(s,0,'SAO-2-024');
  const fillers=[];
  for(let i=0;i<4;i++)fillers.push(take(s,0,'SAO-1-001'));
