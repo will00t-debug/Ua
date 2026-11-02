@@ -1,0 +1,38 @@
+name: Verify published online battlefield
+on:
+  push:
+    branches: [codex/verify-online-public-20261102]
+permissions: {}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Read public HTML and shared battlefield assets
+        run: |
+          python3 - <<'PY'
+          import re, urllib.request
+          origin = 'https://ua-arena.will00t.workers.dev/'
+          expected = {
+              'online.html': 'online.mjs?v=20261102sharedtable1',
+              'universal-v2/online-battle-ui.mjs': 'renderOnlineBattle',
+              'online-battle.css': 'v2-online-battle',
+          }
+          failed = []
+          for path, marker in expected.items():
+              try:
+                  request = urllib.request.Request(origin + path, headers={'Cache-Control': 'no-cache'})
+                  with urllib.request.urlopen(request, timeout=25) as response:
+                      body = response.read().decode()
+                      ok = marker in body
+                      print(path, response.status, 'bytes', len(body), 'new version', ok)
+                      if path.endswith('.html'):
+                          print('scripts', re.findall(r'<script[^>]+src="([^"]+)"', body))
+                      if not ok:
+                          failed.append(path)
+              except Exception as error:
+                  print(path, type(error).__name__, str(error))
+                  failed.append(path)
+          if failed:
+              raise SystemExit('Public verification failed: ' + ', '.join(failed))
+          PY
