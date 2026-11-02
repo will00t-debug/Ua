@@ -1,41 +1,42 @@
-name: Verify published online battlefield
+name: Inspect active UA deployment metadata
 on:
   push:
     branches: [codex/verify-online-public-20261102]
 permissions: {}
 jobs:
-  verify:
+  inspect:
+    environment: Production
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Read public HTML and shared battlefield assets
+      - name: Read active deployment and version timestamps only
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           python3 - <<'PY'
-          import re, urllib.request
-          origin = 'https://ua-arena.will00t.workers.dev/'
-          expected = {
-              'online.html': 'online.mjs?v=20261102sharedtable1',
-              'universal-v2/online-battle-ui.mjs': 'renderOnlineBattle',
-              'online-battle.css': 'v2-online-battle',
-          }
-          failed = []
-          for path, marker in expected.items():
-              try:
-                  request = urllib.request.Request(origin + path, headers={'Cache-Control': 'no-cache'})
-                  with urllib.request.urlopen(request, timeout=25) as response:
-                      body = response.read().decode()
-                      ok = marker in body
-                      print(path, response.status, 'bytes', len(body), 'new version', ok)
-                      if path.endswith('.html'):
-                          print('scripts', re.findall(r'<script[^>]+src="([^"]+)"', body))
-                      if not ok:
-                          failed.append(path)
-              except Exception as error:
-                  print(path, type(error).__name__, str(error))
-                  if isinstance(error, urllib.error.HTTPError):
-                      print('public response headers', {key: error.headers.get(key) for key in ['server', 'content-type', 'cf-mitigated', 'cf-ray']})
-                      print('public error body', error.read().decode(errors='replace')[:1800])
-                  failed.append(path)
-          if failed:
-              raise SystemExit('Public verification failed: ' + ', '.join(failed))
+          import json, os, urllib.request
+          token = os.environ.get('CLOUDFLARE_API_TOKEN')
+          account = os.environ.get('CLOUDFLARE_ACCOUNT_ID')
+          if not token or not account:
+              raise SystemExit('Existing deployment credentials are unavailable')
+          root = 'https://api.cloudflare.com/client/v4/accounts/' + account + '/workers/scripts/ua-arena/'
+          def get(path):
+              request = urllib.request.Request(root + path, headers={'Authorization': 'Bearer ' + token})
+              with urllib.request.urlopen(request, timeout=25) as response:
+                  data = json.load(response)
+              if not data.get('success'):
+                  raise SystemExit('Cloudflare metadata request failed')
+              return data.get('result', {})
+          result = get('deployments')
+          deployments = result.get('deployments', []) if isinstance(result, dict) else result
+          print('ACTIVE DEPLOYMENTS')
+          for deployment in deployments[:8]:
+              print(json.dumps({key: deployment.get(key) for key in ['id', 'created_on', 'source', 'strategy', 'versions']}))
+          result = get('versions')
+          versions = result.get('items', []) if isinstance(result, dict) else result
+          print('UPLOADED VERSIONS')
+          for version in versions[:8]:
+              metadata = version.get('metadata', {})
+              print(json.dumps({'id': version.get('id'), 'created_on': metadata.get('created_on'), 'source': metadata.get('source')}))
           PY
