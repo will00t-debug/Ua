@@ -1266,14 +1266,20 @@ function maybeFinishCoach(){
 function renderCoachReview(target){
  document.body.classList.add('v2-playing');
  const session=app.coachBattle.session;
- target.replaceChildren(el('header',{class:'matchHeader coach-review-header'},
+ const label=session.label;
+ const outcome=label&&(label.winner===0||label.winner===1)?
+  (label.winner===0?'你獲勝了！':'電腦獲勝了')+'結束原因：'+(label.endReason||'finished')+
+  '。這是 V2 引擎測試結果，不代表全部日本官方 FAQ 已驗收。':'';
+ const header=el('header',{class:'matchHeader coach-review-header'},
   el('h1',{text:'賽後教 AI'}),
   el('nav',{class:'coach-review-actions','aria-label':'賽後導覽'},
    el('a',{href:'/online.html',class:'btn small',text:'回大廳',onClick:()=>{
     resetAi();clearSoloBattle(sessionStorage);
    }}),
    btn('重開對局',()=>startGame(),'btn small'),
-   el('a',{href:'/coach.html',class:'btn small',text:'紀錄',title:'查看、匯出或刪除紀錄'}))));
+   el('a',{href:'/coach.html',class:'btn small',text:'紀錄',title:'查看、匯出或刪除紀錄'})));
+ if(outcome)header.append(el('p',{class:'note',text:outcome}));
+ target.replaceChildren(header);
  mountCoachReview(target,{
   packs:app.packs,replay:app.replay,
   marks:session.marks.map(mark=>({...mark,header:session.header})),
@@ -1289,6 +1295,14 @@ function renderCoachReview(target){
 function render(){
  const target=$('match-view');if(!target)return;
  if(app.coachBattle?.session?.reviewing&&app.replay&&app.packs){
+  // A choice that ends the match, such as protecting Al after the last
+  // SPECIAL life, sets the post-match review before this paint. Drop the
+  // choice overlay first or that dialog stays above the finished table.
+  clearTimeout(fieldHold);fieldHold=0;
+  closeZoneSheet();
+  clearPendingOverlay();
+  clearTriggerOverlay();
+  clearPublicMoveOverlay();
   const oldScroll=window.scrollY;
   target.replaceChildren();
   renderCoachReview(target);

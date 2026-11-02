@@ -222,3 +222,57 @@ test('REZ-2-032 retires a Raid top without burying its base, and rejects a parti
  }]}),/named retirement tuck/);
  assert.equal(assertUniversalMatch(rezPacks,s),true);
 });
+
+test('last SPECIAL life that retires facedown Al can protect or leave and then ends',()=>{
+ const specialDeck=rezDeck([
+  'REZ-2-032','REZ-2-063','REZ-2-043','REZ-2-049','REZ-2-021','REZ-2-056',
+  'REZ-2-055','REZ-2-058','REZ-2-014','REZ-2-020','REZ-2-041','REZ-2-026','REZ-2-033'
+ ],'REZ-2-033');
+ let s=fresh(specialDeck,3037);
+ green(s);
+ const victim=sit(s,0,'REZ-2-043','front',0);
+ s=toPhase(rezPacks,s,'main');
+ s=playAl(s);
+ s=dispatchUniversalAction(rezPacks,s,{type:'chooseRetireTuck',uid:victim.uid});
+ const al=s.players[0].front.find(c=>c?.cardId==='REZ-2-032');
+ assert.equal(al.under[0].faceDown,true);
+ assert.equal(universalBp(rezPacks,s,al),4000);
+ al.ready=true;
+ const life=take(s,1,'REZ-2-021');
+ s.players[1].deck.push(...s.players[1].life.splice(0));
+ s.players[1].life.unshift(life);
+ s=passUntil(s,state=>state.active===0&&state.phase==='attack'&&!state.pending);
+ s=dispatchUniversalAction(rezPacks,s,{type:'attack',uid:al.uid},{actor:0});
+ s=dispatchUniversalAction(rezPacks,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending.kind,'life-trigger');
+ assert.equal(s.pending.trigger,'special');
+ assert.equal(s.players[1].life.length,0);
+ s=dispatchUniversalAction(rezPacks,s,{type:'chooseTrigger',mode:'special',uid:al.uid},{actor:1});
+ assert.equal(s.pending.kind,'leave-replacement');
+ assert.equal(s.pending.player,0);
+ assert.equal(s.pending.uid,al.uid);
+ assert.deepEqual(legalUniversalActions(rezPacks,s),[
+  {type:'chooseLeaveReplacement',mode:'protect'},
+  {type:'chooseLeaveReplacement',mode:'leave'}
+ ]);
+ const kept=dispatchUniversalAction(rezPacks,structuredClone(s),
+  {type:'chooseLeaveReplacement',mode:'protect'},{actor:0});
+ assert.equal(kept.status,'finished');
+ assert.equal(kept.winner,0);
+ assert.equal(kept.endReason,'life-zero');
+ assert.equal(kept.pending,null);
+ assert.ok(kept.players[0].front.some(c=>c?.uid===al.uid));
+ assert.equal(kept.players[0].front.find(c=>c?.uid===al.uid).under.length,0);
+ assert.ok(kept.players[0].outside.some(c=>c.uid===victim.uid&&c.faceDown===false));
+ const left=dispatchUniversalAction(rezPacks,s,
+  {type:'chooseLeaveReplacement',mode:'leave'},{actor:0});
+ assert.equal(left.status,'finished');
+ assert.equal(left.winner,0);
+ assert.equal(left.endReason,'life-zero');
+ assert.equal(left.pending,null);
+ assert.equal(left.players[0].front.some(c=>c?.uid===al.uid),false);
+ assert.ok(left.players[0].outside.some(c=>c.uid===al.uid));
+ assert.ok(left.players[0].outside.some(c=>c.uid===victim.uid));
+ assert.equal(assertUniversalMatch(rezPacks,kept),true);
+ assert.equal(assertUniversalMatch(rezPacks,left),true);
+});
