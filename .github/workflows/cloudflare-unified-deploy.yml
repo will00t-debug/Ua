@@ -19,6 +19,8 @@ on:
       - 'package-lock.json'
       - 'scripts/cloudflare-deploy-preflight.mjs'
       - 'scripts/build-worker.mjs'
+      - 'scripts/build-online-client.mjs'
+      - 'scripts/online-battle-inject.mjs'
       - '.github/workflows/cloudflare-unified-deploy.yml'
   workflow_dispatch:
     inputs:

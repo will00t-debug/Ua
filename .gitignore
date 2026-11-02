@@ -12,3 +12,4 @@ __pycache__/
 data/
 worker/dist/
 .wrangler/
+dist/online-client-*.mjs

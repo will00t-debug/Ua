@@ -7,7 +7,8 @@ import {ApiError,dispatchAccount,dispatchRoom} from '../server/domain.mjs';
 import {coachHttp} from '../server/coach.mjs';
 import {SCHEMA,createRepositories,ensureDeckColumns,roomTtl} from '../server/repos.mjs';
 import {durableAct,durableCancel,durableCreate,durableJoin,durableList,durableResign,durableView} from './orchestrate.mjs';
-import {currentPage,ONLINE_UI_VERSION} from './static-pages.mjs';
+import {currentPage,legacyClientRedirect} from './static-pages.mjs';
+import {ONLINE_UI_RELEASE} from 'virtual:online-release';
 
 function adapt(storage){
  const sql=storage.sql;
@@ -150,7 +151,7 @@ export default {
    const path=url.pathname;
    const method=request.method||'GET';
    if(method==='GET'&&path==='/api/health')
-    return send(200,{ok:true,service:'ua-accounts',storage:'durable-object',uiVersion:ONLINE_UI_VERSION});
+    return send(200,{ok:true,service:'ua-accounts',storage:'durable-object',uiVersion:ONLINE_UI_RELEASE.version,uiScript:ONLINE_UI_RELEASE.script});
    if(path.startsWith('/api/')){
     const token=sessionToken(request);
     const secure=url.protocol==='https:';
@@ -218,6 +219,10 @@ export default {
    // One host: / is the account-first entry (login for guests, lobby for signed-in users).
    // The V2 battle lobby remains available at /universal-v2-preview.html.
    // html_handling is "none", so index.html is not redirected onto / and hidden by the lobby.
+   const oldClient=legacyClientRedirect(path,method,ONLINE_UI_RELEASE);
+   if(oldClient)return oldClient;
+   if(['GET','HEAD'].includes(method)&&['/online-bootstrap.mjs','/online-updates.mjs'].includes(path))
+    return currentPage(request,env.ASSETS,path,ONLINE_UI_RELEASE.version);
    const pages={
     '/':'/online.html',
     '/universal-v2-preview':'/universal-v2-preview.html',
@@ -232,7 +237,7 @@ export default {
     '/coach.html':'/coach.html'
    };
    if((method==='GET'||method==='HEAD')&&pages[path]){
-    return currentPage(request,env.ASSETS,pages[path]);
+    return currentPage(request,env.ASSETS,pages[path],ONLINE_UI_RELEASE.version);
    }
    if(method==='GET'||method==='HEAD')return env.ASSETS.fetch(request);
    return send(404,{error:'找不到頁面。'});

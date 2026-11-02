@@ -11,7 +11,7 @@ test('production account frontend compiles as JavaScript (catches missing comma 
  assert.doesNotThrow(()=>new vm.Script(source,{filename:'dist/online.mjs'}));
  const html=readFileSync(new URL('../dist/online.html',import.meta.url),'utf8');
  assert.match(html,/id="app"/);
- assert.match(html,/online\.mjs\?v=/);
+ assert.match(html,/src="online-bootstrap\.mjs"/);
 });
 
 test('a failed battlefield import shows a retry screen without reopening the old online UI',async()=>{
@@ -32,6 +32,21 @@ test('a failed battlefield import shows a retry screen without reopening the old
  assert.match(texts(appRoot),/重新載入對戰介面/);
  assert.equal(appRoot.querySelectorAll('.online-table').length,0);
  assert.equal(vm.runInContext('app.room.code',context),'ABCD2345','the live room is preserved while loading fails');
+});
+
+test('a deployment changing during startup reloads the same page before account or room actions',async()=>{
+ const appRoot=new FakeNode('div'),requests=[];let reloads=0;
+ const document={createElement:tag=>new FakeNode(tag),createTextNode:text=>new FakeNode('#text',String(text)),
+  querySelector:selector=>selector==='#app'?appRoot:null};
+ const context=vm.createContext({document,Node:FakeNode,onlineClientBuild:'ABCDEFGH',
+  fetch:async path=>{requests.push(path);return {ok:true,status:200,json:async()=>({ok:true,uiVersion:'IJKLMNOP',uiScript:'/online-client-IJKLMNOP.mjs'})};},
+  clearInterval(){},setInterval(){},location:{hash:'#ABCD2345'},history:{replaceState(){}},
+  localStorage:{getItem(){return null;}},sessionStorage:{setItem(){}},navigator:{},
+  window:{location:{reload(){reloads++;}}},setTimeout,clearTimeout,console});
+ new vm.Script(source,{filename:'dist/online.mjs'}).runInContext(context);
+ for(let i=0;i<30&&!reloads;i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(reloads,1);assert.deepEqual(requests,['/api/health']);
+ assert.equal(context.location.hash,'#ABCD2345');
 });
 
 test('Cloudflare /online.html login boot produces actual inputs, registration switch and account dashboard',async()=>{

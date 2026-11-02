@@ -40,7 +40,7 @@ test('V2 destination exposes opponent deck, real AI difficulty and start match c
 });
 
 test('public static pages cache-bust the repaired clickable module URLs',()=>{
- assert.match(read('dist/online.html'),/online\.mjs\?v=[0-9a-z]+/);
+ assert.match(read('dist/online.html'),/src="online-bootstrap\.mjs"/);
  assert.match(read('dist/online.html'),/online\.css\?v=[0-9a-z]+/);
  assert.match(read('dist/index.html'),/v2-deck-editor\.mjs\?v=20261102kmr2ship1/);
 });

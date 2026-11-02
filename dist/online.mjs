@@ -23,16 +23,21 @@ const DRAFTS=[
 ];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
-let battleUi=null,battleUiLoading=false,battleUiError=false;
+let battleUi=typeof onlineBattleUiBootstrap==='undefined'?null:onlineBattleUiBootstrap;
+let battleUiLoading=false,battleUiError=false;
+function watchBattleViewport(module){
+ window.matchMedia?.(module.DESKTOP_BATTLE_QUERY)?.addEventListener?.('change',()=>{
+  if(app.room?.view)render();
+ });
+}
+if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
  const url='./universal-v2/online-battle-ui.mjs?v=20261103onlinefix1'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
-  window.matchMedia?.(module.DESKTOP_BATTLE_QUERY)?.addEventListener?.('change',()=>{
-   if(app.room?.view)render();
-  });
+  watchBattleViewport(module);
   render();
  }).catch(error=>{
   if(document.body)battleUi?.setOnlineBattleMode?.(false);
@@ -1571,7 +1576,13 @@ function leaveFinished(){
  refreshOpenRooms().then(()=>{if(!app.room)render();});
 }
 async function boot(){
- try{await api('/api/health');}
+ try{
+  const health=await api('/api/health');
+  const build=typeof onlineClientBuild==='string'?onlineClientBuild:health.uiVersion;
+  if(typeof onlineClientBuild==='string'&&build!==health.uiVersion){window.location.reload();return;}
+  if(typeof onlineReleaseMarker==='function')onlineReleaseMarker(build);
+  if(typeof onlineReleaseWatcher==='function')onlineReleaseWatcher({version:build});
+ }
  catch{app.offline=true;render();return;}
  try{
   app.user=await api('/api/me');

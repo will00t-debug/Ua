@@ -19,6 +19,11 @@ jobs:
           node-version: '22'
       - name: Run all regression tests
         run: npm test
+      - name: Verify fingerprinted client and Worker builds
+        run: |
+          npm ci
+          npm run online:verify-build
+          npm run worker:build
       - name: Syntax check for browser modules
         run: |
           node --check dist/app.mjs

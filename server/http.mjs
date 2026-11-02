@@ -4,6 +4,7 @@ import {extname,resolve,sep} from 'node:path';
 import {ApiError,createService} from './domain.mjs';
 import {coachHttp} from './coach.mjs';
 import {openDatabase} from './sqlite.mjs';
+import {SOURCE_ONLINE_RELEASE,legacyClientRedirect} from '../worker/static-pages.mjs';
 
 const TYPES={
  '.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8',
@@ -99,7 +100,7 @@ function serveStatic(req,res,root,urlPath){
   res.writeHead(200,{
    'content-type':type,
    'content-length':info.size,
-   'cache-control':type.startsWith('text/html')||type.includes('javascript')?'no-cache':'public, max-age=3600',
+   'cache-control':type.startsWith('text/html')||type.includes('javascript')?'no-store':'public, max-age=3600',
    'x-content-type-options':'nosniff'
   });
   if(req.method==='HEAD'){res.end();return;}
@@ -107,7 +108,7 @@ function serveStatic(req,res,root,urlPath){
  }).catch(()=>send(res,404,{error:'找不到頁面。'}));
 }
 
-export async function createHandler({dataFile,staticRoot=null}){
+export async function createHandler({dataFile,staticRoot=null,uiRelease=SOURCE_ONLINE_RELEASE}){
  const sql=openDatabase(dataFile);
  const service=createService({sql});
  async function handle(req,res){
@@ -117,7 +118,9 @@ export async function createHandler({dataFile,staticRoot=null}){
    const method=req.method||'GET';
    const secure=req.headers['x-forwarded-proto']==='https';
    const meta={ip:clientIp(req)};
-   if(method==='GET'&&path==='/api/health')return send(res,200,{ok:true,service:'ua-accounts',storage:'sqlite'});
+   if(method==='GET'&&path==='/api/health')return send(res,200,{ok:true,service:'ua-accounts',storage:'sqlite',uiVersion:uiRelease.version,uiScript:uiRelease.script});
+   const oldClient=legacyClientRedirect(path,method,uiRelease);
+   if(oldClient){res.writeHead(oldClient.status,Object.fromEntries(oldClient.headers));res.end();return;}
    if(path.startsWith('/api/')){
     const token=sessionToken(req);
     if(method==='POST'&&path==='/api/register'){

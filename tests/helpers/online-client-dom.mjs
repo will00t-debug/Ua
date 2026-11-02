@@ -11,6 +11,7 @@ export class FakeNode{
  }
  prepend(...nodes){const old=[...this.children];this.children=[];this.append(...nodes,...old);}
  focus(){}
+ remove(){if(this.parentNode)this.parentNode.children=this.parentNode.children.filter(node=>node!==this);this.parentNode=null;}
  replaceChildren(...nodes){this.children=[...nodes];}
  setAttribute(name,value){this.attributes[name]=value;}
  getAttribute(name){return this.attributes[name]??null;}
