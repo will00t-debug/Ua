@@ -53,6 +53,7 @@ test('binary and placement choices do not share one button label',()=>{
   [{type:'chooseHandReenterUnder',uid:null},
    {type:'chooseHandReenterUnder',uid:'0-1',line:'front',slot:0},
    {type:'chooseHandReenterUnder',uid:'0-1',line:'front',slot:2}],
+  [{type:'chooseTopOrder',uid:'0-1',place:'top'},{type:'chooseTopOrder',uid:'0-1',place:'bottom'}],
   [{type:'chooseTopDeployRest',uid:null},
    {type:'chooseTopDeployRest',uid:'0-1',line:'front',slot:0},
    {type:'chooseTopDeployRest',uid:'0-1',line:'energy',slot:1},
