@@ -1,9 +1,14 @@
 // Solo-vs-computer training rows. The model sees only the acting seat's
 // public view plus cards that seat is already allowed to inspect.
 // Win/loss stays on the match label. Debug replays are a different file.
+// AI moves are not written as player decisions.
 import {legalUniversalActions,dispatchUniversalAction,universalActor,
  universalPublicView,universalPrivateChoices,UNIVERSAL_V2_VERSION} from './engine.mjs';
 import {replayUniversalPreview} from './preview-replay.mjs';
+import {DECISION_FORMAT,classifyDecision,publicHistoryFrom,chainOf,deckSnapshot} from './coach-format.mjs';
+
+export {newCoachMatchId} from './coach-format.mjs';
+export {classifyDecision,publicHistoryFrom};
 
 export const COACH_REASONS=Object.freeze([
  ['','不填理由'],
@@ -15,18 +20,11 @@ export const COACH_REASONS=Object.freeze([
 
 const same=value=>JSON.stringify(value);
 
-export function newCoachMatchId(){
- const bytes=globalThis.crypto.getRandomValues(new Uint8Array(16));
- return 'm'+[...bytes].map(byte=>byte.toString(16).padStart(2,'0')).join('');
-}
-
-export function coachHeader({matchId,packs,counts,aiVersion,engineVersion=UNIVERSAL_V2_VERSION}){
- const deck={};
- for(const [cardId,n] of Object.entries(counts||{}))if(n>0)deck[cardId]=n;
+export function coachHeader({matchId,packs,counts,aiVersion,engineVersion=UNIVERSAL_V2_VERSION,channel='solo',matchLink=null}){
  return {
-  matchId,channel:'solo',engine:'universal-v2',engineVersion,
+  matchId,matchLink:matchLink||matchId,channel,mode:channel,engine:'universal-v2',engineVersion,
   pool:{titles:packs.map(pack=>pack.id),versions:packs.map(pack=>pack.version)},
-  aiVersion,deck:{title:packs[0].id,counts:deck}
+  aiVersion,deck:deckSnapshot(packs[0].id,counts)
  };
 }
 
@@ -54,21 +52,26 @@ export function stateAtReplayIndex(packs,replay,replayIndex){
  return replayUniversalPreview(packs,{...replay,actions:replay.actions.slice(0,replayIndex)});
 }
 
-function decision(packs,state,seat){
+function decision(packs,state,seat,provided){
  if(universalActor(state)!==seat)throw Error('還不是這個座位的決策。');
- const legal=legalUniversalActions(packs,state).map(action=>structuredClone(action));
+ const legal=(Array.isArray(provided)?provided:legalUniversalActions(packs,state)).map(action=>structuredClone(action));
  return {legal,observation:coachObservation(packs,state,seat)};
 }
 
-export function buildHumanStep({packs,state,action,step,replayIndex,previous,header}){
- const {legal,observation}=decision(packs,state,0);
+export function buildHumanStep({packs,state,action,step,replayIndex,previous,header,legal:providedLegal}){
+ const {legal,observation}=decision(packs,state,0,providedLegal);
  const choice=structuredClone(action);
  if(!legal.some(item=>same(item)===same(choice)))throw Error('玩家選擇不在目前的合法操作裡。');
+ const clientKey=header.matchId+':'+step+':human';
+ const link=previous?{step:previous.step,type:previous.type,replayIndex:previous.replayIndex,
+  ...(previous.clientKey?{clientKey:previous.clientKey}:{})}:null;
  return {
-  format:'ua-v2-coach-step-v1',
-  clientKey:header.matchId+':'+step+':human',
-  step,replayIndex,actor:'human',seat:0,...header,
-  observation,legal,choice,previous:previous?{step:previous.step,type:previous.type,replayIndex:previous.replayIndex}:null
+  format:DECISION_FORMAT,
+  clientKey,step,replayIndex,source:'human',actor:'human',seat:0,...header,
+  turn:observation.visible.turn,phase:observation.visible.phase,
+  observation,publicHistory:publicHistoryFrom(observation.visible),
+  legal,choice,forced:legal.length===1,decisionClass:classifyDecision(choice),
+  previous:link,chain:chainOf(header.matchId,step,link,clientKey)
  };
 }
 
@@ -77,9 +80,10 @@ export function buildAiMark({packs,state,action,step,replayIndex,header,reason='
  const original=structuredClone(action);
  if(!legal.some(item=>same(item)===same(original)))throw Error('電腦選擇不在當時的合法操作裡。');
  return {
+  ...header,
   format:'ua-v2-coach-demo-v1',
   clientKey:header.matchId+':ai:'+replayIndex,
-  step,replayIndex,seat:1,...header,observation,legal,original,
+  step,replayIndex,source:'ai',actor:'ai',seat:1,observation,legal,original,
   correction:null,demonstration:[],reason
  };
 }
@@ -107,14 +111,30 @@ export function pushSandbox(packs,state,action){
 }
 
 function showsUid(text,uid){return text.includes('"'+uid+'"');}
+function collectDisclosed(value,ids){
+ if(!value||typeof value!=='object')return;
+ if(Array.isArray(value)){for(const item of value)collectDisclosed(item,ids);return;}
+ if(typeof value.uid==='string')ids.add(value.uid);
+ for(const [key,child] of Object.entries(value))if(key!=='hand')collectDisclosed(child,ids);
+}
 export function hiddenLeak(state,observation,seat){
  const text=JSON.stringify(observation);
+ const disclosed=new Set();
+ if(observation?.visible){
+  collectDisclosed({...observation.visible,players:(observation.visible.players||[]).map(player=>{
+   const next={...player};
+   delete next.hand;
+   return next;
+  })},disclosed);
+ }
+ for(const card of observation?.private?.inspected||[])if(card?.uid)disclosed.add(card.uid);
  const leaks=[];
  state.players.forEach((player,index)=>{
-  for(const card of player.deck)if(showsUid(text,card.uid))leaks.push('deck:'+card.uid);
-  for(const card of player.life)if(!card.lifePublic&&card.faceUp!==true&&showsUid(text,card.uid))
+  for(const card of player.deck)if(!disclosed.has(card.uid)&&showsUid(text,card.uid))leaks.push('deck:'+card.uid);
+  for(const card of player.life)if(!card.lifePublic&&card.faceUp!==true&&!disclosed.has(card.uid)&&showsUid(text,card.uid))
    leaks.push('life:'+card.uid);
-  if(index!==seat)for(const card of player.hand)if(showsUid(text,card.uid))leaks.push('hand:'+card.uid);
+  if(index!==seat)for(const card of player.hand)if(!disclosed.has(card.uid)&&showsUid(text,card.uid))
+   leaks.push('hand:'+card.uid);
  });
  if(text.includes('"winner"')||text.includes('"initialCounts"')||text.includes('"seed"'))
   leaks.push('label');

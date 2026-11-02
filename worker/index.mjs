@@ -82,6 +82,15 @@ export class MatchRoom extends DurableObject{
  }
 }
 
+function sendText(status,text){
+ return new Response(text,{status,headers:{
+  'content-type':'application/x-ndjson; charset=utf-8',
+  'content-disposition':'attachment; filename="ua-v2-decisions.jsonl"',
+  'cache-control':'no-store',
+  'x-content-type-options':'nosniff',
+  'referrer-policy':'same-origin'
+ }});
+}
 function send(status,payload,headers={}){
  const body=JSON.stringify(payload);
  return new Response(body,{status,headers:{
@@ -199,7 +208,9 @@ export default {
     const coach=coachHttp(method,path);
     if(coach){
      const body=method==='GET'||method==='DELETE'?{}:await readBody(request,coach.limit||262144);
-     return send(200,await callAccount({op:coach.op,token,matchId:coach.matchId,demoId:coach.demoId,replayId:coach.replayId,body}));
+     const result=await callAccount({op:coach.op,format:coach.format,token,matchId:coach.matchId,demoId:coach.demoId,replayId:coach.replayId,body});
+     if(coach.format==='jsonl')return sendText(200,result?.jsonl||'');
+     return send(200,result);
     }
     return send(404,{error:'找不到這個功能。'});
    }

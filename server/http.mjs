@@ -161,7 +161,19 @@ export async function createHandler({dataFile,staticRoot=null}){
     const coach=coachHttp(method,path);
     if(coach){
      const body=method==='GET'||method==='DELETE'?{}:await readBody(req,coach.limit||262144);
-     return send(res,200,await service.coach(token,{op:coach.op,matchId:coach.matchId,demoId:coach.demoId,replayId:coach.replayId,body}));
+     const result=await service.coach(token,{op:coach.op,format:coach.format,matchId:coach.matchId,demoId:coach.demoId,replayId:coach.replayId,body});
+     if(coach.format==='jsonl'){
+      const text=typeof result?.jsonl==='string'?result.jsonl:'';
+      res.writeHead(200,{
+       'content-type':'application/x-ndjson; charset=utf-8',
+       'content-disposition':'attachment; filename="ua-v2-decisions.jsonl"',
+       'cache-control':'no-store',
+       'x-content-type-options':'nosniff'
+      });
+      res.end(text);
+      return;
+     }
+     return send(res,200,result);
     }
     return send(res,404,{error:'找不到這個功能。'});
    }

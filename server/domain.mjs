@@ -293,6 +293,17 @@ function decorateView(packs,view){
  });
  return copy;
 }
+function canonicalizeCoach(message){
+ const apply=item=>{
+  if(!item||item.channel!=='online'||!item.pool||!Array.isArray(item.pool.titles))return;
+  item.pool={
+   titles:item.pool.titles,
+   versions:item.pool.titles.map(title=>titlePack(title).version)
+  };
+ };
+ apply(message?.body);
+ apply(message?.body?.header);
+}
 function titlePack(title){
  if(packCache.has(title))return packCache.get(title);
  const pack=registeredPackForEditor(title);
@@ -616,6 +627,7 @@ export function dispatchAccount(repos,message,now){
   case 'coachDeleteDemo':
   case 'coachDeleteDebug':
   case 'coachDeleteAll':
+   canonicalizeCoach(message);
    return dispatchCoach(repos,requireUser(repos,message.token,now),message,now);
   default:throw new ApiError(404,'找不到這個功能。');
  }

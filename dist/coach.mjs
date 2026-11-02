@@ -29,9 +29,16 @@ function download(filename,value){
  document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function outcomeText(label){
+ if(!label)return '尚未有勝敗標籤';
+ if(label.unfinished||['interrupted','abandoned','error','incomplete'].includes(label.endReason))
+  return '未完成 · '+label.endReason+' · 不是和局或勝利';
+ const winner=label.winner===0?'座位 0 勝':label.winner===1?'座位 1 勝':'沒有勝敗';
+ return (label.completed?'正常完成':'認輸或未正常完成')+' · '+winner+' · '+label.endReason;
+}
 function summary(match){
- const label=match.label?((match.label.completed?'正常完成':'未正常完成')+' · '+(match.label.winner===0?'你勝':match.label.winner===1?'電腦勝':'未分勝負')+' · '+match.label.endReason):'尚未有勝敗標籤';
- return match.title+' · '+match.aiVersion+' · '+match.steps+' 步 · '+match.demos+' 段示範 · '+label;
+ const mode=match.mode==='online'||match.channel==='online'?'線上':'單人';
+ return mode+' · '+match.title+' · '+match.aiVersion+' · '+match.steps+' 步 · '+match.demos+' 段示範 · '+outcomeText(match.label);
 }
 async function showMatch(matchId){
  const detail=await api('/api/coach/matches/'+matchId);
@@ -41,7 +48,7 @@ async function showMatch(matchId){
  if(!detail.steps.length)box.append(h('p',{text:'還沒有玩家決策。'}));
  for(const step of detail.steps){
   const choice=step.choice?.type||'';
-  box.append(h('p',{text:'第 '+step.step+' 步 · '+choice+' · 合法 '+(step.legal?.length||0)+' 項'}));
+  box.append(h('p',{text:'第 '+step.step+' 步 · '+(step.source||step.actor||'human')+' · '+(step.decisionClass||choice)+' · 合法 '+(step.legal?.length||0)+' 項'+(step.forced?' · 唯一選項':'')}));
  }
  box.append(h('h3',{text:'示範'}));
  if(!detail.demonstrations.length)box.append(h('p',{text:'還沒有賽後修正。'}));
@@ -69,7 +76,7 @@ async function showMatch(matchId){
 }
 async function render(){
  root.replaceChildren(h('h1',{text:'教 AI 紀錄'}),
-  h('p',{text:'這些資料只供日後學習。目前的 AI 不會因為上傳或示範而變強。'}));
+  h('p',{text:'同意後，打牌時會在背景收集你自己的決策。這些資料只供日後學習。目前的 AI 不會因為上傳而變強，收集完成也不代表模型已經訓練。'}));
  let me=null;
  try{me=await api('/api/me');}
  catch{root.append(h('p',{text:'請先登入，才能查看、匯出或刪除自己的紀錄。'}),h('a',{href:'/online.html',text:'前往登入'}));return;}
@@ -77,15 +84,26 @@ async function render(){
  const listed=await api('/api/coach/matches');
  root.append(h('p',{text:'匿名識別 '+listed.anonymousId+'。匯出檔不含帳號名稱。'}));
  const actions=h('div',{class:'coach-actions'});
- const exportButton=h('button',{type:'button',text:'匯出訓練資料'});
+ const exportButton=h('button',{type:'button',text:'匯出 JSON'});
  exportButton.addEventListener('click',async()=>download('ua-v2-coach-export.json',await api('/api/coach/export')));
+ const jsonlButton=h('button',{type:'button',text:'匯出 JSONL'});
+ jsonlButton.addEventListener('click',async()=>{
+  const response=await fetch('/api/coach/export.jsonl',{credentials:'same-origin',headers:{accept:'application/x-ndjson'}});
+  if(!response.ok)throw Error('無法匯出 JSONL。');
+  const text=await response.text();
+  const url=URL.createObjectURL(new Blob([text],{type:'application/x-ndjson'}));
+  const link=h('a',{href:url});
+  link.download='ua-v2-decisions.jsonl';
+  document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
  const deleteAll=h('button',{type:'button',text:'刪除全部紀錄'});
  deleteAll.addEventListener('click',async()=>{
   if(!window.confirm('刪除這個帳號的全部教 AI 紀錄？牌組與帳號不會被刪除。'))return;
   await api('/api/coach',{method:'DELETE'});
   await render();
  });
- actions.append(exportButton,deleteAll);
+ actions.append(exportButton,jsonlButton,deleteAll);
  root.append(actions,h('div',{id:'coach-list',class:'coach-list'}));
  const list=root.querySelector('#coach-list');
  if(!listed.matches.length)list.append(h('p',{text:'還沒有紀錄。在電腦對戰裡打開同意開關後，每一步會自動記下來。'}));

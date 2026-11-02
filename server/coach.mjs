@@ -2,10 +2,14 @@
 // Debug replays live in their own table and are never part of the export.
 import {randomBytes} from 'node:crypto';
 import {ApiError} from './domain.mjs';
+import {DECISION_CLASSES,UNFINISHED_ENDINGS,classifyDecision} from '../dist/universal-v2/coach-format.mjs';
 
 const MATCH_ID=/^m[a-f0-9]{32}$/;
+const LINK_ID=/^k[a-f0-9]{32}$/;
 const CLIENT_KEY=/^[a-z0-9:-]{8,80}$/;
-const END_REASONS=new Set(['life-zero','unblocked-attack','required-draw-empty','finished','conceded']);
+const END_REASONS=new Set(['life-zero','unblocked-attack','required-draw-empty','finished','conceded',...UNFINISHED_ENDINGS]);
+const UNFINISHED=new Set(UNFINISHED_ENDINGS);
+const CLASSES=new Set(DECISION_CLASSES);
 const REASONS=new Set(['','energy','base','clear','attack-order']);
 const BANNED=/^(password|username|chat|token|cookie|authorization|secret|deckorder)$/i;
 const MAX_MATCHES=40;
@@ -81,11 +85,11 @@ function poolOf(input){
 }
 function headerOf(body){
  if(!body||typeof body!=='object'||Array.isArray(body))throw new ApiError(400,'紀錄不正確。');
- if(body.channel!=='solo')throw new ApiError(400,'第一階段只接受玩家對電腦的紀錄。');
+ if(body.channel!=='solo'&&body.channel!=='online')throw new ApiError(400,'對局模式不正確。');
  if(typeof body.matchId!=='string'||!MATCH_ID.test(body.matchId))throw new ApiError(400,'對局編號不正確。');
  const header={
   matchId:body.matchId,
-  channel:'solo',
+  channel:body.channel,
   engine:text(body.engine,40,'引擎'),
   engineVersion:text(body.engineVersion,40,'引擎版本'),
   pool:poolOf(body.pool),
@@ -93,6 +97,18 @@ function headerOf(body){
   deck:deckOf(body.deck)
  };
  if(header.engine!=='universal-v2')throw new ApiError(400,'引擎不正確。');
+ if(body.mode!=null){
+  if(body.mode!==body.channel)throw new ApiError(400,'對局模式不正確。');
+  header.mode=body.mode;
+ }
+ if(body.matchLink!=null){
+  const own=body.matchLink===body.matchId;
+  const shared=typeof body.matchLink==='string'&&LINK_ID.test(body.matchLink);
+  if(!own&&!shared)throw new ApiError(400,'對局連結不正確。');
+  if(body.channel==='online'&&!shared)throw new ApiError(400,'對局連結不正確。');
+  header.matchLink=body.matchLink;
+ }else if(body.channel==='online')throw new ApiError(400,'對局連結不正確。');
+ if(body.channel==='online'&&header.aiVersion!=='none')throw new ApiError(400,'線上對戰沒有電腦版本。');
  return header;
 }
 function actionOf(input,label){
@@ -156,10 +172,44 @@ function observationOf(input,seat){
 function previousOf(input){
  if(input==null)return null;
  if(!input||typeof input!=='object'||!Number.isInteger(input.step)||input.step<0||input.step>=MAX_STEPS||
-  !Number.isInteger(input.replayIndex)||input.replayIndex<0||input.replayIndex>15000||
   typeof input.type!=='string'||input.type.length<1||input.type.length>60)
   throw new ApiError(400,'前一步紀錄不正確。');
- return {step:input.step,type:input.type,replayIndex:input.replayIndex};
+ const out={step:input.step,type:input.type};
+ if(input.replayIndex!=null){
+  if(!Number.isInteger(input.replayIndex)||input.replayIndex<0||input.replayIndex>15000)
+   throw new ApiError(400,'前一步紀錄不正確。');
+  out.replayIndex=input.replayIndex;
+ }
+ if(input.clientKey!=null){
+  if(typeof input.clientKey!=='string'||!CLIENT_KEY.test(input.clientKey))
+   throw new ApiError(400,'前一步紀錄不正確。');
+  out.clientKey=input.clientKey;
+ }
+ if(out.replayIndex==null&&out.clientKey==null)throw new ApiError(400,'前一步紀錄不正確。');
+ return out;
+}
+function historyOf(input){
+ if(input==null)return [];
+ if(!Array.isArray(input)||input.length>40)throw new ApiError(400,'公開歷史不正確。');
+ return input.map(item=>{
+  if(!item||typeof item!=='object'||Array.isArray(item))throw new ApiError(400,'公開歷史不正確。');
+  const out={};
+  for(const [key,value] of Object.entries(item)){
+   if(value!==null&&typeof value==='object')throw new ApiError(400,'公開歷史不能包含隱藏牌表。');
+   if(BANNED.test(key)||key==='seed'||key==='initialCounts'||key==='winner')
+    throw new ApiError(400,'公開歷史不能包含隱藏資訊或勝敗。');
+   out[key]=typeof value==='string'?value.slice(0,80):value;
+  }
+  return out;
+ });
+}
+function chainOf(body,clientKey){
+ const chain=body.chain;
+ if(!chain||chain.matchId!==body.matchId||chain.step!==body.step||chain.clientKey!==clientKey)
+  throw new ApiError(400,'步驟串接不正確。');
+ const previousStep=body.previous?body.previous.step:null;
+ if(chain.previousStep!==previousStep)throw new ApiError(400,'步驟串接不正確。');
+ return {matchId:body.matchId,step:body.step,previousStep,clientKey};
 }
 function anonymousId(repos,user,now){
  const existing=repos.coachIdentity(user.id);
@@ -198,6 +248,7 @@ export function coachHttp(method,path){
  if(path==='/api/coach/labels'&&method==='POST')return {op:'coachLabel'};
  if(path==='/api/coach/matches'&&method==='GET')return {op:'coachList'};
  if(path==='/api/coach/export'&&method==='GET')return {op:'coachExport'};
+ if(path==='/api/coach/export.jsonl'&&method==='GET')return {op:'coachExport',format:'jsonl'};
  if(path==='/api/coach'&&method==='DELETE')return {op:'coachDeleteAll'};
  if(path==='/api/coach/demos'&&method==='GET')return {op:'coachListDemos'};
  if(path==='/api/coach/demos'&&method==='POST')return {op:'coachDemo'};
@@ -223,7 +274,9 @@ export function dispatchCoach(repos,user,message,now){
   case 'coachDebug':return saveDebug(repos,user,anonymous,message.body,now);
   case 'coachList':return listMatches(repos,user,anonymous);
   case 'coachMatch':return matchDetail(repos,user,anonymous,message.matchId);
-  case 'coachExport':return exportTraining(repos,user,anonymous);
+  case 'coachExport':return message.format==='jsonl'
+    ?{jsonl:exportJsonl(repos,user,anonymous)}
+    :exportTraining(repos,user,anonymous);
   case 'coachListDemos':return {anonymousId:anonymous,demonstrations:repos.listCoachDemos(user.id).map(publicDemo)};
   case 'coachDemoOne':return oneDemo(repos,user,message.demoId);
   case 'coachDebugOne':return oneDebug(repos,user,message.replayId);
@@ -251,9 +304,10 @@ export function dispatchCoach(repos,user,message,now){
 
 function saveStep(repos,user,anonymous,body,now){
  banned(body);
+ if(body?.format==='ua-v2-coach-step-v2')return saveStepV2(repos,user,anonymous,body,now);
  const header=headerOf(body);
  if(body.format!=='ua-v2-coach-step-v1')throw new ApiError(400,'決策格式不正確。');
- if(body.actor!=='human'||body.seat!==0)throw new ApiError(400,'第一階段只記錄玩家自己的決策。');
+ if(body.actor!=='human'||body.seat!==0||body.source==='ai')throw new ApiError(400,'AI 操作不能當成玩家示範。');
  if(!Number.isInteger(body.step)||body.step<0||body.step>=MAX_STEPS)throw new ApiError(400,'步驟編號不正確。');
  if(!Number.isInteger(body.replayIndex)||body.replayIndex<0||body.replayIndex>15000)
   throw new ApiError(400,'步驟順序不正確。');
@@ -284,16 +338,72 @@ function saveStep(repos,user,anonymous,body,now){
  return {id:rowId,matchId:header.matchId,step:body.step,anonymousId:anonymous,duplicate:false};
 }
 
+function saveStepV2(repos,user,anonymous,body,now){
+ const header=headerOf(body);
+ if(body.source!=='human'||body.actor!=='human')throw new ApiError(400,'AI 操作不能當成玩家示範。');
+ if(body.channel==='solo'&&body.seat!==0)throw new ApiError(400,'單人對戰只記錄玩家自己的座位。');
+ if(body.channel==='online'&&body.seat!==0&&body.seat!==1)throw new ApiError(400,'線上對戰的座位不正確。');
+ if('seed' in body||'initialCounts' in body||'replay' in body||'winner' in body||'endReason' in body)
+  throw new ApiError(400,'訓練紀錄不能包含牌序、種子或勝敗。');
+ if(!Number.isInteger(body.step)||body.step<0||body.step>=MAX_STEPS)throw new ApiError(400,'步驟編號不正確。');
+ let clientKey=header.matchId+':'+body.step+':human';
+ if(body.channel==='online'){
+  if(!Number.isInteger(body.engineRevision)||body.engineRevision<0||body.engineRevision>20000)
+   throw new ApiError(400,'步驟順序不正確。');
+  clientKey=header.matchId+':r'+body.engineRevision+':human';
+ }else if(!Number.isInteger(body.replayIndex)||body.replayIndex<0||body.replayIndex>15000)
+  throw new ApiError(400,'步驟順序不正確。');
+ if(body.clientKey!==clientKey||!CLIENT_KEY.test(clientKey))throw new ApiError(400,'步驟編號不正確。');
+ if(!CLASSES.has(body.decisionClass))throw new ApiError(400,'決策類型不正確。');
+ const choice=actionOf(body.choice,'玩家選擇');
+ if(classifyDecision(choice)!==body.decisionClass)throw new ApiError(400,'決策類型和實際選擇不一致。');
+ if(!Array.isArray(body.legal)||body.legal.length<1||body.legal.length>500)
+  throw new ApiError(400,'合法操作紀錄不正確。');
+ const legal=body.legal.map(action=>actionOf(action,'合法操作'));
+ if(body.forced!==(legal.length===1))throw new ApiError(400,'唯一合法選項的標記不正確。');
+ const choiceIndex=legal.findIndex(action=>same(action)===same(choice));
+ if(choiceIndex<0)throw new ApiError(400,'玩家選擇不在當時的合法操作裡。');
+ const observation=observationOf(body.observation,body.seat);
+ if(body.turn!==observation.visible.turn||body.phase!==observation.visible.phase)
+  throw new ApiError(400,'回合或階段和當時的場面不一致。');
+ const publicHistory=historyOf(body.publicHistory);
+ const previous=previousOf(body.previous);
+ const payload={
+  format:'ua-v2-coach-step-v2',clientKey,step:body.step,source:'human',actor:'human',seat:body.seat,
+  anonymousId:anonymous,...header,turn:body.turn,phase:body.phase,
+  ...(body.channel==='solo'?{replayIndex:body.replayIndex}:{engineRevision:body.engineRevision}),
+  observation,publicHistory,legal,choice,choiceIndex,forced:body.forced,decisionClass:body.decisionClass,
+  previous,chain:chainOf({...body,previous},clientKey)
+ };
+ const encoded=stored(payload);
+ ensureMatch(repos,user,anonymous,header,now);
+ const prior=repos.coachStepByKey(user.id,clientKey);
+ if(prior){
+  if(prior.payloadJson!==encoded)throw new ApiError(409,'同一步驟已經有不同的紀錄。');
+  return {id:prior.id,matchId:header.matchId,step:body.step,anonymousId:anonymous,duplicate:true};
+ }
+ if(body.step!==repos.coachStepCount(user.id,header.matchId))
+  throw new ApiError(409,'步驟順序不連續。');
+ const rowId=id('s');
+ repos.insertCoachStep({id:rowId,matchId:header.matchId,userId:user.id,step:body.step,clientKey,payloadJson:encoded,createdAt:iso(now)});
+ return {id:rowId,matchId:header.matchId,step:body.step,anonymousId:anonymous,duplicate:false};
+}
+
 function saveLabel(repos,user,anonymous,body,now){
  banned(body);
  const header=headerOf(body);
- if(body.format!=='ua-v2-coach-label-v1')throw new ApiError(400,'對局結果格式不正確。');
+ if(body.format!=='ua-v2-coach-label-v1'&&body.format!=='ua-v2-coach-label-v2')
+  throw new ApiError(400,'對局結果格式不正確。');
  if(typeof body.completed!=='boolean'||!END_REASONS.has(body.endReason))
   throw new ApiError(400,'對局結果不正確。');
- const finished=body.endReason!=='conceded';
- if(body.completed!==finished)throw new ApiError(400,'正常完成與認輸要分開標記。');
- if(finished&&body.winner!==0&&body.winner!==1)throw new ApiError(400,'對局結果缺少勝敗。');
- if(!finished&&body.winner!==1&&body.winner!==null)throw new ApiError(400,'認輸結果不正確。');
+ if(UNFINISHED.has(body.endReason)){
+  if(body.completed!==false||body.winner!==null)
+   throw new ApiError(400,'中斷、放棄、錯誤或未完成不能記成勝敗。');
+ }else if(body.endReason==='conceded'){
+  if(body.completed!==false||(body.winner!==0&&body.winner!==1))
+   throw new ApiError(400,'認輸結果不正確。');
+ }else if(body.completed!==true||(body.winner!==0&&body.winner!==1))
+  throw new ApiError(400,'對局結果缺少勝敗。');
  const label={completed:body.completed,winner:body.winner,endReason:body.endReason};
  ensureMatch(repos,user,anonymous,header,now);
  const existing=repos.coachMatch(user.id,header.matchId);
@@ -382,9 +492,18 @@ function saveDebug(repos,user,anonymous,body,now){
 
 function publicMatch(row){
  const deck=JSON.parse(row.deckJson);
+ let channel='solo',mode='solo';
+ if(row.headerJson){
+  try{
+   const header=JSON.parse(row.headerJson);
+   channel=header.channel||channel;
+   mode=header.mode||channel;
+  }catch{/* Older rows still list without a mode. */}
+ }
+ const unfinished=UNFINISHED.has(row.endReason);
  return {id:row.id,createdAt:row.createdAt,updatedAt:row.updatedAt,engine:row.engine||'universal-v2',
-  aiVersion:row.aiVersion,title:deck.title,steps:Number(row.steps||0),demos:Number(row.demos||0),
-  label:row.endReason?{completed:!!row.completed,winner:row.winner,endReason:row.endReason}:null};
+  channel,mode,aiVersion:row.aiVersion,title:deck.title,steps:Number(row.steps||0),demos:Number(row.demos||0),
+  label:row.endReason?{completed:!!row.completed,winner:unfinished?null:row.winner,endReason:row.endReason,unfinished}:null};
 }
 function publicDemo(row){
  const payload=JSON.parse(row.payloadJson);
@@ -415,16 +534,40 @@ function exportTraining(repos,user,anonymous){
   return {
    matchId:row.id,anonymousId:anonymous,engine:full.engine,engineVersion:full.engineVersion,
    pool:JSON.parse(full.poolJson),aiVersion:full.aiVersion,deck:JSON.parse(full.deckJson),
-   label:full.endReason?{completed:!!full.completed,winner:full.winner,endReason:full.endReason}:null,
-   steps:repos.listCoachSteps(user.id,row.id).map(step=>JSON.parse(step.payloadJson))
+   label:full.endReason?{completed:!!full.completed,winner:UNFINISHED.has(full.endReason)?null:full.winner,endReason:full.endReason,unfinished:UNFINISHED.has(full.endReason)}:null,
+   steps:repos.listCoachSteps(user.id,row.id).map(step=>JSON.parse(step.payloadJson)).filter(step=>step.source!=='ai'&&step.actor!=='ai')
   };
  });
  return {
-  format:'ua-v2-coach-export-v1',anonymousId:anonymous,channel:'solo',
-  note:'模型輸入是 steps 與 demonstrations 的 observation。label 只放在對局層。此檔不含除錯重播。',
+  format:'ua-v2-coach-export-v1',anonymousId:anonymous,
+  note:'模型輸入是每步的 observation、legal 與 choice。label 只放在對局層。此檔不含除錯重播。AI 原操作不在 steps。上傳這些資料不會讓目前的 AI 變強。',
   matches,
   demonstrations:repos.listCoachDemos(user.id).map(publicDemo)
  };
+}
+function exportJsonl(repos,user,anonymous){
+ const lines=[JSON.stringify({
+  record:'manifest',format:'ua-v2-coach-jsonl-v1',anonymousId:anonymous,
+  note:'每一行是同意玩家自己的決策，或對局結果標籤。不含除錯重播、對手隱藏手牌、未知牌序、未公開生命或可還原牌序的種子。AI 操作與賽後修正不在這個檔案。收集完成不等於模型已經訓練。'
+ })];
+ for(const row of repos.listCoachMatches(user.id)){
+  const full=repos.coachMatch(user.id,row.id);
+  const header=JSON.parse(full.headerJson);
+  const steps=repos.listCoachSteps(user.id,row.id).map(step=>JSON.parse(step.payloadJson))
+   .filter(step=>step.source!=='ai'&&step.actor!=='ai');
+  for(const step of steps)lines.push(JSON.stringify({...step,record:'decision',anonymousId:anonymous}));
+  const unfinished=UNFINISHED.has(full.endReason);
+  lines.push(JSON.stringify({
+   record:'result',matchId:row.id,anonymousId:anonymous,channel:header.channel||'solo',
+   mode:header.mode||header.channel||'solo',engine:full.engine,engineVersion:full.engineVersion,
+   pool:JSON.parse(full.poolJson),deck:JSON.parse(full.deckJson),aiVersion:full.aiVersion,
+   seat:steps[0]?.seat??null,
+   completed:full.endReason?!!full.completed:null,
+   winner:full.endReason&&!unfinished?full.winner:null,
+   endReason:full.endReason||null,unfinished
+  }));
+ }
+ return lines.join('\n')+'\n';
 }
 function oneDemo(repos,user,demoId){
  const row=repos.coachDemo(user.id,demoId);

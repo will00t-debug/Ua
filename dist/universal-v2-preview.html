@@ -116,8 +116,8 @@
      <div class="field"><label for="first-player">先手玩家</label>
       <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
      <p class="shuffle-note"><span aria-hidden="true">⤨</span> 每場新對局都會自動重新洗牌，不需要輸入牌序代碼。</p>
-     <label class="coach-consent" for="coach-consent"><input id="coach-consent" type="checkbox"> 同意提供對戰紀錄改善 AI</label>
-     <p class="note">預設關閉。只記錄你與電腦的對戰，不記錄線上玩家對戰，也不收集姓名、密碼或聊天內容。需要登入。這不會讓目前的 AI 立刻變強。<a href="/coach.html">查看、匯出或刪除紀錄</a></p>
+     <label class="coach-consent" for="coach-consent"><input id="coach-consent" type="checkbox"> 提供對戰紀錄改善 AI</label>
+     <p class="note">預設關閉，選擇會記住。開啟後，單人對電腦與線上對戰都會在背景記錄你自己的決策；關閉會立刻停止並清掉尚未上傳的佇列。線上對戰只記錄已同意的你，不取得對手的隱藏手牌。不收集姓名、密碼或聊天內容。需要登入。這不會讓目前的 AI 立刻變強。<a href="/coach.html">查看、匯出或刪除紀錄</a></p>
     </div>
    </section>
    </div>
@@ -137,6 +137,6 @@
   </footer>
  </div>
  <link rel="stylesheet" href="coach.css?v=20261101reviewnav1">
- <script type="module" src="universal-v2-preview.mjs?v=20261102kmr2ship1"></script>
+ <script type="module" src="universal-v2-preview.mjs?v=20261102decision1"></script>
 </body>
 </html>
