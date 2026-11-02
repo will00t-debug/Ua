@@ -35,8 +35,8 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102kmr2ship1';
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102sourceart1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -578,6 +578,7 @@ function pendingDialog(legal,view){
  const rows=legal.filter(action=>!boardEntryMode(action)&&!picturedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
  const focus=pendingFocusCard(app.packs,s);
+ const source=pendingEffectSourceCard(app.packs,s);
  const focusUid=typeof focus?.uid==='string'?focus.uid:'';
  // The revealed deck card is drawn once, with its effect, above the buttons.
  const gallery=entryCards.length>0||pictured.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
@@ -618,6 +619,7 @@ function pendingDialog(legal,view){
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
    placement.length?'先點卡圖選擇要登場的角色；若要加入手牌，直接點該卡的加入手牌選項。選好登場角色後，再選合法模式及格子。':
    '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
+ if(source&&source.uid!==focusUid)dialog.append(revealFocusSheet(source));
  if(focus)dialog.append(revealFocusSheet(focus));
  if(blocking)dialog.append(attackShowcase(view.battle));
  if(shown.length){
