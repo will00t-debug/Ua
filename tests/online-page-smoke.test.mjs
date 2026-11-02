@@ -2,15 +2,34 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import * as sharedBattleUi from '../dist/universal-v2/online-battle-ui.mjs';
 
 const source=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
 
 class FakeNode{
- constructor(tag='',text=''){this.tag=tag;this.textContent=text;this.children=[];this.attributes={};this.handlers={};this.className='';}
+ constructor(tag='',text=''){this.tag=tag;this.textContent=text;this.children=[];this.attributes={};this.handlers={};this.className='';this.dataset={};}
  append(...nodes){this.children.push(...nodes);}
  replaceChildren(...nodes){this.children=[...nodes];}
  setAttribute(name,value){this.attributes[name]=value;}
+ getAttribute(name){return this.attributes[name]??null;}
  addEventListener(name,callback){this.handlers[name]=callback;}
+ get childElementCount(){return this.children.filter(n=>n instanceof FakeNode&&n.tag!=='#text').length;}
+ get classList(){
+  const node=this;
+  return {
+   add(...names){node.className=[...new Set([...node.className.split(/\s+/).filter(Boolean),...names])].join(' ');},
+   toggle(name,force){const present=node.className.split(/\s+/).includes(name),active=force??!present;
+    node.className=node.className.split(/\s+/).filter(n=>n&&n!==name).concat(active?[name]:[]).join(' ');return active;}
+  };
+ }
+ querySelector(selector){return this.querySelectorAll(selector)[0]||null;}
+ querySelectorAll(selector){
+  const result=[];
+  const matches=n=>selector.startsWith('.')?n.className.split(/\s+/).includes(selector.slice(1)):
+   selector.startsWith('[')?Object.hasOwn(n.attributes,selector.slice(1,-1)):n.tag===selector;
+  const visit=n=>{for(const child of n.children)if(child instanceof FakeNode){if(matches(child))result.push(child);visit(child);}};
+  visit(this);return result;
+ }
 }
 function texts(node){
  if(!(node instanceof FakeNode))return String(node??'');
@@ -22,6 +41,26 @@ test('production account frontend compiles as JavaScript (catches missing comma 
  const html=readFileSync(new URL('../dist/online.html',import.meta.url),'utf8');
  assert.match(html,/id="app"/);
  assert.match(html,/online\.mjs\?v=/);
+});
+
+test('a failed battlefield import shows a retry screen without reopening the old online UI',async()=>{
+ const appRoot=new FakeNode('div');
+ const document={createElement:tag=>new FakeNode(tag),createTextNode:text=>new FakeNode('#text',String(text)),
+  querySelector:selector=>selector==='#app'?appRoot:null};
+ const context=vm.createContext({document,Node:FakeNode,
+  fetch:async path=>({ok:path==='/api/health',status:path==='/api/health'?200:401,json:async()=>path==='/api/health'?{ok:true}:{error:'需要登入'}}),
+  clearInterval(){},setInterval(){},location:{hash:''},history:{replaceState(){}},
+  localStorage:{getItem(){return null;}},sessionStorage:{setItem(){}},navigator:{},
+  window:{location:{assign(){}}},confirm(){return false},setTimeout,clearTimeout,console});
+ new vm.Script(source,{filename:'dist/online.mjs'}).runInContext(context);
+ for(let i=0;i<30&&!appRoot.children.length;i++)await new Promise(resolve=>setImmediate(resolve));
+ vm.runInContext("app.offline=false;app.user={username:'player'};app.room={code:'ABCD2345',status:'playing',seat:0,view:{phase:'main'}};render();",context);
+ assert.match(texts(appRoot),/正在載入對戰介面/);
+ for(let i=0;i<30&&!texts(appRoot).includes('對戰介面載入失敗');i++)await new Promise(resolve=>setImmediate(resolve));
+ assert.match(texts(appRoot),/對戰介面載入失敗/);
+ assert.match(texts(appRoot),/重新載入對戰介面/);
+ assert.equal(appRoot.querySelectorAll('.online-table').length,0);
+ assert.equal(vm.runInContext('app.room.code',context),'ABCD2345','the live room is preserved while loading fails');
 });
 
 test('Cloudflare /online.html login boot produces actual inputs, registration switch and account dashboard',async()=>{
@@ -88,15 +127,7 @@ test('Cloudflare /online.html login boot produces actual inputs, registration sw
  assert.equal(alertParent,'online-match');
 });
 
-test('entering an online room shows a card-sized table, the opening hand, and the mulligan choices',()=>{
- const css=readFileSync(new URL('../dist/online.css',import.meta.url),'utf8');
- assert.match(css,/\.online-match \.slot\{[^}]*aspect-ratio:63\/88/);
- assert.match(css,/\.online-match \.slot img\.art\{[^}]*object-fit:contain/);
- assert.match(css,/\.online-match \.slot\.empty\{[^}]*background:transparent/);
- assert.match(css,/\.online-match button\.slot\{[^}]*min-height:0/);
- assert.match(css,/\.online-match \.slot\.selected\{[^}]*outline:2px solid #ffd56a/);
- assert.match(css,/\.online-match \.slot\.destination\{[^}]*#2f8f55/);
- assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(250px,320px\)/);
+test('entering an online room uses the shared AI table, opening hand, and mulligan choices',()=>{
  const appRoot=new FakeNode('div');
  const document={
   createElement:tag=>new FakeNode(tag),
@@ -104,6 +135,7 @@ test('entering an online room shows a card-sized table, the opening hand, and th
   querySelector:selector=>selector==='#app'?appRoot:null
  };
  const context=vm.createContext({
+  sharedBattleUi,
   document,Node:FakeNode,fetch:async()=>{throw new Error('offline');},
   clearInterval(){},setInterval(){},
   location:{hash:''},history:{replaceState(){}},
@@ -130,7 +162,7 @@ test('entering an online room shows a card-sized table, the opening hand, and th
   {id:'BLC-1-010',image:'https://example.test/energy.png'},
   {id:'064',number:'UA08ST/BLC-1-064',image:'https://example.test/event.png'}
  ]}]};
- vm.runInContext("coverCatalogue=artFixture;artById=null;app.offline=false;app.user={username:'32928748'};app.room=roomFixture;render();",context);
+ vm.runInContext("battleUi=sharedBattleUi;coverCatalogue=artFixture;artById=null;app.offline=false;app.user={username:'32928748'};app.room=roomFixture;render();",context);
  assert.equal(vm.runInContext("cardSrc({cardId:'BLC-1-064'})",context),'https://example.test/event.png',
   'engine canonical IDs must resolve legacy catalogue artwork');
  const rendered=texts(appRoot);
@@ -141,25 +173,28 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  assert.match(rendered,/保留這 7 張手牌/);
  assert.match(rendered,/整手重抽 7 張/);
  assert.match(rendered,/開局可選擇保留 7 張/);
- assert.match(rendered,/對手手牌是隱藏的，這裡只顯示張數。/);
- assert.match(rendered,/生命尚未設置/);
- assert.match(rendered,/能量角色/);
+ assert.equal(context.roomFixture.view.players[1].hand,null);
+ assert.match(rendered,/LIFE/);
  const classes=[];
  const images=[];
+ const labels=[];
  function visit(node){
   if(!(node instanceof FakeNode))return;
   if(node.className)classes.push(node.className);
+  if(node.attributes['aria-label'])labels.push(node.attributes['aria-label']);
   if(node.tag==='img')images.push(node.attributes.src);
   for(const child of node.children)visit(child);
  }
  visit(appRoot);
- assert.deepEqual(images.sort(),['https://example.test/energy.png','https://example.test/ichigo.png']);
- assert.ok(classes.includes('online-match'));
- assert.ok(classes.includes('online-table'));
- assert.ok(classes.includes('online-hand'));
- assert.ok(classes.includes('online-dock'));
- assert.equal(classes.filter(name=>name==='slot empty').length,15,'own lines are empty and the opponent has one occupied energy card');
- assert.ok(classes.some(name=>name.includes('slot occupied')&&name.includes('green')));
+ assert.deepEqual(images.filter(src=>src!=='assets/mark.svg').sort(),['https://example.test/energy.png','https://example.test/ichigo.png']);
+ const has=name=>classes.some(value=>value.split(/\s+/).includes(name));
+ assert.ok(has('online-battle-shell'));
+ assert.ok(has('arena'));
+ assert.ok(has('handArea'));
+ assert.equal(has('online-table'),false,'the legacy table must not be presented');
+ assert.equal(classes.filter(name=>name.split(/\s+/).includes('empty')).length,15,'own lines are empty and the opponent has one occupied energy card');
+ assert.ok(labels.some(label=>label.includes('能量角色')),'field artwork keeps its accessible card name');
+ assert.ok(classes.some(name=>name.split(/\s+/).includes('occupied')&&name.split(/\s+/).includes('slot')));
  vm.runInContext(`roomFixture.view.phase='attack';roomFixture.choices=[
   {index:0,type:'next',label:'前進下一階段'},
   {index:1,type:'attack',uid:'h0',label:'宣告攻擊：測試卡1'},
@@ -176,7 +211,7 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  assert.doesNotMatch(picked,/宣告攻擊：能源角色/);
  classes.length=0;
  visit(appRoot);
- assert.equal(classes.filter(name=>name==='slot empty').length,15,'selecting an attacker does not turn empty slots into destinations');
+ assert.equal(classes.filter(name=>name.split(/\s+/).includes('empty')).length,15,'selecting an attacker does not turn empty slots into destinations');
  assert.ok(classes.some(name=>name.includes('selected')));
  // The real online room renders every authorized private inspection card, but
  // only the actual legal choice indices may be clicked.
