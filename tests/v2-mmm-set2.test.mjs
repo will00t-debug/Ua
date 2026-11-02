@@ -9,6 +9,7 @@ import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalPublicView}
  from '../dist/universal-v2/engine.mjs';
+import {fieldEffectCopy} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createMadokaV2Pack();
 const packs=[pack,pack];
@@ -85,8 +86,11 @@ test('EX16BT registers all 73 playable identities on the shared pack',()=>{
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  const colors={};
  for(const card of EXEDRA_CARDS){
-  assert.equal(card.effect,card.effectJa);
-  assert.equal(card.name,card.nameJa);
+  assert.match(card.sourceTc,/unionarena-tcg\.com\/tc\/cardlist\/detail_iframe\.php\?card_no=EX16BT%2FMMM-2-/);
+  assert.equal(/[ぁ-んァ-ン]/.test(card.name+card.effect+card.triggerText),false,card.id);
+  if(card.effectJa!=='-')assert.notEqual(card.effect,card.effectJa,card.id);
+  assert.ok(card.name.trim(),card.id);
+  assert.ok(card.nameJa.trim(),card.id);
   assert.equal(exedraEngineKind(card.effectJa),card.engineKind);
   assert.ok(pack.cards[card.id],card.id);
   colors[card.color]=(colors[card.color]||0)+1;
@@ -99,7 +103,14 @@ test('EX16BT registers all 73 playable identities on the shared pack',()=>{
  assert.equal(pack.cards['MMM-2-060'].type,'event');
  assert.equal(pack.cards['MMM-2-069'].effects.onPlay[0].count,4);
  assert.equal(pack.cards['MMM-2-069'].effects.onPlay[0].noHandDiscard,true);
- assert.equal(EXEDRA_CARDS.find(c=>c.id==='MMM-2-001').faq[0].id,'Q2344');
+ const ultimate=EXEDRA_CARDS.find(c=>c.id==='MMM-2-001');
+ assert.equal(ultimate.faq[0].id,'Q2344');
+ assert.equal(ultimate.name,'最終形態鹿目圓');
+ assert.equal(pack.cards['MMM-2-001'].name,ultimate.nameJa);
+ const shown=fieldEffectCopy(ultimate);
+ assert.match(shown,/抽1張卡片/);
+ assert.match(shown,/觸發效果：\[突襲\]/);
+ assert.equal(shown.includes('カードを1枚引く'),false);
  const green=Object.fromEntries(EXEDRA_CARDS.filter(c=>c.color==='green').slice(0,13).map((c,i)=>[c.id,i===12?2:4]));
  assert.deepEqual(validateUniversalDeck(pack,green),[]);
 });
