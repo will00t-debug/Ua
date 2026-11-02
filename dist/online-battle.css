@@ -8,7 +8,9 @@ body.v2-online-battle #match-view .v2-compact-actions :is(.play-hint,.setup-note
 body.v2-online-battle .online-effect-overlay{position:fixed;inset:0;z-index:450;display:grid;place-items:center;overflow:auto}
 body.v2-online-battle .online-effect-overlay .dialog{max-height:88dvh;overflow:auto;width:min(920px,96vw)}
 body.v2-online-battle .online-effect-overlay .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-body.v2-online-battle .online-effect-overlay .actions>.online-private-inspection{flex:0 0 100%;max-height:none}
+body.v2-online-battle .online-effect-overlay .actions>.online-private-inspection,
+body.v2-online-battle .online-effect-overlay .actions>.v2-reveal-focus{flex:1 0 100%;max-height:none}
+body.v2-online-battle .v2-middle-controls>.v2-reveal-focus{flex:1 0 100%;width:min(100%,520px);margin:8px auto}
 body.v2-online-battle .online-card-overlay{position:fixed;inset:0;z-index:510;display:grid;place-items:center;background:#070d18dc;padding:12px}
 body.v2-online-battle .online-card-overlay .field-sheet{width:min(640px,96vw);max-height:92dvh;overflow:auto;background:#151e2a;color:#eaf1f9}
 body.v2-online-battle .online-card-overlay .field-sheet-card .art{width:100%;max-height:70dvh;object-fit:contain}

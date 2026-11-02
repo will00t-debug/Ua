@@ -1,4 +1,4 @@
-export const ONLINE_UI_VERSION='20261103onlinefix1';
+export const ONLINE_UI_VERSION='20261103revealart1';
 
 // HTML chooses the JS release. Always ask the current asset binding for a
 // complete document instead of allowing an older browser document via 304.

@@ -16,7 +16,7 @@ export function setOnlineBattleMode(active,doc=globalThis.document){
   let link=doc.querySelector('link[data-online-battle-style="'+file+'"]');
   if(!link&&active){
    link=doc.createElement('link');link.rel='stylesheet';
-  link.href=file+'?v=20261103onlinefix1';
+  link.href=file+'?v=20261103revealart1';
    link.dataset.onlineBattleStyle=file;doc.head.append(link);
   }
   if(link)link.media=active?'all':'not all';
@@ -237,12 +237,15 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
   cardDefinition:definition,imageSource,imageFallback:img=>{img.src='assets/mark.svg';},
   printedCard:definition,effectCopy:d=>d?.effect||d?.text||'請查看印刷卡面。',openCard,
   backControl:leave,matchupLabel:matchup+' · 房間 '+room.code});
- if(paused)middle.append(el('button',{type:'button',class:'v2-inspection-return',text:'返回效果選擇',onClick:onResume}));
- else if(view.pending&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
+ const revealArt=actions.querySelector('.v2-reveal-focus');
+ if(paused){
+  middle.append(el('button',{type:'button',class:'v2-inspection-return',text:'返回效果選擇',onClick:onResume}));
+  if(revealArt)middle.append(revealArt);
+ }else if(view.pending&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
   const dialog=el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true','aria-label':'效果選擇'},
    el('div',{class:'headline'},el('h2',{text:view.phase==='setup'?'起手調度':'效果選擇'}),
     actions.querySelector('.online-inspection-peek')?null:el('button',{type:'button',text:'查看場面與手牌',onClick:onPause})),actions);
   const overlay=el('div',{class:'overlay v2-pending-overlay online-effect-overlay'},dialog);shell.append(overlay);
- }
+ }else if(revealArt)middle.append(revealArt);
  return shell;
 }

@@ -214,4 +214,32 @@ test('entering an online room uses the shared AI table, opening hand, and mullig
  // No actor privileges -> neither inspected card may be present at all.
  vm.runInContext("roomFixture.yourTurn=false;app.inspectPick=null;render();",context);
  assert.doesNotMatch(texts(appRoot),/符合條件的角色|不符合條件的角色/);
+ vm.runInContext(`artById=null;
+  artFixture.titles[0].cards.push({id:'KMR-1-113',name:'繆斯',effect:'登場時公開對手牌組頂。',
+   printings:[{image:'https://example.test/muse.png'}]});
+  roomFixture.yourTurn=true;roomFixture.inspection=null;roomFixture.view.phase='main';
+  roomFixture.view.pending={kind:'kmr',player:0};
+  roomFixture.choices=[
+   {index:0,type:'kmr',mode:'top',label:'將這張公開的卡留在對手牌組上面'},
+   {index:1,type:'kmr',mode:'outside',label:'將這張公開的卡放到場外'}
+  ];
+  roomFixture.reveal={uid:'1-top',cardId:'KMR-1-113',name:'繆斯',zone:'對手牌組頂'};
+  app.pick=null;app.inspectionPaused=false;render();`,context);
+ assert.equal(vm.runInContext("cardSrc({cardId:'KMR-1-113'})",context),'https://example.test/muse.png',
+  'printing art must resolve when the catalogue has no top-level image');
+ const revealText=texts(appRoot);
+ assert.match(revealText,/對手牌組頂/);
+ assert.match(revealText,/繆斯/);
+ assert.match(revealText,/登場時公開對手牌組頂/);
+ assert.match(revealText,/將這張公開的卡留在對手牌組上面/);
+ assert.match(revealText,/將這張公開的卡放到場外/);
+ const reveal=appRoot.querySelector('.v2-reveal-focus');
+ assert.ok(reveal,'the published deck top must be drawn in the choice');
+ assert.equal(reveal.querySelector('img').attributes.src,'https://example.test/muse.png');
+ assert.equal(reveal.parentNode.className.includes('actions'),true,'the acting player sees the card inside the choice');
+ vm.runInContext("roomFixture.yourTurn=false;render();",context);
+ const waiting=appRoot.querySelector('.v2-reveal-focus');
+ assert.ok(waiting);
+ assert.equal(waiting.parentNode.className.includes('actions'),false,'the opponent sees the public card without the choice buttons');
+ assert.doesNotMatch(texts(appRoot),/將這張公開的卡放到場外/);
 });

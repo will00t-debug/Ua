@@ -199,6 +199,38 @@ function deckWindowGallery(legal,packs,match){
  }
  return {kind:q.kind,cards};
 }
+const REVEAL_FOCUS_STEPS=new Set(['oppTop','topPlace','revealTop']);
+function printedRevealName(packs,owner,cardId){
+ const name=packs?.[owner]?.cards?.[cardId]?.name;
+ return typeof name==='string'&&name?name:cardId;
+}
+// One deck card the current choice is about. Opponent hand, life, and every
+// card under the top stay on the server. A private look is returned only to
+// the acting player. A published opponent top uses that public identity.
+export function onlineRevealFocus(packs,match,seat){
+ const q=match?.pending;
+ if(!q||(seat!==0&&seat!==1)||!REVEAL_FOCUS_STEPS.has(q.step))return null;
+ const uid=q.data?.uid;
+ if(typeof uid!=='string'||!uid)return null;
+ const actions=Array.isArray(q.actions)?q.actions:[];
+ if(actions.some(action=>typeof action?.uid==='string'&&action.uid&&action.uid!==uid))return null;
+ const published=(Array.isArray(match.publicReveals)?match.publicReveals:[]).find(entry=>
+  entry?.uid===uid&&typeof entry.cardId==='string'&&entry.cardId);
+ const opponentView=q.player!==seat;
+ if(opponentView&&(q.step!=='oppTop'||!published))return null;
+ let owner=seat;
+ let zone='你的牌組頂';
+ if(q.step==='oppTop'){
+  owner=q.data?.owner===0||q.data?.owner===1?q.data.owner:Number(String(uid).split('-')[0]);
+  zone='對手牌組頂';
+ }
+ if((owner!==0&&owner!==1)||(q.step!=='oppTop'&&owner!==seat))return null;
+ const top=match.players?.[owner]?.deck?.[0];
+ if(!top||top.uid!==uid||typeof top.cardId!=='string'||!top.cardId)return null;
+ const cardId=q.step==='oppTop'&&published?published.cardId:top.cardId;
+ if(opponentView&&cardId!==published.cardId)return null;
+ return {uid,cardId,name:printedRevealName(packs,owner,cardId),zone};
+}
 export function onlinePrivateGallery(privateChoices,legal,packs,match){
  if(!Array.isArray(legal)||!match?.pending)return null;
  if(!privateChoices)return deckWindowGallery(legal,packs,match);
@@ -352,7 +384,7 @@ function present(room,userId){
   you:{username:mine.username,deckId:mine.deckId,deckName:mine.deckName,title:mine.title,titleLabel:TITLE_LABELS[mine.title]||mine.title},
   opponent:other?{username:other.username,deckName:other.deckName,title:other.title,titleLabel:TITLE_LABELS[other.title]||other.title}:null,
   youAreFirst:room.first==null?null:room.first===seat,
-  yourTurn:false,choices:[],inspection:null,view:null,log:room.log.slice(-40),
+  yourTurn:false,choices:[],inspection:null,reveal:null,view:null,log:room.log.slice(-40),
   winner:null
  };
  if(room.status==='waiting'||!room.match||!room.packs)return payload;
@@ -371,6 +403,7 @@ function present(room,userId){
   if(room.match.pending)
    payload.inspection=onlinePrivateGallery(privateChoices,legal,room.packs,room.match);
  }
+ payload.reveal=onlineRevealFocus(room.packs,room.match,seat);
  if(room.status==='finished'&&(room.winner===0||room.winner===1))
   payload.winner={seat:room.winner,username:room.seats[room.winner]?.username||''};
  return payload;

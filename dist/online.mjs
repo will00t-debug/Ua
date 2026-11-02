@@ -27,7 +27,7 @@ let battleUi=null,battleUiLoading=false,battleUiError=false;
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261103onlinefix1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261103revealart1'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   window.matchMedia?.(module.DESKTOP_BATTLE_QUERY)?.addEventListener?.('change',()=>{
@@ -437,7 +437,9 @@ function artIndex(){
  const definitions=new Map();
  for(const title of coverCatalogue.titles||[]){
   for(const card of title.cards||[]){
-   const src=card?.onlineImage||card?.image;
+   const printing=Array.isArray(card?.printings)?card.printings.find(item=>
+    typeof item?.image==='string'&&item.image.trim()):null;
+   const src=card?.onlineImage||card?.image||printing?.image;
    if(typeof src!=='string'||!src)continue;
    const keys=[card.id,card.number,...(Array.isArray(card.aliases)?card.aliases:[])]
     .filter(key=>typeof key==='string').flatMap(key=>[key,key.split('/').at(-1)]);
@@ -453,6 +455,32 @@ function artIndex(){
 function cardSrc(card){
  const index=artIndex();
  return index&&card?.cardId?index.get(card.cardId)||'':'';
+}
+function catalogueEffect(card){
+ const text=value=>typeof value==='string'?value.trim():'';
+ const effect=text(card?.effect);
+ const japanese=text(card?.effectJa);
+ if(effect&&effect!=='-')return effect;
+ return japanese&&japanese!=='-'?japanese:'';
+}
+function onlineRevealFigure(room){
+ const card=room?.reveal;
+ if(!card||typeof card.cardId!=='string'||!card.cardId)return null;
+ const printed=onlineCardDefinition(card.cardId);
+ const name=printed.name||card.name||card.cardId;
+ const zone=typeof card.zone==='string'&&card.zone?card.zone:'公開的卡';
+ const img=el('img',{src:cardSrc({cardId:card.cardId})||'assets/mark.svg',
+  alt:name,loading:'eager',decoding:'async'});
+ img.addEventListener('error',()=>{
+  if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
+ });
+ const effect=catalogueEffect(printed);
+ return el('figure',{class:'v2-reveal-focus','aria-label':zone+' '+name},
+  el('span',{class:'choice-card-art'},img),
+  el('div',{class:'v2-reveal-copy'},
+   el('p',{class:'note',text:zone}),
+   el('h3',{text:name})),
+  effect?el('p',{class:'v2-reveal-effect',text:effect}):null);
 }
 function onlineCardDefinition(cardId){artIndex();return definitionsById?.get(cardId)||{};}
 function openOnlineCard(card){
@@ -1229,6 +1257,8 @@ function matchView(){
  const hint=playHint(room);
  if(view.phase==='setup')actions.append(el('p',{class:'setup-note',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
  else if(hint)actions.append(el('p',{class:'play-hint',text:hint}));
+ const revealedCard=onlineRevealFigure(room);
+ if(revealedCard)actions.append(revealedCard);
  for(const choice of entryModeButtons(room))
   actions.append(el('button',{type:'button',class:choice.mode==='raid'?'primary':'',
    text:choice.label,disabled:app.busy,onClick:()=>{
