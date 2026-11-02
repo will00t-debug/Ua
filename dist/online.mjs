@@ -505,16 +505,17 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
   'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
-// kmr and kjn character entry use this set too: select the physical card,
+// kmr, kjn and aot2 character entry use this set too: select the physical card,
 // then 突襲進場 or 普通進場 only when the print allows both.
 // Ordinary entry taps the destination cell. Raid taps the base, then the
 // destination cell, the same two clicks as a paid Raid.
 // Do not list one execute button per destination. A REST-only print such as
-// Epsilon or Beta stays normal entry and does not invent Raid.
+// Epsilon, Beta, or a raidless yellow Zeke stays normal entry and does not
+// invent Raid.
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','aot2'
 ]);
 function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
