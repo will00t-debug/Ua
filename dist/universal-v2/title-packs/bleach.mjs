@@ -209,12 +209,21 @@ function contributedEntry(profile){
  const definition=checkedBleachAddonDefinition(profile);
  const original=CARDS.find(x=>x.identity===profile.id);
  if(!original)throw Error('Missing BLEACH official source for '+profile.id);
- // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
- // the printed REST base. SourceRecord is the normalized printed card record;
- // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017','BLC-4-032','BLC-4-011','BLC-4-055','BLC-4-075'].includes(profile.id);
- const sourceRecord=Object.freeze(normalized?
-  {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
+ // Catalogue gen is the printed resting pip count. These ids used to store the
+ // energy-icon sprite index (2, 3, or 4). legacyImportedGen keeps that old
+ // index. sourceRecord.gen is the resting pip count, plus the conditional
+ // sentence stays out of gen.
+ const LEGACY_SPRITE_GEN={
+  'BLC-4-014':2,'BLC-4-074':2,
+  'BLC-4-016':4,'BLC-4-075':4,
+  'BLC-4-042':3,'BLC-4-024':3,'BLC-4-063':3,'BLC-4-037':3,'BLC-4-071':3,
+  'BLC-4-006':3,'BLC-4-051':3,'BLC-4-077':3,'BLC-4-065':3,'BLC-4-017':3,
+  'BLC-4-032':3,'BLC-4-011':3,'BLC-4-055':3
+ };
+ const legacySprite=LEGACY_SPRITE_GEN[profile.id];
+ const normalized=legacySprite!=null;
+ const sourceRecord=Object.freeze(legacySprite!=null?
+  {...original,gen:definition.gen,legacyImportedGen:legacySprite}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
  return Object.freeze({
   id:profile.id,sourceRecord,

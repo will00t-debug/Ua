@@ -18,13 +18,15 @@ function physical(s,p,id){
  }
  throw Error('No physically registered '+id);
 }
-function fixture(id,{energyId,ap=1}={}){
+function fixture(id,{energyId,energyIds,ap=1}={}){
  const counts={...SAO_V2_REAL_DECK_COUNTS};
  counts['SAO-1-035']-=2;counts[id]=2;
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  let s=newUniversalMatch([pack,pack],{decks:[counts,counts],seed:208107,first:0});
- const source=physical(s,0,id),producer=physical(s,0,energyId);
- s.players[0].hand.push(source);s.players[0].energy[0]=producer;
+ const source=physical(s,0,id);
+ const producers=(energyIds||[energyId]).map(producerId=>physical(s,0,producerId));
+ s.players[0].hand.push(source);
+ producers.forEach((card,i)=>{s.players[0].energy[i]=card;});
  for(let i=0;i<ap;i++){s.players[0].apCards[i].ready=true;s.players[0].apCards[i].inPlay=true;}
  for(let i=0;i<2;i++)s=dispatchUniversalAction([pack,pack],s,{type:'next'});
  assert.equal(s.phase,'main');
@@ -39,7 +41,7 @@ test('SAO-1-107 exact official AP2 blue 3 draw three, discard exactly ONE; no hi
  assert.equal(print.effectJa,'【登場時】カードを3枚引き、自分の手札を1枚場外に置く。');
  assert.equal(print.ap,2);assert.equal(print.trigger,'draw');
  assert.deepEqual(pack.cards[id].effects.onPlay,[{op:'draw',count:2},{op:'drawDiscard',count:1}]);
- const {s,a}=fixture(id,{energyId:'SAO-1-102',ap:2});
+ const {s,a}=fixture(id,{energyIds:['SAO-1-102','SAO-1-106'],ap:2});
  const before=s.players[0].deck.length,prevHand=s.players[0].hand.length;
  const q=dispatchUniversalAction([pack,pack],s,a);
  assert.equal(q.pending?.kind,'effect-discard');
@@ -229,16 +231,18 @@ test('SAO-1-075 and SAO-1-089 retain BOTH STEP movement and exact top-deck onPla
   assert.deepEqual(definition.effects.onPlay,id==='SAO-1-075'?
    [{op:'inspectTopAnyOutside',count:2,rest:'top'}]:[{op:'peekTopOrBottom'}]);
   const counts={...SAO_V2_REAL_DECK_COUNTS};
-  counts['SAO-1-035']-=2;counts[id]=1;counts['SAO-1-095']=1;
+  counts['SAO-1-035']-=3;counts[id]=1;counts['SAO-1-095']=2;
   assert.deepEqual(validateUniversalDeck(pack,counts),[]);
   const packs=[pack,pack];
   let s=newUniversalMatch(packs,{decks:[counts,counts],seed:75089,first:0});
-  const character=physical(s,0,id),generator=physical(s,0,'SAO-1-095');
-  s.players[0].energy[0]=generator;s.players[0].hand.push(character);
+  const character=physical(s,0,id);
+  s.players[0].energy[0]=physical(s,0,'SAO-1-095');
+  s.players[0].energy[1]=physical(s,0,'SAO-1-095');
+  s.players[0].hand.push(character);
   for(let n=0;n<2;n++)s=dispatchUniversalAction(packs,s,{type:'next'});
   const play=legalUniversalActions(packs,s).find(x=>x.type==='play'&&
    x.uid===character.uid&&x.line==='front'&&x.slot===0);
-  assert.ok(play,'green 3 generator should fund full printed card');
+  assert.ok(play,'two resting green generators should fund the printed cost');
   let q=dispatchUniversalAction(packs,s,play);
   const deckBefore=q.players[0].deck.map(x=>x.uid),outside=q.players[0].outside.length;
   if(id==='SAO-1-075'){

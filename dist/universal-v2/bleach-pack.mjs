@@ -388,7 +388,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "energy": 2,
   "ap": 1,
   "bp": 2500,
-  "gen": 2,
+  "gen": 1,
   "trigger": null,
   "type": "character",
   "effect": "此角色為Active時，額外產生1個黃色能量。"
@@ -959,7 +959,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
  }
 ,
 {"id":"BLC-2-044","kind":"fieldDualMain","number":"EX07BT/BLC-2-044","name":"涅骸部隊","color":"blue","energy":3,"ap":1,"bp":0,"gen":1,"trigger":"get","type":"field","effect":"主要階段・每回合 1 次：使 1 個己方場上具有「涅骸部隊」特徵的角色退場。另一個主要階段效果・每回合 1 次：僅在本回合有己方場上角色退場後可發動，REST 此場域，使所有己方場上的〈涅音夢〉及具有「涅骸部隊」特徵的角色本回合 BP +1000。"},
-{"id":"BLC-4-042","kind":"mayuriThreeMode","number":"EX15BT/BLC-4-042","name":"涅 マユリ","color":"blue","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：選1項。①查看牌庫頂2張，將任意張依任意順序放回牌庫頂，其餘送至場外。②可將2張手牌送至場外；如此則可從場外將最多1張《涅繭利》或《涅音夢》加入手牌。③可使自己場上另1個角色退場；如此則可從手牌將最多1張卡名為《涅骸部隊》的藍色卡以Active登場於自己的能量線（只具同名特徵不符合）。"}
+{"id":"BLC-4-042","kind":"mayuriThreeMode","number":"EX15BT/BLC-4-042","name":"涅 マユリ","color":"blue","energy":3,"ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character","effect":"登場時：選1項。①查看牌庫頂2張，將任意張依任意順序放回牌庫頂，其餘送至場外。②可將2張手牌送至場外；如此則可從場外將最多1張《涅繭利》或《涅音夢》加入手牌。③可使自己場上另1個角色退場；如此則可從手牌將最多1張卡名為《涅骸部隊》的藍色卡以Active登場於自己的能量線（只具同名特徵不符合）。"}
 ,
 {"id":"BLC-4-069","kind":"kyorakuAttackEnd","number":"EX15BT/BLC-4-069","name":"京楽 春水","color":"green","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"突襲《京樂春水》：改為Active，可移至前線。以下僅在突襲狀態適用：此角色攻擊結束時，若自己場外的綠色事件卡及綠色場地卡合計有4種以上不同卡名，可選自己能量線最多1個角色，與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理。登場時：本回合下一張從手牌使用、具有「花天狂骨」特徵的卡，消費AP−1；先使用其他卡不會耗掉減費效果。"},
 {"id":"BLC-4-076","kind":"fieldRestRetireNamed","number":"EX15BT/BLC-4-076","name":"花天","color":"green","energy":0,"ap":1,"bp":0,"gen":1,"trigger":"active","type":"field","effect":"啟動・主要〔改為Rest，並使此卡退場〕：可從場外將最多1張所需能量2以下的綠色《京樂春水》以Active登場於自己的能量線。"},
@@ -977,7 +977,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-002","kind":"aliasPeekTopOutside","number":"EX15BT/BLC-4-002","name":"ユーゴー","color":"yellow","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《雨葛蘭・哈斯沃德》。登場時：查看牌庫頂1張，放回牌庫頂或送至場外。"},
 {"id":"BLC-4-030","kind":"optionalDiscardPeekDraw","number":"EX15BT/BLC-4-030","name":"四楓院 夜一","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"登場時：可將1張手牌送至場外；如此則查看牌庫頂1張，將其放回牌庫頂或底，再抽1張牌。"},
 {"id":"BLC-4-066","kind":"optionalDiscardPeekDraw","number":"EX15BT/BLC-4-066","name":"卯ノ花 烈","color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character","effect":"登場時：可將1張手牌送至場外；如此則查看牌庫頂1張，放回牌庫頂或底，再抽1張牌。"},
-{"id":"BLC-4-074","kind":"aliasFieldRestEnergyRetire","number":"EX15BT/BLC-4-074","name":"山本 重國","color":"green","energy":0,"ap":1,"bp":1000,"gen":2,"trigger":null,"type":"character","effect":"此卡也視為《山本元柳齋重國》。啟動・主要〔改為Rest／每回合1次〕：此角色本回合額外產生1個綠色能量，並獲得「主要階段結束時，使此角色退場」。"}
+{"id":"BLC-4-074","kind":"aliasFieldRestEnergyRetire","number":"EX15BT/BLC-4-074","name":"山本 重國","color":"green","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":null,"type":"character","effect":"此卡也視為《山本元柳齋重國》。啟動・主要〔改為Rest／每回合1次〕：此角色本回合額外產生1個綠色能量，並獲得「主要階段結束時，使此角色退場」。"}
 ,
 {"id":"BLC-1-015","kind":"drawIfOppRestCharacter","number":"UA08BT/BLC-1-015","name":"BG9","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"登場：敵方場上有 REST 角色時，抽 1 張。"}
 ,
@@ -1027,7 +1027,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-4-022","kind":"orihimeEntry","number":"EX15BT/BLC-4-022","name":"井上 織姫","color":"blue","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"此角色以Active登場。登場時：可將1張手牌送至場外；如此則可從場外將最多1張所需能量1以下的藍色角色加入手牌，或以Rest登場於自己場上（可以選剛丟棄的卡）。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上1個角色，到自己下次回合開始前賦予「不會被對方效果選擇」。"}
 ,
-{"id":"BLC-4-027","kind":"ichigoImpactGrants","number":"EX15BT/BLC-4-027","name":"黒崎 一護","color":"blue","energy":3,"ap":1,"bp":2500,"gen":3,"trigger":"draw","type":"character","effect":"Impact無效。啟動・主要〔每回合1次〕：將手牌中1張卡名包含「斬月」或「月牙」的卡送至場外；如此則抽1張牌，此角色本回合BP+1500，並獲得「〔能量線〕自己攻擊階段開始時，若自己的前線有空位，將此角色移至前線」與「不會被Trigger效果選擇」。"}
+{"id":"BLC-4-027","kind":"ichigoImpactGrants","number":"EX15BT/BLC-4-027","name":"黒崎 一護","color":"blue","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"draw","type":"character","effect":"Impact無效。啟動・主要〔每回合1次〕：將手牌中1張卡名包含「斬月」或「月牙」的卡送至場外；如此則抽1張牌，此角色本回合BP+1500，並獲得「〔能量線〕自己攻擊階段開始時，若自己的前線有空位，將此角色移至前線」與「不會被Trigger效果選擇」。"}
 ,
 {"id":"BLC-4-034","kind":"rirukaUnder","number":"EX15BT/BLC-4-034","name":"毒ヶ峰 リルカ","color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":"color","type":"character","effect":"因自己《黑崎一護》的效果將手牌送至場外時，若此角色下方沒有裏向卡片，可將Active的此角色改為Rest；如此則可將該效果送至場外的最多1張卡以裏向置於此角色下方。登場時〔能量線〕：將此角色改為Active。啟動・主要〔改為Rest，並使此卡退場〕：可將此角色下方最多1張裏向卡片加入手牌。自己可查看自己場上卡片下的裏向卡，對方不可查看；被移至下方的《其名為斬月》仍可完成原本已觸發的抽牌效果。"}
 ,
@@ -1037,7 +1037,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-2-047","kind":"zangetsuDraw","number":"EX07BT/BLC-2-047","name":"その名は斬月","color":"blue","energy":2,"ap":1,"bp":0,"gen":0,"trigger":null,"type":"event","effect":"抽 2 張。此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，抽 1 張。"}
 ,
-{"id":"BLC-4-060","kind":"aizenEnergyFront","number":"EX15BT/BLC-4-060","name":"藍染 惣右介","color":"green","energy":3,"ap":1,"bp":4000,"gen":3,"trigger":"get","type":"character","effect":"此卡不能在前線登場，也不能由自己的效果以外的方式移至前線。登場時：最多選自己場上1個《藍染惣右介》以外的角色，移至另一條線；目的線已滿時，先選該線1張卡除外。啟動・主要〔能量線〕：將自己前線2個Active角色改為Rest，如此則將此角色移至前線。攻擊時：抽1張牌。"}
+{"id":"BLC-4-060","kind":"aizenEnergyFront","number":"EX15BT/BLC-4-060","name":"藍染 惣右介","color":"green","energy":3,"ap":1,"bp":4000,"gen":2,"trigger":"get","type":"character","effect":"此卡不能在前線登場，也不能由自己的效果以外的方式移至前線。登場時：最多選自己場上1個《藍染惣右介》以外的角色，移至另一條線；目的線已滿時，先選該線1張卡除外。啟動・主要〔能量線〕：將自己前線2個Active角色改為Rest，如此則將此角色移至前線。攻擊時：抽1張牌。"}
 ,
 {"id":"BLC-2-067","kind":"raidBaseLeaveDamage","number":"EX07BT/BLC-2-067","name":"更木 剣八","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈更木劍八〉：轉為 ACTIVE，可移至前線。不受降低 BP 的效果影響。Impact 1。若 Raid 基底的需求能源為 4 以上，再獲得以下兩項效果：①因敵方效果或戰鬥將離場時，可改為將 1 張己方手牌送至場外；成功時將此角色 Raid 狀態最上層的卡送至場外；②登場：此角色本回合 BP +1000 並獲得 Damage 2。"}
 ,
@@ -1055,7 +1055,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-1-053","kind":"raidDrawDiscardBuff","number":"UA08BT/BLC-1-053","name":"朽木 ルキア","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈朽木露琪亞〉：轉為 ACTIVE，可移至前線。登場：抽 3 張，再將 2 張手牌送至場外。主要階段・每回合 1 次：將 1 張手牌送至場外，可使最多 1 個己方場上角色本回合 BP +500。"}
 ,
-{"id":"BLC-4-054","kind":"renjiPayDeploy","number":"EX15BT/BLC-4-054","name":"朽木 ルキア","color":"purple","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"color","type":"character","effect":"登場時：若自己場上有《阿散井戀次》，可支付1 AP；如此則抽1張牌，並可從手牌將最多1張能量需求已滿足、消費AP1的《阿散井戀次》或《朽木露琪亞》以Rest登場，或進行突襲。"}
+{"id":"BLC-4-054","kind":"renjiPayDeploy","number":"EX15BT/BLC-4-054","name":"朽木 ルキア","color":"purple","energy":3,"ap":1,"bp":2000,"gen":2,"trigger":"color","type":"character","effect":"登場時：若自己場上有《阿散井戀次》，可支付1 AP；如此則抽1張牌，並可從手牌將最多1張能量需求已滿足、消費AP1的《阿散井戀次》或《朽木露琪亞》以Rest登場，或進行突襲。"}
 ,
 {"id":"BLC-4-082","kind":"topSplitEnergyDraw","number":"UA01DC/BLC-4-082","name":"黒崎 一護","color":"purple","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"get","type":"character","effect":"【登場時】查看自己牌庫頂 2 張，任意張依順序放回牌庫頂，其餘送場外。若本次送場外的卡中有能源需求 3 以上的卡，抽 1 張。"}
 ,
@@ -1111,13 +1111,13 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-1-056","kind":"restRetirePurpleCharacter","number":"UA08BT/BLC-1-056","name":"麒麟寺 天示郎","color":"purple","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":null,"type":"character","effect":"主要階段：REST 並退場自己，從己方場外將 1 張紫色角色卡加入手牌。"}
 ,
-{"id":"BLC-4-024","kind":"traitlessLineMove","number":"EX15BT/BLC-4-024","name":"浦原 喜助","color":"blue","energy":3,"ap":1,"bp":3000,"gen":3,"trigger":"active","type":"character","effect":"登場時：最多選自己場上另1個沒有特徵的角色，移至另一條線；目的線已滿時，先選該線1張卡除外。"}
+{"id":"BLC-4-024","kind":"traitlessLineMove","number":"EX15BT/BLC-4-024","name":"浦原 喜助","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"active","type":"character","effect":"登場時：最多選自己場上另1個沒有特徵的角色，移至另一條線；目的線已滿時，先選該線1張卡除外。"}
 ,
 {"id":"BLC-1-004","kind":"raidImpactFrontRest","number":"UA08BT/BLC-1-004","name":"エス・ノト","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈艾斯・諾特〉：轉為 ACTIVE，可移至前線。Impact 1。主要階段・位於前線・每回合 1 次：可選最多 1 個敵方前線 BP 3000 以下角色，將其轉為 REST。"}
 ,
 {"id":"BLC-1-046","kind":"frontMillBuffOther","number":"UA08ST/BLC-1-046","name":"阿散井 恋次","color":"purple","energy":3,"ap":1,"bp":3500,"gen":1,"trigger":null,"type":"character","effect":"前線・每回合 1 次：牌堆頂 1 張送場外，成功時可讓另一己方角色本回合 BP +500。"}
 ,
-{"id":"BLC-4-063","kind":"namedBonusBuff","number":"EX15BT/BLC-4-063","name":"綾瀬川 弓親","color":"green","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：最多選自己場上另1個角色，本回合BP+1000；若所選角色為《更木劍八》、《草鹿八千流》、《斑目一角》或《綾瀨川弓親》，改為BP+2000。"}
+{"id":"BLC-4-063","kind":"namedBonusBuff","number":"EX15BT/BLC-4-063","name":"綾瀬川 弓親","color":"green","energy":3,"ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character","effect":"登場時：最多選自己場上另1個角色，本回合BP+1000；若所選角色為《更木劍八》、《草鹿八千流》、《斑目一角》或《綾瀨川弓親》，改為BP+2000。"}
 ,
 {"id":"BLC-4-064","kind":"groupedTopDiscard","number":"EX15BT/BLC-4-064","name":"伊勢 七緒","color":"green","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":null,"type":"character","effect":"登場時：查看牌庫頂3張，最多公開1張綠色事件卡或綠色場地卡加入手牌，其餘依任意順序放回牌庫底；若有加入手牌，將1張手牌送至場外。"}
 ,
@@ -1135,16 +1135,16 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-038","kind":"optionalMillPurple","number":"UA08BT/BLC-1-038","name":"浦原 喜助","color":"purple","energy":3,"ap":2,"bp":3500,"gen":1,"trigger":null,"type":"character","effect":"登場：可將己方牌堆頂 3 張送至場外；成功時可從己方場外將最多 1 張紫色角色卡加入手牌。"},
 {"id":"BLC-2-014","kind":"optionalEnergyBounce","number":"EX07BT/BLC-2-014","name":"井上 織姫","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：可將 1 個己方場上需求能源 2 以下角色返回手牌；成功時可從己方場外將最多 1 張需求能源 2 以下的卡加入手牌。"},
 {"id":"BLC-2-001","kind":"stepOnceFrontOr","number":"EX07BT/BLC-2-001","name":"アスキン・ナックルヴァール","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"Step：己方移動階段可由前線移至能源線。主要階段・每回合 1 次：敵方前線有 BP 低於原始 BP 的角色，或有 REST 角色時，此角色本回合 BP +1000。"},
-{"id":"BLC-4-037","kind":"replayOnPlayDown","number":"EX15BT/BLC-4-037","name":"ネリエル・トゥ・オーデルシュヴァンク","color":"blue","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：最多選1個對方前線BP1500以上的角色，本回合BP−1000。啟動・主要〔支付1 AP／每回合1次〕：發動此角色的登場時效果。"},
-{"id":"BLC-4-071","kind":"stepDrawNameActive","number":"EX15BT/BLC-4-071","name":"砕蜂","color":"green","energy":4,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"Step：移動階段可從前線移至能量線。登場時：抽1張牌，再將1張手牌送至場外。啟動・主要：將此角色改為Active；所有《碎蜂》的此效果合計每回合僅限1次。"},
+{"id":"BLC-4-037","kind":"replayOnPlayDown","number":"EX15BT/BLC-4-037","name":"ネリエル・トゥ・オーデルシュヴァンク","color":"blue","energy":3,"ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character","effect":"登場時：最多選1個對方前線BP1500以上的角色，本回合BP−1000。啟動・主要〔支付1 AP／每回合1次〕：發動此角色的登場時效果。"},
+{"id":"BLC-4-071","kind":"stepDrawNameActive","number":"EX15BT/BLC-4-071","name":"砕蜂","color":"green","energy":4,"ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character","effect":"Step：移動階段可從前線移至能量線。登場時：抽1張牌，再將1張手牌送至場外。啟動・主要：將此角色改為Active；所有《碎蜂》的此效果合計每回合僅限1次。"},
 {"id":"BLC-3-005","kind":"reducedFrontNameActive","number":"UA04NC/BLC-3-005","name":"阿散井 恋次","color":"purple","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"active","type":"character","effect":"【無效化 Impact】與此角色戰鬥的角色，在該次戰鬥中失去 Impact。\n【啟動主要】只有對手前線有目前 BP 低於原本 BP 的角色時才能發動。將此角色轉為 Active。〈阿散井戀次〉的此效果每回合只能發動一次。"},
-{"id":"BLC-4-006","kind":"outsideAbsentFieldNameBp","number":"EX15BT/BLC-4-006","name":"バズビー","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":3,"trigger":null,"type":"character","effect":"Impact無效。自己的回合中：若自己場外沒有《友哈巴赫》，且自己場上有《雨葛蘭・哈斯沃德》，此角色BP+1000。"},
+{"id":"BLC-4-006","kind":"outsideAbsentFieldNameBp","number":"EX15BT/BLC-4-006","name":"バズビー","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"Impact無效。自己的回合中：若自己場外沒有《友哈巴赫》，且自己場上有《雨葛蘭・哈斯沃德》，此角色BP+1000。"},
 {"id":"BLC-4-047","kind":"restRetireZeroIchigo","number":"EX15BT/BLC-4-047","name":"コン","color":"purple","energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔改為Rest，並使此卡退場〕：可從自己場外將最多1張所需能量0的紫色《黑崎一護》以Rest登場。"},
 {"id":"BLC-2-017","kind":"discardBlockAtLeast","number":"EX07BT/BLC-2-017","name":"黒崎 一護","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":null,"type":"character","effect":"主要階段・每回合 1 次：將 1 張手牌送至場外，使此角色本回合不能被 BP 4000 以上角色阻擋。"},
 {"id":"BLC-4-003","kind":"emptyStepRetireDown","number":"EX15BT/BLC-4-003","name":"アスキン・ナックルヴァール","color":"yellow","energy":2,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"自己場上沒有任何卡片時，手牌中的此卡所需黃色能量減少2。Step：移動階段可從前線移至能量線。退場時：若為自己的回合，最多選1個對方前線BP1500以上的角色，本回合BP−1000。"},
 {"id":"BLC-2-028","kind":"impactDiscardApActive","number":"EX07BT/BLC-2-028","name":"阿散井 恋次","color":"blue","energy":3,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"Impact 無效。登場：可將 1 張手牌送至場外；成功時可將最多 1 張己方 AP 卡轉為 ACTIVE。主要階段・每回合 1 次：己方前線有其他原始 AP 消耗 2 以上角色時，將此角色轉為 ACTIVE。"},
 {"id":"BLC-4-043","kind":"aliasColorTopOutside","number":"EX15BT/BLC-4-043","name":"眠七號","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《涅音夢》。登場時：查看牌庫頂2張，可將最多1張藍色《涅繭利》、《涅音夢》或具有「涅骸部隊」特徵的卡送至場外，其餘依任意順序放回牌庫頂。"},
-{"id":"BLC-4-051","kind":"entryTurnChooseDraw","number":"EX15BT/BLC-4-051","name":"朽木 白哉","color":"purple","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動，選1項。①抽1張牌，再將1張手牌送至場外。②若對方前線有BP低於印刷BP的角色，抽1張牌。"},
+{"id":"BLC-4-051","kind":"entryTurnChooseDraw","number":"EX15BT/BLC-4-051","name":"朽木 白哉","color":"purple","energy":3,"ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character","effect":"啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動，選1項。①抽1張牌，再將1張手牌送至場外。②若對方前線有BP低於印刷BP的角色，抽1張牌。"},
 {"id":"BLC-4-068","kind":"restFrontNameOnce","number":"EX15BT/BLC-4-068","name":"京楽 春水","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"active","type":"character","effect":"Impact無效。啟動・主要〔前線／支付1 AP〕：僅在此角色為Rest時可發動；將此角色改為Active，並最多選1個對方前線角色改為Rest。所有《京樂春水》的此效果合計每回合僅限1次。"}
 ,
 {"id":"BLC-4-010","kind":"frontDiscardFieldDown","number":"EX15BT/BLC-4-010","name":"ペルニダ・パルンカジャス","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔前線／每回合1次／將1張手牌送至場外〕：僅在自己場上有《友哈巴赫》時可發動；選1個對方場上BP1500以上的角色，本回合BP−1000。"}
@@ -1183,7 +1183,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-1-061","kind":"soulPalaceTop","number":"UA08BT/BLC-1-061","name":"霊王宮","color":"purple","energy":2,"ap":1,"bp":0,"gen":1,"trigger":"get","type":"field","effect":"此場域以 ACTIVE 登場。主要階段：REST 此場域，查看己方牌堆頂 1 張；若具有「零番隊」特徵，可公開並加入手牌；若未加入手牌，將其放回牌堆頂或送至場外。"}
 ,
-{"id":"BLC-4-077","kind":"kyokotsuField","number":"EX15BT/BLC-4-077","name":"狂骨","color":"green","energy":3,"ap":1,"bp":0,"gen":3,"trigger":"draw","type":"field","effect":"登場時：可從場外將最多1張《神劍・八鏡劍》加入手牌。啟動・主要〔改為Rest，並使此卡退場〕：最多選自己場上1張卡改為Active；再最多選自己場上1個角色，本回合BP+1000。"}
+{"id":"BLC-4-077","kind":"kyokotsuField","number":"EX15BT/BLC-4-077","name":"狂骨","color":"green","energy":3,"ap":1,"bp":0,"gen":2,"trigger":"draw","type":"field","effect":"登場時：可從場外將最多1張《神劍・八鏡劍》加入手牌。啟動・主要〔改為Rest，並使此卡退場〕：最多選自己場上1張卡改為Active；再最多選自己場上1個角色，本回合BP+1000。"}
 ,
 {"id":"BLC-4-079","kind":"hakkokenChoose","number":"EX15BT/BLC-4-079","name":"神剣・八鏡剣","color":"green","energy":3,"ap":1,"bp":0,"gen":0,"trigger":null,"type":"event","effect":"選1項：①抽1張牌。②最多選自己場上1個《伊勢七緒》，本回合賦予BP+3000及Impact(1)。完成所選效果後，可將自己場上1個Active的《京樂春水》或《伊勢七緒》改為Rest；如此則將自己的1張AP卡改為Active。"}
 ,
@@ -1193,7 +1193,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-4-008","kind":"bazzSacrificeChain","number":"EX15BT/BLC-4-008","name":"バズビー","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"登場時：若自己場外沒有《友哈巴赫》，可使自己場上另1個《巴茲比》退場；如此則最多選1個對方前線、BP不超過被退場角色所需能量×1000的角色使其退場，並將此角色改為Active。若以此效果使所需能量5以上的己方角色退場，此角色本回合獲得Impact(1)。"}
 ,
-{"id":"BLC-4-065","kind":"nanaoStepEventActive","number":"EX15BT/BLC-4-065","name":"伊勢 七緒","color":"green","energy":3,"ap":1,"bp":2500,"gen":3,"trigger":"color","type":"character","effect":"Step：移動階段可從前線移至能量線。自己的回合中：若自己的能量線有《京樂春水》，此角色BP+1500。啟動・主要：僅在本回合已使用《神劍・八鏡劍》時可發動；將此角色改為Active。所有《伊勢七緒》的此效果合計每回合僅限1次。"}
+{"id":"BLC-4-065","kind":"nanaoStepEventActive","number":"EX15BT/BLC-4-065","name":"伊勢 七緒","color":"green","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"color","type":"character","effect":"Step：移動階段可從前線移至能量線。自己的回合中：若自己的能量線有《京樂春水》，此角色BP+1500。啟動・主要：僅在本回合已使用《神劍・八鏡劍》時可發動；將此角色改為Active。所有《伊勢七緒》的此效果合計每回合僅限1次。"}
 ,
 {"id":"BLC-2-051","kind":"removedKeywordIchigo","number":"EX07BT/BLC-2-051","name":"黒崎 一護","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"Impact 無效。己方除外區有至少 10 張卡，或有至少 2 種不同卡名、具有「零番隊」特徵的卡時，此角色獲得 Damage 2；己方除外區有至少 4 種不同卡名、具有「零番隊」特徵的卡時，再獲得 Impact 1。"}
 ,
@@ -1201,15 +1201,15 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-4-044","kind":"yoruichiFirstAttack","number":"EX15BT/BLC-4-044","name":"瞬閧・雷神戦形","color":"blue","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"選自己場上1個《四楓院夜一》，本回合賦予BP+2000，以及「此角色於本回合進行第一次攻擊時，直到該次攻擊結束，獲得Impact(1)與狙擊（可指定對方前線角色為攻擊對象，該次攻擊不會被阻擋）」。"}
 ,
-{"id":"BLC-4-016","kind":"lilleEntrySacrifice","number":"EX15BT/BLC-4-016","name":"リジェ・バロ","color":"yellow","energy":3,"ap":1,"bp":2500,"gen":4,"trigger":"active","type":"character","effect":"啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；使自己場上另1個角色退場，如此則此角色到自己下次回合開始前額外產生1個黃色能量，並選1項：①抽1張牌。②最多選1個對方前線BP1500以上的角色，本回合BP−1000。"}
+{"id":"BLC-4-016","kind":"lilleEntrySacrifice","number":"EX15BT/BLC-4-016","name":"リジェ・バロ","color":"yellow","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character","effect":"啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；使自己場上另1個角色退場，如此則此角色到自己下次回合開始前額外產生1個黃色能量，並選1項：①抽1張牌。②最多選1個對方前線BP1500以上的角色，本回合BP−1000。"}
 ,
-{"id":"BLC-4-017","kind":"giselleRestRetireDouble","number":"EX15BT/BLC-4-017","name":"ジゼル・ジュエル","color":"yellow","energy":3,"ap":1,"bp":2500,"gen":3,"trigger":"active","type":"character","effect":"登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔將此角色改為Rest，並使此卡退場〕：選自己場上1個具有「殭屍」特徵的角色，本回合賦予「2次攻擊」（本回合首次攻擊時將該角色改為Active）。所有《吉賽爾・朱艾兒》的此效果合計每回合僅限1次。"}
+{"id":"BLC-4-017","kind":"giselleRestRetireDouble","number":"EX15BT/BLC-4-017","name":"ジゼル・ジュエル","color":"yellow","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character","effect":"登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔將此角色改為Rest，並使此卡退場〕：選自己場上1個具有「殭屍」特徵的角色，本回合賦予「2次攻擊」（本回合首次攻擊時將該角色改為Active）。所有《吉賽爾・朱艾兒》的此效果合計每回合僅限1次。"}
 ,
 {"id":"BLC-1-028","kind":"sternritterCastleReplay","number":"UA08BT/BLC-1-028","name":"銀架城","color":"yellow","energy":3,"ap":1,"bp":0,"gen":1,"trigger":"get","type":"field","effect":"登場：查看己方牌堆頂 3 張，可公開其中最多 1 張具有「星十字騎士團」特徵的卡並加入手牌，其餘以任意順序放至牌堆底。主要階段：REST 此場域，使 1 個己方場上角色退場；成功時發動此場域的登場效果。"}
 ,
 {"id":"BLC-2-002","kind":"uryuSwapOrBuff","number":"EX07BT/BLC-2-002","name":"石田 雨竜","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"draw","type":"character","effect":"主要階段・每回合 1 次：將 1 張手牌送至場外，選一項：①各選 1 個己方前線與能源線角色，交換其位置；②此角色本回合 BP +1000。己方場上有〈友哈巴赫〉時，可改為執行兩項。"}
 ,
-{"id":"BLC-4-032","kind":"yoruichiEnergySwap","number":"EX15BT/BLC-4-032","name":"四楓院 夜一","color":"blue","energy":3,"ap":1,"bp":3000,"gen":3,"trigger":"color","type":"character","effect":"自己的回合中：若自己場上有《黑崎一護》或《浦原喜助》，此角色BP+1000。〔能量線／每回合1次〕自己的角色攻擊結束時，選自己前線1個本回合尚未攻擊的角色，可將其與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理此效果。"}
+{"id":"BLC-4-032","kind":"yoruichiEnergySwap","number":"EX15BT/BLC-4-032","name":"四楓院 夜一","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"自己的回合中：若自己場上有《黑崎一護》或《浦原喜助》，此角色BP+1000。〔能量線／每回合1次〕自己的角色攻擊結束時，選自己前線1個本回合尚未攻擊的角色，可將其與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理此效果。"}
 ,
 {"id":"BLC-1-011","kind":"bazzDiscardBattleKit","number":"UA08BT/BLC-1-011","name":"バズビー","color":"yellow","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"主要階段：將 1 張手牌送至場外，使此角色本回合獲得 Damage 2，以及「攻擊並贏得戰鬥時，抽 1 張」。"}
 ,
@@ -1246,7 +1246,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-4-057","kind":"shirafudeLock","number":"EX15BT/BLC-4-057","name":"“真打”『しら筆一文字』","color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"最多選1個對方前線角色，到自己下次回合開始前賦予「失去所有原有效果，且不能攻擊或阻擋」。若自己的場上或除外區有《兵主部一兵衛》，抽2張牌，再將1張手牌除外。失去印刷效果不會取消突襲狀態，也不會清除已得到的限時效果，但會取消持續參照的原有效果，且原本的離場觸發也不再發動。"}
 ,
-{"id":"BLC-4-011","kind":"jugramEntryEnergy","number":"EX15BT/BLC-4-011","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":3,"ap":1,"bp":2500,"gen":3,"trigger":"color","type":"character","effect":"登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個角色，本回合其所需能量增加2。"}
+{"id":"BLC-4-011","kind":"jugramEntryEnergy","number":"EX15BT/BLC-4-011","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"color","type":"character","effect":"登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個角色，本回合其所需能量增加2。"}
 ,
 {"id":"BLC-4-007","kind":"bazzRequiredEnergyActive","number":"EX15BT/BLC-4-007","name":"バズビー","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"啟動・主要：僅在自己場外沒有《友哈巴赫》，且此角色的所需能量為5以上時可發動；將此角色改為Active。所有《巴茲比》的此效果合計每回合僅限1次。"}
 ,
@@ -1258,7 +1258,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-4-015","kind":"yhwachOutsideBottom","number":"EX15BT/BLC-4-015","name":"ユーハバッハ","color":"yellow","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"此卡被送至場外時，將此卡從場外放至自己牌庫底。啟動・主要〔前線／每回合1次〕：使自己場上另1個角色退場；如此則將此角色改為Active，查看牌庫頂3張，將其中1張加入手牌，其餘依任意順序放回牌庫底。若以此效果使所需能量4以上的己方角色退場，此角色到自己下次回合開始前BP+1000。"}
 ,
-{"id":"BLC-4-055","kind":"ichibeRemoveChoice","number":"EX15BT/BLC-4-055","name":"兵主部 一兵衛","color":"purple","energy":3,"ap":1,"bp":3000,"gen":3,"trigger":null,"type":"character","traits":["零番隊"],"effect":"登場時：可將自己場上另1個角色除外；如此則選1項。①本回合下一張從手牌使用、具有「零番隊」特徵的卡或《靈王宮》，消費AP−1。②最多選自己場上另2個具有「零番隊」特徵的角色，本回合BP+2000。先使用不符合條件的卡不會耗掉減費效果。"}
+{"id":"BLC-4-055","kind":"ichibeRemoveChoice","number":"EX15BT/BLC-4-055","name":"兵主部 一兵衛","color":"purple","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","traits":["零番隊"],"effect":"登場時：可將自己場上另1個角色除外；如此則選1項。①本回合下一張從手牌使用、具有「零番隊」特徵的卡或《靈王宮》，消費AP−1。②最多選自己場上另2個具有「零番隊」特徵的角色，本回合BP+2000。先使用不符合條件的卡不會耗掉減費效果。"}
 ,
 {"id":"BLC-4-056","kind":"ichibeRetirePlay","number":"EX15BT/BLC-4-056","name":"兵主部 一兵衛","color":"purple","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","traits":["零番隊"],"effect":"登場時：抽1張牌；可將手牌中1張具有「零番隊」特徵的卡除外，如此則將此角色改為Active。退場時：將此卡置於除外區，可從手牌將最多1張紫色《黑崎一護》、《靈王宮》或具有「零番隊」特徵的卡以Rest登場，須為消費AP1且所需能量不超過0；自己除外區每有1種不同卡名的「零番隊」，此登場卡片的所需能量上限+1（也適用於《靈王宮》場地）。"}
 ,
@@ -1266,7 +1266,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-4-053","kind":"byakuyaAttackWinDamage","number":"EX15BT/BLC-4-053","name":"朽木 白哉","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","traits":["護廷十三隊"],"effect":"突襲《朽木白哉》：改為Active，可移至前線。以下僅在突襲狀態適用：此角色攻擊並戰鬥勝利時，將此角色改為Active；所有《朽木白哉》的此效果合計每回合僅發動1次。自己的回合中，若對方前線有至少3個角色的BP低於印刷BP，此角色獲得Damage(2)。登場時：最多選1個對方前線角色，本回合BP−1000。"},
 {"id":"BLC-4-033","kind":"yoruichiRaidBase","number":"EX15BT/BLC-4-033","name":"四楓院 夜一","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","traits":[],"effect":"突襲《四楓院夜一》：改為Active，可移至前線。以下僅在突襲狀態適用：登場時，最多選自己場上另1個沒有特徵的角色改為Active。退場時，若自己場上有《浦原喜助》，可將此角色最多1張突襲底卡以Rest登場於自己場上。"}
-,{"id":"BLC-4-075","kind":"ukitakeFrontRaid","number":"EX15BT/BLC-4-075","name":"浮竹 十四郎","color":"green","energy":3,"ap":1,"bp":500,"gen":4,"trigger":"get","type":"character","traits":["護廷十三隊","靈王的右臂"],"effect":"此卡不能在前線登場，也不能移至前線（包含突襲時的移動）。突襲《浮竹十四郎》：改為Active。以下僅在突襲狀態適用：此角色額外產生1個綠色能量。登場時：抽1張牌。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個具有「護廷十三隊」特徵的角色改為Active。"}
+,{"id":"BLC-4-075","kind":"ukitakeFrontRaid","number":"EX15BT/BLC-4-075","name":"浮竹 十四郎","color":"green","energy":3,"ap":1,"bp":500,"gen":2,"trigger":"get","type":"character","traits":["護廷十三隊","靈王的右臂"],"effect":"此卡不能在前線登場，也不能移至前線（包含突襲時的移動）。突襲《浮竹十四郎》：改為Active。以下僅在突襲狀態適用：此角色額外產生1個綠色能量。登場時：抽1張牌。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個具有「護廷十三隊」特徵的角色改為Active。"}
 ,{"id":"BLC-2-065","kind":"komamuraRaidStrip","number":"EX07BT/BLC-2-065","name":"狛村 左陣","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","traits":["護廷十三隊"],"effect":"Raid〈狛村左陣〉：轉為 ACTIVE，可移至前線。己方回合開始時，將此角色 Raid 狀態最上層的卡送至場外。Impact 無效。此角色不會被敵方效果轉為 REST 或返回手牌。登場：抽 2 張。"}
 ,{"id":"BLC-2-070","kind":"hirakoEntryChoice","number":"EX07BT/BLC-2-070","name":"平子 真子","color":"green","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"draw","type":"character","traits":["護廷十三隊"],"effect":"登場：可選最多一項：①此角色位於前線時，選 2 個 BP 相同且皆為 2000 以下的敵方前線角色，使兩者退場；②可選最多 1 個敵方前線 BP 3000 以上角色，將其轉為 REST，並將此角色轉為 ACTIVE。"}
 ,{"id":"BLC-3-011","kind":"ukitakeFacedownEnergy","number":"UA04NC/BLC-3-011","name":"浮竹 十四郎","color":"green","energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","traits":["護廷十三隊","靈王の右腕"],"effect":"此角色下方有蓋牌時，此角色產生能源＋綠 1。\n【登場時】可以將自己牌庫上方 1 張牌，以蓋牌方式放到此角色下方。\n【啟動主要】【將此角色轉為 Rest】將此角色下方的 1 張蓋牌放到場外。若如此做，此角色在本回合中產生能源＋綠 2。"}
@@ -1324,10 +1324,10 @@ export function checkedBleachAddonDefinition(p){
    {template:'recoverAp',count:1}]},
   stepAttackTraitBuff:{onAttack:[{template:'buffOwnField',filter:{field:'trait',value:'護廷十三隊'},bp:500,optional:true,excludeSelf:false}]}
  };
-// EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
- // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
+// EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. Resting gen is 1.
+ // The ACTIVE +1 is activeExtraEnergy and stays out of gen.
  // EX15BT/BLC-4-074 prints 緑+. That plus is the activate ability, so the REST
- // base is 1. Keep p.gen=2 only as a legacy-source fingerprint.
+ // base is 1. The whitelist below locks the printed resting pip count.
  const v2BaseGen=p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:
   p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-037'||p.id==='BLC-4-071'||p.id==='BLC-4-006'||p.id==='BLC-4-051'||p.id==='BLC-4-077'||p.id==='BLC-4-065'||p.id==='BLC-4-016'||p.id==='BLC-4-017'||p.id==='BLC-4-032'||p.id==='BLC-4-011'||p.id==='BLC-4-055'||p.id==='BLC-4-075'?2:c.gen;
  const isKyoraku=p.kind==='kyorakuAttackEnd';

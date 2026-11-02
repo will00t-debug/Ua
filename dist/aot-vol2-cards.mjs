@@ -39,7 +39,7 @@ export const AOT2_CARDS=
   bp: 2500,
   bpMark: "",
   gen: 1,
-  genMark: "",
+  genMark: "+",
   type: "character",
   traits: [],
   rarity: "U",
@@ -426,7 +426,7 @@ export const AOT2_CARDS=
   bp: 1000,
   bpMark: "",
   gen: 1,
-  genMark: "",
+  genMark: "+",
   type: "character",
   traits: [
    "巨人継承者"
@@ -925,7 +925,7 @@ export const AOT2_CARDS=
   bp: 3000,
   bpMark: "",
   gen: 1,
-  genMark: "",
+  genMark: "+",
   type: "character",
   traits: [
    "地鳴らし／巨人継承者"
@@ -1802,7 +1802,7 @@ export const AOT2_CARDS=
   bp: 2000,
   bpMark: "",
   gen: 1,
-  genMark: "",
+  genMark: "+",
   type: "character",
   traits: [],
   rarity: "U",

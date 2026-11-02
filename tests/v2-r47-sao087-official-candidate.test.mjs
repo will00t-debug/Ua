@@ -143,7 +143,7 @@ test('Genuine paid RAID and RAID LIFE remain independently legal without conflat
  const base=put(s,0,'SAO-1-001','front',0);
  const top=pull(s,0,'SAO-1-087');
  s.players[0].hand.push(top);
- for(const [i,id] of ['SAO-1-075','SAO-1-095','SAO-1-073'].entries())
+ for(const [i,id] of ['SAO-1-075','SAO-1-095','SAO-1-073','SAO-1-075'].entries())
   put(s,0,id,'energy',i);
  s.active=0;s.phase='main';s.players[0].ownTurns=2;
  for(const ap of s.players[0].apCards){ap.inPlay=true;ap.ready=true;}

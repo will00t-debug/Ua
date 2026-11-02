@@ -44,17 +44,17 @@ function setup(n){
  assert.equal(assertUniversalMatch(both,s),true);
  return {s,actor,events,enemies};
 }
-test('R53 EX08BT/SAO-2-063 full official exact 3 energy, gen 3, STEP, live OUTSIDE draw',()=>{
+test('R53 EX08BT/SAO-2-063 full official exact 3 energy, resting gen 2, STEP, live OUTSIDE draw',()=>{
  const original=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-2-063');
  assert.equal(original.number,'EX08BT/SAO-2-063');
  assert.deepEqual([original.nameJa,original.color,original.energy,original.ap,
-  original.bp,original.gen,original.trigger],['アスナ','green',3,1,3000,3,null]);
+  original.bp,original.gen,original.trigger],['アスナ','green',3,1,3000,2,null]);
  assert.deepEqual(original.traits,['ALO']);
  assert.equal(original.effectJa, "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計2枚以上ある場合、カードを1枚引く。");
  const d=pack.cards[original.id];assert.equal(d.step,true);
  assert.deepEqual(d.effects.onPlay,[{op:'drawIfOwnOutsideNamedCountAtLeast',
   min:2,names:['ユウキ','マザーズ・ロザリオ'],count:1}]);
- assert.equal(d.gen,3);
+ assert.equal(d.gen,2);
 });
 test('R53 real paid SAO EVENT twice then normal SAO-2-063 play draws exactly 1',()=>{
  for(const n of [0,1,2]){
@@ -101,7 +101,7 @@ test('R53 real STEP is a FRONT to ENERGY physical move without another paid play
  s=use(s,step);
  assert.ok(!s.players[0].front.some(x=>x?.uid===c.uid));
  assert.equal(s.players[0].energy[0].uid,c.uid);
- assert.equal(universalCardEnergy(both,s,0,s.players[0].energy[0]),3);
+ assert.equal(universalCardEnergy(both,s,0,s.players[0].energy[0]),2);
  assert.equal(s.players[0].apCards.filter(x=>x.ready).length,ap);
  assert.equal(assertUniversalMatch(both,s),true);
 });

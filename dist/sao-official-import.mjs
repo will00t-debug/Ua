@@ -144,6 +144,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 2500,
   "bpPrinted": "2500",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "整合騎士"
   ],
@@ -355,7 +356,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],
@@ -987,7 +988,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "SAOサバイバー"
   ],
@@ -1149,7 +1150,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "プログレッシブ"
   ],
@@ -1203,7 +1204,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1500,
   "bpPrinted": "1500",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "プログレッシブ"
   ],
@@ -1258,6 +1259,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 2500,
   "bpPrinted": "2500",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "プログレッシブ"
   ],
@@ -1312,6 +1314,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 1000,
   "bpPrinted": "1000",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "プログレッシブ"
   ],
@@ -1392,7 +1395,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "プログレッシブ"
   ],
@@ -1656,7 +1659,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "ALO"
   ],
@@ -2031,6 +2034,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 2500,
   "bpPrinted": "2500",
   "gen": 1,
+  "genMark": "+",
   "traits": [],
   "rarity": "U",
   "trigger": null,
@@ -2105,7 +2109,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1500,
   "bpPrinted": "1500",
-  "gen": 3,
+  "gen": 2,
   "traits": [],
   "rarity": "U",
   "trigger": null,
@@ -2158,6 +2162,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 1000,
   "bpPrinted": "1000",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "ALO"
   ],
@@ -2373,7 +2378,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "整合騎士"
   ],
@@ -3145,6 +3150,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 1000,
   "bpPrinted": "1000",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "アインクラッド"
   ],
@@ -3171,7 +3177,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1500,
   "bpPrinted": "1500",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],
@@ -3225,7 +3231,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],
@@ -3334,6 +3340,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 2500,
   "bpPrinted": "2500",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "ALO"
   ],
@@ -3603,7 +3610,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 0,
   "bpPrinted": "-",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "ALO"
   ],
@@ -3891,6 +3898,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 2500,
   "bpPrinted": "2500",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "ALO"
   ],
@@ -3944,7 +3952,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "ALO"
   ],
@@ -4241,7 +4249,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "GGO"
   ],
@@ -4431,6 +4439,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 1000,
   "bpPrinted": "1000",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "GGO"
   ],
@@ -4484,7 +4493,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1500,
   "bpPrinted": "1500",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "GGO"
   ],
@@ -4511,7 +4520,8 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 0,
   "bpPrinted": "-",
-  "gen": 2,
+  "gen": 1,
+  "genMark": "+",
   "traits": [],
   "rarity": "U",
   "trigger": "get",
@@ -4745,6 +4755,7 @@ export const SAO_OFFICIAL_CARDS=[
   "bp": 1000,
   "bpPrinted": "1000",
   "gen": 1,
+  "genMark": "+",
   "traits": [
    "アインクラッド"
   ],
@@ -4771,7 +4782,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1500,
   "bpPrinted": "1500",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],
@@ -4902,7 +4913,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],
@@ -4929,7 +4940,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],
@@ -5037,7 +5048,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 2,
   "bp": 2000,
   "bpPrinted": "2000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],
@@ -5249,7 +5260,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "アインクラッド"
   ],

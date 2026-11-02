@@ -7,16 +7,16 @@ const numberOf=n=>'UA54BT/MST-1-'+String(n).padStart(3,'0');
 const official=n=>'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+encodeURIComponent(numberOf(n));
 const pending=n=>({id:'MST-1-'+String(n).padStart(3,'0'),identity:'MST-1-'+String(n).padStart(3,'0'),number:numberOf(n),title:'mushoku-tensei',name:'待核對卡片 '+String(n).padStart(3,'0'),nameJa:null,color:null,energy:null,ap:null,bp:null,gen:null,type:null,traits:[],rarity:null,trigger:null,effect:null,auto:false,verified:false,reason:'官方卡面與 FAQ 尚未逐項核對；禁止用於自動對戰。',variants:[],image:null,source:official(n)});
 const PARTIAL={
- 10:{"name":"キシリカ・キシリス","nameJa":"キシリカ・キシリス","color":"blue","type":"character","rarity":"U","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 11:{"name":"ギレーヌ","nameJa":"ギレーヌ","color":"blue","type":"character","rarity":"U","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 13:{"name":"シルフィエット","nameJa":"シルフィエット","color":"blue","type":"character","rarity":"U","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 15:{"name":"聖獣","nameJa":"聖獣","color":"blue","type":"character","rarity":"U","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 19:{"name":"リーリャ","nameJa":"リーリャ","color":"blue","type":"character","rarity":"C","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 23:{"name":"ルーデウス","nameJa":"ルーデウス","color":"blue","type":"character","rarity":"C","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 44:{"name":"サラ","nameJa":"サラ","color":"green","type":"character","rarity":"C","effect":"登場時：可將己方需求能源1以下的其他角色返回手牌；若無返回其他角色，將此卡返回手牌。","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 45:{"name":"ゼニス","nameJa":"ゼニス","color":"green","type":"character","rarity":"C","effect":"主要階段：REST 此角色，本回合額外產生1綠能源並在主要階段結束時退場。","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 61:{"name":"ナナホシ","nameJa":"ナナホシ","color":"green","type":"character","rarity":"C","traits":["ラノア魔法大学"],"effect":"登場時：可選其他己方1角色，本回合 BP+1000。","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
- 64:{"name":"バーディガーディ","nameJa":"バーディガーディ","color":"green","type":"character","rarity":"C","traits":["ラノア魔法大学"],"reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
+ 10:{"name":"キシリカ・キシリス","nameJa":"キシリカ・キシリス","color":"blue","type":"character","rarity":"U","gen":2,"reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 11:{"name":"ギレーヌ","nameJa":"ギレーヌ","color":"blue","type":"character","rarity":"U","gen":1,"reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 13:{"name":"シルフィエット","nameJa":"シルフィエット","color":"blue","type":"character","rarity":"U","gen":1,"reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 15:{"name":"聖獣","nameJa":"聖獣","color":"blue","type":"character","rarity":"U","gen":1,"reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 19:{"name":"リーリャ","nameJa":"リーリャ","color":"blue","type":"character","rarity":"C","gen":2,"reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 23:{"name":"ルーデウス","nameJa":"ルーデウス","color":"blue","type":"character","rarity":"C","gen":1,"reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 44:{"name":"サラ","nameJa":"サラ","color":"green","type":"character","rarity":"C","gen":2,"effect":"登場時：可將己方需求能源1以下的其他角色返回手牌；若無返回其他角色，將此卡返回手牌。","reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 45:{"name":"ゼニス","nameJa":"ゼニス","color":"green","type":"character","rarity":"C","gen":1,"genPrintedPlus":true,"effect":"主要階段：REST 此角色，本回合額外產生1綠能源並在主要階段結束時退場。","reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 61:{"name":"ナナホシ","nameJa":"ナナホシ","color":"green","type":"character","rarity":"C","gen":1,"traits":["ラノア魔法大学"],"effect":"登場時：可選其他己方1角色，本回合 BP+1000。","reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
+ 64:{"name":"バーディガーディ","nameJa":"バーディガーディ","color":"green","type":"character","rarity":"C","gen":2,"traits":["ラノア魔法大学"],"reason":"卡名、顏色／種類等部分欄位已核對；發生エナジー圖示已依官方 alt 記入常駐產能；印刷能源／AP／BP 及效果仍待日本官方逐張核驗。"},
  78:{"name":"守護術師フィッツ","nameJa":"守護術師フィッツ","color":"green","type":"event","rarity":"U","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
  79:{"name":"ゼニス救出作戦","nameJa":"ゼニス救出作戦","color":"green","type":"event","rarity":"U","effect":"可將最多2張己方 AP 卡恢復為 ACTIVE。","reason":"卡名、顏色／種類等部分欄位已核對；印刷能源／AP／BP／產能及效果仍待日本官方逐張核驗。"},
 };
@@ -90,6 +90,6 @@ const VERIFIED={
  40:{name:'私がついていますから',nameJa:'私がついていますから',color:'blue',energy:2,ap:1,bp:0,gen:0,type:'event',rarity:'C',trigger:'color',effect:'このカードは自分の場に〈ロキシー〉がある場合のみ使用できる。自分の手札から必要エナジーを満たし消費APが1の青の〔〈ルーデウス〉か〈ロキシー〉〕を1枚まで自分の場にレストで登場させるかレイドさせる。カードを1枚引く。自分の場の〈ルーデウス〉を1枚まで選び、別のラインに移動させる。',triggerEffect:'BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。'},
  55:{name:'アリエル',nameJa:'アリエル',color:'green',energy:1,ap:1,bp:2000,gen:1,type:'character',traits:['ラノア魔法大学'],rarity:'R',trigger:'draw',effect:'登場時：自分の山札の上から3枚見て、［特徴：ラノア魔法大学］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'}
 };
-export const UA54BT_VERIFIED=Array.from({length:80},(_,i)=>{const n=i+1,entry=pending(n);const record=VERIFIED[n]?{...entry,...VERIFIED[n],verified:true,reason:'部分欄位已核對；翻譯、判定與卡圖待逐項驗證。'}:PARTIAL[n]?{...entry,...PARTIAL[n],verified:false}:entry;return {...record,image:mstOfficialCardArt(entry.id)};});
+export const UA54BT_VERIFIED=Array.from({length:80},(_,i)=>{const n=i+1,entry=pending(n);const record=VERIFIED[n]?{...entry,...VERIFIED[n],verified:true,reason:'部分欄位已核對；翻譯、判定與卡圖待逐項驗證。'}:PARTIAL[n]?{...entry,...PARTIAL[n],verified:false}:entry;const genMark=record.genPrintedPlus?'+':record.genMark;return {...record,...(genMark?{genMark}:{}),image:mstOfficialCardArt(entry.id)};});
 
 export const UA54BT_DATA_STATUS={expectedRegularCards:80,parallelArtExcluded:true,apArtExcluded:true,engineReady:0};

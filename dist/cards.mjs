@@ -7,9 +7,9 @@ import {ADVANCED_CARDS} from './advanced-cards.mjs?v=20261029art1';
 const STARTER = [
   {id:'034',name:'石田雨龍',key:'uryu',energy:0,ap:1,bp:1500,gen:1,type:'character',tag:'濾牌',effect:'登場：抽 1 張，再棄 1 張。',trigger:'draw'},
   {id:'035',name:'井上織姬',key:'orihime',energy:1,ap:1,bp:1500,gen:2,type:'character',tag:'雙能源',effect:'登場：將另一個需求 1 以下的己方角色返回手牌；沒有可返回角色時，返回自己。',trigger:null},
-  {id:'037',name:'浦原喜助',key:'urahara',energy:2,ap:1,bp:2500,gen:1,type:'character',tag:'能源',effect:'處於 ACTIVE 狀態時，額外產生 1 紫能源。',trigger:null},
+  {id:'037',name:'浦原喜助',key:'urahara',energy:2,ap:1,bp:2500,gen:1,genMark:'+',type:'character',tag:'能源',effect:'處於 ACTIVE 狀態時，額外產生 1 紫能源。',trigger:null},
   {id:'039',name:'黑崎一護',key:'ichigo',energy:0,ap:1,bp:1500,gen:1,type:'character',tag:'Raid 基底',effect:'基礎角色，可作為一護的 Raid 基底。',trigger:'get'},
-  {id:'042',name:'茶渡泰虎',key:'chad',energy:0,ap:1,bp:1000,gen:1,type:'character',tag:'能源加速',effect:'主要階段・每回合 1 次：REST 自己，本回合多產生 1 紫能源；主要階段結束時退場。',trigger:null},
+  {id:'042',name:'茶渡泰虎',key:'chad',energy:0,ap:1,bp:1000,gen:1,genMark:'+',type:'character',tag:'能源加速',effect:'主要階段・每回合 1 次：REST 自己，本回合多產生 1 紫能源；主要階段結束時退場。',trigger:null},
   {id:'046',name:'阿散井戀次',key:'renji',energy:3,ap:1,bp:3500,gen:1,type:'character',tag:'場外循環',effect:'前線・每回合 1 次：牌堆頂 1 張送場外，成功時可讓另一己方角色本回合 BP +500。',trigger:null},
   {id:'062',name:'美味的麵包',key:'bread',energy:2,ap:1,bp:0,gen:0,type:'event',tag:'AP 回復',effect:'一個己方角色本回合 BP +1000，可回復 1 AP。',trigger:'active'},
   {id:'064',name:'月牙天衝',key:'getsuga',energy:4,ap:1,bp:0,gen:0,type:'event',tag:'角色移除',effect:'退場一個敵方前線 BP 3000 以下角色；己方有一護時，上限改為 5000。',trigger:'special'},

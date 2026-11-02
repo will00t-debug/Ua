@@ -217,6 +217,7 @@ test('SAO-1-037 gains Impact from Kirito and attack-draw only after a non-move l
  const ids=['SAO-1-037','SAO-1-048','SAO-1-103','SAO-1-102','SAO-1-052','SAO-1-001'];
  const opened=fresh(ids,1037,1,0,'move');
  energize(opened.s,0,['SAO-1-102']);
+ place(opened.s,0,take(opened.s,0,'SAO-1-102'),'energy',3,true);
  const kirito=place(opened.s,0,take(opened.s,0,'SAO-1-052'),'energy',1,true);
  const asuna=place(opened.s,0,take(opened.s,0,'SAO-1-037'),'energy',2,true);
  const liz=place(opened.s,0,take(opened.s,0,'SAO-1-048'),'front',0,true);
@@ -260,7 +261,7 @@ test('SAO-1-037 gains Impact from Kirito and attack-draw only after a non-move l
  conserved(swinging);
 
  const empty=fresh(ids,1048,1,0,'main');
- energize(empty.s,0,['SAO-1-102']);
+ energize(empty.s,0,['SAO-1-102','SAO-1-102']);
  const mover=place(empty.s,0,take(empty.s,0,'SAO-1-037'),'front',0,true);
  const watcher=place(empty.s,0,take(empty.s,0,'SAO-1-048'),'front',1,true);
  bury(empty.s,0,mover);
@@ -390,7 +391,7 @@ test('SAO-1-053 raises the rested ALO hand cap only while five cards remain',()=
  const ids=['SAO-1-053','SAO-1-102','SAO-1-058','SAO-1-051','SAO-1-052','SAO-1-050','SAO-1-038','SAO-1-009'];
  function open(seed,handIds){
   const {packs,s}=fresh(ids,seed);
-  energize(s,0,['SAO-1-102','SAO-1-058']);
+  energize(s,0,['SAO-1-102','SAO-1-058','SAO-1-051']);
   const actor=take(s,0,'SAO-1-053');
   const cards=[actor,...handIds.map(id=>take(s,0,id))];
   s.players[0].deck.push(...s.players[0].hand.splice(0));
@@ -434,6 +435,7 @@ test('SAO-2-024 discounts required energy for four other hand cards and may boun
  const {packs,s}=fresh(ids,2024,1,0,'main');
  assert.equal(s.players[0].apCards.filter(c=>c.ready).length,2);
  energize(s,0,['SAO-1-102']);
+ place(s,0,take(s,0,'SAO-1-037'),'energy',2,true);
  const leafa=take(s,0,'SAO-2-024');
  const fillers=[];
  for(let i=0;i<4;i++)fillers.push(take(s,0,'SAO-1-001'));

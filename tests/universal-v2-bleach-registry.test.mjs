@@ -127,7 +127,7 @@ test('fail-closed contract rejects source drift, fake vanilla, unknown code and 
 test('BLC-4-014 normalizes original ACTIVE total 2 to REST 1, ACTIVE 2 with same physical UID',()=>{
  const id='BLC-4-014',original=CARDS.find(x=>x.identity===id);
  const {sourceRecord,definition,evidence}=contribution.entries.find(x=>x.id===id);
- assert.equal(original.gen,2,'old imported active-total fingerprint');
+ assert.equal(original.gen,1,'catalogue stores the resting yellow pip');
  assert.equal(sourceRecord.legacyImportedGen,2);
  assert.equal(sourceRecord.gen,1);
  assert.equal(definition.gen,1);

@@ -97,6 +97,7 @@ test('three green prints complete the white-sword deck without joining the seven
 test('BLC-4-060 cannot enter the front by play or the move rule, and only shifts a differently named character',()=>{
  let s=phase(fresh(2460),'main');
  place(s,0,'BLC-4-060','energy',0);
+ place(s,0,'BLC-4-060','energy',2);
  const played=hold(s,0,'BLC-4-060');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===played.uid&&a.line==='front'),false);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===played.uid&&a.line==='energy'),true);

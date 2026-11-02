@@ -315,7 +315,7 @@ test('SAO-1-060 blocks only below 4000 with five cards in hand, then may return 
  const ids=['SAO-1-060','SAO-1-046','SAO-1-001','SAO-2-033'];
  function board(seed,hand){
   const {packs,s}=fresh(ids,seed);
-  energize(s,0,['SAO-1-046']);
+  energize(s,0,['SAO-1-046','SAO-1-046']);
   const leafa=bury(s,0,hold(s,0,'SAO-1-060'));
   let played=playFront(packs,s,leafa.uid);
   const body=played.players[0].front.find(c=>c?.uid===leafa.uid);
@@ -337,12 +337,15 @@ test('SAO-1-060 blocks only below 4000 with five cards in hand, then may return 
  assert.equal(many.blocks.some(a=>a.uid===many.low.uid),true);
  assert.equal(many.blocks.some(a=>a.uid===many.high.uid),false);
  const {packs,s}=fresh(ids,1062);
- energize(s,0,['SAO-1-046']);
+ energize(s,0,['SAO-1-046','SAO-1-046']);
  const leafa=bury(s,0,hold(s,0,'SAO-1-060'));
  let alone=playFront(packs,s,leafa.uid);
- const genSlot=alone.players[0].energy.findIndex(Boolean);
- alone.players[0].outside.push(alone.players[0].energy[genSlot]);
- alone.players[0].energy[genSlot]=null;
+ for(let i=0;i<alone.players[0].energy.length;i++){
+  const fuel=alone.players[0].energy[i];
+  if(!fuel)continue;
+  alone.players[0].outside.push(fuel);
+  alone.players[0].energy[i]=null;
+ }
  assert.equal(legalUniversalActions(packs,alone).some(a=>a.mode==='returnThenActive'),false);
  const ally=place(alone,0,take(alone,0,'SAO-1-001'),'front',1,true);
  assert.equal(legalUniversalActions(packs,alone).some(a=>a.uid===leafa.uid&&a.mode==='returnThenActive'),true);
@@ -371,7 +374,7 @@ test('SAO-1-060 blocks only below 4000 with five cards in hand, then may return 
 test('SAO-1-062 enters active and must return an ALO before an optional either-side buff',()=>{
  const ids=['SAO-1-062','SAO-1-046','SAO-1-054','SAO-1-001'];
  const {packs,s}=fresh(ids,1062);
- energize(s,0,['SAO-1-046']);
+ energize(s,0,['SAO-1-046','SAO-1-046']);
  const tree=hold(s,0,'SAO-1-062');
  let played=playEnergy(packs,s,tree.uid);
  assert.equal(played.pending,null);
@@ -400,7 +403,7 @@ test('SAO-1-062 enters active and must return an ALO before an optional either-s
 test('SAO-1-049 cannot enter the front and deploys one affordable AP1 ALO from the top four',()=>{
  const ids=['SAO-1-049','SAO-1-046','SAO-1-080','SAO-1-083','SAO-1-001','SAO-1-054'];
  const {packs,s}=fresh(ids,1049,1);
- energize(s,0,['SAO-1-046']);
+ energize(s,0,['SAO-1-046','SAO-1-046']);
  const asuna=hold(s,0,'SAO-1-049');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===asuna.uid&&a.line==='front'),false);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===asuna.uid&&a.line==='energy'),true);
@@ -665,7 +668,7 @@ test('SAO-1-041 may swap with an energy Asuna at attack end, and must swap once 
  const ids=['SAO-1-041','SAO-1-046','SAO-1-035','SAO-1-001','SAO-1-087','SAO-1-049'];
  function cast(seed){
   const {packs,s}=fresh(ids,seed);
-  energize(s,0,['SAO-1-046','SAO-1-035','SAO-1-035']);
+  energize(s,0,['SAO-1-046','SAO-1-035','SAO-1-035','SAO-1-035']);
   const kirito=bury(s,0,hold(s,0,'SAO-1-041'));
   let played=playFront(packs,s,kirito.uid);
   const body=played.players[0].front.find(c=>c?.uid===kirito.uid);

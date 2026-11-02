@@ -87,7 +87,7 @@ export const AOT_CARDS=
   "bp": 2500,
   "bpMark": "",
   "gen": 2,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [],
   "rarity": "SR",
@@ -225,7 +225,7 @@ export const AOT_CARDS=
   "bp": 1000,
   "bpMark": "",
   "gen": 1,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [
    "リヴァイ班"
@@ -1149,7 +1149,7 @@ export const AOT_CARDS=
   "bp": 3000,
   "bpMark": "+",
   "gen": 1,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [
    "104期兵／リヴァイ班"
@@ -1247,7 +1247,7 @@ export const AOT_CARDS=
   "bp": 2500,
   "bpMark": "",
   "gen": 1,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [
    "104期兵／リヴァイ班／巨人継承者"
@@ -2439,7 +2439,7 @@ export const AOT_CARDS=
   "bp": 2500,
   "bpMark": "",
   "gen": 1,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [
    "104期兵／マーレの戦士／巨人継承者"
@@ -2539,7 +2539,7 @@ export const AOT_CARDS=
   "bp": 1000,
   "bpMark": "",
   "gen": 1,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [
    "104期兵／マーレの戦士／巨人継承者"
@@ -2959,7 +2959,7 @@ export const AOT_CARDS=
   "bp": 0,
   "bpMark": "",
   "gen": 2,
-  "genMark": "",
+  "genMark": "+",
   "type": "field",
   "traits": [],
   "rarity": "U",
@@ -3232,7 +3232,7 @@ export const AOT_CARDS=
   "bp": 1000,
   "bpMark": "",
   "gen": 1,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -4199,7 +4199,7 @@ export const AOT_CARDS=
   "bp": 2500,
   "bpMark": "",
   "gen": 1,
-  "genMark": "",
+  "genMark": "+",
   "type": "character",
   "traits": [
    "104期兵／リヴァイ班"

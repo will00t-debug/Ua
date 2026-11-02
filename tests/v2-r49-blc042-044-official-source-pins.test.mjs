@@ -11,10 +11,7 @@ test('BLC-4-042 printed base BLUE 2 normalized independently of legacy gen 3',()
  assert.equal(x.nameJa,'涅 マユリ');
  assert.equal(x.type,'character');assert.equal(x.color,'blue');
  assert.deepEqual([x.energy,x.ap,x.bp],[3,1,2000]);
- assert.equal(x.gen,3,'legacy imported source encodes 3, NOT official printed base 2');
- const officialPrintedBase=2;
- assert.notEqual(x.gen,officialPrintedBase,
-  'legacy source differs from officially printed BLUE 2; use audited V2 normalization');
+ assert.equal(x.gen,2,'official printed base is two blue pips');
  assert.equal(x.trigger,'draw');
  assert.equal(registeredV2TitlePack('bleach').cards[x.identity].gen,2);
  assert.ok(EXPECTED_V2_IDS.bleach.includes(x.identity));

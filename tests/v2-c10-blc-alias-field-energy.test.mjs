@@ -87,7 +87,7 @@ test('C10 registers only the whole-print alias and field energy retirement',()=>
 
 test('BLC-4-074 keeps the printed alias and REST base of 1',()=>{
  const printed=CARDS.find(c=>c.identity===ID);
- assert.equal(printed.gen,2);
+ assert.equal(printed.gen,1);
  assert.equal(printed.effect,'此卡也視為《山本元柳齋重國》。啟動・主要〔改為Rest／每回合1次〕：此角色本回合額外產生1個綠色能量，並獲得「主要階段結束時，使此角色退場」。');
  const {sourceRecord,definition}=contribution.entries.find(x=>x.id===ID);
  assert.equal(sourceRecord.legacyImportedGen,2);
