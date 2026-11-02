@@ -37,16 +37,24 @@ test('hand, outside and removed: select physical target BEFORE choosing normal/R
   const normal=entryClickPlan({selectedUid:uid,entryMode:'normal',line:'front',slot:3,
    slotUid:null,legal:baseLegal});
   if(uid!=='hand-raid')assert.equal(normal.mode,'normal');
-  // Effect-granted Raid: directly tap the destination; no preliminary base tap.
-  const raid=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'front',slot:2,
+  // Effect-granted Raid follows a paid Raid: base first, then the cell.
+  const waiting=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'front',slot:2,
    slotUid:null,legal:baseLegal});
+  assert.equal(waiting.type,'entry-wait',uid);
+  const raid=entryClickPlan({selectedUid:uid,entryMode:'raid',raidBaseUid:'rear-base',
+   line:'front',slot:2,slotUid:null,legal:baseLegal});
   assert.equal(raid.type,'entry',uid);
   assert.equal(raid.mode,'raid',uid);
   assert.ok(raid.actions.every(a=>a.uid===uid&&a.baseUid==='rear-base'),uid);
   const energy=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'energy',slot:0,
    slotUid:'rear-base',legal:baseLegal});
-  assert.notEqual(energy.type,'raid-base',uid);
-  if(uid==='hand-raid')assert.equal(energy.type,'entry',uid);
+  assert.equal(energy.type,'raid-base',uid);
+  assert.equal(energy.baseUid,'rear-base',uid);
+  if(uid==='hand-raid'){
+   const stayed=entryClickPlan({selectedUid:uid,entryMode:'raid',raidBaseUid:'rear-base',
+    line:'energy',slot:0,slotUid:'rear-base',legal:baseLegal});
+   assert.equal(stayed.type,'entry',uid);
+  }
  }
  assert.equal(entryClickPlan({selectedUid:null,entryMode:'raid',line:'front',slot:2,
   slotUid:null,legal:baseLegal}).type,'idle');
@@ -59,12 +67,14 @@ test('effect Raid offers a base choice only when different legal bases share the
    baseUid:'rear-second',line:'front',slot:2}];
  const plan=entryClickPlan({selectedUid:'outside-raid',entryMode:'raid',
   line:'front',slot:2,slotUid:null,legal:multi});
- assert.equal(plan.type,'entry');
- assert.deepEqual(plan.actions.map(a=>a.baseUid),['rear-base','rear-second']);
+ assert.equal(plan.type,'entry-wait');
+ assert.deepEqual(entryClickPlan({selectedUid:'outside-raid',entryMode:'raid',
+  line:'energy',slot:1,slotUid:'rear-second',legal:multi}),
+  {type:'raid-base',baseUid:'rear-second'});
  const selected=entryClickPlan({selectedUid:'outside-raid',entryMode:'raid',
   raidBaseUid:'rear-base',line:'front',slot:2,slotUid:null,legal:multi});
- assert.deepEqual(selected.actions.map(a=>a.baseUid),['rear-base','rear-second'],
-  'effect Raid does not silently lock onto an old base selection');
+ assert.deepEqual(selected.actions.map(a=>a.baseUid),['rear-base'],
+  'the chosen base is the only Raid submitted for that cell');
 });
 
 test('Raid-only and normal-only effects never invent the other entry mode',()=>{

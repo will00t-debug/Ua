@@ -43,7 +43,7 @@ test('solo mixed effect gallery picks target before the legal destination, and n
  const src=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
  assert.match(src,/placement=legal\.filter\(action=>boardEntryMode\(action\)\)/);
  assert.match(src,/pendingEntryChoiceCards\(privateChoices,view,placement\)/);
- assert.match(src,/for\(const card of entryCards\)list\.append\(pendingEntrySelectControl\(card\)\)/);
+ assert.match(src,/for\(const card of entryCards\)list\.append\(pendingEntrySelectControl\(card,legal\)\)/);
  assert.match(src,/onClick:\(\)=>\{selectDeployedCharacter\(card\.uid\);render\(\);\}/);
  assert.match(src,/const rows=legal\.filter\(action=>!boardEntryMode\(action\)/);
  assert.match(src,/pendingRest=s\.pending&&!board\?/);

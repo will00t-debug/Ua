@@ -133,7 +133,7 @@ test('optional AP payment draws, then accepts only the printed hand set',()=>{
  assert.ok(legal.some(a=>a.uid===good.uid&&a.mode==='enter'&&!a.replaceUid));
  const label=uiActionLabel(legal.find(a=>a.uid===good.uid),{pack:packs,state:s});
  assert.match(label,/REST/);
- assert.match(V2_PENDING_LABELS[s.pending.kind],/Raid/);
+ assert.equal(V2_PENDING_LABELS[s.pending.kind],'從手牌休息登場或突襲');
  const viewed=universalPrivateChoices(packs,s,0);
  assert.ok(viewed.options.some(o=>o.card?.cardId==='GOOD'));
  assert.equal(universalPrivateChoices(packs,s,1),null);

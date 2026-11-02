@@ -479,7 +479,9 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
 // kmr and kjn character entry use this set too: select the physical card,
-// then 突襲進場 or 普通進場 only when the print allows both, then tap the cell.
+// then 突襲進場 or 普通進場 only when the print allows both.
+// Ordinary entry taps the destination cell. Raid taps the base, then the
+// destination cell, the same two clicks as a paid Raid.
 // Do not list one execute button per destination. A REST-only print such as
 // Epsilon or Beta stays normal entry and does not invent Raid.
 const MODE_BOARD_ENTRY=new Set([
@@ -547,13 +549,24 @@ function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUi
   const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
   return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
  }
- // Effect entry, including kmr: first choose the card, then its legal mode
- // (if two options are printed), and tap the destination. The action owns
- // its Raid base UID. Do not list one button per destination.
+ // Effect entry, including kmr and EX15BT/BLC-4-054: choose the card, then
+ // 普通進場 or 突襲進場 only when both are printed. Ordinary entry taps the
+ // cell. Raid uses the same base, then destination, clicks as a paid Raid.
  const mode=entryMode==='raid'&&selection.raid.length?'raid':
   entryMode==='normal'&&selection.normal.length?'normal':
   selection.needsMode?null:selection.raid.length?'raid':'normal';
  if(!mode)return {type:'entry-mode'};
+ if(mode==='raid'&&selection.raid.some(action=>action.baseUid)){
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(baseCandidate&&raidBaseUid!==slotUid)
+   return {type:'raid-base',baseUid:slotUid};
+  if(raidBaseUid){
+   const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
+    entryDestination(action,line,slot,slotUid));
+   return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
+  }
+  return {type:'entry-wait',mode:'raid'};
+ }
  const hits=(mode==='raid'?selection.raid:selection.normal)
   .filter(action=>entryDestination(action,line,slot,slotUid));
  return hits.length?{type:'entry',mode,actions:hits}:{type:'entry-wait',mode};
@@ -772,19 +785,17 @@ function playHint(room){
  if(board){
   if(!pick.uid)return '先選擇要登場的角色。手牌直接點；場外或移除區請先打開該區。';
   if(selection.needsMode&&pick.entryMode!=='normal'&&pick.entryMode!=='raid')
-   return '再選擇突襲進場或普通進場。';
+   return '再選擇登場方式：普通進場或突襲進場。';
   if(selection.raid.some(a=>a.type==='raid'))return pick.raidBaseUid?
    '一般突襲：已選好底座，請點合法登場位置（可點後線底座原位）。':
    selection.normal.length?
    '一般出牌：點合法格子普通登場；要突襲請先點底座，再點登場位置。':
    '一般突襲：先點合法底座，再點登場位置。';
   const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
-  if(mode==='raid'&&selection.raid.length&&selection.raid.every(a=>a.type!=='raid'))
-   return '效果突襲：直接點亮起的登場位置；同格有多個合法底座時再選底座。';
-  return mode==='raid'?(pick.raidBaseUid?
-   '已選突襲底座。請點後線底座留在後線，或點前線亮起的位置登場。':
-   '一般突襲：先點合法底座，再點要登場的格子。'):
-   '普通進場。請直接點要登場的格子。';
+  if(mode==='raid')return pick.raidBaseUid?
+   '已選好底板，請點登場格子（可點底板原位）。':
+   '突襲登場：先點底板，再點登場格子。';
+  return '普通進場。請直接點要登場的格子。';
  }
  if(room.view?.pending&&room.view.pending.player===room.seat)return '請完成這個選擇。';
  if(room.view?.phase==='move')return app.pick?.uid?'再點另一條線上亮起的位置。':'先點要移動的角色，再點另一條線的位置。';
@@ -863,11 +874,16 @@ function onlineInspectionGallery(room){
   img.addEventListener('error',()=>{
    if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
   });
-  const entry=enabled&&card.actions.some(action=>choiceIsBoardEntry(room,action.index));
+  const entryActions=enabled?card.actions.map(action=>
+   (room.choices||[]).find(choice=>choice.index===action.index)).filter(Boolean):[];
+  const entry=entryActions.some(action=>boardEntryMode(action));
+  const entrySelection=entry?boardEntrySelection(entryActions,card.uid):null;
+  const entryLabel=!entry?'':entrySelection.needsMode?'選擇此角色 · 再選登場方式':
+   entrySelection.raid.length?'選擇此角色 · 再點底板與登場格子':'選擇此角色 · 再點登場格子';
   const choice=el('button',{type:'button',class:'online-inspection-card '+
    (enabled?'eligible':'ineligible')+(picking?' selected':''),
    disabled:!enabled,'aria-disabled':String(!enabled),
-   'aria-label':(card.name||card.cardId)+(entry?'，選擇登場，再選方式與格子':
+   'aria-label':(card.name||card.cardId)+(entry?'，'+entryLabel:
     enabled?'，符合條件，可選擇':'，不符合條件，無法選擇'),
    ...(enabled?{onClick:()=>{if(app.busy)return;
     if(card.actions.some(action=>choiceIsBoardEntry(room,action.index))){
@@ -880,7 +896,7 @@ function onlineInspectionGallery(room){
    }}:{})},
    el('span',{class:'online-inspection-art'},img),
    el('strong',{text:card.name||card.cardId}),
-   el('small',{text:enabled?(entry?'選擇登場 · 再選方式與格子':card.actions.length>1?'選擇方式／位置':
+   el('small',{text:enabled?(entry?entryLabel:card.actions.length>1?'選擇方式／位置':
     (card.caption||'符合條件 · 點選此牌')):
     (card.caption||'不符合條件 · 無法選擇')}));
   grid.append(choice);
