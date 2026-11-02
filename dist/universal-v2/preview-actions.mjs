@@ -1288,13 +1288,14 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
   'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
-// kmr character entry uses this set too: select the physical card, then
-// 突襲進場 or 普通進場 only when the print allows both, then tap the cell.
-// Do not list one execute button per destination.
+// kmr and kjn character entry use this set too: select the physical card,
+// then 突襲進場 or 普通進場 only when the print allows both, then tap the cell.
+// Do not list one execute button per destination. A REST-only print such as
+// Epsilon or Beta stays normal entry and does not invent Raid.
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter','kmr'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn'
 ]);
 export function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
@@ -1309,6 +1310,9 @@ export function boardEntryMode(action){
  if(action.type==='chooseTrigger'&&(action.mode==='color'||action.mode==='colorOutside'))
   return 'normal';
  if(!MODE_BOARD_ENTRY.has(action.type))return null;
+ // Epsilon and Beta print REST entry only. mode dest is that cell.
+ // Do not treat any other kjn mode as Raid.
+ if(action.type==='kjn')return action.mode==='dest'?'normal':null;
  if(action.mode==='raid')return 'raid';
  if(action.mode==='enter'||action.mode==='place'||action.mode==='rest')return 'normal';
  return null;
