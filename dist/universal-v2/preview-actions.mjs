@@ -907,6 +907,8 @@ export function controllerChoiceArt(pack,state,action){
   return found?[found]:[];
  });
  if(fromZones.length||ids.length)return fromZones;
+ const ordered=orderChoiceSource(pack,state,action);
+ if(ordered)return [ordered];
  // A deck-top choice names the card on the pending step. Own zones are visible
  // to the controller. A published opponent card uses that public identity.
  // Otherwise only deck[0] of this reveal step is readable.
@@ -948,22 +950,59 @@ export function pendingFocusCard(pack,state){
  const zone=q.step==='oppTop'||art[0].side===1?'對手牌組頂':'你的牌組頂';
  return {...art[0],zone};
 }
+// Life triggers and blocks already draw the card they are about. Mulligan is
+// not an effect. Every other controller choice names its source with sourceUid.
+const SOURCE_ART_SKIP=new Set(['life-trigger','block','opening-mulligan']);
+// The character, or other card, whose effect opened this choice. Own deck and
+// unrevealed life stay closed. An opponent card is shown only while face up.
+export function pendingEffectSourceCard(pack,state){
+ const q=state?.pending;
+ if(!q||q.player!==0||SOURCE_ART_SKIP.has(q.kind))return null;
+ const uid=typeof q.sourceUid==='string'?q.sourceUid:'';
+ if(!uid)return null;
+ const found=findPrintedCard(pack,state,uid,'effect');
+ if(!found?.cardId)return null;
+ const printed=(Array.isArray(pack)?pack[found.side]:pack)?.cards?.[found.cardId];
+ return {...found,zone:printed?.type==='character'?'發動中的角色':'發動中的卡'};
+}
 function findControllerCard(pack,state,uid){
+ return findPrintedCard(pack,state,uid,'choice');
+}
+// Several effects can be waiting, and each button names one of them. Show that
+// effect's own card. LIFE order already has its own public reader.
+function orderChoiceSource(pack,state,action){
+ const q=state?.pending;
+ if(!q||q.player!==0||!action)return null;
+ let uid='';
+ if(action.type==='chooseRaidOrder'&&q.kind==='raid-effect-order')
+  uid=action.mode==='baseFirst'?q.baseUid:action.mode==='entryFirst'?q.raidUid:'';
+ else if(['chooseMoveEffectOrder','choosePhaseOrder','chooseRetirementOrder'].includes(action.type)&&
+  typeof action.key==='string'){
+  const entry=(Array.isArray(q.entries)?q.entries:[]).find(item=>item?.key===action.key);
+  uid=typeof entry?.sourceUid==='string'?entry.sourceUid:
+   (typeof entry?.jobs?.[0]?.sourceUid==='string'?entry.jobs[0].sourceUid:'');
+ }
+ return typeof uid==='string'&&uid?findPrintedCard(pack,state,uid,'effect'):null;
+}
+function findPrintedCard(pack,state,uid,purpose){
  const owner=Number(String(uid).split('-')[0]);
  if(owner!==0&&owner!==1)return null;
- const pl=state.players[owner];
+ const pl=state.players?.[owner];
  if(!pl)return null;
  const own=owner===0;
  const piles=[];
  const add=(cards,deep)=>{if(Array.isArray(cards))piles.push({cards,deep});};
+ const faceUp=cards=>(Array.isArray(cards)?cards:[]).filter(card=>card&&card.faceDown!==true);
  if(own){
   add(pl.hand,false);add(pl.front,true);add(pl.energy,true);
-  add(pl.outside,false);add(pl.removed,false);add(pl.life,false);
-  add(pl.lifeRevealed,false);add(pl.deck,false);
- }else{
-  add((pl.front||[]).filter(card=>card&&card.faceDown!==true),false);
-  add((pl.energy||[]).filter(card=>card&&card.faceDown!==true),false);
   add(pl.outside,false);add(pl.removed,false);add(pl.lifeRevealed,false);
+  if(purpose==='effect')add(pl.resolvingEvents,false);
+  else{add(pl.life,false);add(pl.deck,false);}
+ }else{
+  add(faceUp(pl.front),false);
+  add(faceUp(pl.energy),false);
+  add(pl.outside,false);add(pl.removed,false);add(pl.lifeRevealed,false);
+  if(purpose==='effect')add(faceUp(pl.resolvingEvents),false);
  }
  for(const pile of piles){
   for(const card of pile.cards){
