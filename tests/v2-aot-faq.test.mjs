@@ -4,7 +4,7 @@ import {createAotV2Pack} from '../dist/universal-v2/aot-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {effectChoiceProtected} from '../dist/universal-v2/continuous-states.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
- newUniversalMatch, universalBp}
+ newUniversalMatch, universalBp, universalEnergyByColor, universalPublicView}
  from '../dist/universal-v2/engine.mjs';
 
 const pack=createAotV2Pack();
@@ -127,6 +127,7 @@ test('Q980 the rested player draws when Hange rests a titan',()=>{
  const counts=deck(['AOT-1-003','AOT-1-002','AOT-1-071','AOT-1-013']);
  let s=toPhase(fresh(counts,980),'main');
  put(s,0,'AOT-1-002','energy',0,true);
+ put(s,0,'AOT-1-002','energy',1,true);
  readyAp(s,0,1);
  const foe=put(s,1,'AOT-1-071','front',0,true);
  const hange=toHand(s,0,'AOT-1-003');
@@ -141,6 +142,7 @@ test('Q980 the rested player draws when Hange rests a titan',()=>{
 
  let own=toPhase(fresh(counts,9801),'main');
  put(own,0,'AOT-1-002','energy',0,true);
+ put(own,0,'AOT-1-002','energy',1,true);
  readyAp(own,0,1);
  const mine=put(own,0,'AOT-1-013','front',0,true);
  const again=toHand(own,0,'AOT-1-003');
@@ -180,6 +182,7 @@ test('Q982 a granted character returns at the end of the attack phase',()=>{
  const counts=deck(['AOT-1-099','AOT-1-095','AOT-1-083','AOT-1-003']);
  let s=toPhase(fresh(counts,982),'main');
  put(s,0,'AOT-1-095','energy',0,true);
+ put(s,0,'AOT-1-083','energy',1,true);
  readyAp(s,0,1);
  const corps=toHand(s,0,'AOT-1-083');
  const gear=toHand(s,0,'AOT-1-099');
@@ -201,6 +204,7 @@ test('Q983 Historia locks the event AP recover once, and the Ymir bonus stays se
  const counts=deck(['AOT-1-021','AOT-1-002','AOT-1-032','AOT-1-013']);
  let quiet=toPhase(fresh(counts,9830),'main');
  put(quiet,0,'AOT-1-002','energy',0,true);
+ put(quiet,0,'AOT-1-002','energy',1,true);
  readyAp(quiet,0,1);
  const first=toHand(quiet,0,'AOT-1-021');
  quiet=play(quiet,first.uid);
@@ -210,6 +214,7 @@ test('Q983 Historia locks the event AP recover once, and the Ymir bonus stays se
 
  let s=toPhase(fresh(counts,983),'main');
  put(s,0,'AOT-1-002','energy',0,true);
+ put(s,0,'AOT-1-002','energy',1,true);
  put(s,0,'AOT-1-013','front',0,true);
  readyAp(s,0,3);
  const bomb=toHand(s,0,'AOT-1-032');
@@ -232,6 +237,8 @@ test('Q984 Bertolt retires energy-0 enemies and blocks character or trigger choi
  let s=toPhase(fresh(counts,984),'main');
  put(s,0,'AOT-1-060','energy',0,true);
  put(s,0,'AOT-1-060','energy',1,true);
+ put(s,0,'AOT-1-060','energy',2,true);
+ put(s,0,'AOT-1-060','energy',3,true);
  const base=put(s,0,'AOT-1-054','front',0,true);
  const zero=put(s,1,'AOT-1-042','front',0,true);
  const other=put(s,1,'AOT-1-008','front',1,true);
@@ -301,6 +308,7 @@ test('Q986 and Q996 selection AP applies to raided Reiner and always to the Armo
  const green=deck(['AOT-1-066','AOT-1-060','AOT-1-045','AOT-1-112','AOT-1-042']);
  let poor=toPhase(fresh(green,9860),'main');
  put(poor,0,'AOT-1-060','energy',0,true);
+ put(poor,0,'AOT-1-060','energy',1,true);
  put(poor,0,'AOT-1-045','front',0,true);
  const armored=put(poor,1,'AOT-1-112','front',0,true);
  const small=put(poor,1,'AOT-1-042','front',1,true);
@@ -313,6 +321,7 @@ test('Q986 and Q996 selection AP applies to raided Reiner and always to the Armo
 
  let paid=toPhase(fresh(green,9861),'main');
  put(paid,0,'AOT-1-060','energy',0,true);
+ put(paid,0,'AOT-1-060','energy',1,true);
  put(paid,0,'AOT-1-045','front',0,true);
  const taxed=put(paid,1,'AOT-1-112','front',0,true);
  put(paid,1,'AOT-1-042','front',1,true);
@@ -327,6 +336,7 @@ test('Q986 and Q996 selection AP applies to raided Reiner and always to the Armo
  const blue=deck(['AOT-1-034','AOT-1-002','AOT-1-008','AOT-1-061','AOT-1-058','AOT-1-042']);
  let open=toPhase(fresh(blue,9862),'main');
  put(open,0,'AOT-1-002','energy',0,true);
+ put(open,0,'AOT-1-002','energy',1,true);
  put(open,0,'AOT-1-008','front',0,true);
  const plain=put(open,1,'AOT-1-061','front',0,true);
  readyAp(open,0,1);
@@ -336,6 +346,7 @@ test('Q986 and Q996 selection AP applies to raided Reiner and always to the Armo
 
  let raided=toPhase(fresh(blue,9863),'main');
  put(raided,0,'AOT-1-002','energy',0,true);
+ put(raided,0,'AOT-1-002','energy',1,true);
  put(raided,0,'AOT-1-008','front',0,true);
  const hidden=stackRaid(raided,1,'AOT-1-061','AOT-1-058','front',0);
  put(raided,1,'AOT-1-042','front',1,true);
@@ -352,7 +363,7 @@ test('Q987 two green characters enter together when the energy line is full',()=
  const reiner=put(s,0,'AOT-1-060','energy',0,true);
  const side=put(s,0,'AOT-1-035','energy',1,true);
  put(s,0,'AOT-1-039','energy',2,true);
- put(s,0,'AOT-1-054','energy',3,true);
+ put(s,0,'AOT-1-060','energy',3,true);
  readyAp(s,0,2);
  const armor=toHand(s,0,'AOT-1-061');
  const rod=toHand(s,0,'AOT-1-038');
@@ -397,10 +408,12 @@ test('Q988 the returned Armin may be the discarded energy-1 red Armin',()=>{
 });
 
 test('Q989 and Q990 BP-range bonus stacks once, and a choiceless selection keeps it',()=>{
- const counts=deck(['AOT-1-077','AOT-1-095','AOT-1-034','AOT-1-010','AOT-1-061','AOT-1-057','AOT-1-001','AOT-1-002']);
+ const counts=deck(['AOT-1-077','AOT-1-095','AOT-1-034','AOT-1-010','AOT-1-061','AOT-1-057','AOT-1-001','AOT-1-002','AOT-1-090']);
  let kept=toPhase(fresh(counts,989),'main');
  put(kept,0,'AOT-1-095','energy',0,true);
- put(kept,0,'AOT-1-002','energy',1,true);
+ put(kept,0,'AOT-1-090','energy',1,true);
+ put(kept,0,'AOT-1-002','energy',2,true);
+ put(kept,0,'AOT-1-002','energy',3,true);
  put(kept,0,'AOT-1-001','front',0,true);
  readyAp(kept,0,2);
  const wall=put(kept,1,'AOT-1-010','front',0,true);
@@ -424,7 +437,9 @@ test('Q989 and Q990 BP-range bonus stacks once, and a choiceless selection keeps
 
  let doubled=toPhase(fresh(counts,990),'main');
  put(doubled,0,'AOT-1-095','energy',0,true);
- put(doubled,0,'AOT-1-002','energy',1,true);
+ put(doubled,0,'AOT-1-090','energy',1,true);
+ put(doubled,0,'AOT-1-002','energy',2,true);
+ put(doubled,0,'AOT-1-002','energy',3,true);
  readyAp(doubled,0,2);
  const five=put(doubled,1,'AOT-1-061','front',0,true);
  const six=put(doubled,1,'AOT-1-057','front',1,true);
@@ -443,9 +458,10 @@ test('Q989 and Q990 BP-range bonus stacks once, and a choiceless selection keeps
 });
 
 test('Q991 Armin can replay onPlay on the turn he entered',()=>{
- const counts=deck(['AOT-1-077','AOT-1-095','AOT-1-001']);
+ const counts=deck(['AOT-1-077','AOT-1-095','AOT-1-001','AOT-1-090']);
  let s=toPhase(fresh(counts,991),'main');
  put(s,0,'AOT-1-095','energy',0,true);
+ put(s,0,'AOT-1-090','energy',1,true);
  readyAp(s,0,1);
  const armin=toHand(s,0,'AOT-1-077');
  s=play(s,armin.uid);
@@ -461,6 +477,7 @@ test('Q992 and Q993 Eren may deploy after an optional tuck, including when the t
  const counts=deck(['AOT-1-092','AOT-1-090','AOT-1-095','AOT-1-075','AOT-1-076','AOT-1-083','AOT-1-079']);
  let full=toPhase(fresh(counts,992),'main');
  put(full,0,'AOT-1-095','energy',0,true);
+ put(full,0,'AOT-1-079','energy',1,true);
  const base=put(full,0,'AOT-1-090','front',0,true);
  const tucked=put(full,0,'AOT-1-075','front',1,true);
  put(full,0,'AOT-1-076','front',2,true);
@@ -501,6 +518,8 @@ test('Q994 a SPECIAL trigger sends its card to hand instead of retiring the gran
  const counts=deck(['AOT-1-096','AOT-1-095','AOT-1-093','AOT-1-090','AOT-1-001','AOT-1-033']);
  let s=toPhase(fresh(counts,994),'main');
  put(s,0,'AOT-1-095','energy',0,true);
+ put(s,0,'AOT-1-090','energy',1,true);
+ put(s,0,'AOT-1-090','energy',2,true);
  const eren=stackRaid(s,0,'AOT-1-093','AOT-1-090','front',0);
  readyAp(s,0,2);
  s=cast(s,toHand(s,0,'AOT-1-096').uid);
@@ -524,6 +543,7 @@ test('Q995 Eren draws on the raid, and the life main is once per name',()=>{
  const counts=deck(['AOT-1-107','AOT-1-090','AOT-1-095']);
  let s=toPhase(fresh(counts,995),'main');
  put(s,0,'AOT-1-095','energy',0,true);
+ put(s,0,'AOT-1-090','energy',1,true);
  const base=put(s,0,'AOT-1-090','front',0,true);
  readyAp(s,0,1);
  const eren=toHand(s,0,'AOT-1-107');
@@ -555,4 +575,39 @@ test('Mikasa damage cannot let the opponent activate an ACTIVE trigger',()=>{
  s=pick(s,a=>a.mode==='skip');
  assert.equal((ally.buffs||[]).some(b=>b.bp===3000),false);
  assertUniversalMatch(packs,s);
+});
+
+function lifeRaid(seed,energyIds){
+ const counts=deck(['AOT-1-094','AOT-1-102','AOT-1-090','AOT-1-079','AOT-1-001']);
+ let s=toPhase(fresh(counts,seed),'attack');
+ energyIds.forEach((id,slot)=>put(s,1,id,'energy',slot,true));
+ const base=put(s,1,'AOT-1-090','front',0,true);
+ topLife(s,1,'AOT-1-094');
+ const attacker=put(s,0,'AOT-1-001','front',0,true);
+ readyAp(s,0,1);
+ s=use(s,{type:'attack',uid:attacker.uid});
+ if(s.pending?.step==='pay')s=pick(s,a=>a.mode==='pay');
+ assert.equal(s.pending.kind,'block');
+ s=pick(s,a=>a.type==='chooseBlock'&&a.uid==null);
+ assert.equal(s.pending.kind,'life-trigger');
+ assert.equal(s.pending.player,1);
+ return {s,base};
+}
+
+test('life RAID of eight-cost Eren follows printed red energy',()=>{
+ const short=lifeRaid(10946,['AOT-1-102','AOT-1-102','AOT-1-090','AOT-1-079']);
+ assert.equal(universalEnergyByColor(packs,short.s,1).red,6);
+ assert.equal(universalPublicView(packs,short.s,1).players[1].energyByColor.red,6);
+ assert.equal(legalUniversalActions(packs,short.s).some(a=>a.mode==='raid'),false);
+ assert.equal(legalUniversalActions(packs,short.s).some(a=>a.mode==='get'),true);
+ assert.throws(()=>use(short.s,{type:'chooseTrigger',mode:'raid',baseUid:short.base.uid,line:'front',slot:0}),
+  /not currently legal/);
+ const enough=lifeRaid(10948,['AOT-1-102','AOT-1-102','AOT-1-102','AOT-1-102']);
+ assert.equal(universalEnergyByColor(packs,enough.s,1).red,8);
+ const raid=legalUniversalActions(packs,enough.s).find(a=>a.mode==='raid'&&a.baseUid===enough.base.uid);
+ assert.ok(raid);
+ enough.s=use(enough.s,raid);
+ assert.equal(enough.s.players[1].front.some(c=>c?.cardId==='AOT-1-094'),true);
+ assertUniversalMatch(packs,short.s);
+ assertUniversalMatch(packs,enough.s);
 });

@@ -156,10 +156,10 @@ test('outside events scale Mikasa energy and BP, and Ymir on the field raises Hi
  const counts=countsFor(['AOT-1-024','AOT-1-021','AOT-1-013','AOT-1-032']);
  let s=toPhase(fresh(counts,24024),'main');
  const mikasa=put(s,0,'AOT-1-024','energy',0,true);
- assert.equal(universalCardEnergy(packs,s,0,mikasa),2);
+ assert.equal(universalCardEnergy(packs,s,0,mikasa),1);
  assert.equal(universalBp(packs,s,mikasa),3000);
  for(let i=0;i<4;i++)s.players[0].outside.push(take(s,0,'AOT-1-032'));
- assert.equal(universalCardEnergy(packs,s,0,mikasa),3);
+ assert.equal(universalCardEnergy(packs,s,0,mikasa),2);
  assert.equal(universalBp(packs,s,mikasa),4000);
  const historia=put(s,0,'AOT-1-021','front',1,true);
  assert.equal(universalBp(packs,s,historia),2500);
@@ -185,13 +185,14 @@ test('Zeke discounts off-field energy and a raided copy buffs pure titans',()=>{
 });
 
 test('basement key and an Eren name change the printed hand costs',()=>{
- const counts=countsFor(['AOT-1-095','AOT-1-098','AOT-1-096','AOT-1-090']);
+ const counts=countsFor(['AOT-1-095','AOT-1-098','AOT-1-096','AOT-1-090','AOT-1-069']);
  let s=toPhase(fresh(counts,24095),'main');
  const field=pack.cards['AOT-1-095'];
  assert.equal(zoneRequiredEnergy(packs,s,0,field,'hand'),6);
  s.players[0].outside.push(take(s,0,'AOT-1-098'));
  assert.equal(zoneRequiredEnergy(packs,s,0,field,'hand'),4);
  put(s,0,'AOT-1-095','energy',0,true);
+ put(s,0,'AOT-1-069','energy',1,true);
  readyAp(s,0,1);
  const punch=toHand(s,0,'AOT-1-096');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===punch.uid),false);
@@ -233,6 +234,7 @@ test('the Colossal Titan cannot be played onto the energy line',()=>{
  let s=toPhase(fresh(counts,24113),'main');
  put(s,0,'AOT-1-060','energy',0,true);
  put(s,0,'AOT-1-035','energy',1,true);
+ put(s,0,'AOT-1-060','energy',2,true);
  readyAp(s,0,1);
  const titan=toHand(s,0,'AOT-1-113');
  const plays=legalUniversalActions(packs,s).filter(a=>a.type==='play'&&a.uid===titan.uid);

@@ -186,13 +186,13 @@ test('EX10BT registers 73 playable identities on the combined Attack on Titan pa
  assert.equal(status.registered,186);
 });
 
-test('a ready Yelena generates 3 and a rested copy generates 2',()=>{
+test('a ready Yelena generates 2 and a rested copy generates 1',()=>{
  const counts=countsFor(['AOT-2-001']);
  let s=toPhase(fresh(counts,2001),'main');
  const yelena=put(s,0,'AOT-2-001','energy',0,true);
- assert.equal(universalCardEnergy(packs,s,0,yelena),3);
- yelena.ready=false;
  assert.equal(universalCardEnergy(packs,s,0,yelena),2);
+ yelena.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,yelena),1);
  assertUniversalMatch(packs,s);
 });
 
@@ -200,6 +200,7 @@ test('Gabi buffs another character only after her own name makes four',()=>{
  const counts=countsFor(['AOT-2-001','AOT-2-003','AOT-2-004','AOT-2-005','AOT-2-006']);
  let quiet=toPhase(fresh(counts,2003),'main');
  put(quiet,0,'AOT-2-001','energy',0,true);
+ put(quiet,0,'AOT-2-001','energy',1,true);
  put(quiet,0,'AOT-2-004','front',0,true);
  readyAp(quiet,0,1);
  quiet=play(quiet,toHand(quiet,0,'AOT-2-003').uid);
@@ -351,6 +352,7 @@ test('standing BP range raises the Thunder Spear ceiling and is not consumed',()
  let s=toPhase(fresh(counts,2049),'main');
  put(s,0,'AOT-1-002','energy',0,true);
  put(s,0,'AOT-1-015','energy',1,true);
+ put(s,0,'AOT-1-002','energy',2,true);
  const mid=put(s,1,'AOT-2-002','front',0,true);
  const gap=put(s,1,'AOT-2-008','front',1,true);
  readyAp(s,0,4);
@@ -387,6 +389,7 @@ test('Pieck stays private under Falco, and the opponent receives no identity',()
  let s=toPhase(fresh(counts,2017),'main');
  put(s,0,'AOT-2-001','energy',0,true);
  put(s,0,'AOT-2-005','energy',1,true);
+ put(s,0,'AOT-2-001','energy',2,true);
  const buried=put(s,0,'AOT-2-004','front',0,true);
  readyAp(s,0,1);
  const falco=toHand(s,0,'AOT-2-017');
@@ -416,6 +419,7 @@ test('Reiner taxes an opposing event until his next turn starts',()=>{
  let poor=toPhase(fresh(counts,2019),'main');
  put(poor,0,'AOT-2-001','energy',0,true);
  put(poor,0,'AOT-2-004','energy',1,true);
+ put(poor,0,'AOT-2-001','energy',2,true);
  const small=put(poor,0,'AOT-2-005','front',0,true);
  readyAp(poor,0,1);
  const reiner=toHand(poor,0,'AOT-2-019');
@@ -425,6 +429,7 @@ test('Reiner taxes an opposing event until his next turn starts',()=>{
  assert.equal(poor.players[0].front.find(c=>c?.uid===reiner.uid).aot2SelectTax.untilOwnTurnStart>poor.players[0].ownTurns,true);
  poor=toSide(poor,1,'main');
  put(poor,1,'AOT-1-060','energy',0,true);
+ put(poor,1,'AOT-1-060','energy',1,true);
  put(poor,1,'AOT-1-045','front',0,true);
  readyAp(poor,1,1);
  poor=cast(poor,toHand(poor,1,'AOT-1-066').uid);
@@ -436,12 +441,14 @@ test('Reiner taxes an opposing event until his next turn starts',()=>{
  let paid=toPhase(fresh(counts,2020),'main');
  put(paid,0,'AOT-2-001','energy',0,true);
  put(paid,0,'AOT-2-004','energy',1,true);
+ put(paid,0,'AOT-2-001','energy',2,true);
  put(paid,0,'AOT-2-005','front',0,true);
  readyAp(paid,0,1);
  const taxed=toHand(paid,0,'AOT-2-019');
  paid=play(paid,taxed.uid);
  paid=toSide(paid,1,'main');
  put(paid,1,'AOT-1-060','energy',0,true);
+ put(paid,1,'AOT-1-060','energy',1,true);
  put(paid,1,'AOT-1-045','front',0,true);
  readyAp(paid,1,2);
  paid=cast(paid,toHand(paid,1,'AOT-1-066').uid);
@@ -454,6 +461,7 @@ test('Reiner taxes an opposing event until his next turn starts',()=>{
  let expired=toPhase(fresh(counts,2021),'main');
  put(expired,0,'AOT-2-001','energy',0,true);
  put(expired,0,'AOT-2-004','energy',1,true);
+ put(expired,0,'AOT-2-001','energy',2,true);
  put(expired,0,'AOT-2-005','front',1,true);
  readyAp(expired,0,1);
  const lasting=toHand(expired,0,'AOT-2-019');
@@ -546,6 +554,7 @@ test('raid Mikasa ignores standing BP and still cannot be played from hand',()=>
  const counts=countsFor(['AOT-2-066','AOT-2-067','AOT-2-069','AOT-1-069','AOT-1-010','AOT-1-061']);
  let low=toPhase(fresh(counts,2068),'main');
  put(low,0,'AOT-1-069','energy',0,true);
+ put(low,0,'AOT-1-069','energy',1,true);
  const base=put(low,0,'AOT-2-066','front',0,true);
  put(low,0,'AOT-2-069','front',1,true);
  const small=put(low,1,'AOT-1-010','front',0,true);
@@ -565,6 +574,7 @@ test('raid Mikasa ignores standing BP and still cannot be played from hand',()=>
 
  let high=toPhase(fresh(counts,2069),'main');
  put(high,0,'AOT-1-069','energy',0,true);
+ put(high,0,'AOT-1-069','energy',1,true);
  const host=put(high,0,'AOT-2-066','front',0,true);
  put(high,0,'AOT-2-069','front',1,true);
  const armored=put(high,1,'AOT-1-061','front',0,true);
@@ -587,6 +597,7 @@ test('the Rumbling empties the hand, retires the printed window, and bans other 
  put(s,0,'AOT-2-001','energy',0,true);
  put(s,0,'AOT-2-004','energy',1,true);
  put(s,0,'AOT-2-003','energy',2,true);
+ put(s,0,'AOT-2-003','energy',3,true);
  put(s,0,'AOT-2-070','front',0,true);
  const eren=put(s,0,'AOT-2-022','front',1,true);
  const other=put(s,0,'AOT-2-005','front',2,true);
@@ -619,6 +630,7 @@ test('Bertolt reduces only a red Colossal Titan raiding onto him',()=>{
  put(s,0,'AOT-1-069','energy',0,true);
  put(s,0,'AOT-1-070','energy',1,true);
  put(s,0,'AOT-2-066','energy',2,true);
+ put(s,0,'AOT-1-069','energy',3,true);
  const host=put(s,0,'AOT-2-068','front',0,true);
  const other=put(s,0,'AOT-2-011','front',1,true);
  readyAp(s,0,1);
@@ -663,6 +675,7 @@ test('life cards stay hidden while Eren and the Attack Titan choose one',()=>{
  put(titan,0,'AOT-1-069','energy',0,true);
  put(titan,0,'AOT-1-070','energy',1,true);
  put(titan,0,'AOT-2-062','energy',2,true);
+ put(titan,0,'AOT-1-069','energy',3,true);
  readyAp(titan,0,1);
  const hidden=titan.players[0].life[0];
  titan=play(titan,toHand(titan,0,'AOT-2-072').uid);

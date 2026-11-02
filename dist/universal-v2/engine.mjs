@@ -7,7 +7,7 @@ import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-m
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
 import {matchesPrintedRequiredEnergyAtMost} from './ap-discounts.mjs';
-import {cardHasName,cardHasTrait,cardCountsAsEvent,matchesOwnDistinctTraits,matchesV2LiveCondition,
+import {cardHasName,cardHasTrait,cardCountsAsEvent,usedOwnEventThisTurn,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,countOppRestCharacters,countOwnPrintedApAtLeast,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
  countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs';
 import {bindMmm2,runMmm2Job,legalMmm2Pending,resolveMmm2Pending,
@@ -11403,7 +11403,10 @@ function resolveChoice(s,a,pack){
    applyEffects(pack,s,picked,'onPlay',q.player,'lifeColor');
   }
   else if(a.mode==='raid'&&q.trigger==='raid'){
-   const revealed=p[sourceZone].splice(i,1)[0];
+   const revealed=p[sourceZone][i];
+   if(!lifeRaidEnergyPaid(pack,s,q.player,card(pack,revealed)))
+    throw Error('Raid energy is not paid');
+   p[sourceZone].splice(i,1);
    performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot,a.replaceUid,
     {entryCause:'lifeRaid',entryFrom:sourceZone,effectSourceUid:q.uid});
   }
@@ -14681,7 +14684,7 @@ function legalPending(pack,s){
   if(q.trigger==='raid'){
    const revealed=triggerPile.find(c=>c.uid===q.uid),d=card(pack,revealed);
    out.push({type:'chooseTrigger',mode:'get'});
-   if(zoneRequiredEnergy(pack,s,q.player,d,'life')<=(universalEnergyByColor(pack,s,q.player)[d.color]||0)){
+   if(lifeRaidEnergyPaid(pack,s,q.player,d)){
     for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
      const base=p[line][slot];
      if(!validRaidBase(pack,s,q.player,base,d))continue;
@@ -16030,9 +16033,7 @@ export function legalUniversalActions(pack,s){
      out.push({type:'activate',uid:c.uid,mode:mode.id});
     if(mode.op==='frontActiveIfEvent'&&location(s,p,c.uid)?.line==='front'&&
      !s.mainAbilityUsedUids.includes(c.uid+'|'+mode.id)&&
-     (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===p&&e.from==='hand'&&
-      e.to==='outside'&&e.reason==='rule'&&(card(pack,{uid:e.uid,cardId:e.cardId}).type==='event'||
-       card(pack,{uid:e.uid,cardId:e.cardId}).alsoEvent===true))&&
+     usedOwnEventThisTurn(s,p,x=>card(pack,x))&&
      field(pl).some(x=>card(pack,x).type==='character'&&card(pack,x).energy<=mode.maxEnergy))
      out.push({type:'activate',uid:c.uid,mode:mode.id});
     if(mode.op==='frontMoveNamed'&&location(s,p,c.uid)?.line==='front'&&
@@ -16823,6 +16824,11 @@ export function legalUniversalActions(pack,s){
  }
  return out;
 }
+// Life RAID asks whether the revealed card's required energy is met.
+// The check is the same number the button used. Hand-only cuts stay out.
+function lifeRaidEnergyPaid(pack,s,p,d){
+ return zoneRequiredEnergy(pack,s,p,d,'life')<=(universalEnergyByColor(pack,s,p)[d.color]||0);
+}
 // Calculate the *current* required energy for a card being legally played
 // from its owner's hand. No private opponent zone is read or exposed.
 // AP, printed required energy and source definition stay untouched.
@@ -17164,10 +17170,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      break;
     }
     if(printed.op==='frontActiveIfEvent'){
-     const eventUsed=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===p&&
-      e.from==='hand'&&e.to==='outside'&&e.reason==='rule'&&
-      (card(pack,{uid:e.uid,cardId:e.cardId}).type==='event'||
-       card(pack,{uid:e.uid,cardId:e.cardId}).alsoEvent===true));
+     const eventUsed=usedOwnEventThisTurn(s,p,x=>card(pack,x));
      const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
       card(pack,c).energy<=printed.maxEnergy).map(c=>c.uid);
      if(location(s,p,selected.uid)?.line!=='front'||!eventUsed||!choices.length)
