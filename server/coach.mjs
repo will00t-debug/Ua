@@ -3,6 +3,7 @@
 import {randomBytes} from 'node:crypto';
 import {ApiError} from './domain.mjs';
 import {DECISION_CLASSES,UNFINISHED_ENDINGS,classifyDecision} from '../dist/universal-v2/coach-format.mjs';
+import {readPolicy,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
 const MATCH_ID=/^m[a-f0-9]{32}$/;
 const LINK_ID=/^k[a-f0-9]{32}$/;
@@ -243,7 +244,44 @@ function stored(payload){
  return text;
 }
 
+const LEARN_STEP_LIMIT=4000;
+function loadPolicy(repos,userId){
+ const row=repos.coachPolicy(userId);
+ if(!row?.policyJson)return null;
+ try{return readPolicy(JSON.parse(row.policyJson));}
+ catch{return null;}
+}
+function learningRows(repos,userId){
+ const rows=[];
+ for(const step of repos.listCoachTrainingSteps(userId,LEARN_STEP_LIMIT)){
+  try{rows.push(JSON.parse(step.payloadJson));}catch{/* A damaged row is ignored. */}
+ }
+ for(const demo of repos.listCoachDemos(userId)){
+  let body=null;
+  try{body=JSON.parse(demo.payloadJson);}catch{continue;}
+  if(!body?.correction||!Array.isArray(body.legal)||body.legal.length<2||!body.observation)continue;
+  rows.push({
+   source:'human',actor:'human',seat:body.seat===0?0:1,matchId:body.matchId,
+   forced:false,legal:body.legal,choice:body.correction,observation:body.observation
+  });
+ }
+ return rows;
+}
+function learnPolicy(repos,user,now){
+ let policy;
+ try{policy=trainPolicy(learningRows(repos,user.id));}
+ catch(error){throw new ApiError(400,error?.message||'這些紀錄還不夠學習。');}
+ const storedPolicy={...policy,createdAt:iso(now)};
+ const encoded=JSON.stringify(storedPolicy);
+ if(encoded.length>200000)throw new ApiError(413,'學習結果太大。');
+ repos.saveCoachPolicy(user.id,encoded,storedPolicy.createdAt);
+ return {policy:storedPolicy};
+}
+
 export function coachHttp(method,path){
+ if(path==='/api/coach/learn'&&method==='POST')return {op:'coachLearn'};
+ if(path==='/api/coach/policy'&&method==='GET')return {op:'coachPolicy'};
+ if(path==='/api/coach/policy'&&method==='DELETE')return {op:'coachDeletePolicy'};
  if(path==='/api/coach/steps'&&method==='POST')return {op:'coachStep'};
  if(path==='/api/coach/labels'&&method==='POST')return {op:'coachLabel'};
  if(path==='/api/coach/matches'&&method==='GET')return {op:'coachList'};
@@ -297,6 +335,11 @@ export function dispatchCoach(repos,user,message,now){
   }
   case 'coachDeleteAll':
    repos.deleteCoachUser(user.id);
+   return {ok:true};
+  case 'coachLearn':return learnPolicy(repos,user,now);
+  case 'coachPolicy':return {policy:loadPolicy(repos,user.id)};
+  case 'coachDeletePolicy':
+   repos.deleteCoachPolicy(user.id);
    return {ok:true};
   default:throw new ApiError(404,'找不到這個功能。');
  }

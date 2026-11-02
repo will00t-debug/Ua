@@ -90,7 +90,7 @@ body.v2-arena-theme{min-height:100vh;background:#080b11;color:#ecf2fc}
 .v2-arena-theme .v2-shell .difficulty-header>div{gap:10px}
 .v2-arena-theme .v2-shell :is(.difficulty-header h3,.match-advanced h3){color:#fff;font-size:16px;font-weight:800}
 .v2-arena-theme .v2-shell .difficulty-header p{color:#9daac0;font-size:11px}
-.v2-arena-theme .v2-shell .difficulty-options{gap:9px}
+.v2-arena-theme .v2-shell .difficulty-options{gap:9px;grid-template-columns:repeat(4,minmax(0,1fr))}
 .v2-arena-theme .v2-shell .difficulty-choice{position:relative;border:1px solid #48566c;background:#131e2b;color:#e9f4ff;border-radius:9px;min-height:88px;padding:15px 13px}
 .v2-arena-theme .v2-shell .difficulty-choice strong{font-size:17px;color:#f7faff}
 .v2-arena-theme .v2-shell .difficulty-choice span{color:#9bacbf;font-size:11px}
@@ -143,6 +143,7 @@ body.v2-arena-theme{min-height:100vh;background:#080b11;color:#ecf2fc}
  .v2-arena-theme .v2-shell .deck-thumb{height:90px}
  .v2-arena-theme .v2-shell .deck-quick-meta{flex-direction:row}
  .v2-arena-theme .v2-shell .setup-config-grid{grid-template-columns:1fr}
+ .v2-arena-theme .v2-shell .difficulty-options{grid-template-columns:repeat(2,minmax(0,1fr))}
  .v2-arena-theme .v2-shell .setup-bottom{flex-direction:column;align-items:stretch}
  .v2-arena-theme .v2-shell .setup-actions #start-game{width:100%}
  .v2-arena-theme .scene-card-right{right:-160px}

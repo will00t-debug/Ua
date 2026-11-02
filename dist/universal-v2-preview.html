@@ -8,7 +8,7 @@
  <meta name="description" content="UNION ARENA V2 非官方練習模擬器：保留經典對戰介面，以 V2 規則引擎執行已支援牌組的對戰。">
  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
  <link rel="stylesheet" href="universal-v2-legacy.css?v=20261102lookwindow1">
- <link rel="stylesheet" href="universal-v2-arena-setup.css?v=20261028battle1">
+ <link rel="stylesheet" href="universal-v2-arena-setup.css?v=20261102learn1">
  <link rel="stylesheet" href="arena-site-header.css?v=20261028header1">
  <title>V2 對戰設定｜UNION ARENA</title>
 </head>
@@ -107,8 +107,9 @@
      <button type="button" class="difficulty-choice" data-ai-difficulty="easy" aria-pressed="false"><strong>簡單</strong><span>入門練習</span></button>
      <button type="button" class="difficulty-choice" data-ai-difficulty="normal" aria-pressed="true"><strong>普通</strong><span>平衡對戰</span></button>
      <button type="button" class="difficulty-choice" data-ai-difficulty="hard" aria-pressed="false"><strong>困難</strong><span>策略挑戰</span></button>
+     <button type="button" class="difficulty-choice" data-ai-difficulty="learned" aria-pressed="false"><strong>學習</strong><span>用你的紀錄</span></button>
     </div>
-    <select id="ai-level" hidden aria-hidden="true" tabindex="-1"><option value="easy">簡單</option><option value="normal" selected>普通</option><option value="hard">困難</option></select>
+    <select id="ai-level" hidden aria-hidden="true" tabindex="-1"><option value="easy">簡單</option><option value="normal" selected>普通</option><option value="hard">困難</option><option value="learned">學習</option></select>
    </section>
    <section class="match-advanced" aria-label="其他設定">
     <h3>其他設定</h3>
@@ -117,7 +118,7 @@
       <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
      <p class="shuffle-note"><span aria-hidden="true">⤨</span> 每場新對局都會自動重新洗牌，不需要輸入牌序代碼。</p>
      <label class="coach-consent" for="coach-consent"><input id="coach-consent" type="checkbox"> 提供對戰紀錄改善 AI</label>
-     <p class="note">預設關閉，選擇會記住。開啟後，單人對電腦與線上對戰都會在背景記錄你自己的決策；關閉會立刻停止並清掉尚未上傳的佇列。線上對戰只記錄已同意的你，不取得對手的隱藏手牌。不收集姓名、密碼或聊天內容。需要登入。這不會讓目前的 AI 立刻變強。<a href="/coach.html">查看、匯出或刪除紀錄</a></p>
+     <p class="note">預設關閉，選擇會記住。開啟後，單人對電腦與線上對戰都會在背景記錄你自己的決策；關閉會立刻停止並清掉尚未上傳的佇列。線上對戰只記錄已同意的你，不取得對手的隱藏手牌。不收集姓名、密碼或聊天內容。需要登入。上傳之後，到 <a href="/coach.html">教 AI</a> 按「用這些紀錄學習」，再把難度選成「學習」，電腦才會用這個模型。</p>
     </div>
    </section>
    </div>
@@ -137,6 +138,6 @@
   </footer>
  </div>
  <link rel="stylesheet" href="coach.css?v=20261101reviewnav1">
- <script type="module" src="universal-v2-preview.mjs?v=20261102decision2"></script>
+ <script type="module" src="universal-v2-preview.mjs?v=20261102learn1"></script>
 </body>
 </html>
