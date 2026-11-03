@@ -1,5 +1,7 @@
 // Logged-in review of solo training rows. Debug replays stay on their own buttons.
 import {learnReport} from './universal-v2/learn-policy.mjs';
+import {coachConsentEnabled,createCoachUploader} from './universal-v2/coach-client.mjs';
+import {createDecisionQueue} from './universal-v2/coach-queue.mjs';
 const root=document.querySelector('#coach-app');
 const h=(tag,props={},...children)=>{
  const node=document.createElement(tag);
@@ -24,6 +26,35 @@ async function api(path,options={}){
  const data=await response.json().catch(()=>null);
  if(!response.ok)throw Error(data?.error||'無法完成這個操作。');
  return data;
+}
+let flushingQueue=null;
+let lastReport='';
+function flushLocalQueue(){
+ if(!coachConsentEnabled(localStorage))return Promise.resolve({queued:0,dropped:0,lastError:''});
+ if(flushingQueue)return flushingQueue;
+ flushingQueue=(async()=>{
+  const uploader=createCoachUploader({
+   consent:()=>coachConsentEnabled(localStorage)
+  });
+  const queue=createDecisionQueue({
+   storage:localStorage,
+   consent:()=>coachConsentEnabled(localStorage),
+   send(body){
+    return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);
+   }
+  });
+  queue.start();
+  await queue.flushNow();
+  return {queued:queue.length,dropped:queue.dropped,lastError:queue.lastError};
+ })().finally(()=>{flushingQueue=null;});
+ return flushingQueue;
+}
+function queueNote(pending){
+ const parts=[];
+ if(pending?.dropped)parts.push('已跳過 '+pending.dropped+' 筆伺服器拒絕的舊紀錄，後面的新對局會繼續上傳。');
+ if(pending?.queued)parts.push('這台裝置還有 '+pending.queued+' 筆沒送出'+(pending.lastError?'：'+pending.lastError:'。'));
+ else if(pending?.lastError)parts.push(pending.lastError);
+ return parts.join('');
 }
 function download(filename,value){
  const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)+'\n'],{type:'application/json'}));
@@ -79,13 +110,18 @@ async function showMatch(matchId){
 }
 async function render(){
  root.replaceChildren(h('h1',{text:'教 AI 紀錄'}),
-  h('p',{text:'同意後，打牌時會在背景收集你自己的決策。按「用這些紀錄學習」會做出一個模型。之後在單人對戰把難度選成「學習」，有把握的步驟會照你的習慣走，其餘仍用困難 AI。猜中你的選擇還不是勝率。'}));
+  h('p',{text:'同意後，打牌時會在背景收集你自己的決策。按「用這些紀錄學習」會做出一個模型。之後在單人對戰把難度選成「學習」，有把握的步驟會照你的習慣走，其餘仍用困難 AI。猜中你的選擇還不是勝率。打完一把不會自動改學習筆數。新的決策要先送到伺服器，再按一次學習，筆數才會增加。'}));
  let me=null;
  try{me=await api('/api/me');}
  catch{root.append(h('p',{text:'請先登入，才能查看、匯出或刪除自己的紀錄。'}),h('a',{href:'/online.html',text:'前往登入'}));return;}
  void me;
+ const pending=await flushLocalQueue();
  const listed=await api('/api/coach/matches');
+ const steps=listed.matches.reduce((sum,match)=>sum+(Number(match.steps)||0),0);
  root.append(h('p',{text:'匿名識別 '+listed.anonymousId+'。匯出檔不含帳號名稱。'}));
+ root.append(h('p',{text:'伺服器上目前 '+listed.matches.length+' 場、'+steps+' 步。最新的一場排在最上面。學習筆數只計算有兩個以上合法選項的決策，所以會少於總步數。'}));
+ const pendingNote=queueNote(pending);
+ if(pendingNote)root.append(h('p',{text:pendingNote}));
  const actions=h('div',{class:'coach-actions'});
  const exportButton=h('button',{type:'button',text:'匯出 JSON'});
  exportButton.addEventListener('click',async()=>download('ua-v2-coach-export.json',await api('/api/coach/export')));
@@ -101,16 +137,21 @@ async function render(){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
  const learn=h('button',{type:'button',text:'用這些紀錄學習'});
- const report=h('p',{class:'note'});
+ const report=h('p',{class:'note',text:lastReport});
  learn.addEventListener('click',async()=>{
   learn.disabled=true;
-  report.textContent='正在學習…';
+  lastReport='正在學習…';
+  report.textContent=lastReport;
   try{
+   await flushLocalQueue();
    const result=await api('/api/coach/learn',{method:'POST',body:{}});
-   report.textContent=learnReport(result.policy);
+   lastReport=learnReport(result.policy);
+   await render();
   }catch(error){
-   report.textContent=error.message;
-  }finally{learn.disabled=false;}
+   lastReport=error.message;
+   report.textContent=lastReport;
+   learn.disabled=false;
+  }
  });
  const deleteAll=h('button',{type:'button',text:'刪除全部紀錄'});
  deleteAll.addEventListener('click',async()=>{
