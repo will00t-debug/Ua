@@ -8,6 +8,7 @@ import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from '../dist/uni
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
+import {lastHardAiTrace} from '../dist/universal-v2/hard-ai.mjs';
 import {coachObservation} from '../dist/universal-v2/coach-record.mjs';
 import {trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
@@ -41,21 +42,27 @@ function briefAction(view,action){
   line:action?.line||null,slot:Number.isInteger(action?.slot)?action.slot:null,
   cardId:cardIdOf(view,action?.uid)};
 }
+function tracedScore(action){
+ const found=(lastHardAiTrace()?.candidates||[]).find(item=>JSON.stringify(item?.action)===JSON.stringify(action));
+ return found&&Number.isFinite(found.score)?found.score:null;
+}
 function firstChangeOf(layout,state,seat,picked){
  const view=universalPublicView(layout.packs,state,seat);
  const diagnosis=picked.diagnosis||{};
  return {
   turn:state.turn,phase:state.phase,pending:state.pending?.kind||null,seat,
-  board:view.players.map(player=>({
+  board:view.players.map((player,index)=>({
    life:player.lifeCount,
-   hand:player.handCount,
+   hand:index===seat?(player.hand||[]).map(card=>card.cardId):player.handCount,
    front:(player.front||[]).filter(Boolean).map(card=>card.cardId),
    energy:(player.energy||[]).filter(Boolean).map(card=>card.cardId)
   })),
   hard:briefAction(view,diagnosis.hardAction),
   learned:briefAction(view,diagnosis.finalAction),
-  hardScore:diagnosis.hardScore,
-  preferenceScore:diagnosis.preferenceScore,
+  preference:briefAction(view,diagnosis.preference),
+  hardScore:tracedScore(diagnosis.hardAction)??diagnosis.hardScore,
+  learnedScore:tracedScore(diagnosis.finalAction),
+  preferenceScore:tracedScore(diagnosis.preference)??diagnosis.preferenceScore,
   bonus:diagnosis.bonus??0,
   reason:diagnosis.reason||null
  };
