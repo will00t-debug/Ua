@@ -6,9 +6,9 @@ import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.
 import {coachObservation,hiddenLeak} from '../dist/universal-v2/coach-record.mjs';
 import {officialV2Pack,officialV2Titles} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
-import {LEARN_FORMAT,LEARN_FORMAT_V2,LEARN_DIM,LEARN_MIN_AGREEMENT,LEARN_MIN_VALIDATION_DECISIONS,
- LEARN_MIN_VALIDATION_MATCHES,actionIdentity,activationOf,applyLearningAssist,featureKeys,
- partitionByMatch,policyRecordStatus,preferLearnedAction,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
+import {LEARN_FORMAT,LEARN_FORMAT_V2,LEARN_FORMAT_V3,LEARN_DIM,LEARN_MIN_AGREEMENT,LEARN_MIN_VALIDATION_DECISIONS,
+ LEARN_MIN_VALIDATION_MATCHES,actionIdentity,activationOf,applyLearningAssist,featureKeys,featuresOf,
+ interventionOf,learningBattleMode,learnReport,partitionByMatch,policyRecordStatus,preferLearnedAction,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
 const bleach=verifiedBleachPurplePilotDeck();
 const bleachPacks=[bleach.pack,bleach.pack];
@@ -366,8 +366,13 @@ test('unknown, old and broken models fall back without leaving the legal list',(
   support:{play:3},cards:{},profiles:{}});
  assert.equal(retired.state,'old');
  assert.match(retired.message,/重新訓練/);
+ const retiredV3=policyRecordStatus({format:LEARN_FORMAT_V3,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(0),
+  support:{play:3},cards:{},profiles:{}});
+ assert.equal(retiredV3.state,'old');
+ assert.match(retiredV3.message,/重新訓練/);
  const broken={format:LEARN_FORMAT,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(Number.NaN),support:{play:3},cards:{},profiles:{}};
- for(const policy of [{format:'ua-v2-learn-v1'},{format:LEARN_FORMAT_V2,dim:LEARN_DIM,weights:[0]},broken,null]){
+ for(const policy of [{format:'ua-v2-learn-v1'},{format:LEARN_FORMAT_V2,dim:LEARN_DIM,weights:[0]},
+  {format:LEARN_FORMAT_V3,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(0),support:{play:3},cards:{},profiles:{}},broken,null]){
   const result=applyLearningAssist({policy,observation,legal,seat:0,hardAction:hard,candidates});
   assert.equal(result.changed,false);
   assert.deepEqual(result.finalAction,hard);
@@ -542,15 +547,40 @@ test('an unfamiliar finalist cannot inherit another card passing the familiarity
  const alone=preferLearnedAction(policy,observation,[front045,energy045],0);
  assert.equal(alone.action,null);
  assert.equal(alone.reason,'fallback-unknown');
+ const learn=action=>{
+  const vec=featuresOf(observation,action,0);
+  let score=0;
+  for(let i=0;i<vec.length;i++)if(vec[i])score+=policy.weights[i]*vec[i];
+  return score;
+ };
+ const energyVec=featuresOf(observation,energy039,0);
+ const frontVec=featuresOf(observation,front039,0);
+ const nextVec=featuresOf(observation,next,0);
+ const others=legal.filter(action=>action!==energy039).map(action=>({
+  action,vec:featuresOf(observation,action,0)
+ }));
+ let nudged=false;
+ const target=(learn(next)+learn(front039))/2;
+ for(let i=0;i<energyVec.length&&!nudged;i++){
+  if(!energyVec[i]||frontVec[i]||nextVec[i])continue;
+  const gain=(target-learn(energy039))/energyVec[i];
+  const keepsFront=others.every(item=>!item.vec[i]||learn(item.action)+gain*item.vec[i]<learn(front039));
+  if(!keepsFront)continue;
+  policy.weights[i]+=gain;
+  nudged=true;
+ }
+ assert.equal(nudged,true);
+ assert.equal(learn(energy039)>learn(next),true);
+ assert.equal(learn(front039)>learn(energy039),true);
  const preference=preferLearnedAction(policy,observation,legal,0);
  assert.equal(preference.action.uid,card039.uid);
  assert.equal(preference.action.line,'front');
  const assisted=applyLearningAssist({
   policy,observation,legal,seat:0,hardAction:next,
   candidates:[
-   {action:next,score:20},
-   {action:energy039,score:80},
-   {action:front039,score:40},
+   {action:next,score:100},
+   {action:energy039,score:100},
+   {action:front039,score:80},
    {action:front045,score:200}
   ]
  });
@@ -789,4 +819,224 @@ test('a fair comparison uses the same unseen matches and says when it cannot',()
  assert.equal(overlap.validation.comparison.available,false);
  assert.equal(overlap.validation.comparison.reason,'overlap');
  assert.equal(overlap.validation.comparison.existingAgreement,null);
+});
+
+function blankModel(support,cards){
+ return {format:LEARN_FORMAT,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(0),
+  support,cards,profiles:{},active:true};
+}
+function favorOnly(policy,observation,action,seat,amount,others){
+ const mine=featuresOf(observation,action,seat);
+ const rest=others.map(item=>featuresOf(observation,item,seat));
+ for(let i=0;i<mine.length;i++){
+  if(!mine[i]||rest.some(vec=>vec[i]))continue;
+  policy.weights[i]=amount;
+  return true;
+ }
+ return false;
+}
+
+test('a single alternative bonus is measured from the hard choice',()=>{
+ const bleachPack=officialV2Pack('bleach');
+ const yellow=colorDeck(bleachPack,'yellow',['BLC-1-022','BLC-1-002','BLC-1-012','BLC-1-018','BLC-1-021']);
+ const reached=reachMain(bleachPack,yellow,29022);
+ place(reached.state,0,'BLC-1-002','energy',0,true);
+ place(reached.state,0,'BLC-1-012','energy',1,true);
+ place(reached.state,0,'BLC-1-018','energy',2,true);
+ const shown=take(reached.state,1,'BLC-1-021');
+ reached.state.players[1].deck.unshift(shown);
+ const self=take(reached.state,0,'BLC-1-022');
+ reached.state.players[0].hand.push(self);
+ const state=dispatchUniversalAction(reached.packs,reached.state,
+  legalUniversalActions(reached.packs,reached.state).find(action=>action.type==='play'&&action.uid===self.uid&&action.line==='front'));
+ assert.equal(state.pending.kind,'effect-reveal-opp-top');
+ const legal=legalUniversalActions(reached.packs,state);
+ const top=legal.find(action=>action.place==='top');
+ const outside=legal.find(action=>action.place==='outside');
+ const observation=coachObservation(reached.packs,state,0);
+ const preferred=blankModel({effect:4},{'BLC-1-021':2});
+ assert.equal(favorOnly(preferred,observation,outside,0,5,[top]),true);
+ const preference=preferLearnedAction(preferred,observation,legal,0);
+ assert.equal(preference.action.place,'outside',preference.reason);
+ const switched=applyLearningAssist({
+  policy:preferred,observation,legal,seat:0,hardAction:top,
+  candidates:[{action:top,score:100},{action:outside,score:99}]
+ });
+ assert.equal(switched.finalAction.place,'outside');
+ assert.equal(switched.changed,true);
+ assert.equal(switched.reason,'assist');
+ assert.equal(switched.bonus>0,true);
+ assert.equal(99+switched.bonus>=100,true);
+ const tied=blankModel({effect:4},{'BLC-1-021':2});
+ const kept=applyLearningAssist({
+  policy:tied,observation,legal,seat:0,hardAction:top,
+  candidates:[{action:top,score:100},{action:outside,score:101}]
+ });
+ assert.equal(kept.finalAction.place,'top');
+ assert.equal(kept.changed,false);
+ assert.equal(kept.bonus,0);
+ assert.match(kept.reason,/fallback-low-margin|agree|assist-kept/);
+ const wide=handObservation('BLC-1-039');
+ const front={type:'play',mode:'enter',uid:'0-1',line:'front'};
+ const energy={type:'play',mode:'enter',uid:'0-1',line:'energy'};
+ const pass={type:'next'};
+ const wideLegal=[pass,front,energy];
+ const widePolicy=blankModel({play:4,skip:4},{'BLC-1-039':4});
+ assert.equal(favorOnly(widePolicy,wide,front,0,8,[energy,pass]),true);
+ assert.equal(preferLearnedAction(widePolicy,wide,wideLegal,0).action.line,'front');
+ const noBonus=applyLearningAssist({
+  policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:100},{action:front,score:80},{action:energy,score:104}]
+ });
+ assert.equal(noBonus.finalAction.type,'next');
+ assert.equal(noBonus.changed,false);
+ assert.equal(noBonus.bonus,0);
+ const crosses=applyLearningAssist({
+  policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:100},{action:front,score:90},{action:energy,score:101}]
+ });
+ assert.equal(crosses.finalAction.line,'front');
+ assert.equal(crosses.changed,true);
+ assert.equal(crosses.bonus>0,true);
+ assert.equal(90+crosses.bonus>=107,true);
+ const tooFar=applyLearningAssist({
+  policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:100},{action:front,score:80},{action:energy,score:106}]
+ });
+ assert.equal(tooFar.changed,false);
+ assert.equal(tooFar.finalAction.type,'next');
+ const losing=applyLearningAssist({
+  policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:10},{action:front,score:-50000},{action:energy,score:9}]
+ });
+ assert.equal(losing.changed,false);
+ assert.equal(losing.reason,'protect-loss');
+ const illegal={type:'play',mode:'enter',uid:'9-9',line:'front'};
+ const illegalPolicy=blankModel({play:4},{'BLC-1-039':4,'NO-SUCH':4});
+ favorOnly(illegalPolicy,wide,front,0,8,[energy,pass]);
+ const stayed=applyLearningAssist({
+  policy:illegalPolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:100},{action:front,score:80},{action:illegal,score:400}]
+ });
+ assert.equal(wideLegal.some(action=>JSON.stringify(action)===JSON.stringify(stayed.finalAction)),true);
+ assert.notEqual(stayed.finalAction.uid,'9-9');
+});
+
+test('the revealed card is part of the current placement features',()=>{
+ const bleachPack=officialV2Pack('bleach');
+ const yellow=colorDeck(bleachPack,'yellow',['BLC-1-022','BLC-1-002','BLC-1-012','BLC-1-018','BLC-1-021']);
+ const reached=reachMain(bleachPack,yellow,29022);
+ place(reached.state,0,'BLC-1-002','energy',0,true);
+ place(reached.state,0,'BLC-1-012','energy',1,true);
+ place(reached.state,0,'BLC-1-018','energy',2,true);
+ const shown=take(reached.state,1,'BLC-1-021');
+ reached.state.players[1].deck.unshift(shown);
+ const self=take(reached.state,0,'BLC-1-022');
+ reached.state.players[0].hand.push(self);
+ const playAction=legalUniversalActions(reached.packs,reached.state)
+  .find(action=>action.type==='play'&&action.uid===self.uid&&action.line==='front');
+ const reveal=source=>dispatchUniversalAction(reached.packs,source,playAction);
+ const stateA=reveal(structuredClone(reached.state));
+ const swapped=structuredClone(reached.state);
+ const deck=swapped.players[1].deck;
+ const swapAt=deck.findIndex((card,index)=>index>0&&card.cardId!==deck[0].cardId);
+ assert.ok(swapAt>0);
+ const buriedTop=deck[0];
+ deck[0]=deck[swapAt];
+ deck[swapAt]=buriedTop;
+ const stateB=reveal(swapped);
+ assert.equal(stateA.pending.kind,'effect-reveal-opp-top');
+ assert.equal(stateB.pending.kind,'effect-reveal-opp-top');
+ assert.notEqual(stateA.publicReveals.at(-1).cardId,stateB.publicReveals.at(-1).cardId);
+ const first={packs:reached.packs,state:stateA,card:stateA.players[1].deck[0]};
+ const second={packs:reached.packs,state:stateB,card:stateB.players[1].deck[0]};
+ const legalA=legalUniversalActions(first.packs,first.state);
+ const legalB=legalUniversalActions(second.packs,second.state);
+ const topA=legalA.find(action=>action.place==='top');
+ const outsideA=legalA.find(action=>action.place==='outside');
+ const topB=legalB.find(action=>action.place==='top');
+ const outsideB=legalB.find(action=>action.place==='outside');
+ const viewA=coachObservation(first.packs,first.state,0);
+ const viewB=coachObservation(second.packs,second.state,0);
+ assert.notDeepEqual(featureKeys(viewA,topA,0),featureKeys(viewB,topB,0));
+ assert.ok(featureKeys(viewA,outsideA,0).some(key=>key.includes('shown:id:BLC-1-021')));
+ assert.ok(featureKeys(viewB,topB,0).some(key=>key.includes('shown:id:'+second.card.cardId)));
+ assert.equal(featureKeys(viewA,topA,0).some(key=>key.includes('shown:id:'+second.card.cardId)),false);
+ assert.ok(featureKeys(viewA,topA,0).some(key=>key.startsWith('shown:cost:')));
+ const token=uid=>new RegExp('(^|[^0-9A-Za-z])'+uid+'([^0-9]|$)');
+ assert.equal(token(first.card.uid).test(featureKeys(viewA,topA,0).join('\n')),false);
+ const older=structuredClone(viewA);
+ older.visible.publicReveals.unshift({kind:'revealed-top',cardId:'BLC-1-018',uid:'1-999',trigger:null});
+ assert.deepEqual(featureKeys(older,topA,0),featureKeys(viewA,topA,0));
+ const unrelated=structuredClone(viewA);
+ unrelated.visible.publicReveals.unshift({kind:'deck-top',cardId:'BLC-1-012',uid:'1-998'});
+ assert.deepEqual(featureKeys(unrelated,outsideA,0),featureKeys(viewA,outsideA,0));
+ const hidden=structuredClone(first.state);
+ const hiddenDeck=hidden.players[1].deck;
+ assert.ok(hiddenDeck.length>2);
+ assert.equal(hiddenDeck[0].cardId,first.state.players[1].deck[0].cardId);
+ const lower=hiddenDeck[1];
+ hiddenDeck[1]=hiddenDeck[2];
+ hiddenDeck[2]=lower;
+ assert.equal(assertUniversalMatch(first.packs,hidden),true);
+ assert.deepEqual(featureKeys(coachObservation(first.packs,hidden,0),topA,0),featureKeys(viewA,topA,0));
+ const rows=[];
+ for(let i=0;i<8;i++)rows.push(rowFrom(first.packs,structuredClone(first.state),outsideA,'show-a-'+i));
+ for(let i=0;i<8;i++)rows.push(rowFrom(second.packs,structuredClone(second.state),topB,'show-b-'+i));
+ const policy=trainPolicy(rows);
+ assert.equal(policy.format,LEARN_FORMAT);
+ const pickA=preferLearnedAction(policy,viewA,legalA,0);
+ const pickB=preferLearnedAction(policy,viewB,legalB,0);
+ assert.equal(pickA.action?.place,'outside',pickA.reason);
+ assert.equal(pickB.action?.place,'top',pickB.reason);
+});
+
+test('activation ignores steps the live battle will not score',()=>{
+ const keeps=[];
+ for(let i=0;i<16;i++){
+  const state=newUniversalMatch(bleachPacks,{decks:[bleach.counts,bleach.counts],seed:11,first:0,openingMulligan:true});
+  const choice=legalUniversalActions(bleachPacks,state).find(action=>action.mode==='keep');
+  keeps.push(rowFrom(bleachPacks,state,choice,'mulligan-only-'+i));
+ }
+ const mulligan=trainPolicy(keeps);
+ assert.equal(mulligan.validation.overallAgreement,1);
+ assert.equal(mulligan.validation.intervenableSamples,0);
+ assert.equal(mulligan.validation.possibleSamples,0);
+ assert.equal(mulligan.validation.confirmedSamples,0);
+ assert.equal(mulligan.validation.unscoredSamples>=8,true);
+ assert.equal(mulligan.validation.evaluationSufficient,false);
+ assert.equal(mulligan.validation.evaluationReason,'insufficient-intervenable');
+ assert.equal(mulligan.validation.accepted,false);
+ assert.equal(mulligan.validation.switchRate,null);
+ assert.equal(interventionOf(keeps[0]).label,'不會評分');
+ const report=learnReport(mulligan);
+ assert.match(report,/整體模仿吻合率/);
+ assert.match(report,/可能介入/);
+ assert.match(report,/已確認可介入/);
+ assert.match(report,/實戰改選率/);
+ const plays=[];
+ for(let i=0;i<16;i++)plays.push(plainRow('BLC-1-039','intervenable-'+i));
+ const enough=trainPolicy(plays);
+ assert.equal(enough.validation.intervenableSamples>=LEARN_MIN_VALIDATION_DECISIONS,true);
+ assert.equal(enough.validation.possibleSamples>=LEARN_MIN_VALIDATION_DECISIONS,true);
+ assert.equal(enough.validation.confirmedSamples,0);
+ assert.equal(enough.validation.evaluationSufficient,true);
+ assert.equal(enough.validation.accepted,true);
+ assert.equal(interventionOf(plays[0]).label,'可能介入');
+ const confirmed=plainRow('BLC-1-039','scored-row');
+ confirmed.hardAction=confirmed.choice;
+ confirmed.candidates=[{action:confirmed.choice,score:12,hard:true},{action:confirmed.legal[0],score:11}];
+ assert.equal(interventionOf(confirmed).label,'已確認可介入');
+ const order={choice:{type:'reorder',mode:'order'},observation:{visible:{pending:{kind:'phase-order'}}}};
+ assert.equal(interventionOf(order).level,'unscored');
+ const missing=learningBattleMode(null,{failed:true});
+ assert.equal(missing.effective,'hard');
+ assert.equal(missing.notice,'本場使用困難 AI');
+ assert.equal(missing.reason,'讀不到學習結果');
+ assert.equal(learningBattleMode({policy:null}).reason,'還沒有學習結果');
+ assert.equal(learningBattleMode({policy:null,inactive:true}).reason,'候選未啟用');
+ assert.equal(learningBattleMode({policy:null,stale:true}).reason,'舊特徵請重新訓練');
+ const ready=learningBattleMode({policy:enough});
+ assert.equal(ready.effective,'learned');
+ assert.equal(ready.policy.format,LEARN_FORMAT);
 });

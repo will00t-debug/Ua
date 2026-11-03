@@ -5,11 +5,11 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createServer} from 'node:http';
 import {verifiedBleachPurplePilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
-import {newUniversalMatch,legalUniversalActions} from '../dist/universal-v2/engine.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {chooseProgressSafeAiAction,aiPolicyFor} from '../dist/universal-v2/ai-driver-safety.mjs';
 import {buildHumanStep,coachHeader,coachObservation,newCoachMatchId} from '../dist/universal-v2/coach-record.mjs';
-import {LEARN_AI_VERSION,LEARN_DIM,LEARN_FORMAT,LEARN_FORMAT_V2,chooseLearnedAction,learnReport,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
+import {LEARN_AI_VERSION,LEARN_DIM,LEARN_FORMAT,LEARN_FORMAT_V2,LEARN_FORMAT_V3,chooseLearnedAction,learnReport,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 import {createHandler} from '../server/http.mjs';
 
 const deck=verifiedBleachPurplePilotDeck();
@@ -84,6 +84,11 @@ test('learned difficulty falls back to hard when the policy is missing or old',(
  assert.equal(staleV2.learned,false);
  assert.deepEqual(staleV2.action,hard);
  assert.equal(staleV2.diagnosis.reason,'fallback-old-model');
+ const retiredV3={format:LEARN_FORMAT_V3,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(0),support:{mulligan:4},cards:{},profiles:{}};
+ const staleV3=chooseProgressSafeAiAction(packs,state,{difficulty:'learned',policy:retiredV3,...clock});
+ assert.equal(staleV3.learned,false);
+ assert.deepEqual(staleV3.action,hard);
+ assert.equal(staleV3.diagnosis.reason,'fallback-old-model');
  const text=learnReport(trainPolicy(Array.from({length:12},(_,i)=>keepRow('m'+String(i).padStart(32,'a')))));
  assert.match(text,/勝率要在對戰裡另外看/);
  assert.doesNotMatch(text,/信心/);
@@ -116,15 +121,42 @@ function mulliganStep(mode){
  const header=coachHeader({matchId:newCoachMatchId(),packs,counts:deck.counts,aiVersion:'normal'});
  return buildHumanStep({packs,state,action,step:0,replayIndex:0,previous:null,header});
 }
-async function uploadMode(token,count,mode){
+function phaseState(){
+ let state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:11,first:0,openingMulligan:true});
+ const act=action=>{
+  const actor=state.pending?.player??state.active;
+  state=dispatchUniversalAction(packs,state,action,{actor});
+ };
+ const keep=()=>legalUniversalActions(packs,state).find(action=>action.mode==='keep');
+ act(keep());
+ act(keep());
+ return state;
+}
+function phaseStep(type){
+ const state=phaseState();
+ const legal=legalUniversalActions(packs,state);
+ const action=legal.find(item=>item.type===type);
+ assert.ok(action,type);
+ assert.equal(legal.length>=2,true);
+ assert.equal(state.pending,null);
+ const header=coachHeader({matchId:newCoachMatchId(),packs,counts:deck.counts,aiVersion:'normal'});
+ return buildHumanStep({packs,state,action,step:0,replayIndex:0,previous:null,header});
+}
+async function uploadSteps(token,count,stepFor){
  const ids=[];
  for(let i=0;i<count;i++){
-  const step=mulliganStep(mode);
+  const step=stepFor();
   ids.push(step.matchId);
   const saved=await api('/api/coach/steps',{method:'POST',token,body:step});
   assert.equal(saved.status,200,saved.text);
  }
  return ids;
+}
+async function uploadMode(token,count,mode){
+ return uploadSteps(token,count,()=>mulliganStep(mode));
+}
+async function uploadPhase(token,count,type){
+ return uploadSteps(token,count,()=>phaseStep(type));
 }
 async function removeMatches(token,ids){
  for(const matchId of ids){
@@ -153,11 +185,12 @@ test('learning is stored for the logged-in account and removed with that account
  assert.equal(owner.status,201,owner.text);
  const tooFew=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(tooFew.status,400);
- await uploadMode(owner.data.token,16,'keep');
+ await uploadPhase(owner.data.token,16,'next');
  const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(learned.status,200,learned.text);
  assert.equal(learned.data.replaced,true);
  assert.equal(learned.data.activated,true);
+ assert.equal(learned.data.policy.validation.intervenableSamples>=8,true);
  assert.equal(learned.data.policy.format,LEARN_FORMAT);
  assert.equal(learned.data.policy.validation.accepted,true);
  assert.equal(learned.data.policy.trainedSamples>=8,true);
@@ -184,8 +217,8 @@ test('a one-match holdout is saved but does not replace the active model',async(
  const owner=await api('/api/register',{method:'POST',body:{username:'learn_low',password:'correct-horse-1'}});
  const other=await api('/api/register',{method:'POST',body:{username:'learn_low_side',password:'correct-horse-1'}});
  assert.equal(owner.status,201,owner.text);
- await uploadMode(owner.data.token,8,'keep');
- await uploadMode(owner.data.token,1,'redraw');
+ await uploadPhase(owner.data.token,8,'next');
+ await uploadPhase(owner.data.token,1,'extraDraw');
  const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(learned.status,200,learned.text);
  assert.equal(learned.data.replaced,false);
@@ -194,6 +227,7 @@ test('a one-match holdout is saved but does not replace the active model',async(
  assert.equal(learned.data.policy,null);
  assert.equal(learned.data.candidate.validation.splitValid,true);
  assert.equal(learned.data.candidate.validation.heldoutSamples,1);
+ assert.equal(learned.data.candidate.validation.intervenableSamples,1);
  assert.equal(learned.data.candidate.validation.evaluationSufficient,false);
  assert.equal(learned.data.candidate.validation.accepted,false);
  assert.equal(learned.data.candidate.validation.reliable,undefined);
@@ -204,17 +238,45 @@ test('a one-match holdout is saved but does not replace the active model',async(
  assert.equal(side.data.policy,null);
 });
 
+test('mulligan records at full agreement do not activate by themselves',async()=>{
+ const owner=await api('/api/register',{method:'POST',body:{username:'learn_mull',password:'correct-horse-1'}});
+ const other=await api('/api/register',{method:'POST',body:{username:'learn_mull_side',password:'correct-horse-1'}});
+ assert.equal(owner.status,201,owner.text);
+ await uploadPhase(other.data.token,16,'next');
+ const sideLearned=await api('/api/coach/learn',{method:'POST',token:other.data.token,body:{}});
+ assert.equal(sideLearned.data.activated,true);
+ const sideWeights=sideLearned.data.policy.weights;
+ await uploadMode(owner.data.token,16,'keep');
+ const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
+ assert.equal(learned.status,200,learned.text);
+ assert.equal(learned.data.activated,false);
+ assert.equal(learned.data.savedCandidate,true);
+ assert.equal(learned.data.policy,null);
+ assert.equal(learned.data.candidate.validation.overallAgreement,1);
+ assert.equal(learned.data.candidate.validation.intervenableSamples,0);
+ assert.equal(learned.data.candidate.validation.evaluationReason,'insufficient-intervenable');
+ assert.equal(learned.data.candidate.validation.accepted,false);
+ assert.match(learned.data.report,/整體模仿吻合率/);
+ assert.match(learned.data.report,/可能介入/);
+ assert.match(learned.data.report,/實戰改選率/);
+ const reloaded=await api('/api/coach/policy',{token:owner.data.token});
+ assert.equal(reloaded.data.policy,null);
+ assert.equal(reloaded.data.inactive,true);
+ const side=await api('/api/coach/policy',{token:other.data.token});
+ assert.deepEqual(side.data.policy.weights,sideWeights);
+});
+
 test('agreement below the threshold does not replace a stored model',async()=>{
  const owner=await api('/api/register',{method:'POST',body:{username:'learn_keep',password:'correct-horse-1'}});
  assert.equal(owner.status,201,owner.text);
- const first=await uploadMode(owner.data.token,16,'keep');
+ const first=await uploadPhase(owner.data.token,16,'next');
  const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(learned.status,200,learned.text);
  assert.equal(learned.data.activated,true);
  const weights=learned.data.policy.weights;
  await removeMatches(owner.data.token,first);
- await uploadMode(owner.data.token,8,'keep');
- await uploadMode(owner.data.token,8,'redraw');
+ await uploadPhase(owner.data.token,8,'next');
+ await uploadPhase(owner.data.token,8,'extraDraw');
  const again=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(again.status,200,again.text);
  assert.equal(again.data.replaced,false);
@@ -234,11 +296,11 @@ test('a passed model stays after reload and restoring it leaves another account 
  const other=await api('/api/register',{method:'POST',body:{username:'learn_swap_side',password:'correct-horse-1'}});
  assert.equal(owner.status,201,owner.text);
  assert.equal(other.status,201,other.text);
- const sideIds=await uploadMode(other.data.token,16,'keep');
+ const sideIds=await uploadPhase(other.data.token,16,'next');
  const sideLearned=await api('/api/coach/learn',{method:'POST',token:other.data.token,body:{}});
  assert.equal(sideLearned.data.activated,true);
  const sideWeights=sideLearned.data.policy.weights;
- const firstIds=await uploadMode(owner.data.token,16,'keep');
+ const firstIds=await uploadPhase(owner.data.token,16,'next');
  const first=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(first.data.activated,true);
  assert.equal(first.data.policy.validation.accepted,true);
@@ -247,7 +309,7 @@ test('a passed model stays after reload and restoring it leaves another account 
  assert.deepEqual(loaded.data.policy.weights,weights);
  assert.equal(loaded.data.canRestore,false);
  await removeMatches(owner.data.token,firstIds);
- await uploadMode(owner.data.token,16,'redraw');
+ await uploadPhase(owner.data.token,16,'extraDraw');
  const second=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(second.data.replaced,true);
  assert.equal(second.data.activated,true);

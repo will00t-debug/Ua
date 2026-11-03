@@ -26,6 +26,40 @@ const layouts=[
  {name:'ttg-vs-bleach',packs:[ttg.pack,bleach.pack],decks:[ttg.counts,bleach.counts]}
 ];
 
+function cardIdOf(view,uid){
+ if(typeof uid!=='string')return null;
+ for(const player of view.players){
+  for(const line of ['front','energy','hand']){
+   const found=(player[line]||[]).find(card=>card?.uid===uid);
+   if(found?.cardId)return found.cardId;
+  }
+ }
+ return null;
+}
+function briefAction(view,action){
+ return {type:action?.type||null,mode:action?.mode||null,place:action?.place||null,
+  line:action?.line||null,slot:Number.isInteger(action?.slot)?action.slot:null,
+  cardId:cardIdOf(view,action?.uid)};
+}
+function firstChangeOf(layout,state,seat,picked){
+ const view=universalPublicView(layout.packs,state,seat);
+ const diagnosis=picked.diagnosis||{};
+ return {
+  turn:state.turn,phase:state.phase,pending:state.pending?.kind||null,seat,
+  board:view.players.map(player=>({
+   life:player.lifeCount,
+   hand:player.handCount,
+   front:(player.front||[]).filter(Boolean).map(card=>card.cardId),
+   energy:(player.energy||[]).filter(Boolean).map(card=>card.cardId)
+  })),
+  hard:briefAction(view,diagnosis.hardAction),
+  learned:briefAction(view,diagnosis.finalAction),
+  hardScore:diagnosis.hardScore,
+  preferenceScore:diagnosis.preferenceScore,
+  bonus:diagnosis.bonus??0,
+  reason:diagnosis.reason||null
+ };
+}
 function deckAt(layout,seat){
  if(layout.name==='bleach-mirror')return 'bleach';
  if(layout.name==='bleach-vs-ttg')return seat===0?'bleach':'ttg';
@@ -78,7 +112,7 @@ function blank(layout,seed,first,extra){
   learnedDeck:extra.learnedSeat==null?null:deckAt(layout,extra.learnedSeat),
   steps:0,status:'incomplete',endReason:null,error:null,winner:null,
   learnedDecisions:0,hardDecisions:0,changed:0,fallbacks:0,phaseBudget:0,reasons:{},
-  learnedMs:0,hardMs:0};
+  learnedMs:0,hardMs:0,firstChange:null};
 }
 
 const rows=[];
@@ -138,7 +172,10 @@ function play(layout,seed,first,role){
    if(learned){
     entry.learnedMs+=elapsed;
     entry.learnedDecisions++;
-    if(picked.diagnosis?.changed)entry.changed++;
+    if(picked.diagnosis?.changed){
+     entry.changed++;
+     if(!entry.firstChange)entry.firstChange=firstChangeOf(layout,state,seat,picked);
+    }
     const reason=picked.diagnosis?.reason||(picked.reason?'driver-'+picked.reason:'none');
     entry.reasons[reason]=(entry.reasons[reason]||0)+1;
     if(reason.startsWith('fallback')||reason.startsWith('protect'))entry.fallbacks++;
@@ -214,6 +251,61 @@ for(const layout of layouts)for(const learnedSeat of [0,1]){
  });
 }
 const learnedDecisions=sum(learnedGames,'learnedDecisions');
+function playHard(layout,state){
+ const budgets=[phaseCounter(),phaseCounter()];
+ let steps=0;
+ while(state.status==='playing'&&steps<STEP_CAP){
+  const legal=legalUniversalActions(layout.packs,state);
+  const picked=driven(layout.packs,state,{difficulty:'hard',...CLOCK},budgets[state.pending?.player??state.active]);
+  if(!legal.some(action=>JSON.stringify(action)===JSON.stringify(picked.action)))
+   return {status:'error',winner:null,endReason:'illegal',steps};
+  state=act(layout.packs,state,picked.action);
+  steps++;
+ }
+ const finished=state.status==='finished'&&DECIDED.has(state.endReason);
+ return {status:finished?'finished':state.status||'incomplete',winner:finished?state.winner:null,
+  endReason:state.endReason||null,steps};
+}
+function forkFirstChange(layout,seed,first,learnedSeat){
+ let state=fresh(layout,seed,first);
+ const budgets=[phaseCounter(),phaseCounter()];
+ let steps=0;
+ while(state.status==='playing'&&steps<STEP_CAP){
+  const seat=state.pending?.player??state.active;
+  const learned=seat===learnedSeat;
+  const picked=driven(layout.packs,state,
+   learned?{difficulty:'learned',policy,...CLOCK}:{difficulty:'hard',...CLOCK},budgets[seat]);
+  if(learned&&picked.diagnosis?.changed){
+   return {
+    hardContinuation:playHard(layout,act(layout.packs,structuredClone(state),picked.diagnosis.hardAction)),
+    learnedContinuation:playHard(layout,act(layout.packs,structuredClone(state),picked.action))
+   };
+  }
+  state=act(layout.packs,state,picked.action);
+  steps++;
+ }
+ return null;
+}
+const lossFlips=learnedGames.filter(game=>{
+ if(game.status!=='finished'||game.learnedSeat==null||game.winner===game.learnedSeat)return false;
+ const baseline=baselineGames.find(item=>item.layout===game.layout&&item.seed===game.seed&&
+  item.first===game.first&&item.status==='finished');
+ return !!baseline&&baseline.winner===game.learnedSeat;
+});
+const forkTargets=[
+ ...lossFlips.filter(game=>game.layout==='bleach-vs-ttg'&&game.learnedSeat===1),
+ ...lossFlips.filter(game=>!(game.layout==='bleach-vs-ttg'&&game.learnedSeat===1))
+].slice(0,6);
+const regressions=forkTargets.map(game=>{
+ const layout=layouts.find(item=>item.name===game.layout);
+ console.error('fork',game.layout,'seat',game.learnedSeat,game.seed,game.first);
+ const fork=forkFirstChange(layout,game.seed,game.first,game.learnedSeat);
+ const caused=!!fork&&fork.hardContinuation?.winner===game.learnedSeat&&
+  fork.learnedContinuation?.winner!==game.learnedSeat;
+ return {layout:game.layout,seed:game.seed,first:game.first,learnedSeat:game.learnedSeat,
+  learnedDeck:game.learnedDeck,baselineWinner:game.learnedSeat,learnedWinner:game.winner,
+  firstChange:game.firstChange,fork,switchExplainsLoss:caused};
+});
 const report={
  source:'synthetic-engine-teacher',
  disclaimer:'訓練列來自固定的可見資訊規則，不是玩家紀錄，也沒有提交真人決策。模仿相同比例不是勝率。對局數不足，以下是探索性結果，不能當成已經證實強度提升。',
@@ -234,6 +326,8 @@ const report={
   splitValid:policy.validation?.splitValid===true,
   evaluationSufficient:policy.validation?.evaluationSufficient===true,
   agreement:policy.validation?.agreement??null,
+  overallAgreement:policy.validation?.overallAgreement??null,
+  intervenableSamples:policy.validation?.intervenableSamples??0,
   heldoutMatches:policy.validation?.heldoutMatches??0,
   heldoutSamples:policy.validation?.heldoutSamples??0,
   note:'這裡的 agreement 是留出對局的模仿相同比例，不是勝率。伺服器只有 accepted 為真才會啟用模型。'
@@ -252,6 +346,8 @@ const report={
   meanLearnedMs:learnedDecisions?Math.round(sum(learnedGames,'learnedMs')/learnedDecisions*10)/10:null
  },
  baseline:countStatus(baselineGames),
+ lossFlips:lossFlips.length,
+ regressions,
  games:[...training,...games]
 };
 console.log(JSON.stringify(report,null,2));

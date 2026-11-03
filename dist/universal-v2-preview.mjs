@@ -26,8 +26,8 @@ import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadow
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmr2ship1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
-import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261104learn3';
-import {LEARN_FORMAT} from './universal-v2/learn-policy.mjs?v=20261104learn3';
+import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261104learn4';
+import {learningBattleMode,policyRecordStatus} from './universal-v2/learn-policy.mjs?v=20261104learn4';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
@@ -1049,7 +1049,7 @@ function saveBattleProgress(){
   const data={version:1,launchId:app.launch.config.id,state:app.state,replay:app.replay,
    history:app.history.slice(0,2500),recordNoted:app.recordNoted,
    aiCompletedSteps:app.aiCompletedSteps,lastAiProgress:app.lastAiProgress,
-   coach:app.coachBattle?.snapshot?.()||null};
+   coach:app.coachBattle?.snapshot?.()||null,learning:storedLearning()};
   sessionStorage.setItem(SOLO_BATTLE_PROGRESS_KEY,JSON.stringify(data));
  }catch{/* Private browsing/quota limits must not interrupt V2 legal gameplay. */}
 }
@@ -1077,6 +1077,7 @@ function restoreBattleProgress(){
   app.aiCompletedSteps=Number.isInteger(data.aiCompletedSteps)?data.aiCompletedSteps:0;
   app.lastAiProgress=typeof data.lastAiProgress==='string'?data.lastAiProgress.slice(0,100):'已恢復對局';
   app.pendingCoach=data.coach&&typeof data.coach==='object'?data.coach:null;
+  app.learningResolution=storedLearningFrom(data.learning);
   app.error='';app.undo=null;app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;
   app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
   return true;
@@ -1116,7 +1117,10 @@ function renderOpeningMulligan(target,s){
   }
   panel.append(decisions,el('p',{class:'v2-mulligan-hint',text:'每人只有這一次調度機會，確認後不可再次重抽。'}));
  }else panel.append(el('p',{class:'v2-mulligan-hint',role:'status',text:'等待電腦完成調度；你的起手牌會維持隱私。'}));
- panel.append(coachBar());
+ const coach=coachBar();
+ if(coach)panel.append(coach);
+ const note=battleAiNote();
+ if(note)panel.append(note);
  target.append(panel);
 }
 function printedCatalogue(side,cardId){
@@ -1252,17 +1256,91 @@ function mountPendingOverlay(overlay){
  (document.querySelector('.v2-shell')||document.body).append(overlay);
 }
 const AI_LEVEL_LABEL={easy:'簡單',normal:'普通',hard:'困難',learned:'學習'};
-async function ensureLearnedPolicy(){
- if(app.aiDifficulty!=='learned'){app.learnedPolicy=null;return true;}
- let data=null;
+function storedLearning(){
+ const resolution=app.learningResolution;
+ if(!resolution||typeof resolution!=='object')return null;
+ return {
+  effective:resolution.effective,notice:resolution.notice||'',reason:resolution.reason||'',
+  policy:resolution.policy||null
+ };
+}
+function storedLearningFrom(value){
+ if(!value||typeof value!=='object')return null;
+ if(value.effective==='learned'){
+  const status=policyRecordStatus(value.policy);
+  if(status.state!=='ok')return null;
+  return {effective:'learned',notice:'',reason:'',policy:status.policy};
+ }
+ if(value.effective==='hard'&&value.notice==='本場使用困難 AI')
+  return {effective:'hard',notice:value.notice,reason:typeof value.reason==='string'?value.reason.slice(0,40):'',policy:null};
+ if(value.effective==='easy'||value.effective==='normal'||value.effective==='hard')
+  return {effective:value.effective,notice:'',reason:'',policy:null};
+ return null;
+}
+function paintBattleAi(){
+ const resolution=app.learningResolution;
+ const requested=app.launch?.config?.difficulty||app.aiDifficulty;
+ const label=resolution?.notice?resolution.notice+(resolution.reason?' · '+resolution.reason:'')
+  :(AI_LEVEL_LABEL[app.aiDifficulty]||AI_LEVEL_LABEL[requested]||'普通');
+ const banner=$('battle-matchup');
+ if(banner&&app.launch?.decks){
+  banner.textContent=app.launch.decks[0].label+' vs '+app.launch.decks[1].label+' · '+label;
+ }
+ if(document.body){
+  document.body.dataset.aiPolicy=aiPolicyFor(app.aiDifficulty);
+  document.body.dataset.aiNotice=resolution?.notice||'';
+  document.body.dataset.aiReason=resolution?.reason||'';
+ }
+}
+function battleAiNote(){
+ const resolution=app.learningResolution;
+ if(!resolution?.notice)return null;
+ return el('div',{class:'panel v2-ai-status',role:'status'},
+  el('b',{text:resolution.notice}),
+  resolution.reason?el('span',{text:'　'+resolution.reason}):null);
+}
+function applyLearningResolution(resolution){
+ if(!resolution)return false;
+ if(resolution.effective==='learned'&&resolution.policy){
+  app.aiDifficulty='learned';
+  app.learnedPolicy=resolution.policy;
+  app.learningResolution=resolution;
+  paintBattleAi();
+  return true;
+ }
+ if(resolution.notice||resolution.effective==='easy'||resolution.effective==='normal'||resolution.effective==='hard'){
+  app.aiDifficulty=resolution.effective==='learned'?'hard':resolution.effective;
+  app.learnedPolicy=null;
+  app.learningResolution=resolution;
+  paintBattleAi();
+  return true;
+ }
+ return false;
+}
+async function resolveLearning(){
+ const requested=app.launch?.config?.difficulty||app.aiDifficulty;
+ if(requested!=='learned'){
+  app.aiDifficulty=requested;
+  app.learnedPolicy=null;
+  app.learningResolution={effective:requested,notice:'',reason:'',policy:null};
+  paintBattleAi();
+  return;
+ }
+ let payload=null,failed=false;
  try{
   const response=await fetch('/api/coach/policy',{credentials:'same-origin',headers:{accept:'application/json'}});
-  data=response.ok?await response.json():null;
-  app.learnedPolicy=data?.policy?.format===LEARN_FORMAT?data.policy:null;
- }catch{app.learnedPolicy=null;}
- if(app.learnedPolicy)return true;
- alertText(data?.message||'還沒有學習結果。請先到教 AI 頁按「用這些紀錄學習」。');
- return false;
+  if(!response.ok)failed=true;
+  else payload=await response.json();
+ }catch{failed=true;payload=null;}
+ const mode=learningBattleMode(payload,{failed});
+ app.aiDifficulty=mode.effective;
+ app.learnedPolicy=mode.policy;
+ app.learningResolution=mode;
+ paintBattleAi();
+}
+async function ensureLearnedPolicy(){
+ await resolveLearning();
+ return true;
 }
 function coachApi(){
  if(!app.coachBattle)app.coachBattle=createCoachBattle({storage:localStorage,onChange:paintCoachStatus});
@@ -1444,7 +1522,11 @@ function render(){
     btn('手動推進 AI 一步',manualAiStep,'btn small'):null,
    s.status==='playing'&&uiActor(s)===1&&app.busy?
     btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null));
- target.append(title,coachBar());
+ target.append(title);
+ const aiNote=battleAiNote();
+ if(aiNote)target.append(aiNote);
+ const coach=coachBar();
+ if(coach)target.append(coach);
  if(s.status==='playing'&&uiActor(s)===1){
   target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
    el('b',{text:app.busy?'AI 自動操作中':'AI 目前暫停'}),
@@ -1586,7 +1668,7 @@ function manualAiStep(){
  }
 }
 function driveAi(){
- if(document.body)document.body.dataset.aiPolicy=aiPolicyFor(app.aiDifficulty);
+ paintBattleAi();
  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
  app.busy=true;app.autoMoves=0;app.sequence++;
  app.aiPhaseKey=null;app.aiPhaseCount=0;
@@ -1879,7 +1961,8 @@ async function launchBattle(){
   if(!mine||!foe)throw Error('請選擇有已驗證 50 張牌組的作品。');
   const first=$('first-player').value==='ai'?1:0;
   app.aiDifficulty=$('ai-level').value;
-  if(!(await ensureLearnedPolicy()))return;
+  // A missing, inactive, old or unreadable model is resolved on the battle
+  // page. Setup still opens the match and the table says when hard AI is used.
   // Catch invalid packs before navigation. The real match draws a fresh seed
   // on the dedicated battle route rather than inheriting a fixed deck order.
   newUniversalMatch([mine.pack,foe.pack],{
@@ -1904,7 +1987,7 @@ async function startGame(){
   const [mine,foe]=app.launch.decks;
   const first=app.launch.config.first;
   app.aiDifficulty=app.launch.config.difficulty;
-  if(!(await ensureLearnedPolicy()))return;
+  await resolveLearning();
   app.packs=app.launch.packs;
   const seed=generateMatchSeed();
   app.recordDeckId=app.launch.config.recordDeckId;
@@ -1917,9 +2000,12 @@ async function startGame(){
   app.dismissedPublicMoveIds.clear();
   app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
+  const aiNote=app.learningResolution?.notice
+   ?app.learningResolution.notice+(app.learningResolution.reason?'：'+app.learningResolution.reason:'')
+   :'AI '+(AI_LEVEL_LABEL[app.aiDifficulty]||app.aiDifficulty);
   app.history=['新對局：'+(mine.label||fmtTitle(mine.pack.id))+' vs '+
    (foe.label||fmtTitle(foe.pack.id))+'｜先手 '+(first===0?'你':'電腦')+
-   '｜起手牌調度階段'];
+   '｜'+aiNote+'｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   void coachApi().begin(coachHeaderNow(newCoachMatchId()));
@@ -2055,7 +2141,7 @@ if(!IS_BATTLE_PAGE){
   else{
    const saved=app.pendingCoach;
    void (async()=>{
-    await ensureLearnedPolicy();
+    if(!applyLearningResolution(app.learningResolution))await resolveLearning();
     void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()));
     render();driveAi();
    })();

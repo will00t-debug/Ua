@@ -15,7 +15,17 @@ export const HARD_AI_POLICY='hard-search-2';
 const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
  'effect-top-order','effect-raid-witness-order','effect-raid-witness-move',
  'life-batch-order']);
+const WIDE_KINDS=new Set(['block','effect-block-floor','life-trigger','life-batch-order']);
 const ROOT_MARGIN=7;
+export const HARD_ROOT_MARGIN=ROOT_MARGIN;
+// Live search does not score mulligan or an order step. Learning must use
+// the same boundary when it decides which rows can change a battle choice.
+export function hardAiProvidesScores(pendingKind){
+ return pendingKind!=='opening-mulligan'&&!ORDER_KINDS.has(pendingKind);
+}
+export function hardSwitchMargin(pendingKind){
+ return !pendingKind||WIDE_KINDS.has(pendingKind)?ROOT_MARGIN:0;
+}
 const emptyReport=()=>({decisions:0,forced:0,deferred:0,overrides:0,kept:0,
  budgetExhausted:0,exceptions:0,unsupported:0,legacyMiss:0,uncompared:0,
  passed:0,ms:0,maxMs:0,nodes:0,byKind:{}});
@@ -672,8 +682,8 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
    return finish(legacy||legal[0],{reason:'unobserved',seed:view.seed,nodesBudget:limits.nodes});
   }
   evalCache=new Map();
-  const wide=!state.pending||['block','effect-block-floor','life-trigger',
-   'life-batch-order'].includes(state.pending.kind);
+  const margin=hardSwitchMargin(state.pending?.kind);
+  const wide=margin===ROOT_MARGIN;
   const {primary,baseline}=partitionBeam(pack,model,actor,legal,visible);
   let best=null,legacyScore=null;
   const seen=new Set();
@@ -743,7 +753,6 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
   // Effect choices use any measured gain: the frozen heuristic often
   // follows list order. Phase, block and life lines keep a margin, and a
   // line that was never compared does not replace that heuristic.
-  const margin=wide?ROOT_MARGIN:0;
   const uncompared=!!legacy&&legacyScore==null&&best.score<50000;
   if(uncompared)report.uncompared++;
   const idleTie=wide&&!!legacy&&legacyScore!=null&&isBaselineAction(best.action)&&

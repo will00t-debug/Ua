@@ -6,12 +6,14 @@
 // Win/loss, hidden hands, deck order and seeds are not features.
 // A learn score is not a probability and is not shown as confidence.
 import {classifyDecision} from './coach-format.mjs';
+import {hardAiProvidesScores,hardSwitchMargin} from './hard-ai.mjs';
 import {officialV2Pack,officialV2Titles} from './official-entry.mjs';
 
-export const LEARN_FORMAT='ua-v2-learn-v3';
+export const LEARN_FORMAT='ua-v2-learn-v4';
+export const LEARN_FORMAT_V3='ua-v2-learn-v3';
 export const LEARN_FORMAT_V2='ua-v2-learn-v2';
 export const LEARN_FORMAT_V1='ua-v2-learn-v1';
-export const LEARN_AI_VERSION='learned-v3';
+export const LEARN_AI_VERSION='learned-v4';
 export const LEARN_DIM=4096;
 export const LEARN_MIN_SAMPLES=8;
 export const LEARN_MARGIN=0.2;
@@ -372,14 +374,33 @@ function describe(observation,action,seat){
  for(const [color,count] of Object.entries(me.energyByColor||{})){
   if(count>0&&typeof color==='string')keys.push('x:color:'+color.slice(0,20)+'|'+intent);
  }
+ const pendingKind=observation?.visible?.pending?.kind;
+ if(type==='chooseRevealedTop'||pendingKind==='effect-reveal-opp-top'){
+  const shown=latestRevealedTop(observation);
+  const place=publicToken(action?.place)||'none';
+  if(shown){
+   addPrinted(keys,'shown',shown);
+   keys.push('shownPick:'+shown+'|'+place);
+  }else keys.push('shownPick:unknown|'+place);
+ }
  return keys;
+}
+function latestRevealedTop(observation){
+ const list=observation?.visible?.publicReveals;
+ if(!Array.isArray(list))return '';
+ for(let i=list.length-1;i>=0;i--){
+  const card=list[i];
+  if(!card||card.kind!=='revealed-top'||typeof card.cardId!=='string'||!card.cardId)continue;
+  return card.cardId;
+ }
+ return '';
 }
 export function featureKeys(observation,action,seat){
  return describe(observation,action,seat);
 }
 export function featuresOf(observation,action,seat){
  const vec=blank();
- for(const key of describe(observation,action,seat))vec[hash('v3|'+key)]+=1;
+ for(const key of describe(observation,action,seat))vec[hash('v4|'+key)]+=1;
  return vec;
 }
 function publicToken(text){
@@ -534,6 +555,58 @@ function scoreRows(policy,rows){
  }
  return {samples:rows.length,proposed,agreed,abstained,byClass};
 }
+function finiteScoreList(row){
+ const list=Array.isArray(row?.candidates)?row.candidates:Array.isArray(row?.scores)?row.scores:null;
+ if(!list)return null;
+ const scored=list.filter(item=>item&&Number.isFinite(item.score)&&item.action&&typeof item.action==='object');
+ return scored.length?scored:null;
+}
+// Battle never scores mulligan or an order step. A row that only names its
+// decision type can still be one the live search would score, but that is
+// only a possible intervention until the row carries engine scores.
+export function interventionOf(row){
+ const pending=row?.observation?.visible?.pending?.kind;
+ const choice=row?.choice;
+ const type=typeof choice?.type==='string'?choice.type:'';
+ const decisionClass=choice?classifyDecision(choice):'';
+ const pendingKnown=typeof pending==='string'&&pending.length>0;
+ const unscored=decisionClass==='mulligan'||type==='openingMulligan'||
+  (pendingKnown&&!hardAiProvidesScores(pending))||
+  (!pendingKnown&&decisionClass==='order');
+ if(unscored)return {level:'unscored',label:'不會評分'};
+ if(finiteScoreList(row))return {level:'confirmed',label:'已確認可介入'};
+ return {level:'possible',label:'可能介入'};
+}
+function intervenableRows(rows){
+ return rows.filter(row=>interventionOf(row).level!=='unscored');
+}
+function switchStats(policy,rows){
+ const confirmed=rows.filter(row=>interventionOf(row).level==='confirmed');
+ if(!confirmed.length)return {switchRate:null,switchSamples:0,switchChanges:0};
+ let switchSamples=0,switchChanges=0;
+ for(const row of confirmed){
+  const candidates=finiteScoreList(row);
+  const hardAction=row.hardAction||candidates.find(item=>item.hard===true)?.action||null;
+  if(!hardAction||!Array.isArray(row.legal))continue;
+  const result=applyLearningAssist({
+   policy,observation:row.observation,legal:row.legal,seat:row.seat,hardAction,candidates
+  });
+  if(result.reason==='fallback-illegal'||result.reason==='fallback-no-hard')continue;
+  switchSamples++;
+  if(result.changed)switchChanges++;
+ }
+ if(!switchSamples)return {switchRate:null,switchSamples:0,switchChanges:0};
+ return {switchRate:switchChanges/switchSamples,switchSamples,switchChanges};
+}
+function interventionCounts(rows){
+ const counts={possible:0,confirmed:0,unscored:0,intervenable:0};
+ for(const row of rows){
+  const level=interventionOf(row).level;
+  counts[level]=(counts[level]||0)+1;
+  if(level!=='unscored')counts.intervenable++;
+ }
+ return counts;
+}
 
 export function partitionByMatch(rows){
  const order=[];
@@ -560,11 +633,11 @@ export function partitionByMatch(rows){
  }
  if(maxK<1)return blocked;
  let chosen=0;
- let heldRows=0;
+ let heldIntervenable=0;
  for(let k=1;k<=maxK;k++){
   chosen=k;
-  heldRows+=grouped.get(order[order.length-k]).length;
-  if(k>=LEARN_MIN_VALIDATION_MATCHES&&heldRows>=LEARN_MIN_VALIDATION_DECISIONS)break;
+  heldIntervenable+=intervenableRows(grouped.get(order[order.length-k])).length;
+  if(k>=LEARN_MIN_VALIDATION_MATCHES&&heldIntervenable>=LEARN_MIN_VALIDATION_DECISIONS)break;
  }
  const heldIds=order.slice(order.length-chosen);
  const trainIds=order.slice(0,order.length-chosen);
@@ -572,14 +645,15 @@ export function partitionByMatch(rows){
  const train=[];
  for(const matchId of trainIds)train.push(...grouped.get(matchId));
  for(const matchId of heldIds)held.push(...grouped.get(matchId));
+ const intervenableHeld=intervenableRows(held).length;
  const evaluationSufficient=heldIds.length>=LEARN_MIN_VALIDATION_MATCHES&&
-  held.length>=LEARN_MIN_VALIDATION_DECISIONS;
+  intervenableHeld>=LEARN_MIN_VALIDATION_DECISIONS;
  const evaluationReason=evaluationSufficient?null:
-  held.length<LEARN_MIN_VALIDATION_DECISIONS?'insufficient-decisions':'insufficient-matches';
+  heldIds.length<LEARN_MIN_VALIDATION_MATCHES?'insufficient-matches':'insufficient-intervenable';
  return {
   train,held,heldMatchIds:heldIds,trainMatchIds:trainIds,
   splitValid:true,splitReason:null,evaluationSufficient,evaluationReason,
-  matchCount:order.length,heldoutMatches:heldIds.length
+  matchCount:order.length,heldoutMatches:heldIds.length,intervenableHeld
  };
 }
 export function activationOf({splitValid,evaluationSufficient,agreement,comparison}={}){
@@ -617,8 +691,13 @@ export function trainPolicy(rows,options={}){
   format:LEARN_FORMAT,dim:LEARN_DIM,weights:probeWeights,
   support:probeCount.support,cards:probeCount.cards,profiles:probeCount.profiles
  };
- const heldScore=split.held.length?scoreRows(probePolicy,split.held):null;
+ const heldFocus=intervenableRows(split.held);
+ const heldCounts=interventionCounts(split.held);
+ const overallScore=split.held.length?scoreRows(probePolicy,split.held):null;
+ const heldScore=heldFocus.length?scoreRows(probePolicy,heldFocus):null;
+ const overallSamples=overallScore?.samples||0;
  const samples=heldScore?.samples||0;
+ const overallAgreement=overallSamples?overallScore.agreed/overallSamples:null;
  const agreement=samples?heldScore.agreed/samples:null;
  const existing=options.existing||null;
  const existingStatus=existing?policyRecordStatus(existing):{state:'missing'};
@@ -631,11 +710,12 @@ export function trainPolicy(rows,options={}){
   else if(split.heldMatchIds.some(matchId=>seen.includes(matchId)))
    comparison={...comparison,reason:'overlap'};
   else{
-   const existingScore=scoreRows(existingStatus.policy,split.held);
+   const existingScore=scoreRows(existingStatus.policy,heldFocus);
    const existingAgreement=existingScore.samples?existingScore.agreed/existingScore.samples:0;
    comparison={available:true,reason:null,samples,candidateAgreement:agreement,existingAgreement};
   }
  }
+ const switches=switchStats(probePolicy,split.held);
  const decision=activationOf({
   splitValid:split.splitValid,evaluationSufficient:split.evaluationSufficient,agreement,comparison
  });
@@ -653,6 +733,15 @@ export function trainPolicy(rows,options={}){
   accepted:decision.accepted,
   acceptReason:decision.acceptReason,
   agreement,
+  overallAgreement,
+  overallSamples,
+  intervenableSamples:samples,
+  possibleSamples:heldCounts.possible,
+  confirmedSamples:heldCounts.confirmed,
+  unscoredSamples:heldCounts.unscored,
+  switchRate:switches.switchRate,
+  switchSamples:switches.switchSamples,
+  switchChanges:switches.switchChanges,
   minMatches:LEARN_MIN_VALIDATION_MATCHES,
   minDecisions:LEARN_MIN_VALIDATION_DECISIONS,
   minAgreement:LEARN_MIN_AGREEMENT,
@@ -665,11 +754,11 @@ export function trainPolicy(rows,options={}){
   byClass:heldScore?.byClass||{},
   comparison,
   model:'probe-without-heldout-matches',
-  hardChanges:null,
+  hardChanges:switches.switchChanges,
   note:decision.accepted
-   ?'留出的是完整對局，而且筆數達到啟用門檻。相同比例是模仿玩家當時的選擇，不是勝率，也不是戰力。'
+   ?'留出的是完整對局。啟用看的是實戰可能評分的決策，不是全部步驟的模仿比例，也不是勝率。'
    :split.splitValid
-    ?'對局有整場分開。評估資料或模仿比例不夠時，不能把這次結果當成通過驗證。'
+    ?'對局有整場分開。可介入的決策或模仿比例不夠時，不能把這次結果當成通過驗證。'
     :'完整對局不足。沒有把同一場切成訓練和驗證。'
  };
  return {
@@ -700,7 +789,7 @@ export function readPolicy(value){
 }
 export function policyRecordStatus(value){
  if(!value||typeof value!=='object')return {state:'missing',policy:null,message:''};
- if(value.format===LEARN_FORMAT_V1||value.format===LEARN_FORMAT_V2)return {state:'old',policy:null,
+ if(value.format===LEARN_FORMAT_V1||value.format===LEARN_FORMAT_V2||value.format===LEARN_FORMAT_V3)return {state:'old',policy:null,
   message:'以前的學習結果用的是舊特徵，不能直接套用。請重新訓練：再按一次「用這些紀錄學習」。驗證通過之後才會換上，舊權重會留下。'};
  const policy=readPolicy(value);
  if(!policy)return {state:'incompatible',policy:null,message:'學習結果和目前的模型不相容，已沿用困難 AI。請重新學習。'};
@@ -786,7 +875,7 @@ export function applyLearningAssist({
  const cap=assistCapOf(assistCap);
  const base={
   hardAction:hardAction||null,preference:null,finalAction:hardAction||null,
-  changed:false,reason:null,margin:null,hardScore:null,preferenceScore:null
+  changed:false,reason:null,margin:null,hardScore:null,preferenceScore:null,bonus:0
  };
  if(!hardAction)return {...base,reason:'fallback-no-hard'};
  if(!Array.isArray(legal)||!legal.some(action=>same(action,hardAction)))
@@ -825,41 +914,48 @@ export function applyLearningAssist({
    return {ok:false,reason:'fallback-unknown'};
   return {ok:true,reason:null};
  };
+ const learnOf=action=>dotSparse(model.weights,pairsOf(observation,action,actor));
+ const hardLearn=learnOf(hardAction);
  const eligible=scored.filter(item=>!same(item.action,hardAction)&&
   learnGate(item.action).ok&&!blocked(item.action));
- const learnScores=eligible.map(item=>dotSparse(model.weights,pairsOf(observation,item.action,actor)));
- const mean=learnScores.length?learnScores.reduce((sum,score)=>sum+score,0)/learnScores.length:0;
- let maxDev=0;
- for(const score of learnScores)maxDev=Math.max(maxDev,Math.abs(score-mean));
+ let maxAbs=0;
+ const deltas=eligible.map(item=>{
+  const delta=learnOf(item.action)-hardLearn;
+  maxAbs=Math.max(maxAbs,Math.abs(delta));
+  return {item,delta};
+ });
  const bonusOf=action=>{
-  const index=eligible.findIndex(item=>same(item.action,action));
-  if(index<0||!(maxDev>0))return 0;
-  return clamp((learnScores[index]-mean)/maxDev*cap,-cap,cap);
+  const found=deltas.find(row=>same(row.item.action,action));
+  if(!found||!(maxAbs>0))return 0;
+  return clamp(found.delta/maxAbs*cap,-cap,cap);
  };
- const pool=scored.filter(item=>same(item.action,hardAction)||
-  eligible.some(other=>same(other.action,item.action)));
+ const switchMargin=hardSwitchMargin(observation?.visible?.pending?.kind);
+ const threshold=hardScore+switchMargin;
  let best=null;
- for(const item of pool){
-  const adjusted=item.score+bonusOf(item.action);
-  const identity=actionIdentity(observation,item.action,actor);
-  const current={action:item.action,adjusted,hard:item.score,identity};
+ for(const row of deltas){
+  const bonus=bonusOf(row.item.action);
+  if(!(bonus>0))continue;
+  if(!(row.item.score<threshold))continue;
+  const adjusted=row.item.score+bonus;
+  if(!(adjusted>=threshold))continue;
+  const identity=actionIdentity(observation,row.item.action,actor);
+  const current={action:row.item.action,adjusted,hard:row.item.score,identity,bonus};
   if(!best||adjusted>best.adjusted+1e-9)best=current;
   else if(Math.abs(adjusted-best.adjusted)<=1e-9){
-   if(same(current.action,hardAction))best=current;
-   else if(!same(best.action,hardAction)&&current.hard>best.hard)best=current;
-   else if(!same(best.action,hardAction)&&current.hard===best.hard&&identity<best.identity)best=current;
+   if(current.hard>best.hard)best=current;
+   else if(current.hard===best.hard&&identity<best.identity)best=current;
   }
  }
- if(!best)return {...base,reason:'fallback-uncompared'};
+ if(!best)return {...base,reason:'assist-kept'};
  const finalAction=legal.find(action=>same(action,best.action))||hardAction;
  if(!same(finalAction,hardAction)){
   const gate=learnGate(finalAction);
   const guard=blocked(finalAction);
   if(!gate.ok||guard)
-   return {...base,finalAction:hardAction,changed:false,reason:guard||gate.reason};
+   return {...base,finalAction:hardAction,changed:false,bonus:0,reason:guard||gate.reason};
  }
  const changed=!same(finalAction,hardAction);
- return {...base,finalAction,changed,reason:changed?'assist':'assist-kept'};
+ return {...base,finalAction,changed,bonus:changed?best.bonus:0,reason:changed?'assist':'assist-kept'};
 }
 
 const CLASS_LABEL={
@@ -883,27 +979,50 @@ export function learnReport(policy){
  if(!validation.splitValid){
   lines.push('完整對局不足，無法分開驗證。沒有把同一場切成兩半，這次也不能啟用。');
  }else if(!validation.evaluationSufficient){
-  lines.push('對局已整場分開，但留出驗證不到 '+LEARN_MIN_VALIDATION_MATCHES+' 場或 '+
-   LEARN_MIN_VALIDATION_DECISIONS+' 筆。資料不足，不能當成通過，也不會因此啟用。');
- }else if(validation.heldoutSamples>0){
-  lines.push('留出 '+validation.heldoutMatches+' 場、'+validation.heldoutSamples+' 筆。模型提出 '+
-   validation.proposed+' 筆，其中和你當時的選擇相同 '+validation.agreed+' 筆，沒有提出而回退 '+
-   validation.abstained+' 筆。');
-  const detail=classLine(validation);
-  if(detail)lines.push(detail+'。');
-  const rate=typeof validation.agreement==='number'?Math.round(validation.agreement*1000)/10:null;
-  if(rate!=null)lines.push('留出筆數裡選擇相同的比例是 '+rate+'%。這是模仿你當時的選擇，不是勝率，也不是戰力。啟用門檻是 '+
-   Math.round(LEARN_MIN_AGREEMENT*100)+'%。');
+  const why=validation.evaluationReason==='insufficient-intervenable'
+   ?'留出的對局裡，實戰會評分的決策不到 '+LEARN_MIN_VALIDATION_DECISIONS+' 筆。調度或排序即使全部猜中，也不能單獨啟用。'
+   :'留出驗證不到 '+LEARN_MIN_VALIDATION_MATCHES+' 場。';
+  lines.push('對局已整場分開，但'+why+'資料不足，不能當成通過，也不會因此啟用。');
+ }
+ if(validation.splitValid&&(validation.heldoutSamples>0||validation.intervenableSamples>0)){
+  lines.push('留出 '+validation.heldoutMatches+' 場、'+validation.heldoutSamples+' 筆。');
+  const overall=typeof validation.overallAgreement==='number'?Math.round(validation.overallAgreement*1000)/10:null;
+  if(overall!=null)lines.push('整體模仿吻合率是 '+overall+'%。這把調度和排序也算進去，不是啟用門檻，也不是勝率。');
+  lines.push('可參與評分的決策有 '+(validation.intervenableSamples||0)+' 筆。其中可能介入 '+
+   (validation.possibleSamples||0)+' 筆，已確認可介入 '+(validation.confirmedSamples||0)+' 筆。實戰不會評分的有 '+
+   (validation.unscoredSamples||0)+' 筆。');
+  if(validation.intervenableSamples>0){
+   lines.push('可介入的留出決策裡，模型提出 '+validation.proposed+' 筆，其中和你當時的選擇相同 '+
+    validation.agreed+' 筆，沒有提出而回退 '+validation.abstained+' 筆。');
+   const detail=classLine(validation);
+   if(detail)lines.push(detail+'。');
+   const rate=typeof validation.agreement==='number'?Math.round(validation.agreement*1000)/10:null;
+   if(rate!=null)lines.push('可介入決策的模仿吻合率是 '+rate+'%。啟用門檻是 '+
+    Math.round(LEARN_MIN_AGREEMENT*100)+'%，而且至少要有 '+LEARN_MIN_VALIDATION_DECISIONS+' 筆可介入決策。');
+  }
+  if(typeof validation.switchRate==='number'){
+   lines.push('有引擎分數的 '+(validation.switchSamples||0)+' 筆裡，學習加分促成改選的比例是 '+
+    Math.round(validation.switchRate*1000)/10+'%。');
+  }else lines.push('這些留出決策沒有困難 AI 的分數，所以實戰改選率先不算。對戰當下的診斷才分得出有沒有改。');
   if(validation.comparison?.available){
    const other=Math.round((validation.comparison.existingAgreement||0)*1000)/10;
-   lines.push('候選和目前模型在同一批雙方都沒看過的對局上比較。目前模型的相同比例是 '+other+'%。');
+   lines.push('候選和目前模型在同一批雙方都沒看過的對局上比較可介入決策。目前模型的相同比例是 '+other+'%。');
   }else lines.push('這次沒有和目前模型做公平比較，不把缺少比較說成已經比過。');
   lines.push(validation.accepted?'這次驗證通過，可以啟用。':'這次驗證沒有通過，不會替換目前啟用的模型。');
-  lines.push('留出對局沒有困難 AI 的分數，所以這裡不算實際改走法。對戰當下的診斷才分得出有沒有改。');
  }
  lines.push('原始分數差不是機率，畫面上也不換成百分比。請在對戰設定把電腦難度選成「學習」。學習只在困難 AI 的相近走法之間加減有限的分數。');
  lines.push('勝率要在對戰裡另外看。');
  return lines.join('');
+}
+export function learningBattleMode(payload,{failed=false}={}){
+ if(failed)return {effective:'hard',notice:'本場使用困難 AI',reason:'讀不到學習結果',policy:null};
+ const status=payload?.policy?policyRecordStatus(payload.policy):{state:'missing',policy:null};
+ if(status.state==='ok')return {effective:'learned',notice:'',reason:'',policy:status.policy};
+ let reason='還沒有學習結果';
+ if(payload?.inactive||status.state==='inactive')reason='候選未啟用';
+ else if(payload?.stale||status.state==='old')reason='舊特徵請重新訓練';
+ else if(status.state==='incompatible')reason='學習結果不相容';
+ return {effective:'hard',notice:'本場使用困難 AI',reason,policy:null};
 }
 export function rowsFromJsonl(text){
  const rows=[];
