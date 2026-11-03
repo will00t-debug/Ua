@@ -224,8 +224,11 @@ function ensureMatch(repos,user,anonymous,header,now){
  const existing=repos.coachMatch(user.id,header.matchId);
  const headerJson=JSON.stringify(header);
  if(!existing){
-  if(repos.coachMatchCount(user.id)>=MAX_MATCHES)
-   throw new ApiError(400,'紀錄已達 40 場，請先刪除舊資料。');
+  const overflow=repos.coachMatchCount(user.id)-(MAX_MATCHES-1);
+  if(overflow>0){
+   for(const oldId of repos.oldestCoachMatchIds(user.id,overflow))
+    repos.deleteCoachMatch(user.id,oldId);
+  }
   repos.insertCoachMatch({
    id:header.matchId,userId:user.id,anonymousId:anonymous,engine:header.engine,
    engineVersion:header.engineVersion,poolJson:JSON.stringify(header.pool),

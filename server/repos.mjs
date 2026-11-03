@@ -309,6 +309,10 @@ export function createRepositories(sql){
   coachMatchCount(userId){
    return Number(sql.get('SELECT COUNT(*) AS n FROM coach_matches WHERE user_id=?',userId)?.n||0);
   },
+  oldestCoachMatchIds(userId,limit){
+   return sql.all('SELECT id FROM coach_matches WHERE user_id=? ORDER BY created_at ASC, id ASC LIMIT ?',userId,limit)
+    .map(row=>row.id);
+  },
   coachMatch(userId,matchId){
    return sql.get(`SELECT id,user_id AS userId,anonymous_id AS anonymousId,engine,engine_version AS engineVersion,
     pool_json AS poolJson,ai_version AS aiVersion,deck_json AS deckJson,header_json AS headerJson,
