@@ -27,7 +27,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  const uploader=createCoachUploader({
   consent:()=>coachConsentEnabled(storage),
   fetchImpl,
-  onUploaded(){uploaded++;onChange?.();},
+  onUploaded(){uploaded++;lastError='';onChange?.();},
   onError(message){lastError=message||'紀錄沒有送出。';onChange?.();}
  });
  const queue=createDecisionQueue({

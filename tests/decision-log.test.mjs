@@ -290,6 +290,114 @@ test('a dropped upload is retried once and the same client key is not stored twi
  assert.equal(queue.length, 0);
 });
 
+test('a rejected row is skipped so the next match can upload', async()=>{
+ const matchA='m'+'a'.repeat(32);
+ const matchB='m'+'b'.repeat(32);
+ const stepA0={clientKey:matchA+':0:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:0};
+ const stepA1={clientKey:matchA+':1:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:1};
+ const labelA={clientKey:matchA+':label:life-zero', format:'ua-v2-coach-label-v2', matchId:matchA, endReason:'life-zero'};
+ const stepB={clientKey:matchB+':0:human', format:'ua-v2-coach-step-v2', matchId:matchB, step:0};
+ const sent=[];
+ const queue=createDecisionQueue({
+  storage:memoryStorage(),
+  consent:()=>true,
+  schedule(){return 1;},
+  async send(body){
+   sent.push(body.clientKey);
+   if(body.matchId===matchA&&String(body.format).includes('step'))
+    return {ok:false, status:409, data:{error:'步驟順序不連續。'}};
+   return {ok:true};
+  }
+ });
+ queue.start();
+ queue.enqueue(stepA0);
+ queue.enqueue(stepA1);
+ queue.enqueue(labelA);
+ queue.enqueue(stepB);
+ await queue.flushNow();
+ assert.deepEqual(sent, [stepA0.clientKey, labelA.clientKey, stepB.clientKey]);
+ assert.equal(queue.length, 0);
+ assert.equal(queue.dropped, 2);
+ assert.match(queue.lastError, /步驟順序不連續/);
+});
+
+test('a saved rejection no longer blocks rows that were queued behind it', async()=>{
+ const matchA='m'+'c'.repeat(32);
+ const matchB='m'+'d'.repeat(32);
+ const stuck={
+  clientKey:matchA+':0:human',
+  body:{clientKey:matchA+':0:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:0},
+  attempts:1, bytes:20, holdUntil:Date.now()+60000, lastStatus:409, lastError:'步驟順序不連續。'
+ };
+ const next={
+  clientKey:matchB+':0:human',
+  body:{clientKey:matchB+':0:human', format:'ua-v2-coach-step-v2', matchId:matchB, step:0},
+  attempts:0, bytes:20, holdUntil:0
+ };
+ const storage=memoryStorage({'ua-v2-coach-queue-v1':JSON.stringify([stuck, next])});
+ const sent=[];
+ const queue=createDecisionQueue({
+  storage,
+  consent:()=>true,
+  schedule(){return 1;},
+  async send(body){sent.push(body.clientKey);return {ok:true};}
+ });
+ queue.start();
+ await queue.flushNow();
+ assert.deepEqual(sent, [next.clientKey]);
+ assert.equal(queue.length, 0);
+ assert.equal(queue.dropped, 1);
+});
+
+test('a network failure still holds the rows behind it', async()=>{
+ const first={clientKey:'m'+'1'.repeat(32)+':0:human', format:'ua-v2-coach-step-v2', matchId:'m'+'1'.repeat(32)};
+ const second={clientKey:'m'+'2'.repeat(32)+':0:human', format:'ua-v2-coach-step-v2', matchId:'m'+'2'.repeat(32)};
+ let attempts=0;
+ const queue=createDecisionQueue({
+  storage:memoryStorage(),
+  consent:()=>true,
+  schedule(){return 1;},
+  async send(){attempts++;return {ok:false, status:0};}
+ });
+ queue.start();
+ queue.enqueue(first);
+ queue.enqueue(second);
+ await queue.flushNow();
+ assert.equal(attempts, 1);
+ assert.equal(queue.length, 2);
+ assert.equal(queue.dropped, 0);
+});
+
+test('undo cannot retract a row that is already being uploaded', async()=>{
+ const match='m'+'e'.repeat(32);
+ const first={clientKey:match+':0:human', format:'ua-v2-coach-step-v2', matchId:match, step:0};
+ const second={clientKey:match+':1:human', format:'ua-v2-coach-step-v2', matchId:match, step:1};
+ let calls=0;
+ let release;
+ const sent=[];
+ const queue=createDecisionQueue({
+  storage:memoryStorage(),
+  consent:()=>true,
+  schedule(){return 1;},
+  send(body){
+   sent.push(body.clientKey);
+   calls++;
+   if(calls===1)return new Promise(resolve=>{release=()=>resolve({ok:true});});
+   return Promise.resolve({ok:true});
+  }
+ });
+ queue.start();
+ queue.enqueue(first);
+ queue.enqueue(second);
+ const flushing=queue.flushNow();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(queue.drop(first.clientKey), false);
+ release();
+ await flushing;
+ assert.deepEqual(sent, [first.clientKey, second.clientKey]);
+ assert.equal(queue.length, 0);
+});
+
 test('turning consent off drops an upload that is already in flight', async()=>{
  const body={clientKey:'m'+'d'.repeat(32)+':0:human', format:'ua-v2-coach-step-v2'};
  let release;

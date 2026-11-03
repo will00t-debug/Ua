@@ -29,7 +29,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
  const uploader=createCoachUploader({
   consent:()=>coachConsentEnabled(storage),
   fetchImpl,
-  onUploaded(){uploaded++;if(session)session.uploaded=uploaded;},
+  onUploaded(){uploaded++;if(session){session.uploaded=uploaded;session.lastError='';}},
   onError(message){if(session)session.lastError=message||'紀錄沒有送出。';}
  });
  const queue=createDecisionQueue({
