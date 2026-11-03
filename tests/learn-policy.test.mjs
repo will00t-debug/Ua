@@ -64,19 +64,24 @@ test('a learned policy copies a repeated human choice and ignores hidden, forced
  assert.match(text,/勝率要在對戰裡另外看/);
 });
 
-test('learned difficulty follows the policy and otherwise uses the hard policy',()=>{
+test('learned difficulty falls back to hard when the policy is missing or old',()=>{
  assert.equal(aiPolicyFor('learned'),LEARN_AI_VERSION);
- let state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:11,first:0,openingMulligan:true});
- const rows=[];
- for(let i=0;i<12;i++)rows.push(keepRow('m'+String(i).padStart(32,'a')));
- const policy=trainPolicy(rows);
- const learned=chooseProgressSafeAiAction(packs,state,{difficulty:'learned',policy});
- assert.equal(learned.learned,true);
- assert.equal(learned.action.mode,'keep');
- const hard=chooseStrengthenedHardAction(packs,state,{difficulty:'hard'});
- const fallback=chooseProgressSafeAiAction(packs,state,{difficulty:'learned',policy:null});
+ const state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:11,first:0,openingMulligan:true});
+ const clock={ms:1e9};
+ const hard=chooseStrengthenedHardAction(packs,state,clock);
+ const fallback=chooseProgressSafeAiAction(packs,state,{difficulty:'learned',policy:null,...clock});
  assert.equal(fallback.learned,false);
  assert.deepEqual(fallback.action,hard);
+ assert.equal(fallback.diagnosis.reason,'fallback-no-policy');
+ assert.equal(fallback.diagnosis.changed,false);
+ const old={format:'ua-v2-learn-v1',dim:512,weights:[0],support:{mulligan:4},cards:{},profiles:{}};
+ const stale=chooseProgressSafeAiAction(packs,state,{difficulty:'learned',policy:old,...clock});
+ assert.equal(stale.learned,false);
+ assert.deepEqual(stale.action,hard);
+ assert.equal(stale.diagnosis.reason,'fallback-old-model');
+ const text=learnReport(trainPolicy(Array.from({length:12},(_,i)=>keepRow('m'+String(i).padStart(32,'a')))));
+ assert.match(text,/勝率要在對戰裡另外看/);
+ assert.doesNotMatch(text,/信心/);
 });
 
 let ctx;
@@ -132,9 +137,12 @@ test('learning is stored for the logged-in account and removed with that account
  }
  const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(learned.status,200,learned.text);
+ assert.equal(learned.data.replaced,true);
  assert.equal(learned.data.policy.format,LEARN_FORMAT);
+ assert.equal(learned.data.policy.validation.reliable,true);
  assert.equal(learned.data.policy.trainedSamples>=8,true);
  assert.equal(JSON.stringify(learned.data.policy).includes('correct-horse'),false);
+ assert.equal(JSON.stringify(learned.data.policy).includes('信心'),false);
  const mine=await api('/api/coach/policy',{token:owner.data.token});
  assert.equal(mine.data.policy.weights.length,learned.data.policy.weights.length);
  const theirs=await api('/api/coach/policy',{token:other.data.token});
@@ -153,4 +161,42 @@ test('learning is stored for the logged-in account and removed with that account
  assert.equal(wiped.status,200);
  const after=await api('/api/coach/policy',{token:owner.data.token});
  assert.equal(after.data.policy,null);
+});
+
+test('an unverified retrain does not replace a stored model',async()=>{
+ const owner=await api('/api/register',{method:'POST',body:{username:'learn_keep',password:'correct-horse-1'}});
+ assert.equal(owner.status,201,owner.text);
+ const ids=[];
+ for(let i=0;i<12;i++){
+  const step=uploadedStep();
+  ids.push(step.matchId);
+  const saved=await api('/api/coach/steps',{method:'POST',token:owner.data.token,body:step});
+  assert.equal(saved.status,200,saved.text);
+ }
+ const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
+ assert.equal(learned.status,200,learned.text);
+ const weights=learned.data.policy.weights;
+ for(const matchId of ids){
+  const removed=await api('/api/coach/matches/'+matchId,{method:'DELETE',token:owner.data.token});
+  assert.equal(removed.status,200,removed.text);
+ }
+ const matchId=newCoachMatchId();
+ let previous=null;
+ for(let i=0;i<10;i++){
+  const state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:11,first:0,openingMulligan:true});
+  const action=legalUniversalActions(packs,state).find(item=>item.mode==='keep');
+  const header=coachHeader({matchId,packs,counts:deck.counts,aiVersion:'normal'});
+  const step=buildHumanStep({packs,state,action,step:i,replayIndex:i,previous,header});
+  previous={step:step.step,type:step.choice.type,replayIndex:step.replayIndex,clientKey:step.clientKey};
+  const saved=await api('/api/coach/steps',{method:'POST',token:owner.data.token,body:step});
+  assert.equal(saved.status,200,saved.text);
+ }
+ const again=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
+ assert.equal(again.status,200,again.text);
+ assert.equal(again.data.replaced,false);
+ assert.match(again.data.notice,/沒有覆蓋/);
+ assert.deepEqual(again.data.policy.weights,weights);
+ const reloaded=await api('/api/coach/policy',{token:owner.data.token});
+ assert.deepEqual(reloaded.data.policy.weights,weights);
+ assert.equal(reloaded.data.policy.previous,undefined);
 });

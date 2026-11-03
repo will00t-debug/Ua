@@ -26,7 +26,8 @@ import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadow
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmr2ship1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
-import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
+import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261104learn2';
+import {LEARN_FORMAT} from './universal-v2/learn-policy.mjs?v=20261104learn2';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
@@ -1253,13 +1254,14 @@ function mountPendingOverlay(overlay){
 const AI_LEVEL_LABEL={easy:'簡單',normal:'普通',hard:'困難',learned:'學習'};
 async function ensureLearnedPolicy(){
  if(app.aiDifficulty!=='learned'){app.learnedPolicy=null;return true;}
+ let data=null;
  try{
   const response=await fetch('/api/coach/policy',{credentials:'same-origin',headers:{accept:'application/json'}});
-  const data=response.ok?await response.json():null;
-  app.learnedPolicy=data?.policy?.format==='ua-v2-learn-v1'?data.policy:null;
+  data=response.ok?await response.json():null;
+  app.learnedPolicy=data?.policy?.format===LEARN_FORMAT?data.policy:null;
  }catch{app.learnedPolicy=null;}
  if(app.learnedPolicy)return true;
- alertText('還沒有學習結果。請先到教 AI 頁按「用這些紀錄學習」。');
+ alertText(data?.message||'還沒有學習結果。請先到教 AI 頁按「用這些紀錄學習」。');
  return false;
 }
 function coachApi(){
@@ -1610,7 +1612,7 @@ function driveAi(){
     app.replay=appendUniversalReplay(app.replay,choice,1);
     notePublicMove(app.packs,previous,app.state,choice,1);
     pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
-    if(picked.learned)pushHistory('電腦採用你的紀錄走法。');
+    if(picked.learned)pushHistory('電腦參考你的紀錄，改了一個仍合法的走法。');
     if(reason){
      app.aiFallbacks++;
      pushHistory('AI 使用 V2 合法備援操作（'+reason+'），避免對局停住。');

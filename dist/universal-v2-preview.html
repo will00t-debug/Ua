@@ -118,7 +118,7 @@
       <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
      <p class="shuffle-note"><span aria-hidden="true">⤨</span> 每場新對局都會自動重新洗牌，不需要輸入牌序代碼。</p>
      <label class="coach-consent" for="coach-consent"><input id="coach-consent" type="checkbox"> 提供對戰紀錄改善 AI</label>
-     <p class="note">預設關閉，選擇會記住。開啟後，單人對電腦與線上對戰都會在背景記錄你自己的決策；關閉會立刻停止並清掉尚未上傳的佇列。線上對戰只記錄已同意的你，不取得對手的隱藏手牌。不收集姓名、密碼或聊天內容。需要登入。上傳之後，到 <a href="/coach.html">教 AI</a> 按「用這些紀錄學習」，再把難度選成「學習」，電腦才會用這個模型。</p>
+     <p class="note">預設關閉，選擇會記住。開啟後，單人對電腦與線上對戰都會在背景記錄你自己的決策；關閉會立刻停止並清掉尚未上傳的佇列。線上對戰只記錄已同意的你，不取得對手的隱藏手牌。不收集姓名、密碼或聊天內容。需要登入。上傳之後，到 <a href="/coach.html">教 AI</a> 按「用這些紀錄學習」，再把難度選成「學習」。模型只會在困難 AI 的相近走法之間加減有限的分數。分數差不是機率，畫面上也不換成百分比。</p>
     </div>
    </section>
    </div>
@@ -138,6 +138,6 @@
   </footer>
  </div>
  <link rel="stylesheet" href="coach.css?v=20261101reviewnav1">
- <script type="module" src="universal-v2-preview.mjs?v=20261103mmmlabel1"></script>
+ <script type="module" src="universal-v2-preview.mjs?v=20261104learn2"></script>
 </body>
 </html>

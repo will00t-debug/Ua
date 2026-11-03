@@ -3,7 +3,7 @@
 import {randomBytes} from 'node:crypto';
 import {ApiError} from './domain.mjs';
 import {DECISION_CLASSES,UNFINISHED_ENDINGS,classifyDecision} from '../dist/universal-v2/coach-format.mjs';
-import {readPolicy,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
+import {learnReport,policyRecordStatus,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
 const MATCH_ID=/^m[a-f0-9]{32}$/;
 const LINK_ID=/^k[a-f0-9]{32}$/;
@@ -245,11 +245,17 @@ function stored(payload){
 }
 
 const LEARN_STEP_LIMIT=4000;
-function loadPolicy(repos,userId){
+function storedPolicy(repos,userId){
  const row=repos.coachPolicy(userId);
  if(!row?.policyJson)return null;
- try{return readPolicy(JSON.parse(row.policyJson));}
+ try{return JSON.parse(row.policyJson);}
  catch{return null;}
+}
+function publicPolicy(policy){
+ if(!policy)return null;
+ const copy={...policy};
+ delete copy.previous;
+ return copy;
 }
 function learningRows(repos,userId){
  const rows=[];
@@ -268,14 +274,34 @@ function learningRows(repos,userId){
  return rows;
 }
 function learnPolicy(repos,user,now){
+ const existing=storedPolicy(repos,user.id);
+ const current=policyRecordStatus(existing);
  let policy;
  try{policy=trainPolicy(learningRows(repos,user.id));}
  catch(error){throw new ApiError(400,error?.message||'這些紀錄還不夠學習。');}
- const storedPolicy={...policy,createdAt:iso(now)};
- const encoded=JSON.stringify(storedPolicy);
+ const reliable=policy.validation?.reliable===true;
+ if((current.state==='ok'||current.state==='old')&&!reliable){
+  return {
+   replaced:false,
+   policy:current.state==='ok'?publicPolicy(current.policy):null,
+   stale:current.state==='old',
+   notice:'這次完整對局不足，無法可靠驗證，所以沒有覆蓋目前的學習結果。'+(current.message||''),
+   candidate:{format:policy.format,trainedSamples:policy.trainedSamples,validation:policy.validation}
+  };
+ }
+ const stored={...policy,createdAt:iso(now)};
+ if(existing){
+  const previous={...existing};
+  delete previous.previous;
+  stored.previous=previous;
+ }
+ const encoded=JSON.stringify(stored);
  if(encoded.length>200000)throw new ApiError(413,'學習結果太大。');
- repos.saveCoachPolicy(user.id,encoded,storedPolicy.createdAt);
- return {policy:storedPolicy};
+ repos.saveCoachPolicy(user.id,encoded,stored.createdAt);
+ const notice=current.state==='old'
+  ?'已用新的特徵重新訓練。舊的學習結果留在這個帳號裡，沒有刪掉。'
+  :'';
+ return {replaced:true,policy:publicPolicy(stored),notice,report:learnReport(policy)};
 }
 
 export function coachHttp(method,path){
@@ -337,7 +363,13 @@ export function dispatchCoach(repos,user,message,now){
    repos.deleteCoachUser(user.id);
    return {ok:true};
   case 'coachLearn':return learnPolicy(repos,user,now);
-  case 'coachPolicy':return {policy:loadPolicy(repos,user.id)};
+  case 'coachPolicy':{
+   const parsed=storedPolicy(repos,user.id);
+   const status=policyRecordStatus(parsed);
+   if(status.state==='ok')return {policy:publicPolicy(status.policy)};
+   if(status.state==='missing')return {policy:null};
+   return {policy:null,stale:true,message:status.message};
+  }
   case 'coachDeletePolicy':
    repos.deleteCoachPolicy(user.id);
    return {ok:true};

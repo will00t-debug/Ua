@@ -110,7 +110,7 @@ async function showMatch(matchId){
 }
 async function render(){
  root.replaceChildren(h('h1',{text:'教 AI 紀錄'}),
-  h('p',{text:'同意後，打牌時會在背景收集你自己的決策。按「用這些紀錄學習」會做出一個模型。之後在單人對戰把難度選成「學習」，有把握的步驟會照你的習慣走，其餘仍用困難 AI。猜中你的選擇還不是勝率。打完一把不會自動改學習筆數。新的決策要先送到伺服器，再按一次學習，筆數才會增加。'}));
+  h('p',{text:'同意後，打牌時會在背景收集你自己的決策。按「用這些紀錄學習」會做出一個模型。之後在單人對戰把難度選成「學習」，這個模型只會在困難 AI 的相近走法之間加減有限的分數。立即斬殺、避免立刻輸掉、必要阻擋和關鍵資源仍以困難 AI 為準。原始分數差不是機率，畫面上也不換成百分比。猜中你的選擇也不是勝率。打完一把不會自動學習。'}));
  let me=null;
  try{me=await api('/api/me');}
  catch{root.append(h('p',{text:'請先登入，才能查看、匯出或刪除自己的紀錄。'}),h('a',{href:'/online.html',text:'前往登入'}));return;}
@@ -145,7 +145,7 @@ async function render(){
   try{
    await flushLocalQueue();
    const result=await api('/api/coach/learn',{method:'POST',body:{}});
-   lastReport=learnReport(result.policy);
+   lastReport=[result.notice,result.report||learnReport(result.policy)].filter(Boolean).join('');
    await render();
   }catch(error){
    lastReport=error.message;

@@ -399,9 +399,10 @@ test('battle page hard difficulty is wired to the strengthened policy',()=>{
  const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
  const battle=readFileSync(new URL('../dist/universal-v2-battle.html',import.meta.url),'utf8');
  const setup=readFileSync(new URL('../dist/universal-v2-preview.html',import.meta.url),'utf8');
- assert.match(preview,/ai-driver-safety\.mjs\?v=20261102learn1/);
+ assert.match(preview,/ai-driver-safety\.mjs\?v=20261104learn2/);
+ assert.match(preview,/learn-policy\.mjs\?v=20261104learn2/);
  assert.match(preview,/document\.body\.dataset\.aiPolicy=aiPolicyFor\(app\.aiDifficulty\)/);
- assert.match(battle,/universal-v2-preview\.mjs\?v=20261103mmmlabel1/);
- assert.match(setup,/universal-v2-preview\.mjs\?v=20261103mmmlabel1/);
+ assert.match(battle,/universal-v2-preview\.mjs\?v=20261104learn2/);
+ assert.match(setup,/universal-v2-preview\.mjs\?v=20261104learn2/);
  assert.match(battle,/universal-v2-battle\.css\?v=20261028triggercenter1/);
 });
