@@ -102,29 +102,25 @@ test('coach storage requires login and keeps one row per step',async()=>{
  assert.equal(afterDelete.data.demonstrations.length,0);
 });
 
-test('the 41st match replaces the oldest match instead of being rejected',async()=>{
+test('a match after the old 40-match cap keeps the oldest match',async()=>{
  const created=await api('/api/register',{method:'POST',body:{username:'上限甲',password:'correct-horse-1'}});
  assert.equal(created.status,201,created.text);
  const token=created.data.token;
  const template=humanStep();
  const retarget=matchId=>JSON.parse(JSON.stringify(template).split(template.matchId).join(matchId));
- for(let n=0;n<40;n++){
-  const saved=await api('/api/coach/steps',{method:'POST',token,body:retarget(newCoachMatchId())});
+ const ids=[];
+ for(let n=0;n<41;n++){
+  const matchId=newCoachMatchId();
+  ids.push(matchId);
+  const saved=await api('/api/coach/steps',{method:'POST',token,body:retarget(matchId)});
   assert.equal(saved.status,200,saved.text);
  }
- const full=await api('/api/coach/matches',{token});
- assert.equal(full.data.matches.length,40);
- const oldest=full.data.matches[full.data.matches.length-1].id;
- await new Promise(resolve=>setTimeout(resolve,30));
- const extraId=newCoachMatchId();
- const extra=await api('/api/coach/steps',{method:'POST',token,body:retarget(extraId)});
- assert.equal(extra.status,200,extra.text);
- const after=await api('/api/coach/matches',{token});
- assert.equal(after.data.matches.length,40);
- assert.equal(after.data.matches.some(match=>match.id===extraId),true);
- assert.equal(after.data.matches.some(match=>match.id===oldest),false);
- const gone=await api('/api/coach/matches/'+oldest,{token});
- assert.equal(gone.status,404);
+ const listed=await api('/api/coach/matches',{token});
+ assert.equal(listed.data.matches.length,41);
+ for(const matchId of ids)assert.equal(listed.data.matches.some(match=>match.id===matchId),true);
+ const oldest=await api('/api/coach/matches/'+ids[0],{token});
+ assert.equal(oldest.status,200);
+ assert.equal(oldest.data.steps.length,1);
 });
 
 test('a corrected demonstration replaces the unmarked AI step once',async()=>{

@@ -119,7 +119,7 @@ async function render(){
  const listed=await api('/api/coach/matches');
  const steps=listed.matches.reduce((sum,match)=>sum+(Number(match.steps)||0),0);
  root.append(h('p',{text:'匿名識別 '+listed.anonymousId+'。匯出檔不含帳號名稱。'}));
- root.append(h('p',{text:'伺服器上目前 '+listed.matches.length+' 場、'+steps+' 步。最新的一場排在最上面。學習筆數只計算有兩個以上合法選項的決策，所以會少於總步數。最多保留 40 場。已經滿了的時候，下一場新對局會換掉最舊的一場。'}));
+ root.append(h('p',{text:'伺服器上目前 '+listed.matches.length+' 場、'+steps+' 步。最新的一場排在最上面。每一場的選擇都會留下。學習使用最近 4000 步裡、有兩個以上合法選項的決策，所以筆數會少於總步數。'}));
  const pendingNote=queueNote(pending);
  if(pendingNote)root.append(h('p',{text:pendingNote}));
  const actions=h('div',{class:'coach-actions'});
