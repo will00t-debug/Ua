@@ -639,6 +639,7 @@ export function dispatchAccount(repos,message,now){
   case 'coachDeleteAll':
   case 'coachLearn':
   case 'coachPolicy':
+  case 'coachRestorePolicy':
   case 'coachDeletePolicy':
    canonicalizeCoach(message);
    return dispatchCoach(repos,requireUser(repos,message.token,now),message,now);

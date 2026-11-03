@@ -6,16 +6,21 @@
 // Win/loss, hidden hands, deck order and seeds are not features.
 // A learn score is not a probability and is not shown as confidence.
 import {classifyDecision} from './coach-format.mjs';
-import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
+import {officialV2Pack,officialV2Titles} from './official-entry.mjs';
 
-export const LEARN_FORMAT='ua-v2-learn-v2';
+export const LEARN_FORMAT='ua-v2-learn-v3';
+export const LEARN_FORMAT_V2='ua-v2-learn-v2';
 export const LEARN_FORMAT_V1='ua-v2-learn-v1';
-export const LEARN_AI_VERSION='learned-v2';
+export const LEARN_AI_VERSION='learned-v3';
 export const LEARN_DIM=4096;
 export const LEARN_MIN_SAMPLES=8;
 export const LEARN_MARGIN=0.2;
 export const LEARN_ASSIST_CAP=18;
 export const LEARN_ASSIST_CAP_MAX=40;
+// A split can be valid with one held-out match. Enabling the model needs more.
+export const LEARN_MIN_VALIDATION_MATCHES=2;
+export const LEARN_MIN_VALIDATION_DECISIONS=8;
+export const LEARN_MIN_AGREEMENT=0.5;
 // Same band the hard search uses for a finished win or loss.
 export const LEARN_TERMINAL=50000;
 const NEGATIVE_FULL=64;
@@ -35,30 +40,36 @@ let printedCatalog=null;
 function catalog(){
  if(printedCatalog)return printedCatalog;
  const map=new Map();
- for(const title of ['bleach','gurren-lagann','solo-leveling','sword-art-online','mushoku-tensei']){
+ for(const title of officialV2Titles()){
   let pack=null;
-  try{pack=requireRegisteredV2TitlePack(title);}catch{pack=null;}
-  for(const [id,card] of Object.entries(pack?.cards||{}))if(card&&!map.has(id))map.set(id,summarize(card));
+  try{pack=officialV2Pack(title);}catch{pack=null;}
+  for(const card of Object.values(pack?.cards||{})){
+   if(!card||typeof card.id!=='string'||!card.id||map.has(card.id))continue;
+   map.set(card.id,summarize(card));
+  }
  }
  printedCatalog=map;
  return map;
+}
+function knownNumber(value){
+ return typeof value==='number'&&Number.isFinite(value)?value:null;
 }
 function summarize(card){
  const bases=Array.isArray(card.raidBaseNames)?card.raidBaseNames.filter(name=>typeof name==='string').slice(0,6):[];
  return {
   type:typeof card.type==='string'?card.type:'',
   color:typeof card.color==='string'?card.color:'',
-  energy:Number(card.energy)||0,
-  ap:Number(card.ap)||0,
-  bp:Number(card.bp)||0,
-  gen:Number(card.gen)||0,
+  energy:knownNumber(card.energy),
+  ap:knownNumber(card.ap),
+  bp:knownNumber(card.bp),
+  gen:knownNumber(card.gen),
   trigger:typeof card.trigger==='string'&&card.trigger?card.trigger:'none',
   raid:!!(card.raidName||card.raidTrait),
   raidName:typeof card.raidName==='string'?card.raidName:'',
   raidBases:bases,
   name:typeof card.name==='string'?card.name:'',
-  damage:Number(card.printedAttackDamage||card.raidAttackDamage||0)||0,
-  impact:Number(card.impact||card.raidImpact||0)||0,
+  damage:knownNumber(card.printedAttackDamage??card.raidAttackDamage),
+  impact:knownNumber(card.impact??card.raidImpact),
   impactNull:card.impactNull===true,
   extraEnergy:card.activeExtraEnergy?1:0
  };
@@ -99,6 +110,10 @@ function bucket(n,cuts){
  const value=Math.max(0,Number(n)||0);
  for(const cut of cuts)if(value<=cut)return String(cut);
  return String(cuts[cuts.length-1])+'+';
+}
+function bucketKnown(n,cuts){
+ if(typeof n!=='number'||!Number.isFinite(n))return 'unknown';
+ return bucket(n,cuts);
 }
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b);}
@@ -179,8 +194,9 @@ function intentOf(action){
 function signatureOf(cardId){
  const printed=printedOf(cardId);
  if(!printed)return '';
- return [printed.type,printed.color,'c'+bucket(printed.energy,COST_BINS),'b'+bucket(printed.bp,BP_BINS),
-  'g'+bucket(printed.gen,[0,1,2]),printed.raid?'r1':'r0','t'+printed.trigger].join('|');
+ return [printed.type,printed.color,'c'+bucketKnown(printed.energy,COST_BINS),'a'+bucketKnown(printed.ap,AP_BINS),
+  'b'+bucketKnown(printed.bp,BP_BINS),'g'+bucketKnown(printed.gen,[0,1,2]),
+  printed.raid?'r1':'r0','t'+printed.trigger].join('|');
 }
 function addPrinted(keys,prefix,cardId){
  const printed=printedOf(cardId);
@@ -191,13 +207,14 @@ function addPrinted(keys,prefix,cardId){
  }
  keys.push(prefix+':type:'+printed.type);
  keys.push(prefix+':color:'+(printed.color||'none'));
- keys.push(prefix+':cost:'+bucket(printed.energy,COST_BINS));
- keys.push(prefix+':pbp:'+bucket(printed.bp,BP_BINS));
- keys.push(prefix+':gen:'+bucket(printed.gen,[0,1,2]));
+ keys.push(prefix+':cost:'+bucketKnown(printed.energy,COST_BINS));
+ keys.push(prefix+':ap:'+bucketKnown(printed.ap,AP_BINS));
+ keys.push(prefix+':pbp:'+bucketKnown(printed.bp,BP_BINS));
+ keys.push(prefix+':gen:'+bucketKnown(printed.gen,[0,1,2]));
  keys.push(prefix+':trigger:'+printed.trigger);
  keys.push(prefix+':raid:'+(printed.raid?'y':'n'));
- if(printed.damage>0)keys.push(prefix+':pdmg:'+bucket(printed.damage,[1,2,3]));
- if(printed.impact>0)keys.push(prefix+':pimp:'+bucket(printed.impact,[1,2,3]));
+ if(typeof printed.damage==='number'&&printed.damage>0)keys.push(prefix+':pdmg:'+bucket(printed.damage,[1,2,3]));
+ if(typeof printed.impact==='number'&&printed.impact>0)keys.push(prefix+':pimp:'+bucket(printed.impact,[1,2,3]));
  if(printed.impactNull)keys.push(prefix+':inull');
  if(printed.extraEnergy)keys.push(prefix+':egen');
 }
@@ -246,7 +263,7 @@ function raidBases(observation,seat,cardId){
 }
 function canAfford(observation,seat,cardId){
  const printed=printedOf(cardId);
- if(!printed)return 'unknown';
+ if(!printed||printed.energy==null)return 'unknown';
  const have=player(observation,seat).energyByColor?.[printed.color]||0;
  return printed.energy<=have?'yes':'no';
 }
@@ -318,6 +335,10 @@ function describe(observation,action,seat){
   }).sort();
   keys.push('role:set:'+ids.join(','));
  }
+ role('discard',action?.discardUid);
+ role('recover',action?.recoverUid);
+ role('rest',action?.restUid);
+ for(const part of scalarParts(action,cards))keys.push('role:'+part);
  const src=typeof action?.uid==='string'?cards.get(action.uid):null;
  const tgt=typeof action?.targetUid==='string'?cards.get(action.targetUid):null;
  const myLife=bucket(me.lifeCount,LIFE_BINS);
@@ -358,14 +379,53 @@ export function featureKeys(observation,action,seat){
 }
 export function featuresOf(observation,action,seat){
  const vec=blank();
- for(const key of describe(observation,action,seat))vec[hash('v2|'+key)]+=1;
+ for(const key of describe(observation,action,seat))vec[hash('v3|'+key)]+=1;
  return vec;
+}
+function publicToken(text){
+ if(typeof text!=='string'||!text)return '';
+ const value=text.replace(/\s+/g,'').slice(0,40);
+ if(!value||/^[01]-\d+$/.test(value)||/(^|[^A-Za-z0-9])[01]-\d+(?=$|[^0-9])/.test(value))return '';
+ return value;
+}
+function scrubBranch(text,cards){
+ if(typeof text!=='string'||!text)return '';
+ const value=text.slice(0,160).replace(/(^|[^A-Za-z0-9])([01]-\d+)(?=$|[^0-9])/g,(all,pre,uid)=>{
+  return pre+(cards.get(uid)?.cardId||'unseen');
+ }).replace(/\d{5,}/g,'n').replace(/\s+/g,'');
+ return value.slice(0,80);
+}
+function scalarParts(action,cards){
+ const parts=[];
+ if(Number.isInteger(action?.value)&&action.value>=0&&action.value<=40)parts.push('value:'+action.value);
+ const place=publicToken(action?.place);
+ if(place)parts.push('place:'+place);
+ if(action?.index===null)parts.push('index:none');
+ else if(Number.isInteger(action?.index)&&action.index>=0&&action.index<=20)parts.push('index:'+action.index);
+ if(Number.isInteger(action?.fromSlot)&&action.fromSlot>=0&&action.fromSlot<=7)
+  parts.push('fromSlot:'+action.fromSlot);
+ if(Number.isInteger(action?.step)&&action.step>=0&&action.step<=40)parts.push('step:'+action.step);
+ else{
+  const step=publicToken(typeof action?.step==='string'?action.step:'');
+  if(step)parts.push('step:'+step);
+ }
+ const when=publicToken(action?.when);
+ if(when)parts.push('when:'+when);
+ const id=publicToken(action?.id);
+ if(id)parts.push('id:'+id);
+ const name=publicToken(action?.name);
+ if(name)parts.push('name:'+name);
+ const key=scrubBranch(action?.key,cards);
+ if(key)parts.push('key:'+key);
+ return parts;
 }
 export function actionIdentity(observation,action,seat){
  const cards=indexVisible(observation,actingSeat(seat,observation));
  const idOf=uid=>typeof uid==='string'?cards.get(uid)?.cardId||'':'';
  return [action?.type||'',action?.mode||'',action?.line||'',String(action?.slot??''),action?.from||'',
-  idOf(action?.uid),idOf(action?.targetUid),idOf(action?.baseUid),idOf(action?.replaceUid),idOf(action?.retireUid)].join('|');
+  idOf(action?.uid),idOf(action?.targetUid),idOf(action?.baseUid),idOf(action?.replaceUid),idOf(action?.retireUid),
+  idOf(action?.discardUid),idOf(action?.recoverUid),idOf(action?.restUid),
+  scalarParts(action,cards).join(',')].join('|');
 }
 function sourceCard(observation,action,seat){
  if(typeof action?.uid!=='string'||!action.uid)return {present:false};
@@ -483,16 +543,56 @@ export function partitionByMatch(rows){
   if(!grouped.has(matchId)){grouped.set(matchId,[]);order.push(matchId);}
   grouped.get(matchId).push(row);
  }
- if(order.length<2)return {train:rows.slice(),held:[],reliable:false,reason:'insufficient-matches',matchCount:order.length};
- const heldId=order[order.length-1];
- const held=grouped.get(heldId).slice();
+ const blocked={
+  train:rows.slice(),held:[],heldMatchIds:[],trainMatchIds:order.slice(),
+  splitValid:false,splitReason:'insufficient-matches',
+  evaluationSufficient:false,evaluationReason:'insufficient-matches',
+  matchCount:order.length,heldoutMatches:0
+ };
+ if(order.length<2)return blocked;
+ let remain=rows.length;
+ let maxK=0;
+ for(let i=order.length-1;i>=1;i--){
+  const size=grouped.get(order[i]).length;
+  if(remain-size<LEARN_MIN_SAMPLES)break;
+  remain-=size;
+  maxK++;
+ }
+ if(maxK<1)return blocked;
+ let chosen=0;
+ let heldRows=0;
+ for(let k=1;k<=maxK;k++){
+  chosen=k;
+  heldRows+=grouped.get(order[order.length-k]).length;
+  if(k>=LEARN_MIN_VALIDATION_MATCHES&&heldRows>=LEARN_MIN_VALIDATION_DECISIONS)break;
+ }
+ const heldIds=order.slice(order.length-chosen);
+ const trainIds=order.slice(0,order.length-chosen);
+ const held=[];
  const train=[];
- for(const matchId of order)if(matchId!==heldId)train.push(...grouped.get(matchId));
- if(train.length<LEARN_MIN_SAMPLES)return {train:rows.slice(),held:[],reliable:false,reason:'insufficient-matches',matchCount:order.length};
- return {train,held,reliable:true,reason:null,matchCount:order.length};
+ for(const matchId of trainIds)train.push(...grouped.get(matchId));
+ for(const matchId of heldIds)held.push(...grouped.get(matchId));
+ const evaluationSufficient=heldIds.length>=LEARN_MIN_VALIDATION_MATCHES&&
+  held.length>=LEARN_MIN_VALIDATION_DECISIONS;
+ const evaluationReason=evaluationSufficient?null:
+  held.length<LEARN_MIN_VALIDATION_DECISIONS?'insufficient-decisions':'insufficient-matches';
+ return {
+  train,held,heldMatchIds:heldIds,trainMatchIds:trainIds,
+  splitValid:true,splitReason:null,evaluationSufficient,evaluationReason,
+  matchCount:order.length,heldoutMatches:heldIds.length
+ };
+}
+export function activationOf({splitValid,evaluationSufficient,agreement,comparison}={}){
+ if(!splitValid)return {accepted:false,acceptReason:'split-invalid'};
+ if(!evaluationSufficient)return {accepted:false,acceptReason:'evaluation-insufficient'};
+ if(!(typeof agreement==='number'&&agreement>=LEARN_MIN_AGREEMENT))
+  return {accepted:false,acceptReason:'agreement-below-threshold'};
+ if(comparison?.available===true&&!(agreement>=comparison.existingAgreement))
+  return {accepted:false,acceptReason:'existing-better'};
+ return {accepted:true,acceptReason:'passed'};
 }
 
-export function trainPolicy(rows){
+export function trainPolicy(rows,options={}){
  const skipped={ai:0,forced:0,leak:0,result:0,bad:0};
  const prepared=[];
  for(const row of Array.isArray(rows)?rows:[])if(usable(row,skipped))prepared.push(row);
@@ -510,43 +610,78 @@ export function trainPolicy(rows){
   };
  });
  const probeWeights=new Array(LEARN_DIM).fill(0);
- const probeRows=compile(split.train);
+ const probeRows=compile(split.splitValid?split.train:prepared);
  fit(probeWeights,probeRows);
- const probeCount=tally(split.train);
+ const probeCount=tally(split.splitValid?split.train:prepared);
  const probePolicy={
   format:LEARN_FORMAT,dim:LEARN_DIM,weights:probeWeights,
   support:probeCount.support,cards:probeCount.cards,profiles:probeCount.profiles
  };
  const heldScore=split.held.length?scoreRows(probePolicy,split.held):null;
+ const samples=heldScore?.samples||0;
+ const agreement=samples?heldScore.agreed/samples:null;
+ const existing=options.existing||null;
+ const existingStatus=existing?policyRecordStatus(existing):{state:'missing'};
+ let comparison={available:false,reason:existing? 'existing-incompatible':'no-existing',
+  candidateAgreement:agreement,existingAgreement:null,samples};
+ if(!split.evaluationSufficient)comparison={...comparison,reason:existingStatus.state==='ok'?'evaluation-insufficient':comparison.reason};
+ else if(existingStatus.state==='ok'){
+  const seen=Array.isArray(existing.seenMatches)?existing.seenMatches:null;
+  if(!seen)comparison={...comparison,reason:'existing-untracked'};
+  else if(split.heldMatchIds.some(matchId=>seen.includes(matchId)))
+   comparison={...comparison,reason:'overlap'};
+  else{
+   const existingScore=scoreRows(existingStatus.policy,split.held);
+   const existingAgreement=existingScore.samples?existingScore.agreed/existingScore.samples:0;
+   comparison={available:true,reason:null,samples,candidateAgreement:agreement,existingAgreement};
+  }
+ }
+ const decision=activationOf({
+  splitValid:split.splitValid,evaluationSufficient:split.evaluationSufficient,agreement,comparison
+ });
  const finalWeights=new Array(LEARN_DIM).fill(0);
  fit(finalWeights,compile(prepared));
  const counted=tally(prepared);
  const packed=finalWeights.map(value=>Math.round(value*10000)/10000);
+ const seenMatches=[];
+ for(const row of prepared)if(!seenMatches.includes(row.matchId))seenMatches.push(row.matchId);
  const validation={
-  reliable:split.reliable,
-  reason:split.reason,
+  splitValid:split.splitValid,
+  splitReason:split.splitReason,
+  evaluationSufficient:split.evaluationSufficient,
+  evaluationReason:split.evaluationReason,
+  accepted:decision.accepted,
+  acceptReason:decision.acceptReason,
+  agreement,
+  minMatches:LEARN_MIN_VALIDATION_MATCHES,
+  minDecisions:LEARN_MIN_VALIDATION_DECISIONS,
+  minAgreement:LEARN_MIN_AGREEMENT,
   matchCount:split.matchCount,
-  heldoutMatches:split.reliable?1:0,
+  heldoutMatches:split.heldoutMatches,
   heldoutSamples:split.held.length,
   proposed:heldScore?.proposed||0,
   agreed:heldScore?.agreed||0,
   abstained:heldScore?.abstained||0,
   byClass:heldScore?.byClass||{},
+  comparison,
   model:'probe-without-heldout-matches',
   hardChanges:null,
-  note:split.reliable
-   ?'留出的是完整對局。同意次數是模型選擇和該場玩家選擇相同，不是勝率，也不是機率。'
-   :'完整對局不足，不能可靠驗證。沒有把同一場切成訓練和驗證。'
+  note:decision.accepted
+   ?'留出的是完整對局，而且筆數達到啟用門檻。相同比例是模仿玩家當時的選擇，不是勝率，也不是戰力。'
+   :split.splitValid
+    ?'對局有整場分開。評估資料或模仿比例不夠時，不能把這次結果當成通過驗證。'
+    :'完整對局不足。沒有把同一場切成訓練和驗證。'
  };
  return {
   format:LEARN_FORMAT,
   dim:LEARN_DIM,
   weights:packed,
   support:counted.support,cards:counted.cards,profiles:counted.profiles,
+  seenMatches,
   trainedSamples:prepared.length,
   heldoutSamples:split.held.length,
-  heldoutAccuracy:heldScore&&split.held.length?heldScore.agreed/split.held.length:null,
-  baselineAccuracy:null,
+  heldoutAccuracy:agreement,
+  baselineAccuracy:comparison.available?comparison.existingAgreement:null,
   negativeMode,
   validation,
   final:{samples:prepared.length,model:'all-usable-rows',
@@ -565,10 +700,12 @@ export function readPolicy(value){
 }
 export function policyRecordStatus(value){
  if(!value||typeof value!=='object')return {state:'missing',policy:null,message:''};
- if(value.format===LEARN_FORMAT_V1)return {state:'old',policy:null,
-  message:'以前的學習結果用的是舊特徵，不能直接套用。請再按一次「用這些紀錄學習」。驗證通過之後才會換上，舊結果會留下。'};
+ if(value.format===LEARN_FORMAT_V1||value.format===LEARN_FORMAT_V2)return {state:'old',policy:null,
+  message:'以前的學習結果用的是舊特徵，不能直接套用。請重新訓練：再按一次「用這些紀錄學習」。驗證通過之後才會換上，舊權重會留下。'};
  const policy=readPolicy(value);
  if(!policy)return {state:'incompatible',policy:null,message:'學習結果和目前的模型不相容，已沿用困難 AI。請重新學習。'};
+ if(value.active===false)return {state:'inactive',policy:null,
+  message:'已保存候選模型，但驗證沒有通過，對戰會沿用困難 AI。'};
  return {state:'ok',policy,message:''};
 }
 function familiar(model,observation,action,seat){
@@ -583,6 +720,7 @@ export function preferLearnedAction(policy,observation,legal,seat){
  const status=policyRecordStatus(policy);
  if(status.state==='missing')return {action:null,reason:'fallback-no-policy',margin:null,decisionClass:null};
  if(status.state==='old')return {action:null,reason:'fallback-old-model',margin:null,decisionClass:null};
+ if(status.state==='inactive')return {action:null,reason:'fallback-inactive',margin:null,decisionClass:null};
  if(status.state!=='ok')return {action:null,reason:'fallback-incompatible',margin:null,decisionClass:null};
  if(!Array.isArray(legal)||!legal.length)return {action:null,reason:'fallback-empty',margin:null,decisionClass:null};
  const actor=actingSeat(seat,observation);
@@ -678,16 +816,33 @@ export function applyLearningAssist({
  if(hardScore>=LEARN_TERMINAL)return {...base,reason:'protect-lethal'};
  const direct=blocked(preference.action);
  if(direct)return {...base,reason:direct};
- const learnScores=scored.map(item=>dotSparse(readPolicy(policy).weights,pairsOf(observation,item.action,actor)));
- const mean=learnScores.reduce((sum,score)=>sum+score,0)/learnScores.length;
+ const model=readPolicy(policy);
+ const learnGate=action=>{
+  const decisionClass=classifyDecision(action);
+  if((model.support?.[decisionClass]||0)<CLASS_SUPPORT)
+   return {ok:false,reason:'fallback-low-support'};
+  if(!familiar(model,observation,action,actor))
+   return {ok:false,reason:'fallback-unknown'};
+  return {ok:true,reason:null};
+ };
+ const eligible=scored.filter(item=>!same(item.action,hardAction)&&
+  learnGate(item.action).ok&&!blocked(item.action));
+ const learnScores=eligible.map(item=>dotSparse(model.weights,pairsOf(observation,item.action,actor)));
+ const mean=learnScores.length?learnScores.reduce((sum,score)=>sum+score,0)/learnScores.length:0;
  let maxDev=0;
  for(const score of learnScores)maxDev=Math.max(maxDev,Math.abs(score-mean));
- const bonus=maxDev>0?learnScores.map(score=>clamp((score-mean)/maxDev*cap,-cap,cap)):learnScores.map(()=>0);
+ const bonusOf=action=>{
+  const index=eligible.findIndex(item=>same(item.action,action));
+  if(index<0||!(maxDev>0))return 0;
+  return clamp((learnScores[index]-mean)/maxDev*cap,-cap,cap);
+ };
+ const pool=scored.filter(item=>same(item.action,hardAction)||
+  eligible.some(other=>same(other.action,item.action)));
  let best=null;
- for(let i=0;i<scored.length;i++){
-  const adjusted=scored[i].score+bonus[i];
-  const identity=actionIdentity(observation,scored[i].action,actor);
-  const current={action:scored[i].action,adjusted,hard:scored[i].score,identity};
+ for(const item of pool){
+  const adjusted=item.score+bonusOf(item.action);
+  const identity=actionIdentity(observation,item.action,actor);
+  const current={action:item.action,adjusted,hard:item.score,identity};
   if(!best||adjusted>best.adjusted+1e-9)best=current;
   else if(Math.abs(adjusted-best.adjusted)<=1e-9){
    if(same(current.action,hardAction))best=current;
@@ -696,9 +851,13 @@ export function applyLearningAssist({
   }
  }
  if(!best)return {...base,reason:'fallback-uncompared'};
- const guard=blocked(best.action);
- if(guard)return {...base,reason:guard};
  const finalAction=legal.find(action=>same(action,best.action))||hardAction;
+ if(!same(finalAction,hardAction)){
+  const gate=learnGate(finalAction);
+  const guard=blocked(finalAction);
+  if(!gate.ok||guard)
+   return {...base,finalAction:hardAction,changed:false,reason:guard||gate.reason};
+ }
  const changed=!same(finalAction,hardAction);
  return {...base,finalAction,changed,reason:changed?'assist':'assist-kept'};
 }
@@ -721,15 +880,25 @@ export function learnReport(policy){
  const lines=['已用 '+(policy.trainedSamples||0)+' 筆你的決策學習。最終權重用了全部可用決策。'];
  const skipped=policy.skipped||{};
  lines.push('略過只有一個合法選項的 '+(skipped.forced||0)+' 筆，以及 AI 操作 '+(skipped.ai||0)+' 筆。');
- if(!validation.reliable){
-  lines.push('完整對局不足，無法可靠驗證。沒有把同一場切成兩半來冒充獨立驗證。');
+ if(!validation.splitValid){
+  lines.push('完整對局不足，無法分開驗證。沒有把同一場切成兩半，這次也不能啟用。');
+ }else if(!validation.evaluationSufficient){
+  lines.push('對局已整場分開，但留出驗證不到 '+LEARN_MIN_VALIDATION_MATCHES+' 場或 '+
+   LEARN_MIN_VALIDATION_DECISIONS+' 筆。資料不足，不能當成通過，也不會因此啟用。');
  }else if(validation.heldoutSamples>0){
   lines.push('留出 '+validation.heldoutMatches+' 場、'+validation.heldoutSamples+' 筆。模型提出 '+
    validation.proposed+' 筆，其中和你當時的選擇相同 '+validation.agreed+' 筆，沒有提出而回退 '+
    validation.abstained+' 筆。');
   const detail=classLine(validation);
   if(detail)lines.push(detail+'。');
-  lines.push('這些次數只代表留出對局裡的選擇是否相同。提出選擇不等於改掉困難 AI，也不是勝率。');
+  const rate=typeof validation.agreement==='number'?Math.round(validation.agreement*1000)/10:null;
+  if(rate!=null)lines.push('留出筆數裡選擇相同的比例是 '+rate+'%。這是模仿你當時的選擇，不是勝率，也不是戰力。啟用門檻是 '+
+   Math.round(LEARN_MIN_AGREEMENT*100)+'%。');
+  if(validation.comparison?.available){
+   const other=Math.round((validation.comparison.existingAgreement||0)*1000)/10;
+   lines.push('候選和目前模型在同一批雙方都沒看過的對局上比較。目前模型的相同比例是 '+other+'%。');
+  }else lines.push('這次沒有和目前模型做公平比較，不把缺少比較說成已經比過。');
+  lines.push(validation.accepted?'這次驗證通過，可以啟用。':'這次驗證沒有通過，不會替換目前啟用的模型。');
   lines.push('留出對局沒有困難 AI 的分數，所以這裡不算實際改走法。對戰當下的診斷才分得出有沒有改。');
  }
  lines.push('原始分數差不是機率，畫面上也不換成百分比。請在對戰設定把電腦難度選成「學習」。學習只在困難 AI 的相近走法之間加減有限的分數。');

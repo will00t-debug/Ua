@@ -117,9 +117,10 @@ async function render(){
  void me;
  const pending=await flushLocalQueue();
  const listed=await api('/api/coach/matches');
+ const policyState=await api('/api/coach/policy');
  const steps=listed.matches.reduce((sum,match)=>sum+(Number(match.steps)||0),0);
  root.append(h('p',{text:'匿名識別 '+listed.anonymousId+'。匯出檔不含帳號名稱。'}));
- root.append(h('p',{text:'伺服器上目前 '+listed.matches.length+' 場、'+steps+' 步。最新的一場排在最上面。學習筆數只計算有兩個以上合法選項的決策，所以會少於總步數。'}));
+ root.append(h('p',{text:'伺服器上目前 '+listed.matches.length+' 場、'+steps+' 步。最新的一場排在最上面。每一場的選擇都會留下。學習使用最近 4000 步裡、有兩個以上合法選項的決策，所以筆數會少於總步數。'}));
  const pendingNote=queueNote(pending);
  if(pendingNote)root.append(h('p',{text:pendingNote}));
  const actions=h('div',{class:'coach-actions'});
@@ -138,6 +139,7 @@ async function render(){
  });
  const learn=h('button',{type:'button',text:'用這些紀錄學習'});
  const report=h('p',{class:'note',text:lastReport});
+ if(policyState?.message)root.append(h('p',{text:policyState.message}));
  learn.addEventListener('click',async()=>{
   learn.disabled=true;
   lastReport='正在學習…';
@@ -159,7 +161,25 @@ async function render(){
   await api('/api/coach',{method:'DELETE'});
   await render();
  });
- actions.append(exportButton,jsonlButton,learn,deleteAll);
+ actions.append(exportButton,jsonlButton,learn);
+ if(policyState?.canRestore){
+  const restore=h('button',{type:'button',text:'恢復上一版'});
+  restore.addEventListener('click',async()=>{
+   if(!window.confirm('恢復上一版啟用中的學習結果？目前這一版會留在這個帳號裡，其他帳號不會被改到。'))return;
+   restore.disabled=true;
+   try{
+    await api('/api/coach/policy/restore',{method:'POST',body:{}});
+    lastReport='已恢復上一版。對戰的「學習」難度會使用恢復後的結果。';
+    await render();
+   }catch(error){
+    lastReport=error.message;
+    report.textContent=lastReport;
+    restore.disabled=false;
+   }
+  });
+  actions.append(restore);
+ }
+ actions.append(deleteAll);
  root.append(actions,report,h('div',{id:'coach-list',class:'coach-list'}));
  const list=root.querySelector('#coach-list');
  if(!listed.matches.length)list.append(h('p',{text:'還沒有紀錄。在電腦對戰裡打開同意開關後，每一步會自動記下來。'}));

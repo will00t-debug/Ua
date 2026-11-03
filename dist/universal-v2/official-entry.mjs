@@ -18,6 +18,10 @@ import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmr2PackCards} from './kmr2-pack.mjs';
 
 const CENSUS=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei'];
+const OFFICIAL_TITLES=Object.freeze([
+ ...CENSUS,'rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr'
+]);
+export function officialV2Titles(){return OFFICIAL_TITLES;}
 let rezeroBattlePack=null;
 
 export function createRezeroBattlePack(){

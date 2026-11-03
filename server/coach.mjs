@@ -13,7 +13,7 @@ const UNFINISHED=new Set(UNFINISHED_ENDINGS);
 const CLASSES=new Set(DECISION_CLASSES);
 const REASONS=new Set(['','energy','base','clear','attack-order']);
 const BANNED=/^(password|username|chat|token|cookie|authorization|secret|deckorder)$/i;
-const MAX_MATCHES=40;
+const MAX_MATCHES=400;
 const MAX_STEPS=1500;
 const MAX_DEMOS=80;
 const MAX_REPLAYS=10;
@@ -225,7 +225,7 @@ function ensureMatch(repos,user,anonymous,header,now){
  const headerJson=JSON.stringify(header);
  if(!existing){
   if(repos.coachMatchCount(user.id)>=MAX_MATCHES)
-   throw new ApiError(400,'紀錄已達 40 場，請先刪除舊資料。');
+   throw new ApiError(400,'紀錄已達 400 場。舊的選擇會留著，請先刪除不需要的場次。');
   repos.insertCoachMatch({
    id:header.matchId,userId:user.id,anonymousId:anonymous,engine:header.engine,
    engineVersion:header.engineVersion,poolJson:JSON.stringify(header.pool),
@@ -255,7 +255,24 @@ function publicPolicy(policy){
  if(!policy)return null;
  const copy={...policy};
  delete copy.previous;
+ delete copy.candidate;
  return copy;
+}
+function candidateSummary(policy){
+ return {
+  format:policy.format,trainedSamples:policy.trainedSamples,active:false,
+  validation:policy.validation||null
+ };
+}
+function savedCandidate(policy,now){
+ const candidate={...policy,active:false,createdAt:iso(now)};
+ delete candidate.previous;
+ delete candidate.candidate;
+ return candidate;
+}
+function canRestorePolicy(parsed){
+ return !!(parsed?.previous&&policyRecordStatus(parsed.previous).state==='ok'&&
+  parsed.previous.active!==false);
 }
 function learningRows(repos,userId){
  const rows=[];
@@ -277,22 +294,45 @@ function learnPolicy(repos,user,now){
  const existing=storedPolicy(repos,user.id);
  const current=policyRecordStatus(existing);
  let policy;
- try{policy=trainPolicy(learningRows(repos,user.id));}
- catch(error){throw new ApiError(400,error?.message||'這些紀錄還不夠學習。');}
- const reliable=policy.validation?.reliable===true;
- if((current.state==='ok'||current.state==='old')&&!reliable){
+ try{
+  policy=trainPolicy(learningRows(repos,user.id),{existing:current.state==='ok'?current.policy:null});
+ }catch(error){throw new ApiError(400,error?.message||'這些紀錄還不夠學習。');}
+ const accepted=policy.validation?.accepted===true;
+ const summary=candidateSummary(policy);
+ if(!accepted){
+  const notice=current.state==='ok'||current.state==='old'
+   ?'這次沒有通過驗證，所以沒有覆蓋目前啟用的學習結果。'+(current.message||'')
+   :'驗證沒有通過，已保存候選模型，但沒有啟用。對戰會沿用困難 AI。';
+  if(current.state==='ok'){
+   const kept={...existing,candidate:savedCandidate(policy,now)};
+   const encoded=JSON.stringify(kept);
+   if(encoded.length<=200000)repos.saveCoachPolicy(user.id,encoded,existing.createdAt||iso(now));
+   return {
+    replaced:false,activated:false,policy:publicPolicy(existing),
+    notice,report:learnReport(policy),candidate:summary
+   };
+  }
+  if(current.state==='old'){
+   return {
+    replaced:false,activated:false,policy:null,stale:true,
+    notice,report:learnReport(policy),candidate:summary
+   };
+  }
+  const stored=savedCandidate(policy,now);
+  const encoded=JSON.stringify(stored);
+  if(encoded.length>200000)throw new ApiError(413,'學習結果太大。');
+  repos.saveCoachPolicy(user.id,encoded,stored.createdAt);
   return {
-   replaced:false,
-   policy:current.state==='ok'?publicPolicy(current.policy):null,
-   stale:current.state==='old',
-   notice:'這次完整對局不足，無法可靠驗證，所以沒有覆蓋目前的學習結果。'+(current.message||''),
-   candidate:{format:policy.format,trainedSamples:policy.trainedSamples,validation:policy.validation}
+   replaced:false,activated:false,savedCandidate:true,policy:null,
+   notice,report:learnReport(policy),candidate:summary
   };
  }
- const stored={...policy,createdAt:iso(now)};
- if(existing){
+ const stored={...policy,active:true,createdAt:iso(now)};
+ delete stored.candidate;
+ if(existing&&current.state!=='missing'){
   const previous={...existing};
   delete previous.previous;
+  delete previous.candidate;
   stored.previous=previous;
  }
  const encoded=JSON.stringify(stored);
@@ -300,13 +340,31 @@ function learnPolicy(repos,user,now){
  repos.saveCoachPolicy(user.id,encoded,stored.createdAt);
  const notice=current.state==='old'
   ?'已用新的特徵重新訓練。舊的學習結果留在這個帳號裡，沒有刪掉。'
-  :'';
- return {replaced:true,policy:publicPolicy(stored),notice,report:learnReport(policy)};
+  :current.state==='ok'?'已改用通過驗證的新結果。上一版還留在這個帳號裡。':'';
+ return {replaced:true,activated:true,policy:publicPolicy(stored),notice,report:learnReport(policy)};
+}
+function restorePolicy(repos,user,now){
+ const existing=storedPolicy(repos,user.id);
+ if(!existing?.previous)throw new ApiError(400,'沒有可恢復的上一版。');
+ const status=policyRecordStatus(existing.previous);
+ if(status.state!=='ok')throw new ApiError(400,status.message||'上一版不能直接啟用。請重新學習。');
+ const current={...existing};
+ delete current.previous;
+ delete current.candidate;
+ const restored={...existing.previous,active:true,previous:current};
+ delete restored.previous.previous;
+ delete restored.candidate;
+ const encoded=JSON.stringify(restored);
+ if(encoded.length>200000)throw new ApiError(413,'學習結果太大。');
+ const stamp=iso(now);
+ repos.saveCoachPolicy(user.id,encoded,stamp);
+ return {restored:true,policy:publicPolicy(restored),canRestore:canRestorePolicy(restored)};
 }
 
 export function coachHttp(method,path){
  if(path==='/api/coach/learn'&&method==='POST')return {op:'coachLearn'};
  if(path==='/api/coach/policy'&&method==='GET')return {op:'coachPolicy'};
+ if(path==='/api/coach/policy/restore'&&method==='POST')return {op:'coachRestorePolicy'};
  if(path==='/api/coach/policy'&&method==='DELETE')return {op:'coachDeletePolicy'};
  if(path==='/api/coach/steps'&&method==='POST')return {op:'coachStep'};
  if(path==='/api/coach/labels'&&method==='POST')return {op:'coachLabel'};
@@ -363,12 +421,15 @@ export function dispatchCoach(repos,user,message,now){
    repos.deleteCoachUser(user.id);
    return {ok:true};
   case 'coachLearn':return learnPolicy(repos,user,now);
+  case 'coachRestorePolicy':return restorePolicy(repos,user,now);
   case 'coachPolicy':{
    const parsed=storedPolicy(repos,user.id);
    const status=policyRecordStatus(parsed);
-   if(status.state==='ok')return {policy:publicPolicy(status.policy)};
-   if(status.state==='missing')return {policy:null};
-   return {policy:null,stale:true,message:status.message};
+   const canRestore=canRestorePolicy(parsed);
+   if(status.state==='ok')return {policy:publicPolicy(status.policy),canRestore};
+   if(status.state==='missing')return {policy:null,canRestore:false};
+   if(status.state==='inactive')return {policy:null,inactive:true,canRestore:false,message:status.message};
+   return {policy:null,stale:true,canRestore:false,message:status.message};
   }
   case 'coachDeletePolicy':
    repos.deleteCoachPolicy(user.id);

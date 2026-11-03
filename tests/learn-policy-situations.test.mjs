@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
-import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
 import {coachObservation,hiddenLeak} from '../dist/universal-v2/coach-record.mjs';
-import {LEARN_FORMAT,LEARN_DIM,actionIdentity,applyLearningAssist,featureKeys,
+import {officialV2Pack,officialV2Titles} from '../dist/universal-v2/official-entry.mjs';
+import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {LEARN_FORMAT,LEARN_FORMAT_V2,LEARN_DIM,LEARN_MIN_AGREEMENT,LEARN_MIN_VALIDATION_DECISIONS,
+ LEARN_MIN_VALIDATION_MATCHES,actionIdentity,activationOf,applyLearningAssist,featureKeys,
  partitionByMatch,policyRecordStatus,preferLearnedAction,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
 const bleach=verifiedBleachPurplePilotDeck();
@@ -359,8 +362,12 @@ test('unknown, old and broken models fall back without leaving the legal list',(
  const old=policyRecordStatus({format:'ua-v2-learn-v1',dim:512,weights:[0],support:{play:3}});
  assert.equal(old.state,'old');
  assert.match(old.message,/舊特徵|再按一次/);
+ const retired=policyRecordStatus({format:LEARN_FORMAT_V2,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(0),
+  support:{play:3},cards:{},profiles:{}});
+ assert.equal(retired.state,'old');
+ assert.match(retired.message,/重新訓練/);
  const broken={format:LEARN_FORMAT,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(Number.NaN),support:{play:3},cards:{},profiles:{}};
- for(const policy of [{format:'ua-v2-learn-v1'},broken,null]){
+ for(const policy of [{format:'ua-v2-learn-v1'},{format:LEARN_FORMAT_V2,dim:LEARN_DIM,weights:[0]},broken,null]){
   const result=applyLearningAssist({policy,observation,legal,seat:0,hardAction:hard,candidates});
   assert.equal(result.changed,false);
   assert.deepEqual(result.finalAction,hard);
@@ -386,17 +393,40 @@ test('training and validation do not share a match',()=>{
  for(let i=0;i<3;i++)rows.push({...sample({type:'attack'}),matchId:'match-b'});
  rows.push({...sample({type:'raid'}),matchId:'match-b',note:'later-correction'});
  const split=partitionByMatch(rows);
- assert.equal(split.reliable,true);
+ assert.equal(split.splitValid,true);
+ assert.equal(split.evaluationSufficient,false);
+ assert.equal(split.heldoutMatches,1);
+ assert.equal(split.reliable,undefined);
  assert.ok(split.train.every(row=>row.matchId==='match-a'));
  assert.ok(split.held.every(row=>row.matchId==='match-b'));
  assert.equal(split.train.some(row=>row.note==='correction'),true);
  assert.equal(split.held.some(row=>row.note==='later-correction'),true);
  assert.equal(split.train.some(row=>row.matchId==='match-b'),false);
  const alone=partitionByMatch(rows.filter(row=>row.matchId==='match-a'));
- assert.equal(alone.reliable,false);
- assert.equal(alone.reason,'insufficient-matches');
+ assert.equal(alone.splitValid,false);
+ assert.equal(alone.splitReason,'insufficient-matches');
  assert.equal(alone.held.length,0);
  assert.equal(alone.train.length,9);
+ const wide=[];
+ for(const name of ['m1','m2','m3','m4'])
+  for(let i=0;i<4;i++)wide.push({...sample({type:'next'}),matchId:name});
+ const enough=partitionByMatch(wide);
+ assert.equal(enough.splitValid,true);
+ assert.equal(enough.evaluationSufficient,true);
+ assert.equal(enough.heldoutMatches,LEARN_MIN_VALIDATION_MATCHES);
+ assert.equal(enough.held.length>=LEARN_MIN_VALIDATION_DECISIONS,true);
+ assert.ok(enough.held.every(row=>row.matchId==='m3'||row.matchId==='m4'));
+ assert.equal(enough.train.length,8);
+ assert.equal(activationOf({splitValid:true,evaluationSufficient:false,agreement:1}).acceptReason,'evaluation-insufficient');
+ assert.equal(activationOf({splitValid:true,evaluationSufficient:true,agreement:0}).acceptReason,'agreement-below-threshold');
+ assert.equal(activationOf({
+  splitValid:true,evaluationSufficient:true,agreement:LEARN_MIN_AGREEMENT,
+  comparison:{available:true,existingAgreement:0.9}
+ }).acceptReason,'existing-better');
+ assert.equal(activationOf({
+  splitValid:true,evaluationSufficient:true,agreement:LEARN_MIN_AGREEMENT,
+  comparison:{available:false,reason:'no-existing'}
+ }).accepted,true);
 });
 
 test('learning does not read hidden cards or mutate the match',()=>{
@@ -458,4 +488,305 @@ test('a low-energy development is not pulled off the energy line',()=>{
  assert.equal(result.changed,false);
  assert.equal(result.reason,'protect-resource');
  assert.equal(observation.visible.players[0].energyTotal<=1,true);
+});
+
+function handObservation(cardId){
+ return {visible:{phase:'main',turn:2,actor:0,status:'playing',players:[
+  {hand:[{uid:'0-1',cardId}],handCount:1,front:[null,null,null,null],energy:[],apReady:2,apTotal:2,
+   energyTotal:3,energyByColor:{purple:3},lifeCount:4,deckCount:40},
+  {hand:null,handCount:4,front:[null,null,null,null],energy:[],apReady:1,apTotal:1,energyTotal:1,
+   energyByColor:{},lifeCount:5,deckCount:40}
+ ]}};
+}
+function plainRow(cardId,matchId,choice){
+ const observation=handObservation(cardId);
+ const play={type:'play',mode:'enter',uid:'0-1',line:'front'};
+ return {source:'human',actor:'human',seat:0,matchId,forced:false,observation,
+  legal:[{type:'next'},play],choice:choice||play};
+}
+
+test('one held-out decision does not count as a passed validation',()=>{
+ const rows=[];
+ for(let i=0;i<8;i++)rows.push(plainRow('BLC-1-039','match-train'));
+ rows.push(plainRow('BLC-1-045','match-held',{type:'next'}));
+ const policy=trainPolicy(rows);
+ assert.equal(policy.validation.splitValid,true);
+ assert.equal(policy.validation.heldoutSamples,1);
+ assert.equal(policy.validation.heldoutMatches,1);
+ assert.equal(policy.validation.evaluationSufficient,false);
+ assert.equal(policy.validation.accepted,false);
+ assert.equal(policy.validation.acceptReason,'evaluation-insufficient');
+ assert.equal(policy.validation.reliable,undefined);
+ assert.equal(policy.format,LEARN_FORMAT);
+});
+
+test('an unfamiliar finalist cannot inherit another card passing the familiarity check',()=>{
+ const state=toPhase(bleachPacks,bleach.counts,'main',21);
+ const card039=take(state,0,'BLC-1-039');
+ const card045=take(state,0,'BLC-1-045');
+ place(state,0,'BLC-1-034','energy',0,true);
+ place(state,0,'BLC-1-036','energy',1,true);
+ hold(state,0,[card039,card045]);
+ readyAp(state,0,2);
+ const legal=legalUniversalActions(bleachPacks,state);
+ const front039=legal.find(action=>action.type==='play'&&action.uid===card039.uid&&action.line==='front'&&!action.replaceUid);
+ const energy039=legal.find(action=>action.type==='play'&&action.uid===card039.uid&&action.line==='energy'&&!action.replaceUid);
+ const front045=legal.find(action=>action.type==='play'&&action.uid===card045.uid&&action.line==='front'&&!action.replaceUid);
+ const energy045=legal.find(action=>action.type==='play'&&action.uid===card045.uid&&action.line==='energy'&&!action.replaceUid);
+ const next=legal.find(action=>action.type==='next');
+ assert.ok(front039&&energy039&&front045&&energy045&&next);
+ const rows=[];
+ for(let i=0;i<10;i++)rows.push(rowFrom(bleachPacks,structuredClone(state),front039,'known-'+i));
+ const policy=trainPolicy(rows);
+ const observation=coachObservation(bleachPacks,state,0);
+ const alone=preferLearnedAction(policy,observation,[front045,energy045],0);
+ assert.equal(alone.action,null);
+ assert.equal(alone.reason,'fallback-unknown');
+ const preference=preferLearnedAction(policy,observation,legal,0);
+ assert.equal(preference.action.uid,card039.uid);
+ assert.equal(preference.action.line,'front');
+ const assisted=applyLearningAssist({
+  policy,observation,legal,seat:0,hardAction:next,
+  candidates:[
+   {action:next,score:20},
+   {action:energy039,score:80},
+   {action:front039,score:40},
+   {action:front045,score:200}
+  ]
+ });
+ assert.equal(assisted.preference.uid,card039.uid);
+ assert.equal(assisted.preference.line,'front');
+ assert.equal(assisted.finalAction.uid,card039.uid);
+ assert.equal(assisted.finalAction.line,'energy');
+ assert.notEqual(assisted.finalAction.line,assisted.preference.line);
+ assert.notEqual(assisted.finalAction.type,next.type);
+ assert.equal(assisted.changed,true);
+ assert.equal(assisted.reason,'assist');
+ assert.notEqual(assisted.finalAction.uid,card045.uid);
+ const kept=applyLearningAssist({
+  policy,observation,legal,seat:0,hardAction:front045,
+  candidates:[
+   {action:front045,score:100},
+   {action:front039,score:30},
+   {action:energy039,score:20},
+   {action:next,score:10}
+  ]
+ });
+ assert.equal(kept.finalAction.uid,card045.uid);
+ assert.equal(kept.changed,false);
+ assert.equal(kept.reason,'assist-kept');
+});
+
+function colorDeck(pack,color,required){
+ const rest=Object.values(pack.cards).filter(card=>card.color===color&&(card.maxCopies||4)===4&&
+  !required.includes(card.id)&&!['special','color','final'].includes(card.trigger)).map(card=>card.id).sort();
+ const built=[...required,...rest.slice(0,13-required.length)];
+ assert.equal(built.length,13,color+' filler');
+ const counts=Object.fromEntries(built.map((id,index)=>[id,index===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ return counts;
+}
+function anyDeck(pack,required){
+ const rest=Object.values(pack.cards).filter(card=>(card.maxCopies||4)===4&&!required.includes(card.id)&&
+  !['special','color','final'].includes(card.trigger)).map(card=>card.id).sort();
+ const ids=[...required,...rest.slice(0,13-required.length)];
+ assert.equal(ids.length,13);
+ const counts=Object.fromEntries(ids.map((id,index)=>[id,index===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ return counts;
+}
+function reachMain(pack,counts,seed){
+ const packs=[pack,pack];
+ let state=newUniversalMatch(packs,{decks:[counts,counts],seed,first:0});
+ for(let guard=0;state.phase!=='main'&&state.status==='playing'&&guard<8;guard++)
+  state=dispatchUniversalAction(packs,state,{type:'next'});
+ assert.equal(state.phase,'main');
+ assert.equal(assertUniversalMatch(packs,state),true);
+ return {packs,state};
+}
+function retarget(value,map){
+ if(typeof value==='string')return map.get(value)||value;
+ if(Array.isArray(value))return value.map(item=>retarget(item,map));
+ if(value&&typeof value==='object')
+  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,retarget(item,map)]));
+ return value;
+}
+function uidMap(value){
+ const ids=[];
+ const walk=item=>{
+  if(typeof item==='string'&&/^[01]-\d+$/.test(item))ids.push(item);
+  else if(Array.isArray(item))item.forEach(walk);
+  else if(item&&typeof item==='object')Object.values(item).forEach(walk);
+ };
+ walk(value);
+ return new Map([...new Set(ids)].map((uid,index)=>[uid,uid.slice(0,2)+(100+index)]));
+}
+function sameChoice(policy,observation,legal,seat,action){
+ const forward=preferLearnedAction(policy,observation,legal,seat);
+ const reversed=preferLearnedAction(policy,observation,legal.slice().reverse(),seat);
+ assert.equal(actionIdentity(observation,forward.action,seat),actionIdentity(observation,action,seat));
+ assert.equal(actionIdentity(observation,reversed.action,seat),actionIdentity(observation,action,seat));
+ const map=uidMap([observation,legal,action]);
+ const moved=retarget(observation,map);
+ const movedAction=retarget(action,map);
+ assert.deepEqual(featureKeys(observation,action,seat),featureKeys(moved,movedAction,seat));
+ assert.equal(actionIdentity(observation,action,seat),actionIdentity(moved,movedAction,seat));
+ const swapped=structuredClone(observation);
+ [swapped.visible.players[0],swapped.visible.players[1]]=[swapped.visible.players[1],swapped.visible.players[0]];
+ const flip=item=>item===0?1:item===1?0:item;
+ swapped.visible.actor=flip(swapped.visible.actor);
+ swapped.visible.active=flip(swapped.visible.active);
+ if(swapped.visible.pending)swapped.visible.pending.player=flip(swapped.visible.pending.player);
+ const prefix=item=>{
+  if(typeof item==='string'&&/^0-/.test(item))return '1-'+item.slice(2);
+  if(typeof item==='string'&&/^1-/.test(item))return '0-'+item.slice(2);
+  if(Array.isArray(item))return item.map(prefix);
+  if(item&&typeof item==='object')return Object.fromEntries(Object.entries(item).map(([key,child])=>[key,prefix(child)]));
+  return item;
+ };
+ const seated=prefix(swapped);
+ assert.deepEqual(featureKeys(observation,action,seat),featureKeys(seated,prefix(action),seat===0?1:0));
+}
+
+test('printed energy, revealed destination and raid-life slot stay distinct',()=>{
+ const bleachPack=officialV2Pack('bleach');
+ const yellow=colorDeck(bleachPack,'yellow',['BLC-1-022','BLC-1-002','BLC-1-012','BLC-1-018','BLC-1-021']);
+ const revealed=reachMain(bleachPack,yellow,29022);
+ place(revealed.state,0,'BLC-1-002','energy',0,true);
+ place(revealed.state,0,'BLC-1-012','energy',1,true);
+ place(revealed.state,0,'BLC-1-018','energy',2,true);
+ const shown=take(revealed.state,1,'BLC-1-021');
+ revealed.state.players[1].deck.unshift(shown);
+ const self=take(revealed.state,0,'BLC-1-022');
+ revealed.state.players[0].hand.push(self);
+ let revealedState=dispatchUniversalAction(revealed.packs,revealed.state,
+  legalUniversalActions(revealed.packs,revealed.state).find(action=>action.type==='play'&&action.uid===self.uid&&action.line==='front'));
+ assert.equal(revealedState.pending.kind,'effect-reveal-opp-top');
+ const places=legalUniversalActions(revealed.packs,revealedState);
+ const top=places.find(action=>action.place==='top');
+ const outside=places.find(action=>action.place==='outside');
+ assert.ok(top&&outside);
+ const revealView=coachObservation(revealed.packs,revealedState,0);
+ assert.notDeepEqual(featureKeys(revealView,top,0),featureKeys(revealView,outside,0));
+ assert.notEqual(actionIdentity(revealView,top,0),actionIdentity(revealView,outside,0));
+ const hiddenDeck=revealedState.players[1].deck.slice(1).map(card=>card.uid);
+ const token=uid=>new RegExp('(^|[^0-9A-Za-z])'+uid+'([^0-9]|$)');
+ for(const uid of hiddenDeck){
+  assert.equal(token(uid).test(featureKeys(revealView,top,0).join('\n')),false,uid);
+  assert.equal(token(uid).test(featureKeys(revealView,outside,0).join('\n')),false,uid);
+ }
+ const placeRows=[];
+ for(let i=0;i<8;i++)placeRows.push(rowFrom(revealed.packs,structuredClone(revealedState),top,'place-'+i));
+ const placePolicy=trainPolicy(placeRows);
+ const placed=preferLearnedAction(placePolicy,revealView,places,0);
+ assert.equal(placed.action.place,'top',placed.reason);
+ sameChoice(placePolicy,revealView,places,0,top);
+
+ const purple=colorDeck(bleachPack,'purple',['BLC-1-060','BLC-1-034','BLC-1-039','BLC-1-045','BLC-1-036']);
+ const energy=reachMain(bleachPack,purple,29060);
+ place(energy.state,0,'BLC-1-034','energy',0,true);
+ place(energy.state,0,'BLC-1-039','energy',1,true);
+ place(energy.state,0,'BLC-1-045','energy',2,true);
+ const namer=take(energy.state,0,'BLC-1-060');
+ energy.state.players[0].hand.push(namer);
+ const namedState=dispatchUniversalAction(energy.packs,energy.state,
+  legalUniversalActions(energy.packs,energy.state).find(action=>action.type==='play'&&action.uid===namer.uid&&action.line==='front'));
+ assert.equal(namedState.pending.kind,'effect-choose-printed-energy');
+ const numbers=legalUniversalActions(energy.packs,namedState);
+ const zero=numbers.find(action=>action.value===0);
+ const two=numbers.find(action=>action.value===2);
+ assert.ok(zero&&two);
+ const energyView=coachObservation(energy.packs,namedState,0);
+ assert.notDeepEqual(featureKeys(energyView,zero,0),featureKeys(energyView,two,0));
+ assert.notEqual(actionIdentity(energyView,zero,0),actionIdentity(energyView,two,0));
+ const deckUids=namedState.players.flatMap(player=>player.deck.map(card=>card.uid));
+ for(const uid of deckUids)
+  assert.equal(token(uid).test(featureKeys(energyView,two,0).join('\n')),false,uid);
+ const energyRows=[];
+ for(let i=0;i<8;i++)energyRows.push(rowFrom(energy.packs,structuredClone(namedState),two,'energy-'+i));
+ const energyPolicy=trainPolicy(energyRows);
+ assert.equal(preferLearnedAction(energyPolicy,energyView,numbers,0).action.value,2);
+ sameChoice(energyPolicy,energyView,numbers,0,two);
+
+ const sao=officialV2Pack('sword-art-online');
+ const saoCounts=anyDeck(sao,['SAO-2-011','SAO-1-028','SAO-1-003']);
+ const raid=reachMain(sao,saoCounts,2014);
+ place(raid.state,0,'SAO-1-003','energy',0,true);
+ place(raid.state,0,'SAO-1-003','energy',1,true);
+ setLife(raid.state.players[0],4);
+ const base=place(raid.state,0,'SAO-1-028','front',0,true);
+ const leafa=take(raid.state,0,'SAO-2-011');
+ raid.state.players[0].hand.push(leafa);
+ const raided=dispatchUniversalAction(raid.packs,raid.state,
+  legalUniversalActions(raid.packs,raid.state).find(action=>action.type==='raid'&&action.uid===leafa.uid&&action.baseUid===base.uid&&action.line!=='energy'));
+ assert.equal(raided.pending.kind,'effect-raid-life');
+ const slots=legalUniversalActions(raid.packs,raided);
+ const decline=slots.find(action=>action.type==='chooseRaidLife'&&action.index===null);
+ const first=slots.find(action=>action.type==='chooseRaidLife'&&action.index===0);
+ assert.ok(decline&&first);
+ const raidView=coachObservation(raid.packs,raided,0);
+ assert.notDeepEqual(featureKeys(raidView,decline,0),featureKeys(raidView,first,0));
+ assert.notEqual(actionIdentity(raidView,decline,0),actionIdentity(raidView,first,0));
+ const hiddenLife=raided.players.flatMap(player=>player.life.filter(card=>card.lifePublic!==true&&card.faceUp!==true).map(card=>card.uid));
+ assert.ok(hiddenLife.length>0);
+ const joined=featureKeys(raidView,first,0).concat(featureKeys(raidView,decline,0)).join('\n');
+ for(const uid of hiddenLife)assert.equal(token(uid).test(joined),false,uid);
+ const raidRows=[];
+ for(let i=0;i<8;i++)raidRows.push(rowFrom(raid.packs,structuredClone(raided),first,'raid-life-'+i));
+ const raidPolicy=trainPolicy(raidRows);
+ assert.equal(preferLearnedAction(raidPolicy,raidView,slots,0).action.index,0);
+ sameChoice(raidPolicy,raidView,slots,0,first);
+});
+
+test('every official battle title contributes printed attributes',()=>{
+ const seen=[];
+ for(const title of officialV2Titles()){
+  const pack=officialV2Pack(title);
+  const card=Object.values(pack.cards).find(item=>typeof item.energy==='number'&&typeof item.bp==='number'&&typeof item.gen==='number'&&typeof item.ap==='number');
+  assert.ok(card,title);
+  const keys=featureKeys(handObservation(card.id),{type:'play',mode:'enter',uid:'0-1',line:'front'},0);
+  assert.equal(keys.some(key=>key.includes('printed:unknown')),false,title+' '+card.id);
+  assert.ok(keys.some(key=>key.includes(':cost:')&&!key.includes(':cost:unknown')),title+' cost '+card.id);
+  assert.ok(keys.some(key=>key.includes(':ap:')&&!key.includes(':ap:unknown')),title+' ap '+card.id);
+  assert.ok(keys.some(key=>key.includes(':pbp:')&&!key.includes(':pbp:unknown')),title+' bp '+card.id);
+  assert.ok(keys.some(key=>key.includes(':gen:')&&!key.includes(':gen:unknown')),title+' gen '+card.id);
+  assert.ok(keys.some(key=>key.includes(':raid:')),title+' raid '+card.id);
+  seen.push(card.id);
+ }
+ const fresh=officialV2Pack('rezero');
+ const vol2=Object.values(fresh.cards).find(card=>String(card.id).startsWith('REZ-2-')&&typeof card.energy==='number');
+ const madoka=Object.values(officialV2Pack('madoka').cards).find(card=>String(card.id).startsWith('MMM-2-'));
+ const titan=Object.values(officialV2Pack('aot').cards).find(card=>String(card.id).startsWith('AOT-2-'));
+ const rider=Object.values(officialV2Pack('kmr').cards).find(card=>String(card.id).startsWith('KMR-2-'));
+ for(const card of [vol2,madoka,titan,rider]){
+  assert.ok(card);
+  const keys=featureKeys(handObservation(card.id),{type:'play',mode:'enter',uid:'0-1',line:'front'},0);
+  assert.equal(keys.some(key=>key.includes('printed:unknown')),false,card.id);
+  assert.ok(keys.some(key=>key.includes(':cost:')));
+ }
+ const unknown=featureKeys(handObservation('NO-SUCH-CARD'),{type:'play',mode:'enter',uid:'0-1',line:'front'},0);
+ assert.ok(unknown.some(key=>key.includes('printed:unknown')));
+ assert.equal(unknown.some(key=>key.includes(':cost:0')),false);
+ assert.equal(unknown.some(key=>key.includes(':pbp:0')),false);
+ assert.equal(seen.length,officialV2Titles().length);
+});
+
+test('a fair comparison uses the same unseen matches and says when it cannot',()=>{
+ const first=[];
+ for(let i=0;i<8;i++)first.push(plainRow('BLC-1-039','old-'+i));
+ for(let i=0;i<8;i++)first.push(plainRow('BLC-1-039','old-h'+i));
+ const existing=trainPolicy(first);
+ assert.equal(existing.validation.accepted,true);
+ const fresh=[];
+ for(let i=0;i<8;i++)fresh.push(plainRow('BLC-1-039','new-'+i));
+ for(let i=0;i<8;i++)fresh.push(plainRow('BLC-1-039','new-h'+i));
+ const compared=trainPolicy(fresh,{existing});
+ assert.equal(compared.validation.comparison.available,true);
+ assert.equal(typeof compared.validation.comparison.candidateAgreement,'number');
+ assert.equal(typeof compared.validation.comparison.existingAgreement,'number');
+ assert.equal(compared.validation.accepted,true);
+ const overlap=trainPolicy(first,{existing});
+ assert.equal(overlap.validation.comparison.available,false);
+ assert.equal(overlap.validation.comparison.reason,'overlap');
+ assert.equal(overlap.validation.comparison.existingAgreement,null);
 });

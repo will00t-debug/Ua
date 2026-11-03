@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Reproducible learned-vs-hard comparison.
-// Training rows are produced by a documented visible-information teacher
-// playing the engine. They are not human decisions. A win rate here does
-// not show that the model learned from players.
+// Training rows come from a visible-information teacher playing the engine.
+// They are not human decisions and are not committed.
 // Seeds below were fixed before reading the result. Do not change them to
 // improve the score.
 import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
@@ -17,14 +16,21 @@ const EVAL_SEEDS=[21,22];
 const STEP_CAP=500;
 const CLOCK={ms:1e9};
 const DECIDED=new Set(['life-zero','unblocked-attack','required-draw-empty','finished']);
+const EXPLORATORY_GAMES=8;
 
 const bleach=verifiedBleachPurplePilotDeck();
 const ttg=verifiedTtgRedPilotDeck();
-const matchups=[
+const layouts=[
  {name:'bleach-mirror',packs:[bleach.pack,bleach.pack],decks:[bleach.counts,bleach.counts]},
- {name:'bleach-vs-ttg',packs:[bleach.pack,ttg.pack],decks:[bleach.counts,ttg.counts]}
+ {name:'bleach-vs-ttg',packs:[bleach.pack,ttg.pack],decks:[bleach.counts,ttg.counts]},
+ {name:'ttg-vs-bleach',packs:[ttg.pack,bleach.pack],decks:[ttg.counts,bleach.counts]}
 ];
 
+function deckAt(layout,seat){
+ if(layout.name==='bleach-mirror')return 'bleach';
+ if(layout.name==='bleach-vs-ttg')return seat===0?'bleach':'ttg';
+ return seat===0?'ttg':'bleach';
+}
 function bpOf(view,uid){
  for(const line of ['front','energy']){
   for(const card of view.players.flatMap(player=>player[line]||[]))
@@ -64,26 +70,33 @@ function driven(packs,state,options,counter){
  counter.count++;
  return picked;
 }
-function fresh(matchup,seed,first){
- return newUniversalMatch(matchup.packs,{decks:matchup.decks,seed,first,openingMulligan:true});
+function fresh(layout,seed,first){
+ return newUniversalMatch(layout.packs,{decks:layout.decks,seed,first,openingMulligan:true});
+}
+function blank(layout,seed,first,extra){
+ return {kind:extra.kind,layout:layout.name,seed,first,learnedSeat:extra.learnedSeat??null,
+  learnedDeck:extra.learnedSeat==null?null:deckAt(layout,extra.learnedSeat),
+  steps:0,status:'incomplete',endReason:null,error:null,winner:null,
+  learnedDecisions:0,hardDecisions:0,changed:0,fallbacks:0,phaseBudget:0,reasons:{},
+  learnedMs:0,hardMs:0};
 }
 
 const rows=[];
 const training=[];
-for(const matchup of matchups)for(const seed of TRAIN_SEEDS)for(const first of [0,1]){
- const matchId='train-'+matchup.name+'-'+seed+'-'+first;
- console.error('train',matchup.name,seed,first);
- const entry={matchup:matchup.name,seed,first,steps:0,status:'incomplete',endReason:null,error:null,phaseBudget:0};
+for(const layout of layouts)for(const seed of TRAIN_SEEDS)for(const first of [0,1]){
+ const matchId='train-'+layout.name+'-'+seed+'-'+first;
+ console.error('train',layout.name,seed,first);
+ const entry=blank(layout,seed,first,{kind:'train'});
  try{
-  let state=fresh(matchup,seed,first);
+  let state=fresh(layout,seed,first);
   const budget=phaseCounter();
   while(state.status==='playing'&&entry.steps<STEP_CAP){
    const seat=state.pending?.player??state.active;
-   const legal=legalUniversalActions(matchup.packs,state);
+   const legal=legalUniversalActions(layout.packs,state);
    let choice;
-   if(seat===0)choice=teacher(matchup.packs,state);
+   if(seat===0)choice=teacher(layout.packs,state);
    else{
-    const picked=driven(matchup.packs,state,{difficulty:'hard',...CLOCK},budget);
+    const picked=driven(layout.packs,state,{difficulty:'hard',...CLOCK},budget);
     choice=picked.action;
     if(picked.reason==='phase-budget')entry.phaseBudget++;
    }
@@ -91,13 +104,13 @@ for(const matchup of matchups)for(const seed of TRAIN_SEEDS)for(const first of [
     throw Error('teacher or hard action was illegal');
    if(seat===0&&legal.length>=2)
     rows.push({source:'human',actor:'human',seat:0,matchId,forced:false,
-     observation:coachObservation(matchup.packs,state,0),legal,choice});
-   state=act(matchup.packs,state,choice);
+     observation:coachObservation(layout.packs,state,0),legal,choice});
+   state=act(layout.packs,state,choice);
    entry.steps++;
   }
-  entry.status=state.status==='finished'?'finished':'incomplete';
+  entry.status=state.status==='finished'&&DECIDED.has(state.endReason)?'finished':'incomplete';
   entry.endReason=state.endReason||null;
-  entry.winner=state.status==='finished'?state.winner:null;
+  entry.winner=entry.status==='finished'?state.winner:null;
  }catch(error){
   entry.status='error';
   entry.error=String(error?.message||error);
@@ -107,33 +120,35 @@ for(const matchup of matchups)for(const seed of TRAIN_SEEDS)for(const first of [
 
 const policy=trainPolicy(rows);
 const games=[];
-for(const matchup of matchups)for(const seed of EVAL_SEEDS)for(const first of [0,1]){
- console.error('eval',matchup.name,seed,first);
- const entry={matchup:matchup.name,seed,first,steps:0,status:'incomplete',endReason:null,
-  error:null,winner:null,learnedDecisions:0,changed:0,fallbacks:0,phaseBudget:0,reasons:{},
-  learnedMs:0,hardMs:0};
+function play(layout,seed,first,role){
+ console.error(role.kind,layout.name,'seat',role.learnedSeat??'-',seed,first);
+ const entry=blank(layout,seed,first,role);
  try{
-  let state=fresh(matchup,seed,first);
+  let state=fresh(layout,seed,first);
   const budgets=[phaseCounter(),phaseCounter()];
   while(state.status==='playing'&&entry.steps<STEP_CAP){
    const seat=state.pending?.player??state.active;
-   const legal=legalUniversalActions(matchup.packs,state);
+   const legal=legalUniversalActions(layout.packs,state);
+   const learned=role.kind==='learned'&&seat===role.learnedSeat;
    const started=performance.now();
-   const picked=driven(matchup.packs,state,
-    seat===0?{difficulty:'learned',policy,...CLOCK}:{difficulty:'hard',...CLOCK},budgets[seat]);
+   const picked=driven(layout.packs,state,
+    learned?{difficulty:'learned',policy,...CLOCK}:{difficulty:'hard',...CLOCK},budgets[seat]);
    const elapsed=performance.now()-started;
    if(picked.reason==='phase-budget')entry.phaseBudget++;
-   if(seat===0){entry.learnedMs+=elapsed;entry.learnedDecisions++;}
-   else entry.hardMs+=elapsed;
-   if(!legal.some(action=>JSON.stringify(action)===JSON.stringify(picked.action)))
-    throw Error('chosen action was illegal');
-   if(seat===0){
+   if(learned){
+    entry.learnedMs+=elapsed;
+    entry.learnedDecisions++;
     if(picked.diagnosis?.changed)entry.changed++;
     const reason=picked.diagnosis?.reason||(picked.reason?'driver-'+picked.reason:'none');
     entry.reasons[reason]=(entry.reasons[reason]||0)+1;
     if(reason.startsWith('fallback')||reason.startsWith('protect'))entry.fallbacks++;
+   }else{
+    entry.hardMs+=elapsed;
+    entry.hardDecisions++;
    }
-   state=act(matchup.packs,state,picked.action);
+   if(!legal.some(action=>JSON.stringify(action)===JSON.stringify(picked.action)))
+    throw Error('chosen action was illegal');
+   state=act(layout.packs,state,picked.action);
    entry.steps++;
   }
   if(state.status==='finished'&&DECIDED.has(state.endReason)){
@@ -151,43 +166,92 @@ for(const matchup of matchups)for(const seed of EVAL_SEEDS)for(const first of [0
  games.push(entry);
 }
 
-function tally(list){
- const out={games:list.length,learnedWins:0,hardWins:0,incomplete:0,errors:0,byFirst:{}};
+for(const layout of layouts)for(const seed of EVAL_SEEDS)for(const first of [0,1]){
+ play(layout,seed,first,{kind:'baseline'});
+ for(const learnedSeat of [0,1])play(layout,seed,first,{kind:'learned',learnedSeat});
+}
+
+function countStatus(list){
+ const out={games:list.length,finished:0,incomplete:0,errors:0};
  for(const game of list){
-  const bucket=out.byFirst[game.first]||(out.byFirst[game.first]={learnedWins:0,hardWins:0,incomplete:0,errors:0,games:0});
-  bucket.games++;
-  if(game.status==='error'){out.errors++;bucket.errors++;}
-  else if(game.status!=='finished'){out.incomplete++;bucket.incomplete++;}
-  else if(game.winner===0){out.learnedWins++;bucket.learnedWins++;}
-  else {out.hardWins++;bucket.hardWins++;}
+  if(game.status==='error')out.errors++;
+  else if(game.status==='finished')out.finished++;
+  else out.incomplete++;
  }
- const decided=out.learnedWins+out.hardWins;
- out.learnedWinRate=decided?out.learnedWins/decided:null;
  return out;
 }
-const learnedDecisions=games.reduce((sum,game)=>sum+game.learnedDecisions,0);
-const changed=games.reduce((sum,game)=>sum+game.changed,0);
+function seatResult(list,seat){
+ const status=countStatus(list);
+ const finished=list.filter(game=>game.status==='finished');
+ const wins=finished.filter(game=>game.winner===seat).length;
+ return {...status,seat,wins,losses:finished.length-wins,
+  winRate:finished.length?wins/finished.length:null};
+}
+function sum(list,key){return list.reduce((total,game)=>total+(game[key]||0),0);}
+function round(value){return value==null?null:Math.round(value*1000)/1000;}
+
+const learnedGames=games.filter(game=>game.kind==='learned');
+const baselineGames=games.filter(game=>game.kind==='baseline');
+const cells=[];
+for(const layout of layouts)for(const learnedSeat of [0,1]){
+ const learned=learnedGames.filter(game=>game.layout===layout.name&&game.learnedSeat===learnedSeat);
+ const baseline=baselineGames.filter(game=>game.layout===layout.name);
+ const learnedSeatResult=seatResult(learned,learnedSeat);
+ const baselineSeatResult=seatResult(baseline,learnedSeat);
+ const decisions=sum(learned,'learnedDecisions');
+ const changed=sum(learned,'changed');
+ cells.push({
+  layout:layout.name,learnedSeat,learnedDeck:deckAt(layout,learnedSeat),
+  learned:learnedSeatResult,baseline:baselineSeatResult,
+  delta:learnedSeatResult.winRate==null||baselineSeatResult.winRate==null?null:
+   round(learnedSeatResult.winRate-baselineSeatResult.winRate),
+  learnedDecisions:decisions,changed,influenceRate:decisions?round(changed/decisions):null,
+  fallbacks:sum(learned,'fallbacks'),phaseBudget:sum(learned,'phaseBudget'),
+  learnedMs:Math.round(sum(learned,'learnedMs')),
+  hardMs:Math.round(sum(learned,'hardMs')),
+  meanLearnedMs:decisions?Math.round(sum(learned,'learnedMs')/decisions*10)/10:null,
+  exploratory:learnedSeatResult.finished<EXPLORATORY_GAMES||baselineSeatResult.finished<EXPLORATORY_GAMES
+ });
+}
+const learnedDecisions=sum(learnedGames,'learnedDecisions');
 const report={
  source:'synthetic-engine-teacher',
- disclaimer:'訓練列來自固定的可見資訊規則，不是玩家紀錄。這個勝率不能當作已證實能向真人學習，也不能單獨當作強度提升。',
- seeds:{train:TRAIN_SEEDS,eval:EVAL_SEEDS,note:'種子在看結果之前就已固定。'},
- trainingGames:training,
- trainingRows:rows.length,
- validation:policy.validation,
+ disclaimer:'訓練列來自固定的可見資訊規則，不是玩家紀錄，也沒有提交真人決策。模仿相同比例不是勝率。對局數不足，以下是探索性結果，不能當成已經證實強度提升。',
+ exploratory:cells.some(cell=>cell.exploratory)||learnedGames.filter(game=>game.status==='finished').length<EXPLORATORY_GAMES,
+ exploratoryReason:'每個座位與牌組組合的完賽對局少於 '+EXPLORATORY_GAMES+' 場。評估清單在開跑前就固定，沒有事後挑選種子。',
+ seeds:{train:TRAIN_SEEDS,eval:EVAL_SEEDS,note:'訓練種子和評估種子分開，而且在看結果之前就已固定。'},
+ training:{
+  games:training.length,
+  ...countStatus(training),
+  rows:rows.length,
+  phaseBudget:sum(training,'phaseBudget'),
+  teacherSeat:0,
+  layouts:layouts.map(layout=>layout.name)
+ },
+ validation:{
+  accepted:policy.validation?.accepted===true,
+  acceptReason:policy.validation?.acceptReason||null,
+  splitValid:policy.validation?.splitValid===true,
+  evaluationSufficient:policy.validation?.evaluationSufficient===true,
+  agreement:policy.validation?.agreement??null,
+  heldoutMatches:policy.validation?.heldoutMatches??0,
+  heldoutSamples:policy.validation?.heldoutSamples??0,
+  note:'這裡的 agreement 是留出對局的模仿相同比例，不是勝率。伺服器只有 accepted 為真才會啟用模型。'
+ },
  trainedSamples:policy.trainedSamples,
  negativeMode:policy.negativeMode,
+ cells,
  evaluation:{
-  ...tally(games),
-  byMatchup:Object.fromEntries(matchups.map(matchup=>[matchup.name,tally(games.filter(game=>game.matchup===matchup.name))])),
-  learnedDecisions,changed,
-  influenceRate:learnedDecisions?changed/learnedDecisions:null,
-  fallbacks:games.reduce((sum,game)=>sum+game.fallbacks,0),
-  phaseBudget:games.reduce((sum,game)=>sum+game.phaseBudget,0)+
-   training.reduce((sum,game)=>sum+(game.phaseBudget||0),0),
-  learnedMs:Math.round(games.reduce((sum,game)=>sum+game.learnedMs,0)),
-  hardMs:Math.round(games.reduce((sum,game)=>sum+game.hardMs,0)),
-  meanLearnedMs:learnedDecisions?Math.round(games.reduce((sum,game)=>sum+game.learnedMs,0)/learnedDecisions*10)/10:null
+  ...countStatus(learnedGames),
+  learnedDecisions,changed:sum(learnedGames,'changed'),
+  influenceRate:learnedDecisions?round(sum(learnedGames,'changed')/learnedDecisions):null,
+  fallbacks:sum(learnedGames,'fallbacks'),
+  phaseBudget:sum(learnedGames,'phaseBudget')+sum(baselineGames,'phaseBudget')+sum(training,'phaseBudget'),
+  learnedMs:Math.round(sum(learnedGames,'learnedMs')),
+  hardMs:Math.round(sum(learnedGames,'hardMs')+sum(baselineGames,'hardMs')),
+  meanLearnedMs:learnedDecisions?Math.round(sum(learnedGames,'learnedMs')/learnedDecisions*10)/10:null
  },
- games
+ baseline:countStatus(baselineGames),
+ games:[...training,...games]
 };
 console.log(JSON.stringify(report,null,2));

@@ -9,7 +9,7 @@ import {newUniversalMatch,legalUniversalActions} from '../dist/universal-v2/engi
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {chooseProgressSafeAiAction,aiPolicyFor} from '../dist/universal-v2/ai-driver-safety.mjs';
 import {buildHumanStep,coachHeader,coachObservation,newCoachMatchId} from '../dist/universal-v2/coach-record.mjs';
-import {LEARN_AI_VERSION,LEARN_FORMAT,chooseLearnedAction,learnReport,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
+import {LEARN_AI_VERSION,LEARN_DIM,LEARN_FORMAT,LEARN_FORMAT_V2,chooseLearnedAction,learnReport,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 import {createHandler} from '../server/http.mjs';
 
 const deck=verifiedBleachPurplePilotDeck();
@@ -79,6 +79,11 @@ test('learned difficulty falls back to hard when the policy is missing or old',(
  assert.equal(stale.learned,false);
  assert.deepEqual(stale.action,hard);
  assert.equal(stale.diagnosis.reason,'fallback-old-model');
+ const retired={format:LEARN_FORMAT_V2,dim:LEARN_DIM,weights:Array(LEARN_DIM).fill(0),support:{mulligan:4},cards:{},profiles:{}};
+ const staleV2=chooseProgressSafeAiAction(packs,state,{difficulty:'learned',policy:retired,...clock});
+ assert.equal(staleV2.learned,false);
+ assert.deepEqual(staleV2.action,hard);
+ assert.equal(staleV2.diagnosis.reason,'fallback-old-model');
  const text=learnReport(trainPolicy(Array.from({length:12},(_,i)=>keepRow('m'+String(i).padStart(32,'a')))));
  assert.match(text,/勝率要在對戰裡另外看/);
  assert.doesNotMatch(text,/信心/);
@@ -104,11 +109,28 @@ async function api(path,{method='GET',token,body}={}){
  try{data=text?JSON.parse(text):null;}catch{data={raw:text};}
  return {status:response.status,data,text};
 }
-function uploadedStep(){
+function mulliganStep(mode){
  const state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:11,first:0,openingMulligan:true});
- const action=legalUniversalActions(packs,state).find(item=>item.mode==='keep');
+ const action=legalUniversalActions(packs,state).find(item=>item.mode===mode);
+ assert.ok(action,mode);
  const header=coachHeader({matchId:newCoachMatchId(),packs,counts:deck.counts,aiVersion:'normal'});
  return buildHumanStep({packs,state,action,step:0,replayIndex:0,previous:null,header});
+}
+async function uploadMode(token,count,mode){
+ const ids=[];
+ for(let i=0;i<count;i++){
+  const step=mulliganStep(mode);
+  ids.push(step.matchId);
+  const saved=await api('/api/coach/steps',{method:'POST',token,body:step});
+  assert.equal(saved.status,200,saved.text);
+ }
+ return ids;
+}
+async function removeMatches(token,ids){
+ for(const matchId of ids){
+  const removed=await api('/api/coach/matches/'+matchId,{method:'DELETE',token});
+  assert.equal(removed.status,200,removed.text);
+ }
 }
 
 before(async()=>{
@@ -131,72 +153,117 @@ test('learning is stored for the logged-in account and removed with that account
  assert.equal(owner.status,201,owner.text);
  const tooFew=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(tooFew.status,400);
- for(let i=0;i<12;i++){
-  const saved=await api('/api/coach/steps',{method:'POST',token:owner.data.token,body:uploadedStep()});
-  assert.equal(saved.status,200,saved.text);
- }
+ await uploadMode(owner.data.token,16,'keep');
  const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(learned.status,200,learned.text);
  assert.equal(learned.data.replaced,true);
+ assert.equal(learned.data.activated,true);
  assert.equal(learned.data.policy.format,LEARN_FORMAT);
- assert.equal(learned.data.policy.validation.reliable,true);
+ assert.equal(learned.data.policy.validation.accepted,true);
  assert.equal(learned.data.policy.trainedSamples>=8,true);
  assert.equal(JSON.stringify(learned.data.policy).includes('correct-horse'),false);
  assert.equal(JSON.stringify(learned.data.policy).includes('信心'),false);
+ assert.equal(JSON.stringify(learned.data.policy).includes('"previous"'),false);
  const mine=await api('/api/coach/policy',{token:owner.data.token});
- assert.equal(mine.data.policy.weights.length,learned.data.policy.weights.length);
+ assert.deepEqual(mine.data.policy.weights,learned.data.policy.weights);
  const theirs=await api('/api/coach/policy',{token:other.data.token});
  assert.equal(theirs.data.policy,null);
  const removed=await api('/api/coach/policy',{method:'DELETE',token:owner.data.token});
  assert.equal(removed.status,200);
  const gone=await api('/api/coach/policy',{token:owner.data.token});
  assert.equal(gone.data.policy,null);
- for(let i=0;i<12;i++){
-  const saved=await api('/api/coach/steps',{method:'POST',token:owner.data.token,body:uploadedStep()});
-  assert.equal(saved.status,200,saved.text);
- }
- const again=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
- assert.equal(again.status,200,again.text);
  const wiped=await api('/api/coach',{method:'DELETE',token:owner.data.token});
  assert.equal(wiped.status,200);
  const after=await api('/api/coach/policy',{token:owner.data.token});
  assert.equal(after.data.policy,null);
+ const otherStill=await api('/api/coach/policy',{token:other.data.token});
+ assert.equal(otherStill.data.policy,null);
 });
 
-test('an unverified retrain does not replace a stored model',async()=>{
- const owner=await api('/api/register',{method:'POST',body:{username:'learn_keep',password:'correct-horse-1'}});
+test('a one-match holdout is saved but does not replace the active model',async()=>{
+ const owner=await api('/api/register',{method:'POST',body:{username:'learn_low',password:'correct-horse-1'}});
+ const other=await api('/api/register',{method:'POST',body:{username:'learn_low_side',password:'correct-horse-1'}});
  assert.equal(owner.status,201,owner.text);
- const ids=[];
- for(let i=0;i<12;i++){
-  const step=uploadedStep();
-  ids.push(step.matchId);
-  const saved=await api('/api/coach/steps',{method:'POST',token:owner.data.token,body:step});
-  assert.equal(saved.status,200,saved.text);
- }
+ await uploadMode(owner.data.token,8,'keep');
+ await uploadMode(owner.data.token,1,'redraw');
  const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(learned.status,200,learned.text);
+ assert.equal(learned.data.replaced,false);
+ assert.equal(learned.data.activated,false);
+ assert.equal(learned.data.savedCandidate,true);
+ assert.equal(learned.data.policy,null);
+ assert.equal(learned.data.candidate.validation.splitValid,true);
+ assert.equal(learned.data.candidate.validation.heldoutSamples,1);
+ assert.equal(learned.data.candidate.validation.evaluationSufficient,false);
+ assert.equal(learned.data.candidate.validation.accepted,false);
+ assert.equal(learned.data.candidate.validation.reliable,undefined);
+ const reloaded=await api('/api/coach/policy',{token:owner.data.token});
+ assert.equal(reloaded.data.policy,null);
+ assert.equal(reloaded.data.inactive,true);
+ const side=await api('/api/coach/policy',{token:other.data.token});
+ assert.equal(side.data.policy,null);
+});
+
+test('agreement below the threshold does not replace a stored model',async()=>{
+ const owner=await api('/api/register',{method:'POST',body:{username:'learn_keep',password:'correct-horse-1'}});
+ assert.equal(owner.status,201,owner.text);
+ const first=await uploadMode(owner.data.token,16,'keep');
+ const learned=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
+ assert.equal(learned.status,200,learned.text);
+ assert.equal(learned.data.activated,true);
  const weights=learned.data.policy.weights;
- for(const matchId of ids){
-  const removed=await api('/api/coach/matches/'+matchId,{method:'DELETE',token:owner.data.token});
-  assert.equal(removed.status,200,removed.text);
- }
- const matchId=newCoachMatchId();
- let previous=null;
- for(let i=0;i<10;i++){
-  const state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:11,first:0,openingMulligan:true});
-  const action=legalUniversalActions(packs,state).find(item=>item.mode==='keep');
-  const header=coachHeader({matchId,packs,counts:deck.counts,aiVersion:'normal'});
-  const step=buildHumanStep({packs,state,action,step:i,replayIndex:i,previous,header});
-  previous={step:step.step,type:step.choice.type,replayIndex:step.replayIndex,clientKey:step.clientKey};
-  const saved=await api('/api/coach/steps',{method:'POST',token:owner.data.token,body:step});
-  assert.equal(saved.status,200,saved.text);
- }
+ await removeMatches(owner.data.token,first);
+ await uploadMode(owner.data.token,8,'keep');
+ await uploadMode(owner.data.token,8,'redraw');
  const again=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
  assert.equal(again.status,200,again.text);
  assert.equal(again.data.replaced,false);
+ assert.equal(again.data.activated,false);
  assert.match(again.data.notice,/沒有覆蓋/);
+ assert.equal(again.data.candidate.validation.evaluationSufficient,true);
+ assert.equal(again.data.candidate.validation.accepted,false);
+ assert.equal(again.data.candidate.validation.acceptReason,'agreement-below-threshold');
  assert.deepEqual(again.data.policy.weights,weights);
  const reloaded=await api('/api/coach/policy',{token:owner.data.token});
  assert.deepEqual(reloaded.data.policy.weights,weights);
  assert.equal(reloaded.data.policy.previous,undefined);
+});
+
+test('a passed model stays after reload and restoring it leaves another account alone',async()=>{
+ const owner=await api('/api/register',{method:'POST',body:{username:'learn_swap',password:'correct-horse-1'}});
+ const other=await api('/api/register',{method:'POST',body:{username:'learn_swap_side',password:'correct-horse-1'}});
+ assert.equal(owner.status,201,owner.text);
+ assert.equal(other.status,201,other.text);
+ const sideIds=await uploadMode(other.data.token,16,'keep');
+ const sideLearned=await api('/api/coach/learn',{method:'POST',token:other.data.token,body:{}});
+ assert.equal(sideLearned.data.activated,true);
+ const sideWeights=sideLearned.data.policy.weights;
+ const firstIds=await uploadMode(owner.data.token,16,'keep');
+ const first=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
+ assert.equal(first.data.activated,true);
+ assert.equal(first.data.policy.validation.accepted,true);
+ const weights=first.data.policy.weights;
+ const loaded=await api('/api/coach/policy',{token:owner.data.token});
+ assert.deepEqual(loaded.data.policy.weights,weights);
+ assert.equal(loaded.data.canRestore,false);
+ await removeMatches(owner.data.token,firstIds);
+ await uploadMode(owner.data.token,16,'redraw');
+ const second=await api('/api/coach/learn',{method:'POST',token:owner.data.token,body:{}});
+ assert.equal(second.data.replaced,true);
+ assert.equal(second.data.activated,true);
+ assert.notDeepEqual(second.data.policy.weights,weights);
+ const beforeRestore=await api('/api/coach/policy',{token:owner.data.token});
+ assert.equal(beforeRestore.data.canRestore,true);
+ assert.equal(beforeRestore.data.policy.previous,undefined);
+ const restored=await api('/api/coach/policy/restore',{method:'POST',token:owner.data.token,body:{}});
+ assert.equal(restored.status,200,restored.text);
+ assert.equal(restored.data.restored,true);
+ assert.deepEqual(restored.data.policy.weights,weights);
+ assert.equal(restored.data.policy.previous,undefined);
+ const after=await api('/api/coach/policy',{token:owner.data.token});
+ assert.deepEqual(after.data.policy.weights,weights);
+ const sideAfter=await api('/api/coach/policy',{token:other.data.token});
+ assert.deepEqual(sideAfter.data.policy.weights,sideWeights);
+ const sideMatches=await api('/api/coach/matches',{token:other.data.token});
+ assert.equal(sideMatches.data.matches.length,sideIds.length);
 });
