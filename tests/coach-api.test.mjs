@@ -102,6 +102,27 @@ test('coach storage requires login and keeps one row per step',async()=>{
  assert.equal(afterDelete.data.demonstrations.length,0);
 });
 
+test('a match after the old 40-match cap keeps the oldest match',async()=>{
+ const created=await api('/api/register',{method:'POST',body:{username:'上限甲',password:'correct-horse-1'}});
+ assert.equal(created.status,201,created.text);
+ const token=created.data.token;
+ const template=humanStep();
+ const retarget=matchId=>JSON.parse(JSON.stringify(template).split(template.matchId).join(matchId));
+ const ids=[];
+ for(let n=0;n<41;n++){
+  const matchId=newCoachMatchId();
+  ids.push(matchId);
+  const saved=await api('/api/coach/steps',{method:'POST',token,body:retarget(matchId)});
+  assert.equal(saved.status,200,saved.text);
+ }
+ const listed=await api('/api/coach/matches',{token});
+ assert.equal(listed.data.matches.length,41);
+ for(const matchId of ids)assert.equal(listed.data.matches.some(match=>match.id===matchId),true);
+ const oldest=await api('/api/coach/matches/'+ids[0],{token});
+ assert.equal(oldest.status,200);
+ assert.equal(oldest.data.steps.length,1);
+});
+
 test('a corrected demonstration replaces the unmarked AI step once',async()=>{
  const created=await api('/api/register',{method:'POST',body:{username:'教練丙',password:'correct-horse-1'}});
  const token=created.data.token;

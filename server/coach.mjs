@@ -13,7 +13,7 @@ const UNFINISHED=new Set(UNFINISHED_ENDINGS);
 const CLASSES=new Set(DECISION_CLASSES);
 const REASONS=new Set(['','energy','base','clear','attack-order']);
 const BANNED=/^(password|username|chat|token|cookie|authorization|secret|deckorder)$/i;
-const MAX_MATCHES=40;
+const MAX_MATCHES=400;
 const MAX_STEPS=1500;
 const MAX_DEMOS=80;
 const MAX_REPLAYS=10;
@@ -225,7 +225,7 @@ function ensureMatch(repos,user,anonymous,header,now){
  const headerJson=JSON.stringify(header);
  if(!existing){
   if(repos.coachMatchCount(user.id)>=MAX_MATCHES)
-   throw new ApiError(400,'紀錄已達 40 場，請先刪除舊資料。');
+   throw new ApiError(400,'紀錄已達 400 場。舊的選擇會留著，請先刪除不需要的場次。');
   repos.insertCoachMatch({
    id:header.matchId,userId:user.id,anonymousId:anonymous,engine:header.engine,
    engineVersion:header.engineVersion,poolJson:JSON.stringify(header.pool),
