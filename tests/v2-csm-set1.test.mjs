@@ -329,3 +329,52 @@ test('CSM practice deck and public view stay coherent',()=>{
  assert.equal(view.players.length,2);
  assertUniversalMatch([practice.pack,practice.pack],match);
 });
+
+
+test('CSM-1-055 main search shows all three cards and charges exactly one hand discard',()=>{
+ const counts=countsFor(['CSM-1-055','CSM-1-011','CSM-1-001','CSM-1-002']);
+ let s=toPhase(fresh(counts,55001),'main');
+ const aki=put(s,0,'CSM-1-055','front',0);
+ const cost=toHand(s,0,'CSM-1-011');
+ const left=take(s,0,'CSM-1-001');
+ const hit=take(s,0,'CSM-1-055');
+ const right=take(s,0,'CSM-1-002');
+ s.players[0].deck.unshift(left,hit,right);
+ s=use(s,{type:'activate',uid:aki.uid,mode:'csm:0'});
+ assert.equal(s.pending?.step,'discardThenChoose');
+ s=choose(s,a=>a.mode==='discard'&&a.uid===cost.uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===cost.uid),true);
+ s=choose(s,a=>a.mode==='search');
+ assert.equal(s.pending?.step,'lookPick');
+ assert.deepEqual(s.pending.data.window,[left.uid,hit.uid,right.uid]);
+ assert.deepEqual(s.pending.actions.filter(a=>a.mode==='take').map(a=>a.uid),[hit.uid]);
+ s=choose(s,a=>a.mode==='take'&&a.uid===hit.uid);
+ assert.equal(s.players[0].hand.some(c=>c.uid===hit.uid),true);
+ assert.equal(s.pending?.step,'lookOrder');
+ s=choose(s,a=>a.mode==='next');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].outside.filter(c=>c.uid===cost.uid).length,1);
+ assertUniversalMatch(packs,s);
+});
+
+test('CSM-1-055 draws once only after declining its top-three search, including no eligible hits',()=>{
+ const counts=countsFor(['CSM-1-055','CSM-1-011','CSM-1-001','CSM-1-002','CSM-1-003','CSM-1-004']);
+ let s=toPhase(fresh(counts,55002),'main');
+ const aki=put(s,0,'CSM-1-055','front',0);
+ const cost=toHand(s,0,'CSM-1-011');
+ const top=['CSM-1-001','CSM-1-002','CSM-1-003'].map(id=>take(s,0,id));
+ s.players[0].deck.unshift(...top);
+ s=use(s,{type:'activate',uid:aki.uid,mode:'csm:0'});
+ s=choose(s,a=>a.mode==='discard'&&a.uid===cost.uid);
+ s=choose(s,a=>a.mode==='search');
+ assert.equal(s.pending?.step,'lookPick');
+ assert.deepEqual(s.pending.data.window,top.map(c=>c.uid));
+ assert.deepEqual(s.pending.actions.map(a=>a.mode),['skip']);
+ const handBefore=s.players[0].hand.length;
+ s=choose(s,a=>a.mode==='skip');
+ while(s.pending?.step==='lookOrder')s=choose(s,a=>a.mode==='next');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.length,handBefore+1);
+ assert.equal(s.players[0].outside.filter(c=>c.uid===cost.uid).length,1);
+ assertUniversalMatch(packs,s);
+});
