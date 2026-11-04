@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {onlinePrivateGallery} from '../server/domain.mjs';
-import {controllerChoiceArt,controllerDeckWindowCards} from '../dist/universal-v2/preview-actions.mjs';
+import {controllerChoiceArt,controllerDeckWindowCards,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 const packs=[{cards:{
  A:{name:'超銀河グレンラガン'},
@@ -80,4 +80,16 @@ test('choice dialogs render deck looks and visible effect targets as card art',(
  assert.match(online,/visibleChoices\?\.node/);
  assert.match(server,/function deckWindowGallery\(/);
  assert.match(server,/'retireUid'/);
+});
+
+test('AOT-2-072 life-to-hand selection never reveals hidden LIFE art, name or trigger',()=>{
+ const state=lookState();
+ const hidden={uid:'0-hidden-life',cardId:'SECRET'};
+ state.players[0].life=[hidden];
+ state.pending={player:0,kind:'aot2',id:'AOT-2-072',step:'life',sourceUid:'0-source'};
+ const action={type:'aot2',mode:'life',uid:hidden.uid,zone:'life'};
+ assert.deepEqual(controllerChoiceArt(packs,state,action),[]);
+ assert.equal(uiActionLabel(action,{pack:packs,state}),'選擇生命區第 1 張（背面）');
+ assert.equal(uiActionLabel(action,{pack:packs,state}).includes('SECRET'),false);
+ assert.equal(uiActionLabel(action,{pack:packs,state}).includes('觸發'),false);
 });
