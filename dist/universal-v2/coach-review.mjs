@@ -3,6 +3,8 @@
 // from the seat that was deciding, with that seat's own hand face up.
 import {legalUniversalActions,universalPublicView} from './engine.mjs';
 import {uiActionLabel,boardEntryMode,entryClickPlan,moveClickPlan,visibleActionsForCard} from './preview-actions.mjs';
+import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,
+ mountFacedownOverlay,closeFacedownOverlays} from './facedown-inspect.mjs';
 import {COACH_REASONS,stateAtReplayIndex,coachObservation,pushSandbox,buildAiDemonstration} from './coach-record.mjs';
 
 const PHASES=[['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
@@ -71,7 +73,15 @@ export function mountCoachReview(parent,{packs,replay,marks,onSave,artFor,titleO
   session.selectedUid=null;session.entryMode=null;session.raidBaseUid=null;session.choices=null;session.error='';
   draw();
  }
+ function openCoachFacedown(seat,card){
+  const parent=document.querySelector('.v2-shell')||document.body;
+  mountFacedownOverlay({el,parent,card,
+   nameOf:id=>cardName(packs,seat,id),
+   imageOf:id=>artFor?artFor(seat,id):'assets/mark.svg',
+   effectOf:id=>packs?.[seat]?.cards?.[id]?.effect||''});
+ }
  function draw(){
+  closeFacedownOverlays();
   const session=sessions[active];
   let view=null,legal=[];
   try{
@@ -138,9 +148,18 @@ export function mountCoachReview(parent,{packs,replay,marks,onSave,artFor,titleO
    const name=cardName(packs,seat,card.cardId);
    const face=el('span',{class:'slotFace'},picture(seat,card.cardId,name));
    face.append(el('span',{class:'slotBp'},el('b',{text:which==='front'?String(card.bp??''):'◆ '+String(card.produces??0)})));
+   const facedown=facedownInspectModel(card);
+   if(facedown.count){
+    button.className+=' has-facedown';
+    face.append(createFacedownEdges(el,facedown.count),
+     createFacedownBadge(el,facedown,()=>openCoachFacedown(seat,card)));
+   }
    button.append(face);
   }else button.append(el('span',{class:'slotIndex',text:'0'+(index+1)}));
-  button.addEventListener('click',()=>onSlot(session,legal,seat,card,plan,direct));
+  button.addEventListener('click',event=>{
+   if(card&&eventHitsFacedownBadge(event)){openCoachFacedown(seat,card);return;}
+   onSlot(session,legal,seat,card,plan,direct);
+  });
   return button;
  }
  function handBlock(session,view,legal){

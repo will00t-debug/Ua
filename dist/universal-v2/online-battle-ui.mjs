@@ -1,7 +1,10 @@
 // Presentation only. Online commands keep their server-issued action index.
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
+import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,
+ facedownGallery,mountFacedownOverlay,closeFacedownOverlays,findKnownLayer} from './facedown-inspect.mjs';
 export {DESKTOP_BATTLE_QUERY} from './desktop-battle-ui.mjs';
+export {facedownInspectModel,closeFacedownOverlays,findKnownLayer};
 
 export const ONLINE_BATTLE_STYLES=[
  'universal-v2-legacy.css','universal-v2-arena-setup.css','universal-v2-battle.css',
@@ -16,7 +19,7 @@ export function setOnlineBattleMode(active,doc=globalThis.document){
   let link=doc.querySelector('link[data-online-battle-style="'+file+'"]');
   if(!link&&active){
    link=doc.createElement('link');link.rel='stylesheet';
-  const version=doc.querySelector('meta[name="ua-ui-version"]')?.content||'20261103onlinefix1';
+  const version=doc.querySelector('meta[name="ua-ui-version"]')?.content||'20261104facedown2';
   link.href=file+'?v='+encodeURIComponent(version);
    link.dataset.onlineBattleStyle=file;doc.head.append(link);
   }
@@ -51,18 +54,22 @@ export function bindOnlineCardInspect(node,inspect,activate){
  let timer=0,held=false,x=0,y=0;
  const stop=()=>{clearTimeout(timer);timer=0;};
  node.addEventListener('pointerdown',event=>{
-  if(event.button>0)return;
+  if(event.button>0||eventHitsFacedownBadge(event))return;
   held=false;x=event.clientX;y=event.clientY;stop();
   timer=setTimeout(()=>{if(node.isConnected===false)return;held=true;inspect();},1000);
  });
  for(const name of ['pointerup','pointercancel','pointerleave'])node.addEventListener(name,stop);
  node.addEventListener('pointermove',event=>{if(Math.hypot(event.clientX-x,event.clientY-y)>16)stop();});
  node.addEventListener('contextmenu',event=>{event.preventDefault();});
- node.addEventListener('click',()=>{if(held){held=false;return;}if(activate)activate();else inspect();});
+ node.addEventListener('click',event=>{
+  if(held){held=false;return;}
+  if(eventHitsFacedownBadge(event)){node.openFacedown?.();return;}
+  if(activate)activate();else inspect();
+ });
 }
 
 export function onlineBattleCard({el,card,src,classes='',label,placement='',index=0,
- line='front',attacking=false,blocking=false,click,inspect,hand=false,definition={}}){
+ line='front',attacking=false,blocking=false,click,inspect,hand=false,definition={},onFacedown}){
  const badges=line==='front'&&!hand?onlineAttackBadges(card):[];
  const node=el('button',{type:'button',class:(hand?'handCard ':'slot ')+classes+
   (card?' occupied':' empty')+(card?.ready===false?' rested':'')+
@@ -80,17 +87,35 @@ export function onlineBattleCard({el,card,src,classes='',label,placement='',inde
   const face=el('span',{class:'slotFace'},art);
   if(card.raidDepth)face.append(el('span',{class:'slotStack',text:'RAID '+card.raidDepth}));
   face.append(el('span',{class:'slotBp'},el('b',{text:line==='front'?'BP '+(card.bp??'?'):'◆ '+(card.produces??0)})));
+  const facedown=facedownInspectModel(card);
+  if(facedown.count){
+   node.classList.add('has-facedown');
+   node.setAttribute('aria-label',(label||'')+'，下方有 '+facedown.count+' 張'+(facedown.private?'裏向卡':'卡背'));
+   face.append(createFacedownEdges(el,facedown.count),
+    createFacedownBadge(el,facedown,()=>node.openFacedown?.()));
+  }
   node.append(face);
   if(badges.length)node.append(el('span',{class:'v2-attack-keywords v2-attack-keywords-card','aria-hidden':'true'},
    ...badges.map(b=>el('em',{class:'v2-attack-keyword v2-keyword-'+b.type,text:b.text}))));
   if(blocking)node.append(el('span',{class:'v2-block-option',text:'阻擋','aria-hidden':'true'}));
  }
+ node.openFacedown=onFacedown||null;
  bindOnlineCardInspect(node,inspect,click);
  return node;
 }
 
+export function showOnlineFacedown({el,parent,card,nameOf,imageOf,effectOf,onInspect,onClose,focus=true,previous=''}={}){
+ if(!parent)return '';
+ const model=card?facedownInspectModel(card):null;
+ if(!model?.count){closeFacedownOverlays(parent);return '';}
+ const signature=JSON.stringify(model);
+ if(previous===signature&&parent.querySelector('.v2-facedown-overlay'))return signature;
+ mountFacedownOverlay({el,parent,card,nameOf,imageOf,effectOf,onInspect,onClose,focus});
+ return signature;
+}
+
 export function closeOnlineCard(){globalThis.document?.querySelector('.online-card-overlay')?.remove();}
-export function showOnlineCard({el,card,definition={},src}){
+export function showOnlineCard({el,card,definition={},src,nameOf,imageOf,effectOf,onInspect}){
  if(!card?.cardId)return;
  closeOnlineCard();
  const overlay=el('div',{class:'overlay v2-field-overlay online-card-overlay'});
@@ -98,10 +123,12 @@ export function showOnlineCard({el,card,definition={},src}){
   'aria-label':(card.name||definition.name||card.cardId)+' 的卡圖與效果',tabindex:'-1'});
  const effect=definition.effect||definition.text||definition.description||'點選卡圖可查看印刷效果。';
  const art=image(el,src,card.name||definition.name||card.cardId);
+ const facedownSection=facedownGallery(el,facedownInspectModel(card),{nameOf,imageOf,effectOf,onInspect});
  dialog.append(el('button',{type:'button',class:'online-overlay-close',text:'關閉卡片檢視',onClick:()=>close()}),
   el('div',{class:'field-sheet-card'},art,el('div',{},
   el('h2',{text:card.name||definition.name||card.cardId}),el('p',{class:'note',text:card.cardId}))),
   el('p',{class:'field-effect',text:typeof effect==='string'?effect:'請查看印刷卡面。'}));
+ if(facedownSection)dialog.append(facedownSection);
  overlay.append(dialog);
  const opener=document.activeElement;
  const close=()=>{overlay.remove();if(opener?.isConnected)opener.focus({preventScroll:true});};

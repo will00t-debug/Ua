@@ -88,3 +88,37 @@ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile.selected{
  .v2-shell .v2-zone-card-name{font-size:10px}
  .v2-shell .v2-zone-card small{font-size:9px}
 }
+.v2-shell .slotFace .slotFacedown{
+ position:absolute;z-index:5;left:2px;bottom:2px;padding:1px 4px;border-radius:3px;
+ border:1px solid #9ec6ea;background:#1d4f86;color:#f4fbff;font-size:8px;font-weight:700;
+ line-height:1.2;white-space:nowrap;cursor:pointer;pointer-events:auto
+}
+.v2-shell .slot.rested .slotFace .slotFacedown{transform:rotate(-90deg);transform-origin:center}
+.v2-shell .slotFace .slotFacedownStack{
+ position:absolute;z-index:1;left:3px;bottom:16px;display:flex;flex-direction:column;gap:1px;
+ pointer-events:none
+}
+.v2-shell .slotFace .slotFacedownStack i{
+ display:block;width:14px;height:3px;border-radius:1px;background:#1d4f86;border:1px solid #9ec6ea
+}
+.v2-facedown-overlay{
+ position:fixed;inset:0;z-index:530;display:grid;place-items:center;overflow:auto;
+ padding:clamp(10px,3vw,28px);background:#070d18e6;backdrop-filter:blur(6px)
+}
+.v2-shell>.overlay.v2-facedown-overlay{z-index:530}
+.v2-shell .v2-facedown-hidden{cursor:default}
+.v2-shell .v2-facedown-back{
+ display:grid;place-items:center;aspect-ratio:63/88;border-radius:5px;color:#d7ecff;
+ font-size:12px;font-weight:700;border:1px solid #8fb7de;box-shadow:inset 0 0 0 6px #0e2a48;
+ background:repeating-linear-gradient(135deg,#1d4e86 0 8px,#163e6c 8px 16px)
+}
+.v2-shell .v2-facedown-effect{
+ margin:0;font-size:11px;line-height:1.35;color:#d5e4f4;
+ display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden
+}
+.v2-shell .field-sheet .v2-facedown-gallery{margin-top:8px}
+.v2-shell .field-sheet .v2-zone-gallery{max-height:42dvh}
+.v2-shell .v2-desktop-facedown{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.v2-shell .v2-desktop-facedown h3{margin:0;font-size:13px}
+.v2-shell .v2-desktop-facedown p{margin:0;font-size:12px}
+.v2-shell .v2-desktop-facedown-open{min-height:32px;padding:6px 8px;font-size:12px;text-align:left}
