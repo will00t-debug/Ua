@@ -395,7 +395,7 @@ test('KJN-1-048 on retirement can discard a hand card and re-enter the actual Ra
 });
 
 test('KJN-1-073 optional top-two mill may send zero, exactly one, or two cards outside',()=>{
- const counts=countsFor(['KJN-1-073','KJN-1-041',...PURPLE]);
+ const counts=countsFor(['KJN-1-073',...PURPLE]);
  function setup(seed){
   let s=toPhase(fresh(counts,seed),'main');
   readyAp(s);
