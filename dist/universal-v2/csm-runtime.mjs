@@ -845,10 +845,18 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='recover'&&a.mode==='skip'&&q.data?.left)
   offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},q.data.left,q.data.rest);
  else if(step==='deploy'){
-  if(a.mode!=='skip')
+  if(a.mode!=='skip'){
    A.enter(pack,s,{owner,from:q.data?.from||'hand',uid:a.uid,line:a.line,slot:a.slot,
     ...(a.replaceUid?{replaceUid:a.replaceUid}:{}),ready:q.data?.ready===true,
     sourceUid:q.sourceUid,...(q.data?.skipOnPlay?{skipOnPlay:true}:{})});
+   // CSM-1-067 / CSM-1-076: attach the source only after Denji enters.
+   const underUid=q.data?.underUid;
+   if(underUid){
+    const entered=selfOf(s,owner,a.uid);
+    const under=plOf(s,owner).outside.find(c=>c.uid===underUid);
+    if(entered&&under)tuck(pack,s,owner,'outside',under.uid,entered,q.sourceUid);
+   }
+  }
  }else if(step==='choose')resolveChoose(pack,s,q,a);
  else if(step==='retireThenKit'&&a.mode==='pick'){
   const paused=retireUid(pack,s,owner,a.uid);
@@ -979,12 +987,11 @@ export function resolveCsmPending(pack,s,action){
   if(card)offerDeploy(s,{player:owner,sourceUid:q.sourceUid,id:q.id},[card],
    {from:'outside',ready:false,lines:['energy'],optional:false});
  }else if(step==='denjiEnergy'&&a.mode==='deploy'){
-  A.enter(pack,s,{owner,from:'outside',uid:a.uid,line:'energy',slot:0,ready:true,
-   sourceUid:q.sourceUid,skipOnPlay:true});
-  // Find free energy slot properly
-  const entered=selfOf(s,owner,a.uid);
-  const pochita=q.data.pochitaUid&&plOf(s,owner).outside.find(c=>c.uid===q.data.pochitaUid);
-  if(entered&&pochita)tuck(pack,s,owner,'outside',pochita.uid,entered,q.sourceUid);
+  // Choose an energy-line cell after choosing Denji. Its on-play effect is live.
+  const denji=plOf(s,owner).outside.find(c=>c.uid===a.uid);
+  if(denji)offerDeploy(s,{player:owner,sourceUid:q.sourceUid,id:q.id,
+   data:{underUid:q.data?.pochitaUid}},[denji],
+   {from:'outside',ready:true,lines:['energy'],optional:false});
  }else if(step==='auraBuff'&&a.mode==='pick'){
   buff(s,selfOf(s,owner,a.uid),1000);
   s.csmAlsoEventGrant={...(s.csmAlsoEventGrant||{}),[owner]:s.turn};
