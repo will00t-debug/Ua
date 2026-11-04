@@ -998,20 +998,37 @@ export function resolveAotPending(pack,s,action){
   }
   go(pack,s);return;
  }
- if(q.step==='deploy'||q.step==='corps'){
-  doEnter(pack,s,q.player,{...a,from:'hand',ready:a.ready===true},q.sourceUid,false);
+ if(q.step==='corps'){
+  // AOT-1-099 deploys up to two characters in one event. Resolve all
+  // actual onPlay programs after their physical entries, without replacing
+  // the event's remaining deployment choice with a nested effect pending.
+  const jobs=[...(q.data?.jobs||[])];
+  if(a.mode==='done'){
+   if(jobs.length)s.effectQueue.unshift(...jobs);
+   go(pack,s);return;
+  }
+  doEnter(pack,s,q.player,{...a,from:'hand',ready:a.ready===true},q.sourceUid,true);
   const entered=selfOf(s,q.player,a.uid);
-  if(entered&&q.step==='corps')markReturn(s,entered);
-  if(q.step==='corps'&&q.data?.left>1){
+  if(entered){
+   if(q.id==='AOT-1-099')markReturn(s,entered);
+   jobs.push(...(A.programs(pack,s,entered,'onPlay',q.player,'handEffect',q.sourceUid)||[]));
+  }
+  if(q.data?.left>1){
    const cards=handWhere(s,q.player,c=>redCorps(pack,c));
    const actions=[];
    for(const c of cards)for(const dest of dests(s,q.player,['front']))
     if(!dest.replaceUid)actions.push({...dest,uid:c.uid,ready:true,from:'hand'});
    if(actions.length){
-    hold(s,{...spec,step:'corps',data:{left:q.data.left-1}},[{type:'aot',mode:'done'},...actions]);
+    hold(s,{...spec,step:'corps',data:{left:q.data.left-1,jobs}},
+     [{type:'aot',mode:'done'},...actions]);
     return;
    }
   }
+  if(jobs.length)s.effectQueue.unshift(...jobs);
+  go(pack,s);return;
+ }
+ if(q.step==='deploy'){
+  doEnter(pack,s,q.player,{...a,from:'hand',ready:a.ready===true},q.sourceUid,false);
   go(pack,s);return;
  }
  if(q.step==='buffOne'||q.step==='green2'||q.step==='impact48'){
