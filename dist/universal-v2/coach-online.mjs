@@ -5,7 +5,7 @@
 // A delayed reply keeps that identity; it is not retagged after a login change.
 // An end marker uses the account, room and seat bound to that event.
 import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
-import {createDecisionQueue} from './coach-queue.mjs?v=20261104lock1';
+import {createDecisionQueue} from './coach-queue.mjs?v=20261104step1';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
  tableChoices,chainOf,deckSnapshot} from './coach-format.mjs';

@@ -3,7 +3,8 @@
 // back. Quota failures keep the previous rows and report that this one is not
 // stored yet. Legacy rows move one at a time; the old copy is removed only
 // after the new copy is confirmed, and the migrated flag is set only when no
-// full legacy copy remains.
+// full legacy copy remains. A retract can cancel an enqueue that has not
+// entered storage yet; a later replacement of that same key is still written.
 const QUEUE_KEY='ua-v2-coach-queue-v1';
 const ITEM_PREFIX='ua-v2-coach-queue-v1/item/';
 const ORDER_KEY='ua-v2-coach-queue-v1/order';
@@ -196,7 +197,10 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
  let sendingKey=null;
  let dropped=0;
  let lastError='';
+ let opSeq=0;
  const waiting=[];
+ const pendingByKey=new Map();
+ const cancelledThrough=new Map();
  function webLock(){
   const source=locks?.request?locks:globalThis.navigator?.locks;
   const request=source?.request;
@@ -251,6 +255,24 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
  function finish(result){
   if(result?.queued){notify();arm();}
   if(result?.retry){notify();scheduleRetry();}
+ }
+ function queuePending(clientKey, op){
+  const list=pendingByKey.get(clientKey);
+  if(list)list.push(op);
+  else pendingByKey.set(clientKey, [op]);
+ }
+ function takePending(clientKey, op){
+  const list=pendingByKey.get(clientKey);
+  if(!list)return;
+  const index=list.indexOf(op);
+  if(index>=0)list.splice(index, 1);
+  if(!list.length)pendingByKey.delete(clientKey);
+ }
+ function cancelPending(clientKey){
+  const list=pendingByKey.get(clientKey);
+  if(!list?.length)return;
+  const ceiling=Math.max(cancelledThrough.get(clientKey)||0, ...list);
+  cancelledThrough.set(clientKey, ceiling);
  }
  function dropRejected(failed){
   const removed=readMerged(storage).filter(entry=>rejected(entry, failed));
@@ -420,17 +442,25 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
   },
   enqueue(body, {holdMs=0}={}){
    if(!consent?.())return {skipped:'consent'};
-   const exec=()=>commitEnqueue(body, holdMs);
+   const op=++opSeq;
+   const clientKey=String(body?.clientKey||'');
+   const exec=()=>{
+    takePending(clientKey, op);
+    if((cancelledThrough.get(clientKey)||0)>=op)return {skipped:'cancelled'};
+    return commitEnqueue(body, holdMs);
+   };
    if(canRunSync()){
     const result=runSync(exec);
     finish(result);
     return result;
    }
+   queuePending(clientKey, op);
    const done=runAsync(exec).then(result=>{finish(result);return result;});
-   return {pending:true, done};
+   return {pending:true, done, op};
   },
   drop(clientKey){
    if(clientKey===sendingKey)return false;
+   cancelPending(clientKey);
    const memory=waiting.some(item=>item.clientKey===clientKey);
    if(memory){
     for(let index=waiting.length-1;index>=0;index--){

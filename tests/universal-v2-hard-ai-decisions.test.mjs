@@ -403,7 +403,7 @@ test('battle page hard difficulty is wired to the strengthened policy',()=>{
  assert.match(preview,/learn-policy\.mjs\?v=20261104gap1/);
  assert.match(preview,/document\.body\.dataset\.aiPolicy=aiPolicyFor\(app\.aiDifficulty\)/);
  assert.match(preview,/本場使用困難 AI/);
- assert.match(battle,/universal-v2-preview\.mjs\?v=20261104lock1/);
- assert.match(setup,/universal-v2-preview\.mjs\?v=20261104lock1/);
+ assert.match(battle,/universal-v2-preview\.mjs\?v=20261104step1/);
+ assert.match(setup,/universal-v2-preview\.mjs\?v=20261104step1/);
  assert.match(battle,/universal-v2-battle\.css\?v=20261028triggercenter1/);
 });
