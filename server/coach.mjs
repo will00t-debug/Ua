@@ -426,10 +426,11 @@ export function dispatchCoach(repos,user,message,now){
    const parsed=storedPolicy(repos,user.id);
    const status=policyRecordStatus(parsed);
    const canRestore=canRestorePolicy(parsed);
-   if(status.state==='ok')return {policy:publicPolicy(status.policy),canRestore};
-   if(status.state==='missing')return {policy:null,canRestore:false};
-   if(status.state==='inactive')return {policy:null,inactive:true,canRestore:false,message:status.message};
-   return {policy:null,stale:true,canRestore:false,message:status.message};
+   const accountId=user.id;
+   if(status.state==='ok')return {accountId,policy:publicPolicy(status.policy),canRestore};
+   if(status.state==='missing')return {accountId,policy:null,canRestore:false};
+   if(status.state==='inactive')return {accountId,policy:null,inactive:true,canRestore:false,message:status.message};
+   return {accountId,policy:null,stale:true,canRestore:false,message:status.message};
   }
   case 'coachDeletePolicy':
    repos.deleteCoachPolicy(user.id);

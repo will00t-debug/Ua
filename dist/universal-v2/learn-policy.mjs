@@ -1022,8 +1022,12 @@ export function learnReport(policy){
  lines.push('勝率要在對戰裡另外看。');
  return lines.join('');
 }
-export function learningBattleMode(payload,{failed=false}={}){
+export function learningBattleMode(payload,{failed=false,accountId}={}){
  if(failed)return {effective:'hard',notice:'本場使用困難 AI',reason:'讀不到學習結果',policy:null};
+ // The policy and the server-confirmed account arrive together. A later login
+ // must not be allowed to attach another account's weights to this match.
+ if(typeof accountId==='string'&&accountId&&payload?.accountId!==accountId)
+  return {effective:'hard',notice:'本場使用困難 AI',reason:'模型帳號與本場不符',policy:null};
  const status=payload?.policy?policyRecordStatus(payload.policy):{state:'missing',policy:null};
  if(status.state==='ok')return {effective:'learned',notice:'',reason:'',policy:status.policy};
  let reason='還沒有學習結果';

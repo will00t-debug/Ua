@@ -559,7 +559,7 @@ test('an online collector records only the consented player own accepted action'
  host.start();
  guest.start();
  const room={
-  code:'ABCD2345', revision:3, seat:0, yourTurn:true, status:'playing',
+  code:'ABCD2345', revision:3, seat:0, accountId:ME, yourTurn:true, status:'playing',
   you:{deckId:'d0123456789abcde'},
   view:{
    playerTitles:['bleach', 'bleach'], status:'playing', phase:'setup', turn:0, active:0, actor:0,
@@ -761,4 +761,173 @@ test('uploaded decisions stay owned, deduped, exportable and deletable', {timeou
  assert.equal(removed.status, 200);
  const afterDelete=await api('/api/coach/export.jsonl', {token:host.data.token});
  assert.equal(afterDelete.text.includes(posted[0].body.matchId), false);
+});
+
+test('a delayed online reply keeps the account captured before the request', async()=>{
+ const shared=consented();
+ let who=ME;
+ const posted=[];
+ function collector(){
+  return createOnlineCollector({
+   storage:shared,
+   schedule(){return 1;},
+   deckById:()=>({title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}}),
+   fetchImpl:async(path, options)=>{
+    if(path==='/api/me')return meBody(who);
+    posted.push(JSON.parse(options.body));
+    return {ok:true, json:async()=>({duplicate:false})};
+   }
+  });
+ }
+ const hand=[{uid:'0-7', cardId:'BLC-1-034'}];
+ const room={
+  code:'ROOM2345', revision:2, seat:0, accountId:ME, yourTurn:true, status:'playing',
+  you:{deckId:'d0123456789abcde'},
+  view:{
+   playerTitles:['bleach', 'bleach'], phase:'setup', turn:0,
+   players:[
+    {hand, handCount:1, lifeCount:0, deckCount:40, front:[], energy:[]},
+    {hand:null, handCount:7, lifeCount:0, deckCount:43, front:[], energy:[]}
+   ]
+  },
+  choices:[{index:0, type:'openingMulligan', mode:'keep', label:'保留'}]
+ };
+ const tab1=collector();
+ tab1.start();
+ assert.equal(tab1.arm({...room, accountId:undefined}, room.choices[0]), false);
+ assert.match(tab1.lastError, /暫停上傳/);
+ assert.equal(tab1.arm(room, room.choices[0]), true);
+ who=OTHER;
+ await tab1.settle({...room, seat:1, accountId:OTHER, revision:3});
+ assert.equal(tab1.queued, 0);
+ await tab1.settle({...room, revision:3, accountId:OTHER, yourTurn:false, choices:[]});
+ assert.equal(tab1.queued, 1);
+ const queued=JSON.parse(shared.getItem('ua-v2-coach-queue-v1'))[0].body;
+ assert.equal(queued.accountId, ME);
+ assert.equal(queued.seat, 0);
+ assert.equal(queued.observation.visible.players[0].hand[0].uid, '0-7');
+ await tab1.result({...room, accountId:OTHER, revision:3}, 'interrupted', {completed:false, winner:null});
+ const tab2=collector();
+ tab2.start();
+ await tab1.flush();
+ await tab2.flush();
+ assert.equal(posted.length, 0);
+ who=ME;
+ await tab2.flush();
+ assert.equal(posted.length, 2);
+ assert.equal(posted.every(item=>item.accountId===ME), true);
+ const other=collector();
+ other.start();
+ who=OTHER;
+ const otherRoom={...room, accountId:OTHER, seat:0};
+ assert.equal(other.arm(otherRoom, otherRoom.choices[0]), true);
+ await other.settle({...otherRoom, revision:3, yourTurn:false, choices:[]});
+ const seatOne=collector();
+ seatOne.start();
+ who=ME;
+ const firstSeat={...room, accountId:ME, seat:1, view:{
+  ...room.view,
+  players:[
+   {hand:null, handCount:7, lifeCount:0, deckCount:43, front:[], energy:[]},
+   {hand:[{uid:'1-7', cardId:'BLC-1-039'}], handCount:1, lifeCount:0, deckCount:40, front:[], energy:[]}
+  ]
+ }};
+ assert.equal(seatOne.arm(firstSeat, firstSeat.choices[0]), true);
+ await seatOne.settle({...firstSeat, revision:3, yourTurn:false, choices:[]});
+ const sessions=JSON.parse(shared.getItem('ua-v2-decision-online-v1'));
+ assert.equal(sessions[ME+':0:'+room.code].accountId, ME);
+ assert.notEqual(sessions[OTHER+':0:'+room.code].matchId, sessions[ME+':0:'+room.code].matchId);
+ assert.notEqual(sessions[ME+':1:'+room.code].matchId, sessions[ME+':0:'+room.code].matchId);
+});
+
+test('switching accounts while an online action is in flight does not give the hand to the other account', {timeout:180000}, async()=>{
+ const first=await api('/api/register', {method:'POST', body:{username:'延遲甲', password}});
+ const second=await api('/api/register', {method:'POST', body:{username:'延遲乙', password}});
+ assert.equal(first.status, 201, first.text);
+ assert.equal(second.status, 201, second.text);
+ const firstDeck=await api('/api/decks', {method:'POST', token:first.data.token, body:{
+  name:'延遲甲', title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}, localId:'delay-a'}});
+ const secondDeck=await api('/api/decks', {method:'POST', token:second.data.token, body:{
+  name:'延遲乙', title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}, localId:'delay-b'}});
+ const created=await api('/api/rooms', {method:'POST', token:first.data.token, body:{deckId:firstDeck.data.deck.id, first:'me'}});
+ const joined=await api('/api/rooms/'+created.data.code+'/join', {method:'POST', token:second.data.token, body:{deckId:secondDeck.data.deck.id}});
+ assert.equal(joined.status, 200, joined.text);
+ const firstMe=await api('/api/me', {token:first.data.token});
+ const secondMe=await api('/api/me', {token:second.data.token});
+ const shared=consented();
+ let who=first.data;
+ const posted=[];
+ function collector(){
+  return createOnlineCollector({
+   storage:shared,
+   schedule(){return 1;},
+   deckById:()=>({title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}}),
+   fetchImpl:async(path, options)=>{
+    const response=await fetch(ctx.base+path, {
+     method:options?.method||'GET',
+     headers:{accept:'application/json', ...(options?.headers||{}), authorization:'Bearer '+who.token},
+     body:options?.body
+    });
+    const data=await response.json().catch(()=>null);
+    if(path!=='/api/me')posted.push({path, status:response.status, data, body:JSON.parse(options.body)});
+    return {ok:response.ok, status:response.status, json:async()=>data};
+   }
+  });
+ }
+ const view=await api('/api/rooms/'+created.data.code, {token:first.data.token});
+ assert.equal(view.data.accountId, firstMe.data.id);
+ assert.equal(view.data.seat, 0);
+ const otherView=await api('/api/rooms/'+created.data.code, {token:second.data.token});
+ assert.equal(otherView.data.accountId, secondMe.data.id);
+ assert.notEqual(otherView.data.seat, view.data.seat);
+ const tab1=collector();
+ tab1.start();
+ assert.equal(tab1.arm(view.data, view.data.choices[0]), true);
+ const acted=await api('/api/rooms/'+created.data.code+'/actions', {method:'POST', token:first.data.token, body:{index:0}});
+ assert.equal(acted.status, 200, acted.text);
+ who=second.data;
+ await tab1.settle({...acted.data, accountId:secondMe.data.id});
+ assert.equal(tab1.queued, 1);
+ const queued=JSON.parse(shared.getItem('ua-v2-coach-queue-v1'))[0].body;
+ assert.equal(queued.accountId, firstMe.data.id);
+ const handUid=queued.observation.visible.players[0].hand[0].uid;
+ assert.equal(queued.observation.visible.players[0].hand.length, 7);
+ await tab1.result({...view.data, accountId:secondMe.data.id, status:'finished'}, 'interrupted', {completed:false, winner:null});
+ const tab2=collector();
+ tab2.start();
+ await tab1.flush();
+ await tab2.flush();
+ assert.equal(posted.length, 0);
+ const hidden=await api('/api/coach/matches', {token:second.data.token});
+ assert.equal(hidden.data.matches.length, 0);
+ const hiddenDetail=await api('/api/coach/matches/'+queued.matchId, {token:second.data.token});
+ assert.equal(hiddenDetail.status, 404);
+ const hiddenExport=await api('/api/coach/export.jsonl', {token:second.data.token});
+ assert.equal(hiddenExport.text.includes(queued.matchId), false);
+ assert.equal(hiddenExport.text.includes(handUid), false);
+ assert.equal(hiddenExport.text.includes(firstMe.data.id), false);
+ who=first.data;
+ await tab2.flush();
+ assert.equal(posted.length, 2);
+ assert.equal(posted.every(item=>item.body.accountId===firstMe.data.id), true);
+ const listed=await api('/api/coach/matches', {token:first.data.token});
+ assert.equal(listed.data.matches.length, 1);
+ const detail=await api('/api/coach/matches/'+queued.matchId, {token:first.data.token});
+ assert.equal(detail.status, 200, detail.text);
+ assert.equal(detail.text.includes(handUid), true);
+ const exported=await api('/api/coach/export.jsonl', {token:first.data.token});
+ assert.equal(exported.text.includes(queued.matchId), true);
+ assert.equal(exported.text.includes(handUid), true);
+ assert.equal(exported.text.includes(firstMe.data.id), false);
+ assert.equal(exported.text.includes(secondMe.data.id), false);
+ const replay=await api('/api/coach/steps', {method:'POST', token:first.data.token, body:queued});
+ assert.equal(replay.status, 200, replay.text);
+ assert.equal(replay.data.duplicate, true);
+ const again=await api('/api/coach/matches/'+queued.matchId, {token:first.data.token});
+ assert.equal(again.text.split(handUid).length-1, detail.text.split(handUid).length-1);
+ const stillHidden=await api('/api/coach/export.jsonl', {token:second.data.token});
+ assert.equal(stillHidden.text.includes(handUid), false);
+ const sessions=JSON.parse(shared.getItem('ua-v2-decision-online-v1'));
+ assert.equal(Object.keys(sessions).some(key=>key===firstMe.data.id+':'+view.data.seat+':'+created.data.code), true);
+ assert.equal(Object.keys(sessions).some(key=>key.startsWith(secondMe.data.id+':')), false);
 });

@@ -6,7 +6,7 @@ import {verifiedTtgRedPilotDeck,verifiedBleachPurplePilotDeck}
 import {newUniversalMatch,assertUniversalMatch,legalUniversalActions}
  from '../dist/universal-v2/engine.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
- soloProgressMatches,
+ soloProgressMatches,readSoloProgress,writeSoloProgress,soloProgressKey,
  SOLO_BATTLE_ENTRY_KEY,SOLO_BATTLE_PROGRESS_KEY,SOLO_BATTLE_URL,SOLO_SETUP_URL}
  from '../dist/universal-v2/solo-battle-session.mjs';
 
@@ -106,25 +106,75 @@ test('a resume snapshot is read only after the account matches',()=>{
  assert.equal(soloProgressMatches({accountId:'not-an-account'},null),false);
 });
 
+test('a new game for one account keeps the other account entry and progress',()=>{
+ const storage=fakeStorage();
+ const first='u'+'a'.repeat(16);
+ const second='u'+'b'.repeat(16);
+ const firstLaunch=launch();
+ const secondLaunch=launch({nonce:4242});
+ saveSoloBattle(storage,firstLaunch,first);
+ writeSoloProgress(storage,first,{version:1,launchId:firstLaunch.id,state:{phase:'main'}});
+ saveSoloBattle(storage,secondLaunch,second);
+ writeSoloProgress(storage,second,{version:1,launchId:secondLaunch.id,state:{phase:'mulligan'}});
+ assert.equal(readSoloProgress(storage,first).status,'ok');
+ assert.equal(readSoloProgress(storage,first).data.state.phase,'main');
+ assert.equal(readSoloProgress(storage,second).data.state.phase,'mulligan');
+ assert.equal(loadSoloBattle(storage,{now,accountId:first}).config.id,firstLaunch.id);
+ assert.equal(loadSoloBattle(storage,{now,accountId:second}).config.id,secondLaunch.id);
+ saveSoloBattle(storage,{...secondLaunch,unrecorded:true},null);
+ assert.equal(readSoloProgress(storage,first).data.state.phase,'main');
+ assert.equal(readSoloProgress(storage,null).status,'absent');
+ clearSoloBattle(storage,second);
+ assert.equal(loadSoloBattle(storage,{now,accountId:second}),null);
+ assert.equal(readSoloProgress(storage,first).status,'ok');
+ assert.equal(loadSoloBattle(storage,{now,accountId:first}).config.id,firstLaunch.id);
+ storage.setItem(soloProgressKey(first),'{');
+ assert.equal(readSoloProgress(storage,first).status,'unreadable');
+ assert.equal(storage.getItem(soloProgressKey(first)),'{');
+});
+
+test('a legacy snapshot is adopted only by the account it names',()=>{
+ const storage=fakeStorage();
+ const first='u'+'c'.repeat(16);
+ const second='u'+'d'.repeat(16);
+ const firstLaunch=launch();
+ saveSoloBattle(storage,firstLaunch);
+ storage.setItem(SOLO_BATTLE_PROGRESS_KEY,JSON.stringify({accountId:first,version:1,state:{phase:'main'}}));
+ assert.equal(loadSoloBattle(storage,{now,accountId:second}),null);
+ assert.equal(storage.getItem(SOLO_BATTLE_PROGRESS_KEY).includes(first),true);
+ const adopted=loadSoloBattle(storage,{now,accountId:first});
+ assert.equal(adopted.config.id,firstLaunch.id);
+ assert.equal(readSoloProgress(storage,first).status,'ok');
+ assert.equal(readSoloProgress(storage,first).data.state.phase,'main');
+ saveSoloBattle(storage,launch({nonce:99}),first);
+ assert.equal(storage.getItem(SOLO_BATTLE_PROGRESS_KEY),null);
+ assert.equal(readSoloProgress(storage,first).status,'absent');
+});
+
 test('setup launches the new URL and battle-only boot preserves V2 reducer, AI and session recovery',()=>{
  const code=read('dist/universal-v2-preview.mjs');
  assert.match(code,/const IS_BATTLE_PAGE=document\.body\?\.dataset\?\.v2Screen==='battle'/);
  assert.match(code,/function launchBattle\(\)/);
  assert.match(code,/window\.location\.assign\(SOLO_BATTLE_URL\)/);
- assert.match(code,/saveSoloBattle\(sessionStorage,config\)/);
+ assert.match(code,/saveSoloBattle\(sessionStorage,config,account==null\?null:account\)/);
  assert.match(code,/if\(!IS_BATTLE_PAGE\)renderDesignatedDecks\(\)/);
  assert.match(code,/if\(!IS_BATTLE_PAGE\)importV2EditorDeck\(\)/);
  assert.match(code,/if\(!IS_BATTLE_PAGE\)\{/);
- assert.match(code,/const loaded=loadSoloBattle\(sessionStorage\)/);
- assert.match(code,/if\(!restoreBattleProgress\(\)\)void startGame\(\)/);
+ assert.match(code,/const loaded=loadSoloBattle\(sessionStorage,\{accountId:account\}\)/);
+ assert.doesNotMatch(code,/if\(!restoreBattleProgress\(\)\)void startGame\(\)/);
+ assert.match(code,/if\(app\.progressRead==='absent'\)void startGame\(\{account\}\)/);
+ assert.match(code,/這份續局無法讀取，原進度已保留/);
+ assert.match(code,/不記錄練習/);
+ assert.match(code,/learningBattleMode\(payload,\{accountId:app\.battleAccountId\}\)/);
+ assert.match(read('dist/universal-v2/learn-policy.mjs'),/模型帳號與本場不符/);
  const checked=code.indexOf('soloProgressMatches(data,app.battleAccountId)');
  const applied=code.indexOf('app.state=data.state');
  assert.ok(checked>0&&applied>checked);
  assert.match(code,/accountId:soloProgressOwner\(app\.battleAccountId\)/);
- assert.match(code,/sessionStorage\.setItem\(SOLO_BATTLE_PROGRESS_KEY,JSON\.stringify\(data\)\)/);
+ assert.match(code,/writeSoloProgress\(sessionStorage,app\.battleAccountId,data\)/);
  assert.match(code,/assertUniversalMatch\(app\.packs,data\.state\)/);
  assert.match(code,/saveBattleProgress\(\)/);
- assert.match(code,/clearSoloBattle\(sessionStorage\)/);
+ assert.match(code,/clearSoloBattle\(sessionStorage,app\.battleAccountId\)/);
  assert.match(code,/newUniversalMatch\(app\.packs,\{decks:\[mine\.counts,foe\.counts\],seed,first,openingMulligan:true\}\)/);
  assert.match(code,/dispatchUniversalAction\(app\.packs,app\.state,a,\{actor:0\}\)/);
  assert.match(code,/chooseProgressSafeAiAction\(app\.packs,app\.state/);

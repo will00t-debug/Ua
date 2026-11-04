@@ -1,7 +1,9 @@
 // Online collector. Each browser only records the signed-in player's own
 // accepted actions, using the view the server already returned to that seat.
 // The opponent's hidden cards are not on this client and are not uploaded.
-import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId} from './coach-client.mjs';
+// The account, room, seat and revision are fixed when that view is received.
+// A delayed reply keeps that identity; it is not retagged after a login change.
+import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
 import {createDecisionQueue} from './coach-queue.mjs';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
@@ -16,13 +18,17 @@ function readSessions(storage){
   return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{};
  }catch{return {};}
 }
+function sessionKey(accountId,seat,code){
+ const id=validAccountId(accountId);
+ if(!id||(seat!==0&&seat!==1)||typeof code!=='string'||!code)return null;
+ return id+':'+seat+':'+code;
+}
 
 export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckById,onChange,schedule}={}){
  let uploaded=0;
  let lastError='';
  let pending=null;
  let session=null;
- let confirmedAccount=null;
  const opening=new Map();
  const sessions=readSessions(storage);
  const uploader=createCoachUploader({
@@ -52,43 +58,43 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   }
   for(const [matchId,list] of grouped){
    const oldest=list.reduce((left,right)=>left.step<right.step?left:right);
-   for(const [code,saved] of Object.entries(sessions)){
-    if(saved.matchId!==matchId)continue;
+   for(const saved of Object.values(sessions)){
+    if(!saved||saved.matchId!==matchId)continue;
     saved.step=oldest.step;
     saved.previous=oldest.previous||null;
     if(session?.matchId===matchId){session.step=saved.step;session.previous=saved.previous;}
-    void code;
    }
   }
   saveSessions();
  }
  function ensure(room){
-  if(!room?.code)return Promise.resolve(null);
-  if(session?.code===room.code)return Promise.resolve(session);
-  const existing=opening.get(room.code);
+  const key=sessionKey(room?.accountId,room?.seat,room?.code);
+  if(!key)return Promise.resolve(null);
+  if(session?.key===key)return Promise.resolve(session);
+  const existing=opening.get(key);
   if(existing)return existing;
   const job=(async()=>{
-   const prior=sessions[room.code]||{};
+   const prior=sessions[key]||{};
    const matchId=prior.matchId||newCoachMatchId();
    const matchLink=prior.matchLink||await onlineMatchLink(room.code);
-   session={code:room.code,matchId,matchLink,step:prior.step||0,previous:prior.previous||null,seat:room.seat};
-   sessions[room.code]={matchId,matchLink,step:session.step,previous:session.previous};
+   session={key,accountId:validAccountId(room.accountId),code:room.code,seat:room.seat,
+    matchId,matchLink,step:prior.step||0,previous:prior.previous||null,
+    deck:prior.deck||null,titles:prior.titles||null,engineVersion:prior.engineVersion||null};
+   sessions[key]={matchId,matchLink,step:session.step,previous:session.previous,
+    accountId:session.accountId,seat:session.seat,code:session.code,
+    deck:session.deck,titles:session.titles,engineVersion:session.engineVersion};
    saveSessions();
    return session;
   })();
-  opening.set(room.code,job);
-  return job.finally(()=>{if(opening.get(room.code)===job)opening.delete(room.code);});
+  opening.set(key,job);
+  return job.finally(()=>{if(opening.get(key)===job)opening.delete(key);});
  }
  function persist(){
-  if(!session)return;
-  sessions[session.code]={matchId:session.matchId,matchLink:session.matchLink,step:session.step,previous:session.previous};
+  if(!session?.key)return;
+  sessions[session.key]={matchId:session.matchId,matchLink:session.matchLink,step:session.step,
+   previous:session.previous,accountId:session.accountId,seat:session.seat,code:session.code,
+   deck:session.deck||null,titles:session.titles||null,engineVersion:session.engineVersion||null};
   saveSessions();
- }
- async function confirmedId(){
-  const id=await currentAccountId(fetchImpl);
-  if(typeof id==='string'){confirmedAccount=id;return id;}
-  if(id===null){confirmedAccount=null;return null;}
-  return confirmedAccount;
  }
  function headerFrom(current,snap){
   return {
@@ -97,6 +103,10 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    pool:{titles:snap.titles,versions:['server','server']},
    aiVersion:'none',deck:snap.deck
   };
+ }
+ function pause(message){
+  lastError=message;
+  onChange?.();
  }
  return {
   consent(){return coachConsentEnabled(storage);},
@@ -111,12 +121,27 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   start(){queue.start();},
   async prepare(room){
    if(!room?.code)return;
+   if(session?.code===room.code&&validAccountId(room.accountId)!==session.accountId)return;
    const current=await ensure(room);
-   if(room.status==='playing'&&current)queue.drop(current.matchId+':label:interrupted');
+   if(!current)return;
+   const deck=deckById?.(room.you?.deckId);
+   const titles=Array.isArray(room.view?.playerTitles)&&room.view.playerTitles.length===2
+    ?room.view.playerTitles.slice():null;
+   if(deck?.counts&&deck.title&&titles){
+    current.deck=deckSnapshot(deck.title,deck.counts);
+    current.titles=titles;
+    current.engineVersion=DECISION_ENGINE_VERSION;
+    persist();
+   }
+   if(room.status==='playing')queue.drop(current.matchId+':label:interrupted');
   },
   arm(room,choice){
    pending=null;
    if(!this.consent()||!room?.view||room.yourTurn!==true||!choice)return false;
+   if(!validAccountId(room.accountId)){
+    pause('無法確認帳號，這步已暫停上傳。');
+    return false;
+   }
    const deck=deckById?.(room.you?.deckId);
    if(!deck?.counts||!deck.title){
     lastError='找不到自己的牌組快照，這步不會上傳。';
@@ -125,13 +150,14 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    }
    const titles=Array.isArray(room.view.playerTitles)&&room.view.playerTitles.length===2
     ?room.view.playerTitles.slice():null;
-   if(!titles)return false;
+   if(!titles||(room.seat!==0&&room.seat!==1)||!Number.isInteger(room.revision))return false;
    try{
     const legal=tableChoices(room.choices||[]);
     const selected=tableChoices([choice])[0];
     if(!legal.some(item=>same(item)===same(selected)))return false;
     pending={
-     code:room.code,revision:room.revision,seat:room.seat,choice:selected,legal,
+     accountId:room.accountId,code:room.code,revision:room.revision,seat:room.seat,
+     choice:selected,legal,
      visible:visibleForTraining(room.view,room.seat),
      privateView:privateForTraining(room.inspection),
      turn:room.view.turn,phase:room.view.phase,titles,
@@ -144,16 +170,18 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   async settle(room){
    const snap=pending;
    if(!snap||!room||room.code!==snap.code)return;
+   if(room.seat!=null&&room.seat!==snap.seat)return;
    if(room.revision===snap.revision)return;
    pending=null;
    if(room.revision!==snap.revision+1||!this.consent())return;
+   if(!validAccountId(snap.accountId)){
+    pause('無法確認帳號，這步已暫停上傳。');
+    return;
+   }
    if(!Array.isArray(snap.visible?.players?.[snap.seat]?.hand))return;
-   const current=await ensure(room);
-   if(!current)return;
-   const accountId=await confirmedId();
-   if(!accountId){
-    lastError='無法確認帳號，這步已暫停上傳。';
-    onChange?.();
+   const current=await ensure({accountId:snap.accountId,seat:snap.seat,code:snap.code});
+   if(!current){
+    pause('無法確認帳號，這步已暫停上傳。');
     return;
    }
    const clientKey=current.matchId+':r'+snap.revision+':human';
@@ -166,13 +194,16 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     forced:snap.legal.length===1,decisionClass:classifyDecision(snap.choice),
     previous:previous?{step:previous.step,type:previous.type,clientKey:previous.clientKey}:null,
     chain:chainOf(current.matchId,current.step,previous,clientKey),
-    accountId
+    accountId:snap.accountId
    };
    const queued=queue.enqueue(body);
    if(queued.queued||queued.skipped==='queued'){
     if(queued.queued){
      current.previous={step:body.step,type:body.choice.type,clientKey};
      current.step+=1;
+     current.deck=snap.deck;
+     current.titles=snap.titles;
+     current.engineVersion=snap.engineVersion;
      persist();
     }
     lastError='';
@@ -181,22 +212,33 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   },
   async result(room,endReason,{completed,winner,holdMs=0}={}){
    if(!this.consent()||!room?.view)return;
-   const deck=deckById?.(room.you?.deckId);
-   if(!deck?.counts)return;
-   const titles=Array.isArray(room.view.playerTitles)&&room.view.playerTitles.length===2
-    ?room.view.playerTitles.slice():null;
-   if(!titles)return;
-   const current=await ensure(room);
-   const accountId=await confirmedId();
-   if(!accountId){
-    lastError='無法確認帳號，這筆結果已暫停上傳。';
-    onChange?.();
+   const bound=session?.code===room.code?session:null;
+   const identity=bound&&validAccountId(room.accountId)!==bound.accountId?bound:room;
+   if(!validAccountId(identity.accountId)){
+    pause('無法確認帳號，這筆結果已暫停上傳。');
     return;
    }
-   const snap={titles,deck:deckSnapshot(deck.title,deck.counts),engineVersion:DECISION_ENGINE_VERSION};
+   const current=await ensure(identity);
+   if(!current){
+    pause('無法確認帳號，這筆結果已暫停上傳。');
+    return;
+   }
+   let titles=current.titles||null;
+   let deck=current.deck||null;
+   if(validAccountId(room.accountId)===current.accountId){
+    const live=deckById?.(room.you?.deckId);
+    const liveTitles=Array.isArray(room.view.playerTitles)&&room.view.playerTitles.length===2
+     ?room.view.playerTitles.slice():null;
+    if(live?.counts&&live.title&&liveTitles){
+     deck=deckSnapshot(live.title,live.counts);
+     titles=liveTitles;
+    }
+   }
+   if(!deck?.counts||!titles)return;
+   const snap={titles,deck,engineVersion:current.engineVersion||DECISION_ENGINE_VERSION};
    const body={format:LABEL_FORMAT,...headerFrom(current,snap),
     clientKey:current.matchId+':label:'+endReason,completed:completed===true,
-    winner:winner??null,endReason,accountId};
+    winner:winner??null,endReason,accountId:current.accountId};
    queue.enqueue(body,{holdMs});
    onChange?.();
   },

@@ -1119,4 +1119,10 @@ test('activation ignores steps the live battle will not score',()=>{
  const ready=learningBattleMode({policy:enough});
  assert.equal(ready.effective,'learned');
  assert.equal(ready.policy.format,LEARN_FORMAT);
+ const foreign=learningBattleMode({accountId:'u'+'b'.repeat(16),policy:enough},{accountId:'u'+'a'.repeat(16)});
+ assert.equal(foreign.effective,'hard');
+ assert.equal(foreign.notice,'本場使用困難 AI');
+ assert.equal(foreign.reason,'模型帳號與本場不符');
+ assert.equal(foreign.policy,null);
+ assert.equal(learningBattleMode({policy:enough,accountId:'u'+'a'.repeat(16)},{accountId:'u'+'a'.repeat(16)}).effective,'learned');
 });

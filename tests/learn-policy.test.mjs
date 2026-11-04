@@ -210,8 +210,13 @@ test('learning is stored for the logged-in account and removed with that account
  assert.equal(JSON.stringify(learned.data.policy).includes('"previous"'),false);
  const mine=await api('/api/coach/policy',{token:owner.data.token});
  assert.deepEqual(mine.data.policy.weights,learned.data.policy.weights);
+ const ownerMe=await api('/api/me',{token:owner.data.token});
+ const otherMe=await api('/api/me',{token:other.data.token});
+ assert.equal(mine.data.accountId,ownerMe.data.id);
  const theirs=await api('/api/coach/policy',{token:other.data.token});
  assert.equal(theirs.data.policy,null);
+ assert.equal(theirs.data.accountId,otherMe.data.id);
+ assert.notEqual(mine.data.accountId,theirs.data.accountId);
  const removed=await api('/api/coach/policy',{method:'DELETE',token:owner.data.token});
  assert.equal(removed.status,200);
  const gone=await api('/api/coach/policy',{token:owner.data.token});

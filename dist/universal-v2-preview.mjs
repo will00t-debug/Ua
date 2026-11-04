@@ -21,14 +21,14 @@ import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
 import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
- soloProgressMatches,soloProgressOwner,
- SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
+ soloProgressMatches,soloProgressOwner,readSoloProgress,writeSoloProgress,
+ SOLO_BATTLE_URL} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmr2ship1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261104learn4';
-import {learningBattleMode,policyRecordStatus} from './universal-v2/learn-policy.mjs?v=20261104bonus1';
+import {learningBattleMode,policyRecordStatus} from './universal-v2/learn-policy.mjs?v=20261104owner1';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
@@ -134,7 +134,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 let editorRecordId=null,fieldHold=0;
-const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,battleAccountId:null,
+const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,battleAccountId:null,unrecorded:false,progressRead:'absent',
  selectedSide:null,history:[],publicMoves:[],dismissedPublicMoveIds:new Set(),busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,inspectionPaused:false,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
@@ -1046,23 +1046,25 @@ function legacyCommands(legal){
 // Keep an in-progress AI match alive when a mobile browser reloads the battle page.
 // This private, same-tab snapshot is never shared with the opponent or Worker.
 function saveBattleProgress(){
- if(!IS_BATTLE_PAGE||!app.launch||!app.state||!app.replay)return;
+ if(!IS_BATTLE_PAGE||!app.launch||!app.state||!app.replay||app.unrecorded)return;
+ if(soloProgressOwner(app.battleAccountId)==null)return;
  try{
   const data={version:1,accountId:soloProgressOwner(app.battleAccountId),
    launchId:app.launch.config.id,state:app.state,replay:app.replay,
    history:app.history.slice(0,2500),recordNoted:app.recordNoted,
    aiCompletedSteps:app.aiCompletedSteps,lastAiProgress:app.lastAiProgress,
    coach:app.coachBattle?.snapshot?.()||null,learning:storedLearning()};
-  sessionStorage.setItem(SOLO_BATTLE_PROGRESS_KEY,JSON.stringify(data));
+  writeSoloProgress(sessionStorage,app.battleAccountId,data);
  }catch{/* Private browsing/quota limits must not interrupt V2 legal gameplay. */}
 }
 function restoreBattleProgress(){
- if(!IS_BATTLE_PAGE||!app.launch)return false;
+ if(!IS_BATTLE_PAGE||!app.launch){app.progressRead='absent';return false;}
+ const found=readSoloProgress(sessionStorage,app.battleAccountId);
+ app.progressRead=found.status;
+ if(found.status!=='ok')return false;
  try{
-  const json=sessionStorage.getItem(SOLO_BATTLE_PROGRESS_KEY);
-  if(!json||json.length>2200000)return false;
-  const data=JSON.parse(json);
-  if(!soloProgressMatches(data,app.battleAccountId))return false;
+  const data=found.data;
+  if(!soloProgressMatches(data,app.battleAccountId)){app.progressRead='other';return false;}
   const cfg=app.launch.config;
   if(data.version!==1||data.launchId!==cfg.id||!data.state||!data.replay||
    !Array.isArray(data.history)||data.history.length>2500||
@@ -1266,15 +1268,16 @@ function storedLearning(){
  if(!resolution||typeof resolution!=='object')return null;
  return {
   effective:resolution.effective,notice:resolution.notice||'',reason:resolution.reason||'',
-  policy:resolution.policy||null
+  policy:resolution.policy||null,accountId:soloProgressOwner(app.battleAccountId)
  };
 }
 function storedLearningFrom(value){
  if(!value||typeof value!=='object')return null;
  if(value.effective==='learned'){
+  if(soloProgressOwner(value.accountId)!==soloProgressOwner(app.battleAccountId))return null;
   const status=policyRecordStatus(value.policy);
   if(status.state!=='ok')return null;
-  return {effective:'learned',notice:'',reason:'',policy:status.policy};
+  return {effective:'learned',notice:'',reason:'',policy:status.policy,accountId:soloProgressOwner(app.battleAccountId)};
  }
  if(value.effective==='hard'&&value.notice==='本場使用困難 AI')
   return {effective:'hard',notice:value.notice,reason:typeof value.reason==='string'?value.reason.slice(0,40):'',policy:null};
@@ -1329,7 +1332,14 @@ async function resolveLearning(){
   app.learnedPolicy=null;
   app.learningResolution={effective:requested,notice:'',reason:'',policy:null};
   paintBattleAi();
-  return;
+  return 'skipped';
+ }
+ if(app.battleAccountId==null){
+  app.aiDifficulty='hard';
+  app.learnedPolicy=null;
+  app.learningResolution={effective:'hard',notice:'本場使用困難 AI',reason:'尚未登入',policy:null};
+  paintBattleAi();
+  return 'verified';
  }
  let payload=null,failed=false;
  try{
@@ -1337,11 +1347,20 @@ async function resolveLearning(){
   if(!response.ok)failed=true;
   else payload=await response.json();
  }catch{failed=true;payload=null;}
- const mode=learningBattleMode(payload,{failed});
- app.aiDifficulty=mode.effective;
+ if(failed){
+  const mode=learningBattleMode(null,{failed:true});
+  app.aiDifficulty='hard';
+  app.learnedPolicy=null;
+  app.learningResolution=mode;
+  paintBattleAi();
+  return 'failed';
+ }
+ const mode=learningBattleMode(payload,{accountId:app.battleAccountId});
+ app.aiDifficulty=mode.effective==='learned'?'learned':mode.effective;
  app.learnedPolicy=mode.policy;
  app.learningResolution=mode;
  paintBattleAi();
+ return 'verified';
 }
 async function ensureLearnedPolicy(){
  await resolveLearning();
@@ -1444,7 +1463,7 @@ function renderCoachReview(target){
   el('h1',{text:'賽後教 AI'}),
   el('nav',{class:'coach-review-actions','aria-label':'賽後導覽'},
    el('a',{href:'/online.html',class:'btn small',text:'回大廳',onClick:()=>{
-    resetAi();clearSoloBattle(sessionStorage);
+    resetAi();clearSoloBattle(sessionStorage,app.battleAccountId);
    }}),
    btn('重開對局',()=>startGame(),'btn small'),
    el('a',{href:'/coach.html',class:'btn small',text:'紀錄',title:'查看、匯出或刪除紀錄'})));
@@ -1979,26 +1998,29 @@ async function launchBattle(){
    mine,foe,first,difficulty:app.aiDifficulty,recordDeckId,
    nonce:generateMatchSeed()
   });
-  saveSoloBattle(sessionStorage,config);
+  const account=await currentAccountId();
+  if(account==null)config.unrecorded=true;
+  saveSoloBattle(sessionStorage,config,account==null?null:account);
   window.location.assign(SOLO_BATTLE_URL);
  }catch(error){alertText(error?.message||String(error));}
 }
 // Battle route only: preserve the V2 legal reducer, AI, mulligan and replay.
 // The same control is used for a deliberate "重開對局" on the new page.
-async function startGame(){
+async function startGame(options={}){
  resetAi();
  try{
   if(!IS_BATTLE_PAGE||!app.launch)throw Error('請先選擇牌組，再開始 V2 對戰。');
-  const account=await currentAccountId();
+  const account=Object.prototype.hasOwnProperty.call(options,'account')?options.account:await currentAccountId();
   if(account===undefined)throw Error('無法確認帳號，尚未開始對局。');
   app.battleAccountId=account;
+  app.unrecorded=account==null||app.launch?.config?.unrecorded===true;
   const [mine,foe]=app.launch.decks;
   const first=app.launch.config.first;
   app.aiDifficulty=app.launch.config.difficulty;
   await resolveLearning();
   app.packs=app.launch.packs;
   const seed=generateMatchSeed();
-  app.recordDeckId=app.launch.config.recordDeckId;
+  app.recordDeckId=app.unrecorded?null:app.launch.config.recordDeckId;
   app.recordNoted=false;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
@@ -2016,8 +2038,10 @@ async function startGame(){
    '｜'+aiNote+'｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
-  void coachApi().begin(coachHeaderNow(newCoachMatchId()),app.battleAccountId);
-  saveBattleProgress();
+  if(!app.unrecorded){
+   void coachApi().begin(coachHeaderNow(newCoachMatchId()),app.battleAccountId);
+   saveBattleProgress();
+  }
   render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
@@ -2111,7 +2135,7 @@ if(!IS_BATTLE_PAGE){
  }
  $('start-game').addEventListener('click',()=>{
   rememberMatchLobby();
-  launchBattle();
+  void launchBattle();
  });
  const coachConsent=$('coach-consent');
  if(coachConsent){
@@ -2121,7 +2145,6 @@ if(!IS_BATTLE_PAGE){
  syncMatchLobby();
  importAccountLobbyDecks();
 }else{
- const loaded=loadSoloBattle(sessionStorage);
  window.matchMedia(DESKTOP_BATTLE_QUERY).addEventListener('change',()=>render());
  const exit=$('exit-battle');
  if(exit)exit.addEventListener('click',event=>{
@@ -2131,35 +2154,54 @@ if(!IS_BATTLE_PAGE){
   }
   if(app.state?.status==='playing')
    app.coachBattle?.finish?.({completed:false,winner:null,endReason:'abandoned',review:false});
-  resetAi();clearSoloBattle(sessionStorage);
+  resetAi();clearSoloBattle(sessionStorage,app.battleAccountId);
  });
  window.addEventListener('pagehide',()=>{
   const coach=app.coachBattle;
   if(!coach?.session||coach.session.finished||app.state?.status!=='playing')return;
   coach.finish({completed:false,winner:null,endReason:'interrupted',holdMs:4000,review:false});
  });
- if(loaded){
+ void (async()=>{
+  const account=await currentAccountId();
+  if(account===undefined){
+   const guest=loadSoloBattle(sessionStorage,{accountId:null});
+   if(guest?.config?.unrecorded===true){
+    app.launch=guest;app.packs=guest.packs;
+    app.aiDifficulty=guest.config.difficulty;
+    app.recordDeckId=null;
+    app.battleAccountId=null;
+    app.unrecorded=true;
+    const banner=$('battle-matchup');
+    if(banner)banner.textContent=guest.decks[0].label+' vs '+guest.decks[1].label+' · 不記錄練習';
+    try{await startGame({account:null});}
+    catch(error){app.error=error?.message||String(error);render();}
+    return;
+   }
+   app.error='無法確認帳號，續局已暫停。請恢復連線後重新開啟。';
+   render();
+   return;
+  }
+  const loaded=loadSoloBattle(sessionStorage,{accountId:account});
+  if(!loaded){render();return;}
   app.launch=loaded;app.packs=loaded.packs;
   app.aiDifficulty=loaded.config.difficulty;
   app.recordDeckId=loaded.config.recordDeckId;
+  app.battleAccountId=account;
+  app.unrecorded=false;
   const banner=$('battle-matchup');
   if(banner)banner.textContent=loaded.decks[0].label+' vs '+loaded.decks[1].label+
    ' · '+(AI_LEVEL_LABEL[loaded.config.difficulty]||'普通');
-  void (async()=>{
-   const account=await currentAccountId();
-   if(account===undefined){
-    app.error='無法確認帳號，續局已暫停。請恢復連線後重新開啟。';
-    render();
-    return;
-   }
-   app.battleAccountId=account;
-   if(!restoreBattleProgress())void startGame();
-   else{
-    const saved=app.pendingCoach;
-    if(!applyLearningResolution(app.learningResolution))await resolveLearning();
-    void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()),app.battleAccountId);
-    render();driveAi();
-   }
-  })();
- }else render();
+  if(restoreBattleProgress()){
+   const savedLearning=app.learningResolution;
+   const saved=app.pendingCoach;
+   const outcome=await resolveLearning();
+   if(outcome==='failed'&&savedLearning)applyLearningResolution(savedLearning);
+   void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()),app.battleAccountId);
+   if(outcome!=='failed')saveBattleProgress();
+   render();driveAi();
+   return;
+  }
+  if(app.progressRead==='absent')void startGame({account});
+  else{app.error='這份續局無法讀取，原進度已保留。';render();}
+ })();
 }
