@@ -24,7 +24,7 @@ import {bindAot2,runAot2Job,legalAot2Pending,resolveAot2Pending,
 import {bindKmr,runKmrJob,legalKmrPending,resolveKmrPending,
  legalKmrActivations,legalKmrOutside,activateKmr} from './kmr-runtime.mjs';
 import {bindKmr2,runKmr2Job,legalKmr2Pending,resolveKmr2Pending,
- legalKmr2Activations,activateKmr2,kmr2Implements,noteKmr2Zone} from './kmr2-runtime.mjs';
+ legalKmr2Activations,activateKmr2,kmr2Implements,noteKmr2Zone} from './kmr2-runtime.mjs?v=20261104kmrport1';
 import {bindCsm,runCsmJob,legalCsmPending,resolveCsmPending,
  legalCsmActivations,activateCsm,csmOnAttackWin,csmOnUnblocked,csmOnAttackEnd,
  csmOnMovedOutsideMove,csmOnTurnStart,csmOnAttackDeclare,csmLeaveReplace} from './csm-runtime.mjs';

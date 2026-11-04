@@ -112,7 +112,7 @@ function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,ene
  }).join('');
  const logoSource=logoCredits?`<details class="vdb-logo-credits"><summary>作品 Logo 來源與授權</summary><ul>${logoCredits}</ul><p>作品商標權利屬原權利人；本站非官方網站。</p></details>`:"";
 
- if(!ready)return `<div class="vdb arena-editor"><header class="vdb-intro"><span class="vdb-eyebrow">DECK BUILDER · 01 / 03</span><h1>先選擇卡牌作品</h1><p>選好作品，再從低必要能量開始加入卡片。各作品的牌組分開保存。</p></header>${titleGrid}<p class="vdb-footnote">卡圖與效果文字來自已收錄的官方卡牌資料。未移植的卡牌可以編進牌表，但不能進入 V2 對戰。</p>${logoSource}</div>`;
+ if(!ready)return `<div class="vdb arena-editor"><header class="vdb-intro"><span class="vdb-eyebrow">DECK BUILDER · 01 / 03</span><h1>先選擇卡牌作品</h1><p>選好作品，再從低必要能量開始加入卡片。各作品的牌組分開保存。</p></header>${titleGrid}<p class="vdb-footnote">卡圖與效果文字來自已收錄的官方卡牌資料。選好作品後，標成「V2 已登錄」的卡可以組進對戰牌組。</p>${logoSource}</div>`;
  const cardLine=card=>{
   const n=model.amount(card),limit=card.maxCopies??4;
   const produced=finite(card.gen);
