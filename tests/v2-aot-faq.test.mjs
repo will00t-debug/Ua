@@ -611,3 +611,55 @@ test('life RAID of eight-cost Eren follows printed red energy',()=>{
  assertUniversalMatch(packs,short.s);
  assertUniversalMatch(packs,enough.s);
 });
+
+
+test('AOT-1-099 preserves enter-time effects while choosing a second 104th Cadet',()=>{
+ const counts=deck(['AOT-1-099','AOT-1-075','AOT-1-083','AOT-1-095']);
+ let s=toPhase(fresh(counts,9901),'main');
+ put(s,0,'AOT-1-095','energy',0,true);
+ put(s,0,'AOT-1-083','energy',1,true);
+ readyAp(s,0,1);
+ const recruit=toHand(s,0,'AOT-1-075');
+ toHand(s,0,'AOT-1-083');
+ const gear=toHand(s,0,'AOT-1-099');
+ assert.equal(pack.cards['AOT-1-075'].effects.onPlay[0].op,'drawDiscard');
+ s=cast(s,gear.uid);
+ assert.equal(s.pending.step,'corps');
+ s=pick(s,a=>a.uid===recruit.uid&&a.line==='front');
+ const live=s.players[0].front.find(c=>c?.uid===recruit.uid);
+ assert.ok(live);
+ assert.equal(live.ready,true);
+ assert.equal(live.aotReturnHandAtAttackEnd.turn,s.turn);
+ // The second optional physical entry must not swallow the first card's
+ // onPlay draw/discard trigger; declining it must resolve that trigger.
+ assert.equal(s.pending.kind,'aot');
+ assert.equal(s.pending.step,'corps');
+ s=pick(s,a=>a.type==='aot'&&a.mode==='done');
+ assert.notEqual(s.pending?.kind,'aot');
+ assert.ok(s.pending,'Entry-time discard is awaiting a choice');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid!==undefined),true);
+ assertUniversalMatch(packs,s);
+});
+
+test('AOT-1-099 deploys two and keeps both entry jobs instead of overwriting the first',()=>{
+ const counts=deck(['AOT-1-099','AOT-1-075','AOT-1-083','AOT-1-095']);
+ let s=toPhase(fresh(counts,9902),'main');
+ put(s,0,'AOT-1-095','energy',0,true);
+ put(s,0,'AOT-1-083','energy',1,true);
+ readyAp(s,0,1);
+ const first=toHand(s,0,'AOT-1-075');
+ const second=toHand(s,0,'AOT-1-075');
+ const gear=toHand(s,0,'AOT-1-099');
+ s=cast(s,gear.uid);
+ s=pick(s,a=>a.uid===first.uid&&a.line==='front');
+ assert.equal(s.pending.step,'corps');
+ s=pick(s,a=>a.uid===second.uid&&a.line==='front');
+ assert.equal(s.players[0].front.filter(c=>c?.cardId==='AOT-1-075').length,2);
+ assert.ok(s.pending);
+ assert.notEqual(s.pending.kind,'aot');
+ const discard=legalUniversalActions(packs,s).find(a=>a.uid&&s.players[0].hand.some(c=>c.uid===a.uid));
+ assert.ok(discard);
+ s=use(s,discard);
+ assert.ok(s.pending,'Second deployed card must also resolve its entry effect');
+ assertUniversalMatch(packs,s);
+});
