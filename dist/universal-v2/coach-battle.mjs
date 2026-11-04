@@ -3,7 +3,7 @@
 // for the upload. AI actions stay out of the player-decision queue.
 // A resume check or an upload still in flight stages new decisions until the
 // next step number is confirmed. Closing consent drops only unsent rows.
-import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
+import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step3';
 import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step1';
 import {LABEL_FORMAT, chainOf} from './coach-format.mjs';
 import {newCoachMatchId,buildHumanStep,buildAiMark,stateAtReplayIndex} from './coach-record.mjs';
@@ -24,20 +24,27 @@ function rewind(session,bodies){
  session.undoStack=(session.undoStack||[]).slice(0,oldest.step);
 }
 
-export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,onAccepted,schedule,reconcileTimeout=8000}={}){
+export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,onAccepted,schedule,reconcileTimeout=8000,uploadTimeout=8000}={}){
  let uploaded=0;
  let session=null;
  let epoch=0;
  let noteSeq=0;
  let unsettled=null;
+ let openUpload=null;
  let reconcileGen=0;
  let reconcileTimer=null;
  let pendingSaved=null;
+ const sendEpoch=new Map();
  const uploader=createCoachUploader({
   consent:()=>coachConsentEnabled(storage),
   fetchImpl,
+  uploadTimeout,
   onUploaded(){uploaded++;if(session){session.uploaded=uploaded;session.lastError='';}},
-  onError(message){if(session)session.lastError=message||'紀錄沒有送出。';}
+  onError(message){if(session)session.lastError=message||'紀錄沒有送出。';},
+  onLate(result, body){
+   const epochNow=sendEpoch.get(body?.clientKey);
+   applyResult(body?.matchId, body?.step, result, epochNow, body?.accountId);
+  }
  });
  function acceptConfirmed(matchId,step,result,epochNow,accountId,body){
   if(epoch!==epochNow||!session||session.matchId!==matchId)return;
@@ -66,13 +73,15 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    const human=body?.source==='human'&&String(body?.format||'').includes('step');
    const epochNow=epoch;
    const accountId=body?.accountId;
+   if(human&&body?.clientKey)sendEpoch.set(body.clientKey, epochNow);
    const sent=String(body?.format||'').includes('label')?uploader.label(body):uploader.step(body);
    const done=Promise.resolve(sent).then(result=>{
-    if(human)acceptConfirmed(matchId,step,result,epochNow,accountId,body);
+    if(human)applyResult(matchId, step, result, epochNow, accountId);
     return result;
    });
    if(human){
-    const track={matchId,accountId,step,body,done};
+    openUpload={matchId, accountId, step, outcome:'pending', link:session?.previous||null};
+    const track={matchId, accountId, step, done};
     unsettled=track;
     void done.finally(()=>{if(unsettled===track)unsettled=null;});
    }
@@ -103,7 +112,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    previous:null,undoStack:[],finished:false,reviewing:false,label:null,signedIn:null,header:null,
    reservations:[],confirmedThrough:0,staged:[],checking:false};
  }
- function fresh(){epoch+=1;reconcileGen+=1;clearReconcile();pendingSaved=null;}
+ function fresh(){epoch+=1;reconcileGen+=1;clearReconcile();pendingSaved=null;openUpload=null;}
  function clearReconcile(){
   if(reconcileTimer==null)return;
   if(!schedule)clearTimeout(reconcileTimer);
@@ -277,8 +286,49 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   releaseStaged();
   emit();
  }
- async function finishInflight(track, epochNow){
-  if(epoch!==epochNow||!session||session.matchId!==track.matchId)return;
+ function classify(result){
+  const data=result?.data;
+  if(result?.ok===true||result?.duplicate===true||data?.duplicate===true||result?.skipped==='sent')return 'accepted';
+  if(result?.timeout||result?.status===0)return 'unknown';
+  const status=result?.status;
+  if(status==null)return result?.skipped==='consent'?'rejected':'unknown';
+  if(status===401||status===403||status===409||status===500)return 'unknown';
+  if(status>=400)return 'rejected';
+  return 'unknown';
+ }
+ function rewindUnaccepted(step){
+  if(!session||!Number.isInteger(step))return;
+  if((session.confirmedThrough||0)>step)return;
+  if(session.humanStep!==step+1)return;
+  const prior=Array.isArray(session.undoStack)?session.undoStack[step]??null:null;
+  session.humanStep=step;
+  session.undoStack=(session.undoStack||[]).slice(0, step);
+  session.previous=prior;
+ }
+ function sameUpload(matchId, accountId, step){
+  return openUpload&&openUpload.matchId===matchId&&openUpload.step===step&&
+   (!accountId||!openUpload.accountId||accountId===openUpload.accountId);
+ }
+ function applyResult(matchId, step, result, epochNow, accountId){
+  if(!Number.isInteger(epochNow)||epoch!==epochNow||!session||session.matchId!==matchId)return;
+  if(accountId&&session.accountId&&accountId!==session.accountId)return;
+  if(!sameUpload(matchId, accountId, step))return;
+  const kind=classify(result);
+  if(openUpload.outcome==='accepted')return;
+  if(kind==='unknown'&&openUpload.outcome==='rejected')return;
+  openUpload.outcome=kind;
+  if(kind==='accepted'){
+   acceptConfirmed(matchId, step, result, epochNow, accountId, null);
+   if((session.humanStep||0)>=step+1&&openUpload.link)session.previous=openUpload.link;
+  }else if(kind==='rejected')rewindUnaccepted(step);
+ }
+ function uploadMatches(){
+  return openUpload&&session&&openUpload.matchId===session.matchId&&
+   (!openUpload.accountId||!session.accountId||openUpload.accountId===session.accountId);
+ }
+ async function confirmOpenUpload(epochNow){
+  const track=openUpload;
+  if(!track||epoch!==epochNow||!session||session.matchId!==track.matchId)return;
   if(track.accountId&&session.accountId&&track.accountId!==session.accountId)return;
   if(!coachConsentEnabled(storage)){
    session.checking=false;
@@ -286,29 +336,50 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    emit();
    return;
   }
-  if((session.confirmedThrough||0)>track.step){
+  if(track.outcome==='accepted'||(session.confirmedThrough||0)>track.step){
+   if((session.humanStep||0)<track.step+1)session.humanStep=track.step+1;
+   if((session.humanStep||0)>=track.step+1&&track.link)session.previous=track.link;
+   openUpload=null;
+   releaseStaged();
+   emit();
+   return;
+  }
+  if(track.outcome==='rejected'){
+   rewindUnaccepted(track.step);
+   openUpload=null;
    releaseStaged();
    emit();
    return;
   }
   const gen=reconcileGen;
   const remote=await readServerCount(session.matchId);
-  if(epoch!==epochNow||gen!==reconcileGen||!session||session.matchId!==track.matchId)return;
+  if(epoch!==epochNow||gen!==reconcileGen||!session||session.matchId!==track.matchId||openUpload!==track)return;
+  if(track.outcome==='accepted'||(session.confirmedThrough||0)>track.step){
+   if((session.humanStep||0)<track.step+1)session.humanStep=track.step+1;
+   if(track.link)session.previous=track.link;
+   openUpload=null;
+   releaseStaged();
+   emit();
+   return;
+  }
+  if(!coachConsentEnabled(storage)){
+   session.checking=false;
+   session.staged=[];
+   emit();
+   return;
+  }
   if(!remote.known){
    session.checking=true;
    scheduleReconcile(()=>{
-    if(epoch===epochNow&&gen===reconcileGen&&session?.checking&&session.matchId===track.matchId)
-     void finishInflight(track, epochNow);
+    if(epoch===epochNow&&gen===reconcileGen&&session?.checking&&openUpload===track)
+     void confirmOpenUpload(epochNow);
    });
    emit();
    return;
   }
-  if(remote.count<=track.step&&track.body){
-   session.humanStep=track.step;
-   session.previous=track.body.previous||null;
-   session.undoStack=(session.undoStack||[]).slice(0, track.step);
-   enqueueHuman(track.body, session.previous, epochNow);
-  }else applyCount(remote.count, {humanStep:Math.max(remote.count, session.humanStep||0), previous:session.previous, undoStack:session.undoStack});
+  if(remote.count>track.step)applyCount(remote.count, {humanStep:Math.max(remote.count, session.humanStep||0), previous:session.previous, undoStack:session.undoStack});
+  else rewindUnaccepted(track.step);
+  openUpload=null;
   releaseStaged();
   emit();
  }
@@ -347,6 +418,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    setCoachConsent(storage,!!enabled);
    if(!session){emit();return;}
    if(!enabled){
+    uploader.invalidate();
     reconcileGen+=1;
     clearReconcile();
     session.checking=false;
@@ -358,7 +430,8 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
     }
     const inflight=unsettled&&unsettled.matchId===session.matchId&&
      (!unsettled.accountId||!session.accountId||unsettled.accountId===session.accountId)?unsettled:null;
-    const bodies=queue.discard().filter(body=>!inflight||body?.clientKey!==inflight.body?.clientKey);
+    const inflightKey=inflight?inflight.matchId+':'+inflight.step+':human':null;
+    const bodies=queue.discard().filter(body=>!inflightKey||body?.clientKey!==inflightKey);
     rewind(session, bodies);
     if(session.reservations){
      for(const note of session.reservations){
@@ -371,12 +444,21 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
      if((session.confirmedThrough||0)>0)session.humanStep=Math.max(session.humanStep||0, session.confirmedThrough);
      else{session.humanStep=0;session.previous=null;session.undoStack=[];}
     }
-   }else if(unsettled&&unsettled.matchId===session.matchId&&
-    (!unsettled.accountId||!session.accountId||unsettled.accountId===session.accountId)){
-    session.checking=true;
-    const epochNow=epoch;
-    const track=unsettled;
-    void track.done.then(()=>finishInflight(track, epochNow));
+   }else if(uploadMatches()){
+    if(openUpload.outcome==='accepted'||(session.confirmedThrough||0)>openUpload.step){
+     if((session.humanStep||0)<openUpload.step+1)session.humanStep=openUpload.step+1;
+     if(openUpload.link)session.previous=openUpload.link;
+     openUpload=null;
+    }else if(openUpload.outcome==='rejected'){
+     rewindUnaccepted(openUpload.step);
+     openUpload=null;
+    }else{
+     session.checking=true;
+     const epochNow=epoch;
+     const pending=unsettled&&unsettled.matchId===session.matchId&&unsettled.step===openUpload.step?unsettled.done:null;
+     if(openUpload.outcome==='pending'&&pending)void pending.then(()=>confirmOpenUpload(epochNow));
+     else void confirmOpenUpload(epochNow);
+    }
    }else if(!session.checking&&pendingSaved&&pendingSaved.matchId===session.matchId){
     session.checking=true;
     const epochNow=epoch;

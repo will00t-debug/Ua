@@ -120,7 +120,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   get lastError(){return lastError;},
   setConsent(enabled){
    setCoachConsent(storage,!!enabled);
-   if(!enabled){pending=null;rewind(queue.discard());}
+   if(!enabled){uploader.invalidate();pending=null;rewind(queue.discard());}
    onChange?.();
   },
   start(){queue.start();},

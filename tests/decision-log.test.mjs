@@ -2107,3 +2107,197 @@ test('a delayed upload confirmation updates only the original account and match'
  const otherDetail=await api('/api/coach/matches/'+otherHeader.matchId, {token:account.token});
  assert.equal(otherDetail.data.match.steps, 1);
 });
+
+function hangingSteps(account, {deliver=true}={}){
+ const calls=[];
+ let release;
+ let held=false;
+ const fetchImpl=async(path, options={})=>{
+  if(path==='/api/coach/steps'&&options.body){
+   const posted=JSON.parse(options.body);
+   const call={step:posted.step, mode:posted.choice?.mode??null, type:posted.choice?.type??null};
+   calls.push(call);
+   const first=posted.step===0&&!release;
+   if(first){
+    held=true;
+    await new Promise(resolve=>{release=resolve;});
+    if(!deliver){
+     call.status=503;
+     return {ok:false, status:503, json:async()=>({error:'暫時無法保存。'})};
+    }
+   }
+   const result=await apiFetch(account.token)(path, options);
+   const data=await result.json();
+   call.status=result.status;
+   call.duplicate=data?.duplicate===true;
+   return {ok:result.ok, status:result.status, json:async()=>data};
+  }
+  return apiFetch(account.token)(path, options);
+ };
+ return {fetchImpl, calls, held:()=>held, release:()=>release?.()};
+}
+async function closedBattle(account, username, {deliver=true, uploadTimeout}={}){
+ const signed=account||await signedCoach(username);
+ const header=headerFor();
+ const storage=consented();
+ const transport=hangingSteps(signed, {deliver});
+ const battle=createCoachBattle({
+  storage, schedule(){return 1;}, fetchImpl:transport.fetchImpl, uploadTimeout
+ });
+ await battle.begin(header, signed.accountId);
+ const state=opening();
+ const keep=mulligan(state, 'keep');
+ battle.noteHuman({packs, state, action:keep.action, replayIndex:0, legal:keep.legal});
+ const follow=afterKeep(state, keep.action);
+ return {signed, header, storage, battle, state, keep, follow, ...transport};
+}
+
+test('a failed upload is not retried after recording is closed, and the next decision reuses step 0', {timeout:180000}, async()=>{
+ const ended=await closedBattle(null, '未收甲', {deliver:false});
+ const flushing=ended.battle.flush();
+ await waitUntil(()=>ended.held());
+ ended.battle.setConsent(false);
+ ended.battle.noteHuman({packs, state:ended.follow.state, action:ended.follow.action, replayIndex:ended.follow.replayIndex, legal:ended.follow.legal});
+ assert.equal(ended.calls.length, 1);
+ ended.release();
+ await flushing;
+ await new Promise(resolve=>setTimeout(resolve, 30));
+ assert.equal(ended.calls.length, 1);
+ assert.equal(ended.calls[0].status, 503);
+ assert.equal(ended.battle.session.humanStep, 0);
+ ended.battle.setConsent(true);
+ ended.battle.noteHuman({packs, state:ended.follow.state, action:ended.follow.action, replayIndex:ended.follow.replayIndex, legal:ended.follow.legal});
+ assert.equal(ended.battle.session.humanStep, 1);
+ assert.equal(ended.battle.session.checking, false);
+ await ended.battle.flush();
+ assert.equal(ended.calls.length, 2);
+ assert.equal(ended.calls[1].status, 200);
+ assert.equal(ended.calls[1].step, 0);
+ assert.equal(ended.calls[1].duplicate, false);
+ assert.notEqual(ended.calls[1].mode, 'keep');
+ assert.equal(ended.calls.some(item=>item.status===409), false);
+ const endedDetail=await api('/api/coach/matches/'+ended.header.matchId, {token:ended.signed.token});
+ assert.deepEqual(endedDetail.data.steps.map(item=>item.step), [0]);
+ assert.notEqual(endedDetail.data.steps[0].choice.mode, 'keep');
+
+ const soon=await closedBattle(ended.signed, '未收甲', {deliver:false});
+ const soonFlush=soon.battle.flush();
+ await waitUntil(()=>soon.held());
+ soon.battle.setConsent(false);
+ soon.battle.setConsent(true);
+ soon.battle.noteHuman({packs, state:soon.follow.state, action:soon.follow.action, replayIndex:soon.follow.replayIndex, legal:soon.follow.legal});
+ assert.equal(soon.battle.session.checking, true);
+ assert.equal(soon.calls.length, 1);
+ soon.release();
+ await soonFlush;
+ await waitUntil(()=>soon.battle.session.checking===false);
+ assert.equal(soon.calls.filter(item=>item.status===503).length, 1);
+ assert.equal(soon.battle.session.humanStep, 1);
+ await soon.battle.flush();
+ assert.equal(soon.calls.length, 2);
+ assert.equal(soon.calls[1].status, 200);
+ assert.equal(soon.calls[1].step, 0);
+ assert.equal(soon.calls[1].duplicate, false);
+ assert.equal(soon.calls.some(item=>item.status===409), false);
+ const soonDetail=await api('/api/coach/matches/'+soon.header.matchId, {token:soon.signed.token});
+ assert.deepEqual(soonDetail.data.steps.map(item=>item.step), [0]);
+ assert.notEqual(soonDetail.data.steps[0].choice.mode, 'keep');
+});
+
+test('a successful in-flight upload is kept after recording is closed, and the next decision is step 1', {timeout:180000}, async()=>{
+ const ended=await closedBattle(null, '已收甲');
+ const flushing=ended.battle.flush();
+ await waitUntil(()=>ended.held());
+ ended.battle.setConsent(false);
+ ended.release();
+ await flushing;
+ await new Promise(resolve=>setTimeout(resolve, 30));
+ assert.equal(ended.calls.length, 1);
+ assert.equal(ended.calls[0].status, 200);
+ assert.equal(ended.calls[0].mode, 'keep');
+ assert.equal(ended.battle.session.confirmedThrough, 1);
+ assert.equal(ended.battle.session.humanStep, 1);
+ ended.battle.noteHuman({packs, state:ended.follow.state, action:ended.follow.action, replayIndex:ended.follow.replayIndex, legal:ended.follow.legal});
+ assert.equal(ended.calls.length, 1);
+ ended.battle.setConsent(true);
+ ended.battle.noteHuman({packs, state:ended.follow.state, action:ended.follow.action, replayIndex:ended.follow.replayIndex, legal:ended.follow.legal});
+ assert.equal(ended.battle.session.humanStep, 2);
+ await ended.battle.flush();
+ assert.deepEqual(ended.calls.map(item=>item.status+':'+item.step), ['200:0', '200:1']);
+ assert.equal(ended.calls[1].duplicate, false);
+ assert.notEqual(ended.calls[1].mode, 'keep');
+ assert.equal(ended.calls.some(item=>item.status===409), false);
+ const endedDetail=await api('/api/coach/matches/'+ended.header.matchId, {token:ended.signed.token});
+ assert.deepEqual(endedDetail.data.steps.map(item=>item.step), [0, 1]);
+ assert.equal(endedDetail.data.steps[0].choice.mode, 'keep');
+ assert.equal(endedDetail.data.steps.filter(item=>item.step===0).length, 1);
+
+ const soon=await closedBattle(ended.signed, '已收甲');
+ const soonFlush=soon.battle.flush();
+ await waitUntil(()=>soon.held());
+ soon.battle.setConsent(false);
+ soon.battle.setConsent(true);
+ soon.battle.noteHuman({packs, state:soon.follow.state, action:soon.follow.action, replayIndex:soon.follow.replayIndex, legal:soon.follow.legal});
+ assert.equal(soon.battle.session.checking, true);
+ assert.equal(soon.calls.length, 1);
+ soon.release();
+ await soonFlush;
+ await waitUntil(()=>soon.battle.session.checking===false);
+ assert.equal(soon.battle.session.humanStep, 2);
+ await soon.battle.flush();
+ assert.deepEqual(soon.calls.map(item=>item.status+':'+item.step), ['200:0', '200:1']);
+ assert.equal(soon.calls.every(item=>item.duplicate!==true), true);
+ assert.equal(soon.calls.some(item=>item.status===409), false);
+ const soonDetail=await api('/api/coach/matches/'+soon.header.matchId, {token:soon.signed.token});
+ assert.deepEqual(soonDetail.data.steps.map(item=>item.step), [0, 1]);
+ assert.equal(soonDetail.data.steps.filter(item=>item.step===0).length, 1);
+});
+
+test('an unknown in-flight upload is checked before the next step number is assigned', {timeout:180000}, async()=>{
+ const ended=await closedBattle(null, '不明甲', {deliver:false, uploadTimeout:40});
+ const flushing=ended.battle.flush();
+ await waitUntil(()=>ended.held());
+ ended.battle.setConsent(false);
+ await flushing;
+ await new Promise(resolve=>setTimeout(resolve, 20));
+ assert.equal(ended.calls.length, 1);
+ assert.equal(ended.battle.session.humanStep, 1);
+ ended.battle.setConsent(true);
+ ended.battle.noteHuman({packs, state:ended.follow.state, action:ended.follow.action, replayIndex:ended.follow.replayIndex, legal:ended.follow.legal});
+ assert.equal(ended.battle.session.checking, true);
+ assert.equal(ended.calls.length, 1);
+ await waitUntil(()=>ended.battle.session.checking===false);
+ assert.equal(ended.battle.session.humanStep, 1);
+ ended.release();
+ await ended.battle.flush();
+ assert.equal(ended.calls.length, 2);
+ assert.equal(ended.calls[1].status, 200);
+ assert.equal(ended.calls[1].step, 0);
+ assert.equal(ended.calls[1].duplicate, false);
+ assert.notEqual(ended.calls[1].mode, 'keep');
+ assert.equal(ended.calls.some(item=>item.status===409), false);
+ const endedDetail=await api('/api/coach/matches/'+ended.header.matchId, {token:ended.signed.token});
+ assert.deepEqual(endedDetail.data.steps.map(item=>item.step), [0]);
+
+ const soon=await closedBattle(ended.signed, '不明甲', {deliver:false, uploadTimeout:40});
+ const soonFlush=soon.battle.flush();
+ await waitUntil(()=>soon.held());
+ soon.battle.setConsent(false);
+ soon.battle.setConsent(true);
+ soon.battle.noteHuman({packs, state:soon.follow.state, action:soon.follow.action, replayIndex:soon.follow.replayIndex, legal:soon.follow.legal});
+ assert.equal(soon.battle.session.checking, true);
+ assert.equal(soon.calls.length, 1);
+ await soonFlush;
+ await waitUntil(()=>soon.battle.session.checking===false);
+ assert.equal(soon.calls.length, 1);
+ assert.equal(soon.battle.session.humanStep, 1);
+ soon.release();
+ await soon.battle.flush();
+ assert.equal(soon.calls.length, 2);
+ assert.equal(soon.calls[1].status, 200);
+ assert.equal(soon.calls[1].step, 0);
+ assert.equal(soon.calls[1].duplicate, false);
+ assert.equal(soon.calls.some(item=>item.status===409), false);
+ const soonDetail=await api('/api/coach/matches/'+soon.header.matchId, {token:soon.signed.token});
+ assert.deepEqual(soonDetail.data.steps.map(item=>item.step), [0]);
+});

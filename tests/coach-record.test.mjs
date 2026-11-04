@@ -92,3 +92,41 @@ test('a lost response can be sent again without a second client key',async()=>{
  assert.equal(second.skipped,'sent');
  assert.equal(seen.length,1);
 });
+
+test('closing consent cancels the retry even if recording is turned back on',async()=>{
+ let attempt=0;
+ let consent=true;
+ const uploader=createCoachUploader({
+  consent:()=>consent,
+  fetchImpl:async()=>{
+   attempt++;
+   consent=false;
+   uploader.invalidate();
+   consent=true;
+   return {ok:false,status:503,json:async()=>({error:'暫時無法保存。'})};
+  }
+ });
+ const result=await uploader.step({clientKey:'m'+'d'.repeat(32)+':0:human',step:0});
+ assert.equal(attempt,1);
+ assert.equal(result.ok,false);
+ assert.equal(result.status,503);
+ assert.equal(result.skipped,'consent');
+});
+
+test('an in-flight success still resolves after consent is withdrawn',async()=>{
+ let attempt=0;
+ const uploader=createCoachUploader({
+  consent:()=>true,
+  fetchImpl:async()=>{
+   attempt++;
+   uploader.invalidate();
+   return {ok:true,json:async()=>({duplicate:false})};
+  }
+ });
+ const result=await uploader.step({clientKey:'m'+'e'.repeat(32)+':0:human',step:0});
+ assert.equal(attempt,1);
+ assert.equal(result.ok,true);
+ const again=await uploader.step({clientKey:'m'+'e'.repeat(32)+':0:human',step:0});
+ assert.equal(again.skipped,'sent');
+ assert.equal(attempt,1);
+});

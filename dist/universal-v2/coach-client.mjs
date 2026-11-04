@@ -27,23 +27,47 @@ export function setCoachConsent(storage,enabled){
  else storage.removeItem(COACH_CONSENT_KEY);
 }
 
-export function createCoachUploader({consent,fetchImpl=globalThis.fetch,onUploaded,onError}={}){
+export function createCoachUploader({consent,fetchImpl=globalThis.fetch,onUploaded,onError,onLate,uploadTimeout=8000}={}){
  const done=new Set();
  const inflight=new Map();
+ let round=0;
+ function blocked(generation){return generation!==round||!consent?.();}
  async function send(path,body,key){
   if(!consent?.())return {skipped:'consent'};
   if(done.has(key))return {skipped:'sent'};
   const pending=inflight.get(key);
   if(pending)return pending;
+  const generation=round;
   const task=(async()=>{
    let last=null;
    for(let attempt=0;attempt<2;attempt++){
+    if(blocked(generation))return last?{...last,skipped:'consent'}:{skipped:'consent'};
+    let timer;
+    let flight;
     try{
-     const response=await fetchImpl(path,{
+     flight=fetchImpl(path,{
       method:'POST',credentials:'same-origin',
       headers:{'content-type':'application/json',accept:'application/json'},
       body:JSON.stringify(body)
      });
+     const response=await Promise.race([
+      flight,
+      new Promise(resolve=>{
+       timer=setTimeout(()=>resolve({timeout:true}), uploadTimeout);
+      })
+     ]);
+     if(timer)clearTimeout(timer);
+     if(response?.timeout){
+      void Promise.resolve(flight).then(async late=>{
+       if(done.has(key)||!late?.ok)return;
+       const data=await late.json().catch(()=>null);
+       done.add(key);
+       onUploaded?.(data);
+       onLate?.({ok:true,data}, body);
+      }).catch(()=>{});
+      last={ok:false,status:0,timeout:true,data:{error:'紀錄確認逾時。'}};
+      continue;
+     }
      const data=await response.json().catch(()=>null);
      if(response.ok){
       done.add(key);
@@ -51,11 +75,15 @@ export function createCoachUploader({consent,fetchImpl=globalThis.fetch,onUpload
       return {ok:true,data};
      }
      last={ok:false,status:response.status,data};
+     if(blocked(generation))return {...last,skipped:'consent'};
      if(response.status===401||response.status===403||response.status===409||response.status===400||response.status===413)break;
     }catch{
+     if(timer)clearTimeout(timer);
      last={ok:false,status:0,data:{error:'網路中斷，稍後會再送一次。'}};
+     if(blocked(generation))return {...last,skipped:'consent'};
     }
    }
+   if(blocked(generation))return last?{...last,skipped:'consent'}:{skipped:'consent'};
    onError?.(last?.data?.error||'紀錄沒有送出。',last);
    return last;
   })();
@@ -64,6 +92,7 @@ export function createCoachUploader({consent,fetchImpl=globalThis.fetch,onUpload
   finally{inflight.delete(key);}
  }
  return {
+  invalidate(){round+=1;},
   step(body){return send('/api/coach/steps',body,body.clientKey);},
   label(body){return send('/api/coach/labels',body,body.matchId+':label:'+body.endReason);},
   mark(body){return send('/api/coach/demos',body,body.clientKey+':mark');},

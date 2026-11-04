@@ -34,7 +34,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261104step1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261104step3'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -127,7 +127,7 @@ function loadDecisions(){
  if(decisionLog)return Promise.resolve(decisionLog);
  if(decisionLoading)return decisionLoading;
  try{
-  decisionLoading=import('./universal-v2/coach-online.mjs?v=20261104step1').then(mod=>{
+  decisionLoading=import('./universal-v2/coach-online.mjs?v=20261104step3').then(mod=>{
    decisionLog=mod.createOnlineCollector({
     storage:localStorage,
     deckById(id){return app.decks.find(deck=>deck.id===id)||null;},
