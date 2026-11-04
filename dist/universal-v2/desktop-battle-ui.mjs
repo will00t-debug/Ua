@@ -1,5 +1,6 @@
 // Presentation adapter only: keep the existing V2 buttons and their listeners.
 // The inspector is derived exclusively from the viewer's current public view.
+import {facedownInspectModel,facedownInspectorNote,findKnownLayer} from './facedown-inspect.mjs';
 export const DESKTOP_BATTLE_QUERY='(min-width:761px) and (min-height:460px)';
 
 export function isDesktopBattlefield(surface=globalThis.window){
@@ -108,11 +109,24 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
   const depth=card.raidDepth||card.raidLayers?.length||0;
   const details=el('details',{class:'v2-desktop-card-effect'},
    el('summary',{text:'卡片效果'}),el('p',{text:effectCopy(printed)}));
-  inspector.replaceChildren(el('h2',{text:'卡片檢視'}),picture,
+  const nameOf=id=>cardDefinition(side,id)?.name||printedCard(side,id)?.name||'';
+  const facedownModel=facedownInspectModel(card);
+  const facedown=facedownInspectorNote(facedownModel,nameOf);
+  const facedownBlock=facedown?el('section',{class:'v2-desktop-facedown','aria-label':facedown.title},
+   el('h3',{text:facedown.title}),
+   ...facedownModel.cards.map((entry,index)=>entry.hidden?
+    el('p',{text:facedown.lines[index]}):
+    el('button',{type:'button',class:'v2-desktop-facedown-open',text:facedown.lines[index],
+     'aria-label':'查看 '+facedown.lines[index],
+     onClick:()=>openCard(side,'under',findKnownLayer(card,entry.uid)||
+      {uid:entry.uid,cardId:entry.cardId},
+      cardDefinition(side,entry.cardId)||printedCard(side,entry.cardId))}))) :null;
+  inspector.replaceChildren(...[el('h2',{text:'卡片檢視'}),picture,
    el('h3',{class:'v2-desktop-card-name',text:name}),
    el('p',{class:'v2-desktop-card-id',text:printed?.identity||printed?.id||card.cardId}),
-   el('p',{class:'v2-desktop-card-location',text:location+pose+(depth?' · RAID '+depth+' 層':'')}),
-   facts,details,el('p',{class:'v2-desktop-card-hint',text:'點卡圖放大檢視'}));
+   el('p',{class:'v2-desktop-card-location',text:location+pose+(depth?' · RAID '+depth+' 層':'')+(facedown?' · '+facedown.title:'')}),
+   facts,details,facedownBlock,el('p',{class:'v2-desktop-card-hint',text:'點卡圖放大檢視'})]
+   .filter(Boolean));
  }
  const initial=resolveDesktopPreview(view,inspected,selectedUid);
  if(initial)showPreview(initial);
