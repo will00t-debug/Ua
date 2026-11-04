@@ -11,6 +11,8 @@ import {raidBoxListed} from '../dist/universal-v2/raid-box.mjs';
 import {csmEventUseCount,csmAlsoEventAuraLive,csmCardCountsAsEvent}
  from '../dist/universal-v2/csm-continuous.mjs';
 import {handPlayApPlan} from '../dist/universal-v2/ap-discounts.mjs';
+import {appendCompletedMove} from '../dist/universal-v2/zone-move-events.mjs';
+import {runCsmJob} from '../dist/universal-v2/csm-runtime.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalPublicView}
  from '../dist/universal-v2/engine.mjs';
@@ -154,6 +156,51 @@ test('Makima alsoEvent aura is live on front and Q2079 is use-time',()=>{
  assert.equal(csmAlsoEventAuraLive(s,0,c=>def(pack,c)),true);
  assert.equal(csmCardCountsAsEvent(s,0,pack.cards['CSM-1-001'],c=>def(pack,c)),true);
  assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),0);
+ assertUniversalMatch(packs,s);
+});
+
+test('4/1 Makima aura counts plays only while she was actually on front',()=>{
+ const counts=countsFor(['CSM-1-022','CSM-1-001','CSM-1-008']);
+ let s=toPhase(fresh(counts,2222),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ const makima=toHand(s,0,'CSM-1-022');
+ s=play(s,makima.uid);
+ const before=toHand(s,0,'CSM-1-001');
+ s=play(s,before.uid);
+ assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),1);
+ // Move Makima off the front; the first play remains an event, but the next
+ // purple character cannot inherit a continuous aura that has already ended.
+ const idx=s.players[0].front.findIndex(c=>c?.uid===makima.uid);
+ assert.ok(idx>=0);
+ s.players[0].front[idx]=null;
+ s.players[0].outside.push(makima);
+ appendCompletedMove(s,{uid:makima.uid,cardId:makima.cardId,owner:0,controller:0,
+  from:'front',to:'outside',reason:'retirement'});
+ assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),1);
+ const after=toHand(s,0,'CSM-1-001');
+ s=play(s,after.uid);
+ assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),1);
+ assertUniversalMatch(packs,s);
+});
+
+test('red 4/1 Makima may pay with one purple character treated as event',()=>{
+ const counts=countsFor(['CSM-1-022','CSM-1-068','CSM-1-001','CSM-1-008']);
+ let s=toPhase(fresh(counts,2268),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ put(s,0,'CSM-1-022','front',0);
+ const red=put(s,0,'CSM-1-068','front',1);
+ const cost=toHand(s,0,'CSM-1-001');
+ s.players[0].front[1]=null;
+ s.players[0].outside.push(red);
+ appendCompletedMove(s,{uid:red.uid,cardId:red.cardId,owner:0,controller:0,
+  from:'front',to:'outside',reason:'retirement'});
+ legalUniversalActions(packs,s);
+ runCsmJob(pack,s,{op:'csm',id:red.cardId,slot:'onRetire',owner:0,sourceUid:red.uid});
+ assert.equal(s.pending?.step,'payReturn');
+ assert.ok(s.pending.actions.some(a=>a.mode==='event'&&a.uid===cost.uid));
+ s=choose(s,a=>a.mode==='event'&&a.uid===cost.uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===cost.uid),true);
+ assert.equal(s.players[0].hand.some(c=>c.uid===red.uid),true);
  assertUniversalMatch(packs,s);
 });
 
