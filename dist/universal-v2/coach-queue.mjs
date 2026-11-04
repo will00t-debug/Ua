@@ -188,7 +188,7 @@ function rejected(entry, failed){
 }
 
 const UNFILTERED={};
-export function createDecisionQueue({storage, consent, consentVersion, send, schedule, onChange, account, locks, now=()=>Date.now()}={}){
+export function createDecisionQueue({storage, consent, consentVersion, send, schedule, onChange, onStored, account, locks, now=()=>Date.now()}={}){
  let timer=null;
  let retryTimer=null;
  let flushing=false;
@@ -323,6 +323,7 @@ export function createDecisionQueue({storage, consent, consentVersion, send, sch
  }
  async function persistWaiting(){
   if(!waiting.length||!consent?.())return;
+  const saved=[];
   const exec=()=>{
    discardRevoked();
    migrateAvailable(storage);
@@ -339,6 +340,7 @@ export function createDecisionQueue({storage, consent, consentVersion, send, sch
      blocked=true;
      continue;
     }
+    saved.push(record);
    }
    if(!waiting.length&&lastError==='紀錄尚未儲存')lastError='';
    if(!legacyBodies(storage).length)markMigrated(storage);
@@ -346,6 +348,7 @@ export function createDecisionQueue({storage, consent, consentVersion, send, sch
   if(canRunSync())runSync(exec);
   else await runAsync(exec);
   notify();
+  if(saved.length&&onStored)await onStored(saved);
   if(waiting.length)scheduleRetry();
   else if(started)arm();
  }

@@ -5,7 +5,7 @@
 // A delayed reply keeps that identity; it is not retagged after a login change.
 // An end marker uses the account, room and seat bound to that event.
 import {coachConsentEnabled,coachConsentVersion,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step5';
-import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step6';
+import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step7';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
  tableChoices,chainOf,deckSnapshot} from './coach-format.mjs';
@@ -33,6 +33,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  let uploaded=0;
  let lastError='';
  let gapNotice=false;
+ let releasing=false;
  let pending=null;
  let session=null;
  let seenVersion=coachConsentVersion(storage);
@@ -55,11 +56,13 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   send(body){return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);},
   account(){return currentAccountId(fetchImpl);},
   onChange(){
+   noteConsent();
    if(gapNotice)lastError='紀錄尚未儲存';
    else if(lastError==='紀錄尚未儲存'&&queue.lastError!=='紀錄尚未儲存')lastError='';
    if(!gapNotice&&queue.lastError==='紀錄尚未儲存')lastError='紀錄尚未儲存';
    onChange?.();
-  }
+  },
+  onStored(records){return releaseStored(records);}
  });
  function consentBehind(current){
   return (current?.consentVersion??null)!==coachConsentVersion(storage);
@@ -147,14 +150,21 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   const row=place(current.key);
   const kind=mode==='read'?'read':'revoke';
   row.hold={accountId:current.accountId,matchId:current.matchId,seat:current.seat,code:current.code,
-   step,writeVersion:writeVersion??null,mode:kind};
+   step,writeVersion:writeVersion??null,consentVersion:coachConsentVersion(storage),mode:kind};
   if(kind==='read')return;
   current.unresolved={step,writeVersion:writeVersion??null};
   persistRecord(current);
  }
- function refreshShared(){
+ function noteConsent(){
   const version=coachConsentVersion(storage);
-  if(version!==seenVersion){seenVersion=version;uploader.invalidate();}
+  if(version===seenVersion)return;
+  seenVersion=version;
+  uploader.invalidate();
+  for(const row of places.values())
+   row.staged=row.staged.filter(snap=>snap.consentVersion===version);
+ }
+ function refreshShared(){
+  noteConsent();
   if(session?.key)syncRoom(session);
  }
  function rememberUnresolved(bodies){
@@ -195,7 +205,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     new Promise(resolve=>{timer=setTimeout(()=>resolve(null), reconcileTimeout);})
    ]);
    if(!response)return null;
-   if(response.status===404)return {count:0,writeVersion:null,previous:null};
+   if(response.status===404)return {count:0,writeVersion:null,previous:null,knownFence:false};
    if(!response.ok)return null;
    const data=await response.json();
    const count=data?.match?.steps;
@@ -209,27 +219,38 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     clientKey:last.clientKey
    }):null;
    const writeVersion=data.writeVersion===null||typeof data.writeVersion==='string'?data.writeVersion:null;
-   return {count,writeVersion,previous};
+   return {count,writeVersion,previous,knownFence:true};
   }catch{return null;}
   finally{if(timer)clearTimeout(timer);}
+ }
+ function agreedFence(saved, remote, covered){
+  if(remote.knownFence)return remote.writeVersion??null;
+  if(covered.saw)return covered.version??null;
+  return typeof saved.writeVersion==='string'?saved.writeVersion:null;
  }
  function coverQueue(current, remote){
   let step=remote.count;
   let previous=remote.previous;
-  const version=coachConsentVersion(storage);
+  let coveredVersion=null;
+  let saw=false;
+  const consent=coachConsentVersion(storage);
   const rows=[...readStoredQueue(storage), ...queue.unsaved()].filter(item=>{
    const body=item?.body;
    return body&&body.accountId===current.accountId&&body.matchId===current.matchId&&body.seat===current.seat&&
-    String(body.format||'').includes('step')&&(item.consentVersion??null)===version&&Number.isInteger(body.step);
+    String(body.format||'').includes('step')&&(item.consentVersion??null)===consent&&Number.isInteger(body.step);
   }).sort((a,b)=>a.body.step-b.body.step);
   for(const item of rows){
    const body=item.body;
    if(body.step<step)continue;
    if(body.step!==step||typeof body.choice?.type!=='string'||typeof body.clientKey!=='string')break;
+   const itemVersion=body.writeVersion??null;
+   if(saw&&itemVersion!==coveredVersion)break;
+   coveredVersion=itemVersion;
+   saw=true;
    previous={step:body.step,type:body.choice.type,clientKey:body.clientKey};
    step+=1;
   }
-  return {step,previous};
+  return {step,previous,version:coveredVersion,saw};
  }
  function unstoredAhead(current){
   return queue.unsaved().some(item=>{
@@ -269,7 +290,8 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    if(Number.isInteger(prior.unresolved?.step)){
     const row=place(key);
     if(!row.hold)row.hold={accountId:created.accountId,matchId,seat:created.seat,code:created.code,
-     step:prior.unresolved.step,writeVersion:prior.unresolved.writeVersion??null,mode:'revoke'};
+     step:prior.unresolved.step,writeVersion:prior.unresolved.writeVersion??null,
+     consentVersion:coachConsentVersion(storage),mode:'revoke'};
    }
    sessions[key]=created;
    if(live)session=created;
@@ -392,27 +414,41 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   let release=()=>{};
   row.done=new Promise(resolve=>{release=resolve;});
   const gen=row.gen;
+  let restart=false;
   try{
+   const issuedVersion=track.consentVersion??null;
+   const issued={accountId:track.accountId,matchId:track.matchId,seat:track.seat,code:track.code};
    const remote=track.mode==='read'?await readProgress(track):await readFence(track);
-   if(gen!==row.gen||row.hold!==track||!coachConsentEnabled(storage)||!sameRecord(bound(key),track))return;
    const saved=bound(key);
-   if(!remote||!saved){
-    const retry=()=>{if(gen===row.gen&&row.hold===track)void reconcilePlace(key);};
+   const same=!!saved&&saved.accountId===issued.accountId&&saved.matchId===issued.matchId&&
+    saved.seat===issued.seat&&saved.code===issued.code;
+   const versionChanged=issuedVersion!==(coachConsentVersion(storage)??null);
+   const live=gen===row.gen&&row.hold===track&&coachConsentEnabled(storage)&&same;
+   if(!live||versionChanged)restart=!!(versionChanged&&live);
+   else if(!remote){
+    const retry=()=>{if(gen===row.gen&&row.hold===track&&(track.consentVersion??null)===(coachConsentVersion(storage)??null))void reconcilePlace(key);};
     if(schedule)schedule(retry, 500);
     else setTimeout(retry, 500);
-    return;
-   }
-   if(track.mode==='read'){
+   }else if(track.mode==='read'){
     const recovered=coverQueue(saved, remote);
     const gap=(saved.step||0)>recovered.step;
     saved.step=recovered.step;
     saved.previous=recovered.previous;
-    saved.writeVersion=remote.writeVersion??null;
+    saved.writeVersion=agreedFence(saved, remote, recovered);
     saved.consentVersion=coachConsentVersion(storage);
     saved.unresolved=null;
     if(gap){
      gapNotice=true;
      lastError='紀錄尚未儲存';
+    }
+    row.trusted=true;
+    row.hold=null;
+    persistRecord(saved);
+    const snaps=row.staged.splice(0, row.staged.length);
+    for(const item of snaps){
+     if(row.gen!==gen||!coachConsentEnabled(storage))break;
+     if(item.consentVersion!==coachConsentVersion(storage))continue;
+     await commitSnap(item,{activate:session?.key===key});
     }
    }else{
     saved.writeVersion=remote.writeVersion;
@@ -420,18 +456,75 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     saved.previous=remote.previous;
     saved.consentVersion=coachConsentVersion(storage);
     saved.unresolved=null;
-   }
-   row.trusted=true;
-   row.hold=null;
-   persistRecord(saved);
-   const snaps=row.staged.splice(0, row.staged.length);
-   for(const item of snaps){
-    if(row.gen!==gen||!coachConsentEnabled(storage))return;
-    await commitSnap(item,{activate:session?.key===key});
+    row.trusted=true;
+    row.hold=null;
+    persistRecord(saved);
+    const snaps=row.staged.splice(0, row.staged.length);
+    for(const item of snaps){
+     if(row.gen!==gen||!coachConsentEnabled(storage))break;
+     if(item.consentVersion!==coachConsentVersion(storage))continue;
+     await commitSnap(item,{activate:session?.key===key});
+    }
    }
   }finally{
    row.reconciling=false;
    release();
+  }
+  if(restart)beginRevoke(key);
+ }
+ function beginRevoke(key){
+  const saved=bound(key);
+  const row=place(key);
+  if(!saved||row.reconciling||!coachConsentEnabled(storage))return;
+  noteConsent();
+  row.trusted=false;
+  if(row.hold?.mode==='revoke'&&(row.hold.consentVersion??null)===(coachConsentVersion(storage)??null)&&
+   sameRecord(saved, row.hold)){
+   void reconcilePlace(key);
+   return;
+  }
+  row.hold=null;
+  if(!consentBehind(saved)||(saved.step||0)<=0)return;
+  const step=Number.isInteger(saved.unresolved?.step)?saved.unresolved.step:Math.max(0, saved.step-1);
+  rememberHold(saved, step, saved.writeVersion??null, 'revoke');
+  void reconcilePlace(key);
+ }
+ async function releaseStored(records){
+  if(releasing||!Array.isArray(records)||!records.length)return;
+  releasing=true;
+  try{
+   noteConsent();
+   const version=coachConsentVersion(storage);
+   const keys=[];
+   for(const record of records){
+    const body=record?.body;
+    if(!body?.matchId||!String(body.format||'').includes('step')||!Number.isInteger(body.step))continue;
+    for(const [key] of places){
+     const current=bound(key);
+     if(!current||current.matchId!==body.matchId||current.accountId!==body.accountId)continue;
+     if(body.seat!=null&&current.seat!==body.seat)continue;
+     if(!keys.includes(key))keys.push(key);
+    }
+   }
+   for(const key of keys){
+    const row=place(key);
+    const current=bound(key);
+    if(!current||row.reconciling||row.hold)continue;
+    const pendingSave=queue.unsaved().some(item=>{
+     const body=item?.body;
+     return body&&String(body.format||'').includes('step')&&body.matchId===current.matchId&&
+      body.accountId===current.accountId&&(body.seat==null||body.seat===current.seat);
+    });
+    if(pendingSave)continue;
+    row.awaitingStore=false;
+    const snaps=row.staged.splice(0, row.staged.length).filter(snap=>snap.consentVersion===version);
+    for(const snap of snaps){
+     if(!coachConsentEnabled(storage)||coachConsentVersion(storage)!==version)return;
+     await commitSnap(snap,{activate:session?.key===key});
+    }
+   }
+  }finally{
+   releasing=false;
   }
  }
  return {

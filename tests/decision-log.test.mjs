@@ -12,7 +12,7 @@ import {DECISION_CLASSES, DECISION_ENGINE_VERSION, classifyDecision, visibleForT
 import {buildHumanStep, buildAiMark, coachHeader, hiddenLeak, newCoachMatchId} from '../dist/universal-v2/coach-record.mjs';
 // The battle and online collectors import this exact URL. The write lock lives
 // on the module instance, so the regression has to use the same one.
-import {createDecisionQueue, readStoredQueue} from '../dist/universal-v2/coach-queue.mjs?v=20261104step6';
+import {createDecisionQueue, readStoredQueue} from '../dist/universal-v2/coach-queue.mjs?v=20261104step7';
 import {createCoachBattle} from '../dist/universal-v2/coach-battle.mjs';
 import {createOnlineCollector} from '../dist/universal-v2/coach-online.mjs';
 import {COACH_CONSENT_KEY} from '../dist/universal-v2/coach-client.mjs';
@@ -2658,14 +2658,18 @@ function coachGate(token,{failStatus=0,prefetchReconcile=false}={}){
  const posts=[];
  let holdStep=false;
  let holdReconcile=false;
+ let holdRead=false;
  let stepWait=null;
  let reconcileWait=null;
+ let readWait=null;
  let stepStarts=0;
  let prefetchedReconcile=null;
+ let prefetchedRead=null;
  const fetchImpl=async(path, options={})=>{
   const target=String(path).split('?')[0];
   const reconcile=target.endsWith('/api/coach/steps/reconcile');
   const step=target.endsWith('/api/coach/steps');
+  const read=/\/api\/coach\/matches\/m[a-f0-9]{32}$/.test(target);
   if(step)stepStarts+=1;
   if(step&&holdStep){
    holdStep=false;
@@ -2703,6 +2707,18 @@ function coachGate(token,{failStatus=0,prefetchReconcile=false}={}){
     return prefetched;
    }
   }
+  if(read&&holdRead){
+   holdRead=false;
+   let release;
+   const ready=new Promise(resolve=>{release=resolve;});
+   const prefetched=await apiFetch(tokenFor(options.body))(target, options);
+   const data=await prefetched.json();
+   prefetchedRead={status:prefetched.status,data};
+   readWait={release};
+   await ready;
+   posts.push({kind:'read',status:prefetched.status,data,late:true});
+   return prefetched;
+  }
   const result=await apiFetch(tokenFor(options.body))(target, options);
   if(step||reconcile){
    const data=await result.json();
@@ -2716,11 +2732,15 @@ function coachGate(token,{failStatus=0,prefetchReconcile=false}={}){
   get stepStarts(){return stepStarts;},
   get stepHeld(){return !!stepWait;},
   get reconcileHeld(){return !!reconcileWait;},
+  get readHeld(){return !!readWait;},
   get prefetchedReconcile(){return prefetchedReconcile;},
+  get prefetchedRead(){return prefetchedRead;},
   holdNextStep(){holdStep=true;},
   holdNextReconcile(){holdReconcile=true;},
+  holdNextRead(){holdRead=true;},
   releaseStep(){const wait=stepWait;stepWait=null;wait.release();return wait.done;},
-  releaseReconcile(){const wait=reconcileWait;reconcileWait=null;wait.release();}
+  releaseReconcile(){const wait=reconcileWait;reconcileWait=null;wait.release();},
+  releaseRead(){const wait=readWait;readWait=null;wait.release();}
  };
 }
 let roomSeq=0;
@@ -3745,4 +3765,237 @@ test('佇列裡已經留下的 410 不會擋住後面的有效紀錄',{timeout:1
  assert.equal(detail.status,200,detail.text);
  assert.deepEqual(detail.data.steps.map(item=>item.step),[0]);
  assert.equal(detail.data.steps[0].clientKey,steps[0].body.clientKey);
+});
+
+test('延遲交付的唯讀 404 不能完成重新同意後的對帳',{timeout:180000},async()=>{
+ const room=await seatedRoom('晚讀甲','晚讀乙');
+ const storage=consented();
+ const gate=coachGate(room.host.data.token);
+ const log=onlineLog(storage,gate.fetchImpl,{uploadTimeout:120000});
+ gate.holdNextStep();
+ const first=await hostAct(log,room);
+ const flushing=log.flush();
+ await waitUntil(()=>gate.stepHeld);
+ const other=onlineLog(storage,gate.fetchImpl,{uploadTimeout:120000});
+ gate.holdNextRead();
+ await other.prepare(first);
+ await waitUntil(()=>gate.prefetchedRead?.status===404);
+ assert.equal(gate.posts.some(item=>item.kind==='reconcile'),false);
+ const solo=createCoachBattle({storage,schedule(){return 1;},fetchImpl:gate.fetchImpl});
+ solo.setConsent(false);
+ solo.setConsent(true);
+ gate.releaseRead();
+ await waitUntil(()=>gate.posts.some(item=>item.kind==='reconcile'&&item.status===200));
+ const reconciled=gate.posts.find(item=>item.kind==='reconcile');
+ assert.equal(reconciled.data.count,0);
+ assert.equal(typeof reconciled.data.writeVersion,'string');
+ assert.equal(reconciled.body.accountId,first.accountId);
+ assert.equal(reconciled.body.step,0);
+ assert.equal(gate.posts.filter(item=>item.kind==='step'&&item.status===200).length,0);
+ const saved=JSON.parse(storage.getItem('ua-v2-decision-online-v1'));
+ const key=Object.keys(saved).find(item=>item.endsWith(':'+room.code));
+ assert.equal(saved[key].step,0);
+ assert.equal(saved[key].writeVersion,reconciled.data.writeVersion);
+ const lateDone=gate.releaseStep();
+ await lateDone;
+ await flushing;
+ const blocked=gate.posts.find(item=>item.kind==='step'&&item.late);
+ assert.equal(blocked.status,410,JSON.stringify(blocked.data));
+ assert.equal(blocked.body.matchId,reconciled.body.matchId);
+ const played=await hostAct(other,room);
+ await other.flush();
+ const accepted=gate.posts.filter(item=>item.kind==='step'&&item.status===200);
+ assert.equal(accepted.length,1);
+ assert.equal(accepted[0].body.step,0);
+ assert.equal(accepted[0].body.writeVersion,reconciled.data.writeVersion);
+ assert.equal(accepted[0].body.matchId,blocked.body.matchId);
+ assert.equal(accepted[0].body.engineRevision,played.revision);
+ assert.notEqual(accepted[0].body.clientKey,blocked.body.clientKey);
+ assert.equal(gate.posts.filter(item=>item.kind==='step'&&item.body.clientKey===accepted[0].body.clientKey).length,1);
+ assert.equal(gate.posts.some(item=>item.status===409),false);
+ const detail=await api('/api/coach/matches/'+accepted[0].body.matchId,{token:room.host.data.token});
+ assert.equal(detail.status,200,detail.text);
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0]);
+ assert.equal(detail.data.steps[0].clientKey,accepted[0].body.clientKey);
+ assert.equal(detail.data.steps[0].engineRevision,played.revision);
+ assert.equal(detail.data.writeVersion,reconciled.data.writeVersion);
+ assert.equal(detail.data.steps.some(item=>item.clientKey===blocked.body.clientKey),false);
+});
+
+test('舊請求在撤回對帳前已成功時，新操作接第 1 步',{timeout:180000},async()=>{
+ const room=await seatedRoom('先成甲','先成乙');
+ const storage=consented();
+ const gate=coachGate(room.host.data.token);
+ const log=onlineLog(storage,gate.fetchImpl,{uploadTimeout:120000});
+ gate.holdNextStep();
+ const first=await hostAct(log,room);
+ const flushing=log.flush();
+ await waitUntil(()=>gate.stepHeld);
+ const other=onlineLog(storage,gate.fetchImpl,{uploadTimeout:120000});
+ gate.holdNextRead();
+ await other.prepare(first);
+ await waitUntil(()=>gate.prefetchedRead?.status===404);
+ const landed=gate.releaseStep();
+ await landed;
+ await flushing;
+ const stored=gate.posts.find(item=>item.kind==='step');
+ assert.equal(stored.status,200,JSON.stringify(stored.data));
+ assert.equal(stored.body.step,0);
+ assert.equal(stored.body.engineRevision,first.revision);
+ const solo=createCoachBattle({storage,schedule(){return 1;},fetchImpl:gate.fetchImpl});
+ solo.setConsent(false);
+ solo.setConsent(true);
+ gate.releaseRead();
+ await waitUntil(()=>gate.posts.some(item=>item.kind==='reconcile'&&item.status===200));
+ const reconciled=gate.posts.find(item=>item.kind==='reconcile');
+ assert.equal(reconciled.data.count,1);
+ assert.equal(reconciled.body.accountId,first.accountId);
+ assert.equal(reconciled.body.matchId,stored.body.matchId);
+ assert.equal(reconciled.body.step,0);
+ assert.equal(gate.posts.filter(item=>item.kind==='reconcile').length,1);
+ const played=await hostAct(other,room);
+ await other.flush();
+ const steps=gate.posts.filter(item=>item.kind==='step'&&item.status===200);
+ assert.deepEqual(steps.map(item=>item.status+':'+item.body.step),['200:0','200:1']);
+ assert.equal(steps[0].body.matchId,steps[1].body.matchId);
+ assert.equal(steps[1].body.previous.step,0);
+ assert.equal(steps[1].body.previous.clientKey,steps[0].body.clientKey);
+ assert.equal(steps[1].body.chain.previousStep,0);
+ assert.equal(steps[0].body.engineRevision,first.revision);
+ assert.equal(steps[1].body.engineRevision,played.revision);
+ assert.notEqual(steps[0].body.clientKey,steps[1].body.clientKey);
+ assert.equal(gate.posts.some(item=>item.status===409||item.status===410),false);
+ const detail=await api('/api/coach/matches/'+steps[0].body.matchId,{token:room.host.data.token});
+ assert.equal(detail.status,200,detail.text);
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0,1]);
+ assert.equal(detail.data.steps[1].previous.step,0);
+ assert.equal(detail.data.steps[1].previous.clientKey,detail.data.steps[0].clientKey);
+ assert.equal(detail.data.steps[1].chain.previousStep,0);
+ assert.equal(detail.data.steps[0].engineRevision,first.revision);
+ assert.equal(detail.data.steps[1].engineRevision,played.revision);
+});
+
+test('空場次的 404 會留下與待傳步驟一致的寫入版本',{timeout:180000},async()=>{
+ const room=await seatedRoom('保版甲','保版乙');
+ const storage=consented();
+ const gate=coachGate(room.host.data.token);
+ const log=onlineLog(storage,gate.fetchImpl,{uploadTimeout:120000});
+ gate.holdNextStep();
+ const first=await hostAct(log,room);
+ const flushing=log.flush();
+ await waitUntil(()=>gate.stepHeld);
+ log.setConsent(false);
+ log.setConsent(true);
+ await waitUntil(()=>gate.posts.some(item=>item.kind==='reconcile'&&item.status===200));
+ const reconciled=gate.posts.find(item=>item.kind==='reconcile');
+ assert.equal(reconciled.data.count,0);
+ assert.equal(typeof reconciled.data.writeVersion,'string');
+ const second=await hostAct(log,room);
+ const queued=readStoredQueue(storage).find(item=>item.body.step===0);
+ assert.ok(queued);
+ assert.equal(queued.body.writeVersion,reconciled.data.writeVersion);
+ assert.equal(queued.body.engineRevision,second.revision);
+ const missing=await api('/api/coach/matches/'+queued.body.matchId,{token:room.host.data.token});
+ assert.equal(missing.status,404,missing.text);
+ const other=onlineLog(storage,gate.fetchImpl,{uploadTimeout:120000});
+ const third=await hostAct(other,room);
+ const rows=readStoredQueue(storage).map(item=>item.body).sort((a,b)=>a.step-b.step);
+ assert.deepEqual(rows.map(item=>item.step),[0,1]);
+ assert.equal(rows[0].matchId,rows[1].matchId);
+ assert.equal(rows[0].writeVersion,reconciled.data.writeVersion);
+ assert.equal(rows[1].writeVersion,reconciled.data.writeVersion);
+ assert.equal(rows[1].previous.step,0);
+ assert.equal(rows[1].previous.clientKey,rows[0].clientKey);
+ assert.equal(rows[1].chain.previousStep,0);
+ assert.equal(rows[0].engineRevision,second.revision);
+ assert.equal(rows[1].engineRevision,third.revision);
+ assert.equal(gate.posts.filter(item=>item.kind==='reconcile').length,1);
+ await other.flush();
+ const accepted=gate.posts.filter(item=>item.kind==='step'&&item.status===200);
+ assert.deepEqual(accepted.map(item=>item.body.step),[0,1]);
+ assert.equal(accepted[0].body.matchId,accepted[1].body.matchId);
+ assert.equal(accepted[0].body.writeVersion,reconciled.data.writeVersion);
+ assert.equal(accepted[1].body.writeVersion,reconciled.data.writeVersion);
+ assert.equal(accepted[1].body.previous.step,0);
+ assert.equal(accepted[1].body.previous.clientKey,accepted[0].body.clientKey);
+ assert.equal(accepted[1].body.chain.previousStep,0);
+ assert.equal(accepted[0].body.engineRevision,second.revision);
+ assert.equal(accepted[1].body.engineRevision,third.revision);
+ assert.notEqual(accepted[0].body.engineRevision,first.revision);
+ assert.equal(gate.posts.filter(item=>item.body?.clientKey===accepted[0].body.clientKey).length,1);
+ assert.equal(gate.posts.filter(item=>item.body?.clientKey===accepted[1].body.clientKey).length,1);
+ const lateDone=gate.releaseStep();
+ await lateDone;
+ await flushing;
+ const blocked=gate.posts.find(item=>item.kind==='step'&&item.late);
+ assert.equal(blocked.status,410,JSON.stringify(blocked.data));
+ assert.notEqual(blocked.body.clientKey,accepted[0].body.clientKey);
+ assert.equal(gate.posts.some(item=>item.status===409),false);
+ const detail=await api('/api/coach/matches/'+accepted[0].body.matchId,{token:room.host.data.token});
+ assert.equal(detail.status,200,detail.text);
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0,1]);
+ assert.equal(detail.data.writeVersion,reconciled.data.writeVersion);
+ assert.equal(detail.data.steps[1].previous.step,0);
+ assert.equal(detail.data.steps[1].previous.clientKey,detail.data.steps[0].clientKey);
+ assert.equal(detail.data.steps[1].chain.previousStep,0);
+ assert.equal(detail.data.steps[0].engineRevision,second.revision);
+ assert.equal(detail.data.steps[1].engineRevision,third.revision);
+ assert.equal(detail.data.steps.some(item=>item.clientKey===blocked.body.clientKey),false);
+ assert.equal(detail.data.match.id,accepted[0].body.matchId);
+});
+
+test('佇列補存成功後會依序送出暫存的下一步',{timeout:180000},async()=>{
+ const room=await seatedRoom('補放甲','補放乙');
+ const data=new Map([[COACH_CONSENT_KEY,'1']]);
+ let open=false;
+ const storage={
+  getItem(key){return data.has(key)?data.get(key):null;},
+  setItem(key,value){
+   if(!open&&String(key).startsWith('ua-v2-coach-queue-v1'))
+    throw new DOMException('The quota has been exceeded.','QuotaExceededError');
+   data.set(String(key),String(value));
+  },
+  removeItem(key){data.delete(String(key));},
+  get length(){return data.size;},
+  key(index){return [...data.keys()][index]??null;}
+ };
+ const gate=coachGate(room.host.data.token);
+ const log=onlineLog(storage,gate.fetchImpl);
+ const first=await hostAct(log,room);
+ assert.equal(log.lastError,'紀錄尚未儲存');
+ assert.equal(readStoredQueue(storage).length,0);
+ const saved=JSON.parse(storage.getItem('ua-v2-decision-online-v1'));
+ const key=Object.keys(saved).find(item=>item.endsWith(':'+room.code));
+ assert.equal(saved[key].step,1);
+ const second=await hostAct(log,room);
+ assert.notEqual(second.revision,first.revision);
+ assert.equal(readStoredQueue(storage).length,0);
+ assert.equal(gate.posts.filter(item=>item.kind==='step').length,0);
+ assert.equal(JSON.parse(storage.getItem('ua-v2-decision-online-v1'))[key].step,1);
+ open=true;
+ await log.flush();
+ const steps=gate.posts.filter(item=>item.kind==='step');
+ assert.deepEqual(steps.map(item=>item.status+':'+item.body.step),['200:0','200:1']);
+ assert.equal(steps[0].body.matchId,steps[1].body.matchId);
+ assert.equal(steps[1].body.previous.step,0);
+ assert.equal(steps[1].body.previous.clientKey,steps[0].body.clientKey);
+ assert.equal(steps[1].body.chain.previousStep,0);
+ assert.equal(steps[0].body.engineRevision,first.revision);
+ assert.equal(steps[1].body.engineRevision,second.revision);
+ assert.equal(steps.filter(item=>item.body.clientKey===steps[0].body.clientKey).length,1);
+ assert.equal(steps.filter(item=>item.body.clientKey===steps[1].body.clientKey).length,1);
+ assert.equal(gate.posts.some(item=>item.status===409||item.kind==='reconcile'),false);
+ await log.flush();
+ assert.equal(gate.posts.filter(item=>item.kind==='step').length,2);
+ const detail=await api('/api/coach/matches/'+steps[0].body.matchId,{token:room.host.data.token});
+ assert.equal(detail.status,200,detail.text);
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0,1]);
+ assert.equal(detail.data.steps[0].clientKey,steps[0].body.clientKey);
+ assert.equal(detail.data.steps[1].clientKey,steps[1].body.clientKey);
+ assert.equal(detail.data.steps[1].previous.step,0);
+ assert.equal(detail.data.steps[1].previous.clientKey,detail.data.steps[0].clientKey);
+ assert.equal(detail.data.steps[1].chain.previousStep,0);
+ assert.equal(detail.data.steps[0].engineRevision,first.revision);
+ assert.equal(detail.data.steps[1].engineRevision,second.revision);
+ assert.equal(detail.data.match.id,steps[0].body.matchId);
 });

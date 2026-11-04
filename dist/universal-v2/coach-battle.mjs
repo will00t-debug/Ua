@@ -4,7 +4,7 @@
 // A resume check, a recovered write that has not landed, or an upload still
 // in flight stages new decisions until the next step number is confirmed.
 import {coachConsentEnabled,coachConsentVersion,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step5';
-import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step6';
+import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step7';
 import {LABEL_FORMAT, chainOf} from './coach-format.mjs';
 import {newCoachMatchId,buildHumanStep,buildAiMark,stateAtReplayIndex} from './coach-record.mjs';
 
