@@ -70,6 +70,13 @@ test('Genm ordinary entry discards, and the raid-frame main stays closed',()=>{
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===genm.uid&&a.line==='front');
  assert.ok(play);
  s=dispatchUniversalAction(packs,s,play);
+ // Ordinary Genm on-play discard is an explicit controller choice.
+ assert.equal(s.pending?.kind,'kmr');
+ assert.equal(s.pending?.step,'discard');
+ const cost=legalUniversalActions(packs,s).find(a=>a.mode==='discard'&&a.uid===extra.uid);
+ assert.ok(cost,'the printed on-play discard must name the extra hand card');
+ s=dispatchUniversalAction(packs,s,cost);
+ assert.equal(s.pending,null);
  const body=s.players[0].front.find(c=>c?.uid===genm.uid);
  assert.ok(body);
  assert.equal(body.stack.length,0);
