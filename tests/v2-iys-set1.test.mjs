@@ -7,7 +7,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {inuyashaPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
-import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
+import {inspectedPendingChoiceCards,visibleActionsForCard} from '../dist/universal-v2/preview-actions.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalAttackDamage, universalBp, universalCardEnergy,
  universalPrivateChoices, universalPublicView}
@@ -330,6 +330,37 @@ test('Q2131 two 神無 share one activate tuck in the same turn',()=>{
  s=choose(s,a=>a.uid===shard.uid);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===second.uid),false);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===first.uid),false);
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2130: freshly played REST 神無 can activate after an on-play tuck with no AP',()=>{
+ const counts=countsFor(['IYS-1-022','IYS-1-028','IYS-1-029','IYS-1-001','IYS-1-010']);
+ let s=toPhase(fresh(counts,21305),'main');
+ readyAp(s);
+ payPurple(s);
+ const naraku=put(s,0,'IYS-1-028','front',0);
+ const shard=take(s,0,'IYS-1-029');
+ s.players[0].outside.push(shard);
+ const kanna=take(s,0,'IYS-1-022');
+ s.players[0].hand.push(kanna);
+ s=play(s,kanna.uid,'play','energy');
+ assert.equal(s.pending.step,'handPlace');
+ s=choose(s,a=>a.mode==='under');
+ assert.equal(s.pending,null);
+ const live=s.players[0].energy.find(c=>c?.uid===kanna.uid);
+ assert.equal(live?.ready,false);
+ assert.equal(s.players[0].front[0].under.length,1);
+ for(const ap of s.players[0].apCards)ap.ready=false;
+ const legal=legalUniversalActions(packs,s);
+ const activation={type:'activate',uid:kanna.uid,mode:'iys:0'};
+ assert.ok(legal.some(a=>a.type===activation.type&&a.uid===activation.uid&&a.mode===activation.mode));
+ assert.ok(visibleActionsForCard(legal,kanna.uid).some(a=>a.type==='activate'));
+ s=use(s,activation);
+ s=choose(s,a=>a.uid===shard.uid);
+ const host=s.players[0].front.find(c=>c?.uid===naraku.uid);
+ assert.equal(host.under.length,2);
+ assert.equal(host.under.some(c=>c.uid===shard.uid&&c.faceDown===true),true);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===kanna.uid),false);
  assertUniversalMatch(packs,s);
 });
 

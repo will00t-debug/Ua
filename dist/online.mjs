@@ -765,7 +765,14 @@ function clickField(engineSeat,line,index,card){
     raidBaseUid:pick.raidBaseUid||null,options};render();return;
   }
  }
- if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
+ if(plan.type==='entry-mode'||plan.type==='entry-wait'){
+  // The selected hand card's placement must not suppress MAIN abilities
+  // on another field card (including newly played 神無).
+  if(card&&legal.some(a=>a.type==='activate'&&a.uid===card.uid)){
+   app.pick={uid:card.uid,entryMode:null,options:null};app.zone=null;render();
+  }
+  return;
+ }
  if(app.lifeRaidBoard)return;
  if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,entryMode:null,options:null};app.zone=null;render();}
 }

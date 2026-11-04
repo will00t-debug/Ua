@@ -807,7 +807,15 @@ function legacySlot(view,side,line,index,legal){
    if(acts.length>1){app.targetChoices=acts;render();}
    return;
   }
-  if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
+  if(plan.type==='entry-mode'||plan.type==='entry-wait'){
+   // A hand card may still be selected while the player tries to activate
+   // a character already on the board (e.g. 神無 on its entry turn).
+   // Do not let an unrelated placement gesture swallow that field tap.
+   if(c&&legal.some(a=>a.type==='activate'&&a.uid===c.uid)){
+    selectDeployedCharacter(c.uid);app.selectedSide=side;render();
+   }
+   return;
+  }
   if(app.lifeRaidBoard)return;
   if(c){selectDeployedCharacter(c.uid);app.selectedSide=side;render();}
  });
