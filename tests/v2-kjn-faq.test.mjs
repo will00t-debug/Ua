@@ -361,3 +361,67 @@ test('Q2127 the second Delta on play does not activate after the first one did',
  assert.equal(s.pending,null);
  assertUniversalMatch(packs,s);
 });
+
+
+test('KJN-1-048 on retirement can discard a hand card and re-enter the actual Raid base REST',()=>{
+ const counts=countsFor(['KJN-1-048','KJN-1-047','KJN-1-037','KJN-1-012',...YELLOW]);
+ let s=toPhase(fresh(counts,4801),'main');
+ readyAp(s);
+ fuel(s);
+ const shadow=put(s,1,'KJN-1-048','front',0,true);
+ const base=take(s,1,'KJN-1-047');
+ base.faceDown=false;base.ready=false;base.stack=[];base.under=[];
+ shadow.stack=[base];shadow.raidBaseUid=base.uid;
+ const cost=toHand(s,1,'KJN-1-012');
+ const spell=toHand(s,0,'KJN-1-037');
+ s=play(s,spell.uid,'event');
+ assert.equal(s.pending.step,'retire');
+ s=choose(s,a=>a.uid===shadow.uid);
+ assert.equal(s.players[1].outside.some(c=>c.uid===shadow.uid),true);
+ assert.equal(s.players[1].outside.some(c=>c.uid===base.uid),true);
+ assert.equal(s.pending.kind,'kjn');
+ assert.equal(s.pending.step,'pay');
+ assert.equal(s.pending.player,1);
+ s=choose(s,a=>a.mode==='discard'&&a.uid===cost.uid);
+ assert.equal(s.players[1].outside.some(c=>c.uid===cost.uid),true);
+ assert.equal(s.pending.step,'deploy');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===base.uid&&a.ready===false),true);
+ s=choose(s,a=>a.uid===base.uid&&a.line==='energy');
+ const returned=s.players[1].energy.find(c=>c?.uid===base.uid);
+ assert.ok(returned);
+ assert.equal(returned.ready,false);
+ assert.equal(s.players[1].outside.some(c=>c.uid===base.uid),false);
+ assertUniversalMatch(packs,s);
+});
+
+test('KJN-1-073 optional top-two mill may send zero, exactly one, or two cards outside',()=>{
+ const counts=countsFor(['KJN-1-073','KJN-1-041',...PURPLE]);
+ function setup(seed){
+  let s=toPhase(fresh(counts,seed),'main');
+  readyAp(s);
+  purpleFuel(s);
+  const beta=toHand(s,0,'KJN-1-073');
+  const before=s.players[0].outside.length;
+  s=play(s,beta.uid,'play','front');
+  assert.equal(s.pending.kind,'effect-optional-mill');
+  assert.equal(s.pending.remaining,2);
+  return {s,before};
+ }
+ let {s:zero,before:zeroBefore}=setup(7300);
+ zero=choose(zero,a=>a.type==='chooseOptionalMill'&&a.mode==='skip');
+ assert.equal(zero.players[0].outside.length,zeroBefore);
+ assertUniversalMatch(packs,zero);
+ let {s:one,before:oneBefore}=setup(7301);
+ one=choose(one,a=>a.type==='chooseOptionalMill'&&a.mode==='mill');
+ assert.equal(one.pending.kind,'effect-optional-mill');
+ assert.equal(one.pending.remaining,1);
+ one=choose(one,a=>a.type==='chooseOptionalMill'&&a.mode==='skip');
+ assert.equal(one.players[0].outside.length,oneBefore+1);
+ assertUniversalMatch(packs,one);
+ let {s:two,before:twoBefore}=setup(7302);
+ two=choose(two,a=>a.type==='chooseOptionalMill'&&a.mode==='mill');
+ assert.equal(two.pending.remaining,1);
+ two=choose(two,a=>a.type==='chooseOptionalMill'&&a.mode==='mill');
+ assert.equal(two.players[0].outside.length,twoBefore+2);
+ assertUniversalMatch(packs,two);
+});
