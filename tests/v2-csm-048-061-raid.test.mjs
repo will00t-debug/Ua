@@ -105,8 +105,11 @@ test('CSM-1-048 may select between multiple facedown cards under the Raid base',
  assert.ok(pick);
  s=dispatchUniversalAction(packs,s,pick);
  assert.equal(s.pending?.step,'pochita');
- assert.equal(host.stack[0].under.length,1);
- assert.equal(host.stack[0].under[0].uid,extra.uid);
+ // Dispatch returns a cloned state: read the current physical Raid, not the
+ // pre-dispatch host reference.
+ const updatedHost=s.players[0].front[0];
+ assert.equal(updatedHost.stack[0].under.length,1);
+ assert.equal(updatedHost.stack[0].under[0].uid,extra.uid);
  assertUniversalMatch(packs,s);
 });
 
