@@ -6,9 +6,10 @@ import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.
 import {coachObservation,hiddenLeak} from '../dist/universal-v2/coach-record.mjs';
 import {officialV2Pack,officialV2Titles} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
-import {LEARN_FORMAT,LEARN_FORMAT_V2,LEARN_FORMAT_V3,LEARN_DIM,LEARN_MIN_AGREEMENT,LEARN_MIN_VALIDATION_DECISIONS,
+import {LEARN_FORMAT,LEARN_FORMAT_V2,LEARN_FORMAT_V3,LEARN_DIM,LEARN_ASSIST_CAP,LEARN_BONUS_RATE,LEARN_BONUS_THRESHOLD,
+ LEARN_MIN_AGREEMENT,LEARN_MIN_VALIDATION_DECISIONS,
  LEARN_MIN_VALIDATION_MATCHES,actionIdentity,activationOf,applyLearningAssist,featureKeys,featuresOf,
- interventionOf,learningBattleMode,learnReport,partitionByMatch,policyRecordStatus,preferLearnedAction,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
+ interventionOf,learningAssistBonus,learningBattleMode,learnReport,partitionByMatch,policyRecordStatus,preferLearnedAction,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
 const bleach=verifiedBleachPurplePilotDeck();
 const bleachPacks=[bleach.pack,bleach.pack];
@@ -553,25 +554,33 @@ test('an unfamiliar finalist cannot inherit another card passing the familiarity
   for(let i=0;i<vec.length;i++)if(vec[i])score+=policy.weights[i]*vec[i];
   return score;
  };
+ const energyTarget=LEARN_BONUS_THRESHOLD+(7/LEARN_BONUS_RATE)+0.05;
  const energyVec=featuresOf(observation,energy039,0);
  const frontVec=featuresOf(observation,front039,0);
  const nextVec=featuresOf(observation,next,0);
- const others=legal.filter(action=>action!==energy039).map(action=>({
-  action,vec:featuresOf(observation,action,0)
- }));
- let nudged=false;
- const target=(learn(next)+learn(front039))/2;
- for(let i=0;i<energyVec.length&&!nudged;i++){
-  if(!energyVec[i]||frontVec[i]||nextVec[i])continue;
-  const gain=(target-learn(energy039))/energyVec[i];
-  const keepsFront=others.every(item=>!item.vec[i]||learn(item.action)+gain*item.vec[i]<learn(front039));
-  if(!keepsFront)continue;
-  policy.weights[i]+=gain;
-  nudged=true;
+ const strictlyFront=()=>legal.every(action=>action===front039||learn(action)<learn(front039));
+ let lifted=false;
+ for(let i=0;i<frontVec.length&&!lifted;i++){
+  if(!frontVec[i]||energyVec[i]||nextVec[i])continue;
+  const start=policy.weights[i];
+  policy.weights[i]=start+30/frontVec[i];
+  if(strictlyFront())lifted=true;
+  else policy.weights[i]=start;
  }
- assert.equal(nudged,true);
- assert.equal(learn(energy039)>learn(next),true);
- assert.equal(learn(front039)>learn(energy039),true);
+ assert.equal(lifted,true);
+ const energyGoal=learn(next)+energyTarget;
+ assert.ok(energyGoal<learn(front039));
+ let energySet=false;
+ for(let i=0;i<energyVec.length&&!energySet;i++){
+  if(!energyVec[i]||frontVec[i]||nextVec[i])continue;
+  const start=policy.weights[i];
+  policy.weights[i]=start+(energyGoal-learn(energy039))/energyVec[i];
+  if(learn(energy039)>learn(next)&&learn(energy039)<learn(front039)&&strictlyFront())energySet=true;
+  else policy.weights[i]=start;
+ }
+ assert.equal(energySet,true);
+ assert.ok(learningAssistBonus(learn(energy039)-learn(next))>=7);
+ assert.ok(80+LEARN_ASSIST_CAP<107);
  const preference=preferLearnedAction(policy,observation,legal,0);
  assert.equal(preference.action.uid,card039.uid);
  assert.equal(preference.action.line,'front');
@@ -835,6 +844,17 @@ function favorOnly(policy,observation,action,seat,amount,others){
  }
  return false;
 }
+function setLearnLead(policy,observation,action,seat,lead,others){
+ policy.weights.fill(0);
+ const mine=featuresOf(observation,action,seat);
+ const rest=others.map(item=>featuresOf(observation,item,seat));
+ for(let i=0;i<mine.length;i++){
+  if(!mine[i]||rest.some(vec=>vec[i]))continue;
+  policy.weights[i]=lead/mine[i];
+  return true;
+ }
+ return false;
+}
 
 test('a single alternative bonus is measured from the hard choice',()=>{
  const bleachPack=officialV2Pack('bleach');
@@ -855,7 +875,8 @@ test('a single alternative bonus is measured from the hard choice',()=>{
  const outside=legal.find(action=>action.place==='outside');
  const observation=coachObservation(reached.packs,state,0);
  const preferred=blankModel({effect:4},{'BLC-1-021':2});
- assert.equal(favorOnly(preferred,observation,outside,0,5,[top]),true);
+ const outsideLead=LEARN_BONUS_THRESHOLD+(1/LEARN_BONUS_RATE)+0.25;
+ assert.equal(favorOnly(preferred,observation,outside,0,outsideLead,[top]),true);
  const preference=preferLearnedAction(preferred,observation,legal,0);
  assert.equal(preference.action.place,'outside',preference.reason);
  const switched=applyLearningAssist({
@@ -882,7 +903,8 @@ test('a single alternative bonus is measured from the hard choice',()=>{
  const pass={type:'next'};
  const wideLegal=[pass,front,energy];
  const widePolicy=blankModel({play:4,skip:4},{'BLC-1-039':4});
- assert.equal(favorOnly(widePolicy,wide,front,0,8,[energy,pass]),true);
+ const frontLead=LEARN_BONUS_THRESHOLD+(7/LEARN_BONUS_RATE)+0.05;
+ assert.equal(favorOnly(widePolicy,wide,front,0,frontLead,[energy,pass]),true);
  assert.equal(preferLearnedAction(widePolicy,wide,wideLegal,0).action.line,'front');
  const noBonus=applyLearningAssist({
   policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
@@ -893,12 +915,18 @@ test('a single alternative bonus is measured from the hard choice',()=>{
  assert.equal(noBonus.bonus,0);
  const crosses=applyLearningAssist({
   policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
-  candidates:[{action:pass,score:100},{action:front,score:90},{action:energy,score:101}]
+  candidates:[{action:pass,score:100},{action:front,score:100.2},{action:energy,score:101}]
  });
  assert.equal(crosses.finalAction.line,'front');
  assert.equal(crosses.changed,true);
  assert.equal(crosses.bonus>0,true);
- assert.equal(90+crosses.bonus>=107,true);
+ assert.equal(100.2+crosses.bonus>=107,true);
+ const weakGap=applyLearningAssist({
+  policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:100},{action:front,score:90},{action:energy,score:101}]
+ });
+ assert.equal(weakGap.changed,false);
+ assert.equal(weakGap.finalAction.type,'next');
  const tooFar=applyLearningAssist({
   policy:widePolicy,observation:wide,legal:wideLegal,seat:0,hardAction:pass,
   candidates:[{action:pass,score:100},{action:front,score:80},{action:energy,score:106}]
@@ -920,6 +948,58 @@ test('a single alternative bonus is measured from the hard choice',()=>{
  });
  assert.equal(wideLegal.some(action=>JSON.stringify(action)===JSON.stringify(stayed.finalAction)),true);
  assert.notEqual(stayed.finalAction.uid,'9-9');
+});
+
+test('equal raw scores can switch and a 0.21 preference stays a small bonus',()=>{
+ const observation=handObservation('BLC-1-039');
+ observation.visible.pending={kind:'effect-discard',player:0};
+ const front={type:'play',mode:'enter',uid:'0-1',line:'front'};
+ const pass={type:'next'};
+ const legal=[pass,front];
+ const policy=blankModel({play:4,skip:4},{'BLC-1-039':4});
+ assert.equal(setLearnLead(policy,observation,front,0,1, [pass]),true);
+ const tied=applyLearningAssist({
+  policy,observation,legal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:138.43},{action:front,score:138.43}]
+ });
+ assert.equal(tied.changed,true);
+ assert.equal(tied.reason,'assist');
+ assert.equal(tied.finalAction.line,'front');
+ assert.equal(tied.bonus,learningAssistBonus(1));
+ assert.ok(tied.bonus>0);
+ const weakPolicy=blankModel({play:4,skip:4},{'BLC-1-039':4});
+ assert.equal(setLearnLead(weakPolicy,observation,front,0,0.21,[pass]),true);
+ const weakTie=applyLearningAssist({
+  policy:weakPolicy,observation,legal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:138.43},{action:front,score:138.43}]
+ });
+ const small=learningAssistBonus(0.21);
+ assert.equal(small,Math.min(LEARN_ASSIST_CAP,LEARN_BONUS_RATE*Math.max(0,0.21-LEARN_BONUS_THRESHOLD)));
+ assert.ok(small>0);
+ assert.ok(small<1);
+ assert.equal(weakTie.changed,true);
+ assert.equal(weakTie.bonus,small);
+ const weakGap=applyLearningAssist({
+  policy:weakPolicy,observation,legal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:55.57636363636363},{action:front,score:53.55636363636363}]
+ });
+ assert.equal(weakGap.changed,false);
+ assert.equal(weakGap.finalAction.type,'next');
+ assert.equal(weakGap.bonus,0);
+ assert.ok(small<2.02);
+ const reproduced=learningAssistBonus(0.5865);
+ assert.ok(reproduced>0);
+ assert.ok(53.56+reproduced<55.57636363636363);
+ const zeroPolicy=blankModel({play:4,skip:4},{'BLC-1-039':4});
+ assert.equal(setLearnLead(zeroPolicy,observation,front,0,LEARN_BONUS_THRESHOLD,[pass]),true);
+ const zero=applyLearningAssist({
+  policy:zeroPolicy,observation,legal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:138.43},{action:front,score:138.43}]
+ });
+ assert.equal(learningAssistBonus(LEARN_BONUS_THRESHOLD),0);
+ assert.equal(zero.changed,false);
+ assert.equal(zero.finalAction.type,'next');
+ assert.equal(zero.bonus,0);
 });
 
 test('the revealed card is part of the current placement features',()=>{

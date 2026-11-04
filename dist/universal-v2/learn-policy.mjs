@@ -19,6 +19,12 @@ export const LEARN_MIN_SAMPLES=8;
 export const LEARN_MARGIN=0.2;
 export const LEARN_ASSIST_CAP=18;
 export const LEARN_ASSIST_CAP_MAX=40;
+// Fixed scale. A preference only earns a bonus after it clears LEARN_MARGIN,
+// then grows in proportion to the extra difference and stops at the cap.
+// Rate 4 turns a 0.21 preference into 0.04, and the 0.59 preference on the
+// reproduced discard stays below that position's two-point search gap.
+export const LEARN_BONUS_THRESHOLD=LEARN_MARGIN;
+export const LEARN_BONUS_RATE=4;
 // A split can be valid with one held-out match. Enabling the model needs more.
 export const LEARN_MIN_VALIDATION_MATCHES=2;
 export const LEARN_MIN_VALIDATION_DECISIONS=8;
@@ -124,6 +130,12 @@ function assistCapOf(value){
  const n=Number(value);
  if(!Number.isFinite(n))return LEARN_ASSIST_CAP;
  return clamp(n,1,LEARN_ASSIST_CAP_MAX);
+}
+export function learningAssistBonus(preferenceDiff,assistCap){
+ const cap=assistCapOf(assistCap);
+ const excess=Number(preferenceDiff)-LEARN_BONUS_THRESHOLD;
+ if(!(excess>0))return 0;
+ return Math.min(cap,LEARN_BONUS_RATE*excess);
 }
 
 export function actingSeat(seat,observation){
@@ -918,26 +930,22 @@ export function applyLearningAssist({
  const hardLearn=learnOf(hardAction);
  const eligible=scored.filter(item=>!same(item.action,hardAction)&&
   learnGate(item.action).ok&&!blocked(item.action));
- let maxAbs=0;
- const deltas=eligible.map(item=>{
-  const delta=learnOf(item.action)-hardLearn;
-  maxAbs=Math.max(maxAbs,Math.abs(delta));
-  return {item,delta};
- });
+ const deltas=eligible.map(item=>({item,delta:learnOf(item.action)-hardLearn}));
  const bonusOf=action=>{
   const found=deltas.find(row=>same(row.item.action,action));
-  if(!found||!(maxAbs>0))return 0;
-  return clamp(found.delta/maxAbs*cap,-cap,cap);
+  return found?learningAssistBonus(found.delta,cap):0;
  };
  const switchMargin=hardSwitchMargin(observation?.visible?.pending?.kind);
  const threshold=hardScore+switchMargin;
+ const tiedScore=score=>Math.abs(score-hardScore)<=1e-6;
  let best=null;
  for(const row of deltas){
   const bonus=bonusOf(row.item.action);
   if(!(bonus>0))continue;
-  if(!(row.item.score<threshold))continue;
+  const tied=tiedScore(row.item.score);
+  if(!tied&&!(row.item.score<threshold))continue;
   const adjusted=row.item.score+bonus;
-  if(!(adjusted>=threshold))continue;
+  if(!tied&&!(adjusted>=threshold))continue;
   const identity=actionIdentity(observation,row.item.action,actor);
   const current={action:row.item.action,adjusted,hard:row.item.score,identity,bonus};
   if(!best||adjusted>best.adjusted+1e-9)best=current;

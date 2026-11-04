@@ -1,16 +1,15 @@
 // Live solo-match collector. Consent off does no serialization and no network.
 // Accepted human actions are queued locally; the next click does not wait
 // for the upload. AI actions stay out of the player-decision queue.
-import {coachConsentEnabled,setCoachConsent,createCoachUploader} from './coach-client.mjs';
+import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
 import {createDecisionQueue} from './coach-queue.mjs';
 import {LABEL_FORMAT} from './coach-format.mjs';
 import {newCoachMatchId,buildHumanStep,buildAiMark,stateAtReplayIndex} from './coach-record.mjs';
 
-async function signedIn(fetchImpl){
- try{
-  const response=await fetchImpl('/api/me',{credentials:'same-origin',headers:{accept:'application/json'}});
-  return response.ok;
- }catch{return false;}
+async function accountFor(fetchImpl,known){
+ if(known!==undefined)return validAccountId(known);
+ const id=await currentAccountId(fetchImpl);
+ return validAccountId(id);
 }
 function rewind(session,bodies){
  if(!session)return;
@@ -39,6 +38,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
   send(body){
    return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);
   },
+  account(){return currentAccountId(fetchImpl);},
   onChange(){onChange?.();}
  });
  function blank(matchId){
@@ -51,6 +51,11 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    clientKey:session.matchId+':label:'+context.endReason,
    completed:context.completed===true,winner:context.winner,endReason:context.endReason};
  }
+ function owned(body){
+  const id=validAccountId(session?.accountId);
+  if(!id||!body)return null;
+  return {...body,accountId:id};
+ }
  const api={
   get session(){return session;},
   get queued(){return queue.length;},
@@ -60,17 +65,18 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    if(!enabled)rewind(session,queue.discard());
    emit();
   },
-  async begin(header){
+  async begin(header,knownAccount){
    session=blank(header.matchId||newCoachMatchId());
    session.header={...header,matchId:session.matchId};
-   session.signedIn=await signedIn(fetchImpl);
+   session.accountId=await accountFor(fetchImpl,knownAccount);
+   session.signedIn=session.accountId!=null;
    if(this.consent()&&session.signedIn===false)
     session.lastError='已同意提供紀錄，請先登入。這場不會上傳。';
    queue.start();
    emit();
    return session.matchId;
   },
-  async restore(saved,header){
+  async restore(saved,header,knownAccount){
    session=blank(header.matchId);
    if(saved&&saved.matchId===header.matchId){
     session.humanStep=saved.humanStep||0;
@@ -86,7 +92,8 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    }
    session.header={...header,matchId:session.matchId};
    if(!session.finished)queue.drop(session.matchId+':label:interrupted');
-   session.signedIn=await signedIn(fetchImpl);
+   session.accountId=await accountFor(fetchImpl,knownAccount);
+   session.signedIn=session.accountId!=null;
    queue.start();
    emit();
   },
@@ -97,13 +104,13 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
   },
   noteHuman(context){
    if(!session||!this.consent())return;
-   if(session.signedIn===false){
+   if(!session.accountId){
     session.lastError='已同意提供紀錄，請先登入。這場不會上傳。';
     emit();
     return;
    }
    try{
-    const body=buildHumanStep({...context,step:session.humanStep,previous:session.previous,header:session.header});
+    const body=owned(buildHumanStep({...context,step:session.humanStep,previous:session.previous,header:session.header}));
     const prior=session.previous;
     session.undoStack.push(prior);
     session.previous={step:body.step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey};
@@ -139,10 +146,10 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    if(session.marks.some(mark=>mark.replayIndex===session.lastAi.replayIndex))
     return session.marks.length;
    const before=stateAtReplayIndex(packs,replay,session.lastAi.replayIndex);
-   const body=buildAiMark({packs,state:before,action:session.lastAi.action,step:session.lastAi.step,
-    replayIndex:session.lastAi.replayIndex,header:session.header});
+   const body=owned(buildAiMark({packs,state:before,action:session.lastAi.action,step:session.lastAi.step,
+    replayIndex:session.lastAi.replayIndex,header:session.header}));
    session.marks=[...session.marks,{step:session.lastAi.step,replayIndex:session.lastAi.replayIndex,action:session.lastAi.action}];
-   if(this.consent()&&session.signedIn!==false){
+   if(this.consent()&&body){
     const result=await uploader.mark(body);
     if(result?.ok)session.lastError='';
    }
@@ -154,18 +161,20 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    const label=labelBody(context);
    session.label=label;session.finished=true;
    if(context.review!==false)session.reviewing=context.endReason==='conceded'||context.completed===true;
-   if(this.consent()&&session.signedIn!==false){
-    queue.enqueue(label,{holdMs:context.holdMs||0});
+   const stamped=owned(label);
+   if(this.consent()&&stamped){
+    queue.enqueue(stamped,{holdMs:context.holdMs||0});
     if(context.replay&&(context.completed===true||context.endReason==='conceded'))
-     void uploader.debug({header:session.header,replay:context.replay});
+     void uploader.debug({header:session.header,replay:context.replay,accountId:stamped.accountId});
    }
    emit();
   },
   async saveDemonstration(body){
    if(!session)throw Error('這場紀錄已經關閉。');
    if(!this.consent())throw Error('同意開關是關閉的，這段示範不會上傳。');
-   if(session.signedIn===false)throw Error('請先登入再保存示範。');
-   const result=await uploader.demonstration(body);
+   const stamped=owned(body);
+   if(!stamped)throw Error('請先登入再保存示範。');
+   const result=await uploader.demonstration(stamped);
    if(!result?.ok)throw Error(result?.data?.error||'示範沒有保存。');
    session.lastError='';
    emit();

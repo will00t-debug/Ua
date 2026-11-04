@@ -6,6 +6,7 @@ import {verifiedTtgRedPilotDeck,verifiedBleachPurplePilotDeck}
 import {newUniversalMatch,assertUniversalMatch,legalUniversalActions}
  from '../dist/universal-v2/engine.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
+ soloProgressMatches,
  SOLO_BATTLE_ENTRY_KEY,SOLO_BATTLE_PROGRESS_KEY,SOLO_BATTLE_URL,SOLO_SETUP_URL}
  from '../dist/universal-v2/solo-battle-session.mjs';
 
@@ -92,6 +93,19 @@ test('invalid, expired, corrupted, unknown and no-longer-playable handoffs are r
  assert.equal(loadSoloBattle(storage,{now}),null);
 });
 
+test('a resume snapshot is read only after the account matches',()=>{
+ const id='u'+'a'.repeat(16);
+ const other='u'+'b'.repeat(16);
+ assert.equal(soloProgressMatches({accountId:id},id),true);
+ assert.equal(soloProgressMatches({accountId:null},null),true);
+ assert.equal(soloProgressMatches({accountId:id},other),false);
+ assert.equal(soloProgressMatches({accountId:id},null),false);
+ assert.equal(soloProgressMatches({accountId:null},id),false);
+ assert.equal(soloProgressMatches({},null),false);
+ assert.equal(soloProgressMatches({state:{secret:true}},id),false);
+ assert.equal(soloProgressMatches({accountId:'not-an-account'},null),false);
+});
+
 test('setup launches the new URL and battle-only boot preserves V2 reducer, AI and session recovery',()=>{
  const code=read('dist/universal-v2-preview.mjs');
  assert.match(code,/const IS_BATTLE_PAGE=document\.body\?\.dataset\?\.v2Screen==='battle'/);
@@ -103,6 +117,10 @@ test('setup launches the new URL and battle-only boot preserves V2 reducer, AI a
  assert.match(code,/if\(!IS_BATTLE_PAGE\)\{/);
  assert.match(code,/const loaded=loadSoloBattle\(sessionStorage\)/);
  assert.match(code,/if\(!restoreBattleProgress\(\)\)void startGame\(\)/);
+ const checked=code.indexOf('soloProgressMatches(data,app.battleAccountId)');
+ const applied=code.indexOf('app.state=data.state');
+ assert.ok(checked>0&&applied>checked);
+ assert.match(code,/accountId:soloProgressOwner\(app\.battleAccountId\)/);
  assert.match(code,/sessionStorage\.setItem\(SOLO_BATTLE_PROGRESS_KEY,JSON\.stringify\(data\)\)/);
  assert.match(code,/assertUniversalMatch\(app\.packs,data\.state\)/);
  assert.match(code,/saveBattleProgress\(\)/);

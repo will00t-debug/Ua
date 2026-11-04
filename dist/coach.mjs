@@ -1,7 +1,7 @@
 // Logged-in review of solo training rows. Debug replays stay on their own buttons.
-import {learnReport} from './universal-v2/learn-policy.mjs?v=20261104learn4';
-import {coachConsentEnabled,createCoachUploader} from './universal-v2/coach-client.mjs';
-import {createDecisionQueue} from './universal-v2/coach-queue.mjs';
+import {learnReport} from './universal-v2/learn-policy.mjs?v=20261104bonus1';
+import {coachConsentEnabled,createCoachUploader,currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
+import {createDecisionQueue} from './universal-v2/coach-queue.mjs?v=20261104account1';
 const root=document.querySelector('#coach-app');
 const h=(tag,props={},...children)=>{
  const node=document.createElement(tag);
@@ -29,8 +29,8 @@ async function api(path,options={}){
 }
 let flushingQueue=null;
 let lastReport='';
-function flushLocalQueue(){
- if(!coachConsentEnabled(localStorage))return Promise.resolve({queued:0,dropped:0,lastError:''});
+function flushLocalQueue(accountId){
+ if(!coachConsentEnabled(localStorage))return Promise.resolve({queued:0,dropped:0,lastError:'',paused:0});
  if(flushingQueue)return flushingQueue;
  flushingQueue=(async()=>{
   const uploader=createCoachUploader({
@@ -39,20 +39,23 @@ function flushLocalQueue(){
   const queue=createDecisionQueue({
    storage:localStorage,
    consent:()=>coachConsentEnabled(localStorage),
+   account(){return currentAccountId(fetch);},
    send(body){
     return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);
    }
   });
   queue.start();
   await queue.flushNow();
-  return {queued:queue.length,dropped:queue.dropped,lastError:queue.lastError};
+  const paused=queue.paused(accountId);
+  return {queued:Math.max(0,queue.length-paused),paused,dropped:queue.dropped,lastError:queue.lastError};
  })().finally(()=>{flushingQueue=null;});
  return flushingQueue;
 }
 function queueNote(pending){
  const parts=[];
  if(pending?.dropped)parts.push('已跳過 '+pending.dropped+' 筆伺服器拒絕的舊紀錄，後面的新對局會繼續上傳。');
- if(pending?.queued)parts.push('這台裝置還有 '+pending.queued+' 筆沒送出'+(pending.lastError?'：'+pending.lastError:'。'));
+ if(pending?.paused)parts.push('有 '+pending.paused+' 筆無法確認歸屬或其他帳號的紀錄，已暫停上傳。');
+ if(pending?.queued)parts.push('這台裝置還有 '+pending.queued+' 筆目前帳號的紀錄沒送出'+(pending.lastError?'：'+pending.lastError:'。'));
  else if(pending?.lastError)parts.push(pending.lastError);
  return parts.join('');
 }
@@ -115,7 +118,7 @@ async function render(){
  try{me=await api('/api/me');}
  catch{root.append(h('p',{text:'請先登入，才能查看、匯出或刪除自己的紀錄。'}),h('a',{href:'/online.html',text:'前往登入'}));return;}
  void me;
- const pending=await flushLocalQueue();
+ const pending=await flushLocalQueue(me?.id);
  const listed=await api('/api/coach/matches');
  const policyState=await api('/api/coach/policy');
  const steps=listed.matches.reduce((sum,match)=>sum+(Number(match.steps)||0),0);
@@ -145,7 +148,7 @@ async function render(){
   lastReport='正在學習…';
   report.textContent=lastReport;
   try{
-   await flushLocalQueue();
+   await flushLocalQueue(me?.id);
    const result=await api('/api/coach/learn',{method:'POST',body:{}});
    lastReport=[result.notice,result.report||learnReport(result.policy)].filter(Boolean).join('');
    await render();

@@ -127,7 +127,7 @@ function loadDecisions(){
  if(decisionLog)return Promise.resolve(decisionLog);
  if(decisionLoading)return decisionLoading;
  try{
-  decisionLoading=import('./universal-v2/coach-online.mjs').then(mod=>{
+  decisionLoading=import('./universal-v2/coach-online.mjs?v=20261104account1').then(mod=>{
    decisionLog=mod.createOnlineCollector({
     storage:localStorage,
     deckById(id){return app.decks.find(deck=>deck.id===id)||null;},

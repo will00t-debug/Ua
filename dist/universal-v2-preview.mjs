@@ -21,13 +21,14 @@ import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
 import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
+ soloProgressMatches,soloProgressOwner,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmr2ship1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261104learn4';
-import {learningBattleMode,policyRecordStatus} from './universal-v2/learn-policy.mjs?v=20261104learn4';
+import {learningBattleMode,policyRecordStatus} from './universal-v2/learn-policy.mjs?v=20261104bonus1';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
@@ -42,7 +43,8 @@ import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
-import {createCoachBattle} from './universal-v2/coach-battle.mjs';
+import {currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
+import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104account1';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261101coachart1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
@@ -132,7 +134,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 let editorRecordId=null,fieldHold=0;
-const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
+const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,battleAccountId:null,
  selectedSide:null,history:[],publicMoves:[],dismissedPublicMoveIds:new Set(),busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,inspectionPaused:false,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
@@ -1046,7 +1048,8 @@ function legacyCommands(legal){
 function saveBattleProgress(){
  if(!IS_BATTLE_PAGE||!app.launch||!app.state||!app.replay)return;
  try{
-  const data={version:1,launchId:app.launch.config.id,state:app.state,replay:app.replay,
+  const data={version:1,accountId:soloProgressOwner(app.battleAccountId),
+   launchId:app.launch.config.id,state:app.state,replay:app.replay,
    history:app.history.slice(0,2500),recordNoted:app.recordNoted,
    aiCompletedSteps:app.aiCompletedSteps,lastAiProgress:app.lastAiProgress,
    coach:app.coachBattle?.snapshot?.()||null,learning:storedLearning()};
@@ -1058,7 +1061,9 @@ function restoreBattleProgress(){
  try{
   const json=sessionStorage.getItem(SOLO_BATTLE_PROGRESS_KEY);
   if(!json||json.length>2200000)return false;
-  const data=JSON.parse(json),cfg=app.launch.config;
+  const data=JSON.parse(json);
+  if(!soloProgressMatches(data,app.battleAccountId))return false;
+  const cfg=app.launch.config;
   if(data.version!==1||data.launchId!==cfg.id||!data.state||!data.replay||
    !Array.isArray(data.history)||data.history.length>2500||
    data.replay.format!=='ua-universal-v2-preview'||
@@ -1984,6 +1989,9 @@ async function startGame(){
  resetAi();
  try{
   if(!IS_BATTLE_PAGE||!app.launch)throw Error('請先選擇牌組，再開始 V2 對戰。');
+  const account=await currentAccountId();
+  if(account===undefined)throw Error('無法確認帳號，尚未開始對局。');
+  app.battleAccountId=account;
   const [mine,foe]=app.launch.decks;
   const first=app.launch.config.first;
   app.aiDifficulty=app.launch.config.difficulty;
@@ -2008,7 +2016,7 @@ async function startGame(){
    '｜'+aiNote+'｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
-  void coachApi().begin(coachHeaderNow(newCoachMatchId()));
+  void coachApi().begin(coachHeaderNow(newCoachMatchId()),app.battleAccountId);
   saveBattleProgress();
   render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
@@ -2137,14 +2145,21 @@ if(!IS_BATTLE_PAGE){
   const banner=$('battle-matchup');
   if(banner)banner.textContent=loaded.decks[0].label+' vs '+loaded.decks[1].label+
    ' · '+(AI_LEVEL_LABEL[loaded.config.difficulty]||'普通');
-  if(!restoreBattleProgress())void startGame();
-  else{
-   const saved=app.pendingCoach;
-   void (async()=>{
+  void (async()=>{
+   const account=await currentAccountId();
+   if(account===undefined){
+    app.error='無法確認帳號，續局已暫停。請恢復連線後重新開啟。';
+    render();
+    return;
+   }
+   app.battleAccountId=account;
+   if(!restoreBattleProgress())void startGame();
+   else{
+    const saved=app.pendingCoach;
     if(!applyLearningResolution(app.learningResolution))await resolveLearning();
-    void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()));
+    void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()),app.battleAccountId);
     render();driveAi();
-   })();
-  }
+   }
+  })();
  }else render();
 }

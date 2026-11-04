@@ -438,8 +438,13 @@ export function dispatchCoach(repos,user,message,now){
  }
 }
 
+function requireAccount(body,user){
+ if(!body||typeof body!=='object'||Array.isArray(body))throw new ApiError(400,'紀錄不正確。');
+ if(body.accountId!==user.id)throw new ApiError(403,'這筆紀錄屬於另一個帳號，已暫停上傳。');
+}
 function saveStep(repos,user,anonymous,body,now){
  banned(body);
+ requireAccount(body,user);
  if(body?.format==='ua-v2-coach-step-v2')return saveStepV2(repos,user,anonymous,body,now);
  const header=headerOf(body);
  if(body.format!=='ua-v2-coach-step-v1')throw new ApiError(400,'決策格式不正確。');
@@ -527,6 +532,7 @@ function saveStepV2(repos,user,anonymous,body,now){
 
 function saveLabel(repos,user,anonymous,body,now){
  banned(body);
+ requireAccount(body,user);
  const header=headerOf(body);
  if(body.format!=='ua-v2-coach-label-v1'&&body.format!=='ua-v2-coach-label-v2')
   throw new ApiError(400,'對局結果格式不正確。');
@@ -584,6 +590,7 @@ function demoPayload(body,header){
 }
 function saveDemo(repos,user,anonymous,body,now){
  banned(body);
+ requireAccount(body,user);
  const header=headerOf(body);
  const built=demoPayload(body,header);
  ensureMatch(repos,user,anonymous,header,now);
@@ -606,6 +613,7 @@ function saveDemo(repos,user,anonymous,body,now){
 
 function saveDebug(repos,user,anonymous,body,now){
  banned(body);
+ requireAccount(body,user);
  const header=headerOf(body.header||body);
  const replay=body.replay;
  if(!replay||replay.format!=='ua-universal-v2-preview'||replay.version!==1||!Array.isArray(replay.actions))

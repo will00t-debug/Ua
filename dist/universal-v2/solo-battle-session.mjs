@@ -9,7 +9,16 @@ export const SOLO_BATTLE_PROGRESS_KEY='ua-v2-solo-battle-progress-v1';
 export const SOLO_BATTLE_URL='/universal-v2-battle.html';
 export const SOLO_SETUP_URL='/universal-v2-preview.html';
 const MAX_AGE=24*60*60*1000;
+const ACCOUNT_ID=/^u[a-f0-9]{16}$/;
 const isPlain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+export function soloProgressOwner(accountId){
+ return typeof accountId==='string'&&ACCOUNT_ID.test(accountId)?accountId:null;
+}
+export function soloProgressMatches(data,accountId){
+ if(!isPlain(data)||!Object.prototype.hasOwnProperty.call(data,'accountId'))return false;
+ if(data.accountId!=null&&soloProgressOwner(data.accountId)==null)return false;
+ return soloProgressOwner(data.accountId)===soloProgressOwner(accountId);
+}
 const validFirst=x=>x===0||x===1;
 const validDifficulty=x=>['easy','normal','hard','learned'].includes(x);
 

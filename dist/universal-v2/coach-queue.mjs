@@ -15,7 +15,8 @@ function isLabel(body){
  return String(body?.format||'').includes('label');
 }
 
-export function createDecisionQueue({storage,consent,send,schedule,onChange,now=()=>Date.now()}={}){
+const UNFILTERED={};
+export function createDecisionQueue({storage,consent,send,schedule,onChange,account,now=()=>Date.now()}={}){
  let items=readQueue(storage);
  let timer=null;
  let flushing=false;
@@ -24,6 +25,16 @@ export function createDecisionQueue({storage,consent,send,schedule,onChange,now=
  let sendingKey=null;
  let dropped=0;
  let lastError='';
+ async function readOwner(){
+  if(typeof account!=='function')return UNFILTERED;
+  try{
+   const id=await account();
+   return typeof id==='string'&&id?id:null;
+  }catch{return null;}
+ }
+ function ownedBy(entry,owner){
+  return owner===UNFILTERED||entry?.body?.accountId===owner;
+ }
  function save(){
   try{storage?.setItem(QUEUE_KEY,JSON.stringify(items));}
   catch{/* A private browser can keep the in-memory outbox for this page. */}
@@ -52,9 +63,15 @@ export function createDecisionQueue({storage,consent,send,schedule,onChange,now=
   if(flushing||!started)return;
   const gen=generation;
   flushing=true;
+  let retry=false;
   try{
    while(generation===gen&&consent?.()&&items.length){
-    const item=items[0];
+    const owner=await readOwner();
+    if(generation!==gen)return;
+    if(owner===null)return;
+    const found=items.findIndex(entry=>ownedBy(entry,owner));
+    if(found<0)return;
+    const item=items[found];
     const held=item.lastStatus===400||item.lastStatus===409||item.lastStatus===413;
     const hold=item.holdUntil||0;
     if(held){
@@ -65,6 +82,11 @@ export function createDecisionQueue({storage,consent,send,schedule,onChange,now=
      continue;
     }
     if(hold>now()){arm(Math.min(hold-now(),4000));return;}
+    if(owner!==UNFILTERED){
+     const fresh=await readOwner();
+     if(generation!==gen)return;
+     if(fresh!==item.body?.accountId){retry=true;return;}
+    }
     sendingKey=item.clientKey;
     let result=null;
     try{result=await send(item.body);}
@@ -93,18 +115,26 @@ export function createDecisionQueue({storage,consent,send,schedule,onChange,now=
     item.holdUntil=now()+Math.min(30000,1000*2**Math.min(item.attempts,5));
     item.lastStatus=result?.status||0;
     item.lastError=result?.data?.error||'';
+    if(result?.status===403)lastError=item.lastError||'這筆紀錄屬於另一個帳號，已暫停上傳。';
     save();
     notify();
     arm(item.holdUntil-now());
     return;
    }
-  }finally{flushing=false;}
+  }finally{
+   flushing=false;
+   if(retry&&generation===gen)arm(0);
+  }
  }
  return {
   get length(){return items.length;},
   get bytes(){return items.reduce((sum,item)=>sum+(item.bytes||0),0);},
   get dropped(){return dropped;},
   get lastError(){return lastError;},
+  paused(owner){
+   if(typeof owner!=='string'||!owner)return items.length;
+   return items.filter(item=>item.body?.accountId!==owner).length;
+  },
   start(){started=true;if(consent?.())arm(0);else if(items.length){items=[];save();}},
   enqueue(body,{holdMs=0}={}){
    if(!consent?.())return {skipped:'consent'};

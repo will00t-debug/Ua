@@ -1,7 +1,7 @@
 // Online collector. Each browser only records the signed-in player's own
 // accepted actions, using the view the server already returned to that seat.
 // The opponent's hidden cards are not on this client and are not uploaded.
-import {coachConsentEnabled,setCoachConsent,createCoachUploader} from './coach-client.mjs';
+import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId} from './coach-client.mjs';
 import {createDecisionQueue} from './coach-queue.mjs';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
@@ -22,6 +22,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  let lastError='';
  let pending=null;
  let session=null;
+ let confirmedAccount=null;
  const opening=new Map();
  const sessions=readSessions(storage);
  const uploader=createCoachUploader({
@@ -35,6 +36,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   consent:()=>coachConsentEnabled(storage),
   schedule,
   send(body){return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);},
+  account(){return currentAccountId(fetchImpl);},
   onChange(){onChange?.();}
  });
  function saveSessions(){
@@ -81,6 +83,12 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   if(!session)return;
   sessions[session.code]={matchId:session.matchId,matchLink:session.matchLink,step:session.step,previous:session.previous};
   saveSessions();
+ }
+ async function confirmedId(){
+  const id=await currentAccountId(fetchImpl);
+  if(typeof id==='string'){confirmedAccount=id;return id;}
+  if(id===null){confirmedAccount=null;return null;}
+  return confirmedAccount;
  }
  function headerFrom(current,snap){
   return {
@@ -142,6 +150,12 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    if(!Array.isArray(snap.visible?.players?.[snap.seat]?.hand))return;
    const current=await ensure(room);
    if(!current)return;
+   const accountId=await confirmedId();
+   if(!accountId){
+    lastError='無法確認帳號，這步已暫停上傳。';
+    onChange?.();
+    return;
+   }
    const clientKey=current.matchId+':r'+snap.revision+':human';
    const previous=current.previous;
    const body={
@@ -151,7 +165,8 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     publicHistory:publicHistoryFrom(snap.visible),legal:snap.legal,choice:snap.choice,
     forced:snap.legal.length===1,decisionClass:classifyDecision(snap.choice),
     previous:previous?{step:previous.step,type:previous.type,clientKey:previous.clientKey}:null,
-    chain:chainOf(current.matchId,current.step,previous,clientKey)
+    chain:chainOf(current.matchId,current.step,previous,clientKey),
+    accountId
    };
    const queued=queue.enqueue(body);
    if(queued.queued||queued.skipped==='queued'){
@@ -172,10 +187,16 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     ?room.view.playerTitles.slice():null;
    if(!titles)return;
    const current=await ensure(room);
+   const accountId=await confirmedId();
+   if(!accountId){
+    lastError='無法確認帳號，這筆結果已暫停上傳。';
+    onChange?.();
+    return;
+   }
    const snap={titles,deck:deckSnapshot(deck.title,deck.counts),engineVersion:DECISION_ENGINE_VERSION};
    const body={format:LABEL_FORMAT,...headerFrom(current,snap),
     clientKey:current.matchId+':label:'+endReason,completed:completed===true,
-    winner:winner??null,endReason};
+    winner:winner??null,endReason,accountId};
    queue.enqueue(body,{holdMs});
    onChange?.();
   },

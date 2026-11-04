@@ -19,6 +19,9 @@ import {createHandler} from '../server/http.mjs';
 const deck=verifiedBleachPurplePilotDeck();
 const packs=[deck.pack, deck.pack];
 const password='correct-horse-1';
+const ME='u'+'a1'.repeat(8);
+const OTHER='u'+'b2'.repeat(8);
+function meBody(id=ME){return {ok:true, status:200, json:async()=>({id, username:'甲'})};}
 
 function memoryStorage(seed={}){
  const data=new Map(Object.entries(seed));
@@ -188,7 +191,10 @@ test('consent off does not build a decision or call the network, and clears the 
  const battle=createCoachBattle({
   storage,
   schedule(){return 1;},
-  fetchImpl:async path=>{paths.push(path);return {ok:true, json:async()=>({})};}
+  fetchImpl:async path=>{
+   paths.push(path);
+   return path==='/api/me'?meBody():{ok:true, json:async()=>({})};
+  }
  });
  await battle.begin(header);
  battle.noteHuman({packs, state, action:{type:'not-legal'}, replayIndex:0});
@@ -219,7 +225,7 @@ test('a human decision is queued before the upload finishes, and an AI action is
   schedule(){return 1;},
   fetchImpl(path){
    paths.push(path);
-   if(path==='/api/me')return Promise.resolve({ok:true, json:async()=>({})});
+   if(path==='/api/me')return Promise.resolve(meBody());
    return new Promise(resolve=>{release=()=>resolve({ok:true, json:async()=>({duplicate:false})});});
   }
  });
@@ -247,9 +253,7 @@ test('illegal, deselected and unsent actions are not new decisions', async()=>{
  const battle=createCoachBattle({
   storage:consented(),
   schedule(){return 1;},
-  fetchImpl:async path=>path==='/api/me'
-   ?{ok:true, json:async()=>({})}
-   :{ok:true, json:async()=>({duplicate:false})}
+  fetchImpl:async path=>path==='/api/me'?meBody():{ok:true, json:async()=>({duplicate:false})}
  });
  await battle.begin(header);
  battle.noteHuman({packs, state, action:{type:'play', uid:'missing'}, replayIndex:0, legal});
@@ -398,6 +402,77 @@ test('undo cannot retract a row that is already being uploaded', async()=>{
  assert.equal(queue.length, 0);
 });
 
+test('an unconfirmed or other-account row stays queued and does not block the signed-in account', async()=>{
+ const matchA='m'+'a'.repeat(32);
+ const matchB='m'+'b'.repeat(32);
+ const unknown={clientKey:matchA+':0:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:0};
+ const theirs={clientKey:matchB+':0:human', format:'ua-v2-coach-step-v2', matchId:matchB, step:0, accountId:OTHER};
+ const mine={clientKey:matchA+':1:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:1, accountId:ME};
+ const sent=[];
+ let who=OTHER;
+ const queue=createDecisionQueue({
+  storage:memoryStorage(),
+  consent:()=>true,
+  account(){return who;},
+  schedule(){return 1;},
+  async send(body){sent.push(body.clientKey);return {ok:true};}
+ });
+ queue.start();
+ queue.enqueue(unknown);
+ queue.enqueue(theirs);
+ queue.enqueue(mine);
+ await queue.flushNow();
+ assert.deepEqual(sent, [theirs.clientKey]);
+ assert.equal(queue.length, 2);
+ assert.equal(queue.paused(OTHER), 2);
+ who=ME;
+ await queue.flushNow();
+ assert.deepEqual(sent, [theirs.clientKey, mine.clientKey]);
+ assert.equal(queue.length, 1);
+ assert.equal(queue.paused(ME), 1);
+ who=null;
+ await queue.flushNow();
+ assert.deepEqual(sent, [theirs.clientKey, mine.clientKey]);
+ assert.equal(queue.length, 1);
+ assert.equal(queue.dropped, 0);
+});
+
+test('a row is not sent when the account changes between the check and the upload', async()=>{
+ const body={clientKey:'m'+'f'.repeat(32)+':0:human', format:'ua-v2-coach-step-v2', accountId:ME};
+ let checks=0;
+ const sent=[];
+ const queue=createDecisionQueue({
+  storage:memoryStorage(),
+  consent:()=>true,
+  account(){checks++;return checks===1?ME:OTHER;},
+  schedule(){return 1;},
+  async send(item){sent.push(item.accountId);return {ok:true};}
+ });
+ queue.start();
+ queue.enqueue(body);
+ await queue.flushNow();
+ assert.deepEqual(sent, []);
+ assert.equal(queue.length, 1);
+ assert.equal(queue.dropped, 0);
+});
+
+test('a 403 keeps the row instead of dropping it', async()=>{
+ const body={clientKey:'m'+'9'.repeat(32)+':0:human', format:'ua-v2-coach-step-v2', accountId:ME};
+ const queue=createDecisionQueue({
+  storage:memoryStorage(),
+  consent:()=>true,
+  account(){return ME;},
+  schedule(){return 1;},
+  async send(){return {ok:false, status:403, data:{error:'這筆紀錄屬於另一個帳號，已暫停上傳。'}};}
+ });
+ queue.start();
+ queue.enqueue(body);
+ await queue.flushNow();
+ assert.equal(queue.length, 1);
+ assert.equal(queue.dropped, 0);
+ assert.match(queue.lastError, /另一個帳號/);
+});
+
 test('turning consent off drops an upload that is already in flight', async()=>{
  const body={clientKey:'m'+'d'.repeat(32)+':0:human', format:'ua-v2-coach-step-v2'};
  let release;
@@ -427,7 +502,7 @@ test('reloading the same match drops the interrupt label before it can upload', 
   schedule(){return 1;},
   fetchImpl:async path=>{
    paths.push(path);
-   return {ok:true, json:async()=>({})};
+   return path==='/api/me'?meBody():{ok:true, json:async()=>({})};
   }
  });
  await battle.begin(header);
@@ -440,7 +515,7 @@ test('reloading the same match drops the interrupt label before it can upload', 
   schedule(){return 1;},
   fetchImpl:async path=>{
    paths.push('resume:'+path);
-   return {ok:true, json:async()=>({})};
+   return path==='/api/me'?meBody():{ok:true, json:async()=>({})};
   }
  });
  await resumed.restore({...saved, finished:false, label:null}, header);
@@ -473,6 +548,7 @@ test('an online collector records only the consented player own accepted action'
    schedule(){return 1;},
    deckById:()=>({title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}}),
    fetchImpl:async(path, options)=>{
+    if(path==='/api/me')return meBody();
     posted.push({path, body:JSON.parse(options.body)});
     return {ok:true, json:async()=>({duplicate:false})};
    }
@@ -506,6 +582,7 @@ test('an online collector records only the consented player own accepted action'
  await host.settle({...room, revision:4, yourTurn:false, choices:[]});
  assert.equal(host.queued, 1);
  const body=JSON.parse(hostStorage.getItem('ua-v2-coach-queue-v1'))[0].body;
+ assert.equal(body.accountId, ME);
  assert.equal(body.source, 'human');
  assert.equal(body.actor, 'human');
  assert.equal(body.seat, 0);
@@ -583,12 +660,12 @@ test('uploaded decisions stay owned, deduped, exportable and deletable', {timeou
   deckById:()=>({title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}}),
   fetchImpl:async(path, options)=>{
    const response=await fetch(ctx.base+path, {
-    method:options.method,
-    headers:{...options.headers, authorization:'Bearer '+host.data.token},
+    method:options.method||'GET',
+    headers:{accept:'application/json',...(options.headers||{}), authorization:'Bearer '+host.data.token},
     body:options.body
    });
    const data=await response.json().catch(()=>null);
-   posted.push({path, status:response.status, data, body:JSON.parse(options.body)});
+   if(path!=='/api/me')posted.push({path, status:response.status, data, body:JSON.parse(options.body)});
    return {ok:response.ok, status:response.status, json:async()=>data};
   }
  });
@@ -611,6 +688,18 @@ test('uploaded decisions stay owned, deduped, exportable and deletable', {timeou
  await hostLog.flush();
  assert.equal(posted[0].status, 200, JSON.stringify(posted[0].data));
  assert.equal(posted[0].data.duplicate, false);
+ const hostMe=await api('/api/me', {token:host.data.token});
+ assert.equal(posted[0].body.accountId, hostMe.data.id);
+ const stolen=await api('/api/coach/steps', {method:'POST', token:guest.data.token, body:posted[0].body});
+ assert.equal(stolen.status, 403);
+ const guestList=await api('/api/coach/matches', {token:guest.data.token});
+ assert.equal(guestList.data.matches.length, 0);
+ const bare=structuredClone(posted[0].body);
+ delete bare.accountId;
+ const missing=await api('/api/coach/steps', {method:'POST', token:host.data.token, body:bare});
+ assert.equal(missing.status, 403);
+ const hostList=await api('/api/coach/matches', {token:host.data.token});
+ assert.equal(hostList.data.matches.length, 1);
  const again=await hostLog.flush();
  void again;
  const replay=await api('/api/coach/steps', {method:'POST', token:host.data.token, body:posted[0].body});
@@ -644,7 +733,7 @@ test('uploaded decisions stay owned, deduped, exportable and deletable', {timeou
  }});
  assert.equal(ended.status, 200, ended.text);
  const debug=makeUniversalPreviewReplay(packs, {decks:[deck.counts, deck.counts], seed:8675309, first:0, openingMulligan:true});
- const storedDebug=await api('/api/coach/debug-replays', {method:'POST', token:host.data.token, body:{header:posted[0].body, replay:debug}});
+ const storedDebug=await api('/api/coach/debug-replays', {method:'POST', token:host.data.token, body:{accountId:posted[0].body.accountId, header:posted[0].body, replay:debug}});
  assert.equal(storedDebug.status, 200, storedDebug.text);
  const guestExport=await api('/api/coach/export.jsonl', {token:guest.data.token});
  assert.equal(guestExport.status, 200);
@@ -662,6 +751,7 @@ test('uploaded decisions stay owned, deduped, exportable and deletable', {timeou
  assert.equal(lines.at(-1).winner, null);
  assert.equal(lines.at(-1).unfinished, true);
  assert.equal(exported.text.includes('決策甲'), false);
+ assert.equal(exported.text.includes(hostMe.data.id), false);
  assert.equal(exported.text.includes('8675309'), false);
  assert.equal(exported.text.includes('ua-universal-v2-preview'), false);
  assert.equal(exported.text.includes('"uid":"1-'), false);

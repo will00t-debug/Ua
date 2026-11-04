@@ -142,10 +142,21 @@ function phaseStep(type){
  const header=coachHeader({matchId:newCoachMatchId(),packs,counts:deck.counts,aiVersion:'normal'});
  return buildHumanStep({packs,state,action,step:0,replayIndex:0,previous:null,header});
 }
+const accountIds=new Map();
+async function accountIdFor(token){
+ if(accountIds.has(token))return accountIds.get(token);
+ const me=await api('/api/me',{token});
+ assert.equal(me.status,200,me.text);
+ assert.match(me.data.id,/^u[a-f0-9]{16}$/);
+ accountIds.set(token,me.data.id);
+ return me.data.id;
+}
 async function uploadSteps(token,count,stepFor){
+ const accountId=await accountIdFor(token);
  const ids=[];
  for(let i=0;i<count;i++){
   const step=stepFor();
+  step.accountId=accountId;
   ids.push(step.matchId);
   const saved=await api('/api/coach/steps',{method:'POST',token,body:step});
   assert.equal(saved.status,200,saved.text);

@@ -524,7 +524,7 @@ export function dispatchAccount(repos,message,now){
    return {ok:true};
   }
   case 'me':
-   return {username:requireUser(repos,message.token,now).username};
+   return publicUser(requireUser(repos,message.token,now));
   case 'session':
    return publicUser(requireUser(repos,message.token,now));
   case 'listDecks':{
