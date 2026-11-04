@@ -1200,6 +1200,16 @@ function resolveStep(pack,s,q,a){
   }else if(next==='enter111'){
    const card=plOf(s,q.player).outside.find(c=>c.uid===q.sourceUid);
    if(card)offerFieldEntry(s,spec,[card],{from:'outside',optional:false,skipOnPlay:false});
+  }else if(next==='revivePay'){
+   const self=selfOf(s,q.player,q.sourceUid);
+   const loc=self&&A.location(s,q.player,self.uid);
+   if(loc)A.retire(pack,s,q.player,loc.line,loc.slot,{skipReplacement:true});
+   const name=q.id==='KMR-1-008'?'仮面ライダーゲイツリバイブ疾風':'仮面ライダーゲイツリバイブ剛烈';
+   const cards=plOf(s,q.player).outside.filter(c=>exact(pack,c,name,null));
+   offerFieldEntry(s,spec,cards,{from:'outside',optional:true,skipOnPlay:false});
+  }else if(next==='punishBackReturn'){
+   const card=plOf(s,q.player).outside.find(c=>c.uid===q.data.uid);
+   if(card)moveUid(pack,s,q.player,'outside',card.uid,'hand',q.sourceUid);
   }else continueAfter(pack,s,spec,next);
   return;
  }
@@ -1374,14 +1384,7 @@ function resolveStep(pack,s,q,a){
  if(q.step==='revive'){
   s.pending=null;
   if(hit.mode==='skip')return;
-  const hand=plOf(s,q.player).hand[0];
-  if(!hand)return;
-  discard(pack,s,q.player,hand.uid,q.sourceUid);
-  const self=selfOf(s,q.player,q.sourceUid);
-  const loc=self&&A.location(s,q.player,self.uid);
-  if(loc)A.retire(pack,s,q.player,loc.line,loc.slot,{skipReplacement:true});
-  const cards=plOf(s,q.player).outside.filter(c=>exact(pack,c,q.data.name,null));
-  if(cards.length)offerFieldEntry(s,spec,cards,{from:'outside',optional:false,skipOnPlay:false});
+  offerDiscard(s,spec,1,false,'revivePay');
   return;
  }
  if(q.step==='enter'){
@@ -1490,12 +1493,7 @@ function resolveStep(pack,s,q,a){
  if(q.step==='punishBack'){
   s.pending=null;
   if(hit.mode==='skip')return;
-  const hand=plOf(s,q.player).hand;
-  if(hand.length<2)return;
-  discard(pack,s,q.player,hand[0].uid,q.sourceUid);
-  discard(pack,s,q.player,plOf(s,q.player).hand[0].uid,q.sourceUid);
-  const card=plOf(s,q.data.owner).outside.find(c=>c.uid===q.data.uid);
-  if(card)moveUid(pack,s,q.data.owner,'outside',card.uid,'hand',q.sourceUid);
+  offerDiscard(s,spec,2,false,'punishBackReturn',{uid:q.data.uid});
   return;
  }
  if(q.step==='medalBack'){
