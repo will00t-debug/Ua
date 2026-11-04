@@ -10,9 +10,12 @@ import {uiActionLabel,publicLifeTriggerText} from '../dist/universal-v2/preview-
 import {publicCardResults} from './public-card-results.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
 import {dispatchCoach} from './coach.mjs';
+import {TITLES as EDITOR_TITLES} from '../dist/title-registry.mjs';
 
-const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr'];
+// Keep the account API's accepted titles synchronized with the deck editor.
+const TITLES=new Set(EDITOR_TITLES.map(title=>title.id));
 const TITLE_LABELS={
+ ...Object.fromEntries(EDITOR_TITLES.map(({id,label})=>[id,label])),
  bleach:'BLEACH','gurren-lagann':'天元突破','sword-art-online':'刀劍神域',
  'solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生',rezero:'Re:Zero',
  'steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉',kjn:'我想成為影之強者！',
@@ -66,7 +69,7 @@ function cleanName(value){
  return name;
 }
 function parseTitle(value){
- if(typeof value!=='string'||!TITLES.includes(value))throw new ApiError(400,'請選擇已收錄的作品。');
+ if(typeof value!=='string'||!TITLES.has(value))throw new ApiError(400,'請選擇已收錄的作品。');
  return value;
 }
 function parseLocalId(value){
