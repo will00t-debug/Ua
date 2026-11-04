@@ -38,7 +38,7 @@ function hold(s,spec,actions){
 }
 function sig(a){
  return JSON.stringify([a?.type,a?.mode,a?.uid??null,a?.line??null,a?.slot??null,
-  a?.replaceUid??null,a?.key??null,a?.ready??null,a?.from??null,a?.skip??null]);
+  a?.replaceUid??null,a?.baseUid??null,a?.key??null,a?.ready??null,a?.from??null,a?.skip??null]);
 }
 function takeAction(q,a){
  const hit=(q.actions||[]).find(x=>sig(x)===sig(a));
@@ -338,7 +338,8 @@ function deployGochizo(pack,s,job,ready){
 function attackEndSwap(pack,s,job,partner){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self||!(self.stack||[]).length)return;
- if(s.raidedThisTurn?.[job.owner])return;
+ // Printed condition is scoped to the current ATTACK phase, not the whole turn.
+ if((s.raidCount?.[job.owner]||0)>(s.kmr2AttackRaidBaseline?.[job.owner]||0))return;
  const spec=specOf(job);
  const hand=handWhere(s,job.owner,c=>exact(pack,c,partner,null));
  const food=ownWhere(s,job.owner,c=>exact(pack,c,GO,s));
