@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createKjnV2Pack} from '../dist/universal-v2/kjn-pack.mjs';
+import {boardEntryMode,boardEntrySelection,entryClickPlan} from '../dist/universal-v2/preview-actions.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp}
@@ -385,8 +386,26 @@ test('KJN-1-048 on retirement can discard a hand card and re-enter the actual Ra
  s=choose(s,a=>a.mode==='discard'&&a.uid===cost.uid);
  assert.equal(s.players[1].outside.some(c=>c.uid===cost.uid),true);
  assert.equal(s.pending.step,'deploy');
- assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===base.uid&&a.ready===false),true);
- s=choose(s,a=>a.uid===base.uid&&a.line==='energy');
+ const available=legalUniversalActions(packs,s);
+ const entryActions=available.filter(a=>boardEntryMode(a));
+ assert.ok(entryActions.length>0);
+ assert.ok(entryActions.every(a=>a.uid===base.uid&&a.type==='kjn'&&
+  a.mode==='dest'&&a.from==='outside'&&a.ready===false));
+ assert.equal(boardEntrySelection(available,base.uid).needsMode,false,
+  'Only ordinary REST entry is printed; never offer a Raid entry mode');
+ assert.equal(entryClickPlan({selectedUid:null,entryMode:null,line:'energy',slot:3,
+  slotUid:null,legal:available}).type,'idle',
+  'The board cell alone cannot enter before selecting the physical card');
+ const selected=entryActions.find(a=>a.line==='energy'&&!a.replaceUid);
+ assert.ok(selected,'A legal REST entry cell should be offered');
+ assert.deepEqual(entryClickPlan({selectedUid:base.uid,entryMode:null,
+  line:'energy',slot:selected.slot,slotUid:null,legal:available}),
+  {type:'entry',mode:'normal',actions:[selected]},
+  'Choose the actual Raid base card first, then tap its destination cell');
+ assert.equal(entryClickPlan({selectedUid:cost.uid,entryMode:null,line:'energy',
+  slot:selected.slot,slotUid:null,legal:available}).type,'idle',
+  'A discarded payment card is never an entry candidate');
+ s=use(s,selected);
  const returned=s.players[1].energy.find(c=>c?.uid===base.uid);
  assert.ok(returned);
  assert.equal(returned.ready,false);
