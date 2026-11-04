@@ -44,7 +44,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-trait-event':'查看牌頂，公開王選候補者或事件',
  'effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
  'effect-top-order':'排列牌庫頂或底',
- 'effect-optional-mill':'可將牌庫頂 1 張送場外',
+ 'effect-optional-mill':'可逐張將牌庫頂送場外（每次 1 張，可繼續或停止）',
  'effect-mill-up-to':'可將牌庫頂至多數張送場外',
  'effect-mill-recover-discard':'可棄 1 張手牌以回收剛才送出場外的卡',
  'effect-mill-recover':'從剛才送出場外的卡回收至多 1 張',
