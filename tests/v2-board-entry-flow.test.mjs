@@ -119,7 +119,7 @@ test('solo and online both ask for the character, then the mode, then the cell',
  assert.match(read('dist/online.css'),/\.online-zones/);
 });
 
-test('online match keeps paid hand choice-free but shows mode options for effect summon',()=>{
+test('online match offers explicit paid Raid mode while keeping direct normal entry and effect modes',()=>{
  const source=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
  const classes=node=>{
   if(!(node instanceof FakeNode))return [];
@@ -169,10 +169,18 @@ test('online match keeps paid hand choice-free but shows mode options for effect
  assert.doesNotMatch(texts(appRoot),/普通進場/);
  vm.runInContext("app.pick={uid:'hand',entryMode:null,options:null};render();",context);
  assert.match(texts(appRoot),/一般出牌：點合法格子普通登場/);
- assert.doesNotMatch(texts(appRoot),/突襲進場/);
- assert.doesNotMatch(texts(appRoot),/普通進場/);
+ assert.match(texts(appRoot),/突襲進場/);
+ assert.match(texts(appRoot),/普通進場/);
  assert.equal(classes(appRoot).some(name=>name.includes('destination')),true,
   'paid normal entry cell remains directly clickable');
+ vm.runInContext("app.pick={uid:'hand',entryMode:'raid',raidBaseUid:null,options:null};render();",context);
+ assert.match(texts(appRoot),/已選突襲進場/);
+ assert.equal(classes(appRoot).some(name=>name.includes('raid-base')),true,
+  'paid Raid mode shows a selectable existing base');
+ vm.runInContext("app.pick={uid:'hand',entryMode:'raid',raidBaseUid:'base',options:null};render();",context);
+ assert.match(texts(appRoot),/已選好底座/);
+ assert.equal(classes(appRoot).some(name=>name.includes('destination')),true,
+  'paid Raid can still use the selected base as a destination');
  vm.runInContext("app.pick={uid:'out',entryMode:null,options:null};render();",context);
  assert.match(texts(appRoot),/普通進場/);
  assert.match(texts(appRoot),/突襲進場/);

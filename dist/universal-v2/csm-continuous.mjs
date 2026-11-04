@@ -10,7 +10,13 @@ const REZE='レゼ';
 const MAKIMA='マキマ';
 
 function named(d,name,silenced){return cardHasName(d,name,silenced===true);}
-function facedowns(c){return (c?.under||[]).filter(x=>x&&x.faceDown===true);}
+// A Raid top sees every card below it, including facedown cards attached to
+// its buried Raid base (e.g. 067 Pochita under Denji -> 048 Chainsaw Man).
+function facedowns(c){
+ if(!c)return [];
+ return [...(c.under||[]).filter(x=>x&&x.faceDown===true),
+  ...(c.stack||[]).flatMap(facedowns)];
+}
 
 export function csmDenjiRetiredThisTurn(s,owner,card){
  return (s.zoneMoveEvents||[]).some(e=>{

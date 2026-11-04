@@ -280,11 +280,22 @@ function tuck(pack,s,owner,from,uid,host,sourceUid){
  host.under??=[];host.under.push(physical);
  A.record(pack,s,{physical,owner,from,to:'raid-under',reason:'own-effect',sourceUid:host.uid});
 }
+function facedownContainer(host,uid){
+ if(!host)return null;
+ if((host.under||[]).some(c=>c?.uid===uid&&c.faceDown===true))return host;
+ for(const base of host.stack||[]){
+  const found=facedownContainer(base,uid);
+  if(found)return found;
+ }
+ return null;
+}
 function peelFacedownUid(pack,s,owner,host,uid,to,sourceUid){
- const under=csmFacedowns(host);
- const physical=under.find(c=>c.uid===uid)||null;
- if(!physical)return null;
- host.under=host.under.filter(c=>c.uid!==physical.uid);
+ // A facedown directly under a Raid base is also under the face-up Raid top.
+ // Detach the real physical card from its owning under[] container.
+ const container=facedownContainer(host,uid);
+ if(!container)return null;
+ const physical=container.under.find(c=>c.uid===uid);
+ container.under=container.under.filter(c=>c.uid!==physical.uid);
  physical.faceDown=false;
  if(to==='hand')plOf(s,owner).hand.push(physical);
  else if(to==='outside')plOf(s,owner).outside.push(physical);

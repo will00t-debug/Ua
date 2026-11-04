@@ -927,8 +927,10 @@ function playHint(room){
    return '再選擇登場方式：普通進場或突襲進場。';
   if(selection.raid.some(a=>a.type==='raid'))return pick.raidBaseUid?
    '一般突襲：已選好底座，請點合法登場位置（可點後線底座原位）。':
+   pick.entryMode==='raid'?
+   '已選突襲進場：先點自己的合法底座，再點要登場的格子。':
    selection.normal.length?
-   '一般出牌：點合法格子普通登場；要突襲請先點底座，再點登場位置。':
+   '一般出牌：點合法格子普通登場；要突襲請按突襲進場或直接點底座。':
    '一般突襲：先點合法底座，再點登場位置。';
   const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
   if(mode==='raid')return pick.raidBaseUid?
@@ -944,8 +946,11 @@ function playHint(room){
 function entryModeButtons(room){
  const legal=room?.choices||[];
  const pick=app.pick||{};
- const selection=pick.uid?boardEntrySelection(legal,pick.uid):{needsMode:false};
- if(!room?.yourTurn||!selection.needsMode||pick.options?.length)return [];
+ const selection=pick.uid?boardEntrySelection(legal,pick.uid):{needsMode:false,normal:[],raid:[]};
+ // Paid Raid normally uses base-first taps. An explicit RAID button also makes
+ // 5/1 Power and similar cards discoverable when ordinary entry is available.
+ const paidDual=selection.normal.length>0&&selection.raid.some(a=>a.type==='raid');
+ if(!room?.yourTurn||(!selection.needsMode&&!paidDual)||pick.options?.length)return [];
  if(pick.entryMode!=='normal'&&pick.entryMode!=='raid')return [
   {label:'普通進場',mode:'normal'},{label:'突襲進場',mode:'raid'}
  ];
