@@ -1818,6 +1818,7 @@ function ensureIys(){
   enter:effectEnter,destinations:legalDestinations,
   retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
   retireSkip:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot,{skipReplacement:true}),
+  afterImpact:(pack,s,owner,hits)=>queueImpactAfterRetirement(pack,s,owner,hits),
   removeSkip:(pack,s,owner,line,slot,controller)=>removeFieldObject(pack,s,owner,line,slot,{controller,skipReplacement:true}),
   bounce:(pack,s,owner,uid,sourceUid)=>bounceToHand(pack,s,owner,uid,sourceUid,{skipReplacement:true}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
