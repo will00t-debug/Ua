@@ -490,10 +490,36 @@ function on065(pack,s,job){
  onLook(pack,s,job,3,c=>def(pack,c).type==='character'&&token(pack,c,'ディケイド',null)||trait(pack,c,RE),
   {where:'bottom',discard:true});
 }
+// EX12BT/KMR-2-068: 2枚まで includes zero, one, and two. Placing one card
+// still retires by that card's printed BP and copies that card's turn text.
+function offer068(pack,s,spec,got,closed){
+ const pool=handWhere(s,spec.player,c=>trait(pack,c,RE));
+ if(closed||!pool.length||got.length>=2){
+  s.pending=null;
+  finish068(pack,s,spec,got);
+  return;
+ }
+ hold(s,{...spec,step:'removeTwo',data:{got}},[
+  ...pool.map(c=>({type:'kmr2',mode:'remove',uid:c.uid})),
+  {type:'kmr2',mode:'done'}
+ ]);
+}
+function finish068(pack,s,spec,uids){
+ const removed=plOf(s,spec.player).removed;
+ const cards=uids.map(uid=>removed.find(c=>c.uid===uid)).filter(Boolean);
+ if(!cards.length)return;
+ const ids=cards.map(c=>def(pack,c).id);
+ const limit=cards.reduce((n,c)=>n+(Number(def(pack,c).bp)||0),0);
+ if(!offerRetire(pack,s,spec,limit,true,null)){
+  copyTurn(s,selfOf(s,spec.player,spec.sourceUid),ids);
+  return;
+ }
+ if(s.pending?.step==='retire')
+  s.pending.data={...(s.pending.data||{}),copyIds:ids};
+}
 function on068(pack,s,job){
  A.draw(pack,s,job.owner,1,job.sourceUid);
- const pool=handWhere(s,job.owner,c=>trait(pack,c,RE));
- offerList(s,specOf(job),'removeTwo',pool,true,null,'remove');
+ offer068(pack,s,specOf(job),[],false);
 }
 function on069(pack,s,job){
  if(job.slot==='onAttack'){
@@ -1158,16 +1184,32 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='retire'){
   s.pending=null;
-  if(hit.mode==='skip')return;
-  const foe=1-q.player;
-  const slot=plOf(s,foe).front.findIndex(c=>c?.uid===hit.uid);
-  if(slot>=0)A.retire(pack,s,foe,'front',slot,{by:'opponent'});
-  if(q.data?.next==='recoverBp'){
-   const retired=plOf(s,foe).outside.find(c=>c.uid===hit.uid);
-   const bp=retired?def(pack,retired).bp:null;
-   const pool=bp==null?[]:zoneWhere(s,q.player,'outside',c=>def(pack,c).type==='character'&&def(pack,c).bp===bp);
-   offerList(s,spec,'hand',pool,true,null,'hand');
+  if(hit.mode!=='skip'){
+   const foe=1-q.player;
+   const slot=plOf(s,foe).front.findIndex(c=>c?.uid===hit.uid);
+   if(slot>=0)A.retire(pack,s,foe,'front',slot,{by:'opponent'});
+   if(q.data?.next==='recoverBp'){
+    const retired=plOf(s,foe).outside.find(c=>c.uid===hit.uid);
+    const bp=retired?def(pack,retired).bp:null;
+    const pool=bp==null?[]:zoneWhere(s,q.player,'outside',c=>def(pack,c).type==='character'&&def(pack,c).bp===bp);
+    offerList(s,spec,'hand',pool,true,null,'hand');
+   }
   }
+  if(Array.isArray(q.data?.copyIds)&&q.data.copyIds.length)
+   copyTurn(s,selfOf(s,q.player,q.sourceUid),q.data.copyIds);
+  return;
+ }
+ if(q.step==='removeTwo'){
+  const got=[...(q.data?.got||[])];
+  if(hit.mode==='done'||hit.mode==='skip'){
+   offer068(pack,s,spec,got,true);
+   return;
+  }
+  if(!plOf(s,q.player).hand.some(c=>c.uid===hit.uid&&trait(pack,c,RE)))
+   throw Error('Kamen Rider vol.2 remove lost a card');
+  moveUid(pack,s,q.player,'hand',hit.uid,'removed',q.sourceUid);
+  got.push(hit.uid);
+  offer068(pack,s,spec,got,false);
   return;
  }
  if(q.step==='hand'||q.step==='toHand'){

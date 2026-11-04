@@ -7,7 +7,8 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {createKmrBattlePack,kmrPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch}
+import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
+ universalBp,universalCardEnergy}
  from '../dist/universal-v2/engine.mjs';
 import {uiActionLabel,controllerChoiceArt,fieldEffectCopy} from '../dist/universal-v2/preview-actions.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
@@ -328,4 +329,138 @@ test('a two-way vol.2 choice names the printed effect',()=>{
  assert.match(top,/牌組/);
  assert.match(alt,/抽最多 1 張/);
  assert.equal(/[A-Za-z]/.test(top+alt),false);
+});
+
+function passionBoard(handIds,{small=true}={}){
+ const s=fresh(fill(
+  ['KMR-2-068','KMR-2-064','KMR-2-070','KMR-2-071','KMR-2-072','KMR-2-063','KMR-2-010','KMR-2-020'],
+  {'KMR-2-045':3,'KMR-2-072':2}
+ ));
+ put(s,0,'KMR-2-045','energy',0,true);
+ put(s,0,'KMR-2-045','energy',1,true);
+ put(s,0,'KMR-2-045','energy',2,true);
+ const decade=put(s,0,'KMR-2-064','front',0,true);
+ const rider=take(s,0,'KMR-2-068');
+ const drawn=take(s,0,'KMR-2-010');
+ const filler=take(s,0,'KMR-2-020');
+ const hand=handIds.map(id=>take(s,0,id));
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].deck.unshift(drawn);
+ s.players[0].hand.push(rider,filler,...hand);
+ const foeSmall=small?put(s,1,'KMR-2-072','front',0,true):null;
+ const foeMid=put(s,1,'KMR-2-071','front',1,true);
+ const foeBig=put(s,1,'KMR-2-063','front',2,true);
+ ready(s);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===rider.uid&&a.baseUid===decade.uid);
+ assert.ok(play);
+ let state=dispatchUniversalAction(packs,s,play);
+ assert.equal(state.pending?.id,'KMR-2-068');
+ assert.equal(state.pending?.step,'removeTwo');
+ assert.equal(state.players[0].hand.some(c=>c.uid===drawn.uid),true);
+ const offered=state.pending.actions.filter(a=>a.mode==='remove').map(a=>a.uid).sort();
+ assert.deepEqual(offered,hand.map(c=>c.uid).sort());
+ assert.equal(state.pending.actions.some(a=>a.uid===filler.uid),false);
+ assert.equal(state.pending.actions.some(a=>a.uid===drawn.uid),false);
+ assert.equal(state.pending.actions.some(a=>a.mode==='done'),true);
+ for(const action of state.pending.actions){
+  const label=uiActionLabel(action,{pack,state});
+  assert.equal(label.includes('執行'),false,label);
+  assert.equal(/kmr/i.test(label),false,label);
+ }
+ assert.equal(uiActionLabel(state.pending.actions.find(a=>a.mode==='done'),{pack,state}),'完成選擇');
+ const shown=state.pending.actions.find(a=>a.uid===hand[0].uid);
+ assert.equal(controllerChoiceArt(packs,state,shown)[0]?.cardId,hand[0].cardId);
+ return {state,rider,hand,foeSmall,foeMid,foeBig};
+}
+function hostOf(state,rider){
+ return state.players[0].front.find(c=>c?.uid===rider.uid);
+}
+function retireTargets(state){
+ return state.pending.actions.filter(a=>a.mode==='retire').map(a=>a.uid);
+}
+
+test('EX12BT/KMR-2-068 removing one re-imagination still retires and copies',()=>{
+ const {state:opened,rider,hand,foeSmall,foeMid,foeBig}=passionBoard(['KMR-2-072']);
+ let state=click(opened,a=>a.mode==='remove'&&a.uid===hand[0].uid);
+ assert.equal(state.players[0].removed.filter(c=>c.uid===hand[0].uid).length,1);
+ assert.equal(state.players[0].hand.some(c=>c.uid===hand[0].uid),false);
+ assert.equal(state.pending?.step,'retire');
+ assert.deepEqual(retireTargets(state),[foeSmall.uid]);
+ assert.equal(retireTargets(state).includes(foeMid.uid),false);
+ assert.equal(retireTargets(state).includes(foeBig.uid),false);
+ state=click(state,a=>a.mode==='retire'&&a.uid===foeSmall.uid);
+ const host=hostOf(state,rider);
+ assert.deepEqual(host.kmr2Copied.ids,['KMR-2-072']);
+ assert.equal(universalBp(pack,state,host),5000);
+ assert.equal(universalCardEnergy(pack,state,0,host),0);
+ assert.equal(state.players[1].front.some(c=>c?.uid===foeSmall.uid),false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===foeSmall.uid).length,1);
+ assert.equal(state.players[0].front.filter(c=>c?.uid===rider.uid).length,1);
+});
+
+test('EX12BT/KMR-2-068 still copies when one removal cannot retire',()=>{
+ const {state:opened,rider,hand,foeMid,foeBig}=passionBoard(['KMR-2-072'],{small:false});
+ const state=click(opened,a=>a.mode==='remove'&&a.uid===hand[0].uid);
+ assert.equal(state.pending,null);
+ const host=hostOf(state,rider);
+ assert.deepEqual(host.kmr2Copied.ids,['KMR-2-072']);
+ assert.equal(universalBp(pack,state,host),5000);
+ assert.equal(state.players[0].removed.filter(c=>c.uid===hand[0].uid).length,1);
+ assert.equal(state.players[1].front.some(c=>c?.uid===foeMid.uid),true);
+ assert.equal(state.players[1].front.some(c=>c?.uid===foeBig.uid),true);
+});
+
+test('EX12BT/KMR-2-068 can stop after placing one of two cards',()=>{
+ const {state:opened,rider,hand,foeSmall,foeMid,foeBig}=passionBoard(['KMR-2-070','KMR-2-072']);
+ const [agito,kiva]=hand;
+ let state=click(opened,a=>a.mode==='remove'&&a.uid===agito.uid);
+ assert.equal(state.pending?.step,'removeTwo');
+ assert.equal(state.players[0].removed.filter(c=>c.uid===agito.uid).length,1);
+ assert.equal(state.pending.actions.some(a=>a.mode==='done'),true);
+ assert.equal(state.pending.actions.some(a=>a.uid===kiva.uid),true);
+ assert.equal(state.pending.actions.some(a=>a.uid===agito.uid),false);
+ assert.equal(uiActionLabel(state.pending.actions.find(a=>a.mode==='done'),{pack,state}),'完成選擇');
+ state=click(state,a=>a.mode==='done');
+ assert.equal(state.pending?.step,'retire');
+ assert.deepEqual(retireTargets(state),[foeSmall.uid]);
+ assert.equal(retireTargets(state).includes(foeMid.uid),false);
+ assert.equal(retireTargets(state).includes(foeBig.uid),false);
+ state=click(state,a=>a.mode==='skip');
+ const host=hostOf(state,rider);
+ assert.deepEqual(host.kmr2Copied.ids,['KMR-2-070']);
+ assert.equal(universalBp(pack,state,host),4500);
+ assert.equal(universalCardEnergy(pack,state,0,host),1);
+ assert.equal(state.players[0].hand.some(c=>c.uid===kiva.uid),true);
+ assert.equal(state.players[0].removed.filter(c=>c.uid===agito.uid).length,1);
+ assert.equal(state.players[1].front.some(c=>c?.uid===foeSmall.uid),true);
+});
+
+test('EX12BT/KMR-2-068 sums both removed cards',()=>{
+ const {state:opened,rider,hand,foeSmall,foeMid,foeBig}=passionBoard(['KMR-2-070','KMR-2-072']);
+ const [agito,kiva]=hand;
+ let state=click(opened,a=>a.mode==='remove'&&a.uid===agito.uid);
+ state=click(state,a=>a.mode==='remove'&&a.uid===kiva.uid);
+ assert.equal(state.pending?.step,'retire');
+ assert.deepEqual(retireTargets(state).sort(),[foeSmall.uid,foeMid.uid].sort());
+ assert.equal(retireTargets(state).includes(foeBig.uid),false);
+ state=click(state,a=>a.mode==='retire'&&a.uid===foeMid.uid);
+ const host=hostOf(state,rider);
+ assert.deepEqual(host.kmr2Copied.ids,['KMR-2-070','KMR-2-072']);
+ assert.equal(universalBp(pack,state,host),5000);
+ assert.equal(universalCardEnergy(pack,state,0,host),1);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===foeMid.uid).length,1);
+ assert.equal(state.players[0].hand.some(c=>c.uid===agito.uid||c.uid===kiva.uid),false);
+ assert.equal(state.players[0].removed.filter(c=>c.uid===agito.uid||c.uid===kiva.uid).length,2);
+ assert.equal(state.players[0].front.filter(c=>c?.uid===rider.uid).length,1);
+});
+
+test('EX12BT/KMR-2-068 can place none of the re-imagination cards',()=>{
+ const {state:opened,rider,hand,foeSmall}=passionBoard(['KMR-2-070','KMR-2-072']);
+ const state=click(opened,a=>a.mode==='done');
+ const host=hostOf(state,rider);
+ assert.equal(state.pending,null);
+ assert.equal(host.kmr2Copied,undefined);
+ assert.equal(hand.every(c=>state.players[0].hand.some(x=>x.uid===c.uid)),true);
+ assert.equal(state.players[0].removed.some(c=>hand.some(x=>x.uid===c.uid)),false);
+ assert.equal(state.players[1].front.some(c=>c?.uid===foeSmall.uid),true);
 });
