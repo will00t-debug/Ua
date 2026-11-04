@@ -1010,7 +1010,8 @@ function legacyCommands(legal){
  const selection=app.selectedUid?boardEntrySelection(legal,app.selectedUid):
   {normal:[],raid:[],needsMode:false};
  const paidRaid=selection.raid.some(a=>a.type==='raid');
- const chosen=paidRaid?(app.raidBaseUid?'raid':selection.normal.length?'normal':'raid'):
+ const paidDual=paidRaid&&selection.normal.length>0;
+ const chosen=paidRaid?(app.raidBaseUid||app.entryMode==='raid'?'raid':selection.normal.length?'normal':'raid'):
   selection.needsMode&&(app.entryMode==='normal'||app.entryMode==='raid')?
   app.entryMode:selection.needsMode?null:selection.raid.length?'raid':
   selection.normal.length?'normal':null;
@@ -1054,14 +1055,16 @@ function legacyCommands(legal){
    '以活動狀態登場。請直接點亮起的格子。':(name?name+'：':'')+
    (paidRaid?(app.raidBaseUid?
     '一般突襲：已選好底座，請點合法登場位置（可點後線底座原位）。':
+    chosen==='raid'?
+    '突襲進場：先點合法底座，再點登場位置。':
     selection.normal.length?
-    '一般出牌：點合法格子普通登場；要突襲請先點底座，再點登場位置。':
+    '普通登場點合法格子；突襲可按突襲進場或先點底座。':
     '一般突襲：先點合法底座，再點登場位置。'):
     chosen==='raid'?(app.raidBaseUid?
     '已選好底板，請點登場格子（可點底板原位）。':
     '突襲登場：先點底板，再點登場格子。'):
     '普通進場。請直接點要登場的格子。')}));
-  if(selection.needsMode)bar.append(btn(chosen==='raid'?'改為普通進場':'改為突襲進場',()=>{
+  if(selection.needsMode||paidDual)bar.append(btn(chosen==='raid'?'改為普通進場':'改為突襲進場',()=>{
    app.entryMode=chosen==='raid'?'normal':'raid';app.raidBaseUid=null;app.targetChoices=null;render();
   },'btn small quiet'));
  }
