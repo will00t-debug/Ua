@@ -113,10 +113,14 @@ export function kmr2SelectTax(pack,s,c,card,suppressed){
  if(!idsOf(printed,c).includes('KMR-2-071'))return 0;
  return fieldHas(pack,s,owner,card,'ディケイド')?1:0;
 }
-export function kmr2HandApCut(pack,s,owner,d,card){
+export function kmrPrNextDecadeMatches(d){
+ return d?.type==='character'&&String(d.name||'').includes('ディケイド')&&!d.raidName;
+}
+export function kmr2HandApCut(pack,s,owner,d,card,from){
  let n=0;
  if(d?.id==='KMR-2-073'&&fieldHas(pack,s,owner,card,'ディケイド'))n+=1;
  if(cardHasTrait(d,ADVENT)&&s.kmr2NextAdventAp?.[owner]===s.turn)n+=1;
+ if(from!=='removed'&&s.kmrPrNextDecadeAp?.[owner]===s.turn&&kmrPrNextDecadeMatches(d))n+=1;
  return n;
 }
 export function kmr2BlockFloors(pack,s,attacker,card,suppressed){

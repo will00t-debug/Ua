@@ -4,6 +4,7 @@
 // Display text is the official Traditional Chinese printing.
 // The engine matches effectJa. Registration is not an official FAQ certification.
 import {KMR2_CARDS} from '../kmr-vol2-cards.mjs';
+import {KMR_PR_CARDS} from '../kmr-pr-cards.mjs';
 import {kmr2EngineKind} from './kmr2-kinds.mjs';
 import {kmr2Implements} from './kmr2-runtime.mjs';
 import {createUniversalPack} from './pack.mjs';
@@ -114,7 +115,10 @@ const BY_ID={
  'KMR-2-096':{kmr2Hook:true,effects:{onPlay:[job('KMR-2-096','onPlay')]}},
  'KMR-2-097':{enterAlwaysActive:true,mainAbility:main('KMR-2-097'),effects:{}},
  'KMR-2-099':{effects:{onPlay:[job('KMR-2-099','onPlay')]}},
- 'KMR-2-100':{effects:{onPlay:[job('KMR-2-100','onPlay')]}}
+ 'KMR-2-100':{effects:{onPlay:[job('KMR-2-100','onPlay')]}},
+ 'KMR-P-003':{effects:{onPlay:[job('KMR-P-003','onPlay')]}},
+ 'KMR-P-004':{effects:{onPlay:[job('KMR-P-004','onPlay')]}},
+ 'KMR-P-005':{mainAbility:main('KMR-P-005'),effects:{onPlay:[job('KMR-P-005','onPlay')]}}
 };
 
 const EXTRA={
@@ -187,6 +191,12 @@ export function kmr2PackCard(card){
 export function kmr2PackCards(){
  const cards=KMR2_CARDS.map(kmr2PackCard);
  if(cards.length!==100)throw Error('Kamen Rider vol.2 registered count drifted');
+ return cards;
+}
+
+export function kmrPrPackCards(){
+ const cards=KMR_PR_CARDS.map(kmr2PackCard);
+ if(cards.length!==3)throw Error('Kamen Rider promo count drifted');
  return cards;
 }
 

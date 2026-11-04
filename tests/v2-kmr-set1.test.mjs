@@ -43,7 +43,7 @@ test('yellow starter practice deck uses only the 18 starter identities',()=>{
  assert.deepEqual(validateUniversalDeck(built.pack,built.counts),[]);
  const status=editorV2Status('kmr',built.counts);
  assert.equal(status.ready,true,status.issues.join('；'));
- assert.equal(status.registered,213);
+ assert.equal(status.registered,216);
 });
 
 function countsFor(required){

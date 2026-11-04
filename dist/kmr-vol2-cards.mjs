@@ -1,8 +1,9 @@
 // Official EX12BT Kamen Rider Vol.2. Fetched 2026-11-01 from
 // unionarena-tcg.com (JP series 570212, TC series 590212). Display text is
 // the official Traditional Chinese printing. The engine matches effectJa.
-// Traits inside ［特徵：］ stay the printed Japanese token. Parallel art and
-// AP cards are not deck cards. BP+ is a design mark. Generated energy uses
+// Traits inside ［特徵：］ stay the printed Japanese token. Parallel character
+// art is not a separate deck card. Action-point cards live in
+// kmr-point-cards.mjs and are not deck cards. BP+ is a design mark. Generated energy uses
 // the icon filename, not the alt length. Events and fields store BP 0.
 // engineKind classifies effectJa. Registration is not an official FAQ certification.
 export const KMR2_FETCHED='2026-11-01';

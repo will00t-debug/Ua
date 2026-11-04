@@ -50,6 +50,18 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
 .v2-shell .apDots i.available{background:#d97a80;border-color:#ba666d}
 .v2-shell .apDots i.locked{opacity:.4;border-style:dashed}
 .v2-shell .apDots span{margin-left:4px;font-size:10px;color:#7b8593}
+.v2-shell .apRow{display:flex;align-items:flex-end;gap:4px}
+.v2-shell .apCard{width:36px;padding:0;border:0;background:transparent;line-height:0}
+.v2-shell .apCard.pick{outline:2px solid #e0a020;outline-offset:1px;border-radius:3px}
+.v2-shell .apArt{display:block;width:36px;aspect-ratio:2/2.82;border:1px solid #aeb9c7;border-radius:3px;overflow:hidden;background:#fff}
+.v2-shell .apArt img{display:block;width:100%;height:100%;object-fit:contain}
+.v2-shell .apArt.rested img{transform:rotate(90deg)}
+.v2-shell .apArt.locked{opacity:.4}
+.v2-shell .apArt.ready{border-color:#ba666d}
+.v2-shell .apCount{font-size:10px;color:#7b8593;line-height:1.2}
+@media(max-width:760px){
+ .v2-shell .apCard,.v2-shell .apArt{width:26px}
+}
 .v2-shell .lineGroup{display:grid;grid-template-columns:75px minmax(0,1fr) 70px;align-items:center;gap:12px;max-width:730px;margin:7px auto}
 .v2-shell .lineLabel{font-size:10px;color:#919ca9;letter-spacing:.35px}
 .v2-shell .slots{display:grid;grid-template-columns:repeat(4,minmax(0,72px));justify-content:center;gap:14px;width:100%;max-width:400px;margin:auto}

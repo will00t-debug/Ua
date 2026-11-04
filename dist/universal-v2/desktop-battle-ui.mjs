@@ -19,6 +19,8 @@ export function desktopVisibleCards(view){
   // future caller accidentally supplies an unredacted hand alongside the view.
   if(side===0)for(const card of player.hand||[])
    if(card?.uid&&card.cardId)visible.push({side,line:'hand',card});
+  for(const [index,card] of (player.apCards||[]).entries())
+   if(card?.cardId)visible.push({side,line:'ap',card:{...card,uid:'AP'+side+'-'+index}});
  }
  return visible;
 }
@@ -58,6 +60,8 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
    .filter(([,amount])=>amount>0).map(([color,amount])=>(colorNames[color]||color)+' '+amount).join(' / ')||'能源 0';
   const ap=resources?.querySelector('.apDots>span');
   if(ap)ap.textContent='AP '+player.apReady+' / '+player.apTotal;
+  const apCount=resources?.querySelector('.apRow .apCount');
+  if(apCount)apCount.textContent='行動值 '+player.apReady+' / '+player.apTotal;
   panels.push(panel);
  }
  const opponentInfo=opponent.querySelector('.playerInfo');
@@ -91,7 +95,11 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
   const picture=el('button',{type:'button',class:'v2-desktop-preview-art',
    'aria-label':'放大 '+name+' 的卡圖與效果',
    onClick:()=>openCard(side,line,card,definition)},art);
-  const location=(side===0?'我方':'對手')+(line==='hand'?'手牌':line==='front'?'前線':'能源線');
+  const place=line==='hand'?'手牌':line==='front'?'前線':line==='ap'?'行動值卡':'能源線';
+  const pose=line==='hand'?'':line==='ap'
+   ?(card.inPlay?(card.ready?' · 活動':' · 休息'):' · 尚未登場')
+   :(card.ready?' · 直立':' · 橫置');
+  const location=(side===0?'我方':'對手')+place;
   const facts=el('dl',{class:'v2-desktop-card-facts'});
   const bp=line==='front'?card.bp:definition.bp;
   for(const [label,value] of [['BP',bp],['所需能源',definition.energy],
@@ -116,9 +124,7 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
   inspector.replaceChildren(...[el('h2',{text:'卡片檢視'}),picture,
    el('h3',{class:'v2-desktop-card-name',text:name}),
    el('p',{class:'v2-desktop-card-id',text:printed?.identity||printed?.id||card.cardId}),
-   el('p',{class:'v2-desktop-card-location',text:location+
-    (line==='hand'?'':card.ready?' · 直立':' · 橫置')+(depth?' · RAID '+depth+' 層':'')+
-     (facedown?' · '+facedown.title:'')}),
+   el('p',{class:'v2-desktop-card-location',text:location+pose+(depth?' · RAID '+depth+' 層':'')+(facedown?' · '+facedown.title:'')}),
    facts,details,facedownBlock,el('p',{class:'v2-desktop-card-hint',text:'點卡圖放大檢視'})]
    .filter(Boolean));
  }

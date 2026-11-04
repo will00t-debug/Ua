@@ -3,6 +3,7 @@ import {DISCOUNT_KIND,grantHandDiscount,handPlayApPlan,definitionGrantsDiscount}
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
+import {assignPointCards,assertPointCardIdentities} from './point-cards.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
@@ -32,7 +33,7 @@ import {kmrBp,kmrBpImmune,kmrAnchored,kmrEnergyBonus,kmrEnergyCut,kmrEntryActive
 import {csmBp,csmImpactNull,csmBlockAtLeast,csmAttackDamage,
  csmCardCountsAsEvent,csmAlsoEventAuraLive,csmEventUseCount} from './csm-continuous.mjs';
 import {kmr2Bp,kmr2Impact,kmr2ImpactNull,kmr2EnergyBonus,kmr2EnergyCut,kmr2FrontEnergy,
- kmr2SelectTax,kmr2HandApCut,kmr2BlockFloors,kmr2ChoiceImmune,kmr2Protected} from './kmr2-continuous.mjs';
+ kmr2SelectTax,kmr2HandApCut,kmrPrNextDecadeMatches,kmr2BlockFloors,kmr2ChoiceImmune,kmr2Protected} from './kmr2-continuous.mjs';
 import {AOT2_FRONT_PENALTY,aot2Bp,aot2EnergyBonus,aot2FrontEnergy,aot2EnergyCut,
  aot2HandApCut,aot2ConsumeFoodAp,aot2RaidCut,aot2Warhammer,aot2Impact,
  aot2CannotPlay,aot2AttackBlocked,aot2SelectTax,aot2StandingBp} from './aot2-continuous.mjs';
@@ -1994,6 +1995,7 @@ function ensureKmr2(){
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
   retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
+  bounce:(pack,s,owner,uid,sourceUid)=>bounceToHand(pack,s,owner,uid,sourceUid,{reason:'own-effect'}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,go:continueEffectQueue,
@@ -13272,10 +13274,12 @@ function resolveChoice(s,a,pack){
  }
  throw Error('Unsupported pending decision');
 }
-export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=false}={}){
+export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=false,pointCardIds=null}={}){
  const packs=playerPacks(pack);
  if(!Array.isArray(decks)||decks.length!==2||!playerIndex(first)||typeof openingMulligan!=='boolean')
   throw Error('Universal v2 requires one or two title packs and two decks');
+ if(pointCardIds!=null&&(!Array.isArray(pointCardIds)||pointCardIds.length!==2))
+  throw Error('Point cards are chosen per player');
  for(const [i,d] of decks.entries()){
   const issues=validateUniversalDeck(packs[i],d);
   if(issues.length)throw Error('Player '+i+': '+issues.join('; '));
@@ -13304,7 +13308,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=fal
   s.players.push({
    deck:pile,hand:pile.splice(0,7),life:openingMulligan?[]:pile.splice(0,7),lifeRevealed:[],
    front:[null,null,null,null],energy:[null,null,null,null],
-   outside:[],resolvingEvents:[],removed:[],apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false,inPlay:false})),ownTurns:0,
+   outside:[],resolvingEvents:[],removed:[],apCards:assignPointCards(packs[p],p,pointCardIds?pointCardIds[p]:null),ownTurns:0,
    nextNamedHandEnergy:[],handCharacterBpMay:null,
    nextRemovedApCut:null,turnNamedEnergy:[],nextHandEventApCut:null,
    nextPrintedEnergyApCut:null,deckRevealEnergy5:null,armedEntryMayDraw:null
@@ -15888,7 +15892,7 @@ function handApPlan(pack,s,owner,d,opts={}){
  if(d.id==='AOT-1-096'&&field(pl).some(c=>nameContainsToken(card(pack,c),'エレン・イェーガー',originalEffectsDisabled(s,c))))
   extra+=1;
  extra+=aot2HandApCut(pack,s,owner,d);
- extra+=kmr2HandApCut(pack,s,owner,d,card);
+ extra+=kmr2HandApCut(pack,s,owner,d,card,opts.from);
  if(s.kmrMedalAp?.[owner]===s.turn&&d.name==='セルメダル')extra+=1;
  return {cost:Math.max(0,base.cost-extra),ids:base.ids};
 }
@@ -18799,6 +18803,7 @@ if(ability.op==='characterDualMain'){
     if(s.kmrMedalAp?.[p]===s.turn&&d.name==='セルメダル')s.kmrMedalAp[p]=null;
     aot2ConsumeFoodAp(pack,s,p,d);
     if(cardHasTrait(d,'アドベントカード')&&s.kmr2NextAdventAp?.[p]===s.turn)s.kmr2NextAdventAp[p]=null;
+    if(s.kmrPrNextDecadeAp?.[p]===s.turn&&kmrPrNextDecadeMatches(d))s.kmrPrNextDecadeAp[p]=null;
    }
    consumeNextNamedHandEnergy(s,p,d);
    s.continuousStates=s.continuousStates.filter(e=>!payment.ids.includes(e.id));
@@ -19022,7 +19027,7 @@ function assertAotGrants(pack,s){
  }
  if(s.pending?.kind==='kmr2'){
   const q=s.pending;
-  if(typeof q.step!=='string'||!Array.isArray(q.actions)||!/^KMR-2-\d\d\d$/.test(String(q.id||'')))
+  if(typeof q.step!=='string'||!Array.isArray(q.actions)||!/^KMR-(?:2|P)-\d\d\d$/.test(String(q.id||'')))
    throw Error('Invalid Kamen Rider vol.2 pending');
  }
  if(s.aot2CorpsReturned!==undefined){
@@ -23373,6 +23378,7 @@ export function assertUniversalMatch(pack,s){
   const pl=s.players[p],uids=new Set(),items=[];
   if(pl.front?.length!==4||pl.energy?.length!==4||!Array.isArray(pl.resolvingEvents)||!Array.isArray(pl.lifeRevealed)||pl.apCards?.length!==3||
     pl.apCards.some(c=>typeof c.ready!=='boolean'||typeof c.inPlay!=='boolean'||(c.ready&&!c.inPlay)))throw Error('Invalid zones or AP cards');
+  assertPointCardIdentities(packs[p],pl);
   function visit(c){
    if(!c)return;
    if(typeof c.uid!=='string'||uids.has(c.uid)||!c.uid.startsWith(p+'-')||
@@ -23643,8 +23649,9 @@ export function universalPrivateChoices(pack,s,viewer){
    ...field(s.players[1-viewer]),...s.players[1-viewer].outside];
   // 檢索、看牌頂、噴牌：控制者看過的每一張都要列出來，不能選的也要。
   // 新卡把完整視窗的實體 UID 放在 data.uids 或 data.window（由牌庫上到下）。
-  // 排序用 data.left，登場視窗用 data.windowUids。只把符合條件的目標放進
-  // actions 不夠，畫面不會自己補牌。名單只含仍在自己牌庫裡的卡。
+  // 排序用 data.left，登場視窗用 data.windowUids。場外或手牌視窗另記 data.zone。
+  // 只把符合條件的目標放進 actions 不夠，畫面不會自己補牌。
+  // 名單只含仍在自己那個區域裡的卡，不含對手的牌。
   // 新的封閉作品先加入 pending kind 白名單，再加進這個判斷。個別新卡不用再寫顯示。
   const data=q.data&&typeof q.data==='object'?q.data:null;
   const listed=q.step==='lookOrder'?data?.left
@@ -23652,15 +23659,18 @@ export function universalPrivateChoices(pack,s,viewer){
    :Array.isArray(data?.uids)?data.uids
    :Array.isArray(data?.window)?data.window
    :Array.isArray(data?.windowUids)?data.windowUids:null;
-  const deck=s.players[viewer].deck;
+  const zoneName=data?.zone==='outside'||data?.zone==='hand'?data.zone:'deck';
+  const pile=s.players[viewer][zoneName];
   const lookStep=/^(look|mill|reveal|peek|search|keep|take|distinct)/.test(String(q.step||''));
   let windowCards=[];
-  if(Array.isArray(listed)&&listed.length&&Array.isArray(deck)){
-   const found=listed.map(uid=>deck.find(c=>c?.uid===uid)||null);
+  if(Array.isArray(listed)&&listed.length&&Array.isArray(pile)){
+   const found=listed.map(uid=>pile.find(c=>c?.uid===uid)||null);
    const intact=found.every(Boolean);
-   const prefix=intact&&deck.slice(0,listed.length).every((c,i)=>c?.uid===listed[i]);
-   if(intact&&(lookStep||prefix||q.step==='enter'))windowCards=found;
-   else if(lookStep)windowCards=found.filter(Boolean);
+   if(zoneName==='deck'){
+    const prefix=intact&&pile.slice(0,listed.length).every((c,i)=>c?.uid===listed[i]);
+    if(intact&&(lookStep||prefix||q.step==='enter'))windowCards=found;
+    else if(lookStep)windowCards=found.filter(Boolean);
+   }else if(intact)windowCards=found;
   }
   const inspected=windowCards.map(c=>{
    const printed=card(pack,c);
@@ -23812,7 +23822,13 @@ export function universalPublicView(pack,s,viewer=0){
     baseProduces:card(pack,c).gen,produces:universalCardEnergy(pack,s,p,c),
     restrictions:fieldRestrictions(s,p,c),raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer)),
     underLayers:(c.under||[]).map(layer=>layerView(layer,p,viewer))}:null),
-   apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
+   apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,
+   // Slot order is the identity. Publishing AP0-0 would contain the private
+   // deck uid 0-0 as a substring, so the public row keeps ready, inPlay and
+   // the point-card id only.
+   apCards:pl.apCards.map(c=>({ready:!!c.ready,inPlay:!!c.inPlay,
+    ...(typeof c.cardId==='string'?{cardId:c.cardId}:{})})),
+   energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    // Both public zones expose printed identities; private hand/deck/life stay redacted.
    faceUpLife:pl.life.filter(c=>c.faceUp===true).map(c=>({uid:c.uid,cardId:c.cardId})),
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId})),

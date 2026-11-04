@@ -342,9 +342,20 @@ export function isExactLegal(action,legal){
 export function uiActor(state){
  return state.pending?.player??state.active;
 }
+function apPointRecord(pack,state,uid){
+ if(!/^AP[01]-\d+$/.test(String(uid||'')))return null;
+ const owner=Number(String(uid)[2]);
+ const token=state?.players?.[owner]?.apCards?.find(card=>card?.uid===uid);
+ if(typeof token?.cardId!=='string'||!token.cardId)return null;
+ const source=Array.isArray(pack)?pack[owner]:pack;
+ return (source?.pointCards||[]).find(card=>card?.id===token.cardId)||null;
+}
 export function uiCardLabel(pack,state,uid){
  if(uid==null)return '';
- if(/^AP\d-\d+$/.test(uid))return 'AP '+uid.replace(/^AP\d-/, '');
+ if(/^AP\d-\d+$/.test(uid)){
+  const point=apPointRecord(pack,state,uid);
+  return point?.name||('AP '+uid.replace(/^AP\d-/, ''));
+ }
  const owner=Number(String(uid).split('-')[0]);
  if(owner!==0&&owner!==1)return String(uid);
  const sourcePack=Array.isArray(pack)?pack[owner]:pack;
@@ -459,7 +470,9 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
  }
  const table={
   take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',
-  retire:'使這張角色退場',retireOwn:'使這張角色退場',outside:'放到場外',bottom:'放到牌組底',
+  retire:'使這張角色退場',retireOwn:'使這張角色退場',retireFood:'使這張卡退場',
+  switch:'退場1張口嚼獸，改為選擇黃色角色卡',deckTop:'將這張卡放到自己牌組上面',
+  outside:'放到場外',bottom:'放到牌組底',
   top:'留在上面',deploy:'讓這張卡登場',reveal:'公開牌組頂',rest:'使這張角色休息',
   raid:'以突襲登場',mill:'將牌組頂放到場外',remove:'將這張卡移入移除區',removed:'移入移除區',
   enter:'讓這張卡登場',enterAsk:'讓這張角色登場',host:'選擇這張角色',back:'放回',
@@ -929,7 +942,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseLifeOrder':return '先處理此公開 LIFE：'+name();
   case 'chooseLifeEffect':return '先結算登場效果：'+uiCardLabel(pack,state,state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid);
   case 'choosePhaseOrder':return orderEffectLabel(pack,state,action,'先結算此階段效果');
-  case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 '+name();
+  case 'chooseApRecovery':
+   if(action.uid===null)return '完成恢復 AP';
+   return apPointRecord(pack,state,action.uid)?'啟動 '+name():'恢復 '+name();
   case 'chooseLoseBattleReady':return action.uid===null?
    '不給予落敗時 ACTIVE':'給 '+name()+' 本回合落敗時 ACTIVE';
   case 'chooseTraitBanMove':return action.uid===null?
@@ -997,7 +1012,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseReplayBase':return action.mode==='skip'?'不將底板重新登場':
    (action.mode==='active'?'ACTIVE 登場底板':'REST 登場底板')+suffix();
   case 'chooseNamedEnergy':return '讓 '+name()+' 本回合產能增加';
-  case 'chooseActiveAp':return '將 '+name()+' 轉為 ACTIVE';
+  case 'chooseActiveAp':
+   return apPointRecord(pack,state,action.uid)?'將 '+name()+' 轉為活動':'將 '+name()+' 轉為 ACTIVE';
   case 'chooseModeDiscard':return '支付 '+name();
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
@@ -1364,6 +1380,8 @@ function orderChoiceSource(pack,state,action){
  return typeof uid==='string'&&uid?findPrintedCard(pack,state,uid,'effect'):null;
 }
 function findPrintedCard(pack,state,uid,purpose){
+ const point=apPointRecord(pack,state,uid);
+ if(point)return {uid,cardId:point.id,name:point.name,color:'',side:Number(String(uid)[2])};
  const owner=Number(String(uid).split('-')[0]);
  if(owner!==0&&owner!==1)return null;
  const pl=state.players?.[owner];

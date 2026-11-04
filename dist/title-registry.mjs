@@ -14,6 +14,7 @@ import {AOT_CARDS} from './aot-cards.mjs';
 import {AOT2_CARDS} from './aot-vol2-cards.mjs';
 import {KMR_CARDS} from './kmr-cards.mjs';
 import {KMR2_CARDS} from './kmr-vol2-cards.mjs';
+import {KMR_PR_CARDS} from './kmr-pr-cards.mjs';
 import {CSM_CARDS} from './csm-cards.mjs';
 // Isolated catalogue/deck editing; unfinished series are not match-playable.
 export const TITLES=[
@@ -28,7 +29,7 @@ export const TITLES=[
  {id:'inuyasha',label:'犬夜叉',cards:INUYASHA_CARDS,presets:[],playable:false},
  {id:'kjn',label:'我想成為影之強者！',cards:KJN_CARDS,presets:[],playable:false},
  {id:'aot',label:'進擊的巨人',cards:[...AOT_CARDS,...AOT2_CARDS],presets:[],playable:false},
- {id:'kmr',label:'假面騎士',cards:[...KMR_CARDS,...KMR2_CARDS],presets:[],playable:false},
+ {id:'kmr',label:'假面騎士',cards:[...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS],presets:[],playable:false},
  {id:'csm',label:'鏈鋸人',cards:CSM_CARDS,presets:[],playable:false}
 ];
 export function titleOfCard(card){return TITLES.some(t=>t.id===card?.title)?card.title:'bleach';}

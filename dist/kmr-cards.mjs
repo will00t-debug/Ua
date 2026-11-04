@@ -5,8 +5,9 @@
 // wording as the other closed titles. They are not an official TC printing.
 // The engine matches effectJa. Traits inside ［特徵：］ stay the printed
 // Japanese token. One identity per card number. Reprints that match merge
-// into the booster identity and keep both printings. Parallel art and AP
-// cards are not deck cards. BP+ is a design mark: the integer is the printed
+// into the booster identity and keep both printings. Parallel character art
+// is not a separate deck card. Action-point cards live in kmr-point-cards.mjs
+// and are not deck cards. BP+ is a design mark: the integer is the printed
 // base. Generated energy has no printed plus. engineKind is the classifier
 // of effectJa. Registration is not an official FAQ certification.
 export const KMR_FETCHED='2026-11-01';

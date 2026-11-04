@@ -266,8 +266,16 @@ function nonYellowRaid(pack,c){
  const d=def(pack,c);
  return d.type==='character'&&d.color!=='yellow'&&!!d.raidName&&d.bp<=4000;
 }
+function finishPr003(s,spec){
+ const chain=s.kmrPrChain;
+ s.kmrPrChain=null;
+ if(chain?.discard&&plOf(s,spec.player).hand.length)
+  return offerDiscard(s,spec,1,false,null);
+ return false;
+}
 function follow(pack,s,spec,next){
  if(!next)return false;
+ if(next==='pr003Discard')return finishPr003(s,spec);
  if(next==='draw1'){A.draw(pack,s,spec.player,1,spec.sourceUid);return false;}
  if(next==='draw2'){A.draw(pack,s,spec.player,2,spec.sourceUid);return false;}
  if(next==='activeSelf'){
@@ -884,6 +892,68 @@ function on011(pack,s,job){onLook(pack,s,job,3,gavFilter,{where:'bottom',discard
 function on041(pack,s,job){
  onLook(pack,s,job,3,c=>trait(pack,c,SCHOOL),{where:'bottom',after:'schoolDiscard'});
 }
+function settleP003(pack,s,spec,uids,takenUid){
+ const pl=plOf(s,spec.player);
+ let discard=false;
+ if(takenUid){
+  if(!uids.includes(takenUid))throw Error('Kamen Rider promo look lost a card');
+  const index=pl.deck.findIndex(c=>c.uid===takenUid);
+  if(index<0)throw Error('Kamen Rider promo look lost a card');
+  const physical=pl.deck[index];
+  discard=exact(pack,physical,GO,null);
+  A.reveal(pack,s,spec.player,physical);
+  A.move(pack,s,{owner:spec.player,from:'deck',to:'hand',index,reason:'own-effect',sourceUid:spec.sourceUid});
+ }
+ s.kmrPrChain={discard};
+ const left=uids.filter(uid=>uid!==takenUid);
+ if(offerOrder(s,spec,left,'bottom','pr003Discard'))return;
+ finishPr003(s,spec);
+}
+function openP003Pick(pack,s,spec,uids,yellow){
+ const pl=plOf(s,spec.player);
+ const window=uids.map(uid=>pl.deck.find(c=>c.uid===uid)).filter(Boolean);
+ const matches=window.filter(c=>yellow?def(pack,c).type==='character'&&def(pack,c).color==='yellow':exact(pack,c,GO,null));
+ const foods=yellow?[]:ownWhere(s,spec.player,c=>exact(pack,c,GO,s));
+ hold(s,{...spec,step:'pr003Pick',data:{uids:window.map(c=>c.uid),yellow:yellow===true}},[
+  {type:'kmr2',mode:'done'},
+  ...matches.map(c=>({type:'kmr2',mode:'take',uid:c.uid})),
+  ...(foods.length?[{type:'kmr2',mode:'switch'}]:[])
+ ]);
+}
+function onP003(pack,s,job){
+ const window=windowCards(s,job.owner,5);
+ if(!window.length)return;
+ openP003Pick(pack,s,specOf(job),window.map(c=>c.uid),false);
+}
+function onP004(pack,s,job){
+ const pool=ownWhere(s,job.owner,c=>trait(pack,c,RE));
+ if(!pool.length)return;
+ offerList(s,specOf(job),'pr004Bounce',pool,true,null,'bounce');
+}
+function onP005(pack,s,job){
+ const outside=plOf(s,job.owner).outside;
+ if(!outside.length)return;
+ const matches=outside.filter(c=>String(def(pack,c).name||'').includes('サバイブ'));
+ hold(s,{...specOf(job),step:'outsideTop',data:{uids:outside.map(c=>c.uid),zone:'outside'}},[
+  {type:'kmr2',mode:'done'},
+  ...matches.map(c=>({type:'kmr2',mode:'deckTop',uid:c.uid}))
+ ]);
+}
+function mainP005(pack,s,job){
+ const self=selfOf(s,job.owner,job.sourceUid);
+ if(!self||!frontOf(s,job.owner,self)||used(s,self.uid+'|P005'))return;
+ use(s,self.uid+'|P005');
+ if(ownWhere(s,job.owner,c=>def(pack,c).type==='character'&&token(pack,c,'ナイト',s)).length)
+  A.draw(pack,s,job.owner,1,job.sourceUid);
+ if(!ownWhere(s,job.owner,c=>exact(pack,c,'仮面ライダーナイトサバイブ',s)&&faceUpRaidCard(c)).length)return;
+ const pool=handWhere(s,job.owner,c=>exact(pack,c,'仮面ライダー龍騎サバイブ',null))
+  .filter(c=>A.raidBase(pack,s,job.owner,self,def(pack,c)));
+ if(!pool.length)return;
+ hold(s,{...specOf(job),step:'raidSelf',data:{base:self.uid}},[
+  {type:'kmr2',mode:'skip'},
+  ...pool.map(c=>({type:'kmr2',mode:'raid',uid:c.uid}))
+ ]);
+}
 function on086(pack,s,job){onLook(pack,s,job,2,riderFilter,{dest:'outside',where:'top',reveal:false,takeMode:'outside'});}
 function on087(pack,s,job){onLook(pack,s,job,3,riderFilter,{where:'bottom',discard:true});}
 function on089(pack,s,job){onLook(pack,s,job,6,c=>trait(pack,c,ADVENT),{where:'bottom'});}
@@ -920,7 +990,9 @@ const HANDLERS={
  'KMR-2-087|onPlay':on087,'KMR-2-088|onAttack':on088,'KMR-2-089|onPlay':on089,
  'KMR-2-089|main':main089,'KMR-2-093|onPlay':on093,'KMR-2-094|onPlay':on094,
  'KMR-2-094|onRetire':on094,'KMR-2-095|onPlay':on095,'KMR-2-096|onPlay':on096,
- 'KMR-2-097|main':main097,'KMR-2-099|onPlay':on099,'KMR-2-100|onPlay':on100
+ 'KMR-2-097|main':main097,'KMR-2-099|onPlay':on099,'KMR-2-100|onPlay':on100,
+ 'KMR-P-003|onPlay':onP003,'KMR-P-004|onPlay':onP004,
+ 'KMR-P-005|onPlay':onP005,'KMR-P-005|main':mainP005
 };
 
 function resolveStep(pack,s,q,a){
@@ -1393,6 +1465,50 @@ function resolveStep(pack,s,q,a){
   A.readyAp(plOf(s,q.player));
   return;
  }
+ if(q.step==='pr003Pick'){
+  if(hit.mode==='switch'){
+   const foods=ownWhere(s,q.player,c=>exact(pack,c,GO,s));
+   if(!foods.length){openP003Pick(pack,s,spec,q.data.uids,false);return;}
+   hold(s,{...spec,step:'pr003Retire',data:{uids:q.data.uids}},[
+    {type:'kmr2',mode:'skip'},
+    ...foods.map(c=>({type:'kmr2',mode:'retireFood',uid:c.uid}))
+   ]);
+   return;
+  }
+  s.pending=null;
+  settleP003(pack,s,spec,q.data.uids,hit.mode==='take'?hit.uid:null);
+  return;
+ }
+ if(q.step==='pr003Retire'){
+  s.pending=null;
+  let yellow=false;
+  if(hit.mode==='retireFood'){
+   const loc=A.location(s,q.player,hit.uid);
+   if(loc)A.retire(pack,s,q.player,loc.line,loc.slot);
+   yellow=!A.location(s,q.player,hit.uid);
+  }
+  if(s.pending&&s.pending.kind!=='kmr2')return;
+  openP003Pick(pack,s,spec,q.data.uids,yellow);
+  return;
+ }
+ if(q.step==='pr004Bounce'){
+  s.pending=null;
+  if(hit.mode==='skip'||hit.mode==='done')return;
+  if(!A.location(s,q.player,hit.uid))return;
+  const result=A.bounce(pack,s,q.player,hit.uid,q.sourceUid);
+  if(result===false)return;
+  if(s.pending&&s.pending.kind!=='kmr2')return;
+  if(A.location(s,q.player,hit.uid))return;
+  s.kmrPrNextDecadeAp??={};
+  s.kmrPrNextDecadeAp[q.player]=s.turn;
+  return;
+ }
+ if(q.step==='outsideTop'){
+  s.pending=null;
+  if(hit.mode==='done'||hit.mode==='skip')return;
+  moveUid(pack,s,q.player,'outside',hit.uid,'deck',q.sourceUid,'top');
+  return;
+ }
  if(hit.mode==='skip'||hit.mode==='done'){s.pending=null;return;}
  throw Error('Kamen Rider vol.2 choice is not legal');
 }
@@ -1444,6 +1560,7 @@ export function legalKmr2Activations(pack,s,owner,c){
  if(id==='KMR-2-085'&&!used(s,c.uid+'|085')&&handWhere(s,owner,x=>exact(pack,x,VENT,null)).length)push();
  if(id==='KMR-2-089'&&frontOf(s,owner,c)&&!used(s,c.uid+'|089')&&s.kmr2AdventUsed?.[owner]===s.turn)push();
  if(id==='KMR-2-097'&&c.ready&&ownWhere(s,owner,x=>def(pack,x).type==='character').length)push();
+ if(id==='KMR-P-005'&&frontOf(s,owner,c)&&!used(s,c.uid+'|P005'))push();
  return out;
 }
 export function activateKmr2(pack,s,action){
