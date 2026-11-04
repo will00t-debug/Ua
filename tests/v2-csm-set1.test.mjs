@@ -213,6 +213,8 @@ test('Date draw/discard restores AP after earlier Makima-converted event charact
  s=choose(s,a=>a.mode==='draw');
  assert.equal(s.pending?.step,'discard');
  s=choose(s,a=>a.mode==='discard');
+ // Multiple rested AP cards require choosing which AP to activate.
+ if(s.pending?.step==='ap')s=choose(s,a=>a.mode==='ap');
  assert.equal(s.players[0].apCards.filter(a=>a.ready).length,2);
  assertUniversalMatch(packs,s);
 });
