@@ -187,7 +187,7 @@ test('Makima 5: free Date aura choice still activates one AP',()=>{
  assert.equal(s.players[0].apCards.filter(a=>a.ready).length,2);
  assert.equal(handPlayApPlan(s,0,pack.cards['CSM-1-037']).cost,0);
  const date=toHand(s,0,'CSM-1-037');
- s=play(s,date.uid);
+ s=play(s,date.uid,'event');
  assert.equal(s.players[0].apCards.filter(a=>a.ready).length,2);
  s=choose(s,a=>a.mode==='aura');
  assert.equal(s.pending?.step,'auraBuff');
@@ -208,7 +208,7 @@ test('Date draw/discard restores AP after earlier Makima-converted event charact
  assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),1);
  const date=toHand(s,0,'CSM-1-037');
  assert.equal(handPlayApPlan(s,0,pack.cards['CSM-1-037']).cost,1);
- s=play(s,date.uid);
+ s=play(s,date.uid,'event');
  assert.equal(s.players[0].apCards.filter(a=>a.ready).length,1);
  s=choose(s,a=>a.mode==='draw');
  assert.equal(s.pending?.step,'discard');
