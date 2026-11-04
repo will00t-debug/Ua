@@ -4,7 +4,7 @@
 // AP cards are not deck cards and stay out of this pack.
 // This module does not add Re:Zero to the five-title census.
 import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
-import {createUniversalPack,validateUniversalDeck} from './pack.mjs';
+import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261104kmrport1';
 import {REZERO_CARDS} from '../rezero-cards.mjs';
 import {createRezeroV2Pack,rezeroPackCard} from './rezero-pack.mjs';
 import {rezV2RawCards} from './rez-pack.mjs';
@@ -17,7 +17,7 @@ import {createAotV2Pack} from './aot-pack.mjs';
 import {createKmrV2Pack,KMR_STARTER_IDS,kmrPackCard} from './kmr-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
-import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs';
+import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
 
 const CENSUS=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei'];
 let rezeroBattlePack=null;

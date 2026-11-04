@@ -116,6 +116,38 @@ test('the three point-exchange promos are deck characters',()=>{
  assert.equal(pack.pointCards.some(c=>c.id.startsWith('KMR-P-')),false);
 });
 
+test('deck builder lists the three promos as registered V2 cards',async()=>{
+ const {editorV2Status}=await import('../dist/v2-editor-compat.mjs?v=20261104kmrport1');
+ const {TITLES}=await import('../dist/title-registry.mjs');
+ const {renderVisualDeckBuilder}=await import('../dist/visual-deck-builder.mjs?v=20261104kmrport1');
+ const title=TITLES.find(item=>item.id==='kmr');
+ const counts=fill(['KMR-P-003','KMR-P-004','KMR-P-005'],{'KMR-P-003':4,'KMR-P-004':4,'KMR-P-005':4});
+ const status=editorV2Status('kmr',counts);
+ assert.equal(status.registered,title.cards.length);
+ assert.equal(status.registered,216);
+ assert.equal(status.ready,true,status.issues.join('；'));
+ assert.ok(status.issues.every(issue=>!issue.includes('移植')));
+ const picker=renderVisualDeckBuilder({
+  titles:TITLES,titleId:'kmr',ready:false,tab:'pick',search:'',type:'all',color:'all',energy:'all',
+  counts:{},name:'',nameId:'n',savedId:'s',savedOptions:[],saveAction:'saveDeck',newAction:'newDeck',issues:[]
+ });
+ assert.match(picker,/標成「V2 已登錄」的卡可以組進對戰牌組/);
+ assert.doesNotMatch(picker,/未移植|尚未移植|沒有移植/);
+ const html=renderVisualDeckBuilder({
+  titles:TITLES,titleId:'kmr',ready:true,tab:'pick',search:'UAPR/KMR-P',type:'all',color:'all',energy:'all',
+  counts,name:'PR',nameId:'n',savedId:'s',savedOptions:[],saveAction:'saveDeck',newAction:'newDeck',
+  issues:status.issues,v2SupportedIds:status.supported,v2Ready:status.ready
+ });
+ for(const id of ['KMR-P-003','KMR-P-004','KMR-P-005']){
+  const start=html.indexOf(`data-card-id="${id}"`);
+  assert.ok(start>=0,id);
+  const row=html.slice(start,html.indexOf('</article>',start));
+  assert.match(row,/✓ V2 已登錄/);
+  assert.doesNotMatch(row,/尚未移植|未移植/);
+ }
+ assert.doesNotMatch(html,/尚未完整移植|尚未移植|未移植/);
+});
+
 test('Poppingummy can take a Gochizo, or retire one and take a yellow character instead',()=>{
  const s=fresh(fill(['KMR-P-003','KMR-2-013','KMR-2-010','KMR-2-090','KMR-2-091','KMR-2-088','KMR-2-002','KMR-2-001'],
   {'KMR-2-013':2}));

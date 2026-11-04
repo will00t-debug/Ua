@@ -6,8 +6,8 @@
 import {KMR2_CARDS} from '../kmr-vol2-cards.mjs';
 import {KMR_PR_CARDS} from '../kmr-pr-cards.mjs';
 import {kmr2EngineKind} from './kmr2-kinds.mjs';
-import {kmr2Implements} from './kmr2-runtime.mjs';
-import {createUniversalPack} from './pack.mjs';
+import {kmr2Implements} from './kmr2-runtime.mjs?v=20261104kmrport1';
+import {createUniversalPack} from './pack.mjs?v=20261104kmrport1';
 
 const job=(id,slot)=>({op:'kmr2',id,slot});
 const main=id=>({op:'kmr2Main',id});

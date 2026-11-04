@@ -1,8 +1,8 @@
 // Production-only V2 deck compatibility: never use legacy auto, rules or match reducers.
 import {TITLES} from './title-registry.mjs?v=20261104kmrpr1';
 import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
-import {validateUniversalDeck} from './universal-v2/pack.mjs';
-import {officialV2Pack} from './universal-v2/official-entry.mjs';
+import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261104kmrport1';
+import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261104kmrport1';
 
 export const LEGACY_DECK_KEYS=Object.freeze({
  bleach:['bleach-arena-deck-v1','bleach-arena-saved-decks-v1'],
