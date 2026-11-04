@@ -25,12 +25,12 @@ export const LEARN_ASSIST_CAP_MAX=40;
 // reproduced discard stays below that position's two-point search gap.
 export const LEARN_BONUS_THRESHOLD=LEARN_MARGIN;
 export const LEARN_BONUS_RATE=4;
-// Raw-score cap, applied before the learning bonus. An alternative whose hard
-// search score is lower than the hard choice by more than this much stays on
-// the hard choice, even when the bonus would have crossed the search margin.
-// Zero means a learning switch can only break an exact tie. Held-out seeds
-// 31 and 32, which are not the training seeds 11/12 or the report seeds 21/22,
-// favored ties only over a 0.5 gap. Do not retune this on the report seeds.
+// Raw-score cap, applied before the learning bonus. Learning only considers
+// moves whose raw score is the same or higher. A lower raw score stays on the
+// hard move, even when the bonus would have crossed the search margin.
+// The cap stays 0. Familiarity, safety and the existing switch thresholds
+// still apply. Held-out seeds 31 and 32 favored this over a 0.5 gap.
+// Report seeds 21 and 22 were not used to choose it; both sides won 12/24.
 export const LEARN_RAW_GAP=0;
 // A split can be valid with one held-out match. Enabling the model needs more.
 export const LEARN_MIN_VALIDATION_MATCHES=2;

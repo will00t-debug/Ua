@@ -28,7 +28,9 @@ function memoryStorage(seed={}){
  return {
   getItem(key){return data.has(key)?data.get(key):null;},
   setItem(key, value){data.set(String(key), String(value));},
-  removeItem(key){data.delete(key);}
+  removeItem(key){data.delete(key);},
+  get length(){return data.size;},
+  key(index){return [...data.keys()][index]??null;}
  };
 }
 function consented(){return memoryStorage({[COACH_CONSENT_KEY]:'1'});}
@@ -493,6 +495,120 @@ test('turning consent off drops an upload that is already in flight', async()=>{
  assert.equal(queue.length, 0);
 });
 
+test('two open queues keep each account record when adds and uploads interleave', async()=>{
+ const storage=memoryStorage();
+ const matchA='m'+'a'.repeat(32);
+ const matchB='m'+'b'.repeat(32);
+ const first={clientKey:matchA+':0:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:0, accountId:ME};
+ const second={clientKey:matchA+':1:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:1, accountId:ME};
+ const other={clientKey:matchB+':0:human', format:'ua-v2-coach-step-v2', matchId:matchB, step:0, accountId:OTHER};
+ const sameKey={...first, accountId:OTHER, matchId:matchB, step:0};
+ const addedDuringUpload={clientKey:matchB+':1:human', format:'ua-v2-coach-step-v2', matchId:matchB, step:1, accountId:OTHER};
+ let who=ME;
+ const sent=[];
+ let release;
+ function open(){
+  return createDecisionQueue({
+   storage,
+   consent:()=>true,
+   account(){return who;},
+   schedule(){return 1;},
+   send(body){
+    sent.push(body.accountId+':'+body.clientKey);
+    if(body.accountId===ME&&body.clientKey===first.clientKey)
+     return new Promise(resolve=>{release=()=>resolve({ok:true});});
+    return Promise.resolve({ok:true});
+   }
+  });
+ }
+ const tab1=open();
+ const tab2=open();
+ tab1.start();
+ tab2.start();
+ assert.equal(tab1.enqueue(first).queued, true);
+ assert.equal(tab2.enqueue(other).queued, true);
+ assert.equal(tab1.enqueue(second).queued, true);
+ assert.equal(tab2.enqueue(first).skipped, 'queued');
+ assert.equal(tab2.enqueue(sameKey).queued, true);
+ const loaded=JSON.parse(storage.getItem('ua-v2-coach-queue-v1')).map(item=>item.body.accountId+':'+item.clientKey);
+ assert.deepEqual(loaded, [
+  ME+':'+first.clientKey,
+  OTHER+':'+other.clientKey,
+  ME+':'+second.clientKey,
+  OTHER+':'+sameKey.clientKey
+ ]);
+ const reloadedBeforeUpload=open();
+ assert.equal(reloadedBeforeUpload.length, 4);
+ const flushing=tab1.flushNow();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(tab2.enqueue(second).skipped, 'queued');
+ assert.equal(tab2.enqueue(addedDuringUpload).queued, true);
+ release();
+ await flushing;
+ assert.deepEqual(sent.filter(item=>item.startsWith(ME+':')), [ME+':'+first.clientKey, ME+':'+second.clientKey]);
+ const afterUpload=JSON.parse(storage.getItem('ua-v2-coach-queue-v1')).map(item=>item.body.accountId+':'+item.clientKey);
+ assert.deepEqual(afterUpload, [
+  OTHER+':'+other.clientKey,
+  OTHER+':'+sameKey.clientKey,
+  OTHER+':'+addedDuringUpload.clientKey
+ ]);
+ storage.setItem('ua-v2-coach-queue-v1', JSON.stringify([
+  {clientKey:first.clientKey, body:first, attempts:0, bytes:1, holdUntil:0},
+  ...JSON.parse(storage.getItem('ua-v2-coach-queue-v1'))
+ ]));
+ const reloaded=open();
+ assert.equal(reloaded.length, 3);
+ who=OTHER;
+ await tab2.flushNow();
+ assert.deepEqual(sent.filter(item=>item.startsWith(OTHER+':')), [
+  OTHER+':'+other.clientKey,
+  OTHER+':'+sameKey.clientKey,
+  OTHER+':'+addedDuringUpload.clientKey
+ ]);
+ assert.equal(reloaded.length, 0);
+ await tab1.flushNow();
+ assert.equal(JSON.parse(storage.getItem('ua-v2-coach-queue-v1')).length, 0);
+});
+
+test('a legacy queue migrates owned rows and keeps an unknown row paused', async()=>{
+ const matchA='m'+'c'.repeat(32);
+ const matchB='m'+'d'.repeat(32);
+ const unknown={
+  clientKey:matchA+':0:human',
+  body:{clientKey:matchA+':0:human', format:'ua-v2-coach-step-v2', matchId:matchA, step:0},
+  attempts:0, bytes:10, holdUntil:0
+ };
+ const mine={
+  clientKey:matchB+':0:human',
+  body:{clientKey:matchB+':0:human', format:'ua-v2-coach-step-v2', matchId:matchB, step:0, accountId:ME},
+  attempts:0, bytes:10, holdUntil:0
+ };
+ const storage=memoryStorage({'ua-v2-coach-queue-v1':JSON.stringify([unknown, mine])});
+ const sent=[];
+ const queue=createDecisionQueue({
+  storage,
+  consent:()=>true,
+  account(){return ME;},
+  schedule(){return 1;},
+  async send(body){sent.push(body.clientKey);return {ok:true};}
+ });
+ queue.start();
+ await queue.flushNow();
+ assert.deepEqual(sent, [mine.clientKey]);
+ assert.equal(queue.length, 1);
+ assert.equal(queue.paused(ME), 1);
+ const again=createDecisionQueue({
+  storage,
+  consent:()=>true,
+  account(){return ME;},
+  schedule(){return 1;},
+  async send(){return {ok:true};}
+ });
+ assert.equal(again.length, 1);
+ assert.equal(JSON.parse(storage.getItem('ua-v2-coach-queue-v1'))[0].clientKey, unknown.clientKey);
+ assert.equal(JSON.parse(storage.getItem('ua-v2-coach-queue-v1'))[0].body.accountId, undefined);
+});
+
 test('reloading the same match drops the interrupt label before it can upload', async()=>{
  const header=headerFor();
  const paths=[];
@@ -806,7 +922,7 @@ test('a delayed online reply keeps the account captured before the request', asy
  assert.equal(queued.accountId, ME);
  assert.equal(queued.seat, 0);
  assert.equal(queued.observation.visible.players[0].hand[0].uid, '0-7');
- await tab1.result({...room, accountId:OTHER, revision:3}, 'interrupted', {completed:false, winner:null});
+ await tab1.result(room, 'interrupted', {completed:false, winner:null});
  const tab2=collector();
  tab2.start();
  await tab1.flush();
@@ -816,6 +932,13 @@ test('a delayed online reply keeps the account captured before the request', asy
  await tab2.flush();
  assert.equal(posted.length, 2);
  assert.equal(posted.every(item=>item.accountId===ME), true);
+ await tab1.result({...room, accountId:OTHER, seat:1}, 'conceded', {completed:false, winner:0});
+ const split=JSON.parse(shared.getItem('ua-v2-decision-online-v1'));
+ assert.notEqual(split[OTHER+':1:'+room.code].matchId, split[ME+':0:'+room.code].matchId);
+ who=OTHER;
+ await tab1.flush();
+ assert.equal(posted.at(-1).accountId, OTHER);
+ assert.equal(posted.at(-1).matchId, split[OTHER+':1:'+room.code].matchId);
  const other=collector();
  other.start();
  who=OTHER;
@@ -892,7 +1015,7 @@ test('switching accounts while an online action is in flight does not give the h
  assert.equal(queued.accountId, firstMe.data.id);
  const handUid=queued.observation.visible.players[0].hand[0].uid;
  assert.equal(queued.observation.visible.players[0].hand.length, 7);
- await tab1.result({...view.data, accountId:secondMe.data.id, status:'finished'}, 'interrupted', {completed:false, winner:null});
+ await tab1.result(view.data, 'interrupted', {completed:false, winner:null});
  const tab2=collector();
  tab2.start();
  await tab1.flush();
@@ -930,4 +1053,92 @@ test('switching accounts while an online action is in flight does not give the h
  const sessions=JSON.parse(shared.getItem('ua-v2-decision-online-v1'));
  assert.equal(Object.keys(sessions).some(key=>key===firstMe.data.id+':'+view.data.seat+':'+created.data.code), true);
  assert.equal(Object.keys(sessions).some(key=>key.startsWith(secondMe.data.id+':')), false);
+});
+
+test('a concede from the other seat stays on that seat and the first account can still finish', {timeout:180000}, async()=>{
+ const first=await api('/api/register', {method:'POST', body:{username:'認輸甲', password}});
+ const second=await api('/api/register', {method:'POST', body:{username:'認輸乙', password}});
+ assert.equal(first.status, 201, first.text);
+ assert.equal(second.status, 201, second.text);
+ const firstDeck=await api('/api/decks', {method:'POST', token:first.data.token, body:{
+  name:'認輸甲', title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}, localId:'concede-a'}});
+ const secondDeck=await api('/api/decks', {method:'POST', token:second.data.token, body:{
+  name:'認輸乙', title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}, localId:'concede-b'}});
+ const created=await api('/api/rooms', {method:'POST', token:first.data.token, body:{deckId:firstDeck.data.deck.id, first:'me'}});
+ const joined=await api('/api/rooms/'+created.data.code+'/join', {method:'POST', token:second.data.token, body:{deckId:secondDeck.data.deck.id}});
+ assert.equal(joined.status, 200, joined.text);
+ const firstMe=await api('/api/me', {token:first.data.token});
+ const secondMe=await api('/api/me', {token:second.data.token});
+ const shared=consented();
+ let who=first.data;
+ const posted=[];
+ const tab=createOnlineCollector({
+  storage:shared,
+  schedule(){return 1;},
+  deckById:()=>({title:'bleach', counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}}),
+  fetchImpl:async(path, options)=>{
+   const response=await fetch(ctx.base+path, {
+    method:options?.method||'GET',
+    headers:{accept:'application/json', ...(options?.headers||{}), authorization:'Bearer '+who.token},
+    body:options?.body
+   });
+   const data=await response.json().catch(()=>null);
+   if(path!=='/api/me')posted.push({path, status:response.status, data, body:JSON.parse(options.body)});
+   return {ok:response.ok, status:response.status, json:async()=>data};
+  }
+ });
+ tab.start();
+ const view=await api('/api/rooms/'+created.data.code, {token:first.data.token});
+ const otherView=await api('/api/rooms/'+created.data.code, {token:second.data.token});
+ assert.equal(view.data.accountId, firstMe.data.id);
+ assert.equal(view.data.seat, 0);
+ assert.equal(otherView.data.accountId, secondMe.data.id);
+ assert.equal(otherView.data.seat, 1);
+ assert.equal(tab.arm(view.data, view.data.choices[0]), true);
+ const acted=await api('/api/rooms/'+created.data.code+'/actions', {method:'POST', token:first.data.token, body:{index:0}});
+ assert.equal(acted.status, 200, acted.text);
+ await tab.settle(acted.data);
+ assert.equal(tab.queued, 1);
+ await tab.flush();
+ assert.equal(posted.at(-1).status, 200);
+ const sessionsBefore=JSON.parse(shared.getItem('ua-v2-decision-online-v1'));
+ const firstKey=firstMe.data.id+':0:'+created.data.code;
+ const firstMatch=sessionsBefore[firstKey].matchId;
+ who=second.data;
+ await tab.prepare(otherView.data);
+ const prepared=JSON.parse(shared.getItem('ua-v2-decision-online-v1'));
+ const secondKey=secondMe.data.id+':1:'+created.data.code;
+ assert.equal(typeof prepared[secondKey].matchId, 'string');
+ assert.notEqual(prepared[secondKey].matchId, firstMatch);
+ assert.equal(prepared[firstKey].matchId, firstMatch);
+ await tab.result(otherView.data, 'conceded', {completed:false, winner:0});
+ await tab.flush();
+ const concede=posted.at(-1);
+ assert.equal(concede.status, 200, JSON.stringify(concede.data));
+ assert.equal(concede.body.accountId, secondMe.data.id);
+ assert.equal(concede.body.matchId, prepared[secondKey].matchId);
+ assert.equal(concede.body.endReason, 'conceded');
+ const secondList=await api('/api/coach/matches', {token:second.data.token});
+ assert.equal(secondList.data.matches.length, 1);
+ assert.equal(secondList.data.matches[0].id, prepared[secondKey].matchId);
+ assert.equal(secondList.data.matches[0].label.endReason, 'conceded');
+ const firstAfterConcede=await api('/api/coach/matches/'+firstMatch, {token:first.data.token});
+ assert.equal(firstAfterConcede.status, 200, firstAfterConcede.text);
+ assert.equal(firstAfterConcede.data.match.label, null);
+ who=first.data;
+ await tab.result(view.data, 'life-zero', {completed:true, winner:0});
+ await tab.flush();
+ const finished=posted.at(-1);
+ assert.equal(finished.status, 200, JSON.stringify(finished.data));
+ assert.notEqual(finished.status, 409);
+ assert.equal(finished.body.accountId, firstMe.data.id);
+ assert.equal(finished.body.matchId, firstMatch);
+ assert.equal(finished.body.endReason, 'life-zero');
+ assert.equal(finished.data.duplicate, false);
+ const firstDone=await api('/api/coach/matches/'+firstMatch, {token:first.data.token});
+ assert.equal(firstDone.data.match.label.endReason, 'life-zero');
+ const secondStill=await api('/api/coach/matches/'+prepared[secondKey].matchId, {token:second.data.token});
+ assert.equal(secondStill.data.match.label.endReason, 'conceded');
+ const hidden=await api('/api/coach/matches/'+firstMatch, {token:second.data.token});
+ assert.equal(hidden.status, 404);
 });

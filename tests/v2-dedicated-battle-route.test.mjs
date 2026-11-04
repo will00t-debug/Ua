@@ -164,6 +164,9 @@ test('setup launches the new URL and battle-only boot preserves V2 reducer, AI a
  assert.doesNotMatch(code,/if\(!restoreBattleProgress\(\)\)void startGame\(\)/);
  assert.match(code,/if\(app\.progressRead==='absent'\)void startGame\(\{account\}\)/);
  assert.match(code,/這份續局無法讀取，原進度已保留/);
+ assert.match(code,/無法確認帳號，這一局的進度已保留/);
+ assert.match(code,/這場屬於另一個帳號。請回到對戰設定，由目前的帳號另開一局/);
+ assert.match(code,/if\(launchOwner&&launchOwner!==owner\)return/);
  assert.match(code,/不記錄練習/);
  assert.match(code,/learningBattleMode\(payload,\{accountId:app\.battleAccountId\}\)/);
  assert.match(read('dist/universal-v2/learn-policy.mjs'),/模型帳號與本場不符/);

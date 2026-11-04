@@ -44,7 +44,7 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
-import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104account1';
+import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104event1';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261101coachart1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
@@ -1047,7 +1047,10 @@ function legacyCommands(legal){
 // This private, same-tab snapshot is never shared with the opponent or Worker.
 function saveBattleProgress(){
  if(!IS_BATTLE_PAGE||!app.launch||!app.state||!app.replay||app.unrecorded)return;
- if(soloProgressOwner(app.battleAccountId)==null)return;
+ const owner=soloProgressOwner(app.battleAccountId);
+ if(owner==null)return;
+ const launchOwner=soloProgressOwner(app.launch.config?.accountId);
+ if(launchOwner&&launchOwner!==owner)return;
  try{
   const data={version:1,accountId:soloProgressOwner(app.battleAccountId),
    launchId:app.launch.config.id,state:app.state,replay:app.replay,
@@ -1326,6 +1329,9 @@ function applyLearningResolution(resolution){
  return false;
 }
 async function resolveLearning(){
+ const launchOwner=soloProgressOwner(app.launch?.config?.accountId);
+ const bound=soloProgressOwner(app.battleAccountId);
+ if(launchOwner&&bound!==launchOwner)return 'kept';
  const requested=app.launch?.config?.difficulty||app.aiDifficulty;
  if(requested!=='learned'){
   app.aiDifficulty=requested;
@@ -1495,6 +1501,7 @@ function render(){
   const oldScroll=window.scrollY;
   target.replaceChildren();
   renderCoachReview(target);
+  if(app.error)target.prepend(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
   if(IS_BATTLE_PAGE)window.scrollTo(window.scrollX,oldScroll);
   return;
  }
@@ -1515,11 +1522,13 @@ function render(){
    el('h2',{text:'尚未開始對戰'}),
    el('p',{text:'請先在對戰設定頁選擇雙方牌組與 AI 難度，再開始 V2 對戰。'}),
    el('a',{href:'/universal-v2-preview.html',text:'返回對戰設定'})));
+  if(app.error)target.prepend(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
   return;
  }
  const s=app.state;
  if(s.phase==='setup'&&s.pending?.kind==='opening-mulligan'){
   renderOpeningMulligan(target,s);
+  if(app.error)target.prepend(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
   return;
  }
  const v=universalPublicView(app.packs,s,0),legal=presentLifeRaid(legalUniversalActions(app.packs,s));
@@ -2004,14 +2013,34 @@ async function launchBattle(){
   window.location.assign(SOLO_BATTLE_URL);
  }catch(error){alertText(error?.message||String(error));}
 }
+function restartAccountMatches(account){
+ const launchOwner=soloProgressOwner(app.launch?.config?.accountId);
+ const liveOwner=soloProgressOwner(account);
+ const boundOwner=soloProgressOwner(app.battleAccountId);
+ if(launchOwner&&launchOwner!==liveOwner)return false;
+ if(boundOwner&&boundOwner!==liveOwner)return false;
+ if(app.state&&(account==null)!==(app.battleAccountId==null))return false;
+ return true;
+}
 // Battle route only: preserve the V2 legal reducer, AI, mulligan and replay.
 // The same control is used for a deliberate "重開對局" on the new page.
 async function startGame(options={}){
- resetAi();
  try{
   if(!IS_BATTLE_PAGE||!app.launch)throw Error('請先選擇牌組，再開始 V2 對戰。');
-  const account=Object.prototype.hasOwnProperty.call(options,'account')?options.account:await currentAccountId();
-  if(account===undefined)throw Error('無法確認帳號，尚未開始對局。');
+  const explicit=Object.prototype.hasOwnProperty.call(options,'account');
+  const account=explicit?options.account:await currentAccountId();
+  if(account===undefined){
+   app.error='無法確認帳號，這一局的進度已保留。';
+   render();
+   return;
+  }
+  if(!restartAccountMatches(account)){
+   resetAi();
+   app.error='這場屬於另一個帳號。請回到對戰設定，由目前的帳號另開一局。';
+   render();
+   return;
+  }
+  resetAi();
   app.battleAccountId=account;
   app.unrecorded=account==null||app.launch?.config?.unrecorded===true;
   const [mine,foe]=app.launch.decks;

@@ -3,8 +3,9 @@
 // The opponent's hidden cards are not on this client and are not uploaded.
 // The account, room, seat and revision are fixed when that view is received.
 // A delayed reply keeps that identity; it is not retagged after a login change.
+// An end marker uses the account, room and seat bound to that event.
 import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
-import {createDecisionQueue} from './coach-queue.mjs';
+import {createDecisionQueue} from './coach-queue.mjs?v=20261104event1';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
  tableChoices,chainOf,deckSnapshot} from './coach-format.mjs';
@@ -121,9 +122,14 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   start(){queue.start();},
   async prepare(room){
    if(!room?.code)return;
-   if(session?.code===room.code&&validAccountId(room.accountId)!==session.accountId)return;
-   const current=await ensure(room);
-   if(!current)return;
+   const accountId=validAccountId(room.accountId);
+   const seat=Number(room.seat);
+   if(!accountId||(seat!==0&&seat!==1)){
+    pause('無法確認帳號，這筆結果已暫停上傳。');
+    return;
+   }
+   const current=await ensure({accountId, seat, code:room.code});
+   if(!current||current.accountId!==accountId||current.seat!==seat||current.code!==room.code)return;
    const deck=deckById?.(room.you?.deckId);
    const titles=Array.isArray(room.view?.playerTitles)&&room.view.playerTitles.length===2
     ?room.view.playerTitles.slice():null;
@@ -212,27 +218,25 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   },
   async result(room,endReason,{completed,winner,holdMs=0}={}){
    if(!this.consent()||!room?.view)return;
-   const bound=session?.code===room.code?session:null;
-   const identity=bound&&validAccountId(room.accountId)!==bound.accountId?bound:room;
-   if(!validAccountId(identity.accountId)){
+   const accountId=validAccountId(room.accountId);
+   const seat=Number(room.seat);
+   if(!accountId||(seat!==0&&seat!==1)||typeof room.code!=='string'||!room.code){
     pause('無法確認帳號，這筆結果已暫停上傳。');
     return;
    }
-   const current=await ensure(identity);
-   if(!current){
+   const current=await ensure({accountId, seat, code:room.code});
+   if(!current||current.accountId!==accountId||current.seat!==seat||current.code!==room.code){
     pause('無法確認帳號，這筆結果已暫停上傳。');
     return;
    }
    let titles=current.titles||null;
    let deck=current.deck||null;
-   if(validAccountId(room.accountId)===current.accountId){
-    const live=deckById?.(room.you?.deckId);
-    const liveTitles=Array.isArray(room.view.playerTitles)&&room.view.playerTitles.length===2
-     ?room.view.playerTitles.slice():null;
-    if(live?.counts&&live.title&&liveTitles){
-     deck=deckSnapshot(live.title,live.counts);
-     titles=liveTitles;
-    }
+   const live=deckById?.(room.you?.deckId);
+   const liveTitles=Array.isArray(room.view.playerTitles)&&room.view.playerTitles.length===2
+    ?room.view.playerTitles.slice():null;
+   if(live?.counts&&live.title&&liveTitles){
+    deck=deckSnapshot(live.title,live.counts);
+    titles=liveTitles;
    }
    if(!deck?.counts||!titles)return;
    const snap={titles,deck,engineVersion:current.engineVersion||DECISION_ENGINE_VERSION};

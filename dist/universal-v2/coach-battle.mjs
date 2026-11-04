@@ -2,7 +2,7 @@
 // Accepted human actions are queued locally; the next click does not wait
 // for the upload. AI actions stay out of the player-decision queue.
 import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
-import {createDecisionQueue} from './coach-queue.mjs';
+import {createDecisionQueue} from './coach-queue.mjs?v=20261104event1';
 import {LABEL_FORMAT} from './coach-format.mjs';
 import {newCoachMatchId,buildHumanStep,buildAiMark,stateAtReplayIndex} from './coach-record.mjs';
 
