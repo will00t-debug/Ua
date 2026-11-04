@@ -302,6 +302,14 @@ function follow(pack,s,spec,next){
    def(pack,c).color==='green'&&trait(pack,c,RE));
   return offerEnter(s,spec,pool,{ready:false,from:'hand',optional:true,max:2});
  }
+ if(next==='mirror'){
+  const pool=zoneWhere(s,spec.player,'outside',c=>trait(pack,c,MIRROR)&&def(pack,c).type==='character');
+  return offerEnter(s,spec,pool,{ready:false,from:'outside',optional:true});
+ }
+ if(next==='ankhHand'){
+  const pool=zoneWhere(s,spec.player,'outside',c=>exact(pack,c,'アンク',s)&&energyPrinted(pack,c)===0);
+  return offerList(s,spec,'hand',pool,true,null,'hand');
+ }
  return false;
 }
 
