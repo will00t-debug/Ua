@@ -512,3 +512,15 @@ test('KMR-2-099 continues after chosen discard to outside Mirror Monster entry',
  assert.equal(state.players[0].energy[3]?.uid,mirror.uid);
  assert.equal(state.players[0].energy[3]?.ready,false);
 });
+
+
+test('Gav swaps compare raids against the ATTACK-phase baseline rather than the turn flag',()=>{
+ const s=fresh(fill(['KMR-2-005','KMR-2-012']));
+ ready(s);
+ assert.deepEqual(s.kmr2AttackRaidBaseline,[0,0]);
+ const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+ assert.ok(next);
+ const attack=dispatchUniversalAction(packs,s,next);
+ assert.equal(attack.phase,'attack');
+ assert.deepEqual(attack.kmr2AttackRaidBaseline,attack.raidCount);
+});
