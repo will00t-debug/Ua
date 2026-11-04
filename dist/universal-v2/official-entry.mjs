@@ -12,6 +12,7 @@ import {createStgV2Pack} from './stg-pack.mjs';
 import {createMadokaV2Pack} from './mmm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
 import {createKjnV2Pack} from './kjn-pack.mjs';
+import {createCsmV2Pack} from './csm-pack.mjs';
 import {createAotV2Pack} from './aot-pack.mjs';
 import {createKmrV2Pack,KMR_STARTER_IDS,kmrPackCard} from './kmr-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
@@ -59,6 +60,7 @@ export function officialV2Pack(title){
  if(title==='madoka')return createMadokaBattlePack();
  if(title==='inuyasha')return createInuyashaBattlePack();
  if(title==='kjn')return createKjnBattlePack();
+ if(title==='csm')return createCsmBattlePack();
  if(title==='aot')return createAotBattlePack();
  if(title==='kmr')return createKmrBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
@@ -155,6 +157,21 @@ export function kjnPracticeDeck(){
  if(other.length)throw Error('Eminence in Shadow purple practice deck included another color');
  return {pack,counts};
 }
+
+let csmBattlePack=null;
+export function createCsmBattlePack(){
+ if(!csmBattlePack)csmBattlePack=createCsmV2Pack();
+ return csmBattlePack;
+}
+
+export function csmPracticeDeck(){
+ const pack=createCsmBattlePack();
+ const counts=practiceDeck(pack,{color:'purple'});
+ const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='purple');
+ if(other.length)throw Error('Chainsaw Man purple practice deck included another color');
+ return {pack,counts};
+}
+
 
 let aotBattlePack=null;
 export function createAotBattlePack(){

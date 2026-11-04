@@ -45,6 +45,14 @@ const RAID_BOX_FEATURES=Object.freeze({
  'KJN-1-049':["onPlay"],
  'KJN-1-056':["onPlay","main"],
  'KJN-1-074':["onPlay","main"],
+ // UA53BT 鏈鋸人：官網數位圖沒有 rugia raidBorder 標記，以下依卡面突襲框內句子判定。
+ // 登場時／退場時在框外的維持一般登場也會發動；框內啟動／攻擊結束等只在正面向上突襲狀態。
+ 'CSM-1-017':["main"],
+ 'CSM-1-023':["main"],
+ 'CSM-1-048':["attackEnd"],
+ 'CSM-1-056':["phase","onAttack"],
+ 'CSM-1-061':["attackWin","leaveReplace"],
+ 'CSM-1-066':["attackEnd","phase"], // phase = エンドフェイズ開始時の入替
  'MMM-1-002':["onPlay","onRetire","frontRemovedUse"],
  'MMM-1-019':["onPlay"],
  'MMM-1-036':["onPlay","frontNameRemoveShield"],

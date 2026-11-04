@@ -10,7 +10,9 @@ const DENJI='デンジ';
 const MAKIMA='マキマ';
 const REZE='レゼ';
 const POWER='パワー';
+// Official name line uses a space; Raid / effect angle brackets do not.
 const AKI='早川アキ';
+const AKI_NAME='早川 アキ';
 const HIMENO='姫野';
 const job=(id,slot)=>({op:'csm',id,slot});
 const main=id=>({op:'csmMain',id});
@@ -25,8 +27,7 @@ function mark(id,...slots){
 
 // Closed programs. Continuous helpers use csmHook (engine/runtime).
 const BY_ID={
- 'CSM-1-002':{passiveBonuses:[{
-  condition:{kind:'sameLineName',turn:'own',name:REZE},bp:1000,impactNull:true}],effects:{}},
+ 'CSM-1-002':{csmHook:true,effects:{}},
  'CSM-1-004':{emptyOwnFieldHandEnergyDiscount:2,effects:{onPlay:[{op:'drawDiscard',count:1}]}},
  'CSM-1-006':{effects:{onRetire:[job('CSM-1-006','onRetire')]}},
  'CSM-1-007':{impactNull:true,mainAbility:main('CSM-1-007'),effects:{}},
@@ -43,7 +44,9 @@ const BY_ID={
  'CSM-1-021':{effects:{onPlay:[job('CSM-1-021','onPlay')]}},
  'CSM-1-022':{csmHook:true,mainAbility:main('CSM-1-022'),effects:{}},
  'CSM-1-023':{raidName:MAKIMA,mainAbility:main('CSM-1-023'),effects:{}},
- 'CSM-1-024':{raidName:MAKIMA,csmHook:true,effects:{onPlay:[job('CSM-1-024','onPlay')]}},
+ 'CSM-1-024':{raidName:MAKIMA,csmHook:true,effects:{onPlay:[
+  {op:'nextEligibleHandPlayApDiscount',filter:{cardType:'event',noSpecialFinal:true}},
+  job('CSM-1-024','onPlay')]}},
  'CSM-1-027':{csmHook:true,effects:{}},
  'CSM-1-028':{effects:{onPlay:[job('CSM-1-028','onPlay')]}},
  'CSM-1-029':{csmHook:true,effects:{}},
@@ -65,9 +68,10 @@ const BY_ID={
  'CSM-1-051':{effects:{onPlay:[job('CSM-1-051','onPlay')]}},
  'CSM-1-053':{effects:{onPlay:[{
   op:'searchTopOneBottomDiscard',count:3,logic:'any',filters:[
-   {field:'name',value:AKI},{field:'name',value:HIMENO},{field:'name',value:MAKIMA}]}],
- }]},
- 'CSM-1-054':{effects:{onPlay:[job('CSM-1-054','onPlay')],onAttack:[job('CSM-1-054','onAttack')]}},
+   {field:'name',value:AKI},{field:'name',value:AKI_NAME},
+   {field:'name',value:HIMENO},{field:'name',value:MAKIMA}]}]}},
+ 'CSM-1-054':{effects:{onPlay:[job('CSM-1-054','onPlay')],
+  onAttack:[job('CSM-1-054','onAttack')]}},
  'CSM-1-055':{mainAbility:main('CSM-1-055'),effects:{}},
  'CSM-1-056':{raidName:AKI,csmHook:true,effects:{onPlay:[job('CSM-1-056','onPlay')]}},
  'CSM-1-057':{effects:{onPlay:[job('CSM-1-057','onPlay')]}},
@@ -87,8 +91,8 @@ const BY_ID={
  'CSM-1-072':{effects:{onAttack:[job('CSM-1-072','onAttack')]}},
  'CSM-1-073':{effects:{onPlay:[{
   op:'searchTopOneBottomDiscard',count:4,logic:'any',discard:false,filters:[
-   {field:'name',value:AKI},{field:'name',value:DENJI},{field:'name',value:POWER}]}],
- }]},
+   {field:'name',value:AKI},{field:'name',value:AKI_NAME},
+   {field:'name',value:DENJI},{field:'name',value:POWER}]}]}},
  'CSM-1-075':{effects:{onPlay:[job('CSM-1-075','onPlay')]}},
  'CSM-1-076':{effects:{onPlay:[job('CSM-1-076','onPlay')]}},
  'CSM-1-077':{playRequiresOwnName:AKI,effects:{onPlay:[job('CSM-1-077','onPlay')]}},
@@ -142,21 +146,22 @@ export function csmPackCard(card){
  const kind=csmEngineKind(card.effectJa);
  if(kind!==card.engineKind)throw Error(card.id+' engine kind drifted from the Japanese print');
  const shared=kindProgram(kind);
- const extra=shared||BY_ID[card.id];
+ let extra=shared||BY_ID[card.id];
  if(!extra)throw Error(card.id+' has no Chainsaw Man program');
+ // Shared kinds still need the no-space Aki alias when the print is 早川 アキ.
+ if(card.nameJa===AKI_NAME&&!(extra.nameAliases||[]).includes(AKI)){
+  extra={...extra,nameAliases:[...(extra.nameAliases||[]),AKI]};
+  if(extra.implementation==='vanilla')delete extra.implementation;
+ }
  walkJobs(extra,step=>{
   if(!csmImplements(step.id,step.slot))
    throw Error(card.id+' '+step.slot+' is not implemented');
  });
- // Official prints write 〈早川アキ〉 without the space used on the name line.
- const akiAlias=card.nameJa==='早川 アキ'
-  ?{nameAliases:[...(extra.nameAliases||[]),'早川アキ']}
-  :{};
  const marked=extra.implementation||(Object.keys(extra.effects||{}).length||
   extra.mainAbility||extra.passiveBonuses||extra.impactNull||extra.step||
   extra.enterAlwaysActive||extra.activeExtraEnergy||extra.nameAliases||
-  akiAlias.nameAliases||extra.emptyOwnFieldHandEnergyDiscount||extra.raidName||
-  extra.frontForbidden||extra.playRequiresOwnName||extra.csmHook?'dsl':'vanilla');
+  extra.emptyOwnFieldHandEnergyDiscount||extra.raidName||extra.frontForbidden||
+  extra.playRequiresOwnName||extra.csmHook?'dsl':'vanilla');
  const trig=triggerProfile(card);
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
@@ -164,7 +169,6 @@ export function csmPackCard(card){
   traits:card.traits||[],
   implementation:marked,
   ...extra,
-  ...akiAlias,
   ...(trig?{triggerEffect:trig}:{}),
   effects:extra.effects||{}
  };

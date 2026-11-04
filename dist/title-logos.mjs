@@ -87,6 +87,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:Kamen_Rider_logo.svg',
   credit:'東映',
   license:'PD text logo'
+ }),
+ csm:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/4/46/Chainsaw_Man_%28Japanese%29_logo.svg',
+  label:'鏈鋸人',
+  source:'https://commons.wikimedia.org/wiki/File:Chainsaw_Man_(Japanese)_logo.svg',
+  credit:'藤本タツキ／集英社・MAPPA',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;
