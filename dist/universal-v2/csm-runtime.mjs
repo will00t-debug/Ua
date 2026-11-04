@@ -84,6 +84,14 @@ function retireUid(pack,s,owner,uid){
  if(!loc)return false;
  return A.retire(pack,s,owner,loc.line,loc.slot)===true;
 }
+// Q94: a character at BP <= 0 retires after the debuff resolves.
+// Use the ordinary retirement path so Raid bases and on-retire effects are kept.
+function debuffFront(pack,s,owner,uid,amount){
+ const loc=locOf(s,owner,uid);
+ if(!loc||loc.line!=='front')return false;
+ buff(s,loc.c,amount);
+ return A.bp(pack,s,loc.c)<=0 ? retireUid(pack,s,owner,uid) : false;
+}
 function restOwn(s,owner,c){
  if(!c?.ready)return false;
  A.noteRest(s,owner,c);
@@ -811,7 +819,8 @@ export function resolveCsmPending(pack,s,action){
    offerFront(s,{player:owner,sourceUid:q.sourceUid,id:q.id},1-owner,null,true,'debuff5k');
   }
  }else if(step==='debuff5k'&&a.mode==='pick'){
-  buff(s,selfOf(s,1-owner,a.uid),-5000);
+  const paused=debuffFront(pack,s,1-owner,a.uid,-5000);
+  if(paused)return go(pack,s);
  }else if(step==='peelUnder'&&a.mode==='peel'){
   const host=selfOf(s,owner,a.hostUid||q.data?.hostUid);
   if(host){
@@ -832,7 +841,8 @@ export function resolveCsmPending(pack,s,action){
   if(q.data?.left)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},
    q.data.left,q.data.rest);
  }else if(step==='debuff'&&a.mode==='pick'){
-  buff(s,selfOf(s,1-owner,a.uid),q.data?.bp||-1000);
+  const paused=debuffFront(pack,s,1-owner,a.uid,q.data?.bp||-1000);
+  if(paused)return go(pack,s);
   if(q.data?.left)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},
    q.data.left,q.data.rest);
  }else if(step==='buffOther'&&a.mode==='skip'&&q.data?.left)
