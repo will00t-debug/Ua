@@ -600,6 +600,8 @@ export function resolveIysPending(pack,s,action){
   if(a.mode==='hand')A.bounce(pack,s,q.player,q.sourceUid,q.sourceUid);
   else if(q.data.mode==='remove')A.removeSkip(pack,s,q.player,q.data.line,q.data.slot,q.player);
   else A.retireSkip(pack,s,q.player,q.data.line,q.data.slot);
+  // Resume pending battle impact after a replaced leave, even when Naraku returns to hand.
+  if(q.data?.postImpact)A.afterImpact(pack,s,q.player,q.data.postImpact);
  }else if(step==='lookPick')finishLookTake(pack,s,q,a);
  else if(step==='lookOrder')finishOrder(s,q,a);
  else if(step==='deploy')afterDeploy(pack,s,q,a);
