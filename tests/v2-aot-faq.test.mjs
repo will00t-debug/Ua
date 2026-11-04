@@ -642,19 +642,20 @@ test('AOT-1-099 preserves enter-time effects while choosing a second 104th Cadet
 });
 
 test('AOT-1-099 deploys two and keeps both entry jobs instead of overwriting the first',()=>{
- const counts=deck(['AOT-1-099','AOT-1-075','AOT-1-083','AOT-1-095']);
+ const counts=deck(['AOT-1-099','AOT-1-075','AOT-1-078','AOT-1-083','AOT-1-095']);
  let s=toPhase(fresh(counts,9902),'main');
  put(s,0,'AOT-1-095','energy',0,true);
  put(s,0,'AOT-1-083','energy',1,true);
  readyAp(s,0,1);
  const first=toHand(s,0,'AOT-1-075');
- const second=toHand(s,0,'AOT-1-075');
+ const second=toHand(s,0,'AOT-1-078');
  const gear=toHand(s,0,'AOT-1-099');
  s=cast(s,gear.uid);
  s=pick(s,a=>a.uid===first.uid&&a.line==='front');
  assert.equal(s.pending.step,'corps');
  s=pick(s,a=>a.uid===second.uid&&a.line==='front');
- assert.equal(s.players[0].front.filter(c=>c?.cardId==='AOT-1-075').length,2);
+ assert.equal(s.players[0].front.some(c=>c?.uid===first.uid),true);
+ assert.equal(s.players[0].front.some(c=>c?.uid===second.uid),true);
  assert.ok(s.pending);
  assert.notEqual(s.pending.kind,'aot');
  const discard=legalUniversalActions(packs,s).find(a=>a.uid&&s.players[0].hand.some(c=>c.uid===a.uid));
