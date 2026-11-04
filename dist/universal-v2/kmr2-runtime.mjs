@@ -877,12 +877,15 @@ function on079(pack,s,job){
 function attackEnd021(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self)return;
- const pool=handWhere(s,job.owner,c=>exact(pack,c,HOPPER,null));
+ const pool=handWhere(s,job.owner,c=>exact(pack,c,HOPPER,null)&&
+  A.raidBase(pack,s,job.owner,self,def(pack,c)));
  if(!pool.length)return;
- if(!pool.some(c=>A.raidBase(pack,s,job.owner,self,def(pack,c))))return;
+ const loc=A.location(s,job.owner,self.uid);
+ if(!loc)return;
  hold(s,{...specOf(job),step:'raidSelf',data:{base:self.uid}},[
   {type:'kmr2',mode:'skip'},
-  ...pool.map(c=>({type:'kmr2',mode:'raid',uid:c.uid}))
+  ...pool.map(c=>({type:'kmr2',mode:'raid',uid:c.uid,baseUid:self.uid,
+   line:loc.line,slot:loc.slot}))
  ]);
 }
 function attackEnd083(pack,s,job){
@@ -983,9 +986,12 @@ function mainP005(pack,s,job){
  const pool=handWhere(s,job.owner,c=>exact(pack,c,'仮面ライダー龍騎サバイブ',null))
   .filter(c=>A.raidBase(pack,s,job.owner,self,def(pack,c)));
  if(!pool.length)return;
+ const loc=A.location(s,job.owner,self.uid);
+ if(!loc)return;
  hold(s,{...specOf(job),step:'raidSelf',data:{base:self.uid}},[
   {type:'kmr2',mode:'skip'},
-  ...pool.map(c=>({type:'kmr2',mode:'raid',uid:c.uid}))
+  ...pool.map(c=>({type:'kmr2',mode:'raid',uid:c.uid,baseUid:self.uid,
+   line:loc.line,slot:loc.slot}))
  ]);
 }
 function on086(pack,s,job){onLook(pack,s,job,2,riderFilter,{dest:'outside',where:'top',reveal:false,takeMode:'outside'});}
