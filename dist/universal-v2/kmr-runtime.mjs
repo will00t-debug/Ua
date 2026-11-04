@@ -106,7 +106,8 @@ function beginLook(s,spec,count,match,opts){
    if(!offerOrder(s,spec,data.uids,'top','splitBottom:'+data.uids.join(',')))return false;
    return true;
   }
-  if(!offerOrder(s,spec,data.uids,data.where,data.after))return false;
+  if(!offerOrder(s,spec,data.uids,data.where,
+   ['ankhDiscard','platformDiscard'].includes(data.after)?null:data.after))return false;
   return true;
  }
  if(!actions.length)return false;
@@ -250,6 +251,12 @@ function continueAfter(pack,s,spec,next){
  if(next.startsWith('splitBottom:'))return;
 }
 function specOf(q){return {player:q.player,sourceUid:q.sourceUid,id:q.id};}
+function offerSnipeRest(s,spec,uids){
+ const left=uids.filter(uid=>plOf(s,spec.player).deck.some(c=>c.uid===uid));
+ if(!left.length)return;
+ hold(s,{...spec,step:'snipeRest',uids:left,data:{left}},
+  left.flatMap(uid=>[{type:'kmr',mode:'top',uid},{type:'kmr',mode:'bottom',uid}]));
+}
 
 function on001(pack,s,job){
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
@@ -530,7 +537,10 @@ const HANDLERS={
  },
  'KMR-1-053|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  beginLook(s,spec,3,()=>true,{max:1,min:1,discard:false,where:'bottom',after:'doctorUnder'});
+  const window=windowCards(s,job.owner,3);
+  if(!window.length)return;
+  hold(s,{...spec,step:'snipeHand',uids:window.map(c=>c.uid),
+   data:{uids:window.map(c=>c.uid)}},window.map(c=>({type:'kmr',mode:'take',uid:c.uid})));
  },
  'KMR-1-053|main'(pack,s,job){
   const self=selfOf(s,job.owner,job.sourceUid);
@@ -1060,6 +1070,49 @@ function resolveStep(pack,s,q,a){
    use(s,q.sourceUid+'|KMR-1-044');
    offerRetire(pack,s,spec,3000,true,null);
   }
+  return;
+ }
+ if(q.step==='snipeHand'){
+  s.pending=null;
+  const index=plOf(s,q.player).deck.findIndex(c=>c.uid===hit.uid);
+  if(index<0)throw Error('KMR-1-053 hand card missing');
+  const card=plOf(s,q.player).deck[index];
+  A.reveal(pack,s,q.player,card);
+  A.move(pack,s,{owner:q.player,from:'deck',to:'hand',index,
+   reason:'own-effect',sourceUid:q.sourceUid});
+  const left=q.data.uids.filter(uid=>uid!==hit.uid);
+  const doctors=fieldCards(s,q.player).filter(c=>trait(pack,c,DOCTOR));
+  if(left.length&&doctors.length)
+   hold(s,{...spec,step:'snipeUnderCard',uids:left,data:{left}},
+    left.map(uid=>({type:'kmr',mode:'under',uid})));
+  else offerSnipeRest(s,spec,left);
+  return;
+ }
+ if(q.step==='snipeUnderCard'){
+  const doctors=fieldCards(s,q.player).filter(c=>trait(pack,c,DOCTOR));
+  if(!doctors.length){s.pending=null;offerSnipeRest(s,spec,q.data.left);return;}
+  hold(s,{...spec,step:'snipeUnderHost',uids:q.data.left,
+   data:{uid:hit.uid,left:q.data.left.filter(uid=>uid!==hit.uid)}},
+   doctors.map(c=>({type:'kmr',mode:'underHost',uid:c.uid})));
+  return;
+ }
+ if(q.step==='snipeUnderHost'){
+  s.pending=null;
+  const host=fieldCards(s,q.player).find(c=>c.uid===hit.uid&&trait(pack,c,DOCTOR));
+  const index=plOf(s,q.player).deck.findIndex(c=>c.uid===q.data.uid);
+  if(!host||index<0)throw Error('KMR-1-053 doctor or card missing');
+  const card=plOf(s,q.player).deck.splice(index,1)[0];
+  card.faceDown=true;card.ready=false;card.fieldEntryStamp=null;
+  host.under??=[];host.under.push(card);
+  A.record(pack,s,{physical:card,owner:q.player,from:'deck',to:'raid-under',
+   reason:'own-effect',sourceUid:q.sourceUid});
+  offerSnipeRest(s,spec,q.data.left);
+  return;
+ }
+ if(q.step==='snipeRest'){
+  s.pending=null;
+  lay(plOf(s,q.player),[hit.uid],hit.mode);
+  offerSnipeRest(s,spec,q.data.left.filter(uid=>uid!==hit.uid));
   return;
  }
  if(q.step==='lookPick'){
