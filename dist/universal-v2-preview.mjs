@@ -14,6 +14,7 @@ import {AOT_CARDS} from './aot-cards.mjs';
 import {AOT2_CARDS} from './aot-vol2-cards.mjs';
 import {KMR_CARDS} from './kmr-cards.mjs';
 import {KMR2_CARDS} from './kmr-vol2-cards.mjs';
+import {KMR_POINT_CARDS} from './kmr-point-cards.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -25,7 +26,7 @@ import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmr2ship1';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261104kmrpoint1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
@@ -37,7 +38,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261103mmmlabel1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261104kmrpoint1';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -85,7 +86,7 @@ const allArt=Object.freeze({
  kjn:new Map(KJN_CARDS.map(c=>[c.id,c.image||null])),
  csm:new Map(CSM_CARDS.map(c=>[c.id,c.image||null])),
  aot:new Map([...AOT_CARDS,...AOT2_CARDS].map(c=>[c.id,c.image||null])),
- kmr:new Map([...KMR_CARDS,...KMR2_CARDS].map(c=>[c.id,c.image||c.printings?.[0]?.image||null]))
+ kmr:new Map([...KMR_CARDS,...KMR2_CARDS,...KMR_POINT_CARDS].map(c=>[c.id,c.image||c.printings?.[0]?.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){
@@ -108,7 +109,7 @@ const PRINTED_CATALOGUE={
  kjn:printedCatalogueMap(KJN_CARDS),
  csm:printedCatalogueMap(CSM_CARDS),
  aot:printedCatalogueMap([...AOT_CARDS,...AOT2_CARDS]),
- kmr:printedCatalogueMap([...KMR_CARDS,...KMR2_CARDS]),
+ kmr:printedCatalogueMap([...KMR_CARDS,...KMR2_CARDS,...KMR_POINT_CARDS]),
  'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID))
 };
 const el=(tag,props={},...contents)=>{
@@ -830,15 +831,44 @@ function legacyLife(count){
  for(let i=0;i<count;i++)life.append(el('span',{class:'lifeCard','aria-hidden':'true',text:'✦'}));
  return life;
 }
+function legacyAp(view,side,legal,player){
+ const tokens=Array.isArray(player.apCards)?player.apCards:[];
+ const faced=tokens.length===3&&tokens.every(token=>typeof token?.cardId==='string'&&token.cardId);
+ if(!faced){
+  const dots=el('div',{class:'apDots','aria-label':player.apReady+'/'+player.apTotal+' AP'});
+  for(let i=0;i<3;i++)dots.append(el('i',{class:i<player.apReady?'available':i>=player.apTotal?'locked':''}));
+  dots.append(el('span',{text:'AP'}));
+  return dots;
+ }
+ const yours=side===0&&uiActor(app.state)===0&&!app.busy;
+ const row=el('div',{class:'apRow','aria-label':'行動值卡 '+player.apReady+'/'+player.apTotal});
+ for(const [index,token] of tokens.entries()){
+  const uid='AP'+side+'-'+index;
+  const record=(app.packs?.[side]?.pointCards||[]).find(card=>card.id===token.cardId);
+  const catalogue=printedCatalogue(side,token.cardId);
+  const name=record?.name||catalogue?.name||'行動值卡';
+  const recover=yours?legal.find(action=>action.type==='chooseApRecovery'&&action.uid===uid):null;
+  const activate=yours?legal.find(action=>action.type==='chooseActiveAp'&&action.uid===uid):null;
+  const action=recover||activate||null;
+  const art=el('img',{src:imgUrl(side,token.cardId),alt:name});
+  art.onerror=()=>{if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';};
+  const pose=token.ready?' ready':token.inPlay?' rested':' locked';
+  const face=el('span',{class:'apArt'+pose},art);
+  const label=action?uiActionLabel(action,{pack:app.packs,state:app.state}):name+'，查看卡面';
+  row.append(el('button',{type:'button',class:'apCard'+(action?' pick':''),
+   'data-v2-card-uid':uid,'aria-label':label,
+   onClick:()=>action?applyAction(action):showFieldSheet(side,'ap',{...token,uid},record||catalogue)},face));
+ }
+ row.append(el('span',{class:'apCount',text:player.apReady+'/'+player.apTotal}));
+ return row;
+}
 function legacyPlayer(view,side,legal){
  const p=view.players[side],mine=side===0;
  const resources=el('div',{class:'playerResources'});
  const colorStr=Object.entries(p.energyByColor).filter(([,v])=>v>0)
   .map(([k,v])=>k+' '+v).join(' / ')||'◆ 0';
  resources.append(el('span',{class:'energyCount',text:colorStr}));
- const ap=el('div',{class:'apDots','aria-label':p.apReady+'/'+p.apTotal+' AP'});
- for(let i=0;i<3;i++)ap.append(el('i',{class:i<p.apReady?'available':i>=p.apTotal?'locked':''}));
- ap.append(el('span',{text:'AP'}));resources.append(ap);
+ resources.append(legacyAp(view,side,legal,p));
  const info=el('header',{class:'playerInfo'},
   el('div',{class:'playerName'},el('span',{class:'avatar'+(mine?'':' opponent'),text:mine?'Ⅰ':'Ⅱ'}),
    el('div',{},el('b',{text:(mine?'你':'電腦')+' · '+fmtTitle(app.packs[side].id)}),
@@ -1133,13 +1163,24 @@ function closeFieldSheet(){
  overlay?.remove();
  if(opener?.isConnected)opener.focus({preventScroll:true});
 }
+function fieldSheetEffect(catalogue,metadata){
+ const printed=fieldEffectCopy(catalogue);
+ if(metadata?.type!=='action-point')return printed;
+ const note=['官方名稱：'+(metadata.officialName||metadata.name||'行動值卡')];
+ if(metadata.artCredit)note.push(metadata.artCredit);
+ return [printed,...note].join('\n');
+}
 function showFieldSheet(side,line,card,printed){
  closeFieldSheet();
  const catalogue=printedCatalogue(side,card.cardId);
  const name=catalogue?.name||printed?.name||card.cardId;
  const stats=[];
  const metadata=printed||catalogue;
- if(metadata){
+ const point=metadata?.type==='action-point'?metadata:(catalogue?.type==='action-point'?catalogue:null);
+ if(point){
+  stats.push('行動值卡','不加入牌組');
+  if(point.number)stats.push(point.number);
+ }else if(metadata){
   stats.push('能源 '+metadata.energy,'AP '+metadata.ap);
   if(metadata.type==='character')stats.push('BP '+(line==='front'?card.bp:metadata.bp));
   if(line==='energy')stats.push('產生 '+(card.produces??metadata.gen??0));
@@ -1158,7 +1199,7 @@ function showFieldSheet(side,line,card,printed){
  };
  dialog.append(el('div',{class:'field-sheet-card'},art,
   el('div',{},el('h2',{text:name}),el('p',{class:'note',text:stats.join(' · ')}))),
-  el('p',{class:'field-effect',text:fieldEffectCopy(catalogue)}),
+  el('p',{class:'field-effect',text:fieldSheetEffect(catalogue,point||metadata)}),
   btn('關閉',closeFieldSheet,'quiet'));
  overlay.addEventListener('click',event=>{if(event.target===overlay)closeFieldSheet();});
  overlay.addEventListener('keydown',event=>{if(event.key==='Escape')closeFieldSheet();});

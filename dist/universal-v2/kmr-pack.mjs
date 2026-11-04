@@ -4,6 +4,7 @@
 // Official Traditional Chinese card pages do not exist for these products.
 // The engine matches effectJa. Registration is not an official FAQ certification.
 import {KMR_CARDS} from '../kmr-cards.mjs';
+import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmrEngineKind} from './kmr-kinds.mjs';
 import {kmrImplements} from './kmr-runtime.mjs';
 import {createUniversalPack} from './pack.mjs';
@@ -198,7 +199,8 @@ export function kmrPackCard(card){
 export function createKmrV2Pack(){
  const cards=KMR_CARDS.map(kmrPackCard);
  if(cards.length!==113)throw Error('Kamen Rider registered count drifted');
- return createUniversalPack({id:'kmr',version:'kmr-ua29-20261101',cards});
+ const pack=createUniversalPack({id:'kmr',version:'kmr-ua29-20261101',cards});
+ return Object.freeze({...pack,pointCards:kmrPointCardsFor('set1')});
 }
 
 export const KMR_STARTER_IDS=Object.freeze([

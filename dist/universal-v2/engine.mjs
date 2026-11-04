@@ -3,6 +3,7 @@ import {DISCOUNT_KIND,grantHandDiscount,handPlayApPlan,definitionGrantsDiscount}
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
+import {assignPointCards,assertPointCardIdentities} from './point-cards.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
@@ -13272,10 +13273,12 @@ function resolveChoice(s,a,pack){
  }
  throw Error('Unsupported pending decision');
 }
-export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=false}={}){
+export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=false,pointCardIds=null}={}){
  const packs=playerPacks(pack);
  if(!Array.isArray(decks)||decks.length!==2||!playerIndex(first)||typeof openingMulligan!=='boolean')
   throw Error('Universal v2 requires one or two title packs and two decks');
+ if(pointCardIds!=null&&(!Array.isArray(pointCardIds)||pointCardIds.length!==2))
+  throw Error('Point cards are chosen per player');
  for(const [i,d] of decks.entries()){
   const issues=validateUniversalDeck(packs[i],d);
   if(issues.length)throw Error('Player '+i+': '+issues.join('; '));
@@ -13304,7 +13307,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=fal
   s.players.push({
    deck:pile,hand:pile.splice(0,7),life:openingMulligan?[]:pile.splice(0,7),lifeRevealed:[],
    front:[null,null,null,null],energy:[null,null,null,null],
-   outside:[],resolvingEvents:[],removed:[],apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false,inPlay:false})),ownTurns:0,
+   outside:[],resolvingEvents:[],removed:[],apCards:assignPointCards(packs[p],p,pointCardIds?pointCardIds[p]:null),ownTurns:0,
    nextNamedHandEnergy:[],handCharacterBpMay:null,
    nextRemovedApCut:null,turnNamedEnergy:[],nextHandEventApCut:null,
    nextPrintedEnergyApCut:null,deckRevealEnergy5:null,armedEntryMayDraw:null
@@ -23373,6 +23376,7 @@ export function assertUniversalMatch(pack,s){
   const pl=s.players[p],uids=new Set(),items=[];
   if(pl.front?.length!==4||pl.energy?.length!==4||!Array.isArray(pl.resolvingEvents)||!Array.isArray(pl.lifeRevealed)||pl.apCards?.length!==3||
     pl.apCards.some(c=>typeof c.ready!=='boolean'||typeof c.inPlay!=='boolean'||(c.ready&&!c.inPlay)))throw Error('Invalid zones or AP cards');
+  assertPointCardIdentities(packs[p],pl);
   function visit(c){
    if(!c)return;
    if(typeof c.uid!=='string'||uids.has(c.uid)||!c.uid.startsWith(p+'-')||
@@ -23812,7 +23816,13 @@ export function universalPublicView(pack,s,viewer=0){
     baseProduces:card(pack,c).gen,produces:universalCardEnergy(pack,s,p,c),
     restrictions:fieldRestrictions(s,p,c),raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer)),
     underLayers:(c.under||[]).map(layer=>layerView(layer,p,viewer))}:null),
-   apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
+   apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,
+   // Slot order is the identity. Publishing AP0-0 would contain the private
+   // deck uid 0-0 as a substring, so the public row keeps ready, inPlay and
+   // the point-card id only.
+   apCards:pl.apCards.map(c=>({ready:!!c.ready,inPlay:!!c.inPlay,
+    ...(typeof c.cardId==='string'?{cardId:c.cardId}:{})})),
+   energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    // Both public zones expose printed identities; private hand/deck/life stay redacted.
    faceUpLife:pl.life.filter(c=>c.faceUp===true).map(c=>({uid:c.uid,cardId:c.cardId})),
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId})),
