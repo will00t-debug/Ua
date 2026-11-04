@@ -41,7 +41,8 @@ const BY_ID={
  'CSM-1-017':{nameAliases:[REZE],raidName:REZE,effects:{onPlay:[job('CSM-1-017','onPlay')]},
   mainAbility:main('CSM-1-017')},
  'CSM-1-019':{mainAbility:{op:'restSelfBuffOther',bp:1000},effects:{}},
- 'CSM-1-021':{effects:{onPlay:[job('CSM-1-021','onPlay')]}},
+ 'CSM-1-021':{effects:{onPlay:[{
+  op:'inspectTopAnyOutside',count:3,rest:'top',maxOutside:1}]}},
  'CSM-1-022':{csmHook:true,mainAbility:main('CSM-1-022'),effects:{}},
  'CSM-1-023':{raidName:MAKIMA,mainAbility:main('CSM-1-023'),effects:{}},
  'CSM-1-024':{raidName:MAKIMA,csmHook:true,effects:{onPlay:[
@@ -62,7 +63,8 @@ const BY_ID={
  'CSM-1-040':{playRequiresOwnName:MAKIMA,effects:{onPlay:[job('CSM-1-040','onPlay')]}},
  'CSM-1-042':{enterAlwaysActive:true,mainAbility:main('CSM-1-042'),effects:{}},
  'CSM-1-046':{step:true,csmHook:true,effects:{}},
- 'CSM-1-047':{nameAliases:[DENJI],raidName:DENJI,impactNull:true,
+ // 衝擊無效在突襲框內：一般登場不要帶 impactNull 旗標（用 raidImpactNull）。
+ 'CSM-1-047':{nameAliases:[DENJI],raidName:DENJI,raidImpactNull:true,
   effects:{onRetire:[job('CSM-1-047','onRetire')]}},
  'CSM-1-048':{nameAliases:[DENJI],raidName:DENJI,csmHook:true,effects:{}},
  'CSM-1-051':{effects:{onPlay:[job('CSM-1-051','onPlay')]}},
@@ -74,7 +76,8 @@ const BY_ID={
   onAttack:[job('CSM-1-054','onAttack')]}},
  'CSM-1-055':{mainAbility:main('CSM-1-055'),effects:{}},
  'CSM-1-056':{raidName:AKI,csmHook:true,effects:{onPlay:[job('CSM-1-056','onPlay')]}},
- 'CSM-1-057':{effects:{onPlay:[job('CSM-1-057','onPlay')]}},
+ 'CSM-1-057':{effects:{onPlay:[{
+  op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]}},
  'CSM-1-059':{mainAbility:main('CSM-1-059'),effects:{}},
  'CSM-1-060':{effects:{onPlay:[{op:'drawIfOwnName',name:DENJI,count:1}]}},
  'CSM-1-061':{raidName:POWER,csmHook:true,effects:{onPlay:[job('CSM-1-061','onPlay')]}},
@@ -160,8 +163,8 @@ export function csmPackCard(card){
  const marked=extra.implementation||(Object.keys(extra.effects||{}).length||
   extra.mainAbility||extra.passiveBonuses||extra.impactNull||extra.step||
   extra.enterAlwaysActive||extra.activeExtraEnergy||extra.nameAliases||
-  extra.emptyOwnFieldHandEnergyDiscount||extra.raidName||extra.frontForbidden||
-  extra.playRequiresOwnName||extra.csmHook?'dsl':'vanilla');
+  extra.emptyOwnFieldHandEnergyDiscount||extra.raidName||extra.raidImpactNull||
+  extra.frontForbidden||extra.playRequiresOwnName||extra.csmHook?'dsl':'vanilla');
  const trig=triggerProfile(card);
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,

@@ -120,6 +120,14 @@ test('UA53BT registers all 80 playable identities outside the five-title census'
  assert.equal(pack.cards['CSM-1-024'].gen,1);
  assert.equal(pack.cards['CSM-1-017'].raidName,'レゼ');
  assert.equal(pack.cards['CSM-1-047'].nameAliases.includes('デンジ'),true);
+ assert.equal(pack.cards['CSM-1-047'].impactNull,false);
+ assert.equal(pack.cards['CSM-1-047'].raidImpactNull,true);
+ assert.deepEqual(pack.cards['CSM-1-021'].effects.onPlay,[{
+  op:'inspectTopAnyOutside',count:3,rest:'top',maxOutside:1}]);
+ assert.deepEqual(pack.cards['CSM-1-057'].effects.onPlay,[{
+  op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]);
+ assert.equal(pack.cards['CSM-1-053'].effects.onPlay[0].op,'searchTopOneBottomDiscard');
+ assert.equal(pack.cards['CSM-1-053'].effects.onPlay[0].discard,undefined);
  assert.equal(pack.cards['CSM-1-052'].nameAliases.includes('早川アキ'),true);
  assert.equal(raidBoxListed('CSM-1-017','main'),true);
  assert.equal(raidBoxListed('CSM-1-024','onPlay'),false);
