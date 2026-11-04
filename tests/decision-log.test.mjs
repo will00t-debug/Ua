@@ -2652,3 +2652,390 @@ test('a step picked up by a different outbox is fenced when the original collect
  const detail=await api('/api/coach/matches/'+header.matchId,{token:signed.token});
  assert.deepEqual(detail.data.steps.map(({step,replayIndex})=>[step,replayIndex]),[[0,follow.replayIndex]]);
 });
+
+function coachGate(token,{failStatus=0}={}){
+ const posts=[];
+ let holdStep=false;
+ let holdReconcile=false;
+ let stepWait=null;
+ let reconcileWait=null;
+ let stepStarts=0;
+ const fetchImpl=async(path, options={})=>{
+  const target=String(path).split('?')[0];
+  const reconcile=target.endsWith('/api/coach/steps/reconcile');
+  const step=target.endsWith('/api/coach/steps');
+  if(step)stepStarts+=1;
+  if(step&&holdStep){
+   holdStep=false;
+   const body=options.body;
+   let release;
+   let finished;
+   const ready=new Promise(resolve=>{release=resolve;});
+   const done=new Promise(resolve=>{finished=resolve;});
+   stepWait={release,done,body};
+   await ready;
+   if(failStatus){
+    posts.push({kind:'step',status:failStatus,body:JSON.parse(body),data:null,late:true});
+    finished();
+    return {ok:false,status:failStatus,json:async()=>({error:'暫時無法寫入。'})};
+   }
+   const result=await apiFetch(token)(target, options);
+   const data=await result.json();
+   posts.push({kind:'step',status:result.status,body:JSON.parse(body),data,late:true});
+   finished();
+   return result;
+  }
+  if(reconcile&&holdReconcile){
+   holdReconcile=false;
+   let release;
+   const ready=new Promise(resolve=>{release=resolve;});
+   reconcileWait={release};
+   await ready;
+  }
+  const result=await apiFetch(token)(target, options);
+  if(step||reconcile){
+   const data=await result.json();
+   posts.push({kind:reconcile?'reconcile':'step',status:result.status,body:options.body?JSON.parse(options.body):null,data,late:false});
+   return result;
+  }
+  return result;
+ };
+ return {
+  fetchImpl,posts,
+  get stepStarts(){return stepStarts;},
+  get stepHeld(){return !!stepWait;},
+  get reconcileHeld(){return !!reconcileWait;},
+  holdNextStep(){holdStep=true;},
+  holdNextReconcile(){holdReconcile=true;},
+  releaseStep(){const wait=stepWait;stepWait=null;wait.release();return wait.done;},
+  releaseReconcile(){const wait=reconcileWait;reconcileWait=null;wait.release();}
+ };
+}
+let roomSeq=0;
+async function seatedRoom(hostName,guestName){
+ const id=++roomSeq;
+ const host=await api('/api/register',{method:'POST',body:{username:hostName,password}});
+ const guest=await api('/api/register',{method:'POST',body:{username:guestName,password}});
+ assert.equal(host.status,201,host.text);
+ assert.equal(guest.status,201,guest.text);
+ const hostDeck=await api('/api/decks',{method:'POST',token:host.data.token,body:{
+  name:'房主',title:'bleach',counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS},localId:'host-'+id}});
+ const guestDeck=await api('/api/decks',{method:'POST',token:guest.data.token,body:{
+  name:'訪客',title:'bleach',counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS},localId:'guest-'+id}});
+ assert.equal(hostDeck.data.deck.playable,true,hostDeck.text);
+ assert.equal(guestDeck.data?.deck?.playable,true,guestDeck.text);
+ const created=await api('/api/rooms',{method:'POST',token:host.data.token,body:{deckId:hostDeck.data.deck.id,first:'me'}});
+ assert.equal(created.status,201,created.text);
+ const joined=await api('/api/rooms/'+created.data.code+'/join',{method:'POST',token:guest.data.token,body:{deckId:guestDeck.data.deck.id}});
+ assert.equal(joined.status,200,joined.text);
+ return {host,guest,code:created.data.code};
+}
+function onlineLog(storage,fetchImpl,{uploadTimeout=20000,reconcileTimeout=20000}={}){
+ const log=createOnlineCollector({
+  storage,fetchImpl,uploadTimeout,reconcileTimeout,
+  schedule(){return 1;},
+  deckById:()=>({title:'bleach',counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}})
+ });
+ log.start();
+ return log;
+}
+async function hostAct(log,room){
+ for(let turn=0;turn<16;turn++){
+  const guestView=await api('/api/rooms/'+room.code,{token:room.guest.data.token});
+  if(guestView.data?.yourTurn&&guestView.data.choices?.length){
+   const acted=await api('/api/rooms/'+room.code+'/actions',{method:'POST',token:room.guest.data.token,body:{index:guestView.data.choices[0].index}});
+   assert.equal(acted.status,200,acted.text);
+   continue;
+  }
+  const hostView=await api('/api/rooms/'+room.code,{token:room.host.data.token});
+  if(hostView.data?.yourTurn&&hostView.data.choices?.length){
+   const choice=hostView.data.choices[0];
+   assert.equal(log.arm(hostView.data,choice),true);
+   const acted=await api('/api/rooms/'+room.code+'/actions',{method:'POST',token:room.host.data.token,body:{index:choice.index}});
+   assert.equal(acted.status,200,acted.text);
+   await log.settle(acted.data);
+   return hostView.data;
+  }
+ }
+ assert.fail('沒有等到房主的下一步');
+}
+
+test('reopening recording after an old solo snapshot continues from the server step',{timeout:180000},async()=>{
+ const account=await signedCoach('舊照甲');
+ const header=headerFor();
+ const storage=consented();
+ const {battle,posts}=collector(account,storage);
+ await battle.begin(header,account.accountId);
+ const state=opening();
+ const keep=mulligan(state,'keep');
+ battle.noteHuman({packs,state,action:keep.action,replayIndex:0,legal:keep.legal});
+ await battle.flush();
+ assert.deepEqual(posts.map(item=>item.status+':'+item.step),['200:0']);
+ const saved=battle.snapshot();
+ const quiet=memoryStorage();
+ const resumedPosts=[];
+ const gets=[];
+ let releaseMatch;
+ let matchWaiting=false;
+ const resumed=createCoachBattle({
+  storage:quiet,
+  schedule(){return 1;},
+  async fetchImpl(path,options={}){
+   if(String(path).includes('/api/coach/matches/')){
+    gets.push(path);
+    matchWaiting=true;
+    await new Promise(resolve=>{releaseMatch=resolve;});
+   }
+   const result=await apiFetch(account.token)(path,options);
+   if(path==='/api/coach/steps'&&options.body){
+    const posted=JSON.parse(options.body);
+    resumedPosts.push({status:result.status,step:posted.step,mode:posted.choice?.mode,previous:posted.previous?.step??null,chain:posted.chain?.previousStep??null});
+   }
+   return result;
+  }
+ });
+ const stale={...saved,humanStep:0,confirmedThrough:0,previous:null,pending:[],staged:[],undoStack:[],openUpload:null};
+ await resumed.restore(stale,header,account.accountId);
+ assert.equal(gets.length,0);
+ assert.equal(resumed.session.humanStep,0);
+ assert.equal(resumed.session.checking,false);
+ resumed.setConsent(true);
+ await waitUntil(()=>matchWaiting);
+ const redraw=mulligan(state,'redraw');
+ resumed.noteHuman({packs,state,action:redraw.action,replayIndex:0,legal:redraw.legal});
+ assert.equal(resumed.session.checking,true);
+ assert.equal(resumed.session.staged.length,1);
+ assert.equal(resumed.session.humanStep,0);
+ assert.equal(resumedPosts.length,0);
+ assert.equal(readStoredQueue(quiet).length,0);
+ releaseMatch();
+ await waitUntil(()=>readStoredQueue(quiet).length===1);
+ const queued=readStoredQueue(quiet)[0].body;
+ assert.equal(queued.step,1);
+ assert.equal(queued.choice.mode,'redraw');
+ assert.equal(queued.previous.step,0);
+ assert.equal(queued.chain.previousStep,0);
+ await resumed.flush();
+ assert.deepEqual(resumedPosts.map(item=>item.status+':'+item.step+':'+item.mode),['200:1:redraw']);
+ assert.equal(resumedPosts[0].previous,0);
+ const detail=await api('/api/coach/matches/'+header.matchId,{token:account.token});
+ assert.equal(detail.status,200,detail.text);
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0,1]);
+ assert.equal(detail.data.steps[0].choice.mode,'keep');
+ assert.equal(detail.data.steps[1].choice.mode,'redraw');
+ assert.equal(detail.data.steps.filter(item=>item.step===0).length,1);
+});
+
+test('resume points previous and chain at the last accepted server step',{timeout:180000},async()=>{
+ const account=await signedCoach('接上甲');
+ const header=headerFor();
+ const storage=consented();
+ const {battle,posts}=collector(account,storage);
+ await battle.begin(header,account.accountId);
+ const state=opening();
+ const keep=mulligan(state,'keep');
+ battle.noteHuman({packs,state,action:keep.action,replayIndex:0,legal:keep.legal});
+ await battle.flush();
+ const follow=afterKeep(state,keep.action);
+ battle.noteHuman({packs,state:follow.state,action:follow.action,replayIndex:follow.replayIndex,legal:follow.legal});
+ await battle.flush();
+ assert.deepEqual(posts.map(item=>item.status+':'+item.step),['200:0','200:1']);
+ const snap=battle.snapshot();
+ assert.equal(snap.humanStep,2);
+ assert.equal(snap.previous.step,1);
+ assert.equal(snap.undoStack[1].step,0);
+ const stale={...snap,humanStep:1,confirmedThrough:1,previous:snap.undoStack[1],pending:[],staged:[],
+  undoStack:snap.undoStack.slice(0,1),openUpload:null};
+ const resumedStorage=consented();
+ const resumed=collector(account,resumedStorage);
+ await resumed.battle.restore(stale,header,account.accountId);
+ assert.equal(resumed.battle.session.humanStep,2);
+ assert.equal(resumed.battle.session.previous.step,1);
+ const played=dispatchUniversalAction(packs,follow.state,follow.action,{actor:0});
+ const next=respondUntilHuman(played);
+ const later=legalUniversalActions(packs,next.state);
+ resumed.battle.noteHuman({packs,state:next.state,action:later[0],replayIndex:follow.replayIndex+1+next.steps,legal:later});
+ const queued=readStoredQueue(resumedStorage)[0].body;
+ assert.equal(queued.step,2);
+ assert.equal(queued.previous.step,1);
+ assert.equal(queued.chain.previousStep,1);
+ await resumed.battle.flush();
+ assert.deepEqual(resumed.posts.map(item=>item.status+':'+item.step),['200:2']);
+ const detail=await api('/api/coach/matches/'+header.matchId,{token:account.token});
+ assert.equal(detail.status,200,detail.text);
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0,1,2]);
+ assert.equal(detail.data.steps[2].previous.step,1);
+ assert.equal(detail.data.steps[2].chain.previousStep,1);
+ assert.equal(detail.data.steps[2].chain.step,2);
+});
+
+test('an online step accepted after recording closes continues at the next number',{timeout:180000},async()=>{
+ const room=await seatedRoom('線成甲','線成乙');
+ const storage=consented();
+ const gate=coachGate(room.host.data.token);
+ const log=onlineLog(storage,gate.fetchImpl);
+ gate.holdNextStep();
+ const first=await hostAct(log,room);
+ const flushing=log.flush();
+ await waitUntil(()=>gate.stepHeld);
+ log.setConsent(false);
+ const landed=gate.releaseStep();
+ await flushing;
+ await landed;
+ assert.equal(gate.stepStarts,1);
+ assert.equal(gate.posts.filter(item=>item.kind==='step').length,1);
+ assert.equal(gate.posts[0].status,200,JSON.stringify(gate.posts[0].data));
+ assert.equal(gate.posts[0].body.step,0);
+ assert.equal(gate.posts[0].body.engineRevision,first.revision);
+ log.setConsent(true);
+ await waitUntil(()=>gate.posts.some(item=>item.kind==='reconcile'));
+ const reconciled=gate.posts.find(item=>item.kind==='reconcile');
+ assert.equal(reconciled.status,200,JSON.stringify(reconciled.data));
+ assert.equal(reconciled.data.count,1);
+ assert.equal(reconciled.body.accountId,first.accountId);
+ assert.equal(reconciled.body.matchId,gate.posts[0].body.matchId);
+ assert.equal(reconciled.body.step,0);
+ const second=await hostAct(log,room);
+ assert.equal(readStoredQueue(storage)[0].body.step,1);
+ await log.flush();
+ const steps=gate.posts.filter(item=>item.kind==='step');
+ assert.deepEqual(steps.map(item=>item.status+':'+item.body.step),['200:0','200:1']);
+ assert.equal(steps[1].body.previous.step,0);
+ assert.equal(steps[1].body.chain.previousStep,0);
+ assert.equal(steps[1].body.engineRevision,second.revision);
+ assert.notEqual(steps[0].body.clientKey,steps[1].body.clientKey);
+ assert.equal(steps[0].body.clientKey,steps[0].body.matchId+':r'+first.revision+':human');
+ const detail=await api('/api/coach/matches/'+steps[0].body.matchId,{token:room.host.data.token});
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0,1]);
+ assert.equal(detail.data.steps.filter(item=>item.clientKey===steps[0].body.clientKey).length,1);
+});
+
+test('a cross-tab close drops an online step the server never accepted',{timeout:180000},async()=>{
+ const room=await seatedRoom('線敗甲','線敗乙');
+ const storage=consented();
+ const gate=coachGate(room.host.data.token,{failStatus:503});
+ const log=onlineLog(storage,gate.fetchImpl);
+ gate.holdNextStep();
+ const first=await hostAct(log,room);
+ const flushing=log.flush();
+ await waitUntil(()=>gate.stepHeld);
+ const other=createOnlineCollector({
+  storage,schedule(){return 1;},reconcileTimeout:20000,
+  deckById:()=>({title:'bleach',counts:{...BLEACH_PURPLE_V2_PILOT_COUNTS}}),
+  fetchImpl:async()=>{throw Error('舊分頁不該重送');}
+ });
+ await other.prepare(first);
+ other.setConsent(false);
+ assert.equal(gate.stepStarts,1);
+ const failed=gate.releaseStep();
+ await flushing;
+ await failed;
+ assert.equal(gate.stepStarts,1);
+ assert.equal(gate.posts.filter(item=>item.kind==='step').length,1);
+ assert.equal(gate.posts[0].status,503);
+ log.setConsent(true);
+ await waitUntil(()=>gate.posts.some(item=>item.kind==='reconcile'));
+ const reconciled=gate.posts.find(item=>item.kind==='reconcile');
+ assert.equal(reconciled.status,200,JSON.stringify(reconciled.data));
+ assert.equal(reconciled.data.count,0);
+ assert.equal(reconciled.body.accountId,first.accountId);
+ assert.equal(reconciled.body.step,0);
+ const second=await hostAct(log,room);
+ await log.flush();
+ const steps=gate.posts.filter(item=>item.kind==='step'&&item.status!==503);
+ assert.equal(steps.length,1);
+ assert.equal(steps[0].status,200,JSON.stringify(steps[0].data));
+ assert.equal(steps[0].body.step,0);
+ assert.equal(steps[0].body.engineRevision,second.revision);
+ assert.notEqual(steps[0].body.clientKey,gate.posts[0].body.clientKey);
+ assert.equal(gate.stepStarts,2);
+ const detail=await api('/api/coach/matches/'+steps[0].body.matchId,{token:room.host.data.token});
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0]);
+ assert.equal(detail.data.steps[0].clientKey,steps[0].body.clientKey);
+ assert.equal(detail.data.steps.some(item=>item.clientKey===gate.posts[0].body.clientKey),false);
+});
+
+test('a timed-out online step is fenced and cannot land afterwards',{timeout:180000},async()=>{
+ const room=await seatedRoom('線時甲','線時乙');
+ const storage=consented();
+ const gate=coachGate(room.host.data.token);
+ const log=onlineLog(storage,gate.fetchImpl,{uploadTimeout:300,reconcileTimeout:20000});
+ gate.holdNextStep();
+ const first=await hostAct(log,room);
+ const flushing=log.flush();
+ await waitUntil(()=>gate.stepHeld);
+ log.setConsent(false);
+ await flushing;
+ assert.equal(gate.stepStarts,1);
+ assert.equal(gate.posts.filter(item=>item.kind==='step').length,0);
+ log.setConsent(true);
+ await waitUntil(()=>gate.posts.some(item=>item.kind==='reconcile'));
+ const reconciled=gate.posts.find(item=>item.kind==='reconcile');
+ assert.equal(reconciled.status,200,JSON.stringify(reconciled.data));
+ assert.equal(reconciled.data.count,0);
+ assert.equal(typeof reconciled.data.writeVersion,'string');
+ assert.equal(reconciled.body.accountId,first.accountId);
+ assert.equal(reconciled.body.step,0);
+ const late=gate.releaseStep();
+ await late;
+ const blocked=gate.posts.find(item=>item.kind==='step'&&item.late);
+ assert.equal(blocked.status,410,JSON.stringify(blocked.data));
+ assert.equal(blocked.body.writeVersion??null,null);
+ const absent=await api('/api/coach/matches/'+blocked.body.matchId,{token:room.host.data.token});
+ const before=absent.status===404?[]:absent.data.steps;
+ assert.equal(before.some(item=>item.clientKey===blocked.body.clientKey),false);
+ const second=await hostAct(log,room);
+ await log.flush();
+ const accepted=gate.posts.filter(item=>item.kind==='step'&&item.status===200);
+ assert.equal(accepted.length,1);
+ assert.equal(accepted[0].body.step,0);
+ assert.equal(accepted[0].body.writeVersion,reconciled.data.writeVersion);
+ assert.equal(accepted[0].body.engineRevision,second.revision);
+ assert.notEqual(accepted[0].body.clientKey,blocked.body.clientKey);
+ assert.equal(gate.stepStarts,2);
+ assert.equal(gate.posts.some(item=>item.status===409),false);
+ const detail=await api('/api/coach/matches/'+accepted[0].body.matchId,{token:room.host.data.token});
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0]);
+ assert.equal(detail.data.steps[0].clientKey,accepted[0].body.clientKey);
+});
+
+test('reopening recording while an online step is in flight numbers the next action after it lands',{timeout:180000},async()=>{
+ const room=await seatedRoom('線開甲','線開乙');
+ const storage=consented();
+ const gate=coachGate(room.host.data.token);
+ const log=onlineLog(storage,gate.fetchImpl);
+ gate.holdNextStep();
+ const first=await hostAct(log,room);
+ const flushing=log.flush();
+ await waitUntil(()=>gate.stepHeld);
+ log.setConsent(false);
+ gate.holdNextReconcile();
+ log.setConsent(true);
+ await waitUntil(()=>gate.reconcileHeld);
+ const second=await hostAct(log,room);
+ assert.equal(readStoredQueue(storage).length,0);
+ assert.equal(gate.stepStarts,1);
+ const landed=gate.releaseStep();
+ await landed;
+ const firstPost=gate.posts.find(item=>item.kind==='step');
+ assert.equal(firstPost.status,200,JSON.stringify(firstPost.data));
+ assert.equal(firstPost.body.step,0);
+ assert.equal(firstPost.body.engineRevision,first.revision);
+ gate.releaseReconcile();
+ await flushing;
+ await waitUntil(()=>readStoredQueue(storage).some(item=>item.body.step===1));
+ const staged=readStoredQueue(storage).find(item=>item.body.step===1).body;
+ assert.equal(staged.previous.step,0);
+ assert.equal(staged.chain.previousStep,0);
+ assert.equal(staged.engineRevision,second.revision);
+ await log.flush();
+ const steps=gate.posts.filter(item=>item.kind==='step');
+ assert.deepEqual(steps.map(item=>item.status+':'+item.body.step),['200:0','200:1']);
+ assert.equal(steps[1].body.previous.step,0);
+ assert.equal(steps[1].body.chain.previousStep,0);
+ assert.notEqual(steps[0].body.clientKey,steps[1].body.clientKey);
+ assert.equal(gate.posts.filter(item=>item.kind==='step'&&item.body.clientKey===steps[0].body.clientKey).length,1);
+ assert.equal(gate.posts.some(item=>item.status===409),false);
+ const detail=await api('/api/coach/matches/'+steps[0].body.matchId,{token:room.host.data.token});
+ assert.deepEqual(detail.data.steps.map(item=>item.step),[0,1]);
+});

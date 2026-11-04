@@ -161,39 +161,55 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    ]);
    if(timer)clearTimeout(timer);
    if(!response||response.timeout)return {known:false};
-   if(response.status===404)return {known:true, count:0};
+   if(response.status===404)return {known:true, count:0, previous:null};
    if(!response.ok)return {known:false};
    const data=await response.json();
    const count=data?.match?.steps;
-   if(Number.isInteger(count)&&count>=0)return {known:true,count,writeVersion:data.writeVersion};
+   if(Number.isInteger(count)&&count>=0)
+    return {known:true,count,writeVersion:data.writeVersion,previous:serverLink(data.steps,count)};
    return {known:false};
   }catch{
    if(timer)clearTimeout(timer);
    return {known:false};
   }
  }
- function applyCount(count, saved){
+ function serverLink(steps, count){
+  if(!Array.isArray(steps)||count<1)return null;
+  let last=null;
+  for(const step of steps){
+   if(!step||step.source==='ai'||step.actor==='ai'||!Number.isInteger(step.step))continue;
+   if(!last||step.step>last.step)last=step;
+  }
+  if(!last||last.step!==count-1||typeof last.choice?.type!=='string')return null;
+  const link={step:last.step,type:last.choice.type};
+  if(Number.isInteger(last.replayIndex))link.replayIndex=last.replayIndex;
+  if(typeof last.clientKey==='string')link.clientKey=last.clientKey;
+  if(link.replayIndex==null&&link.clientKey==null)return null;
+  return link;
+ }
+ function applyCount(count, saved, link){
   if(count>session.confirmedThrough)session.confirmedThrough=count;
   const wanted=Number.isInteger(saved?.humanStep)&&saved.humanStep>0?saved.humanStep:0;
   const local=session.humanStep||0;
   if(count>=wanted&&wanted>0&&local<count){
    session.humanStep=count;
-   if(saved?.previous)session.previous=saved.previous;
    if(Array.isArray(saved?.undoStack))session.undoStack=saved.undoStack;
    if(session.lastError==='紀錄尚未儲存')session.lastError='';
-   return;
+  }else{
+   const covered=Math.max(local, session.confirmedThrough||0, count);
+   if(wanted>covered){
+    session.humanStep=covered;
+    session.lastError='紀錄尚未儲存';
+    const stack=Array.isArray(saved?.undoStack)?saved.undoStack:[];
+    session.undoStack=stack.slice(0, covered);
+    session.previous=covered===0?null:stack[covered]||null;
+   }else{
+    session.humanStep=Math.max(local, count, session.confirmedThrough||0);
+    if(session.lastError==='紀錄尚未儲存'&&session.humanStep>=wanted)session.lastError='';
+   }
   }
-  const covered=Math.max(local, session.confirmedThrough||0, count);
-  if(wanted>covered){
-   session.humanStep=covered;
-   session.lastError='紀錄尚未儲存';
-   const stack=Array.isArray(saved?.undoStack)?saved.undoStack:[];
-   session.undoStack=stack.slice(0, covered);
-   session.previous=covered===0?null:stack[covered]||null;
-   return;
-  }
-  session.humanStep=Math.max(local, count, session.confirmedThrough||0);
-  if(session.lastError==='紀錄尚未儲存'&&session.humanStep>=wanted)session.lastError='';
+  if(link&&link.step===count-1&&(session.humanStep||0)===count&&session.previous?.step!==link.step)
+   session.previous=link;
  }
  function materialize(draft, step, previous){
   const matchId=session.header.matchId;
@@ -281,7 +297,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   const remote=await readServerCount(matchId);
   if(epoch!==epochNow||gen!==reconcileGen||!session||session.matchId!==matchId)return;
   if(!remote.known){
-   if(!coachConsentEnabled(storage))return;
+   if(!coachConsentEnabled(storage)){session.checking=false;return;}
    session.checking=true;
    scheduleReconcile(()=>{
     if(epoch===epochNow&&gen===reconcileGen&&session?.checking&&session.matchId===matchId)
@@ -292,7 +308,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   }
   pendingSaved=null;
   if(remote.writeVersion!==undefined)session.writeVersion=remote.writeVersion;
-  applyCount(remote.count, saved);
+  applyCount(remote.count, saved, remote.previous);
   if(!coachConsentEnabled(storage)){
    session.checking=false;
    session.staged=[];
@@ -544,10 +560,12 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
      session.checking=true;
      await confirmOpenUpload(openUpload,reconcileGen);
     }
-   }else if(saved&&saved.matchId===header.matchId&&coachConsentEnabled(storage)&&session.accountId){
+   }else if(saved&&saved.matchId===header.matchId&&session.accountId){
     pendingSaved=saved;
-    session.checking=true;
-    await confirmCounting(saved, epochNow);
+    if(coachConsentEnabled(storage)){
+     session.checking=true;
+     await confirmCounting(saved, epochNow);
+    }
    }else if(session){
     session.checking=false;
     const wanted=Number.isInteger(saved?.humanStep)&&saved.humanStep>0?saved.humanStep:0;

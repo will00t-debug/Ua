@@ -25,17 +25,23 @@ function sessionKey(accountId,seat,code){
  return id+':'+seat+':'+code;
 }
 
-export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckById,onChange,schedule}={}){
+export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckById,onChange,schedule,uploadTimeout=8000,reconcileTimeout=8000}={}){
  let uploaded=0;
  let lastError='';
  let pending=null;
  let session=null;
+ let hold=null;
+ let staged=null;
+ let reconcileGen=0;
+ let reconciling=false;
+ let seenVersion=coachConsentVersion(storage);
  const opening=new Map();
  const sessions=readSessions(storage);
  const uploader=createCoachUploader({
   storage,
   consent:()=>coachConsentEnabled(storage),
   fetchImpl,
+  uploadTimeout,
   onUploaded(){uploaded++;lastError='';onChange?.();},
   onError(message){lastError=message||'紀錄沒有送出。';onChange?.();}
  });
@@ -55,24 +61,56 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  function saveSessions(){
   try{storage.setItem(MATCH_KEY,JSON.stringify(sessions));}catch{/* ignore quota */}
  }
- function rewind(bodies){
-  const grouped=new Map();
-  for(const body of bodies){
-   if(body?.channel!=='online'||!String(body.format||'').includes('step'))continue;
-   const list=grouped.get(body.matchId)||[];
-   list.push(body);
-   grouped.set(body.matchId,list);
-  }
-  for(const [matchId,list] of grouped){
-   const oldest=list.reduce((left,right)=>left.step<right.step?left:right);
-   for(const saved of Object.values(sessions)){
-    if(!saved||saved.matchId!==matchId)continue;
-    saved.step=oldest.step;
-    saved.previous=oldest.previous||null;
-    if(session?.matchId===matchId){session.step=saved.step;session.previous=saved.previous;}
-   }
-  }
-  saveSessions();
+ function linkOf(previous){
+  if(!previous||!Number.isInteger(previous.step)||typeof previous.type!=='string')return null;
+  const link={step:previous.step,type:previous.type};
+  if(Number.isInteger(previous.replayIndex))link.replayIndex=previous.replayIndex;
+  if(typeof previous.clientKey==='string')link.clientKey=previous.clientKey;
+  return link.replayIndex==null&&link.clientKey==null?null:link;
+ }
+ function samePlace(track){
+  return !!session&&session.accountId===track.accountId&&session.matchId===track.matchId&&
+   session.seat===track.seat&&session.code===track.code;
+ }
+ function refreshShared(){
+  const version=coachConsentVersion(storage);
+  if(version!==seenVersion){seenVersion=version;uploader.invalidate();}
+  if(!session?.key)return;
+  const saved=readSessions(storage)[session.key];
+  if(!saved?.unresolved||hold)return;
+  hold={accountId:saved.accountId,matchId:saved.matchId,seat:saved.seat,code:saved.code,
+   step:saved.unresolved.step,writeVersion:saved.unresolved.writeVersion??null};
+ }
+ function rememberUnresolved(bodies){
+  if(!session)return;
+  const steps=(Array.isArray(bodies)?bodies:[]).filter(body=>body?.channel==='online'&&
+   String(body.format||'').includes('step')&&body.matchId===session.matchId&&Number.isInteger(body.step))
+   .map(body=>body.step);
+  const step=steps.length?Math.min(...steps):(session.step>0?session.step-1:null);
+  if(step==null)return;
+  hold={accountId:session.accountId,matchId:session.matchId,seat:session.seat,code:session.code,
+   step,writeVersion:session.writeVersion??null};
+  session.unresolved={step,writeVersion:session.writeVersion??null};
+  persist();
+ }
+ async function readFence(track){
+  let timer;
+  try{
+   const response=await Promise.race([
+    fetchImpl('/api/coach/steps/reconcile',{
+     method:'POST',credentials:'same-origin',
+     headers:{accept:'application/json','content-type':'application/json'},
+     body:JSON.stringify({matchId:track.matchId,accountId:track.accountId,step:track.step,writeVersion:track.writeVersion??null})
+    }),
+    new Promise(resolve=>{timer=setTimeout(()=>resolve(null), reconcileTimeout);})
+   ]);
+   if(!response?.ok)return null;
+   const data=await response.json();
+   if(!Number.isInteger(data?.count)||data.count<0)return null;
+   if(!(data.writeVersion===null||typeof data.writeVersion==='string'))return null;
+   return {count:data.count,writeVersion:data.writeVersion,previous:linkOf(data.previous)};
+  }catch{return null;}
+  finally{if(timer)clearTimeout(timer);}
  }
  function ensure(room){
   const key=sessionKey(room?.accountId,room?.seat,room?.code);
@@ -81,15 +119,21 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   const existing=opening.get(key);
   if(existing)return existing;
   const job=(async()=>{
-   const prior=sessions[key]||{};
+   const stored=readSessions(storage)[key]||{};
+   const memory=sessions[key]||{};
+   const prior=memory.matchId?memory:stored;
    const matchId=prior.matchId||newCoachMatchId();
    const matchLink=prior.matchLink||await onlineMatchLink(room.code);
    session={key,accountId:validAccountId(room.accountId),code:room.code,seat:room.seat,
     matchId,matchLink,step:prior.step||0,previous:prior.previous||null,
+    writeVersion:prior.writeVersion??null,unresolved:prior.unresolved||null,
     deck:prior.deck||null,titles:prior.titles||null,engineVersion:prior.engineVersion||null};
+   if(prior.unresolved)hold={accountId:session.accountId,matchId,seat:session.seat,code:session.code,
+    step:prior.unresolved.step,writeVersion:prior.unresolved.writeVersion??null};
    sessions[key]={matchId,matchLink,step:session.step,previous:session.previous,
     accountId:session.accountId,seat:session.seat,code:session.code,
-    deck:session.deck,titles:session.titles,engineVersion:session.engineVersion};
+    deck:session.deck,titles:session.titles,engineVersion:session.engineVersion,
+    writeVersion:session.writeVersion,unresolved:session.unresolved};
    saveSessions();
    return session;
   })();
@@ -100,7 +144,8 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   if(!session?.key)return;
   sessions[session.key]={matchId:session.matchId,matchLink:session.matchLink,step:session.step,
    previous:session.previous,accountId:session.accountId,seat:session.seat,code:session.code,
-   deck:session.deck||null,titles:session.titles||null,engineVersion:session.engineVersion||null};
+   deck:session.deck||null,titles:session.titles||null,engineVersion:session.engineVersion||null,
+   writeVersion:session.writeVersion??null,unresolved:session.unresolved||null};
   saveSessions();
  }
  function headerFrom(current,snap){
@@ -115,6 +160,84 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   lastError=message;
   onChange?.();
  }
+ async function commitSnap(snap){
+  if(!snap||!coachConsentEnabled(storage)||snap.consentVersion!==coachConsentVersion(storage))return;
+  if(!validAccountId(snap.accountId)){
+   pause('無法確認帳號，這步已暫停上傳。');
+   return;
+  }
+  if(!Array.isArray(snap.visible?.players?.[snap.seat]?.hand))return;
+  const current=await ensure({accountId:snap.accountId,seat:snap.seat,code:snap.code});
+  if(!current){
+   pause('無法確認帳號，這步已暫停上傳。');
+   return;
+  }
+  refreshShared();
+  if(!coachConsentEnabled(storage)||snap.consentVersion!==coachConsentVersion(storage))return;
+  if(hold){staged=snap;void reconcileHold();return;}
+  const clientKey=current.matchId+':r'+snap.revision+':human';
+  const previous=linkOf(current.previous);
+  const body={
+   format:DECISION_FORMAT,clientKey,step:current.step,source:'human',actor:'human',seat:snap.seat,
+   ...headerFrom(current,snap),turn:snap.turn,phase:snap.phase,engineRevision:snap.revision,
+   observation:{visible:snap.visible,private:snap.privateView},
+   publicHistory:publicHistoryFrom(snap.visible),legal:snap.legal,choice:snap.choice,
+   forced:snap.legal.length===1,decisionClass:classifyDecision(snap.choice),
+   previous,chain:chainOf(current.matchId,current.step,previous,clientKey),
+   accountId:snap.accountId
+  };
+  if(current.writeVersion)body.writeVersion=current.writeVersion;
+  const queued=queue.enqueue(body);
+  let reserved=false;
+  const reserve=()=>{
+   if(reserved)return;
+   reserved=true;
+   current.previous={step:body.step,type:body.choice.type,clientKey};
+   current.step+=1;
+   current.unresolved=null;
+   current.deck=snap.deck;
+   current.titles=snap.titles;
+   current.engineVersion=snap.engineVersion;
+   persist();
+  };
+  const apply=result=>{
+   if(result?.pending){
+    reserve();
+    void result.done.then(apply);
+    return;
+   }
+   if(result?.queued||(result?.stored===false&&result.retry===true))reserve();
+   if(result?.stored===false)lastError='紀錄尚未儲存';
+   else if((result?.queued||result?.skipped==='queued')&&queue.lastError!=='紀錄尚未儲存')lastError='';
+   onChange?.();
+  };
+  apply(queued);
+ }
+ async function reconcileHold(){
+  const track=hold;
+  if(reconciling||!track||!coachConsentEnabled(storage)||!samePlace(track))return;
+  reconciling=true;
+  const gen=reconcileGen;
+  let remote=null;
+  try{remote=await readFence(track);}
+  finally{reconciling=false;}
+  if(gen!==reconcileGen||hold!==track||!samePlace(track)||!coachConsentEnabled(storage))return;
+  if(!remote){
+   const retry=()=>{if(gen===reconcileGen&&hold===track)void reconcileHold();};
+   if(schedule)schedule(retry, 500);
+   else setTimeout(retry, 500);
+   return;
+  }
+  session.writeVersion=remote.writeVersion;
+  session.step=remote.count;
+  session.previous=remote.previous;
+  session.unresolved=null;
+  hold=null;
+  persist();
+  const snap=staged;
+  staged=null;
+  if(snap)await commitSnap(snap);
+ }
  return {
   consent(){return coachConsentEnabled(storage);},
   get queued(){return queue.length;},
@@ -122,7 +245,14 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   get lastError(){return lastError;},
   setConsent(enabled){
    setCoachConsent(storage,!!enabled);
-   if(!enabled){uploader.invalidate();pending=null;rewind(queue.discard());}
+   refreshShared();
+   if(!enabled){
+    uploader.invalidate();
+    pending=null;
+    staged=null;
+    reconcileGen+=1;
+    rememberUnresolved(queue.discard());
+   }else if(hold)void reconcileHold();
    onChange?.();
   },
   start(){queue.start();},
@@ -187,53 +317,9 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    if(room.revision===snap.revision)return;
    pending=null;
    if(room.revision!==snap.revision+1||!this.consent()||snap.consentVersion!==coachConsentVersion(storage))return;
-   if(!validAccountId(snap.accountId)){
-    pause('無法確認帳號，這步已暫停上傳。');
-    return;
-   }
-   if(!Array.isArray(snap.visible?.players?.[snap.seat]?.hand))return;
-   const current=await ensure({accountId:snap.accountId,seat:snap.seat,code:snap.code});
-   if(!current){
-    pause('無法確認帳號，這步已暫停上傳。');
-    return;
-   }
-   if(!this.consent()||snap.consentVersion!==coachConsentVersion(storage))return;
-   const clientKey=current.matchId+':r'+snap.revision+':human';
-   const previous=current.previous;
-   const body={
-    format:DECISION_FORMAT,clientKey,step:current.step,source:'human',actor:'human',seat:snap.seat,
-    ...headerFrom(current,snap),turn:snap.turn,phase:snap.phase,engineRevision:snap.revision,
-    observation:{visible:snap.visible,private:snap.privateView},
-    publicHistory:publicHistoryFrom(snap.visible),legal:snap.legal,choice:snap.choice,
-    forced:snap.legal.length===1,decisionClass:classifyDecision(snap.choice),
-    previous:previous?{step:previous.step,type:previous.type,clientKey:previous.clientKey}:null,
-    chain:chainOf(current.matchId,current.step,previous,clientKey),
-    accountId:snap.accountId
-   };
-   const queued=queue.enqueue(body);
-   let reserved=false;
-   const reserve=()=>{
-    if(reserved)return;
-    reserved=true;
-    current.previous={step:body.step,type:body.choice.type,clientKey};
-    current.step+=1;
-    current.deck=snap.deck;
-    current.titles=snap.titles;
-    current.engineVersion=snap.engineVersion;
-    persist();
-   };
-   const apply=result=>{
-    if(result?.pending){
-     reserve();
-     void result.done.then(apply);
-     return;
-    }
-    if(result?.queued||(result?.stored===false&&result.retry===true))reserve();
-    if(result?.stored===false)lastError='紀錄尚未儲存';
-    else if((result?.queued||result?.skipped==='queued')&&queue.lastError!=='紀錄尚未儲存')lastError='';
-    onChange?.();
-   };
-   apply(queued);
+   refreshShared();
+   if(hold){staged=snap;void reconcileHold();return;}
+   await commitSnap(snap);
   },
   async result(room,endReason,{completed,winner,holdMs=0}={}){
    if(!this.consent()||!room?.view)return;
