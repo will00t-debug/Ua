@@ -67,7 +67,7 @@ function arm(pack){A.pack=pack;}
 function go(pack,s){if(!s.pending)A.go(pack,s);}
 function sig(a){
  return JSON.stringify([a?.type,a?.mode,a?.uid??null,a?.line??null,a?.slot??null,
-  a?.replaceUid??null,a?.index??null]);
+  a?.replaceUid??null,a?.index??null,a?.hostUid??null]);
 }
 function takeAction(q,a){
  const hit=(q.actions||[]).find(x=>sig(x)===sig(a));
@@ -205,7 +205,8 @@ function finishOrder(s,q,a){
 function destinations(s,owner,c,lines){
  const d=def(A.pack,c),pl=plOf(s,owner),actions=[];
  for(const line of lines||['front','energy']){
-  if(line==='front'&&d.frontForbidden)continue;
+  // Fields and frontForbidden prints never list a front cell (Q2082 / Q2098).
+  if(line==='front'&&(d.frontForbidden||d.type==='field'))continue;
   for(const dest of A.destinations(pl,line)){
    const action={type:'csm',mode:'deploy',uid:c.uid,line,slot:dest.slot};
    if(dest.replaceUid)action.replaceUid=dest.replaceUid;
@@ -213,6 +214,10 @@ function destinations(s,owner,c,lines){
   }
  }
  return actions;
+}
+function energyCharsToFront(pack,s,owner){
+ return plOf(s,owner).energy.filter(c=>c&&def(pack,c).type==='character'&&
+  !def(pack,c).frontForbidden);
 }
 function offerDeploy(s,spec,cards,opts){
  const lines=opts?.lines||['front','energy'];
@@ -275,10 +280,10 @@ function tuck(pack,s,owner,from,uid,host,sourceUid){
  host.under??=[];host.under.push(physical);
  A.record(pack,s,{physical,owner,from,to:'raid-under',reason:'own-effect',sourceUid:host.uid});
 }
-function peelFacedown(pack,s,owner,host,to,sourceUid){
+function peelFacedownUid(pack,s,owner,host,uid,to,sourceUid){
  const under=csmFacedowns(host);
- if(!under.length)return null;
- const physical=under[under.length-1];
+ const physical=under.find(c=>c.uid===uid)||null;
+ if(!physical)return null;
  host.under=host.under.filter(c=>c.uid!==physical.uid);
  physical.faceDown=false;
  if(to==='hand')plOf(s,owner).hand.push(physical);
@@ -286,6 +291,19 @@ function peelFacedown(pack,s,owner,host,to,sourceUid){
  A.record(pack,s,{physical,owner,from:'raid-under',to,reason:'own-effect',
   sourceUid,attachedToUid:host.uid,wasFaceDown:true});
  return physical;
+}
+function peelFacedown(pack,s,owner,host,to,sourceUid){
+ const under=csmFacedowns(host);
+ if(!under.length)return null;
+ return peelFacedownUid(pack,s,owner,host,under[under.length-1].uid,to,sourceUid);
+}
+function offerPeelUnder(s,spec,host,to,follow){
+ const unders=csmFacedowns(host);
+ if(!unders.length)return false;
+ if(unders.length===1)return false;
+ hold(s,{...spec,step:'peelUnder',data:{...(spec.data||{}),hostUid:host.uid,to,follow}},
+  unders.map(c=>({type:'csm',mode:'peel',uid:c.uid,hostUid:host.uid})));
+ return true;
 }
 function nameOn(s,owner,name){return chars(s,owner,c=>named(A.pack,c,name,s)).length>0;}
 function eventsUsed(s,owner){
@@ -331,13 +349,20 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='CSM-1-028'){
+  // Q2082: Café「二道」 is a field — energy line only; never front.
   const cards=plOf(s,owner).hand.filter(c=>{
    const d=def(pack,c);
    if(d.energy>2||d.ap!==1||d.color!=='purple')return false;
    if(d.type==='field')return d.name===CAFE;
    return d.type==='character'&&(named(pack,c,REZE,s)||named(pack,c,DENJI,s));
   });
-  offerDeploy(s,spec,cards,{from:'hand',ready:false,optional:true});
+  const actions=cards.flatMap(c=>{
+   const lines=def(pack,c).type==='field'?['energy']:['front','energy'];
+   return destinations(s,owner,c,lines);
+  });
+  if(!actions.length)return;
+  hold(s,{...spec,step:'deploy',data:{from:'hand',ready:false}},[
+   {type:'csm',mode:'skip'},...actions]);
   return;
  }
  if(id==='CSM-1-030'){
@@ -488,7 +513,8 @@ function runRetire(pack,s,job){
   const high=[...chars(s,owner),...plOf(s,owner).outside].some(c=>
    def(pack,c).type==='character'&&Number.isInteger(def(pack,c).bp)&&def(pack,c).bp>=4500);
   if(high)return;
-  const energy=plOf(s,owner).energy.filter(c=>c&&def(pack,c).type==='character');
+  // Q2098: Pochita frontForbidden must not be offered for energy→front.
+  const energy=energyCharsToFront(pack,s,owner);
   if(!energy.length)return;
   hold(s,{...spec,step:'buffMoveFront'},[
    {type:'csm',mode:'skip'},...energy.map(c=>({type:'csm',mode:'pick',uid:c.uid}))]);
@@ -558,7 +584,8 @@ export function runCsmJob(pack,s,job){
   const self=selfOf(s,job.owner,job.sourceUid);
   if(job.id==='CSM-1-066'&&self&&frontLine(s,job.owner,self)){
    const frontsPool=fronts(s,job.owner,c=>c.uid!==self.uid&&!named(pack,c,HIMENO,s));
-   const energyPool=plOf(s,job.owner).energy.filter(c=>c&&def(pack,c).type==='character');
+   // Q2098: exclude frontForbidden (Pochita) from energy↔front swap pool.
+   const energyPool=energyCharsToFront(pack,s,job.owner);
    if(frontsPool.length&&energyPool.length){
     hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'himenoSwap',
      data:{fronts:frontsPool.map(c=>c.uid),energies:energyPool.map(c=>c.uid)}},[
@@ -578,6 +605,9 @@ function runAttackEnd(pack,s,job){
  if(job.id==='CSM-1-048'&&self&&csmFacedowns(self).length){
   A.active(s,owner,self);
   impact(s,self);
+  // Q2088/Q2089: controller chooses which facedown under to peel.
+  if(offerPeelUnder(s,{player:owner,sourceUid:job.sourceUid,id:job.id},self,'outside','pochita'))
+   return;
   const peeled=peelFacedown(pack,s,owner,self,'outside',job.sourceUid);
   if(peeled&&named(pack,peeled,POCHITA,s)){
    hold(s,{player:owner,sourceUid:job.sourceUid,id:job.id,step:'pochita',
@@ -725,7 +755,8 @@ export function activateCsm(pack,s,action){
  }
  if(id==='CSM-1-070'){
   use(s,c.uid+'|main');
-  const pool=plOf(s,owner).energy.filter(x=>x&&def(pack,x).type==='character');
+  // Q2098: frontForbidden energy cards cannot swap onto front.
+  const pool=energyCharsToFront(pack,s,owner);
   hold(s,{...spec,step:'swap'},pool.map(x=>({type:'csm',mode:'pick',uid:x.uid})));
   go(pack,s);return;
  }
@@ -753,7 +784,7 @@ export function resolveCsmPending(pack,s,action){
  const step=q.step,owner=q.player;
  if(step==='lookPick')finishLookTake(pack,s,q,a);
  else if(step==='lookOrder')finishOrder(s,q,a);
- else if(step==='discard'&&a.mode==='discard'){
+ else if((step==='discard'||step==='discardEnergy')&&a.mode==='discard'){
   moveUid(pack,s,owner,'hand',a.uid,'outside',q.sourceUid);
   if(q.data?.left)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},
    q.data.left,q.data.rest);
@@ -761,6 +792,38 @@ export function resolveCsmPending(pack,s,action){
   else if(q.id==='CSM-1-059'){
    const self=selfOf(s,owner,q.sourceUid);
    if(self){self.buffs??=[];self.buffs.push({energy:1,untilTurn:s.turn});}
+  }
+ }else if(step==='leaveReplace'){
+  // Q2093/Q2094: accept retires the chosen substitute; skip resumes the original leave.
+  if(a.mode==='pick'){
+   use(s,q.sourceUid+'|leave');
+   const paused=retireUid(pack,s,owner,a.uid);
+   if(paused)return go(pack,s);
+  }else if(a.mode==='skip'&&q.data?.line!=null&&q.data?.slot!=null&&A.retireSkip){
+   A.retireSkip(pack,s,owner,q.data.line,q.data.slot);
+  }
+ }else if(step==='retireThenDebuff5k'){
+  if(a.mode==='pick'){
+   const paused=retireUid(pack,s,owner,a.uid);
+   if(paused)return go(pack,s);
+   offerFront(s,{player:owner,sourceUid:q.sourceUid,id:q.id},1-owner,null,true,'debuff5k');
+  }
+ }else if(step==='debuff5k'&&a.mode==='pick'){
+  buff(s,selfOf(s,1-owner,a.uid),-5000);
+ }else if(step==='peelUnder'&&a.mode==='peel'){
+  const host=selfOf(s,owner,a.hostUid||q.data?.hostUid);
+  if(host){
+   const peeled=peelFacedownUid(pack,s,owner,host,a.uid,q.data?.to||'outside',q.sourceUid);
+   if(q.data?.follow==='pochita'&&peeled&&named(pack,peeled,POCHITA,s)){
+    hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'pochita',
+     data:{uid:peeled.uid}},[
+     {type:'csm',mode:'skip'},{type:'csm',mode:'deploy',uid:peeled.uid}]);
+   }else if(q.data?.follow==='himeno'){
+    const self=selfOf(s,owner,q.sourceUid);
+    if(self&&nameOn(s,owner,HIMENO)&&!csmFacedowns(self).length){
+     sniper(s,self);impact(s,self);
+    }
+   }
   }
  }else if(step==='buffOther'&&a.mode==='pick'){
   buff(s,selfOf(s,owner,a.uid),q.data?.bp||1000);
@@ -903,10 +966,12 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='topPlace'){
   const uid=q.data.uid;
   if(a.mode==='bottom')lay(plOf(s,owner),[uid],'bottom');
- }else if(step==='mayRetire'&&a.mode==='retire')retireUid(pack,s,owner,q.sourceUid);
+ } else if(step==='mayRetire'&&a.mode==='retire')retireUid(pack,s,owner,q.sourceUid);
  else if(step==='buffMoveFront'&&a.mode==='pick'){
   const t=selfOf(s,owner,a.uid);
-  if(t){buff(s,t,2000);moveToFront(pack,s,owner,t,q.sourceUid);}
+  if(t){buff(s,t,2000);offerMoveToFront(pack,s,{player:owner,sourceUid:q.sourceUid,id:q.id},t);}
+ }else if(step==='moveFront'&&a.mode==='move'){
+  A.moveLine(pack,s,owner,a.uid||q.data?.uid,'front',a.slot,a.replaceUid,q.sourceUid);
  }else if(step==='payReturn')resolvePayReturn(pack,s,q,a);
  else if(step==='pochita'&&a.mode==='deploy'){
   const card=plOf(s,owner).outside.find(c=>c.uid===q.data.uid);
@@ -1100,6 +1165,8 @@ function swapFrontEnergy(pack,s,owner,frontUid,energyUid){
  const fi=pl.front.findIndex(c=>c?.uid===frontUid);
  const ei=pl.energy.findIndex(c=>c?.uid===energyUid);
  if(fi<0||ei<0)return;
+ // Q2098: never swap a frontForbidden energy card onto front.
+ if(def(pack,pl.energy[ei]).frontForbidden)return;
  const tmp=pl.front[fi];
  pl.front[fi]=pl.energy[ei];
  pl.energy[ei]=tmp;
@@ -1108,25 +1175,21 @@ function swapFrontEnergy(pack,s,owner,frontUid,energyUid){
  A.record(pack,s,{physical:pl.energy[ei],owner,from:'front',to:'energy',reason:'own-effect',
   sourceUid:frontUid});
 }
-function moveToFront(pack,s,owner,c,sourceUid){
- const loc=locOf(s,owner,c.uid);
- if(!loc||loc.line==='front')return;
- const dests=A.destinations(plOf(s,owner),'front');
- if(!dests.length)return;
- const d=dests[0];
- // Use enter-style move via destinations API through pending if multiple;
- // single empty / replace path:
- if(typeof A.moveLine==='function'){
-  try{A.moveLine(pack,s,owner,c,'front');return;}catch(_){}
+// Q2095: full front requires an explicit replace choice; no silent auto-remove.
+function offerMoveToFront(pack,s,spec,c){
+ const loc=locOf(s,spec.player,c.uid);
+ if(!loc||loc.line==='front')return false;
+ if(def(pack,c).frontForbidden)return false;
+ const dests=A.destinations(plOf(s,spec.player),'front');
+ if(!dests.length)return false;
+ if(dests.length===1&&!dests[0].replaceUid){
+  A.moveLine(pack,s,spec.player,c.uid,'front',dests[0].slot,undefined,spec.sourceUid);
+  return true;
  }
- const pl=plOf(s,owner);
- pl[loc.line][loc.slot]=null;
- if(d.replaceUid){
-  const victim=pl.front[d.slot];
-  if(victim){pl.front[d.slot]=null;pl.removed.push(victim);}
- }
- pl.front[d.slot]=c;
- A.record(pack,s,{physical:c,owner,from:loc.line,to:'front',reason:'own-effect',sourceUid});
+ hold(s,{...spec,step:'moveFront',data:{...(spec.data||{}),uid:c.uid}},
+  dests.map(d=>({type:'csm',mode:'move',uid:c.uid,line:'front',slot:d.slot,
+   ...(d.replaceUid?{replaceUid:d.replaceUid}:{})})));
+ return true;
 }
 
 // Hooks the engine calls for continuous / timing edges.
@@ -1171,11 +1234,14 @@ export function csmOnAttackDeclare(pack,s,attacker){
  if(!d?.csmHook||d.id!=='CSM-1-056'||originalEffectsDisabled(s,attacker))return;
  if(!raidLive(attacker,d,'onAttack'))return;
  const owner=Number(String(attacker.uid).split('-')[0]);
- if(csmFacedowns(attacker).length){
-  peelFacedown(pack,s,owner,attacker,'hand',attacker.uid);
-  if(nameOn(s,owner,HIMENO)&&!csmFacedowns(attacker).length){
-   sniper(s,attacker);impact(s,attacker);
-  }
+ const unders=csmFacedowns(attacker);
+ if(!unders.length)return;
+ // Multi-under: controller chooses which facedown goes to hand.
+ if(offerPeelUnder(s,{player:owner,sourceUid:attacker.uid,id:d.id},attacker,'hand','himeno'))
+  return;
+ peelFacedown(pack,s,owner,attacker,'hand',attacker.uid);
+ if(nameOn(s,owner,HIMENO)&&!csmFacedowns(attacker).length){
+  sniper(s,attacker);impact(s,attacker);
  }
 }
 export function csmLeaveReplace(pack,s,owner,c){
@@ -1185,9 +1251,10 @@ export function csmLeaveReplace(pack,s,owner,c){
  if(A.bp(pack,s,c)<500||used(s,c.uid+'|leave'))return false;
  const pool=fronts(s,owner,x=>x.uid!==c.uid&&A.bp(pack,s,x)>=4000);
  if(!pool.length)return false;
+ const loc=locOf(s,owner,c.uid);
  hold(s,{player:owner,sourceUid:c.uid,id:d.id,step:'leaveReplace',
-  data:{line:locOf(s,owner,c.uid)?.line,slot:locOf(s,owner,c.uid)?.slot}},[
+  data:{line:loc?.line,slot:loc?.slot}},[
   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
- use(s,c.uid+'|leave');
+ // Spend |leave only when the substitute branch is accepted (resolveCsmPending).
  return true;
 }

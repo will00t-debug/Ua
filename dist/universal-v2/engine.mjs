@@ -1852,11 +1852,13 @@ function ensureCsm(){
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
   retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
+  retireSkip:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot,{skipReplacement:true}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
   energy:universalEnergyByColor,required:zoneRequiredEnergy,
-  moveLine:effectMoveTo
+  moveLine:(pack,s,owner,uid,line,slot,replaceUid,sourceUid)=>
+   effectMoveTo(pack,s,owner,uid,line,slot,replaceUid,sourceUid)
  });
 }
 let aotBound=false;

@@ -10,6 +10,7 @@ import {appendCompletedMove} from '../dist/universal-v2/zone-move-events.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp}
  from '../dist/universal-v2/engine.mjs';
+import {runCsmJob} from '../dist/universal-v2/csm-runtime.mjs';
 
 const pack=createCsmV2Pack();
 const packs=[pack,pack];
@@ -192,5 +193,157 @@ test('Q2075 Power BP+1000 turns on when Makima arrives after an event',()=>{
  put(s,0,'CSM-1-022','front',1);
  assert.equal(csmBp(pack,s,power,pack.cards['CSM-1-010'],false,0,printed),1000);
  assert.equal(universalBp(packs,s,power),pack.cards['CSM-1-010'].bp+1000);
+ assertUniversalMatch(packs,s);
+});
+
+function buryRaid(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to bury under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
+function tuckFacedown(s,p,host,id){
+ const card=take(s,p,id);
+ card.faceDown=true;card.ready=false;card.fieldEntryStamp=null;
+ host.under??=[];host.under.push(card);
+ return card;
+}
+
+test('Q2093/Q2094 CSM-1-061 leaveReplace accept retires the substitute',()=>{
+ const counts=countsFor(['CSM-1-061','CSM-1-030','CSM-1-024','CSM-1-008','CSM-1-001']);
+ let s=toPhase(fresh(counts,2093),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ const power=buryRaid(s,0,put(s,0,'CSM-1-061','front',0));
+ const sub=put(s,0,'CSM-1-024','front',1);
+ const reze=toHand(s,0,'CSM-1-030');
+ s=play(s,reze.uid);
+ assert.equal(s.pending?.kind,'csm');
+ assert.equal(s.pending?.step,'retireThenChoose');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===power.uid);
+ assert.equal(s.pending?.kind,'csm');
+ assert.equal(s.pending?.step,'leaveReplace');
+ assert.ok(s.pending.actions.some(a=>a.mode==='pick'&&a.uid===sub.uid));
+ assert.ok(s.pending.actions.some(a=>a.mode==='skip'));
+ s=choose(s,a=>a.mode==='pick'&&a.uid===sub.uid);
+ assert.equal(s.players[0].front.some(c=>c?.uid===power.uid),true);
+ assert.equal(s.players[0].front.some(c=>c?.uid===sub.uid),false);
+ assert.ok(s.players[0].outside.some(c=>c.uid===sub.uid));
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2093 CSM-1-061 leaveReplace skip resumes the original retirement',()=>{
+ const counts=countsFor(['CSM-1-061','CSM-1-030','CSM-1-024','CSM-1-008','CSM-1-001']);
+ let s=toPhase(fresh(counts,2094),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ const power=buryRaid(s,0,put(s,0,'CSM-1-061','front',0));
+ put(s,0,'CSM-1-024','front',1);
+ const reze=toHand(s,0,'CSM-1-030');
+ s=play(s,reze.uid);
+ s=choose(s,a=>a.mode==='pick'&&a.uid===power.uid);
+ assert.equal(s.pending?.step,'leaveReplace');
+ s=choose(s,a=>a.mode==='skip');
+ assert.equal(s.players[0].front.some(c=>c?.uid===power.uid),false);
+ assert.ok(s.players[0].outside.some(c=>c.uid===power.uid));
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2082 Café「二道」 deploy from 028 is energy-only',()=>{
+ const counts=countsFor(['CSM-1-028','CSM-1-033','CSM-1-008','CSM-1-001','CSM-1-006']);
+ let s=toPhase(fresh(counts,2082),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ const cafe=toHand(s,0,'CSM-1-033');
+ const host=toHand(s,0,'CSM-1-028');
+ s=play(s,host.uid);
+ assert.equal(s.pending?.kind,'csm');
+ assert.equal(s.pending?.step,'deploy');
+ const cafeActs=s.pending.actions.filter(a=>a.mode==='deploy'&&a.uid===cafe.uid);
+ assert.ok(cafeActs.length>0);
+ assert.equal(cafeActs.every(a=>a.line==='energy'),true);
+ assert.equal(cafeActs.some(a=>a.line==='front'),false);
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2098 066 onRetire excludes frontForbidden Pochita from energy→front',()=>{
+ // Avoid pairing two color-trigger cards (030+067) in the same 50-card build.
+ const counts=countsFor(['CSM-1-066','CSM-1-067','CSM-1-008','CSM-1-006']);
+ let s=toPhase(fresh(counts,2098),'main');
+ dumpHand(s);
+ const himeno=put(s,0,'CSM-1-066','front',0);
+ const pochita=put(s,0,'CSM-1-067','energy',0);
+ const other=put(s,0,'CSM-1-006','energy',1);
+ legalUniversalActions(packs,s);
+ runCsmJob(pack,s,{op:'csm',id:'CSM-1-066',slot:'onRetire',owner:0,sourceUid:himeno.uid});
+ assert.equal(s.pending?.step,'buffMoveFront');
+ assert.equal(s.pending.actions.some(a=>a.uid===pochita.uid),false);
+ assert.ok(s.pending.actions.some(a=>a.uid===other.uid));
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2095 066 full-front move asks for replaceUid',()=>{
+ const counts=countsFor(['CSM-1-066','CSM-1-006','CSM-1-008','CSM-1-001','CSM-1-002',
+  'CSM-1-003']);
+ let s=toPhase(fresh(counts,2095),'main');
+ dumpHand(s);
+ const himeno=put(s,0,'CSM-1-066','energy',0);
+ const mover=put(s,0,'CSM-1-006','energy',1);
+ const victims=[put(s,0,'CSM-1-001','front',0),put(s,0,'CSM-1-002','front',1),
+  put(s,0,'CSM-1-003','front',2),put(s,0,'CSM-1-008','front',3)];
+ legalUniversalActions(packs,s);
+ runCsmJob(pack,s,{op:'csm',id:'CSM-1-066',slot:'onRetire',owner:0,sourceUid:himeno.uid});
+ assert.equal(s.pending?.step,'buffMoveFront');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===mover.uid);
+ assert.equal(s.pending?.step,'moveFront');
+ assert.ok(s.pending.actions.every(a=>a.mode==='move'&&a.replaceUid));
+ assert.ok(s.pending.actions.some(a=>a.replaceUid===victims[0].uid));
+ s=choose(s,a=>a.replaceUid===victims[0].uid);
+ assert.equal(s.players[0].front.some(c=>c?.uid===mover.uid),true);
+ assert.equal(s.players[0].front.some(c=>c?.uid===victims[0].uid),false);
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2077/Q2078 017 reze branch retires then optional BP-5000',()=>{
+ // 017 is energy 5; seat it with put + runCsmJob rather than paying from a 4-slot line.
+ const counts=countsFor(['CSM-1-017','CSM-1-006','CSM-1-008','CSM-1-001']);
+ let s=toPhase(fresh(counts,2078),'main');
+ dumpHand(s);
+ const bomb=put(s,0,'CSM-1-017','front',1);
+ const ally=put(s,0,'CSM-1-006','front',0);
+ const foe=put(s,1,'CSM-1-001','front',0);
+ legalUniversalActions(packs,s);
+ runCsmJob(pack,s,{op:'csm',id:'CSM-1-017',slot:'onPlay',owner:0,sourceUid:bomb.uid});
+ assert.equal(s.pending?.step,'choose');
+ assert.ok(s.pending.actions.some(a=>a.mode==='reze'));
+ s=choose(s,a=>a.mode==='reze');
+ assert.equal(s.pending?.step,'retireThenDebuff5k');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===ally.uid);
+ assert.equal(s.pending?.step,'debuff5k');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
+ const liveFoe=s.players[1].front.find(c=>c?.uid===foe.uid);
+ assert.ok(liveFoe);
+ assert.equal(universalBp(packs,s,liveFoe),pack.cards['CSM-1-001'].bp-5000);
+ assert.ok(s.players[0].outside.some(c=>c.uid===ally.uid));
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2088/Q2089 048 multi-under peel offers a choice',()=>{
+ const counts=countsFor(['CSM-1-048','CSM-1-067','CSM-1-001','CSM-1-008','CSM-1-006',
+  'CSM-1-022']);
+ let s=toPhase(fresh(counts,2088),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ const host=buryRaid(s,0,put(s,0,'CSM-1-048','front',0));
+ const first=tuckFacedown(s,0,host,'CSM-1-001');
+ const second=tuckFacedown(s,0,host,'CSM-1-067');
+ put(s,0,'CSM-1-022','front',1); // ensureCsm via activation scan
+ legalUniversalActions(packs,s);
+ runCsmJob(pack,s,{op:'csm',id:'CSM-1-048',slot:'attackEnd',owner:0,sourceUid:host.uid});
+ assert.equal(s.pending?.step,'peelUnder');
+ assert.ok(s.pending.actions.some(a=>a.mode==='peel'&&a.uid===first.uid));
+ assert.ok(s.pending.actions.some(a=>a.mode==='peel'&&a.uid===second.uid));
+ s=choose(s,a=>a.mode==='peel'&&a.uid===second.uid);
+ assert.ok(s.players[0].outside.some(c=>c.uid===second.uid)||s.pending?.step==='pochita');
+ assert.equal(host.under.some(c=>c.uid===first.uid),true);
  assertUniversalMatch(packs,s);
 });
