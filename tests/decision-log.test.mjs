@@ -10,7 +10,9 @@ import {newUniversalMatch, dispatchUniversalAction, legalUniversalActions, unive
 import {makeUniversalPreviewReplay} from '../dist/universal-v2/preview-replay.mjs';
 import {DECISION_CLASSES, DECISION_ENGINE_VERSION, classifyDecision, visibleForTraining} from '../dist/universal-v2/coach-format.mjs';
 import {buildHumanStep, buildAiMark, coachHeader, hiddenLeak, newCoachMatchId} from '../dist/universal-v2/coach-record.mjs';
-import {createDecisionQueue} from '../dist/universal-v2/coach-queue.mjs';
+// The battle and online collectors import this exact URL. The write lock lives
+// on the module instance, so the regression has to use the same one.
+import {createDecisionQueue, readStoredQueue} from '../dist/universal-v2/coach-queue.mjs?v=20261104lock1';
 import {createCoachBattle} from '../dist/universal-v2/coach-battle.mjs';
 import {createOnlineCollector} from '../dist/universal-v2/coach-online.mjs';
 import {COACH_CONSENT_KEY} from '../dist/universal-v2/coach-client.mjs';
@@ -530,7 +532,7 @@ test('two open queues keep each account record when adds and uploads interleave'
  assert.equal(tab1.enqueue(second).queued, true);
  assert.equal(tab2.enqueue(first).skipped, 'queued');
  assert.equal(tab2.enqueue(sameKey).queued, true);
- const loaded=JSON.parse(storage.getItem('ua-v2-coach-queue-v1')).map(item=>item.body.accountId+':'+item.clientKey);
+ const loaded=readStoredQueue(storage).map(item=>item.body.accountId+':'+item.clientKey);
  assert.deepEqual(loaded, [
   ME+':'+first.clientKey,
   OTHER+':'+other.clientKey,
@@ -546,7 +548,7 @@ test('two open queues keep each account record when adds and uploads interleave'
  release();
  await flushing;
  assert.deepEqual(sent.filter(item=>item.startsWith(ME+':')), [ME+':'+first.clientKey, ME+':'+second.clientKey]);
- const afterUpload=JSON.parse(storage.getItem('ua-v2-coach-queue-v1')).map(item=>item.body.accountId+':'+item.clientKey);
+ const afterUpload=readStoredQueue(storage).map(item=>item.body.accountId+':'+item.clientKey);
  assert.deepEqual(afterUpload, [
   OTHER+':'+other.clientKey,
   OTHER+':'+sameKey.clientKey,
@@ -605,8 +607,264 @@ test('a legacy queue migrates owned rows and keeps an unknown row paused', async
   async send(){return {ok:true};}
  });
  assert.equal(again.length, 1);
- assert.equal(JSON.parse(storage.getItem('ua-v2-coach-queue-v1'))[0].clientKey, unknown.clientKey);
- assert.equal(JSON.parse(storage.getItem('ua-v2-coach-queue-v1'))[0].body.accountId, undefined);
+ const pausedRow=readStoredQueue(storage)[0];
+ assert.equal(pausedRow.clientKey, unknown.clientKey);
+ assert.equal(pausedRow.body.accountId, undefined);
+ assert.equal(storage.getItem('ua-v2-coach-queue-v1'), '[]');
+});
+
+test('a partial migration keeps the unsent row and dedups it after space is freed', async()=>{
+ const match='m'+'e'.repeat(32);
+ const firstBody={clientKey:match+':0:human', format:'ua-v2-coach-step-v2', matchId:match, step:0, accountId:ME};
+ const secondBody={clientKey:match+':1:human', format:'ua-v2-coach-step-v2', matchId:match, step:1, accountId:ME};
+ const seed=[
+  {clientKey:firstBody.clientKey, body:firstBody, attempts:0, bytes:10, holdUntil:0},
+  {clientKey:secondBody.clientKey, body:secondBody, attempts:0, bytes:10, holdUntil:0}
+ ];
+ const data=new Map([['ua-v2-coach-queue-v1', JSON.stringify(seed)]]);
+ let itemWrites=0;
+ let open=false;
+ const storage={
+  getItem(key){return data.has(key)?data.get(key):null;},
+  setItem(key, value){
+   const name=String(key);
+   if(!open&&name.startsWith('ua-v2-coach-queue-v1/item/')){
+    itemWrites+=1;
+    if(itemWrites>1)throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+   }
+   data.set(name, String(value));
+  },
+  removeItem(key){data.delete(String(key));},
+  get length(){return data.size;},
+  key(index){return [...data.keys()][index]??null;}
+ };
+ const sent=[];
+ function openQueue(){
+  return createDecisionQueue({
+   storage,
+   consent:()=>true,
+   account:()=>ME,
+   schedule(){return 1;},
+   async send(body){
+    const key=body.accountId+':'+body.clientKey;
+    if(sent.includes(key))return {ok:true, duplicate:true};
+    sent.push(key);
+    return {ok:true};
+   }
+  });
+ }
+ const queue=openQueue();
+ queue.start();
+ await queue.flushNow();
+ await queue.flushNow();
+ assert.deepEqual(sent, [ME+':'+firstBody.clientKey]);
+ assert.notEqual(storage.getItem('ua-v2-coach-queue-v1/migrated'), '1');
+ const legacy=JSON.parse(storage.getItem('ua-v2-coach-queue-v1'));
+ assert.equal(legacy.length, 1);
+ assert.equal(legacy[0].body.clientKey, secondBody.clientKey);
+ assert.equal(legacy[0].body.step, 1);
+ let copied=0;
+ for(let index=0;index<storage.length;index++){
+  const key=storage.key(index);
+  if(key.startsWith('ua-v2-coach-queue-v1/item/')&&String(storage.getItem(key)).includes(secondBody.clientKey))copied+=1;
+ }
+ assert.equal(copied, 0);
+ const reloaded=openQueue();
+ reloaded.start();
+ assert.equal(reloaded.length, 1);
+ assert.equal(readStoredQueue(storage)[0].body.accountId, ME);
+ assert.equal(readStoredQueue(storage)[0].body.clientKey, secondBody.clientKey);
+ open=true;
+ await reloaded.flushNow();
+ assert.deepEqual(sent, [ME+':'+firstBody.clientKey, ME+':'+secondBody.clientKey]);
+ assert.equal(storage.getItem('ua-v2-coach-queue-v1/migrated'), '1');
+ assert.equal(storage.getItem('ua-v2-coach-queue-v1'), '[]');
+ assert.equal(reloaded.length, 0);
+ const again=openQueue();
+ again.start();
+ assert.equal(again.enqueue(firstBody).queued, true);
+ await again.flushNow();
+ assert.deepEqual(sent, [ME+':'+firstBody.clientKey, ME+':'+secondBody.clientKey]);
+ assert.equal(again.length, 0);
+});
+
+test('a new record that cannot be stored is not reported as queued', async()=>{
+ const header=headerFor();
+ const data=new Map([[COACH_CONSENT_KEY, '1']]);
+ let open=false;
+ const storage={
+  getItem(key){return data.has(key)?data.get(key):null;},
+  setItem(key, value){
+   if(!open&&String(key).startsWith('ua-v2-coach-queue-v1'))
+    throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+   data.set(String(key), String(value));
+  },
+  removeItem(key){data.delete(String(key));},
+  get length(){return data.size;},
+  key(index){return [...data.keys()][index]??null;}
+ };
+ const timers=[];
+ const state=opening();
+ const action=keepAction(state);
+ const played=dispatchUniversalAction(packs, state, action, {actor:0});
+ const battle=createCoachBattle({
+  storage,
+  schedule(fn){timers.push(fn);return timers.length;},
+  fetchImpl:async()=>meBody()
+ });
+ await battle.begin(header, ME);
+ const scheduled=timers.length;
+ const started=performance.now();
+ battle.noteHuman({packs, state, action, replayIndex:0, legal:legalUniversalActions(packs, state)});
+ assert.ok(performance.now()-started<100);
+ assert.notEqual(played, state);
+ assert.equal(battle.session.humanStep, 1);
+ assert.equal(battle.queued, 0);
+ assert.equal(battle.session.lastError, '紀錄尚未儲存');
+ assert.equal(readStoredQueue(storage).length, 0);
+ const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs', import.meta.url), 'utf8');
+ const online=readFileSync(new URL('../dist/online.mjs', import.meta.url), 'utf8');
+ assert.match(preview, /session\?\.lastError==='紀錄尚未儲存'/);
+ assert.match(online, /log\.lastError==='紀錄尚未儲存'/);
+ const follow=legalUniversalActions(packs, played);
+ if(universalActor(played)===0&&follow.length){
+  battle.noteHuman({packs, state:played, action:follow[0], replayIndex:1, legal:follow});
+  assert.equal(battle.session.humanStep, 2);
+  assert.equal(battle.queued, 0);
+  assert.equal(battle.session.lastError, '紀錄尚未儲存');
+ }
+ assert.ok(timers.length>scheduled);
+ open=true;
+ await timers[scheduled]();
+ assert.equal(battle.session.lastError, '');
+ const stored=readStoredQueue(storage);
+ assert.equal(stored.length, battle.session.humanStep);
+ assert.deepEqual(stored.map(item=>item.body.step), stored.map((_, index)=>index));
+ assert.equal(stored[0].body.accountId, ME);
+ assert.equal(stored[0].body.clientKey, header.matchId+':0:human');
+});
+
+test('a held write lock does not block play and both accounts finish in order', async()=>{
+ const storage=memoryStorage({[COACH_CONSENT_KEY]:'1'});
+ const header=headerFor();
+ const battle=createCoachBattle({
+  storage,
+  schedule(){return 1;},
+  fetchImpl:async()=>meBody()
+ });
+ await battle.begin(header, ME);
+ const otherMatch='m'+'g'.repeat(32);
+ const otherBody={clientKey:otherMatch+':0:human', format:'ua-v2-coach-step-v2', matchId:otherMatch, step:0, accountId:OTHER};
+ const sameMatch={clientKey:header.matchId+':1:human', format:'ua-v2-coach-step-v2', matchId:header.matchId, step:1, accountId:ME};
+ const holder=createDecisionQueue({
+  storage,
+  consent:()=>true,
+  schedule(){return 1;},
+  async send(){return {ok:true};}
+ });
+ let release;
+ let opened;
+ const held=holder.exclusive(async()=>{
+  opened();
+  await new Promise(resolve=>{release=resolve;});
+ });
+ await new Promise(resolve=>{opened=resolve;});
+ const state=opening();
+ const action=keepAction(state);
+ const started=performance.now();
+ const played=dispatchUniversalAction(packs, state, action, {actor:0});
+ const pending=battle.noteHuman({packs, state, action, replayIndex:0, legal:legalUniversalActions(packs, state)});
+ const other=holder.enqueue(otherBody);
+ const follow=holder.enqueue(sameMatch);
+ const elapsed=performance.now()-started;
+ let playSaved=false;
+ Promise.resolve(pending).then(()=>{playSaved=true;});
+ assert.ok(played&&played!==state);
+ assert.ok(elapsed<200, '出牌等待了 '+elapsed+' ms');
+ assert.equal(other.pending, true);
+ assert.equal(follow.pending, true);
+ assert.equal(battle.session.humanStep, 1);
+ assert.equal(battle.queued, 0);
+ assert.equal(battle.session.lastError, '');
+ await new Promise(resolve=>setTimeout(resolve, 40));
+ assert.equal(playSaved, false);
+ assert.equal(readStoredQueue(storage).length, 0);
+ release();
+ await held;
+ await pending;
+ await other.done;
+ await follow.done;
+ const stored=readStoredQueue(storage).map(item=>item.body.accountId+':'+item.body.step+':'+item.body.clientKey);
+ assert.deepEqual(stored, [
+  ME+':0:'+header.matchId+':0:human',
+  OTHER+':0:'+otherBody.clientKey,
+  ME+':1:'+sameMatch.clientKey
+ ]);
+ assert.equal(battle.session.lastError, '');
+ const sent=[];
+ const sender=createDecisionQueue({
+  storage,
+  consent:()=>true,
+  account:()=>ME,
+  schedule(){return 1;},
+  async send(body){
+   const key=body.accountId+':'+body.clientKey;
+   if(sent.includes(key))return {ok:true, duplicate:true};
+   sent.push(key);
+   return {ok:true};
+  }
+ });
+ sender.start();
+ await sender.flushNow();
+ assert.deepEqual(sent, [ME+':'+header.matchId+':0:human', ME+':'+sameMatch.clientKey]);
+ storage.setItem('ua-v2-coach-queue-v1', JSON.stringify([
+  {clientKey:header.matchId+':0:human', body:{
+   clientKey:header.matchId+':0:human', accountId:ME, step:0, matchId:header.matchId,
+   format:'ua-v2-coach-step-v2'
+  }, attempts:0, bytes:1, holdUntil:0}
+ ]));
+ const stale=createDecisionQueue({
+  storage,
+  consent:()=>true,
+  account:()=>ME,
+  schedule(){return 1;},
+  async send(body){sent.push('again:'+body.clientKey);return {ok:true};}
+ });
+ assert.equal(stale.length, 1);
+ assert.equal(readStoredQueue(storage)[0].body.accountId, OTHER);
+ await stale.flushNow();
+ assert.equal(sent.some(item=>String(item).startsWith('again:')), false);
+});
+
+test('a browser lock that is still held does not write when the wait expires', async()=>{
+ const storage=memoryStorage();
+ let grant;
+ const locks={
+  request(name, fn){
+   assert.equal(name, 'ua-v2-coach-queue-v1');
+   return new Promise(resolve=>{
+    grant=()=>Promise.resolve(fn()).then(resolve, resolve);
+   });
+  }
+ };
+ const body={clientKey:'m'+'h'.repeat(32)+':0:human', format:'ua-v2-coach-step-v2', matchId:'m'+'h'.repeat(32), step:0, accountId:ME};
+ const queue=createDecisionQueue({
+  storage,
+  consent:()=>true,
+  locks,
+  schedule(){return 1;},
+  async send(){return {ok:true};}
+ });
+ const started=performance.now();
+ const pending=queue.enqueue(body);
+ assert.ok(performance.now()-started<100);
+ assert.equal(pending.pending, true);
+ await new Promise(resolve=>setTimeout(resolve, 40));
+ assert.equal(readStoredQueue(storage).length, 0);
+ assert.equal(typeof grant, 'function');
+ await grant();
+ assert.equal((await pending.done).queued, true);
+ assert.equal(readStoredQueue(storage)[0].body.clientKey, body.clientKey);
 });
 
 test('reloading the same match drops the interrupt label before it can upload', async()=>{
@@ -697,7 +955,7 @@ test('an online collector records only the consented player own accepted action'
  assert.equal(jumped.queued, 0);
  await host.settle({...room, revision:4, yourTurn:false, choices:[]});
  assert.equal(host.queued, 1);
- const body=JSON.parse(hostStorage.getItem('ua-v2-coach-queue-v1'))[0].body;
+ const body=readStoredQueue(hostStorage)[0].body;
  assert.equal(body.accountId, ME);
  assert.equal(body.source, 'human');
  assert.equal(body.actor, 'human');
@@ -918,7 +1176,7 @@ test('a delayed online reply keeps the account captured before the request', asy
  assert.equal(tab1.queued, 0);
  await tab1.settle({...room, revision:3, accountId:OTHER, yourTurn:false, choices:[]});
  assert.equal(tab1.queued, 1);
- const queued=JSON.parse(shared.getItem('ua-v2-coach-queue-v1'))[0].body;
+ const queued=readStoredQueue(shared)[0].body;
  assert.equal(queued.accountId, ME);
  assert.equal(queued.seat, 0);
  assert.equal(queued.observation.visible.players[0].hand[0].uid, '0-7');
@@ -1011,7 +1269,7 @@ test('switching accounts while an online action is in flight does not give the h
  who=second.data;
  await tab1.settle({...acted.data, accountId:secondMe.data.id});
  assert.equal(tab1.queued, 1);
- const queued=JSON.parse(shared.getItem('ua-v2-coach-queue-v1'))[0].body;
+ const queued=readStoredQueue(shared)[0].body;
  assert.equal(queued.accountId, firstMe.data.id);
  const handUid=queued.observation.visible.players[0].hand[0].uid;
  assert.equal(queued.observation.visible.players[0].hand.length, 7);

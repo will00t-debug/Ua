@@ -2,7 +2,7 @@
 // Accepted human actions are queued locally; the next click does not wait
 // for the upload. AI actions stay out of the player-decision queue.
 import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
-import {createDecisionQueue} from './coach-queue.mjs?v=20261104event1';
+import {createDecisionQueue} from './coach-queue.mjs?v=20261104lock1';
 import {LABEL_FORMAT} from './coach-format.mjs';
 import {newCoachMatchId,buildHumanStep,buildAiMark,stateAtReplayIndex} from './coach-record.mjs';
 
@@ -39,7 +39,11 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);
   },
   account(){return currentAccountId(fetchImpl);},
-  onChange(){onChange?.();}
+  onChange(){
+   if(session?.lastError==='紀錄尚未儲存'&&queue.lastError!=='紀錄尚未儲存')session.lastError='';
+   if(queue.lastError==='紀錄尚未儲存')session.lastError='紀錄尚未儲存';
+   onChange?.();
+  }
  });
  function blank(matchId){
   return {matchId,humanStep:0,aiStep:0,lastAi:null,marks:[],uploaded,lastError:'',
@@ -109,19 +113,39 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
     emit();
     return;
    }
+   let prior=session.previous;
    try{
     const body=owned(buildHumanStep({...context,step:session.humanStep,previous:session.previous,header:session.header}));
-    const prior=session.previous;
+    prior=session.previous;
     session.undoStack.push(prior);
     session.previous={step:body.step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey};
     session.humanStep+=1;
     const queued=queue.enqueue(body);
-    if(!queued.queued){
-     session.humanStep-=1;
-     session.undoStack.pop();
-     session.previous=prior;
-     if(queued.skipped!=='queued')session.lastError='這步沒有放進佇列。';
-    }else session.lastError='';
+    const settle=result=>{
+     if(result?.stored===false){
+      session.lastError='紀錄尚未儲存';
+      if(result.retry!==true){
+       session.humanStep-=1;
+       session.undoStack.pop();
+       session.previous=prior;
+      }
+      return;
+     }
+     if(!result?.queued){
+      session.humanStep-=1;
+      session.undoStack.pop();
+      session.previous=prior;
+      if(result?.skipped!=='queued')session.lastError='這步沒有放進佇列。';
+     }else if(queue.lastError!=='紀錄尚未儲存')session.lastError='';
+    };
+    if(queued?.pending){
+     emit();
+     return queued.done.then(value=>{settle(value);emit();return value;}, error=>{
+      session.lastError=error?.message||'紀錄尚未儲存';
+      emit();
+     });
+    }
+    settle(queued);
    }catch(error){session.lastError=error?.message||'這步沒有記下來。';}
    emit();
   },
@@ -135,11 +159,16 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    if(!session||session.humanStep<1)return false;
    const step=session.humanStep-1;
    const key=session.header.matchId+':'+step+':human';
-   if(!queue.drop(key))return false;
-   session.humanStep=step;
-   session.previous=session.undoStack.pop()||null;
-   emit();
-   return true;
+   const removed=queue.drop(key);
+   const apply=ok=>{
+    if(!ok)return false;
+    session.humanStep=step;
+    session.previous=session.undoStack.pop()||null;
+    emit();
+    return true;
+   };
+   if(removed&&typeof removed.then==='function')return removed.then(apply);
+   return apply(removed);
   },
   async markLast(packs,replay){
    if(!session?.lastAi)throw Error('電腦還沒有走出可以標記的一步。');
@@ -163,7 +192,10 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    if(context.review!==false)session.reviewing=context.endReason==='conceded'||context.completed===true;
    const stamped=owned(label);
    if(this.consent()&&stamped){
-    queue.enqueue(stamped,{holdMs:context.holdMs||0});
+    const queued=queue.enqueue(stamped,{holdMs:context.holdMs||0});
+    const settle=result=>{if(result?.stored===false)session.lastError='紀錄尚未儲存';};
+    if(queued?.pending)void queued.done.then(settle);
+    else settle(queued);
     if(context.replay&&(context.completed===true||context.endReason==='conceded'))
      void uploader.debug({header:session.header,replay:context.replay,accountId:stamped.accountId});
    }

@@ -1,4 +1,4 @@
-export const ONLINE_UI_VERSION='20261103onlinefix1';
+export const ONLINE_UI_VERSION='20261104lock1';
 export const SOURCE_ONLINE_RELEASE={version:ONLINE_UI_VERSION,script:'/online.mjs?v='+ONLINE_UI_VERSION};
 
 export function legacyClientRedirect(path,method,release){

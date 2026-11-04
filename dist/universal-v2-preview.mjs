@@ -44,7 +44,7 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
-import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104event1';
+import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104lock1';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261101coachart1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
@@ -1392,6 +1392,7 @@ function coachStatusShort(){
  const coach=app.coachBattle,session=coach?.session;
  if(!coach?.consent())return '未上傳';
  if(session?.signedIn===false)return '未登入';
+ if(session?.lastError==='紀錄尚未儲存')return '紀錄尚未儲存';
  if(session?.lastError)return '未送出';
  const queued=coach.queued||0;
  if(queued)return '排隊 '+queued;

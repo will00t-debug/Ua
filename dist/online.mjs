@@ -34,7 +34,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261103onlinefix1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261104lock1'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -127,7 +127,7 @@ function loadDecisions(){
  if(decisionLog)return Promise.resolve(decisionLog);
  if(decisionLoading)return decisionLoading;
  try{
-  decisionLoading=import('./universal-v2/coach-online.mjs?v=20261104event1').then(mod=>{
+  decisionLoading=import('./universal-v2/coach-online.mjs?v=20261104lock1').then(mod=>{
    decisionLog=mod.createOnlineCollector({
     storage:localStorage,
     deckById(id){return app.decks.find(deck=>deck.id===id)||null;},
@@ -151,6 +151,7 @@ function decisions(){
 function decisionStatus(){
  const log=decisions();
  if(!log.consent())return '未記錄';
+ if(log.lastError==='紀錄尚未儲存')return '紀錄尚未儲存';
  if(log.lastError)return '未送出';
  if(log.queued)return '排隊 '+log.queued;
  return '已傳 '+log.uploaded;

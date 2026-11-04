@@ -5,7 +5,7 @@
 // A delayed reply keeps that identity; it is not retagged after a login change.
 // An end marker uses the account, room and seat bound to that event.
 import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
-import {createDecisionQueue} from './coach-queue.mjs?v=20261104event1';
+import {createDecisionQueue} from './coach-queue.mjs?v=20261104lock1';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
  tableChoices,chainOf,deckSnapshot} from './coach-format.mjs';
@@ -44,7 +44,11 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   schedule,
   send(body){return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);},
   account(){return currentAccountId(fetchImpl);},
-  onChange(){onChange?.();}
+  onChange(){
+   if(lastError==='紀錄尚未儲存'&&queue.lastError!=='紀錄尚未儲存')lastError='';
+   if(queue.lastError==='紀錄尚未儲存')lastError='紀錄尚未儲存';
+   onChange?.();
+  }
  });
  function saveSessions(){
   try{storage.setItem(MATCH_KEY,JSON.stringify(sessions));}catch{/* ignore quota */}
@@ -203,18 +207,29 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     accountId:snap.accountId
    };
    const queued=queue.enqueue(body);
-   if(queued.queued||queued.skipped==='queued'){
-    if(queued.queued){
-     current.previous={step:body.step,type:body.choice.type,clientKey};
-     current.step+=1;
-     current.deck=snap.deck;
-     current.titles=snap.titles;
-     current.engineVersion=snap.engineVersion;
-     persist();
+   let reserved=false;
+   const reserve=()=>{
+    if(reserved)return;
+    reserved=true;
+    current.previous={step:body.step,type:body.choice.type,clientKey};
+    current.step+=1;
+    current.deck=snap.deck;
+    current.titles=snap.titles;
+    current.engineVersion=snap.engineVersion;
+    persist();
+   };
+   const apply=result=>{
+    if(result?.pending){
+     reserve();
+     void result.done.then(apply);
+     return;
     }
-    lastError='';
-   }
-   onChange?.();
+    if(result?.queued||(result?.stored===false&&result.retry===true))reserve();
+    if(result?.stored===false)lastError='紀錄尚未儲存';
+    else if((result?.queued||result?.skipped==='queued')&&queue.lastError!=='紀錄尚未儲存')lastError='';
+    onChange?.();
+   };
+   apply(queued);
   },
   async result(room,endReason,{completed,winner,holdMs=0}={}){
    if(!this.consent()||!room?.view)return;
@@ -243,8 +258,13 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    const body={format:LABEL_FORMAT,...headerFrom(current,snap),
     clientKey:current.matchId+':label:'+endReason,completed:completed===true,
     winner:winner??null,endReason,accountId:current.accountId};
-   queue.enqueue(body,{holdMs});
-   onChange?.();
+   const queued=queue.enqueue(body,{holdMs});
+   const apply=result=>{
+    if(result?.pending){void result.done.then(apply);return;}
+    if(result?.stored===false)lastError='紀錄尚未儲存';
+    onChange?.();
+   };
+   apply(queued);
   },
   flush(){return queue.flushNow();}
  };

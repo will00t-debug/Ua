@@ -118,6 +118,32 @@ async function goto(browser, session, url){
  }
  throw Error('頁面沒有載入完成：'+url);
 }
+const readQueue=`(()=>{
+ const prefix='ua-v2-coach-queue-v1/item/';
+ const migrated=localStorage.getItem('ua-v2-coach-queue-v1/migrated')==='1';
+ const items=[];
+ const seen=new Set();
+ const push=item=>{
+  if(!item||!item.body)return;
+  const id=(item.body.accountId||'')+'\\n'+item.clientKey;
+  if(seen.has(id))return;
+  seen.add(id);
+  items.push(item);
+ };
+ const order=JSON.parse(localStorage.getItem('ua-v2-coach-queue-v1/order')||'[]');
+ const keyed=new Map();
+ for(let index=0;index<localStorage.length;index++){
+  const key=localStorage.key(index);
+  if(!key||!key.startsWith(prefix))continue;
+  try{keyed.set(key.slice(prefix.length), JSON.parse(localStorage.getItem(key)));}catch{}
+ }
+ if(Array.isArray(order))for(const id of order)push(keyed.get(id));
+ for(const item of keyed.values())push(item);
+ if(!migrated){
+  try{for(const item of JSON.parse(localStorage.getItem('ua-v2-coach-queue-v1')||'[]'))push(item);}catch{}
+ }
+ return JSON.stringify(items);
+})()`;
 async function waitFor(browser, session, expression, label){
  for(let attempt=0;attempt<80;attempt++){
   const value=await evaluate(browser, session, expression);
@@ -166,7 +192,7 @@ try{
   const names=[...document.querySelectorAll('.v2-mulligan-card span')].map(node=>node.textContent);
   const start=performance.now();
   button.click();
-  return {ms:performance.now()-start, names, queue:localStorage.getItem('ua-v2-coach-queue-v1')||'[]'};
+  return {ms:performance.now()-start, names, queue:${readQueue}};
  })()`);
  assert(JSON.parse(offClick.queue).length===0, '關閉收集時不該留下決策');
  await evaluate(browser, page.session, `(()=>{
@@ -184,13 +210,18 @@ try{
   const names=[...document.querySelectorAll('.v2-mulligan-card span')].map(node=>node.textContent);
   const card=document.querySelector('.v2-mulligan-card');
   card.click();
-  const afterCard=localStorage.getItem('ua-v2-coach-queue-v1')||'[]';
+  const afterCard=${readQueue};
   const start=performance.now();
   button.click();
-  return {ms:performance.now()-start, names, afterCard, queue:localStorage.getItem('ua-v2-coach-queue-v1')||'[]'};
+  return {ms:performance.now()-start, names, afterCard};
  })()`);
  assert(JSON.parse(onClick.afterCard).length===0, '點卡片不該變成決策');
- const queued=JSON.parse(onClick.queue);
+ const queuedRaw=await waitFor(browser, page.session, `(()=>{
+  const raw=${readQueue};
+  return raw.includes('openingMulligan')?raw:'';
+ })()`, '單人決策佇列');
+ onClick.queue=queuedRaw;
+ const queued=JSON.parse(queuedRaw);
  assert(queued.length===1, '同意後應該只留下玩家這一步');
  const row=queued[0].body;
  assert(row.source==='human' && row.actor==='human', '真人決策被標成別的來源');
@@ -201,12 +232,16 @@ try{
  const recordedNames=namesOf(row.observation.visible.players[0].hand.map(card=>card.cardId));
  assert(recordedNames.join('\n')===onClick.names.join('\n'), '紀錄手牌和畫面手牌不同：'+recordedNames.join('、')+' / '+onClick.names.join('、'));
  await shot(browser, page.session, join(outDir, 'solo-after-keep.png'));
- const cleared=await evaluate(browser, page.session, `(()=>{
+ await evaluate(browser, page.session, `(()=>{
   const box=document.querySelector('.coach-consent input');
   box.checked=false;
   box.dispatchEvent(new Event('change', {bubbles:true}));
-  return localStorage.getItem('ua-v2-coach-queue-v1')||'[]';
+  return true;
  })()`);
+ const cleared=await waitFor(browser, page.session, `(()=>{
+  const raw=${readQueue};
+  return raw==='[]'?raw:'';
+ })()`, '關閉同意後清空佇列');
  assert(JSON.parse(cleared).length===0, '關閉同意後尚未上傳的佇列應該被清掉');
  await new Promise(resolve=>setTimeout(resolve, 1500));
  await goto(browser, page.session, origin+'/coach.html');
@@ -249,8 +284,8 @@ try{
   return true;
  })()`);
  const hostQueueText=await waitFor(hostBrowser, hostPage.session, `(()=>{
-  const raw=localStorage.getItem('ua-v2-coach-queue-v1')||'[]';
-  return raw.includes('openingMulligan')?raw:''
+  const raw=${readQueue};
+  return raw.includes('openingMulligan')?raw:'';
  })()`, '線上房主決策佇列');
  const hostMove={ms:Date.now()-hostStarted, queue:hostQueueText};
  const hostRows=JSON.parse(hostMove.queue);
@@ -264,9 +299,9 @@ try{
   return true;
  })()`);
  await waitFor(guestBrowser, guestPage.session, `[...document.querySelectorAll('button')].every(node=>!node.textContent.includes('保留這 7 張手牌'))`, '訪客操作已被接受');
- const guestMove=await evaluate(guestBrowser, guestPage.session, `localStorage.getItem('ua-v2-coach-queue-v1')||'[]'`);
+ const guestMove=await evaluate(guestBrowser, guestPage.session, readQueue);
  assert(JSON.parse(guestMove).length===0, '未同意的訪客決策不該被收集');
- const hostAfter=await evaluate(hostBrowser, hostPage.session, `localStorage.getItem('ua-v2-coach-queue-v1')||'[]'`);
+ const hostAfter=await evaluate(hostBrowser, hostPage.session, readQueue);
  const hostBodies=JSON.parse(hostAfter).map(item=>item.body).filter(body=>body.seat===1);
  assert(hostBodies.length===0, '房主不該收集到訪客的決策');
  await shot(guestBrowser, guestPage.session, join(outDir, 'online-guest-no-consent.png'));

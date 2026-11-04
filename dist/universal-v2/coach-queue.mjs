@@ -1,15 +1,17 @@
-// Local outbox for decision rows. Gameplay never waits on the network.
-// Each record is stored by account scope and clientKey. A mutation re-reads
-// that record, changes only it, and writes it back inside one lock so another
-// tab cannot replace the rest of the queue. Turning consent off drops
-// everything that has not been uploaded yet.
+// Local outbox for decision rows. Gameplay never waits on the network or on
+// another tab's write lock. A row is queued only after its own write is read
+// back. Quota failures keep the previous rows and report that this one is not
+// stored yet. Legacy rows move one at a time; the old copy is removed only
+// after the new copy is confirmed, and the migrated flag is set only when no
+// full legacy copy remains.
 const QUEUE_KEY='ua-v2-coach-queue-v1';
 const ITEM_PREFIX='ua-v2-coach-queue-v1/item/';
-const LOCK_KEY='ua-v2-coach-queue-v1/lock';
+const ORDER_KEY='ua-v2-coach-queue-v1/order';
 const MIGRATED_KEY='ua-v2-coach-queue-v1/migrated';
 const LOCK_NAME='ua-v2-coach-queue-v1';
 const BATCH=8;
 const ACCOUNT_ID=/^u[a-f0-9]{16}$/;
+const gates=new WeakMap();
 
 function scopeOf(body){
  return typeof body?.accountId==='string'&&ACCOUNT_ID.test(body.accountId)?body.accountId:'unknown';
@@ -17,8 +19,8 @@ function scopeOf(body){
 function recordId(body){
  return scopeOf(body)+'\n'+String(body?.clientKey||'');
 }
-function itemStorageKey(item){
- return ITEM_PREFIX+encodeURIComponent(recordId(item?.body));
+function encodedId(body){
+ return encodeURIComponent(recordId(body));
 }
 function parseList(raw){
  try{
@@ -27,115 +29,205 @@ function parseList(raw){
  }catch{return [];}
 }
 function parseItem(raw){
- const listed=parseList(raw?`[${raw}]`:null);
- return listed[0]||null;
+ try{
+  const item=JSON.parse(raw);
+  return item&&typeof item.clientKey==='string'&&item.body?item:null;
+ }catch{return null;}
 }
-function listStoredItems(storage){
- const found=[];
+function gateFor(storage){
+ let state=gates.get(storage);
+ if(!state){
+  state={holding:0, tail:Promise.resolve()};
+  gates.set(storage, state);
+ }
+ return state;
+}
+function readOrder(storage){
+ try{
+  const parsed=JSON.parse(storage.getItem(ORDER_KEY)||'[]');
+  return Array.isArray(parsed)?parsed.filter(id=>typeof id==='string'):[];
+ }catch{return [];}
+}
+function listStored(storage){
+ const found=new Map();
  const total=storage?.length;
  if(typeof total!=='number'||typeof storage.key!=='function')return found;
  for(let index=0;index<total;index++){
   const key=storage.key(index);
   if(typeof key!=='string'||!key.startsWith(ITEM_PREFIX))continue;
   const item=parseItem(storage.getItem(key));
-  if(item)found.push([key, item]);
+  if(item)found.set(key.slice(ITEM_PREFIX.length), item);
  }
  return found;
 }
-function readQueue(storage){
- const listed=parseList(storage?.getItem?.(QUEUE_KEY));
- let migrated=false;
- try{migrated=storage?.getItem?.(MIGRATED_KEY)==='1';}catch{migrated=false;}
- const keyed=listStoredItems(storage);
- if(!migrated&&keyed.length===0)return {items:listed, keys:listed.map(itemStorageKey)};
- const byKey=new Map(keyed);
+function legacyBodies(storage){
+ try{if(storage.getItem(MIGRATED_KEY)==='1')return [];}catch{return [];}
+ return parseList(storage.getItem(QUEUE_KEY));
+}
+function readMerged(storage){
+ if(!storage?.getItem)return [];
+ const keyed=listStored(storage);
  const items=[];
  const seen=new Set();
- for(const item of listed){
-  const key=itemStorageKey(item);
-  if(!byKey.has(key))continue;
-  items.push(byKey.get(key));
-  seen.add(key);
- }
- const extras=keyed.filter(([key])=>!seen.has(key)).sort((left, right)=>left[0]<right[0]?-1:1);
- for(const [, item] of extras)items.push(item);
- return {items, keys:[...byKey.keys()]};
+ const push=item=>{
+  if(!item?.body)return;
+  const id=recordId(item.body);
+  if(seen.has(id))return;
+  seen.add(id);
+  items.push(item);
+ };
+ for(const id of readOrder(storage))push(keyed.get(id));
+ for(const item of keyed.values())push(item);
+ for(const item of legacyBodies(storage))push(item);
+ return items;
 }
-function writeQueue(storage, items, previousKeys, prior){
- const live=new Set(items.map(itemStorageKey));
- for(const key of previousKeys){
-  if(live.has(key))continue;
-  try{storage?.removeItem(key);}catch{/* The ordered array below still omits this record. */}
- }
- for(const item of items){
-  const key=itemStorageKey(item);
-  const encoded=JSON.stringify(item);
-  if(prior.get(key)===encoded)continue;
-  try{storage?.setItem(key, encoded);}catch{/* Keep the ordered array. */}
- }
- try{storage?.setItem(QUEUE_KEY, JSON.stringify(items));}catch{/* A private browser can still play. */}
- try{storage?.setItem(MIGRATED_KEY, '1');}catch{/* Legacy rows remain readable from the array. */}
+export function readStoredQueue(storage){
+ return readMerged(storage);
 }
-function acquireLock(storage){
- const token=Math.random().toString(16).slice(2)+'|'+Date.now().toString(16);
- const deadline=Date.now()+1500;
- while(true){
-  let current=null;
-  try{current=storage?.getItem?.(LOCK_KEY)||null;}catch{return token;}
-  const stamp=Number(String(current||'').split('|')[1]);
-  const stale=!current||!Number.isFinite(stamp)||Date.now()-stamp>3000;
-  if(stale){
-   try{storage.setItem(LOCK_KEY, token+'|'+Date.now());}catch{return token;}
-   let check=null;
-   try{check=storage.getItem(LOCK_KEY);}catch{return token;}
-   if(String(check||'').startsWith(token+'|'))return token;
+function confirmed(storage, key, value){
+ storage.setItem(key, value);
+ return storage.getItem(key)===value;
+}
+function saveRecord(storage, record){
+ const id=encodedId(record.body);
+ const key=ITEM_PREFIX+id;
+ const encoded=JSON.stringify(record);
+ try{
+  if(storage.getItem(key)!==encoded&&!confirmed(storage, key, encoded))return false;
+ }catch{return false;}
+ try{
+  const order=readOrder(storage);
+  if(!order.includes(id)){
+   const next=JSON.stringify([...order, id]);
+   if(!confirmed(storage, ORDER_KEY, next)&&storage.getItem(key)!==encoded)return false;
   }
-  if(Date.now()>deadline)return token;
-  const until=Date.now()+4;
-  while(Date.now()<until){/* Another tab is writing one record. */}
+ }catch{/* The record key is the copy that counts. */}
+ return storage.getItem(key)===encoded;
+}
+function markMigrated(storage){
+ if(legacyBodies(storage).length)return false;
+ try{storage.setItem(MIGRATED_KEY, '1');}catch{/* Retry the flag later. The rows are already in their own keys. */}
+ try{if(storage.getItem(MIGRATED_KEY)==='1')storage.setItem(QUEUE_KEY, '[]');}catch{/* A stale array is ignored once the flag is set. */}
+ return storage.getItem(MIGRATED_KEY)==='1';
+}
+function migrateOne(storage){
+ try{if(storage.getItem(MIGRATED_KEY)==='1')return 'done';}catch{return 'blocked';}
+ const legacy=parseList(storage.getItem(QUEUE_KEY));
+ if(!legacy.length){
+  markMigrated(storage);
+  return 'done';
+ }
+ if(!saveRecord(storage, legacy[0]))return 'blocked';
+ const raw=JSON.stringify(legacy.slice(1));
+ try{
+  if(!confirmed(storage, QUEUE_KEY, raw))return 'blocked';
+ }catch{return 'blocked';}
+ if(legacy.length===1)markMigrated(storage);
+ return 'moved';
+}
+function migrateAvailable(storage){
+ const cap=Math.max(readMerged(storage).length, 1)+2;
+ for(let count=0;count<cap;count++){
+  if(migrateOne(storage)!=='moved')return;
  }
 }
-function releaseLock(storage, token){
- try{
-  if(String(storage?.getItem?.(LOCK_KEY)||'').startsWith(token+'|'))storage.removeItem(LOCK_KEY);
- }catch{/* The lock expires if this tab closes mid-update. */}
+function hasKey(storage, item){
+ try{return storage.getItem(ITEM_PREFIX+encodedId(item.body))!=null;}catch{return false;}
 }
-function transaction(storage, fn){
- const token=acquireLock(storage);
+function forgetRecord(storage, body){
+ const id=encodedId(body);
+ try{storage.removeItem(ITEM_PREFIX+id);}catch{/* Already gone. */}
  try{
-  const loaded=readQueue(storage);
-  const prior=new Map(listStoredItems(storage).map(([key, item])=>[key, JSON.stringify(item)]));
-  const result=fn(loaded.items);
-  writeQueue(storage, loaded.items, loaded.keys, prior);
-  return result;
- }finally{releaseLock(storage, token);}
+  const order=readOrder(storage).filter(item=>item!==id);
+  storage.setItem(ORDER_KEY, JSON.stringify(order));
+ }catch{/* The missing record key keeps it out of the readable queue. */}
+ try{
+  if(storage.getItem(MIGRATED_KEY)==='1')storage.setItem(QUEUE_KEY, '[]');
+  else{
+   const legacy=parseList(storage.getItem(QUEUE_KEY)).filter(item=>recordId(item.body)!==recordId(body));
+   storage.setItem(QUEUE_KEY, JSON.stringify(legacy));
+  }
+ }catch{/* The next attempt removes the old copy after the new one is still confirmed. */}
 }
-async function lockSection(fn){
- const request=globalThis.navigator?.locks?.request;
- if(typeof request!=='function')return fn();
- return request.call(globalThis.navigator.locks, LOCK_NAME, ()=>fn());
+function forgetClientKey(storage, clientKey){
+ const matches=readMerged(storage).filter(item=>item.clientKey===clientKey);
+ for(const item of matches)forgetRecord(storage, item.body);
+ return matches.length>0;
+}
+function storageKeys(storage, include){
+ const keys=[];
+ const total=storage?.length;
+ if(typeof total!=='number'||typeof storage.key!=='function')return keys;
+ for(let index=0;index<total;index++){
+  const key=storage.key(index);
+  if(typeof key==='string'&&include(key))keys.push(key);
+ }
+ return keys;
+}
+function wipeStorage(storage){
+ for(const key of storageKeys(storage, name=>name.startsWith(ITEM_PREFIX)||name===ORDER_KEY)){
+  try{storage.removeItem(key);}catch{/* Continue clearing the rest. */}
+ }
+ try{storage.setItem(QUEUE_KEY, '[]');}catch{/* Consent off still drops the in-memory rows. */}
+ try{storage.setItem(MIGRATED_KEY, '1');}catch{/* A later stale copy of the old array stays ignored. */}
 }
 
 function isLabel(body){
  return String(body?.format||'').includes('label');
 }
-function replace(items, next){
- items.length=0;
- for(const item of next)items.push(item);
-}
 function sameRecord(entry, body){
  return recordId(entry?.body)===recordId(body);
 }
+function rejected(entry, failed){
+ if(sameRecord(entry, failed.body))return true;
+ if(scopeOf(entry.body)!==scopeOf(failed.body))return false;
+ const matchId=failed.body?.matchId;
+ if(!matchId||isLabel(failed.body)||isLabel(entry.body)||entry.body?.matchId!==matchId)return false;
+ return true;
+}
 
 const UNFILTERED={};
-export function createDecisionQueue({storage, consent, send, schedule, onChange, account, now=()=>Date.now()}={}){
+export function createDecisionQueue({storage, consent, send, schedule, onChange, account, locks, now=()=>Date.now()}={}){
  let timer=null;
+ let retryTimer=null;
  let flushing=false;
  let generation=0;
  let started=false;
  let sendingKey=null;
  let dropped=0;
  let lastError='';
+ const waiting=[];
+ function webLock(){
+  const source=locks?.request?locks:globalThis.navigator?.locks;
+  const request=source?.request;
+  return typeof request==='function'?request.bind(source):null;
+ }
+ function canRunSync(){
+  return gateFor(storage).holding===0&&!webLock();
+ }
+ function runSync(fn){
+  const state=gateFor(storage);
+  state.holding++;
+  try{return fn();}
+  finally{state.holding--;}
+ }
+ function runAsync(fn){
+  const state=gateFor(storage);
+  const job=state.tail.then(async()=>{
+   state.holding++;
+   try{
+    const lock=webLock();
+    if(lock)return await lock(LOCK_NAME, async()=>fn());
+    return await fn();
+   }finally{state.holding--;}
+  });
+  state.tail=job.then(()=>{}, ()=>{});
+  return job;
+ }
+ function withWrite(fn){
+  if(canRunSync())return Promise.resolve(runSync(fn));
+  return runAsync(fn);
+ }
  async function readOwner(){
   if(typeof account!=='function')return UNFILTERED;
   try{
@@ -147,29 +239,123 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
   return owner===UNFILTERED||entry?.body?.accountId===owner;
  }
  function notify(){onChange?.();}
- function rejectIn(items, failed){
-  const matchId=failed.body?.matchId;
-  const scope=scopeOf(failed.body);
-  const before=items.length;
-  replace(items, items.filter(entry=>{
-   if(sameRecord(entry, failed.body))return false;
-   if(scopeOf(entry.body)!==scope)return true;
-   if(!matchId||isLabel(failed.body)||isLabel(entry.body)||entry.body?.matchId!==matchId)return true;
-   return false;
-  }));
-  const removed=before-items.length;
-  dropped+=removed;
-  return removed;
+ function remember(record){
+  if(!waiting.some(item=>sameRecord(item, record.body)))waiting.push(record);
+  lastError='紀錄尚未儲存';
+ }
+ function scheduleRetry(){
+  if(retryTimer!=null||!waiting.length)return;
+  const run=()=>{retryTimer=null;void persistWaiting();};
+  retryTimer=schedule?schedule(run, 400):setTimeout(run, 400);
+ }
+ function finish(result){
+  if(result?.queued){notify();arm();}
+  if(result?.retry){notify();scheduleRetry();}
+ }
+ function dropRejected(failed){
+  const removed=readMerged(storage).filter(entry=>rejected(entry, failed));
+  for(const entry of removed)forgetRecord(storage, entry.body);
+  const before=waiting.length;
+  for(let index=waiting.length-1;index>=0;index--){
+   if(rejected(waiting[index], failed))waiting.splice(index, 1);
+  }
+  const count=removed.length+(before-waiting.length);
+  dropped+=count;
+  return count;
+ }
+ function commitEnqueue(body, holdMs){
+  migrateAvailable(storage);
+  const items=readMerged(storage);
+  if(items.some(item=>sameRecord(item, body))||waiting.some(item=>sameRecord(item, body)))
+   return {skipped:'queued'};
+  let encoded='';
+  try{encoded=JSON.stringify(body);}catch{return {stored:false, error:'storage'};}
+  const record={clientKey:body.clientKey, body, attempts:0, bytes:encoded.length, holdUntil:holdMs?now()+holdMs:0};
+  const behind=legacyBodies(storage).length>0||waiting.some(item=>item.body?.matchId&&item.body.matchId===body.matchId);
+  if(behind||!saveRecord(storage, record)){
+   remember(record);
+   return {stored:false, error:'quota', retry:true};
+  }
+  if(!legacyBodies(storage).length)markMigrated(storage);
+  if(!waiting.length&&lastError==='紀錄尚未儲存')lastError='';
+  return {queued:true, bytes:encoded.length};
+ }
+ async function persistWaiting(){
+  if(!waiting.length||!consent?.())return;
+  const exec=()=>{
+   migrateAvailable(storage);
+   if(legacyBodies(storage).length){
+    lastError='紀錄尚未儲存';
+    return;
+   }
+   const batch=waiting.splice(0, waiting.length);
+   let blocked=false;
+   for(const record of batch){
+    if(blocked||!saveRecord(storage, record)){
+     remember(record);
+     blocked=true;
+     continue;
+    }
+   }
+   if(!waiting.length&&lastError==='紀錄尚未儲存')lastError='';
+   if(!legacyBodies(storage).length)markMigrated(storage);
+  };
+  if(canRunSync())runSync(exec);
+  else await runAsync(exec);
+  notify();
+  if(waiting.length)scheduleRetry();
+  else if(started)arm();
  }
  function arm(delay){
   if(!started||timer!=null)return;
-  const count=readQueue(storage).items.length;
+  const count=readMerged(storage).length;
   const wait=delay??(count>=BATCH?0:1200);
   timer=schedule?schedule(run, wait):setTimeout(run, wait);
  }
  function run(){
   timer=null;
   void flush();
+ }
+ function pick(owner){
+  migrateAvailable(storage);
+  for(const item of readMerged(storage)){
+   if(!ownedBy(item, owner))continue;
+   if(!hasKey(storage, item))return {kind:'blocked'};
+   if(item.lastStatus===400||item.lastStatus===409||item.lastStatus===413){
+    lastError=item.lastError||lastError||'有一筆紀錄被拒絕，已跳過。';
+    dropRejected(item);
+    return {kind:'rejected'};
+   }
+   const hold=item.holdUntil||0;
+   if(hold>now())return {kind:'hold', delay:Math.min(hold-now(), 4000)};
+   return {kind:'send', item};
+  }
+  return {kind:'idle'};
+ }
+ function commitSend(item, result){
+  if(!consent?.()){waiting.length=0;wipeStorage(storage);return 'cleared';}
+  const items=readMerged(storage);
+  const index=items.findIndex(entry=>sameRecord(entry, item.body));
+  if(result?.ok||result?.skipped==='sent'){
+   if(index>=0)forgetRecord(storage, item.body);
+   return 'next';
+  }
+  if(result?.skipped==='consent'){waiting.length=0;wipeStorage(storage);return 'cleared';}
+  if(index<0)return 'next';
+  const fatal=result?.status===400||result?.status===409||result?.status===413;
+  if(fatal){
+   lastError=result?.data?.error||'有一筆紀錄被拒絕，已跳過。';
+   dropRejected(items[index]);
+   return 'next';
+  }
+  const current=items[index];
+  current.attempts=(current.attempts||0)+1;
+  current.holdUntil=now()+Math.min(30000, 1000*2**Math.min(current.attempts, 5));
+  current.lastStatus=result?.status||0;
+  current.lastError=result?.data?.error||'';
+  saveRecord(storage, current);
+  if(result?.status===403)lastError=current.lastError||'這筆紀錄屬於另一個帳號，已暫停上傳。';
+  return {kind:'retry', delay:current.holdUntil-now()};
  }
  async function flush(){
   if(flushing||!started)return;
@@ -181,20 +367,10 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
     const owner=await readOwner();
     if(generation!==gen)return;
     if(owner===null)return;
-    const picked=transaction(storage, items=>{
-     const found=items.findIndex(entry=>ownedBy(entry, owner));
-     if(found<0)return {kind:'idle'};
-     const item=items[found];
-     if(item.lastStatus===400||item.lastStatus===409||item.lastStatus===413){
-      lastError=item.lastError||lastError||'有一筆紀錄被拒絕，已跳過。';
-      rejectIn(items, item);
-      return {kind:'rejected'};
-     }
-     const hold=item.holdUntil||0;
-     if(hold>now())return {kind:'hold', delay:Math.min(hold-now(), 4000)};
-     return {kind:'send', item};
-    });
+    const picked=await withWrite(()=>pick(owner));
+    if(generation!==gen)return;
     if(picked.kind==='idle')return;
+    if(picked.kind==='blocked'){arm(400);return;}
     if(picked.kind==='rejected'){notify();continue;}
     if(picked.kind==='hold'){arm(picked.delay);return;}
     const item=picked.item;
@@ -209,31 +385,9 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
     catch{result={ok:false, status:0};}
     finally{sendingKey=null;}
     if(generation!==gen)return;
-    const action=await lockSection(()=>{
+    const action=await withWrite(()=>{
      if(generation!==gen)return 'stale';
-     return transaction(storage, items=>{
-      if(!consent?.()){replace(items, []);return 'cleared';}
-      const index=items.findIndex(entry=>sameRecord(entry, item.body));
-      if(result?.ok||result?.skipped==='sent'){
-       if(index>=0)items.splice(index, 1);
-       return 'next';
-      }
-      if(result?.skipped==='consent'){replace(items, []);return 'cleared';}
-      if(index<0)return 'next';
-      const fatal=result?.status===400||result?.status===409||result?.status===413;
-      if(fatal){
-       lastError=result?.data?.error||'有一筆紀錄被拒絕，已跳過。';
-       rejectIn(items, items[index]);
-       return 'next';
-      }
-      const current=items[index];
-      current.attempts=(current.attempts||0)+1;
-      current.holdUntil=now()+Math.min(30000, 1000*2**Math.min(current.attempts, 5));
-      current.lastStatus=result?.status||0;
-      current.lastError=result?.data?.error||'';
-      if(result?.status===403)lastError=current.lastError||'這筆紀錄屬於另一個帳號，已暫停上傳。';
-      return {kind:'retry', delay:current.holdUntil-now()};
-     });
+     return commitSend(item, result);
     });
     notify();
     if(action==='stale'||action==='cleared')return;
@@ -245,55 +399,79 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
   }
  }
  return {
-  get length(){return readQueue(storage).items.length;},
-  get bytes(){return readQueue(storage).items.reduce((sum, item)=>sum+(item.bytes||0), 0);},
+  get length(){return readMerged(storage).length;},
+  get bytes(){return readMerged(storage).reduce((sum, item)=>sum+(item.bytes||0), 0);},
   get dropped(){return dropped;},
   get lastError(){return lastError;},
   paused(owner){
-   const items=readQueue(storage).items;
+   const items=readMerged(storage);
    if(typeof owner!=='string'||!owner)return items.length;
    return items.filter(item=>item.body?.accountId!==owner).length;
   },
   start(){
    started=true;
    if(consent?.())arm(0);
-   else if(readQueue(storage).items.length){
-    transaction(storage, items=>{replace(items, []);});
+   else if(readMerged(storage).length||waiting.length){
+    waiting.length=0;
+    if(canRunSync())runSync(()=>wipeStorage(storage));
+    else void runAsync(()=>wipeStorage(storage));
     notify();
    }
   },
   enqueue(body, {holdMs=0}={}){
    if(!consent?.())return {skipped:'consent'};
-   const result=transaction(storage, items=>{
-    if(items.some(item=>sameRecord(item, body)))return {skipped:'queued'};
-    const encoded=JSON.stringify(body);
-    items.push({clientKey:body.clientKey, body, attempts:0, bytes:encoded.length, holdUntil:holdMs?now()+holdMs:0});
-    return {queued:true, bytes:encoded.length};
-   });
-   if(result?.queued){notify();arm();}
-   return result;
+   const exec=()=>commitEnqueue(body, holdMs);
+   if(canRunSync()){
+    const result=runSync(exec);
+    finish(result);
+    return result;
+   }
+   const done=runAsync(exec).then(result=>{finish(result);return result;});
+   return {pending:true, done};
   },
   drop(clientKey){
    if(clientKey===sendingKey)return false;
-   const removed=transaction(storage, items=>{
-    const before=items.length;
-    replace(items, items.filter(item=>item.clientKey!==clientKey));
-    return items.length!==before;
+   const memory=waiting.some(item=>item.clientKey===clientKey);
+   if(memory){
+    for(let index=waiting.length-1;index>=0;index--){
+     if(waiting[index].clientKey===clientKey)waiting.splice(index, 1);
+    }
+    if(!waiting.length&&lastError==='紀錄尚未儲存')lastError='';
+   }
+   const exec=()=>forgetClientKey(storage, clientKey);
+   if(canRunSync()){
+    const removed=runSync(exec)||memory;
+    if(removed)notify();
+    return removed;
+   }
+   return runAsync(exec).then(removed=>{
+    const ok=removed||memory;
+    if(ok)notify();
+    return ok;
    });
-   if(removed)notify();
-   return removed;
   },
   discard(){
-   const bodies=readQueue(storage).items.map(item=>item.body);
+   const bodies=readMerged(storage).map(item=>item.body).concat(waiting.map(item=>item.body));
    this.clear();
    return bodies;
   },
   clear(){
    generation++;
    if(timer!=null){clearTimeout(timer);timer=null;}
-   transaction(storage, items=>{replace(items, []);});
+   if(retryTimer!=null){clearTimeout(retryTimer);retryTimer=null;}
+   waiting.length=0;
+   if(lastError==='紀錄尚未儲存')lastError='';
+   if(canRunSync())runSync(()=>wipeStorage(storage));
+   else void runAsync(()=>wipeStorage(storage));
    notify();
   },
-  async flushNow(){if(timer!=null){clearTimeout(timer);timer=null;}await flush();}
+  exclusive(fn){
+   return runAsync(()=>fn());
+  },
+  async flushNow(){
+   if(timer!=null){clearTimeout(timer);timer=null;}
+   await persistWaiting();
+   await flush();
+  }
  };
 }
