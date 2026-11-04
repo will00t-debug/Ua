@@ -37,7 +37,7 @@ const TYPE_LABELS={character:'角色',field:'場地',event:'事件'};
 const COLOR_NAMES={red:'紅',blue:'藍',yellow:'黃',green:'綠',purple:'紫'};
 const COLOR_ORDER=['red','blue','yellow','green','purple'];
 const TRIGGER_NAMES={active:'活動',get:'獲得',draw:'抽卡',raid:'突襲',color:'顏色',special:'特殊',final:'最終',none:'無'};
-const TITLE_NAMES={rezero:'Re:從零開始的異世界生活','steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉',kjn:'我想成為影之強者！',aot:'進擊的巨人',kmr:'假面騎士',bleach:'BLEACH 千年血戰篇','gurren-lagann':'天元突破 紅蓮螺巖','sword-art-online':'刀劍神域','solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生'};
+const TITLE_NAMES={rezero:'Re:從零開始的異世界生活','steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉',kjn:'我想成為影之強者！',aot:'進擊的巨人',kmr:'假面騎士',csm:'鏈鋸人',bleach:'BLEACH 千年血戰篇','gurren-lagann':'天元突破 紅蓮螺巖','sword-art-online':'刀劍神域','solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生'};
 
 function makeVisualDeckModel({cards,counts,search='',type='all',color='all',energy='all',energies,generate='all',sort='energy-asc',titleName=''}={}) {
  const source=Array.isArray(cards)?cards:[];

@@ -42,7 +42,7 @@ export function classifyDecision(action){
  if(/discard/i.test(type)||/discard/i.test(mode))return 'discard';
  if(/search|look|peek|inspect|filter/i.test(type)||/search|look|peek|inspect|filter/i.test(mode))return 'search';
  if(type.startsWith('choose')||type.startsWith('effect')||
-  type==='kmr'||type==='kmr2'||type==='aot'||type==='aot2'||type==='kjn'||type==='iys'||type==='mmm2')
+  type==='kmr'||type==='kmr2'||type==='aot'||type==='aot2'||type==='kjn'||type==='iys'||type==='mmm2'||type==='csm')
   return 'effect';
  return 'other';
 }

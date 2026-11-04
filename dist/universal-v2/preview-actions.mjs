@@ -15,14 +15,15 @@ export const V2_TITLE_LABELS=Object.freeze({
  inuyasha:'犬夜叉',
  kjn:'我想成為影之強者！',
  aot:'進擊的巨人',
- kmr:'假面騎士'
+ kmr:'假面騎士',
+ csm:'鏈鋸人'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',
  'effect-grant-below-printed':'選擇對方角色，本回合 BP 低於原本時不能阻擋',
  'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
- 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
+ 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇',csm:'鏈鋸人效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
  'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂',
  'effect-grant-lose-ready':'給能源 0 的指定角色本回合落敗時 ACTIVE',
  'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',
@@ -371,7 +372,7 @@ export function uiCardLabel(pack,state,uid){
 // `recommended` is the raid-red outline. An on-play or activate branch is
 // not a raid, even when the card itself has a raid keyword. Only a choice
 // whose mode is raid keeps that frame.
-const CLOSED_CHOICE_TYPES=new Set(['kmr','kmr2','iys','kjn','aot','aot2','mmm2']);
+const CLOSED_CHOICE_TYPES=new Set(['kmr','kmr2','iys','kjn','aot','aot2','mmm2','csm']);
 export function pendingTextChoiceClass(action){
  const closed=CLOSED_CHOICE_TYPES.has(action?.type);
  const quiet=action?.mode==='skip'||action?.mode==='done'||(!closed&&action?.uid===null);
@@ -1199,7 +1200,7 @@ export function uiActionLabel(action,{pack,state}={}){
    return '支付 '+cost+'，以活動狀態登場';
   }
   case 'chooseDeploySelfActive':return '以活動狀態放到'+destination()+' '+(action.slot+1);
-  case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':
+  case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':case 'csm':
    return closedTitleChoiceLabel(action,{pack,state});
   default:return unlabeledChoiceLabel(action,{pack,state})||'完成這個選擇';
  }
@@ -1425,7 +1426,7 @@ const INSPECTED_ACTION_TYPES={
  'effect-top-character-outside':'chooseTopCharacterOutside',
  'effect-top-deploy':'chooseTopDeploy',
  'effect-top-deploy-rest':'chooseTopDeployRest',
- iys:'iys',kmr:'kmr',kmr2:'kmr2',kjn:'kjn',aot:'aot',aot2:'aot2',mmm2:'mmm2'
+ iys:'iys',kmr:'kmr',kmr2:'kmr2',kjn:'kjn',aot:'aot',aot2:'aot2',mmm2:'mmm2',csm:'csm'
 };
 export function inspectedPendingChoiceCards(privateChoices,legal){
  const inspected=privateChoices?.inspected;
@@ -1715,7 +1716,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2','aot2'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2','aot2','csm'
 ]);
 export function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
@@ -1737,6 +1738,7 @@ export function boardEntryMode(action){
  // Epsilon and Beta print REST entry only. mode dest is that cell.
  // Do not treat any other kjn mode as Raid.
  if(action.type==='kjn')return action.mode==='dest'?'normal':null;
+ if(action.type==='csm')return action.mode==='deploy'?'normal':null;
  if(action.mode==='raid')return 'raid';
  if(action.mode==='enter'||action.mode==='place'||action.mode==='rest')return 'normal';
  return null;

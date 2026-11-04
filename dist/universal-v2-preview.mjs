@@ -2,13 +2,14 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,aotPracticeDeck,kmrPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
+import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
 import {EXEDRA_CARDS} from './madoka-exedra-cards.mjs';
 import {INUYASHA_CARDS} from './inuyasha-cards.mjs';
 import {KJN_CARDS} from './kjn-cards.mjs';
+import {CSM_CARDS} from './csm-cards.mjs';
 import {AOT_CARDS} from './aot-cards.mjs';
 import {AOT2_CARDS} from './aot-vol2-cards.mjs';
 import {KMR_CARDS} from './kmr-cards.mjs';
@@ -51,6 +52,7 @@ const stgPractice=steinsGatePracticeDeck();
 const madokaPractice=madokaPracticeDeck();
 const inuyashaPractice=inuyashaPracticeDeck();
 const kjnPractice=kjnPracticeDeck();
+const csmPractice=csmPracticeDeck();
 const aotPractice=aotPracticeDeck();
 const kmrPractice=kmrPracticeDeck();
 const decks={...createAllV2PreviewRealDecks(),
@@ -64,6 +66,8 @@ const decks={...createAllV2PreviewRealDecks(),
   label:'犬夜叉｜紫色練習組'},
  'kjn-purple':{pack:kjnPractice.pack,counts:kjnPractice.counts,
   label:'我想成為影之強者！｜紫色練習組'},
+ 'csm-purple':{pack:csmPractice.pack,counts:csmPractice.counts,
+  label:'鏈鋸人｜紫色練習組'},
  'aot-red':{pack:aotPractice.pack,counts:aotPractice.counts,
   label:'進擊的巨人｜紅色練習組'},
  'kmr-yellow':{pack:kmrPractice.pack,counts:kmrPractice.counts,
@@ -79,6 +83,7 @@ const allArt=Object.freeze({
  madoka:new Map([...MADOKA_CARDS,...EXEDRA_CARDS].map(c=>[c.id,c.image||null])),
  inuyasha:new Map(INUYASHA_CARDS.map(c=>[c.id,c.image||null])),
  kjn:new Map(KJN_CARDS.map(c=>[c.id,c.image||null])),
+ csm:new Map(CSM_CARDS.map(c=>[c.id,c.image||null])),
  aot:new Map([...AOT_CARDS,...AOT2_CARDS].map(c=>[c.id,c.image||null])),
  kmr:new Map([...KMR_CARDS,...KMR2_CARDS].map(c=>[c.id,c.image||c.printings?.[0]?.image||null]))
 });
@@ -101,6 +106,7 @@ const PRINTED_CATALOGUE={
  madoka:printedCatalogueMap([...MADOKA_CARDS,...EXEDRA_CARDS]),
  inuyasha:printedCatalogueMap(INUYASHA_CARDS),
  kjn:printedCatalogueMap(KJN_CARDS),
+ csm:printedCatalogueMap(CSM_CARDS),
  aot:printedCatalogueMap([...AOT_CARDS,...AOT2_CARDS]),
  kmr:printedCatalogueMap([...KMR_CARDS,...KMR2_CARDS]),
  'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID))
@@ -1731,6 +1737,7 @@ function selectBuiltOpponent(title){
  if(decks['madoka-red']&&title==='madoka')$('ai-title').value='madoka-red';
  if(decks['inuyasha-purple']&&title==='inuyasha')$('ai-title').value='inuyasha-purple';
  if(decks['kjn-purple']&&title==='kjn')$('ai-title').value='kjn-purple';
+ if(decks['csm-purple']&&title==='csm')$('ai-title').value='csm-purple';
  if(decks['aot-red']&&title==='aot')$('ai-title').value='aot-red';
  if(decks['kmr-yellow']&&title==='kmr')$('ai-title').value='kmr-yellow';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
@@ -1766,7 +1773,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='aot'||raw.title==='kmr'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}
