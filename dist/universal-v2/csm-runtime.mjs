@@ -310,12 +310,9 @@ function eventsUsed(s,owner){
  return csmEventUseCount(s,owner,c=>def(A.pack,c));
 }
 function otherEventsUsed(s,owner,exceptUid){
- return (s.zoneMoveEvents||[]).filter(e=>{
-  if(e.turn!==s.turn||e.owner!==owner||e.controller!==owner||e.uid===exceptUid||
-   e.from!=='hand'||e.reason!=='rule')return false;
-  const d=def(A.pack,{uid:e.uid,cardId:e.cardId});
-  return d.type==='event'||d.alsoEvent===true;
- }).length;
+ // Q2080: count event identity when used, including purple characters
+ // played under Makima's live aura, never retroactively.
+ return csmEventUseCount(s,owner,c=>def(A.pack,c),exceptUid);
 }
 
 function runPlay(pack,s,job){
@@ -792,6 +789,10 @@ export function resolveCsmPending(pack,s,action){
   else if(q.id==='CSM-1-059'){
    const self=selfOf(s,owner,q.sourceUid);
    if(self){self.buffs??=[];self.buffs.push({energy:1,untilTurn:s.turn});}
+  }else if(q.id==='CSM-1-037'&&q.data?.nextAp){
+   // Date option 2: after draw-two/discard-one, ready an AP if an
+   // earlier qualifying event (including a Makima-converted card) was used.
+   offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
   }
  }else if(step==='leaveReplace'){
   // Q2093/Q2094: accept retires the chosen substitute; skip resumes the original leave.
