@@ -33,7 +33,7 @@ import {kmrBp,kmrBpImmune,kmrAnchored,kmrEnergyBonus,kmrEnergyCut,kmrEntryActive
 import {csmBp,csmImpactNull,csmBlockAtLeast,csmAttackDamage,
  csmCardCountsAsEvent,csmAlsoEventAuraLive,csmEventUseCount} from './csm-continuous.mjs';
 import {kmr2Bp,kmr2Impact,kmr2ImpactNull,kmr2EnergyBonus,kmr2EnergyCut,kmr2FrontEnergy,
- kmr2SelectTax,kmr2HandApCut,kmr2BlockFloors,kmr2ChoiceImmune,kmr2Protected} from './kmr2-continuous.mjs';
+ kmr2SelectTax,kmr2HandApCut,kmrPrNextDecadeMatches,kmr2BlockFloors,kmr2ChoiceImmune,kmr2Protected} from './kmr2-continuous.mjs';
 import {AOT2_FRONT_PENALTY,aot2Bp,aot2EnergyBonus,aot2FrontEnergy,aot2EnergyCut,
  aot2HandApCut,aot2ConsumeFoodAp,aot2RaidCut,aot2Warhammer,aot2Impact,
  aot2CannotPlay,aot2AttackBlocked,aot2SelectTax,aot2StandingBp} from './aot2-continuous.mjs';
@@ -1995,6 +1995,7 @@ function ensureKmr2(){
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
   retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
+  bounce:(pack,s,owner,uid,sourceUid)=>bounceToHand(pack,s,owner,uid,sourceUid,{reason:'own-effect'}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,go:continueEffectQueue,
@@ -15891,7 +15892,7 @@ function handApPlan(pack,s,owner,d,opts={}){
  if(d.id==='AOT-1-096'&&field(pl).some(c=>nameContainsToken(card(pack,c),'エレン・イェーガー',originalEffectsDisabled(s,c))))
   extra+=1;
  extra+=aot2HandApCut(pack,s,owner,d);
- extra+=kmr2HandApCut(pack,s,owner,d,card);
+ extra+=kmr2HandApCut(pack,s,owner,d,card,opts.from);
  if(s.kmrMedalAp?.[owner]===s.turn&&d.name==='セルメダル')extra+=1;
  return {cost:Math.max(0,base.cost-extra),ids:base.ids};
 }
@@ -18802,6 +18803,7 @@ if(ability.op==='characterDualMain'){
     if(s.kmrMedalAp?.[p]===s.turn&&d.name==='セルメダル')s.kmrMedalAp[p]=null;
     aot2ConsumeFoodAp(pack,s,p,d);
     if(cardHasTrait(d,'アドベントカード')&&s.kmr2NextAdventAp?.[p]===s.turn)s.kmr2NextAdventAp[p]=null;
+    if(s.kmrPrNextDecadeAp?.[p]===s.turn&&kmrPrNextDecadeMatches(d))s.kmrPrNextDecadeAp[p]=null;
    }
    consumeNextNamedHandEnergy(s,p,d);
    s.continuousStates=s.continuousStates.filter(e=>!payment.ids.includes(e.id));
@@ -19025,7 +19027,7 @@ function assertAotGrants(pack,s){
  }
  if(s.pending?.kind==='kmr2'){
   const q=s.pending;
-  if(typeof q.step!=='string'||!Array.isArray(q.actions)||!/^KMR-2-\d\d\d$/.test(String(q.id||'')))
+  if(typeof q.step!=='string'||!Array.isArray(q.actions)||!/^KMR-(?:2|P)-\d\d\d$/.test(String(q.id||'')))
    throw Error('Invalid Kamen Rider vol.2 pending');
  }
  if(s.aot2CorpsReturned!==undefined){
@@ -23647,8 +23649,9 @@ export function universalPrivateChoices(pack,s,viewer){
    ...field(s.players[1-viewer]),...s.players[1-viewer].outside];
   // 檢索、看牌頂、噴牌：控制者看過的每一張都要列出來，不能選的也要。
   // 新卡把完整視窗的實體 UID 放在 data.uids 或 data.window（由牌庫上到下）。
-  // 排序用 data.left，登場視窗用 data.windowUids。只把符合條件的目標放進
-  // actions 不夠，畫面不會自己補牌。名單只含仍在自己牌庫裡的卡。
+  // 排序用 data.left，登場視窗用 data.windowUids。場外或手牌視窗另記 data.zone。
+  // 只把符合條件的目標放進 actions 不夠，畫面不會自己補牌。
+  // 名單只含仍在自己那個區域裡的卡，不含對手的牌。
   // 新的封閉作品先加入 pending kind 白名單，再加進這個判斷。個別新卡不用再寫顯示。
   const data=q.data&&typeof q.data==='object'?q.data:null;
   const listed=q.step==='lookOrder'?data?.left
@@ -23656,15 +23659,18 @@ export function universalPrivateChoices(pack,s,viewer){
    :Array.isArray(data?.uids)?data.uids
    :Array.isArray(data?.window)?data.window
    :Array.isArray(data?.windowUids)?data.windowUids:null;
-  const deck=s.players[viewer].deck;
+  const zoneName=data?.zone==='outside'||data?.zone==='hand'?data.zone:'deck';
+  const pile=s.players[viewer][zoneName];
   const lookStep=/^(look|mill|reveal|peek|search|keep|take|distinct)/.test(String(q.step||''));
   let windowCards=[];
-  if(Array.isArray(listed)&&listed.length&&Array.isArray(deck)){
-   const found=listed.map(uid=>deck.find(c=>c?.uid===uid)||null);
+  if(Array.isArray(listed)&&listed.length&&Array.isArray(pile)){
+   const found=listed.map(uid=>pile.find(c=>c?.uid===uid)||null);
    const intact=found.every(Boolean);
-   const prefix=intact&&deck.slice(0,listed.length).every((c,i)=>c?.uid===listed[i]);
-   if(intact&&(lookStep||prefix||q.step==='enter'))windowCards=found;
-   else if(lookStep)windowCards=found.filter(Boolean);
+   if(zoneName==='deck'){
+    const prefix=intact&&pile.slice(0,listed.length).every((c,i)=>c?.uid===listed[i]);
+    if(intact&&(lookStep||prefix||q.step==='enter'))windowCards=found;
+    else if(lookStep)windowCards=found.filter(Boolean);
+   }else if(intact)windowCards=found;
   }
   const inspected=windowCards.map(c=>{
    const printed=card(pack,c);

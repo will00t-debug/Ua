@@ -470,7 +470,9 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
  }
  const table={
   take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',
-  retire:'使這張角色退場',retireOwn:'使這張角色退場',outside:'放到場外',bottom:'放到牌組底',
+  retire:'使這張角色退場',retireOwn:'使這張角色退場',retireFood:'使這張卡退場',
+  switch:'退場1張口嚼獸，改為選擇黃色角色卡',deckTop:'將這張卡放到自己牌組上面',
+  outside:'放到場外',bottom:'放到牌組底',
   top:'留在上面',deploy:'讓這張卡登場',reveal:'公開牌組頂',rest:'使這張角色休息',
   raid:'以突襲登場',mill:'將牌組頂放到場外',remove:'將這張卡移入移除區',removed:'移入移除區',
   enter:'讓這張卡登場',enterAsk:'讓這張角色登場',host:'選擇這張角色',back:'放回',

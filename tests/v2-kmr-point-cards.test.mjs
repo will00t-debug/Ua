@@ -14,13 +14,13 @@ const SET1_IDS=['KMR-1-AP01','KMR-1-AP02','KMR-1-AP03','KMR-1-AP04','KMR-1-AP05'
 const BATTLE_EXTRA=['KMR-2-AP01','KMR-2-AP02','KMR-2-AP03','KMR-2-AP04','KMR-2-AP05','KMR-2-AP06','KMR-2-AP01-star','KMR-AP01'];
 const deckIds=new Set([...KMR_CARDS,...KMR2_CARDS].map(card=>card.id));
 
-test('Rugia point cards stay outside the 113 and 213 deck identities',()=>{
+test('Rugia point cards stay outside the 113 and 216 deck identities',()=>{
  const set1=createKmrV2Pack();
  const battle=createKmrBattlePack();
  assert.equal(set1.version,'kmr-ua29-20261101');
  assert.equal(battle.version,'kmr-ua29-ex12-20261102');
  assert.equal(Object.keys(set1.cards).length,113);
- assert.equal(Object.keys(battle.cards).length,213);
+ assert.equal(Object.keys(battle.cards).length,216);
  assert.deepEqual(kmrPointCardsFor('set1').map(card=>card.id),SET1_IDS);
  assert.deepEqual(kmrPointCardsFor('battle').map(card=>card.id),[...SET1_IDS,...BATTLE_EXTRA]);
  assert.equal(KMR_POINT_CARDS.length,16);

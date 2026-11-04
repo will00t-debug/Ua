@@ -17,7 +17,7 @@ import {createAotV2Pack} from './aot-pack.mjs';
 import {createKmrV2Pack,KMR_STARTER_IDS,kmrPackCard} from './kmr-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
-import {kmr2PackCards} from './kmr2-pack.mjs';
+import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs';
 
 const CENSUS=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei'];
 let rezeroBattlePack=null;
@@ -191,8 +191,8 @@ export function aotPracticeDeck(){
 let kmrBattlePack=null;
 export function createKmrBattlePack(){
  if(kmrBattlePack)return kmrBattlePack;
- const cards=[...KMR_CARDS.map(kmrPackCard),...kmr2PackCards()];
- if(cards.length!==213)throw Error('Kamen Rider registered count drifted');
+ const cards=[...KMR_CARDS.map(kmrPackCard),...kmr2PackCards(),...kmrPrPackCards()];
+ if(cards.length!==216)throw Error('Kamen Rider registered count drifted');
  const seen=new Set();
  for(const card of cards){
   if(seen.has(card.id))throw Error('Duplicate Kamen Rider battle id '+card.id);

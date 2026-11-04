@@ -234,7 +234,7 @@ function verifyProgram(program,path){
    continue;
   }
   if(e.op==='kmr2'){
-   if(!/^KMR-2-\d\d\d$/.test(e.id)||
+   if(!/^KMR-(?:2|P)-\d\d\d$/.test(e.id)||
     !['onPlay','onAttack','onRetire','phase','attackEnd','allyAttackEnd','removed','entered','blocked','unblocked','lost','win','main'].includes(e.slot)||
     Object.keys(e).length!==3||Object.keys(e).some(k=>!['op','id','slot'].includes(k)))
     throw Error(path+'['+i+'] invalid Kamen Rider vol.2 job');
@@ -3949,7 +3949,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).every(k=>['op','id'].includes(k));
  const mainKmr2=mainAbility?.op==='kmr2Main'&&
   ['character','field'].includes(card.type)&&mainAbility.id===card.id&&
-  /^KMR-2-\d\d\d$/.test(mainAbility.id)&&
+  /^KMR-(?:2|P)-\d\d\d$/.test(mainAbility.id)&&
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','id'].includes(k));
   const mainSongRestBuff=mainAbility?.op==='restIfTraitUsedBuffUnion'&&

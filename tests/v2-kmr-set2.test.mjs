@@ -22,10 +22,10 @@ test('EX12BT registers 100 identities and the battle pack keeps both sets',()=>{
  assert.deepEqual(KMR2_CARDS.map(c=>c.id),Array.from({length:100},(_,i)=>'KMR-2-'+String(i+1).padStart(3,'0')));
  assert.equal(KMR2_CARDS.some(c=>c.id.includes('_p')||c.id.includes('AP')),false);
  assert.equal(Object.keys(set1.cards).length,113);
- assert.equal(Object.keys(pack.cards).length,213);
+ assert.equal(Object.keys(pack.cards).length,216);
  assert.ok(pack.cards['KMR-1-001']);
  assert.ok(pack.cards['KMR-2-001']);
- assert.equal(new Set(Object.keys(pack.cards)).size,213);
+ assert.equal(new Set(Object.keys(pack.cards)).size,216);
  assert.equal(V2_TITLE_IDS.includes('kmr'),false);
  for(const card of KMR2_CARDS){
   assert.equal(kmr2EngineKind(card.effectJa),card.engineKind,card.id);
