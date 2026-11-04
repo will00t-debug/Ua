@@ -519,7 +519,8 @@ function runRetire(pack,s,job){
  }
  if(id==='CSM-1-068'){
   const chars2=plOf(s,owner).hand.filter(c=>def(pack,c).type==='character');
-  const events=plOf(s,owner).hand.filter(c=>cardCountsAsEvent(def(pack,c)));
+  // Purple characters also count as events while the 4/1 Makima aura is live.
+   const events=plOf(s,owner).hand.filter(c=>isEvent(s,owner,c));
   const actions=[{type:'csm',mode:'skip'}];
   if(events.length)actions.push(...events.map(c=>({type:'csm',mode:'event',uid:c.uid})));
   if(chars2.length>=2)actions.push(...chars2.map(c=>({type:'csm',mode:'char',uid:c.uid})));

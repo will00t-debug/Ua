@@ -49,23 +49,24 @@ function csmAlsoEventAuraAt(s,owner,order,card){
  if(Number.isInteger(s.csmAlsoEventGrantOrder?.[owner])&&
   s.csmAlsoEventGrant?.[owner]===s.turn&&
   s.csmAlsoEventGrantOrder[owner]<order)return true;
- for(const e of s.zoneMoveEvents||[]){
-  if(e.turn!==s.turn||e.owner!==owner||e.order>=order)continue;
-  if(!['front'].includes(e.to)||['front','energy'].includes(e.from))continue;
-  const d=card({uid:e.uid,cardId:e.cardId});
-  if((d?.id==='CSM-1-022'||d?.id==='CSM-1-024')&&
-   !originalEffectsDisabled(s,{uid:e.uid,cardId:e.cardId}))return true;
+ // Q2079: determine whether Makima was on the front line WHEN the card was
+ // used, not merely whether she appeared there earlier in the turn. Rewind
+ // only front-line moves after this hand use, starting from the current board.
+ const makimaIds=new Set(['CSM-1-022','CSM-1-024']);
+ const frontAtUse=new Set((s.players[owner]?.front||[]).filter(c=>
+  c&&makimaIds.has(card(c)?.id)&&!originalEffectsDisabled(s,c)).map(c=>c.uid));
+ const moves=s.zoneMoveEvents||[];
+ for(let i=moves.length-1;i>=0;i--){
+  const e=moves[i];
+  if(e.turn!==s.turn||e.owner!==owner||e.order<order||
+   (e.from!=='front'&&e.to!=='front')||
+   !makimaIds.has(card({uid:e.uid,cardId:e.cardId})?.id))continue;
+  // Undo the move. front->outside restores Makima's earlier aura; a later
+  // hand->front must not make an earlier character play count as an event.
+  if(e.to==='front')frontAtUse.delete(e.uid);
+  if(e.from==='front')frontAtUse.add(e.uid);
  }
- // Already sitting on front from a previous turn.
- for(const c of s.players[owner]?.front||[]){
-  if(!c||originalEffectsDisabled(s,c))continue;
-  const id=card(c)?.id;
-  if(id!=='CSM-1-022'&&id!=='CSM-1-024')continue;
-  const entered=(s.zoneMoveEvents||[]).find(e=>e.uid===c.uid&&e.to==='front'&&
-   e.turn===s.turn);
-  if(!entered||entered.order<order)return true;
- }
- return false;
+ return frontAtUse.size>0;
 }
 
 export function csmCardCountsAsEvent(s,owner,definition,card){
