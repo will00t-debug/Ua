@@ -44,7 +44,7 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
-import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104step3';
+import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104step4';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261101coachart1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';

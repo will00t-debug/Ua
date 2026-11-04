@@ -1,8 +1,9 @@
 // Live solo-match collector. Consent off does no serialization and no network.
 // Accepted human actions are queued locally; the next click does not wait
 // for the upload. AI actions stay out of the player-decision queue.
-// A resume check or an upload still in flight stages new decisions until the
-// next step number is confirmed. Closing consent drops only unsent rows.
+// A resume check, a recovered write that has not landed, or an upload still
+// in flight stages new decisions until the next step number is confirmed.
+// Closing consent drops only unsent rows.
 import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step3';
 import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step1';
 import {LABEL_FORMAT, chainOf} from './coach-format.mjs';
@@ -24,7 +25,7 @@ function rewind(session,bodies){
  session.undoStack=(session.undoStack||[]).slice(0,oldest.step);
 }
 
-export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,onAccepted,schedule,reconcileTimeout=8000,uploadTimeout=8000}={}){
+export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,onAccepted,schedule,locks,reconcileTimeout=8000,uploadTimeout=8000}={}){
  let uploaded=0;
  let session=null;
  let epoch=0;
@@ -34,6 +35,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
  let reconcileGen=0;
  let reconcileTimer=null;
  let pendingSaved=null;
+ let anchorWait=null;
  const sendEpoch=new Map();
  const uploader=createCoachUploader({
   consent:()=>coachConsentEnabled(storage),
@@ -67,6 +69,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   storage,
   consent:()=>coachConsentEnabled(storage),
   schedule,
+  locks,
   send(body){
    const matchId=body?.matchId;
    const step=body?.step;
@@ -112,7 +115,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    previous:null,undoStack:[],finished:false,reviewing:false,label:null,signedIn:null,header:null,
    reservations:[],confirmedThrough:0,staged:[],checking:false};
  }
- function fresh(){epoch+=1;reconcileGen+=1;clearReconcile();pendingSaved=null;openUpload=null;}
+ function fresh(){epoch+=1;reconcileGen+=1;clearReconcile();pendingSaved=null;openUpload=null;anchorWait=null;}
  function clearReconcile(){
   if(reconcileTimer==null)return;
   if(!schedule)clearTimeout(reconcileTimer);
@@ -141,7 +144,15 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    }
    return;
   }
-  if(result?.skipped==='cancelled')return;
+  if(result?.skipped==='cancelled'){
+   note.status='cancelled';
+   if(rollback&&session.humanStep===step+1){
+    session.humanStep=step;
+    session.undoStack.pop();
+    session.previous=prior;
+   }
+   return;
+  }
   if(result?.skipped==='queued'){
    note.status='stored';
    if(queue.lastError!=='紀錄尚未儲存')session.lastError='';
@@ -243,6 +254,23 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   const items=session.staged.splice(0, session.staged.length);
   for(const item of items)commitDraft(item.draft);
  }
+ function contiguousHuman(){
+  const stored=new Set(localHumanSteps(session.matchId).map(body=>body.step));
+  let next=session.confirmedThrough||0;
+  while(stored.has(next)||session.reservations.some(item=>item.step===next&&
+   (item.status==='waiting'||item.status==='stored'||item.status==='confirmed')))next++;
+  return next;
+ }
+ function repairRecovered(){
+  if(!session)return;
+  const next=contiguousHuman();
+  if((session.humanStep||0)<=next)return;
+  const stack=Array.isArray(session.undoStack)?session.undoStack:[];
+  session.humanStep=next;
+  session.undoStack=stack.slice(0, next);
+  session.previous=next===0?null:stack[next]||null;
+  session.lastError='紀錄尚未儲存';
+ }
  function stageHuman(context){
   let draft;
   try{
@@ -280,10 +308,22 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   if(!coachConsentEnabled(storage)){
    session.checking=false;
    session.staged=[];
+   anchorWait=null;
    emit();
    return;
   }
+  const wait=anchorWait;
+  anchorWait=null;
+  const cursor=session.humanStep||0;
+  if(wait){
+   try{await wait;}
+   catch{/* The note records a write that failed; the cursor is repaired below. */}
+   if(epoch!==epochNow||gen!==reconcileGen||!session||session.matchId!==matchId)return;
+  }
+  repairRecovered();
+  const lost=(session.humanStep||0)<cursor;
   releaseStaged();
+  if(lost)session.lastError='紀錄尚未儲存';
   emit();
  }
  function classify(result){
@@ -537,10 +577,13 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
        session.staged.push({draft:item.draft, replayIndex:item.replayIndex});
      }
     }
+    const waits=[];
     for(const item of recoverable){
      const result=queue.enqueue(item.body);
      rememberStep(item.body,item.previous??null,result,epochNow);
+     if(result?.pending&&result.done)waits.push(result.done);
     }
+    anchorWait=waits.length?Promise.all(waits):null;
    }
    session.header={...header,matchId:session.matchId};
    if(!session.finished)queue.drop(session.matchId+':label:interrupted');
