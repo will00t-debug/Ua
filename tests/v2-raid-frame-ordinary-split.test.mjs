@@ -59,7 +59,7 @@ function fuel(s,p,ids){
 test('Genm ordinary entry discards, and the raid-frame main stays closed',()=>{
  const pack=officialV2Pack('kmr');
  const packs=[pack,pack];
- const deck=deckFor(pack,['KMR-1-044','KMR-1-046','KMR-1-046','KMR-1-001']);
+ const deck=deckFor(pack,['KMR-1-044','KMR-1-043','KMR-1-046','KMR-1-046','KMR-1-001']);
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:44044});
  fuel(s,0,['KMR-1-046','KMR-1-046','KMR-1-046']);
  const genm=take(s,0,'KMR-1-044');
@@ -70,12 +70,19 @@ test('Genm ordinary entry discards, and the raid-frame main stays closed',()=>{
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===genm.uid&&a.line==='front');
  assert.ok(play);
  s=dispatchUniversalAction(packs,s,play);
+ // Ordinary Genm on-play discard is an explicit controller choice.
+ assert.equal(s.pending?.kind,'kmr');
+ assert.equal(s.pending?.step,'discard');
+ const cost=legalUniversalActions(packs,s).find(a=>a.mode==='discard'&&a.uid===extra.uid);
+ assert.ok(cost,'the printed on-play discard must name the extra hand card');
+ s=dispatchUniversalAction(packs,s,cost);
+ assert.equal(s.pending,null);
  const body=s.players[0].front.find(c=>c?.uid===genm.uid);
  assert.ok(body);
  assert.equal(body.stack.length,0);
  assert.equal(s.players[0].outside.some(c=>c.uid===extra.uid),true);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===genm.uid),false);
- const base=take(s,0,'KMR-1-046');
+ const base=take(s,0,'KMR-1-043'); // A Genm base, not unrelated Kamen Rider Birth.
  base.faceDown=false;
  body.stack=[base];
  s.players[0].outside.push(take(s,0,'KMR-1-044'));

@@ -129,7 +129,7 @@ function beginLook(pack,s,job,spec){
  const matches=window.filter(c=>spec.pred(def(pack,c)));
  const data={window:window.map(c=>c.uid),rest:spec.rest,dest:spec.dest,
   public:spec.public===true,discard:spec.discard===true,follow:spec.follow||null};
- if(!matches.length){offerOrder(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,data},
+ if(!matches.length&&job.id!=='CSM-1-055'){offerOrder(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,data},
   data.window,spec.rest);return;}
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'lookPick',data},[
   {type:'csm',mode:'skip'},...matches.map(c=>({type:'csm',mode:'take',uid:c.uid}))]);
@@ -152,6 +152,12 @@ function finishLookTake(pack,s,q,a){
     hand.map(c=>({type:'csm',mode:'discard',uid:c.uid})));
    return;
   }
+ }
+ if(q.id==='CSM-1-055'&&a.mode==='skip'){
+  const drawData={...data,drawIfSkipped:true};
+  if(!offerOrder(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,data:drawData},rest,data.rest))
+   A.draw(pack,s,q.player,1,q.sourceUid);
+  return;
  }
  if(data.follow&&a.mode==='take'&&taken)
   afterLookFollow(pack,s,q,taken,rest);
@@ -206,7 +212,11 @@ function afterLookFollow(pack,s,q,taken,rest){
 function finishOrder(s,q,a){
  const left=q.data.left.filter(uid=>uid!==a.uid);
  const built=[...q.data.built,a.uid];
- if(left.length<=1){lay(plOf(s,q.player),[...built,...left],q.data.rest);return;}
+ if(left.length<=1){
+  lay(plOf(s,q.player),[...built,...left],q.data.rest);
+  if(q.data.drawIfSkipped)A.draw(A.pack,s,q.player,1,q.sourceUid);
+  return;
+ }
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'lookOrder',
   data:{...q.data,left,built}},left.map(uid=>({type:'csm',mode:'next',uid})));
 }
@@ -971,11 +981,7 @@ export function resolveCsmPending(pack,s,action){
   afterAkiDiscard(pack,s,q);
  }else if(step==='akiChoose'){
   if(a.mode==='block')offerChars(s,{player:owner,sourceUid:q.sourceUid,id:q.id},null,false,'grantBlock3k');
-  else beginLook(pack,s,{owner,sourceUid:q.sourceUid,id:q.id},{count:3,rest:'bottom',
-   dest:'hand',public:true,discard:false,pred:d=>named(pack,{uid:d.uid,cardId:d.id}?d:
-    {uid:'x',cardId:d.id||''},AKI,s)||false});
-  // Fix aki look - use proper pred below via helper
-  if(a.mode==='search')startAkiSearch(pack,s,q);
+  else if(a.mode==='search')startAkiSearch(pack,s,q);
  }else if(step==='grantBlock3k'&&a.mode==='pick'){
   unblocked(s,selfOf(s,owner,a.uid),3000);
   lock(s,owner,'akiBlock');

@@ -437,6 +437,11 @@ function kmr2ModeLine(id,key){
 function closedTitleChoiceLabel(action,{pack,state}={}){
  const mode=action?.mode;
  const step=state?.pending?.step;
+ // Hidden LIFE is not a looked-at card: showing artwork/text exposes its trigger.
+ if(state?.pending?.kind==='aot2'&&step==='life'&&mode==='life'){
+  const index=state.players?.[0]?.life?.findIndex(c=>c?.uid===action.uid)??-1;
+  return index>=0?'選擇生命區第 '+(index+1)+' 張（背面）':'選擇背面生命';
+ }
  if(mode==='skip')return '不發動';
  if(mode==='done')return '完成選擇';
  if(step==='oppDeck'&&mode==='top')return '放到對手牌組上面';
@@ -1295,6 +1300,9 @@ function publicRevealChoice(pack,state,uid){
 }
 export function controllerChoiceArt(pack,state,action){
  if(!state?.players||!action||typeof action!=='object'||state.pending?.player!==0)return [];
+ // AOT-2-071/072 move an unexamined LIFE card to hand; selection must stay facedown.
+ if(state.pending?.kind==='aot2'&&state.pending?.step==='life'&&
+  action.type==='aot2'&&action.mode==='life')return [];
  const ids=[];
  const push=value=>{if(typeof value==='string'&&value&&!ids.includes(value))ids.push(value);};
  push(action.uid);

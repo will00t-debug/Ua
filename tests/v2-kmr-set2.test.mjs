@@ -508,6 +508,9 @@ test('KMR-2-099 continues after chosen discard to outside Mirror Monster entry',
  state=click(state,a=>a.mode==='deploy'&&a.uid===mirror.uid);
  assert.equal(state.pending?.step,'enter');
  state=click(state,a=>a.mode==='enter'&&a.uid===mirror.uid&&a.line==='energy'&&a.slot===3);
+ // KMR-2-095 has an independent optional on-play effect; resolve it before closing.
+ if(state.pending?.kind==='kmr2'&&state.pending?.step==='triggerSafe')
+  state=click(state,a=>a.mode==='skip');
  assert.equal(state.pending,null);
  assert.equal(state.players[0].energy[3]?.uid,mirror.uid);
  assert.equal(state.players[0].energy[3]?.ready,false);

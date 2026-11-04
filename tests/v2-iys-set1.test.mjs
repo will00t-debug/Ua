@@ -611,3 +611,53 @@ test('fake-0 Sesshomaru shows both looked cards and can send only a traitless pu
  assert.equal(universalPrivateChoices(packs,coral,1),null);
  assert.equal(assertUniversalMatch(packs,coral),true);
 });
+
+
+test('IYS-1-028 with three direct facedown cards replaces retirement with hand and REST raid-base return',()=>{
+ const counts=countsFor(['IYS-1-028','IYS-1-027','IYS-1-025','IYS-1-029','IYS-1-034','IYS-1-001']);
+ let s=toPhase(fresh(counts,28003),'main');
+ readyAp(s);
+ const naraku=put(s,0,'IYS-1-028','front',0);
+ const caster=put(s,0,'IYS-1-027','front',1);
+ const base=take(s,0,'IYS-1-025');
+ naraku.stack=[base];
+ const under=['IYS-1-029','IYS-1-034','IYS-1-001'].map(id=>take(s,0,id));
+ for(const layer of under)layer.faceDown=true;
+ naraku.under=under;
+ s=use(s,{type:'activate',uid:caster.uid,mode:'iys:0'});
+ assert.equal(s.pending?.step,'retireNaraku');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===naraku.uid);
+ assert.equal(s.pending?.kind,'iys');
+ assert.equal(s.pending?.step,'leave');
+ s=choose(s,a=>a.mode==='hand');
+ assert.equal(s.players[0].hand.some(c=>c.uid===naraku.uid),true);
+ assert.equal(s.players[0].outside.some(c=>c.uid===base.uid),true);
+ assert.equal(s.pending?.step,'deploy');
+ assert.ok(s.pending.actions.some(a=>a.mode==='deploy'&&a.uid===base.uid));
+ s=choose(s,a=>a.mode==='deploy'&&a.uid===base.uid&&a.line==='front');
+ const returned=s.players[0].front.find(c=>c?.uid===base.uid);
+ assert.ok(returned,'the raid base must reenter in REST');
+ assert.equal(returned.ready,false);
+ assert.equal(s.players[0].outside.filter(c=>under.some(u=>u.uid===c.uid)).length,3);
+ assertUniversalMatch(packs,s);
+});
+
+test('IYS-1-028 with two direct facedown cards can return to hand without base reentry',()=>{
+ const counts=countsFor(['IYS-1-028','IYS-1-027','IYS-1-025','IYS-1-029','IYS-1-034']);
+ let s=toPhase(fresh(counts,28002),'main');
+ const naraku=put(s,0,'IYS-1-028','front',0);
+ const caster=put(s,0,'IYS-1-027','front',1);
+ const base=take(s,0,'IYS-1-025');
+ naraku.stack=[base];
+ naraku.under=['IYS-1-029','IYS-1-034'].map(id=>{
+  const layer=take(s,0,id);layer.faceDown=true;return layer;
+ });
+ s=use(s,{type:'activate',uid:caster.uid,mode:'iys:0'});
+ s=choose(s,a=>a.mode==='pick'&&a.uid===naraku.uid);
+ assert.equal(s.pending?.step,'leave');
+ s=choose(s,a=>a.mode==='hand');
+ assert.equal(s.pending?.step,undefined);
+ assert.equal(s.players[0].hand.some(c=>c.uid===naraku.uid),true);
+ assert.equal(s.players[0].outside.some(c=>c.uid===base.uid),true);
+ assertUniversalMatch(packs,s);
+});
