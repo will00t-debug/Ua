@@ -357,12 +357,6 @@ function runPlay(pack,s,job){
    window.map(c=>({type:'kjn',mode:'take',uid:c.uid})));
   return;
  }
- if(id==='KJN-1-048'&&job.slot==='onRetire'){
-  if(!plOf(s,owner).hand.length)return;
-  hold(s,{...spec,step:'pay',data:{reason:'own-effect',next:'048base',baseUid:job.baseUid}},[
-   {type:'kjn',mode:'skip'},...plOf(s,owner).hand.map(c=>({type:'kjn',mode:'discard',uid:c.uid}))]);
-  return;
- }
  if(id==='KJN-1-049'){
   const outside=plOf(s,owner).outside;
   const max=1+Math.floor(outside.length/10);
@@ -435,6 +429,20 @@ function runPlay(pack,s,job){
  }
 }
 function runRetire(pack,s,job){
+ if(job.id==='KJN-1-048'){
+  // The retiring Raid top has already moved outside together with its
+  // directly-underlying physical Raid base. Pay one hand card to re-enter
+  // that base REST; no effect is available if the base is absent.
+  const pl=plOf(s,job.owner);
+  const retired=pl.outside.find(c=>c.uid===job.sourceUid);
+  const baseUid=retired?.raidBaseUid;
+  if(!baseUid||!pl.outside.some(c=>c.uid===baseUid)||!pl.hand.length)return;
+  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'pay',
+   data:{reason:'own-effect',next:'048base',baseUid}},[
+   {type:'kjn',mode:'skip'},
+   ...pl.hand.map(c=>({type:'kjn',mode:'discard',uid:c.uid}))]);
+  return;
+ }
  if(job.id==='KJN-1-016'){
   if(!job.hadFacedown)return;
   const pool=plOf(s,job.owner).outside.filter(c=>def(pack,c).energy<=1&&cardHasName(def(pack,c),CLAIRE));
