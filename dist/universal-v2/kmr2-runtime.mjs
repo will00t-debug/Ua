@@ -442,6 +442,21 @@ function on049(pack,s,job){
  const targets=oppFront(s,job.owner);
  offerList(s,specOf(job),'toEnergy',targets,true,null,'place');
 }
+// The defender chooses which of their existing ENERGY cards to remove when
+// the destination is full. Complete the move before silencing printed text.
+function moveExtremeTarget(pack,s,controller,sourceUid,targetUid){
+ const foe=1-controller;
+ const target=A.location(s,foe,targetUid);
+ if(!target||target.line!=='front')return false;
+ if(!s.players[foe].energy.some(c=>!c)){
+  const occupied=s.players[foe].energy.filter(Boolean);
+  return hold(s,{player:foe,sourceUid,id:'KMR-2-049',step:'toEnergyReplace',
+   data:{controller,targetUid}},occupied.map(c=>({type:'kmr2',mode:'remove',uid:c.uid})));
+ }
+ if(!A.shift(pack,s,foe,targetUid,'energy','opponent-effect',sourceUid))return false;
+ silenceUntil(s,controller,sourceUid,targetUid);
+ return true;
+}
 function on052(pack,s,job){
  const pool=ownWhere(s,job.owner,c=>def(pack,c).energy<=2&&token(pack,c,'Ｗ',s));
  offerList(s,specOf(job),'buff',pool,true,null,'own');
@@ -846,6 +861,13 @@ function blocked048(pack,s,job){
  use(s,job.sourceUid+'|048b');
  A.active(s,job.owner,self);
 }
+function offerWBlockedTopPlace(s,spec){
+ const top=plOf(s,spec.player).deck[0];
+ if(!top)return false;
+ return hold(s,{...spec,step:'topPlace',data:{uid:top.uid}},[
+  {type:'kmr2',mode:'top',uid:top.uid},{type:'kmr2',mode:'bottom',uid:top.uid}
+ ]);
+}
 function blocked054(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(self&&memoryEntry(self,s)){
@@ -854,11 +876,7 @@ function blocked054(pack,s,job){
   ]);
   return;
  }
- const top=plOf(s,job.owner).deck[0];
- if(!top)return;
- hold(s,{...specOf(job),step:'topPlace',data:{uid:top.uid}},[
-  {type:'kmr2',mode:'top',uid:top.uid},{type:'kmr2',mode:'bottom',uid:top.uid}
- ]);
+ offerWBlockedTopPlace(s,specOf(job));
 }
 function blocked079(pack,s,job){
  if(used(s,job.sourceUid+'|079'))return;
@@ -1121,7 +1139,13 @@ function resolveStep(pack,s,q,a){
   const c=fieldCards(s,who).find(x=>x.uid===hit.uid)||plOf(s,who).hand.find(x=>x.uid===hit.uid)||
    plOf(s,who).outside.find(x=>x.uid===hit.uid);
   if(q.step==='rest'&&c)restCard(s,who,c,q.sourceUid);
-  if(q.step==='retireOwn'&&c)retireUid(pack,s,q.player,c.uid);
+  if(q.step==='retireOwn'){
+   if(!c)return;
+   retireUid(pack,s,q.player,c.uid);
+   // The engine returns false after a *successful* plain retirement.
+   // Check the actual field location instead of interpreting that flag.
+   if(q.data?.next==='memoryDeploy'&&A.location(s,q.player,c.uid))return;
+  }
   if(q.step==='ready'&&c)A.active(s,q.player,c);
   if(q.step==='buff'&&c)buff(s,c,q.data?.bp||1000);
   if(q.step==='block'&&c)c.kmr2Block={turn:s.turn,stamp:c.fieldEntryStamp,relation:'atLeast',bp:4000,sourceUid:q.sourceUid};
@@ -1155,10 +1179,8 @@ function resolveStep(pack,s,q,a){
    const host=selfOf(s,q.player,q.sourceUid);
    copyTurn(s,host,[def(pack,c).id]);
   }
-  if(q.step==='toEnergy'&&c){
-   A.shift(pack,s,who,c.uid,'energy','opponent-effect',q.sourceUid);
-   silenceUntil(s,q.player,q.sourceUid,c.uid);
-  }
+  if(q.step==='toEnergy'&&c)
+   moveExtremeTarget(pack,s,q.player,q.sourceUid,c.uid);
   if(q.step==='removeTrio'){
    const self=selfOf(s,q.player,q.sourceUid);
    const base=self?.stack?.[0];
@@ -1195,6 +1217,17 @@ function resolveStep(pack,s,q,a){
    offerList(s,spec,'hand',pool,true,null,'hand');
   }else if(next==='readyAp')follow(pack,s,spec,'readyAp');
   void owner;
+  return;
+ }
+ if(q.step==='toEnergyReplace'){
+  s.pending=null;
+  const controller=q.data?.controller,targetUid=q.data?.targetUid;
+  if((controller!==0&&controller!==1)||q.player!==1-controller)return;
+  if(!plOf(s,q.player).energy.some(c=>c?.uid===hit.uid))return;
+  A.remove(pack,s,q.player,hit.uid,q.sourceUid);
+  const target=A.location(s,q.player,targetUid);
+  if(target?.line==='front'&&A.shift(pack,s,q.player,targetUid,'energy','opponent-effect',q.sourceUid))
+   silenceUntil(s,controller,q.sourceUid,targetUid);
   return;
  }
  if(q.step==='retire'){
@@ -1352,7 +1385,7 @@ function resolveStep(pack,s,q,a){
    const layers=fieldCards(s,q.player).flatMap(c=>(c.under||[]).filter(x=>x?.faceDown).map(x=>({host:c,layer:x})));
    if(layers.length<3)return;
    hold(s,{...spec,step:'release3',data:{got:[],need:3}},layers.map(x=>({type:'kmr2',mode:'outside',uid:x.layer.uid})));
-  }else if(hit.key==='top')blocked054(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id,slot:'plain'});
+  }else if(hit.key==='top')offerWBlockedTopPlace(s,spec);
   else if(hit.key==='deploy'){
    A.draw(pack,s,q.player,1,q.sourceUid);
    offerDiscard(s,spec,1,false,'mirror');
