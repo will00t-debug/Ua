@@ -46,13 +46,14 @@ const exact=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 
 export function chooseProgressSafeAiAction(pack,state,{
  difficulty='normal',actionsInPhase=0,choose=null,policy=null,
- nodes,ms,depth,seed
+ nodes,ms,depth,seed,rawGap
 }={}){
  const search={};
  if(Number.isInteger(nodes))search.nodes=nodes;
  if(Number.isFinite(ms))search.ms=ms;
  if(Number.isInteger(depth))search.depth=depth;
  if(Number.isInteger(seed))search.seed=seed;
+ if(Number.isFinite(rawGap))search.rawGap=rawGap;
  const strategy=choose||(difficulty==='hard'||difficulty==='learned'?chooseStrengthenedHardAction:chooseUniversalAiAction);
  const legal=legalUniversalActions(pack,state);
  if(!legal.length)throw Error('V2 reducer returned no legal AI action');
@@ -70,7 +71,7 @@ export function chooseProgressSafeAiAction(pack,state,{
     const trace=lastHardAiTrace();
     diagnosis=applyLearningAssist({
      policy,observation:learnedObservation(pack,state,seat),legal,seat,
-     hardAction:hard,candidates:trace?.candidates||[]
+     hardAction:hard,candidates:trace?.candidates||[],rawGap:search.rawGap
     });
     choice=legal.find(a=>exact(a,diagnosis.finalAction))||hard;
     if(!exact(choice,diagnosis.finalAction))

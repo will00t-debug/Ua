@@ -12,8 +12,19 @@ import {lastHardAiTrace} from '../dist/universal-v2/hard-ai.mjs';
 import {coachObservation} from '../dist/universal-v2/coach-record.mjs';
 import {trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
-const TRAIN_SEEDS=[11,12];
-const EVAL_SEEDS=[21,22];
+function seedList(name,fallback){
+ const raw=process.env[name];
+ if(raw==null||raw==='')return fallback.slice();
+ const values=raw.split(',').map(item=>Number(item));
+ if(!values.length||values.some(item=>!Number.isInteger(item)))
+  throw Error(name+' 必須是逗號分隔的整數種子');
+ return values;
+}
+const TRAIN_SEEDS=seedList('UA_LEARN_TRAIN_SEEDS',[11,12]);
+const EVAL_SEEDS=seedList('UA_LEARN_EVAL_SEEDS',[21,22]);
+const RAW_GAP=process.env.UA_LEARN_RAW_GAP==null||process.env.UA_LEARN_RAW_GAP===''
+ ?undefined:Number(process.env.UA_LEARN_RAW_GAP);
+if(RAW_GAP!==undefined&&!Number.isFinite(RAW_GAP))throw Error('UA_LEARN_RAW_GAP 必須是數字');
 const STEP_CAP=500;
 const CLOCK={ms:1e9};
 const DECIDED=new Set(['life-zero','unblocked-attack','required-draw-empty','finished']);
@@ -119,7 +130,7 @@ function blank(layout,seed,first,extra){
   learnedDeck:extra.learnedSeat==null?null:deckAt(layout,extra.learnedSeat),
   steps:0,status:'incomplete',endReason:null,error:null,winner:null,
   learnedDecisions:0,hardDecisions:0,changed:0,fallbacks:0,phaseBudget:0,reasons:{},
-  learnedMs:0,hardMs:0,firstChange:null};
+  learnedMs:0,hardMs:0,firstChange:null,changes:[]};
 }
 
 const rows=[];
@@ -173,7 +184,7 @@ function play(layout,seed,first,role){
    const learned=role.kind==='learned'&&seat===role.learnedSeat;
    const started=performance.now();
    const picked=driven(layout.packs,state,
-    learned?{difficulty:'learned',policy,...CLOCK}:{difficulty:'hard',...CLOCK},budgets[seat]);
+    learned?{difficulty:'learned',policy,rawGap:RAW_GAP,...CLOCK}:{difficulty:'hard',...CLOCK},budgets[seat]);
    const elapsed=performance.now()-started;
    if(picked.reason==='phase-budget')entry.phaseBudget++;
    if(learned){
@@ -181,7 +192,9 @@ function play(layout,seed,first,role){
     entry.learnedDecisions++;
     if(picked.diagnosis?.changed){
      entry.changed++;
-     if(!entry.firstChange)entry.firstChange=firstChangeOf(layout,state,seat,picked);
+     const change=firstChangeOf(layout,state,seat,picked);
+     if(!entry.firstChange)entry.firstChange=change;
+     if(entry.changes.length<8)entry.changes.push(change);
     }
     const reason=picked.diagnosis?.reason||(picked.reason?'driver-'+picked.reason:'none');
     entry.reasons[reason]=(entry.reasons[reason]||0)+1;
@@ -210,9 +223,22 @@ function play(layout,seed,first,role){
  games.push(entry);
 }
 
+const ONLY=(process.env.UA_LEARN_ONLY||'').split(':');
+function wanted(layout,seed,first,seat){
+ if(!process.env.UA_LEARN_ONLY)return true;
+ const [name,seedText,firstText,seatText]=ONLY;
+ if(name&&name!==layout.name)return false;
+ if(seedText&&Number(seedText)!==seed)return false;
+ if(firstText&&Number(firstText)!==first)return false;
+ if(seatText&&seat!=null&&Number(seatText)!==seat)return false;
+ return true;
+}
 for(const layout of layouts)for(const seed of EVAL_SEEDS)for(const first of [0,1]){
+ if(!wanted(layout,seed,first,null))continue;
  play(layout,seed,first,{kind:'baseline'});
- for(const learnedSeat of [0,1])play(layout,seed,first,{kind:'learned',learnedSeat});
+ for(const learnedSeat of [0,1]){
+  if(wanted(layout,seed,first,learnedSeat))play(layout,seed,first,{kind:'learned',learnedSeat});
+ }
 }
 
 function countStatus(list){
@@ -281,7 +307,7 @@ function forkFirstChange(layout,seed,first,learnedSeat){
   const seat=state.pending?.player??state.active;
   const learned=seat===learnedSeat;
   const picked=driven(layout.packs,state,
-   learned?{difficulty:'learned',policy,...CLOCK}:{difficulty:'hard',...CLOCK},budgets[seat]);
+   learned?{difficulty:'learned',policy,rawGap:RAW_GAP,...CLOCK}:{difficulty:'hard',...CLOCK},budgets[seat]);
   if(learned&&picked.diagnosis?.changed){
    return {
     hardContinuation:playHard(layout,act(layout.packs,structuredClone(state),picked.diagnosis.hardAction)),
@@ -311,14 +337,15 @@ const regressions=forkTargets.map(game=>{
   fork.learnedContinuation?.winner!==game.learnedSeat;
  return {layout:game.layout,seed:game.seed,first:game.first,learnedSeat:game.learnedSeat,
   learnedDeck:game.learnedDeck,baselineWinner:game.learnedSeat,learnedWinner:game.winner,
-  firstChange:game.firstChange,fork,switchExplainsLoss:caused};
+  firstChange:game.firstChange,changes:game.changes,fork,switchExplainsLoss:caused};
 });
 const report={
  source:'synthetic-engine-teacher',
  disclaimer:'訓練列來自固定的可見資訊規則，不是玩家紀錄，也沒有提交真人決策。模仿相同比例不是勝率。對局數不足，以下是探索性結果，不能當成已經證實強度提升。',
  exploratory:cells.some(cell=>cell.exploratory)||learnedGames.filter(game=>game.status==='finished').length<EXPLORATORY_GAMES,
  exploratoryReason:'每個座位與牌組組合的完賽對局少於 '+EXPLORATORY_GAMES+' 場。評估清單在開跑前就固定，沒有事後挑選種子。',
- seeds:{train:TRAIN_SEEDS,eval:EVAL_SEEDS,note:'訓練種子和評估種子分開，而且在看結果之前就已固定。'},
+ seeds:{train:TRAIN_SEEDS,eval:EVAL_SEEDS,rawGap:RAW_GAP??null,
+  note:'預設訓練種子 11、12 與評估種子 21、22 在看結果之前就已固定。環境變數只供另外一組驗收種子或分差試跑，不取代這組預設。'},
  training:{
   games:training.length,
   ...countStatus(training),

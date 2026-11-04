@@ -7,7 +7,7 @@ import {coachObservation,hiddenLeak} from '../dist/universal-v2/coach-record.mjs
 import {officialV2Pack,officialV2Titles} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {LEARN_FORMAT,LEARN_FORMAT_V2,LEARN_FORMAT_V3,LEARN_DIM,LEARN_ASSIST_CAP,LEARN_BONUS_RATE,LEARN_BONUS_THRESHOLD,
- LEARN_MIN_AGREEMENT,LEARN_MIN_VALIDATION_DECISIONS,
+ LEARN_MIN_AGREEMENT,LEARN_MIN_VALIDATION_DECISIONS,LEARN_RAW_GAP,
  LEARN_MIN_VALIDATION_MATCHES,actionIdentity,activationOf,applyLearningAssist,featureKeys,featuresOf,
  interventionOf,learningAssistBonus,learningBattleMode,learnReport,partitionByMatch,policyRecordStatus,preferLearnedAction,trainPolicy} from '../dist/universal-v2/learn-policy.mjs';
 
@@ -881,12 +881,19 @@ test('a single alternative bonus is measured from the hard choice',()=>{
  assert.equal(preference.action.place,'outside',preference.reason);
  const switched=applyLearningAssist({
   policy:preferred,observation,legal,seat:0,hardAction:top,
-  candidates:[{action:top,score:100},{action:outside,score:99}]
+  candidates:[{action:top,score:100},{action:outside,score:99}],
+  rawGap:2
  });
  assert.equal(switched.finalAction.place,'outside');
  assert.equal(switched.changed,true);
  assert.equal(switched.reason,'assist');
  assert.equal(switched.bonus>0,true);
+ const capped=applyLearningAssist({
+  policy:preferred,observation,legal,seat:0,hardAction:top,
+  candidates:[{action:top,score:100},{action:outside,score:99}]
+ });
+ assert.equal(capped.changed,1<=LEARN_RAW_GAP);
+ assert.equal(capped.finalAction.place,capped.changed?'outside':'top');
  assert.equal(99+switched.bonus>=100,true);
  const tied=blankModel({effect:4},{'BLC-1-021':2});
  const kept=applyLearningAssist({
@@ -1000,6 +1007,60 @@ test('equal raw scores can switch and a 0.21 preference stays a small bonus',()=
  assert.equal(zero.changed,false);
  assert.equal(zero.finalAction.type,'next');
  assert.equal(zero.bonus,0);
+});
+
+test('a raw deficit beyond the cap stays on the hard move even when the bonus could repay it',()=>{
+ const observation=handObservation('BLC-1-039');
+ observation.visible.pending={kind:'effect-discard',player:0};
+ const front={type:'play',mode:'enter',uid:'0-1',line:'front'};
+ const pass={type:'next'};
+ const legal=[pass,front];
+ const policy=blankModel({play:4,skip:4},{'BLC-1-039':4});
+ assert.equal(setLearnLead(policy,observation,front,0,8,[pass]),true);
+ const bonus=learningAssistBonus(8);
+ assert.equal(bonus,LEARN_ASSIST_CAP);
+ const hard=55.57636363636363;
+ const alternative=53.56;
+ assert.ok(alternative+bonus>=hard);
+ assert.ok(hard-alternative>2);
+ assert.ok(LEARN_RAW_GAP<2);
+ for(const rawGap of [0,0.25]){
+  const kept=applyLearningAssist({
+   policy,observation,legal,seat:0,hardAction:pass,rawGap,
+   candidates:[{action:pass,score:hard},{action:front,score:alternative}]
+  });
+  assert.equal(kept.changed,false,String(rawGap));
+  assert.equal(kept.reason,'assist-gap');
+  assert.equal(kept.finalAction.type,'next');
+  assert.equal(kept.bonus,0);
+ }
+ const repaid=applyLearningAssist({
+  policy,observation,legal,seat:0,hardAction:pass,rawGap:3,
+  candidates:[{action:pass,score:hard},{action:front,score:alternative}]
+ });
+ assert.equal(repaid.changed,true);
+ assert.equal(repaid.finalAction.line,'front');
+ const open=handObservation('BLC-1-039');
+ const openPolicy=blankModel({play:4,skip:4},{'BLC-1-039':4});
+ assert.equal(setLearnLead(openPolicy,open,front,0,8,[pass]),true);
+ const higher=applyLearningAssist({
+  policy:openPolicy,observation:open,legal,seat:0,hardAction:pass,rawGap:0,
+  candidates:[{action:pass,score:81.0228947368421},{action:front,score:81.79562200956939}]
+ });
+ assert.equal(higher.changed,true);
+ assert.equal(higher.reason,'assist');
+ const lethal=applyLearningAssist({
+  policy,observation,legal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:50000},{action:front,score:49990}]
+ });
+ assert.equal(lethal.reason,'protect-lethal');
+ assert.equal(lethal.changed,false);
+ const losing=applyLearningAssist({
+  policy,observation,legal,seat:0,hardAction:pass,
+  candidates:[{action:pass,score:10},{action:front,score:-50000}]
+ });
+ assert.equal(losing.reason,'protect-loss');
+ assert.equal(losing.changed,false);
 });
 
 test('the revealed card is part of the current placement features',()=>{

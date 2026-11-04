@@ -25,6 +25,13 @@ export const LEARN_ASSIST_CAP_MAX=40;
 // reproduced discard stays below that position's two-point search gap.
 export const LEARN_BONUS_THRESHOLD=LEARN_MARGIN;
 export const LEARN_BONUS_RATE=4;
+// Raw-score cap, applied before the learning bonus. An alternative whose hard
+// search score is lower than the hard choice by more than this much stays on
+// the hard choice, even when the bonus would have crossed the search margin.
+// Zero means a learning switch can only break an exact tie. Held-out seeds
+// 31 and 32, which are not the training seeds 11/12 or the report seeds 21/22,
+// favored ties only over a 0.5 gap. Do not retune this on the report seeds.
+export const LEARN_RAW_GAP=0;
 // A split can be valid with one held-out match. Enabling the model needs more.
 export const LEARN_MIN_VALIDATION_MATCHES=2;
 export const LEARN_MIN_VALIDATION_DECISIONS=8;
@@ -882,9 +889,10 @@ function hardScoreOf(candidates,action){
  return found&&Number.isFinite(found.score)?found.score:null;
 }
 export function applyLearningAssist({
- policy,observation,legal,seat,hardAction,candidates,assistCap
+ policy,observation,legal,seat,hardAction,candidates,assistCap,rawGap
 }={}){
  const cap=assistCapOf(assistCap);
+ const gap=Number.isFinite(rawGap)?rawGap:LEARN_RAW_GAP;
  const base={
   hardAction:hardAction||null,preference:null,finalAction:hardAction||null,
   changed:false,reason:null,margin:null,hardScore:null,preferenceScore:null,bonus:0
@@ -939,10 +947,17 @@ export function applyLearningAssist({
  const threshold=hardScore+switchMargin;
  const tiedScore=score=>Math.abs(score-hardScore)<=1e-6;
  let best=null;
+ let gapBlocked=false;
  for(const row of deltas){
   const bonus=bonusOf(row.item.action);
   if(!(bonus>0))continue;
   const tied=tiedScore(row.item.score);
+  const deficit=hardScore-row.item.score;
+  if(deficit>gap+1e-9){
+   const adjusted=row.item.score+bonus;
+   if(!tied&&row.item.score<threshold&&adjusted>=threshold)gapBlocked=true;
+   continue;
+  }
   if(!tied&&!(row.item.score<threshold))continue;
   const adjusted=row.item.score+bonus;
   if(!tied&&!(adjusted>=threshold))continue;
@@ -954,7 +969,7 @@ export function applyLearningAssist({
    else if(current.hard===best.hard&&identity<best.identity)best=current;
   }
  }
- if(!best)return {...base,reason:'assist-kept'};
+ if(!best)return {...base,reason:gapBlocked?'assist-gap':'assist-kept'};
  const finalAction=legal.find(action=>same(action,best.action))||hardAction;
  if(!same(finalAction,hardAction)){
   const gate=learnGate(finalAction);

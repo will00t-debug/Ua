@@ -1,5 +1,5 @@
 // Logged-in review of solo training rows. Debug replays stay on their own buttons.
-import {learnReport} from './universal-v2/learn-policy.mjs?v=20261104owner1';
+import {learnReport} from './universal-v2/learn-policy.mjs?v=20261104gap1';
 import {coachConsentEnabled,createCoachUploader,currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
 import {createDecisionQueue} from './universal-v2/coach-queue.mjs?v=20261104account1';
 const root=document.querySelector('#coach-app');
