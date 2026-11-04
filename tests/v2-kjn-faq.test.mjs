@@ -365,10 +365,12 @@ test('Q2127 the second Delta on play does not activate after the first one did',
 
 
 test('KJN-1-048 on retirement can discard a hand card and re-enter the actual Raid base REST',()=>{
- const counts=countsFor(['KJN-1-048','KJN-1-047','KJN-1-037','KJN-1-012',...YELLOW]);
+ const counts=countsFor(['KJN-1-048','KJN-1-047','KJN-1-037','KJN-1-012','KJN-1-032',...YELLOW]);
  let s=toPhase(fresh(counts,4801),'main');
  readyAp(s);
  fuel(s);
+ // KJN-1-037 can retire BP4000 Shadow only while Rose is on our field.
+ put(s,0,'KJN-1-032','front',0,true);
  const shadow=put(s,1,'KJN-1-048','front',0,true);
  const base=take(s,1,'KJN-1-047');
  base.faceDown=false;base.ready=false;base.stack=[];base.under=[];
