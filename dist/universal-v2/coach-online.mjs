@@ -5,7 +5,7 @@
 // A delayed reply keeps that identity; it is not retagged after a login change.
 // An end marker uses the account, room and seat bound to that event.
 import {coachConsentEnabled,coachConsentVersion,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step5';
-import {createDecisionQueue} from './coach-queue.mjs?v=20261104step5';
+import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step6';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
  tableChoices,chainOf,deckSnapshot} from './coach-format.mjs';
@@ -32,6 +32,7 @@ function sessionKey(accountId,seat,code){
 export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckById,onChange,schedule,uploadTimeout=8000,reconcileTimeout=8000}={}){
  let uploaded=0;
  let lastError='';
+ let gapNotice=false;
  let pending=null;
  let session=null;
  let seenVersion=coachConsentVersion(storage);
@@ -43,8 +44,8 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   consent:()=>coachConsentEnabled(storage),
   fetchImpl,
   uploadTimeout,
-  onUploaded(){uploaded++;lastError='';onChange?.();},
-  onError(message){lastError=message||'紀錄沒有送出。';onChange?.();}
+  onUploaded(){uploaded++;if(!gapNotice)lastError='';onChange?.();},
+  onError(message){if(!gapNotice)lastError=message||'紀錄沒有送出。';onChange?.();}
  });
  const queue=createDecisionQueue({
   storage,
@@ -54,8 +55,9 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   send(body){return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);},
   account(){return currentAccountId(fetchImpl);},
   onChange(){
-   if(lastError==='紀錄尚未儲存'&&queue.lastError!=='紀錄尚未儲存')lastError='';
-   if(queue.lastError==='紀錄尚未儲存')lastError='紀錄尚未儲存';
+   if(gapNotice)lastError='紀錄尚未儲存';
+   else if(lastError==='紀錄尚未儲存'&&queue.lastError!=='紀錄尚未儲存')lastError='';
+   if(!gapNotice&&queue.lastError==='紀錄尚未儲存')lastError='紀錄尚未儲存';
    onChange?.();
   }
  });
@@ -107,11 +109,15 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   if(row.hold)return;
   const ahead=absorbShared(current);
   if(Number.isInteger(current.unresolved?.step)){
-   rememberHold(current, current.unresolved.step, current.unresolved.writeVersion??null);
+   rememberHold(current, current.unresolved.step, current.unresolved.writeVersion??null, 'revoke');
    return;
   }
-  if(!(ahead||consentBehind(current))||(current.step||0)<=0)return;
-  rememberHold(current, current.step-1, current.writeVersion??null);
+  if(consentBehind(current)&&(current.step||0)>0){
+   rememberHold(current, current.step-1, current.writeVersion??null, 'revoke');
+   return;
+  }
+  if(!row.trusted&&(ahead||(current.step||0)>0))
+   rememberHold(current, Math.max(0,(current.step||1)-1), current.writeVersion??null, 'read');
  }
  function linkOf(previous){
   if(!previous||!Number.isInteger(previous.step)||typeof previous.type!=='string')return null;
@@ -123,7 +129,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  function place(key){
   let row=places.get(key);
   if(!row){
-   row={hold:null,staged:[],reconciling:false,gen:0};
+   row={hold:null,staged:[],reconciling:false,gen:0,trusted:false,awaitingStore:false,done:null};
    places.set(key,row);
   }
   return row;
@@ -136,11 +142,13 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   return !!current&&current.accountId===track.accountId&&current.matchId===track.matchId&&
    current.seat===track.seat&&current.code===track.code;
  }
- function rememberHold(current,step,writeVersion){
+ function rememberHold(current,step,writeVersion,mode){
   if(!current?.key||!Number.isInteger(step)||step<0)return;
   const row=place(current.key);
+  const kind=mode==='read'?'read':'revoke';
   row.hold={accountId:current.accountId,matchId:current.matchId,seat:current.seat,code:current.code,
-   step,writeVersion:writeVersion??null};
+   step,writeVersion:writeVersion??null,mode:kind};
+  if(kind==='read')return;
   current.unresolved={step,writeVersion:writeVersion??null};
   persistRecord(current);
  }
@@ -156,7 +164,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    .map(body=>body.step);
   const step=steps.length?Math.min(...steps):(session.step>0?session.step-1:null);
   if(step==null)return;
-  rememberHold(session,step,session.writeVersion??null);
+  rememberHold(session,step,session.writeVersion??null,'revoke');
  }
  async function readFence(track){
   let timer;
@@ -176,6 +184,59 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    return {count:data.count,writeVersion:data.writeVersion,previous:linkOf(data.previous)};
   }catch{return null;}
   finally{if(timer)clearTimeout(timer);}
+ }
+ async function readProgress(track){
+  let timer;
+  try{
+   const response=await Promise.race([
+    fetchImpl('/api/coach/matches/'+encodeURIComponent(track.matchId),{
+     method:'GET',credentials:'same-origin',headers:{accept:'application/json'}
+    }),
+    new Promise(resolve=>{timer=setTimeout(()=>resolve(null), reconcileTimeout);})
+   ]);
+   if(!response)return null;
+   if(response.status===404)return {count:0,writeVersion:null,previous:null};
+   if(!response.ok)return null;
+   const data=await response.json();
+   const count=data?.match?.steps;
+   if(!Number.isInteger(count)||count<0)return null;
+   const steps=Array.isArray(data.steps)?data.steps:[];
+   const last=count>0?steps[steps.length-1]:null;
+   const previous=last?linkOf({
+    step:Number.isInteger(last.step)?last.step:count-1,
+    type:last.choice?.type,
+    replayIndex:last.replayIndex,
+    clientKey:last.clientKey
+   }):null;
+   const writeVersion=data.writeVersion===null||typeof data.writeVersion==='string'?data.writeVersion:null;
+   return {count,writeVersion,previous};
+  }catch{return null;}
+  finally{if(timer)clearTimeout(timer);}
+ }
+ function coverQueue(current, remote){
+  let step=remote.count;
+  let previous=remote.previous;
+  const version=coachConsentVersion(storage);
+  const rows=[...readStoredQueue(storage), ...queue.unsaved()].filter(item=>{
+   const body=item?.body;
+   return body&&body.accountId===current.accountId&&body.matchId===current.matchId&&body.seat===current.seat&&
+    String(body.format||'').includes('step')&&(item.consentVersion??null)===version&&Number.isInteger(body.step);
+  }).sort((a,b)=>a.body.step-b.body.step);
+  for(const item of rows){
+   const body=item.body;
+   if(body.step<step)continue;
+   if(body.step!==step||typeof body.choice?.type!=='string'||typeof body.clientKey!=='string')break;
+   previous={step:body.step,type:body.choice.type,clientKey:body.clientKey};
+   step+=1;
+  }
+  return {step,previous};
+ }
+ function unstoredAhead(current){
+  return queue.unsaved().some(item=>{
+   const body=item?.body;
+   return body&&body.matchId===current.matchId&&body.seat===current.seat&&body.accountId===current.accountId&&
+    Number.isInteger(body.step)&&body.step<(current.step||0);
+  });
  }
  function loadSession(room,{activate=true}={}){
   const key=sessionKey(room?.accountId,room?.seat,room?.code);
@@ -208,7 +269,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    if(Number.isInteger(prior.unresolved?.step)){
     const row=place(key);
     if(!row.hold)row.hold={accountId:created.accountId,matchId,seat:created.seat,code:created.code,
-     step:prior.unresolved.step,writeVersion:prior.unresolved.writeVersion??null};
+     step:prior.unresolved.step,writeVersion:prior.unresolved.writeVersion??null,mode:'revoke'};
    }
    sessions[key]=created;
    if(live)session=created;
@@ -266,8 +327,19 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   const row=place(current.key);
   if(row.hold){
    if(!row.staged.some(item=>item.revision===snap.revision))row.staged.push(snap);
-   void reconcilePlace(current.key);
+   if(row.hold.mode==='read')await reconcilePlace(current.key);
+   else void reconcilePlace(current.key);
    return;
+  }
+  if(row.awaitingStore){
+   if(unstoredAhead(current)){
+    if(!row.staged.some(item=>item.revision===snap.revision))row.staged.push(snap);
+    return;
+   }
+   row.awaitingStore=false;
+   const earlier=row.staged.filter(item=>item.revision!==snap.revision);
+   row.staged=row.staged.filter(item=>item.revision===snap.revision);
+   for(const item of earlier)await commitSnap(item,{activate});
   }
   const clientKey=current.matchId+':r'+snap.revision+':human';
   const previous=linkOf(current.previous);
@@ -293,6 +365,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    current.deck=snap.deck;
    current.titles=snap.titles;
    current.engineVersion=snap.engineVersion;
+   place(current.key).trusted=true;
    persistRecord(current);
   };
   const apply=result=>{
@@ -302,40 +375,63 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     return;
    }
    if(result?.queued||(result?.stored===false&&result.retry===true))reserve();
-   if(result?.stored===false)lastError='紀錄尚未儲存';
-   else if((result?.queued||result?.skipped==='queued')&&queue.lastError!=='紀錄尚未儲存')lastError='';
+   if(result?.stored===false){
+    lastError='紀錄尚未儲存';
+    place(current.key).awaitingStore=true;
+   }else if((result?.queued||result?.skipped==='queued')&&queue.lastError!=='紀錄尚未儲存'&&!gapNotice)lastError='';
    onChange?.();
   };
   apply(queued);
  }
  async function reconcilePlace(key){
   const row=place(key);
+  if(row.reconciling)return row.done;
   const track=row.hold;
-  if(row.reconciling||!track||!coachConsentEnabled(storage)||!sameRecord(bound(key),track))return;
+  if(!track||!coachConsentEnabled(storage)||!sameRecord(bound(key),track))return;
   row.reconciling=true;
+  let release=()=>{};
+  row.done=new Promise(resolve=>{release=resolve;});
   const gen=row.gen;
-  let remote=null;
-  try{remote=await readFence(track);}
-  finally{row.reconciling=false;}
-  if(gen!==row.gen||row.hold!==track||!coachConsentEnabled(storage)||!sameRecord(bound(key),track))return;
-  const saved=bound(key);
-  if(!remote){
-   const retry=()=>{if(gen===row.gen&&row.hold===track)void reconcilePlace(key);};
-   if(schedule)schedule(retry, 500);
-   else setTimeout(retry, 500);
-   return;
-  }
-  saved.writeVersion=remote.writeVersion;
-  saved.step=remote.count;
-  saved.previous=remote.previous;
-  saved.consentVersion=coachConsentVersion(storage);
-  saved.unresolved=null;
-  row.hold=null;
-  persistRecord(saved);
-  const snaps=row.staged.splice(0, row.staged.length);
-  for(const item of snaps){
-   if(row.gen!==gen||!coachConsentEnabled(storage))return;
-   await commitSnap(item,{activate:session?.key===key});
+  try{
+   const remote=track.mode==='read'?await readProgress(track):await readFence(track);
+   if(gen!==row.gen||row.hold!==track||!coachConsentEnabled(storage)||!sameRecord(bound(key),track))return;
+   const saved=bound(key);
+   if(!remote||!saved){
+    const retry=()=>{if(gen===row.gen&&row.hold===track)void reconcilePlace(key);};
+    if(schedule)schedule(retry, 500);
+    else setTimeout(retry, 500);
+    return;
+   }
+   if(track.mode==='read'){
+    const recovered=coverQueue(saved, remote);
+    const gap=(saved.step||0)>recovered.step;
+    saved.step=recovered.step;
+    saved.previous=recovered.previous;
+    saved.writeVersion=remote.writeVersion??null;
+    saved.consentVersion=coachConsentVersion(storage);
+    saved.unresolved=null;
+    if(gap){
+     gapNotice=true;
+     lastError='紀錄尚未儲存';
+    }
+   }else{
+    saved.writeVersion=remote.writeVersion;
+    saved.step=remote.count;
+    saved.previous=remote.previous;
+    saved.consentVersion=coachConsentVersion(storage);
+    saved.unresolved=null;
+   }
+   row.trusted=true;
+   row.hold=null;
+   persistRecord(saved);
+   const snaps=row.staged.splice(0, row.staged.length);
+   for(const item of snaps){
+    if(row.gen!==gen||!coachConsentEnabled(storage))return;
+    await commitSnap(item,{activate:session?.key===key});
+   }
+  }finally{
+   row.reconciling=false;
+   release();
   }
  }
  return {

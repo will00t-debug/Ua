@@ -274,6 +274,14 @@ export function createDecisionQueue({storage, consent, consentVersion, send, sch
   const ceiling=Math.max(cancelledThrough.get(clientKey)||0, ...list);
   cancelledThrough.set(clientKey, ceiling);
  }
+ function dropOne(body, message){
+  forgetRecord(storage, body);
+  for(let index=waiting.length-1;index>=0;index--){
+   if(sameRecord(waiting[index], body))waiting.splice(index, 1);
+  }
+  dropped+=1;
+  if(message)lastError=message;
+ }
  function dropRejected(failed){
   const removed=readMerged(storage).filter(entry=>rejected(entry, failed));
   for(const entry of removed)forgetRecord(storage, entry.body);
@@ -357,6 +365,10 @@ export function createDecisionQueue({storage, consent, consentVersion, send, sch
   for(const item of readMerged(storage)){
    if(!ownedBy(item, owner))continue;
    if(!hasKey(storage, item))return {kind:'blocked'};
+   if(item.lastStatus===410){
+    dropOne(item.body, item.lastError||'這輪步驟上傳已失效。');
+    return {kind:'rejected'};
+   }
    if(item.lastStatus===400||item.lastStatus===409||item.lastStatus===413){
     lastError=item.lastError||lastError||'有一筆紀錄被拒絕，已跳過。';
     dropRejected(item);
@@ -378,6 +390,10 @@ export function createDecisionQueue({storage, consent, consentVersion, send, sch
   }
   if(result?.skipped==='consent'){waiting.length=0;wipeStorage(storage);return 'cleared';}
   if(index<0)return 'next';
+  if(result?.status===410){
+   dropOne(item.body, result?.data?.error||'這輪步驟上傳已失效。');
+   return 'next';
+  }
   const fatal=result?.status===400||result?.status===409||result?.status===413;
   if(fatal){
    lastError=result?.data?.error||'有一筆紀錄被拒絕，已跳過。';
@@ -438,6 +454,7 @@ export function createDecisionQueue({storage, consent, consentVersion, send, sch
  }
  return {
   get length(){return readMerged(storage).length;},
+  unsaved(){return waiting.map(item=>({...item}));},
   get bytes(){return readMerged(storage).reduce((sum, item)=>sum+(item.bytes||0), 0);},
   get dropped(){return dropped;},
   get lastError(){return lastError;},

@@ -16,7 +16,7 @@ export function setOnlineBattleMode(active,doc=globalThis.document){
   let link=doc.querySelector('link[data-online-battle-style="'+file+'"]');
   if(!link&&active){
    link=doc.createElement('link');link.rel='stylesheet';
-  const version=doc.querySelector('meta[name="ua-ui-version"]')?.content||'20261104step8';
+  const version=doc.querySelector('meta[name="ua-ui-version"]')?.content||'20261104step9';
   link.href=file+'?v='+encodeURIComponent(version);
    link.dataset.onlineBattleStyle=file;doc.head.append(link);
   }
