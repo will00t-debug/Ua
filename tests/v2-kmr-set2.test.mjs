@@ -527,3 +527,108 @@ test('Gav swaps compare raids against the ATTACK-phase baseline rather than the 
  assert.equal(attack.phase,'attack');
  assert.deepEqual(attack.kmr2AttackRaidBaseline,attack.raidCount);
 });
+
+test('W Heat Metal chooses a single top-or-bottom placement after Memory Change mode',()=>{
+ for(const where of ['top','bottom']){
+  const s=fresh(fill(['KMR-2-054','KMR-2-059','KMR-2-020']));
+  const heat=put(s,0,'KMR-2-054','front',0,true);
+  heat.kmr2EnteredBy={id:'KMR-2-059',name:'メモリチェンジ',turn:s.turn};
+  const seen=take(s,0,'KMR-2-020');
+  s.players[0].deck.unshift(seen);
+  ready(s);
+  // The blocked hook has already offered the printed Memory Change alternative.
+  s.pending={kind:'kmr2',player:0,id:'KMR-2-054',sourceUid:heat.uid,
+   step:'mode',data:{},actions:[
+    {type:'kmr2',mode:'one',key:'top'},
+    {type:'kmr2',mode:'two',key:'draw'}
+   ]};
+  let state=click(s,a=>a.key==='top');
+  assert.equal(state.pending?.step,'topPlace','must not reopen the mode choice');
+  assert.deepEqual(state.pending.actions.map(a=>a.mode),['top','bottom']);
+  assert.equal(controllerChoiceArt(packs,state,state.pending.actions[0])[0]?.cardId,'KMR-2-020');
+  state=click(state,a=>a.mode===where);
+  assert.equal(state.pending,null);
+  assert.equal(state.players[0].deck[where==='top'?0:state.players[0].deck.length-1]?.uid,seen.uid);
+ }
+});
+
+test('Memory Change asks for a W hand card and destination, entering it ACTIVE',()=>{
+ const s=fresh(fill(['KMR-2-059','KMR-2-050','KMR-2-054']));
+ const field=put(s,0,'KMR-2-059','energy',0,true);
+ const oldW=put(s,0,'KMR-2-050','front',0,true);
+ const nextW=take(s,0,'KMR-2-054');
+ s.players[0].hand.push(nextW);
+ ready(s);
+ const activate=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===field.uid);
+ assert.ok(activate,'field must be usable');
+ let state=dispatchUniversalAction(packs,s,activate);
+ assert.equal(state.pending?.step,'retireOwn');
+ assert.equal(state.pending.actions.some(a=>a.uid===oldW.uid),true);
+ state=click(state,a=>a.mode==='retireOwn'&&a.uid===oldW.uid);
+ assert.equal(state.players[0].outside.some(c=>c.uid===oldW.uid),true);
+ assert.equal(state.pending?.step,'deployPick','draw must precede hand selection');
+ assert.equal(state.pending.actions.some(a=>a.mode==='done'),true);
+ assert.equal(state.pending.actions.some(a=>a.mode==='deploy'&&a.uid===nextW.uid),true);
+ state=click(state,a=>a.mode==='deploy'&&a.uid===nextW.uid);
+ assert.equal(state.pending?.step,'enter','choose line only after the chosen hand card');
+ assert.equal(state.pending.actions.some(a=>a.mode==='enter'&&a.line==='front'&&a.slot===0),true);
+ assert.equal(state.pending.actions.some(a=>a.mode==='enter'&&a.line==='energy'),true);
+ state=click(state,a=>a.mode==='enter'&&a.line==='front'&&a.slot===0);
+ assert.equal(state.pending,null);
+ const entered=state.players[0].front[0];
+ assert.equal(entered?.uid,nextW.uid);
+ assert.equal(entered.ready,true);
+ assert.equal(entered.kmr2EnteredBy?.id,'KMR-2-059');
+ assert.equal(state.players[0].hand.some(c=>c.uid===nextW.uid),false);
+});
+
+function wExtremeBoard(fullEnergy){
+ const ids=['KMR-2-048','KMR-2-049','KMR-2-050','KMR-2-052','KMR-2-056',
+  'KMR-2-090','KMR-2-045','KMR-2-013'];
+ const s=fresh(fill(ids,{'KMR-2-045':4,'KMR-2-013':4}));
+ const base=put(s,0,'KMR-2-048','front',0,true);
+ put(s,0,'KMR-2-050','front',1,true);
+ put(s,0,'KMR-2-052','front',2,true);
+ put(s,0,'KMR-2-056','front',3,true);
+ for(let i=0;i<4;i++)put(s,0,'KMR-2-045','energy',i,true);
+ const target=put(s,1,'KMR-2-090','front',0,true);
+ const replacements=[];
+ for(let i=0;i<(fullEnergy?4:3);i++)replacements.push(put(s,1,'KMR-2-013','energy',i,true));
+ const extreme=take(s,0,'KMR-2-049');
+ s.players[0].hand.push(extreme);
+ ready(s);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===extreme.uid&&a.baseUid===base.uid);
+ assert.ok(raid,'4/1 W should be allowed to raid W Cyclone Joker');
+ const opened=dispatchUniversalAction(packs,s,raid);
+ assert.equal(opened.pending?.step,'toEnergy','0/1/2/4 distinct W energies must qualify');
+ return {opened,target,replacements,extreme};
+}
+
+test('W Extreme sends the chosen enemy front character to an open ENERGY space',()=>{
+ const {opened,target,extreme}=wExtremeBoard(false);
+ const state=click(opened,a=>a.mode==='place'&&a.uid===target.uid);
+ assert.equal(state.pending,null);
+ assert.equal(state.players[1].front.some(c=>c?.uid===target.uid),false);
+ assert.equal(state.players[1].energy.some(c=>c?.uid===target.uid),true);
+ assert.equal(state.continuousStates.some(x=>x.kind==='originalEffectsDisabled'&&
+  x.sourceUid===extreme.uid&&x.targetUid===target.uid),true);
+});
+
+test('W Extreme moves a selected front character even when ENERGY is full',()=>{
+ const {opened,target,replacements,extreme}=wExtremeBoard(true);
+ let state=click(opened,a=>a.mode==='place'&&a.uid===target.uid);
+ assert.equal(state.pending?.step,'toEnergyReplace');
+ assert.equal(state.pending?.player,1,'defender chooses the ENERGY card to remove');
+ assert.equal(state.players[1].front.some(c=>c?.uid===target.uid),true);
+ assert.equal(state.continuousStates.some(x=>x.targetUid===target.uid),false,
+  'silence applies only after successfully moving the target');
+ assert.deepEqual(state.pending.actions.map(a=>a.uid).sort(),replacements.map(c=>c.uid).sort());
+ state=click(state,a=>a.mode==='remove'&&a.uid===replacements[2].uid);
+ assert.equal(state.pending,null);
+ assert.equal(state.players[1].removed.some(c=>c.uid===replacements[2].uid),true);
+ assert.equal(state.players[1].front.some(c=>c?.uid===target.uid),false);
+ assert.equal(state.players[1].energy.some(c=>c?.uid===target.uid),true);
+ assert.equal(state.players[1].energy.filter(Boolean).length,4);
+ assert.equal(state.continuousStates.some(x=>x.kind==='originalEffectsDisabled'&&
+  x.sourceUid===extreme.uid&&x.targetUid===target.uid),true);
+});
