@@ -1482,7 +1482,7 @@ function startTurn(pack,s){
  s.fieldEntryNames=[[],[]];
  s.mainAbilityUsedUids=[];s.mainReadyOnceByName=[[],[]];
  s.onceEffectUses=[[],[]];
- s.energyDoubles=[0,0];s.allFrontEnergy=[null,null];s.raidCount=[0,0];
+ s.energyDoubles=[0,0];s.allFrontEnergy=[null,null];s.raidCount=[0,0];s.kmr2AttackRaidBaseline=[0,0];
  s.aotBpRange=[0,0];s.aotAttackPhaseApPaid=[null,null];s.aotAttackStartRecover=[];
  s.aot2CorpsReturned=[null,null];
  s.attackCap=[null,null];s.handRaidCuts=[[],[]];s.handNameUses=[[],[]];
@@ -13292,7 +13292,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=fal
   publicReveals:[],effectQueue:[],delayedEffects:[],retirementBatch:null,lifeRevealBatch:null,nextFieldEntryStamp:1,
   continuousStates:[],nextContinuousStateId:1,endRefreshed:false,players:[],
   raidedThisTurn:[false,false],raidNamesThisTurn:[[],[]],triggerActivated:[false,false],fieldEntryNames:[[],[]],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
-  onceEffectUses:[[],[]],energyDoubles:[0,0],allFrontEnergy:[null,null],raidCount:[0,0],
+  onceEffectUses:[[],[]],energyDoubles:[0,0],allFrontEnergy:[null,null],raidCount:[0,0],kmr2AttackRaidBaseline:[0,0],
   aotBpRange:[0,0],aotAttackPhaseApPaid:[null,null],aotAttackStartRecover:[],
   aot2CorpsReturned:[null,null],
   attackCap:[null,null],handRaidCuts:[[],[]],handNameUses:[[],[]],
@@ -17089,6 +17089,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      expireContinuousStates(s,{player:p,phase:'main',edge:'end'});
      queuePhaseBoundary(pack,s,'main','end',p);
      s.phase='attack';
+     s.kmr2AttackRaidBaseline=[...s.raidCount];
      const due=s.delayedEffects.filter(x=>x.turn===s.turn&&x.owner===p);
      s.delayedEffects=s.delayedEffects.filter(x=>!(x.turn===s.turn&&x.owner===p));
      const retires=due.filter(x=>x.op==='retireAtMainEnd');
