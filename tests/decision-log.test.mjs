@@ -965,6 +965,7 @@ test('the battle page records a decision only after the engine accepts it', ()=>
  const online=readFileSync(new URL('../dist/online.mjs', import.meta.url), 'utf8');
  assert.equal([...preview.matchAll(/rememberHuman\(/g)].length, 2);
  assert.match(preview, /dispatchUniversalAction\(app\.packs,app\.state,a,\{actor:0\}\);[\s\S]{0,180}rememberHuman\(a,previous,replayIndex,legal\)/);
+ assert.match(preview, /onAccepted\(\)\{saveBattleProgress\(\);\}/);
  assert.match(preview, /endReason:'abandoned'/);
  assert.match(preview, /endReason:'interrupted'/);
  assert.match(online, /提供對戰紀錄改善 AI/);
@@ -1514,6 +1515,20 @@ function respondUntilHuman(state){
  assert.equal(universalActor(current), 0);
  return {state:current, steps};
 }
+function afterKeep(state, action){
+ const played=dispatchUniversalAction(packs, state, action, {actor:0});
+ const next=respondUntilHuman(played);
+ const follow=legalUniversalActions(packs, next.state);
+ assert.ok(follow.length);
+ return {state:next.state, action:follow[0], replayIndex:1+next.steps, legal:follow};
+}
+async function waitUntil(ready){
+ for(let i=0;i<80;i++){
+  if(ready())return;
+  await new Promise(resolve=>setTimeout(resolve, 10));
+ }
+ assert.equal(ready(), true);
+}
 async function holdWrites(storage){
  const holder=createDecisionQueue({
   storage,
@@ -1700,4 +1715,395 @@ test('resume does not reuse a step the server already accepted', {timeout:180000
  assert.equal(replay.data.duplicate, true);
  const again=await api('/api/coach/matches/'+header.matchId, {token:account.token});
  assert.equal(again.data.match.steps, 2);
+});
+
+test('a play during resume reconciliation is numbered after the server count', {timeout:180000}, async()=>{
+ const account=await signedCoach('對帳甲');
+ const header=headerFor();
+ const storage=consented();
+ const {battle, posts}=collector(account, storage);
+ await battle.begin(header, account.accountId);
+ const state=opening();
+ const keep=mulligan(state, 'keep');
+ battle.noteHuman({packs, state, action:keep.action, replayIndex:0, legal:keep.legal});
+ const original=structuredClone(readStoredQueue(storage)[0].body);
+ await battle.flush();
+ assert.deepEqual(posts.map(item=>item.status+':'+item.step), ['200:0']);
+ const stale={...battle.snapshot(), confirmedThrough:0, pending:[], staged:[]};
+ const follow=afterKeep(state, keep.action);
+ let releaseMatch;
+ let matchWaiting=false;
+ const resumedPosts=[];
+ const resumedStorage=consented();
+ const resumed=createCoachBattle({
+  storage:resumedStorage,
+  schedule(){return 1;},
+  async fetchImpl(path, options={}){
+   if(String(path).includes('/api/coach/matches/')){
+    matchWaiting=true;
+    await new Promise(resolve=>{releaseMatch=resolve;});
+   }
+   const result=await apiFetch(account.token)(path, options);
+   if(path==='/api/coach/steps'&&options.body){
+    const posted=JSON.parse(options.body);
+    resumedPosts.push({status:result.status, step:posted.step, duplicate:(await result.json())?.duplicate===true, previous:posted.previous?.step??null});
+   }
+   return result;
+  }
+ });
+ let finished=false;
+ const pending=resumed.restore(stale, header, account.accountId);
+ pending.then(()=>{finished=true;}, ()=>{finished=true;});
+ await waitUntil(()=>matchWaiting);
+ assert.equal(finished, false);
+ resumed.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
+ assert.equal(finished, false);
+ assert.equal(resumed.session.checking, true);
+ assert.equal(resumed.session.staged.length, 1);
+ assert.equal(resumed.session.humanStep, 0);
+ assert.equal(readStoredQueue(resumedStorage).length, 0);
+ assert.equal(resumedPosts.length, 0);
+ releaseMatch();
+ await pending;
+ assert.equal(resumed.session.humanStep, 2);
+ assert.equal(resumed.session.checking, false);
+ assert.equal(resumed.session.lastError, '');
+ assert.deepEqual(readStoredQueue(resumedStorage).map(item=>item.body.step), [1]);
+ assert.equal(readStoredQueue(resumedStorage)[0].body.previous.step, 0);
+ assert.equal(readStoredQueue(resumedStorage)[0].body.chain.previousStep, 0);
+ assert.equal(readStoredQueue(resumedStorage)[0].body.chain.step, 1);
+ await resumed.flush();
+ assert.deepEqual(resumedPosts.map(item=>item.status+':'+item.step), ['200:1']);
+ assert.equal(resumedPosts[0].duplicate, false);
+ assert.equal(resumedPosts[0].previous, 0);
+ const detail=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.equal(detail.status, 200, detail.text);
+ assert.deepEqual(detail.data.steps.map(item=>item.step), [0, 1]);
+ assert.equal(detail.data.steps.filter(item=>item.step===0).length, 1);
+ const replay=await api('/api/coach/steps', {method:'POST', token:account.token, body:original});
+ assert.equal(replay.status, 200, replay.text);
+ assert.equal(replay.data.duplicate, true);
+ const again=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.equal(again.data.match.steps, 2);
+});
+
+test('a failed or timed-out reconciliation keeps the staged play and retries', {timeout:180000}, async()=>{
+ const account=await signedCoach('重試甲');
+ const header=headerFor();
+ const storage=consented();
+ const {battle}=collector(account, storage);
+ await battle.begin(header, account.accountId);
+ const state=opening();
+ const keep=mulligan(state, 'keep');
+ battle.noteHuman({packs, state, action:keep.action, replayIndex:0, legal:keep.legal});
+ await battle.flush();
+ const stale={...battle.snapshot(), confirmedThrough:0, pending:[], staged:[]};
+ const follow=afterKeep(state, keep.action);
+ let releaseMatch;
+ let matchWaiting=false;
+ let fail=true;
+ const retries=[];
+ const posts=[];
+ const resumedStorage=consented();
+ const resumed=createCoachBattle({
+  storage:resumedStorage,
+  reconcileTimeout:60,
+  schedule(fn, delay){if(delay===500)retries.push(fn);return 1;},
+  async fetchImpl(path, options={}){
+   if(String(path).includes('/api/coach/matches/')){
+    matchWaiting=true;
+    if(fail){
+     await new Promise(resolve=>{releaseMatch=resolve;});
+     throw Error('offline');
+    }
+   }
+   const result=await apiFetch(account.token)(path, options);
+   if(path==='/api/coach/steps'&&options.body){
+    const posted=JSON.parse(options.body);
+    posts.push({status:result.status, step:posted.step, duplicate:(await result.json())?.duplicate===true});
+   }
+   return result;
+  }
+ });
+ let finished=false;
+ const pending=resumed.restore(stale, header, account.accountId);
+ pending.then(()=>{finished=true;}, ()=>{finished=true;});
+ await waitUntil(()=>matchWaiting);
+ assert.equal(finished, false);
+ resumed.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
+ assert.equal(finished, false);
+ assert.equal(posts.length, 0);
+ releaseMatch();
+ await pending;
+ assert.equal(resumed.session.checking, true);
+ assert.equal(resumed.session.staged.length, 1);
+ assert.equal(resumed.session.lastError==='紀錄尚未儲存', false);
+ assert.equal(readStoredQueue(resumedStorage).length, 0);
+ assert.equal(posts.length, 0);
+ assert.equal(retries.length, 1);
+ fail=false;
+ retries[0]();
+ await waitUntil(()=>resumed.session.checking===false);
+ assert.equal(resumed.session.humanStep, 2);
+ assert.deepEqual(readStoredQueue(resumedStorage).map(item=>item.body.step), [1]);
+ await resumed.flush();
+ assert.deepEqual(posts.map(item=>item.status+':'+item.step), ['200:1']);
+ assert.equal(posts[0].duplicate, false);
+ const detail=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.deepEqual(detail.data.steps.map(item=>item.step), [0, 1]);
+
+ const timeoutHeader=headerFor();
+ const timeoutStorage=consented();
+ const timeoutBattle=collector(account, timeoutStorage).battle;
+ await timeoutBattle.begin(timeoutHeader, account.accountId);
+ const timeoutState=opening();
+ const timeoutKeep=mulligan(timeoutState, 'keep');
+ timeoutBattle.noteHuman({packs, state:timeoutState, action:timeoutKeep.action, replayIndex:0, legal:timeoutKeep.legal});
+ await timeoutBattle.flush();
+ const timeoutStale={...timeoutBattle.snapshot(), confirmedThrough:0, pending:[], staged:[]};
+ const timeoutFollow=afterKeep(timeoutState, timeoutKeep.action);
+ let releaseHung;
+ let hung=false;
+ const timeoutRetries=[];
+ const timeoutPosts=[];
+ let attempts=0;
+ const resumedTimeoutStorage=consented();
+ const resumedTimeout=createCoachBattle({
+  storage:resumedTimeoutStorage,
+  reconcileTimeout:60,
+  schedule(fn, delay){if(delay===500)timeoutRetries.push(fn);return 1;},
+  async fetchImpl(path, options={}){
+   if(String(path).includes('/api/coach/matches/')){
+    attempts+=1;
+    if(attempts===1){
+     hung=true;
+     await new Promise(resolve=>{releaseHung=resolve;});
+     return {ok:true, status:200, json:async()=>({})};
+    }
+   }
+   const result=await apiFetch(account.token)(path, options);
+   if(path==='/api/coach/steps'&&options.body){
+    const posted=JSON.parse(options.body);
+    timeoutPosts.push({status:result.status, step:posted.step, duplicate:(await result.json())?.duplicate===true});
+   }
+   return result;
+  }
+ });
+ let timeoutFinished=false;
+ const timeoutPending=resumedTimeout.restore(timeoutStale, timeoutHeader, account.accountId);
+ timeoutPending.then(()=>{timeoutFinished=true;}, ()=>{timeoutFinished=true;});
+ await waitUntil(()=>hung);
+ assert.equal(timeoutFinished, false);
+ resumedTimeout.noteHuman({packs, state:timeoutFollow.state, action:timeoutFollow.action, replayIndex:timeoutFollow.replayIndex, legal:timeoutFollow.legal});
+ assert.equal(timeoutFinished, false);
+ assert.equal(timeoutPosts.length, 0);
+ await waitUntil(()=>timeoutFinished);
+ assert.equal(resumedTimeout.session.checking, true);
+ assert.equal(resumedTimeout.session.staged.length, 1);
+ assert.equal(resumedTimeout.session.lastError==='紀錄尚未儲存', false);
+ assert.equal(timeoutPosts.length, 0);
+ assert.equal(readStoredQueue(resumedTimeoutStorage).length, 0);
+ releaseHung();
+ assert.equal(timeoutRetries.length>=1, true);
+ timeoutRetries[0]();
+ await waitUntil(()=>resumedTimeout.session.checking===false);
+ assert.equal(resumedTimeout.session.humanStep, 2);
+ await resumedTimeout.flush();
+ assert.deepEqual(timeoutPosts.map(item=>item.status+':'+item.step), ['200:1']);
+ assert.equal(timeoutPosts[0].duplicate, false);
+ const timeoutDetail=await api('/api/coach/matches/'+timeoutHeader.matchId, {token:account.token});
+ assert.deepEqual(timeoutDetail.data.steps.map(item=>item.step), [0, 1]);
+});
+
+test('turning recording off keeps a confirmed step and the previous link', {timeout:180000}, async()=>{
+ const account=await signedCoach('開關甲');
+ const header=headerFor();
+ const storage=consented();
+ const saved=[];
+ const posts=[];
+ const battle=createCoachBattle({
+  storage,
+  schedule(){return 1;},
+  onAccepted(){
+   const snap=battle.snapshot();
+   saved.push({confirmedThrough:snap.confirmedThrough, humanStep:snap.humanStep, previousStep:snap.previous?.step??null});
+  },
+  async fetchImpl(path, options={}){
+   const result=await apiFetch(account.token)(path, options);
+   if(path==='/api/coach/steps'&&options.body){
+    const posted=JSON.parse(options.body);
+    posts.push({status:result.status, step:posted.step, duplicate:(await result.json())?.duplicate===true});
+   }
+   return result;
+  }
+ });
+ await battle.begin(header, account.accountId);
+ const state=opening();
+ const keep=mulligan(state, 'keep');
+ battle.noteHuman({packs, state, action:keep.action, replayIndex:0, legal:keep.legal});
+ const original=structuredClone(readStoredQueue(storage)[0].body);
+ await battle.flush();
+ assert.deepEqual(posts.map(item=>item.status+':'+item.step), ['200:0']);
+ assert.equal(readStoredQueue(storage).length, 0);
+ assert.equal(battle.session.confirmedThrough, 1);
+ assert.equal(saved[0].confirmedThrough, 1);
+ assert.equal(saved[0].humanStep, 1);
+ assert.equal(saved[0].previousStep, 0);
+ const follow=afterKeep(state, keep.action);
+ battle.setConsent(false);
+ assert.equal(battle.session.humanStep, 1);
+ assert.equal(battle.session.previous.step, 0);
+ assert.equal(battle.session.confirmedThrough, 1);
+ battle.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
+ assert.equal(battle.session.humanStep, 1);
+ assert.equal(readStoredQueue(storage).length, 0);
+ assert.equal(posts.length, 1);
+ battle.setConsent(true);
+ battle.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
+ assert.equal(battle.session.humanStep, 2);
+ assert.deepEqual(readStoredQueue(storage).map(item=>item.body.step), [1]);
+ assert.equal(readStoredQueue(storage)[0].body.previous.step, 0);
+ await battle.flush();
+ assert.deepEqual(posts.map(item=>item.status+':'+item.step+':'+item.duplicate), ['200:0:false', '200:1:false']);
+ const detail=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.deepEqual(detail.data.steps.map(item=>item.step), [0, 1]);
+ assert.equal(detail.data.steps.filter(item=>item.step===0).length, 1);
+ const replay=await api('/api/coach/steps', {method:'POST', token:account.token, body:original});
+ assert.equal(replay.data.duplicate, true);
+ const again=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.equal(again.data.match.steps, 2);
+});
+
+test('turning recording off while step 0 is uploading confirms it before the next number', {timeout:180000}, async()=>{
+ const account=await signedCoach('傳送甲');
+ const header=headerFor();
+ const storage=consented();
+ const posts=[];
+ let releaseStep;
+ let stepSeen=false;
+ const battle=createCoachBattle({
+  storage,
+  schedule(){return 1;},
+  async fetchImpl(path, options={}){
+   if(path==='/api/coach/steps'&&options.body){
+    const posted=JSON.parse(options.body);
+    if(posted.step===0){
+     stepSeen=true;
+     await new Promise(resolve=>{releaseStep=resolve;});
+    }
+    const result=await apiFetch(account.token)(path, options);
+    const data=await result.json();
+    posts.push({status:result.status, step:posted.step, duplicate:data?.duplicate===true, clientKey:posted.clientKey});
+    return {ok:result.ok, status:result.status, json:async()=>data};
+   }
+   return apiFetch(account.token)(path, options);
+  }
+ });
+ await battle.begin(header, account.accountId);
+ const state=opening();
+ const keep=mulligan(state, 'keep');
+ battle.noteHuman({packs, state, action:keep.action, replayIndex:0, legal:keep.legal});
+ const original=structuredClone(readStoredQueue(storage)[0].body);
+ const flushing=battle.flush();
+ await waitUntil(()=>stepSeen);
+ assert.equal(posts.length, 0);
+ battle.setConsent(false);
+ assert.equal(battle.session.humanStep, 1);
+ assert.equal(battle.session.previous.step, 0);
+ assert.equal(readStoredQueue(storage).length, 0);
+ const follow=afterKeep(state, keep.action);
+ battle.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
+ assert.equal(battle.session.humanStep, 1);
+ assert.equal(posts.length, 0);
+ battle.setConsent(true);
+ battle.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
+ assert.equal(battle.session.checking, true);
+ assert.equal(battle.session.staged.length, 1);
+ assert.equal(posts.length, 0);
+ assert.equal(readStoredQueue(storage).length, 0);
+ releaseStep();
+ await flushing;
+ await waitUntil(()=>battle.session.checking===false);
+ assert.equal(battle.session.humanStep, 2);
+ assert.equal(battle.session.confirmedThrough, 1);
+ assert.deepEqual(readStoredQueue(storage).map(item=>item.body.step), [1]);
+ assert.equal(readStoredQueue(storage)[0].body.previous.step, 0);
+ await battle.flush();
+ assert.deepEqual(posts.map(item=>item.status+':'+item.step+':'+item.duplicate), ['200:0:false', '200:1:false']);
+ assert.equal(posts[0].clientKey===posts[1].clientKey, false);
+ const detail=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.deepEqual(detail.data.steps.map(item=>item.step), [0, 1]);
+ assert.equal(detail.data.steps.filter(item=>item.step===0).length, 1);
+ const replay=await api('/api/coach/steps', {method:'POST', token:account.token, body:original});
+ assert.equal(replay.status, 200, replay.text);
+ assert.equal(replay.data.duplicate, true);
+ const again=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.equal(again.data.match.steps, 2);
+});
+
+test('a delayed upload confirmation updates only the original account and match', {timeout:180000}, async()=>{
+ const account=await signedCoach('晚回甲');
+ const header=headerFor();
+ const storage=consented();
+ const accepted=[];
+ let releaseStep;
+ let stepSeen=false;
+ const battle=createCoachBattle({
+  storage,
+  schedule(){return 1;},
+  onAccepted(){accepted.push(battle.session.matchId+':'+battle.session.accountId+':'+battle.session.confirmedThrough);},
+  async fetchImpl(path, options={}){
+   if(path==='/api/coach/steps'){
+    stepSeen=true;
+    await new Promise(resolve=>{releaseStep=resolve;});
+   }
+   return apiFetch(account.token)(path, options);
+  }
+ });
+ await battle.begin(header, account.accountId);
+ const state=opening();
+ const keep=mulligan(state, 'keep');
+ battle.noteHuman({packs, state, action:keep.action, replayIndex:0, legal:keep.legal});
+ const flushing=battle.flush();
+ await waitUntil(()=>stepSeen);
+ battle.session.accountId=OTHER;
+ releaseStep();
+ await flushing;
+ assert.equal(battle.session.confirmedThrough, 0);
+ assert.deepEqual(accepted, []);
+ const detail=await api('/api/coach/matches/'+header.matchId, {token:account.token});
+ assert.equal(detail.data.match.steps, 1);
+ battle.session.accountId=account.accountId;
+ const otherHeader=headerFor();
+ const otherStorage=consented();
+ let releaseOther;
+ let otherSeen=false;
+ const otherAccepted=[];
+ const other=createCoachBattle({
+  storage:otherStorage,
+  schedule(){return 1;},
+  onAccepted(){otherAccepted.push(other.session.matchId);},
+  async fetchImpl(path, options={}){
+   if(path==='/api/coach/steps'){
+    otherSeen=true;
+    await new Promise(resolve=>{releaseOther=resolve;});
+   }
+   return apiFetch(account.token)(path, options);
+  }
+ });
+ await other.begin(otherHeader, account.accountId);
+ const otherState=opening();
+ const otherKeep=mulligan(otherState, 'keep');
+ other.noteHuman({packs, state:otherState, action:otherKeep.action, replayIndex:0, legal:otherKeep.legal});
+ const otherFlush=other.flush();
+ await waitUntil(()=>otherSeen);
+ const displaced=headerFor().matchId;
+ other.session.matchId=displaced;
+ releaseOther();
+ await otherFlush;
+ assert.equal(other.session.confirmedThrough, 0);
+ assert.equal(other.session.matchId, displaced);
+ assert.deepEqual(otherAccepted, []);
+ const otherDetail=await api('/api/coach/matches/'+otherHeader.matchId, {token:account.token});
+ assert.equal(otherDetail.data.match.steps, 1);
 });

@@ -1,9 +1,11 @@
 // Live solo-match collector. Consent off does no serialization and no network.
 // Accepted human actions are queued locally; the next click does not wait
 // for the upload. AI actions stay out of the player-decision queue.
+// A resume check or an upload still in flight stages new decisions until the
+// next step number is confirmed. Closing consent drops only unsent rows.
 import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
 import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step1';
-import {LABEL_FORMAT} from './coach-format.mjs';
+import {LABEL_FORMAT, chainOf} from './coach-format.mjs';
 import {newCoachMatchId,buildHumanStep,buildAiMark,stateAtReplayIndex} from './coach-record.mjs';
 
 async function accountFor(fetchImpl,known){
@@ -22,25 +24,36 @@ function rewind(session,bodies){
  session.undoStack=(session.undoStack||[]).slice(0,oldest.step);
 }
 
-export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,schedule}={}){
+export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,onAccepted,schedule,reconcileTimeout=8000}={}){
  let uploaded=0;
  let session=null;
  let epoch=0;
  let noteSeq=0;
+ let unsettled=null;
+ let reconcileGen=0;
+ let reconcileTimer=null;
+ let pendingSaved=null;
  const uploader=createCoachUploader({
   consent:()=>coachConsentEnabled(storage),
   fetchImpl,
   onUploaded(){uploaded++;if(session){session.uploaded=uploaded;session.lastError='';}},
   onError(message){if(session)session.lastError=message||'紀錄沒有送出。';}
  });
- function acceptConfirmed(matchId,step,result,epochNow){
+ function acceptConfirmed(matchId,step,result,epochNow,accountId,body){
   if(epoch!==epochNow||!session||session.matchId!==matchId)return;
+  if(accountId&&session.accountId&&accountId!==session.accountId)return;
   const data=result?.data;
-  const accepted=result?.ok===true||result?.duplicate===true||data?.duplicate===true;
+  const accepted=result?.ok===true||result?.duplicate===true||data?.duplicate===true||result?.skipped==='sent';
   if(!accepted||!Number.isInteger(step)||step!==session.confirmedThrough)return;
   session.confirmedThrough=step+1;
+  const summary=body?.choice?{step:body.step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey}:null;
+  if(session.humanStep<session.confirmedThrough){
+   session.humanStep=session.confirmedThrough;
+   if(summary)session.previous=summary;
+  }
   const note=session.reservations.find(item=>item.step===step&&item.status!=='cancelled');
   if(note)note.status='confirmed';
+  try{onAccepted?.();}catch{/* The accepted cursor is already in memory if saving the snapshot fails. */}
   emit();
  }
  const queue=createDecisionQueue({
@@ -52,11 +65,18 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    const step=body?.step;
    const human=body?.source==='human'&&String(body?.format||'').includes('step');
    const epochNow=epoch;
+   const accountId=body?.accountId;
    const sent=String(body?.format||'').includes('label')?uploader.label(body):uploader.step(body);
-   return Promise.resolve(sent).then(result=>{
-    if(human)acceptConfirmed(matchId,step,result,epochNow);
+   const done=Promise.resolve(sent).then(result=>{
+    if(human)acceptConfirmed(matchId,step,result,epochNow,accountId,body);
     return result;
    });
+   if(human){
+    const track={matchId,accountId,step,body,done};
+    unsettled=track;
+    void done.finally(()=>{if(unsettled===track)unsettled=null;});
+   }
+   return done;
   },
   account(){return currentAccountId(fetchImpl);},
   onChange(){
@@ -81,9 +101,19 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
  function blank(matchId){
   return {matchId,humanStep:0,aiStep:0,lastAi:null,marks:[],uploaded,lastError:'',
    previous:null,undoStack:[],finished:false,reviewing:false,label:null,signedIn:null,header:null,
-   reservations:[],confirmedThrough:0};
+   reservations:[],confirmedThrough:0,staged:[],checking:false};
  }
- function fresh(){epoch+=1;}
+ function fresh(){epoch+=1;reconcileGen+=1;clearReconcile();pendingSaved=null;}
+ function clearReconcile(){
+  if(reconcileTimer==null)return;
+  if(!schedule)clearTimeout(reconcileTimer);
+  reconcileTimer=null;
+ }
+ function scheduleReconcile(fn){
+  if(reconcileTimer!=null)return;
+  const run=()=>{reconcileTimer=null;fn();};
+  reconcileTimer=schedule?schedule(run, 500):setTimeout(run, 500);
+ }
  function settleNote(note,result,{epochNow,matchId,step,prior,rollback}){
   if(epoch!==epochNow||!session||session.matchId!==matchId||note.status==='cancelled')return;
   if(result?.queued){
@@ -116,36 +146,171 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
   note.status='failed';
   session.lastError='這步沒有放進佇列。';
  }
- async function reconcileServer(saved,localNext,hole,epochNow){
-  let remote=null;
+ async function readServerCount(matchId){
+  let timer;
   try{
-   const response=await fetchImpl('/api/coach/matches/'+session.matchId,{
-    credentials:'same-origin',headers:{accept:'application/json'}
-   });
-   if(response?.ok){
-    const data=await response.json();
-    const count=data?.match?.steps;
-    if(Number.isInteger(count)&&count>=0)remote=count;
-   }
-  }catch{remote=null;}
-  if(epoch!==epochNow||!session||session.humanStep!==localNext||!Number.isInteger(remote))return;
-  if(remote>session.confirmedThrough)session.confirmedThrough=remote;
-  const covered=Math.max(localNext,remote);
-  const wanted=Number.isInteger(saved.humanStep)&&saved.humanStep>0?saved.humanStep:0;
+   const response=await Promise.race([
+    fetchImpl('/api/coach/matches/'+matchId,{credentials:'same-origin',headers:{accept:'application/json'}}),
+    new Promise(resolve=>{timer=setTimeout(()=>resolve({timeout:true}), reconcileTimeout);})
+   ]);
+   if(timer)clearTimeout(timer);
+   if(!response||response.timeout)return {known:false};
+   if(response.status===404)return {known:true, count:0};
+   if(!response.ok)return {known:false};
+   const data=await response.json();
+   const count=data?.match?.steps;
+   if(Number.isInteger(count)&&count>=0)return {known:true, count};
+   return {known:false};
+  }catch{
+   if(timer)clearTimeout(timer);
+   return {known:false};
+  }
+ }
+ function applyCount(count, saved){
+  if(count>session.confirmedThrough)session.confirmedThrough=count;
+  const wanted=Number.isInteger(saved?.humanStep)&&saved.humanStep>0?saved.humanStep:0;
+  const local=session.humanStep||0;
+  if(count>=wanted&&wanted>0&&local<count){
+   session.humanStep=count;
+   if(saved?.previous)session.previous=saved.previous;
+   if(Array.isArray(saved?.undoStack))session.undoStack=saved.undoStack;
+   if(session.lastError==='紀錄尚未儲存')session.lastError='';
+   return;
+  }
+  const covered=Math.max(local, session.confirmedThrough||0, count);
   if(wanted>covered){
    session.humanStep=covered;
    session.lastError='紀錄尚未儲存';
-   const stack=Array.isArray(saved.undoStack)?saved.undoStack:[];
-   session.undoStack=stack.slice(0,covered);
+   const stack=Array.isArray(saved?.undoStack)?saved.undoStack:[];
+   session.undoStack=stack.slice(0, covered);
    session.previous=covered===0?null:stack[covered]||null;
    return;
   }
-  session.humanStep=covered;
-  if(covered===wanted){
-   session.previous=saved.previous||null;
-   session.undoStack=Array.isArray(saved.undoStack)?saved.undoStack:[];
+  session.humanStep=Math.max(local, count, session.confirmedThrough||0);
+  if(session.lastError==='紀錄尚未儲存'&&session.humanStep>=wanted)session.lastError='';
+ }
+ function materialize(draft, step, previous){
+  const matchId=session.header.matchId;
+  const clientKey=matchId+':'+step+':human';
+  const link=previous?{step:previous.step,type:previous.type,replayIndex:previous.replayIndex,
+   ...(previous.clientKey?{clientKey:previous.clientKey}:{})}:null;
+  return {...draft, step, clientKey, previous:link, chain:chainOf(matchId, step, link, clientKey)};
+ }
+ function enqueueHuman(body, prior, epochNow){
+  const matchId=session.matchId;
+  const step=body.step;
+  session.undoStack.push(prior);
+  session.previous={step:body.step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey};
+  session.humanStep=step+1;
+  const note={id:++noteSeq,matchId,step,clientKey:body.clientKey,body,previous:prior,status:'open'};
+  session.reservations.push(note);
+  let queued;
+  try{queued=queue.enqueue(body);}
+  catch(error){
+   note.status='failed';
+   session.humanStep=step;
+   session.undoStack.pop();
+   session.previous=prior;
+   session.lastError=error?.message||'這步沒有記下來。';
+   emit();
+   return;
   }
-  if((hole||session.lastError==='紀錄尚未儲存')&&covered>=wanted)session.lastError='';
+  const followed=watch(note,queued,{epochNow,matchId,step,prior,rollback:true});
+  if(queued?.pending){
+   emit();
+   return followed.then(value=>{emit();return value;});
+  }
+  emit();
+ }
+ function commitDraft(draft){
+  const prior=session.previous;
+  const body=materialize(draft, session.humanStep, prior);
+  if(body.accountId&&session.accountId&&body.accountId!==session.accountId)return;
+  enqueueHuman(body, prior, epoch);
+ }
+ function releaseStaged(){
+  if(!session)return;
+  session.checking=false;
+  const items=session.staged.splice(0, session.staged.length);
+  for(const item of items)commitDraft(item.draft);
+ }
+ function stageHuman(context){
+  let draft;
+  try{
+   draft=owned(buildHumanStep({...context, step:session.humanStep, previous:session.previous, header:session.header}));
+  }catch(error){
+   session.lastError=error?.message||'這步沒有記下來。';
+   emit();
+   return;
+  }
+  if(!draft){
+   session.lastError='已同意提供紀錄，請先登入。這場不會上傳。';
+   emit();
+   return;
+  }
+  session.staged.push({draft, replayIndex:context.replayIndex});
+  emit();
+ }
+ async function confirmCounting(saved, epochNow){
+  const gen=reconcileGen;
+  const matchId=session.matchId;
+  const remote=await readServerCount(matchId);
+  if(epoch!==epochNow||gen!==reconcileGen||!session||session.matchId!==matchId)return;
+  if(!remote.known){
+   if(!coachConsentEnabled(storage))return;
+   session.checking=true;
+   scheduleReconcile(()=>{
+    if(epoch===epochNow&&gen===reconcileGen&&session?.checking&&session.matchId===matchId)
+     void confirmCounting(saved, epochNow);
+   });
+   emit();
+   return;
+  }
+  pendingSaved=null;
+  applyCount(remote.count, saved);
+  if(!coachConsentEnabled(storage)){
+   session.checking=false;
+   session.staged=[];
+   emit();
+   return;
+  }
+  releaseStaged();
+  emit();
+ }
+ async function finishInflight(track, epochNow){
+  if(epoch!==epochNow||!session||session.matchId!==track.matchId)return;
+  if(track.accountId&&session.accountId&&track.accountId!==session.accountId)return;
+  if(!coachConsentEnabled(storage)){
+   session.checking=false;
+   session.staged=[];
+   emit();
+   return;
+  }
+  if((session.confirmedThrough||0)>track.step){
+   releaseStaged();
+   emit();
+   return;
+  }
+  const gen=reconcileGen;
+  const remote=await readServerCount(session.matchId);
+  if(epoch!==epochNow||gen!==reconcileGen||!session||session.matchId!==track.matchId)return;
+  if(!remote.known){
+   session.checking=true;
+   scheduleReconcile(()=>{
+    if(epoch===epochNow&&gen===reconcileGen&&session?.checking&&session.matchId===track.matchId)
+     void finishInflight(track, epochNow);
+   });
+   emit();
+   return;
+  }
+  if(remote.count<=track.step&&track.body){
+   session.humanStep=track.step;
+   session.previous=track.body.previous||null;
+   session.undoStack=(session.undoStack||[]).slice(0, track.step);
+   enqueueHuman(track.body, session.previous, epochNow);
+  }else applyCount(remote.count, {humanStep:Math.max(remote.count, session.humanStep||0), previous:session.previous, undoStack:session.undoStack});
+  releaseStaged();
+  emit();
  }
  function watch(note,queued,context){
   const settle=result=>settleNote(note,result,context);
@@ -180,22 +345,43 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
   consent(){return coachConsentEnabled(storage);},
   setConsent(enabled){
    setCoachConsent(storage,!!enabled);
+   if(!session){emit();return;}
    if(!enabled){
-    if(session?.reservations){
+    reconcileGen+=1;
+    clearReconcile();
+    session.checking=false;
+    session.staged=[];
+    if(session.reservations){
      for(const note of session.reservations){
-      if(note.status==='open')queue.drop(note.clientKey);
+      if(note.status==='open'||note.status==='waiting')queue.drop(note.clientKey);
      }
     }
-    const bodies=queue.discard();
-    rewind(session,bodies);
-    if(session?.reservations){
+    const inflight=unsettled&&unsettled.matchId===session.matchId&&
+     (!unsettled.accountId||!session.accountId||unsettled.accountId===session.accountId)?unsettled:null;
+    const bodies=queue.discard().filter(body=>!inflight||body?.clientKey!==inflight.body?.clientKey);
+    rewind(session, bodies);
+    if(session.reservations){
      for(const note of session.reservations){
       if(note.status==='open'||note.status==='waiting')note.status='cancelled';
      }
-     const kept=bodies.some(body=>body?.matchId===session.matchId&&body?.source==='human'&&
-      String(body.format||'').includes('step'));
-     if(!kept){session.humanStep=0;session.previous=null;session.undoStack=[];}
     }
+    const kept=bodies.some(body=>body?.matchId===session.matchId&&body?.source==='human'&&
+     String(body.format||'').includes('step'));
+    if(!kept&&!inflight){
+     if((session.confirmedThrough||0)>0)session.humanStep=Math.max(session.humanStep||0, session.confirmedThrough);
+     else{session.humanStep=0;session.previous=null;session.undoStack=[];}
+    }
+   }else if(unsettled&&unsettled.matchId===session.matchId&&
+    (!unsettled.accountId||!session.accountId||unsettled.accountId===session.accountId)){
+    session.checking=true;
+    const epochNow=epoch;
+    const track=unsettled;
+    void track.done.then(()=>finishInflight(track, epochNow));
+   }else if(!session.checking&&pendingSaved&&pendingSaved.matchId===session.matchId){
+    session.checking=true;
+    const epochNow=epoch;
+    const saved=pendingSaved;
+    void confirmCounting(saved, epochNow);
    }
    emit();
   },
@@ -215,8 +401,6 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    fresh();
    const epochNow=epoch;
    session=blank(header.matchId);
-   let localNext=0;
-   let hole=false;
    if(saved&&saved.matchId===header.matchId){
     session.aiStep=saved.aiStep||0;
     session.lastAi=saved.lastAi||null;
@@ -254,19 +438,23 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
       next+=1;
      }
     }
-    hole=wanted>next;
+    const hole=wanted>next;
     const stack=Array.isArray(saved.undoStack)?saved.undoStack:[];
     if(hole){
      session.humanStep=next;
      session.undoStack=stack.slice(0,next);
      session.previous=next===0?null:stack[next]||null;
-     session.lastError='紀錄尚未儲存';
     }else{
      session.humanStep=Math.max(wanted,next);
      session.previous=saved.previous||null;
      session.undoStack=stack;
     }
-    localNext=session.humanStep;
+    if(coachConsentEnabled(storage)){
+     for(const item of Array.isArray(saved.staged)?saved.staged:[]){
+      if(item?.draft?.matchId===header.matchId&&item.draft.source==='human'&&item.draft.choice)
+       session.staged.push({draft:item.draft, replayIndex:item.replayIndex});
+     }
+    }
     for(const item of recoverable){
      const result=queue.enqueue(item.body);
      rememberStep(item.body,item.previous??null,result,epochNow);
@@ -274,12 +462,23 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    }
    session.header={...header,matchId:session.matchId};
    if(!session.finished)queue.drop(session.matchId+':label:interrupted');
+   if(knownAccount!==undefined)session.accountId=validAccountId(knownAccount);
+   if(saved&&saved.matchId===header.matchId&&coachConsentEnabled(storage)&&session.accountId)
+    session.checking=true;
    session.accountId=await accountFor(fetchImpl,knownAccount);
    if(epoch!==epochNow)return;
    session.signedIn=session.accountId!=null;
    queue.start();
-   if(saved&&saved.matchId===header.matchId&&coachConsentEnabled(storage)&&session.accountId)
-    await reconcileServer(saved,localNext,hole,epochNow);
+   if(saved&&saved.matchId===header.matchId&&coachConsentEnabled(storage)&&session.accountId){
+    pendingSaved=saved;
+    session.checking=true;
+    await confirmCounting(saved, epochNow);
+   }else if(session){
+    session.checking=false;
+    const wanted=Number.isInteger(saved?.humanStep)&&saved.humanStep>0?saved.humanStep:0;
+    if(saved&&saved.matchId===header.matchId&&wanted>(session.humanStep||0))
+     session.lastError='紀錄尚未儲存';
+   }
    emit();
   },
   snapshot(){
@@ -287,10 +486,11 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    const pending=session.reservations.filter(item=>
     (item.status==='open'||item.status==='waiting')&&item.step>=session.confirmedThrough)
     .map(item=>({step:item.step,clientKey:item.clientKey,body:item.body,previous:item.previous??null}));
+   const staged=session.staged.map(item=>({draft:item.draft, replayIndex:item.replayIndex}));
    const {matchId,humanStep,aiStep,lastAi,marks,uploaded:sent,previous,undoStack,finished,reviewing,label,
     confirmedThrough}=session;
    return {matchId,humanStep,aiStep,lastAi,marks,uploaded:sent,previous,undoStack,finished,reviewing,label,
-    pending,confirmedThrough};
+    pending,confirmedThrough,staged};
   },
   noteHuman(context){
    if(!session||!this.consent())return;
@@ -299,8 +499,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
     emit();
     return;
    }
-   const epochNow=epoch;
-   const matchId=session.matchId;
+   if(session.checking)return stageHuman(context);
    const step=session.humanStep;
    const prior=session.previous;
    let body;
@@ -311,28 +510,12 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
     emit();
     return;
    }
-   session.undoStack.push(prior);
-   session.previous={step:body.step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey};
-   session.humanStep=step+1;
-   const note={id:++noteSeq,matchId,step,clientKey:body.clientKey,body,previous:prior,status:'open'};
-   session.reservations.push(note);
-   let queued;
-   try{queued=queue.enqueue(body);}
-   catch(error){
-    note.status='failed';
-    session.humanStep=step;
-    session.undoStack.pop();
-    session.previous=prior;
-    session.lastError=error?.message||'這步沒有記下來。';
+   if(!body){
+    session.lastError='已同意提供紀錄，請先登入。這場不會上傳。';
     emit();
     return;
    }
-   const followed=watch(note,queued,{epochNow,matchId,step,prior,rollback:true});
-   if(queued?.pending){
-    emit();
-    return followed.then(value=>{emit();return value;});
-   }
-   emit();
+   return enqueueHuman(body, prior, epoch);
   },
   noteAi(entry){
    if(!session)return;
@@ -341,6 +524,11 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,s
    emit();
   },
   retractLast(){
+   if(session?.staged?.length){
+    session.staged.pop();
+    emit();
+    return true;
+   }
    if(!session||session.humanStep<1)return false;
    const step=session.humanStep-1;
    if(session.confirmedThrough>step)return false;

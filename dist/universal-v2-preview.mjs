@@ -44,7 +44,7 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
-import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104step1';
+import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104step2';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261101coachart1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
@@ -1373,7 +1373,9 @@ async function ensureLearnedPolicy(){
  return true;
 }
 function coachApi(){
- if(!app.coachBattle)app.coachBattle=createCoachBattle({storage:localStorage,onChange:paintCoachStatus});
+ if(!app.coachBattle)app.coachBattle=createCoachBattle({
+  storage:localStorage,onChange:paintCoachStatus,onAccepted(){saveBattleProgress();}
+ });
  return app.coachBattle;
 }
 function coachHeaderNow(matchId){
