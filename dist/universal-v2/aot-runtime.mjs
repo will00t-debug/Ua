@@ -1010,7 +1010,7 @@ export function resolveAotPending(pack,s,action){
   doEnter(pack,s,q.player,{...a,from:'hand',ready:a.ready===true},q.sourceUid,true);
   const entered=selfOf(s,q.player,a.uid);
   if(entered){
-   if(q.id==='AOT-1-099')markReturn(s,entered);
+   markReturn(s,entered);
    jobs.push(...(A.programs(pack,s,entered,'onPlay',q.player,'handEffect',q.sourceUid)||[]));
   }
   if(q.data?.left>1){
