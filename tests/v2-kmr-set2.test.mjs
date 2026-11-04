@@ -464,3 +464,63 @@ test('EX12BT/KMR-2-068 can place none of the re-imagination cards',()=>{
  assert.equal(state.players[0].removed.some(c=>hand.some(x=>x.uid===c.uid)),false);
  assert.equal(state.players[1].front.some(c=>c?.uid===foeSmall.uid),true);
 });
+
+
+test('KMR-2-022 tucks the chosen hand card facedown under a chosen host instead of discarding',()=>{
+ const s=fresh(fill(['KMR-2-022','KMR-2-090','KMR-2-010']));
+ const source=put(s,0,'KMR-2-022','front',0,true);
+ const chosen=take(s,0,'KMR-2-090');
+ s.players[0].hand.push(chosen);
+ ready(s);
+ const activate=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===source.uid);
+ assert.ok(activate);
+ let state=dispatchUniversalAction(packs,s,activate);
+ assert.equal(state.pending?.step,'mode');
+ state=click(state,a=>a.key==='tuck');
+ assert.equal(state.pending?.step,'tuck022Hand');
+ assert.ok(state.pending.actions.some(a=>a.mode==='tuck'&&a.uid===chosen.uid));
+ state=click(state,a=>a.mode==='tuck'&&a.uid===chosen.uid);
+ assert.equal(state.pending?.step,'tuck022Host');
+ state=click(state,a=>a.mode==='under'&&a.uid===source.uid);
+ assert.equal(state.pending,null);
+ const host=state.players[0].front.find(c=>c?.uid===source.uid);
+ assert.ok(host?.under?.some(c=>c.uid===chosen.uid&&c.faceDown===true));
+ assert.equal(state.players[0].outside.some(c=>c.uid===chosen.uid),false);
+});
+
+test('KMR-2-099 continues after chosen discard to outside Mirror Monster entry',()=>{
+ const s=fresh(fill(['KMR-2-099','KMR-2-095','KMR-2-087','KMR-2-090','KMR-2-091']));
+ put(s,0,'KMR-2-087','energy',0,true);
+ put(s,0,'KMR-2-090','energy',1,true);
+ put(s,0,'KMR-2-091','energy',2,true);
+ const mirror=take(s,0,'KMR-2-095');
+ s.players[0].outside.push(mirror);
+ const event=take(s,0,'KMR-2-099');
+ s.players[0].hand.push(event);
+ ready(s);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===event.uid);
+ assert.ok(play);
+ let state=dispatchUniversalAction(packs,s,play);
+ state=click(state,a=>a.key==='deploy');
+ assert.equal(state.pending?.step,'discard');
+ state=click(state,a=>a.mode==='discard');
+ assert.equal(state.pending?.step,'deployPick');
+ state=click(state,a=>a.mode==='deploy'&&a.uid===mirror.uid);
+ assert.equal(state.pending?.step,'enter');
+ state=click(state,a=>a.mode==='enter'&&a.uid===mirror.uid&&a.line==='energy'&&a.slot===3);
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].energy[3]?.uid,mirror.uid);
+ assert.equal(state.players[0].energy[3]?.ready,false);
+});
+
+
+test('Gav swaps compare raids against the ATTACK-phase baseline rather than the turn flag',()=>{
+ const s=fresh(fill(['KMR-2-005','KMR-2-012']));
+ ready(s);
+ assert.deepEqual(s.kmr2AttackRaidBaseline,[0,0]);
+ const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+ assert.ok(next);
+ const attack=dispatchUniversalAction(packs,s,next);
+ assert.equal(attack.phase,'attack');
+ assert.deepEqual(attack.kmr2AttackRaidBaseline,attack.raidCount);
+});
