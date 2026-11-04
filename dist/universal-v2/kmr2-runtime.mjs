@@ -1339,7 +1339,7 @@ function resolveStep(pack,s,q,a){
   }else if(hit.key==='tuck'){
    nameLock(s,q.player,q.data?.lock||PARADOX);
    A.draw(pack,s,q.player,1,q.sourceUid);
-   offerDiscard(s,spec,1,false,'tuckDrawn');
+   offerList(s,spec,'tuck022Hand',plOf(s,q.player).hand,false,null,'tuck');
   }else if(hit.key==='release'){
    nameLock(s,q.player,q.data?.lock||PARADOX);
    const layers=fieldCards(s,q.player).flatMap(c=>(c.under||[]).filter(x=>x?.faceDown).map(x=>({host:c,layer:x})));
@@ -1502,6 +1502,26 @@ function resolveStep(pack,s,q,a){
   const self=selfOf(s,q.player,q.sourceUid);
   if(!self?.ready||!plOf(s,q.player).hand.length)return;
   offerDiscard(s,spec,1,false,'activeEntered',{entered:q.data?.entered||null});
+  return;
+ }
+ if(q.step==='tuck022Hand'){
+  if(!plOf(s,q.player).hand.some(c=>c.uid===hit.uid))throw Error('KMR-2-022 hand card missing');
+  const hosts=fieldCards(s,q.player).filter(c=>c.uid===q.sourceUid||
+   (def(pack,c).type==='character'&&token(pack,c,'エグゼイド',s)));
+  hold(s,{...spec,step:'tuck022Host',data:{handUid:hit.uid}},
+   hosts.map(c=>({type:'kmr2',mode:'under',uid:c.uid})));
+  return;
+ }
+ if(q.step==='tuck022Host'){
+  s.pending=null;
+  const host=fieldCards(s,q.player).find(c=>c.uid===hit.uid);
+  const index=plOf(s,q.player).hand.findIndex(c=>c.uid===q.data.handUid);
+  if(!host||index<0)throw Error('KMR-2-022 tuck host or card missing');
+  const physical=plOf(s,q.player).hand.splice(index,1)[0];
+  physical.faceDown=true;physical.ready=false;physical.fieldEntryStamp=null;
+  host.under??=[];host.under.push(physical);
+  A.record(pack,s,{physical,owner:q.player,from:'hand',to:'raid-under',
+   reason:'own-effect',sourceUid:q.sourceUid});
   return;
  }
  if(q.step==='replay'){
