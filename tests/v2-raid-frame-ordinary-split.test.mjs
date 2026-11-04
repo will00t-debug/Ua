@@ -59,7 +59,7 @@ function fuel(s,p,ids){
 test('Genm ordinary entry discards, and the raid-frame main stays closed',()=>{
  const pack=officialV2Pack('kmr');
  const packs=[pack,pack];
- const deck=deckFor(pack,['KMR-1-044','KMR-1-046','KMR-1-046','KMR-1-001']);
+ const deck=deckFor(pack,['KMR-1-044','KMR-1-043','KMR-1-046','KMR-1-046','KMR-1-001']);
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:44044});
  fuel(s,0,['KMR-1-046','KMR-1-046','KMR-1-046']);
  const genm=take(s,0,'KMR-1-044');
@@ -75,7 +75,7 @@ test('Genm ordinary entry discards, and the raid-frame main stays closed',()=>{
  assert.equal(body.stack.length,0);
  assert.equal(s.players[0].outside.some(c=>c.uid===extra.uid),true);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===genm.uid),false);
- const base=take(s,0,'KMR-1-046');
+ const base=take(s,0,'KMR-1-043'); // A Genm base, not unrelated Kamen Rider Birth.
  base.faceDown=false;
  body.stack=[base];
  s.players[0].outside.push(take(s,0,'KMR-1-044'));
