@@ -321,10 +321,67 @@ test('Q2077/Q2078 017 reze branch retires then optional BP-5000',()=>{
  s=choose(s,a=>a.mode==='pick'&&a.uid===ally.uid);
  assert.equal(s.pending?.step,'debuff5k');
  s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
- const liveFoe=s.players[1].front.find(c=>c?.uid===foe.uid);
- assert.ok(liveFoe);
- assert.equal(universalBp(packs,s,liveFoe),pack.cards['CSM-1-001'].bp-5000);
+ assert.equal(s.players[1].front.some(c=>c?.uid===foe.uid),false,
+  'BP below zero must retire instead of staying on the board');
+ assert.ok(s.players[1].outside.some(c=>c.uid===foe.uid));
  assert.ok(s.players[0].outside.some(c=>c.uid===ally.uid));
+ assertUniversalMatch(packs,s);
+});
+
+for(const [targetId,printedBp] of [['CSM-1-007',4000],['CSM-1-048',5000]]){
+ test('CSM-1-017 BP-5000 retires a '+printedBp+' BP target (official Q94)',()=>{
+  const counts=countsFor(['CSM-1-017','CSM-1-006','CSM-1-008','CSM-1-001',targetId]);
+  let s=toPhase(fresh(counts,5000+printedBp),'main');
+  dumpHand(s);
+  const bomb=put(s,0,'CSM-1-017','front',1);
+  const ally=put(s,0,'CSM-1-006','front',0);
+  const foe=put(s,1,targetId,'front',0);
+  assert.equal(universalBp(packs,s,foe),printedBp);
+  legalUniversalActions(packs,s);
+  runCsmJob(pack,s,{op:'csm',id:'CSM-1-017',slot:'onPlay',owner:0,sourceUid:bomb.uid});
+  s=choose(s,a=>a.mode==='reze');
+  s=choose(s,a=>a.mode==='pick'&&a.uid===ally.uid);
+  s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
+  assert.equal(s.players[1].front[0],null);
+  assert.ok(s.players[1].outside.some(c=>c.uid===foe.uid));
+  assert.ok(s.players[0].outside.some(c=>c.uid===ally.uid));
+  assertUniversalMatch(packs,s);
+ });
+}
+
+test('CSM-1-017 BP-5000 keeps a target that still has positive effective BP',()=>{
+ const counts=countsFor(['CSM-1-017','CSM-1-006','CSM-1-008','CSM-1-001','CSM-1-007']);
+ let s=toPhase(fresh(counts,5061),'main');
+ dumpHand(s);
+ const bomb=put(s,0,'CSM-1-017','front',1);
+ const ally=put(s,0,'CSM-1-006','front',0);
+ const foe=put(s,1,'CSM-1-007','front',0);
+ foe.buffs=[{bp:2000,untilTurn:s.turn}];
+ assert.equal(universalBp(packs,s,foe),6000);
+ legalUniversalActions(packs,s);
+ runCsmJob(pack,s,{op:'csm',id:'CSM-1-017',slot:'onPlay',owner:0,sourceUid:bomb.uid});
+ s=choose(s,a=>a.mode==='reze');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===ally.uid);
+ s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
+ assert.equal(s.players[1].front[0]?.uid,foe.uid);
+ assert.equal(universalBp(packs,s,s.players[1].front[0]),1000);
+ assert.equal(s.players[1].outside.some(c=>c.uid===foe.uid),false);
+ assertUniversalMatch(packs,s);
+});
+
+test('CSM-1-017 BP-1000 mode retires a 1000 BP target at exactly zero',()=>{
+ const counts=countsFor(['CSM-1-017','CSM-1-006','CSM-1-008','CSM-1-003']);
+ let s=toPhase(fresh(counts,1000),'main');
+ dumpHand(s);
+ const bomb=put(s,0,'CSM-1-017','front',0);
+ const foe=put(s,1,'CSM-1-003','front',0);
+ assert.equal(universalBp(packs,s,foe),1000);
+ legalUniversalActions(packs,s);
+ runCsmJob(pack,s,{op:'csm',id:'CSM-1-017',slot:'onPlay',owner:0,sourceUid:bomb.uid});
+ s=choose(s,a=>a.mode==='debuff');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
+ assert.equal(s.players[1].front[0],null);
+ assert.ok(s.players[1].outside.some(c=>c.uid===foe.uid));
  assertUniversalMatch(packs,s);
 });
 
