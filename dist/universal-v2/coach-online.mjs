@@ -30,11 +30,8 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  let lastError='';
  let pending=null;
  let session=null;
- let hold=null;
- let staged=null;
- let reconcileGen=0;
- let reconciling=false;
  let seenVersion=coachConsentVersion(storage);
+ const places=new Map();
  const opening=new Map();
  const sessions=readSessions(storage);
  const uploader=createCoachUploader({
@@ -68,18 +65,45 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   if(typeof previous.clientKey==='string')link.clientKey=previous.clientKey;
   return link.replayIndex==null&&link.clientKey==null?null:link;
  }
- function samePlace(track){
-  return !!session&&session.accountId===track.accountId&&session.matchId===track.matchId&&
-   session.seat===track.seat&&session.code===track.code;
+ function place(key){
+  let row=places.get(key);
+  if(!row){
+   row={hold:null,staged:[],reconciling:false,gen:0};
+   places.set(key,row);
+  }
+  return row;
+ }
+ function bound(key){
+  if(session?.key===key)return session;
+  return sessions[key]||null;
+ }
+ function sameRecord(current,track){
+  return !!current&&current.accountId===track.accountId&&current.matchId===track.matchId&&
+   current.seat===track.seat&&current.code===track.code;
+ }
+ function rememberHold(current,step,writeVersion){
+  if(!current?.key||!Number.isInteger(step)||step<0)return;
+  const row=place(current.key);
+  row.hold={accountId:current.accountId,matchId:current.matchId,seat:current.seat,code:current.code,
+   step,writeVersion:writeVersion??null};
+  current.unresolved={step,writeVersion:writeVersion??null};
+  persistRecord(current);
  }
  function refreshShared(){
   const version=coachConsentVersion(storage);
-  if(version!==seenVersion){seenVersion=version;uploader.invalidate();}
+  const changed=version!==seenVersion;
+  if(changed){seenVersion=version;uploader.invalidate();}
   if(!session?.key)return;
+  const row=place(session.key);
+  if(row.hold)return;
+  if(changed&&(session.step||0)>0){
+   const step=Number.isInteger(session.unresolved?.step)?session.unresolved.step:session.step-1;
+   rememberHold(session,step,session.unresolved?.writeVersion??session.writeVersion??null);
+   return;
+  }
   const saved=readSessions(storage)[session.key];
-  if(!saved?.unresolved||hold)return;
-  hold={accountId:saved.accountId,matchId:saved.matchId,seat:saved.seat,code:saved.code,
-   step:saved.unresolved.step,writeVersion:saved.unresolved.writeVersion??null};
+  if(!Number.isInteger(saved?.unresolved?.step))return;
+  rememberHold(session,saved.unresolved.step,saved.unresolved.writeVersion??null);
  }
  function rememberUnresolved(bodies){
   if(!session)return;
@@ -88,10 +112,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    .map(body=>body.step);
   const step=steps.length?Math.min(...steps):(session.step>0?session.step-1:null);
   if(step==null)return;
-  hold={accountId:session.accountId,matchId:session.matchId,seat:session.seat,code:session.code,
-   step,writeVersion:session.writeVersion??null};
-  session.unresolved={step,writeVersion:session.writeVersion??null};
-  persist();
+  rememberHold(session,step,session.writeVersion??null);
  }
  async function readFence(track){
   let timer;
@@ -112,42 +133,47 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   }catch{return null;}
   finally{if(timer)clearTimeout(timer);}
  }
- function ensure(room){
+ function loadSession(room,{activate=true}={}){
   const key=sessionKey(room?.accountId,room?.seat,room?.code);
   if(!key)return Promise.resolve(null);
   if(session?.key===key)return Promise.resolve(session);
+  if(sessions[key]?.matchId){
+   if(activate)session=sessions[key];
+   return Promise.resolve(sessions[key]);
+  }
   const existing=opening.get(key);
   if(existing)return existing;
+  const live=activate||!session;
   const job=(async()=>{
    const stored=readSessions(storage)[key]||{};
    const memory=sessions[key]||{};
    const prior=memory.matchId?memory:stored;
    const matchId=prior.matchId||newCoachMatchId();
    const matchLink=prior.matchLink||await onlineMatchLink(room.code);
-   session={key,accountId:validAccountId(room.accountId),code:room.code,seat:room.seat,
+   const created={key,accountId:validAccountId(room.accountId),code:room.code,seat:room.seat,
     matchId,matchLink,step:prior.step||0,previous:prior.previous||null,
     writeVersion:prior.writeVersion??null,unresolved:prior.unresolved||null,
     deck:prior.deck||null,titles:prior.titles||null,engineVersion:prior.engineVersion||null};
-   if(prior.unresolved)hold={accountId:session.accountId,matchId,seat:session.seat,code:session.code,
-    step:prior.unresolved.step,writeVersion:prior.unresolved.writeVersion??null};
-   sessions[key]={matchId,matchLink,step:session.step,previous:session.previous,
-    accountId:session.accountId,seat:session.seat,code:session.code,
-    deck:session.deck,titles:session.titles,engineVersion:session.engineVersion,
-    writeVersion:session.writeVersion,unresolved:session.unresolved};
+   if(Number.isInteger(prior.unresolved?.step)){
+    const row=place(key);
+    if(!row.hold)row.hold={accountId:created.accountId,matchId,seat:created.seat,code:created.code,
+     step:prior.unresolved.step,writeVersion:prior.unresolved.writeVersion??null};
+   }
+   sessions[key]=created;
+   if(live)session=created;
    saveSessions();
-   return session;
+   return created;
   })();
   opening.set(key,job);
   return job.finally(()=>{if(opening.get(key)===job)opening.delete(key);});
  }
- function persist(){
-  if(!session?.key)return;
-  sessions[session.key]={matchId:session.matchId,matchLink:session.matchLink,step:session.step,
-   previous:session.previous,accountId:session.accountId,seat:session.seat,code:session.code,
-   deck:session.deck||null,titles:session.titles||null,engineVersion:session.engineVersion||null,
-   writeVersion:session.writeVersion??null,unresolved:session.unresolved||null};
+ function ensure(room){return loadSession(room,{activate:true});}
+ function persistRecord(current){
+  if(!current?.key)return;
+  sessions[current.key]=current;
   saveSessions();
  }
+ function persist(){persistRecord(session);}
  function headerFrom(current,snap){
   return {
    matchId:current.matchId,matchLink:current.matchLink,channel:'online',mode:'online',
@@ -160,21 +186,26 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   lastError=message;
   onChange?.();
  }
- async function commitSnap(snap){
+ async function commitSnap(snap,{activate=true}={}){
   if(!snap||!coachConsentEnabled(storage)||snap.consentVersion!==coachConsentVersion(storage))return;
   if(!validAccountId(snap.accountId)){
    pause('無法確認帳號，這步已暫停上傳。');
    return;
   }
   if(!Array.isArray(snap.visible?.players?.[snap.seat]?.hand))return;
-  const current=await ensure({accountId:snap.accountId,seat:snap.seat,code:snap.code});
+  const current=await loadSession({accountId:snap.accountId,seat:snap.seat,code:snap.code},{activate});
   if(!current){
    pause('無法確認帳號，這步已暫停上傳。');
    return;
   }
-  refreshShared();
+  if(session?.key===current.key)refreshShared();
   if(!coachConsentEnabled(storage)||snap.consentVersion!==coachConsentVersion(storage))return;
-  if(hold){staged=snap;void reconcileHold();return;}
+  const row=place(current.key);
+  if(row.hold){
+   if(!row.staged.some(item=>item.revision===snap.revision))row.staged.push(snap);
+   void reconcilePlace(current.key);
+   return;
+  }
   const clientKey=current.matchId+':r'+snap.revision+':human';
   const previous=linkOf(current.previous);
   const body={
@@ -198,7 +229,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    current.deck=snap.deck;
    current.titles=snap.titles;
    current.engineVersion=snap.engineVersion;
-   persist();
+   persistRecord(current);
   };
   const apply=result=>{
    if(result?.pending){
@@ -213,30 +244,34 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   };
   apply(queued);
  }
- async function reconcileHold(){
-  const track=hold;
-  if(reconciling||!track||!coachConsentEnabled(storage)||!samePlace(track))return;
-  reconciling=true;
-  const gen=reconcileGen;
+ async function reconcilePlace(key){
+  const row=place(key);
+  const track=row.hold;
+  if(row.reconciling||!track||!coachConsentEnabled(storage)||!sameRecord(bound(key),track))return;
+  row.reconciling=true;
+  const gen=row.gen;
   let remote=null;
   try{remote=await readFence(track);}
-  finally{reconciling=false;}
-  if(gen!==reconcileGen||hold!==track||!samePlace(track)||!coachConsentEnabled(storage))return;
+  finally{row.reconciling=false;}
+  if(gen!==row.gen||row.hold!==track||!coachConsentEnabled(storage)||!sameRecord(bound(key),track))return;
+  const saved=bound(key);
   if(!remote){
-   const retry=()=>{if(gen===reconcileGen&&hold===track)void reconcileHold();};
+   const retry=()=>{if(gen===row.gen&&row.hold===track)void reconcilePlace(key);};
    if(schedule)schedule(retry, 500);
    else setTimeout(retry, 500);
    return;
   }
-  session.writeVersion=remote.writeVersion;
-  session.step=remote.count;
-  session.previous=remote.previous;
-  session.unresolved=null;
-  hold=null;
-  persist();
-  const snap=staged;
-  staged=null;
-  if(snap)await commitSnap(snap);
+  saved.writeVersion=remote.writeVersion;
+  saved.step=remote.count;
+  saved.previous=remote.previous;
+  saved.unresolved=null;
+  row.hold=null;
+  persistRecord(saved);
+  const snaps=row.staged.splice(0, row.staged.length);
+  for(const item of snaps){
+   if(row.gen!==gen||!coachConsentEnabled(storage))return;
+   await commitSnap(item,{activate:session?.key===key});
+  }
  }
  return {
   consent(){return coachConsentEnabled(storage);},
@@ -249,10 +284,12 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    if(!enabled){
     uploader.invalidate();
     pending=null;
-    staged=null;
-    reconcileGen+=1;
+    for(const row of places.values()){
+     row.staged.length=0;
+     row.gen+=1;
+    }
     rememberUnresolved(queue.discard());
-   }else if(hold)void reconcileHold();
+   }else if(session?.key&&place(session.key).hold)void reconcilePlace(session.key);
    onChange?.();
   },
   start(){queue.start();},
@@ -276,6 +313,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     persist();
    }
    if(room.status==='playing')queue.drop(current.matchId+':label:interrupted');
+   if(place(current.key).hold&&coachConsentEnabled(storage))void reconcilePlace(current.key);
   },
   arm(room,choice){
    pending=null;
@@ -318,7 +356,6 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    pending=null;
    if(room.revision!==snap.revision+1||!this.consent()||snap.consentVersion!==coachConsentVersion(storage))return;
    refreshShared();
-   if(hold){staged=snap;void reconcileHold();return;}
    await commitSnap(snap);
   },
   async result(room,endReason,{completed,winner,holdMs=0}={}){
