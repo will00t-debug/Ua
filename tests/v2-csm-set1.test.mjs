@@ -10,6 +10,7 @@ import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {raidBoxListed} from '../dist/universal-v2/raid-box.mjs';
 import {csmEventUseCount,csmAlsoEventAuraLive,csmCardCountsAsEvent}
  from '../dist/universal-v2/csm-continuous.mjs';
+import {handPlayApPlan} from '../dist/universal-v2/ap-discounts.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalPublicView}
  from '../dist/universal-v2/engine.mjs';
@@ -153,6 +154,66 @@ test('Makima alsoEvent aura is live on front and Q2079 is use-time',()=>{
  assert.equal(csmAlsoEventAuraLive(s,0,c=>def(pack,c)),true);
  assert.equal(csmCardCountsAsEvent(s,0,pack.cards['CSM-1-001'],c=>def(pack,c)),true);
  assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),0);
+ assertUniversalMatch(packs,s);
+});
+
+test('Makima 5: next event discount permits 0 AP purple character use',()=>{
+ const counts=countsFor(['CSM-1-024','CSM-1-001','CSM-1-008','CSM-1-037']);
+ let s=toPhase(fresh(counts,2401),'main');
+ readyAp(s,0,1);fuel(s);dumpHand(s);
+ const makima=toHand(s,0,'CSM-1-024');
+ s=play(s,makima.uid);
+ s=choose(s,a=>a.mode==='draw');
+ assert.equal(s.players[0].apCards.filter(a=>a.ready).length,0);
+ assert.equal(csmAlsoEventAuraLive(s,0,c=>def(pack,c)),true);
+ assert.equal(handPlayApPlan(s,0,pack.cards['CSM-1-001']).cost,0);
+ assert.equal(handPlayApPlan(s,0,pack.cards['CSM-1-024']).cost,1);
+ const kobeni=toHand(s,0,'CSM-1-001');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===kobeni.uid),true);
+ s=play(s,kobeni.uid);
+ assert.equal(s.players[0].apCards.filter(a=>a.ready).length,0);
+ assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),1);
+ assert.equal(handPlayApPlan(s,0,pack.cards['CSM-1-037']).cost,1);
+ assertUniversalMatch(packs,s);
+});
+
+test('Makima 5: free Date aura choice still activates one AP',()=>{
+ const counts=countsFor(['CSM-1-024','CSM-1-037','CSM-1-008']);
+ let s=toPhase(fresh(counts,2402),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ const makima=toHand(s,0,'CSM-1-024');
+ s=play(s,makima.uid);
+ s=choose(s,a=>a.mode==='draw');
+ assert.equal(s.players[0].apCards.filter(a=>a.ready).length,2);
+ assert.equal(handPlayApPlan(s,0,pack.cards['CSM-1-037']).cost,0);
+ const date=toHand(s,0,'CSM-1-037');
+ s=play(s,date.uid);
+ assert.equal(s.players[0].apCards.filter(a=>a.ready).length,2);
+ s=choose(s,a=>a.mode==='aura');
+ assert.equal(s.pending?.step,'auraBuff');
+ s=choose(s,a=>a.mode==='pick');
+ assert.equal(s.players[0].apCards.filter(a=>a.ready).length,3);
+ assertUniversalMatch(packs,s);
+});
+
+test('Date draw/discard restores AP after earlier Makima-converted event character',()=>{
+ const counts=countsFor(['CSM-1-024','CSM-1-037','CSM-1-001','CSM-1-008']);
+ let s=toPhase(fresh(counts,2403),'main');
+ readyAp(s);fuel(s);dumpHand(s);
+ const makima=toHand(s,0,'CSM-1-024');
+ s=play(s,makima.uid);
+ s=choose(s,a=>a.mode==='draw');
+ const kobeni=toHand(s,0,'CSM-1-001');
+ s=play(s,kobeni.uid);
+ assert.equal(csmEventUseCount(s,0,c=>def(pack,c)),1);
+ const date=toHand(s,0,'CSM-1-037');
+ assert.equal(handPlayApPlan(s,0,pack.cards['CSM-1-037']).cost,1);
+ s=play(s,date.uid);
+ assert.equal(s.players[0].apCards.filter(a=>a.ready).length,1);
+ s=choose(s,a=>a.mode==='draw');
+ assert.equal(s.pending?.step,'discard');
+ s=choose(s,a=>a.mode==='discard');
+ assert.equal(s.players[0].apCards.filter(a=>a.ready).length,2);
  assertUniversalMatch(packs,s);
 });
 

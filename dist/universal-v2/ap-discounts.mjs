@@ -1,6 +1,7 @@
 // Q1210/Q2161: only the next matching hand use consumes the effect.
 // Q1209: printed BP; Q670: repeated next-use reductions stack on that use.
 import {cardHasTrait,cardHasName} from './field-conditions.mjs';
+import {csmCardCountsAsEvent} from './csm-continuous.mjs';
 // Card-face required energy (necessary cost), never the card's generated energy.
 export function matchesPrintedRequiredEnergyAtMost(definition,max){
  return Number.isInteger(max)&&max>=0&&max<=30&&Number.isInteger(definition?.energy)&&definition.energy<=max;
@@ -57,8 +58,14 @@ export function grantHandDiscount(s,owner,source,filter){
 }
 // A payment plan only; spendAp remains the single AP payment implementation.
 export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false}={}){
+ // A Makima aura makes other purple characters events as well as characters.
+ // Test both identities without changing their printed card type.
+ const alsoEvent=d.type==='character'&&csmCardCountsAsEvent(s,owner,d,
+  c=>({id:c?.cardId}));
  const ids=s.continuousStates.filter(e=>e.kind===DISCOUNT_KIND&&e.controller===owner&&
-  !e.consumed&&e.turn===s.turn&&matchesPrintedPlayFilter(d,e.filter)).map(e=>e.id);
+  !e.consumed&&e.turn===s.turn&&
+  (matchesPrintedPlayFilter(d,e.filter)||
+   (alsoEvent&&matchesPrintedPlayFilter({...d,type:'event'},e.filter)))).map(e=>e.id);
  // Raid-only printed AP reduction. A zero-AP hand use of another card with
  // the same name voids it. Effect entries are not recorded as hand uses.
  let raidCut=0;

@@ -19,11 +19,11 @@ export function csmDenjiRetiredThisTurn(s,owner,card){
  });
 }
 
-export function csmEventUseCount(s,owner,card){
+export function csmEventUseCount(s,owner,card,exceptUid=null){
  let n=0;
  for(const e of s.zoneMoveEvents||[]){
   if(e.turn!==s.turn||e.owner!==owner||e.controller!==owner||
-   e.from!=='hand'||e.reason!=='rule')continue;
+   e.from!=='hand'||e.reason!=='rule'||e.uid===exceptUid)continue;
   const d=card({uid:e.uid,cardId:e.cardId});
   if(!d)continue;
   if(d.type==='event'||d.alsoEvent===true){n++;continue;}
