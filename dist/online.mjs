@@ -25,6 +25,7 @@ const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 let battleUi=typeof onlineBattleUiBootstrap==='undefined'?null:onlineBattleUiBootstrap;
 let battleUiLoading=false,battleUiError=false;
+let facedownUid='',facedownSignature='';
 function watchBattleViewport(module){
  window.matchMedia?.(module.DESKTOP_BATTLE_QUERY)?.addEventListener?.('change',()=>{
   if(app.room?.view)render();
@@ -34,7 +35,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261103onlinefix1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261104facedown2'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -460,8 +461,47 @@ function cardSrc(card){
  return index&&card?.cardId?index.get(card.cardId)||'':'';
 }
 function onlineCardDefinition(cardId){artIndex();return definitionsById?.get(cardId)||{};}
+function onlineFacedownLookups(root){
+ const effectText=id=>{
+  const printed=onlineCardDefinition(id);
+  const effect=printed.effect||printed.text||printed.description||'';
+  return typeof effect==='string'?effect:'';
+ };
+ return {
+  nameOf:id=>onlineCardDefinition(id).name||'',
+  imageOf:id=>cardSrc({cardId:id}),
+  effectOf:effectText,
+  onInspect:entry=>{
+   const layer=root&&battleUi?.findKnownLayer?battleUi.findKnownLayer(root,entry.uid):null;
+   openOnlineCard(layer||{uid:entry.uid,cardId:entry.cardId,name:onlineCardDefinition(entry.cardId).name||''});
+  }
+ };
+}
+function facedownHost(uid){
+ if(!uid||!battleUi?.onlineBattleView||!app.room?.view)return null;
+ const view=battleUi.onlineBattleView(app.room);
+ for(const player of view.players||[]){
+  for(const line of ['front','energy']){
+   const card=(player?.[line]||[]).find(item=>item?.uid===uid);
+   if(card)return card;
+  }
+ }
+ return null;
+}
+function openOnlineFacedown(card){
+ if(!card?.uid||!battleUi?.showOnlineFacedown)return;
+ const parent=document.querySelector('.online-battle-shell')||document.body;
+ const previous=facedownSignature;
+ facedownUid=card.uid;
+ facedownSignature=battleUi.showOnlineFacedown({el,parent,card,...onlineFacedownLookups(card),
+  previous,focus:true,onClose:()=>{facedownUid='';facedownSignature='';}})||'';
+ if(!facedownSignature)facedownUid='';
+}
 function openOnlineCard(card){
- battleUi?.showOnlineCard({el,card,definition:onlineCardDefinition(card.cardId),src:cardSrc(card)});
+ facedownUid='';facedownSignature='';
+ battleUi?.closeFacedownOverlays?.();
+ battleUi?.showOnlineCard({el,card,definition:onlineCardDefinition(card.cardId),src:cardSrc(card),
+  ...onlineFacedownLookups(card)});
 }
 function cardBox(card,opts={}){
  const click=opts.click||null;
@@ -775,7 +815,8 @@ function zone(title,cards,engineSeat){
    label:spoken,index,line:kind,placement:place,
    attacking:!!card&&kind==='front'&&app.room.view.battle?.uid===card.uid,
    blocking:canBlock,click:clickable?()=>clickField(engineSeat,kind,index,card):null,
-   inspect:()=>openOnlineCard(card)});
+   inspect:card?()=>openOnlineCard(card):null,
+   onFacedown:card?()=>openOnlineFacedown(card):null});
   return cardBox(card,{className:classes,click:clickable?()=>clickField(engineSeat,kind,index,card):null,label:spoken});
  });
  return el('div',{class:'online-line '+kind},
@@ -1345,9 +1386,33 @@ function matchView(){
    openCard:(_side,_line,card)=>openOnlineCard(card),onSelectZone:clickZoneCard});
  }
 }
+function restoreOnlineFacedown(saved,focusInside,focusCard){
+ if(!facedownUid||!battleUi?.showOnlineFacedown)return;
+ const host=facedownHost(facedownUid);
+ const parent=document.querySelector('.online-battle-shell');
+ const model=host&&battleUi.facedownInspectModel?battleUi.facedownInspectModel(host):null;
+ const signature=model?.count?JSON.stringify(model):'';
+ if(!host||!parent||!signature){facedownUid='';facedownSignature='';return;}
+ if(saved&&signature===facedownSignature){
+  parent.append(saved);
+  if(focusInside){
+   const safe=globalThis.CSS?.escape?CSS.escape(focusCard):String(focusCard||'').replace(/["\\]/g,'');
+   const opener=safe?saved.querySelector?.('[data-facedown-card="'+safe+'"]'):null;
+   (opener||saved.querySelector?.('button'))?.focus?.({preventScroll:true});
+  }
+  return;
+ }
+ facedownSignature=battleUi.showOnlineFacedown({el,parent,card:host,...onlineFacedownLookups(host),
+  focus:!saved,onClose:()=>{facedownUid='';facedownSignature='';}})||'';
+ if(!facedownSignature)facedownUid='';
+}
 function render(){
  const root=document.querySelector('#app');
  const oldHandScroll=root.querySelector?.('.hand')?.scrollLeft||0;
+ const savedFacedown=document.querySelector('.v2-facedown-overlay');
+ const focusInside=!!savedFacedown?.contains?.(document.activeElement);
+ const focusCard=focusInside?(document.activeElement.getAttribute?.('data-facedown-card')||''):'';
+ if(savedFacedown)savedFacedown.remove();
  if(battleUi&&document.body){
   battleUi.closeOnlineCard();
   battleUi.setOnlineBattleMode(!!app.room?.view&&app.room.status!=='waiting');
@@ -1359,6 +1424,7 @@ function render(){
   app.room?matchView():app.user?homeView():authView();
  root.replaceChildren(view);
  const hand=root.querySelector?.('.hand');if(hand)hand.scrollLeft=oldHandScroll;
+ restoreOnlineFacedown(savedFacedown,focusInside,focusCard);
 }
 async function submitAuth(event){
  event.preventDefault();

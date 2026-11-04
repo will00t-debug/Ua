@@ -43,9 +43,12 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {createCoachBattle} from './universal-v2/coach-battle.mjs';
-import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261101coachart1';
+import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261104facedown1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
- from './universal-v2/desktop-battle-ui.mjs';
+ from './universal-v2/desktop-battle-ui.mjs?v=20261104facedown1';
+import {facedownInspectModel,facedownGallery,mountFacedownOverlay,closeFacedownOverlays,
+ createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,findKnownLayer}
+ from './universal-v2/facedown-inspect.mjs?v=20261104facedown1';
 
 const rezeroPractice=rezeroSet1PracticeDeck();
 const stgPractice=steinsGatePracticeDeck();
@@ -744,6 +747,14 @@ function legacySlot(view,side,line,index,legal){
   if(c.raidDepth||c.raidLayers?.length)
    face.append(el('span',{class:'slotStack',text:'RAID '+(c.raidDepth||c.raidLayers.length)}));
   face.append(el('span',{class:'slotBp'},el('b',{text:line==='front'?String(c.bp):'◆ '+String(c.produces??0)})));
+  const facedown=facedownInspectModel(c);
+  if(facedown.count){
+   btnSlot.classList.add('has-facedown');
+   const label=btnSlot.getAttribute('aria-label')||'';
+   btnSlot.setAttribute('aria-label',label+'，下方有 '+facedown.count+' 張'+(facedown.private?'裏向卡':'卡背'));
+   face.append(createFacedownEdges(el,facedown.count),
+    createFacedownBadge(el,facedown,()=>openFacedownSheet(side,c)));
+  }
   btnSlot.append(face);
   // Visible FRONT keywords persist without an active attack; REST rotates only the face.
   if(attackBadges.length)btnSlot.append(el('span',
@@ -757,7 +768,7 @@ function legacySlot(view,side,line,index,legal){
   let originX=0,originY=0;
   const stopHold=()=>{clearTimeout(fieldHold);fieldHold=0;};
   btnSlot.addEventListener('pointerdown',event=>{
-   if(event.button>0)return;
+   if(event.button>0||eventHitsFacedownBadge(event))return;
    held=false;originX=event.clientX;originY=event.clientY;
    stopHold();
    fieldHold=setTimeout(()=>{held=true;showFieldSheet(side,line,c,d);},FIELD_HOLD_MS);
@@ -769,7 +780,8 @@ function legacySlot(view,side,line,index,legal){
   });
   btnSlot.addEventListener('contextmenu',event=>event.preventDefault());
  }
- btnSlot.addEventListener('click',()=>{
+ btnSlot.addEventListener('click',event=>{
+  if(eventHitsFacedownBadge(event)){openFacedownSheet(side,c);return;}
   if(held){held=false;return;}
   if(app.inspectionPaused){if(c)showFieldSheet(side,line,c,d);return;}
   // Display public opponent card art on tap; no game action is dispatched.
@@ -1127,6 +1139,26 @@ function renderOpeningMulligan(target,s){
 function printedCatalogue(side,cardId){
  return PRINTED_CATALOGUE[app.packs?.[side]?.id]?.get(cardId)||null;
 }
+function facedownLookups(side,root){
+ return {
+  nameOf:id=>cardDef(side,id)?.name||printedCatalogue(side,id)?.name||'',
+  imageOf:id=>imgUrl(side,id),
+  effectOf:id=>{
+   const printed=printedCatalogue(side,id)||cardDef(side,id);
+   return printed?fieldEffectCopy(printed):'';
+  },
+  onInspect:entry=>{
+   closeFacedownOverlays();
+   const layer=root?findKnownLayer(root,entry.uid):null;
+   const shown=layer||{uid:entry.uid,cardId:entry.cardId};
+   showFieldSheet(side,'under',shown,cardDef(side,entry.cardId));
+  }
+ };
+}
+function openFacedownSheet(side,card){
+ const parent=document.querySelector('.v2-shell')||document.body;
+ mountFacedownOverlay({el,parent,card,...facedownLookups(side,card)});
+}
 function closeFieldSheet(){
  const overlay=document.querySelector('.v2-shell>.v2-field-overlay');
  const opener=overlay?._v2Opener;
@@ -1156,15 +1188,17 @@ function showFieldSheet(side,line,card,printed){
   if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
   if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
  };
+ const facedownSection=facedownGallery(el,facedownInspectModel(card),facedownLookups(side,card));
  dialog.append(el('div',{class:'field-sheet-card'},art,
   el('div',{},el('h2',{text:name}),el('p',{class:'note',text:stats.join(' · ')}))),
-  el('p',{class:'field-effect',text:fieldEffectCopy(catalogue)}),
-  btn('關閉',closeFieldSheet,'quiet'));
+  el('p',{class:'field-effect',text:fieldEffectCopy(catalogue)}));
+ if(facedownSection)dialog.append(facedownSection);
+ dialog.append(btn('關閉',closeFieldSheet,'quiet'));
  overlay.addEventListener('click',event=>{if(event.target===overlay)closeFieldSheet();});
  overlay.addEventListener('keydown',event=>{if(event.key==='Escape')closeFieldSheet();});
  overlay.append(dialog);
  (document.querySelector('.v2-shell')||document.body).append(overlay);
- dialog.querySelector('button')?.focus();
+ dialog.querySelector(':scope > button')?.focus();
 }
 
 function closeZoneSheet(){
@@ -1391,6 +1425,7 @@ function render(){
   // choice overlay first or that dialog stays above the finished table.
   clearTimeout(fieldHold);fieldHold=0;
   closeZoneSheet();
+  closeFacedownOverlays();
   clearPendingOverlay();
   clearTriggerOverlay();
   clearPublicMoveOverlay();
@@ -1408,6 +1443,7 @@ function render(){
   !!app.state&&!(app.state.phase==='setup'&&app.state.pending?.kind==='opening-mulligan'));
  clearTimeout(fieldHold);fieldHold=0;
  closeZoneSheet();
+ closeFacedownOverlays();
  clearPendingOverlay();
  clearTriggerOverlay();
  clearPublicMoveOverlay();
