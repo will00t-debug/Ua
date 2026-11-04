@@ -34,7 +34,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261104step3'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261104step5'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -110,10 +110,13 @@ const decisionStub={
  get lastError(){return decisionLog?.lastError||'';},
  setConsent(enabled){
   try{
-   if(enabled)localStorage.setItem('ua-v2-coach-consent','1');
-   else localStorage.removeItem('ua-v2-coach-consent');
+   if(decisionLog)decisionLog.setConsent(enabled);
+   else if(enabled)localStorage.setItem('ua-v2-coach-consent','1');
+   else{
+    localStorage.removeItem('ua-v2-coach-consent');
+    localStorage.setItem('ua-v2-coach-consent-version',globalThis.crypto.randomUUID());
+   }
   }catch{/* A private browser can still play without storing the choice. */}
-  decisionLog?.setConsent(enabled);
  },
  arm(room,choice){return decisionLog?decisionLog.arm(room,choice):false;},
  cancel(){decisionLog?.cancel();},
@@ -127,7 +130,7 @@ function loadDecisions(){
  if(decisionLog)return Promise.resolve(decisionLog);
  if(decisionLoading)return decisionLoading;
  try{
-  decisionLoading=import('./universal-v2/coach-online.mjs?v=20261104step3').then(mod=>{
+  decisionLoading=import('./universal-v2/coach-online.mjs?v=20261104step5').then(mod=>{
    decisionLog=mod.createOnlineCollector({
     storage:localStorage,
     deckById(id){return app.decks.find(deck=>deck.id===id)||null;},

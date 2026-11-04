@@ -4,8 +4,8 @@
 // The account, room, seat and revision are fixed when that view is received.
 // A delayed reply keeps that identity; it is not retagged after a login change.
 // An end marker uses the account, room and seat bound to that event.
-import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs';
-import {createDecisionQueue} from './coach-queue.mjs?v=20261104step1';
+import {coachConsentEnabled,coachConsentVersion,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step5';
+import {createDecisionQueue} from './coach-queue.mjs?v=20261104step5';
 import {DECISION_FORMAT,LABEL_FORMAT,DECISION_ENGINE_VERSION,ENGINE_NAME,newCoachMatchId,
  onlineMatchLink,classifyDecision,publicHistoryFrom,visibleForTraining,privateForTraining,
  tableChoices,chainOf,deckSnapshot} from './coach-format.mjs';
@@ -33,6 +33,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  const opening=new Map();
  const sessions=readSessions(storage);
  const uploader=createCoachUploader({
+  storage,
   consent:()=>coachConsentEnabled(storage),
   fetchImpl,
   onUploaded(){uploaded++;lastError='';onChange?.();},
@@ -41,6 +42,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  const queue=createDecisionQueue({
   storage,
   consent:()=>coachConsentEnabled(storage),
+  consentVersion:()=>coachConsentVersion(storage),
   schedule,
   send(body){return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);},
   account(){return currentAccountId(fetchImpl);},
@@ -167,6 +169,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     if(!legal.some(item=>same(item)===same(selected)))return false;
     pending={
      accountId:room.accountId,code:room.code,revision:room.revision,seat:room.seat,
+     consentVersion:coachConsentVersion(storage),
      choice:selected,legal,
      visible:visibleForTraining(room.view,room.seat),
      privateView:privateForTraining(room.inspection),
@@ -183,7 +186,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    if(room.seat!=null&&room.seat!==snap.seat)return;
    if(room.revision===snap.revision)return;
    pending=null;
-   if(room.revision!==snap.revision+1||!this.consent())return;
+   if(room.revision!==snap.revision+1||!this.consent()||snap.consentVersion!==coachConsentVersion(storage))return;
    if(!validAccountId(snap.accountId)){
     pause('無法確認帳號，這步已暫停上傳。');
     return;
@@ -194,6 +197,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     pause('無法確認帳號，這步已暫停上傳。');
     return;
    }
+   if(!this.consent()||snap.consentVersion!==coachConsentVersion(storage))return;
    const clientKey=current.matchId+':r'+snap.revision+':human';
    const previous=current.previous;
    const body={
@@ -233,6 +237,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   },
   async result(room,endReason,{completed,winner,holdMs=0}={}){
    if(!this.consent()||!room?.view)return;
+   const version=coachConsentVersion(storage);
    const accountId=validAccountId(room.accountId);
    const seat=Number(room.seat);
    if(!accountId||(seat!==0&&seat!==1)||typeof room.code!=='string'||!room.code){
@@ -244,6 +249,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
     pause('無法確認帳號，這筆結果已暫停上傳。');
     return;
    }
+   if(!this.consent()||version!==coachConsentVersion(storage))return;
    let titles=current.titles||null;
    let deck=current.deck||null;
    const live=deckById?.(room.you?.deckId);

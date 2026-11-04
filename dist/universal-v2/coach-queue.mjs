@@ -188,7 +188,7 @@ function rejected(entry, failed){
 }
 
 const UNFILTERED={};
-export function createDecisionQueue({storage, consent, send, schedule, onChange, account, locks, now=()=>Date.now()}={}){
+export function createDecisionQueue({storage, consent, consentVersion, send, schedule, onChange, account, locks, now=()=>Date.now()}={}){
  let timer=null;
  let retryTimer=null;
  let flushing=false;
@@ -285,14 +285,25 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
   dropped+=count;
   return count;
  }
- function commitEnqueue(body, holdMs){
+ function discardRevoked(){
+  if(!consentVersion)return;
+  const version=consentVersion();
+  for(const item of readMerged(storage)){
+   if((item.consentVersion??null)!==version)forgetRecord(storage,item.body);
+  }
+  for(let index=waiting.length-1;index>=0;index--){
+   if((waiting[index].consentVersion??null)!==version)waiting.splice(index,1);
+  }
+ }
+ function commitEnqueue(body, holdMs, version){
+  discardRevoked();
   migrateAvailable(storage);
   const items=readMerged(storage);
   if(items.some(item=>sameRecord(item, body))||waiting.some(item=>sameRecord(item, body)))
    return {skipped:'queued'};
   let encoded='';
   try{encoded=JSON.stringify(body);}catch{return {stored:false, error:'storage'};}
-  const record={clientKey:body.clientKey, body, attempts:0, bytes:encoded.length, holdUntil:holdMs?now()+holdMs:0};
+  const record={clientKey:body.clientKey, body, consentVersion:version, attempts:0, bytes:encoded.length, holdUntil:holdMs?now()+holdMs:0};
   const behind=legacyBodies(storage).length>0||waiting.some(item=>item.body?.matchId&&item.body.matchId===body.matchId);
   if(behind||!saveRecord(storage, record)){
    remember(record);
@@ -305,6 +316,7 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
  async function persistWaiting(){
   if(!waiting.length||!consent?.())return;
   const exec=()=>{
+   discardRevoked();
    migrateAvailable(storage);
    if(legacyBodies(storage).length){
     lastError='紀錄尚未儲存';
@@ -313,6 +325,7 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
    const batch=waiting.splice(0, waiting.length);
    let blocked=false;
    for(const record of batch){
+    if(consentVersion&&(record.consentVersion??null)!==consentVersion())continue;
     if(blocked||!saveRecord(storage, record)){
      remember(record);
      blocked=true;
@@ -339,6 +352,7 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
   void flush();
  }
  function pick(owner){
+  discardRevoked();
   migrateAvailable(storage);
   for(const item of readMerged(storage)){
    if(!ownedBy(item, owner))continue;
@@ -382,15 +396,17 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
  async function flush(){
   if(flushing||!started)return;
   const gen=generation;
+  const version=consentVersion?.();
+  const active=()=>generation===gen&&version===consentVersion?.()&&consent?.();
   flushing=true;
   let retry=false;
   try{
-   while(generation===gen&&consent?.()){
+   while(active()){
     const owner=await readOwner();
-    if(generation!==gen)return;
+    if(!active())return;
     if(owner===null)return;
     const picked=await withWrite(()=>pick(owner));
-    if(generation!==gen)return;
+    if(!active())return;
     if(picked.kind==='idle')return;
     if(picked.kind==='blocked'){arm(400);return;}
     if(picked.kind==='rejected'){notify();continue;}
@@ -398,7 +414,7 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
     const item=picked.item;
     if(owner!==UNFILTERED){
      const fresh=await readOwner();
-     if(generation!==gen)return;
+     if(!active())return;
      if(fresh!==item.body?.accountId){retry=true;return;}
     }
     sendingKey=item.clientKey;
@@ -406,9 +422,9 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
     try{result=await send(item.body);}
     catch{result={ok:false, status:0};}
     finally{sendingKey=null;}
-    if(generation!==gen)return;
+    if(!active())return;
     const action=await withWrite(()=>{
-     if(generation!==gen)return 'stale';
+     if(!active())return 'stale';
      return commitSend(item, result);
     });
     notify();
@@ -435,19 +451,21 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
    if(consent?.())arm(0);
    else if(readMerged(storage).length||waiting.length){
     waiting.length=0;
-    if(canRunSync())runSync(()=>wipeStorage(storage));
-    else void runAsync(()=>wipeStorage(storage));
+    const clear=consentVersion?discardRevoked:()=>wipeStorage(storage);
+    if(canRunSync())runSync(clear);
+    else void runAsync(clear);
     notify();
    }
   },
   enqueue(body, {holdMs=0}={}){
    if(!consent?.())return {skipped:'consent'};
    const op=++opSeq;
+   const version=consentVersion?.();
    const clientKey=String(body?.clientKey||'');
    const exec=()=>{
     takePending(clientKey, op);
-    if((cancelledThrough.get(clientKey)||0)>=op)return {skipped:'cancelled'};
-    return commitEnqueue(body, holdMs);
+    if((cancelledThrough.get(clientKey)||0)>=op||version!==consentVersion?.()||!consent?.())return {skipped:'cancelled'};
+    return commitEnqueue(body, holdMs, version);
    };
    if(canRunSync()){
     const result=runSync(exec);
@@ -481,7 +499,9 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
    });
   },
   discard(){
-   const bodies=readMerged(storage).map(item=>item.body).concat(waiting.map(item=>item.body));
+   const items=readMerged(storage).concat(waiting);
+   const version=consentVersion?.();
+   const bodies=items.filter(item=>!consentVersion||(item.consentVersion??null)!==version).map(item=>item.body);
    this.clear();
    return bodies;
   },
@@ -491,8 +511,9 @@ export function createDecisionQueue({storage, consent, send, schedule, onChange,
    if(retryTimer!=null){clearTimeout(retryTimer);retryTimer=null;}
    waiting.length=0;
    if(lastError==='紀錄尚未儲存')lastError='';
-   if(canRunSync())runSync(()=>wipeStorage(storage));
-   else void runAsync(()=>wipeStorage(storage));
+   const clear=consentVersion?discardRevoked:()=>wipeStorage(storage);
+   if(canRunSync())runSync(clear);
+   else void runAsync(clear);
    notify();
   },
   exclusive(fn){

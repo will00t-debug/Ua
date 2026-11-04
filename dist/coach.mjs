@@ -1,7 +1,7 @@
 // Logged-in review of solo training rows. Debug replays stay on their own buttons.
 import {learnReport} from './universal-v2/learn-policy.mjs?v=20261104gap1';
-import {coachConsentEnabled,createCoachUploader,currentAccountId} from './universal-v2/coach-client.mjs?v=20261104step3';
-import {createDecisionQueue} from './universal-v2/coach-queue.mjs?v=20261104step1';
+import {coachConsentEnabled,coachConsentVersion,createCoachUploader,currentAccountId} from './universal-v2/coach-client.mjs?v=20261104step5';
+import {createDecisionQueue} from './universal-v2/coach-queue.mjs?v=20261104step5';
 const root=document.querySelector('#coach-app');
 const h=(tag,props={},...children)=>{
  const node=document.createElement(tag);
@@ -34,11 +34,13 @@ function flushLocalQueue(accountId){
  if(flushingQueue)return flushingQueue;
  flushingQueue=(async()=>{
   const uploader=createCoachUploader({
+   storage:localStorage,
    consent:()=>coachConsentEnabled(localStorage)
   });
   const queue=createDecisionQueue({
    storage:localStorage,
    consent:()=>coachConsentEnabled(localStorage),
+   consentVersion:()=>coachConsentVersion(localStorage),
    account(){return currentAccountId(fetch);},
    send(body){
     return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);

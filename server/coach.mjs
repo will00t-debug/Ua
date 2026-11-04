@@ -7,6 +7,7 @@ import {learnReport,policyRecordStatus,trainPolicy} from '../dist/universal-v2/l
 
 const MATCH_ID=/^m[a-f0-9]{32}$/;
 const LINK_ID=/^k[a-f0-9]{32}$/;
+const STEP_VERSION=/^v[a-f0-9]{16}$/;
 const CLIENT_KEY=/^[a-z0-9:-]{8,80}$/;
 const END_REASONS=new Set(['life-zero','unblocked-attack','required-draw-empty','finished','conceded',...UNFINISHED_ENDINGS]);
 const UNFINISHED=new Set(UNFINISHED_ENDINGS);
@@ -367,6 +368,7 @@ export function coachHttp(method,path){
  if(path==='/api/coach/policy/restore'&&method==='POST')return {op:'coachRestorePolicy'};
  if(path==='/api/coach/policy'&&method==='DELETE')return {op:'coachDeletePolicy'};
  if(path==='/api/coach/steps'&&method==='POST')return {op:'coachStep'};
+ if(path==='/api/coach/steps/reconcile'&&method==='POST')return {op:'coachReconcileStep',limit:1024};
  if(path==='/api/coach/labels'&&method==='POST')return {op:'coachLabel'};
  if(path==='/api/coach/matches'&&method==='GET')return {op:'coachList'};
  if(path==='/api/coach/export'&&method==='GET')return {op:'coachExport'};
@@ -391,6 +393,7 @@ export function dispatchCoach(repos,user,message,now){
  const anonymous=anonymousId(repos,user,now);
  switch(message.op){
   case 'coachStep':return saveStep(repos,user,anonymous,message.body,now);
+  case 'coachReconcileStep':return reconcileStep(repos,user,message.body);
   case 'coachLabel':return saveLabel(repos,user,anonymous,message.body,now);
   case 'coachDemo':return saveDemo(repos,user,anonymous,message.body,now);
   case 'coachDebug':return saveDebug(repos,user,anonymous,message.body,now);
@@ -443,6 +446,31 @@ function requireAccount(body,user){
  if(!body||typeof body!=='object'||Array.isArray(body))throw new ApiError(400,'紀錄不正確。');
  if(body.accountId!==user.id)throw new ApiError(403,'這筆紀錄屬於另一個帳號，已暫停上傳。');
 }
+// The account dispatcher runs this and step inserts in the same SQL transaction.
+function reconcileStep(repos,user,body){
+ requireAccount(body,user);
+ const {matchId,step}=body;
+ const expected=body.writeVersion??null;
+ if(typeof matchId!=='string'||!MATCH_ID.test(matchId)||!Number.isInteger(step)||step<0||step>=MAX_STEPS||
+    (expected!==null&&(typeof expected!=='string'||!STEP_VERSION.test(expected))))
+  throw new ApiError(400,'步驟對帳資料不正確。');
+ const count=repos.coachStepCount(user.id,matchId);
+ let writeVersion=repos.coachStepFence(user.id,matchId);
+ if(count<=step&&writeVersion===expected){
+  if(!writeVersion&&repos.coachStepFenceCount(user.id)>=MAX_MATCHES*2)
+   throw new ApiError(429,'待核對的場次已達上限。');
+  writeVersion=id('v');
+  repos.setCoachStepFence(user.id,matchId,writeVersion);
+ }
+ const last=repos.lastCoachStep(user.id,matchId);
+ const row=last?JSON.parse(last.payloadJson):null;
+ const previous=row?{step:row.step,type:row.choice.type,replayIndex:row.replayIndex,clientKey:row.clientKey}:null;
+ return {count,writeVersion,previous};
+}
+function requireStepVersion(repos,user,body,matchId){
+ if((body.writeVersion??null)!==repos.coachStepFence(user.id,matchId))
+  throw new ApiError(410,'這輪步驟上傳已失效。');
+}
 function saveStep(repos,user,anonymous,body,now){
  banned(body);
  requireAccount(body,user);
@@ -470,9 +498,13 @@ function saveStep(repos,user,anonymous,body,now){
  ensureMatch(repos,user,anonymous,header,now);
  const prior=repos.coachStepByKey(user.id,clientKey);
  if(prior){
-  if(prior.payloadJson!==encoded)throw new ApiError(409,'同一步驟已經有不同的紀錄。');
+  if(prior.payloadJson!==encoded){
+   requireStepVersion(repos,user,body,header.matchId);
+   throw new ApiError(409,'同一步驟已經有不同的紀錄。');
+  }
   return {id:prior.id,matchId:header.matchId,step:body.step,anonymousId:anonymous,duplicate:true};
  }
+ requireStepVersion(repos,user,body,header.matchId);
  if(body.step!==repos.coachStepCount(user.id,header.matchId))
   throw new ApiError(409,'步驟順序不連續。');
  const rowId=id('s');
@@ -521,9 +553,13 @@ function saveStepV2(repos,user,anonymous,body,now){
  ensureMatch(repos,user,anonymous,header,now);
  const prior=repos.coachStepByKey(user.id,clientKey);
  if(prior){
-  if(prior.payloadJson!==encoded)throw new ApiError(409,'同一步驟已經有不同的紀錄。');
+  if(prior.payloadJson!==encoded){
+   requireStepVersion(repos,user,body,header.matchId);
+   throw new ApiError(409,'同一步驟已經有不同的紀錄。');
+  }
   return {id:prior.id,matchId:header.matchId,step:body.step,anonymousId:anonymous,duplicate:true};
  }
+ requireStepVersion(repos,user,body,header.matchId);
  if(body.step!==repos.coachStepCount(user.id,header.matchId))
   throw new ApiError(409,'步驟順序不連續。');
  const rowId=id('s');
@@ -666,6 +702,7 @@ function matchDetail(repos,user,anonymous,matchId){
  const debug=repos.coachDebugForMatch(user.id,matchId);
  return {
   anonymousId:anonymous,
+  writeVersion:repos.coachStepFence(user.id,matchId),
   match:{...publicMatch({...row,engine:row.engine,steps:repos.coachStepCount(user.id,matchId),demos:repos.listCoachDemos(user.id,matchId).length}),
    engineVersion:row.engineVersion,pool:JSON.parse(row.poolJson),deck:JSON.parse(row.deckJson)},
   steps:repos.listCoachSteps(user.id,matchId).map(step=>({id:step.id,createdAt:step.createdAt,...JSON.parse(step.payloadJson)})),

@@ -12,7 +12,7 @@ import {DECISION_CLASSES, DECISION_ENGINE_VERSION, classifyDecision, visibleForT
 import {buildHumanStep, buildAiMark, coachHeader, hiddenLeak, newCoachMatchId} from '../dist/universal-v2/coach-record.mjs';
 // The battle and online collectors import this exact URL. The write lock lives
 // on the module instance, so the regression has to use the same one.
-import {createDecisionQueue, readStoredQueue} from '../dist/universal-v2/coach-queue.mjs?v=20261104step1';
+import {createDecisionQueue, readStoredQueue} from '../dist/universal-v2/coach-queue.mjs?v=20261104step5';
 import {createCoachBattle} from '../dist/universal-v2/coach-battle.mjs';
 import {createOnlineCollector} from '../dist/universal-v2/coach-online.mjs';
 import {COACH_CONSENT_KEY} from '../dist/universal-v2/coach-client.mjs';
@@ -2242,12 +2242,12 @@ test('turning recording off while step 0 is uploading confirms it before the nex
  await waitUntil(()=>stepSeen);
  assert.equal(posts.length, 0);
  battle.setConsent(false);
- assert.equal(battle.session.humanStep, 1);
- assert.equal(battle.session.previous.step, 0);
+ assert.equal(battle.session.humanStep, 0);
+ assert.equal(battle.session.previous, null);
  assert.equal(readStoredQueue(storage).length, 0);
  const follow=afterKeep(state, keep.action);
  battle.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
- assert.equal(battle.session.humanStep, 1);
+ assert.equal(battle.session.humanStep, 0);
  assert.equal(posts.length, 0);
  battle.setConsent(true);
  battle.noteHuman({packs, state:follow.state, action:follow.action, replayIndex:follow.replayIndex, legal:follow.legal});
@@ -2342,25 +2342,27 @@ test('a delayed upload confirmation updates only the original account and match'
  assert.equal(otherDetail.data.match.steps, 1);
 });
 
-function hangingSteps(account, {deliver=true}={}){
+function hangingSteps(account, {deliver=true, commitFirst=false, responseStatus}={}){
  const calls=[];
  let release;
  let held=false;
  const fetchImpl=async(path, options={})=>{
   if(path==='/api/coach/steps'&&options.body){
    const posted=JSON.parse(options.body);
-   const call={step:posted.step, mode:posted.choice?.mode??null, type:posted.choice?.type??null};
+   const call={step:posted.step, replayIndex:posted.replayIndex, mode:posted.choice?.mode??null};
    calls.push(call);
    const first=posted.step===0&&!release;
+   const send=()=>apiFetch(account.token)(path, options);
+   const committed=first&&commitFirst?await send():null;
    if(first){
     held=true;
     await new Promise(resolve=>{release=resolve;});
-    if(!deliver){
-     call.status=503;
-     return {ok:false, status:503, json:async()=>({error:'暫時無法保存。'})};
+    if(!deliver||responseStatus){
+     call.status=responseStatus??503;
+     return {ok:false, status:call.status, json:async()=>({error:'暫時無法保存。'})};
     }
    }
-   const result=await apiFetch(account.token)(path, options);
+   const result=committed??await send();
    const data=await result.json();
    call.status=result.status;
    call.duplicate=data?.duplicate===true;
@@ -2370,11 +2372,11 @@ function hangingSteps(account, {deliver=true}={}){
  };
  return {fetchImpl, calls, held:()=>held, release:()=>release?.()};
 }
-async function closedBattle(account, username, {deliver=true, uploadTimeout}={}){
+async function closedBattle(account, username, {uploadTimeout,...transportOptions}={}){
  const signed=account||await signedCoach(username);
  const header=headerFor();
  const storage=consented();
- const transport=hangingSteps(signed, {deliver});
+ const transport=hangingSteps(signed, transportOptions);
  const battle=createCoachBattle({
   storage, schedule(){return 1;}, fetchImpl:transport.fetchImpl, uploadTimeout
  });
@@ -2401,8 +2403,9 @@ test('a failed upload is not retried after recording is closed, and the next dec
  assert.equal(ended.battle.session.humanStep, 0);
  ended.battle.setConsent(true);
  ended.battle.noteHuman({packs, state:ended.follow.state, action:ended.follow.action, replayIndex:ended.follow.replayIndex, legal:ended.follow.legal});
+ assert.equal(ended.battle.session.checking, true);
+ await waitUntil(()=>ended.battle.session.checking===false);
  assert.equal(ended.battle.session.humanStep, 1);
- assert.equal(ended.battle.session.checking, false);
  await ended.battle.flush();
  assert.equal(ended.calls.length, 2);
  assert.equal(ended.calls[1].status, 200);
@@ -2495,7 +2498,7 @@ test('an unknown in-flight upload is checked before the next step number is assi
  await flushing;
  await new Promise(resolve=>setTimeout(resolve, 20));
  assert.equal(ended.calls.length, 1);
- assert.equal(ended.battle.session.humanStep, 1);
+ assert.equal(ended.battle.session.humanStep, 0);
  ended.battle.setConsent(true);
  ended.battle.noteHuman({packs, state:ended.follow.state, action:ended.follow.action, replayIndex:ended.follow.replayIndex, legal:ended.follow.legal});
  assert.equal(ended.battle.session.checking, true);
@@ -2534,4 +2537,118 @@ test('an unknown in-flight upload is checked before the next step number is assi
  assert.equal(soon.calls.some(item=>item.status===409), false);
  const soonDetail=await api('/api/coach/matches/'+soon.header.matchId, {token:soon.signed.token});
  assert.deepEqual(soonDetail.data.steps.map(item=>item.step), [0]);
+});
+
+function noteFollow(battle, follow){
+ battle.noteHuman({packs,state:follow.state,action:follow.action,replayIndex:follow.replayIndex,legal:follow.legal});
+}
+
+test('a revoked POST that committed before a 503 or timeout keeps its accepted step', async()=>{
+ const account=await signedCoach('已寫甲');
+ for(const outcome of ['503','timeout']){
+  for(const immediate of [false,true]){
+   const fixture=await closedBattle(account,null,{commitFirst:true,responseStatus:outcome==='503'?503:undefined,
+    uploadTimeout:outcome==='timeout'?100:undefined});
+   const {battle,follow,header,held,release,calls}=fixture;
+   const flushed=battle.flush();
+   await waitUntil(held);
+   battle.setConsent(false);
+   if(immediate){battle.setConsent(true);noteFollow(battle,follow);}
+   if(outcome==='503')release();
+   await flushed;
+   if(!immediate){battle.setConsent(true);noteFollow(battle,follow);}
+   await waitUntil(()=>!battle.session.checking);
+   if(outcome==='timeout')release();
+   await battle.flush();
+   assert.deepEqual(calls.map(({status,step})=>[status,step]),[[outcome==='503'?503:200,0],[200,1]]);
+   const detail=await api('/api/coach/matches/'+header.matchId,{token:account.token});
+   assert.deepEqual(detail.data.steps.map(({step,replayIndex})=>[step,replayIndex]),[[0,0],[1,follow.replayIndex]]);
+   assert.equal(detail.data.steps[1].previous.step,0);
+  }
+ }
+});
+
+test('a POST arriving after timeout reconciliation cannot displace the fresh step', async()=>{
+ const account=await signedCoach('晚抵甲');
+ for(const immediate of [false,true]){
+  const {battle,storage,fetchImpl,follow,header,held,release,calls}=await closedBattle(account,null,{uploadTimeout:70});
+  const flushed=battle.flush();
+  await waitUntil(held);
+  battle.setConsent(false);
+  if(immediate){battle.setConsent(true);noteFollow(battle,follow);}
+  await flushed;
+  let resumed=battle;
+  if(!immediate){
+   const saved=battle.snapshot();
+   assert.equal(saved.openUpload.step,0);
+   assert.equal(saved.openUpload.body,undefined);
+   resumed=createCoachBattle({storage,fetchImpl,schedule(){return 1;}});
+   await resumed.restore(saved,header,account.accountId);
+   resumed.setConsent(true);
+   noteFollow(resumed,follow);
+  }
+  await waitUntil(()=>!resumed.session.checking);
+  release();
+  await waitUntil(()=>calls[0].status===410);
+  await resumed.flush();
+  assert.deepEqual(calls.map(({status,step})=>[status,step]),[[410,0],[200,0]]);
+  const detail=await api('/api/coach/matches/'+header.matchId,{token:account.token});
+  assert.deepEqual(detail.data.steps.map(({step,replayIndex})=>[step,replayIndex]),[[0,follow.replayIndex]]);
+ }
+});
+
+test('rapid revocation in another collector cancels an old retry and keeps the fresh step', async()=>{
+ const {battle,storage,signed,follow,header,held,release,calls}=await closedBattle(null,'跨頁甲',{deliver:false});
+ const other=createCoachBattle({storage,fetchImpl:apiFetch(signed.token),schedule(){return 1;}});
+ await other.begin(headerFor(),signed.accountId);
+ const flushed=battle.flush();
+ await waitUntil(held);
+ other.setConsent(false);
+ other.setConsent(true);
+ release();
+ await flushed;
+ assert.deepEqual(calls.map(({status,step})=>[status,step]),[[503,0]]);
+ noteFollow(battle,follow);
+ await waitUntil(()=>!battle.session.checking);
+ await battle.flush();
+ assert.deepEqual(calls.map(({status,step})=>[status,step]),[[503,0],[200,0]]);
+ const detail=await api('/api/coach/matches/'+header.matchId,{token:signed.token});
+ assert.deepEqual(detail.data.steps.map(({step,replayIndex})=>[step,replayIndex]),[[0,follow.replayIndex]]);
+});
+
+test('a confirmed step links to the transmitted action when later queued actions are revoked', async()=>{
+ const {battle,signed,follow,header,held,release,calls}=await closedBattle(null,'前步甲');
+ noteFollow(battle,follow);
+ const next=respondUntilHuman(dispatchUniversalAction(packs,follow.state,follow.action,{actor:0}));
+ const legal=legalUniversalActions(packs,next.state);
+ const fresh={state:next.state,legal,action:legal[0],replayIndex:follow.replayIndex+1+next.steps};
+ const flushed=battle.flush();
+ await waitUntil(held);
+ battle.setConsent(false);
+ release();
+ await flushed;
+ battle.setConsent(true);
+ noteFollow(battle,fresh);
+ await battle.flush();
+ assert.deepEqual(calls.map(({status,step})=>[status,step]),[[200,0],[200,1]]);
+ const detail=await api('/api/coach/matches/'+header.matchId,{token:signed.token});
+ assert.deepEqual(detail.data.steps.map(({step,replayIndex})=>[step,replayIndex]),[[0,0],[1,fresh.replayIndex]]);
+ assert.deepEqual(detail.data.steps[1].previous,{
+  step:0,type:'openingMulligan',replayIndex:0,clientKey:detail.data.steps[0].clientKey
+ });
+ assert.equal(detail.data.steps[1].chain.previousStep,0);
+});
+
+test('a step picked up by a different outbox is fenced when the original collector revokes it', async()=>{
+ const {battle,signed,storage,follow,header}=await closedBattle(null,'他頁甲');
+ const original=readStoredQueue(storage)[0].body;
+ battle.setConsent(false);
+ battle.setConsent(true);
+ noteFollow(battle,follow);
+ await waitUntil(()=>!battle.session.checking);
+ const late=await api('/api/coach/steps',{method:'POST',token:signed.token,body:original});
+ assert.equal(late.status,410,late.text);
+ await battle.flush();
+ const detail=await api('/api/coach/matches/'+header.matchId,{token:signed.token});
+ assert.deepEqual(detail.data.steps.map(({step,replayIndex})=>[step,replayIndex]),[[0,follow.replayIndex]]);
 });

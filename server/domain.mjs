@@ -624,6 +624,7 @@ export function dispatchAccount(repos,message,now){
    return {ok:true};
   }
   case 'coachStep':
+  case 'coachReconcileStep':
   case 'coachLabel':
   case 'coachDemo':
   case 'coachDebug':

@@ -1,6 +1,7 @@
 // Consent defaults off. A dropped response can be sent again; the server
 // keeps one row per match step, so a retry does not create a second decision.
 export const COACH_CONSENT_KEY='ua-v2-coach-consent';
+const CONSENT_VERSION_KEY=COACH_CONSENT_KEY+'-version';
 const ACCOUNT_ID=/^u[a-f0-9]{16}$/;
 
 export function validAccountId(value){
@@ -22,26 +23,35 @@ export function coachConsentEnabled(storage){
  try{return storage?.getItem(COACH_CONSENT_KEY)==='1';}
  catch{return false;}
 }
+export function coachConsentVersion(storage){
+ try{return storage?.getItem(CONSENT_VERSION_KEY)??null;}
+ catch{return null;}
+}
 export function setCoachConsent(storage,enabled){
  if(enabled)storage.setItem(COACH_CONSENT_KEY,'1');
- else storage.removeItem(COACH_CONSENT_KEY);
+ else{
+  storage.removeItem(COACH_CONSENT_KEY);
+  storage.setItem(CONSENT_VERSION_KEY,globalThis.crypto.randomUUID());
+ }
 }
 
-export function createCoachUploader({consent,fetchImpl=globalThis.fetch,onUploaded,onError,onLate,uploadTimeout=8000}={}){
+export function createCoachUploader({consent,storage,fetchImpl=globalThis.fetch,onUploaded,onError,uploadTimeout=8000}={}){
  const done=new Set();
  const inflight=new Map();
  let round=0;
- function blocked(generation){return generation!==round||!consent?.();}
  async function send(path,body,key){
+  key=(body?.accountId||'')+'\n'+key;
   if(!consent?.())return {skipped:'consent'};
   if(done.has(key))return {skipped:'sent'};
   const pending=inflight.get(key);
   if(pending)return pending;
   const generation=round;
+  const version=coachConsentVersion(storage);
+  const blocked=()=>generation!==round||version!==coachConsentVersion(storage)||!consent?.();
   const task=(async()=>{
    let last=null;
    for(let attempt=0;attempt<2;attempt++){
-    if(blocked(generation))return last?{...last,skipped:'consent'}:{skipped:'consent'};
+    if(blocked())return last?{...last,skipped:'consent'}:{skipped:'consent'};
     let timer;
     let flight;
     try{
@@ -58,13 +68,6 @@ export function createCoachUploader({consent,fetchImpl=globalThis.fetch,onUpload
      ]);
      if(timer)clearTimeout(timer);
      if(response?.timeout){
-      void Promise.resolve(flight).then(async late=>{
-       if(done.has(key)||!late?.ok)return;
-       const data=await late.json().catch(()=>null);
-       done.add(key);
-       onUploaded?.(data);
-       onLate?.({ok:true,data}, body);
-      }).catch(()=>{});
       last={ok:false,status:0,timeout:true,data:{error:'紀錄確認逾時。'}};
       continue;
      }
@@ -75,16 +78,16 @@ export function createCoachUploader({consent,fetchImpl=globalThis.fetch,onUpload
       return {ok:true,data};
      }
      last={ok:false,status:response.status,data};
-     if(blocked(generation))return {...last,skipped:'consent'};
+     if(blocked())return {...last,skipped:'consent'};
      if(response.status===401||response.status===403||response.status===409||response.status===400||response.status===413)break;
     }catch{
      if(timer)clearTimeout(timer);
      last={ok:false,status:0,data:{error:'網路中斷，稍後會再送一次。'}};
-     if(blocked(generation))return {...last,skipped:'consent'};
+     if(blocked())return {...last,skipped:'consent'};
     }
    }
-   if(blocked(generation))return last?{...last,skipped:'consent'}:{skipped:'consent'};
-   onError?.(last?.data?.error||'紀錄沒有送出。',last);
+   if(blocked())return last?{...last,skipped:'consent'}:{skipped:'consent'};
+   onError?.(last?.data?.error||'紀錄沒有送出。',last,body);
    return last;
   })();
   inflight.set(key,task);

@@ -82,6 +82,12 @@ CREATE TABLE IF NOT EXISTS coach_matches (
   end_reason TEXT
 );
 CREATE INDEX IF NOT EXISTS coach_matches_user ON coach_matches(user_id, created_at);
+CREATE TABLE IF NOT EXISTS coach_step_fences (
+  user_id TEXT NOT NULL,
+  match_id TEXT NOT NULL,
+  version TEXT NOT NULL,
+  PRIMARY KEY(user_id, match_id)
+);
 CREATE TABLE IF NOT EXISTS coach_steps (
   id TEXT PRIMARY KEY,
   match_id TEXT NOT NULL,
@@ -334,6 +340,19 @@ export function createRepositories(sql){
     (SELECT COUNT(*) FROM coach_steps s WHERE s.user_id=coach_matches.user_id AND s.match_id=coach_matches.id) AS steps,
     (SELECT COUNT(*) FROM coach_demos d WHERE d.user_id=coach_matches.user_id AND d.match_id=coach_matches.id) AS demos
     FROM coach_matches WHERE user_id=? ORDER BY created_at DESC, id DESC`,userId);
+  },
+  coachStepFence(userId,matchId){
+   return sql.get('SELECT version FROM coach_step_fences WHERE user_id=? AND match_id=?',userId,matchId)?.version||null;
+  },
+  coachStepFenceCount(userId){
+   return Number(sql.get('SELECT COUNT(*) AS n FROM coach_step_fences WHERE user_id=?',userId)?.n||0);
+  },
+  setCoachStepFence(userId,matchId,version){
+   sql.run(`INSERT INTO coach_step_fences (user_id,match_id,version) VALUES (?,?,?)
+    ON CONFLICT(user_id,match_id) DO UPDATE SET version=excluded.version`,userId,matchId,version);
+  },
+  lastCoachStep(userId,matchId){
+   return sql.get('SELECT payload_json AS payloadJson FROM coach_steps WHERE user_id=? AND match_id=? ORDER BY step DESC LIMIT 1',userId,matchId);
   },
   coachStepCount(userId,matchId){
    return Number(sql.get('SELECT COUNT(*) AS n FROM coach_steps WHERE user_id=? AND match_id=?',userId,matchId)?.n||0);

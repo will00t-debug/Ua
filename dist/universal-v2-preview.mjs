@@ -44,7 +44,7 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {currentAccountId} from './universal-v2/coach-client.mjs?v=20261104account1';
-import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104step4';
+import {createCoachBattle} from './universal-v2/coach-battle.mjs?v=20261104step5';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261101coachart1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
@@ -1378,6 +1378,11 @@ function coachApi(){
  });
  return app.coachBattle;
 }
+window.addEventListener('storage',event=>{
+ if(event.key!=='ua-v2-coach-consent'&&event.key!=='ua-v2-coach-consent-version')return;
+ app.coachBattle?.syncConsent();
+ saveBattleProgress();
+});
 function coachHeaderNow(matchId){
  return coachHeader({matchId,packs:app.packs,counts:app.launch.decks[0].counts,
   aiVersion:aiPolicyFor(app.aiDifficulty),engineVersion:app.state?.version});

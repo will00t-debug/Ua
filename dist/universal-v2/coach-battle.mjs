@@ -3,9 +3,8 @@
 // for the upload. AI actions stay out of the player-decision queue.
 // A resume check, a recovered write that has not landed, or an upload still
 // in flight stages new decisions until the next step number is confirmed.
-// Closing consent drops only unsent rows.
-import {coachConsentEnabled,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step3';
-import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step1';
+import {coachConsentEnabled,coachConsentVersion,setCoachConsent,createCoachUploader,currentAccountId,validAccountId} from './coach-client.mjs?v=20261104step5';
+import {createDecisionQueue, readStoredQueue} from './coach-queue.mjs?v=20261104step5';
 import {LABEL_FORMAT, chainOf} from './coach-format.mjs';
 import {newCoachMatchId,buildHumanStep,buildAiMark,stateAtReplayIndex} from './coach-record.mjs';
 
@@ -14,51 +13,36 @@ async function accountFor(fetchImpl,known){
  const id=await currentAccountId(fetchImpl);
  return validAccountId(id);
 }
-function rewind(session,bodies){
- if(!session)return;
- const mine=bodies.filter(body=>body?.matchId===session.matchId&&body?.source==='human'&&
-  String(body.format||'').includes('step'));
- if(!mine.length)return;
- const oldest=mine.reduce((left,right)=>left.step<right.step?left:right);
- session.humanStep=oldest.step;
- session.previous=oldest.previous||null;
- session.undoStack=(session.undoStack||[]).slice(0,oldest.step);
-}
-
 export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,onAccepted,schedule,locks,reconcileTimeout=8000,uploadTimeout=8000}={}){
  let uploaded=0;
  let session=null;
  let epoch=0;
  let noteSeq=0;
- let unsettled=null;
  let openUpload=null;
  let reconcileGen=0;
  let reconcileTimer=null;
  let pendingSaved=null;
  let anchorWait=null;
- const sendEpoch=new Map();
+ let consentVersion=coachConsentVersion(storage);
  const uploader=createCoachUploader({
   consent:()=>coachConsentEnabled(storage),
+  storage,
   fetchImpl,
   uploadTimeout,
-  onUploaded(){uploaded++;if(session){session.uploaded=uploaded;session.lastError='';}},
-  onError(message){if(session)session.lastError=message||'紀錄沒有送出。';},
-  onLate(result, body){
-   const epochNow=sendEpoch.get(body?.clientKey);
-   applyResult(body?.matchId, body?.step, result, epochNow, body?.accountId);
+  onError(message,result,body){
+   if(owns(body))session.lastError=message||'紀錄沒有送出。';
   }
  });
- function acceptConfirmed(matchId,step,result,epochNow,accountId,body){
-  if(epoch!==epochNow||!session||session.matchId!==matchId)return;
-  if(accountId&&session.accountId&&accountId!==session.accountId)return;
-  const data=result?.data;
-  const accepted=result?.ok===true||result?.duplicate===true||data?.duplicate===true||result?.skipped==='sent';
-  if(!accepted||!Number.isInteger(step)||step!==session.confirmedThrough)return;
+ function owns({matchId,accountId}={}){
+  return !!session&&session.matchId===matchId&&session.accountId===accountId;
+ }
+ function acceptConfirmed(track){
+  const {step,link}=track;
+  if(step!==session.confirmedThrough)return;
   session.confirmedThrough=step+1;
-  const summary=body?.choice?{step:body.step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey}:null;
-  if(session.humanStep<session.confirmedThrough){
-   session.humanStep=session.confirmedThrough;
-   if(summary)session.previous=summary;
+  if(session.humanStep<=step+1){
+   session.humanStep=step+1;
+   session.previous=link;
   }
   const note=session.reservations.find(item=>item.step===step&&item.status!=='cancelled');
   if(note)note.status='confirmed';
@@ -68,27 +52,28 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
  const queue=createDecisionQueue({
   storage,
   consent:()=>coachConsentEnabled(storage),
+  consentVersion:()=>coachConsentVersion(storage),
   schedule,
   locks,
   send(body){
-   const matchId=body?.matchId;
-   const step=body?.step;
    const human=body?.source==='human'&&String(body?.format||'').includes('step');
-   const epochNow=epoch;
-   const accountId=body?.accountId;
-   if(human&&body?.clientKey)sendEpoch.set(body.clientKey, epochNow);
-   const sent=String(body?.format||'').includes('label')?uploader.label(body):uploader.step(body);
-   const done=Promise.resolve(sent).then(result=>{
-    if(human)applyResult(matchId, step, result, epochNow, accountId);
+   if(!human||!owns(body))
+    return String(body.format||'').includes('label')?uploader.label(body):uploader.step(body);
+   const {matchId,accountId,step,writeVersion=null}=body;
+   const track={matchId,accountId,step,writeVersion,outcome:'pending',
+    link:{step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey}};
+   openUpload=track;
+   track.done=uploader.step(body).then(result=>{
+    if(openUpload!==track||!owns(track))return result;
+    track.done=null;
+    if(result?.ok||result?.skipped==='sent'){
+     track.outcome='accepted';
+     if(result.ok){uploaded++;session.uploaded=uploaded;session.lastError='';}
+     acceptConfirmed(track);
+    }else track.outcome='unknown';
     return result;
    });
-   if(human){
-    openUpload={matchId, accountId, step, outcome:'pending', link:session?.previous||null};
-    const track={matchId, accountId, step, done};
-    unsettled=track;
-    void done.finally(()=>{if(unsettled===track)unsettled=null;});
-   }
-   return done;
+   return track.done;
   },
   account(){return currentAccountId(fetchImpl);},
   onChange(){
@@ -106,14 +91,15 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   return readStoredQueue(storage).some(item=>item.clientKey===clientKey||item.body?.clientKey===clientKey);
  }
  function localHumanSteps(matchId){
-  return readStoredQueue(storage).map(item=>item.body).filter(body=>body?.matchId===matchId&&
+  return readStoredQueue(storage).filter(item=>(item.consentVersion??null)===consentVersion)
+   .map(item=>item.body).filter(body=>body?.matchId===matchId&&
    body.source==='human'&&String(body.format||'').includes('step')&&Number.isInteger(body.step))
    .sort((left,right)=>left.step-right.step);
  }
  function blank(matchId){
   return {matchId,humanStep:0,aiStep:0,lastAi:null,marks:[],uploaded,lastError:'',
    previous:null,undoStack:[],finished:false,reviewing:false,label:null,signedIn:null,header:null,
-   reservations:[],confirmedThrough:0,staged:[],checking:false};
+   reservations:[],confirmedThrough:0,staged:[],checking:false,writeVersion:null};
  }
  function fresh(){epoch+=1;reconcileGen+=1;clearReconcile();pendingSaved=null;openUpload=null;anchorWait=null;}
  function clearReconcile(){
@@ -179,7 +165,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    if(!response.ok)return {known:false};
    const data=await response.json();
    const count=data?.match?.steps;
-   if(Number.isInteger(count)&&count>=0)return {known:true, count};
+   if(Number.isInteger(count)&&count>=0)return {known:true,count,writeVersion:data.writeVersion};
    return {known:false};
   }catch{
    if(timer)clearTimeout(timer);
@@ -217,9 +203,10 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   return {...draft, step, clientKey, previous:link, chain:chainOf(matchId, step, link, clientKey)};
  }
  function enqueueHuman(body, prior, epochNow){
+  if(session.writeVersion)body={...body,writeVersion:session.writeVersion};
   const matchId=session.matchId;
   const step=body.step;
-  session.undoStack.push(prior);
+  session.undoStack[step]=prior;
   session.previous={step:body.step,type:body.choice.type,replayIndex:body.replayIndex,clientKey:body.clientKey};
   session.humanStep=step+1;
   const note={id:++noteSeq,matchId,step,clientKey:body.clientKey,body,previous:prior,status:'open'};
@@ -304,6 +291,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    return;
   }
   pendingSaved=null;
+  if(remote.writeVersion!==undefined)session.writeVersion=remote.writeVersion;
   applyCount(remote.count, saved);
   if(!coachConsentEnabled(storage)){
    session.checking=false;
@@ -326,101 +314,92 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   if(lost)session.lastError='紀錄尚未儲存';
   emit();
  }
- function classify(result){
-  const data=result?.data;
-  if(result?.ok===true||result?.duplicate===true||data?.duplicate===true||result?.skipped==='sent')return 'accepted';
-  if(result?.timeout||result?.status===0)return 'unknown';
-  const status=result?.status;
-  if(status==null)return result?.skipped==='consent'?'rejected':'unknown';
-  if(status===401||status===403||status===409||status===500)return 'unknown';
-  if(status>=400)return 'rejected';
-  return 'unknown';
+ async function readFencedProgress(track){
+  let timer;
+  try{
+   const {matchId,accountId,step,writeVersion}=track;
+   const response=await Promise.race([
+    fetchImpl('/api/coach/steps/reconcile',{
+     method:'POST',credentials:'same-origin',headers:{accept:'application/json','content-type':'application/json'},
+     body:JSON.stringify({matchId,accountId,step,writeVersion})
+    }),
+    new Promise(resolve=>{timer=setTimeout(()=>resolve(null),reconcileTimeout);})
+   ]);
+   if(!response?.ok)return null;
+   const data=await response.json();
+   return Number.isInteger(data?.count)&&data.count>=0&&
+    (data.writeVersion===null||typeof data.writeVersion==='string')?data:null;
+  }catch{return null;}
+  finally{clearTimeout(timer);}
  }
- function rewindUnaccepted(step){
-  if(!session||!Number.isInteger(step))return;
-  if((session.confirmedThrough||0)>step)return;
-  if(session.humanStep!==step+1)return;
-  const prior=Array.isArray(session.undoStack)?session.undoStack[step]??null:null;
-  session.humanStep=step;
-  session.undoStack=(session.undoStack||[]).slice(0, step);
-  session.previous=prior;
- }
- function sameUpload(matchId, accountId, step){
-  return openUpload&&openUpload.matchId===matchId&&openUpload.step===step&&
-   (!accountId||!openUpload.accountId||accountId===openUpload.accountId);
- }
- function applyResult(matchId, step, result, epochNow, accountId){
-  if(!Number.isInteger(epochNow)||epoch!==epochNow||!session||session.matchId!==matchId)return;
-  if(accountId&&session.accountId&&accountId!==session.accountId)return;
-  if(!sameUpload(matchId, accountId, step))return;
-  const kind=classify(result);
-  if(openUpload.outcome==='accepted')return;
-  if(kind==='unknown'&&openUpload.outcome==='rejected')return;
-  openUpload.outcome=kind;
-  if(kind==='accepted'){
-   acceptConfirmed(matchId, step, result, epochNow, accountId, null);
-   if((session.humanStep||0)>=step+1&&openUpload.link)session.previous=openUpload.link;
-  }else if(kind==='rejected')rewindUnaccepted(step);
- }
- function uploadMatches(){
-  return openUpload&&session&&openUpload.matchId===session.matchId&&
-   (!openUpload.accountId||!session.accountId||openUpload.accountId===session.accountId);
- }
- async function confirmOpenUpload(epochNow){
-  const track=openUpload;
-  if(!track||epoch!==epochNow||!session||session.matchId!==track.matchId)return;
-  if(track.accountId&&session.accountId&&track.accountId!==session.accountId)return;
-  if(!coachConsentEnabled(storage)){
-   session.checking=false;
-   session.staged=[];
-   emit();
-   return;
+ async function confirmOpenUpload(track,gen){
+  if(openUpload!==track||!owns(track)||gen!==reconcileGen||!coachConsentEnabled(storage))return;
+  if(track.outcome!=='accepted'||session.confirmedThrough<=track.step){
+   const remote=await readFencedProgress(track);
+   if(openUpload!==track||!owns(track)||gen!==reconcileGen||
+      consentVersion!==coachConsentVersion(storage)||!coachConsentEnabled(storage))return;
+   if(!remote){
+    scheduleReconcile(()=>void confirmOpenUpload(track,gen));
+    emit();
+    return;
+   }
+   session.writeVersion=remote.writeVersion;
+   session.confirmedThrough=remote.count;
+   session.humanStep=remote.count;
+   session.undoStack=session.undoStack.slice(0,remote.count);
+   session.previous=remote.previous??null;
   }
-  if(track.outcome==='accepted'||(session.confirmedThrough||0)>track.step){
-   if((session.humanStep||0)<track.step+1)session.humanStep=track.step+1;
-   if((session.humanStep||0)>=track.step+1&&track.link)session.previous=track.link;
-   openUpload=null;
-   releaseStaged();
-   emit();
-   return;
-  }
-  if(track.outcome==='rejected'){
-   rewindUnaccepted(track.step);
-   openUpload=null;
-   releaseStaged();
-   emit();
-   return;
-  }
-  const gen=reconcileGen;
-  const remote=await readServerCount(session.matchId);
-  if(epoch!==epochNow||gen!==reconcileGen||!session||session.matchId!==track.matchId||openUpload!==track)return;
-  if(track.outcome==='accepted'||(session.confirmedThrough||0)>track.step){
-   if((session.humanStep||0)<track.step+1)session.humanStep=track.step+1;
-   if(track.link)session.previous=track.link;
-   openUpload=null;
-   releaseStaged();
-   emit();
-   return;
-  }
-  if(!coachConsentEnabled(storage)){
-   session.checking=false;
-   session.staged=[];
-   emit();
-   return;
-  }
-  if(!remote.known){
-   session.checking=true;
-   scheduleReconcile(()=>{
-    if(epoch===epochNow&&gen===reconcileGen&&session?.checking&&openUpload===track)
-     void confirmOpenUpload(epochNow);
-   });
-   emit();
-   return;
-  }
-  if(remote.count>track.step)applyCount(remote.count, {humanStep:Math.max(remote.count, session.humanStep||0), previous:session.previous, undoStack:session.undoStack});
-  else rewindUnaccepted(track.step);
   openUpload=null;
+  pendingSaved=null;
   releaseStaged();
+  try{onAccepted?.();}catch{/* The current cursor is already in memory. */}
+  emit();
+ }
+ function revoke(){
+  uploader.invalidate();
+  reconcileGen+=1;
+  clearReconcile();
+  anchorWait=null;
+  queue.discard();
+  if(!session)return;
+  session.checking=false;
+  session.staged=[];
+  const confirmed=session.confirmedThrough;
+  if(session.humanStep>confirmed)session.previous=session.undoStack[confirmed]??null;
+  session.humanStep=confirmed;
+  session.undoStack=session.undoStack.slice(0,confirmed);
+  // Another tab can also drain a stored row from the shared outbox.
+  const candidate=session.reservations.find(note=>note.step===confirmed&&note.status==='stored');
+  if(candidate&&(!owns(openUpload??{})||openUpload.step<confirmed)){
+   openUpload={matchId:session.matchId,accountId:session.accountId,step:confirmed,
+    writeVersion:session.writeVersion,outcome:'unknown'};
+  }
+  for(const note of session.reservations){
+   if(note.status!=='confirmed')note.status='cancelled';
+  }
+  session.reservations=session.reservations.filter(note=>note.status==='confirmed');
+  if(owns(openUpload??{}))openUpload.revoked=true;
+ }
+ function resume(){
+  if(!session||session.checking||!coachConsentEnabled(storage))return;
+  if(openUpload?.revoked&&owns(openUpload)){
+   const track=openUpload;
+   if(track.outcome==='accepted'&&session.confirmedThrough>track.step){openUpload=null;return;}
+   session.checking=true;
+   const gen=reconcileGen;
+   if(track.done)void track.done.then(()=>confirmOpenUpload(track,gen));
+   else void confirmOpenUpload(track,gen);
+  }else if(pendingSaved?.matchId===session.matchId){
+   session.checking=true;
+   void confirmCounting(pendingSaved,epoch);
+  }
+ }
+ function syncConsent(){
+  const version=coachConsentVersion(storage);
+  if(version===consentVersion){resume();return;}
+  consentVersion=version;
+  revoke();
+  resume();
   emit();
  }
  function watch(note,queued,context){
@@ -454,60 +433,14 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
   get session(){return session;},
   get queued(){return queue.length;},
   consent(){return coachConsentEnabled(storage);},
+  syncConsent,
   setConsent(enabled){
    setCoachConsent(storage,!!enabled);
-   if(!session){emit();return;}
-   if(!enabled){
-    uploader.invalidate();
-    reconcileGen+=1;
-    clearReconcile();
-    session.checking=false;
-    session.staged=[];
-    if(session.reservations){
-     for(const note of session.reservations){
-      if(note.status==='open'||note.status==='waiting')queue.drop(note.clientKey);
-     }
-    }
-    const inflight=unsettled&&unsettled.matchId===session.matchId&&
-     (!unsettled.accountId||!session.accountId||unsettled.accountId===session.accountId)?unsettled:null;
-    const inflightKey=inflight?inflight.matchId+':'+inflight.step+':human':null;
-    const bodies=queue.discard().filter(body=>!inflightKey||body?.clientKey!==inflightKey);
-    rewind(session, bodies);
-    if(session.reservations){
-     for(const note of session.reservations){
-      if(note.status==='open'||note.status==='waiting')note.status='cancelled';
-     }
-    }
-    const kept=bodies.some(body=>body?.matchId===session.matchId&&body?.source==='human'&&
-     String(body.format||'').includes('step'));
-    if(!kept&&!inflight){
-     if((session.confirmedThrough||0)>0)session.humanStep=Math.max(session.humanStep||0, session.confirmedThrough);
-     else{session.humanStep=0;session.previous=null;session.undoStack=[];}
-    }
-   }else if(uploadMatches()){
-    if(openUpload.outcome==='accepted'||(session.confirmedThrough||0)>openUpload.step){
-     if((session.humanStep||0)<openUpload.step+1)session.humanStep=openUpload.step+1;
-     if(openUpload.link)session.previous=openUpload.link;
-     openUpload=null;
-    }else if(openUpload.outcome==='rejected'){
-     rewindUnaccepted(openUpload.step);
-     openUpload=null;
-    }else{
-     session.checking=true;
-     const epochNow=epoch;
-     const pending=unsettled&&unsettled.matchId===session.matchId&&unsettled.step===openUpload.step?unsettled.done:null;
-     if(openUpload.outcome==='pending'&&pending)void pending.then(()=>confirmOpenUpload(epochNow));
-     else void confirmOpenUpload(epochNow);
-    }
-   }else if(!session.checking&&pendingSaved&&pendingSaved.matchId===session.matchId){
-    session.checking=true;
-    const epochNow=epoch;
-    const saved=pendingSaved;
-    void confirmCounting(saved, epochNow);
-   }
+   syncConsent();
    emit();
   },
   async begin(header,knownAccount){
+   syncConsent();
    fresh();
    session=blank(header.matchId||newCoachMatchId());
    session.header={...header,matchId:session.matchId};
@@ -520,10 +453,12 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    return session.matchId;
   },
   async restore(saved,header,knownAccount){
+   syncConsent();
    fresh();
    const epochNow=epoch;
    session=blank(header.matchId);
    if(saved&&saved.matchId===header.matchId){
+    session.writeVersion=saved.writeVersion??null;
     session.aiStep=saved.aiStep||0;
     session.lastAi=saved.lastAi||null;
     session.marks=Array.isArray(saved.marks)?saved.marks:[];
@@ -544,7 +479,8 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
      next+=1;
     }
     const wanted=Number.isInteger(saved.humanStep)&&saved.humanStep>0?saved.humanStep:0;
-    const pending=(Array.isArray(saved.pending)?saved.pending:[]).filter(item=>item?.body&&
+    const currentConsent=(saved.consentVersion??null)===consentVersion;
+    const pending=(currentConsent&&Array.isArray(saved.pending)?saved.pending:[]).filter(item=>item?.body&&
      item.body.matchId===header.matchId&&item.body.source==='human'&&
      String(item.body.format||'').includes('step')&&Number.isInteger(item.step)&&
      item.step>=confirmed&&item.clientKey===header.matchId+':'+item.step+':human'&&
@@ -572,7 +508,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
      session.undoStack=stack;
     }
     if(coachConsentEnabled(storage)){
-     for(const item of Array.isArray(saved.staged)?saved.staged:[]){
+     for(const item of currentConsent&&Array.isArray(saved.staged)?saved.staged:[]){
       if(item?.draft?.matchId===header.matchId&&item.draft.source==='human'&&item.draft.choice)
        session.staged.push({draft:item.draft, replayIndex:item.replayIndex});
      }
@@ -593,8 +529,22 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    session.accountId=await accountFor(fetchImpl,knownAccount);
    if(epoch!==epochNow)return;
    session.signedIn=session.accountId!=null;
+   let track=saved?.openUpload;
+   const revokedSinceSave=saved&&(saved.consentVersion??null)!==consentVersion;
+   if(!track&&revokedSinceSave&&saved.humanStep>session.confirmedThrough){
+    track={matchId:saved.matchId,accountId:saved.accountId,step:session.confirmedThrough,writeVersion:saved.writeVersion};
+   }
+   if(track?.matchId===header.matchId&&owns(track)&&Number.isInteger(track.step)&&track.step>=session.confirmedThrough){
+    openUpload={matchId:track.matchId,accountId:track.accountId,step:track.step,
+     writeVersion:track.writeVersion??null,outcome:'unknown',revoked:true};
+   }
    queue.start();
-   if(saved&&saved.matchId===header.matchId&&coachConsentEnabled(storage)&&session.accountId){
+   if(openUpload){
+    if(coachConsentEnabled(storage)){
+     session.checking=true;
+     await confirmOpenUpload(openUpload,reconcileGen);
+    }
+   }else if(saved&&saved.matchId===header.matchId&&coachConsentEnabled(storage)&&session.accountId){
     pendingSaved=saved;
     session.checking=true;
     await confirmCounting(saved, epochNow);
@@ -612,12 +562,15 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
     (item.status==='open'||item.status==='waiting')&&item.step>=session.confirmedThrough)
     .map(item=>({step:item.step,clientKey:item.clientKey,body:item.body,previous:item.previous??null}));
    const staged=session.staged.map(item=>({draft:item.draft, replayIndex:item.replayIndex}));
-   const {matchId,humanStep,aiStep,lastAi,marks,uploaded:sent,previous,undoStack,finished,reviewing,label,
-    confirmedThrough}=session;
-   return {matchId,humanStep,aiStep,lastAi,marks,uploaded:sent,previous,undoStack,finished,reviewing,label,
-    pending,confirmedThrough,staged};
+   const {matchId,accountId,humanStep,aiStep,lastAi,marks,uploaded:sent,previous,undoStack,finished,reviewing,label,
+    confirmedThrough,writeVersion}=session;
+   const unresolved=openUpload?.revoked&&openUpload.outcome!=='accepted'?openUpload:null;
+   const upload=unresolved?{matchId:unresolved.matchId,accountId:unresolved.accountId,step:unresolved.step,writeVersion:unresolved.writeVersion}:null;
+   return {matchId,accountId,humanStep,aiStep,lastAi,marks,uploaded:sent,previous,undoStack,finished,reviewing,label,
+    pending,confirmedThrough,staged,writeVersion,consentVersion,openUpload:upload};
   },
   noteHuman(context){
+   syncConsent();
    if(!session||!this.consent())return;
    if(!session.accountId){
     session.lastError='已同意提供紀錄，請先登入。這場不會上傳。';
@@ -711,7 +664,7 @@ export function createCoachBattle({storage,fetchImpl=globalThis.fetch,onChange,o
    emit();
    return result;
   },
-  flush(){return queue.flushNow();},
+  flush(){syncConsent();return queue.flushNow();},
   openReview(){if(session){session.reviewing=true;emit();}},
   closeReview(){if(session){session.reviewing=false;emit();}}
  };
