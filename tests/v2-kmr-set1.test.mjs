@@ -427,3 +427,35 @@ test('UA29BT/KMR-1-011 puts any of the top two on top and the rest on the bottom
  assert.equal(assertUniversalMatch(packs,placed),true);
  assert.equal(assertUniversalMatch(packs,quiet),true);
 });
+
+
+test('KMR-1-053 resolves hand, facedown Doctor under-card and top-or-bottom remainder',()=>{
+ const counts=countsFor(['KMR-1-053','KMR-1-046','KMR-1-036','KMR-1-023','KMR-1-024','KMR-1-026']);
+ const s=fresh(counts);
+ put(s,0,'KMR-1-046','energy',0,true);
+ put(s,0,'KMR-1-036','energy',1,true);
+ const top=take(s,0,'KMR-1-023');
+ const under=take(s,0,'KMR-1-024');
+ const last=take(s,0,'KMR-1-026');
+ s.players[0].deck.unshift(top,under,last);
+ const snipe=take(s,0,'KMR-1-053');
+ s.players[0].hand.push(snipe);
+ ready(s);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===snipe.uid&&a.line==='front');
+ assert.ok(play);
+ let state=dispatchUniversalAction(packs,s,play);
+ assert.equal(state.pending?.step,'snipeHand');
+ state=dispatchUniversalAction(packs,state,state.pending.actions.find(a=>a.mode==='take'&&a.uid===top.uid));
+ assert.equal(state.pending?.step,'snipeUnderCard');
+ state=dispatchUniversalAction(packs,state,state.pending.actions.find(a=>a.mode==='under'&&a.uid===under.uid));
+ assert.equal(state.pending?.step,'snipeUnderHost');
+ state=dispatchUniversalAction(packs,state,state.pending.actions.find(a=>a.mode==='underHost'&&a.uid===snipe.uid));
+ assert.equal(state.pending?.step,'snipeRest');
+ state=dispatchUniversalAction(packs,state,state.pending.actions.find(a=>a.mode==='bottom'&&a.uid===last.uid));
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].hand.some(c=>c.uid===top.uid),true);
+ assert.equal(state.players[0].front.find(c=>c?.uid===snipe.uid)?.under?.some(c=>
+  c.uid===under.uid&&c.faceDown===true),true);
+ assert.equal(state.players[0].deck.at(-1)?.uid,last.uid);
+ assert.equal(assertUniversalMatch(packs,state),true);
+});
