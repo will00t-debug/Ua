@@ -295,7 +295,8 @@ function onLookSimple(pack,s,job,count,pred,opts={}){
  // pack in as that card makes card() throw on the pack object.
  const held=beginLook(s,spec,count,c=>pred(c),{max:opts.max??1,min:0,discard:opts.discard!==false,
   where:'bottom',after:opts.after||null});
- if(!held)continueAfter(pack,s,spec,opts.after||null);
+ if(!held&&!['ankhDiscard','platformDiscard'].includes(opts.after))
+  continueAfter(pack,s,spec,opts.after||null);
 }
 function nonYellowRaid(pack,c){const d=def(pack,c);return !!d.raidName&&d.color!=='yellow';}
 function frontRaidPool(pack,s,owner,names,got){
