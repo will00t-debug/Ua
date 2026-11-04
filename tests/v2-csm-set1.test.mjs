@@ -362,7 +362,7 @@ test('CSM-1-055 draws once only after declining its top-three search, including 
  let s=toPhase(fresh(counts,55002),'main');
  const aki=put(s,0,'CSM-1-055','front',0);
  const cost=toHand(s,0,'CSM-1-011');
- const top=['CSM-1-001','CSM-1-002','CSM-1-003'].map(id=>take(s,0,id));
+ const top=['CSM-1-001','CSM-1-002','CSM-1-009'].map(id=>take(s,0,id));
  s.players[0].deck.unshift(...top);
  s=use(s,{type:'activate',uid:aki.uid,mode:'csm:0'});
  s=choose(s,a=>a.mode==='discard'&&a.uid===cost.uid);
