@@ -16,7 +16,11 @@ const same=value=>JSON.stringify(value);
 function readSessions(storage){
  try{
   const parsed=JSON.parse(storage.getItem(MATCH_KEY)||'{}');
-  return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{};
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return {};
+  for(const [key, record] of Object.entries(parsed)){
+   if(record&&typeof record==='object'&&!Array.isArray(record)&&!record.key)record.key=key;
+  }
+  return parsed;
  }catch{return {};}
 }
 function sessionKey(accountId,seat,code){
@@ -55,8 +59,59 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    onChange?.();
   }
  });
- function saveSessions(){
-  try{storage.setItem(MATCH_KEY,JSON.stringify(sessions));}catch{/* ignore quota */}
+ function consentBehind(current){
+  return (current?.consentVersion??null)!==coachConsentVersion(storage);
+ }
+ function adoptRecord(current, saved){
+  current.matchId=saved.matchId||current.matchId;
+  current.matchLink=saved.matchLink||current.matchLink;
+  current.step=saved.step||0;
+  current.previous=saved.previous||null;
+  current.writeVersion=saved.writeVersion??null;
+  current.unresolved=saved.unresolved||null;
+  current.consentVersion=saved.consentVersion??null;
+  current.progressGen=saved.progressGen||0;
+  if(saved.deck)current.deck=saved.deck;
+  if(saved.titles)current.titles=saved.titles;
+  if(saved.engineVersion)current.engineVersion=saved.engineVersion;
+ }
+ function diskWins(current, stored){
+  if(!stored?.matchId||!current)return false;
+  return (stored.progressGen||0)>(current.progressGen||0);
+ }
+ function absorbShared(current){
+  if(!current?.key)return false;
+  const saved=readSessions(storage)[current.key];
+  if(!saved?.matchId)return false;
+  const sameMatch=saved.matchId===current.matchId;
+  if(sameMatch&&(saved.step||0)>(current.step||0)){
+   adoptRecord(current, saved);
+   return true;
+  }
+  if(!sameMatch&&((saved.progressGen||0)>(current.progressGen||0)||(current.step||0)===0)){
+   adoptRecord(current, saved);
+   return (saved.step||0)>0;
+  }
+  if(sameMatch&&(saved.progressGen||0)>(current.progressGen||0)&&(saved.step||0)>=(current.step||0))
+   adoptRecord(current, saved);
+  return false;
+ }
+ function syncRoom(current){
+  if(!current)return;
+  if(!current.key){
+   const key=sessionKey(current.accountId, current.seat, current.code);
+   if(!key)return;
+   current.key=key;
+  }
+  const row=place(current.key);
+  if(row.hold)return;
+  const ahead=absorbShared(current);
+  if(Number.isInteger(current.unresolved?.step)){
+   rememberHold(current, current.unresolved.step, current.unresolved.writeVersion??null);
+   return;
+  }
+  if(!(ahead||consentBehind(current))||(current.step||0)<=0)return;
+  rememberHold(current, current.step-1, current.writeVersion??null);
  }
  function linkOf(previous){
   if(!previous||!Number.isInteger(previous.step)||typeof previous.type!=='string')return null;
@@ -91,19 +146,8 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  }
  function refreshShared(){
   const version=coachConsentVersion(storage);
-  const changed=version!==seenVersion;
-  if(changed){seenVersion=version;uploader.invalidate();}
-  if(!session?.key)return;
-  const row=place(session.key);
-  if(row.hold)return;
-  if(changed&&(session.step||0)>0){
-   const step=Number.isInteger(session.unresolved?.step)?session.unresolved.step:session.step-1;
-   rememberHold(session,step,session.unresolved?.writeVersion??session.writeVersion??null);
-   return;
-  }
-  const saved=readSessions(storage)[session.key];
-  if(!Number.isInteger(saved?.unresolved?.step))return;
-  rememberHold(session,saved.unresolved.step,saved.unresolved.writeVersion??null);
+  if(version!==seenVersion){seenVersion=version;uploader.invalidate();}
+  if(session?.key)syncRoom(session);
  }
  function rememberUnresolved(bodies){
   if(!session)return;
@@ -136,10 +180,16 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  function loadSession(room,{activate=true}={}){
   const key=sessionKey(room?.accountId,room?.seat,room?.code);
   if(!key)return Promise.resolve(null);
-  if(session?.key===key)return Promise.resolve(session);
+  if(session?.key===key){
+   syncRoom(session);
+   return Promise.resolve(session);
+  }
   if(sessions[key]?.matchId){
-   if(activate)session=sessions[key];
-   return Promise.resolve(sessions[key]);
+   const current=sessions[key];
+   if(!current.key)current.key=key;
+   if(activate)session=current;
+   syncRoom(current);
+   return Promise.resolve(current);
   }
   const existing=opening.get(key);
   if(existing)return existing;
@@ -153,6 +203,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    const created={key,accountId:validAccountId(room.accountId),code:room.code,seat:room.seat,
     matchId,matchLink,step:prior.step||0,previous:prior.previous||null,
     writeVersion:prior.writeVersion??null,unresolved:prior.unresolved||null,
+    consentVersion:prior.consentVersion??null,progressGen:prior.progressGen||0,
     deck:prior.deck||null,titles:prior.titles||null,engineVersion:prior.engineVersion||null};
    if(Number.isInteger(prior.unresolved?.step)){
     const row=place(key);
@@ -161,7 +212,8 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    }
    sessions[key]=created;
    if(live)session=created;
-   saveSessions();
+   syncRoom(created);
+   if(!place(key).hold)persistRecord(created);
    return created;
   })();
   opening.set(key,job);
@@ -169,9 +221,20 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
  }
  function ensure(room){return loadSession(room,{activate:true});}
  function persistRecord(current){
-  if(!current?.key)return;
-  sessions[current.key]=current;
-  saveSessions();
+  const key=current?.key||sessionKey(current?.accountId, current?.seat, current?.code);
+  if(!key||!current)return;
+  current.key=key;
+  const latest=readSessions(storage);
+  const stored=latest[key];
+  if(diskWins(current, stored)){
+   adoptRecord(current, stored);
+   sessions[key]=current;
+   return;
+  }
+  current.progressGen=Math.max(stored?.progressGen||0, current.progressGen||0)+1;
+  latest[key]=current;
+  try{storage.setItem(MATCH_KEY, JSON.stringify(latest));}catch{/* ignore quota */}
+  sessions[key]=current;
  }
  function persist(){persistRecord(session);}
  function headerFrom(current,snap){
@@ -226,6 +289,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
    current.previous={step:body.step,type:body.choice.type,clientKey};
    current.step+=1;
    current.unresolved=null;
+   current.consentVersion=coachConsentVersion(storage);
    current.deck=snap.deck;
    current.titles=snap.titles;
    current.engineVersion=snap.engineVersion;
@@ -264,6 +328,7 @@ export function createOnlineCollector({storage,fetchImpl=globalThis.fetch,deckBy
   saved.writeVersion=remote.writeVersion;
   saved.step=remote.count;
   saved.previous=remote.previous;
+  saved.consentVersion=coachConsentVersion(storage);
   saved.unresolved=null;
   row.hold=null;
   persistRecord(saved);
