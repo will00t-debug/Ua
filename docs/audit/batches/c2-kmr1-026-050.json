@@ -36,13 +36,13 @@
       "command": "node --test tests/v2-kmr-026-050.test.mjs tests/v2-kmr-set1.test.mjs tests/v2-kmr-choice-display.test.mjs tests/v2-raid-frame-ordinary-split.test.mjs tests/v2-kmr-001-025.test.mjs tests/v2-kmr-001-025-rest.test.mjs tests/v2-kmr-entry-flow.test.mjs tests/v2-bp-zero-retire.test.mjs tests/v2-kmr2-001-025.test.mjs",
       "pass": 102,
       "fail": 0,
-      "note": "102 是加上 041 跳過對手後仍放生命之前的整批。該案例隨後單獨通過。全庫數字見 fullSuite。"
+      "note": "102 是加上 041 跳過對手後仍放生命、以及 039／044 生命突襲之前的整批。這兩段已包含在隨後的全庫。"
     },
     "fullSuite": {
       "command": "npm test",
-      "pass": null,
-      "fail": null,
-      "note": "全庫通過不代表每張卡的每個句子都正確。"
+      "pass": 3783,
+      "fail": 0,
+      "note": "2026-11-06 於 Node 22 執行，exit 0。全庫通過不代表每張卡的每個句子都正確。048 與 050 的裡向底下卡仍是 A 組共用缺口。"
     }
   },
   "reviews": [
