@@ -2,6 +2,7 @@
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
 import {makeAttackLifePicker} from './attack-life-picker.mjs';
+import {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
 import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,
  facedownGallery,mountFacedownOverlay,closeFacedownOverlays,findKnownLayer} from './facedown-inspect.mjs';
 export {DESKTOP_BATTLE_QUERY} from './desktop-battle-ui.mjs';
@@ -189,11 +190,18 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
   const gallery=el('div',{class:'v2-zone-gallery'});
   for(const c of [...cards].reverse()){
    if(!c?.cardId||c.faceDown)continue;
-   const playable=side===0&&choices.some(a=>a.uid===c.uid);
+   const enabled=side===0&&room.yourTurn&&room.status==='playing';
+   const activate=legalRemovedMainAction(choices,c.uid,enabled&&zone==='removed');
+   const playable=enabled&&choices.some(a=>a.uid===c.uid&&a.type!=='activateRemoved');
    gallery.append(el('article',{class:'v2-zone-card'},el('button',{type:'button',class:'v2-zone-open',
     onClick:()=>openCard(side,zone,c)},image(el,imageSource(side,c.cardId),c.name||c.cardId),
     el('strong',{class:'v2-zone-card-name',text:c.name||c.cardId})),
-    playable?el('button',{type:'button',text:'選擇此卡',onClick:()=>{overlay.remove();onSelectZone(c);}}):null));
+    playable?el('button',{type:'button',class:'v2-zone-look',text:'選擇此卡',
+     onClick:()=>{overlay.remove();onSelectZone(c);}}):null,
+    activate?el('button',{type:'button',class:'v2-zone-activate',
+     text:removedMainActionText(activate),
+     'aria-label':'發動 '+(c.name||c.cardId)+' 的移除區起動主要',
+     onClick:()=>{overlay.remove();onAction(activate.index);}}):null));
   }
   if(!gallery.childElementCount)gallery.append(el('p',{class:'v2-zone-empty',text:'目前沒有卡片'}));
   dialog.append(el('header',{class:'v2-zone-header'},el('h2',{text:(side===0?'我方':'對手')+(zone==='outside'?'場外':'移除區')+' · '+cards.length+' 張'}),
