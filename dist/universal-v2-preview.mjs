@@ -47,7 +47,7 @@ import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {createCoachBattle} from './universal-v2/coach-battle.mjs';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261104facedown1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
- from './universal-v2/desktop-battle-ui.mjs?v=20261104facedown1';
+ from './universal-v2/desktop-battle-ui.mjs?v=20261105ref1';
 import {facedownInspectModel,facedownGallery,mountFacedownOverlay,closeFacedownOverlays,
  createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,findKnownLayer}
  from './universal-v2/facedown-inspect.mjs?v=20261104facedown1';
