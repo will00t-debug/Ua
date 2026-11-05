@@ -201,6 +201,11 @@ body.arena-site #app.wrap:has(.online-match)>.arena-app{
 .online-zones .zone-pile.selected,.online-zones .zone-pile.open{background:#6a4b16;border-color:#ffd98a}
 .online-zone-gallery{display:flex;gap:6px;overflow-x:auto;padding-top:6px}
 .online-zone-gallery .slot{flex:0 0 72px}
+.online-zone-gallery .online-zone-card{display:flex;flex:0 0 96px;flex-direction:column;gap:4px;min-width:0}
+.online-zone-gallery .online-zone-card .slot{flex:0 0 auto;width:100%;min-width:0}
+.online-zone-gallery .online-zone-card .v2-zone-activate{width:100%;min-height:44px;
+ padding:5px 3px;font-size:10px;white-space:normal;line-height:1.3}
+
 /* Controller-only TOP-N and deck-search gallery, never part of the opponent view. */
 .online-private-inspection{
  border:1px solid #516a82;border-radius:10px;background:#0f1d2b;padding:10px;
