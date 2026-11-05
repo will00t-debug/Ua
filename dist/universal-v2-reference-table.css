@@ -214,3 +214,33 @@
 @media (prefers-reduced-motion:reduce){
  body.v2-battle-page #match-view .v2-reference-table .slots .slot{transition:none}
 }
+
+/* Attacker-only LIFE targeting. No private face-down card identity is exposed. */
+@media (min-width:761px) and (min-height:460px){
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard.v2-life-target{
+  appearance:none;cursor:crosshair;outline:2px solid #ff3a49;
+  outline-offset:0;border-color:#ff6b76;
+  box-shadow:0 0 7px #ef273888,inset 0 1px 3px #b1d8ff1a;
+  color:#fff
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard.v2-life-target:hover,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard.v2-life-target:focus-visible{
+  outline:3px solid #ff8a88;z-index:4
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard.v2-life-selected{
+  background:linear-gradient(125deg,#8b243b,#301a35);
+  border-color:#ffc3c8;outline:3px solid #ff344c;z-index:3
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-instruction{
+  flex:0 0 auto;color:#ffe2e6;text-align:center;font-size:10px;
+  margin:2px 0 0;line-height:1.25
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-confirm{
+  flex:0 0 auto;width:100%;border:1px solid #ffc2c8;border-radius:4px;
+  background:#b83243;color:#fff;font-weight:700;font-size:11px;
+  padding:3px 2px;min-height:24px;cursor:pointer
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-confirm:disabled{
+  cursor:not-allowed;background:#334359;color:#8295ae;border-color:#56708b
+ }
+}
