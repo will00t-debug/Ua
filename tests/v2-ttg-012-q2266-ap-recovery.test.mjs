@@ -33,7 +33,7 @@ function setup(seed,{spare=false,topCards=0}={}){
  let s=newUniversalMatch(pack,{decks:[deck,deck],seed,first:0});
  const p=s.players[0];
  const simon=take(s,'TTG-1-012');
- const extra=spare?take(s,'TTG-1-032'):null;
+ const extra=spare?take(s,'TTG-1-058'):null;
  for(let i=0;i<3;i++){
   const c=take(s,'TTG-1-009');
   c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
@@ -66,7 +66,7 @@ test('Q2266: discard exactly one card, then recover one AP without reaching ener
  assert.equal(s.pending.kind,'effect-discard-mode');
  const options=legalUniversalActions(pack,s);
  assert.ok(options.some(a=>a.type==='chooseDiscardPay'&&a.mode==='activeAp'));
- assert.equal(options.some(a=>a.mode==='retire'),true,'energy-100 discarded card can replace AP with retirement');
+ assert.equal(options.some(a=>a.mode==='retire'),false,'low-energy discard still recovers AP');
  assert.equal(options.some(a=>a.mode==='skip'),false);
  const label=uiActionLabel(options.find(a=>a.mode==='activeAp'),{pack,state:s});
  assert.match(label,/AP/);
