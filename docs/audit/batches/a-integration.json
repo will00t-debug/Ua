@@ -4,13 +4,19 @@
   "pr": 319,
   "base": "a5bc96e85e8f5c1ee62597feae27b3ec337de653",
   "integratedMain": "03bd60f7237e1b1ecdd1002eac167f718b2947b7",
-  "status": "已整合 B 的 Draft PR #321。C、D 尚未交付。",
+  "status": "已整合 B 的 PR #321 與 C 的 PR #323。D 尚未併入。",
   "mergedFrom": [
     {
       "group": "B",
       "pr": 321,
       "branch": "cursor/audit-b-csm-021-039",
       "head": "d25a1b9d"
+    },
+    {
+      "group": "C",
+      "pr": 323,
+      "branch": "cursor/audit-c-kmr1-001-025",
+      "head": "eec537a7"
     }
   ],
   "shared": [
