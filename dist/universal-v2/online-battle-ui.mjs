@@ -1,6 +1,7 @@
 // Presentation only. Online commands keep their server-issued action index.
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
+import {makeAttackLifePicker} from './attack-life-picker.mjs';
 import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,
  facedownGallery,mountFacedownOverlay,closeFacedownOverlays,findKnownLayer} from './facedown-inspect.mjs';
 export {DESKTOP_BATTLE_QUERY} from './desktop-battle-ui.mjs';
@@ -269,7 +270,15 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
   printedCard:definition,effectCopy:d=>d?.effect||d?.text||'請查看印刷卡面。',openCard,
   backControl:leave,matchupLabel:matchup+' · 房間 '+room.code});
  if(paused)middle.append(el('button',{type:'button',class:'v2-inspection-return',text:'返回效果選擇',onClick:onResume}));
- else if(view.pending&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
+ else if(view.pending?.kind==='attack-life-target'&&room.yourTurn&&!desktop){
+  const overlay=el('div',{class:'overlay v2-attack-life-overlay'},
+   el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true',
+    'aria-label':'進攻方選擇對手血區'},
+    makeAttackLifePicker({el,lifeCount:view.players[1].lifeCount,
+     count:view.pending.count,actions:choices,onAction:a=>onAction(a.index)})));
+  shell.append(overlay);
+ }
+ else if(view.pending&&view.pending.kind!=='attack-life-target'&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
   const dialog=el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true','aria-label':'效果選擇'},
    el('div',{class:'headline'},el('h2',{text:view.phase==='setup'?'起手調度':'效果選擇'}),
     actions.querySelector('.online-inspection-peek')?null:el('button',{type:'button',text:'查看場面與手牌',onClick:onPause})),actions);
