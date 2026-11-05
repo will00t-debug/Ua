@@ -688,7 +688,7 @@ export function dispatchRoom(repos,message,now){
    }];
    const packs=seats.map(seat=>titlePack(seat.title));
    let match;
-   try{match=newUniversalMatch(packs,{decks:[host.battleCounts,message.battleCounts],seed,first,openingMulligan:true});}
+   try{match=newUniversalMatch(packs,{decks:[host.battleCounts,message.battleCounts],seed,first,openingMulligan:true,attackerChoosesLife:true});}
    catch{throw new ApiError(400,'這副牌組還不能進入 V2 對戰。');}
    assertUniversalMatch(packs,match);
    room.seats=seats;
