@@ -56,30 +56,37 @@
    "where": "dist/universal-v2/engine.mjs 完成突襲時同時寫 raidedTurn 與 entryTurn。KMR-1-019 仍同時看兩個欄位。",
    "affects": "讀 entryTurn 判斷這個回合是否登場的卡，會把剛完成的突襲算進去。埋到下面的底板不改寫 entryTurn。",
    "evidence": "tests/v2-kmr-001-025-rest.test.mjs 的 019：突襲當回合不能支付取得全部。"
+  },
+  {
+   "name": "假面騎士第二彈三個共用掛點",
+   "rule": "KMR-2-006 在口嚼獸合計 3 張時，直到下一個自己回合開始前發生能源 +黃。KMR-2-009、Q1760：敗給 BP 3000 以下時改到能源線；能源線全滿就先把一張能源卡放到場外。KMR-2-019：自己回合，場上有歐馬形態時，黃以外的角色戰鬥勝利可以抽最多 1 張，複數張歐馬形態不重複抽。",
+   "where": "dist/universal-v2/engine.mjs 允許 KMR-2-006 的 untilOwnTurnStart 能量。kmr2LossReplacement 在滿線時開啟 shiftFull。noteKmr2OmaWin 把 win 排進 KMR-2-019。dist/universal-v2/kmr2-runtime.mjs 結算 shiftFull。",
+   "affects": "006 的能量加成、009 的滿線代替、019 給其他非黃角色的勝利抽牌。015 沒有對象時仍可支付並結束，印刷文本沒有寫必須有對象。",
+   "evidence": "tests/v2-kmr2-001-025.test.mjs"
   }
  ],
  "summary": {
   "total": 957,
-  "未檢查": 869,
+  "未檢查": 844,
   "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 63,
+  "已驗證": 82,
   "缺資料待確認": 0,
-  "部分核對": 6,
+  "部分核對": 12,
   "無效果": 3,
   "行動值卡": 16,
-  "部分條款已記錄": 77,
+  "部分條款已記錄": 100,
   "playable": {
    "total": 938,
-   "未檢查": 869,
+   "未檢查": 844,
    "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 63,
+   "已驗證": 82,
    "缺資料待確認": 0,
-   "部分核對": 6,
+   "部分核對": 12,
    "無效果": 0,
    "行動值卡": 0,
-   "部分條款已記錄": 77
+   "部分條款已記錄": 100
   },
   "ap": {
    "total": 16,
@@ -144,15 +151,15 @@
     "product": "EX12BT",
     "priority": 1,
     "total": 100,
-    "未檢查": 96,
+    "未檢查": 71,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 0,
+    "已驗證": 19,
     "缺資料待確認": 0,
-    "部分核對": 4,
+    "部分核對": 10,
     "無效果": 0,
     "行動值卡": 0,
-    "部分條款已記錄": 6
+    "部分條款已記錄": 29
    },
    {
     "id": "kmr-pr",
@@ -8773,26 +8780,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から2枚見て、カード名に「ガヴ」か「ヴァレン」か「ヴラム」を含むキャラカードか〈ゴチゾウ〉を1枚まで場外に置く。残りを望む順で山札の上に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-001",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on001、beginLook、finishLook",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：查看的 2 張都顯示，不能選的卡標題是目前不能選。對手私人選項為 null。取 1 張不另抽。0 張時兩張回牌頂，先選的在 deck[0]。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-001",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：這張卡接受後手牌 +1，觸發卡進場外一次。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-001",
+     "number": "EX12BT/KMR-2-001",
+     "clauses": [
+      {
+       "match": "【登場時】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -8811,35 +8833,54 @@
    "clauses": [
     {
      "text": "【起動メイン】【ターン1】このキャラがレストの場合のみ発動できる。自分の場の〈ゴチゾウ〉を1枚退場させる。そうした場合、このキャラをアクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-002",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs main002 模式 a",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的 KMR-2-008：休息的 002 退場 1 張口嚼獸後變活動。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【レストにする】 【ターン1】BP3000以下の相手のフロントLのキャラを1枚選び、レストにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-002",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs legalKmr2Activations、main002 模式 b、resolveStep rest",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：沒有合法對象時不休息、不鎖回合。有對象時對手角色實際休息，之後不能再發動。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-002",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：活動生命擁有者的角色並 BP+3000。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-002",
+     "number": "EX12BT/KMR-2-002",
+     "clauses": [
+      {
+       "match": "レストの場合",
+       "status": "已驗證"
+      },
+      {
+       "match": "BP3000以下",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -8858,26 +8899,41 @@
    "clauses": [
     {
      "text": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-003",
+     "implementation": "dist/universal-v2/engine.mjs impactNull",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：正面突襲的 KMR-2-019 擊破 003 後，003 退場，生命沒有減少。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】自分の場のアクティブの〈ゴチゾウ〉を1枚レストにする。そうした場合、このキャラは次の自分のターン開始時まで、「このキャラはフロントLでもエナジーを発生させる。」を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-003",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs main003",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：前線休息 1 張活動口嚼獸後產生黃能量，同一回合不能再發動。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-003",
+     "number": "EX12BT/KMR-2-003",
+     "clauses": [
+      {
+       "match": "インパクト無効",
+       "status": "已驗證"
+      },
+      {
+       "match": "起動メイン",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -8896,26 +8952,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の場のアクティブの〈ゴチゾウ〉を1枚レストにしてもよい。そうした場合、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-004",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on004",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：可跳過。接受時休息 1 張活動口嚼獸並只抽 1 張。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-004",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：這張卡展開為抽牌並可放棄。接受抽 1 張在同一測試的 KMR-2-001。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-004",
+     "number": "EX12BT/KMR-2-004",
+     "clauses": [
+      {
+       "match": "【登場時】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -8934,33 +9005,33 @@
    "clauses": [
     {
      "text": "【レイド】カード名に「ガヴ」を含むキャラ アクティブにし、フロントLに移動できるこのターン中にこのキャラが自分の効果で登場している場合、このキャラはBP+3000と「このキャラは、相手の効果で選ばれない。」を得る。このキャラのアタック終了時、自分がこのアタックフェイズでレイドしていない場合、「自分の手札の〈仮面ライダーガヴ マスターモード〉を1枚公開し、自分の場の〈ゴチゾウ〉を1枚退場させる。」をしてもよい。そうした場合、レイド状態のこのキャラの一番上のカードを手札に戻し、公開したカードをこのキャラのレイド元のカードにレイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-005",
+     "implementation": "dist/universal-v2/kmr2-continuous.mjs bpFor、kmr2ChoiceImmune；dist/universal-v2/kmr2-runtime.mjs attackEndSwap",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs；tests/v2-kmr-set2.test.mjs Gav baseline。突襲框 BP+3000 與不能選擇，只在正面突襲層且這個回合由自己的效果登場時成立。支付突襲不給 BP，也不擋住稍後交換。攻擊結束比這個攻擊階段的突襲基準。跳過不交換。接受時公開大師模式、退 1 張口嚼獸、只回最上面，再突襲到記錄的底板。底板不發登場。同一攻擊階段不再交換第二次。Q1755–Q1758。",
      "unresolved": ""
     },
     {
      "text": "【登場時】【アタック時】自分の場外から〈ゴチゾウ〉を1枚まで手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-005",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs recoverGochizo、on005",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：支付突襲登場時，場外最多 1 張口嚼獸進手牌。攻擊時共用這個函式；該次攻擊場外沒有口嚼獸，沒有另開選擇。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-005",
+     "implementation": "dist/universal-v2/engine.mjs life-trigger raid",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：加入手牌一次，raidCount 不增加。未付能量且沒有底板時不提供突襲。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "KMR-2-005",
@@ -8970,6 +9041,24 @@
      "evidence": "tests/v2-kmr-set2.test.mjs Gav baseline。程式在 kmr2-runtime.mjs attackEndSwap。",
      "remaining": "登場、攻擊時回收口嚼獸，以及突襲框的活動與 BP，這次沒有逐段重跑。目錄裡舊的「用整回合擋交換」已經更正。",
      "complete": false
+    },
+    {
+     "cardId": "KMR-2-005",
+     "number": "EX12BT/KMR-2-005",
+     "clauses": [
+      {
+       "match": "BP+3000",
+       "status": "已驗證"
+      },
+      {
+       "match": "場外から",
+       "status": "已驗證"
+      },
+      {
+       "match": "このカードを手札に加えるか",
+       "status": "已驗證"
+      }
+     ]
     }
    ],
    "partial": true
@@ -8991,26 +9080,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【ターン1】自分の場と場外に〈ゴチゾウ〉が合計3枚以上ある場合のみ発動できる。このキャラは次の自分のターン開始時まで、発生エナジー+【黄】。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-006",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs energyBuff；dist/universal-v2/engine.mjs energyShape 整合時已補上引擎掛點。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 沒有發動模式 a。；tests/v2-kmr2-001-025.test.mjs 的黃色能量直到下一個自己回合。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【レストにする】自分の場の〈ゴチゾウ〉を1枚退場させる。そうした場合、自分の手札から必要エナジーが1以下の特徴を持たない黄のキャラカードを1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-006",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs main006 模式 b",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：休息後退場 1 張口嚼獸，才可選能量 1 以下、無特徵的黃角色休息登場。跳過不登場。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-006",
+     "number": "EX12BT/KMR-2-006",
+     "clauses": [
+      {
+       "match": "合計3枚以上",
+       "status": "已驗證"
+      },
+      {
+       "match": "特徴を持たない",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9029,26 +9133,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】自分の場の〈ゴチゾウ〉を1枚退場させる。そうした場合、このキャラはこのターン中、BP+2000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-007",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs main007",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：退場 1 張口嚼獸後這個回合 BP+2000，不能再發動。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-007",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為活動並可放棄。接受後的結算見 KMR-2-002。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-007",
+     "number": "EX12BT/KMR-2-007",
+     "clauses": [
+      {
+       "match": "BP+2000",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9067,26 +9186,41 @@
    "clauses": [
     {
      "text": "【自分のターン中】このターン中に自分の場の〈ゴチゾウ〉が退場している場合、このキャラはBP+1000と「【エナジーLにある場合】自分のキャラのアタック終了時、自分のフロントLに空きがある場合、自分の手札を1枚場外に置いてもよい。そうした場合、このキャラをフロントLに移動させる。」を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-008",
+     "implementation": "dist/universal-v2/kmr2-continuous.mjs bpFor；dist/universal-v2/kmr2-runtime.mjs on008、shiftFront",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：這個回合有口嚼獸退場才 BP+1000。攻擊結束可放棄，人留在能源線。接受時手牌進場外，008 移到前線一次。Q1759 沿用共用攻擊結束佇列。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-008",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為活動並可放棄。接受後的結算見 KMR-2-002。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-008",
+     "number": "EX12BT/KMR-2-008",
+     "clauses": [
+      {
+       "match": "BP+1000",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9105,35 +9239,54 @@
    "clauses": [
     {
      "text": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-009",
+     "implementation": "dist/universal-v2/engine.mjs impactNull",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：被正面突襲、衝擊 1 的 019 擊破時退場，生命不減少。",
      "unresolved": ""
     },
     {
      "text": "【相手のターン中】BP3000以下のキャラとのバトルで敗北したこのキャラは、退場する代わりにエナジーLに移動する。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-009",
+     "implementation": "dist/universal-v2/engine.mjs kmr2LossReplacement 整合時已補上引擎掛點。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：能源線有空位時，輸給 BP 3000 以下會移到能源線一次。；tests/v2-kmr2-001-025.test.mjs 的能源線全滿先移出一張再進能源。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-009",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為抽牌並可放棄。接受抽 1 張見 KMR-2-001。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-009",
+     "number": "EX12BT/KMR-2-009",
+     "clauses": [
+      {
+       "match": "インパクト無効",
+       "status": "已驗證"
+      },
+      {
+       "match": "BP3000以下",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9152,17 +9305,28 @@
    "clauses": [
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-010",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：這張卡本身進手牌一次。沒有其他印刷效果。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-010",
+     "number": "EX12BT/KMR-2-010",
+     "clauses": [
+      {
+       "match": "【ゲット】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9181,26 +9345,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から3枚見て、カード名に「ガヴ」か「ヴァレン」か「ヴラム」を含むキャラカードか〈ゴチゾウ〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-011",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on011、finishLook orderBeforeDiscard",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：最多取 1 張。其餘先排到牌組底，再強制棄手牌。0 張也排底且不棄牌。其他 kmr2 看牌沒有開這個順序。",
      "unresolved": ""
     },
     {
      "text": "【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-011",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode colorRestSkip",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：休息對手前線角色，並記下一次不能活動。觸發卡進場外一次。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-011",
+     "number": "EX12BT/KMR-2-011",
+     "clauses": [
+      {
+       "match": "山札の上から3枚",
+       "status": "已驗證"
+      },
+      {
+       "match": "【カラー】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9219,11 +9398,11 @@
    "clauses": [
     {
      "text": "【レイド】カード名に「ガヴ」を含むキャラ アクティブにし、フロントLに移動できるこのターン中にこのキャラが自分の効果で登場している場合、このキャラはBP+1000と【インパクト（1）】を得る。このキャラのアタック終了時、自分がこのアタックフェイズでレイドしていない場合、「自分の手札の〈仮面ライダーガヴ オーバーモード〉を1枚公開し、自分の場の〈ゴチゾウ〉を1枚退場させる。」をしてもよい。そうした場合、レイド状態のこのキャラの一番上のカードを手札に戻し、公開したカードをこのキャラのレイド元のカードにレイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-012",
+     "implementation": "dist/universal-v2/kmr2-continuous.mjs impactFor、bpFor；dist/universal-v2/kmr2-runtime.mjs attackEndSwap",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：效果突襲且底下正面時 BP+1000、衝擊 1。蓋牌不給衝擊。支付突襲不給這兩項。本攻擊階段已突襲時，012 的攻擊結束不再交換。005 接受交換後登場的是這張卡。012 自己公開超載模式的接受路徑與 005 共用函式，這次沒有再走一遍。",
      "unresolved": ""
     },
     {
@@ -9237,15 +9416,15 @@
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-012",
+     "implementation": "dist/universal-v2/engine.mjs life-trigger raid",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為突襲並可放棄。加入手牌見 KMR-2-005。這張卡支付能量後從生命區突襲沒有實測。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
+   "status": "部分核對",
    "audits": [
     {
      "cardId": "KMR-2-012",
@@ -9255,6 +9434,20 @@
      "evidence": "tests/v2-kmr-set2.test.mjs",
      "remaining": "這張卡其餘句子沒有逐段重跑。",
      "complete": false
+    },
+    {
+     "cardId": "KMR-2-012",
+     "number": "EX12BT/KMR-2-012",
+     "clauses": [
+      {
+       "match": "インパクト（1）",
+       "status": "已驗證"
+      },
+      {
+       "match": "このカードを手札に加えるか",
+       "status": "已驗證"
+      }
+     ]
     }
    ],
    "partial": true
@@ -9276,44 +9469,67 @@
    "clauses": [
     {
      "text": "※このカードはデッキに10枚まで入れられる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-013",
+     "implementation": "dist/kmr-vol2-cards.mjs maxCopies",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr-set2.test.mjs：口嚼獸可放 10 張，其他第二彈維持 4 張。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の場にキャラがない場合、カードを1枚引き、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-013",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on013",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：沒有角色時先抽 1 再強制棄 1，場上只有場地卡也算沒有角色。已有角色時不抽，見 tests/v2-kmr-set2.test.mjs。",
      "unresolved": ""
     },
     {
      "text": "【退場時】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-013",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs 013 onRetire",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr-set2.test.mjs 與 tests/v2-kmr2-001-025.test.mjs 的交換：退場只抽 1 張。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-013",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為抽牌並可放棄。接受抽 1 張見 KMR-2-001。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-013",
+     "number": "EX12BT/KMR-2-013",
+     "clauses": [
+      {
+       "match": "10枚",
+       "status": "已驗證"
+      },
+      {
+       "match": "自分の場にキャラがない",
+       "status": "已驗證"
+      },
+      {
+       "match": "【退場時】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9341,26 +9557,41 @@
     },
     {
      "text": "【起動メイン】【レストにする】 【手札を1枚場外に置く】 【APを1支払う】自分の場外から〈ゴチゾウ〉を1枚まで自分のエナジーLにアクティブで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-014",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs main014",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：先棄 1 張並付 1 AP，之後可以選 0 張口嚼獸。沒有手牌時不能發動。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-014",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為取得並可放棄。接受後進手牌見 KMR-2-010。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "部分核對",
+   "audits": [
+    {
+     "cardId": "KMR-2-014",
+     "number": "EX12BT/KMR-2-014",
+     "clauses": [
+      {
+       "match": "APを1支払う",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9379,26 +9610,41 @@
    "clauses": [
     {
      "text": "BP5000以下の相手のフロントLのキャラを1枚選び、相手の山札の上か下の『相手が選んだ方』に置く。自分の場にカード名に「ガヴ」を含むキャラがある場合、『自分が選んだ方』に代わる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-015",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on015、pickFront、oppDeck",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：效果控制者先選角色。沒有卡名含ガヴ時上下由對手選，有時由自己選。移動一次。不能選的正面突襲 005 不在名單。沒有對象時事件仍可支付，效果結束，沒有在卡片腳本退費。",
      "unresolved": ""
     },
     {
      "text": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-015",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode special",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：對手前線角色退場一次，觸發卡進場外一次。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-015",
+     "number": "EX12BT/KMR-2-015",
+     "clauses": [
+      {
+       "match": "BP5000以下",
+       "status": "已驗證"
+      },
+      {
+       "match": "【スペシャル】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9417,26 +9663,41 @@
    "clauses": [
     {
      "text": "自分のAPカードを2枚まで選び、アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-016",
+     "implementation": "dist/universal-v2/engine.mjs effect-recover-ap",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：最多 2 張。活動 1 張後可以停止。",
      "unresolved": ""
     },
     {
      "text": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-016",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode final",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：生命區只剩這張卡時，牌組頂 1 張放入生命區，觸發卡進場外一次。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-016",
+     "number": "EX12BT/KMR-2-016",
+     "clauses": [
+      {
+       "match": "APカードを2枚まで",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ファイナル】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9455,17 +9716,28 @@
    "clauses": [
     {
      "text": "【起動メイン】【レストにする】 【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+【黄】。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-017",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs legalKmr2Activations、main017",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：沒有其他活動角色時不休息、不上鎖。不能選自己。休息別人後，這張卡在能源線才產生這個回合的黃能量；在前線時能量仍是 0。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-017",
+     "number": "EX12BT/KMR-2-017",
+     "clauses": [
+      {
+       "match": "発生エナジー",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9493,17 +9765,28 @@
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-018",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為活動並可放棄。接受後的結算見 KMR-2-002。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "部分核對",
+   "audits": [
+    {
+     "cardId": "KMR-2-018",
+     "number": "EX12BT/KMR-2-018",
+     "clauses": [
+      {
+       "match": "【アクティブ】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9522,20 +9805,20 @@
    "clauses": [
     {
      "text": "【レイド】カード名に「ジオウ」を含むキャラ アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手に1ダメージ）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-019",
+     "implementation": "dist/universal-v2/kmr2-continuous.mjs；dist/universal-v2/engine.mjs 戰鬥衝擊",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：正面突襲時衝擊 1，打在有衝擊無效的 009 上不扣生命。突襲框的活動與移到前線沒有另測。清單沿用 raid-box.mjs。",
      "unresolved": ""
     },
     {
      "text": "【自分のターン中】自分の場の黄以外のキャラ全ては、「このキャラがバトルに勝利した時、カードを1枚まで引く。」を得る。〈仮面ライダージオウ オーマフォーム〉のこの効果は重複しない。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-019",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs win019；dist/universal-v2/engine.mjs noteKmrBattleWin 整合時已補上引擎掛點。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的 009 對 019 沒有要求 pending 為 null。；tests/v2-kmr2-001-025.test.mjs 的非黃角色戰鬥勝利可抽 0 或 1 張。",
      "unresolved": ""
     },
     {
@@ -9558,17 +9841,36 @@
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-019",
+     "implementation": "dist/universal-v2/engine.mjs life-trigger raid",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為突襲並可放棄。加入手牌見 KMR-2-005。這張卡支付能量後突襲到場沒有實測。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "部分核對",
+   "audits": [
+    {
+     "cardId": "KMR-2-019",
+     "number": "EX12BT/KMR-2-019",
+     "clauses": [
+      {
+       "match": "インパクト（1）",
+       "status": "已驗證"
+      },
+      {
+       "match": "オーマフォーム",
+       "status": "已驗證"
+      },
+      {
+       "match": "このカードを手札に加えるか",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9587,17 +9889,28 @@
    "clauses": [
     {
      "text": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【黄×2】減らす。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-020",
+     "implementation": "dist/universal-v2/engine.mjs zoneRequiredEnergy",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：自己場上沒有卡時手牌費用減黃 2。場上有卡時費用為 2，能量不夠不能打出。012 的第二擊被 020 擋住，生命不減少。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-020",
+     "number": "EX12BT/KMR-2-020",
+     "clauses": [
+      {
+       "match": "黄×2",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9616,35 +9929,54 @@
    "clauses": [
     {
      "text": "【自分のターン中】このキャラはBP+1000。このキャラのアタック終了時、自分の手札から〈仮面ライダーゼロワン リアライジングホッパー〉を1枚までこのキャラにレイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-021",
+     "implementation": "dist/universal-v2/kmr2-continuous.mjs；dist/universal-v2/kmr2-runtime.mjs raidFromHand",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：自己回合 BP 5000，對手回合 4000。攻擊結束可放棄，107 留在手牌，raidCount 為 0。接受時 107 成為最上面，021 進突襲層，raidCount 為 1。Q1765 沿用共用攻擊結束佇列。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の手札とライフを1枚ずつ場外に置いてもよい。そうした場合、カードを2枚引き、このキャラをアクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-021",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on021",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：可放棄。接受時手牌與 1 張生命進場外，不開生命觸發，抽 2 張，這張卡變活動。Q1764。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-021",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為取得並可放棄。接受後進手牌見 KMR-2-010。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-021",
+     "number": "EX12BT/KMR-2-021",
+     "clauses": [
+      {
+       "match": "リアライジングホッパー",
+       "status": "已驗證"
+      },
+      {
+       "match": "ライフを1枚",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9663,26 +9995,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【フロントLにある場合】以下から1つ選ぶ。〈仮面ライダーパラドクス パーフェクトノックアウトゲーマー レベル99〉のこの効果は1ターンに1回のみ発動できる。・カードを1枚引き、自分の手札を1枚裏向きでこのキャラか自分の場のカード名に「エグゼイド」を含むキャラの下に置く。・自分の場のキャラの下の裏向きのカードを合計3枚場外に置く。そうした場合、このキャラか自分の場のカード名に「エグゼイド」を含むキャラを1枚選び、このターン中、【インパクト（1）】を与える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-022",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs main022、nameLocked",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 與 tests/v2-kmr-set2.test.mjs：蓋到角色下面。兩個複製品選過分支後，卡名這個回合不能再發動。Q1766。背面少於 3 張沒有解放。滿 3 張可解放，衝擊可以放棄。Q1767 的背面可視性沒有另測。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-022",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為取得並可放棄。接受後進手牌見 KMR-2-010。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-022",
+     "number": "EX12BT/KMR-2-022",
+     "clauses": [
+      {
+       "match": "パーフェクトノックアウト",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9701,35 +10048,54 @@
    "clauses": [
     {
      "text": "【自分のターン中】このキャラの下に裏向きのカードがある場合、このキャラはBP+1500。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-023",
+     "implementation": "dist/universal-v2/kmr2-continuous.mjs bpFor",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：自己回合且下面有背面卡時 BP+1500。",
      "unresolved": ""
     },
     {
      "text": "【登場時】必要エナジーが2以下でカード名に「エグゼイド」を含む自分の場の他のキャラを1枚選んでもよい。そうした場合、そのキャラとそのキャラの下の裏向きのカードを裏向きでこのキャラの下に置き、カードを1枚引き、自分の手札から必要エナジーが2以下で消費APが1の［特徴：ドクター］を1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-023",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on023",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：可放棄。接受時先蓋牌、抽 1 張，之後的博士可以放棄，手牌留下。Q1768 的背面可視性沒有另測。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-023",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為活動並可放棄。接受後的結算見 KMR-2-002。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KMR-2-023",
+     "number": "EX12BT/KMR-2-023",
+     "clauses": [
+      {
+       "match": "BP+1500",
+       "status": "已驗證"
+      },
+      {
+       "match": "エグゼイド",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9748,20 +10114,20 @@
    "clauses": [
     {
      "text": "このカードは〈アンク〉としても扱う。このキャラはアクティブで登場させる。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-024",
+     "implementation": "dist/universal-v2/kmr2-pack.mjs nameAliases；dist/universal-v2/kmr2-runtime.mjs on024",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：KMR-2-026 同時是アンク。這張卡活動登場。衝擊無效這句沒有單獨開戰。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分のリムーブエリアの〈アンク〉を1枚場外に置いてもよい。そうした場合、自分のAPカードを1枚アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-024",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on024、offerReadyAp",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：可放棄。接受時 026 進場外。場上 1 張休息 AP 直接活動；2 張以上才選 1 張。",
      "unresolved": ""
     },
     {
@@ -9775,17 +10141,36 @@
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-024",
+     "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs 的生命區測試：展開為取得並可放棄。接受後進手牌見 KMR-2-010。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "部分核對",
+   "audits": [
+    {
+     "cardId": "KMR-2-024",
+     "number": "EX12BT/KMR-2-024",
+     "clauses": [
+      {
+       "match": "としても扱う",
+       "status": "已驗證"
+      },
+      {
+       "match": "リムーブエリアの〈アンク〉",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",
@@ -9813,17 +10198,28 @@
     },
     {
      "text": "【起動メイン】【ターン1】自分の手札の必要エナジーが同じカードを3枚場外に置く。そうした場合、自分の場のキャラを1枚まで選び、このターン中、BP+1000し、このメインフェイズ終了時、カードを3枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-025",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs sameEnergyHand、main025",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs：沒有 3 張相同印刷能量時不能發動。剛好 3 張全部放場外，不能跳過。BP 可以放棄。抽 3 張在離開主要階段時發生，只抽一次。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "部分核對",
+   "audits": [
+    {
+     "cardId": "KMR-2-025",
+     "number": "EX12BT/KMR-2-025",
+     "clauses": [
+      {
+       "match": "必要エナジーが同じ",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kmr2",

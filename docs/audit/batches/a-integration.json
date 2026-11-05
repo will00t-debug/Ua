@@ -4,7 +4,7 @@
   "pr": 319,
   "base": "a5bc96e85e8f5c1ee62597feae27b3ec337de653",
   "integratedMain": "03bd60f7237e1b1ecdd1002eac167f718b2947b7",
-  "status": "已整合 B 的 PR #321 與 C 的 PR #323。D 尚未併入。",
+  "status": "已整合 B 的 PR #321、C 的 PR #323、D 的 PR #322。",
   "mergedFrom": [
     {
       "group": "B",
@@ -17,11 +17,18 @@
       "pr": 323,
       "branch": "cursor/audit-c-kmr1-001-025",
       "head": "eec537a7"
+    },
+    {
+      "group": "D",
+      "pr": 322,
+      "branch": "cursor/audit-d-kmr2-001-025",
+      "head": "d9438c68"
     }
   ],
   "shared": [
     "退場原因仍保留 by、控制者與來源。原因未填不是自己的效果。",
     "同一印刷效果的 effectScope 結束後才檢查 BP 0。",
-    "退場代替後，只有印刷文本要求原目標實際退場的後段才停止；CSM-1-040 的 BP+1000 與 CSM-1-077 的翻裏向卡仍會結算一次。"
+    "退場代替後，只有印刷文本要求原目標實際退場的後段才停止；CSM-1-040 的 BP+1000 與 CSM-1-077 的翻裏向卡仍會結算一次。",
+    "突襲完成時寫入 entryTurn。KMR-2-006 的黃能量、009 的滿線代替、019 的戰鬥勝利抽牌已補進共用引擎。"
   ]
 }

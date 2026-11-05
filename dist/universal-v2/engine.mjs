@@ -2060,6 +2060,16 @@ function noteKmrBattleWin(pack,s,owner,attacker){
  s.effectQueue.splice(retirementJobsInserted,0,{op:'kmr',id:'KMR-1-086',slot:'win',
   owner,sourceUid:attacker.uid});
 }
+function noteKmr2OmaWin(pack,s,owner,winner){
+ // KMR-2-019: on your turn, every non-yellow character gains an optional
+ // draw when that character wins a battle. Two copies do not draw twice.
+ if(s.active!==owner||!winner||originalEffectsDisabled(s,winner))return;
+ if(card(pack,winner).color==='yellow')return;
+ if(!field(s.players[owner]).some(c=>c&&card(pack,c).id==='KMR-2-019'&&
+  !originalEffectsDisabled(s,c)))return;
+ s.effectQueue.splice(retirementJobsInserted,0,{op:'kmr2',id:'KMR-2-019',slot:'win',
+  owner,sourceUid:winner.uid});
+}
 function noteAot2BattleWin(pack,s,owner,attacker,defender){
  if(!attacker||!defender||card(pack,attacker).id!=='AOT-2-007')return;
  if(originalEffectsDisabled(s,attacker)||bp(pack,s,defender)<5000)return;
@@ -4766,6 +4776,7 @@ function continueEffectQueue(pack,s){
     applyAttackWinActiveOnce(pack,s,owner,attacker);
     noteAot2BattleWin(pack,s,owner,attacker,defender);
     noteKmrBattleWin(pack,s,owner,attacker);
+    noteKmr2OmaWin(pack,s,owner,attacker);
     ensureCsm();
     if(raidBoxTextLive(pack,attacker,'attackWin'))csmOnAttackWin(pack,s,attacker);
     const hasDraw=hasCurrentBattleGrant(s,attacker,'attackWinDrawGranted');
@@ -6701,6 +6712,7 @@ function finishBlockedBattle(pack,s,attacker,blocker,blockerOwner,slot){
    applyAttackWinActiveOnce(pack,s,s.active,attacker);
    noteAot2BattleWin(pack,s,s.active,attacker,blocker);
    noteKmrBattleWin(pack,s,s.active,attacker);
+   noteKmr2OmaWin(pack,s,s.active,attacker);
    ensureCsm();
    if(raidBoxTextLive(pack,attacker,'attackWin'))csmOnAttackWin(pack,s,attacker);
    const hits=impactOnBattleWin(pack,s,attacker);
@@ -6723,6 +6735,7 @@ function finishBlockedBattle(pack,s,attacker,blocker,blockerOwner,slot){
    // damage. A printed 「攻撃してバトルに敗北した時、アクティブにする」 grant
    // readies the attacker in place; it is not a retirement.
    grantBattleWinToOtherOwn(pack,s,blockerOwner,blocker,'blocker');
+   noteKmr2OmaWin(pack,s,blockerOwner,blocker);
    if(!s.players[s.active].front.some(c=>c?.uid===attacker.uid))
     throw Error('Attacker left before the lost battle');
    const lossReady=attacker.loseBattleReady;
@@ -6767,6 +6780,15 @@ function kmr2LossReplacement(pack,s,loserOwner,line,slot,winner){
    s.players[loserOwner][line][slot]=null;
    s.players[loserOwner].energy[empty]=loser;
    recordCompletedMove(pack,s,{physical:loser,owner:loserOwner,from:line,to:'energy',reason:'rule'});
+   return true;
+  }
+  // Q1760: a full energy line still moves. The controller first puts one
+  // energy character outside, then this card takes that slot.
+  const occupied=s.players[loserOwner].energy.filter(Boolean);
+  if(occupied.length){
+   s.pending={kind:'kmr2',player:loserOwner,sourceUid:loser.uid,id:'KMR-2-009',
+    step:'shiftFull',actions:occupied.map(c=>({type:'kmr2',mode:'shift',uid:c.uid})),
+    data:{owner:loserOwner,line,slot,uid:loser.uid}};
    return true;
   }
  }
@@ -20209,8 +20231,8 @@ export function assertUniversalMatch(pack,s){
     card(pack,physical).color==='yellow'&&
     Object.keys(buff).length===3&&
     Object.keys(buff).every(k=>['energy','color','untilOwnTurnStart'].includes(k))&&
-    ability?.op==='entryTurnSacrificeChoice'&&ability.energy===1&&
-    ability.color==='yellow';
+    ((ability?.op==='entryTurnSacrificeChoice'&&ability.energy===1&&
+     ability.color==='yellow')||card(pack,physical).id==='KMR-2-006');
    const namedGrant=Object.keys(buff).length===3&&typeof buff.sourceUid==='string'&&
     Object.keys(buff).every(k=>['bp','untilOwnTurnStart','sourceUid'].includes(k))&&
     Number.isInteger(buff.bp)&&buff.bp>=1&&buff.bp<=5000&&

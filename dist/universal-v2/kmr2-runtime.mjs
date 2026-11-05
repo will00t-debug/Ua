@@ -4,7 +4,7 @@
 // Registration is not an official FAQ certification.
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
 import {originalEffectsDisabled,grantContinuousState} from './continuous-states.mjs';
-import {kmr2CopiedIds} from './kmr2-continuous.mjs';
+import {kmr2ChoiceImmune,kmr2CopiedIds} from './kmr2-continuous.mjs';
 import {raidBoxListed} from './raid-box.mjs';
 
 const SCHOOL='天ノ川学園高校';
@@ -87,10 +87,11 @@ function lay(pl,uids,where){
  if(where==='top')pl.deck.unshift(...picked);
  else pl.deck.push(...picked);
 }
-function offerOrder(s,spec,uids,where,after){
+function offerOrder(s,spec,uids,where,after,extra){
  const left=uids.filter(Boolean);
+ const discardAfter=extra?.discardAfter===true;
  if(left.length<=1){lay(plOf(s,spec.player),left,where);return false;}
- return hold(s,{...spec,step:'lookOrder',data:{left,built:[],where,after:after||null}},
+ return hold(s,{...spec,step:'lookOrder',data:{left,built:[],where,after:after||null,discardAfter}},
   left.map(uid=>({type:'kmr2',mode:'next',uid})));
 }
 function beginLook(s,spec,count,match,opts={}){
@@ -101,7 +102,8 @@ function beginLook(s,spec,count,match,opts={}){
  const takeMode=opts.takeMode||'take';
  const data={uids:window.map(c=>c.uid),taken:[],max:opts.max??1,min:opts.min||0,
   where:opts.where||'bottom',dest:opts.dest||'hand',reveal:opts.reveal!==false,
-  discard:opts.discard===true,after,takeMode};
+  discard:opts.discard===true,orderBeforeDiscard:opts.orderBeforeDiscard===true,
+  after,takeMode};
  const actions=[
   ...(data.min===0?[{type:'kmr2',mode:'done'}]:[]),
   ...matches.map(c=>({type:'kmr2',mode:takeMode,uid:c.uid}))
@@ -130,11 +132,20 @@ function finishLook(pack,s,spec,data){
   A.move(pack,s,{owner:spec.player,from:'deck',to:data.dest==='outside'?'outside':'hand',
    index,reason:'own-effect',sourceUid:spec.sourceUid});
  }
+ const left=data.uids.filter(uid=>!data.taken.includes(uid));
+ // KMR-2-011 prints the bottom order before the hand-to-outside cost.
+ if(data.orderBeforeDiscard&&data.discard&&data.taken.length){
+  if(offerOrder(s,spec,left,data.where,data.after||null,{discardAfter:true}))return 'held';
+  if(pl.hand.length){
+   offerDiscard(s,spec,1,false,data.after||null);
+   return 'held';
+  }
+  return data.after||null;
+ }
  if(data.discard&&data.taken.length&&pl.hand.length){
   offerDiscard(s,spec,1,false,data.after||null);
   return 'held';
  }
- const left=data.uids.filter(uid=>!data.taken.includes(uid));
  if(offerOrder(s,spec,left,data.where,data.after))return 'held';
  return data.after||null;
 }
@@ -153,7 +164,17 @@ function offerList(s,spec,step,cards,optional,next,mode){
   ...cards.map(c=>({type:'kmr2',mode,uid:c.uid}))
  ]);
 }
-function oppFront(s,owner,pred){return plOf(s,1-owner).front.filter(c=>c&&(!pred||pred(c)));}
+function oppFront(s,owner,pred){
+ return plOf(s,1-owner).front.filter(c=>c&&
+  !kmr2ChoiceImmune(A.pack,s,c,(p,x)=>def(p,x),!live(s,c))&&(!pred||pred(c)));
+}
+function offerReadyAp(s,spec){
+ const rested=plOf(s,spec.player).apCards.filter(c=>c.inPlay&&!c.ready);
+ if(rested.length===1){rested[0].ready=true;return false;}
+ if(rested.length<2)return false;
+ return hold(s,{...spec,step:'readyAp',data:{}},
+  rested.map(c=>({type:'kmr2',mode:'readyAp',uid:c.uid})));
+}
 function offerRetire(pack,s,spec,limit,optional,next){
  const targets=oppFront(s,spec.player,c=>limit==null||A.bp(pack,s,c)<=limit);
  if(!targets.length)return false;
@@ -170,6 +191,14 @@ function pay(s,owner,n,sourceUid){
  return true;
 }
 function specOf(q){return {player:q.player??q.owner,sourceUid:q.sourceUid,id:q.id};}
+function sameEnergyHand(pack,s,owner){
+ const groups=new Map();
+ for(const c of plOf(s,owner).hand){
+  const energy=def(pack,c).energy;
+  groups.set(energy,(groups.get(energy)||0)+1);
+ }
+ return [...groups.values()].some(n=>n>=3);
+}
 function gochizo(pack,s,owner){
  const piles=[...fieldCards(s,owner),...plOf(s,owner).outside];
  return piles.filter(c=>exact(pack,c,GO,s));
@@ -282,7 +311,7 @@ function follow(pack,s,spec,next){
   const c=selfOf(s,spec.player,spec.sourceUid);if(c)A.active(s,spec.player,c);return false;
  }
  if(next==='discard1')return offerDiscard(s,spec,1,false,null);
- if(next==='readyAp'){A.readyAp(plOf(s,spec.player));return false;}
+ if(next==='readyAp'){offerReadyAp(s,spec);return false;}
  if(next==='buff2000'){const c=selfOf(s,spec.player,spec.sourceUid);buff(s,c,2000);return false;}
  if(next==='buff1000self'){const c=selfOf(s,spec.player,spec.sourceUid);buff(s,c,1000);return false;}
  if(next==='energyTurn'){energyBuff(s,selfOf(s,spec.player,spec.sourceUid),false);return false;}
@@ -360,7 +389,9 @@ function on015(pack,s,job){
  const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=5000);
  if(!targets.length)return;
  const chooser=hasName(pack,s,job.owner,'ガヴ')?job.owner:1-job.owner;
- hold(s,{...spec,player:chooser,step:'pickFront',data:{next:'oppDeck',chooser,actor:job.owner}},[
+ // The effect's controller chooses the character. Only top or bottom
+ // follows the printed 『相手が選んだ方』 / 『自分が選んだ方』.
+ hold(s,{...spec,step:'pickFront',data:{next:'oppDeck',chooser,actor:job.owner}},[
   ...targets.map(c=>({type:'kmr2',mode:'place',uid:c.uid}))
  ]);
 }
@@ -643,9 +674,11 @@ function main002(pack,s,job){
   return;
  }
  if(!frontOf(s,job.owner,self)||used(s,self.uid+'|002b'))return;
+ const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=3000);
+ if(!targets.length)return;
  use(s,self.uid+'|002b');
  restCard(s,job.owner,self,self.uid);
- offerList(s,spec,'rest',oppFront(s,job.owner,c=>A.bp(pack,s,c)<=3000),false,null,'rest');
+ offerList(s,spec,'rest',targets,false,null,'rest');
 }
 function main003(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -687,7 +720,7 @@ function main014(pack,s,job){
 function main017(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self?.ready||used(s,self.uid+'|017'))return;
- const pool=plOf(s,job.owner).front.filter(c=>c?.ready&&def(pack,c).type==='character');
+ const pool=plOf(s,job.owner).front.filter(c=>c?.ready&&c.uid!==self.uid&&def(pack,c).type==='character');
  if(!pool.length)return;
  use(s,self.uid+'|017');
  restCard(s,job.owner,self,self.uid);
@@ -705,10 +738,10 @@ function main022(pack,s,job){
  if(nameLocked(s,job.owner,PARADOX))return;
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self||!frontOf(s,job.owner,self))return;
- hold(s,{...specOf(job),step:'mode',data:{lock:PARADOX}},[
-  {type:'kmr2',mode:'one',key:'tuck'},
-  {type:'kmr2',mode:'two',key:'release'}
- ]);
+ const layers=fieldCards(s,job.owner).flatMap(c=>(c.under||[]).filter(x=>x?.faceDown));
+ const actions=[{type:'kmr2',mode:'one',key:'tuck'}];
+ if(layers.length>=3)actions.push({type:'kmr2',mode:'two',key:'release'});
+ hold(s,{...specOf(job),step:'mode',data:{lock:PARADOX}},actions);
 }
 function main025(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -944,7 +977,9 @@ function on030(pack,s,job){
  offerList(s,specOf(job),'removeTrio',targets,true,null,'remove');
 }
 function on012(pack,s,job){deployGochizo(pack,s,job,false);}
-function on011(pack,s,job){onLook(pack,s,job,3,gavFilter,{where:'bottom',discard:true});}
+function on011(pack,s,job){
+ onLook(pack,s,job,3,gavFilter,{where:'bottom',discard:true,orderBeforeDiscard:true});
+}
 function on041(pack,s,job){
  onLook(pack,s,job,3,c=>trait(pack,c,SCHOOL),{where:'bottom',after:'schoolDiscard'});
 }
@@ -1088,6 +1123,10 @@ function resolveStep(pack,s,q,a){
   }
   lay(plOf(s,q.player),data.built,data.where);
   s.pending=null;
+  if(data.discardAfter&&plOf(s,q.player).hand.length){
+   offerDiscard(s,spec,1,false,data.after||null);
+   return;
+  }
   follow(pack,s,spec,data.after);
   return;
  }
@@ -1135,7 +1174,7 @@ function resolveStep(pack,s,q,a){
   if(hit.mode==='skip')return;
   const owner=hit.uid&&hit.uid[0]==='1'&&q.player===0?1:q.player;
   const foe=hit.uid&&String(hit.uid).startsWith((1-q.player)+'-')?1-q.player:q.player;
-  const who=q.step==='toEnergy'||q.step==='removeTrio'?foe:q.player;
+  const who=q.step==='toEnergy'||q.step==='removeTrio'||q.step==='rest'?foe:q.player;
   const c=fieldCards(s,who).find(x=>x.uid===hit.uid)||plOf(s,who).hand.find(x=>x.uid===hit.uid)||
    plOf(s,who).outside.find(x=>x.uid===hit.uid);
   if(q.step==='rest'&&c)restCard(s,who,c,q.sourceUid);
@@ -1400,6 +1439,25 @@ function resolveStep(pack,s,q,a){
   }
   return;
  }
+ if(q.step==='shiftFull'){
+  s.pending=null;
+  const owner=q.data.owner;
+  const energy=plOf(s,owner).energy;
+  const index=energy.findIndex(c=>c?.uid===hit.uid);
+  if(hit.mode!=='shift'||index<0)throw Error('Energy card to move outside is missing');
+  const displaced=energy[index];
+  energy[index]=null;
+  plOf(s,owner).outside.push(displaced);
+  A.record(pack,s,{physical:displaced,owner,from:'energy',to:'outside',
+   reason:'own-effect',sourceUid:q.sourceUid});
+  const victim=s.players[owner][q.data.line][q.data.slot];
+  if(!victim||victim.uid!==q.data.uid)throw Error('Fuwamaro left before the energy shift');
+  s.players[owner][q.data.line][q.data.slot]=null;
+  energy[index]=victim;
+  A.record(pack,s,{physical:victim,owner,from:q.data.line,to:'energy',
+   reason:'own-effect',sourceUid:q.sourceUid});
+  return;
+ }
  if(q.step==='mayDraw'){
   s.pending=null;
   if(hit.mode==='skip')return;
@@ -1529,6 +1587,13 @@ function resolveStep(pack,s,q,a){
   offerList(s,spec,'impact',pool,true,null,'own');
   return;
  }
+ if(q.step==='readyAp'){
+  s.pending=null;
+  const ap=plOf(s,q.player).apCards.find(c=>c.uid===hit.uid&&c.inPlay&&!c.ready);
+  if(!ap)throw Error('KMR-2-024 rested AP is missing');
+  ap.ready=true;
+  return;
+ }
  if(q.step==='raidSelf'){
   s.pending=null;
   if(hit.mode==='skip')return;
@@ -1651,7 +1716,8 @@ export function legalKmr2Activations(pack,s,owner,c){
  const push=(tail='')=>{out.push({type:'activate',uid:c.uid,mode:tail?'kmr2:'+id+':'+tail:'kmr2:'+id});};
  if(id==='KMR-2-002'){
   if(!c.ready&&!used(s,c.uid+'|002a')&&ownWhere(s,owner,x=>exact(pack,x,GO,s)).length)push('a');
-  if(frontOf(s,owner,c)&&!used(s,c.uid+'|002b'))push('b');
+  if(frontOf(s,owner,c)&&!used(s,c.uid+'|002b')&&
+   oppFront(s,owner,x=>A.bp(pack,s,x)<=3000).length)push('b');
  }
  if(id==='KMR-2-003'&&frontOf(s,owner,c)&&!used(s,c.uid+'|003')&&
   ownWhere(s,owner,x=>x.ready&&exact(pack,x,GO,s)).length)push();
@@ -1663,11 +1729,11 @@ export function legalKmr2Activations(pack,s,owner,c){
   ownWhere(s,owner,x=>exact(pack,x,GO,s)).length)push();
  if(id==='KMR-2-014'&&c.ready&&plOf(s,owner).hand.length&&apReady(s,owner)>=1)push();
  if(id==='KMR-2-017'&&c.ready&&!used(s,c.uid+'|017')&&
-  plOf(s,owner).front.some(x=>x?.ready&&def(pack,x).type==='character'))push();
+  plOf(s,owner).front.some(x=>x?.ready&&x.uid!==c.uid&&def(pack,x).type==='character'))push();
  if(id==='KMR-2-019'&&frontOf(s,owner,c)&&!used(s,c.uid+'|019')&&
   handWhere(s,owner,x=>nonYellowRaid(pack,x)).length)push();
  if(id==='KMR-2-022'&&frontOf(s,owner,c)&&!nameLocked(s,owner,PARADOX))push();
- if(id==='KMR-2-025'&&!used(s,c.uid+'|025'))push();
+ if(id==='KMR-2-025'&&!used(s,c.uid+'|025')&&sameEnergyHand(pack,s,owner))push();
  if(id==='KMR-2-040'&&c.ready&&ownWhere(s,owner,x=>token(pack,x,'フォーゼ',s)).length)push();
  if(id==='KMR-2-059'&&c.ready&&ownWhere(s,owner,x=>x.ready&&def(pack,x).energy<=2&&token(pack,x,'Ｗ',s)).length)push();
  if(id==='KMR-2-067'&&frontOf(s,owner,c)&&!used(s,c.uid+'|067')&&
