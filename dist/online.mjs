@@ -1,5 +1,3 @@
-import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
-
 const TITLES=[
  ['bleach','BLEACH'],['gurren-lagann','天元突破'],['sword-art-online','刀劍神域'],
  ['solo-leveling','我獨自升級'],['mushoku-tensei','無職轉生'],['rezero','Re:Zero'],
@@ -26,6 +24,15 @@ const DRAFTS=[
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 let battleUi=typeof onlineBattleUiBootstrap==='undefined'?null:onlineBattleUiBootstrap;
+// online.mjs is intentionally a classic script: its VM smoke tests and
+// account bootstrap must not see a top-level import. The loaded battle UI
+// supplies the same legal-action helper used by the solo card gallery.
+function legalRemovedMainAction(actions,uid,enabled=true){
+ return battleUi?.legalRemovedMainAction?.(actions,uid,enabled)||null;
+}
+function removedMainActionText(action){
+ return battleUi?.removedMainActionText?.(action)||'起動主要';
+}
 let battleUiLoading=false,battleUiError=false;
 let facedownUid='',facedownSignature='';
 function watchBattleViewport(module){
