@@ -456,7 +456,11 @@ test('the battle page records a decision only after the engine accepts it', ()=>
  assert.match(preview, /endReason:'abandoned'/);
  assert.match(preview, /endReason:'interrupted'/);
  assert.match(online, /提供對戰紀錄改善 AI/);
- assert.match(online, /if\(!choice\)return;\s*decisions\(\)\.arm/);
+ const choiceGuard=online.indexOf('if(!choice)return;');
+ const freshGuard=online.indexOf('if(!app.room||app.room.code!==snapshot.code||');
+ const arm=online.indexOf('decisions().arm(app.room,choice)');
+ assert.ok(choiceGuard>0&&freshGuard>choiceGuard&&arm>freshGuard,
+  'online decision is recorded only after a present, fresh, legal choice is checked');
  assert.match(online, /if\(error\.status\)decisions\(\)\.cancel\(\)/);
  assert.match(readFileSync(new URL('../dist/universal-v2-preview.html', import.meta.url), 'utf8'), /提供對戰紀錄改善 AI/);
 });
