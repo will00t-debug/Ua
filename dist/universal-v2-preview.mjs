@@ -27,7 +27,7 @@ import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261104kmrport1';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261105lifetable1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
@@ -39,15 +39,16 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261104kmrpr1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261105lifetable1';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
+import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
 import {createCoachBattle} from './universal-v2/coach-battle.mjs';
 import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs?v=20261104facedown1';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
- from './universal-v2/desktop-battle-ui.mjs?v=20261104facedown1';
+ from './universal-v2/desktop-battle-ui.mjs?v=20261105ref1';
 import {facedownInspectModel,facedownGallery,mountFacedownOverlay,closeFacedownOverlays,
  createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,findKnownLayer}
  from './universal-v2/facedown-inspect.mjs?v=20261104facedown1';
@@ -571,6 +572,16 @@ function revealFocusSheet(card){
 function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
+ if(s.pending.kind==='attack-life-target'){
+  // Desktop targets are clickable red LIFE card backs in the visible left rail.
+  // A modal would cover them; mobile gets the identical legal-action picker.
+  if(IS_BATTLE_PAGE&&isDesktopBattlefield())return null;
+  return el('div',{class:'overlay v2-attack-life-overlay'},
+   el('section',{class:'dialog panel pending',role:'dialog','aria-modal':'true',
+    'aria-label':'進攻方選擇對手血區'},
+    makeAttackLifePicker({el,lifeCount:view.players[1].lifeCount,
+     count:s.pending.count,actions:legal,onAction:applyAction})));
+ }
  // A mixed hand/outside/removed effect needs an illustrated target picker.
  // Once the target has been selected, dismiss this overlay so the player can
  // choose ordinary/Raid mode (if needed) and the actual legal board cell.
@@ -1595,6 +1606,7 @@ function render(){
  target.append(log);
  if(IS_BATTLE_PAGE&&isDesktopBattlefield())mountDesktopBattlefield({
   arena,header:title,log,view:v,selectedUid:app.selectedUid,el,
+  lifeTargetActions:legal,onLifeTargetAction:applyAction,
   cardDefinition:cardDef,imageSource:imgUrl,printedCard:printedCatalogue,
   effectCopy:fieldEffectCopy,openCard:showFieldSheet,
   imageFallback:(image,side)=>{
@@ -1991,7 +2003,7 @@ async function launchBattle(){
   // Catch invalid packs before navigation. The real match draws a fresh seed
   // on the dedicated battle route rather than inheriting a fixed deck order.
   newUniversalMatch([mine.pack,foe.pack],{
-   decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true
+   decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true,attackerChoosesLife:true
   });
   const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId
    :(typeof mine.recordDeckId==='string'?mine.recordDeckId:null);
@@ -2017,7 +2029,7 @@ async function startGame(){
   const seed=generateMatchSeed();
   app.recordDeckId=app.launch.config.recordDeckId;
   app.recordNoted=false;
-  app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
+  app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true,attackerChoosesLife:true});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.undo=null;
   app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
@@ -2029,7 +2041,7 @@ async function startGame(){
    (foe.label||fmtTitle(foe.pack.id))+'｜先手 '+(first===0?'你':'電腦')+
    '｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
-   decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
+   decks:[mine.counts,foe.counts],seed,first,openingMulligan:true,attackerChoosesLife:true});
   void coachApi().begin(coachHeaderNow(newCoachMatchId()));
   saveBattleProgress();
   render();driveAi();
