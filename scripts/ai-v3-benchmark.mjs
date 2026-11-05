@@ -99,7 +99,7 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
  const acts={};
  const script=[];
  let steps=0,fallback=0,illegal=0,engineError=null;
- const learned={decisions:0,search:0,budgetFallback:0,fallback:0,forced:0,nodes:0,followBranches:0,maxDepth:0,responses:0};
+ const learned={decisions:0,search:0,settledChoices:0,budgetFallback:0,fallback:0,forced:0,nodes:0,basicNodes:0,deepNodes:0,followBranches:0,maxDepth:0,responses:0};
  const passes={decisions:0,onlyNext:0,voluntaryNext:0,passedDevelopment:0,autonomous:0};
  let mark=aiV3Report();
  const started=performance.now();
@@ -117,8 +117,11 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
    if(mode===challengerMode){
     learned.decisions+=now.decisions-mark.decisions;
     learned.search+=now.search-mark.search;
+    learned.settledChoices+=now.settledChoices-mark.settledChoices;
     learned.budgetFallback+=now.budgetFallback-mark.budgetFallback;
     learned.fallback+=now.fallback-mark.fallback;
+    learned.basicNodes+=now.basicNodes-mark.basicNodes;
+    learned.deepNodes+=now.deepNodes-mark.deepNodes;
     learned.forced+=now.forced-mark.forced;
     learned.nodes+=now.nodes-mark.nodes;
     learned.followBranches+=now.followBranches-mark.followBranches;
@@ -188,7 +191,7 @@ for(const deck of decks){
   const rows=[];
   const samples=[];
   const walls=[];
-  let fallback=0,budgetFallback=0,search=0,forced=0,decisions=0,illegal=0,finished=0;
+  let fallback=0,budgetFallback=0,search=0,settledChoices=0,forced=0,decisions=0,illegal=0,finished=0;
   let nodes=0,followBranches=0,maxDepth=0,responses=0;
   let onlyNext=0,voluntaryNext=0,passedDevelopment=0,autonomous=0;
   const games=[];
@@ -219,6 +222,7 @@ for(const deck of decks){
     fallback+=row.challengerFallback;
     budgetFallback+=row.budgetFallback||0;
     search+=mode==='baseline'?0:(learned.search||0);
+    settledChoices+=mode==='baseline'?0:(learned.settledChoices||0);
     forced+=mode==='baseline'?0:(learned.forced||0);
     nodes+=learned.nodes||0;
     followBranches+=learned.followBranches||0;
@@ -247,8 +251,12 @@ for(const deck of decks){
    completion:rows.length?rows.filter(row=>row.finished||row.steps>=STEPS&&!row.illegal).length/rows.length:0,
    fallbackRate:decisions?fallback/decisions:0,
    search,forced,nodes,followBranches,maxDepth,responses,
+   // choiceRate is a compared choice. It does not mean the selected line settled.
+   choiceRate:decisions?search/decisions:0,
    completedSearchRate:decisions?search/decisions:0,
+   settledLineRate:decisions?settledChoices/decisions:0,
    choiceSearchRate:(search+budgetFallback)?search/(search+budgetFallback):0,
+   metricNote:'completedSearchRate aliases choiceRate and does not mean the line reached the next own turn. settledLineRate does.',
    budgetFallback,budgetFallbackRate:decisions?budgetFallback/decisions:0,
    onlyNext,voluntaryNext,passedDevelopment,autonomous,
    onlyNextRate:decisions?onlyNext/decisions:0,

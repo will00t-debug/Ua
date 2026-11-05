@@ -116,7 +116,7 @@ test('strategy: a cut search records the boundary and may still skip',()=>{
  assert.equal(trace.reason,'budget-fallback');
  assert.equal((trace.compared||[]).length,0);
  assert.ok((trace.unexecuted||[]).length>0);
- assert.ok((trace.unexecuted||[]).every(row=>row.executed===false));
+ assert.ok((trace.unexecuted||[]).every(row=>row.executed===false&&row.reason==='time'));
  console.log('strategy clock ok',action.type,trace.reason);
 });
 
@@ -173,15 +173,27 @@ test('strategy: a real 40ms clock stays inside the match budget',()=>{
  for(const card of [...state.players[0].hand])state.players[0].deck.push(card);
  state.players[0].hand.length=0;
  state.players[0].hand.push(body);
- resetAiV3Report();
- const started=performance.now();
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1});
- const trace=lastAiV3Trace();
- assert.equal(legalUniversalActions(packs,state).some(item=>item.type===action.type),true);
- assert.ok(trace.nodesUsed<=48);
- assert.ok(performance.now()-started<1000);
- assert.ok((trace.compared||[]).every(row=>row.executed!==false&&row.nodes>0&&Number.isFinite(row.search)));
- console.log('strategy 40ms',action.type,trace.reason,trace.nodesUsed,Math.round(trace.ms));
+ const walls=[];
+ let action=null,trace=null;
+ for(let sample=0;sample<7;sample++){
+  resetAiV3Report();
+  const started=performance.now();
+  action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1});
+  walls.push(performance.now()-started);
+  trace=lastAiV3Trace();
+  assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+  assert.ok(trace.nodesUsed<=48);
+  assert.equal(trace.softMs,40);
+  assert.ok(trace.coverage.executed>=1);
+  assert.ok((trace.compared||[]).every(row=>row.executed!==false&&row.nodes>0&&Number.isFinite(row.search)));
+ }
+ walls.sort((a,b)=>a-b);
+ const at=p=>walls[Math.min(walls.length-1,Math.max(0,Math.ceil(p*walls.length)-1))];
+ const p50=at(0.5),p95=at(0.95),max=walls[walls.length-1];
+ // 40ms is the soft search deadline. 500ms is only a hang cap, not the think budget.
+ assert.ok(max<500,`strict hang cap exceeded: p50 ${p50} p95 ${p95} max ${max}`);
+ console.log('strategy 40ms',action.type,trace.reason,'soft',trace.softMs,'over',trace.overSoft,
+  'p50',p50.toFixed(1),'p95',p95.toFixed(1),'max',max.toFixed(1),'nodes',trace.nodesUsed);
 });
 
 test('strategy: two nodes do not settle the same turn',()=>{

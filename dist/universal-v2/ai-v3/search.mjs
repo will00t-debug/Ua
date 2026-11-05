@@ -27,8 +27,8 @@ const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
  'life-batch-order']);
 
 function emptyReport(){
- return {decisions:0,forced:0,deferred:0,search:0,prior:0,ismcts:0,fallback:0,
-  budgetFallback:0,budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,samples:[],
+ return {decisions:0,forced:0,deferred:0,search:0,settledChoices:0,prior:0,ismcts:0,fallback:0,
+  budgetFallback:0,budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,basicNodes:0,deepNodes:0,samples:[],
   followBranches:0,maxDepth:0,responses:0};
 }
 let report=emptyReport();
@@ -140,6 +140,40 @@ function mergeRows(basic,deep){
 function placeKey(row){
  return [row.leafTurn??'',row.leafActive??'',row.phase??'',row.pending??'',row.leafOwnTurns??''].join('|');
 }
+function actionNote(action){
+ return {type:action?.type||null,uid:action?.uid??null,line:action?.line||null,mode:action?.mode||null};
+}
+function wantsRoot(action,want){
+ if(!want||want.type!==action?.type)return false;
+ if(want.uid!=null&&want.uid!==action.uid)return false;
+ if(want.line!=null&&want.line!==action.line)return false;
+ if(want.mode!=null&&want.mode!==action.mode)return false;
+ return true;
+}
+// Tests permute which root runs first. Production leaves the list as built.
+function orderRoots(jobs,first,legal){
+ const list=jobs.slice();
+ if(!Array.isArray(first)||!first.length)return list;
+ for(const want of [...first].reverse()){
+  const found=list.find(action=>wantsRoot(action,want))||(legal||[]).find(action=>wantsRoot(action,want));
+  if(!found)continue;
+  const rest=list.filter(action=>!same(action,found));
+  list.length=0;
+  list.push(found,...rest);
+ }
+ return list;
+}
+// Every later root keeps a small share. Earlier roots may use up to 16,
+// and the last root still starts. A flat 16 would skip the fourth root.
+function coverShare(total,roots){
+ return Math.max(4,Math.min(8,Math.floor(Math.max(0,total)/Math.max(1,roots))||4));
+}
+function rootSlice(poolLeft,jobsLeft,total,roots){
+ const cover=coverShare(total,roots);
+ const reserved=Math.max(0,jobsLeft-1)*cover;
+ const room=Math.max(cover,poolLeft-reserved);
+ return Math.max(1,Math.min(16,room,Math.max(0,poolLeft)));
+}
 function fallback(pack,state,legal,started,reason){
  report.fallback++;
  const actor=state?.pending?.player??state?.active??0;
@@ -147,12 +181,14 @@ function fallback(pack,state,legal,started,reason){
  try{ordered=rankLegal(pack,state,actor,legal,null);}catch{ordered=legal;}
  const choice=reliableChoice(pack,state,actor,legal,null,ordered);
  const exact=legal.find(item=>same(item,choice))||legal[0]||null;
- return finish(exact,'budget-fallback',{fallback:true,fallbackFrom:reason,nodesUsed:0,executed:false},started);
+ const kind=reason==='no-world'||reason==='unmatched'||reason==='ismcts-empty'?reason:'exception';
+ return finish(exact,'budget-fallback',{fallback:true,fallbackKind:kind,fallbackFrom:reason,nodesUsed:0,executed:false,settled:false},started);
 }
 export function chooseAiV3Action(pack,state,options={}){
  const started=performance.now();
  const now=typeof options.now==='function'?options.now:()=>performance.now();
  const clockStart=now();
+ const timing={worldMs:0,rankMs:0,searchMs:0};
  report.decisions++;
  try{
   if(!state||state.status!=='playing')return finish(null,'idle',{},started);
@@ -168,7 +204,9 @@ export function chooseAiV3Action(pack,state,options={}){
   }
   const seed=Number.isInteger(options.seed)?options.seed:1;
   const worldsWanted=options.mode==='belief'?Math.max(2,options.worlds||3):Math.max(1,options.worlds||1);
+  const worldStarted=performance.now();
   const worlds=beliefWorlds(pack,state,actor,seed,worldsWanted);
+  timing.worldMs=performance.now()-worldStarted;
   if(!worlds.length)return fallback(pack,state,legal,started,'no-world');
   const probe=worlds[0].state;
   const beam=options.beam??MATCH_LIMITS.beam;
@@ -177,7 +215,9 @@ export function chooseAiV3Action(pack,state,options={}){
   const total=pinned?options.nodes:(combat?64:48);
   const ms=Number.isFinite(options.ms)?options.ms:(pinned?1e9:(combat?64:48));
   const strategy=options.strategy==='score'||options.strategy==='order'||options.strategy==='reply'?options.strategy:null;
+  const rankStarted=performance.now();
   const ordered=rankLegal(pack,probe,actor,legal,strategy);
+  timing.rankMs=performance.now()-rankStarted;
   if(options.mode==='prior'){
    report.prior++;
    const exact=legal.find(item=>same(item,ordered[0]))||legal[0];
@@ -224,29 +264,38 @@ export function chooseAiV3Action(pack,state,options={}){
   const safe=ranked.find(isSafeAction);
   push(safe);
   for(const action of ranked)push(action);
+  const rootPlan=orderRoots(jobs,options.rootFirst,legal);
+  jobs.length=0;
+  jobs.push(...rootPlan);
   const actorDecisions=options.actorDecisions??MATCH_LIMITS.actorDecisions;
-  // Each candidate first keeps a scripted continuation. Remaining nodes
-  // deepen those lines. A cut activation must not replace a finished basic line.
+  // Each root first keeps a scripted continuation inside its share of the
+  // budget. Nodes left after every root has had that share deepen the lines.
   const seats=Math.max(2,Math.min(jobs.length||2,4));
   const lineFloor=total<=48?16:Math.max(16,Math.min(160,Math.floor(total/seats)));
+  const basicCap=coverShare(total,jobs.length);
   const plan=options.plan||'tree';
   const unexecuted=[];
   const unexplored=[];
   const held=[];
-  const note=action=>({type:action?.type||null,uid:action?.uid??null,line:action?.line||null,mode:action?.mode||null});
-  const scoreJob=(action,pass)=>{
+  const note=actionNote;
+  const stopReason=()=>pool.n<=0?'nodes':now()>deadline?'time':'unscored';
+  const scoreJob=(action,pass,cap)=>{
    let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0,settled=0;
-   let pending=null,phase=null,boundary=null,cut=null,sequence=null,sample=null;
+   let pending=null,phase=null,boundary=null,cut=null,sequence=null,sample=null,failReason=null;
    let followBranches=0,maxDepth=1;
    for(let w=0;w<worlds.length;w++){
-    if(pool.n<=0){report.budget++;break;}
-    if(now()>deadline&&n){report.budget++;break;}
-    const slice=Math.min(pool.n,pass==='basic'?16:lineFloor);
+    if(pool.n<=0){report.budget++;failReason=failReason||'nodes';break;}
+    if(now()>deadline&&n){report.budget++;failReason=failReason||'time';break;}
+    const slice=Math.min(pool.n,pass==='basic'?Math.max(1,cap||basicCap):lineFloor);
     const line=scoreLine(pack,worlds[w].state,actor,action,{
      nodes:slice,pool,beam,deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass
     });
     if(line?.unexplored?.length)unexplored.push(...line.unexplored);
-    if(!line||line.executed===false||!Number.isFinite(line.search))continue;
+    if(!line||line.executed===false||!Number.isFinite(line.search)){
+     const kind=line?.limit==='time'||line?.cut==='time'?'time':line?.limit==='nodes'||line?.cut==='nodes'?'nodes':stopReason();
+     failReason=failReason||kind;
+     continue;
+    }
     totalScore+=line.search;
     n++;
     sample=line;
@@ -265,7 +314,7 @@ export function chooseAiV3Action(pack,state,options={}){
     hits+=line.transpositionHits||0;
     report.unsupported+=line.unsupported||0;
    }
-   if(!n)return null;
+   if(!n)return {failed:true,reason:failReason||stopReason(),action};
    report.nodes+=nodes;
    report.transpositionHits=(report.transpositionHits||0)+hits;
    return {action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
@@ -273,32 +322,59 @@ export function chooseAiV3Action(pack,state,options={}){
     executed:true,refuted:!!sample.refuted,leafTurn:sample.leafTurn??null,
     leafActive:sample.leafActive??null,leafOwnTurns:sample.leafOwnTurns??null};
   };
+  const searchStarted=performance.now();
+  let basicSpent=0,deepSpent=0;
   for(let index=0;index<jobs.length;index++){
    if((now()>deadline||pool.n<=0)&&held.length){
-    unexplored.push(...jobs.slice(index).map(action=>({...note(action),executed:false})));
+    const reason=stopReason();
+    unexecuted.push(...jobs.slice(index).map(action=>({...note(action),action,executed:false,nodes:0,reason})));
     break;
    }
    if(pool.n<=0||now()>deadline){
-    unexecuted.push({action:jobs[index],executed:false,nodes:0});
+    unexecuted.push({...note(jobs[index]),action:jobs[index],executed:false,nodes:0,reason:stopReason()});
     continue;
    }
-   const row=scoreJob(jobs[index],'basic');
-   if(!row)unexecuted.push({action:jobs[index],executed:false,nodes:0});
-   else held.push(row);
+   const row=scoreJob(jobs[index],'basic',rootSlice(pool.n,jobs.length-index,total,jobs.length));
+   if(!row||row.failed)unexecuted.push({...note(jobs[index]),action:jobs[index],executed:false,nodes:0,reason:row?.reason||stopReason()});
+   else{
+    row.basicNodes=row.nodes;
+    row.deepNodes=0;
+    basicSpent+=row.nodes;
+    report.basicNodes+=row.nodes;
+    held.push(row);
+   }
+   if(typeof options.onRootDone==='function')options.onRootDone({index,action:jobs[index],executed:!!row&&!row.failed});
   }
   const deepen=[...held.keys()].sort((a,b)=>Number(isSafeAction(held[a].action))-Number(isSafeAction(held[b].action)));
   for(let cursor=0;cursor<deepen.length;cursor++){
    const index=deepen[cursor];
    if(pool.n<8||now()>deadline){
-    unexplored.push(...deepen.slice(cursor).map(slot=>({...note(held[slot].action),deepen:false})));
+    unexplored.push(...deepen.slice(cursor).map(slot=>({...note(held[slot].action),deepen:false,reason:stopReason()})));
     break;
    }
    const deep=scoreJob(held[index].action,'deep');
-   if(deep)held[index]=mergeRows(held[index],deep);
+   if(deep&&!deep.failed){
+    const merged=mergeRows(held[index],deep);
+    merged.basicNodes=held[index].basicNodes||0;
+    merged.deepNodes=deep.nodes||0;
+    merged.nodes=(merged.basicNodes||0)+(merged.deepNodes||0);
+    deepSpent+=deep.nodes||0;
+    report.deepNodes+=deep.nodes||0;
+    held[index]=merged;
+   }
   }
+  timing.searchMs=performance.now()-searchStarted;
+  const reasons={time:0,nodes:0,unscored:0};
+  for(const row of unexecuted)reasons[row.reason]=(reasons[row.reason]||0)+1;
+  const coverage={roots:jobs.length,executed:held.length,unexecuted:unexecuted.length,reasons,basicCap};
+  const diagnosis={
+   coverage,rootPlan:jobs.map(note),timing:{...timing,totalMs:performance.now()-started},
+   softMs:ms,overSoft:now()>deadline,basicNodes:basicSpent,deepNodes:deepSpent
+  };
   const scored=held;
   const viewed=scored.map(item=>({action:item.action,search:item.search,opponentTurns:item.opponentTurns,
    settled:item.settled,boundary:item.boundary,cut:item.cut,pending:item.pending,phase:item.phase,nodes:item.nodes,
+   basicNodes:item.basicNodes||0,deepNodes:item.deepNodes||0,
    executed:item.executed!==false,refuted:!!item.refuted,leafTurn:item.leafTurn??null,
    leafActive:item.leafActive??null,leafOwnTurns:item.leafOwnTurns??null,
    followBranches:item.followBranches,maxDepth:item.maxDepth,sequence:item.sequence}));
@@ -314,13 +390,19 @@ export function chooseAiV3Action(pack,state,options={}){
   // Lines that stopped together still compete, including a raid ahead of next.
   const idleOnly=comparable.length>0&&comparable.every(item=>isSafeAction(item.action));
   const constructiveCut=scored.some(item=>!isSafeAction(item.action)&&item.boundary!=='returned'&&item.boundary!=='terminal');
-  if((!comparable.length||discardIncomplete||(!shared&&idleOnly&&constructiveCut))&&backup){
+  const missedDevelopment=unexecuted.some(item=>{
+   const action=item.action||item;
+   return !!(action&&action.type&&!isSafeAction(action));
+  });
+  // A finished next is not a comparison of the plays that never ran.
+  if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&backup){
    report.budgetFallback++;
    report.budget++;
    return finish(backup,'budget-fallback',{
-    actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,incomplete:true,
+    actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
+    incomplete:true,settled:false,
     hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,
-    plan,roots:jobs.length,followBranches,maxDepth,unexecuted,unexplored,
+    plan,roots:jobs.length,followBranches,maxDepth,unexecuted,unexplored,...diagnosis,
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
     sequence:(scored.find(item=>item.sequence?.length)||{}).sequence||[]
    },started);
@@ -330,9 +412,10 @@ export function chooseAiV3Action(pack,state,options={}){
    report.budgetFallback++;
    report.budget++;
    return finish(backupOnly,'budget-fallback',{
-    actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,incomplete:true,
-    executed:false,hard:hardExact,hardNodes:hardSlice,strategy,compared:[],unexecuted,unexplored,
-    plan,roots:jobs.length
+    actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
+    incomplete:true,executed:false,settled:false,
+    hard:hardExact,hardNodes:hardSlice,strategy,compared:[],unexecuted,unexplored,
+    plan,roots:jobs.length,...diagnosis
    },started);
   }
   const observation=actorObservation(pack,state,actor);
@@ -347,12 +430,15 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched');
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
+  if(row?.settled)report.settledChoices++;
   return finish(exact,now()>deadline?'budget':'search',{
    actor,seed,worlds:worlds.length,score:row?.search??null,bonus:blended.bonus,
    opponentTurns:row?.opponentTurns||0,responses:row?.responses||0,
-   actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,
-   incomplete:!row?.settled,hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:jobs.length-scored.length,
-   unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:row?.sequence||[]
+   actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:null,
+   incomplete:!row?.settled,settled:!!row?.settled,hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,
+   unscored:jobs.length-scored.length,
+   unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:row?.sequence||[],
+   ...diagnosis
   },started);
  }catch(error){
   try{
