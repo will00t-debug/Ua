@@ -33,7 +33,8 @@ export function onlineBattleView(room){
  const view=room.view,seat=room.seat;
  const relative=n=>n===0||n===1?n===seat?0:1:n;
  return {...view,status:room.status,active:relative(view.active),actor:relative(view.actor),
-  pending:view.pending?{...view.pending,player:relative(view.pending.player)}:null,
+  pending:view.pending?{...view.pending,player:relative(view.pending.player),
+   ...(Number.isInteger(view.pending.defender)?{defender:relative(view.pending.defender)}:{})}:null,
   battle:view.battle?{...view.battle,owner:relative(view.battle.owner)}:null,
   players:[view.players[seat],{...view.players[1-seat],hand:null}]};
 }
@@ -263,6 +264,7 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
  const details=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄'}),log);
  target.append(arena,details);shell.append(target);
  if(desktop)mountDesktopBattlefield({arena,header,log:details,view,selectedUid,el,
+  lifeTargetActions:choices,onLifeTargetAction:action=>onAction(action.index),
   cardDefinition:definition,imageSource,imageFallback:img=>{img.src='assets/mark.svg';},
   printedCard:definition,effectCopy:d=>d?.effect||d?.text||'請查看印刷卡面。',openCard,
   backControl:leave,matchupLabel:matchup+' · 房間 '+room.code});
