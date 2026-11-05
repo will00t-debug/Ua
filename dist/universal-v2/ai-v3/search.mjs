@@ -87,13 +87,17 @@ const BOUNDARY_RANK={terminal:5,returned:4,yielded:3,pending:2,open:1};
 export function comparedLines(scored){
  const terminals=scored.filter(item=>item.boundary==='terminal');
  const wins=terminals.filter(item=>item.search>0);
- if(wins.length)return {rows:wins,shared:false};
+ if(wins.length)return {rows:wins,shared:false,contested:false};
  const returned=scored.filter(item=>item.boundary==='returned');
- if(returned.length)return {rows:returned,shared:false};
- if(terminals.length)return {rows:terminals,shared:false};
+ if(returned.length)return {rows:returned,shared:false,contested:false};
+ const losses=terminals.filter(item=>item.search<=-90000);
+ // A finished loss is known. It does not erase an alternative that has not
+ // been resolved, and that alternative's unfinished score is not a choice.
+ if(losses.length&&scored.some(item=>item.boundary!=='terminal'))return {rows:[],shared:false,contested:true};
+ if(terminals.length)return {rows:terminals,shared:false,contested:false};
  let best=0;
  for(const row of scored)best=Math.max(best,BOUNDARY_RANK[row.boundary]||0);
- if(!best)return {rows:[],shared:false};
+ if(!best)return {rows:[],shared:false,contested:false};
  const rows=scored.filter(row=>(BOUNDARY_RANK[row.boundary]||0)===best);
  // yielded and pending are labels, not positions. Incomplete lines share a
  // comparison only when the turn, the player to move, the phase, and the
@@ -108,37 +112,47 @@ export function comparedLines(scored){
   }
   if(groups.size>1){
    const lists=[...groups.values()];
+   const players=new Set(lists.map(list=>list[0].leafPendingPlayer??''));
+   if(players.size>1)chosen=[];
    const idle=list=>list.every(item=>isSafeAction(item.action));
    lists.sort((a,b)=>{
     if(idle(a)!==idle(b))return idle(a)?1:-1;
     return b.length-a.length;
    });
    const top=lists[0],second=lists[1];
-   if(top.length===second.length&&idle(top)===idle(second))chosen=[];
-   else chosen=top;
+   if(players.size<=1){
+    if(top.length===second.length&&idle(top)===idle(second))chosen=[];
+    else chosen=top;
+   }
   }
  }
- if(!chosen.length)return {rows:[],shared:false};
+ if(!chosen.length)return {rows:[],shared:false,contested:false};
  const idleOnly=chosen.every(item=>isSafeAction(item.action));
  const behind=scored.some(row=>!isSafeAction(row.action)&&!chosen.includes(row));
- if(idleOnly&&behind)return {rows:[],shared:false};
- return {rows:chosen,shared:true};
+ if(idleOnly&&behind)return {rows:[],shared:false,contested:false};
+ return {rows:chosen,shared:true,contested:false};
 }
 function doneLine(row){
  return !!(row&&(row.settled||row.boundary==='returned'||row.boundary==='terminal'));
 }
-// A later search replaces the basic line only when it is a finished
-// improvement, or when an opponent reply has already refuted a sure win.
-function mergeRows(basic,deep){
+function ourPlan(row){
+ return (row?.sequence||[]).filter(step=>step.kind==='root'||step.kind==='choice')
+  .map(step=>[step.type,step.uid??'',step.line||'',step.mode||''].join(':')).join('|');
+}
+// A lower deep score replaces the basic line only when it is the same
+// friendly plan and an opponent reply refuted it. A deep line that chose
+// different friendly actions is a different plan and keeps the better score.
+export function mergeRows(basic,deep){
  if(!deep||!Number.isFinite(deep.search))return basic;
  if(!basic||!Number.isFinite(basic.search))return deep;
- if(basic.search>=90000&&deep.refuted&&deep.search<basic.search)return deep;
+ if(deep.refuted&&ourPlan(basic)===ourPlan(deep)&&deep.search<basic.search)return deep;
  if(doneLine(basic)&&!doneLine(deep))return basic;
  if(doneLine(deep)&&!doneLine(basic))return deep;
  return deep.search>basic.search?deep:basic;
 }
 function placeKey(row){
- return [row.leafTurn??'',row.leafActive??'',row.phase??'',row.pending??'',row.leafOwnTurns??''].join('|');
+ return [row.leafTurn??'',row.leafPendingPlayer??'',row.leafActive??'',row.phase??'',row.pending??'',
+  row.leafSource??'',row.leafProgress??'',row.leafOwnTurns??''].join('|');
 }
 function actionNote(action){
  return {type:action?.type||null,uid:action?.uid??null,line:action?.line||null,mode:action?.mode||null};
@@ -320,7 +334,9 @@ export function chooseAiV3Action(pack,state,options={}){
    return {action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
     nodes,settled:settled===n,pending,phase,boundary,cut,followBranches,maxDepth,sequence,
     executed:true,refuted:!!sample.refuted,leafTurn:sample.leafTurn??null,
-    leafActive:sample.leafActive??null,leafOwnTurns:sample.leafOwnTurns??null};
+    leafActive:sample.leafActive??null,leafPendingPlayer:sample.leafPendingPlayer??null,
+    leafSource:sample.leafSource??null,leafProgress:sample.leafProgress??'',
+    leafOwnTurns:sample.leafOwnTurns??null};
   };
   const searchStarted=performance.now();
   let basicSpent=0,deepSpent=0;
@@ -376,12 +392,14 @@ export function chooseAiV3Action(pack,state,options={}){
    settled:item.settled,boundary:item.boundary,cut:item.cut,pending:item.pending,phase:item.phase,nodes:item.nodes,
    basicNodes:item.basicNodes||0,deepNodes:item.deepNodes||0,
    executed:item.executed!==false,refuted:!!item.refuted,leafTurn:item.leafTurn??null,
-   leafActive:item.leafActive??null,leafOwnTurns:item.leafOwnTurns??null,
+   leafActive:item.leafActive??null,leafPendingPlayer:item.leafPendingPlayer??null,
+   leafSource:item.leafSource??null,leafProgress:item.leafProgress??'',
+   leafOwnTurns:item.leafOwnTurns??null,
    followBranches:item.followBranches,maxDepth:item.maxDepth,sequence:item.sequence}));
   const followBranches=scored.reduce((sum,item)=>sum+(item.followBranches||0),0);
   const maxDepth=scored.reduce((sum,item)=>Math.max(sum,item.maxDepth||1),1);
   const backup=reliableChoice(pack,state,actor,legal,hardExact,ordered);
-  const {rows:comparable,shared}=comparedLines(scored);
+  const {rows:comparable,shared,contested}=comparedLines(scored);
   const missed=jobs.length>scored.length||scored.some(item=>!item.settled);
   const discardWindow=(state.pending?.kind||'').startsWith('effect-discard');
   const discardIncomplete=discardWindow&&legal.some(action=>action.type==='chooseDiscard'&&action.uid&&
@@ -395,10 +413,18 @@ export function chooseAiV3Action(pack,state,options={}){
    return !!(action&&action.type&&!isSafeAction(action));
   });
   // A finished next is not a comparison of the plays that never ran.
-  if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&backup){
+  const choice=contested?(()=>{
+   const doomed=scored.filter(row=>row.boundary==='terminal'&&row.search<=-90000);
+   const safer=legal.filter(action=>!doomed.some(row=>same(row.action,action)));
+   if(!safer.length)return backup;
+   let orderedSafer=safer;
+   try{orderedSafer=rankLegal(pack,state,actor,safer,strategy);}catch{orderedSafer=safer;}
+   return reliableChoice(pack,state,actor,safer,null,orderedSafer);
+  })():backup;
+  if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    report.budgetFallback++;
    report.budget++;
-   return finish(backup,'budget-fallback',{
+   return finish(choice,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
     incomplete:true,settled:false,
     hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,

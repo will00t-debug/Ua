@@ -228,7 +228,14 @@ function continuationAction(pack,state,actor,legal){
  return kind==='effect-discard'?cards[0].action:cards[cards.length-1].action;
 }
 function noteLeaf(ctx,state){
- ctx.stats.leafPending=state.pending?.kind||null;
+ const pending=state.pending;
+ ctx.stats.leafPending=pending?.kind||null;
+ ctx.stats.leafPendingPlayer=Number.isInteger(pending?.player)?pending.player:null;
+ ctx.stats.leafSource=pending?.sourceUid||null;
+ ctx.stats.leafProgress=pending?[pending.index??'',pending.step??'',
+  Array.isArray(pending.choices)?pending.choices.length:'',
+  Array.isArray(pending.entries)?pending.entries.length:'',
+  pending.sourceStamp??''].join('.'):'';
  ctx.stats.leafPhase=state.phase;
  ctx.stats.leafOwnTurns=state.players?.map(player=>player.ownTurns??0)||null;
  ctx.stats.leafTurn=state.turn??null;
@@ -342,7 +349,9 @@ function leafSnap(ctx){
   boundary:ctx.stats.boundary,handedOff:ctx.stats.handedOff,returned:ctx.stats.returned,
   settled:ctx.stats.settled,cut:ctx.stats.cut,exhausted:ctx.stats.exhausted,
   limit:ctx.stats.limit,depthHit:ctx.stats.depthHit,
-  leafPending:ctx.stats.leafPending,leafPhase:ctx.stats.leafPhase,
+  leafPending:ctx.stats.leafPending,leafPendingPlayer:ctx.stats.leafPendingPlayer??null,
+  leafSource:ctx.stats.leafSource??null,leafProgress:ctx.stats.leafProgress??'',
+  leafPhase:ctx.stats.leafPhase,
   leafOwnTurns:ctx.stats.leafOwnTurns,leafTurn:ctx.stats.leafTurn,leafActive:ctx.stats.leafActive,
   opponentTurns:ctx.stats.opponentTurns,responses:ctx.stats.responses,
   sequence:ctx.stats.sequence?ctx.stats.sequence.slice():[],
@@ -353,7 +362,9 @@ function applyLeaf(ctx,snap){
  ctx.stats.boundary=snap.boundary;ctx.stats.handedOff=snap.handedOff;ctx.stats.returned=snap.returned;
  ctx.stats.settled=snap.settled;ctx.stats.cut=snap.cut;ctx.stats.exhausted=snap.exhausted;
  ctx.stats.limit=snap.limit;ctx.stats.depthHit=snap.depthHit;
- ctx.stats.leafPending=snap.leafPending;ctx.stats.leafPhase=snap.leafPhase;
+ ctx.stats.leafPending=snap.leafPending;ctx.stats.leafPendingPlayer=snap.leafPendingPlayer??null;
+ ctx.stats.leafSource=snap.leafSource??null;ctx.stats.leafProgress=snap.leafProgress??'';
+ ctx.stats.leafPhase=snap.leafPhase;
  ctx.stats.leafOwnTurns=snap.leafOwnTurns;ctx.stats.leafTurn=snap.leafTurn;ctx.stats.leafActive=snap.leafActive;
  ctx.stats.opponentTurns=snap.opponentTurns;ctx.stats.responses=snap.responses;
  ctx.stats.sequence=snap.sequence.slice();
@@ -437,13 +448,23 @@ function replyFrom(pack,state,actor,ctx,left){
  ctx.stats.sequence=best.sequence;
  return best.state;
 }
-function keepBest(best,value,snap,settled,maximize){
+function certainLoss(value,settled){return !!settled&&value<=-90000;}
+// A finished loss does not hide an unfinished alternative. A finished
+// non-loss still outranks an unfinished score, so an open +20 cannot
+// replace a line that already came home.
+function preferOurLine(candidate,current){
+ if(!current)return true;
+ if(certainLoss(candidate.value,candidate.settled)&&!current.settled)return false;
+ if(certainLoss(current.value,current.settled)&&!candidate.settled)return true;
+ if(candidate.settled!==current.settled)return candidate.settled;
+ return candidate.value>current.value;
+}
+export function keepBest(best,value,snap,settled,maximize){
  if(!best)return {value,snap,settled};
  // The opponent minimizes our score. A settled win for us must not outrank
  // the block, trigger, or other answer that keeps them alive.
  if(!maximize)return value<best.value?{value,snap,settled}:best;
- if(settled!==best.settled)return settled?{value,snap,settled}:best;
- return value>best.value?{value,snap,settled}:best;
+ return preferOurLine({value,settled},{value:best.value,settled:best.settled})?{value,snap,settled}:best;
 }
 function answerOpponent(pack,cursor,actor,ctx,left,depth){
  const budget=ctx.replyLeft??(ctx.opponentLeft??2);
@@ -640,8 +661,8 @@ function layered(pack,state,actor,ctx,base){
   const snap=leafSnap(ctx);
   const settled=!!ctx.stats.settled;
   ctx.stats.layers=(ctx.stats.layers||0)+1;
-  if(!best||(settled&&!best.settled)||(settled===best.settled&&value>best.value))
-   best={value,snap,settled,depth:ctx.stats.maxDepth,branches:ctx.stats.followBranches};
+  const candidate={value,snap,settled,depth:ctx.stats.maxDepth,branches:ctx.stats.followBranches};
+  if(preferOurLine(candidate,best))best=candidate;
   if(!room(ctx)||ctx.stats.exhausted==='nodes'||ctx.stats.exhausted==='time')break;
   if(ctx.pool.n<16||ctx.lineSpent>ctx.lineCap*0.7)break;
   layer++;
