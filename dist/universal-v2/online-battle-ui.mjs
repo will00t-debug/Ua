@@ -11,7 +11,7 @@ export const ONLINE_BATTLE_STYLES=[
  'universal-v2-legacy.css','universal-v2-arena-setup.css','universal-v2-battle.css',
  'universal-v2-compact.css','universal-v2-desktop.css','universal-v2-pc-table.css',
  'universal-v2-block.css','universal-v2-zone.css','online-battle.css',
- 'universal-v2-reference-table.css'
+ 'universal-v2-reference-table.css','union-arena-card-backs.css'
 ];
 
 export function setOnlineBattleMode(active,doc=globalThis.document){
