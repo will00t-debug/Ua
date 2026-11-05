@@ -1,0 +1,18 @@
+{
+  "baseline": "hard-search-2",
+  "cases": [
+    {
+      "id": "bleach-energy-instead-of-blocker",
+      "kind": "decision",
+      "title": "bleach",
+      "seed": 7,
+      "first": 0,
+      "actorCards": ["BLC-1-042"],
+      "opponentFront": "BLC-1-045",
+      "actorLife": 1,
+      "baselineAction": {"type": "play", "line": "energy"},
+      "expectedLine": "front",
+      "why": "Q34：BP 較低的阻擋者擋住較高的攻擊者時，雙方都不退場，也不扣生命。茶渡 泰虎放到前線，回合結束會回復為可行動並擋下阿散井 恋次。放到能量區則擋不住，生命 1 會被直接擊破。hard-search-2 只看當前局面的能量曲線，會把這張生成放到能量區。"
+    }
+  ]
+}

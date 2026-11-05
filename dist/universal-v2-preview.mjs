@@ -30,6 +30,8 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261105ttg012ap1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
+import {chooseAiV3Action,AI_V3_POLICY} from './universal-v2/ai-v3/search.mjs';
+import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from './universal-v2/ai-v3/worker-entry.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
@@ -1573,7 +1575,14 @@ function render(){
    s.status==='playing'&&uiActor(s)===1?
     btn('手動推進 AI 一步',manualAiStep,'btn small'):null,
    s.status==='playing'&&uiActor(s)===1&&app.busy?
-    btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null));
+    btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null,
+   s.status==='playing'?
+    btn(searchPreviewOn()?'關閉搜尋預覽':'完整回合搜尋',()=>{
+     setSearchPreview(!searchPreviewOn());
+     resetAi();app.error='';
+     if(uiActor(app.state)===1)driveAi();
+     else render();
+    },'btn small'):null));
  target.append(title,coachBar());
  if(s.status==='playing'&&uiActor(s)===1){
   target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
@@ -1762,6 +1771,14 @@ function manualAiStep(){
  }
 }
 function driveAi(){
+ if(searchPreviewOn()){
+  if(document.body)document.body.dataset.aiPolicy=AI_V3_POLICY;
+  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
+  app.busy=true;app.autoMoves=0;app.sequence++;
+  app.aiPhaseKey=null;app.aiPhaseCount=0;
+  driveSearchPreview(app.sequence);
+  return;
+ }
  if(document.body)document.body.dataset.aiPolicy=aiPolicyFor(app.aiDifficulty);
  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
  app.busy=true;app.autoMoves=0;app.sequence++;
@@ -1820,6 +1837,120 @@ function driveAi(){
   }
  }
  app.aiTimer=setTimeout(chunk,16);render();
+}
+const SEARCH_PREVIEW_KEY='ua-ai-v3-preview';
+function searchPreviewOn(){
+ try{return localStorage.getItem(SEARCH_PREVIEW_KEY)==='1';}catch{return false;}
+}
+function setSearchPreview(on){
+ try{localStorage.setItem(SEARCH_PREVIEW_KEY,on?'1':'0');}catch{}
+ const box=$('ai-v3-preview');
+ if(box)box.checked=!!on;
+}
+let searchWorker=null;
+let searchRequest=0;
+function searchWorkerHandle(){
+ if(searchWorker)return searchWorker;
+ try{
+  searchWorker=new Worker(new URL('./universal-v2/ai-v3/browser-worker.mjs',import.meta.url),{type:'module'});
+  return searchWorker;
+ }catch{return null;}
+}
+function commitAiAction(choice,reason){
+ const previous=app.state;
+ const replayIndex=app.replay.actions.length;
+ app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
+ rememberAi(choice,replayIndex);
+ app.replay=appendUniversalReplay(app.replay,choice,1);
+ notePublicMove(app.packs,previous,app.state,choice,1);
+ pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
+ if(reason){
+  app.aiFallbacks++;
+  pushHistory('AI 使用 V2 合法備援操作（'+reason+'），避免對局停住。');
+ }
+ app.aiPhaseCount++;
+ app.aiCompletedSteps++;
+ app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
+}
+function driveSearchPreview(sequence){
+ if(document.body)document.body.dataset.aiPolicy=AI_V3_POLICY;
+ const step=()=>{
+  if(sequence!==app.sequence)return;
+  if(!searchPreviewOn()){app.busy=false;driveAi();return;}
+  if(!app.state||app.state.status!=='playing'||uiActor(app.state)!==1){
+   app.busy=false;app.aiTimer=null;app.error='';render();return;
+  }
+  if(++app.autoMoves>app.maxAuto){
+   app.busy=false;
+   app.error='電腦操作已達安全上限，請下載重播檔供除錯。';
+   render();return;
+  }
+  const legal=legalUniversalActions(app.packs,app.state);
+  const actor=1;
+  const requestId=++searchRequest;
+  const stateVersion=(app.aiStateVersion=(app.aiStateVersion||0)+1);
+  const request=buildAiV3Request(app.packs,app.state,actor,{
+   requestId,stateVersion,seed:stateVersion,nodes:64,ms:60
+  });
+  let settled=false;
+  const finish=(action,reason)=>{
+   if(settled||sequence!==app.sequence||stateVersion!==app.aiStateVersion)return;
+   settled=true;
+   try{
+    const currentLegal=legalUniversalActions(app.packs,app.state);
+    const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal:currentLegal},{
+     requestId,stateVersion,actor,action,error:action?null:'empty'
+    });
+    const choice=accepted.ok?accepted.action:chooseProgressSafeAiAction(app.packs,app.state,{
+     difficulty:'hard',actionsInPhase:app.aiPhaseCount
+    }).action;
+    commitAiAction(choice,accepted.ok?reason:reason||accepted.reason);
+    if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
+    maybeFinishCoach();
+    saveBattleProgress();
+    render();
+    if(app.state.status==='playing'&&uiActor(app.state)===1)app.aiTimer=setTimeout(step,16);
+    else{app.busy=false;app.aiTimer=null;app.error='';}
+   }catch(error){
+    app.busy=false;app.aiTimer=null;
+    app.error='電腦操作已暫停：'+(error?.message||String(error));
+    try{render();}catch{}
+   }
+  };
+  const worker=request?searchWorkerHandle():null;
+  if(!worker||!request){
+   try{
+    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,nodes:64,ms:60});
+    finish(action,null);
+   }catch{finish(null,'search-failed');}
+   return;
+  }
+  const timer=setTimeout(()=>{
+   worker.removeEventListener('message',onMessage);
+   try{
+    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,nodes:48,ms:40});
+    finish(action,'worker-timeout');
+   }catch{finish(null,'worker-timeout');}
+  },700);
+  const onMessage=event=>{
+   const data=event.data||{};
+   if(data.requestId!==requestId)return;
+   clearTimeout(timer);
+   worker.removeEventListener('message',onMessage);
+   const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal},{...data,legal:undefined});
+   if(!accepted.ok){finish(null,accepted.reason);return;}
+   finish(accepted.action,null);
+  };
+  worker.addEventListener('message',onMessage);
+  try{worker.postMessage(request);}
+  catch{
+   clearTimeout(timer);
+   worker.removeEventListener('message',onMessage);
+   try{finish(handleAiV3Request(request).action,null);}catch{finish(null,'worker-post');}
+  }
+ };
+ app.aiTimer=setTimeout(step,16);
+ render();
 }
 function resetAi(){
  app.sequence++;if(app.aiTimer!==null)clearTimeout(app.aiTimer);
@@ -2200,6 +2331,11 @@ if(!IS_BATTLE_PAGE){
  if(coachConsent){
   coachConsent.checked=coachApi().consent();
   coachConsent.addEventListener('change',()=>coachApi().setConsent(coachConsent.checked));
+ }
+ const searchPreview=$('ai-v3-preview');
+ if(searchPreview){
+  searchPreview.checked=searchPreviewOn();
+  searchPreview.addEventListener('change',()=>setSearchPreview(searchPreview.checked));
  }
  syncMatchLobby();
  importAccountLobbyDecks();
