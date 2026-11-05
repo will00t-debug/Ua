@@ -1595,6 +1595,7 @@ function render(){
  target.append(log);
  if(IS_BATTLE_PAGE&&isDesktopBattlefield())mountDesktopBattlefield({
   arena,header:title,log,view:v,selectedUid:app.selectedUid,el,
+  lifeTargetActions:legal,onLifeTargetAction:applyAction,
   cardDefinition:cardDef,imageSource:imgUrl,printedCard:printedCatalogue,
   effectCopy:fieldEffectCopy,openCard:showFieldSheet,
   imageFallback:(image,side)=>{
@@ -1991,7 +1992,7 @@ async function launchBattle(){
   // Catch invalid packs before navigation. The real match draws a fresh seed
   // on the dedicated battle route rather than inheriting a fixed deck order.
   newUniversalMatch([mine.pack,foe.pack],{
-   decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true
+   decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true,attackerChoosesLife:true
   });
   const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId
    :(typeof mine.recordDeckId==='string'?mine.recordDeckId:null);
@@ -2017,7 +2018,7 @@ async function startGame(){
   const seed=generateMatchSeed();
   app.recordDeckId=app.launch.config.recordDeckId;
   app.recordNoted=false;
-  app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
+  app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true,attackerChoosesLife:true});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.undo=null;
   app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
@@ -2029,7 +2030,7 @@ async function startGame(){
    (foe.label||fmtTitle(foe.pack.id))+'｜先手 '+(first===0?'你':'電腦')+
    '｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
-   decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
+   decks:[mine.counts,foe.counts],seed,first,openingMulligan:true,attackerChoosesLife:true});
   void coachApi().begin(coachHeaderNow(newCoachMatchId()));
   saveBattleProgress();
   render();driveAi();
