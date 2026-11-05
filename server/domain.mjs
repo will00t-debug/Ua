@@ -154,8 +154,10 @@ function publicActionChoice(action,index,packs,match,view,extraIds){
   choice.from=action.from;
  // Public LIFE POSITION indices, never the underlying private card identities.
  if(action?.type==='chooseAttackLife'&&Array.isArray(action.indices)&&
+  match?.pending?.kind==='attack-life-target'&&
   action.indices.length>=1&&action.indices.length<=7&&
-  action.indices.every(i=>Number.isInteger(i)&&i>=0&&i<7))
+  action.indices.every(i=>Number.isInteger(i)&&i>=0&&
+   i<view.players[match.pending.defender]?.lifeCount))
   choice.indices=[...action.indices];
  return choice;
 }
