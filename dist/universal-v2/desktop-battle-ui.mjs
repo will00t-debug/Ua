@@ -37,7 +37,7 @@ const colorNames={blue:'藍',green:'綠',red:'紅',purple:'紫',yellow:'黃',whi
 
 export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
  cardDefinition,imageSource,imageFallback,printedCard,effectCopy,openCard,
- backControl=null,matchupLabel=null}){
+ backControl=null,matchupLabel=null,lifeTargetActions=[],onLifeTargetAction=null}){
  const opponent=arena.querySelector('.playerArea.opponent');
  const mine=arena.querySelector('.playerArea:not(.opponent)');
  const middle=arena.querySelector('.v2-middle-controls');
@@ -53,20 +53,78 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
  const lifeRail=el('aside',{class:'v2-life-rail','aria-label':'雙方七格生命區'});
  const pileRail=el('aside',{class:'v2-pile-rail','aria-label':'雙方牌組及場外'});
  const slotCount=side=>Math.max(7,Number(view.players[side]?.lifeCount)||0);
+ const choosingLife=view?.pending?.kind==='attack-life-target'&&
+  view.pending.player===0&&view.pending.defender===1&&typeof onLifeTargetAction==='function';
+ const requiredLifeCards=choosingLife?view.pending.count:0;
+ const legalLifeActions=choosingLife?lifeTargetActions.filter(a=>
+  a?.type==='chooseAttackLife'&&Array.isArray(a.indices)&&a.indices.length===requiredLifeCards):[];
+ const selectedLifeIndices=new Set();
+ let lifeButtons=[],lifeConfirm=null,lifeInstruction=null;
+ const matchedLifeAction=()=>legalLifeActions.find(a=>
+  JSON.stringify(a.indices)===JSON.stringify([...selectedLifeIndices].sort((a,b)=>a-b)));
+ function updateLifeSelection(){
+  for(const button of lifeButtons){
+   const index=Number(button.dataset.lifeIndex);
+   const chosen=selectedLifeIndices.has(index);
+   button.classList.toggle('v2-life-selected',chosen);
+   button.setAttribute('aria-pressed',String(chosen));
+  }
+  if(lifeInstruction)lifeInstruction.textContent=
+   '進攻方選擇 '+requiredLifeCards+' 張血區：'+selectedLifeIndices.size+'/'+requiredLifeCards;
+  if(lifeConfirm)lifeConfirm.disabled=selectedLifeIndices.size!==requiredLifeCards||!matchedLifeAction();
+ }
+ function selectLifeIndex(index){
+  if(!choosingLife||!legalLifeActions.length)return;
+  if(requiredLifeCards===1){
+   const action=legalLifeActions.find(a=>a.indices[0]===index);
+   if(action)onLifeTargetAction(action);
+   return;
+  }
+  if(selectedLifeIndices.has(index))selectedLifeIndices.delete(index);
+  else{
+   if(selectedLifeIndices.size>=requiredLifeCards)return;
+   selectedLifeIndices.add(index);
+  }
+  updateLifeSelection();
+ }
  for(const [side,area] of [[1,opponent],[0,mine]]){
   const player=view.players[side];
   const resources=area.querySelector('.playerResources');
   const life=area.querySelector('.lifeRow');
   const lifeCount=Math.max(0,Number(player.lifeCount)||0);
   // Keep all seven printed positions; empty positions persist as life is lost.
+  const targets=side===1&&choosingLife&&legalLifeActions.length>0;
+  const lifeCards=Array.from({length:slotCount(side)},(_,i)=>{
+   const canPick=targets&&i<lifeCount;
+   const node=el(canPick?'button':'span',{
+    ...(canPick?{type:'button',onClick:()=>selectLifeIndex(i),'aria-pressed':'false'}:{}),
+    class:'lifeCard'+(i>=lifeCount?' v2-life-spent':'')+(canPick?' v2-life-target':''),
+    'aria-label':(side===1?'對手':'我方')+'血區第 '+(i+1)+' 格'+
+     (i>=lifeCount?'（已失去）':canPick?'（選擇攻擊）':''),
+    'data-life-index':String(i)},el('span',{class:'v2-life-number',text:String(i+1)}),
+    el('span',{class:'v2-life-emblem',text:i>=lifeCount?'':'♠'}));
+   if(canPick)lifeButtons.push(node);
+   return node;
+  });
   life?.replaceChildren(
    el('span',{class:'v2-life-caption',text:side===1?'電腦血區':'你的血區'}),
-   ...Array.from({length:slotCount(side)},(_,i)=>el('span',{
-    class:'lifeCard'+(i>=lifeCount?' v2-life-spent':''),
-    'aria-label':(side===1?'對手':'我方')+'血區第 '+(i+1)+' 格'+(i>=lifeCount?'（已失去）':''),
-    'data-life-index':String(i)},el('span',{class:'v2-life-number',text:String(i+1)}),
-    el('span',{class:'v2-life-emblem',text:i>=lifeCount?'':'♠'})))
+   ...lifeCards
   );
+  if(targets){
+   lifeInstruction=el('p',{class:'v2-life-instruction',text:
+    '進攻方選擇 '+requiredLifeCards+' 張血區：0/'+requiredLifeCards});
+   life.append(lifeInstruction);
+   if(requiredLifeCards>1){
+    lifeConfirm=el('button',{type:'button',class:'v2-life-confirm',disabled:true,
+     text:'確認攻擊 '+requiredLifeCards+' 張',
+     onClick:()=>{
+      const action=matchedLifeAction();
+      if(action)onLifeTargetAction(action);
+     }});
+    life.append(lifeConfirm);
+   }
+   updateLifeSelection();
+  }
   const lifeGroup=el('section',{class:'v2-life-group'+(side===1?' opponent':''),
    'aria-label':side===1?'對手生命卡':'我方生命卡'},life);
   const removed=area.querySelector('[data-v2-zone="removed"]');
