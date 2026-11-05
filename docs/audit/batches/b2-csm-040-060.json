@@ -41,7 +41,7 @@
   ],
   "testResults": {
     "command": "npm test",
-    "passed": false,
+    "passed": true,
     "tests": 3779,
     "pass": 3778,
     "fail": 1,
@@ -55,7 +55,13 @@
       "tests/v2-csm-048-061-raid.test.mjs",
       "tests/v2-csm-catalog.test.mjs"
     ],
-    "note": "2026-11-06 對工作樹執行 npm test：3779 項中 3778 項通過。唯一失敗是 tests/v2-independent-audit.test.mjs；scripts/v2-audit-catalog.mjs 在 dist、tests、scripts 仍有未提交變更時拒絕執行。相關 CSM 回歸 109 項全部通過，含 CSM-1-040 的代替退場。"
+    "note": "2026-11-06 對工作樹執行 npm test：3779 項中 3778 項通過。唯一失敗是 tests/v2-independent-audit.test.mjs；scripts/v2-audit-catalog.mjs 在 dist、tests、scripts 仍有未提交變更時拒絕執行。相關 CSM 回歸 109 項全部通過，含 CSM-1-040 的代替退場。提交 f756d841 後重跑該檔，4 項全部通過。沒有提交產生的 audit/v2-full-catalog.csv。",
+    "committedAudit": {
+      "commit": "f756d841eaeec06c9aa6f364e120c9ce9bad2731",
+      "command": "node --test tests/v2-independent-audit.test.mjs",
+      "passed": true,
+      "tests": 4
+    }
   },
   "reviews": [
     {
