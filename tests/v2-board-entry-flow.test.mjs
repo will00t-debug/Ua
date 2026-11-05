@@ -87,6 +87,42 @@ test('effect Raid selects the base before the destination, and paid Raid keeps t
  assert.doesNotMatch(online,/效果突襲：直接點亮起的登場位置/);
 });
 
+test('KJN Shadow locks rear Cid base before targeting occupied front COLOR Shadow',()=>{
+ // KJN-1-049 (8/1 Shadow), KJN-1-046 (3/1 Cid), KJN-1-047 (COLOR Shadow/Cid alias).
+ const actions=[
+  {type:'raid',uid:'shadow8',baseUid:'cid3',line:'front',slot:2,replaceUid:'color-shadow'},
+  {type:'raid',uid:'shadow8',baseUid:'color-shadow',line:'front',slot:2},
+  {type:'raid',uid:'shadow8',baseUid:'cid3',line:'front',slot:3}
+ ];
+ const click=(base,line,slot,slotUid,legal=actions)=>entryClickPlan({
+  selectedUid:'shadow8',entryMode:'raid',raidBaseUid:base,line,slot,slotUid,legal
+ });
+ assert.deepEqual(click(null,'front',2,'color-shadow'),
+  {type:'raid-base',baseUid:'color-shadow'},'another eligible base is selectable before base lock');
+ assert.deepEqual(click('cid3','front',2,'color-shadow'),
+  {type:'entry',mode:'raid',actions:[actions[0]]},'occupied target is destination after base lock');
+ assert.deepEqual(click('cid3','front',3,null),
+  {type:'entry',mode:'raid',actions:[actions[2]]},'empty target stays directly playable');
+ assert.deepEqual(click('cid3','front',1,'unrelated'),
+  {type:'entry-wait',mode:'raid'},'illegal occupied target cannot change base');
+ assert.deepEqual(click('cid3','front',2,'color-shadow',[actions[1]]),
+  {type:'entry-wait',mode:'raid'},'cannot invent a Raid with a different base');
+ const effect=[
+  {type:'chooseOutsideRestOrRaid',uid:'shadow8',mode:'raid',baseUid:'cid3',
+   line:'front',slot:2,replaceUid:'color-shadow'},
+  {type:'chooseOutsideRestOrRaid',uid:'shadow8',mode:'raid',baseUid:'color-shadow',
+   line:'front',slot:2}
+ ];
+ assert.deepEqual(click('cid3','front',2,'color-shadow',effect),
+  {type:'entry',mode:'raid',actions:[effect[0]]},'effect Raid uses the same lock');
+ const solo=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
+ const online=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
+ assert.match(solo,/重新選擇底板/);
+ assert.match(online,/重新選擇底板/);
+ assert.match(solo,/window\.confirm\('確認擠位/);
+ assert.match(online,/window\.confirm\('確認擠位/);
+});
+
 test('outside and removed characters use the same cell click',()=>{
  assert.equal(boardEntryMode(legal[8]),'raid');
  assert.equal(boardEntryMode(legal[9]),null);
@@ -135,9 +171,10 @@ test('online match offers explicit paid Raid mode while keeping direct normal en
   document,Node:FakeNode,fetch:async()=>{throw new Error('offline');},
   clearInterval(){},setInterval(){},location:{hash:''},history:{replaceState(){}},
   localStorage:{getItem(){return null;}},sessionStorage:{setItem(){}},
-  navigator:{},window:{location:{assign(){}}},confirm(){return false},
+  navigator:{},window:{location:{assign(){}},confirm(message){context.confirmed.push(message);return false;}},confirm(){return false},
   setTimeout,clearTimeout,console
  });
+ context.confirmed=[];
  new vm.Script(source,{filename:'dist/online.mjs'}).runInContext(context);
  const empty=()=>[null,null,null,null];
  context.roomFixture={
@@ -194,4 +231,22 @@ test('online match offers explicit paid Raid mode while keeping direct normal en
  const pile=appRoot.querySelectorAll('button').find(node=>node.attributes['aria-label']==='我方移除區 1 張');
  assert.ok(pile);pile.handlers.click();
  assert.match(texts(appRoot),/移除角色/);
+ vm.runInContext(`
+  roomFixture.view.players[0].front[2]={uid:'color-shadow',cardId:'KJN-1-047',name:'COLOR 闇影',color:'purple'};
+  roomFixture.choices.push(
+   {index:6,type:'raid',uid:'hand',baseUid:'base',line:'front',slot:2,replaceUid:'color-shadow',label:'突襲擠位'},
+   {index:7,type:'raid',uid:'hand',baseUid:'color-shadow',line:'front',slot:2,label:'另一底板突襲'}
+  );
+  app.pick={uid:'hand',entryMode:'raid',raidBaseUid:'base',options:null};
+  render();
+ `,context);
+ assert.match(texts(appRoot),/重新選擇底板/);
+ vm.runInContext("clickField(0,'front',2,roomFixture.view.players[0].front[2]);",context);
+ assert.equal(context.confirmed.length,1,'occupied legal Raid requires confirmation');
+ assert.match(context.confirmed[0],/COLOR 闇影/);
+ assert.equal(vm.runInContext('app.pick.raidBaseUid',context),'base',
+  'cancel keeps selected base and does not dispatch an action');
+ const reset=appRoot.querySelectorAll('button').find(node=>node.textContent==='重新選擇底板');
+ assert.ok(reset);reset.handlers.click();
+ assert.equal(vm.runInContext('app.pick.raidBaseUid',context),null);
 });
