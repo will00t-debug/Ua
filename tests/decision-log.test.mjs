@@ -452,7 +452,15 @@ test('the battle page records a decision only after the engine accepts it', ()=>
  const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs', import.meta.url), 'utf8');
  const online=readFileSync(new URL('../dist/online.mjs', import.meta.url), 'utf8');
  assert.equal([...preview.matchAll(/rememberHuman\(/g)].length, 2);
- assert.match(preview, /dispatchUniversalAction\(app\.packs,app\.state,a,\{actor:0\}\);[\s\S]{0,180}rememberHuman\(a,previous,replayIndex,legal\)/);
+  const human=preview.split('function applyAction(a){')[1]?.split('function undoMove(){')[0];
+  assert.ok(human,'human action handler exists');
+  const dispatch=human.indexOf('const nextState=dispatchUniversalAction(app.packs,app.state,a,{actor:0});');
+  const checked=human.indexOf('assertUniversalMatch(app.packs,nextState);');
+  const replay=human.indexOf('const nextReplay=appendUniversalReplay(');
+  const committed=human.indexOf('app.state=nextState;');
+  const recorded=human.indexOf('rememberHuman(a,previous,replayIndex,legal)');
+  assert.ok(dispatch>=0&&checked>dispatch&&replay>checked&&committed>replay&&recorded>committed,
+   'V2 reducer and replay are validated before recording an accepted decision');
  assert.match(preview, /endReason:'abandoned'/);
  assert.match(preview, /endReason:'interrupted'/);
  assert.match(online, /提供對戰紀錄改善 AI/);

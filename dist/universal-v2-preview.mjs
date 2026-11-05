@@ -1188,7 +1188,17 @@ function renderOpeningMulligan(target,s){
     action.mode==='keep'?'recommended':'quiet'));
   }
   panel.append(decisions,el('p',{class:'v2-mulligan-hint',text:'每人只有這一次調度機會，確認後不可再次重抽。'}));
- }else panel.append(el('p',{class:'v2-mulligan-hint',role:'status',text:'等待電腦完成調度；你的起手牌會維持隱私。'}));
+ }else{
+  panel.append(el('p',{class:'v2-mulligan-hint',role:'status',text:
+   app.busy?'電腦正在決定起手牌；你的手牌會維持隱私。':'電腦調度尚未完成；可以重新繼續或手動完成這一步。'}));
+  const retry=el('div',{class:'v2-mulligan-decisions'});
+  retry.append(btn('重新繼續電腦調度',()=>{resetAi();app.error='';driveAi();},'recommended'));
+  retry.append(btn('手動完成電腦調度',manualAiStep,'quiet'));
+  panel.append(retry);
+ }
+ // The opening-hand screen returns early from render(), so surface errors
+ // here instead of hiding failures underneath the future battle controls.
+ if(app.error)panel.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
  panel.append(coachBar());
  target.append(panel);
 }
@@ -1628,7 +1638,13 @@ function render(){
 }
 function applyAction(a){
  if(a?.lifeRaidSource)a=a.lifeRaidSource;
- if(!app.state||app.busy||uiActor(app.state)!==0)return;
+ if(!app.state||uiActor(app.state)!==0)return;
+ // Mobile timers may leave a stale AI busy flag after the AI hands control
+ // back during mulligan. It must not disable BOTH human opening decisions.
+ if(app.busy){
+  if(app.state.pending?.kind!=='opening-mulligan')return;
+  resetAi();
+ }
  try{
   const legal=legalUniversalActions(app.packs,app.state);
   if(!isExactLegal(a,legal))throw Error('操作已非目前的合法動作，請重新選擇。');
@@ -1646,12 +1662,21 @@ function applyAction(a){
    publicMoves:app.publicMoves.slice()};
   const previous=app.state;
   const replayIndex=app.replay.actions.length;
-  app.state=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
-  assertUniversalMatch(app.packs,app.state);
-  rememberHuman(a,previous,replayIndex,legal);
-  app.replay=appendUniversalReplay(app.replay,a,0);
-  notePublicMove(app.packs,previous,app.state,a,0);
-  pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
+  // Prepare the next legal state and replay before publishing either.
+  // A failed validation must leave the original choice available to retry.
+  const nextState=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
+  assertUniversalMatch(app.packs,nextState);
+  const nextReplay=appendUniversalReplay(app.replay,a,0);
+  const publicLabel=publicPreviewActionLabel(app.packs,previous,nextState,a,0);
+  app.state=nextState;
+  app.replay=nextReplay;
+  // Recording problems must not strand an already-committed mulligan.
+  try{rememberHuman(a,previous,replayIndex,legal);}
+  catch(e){app.history.unshift('紀錄未保存：'+(e?.message||String(e)));}
+  try{notePublicMove(app.packs,previous,nextState,a,0);}
+  catch(e){app.history.unshift('公開動作紀錄未保存：'+(e?.message||String(e)));}
+  pushHistory(publicLabel);
+
   saveBattleProgress();
   app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;
   app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
