@@ -1351,8 +1351,12 @@ export function pendingFocusCard(pack,state){
  const q=state?.pending;
  if(!q||q.player!==0||!REVEAL_FOCUS_STEPS.has(q.step))return null;
  const actions=Array.isArray(q.actions)?q.actions:[];
- if(actions.some(action=>typeof action?.uid==='string'&&action.uid))return null;
- const art=controllerChoiceArt(pack,state,{type:q.kind||'focus'});
+ const named=[...new Set(actions.map(action=>action?.uid).filter(uid=>typeof uid==='string'&&uid))];
+ // Several different cards keep their own buttons. One looked-at card,
+ // even when both placement buttons name it, still opens the effect sheet.
+ if(named.length>1)return null;
+ const art=controllerChoiceArt(pack,state,named.length===1?
+  {type:q.kind||'focus',uid:named[0]}:{type:q.kind||'focus'});
  if(art.length!==1||typeof art[0]?.cardId!=='string'||!art[0].cardId)return null;
  const zone=q.step==='oppTop'||art[0].side===1?'對手牌組頂':'你的牌組頂';
  return {...art[0],zone};

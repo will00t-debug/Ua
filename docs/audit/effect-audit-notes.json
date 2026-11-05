@@ -1,0 +1,128 @@
+{
+  "updated": "2026-11-05",
+  "next": "從 CSM-1-001 的第一段效果開始逐段核對。本批沒有把未檢查的卡標成通過。",
+  "sharedFixes": [
+    {
+      "name": "BP 0 以下依規則退場",
+      "rule": "Q94。BP 變成 0 以下的角色退場。Q1139（2024-10-18）：這次退場不是「キャラの効果による退場」，所以 KMR-1-025 的代替退場與 KMR-1-051 的對手效果支付都不能用。",
+      "where": "dist/universal-v2/engine.mjs openBpZeroRetirements、continueEffectQueue、retireBatchOne、effect-target",
+      "affects": "前線與能源線的角色。只把 BP 減下去、自己沒有呼叫退場的封閉腳本也會在效果佇列空出來時被清掉，包含犬夜叉 debuff、假面騎士 debuff、陰之實力者 KJN-1-029、魔法少女小圓第二彈 MMM-2-014、進擊的巨人第二彈 AOT-2-056 這類自己減 BP。場地卡不退。kmrAnchored 仍留在場上。已經排進 retireBatchOne 的對象不會再排一次。",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs"
+    },
+    {
+      "name": "看牌頂的單一選擇顯示卡圖與效果",
+      "rule": "KMR-2-054：被阻擋時查看自己牌組頂 1 張，放到上面或下面。這張牌只給操作者看。",
+      "where": "dist/universal-v2/preview-actions.mjs pendingFocusCard。畫面用 printedCatalogue 的官方文本。",
+      "affects": "同一個待處理步驟裡，所有按鈕都指向同一張牌的看牌頂／上下排列。兩張不同的牌仍各自成按鈕，不會合成一張。",
+      "evidence": "tests/v2-kmr-set2.test.mjs"
+    }
+  ],
+  "reviews": [
+    {
+      "cardId": "IYS-1-035",
+      "number": "UA50BT/IYS-1-035",
+      "complete": true,
+      "clauseIncludes": "BP-1000",
+      "covers": "選擇 1 張對手前線角色，自己場上每有 1 張［特徵：奈落一派］，該角色這個回合 BP-1000。減到 0 以下會退場。",
+      "implementation": "dist/universal-v2/iys-runtime.mjs IYS-1-035 debuff；dist/universal-v2/engine.mjs openBpZeroRetirements",
+      "status": "已驗證",
+      "change": "減到 0 的角色改由規則退場，不再留在前線。",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs",
+      "remaining": "生命區【特別】觸發沒有在這次重跑。"
+    },
+    {
+      "cardId": "IYS-1-025",
+      "number": "UA50BT/IYS-1-025",
+      "covers": "登場時最多選擇 1 張對手前線角色，這個回合 BP-1000。打到 0 時退場，而且不是對手角色效果。",
+      "status": "已驗證",
+      "change": "effect-target 在 BP 0 時改傳 by:rule。KMR-1-025 不會被問要不要代替。",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs",
+      "remaining": "「最多」選擇 0 張，以及減完仍大於 0 的對象，這張卡本身沒有另寫斷言。較高 BP 留在場上是用 IYS-1-035 測的。"
+    },
+    {
+      "cardId": "KMR-1-025",
+      "number": "UA29BT/KMR-1-025",
+      "covers": "Q1139：對方角色效果把 BP 打到 0 而退場時，不能改退這張。",
+      "status": "已驗證",
+      "change": "規則退場不再帶 by:opponent。",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs",
+      "remaining": "真正的對手角色效果退場時，代替與退場後抽 1 棄 1 還沒有在這次重跑。"
+    },
+    {
+      "cardId": "KMR-1-010",
+      "number": "UA29BT/KMR-1-010",
+      "covers": "只當作 BP 1000 的退場對象。",
+      "status": "已驗證",
+      "change": "BP 0 後離開前線，KMR-1-025 的退場抽牌沒有發生。",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs",
+      "remaining": "啟動主要與主要階段結束退場沒有核。"
+    },
+    {
+      "cardId": "IYS-1-011",
+      "number": "UA50BT/IYS-1-011",
+      "covers": "能源線上 BP 降到 0 的角色會退場。兩張同時到 0 各退一次。",
+      "status": "已驗證",
+      "change": "退場掃描包含能源線，同一輪兩張一起進退場批次。",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs",
+      "remaining": "這張卡自己的啟動主要沒有核。"
+    },
+    {
+      "cardId": "IYS-1-032",
+      "number": "UA50BT/IYS-1-032",
+      "covers": "場地卡即使被寫上負 BP，也不會被 BP 0 規則退場。",
+      "status": "已驗證",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs",
+      "remaining": "場地本身的印刷效果沒有核。"
+    },
+    {
+      "cardId": "IYS-1-028",
+      "number": "UA50BT/IYS-1-028",
+      "covers": "下面有 2 張以上正面朝下的卡時，離場可以改回手牌。BP 降到 0 也算離場。拒絕之後才真的退場，不會再問一次。3 張時的底板休息再登場沿用既有測試。",
+      "status": "已驗證",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs；tests/v2-iys-set1.test.mjs",
+      "remaining": "突襲活動移動，以及啟動主要把奈落一派或四魂之玉蓋到奈落下面，這次沒有重跑。"
+    },
+    {
+      "cardId": "KMR-2-054",
+      "number": "EX12BT/KMR-2-054",
+      "covers": "查看自己牌組頂 1 張後，放到上面或下面。控制者看得到卡圖和效果。對手的私人選項是空的，公開紀錄沒有這張牌。",
+      "status": "已驗證",
+      "change": "兩顆按鈕都指向同一張牌時，仍打開效果頁，而不是只剩按鈕。",
+      "evidence": "tests/v2-kmr-set2.test.mjs",
+      "remaining": "被阻擋的當下怎麼開出選擇，以及改成抽最多 1 張，這次沒有重跑完整戰鬥。突襲位置與場地帶人也不在這一段。"
+    },
+    {
+      "cardId": "KMR-2-005",
+      "number": "EX12BT/KMR-2-005",
+      "covers": "攻擊結束的交換條件是「這個攻擊階段沒有突襲」，不是整回合。",
+      "status": "已驗證",
+      "evidence": "tests/v2-kmr-set2.test.mjs Gav baseline。程式在 kmr2-runtime.mjs attackEndSwap。",
+      "remaining": "登場、攻擊時回收口嚼獸，以及突襲框的活動與 BP，這次沒有逐段重跑。目錄裡舊的「用整回合擋交換」已經更正。"
+    },
+    {
+      "cardId": "MMM-1-036",
+      "number": "UA31BT/MMM-1-036",
+      "covers": "場上角色都是曉美焰或鹿目圓時，登場後的 BP 削減是 4000。對象是 BP 500 的貝貝時，Q94 讓她退場。",
+      "status": "已驗證",
+      "change": "不再把負 BP 留在前線。",
+      "evidence": "tests/v2-mmm-set1-faq.test.mjs",
+      "remaining": "回手是可選、削減 3000 的分支，以及移除區保護，這次只重跑了既有的保護段。"
+    },
+    {
+      "cardId": "MMM-1-038",
+      "number": "UA31BT/MMM-1-038",
+      "covers": "只當作 BP 500 的削減對象。BP-4000 後離開前線一次。",
+      "status": "已驗證",
+      "evidence": "tests/v2-mmm-set1-faq.test.mjs",
+      "remaining": "登場時給其他角色 BP+1000 沒有核。"
+    },
+    {
+      "cardId": "KMR-2-012",
+      "number": "EX12BT/KMR-2-012",
+      "covers": "與 KMR-2-005 共用 attackEndSwap，攻擊階段基準相同。",
+      "status": "已驗證",
+      "evidence": "tests/v2-kmr-set2.test.mjs",
+      "remaining": "這張卡其餘句子沒有逐段重跑。"
+    }
+  ]
+}

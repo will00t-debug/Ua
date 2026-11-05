@@ -8,9 +8,9 @@ import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {createKmrBattlePack,kmrPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
- universalBp,universalCardEnergy}
+ universalBp,universalCardEnergy,universalPrivateChoices}
  from '../dist/universal-v2/engine.mjs';
-import {uiActionLabel,controllerChoiceArt,fieldEffectCopy} from '../dist/universal-v2/preview-actions.mjs';
+import {uiActionLabel,controllerChoiceArt,fieldEffectCopy,pendingFocusCard} from '../dist/universal-v2/preview-actions.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
 const set1=createKmrV2Pack();
@@ -546,10 +546,26 @@ test('W Heat Metal chooses a single top-or-bottom placement after Memory Change 
   assert.equal(state.pending?.step,'topPlace','must not reopen the mode choice');
   assert.deepEqual(state.pending.actions.map(a=>a.mode),['top','bottom']);
   assert.equal(controllerChoiceArt(packs,state,state.pending.actions[0])[0]?.cardId,'KMR-2-020');
+  const focus=pendingFocusCard(packs,state);
+  assert.equal(focus?.cardId,'KMR-2-020');
+  assert.equal(focus?.uid,seen.uid);
+  const printed=KMR2_CARDS.find(card=>card.id===focus.cardId);
+  assert.match(fieldEffectCopy(printed),/インパクト無効|減少/);
+  assert.equal(state.publicReveals.some(entry=>entry.uid===seen.uid),false);
+  assert.equal(universalPrivateChoices(packs,state,1),null);
+  const shown=universalPrivateChoices(packs,state,0);
+  assert.equal(shown?.options?.some(option=>option.card?.cardId==='KMR-2-020'),true);
   state=click(state,a=>a.mode===where);
   assert.equal(state.pending,null);
   assert.equal(state.players[0].deck[where==='top'?0:state.players[0].deck.length-1]?.uid,seen.uid);
  }
+});
+
+test('two different top-placement cards do not collapse into one effect sheet',()=>{
+ const state={pending:{player:0,kind:'kmr2',step:'topPlace',actions:[
+  {type:'kmr2',mode:'top',uid:'0-1'},{type:'kmr2',mode:'bottom',uid:'0-2'}
+ ]},players:[{deck:[]},{deck:[]}]};
+ assert.equal(pendingFocusCard(packs,state),null);
 });
 
 test('Memory Change asks for a W hand card and destination, entering it ACTIVE',()=>{

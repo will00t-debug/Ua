@@ -2068,11 +2068,45 @@ function noteAot2BattleWin(pack,s,owner,attacker,defender){
  delete attacker.aot2Sniper;
  delete attacker.sniperGranted;
 }
+function openBpZeroRetirements(pack,s){
+ if(s.pending||s.status!=='playing'||s.retirementBatch)return false;
+ const queued=new Set();
+ for(const job of s.effectQueue||[])
+  if(job?.op==='retireBatchOne'&&typeof job.uid==='string')
+   queued.add(job.targetPlayer+':'+job.uid);
+ const jobs=[];
+ for(let p=0;p<2;p++){
+  for(const line of ['front','energy']){
+   for(const c of s.players[p][line]){
+    if(!c||queued.has(p+':'+c.uid))continue;
+    if(card(pack,c).type!=='character')continue;
+    if(kmrAnchored(pack,s,c,card,originalEffectsDisabled))continue;
+    if(bp(pack,s,c)>0)continue;
+    jobs.push({op:'retireBatchOne',owner:p,targetPlayer:p,uid:c.uid,mode:'bpZero'});
+   }
+  }
+ }
+ if(!jobs.length)return false;
+ queueSimultaneousRetires(s,s.active,jobs);
+ return true;
+}
 function continueEffectQueue(pack,s){
  aotMatch=s;
- while(!s.pending&&s.status==='playing'&&s.effectQueue.length){
+ // Q94: a character at 0 BP or less leaves before the next effect job.
+ // Re-check when the queue is idle too, so a title runtime that only
+ // applied a modifier still sidelined the character. Twelve passes is
+ // enough for chained retirements; a card that refuses to leave stops
+ // the loop instead of spinning.
+ let bpPasses=0;
+ while(!s.pending&&s.status==='playing'){
   refreshAotFrontLimits(pack,s);
   if(openAotFrontOverflow(pack,s))break;
+  if(openBpZeroRetirements(pack,s)){
+   if(++bpPasses>12)throw Error('BP zero retirement did not resolve');
+   continue;
+  }
+  bpPasses=0;
+  if(!s.effectQueue.length)break;
   refreshAbsentFieldNames(pack,s);
   const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
   s.kmrSourceUid=job.sourceUid||null;
@@ -4595,11 +4629,17 @@ function continueEffectQueue(pack,s){
      bounceToHand(pack,s,owner,job.sourceUid,job.sourceUid);
    }else if(job.op==='retireBatchOne'){
    // Internal state-based consequence, never a user-authored card DSL op.
-   const slot=s.players[job.targetPlayer].front.findIndex(c=>c?.uid===job.uid);
-   if(slot>=0&&(job.mode==='threshold'||
-    bp(pack,s,s.players[job.targetPlayer].front[slot])<=0))
-    retire(pack,s,job.targetPlayer,'front',slot,
-     {by:job.owner===job.targetPlayer?undefined:'opponent'});
+   // Threshold jobs are the printed retire of characters already chosen
+   // at or below a BP. BP becoming 0 is Q94's rule process: Q1139 says
+   // that leave is not 「キャラの効果による退場」.
+   const loc=location(s,job.targetPlayer,job.uid);
+   if(loc&&(loc.line==='front'||loc.line==='energy')){
+    const ruleZero=job.mode==='bpZero'||
+     (job.mode!=='threshold'&&bp(pack,s,loc.c)<=0);
+    if(ruleZero||job.mode==='threshold')
+     retire(pack,s,job.targetPlayer,loc.line,loc.slot,
+      {by:ruleZero?'rule':(job.owner===job.targetPlayer?undefined:'opponent')});
+   }
   }else if(job.op==='buffOwnTraitAllTurn'){
    // A snapshot of current qualifying field units. Later entrants do not
    // inherit this temporary, printed action effect. excludeSelf is the
@@ -11341,10 +11381,11 @@ function resolveChoice(s,a,pack){
   const target=found.target;
   target.buffs??=[];
   target.buffs.push({bp:-q.bp,untilTurn:s.turn});
-  // Official state-based rule: characters at 0 BP or below are sidelined.
-  // The choice list stays the snapshot taken when the effect resolved.
+  // Q94: characters at 0 BP or below are sidelined. Q1139: that leave is
+  // not an opponent character effect. The choice list stays the snapshot
+  // taken when the effect resolved.
   s.pending=null;
-  if(bp(pack,s,target)<=0)retire(pack,s,foe,found.line,found.slot,{by:'opponent'});
+  if(bp(pack,s,target)<=0)retire(pack,s,foe,found.line,found.slot,{by:'rule'});
   continueEffectQueue(pack,s);
   return;
  }

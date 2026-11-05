@@ -169,7 +169,11 @@ test('Q1259 raises Devil Homura to BP-4000, and her shield blocks effect removal
  assert.equal(s.pending.kind,'effect-front-bp-cut');
  assert.equal(s.pending.bp,4000);
  s=use(s,{type:'chooseFrontBpCut',uid:foe.uid});
- assert.equal(universalBp(packs,s,s.players[1].front[0]),before-4000);
+ // Q1259 only raises the printed cut to 4000. Bebe is 500 BP, so Q94
+ // retires her. The old expectation kept a negative BP on the front line.
+ assert.equal(before,500);
+ assert.equal(s.players[1].front.some(c=>c?.uid===foe.uid),false);
+ assert.equal(s.players[1].outside.filter(c=>c.uid===foe.uid).length,1);
  assert.equal(s.players[0].front.some(c=>c?.uid===alias.uid),true);
 
  let shield=toPhase(fresh(counts,41260),'main');
