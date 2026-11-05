@@ -15,7 +15,7 @@ test('solo and online entry points include the same fingerprinted back styleshee
   assert.match(load(page),/union-arena-card-backs\.css\?v=20261105redcard1/);
  assert.match(load('dist/universal-v2/online-battle-ui.mjs'),
   /universal-v2-reference-table\.css','union-arena-card-backs\.css'/);
- assert.match(load('dist/online.mjs'),/online-battle-ui\.mjs\?v=20261105redcard1/);
+ assert.match(load('dist/online.mjs'),/online-battle-ui\.mjs\?v=20261105removedmain1/);
 });
 test('hidden LIFE, deck, opponent hand and buried card positions share the back art',()=>{
  for(const selector of ['.lifeCard','.v2-deck-stack','.v2-desktop-opponent-hand i',

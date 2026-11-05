@@ -60,6 +60,18 @@ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile.selected{
  background:#24364c;color:#e7f2ff;font-size:11px;cursor:pointer
 }
 .v2-shell .v2-zone-badge{font-size:10px;font-style:normal;color:#ffd98a}
+.v2-shell .v2-zone-activate{
+ display:block;width:100%;min-height:38px;padding:7px 5px;margin-top:4px;
+ border:1px solid #ffb95f;border-radius:6px;background:#55350f;color:#fff0c5;
+ font:inherit;font-size:11px;font-weight:750;line-height:1.35;white-space:normal;
+ text-align:center;cursor:pointer
+}
+.v2-shell .v2-zone-activate:hover,.v2-shell .v2-zone-activate:focus-visible{
+ border-color:#fff0b1;outline:2px solid #ffcc5e;outline-offset:1px;background:#704814
+}
+.v2-shell .v2-zone-locked-main{display:block;margin-top:4px;color:#c7d6e8;
+ font-size:10px;line-height:1.4}
+
 .v2-shell .v2-zone-card img{
  display:block;width:100%;aspect-ratio:63/88;object-fit:contain;
  border-radius:5px;background:#09131f

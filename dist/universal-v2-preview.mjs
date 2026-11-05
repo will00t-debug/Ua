@@ -41,6 +41,7 @@ import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261105lifetable1';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
+import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
 import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -847,11 +848,13 @@ function legacyLine(view,side,line,legal){
    const cards=p[zone]||[];
    const canBring=yours&&cards.some(card=>legal.some(action=>
     boardEntryMode(action)&&action.uid===card.uid));
+   const canActivate=yours&&zone==='removed'&&cards.some(card=>
+    legalRemovedMainAction(legal,card?.uid));
    const chosen=side===0&&cards.some(card=>card.uid===app.selectedUid);
    piles.append(el('button',{type:'button',class:'pile v2-zone-pile'+
-    (canBring?' v2-zone-playable':'')+(chosen?' selected':''),
+    (canBring||canActivate?' v2-zone-playable':'')+(chosen?' selected':''),
     'data-v2-zone':zone,'aria-label':(side===0?'我方':'對手')+label+'：'+cards.length+
-     ' 張，查看清單'+(canBring?'，可選擇登場':''),
+     ' 張，查看清單'+(canBring?'，可選擇登場':'')+(canActivate?'，可起動主要能力':''),
     onClick:()=>showZoneSheet(side,zone)},
     el('span',{text:label}),el('b',{text:cards.length})));
   }
@@ -1293,8 +1296,9 @@ function showZoneSheet(side,zone){
  const label=zone==='outside'?'場外':'移除區';
  const owner=side===0?'我方':'對手';
  const yours=side===0&&uiActor(app.state)===0&&!app.busy;
- const playable=new Set((yours?legalUniversalActions(app.packs,app.state):[])
-  .filter(action=>boardEntryMode(action)).map(action=>action.uid));
+ const zoneLegal=yours?legalUniversalActions(app.packs,app.state):[];
+ const playable=new Set(zoneLegal.filter(action=>boardEntryMode(action)).map(action=>action.uid));
+ const activations=zone==='removed'?zoneLegal.filter(a=>a.type==='activateRemoved'):[];
  const overlay=el('div',{class:'overlay v2-zone-overlay'});
  overlay._v2Opener=document.activeElement;
  const dialog=el('section',{class:'v2-zone-dialog',role:'dialog',
@@ -1302,8 +1306,8 @@ function showZoneSheet(side,zone){
  const close=btn('關閉',closeZoneSheet,'v2-zone-close');
  dialog.append(el('header',{class:'v2-zone-header'},
   el('div',{},el('h2',{text:owner+'｜'+label}),
-   el('p',{class:'v2-zone-subtitle',text:playable.size?
-    '公開區域 · '+cards.length+' 張 · 點角色開始登場。查看效果不會出牌。':
+   el('p',{class:'v2-zone-subtitle',text:playable.size||activations.length?
+    '公開區域 · '+cards.length+' 張 · 點角色選擇登場；合法起動主要可按卡片下方按鈕。':
     '公開區域 · '+cards.length+' 張 · 點卡圖可查看效果'})),
   close));
  const gallery=el('div',{class:'v2-zone-gallery'});
@@ -1317,7 +1321,9 @@ function showZoneSheet(side,zone){
    if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
   };
   const canPlay=playable.has(physical.uid);
-  const figure=el('div',{class:'v2-zone-card'+(canPlay?' v2-zone-playable':'')});
+  const activate=legalRemovedMainAction(activations,physical.uid,yours);
+  const printedMain=zone==='removed'?def?.removedMain:null;
+  const figure=el('div',{class:'v2-zone-card'+(canPlay||activate?' v2-zone-playable':'')});
   figure.append(el('button',{type:'button',class:'v2-zone-open',
    'aria-label':(canPlay?'選擇登場：':'查看 ')+name+' '+physical.cardId,
    onClick:()=>{
@@ -1331,6 +1337,12 @@ function showZoneSheet(side,zone){
   if(canPlay)figure.append(el('button',{type:'button',class:'v2-zone-look',text:'查看效果',
    'aria-label':'查看 '+name+' 的效果',
    onClick:()=>showFieldSheet(side,zone,physical,def)}));
+  if(activate)figure.append(el('button',{type:'button',class:'v2-zone-activate',
+   text:removedMainActionText(activate),'aria-label':'發動 '+name+' 的移除區起動主要',
+   onClick:()=>{closeZoneSheet();applyAction(activate);}}));
+  else if(printedMain)figure.append(el('small',{class:'v2-zone-locked-main',
+   text:'移除區起動主要：需己方主要階段、總能源 '+printedMain.minEnergy+
+    ' 以上，且本回合尚未發動'}));
   gallery.append(figure);
  }
  dialog.append(cards.length?gallery:

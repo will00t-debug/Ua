@@ -38,7 +38,7 @@ test('outside and removed identities are public for both players without leaking
  }
 });
 
-test('both energy-side piles open a read-only gallery with card inspection on mobile and desktop',()=>{
+test('both energy-side piles open a public card gallery with legally gated removed MAIN actions on mobile and desktop',()=>{
  const ui=read('dist/universal-v2-preview.mjs');
  const html=read('dist/universal-v2-battle.html');
  const css=read('dist/universal-v2-zone.css');
@@ -52,8 +52,10 @@ test('both energy-side piles open a read-only gallery with card inspection on mo
  assert.match(popup,/showFieldSheet\(side,zone,physical,def\)/);
  assert.match(popup,/cards\.length\?gallery:/);
  assert.match(popup,/event\.key==='Escape'/);
- assert.doesNotMatch(popup,/applyAction\(|dispatchUniversalAction\(/);
- assert.match(html,/universal-v2-zone\.css\?v=20261104facedown1/);
+ assert.match(popup,/legalRemovedMainAction\(activations,physical\.uid,yours\)/);
+ assert.match(popup,/closeZoneSheet\(\);applyAction\(activate\)/);
+ assert.match(popup,/const zoneLegal=yours\?legalUniversalActions/);
+ assert.match(html,/universal-v2-zone\.css\?v=20261105removedmain1/);
  assert.match(css,/\.v2-zone-gallery/);
  assert.match(css,/@media\(max-width:600px\)/);
 });

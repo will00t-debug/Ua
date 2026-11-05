@@ -24,6 +24,15 @@ const DRAFTS=[
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 let battleUi=typeof onlineBattleUiBootstrap==='undefined'?null:onlineBattleUiBootstrap;
+// online.mjs is intentionally a classic script: its VM smoke tests and
+// account bootstrap must not see a top-level import. The loaded battle UI
+// supplies the same legal-action helper used by the solo card gallery.
+function legalRemovedMainAction(actions,uid,enabled=true){
+ return battleUi?.legalRemovedMainAction?.(actions,uid,enabled)||null;
+}
+function removedMainActionText(action){
+ return battleUi?.removedMainActionText?.(action)||'起動主要';
+}
 let battleUiLoading=false,battleUiError=false;
 let facedownUid='',facedownSignature='';
 function watchBattleViewport(module){
@@ -35,7 +44,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261105redcard1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261105removedmain1'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -864,7 +873,8 @@ function zoneTray(player){
  const row=el('div',{class:'online-zones'});
  for(const [zone,label] of [['outside','場外'],['removed','移除區']]){
   const cards=player[zone]||[];
-  const playable=ready&&cards.some(card=>legal.some(action=>boardEntryMode(action)&&action.uid===card.uid));
+  const playable=ready&&cards.some(card=>legal.some(action=>boardEntryMode(action)&&action.uid===card.uid)||
+   app.zone!=='outside'&&!!legalRemovedMainAction(legal,card.uid));
   const chosen=cards.some(card=>card?.uid&&card.uid===app.pick?.uid);
   row.append(el('button',{type:'button',class:'zone-pile'+(playable?' playable':'')+
    (app.zone===zone?' open':'')+(chosen?' selected':''),
@@ -877,11 +887,18 @@ function zoneTray(player){
   if(!open.length)gallery.append(el('p',{class:'muted',text:'目前沒有卡片'}));
   for(const card of [...open].reverse()){
    const canPlay=ready&&legal.some(action=>boardEntryMode(action)&&action.uid===card.uid);
-   gallery.append(cardBox(card,{
+   const activate=legalRemovedMainAction(legal,card.uid,ready&&app.zone==='removed');
+   const tile=el('div',{class:'online-zone-card'});
+   tile.append(cardBox(card,{
     className:(canPlay?'playable ':'')+(card.uid===app.pick?.uid?'selected':''),
     click:canPlay?()=>clickZoneCard(card):null,
     label:(canPlay?'選擇登場：':'')+(card.name||card.cardId||'卡片')
    }));
+   if(activate)tile.append(el('button',{type:'button',class:'v2-zone-activate',
+    text:removedMainActionText(activate),
+    'aria-label':'發動 '+(card.name||card.cardId)+' 的移除區起動主要',
+    onClick:()=>{app.zone=null;sendAction(activate.index);}}));
+   gallery.append(tile);
   }
  }
  return el('div',{class:'online-zone-tray'},row,gallery);
