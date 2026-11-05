@@ -75,8 +75,9 @@ test('TTG-040 removed MAIN only appears as an engine-issued action during own MA
 
 test('TTG-040 cannot start removed MAIN below the 8-energy threshold',()=>{
  const {s,spell}=fixture(8041);
+ const moved=s.players[0].energy[3];
  s.players[0].energy[3]=null;
- s.players[0].outside.push(...[]); // no hidden card lookup required
+ s.players[0].outside.push(moved); // conserve the real physical card
  let at=s;
  at=step(at,a=>a.type==='next');
  at=step(at,a=>a.type==='next');
