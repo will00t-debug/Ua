@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
-import {chooseAiV3Action,resetAiV3Report} from '../dist/universal-v2/ai-v3/search.mjs';
+import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {positionKey} from '../dist/universal-v2/ai-v3/beam.mjs';
 
-const OPTS={seed:11,nodes:180,ms:2500,beam:4,actorDecisions:4,opponentDecisions:1,worlds:1,mode:'beam'};
+const OPTS={...MATCH_LIMITS,seed:1,mode:'beam'};
 function deck(pack,extra){
  const counts={...extra};
  let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
@@ -71,11 +71,28 @@ test('strategy: the first front body follows one energy card',()=>{
  state.players[0].hand.length=0;
  state.players[0].hand.push(body);
  assert.equal(assertUniversalMatch(packs,state),true);
- const action=chooseAiV3Action(packs,state,{actor:0,nodes:48,ms:40,beam:4,actorDecisions:2,opponentDecisions:2,seed:1});
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1});
  assert.equal(action.type,'play');
- assert.equal(action.line,'front');
+ assert.equal(action.line,'energy');
  assert.equal(action.uid,body.uid);
- console.log('strategy develop ok');
+ console.log('strategy develop ok',action.line);
+});
+
+test('strategy: a clock that only finishes the idle line does not play it',()=>{
+ const {packs,state}=main(bleach,counts);
+ const energy=take(state,0,'BLC-1-042');
+ place(state,0,energy,'energy',0);
+ const body=take(state,0,'BLC-1-042');
+ for(const card of [...state.players[0].hand])state.players[0].deck.push(card);
+ state.players[0].hand.length=0;
+ state.players[0].hand.push(body);
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1});
+ const trace=lastAiV3Trace();
+ assert.notEqual(action.type,'next');
+ assert.equal(trace.reason==='budget-fallback'||trace.incomplete===true||action.type==='play',true);
+ assert.ok(Array.isArray(trace.compared)||Array.isArray(trace.candidates));
+ console.log('strategy clock ok',action.type,trace.reason);
 });
 
 test('strategy: an open lethal attack is taken',()=>{

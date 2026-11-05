@@ -30,7 +30,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261105ttg012ap1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
-import {chooseAiV3Action,AI_V3_POLICY} from './universal-v2/ai-v3/search.mjs';
+import {chooseAiV3Action,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
 import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from './universal-v2/ai-v3/worker-entry.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
@@ -1890,7 +1890,7 @@ function driveSearchPreview(sequence){
   const requestId=++searchRequest;
   const stateVersion=(app.aiStateVersion=(app.aiStateVersion||0)+1);
   const request=buildAiV3Request(app.packs,app.state,actor,{
-   requestId,stateVersion,seed:stateVersion,nodes:64,ms:60
+   requestId,stateVersion,seed:stateVersion,nodes:MATCH_LIMITS.nodes,ms:MATCH_LIMITS.ms
   });
   let settled=false;
   const finish=(action,reason)=>{
@@ -1920,7 +1920,7 @@ function driveSearchPreview(sequence){
   const worker=request?searchWorkerHandle():null;
   if(!worker||!request){
    try{
-    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,nodes:64,ms:60});
+    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
     finish(action,null);
    }catch{finish(null,'search-failed');}
    return;
@@ -1928,7 +1928,7 @@ function driveSearchPreview(sequence){
   const timer=setTimeout(()=>{
    worker.removeEventListener('message',onMessage);
    try{
-    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,nodes:48,ms:40});
+    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
     finish(action,'worker-timeout');
    }catch{finish(null,'worker-timeout');}
   },700);

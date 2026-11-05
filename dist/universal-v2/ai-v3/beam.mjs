@@ -3,7 +3,7 @@
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
 import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
-import {evaluate,terminalValue} from './eval.mjs';
+import {evaluate,terminalValue,keepScore} from './eval.mjs';
 import {archetypeRank,actionGroup} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
 
@@ -183,6 +183,88 @@ function autoAdvance(pack,state,ctx){
  }
  return cursor;
 }
+const CONTINUATION=new Set(['effect-discard','effect-recover-ap','effect-recover-outside','effect-optional-mill']);
+function continuationAction(pack,state,actor,legal){
+ const kind=state.pending?.kind;
+ if(!CONTINUATION.has(kind))return null;
+ if((state.pending.player??state.active)!==actor)return null;
+ if(kind==='effect-optional-mill')return legal.find(action=>action.mode==='mill')||legal[0];
+ const cards=[];
+ const zone=kind==='effect-recover-outside'?'outside':'hand';
+ for(const action of legal){
+  if(!action.uid)continue;
+  const card=(state.players[actor][zone]||[]).find(item=>item?.uid===action.uid)
+   ||(kind==='effect-recover-ap'?null:state.players[actor].hand.find(item=>item?.uid===action.uid));
+  if(card)cards.push({action,score:keepScore(pack,state,actor,card)});
+ }
+ if(kind==='effect-recover-ap')return legal.find(action=>action.uid)||null;
+ if(!cards.length)return legal.find(action=>action.uid)||null;
+ cards.sort((a,b)=>a.score-b.score||(a.action.uid<b.action.uid?-1:1));
+ // A discard pays with the card we least want. A recovery takes the best one.
+ return kind==='effect-discard'?cards[0].action:cards[cards.length-1].action;
+}
+function noteLeaf(ctx,state){
+ ctx.stats.leafPending=state.pending?.kind||null;
+ ctx.stats.leafPhase=state.phase;
+}
+function attackOrEnd(pack,state,actor,legal){
+ const pending=continuationAction(pack,state,actor,legal);
+ if(pending)return pending;
+ if(state.pending)return null;
+ const attack=legal.filter(action=>action.type==='attack');
+ if(attack.length){
+  attack.sort((a,b)=>keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===b.uid)||{})
+   -keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===a.uid)||{}));
+  return attack[0];
+ }
+ return legal.find(action=>action.type==='next')||null;
+}
+function fastOpponent(pack,cursor,actor,ctx){
+ for(let step=0;step<12&&room(ctx)&&cursor.status==='playing';step++){
+  if(!cursor.pending&&cursor.active===actor)break;
+  let legal;
+  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;break;}
+  const seat=who(cursor);
+  const ranked=rankLegal(pack,cursor,seat,legal);
+  const action=ranked[0];
+  if(!action||!room(ctx)){ctx.stats.budget++;break;}
+  try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
+  if(!spend(ctx)){ctx.stats.budget++;break;}
+  cursor=settleBattle(pack,autoAdvance(pack,cursor,ctx),actor,ctx);
+ }
+ noteLeaf(ctx,cursor);
+ return cursor;
+}
+function greedyAction(pack,state,actor,legal){
+ const pending=continuationAction(pack,state,actor,legal);
+ if(pending)return pending;
+ if(state.pending)return null;
+ const attack=legal.filter(action=>action.type==='attack');
+ if(attack.length){
+  attack.sort((a,b)=>keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===b.uid)||{})
+   -keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===a.uid)||{}));
+  return attack[0];
+ }
+ if((state.phase==='main'||state.phase==='attack')&&legal.some(action=>action.type==='next')&&
+  (state.phase==='attack'||state.players[actor].front.some(card=>card?.ready)))
+  return legal.find(action=>action.type==='next');
+ return null;
+}
+function roll(pack,cursor,actor,ctx,pick){
+ for(let step=0;step<8&&room(ctx)&&cursor.status==='playing';step++){
+  if((cursor.pending?.player??cursor.active)!==actor)break;
+  let legal;
+  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;break;}
+  const action=pick(pack,cursor,actor,legal);
+  if(!action)break;
+  if(!room(ctx)){ctx.stats.budget++;break;}
+  try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
+  if(!spend(ctx)){ctx.stats.budget++;break;}
+  cursor=settleBattle(pack,autoAdvance(pack,cursor,ctx),actor,ctx);
+ }
+ noteLeaf(ctx,cursor);
+ return cursor;
+}
 function remember(ctx,key,value,mark){
  if(ctx.stats.budget===mark)ctx.tt.set(key,value);
  return value;
@@ -192,27 +274,57 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  if(done!==null)return done;
  const key=positionKey(state,actor,mode,left);
  if(ctx.tt.has(key)){ctx.stats.transpositionHits++;return ctx.tt.get(key);}
- if(!room(ctx)){ctx.stats.budget++;return evaluate(pack,state,actor);}
+ if(!room(ctx)){ctx.stats.budget++;noteLeaf(ctx,state);return evaluate(pack,state,actor);}
+ if(ctx.finish&&mode==='us'){
+  let cursor=roll(pack,state,actor,ctx,continuationAction);
+  cursor=roll(pack,cursor,actor,ctx,attackOrEnd);
+  const mid=terminalValue(cursor,actor);
+  if(mid!==null){ctx.stats.settled=true;noteLeaf(ctx,cursor);return mid;}
+  if(!cursor.pending&&cursor.active!==actor){
+   ctx.stats.opponentTurns++;
+   cursor=fastOpponent(pack,cursor,actor,ctx);
+  }
+  const end=terminalValue(cursor,actor);
+  if(end!==null){ctx.stats.settled=true;noteLeaf(ctx,cursor);return end;}
+  noteLeaf(ctx,cursor);
+  if(!cursor.pending&&cursor.active===actor)ctx.stats.settled=true;
+  return evaluate(pack,cursor,actor);
+ }
  const mark=ctx.stats.budget;
- const cursor=settleBattle(pack,autoAdvance(pack,state,ctx),actor,ctx);
+ let cursor=roll(pack,settleBattle(pack,autoAdvance(pack,state,ctx),actor,ctx),actor,ctx,continuationAction);
  const after=terminalValue(cursor,actor);
- if(after!==null)return remember(ctx,key,after,mark);
+ if(after!==null){ctx.stats.settled=true;return remember(ctx,key,after,mark);}
+ if(mode==='us'&&left<=0)cursor=roll(pack,cursor,actor,ctx,greedyAction);
+ const yielded=terminalValue(cursor,actor);
+ if(yielded!==null){ctx.stats.settled=true;return remember(ctx,key,yielded,mark);}
  if(mode==='them'&&!cursor.pending&&cursor.active===actor){
+  noteLeaf(ctx,cursor);
+  ctx.stats.settled=true;
   return remember(ctx,key,evaluate(pack,cursor,actor),mark);
  }
  if(mode==='us'&&!cursor.pending&&cursor.active!==actor){
   ctx.stats.opponentTurns++;
-  return remember(ctx,key,searchFrom(pack,cursor,actor,ctx,'them',ctx.opponentLeft),mark);
+  noteLeaf(ctx,cursor);
+  const held=ctx.stats.settled;
+  ctx.stats.settled=false;
+  const value=searchFrom(pack,cursor,actor,ctx,'them',ctx.opponentLeft);
+  ctx.stats.settled=held||ctx.stats.settled;
+  return remember(ctx,key,value,mark);
  }
+ noteLeaf(ctx,cursor);
  if(left<=0)return remember(ctx,key,evaluate(pack,cursor,actor),mark);
  const seat=who(cursor);
  let legal;
  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return evaluate(pack,cursor,actor);}
  if(!legal.length)return evaluate(pack,cursor,actor);
  const candidates=selectCandidates(pack,cursor,seat,legal,ctx.beam);
+ const finishRank=action=>action.type==='attack'?0:action.type==='next'?1:2;
+ const ordered=[...candidates].sort((a,b)=>finishRank(a)-finishRank(b)||byText(a,b));
  const maximize=seat===actor;
- let best=maximize?-Infinity:Infinity,compared=0;
- for(const action of candidates){
+ let best=maximize?-Infinity:Infinity,compared=0,bestOk=false;
+ let bestPending=ctx.stats.leafPending,bestPhase=ctx.stats.leafPhase;
+ for(let i=0;i<ordered.length;i++){
+  const action=ordered[i];
   if(!room(ctx)){ctx.stats.budget++;break;}
   let next;
   try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
@@ -221,10 +333,24 @@ function searchFrom(pack,state,actor,ctx,mode,left){
   compared++;
   if(seat===actor)ctx.stats.actorDecisions++;
   else ctx.stats.responses++;
+  const savedCap=ctx.lineCap;
+  const roomNodes=Math.min(ctx.pool.n,Math.max(0,ctx.lineCap-ctx.lineSpent));
+  const share=Math.max(1,Math.ceil(roomNodes/Math.max(1,ordered.length-i)));
+  ctx.lineCap=Math.min(savedCap,ctx.lineSpent+share);
+  const held=ctx.stats.settled;
+  ctx.stats.settled=false;
   const value=searchFrom(pack,next,actor,ctx,mode,left-1);
-  if(maximize?value>best:value<best)best=value;
+  const ok=!!ctx.stats.settled;
+  ctx.stats.settled=held;
+  ctx.lineCap=savedCap;
+  if(compared===1||(maximize?value>best:value<best)){
+   best=value;bestOk=ok;bestPending=ctx.stats.leafPending;bestPhase=ctx.stats.leafPhase;
+  }
  }
+ ctx.stats.leafPending=bestPending;
+ ctx.stats.leafPhase=bestPhase;
  if(!compared)best=evaluate(pack,cursor,actor);
+ if(bestOk)ctx.stats.settled=true;
  return remember(ctx,key,best,mark);
 }
 export function scoreLine(pack,state,actor,action,limits){
@@ -233,6 +359,7 @@ export function scoreLine(pack,state,actor,action,limits){
  const ctx={
   pool,lineCap,lineSpent:0,
   deadline:limits.deadline??Infinity,
+  finish:true,
   beam:limits.beam,
   opponentLeft:limits.opponentDecisions,
   tt:limits.tt||new Map(),
@@ -244,7 +371,8 @@ export function scoreLine(pack,state,actor,action,limits){
  if(!spend(ctx))return {search:evaluate(pack,next,actor),nodes:0,...ctx.stats};
  ctx.stats.actorDecisions++;
  const value=searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions);
- return {search:value,nodes:ctx.lineSpent,...ctx.stats};
+ return {search:value,nodes:ctx.lineSpent,settled:!!ctx.stats.settled,
+  pending:ctx.stats.leafPending||null,phase:ctx.stats.leafPhase||null,...ctx.stats};
 }
 export function searchPosition(pack,state,actor,limits={},table=null){
  const pool={n:limits.nodes??48};

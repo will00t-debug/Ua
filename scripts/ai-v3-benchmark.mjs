@@ -8,7 +8,7 @@
 //   AI_V3_GAMES=1 AI_V3_STEPS=30 node scripts/ai-v3-benchmark.mjs
 import {performance} from 'node:perf_hooks';
 import {mainDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
-import {chooseAiV3Action,resetAiV3Report,aiV3Report,AI_V3_POLICY} from '../dist/universal-v2/ai-v3/search.mjs';
+import {chooseAiV3Action,resetAiV3Report,aiV3Report,AI_V3_POLICY,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLICY} from '../dist/universal-v2/hard-ai.mjs';
 import {matchGrid,pairedChallenger} from '../dist/universal-v2/ai-v3/compare.mjs';
@@ -18,7 +18,7 @@ const STEPS=Number(process.env.AI_V3_STEPS||24);
 const FINAL=process.env.AI_V3_SPLIT==='final';
 const SEED0=FINAL?Number(process.env.AI_V3_FINAL_SEED||5000):Number(process.env.AI_V3_DEV_SEED||8100);
 const MODES=(process.env.AI_V3_MODES||'baseline,prior,beam,belief').split(',');
-const BUDGET={nodes:48,ms:40,beam:4,actorDecisions:2,opponentDecisions:2,seed:1};
+const BUDGET={...MATCH_LIMITS,seed:1};
 
 function pct(values,p){
  const sorted=values.filter(Number.isFinite).sort((a,b)=>a-b);
@@ -84,7 +84,7 @@ for(const deck of decks){
  for(const mode of MODES){
   const rows=[];
   const samples=[];
-  let fallback=0,decisions=0,illegal=0,finished=0;
+  let fallback=0,budgetFallback=0,decisions=0,illegal=0,finished=0;
   const games=[];
   for(let g=0;g<GAMES;g++){
    const seed=SEED0+g;
@@ -97,6 +97,7 @@ for(const deck of decks){
     const learned=aiV3Report();
     row.challengerSeat=plan.challengerSeat;
     row.challengerFallback=mode==='baseline'?row.fallback:(learned.fallback||0);
+    row.budgetFallback=mode==='baseline'?0:(learned.budgetFallback||0);
     row.challengerDecisions=mode==='baseline'?row.steps:(learned.decisions||0);
     row.nodes=mode==='baseline'?hardAiReport().nodes:(learned.nodes||0);
     rows.push(row);
@@ -105,6 +106,8 @@ for(const deck of decks){
     games.push(view);
     samples.push(...(row.ms[challenger]||[]));
     fallback+=row.challengerFallback;
+    budgetFallback+=row.budgetFallback||0;
+    view.budgetFallback=row.budgetFallback||0;
     decisions+=row.challengerDecisions;
     illegal+=row.illegal;
     if(row.finished)finished++;
@@ -117,6 +120,7 @@ for(const deck of decks){
    finishedRate:rows.length?finished/rows.length:0,
    completion:rows.length?rows.filter(row=>row.finished||row.steps>=STEPS&&!row.illegal).length/rows.length:0,
    fallbackRate:decisions?fallback/decisions:0,
+   budgetFallback,budgetFallbackRate:decisions?budgetFallback/decisions:0,
    p50:pct(samples,0.5),p95:pct(samples,0.95),
    paired:mode==='baseline'?{n:0,mean:null,low:null,high:null}:pairedChallenger(rows),
    games

@@ -2,8 +2,8 @@
 // and to build a belief world. Search dispatches that world, then the
 // chosen action is matched back onto the live legal list.
 import {legalUniversalActions} from '../engine.mjs';
-import {chooseStrengthenedHardAction,HARD_AI_POLICY} from '../hard-ai.mjs';
-import {actorObservation,packOf,viewerCard} from './observation.mjs';
+import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLICY} from '../hard-ai.mjs';
+import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
@@ -12,28 +12,15 @@ import {chooseIsmctsAction} from './ismcts.mjs';
 export const AI_V3_POLICY='ai-v3-beam-1';
 export const AI_V3_BASELINE=HARD_AI_POLICY;
 export {SEARCH_PRIOR_GAP};
+// Strategy tests, full matches and the browser preview share this budget.
+export const MATCH_LIMITS=Object.freeze({nodes:48,ms:40,beam:4,actorDecisions:2,opponentDecisions:2,worlds:1});
 const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
  'effect-top-order','effect-raid-witness-order','effect-raid-witness-move',
  'life-batch-order']);
 
-// A front character enters rested, so a two-decision horizon ends before it
-// can attack. Credit the first two bodies at the root; the board evaluation
-// itself stays unchanged, so spending one later to save a life still wins.
-function developCredit(pack,state,actor,action,legal){
- if(action?.type!=='play'||action.line!=='front')return 0;
- if(legal.some(item=>item.type==='raid'&&item.uid===action.uid))return 0;
- const mine=state.players[actor];
- const bodies=(mine?.front||[]).filter(Boolean).length;
- const energy=(mine?.energy||[]).filter(Boolean).length;
- if(bodies>=1||energy<1)return 0;
- const card=viewerCard(state,actor,action.uid);
- const printed=card?packOf(pack,actor).cards[card.cardId]:null;
- if(!printed||printed.type!=='character')return 0;
- return 18;
-}
 function emptyReport(){
  return {decisions:0,forced:0,deferred:0,search:0,prior:0,ismcts:0,fallback:0,
-  budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,samples:[]};
+  budgetFallback:0,budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,samples:[]};
 }
 let report=emptyReport();
 let lastTrace=null;
@@ -77,7 +64,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const worlds=beliefWorlds(pack,state,actor,seed,worldsWanted);
   if(!worlds.length)return fallback(pack,state,legal,started,'no-world');
   const probe=worlds[0].state;
-  const beam=options.beam??5;
+  const beam=options.beam??MATCH_LIMITS.beam;
   const combat=state.phase==='attack'||state.pending?.kind==='block'||state.pending?.kind==='effect-block-floor';
   const pinned=Number.isInteger(options.nodes);
   const total=pinned?options.nodes:(combat?64:48);
@@ -106,34 +93,40 @@ export function chooseAiV3Action(pack,state,options={}){
    return finish(exact,'ismcts',{actor,seed,worlds:worlds.length,visits:picked.visits,
     nodesUsed:total-pool.n,fallback:false},started);
   }
-  const opponentDecisions=options.opponent===false?0:(options.opponentDecisions??4);
+  const opponentDecisions=options.opponent===false?0:(options.opponentDecisions??MATCH_LIMITS.opponentDecisions);
   const pool={n:total};
-  const jobs=[];
-  const safe=ranked.find(isSafeAction);
-  const front=ranked.find(action=>action.type==='play'&&action.line==='front');
-  if(safe)jobs.push(safe);
-  if(front)jobs.push(front);
-  for(const action of ranked){
-   if(safe&&same(action,safe))continue;
-   if(front&&same(action,front))continue;
-   jobs.push(action);
-  }
-  const scored=[];
   const nodesBefore=report.nodes;
+  resetHardAiReport();
+  const hardSlice=Math.min(16,pool.n);
+  const hardMs=Math.max(1,Math.min(16,deadline-performance.now()));
+  const hardRaw=hardSlice>0?chooseStrengthenedHardAction(pack,state,{nodes:hardSlice,ms:hardMs,seed}):null;
+  const hardSpent=Math.min(pool.n,hardAiReport().nodes||0);
+  pool.n-=hardSpent;
+  report.nodes+=hardSpent;
+  const hardExact=legal.find(item=>same(item,hardRaw))||null;
+  const constructive=hardExact&&!isSafeAction(hardExact)?hardExact:ordered.find(action=>!isSafeAction(action))||null;
+  const jobs=[];
+  const push=action=>{if(action&&!jobs.some(item=>same(item,action)))jobs.push(action);};
+  push(constructive);
+  const safe=ranked.find(isSafeAction);
+  push(safe);
+  for(const action of ranked)if(!isSafeAction(action))push(action);
+  const scored=[];
+  const actorDecisions=options.actorDecisions??MATCH_LIMITS.actorDecisions;
+  // One settled turn is worth more than another shallow glance. Hold nodes
+  // back so the last jobs, including the idle baseline, can finish too.
+  const lineFloor=16;
   for(let index=0;index<jobs.length;index++){
-   if(pool.n<=0){report.budget++;break;}
+   const reserve=index===0&&jobs.length>1?lineFloor:0;
+   if(pool.n-reserve<8){report.budget++;break;}
    if(performance.now()>deadline&&scored.length){report.budget++;break;}
    const action=jobs[index];
-   let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0;
+   let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0,settled=0,pending=null,phase=null;
    for(let w=0;w<worlds.length;w++){
     if(pool.n<=0){report.budget++;break;}
-    const remain=(jobs.length-index)*worlds.length-w;
-    const cap=isSafeAction(action)?6:Math.max(1,Math.ceil(pool.n/Math.max(1,remain)));
-    const slice=Math.min(pool.n,cap);
+    const slice=Math.min(pool.n-reserve,lineFloor);
     const line=scoreLine(pack,worlds[w].state,actor,action,{
-     nodes:slice,pool,beam,deadline,
-     actorDecisions:options.actorDecisions??4,
-     opponentDecisions
+     nodes:slice,pool,beam,deadline,actorDecisions,opponentDecisions
     });
     if(!line||!Number.isFinite(line.search))continue;
     totalScore+=line.search;
@@ -142,18 +135,38 @@ export function chooseAiV3Action(pack,state,options={}){
     responses+=line.responses;
     decisions+=line.actorDecisions;
     nodes+=line.nodes;
+    if(line.settled)settled++;
+    pending=line.pending;
+    phase=line.phase;
     hits+=line.transpositionHits;
     report.unsupported+=line.unsupported;
    }
    if(!n)continue;
-   scored.push({action,search:totalScore/n+developCredit(pack,state,actor,action,legal),opponentTurns:turns,responses,actorDecisions:decisions,nodes});
+   scored.push({action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
+    nodes,settled:settled===n,pending,phase});
    report.nodes+=nodes;
    report.transpositionHits=(report.transpositionHits||0)+hits;
   }
+  const viewed=scored.map(item=>({action:item.action,search:item.search,opponentTurns:item.opponentTurns,
+   settled:item.settled,pending:item.pending,phase:item.phase,nodes:item.nodes}));
+  const backup=constructive;
+  const finished=scored.filter(item=>item.settled);
+  const finishedPlay=finished.filter(item=>!isSafeAction(item.action));
+  const unfinishedPlay=scored.some(item=>!item.settled&&!isSafeAction(item.action));
+  const missed=jobs.length>scored.length;
+  if(!finishedPlay.length&&backup&&(unfinishedPlay||missed||!finished.length)){
+   report.budgetFallback++;
+   report.budget++;
+   return finish(backup,'budget-fallback',{
+    actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,incomplete:true,
+    hard:hardExact,compared:viewed,unscored:jobs.length-scored.length
+   },started);
+  }
   if(!scored.length)return fallback(pack,state,legal,started,'empty-search');
   const observation=actorObservation(pack,state,actor);
-  const anchor=scored.reduce((best,row)=>row.search>best.search?row:best).action;
-  const blended=blendRoot(scored,action=>{
+  const poolRows=finished.length?finished:scored;
+  const anchor=poolRows.reduce((best,row)=>row.search>best.search?row:best).action;
+  const blended=blendRoot(poolRows,action=>{
    const mine=learnBonus(options.prior,observation,action,actor);
    const base=learnBonus(options.prior,observation,anchor,actor);
    return mine-base;
@@ -166,7 +179,8 @@ export function chooseAiV3Action(pack,state,options={}){
    actor,seed,worlds:worlds.length,score:row?.search??null,bonus:blended.bonus,
    opponentTurns:row?.opponentTurns||0,responses:row?.responses||0,
    actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,
-   candidates:scored.map(item=>({action:item.action,search:item.search,opponentTurns:item.opponentTurns}))
+   incomplete:!row?.settled,hard:hardExact,compared:viewed,unscored:jobs.length-scored.length,
+   candidates:viewed
   },started);
  }catch(error){
   try{

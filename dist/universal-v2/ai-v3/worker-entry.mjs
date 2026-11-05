@@ -2,7 +2,7 @@
 // actor-belief world. A result is discarded unless request id, state
 // version and actor still match, and the action is on the live legal list.
 import {legalUniversalActions} from '../engine.mjs';
-import {chooseAiV3Action,AI_V3_POLICY} from './search.mjs';
+import {chooseAiV3Action,AI_V3_POLICY,MATCH_LIMITS} from './search.mjs';
 import {beliefWorld} from './belief.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -12,7 +12,7 @@ export function buildAiV3Request(pack,state,actor,{requestId,stateVersion,seed=1
  return {
   sealed:true,
   requestId,stateVersion,actor,seed,mode:mode||'beam',prior:prior||null,
-  nodes:nodes??64,ms:ms??70,
+  nodes:nodes??MATCH_LIMITS.nodes,ms:ms??MATCH_LIMITS.ms,
   pack,state:world.state
  };
 }
