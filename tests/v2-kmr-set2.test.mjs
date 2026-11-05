@@ -7,9 +7,10 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {createKmrBattlePack,kmrPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
+import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
  universalBp,universalCardEnergy,universalPrivateChoices}
  from '../dist/universal-v2/engine.mjs';
+import {dispatchRoom} from '../server/domain.mjs';
 import {uiActionLabel,controllerChoiceArt,fieldEffectCopy,pendingFocusCard} from '../dist/universal-v2/preview-actions.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
@@ -559,6 +560,99 @@ test('W Heat Metal chooses a single top-or-bottom placement after Memory Change 
   assert.equal(state.pending,null);
   assert.equal(state.players[0].deck[where==='top'?0:state.players[0].deck.length-1]?.uid,seen.uid);
  }
+});
+
+test('KMR-2-054 starts when its own attack is blocked and can draw zero or one',()=>{
+ const counts=fill(['KMR-2-054','KMR-2-020','KMR-1-010','KMR-2-059']);
+ function blocked(memory){
+  const s=fresh(counts);
+  const heat=put(s,0,'KMR-2-054','front',0,true);
+  const wall=put(s,1,'KMR-1-010','front',0,true);
+  const seen=take(s,0,'KMR-2-020');
+  s.players[0].deck.unshift(seen);
+  if(memory)heat.kmr2EnteredBy={id:'KMR-2-059',name:'メモリチェンジ',turn:s.turn};
+  ready(s);
+  let state=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='next'));
+  assert.equal(state.phase,'attack');
+  state=dispatchUniversalAction(packs,state,{type:'attack',uid:heat.uid});
+  assert.equal(state.pending?.kind,'block');
+  state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:wall.uid});
+  assert.equal(state.pending?.id,'KMR-2-054');
+  return {state,heat,wall,seen};
+ }
+ const plain=blocked(false);
+ assert.equal(plain.state.pending.step,'topPlace');
+ assert.deepEqual(plain.state.pending.data.window,[plain.seen.uid]);
+ assert.equal(universalPrivateChoices(packs,plain.state,1),null);
+ assert.equal(plain.state.publicReveals.some(entry=>entry.uid===plain.seen.uid),false);
+ const shown=universalPrivateChoices(packs,plain.state,0);
+ assert.equal(shown?.inspected?.some(card=>card.uid===plain.seen.uid),true);
+ const ai=chooseUniversalAiAction(packs,plain.state);
+ assert.equal(legalUniversalActions(packs,plain.state).some(a=>
+  a.type===ai.type&&a.mode===ai.mode&&a.uid===ai.uid),true);
+ let placed=dispatchUniversalAction(packs,plain.state,ai);
+ assert.equal(placed.pending?.id==='KMR-2-054',false);
+ assert.equal(placed.players[0].deck[0]?.uid,plain.seen.uid);
+ assert.equal(placed.players[1].outside.some(c=>c.uid===plain.wall.uid),true);
+ assert.equal(placed.players[0].front.some(c=>c?.uid===plain.heat.uid),true);
+ assertUniversalMatch(packs,placed);
+
+ for(const draw of [false,true]){
+  const changed=blocked(true);
+  assert.equal(changed.state.pending.step,'mode');
+  let state=click(changed.state,a=>a.key==='draw');
+  assert.equal(state.pending?.step,'mayDraw');
+  assert.deepEqual(state.pending.actions.map(a=>a.mode),['skip','draw']);
+  const deck=state.players[0].deck.length,hand=state.players[0].hand.length;
+  state=click(state,a=>a.mode===(draw?'draw':'skip'));
+  assert.equal(state.players[0].deck.length,deck-(draw?1:0));
+  assert.equal(state.players[0].hand.length,hand+(draw?1:0));
+  assert.equal(state.pending?.id==='KMR-2-054',false);
+  assert.equal(state.players[1].outside.some(c=>c.uid===changed.wall.uid),true);
+  assert.equal(state.players[0].front.some(c=>c?.uid===changed.heat.uid),true);
+  assertUniversalMatch(packs,state);
+ }
+});
+
+test('both seats submit KMR-2-054 through the room, and the guest never receives the top card',()=>{
+ const counts=fill(['KMR-2-054','KMR-2-020','KMR-1-010']);
+ const match=fresh(counts);
+ const heat=put(match,0,'KMR-2-054','front',0,true);
+ const wall=put(match,1,'KMR-1-010','front',0,true);
+ const seen=take(match,0,'KMR-2-020');
+ match.players[0].deck.unshift(seen);
+ ready(match);
+ assert.equal(assertUniversalMatch(packs,match),true);
+ let room={code:'HEAT0541',status:'playing',revision:1,first:0,match,log:[],updatedAt:1,
+  seats:[0,1].map(side=>({userId:'user'+side,username:'玩家'+side,title:'kmr',battleCounts:counts}))};
+ const repos={pruneRooms(){},loadRoom:()=>structuredClone(room),saveRoom:r=>{room=structuredClone(r);}};
+ const act=(userId,pred)=>{
+  const view=dispatchRoom(repos,{op:'view',code:room.code,userId},2).public;
+  const index=legalUniversalActions(packs,room.match).findIndex(pred);
+  assert.ok(index>=0,userId);
+  assert.equal(view.choices.some(choice=>choice.index===index),true);
+  return dispatchRoom(repos,{op:'act',code:room.code,userId,index},3);
+ };
+ act('user0',a=>a.type==='next');
+ act('user0',a=>a.type==='attack'&&a.uid===heat.uid);
+ act('user1',a=>a.type==='chooseBlock'&&a.uid===wall.uid);
+ const host=dispatchRoom(repos,{op:'view',code:room.code,userId:'user0'},4).public;
+ const guest=dispatchRoom(repos,{op:'view',code:room.code,userId:'user1'},5).public;
+ assert.equal(host.yourTurn,true);
+ assert.equal(host.inspection?.cards?.some(card=>card.uid===seen.uid&&card.cardId==='KMR-2-020'),true);
+ assert.equal(guest.yourTurn,false);
+ assert.equal(guest.inspection,null);
+ assert.equal(guest.choices.length,0);
+ assert.equal(JSON.stringify(guest).includes(seen.uid),false);
+ assert.throws(()=>dispatchRoom(repos,{op:'act',code:room.code,userId:'user1',index:0},6));
+ const bottom=legalUniversalActions(packs,room.match).findIndex(a=>a.mode==='bottom'&&a.uid===seen.uid);
+ act('user0',a=>a.mode==='bottom'&&a.uid===seen.uid);
+ assert.equal(room.match.players[0].deck.at(-1)?.uid,seen.uid);
+ assert.equal(room.match.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(room.match.players[0].front.some(c=>c?.uid===heat.uid),true);
+ assert.equal(bottom>=0,true);
+ const after=dispatchRoom(repos,{op:'view',code:room.code,userId:'user1'},7).public;
+ assert.equal(JSON.stringify(after).includes(seen.uid),false);
 });
 
 test('two different top-placement cards do not collapse into one effect sheet',()=>{

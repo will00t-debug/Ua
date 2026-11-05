@@ -1853,7 +1853,7 @@ function ensureCsm(){
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
-  retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
+  retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
   retireSkip:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot,{skipReplacement:true}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
@@ -2092,11 +2092,10 @@ function openBpZeroRetirements(pack,s){
 }
 function continueEffectQueue(pack,s){
  aotMatch=s;
- // Q94: a character at 0 BP or less leaves before the next effect job.
- // Re-check when the queue is idle too, so a title runtime that only
- // applied a modifier still sidelined the character. Twelve passes is
- // enough for chained retirements; a card that refuses to leave stops
- // the loop instead of spinning.
+ // Q94 leaves a character still at 0 BP or less. Q1898 / Q1899: that check
+ // waits until the current effect is finished, including an open choice.
+ // Q187: it then happens before the next effect, such as the blocked battle.
+ // Q1139: the leave is a rule process. Twelve passes cover chained leaves.
  let bpPasses=0;
  while(!s.pending&&s.status==='playing'){
   refreshAotFrontLimits(pack,s);
@@ -6419,6 +6418,7 @@ function queueRetirement(pack,s,p,c,line){
   ...job,retiredSource:{uid:c.uid,cardId:c.cardId,line,ready:c.ready,
    bp:bp(pack,s,c),fieldEntryStamp:c.fieldEntryStamp??null},
   ...(job.op==='replayRaidBase'?{baseUid}:{}),
+  ...(job.op==='csm'?{by:s.kmrRetireBy??null}:{}),
   ...(job.op==='kmr'&&s.kmrRetireBy?{by:s.kmrRetireBy}:{})
  }));
  // Q2220: a this-turn earned leave trigger is not original text.
@@ -8120,10 +8120,11 @@ function resolveChoice(s,a,pack){
    blocker.buffs.push({bp:raidState?blockShift.raid:blockShift.plain,untilTurn:s.turn});
   }
   s.kmr2LastBattle={turn:s.turn,attackerUid:attacker.uid,blockerUid:blocker.uid,attackerWon:null};
-  if(kmr2Implements(card(pack,blocker).id,'blocked')&&!originalEffectsDisabled(s,blocker)&&
-   raidBoxTextLive(pack,blocker,'blocked')){
+  // 「このキャラがブロックされた時」 is the attacker whose attack was blocked.
+  if(kmr2Implements(card(pack,attacker).id,'blocked')&&!originalEffectsDisabled(s,attacker)&&
+   raidBoxTextLive(pack,attacker,'blocked')){
    s.effectQueue.unshift(
-    {op:'kmr2',id:card(pack,blocker).id,slot:'blocked',owner:q.player,sourceUid:blocker.uid},
+    {op:'kmr2',id:card(pack,attacker).id,slot:'blocked',owner:s.active,sourceUid:attacker.uid},
     {op:'kmr2ResumeBattle',owner:s.active,attackerUid:attacker.uid,blockerUid:blocker.uid,
      blockerOwner:q.player,slot});
    continueEffectQueue(pack,s);

@@ -145,10 +145,10 @@ test('MST-1-005 loses impact in battle and gains BP only after an own-effect cha
  assert.equal(assertUniversalMatch(cast.packs,live),true);
 });
 
-test('MST-1-014 discounts an empty field, pairs a line with Rudeus after an event, and puts at most one of the top two outside',()=>{
+test('MST-1-014 discounts an empty field, shares its own line with Rudeus after an event, and puts at most one of the top two outside',()=>{
  const {packs,s:opened}=match();
  const sylph=place(opened,0,'MST-1-014','front',0);
- const rude=place(opened,0,'MST-1-022','energy',0);
+ const rude=place(opened,0,'MST-1-022','front',1);
  place(opened,0,'MST-1-010','energy',1);
  place(opened,0,'MST-1-019','energy',2);
  const event=hold(opened,0,'MST-1-034');
@@ -158,8 +158,9 @@ test('MST-1-014 discounts an empty field, pairs a line with Rudeus after an even
  assert.equal(s.zoneMoveEvents.some(e=>e.uid===event.uid&&e.reason==='rule'&&e.to==='outside'),true);
  assert.equal(universalBp(packs,s,sylph),3000);
  const other=structuredClone(s);
- other.players[0].energy[0]=null;
- other.players[0].energy[2]=rude;
+ const across=other.players[0].front[1];
+ other.players[0].front[1]=null;
+ other.players[0].energy[0]=across;
  assert.equal(universalBp(packs,other,sylph),1500);
  if(s.pending){
   const recover=legalUniversalActions(packs,s).find(a=>a.type==='chooseApRecovery')||

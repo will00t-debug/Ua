@@ -864,7 +864,7 @@ function blocked048(pack,s,job){
 function offerWBlockedTopPlace(s,spec){
  const top=plOf(s,spec.player).deck[0];
  if(!top)return false;
- return hold(s,{...spec,step:'topPlace',data:{uid:top.uid}},[
+ return hold(s,{...spec,step:'topPlace',data:{uid:top.uid,window:[top.uid]}},[
   {type:'kmr2',mode:'top',uid:top.uid},{type:'kmr2',mode:'bottom',uid:top.uid}
  ]);
 }
@@ -1360,6 +1360,11 @@ function resolveStep(pack,s,q,a){
  if(q.step==='mode'){
   s.pending=null;
   if(hit.mode==='done'||hit.mode==='skip')return;
+  if(hit.key==='draw'&&q.id==='KMR-2-054'){
+   hold(s,{...spec,step:'mayDraw'},[
+    {type:'kmr2',mode:'skip'},{type:'kmr2',mode:'draw'}]);
+   return;
+  }
   if(hit.key==='draw'){
    A.draw(pack,s,q.player,1,q.sourceUid);
    if(q.id==='KMR-2-018')offerDiscard(s,spec,1,false,null);

@@ -270,16 +270,16 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    e.controller===owner&&e.reason==='own-effect'&&
    (e.to==='front'||e.to==='energy')&&
    printed({uid:e.uid,cardId:e.cardId})?.type==='character');
- // 「同じライン」is the paired front and energy slot, not another column
- // and not a card buried under a Raid.
+ // Q18 and Q1806: 同じライン is the line this card is on. A front-line
+ // card looks along the front line, and an energy-line card looks along
+ // the energy line. The slot across from it is a different line. A card
+ // buried under a Raid is not on the line.
  if(condition.kind==='sameLineName'){
   const pl=s.players[owner];
   for(const line of ['front','energy']){
-   const slot=pl[line].findIndex(c=>c?.uid===sourceUid);
-   if(slot<0)continue;
-   const mate=pl[line==='front'?'energy':'front'][slot];
-   return !!mate&&cardHasName(printed(mate),condition.name,
-    originalEffectsDisabled(s,mate));
+   if(!pl[line].some(c=>c?.uid===sourceUid))continue;
+   return pl[line].some(c=>c&&c.uid!==sourceUid&&
+    cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c)));
   }
   return false;
  }

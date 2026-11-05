@@ -84,13 +84,15 @@ function retireUid(pack,s,owner,uid){
  if(!loc)return false;
  return A.retire(pack,s,owner,loc.line,loc.slot)===true;
 }
-// Q94: a character at BP <= 0 retires after the debuff resolves.
-// Use the ordinary retirement path so Raid bases and on-retire effects are kept.
+// Q1898 / Q1899 (2026-01-09): BP that reaches 0 during an effect does not
+// leave until that effect has finished, and only if it is still 0 then.
+// The queue checkpoint applies Q94 and Q1139 with by:'rule'. Leaving here
+// would drop the same effect's later sentences.
 function debuffFront(pack,s,owner,uid,amount){
  const loc=locOf(s,owner,uid);
  if(!loc||loc.line!=='front')return false;
  buff(s,loc.c,amount);
- return A.bp(pack,s,loc.c)<=0 ? retireUid(pack,s,owner,uid) : false;
+ return false;
 }
 function restOwn(s,owner,c){
  if(!c?.ready)return false;
@@ -143,6 +145,15 @@ function finishLookTake(pack,s,q,a){
   taken=plOf(s,q.player).hand.find(c=>c.uid===a.uid)||
    plOf(s,q.player).outside.find(c=>c.uid===a.uid)||null;
   if(data.public&&taken)publish(pack,s,q.player,taken);
+ }
+ if(q.id==='CSM-1-008'){
+  if(a.mode==='take'&&taken){
+   q.data.takenUid=taken.uid;
+   q.data.takenCardId=taken.cardId;
+  }
+  if(!offerOrder(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,data:q.data},rest,data.rest)&&
+   q.data.takenUid)continue008(pack,s,q);
+  return;
  }
  if(data.discard&&a.mode==='take'){
   const hand=plOf(s,q.player).hand.filter(c=>c.uid!==a.uid);
@@ -215,6 +226,7 @@ function finishOrder(s,q,a){
  if(left.length<=1){
   lay(plOf(s,q.player),[...built,...left],q.data.rest);
   if(q.data.drawIfSkipped)A.draw(A.pack,s,q.player,1,q.sourceUid);
+  if(q.id==='CSM-1-008'&&q.data.takenUid)continue008(A.pack,s,q);
   return;
  }
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'lookOrder',
@@ -499,6 +511,20 @@ function runPlay(pack,s,job){
   A.draw(pack,s,owner,extra?3:2,job.sourceUid);
  }
 }
+function continue008(pack,s,q){
+ if(q.data?.handDone){offer008Follow(pack,s,q);return;}
+ const hand=plOf(s,q.player).hand;
+ if(!hand.length){offer008Follow(pack,s,q);return;}
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'discard',
+  data:{...q.data,left:null,handThenFollow:true}},
+  hand.map(c=>({type:'csm',mode:'discard',uid:c.uid})));
+}
+function offer008Follow(pack,s,q){
+ const id=q.data?.takenCardId;
+ if(!id)return;
+ afterLookFollow(pack,s,{...q,data:{...q.data,left:null,handDone:true}},
+  {uid:q.data.takenUid,cardId:id},null);
+}
 function offerTuckUnderDenji(pack,s,spec){
  const hosts=chars(s,spec.player,c=>{
   const d=def(pack,c);
@@ -516,10 +542,10 @@ function offerTuckUnderDenji(pack,s,spec){
 function runRetire(pack,s,job){
  const id=job.id,owner=job.owner,spec={player:owner,sourceUid:job.sourceUid,id};
  if(id==='CSM-1-006'){
-  const byOwn=job.by===owner||job.reason==='own-effect'||
-   (s.zoneMoveEvents||[]).some(e=>e.uid===job.sourceUid&&e.turn===s.turn&&
-    e.reason==='retirement'&&e.controller===owner);
-  // Default draw; may replace with look when own-effect retirement.
+  // Q1139: a BP 0 rule leave is not 「自分の効果で退場」. Battle and an
+  // opponent effect are not either. Only a leave with no recorded cause
+  // is this character's own effect.
+  const byOwn=job.by==null;
   if(byOwn){
    hold(s,{...spec,step:'choose'},[
     {type:'csm',mode:'draw'},{type:'csm',mode:'look'}]);
@@ -813,7 +839,8 @@ export function resolveCsmPending(pack,s,action){
  else if(step==='lookOrder')finishOrder(s,q,a);
  else if((step==='discard'||step==='discardEnergy')&&a.mode==='discard'){
   moveUid(pack,s,owner,'hand',a.uid,'outside',q.sourceUid);
-  if(q.data?.left)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},
+  if(q.id==='CSM-1-008'&&q.data?.handThenFollow)offer008Follow(pack,s,q);
+  else if(q.data?.left)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},
    q.data.left,q.data.rest);
   else if(q.id==='CSM-1-055')afterAkiDiscard(pack,s,q);
   else if(q.id==='CSM-1-059'){

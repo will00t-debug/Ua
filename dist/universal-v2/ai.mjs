@@ -74,7 +74,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
- if(s.pending?.kind==='kmr'||s.pending?.kind==='kmr2')return legal.find(a=>a.mode!=='skip')||legal[0];
+ if(s.pending?.kind==='kmr'||s.pending?.kind==='kmr2'||s.pending?.kind==='csm')
+  return legal.find(a=>a.mode!=='skip')||legal[0];
  if(s.pending?.kind==='opening-mulligan'){
   const side=s.pending.player,print=packsOf(pack)[side].cards;
   const starters=s.players[side].hand.filter(c=>{

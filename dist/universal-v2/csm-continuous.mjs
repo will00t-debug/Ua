@@ -83,19 +83,21 @@ export function csmCardCountsAsEvent(s,owner,definition,card){
  return csmAlsoEventAuraLive(s,owner,card);
 }
 
+function sameLineNamed(s,owner,uid,name,card){
+ const pl=s.players[owner];
+ for(const line of ['front','energy']){
+  if(!pl[line].some(x=>x?.uid===uid))continue;
+  return pl[line].some(x=>x&&x.uid!==uid&&
+   named(card(x),name,originalEffectsDisabled(s,x)));
+ }
+ return false;
+}
 export function csmBp(pack,s,c,printed,suppressed,owner,card){
  if(suppressed||!printed?.csmHook)return 0;
  let n=0;
  const events=csmEventUseCount(s,owner,x=>card(pack,x));
- if(printed.id==='CSM-1-002'){
-  const pl=s.players[owner];
-  for(const line of ['front','energy']){
-   const slot=pl[line].findIndex(x=>x?.uid===c.uid);
-   if(slot<0)continue;
-   const mate=pl[line==='front'?'energy':'front'][slot];
-   if(mate&&named(card(pack,mate),REZE,originalEffectsDisabled(s,mate)))n+=1000;
-  }
- }
+ if(printed.id==='CSM-1-002'&&
+  sameLineNamed(s,owner,c.uid,REZE,x=>card(pack,x)))n+=1000;
  if(printed.id==='CSM-1-010'&&s.active===owner&&
   s.players[owner].front.concat(s.players[owner].energy).some(x=>x&&
    named(card(pack,x),MAKIMA,originalEffectsDisabled(s,x)))&&events>=1)n+=1000;
@@ -107,15 +109,8 @@ export function csmBp(pack,s,c,printed,suppressed,owner,card){
 
 export function csmImpactNull(pack,s,c,printed,suppressed,owner,card){
  if(suppressed||!printed?.csmHook)return false;
- if(printed.id==='CSM-1-002'){
-  const pl=s.players[owner];
-  for(const line of ['front','energy']){
-   const slot=pl[line].findIndex(x=>x?.uid===c.uid);
-   if(slot<0)continue;
-   const mate=pl[line==='front'?'energy':'front'][slot];
-   if(mate&&named(card(pack,mate),REZE,originalEffectsDisabled(s,mate)))return true;
-  }
- }
+ if(printed.id==='CSM-1-002'&&
+  sameLineNamed(s,owner,c.uid,REZE,x=>card(pack,x)))return true;
  return false;
 }
 
