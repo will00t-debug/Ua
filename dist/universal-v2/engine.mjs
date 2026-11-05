@@ -4671,11 +4671,19 @@ function continueEffectQueue(pack,s){
    const suppressActive=card(pack,attacker).id==='AOT-1-025'&&!originalEffectsDisabled(s,attacker);
    // The defender has chosen not to BLOCK. Give the ATTACKER a single legal
    // target selection, even for DAMAGE 2; no hidden card ID is published.
-   const remaining=s.players[owner].life.length;
-   if(remaining===0){s.status='finished';s.winner=1-owner;s.endReason='unblocked-attack';}
-   else s.pending={kind:'attack-life-target',player:1-owner,defender:owner,
-    attackerUid:attacker.uid,attackerStamp:attacker.fieldEntryStamp,
-    count:Math.min(count,remaining),suppressActive};
+   if(s.attackerChoosesLife===true){
+    const remaining=s.players[owner].life.length;
+    if(remaining===0){s.status='finished';s.winner=1-owner;s.endReason='unblocked-attack';}
+    else s.pending={kind:'attack-life-target',player:1-owner,defender:owner,
+     attackerUid:attacker.uid,attackerStamp:attacker.fieldEntryStamp,
+     count:Math.min(count,remaining),suppressActive};
+   }else{
+    if(suppressActive)s.aotSuppressActive=true;
+    try{
+     if(count>1)revealLifeBatch(pack,s,owner,count);
+     else damage(pack,s,owner);
+    }finally{delete s.aotSuppressActive;}
+   }
   }else if(job.op==='resolveEnergyLineAttackEndSwap'){
    const src=pl.energy.find(c=>c?.uid===job.sourceUid);
    const choices=energyLineAttackEndFrontChoices(pack,s,owner);
@@ -13300,8 +13308,9 @@ function resolveChoice(s,a,pack){
  }
  throw Error('Unsupported pending decision');
 }
-export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=false,pointCardIds=null}={}){
+export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=false,pointCardIds=null,attackerChoosesLife=false}={}){
  const packs=playerPacks(pack);
+ if(typeof attackerChoosesLife!=='boolean')throw Error('Invalid LIFE targeting rule');
  if(!Array.isArray(decks)||decks.length!==2||!playerIndex(first)||typeof openingMulligan!=='boolean')
   throw Error('Universal v2 requires one or two title packs and two decks');
  if(pointCardIds!=null&&(!Array.isArray(pointCardIds)||pointCardIds.length!==2))
@@ -13314,6 +13323,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=fal
  const s={version:UNIVERSAL_V2_VERSION,title:isSame?packs[0].id:'cross-title',packVersion:isSame?packs[0].version:null,
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:openingMulligan?'setup':'start',status:'playing',
+  attackerChoosesLife,
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,attacksByUid:{},blocksByUid:{},attackedNames:[],
   publicReveals:[],effectQueue:[],delayedEffects:[],retirementBatch:null,lifeRevealBatch:null,nextFieldEntryStamp:1,
   continuousStates:[],nextContinuousStateId:1,endRefreshed:false,players:[],
@@ -22569,7 +22579,10 @@ export function assertUniversalMatch(pack,s){
    !s.effectQueue.some(e=>e.op==='closeRetirementBatch'))
    throw Error('Invalid open retirement batch');
  }
+ if(s.attackerChoosesLife!==undefined&&typeof s.attackerChoosesLife!=='boolean')
+  throw Error('Invalid LIFE targeting mode');
  if(s.pending?.kind==='attack-life-target'){
+  if(s.attackerChoosesLife!==true)throw Error('Inactive LIFE targeting mode');
   const q=s.pending,attacker=liveAttacker(s,q.attackerUid);
   if(s.phase!=='attack'||s.active!==q.player||q.defender!==1-q.player||
    !attacker||attacker.fieldEntryStamp!==q.attackerStamp||
