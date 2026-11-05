@@ -15,7 +15,13 @@
       "tests/v2-csm-faq.test.mjs",
       "tests/v2-csm-catalog.test.mjs"
     ],
-    "note": "2026-11-05 對 a5bc96e 上的工作樹執行 npm test：3709 項中 3708 項通過。唯一失敗是 tests/v2-independent-audit.test.mjs 呼叫 scripts/v2-audit-catalog.mjs，該腳本在 dist、tests、scripts 仍有未提交變更時拒絕執行。提交本組程式與測試後重跑該檔，結果記在 committedAudit。"
+    "note": "2026-11-05 對工作樹執行 npm test：3709 項中 3708 項通過。唯一失敗是 tests/v2-independent-audit.test.mjs；scripts/v2-audit-catalog.mjs 在 dist、tests、scripts 仍有未提交變更時拒絕執行。提交 33add35f 後重跑該檔，4 項全部通過。",
+    "committedAudit": {
+      "commit": "33add35f4a5fda6be6f95a5cf262586ea1dcf71e",
+      "command": "node --test tests/v2-independent-audit.test.mjs",
+      "passed": true,
+      "tests": 4
+    }
   },
   "reviews": [
     {
