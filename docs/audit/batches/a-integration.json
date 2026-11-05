@@ -4,11 +4,18 @@
   "pr": 319,
   "base": "a5bc96e85e8f5c1ee62597feae27b3ec337de653",
   "integratedMain": "03bd60f7237e1b1ecdd1002eac167f718b2947b7",
-  "status": "本輪共用修正已完成。B、C、D 尚未交付。",
+  "status": "已整合 B 的 Draft PR #321。C、D 尚未交付。",
+  "mergedFrom": [
+    {
+      "group": "B",
+      "pr": 321,
+      "branch": "cursor/audit-b-csm-021-039",
+      "head": "d25a1b9d"
+    }
+  ],
   "shared": [
     "退場原因仍保留 by、控制者與來源。原因未填不是自己的效果。",
     "同一印刷效果的 effectScope 結束後才檢查 BP 0。",
     "退場代替後，只有印刷文本要求原目標實際退場的後段才停止；CSM-1-040 的 BP+1000 與 CSM-1-077 的翻裏向卡仍會結算一次。"
-  ],
-  "mergedFrom": []
+  ]
 }
