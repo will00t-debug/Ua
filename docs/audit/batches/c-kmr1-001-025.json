@@ -63,7 +63,8 @@
       "pass": 3706,
       "fail": 1,
       "failure": "tests/v2-independent-audit.test.mjs 呼叫 scripts/v2-audit-catalog.mjs。該腳本在 dist、tests、scripts 還有未提交修改時拒絕執行。失敗發生在本組修正尚未提交，不是效果斷言。",
-      "note": "全庫通過不代表每張卡的每個句子都正確。提交後會再跑這一個目錄測試。"
+      "cleanRerun": "提交 56373b12 後，node --test --test-name-pattern \"report generates from actual catalog\" tests/v2-independent-audit.test.mjs 通過。",
+      "note": "全庫通過不代表每張卡的每個句子都正確。"
     }
   },
   "reviews": [
