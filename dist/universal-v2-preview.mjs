@@ -1574,7 +1574,9 @@ function render(){
     btn('手動推進 AI 一步',manualAiStep,'btn small'):null,
    s.status==='playing'&&uiActor(s)===1&&app.busy?
     btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null));
- target.append(title,coachBar());
+ target.append(title);
+ const coach=coachBar();
+ if(coach)target.append(coach);
  if(s.status==='playing'&&uiActor(s)===1){
   target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
    el('b',{text:app.busy?'AI 自動操作中':'AI 目前暫停'}),
@@ -2169,6 +2171,26 @@ function restoreMatchLobby(){
  if(['easy','normal','hard','learned'].includes(saved.difficulty))$('ai-level').value=saved.difficulty;
  if(['human','ai'].includes(saved.first))$('first-player').value=saved.first;
 }
+async function startAuditFixture(name){
+ try{
+  const {loadAuditFixture}=await import('./universal-v2/audit-browser-fixtures.mjs?v=20261105hand1');
+  const fixture=loadAuditFixture(name);
+  clearSoloBattle(sessionStorage);
+  app.packs=fixture.packs;
+  app.state=fixture.state;
+  app.replay=fixture.replay;
+  app.launch={config:{id:'audit-'+name,difficulty:'normal',first:0,recordDeckId:null},
+   decks:[{label:fixture.label},{label:'稽核對手'}],packs:fixture.packs};
+  app.aiDifficulty='normal';
+  app.history=[fixture.label];
+  app.error='';
+  app.selectedUid=null;app.entryMode=null;app.targetChoices=null;
+  document.body.dataset.audit=name;
+  const banner=$('battle-matchup');
+  if(banner)banner.textContent=fixture.label;
+  render();
+ }catch(error){alertText(error?.message||String(error));}
+}
 if(!IS_BATTLE_PAGE){
  restoreMatchLobby();
  for(const button of document.querySelectorAll('[data-deck-side]')){
@@ -2204,7 +2226,8 @@ if(!IS_BATTLE_PAGE){
  syncMatchLobby();
  importAccountLobbyDecks();
 }else{
- const loaded=loadSoloBattle(sessionStorage);
+ const auditName=new URLSearchParams(location.search).get('audit');
+ const loaded=auditName?null:loadSoloBattle(sessionStorage);
  window.matchMedia(DESKTOP_BATTLE_QUERY).addEventListener('change',()=>render());
  const exit=$('exit-battle');
  if(exit)exit.addEventListener('click',event=>{
@@ -2221,7 +2244,9 @@ if(!IS_BATTLE_PAGE){
   if(!coach?.session||coach.session.finished||app.state?.status!=='playing')return;
   coach.finish({completed:false,winner:null,endReason:'interrupted',holdMs:4000,review:false});
  });
- if(loaded){
+ if(auditName){
+  void startAuditFixture(auditName);
+ }else if(loaded){
   app.launch=loaded;app.packs=loaded.packs;
   app.aiDifficulty=loaded.config.difficulty;
   app.recordDeckId=loaded.config.recordDeckId;

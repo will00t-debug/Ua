@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createCsmV2Pack} from '../dist/universal-v2/csm-pack.mjs';
 import {createIysV2Pack} from '../dist/universal-v2/iys-pack.mjs';
 import {createKmrV2Pack} from '../dist/universal-v2/kmr-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -218,6 +219,54 @@ test('IYS-1-028 at 0 BP still offers the printed leave replacement',()=>{
  assert.equal(left.players[0].outside.filter(c=>c.uid===other.uid).length,1);
  assert.notEqual(left.pending?.step,'leave');
  assertUniversalMatch(declined.packs,left);
+});
+
+test('Q1898 restores BP inside one effect across a choice, and the next effect does not wait',()=>{
+ const csm=createCsmV2Pack();
+ const packs=[csm,csm];
+ const counts=countsFor(csm,['CSM-1-016','CSM-1-001','CSM-1-008','CSM-1-003']);
+ const board=()=>toPhase(packs,fresh(packs,[counts,counts],1898),'main');
+ function queue(s,jobs){
+  const victim=put(s,0,'CSM-1-001','front',0,true);
+  const reze=put(s,0,'CSM-1-016','front',1,true);
+  put(s,0,'CSM-1-003','front',2,true);
+  const deck=s.players[0].deck.length;
+  s.effectQueue=jobs.map(job=>{
+   const {source,...rest}=job;
+   return {owner:0,sourceUid:source==='reze'?reze.uid:victim.uid,...rest};
+  });
+  return {s:dispatchUniversalAction(packs,s,{type:'next'}),victim,deck};
+ }
+ const held=queue(board(),[
+  {op:'buffSelf',bp:-10000,effectScope:1},
+  {op:'csm',id:'CSM-1-016',slot:'onPlay',effectScope:1,source:'reze'},
+  {op:'buffSelf',bp:10000,effectScope:1}
+ ]);
+ assert.equal(held.s.pending?.step,'retireThenKit');
+ assert.equal(held.s.players[0].front.some(c=>c?.uid===held.victim.uid),true);
+ assert.equal(universalBp(packs,held.s,held.s.players[0].front.find(c=>c.uid===held.victim.uid))<=0,true);
+ let restored=choose(packs,held.s,a=>a.mode==='skip');
+ const stayed=restored.players[0].front.find(c=>c?.uid===held.victim.uid);
+ assert.ok(stayed);
+ assert.equal(universalBp(packs,restored,stayed)>0,true);
+ assertUniversalMatch(packs,restored);
+
+ const split=queue(board(),[
+  {op:'buffSelf',bp:-10000,effectScope:1},
+  {op:'csm',id:'CSM-1-016',slot:'onPlay',effectScope:2,source:'reze'}
+ ]);
+ assert.equal(split.s.pending?.step,'retireThenKit');
+ assert.equal(split.s.players[0].front.some(c=>c?.uid===split.victim.uid),false);
+ assert.equal(split.s.players[0].outside.some(c=>c.uid===split.victim.uid),true);
+ assertUniversalMatch(packs,split.s);
+
+ const ended=queue(board(),[
+  {op:'buffSelf',bp:-10000,effectScope:1},
+  {op:'csm',id:'CSM-1-016',slot:'onPlay',effectScope:1,source:'reze'},
+  {op:'buffSelf',bp:1,effectScope:2}
+ ]);
+ assert.equal(ended.s.players[0].front.some(c=>c?.uid===ended.victim.uid),true);
+ assert.throws(()=>choose(packs,ended.s,a=>a.mode==='skip'),/buffSelf source must be on field/);
 });
 
 test('AI and online matches dispatch the same engine action path',()=>{

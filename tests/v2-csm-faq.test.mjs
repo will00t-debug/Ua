@@ -319,6 +319,9 @@ test('Q2077/Q2078 017 reze branch retires then optional BP-5000',()=>{
  s=choose(s,a=>a.mode==='reze');
  assert.equal(s.pending?.step,'retireThenDebuff5k');
  s=choose(s,a=>a.mode==='pick'&&a.uid===ally.uid);
+ assert.equal(s.pending?.id,'CSM-1-006');
+ assert.deepEqual(s.pending.actions.map(a=>a.mode).sort(),['draw','look']);
+ s=choose(s,a=>a.mode==='draw');
  assert.equal(s.pending?.step,'debuff5k');
  s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
  assert.equal(s.players[1].front.some(c=>c?.uid===foe.uid),false,
@@ -341,6 +344,8 @@ for(const [targetId,printedBp] of [['CSM-1-007',4000],['CSM-1-048',5000]]){
   runCsmJob(pack,s,{op:'csm',id:'CSM-1-017',slot:'onPlay',owner:0,sourceUid:bomb.uid});
   s=choose(s,a=>a.mode==='reze');
   s=choose(s,a=>a.mode==='pick'&&a.uid===ally.uid);
+  assert.equal(s.pending?.id,'CSM-1-006');
+  s=choose(s,a=>a.mode==='draw');
   s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
   assert.equal(s.players[1].front[0],null);
   assert.ok(s.players[1].outside.some(c=>c.uid===foe.uid));
@@ -362,6 +367,8 @@ test('CSM-1-017 BP-5000 keeps a target that still has positive effective BP',()=
  runCsmJob(pack,s,{op:'csm',id:'CSM-1-017',slot:'onPlay',owner:0,sourceUid:bomb.uid});
  s=choose(s,a=>a.mode==='reze');
  s=choose(s,a=>a.mode==='pick'&&a.uid===ally.uid);
+ assert.equal(s.pending?.id,'CSM-1-006');
+ s=choose(s,a=>a.mode==='draw');
  s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
  assert.equal(s.players[1].front[0]?.uid,foe.uid);
  assert.equal(universalBp(packs,s,s.players[1].front[0]),1000);

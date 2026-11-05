@@ -79,10 +79,33 @@ function moveUid(pack,s,owner,from,uid,to,sourceUid,reason='own-effect'){
  if(index<0)throw Error('Chainsaw Man card left '+from);
  return A.move(pack,s,{owner,from,to,index,reason,sourceUid});
 }
-function retireUid(pack,s,owner,uid){
+function ownCause(owner,sourceUid){
+ return {by:'own',controller:owner,sourceUid};
+}
+function foeCause(controller,sourceUid){
+ return {by:'opponent',controller,sourceUid};
+}
+function retireUid(pack,s,owner,uid,cause){
  const loc=locOf(s,owner,uid);
  if(!loc)return false;
- return A.retire(pack,s,owner,loc.line,loc.slot)===true;
+ const spec=cause&&typeof cause==='object'?cause:{};
+ return A.retire(pack,s,owner,loc.line,loc.slot,{
+  ...(typeof spec.by==='string'?{by:spec.by}:{}),
+  ...(Number.isInteger(spec.controller)?{controller:spec.controller}:{}),
+  ...(typeof spec.sourceUid==='string'?{sourceUid:spec.sourceUid}:{})
+ })===true;
+}
+// The leave trigger is queued in front of this follow-up. A pause keeps the
+// follow-up on the pending until the chosen card actually leaves.
+function retireThen(pack,s,owner,uid,cause,follow){
+ const paused=retireUid(pack,s,owner,uid,cause);
+ if(follow){
+  if(Number.isInteger(s.openEffectScope)&&s.openEffectScope>0)
+   follow.effectScope=s.openEffectScope;
+  if(paused){if(s.pending)s.pending.csmFollow=follow;}
+  else s.effectQueue.push(follow);
+ }
+ return paused;
 }
 // Q1898 / Q1899 (2026-01-09): BP that reaches 0 during an effect does not
 // leave until that effect has finished, and only if it is still 0 then.
@@ -542,10 +565,11 @@ function offerTuckUnderDenji(pack,s,spec){
 function runRetire(pack,s,job){
  const id=job.id,owner=job.owner,spec={player:owner,sourceUid:job.sourceUid,id};
  if(id==='CSM-1-006'){
-  // Q1139: a BP 0 rule leave is not 「自分の効果で退場」. Battle and an
-  // opponent effect are not either. Only a leave with no recorded cause
-  // is this character's own effect.
-  const byOwn=job.by==null;
+  // Printed: the look replaces the draw only when this character left by
+  // its controller's own effect. A missing cause is not that evidence.
+  // Q1139: BP 0 is a rule leave. Battle and an opponent effect draw 1.
+  const byOwn=job.by==='own'&&job.retireController===owner&&
+   typeof job.retireSourceUid==='string';
   if(byOwn){
    hold(s,{...spec,step:'choose'},[
     {type:'csm',mode:'draw'},{type:'csm',mode:'look'}]);
@@ -621,10 +645,46 @@ function runAttack(pack,s,job){
  }
 }
 
+function runAfterOwnRetire(pack,s,job){
+ const owner=job.owner,spec={player:owner,sourceUid:job.sourceUid,id:job.id};
+ if(job.kind==='kit016'){
+  const self=selfOf(s,owner,job.sourceUid);
+  if(self){A.active(s,owner,self);buff(s,self,1000);impact(s,self);}
+  offerAp(s,spec,false);
+ }else if(job.kind==='denjiImpact'){
+  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
+  hold(s,{...spec,step:'buffImpact'},[
+   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+ }else if(job.kind==='grantAttackDraw'){
+  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
+  hold(s,{...spec,step:'grantAttackDraw'},[
+   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+ }else if(job.kind==='denjiEnergy'){
+  const outs=plOf(s,owner).outside.filter(x=>named(pack,x,DENJI,s)&&
+   def(pack,x).color==='red'&&def(pack,x).energy<=1);
+  if(!outs.length)return;
+  hold(s,{...spec,step:'denjiEnergy',data:{pochitaUid:job.pochitaUid||null}},[
+   {type:'csm',mode:'skip'},...outs.map(x=>({type:'csm',mode:'deploy',uid:x.uid}))]);
+ }else if(job.kind==='debuff5k'){
+  offerFront(s,spec,1-owner,null,true,'debuff5k');
+ }else if(job.kind==='choose12'){
+  hold(s,{...spec,step:'afterRetireChoose'},[
+   {type:'csm',mode:'one'},{type:'csm',mode:'two'}]);
+ }else if(job.kind==='ap038'){
+  offerAp(s,{...spec,data:{next:'draw2'}},false);
+ }
+}
+function runAfterFoeRetire(pack,s,job){
+ const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id,data:{}};
+ if(job.thenBuff)offerChars(s,spec,null,true,'buffOther');
+ if(job.peelAki)offerPeelAki(pack,s,spec);
+}
 export function runCsmJob(pack,s,job){
  arm(pack);
  if(job.slot==='onPlay'||job.slot==='after')runPlay(pack,s,job);
  else if(job.slot==='onRetire')runRetire(pack,s,job);
+ else if(job.slot==='afterOwnRetire')runAfterOwnRetire(pack,s,job);
+ else if(job.slot==='afterFoeRetire')runAfterFoeRetire(pack,s,job);
  else if(job.slot==='onAttack')runAttack(pack,s,job);
  else if(job.slot==='unblocked'){
   if(csmDenjiRetiredThisTurn(s,job.owner,c=>def(pack,c)))
@@ -725,11 +785,8 @@ export function activateCsm(pack,s,action){
  if(id==='CSM-1-007'){lock(s,owner,'denjiActive');A.active(s,owner,c);go(pack,s);return;}
  if(id==='CSM-1-014'){
   restOwn(s,owner,c);
-  const paused=retireUid(pack,s,owner,c.uid);
-  if(paused)return go(pack,s);
-  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
-  hold(s,{...spec,step:'buffImpact'},[
-   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+  retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiImpact'});
   return go(pack,s);
  }
  if(id==='CSM-1-017'){
@@ -782,11 +839,8 @@ export function activateCsm(pack,s,action){
  }
  if(id==='CSM-1-062'){
   restOwn(s,owner,c);
-  const paused=retireUid(pack,s,owner,c.uid);
-  if(paused)return go(pack,s);
-  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
-  hold(s,{...spec,step:'grantAttackDraw'},[
-   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+  retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'grantAttackDraw'});
   go(pack,s);return;
  }
  if(id==='CSM-1-065'){
@@ -797,13 +851,9 @@ export function activateCsm(pack,s,action){
  }
  if(id==='CSM-1-067'){
   restOwn(s,owner,c);
-  const paused=retireUid(pack,s,owner,c.uid);
-  if(paused)return go(pack,s);
-  const outs=plOf(s,owner).outside.filter(x=>named(pack,x,DENJI,s)&&
-   def(pack,x).color==='red'&&def(pack,x).energy<=1);
-  if(!outs.length)return go(pack,s);
-  hold(s,{...spec,step:'denjiEnergy',data:{pochitaUid:jobSourceOutside(s,owner,c.uid)}},[
-   {type:'csm',mode:'skip'},...outs.map(x=>({type:'csm',mode:'deploy',uid:x.uid}))]);
+  retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiEnergy',
+    pochitaUid:c.uid});
   go(pack,s);return;
  }
  if(id==='CSM-1-070'){
@@ -823,10 +873,6 @@ export function activateCsm(pack,s,action){
  }
  go(pack,s);
 }
-function jobSourceOutside(s,owner,uid){
- return plOf(s,owner).outside.find(c=>c.uid===uid)?.uid||null;
-}
-
 export function legalCsmPending(pack,s){arm(pack);return s.pending?.actions||[];}
 
 export function resolveCsmPending(pack,s,action){
@@ -853,18 +899,22 @@ export function resolveCsmPending(pack,s,action){
   }
  }else if(step==='leaveReplace'){
   // Q2093/Q2094: accept retires the chosen substitute; skip resumes the original leave.
+  const cause=q.data?.retireCause||null;
   if(a.mode==='pick'){
    use(s,q.sourceUid+'|leave');
-   const paused=retireUid(pack,s,owner,a.uid);
-   if(paused)return go(pack,s);
+   retireUid(pack,s,owner,a.uid,cause);
+   return go(pack,s);
   }else if(a.mode==='skip'&&q.data?.line!=null&&q.data?.slot!=null&&A.retireSkip){
-   A.retireSkip(pack,s,owner,q.data.line,q.data.slot);
+   A.retireSkip(pack,s,owner,q.data.line,q.data.slot,cause?{
+    by:cause.by||undefined,controller:cause.controller,sourceUid:cause.sourceUid
+   }:{});
+   if(q.csmFollow){if(s.pending)s.pending.csmFollow=q.csmFollow;else s.effectQueue.push(q.csmFollow);}
   }
  }else if(step==='retireThenDebuff5k'){
   if(a.mode==='pick'){
-   const paused=retireUid(pack,s,owner,a.uid);
-   if(paused)return go(pack,s);
-   offerFront(s,{player:owner,sourceUid:q.sourceUid,id:q.id},1-owner,null,true,'debuff5k');
+   retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'debuff5k'});
+   return go(pack,s);
   }
  }else if(step==='debuff5k'&&a.mode==='pick'){
   const paused=debuffFront(pack,s,1-owner,a.uid,-5000);
@@ -918,17 +968,12 @@ export function resolveCsmPending(pack,s,action){
   }
  }else if(step==='choose')resolveChoose(pack,s,q,a);
  else if(step==='retireThenKit'&&a.mode==='pick'){
-  const paused=retireUid(pack,s,owner,a.uid);
-  if(paused)return go(pack,s);
-  const self=selfOf(s,owner,q.sourceUid);
-  if(self){A.active(s,owner,self);buff(s,self,1000);impact(s,self);}
-  offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
+  retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+   {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'kit016'});
  }else if(step==='retireThenChoose'){
   if(a.mode==='pick'){
-   const paused=retireUid(pack,s,owner,a.uid);
-   if(paused)return go(pack,s);
-   hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'afterRetireChoose'},[
-    {type:'csm',mode:'one'},{type:'csm',mode:'two'}]);
+   retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'choose12'});
   }
  }else if(step==='afterRetireChoose'){
   if(a.mode==='one'){
@@ -937,15 +982,12 @@ export function resolveCsmPending(pack,s,action){
   }else A.draw(pack,s,owner,2,q.sourceUid);
  }else if(step==='buffOther2k'&&a.mode==='pick')buff(s,selfOf(s,owner,a.uid),2000);
  else if(step==='retireOwn'&&a.mode==='pick'){
-  const paused=retireUid(pack,s,owner,a.uid);
-  if(paused)return go(pack,s);
-  if(q.id==='CSM-1-038'){offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id,
-   data:{next:'draw2'}},false);}
+  retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+   q.id==='CSM-1-038'?{op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'ap038'}:null);
  }else if(step==='retireFoe'&&a.mode==='pick'){
-  retireUid(pack,s,1-owner,a.uid);
-  if(q.data?.thenBuff)offerChars(s,{player:owner,sourceUid:q.sourceUid,id:q.id},
-   null,true,'buffOther');
-  if(q.data?.peelAki)offerPeelAki(pack,s,q);
+  const follow=q.data?.thenBuff||q.data?.peelAki?{op:'csm',id:q.id,slot:'afterFoeRetire',
+   owner,sourceUid:q.sourceUid,thenBuff:q.data?.thenBuff===true,peelAki:q.data?.peelAki===true}:null;
+  retireThen(pack,s,1-owner,a.uid,foeCause(owner,q.sourceUid),follow);
  }else if(step==='ap'){
   if(a.mode==='ap')readyIndex(s,owner,a.index);
   if(q.data?.next==='draw2')A.draw(pack,s,owner,2,q.sourceUid);
@@ -1030,7 +1072,7 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='topPlace'){
   const uid=q.data.uid;
   if(a.mode==='bottom')lay(plOf(s,owner),[uid],'bottom');
- } else if(step==='mayRetire'&&a.mode==='retire')retireUid(pack,s,owner,q.sourceUid);
+ } else if(step==='mayRetire'&&a.mode==='retire')retireUid(pack,s,owner,q.sourceUid,ownCause(owner,q.sourceUid));
  else if(step==='buffMoveFront'&&a.mode==='pick'){
   const t=selfOf(s,owner,a.uid);
   if(t){buff(s,t,2000);offerMoveToFront(pack,s,{player:owner,sourceUid:q.sourceUid,id:q.id},t);}
@@ -1289,7 +1331,7 @@ export function csmOnTurnStart(pack,s,owner){
   if(!c||originalEffectsDisabled(s,c))continue;
   const d=def(pack,c);
   if(d.id==='CSM-1-056'&&raidLive(c,d,'phase')&&!csmFacedowns(c).length)
-   retireUid(pack,s,owner,c.uid);
+   retireUid(pack,s,owner,c.uid,ownCause(owner,c.uid));
  }
 }
 export function csmOnAttackDeclare(pack,s,attacker){
@@ -1316,7 +1358,7 @@ export function csmLeaveReplace(pack,s,owner,c){
  if(!pool.length)return false;
  const loc=locOf(s,owner,c.uid);
  hold(s,{player:owner,sourceUid:c.uid,id:d.id,step:'leaveReplace',
-  data:{line:loc?.line,slot:loc?.slot}},[
+  data:{line:loc?.line,slot:loc?.slot,retireCause:s.csmRetireCause||null}},[
   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
  // Spend |leave only when the substitute branch is accepted (resolveCsmPending).
  return true;

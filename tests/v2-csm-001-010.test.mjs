@@ -236,12 +236,16 @@ test('CSM-1-006 may look at four only when its own effect retires it',()=>{
  own=play(own,bomb.uid);
  assert.equal(own.pending?.step,'retireThenKit');
  own=choose(own,a=>a.mode==='pick'&&a.uid===denji.uid);
- if(own.pending?.step==='ap')own=choose(own,a=>a.mode==='ap');
+ const beforeKit=live(own,0,bomb.uid);
  assert.equal(own.pending?.id,'CSM-1-006');
  assert.equal(own.pending.step,'choose');
+ assert.notEqual(own.pending.step,'ap');
+ assert.equal(beforeKit.impactGranted,undefined);
+ assert.equal((beforeKit.buffs||[]).some(b=>b.bp===1000),false);
  assert.deepEqual(own.pending.actions.map(a=>a.mode).sort(),['draw','look']);
  own=choose(own,a=>a.mode==='look');
  assert.equal(own.pending.step,'lookPick');
+ assert.equal(live(own,0,bomb.uid).impactGranted,undefined);
  assert.deepEqual(own.pending.data.window.length,4);
  const selectable=own.pending.actions.filter(a=>a.mode==='take').map(a=>a.uid);
  assert.equal(selectable.length,2);
@@ -250,8 +254,17 @@ test('CSM-1-006 may look at four only when its own effect retires it',()=>{
  assert.equal(universalPrivateChoices(packs,own,1),null);
  const ai=chooseUniversalAiAction(packs,structuredClone(own));
  assert.equal(legalUniversalActions(packs,own).some(a=>JSON.stringify(a)===JSON.stringify(ai)),true);
- own=use(own,ai);
- assert.equal(own.pending?.step==='lookPick',false);
+ own=choose(own,a=>a.mode==='take'&&a.uid===selectable[0]);
+ let guard=0;
+ while(own.pending?.step==='lookOrder'){
+  own=choose(own,a=>a.mode==='next');
+  if(++guard>6)throw Error('Look order did not finish');
+ }
+ const afterKit=live(own,0,bomb.uid);
+ assert.equal(afterKit.ready,true);
+ assert.equal(afterKit.impactGranted?.amount,1);
+ assert.equal((afterKit.buffs||[]).some(b=>b.bp===1000),true);
+ if(own.pending)assert.equal(own.pending.step,'ap');
  assertUniversalMatch(packs,own);
 });
 
@@ -549,4 +562,117 @@ test('Q1898 does not retire BP 0 until CSM-1-008 finishes, and a restored charac
  assert.equal(gone.players[1].outside.some(c=>c.uid===lost.victim.uid),true);
  assert.equal(gone.players[1].front.some(c=>c?.uid===lost.victim.uid),false);
  assertUniversalMatch(packs,gone);
+});
+
+function playEvent(s,uid){
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===uid);
+ if(!action)throw Error('No event for '+uid);
+ return use(s,action);
+}
+
+test('opponent CSM-1-040 and CSM-1-077 retire 006 with a draw only',()=>{
+ const counts=countsFor(['CSM-1-006','CSM-1-040','CSM-1-022','CSM-1-011','CSM-1-001','CSM-1-008','CSM-1-003']);
+ let s=toPhase(fresh(counts,1040),'main');
+ readyAp(s);fuel(s);
+ put(s,0,'CSM-1-022','front',0);
+ const foe=put(s,1,'CSM-1-006','front',0);
+ const before=s.players[1].hand.length;
+ const event=toHand(s,0,'CSM-1-040');
+ s=playEvent(s,event.uid);
+ assert.equal(s.pending?.step,'retireFoe');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===foe.uid);
+ assert.notEqual(s.pending?.id,'CSM-1-006');
+ assert.equal(s.pending?.actions?.some(a=>a.mode==='look')??false,false);
+ assert.equal(s.players[1].hand.length,before+1);
+ assert.equal(s.players[1].front.some(c=>c?.uid===foe.uid),false);
+ assertUniversalMatch(packs,s);
+
+ const akiCounts=countsFor(['CSM-1-006','CSM-1-077','CSM-1-011','CSM-1-043','CSM-1-049','CSM-1-052','CSM-1-062']);
+ let aki=toPhase(fresh(akiCounts,1077),'main');
+ readyAp(aki);
+ put(aki,0,'CSM-1-043','energy',0);
+ put(aki,0,'CSM-1-049','energy',1);
+ put(aki,0,'CSM-1-052','energy',2);
+ put(aki,0,'CSM-1-062','energy',3);
+ const host=put(aki,0,'CSM-1-011','front',0);
+ const under=take(aki,0,'CSM-1-043');
+ under.faceDown=true;under.ready=false;under.fieldEntryStamp=null;
+ host.under=[under];
+ const victim=put(aki,1,'CSM-1-006','front',0);
+ const hand=aki.players[1].hand.length;
+ const second=toHand(aki,0,'CSM-1-077');
+ aki=playEvent(aki,second.uid);
+ assert.equal(aki.pending?.step,'retireFoe');
+ aki=choose(aki,a=>a.mode==='pick'&&a.uid===victim.uid);
+ assert.equal(aki.players[1].hand.length,hand+1);
+ assert.equal(aki.pending?.id,'CSM-1-077');
+ assert.equal(aki.pending?.step,'peelAki');
+ assert.equal(aki.pending?.actions?.some(a=>a.mode==='look'),false);
+ assertUniversalMatch(packs,aki);
+});
+
+test('leave replacement keeps the retire cause through the resumed leave',()=>{
+ const counts=countsFor(['CSM-1-006','CSM-1-061','CSM-1-030','CSM-1-040','CSM-1-022','CSM-1-008','CSM-1-001']);
+ let own=toPhase(fresh(counts,1061),'main');
+ readyAp(own);fuel(own);
+ const power=put(own,0,'CSM-1-061','front',0);
+ const buried=own.players[0].deck.pop();
+ buried.faceDown=false;power.stack=[buried];
+ const denji=put(own,0,'CSM-1-006','front',1);
+ denji.buffs=[{bp:2500,untilTurn:own.turn}];
+ const reze=toHand(own,0,'CSM-1-030');
+ own=play(own,reze.uid);
+ assert.equal(own.pending?.step,'retireThenChoose');
+ own=choose(own,a=>a.mode==='pick'&&a.uid===power.uid);
+ assert.equal(own.pending?.step,'leaveReplace');
+ assert.equal(own.pending.data.retireCause.by,'own');
+ assert.equal(own.pending.data.retireCause.controller,0);
+ assert.equal(own.pending.data.retireCause.sourceUid,reze.uid);
+ own=choose(own,a=>a.mode==='pick'&&a.uid===denji.uid);
+ assert.equal(own.pending?.id,'CSM-1-006');
+ assert.deepEqual(own.pending.actions.map(a=>a.mode).sort(),['draw','look']);
+ assert.notEqual(own.pending.step,'afterRetireChoose');
+ own=choose(own,a=>a.mode==='draw');
+ assert.notEqual(own.pending?.step,'afterRetireChoose');
+ assert.equal(own.players[0].front.some(c=>c?.uid===power.uid),true);
+ assert.equal(own.players[0].outside.some(c=>c.uid===denji.uid),true);
+ assertUniversalMatch(packs,own);
+ let skipped=toPhase(fresh(counts,1062),'main');
+ readyAp(skipped);fuel(skipped);
+ const original=put(skipped,0,'CSM-1-061','front',0);
+ const under=skipped.players[0].deck.pop();
+ under.faceDown=false;original.stack=[under];
+ const spare=put(skipped,0,'CSM-1-006','front',1);
+ spare.buffs=[{bp:2500,untilTurn:skipped.turn}];
+ const cause=toHand(skipped,0,'CSM-1-030');
+ skipped=play(skipped,cause.uid);
+ skipped=choose(skipped,a=>a.mode==='pick'&&a.uid===original.uid);
+ assert.equal(skipped.pending.data.retireCause.by,'own');
+ skipped=choose(skipped,a=>a.mode==='skip');
+ assert.equal(skipped.players[0].front.some(c=>c?.uid===original.uid),false);
+ assert.equal(skipped.pending?.step,'afterRetireChoose');
+ assertUniversalMatch(packs,skipped);
+
+ let foe=toPhase(fresh(counts,1640),'main');
+ readyAp(foe);fuel(foe);
+ put(foe,0,'CSM-1-022','front',0);
+ const bomb=put(foe,1,'CSM-1-061','front',0);
+ const base=foe.players[1].deck.pop();
+ base.faceDown=false;bomb.stack=[base];
+ const target=put(foe,1,'CSM-1-006','front',1);
+ target.buffs=[{bp:2500,untilTurn:foe.turn}];
+ const hand=foe.players[1].hand.length;
+ const event=toHand(foe,0,'CSM-1-040');
+ foe=playEvent(foe,event.uid);
+ foe=choose(foe,a=>a.mode==='pick'&&a.uid===bomb.uid);
+ assert.equal(foe.pending?.step,'leaveReplace');
+ assert.equal(foe.pending.data.retireCause.by,'opponent');
+ assert.equal(foe.pending.data.retireCause.controller,0);
+ assert.equal(foe.pending.data.retireCause.sourceUid,event.uid);
+ foe=choose(foe,a=>a.mode==='pick'&&a.uid===target.uid);
+ assert.notEqual(foe.pending?.id,'CSM-1-006');
+ assert.equal(foe.pending?.actions?.some(a=>a.mode==='look')??false,false);
+ assert.equal(foe.players[1].hand.length,hand+1);
+ assert.equal(foe.players[1].front.some(c=>c?.uid===bomb.uid),true);
+ assertUniversalMatch(packs,foe);
 });

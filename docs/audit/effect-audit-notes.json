@@ -1,13 +1,13 @@
 {
   "updated": "2026-11-05",
-  "next": "CSM-1-011。CSM-1-001 至 CSM-1-010 的每一段都已核對。KMR-2-054 的被阻擋效果已核對，生命觸發仍未檢查。",
+  "next": "CSM-1-021。CSM-1-011 至 CSM-1-020 已逐段核對。KMR-2-033、039、048、079 的被阻擋效果已實測，其餘句子維持未完成。",
   "sharedFixes": [
     {
       "name": "BP 0 以下依規則退場",
       "rule": "Q94（https://www.unionarena-tcg.com/jp/faq/list.php?number=94）：卡牌效果使場上角色 BP 變成 0 以下時退場。Q187：阻擋時效果先處理完，BP 0 的角色才退場，之後不進行戰鬥。Q1139（2024-10-18）：這次退場不是「キャラの効果による退場」，所以 KMR-1-025 的代替退場與 KMR-1-051 的對手效果支付都不能用。Q1898／Q1899（2026-01-09，https://www.unionarena-tcg.com/jp/faq/list.php?freeword=BP%E3%81%8C0）：效果處理途中 BP 一度變成 0，只要該效果結束時 BP 已不是 0，就不退場。",
       "where": "dist/universal-v2/engine.mjs openBpZeroRetirements、continueEffectQueue、retireBatchOne、effect-target。dist/universal-v2/csm-runtime.mjs debuffFront 只記 BP，不在句子中途退場。",
-      "affects": "前線與能源線的角色。效果還有待處理選擇時不退；選擇結束且 BP 仍為 0 以下才由規則退場。同時到 0 的角色各退一次。IYS-1-028 的離場代替仍會問。場地卡不退。kmrAnchored 仍留在場上。鍊鋸人 debuffFront 的呼叫者（CSM-1-008 蕾潔後續、CSM-1-017 的 BP-5000／BP-1000）都改為等效果結束。一個效果若拆成多個佇列工作、後段又把 BP 加回來，目前仍會在下一個工作前檢查；這批沒有這種卡，不另改檢查點。",
-      "evidence": "tests/v2-bp-zero-retire.test.mjs；tests/v2-csm-001-010.test.mjs 的 Q1898；tests/v2-csm-faq.test.mjs 的 CSM-1-017 BP 0"
+      "affects": "前線與能源線的角色。同一印刷效果的後續工作與待處理選擇共用 effectScope，中途不檢查。下一個不同效果開始前，以及佇列清空時，才檢查。選擇結束且 BP 仍為 0 以下才由規則退場。同時到 0 的角色各退一次。IYS-1-028 的離場代替仍會問。場地卡不退。kmrAnchored 仍留在場上。鍊鋸人 debuffFront 的呼叫者都等效果結束。",
+      "evidence": "tests/v2-bp-zero-retire.test.mjs 用 buffSelf 先減 10000、中間經過 CSM-1-016 的選擇、再加回 10000。不同 effectScope 會在下一個效果前退場。tests/v2-csm-001-010.test.mjs 的 Q1898；tests/v2-csm-faq.test.mjs 的 CSM-1-017 BP 0"
     },
     {
       "name": "看牌頂的單一選擇顯示卡圖與效果",
@@ -27,15 +27,15 @@
       "name": "被阻擋時是攻擊角色的效果",
       "rule": "KMR-2-054 印刷文本「このキャラがブロックされた時」指自己的攻擊被阻擋。記憶體切換登場時可以改成抽最多 1 張，包含 0 張。卡頁沒有另立 FAQ。",
       "where": "dist/universal-v2/engine.mjs 阻擋成立時把 kmr2 blocked 排給攻擊者，並在選擇後用 kmr2ResumeBattle 結算戰鬥。dist/universal-v2/kmr2-runtime.mjs blocked054、mayDraw。",
-      "affects": "共用 blocked 欄位的 KMR-2-033、KMR-2-039、KMR-2-048、KMR-2-054、KMR-2-079。本輪只把 KMR-2-054 的看牌與抽 0／1 張走完；其餘四張沒有逐段核對，不能標成已驗證。",
-      "evidence": "tests/v2-kmr-set2.test.mjs 的實戰阻擋、抽 0／1 張，以及房間雙方提交"
+      "affects": "KMR-2-033、039、048、054、079 的被阻擋效果都從攻擊開始實測：被阻擋才發動，沒被阻擋不發動，防守方不會借用攻擊方的效果，選擇後戰鬥只結算一次。039 沒有突襲狀態時不發動；三張卡名不含メテオ的天ノ川學園高校才棄牌，之後活動並獲得傷害 2。048 要先由登場時的記憶體切換支付取得該能力。079 需要突襲狀態，以及其他兩張イマジン或卡名含電王的角色。033、039、048、079 的其他句子沒有全部走完，維持部分核對或未檢查。",
+      "evidence": "tests/v2-kmr-set2.test.mjs"
     },
     {
       "name": "鍊鋸人退場原因與登場看牌順序",
       "rule": "CSM-1-006 只有「自分の效果で退場」才可改看 4 張。Q1139：BP 0 規則退場不是角色效果。CSM-1-008 的印刷順序是看 3 張、排列其餘、再把手牌放場外，然後才處理真紀真或蕾潔。Q2074：加入的角色不限真紀真或蕾潔。",
-      "where": "dist/universal-v2/engine.mjs queueRetirement 把退場原因寫進 csm 工作。dist/universal-v2/csm-runtime.mjs runRetire、finishLookTake、continue008、offer008Follow。",
-      "affects": "退場原因會寫進每一個鍊鋸人退場工作；目前只有 CSM-1-006 讀這個原因。008 的順序只影響這張卡。AI 會提交 csm 待處理選擇，影響所有鍊鋸人選擇。",
-      "evidence": "tests/v2-csm-001-010.test.mjs"
+      "where": "dist/universal-v2/engine.mjs normalizeRetireCause、retire、queueRetirement。暫停的 leave-replacement、effect-substitute-retire、raid-leave、field-leave-remove 與 csm 離場代替都帶著 retireCause。dist/universal-v2/csm-runtime.mjs retireUid、retireThen、runRetire。原因未填不再當成自己的效果。",
+      "affects": "鍊鋸人退場都會帶 by、controller、sourceUid。CSM-1-006 只有 by 為 own、控制者是自己、而且有來源 UID 才能改看 4 張。040、077 讓對手的 006 退場只抽 1 張。016 讓自己的 006 退場仍可看 4 張，而且看完才做後續的活動、BP 與衝擊。離場代替暫停後，接受代替或放棄都留著原因。",
+      "evidence": "tests/v2-csm-001-010.test.mjs；tests/v2-csm-faq.test.mjs 的 017 先處理 006 再減 BP"
     }
   ],
   "reviews": [
@@ -273,9 +273,9 @@
           "match": "退場時",
           "status": "已驗證",
           "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-006 ；Q1139 https://www.unionarena-tcg.com/jp/faq/list.php?freeword=BP%E3%81%8C0",
-          "implementation": "dist/universal-v2/csm-runtime.mjs runRetire；dist/universal-v2/engine.mjs queueRetirement 的 by",
-          "discrepancy": "戰鬥退場與 BP 0 規則退場原本也會打開看 4 張。改為只有沒有記錄原因的自己效果退場才可改看，其餘只抽 1 張。看牌時不能選的卡仍留在視窗。",
-          "evidence": "tests/v2-csm-001-010.test.mjs",
+          "implementation": "dist/universal-v2/csm-runtime.mjs runRetire、retireUid；dist/universal-v2/engine.mjs normalizeRetireCause、queueRetirement",
+          "discrepancy": "對手效果退場原本因為沒有傳原因，被 job.by==null 當成自己的效果。改為原因、控制者與來源都要保留；沒填原因只抽 1 張。",
+          "evidence": "tests/v2-csm-001-010.test.mjs 的 040、077、016、戰鬥、BP 0，以及 061 離場代替暫停",
           "unresolved": ""
         }
       ]
@@ -372,6 +372,291 @@
           "implementation": "dist/universal-v2/engine.mjs 生命觸發 chooseTrigger mode draw",
           "discrepancy": "異圖 UA53BT/CSM-1-010_p1 同一身份。",
           "evidence": "tests/v2-csm-001-010.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-011",
+      "number": "UA53BT/CSM-1-011",
+      "clauses": [
+        {
+          "match": "登場時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-011 。2026-05-15 的 UA53BT FAQ 清單沒有這張卡的個別問答。",
+          "implementation": "dist/universal-v2/csm-pack.mjs buffOther；dist/universal-v2/engine.mjs buffOwnField、effect-buff-own。與 CSM-1-020 同一句。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-012",
+      "number": "UA53BT/CSM-1-012",
+      "clauses": [
+        {
+          "match": "バトルに勝利",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-012 ；Q2076（2026-05-15）https://www.unionarena-tcg.com/jp/faq/list.php?series=UA53BT",
+          "implementation": "dist/universal-v2/csm-runtime.mjs csmOnAttackWin、slot win、offerHand",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-013",
+      "number": "UA53BT/CSM-1-013",
+      "clauses": [
+        {
+          "match": "アタック時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-013 。系列 FAQ 清單沒有個別問答。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs runAttack",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-013",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-014",
+      "number": "UA53BT/CSM-1-014",
+      "clauses": [
+        {
+          "match": "起動メイン",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-014 。系列 FAQ 清單沒有個別問答。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs activateCsm、retireThen、denjiImpact",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-014",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 chooseTrigger mode active",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-015",
+      "number": "UA53BT/CSM-1-015",
+      "clauses": [
+        {
+          "match": "自分のターン中",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-015 。系列 FAQ 清單沒有個別問答。",
+          "implementation": "dist/universal-v2/csm-continuous.mjs csmBp、csmEventUseCount",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-016",
+      "number": "UA53BT/CSM-1-016",
+      "clauses": [
+        {
+          "match": "としても扱う",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-016 ；Q2077（2026-05-15）https://www.unionarena-tcg.com/jp/faq/list.php?series=UA53BT",
+          "implementation": "dist/universal-v2/csm-pack.mjs nameAliases；dist/universal-v2/csm-continuous.mjs csmOnlyRezeHighBp",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-faq.test.mjs；tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "ダメージ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-016",
+          "implementation": "dist/universal-v2/csm-continuous.mjs csmAttackDamage；dist/universal-v2/engine.mjs universalAttackDamage",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "登場時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-016",
+          "implementation": "dist/universal-v2/csm-runtime.mjs retireThenKit、kit016。006 的退場選擇先於後續活動、BP 與衝擊。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-001-010.test.mjs；tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-016",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 chooseTrigger mode get",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-017",
+      "number": "UA53BT/CSM-1-017",
+      "clauses": [
+        {
+          "match": "としても扱う",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-017 ；Q2078（2026-05-15）https://www.unionarena-tcg.com/jp/faq/list.php?series=UA53BT",
+          "implementation": "dist/universal-v2/csm-pack.mjs nameAliases；dist/universal-v2/csm-continuous.mjs csmOnlyRezeHighBp",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-faq.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "〈レゼ〉アクティブにし",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-017 ；Q94、Q2078",
+          "implementation": "dist/universal-v2/csm-runtime.mjs runPlay 的 choose、debuff、retireThenDebuff5k。生命突襲走 engine 的 chooseTrigger mode raid。",
+          "discrepancy": "退掉 CSM-1-006 時，先處理 006 的退場時，再處理 BP-5000。",
+          "evidence": "tests/v2-csm-faq.test.mjs；tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "起動メイン",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-017",
+          "implementation": "dist/universal-v2/csm-runtime.mjs activateCsm；dist/universal-v2/raid-box.mjs 只在突襲狀態可啟動",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-set1.test.mjs；tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "必要エナジーを満たしている",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-017",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 chooseTrigger mode raid 或 get",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-018",
+      "number": "UA53BT/CSM-1-018",
+      "clauses": [
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-018 。效果欄是「-」。系列 FAQ 清單沒有個別問答。",
+          "implementation": "dist/universal-v2/csm-pack.mjs plain。生命觸發 chooseTrigger mode draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-019",
+      "number": "UA53BT/CSM-1-019",
+      "clauses": [
+        {
+          "match": "起動メイン",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-019 。系列 FAQ 清單沒有個別問答。",
+          "implementation": "dist/universal-v2/engine.mjs restSelfBuffOther、effect-buff-own。沒有印刷ターン 1，所以不寫入 mainAbilityUsedUids。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-019",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-020",
+      "number": "UA53BT/CSM-1-020",
+      "clauses": [
+        {
+          "match": "登場時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-020 。系列 FAQ 清單沒有個別問答。",
+          "implementation": "dist/universal-v2/csm-pack.mjs buffOther，與 CSM-1-011 同一句。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-020",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 chooseTrigger mode active",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-011-020.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-033",
+      "number": "EX12BT/KMR-2-033",
+      "clauses": [
+        {
+          "match": "ブロックされた時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-033",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs blocked033、mayDraw、discard1",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-set2.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-039",
+      "number": "EX12BT/KMR-2-039",
+      "clauses": [
+        {
+          "match": "どちらかのみ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-039",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs blocked039、school；dist/universal-v2/raid-box.mjs 被阻擋與沒被阻擋都在突襲框",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-set2.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-079",
+      "number": "EX12BT/KMR-2-079",
+      "clauses": [
+        {
+          "match": "ブロックされた時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-079",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs blocked079；dist/universal-v2/raid-box.mjs",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-set2.test.mjs",
           "unresolved": ""
         }
       ]

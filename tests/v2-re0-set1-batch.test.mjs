@@ -6737,7 +6737,9 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  assert.equal(swap.pending.optional,true);
  assert.equal(swap.pending.by,'opponent');
  assert.equal(swap.pending.name,'レム');
- assert.equal(Object.keys(swap.pending).length,10);
+ assert.equal(swap.pending.retireCause.by,'opponent');
+ assert.equal(swap.pending.csmFollow,null);
+ assert.equal(Object.keys(swap.pending).length,12);
  assert.notEqual(swap.active,swap.pending.player);
  assert.deepEqual(swap.pending.choices.slice().sort(),[ramA.uid,ramB.uid].sort());
  assert.equal(V2_PENDING_LABELS['effect-substitute-retire'],'可改由前線的拉姆代替雷姆退場');

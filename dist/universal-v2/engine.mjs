@@ -1797,7 +1797,7 @@ function ensureMmm2(){
   card,draw:(pack,s,owner,count)=>draw(pack,s,owner,count),field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
-  retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
+  retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
   bounce:(pack,s,owner,uid,sourceUid)=>bounceToHand(pack,s,owner,uid,sourceUid),
   moveLine:effectMoveTo,
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
@@ -1816,8 +1816,8 @@ function ensureIys(){
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
-  retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
-  retireSkip:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot,{skipReplacement:true}),
+  retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
+  retireSkip:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,{skipReplacement:true,...(opts||{})}),
   afterImpact:(pack,s,owner,hits)=>queueImpactAfterRetirement(pack,s,owner,hits),
   removeSkip:(pack,s,owner,line,slot,controller)=>removeFieldObject(pack,s,owner,line,slot,{controller,skipReplacement:true}),
   bounce:(pack,s,owner,uid,sourceUid)=>bounceToHand(pack,s,owner,uid,sourceUid,{skipReplacement:true}),
@@ -1835,7 +1835,7 @@ function ensureKjn(){
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
-  retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
+  retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
@@ -1854,7 +1854,7 @@ function ensureCsm(){
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
   retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
-  retireSkip:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot,{skipReplacement:true}),
+  retireSkip:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,{skipReplacement:true,...(opts||{})}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
@@ -1894,7 +1894,7 @@ function ensureAot(){
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
-  retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
+  retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
   bounce:(pack,s,owner,uid,sourceUid)=>bounceToHand(pack,s,owner,uid,sourceUid,{skipReplacement:true}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
@@ -2100,11 +2100,22 @@ function continueEffectQueue(pack,s){
  while(!s.pending&&s.status==='playing'){
   refreshAotFrontLimits(pack,s);
   if(openAotFrontOverflow(pack,s))break;
-  if(openBpZeroRetirements(pack,s)){
-   if(++bpPasses>12)throw Error('BP zero retirement did not resolve');
-   continue;
-  }
-  bpPasses=0;
+  // Q1898/Q1899: do not leave at 0 until the current printed effect ends.
+  // A later job or an open choice of the same effectScope is still that
+  // effect. The next different effect, or an empty queue, is the checkpoint.
+  // Do not wait until every queued effect has finished.
+  const nextJob=s.effectQueue[0];
+  const nextScope=positiveScope(nextJob?.effectScope);
+  const openScope=positiveScope(s.openEffectScope);
+  if(!(openScope&&nextScope===openScope)){
+   if(openBpZeroRetirements(pack,s)){
+    if(++bpPasses>12)throw Error('BP zero retirement did not resolve');
+    continue;
+   }
+   bpPasses=0;
+   s.openEffectScope=nextScope;
+   if(!nextJob)break;
+  }else bpPasses=0;
   if(!s.effectQueue.length)break;
   refreshAbsentFieldNames(pack,s);
   const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
@@ -5864,6 +5875,7 @@ function applyEffects(pack,s,cardOnField,timing,owner,entryCause,entrySourceUid)
    cardHasTrait(entered,arm.trait))
    complete.push({op:'resolveArmedEntryMayDraw',owner,sourceUid:cardOnField.uid});
  }
+ assignEffectScope(s,complete);
  if(!(timing==='onPlay'&&deferLifeEntry(s,owner,cardOnField.uid,complete)))
   s.effectQueue.unshift(...complete);
  continueEffectQueue(pack,s);
@@ -6087,10 +6099,13 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
   ...sourceMoveBoundary(pack,s,p,effectiveBase.uid)]:[];
  const raidWithBoundary=entryJobs.length||raidJobs.length?[...raidJobs,
   ...sourceMoveBoundary(pack,s,p,cardOnTop.uid)]:raidJobs;
+ assignEffectScope(s,baseWithBoundary);
+ assignEffectScope(s,[...entryJobs,...raidWithBoundary]);
  ensureFinish();
  const witnesses=collectRaidWitnesses(pack,s,p,cardOnTop,effectiveBase);
  const witnessJobs=witnesses.map(w=>({op:'openRaidWitness',owner:p,witness:w,
   sourceUid:w.uid,raidUid:cardOnTop.uid}));
+ for(const witness of witnessJobs)assignEffectScope(s,[witness]);
  if(deferEffects)return {uid:cardOnTop.uid,jobs:[...witnessJobs,...baseWithBoundary,...entryJobs,...raidWithBoundary]};
  if(witnesses.length&&entryCause!=='lifeRaid'){
   s.pending={kind:'effect-raid-witness-order',player:p,witnesses,decided:[],
@@ -6409,17 +6424,65 @@ function liveDirectRaidBases(s,pl,owner,retiredUid){
  const outside=new Set(pl.outside.map(c=>c.uid));
  return directRaidBaseUids(s,owner,retiredUid).filter(uid=>uid===stamped&&outside.has(uid));
 }
+function positiveScope(value){
+ return Number.isInteger(value)&&value>0?value:null;
+}
+// One printed effect, including its later sentences and the triggers it
+// causes, shares this id. Q1898/Q1899 check BP only when that id ends.
+function assignEffectScope(s,jobs){
+ if(!Array.isArray(jobs)||!jobs.length)return jobs;
+ if(!jobs.some(job=>job&&!positiveScope(job.effectScope)))return jobs;
+ const scope=(s.nextEffectScope=(s.nextEffectScope||0)+1);
+ for(const job of jobs)if(job&&!positiveScope(job.effectScope))job.effectScope=scope;
+ return jobs;
+}
+function scopeOpenJob(s,job){
+ const open=positiveScope(s.openEffectScope);
+ if(open&&job&&!positiveScope(job.effectScope))job.effectScope=open;
+ return job;
+}
+// A missing cause is not evidence of the retiring card's own effect.
+function normalizeRetireCause(opts={}){
+ const raw=opts?.by;
+ const nested=raw&&typeof raw==='object'?raw:null;
+ const by=typeof (nested?nested.by:raw)==='string'?(nested?nested.by:raw):null;
+ const source=nested||opts||{};
+ return {
+  by,
+  controller:Number.isInteger(source.controller)?source.controller:null,
+  sourceUid:typeof source.sourceUid==='string'?source.sourceUid:null
+ };
+}
+function retireCall(cause,extra={}){
+ const c=cause&&typeof cause==='object'?cause:{by:null,controller:null,sourceUid:null};
+ return {
+  ...extra,
+  ...(typeof c.by==='string'?{by:c.by}:{}),
+  ...(Number.isInteger(c.controller)?{controller:c.controller}:{}),
+  ...(typeof c.sourceUid==='string'?{sourceUid:c.sourceUid}:{})
+ };
+}
+function holdCsmFollow(s,follow){
+ if(!follow)return;
+ if(s.pending)s.pending.csmFollow=follow;
+ else s.effectQueue.push(follow);
+}
 function queueRetirement(pack,s,p,c,line){
  // Capture the source before moving to outside. Only GENUINE retirement
  // queues onRetire; bounce, removed area and stripping a Raid top do not.
  // stack[0] is the レイド元 and is cleared by vacate, so stamp it now.
  const baseUid=c.stack?.[0]?.uid||null;
- const jobs=programJobs(pack,s,c,'onRetire',p).map(job=>({
+ const cause=s.csmRetireCause||{by:s.kmrRetireBy??null,controller:null,sourceUid:null};
+ const jobs=programJobs(pack,s,c,'onRetire',p).map(job=>scopeOpenJob(s,{
   ...job,retiredSource:{uid:c.uid,cardId:c.cardId,line,ready:c.ready,
    bp:bp(pack,s,c),fieldEntryStamp:c.fieldEntryStamp??null},
   ...(job.op==='replayRaidBase'?{baseUid}:{}),
-  ...(job.op==='csm'?{by:s.kmrRetireBy??null}:{}),
-  ...(job.op==='kmr'&&s.kmrRetireBy?{by:s.kmrRetireBy}:{})
+  ...(job.op==='csm'?{
+   by:cause.by??null,
+   retireController:Number.isInteger(cause.controller)?cause.controller:null,
+   retireSourceUid:typeof cause.sourceUid==='string'?cause.sourceUid:null
+  }:{}),
+  ...(job.op==='kmr'&&(s.kmrRetireBy||cause.by)?{by:s.kmrRetireBy||cause.by}:{})
  }));
  // Q2220: a this-turn earned leave trigger is not original text.
  const gained=s.continuousStates.filter(x=>x.kind==='grantedOnRetire'&&
@@ -6427,13 +6490,13 @@ function queueRetirement(pack,s,p,c,line){
   x.targetStamp===c.fieldEntryStamp);
  for(const grant of gained){
   grant.consumed=true;
-  jobs.push({op:'grantedRetireDraw',owner:p,sourceUid:c.uid,grantId:grant.id});
+  jobs.push(scopeOpenJob(s,{op:'grantedRetireDraw',owner:p,sourceUid:c.uid,grantId:grant.id}));
  }
  const reenter=c.reenterOrRaidUntil;
  if(reenter&&Number.isInteger(reenter.untilOwnTurnStart)&&
   s.players[p].ownTurns<reenter.untilOwnTurnStart)
-  jobs.push({op:'sayakaReenterChoice',owner:p,sourceUid:c.uid,
-   untilOwnTurnStart:reenter.untilOwnTurnStart});
+  jobs.push(scopeOpenJob(s,{op:'sayakaReenterChoice',owner:p,sourceUid:c.uid,
+   untilOwnTurnStart:reenter.untilOwnTurnStart}));
  if(gained.length)pruneContinuousStates(s);
  const entries=[];
  if(jobs.length)entries.push({key:c.uid+':onRetire:'+(c.fieldEntryStamp??'0'),owner:p,
@@ -6732,7 +6795,8 @@ function kmrSubstitute025(pack,s,p,c,line,slot,opts){
  if(!subs.length)return false;
  s.pending={kind:'kmr',player:p,sourceUid:subs[0].uid,id:'KMR-1-025',step:'sub25',
   actions:[{type:'kmr',mode:'skip'},...subs.map(x=>({type:'kmr',mode:'sub',uid:x.uid}))],
-  data:{owner:p,line,slot,postImpact:!!opts.postImpact,by:opts.by}};
+  data:{owner:p,line,slot,postImpact:!!opts.postImpact,by:opts.by,
+   retireCause:opts.cause||normalizeRetireCause(opts)}};
  return true;
 }
 function kmrSpend051(pack,s,p,c,line,slot,opts){
@@ -6742,74 +6806,88 @@ function kmrSpend051(pack,s,p,c,line,slot,opts){
  if(!layers.length)return false;
  s.pending={kind:'kmr',player:p,sourceUid:c.uid,id:'KMR-1-051',step:'spend51',
   actions:[{type:'kmr',mode:'skip'},...layers.map(x=>({type:'kmr',mode:'layer',uid:x.uid}))],
-  data:{owner:p,line,slot,postImpact:!!opts.postImpact,by:opts.by}};
+  data:{owner:p,line,slot,postImpact:!!opts.postImpact,by:opts.by,
+   retireCause:opts.cause||normalizeRetireCause(opts)}};
  return true;
 }
-function retire(pack,s,p,line,slot,{postImpact=false,by,skipReplacement=false}={}){
+function retire(pack,s,p,line,slot,opts={}){
+ const postImpact=opts.postImpact??false;
+ const skipReplacement=opts.skipReplacement===true;
+ const cause=normalizeRetireCause(opts);
+ const by=cause.by;
  const c=s.players[p][line][slot];
  if(!c)throw Error('Cannot retire empty field');
  if(kmrAnchored(pack,s,c,card,originalEffectsDisabled))return false;
- if(kmrSubstitute025(pack,s,p,c,line,slot,{postImpact,by,skipReplacement}))return true;
- if(kmrSpend051(pack,s,p,c,line,slot,{postImpact,by,skipReplacement}))return true;
- if(!skipReplacement&&raidBoxTextLive(pack,c,'leaveReplace')){
-  ensureCsm();
-  if(csmLeaveReplace(pack,s,p,c))return true;
- }
- retirementJobsInserted=0;
- if(!skipReplacement&&protectedLeave(pack,s,c)){
-  s.pending={kind:'leave-replacement',player:p,uid:c.uid,line,slot,
-   postImpact,destination:'outside'};
-  return true;
- }
- // Optional front substitute for a named character leaving by an opponent
- // effect on the opponent's turn. Decline falls through to the other
- // leave offers. Accepting retires the substitute, not this card.
- if(!skipReplacement&&by==='opponent'&&s.active!==p){
-  const offers=substituteOffers(pack,s,p,c);
-  if(offers.length){
-   s.pending={kind:'effect-substitute-retire',player:p,uid:c.uid,line,slot,
-    postImpact:impactFlag(postImpact),by,choices:offers.map(x=>x.uid),
-    optional:true,name:card(pack,offers[0]).substituteOppRetire.name};
+ const previousCause=s.csmRetireCause??null;
+ const previousBy=s.kmrRetireBy??null;
+ s.csmRetireCause=cause;
+ s.kmrRetireBy=by;
+ try{
+  if(kmrSubstitute025(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause}))return true;
+  if(kmrSpend051(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause}))return true;
+  if(!skipReplacement&&raidBoxTextLive(pack,c,'leaveReplace')){
+   ensureCsm();
+   if(csmLeaveReplace(pack,s,p,c))return true;
+  }
+  retirementJobsInserted=0;
+  if(!skipReplacement&&protectedLeave(pack,s,c)){
+   s.pending={kind:'leave-replacement',player:p,uid:c.uid,line,slot,
+    postImpact,destination:'outside',retireCause:cause,csmFollow:null};
    return true;
   }
- }
- // A granted 「手札に戻す」 replacement is on the leaving card. It is not
- // an opponent bounce, a battle, or a move between front and energy.
- if(!skipReplacement&&by==='opponent'&&liveBounceInstead(s,c)){
-  bounceToHand(pack,s,p,c.uid,c.uid,{reason:'opponent-effect',controller:p,
-   by:'opponent',skipReplacement:true});
+  // Optional front substitute for a named character leaving by an opponent
+  // effect on the opponent's turn. Decline falls through to the other
+  // leave offers. Accepting retires the substitute, not this card.
+  if(!skipReplacement&&by==='opponent'&&s.active!==p){
+   const offers=substituteOffers(pack,s,p,c);
+   if(offers.length){
+    s.pending={kind:'effect-substitute-retire',player:p,uid:c.uid,line,slot,
+     postImpact:impactFlag(postImpact),by,choices:offers.map(x=>x.uid),
+     optional:true,name:card(pack,offers[0]).substituteOppRetire.name,
+     retireCause:cause,csmFollow:null};
+    return true;
+   }
+  }
+  // A granted 「手札に戻す」 replacement is on the leaving card. It is not
+  // an opponent bounce, a battle, or a move between front and energy.
+  if(!skipReplacement&&by==='opponent'&&liveBounceInstead(s,c)){
+   bounceToHand(pack,s,p,c.uid,c.uid,{reason:'opponent-effect',controller:p,
+    by:'opponent',skipReplacement:true});
+   return false;
+  }
+  if(!skipReplacement&&(by==='opponent'||by==='battle')&&raidLeaveOffer(pack,s,p,c)){
+   s.pending={kind:'effect-raid-leave',player:p,uid:c.uid,line,slot,
+    mode:'retire',postImpact:impactFlag(postImpact),by,retireCause:cause,csmFollow:null};
+   return true;
+  }
+  // Leaving the field may offer removed instead of outside. Hand overflow
+  // and a return to hand are not this replacement. Decline keeps 退場.
+  if(!skipReplacement&&fieldLeaveMayRemove(pack,s,p,c)){
+   s.pending={kind:'effect-field-leave-remove',player:p,uid:c.uid,line,slot,
+    mode:'retire',postImpact:impactFlag(postImpact),by:by??null,
+    retireCause:cause,csmFollow:null};
+   return true;
+  }
+  if(!skipReplacement&&iysLeaveOffer(pack,s,p,c,line,slot,'retire',{postImpact,by,cause}))
+   return true;
+  const plainCapture=card(pack,c).type==='character'&&!(c.stack||[]).length&&!(c.under||[]).length;
+  const retiring=card(pack,c),handGrant=c.retireToHandTurn===s.turn,retiredUid=c.uid;
+  queueRetirement(pack,s,p,c,line);
+  vacate(pack,s,p,line,slot,'outside');
+  recordCompletedMove(pack,s,{physical:c,owner:p,from:line,to:'outside',reason:'retirement'});
+  recordTrueRetirement(pack,s,p,c,line);
+  if(plainCapture){
+   const choices=field(s.players[p]).filter(w=>card(pack,w).retireCapture&&
+    !originalEffectsDisabled(s,w)&&!s.onceEffectUses[p].includes(w.uid+'|retireCapture')).map(w=>w.uid);
+   if(choices.length)s.effectQueue.unshift(scopeOpenJob(s,{op:'mayCaptureRetired',owner:p,
+    retiredUid:c.uid,choices}));
+  }
+  noteRetiredToHand(pack,s,p,retiring,retiredUid,handGrant);
   return false;
+ }finally{
+  s.csmRetireCause=previousCause;
+  s.kmrRetireBy=previousBy;
  }
- if(!skipReplacement&&(by==='opponent'||by==='battle')&&raidLeaveOffer(pack,s,p,c)){
-  s.pending={kind:'effect-raid-leave',player:p,uid:c.uid,line,slot,
-   mode:'retire',postImpact:impactFlag(postImpact),by};
-  return true;
- }
- // Leaving the field may offer removed instead of outside. Hand overflow
- // and a return to hand are not this replacement. Decline keeps 退場.
- if(!skipReplacement&&fieldLeaveMayRemove(pack,s,p,c)){
-  s.pending={kind:'effect-field-leave-remove',player:p,uid:c.uid,line,slot,
-   mode:'retire',postImpact:impactFlag(postImpact),by:by??null};
-  return true;
- }
- if(!skipReplacement&&iysLeaveOffer(pack,s,p,c,line,slot,'retire',{postImpact,by}))
-  return true;
- const plainCapture=card(pack,c).type==='character'&&!(c.stack||[]).length&&!(c.under||[]).length;
- const retiring=card(pack,c),handGrant=c.retireToHandTurn===s.turn,retiredUid=c.uid;
- s.kmrRetireBy=by||null;
- queueRetirement(pack,s,p,c,line);
- vacate(pack,s,p,line,slot,'outside');
- recordCompletedMove(pack,s,{physical:c,owner:p,from:line,to:'outside',reason:'retirement'});
- recordTrueRetirement(pack,s,p,c,line);
- if(plainCapture){
-  const choices=field(s.players[p]).filter(w=>card(pack,w).retireCapture&&
-   !originalEffectsDisabled(s,w)&&!s.onceEffectUses[p].includes(w.uid+'|retireCapture')).map(w=>w.uid);
-  if(choices.length)s.effectQueue.unshift({op:'mayCaptureRetired',owner:p,
-   retiredUid:c.uid,choices});
- }
- noteRetiredToHand(pack,s,p,retiring,retiredUid,handGrant);
- s.kmrRetireBy=null;
- return false;
 }
 function iysLeaveOffer(pack,s,p,c,line,slot,mode,extra){
  if(card(pack,c).id!=='IYS-1-028'||originalEffectsDisabled(s,c))return false;
@@ -6817,7 +6895,8 @@ function iysLeaveOffer(pack,s,p,c,line,slot,mode,extra){
  if(facedown<2)return false;
  s.pending={kind:'iys',player:p,sourceUid:c.uid,id:'IYS-1-028',step:'leave',
   actions:[{type:'iys',mode:'hand'},{type:'iys',mode:'skip'}],
-  data:{line,slot,postImpact:extra.postImpact??false,by:extra.by??null,mode,facedown}};
+  data:{line,slot,postImpact:extra.postImpact??false,by:extra.by??null,mode,facedown,
+   retireCause:extra.cause||normalizeRetireCause(extra)}};
  return true;
 }
 function removeFieldObject(pack,s,p,line,slot,{controller,skipReplacement=false}={}){
@@ -8159,7 +8238,16 @@ function resolveChoice(s,a,pack){
    }
   }else if(a.mode==='leave'){
     const retiring=card(pack,loc.c),handGrant=loc.c.retireToHandTurn===s.turn,retiredUid=loc.c.uid;
-    if(q.destination==='outside')queueRetirement(pack,s,q.player,loc.c,q.line);
+    const cause=q.retireCause||{by:null,controller:null,sourceUid:null};
+    const previousCause=s.csmRetireCause??null,previousBy=s.kmrRetireBy??null;
+    s.csmRetireCause=cause;
+    s.kmrRetireBy=cause.by||null;
+    try{
+     if(q.destination==='outside')queueRetirement(pack,s,q.player,loc.c,q.line);
+    }finally{
+     s.csmRetireCause=previousCause;
+     s.kmrRetireBy=previousBy;
+    }
     const leftTo=vacate(pack,s,q.player,q.line,q.slot,q.destination);
     recordCompletedMove(pack,s,{physical:loc.c,owner:q.player,
      from:q.line,to:leftTo,reason:q.destination==='outside'?'retirement':'rule'});
@@ -8170,6 +8258,7 @@ function resolveChoice(s,a,pack){
    }
   else throw Error('Invalid leave replacement option');
   s.pending=null;
+  if(a.mode==='leave')holdCsmFollow(s,q.csmFollow);
   if(q.retirementAfter)
    s.effectQueue.push(...(a.mode==='leave'?q.retirementAfter:[]),...q.retirementTail);
   if(q.originalAction&&a.mode==='leave'){
@@ -11628,7 +11717,10 @@ function resolveChoice(s,a,pack){
    throw Error('Raid leave replacement is no longer available');
   if(a.mode==='decline'){
    s.pending=null;
-   if(q.mode==='retire')retire(pack,s,q.player,q.line,q.slot,{postImpact:q.postImpact,by:q.by,skipReplacement:true});
+   if(q.mode==='retire'){
+    retire(pack,s,q.player,q.line,q.slot,retireCall(q.retireCause,{postImpact:q.postImpact,by:q.by,skipReplacement:true}));
+    holdCsmFollow(s,q.csmFollow);
+   }
    else bounceToHand(pack,s,q.player,q.uid,q.sourceUid,{reason:q.reason,controller:q.controller,by:q.by,skipReplacement:true});
   }else if(a.mode==='pay'){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
@@ -11982,11 +12074,13 @@ function resolveChoice(s,a,pack){
    }
    if(raidLeaveOffer(pack,s,q.player,loc.c)){
     s.pending={kind:'effect-raid-leave',player:q.player,uid:loc.c.uid,line:loc.line,
-     slot:loc.slot,mode:'retire',postImpact:q.postImpact,by:q.by};
+     slot:loc.slot,mode:'retire',postImpact:q.postImpact,by:q.by,
+     retireCause:q.retireCause||null,csmFollow:q.csmFollow||null};
     return;
    }
-   retire(pack,s,q.player,loc.line,loc.slot,{postImpact:q.postImpact,by:q.by,
-    skipReplacement:true});
+   retire(pack,s,q.player,loc.line,loc.slot,retireCall(q.retireCause,{postImpact:q.postImpact,by:q.by,
+    skipReplacement:true}));
+   holdCsmFollow(s,q.csmFollow);
    if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player,q.postImpact);
    continueEffectQueue(pack,s);return;
   }
@@ -11995,7 +12089,7 @@ function resolveChoice(s,a,pack){
    card(pack,ram.c).substituteOppRetire?.name!==q.name)
    throw Error('Illegal substitute character');
   s.pending=null;
-  retire(pack,s,q.player,ram.line,ram.slot,{skipReplacement:true});
+  retire(pack,s,q.player,ram.line,ram.slot,retireCall(q.retireCause,{skipReplacement:true}));
   if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player,q.postImpact);
   continueEffectQueue(pack,s);return;
  }
@@ -12176,7 +12270,8 @@ function resolveChoice(s,a,pack){
     const loc=location(s,q.player,q.uid);
     if(!loc||loc.line!==q.line||loc.slot!==q.slot)throw Error('Leaving card moved');
     s.pending=null;
-    retire(pack,s,q.player,q.line,q.slot,{postImpact:q.postImpact,by:q.by,skipReplacement:true});
+    retire(pack,s,q.player,q.line,q.slot,retireCall(q.retireCause,{postImpact:q.postImpact,by:q.by,skipReplacement:true}));
+    holdCsmFollow(s,q.csmFollow);
    }
   }else throw Error('Invalid field-leave remove choice');
   s.pending=null;
@@ -22463,8 +22558,9 @@ export function assertUniversalMatch(pack,s){
    !same(q.choices,offers.map(c=>c.uid))||
    card(pack,offers[0]).substituteOppRetire.name!==q.name||
    !(q.postImpact===false||q.postImpact===true||Number.isInteger(q.postImpact)&&q.postImpact>=2)||
-   Object.keys(q).length!==10||
-   Object.keys(q).some(k=>!['kind','player','uid','line','slot','postImpact','by','choices','optional','name'].includes(k)))
+   Object.keys(q).length!==12||
+   Object.keys(q).some(k=>!['kind','player','uid','line','slot','postImpact','by','choices','optional','name','retireCause','csmFollow'].includes(k))||
+   !q.retireCause||q.retireCause.by!=='opponent')
    throw Error('Invalid substitute retirement pending');
  }
  if(s.pending?.kind==='effect-outside-printed-active'){
@@ -23140,7 +23236,7 @@ export function assertUniversalMatch(pack,s){
  // BLC-1-053's draw/discard when the player resolves entry before the
  // BLC-4-083 on-raided mode. The suspended job must still be that
  // physical card's own printed program, not an invented branch.
- const chooseRuntime=new Set(['owner','sourceUid','sourceName','raidUid','entryCause']);
+ const chooseRuntime=new Set(['owner','sourceUid','sourceName','raidUid','entryCause','effectScope']);
  const chooseJobs=[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].filter(e=>e.op==='chooseOne');
  for(const job of chooseJobs){
   const pl=s.players[job.owner];
@@ -23171,7 +23267,8 @@ export function assertUniversalMatch(pack,s){
    .filter(([key])=>!chooseRuntime.has(key))));
   if(!printed||job.sourceName!==printed.name||!programs.some(effect=>JSON.stringify(effect)===body)||
    (job.raidUid!==undefined&&(typeof job.raidUid!=='string'||!job.raidUid.startsWith(job.owner+'-')))||
-   (job.entryCause!==undefined&&typeof job.entryCause!=='string'))
+   (job.entryCause!==undefined&&typeof job.entryCause!=='string')||
+   (job.effectScope!==undefined&&!(Number.isInteger(job.effectScope)&&job.effectScope>0)))
    throw Error('Unproven queued choose-one');
  }
  const energyMoves=s.effectQueue.filter(e=>e.op==='openEnergyMoveGrants');
@@ -23472,7 +23569,8 @@ export function assertUniversalMatch(pack,s){
   !Number.isInteger(e.afterOrder)||e.afterOrder<0||
   e.afterOrder>=s.nextZoneMoveOrder||
   typeof e.sourceUid!=='string'||!e.sourceUid.startsWith(e.owner+'-')||
-  Object.keys(e).some(k=>!['op','owner','sourceUid','afterOrder'].includes(k)))))
+  (e.effectScope!==undefined&&(!Number.isInteger(e.effectScope)||e.effectScope<1))||
+  Object.keys(e).some(k=>!['op','owner','sourceUid','afterOrder','effectScope'].includes(k)))))
   throw Error('Invalid source-resolution boundary');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];

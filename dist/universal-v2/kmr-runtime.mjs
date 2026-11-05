@@ -1549,17 +1549,19 @@ function resolveStep(pack,s,q,a){
  if(q.step==='sub25'){
   s.pending=null;
   if(hit.mode==='skip'){
-   A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.by,skipReplacement:true});
+   A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
+   if(q.csmFollow){if(s.pending)s.pending.csmFollow=q.csmFollow;else s.effectQueue.push(q.csmFollow);}
    return;
   }
   const loc=A.location(s,q.player,hit.uid);
-  if(loc)A.retire(pack,s,q.player,loc.line,loc.slot,{skipReplacement:true});
+  if(loc)A.retire(pack,s,q.player,loc.line,loc.slot,{by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
   return;
  }
  if(q.step==='spend51'){
   s.pending=null;
   if(hit.mode==='skip'){
-   A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.by,skipReplacement:true});
+   A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
+   if(q.csmFollow){if(s.pending)s.pending.csmFollow=q.csmFollow;else s.effectQueue.push(q.csmFollow);}
    return;
   }
   const host=selfOf(s,q.player,q.sourceUid);
