@@ -52,9 +52,9 @@ test('both energy-side piles open a public card gallery with legally gated remov
  assert.match(popup,/showFieldSheet\(side,zone,physical,def\)/);
  assert.match(popup,/cards\.length\?gallery:/);
  assert.match(popup,/event\.key==='Escape'/);
- assert.match(popup,/legalRemovedMainAction\\(activations,physical\\.uid,yours\\)/);
- assert.match(popup,/closeZoneSheet\\(\\);applyAction\\(activate\\)/);
- assert.match(popup,/const zoneLegal=yours\\?legalUniversalActions/);
+ assert.match(popup,/legalRemovedMainAction\(activations,physical\.uid,yours\)/);
+ assert.match(popup,/closeZoneSheet\(\);applyAction\(activate\)/);
+ assert.match(popup,/const zoneLegal=yours\?legalUniversalActions/);
  assert.match(html,/universal-v2-zone\.css\?v=20261105removedmain1/);
  assert.match(css,/\.v2-zone-gallery/);
  assert.match(css,/@media\(max-width:600px\)/);
