@@ -256,7 +256,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-zone-rest-raid':'從場外或移除區休息登場或突襲',
  'effect-removed-okabe-raid':'從移除區使岡部倫太郎突襲',
  'effect-look-take':'查看牌庫，選擇加入手牌或放回牌底',
- 'effect-discard-mode':'選擇要放到場外的手牌',
+ 'effect-discard-mode':'西蒙登場：棄至少 1 張手牌，回復 1 AP；能源合計 15 以上可改為退場敵方前線',
  mmm2:'魔法少女小圓效果選擇',
  kmr2:'假面騎士第二彈效果選擇',
  'phase-order':'選擇同時發動的階段效果順序',
@@ -1173,8 +1173,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRaidWitnessMove':return action.mode==='move'?'把此卡裏向放在突襲角色下':'不移動此卡';
   case 'chooseLookTake':return action.uid===null?'不加入手牌':'加入手牌：'+name();
   case 'chooseLookOrder':return '依序放回牌庫底：'+name();
-  case 'chooseDiscardPay':return action.uid===null?(action.mode==='activeAp'?'ACTIVE 1 張 AP':
-   action.mode==='retire'?'改為退場敵方前線':'停止棄牌'):'棄掉 '+name();
+  case 'chooseDiscardPay':return action.uid===null?(action.mode==='activeAp'?'完成棄牌 → 回復 1 AP':
+   action.mode==='retire'?'改為退場敵方前線（不回復 AP）':'完成棄牌'):'棄掉 '+name();
   case 'chooseFacedownScale':return (action.retireUid?'退場 1 張敵方前線':'不退場')+
    (action.activeAp?'，並 ACTIVE 1 張 AP':'');
   case 'chooseSpendFacedown':return action.uids?.length?'送出 2 張裏向卡'+(action.targetUid?'並退場敵方前線':'') :'不送出裏向卡';

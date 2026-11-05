@@ -162,6 +162,8 @@ export function finishJob(pack,s,job){
   if(!uids.length){
    if(pl.hand.length)s.pending={kind:'effect-discard-mode',player:owner,sourceUid:job.sourceUid,
     discarded:[],sum:0,min:job.discardMin,retireEnergySum:job.retireEnergySum};
+   // Official TTG-1-012 Q2266: empty hand still readies one AP.
+   else readyOneAp(pl);
    return true;
   }
   s.pending={kind:'effect-look-take',player:owner,sourceUid:job.sourceUid,
@@ -266,7 +268,10 @@ function finishLook(pack,s,q){
    reason:'own-effect',sourceUid:q.sourceUid});
  }
  p.deck.push(...q.order.map(uid=>by.get(uid)));
- if(!p.hand.length){s.pending=null;api.continueEffectQueue(pack,s);return;}
+ if(!p.hand.length){
+  // Printed AP recovery resolves even when no hand card is available to discard.
+  readyOneAp(p);s.pending=null;api.continueEffectQueue(pack,s);return;
+ }
  s.pending={kind:'effect-discard-mode',player:q.player,sourceUid:q.sourceUid,
   discarded:[],sum:0,min:q.discardMin,retireEnergySum:q.retireEnergySum};
 }
@@ -300,8 +305,8 @@ export function legalFinishPending(pack,s){
  }
  if(q.kind==='effect-discard-mode'){
   const out=p.hand.map(c=>({type:'chooseDiscardPay',uid:c.uid}));
-  if(q.discarded.length>=q.min){
-   out.push({type:'chooseDiscardPay',uid:null,mode:'skip'});
+  // At least one discard when possible; the AP branch is mandatory, not skippable.
+  if(q.discarded.length>=q.min||p.hand.length===0){
    out.push({type:'chooseDiscardPay',uid:null,mode:'activeAp'});
    if(q.sum>=q.retireEnergySum)out.push({type:'chooseDiscardPay',uid:null,mode:'retire'});
   }
