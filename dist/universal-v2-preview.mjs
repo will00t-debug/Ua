@@ -39,7 +39,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261104kmrpr1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261105lifetable1';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
