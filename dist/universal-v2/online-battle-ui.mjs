@@ -3,6 +3,7 @@
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
 import {makeAttackLifePicker} from './attack-life-picker.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
+export {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
 import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,
  facedownGallery,mountFacedownOverlay,closeFacedownOverlays,findKnownLayer} from './facedown-inspect.mjs';
 export {DESKTOP_BATTLE_QUERY} from './desktop-battle-ui.mjs';
