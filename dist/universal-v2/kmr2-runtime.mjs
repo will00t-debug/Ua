@@ -4,7 +4,7 @@
 // Registration is not an official FAQ certification.
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
 import {originalEffectsDisabled,grantContinuousState} from './continuous-states.mjs';
-import {kmr2ChoiceImmune,kmr2CopiedIds} from './kmr2-continuous.mjs';
+import {kmr2ChoiceImmune,kmr2CopiedIds,kmr2Protected} from './kmr2-continuous.mjs';
 import {raidBoxListed} from './raid-box.mjs';
 
 const SCHOOL='天ノ川学園高校';
@@ -164,9 +164,10 @@ function offerList(s,spec,step,cards,optional,next,mode){
   ...cards.map(c=>({type:'kmr2',mode,uid:c.uid}))
  ]);
 }
-function oppFront(s,owner,pred){
+function oppFront(s,owner,pred,sourceType='character'){
  return plOf(s,1-owner).front.filter(c=>c&&
-  !kmr2ChoiceImmune(A.pack,s,c,(p,x)=>def(p,x),!live(s,c))&&(!pred||pred(c)));
+  !kmr2ChoiceImmune(A.pack,s,c,(p,x)=>def(p,x),!live(s,c))&&
+  !kmr2Protected(A.pack,s,c,(p,x)=>def(p,x),sourceType)&&(!pred||pred(c)));
 }
 function offerReadyAp(s,spec){
  const rested=plOf(s,spec.player).apCards.filter(c=>c.inPlay&&!c.ready);
@@ -222,6 +223,7 @@ function askEnter(s,spec,uid,ready,from,skip,next,lines){
    actions.push({type:'kmr2',mode:'enter',uid,line,slot:choice.slot,
     replaceUid:choice.replaceUid??null,ready,from,skip:skip===true});
  if(!actions.length)return false;
+ if(skip===true)actions.unshift({type:'kmr2',mode:'skip'});
  const carried=spec.data&&typeof spec.data==='object'?{...spec.data}:{};
  return hold(s,{...spec,step:'enter',data:{...carried,uid,ready,from,skip:skip===true,next:next||null}},actions);
 }
@@ -386,7 +388,7 @@ function on013(pack,s,job){
 }
 function on015(pack,s,job){
  const spec=specOf(job);
- const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=5000);
+ const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=5000,'event');
  if(!targets.length)return;
  const chooser=hasName(pack,s,job.owner,'ガヴ')?job.owner:1-job.owner;
  // The effect's controller chooses the character. Only top or bottom
@@ -850,7 +852,7 @@ function removedReact(pack,s,job){
   askEnter(s,specOf(job),card.uid,false,'removed',false,null);
   return;
  }
- if(as030){askEnter(s,specOf(job),card.uid,false,'removed',false,null);return;}
+ if(as030){askEnter(s,specOf(job),card.uid,false,'removed',true,null);return;}
  if(as032||as035){
   hold(s,{...specOf(job),step:'toHand',data:{uid:card.uid}},[
    {type:'kmr2',mode:'skip'},{type:'kmr2',mode:'hand',uid:card.uid}
@@ -1222,12 +1224,14 @@ function resolveStep(pack,s,q,a){
    moveExtremeTarget(pack,s,q.player,q.sourceUid,c.uid);
   if(q.step==='removeTrio'){
    const self=selfOf(s,q.player,q.sourceUid);
-   const base=self?.stack?.[0];
+   const baseUid=self?.stack?.[0]?.uid||null;
    if(c)A.remove(pack,s,who,c.uid,q.sourceUid);
    if(self)A.remove(pack,s,q.player,self.uid,q.sourceUid);
-   if(base){
-    const loc=A.location(s,q.player,base.uid);
-    if(loc)A.remove(pack,s,q.player,base.uid,q.sourceUid);
+   // Removing the top sends the raid source outside. The print also removes it.
+   if(baseUid){
+    const loc=A.location(s,q.player,baseUid);
+    if(loc)A.remove(pack,s,q.player,baseUid,q.sourceUid);
+    else moveUid(pack,s,q.player,'outside',baseUid,'removed',q.sourceUid);
    }
    s.kmr2EndAttack=q.sourceUid;
   }
@@ -1309,14 +1313,14 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='takeTwo'){
   if(hit.mode==='skip'||hit.mode==='done'){s.pending=null;return;}
-  q.data??={got:[]};
-  q.data.got.push(hit.uid);
+  const data=q.data&&typeof q.data==='object'?q.data:{};
+  data.got=[...(data.got||[]),hit.uid];
   moveUid(pack,s,q.player,'outside',hit.uid,'hand',q.sourceUid);
-  if(q.data.got.length<2){
+  if(data.got.length<2){
    const rest=zoneWhere(s,q.player,'outside',c=>energyPrinted(pack,c)===0&&(def(pack,c).type==='field'||
     def(pack,c).type==='event'||(def(pack,c).type==='character'&&token(pack,c,'オーズ',s))));
    if(!rest.length){s.pending=null;return;}
-   hold(s,{...spec,step:'takeTwo',data:q.data},[
+   hold(s,{...spec,step:'takeTwo',data},[
     {type:'kmr2',mode:'done'},...rest.map(c=>({type:'kmr2',mode:'hand',uid:c.uid}))
    ]);
    return;
@@ -1347,6 +1351,7 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='enter'){
   s.pending=null;
+  if(hit.mode==='skip')return;
   doEnter(pack,s,q.player,hit,q.sourceUid);
   if(q.data?.next==='banEntered'){
    const entered=selfOf(s,q.player,hit.uid);
@@ -1783,7 +1788,7 @@ export function noteKmr2Zone(pack,s,move,card){
  if(reason==='own-effect'&&from==='removed'&&fieldTo&&s.active===owner&&String(d?.name||'').includes('フォーゼ')){
   for(const watcher of [...s.players[owner].front,...s.players[owner].energy].filter(Boolean)){
    if(card(pack,watcher).id!=='KMR-2-028'||originalEffectsDisabled(s,watcher))continue;
-   s.effectQueue.push({op:'kmr2',id:'KMR-2-028',slot:'entered',owner,sourceUid:watcher.uid,enteredUid:physical.uid});
+   s.effectQueue.unshift({op:'kmr2',id:'KMR-2-028',slot:'entered',owner,sourceUid:watcher.uid,enteredUid:physical.uid});
   }
  }
  if(to==='removed'&&reason==='own-effect'&&s.active===owner){
@@ -1794,7 +1799,7 @@ export function noteKmr2Zone(pack,s,move,card){
    const slotId=HANDLERS[id+'|removed']?id:(copied.includes('KMR-2-035')||copied.includes('KMR-2-030')||copied.includes('KMR-2-032')?(id==='KMR-2-068'?'KMR-2-068':'KMR-2-067'):null);
    const sourceCard=findSource(s,sourceUid);
    const causeId=sourceCard?card(pack,sourceCard).id:'';
-   if(slotId)s.effectQueue.push({op:'kmr2',id:slotId,slot:'removed',owner,sourceUid:live.uid,causeId});
+   if(slotId)s.effectQueue.unshift({op:'kmr2',id:slotId,slot:'removed',owner,sourceUid:live.uid,causeId});
   }
  }
  if(fieldFrom&&!fieldTo){
