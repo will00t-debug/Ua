@@ -41,6 +41,7 @@ import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261104kmrpr1';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
+import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -571,6 +572,16 @@ function revealFocusSheet(card){
 function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
+ if(s.pending.kind==='attack-life-target'){
+  // Desktop targets are clickable red LIFE card backs in the visible left rail.
+  // A modal would cover them; mobile gets the identical legal-action picker.
+  if(IS_BATTLE_PAGE&&isDesktopBattlefield())return null;
+  return el('div',{class:'overlay v2-attack-life-overlay'},
+   el('section',{class:'dialog panel pending',role:'dialog','aria-modal':'true',
+    'aria-label':'進攻方選擇對手血區'},
+    makeAttackLifePicker({el,lifeCount:view.players[1].lifeCount,
+     count:s.pending.count,actions:legal,onAction:applyAction})));
+ }
  // A mixed hand/outside/removed effect needs an illustrated target picker.
  // Once the target has been selected, dismiss this overlay so the player can
  // choose ordinary/Raid mode (if needed) and the actual legal board cell.
