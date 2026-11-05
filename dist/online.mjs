@@ -1,3 +1,5 @@
+import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
+
 const TITLES=[
  ['bleach','BLEACH'],['gurren-lagann','天元突破'],['sword-art-online','刀劍神域'],
  ['solo-leveling','我獨自升級'],['mushoku-tensei','無職轉生'],['rezero','Re:Zero'],
@@ -864,7 +866,8 @@ function zoneTray(player){
  const row=el('div',{class:'online-zones'});
  for(const [zone,label] of [['outside','場外'],['removed','移除區']]){
   const cards=player[zone]||[];
-  const playable=ready&&cards.some(card=>legal.some(action=>boardEntryMode(action)&&action.uid===card.uid));
+  const playable=ready&&cards.some(card=>legal.some(action=>boardEntryMode(action)&&action.uid===card.uid)||
+   app.zone!=='outside'&&!!legalRemovedMainAction(legal,card.uid));
   const chosen=cards.some(card=>card?.uid&&card.uid===app.pick?.uid);
   row.append(el('button',{type:'button',class:'zone-pile'+(playable?' playable':'')+
    (app.zone===zone?' open':'')+(chosen?' selected':''),
@@ -877,11 +880,18 @@ function zoneTray(player){
   if(!open.length)gallery.append(el('p',{class:'muted',text:'目前沒有卡片'}));
   for(const card of [...open].reverse()){
    const canPlay=ready&&legal.some(action=>boardEntryMode(action)&&action.uid===card.uid);
-   gallery.append(cardBox(card,{
+   const activate=legalRemovedMainAction(legal,card.uid,ready&&app.zone==='removed');
+   const tile=el('div',{class:'online-zone-card'});
+   tile.append(cardBox(card,{
     className:(canPlay?'playable ':'')+(card.uid===app.pick?.uid?'selected':''),
     click:canPlay?()=>clickZoneCard(card):null,
     label:(canPlay?'選擇登場：':'')+(card.name||card.cardId||'卡片')
    }));
+   if(activate)tile.append(el('button',{type:'button',class:'v2-zone-activate',
+    text:removedMainActionText(activate),
+    'aria-label':'發動 '+(card.name||card.cardId)+' 的移除區起動主要',
+    onClick:()=>{app.zone=null;sendAction(activate.index);}}));
+   gallery.append(tile);
   }
  }
  return el('div',{class:'online-zone-tray'},row,gallery);
