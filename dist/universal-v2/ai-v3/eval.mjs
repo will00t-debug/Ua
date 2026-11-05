@@ -65,6 +65,22 @@ export function terminalValue(state,actor){
  if(mine<=0&&opp>0)return -90000;
  return null;
 }
+export function explainValue(pack,state,actor){
+ const opp=1-actor;
+ const mine=state.players[actor];
+ const handRaid=mine.hand.reduce((sum,card)=>sum+raidMaterialValue(pack,state,actor,card),0);
+ const ownBoard=board(pack,state,actor);
+ const oppBoard=board(pack,state,opp);
+ return {
+  total:evaluate(pack,state,actor),
+  life:lifeScore(mine.life.length)-lifeScore(state.players[opp].life.length),
+  board:ownBoard-oppBoard,
+  handRaid,
+  hand:Math.min(mine.hand.length,6)*2.2,
+  energy:Math.min(universalEnergy(pack,state,actor),6)*6-Math.min(universalEnergy(pack,state,opp),6)*2,
+  ap:mine.apCards.filter(card=>card.ready).length*1.5
+ };
+}
 export function evaluate(pack,state,actor,strategy){
  const done=terminalValue(state,actor);
  if(done!==null)return done;
