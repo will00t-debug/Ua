@@ -244,7 +244,13 @@ function classifyLine(ctx,cursor,actor){
  const outOfNodes=!(ctx.pool.n>0&&ctx.lineSpent<ctx.lineCap);
  const outOfTime=performance.now()>ctx.deadline;
  ctx.stats.exhausted=outOfNodes?'nodes':outOfTime?'time':null;
+ if(!ctx.stats.limit){
+  if(outOfNodes)ctx.stats.limit='nodes';
+  else if(outOfTime)ctx.stats.limit='time';
+  else if(ctx.stats.depthHit)ctx.stats.limit='depth';
+ }
  if(ctx.stats.settled)ctx.stats.cut=null;
+ else if(ctx.stats.depthHit&&!outOfNodes&&!outOfTime)ctx.stats.cut='depth';
  else if(cursor.pending)ctx.stats.cut='pending';
  else if(outOfNodes)ctx.stats.cut='nodes';
  else if(outOfTime)ctx.stats.cut='time';
@@ -322,6 +328,7 @@ function leafSnap(ctx){
  return {
   boundary:ctx.stats.boundary,handedOff:ctx.stats.handedOff,returned:ctx.stats.returned,
   settled:ctx.stats.settled,cut:ctx.stats.cut,exhausted:ctx.stats.exhausted,
+  limit:ctx.stats.limit,depthHit:ctx.stats.depthHit,
   leafPending:ctx.stats.leafPending,leafPhase:ctx.stats.leafPhase,
   leafOwnTurns:ctx.stats.leafOwnTurns,leafTurn:ctx.stats.leafTurn,leafActive:ctx.stats.leafActive,
   opponentTurns:ctx.stats.opponentTurns,responses:ctx.stats.responses,
@@ -331,6 +338,7 @@ function leafSnap(ctx){
 function applyLeaf(ctx,snap){
  ctx.stats.boundary=snap.boundary;ctx.stats.handedOff=snap.handedOff;ctx.stats.returned=snap.returned;
  ctx.stats.settled=snap.settled;ctx.stats.cut=snap.cut;ctx.stats.exhausted=snap.exhausted;
+ ctx.stats.limit=snap.limit;ctx.stats.depthHit=snap.depthHit;
  ctx.stats.leafPending=snap.leafPending;ctx.stats.leafPhase=snap.leafPhase;
  ctx.stats.leafOwnTurns=snap.leafOwnTurns;ctx.stats.leafTurn=snap.leafTurn;ctx.stats.leafActive=snap.leafActive;
  ctx.stats.opponentTurns=snap.opponentTurns;ctx.stats.responses=snap.responses;
@@ -399,6 +407,105 @@ function replyFrom(pack,state,actor,ctx,left){
  ctx.stats.sequence=best.sequence;
  return best.state;
 }
+function keepBest(best,value,snap,settled,maximize){
+ if(!best)return {value,snap,settled};
+ // The opponent minimizes our score. A settled win for us must not outrank
+ // the block, trigger, or other answer that keeps them alive.
+ if(!maximize)return value<best.value?{value,snap,settled}:best;
+ if(settled!==best.settled)return settled?{value,snap,settled}:best;
+ return value>best.value?{value,snap,settled}:best;
+}
+function answerOpponent(pack,cursor,actor,ctx,left,depth){
+ const budget=ctx.replyLeft??(ctx.opponentLeft??2);
+ if(ctx.replyStuck){
+  classifyLine(ctx,cursor,actor);
+  return terminalValue(cursor,actor)??evaluate(pack,cursor,actor);
+ }
+ if(ctx.plan==='tree-replies'){
+  const after=replyFrom(pack,cursor,actor,ctx,Math.max(1,budget));
+  if(after===cursor){
+   classifyLine(ctx,cursor,actor);
+   return terminalValue(cursor,actor)??evaluate(pack,cursor,actor);
+  }
+  return planFrom(pack,after,actor,ctx,left,depth);
+ }
+ if(budget<=0){
+  ctx.replyStuck=true;
+  const after=fastOpponent(pack,cursor,actor,ctx);
+  const value=after===cursor
+   ?evaluate(pack,cursor,actor)
+   :planFrom(pack,after,actor,ctx,left,depth);
+  ctx.replyStuck=false;
+  return value;
+ }
+ let legal;
+ try{legal=legalUniversalActions(pack,cursor);}catch{
+  ctx.stats.unsupported++;
+  classifyLine(ctx,cursor,actor);
+  return evaluate(pack,cursor,actor);
+ }
+ const seat=who(cursor);
+ const candidates=planCandidates(pack,cursor,seat,legal,2);
+ ctx.stats.followBranches+=candidates.length;
+ const before=leafSnap(ctx);
+ const saved=ctx.replyLeft;
+ ctx.replyLeft=budget-1;
+ let best=null;
+ for(const action of candidates){
+  if(!room(ctx)){ctx.stats.budget++;break;}
+  applyLeaf(ctx,before);
+  let next;
+  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
+  if(!spend(ctx)){ctx.stats.budget++;break;}
+  noteStep(ctx,action,'reply');
+  ctx.stats.responses++;
+  const value=planFrom(pack,next,actor,ctx,left,depth+1);
+  best=keepBest(best,value,leafSnap(ctx),!!ctx.stats.settled,false);
+ }
+ ctx.replyLeft=saved;
+ const branches=ctx.stats.followBranches;
+ const deepest=ctx.stats.maxDepth;
+ if(!best){
+  applyLeaf(ctx,before);
+  classifyLine(ctx,cursor,actor);
+  ctx.stats.followBranches=branches;
+  ctx.stats.maxDepth=deepest;
+  return evaluate(pack,cursor,actor);
+ }
+ applyLeaf(ctx,best.snap);
+ ctx.stats.followBranches=branches;
+ ctx.stats.maxDepth=Math.max(deepest,depth+1);
+ return best.value;
+}
+// After the decision cap, every line walks the same attack-or-end script
+// so a combo can still reach the boundary a bare next already reached.
+function finishLine(pack,cursor,actor,ctx){
+ ctx.stats.depthHit=true;
+ if(!ctx.stats.limit)ctx.stats.limit='depth';
+ if((ctx.finishGuard||0)>6){
+  classifyLine(ctx,cursor,actor);
+  return terminalValue(cursor,actor)??evaluate(pack,cursor,actor);
+ }
+ ctx.finishGuard=(ctx.finishGuard||0)+1;
+ let state=cursor;
+ if(room(ctx)&&state.status==='playing')state=roll(pack,state,actor,ctx,attackOrEnd);
+ const mid=terminalValue(state,actor);
+ if(mid!==null){ctx.finishGuard--;classifyLine(ctx,state,actor);return mid;}
+ if(state.status==='playing'&&state.pending&&who(state)!==actor){
+  const value=answerOpponent(pack,state,actor,ctx,0,ctx.stats.maxDepth||1);
+  ctx.finishGuard--;
+  return value;
+ }
+ if(state.status==='playing'&&!state.pending&&state.active!==actor){
+  ctx.stats.opponentTurns++;
+  state=ctx.plan==='tree-replies'
+   ?replyFrom(pack,state,actor,ctx,ctx.opponentLeft??2)
+   :fastOpponent(pack,state,actor,ctx);
+ }
+ ctx.finishGuard--;
+ classifyLine(ctx,state,actor);
+ return terminalValue(state,actor)??evaluate(pack,state,actor);
+}
 function planFrom(pack,state,actor,ctx,left,depth){
  ctx.stats.maxDepth=Math.max(ctx.stats.maxDepth||1,depth);
  const done=terminalValue(state,actor);
@@ -407,6 +514,10 @@ function planFrom(pack,state,actor,ctx,left,depth){
  let cursor=advanceForced(pack,state,ctx);
  const mid=terminalValue(cursor,actor);
  if(mid!==null){classifyLine(ctx,cursor,actor);return mid;}
+ if(left<=0){
+  ctx.stats.depthHit=true;
+  if(!ctx.stats.limit)ctx.stats.limit='depth';
+ }
  if(!cursor.pending&&cursor.active!==actor){
   ctx.stats.opponentTurns++;
   cursor=ctx.plan==='tree-replies'?replyFrom(pack,cursor,actor,ctx,ctx.opponentLeft??2):fastOpponent(pack,cursor,actor,ctx);
@@ -414,7 +525,8 @@ function planFrom(pack,state,actor,ctx,left,depth){
   const end=terminalValue(cursor,actor);
   return end!==null?end:evaluate(pack,cursor,actor);
  }
- if(left<=0){classifyLine(ctx,cursor,actor);return evaluate(pack,cursor,actor);}
+ if(cursor.pending&&who(cursor)!==actor)return answerOpponent(pack,cursor,actor,ctx,left,depth);
+ if(left<=0)return finishLine(pack,cursor,actor,ctx);
  let legal;
  try{legal=legalUniversalActions(pack,cursor);}catch{
   ctx.stats.unsupported++;
@@ -423,6 +535,7 @@ function planFrom(pack,state,actor,ctx,left,depth){
  }
  if(!legal.length){classifyLine(ctx,cursor,actor);return evaluate(pack,cursor,actor);}
  const seat=who(cursor);
+ const maximize=seat===actor;
  const candidates=planCandidates(pack,cursor,seat,legal,Math.max(1,ctx.beam||1));
  ctx.stats.followBranches+=candidates.length;
  const before=leafSnap(ctx);
@@ -433,14 +546,11 @@ function planFrom(pack,state,actor,ctx,left,depth){
   let next;
   try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
   if(!spend(ctx)){ctx.stats.budget++;break;}
-  noteStep(ctx,action,'choice');
-  if(seat===actor)ctx.stats.actorDecisions++;
+  noteStep(ctx,action,maximize?'choice':'reply');
+  if(maximize)ctx.stats.actorDecisions++;
   else ctx.stats.responses++;
-  const value=planFrom(pack,next,actor,ctx,left-1,depth+1);
-  const snap=leafSnap(ctx);
-  const settled=!!ctx.stats.settled;
-  if(!best||(settled&&!best.settled)||(settled===best.settled&&value>best.value))
-   best={value,snap,settled};
+  const value=planFrom(pack,next,actor,ctx,maximize?left-1:left,depth+1);
+  best=keepBest(best,value,leafSnap(ctx),!!ctx.stats.settled,maximize);
  }
  const branches=ctx.stats.followBranches;
  const deepest=ctx.stats.maxDepth;
@@ -454,6 +564,44 @@ function planFrom(pack,state,actor,ctx,left,depth){
  applyLeaf(ctx,best.snap);
  ctx.stats.followBranches=branches;
  ctx.stats.maxDepth=Math.max(deepest,depth+1);
+ return best.value;
+}
+function layered(pack,state,actor,ctx,base){
+ if(!room(ctx)){
+  classifyLine(ctx,state,actor);
+  return terminalValue(state,actor)??evaluate(pack,state,actor);
+ }
+ const ceiling=base+3;
+ let layer=Math.max(0,base);
+ let best=null;
+ const rootSeq=ctx.stats.sequence.slice();
+ const rootTurns=ctx.stats.opponentTurns;
+ const rootResponses=ctx.stats.responses;
+ const rootDecisions=ctx.stats.actorDecisions;
+ while(layer<=ceiling&&room(ctx)){
+  ctx.stats.sequence=rootSeq.slice();
+  ctx.stats.opponentTurns=rootTurns;
+  ctx.stats.responses=rootResponses;
+  ctx.stats.actorDecisions=rootDecisions;
+  ctx.stats.depthHit=false;
+  ctx.stats.limit=null;
+  const value=planFrom(pack,state,actor,ctx,layer,1);
+  const snap=leafSnap(ctx);
+  const settled=!!ctx.stats.settled;
+  ctx.stats.layers=(ctx.stats.layers||0)+1;
+  if(!best||(settled&&!best.settled)||(settled===best.settled&&value>best.value))
+   best={value,snap,settled,depth:ctx.stats.maxDepth,branches:ctx.stats.followBranches};
+  if(!room(ctx)||ctx.stats.exhausted==='nodes'||ctx.stats.exhausted==='time')break;
+  if(ctx.pool.n<16||ctx.lineSpent>ctx.lineCap*0.7)break;
+  layer++;
+ }
+ if(!best)return evaluate(pack,state,actor);
+ const depth=Math.max(ctx.stats.maxDepth||1,best.depth||1);
+ const branches=Math.max(ctx.stats.followBranches||0,best.branches||0);
+ applyLeaf(ctx,best.snap);
+ ctx.stats.maxDepth=depth;
+ ctx.stats.followBranches=branches;
+ ctx.stats.settled=best.settled;
  return best.value;
 }
 function remember(ctx,key,value,mark){
@@ -568,7 +716,8 @@ export function scoreLine(pack,state,actor,action,limits){
   origin:{turn:state.turn,ownTurns:state.players[actor].ownTurns,phase:state.phase,actor},
   tt:limits.tt||new Map(),
   stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0,
-   boundary:'open',handedOff:false,returned:false,cut:null,followBranches:0,maxDepth:1,sequence:[],
+   boundary:'open',handedOff:false,returned:false,cut:null,limit:null,depthHit:false,layers:0,
+   followBranches:0,maxDepth:1,sequence:[],
    plan:limits.plan||(limits.finish===false?'tree':'rollout')}
  };
  ctx.finish=ctx.plan==='rollout';
@@ -591,7 +740,7 @@ export function scoreLine(pack,state,actor,action,limits){
  noteStep(ctx,action,'root');
  const value=ctx.plan==='rollout'
   ?searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions)
-  :planFrom(pack,next,actor,ctx,limits.actorDecisions??2,1);
+  :layered(pack,next,actor,ctx,limits.actorDecisions??2);
  return lineView(ctx,value);
 }
 export function searchPosition(pack,state,actor,limits={},table=null){

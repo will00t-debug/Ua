@@ -58,6 +58,7 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode){
  let state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed,first});
  const samples={};
  const acts={};
+ const script=[];
  let steps=0,fallback=0,illegal=0,engineError=null;
  const learned={decisions:0,search:0,budgetFallback:0,fallback:0,forced:0,nodes:0,followBranches:0,maxDepth:0,responses:0};
  let mark=aiV3Report();
@@ -95,16 +96,17 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode){
    action.type==='raid'?'raid':action.type==='attack'?'attack':action.type==='next'?'next':action.type;
   acts[mode]??={};
   acts[mode][label]=(acts[mode][label]||0)+1;
+  if(mode===challengerMode&&script.length<80)script.push(label);
   try{state=dispatchUniversalAction(packs,state,action,{actor});}
   catch(error){
    illegal++;
    engineError=error.message;
-   console.error('engine',deck.id,seed,first,action.type,error.message);
+   console.error('engine',deck.id,seed,first,challengerMode,action.type,error.message);
    break;
   }
   steps++;
  }
- return {title:deck.title,seed,first,steps,illegal,engineError,fallback,ms:samples,acts,learned,
+ return {title:deck.title,seed,first,steps,illegal,engineError,fallback,ms:samples,acts,script,learned,
   finished:state.status==='finished',winner:state.winner,endReason:state.endReason,
   life:state.players.map(player=>player.life.length),
   wall:performance.now()-started};
@@ -113,6 +115,7 @@ function gameView(row){
  return {seed:row.seed,first:row.first,challengerSeat:row.challengerSeat,
   challengerIsFirst:row.challengerSeat===row.first,steps:row.steps,illegal:row.illegal,
   finished:row.finished,winner:row.winner,endReason:row.endReason,life:row.life,
+  engineError:row.engineError||null,script:row.script||[],
   challengerWon:row.finished&&(row.winner===0||row.winner===1)?row.winner===row.challengerSeat:null};
 }
 const wanted=new Set((process.env.AI_V3_TITLES||'').split(',').filter(Boolean));
