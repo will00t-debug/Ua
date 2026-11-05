@@ -152,6 +152,11 @@ function publicActionChoice(action,index,packs,match,view,extraIds){
  if(typeof action?.mode==='string'&&/^[A-Za-z0-9_-]{1,40}$/.test(action.mode))choice.mode=action.mode;
  if(action?.from==='hand'||action?.from==='removed'||action?.from==='outside'||action?.from==='deck')
   choice.from=action.from;
+ // Public LIFE POSITION indices, never the underlying private card identities.
+ if(action?.type==='chooseAttackLife'&&Array.isArray(action.indices)&&
+  action.indices.length>=1&&action.indices.length<=7&&
+  action.indices.every(i=>Number.isInteger(i)&&i>=0&&i<7))
+  choice.indices=[...action.indices];
  return choice;
 }
 // Only the active controller receives the cards they were authorized to inspect.
