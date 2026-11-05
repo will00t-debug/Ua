@@ -12,7 +12,7 @@ const feature=['TTG-1-004','TTG-1-012','TTG-1-027','TTG-1-031','TTG-1-032','TTG-
 const filler=['TTG-1-009','TTG-1-002','TTG-1-029','TTG-1-076','TTG-1-058','TTG-1-044','TTG-1-053'];
 const deck=Object.fromEntries(feature.map(id=>[id,2]));
 for(const id of filler)deck[id]=4;
-const take=(s,id,owner=0)=>{
+const take=(s,id,owner=1)=>{
  const p=s.players[owner];
  for(const zone of ['hand','deck','life','outside']){
   const i=p[zone].findIndex(c=>c.cardId===id);
@@ -28,23 +28,27 @@ const advance=(s,predicate)=>{
  assert.equal(assertUniversalMatch(pack,next),true);
  return next;
 };
-function readyCount(s){return s.players[0].apCards.filter(c=>c.inPlay&&c.ready).length;}
+function readyCount(s){return s.players[1].apCards.filter(c=>c.inPlay&&c.ready).length;}
 function setup(seed,{spare=false,topCards=0}={}){
  let s=newUniversalMatch(pack,{decks:[deck,deck],seed,first:0});
- const p=s.players[0];
+ // First seat cannot always pay a two-AP character on its opening turn.
+ // Use the second seat's turn, matching the established V2 TTG-012 suite.
+ for(let i=0;i<6&&s.active===0;i++)s=advance(s,a=>a.type==='next');
+ assert.equal(s.active,1,'setup reached the second seat');
+ const p=s.players[1];
  const simon=take(s,'TTG-1-012');
  const extra=spare?take(s,'TTG-1-058'):null;
  // Keep all physical cards inside an actual zone even while advancing phases.
  p.hand.push(simon);
  if(extra)p.hand.push(extra);
  for(let i=0;i<3;i++){
-  const c=take(s,'TTG-1-009');
+  const c=take(s,'TTG-1-002');
   c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
-  c.buffs=[{energy:10,untilTurn:1}];p.energy[i]=c;
+  c.buffs=[{energy:10,untilTurn:s.turn}];p.energy[i]=c;
  }
- s=advance(s,a=>a.type==='next'); // START -> MOVE
- s=advance(s,a=>a.type==='next'); // MOVE -> MAIN
- const mine=s.players[0];
+ for(let i=0;i<3&&s.phase!=='main';i++)s=advance(s,a=>a.type==='next');
+ assert.equal(s.phase,'main');
+ const mine=s.players[1];
  const kept=new Set([simon.uid,extra?.uid].filter(Boolean));
  const moveToOutside=mine.hand.filter(card=>!kept.has(card.uid));
  mine.hand=mine.hand.filter(card=>kept.has(card.uid));
@@ -74,7 +78,7 @@ test('Q2266: discard exactly one card, then recover one AP without reaching ener
  s=advance(s,a=>a.type==='chooseDiscardPay'&&a.mode==='activeAp');
  assert.equal(readyCount(s),apPaid+1);
  assert.equal(s.pending,null);
- assert.ok(s.players[0].outside.some(c=>c.uid===extra.uid));
+ assert.ok(s.players[1].outside.some(c=>c.uid===extra.uid));
 });
 
 test('Q2266: with zero hand and an empty deck, Simon still recovers one AP',()=>{
