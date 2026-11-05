@@ -1639,6 +1639,7 @@ function render(){
 function applyAction(a){
  if(a?.lifeRaidSource)a=a.lifeRaidSource;
  if(!app.state||uiActor(app.state)!==0)return;
+ let openingStep='檢查操作';
  // Mobile timers may leave a stale AI busy flag after the AI hands control
  // back during mulligan. It must not disable BOTH human opening decisions.
  if(app.busy){
@@ -1653,7 +1654,7 @@ function applyAction(a){
   const replacementLine=a.line==='energy'?'energy':'front';
   const displaced=typeof a.replaceUid==='string'?
    app.state.players[0]?.[replacementLine]?.[a.slot]:null;
-  if(displaced?.uid===a.replaceUid){
+  if(typeof a.replaceUid==='string'&&displaced?.uid===a.replaceUid){
    const name=cardDef(0,displaced.cardId)?.name||displaced.cardId||'原角色';
    if(!window.confirm('確認擠位？\n將取代 '+name+' 所在的'+
     (replacementLine==='front'?'前線':'能源線')+'格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。'))return;
@@ -1662,12 +1663,27 @@ function applyAction(a){
    publicMoves:app.publicMoves.slice()};
   const previous=app.state;
   const replayIndex=app.replay.actions.length;
-  // Prepare the next legal state and replay before publishing either.
-  // A failed validation must leave the original choice available to retry.
+  // Setup has no public card result: the player only announces KEEP/REDRAW.
+  // Never scan private decks or unfilled LIFE/field slots to label this choice.
+  // Keep the engine transition authoritative and log independently of it.
+  openingStep='規則結算';
   const nextState=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
+  openingStep='驗證新對局狀態';
   assertUniversalMatch(app.packs,nextState);
+  openingStep='儲存回放';
   const nextReplay=appendUniversalReplay(app.replay,a,0);
-  const publicLabel=publicPreviewActionLabel(app.packs,previous,nextState,a,0);
+  openingStep='產生操作摘要';
+  let publicLabel;
+  if(a.type==='openingMulligan'){
+   publicLabel='你：'+(a.mode==='redraw'?'整手重抽 7 張':'保留起手 7 張');
+  }else{
+   try{publicLabel=publicPreviewActionLabel(app.packs,previous,nextState,a,0);}
+   catch(error){
+    // A presentation-only label must never veto an accepted reducer choice.
+    publicLabel='你：'+uiActionLabel(a,{pack:app.packs,state:previous});
+    console.warn('V2 action summary fallback',error);
+   }
+  }
   app.state=nextState;
   app.replay=nextReplay;
   // Recording problems must not strand an already-committed mulligan.
@@ -1681,7 +1697,11 @@ function applyAction(a){
   app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;
   app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
   maybeFinishCoach();render();driveAi();
- }catch(e){alertText(e?.message||String(e));}
+ }catch(e){
+  const message=e?.message||String(e);
+  console.error('V2 human action failure',a.type,openingStep,e);
+  alertText((a.type==='openingMulligan'?'起手牌（'+openingStep+'）失敗：':'')+message);
+ }
 }
 function undoMove(){
  if(!app.undo||app.busy)return;
