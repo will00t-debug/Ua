@@ -27,12 +27,12 @@ function step(s,predicate){
  assert.equal(assertUniversalMatch(pack,next),true);
  return next;
 }
-function fixture(seed){
+function fixture(seed,producersCount=4){
  let s=newUniversalMatch(pack,{decks:[deck,deck],seed,first:0});
  const spell=take(s,0,'TTG-1-040');
  const second=take(s,0,'TTG-1-040');
  s.players[0].removed.push(spell,second);
- const producers=Array.from({length:4},(_,i)=>{
+ const producers=Array.from({length:producersCount},(_,i)=>{
   const c=take(s,0,'TTG-1-019');
   c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
   s.players[0].energy[i]=c;
@@ -74,10 +74,7 @@ test('TTG-040 removed MAIN only appears as an engine-issued action during own MA
 });
 
 test('TTG-040 cannot start removed MAIN below the 8-energy threshold',()=>{
- const {s,spell}=fixture(8041);
- const moved=s.players[0].energy[3];
- s.players[0].energy[3]=null;
- s.players[0].outside.push(moved); // conserve the real physical card
+ const {s,spell}=fixture(8041,3);
  let at=s;
  at=step(at,a=>a.type==='next');
  at=step(at,a=>a.type==='next');
