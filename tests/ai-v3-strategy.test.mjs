@@ -7,7 +7,10 @@ import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../di
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {positionKey,scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
 
-const OPTS={...MATCH_LIMITS,seed:1,mode:'beam'};
+// These decisions spend the node budget. The 40ms match clock finishes
+// here and stops after the first pass on a slower runner, so the checks
+// do not use the wall clock.
+const OPTS={...MATCH_LIMITS,seed:1,mode:'beam',ms:1e9};
 function deck(pack,extra){
  const counts={...extra};
  let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
