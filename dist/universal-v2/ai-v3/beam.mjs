@@ -27,45 +27,91 @@ function dedupe(state,actor,legal){
  }
  return out;
 }
-function baseline(action){
+export function isSafeAction(action){
  return action.type==='next'||action.mode==='skip'||action.mode==='decline'||action.uid==null;
 }
-export function selectCandidates(pack,state,viewer,legal,beam){
+function byText(a,b){
+ const left=JSON.stringify(a),right=JSON.stringify(b);
+ return left<right?-1:left>right?1:0;
+}
+export function rankLegal(pack,state,viewer,legal){
  const list=dedupe(state,viewer,legal);
  const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action);
- const ranked=[...list].sort((a,b)=>rank(b)-rank(a)||(JSON.stringify(a)<JSON.stringify(b)?-1:1));
- const picked=[],seen=new Set();
+ return [...list].sort((a,b)=>rank(b)-rank(a)||byText(a,b));
+}
+export function selectCandidates(pack,state,viewer,legal,beam){
+ const ranked=rankLegal(pack,state,viewer,legal);
+ const width=Math.max(1,beam||1);
+ const picked=[],seen=new Set(),groups=new Set();
  const take=action=>{
   const key=JSON.stringify(action);
   if(seen.has(key))return;
   seen.add(key);
   picked.push(action);
  };
- for(const action of list)if(baseline(action))take(action);
- const groups=new Set();
  for(const action of ranked){
   const group=actionGroup(state,viewer,action);
   if(groups.has(group))continue;
   groups.add(group);
   take(action);
-  if(picked.length>=beam)break;
+  if(picked.length>=width)break;
  }
  for(const action of ranked){
-  if(picked.length>=beam)break;
+  if(picked.length>=width)break;
   take(action);
  }
- return picked.slice(0,Math.max(beam,Math.min(picked.length,beam+1)));
+ const safe=ranked.find(isSafeAction);
+ if(safe&&!picked.some(action=>same(action,safe))){
+  if(picked.length<width)picked.push(safe);
+  else picked[picked.length-1]=safe;
+ }
+ // Energy outranks a front play, and a width of four then never looks at the
+ // front. Keep one front play so the search can compare it with energy.
+ const front=ranked.find(action=>action.type==='play'&&action.line==='front');
+ if(front&&!picked.some(action=>action.type==='play'&&action.line==='front')){
+  if(picked.length<width)picked.push(front);
+  else{
+   const spare=picked.findIndex(action=>!isSafeAction(action));
+   if(spare>=0)picked[spare]=front;
+  }
+ }
+ const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action);
+ picked.sort((a,b)=>rank(b)-rank(a)||byText(a,b));
+ return picked;
 }
-function stateKey(state,actor,mode,left){
- const parts=[mode,left,state.status,state.phase,state.active,state.turn,state.pending?.kind||'',
-  state.pending?.player??'',actor];
+function plain(value){
+ if(value==null)return '';
+ const kind=typeof value;
+ if(kind==='string'||kind==='number'||kind==='boolean')return String(value);
+ if(kind!=='object')return '';
+ if(Array.isArray(value))return value.map(plain).join(',');
+ return Object.keys(value).filter(key=>typeof value[key]!=='function').sort()
+  .map(key=>key+'='+plain(value[key])).join(',');
+}
+function layerBits(card){
+ if(!card)return '-';
+ const stack=(card.stack||[]).map(layer=>layer?layer.uid+':'+layer.cardId+':'+(layer.faceDown?'d':'u')+':'+plain(layer.buffs):'-').join('>');
+ const under=(card.under||[]).map(layer=>layer?layer.uid+':'+(layer.faceDown?'d':'u')+':'+plain(layer.buffs):'-').join('>');
+ return [card.uid,card.cardId,card.ready?'r':'t',card.faceDown?'d':'u',card.fieldEntryStamp??'',
+  plain(card.buffs),stack,under,card.raidBaseUid||'',plain(card.energyPlusUntil),plain(card.frontEnergyUntil)].join('~');
+}
+export function positionKey(state,actor,mode,left){
+ const pending=plain(state.pending);
+ const parts=[mode,left,state.status,state.phase,state.active,state.turn,state.attacksThisTurn??'',
+  actor,pending,plain(state.onceEffectUses),plain(state.mainAbilityUsedUids),plain(state.delayedEffects),
+  plain((state.effectQueue||[]).map(job=>job&&(job.op+':'+job.sourceUid+':'+plain(job.bp)))),
+  plain(state.raidCount),plain(state.energyDoubles),plain(state.allFrontEnergy)];
  for(let p=0;p<2;p++){
   const player=state.players[p];
-  parts.push(player.life.length,player.hand.length,player.deck.length,
-   player.apCards.filter(card=>card.ready).length);
-  if(p===actor)parts.push(player.hand.map(card=>card.uid+':'+card.cardId).sort().join(','));
+  parts.push(player.life.length,player.ownTurns??'',player.hand.length,player.deck.length,
+   player.hand.map(card=>card.uid+':'+card.cardId).sort().join(','),
+   player.deck.map(card=>card.cardId).join(','),
+   (player.life||[]).map(card=>card?.cardId||'-').join(','),
+   (player.apCards||[]).map(card=>card.cardId+':'+(card.ready?'r':'t')).join(','),
+   plain((player.outside||[]).map(card=>card.cardId).sort()),
+   plain((player.removed||[]).map(card=>card.cardId).sort()));
   for(const line of ['front','energy'])
-   parts.push(player[line].map(card=>!card?'-':card.uid+':'+card.cardId+(card.ready?'r':'t')).join('|'));
+   parts.push(player[line].map(layerBits).join('|'));
  }
  return parts.join(';');
 }
@@ -73,10 +119,19 @@ function dispatch(pack,state,action){
  return dispatchUniversalAction(pack,state,action,{actor:who(state)});
 }
 const BATTLE_KINDS=new Set(['block','effect-block-floor','life-trigger']);
+function room(ctx){
+ return ctx.pool.n>0&&ctx.lineSpent<ctx.lineCap&&performance.now()<=ctx.deadline;
+}
+function spend(ctx){
+ if(!room(ctx))return false;
+ ctx.pool.n--;
+ ctx.lineSpent++;
+ return true;
+}
 function settleBattle(pack,state,actor,ctx){
  let cursor=state;
  for(let guard=0;guard<6&&cursor.status==='playing'&&cursor.pending&&
-  BATTLE_KINDS.has(cursor.pending.kind)&&ctx.budget.n>0;guard++){
+  BATTLE_KINDS.has(cursor.pending.kind)&&room(ctx);guard++){
   const seat=who(cursor);
   let legal;
   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
@@ -85,29 +140,31 @@ function settleBattle(pack,state,actor,ctx){
   const maximize=seat===actor;
   let best=maximize?-Infinity:Infinity,chosen=null;
   for(const action of candidates){
+   if(!room(ctx)){ctx.stats.budget++;break;}
    let next;
    try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
+   if(!spend(ctx)){ctx.stats.budget++;break;}
    const done=terminalValue(next,actor);
    const value=done!==null?done:evaluate(pack,next,actor);
    if(chosen===null||(maximize?value>best:value<best)){best=value;chosen=next;}
   }
   if(!chosen)return cursor;
   cursor=chosen;
-  ctx.budget.n--;
   ctx.stats.responses++;
  }
  return cursor;
 }
 function autoAdvance(pack,state,ctx){
  let cursor=state;
- for(let guard=0;guard<10&&ctx.budget.n>0&&cursor.status==='playing';guard++){
+ for(let guard=0;guard<10&&room(ctx)&&cursor.status==='playing';guard++){
   if(cursor.pending&&ORDER_KINDS.has(cursor.pending.kind)){
    let legal;
    try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
    if(!legal.length)return cursor;
+   if(!room(ctx)){ctx.stats.budget++;return cursor;}
    try{cursor=dispatch(pack,cursor,legal[0]);}
    catch{ctx.stats.unsupported++;return cursor;}
-   ctx.budget.n--;
+   if(!spend(ctx)){ctx.stats.budget++;return cursor;}
    ctx.stats.orderSteps++;
    continue;
   }
@@ -115,9 +172,10 @@ function autoAdvance(pack,state,ctx){
   let legal;
   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
   if(legal.length===1&&legal[0].type==='next'){
+   if(!room(ctx)){ctx.stats.budget++;return cursor;}
    try{cursor=dispatch(pack,cursor,legal[0]);}
    catch{ctx.stats.unsupported++;return cursor;}
-   ctx.budget.n--;
+   if(!spend(ctx)){ctx.stats.budget++;return cursor;}
    ctx.stats.orderSteps++;
    continue;
   }
@@ -125,31 +183,28 @@ function autoAdvance(pack,state,ctx){
  }
  return cursor;
 }
+function remember(ctx,key,value,mark){
+ if(ctx.stats.budget===mark)ctx.tt.set(key,value);
+ return value;
+}
 function searchFrom(pack,state,actor,ctx,mode,left){
  const done=terminalValue(state,actor);
  if(done!==null)return done;
- if(ctx.budget.n<=0||ctx.deadline<performance.now()){ctx.stats.budget++;return evaluate(pack,state,actor);}
- const key=stateKey(state,actor,mode,left);
+ const key=positionKey(state,actor,mode,left);
  if(ctx.tt.has(key)){ctx.stats.transpositionHits++;return ctx.tt.get(key);}
+ if(!room(ctx)){ctx.stats.budget++;return evaluate(pack,state,actor);}
+ const mark=ctx.stats.budget;
  const cursor=settleBattle(pack,autoAdvance(pack,state,ctx),actor,ctx);
  const after=terminalValue(cursor,actor);
- if(after!==null){ctx.tt.set(key,after);return after;}
+ if(after!==null)return remember(ctx,key,after,mark);
  if(mode==='them'&&!cursor.pending&&cursor.active===actor){
-  const value=evaluate(pack,cursor,actor);
-  ctx.tt.set(key,value);
-  return value;
+  return remember(ctx,key,evaluate(pack,cursor,actor),mark);
  }
  if(mode==='us'&&!cursor.pending&&cursor.active!==actor){
   ctx.stats.opponentTurns++;
-  const value=searchFrom(pack,cursor,actor,ctx,'them',ctx.opponentLeft);
-  ctx.tt.set(key,value);
-  return value;
+  return remember(ctx,key,searchFrom(pack,cursor,actor,ctx,'them',ctx.opponentLeft),mark);
  }
- if(left<=0){
-  const value=evaluate(pack,cursor,actor);
-  ctx.tt.set(key,value);
-  return value;
- }
+ if(left<=0)return remember(ctx,key,evaluate(pack,cursor,actor),mark);
  const seat=who(cursor);
  let legal;
  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return evaluate(pack,cursor,actor);}
@@ -158,10 +213,11 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  const maximize=seat===actor;
  let best=maximize?-Infinity:Infinity,compared=0;
  for(const action of candidates){
-  if(ctx.budget.n<=0||ctx.deadline<performance.now()){ctx.stats.budget++;break;}
+  if(!room(ctx)){ctx.stats.budget++;break;}
   let next;
-  try{next=settleBattle(pack,dispatch(pack,cursor,action),actor,ctx);}catch{ctx.stats.unsupported++;continue;}
-  ctx.budget.n--;
+  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
+  if(!spend(ctx)){ctx.stats.budget++;break;}
+  try{next=settleBattle(pack,next,actor,ctx);}catch{ctx.stats.unsupported++;continue;}
   compared++;
   if(seat===actor)ctx.stats.actorDecisions++;
   else ctx.stats.responses++;
@@ -169,23 +225,40 @@ function searchFrom(pack,state,actor,ctx,mode,left){
   if(maximize?value>best:value<best)best=value;
  }
  if(!compared)best=evaluate(pack,cursor,actor);
- ctx.tt.set(key,best);
- return best;
+ return remember(ctx,key,best,mark);
 }
 export function scoreLine(pack,state,actor,action,limits){
+ const pool=limits.pool||{n:limits.nodes};
+ const lineCap=Math.min(limits.nodes,pool.n);
  const ctx={
-  budget:{n:limits.nodes},
-  deadline:limits.deadline,
+  pool,lineCap,lineSpent:0,
+  deadline:limits.deadline??Infinity,
   beam:limits.beam,
   opponentLeft:limits.opponentDecisions,
-  tt:new Map(),
+  tt:limits.tt||new Map(),
   stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0}
  };
+ if(!room(ctx))return {search:evaluate(pack,state,actor),nodes:0,...ctx.stats};
  let next;
  try{next=dispatch(pack,state,action);}catch{return null;}
- ctx.budget.n--;
+ if(!spend(ctx))return {search:evaluate(pack,next,actor),nodes:0,...ctx.stats};
  ctx.stats.actorDecisions++;
  const value=searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions);
- return {search:value,nodes:limits.nodes-ctx.budget.n,...ctx.stats};
+ return {search:value,nodes:ctx.lineSpent,...ctx.stats};
+}
+export function searchPosition(pack,state,actor,limits={},table=null){
+ const pool={n:limits.nodes??48};
+ const ctx={
+  pool,lineCap:pool.n,lineSpent:0,
+  deadline:limits.deadline??Infinity,
+  beam:limits.beam??4,
+  opponentLeft:limits.opponentDecisions??2,
+  tt:table||new Map(),
+  stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0}
+ };
+ const left=limits.actorDecisions??2;
+ const value=searchFrom(pack,state,actor,ctx,'us',left);
+ return {value,hits:ctx.stats.transpositionHits,nodes:ctx.lineSpent,
+  key:positionKey(state,actor,'us',left)};
 }
 export {same};

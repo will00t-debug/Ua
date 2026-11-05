@@ -3,9 +3,9 @@
 // chosen action is matched back onto the live legal list.
 import {legalUniversalActions} from '../engine.mjs';
 import {chooseStrengthenedHardAction,HARD_AI_POLICY} from '../hard-ai.mjs';
-import {actorObservation} from './observation.mjs';
+import {actorObservation,packOf,viewerCard} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
-import {selectCandidates,scoreLine,same} from './beam.mjs';
+import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
 
@@ -16,6 +16,21 @@ const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
  'effect-top-order','effect-raid-witness-order','effect-raid-witness-move',
  'life-batch-order']);
 
+// A front character enters rested, so a two-decision horizon ends before it
+// can attack. Credit the first two bodies at the root; the board evaluation
+// itself stays unchanged, so spending one later to save a life still wins.
+function developCredit(pack,state,actor,action,legal){
+ if(action?.type!=='play'||action.line!=='front')return 0;
+ if(legal.some(item=>item.type==='raid'&&item.uid===action.uid))return 0;
+ const mine=state.players[actor];
+ const bodies=(mine?.front||[]).filter(Boolean).length;
+ const energy=(mine?.energy||[]).filter(Boolean).length;
+ if(bodies>=1||energy<1)return 0;
+ const card=viewerCard(state,actor,action.uid);
+ const printed=card?packOf(pack,actor).cards[card.cardId]:null;
+ if(!printed||printed.type!=='character')return 0;
+ return 18;
+}
 function emptyReport(){
  return {decisions:0,forced:0,deferred:0,search:0,prior:0,ismcts:0,fallback:0,
   budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,samples:[]};
@@ -63,39 +78,63 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!worlds.length)return fallback(pack,state,legal,started,'no-world');
   const probe=worlds[0].state;
   const beam=options.beam??5;
-  const ranked=selectCandidates(pack,probe,actor,legal,beam);
+  const combat=state.phase==='attack'||state.pending?.kind==='block'||state.pending?.kind==='effect-block-floor';
+  const pinned=Number.isInteger(options.nodes);
+  const total=pinned?options.nodes:(combat?64:48);
+  const ms=Number.isFinite(options.ms)?options.ms:(pinned?1e9:(combat?64:48));
+  const ordered=rankLegal(pack,probe,actor,legal);
   if(options.mode==='prior'){
    report.prior++;
-   const exact=legal.find(item=>same(item,ranked[0]))||legal[0];
-   return finish(exact,'prior',{actor,seed,worlds:worlds.length,candidates:ranked.slice(0,beam).map(action=>({action}))},started);
+   const exact=legal.find(item=>same(item,ordered[0]))||legal[0];
+   return finish(exact,'prior',{actor,seed,worlds:worlds.length,nodesUsed:0,
+    candidates:ordered.slice(0,beam).map(action=>({action}))},started);
   }
+  const ranked=selectCandidates(pack,probe,actor,legal,beam);
+  const deadline=started+ms;
   if(options.mode==='ismcts'){
    report.ismcts++;
+   const pool={n:total};
    const picked=chooseIsmctsAction(pack,worlds,actor,legal,{
-    nodes:options.nodes??96,beam:1,seed,
+    nodes:total,pool,beam:1,seed,
     actorDecisions:options.actorDecisions??3,
     opponentDecisions:options.opponent===false?0:(options.opponentDecisions??3),
-    deadline:started+(options.ms??80)
+    deadline
    });
+   report.nodes+=total-pool.n;
    const exact=legal.find(item=>same(item,picked?.action));
    if(!exact)return fallback(pack,state,legal,started,'ismcts-empty');
-   return finish(exact,'ismcts',{actor,seed,worlds:worlds.length,visits:picked.visits,fallback:false},started);
+   return finish(exact,'ismcts',{actor,seed,worlds:worlds.length,visits:picked.visits,
+    nodesUsed:total-pool.n,fallback:false},started);
   }
-  const total=Number.isInteger(options.nodes)?options.nodes:96;
-  const share=Math.max(12,Math.floor(total/Math.max(1,ranked.length*worlds.length)));
-  const deadline=started+(options.ms??80);
   const opponentDecisions=options.opponent===false?0:(options.opponentDecisions??4);
-  const limits={
-   nodes:share,beam,deadline,
-   actorDecisions:options.actorDecisions??4,
-   opponentDecisions
-  };
-  const scored=[];
+  const pool={n:total};
+  const jobs=[];
+  const safe=ranked.find(isSafeAction);
+  const front=ranked.find(action=>action.type==='play'&&action.line==='front');
+  if(safe)jobs.push(safe);
+  if(front)jobs.push(front);
   for(const action of ranked){
+   if(safe&&same(action,safe))continue;
+   if(front&&same(action,front))continue;
+   jobs.push(action);
+  }
+  const scored=[];
+  const nodesBefore=report.nodes;
+  for(let index=0;index<jobs.length;index++){
+   if(pool.n<=0){report.budget++;break;}
    if(performance.now()>deadline&&scored.length){report.budget++;break;}
+   const action=jobs[index];
    let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0;
-   for(const world of worlds){
-    const line=scoreLine(pack,world.state,actor,action,limits);
+   for(let w=0;w<worlds.length;w++){
+    if(pool.n<=0){report.budget++;break;}
+    const remain=(jobs.length-index)*worlds.length-w;
+    const cap=isSafeAction(action)?6:Math.max(1,Math.ceil(pool.n/Math.max(1,remain)));
+    const slice=Math.min(pool.n,cap);
+    const line=scoreLine(pack,worlds[w].state,actor,action,{
+     nodes:slice,pool,beam,deadline,
+     actorDecisions:options.actorDecisions??4,
+     opponentDecisions
+    });
     if(!line||!Number.isFinite(line.search))continue;
     totalScore+=line.search;
     n++;
@@ -107,7 +146,7 @@ export function chooseAiV3Action(pack,state,options={}){
     report.unsupported+=line.unsupported;
    }
    if(!n)continue;
-   scored.push({action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,nodes});
+   scored.push({action,search:totalScore/n+developCredit(pack,state,actor,action,legal),opponentTurns:turns,responses,actorDecisions:decisions,nodes});
    report.nodes+=nodes;
    report.transpositionHits=(report.transpositionHits||0)+hits;
   }
@@ -123,10 +162,10 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched');
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
-  return finish(exact,report.samples&&performance.now()>deadline?'budget':'search',{
+  return finish(exact,performance.now()>deadline?'budget':'search',{
    actor,seed,worlds:worlds.length,score:row?.search??null,bonus:blended.bonus,
    opponentTurns:row?.opponentTurns||0,responses:row?.responses||0,
-   actorDecisions:row?.actorDecisions||0,fallback:false,
+   actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,
    candidates:scored.map(item=>({action:item.action,search:item.search,opponentTurns:item.opponentTurns}))
   },started);
  }catch(error){

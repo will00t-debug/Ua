@@ -9,9 +9,10 @@ export function chooseIsmctsAction(pack,worlds,actor,legal,limits){
  const rows=legal.slice(0,8).map(action=>({action,n:0,w:0}));
  if(!rows.length)return {action:null,visits:0};
  const rng=mulberry32(limits.seed>>>0);
+ const pool=limits.pool||{n:limits.nodes||48};
  let guard=0;
  const deadline=limits.deadline??Infinity;
- while(guard++<rows.length*3&&performance.now()<deadline){
+ while(pool.n>0&&guard++<rows.length*4&&performance.now()<deadline){
   const total=rows.reduce((sum,row)=>sum+row.n,0);
   let pick=rows[0],best=-Infinity;
   for(const row of rows){
@@ -21,10 +22,9 @@ export function chooseIsmctsAction(pack,worlds,actor,legal,limits){
    if(ucb>best){best=ucb;pick=row;}
   }
   const world=worlds[rng()%worlds.length];
+  const slice=Math.min(pool.n,Math.max(1,Math.ceil(pool.n/rows.length)));
   const line=scoreLine(pack,world.state,actor,pick.action,{
-   nodes:Math.max(8,Math.floor((limits.nodes||48)/rows.length)),
-   beam:1,
-   deadline,
+   nodes:slice,pool,beam:1,deadline,
    actorDecisions:limits.actorDecisions??2,
    opponentDecisions:limits.opponentDecisions??2
   });
