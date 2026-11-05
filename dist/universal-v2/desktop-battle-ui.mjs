@@ -153,6 +153,9 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
    }
    row.append(el('span',{class:'apCount',text:player.apReady+'/'+player.apTotal}));
    apPlace.append(row);
+   // The native online AP dots have been replaced by the same three card
+   // positions as AI; do not leave a second AP indicator in playerInfo.
+   if(apNode?.classList.contains('apDots'))apNode.remove();
   }
   if(side===1)area.insertBefore(apPlace,area.querySelector('.lineGroup'));
   else area.append(apPlace);
