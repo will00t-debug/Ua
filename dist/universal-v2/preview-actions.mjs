@@ -1710,13 +1710,13 @@ export function moveClickPlan({selectedUid,slotUid,line,slot,legal}){
 export function raidClickPlan({selectedUid,raidBaseUid,slotUid,line,slot,legal}){
  const actions=Array.isArray(legal)?legal:[];
  const raids=actions.filter(a=>a?.type==='raid'&&a.uid===selectedUid);
- const isBase=!!slotUid&&raids.some(a=>a.baseUid===slotUid);
- if(isBase&&raidBaseUid!==slotUid)return {type:'choose-base',baseUid:slotUid};
- // The reducer treats a raid with no line as the front line. Energy raids
- // are the only ones that carry line:'energy'.
+ // Once a base is selected, every board click is a destination attempt.
+ // An occupied destination may ALSO be an eligible base; never switch silently.
  const dest=raidBaseUid?raids.filter(a=>a.baseUid===raidBaseUid&&a.slot===slot&&
   (a.line==='energy'?'energy':'front')===line):[];
- if(dest.length)return {type:'raid',actions:dest};
+ if(raidBaseUid)return dest.length?{type:'raid',actions:dest}:{type:'select'};
+ const isBase=!!slotUid&&raids.some(a=>a.baseUid===slotUid);
+ if(isBase)return {type:'choose-base',baseUid:slotUid};
  const plays=actions.filter(a=>a?.uid===selectedUid&&a.line===line&&a.slot===slot&&
   ['play','move','step'].includes(a.type));
  if(plays.length)return {type:'place',actions:plays};
@@ -1801,14 +1801,16 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
  // Standard paid play: empty legal cell = ordinary entry. Tapping a legal
  // Raid base enters the two-step base -> destination flow; no mode button.
  if(paidRaid){
-  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
-  if(entryMode!=='normal'&&baseCandidate&&raidBaseUid!==slotUid)
-   return {type:'raid-base',baseUid:slotUid};
+  // A locked base means this tap is a destination, including occupied slots
+  // bearing another valid base card. Changing base requires the explicit UI button.
   if(raidBaseUid){
    const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
     entryDestination(action,line,slot,slotUid));
    return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
   }
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(entryMode!=='normal'&&baseCandidate)
+   return {type:'raid-base',baseUid:slotUid};
   // An explicitly entered Raid gesture cannot silently become ordinary play
   // by clicking another occupied cell before choosing its legitimate base.
   if(entryMode==='raid')return {type:'entry-wait',mode:'raid'};
@@ -1823,14 +1825,13 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
   selection.needsMode?null:selection.raid.length?'raid':'normal';
  if(!mode)return {type:'entry-mode'};
  if(mode==='raid'&&selection.raid.some(action=>action.baseUid)){
-  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
-  if(baseCandidate&&raidBaseUid!==slotUid)
-   return {type:'raid-base',baseUid:slotUid};
   if(raidBaseUid){
    const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
     entryDestination(action,line,slot,slotUid));
    return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
   }
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(baseCandidate)return {type:'raid-base',baseUid:slotUid};
   return {type:'entry-wait',mode:'raid'};
  }
  const hits=(mode==='raid'?selection.raid:selection.normal)

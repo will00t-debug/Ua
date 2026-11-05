@@ -1075,6 +1075,9 @@ function legacyCommands(legal){
   if(selection.needsMode||paidDual)bar.append(btn(chosen==='raid'?'改為普通進場':'改為突襲進場',()=>{
    app.entryMode=chosen==='raid'?'normal':'raid';app.raidBaseUid=null;app.targetChoices=null;render();
   },'btn small quiet'));
+  if(chosen==='raid'&&app.raidBaseUid)bar.append(btn('重新選擇底板',()=>{
+   app.raidBaseUid=null;app.entryMode='raid';app.targetChoices=null;render();
+  },'btn small quiet'));
  }
  if(s.pending?.kind==='life-trigger'&&app.lifeRaidBoard){
   if(legal.some(action=>action.type==='chooseTrigger'&&(action.mode==='skip'||action.mode==='get')))
@@ -1617,6 +1620,16 @@ function applyAction(a){
  try{
   const legal=legalUniversalActions(app.packs,app.state);
   if(!isExactLegal(a,legal))throw Error('操作已非目前的合法動作，請重新選擇。');
+  // Confirmation occurs before changing AP, board slots, Raid layers or history.
+  // Cancel leaves the selected Raid base and destination choices untouched.
+  const replacementLine=a.line==='energy'?'energy':'front';
+  const displaced=typeof a.replaceUid==='string'?
+   app.state.players[0]?.[replacementLine]?.[a.slot]:null;
+  if(displaced?.uid===a.replaceUid){
+   const name=cardDef(0,displaced.cardId)?.name||displaced.cardId||'原角色';
+   if(!window.confirm('確認擠位？\n將取代 '+name+' 所在的'+
+    (replacementLine==='front'?'前線':'能源線')+'格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。'))return;
+  }
   app.undo={state:app.state,history:app.history.slice(),replay:app.replay,
    publicMoves:app.publicMoves.slice()};
   const previous=app.state;

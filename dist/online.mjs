@@ -611,14 +611,15 @@ function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUi
  // Standard paid play: empty legal cell = ordinary entry. Tapping a legal
  // Raid base enters the two-step base -> destination flow; no mode button.
  if(paidRaid){
-  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
-  if(entryMode!=='normal'&&baseCandidate&&raidBaseUid!==slotUid)
-   return {type:'raid-base',baseUid:slotUid};
+  // Once a base is fixed, a second occupied card is a destination click,
+  // even if that card is also a legal Raid base.
   if(raidBaseUid){
    const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
     entryDestination(action,line,slot,slotUid));
    return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
   }
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(entryMode!=='normal'&&baseCandidate)return {type:'raid-base',baseUid:slotUid};
   // An explicitly entered Raid gesture cannot silently become ordinary play
   // by clicking another occupied cell before choosing its legitimate base.
   if(entryMode==='raid')return {type:'entry-wait',mode:'raid'};
@@ -633,14 +634,13 @@ function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUi
   selection.needsMode?null:selection.raid.length?'raid':'normal';
  if(!mode)return {type:'entry-mode'};
  if(mode==='raid'&&selection.raid.some(action=>action.baseUid)){
-  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
-  if(baseCandidate&&raidBaseUid!==slotUid)
-   return {type:'raid-base',baseUid:slotUid};
   if(raidBaseUid){
    const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
     entryDestination(action,line,slot,slotUid));
    return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
   }
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(baseCandidate)return {type:'raid-base',baseUid:slotUid};
   return {type:'entry-wait',mode:'raid'};
  }
  const hits=(mode==='raid'?selection.raid:selection.normal)
@@ -1294,6 +1294,10 @@ function matchView(){
     app.pick={uid:app.pick.uid,entryMode:choice.mode,
      raidBaseUid:choice.mode==='raid'?app.pick.raidBaseUid:null,options:null};render();
    }}));
+ if(room.yourTurn&&app.pick?.raidBaseUid&&!app.pick?.options?.length)
+  actions.append(el('button',{type:'button',text:'重新選擇底板',disabled:app.busy,onClick:()=>{
+   app.pick={...app.pick,entryMode:'raid',raidBaseUid:null,options:null};render();
+  }}));
  if(room.yourTurn&&room.view?.pending&&app.pick?.uid&&
   (room.choices||[]).some(action=>boardEntryMode(action)))
   actions.append(el('button',{type:'button',text:'重新選擇角色',onClick:()=>{
@@ -1623,9 +1627,29 @@ async function cancelRoom(){
 }
 async function sendAction(index){
  if(!app.room||app.busy)return;
- await loadDecisions();
- const choice=(app.room.choices||[]).find(item=>item.index===index);
+ const snapshot=app.room;
+ const choice=(snapshot.choices||[]).find(item=>item.index===index);
  if(!choice)return;
+ // The server remains authoritative; confirm only a reducer-approved
+ // replacement and never send a stale action after an awaited UI operation.
+ if(typeof choice.replaceUid==='string'){
+  const line=choice.line==='energy'?'energy':'front';
+  const displaced=snapshot.view?.players?.[snapshot.seat]?.[line]?.[choice.slot];
+  if(displaced?.uid!==choice.replaceUid){
+   app.error='格子內容已改變，請重新選擇登場位置。';render();return;
+  }
+  const name=displaced.name||displaced.cardId||'原角色';
+  if(!window.confirm('確認擠位？\n將取代 '+name+' 所在的'+
+   (line==='front'?'前線':'能源線')+'格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。'))return;
+ }
+ await loadDecisions();
+ if(!app.room||app.room.code!==snapshot.code||
+  app.room.revision!==snapshot.revision||!app.room.yourTurn||app.busy||
+  !(app.room.choices||[]).some(item=>item.index===index&&item.uid===choice.uid&&
+   item.replaceUid===choice.replaceUid&&item.baseUid===choice.baseUid&&
+   item.slot===choice.slot&&item.line===choice.line)){
+  app.error='對局操作已更新，請重新選擇。';render();return;
+ }
  decisions().arm(app.room,choice);
  app.busy=true;app.error='';render();
  try{applyRoom(await api('/api/rooms/'+app.room.code+'/actions',{method:'POST',body:{index}}));}

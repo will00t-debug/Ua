@@ -71,7 +71,8 @@ test('raid starts on the base click and submits only on the entry slot',()=>{
  assert.deepEqual(raidClickPlan({selectedUid:'hand',raidBaseUid:'energy-base',slotUid:null,
   line:'front',slot:2,legal}),{type:'raid',actions:[legal[2]]});
  assert.deepEqual(raidClickPlan({selectedUid:'hand',raidBaseUid:'energy-base',slotUid:'front-base',
-  line:'front',slot:0,legal}),{type:'choose-base',baseUid:'front-base'});
+  line:'front',slot:0,legal}),{type:'select'},
+  'a locked energy base must not silently switch to an occupied front Raid base');
  assert.deepEqual(raidClickPlan({selectedUid:'hand',raidBaseUid:null,slotUid:null,
   line:'front',slot:3,legal}),{type:'place',actions:[legal[3]]});
  assert.equal(raidClickPlan({selectedUid:'hand',raidBaseUid:null,slotUid:null,
