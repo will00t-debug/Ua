@@ -217,31 +217,48 @@ function afterLookFollow(pack,s,q,taken,rest){
    return;
   }
  }
- if(q.id==='CSM-1-035'){
-  if(is(MAKIMA)){
-   const dates=plOf(s,q.player).outside.filter(c=>named(pack,c,DATE,s));
-   hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'recover',
-    data:{...q.data,left:rest}},[
-    {type:'csm',mode:'skip'},...dates.map(c=>({type:'csm',mode:'take',uid:c.uid}))]);
-   return;
-  }
-  if(is(REZE)){
-   const denji=plOf(s,q.player).outside.filter(c=>named(pack,c,DENJI,s)&&def(pack,c).energy<=1);
-   hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'recover',
-    data:{...q.data,left:rest}},[
-    {type:'csm',mode:'skip'},...denji.map(c=>({type:'csm',mode:'take',uid:c.uid}))]);
-   return;
-  }
+ // Printed order is reveal to hand, arrange the rest, then the follow-up.
+ // 033 may put the card just added outside. 035's outside add is optional.
+ if(q.id==='CSM-1-035'&&(is(MAKIMA)||is(REZE))){
+  q.data.takenUid=taken.uid;
+  scheduleOrderThen(s,q,rest,'follow035');
+  return;
  }
  if(q.id==='CSM-1-033'&&!is(REZE)){
-  const hand=plOf(s,q.player).hand.filter(c=>c.uid!==taken.uid);
-  if(hand.length){
-   hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'discard',
-    data:{...q.data,left:rest}},hand.map(c=>({type:'csm',mode:'discard',uid:c.uid})));
-   return;
-  }
+  q.data.takenUid=taken.uid;
+  scheduleOrderThen(s,q,rest,'discard033');
+  return;
  }
  offerOrder(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,data:q.data},rest,q.data.rest);
+}
+function scheduleOrderThen(s,q,rest,kind){
+ q.data={...q.data,afterOrder:kind};
+ const opened=offerOrder(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,data:q.data},
+  rest,q.data.rest);
+ if(!opened)runAfterOrder(s,q);
+}
+function runAfterOrder(s,q){
+ if(q.data?.afterOrder==='discard033'){
+  const hand=plOf(s,q.player).hand;
+  if(!hand.length)return;
+  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'discard'},
+   hand.map(c=>({type:'csm',mode:'discard',uid:c.uid})));
+  return;
+ }
+ if(q.data?.afterOrder==='follow035')offer035Follow(s,q);
+}
+function offer035Follow(s,q){
+ const taken=plOf(s,q.player).hand.find(c=>c.uid===q.data?.takenUid);
+ if(!taken)return;
+ let pool=[];
+ if(named(A.pack,taken,MAKIMA,s))
+  pool=plOf(s,q.player).outside.filter(c=>named(A.pack,c,DATE,s));
+ else if(named(A.pack,taken,REZE,s))
+  pool=plOf(s,q.player).outside.filter(c=>named(A.pack,c,DENJI,s)&&
+   def(A.pack,c).energy<=1);
+ if(!pool.length)return;
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'recover'},[
+  {type:'csm',mode:'skip'},...pool.map(c=>({type:'csm',mode:'take',uid:c.uid}))]);
 }
 function finishOrder(s,q,a){
  const left=q.data.left.filter(uid=>uid!==a.uid);
@@ -250,6 +267,7 @@ function finishOrder(s,q,a){
   lay(plOf(s,q.player),[...built,...left],q.data.rest);
   if(q.data.drawIfSkipped)A.draw(A.pack,s,q.player,1,q.sourceUid);
   if(q.id==='CSM-1-008'&&q.data.takenUid)continue008(A.pack,s,q);
+  else if(q.data.afterOrder)runAfterOrder(s,q);
   return;
  }
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'lookOrder',
@@ -453,9 +471,11 @@ function runPlay(pack,s,job){
  if(id==='CSM-1-035')return beginLook(pack,s,job,{count:6,rest:'bottom',dest:'hand',
   public:true,discard:false,follow:true,pred:d=>d.type==='character'});
  if(id==='CSM-1-037'){
-  hold(s,{...spec,step:'choose'},[
-   {type:'csm',mode:'aura'},
-   ...(!locked(s,owner,'dateDraw')?[{type:'csm',mode:'draw'}]:[])]);
+  // The BP line must choose a character. The draw line is the name-once branch.
+  const actions=[
+   ...(chars(s,owner).length?[{type:'csm',mode:'aura'}]:[]),
+   ...(!locked(s,owner,'dateDraw')?[{type:'csm',mode:'draw'}]:[])];
+  if(actions.length)hold(s,{...spec,step:'choose'},actions);
   return;
  }
  if(id==='CSM-1-038'){
@@ -671,7 +691,10 @@ function runAfterOwnRetire(pack,s,job){
   hold(s,{...spec,step:'afterRetireChoose'},[
    {type:'csm',mode:'one'},{type:'csm',mode:'two'}]);
  }else if(job.kind==='ap038'){
-  offerAp(s,{...spec,data:{next:'draw2'}},false);
+  // Activating an AP does not gate the draw. Zero or one rested AP resolves
+  // immediately; two or more wait for the choice, which then draws.
+  if(!offerAp(s,{...spec,data:{next:'draw2'}},false))
+   A.draw(pack,s,owner,2,job.sourceUid);
  }
 }
 function runAfterFoeRetire(pack,s,job){
@@ -1133,7 +1156,9 @@ function resolveChoose(pack,s,q,a){
   }else{
    lock(s,owner,'dateDraw');
    A.draw(pack,s,owner,2,q.sourceUid);
-   offerHand(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{nextAp:otherEventsUsed(s,owner,q.sourceUid)>0}},false);
+   const nextAp=otherEventsUsed(s,owner,q.sourceUid)>0;
+   if(!offerHand(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{nextAp}},false)&&nextAp)
+    offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
   }
   return;
  }
@@ -1309,7 +1334,7 @@ export function csmOnAttackWin(pack,s,attacker){
 export function csmOnUnblocked(pack,s,attacker){
  const d=def(pack,attacker);
  if(!d?.csmHook)return;
- if(d.id==='CSM-1-029')
+ if(d.id==='CSM-1-029'&&!originalEffectsDisabled(s,attacker))
   s.effectQueue.unshift({op:'csm',id:d.id,slot:'unblocked',owner:s.active,sourceUid:attacker.uid});
  if(d.id==='CSM-1-046'&&attacker.csmUnblockedDraw===s.turn)
   A.draw(pack,s,s.active,1,attacker.uid);

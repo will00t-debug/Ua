@@ -266,6 +266,7 @@ test('CSM-1-015 gains 500 BP for each event its controller used this turn',()=>{
  assert.equal(universalBp(packs,s,live(s,0,fiend.uid)),pack.cards['CSM-1-015'].bp+1000);
  s=toPhase(s,'attack');
  s=use(s,{type:'next'});
+ while(s.pending?.kind==='end-hand-limit')s=choose(s,a=>a.type==='chooseHandLimit');
  assert.notEqual(s.active,0);
  assert.equal(universalBp(packs,s,live(s,0,fiend.uid)),pack.cards['CSM-1-015'].bp);
  assertUniversalMatch(packs,s);
