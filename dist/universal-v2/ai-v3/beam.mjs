@@ -274,6 +274,8 @@ function fastOpponent(pack,cursor,actor,ctx){
   if(!action||!room(ctx)){ctx.stats.budget++;break;}
   try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
   if(!spend(ctx)){ctx.stats.budget++;break;}
+  if(legal.length>1&&seat!==actor)ctx.stats.responses++;
+  noteStep(ctx,action,'script');
   cursor=settleBattle(pack,autoAdvance(pack,cursor,ctx),actor,ctx);
  }
  noteLeaf(ctx,cursor);
@@ -294,6 +296,12 @@ function greedyAction(pack,state,actor,legal){
   return legal.find(action=>action.type==='next');
  return null;
 }
+function brief(action,kind){
+ return {type:action.type,uid:action.uid??null,line:action.line||null,mode:action.mode||null,kind};
+}
+function noteStep(ctx,action,kind){
+ if(ctx.stats.sequence)ctx.stats.sequence.push(brief(action,kind));
+}
 function roll(pack,cursor,actor,ctx,pick){
  for(let step=0;step<8&&room(ctx)&&cursor.status==='playing';step++){
   if((cursor.pending?.player??cursor.active)!==actor)break;
@@ -304,10 +312,149 @@ function roll(pack,cursor,actor,ctx,pick){
   if(!room(ctx)){ctx.stats.budget++;break;}
   try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
   if(!spend(ctx)){ctx.stats.budget++;break;}
+  noteStep(ctx,action,'script');
   cursor=settleBattle(pack,autoAdvance(pack,cursor,ctx),actor,ctx);
  }
  noteLeaf(ctx,cursor);
  return cursor;
+}
+function leafSnap(ctx){
+ return {
+  boundary:ctx.stats.boundary,handedOff:ctx.stats.handedOff,returned:ctx.stats.returned,
+  settled:ctx.stats.settled,cut:ctx.stats.cut,exhausted:ctx.stats.exhausted,
+  leafPending:ctx.stats.leafPending,leafPhase:ctx.stats.leafPhase,
+  leafOwnTurns:ctx.stats.leafOwnTurns,leafTurn:ctx.stats.leafTurn,leafActive:ctx.stats.leafActive,
+  opponentTurns:ctx.stats.opponentTurns,responses:ctx.stats.responses,
+  sequence:ctx.stats.sequence?ctx.stats.sequence.slice():[]
+ };
+}
+function applyLeaf(ctx,snap){
+ ctx.stats.boundary=snap.boundary;ctx.stats.handedOff=snap.handedOff;ctx.stats.returned=snap.returned;
+ ctx.stats.settled=snap.settled;ctx.stats.cut=snap.cut;ctx.stats.exhausted=snap.exhausted;
+ ctx.stats.leafPending=snap.leafPending;ctx.stats.leafPhase=snap.leafPhase;
+ ctx.stats.leafOwnTurns=snap.leafOwnTurns;ctx.stats.leafTurn=snap.leafTurn;ctx.stats.leafActive=snap.leafActive;
+ ctx.stats.opponentTurns=snap.opponentTurns;ctx.stats.responses=snap.responses;
+ ctx.stats.sequence=snap.sequence.slice();
+}
+function advanceForced(pack,cursor,ctx){
+ for(let guard=0;guard<12&&room(ctx)&&cursor.status==='playing';guard++){
+  let legal;
+  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
+  const ordered=cursor.pending&&ORDER_KINDS.has(cursor.pending.kind);
+  if(!ordered&&legal.length!==1)return cursor;
+  if(!legal.length)return cursor;
+  if(!room(ctx)){ctx.stats.budget++;return cursor;}
+  const action=legal[0];
+  try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;return cursor;}
+  if(!spend(ctx)){ctx.stats.budget++;return cursor;}
+  noteStep(ctx,action,'forced');
+  if(ordered)ctx.stats.orderSteps++;
+ }
+ return cursor;
+}
+function planCandidates(pack,state,seat,legal,beam){
+ const picked=selectCandidates(pack,state,seat,legal,beam);
+ const next=legal.find(action=>action.type==='next');
+ if(next&&!picked.some(action=>same(action,next))){
+  if(picked.length<beam)picked.push(next);
+  else{
+   const spare=picked.findIndex(action=>action.type!=='play'&&action.type!=='raid'&&action.type!=='attack'&&action.type!=='next');
+   picked[spare>=0?spare:picked.length-1]=next;
+  }
+ }
+ return picked;
+}
+function replyFrom(pack,state,actor,ctx,left){
+ if(!room(ctx)||state.status!=='playing')return state;
+ if(!state.pending&&state.active===actor)return state;
+ let cursor=advanceForced(pack,state,ctx);
+ if(!room(ctx)||cursor.status!=='playing'||(!cursor.pending&&cursor.active===actor))return cursor;
+ if(left<=0)return fastOpponent(pack,cursor,actor,ctx);
+ let legal;
+ try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
+ const seat=who(cursor);
+ const candidates=planCandidates(pack,cursor,seat,legal,2);
+ if(candidates.length<=1)return fastOpponent(pack,cursor,actor,ctx);
+ ctx.stats.followBranches+=candidates.length;
+ ctx.stats.maxDepth=Math.max(ctx.stats.maxDepth||1,(ctx.replyDepth||0)+1);
+ const maximize=seat===actor;
+ const mark=ctx.stats.sequence.length;
+ let best=null;
+ for(const action of candidates){
+  if(!room(ctx)){ctx.stats.budget++;break;}
+  ctx.stats.sequence.length=mark;
+  let next;
+  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
+  if(!spend(ctx)){ctx.stats.budget++;break;}
+  noteStep(ctx,action,'reply');
+  if(seat!==actor)ctx.stats.responses++;
+  const saved=ctx.replyDepth||0;
+  ctx.replyDepth=saved+1;
+  const after=replyFrom(pack,next,actor,ctx,left-1);
+  ctx.replyDepth=saved;
+  const value=terminalValue(after,actor)??evaluate(pack,after,actor);
+  if(!best||(maximize?value>best.value:value<best.value))best={value,state:after,sequence:ctx.stats.sequence.slice()};
+ }
+ if(!best)return cursor;
+ ctx.stats.sequence=best.sequence;
+ return best.state;
+}
+function planFrom(pack,state,actor,ctx,left,depth){
+ ctx.stats.maxDepth=Math.max(ctx.stats.maxDepth||1,depth);
+ const done=terminalValue(state,actor);
+ if(done!==null){classifyLine(ctx,state,actor);return done;}
+ if(!room(ctx)){classifyLine(ctx,state,actor);return evaluate(pack,state,actor);}
+ let cursor=advanceForced(pack,state,ctx);
+ const mid=terminalValue(cursor,actor);
+ if(mid!==null){classifyLine(ctx,cursor,actor);return mid;}
+ if(!cursor.pending&&cursor.active!==actor){
+  ctx.stats.opponentTurns++;
+  cursor=ctx.plan==='tree-replies'?replyFrom(pack,cursor,actor,ctx,ctx.opponentLeft??2):fastOpponent(pack,cursor,actor,ctx);
+  classifyLine(ctx,cursor,actor);
+  const end=terminalValue(cursor,actor);
+  return end!==null?end:evaluate(pack,cursor,actor);
+ }
+ if(left<=0){classifyLine(ctx,cursor,actor);return evaluate(pack,cursor,actor);}
+ let legal;
+ try{legal=legalUniversalActions(pack,cursor);}catch{
+  ctx.stats.unsupported++;
+  classifyLine(ctx,cursor,actor);
+  return evaluate(pack,cursor,actor);
+ }
+ if(!legal.length){classifyLine(ctx,cursor,actor);return evaluate(pack,cursor,actor);}
+ const seat=who(cursor);
+ const candidates=planCandidates(pack,cursor,seat,legal,Math.max(1,ctx.beam||1));
+ ctx.stats.followBranches+=candidates.length;
+ const before=leafSnap(ctx);
+ let best=null;
+ for(const action of candidates){
+  if(!room(ctx)){ctx.stats.budget++;break;}
+  applyLeaf(ctx,before);
+  let next;
+  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
+  if(!spend(ctx)){ctx.stats.budget++;break;}
+  noteStep(ctx,action,'choice');
+  if(seat===actor)ctx.stats.actorDecisions++;
+  else ctx.stats.responses++;
+  const value=planFrom(pack,next,actor,ctx,left-1,depth+1);
+  const snap=leafSnap(ctx);
+  const settled=!!ctx.stats.settled;
+  if(!best||(settled&&!best.settled)||(settled===best.settled&&value>best.value))
+   best={value,snap,settled};
+ }
+ const branches=ctx.stats.followBranches;
+ const deepest=ctx.stats.maxDepth;
+ if(!best){
+  applyLeaf(ctx,before);
+  classifyLine(ctx,cursor,actor);
+  ctx.stats.followBranches=branches;
+  ctx.stats.maxDepth=deepest;
+  return evaluate(pack,cursor,actor);
+ }
+ applyLeaf(ctx,best.snap);
+ ctx.stats.followBranches=branches;
+ ctx.stats.maxDepth=Math.max(deepest,depth+1);
+ return best.value;
 }
 function remember(ctx,key,value,mark){
  if(ctx.stats.budget===mark)ctx.tt.set(key,value);
@@ -325,6 +472,8 @@ function searchFrom(pack,state,actor,ctx,mode,left){
   return evaluate(pack,state,actor);
  }
  if(ctx.finish&&mode==='us'){
+  ctx.stats.maxDepth=1;
+  ctx.stats.followBranches=0;
   let cursor=roll(pack,state,actor,ctx,continuationAction);
   cursor=roll(pack,cursor,actor,ctx,attackOrEnd);
   const mid=terminalValue(cursor,actor);
@@ -413,14 +562,16 @@ export function scoreLine(pack,state,actor,action,limits){
  const ctx={
   pool,lineCap,lineSpent:0,
   deadline:limits.deadline??Infinity,
-  finish:limits.finish!==false,
+  plan:limits.plan||(limits.finish===false?'tree':'rollout'),
   beam:limits.beam,
   opponentLeft:limits.opponentDecisions,
   origin:{turn:state.turn,ownTurns:state.players[actor].ownTurns,phase:state.phase,actor},
   tt:limits.tt||new Map(),
   stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0,
-   boundary:'open',handedOff:false,returned:false,cut:null}
+   boundary:'open',handedOff:false,returned:false,cut:null,followBranches:0,maxDepth:1,sequence:[],
+   plan:limits.plan||(limits.finish===false?'tree':'rollout')}
  };
+ ctx.finish=ctx.plan==='rollout';
  if(!room(ctx)){
   classifyLine(ctx,state,actor);
   if(!(pool.n>0))ctx.stats.cut='nodes';
@@ -437,7 +588,10 @@ export function scoreLine(pack,state,actor,action,limits){
   return lineView(ctx,evaluate(pack,next,actor));
  }
  ctx.stats.actorDecisions++;
- const value=searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions);
+ noteStep(ctx,action,'root');
+ const value=ctx.plan==='rollout'
+  ?searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions)
+  :planFrom(pack,next,actor,ctx,limits.actorDecisions??2,1);
  return lineView(ctx,value);
 }
 export function searchPosition(pack,state,actor,limits={},table=null){

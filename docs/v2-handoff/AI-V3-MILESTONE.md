@@ -38,6 +38,8 @@ AI_V3_GAMES=3 AI_V3_STEPS=400 AI_V3_MODES=beam AI_V3_DEV_SEED=8100 node scripts/
 AI_V3_SPLIT=final AI_V3_GAMES=3 AI_V3_STEPS=400 AI_V3_MODES=beam AI_V3_FINAL_SEED=9100 node scripts/ai-v3-benchmark.mjs
 AI_V3_POOL=battle AI_V3_MODES=beam AI_V3_OPPONENT=default AI_V3_GAMES=1 AI_V3_STEPS=400 AI_V3_DEV_SEED=8200 node scripts/ai-v3-benchmark.mjs
 AI_V3_POOL=battle AI_V3_MODES=beam AI_V3_OPPONENT=matched AI_V3_MS=100 AI_V3_NODES=120 AI_V3_TITLES=reject-blue,white-sword,renruki AI_V3_GAMES=1 AI_V3_STEPS=400 AI_V3_DEV_SEED=8200 node scripts/ai-v3-benchmark.mjs
+node --test tests/ai-v3-plan.test.mjs
+AI_V3_POOL=battle AI_V3_TITLES=reject-blue,white-sword,renruki AI_V3_MODES=tree AI_V3_ANCHOR=rollout AI_V3_GAMES=3 AI_V3_STEPS=400 AI_V3_DEV_SEED=8300 AI_V3_MS=40 AI_V3_NODES=48 node scripts/ai-v3-benchmark.mjs
 ```
 
 策略題、完整對局與瀏覽器預覽共用 `MATCH_LIMITS`：`nodes=48`、`ms=40`、`beam=4`、雙方各 2 個決策、`worlds=1`。開發種子從 `AI_V3_DEV_SEED`（預設 8100）起，只用來找失敗模式。5000–5002 是上一輪已經看過的 0 勝 60 敗，只留作回歸。這輪的最終驗收是 9100–9102，沒有用來改任何常數。
@@ -210,9 +212,36 @@ Chrome headless 打開本機預覽頁。核取方塊一開始未勾、`localStor
 
 同預算的三勝：Solo Leveling 後手生命 5/0、魔法少女先手生命 1/0、無職轉生後手生命 2/0。假面騎士有 1 場打到 400 步，雙方生命都是 2。P95 沒有靠近 300ms 或 800ms：多出來的時間沒有變成更多勝場。這是開發種子，不是最終驗收。
 
+## 多層搜尋與固定 rollout（2026-11-05 20:55–21:28，台北時間）
+
+`chooseAiV3Action` 以前把每條根線交給 `scoreLine`，而 `scoreLine` 預設 `finish=true`。`searchFrom` 一進場就走固定腳本：棄牌與回復只留一張、有攻擊就攻擊、否則 `next`，然後對手每步只拿 `rankLegal` 的第一個。函式後半的遞迴分支不會執行。`searchPosition` 沒有設 `finish`，所以它的測試不能代表實戰。
+
+實戰入口現在把這條腳本留成 `plan:'rollout'`。預設改為 `plan:'tree'`：唯一合法動作才直接推進；出牌、突襲、移動、事件、攻擊、棄牌、回收與阻擋保留多個候選，逐層搜尋。`next` 一直留在候選裡，但不再把後續路線全部導向攻擊或交回合。順序視窗仍是解算，不佔決策層。同一條線的節點、時間與回合邊界沿用原本的池和 `classifyLine`。對手的多種回應是另一個 `plan:'tree-replies'`，每步最多兩個候選，深度受 `opponentDecisions` 限制，不在每個節點呼叫完整困難搜尋，而且只看 belief world。
+
+`tests/ai-v3-plan.test.mjs` 從 `chooseAiV3Action` 記錄根候選、後續分支、最深決策層、對手回應、節點與動作序列。固定 rollout 在 200 個節點時後續分支是 0、深度是 1，序列裡沒有 `choice`。多層搜尋在 24 個節點時還沒展開後續選擇；80 個節點時選出牌底板，序列接著是突襲、兩次棄牌與攻擊。`tree-replies` 的同一條序列裡出現 `reply`。
+
+開發種子 8300–8302。牌組、起手與先手固定，只交換 AI。每組 4 場、400 步。實戰的 `actorDecisions` 仍是 2，所以這些對局的最深層是 3。
+
+| 對照 | 預算 | 勝/敗/未完 | 完成搜尋 | 備援 | P95 | 最深層 | 後續分支 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| tree 對 rollout，三副指定 | 40ms/48 | 27/9/0 | 9–14% | 56–68% | 40.8 | 3 | 9389–14682 |
+| tree 對 rollout，三副指定 | 300ms/360 | 18/18/0 | 41–48% | 15–34% | 226.8–243.7 | 3 | 9496–22948 |
+| tree-replies 對 tree，三副指定 | 40ms/48 | 19/17/0 | 9–15% | 53–69% | 40.9 | 3 | 10209–16487 |
+| tree-replies 對 tree，三副指定 | 300ms/360 | 17/19/0 | 44–48% | 11–26% | 282.9–300.7 | 3 | 16857–31209 |
+
+40ms 的三副配對差都是 +0.25，bootstrap 下緣 0.08。同一組種子稍後和全部 15 副一起重跑時，時鐘吃掉的節點不同，三副變成 7/5、9/3、8/4。15 副合計 117 勝、61 敗、2 場未完；鏈鋸人有 2 場在攻擊結算時觸發既有的 `Forged temporary physical battle grant`，沒有改規則引擎。多數單副的配對區間含 0。300ms 沒有勝過固定 rollout。對手分支也沒有再提高勝率，所以預設仍是 `tree` 加上原本的快速對手，不改評分。
+
+代表敗局：
+
+- 40ms、白劍、種子 8300、先手 1、新版座位 1。70 步結束，生命 7/0。序列幾乎只有 `next` 與觸發，出牌 1 次，沒有攻擊也沒有突襲。40ms 裡約六成決策走備援，這一場沒有把底板連到突襲。
+- 300ms、我拒絕、種子 8302、先手 1、新版座位 0。212 步，生命 0/7。攻擊 9 次、突襲 0 次。較長預算把完成搜尋拉到約五成，但選到的仍是能源與過牌，不是兩步突襲。
+- 300ms、白劍、種子 8300、兩個後手座位。60 與 66 步就結束，生命 7/0，角色出牌是 0。`next` 已回到自己的下一回合，未完成的出牌線不參加比較，搜尋就結束階段。
+
+9100 之後的最終種子這輪沒有用。15 副的 40ms 優勢會隨時鐘變動，300ms 也沒有同樣的優勢，所以還不到最終驗收。
+
 ## 未達標
 
-- 9100–9102 是 3 勝 55 敗，此後只留作回歸。8200 的真實牌型也沒有勝過現行預設或同預算的困難基準。策略題選對、以及較長預算降低備援率，都不是整場勝率。這不是戰力提升。
+- 9100–9102 是 3 勝 55 敗，此後只留作回歸。8200 沒有勝過現行預設或同預算的困難基準。8300 的多層搜尋在 40ms 對固定 rollout 有優勢，但 300ms 是 18 勝 18 敗，15 副重跑也會隨時鐘改變單副勝場。這還不是對最終種子的戰力驗收。
 - 價值網路沒有訓練。先驗只在呼叫端傳入 v4 權重時生效。
 - 瀏覽器 Worker 路徑先送一個已抹除隱藏資訊的世界，Worker 內再以 `worlds:1` 搜尋。同預算表裡的 belief 是行程內 2 個世界，兩者不要看成同一個路徑。
 - 不合併、不部署正式站。預覽仍是預設關閉，關閉後回到這場選擇的難度。

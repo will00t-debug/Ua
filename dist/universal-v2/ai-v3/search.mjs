@@ -28,7 +28,8 @@ const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
 
 function emptyReport(){
  return {decisions:0,forced:0,deferred:0,search:0,prior:0,ismcts:0,fallback:0,
-  budgetFallback:0,budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,samples:[]};
+  budgetFallback:0,budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,samples:[],
+  followBranches:0,maxDepth:0,responses:0};
 }
 let report=emptyReport();
 let lastTrace=null;
@@ -42,6 +43,9 @@ function finish(action,reason,extra,started){
  report.maxMs=Math.max(report.maxMs,ms);
  if(report.samples.length<4000)report.samples.push(Math.round(ms*10)/10);
  lastTrace={policy:AI_V3_POLICY,baseline:AI_V3_BASELINE,reason,ms,action:action?.type||null,...extra};
+ report.followBranches+=extra.followBranches||0;
+ report.maxDepth=Math.max(report.maxDepth||0,extra.maxDepth||0);
+ report.responses+=extra.responses||0;
  return action;
 }
 function cardOf(state,actor,uid){
@@ -162,11 +166,13 @@ export function chooseAiV3Action(pack,state,options={}){
    if(performance.now()>deadline&&scored.length){report.budget++;break;}
    const action=jobs[index];
    let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0,settled=0,pending=null,phase=null,boundary=null,cut=null;
+   let followBranches=0,maxDepth=1,sequence=null;
+   const plan=options.plan||'tree';
    for(let w=0;w<worlds.length;w++){
     if(pool.n<=0){report.budget++;break;}
     const slice=Math.min(pool.n-reserve,lineFloor);
     const line=scoreLine(pack,worlds[w].state,actor,action,{
-     nodes:slice,pool,beam,deadline,actorDecisions,opponentDecisions
+     nodes:slice,pool,beam,deadline,actorDecisions,opponentDecisions,plan
     });
     if(!line||!Number.isFinite(line.search))continue;
     totalScore+=line.search;
@@ -180,17 +186,24 @@ export function chooseAiV3Action(pack,state,options={}){
     phase=line.phase;
     boundary=line.boundary;
     cut=line.cut;
+    followBranches+=line.followBranches||0;
+    maxDepth=Math.max(maxDepth,line.maxDepth||1);
+    sequence=line.sequence||sequence;
     hits+=line.transpositionHits;
     report.unsupported+=line.unsupported;
    }
    if(!n)continue;
    scored.push({action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
-    nodes,settled:settled===n,pending,phase,boundary,cut});
+    nodes,settled:settled===n,pending,phase,boundary,cut,followBranches,maxDepth,sequence});
    report.nodes+=nodes;
    report.transpositionHits=(report.transpositionHits||0)+hits;
   }
   const viewed=scored.map(item=>({action:item.action,search:item.search,opponentTurns:item.opponentTurns,
-   settled:item.settled,boundary:item.boundary,cut:item.cut,pending:item.pending,phase:item.phase,nodes:item.nodes}));
+   settled:item.settled,boundary:item.boundary,cut:item.cut,pending:item.pending,phase:item.phase,nodes:item.nodes,
+   followBranches:item.followBranches,maxDepth:item.maxDepth,sequence:item.sequence}));
+  const followBranches=scored.reduce((sum,item)=>sum+(item.followBranches||0),0);
+  const maxDepth=scored.reduce((sum,item)=>Math.max(sum,item.maxDepth||1),1);
+  const plan=options.plan||'tree';
   const backup=reliableChoice(pack,state,actor,legal,hardExact,ordered);
   // Only lines that reached the same finished boundary compete. A same-turn
   // attack, a yielded turn, and a pending window are not that boundary.
@@ -213,7 +226,10 @@ export function chooseAiV3Action(pack,state,options={}){
    report.budget++;
    return finish(backup,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,incomplete:true,
-    hard:hardExact,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed
+    hard:hardExact,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,
+    plan,roots:jobs.length,followBranches,maxDepth,
+    responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
+    sequence:(scored.find(item=>item.sequence?.length)||{}).sequence||[]
    },started);
   }
   if(!scored.length)return fallback(pack,state,legal,started,'empty-search');
@@ -234,7 +250,7 @@ export function chooseAiV3Action(pack,state,options={}){
    opponentTurns:row?.opponentTurns||0,responses:row?.responses||0,
    actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,
    incomplete:!row?.settled,hard:hardExact,compared:viewed,unscored:jobs.length-scored.length,
-   candidates:viewed
+   candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:row?.sequence||[]
   },started);
  }catch(error){
   try{
