@@ -4,7 +4,7 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
-import {positionKey} from '../dist/universal-v2/ai-v3/beam.mjs';
+import {positionKey,scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
 
 const OPTS={...MATCH_LIMITS,seed:1,mode:'beam'};
 function deck(pack,extra){
@@ -78,7 +78,7 @@ test('strategy: the first front body follows one energy card',()=>{
  console.log('strategy develop ok',action.line);
 });
 
-test('strategy: a clock that only finishes the idle line does not play it',()=>{
+test('strategy: a cut search records the boundary and may still skip',()=>{
  const {packs,state}=main(bleach,counts);
  const energy=take(state,0,'BLC-1-042');
  place(state,0,energy,'energy',0);
@@ -89,10 +89,55 @@ test('strategy: a clock that only finishes the idle line does not play it',()=>{
  resetAiV3Report();
  const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1});
  const trace=lastAiV3Trace();
- assert.notEqual(action.type,'next');
- assert.equal(trace.reason==='budget-fallback'||trace.incomplete===true||action.type==='play',true);
- assert.ok(Array.isArray(trace.compared)||Array.isArray(trace.candidates));
+ assert.equal(legalUniversalActions(packs,state).some(item=>item.type===action.type),true);
+ assert.equal(trace.incomplete,true);
+ assert.ok(Array.isArray(trace.compared));
  console.log('strategy clock ok',action.type,trace.reason);
+});
+
+test('strategy: two nodes do not settle the same turn',()=>{
+ const {packs,state}=main(bleach,counts);
+ place(state,0,take(state,0,'BLC-1-043'),'front',0);
+ const actor=0;
+ const next=legalUniversalActions(packs,state).find(action=>action.type==='next');
+ const line=scoreLine(packs,state,actor,next,{nodes:2,deadline:Infinity,actorDecisions:2,opponentDecisions:2});
+ assert.equal(line.settled,false);
+ assert.equal(line.opponentTurns,0);
+ assert.equal(line.returned,false);
+ assert.equal(line.handedOff,false);
+ assert.equal(line.phase,'attack');
+ assert.equal(line.exhausted,'nodes');
+ assert.equal(line.leafOwnTurns[0],state.players[0].ownTurns);
+ const held=scoreLine(packs,state,actor,next,{nodes:1,deadline:Infinity,actorDecisions:2,opponentDecisions:2});
+ assert.equal(held.settled,false);
+ assert.equal(held.phase,'attack');
+ assert.equal(held.opponentTurns,0);
+ assert.equal(held.pending,null);
+ assert.equal(held.cut,'nodes');
+ assert.equal(held.boundary,'open');
+ const timed=scoreLine(packs,state,actor,next,{nodes:48,deadline:performance.now()-1,actorDecisions:2,opponentDecisions:2});
+ assert.equal(timed.settled,false);
+ assert.equal(timed.cut,'time');
+ assert.equal(timed.boundary,'open');
+ console.log('strategy boundary ok',line.phase,timed.cut);
+});
+
+test('strategy: an unfinished discard pending is not a settled turn',()=>{
+ const {packs,state}=main(bleach,counts);
+ for(let slot=0;slot<4;slot++)place(state,0,take(state,0,'BLC-1-042'),'energy',slot);
+ const base=take(state,0,'BLC-1-051');
+ place(state,0,base,'front',0);
+ const core=take(state,0,'BLC-1-053');
+ state.players[0].hand.push(core);
+ state.players[0].apCards.forEach((card,index)=>{card.inPlay=true;card.ready=index<2;});
+ const raid=legalUniversalActions(packs,state).find(action=>action.type==='raid'&&action.uid===core.uid);
+ const line=scoreLine(packs,state,0,raid,{nodes:2,deadline:Infinity,actorDecisions:2,opponentDecisions:2});
+ assert.equal(line.settled,false);
+ assert.equal(line.boundary,'pending');
+ assert.equal(line.cut,'pending');
+ assert.equal(line.pending,'effect-discard');
+ assert.equal(line.returned,false);
+ console.log('strategy pending ok',line.exhausted);
 });
 
 test('strategy: an open lethal attack is taken',()=>{
@@ -227,6 +272,12 @@ test('strategy: a discard keeps the raid card',()=>{
  const action=ask(packs,pending);
  assert.equal(action.type,'chooseDiscard');
  assert.notEqual(action.uid,core.uid);
+ resetAiV3Report();
+ const loaded=chooseAiV3Action(packs,pending,{...MATCH_LIMITS,actor:pending.pending.player,ms:1,nodes:4});
+ assert.equal(loaded.type,'chooseDiscard');
+ assert.notEqual(loaded.uid,core.uid);
+ const trace=lastAiV3Trace();
+ assert.equal(trace.incomplete,true);
  const kept=dispatchUniversalAction(packs,pending,action,{actor:pending.pending.player});
  const raid=ask(packs,kept);
  assert.equal(raid.type,'raid');

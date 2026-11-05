@@ -37,7 +37,19 @@ function byText(a,b){
 export function rankLegal(pack,state,viewer,legal){
  const list=dedupe(state,viewer,legal);
  const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action);
- return [...list].sort((a,b)=>rank(b)-rank(a)||byText(a,b));
+ return [...list].sort((a,b)=>{
+  const delta=rank(b)-rank(a);
+  if(delta)return delta;
+  // Equal discards keep the card we want. A raid bonus must not make the
+  // core the first thing thrown away.
+  if(a.type==='chooseDiscard'&&a.type===b.type){
+   const hand=state.players[viewer]?.hand||[];
+   const left=keepScore(pack,state,viewer,hand.find(card=>card?.uid===a.uid));
+   const right=keepScore(pack,state,viewer,hand.find(card=>card?.uid===b.uid));
+   if(left!==right)return left-right;
+  }
+  return byText(a,b);
+ });
 }
 export function selectCandidates(pack,state,viewer,legal,beam){
  const ranked=rankLegal(pack,state,viewer,legal);
@@ -206,6 +218,38 @@ function continuationAction(pack,state,actor,legal){
 function noteLeaf(ctx,state){
  ctx.stats.leafPending=state.pending?.kind||null;
  ctx.stats.leafPhase=state.phase;
+ ctx.stats.leafOwnTurns=state.players?.map(player=>player.ownTurns??0)||null;
+ ctx.stats.leafTurn=state.turn??null;
+ ctx.stats.leafActive=state.active;
+}
+// A line is settled only when the game is over, or the actor has handed the
+// turn to the opponent and come back to that actor's next turn start.
+// Still being the active player with an empty pending is the same turn.
+function classifyLine(ctx,cursor,actor){
+ const origin=ctx.origin;
+ const terminal=cursor.status==='finished'||terminalValue(cursor,actor)!==null;
+ const ownTurns=cursor.players?.[actor]?.ownTurns??0;
+ const handed=ctx.stats.opponentTurns>0;
+ const returned=!terminal&&handed&&!cursor.pending&&cursor.active===actor&&cursor.phase==='start'&&
+  !!origin&&ownTurns>origin.ownTurns;
+ let boundary='open';
+ if(terminal)boundary='terminal';
+ else if(returned)boundary='returned';
+ else if(cursor.pending)boundary='pending';
+ else if(handed)boundary='yielded';
+ ctx.stats.boundary=boundary;
+ ctx.stats.handedOff=handed;
+ ctx.stats.returned=returned;
+ ctx.stats.settled=terminal||returned;
+ const outOfNodes=!(ctx.pool.n>0&&ctx.lineSpent<ctx.lineCap);
+ const outOfTime=performance.now()>ctx.deadline;
+ ctx.stats.exhausted=outOfNodes?'nodes':outOfTime?'time':null;
+ if(ctx.stats.settled)ctx.stats.cut=null;
+ else if(cursor.pending)ctx.stats.cut='pending';
+ else if(outOfNodes)ctx.stats.cut='nodes';
+ else if(outOfTime)ctx.stats.cut='time';
+ else ctx.stats.cut='open';
+ noteLeaf(ctx,cursor);
 }
 function attackOrEnd(pack,state,actor,legal){
  const pending=continuationAction(pack,state,actor,legal);
@@ -274,21 +318,23 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  if(done!==null)return done;
  const key=positionKey(state,actor,mode,left);
  if(ctx.tt.has(key)){ctx.stats.transpositionHits++;return ctx.tt.get(key);}
- if(!room(ctx)){ctx.stats.budget++;noteLeaf(ctx,state);return evaluate(pack,state,actor);}
+ if(!room(ctx)){
+  ctx.stats.budget++;
+  if(ctx.finish&&ctx.origin)classifyLine(ctx,state,actor);
+  else noteLeaf(ctx,state);
+  return evaluate(pack,state,actor);
+ }
  if(ctx.finish&&mode==='us'){
   let cursor=roll(pack,state,actor,ctx,continuationAction);
   cursor=roll(pack,cursor,actor,ctx,attackOrEnd);
   const mid=terminalValue(cursor,actor);
-  if(mid!==null){ctx.stats.settled=true;noteLeaf(ctx,cursor);return mid;}
-  if(!cursor.pending&&cursor.active!==actor){
+  if(mid===null&&!cursor.pending&&cursor.active!==actor){
    ctx.stats.opponentTurns++;
    cursor=fastOpponent(pack,cursor,actor,ctx);
   }
+  classifyLine(ctx,cursor,actor);
   const end=terminalValue(cursor,actor);
-  if(end!==null){ctx.stats.settled=true;noteLeaf(ctx,cursor);return end;}
-  noteLeaf(ctx,cursor);
-  if(!cursor.pending&&cursor.active===actor)ctx.stats.settled=true;
-  return evaluate(pack,cursor,actor);
+  return end!==null?end:evaluate(pack,cursor,actor);
  }
  const mark=ctx.stats.budget;
  let cursor=roll(pack,settleBattle(pack,autoAdvance(pack,state,ctx),actor,ctx),actor,ctx,continuationAction);
@@ -353,26 +399,46 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  if(bestOk)ctx.stats.settled=true;
  return remember(ctx,key,best,mark);
 }
+function lineView(ctx,search){
+ return {search,nodes:ctx.lineSpent,settled:!!ctx.stats.settled,
+  boundary:ctx.stats.boundary||'open',handedOff:!!ctx.stats.handedOff,returned:!!ctx.stats.returned,
+  cut:ctx.stats.cut||null,pending:ctx.stats.leafPending||null,phase:ctx.stats.leafPhase||null,
+  startOwnTurns:ctx.origin?.ownTurns??null,
+  leafOwnTurns:ctx.stats.leafOwnTurns?.[ctx.origin?.actor]??null,
+  ...ctx.stats};
+}
 export function scoreLine(pack,state,actor,action,limits){
  const pool=limits.pool||{n:limits.nodes};
  const lineCap=Math.min(limits.nodes,pool.n);
  const ctx={
   pool,lineCap,lineSpent:0,
   deadline:limits.deadline??Infinity,
-  finish:true,
+  finish:limits.finish!==false,
   beam:limits.beam,
   opponentLeft:limits.opponentDecisions,
+  origin:{turn:state.turn,ownTurns:state.players[actor].ownTurns,phase:state.phase,actor},
   tt:limits.tt||new Map(),
-  stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0}
+  stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0,
+   boundary:'open',handedOff:false,returned:false,cut:null}
  };
- if(!room(ctx))return {search:evaluate(pack,state,actor),nodes:0,...ctx.stats};
+ if(!room(ctx)){
+  classifyLine(ctx,state,actor);
+  if(!(pool.n>0))ctx.stats.cut='nodes';
+  else if(performance.now()>ctx.deadline)ctx.stats.cut='time';
+  ctx.stats.settled=false;
+  return lineView(ctx,evaluate(pack,state,actor));
+ }
  let next;
  try{next=dispatch(pack,state,action);}catch{return null;}
- if(!spend(ctx))return {search:evaluate(pack,next,actor),nodes:0,...ctx.stats};
+ if(!spend(ctx)){
+  classifyLine(ctx,next,actor);
+  ctx.stats.settled=false;
+  ctx.stats.cut=performance.now()>ctx.deadline?'time':'nodes';
+  return lineView(ctx,evaluate(pack,next,actor));
+ }
  ctx.stats.actorDecisions++;
  const value=searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions);
- return {search:value,nodes:ctx.lineSpent,settled:!!ctx.stats.settled,
-  pending:ctx.stats.leafPending||null,phase:ctx.stats.leafPhase||null,...ctx.stats};
+ return lineView(ctx,value);
 }
 export function searchPosition(pack,state,actor,limits={},table=null){
  const pool={n:limits.nodes??48};

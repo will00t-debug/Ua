@@ -95,7 +95,7 @@ export function archetypeRank(pack,state,viewer,action){
  else score+=4;
  const card=viewerCard(state,viewer,action.uid);
  const printed=card?packOf(pack,viewer).cards[card.cardId]:null;
- if(printed?.raidName){
+ if((action.type==='raid'||action.type==='play'||action.type==='event')&&printed?.raidName){
   const need=squash(printed.raidName);
   const mine=state.players[viewer];
   for(const line of ['front','energy'])for(const body of mine[line]||[]){
