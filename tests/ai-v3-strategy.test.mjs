@@ -4,6 +4,7 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
+import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {positionKey,scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
 
 const OPTS={...MATCH_LIMITS,seed:1,mode:'beam'};
@@ -62,7 +63,7 @@ const counts=deck(bleach,{
  'BLC-2-052':2,'BLC-4-059':1,'BLC-1-038':2
 });
 
-test('strategy: the first front body follows one energy card',()=>{
+test('strategy: a finished search may pass when the returned energy line scores worse',()=>{
  const {packs,state}=main(bleach,counts);
  const energy=take(state,0,'BLC-1-042');
  place(state,0,energy,'energy',0);
@@ -71,11 +72,22 @@ test('strategy: the first front body follows one energy card',()=>{
  state.players[0].hand.length=0;
  state.players[0].hand.push(body);
  assert.equal(assertUniversalMatch(packs,state),true);
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1});
- assert.equal(action.type,'play');
- assert.equal(action.line,'energy');
- assert.equal(action.uid,body.uid);
- console.log('strategy develop ok',action.line);
+ const hard=chooseStrengthenedHardAction(packs,state,{nodes:48,ms:1e9,seed:1});
+ assert.equal(hard.type,'play');
+ assert.equal(hard.line,'energy');
+ assert.equal(hard.uid,body.uid);
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,hardNodes:0});
+ const trace=lastAiV3Trace();
+ const played=trace.compared.find(row=>row.action.type==='play'&&row.action.line==='energy');
+ const passed=trace.compared.find(row=>row.action.type==='next');
+ assert.equal(action.type,'next');
+ assert.equal(trace.reason,'search');
+ assert.equal(played.boundary,'returned');
+ assert.equal(passed.boundary,'returned');
+ assert.ok(passed.search>played.search);
+ assert.equal(legalUniversalActions(packs,state).some(item=>item.type==='next'),true);
+ console.log('strategy develop',action.type,played.search,passed.search);
 });
 
 test('strategy: a cut search records the boundary and may still skip',()=>{

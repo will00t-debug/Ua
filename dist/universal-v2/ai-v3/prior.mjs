@@ -27,10 +27,13 @@ export function blendRoot(candidates,bonusOf){
   const identity=JSON.stringify(row.action);
   const better=!!best&&adjusted>best.adjusted+1e-9;
   const tied=best&&Math.abs(adjusted-best.adjusted)<=1e-9;
-  // A line that changes nothing ties with passing. Keep the pass.
-  const preferIdle=tied&&idle(row.action)&&!idle(best.action);
+  const develop=action=>action?.type==='play'||action?.type==='raid'||action?.type==='move';
+  // An attack that ties with passing changes nothing. Keep the pass.
+  // A tied play, raid or move is a different action. Keep that one.
+  const preferIdle=tied&&idle(row.action)&&!idle(best.action)&&!develop(best.action);
+  const preferDevelop=tied&&develop(row.action)&&idle(best.action);
   const preferIdentity=tied&&idle(row.action)===idle(best.action)&&identity<best.identity;
-  if(!best||better||preferIdle||preferIdentity)best={...row,bonus,adjusted,identity};
+  if(!best||better||preferIdle||preferDevelop||preferIdentity)best={...row,bonus,adjusted,identity};
  }
  return best;
 }

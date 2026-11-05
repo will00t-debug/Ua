@@ -3,9 +3,14 @@
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
 import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
-import {evaluate,terminalValue,keepScore} from './eval.mjs';
+import {evaluate as staticValue,terminalValue,keepScore} from './eval.mjs';
 import {archetypeRank,actionGroup} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
+import {strategyOrder,replyAction,replyOrder} from './strategy.mjs';
+
+function evaluate(pack,state,actor,ctx){
+ return staticValue(pack,state,actor,ctx?.strategy);
+}
 
 const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
  'effect-top-order','effect-raid-witness-order','effect-raid-witness-move',
@@ -34,9 +39,10 @@ function byText(a,b){
  const left=JSON.stringify(a),right=JSON.stringify(b);
  return left<right?-1:left>right?1:0;
 }
-export function rankLegal(pack,state,viewer,legal){
+export function rankLegal(pack,state,viewer,legal,strategy){
  const list=dedupe(state,viewer,legal);
- const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action);
+ const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action)+
+  (strategy==='order'?strategyOrder(pack,state,viewer,action):0);
  return [...list].sort((a,b)=>{
   const delta=rank(b)-rank(a);
   if(delta)return delta;
@@ -51,8 +57,8 @@ export function rankLegal(pack,state,viewer,legal){
   return byText(a,b);
  });
 }
-export function selectCandidates(pack,state,viewer,legal,beam){
- const ranked=rankLegal(pack,state,viewer,legal);
+export function selectCandidates(pack,state,viewer,legal,beam,strategy){
+ const ranked=rankLegal(pack,state,viewer,legal,strategy);
  const width=Math.max(1,beam||1);
  const picked=[],seen=new Set(),groups=new Set();
  const take=action=>{
@@ -87,7 +93,8 @@ export function selectCandidates(pack,state,viewer,legal,beam){
    if(spare>=0)picked[spare]=front;
   }
  }
- const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action);
+ const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action)+
+  (strategy==='order'?strategyOrder(pack,state,viewer,action):0);
  picked.sort((a,b)=>rank(b)-rank(a)||byText(a,b));
  return picked;
 }
@@ -148,8 +155,10 @@ function settleBattle(pack,state,actor,ctx){
   let legal;
   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
   if(!legal.length)return cursor;
-  const candidates=selectCandidates(pack,cursor,seat,legal,Math.min(4,ctx.beam));
   const maximize=seat===actor;
+  const candidates=ctx.strategy==='reply'&&!maximize
+   ?replyCandidates(pack,cursor,legal,Math.min(4,ctx.beam))
+   :selectCandidates(pack,cursor,seat,legal,Math.min(4,ctx.beam),maximize?ctx.strategy:null);
   let best=maximize?-Infinity:Infinity,chosen=null;
   for(const action of candidates){
    if(!room(ctx)){ctx.stats.budget++;break;}
@@ -157,7 +166,7 @@ function settleBattle(pack,state,actor,ctx){
    try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
    if(!spend(ctx)){ctx.stats.budget++;break;}
    const done=terminalValue(next,actor);
-   const value=done!==null?done:evaluate(pack,next,actor);
+   const value=done!==null?done:evaluate(pack,next,actor,ctx);
    if(chosen===null||(maximize?value>best:value<best)){best=value;chosen=next;}
   }
   if(!chosen)return cursor;
@@ -275,8 +284,9 @@ function fastOpponent(pack,cursor,actor,ctx){
   let legal;
   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;break;}
   const seat=who(cursor);
-  const ranked=rankLegal(pack,cursor,seat,legal);
-  const action=ranked[0];
+  const action=ctx.strategy==='reply'&&seat!==actor
+   ?replyAction(pack,cursor,legal)
+   :rankLegal(pack,cursor,seat,legal,seat===actor?ctx.strategy:null)[0];
   if(!action||!room(ctx)){ctx.stats.budget++;break;}
   try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
   if(!spend(ctx)){ctx.stats.budget++;break;}
@@ -360,8 +370,20 @@ function advanceForced(pack,cursor,ctx){
  }
  return cursor;
 }
-function planCandidates(pack,state,seat,legal,beam){
- const picked=selectCandidates(pack,state,seat,legal,beam);
+function replyCandidates(pack,state,legal,beam){
+ const width=Math.max(1,beam||1);
+ const ordered=replyOrder(pack,state,legal);
+ const picked=[];
+ const take=action=>{
+  if(action&&!picked.some(item=>same(item,action))&&picked.length<width)picked.push(action);
+ };
+ take(legal.find(action=>action.type==='next'||action.uid==null));
+ take(replyAction(pack,state,legal));
+ for(const action of ordered)take(action);
+ return picked.length?picked:ordered.slice(0,width);
+}
+function planCandidates(pack,state,seat,legal,beam,strategy){
+ const picked=selectCandidates(pack,state,seat,legal,beam,strategy);
  const next=legal.find(action=>action.type==='next');
  if(next&&!picked.some(action=>same(action,next))){
   if(picked.length<beam)picked.push(next);
@@ -381,7 +403,9 @@ function replyFrom(pack,state,actor,ctx,left){
  let legal;
  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
  const seat=who(cursor);
- const candidates=planCandidates(pack,cursor,seat,legal,2);
+ const candidates=ctx.strategy==='reply'
+  ?replyCandidates(pack,cursor,legal,2)
+  :planCandidates(pack,cursor,seat,legal,2,null);
  if(candidates.length<=1)return fastOpponent(pack,cursor,actor,ctx);
  ctx.stats.followBranches+=candidates.length;
  ctx.stats.maxDepth=Math.max(ctx.stats.maxDepth||1,(ctx.replyDepth||0)+1);
@@ -400,7 +424,7 @@ function replyFrom(pack,state,actor,ctx,left){
   ctx.replyDepth=saved+1;
   const after=replyFrom(pack,next,actor,ctx,left-1);
   ctx.replyDepth=saved;
-  const value=terminalValue(after,actor)??evaluate(pack,after,actor);
+  const value=terminalValue(after,actor)??evaluate(pack,after,actor,ctx);
   if(!best||(maximize?value>best.value:value<best.value))best={value,state:after,sequence:ctx.stats.sequence.slice()};
  }
  if(!best)return cursor;
@@ -419,13 +443,13 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
  const budget=ctx.replyLeft??(ctx.opponentLeft??2);
  if(ctx.replyStuck){
   classifyLine(ctx,cursor,actor);
-  return terminalValue(cursor,actor)??evaluate(pack,cursor,actor);
+  return terminalValue(cursor,actor)??evaluate(pack,cursor,actor,ctx);
  }
  if(ctx.plan==='tree-replies'){
   const after=replyFrom(pack,cursor,actor,ctx,Math.max(1,budget));
   if(after===cursor){
    classifyLine(ctx,cursor,actor);
-   return terminalValue(cursor,actor)??evaluate(pack,cursor,actor);
+   return terminalValue(cursor,actor)??evaluate(pack,cursor,actor,ctx);
   }
   return planFrom(pack,after,actor,ctx,left,depth);
  }
@@ -433,7 +457,7 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
   ctx.replyStuck=true;
   const after=fastOpponent(pack,cursor,actor,ctx);
   const value=after===cursor
-   ?evaluate(pack,cursor,actor)
+   ?evaluate(pack,cursor,actor,ctx)
    :planFrom(pack,after,actor,ctx,left,depth);
   ctx.replyStuck=false;
   return value;
@@ -442,7 +466,7 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
  try{legal=legalUniversalActions(pack,cursor);}catch{
   ctx.stats.unsupported++;
   classifyLine(ctx,cursor,actor);
-  return evaluate(pack,cursor,actor);
+  return evaluate(pack,cursor,actor,ctx);
  }
  const seat=who(cursor);
  const candidates=planCandidates(pack,cursor,seat,legal,2);
@@ -470,7 +494,7 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
   classifyLine(ctx,cursor,actor);
   ctx.stats.followBranches=branches;
   ctx.stats.maxDepth=deepest;
-  return evaluate(pack,cursor,actor);
+  return evaluate(pack,cursor,actor,ctx);
  }
  applyLeaf(ctx,best.snap);
  ctx.stats.followBranches=branches;
@@ -484,7 +508,7 @@ function finishLine(pack,cursor,actor,ctx){
  if(!ctx.stats.limit)ctx.stats.limit='depth';
  if((ctx.finishGuard||0)>6){
   classifyLine(ctx,cursor,actor);
-  return terminalValue(cursor,actor)??evaluate(pack,cursor,actor);
+  return terminalValue(cursor,actor)??evaluate(pack,cursor,actor,ctx);
  }
  ctx.finishGuard=(ctx.finishGuard||0)+1;
  let state=cursor;
@@ -504,13 +528,13 @@ function finishLine(pack,cursor,actor,ctx){
  }
  ctx.finishGuard--;
  classifyLine(ctx,state,actor);
- return terminalValue(state,actor)??evaluate(pack,state,actor);
+ return terminalValue(state,actor)??evaluate(pack,state,actor,ctx);
 }
 function planFrom(pack,state,actor,ctx,left,depth){
  ctx.stats.maxDepth=Math.max(ctx.stats.maxDepth||1,depth);
  const done=terminalValue(state,actor);
  if(done!==null){classifyLine(ctx,state,actor);return done;}
- if(!room(ctx)){classifyLine(ctx,state,actor);return evaluate(pack,state,actor);}
+ if(!room(ctx)){classifyLine(ctx,state,actor);return evaluate(pack,state,actor,ctx);}
  let cursor=advanceForced(pack,state,ctx);
  const mid=terminalValue(cursor,actor);
  if(mid!==null){classifyLine(ctx,cursor,actor);return mid;}
@@ -523,7 +547,7 @@ function planFrom(pack,state,actor,ctx,left,depth){
   cursor=ctx.plan==='tree-replies'?replyFrom(pack,cursor,actor,ctx,ctx.opponentLeft??2):fastOpponent(pack,cursor,actor,ctx);
   classifyLine(ctx,cursor,actor);
   const end=terminalValue(cursor,actor);
-  return end!==null?end:evaluate(pack,cursor,actor);
+  return end!==null?end:evaluate(pack,cursor,actor,ctx);
  }
  if(cursor.pending&&who(cursor)!==actor)return answerOpponent(pack,cursor,actor,ctx,left,depth);
  if(left<=0)return finishLine(pack,cursor,actor,ctx);
@@ -531,12 +555,15 @@ function planFrom(pack,state,actor,ctx,left,depth){
  try{legal=legalUniversalActions(pack,cursor);}catch{
   ctx.stats.unsupported++;
   classifyLine(ctx,cursor,actor);
-  return evaluate(pack,cursor,actor);
+  return evaluate(pack,cursor,actor,ctx);
  }
- if(!legal.length){classifyLine(ctx,cursor,actor);return evaluate(pack,cursor,actor);}
+ if(!legal.length){classifyLine(ctx,cursor,actor);return evaluate(pack,cursor,actor,ctx);}
  const seat=who(cursor);
  const maximize=seat===actor;
- const candidates=planCandidates(pack,cursor,seat,legal,Math.max(1,ctx.beam||1));
+ const width=Math.max(1,ctx.beam||1);
+ const candidates=ctx.strategy==='reply'&&!maximize
+  ?replyCandidates(pack,cursor,legal,width)
+  :planCandidates(pack,cursor,seat,legal,width,maximize?ctx.strategy:null);
  ctx.stats.followBranches+=candidates.length;
  const before=leafSnap(ctx);
  let best=null;
@@ -559,7 +586,7 @@ function planFrom(pack,state,actor,ctx,left,depth){
   classifyLine(ctx,cursor,actor);
   ctx.stats.followBranches=branches;
   ctx.stats.maxDepth=deepest;
-  return evaluate(pack,cursor,actor);
+  return evaluate(pack,cursor,actor,ctx);
  }
  applyLeaf(ctx,best.snap);
  ctx.stats.followBranches=branches;
@@ -569,7 +596,7 @@ function planFrom(pack,state,actor,ctx,left,depth){
 function layered(pack,state,actor,ctx,base){
  if(!room(ctx)){
   classifyLine(ctx,state,actor);
-  return terminalValue(state,actor)??evaluate(pack,state,actor);
+  return terminalValue(state,actor)??evaluate(pack,state,actor,ctx);
  }
  const ceiling=base+3;
  let layer=Math.max(0,base);
@@ -595,7 +622,7 @@ function layered(pack,state,actor,ctx,base){
   if(ctx.pool.n<16||ctx.lineSpent>ctx.lineCap*0.7)break;
   layer++;
  }
- if(!best)return evaluate(pack,state,actor);
+ if(!best)return evaluate(pack,state,actor,ctx);
  const depth=Math.max(ctx.stats.maxDepth||1,best.depth||1);
  const branches=Math.max(ctx.stats.followBranches||0,best.branches||0);
  applyLeaf(ctx,best.snap);
@@ -617,7 +644,7 @@ function searchFrom(pack,state,actor,ctx,mode,left){
   ctx.stats.budget++;
   if(ctx.finish&&ctx.origin)classifyLine(ctx,state,actor);
   else noteLeaf(ctx,state);
-  return evaluate(pack,state,actor);
+  return evaluate(pack,state,actor,ctx);
  }
  if(ctx.finish&&mode==='us'){
   ctx.stats.maxDepth=1;
@@ -631,7 +658,7 @@ function searchFrom(pack,state,actor,ctx,mode,left){
   }
   classifyLine(ctx,cursor,actor);
   const end=terminalValue(cursor,actor);
-  return end!==null?end:evaluate(pack,cursor,actor);
+  return end!==null?end:evaluate(pack,cursor,actor,ctx);
  }
  const mark=ctx.stats.budget;
  let cursor=roll(pack,settleBattle(pack,autoAdvance(pack,state,ctx),actor,ctx),actor,ctx,continuationAction);
@@ -643,7 +670,7 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  if(mode==='them'&&!cursor.pending&&cursor.active===actor){
   noteLeaf(ctx,cursor);
   ctx.stats.settled=true;
-  return remember(ctx,key,evaluate(pack,cursor,actor),mark);
+  return remember(ctx,key,evaluate(pack,cursor,actor,ctx),mark);
  }
  if(mode==='us'&&!cursor.pending&&cursor.active!==actor){
   ctx.stats.opponentTurns++;
@@ -655,11 +682,11 @@ function searchFrom(pack,state,actor,ctx,mode,left){
   return remember(ctx,key,value,mark);
  }
  noteLeaf(ctx,cursor);
- if(left<=0)return remember(ctx,key,evaluate(pack,cursor,actor),mark);
+ if(left<=0)return remember(ctx,key,evaluate(pack,cursor,actor,ctx),mark);
  const seat=who(cursor);
  let legal;
- try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return evaluate(pack,cursor,actor);}
- if(!legal.length)return evaluate(pack,cursor,actor);
+ try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return evaluate(pack,cursor,actor,ctx);}
+ if(!legal.length)return evaluate(pack,cursor,actor,ctx);
  const candidates=selectCandidates(pack,cursor,seat,legal,ctx.beam);
  const finishRank=action=>action.type==='attack'?0:action.type==='next'?1:2;
  const ordered=[...candidates].sort((a,b)=>finishRank(a)-finishRank(b)||byText(a,b));
@@ -692,7 +719,7 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  }
  ctx.stats.leafPending=bestPending;
  ctx.stats.leafPhase=bestPhase;
- if(!compared)best=evaluate(pack,cursor,actor);
+ if(!compared)best=evaluate(pack,cursor,actor,ctx);
  if(bestOk)ctx.stats.settled=true;
  return remember(ctx,key,best,mark);
 }
@@ -711,6 +738,7 @@ export function scoreLine(pack,state,actor,action,limits){
   pool,lineCap,lineSpent:0,
   deadline:limits.deadline??Infinity,
   plan:limits.plan||(limits.finish===false?'tree':'rollout'),
+  strategy:limits.strategy||null,
   beam:limits.beam,
   opponentLeft:limits.opponentDecisions,
   origin:{turn:state.turn,ownTurns:state.players[actor].ownTurns,phase:state.phase,actor},
@@ -726,7 +754,7 @@ export function scoreLine(pack,state,actor,action,limits){
   if(!(pool.n>0))ctx.stats.cut='nodes';
   else if(performance.now()>ctx.deadline)ctx.stats.cut='time';
   ctx.stats.settled=false;
-  return lineView(ctx,evaluate(pack,state,actor));
+  return lineView(ctx,evaluate(pack,state,actor,ctx));
  }
  let next;
  try{next=dispatch(pack,state,action);}catch{return null;}
@@ -734,7 +762,7 @@ export function scoreLine(pack,state,actor,action,limits){
   classifyLine(ctx,next,actor);
   ctx.stats.settled=false;
   ctx.stats.cut=performance.now()>ctx.deadline?'time':'nodes';
-  return lineView(ctx,evaluate(pack,next,actor));
+  return lineView(ctx,evaluate(pack,next,actor,ctx));
  }
  ctx.stats.actorDecisions++;
  noteStep(ctx,action,'root');

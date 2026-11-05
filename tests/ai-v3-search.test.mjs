@@ -8,6 +8,7 @@ import {positionKey,searchPosition,rankLegal} from '../dist/universal-v2/ai-v3/b
 import {matchGrid,pairedChallenger} from '../dist/universal-v2/ai-v3/compare.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from '../dist/universal-v2/ai-v3/prior.mjs';
+import {comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {featureKeys,hashV4,V4_DIM,V4_FORMAT} from '../dist/universal-v2/ai-v3/v4-features.mjs';
 import {holdoutLastMatch,valueLabel} from '../dist/universal-v2/ai-v3/learn-bridge.mjs';
 import {beliefWorld} from '../dist/universal-v2/ai-v3/belief.mjs';
@@ -201,6 +202,27 @@ test('a learned-v4 prior cannot cross the search gap',()=>{
  ],action=>action.type==='play'?6:0);
  assert.equal(near.action.type,'play');
  assert.ok(near.bonus<=SEARCH_PRIOR_GAP);
+ const tiedPlay=blendRoot([
+  {action:{type:'next'},search:10},
+  {action:{type:'play',line:'energy'},search:10}
+ ],()=>0);
+ assert.equal(tiedPlay.action.type,'play');
+ const tiedSwing=blendRoot([
+  {action:{type:'attack',uid:'0-1'},search:10},
+  {action:{type:'next'},search:10}
+ ],()=>0);
+ assert.equal(tiedSwing.action.type,'next');
+ const shared=comparedLines([
+  {action:{type:'next'},search:49.5,boundary:'yielded'},
+  {action:{type:'raid',uid:'1-38'},search:71.4,boundary:'yielded'}
+ ]);
+ assert.equal(shared.shared,true);
+ assert.equal(shared.rows.length,2);
+ const cut=comparedLines([
+  {action:{type:'next'},search:22,boundary:'yielded'},
+  {action:{type:'move',uid:'0-14'},search:17,boundary:'pending'}
+ ]);
+ assert.equal(cut.rows.length,0);
  const observation={visible:{phase:'main',turn:1,actor:0,players:[
   {hand:[],front:[],energy:[],lifeCount:1,energyTotal:0,apReady:0,energyByColor:{},handCount:0},
   {hand:null,front:[],energy:[],lifeCount:5,energyTotal:0,apReady:0,energyByColor:{},handCount:0}

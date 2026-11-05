@@ -80,6 +80,26 @@ function reliableChoice(pack,state,actor,legal,hardExact,ordered){
  if(kind==='effect-optional-mill')return legal.find(action=>action.mode==='mill')||hardExact||legal[0];
  return hardExact||ordered[0]||legal[0];
 }
+const BOUNDARY_RANK={terminal:5,returned:4,yielded:3,pending:2,open:1};
+// A finished game outranks a returned turn. When nothing got home, lines
+// that stopped on the same boundary still compete. A pass that got further
+// than a cut play does not win that comparison by itself.
+export function comparedLines(scored){
+ const terminals=scored.filter(item=>item.boundary==='terminal');
+ const wins=terminals.filter(item=>item.search>0);
+ if(wins.length)return {rows:wins,shared:false};
+ const returned=scored.filter(item=>item.boundary==='returned');
+ if(returned.length)return {rows:returned,shared:false};
+ if(terminals.length)return {rows:terminals,shared:false};
+ let best=0;
+ for(const row of scored)best=Math.max(best,BOUNDARY_RANK[row.boundary]||0);
+ if(!best)return {rows:[],shared:false};
+ const rows=scored.filter(row=>(BOUNDARY_RANK[row.boundary]||0)===best);
+ const idleOnly=rows.every(row=>isSafeAction(row.action));
+ const behind=scored.some(row=>!isSafeAction(row.action)&&!rows.includes(row));
+ if(idleOnly&&behind)return {rows:[],shared:false};
+ return {rows,shared:true};
+}
 function fallback(pack,state,legal,started,reason){
  report.fallback++;
  let action=null;
@@ -113,14 +133,15 @@ export function chooseAiV3Action(pack,state,options={}){
   const pinned=Number.isInteger(options.nodes);
   const total=pinned?options.nodes:(combat?64:48);
   const ms=Number.isFinite(options.ms)?options.ms:(pinned?1e9:(combat?64:48));
-  const ordered=rankLegal(pack,probe,actor,legal);
+  const strategy=options.strategy==='score'||options.strategy==='order'||options.strategy==='reply'?options.strategy:null;
+  const ordered=rankLegal(pack,probe,actor,legal,strategy);
   if(options.mode==='prior'){
    report.prior++;
    const exact=legal.find(item=>same(item,ordered[0]))||legal[0];
    return finish(exact,'prior',{actor,seed,worlds:worlds.length,nodesUsed:0,
     candidates:ordered.slice(0,beam).map(action=>({action}))},started);
   }
-  const ranked=selectCandidates(pack,probe,actor,legal,beam);
+  const ranked=selectCandidates(pack,probe,actor,legal,beam,strategy);
   const deadline=started+ms;
   if(options.mode==='ismcts'){
    report.ismcts++;
@@ -141,8 +162,13 @@ export function chooseAiV3Action(pack,state,options={}){
   const pool={n:total};
   const nodesBefore=report.nodes;
   resetHardAiReport();
-  const hardSlice=Math.min(16,pool.n);
-  const hardMs=Math.max(1,Math.min(16,deadline-performance.now()));
+  // The old 16-node slice passed moves and front plays that the 48-node
+  // baseline took, then the fallback copied that pass. Those nodes stay in
+  // the tree. Passing hardNodes measures another split. A hard candidate is
+  // not the 48-node baseline.
+  const hardBudget=Number.isInteger(options.hardNodes)?Math.max(0,options.hardNodes):0;
+  const hardSlice=Math.min(hardBudget,pool.n);
+  const hardMs=Math.max(1,Math.min(Math.max(hardSlice,1),deadline-performance.now()));
   const hardRaw=hardSlice>0?chooseStrengthenedHardAction(pack,state,{nodes:hardSlice,ms:hardMs,seed}):null;
   const hardSpent=Math.min(pool.n,hardAiReport().nodes||0);
   pool.n-=hardSpent;
@@ -156,8 +182,8 @@ export function chooseAiV3Action(pack,state,options={}){
   for(const action of ranked)push(action);
   const scored=[];
   const actorDecisions=options.actorDecisions??MATCH_LIMITS.actorDecisions;
-  // The 48-node match keeps a 16-node line so the idle baseline can also
-  // finish. A larger clock deepens each line instead of stopping at 16.
+  // The first line keeps a floor so a pass can finish. A larger clock
+  // deepens each line instead of stopping at that floor.
   const seats=Math.max(2,Math.min(jobs.length||2,4));
   const lineFloor=total<=48?16:Math.max(16,Math.min(160,Math.floor(total/seats)));
   for(let index=0;index<jobs.length;index++){
@@ -172,7 +198,7 @@ export function chooseAiV3Action(pack,state,options={}){
     if(pool.n<=0){report.budget++;break;}
     const slice=Math.min(pool.n-reserve,lineFloor);
     const line=scoreLine(pack,worlds[w].state,actor,action,{
-     nodes:slice,pool,beam,deadline,actorDecisions,opponentDecisions,plan
+     nodes:slice,pool,beam,deadline,actorDecisions,opponentDecisions,plan,strategy
     });
     if(!line||!Number.isFinite(line.search))continue;
     totalScore+=line.search;
@@ -205,28 +231,21 @@ export function chooseAiV3Action(pack,state,options={}){
   const maxDepth=scored.reduce((sum,item)=>Math.max(sum,item.maxDepth||1),1);
   const plan=options.plan||'tree';
   const backup=reliableChoice(pack,state,actor,legal,hardExact,ordered);
-  // Only lines that reached the same finished boundary compete. A same-turn
-  // attack, a yielded turn, and a pending window are not that boundary.
-  const returned=scored.filter(item=>item.boundary==='returned');
-  const terminals=scored.filter(item=>item.boundary==='terminal');
-  // A finished game is its own boundary. A win there is not compared with
-  // a line that merely got back to the next turn.
-  const wins=terminals.filter(item=>item.search>0);
-  const comparable=wins.length?wins:(returned.length?returned:terminals);
+  const {rows:comparable,shared}=comparedLines(scored);
   const missed=jobs.length>scored.length||scored.some(item=>!item.settled);
   const discardWindow=(state.pending?.kind||'').startsWith('effect-discard');
   const discardIncomplete=discardWindow&&legal.some(action=>action.type==='chooseDiscard'&&action.uid&&
    !comparable.some(item=>same(item.action,action)));
   // An idle line that got home does not beat a play whose combo was cut.
-  // Skipping stays available when that play also got home and scores worse.
+  // Lines that stopped together still compete, including a raid ahead of next.
   const idleOnly=comparable.length>0&&comparable.every(item=>isSafeAction(item.action));
   const constructiveCut=scored.some(item=>!isSafeAction(item.action)&&item.boundary!=='returned'&&item.boundary!=='terminal');
-  if((!comparable.length||discardIncomplete||(idleOnly&&constructiveCut))&&backup){
+  if((!comparable.length||discardIncomplete||(!shared&&idleOnly&&constructiveCut))&&backup){
    report.budgetFallback++;
    report.budget++;
    return finish(backup,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,incomplete:true,
-    hard:hardExact,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,
+    hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,
     plan,roots:jobs.length,followBranches,maxDepth,
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
     sequence:(scored.find(item=>item.sequence?.length)||{}).sequence||[]
@@ -249,7 +268,7 @@ export function chooseAiV3Action(pack,state,options={}){
    actor,seed,worlds:worlds.length,score:row?.search??null,bonus:blended.bonus,
    opponentTurns:row?.opponentTurns||0,responses:row?.responses||0,
    actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,
-   incomplete:!row?.settled,hard:hardExact,compared:viewed,unscored:jobs.length-scored.length,
+   incomplete:!row?.settled,hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:jobs.length-scored.length,
    candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:row?.sequence||[]
   },started);
  }catch(error){

@@ -171,7 +171,9 @@ test('practical tree search records the play, raid, effect choice, and attack at
 });
 
 test('a short node budget stays legal and does not invent a win',()=>{
- const thin=ask('tree',24);
+ // 24 nodes used to fall back because 16 were spent on the hard slice.
+ // Those nodes now stay in the tree, so the insufficient budget is 8.
+ const thin=ask('tree',8);
  assert.equal(thin.legal.some(item=>JSON.stringify(item)===JSON.stringify(thin.action)),true);
  assert.equal(thin.trace.reason,'budget-fallback');
  assert.equal(thin.trace.incomplete,true);

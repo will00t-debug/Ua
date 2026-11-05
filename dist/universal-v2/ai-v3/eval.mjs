@@ -3,6 +3,7 @@
 // has to see the opponent's turn before a blocker outranks that energy.
 import {universalBp,universalEnergy} from '../engine.mjs';
 import {packOf} from './observation.mjs';
+import {strategyScore} from './strategy.mjs';
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 // A hand card that can raid a body already on our side is not a generic card.
@@ -64,7 +65,7 @@ export function terminalValue(state,actor){
  if(mine<=0&&opp>0)return -90000;
  return null;
 }
-export function evaluate(pack,state,actor){
+export function evaluate(pack,state,actor,strategy){
  const done=terminalValue(state,actor);
  if(done!==null)return done;
  const opp=1-actor;
@@ -76,5 +77,6 @@ export function evaluate(pack,state,actor){
  score+=Math.min(universalEnergy(pack,state,actor),6)*6;
  score-=Math.min(universalEnergy(pack,state,opp),6)*2;
  score+=state.players[actor].apCards.filter(card=>card.ready).length*1.5;
+ if(strategy==='score')score+=strategyScore(pack,state,actor);
  return score;
 }
