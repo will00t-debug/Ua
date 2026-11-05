@@ -93,6 +93,7 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
   const life=area.querySelector('.lifeRow');
   const lifeCount=Math.max(0,Number(player.lifeCount)||0);
   // Keep all seven printed positions; empty positions persist as life is lost.
+  const lifeTools=[];
   const targets=side===1&&choosingLife&&legalLifeActions.length>0;
   const lifeCards=Array.from({length:slotCount(side)},(_,i)=>{
    const canPick=targets&&i<lifeCount;
@@ -107,13 +108,13 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
    return node;
   });
   life?.replaceChildren(
-   el('span',{class:'v2-life-caption',text:side===1?'電腦血區':'你的血區'}),
+   el('span',{class:'v2-life-caption',text:side===1?(matchupLabel?'對手血區':'電腦血區'):'你的血區'}),
    ...lifeCards
   );
   if(targets){
    lifeInstruction=el('p',{class:'v2-life-instruction',text:
     '進攻方選擇 '+requiredLifeCards+' 張血區：0/'+requiredLifeCards});
-   life.append(lifeInstruction);
+   lifeTools.push(lifeInstruction);
    if(requiredLifeCards>1){
     lifeConfirm=el('button',{type:'button',class:'v2-life-confirm',disabled:true,
      text:'確認攻擊 '+requiredLifeCards+' 張',
@@ -121,12 +122,12 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
       const action=matchedLifeAction();
       if(action)onLifeTargetAction(action);
      }});
-    life.append(lifeConfirm);
+    lifeTools.push(lifeConfirm);
    }
    updateLifeSelection();
   }
   const lifeGroup=el('section',{class:'v2-life-group'+(side===1?' opponent':''),
-   'aria-label':side===1?'對手生命卡':'我方生命卡'},life);
+   'aria-label':side===1?'對手生命卡':'我方生命卡'},life,...lifeTools);
   const removed=area.querySelector('[data-v2-zone="removed"]');
   if(removed)lifeGroup.append(el('div',{class:'v2-removed-zone'},removed));
   lifeRail.append(lifeGroup);
