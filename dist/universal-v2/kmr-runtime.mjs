@@ -1550,18 +1550,19 @@ function resolveStep(pack,s,q,a){
   s.pending=null;
   if(hit.mode==='skip'){
    A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
-   if(q.csmFollow){if(s.pending)s.pending.csmFollow=q.csmFollow;else s.effectQueue.push(q.csmFollow);}
+   A.releaseRetirement(s,q,true);
    return;
   }
   const loc=A.location(s,q.player,hit.uid);
   if(loc)A.retire(pack,s,q.player,loc.line,loc.slot,{by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
+  A.releaseRetirement(s,q,false);
   return;
  }
  if(q.step==='spend51'){
   s.pending=null;
   if(hit.mode==='skip'){
    A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
-   if(q.csmFollow){if(s.pending)s.pending.csmFollow=q.csmFollow;else s.effectQueue.push(q.csmFollow);}
+   A.releaseRetirement(s,q,true);
    return;
   }
   const host=selfOf(s,q.player,q.sourceUid);
@@ -1572,6 +1573,7 @@ function resolveStep(pack,s,q,a){
    plOf(s,q.player).outside.push(layer);
    A.record(pack,s,{physical:layer,owner:q.player,from:'raid-under',to:'outside',reason:'own-effect',sourceUid:host.uid});
   }
+  A.releaseRetirement(s,q,false);
   return;
  }
  throw Error('Kamen Rider choice is not legal');

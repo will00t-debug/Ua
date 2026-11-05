@@ -1823,7 +1823,8 @@ function ensureIys(){
   bounce:(pack,s,owner,uid,sourceUid)=>bounceToHand(pack,s,owner,uid,sourceUid,{skipReplacement:true}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,readyAp:readyOneAp,
-  reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue
+  reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
+  releaseRetirement:(s,q,originalLeft)=>{holdCsmFollow(s,q?.csmFollow,originalLeft);flushRetirement(s,q,originalLeft);}
  });
 }
 let kjnBound=false;
@@ -1858,6 +1859,7 @@ function ensureCsm(){
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
+  releaseRetirement:(s,q,originalLeft)=>{holdCsmFollow(s,q?.csmFollow,originalLeft);flushRetirement(s,q,originalLeft);},
   energy:universalEnergyByColor,required:zoneRequiredEnergy,
   moveLine:(pack,s,owner,uid,line,slot,replaceUid,sourceUid)=>
    effectMoveTo(pack,s,owner,uid,line,slot,replaceUid,sourceUid)
@@ -1955,6 +1957,7 @@ function ensureKmr(){
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,go:continueEffectQueue,
+  releaseRetirement:(s,q,originalLeft)=>{holdCsmFollow(s,q?.csmFollow,originalLeft);flushRetirement(s,q,originalLeft);},
   energy:calcEnergy,spend:spendAp,noteEffect:noteEffectApPaid,
   raided:faceUpRaid,
   raid:(pack,s,owner,physical,baseUid,line,slot,replaceUid,opts)=>
@@ -6462,10 +6465,30 @@ function retireCall(cause,extra={}){
   ...(typeof c.sourceUid==='string'?{sourceUid:c.sourceUid}:{})
  };
 }
-function holdCsmFollow(s,follow){
- if(!follow)return;
- if(s.pending)s.pending.csmFollow=follow;
- else s.effectQueue.push(follow);
+// 「そうした場合」 and a bracketed retire cost continue only when the chosen
+// card actually leaves. A later sentence that does not mention that result
+// still runs. A missing flag is not treated as either answer: the printed
+// kind list below is the closed set that requires the leave.
+const LEAVE_BOUND_FOLLOW=new Set(['kit016','debuff5k','choose12','ap038','denjiImpact','grantAttackDraw']);
+function followNeedsPrintedLeave(follow){
+ if(!follow||typeof follow!=='object')return false;
+ if(follow.needsLeave===true)return true;
+ if(follow.needsLeave===false)return false;
+ return LEAVE_BOUND_FOLLOW.has(follow.kind);
+}
+function holdCsmFollow(s,follow,originalLeft=true){
+ if(!follow||typeof follow!=='object')return;
+ if(followNeedsPrintedLeave(follow)&&originalLeft!==true)return;
+ // The original card's next replacement keeps the follow. A substitute's
+ // own pause must not capture it; the follow waits behind that pause.
+ if(originalLeft===true&&s.pending)s.pending.csmFollow=follow;
+ else if(!s.effectQueue.includes(follow))s.effectQueue.push(follow);
+}
+function flushRetirement(s,q,originalLeft){
+ if(!q)return;
+ const after=originalLeft===true&&Array.isArray(q.retirementAfter)?q.retirementAfter:[];
+ const tail=Array.isArray(q.retirementTail)?q.retirementTail:[];
+ if(after.length||tail.length)s.effectQueue.push(...after,...tail);
 }
 function queueRetirement(pack,s,p,c,line){
  // Capture the source before moving to outside. Only GENUINE retirement
@@ -8258,7 +8281,8 @@ function resolveChoice(s,a,pack){
    }
   else throw Error('Invalid leave replacement option');
   s.pending=null;
-  if(a.mode==='leave')holdCsmFollow(s,q.csmFollow);
+  if(a.mode==='leave')holdCsmFollow(s,q.csmFollow,true);
+  else if(a.mode==='protect')holdCsmFollow(s,q.csmFollow,false);
   if(q.retirementAfter)
    s.effectQueue.push(...(a.mode==='leave'?q.retirementAfter:[]),...q.retirementTail);
   if(q.originalAction&&a.mode==='leave'){
@@ -11719,15 +11743,19 @@ function resolveChoice(s,a,pack){
    s.pending=null;
    if(q.mode==='retire'){
     retire(pack,s,q.player,q.line,q.slot,retireCall(q.retireCause,{postImpact:q.postImpact,by:q.by,skipReplacement:true}));
-    holdCsmFollow(s,q.csmFollow);
+    holdCsmFollow(s,q.csmFollow,true);
    }
-   else bounceToHand(pack,s,q.player,q.uid,q.sourceUid,{reason:q.reason,controller:q.controller,by:q.by,skipReplacement:true});
+   else{
+    bounceToHand(pack,s,q.player,q.uid,q.sourceUid,{reason:q.reason,controller:q.controller,by:q.by,skipReplacement:true});
+    holdCsmFollow(s,q.csmFollow,false);
+   }
   }else if(a.mode==='pay'){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('Raid leave payment is not in hand');
    moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,reason:'payment',sourceUid:q.uid});
    stripRaidTopInPlace(pack,s,q.player,q.line,q.slot,q.uid);
    s.pending=null;
+   holdCsmFollow(s,q.csmFollow,false);
   }else throw Error('Invalid raid leave choice');
   if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player,q.postImpact);
   if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player);
@@ -12069,18 +12097,22 @@ function resolveChoice(s,a,pack){
    if(liveBounceInstead(s,loc.c)){
     bounceToHand(pack,s,q.player,loc.c.uid,loc.c.uid,{reason:'opponent-effect',
      controller:q.player,by:'opponent',skipReplacement:true});
+    holdCsmFollow(s,q.csmFollow,false);
+    flushRetirement(s,q,false);
     if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player,q.postImpact);
     continueEffectQueue(pack,s);return;
    }
    if(raidLeaveOffer(pack,s,q.player,loc.c)){
     s.pending={kind:'effect-raid-leave',player:q.player,uid:loc.c.uid,line:loc.line,
      slot:loc.slot,mode:'retire',postImpact:q.postImpact,by:q.by,
-     retireCause:q.retireCause||null,csmFollow:q.csmFollow||null};
+     retireCause:q.retireCause||null,csmFollow:q.csmFollow||null,
+     retirementAfter:q.retirementAfter,retirementTail:q.retirementTail};
     return;
    }
    retire(pack,s,q.player,loc.line,loc.slot,retireCall(q.retireCause,{postImpact:q.postImpact,by:q.by,
     skipReplacement:true}));
-   holdCsmFollow(s,q.csmFollow);
+   holdCsmFollow(s,q.csmFollow,true);
+   flushRetirement(s,q,true);
    if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player,q.postImpact);
    continueEffectQueue(pack,s);return;
   }
@@ -12090,6 +12122,8 @@ function resolveChoice(s,a,pack){
    throw Error('Illegal substitute character');
   s.pending=null;
   retire(pack,s,q.player,ram.line,ram.slot,retireCall(q.retireCause,{skipReplacement:true}));
+  holdCsmFollow(s,q.csmFollow,false);
+  flushRetirement(s,q,false);
   if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player,q.postImpact);
   continueEffectQueue(pack,s);return;
  }
@@ -12271,10 +12305,11 @@ function resolveChoice(s,a,pack){
     if(!loc||loc.line!==q.line||loc.slot!==q.slot)throw Error('Leaving card moved');
     s.pending=null;
     retire(pack,s,q.player,q.line,q.slot,retireCall(q.retireCause,{postImpact:q.postImpact,by:q.by,skipReplacement:true}));
-    holdCsmFollow(s,q.csmFollow);
+    holdCsmFollow(s,q.csmFollow,true);
    }
   }else throw Error('Invalid field-leave remove choice');
   s.pending=null;
+  if(a.mode==='remove')holdCsmFollow(s,q.csmFollow,false);
   if(after.length||tail.length)s.effectQueue.push(...after,...tail);
   if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player,q.postImpact);
   continueEffectQueue(pack,s);return;
@@ -22558,8 +22593,9 @@ export function assertUniversalMatch(pack,s){
    !same(q.choices,offers.map(c=>c.uid))||
    card(pack,offers[0]).substituteOppRetire.name!==q.name||
    !(q.postImpact===false||q.postImpact===true||Number.isInteger(q.postImpact)&&q.postImpact>=2)||
-   Object.keys(q).length!==12||
-   Object.keys(q).some(k=>!['kind','player','uid','line','slot','postImpact','by','choices','optional','name','retireCause','csmFollow'].includes(k))||
+   !['retirementAfter','retirementTail'].every(k=>q[k]===undefined||Array.isArray(q[k]))||
+   Object.keys(q).length!==12+['retirementAfter','retirementTail'].filter(k=>q[k]!==undefined).length||
+   Object.keys(q).some(k=>!['kind','player','uid','line','slot','postImpact','by','choices','optional','name','retireCause','csmFollow','retirementAfter','retirementTail'].includes(k))||
    !q.retireCause||q.retireCause.by!=='opponent')
    throw Error('Invalid substitute retirement pending');
  }

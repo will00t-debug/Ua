@@ -266,13 +266,22 @@ function retiredOut(s,owner,uid){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.uid===uid&&
   e.to==='outside'&&e.reason==='retirement');
 }
-const RETIRE_FOLLOW=new Set(['leave-replacement','effect-raid-leave','effect-field-leave-remove']);
+const RETIRE_FOLLOW=new Set(['leave-replacement','effect-raid-leave','effect-field-leave-remove','effect-substitute-retire']);
+function retirePause(pending){
+ if(!pending)return false;
+ if(RETIRE_FOLLOW.has(pending.kind))return true;
+ if(pending.kind==='csm'&&pending.step==='leaveReplace')return true;
+ if(pending.kind==='kmr'&&(pending.step==='sub25'||pending.step==='spend51'))return true;
+ if(pending.kind==='iys'&&pending.step==='leave')return true;
+ return false;
+}
 // onRetire is queued by the retirement itself. The printed follow-up waits
-// until that pause closes. A declined leave does not count as 退場.
+// until that pause closes. opts.always is a sentence that does not require
+// the chosen card to leave. The default follow is 「そうした場合」.
 function retireThen(s,who,line,slot,follow,opts={}){
  const tail=s.effectQueue.splice(0);
  const paused=A.retire(A.pack,s,who,line,slot,opts.by?{by:opts.by}:undefined);
- if(paused&&s.pending&&RETIRE_FOLLOW.has(s.pending.kind)){
+ if(paused&&retirePause(s.pending)){
   if(opts.always){
    s.pending.retirementAfter=[];
    s.pending.retirementTail=[...follow,...(s.pending.retirementTail||[]),...tail];

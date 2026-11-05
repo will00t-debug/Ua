@@ -786,7 +786,7 @@ export function activateCsm(pack,s,action){
  if(id==='CSM-1-014'){
   restOwn(s,owner,c);
   retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
-   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiImpact'});
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiImpact',needsLeave:true});
   return go(pack,s);
  }
  if(id==='CSM-1-017'){
@@ -840,7 +840,7 @@ export function activateCsm(pack,s,action){
  if(id==='CSM-1-062'){
   restOwn(s,owner,c);
   retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
-   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'grantAttackDraw'});
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'grantAttackDraw',needsLeave:true});
   go(pack,s);return;
  }
  if(id==='CSM-1-065'){
@@ -853,7 +853,7 @@ export function activateCsm(pack,s,action){
   restOwn(s,owner,c);
   retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
    {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiEnergy',
-    pochitaUid:c.uid});
+    pochitaUid:c.uid,needsLeave:false});
   go(pack,s);return;
  }
  if(id==='CSM-1-070'){
@@ -899,21 +899,24 @@ export function resolveCsmPending(pack,s,action){
   }
  }else if(step==='leaveReplace'){
   // Q2093/Q2094: accept retires the chosen substitute; skip resumes the original leave.
+  // A printed 「そうした場合」 stays with the original card. A later sentence
+  // that does not depend on that card leaving still resolves, once.
   const cause=q.data?.retireCause||null;
   if(a.mode==='pick'){
    use(s,q.sourceUid+'|leave');
    retireUid(pack,s,owner,a.uid,cause);
+   A.releaseRetirement(s,q,false);
    return go(pack,s);
   }else if(a.mode==='skip'&&q.data?.line!=null&&q.data?.slot!=null&&A.retireSkip){
    A.retireSkip(pack,s,owner,q.data.line,q.data.slot,cause?{
     by:cause.by||undefined,controller:cause.controller,sourceUid:cause.sourceUid
    }:{});
-   if(q.csmFollow){if(s.pending)s.pending.csmFollow=q.csmFollow;else s.effectQueue.push(q.csmFollow);}
+   A.releaseRetirement(s,q,true);
   }
  }else if(step==='retireThenDebuff5k'){
   if(a.mode==='pick'){
    retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
-    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'debuff5k'});
+    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'debuff5k',needsLeave:true});
    return go(pack,s);
   }
  }else if(step==='debuff5k'&&a.mode==='pick'){
@@ -969,11 +972,11 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='choose')resolveChoose(pack,s,q,a);
  else if(step==='retireThenKit'&&a.mode==='pick'){
   retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
-   {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'kit016'});
+   {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'kit016',needsLeave:true});
  }else if(step==='retireThenChoose'){
   if(a.mode==='pick'){
    retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
-    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'choose12'});
+    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'choose12',needsLeave:true});
   }
  }else if(step==='afterRetireChoose'){
   if(a.mode==='one'){
@@ -983,10 +986,11 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='buffOther2k'&&a.mode==='pick')buff(s,selfOf(s,owner,a.uid),2000);
  else if(step==='retireOwn'&&a.mode==='pick'){
   retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
-   q.id==='CSM-1-038'?{op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'ap038'}:null);
+   q.id==='CSM-1-038'?{op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'ap038',needsLeave:true}:null);
  }else if(step==='retireFoe'&&a.mode==='pick'){
   const follow=q.data?.thenBuff||q.data?.peelAki?{op:'csm',id:q.id,slot:'afterFoeRetire',
-   owner,sourceUid:q.sourceUid,thenBuff:q.data?.thenBuff===true,peelAki:q.data?.peelAki===true}:null;
+   owner,sourceUid:q.sourceUid,thenBuff:q.data?.thenBuff===true,peelAki:q.data?.peelAki===true,
+   needsLeave:false}:null;
   retireThen(pack,s,1-owner,a.uid,foeCause(owner,q.sourceUid),follow);
  }else if(step==='ap'){
   if(a.mode==='ap')readyIndex(s,owner,a.index);

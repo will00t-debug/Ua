@@ -77,6 +77,16 @@ dist/universal-v2/engine.mjs normalizeRetireCause、retire、queueRetirement。�
 
 tests/v2-csm-001-010.test.mjs；tests/v2-csm-faq.test.mjs 的 017 先處理 006 再減 BP
 
+### 退場代替後的後續句子
+
+印刷文本寫「そうした場合」，或退場寫在【】成本裡，後段要等被選中的那張卡實際退場。沒有這樣寫的後段不依賴那張卡的退場結果。CSM-1-040 的 BP+1000、CSM-1-077 的翻開裏向卡屬於後者。CSM-1-016、017、030、038 的「そうした場合」，以及 CSM-1-014、062 的【このカードを退場させる】屬於前者。
+
+dist/universal-v2/engine.mjs holdCsmFollow、flushRetirement。dist/universal-v2/csm-runtime.mjs leaveReplace 與 needsLeave。假面騎士 sub25／spend51、犬夜叉離場、突襲離場支付、代替退場與保護離場使用同一個規則。進擊的巨人第二彈 retireThen 也認這些暫停。
+
+接受 CSM-1-061 的代替時，040 仍可選 BP+1000，077 仍可翻開早川秋底下的裏向卡，016 與 030 的後段不發生。拒絕代替時原卡退場，040 的後段仍發生。沒有合法對象時後段不開啟，也不會再跑一次。
+
+tests/v2-csm-001-010.test.mjs 的接受、拒絕、一般退場與沒有裏向卡
+
 ## 已寫進台帳的條款
 
 - `CSM-1-001` UA53BT/CSM-1-001：已驗證。已驗證 【インパクト無効】（このキャラとバトルをしたキャ／已驗證 【ドロー】カードを1枚引く。
