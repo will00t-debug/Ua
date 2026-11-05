@@ -281,9 +281,8 @@ function phase004(pack,s,job){
 function reviveEnd(pack,s,job,name){
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
  const self=selfOf(s,job.owner,job.sourceUid);
+ // 「1枚まで」 includes zero. The hand cost can be paid with no copy outside.
  if(!self||!plOf(s,job.owner).hand.length)return;
- const outs=plOf(s,job.owner).outside.filter(c=>exact(pack,c,name,null));
- if(!outs.length)return;
  hold(s,{...spec,step:'revive',data:{name}},[
   {type:'kmr',mode:'skip'},
   {type:'kmr',mode:'revive'}
@@ -360,14 +359,17 @@ const HANDLERS={
   const key=job.sourceUid+'|KMR-1-019';
   if(used(s,key))return;
   const self=selfOf(s,job.owner,job.sourceUid);
-  const fresh=self&&self.entryTurn!==s.turn;
+  // Raid entry sets raidedTurn. A paid raid does not currently stamp entryTurn.
+  // このターンに登場していない is false on the raid that put this card in play.
+  const enteredThisTurn=!!self&&(self.entryTurn===s.turn||self.raidedTurn===s.turn);
+  const older=!!self&&!enteredThisTurn;
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
   const modes=['impact','damage','bp'];
-  hold(s,{...spec,step:'vulcan',data:{left:fresh?modes:[],paid:false,all:false,canPay:fresh&&apReady(s,job.owner)>=1}},[
+  hold(s,{...spec,step:'vulcan',data:{left:older?modes:[],paid:false,all:false,canPay:older&&apReady(s,job.owner)>=1}},[
    {type:'kmr',mode:'mode',key:'impact'},
    {type:'kmr',mode:'mode',key:'damage'},
    {type:'kmr',mode:'mode',key:'bp'},
-   ...(fresh&&apReady(s,job.owner)>=1?[{type:'kmr',mode:'payAll'}]:[])
+   ...(older&&apReady(s,job.owner)>=1?[{type:'kmr',mode:'payAll'}]:[])
   ]);
  },
  'KMR-1-021|onPlay'(pack,s,job){
@@ -376,12 +378,22 @@ const HANDLERS={
   offerOwn(s,spec,targets,true,'grant21','own');
  },
  'KMR-1-021|onRaidSeen'(pack,s,job){
+  // Printed timing is this controller's attack phase, and only that hopper.
+  if(s.phase!=='attack'||s.active!==job.owner)return;
+  const hopper=selfOf(s,job.owner,job.sourceUid);
+  if(!hopper||def(pack,hopper).name!=='仮面ライダーゼロワン リアライジングホッパー')return;
   if(nameLocked(s,job.owner,'仮面ライダーゼロツー（イズ）|021'))return;
   if(intelCount(pack,s,job.owner)<3)return;
   const copies=handWhere(s,job.owner,c=>def(pack,c).id==='KMR-1-021');
   if(!copies.length)return;
   offerFieldEntry(s,{player:job.owner,sourceUid:copies[0].uid,id:'KMR-1-021'},copies,{
    from:'hand',optional:true,skipOnPlay:false,lock:'仮面ライダーゼロツー（イズ）|021'});
+ },
+ 'KMR-1-022|mayDraw'(pack,s,job){
+  if(!plOf(s,job.owner).deck.length)return;
+  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:'KMR-1-022',step:'mayDraw',data:{}},[
+   {type:'kmr',mode:'skip'},{type:'kmr',mode:'draw'}
+  ]);
  },
  'KMR-1-022|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
@@ -393,9 +405,10 @@ const HANDLERS={
  },
  'KMR-1-024|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  if(plOf(s,job.owner).hand.length<2&&plOf(s,job.owner).deck.length<2)return;
   A.draw(pack,s,job.owner,2,job.sourceUid);
-  if(offerDiscard(s,spec,2,false,'scaleRetire'))return;
+  const need=Math.min(2,plOf(s,job.owner).hand.length);
+  if(need>0&&offerDiscard(s,spec,need,false,'scaleRetire'))return;
+  offerRetire(pack,s,spec,2000,true,null);
  },
  'KMR-1-025|onRetire'(pack,s,job){
   A.draw(pack,s,job.owner,1,job.sourceUid);
@@ -1007,8 +1020,10 @@ function queueEntryFollow(s,q,hit,playedName){
  if(data.then==='more005')s.effectQueue.unshift({op:'kmr',id:q.id,slot:'entryFollow',owner:q.player,
   sourceUid:q.sourceUid,then:'more005',names:[...(data.names||[]),playedName],
   got:[...(data.got||[]),hit.uid],max:data.max??2});
- if(data.drawIfHand&&hit.from==='hand')
-  s.effectQueue.unshift({op:'draw',owner:q.player,sourceUid:q.sourceUid,count:1});
+ // UA29BT/KMR-1-022: 手札から登場させた場合、カードを1枚まで引く.
+ // The shared optional-draw pending is reserved for other prints.
+ if(data.drawIfHand&&hit.from==='hand'&&plOf(s,q.player).deck.length)
+  s.effectQueue.unshift({op:'kmr',id:'KMR-1-022',slot:'mayDraw',owner:q.player,sourceUid:q.sourceUid});
 }
 function finishBoardEntry(pack,s,q,hit){
  const data=q.data||{};
@@ -1263,7 +1278,8 @@ function resolveStep(pack,s,q,a){
   if(hit.mode!=='skip'){
    const foe=1-q.player;
    const slot=plOf(s,foe).front.findIndex(c=>c?.uid===hit.uid);
-   if(slot>=0)A.retire(pack,s,foe,'front',slot,{by:'opponent'});
+   if(slot>=0)A.retire(pack,s,foe,'front',slot,{by:'opponent',controller:q.player,
+    sourceUid:q.sourceUid});
   }
   if(q.data?.next==='buffAny')
    offerOwn(s,spec,fieldCards(s,q.player).filter(c=>def(pack,c).type==='character'),true,null,'own');
@@ -1386,6 +1402,11 @@ function resolveStep(pack,s,q,a){
   s.pending=null;
   if(hit.mode==='skip')return;
   offerDiscard(s,spec,1,false,'revivePay');
+  return;
+ }
+ if(q.step==='mayDraw'){
+  s.pending=null;
+  if(hit.mode==='draw'&&plOf(s,q.player).deck.length)A.draw(pack,s,q.player,1,q.sourceUid);
   return;
  }
  if(q.step==='enter'){
@@ -1548,13 +1569,20 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='sub25'){
   s.pending=null;
+  const cause=q.data?.retireCause||{by:q.data?.by??null,controller:null,sourceUid:null};
   if(hit.mode==='skip'){
-   A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
+   // Declining resumes the original leave with the same cause. Other
+   // replacements may still be offered. This card is not asked again.
+   A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,
+    by:cause.by,controller:cause.controller,sourceUid:cause.sourceUid,declined025:true});
    if(q.csmFollow){if(s.pending)s.pending.csmFollow=q.csmFollow;else s.effectQueue.push(q.csmFollow);}
    return;
   }
   const loc=A.location(s,q.player,hit.uid);
-  if(loc)A.retire(pack,s,q.player,loc.line,loc.slot,{by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
+  if(!loc||loc.line!=='front'||def(pack,loc.c).id!=='KMR-1-025')
+   throw Error('Burning Falcon is not on the front');
+  A.retire(pack,s,q.player,loc.line,loc.slot,{by:cause.by,controller:cause.controller,
+   sourceUid:cause.sourceUid,skipReplacement:true});
   return;
  }
  if(q.step==='spend51'){

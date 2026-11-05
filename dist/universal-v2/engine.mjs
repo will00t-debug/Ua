@@ -6786,17 +6786,25 @@ function removeBattleLoser(pack,s,p,line,slot){
  return false;
 }
 function kmrSubstitute025(pack,s,p,c,line,slot,opts){
- if(opts.skipReplacement||opts.by!=='opponent'||line!=='front'||!s.kmrSourceUid)return false;
- if(sourceTypeFromUid(pack,s,s.kmrSourceUid)!=='character')return false;
- if(Number(String(s.kmrSourceUid).split('-')[0])===p)return false;
+ // UA29BT/KMR-1-025, Q1139. Only an opponent character effect. The victim
+ // may be on either line of 自分の場. This card itself must be on the front.
+ // Battle, events, own effects, and BP 0 rule leaves are not this sentence.
+ if(opts.skipReplacement||opts.declined025||opts.by!=='opponent')return false;
+ if(line!=='front'&&line!=='energy')return false;
+ const snapped=opts.cause&&typeof opts.cause==='object'?opts.cause:null;
+ const sourceUid=typeof snapped?.sourceUid==='string'?snapped.sourceUid:
+  (typeof s.kmrSourceUid==='string'?s.kmrSourceUid:null);
+ if(!sourceUid||sourceTypeFromUid(pack,s,sourceUid)!=='character')return false;
+ if(Number(sourceUid.split('-')[0])===p)return false;
  if(card(pack,c).name==='仮面ライダー迅 バーニングファルコン')return false;
  const subs=s.players[p].front.filter(x=>x&&x.uid!==c.uid&&card(pack,x).id==='KMR-1-025'&&
   !originalEffectsDisabled(s,x));
  if(!subs.length)return false;
+ const controller=Number.isInteger(snapped?.controller)?snapped.controller:Number(sourceUid[0]);
  s.pending={kind:'kmr',player:p,sourceUid:subs[0].uid,id:'KMR-1-025',step:'sub25',
   actions:[{type:'kmr',mode:'skip'},...subs.map(x=>({type:'kmr',mode:'sub',uid:x.uid}))],
-  data:{owner:p,line,slot,postImpact:!!opts.postImpact,by:opts.by,
-   retireCause:opts.cause||normalizeRetireCause(opts)}};
+  data:{owner:p,line,slot,postImpact:!!opts.postImpact,by:'opponent',
+   retireCause:{by:'opponent',controller,sourceUid}}};
  return true;
 }
 function kmrSpend051(pack,s,p,c,line,slot,opts){
@@ -6823,7 +6831,8 @@ function retire(pack,s,p,line,slot,opts={}){
  s.csmRetireCause=cause;
  s.kmrRetireBy=by;
  try{
-  if(kmrSubstitute025(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause}))return true;
+  if(kmrSubstitute025(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause,
+   declined025:opts.declined025===true}))return true;
   if(kmrSpend051(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause}))return true;
   if(!skipReplacement&&raidBoxTextLive(pack,c,'leaveReplace')){
    ensureCsm();

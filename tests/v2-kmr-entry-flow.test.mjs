@@ -186,6 +186,10 @@ test('KMR-1-022 offers every legal copy as a rest entry, then draws after a hand
  assert.equal(s.players[0].front[0]?.cardId,'KMR-1-022');
  assert.equal(s.players[0].hand.some(c=>c.uid===handA.uid),false);
  assert.equal(s.players[0].outside.some(c=>c.uid===outside.uid),true);
+ assert.equal(s.pending?.step,'mayDraw');
+ assert.equal(s.players[0].deck.length,deckBefore);
+ s=go(s,{type:'kmr',mode:'draw'});
+ assert.equal(s.pending,null);
  assert.equal(s.players[0].deck.length,deckBefore-1);
 });
 
