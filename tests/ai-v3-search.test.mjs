@@ -213,11 +213,22 @@ test('a learned-v4 prior cannot cross the search gap',()=>{
  ],()=>0);
  assert.equal(tiedSwing.action.type,'next');
  const shared=comparedLines([
-  {action:{type:'next'},search:49.5,boundary:'yielded'},
-  {action:{type:'raid',uid:'1-38'},search:71.4,boundary:'yielded'}
+  {action:{type:'next'},search:49.5,boundary:'yielded',phase:'main',pending:null,leafTurn:2,leafActive:0,leafOwnTurns:1},
+  {action:{type:'raid',uid:'1-38'},search:71.4,boundary:'yielded',phase:'main',pending:null,leafTurn:2,leafActive:0,leafOwnTurns:1}
  ]);
  assert.equal(shared.shared,true);
  assert.equal(shared.rows.length,2);
+ const misplaced=comparedLines([
+  {action:{type:'next'},search:49.5,boundary:'yielded',phase:'main',pending:null,leafTurn:2,leafActive:0,leafOwnTurns:1},
+  {action:{type:'raid',uid:'1-38'},search:71.4,boundary:'yielded',phase:'attack',pending:'block',leafTurn:3,leafActive:1,leafOwnTurns:2}
+ ]);
+ assert.equal(misplaced.rows.length,1);
+ assert.equal(misplaced.rows[0].action.type,'raid');
+ const split=comparedLines([
+  {action:{type:'play',uid:'0-1',line:'front'},search:10,boundary:'pending',phase:'main',pending:'effect-discard',leafTurn:2,leafActive:0,leafOwnTurns:1},
+  {action:{type:'raid',uid:'0-2'},search:30,boundary:'pending',phase:'main',pending:'effect-order',leafTurn:4,leafActive:1,leafOwnTurns:2}
+ ]);
+ assert.equal(split.rows.length,0);
  const cut=comparedLines([
   {action:{type:'next'},search:22,boundary:'yielded'},
   {action:{type:'move',uid:'0-14'},search:17,boundary:'pending'}

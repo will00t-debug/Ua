@@ -138,8 +138,11 @@ function dispatch(pack,state,action){
  return dispatchUniversalAction(pack,state,action,{actor:who(state)});
 }
 const BATTLE_KINDS=new Set(['block','effect-block-floor','life-trigger']);
+function nowOf(ctx){
+ return ctx.now?ctx.now():performance.now();
+}
 function room(ctx){
- return ctx.pool.n>0&&ctx.lineSpent<ctx.lineCap&&performance.now()<=ctx.deadline;
+ return ctx.pool.n>0&&ctx.lineSpent<ctx.lineCap&&nowOf(ctx)<=ctx.deadline;
 }
 function spend(ctx){
  if(!room(ctx))return false;
@@ -251,7 +254,7 @@ function classifyLine(ctx,cursor,actor){
  ctx.stats.returned=returned;
  ctx.stats.settled=terminal||returned;
  const outOfNodes=!(ctx.pool.n>0&&ctx.lineSpent<ctx.lineCap);
- const outOfTime=performance.now()>ctx.deadline;
+ const outOfTime=nowOf(ctx)>ctx.deadline;
  ctx.stats.exhausted=outOfNodes?'nodes':outOfTime?'time':null;
  if(!ctx.stats.limit){
   if(outOfNodes)ctx.stats.limit='nodes';
@@ -342,7 +345,8 @@ function leafSnap(ctx){
   leafPending:ctx.stats.leafPending,leafPhase:ctx.stats.leafPhase,
   leafOwnTurns:ctx.stats.leafOwnTurns,leafTurn:ctx.stats.leafTurn,leafActive:ctx.stats.leafActive,
   opponentTurns:ctx.stats.opponentTurns,responses:ctx.stats.responses,
-  sequence:ctx.stats.sequence?ctx.stats.sequence.slice():[]
+  sequence:ctx.stats.sequence?ctx.stats.sequence.slice():[],
+  refuted:!!ctx.stats.refuted,unexplored:(ctx.stats.unexplored||[]).slice()
  };
 }
 function applyLeaf(ctx,snap){
@@ -353,6 +357,8 @@ function applyLeaf(ctx,snap){
  ctx.stats.leafOwnTurns=snap.leafOwnTurns;ctx.stats.leafTurn=snap.leafTurn;ctx.stats.leafActive=snap.leafActive;
  ctx.stats.opponentTurns=snap.opponentTurns;ctx.stats.responses=snap.responses;
  ctx.stats.sequence=snap.sequence.slice();
+ ctx.stats.refuted=!!snap.refuted;
+ ctx.stats.unexplored=snap.unexplored?snap.unexplored.slice():[];
 }
 function advanceForced(pack,cursor,ctx){
  for(let guard=0;guard<12&&room(ctx)&&cursor.status==='playing';guard++){
@@ -475,8 +481,15 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
  const saved=ctx.replyLeft;
  ctx.replyLeft=budget-1;
  let best=null;
- for(const action of candidates){
-  if(!room(ctx)){ctx.stats.budget++;break;}
+ let sawWin=false;
+ for(let index=0;index<candidates.length;index++){
+  const action=candidates[index];
+  if(!room(ctx)){
+   ctx.stats.budget++;
+   const skipped=candidates.slice(index).map(item=>brief(item,'unexplored'));
+   ctx.stats.unexplored=(ctx.stats.unexplored||[]).concat(skipped);
+   break;
+  }
   applyLeaf(ctx,before);
   let next;
   try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
@@ -484,7 +497,12 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
   noteStep(ctx,action,'reply');
   ctx.stats.responses++;
   const value=planFrom(pack,next,actor,ctx,left,depth+1);
+  if(value>=90000)sawWin=true;
   best=keepBest(best,value,leafSnap(ctx),!!ctx.stats.settled,false);
+ }
+ if(sawWin&&best&&best.value<90000){
+  ctx.stats.refuted=true;
+  best.snap.refuted=true;
  }
  ctx.replyLeft=saved;
  const branches=ctx.stats.followBranches;
@@ -567,8 +585,14 @@ function planFrom(pack,state,actor,ctx,left,depth){
  ctx.stats.followBranches+=candidates.length;
  const before=leafSnap(ctx);
  let best=null;
- for(const action of candidates){
-  if(!room(ctx)){ctx.stats.budget++;break;}
+ for(let index=0;index<candidates.length;index++){
+  const action=candidates[index];
+  if(!room(ctx)){
+   ctx.stats.budget++;
+   const skipped=candidates.slice(index).map(item=>brief(item,'unexplored'));
+   ctx.stats.unexplored=(ctx.stats.unexplored||[]).concat(skipped);
+   break;
+  }
   applyLeaf(ctx,before);
   let next;
   try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
@@ -724,18 +748,21 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  return remember(ctx,key,best,mark);
 }
 function lineView(ctx,search){
- return {search,nodes:ctx.lineSpent,settled:!!ctx.stats.settled,
+ const finite=Number.isFinite(search);
+ return {...ctx.stats,
+  search:finite?search:null,nodes:ctx.lineSpent,executed:!!ctx.stats.executed,settled:!!ctx.stats.settled,
   boundary:ctx.stats.boundary||'open',handedOff:!!ctx.stats.handedOff,returned:!!ctx.stats.returned,
   cut:ctx.stats.cut||null,pending:ctx.stats.leafPending||null,phase:ctx.stats.leafPhase||null,
   startOwnTurns:ctx.origin?.ownTurns??null,
-  leafOwnTurns:ctx.stats.leafOwnTurns?.[ctx.origin?.actor]??null,
-  ...ctx.stats};
+  leafTurn:ctx.stats.leafTurn??null,leafActive:ctx.stats.leafActive??null,
+  refuted:!!ctx.stats.refuted,unexplored:ctx.stats.unexplored||[]};
 }
 export function scoreLine(pack,state,actor,action,limits){
  const pool=limits.pool||{n:limits.nodes};
  const lineCap=Math.min(limits.nodes,pool.n);
  const ctx={
   pool,lineCap,lineSpent:0,
+  now:limits.now,
   deadline:limits.deadline??Infinity,
   plan:limits.plan||(limits.finish===false?'tree':'rollout'),
   strategy:limits.strategy||null,
@@ -745,27 +772,32 @@ export function scoreLine(pack,state,actor,action,limits){
   tt:limits.tt||new Map(),
   stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0,
    boundary:'open',handedOff:false,returned:false,cut:null,limit:null,depthHit:false,layers:0,
-   followBranches:0,maxDepth:1,sequence:[],
+   followBranches:0,maxDepth:1,sequence:[],executed:false,refuted:false,unexplored:[],
    plan:limits.plan||(limits.finish===false?'tree':'rollout')}
  };
  ctx.finish=ctx.plan==='rollout';
  if(!room(ctx)){
-  classifyLine(ctx,state,actor);
-  if(!(pool.n>0))ctx.stats.cut='nodes';
-  else if(performance.now()>ctx.deadline)ctx.stats.cut='time';
+  ctx.stats.executed=false;
   ctx.stats.settled=false;
-  return lineView(ctx,evaluate(pack,state,actor,ctx));
+  ctx.stats.cut=!(pool.n>0)?'nodes':'time';
+  ctx.stats.limit=ctx.stats.cut;
+  ctx.stats.boundary='open';
+  return lineView(ctx,null);
  }
  let next;
  try{next=dispatch(pack,state,action);}catch{return null;}
  if(!spend(ctx)){
-  classifyLine(ctx,next,actor);
+  ctx.stats.executed=false;
   ctx.stats.settled=false;
-  ctx.stats.cut=performance.now()>ctx.deadline?'time':'nodes';
-  return lineView(ctx,evaluate(pack,next,actor,ctx));
+  ctx.stats.cut=nowOf(ctx)>ctx.deadline?'time':'nodes';
+  ctx.stats.limit=ctx.stats.cut;
+  ctx.stats.boundary='open';
+  return lineView(ctx,null);
  }
+ ctx.stats.executed=true;
  ctx.stats.actorDecisions++;
  noteStep(ctx,action,'root');
+ if(limits.pass==='basic')return lineView(ctx,finishLine(pack,next,actor,ctx));
  const value=ctx.plan==='rollout'
   ?searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions)
   :layered(pack,next,actor,ctx,limits.actorDecisions??2);

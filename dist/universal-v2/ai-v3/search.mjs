@@ -95,21 +95,64 @@ export function comparedLines(scored){
  for(const row of scored)best=Math.max(best,BOUNDARY_RANK[row.boundary]||0);
  if(!best)return {rows:[],shared:false};
  const rows=scored.filter(row=>(BOUNDARY_RANK[row.boundary]||0)===best);
- const idleOnly=rows.every(row=>isSafeAction(row.action));
- const behind=scored.some(row=>!isSafeAction(row.action)&&!rows.includes(row));
+ // yielded and pending are labels, not positions. Incomplete lines share a
+ // comparison only when the turn, the player to move, the phase, and the
+ // pending effect are the same.
+ let chosen=rows;
+ if(best<BOUNDARY_RANK.returned){
+  const groups=new Map();
+  for(const row of rows){
+   const key=placeKey(row);
+   if(!groups.has(key))groups.set(key,[]);
+   groups.get(key).push(row);
+  }
+  if(groups.size>1){
+   const lists=[...groups.values()];
+   const idle=list=>list.every(item=>isSafeAction(item.action));
+   lists.sort((a,b)=>{
+    if(idle(a)!==idle(b))return idle(a)?1:-1;
+    return b.length-a.length;
+   });
+   const top=lists[0],second=lists[1];
+   if(top.length===second.length&&idle(top)===idle(second))chosen=[];
+   else chosen=top;
+  }
+ }
+ if(!chosen.length)return {rows:[],shared:false};
+ const idleOnly=chosen.every(item=>isSafeAction(item.action));
+ const behind=scored.some(row=>!isSafeAction(row.action)&&!chosen.includes(row));
  if(idleOnly&&behind)return {rows:[],shared:false};
- return {rows,shared:true};
+ return {rows:chosen,shared:true};
+}
+function doneLine(row){
+ return !!(row&&(row.settled||row.boundary==='returned'||row.boundary==='terminal'));
+}
+// A later search replaces the basic line only when it is a finished
+// improvement, or when an opponent reply has already refuted a sure win.
+function mergeRows(basic,deep){
+ if(!deep||!Number.isFinite(deep.search))return basic;
+ if(!basic||!Number.isFinite(basic.search))return deep;
+ if(basic.search>=90000&&deep.refuted&&deep.search<basic.search)return deep;
+ if(doneLine(basic)&&!doneLine(deep))return basic;
+ if(doneLine(deep)&&!doneLine(basic))return deep;
+ return deep.search>basic.search?deep:basic;
+}
+function placeKey(row){
+ return [row.leafTurn??'',row.leafActive??'',row.phase??'',row.pending??'',row.leafOwnTurns??''].join('|');
 }
 function fallback(pack,state,legal,started,reason){
  report.fallback++;
- let action=null;
- try{action=chooseStrengthenedHardAction(pack,state,{ms:10000,nodes:48,seed:1});}
- catch{action=null;}
- const exact=legal.find(item=>same(item,action))||legal[0]||null;
- return finish(exact,'fallback-hard',{fallback:true,fallbackFrom:reason},started);
+ const actor=state?.pending?.player??state?.active??0;
+ let ordered=legal;
+ try{ordered=rankLegal(pack,state,actor,legal,null);}catch{ordered=legal;}
+ const choice=reliableChoice(pack,state,actor,legal,null,ordered);
+ const exact=legal.find(item=>same(item,choice))||legal[0]||null;
+ return finish(exact,'budget-fallback',{fallback:true,fallbackFrom:reason,nodesUsed:0,executed:false},started);
 }
 export function chooseAiV3Action(pack,state,options={}){
  const started=performance.now();
+ const now=typeof options.now==='function'?options.now:()=>performance.now();
+ const clockStart=now();
  report.decisions++;
  try{
   if(!state||state.status!=='playing')return finish(null,'idle',{},started);
@@ -142,7 +185,7 @@ export function chooseAiV3Action(pack,state,options={}){
     candidates:ordered.slice(0,beam).map(action=>({action}))},started);
   }
   const ranked=selectCandidates(pack,probe,actor,legal,beam,strategy);
-  const deadline=started+ms;
+  const deadline=Number.isFinite(ms)&&ms<=0?clockStart-1:clockStart+ms;
   if(options.mode==='ismcts'){
    report.ismcts++;
    const pool={n:total};
@@ -168,8 +211,9 @@ export function chooseAiV3Action(pack,state,options={}){
   // not the 48-node baseline.
   const hardBudget=Number.isInteger(options.hardNodes)?Math.max(0,options.hardNodes):0;
   const hardSlice=Math.min(hardBudget,pool.n);
-  const hardMs=Math.max(1,Math.min(Math.max(hardSlice,1),deadline-performance.now()));
-  const hardRaw=hardSlice>0?chooseStrengthenedHardAction(pack,state,{nodes:hardSlice,ms:hardMs,seed}):null;
+  const hardRemain=deadline-now();
+  const hardMs=hardSlice>0?Math.max(0,Math.min(hardSlice,hardRemain)):0;
+  const hardRaw=hardSlice>0&&hardMs>0?chooseStrengthenedHardAction(pack,state,{nodes:hardSlice,ms:hardMs,seed}):null;
   const hardSpent=Math.min(pool.n,hardAiReport().nodes||0);
   pool.n-=hardSpent;
   report.nodes+=hardSpent;
@@ -180,33 +224,36 @@ export function chooseAiV3Action(pack,state,options={}){
   const safe=ranked.find(isSafeAction);
   push(safe);
   for(const action of ranked)push(action);
-  const scored=[];
   const actorDecisions=options.actorDecisions??MATCH_LIMITS.actorDecisions;
-  // The first line keeps a floor so a pass can finish. A larger clock
-  // deepens each line instead of stopping at that floor.
+  // Each candidate first keeps a scripted continuation. Remaining nodes
+  // deepen those lines. A cut activation must not replace a finished basic line.
   const seats=Math.max(2,Math.min(jobs.length||2,4));
   const lineFloor=total<=48?16:Math.max(16,Math.min(160,Math.floor(total/seats)));
-  for(let index=0;index<jobs.length;index++){
-   const reserve=index===0&&jobs.length>1?lineFloor:0;
-   if(pool.n-reserve<8){report.budget++;break;}
-   if(performance.now()>deadline&&scored.length){report.budget++;break;}
-   const action=jobs[index];
-   let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0,settled=0,pending=null,phase=null,boundary=null,cut=null;
-   let followBranches=0,maxDepth=1,sequence=null;
-   const plan=options.plan||'tree';
+  const plan=options.plan||'tree';
+  const unexecuted=[];
+  const unexplored=[];
+  const held=[];
+  const note=action=>({type:action?.type||null,uid:action?.uid??null,line:action?.line||null,mode:action?.mode||null});
+  const scoreJob=(action,pass)=>{
+   let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0,settled=0;
+   let pending=null,phase=null,boundary=null,cut=null,sequence=null,sample=null;
+   let followBranches=0,maxDepth=1;
    for(let w=0;w<worlds.length;w++){
     if(pool.n<=0){report.budget++;break;}
-    const slice=Math.min(pool.n-reserve,lineFloor);
+    if(now()>deadline&&n){report.budget++;break;}
+    const slice=Math.min(pool.n,pass==='basic'?16:lineFloor);
     const line=scoreLine(pack,worlds[w].state,actor,action,{
-     nodes:slice,pool,beam,deadline,actorDecisions,opponentDecisions,plan,strategy
+     nodes:slice,pool,beam,deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass
     });
-    if(!line||!Number.isFinite(line.search))continue;
+    if(line?.unexplored?.length)unexplored.push(...line.unexplored);
+    if(!line||line.executed===false||!Number.isFinite(line.search))continue;
     totalScore+=line.search;
     n++;
-    turns+=line.opponentTurns;
-    responses+=line.responses;
-    decisions+=line.actorDecisions;
-    nodes+=line.nodes;
+    sample=line;
+    turns+=line.opponentTurns||0;
+    responses+=line.responses||0;
+    decisions+=line.actorDecisions||0;
+    nodes+=line.nodes||0;
     if(line.settled)settled++;
     pending=line.pending;
     phase=line.phase;
@@ -215,21 +262,48 @@ export function chooseAiV3Action(pack,state,options={}){
     followBranches+=line.followBranches||0;
     maxDepth=Math.max(maxDepth,line.maxDepth||1);
     sequence=line.sequence||sequence;
-    hits+=line.transpositionHits;
-    report.unsupported+=line.unsupported;
+    hits+=line.transpositionHits||0;
+    report.unsupported+=line.unsupported||0;
    }
-   if(!n)continue;
-   scored.push({action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
-    nodes,settled:settled===n,pending,phase,boundary,cut,followBranches,maxDepth,sequence});
+   if(!n)return null;
    report.nodes+=nodes;
    report.transpositionHits=(report.transpositionHits||0)+hits;
+   return {action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
+    nodes,settled:settled===n,pending,phase,boundary,cut,followBranches,maxDepth,sequence,
+    executed:true,refuted:!!sample.refuted,leafTurn:sample.leafTurn??null,
+    leafActive:sample.leafActive??null,leafOwnTurns:sample.leafOwnTurns??null};
+  };
+  for(let index=0;index<jobs.length;index++){
+   if((now()>deadline||pool.n<=0)&&held.length){
+    unexplored.push(...jobs.slice(index).map(action=>({...note(action),executed:false})));
+    break;
+   }
+   if(pool.n<=0||now()>deadline){
+    unexecuted.push({action:jobs[index],executed:false,nodes:0});
+    continue;
+   }
+   const row=scoreJob(jobs[index],'basic');
+   if(!row)unexecuted.push({action:jobs[index],executed:false,nodes:0});
+   else held.push(row);
   }
+  const deepen=[...held.keys()].sort((a,b)=>Number(isSafeAction(held[a].action))-Number(isSafeAction(held[b].action)));
+  for(let cursor=0;cursor<deepen.length;cursor++){
+   const index=deepen[cursor];
+   if(pool.n<8||now()>deadline){
+    unexplored.push(...deepen.slice(cursor).map(slot=>({...note(held[slot].action),deepen:false})));
+    break;
+   }
+   const deep=scoreJob(held[index].action,'deep');
+   if(deep)held[index]=mergeRows(held[index],deep);
+  }
+  const scored=held;
   const viewed=scored.map(item=>({action:item.action,search:item.search,opponentTurns:item.opponentTurns,
    settled:item.settled,boundary:item.boundary,cut:item.cut,pending:item.pending,phase:item.phase,nodes:item.nodes,
+   executed:item.executed!==false,refuted:!!item.refuted,leafTurn:item.leafTurn??null,
+   leafActive:item.leafActive??null,leafOwnTurns:item.leafOwnTurns??null,
    followBranches:item.followBranches,maxDepth:item.maxDepth,sequence:item.sequence}));
   const followBranches=scored.reduce((sum,item)=>sum+(item.followBranches||0),0);
   const maxDepth=scored.reduce((sum,item)=>Math.max(sum,item.maxDepth||1),1);
-  const plan=options.plan||'tree';
   const backup=reliableChoice(pack,state,actor,legal,hardExact,ordered);
   const {rows:comparable,shared}=comparedLines(scored);
   const missed=jobs.length>scored.length||scored.some(item=>!item.settled);
@@ -246,12 +320,21 @@ export function chooseAiV3Action(pack,state,options={}){
    return finish(backup,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,incomplete:true,
     hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,
-    plan,roots:jobs.length,followBranches,maxDepth,
+    plan,roots:jobs.length,followBranches,maxDepth,unexecuted,unexplored,
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
     sequence:(scored.find(item=>item.sequence?.length)||{}).sequence||[]
    },started);
   }
-  if(!scored.length)return fallback(pack,state,legal,started,'empty-search');
+  if(!scored.length){
+   const backupOnly=reliableChoice(pack,state,actor,legal,hardExact,ordered);
+   report.budgetFallback++;
+   report.budget++;
+   return finish(backupOnly,'budget-fallback',{
+    actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,incomplete:true,
+    executed:false,hard:hardExact,hardNodes:hardSlice,strategy,compared:[],unexecuted,unexplored,
+    plan,roots:jobs.length
+   },started);
+  }
   const observation=actorObservation(pack,state,actor);
   const poolRows=comparable;
   const anchor=poolRows.reduce((best,row)=>row.search>best.search?row:best).action;
@@ -264,12 +347,12 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched');
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
-  return finish(exact,performance.now()>deadline?'budget':'search',{
+  return finish(exact,now()>deadline?'budget':'search',{
    actor,seed,worlds:worlds.length,score:row?.search??null,bonus:blended.bonus,
    opponentTurns:row?.opponentTurns||0,responses:row?.responses||0,
    actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,
    incomplete:!row?.settled,hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:jobs.length-scored.length,
-   candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:row?.sequence||[]
+   unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:row?.sequence||[]
   },started);
  }catch(error){
   try{

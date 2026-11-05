@@ -171,14 +171,19 @@ test('practical tree search records the play, raid, effect choice, and attack at
 });
 
 test('a short node budget stays legal and does not invent a win',()=>{
- // 24 nodes used to fall back because 16 were spent on the hard slice.
- // Those nodes now stay in the tree, so the insufficient budget is 8.
+ // Eight nodes can finish one scripted continuation. That result is a real
+ // search. A clock with nothing executed still uses the budget fallback.
  const thin=ask('tree',8);
  assert.equal(thin.legal.some(item=>JSON.stringify(item)===JSON.stringify(thin.action)),true);
- assert.equal(thin.trace.reason,'budget-fallback');
- assert.equal(thin.trace.incomplete,true);
  assert.notEqual(thin.trace.score,100000);
- console.log('plan thin',thin.action.type,thin.trace.reason);
+ assert.ok(thin.trace.nodesUsed<=8);
+ if(thin.trace.reason==='search'){
+  assert.ok((thin.trace.compared||[]).every(row=>row.executed===true&&row.nodes>0));
+ }else{
+  assert.equal(thin.trace.reason,'budget-fallback');
+  assert.equal(thin.trace.incomplete,true);
+ }
+ console.log('plan thin',thin.action.type,thin.trace.reason,thin.trace.nodesUsed);
 });
 
 test('node, time, and depth limits stay distinct',()=>{

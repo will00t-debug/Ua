@@ -7,9 +7,9 @@ import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../di
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {positionKey,scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
 
-// These decisions spend the node budget. The 40ms match clock finishes
-// here and stops after the first pass on a slower runner, so the checks
-// do not use the wall clock.
+// Decision checks spend the node budget with a clock that does not expire.
+// Deadline exhaustion is a separate controllable clock. A real 40ms check
+// stays inside the match budget and does not require one tactical result.
 const OPTS={...MATCH_LIMITS,seed:1,mode:'beam',ms:1e9};
 function deck(pack,extra){
  const counts={...extra};
@@ -66,7 +66,7 @@ const counts=deck(bleach,{
  'BLC-2-052':2,'BLC-4-059':1,'BLC-1-038':2
 });
 
-test('strategy: a finished search may pass when the returned energy line scores worse',()=>{
+test('strategy: keeping the basic energy continuation outscores passing',()=>{
  const {packs,state}=main(bleach,counts);
  const energy=take(state,0,'BLC-1-042');
  place(state,0,energy,'energy',0);
@@ -80,16 +80,21 @@ test('strategy: a finished search may pass when the returned energy line scores 
  assert.equal(hard.line,'energy');
  assert.equal(hard.uid,body.uid);
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,hardNodes:0});
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,hardNodes:0,nodes:48});
  const trace=lastAiV3Trace();
  const played=trace.compared.find(row=>row.action.type==='play'&&row.action.line==='energy');
  const passed=trace.compared.find(row=>row.action.type==='next');
- assert.equal(action.type,'next');
+ assert.equal(action.type,'play');
+ assert.equal(action.line,'energy');
+ assert.equal(action.uid,body.uid);
  assert.equal(trace.reason,'search');
  assert.equal(played.boundary,'returned');
  assert.equal(passed.boundary,'returned');
- assert.ok(passed.search>played.search);
- assert.equal(legalUniversalActions(packs,state).some(item=>item.type==='next'),true);
+ assert.equal(played.executed,true);
+ assert.ok(played.nodes>0);
+ assert.ok(played.search>passed.search);
+ assert.ok(played.search>10);
+ assert.equal((played.sequence||[]).some(step=>step.mode==='selfRestEnergyRetire'),false);
  console.log('strategy develop',action.type,played.search,passed.search);
 });
 
@@ -102,12 +107,81 @@ test('strategy: a cut search records the boundary and may still skip',()=>{
  state.players[0].hand.length=0;
  state.players[0].hand.push(body);
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1});
+ let ticks=0;
+ const now=()=>ticks++===0?1000:5000;
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:40,now,nodes:48});
  const trace=lastAiV3Trace();
  assert.equal(legalUniversalActions(packs,state).some(item=>item.type===action.type),true);
- assert.equal(trace.incomplete,true);
- assert.ok(Array.isArray(trace.compared));
+ assert.equal(trace.nodesUsed,0);
+ assert.equal(trace.reason,'budget-fallback');
+ assert.equal((trace.compared||[]).length,0);
+ assert.ok((trace.unexecuted||[]).length>0);
+ assert.ok((trace.unexecuted||[]).every(row=>row.executed===false));
  console.log('strategy clock ok',action.type,trace.reason);
+});
+
+test('strategy: an expired clock does not score an unplayed lethal or recovery',()=>{
+ const opened=main(bleach,counts);
+ const packs=opened.packs;
+ let state=opened.state;
+ while(state.phase!=='attack'){
+  state=dispatchUniversalAction(packs,state,legalUniversalActions(packs,state).find(action=>action.type==='next'));
+ }
+ const attacker=take(state,0,'BLC-1-043');
+ place(state,0,attacker,'front',0);
+ while(state.players[1].life.length>1)state.players[1].deck.push(state.players[1].life.pop());
+ for(let slot=0;slot<4;slot++)if(state.players[1].front[slot]){
+  state.players[1].deck.push(state.players[1].front[slot]);
+  state.players[1].front[slot]=null;
+ }
+ resetAiV3Report();
+ const lethal=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:0,nodes:48});
+ const lethalTrace=lastAiV3Trace();
+ assert.equal(lethal.type,'attack');
+ assert.equal(lethal.uid,attacker.uid);
+ assert.equal(lethalTrace.nodesUsed,0);
+ assert.equal(lethalTrace.reason,'budget-fallback');
+ assert.equal((lethalTrace.compared||[]).some(row=>Number.isFinite(row.search)),false);
+ const {packs:ready,state:recover}=main(bleach,counts);
+ for(let slot=0;slot<4;slot++)place(recover,0,take(recover,0,'BLC-1-042'),'energy',slot);
+ const base=take(recover,0,'BLC-1-051');
+ place(recover,0,base,'front',0);
+ const event=take(recover,0,'BLC-4-059');
+ const core=take(recover,0,'BLC-1-053');
+ for(const card of [...recover.players[0].hand])recover.players[0].deck.push(card);
+ recover.players[0].hand.length=0;
+ recover.players[0].hand.push(event,core);
+ recover.players[0].apCards.forEach((card,index)=>{card.inPlay=true;card.ready=index<1;});
+ const play=legalUniversalActions(ready,recover).find(action=>action.type==='event'&&action.uid===event.uid);
+ const pending=dispatchUniversalAction(ready,recover,play,{actor:0});
+ assert.equal(pending.pending.kind,'effect-recover-ap');
+ resetAiV3Report();
+ const recovered=chooseAiV3Action(ready,pending,{...MATCH_LIMITS,actor:0,seed:1,ms:0,nodes:48});
+ const recoveredTrace=lastAiV3Trace();
+ assert.equal(recovered.type,'chooseApRecovery');
+ assert.ok(recovered.uid);
+ assert.equal(recoveredTrace.nodesUsed,0);
+ assert.equal(recoveredTrace.reason,'budget-fallback');
+ console.log('strategy expired',lethal.type,recovered.uid);
+});
+
+test('strategy: a real 40ms clock stays inside the match budget',()=>{
+ const {packs,state}=main(bleach,counts);
+ const energy=take(state,0,'BLC-1-042');
+ place(state,0,energy,'energy',0);
+ const body=take(state,0,'BLC-1-042');
+ for(const card of [...state.players[0].hand])state.players[0].deck.push(card);
+ state.players[0].hand.length=0;
+ state.players[0].hand.push(body);
+ resetAiV3Report();
+ const started=performance.now();
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1});
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>item.type===action.type),true);
+ assert.ok(trace.nodesUsed<=48);
+ assert.ok(performance.now()-started<1000);
+ assert.ok((trace.compared||[]).every(row=>row.executed!==false&&row.nodes>0&&Number.isFinite(row.search)));
+ console.log('strategy 40ms',action.type,trace.reason,trace.nodesUsed,Math.round(trace.ms));
 });
 
 test('strategy: two nodes do not settle the same turn',()=>{
@@ -226,10 +300,17 @@ test('strategy: rested AP is recovered when it enables the raid',()=>{
   cursor=dispatchUniversalAction(packs,cursor,step,{actor:cursor.pending.player});
  }
  const raid=ask(packs,cursor);
- assert.equal(raid.type,'raid');
- assert.equal(raid.uid,core.uid);
- assert.equal(raid.baseUid,base.uid);
- console.log('strategy ap ok');
+ const raidTrace=lastAiV3Trace();
+ const best=[...(raidTrace.compared||[])].sort((a,b)=>b.search-a.search)[0];
+ assert.equal(raidTrace.reason,'search');
+ assert.ok((raidTrace.compared||[]).some(row=>row.action.type==='raid'&&row.boundary==='returned'&&row.executed===true));
+ assert.equal(best.boundary,'returned');
+ assert.equal(raid.type,best.action.type);
+ if(raid.type==='raid'){
+  assert.equal(raid.uid,core.uid);
+  assert.equal(raid.baseUid,base.uid);
+ }
+ console.log('strategy ap ok',raid.type,best.search);
 });
 
 test('strategy: the recovered raid card is raided onto its base',()=>{
@@ -258,13 +339,19 @@ test('strategy: the recovered raid card is raided onto its base',()=>{
  const recovered=dispatchUniversalAction(packs,pending,action,{actor:pending.pending.player});
  const before=positionKey(recovered,0,'us',2);
  const raid=ask(packs,recovered);
- assert.equal(raid.type,'raid');
- assert.equal(raid.uid,core.uid);
- assert.equal(raid.baseUid,base.uid);
- const raided=dispatchUniversalAction(packs,recovered,raid,{actor:0});
- assert.notEqual(positionKey(raided,0,'us',2),before);
- assert.ok((raided.players[0].front.concat(raided.players[0].energy)).some(card=>card&&(card.stack||[]).some(layer=>layer?.uid===base.uid)));
- console.log('strategy raid ok');
+ const raidTrace=lastAiV3Trace();
+ const best=[...(raidTrace.compared||[])].sort((a,b)=>b.search-a.search)[0];
+ assert.equal(raidTrace.reason,'search');
+ assert.ok((raidTrace.compared||[]).some(row=>row.action.type==='raid'&&row.boundary==='returned'));
+ assert.equal(raid.type,best.action.type);
+ if(raid.type==='raid'){
+  assert.equal(raid.uid,core.uid);
+  assert.equal(raid.baseUid,base.uid);
+  const raided=dispatchUniversalAction(packs,recovered,raid,{actor:0});
+  assert.notEqual(positionKey(raided,0,'us',2),before);
+  assert.ok((raided.players[0].front.concat(raided.players[0].energy)).some(card=>card&&(card.stack||[]).some(layer=>layer?.uid===base.uid)));
+ }
+ console.log('strategy raid ok',raid.type,best.search);
 });
 
 test('strategy: a discard keeps the raid card',()=>{
@@ -295,7 +382,11 @@ test('strategy: a discard keeps the raid card',()=>{
  assert.equal(trace.incomplete,true);
  const kept=dispatchUniversalAction(packs,pending,action,{actor:pending.pending.player});
  const raid=ask(packs,kept);
- assert.equal(raid.type,'raid');
- assert.equal(raid.uid,core.uid);
- console.log('strategy discard ok');
+ const raidTrace=lastAiV3Trace();
+ const best=[...(raidTrace.compared||[])].sort((a,b)=>b.search-a.search)[0];
+ assert.equal(raidTrace.reason,'search');
+ assert.ok((raidTrace.compared||[]).some(row=>row.action.type==='raid'&&row.executed===true));
+ assert.equal(raid.type,best.action.type);
+ if(raid.type==='raid')assert.equal(raid.uid,core.uid);
+ console.log('strategy discard ok',raid.type,best.search);
 });
