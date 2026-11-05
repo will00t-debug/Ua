@@ -1,0 +1,95 @@
+/* One artwork for every physical face-down card. User-supplied photo, perspective-corrected.
+   Public faces, visible outside-zone cards, AP faces, and empty deck piles remain unchanged. */
+:root{--ua-card-back-image:url("assets/union-arena-card-back.webp")}
+/* V2 setup: face-down cards and visual thumbnails use the common red back.
+   Deck colour labels/borders remain available for recognition. */
+.v2-arena-theme .scene-card,
+.v2-arena-theme .v2-shell .deck-thumb,
+.v2-arena-theme .v2-shell .deck-quick-pick.green .deck-thumb,
+.v2-arena-theme .v2-shell .deck-quick-pick.purple .deck-thumb{
+ background-color:#b5092b!important;
+ background-image:var(--ua-card-back-image)!important;
+ background-position:center!important;
+ background-size:cover!important;
+ background-repeat:no-repeat!important
+}
+.v2-arena-theme .scene-card span,
+.v2-arena-theme .v2-shell .deck-thumb-title{visibility:hidden}
+.v2-arena-theme .scene-card::before,
+.v2-arena-theme .v2-shell .deck-thumb::before{display:none}
+
+/* Player/AI/online LIFE card backs. They never disclose the real card identity. */
+.v2-shell #match-view .lifeCard,.online-match .lifeCard{
+ background-color:#bc0928!important;
+ background-image:var(--ua-card-back-image)!important;
+ background-position:center!important;background-size:cover!important;
+ background-repeat:no-repeat!important;
+ border-color:#571724;color:transparent;font-size:0
+}
+body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard.v2-life-spent{
+ background-image:none!important;background-color:#112135!important;
+ opacity:.32;border:1px dashed #697a93!important
+}
+body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-emblem{display:none}
+body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-number{
+ position:relative;z-index:2;min-width:13px;padding:1px 3px;
+ border-radius:3px;background:#000b;color:white;
+ font-size:10px;line-height:1.15;text-shadow:0 1px 2px #000
+}
+body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard.v2-life-target{
+ border-color:#ff7a8b!important;outline:2px solid #f93449!important;
+ box-shadow:0 0 8px #ff3e5490!important
+}
+body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard.v2-life-selected{
+ border-color:#ffc5c9!important;outline:3px solid #ff304b!important;
+ box-shadow:inset 0 0 0 2px #ff455c,0 0 9px #ff3d55!important
+}
+/* Large screens have horizontal LIFE slots. Rotate just the illustration:
+   button hit targets and card-number labels stay upright. */
+@supports (width:100cqh){
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard{
+  container-type:size;background-image:none!important
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lifeCard:not(.v2-life-spent)::before{
+  content:"";position:absolute;top:50%;left:50%;
+  width:100cqh;height:100cqw;pointer-events:none;
+  background:var(--ua-card-back-image) center/cover no-repeat;
+  transform:translate(-50%,-50%) rotate(90deg);border-radius:4px
+ }
+}
+
+/* New desktop deck stack, compact desktop/mobile deck pile, opponent hands. */
+body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-deck-stack{
+ background:#b5092b var(--ua-card-back-image) center/cover no-repeat!important;
+ border-color:#541522!important;color:transparent!important;font-size:0!important
+}
+.v2-shell #match-view .lineGroup .piles>.pile:first-child{
+ background:#b5092b var(--ua-card-back-image) center/cover no-repeat!important;
+ border-color:#63263b!important;color:#fff!important;
+ font-weight:750;text-shadow:0 1px 3px #080006
+}
+.v2-shell #match-view .lineGroup .piles>.pile:first-child b{
+ color:#fff!important;text-shadow:0 1px 3px #080006
+}
+body.v2-battle-page.v2-playing #match-view .v2-desktop-opponent-hand i,
+body.arena-site .hidden-hand i{
+ background:#b5092b var(--ua-card-back-image) center/cover no-repeat!important;
+ border-color:#5b2636!important;box-shadow:0 1px 3px #0008
+}
+
+/* Field face-down markers and private under-card gallery. A hidden face is
+   always red, never an accidentally revealed public card illustration. */
+body.arena-site .online-match .slot.facedown,
+body.arena-site .online-match button.slot.facedown,
+.v2-shell .slot.facedown{
+ background:#b5092b var(--ua-card-back-image) center/cover no-repeat!important;
+ border-color:#641b2d!important;color:transparent!important;font-size:0!important
+}
+.v2-shell .v2-facedown-back{
+ background:#b5092b var(--ua-card-back-image) center/cover no-repeat!important;
+ border:1px solid #732438!important;color:transparent!important
+}
+.v2-shell .v2-facedown-back>span{visibility:hidden}
+.v2-shell .slotFace .slotFacedownStack i{
+ background:#9b0927!important;border-color:#d44760!important
+}
