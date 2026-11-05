@@ -44,25 +44,85 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
  const hand=arena.querySelector('.handArea');
  if(!opponent||!mine||!middle||!hand)return false;
 
+
+ // A single shared tabletop for AI and online matches. All existing card,
+ // outside-zone, AP and phase action nodes are MOVED, not recreated, so their
+ // original legal-action listeners remain authoritative.
  const inspector=el('aside',{class:'v2-desktop-inspector','aria-label':'卡片檢視'});
  const table=el('div',{class:'v2-desktop-table','aria-label':'雙方場地與我的手牌'});
- const sidebar=el('aside',{class:'v2-desktop-sidebar','aria-label':'生命、能源與回合操作'});
- const panels=[];
+ const lifeRail=el('aside',{class:'v2-life-rail','aria-label':'雙方七格生命區'});
+ const pileRail=el('aside',{class:'v2-pile-rail','aria-label':'雙方牌組及場外'});
+ const slotCount=side=>Math.max(7,Number(view.players[side]?.lifeCount)||0);
  for(const [side,area] of [[1,opponent],[0,mine]]){
   const player=view.players[side];
   const resources=area.querySelector('.playerResources');
   const life=area.querySelector('.lifeRow');
-  const panel=el('section',{class:'v2-desktop-resources'+(side===1?' opponent':''),
-   'aria-label':side===1?'對手資源':'我方資源'},
-   el('h2',{class:'v2-desktop-owner',text:side===1?'對手':'我方'}),life,resources);
+  const lifeCount=Math.max(0,Number(player.lifeCount)||0);
+  // Keep all seven printed positions; empty positions persist as life is lost.
+  life?.replaceChildren(
+   el('span',{class:'v2-life-caption',text:side===1?'電腦血區':'你的血區'}),
+   ...Array.from({length:slotCount(side)},(_,i)=>el('span',{
+    class:'lifeCard'+(i>=lifeCount?' v2-life-spent':''),
+    'aria-label':(side===1?'對手':'我方')+'血區第 '+(i+1)+' 格'+(i>=lifeCount?'（已失去）':''),
+    'data-life-index':String(i)},el('span',{class:'v2-life-number',text:String(i+1)}),
+    el('span',{class:'v2-life-emblem',text:i>=lifeCount?'':'♠'})))
+  );
+  const lifeGroup=el('section',{class:'v2-life-group'+(side===1?' opponent':''),
+   'aria-label':side===1?'對手生命卡':'我方生命卡'},life);
+  const removed=area.querySelector('[data-v2-zone="removed"]');
+  if(removed)lifeGroup.append(el('div',{class:'v2-removed-zone'},removed));
+  lifeRail.append(lifeGroup);
+  const apNode=resources?.querySelector('.apRow, .apDots');
+  const apPlace=el('div',{class:'v2-table-ap',
+   'aria-label':(side===1?'對手':'我方')+' AP 卡'});
+  if(apNode?.classList.contains('apRow'))apPlace.append(apNode);
+  else{
+   // Online's public view can expose point cards without a native AP row.
+   // Render them as cards, not inert AP dots; existing online legal choices
+   // continue through their original action controls.
+   const tokens=Array.isArray(player.apCards)?player.apCards:[];
+   const row=el('div',{class:'apRow'});
+   for(let i=0;i<3;i++){
+    const token=tokens[i];
+    const face=el('span',{class:'apArt'+(token?.ready||(!token&&i<player.apReady)?' ready':
+     token?.inPlay||i<player.apTotal?' rested':' locked')});
+    if(token?.cardId){
+     const img=el('img',{src:imageSource(side,token.cardId),alt:'AP '+(i+1)});
+     img.addEventListener('error',()=>imageFallback(img,side));
+     face.append(img);
+    }else face.append(el('span',{class:'v2-ap-fallback',text:'AP'}));
+    row.append(el('span',{class:'apCard','aria-label':'AP '+(i+1)},face));
+   }
+   row.append(el('span',{class:'apCount',text:player.apReady+'/'+player.apTotal}));
+   apPlace.append(row);
+  }
+  if(side===1)area.insertBefore(apPlace,area.querySelector('.lineGroup'));
+  else area.append(apPlace);
+  // Present each player's piles as a vertical deck/outside stack at far right.
+  // Outside previews are public; never guess or disclose hidden deck cards.
+  const rightGroup=el('section',{class:'v2-pile-group'+(side===1?' opponent':''),
+   'aria-label':side===1?'對手牌組及場外':'我的牌組及場外'});
+  const deck=el('div',{class:'v2-pile-deck','aria-label':'牌組 '+player.deckCount+' 張'},
+   el('span',{class:'v2-deck-stack',text:'♠'}),
+   el('span',{class:'v2-pile-label',text:'牌組'}),
+   el('span',{class:'v2-pile-count',text:String(player.deckCount)}));
+  rightGroup.append(deck);
+  const outside=area.querySelector('[data-v2-zone="outside"]');
+  if(outside){
+   const publiclyKnown=[...(player.outside||[])].reverse()
+    .find(card=>card?.cardId&&!card?.faceDown);
+   if(publiclyKnown){
+    const picture=el('img',{class:'v2-outside-preview',
+     src:imageSource(side,publiclyKnown.cardId),alt:'場外最上方的公開卡'});
+    picture.addEventListener('error',()=>imageFallback(picture,side));
+    outside.prepend(picture);
+   }else outside.prepend(el('span',{class:'v2-outside-placeholder',text:'♠'}));
+   rightGroup.append(outside);
+  }
+  pileRail.append(rightGroup);
   const energy=resources?.querySelector('.energyCount');
   if(energy)energy.textContent=Object.entries(player.energyByColor||{})
    .filter(([,amount])=>amount>0).map(([color,amount])=>(colorNames[color]||color)+' '+amount).join(' / ')||'能源 0';
-  const ap=resources?.querySelector('.apDots>span');
-  if(ap)ap.textContent='AP '+player.apReady+' / '+player.apTotal;
-  const apCount=resources?.querySelector('.apRow .apCount');
-  if(apCount)apCount.textContent='行動值 '+player.apReady+' / '+player.apTotal;
-  panels.push(panel);
  }
  const opponentInfo=opponent.querySelector('.playerInfo');
  const hiddenHand=el('div',{class:'v2-desktop-opponent-hand',
@@ -76,11 +136,13 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
  const phaseAction=arena.querySelector('.phaseAction');
  const result=arena.querySelector('.resultBanner');
  table.append(opponent,middle,mine,hand);
- sidebar.append(panels[0],advance||el('div',{class:'v2-middle-next v2-desktop-wait',
-  role:'status',text:view.status==='finished'?'對局結束':view.pending?'請完成效果選擇':'等待操作'}),panels[1]);
- if(phaseAction)sidebar.append(phaseAction);
- arena.classList.add('v2-desktop-arena');
- arena.replaceChildren(inspector,table,sidebar);
+ const controls=el('div',{class:'v2-pile-controls'},
+  advance||el('div',{class:'v2-middle-next v2-desktop-wait',
+   role:'status',text:view.status==='finished'?'對局結束':view.pending?'請完成效果選擇':'等待操作'}));
+ if(phaseAction)controls.append(phaseAction);
+ pileRail.append(controls);
+ arena.classList.add('v2-desktop-arena','v2-reference-table');
+ arena.replaceChildren(lifeRail,table,pileRail);
  if(result)arena.append(result);
 
  function showPreview(entry){
@@ -162,6 +224,6 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
  header.insertBefore(logButton,menu);
  log.classList.add('v2-desktop-log');
  log.hidden=!logOpen;log.open=logOpen;
- sidebar.append(log);
+ pileRail.append(log);
  return true;
 }
