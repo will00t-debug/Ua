@@ -1654,7 +1654,7 @@ function applyAction(a){
   const replacementLine=a.line==='energy'?'energy':'front';
   const displaced=typeof a.replaceUid==='string'?
    app.state.players[0]?.[replacementLine]?.[a.slot]:null;
-  if(displaced?.uid===a.replaceUid){
+  if(typeof a.replaceUid==='string'&&displaced?.uid===a.replaceUid){
    const name=cardDef(0,displaced.cardId)?.name||displaced.cardId||'原角色';
    if(!window.confirm('確認擠位？\n將取代 '+name+' 所在的'+
     (replacementLine==='front'?'前線':'能源線')+'格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。'))return;
