@@ -34,6 +34,9 @@ function setup(seed,{spare=false,topCards=0}={}){
  const p=s.players[0];
  const simon=take(s,'TTG-1-012');
  const extra=spare?take(s,'TTG-1-058'):null;
+ // Keep all physical cards inside an actual zone even while advancing phases.
+ p.hand.push(simon);
+ if(extra)p.hand.push(extra);
  for(let i=0;i<3;i++){
   const c=take(s,'TTG-1-009');
   c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
@@ -42,13 +45,10 @@ function setup(seed,{spare=false,topCards=0}={}){
  s=advance(s,a=>a.type==='next'); // START -> MOVE
  s=advance(s,a=>a.type==='next'); // MOVE -> MAIN
  const mine=s.players[0];
- mine.outside.push(...mine.hand.splice(0),...mine.deck.splice(topCards));
- if(topCards===0){
-  // No deck window: setup should still resolve the mandatory AP recovery.
-  mine.outside.push(...mine.deck.splice(0));
- }
- mine.hand.push(simon);
- if(extra)mine.hand.push(extra);
+ const kept=new Set([simon.uid,extra?.uid].filter(Boolean));
+ const moveToOutside=mine.hand.filter(card=>!kept.has(card.uid));
+ mine.hand=mine.hand.filter(card=>kept.has(card.uid));
+ mine.outside.push(...moveToOutside,...mine.deck.splice(topCards));
  assert.equal(assertUniversalMatch(pack,s),true);
  return {s,simon,extra};
 }
