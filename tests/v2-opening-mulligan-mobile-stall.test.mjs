@@ -67,6 +67,6 @@ test('opening UI never silently traps either choice behind a stale AI busy state
  assert.match(action,/const nextReplay=appendUniversalReplay/);
  for(const file of ['dist/universal-v2-battle.html','dist/universal-v2-preview.html']){
   const html=readFileSync(new URL('../'+file,import.meta.url),'utf8');
-  assert.match(html,/universal-v2-preview\.mjs\?v=20261105mulliganfix1/);
+  assert.match(html,/universal-v2-preview\.mjs\?v=20261105lifetablemulligan1/);
  }
 });

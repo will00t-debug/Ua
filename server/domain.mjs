@@ -152,6 +152,13 @@ function publicActionChoice(action,index,packs,match,view,extraIds){
  if(typeof action?.mode==='string'&&/^[A-Za-z0-9_-]{1,40}$/.test(action.mode))choice.mode=action.mode;
  if(action?.from==='hand'||action?.from==='removed'||action?.from==='outside'||action?.from==='deck')
   choice.from=action.from;
+ // Public LIFE POSITION indices, never the underlying private card identities.
+ if(action?.type==='chooseAttackLife'&&Array.isArray(action.indices)&&
+  match?.pending?.kind==='attack-life-target'&&
+  action.indices.length>=1&&action.indices.length<=7&&
+  action.indices.every(i=>Number.isInteger(i)&&i>=0&&
+   i<view.players[match.pending.defender]?.lifeCount))
+  choice.indices=[...action.indices];
  return choice;
 }
 // Only the active controller receives the cards they were authorized to inspect.
@@ -688,7 +695,7 @@ export function dispatchRoom(repos,message,now){
    }];
    const packs=seats.map(seat=>titlePack(seat.title));
    let match;
-   try{match=newUniversalMatch(packs,{decks:[host.battleCounts,message.battleCounts],seed,first,openingMulligan:true});}
+   try{match=newUniversalMatch(packs,{decks:[host.battleCounts,message.battleCounts],seed,first,openingMulligan:true,attackerChoosesLife:true});}
    catch{throw new ApiError(400,'這副牌組還不能進入 V2 對戰。');}
    assertUniversalMatch(packs,match);
    room.seats=seats;

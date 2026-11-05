@@ -1,6 +1,7 @@
 // Presentation only. Online commands keep their server-issued action index.
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
+import {makeAttackLifePicker} from './attack-life-picker.mjs';
 import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,
  facedownGallery,mountFacedownOverlay,closeFacedownOverlays,findKnownLayer} from './facedown-inspect.mjs';
 export {DESKTOP_BATTLE_QUERY} from './desktop-battle-ui.mjs';
@@ -9,7 +10,8 @@ export {facedownInspectModel,closeFacedownOverlays,findKnownLayer};
 export const ONLINE_BATTLE_STYLES=[
  'universal-v2-legacy.css','universal-v2-arena-setup.css','universal-v2-battle.css',
  'universal-v2-compact.css','universal-v2-desktop.css','universal-v2-pc-table.css',
- 'universal-v2-block.css','universal-v2-zone.css','online-battle.css'
+ 'universal-v2-block.css','universal-v2-zone.css','online-battle.css',
+ 'universal-v2-reference-table.css'
 ];
 
 export function setOnlineBattleMode(active,doc=globalThis.document){
@@ -32,7 +34,8 @@ export function onlineBattleView(room){
  const view=room.view,seat=room.seat;
  const relative=n=>n===0||n===1?n===seat?0:1:n;
  return {...view,status:room.status,active:relative(view.active),actor:relative(view.actor),
-  pending:view.pending?{...view.pending,player:relative(view.pending.player)}:null,
+  pending:view.pending?{...view.pending,player:relative(view.pending.player),
+   ...(Number.isInteger(view.pending.defender)?{defender:relative(view.pending.defender)}:{})}:null,
   battle:view.battle?{...view.battle,owner:relative(view.battle.owner)}:null,
   players:[view.players[seat],{...view.players[1-seat],hand:null}]};
 }
@@ -262,11 +265,20 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
  const details=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄'}),log);
  target.append(arena,details);shell.append(target);
  if(desktop)mountDesktopBattlefield({arena,header,log:details,view,selectedUid,el,
+  lifeTargetActions:choices,onLifeTargetAction:action=>onAction(action.index),
   cardDefinition:definition,imageSource,imageFallback:img=>{img.src='assets/mark.svg';},
   printedCard:definition,effectCopy:d=>d?.effect||d?.text||'請查看印刷卡面。',openCard,
   backControl:leave,matchupLabel:matchup+' · 房間 '+room.code});
  if(paused)middle.append(el('button',{type:'button',class:'v2-inspection-return',text:'返回效果選擇',onClick:onResume}));
- else if(view.pending&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
+ else if(view.pending?.kind==='attack-life-target'&&room.yourTurn&&!desktop){
+  const overlay=el('div',{class:'overlay v2-attack-life-overlay'},
+   el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true',
+    'aria-label':'進攻方選擇對手血區'},
+    makeAttackLifePicker({el,lifeCount:view.players[1].lifeCount,
+     count:view.pending.count,actions:choices,onAction:a=>onAction(a.index)})));
+  shell.append(overlay);
+ }
+ else if(view.pending&&view.pending.kind!=='attack-life-target'&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
   const dialog=el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true','aria-label':'效果選擇'},
    el('div',{class:'headline'},el('h2',{text:view.phase==='setup'?'起手調度':'效果選擇'}),
     actions.querySelector('.online-inspection-peek')?null:el('button',{type:'button',text:'查看場面與手牌',onClick:onPause})),actions);

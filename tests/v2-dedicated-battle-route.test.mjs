@@ -107,7 +107,7 @@ test('setup launches the new URL and battle-only boot preserves V2 reducer, AI a
  assert.match(code,/assertUniversalMatch\(app\.packs,data\.state\)/);
  assert.match(code,/saveBattleProgress\(\)/);
  assert.match(code,/clearSoloBattle\(sessionStorage\)/);
- assert.match(code,/newUniversalMatch\(app\.packs,\{decks:\[mine\.counts,foe\.counts\],seed,first,openingMulligan:true\}\)/);
+ assert.match(code,/newUniversalMatch\(app\.packs,\{decks:\[mine\.counts,foe\.counts\],seed,first,openingMulligan:true,attackerChoosesLife:true\}\)/);
  assert.match(code,/dispatchUniversalAction\(app\.packs,app\.state,a,\{actor:0\}\)/);
  assert.match(code,/chooseProgressSafeAiAction\(app\.packs,app\.state/);
  assert.match(code,/function renderOpeningMulligan\(target,s\)/);

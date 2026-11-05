@@ -898,6 +898,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='frontDiscardBuff'?'起動主要：棄 1 張手牌，指定名稱與特徵 BP+1000':
     action.mode==='discardEventEnergy'?'起動主要：棄 1 張事件，本回合指定角色必要能源 -1':
     action.mode==='buff'?'主要能力：指定符合條件的角色 BP＋1000':'主要能力：先 ACTIVE 自己，再指定符合條件的角色 BP＋1000';
+  case 'chooseAttackLife':return '攻擊對手血區第 '+(action.indices||[]).map(i=>i+1).join('、')+' 格';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
    if(action.mode==='skip')return '不使用此觸發';
