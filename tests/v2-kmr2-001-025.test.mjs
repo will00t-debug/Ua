@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {KMR2_CARDS} from '../dist/kmr-vol2-cards.mjs';
 import {createKmrBattlePack} from '../dist/universal-v2/official-entry.mjs';
 import {kmr2ChoiceImmune} from '../dist/universal-v2/kmr2-continuous.mjs';
+import {grantContinuousState,originalEffectsDisabled} from '../dist/universal-v2/continuous-states.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
  universalBp,universalCardEnergy,universalImpact,universalImpactNull,universalPrivateChoices,
  zoneRequiredEnergy}
@@ -107,6 +108,29 @@ function stackFaceUp(s,p,top,underId){
  under.faceDown=false;under.ready=false;under.stack=[];under.under=[];
  top.stack=[under];top.raidBaseUid=under.uid;
  return under;
+}
+// Q974: losing original effects does not remove a grant from another card,
+// and it does turn off the silenced card's own continuous text. KMR-1-051's
+// onPlay writes this same status after its tuck. The fixture applies that
+// status. It does not replay the tuck or the draw, and it does not add an
+// action KMR-2-019 does not print.
+function loseOriginal(s,target){
+ const source=put(s,1,'KMR-1-051','front',1,true);
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:1,sourceUid:source.uid,
+  targetUid:target.uid,sourceLinked:false,until:{player:1,phase:'start',edge:'start'}});
+ return source;
+}
+// Premise: the physical source is already off the field before the win is
+// decided. This moves that card and its raid base to outside. It is not a
+// new leave action.
+function alreadyLeft(s,p,card){
+ const slot=s.players[p].front.findIndex(c=>c?.uid===card.uid);
+ assert.ok(slot>=0);
+ const buried=[...(card.stack||[])];
+ card.stack=[];
+ delete card.raidBaseUid;
+ s.players[p].front[slot]=null;
+ s.players[p].outside.push(card,...buried);
 }
 function entered(s,card,id,name){
  card.kmr2EnteredBy={id,name,turn:s.turn};
@@ -1124,4 +1148,130 @@ test('KMR-2-019 offers one optional draw after a non-yellow battle win',()=>{
  quiet=block(quiet,blocker.uid);
  assert.equal(quiet.pending?.id==='KMR-2-019',false);
  assertUniversalMatch(packs,quiet);
+});
+
+function ohmaBoard(extra={}){
+ const s=fresh(fill(['KMR-2-019','KMR-2-022','KMR-2-006','KMR-2-010','KMR-1-051'],extra));
+ const attacker=put(s,0,'KMR-2-022','front',0,true);
+ const ohma=put(s,0,'KMR-2-019','front',1,true);
+ stackFaceUp(s,0,ohma,'KMR-2-006');
+ const wall=put(s,1,'KMR-2-010','front',0,true);
+ ready(s);
+ park(s,0);
+ return {s,attacker,ohma,wall};
+}
+
+test('KMR-2-019 keeps the granted draw when only the winner lost its original effects',()=>{
+ const skipped=ohmaBoard();
+ assert.equal(legal(skipped.s).some(action=>action.mode==='kmr2:KMR-2-022'),true);
+ loseOriginal(skipped.s,skipped.attacker);
+ assert.equal(originalEffectsDisabled(skipped.s,skipped.attacker),true);
+ assert.equal(originalEffectsDisabled(skipped.s,skipped.ohma),false);
+ assert.equal(legal(skipped.s).some(action=>action.mode==='kmr2:KMR-2-022'),false);
+ const deck=skipped.s.players[0].deck.length;
+ let state=strike(skipped.s,skipped.attacker.uid);
+ state=block(state,skipped.wall.uid);
+ assert.equal(state.pending?.id,'KMR-2-019');
+ assert.equal(state.pending?.step,'mayDraw');
+ assert.equal(state.effectQueue.some(job=>job.id==='KMR-2-019'&&job.slot==='win'),false);
+ state=click(state,action=>action.mode==='skip');
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].deck.length,deck);
+ assert.equal(state.players[0].hand.length,0);
+ assertUniversalMatch(packs,state);
+
+ const drawn=ohmaBoard();
+ loseOriginal(drawn.s,drawn.attacker);
+ const before=drawn.s.players[0].deck.length;
+ let win=strike(drawn.s,drawn.attacker.uid);
+ win=block(win,drawn.wall.uid);
+ assert.equal(win.pending?.actions.filter(action=>action.mode==='draw').length,1);
+ win=click(win,action=>action.mode==='draw');
+ assert.equal(win.pending,null);
+ assert.equal(win.players[0].deck.length,before-1);
+ assert.equal(win.players[0].hand.length,1);
+ assert.equal(win.effectQueue.some(job=>job.id==='KMR-2-019'&&job.slot==='win'),false);
+ assertUniversalMatch(packs,win);
+});
+
+test('KMR-2-019 stops when the source is silenced or has left, and a later change does not redraw',()=>{
+ const silenced=ohmaBoard();
+ loseOriginal(silenced.s,silenced.ohma);
+ assert.equal(originalEffectsDisabled(silenced.s,silenced.ohma),true);
+ assert.equal(originalEffectsDisabled(silenced.s,silenced.attacker),false);
+ let quiet=strike(silenced.s,silenced.attacker.uid);
+ quiet=block(quiet,silenced.wall.uid);
+ assert.equal(quiet.pending?.id==='KMR-2-019',false);
+ assertUniversalMatch(packs,quiet);
+
+ const gone=ohmaBoard();
+ alreadyLeft(gone.s,0,gone.ohma);
+ let absent=strike(gone.s,gone.attacker.uid);
+ absent=block(absent,gone.wall.uid);
+ assert.equal(absent.pending?.id==='KMR-2-019',false);
+ assertUniversalMatch(packs,absent);
+
+ const duringBlock=ohmaBoard();
+ let waiting=strike(duringBlock.s,duringBlock.attacker.uid);
+ alreadyLeft(waiting,0,duringBlock.ohma);
+ waiting=block(waiting,duringBlock.wall.uid);
+ assert.equal(waiting.pending?.id==='KMR-2-019',false);
+ assertUniversalMatch(packs,waiting);
+
+ const silencedLate=ohmaBoard();
+ let open=strike(silencedLate.s,silencedLate.attacker.uid);
+ loseOriginal(open,silencedLate.ohma);
+ open=block(open,silencedLate.wall.uid);
+ assert.equal(open.pending?.id==='KMR-2-019',false);
+ assertUniversalMatch(packs,open);
+
+ const after=ohmaBoard();
+ const before=after.s.players[0].deck.length;
+ let offered=strike(after.s,after.attacker.uid);
+ offered=block(offered,after.wall.uid);
+ assert.equal(offered.pending?.step,'mayDraw');
+ loseOriginal(offered,after.ohma);
+ alreadyLeft(offered,0,after.ohma);
+ assert.equal(offered.pending?.step,'mayDraw');
+ offered=click(offered,action=>action.mode==='draw');
+ assert.equal(offered.pending,null);
+ assert.equal(offered.players[0].deck.length,before-1);
+ assertUniversalMatch(packs,offered);
+});
+
+test('KMR-2-019 does not stack, and a yellow winner stays excluded',()=>{
+ const both=ohmaBoard({'KMR-2-019':2,'KMR-2-004':1});
+ const second=put(both.s,0,'KMR-2-019','front',2,true);
+ stackFaceUp(both.s,0,second,'KMR-2-004');
+ const before=both.s.players[0].deck.length;
+ let once=strike(both.s,both.attacker.uid);
+ once=block(once,both.wall.uid);
+ assert.equal(once.pending?.step,'mayDraw');
+ assert.equal(once.pending.actions.filter(action=>action.mode==='draw').length,1);
+ once=click(once,action=>action.mode==='draw');
+ assert.equal(once.pending,null);
+ assert.equal(once.players[0].deck.length,before-1);
+ assertUniversalMatch(packs,once);
+
+ const mixed=ohmaBoard({'KMR-2-019':2,'KMR-2-004':1});
+ const other=put(mixed.s,0,'KMR-2-019','front',2,true);
+ stackFaceUp(mixed.s,0,other,'KMR-2-004');
+ loseOriginal(mixed.s,mixed.ohma);
+ const deck=mixed.s.players[0].deck.length;
+ let live=strike(mixed.s,mixed.attacker.uid);
+ live=block(live,mixed.wall.uid);
+ assert.equal(live.pending?.step,'mayDraw');
+ live=click(live,action=>action.mode==='skip');
+ assert.equal(live.pending,null);
+ assert.equal(live.players[0].deck.length,deck);
+ assertUniversalMatch(packs,live);
+
+ const yellowWin=ohmaBoard({'KMR-2-020':1});
+ const mammoth=put(yellowWin.s,0,'KMR-2-020','front',2,true);
+ loseOriginal(yellowWin.s,mammoth);
+ assert.equal(pack.cards['KMR-2-020'].color,'yellow');
+ let excluded=strike(yellowWin.s,mammoth.uid);
+ excluded=block(excluded,yellowWin.wall.uid);
+ assert.equal(excluded.pending?.id==='KMR-2-019',false);
+ assertUniversalMatch(packs,excluded);
 });

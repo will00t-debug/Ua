@@ -2,9 +2,9 @@
   "group": "A",
   "branch": "cursor/effect-audit-bp-zero-65f8",
   "pr": 319,
-  "base": "a5bc96e85e8f5c1ee62597feae27b3ec337de653",
+  "base": "6e2486515d58d677eb97d50cfa568ee8111476fd",
   "integratedMain": "03bd60f7237e1b1ecdd1002eac167f718b2947b7",
-  "status": "已整合 B 的 PR #321、C 的 PR #323、D 的 PR #322。",
+  "status": "第二輪 B cursor/audit-b2-csm-040-060、C cursor/audit-c2-kmr1-026-050、D cursor/audit-d2-kmr2-close-026-040 在 origin 與開放 PR 都尚未交付。第一輪 #321、#323、#322 維持已整合。KMR-2-019 的歐馬形態句已依 Q974 改為看來源。",
   "mergedFrom": [
     {
       "group": "B",
@@ -29,6 +29,15 @@
     "退場原因仍保留 by、控制者與來源。原因未填不是自己的效果。",
     "同一印刷效果的 effectScope 結束後才檢查 BP 0。",
     "退場代替後，只有印刷文本要求原目標實際退場的後段才停止；CSM-1-040 的 BP+1000 與 CSM-1-077 的翻裏向卡仍會結算一次。",
-    "突襲完成時寫入 entryTurn。KMR-2-006 的黃能量、009 的滿線代替、019 的戰鬥勝利抽牌已補進共用引擎。"
-  ]
+    "突襲完成時寫入 entryTurn。KMR-2-006 的黃能量、009 的滿線代替、019 的戰鬥勝利抽牌已補進共用引擎。",
+    "KMR-2-019 依 Q974 只看來源。受益者失去原本效果仍保留抽 0 或 1 張。來源失效，或在勝利判定前離場，都不再賦予。多張來源不重複。沒有為 KMR-1-021 或 Q1473 新增印刷文本沒有的行動。"
+  ],
+  "round2": {
+    "checked": "2026-11-06",
+    "missing": [
+      "cursor/audit-b2-csm-040-060",
+      "cursor/audit-c2-kmr1-026-050",
+      "cursor/audit-d2-kmr2-close-026-040"
+    ]
+  }
 }

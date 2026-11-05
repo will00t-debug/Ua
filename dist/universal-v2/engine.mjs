@@ -2060,13 +2060,22 @@ function noteKmrBattleWin(pack,s,owner,attacker){
  s.effectQueue.splice(retirementJobsInserted,0,{op:'kmr',id:'KMR-1-086',slot:'win',
   owner,sourceUid:attacker.uid});
 }
+function omaFormGrantLive(pack,s,c){
+ // The draw sentence is KMR-2-019's own continuous text, listed in the raid
+ // frame. Q51: that frame is live only with a face-up card underneath. Q974:
+ // the source losing its original effects turns this sentence off. A copy
+ // that has left the field is not in `field`, so it no longer grants.
+ if(!c||card(pack,c).id!=='KMR-2-019'||originalEffectsDisabled(s,c))return false;
+ return raidBoxTextLive(pack,c,'phase');
+}
 function noteKmr2OmaWin(pack,s,owner,winner){
- // KMR-2-019: on your turn, every non-yellow character gains an optional
- // draw when that character wins a battle. Two copies do not draw twice.
- if(s.active!==owner||!winner||originalEffectsDisabled(s,winner))return;
+ // KMR-2-019: while Ohma Form's own text is live, on your turn every
+ // non-yellow character has one optional draw when THAT character wins.
+ // Q974: silencing the winner removes the winner's printed text, not this
+ // grant. Printed yellow stays yellow. Two live copies still queue once.
+ if(s.active!==owner||!winner)return;
  if(card(pack,winner).color==='yellow')return;
- if(!field(s.players[owner]).some(c=>c&&card(pack,c).id==='KMR-2-019'&&
-  !originalEffectsDisabled(s,c)))return;
+ if(!field(s.players[owner]).some(c=>omaFormGrantLive(pack,s,c)))return;
  s.effectQueue.splice(retirementJobsInserted,0,{op:'kmr2',id:'KMR-2-019',slot:'win',
   owner,sourceUid:winner.uid});
 }

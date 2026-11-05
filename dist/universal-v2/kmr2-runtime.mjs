@@ -963,6 +963,10 @@ function faceUpRaidCard(c){
 }
 function win019(pack,s,job){
  const unit=selfOf(s,job.owner,job.sourceUid);
+ // Printed color only. Q974: the winner having lost its own effects does
+ // not remove the draw Ohma Form is granting. Recheck the source here so a
+ // copy silenced or removed after the win was noted, with no other live
+ // copy left, does not open the draw.
  if(!unit||def(pack,unit).color==='yellow')return;
  if(!fieldCards(s,job.owner).some(c=>c&&def(pack,c).id==='KMR-2-019'&&live(s,c)&&
   (!raidBoxListed('KMR-2-019','phase')||faceUpRaidCard(c))))return;

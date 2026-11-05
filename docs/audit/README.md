@@ -99,11 +99,11 @@ tests/v2-kmr-001-025-rest.test.mjs 的 019：突襲當回合不能支付取得�
 
 ### 假面騎士第二彈三個共用掛點
 
-KMR-2-006 在口嚼獸合計 3 張時，直到下一個自己回合開始前發生能源 +黃。KMR-2-009、Q1760：敗給 BP 3000 以下時改到能源線；能源線全滿就先把一張能源卡放到場外。KMR-2-019：自己回合，場上有歐馬形態時，黃以外的角色戰鬥勝利可以抽最多 1 張，複數張歐馬形態不重複抽。
+KMR-2-006 在口嚼獸合計 3 張時，直到下一個自己回合開始前發生能源 +黃。KMR-2-009、Q1760：敗給 BP 3000 以下時改到能源線；能源線全滿就先把一張能源卡放到場外。KMR-2-019：自己回合，場上有歐馬形態時，黃以外的角色戰鬥勝利可以抽最多 1 張，複數張歐馬形態不重複抽。Q974（2024-05-24）：失去原本效果不會拿掉其他卡已賦予的能力，但會關掉自己的常時參照。
 
-dist/universal-v2/engine.mjs 允許 KMR-2-006 的 untilOwnTurnStart 能量。kmr2LossReplacement 在滿線時開啟 shiftFull。noteKmr2OmaWin 把 win 排進 KMR-2-019。dist/universal-v2/kmr2-runtime.mjs 結算 shiftFull。
+dist/universal-v2/engine.mjs 允許 KMR-2-006 的 untilOwnTurnStart 能量。kmr2LossReplacement 在滿線時開啟 shiftFull。noteKmr2OmaWin 只在來源仍在場、原本效果仍在、突襲框文字有效時排進一筆 win。dist/universal-v2/kmr2-runtime.mjs win019 在結算時再查一次來源。
 
-006 的能量加成、009 的滿線代替、019 給其他非黃角色的勝利抽牌。015 沒有對象時仍可支付並結束，印刷文本沒有寫必須有對象。
+006 的能量加成、009 的滿線代替、019 給其他非黃角色的勝利抽牌。受益者失去原本效果仍可抽 0 或 1 張。來源失效或在勝利判定前離場就不再賦予。選擇打開之後來源才失效或離場，不會再抽第二次。015 沒有對象時仍可支付並結束，印刷文本沒有寫必須有對象。
 
 tests/v2-kmr2-001-025.test.mjs
 
