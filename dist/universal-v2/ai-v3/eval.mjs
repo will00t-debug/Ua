@@ -122,25 +122,49 @@ function battleOptions(pack,state,actor){
  for(const action of legal){
   if(action?.type!=='chooseBlock')continue;
   let delta=0;
-  if(!action.uid)delta=lifeChange(state,actor,defender,damage);
+  if(!action.uid){
+   delta=lifeChange(state,actor,defender,damage);
+   const ready=(front||[]).filter(card=>card?.ready);
+   const later=laterSwingDamage(pack,state,attacker);
+   // Staying ready answers the largest later swing. The others still connect.
+   if(ready.length&&later.length>1){
+    const eaten=later.sort((a,b)=>b-a).slice(1).reduce((sum,n)=>sum+n,0);
+    if(eaten)delta+=lifeChange(state,actor,defender,eaten);
+   }
+  }
   else{
    const blocker=front.find(card=>card?.uid===action.uid);
    if(!blocker)continue;
    const bp=Number(universalBp(pack,state,blocker))||0;
    // Q34: the blocker wins only when its BP is strictly higher. Equal BP
    // removes the blocker. Impact life is separate and can still land.
+   const later=laterSwingDamage(pack,state,attacker);
+   const alone=!front.some(card=>card?.ready&&card.uid!==blocker.uid);
+   const uncovered=alone?later.reduce((sum,n)=>sum+n,0):0;
    if(bp>atkBp){
+    // The blocker wins. The engine leaves both characters and deals no life,
+    // including Impact, because Impact is a battle-win hit.
     const rested=front.map(card=>card?.uid===blocker.uid?{...card,ready:false}:card);
     delta=boardChange(pack,state,actor,defender,rested);
+    if(uncovered)delta+=lifeChange(state,actor,defender,uncovered);
    }else{
     const removed=front.map(card=>card?.uid===blocker.uid?null:card);
     const body=boardChange(pack,state,actor,defender,removed);
-    // A proven refill pays with a known hand card. It does not read the deck.
-    // The body is no longer the whole cost when that card enters ready.
+    // A proven refill pays with known hand cards and leaves four attacking
+    // bodies. It does not read the deck. Otherwise one clean last hit does
+    // not pay for a 4000 while four or more life remain.
     const plan=defender===actor&&bp>=4000?provenRebuild(pack,state,actor,blocker.uid):null;
-    delta=plan?.ok&&body<0?Math.max(body,-2.2):body;
+    if(plan?.ok&&body<0)delta=Math.max(body,-2.2);
+    else{
+     delta=body;
+     if(holdMain(state,actor,defender,bp,atkBp,damage,impact,later.length)){
+      const passed=lifeChange(state,actor,defender,damage);
+      if(delta>passed)delta=passed-4;
+     }
+    }
     const extra=impact>0&&!universalImpactNull(pack,state,blocker)?impact:0;
     delta+=lifeChange(state,actor,defender,extra);
+    if(uncovered)delta+=lifeChange(state,actor,defender,uncovered);
    }
   }
   rows.push({action,delta,damage,impact});
@@ -157,44 +181,90 @@ function colorEnergy(pack,state,actor){
  try{return universalEnergyByColor(pack,state,actor)||{};}
  catch{return {};}
 }
-// The next own turn can replace a body only from the known hand and the
-// public board. A normal play enters rested, so it cannot attack that turn.
-// A paid Raid or a printed active entry can. The deck is not consulted, and
-// a plan that takes a generator off the energy line is not a refill.
+// One clean last hit, both sides 4000, no Impact, nothing else still ready to
+// attack. While four or more life remain, that hit does not pay for the main.
+// At three the hold is gone and the life step is compared again. Other
+// attacks, other bodies, and a full refill do not use this hold.
+function holdMain(state,actor,defender,bp,atkBp,damage,impact,later){
+ if(defender!==actor||damage!==1||impact>0||later>0)return false;
+ if(bp<4000||atkBp!==bp)return false;
+ const life=state.players?.[actor]?.life?.length||0;
+ return life>=4&&life-damage>0;
+}
+function laterSwingDamage(pack,state,attacker){
+ const owner=Number(String(attacker?.uid||'').split('-')[0]);
+ const pl=state.players?.[owner];
+ if(!pl)return [];
+ const catalog=packOf(pack,owner).cards;
+ const rows=[];
+ for(const card of pl.front||[]){
+  if(!card?.ready||card.uid===attacker.uid)continue;
+  if(catalog[card.cardId]?.type!=='character')continue;
+  try{rows.push(universalAttackDamage(pack,state,card)||1);}catch{rows.push(1);}
+ }
+ if(attacker?.ready){
+  try{rows.push(universalAttackDamage(pack,state,attacker)||1);}catch{rows.push(1);}
+ }
+ return rows;
+}
+// The next own turn fills all four front slots from the known hand and the
+// public board. Every body is at least 4000 and can attack that turn. A
+// normal play enters rested, so it does not count. A paid Raid or a printed
+// active entry does. Empty slots are not success. The deck is not consulted,
+// and a plan that takes a generator off the energy line is not a refill.
 export function provenRebuild(pack,state,actor,removedUid){
  const mine=state?.players?.[actor];
- if(!mine)return {ok:false,reason:'none'};
+ if(!mine||!Array.isArray(mine.front)||mine.front.length<4)return {ok:false,reason:'none'};
  const catalog=packOf(pack,actor).cards;
- const front=(mine.front||[]).map(card=>card&&card.uid===removedUid?null:card);
  const colors=colorEnergy(pack,state,actor);
- const ap=apOnNextTurn(state,actor);
- const energy=(mine.energy||[]).filter(Boolean).map(card=>card.uid).join(',');
- const place=(slot,card)=>front.map((body,index)=>index===slot?card:body);
- const readyEnough=cards=>cards.every(card=>!card||(Number(universalBp(pack,state,card))||Number(catalog[card.cardId]?.bp)||0)>=4000);
- for(const card of mine.hand||[]){
-  const printed=catalog[card?.cardId];
-  if(!printed||printed.type!=='character'||(Number(printed.bp)||0)<4000)continue;
-  if((printed.ap||1)>ap)continue;
-  if((printed.energy||0)>(colors[printed.color]||0))continue;
-  const added={...card,ready:true,cardId:printed.id};
-  if(printed.enterAlwaysActive===true||(printed.enterActiveIfOpponentRest===true&&
-   (state.players[1-actor].front||[]).some(body=>body&&body.ready===false))){
-   const slot=front.findIndex(body=>!body);
-   if(slot<0)continue;
-   const next=place(slot,added);
-   if(!readyEnough(next))continue;
-   if((mine.energy||[]).filter(Boolean).map(body=>body.uid).join(',')!==energy)continue;
-   return {ok:true,cardId:printed.id,mode:'active'};
+ let ap=apOnNextTurn(state,actor);
+ const energy=(mine.energy||[]).map(card=>card?.uid||'').join(',');
+ const oppRested=(state.players?.[1-actor]?.front||[]).some(body=>body&&body.ready===false);
+ const used=new Set();
+ const planned=mine.front.map(card=>card&&card.uid!==removedUid?{uid:card.uid,cardId:card.cardId,from:'field'}:null);
+ const liveBp=card=>{
+  try{
+   const value=Number(universalBp(pack,state,card));
+   if(Number.isFinite(value)&&value>0)return value;
+  }catch{/* printed BP below */}
+  return Number(catalog[card?.cardId]?.bp)||0;
+ };
+ const spendable=printed=>printed&&printed.type==='character'&&(Number(printed.bp)||0)>=4000&&
+  (printed.ap||1)<=ap&&(printed.energy||0)<=(colors[printed.color]||0);
+ const entersReady=printed=>printed.enterAlwaysActive===true||
+  (printed.enterActiveIfOpponentRest===true&&oppRested);
+ for(let slot=0;slot<planned.length;slot++){
+  const current=planned[slot];
+  const fieldCard=current&&mine.front.find(card=>card?.uid===current.uid);
+  if(current&&catalog[current.cardId]?.type==='character'&&liveBp(fieldCard)>=4000)continue;
+  let placed=null;
+  for(const card of mine.hand||[]){
+   if(!card||used.has(card.uid))continue;
+   const printed=catalog[card.cardId];
+   if(!spendable(printed))continue;
+   if(!current&&entersReady(printed)){
+    placed={uid:card.uid,cardId:printed.id,from:printed.enterAlwaysActive?'active':'rested-active'};
+    break;
+   }
+   if(!current||!printed.raidName)continue;
+   const names=new Set([printed.raidName,...(printed.raidBaseNames||[])].map(squash));
+   if(!names.has(squash(catalog[current.cardId]?.name)))continue;
+   if((mine.energy||[]).some(body=>body?.uid===current.uid))continue;
+   placed={uid:card.uid,cardId:printed.id,from:'raid'};
+   break;
   }
-  if(!printed.raidName)continue;
-  const names=new Set([printed.raidName,...(printed.raidBaseNames||[])].map(squash));
-  const slot=front.findIndex(body=>body&&names.has(squash(catalog[body.cardId]?.name)));
-  if(slot<0)continue;
-  const next=place(slot,added);
-  if(!readyEnough(next))continue;
-  return {ok:true,cardId:printed.id,mode:'raid'};
+  if(!placed)return {ok:false,reason:'unproven'};
+  used.add(placed.uid);
+  ap-=catalog[placed.cardId].ap||1;
+  planned[slot]=placed;
  }
- return {ok:false,reason:'unproven'};
+ if(planned.length<4||planned.some(slot=>!slot||(Number(catalog[slot.cardId]?.bp)||0)<4000&&slot.from==='field'))
+  return {ok:false,reason:'unproven'};
+ if(planned.some(slot=>slot.from!=='field'&&(Number(catalog[slot.cardId]?.bp)||0)<4000))
+  return {ok:false,reason:'unproven'};
+ if((mine.energy||[]).map(card=>card?.uid||'').join(',')!==energy)return {ok:false,reason:'energy'};
+ const fresh=planned.find(slot=>slot.from!=='field');
+ return {ok:true,cardId:fresh?.cardId||planned[0].cardId,mode:planned.some(slot=>slot.from==='raid')?'raid':'active',filled:planned.length};
 }
 function listedEffects(printed,slot){
  const list=printed?.effects?.[slot];

@@ -2,23 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
-import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalBp,universalEnergyByColor} from '../dist/universal-v2/engine.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {battleWindowAction,blankSwingAdjustment,provenRebuild} from '../dist/universal-v2/ai-v3/eval.mjs';
 
 // Player strategy, stated as situations rather than card lists.
-// 1. With life to spare, keep a 4000 that can still attack and block. One
-//    life does not pay for that body. The same attack is still passed at 6
-//    life. From 5 life the life step is larger than the body, so 5, 4 and 3
-//    all spend it. That is the life table, not a cutoff written at 3. A refill counts only
-//    when the known hand can enter ready, pay its cost, and leave the energy
-//    line in place. The deck is not assumed.
-// 2. Two affordable plays in one main are both made. Energy is not always
-//    first, and the front is not always first.
-// 3. An attack that removes nothing and deals nothing rests the attacker
-//    through the opponent's turn. Skip it unless a declaration, hit, or win
-//    effect can actually start. A lower BP that still removes a body, or a
-//    swing that connects, stays legal.
+// 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
+//    four-body refill: 7, 6, 5 and 4 life take the hit and keep the main.
+//    At 3 life that hold lifts and the block comes first. Other damage,
+//    other bodies, and a real Impact result are not the same hold.
+// 2. A refill is four front characters, each at least 4000, each able to
+//    attack that turn, paid from the known hand without touching the energy
+//    line. An empty slot is not a filled slot. The deck is not assumed.
+// 3. A block that keeps the character and the life is allowed. A block that
+//    removes the character and still loses life is not, unless it is the
+//    only legal way to stay alive. Impact null is checked, not assumed.
+// 4. Two affordable plays in one main are both made.
+// 5. An attack that removes nothing and deals nothing stays back unless a
+//    declaration effect can actually be paid.
 
 const pack=officialV2Pack('bleach');
 function deck(extra){
@@ -45,7 +46,8 @@ function deck(extra){
 }
 const counts=deck({
  'BLC-4-036':4,'BLC-4-005':2,'BLC-4-022':1,'BLC-4-070':2,'BLC-1-083':4,
- 'BLC-4-068':2,'BLC-4-062':2,'BLC-1-082':2,'BLC-1-050':2
+ 'BLC-4-068':2,'BLC-4-062':2,'BLC-1-082':2,'BLC-1-050':2,'BLC-2-040':4,
+ 'BLC-1-009':1,'BLC-1-043':2
 });
 function take(state,player,id){
  for(const zone of ['hand','deck','life','outside','removed']){
@@ -95,22 +97,36 @@ function ask(packs,state){
  if(trace.reason!=='forced')assert.ok(trace.nodesUsed<=48,trace.reason+' nodes '+trace.nodesUsed);
  return {action,trace};
 }
-function blockWindow(life,{hand}={}){
+function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blockerBp=4000,attackerBp=4000,damage=1,secondBp=0,secondDamage=1}={}){
  const {packs,state}=boot('attack',1,0);
  clearHand(state,0);
- const mine=take(state,0,'BLC-4-005');
- const foe=take(state,1,'BLC-4-005');
+ const mine=take(state,0,blockerId);
+ const foe=take(state,1,attackerId);
  place(state,0,mine,'front',0);
  place(state,1,foe,'front',0);
+ setBp(state,mine,blockerBp);
+ setBp(state,foe,attackerBp);
+ if(damage===2)foe.attackDamageGranted={turn:state.turn,stamp:foe.fieldEntryStamp,amount:2};
+ let second=null;
+ if(secondBp){
+  second=take(state,1,'BLC-4-062');
+  place(state,1,second,'front',1);
+  setBp(state,second,secondBp);
+  if(secondDamage===2)second.attackDamageGranted={turn:state.turn,stamp:second.fieldEntryStamp,amount:2};
+ }
  setLife(state,0,life);
  for(const card of hand||[])state.players[0].hand.push(card(state));
  const swing=legalUniversalActions(packs,state).find(item=>item.type==='attack'&&item.uid===foe.uid);
  const opened=dispatchUniversalAction(packs,state,swing,{actor:1});
  assert.equal(assertUniversalMatch(packs,opened),true);
  assert.equal(opened.pending.kind,'block');
- assert.equal(universalBp(packs,opened,mine),4000);
- assert.equal(universalBp(packs,opened,foe),4000);
- return {packs,state:opened,mine};
+ return {packs,state:opened,mine,foe,second};
+}
+function settle(packs,state,action){
+ const actor=state.pending?.player??state.active;
+ const after=dispatchUniversalAction(packs,state,action,{actor});
+ assert.equal(assertUniversalMatch(packs,after),true);
+ return after;
 }
 
 test('a block line that got home does not outrank a life window on a different score',()=>{
@@ -133,63 +149,145 @@ test('a block line that got home does not outrank a life window on a different s
  assert.equal(bare.rows[0].action.type,'play');
 });
 
-test('seven life keeps the 4000, and three life spends it on the same attack',()=>{
- const high=blockWindow(7);
- const highHelper=battleWindowAction(high.packs,high.state,0);
- assert.equal(highHelper.uid??null,null);
- const highChoice=ask(high.packs,high.state);
- assert.equal(highChoice.action.type,'chooseBlock');
- assert.equal(highChoice.action.uid??null,null);
- const highRows=highChoice.trace.candidates.filter(row=>row.action?.type==='chooseBlock');
- const highPass=highRows.find(row=>!row.action.uid);
- const highBody=highRows.find(row=>row.action.uid===high.mine.uid);
- assert.ok(highPass&&highBody);
- assert.ok(highPass.battleScore>highBody.battleScore);
- for(const row of highRows)if(row.damageOpen)assert.notEqual(row.boundary,'returned');
+test('four or more life keeps the 4000 on the last clean hit, and three spends it',()=>{
+ for(const life of [7,6,5,4]){
+  const opened=blockWindow(life);
+  assert.equal(universalImpact(opened.packs,opened.state,opened.foe),0);
+  const choice=ask(opened.packs,opened.state);
+  assert.equal(choice.action.type,'chooseBlock');
+  assert.equal(choice.action.uid??null,null);
+  const rows=choice.trace.candidates.filter(row=>row.action?.type==='chooseBlock');
+  for(const row of rows)if(row.damageOpen)assert.notEqual(row.boundary,'returned');
+  const after=settle(opened.packs,opened.state,choice.action);
+  assert.equal(after.players[0].front.some(card=>card?.uid===opened.mine.uid),true);
+  assert.ok(after.players[0].life.length===life-1||after.pending);
+ }
  const low=blockWindow(3);
- assert.equal(battleWindowAction(low.packs,low.state,0).uid,low.mine.uid);
  const lowChoice=ask(low.packs,low.state);
  assert.equal(lowChoice.action.uid,low.mine.uid);
- // The life table, not a 3-life switch: 6 to 5 drops 25 and the body stays;
- // 5 to 4 drops 35 and the same 4000 is spent. 4 life is already in that region.
- const six=blockWindow(6);
- assert.equal(ask(six.packs,six.state).action.uid??null,null);
- const five=blockWindow(5);
- assert.equal(ask(five.packs,five.state).action.uid,five.mine.uid);
+ const spent=settle(low.packs,low.state,lowChoice.action);
+ assert.equal(spent.players[0].front.some(card=>card?.uid===low.mine.uid),false);
+ assert.equal(spent.players[0].life.length,3);
  const danger=blockWindow(1);
- assert.equal(ask(danger.packs,danger.state).action.uid,danger.mine.uid);
+ const dangerChoice=ask(danger.packs,danger.state);
+ assert.equal(dangerChoice.action.uid,danger.mine.uid);
+ const lived=settle(danger.packs,danger.state,dangerChoice.action);
+ assert.equal(lived.players[0].life.length,1);
+ const heavy=blockWindow(4,{attackerBp:5000,damage:2});
+ assert.equal(universalAttackDamage(heavy.packs,heavy.state,heavy.foe),2);
+ const heavyChoice=ask(heavy.packs,heavy.state);
+ assert.equal(heavyChoice.action.uid,heavy.mine.uid);
+ const held=settle(heavy.packs,heavy.state,heavyChoice.action);
+ assert.equal(held.players[0].life.length,4);
 });
 
-test('a ready refill from the known hand can be spent, and an unproven one cannot',()=>{
- const ready=blockWindow(7);
+test('a refill counts only when four attacking 4000s are already paid for',()=>{
+ const ready=blockWindow(7,{blockerId:'BLC-4-036'});
+ for(let slot=1;slot<4;slot++)place(ready.state,0,take(ready.state,0,'BLC-4-036'),'front',slot);
+ for(let slot=0;slot<4;slot++)place(ready.state,0,take(ready.state,0,'BLC-2-040'),'energy',slot);
  const refill=take(ready.state,0,'BLC-4-022');
- for(let slot=0;slot<4;slot++){
-  const gen=take(ready.state,0,'BLC-4-036');
-  place(ready.state,0,gen,'energy',slot);
- }
  ready.state.players[0].hand.push(refill);
  assert.equal(universalEnergyByColor(ready.packs,ready.state,0).blue>=4,true);
  assert.equal(provenRebuild(ready.packs,ready.state,0,ready.mine.uid).ok,true);
  assert.equal(assertUniversalMatch(ready.packs,ready.state),true);
- assert.equal(battleWindowAction(ready.packs,ready.state,0).uid,ready.mine.uid);
- assert.equal(ask(ready.packs,ready.state).action.uid,ready.mine.uid);
- const short=blockWindow(7);
- short.state.players[0].hand.push(take(short.state,0,'BLC-4-022'));
- place(short.state,0,take(short.state,0,'BLC-4-036'),'energy',0);
- assert.equal(provenRebuild(short.packs,short.state,0,short.mine.uid).ok,false);
- assert.equal(ask(short.packs,short.state).action.uid??null,null);
+ const fronts=ready.state.players[0].front.filter(Boolean).map(card=>card.uid);
+ const choice=ask(ready.packs,ready.state);
+ assert.equal(fronts.includes(choice.action.uid),true);
+ let cursor=settle(ready.packs,ready.state,choice.action);
+ assert.equal(cursor.players[0].front.filter(Boolean).length,3);
+ for(let guard=0;guard<40&&!(cursor.active===0&&cursor.phase==='main'&&!cursor.pending);guard++){
+  const legal=legalUniversalActions(ready.packs,cursor);
+  const actor=cursor.pending?.player??cursor.active;
+  const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw')||legal[0];
+  cursor=dispatchUniversalAction(ready.packs,cursor,action,{actor});
+ }
+ const play=legalUniversalActions(ready.packs,cursor).find(item=>item.type==='play'&&item.line==='front'&&item.uid===refill.uid);
+ assert.ok(play);
+ cursor=dispatchUniversalAction(ready.packs,cursor,play,{actor:0});
+ for(let guard=0;guard<8&&cursor.pending;guard++){
+  const legal=legalUniversalActions(ready.packs,cursor);
+  const actor=cursor.pending.player??cursor.active;
+  const action=legal.find(item=>item.optional===true&&(item.mode==='pass'||item.mode==='decline'||item.uid==null))||legal[0];
+  cursor=dispatchUniversalAction(ready.packs,cursor,action,{actor});
+ }
+ for(let guard=0;guard<12&&!(cursor.active===0&&cursor.phase==='attack'&&!cursor.pending);guard++){
+  const legal=legalUniversalActions(ready.packs,cursor);
+  const actor=cursor.pending?.player??cursor.active;
+  const action=legal.find(item=>item.type==='next')||legal[0];
+  cursor=dispatchUniversalAction(ready.packs,cursor,action,{actor});
+ }
+ const bodies=cursor.players[0].front.filter(Boolean);
+ assert.equal(bodies.length,4);
+ assert.ok(bodies.every(card=>universalBp(ready.packs,cursor,card)>=4000));
+ const attacks=legalUniversalActions(ready.packs,cursor).filter(item=>item.type==='attack');
+ for(const card of bodies)assert.equal(attacks.some(item=>item.uid===card.uid),true);
+ const energy=(cursor.players[0].energy||[]).filter(card=>card?.cardId==='BLC-2-040').length;
+ assert.equal(energy,4);
+ const one=blockWindow(7);
+ one.state.players[0].hand.push(take(one.state,0,'BLC-4-022'));
+ for(let slot=0;slot<4;slot++)place(one.state,0,take(one.state,0,'BLC-4-036'),'energy',slot);
+ assert.equal(provenRebuild(one.packs,one.state,0,one.mine.uid).ok,false);
+ assert.equal(ask(one.packs,one.state).action.uid??null,null);
  const rested=blockWindow(7);
  place(rested.state,0,take(rested.state,0,'BLC-1-083'),'energy',0);
  rested.state.players[0].hand.push(take(rested.state,0,'BLC-4-070'));
  assert.equal(provenRebuild(rested.packs,rested.state,0,rested.mine.uid).ok,false);
  assert.equal(ask(rested.packs,rested.state).action.uid??null,null);
  const crowded=blockWindow(7);
- const small=take(crowded.state,0,'BLC-1-083');
- place(crowded.state,0,small,'front',1);
- for(let slot=0;slot<4;slot++)place(crowded.state,0,take(crowded.state,0,'BLC-4-036'),'energy',slot);
+ place(crowded.state,0,take(crowded.state,0,'BLC-1-083'),'front',1);
+ for(let slot=2;slot<4;slot++)place(crowded.state,0,take(crowded.state,0,'BLC-4-036'),'front',slot);
+ for(let slot=0;slot<4;slot++)place(crowded.state,0,take(crowded.state,0,'BLC-2-040'),'energy',slot);
  crowded.state.players[0].hand.push(take(crowded.state,0,'BLC-4-022'));
  assert.equal(provenRebuild(crowded.packs,crowded.state,0,crowded.mine.uid).ok,false);
  assert.notEqual(ask(crowded.packs,crowded.state).action.uid,crowded.mine.uid);
+ const parked=blockWindow(7);
+ for(let slot=0;slot<4;slot++)place(parked.state,0,take(parked.state,0,'BLC-4-036'),'energy',slot);
+ parked.state.players[0].hand.push(take(parked.state,0,'BLC-1-050'));
+ assert.equal(provenRebuild(parked.packs,parked.state,0,parked.mine.uid).ok,false);
+ assert.equal(ask(parked.packs,parked.state).action.uid??null,null);
+});
+
+test('impact follows the engine result, and a safe block is not spent on the first of two swings',()=>{
+ const safe=blockWindow(7,{blockerBp:5000,attackerId:'BLC-1-009',attackerBp:4000});
+ assert.equal(universalImpact(safe.packs,safe.state,safe.foe),1);
+ assert.equal(universalImpactNull(safe.packs,safe.state,safe.mine),false);
+ assert.ok(universalBp(safe.packs,safe.state,safe.mine)>universalBp(safe.packs,safe.state,safe.foe));
+ const safeChoice=ask(safe.packs,safe.state);
+ assert.equal(safeChoice.action.uid,safe.mine.uid);
+ const kept=settle(safe.packs,safe.state,safeChoice.action);
+ assert.equal(kept.players[0].life.length,7);
+ assert.equal(kept.players[0].front.some(card=>card?.uid===safe.mine.uid),true);
+ const leaked=blockWindow(7,{attackerId:'BLC-1-009'});
+ assert.equal(universalImpactNull(leaked.packs,leaked.state,leaked.mine),false);
+ const leakChoice=ask(leaked.packs,leaked.state);
+ assert.equal(leakChoice.action.uid??null,null);
+ const stayed=settle(leaked.packs,leaked.state,leakChoice.action);
+ assert.equal(stayed.players[0].front.some(card=>card?.uid===leaked.mine.uid),true);
+ const wasted=legalUniversalActions(leaked.packs,leaked.state).find(action=>action.uid===leaked.mine.uid);
+ const lost=settle(leaked.packs,leaked.state,wasted);
+ assert.equal(lost.players[0].front.some(card=>card?.uid===leaked.mine.uid),false);
+ assert.ok(lost.players[0].life.length<7||lost.pending);
+ const nulled=blockWindow(7,{blockerId:'BLC-1-043',blockerBp:2000,attackerId:'BLC-1-009',attackerBp:4000});
+ assert.equal(universalImpactNull(nulled.packs,nulled.state,nulled.mine),true);
+ const nullChoice=ask(nulled.packs,nulled.state);
+ assert.equal(nullChoice.action.uid,nulled.mine.uid);
+ const stopped=settle(nulled.packs,nulled.state,nullChoice.action);
+ assert.equal(stopped.players[0].life.length,7);
+ assert.equal(stopped.players[0].front.some(card=>card?.uid===nulled.mine.uid),false);
+ const valued=blockWindow(7,{blockerId:'BLC-1-043',blockerBp:4000,attackerId:'BLC-1-009',attackerBp:4000});
+ assert.equal(ask(valued.packs,valued.state).action.uid??null,null);
+ const lowNull=blockWindow(3,{blockerId:'BLC-1-043',blockerBp:4000,attackerId:'BLC-1-009',attackerBp:4000});
+ assert.equal(ask(lowNull.packs,lowNull.state).action.uid,lowNull.mine.uid);
+ const first=blockWindow(7,{blockerBp:5000,attackerId:'BLC-1-009',attackerBp:4000,secondBp:4000,secondDamage:2});
+ const firstChoice=ask(first.packs,first.state);
+ assert.equal(firstChoice.action.uid??null,null);
+ const saved=settle(first.packs,first.state,firstChoice.action);
+ assert.equal(saved.players[0].front.find(card=>card?.uid===first.mine.uid)?.ready,true);
+ const small=blockWindow(7,{blockerId:'BLC-1-083',blockerBp:1500});
+ assert.equal(ask(small.packs,small.state).action.uid,small.mine.uid);
+ const forced=blockWindow(7,{blockerId:'BLC-4-070'});
+ assert.equal(legalUniversalActions(forced.packs,forced.state).some(action=>action.type==='chooseBlock'&&!action.uid),false);
+ assert.equal(ask(forced.packs,forced.state).action.uid,forced.mine.uid);
 });
 
 test('one main spends both affordable cards and leaves the card that cannot be paid',()=>{
