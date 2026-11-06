@@ -1707,6 +1707,7 @@ function effectEnter(pack,s,{owner,from,uid,line,slot,replaceUid,ready,sourceUid
  const physical=pl[from].splice(index,1)[0];
  physical.ready=ready===true;
  physical.fieldEntryStamp=s.nextFieldEntryStamp++;
+ physical.entryTurn=s.turn;
  pl[line][slot]=physical;
  recordCompletedMove(pack,s,{physical,owner,from,to:line,reason:'own-effect',sourceUid});
  const cause=from==='hand'?'handEffect':from==='removed'?'removedEffect':
@@ -19137,6 +19138,7 @@ if(ability.op==='characterDualMain'){
     commitDestination(pack,s,p,action.line,action.slot,action.replaceUid);
     current.ready=defaultEntryReady(pack,s,p,current);
     current.fieldEntryStamp=s.nextFieldEntryStamp++;
+    current.entryTurn=s.turn;
     pl[action.line][action.slot]=current;
     recordCompletedMove(pack,s,{physical:current,owner:p,from:fromRemoved?'removed':'hand',
      to:action.line,reason:'rule'});
@@ -23984,7 +23986,8 @@ export function universalPrivateChoices(pack,s,viewer){
      color:card(pack,c).color}:null};
    })};
  if((q?.kind==='iys'||q?.kind==='kjn'||q?.kind==='aot'||q?.kind==='aot2'||q?.kind==='kmr'||q?.kind==='kmr2'||q?.kind==='mmm2'||q?.kind==='csm')&&q.player===viewer){
-  const unders=q.kind==='aot2'?field(s.players[viewer]).flatMap(c=>(c.under||[]).filter(x=>x&&x.faceDown)):[];
+  const unders=['aot2','kmr','kmr2'].includes(q.kind)?
+   field(s.players[viewer]).flatMap(c=>(c.under||[]).filter(x=>x&&x.faceDown)):[];
   const piles=[...field(s.players[viewer]),...s.players[viewer].hand,...s.players[viewer].deck,
    ...s.players[viewer].outside,...(s.players[viewer].removed||[]),...unders,
    ...field(s.players[1-viewer]),...s.players[1-viewer].outside];

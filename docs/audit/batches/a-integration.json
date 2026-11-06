@@ -4,7 +4,7 @@
   "pr": 319,
   "base": "6e2486515d58d677eb97d50cfa568ee8111476fd",
   "integratedMain": "03bd60f7237e1b1ecdd1002eac167f718b2947b7",
-  "status": "第二輪已整合。B #326 CSM-1-040 至 060、C #325 KMR-1-026 至 050、D #324 KMR-2-026 至 040，並關閉上一輪留給 D 的句子。KMR-2-019 的歐馬形態句維持 Q974：受益者失去原本效果仍保留抽牌。第一輪 #321、#323、#322 維持已整合。",
+  "status": "第三輪已整合。B #327 鏈鋸人 061 至 080、C #329 假面騎士第一彈 051 至 075、D #328 第二彈 041 至 060。KMR-2-019 的歐馬形態句維持 Q974：受益者失去原本效果仍保留抽牌。第二輪 #326、#325、#324 與第一輪 #321、#323、#322 維持已整合。",
   "mergedFrom": [
     {
       "group": "B",
@@ -50,14 +50,13 @@
     "checked": "2026-11-06",
     "baseline": "fad8be045910fbac211abfda6266763cf6b88885",
     "delivered": [
-      {"group": "B", "pr": 327, "branch": "cursor/audit-b3-csm-061-080", "head": "807a2e103ec36b027e040637211eb39facb4cb04"}
-    ],
-    "missing": [],
-    "pending": [
+      {"group": "B", "pr": 327, "branch": "cursor/audit-b3-csm-061-080", "head": "807a2e103ec36b027e040637211eb39facb4cb04"},
       {"group": "C", "pr": 329, "branch": "cursor/audit-c3-kmr1-051-075", "head": "3971f1f5c075b5877b4e33b7d74f9aab6488d6a8"},
       {"group": "D", "pr": 328, "branch": "cursor/audit-d3-kmr2-041-060", "head": "9d05fe4b10075c95320fefcdd3b9de7fb92a6451"}
     ],
-    "shared": "KMR-2-035 的休息登場改為可放棄。askEnter 的放棄和 skipOnPlay 分開。060 仍同時不選位置並跳過登場時。",
+    "missing": [],
+    "pending": [],
+    "shared": "KMR-2-035 的休息登場改為可放棄。askEnter 的放棄和 skipOnPlay 分開。060 仍同時不選位置並跳過登場時。074 的相手の効果で選ばれない接到 effectChoiceProtected。051 與 053 的控制者私人選項看得到自己的裡向卡。付費登場與 effectEnter 寫入 entryTurn。KMR-1-060 收下去時，底下既有裡向卡依 Q1148 跟著移動。",
     "matrix": "原五作品 60 場保留。另加鍊鋸人紫、假面騎士第一彈黃、第二彈藍，對彼此與對死神綠，兩種子、先後手，共 24 場。"
   }
 }

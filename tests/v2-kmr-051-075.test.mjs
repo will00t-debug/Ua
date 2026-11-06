@@ -207,6 +207,13 @@ test('KMR-1-051 spends a facedown only for an opponent effect',()=>{
  s=kmr(s,a=>a.mode==='retire'&&a.uid===body.uid);
  assert.equal(s.pending.step,'spend51');
  assert.equal(s.pending.actions.some(a=>a.mode==='layer'&&a.uid===body.under[0].uid),true);
+ const spendView=universalPrivateChoices(pack,s,0);
+ const layerChoice=spendView.options.find(o=>o.action.mode==='layer');
+ assert.equal(layerChoice.card.cardId,'KMR-1-026');
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ const spendPublic=JSON.stringify(universalPublicView(pack,s,1));
+ assert.equal(spendPublic.includes('KMR-1-026'),false);
+ assert.equal(spendPublic.includes(body.under[0].uid),false);
  s=kmr(s,a=>a.mode==='layer');
  assert.equal(s.players[0].front.some(c=>c?.uid===body.uid),true);
  assert.equal(s.players[0].front.find(c=>c?.uid===body.uid).under.length,0);
@@ -369,6 +376,14 @@ test('KMR-1-053 shows the whole window and bounces instead of retiring',()=>{
  s=act(s,body.uid);
  assert.equal(s.pending.step,'payUnder');
  assert.equal(s.pending.actions.filter(a=>a.mode==='pay').length,2);
+ const peelView=universalPrivateChoices(pack,s,0);
+ const peels=peelView.options.filter(o=>o.action.mode==='pay');
+ assert.equal(peels.length,2);
+ assert.equal(peels.every(o=>o.card&&o.card.cardId),true);
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ const peelPublic=JSON.stringify(universalPublicView(pack,s,1));
+ assert.equal(peelPublic.includes(mid.cardId),false);
+ assert.equal(peelPublic.includes('KMR-1-059'),false);
  const paid=s.pending.actions.find(a=>a.mode==='pay'&&a.uid!==mid.uid).uid;
  s=kmr(s,a=>a.mode==='pay'&&a.uid===paid);
  assert.equal(s.players[0].outside.some(c=>c.uid===paid&&c.faceDown!==true),true);
@@ -804,6 +819,7 @@ test('KMR-1-071 discards on entry and summons one rested Deneb that turn',()=>{
  s=kmr(s,a=>a.mode==='enter'&&a.uid===deneb.uid&&a.line==='front'&&a.slot===entry.slot);
  const summoned=s.players[0].front.find(c=>c?.uid===deneb.uid);
  assert.equal(summoned.ready,false);
+ assert.equal(summoned.entryTurn,s.turn);
  assert.equal(s.pending.kind,'effect-bounce-own');
  assert.equal(s.pending.choices.includes(ally.uid),true);
  assert.equal(s.pending.choices.includes(body.uid),false);
@@ -867,6 +883,64 @@ test('KMR-1-074 and 075 keep raid-frame text off an ordinary play',()=>{
  assert.equal(assertUniversalMatch(packs,plain),true);
  assert.equal(assertUniversalMatch(packs,s),true);
  assert.equal(assertUniversalMatch(packs,gun),true);
+});
+
+test('KMR-1-074 and 075 count as the printed Imagin names',()=>{
+ function climax(fieldIds,seed){
+  let s=open(['KMR-1-076','KMR-1-074','KMR-1-075','KMR-1-092','KMR-1-004',...RED],seed);
+  line(s,0,RED);
+  fieldIds.forEach((id,i)=>put(s,0,id,'front',i,true));
+  const body=take(s,0,'KMR-1-076');
+  onlyHand(s,0,[body]);
+  ready(s);
+  const deck=s.players[0].deck.length;
+  s=play(s,body.uid);
+  const live=s.players[0].front.find(c=>c?.uid===body.uid);
+  return {s,drew:s.players[0].deck.length===deck-1,ready:live?.ready,pending:s.pending};
+ }
+ const two=climax(['KMR-1-074','KMR-1-092'],76074);
+ assert.equal(two.drew,true);
+ assert.equal(two.ready,true);
+ assert.equal(two.pending,null);
+ const gun=climax(['KMR-1-075','KMR-1-092'],76075);
+ assert.equal(gun.drew,true);
+ assert.equal(gun.pending,null);
+ const one=climax(['KMR-1-004','KMR-1-092'],76076);
+ assert.equal(one.drew,false);
+ assert.equal(one.pending,null);
+ assert.equal(assertUniversalMatch(packs,two.s),true);
+ assert.equal(assertUniversalMatch(packs,gun.s),true);
+ assert.equal(assertUniversalMatch(packs,one.s),true);
+});
+
+test('KMR-1-074 is absent from an opponent choose while another legal character remains',()=>{
+ let s=open(['KMR-1-074','KMR-1-090','KMR-1-067','KMR-1-048','KMR-1-004','KMR-1-006',...RED,...BLUE],74076);
+ line(s,0,RED);
+ line(s,1,BLUE);
+ put(s,1,'KMR-1-048','front',0,true);
+ const base=put(s,0,'KMR-1-090','front',0,true);
+ const other=put(s,0,'KMR-1-004','front',1,true);
+ const poke=put(s,0,'KMR-1-006','front',2,true);
+ const axe=take(s,0,'KMR-1-074');
+ onlyHand(s,0,[axe]);
+ ready(s);
+ s=raidOnto(s,axe.uid,base.uid);
+ const immune=s.players[0].front.find(c=>c?.uid===axe.uid);
+ assert.equal(immune.oppChoiceImmuneGranted.turn,s.turn);
+ const trigger=take(s,1,'KMR-1-067');
+ s.players[1].deck.push(...s.players[1].life.splice(0));
+ s.players[1].life.push(trigger);
+ s=toAttack(s);
+ s=use(s,a=>a.type==='attack'&&a.uid===poke.uid);
+ s=use(s,a=>a.type==='chooseBlock'&&a.uid==null);
+ s=use(s,a=>a.type==='chooseTrigger'&&a.mode==='special');
+ assert.equal(s.pending.id,'KMR-1-067');
+ assert.equal(s.pending.actions.some(a=>a.uid===other.uid),true);
+ assert.equal(s.pending.actions.some(a=>a.uid===immune.uid),false);
+ s=kmr(s,a=>a.mode==='retire'&&a.uid===other.uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===other.uid),true);
+ assert.equal(s.players[0].front.some(c=>c?.uid===immune.uid),true);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
 
 test('life triggers of KMR-1-051 through 075 resolve on the revealed card',()=>{

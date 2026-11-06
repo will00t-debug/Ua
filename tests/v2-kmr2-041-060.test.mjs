@@ -932,7 +932,8 @@ test('KMR-2-060 draws and rests a legal character without starting its on-play',
  assert.deepEqual(offered,[luna.uid,heat.uid].sort());
  assert.equal(state.pending.actions.some(action=>action.uid===big.uid),false);
  state=click(state,action=>action.uid===heat.uid);
- assert.equal(state.pending.actions.some(action=>action.skip===true),true);
+ assert.equal(state.pending.actions.some(action=>action.mode==='enter'&&action.skipOnPlay===true),true);
+ assert.equal(state.pending.actions.some(action=>action.mode==='skip'),true);
  state=click(state,action=>action.mode==='enter'&&action.line==='front');
  const entered=state.players[0].front.find(card=>card?.uid===heat.uid);
  assert.equal(entered.ready,false);

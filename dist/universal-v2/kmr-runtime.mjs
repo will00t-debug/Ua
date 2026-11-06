@@ -5,7 +5,7 @@
 // then the shared gesture (select the card, mode only if both are printed, tap the cell).
 // Registration is not an official FAQ certification.
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
-import {originalEffectsDisabled,grantContinuousState} from './continuous-states.mjs';
+import {originalEffectsDisabled,grantContinuousState,effectChoiceProtected} from './continuous-states.mjs';
 
 const INTEL='飛電インテリジェンス';
 const GEAR='ファイズギア';
@@ -148,11 +148,21 @@ function offerDiscard(s,spec,count,optional,next,extra){
  ]);
  return true;
 }
+function sourceTypeOf(pack,id){
+ const printed=id&&pack?.cards?pack.cards[id]:null;
+ if(printed?.type==='event'||printed?.type==='character'||printed?.type==='field')return printed.type;
+ return 'unknown';
+}
+// Q1164: a printed 選び cannot take a character the opponent's effect cannot choose.
+function selectable(pack,s,selector,sourceId,c){
+ return !!c&&!effectChoiceProtected(s,selector,c.uid,sourceTypeOf(pack,sourceId));
+}
 function oppFront(s,owner,pred){
  return plOf(s,1-owner).front.filter(c=>c&&(!pred||pred(c)));
 }
 function offerRetire(pack,s,spec,limit,optional,next){
- const targets=oppFront(s,spec.player,c=>A.bp(pack,s,c)<=limit);
+ const targets=oppFront(s,spec.player,c=>A.bp(pack,s,c)<=limit&&
+  selectable(pack,s,spec.player,spec.id,c));
  if(!targets.length)return false;
  hold(s,{...spec,step:'retire',data:{next:next||null,optional}},[
   ...(optional?[{type:'kmr',mode:'skip'}]:[]),
@@ -163,7 +173,8 @@ function offerRetire(pack,s,spec,limit,optional,next){
 // 必要エナジー is the printed cost, not current BP. UA29BT/KMR-1-075 retires
 // one opponent front character whose printed energy is exactly 0.
 function offerEnergyRetire(pack,s,spec,energy,optional,next){
- const targets=oppFront(s,spec.player,c=>def(pack,c).type==='character'&&def(pack,c).energy===energy);
+ const targets=oppFront(s,spec.player,c=>def(pack,c).type==='character'&&
+  def(pack,c).energy===energy&&selectable(pack,s,spec.player,spec.id,c));
  if(!targets.length)return false;
  hold(s,{...spec,step:'retire',data:{next:next||null,optional}},[
   ...(optional?[{type:'kmr',mode:'skip'}]:[]),
@@ -499,7 +510,8 @@ const HANDLERS={
  },
  'KMR-1-041|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=4000);
+  const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=4000&&
+   selectable(pack,s,job.owner,job.id,c));
   if(targets.length){
    hold(s,{...spec,step:'deckBottom',data:{thenLife:plOf(s,job.owner).life.length>=2}},[
     {type:'kmr',mode:'skip'},
@@ -739,7 +751,8 @@ const HANDLERS={
   ]);
  },
  'KMR-1-088|onPlay'(pack,s,job){
-  const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=4000);
+  const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=4000&&
+   selectable(pack,s,job.owner,job.id,c));
   if(!targets.length)return;
   hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'punish',data:{}},[
    {type:'kmr',mode:'skip'},
@@ -850,7 +863,8 @@ const HANDLERS={
  },
  'KMR-1-111|onRetire'(pack,s,job){
   if(job.by!=='battle')return;
-  const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)>=1500);
+  const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)>=1500&&
+   selectable(pack,s,job.owner,job.id,c));
   offerOwn(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},targets,true,'debuff','own');
  },
  'KMR-1-112|onPlay'(pack,s,job){
@@ -886,7 +900,8 @@ function special033(pack,s,job){
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
  const retire=fieldCards(s,job.owner).some(c=>token(pack,c,'ゼロワン',s));
  // The BP5000 filter stays. ゼロワン only replaces the result, not the ceiling.
- const targets=plOf(s,1-job.owner).front.filter(c=>c&&A.bp(pack,s,c)<=5000);
+ const targets=plOf(s,1-job.owner).front.filter(c=>c&&A.bp(pack,s,c)<=5000&&
+  selectable(pack,s,job.owner,job.id,c));
  if(!targets.length)return;
  if(retire)offerRetire(pack,s,spec,5000,false,null);
  else hold(s,{...spec,step:'restSkip',data:{}},targets.map(c=>({type:'kmr',mode:'rest',uid:c.uid})));
@@ -1266,7 +1281,7 @@ function resolveStep(pack,s,q,a){
   }else if(next==='rest'){
    // KMR-1-035: up to one rest. It does not skip the next active.
    scheduleDraw(s,q.player,q.sourceUid,3);
-   const targets=plOf(s,1-q.player).front.filter(Boolean);
+   const targets=plOf(s,1-q.player).front.filter(c=>selectable(pack,s,q.player,q.id,c));
    if(targets.length)hold(s,{...spec,step:'restOnly',data:{}},[
     {type:'kmr',mode:'skip'},
     ...targets.map(c=>({type:'kmr',mode:'rest',uid:c.uid}))
@@ -1494,7 +1509,7 @@ function resolveStep(pack,s,q,a){
    offerFieldEntry(s,spec,pool,{optional:true,skipOnPlay:true,
     fromOf:c=>plOf(s,q.player).hand.some(h=>h.uid===c.uid)?'hand':'outside'});
   }else if(next==='silence'){
-   const foes=plOf(s,1-q.player).front.filter(Boolean);
+   const foes=plOf(s,1-q.player).front.filter(c=>selectable(pack,s,q.player,q.id,c));
    if(foes.length)hold(s,{...spec,step:'silence',data:{}},[
     {type:'kmr',mode:'skip'},...foes.map(c=>({type:'kmr',mode:'silence',uid:c.uid}))]);
   }
@@ -1562,7 +1577,8 @@ function resolveStep(pack,s,q,a){
   plOf(s,q.player).outside.push(layer);
   A.record(pack,s,{physical:layer,owner:q.player,from:'raid-under',to:'outside',
    reason:'own-effect',sourceUid:q.sourceUid});
-  const targets=oppFront(s,q.player,c=>A.bp(pack,s,c)<=3000);
+  const targets=oppFront(s,q.player,c=>A.bp(pack,s,c)<=3000&&
+   selectable(pack,s,q.player,q.id,c));
   if(targets.length)hold(s,{...spec,step:'bounceFront',data:{}},[
    {type:'kmr',mode:'skip'},
    ...targets.map(c=>({type:'kmr',mode:'bounce',uid:c.uid}))
