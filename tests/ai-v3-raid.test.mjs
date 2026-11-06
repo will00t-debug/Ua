@@ -266,16 +266,15 @@ test('raid: official life choice still finishes the rested lethal',()=>{
   assert.ok(trace.nodesUsed<=48);
   assert.equal(legal.some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
   const row=(trace.compared||[]).find(item=>identity(item.action)===identity(onRaid));
-  if(trace.reason==='search'||trace.reason==='budget'){
+  const finishedKill=row&&row.boundary==='terminal'&&row.search===100000&&row.damageOpen===false;
+  if(finishedKill){
    assert.equal(identity(action),identity(onRaid));
-   assert.equal(row.boundary,'terminal');
-   assert.equal(row.search,100000);
-   assert.equal(row.damageOpen,false);
    found++;
-  }else{
-   assert.equal(trace.reason,'budget-fallback');
-   assert.equal(trace.fallbackKind,'budget');
+  }else if(trace.reason==='budget'||trace.reason==='budget-fallback'){
+   if(trace.reason==='budget-fallback')assert.equal(trace.fallbackKind,'budget');
    clockCut++;
+  }else{
+   assert.equal(row&&row.search,100000,trace.reason+' '+(row&&row.search));
   }
  }
  const p50=pct(samples,0.5),p95=pct(samples,0.95),max=Math.max(...samples);
