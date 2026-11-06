@@ -44,6 +44,13 @@ function hand(s,p,id){
  s.players[p].hand.push(card);
  return card;
 }
+function deckHand(s,p,id){
+ const pile=s.players[p].deck,index=pile.findIndex(c=>c.cardId===id);
+ if(index<0)throw Error('Missing deck copy '+id);
+ const card=pile.splice(index,1)[0];
+ s.players[p].hand.push(card);
+ return card;
+}
 function top(s,p,ids){
  const cards=[];
  for(const id of [...ids].reverse()){
@@ -90,6 +97,29 @@ function choose(s,pred){
 }
 function fuel(s,p,ids){
  return ids.map((id,slot)=>put(s,p,id,'energy',slot,true));
+}
+function event(s,uid){
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===uid);
+ if(!action)throw Error('No event '+uid+' '+JSON.stringify(legalUniversalActions(packs,s).filter(a=>a.uid===uid)));
+ return use(s,action);
+}
+function readyCount(s,p=0){return s.players[p].apCards.filter(c=>c.inPlay&&c.ready).length;}
+function located(s,uid){
+ const found=[];
+ for(const p of [0,1]){
+  const pl=s.players[p];
+  for(const zone of ['hand','deck','life','outside','removed'])
+   for(const c of pl[zone]) if(c?.uid===uid) found.push(p+':'+zone);
+  for(const zone of ['front','energy']) pl[zone].forEach(c=>{
+   if(!c)return;
+   const walk=(layer,name)=>{
+    if(layer?.uid===uid) found.push(p+':'+name);
+    for(const child of [...(layer.stack||[]),...(layer.under||[])]) walk(child,name+'-under');
+   };
+   walk(c,zone);
+  });
+ }
+ return found;
 }
 function purple(s,p){return universalEnergyByColor(packs,s,p).purple||0;}
 function bpOf(s,card){return universalBp(packs,s,card);}
@@ -565,6 +595,133 @@ test('IYS-1-013 readies a Sesshomaru only after this card entered from outside',
  assert.equal(live(brought,0,kagura.uid)?.cardId,'IYS-1-019');
  assert.equal(brought.players[0].front[0].ready,true);
  assertUniversalMatch(packs,brought);
+});
+
+test('IYS-1-013 uses this entry source after the same card has already entered from outside',()=>{
+ const ids=['IYS-1-013','IYS-1-004','IYS-1-019','IYS-1-039','IYS-1-040','IYS-1-010','IYS-1-001'];
+ let s=toPhase(fresh(ids,1313),'main');
+ readyAp(s);
+ const started=readyCount(s);
+ assert.equal(started,3);
+ fuel(s,0,['IYS-1-010','IYS-1-001']);
+ const sess=put(s,0,'IYS-1-004','front',0,false);
+ const rin=hand(s,0,'IYS-1-013');
+ s.players[0].outside.push(rin);
+ s.players[0].hand=s.players[0].hand.filter(c=>c.uid!==rin.uid);
+ const kagura=hand(s,0,'IYS-1-019');
+ const fusion=hand(s,0,'IYS-1-039');
+ const restore=hand(s,0,'IYS-1-040');
+ const mother=hand(s,0,'IYS-1-010');
+ const again=deckHand(s,0,'IYS-1-019');
+ const fusionAgain=deckHand(s,0,'IYS-1-039');
+ const restoreAgain=deckHand(s,0,'IYS-1-040');
+ const restoreLater=deckHand(s,0,'IYS-1-040');
+ const apUids=s.players[0].apCards.map(c=>c.uid);
+
+ s=play(s,kagura.uid);
+ assert.equal(readyCount(s),started-1);
+ assert.ok(s.pending.actions.some(a=>a.mode==='deploy'&&a.uid===rin.uid));
+ s=choose(s,a=>a.mode==='deploy'&&a.uid===rin.uid&&a.line==='energy');
+ assert.equal(s.pending.id,'IYS-1-013');
+ assert.equal(s.pending.step,'activeName');
+ s=choose(s,a=>a.mode==='skip');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front[0].ready,false);
+ assert.deepEqual(located(s,rin.uid),['0:energy']);
+ assertUniversalMatch(packs,s);
+
+ s=event(s,fusion.uid);
+ if(s.pending?.step==='ap')s=choose(s,a=>a.mode==='ap');
+ assert.equal(s.pending.id,'IYS-1-039');
+ assert.equal(s.pending.step,'retireOwn');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===rin.uid);
+ assert.equal(s.pending,null);
+ assert.deepEqual(located(s,rin.uid),['0:outside']);
+ assert.equal(s.players[0].front[0].ready,false);
+ assertUniversalMatch(packs,s);
+
+ const beforeRestore=readyCount(s);
+ s=event(s,restore.uid);
+ let recovered=0;
+ while(s.pending?.kind==='effect-recover-ap'){
+  s=choose(s,a=>a.type==='chooseApRecovery'&&a.uid);
+  recovered++;
+ }
+ assert.ok(recovered>=1);
+ assert.ok(readyCount(s)>beforeRestore);
+ assert.equal(s.pending,null);
+ assertUniversalMatch(packs,s);
+
+ const beforeMother=readyCount(s);
+ s=play(s,mother.uid);
+ assert.equal(readyCount(s),beforeMother-2);
+ assert.equal(s.pending.step,'recover');
+ s=choose(s,a=>a.mode==='take'&&a.uid===rin.uid);
+ assert.equal(s.pending,null);
+ assert.deepEqual(located(s,rin.uid),['0:hand']);
+ assertUniversalMatch(packs,s);
+
+ s=event(s,restoreAgain.uid);
+ while(s.pending?.kind==='effect-recover-ap')s=choose(s,a=>a.type==='chooseApRecovery'&&a.uid);
+ assert.equal(s.pending,null);
+ const beforeHand=readyCount(s);
+ s=play(s,rin.uid);
+ assert.equal(readyCount(s),beforeHand-1);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.find(c=>c?.uid===sess.uid).ready,false);
+ assert.ok(s.players[0].front.some(c=>c?.uid===rin.uid));
+ assert.equal(located(s,rin.uid).length,1);
+ assertUniversalMatch(packs,s);
+
+ s=event(s,restoreLater.uid);
+ while(s.pending?.kind==='effect-recover-ap')s=choose(s,a=>a.type==='chooseApRecovery'&&a.uid);
+ s=event(s,fusionAgain.uid);
+ if(s.pending?.step==='ap')s=choose(s,a=>a.mode==='ap');
+ assert.equal(s.pending.step,'retireOwn');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===rin.uid);
+ assert.deepEqual(located(s,rin.uid),['0:outside']);
+ assert.equal(s.players[0].front.find(c=>c?.uid===sess.uid).ready,false);
+ s=play(s,again.uid);
+ s=choose(s,a=>a.mode==='deploy'&&a.uid===rin.uid&&a.line==='energy');
+ assert.equal(s.pending.id,'IYS-1-013');
+ assert.equal(s.pending.step,'activeName');
+ s=choose(s,a=>a.uid===sess.uid);
+ assert.equal(s.players[0].front.find(c=>c?.uid===sess.uid).ready,true);
+ assert.equal(located(s,rin.uid).length,1);
+ assert.deepEqual(s.players[0].apCards.map(c=>c.uid),apUids);
+ assert.equal(s.players[0].apCards.filter(c=>c.inPlay).length,3);
+ assertUniversalMatch(packs,s);
+});
+
+test('IYS-1-013 does not treat a line change as a new entry',()=>{
+ const ids=['IYS-1-013','IYS-1-004','IYS-1-019','IYS-1-001','IYS-1-010'];
+ let s=toPhase(fresh(ids,1314),'main');
+ readyAp(s);
+ fuel(s,0,['IYS-1-010','IYS-1-001']);
+ const sess=put(s,0,'IYS-1-004','front',0,false);
+ const rin=hand(s,0,'IYS-1-013');
+ s.players[0].outside.push(rin);
+ s.players[0].hand=s.players[0].hand.filter(c=>c.uid!==rin.uid);
+ const kagura=hand(s,0,'IYS-1-019');
+ const mover=hand(s,0,'IYS-1-001');
+ s=play(s,kagura.uid);
+ s=choose(s,a=>a.mode==='deploy'&&a.uid===rin.uid&&a.line==='energy');
+ s=choose(s,a=>a.mode==='skip');
+ assert.equal(s.pending,null);
+ const stamp=s.players[0].energy.find(c=>c?.uid===rin.uid).fieldEntryStamp;
+ const before=readyCount(s);
+ s=play(s,mover.uid);
+ assert.equal(readyCount(s),before-1);
+ assert.equal(s.pending.kind,'effect-line-move');
+ s=choose(s,a=>a.uid===rin.uid);
+ assert.equal(s.pending.kind,'effect-line-slot');
+ const dest=legalUniversalActions(packs,s).find(a=>a.replaceUid===undefined);
+ s=use(s,dest);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.find(c=>c?.uid===rin.uid).fieldEntryStamp,stamp);
+ assert.equal(s.players[0].front.find(c=>c?.uid===sess.uid).ready,false);
+ assert.equal(located(s,rin.uid).length,1);
+ assertUniversalMatch(packs,s);
 });
 
 test('IYS-1-014 reveals one Naraku card from the top three and bottoms the rest',()=>{

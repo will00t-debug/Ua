@@ -302,15 +302,19 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 // (REST or a legal Raid). They are not the older deployOwnHandRest cause,
 // which remains the literal string 'ownEffect' and stays outside this set.
 const OWN_EFFECT_ENTRY=new Set(['outsideEffect','outsideEffectRaid','recoveredEffect','handEffect','handEffectRaid','deckEffect','deckEffectRaid']);
-// 「自分のキャラの効果で登場」 is narrower than 自分の効果. The latest completed
-// move of this physical card onto a field line must be an own effect, and the
-// source snapshotted on that move must be one of this player's characters.
-// A missing source, a field, an event, a paid play, or a life trigger fails closed.
+// 「自分のキャラの効果で登場」 is narrower than 自分の効果. The latest entry
+// onto a field line must be an own effect, and the source snapshotted on
+// that entry must be one of this player's characters. An earlier character
+// entry does not survive a later play from hand. A move between front and
+// energy is not a new entry. A missing source, a field, an event, a paid
+// play, or a life trigger fails closed.
 function enteredByOwnCharacter(pack,s,owner,uid){
  const events=(s.zoneMoveEvents||[]).filter(e=>e.uid===uid&&e.owner===owner&&
-  e.controller===owner&&e.reason==='own-effect'&&(e.to==='front'||e.to==='energy'));
+  e.controller===owner&&(e.to==='front'||e.to==='energy')&&
+  e.from!=='front'&&e.from!=='energy');
  const latest=events.length?events[events.length-1]:null;
- if(!latest||typeof latest.sourceUid!=='string'||typeof latest.sourceCardId!=='string')return false;
+ if(!latest||latest.reason!=='own-effect'||
+  typeof latest.sourceUid!=='string'||typeof latest.sourceCardId!=='string')return false;
  if(Number(String(latest.sourceUid).split('-')[0])!==owner)return false;
  return playerPacks(pack)[owner].cards[latest.sourceCardId]?.type==='character';
 }

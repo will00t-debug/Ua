@@ -3,6 +3,13 @@
  "next": "KMR-1-102。KMR-1-101 沒有印刷效果。第四輪已整合 B #330 犬夜叉 001–025、C #331 假面騎士第一彈 076–100、D #332 第二彈 061–080。KMR-1-085 抽走突襲頂時，頂卡自己底下的裡向卡仍沒有官方去向。",
  "sharedFixes": [
   {
+   "name": "這一次登場只看這一次的來源",
+   "rule": "「このキャラが場外から登場していた場合」看這一次登場時的 entryCause。outsideEffect、outsideEffectRaid、lifeColorOutside 算從場外登場。同一 UID 本回合較早的場外移動不算。手牌普通登場是 paidPlay。前線與能源線互換不重跑登場時。「自分のキャラの効果で登場」看最近一次非換線進場：reason 必須是 own-effect，來源是自己的角色。較早的角色效果登場不會留到後來的手牌登場。",
+   "where": "dist/universal-v2/iys-runtime.mjs thisEntryFromOutside。dist/universal-v2/aot2-runtime.mjs 同一組 entryCause，AOT-2-024 的抽牌選項才打開。dist/universal-v2/engine.mjs enteredByOwnCharacter 改看最近一次進場。",
+   "affects": "IYS-1-013 的登場時。AOT-2-024 的場外抽牌。BLC-2-005、006 與其他 entry ownCharacter。本回合「有角色從場外登場」的常時（IYS-1-006 到 009、field-conditions ownCharacterFromOutsideThisTurn）仍看整回合。MMM-2-003 的手札登場、MMM-2-014 與 033 的自己效果登場、KJN-1-034 的移除區使用，仍用本回合 .some()，這次沒有走完合法的離場再登場，所以沒改。",
+   "evidence": "tests/v2-iys-001-025.test.mjs。tests/v2-aot-set2.test.mjs 的 AOT-2-024。tests/v2-c29-bleach-port.test.mjs 的 BLC-2-006。"
+  },
+  {
    "name": "KMR-1-021 的攻擊階段突襲來自 KMR-2-021",
    "rule": "UA29BT/KMR-1-021：自分のアタックフェイズ中に《仮面ライダーゼロワン リアライジングホッパー》被突襲，且自己場上飛電インテリジェンス至少 3 張時，可從手牌把這張卡休息登場。Q1137：每回合一次只約束這句。Q1138：手牌兩張也不能同一回合各用一次。全庫 effectJa 寫到這個卡名的只有 021 自己與 EX12BT/KMR-2-021。後者在自己的攻擊結束，從手牌把 KMR-1-107 突襲到自己身上。付費突襲在主要階段。沒有另外做一個攻擊階段突襲按鈕。",
    "where": "dist/universal-v2/engine.mjs performRaid 在 KMR-1-107 突襲完成時排入 onRaidSeen。dist/universal-v2/kmr-runtime.mjs KMR-1-021|onRaidSeen 要求 phase 為 attack、active 為控制者、來源卡名相符、特徵至少 3 張。接受休息登場才寫入卡名鎖。",
@@ -6110,18 +6117,18 @@
      "match": "【登場時】このキャラが場外から登場していた場合、自分の場の〈殺生丸〉を1枚まで選び、アクティブにする。",
      "status": "已驗證",
      "official": "自分のフロントLに〈殺生丸〉がある場合、このキャラの発生エナジー+【紫】。【登場時】このキャラが場外から登場していた場合、自分の場の〈殺生丸〉を1枚まで選び、アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-013",
-     "implementation": "passiveBonuses ownNameExists，zone front，name 殺生丸，extraEnergy 1。onPlay 改看 zoneMoveEvents：這個回合從 outside 進入 front 或 energy 才算。顏色觸發的 lifeColorOutside 算。手牌登場與付費突襲不算。只提供休息中的殺生丸，可以略過。",
-     "discrepancy": "修正前只接受 entryCause outsideEffect 與 outsideEffectRaid，顏色觸發登場不會起動。",
-     "evidence": "tests/v2-iys-001-025.test.mjs。手牌放到能源線不活動休息中的 004，能源線上的 013 在前線有殺生丸時產生 2。003 的顏色觸發把 013 從場外放到前線後，可以活動能源線的殺生丸，013 自己活動。019 帶出的 013 也會詢問，並在主要結束時退場。",
+     "implementation": "onPlay 讀這一次 job.entryCause。outsideEffect、outsideEffectRaid、lifeColorOutside 才開啟 activeName。paidPlay 不開。只列出休息中的殺生丸，可以略過。換線不重跑登場時。",
+     "discrepancy": "修正前 enteredFromOutside 用 .some() 看本回合同一 UID 任何 outside→front／energy。同一張先從場外登場、退場、回手，再從手牌普通登場，仍會開啟 activeName 並活動殺生丸。",
+     "evidence": "tests/v2-iys-001-025.test.mjs。手牌放到能源線不活動休息中的 004。003 的顏色觸發把 013 從場外放到前線後，可以活動能源線的殺生丸。019 帶出的 013 也會詢問，放棄後 004 仍休息，主要結束時 013 退場。同一 UID：019 登場並放棄、039 退場、040 恢復 AP、010 回手、手牌普通登場不開 activeName，004 仍休息；同回合再用 039 退場、019 從場外登場，activeName 出現並把 004 活動。001 把能源線的 013 換到前線，fieldEntryStamp 不變，不開 activeName。AP 卡 UID 不變，在場 AP 仍是 3 張，013 只在一個位置。",
      "unresolved": ""
     },
     {
      "match": "自分のフロントLに〈殺生",
      "status": "已驗證",
      "official": "自分のフロントLに〈殺生丸〉がある場合、このキャラの発生エナジー+【紫】。【登場時】このキャラが場外から登場していた場合、自分の場の〈殺生丸〉を1枚まで選び、アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-013",
-     "implementation": "passiveBonuses ownNameExists，zone front，name 殺生丸，extraEnergy 1。onPlay 改看 zoneMoveEvents：這個回合從 outside 進入 front 或 energy 才算。顏色觸發的 lifeColorOutside 算。手牌登場與付費突襲不算。只提供休息中的殺生丸，可以略過。",
-     "discrepancy": "修正前只接受 entryCause outsideEffect 與 outsideEffectRaid，顏色觸發登場不會起動。",
-     "evidence": "tests/v2-iys-001-025.test.mjs。手牌放到能源線不活動休息中的 004，能源線上的 013 在前線有殺生丸時產生 2。003 的顏色觸發把 013 從場外放到前線後，可以活動能源線的殺生丸，013 自己活動。019 帶出的 013 也會詢問，並在主要結束時退場。",
+     "implementation": "passiveBonuses ownNameExists，zone front，name 殺生丸，extraEnergy 1。能源線上的 013 在前線有殺生丸時多 1 點紫。這句不看登場來源。",
+     "discrepancy": "",
+     "evidence": "tests/v2-iys-001-025.test.mjs。能源線上的 013 在前線有殺生丸時產生 2。",
      "unresolved": ""
     }
    ]

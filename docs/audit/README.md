@@ -27,6 +27,16 @@
 
 ## 本批共用修正
 
+### 這一次登場只看這一次的來源
+
+「このキャラが場外から登場していた場合」看這一次登場時的 entryCause。outsideEffect、outsideEffectRaid、lifeColorOutside 算從場外登場。同一 UID 本回合較早的場外移動不算。手牌普通登場是 paidPlay。前線與能源線互換不重跑登場時。「自分のキャラの効果で登場」看最近一次非換線進場：reason 必須是 own-effect，來源是自己的角色。較早的角色效果登場不會留到後來的手牌登場。
+
+dist/universal-v2/iys-runtime.mjs thisEntryFromOutside。dist/universal-v2/aot2-runtime.mjs 同一組 entryCause，AOT-2-024 的抽牌選項才打開。dist/universal-v2/engine.mjs enteredByOwnCharacter 改看最近一次進場。
+
+IYS-1-013 的登場時。AOT-2-024 的場外抽牌。BLC-2-005、006 與其他 entry ownCharacter。本回合「有角色從場外登場」的常時（IYS-1-006 到 009、field-conditions ownCharacterFromOutsideThisTurn）仍看整回合。MMM-2-003 的手札登場、MMM-2-014 與 033 的自己效果登場、KJN-1-034 的移除區使用，仍用本回合 .some()，這次沒有走完合法的離場再登場，所以沒改。
+
+tests/v2-iys-001-025.test.mjs。tests/v2-aot-set2.test.mjs 的 AOT-2-024。tests/v2-c29-bleach-port.test.mjs 的 BLC-2-006。
+
 ### KMR-1-021 的攻擊階段突襲來自 KMR-2-021
 
 UA29BT/KMR-1-021：自分のアタックフェイズ中に《仮面ライダーゼロワン リアライジングホッパー》被突襲，且自己場上飛電インテリジェンス至少 3 張時，可從手牌把這張卡休息登場。Q1137：每回合一次只約束這句。Q1138：手牌兩張也不能同一回合各用一次。全庫 effectJa 寫到這個卡名的只有 021 自己與 EX12BT/KMR-2-021。後者在自己的攻擊結束，從手牌把 KMR-1-107 突襲到自己身上。付費突襲在主要階段。沒有另外做一個攻擊階段突襲按鈕。

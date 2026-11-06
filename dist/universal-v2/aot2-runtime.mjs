@@ -69,9 +69,12 @@ function hasRaid(d){return !!(d.raidName||d.trigger==='raid');}
 function events(pack,s,owner){
  return plOf(s,owner).outside.filter(c=>def(pack,c).type==='event').length;
 }
-function enteredFrom(s,owner,c,from){
- return !!(c&&(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===c.uid&&e.owner===owner&&
-  e.from===from&&['front','energy'].includes(e.to)));
+// 「このキャラが場外から登場」 is this onPlay's entryCause. An earlier outside
+// move of the same UID does not qualify a later hand play. COLOR life uses
+// lifeColorOutside. A line change does not create an onPlay.
+const OUTSIDE_ENTRY=new Set(['outsideEffect','outsideEffectRaid','lifeColorOutside']);
+function thisEntryFromOutside(job){
+ return OUTSIDE_ENTRY.has(job.entryCause);
 }
 function enteredThisTurn(s,owner,c){
  return !!(c&&(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===c.uid&&e.owner===owner&&
@@ -398,7 +401,7 @@ export function runAot2Job(pack,s,job){
  if(id==='AOT-2-024'){
   const c=self();
   const modes=[act('look')];
-  if(enteredFrom(s,owner,c,'outside'))modes.push(act('draw'));
+  if(thisEntryFromOutside(job))modes.push(act('draw'));
   if(modes.length===1){
    beginLook(s,spec,3,()=>true,{max:1,min:0,rest:'bottom',to:'outside',reveal:false});
    return;

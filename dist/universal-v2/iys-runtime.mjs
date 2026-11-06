@@ -50,9 +50,12 @@ function fromOutsideThisTurn(s,owner){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.from==='outside'&&
   ['front','energy'].includes(e.to)&&def(A.pack,{uid:e.uid,cardId:e.cardId}).type==='character');
 }
-function enteredFromOutside(s,owner,uid){
- return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.uid===uid&&
-  e.from==='outside'&&['front','energy'].includes(e.to));
+// 「このキャラが場外から登場」 is this entry, not an older move of the same UID.
+// COLOR life from outside is lifeColorOutside. A later play from hand is
+// paidPlay. Moving between front and energy does not run onPlay again.
+const OUTSIDE_ENTRY=new Set(['outsideEffect','outsideEffectRaid','lifeColorOutside']);
+function thisEntryFromOutside(job){
+ return OUTSIDE_ENTRY.has(job.entryCause);
 }
 function traitlessPurple(d){return d.type==='character'&&d.color==='purple'&&!(d.traits||[]).length;}
 function redEvent(d){return d.type==='event'&&d.color==='red';}
@@ -335,8 +338,7 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='IYS-1-013'){
-  // 「場外から登場」 is the zone the card left. COLOR life uses lifeColorOutside.
-  if(!enteredFromOutside(s,owner,job.sourceUid))return;
+  if(!thisEntryFromOutside(job))return;
   const pool=chars(s,owner,c=>!c.ready&&named(pack,c,'殺生丸',s));
   if(!pool.length)return;
   hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'activeName'},[
