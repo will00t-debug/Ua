@@ -207,12 +207,18 @@ test('IYS-1-027 pays the printed order, and BP 0 leaves by the rule',()=>{
  const frail=put(zero,1,'IYS-1-048','front',0);
  zero=use(zero,{type:'activate',uid:caster.uid,mode:'iys:0'});
  zero=choose(zero,a=>a.mode==='pick'&&a.uid===frail.uid);
- assert.equal(zero.players[1].outside.some(c=>c.uid===frail.uid),true);
- assert.equal(zero.players[1].removed.some(c=>c.uid===frail.uid),false);
+ assert.equal(zero.pending.step,'retireNaraku');
+ assert.equal(zero.players[1].front.some(c=>c?.uid===frail.uid),true);
+ assert.equal(zero.players[1].outside.some(c=>c.uid===frail.uid),false);
+ assert.equal(universalBp(pack,zero,zero.players[1].front.find(c=>c.uid===frail.uid))<=0,true);
  assert.equal(zero.players[0].front.find(c=>c?.uid===caster.uid).ready,true);
  assert.equal(universalImpact(pack,zero,zero.players[0].front.find(c=>c?.uid===caster.uid)),1);
- assert.equal(zero.pending.step,'retireNaraku');
  zero=choose(zero,a=>a.uid===other.uid);
+ assert.equal(zero.players[1].front.some(c=>c?.uid===frail.uid),false);
+ assert.equal(zero.players[1].outside.some(c=>c.uid===frail.uid),true);
+ assert.equal(zero.players[1].removed.some(c=>c.uid===frail.uid),false);
+ assert.equal(zero.zoneMoveEvents.filter(e=>e.uid===frail.uid&&e.to==='outside'&&e.reason==='retirement').length,1);
+ assert.equal(zero.turnRetireEvents.filter(e=>e.uid===frail.uid).length,1);
  assertUniversalMatch(packs,zero);
 
  let alone=toPhase(fresh(counts,2703),'main');
@@ -221,6 +227,78 @@ test('IYS-1-027 pays the printed order, and BP 0 leaves by the rule',()=>{
  assert.equal(alone.pending,null);
  assert.equal(alone.players[0].outside.some(c=>c.uid===only.uid),true);
  assertUniversalMatch(packs,alone);
+});
+
+test('an open IYS-1-027 choice does not rule-retire, and the leave follow-up settles once',()=>{
+ const counts=countsFor(['IYS-1-027','IYS-1-028','IYS-1-015','IYS-1-029','IYS-1-034','IYS-1-001','IYS-1-004']);
+ let s=toPhase(fresh(counts,2715),'main');
+ const caster=put(s,0,'IYS-1-027','front',0,false);
+ const naraku=put(s,0,'IYS-1-028','front',1);
+ const base=take(s,0,'IYS-1-029');
+ naraku.stack=[base];
+ const buried=['IYS-1-034','IYS-1-001','IYS-1-004'].map(id=>{
+  const card=take(s,0,id);card.faceDown=true;return card;
+ });
+ naraku.under=buried;
+ const frail=put(s,1,'IYS-1-015','front',0);
+ const deck=s.players[1].deck.length;
+ const hand=s.players[1].hand.length;
+ s=use(s,{type:'activate',uid:caster.uid,mode:'iys:0'});
+ s=choose(s,a=>a.mode==='pick'&&a.uid===frail.uid);
+ assert.equal(s.pending.step,'retireNaraku');
+ assert.equal(s.players[1].front.some(c=>c?.uid===frail.uid),true);
+ assert.equal(s.players[1].outside.some(c=>c.uid===frail.uid),false);
+ assert.equal(s.players[1].deck.length,deck);
+ assert.equal(s.players[1].hand.length,hand);
+ s=choose(s,a=>a.uid===naraku.uid);
+ assert.equal(s.pending.step,'leave');
+ assert.equal(s.players[1].front.some(c=>c?.uid===frail.uid),true);
+ assert.equal(s.players[1].deck.length,deck);
+ s=choose(s,a=>a.mode==='hand');
+ assert.equal(s.players[0].hand.filter(c=>c.uid===naraku.uid).length,1);
+ assert.equal(s.players[0].outside.some(c=>c.uid===naraku.uid),false);
+ assert.equal(s.players[0].removed.some(c=>c.uid===naraku.uid),false);
+ assert.equal(s.pending.step,'deploy');
+ assert.equal(legalUniversalActions(packs,s).filter(a=>a.mode==='deploy'&&a.uid===base.uid).length>0,true);
+ s=choose(s,a=>a.mode==='deploy'&&a.uid===base.uid&&a.line==='energy');
+ assert.equal(s.pending,null);
+ const returned=[...s.players[0].front,...s.players[0].energy].filter(c=>c?.uid===base.uid);
+ assert.equal(returned.length,1);
+ assert.equal(returned[0].ready,false);
+ assert.equal(s.players[1].outside.filter(c=>c.uid===frail.uid).length,1);
+ assert.equal(s.players[1].removed.some(c=>c.uid===frail.uid),false);
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===frail.uid&&e.to==='outside'&&e.reason==='retirement').length,1);
+ assert.equal(s.turnRetireEvents.filter(e=>e.uid===frail.uid).length,1);
+ assert.equal(s.players[1].deck.length,deck-1);
+ assert.equal(s.players[1].hand.length,hand+1);
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===naraku.uid&&e.to==='hand').length,1);
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===base.uid&&(e.to==='front'||e.to==='energy')).length,1);
+ assert.equal(buried.every(card=>s.players[0].outside.filter(c=>c.uid===card.uid).length===1),true);
+ assertUniversalMatch(packs,s);
+
+ let pair=toPhase(fresh(counts,2716),'main');
+ const actor=put(pair,0,'IYS-1-027','front',0,false);
+ const host=put(pair,0,'IYS-1-028','front',1);
+ host.under=['IYS-1-034','IYS-1-001'].map(id=>{
+  const card=take(pair,0,id);card.faceDown=true;return card;
+ });
+ const target=put(pair,1,'IYS-1-015','front',0);
+ const before=pair.players[1].deck.length;
+ pair=use(pair,{type:'activate',uid:actor.uid,mode:'iys:0'});
+ pair=choose(pair,a=>a.uid===target.uid);
+ pair=choose(pair,a=>a.uid===host.uid);
+ assert.equal(pair.pending.step,'leave');
+ assert.equal(pair.players[1].front.some(c=>c?.uid===target.uid),true);
+ assert.equal(pair.players[1].deck.length,before);
+ pair=choose(pair,a=>a.mode==='hand');
+ assert.equal(pair.pending,null);
+ assert.equal(pair.players[0].hand.filter(c=>c.uid===host.uid).length,1);
+ assert.equal(pair.players[1].outside.filter(c=>c.uid===target.uid).length,1);
+ assert.equal(pair.players[1].deck.length,before-1);
+ assert.equal(pair.zoneMoveEvents.filter(e=>e.uid===host.uid&&e.to==='hand').length,1);
+ assert.equal(pair.zoneMoveEvents.filter(e=>e.uid===target.uid&&e.to==='outside'&&e.reason==='retirement').length,1);
+ assert.equal(pair.turnRetireEvents.filter(e=>e.uid===target.uid).length,1);
+ assertUniversalMatch(packs,pair);
 });
 
 test('IYS-1-028 separates the raid frame from the facedown leave, and reenters 013 from outside',()=>{
@@ -320,6 +398,71 @@ test('IYS-1-028 separates the raid frame from the facedown leave, and reenters 0
  trigger=choose(trigger,a=>a.mode==='get');
  assert.equal(trigger.players[1].hand.some(c=>c.uid===life.uid),true);
  assertUniversalMatch(packs,trigger);
+});
+
+test('a full front asks IYS-1-028 before the line replacement removes it',()=>{
+ const counts=countsFor(['IYS-1-001','IYS-1-013','IYS-1-028','IYS-1-010','IYS-1-026','IYS-1-029','IYS-1-034','IYS-1-004']);
+ let handBack=toPhase(fresh(counts,2811),'main');
+ readyAp(handBack);
+ put(handBack,0,'IYS-1-010','energy',0);
+ put(handBack,0,'IYS-1-026','energy',1);
+ const mover=put(handBack,0,'IYS-1-013','energy',2);
+ const occupant=put(handBack,0,'IYS-1-028','front',0);
+ const base=take(handBack,0,'IYS-1-029');
+ occupant.stack=[base];
+ const layers=['IYS-1-034','IYS-1-004'].map(id=>{
+  const card=take(handBack,0,id);card.faceDown=true;return card;
+ });
+ occupant.under=layers;
+ put(handBack,0,'IYS-1-029','front',1);
+ put(handBack,0,'IYS-1-026','front',2);
+ put(handBack,0,'IYS-1-010','front',3);
+ const event=take(handBack,0,'IYS-1-001');
+ handBack.players[0].hand.push(event);
+ handBack=play(handBack,event.uid,'play','energy');
+ handBack=choose(handBack,a=>a.type==='chooseLineMove'&&a.uid===mover.uid);
+ assert.equal(handBack.pending.kind,'effect-line-slot');
+ handBack=choose(handBack,a=>a.type==='chooseLineSlot'&&a.replaceUid===occupant.uid);
+ assert.equal(handBack.pending.step,'leave');
+ assert.equal(handBack.players[0].front.some(c=>c?.uid===occupant.uid),true);
+ assert.equal(handBack.players[0].energy.some(c=>c?.uid===mover.uid),true);
+ handBack=choose(handBack,a=>a.mode==='hand');
+ assert.equal(handBack.pending,null);
+ assert.equal(handBack.players[0].hand.filter(c=>c.uid===occupant.uid).length,1);
+ assert.equal(handBack.players[0].removed.some(c=>c.uid===occupant.uid),false);
+ assert.equal(handBack.players[0].outside.some(c=>c.uid===occupant.uid),false);
+ assert.equal(handBack.players[0].front.filter(c=>c?.uid===mover.uid).length,1);
+ assert.equal(layers.every(card=>handBack.players[0].outside.filter(c=>c.uid===card.uid).length===1),true);
+ assert.equal(handBack.zoneMoveEvents.filter(e=>e.uid===occupant.uid&&e.to==='hand').length,1);
+ assert.equal(handBack.zoneMoveEvents.filter(e=>e.uid===mover.uid&&e.to==='front').length,1);
+ assertUniversalMatch(packs,handBack);
+
+ let kept=toPhase(fresh(counts,2812),'main');
+ readyAp(kept);
+ put(kept,0,'IYS-1-010','energy',0);
+ put(kept,0,'IYS-1-026','energy',1);
+ const body=put(kept,0,'IYS-1-013','energy',2);
+ const staying=put(kept,0,'IYS-1-028','front',0);
+ staying.under=['IYS-1-034','IYS-1-004'].map(id=>{
+  const card=take(kept,0,id);card.faceDown=true;return card;
+ });
+ put(kept,0,'IYS-1-029','front',1);
+ put(kept,0,'IYS-1-026','front',2);
+ put(kept,0,'IYS-1-010','front',3);
+ const aunn=take(kept,0,'IYS-1-001');
+ kept.players[0].hand.push(aunn);
+ kept=play(kept,aunn.uid,'play','energy');
+ kept=choose(kept,a=>a.type==='chooseLineMove'&&a.uid===body.uid);
+ kept=choose(kept,a=>a.type==='chooseLineSlot'&&a.replaceUid===staying.uid);
+ assert.equal(kept.pending.step,'leave');
+ kept=choose(kept,a=>a.mode==='skip');
+ assert.equal(kept.pending,null);
+ assert.equal(kept.players[0].removed.filter(c=>c.uid===staying.uid).length,1);
+ assert.equal(kept.players[0].hand.some(c=>c.uid===staying.uid),false);
+ assert.equal(kept.players[0].front.filter(c=>c?.uid===body.uid).length,1);
+ assert.equal(kept.zoneMoveEvents.filter(e=>e.uid===staying.uid&&e.to==='removed').length,1);
+ assert.equal(kept.zoneMoveEvents.filter(e=>e.uid===body.uid&&e.to==='front').length,1);
+ assertUniversalMatch(packs,kept);
 });
 
 test('a hand-played IYS-1-013 does not use an older outside entry',()=>{
@@ -1136,6 +1279,49 @@ test('IYS-1-046 keeps the unblocked draw outside the raid frame and offers doubl
  doubled=choose(doubled,a=>a.type==='chooseBlock'&&a.uid===null);
  assert.equal(doubled.players[0].deck.length,deck-1);
  assertUniversalMatch(packs,doubled);
+});
+
+test('IYS-1-046 double attack is not generated-energy doubling',()=>{
+ const counts=countsFor(['IYS-1-046','IYS-1-049','IYS-1-042','IYS-1-041','IYS-1-045','IYS-1-062','IYS-1-050']);
+ let s=toPhase(fresh(counts,4604),'main');
+ readyAp(s);
+ payRed(s);
+ const base=put(s,0,'IYS-1-042','front',0,true);
+ const raider=take(s,0,'IYS-1-046');
+ s.players[0].hand.push(raider);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&
+  a.uid===raider.uid&&a.baseUid===base.uid&&a.line!=='energy');
+ if(!raid)throw Error('No raid onto the named base');
+ s=use(s,raid);
+ const actor=take(s,0,'IYS-1-049');
+ s.players[0].hand.push(actor);
+ s=play(s,actor.uid);
+ s=use(s,{type:'activate',uid:actor.uid,mode:'iys:0'});
+ s=choose(s,a=>a.uid===raider.uid);
+ s=choose(s,a=>a.mode==='skip');
+ s=use(s,{type:'activate',uid:raider.uid,mode:'iys:0'});
+ s=choose(s,a=>a.mode==='double');
+ const body=s.players[0].front.find(c=>c?.uid===raider.uid);
+ assert.equal(body.ready,true);
+ assert.equal(universalBp(pack,s,body),4000);
+ assert.equal(universalImpact(pack,s,body),0);
+ assert.deepEqual(s.energyDoubles,[0,0]);
+ assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|double'),true);
+ assertUniversalMatch(packs,s);
+ crown(s,1,'IYS-1-050');
+ s=toPhase(s,'attack');
+ s=use(s,{type:'attack',uid:raider.uid});
+ s=choose(s,a=>a.type==='chooseBlock'&&a.uid===null);
+ if(s.pending?.kind==='life-trigger')s=choose(s,a=>a.mode==='skip'||a.uid===null);
+ const again=s.players[0].front.find(c=>c?.uid===raider.uid);
+ assert.equal(again.ready,true);
+ assert.equal(legal(s,a=>a.type==='attack'&&a.uid===raider.uid),true);
+ s=use(s,{type:'attack',uid:raider.uid});
+ s=choose(s,a=>a.type==='chooseBlock'&&a.uid===null);
+ if(s.pending?.kind==='life-trigger')s=choose(s,a=>a.mode==='skip'||a.uid===null);
+ assert.equal(legal(s,a=>a.type==='attack'&&a.uid===raider.uid),false);
+ assert.deepEqual(s.energyDoubles,[0,0]);
+ assertUniversalMatch(packs,s);
 });
 
 test('IYS-1-047 active trigger readies one character and gives BP+3000',()=>{

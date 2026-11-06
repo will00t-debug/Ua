@@ -88,8 +88,13 @@ test('the stored ledger keeps unchecked cards unchecked and recounts its own cur
  }
  const iys=ledger.cards.find(card=>card.id==='IYS-1-035');
  assert.equal(iys.clauses.find(clause=>clause.text.includes('BP-1000'))?.status,'已驗證');
- assert.equal(iys.clauses.find(clause=>clause.text.includes('スペシャル'))?.status,'未檢查');
- assert.notEqual(iys.status,'已驗證');
+ assert.equal(iys.clauses.find(clause=>clause.text.includes('スペシャル'))?.status,'已驗證');
+ assert.equal(iys.status,'已驗證');
+ const activeEntry=ledger.cards.find(card=>card.id==='IYS-1-044');
+ assert.equal(activeEntry.status,'缺資料待確認');
+ const facedownRaid=ledger.cards.find(card=>card.id==='KMR-1-085');
+ assert.equal(facedownRaid.status,'缺資料待確認');
+ assert.equal(ledger.cards.find(card=>card.id==='AOT-1-001').status,'未檢查');
  const cursor=playable.find(card=>card.status==='未檢查');
  assert.equal(ledger.next?.id,cursor?.id);
  for(const review of notes.reviews){

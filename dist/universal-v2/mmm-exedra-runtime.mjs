@@ -12,6 +12,18 @@ const MAGIUS='マギウス';
 const WING='マギウスの翼';
 let A=null;
 export function bindMmm2(api){A=api;}
+export function finishU045Look(pack,s,player,sourceUid,id){
+ const top=plOf(s,player).deck[0];
+ if(!top)return;
+ const energy=A.deckEnergy(pack,s,player,def(pack,top));
+ publish(pack,s,player,top);
+ moveZone(pack,s,player,'deck',top.uid,'hand',sourceUid);
+ if(energy<5)return;
+ const energies=plOf(s,1-player).energy.filter(Boolean);
+ if(!energies.length)return;
+ hold(s,{player,sourceUid,id,step:'u045lock'},
+  skipDo(energies.map(c=>({type:'mmm2',uid:c.uid}))));
+}
 
 function plOf(s,owner){return s.players[owner];}
 function def(pack,c){return A.card(pack,c);}
@@ -798,17 +810,15 @@ const STEPS={
   if(a.mode!=='skip'){
    const foe=1-q.player;
    A.moveLine(pack,s,foe,a.uid,'energy',a.slot,a.replaceUid,q.sourceUid);
+   if(s.pending?.data?.resumeReplace){
+    s.pending.data.resumeReplace.afterMmm='u045';
+    s.pending.data.resumeReplace.afterMmmPlayer=q.player;
+    s.pending.data.resumeReplace.afterMmmSource=q.sourceUid;
+    s.pending.data.resumeReplace.afterMmmId=q.id;
+    return;
+   }
   }
-  const top=plOf(s,q.player).deck[0];
-  if(!top)return;
-  const energy=A.deckEnergy(pack,s,q.player,def(pack,top));
-  publish(pack,s,q.player,top);
-  moveZone(pack,s,q.player,'deck',top.uid,'hand',q.sourceUid);
-  if(energy<5)return;
-  const energies=plOf(s,foeOf(q)).energy.filter(Boolean);
-  if(!energies.length)return;
-  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u045lock'},
-   skipDo(energies.map(c=>({type:'mmm2',uid:c.uid}))));
+  finishU045Look(pack,s,q.player,q.sourceUid,q.id);
  },
  u045lock(pack,s,q,a){
   if(a.mode==='skip')return;

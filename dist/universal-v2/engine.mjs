@@ -12,7 +12,7 @@ import {cardHasName,cardHasTrait,cardCountsAsEvent,usedOwnEventThisTurn,matchesO
  ownRestPrintedBpCount,countOppRestCharacters,countOwnPrintedApAtLeast,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
  countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs';
 import {bindMmm2,runMmm2Job,legalMmm2Pending,resolveMmm2Pending,
- legalMmm2Activations,activateMmm2} from './mmm-exedra-runtime.mjs';
+ legalMmm2Activations,activateMmm2,finishU045Look} from './mmm-exedra-runtime.mjs';
 import {bindIys,runIysJob,legalIysPending,resolveIysPending,
  legalIysActivations,activateIys} from './iys-runtime.mjs';
 import {bindKjn,runKjnJob,legalKjnPending,resolveKjnPending,
@@ -1853,7 +1853,8 @@ function ensureIys(){
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,readyAp:readyOneAp,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
-  releaseRetirement:(s,q,originalLeft)=>{holdCsmFollow(s,q?.csmFollow,originalLeft);flushRetirement(s,q,originalLeft);}
+  releaseRetirement:(s,q,originalLeft)=>{holdCsmFollow(s,q?.csmFollow,originalLeft);flushRetirement(s,q,originalLeft);},
+  resumeReplace:(pack,s,resume)=>resumeFullLineReplace(pack,s,resume)
  });
 }
 let kjnBound=false;
@@ -7180,8 +7181,18 @@ function ownSwapCandidates(pack,pl,sourceUid,excludeSelf,line){
 function effectMoveTo(pack,s,p,moverUid,destLine,slot,replaceUid,sourceUid){
  const from=location(s,p,moverUid);
  if(!from||from.line===destLine)throw Error('Line move source left its original line');
- if(replaceUid)commitDestination(pack,s,p,destLine,slot,replaceUid);
- else if(s.players[p][destLine][slot])throw Error('Destination occupied');
+ if(replaceUid){
+  const lineCards=s.players[p][destLine];
+  const occupant=lineCards[slot];
+  // Q2129 removes the occupant. IYS-1-028's leave is asked before that removal.
+  if(occupant&&occupant.uid===replaceUid&&lineCards.every(Boolean)&&
+   iysLeaveOffer(pack,s,p,occupant,destLine,slot,'remove',{postImpact:false,by:null})){
+   s.pending.data.resumeReplace={kind:'lineMove',player:p,moverUid,destLine,slot,
+    sourceUid:sourceUid??null};
+   return true;
+  }
+  commitDestination(pack,s,p,destLine,slot,replaceUid);
+ }else if(s.players[p][destLine][slot])throw Error('Destination occupied');
  const moving=from.c;
  if(facedownMoveBanned(pack,s,moving))throw Error('Facedown cards ban this move');
  if(destLine==='energy'&&(card(pack,moving).energyForbidden||card(pack,moving).energyLineForbidden))
@@ -7197,6 +7208,27 @@ function effectMoveTo(pack,s,p,moverUid,destLine,slot,replaceUid,sourceUid){
  // and the hook itself ignores the move phase.
  ensureCsm();
  csmOnMovedOutsideMove(pack,s,p,moving);
+ return false;
+}
+function resumeFullLineReplace(pack,s,resume){
+ if(!resume||resume.kind!=='lineMove')return;
+ effectMoveTo(pack,s,resume.player,resume.moverUid,resume.destLine,resume.slot,
+  undefined,resume.sourceUid);
+ const moved=s.players[resume.player][resume.destLine][resume.slot];
+ if(!moved)return;
+ if(resume.afterLock)
+  grantContinuousState(s,{kind:'cannotMove',controller:resume.afterLock.controller,
+   sourceUid:resume.afterLock.sourceUid,targetUid:moved.uid,sourceLinked:false,
+   until:{player:resume.afterLock.controller,phase:'start',edge:'start'}});
+ if(resume.afterLockIfEvent&&matchesV2LiveCondition(s,resume.afterLockIfEvent.controller,
+  resume.afterLockIfEvent.sourceUid,{kind:'ownEventUsedThisTurn',turn:'any'},c=>card(pack,c)))
+  grantContinuousState(s,{kind:'cannotMove',controller:resume.afterLockIfEvent.controller,
+   sourceUid:resume.afterLockIfEvent.sourceUid,targetUid:moved.uid,sourceLinked:false,
+   until:{player:resume.afterLockIfEvent.controller,phase:'start',edge:'start'}});
+ if(resume.afterMmm==='u045'){
+  ensureMmm2();
+  finishU045Look(pack,s,resume.afterMmmPlayer,resume.afterMmmSource,resume.afterMmmId);
+ }
 }
 function findOwnLayer(s,owner,uid){
  const visit=c=>{
@@ -10487,7 +10519,11 @@ function resolveChoice(s,a,pack){
   if(from<0||!q.choices.includes(a.uid)||!dest||
    !cardEffectTargetPayable(pack,s,q.player,a.uid,0,q.sourceUid))
    throw Error('Opponent front move needs a legal energy destination');
-  effectMoveTo(pack,s,foeIndex,a.uid,'energy',a.slot,a.replaceUid,q.sourceUid);
+  const paused=effectMoveTo(pack,s,foeIndex,a.uid,'energy',a.slot,a.replaceUid,q.sourceUid);
+  if(paused){
+   if(q.lock)s.pending.data.resumeReplace.afterLock={controller:q.player,sourceUid:q.sourceUid};
+   return;
+  }
   const moved=foe.energy[a.slot];
   s.pending=null;
   if(q.lock)grantContinuousState(s,{kind:'cannotMove',controller:q.player,
@@ -10504,7 +10540,11 @@ function resolveChoice(s,a,pack){
   if(from<0||!q.choices.includes(a.uid)||!dest||
    !cardEffectTargetPayable(pack,s,q.player,a.uid,0,q.sourceUid))
    throw Error('Opponent front move needs a legal energy destination');
-  effectMoveTo(pack,s,foeIndex,a.uid,'energy',a.slot,a.replaceUid,q.sourceUid);
+  const paused=effectMoveTo(pack,s,foeIndex,a.uid,'energy',a.slot,a.replaceUid,q.sourceUid);
+  if(paused){
+   s.pending.data.resumeReplace.afterLockIfEvent={controller:q.player,sourceUid:q.sourceUid};
+   return;
+  }
   const moved=foe.energy[a.slot];
   s.pending=null;
   if(matchesV2LiveCondition(s,q.player,q.sourceUid,
@@ -11880,7 +11920,8 @@ function resolveChoice(s,a,pack){
   if(!Number.isInteger(a.slot)||a.slot<0||a.slot>3||
    (full?occupant?.uid!==a.replaceUid:!!occupant||a.replaceUid!==undefined))
    throw Error('Illegal line-move destination');
-  effectMoveTo(pack,s,q.player,q.moverUid,q.line,a.slot,a.replaceUid,q.sourceUid);
+  const paused=effectMoveTo(pack,s,q.player,q.moverUid,q.line,a.slot,a.replaceUid,q.sourceUid);
+  if(paused)return;
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-rest-two'){
@@ -19842,16 +19883,27 @@ export function assertUniversalMatch(pack,s){
   throw Error('Invalid turn-wide generated-energy ledger');
  for(let owner=0;owner<2;owner++){
   const doubles=s.energyDoubles[owner];
-  const doubleUses=(s.mainAbilityUsedUids||[]).filter(k=>k.startsWith(owner+'-')&&k.endsWith('|double'));
-   if(!Number.isInteger(doubles)||doubles<0||doubles>6||doubleUses.length!==doubles||
-   doubleUses.some(k=>{
-    const uid=k.slice(0,-'|double'.length);
-    const physical=[...field(s.players[owner]),...s.players[owner].removed,
-     ...s.players[owner].outside,...s.players[owner].hand].find(c=>c.uid===uid);
-    const printed=physical&&card(pack,physical);
-    return !printed||!(printed.removedMain?.op==='doubleGeneratedEnergy'||
-     printed.mainAbility?.op==='doubleEnergyIfNotEntry');
-   }))throw Error('Forged generated-energy doubling');
+  const marked=(s.mainAbilityUsedUids||[]).filter(k=>k.startsWith(owner+'-')&&k.endsWith('|double'));
+  const energyDouble=k=>{
+   const uid=k.slice(0,-'|double'.length);
+   const physical=[...field(s.players[owner]),...s.players[owner].removed,
+    ...s.players[owner].outside,...s.players[owner].hand].find(c=>c.uid===uid);
+   const printed=physical&&card(pack,physical);
+   return !!(printed&&(printed.removedMain?.op==='doubleGeneratedEnergy'||
+    printed.mainAbility?.op==='doubleEnergyIfNotEntry'));
+  };
+  const liveDoubleAttack=k=>{
+   const uid=k.slice(0,-'|double'.length);
+   const physical=[...field(s.players[owner]),...s.players[owner].removed,
+    ...s.players[owner].outside,...s.players[owner].hand].find(c=>c.uid===uid);
+   const grant=physical?.readyOnAttackGranted;
+   return !!(physical&&card(pack,physical).id==='IYS-1-046'&&grant&&
+    grant.turn===s.turn&&grant.stamp===physical.fieldEntryStamp);
+  };
+  if(!Number.isInteger(doubles)||doubles<0||doubles>6||
+   marked.filter(energyDouble).length!==doubles||
+   marked.some(k=>!energyDouble(k)&&!liveDoubleAttack(k)))
+   throw Error('Forged generated-energy doubling');
   const frontSource=s.allFrontEnergy[owner];
   if(frontSource!==null){
    const physical=[...field(s.players[owner]),...s.players[owner].removed,
