@@ -255,14 +255,21 @@ function on010Attack(pack,s,job){
 }
 function on011(pack,s,job){
  const c=requireSelf(s,job);if(!c)return;
- c.aotThirdSniper={turn:s.turn,stamp:c.fieldEntryStamp,done:false};
+ // Sniper is only the third attack. done stays true until that attack is next.
+ c.aotThirdSniper={turn:s.turn,stamp:c.fieldEntryStamp,done:true};
 }
 function on011End(pack,s,job){
  const c=requireSelf(s,job);if(!c||!A.raided(pack,c))return;
+ const sniper=c.aotThirdSniper;
+ if(sniper&&sniper.turn===s.turn&&sniper.stamp===c.fieldEntryStamp&&
+  (s.attacksByUid[c.uid]||0)===2)sniper.done=false;
  const key=c.uid+'|AOT-1-011|end';
  if(used(s,key))return;
+ // 「支払ってもよい」 declines without spending 【ターン1】.
+ // Paying is what activates the once. No ready AP means it cannot activate.
+ if(apReady(s,job.owner)<1)return;
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
- if(!payOrSkip(s,{...spec,data:null},'readySelf')){use(s,key);return;}
+ if(!payOrSkip(s,{...spec,data:null},'readySelf'))return;
 }
 function on014(pack,s,job){
  const c=requireSelf(s,job);if(!c)return;
@@ -273,16 +280,31 @@ function on014(pack,s,job){
  if(!plOf(s,job.owner).hand.length)return;
  if(!offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'active14'))return;
 }
+function finish020(pack,s,spec,data){
+ const pl=plOf(s,spec.player);
+ const rest=data.uids.filter(uid=>!data.kept.includes(uid));
+ for(const uid of rest){
+  const index=pl.deck.findIndex(c=>c.uid===uid);
+  if(index>=0)A.move(pack,s,{owner:spec.player,from:'deck',to:'outside',index,
+   reason:'own-effect',sourceUid:spec.sourceUid});
+ }
+ if(data.kept.length)lay(pl,data.kept,'top');
+}
 function on020(pack,s,job){
  const ymir=fieldCards(s,job.owner).some(c=>contains(pack,c,YMIR,s));
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
- if(ymir){
-  if(!beginLook(s,spec,2,()=>true,{max:2,min:0,rest:'outside',after:null}))return;
-  s.pending.data.restMode='ymir';
+ const window=windowCards(s,job.owner,2);
+ if(!window.length)return;
+ if(!ymir){
+  if(window.length>1)offerOrder(s,spec,window.map(c=>c.uid),'top',null);
   return;
  }
- const window=windowCards(s,job.owner,2);
- if(window.length>1)offerOrder(s,spec,window.map(c=>c.uid),'top',null);
+ // Any number returns to the top in the chosen order. The rest go outside.
+ // Nothing in this window is added to hand, and the look stays private.
+ hold(s,{...spec,step:'lookKeep',data:{uids:window.map(c=>c.uid),kept:[]}},[
+  {type:'aot',mode:'done'},
+  ...window.map(c=>({type:'aot',mode:'keep',uid:c.uid}))
+ ]);
 }
 function on021(pack,s,job){
  if(!eventUsed(s,job.owner)||locked(s,job.owner,'AOT-1-021|event'))return;
@@ -923,6 +945,22 @@ export function resolveAotPending(pack,s,action){
   if(next){const held=continueAfter(pack,s,q,next);if(held==='held'||s.pending)return;}
   go(pack,s);return;
  }
+ if(q.step==='lookKeep'){
+  const data=q.data;
+  if(a.mode==='keep'){
+   data.kept.push(a.uid);
+   const left=data.uids.filter(uid=>!data.kept.includes(uid));
+   if(left.length){
+    hold(s,{...spec,step:'lookKeep',data},[
+     {type:'aot',mode:'done'},
+     ...left.map(uid=>({type:'aot',mode:'keep',uid}))
+    ]);
+    return;
+   }
+  }
+  finish020(pack,s,spec,data);
+  go(pack,s);return;
+ }
  if(q.step==='lookOrder'){
   const data=q.data;
   data.built.push(a.uid);
@@ -940,7 +978,6 @@ export function resolveAotPending(pack,s,action){
    A.bounce(pack,s,q.player,q.data.uid,q.data.sourceUid);
    go(pack,s);return;
   }
-  if(q.step==='pay'&&q.id==='AOT-1-011')use(s,(q.sourceUid)+'|AOT-1-011|end');
   if(q.data?.after){const held=continueAfter(pack,s,q,q.data.after);if(held==='held'||s.pending)return;}
   if(q.step==='tuck92')deployAfter92(s,{owner:q.player,sourceUid:q.sourceUid,id:q.id});
   go(pack,s);return;
