@@ -49,11 +49,13 @@
   "round3": {
     "checked": "2026-11-06",
     "baseline": "fad8be045910fbac211abfda6266763cf6b88885",
-    "delivered": [],
-    "missing": [
-      {"group": "B", "branch": "cursor/audit-b3-csm-061-080"},
-      {"group": "C", "branch": "cursor/audit-c3-kmr1-051-075"},
-      {"group": "D", "branch": "cursor/audit-d3-kmr2-041-060"}
+    "delivered": [
+      {"group": "B", "pr": 327, "branch": "cursor/audit-b3-csm-061-080", "head": "807a2e103ec36b027e040637211eb39facb4cb04"}
+    ],
+    "missing": [],
+    "pending": [
+      {"group": "C", "pr": 329, "branch": "cursor/audit-c3-kmr1-051-075", "head": "3971f1f5c075b5877b4e33b7d74f9aab6488d6a8"},
+      {"group": "D", "pr": 328, "branch": "cursor/audit-d3-kmr2-041-060", "head": "9d05fe4b10075c95320fefcdd3b9de7fb92a6451"}
     ],
     "shared": "KMR-2-035 的休息登場改為可放棄。askEnter 的放棄和 skipOnPlay 分開。060 仍同時不選位置並跳過登場時。",
     "matrix": "原五作品 60 場保留。另加鍊鋸人紫、假面騎士第一彈黃、第二彈藍，對彼此與對死神綠，兩種子、先後手，共 24 場。"

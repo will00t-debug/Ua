@@ -1,6 +1,6 @@
 {
   "updated": "2026-11-06",
-  "next": "CSM-1-061。第三輪 B、C、D 的分支還沒有送到。KMR-2-035 被自己的效果移除後可以放棄休息登場，這句已驗證。KMR-2-034 的登場時觸發選擇、KMR-1-021 的攻擊階段突襲句維持未完成。鍊鋸人裡向卡的對手視角有矩陣抽樣，沒有另開瀏覽器重測。",
+  "next": "KMR-1-051。鏈鋸人 80 張可出牌都已驗證。第三輪 B 已併入 PR #327。C 的 PR #329 與 D 的 PR #328 已在遠端，這次沒有併入。CSM-1-061 有電次時的強制阻擋與 CSM-1-062 指定電次的攻擊抽牌已通過對局驗證。CSM-1-066 的結束階段換位只在她位於前線時詢問。KMR-2-034 的登場時觸發選擇、KMR-1-021 的攻擊階段突襲句維持未完成。",
   "sharedFixes": [
     {
       "name": "BP 0 以下依規則退場",
@@ -4097,6 +4097,513 @@
           "implementation": "dist/universal-v2/kmr2-runtime.mjs main040 寫入 kmr2LoseRemove。攻擊結束的 kmr2BattleLossRemove 再移除被標記的 Fourze 與阻擋者。",
           "discrepancy": "",
           "evidence": "tests/v2-kmr2-026-040.test.mjs：主要啟動休息自己並標記 Fourze。該 Fourze 被較高 BP 阻擋並敗北後，兩張卡都進移除區。直接打玩家不移除。Q1772（2025-10-24）https://www.unionarena-tcg.com/jp/faq/list.php?number=1772",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-061",
+      "number": "UA53BT/CSM-1-061",
+      "clauses": [
+        {
+          "match": "バトルに勝利した時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-061。Q2093：角色戰鬥後攻擊方 BP 大於等於防守方才算勝利。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs csmLeaveReplace、win。突襲框的活動、退場代替與戰鬥勝利抽牌只在正面突襲時成立。詢問代替時就用掉本回合一次，放棄也用掉。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：普通登場打贏不抽。正面突襲打贏抽 1，放棄代替後本回合不能再問。",
+          "unresolved": ""
+        },
+        {
+          "match": "可能ならブロックしなければならない",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-061。Q2094：對手有可阻擋的角色就必須指定 1 體，沒有則承受傷害。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs runPlay。場上有電次時寫入本回合 BP+1000 與 mustBlockGranted。dist/universal-v2/engine.mjs 的對局驗證接受這張功率自己、只有 turn 與 stamp、而且場上另有電次。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：沒有電次時 BP 維持 4000，沒有強制阻擋。有電次時從手牌普通登場，BP 5000，對局驗證通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "手札に加えるか",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-061",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 raid。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-062",
+      "number": "UA53BT/CSM-1-062",
+      "clauses": [
+        {
+          "match": "カードを1枚まで引く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-062",
+          "implementation": "dist/universal-v2/csm-runtime.mjs grantAttackDraw。起動時先休息並退場，再選最多 1 張電次。dist/universal-v2/engine.mjs 接受受益者是電次、授予只有 turn 與 stamp，而且本回合有自己的 CSM-1-062 從前線或能源線以退場進到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：放棄不授予。場上沒有電次就直接結束。指定電次後授予留在那張電次上，對局驗證通過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-063",
+      "number": "UA53BT/CSM-1-063",
+      "clauses": [
+        {
+          "match": "手札を1枚場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-063",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 登場時先抽 1，再選 1 張手牌放場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：抽到牌庫頂，選另一張手牌放場外，抽到的牌留在手牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-063",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-064",
+      "number": "UA53BT/CSM-1-064",
+      "clauses": [
+        {
+          "match": "【赤×2】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-064",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 空場時手牌能量減少紅 2。登場後 impactNull。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：空場可以打出並使衝擊無效。場上已有卡時不能打出。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-064",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-065",
+      "number": "UA53BT/CSM-1-065",
+      "clauses": [
+        {
+          "match": "エナジーLのカードを1枚選び",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-065",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 起動休息自己，活動 1 張能源卡，本回合一次。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：只列出休息中的能源卡。活動後同一回合不能再起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-065",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 color。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-066",
+      "number": "UA53BT/CSM-1-066",
+      "clauses": [
+        {
+          "match": "エンドフェイズ開始時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-066。印刷文本含【フロントLにある場合】。Q2097 是攻擊結束的時點。",
+          "implementation": "dist/universal-v2/engine.mjs 只在正面突襲且人在前線時排入 endStart。dist/universal-v2/csm-runtime.mjs 的處理也要求 frontLine。換位可放棄。攻擊結束的可選退場只在自己的攻擊結束時、且突襲框生效時詢問。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：正面突襲的攻擊結束可以放棄退場，結束階段可以和能源角色換位。普通登場沒有攻擊結束退場。能源線上的突襲姬野不詢問換位。",
+          "unresolved": ""
+        },
+        {
+          "match": "カードを1枚引く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-066",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 登場時抽 1。這句在突襲框外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：突襲登場抽 1。普通登場也抽 1，手牌張數在打出後回到原數。",
+          "unresolved": ""
+        },
+        {
+          "match": "元々のBPが4500",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-066。Q2096：元々のBP 是印刷 BP。Q2095：移到已滿的前線時先選 1 張被取代的卡。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 退場時看自己場上與場外有沒有印刷 BP 4500 以上。沒有才選能源角色，本回合 BP+2000 並移到前線。offerMoveToFront 在前線已滿時列出取代目的地。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：場外已有印刷 BP 4500 以上時只退場。沒有時選中的能源角色 BP 3000 並移到空位。",
+          "unresolved": ""
+        },
+        {
+          "match": "手札に加えるか",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-066",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 raid。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-067",
+      "number": "UA53BT/CSM-1-067",
+      "clauses": [
+        {
+          "match": "フロントLに登場できず",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-067",
+          "implementation": "dist/universal-v2/csm-runtime.mjs frontForbidden。不能打到前線，也不能移到前線。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：手牌沒有前線登場。能源登場後只給操作者看牌庫頂。",
+          "unresolved": ""
+        },
+        {
+          "match": "山札の上から1枚見て",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-067",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 登場時看牌庫頂 1 張，放回上面或場外。公開視圖不給對手。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：操作者看得到那張卡。對手的公開視圖沒有 uid 與 cardId。放回上面後牌庫頂不變。",
+          "unresolved": ""
+        },
+        {
+          "match": "必要エナジーが1以下の赤の〈デンジ〉",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-067",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 起動時 needsLeave 為真。波奇塔實際退場後，才可從場外選能量 1 以下的紅色電次，以活動狀態進能源線，再把這張卡蓋到下面。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-067-pochita-denji.test.mjs：可選合法電次並完成登場，也可以放棄。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-067",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 color。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-068",
+      "number": "UA53BT/CSM-1-068",
+      "clauses": [
+        {
+          "match": "手札に加える",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-068",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 退場時可把 2 張角色或 1 張事件放場外，然後這張卡回手牌。放棄則留在場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：付了 2 張角色才回手。事件不足或放棄都留在場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-068",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-069",
+      "number": "UA53BT/CSM-1-069",
+      "clauses": [
+        {
+          "match": "発生エナジー",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-069",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 活動且在能源線時額外產生紅。休息或在前線時不加。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：活動在能源線多 1 紅。休息後不加。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-070",
+      "number": "UA53BT/CSM-1-070",
+      "clauses": [
+        {
+          "match": "位置を入れ替える",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-070。Q2098：不能和禁止上前線的角色換。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 只在前線、本回合一次。energyCharsToFront 排除波奇塔。空的可選池不開選擇。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：在能源線不能起動。可換的能源角色會換位。波奇塔不在選項裡。",
+          "unresolved": ""
+        },
+        {
+          "match": "〈マキマ〉以外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-070",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 攻擊時必須退場 1 張自己場上、卡名不是真紀真的角色。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：可選其他角色，不能選真紀真。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-070",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 get。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-071",
+      "number": "UA53BT/CSM-1-071",
+      "clauses": [
+        {
+          "match": "山札の上か下に置く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-071",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 起動休息後看牌庫頂 1 張，放上面或下面。只給操作者看。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：操作者看得到那張卡。放到下面後它不在牌庫頂。對手的公開視圖沒有那張卡的身分。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-071",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-072",
+      "number": "UA53BT/CSM-1-072",
+      "clauses": [
+        {
+          "match": "移動フェイズ以外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-072",
+          "implementation": "dist/universal-v2/csm-pack.mjs 這張卡 csmHook。dist/universal-v2/csm-runtime.mjs csmOnMovedOutsideMove 在移動階段以外的效果移動記下 csmMovedOutsideMove。攻擊時只看這個標記，再從場外取能量 2 以下的早川秋。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：移動階段的移動不取回。效果移動後攻擊可以取回那張早川秋。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-073",
+      "number": "UA53BT/CSM-1-073",
+      "clauses": [
+        {
+          "match": "山札の上から4枚",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-073",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 看 4 張，最多公開 1 張早川秋、電次或功率加入手牌，其餘依序放牌庫下。不能選的牌留在視窗裡。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：4 張都顯示。加入的那張進手牌，其餘在牌庫底，沒有棄牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-073",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 get。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-074",
+      "number": "UA53BT/CSM-1-074",
+      "clauses": [
+        {
+          "match": "APカードを2枚まで",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-074",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 選最多 2 張自己的行動值卡並活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：兩張休息的行動值卡都可活動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-074",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 final。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-075",
+      "number": "UA53BT/CSM-1-075",
+      "clauses": [
+        {
+          "match": "裏向きのカードを1枚場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-075",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 先給 1 張角色本回合 BP+2000。早川秋下面的每一張裡向卡都可選。選了才放場外、活動 1 張行動值，再可授予衝擊。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：BP 先加上。三張裡向卡都能選，選中的那張離場，然後活動行動值並可給衝擊。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-075",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-076",
+      "number": "UA53BT/CSM-1-076",
+      "clauses": [
+        {
+          "match": "望む枚数を望む順",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-076",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 二選一。看 2 張時視窗含不能選的牌，操作者看得到，對手看不到。之後可從場外讓能量 1 以下的紅色電次進能源線。另一項把這張事件蓋到沒有裡向卡的電次下面；宿主不是正面突襲時再活動行動值。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：看牌視窗有兩張卡，公開視圖沒有身分。蓋到沒有突襲的電次下面後會問行動值。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-076",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-077",
+      "number": "UA53BT/CSM-1-077",
+      "clauses": [
+        {
+          "match": "〈早川アキ〉がある場合のみ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-077",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 場上有早川秋才能使用。先選 BP 5000 以下的對手前線角色退場。沒有這種角色時，剝卡仍另外詢問。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：沒有 BP 5000 以下的對手時仍可剝早川秋下面的裡向卡。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-077",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 special。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-078",
+      "number": "UA53BT/CSM-1-078",
+      "clauses": [
+        {
+          "match": "『3枚』に代わる",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-078",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 平常抽 2。場上有早川家，或電次下面有裡向卡時抽 3。場地卡也算場上。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：沒有條件抽 2。早川家或電次下面有裡向卡時抽 3。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-078",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-079",
+      "number": "UA53BT/CSM-1-079",
+      "clauses": [
+        {
+          "match": "APカードを2枚まで",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-079",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 選最多 2 張自己的行動值卡並活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：和 CSM-1-074 同一測試，兩張休息的行動值卡都可活動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-079",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 final。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-080",
+      "number": "UA53BT/CSM-1-080",
+      "clauses": [
+        {
+          "match": "『BP5000以下』",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-080",
+          "implementation": "dist/universal-v2/csm-runtime.mjs 退場上限平常是當前 BP 3000。場上有電次時改成 5000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs：沒有電次時 BP 4000 不退。有電次時 BP 5000 可退，更高的不退。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-080",
+          "implementation": "dist/universal-v2/engine.mjs 生命觸發 special。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的生命觸發。",
           "unresolved": ""
         }
       ]

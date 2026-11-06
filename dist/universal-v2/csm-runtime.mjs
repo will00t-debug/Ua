@@ -726,7 +726,7 @@ export function runCsmJob(pack,s,job){
   runAttackEnd(pack,s,job);
  }else if(job.slot==='endStart'){
   const self=selfOf(s,job.owner,job.sourceUid);
-  if(job.id==='CSM-1-066'&&self){
+  if(job.id==='CSM-1-066'&&self&&frontLine(s,job.owner,self)){
    const frontsPool=fronts(s,job.owner,c=>c.uid!==self.uid&&!named(pack,c,HIMENO,s));
    // Q2098: exclude frontForbidden (Pochita) from energy↔front swap pool.
    const energyPool=energyCharsToFront(pack,s,job.owner);

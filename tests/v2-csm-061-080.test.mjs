@@ -212,11 +212,13 @@ test('CSM-1-061 on-play Denji gate writes BP and must-block without a raid',()=>
  let s=open(6105,['CSM-1-061','CSM-1-049','CSM-1-060']);
  redFuel(s,0,['CSM-1-060','CSM-1-060','CSM-1-060']);
  put(s,0,'CSM-1-049','front',1);
- const power=put(s,0,'CSM-1-061','front',0);
- runCsmJob(pack,s,{op:'csm',id:'CSM-1-061',slot:'onPlay',owner:0,sourceUid:power.uid});
- assert.equal(universalBp(pack,s,power),5000);
- assert.equal(power.mustBlockGranted?.turn,s.turn);
- assert.equal(power.mustBlockGranted?.stamp,power.fieldEntryStamp);
+ const power=toHand(s,0,'CSM-1-061');
+ s=play(s,power.uid);
+ const entered=live(s,0,power.uid);
+ assert.equal(universalBp(pack,s,entered),5000);
+ assert.equal(entered.mustBlockGranted?.turn,s.turn);
+ assert.equal(entered.mustBlockGranted?.stamp,entered.fieldEntryStamp);
+ assertUniversalMatch(packs,s);
 });
 
 test('CSM-1-062 retires as a cost and may decline the Denji grant',()=>{
@@ -239,6 +241,19 @@ test('CSM-1-062 retires as a cost and may decline the Denji grant',()=>{
  assert.equal(none.pending,null);
  assert.equal(none.players[0].outside.some(c=>c.uid===solo.uid),true);
  assertUniversalMatch(packs,none);
+
+ let granted=open(6203,['CSM-1-062','CSM-1-049']);
+ const cost=put(granted,0,'CSM-1-062','front',0);
+ const target=put(granted,0,'CSM-1-049','front',1);
+ granted=use(granted,legalUniversalActions(packs,granted).find(a=>
+  a.type==='activate'&&a.uid===cost.uid));
+ granted=choose(granted,a=>a.mode==='pick'&&a.uid===target.uid);
+ const receiver=live(granted,0,target.uid);
+ assert.equal(receiver.attackDrawGranted?.turn,granted.turn);
+ assert.equal(receiver.attackDrawGranted?.stamp,target.fieldEntryStamp);
+ assert.equal(granted.players[0].outside.some(c=>c.uid===cost.uid),true);
+ assert.equal(granted.pending,null);
+ assertUniversalMatch(packs,granted);
 });
 
 test('CSM-1-063 draws one and then puts one hand card outside',()=>{
@@ -363,14 +378,27 @@ test('CSM-1-066 retirement ignores printed BP 4500 and can move the chosen energ
  assertUniversalMatch(packs,openRetire);
 });
 
-test('CSM-1-066 end-phase swap is offered from the energy line by the card branch',()=>{
- let s=open(6605,['CSM-1-066','CSM-1-063','CSM-1-057','CSM-1-062']);
- const himeno=buryRaid(put(s,0,'CSM-1-066','energy',0),take(s,0,'CSM-1-063'));
- put(s,0,'CSM-1-057','front',0);
- put(s,0,'CSM-1-062','energy',1);
- runCsmJob(pack,s,{op:'csm',id:'CSM-1-066',slot:'endStart',owner:0,sourceUid:himeno.uid});
- assert.equal(s.pending?.step,'himenoSwap');
- assert.equal(s.pending.actions.some(a=>a.mode==='front'),true);
+test('CSM-1-066 end-phase swap is offered only while she is on the front',()=>{
+ let energy=open(6605,['CSM-1-066','CSM-1-063','CSM-1-057','CSM-1-062']);
+ const stored=buryRaid(put(energy,0,'CSM-1-066','energy',0),take(energy,0,'CSM-1-063'));
+ put(energy,0,'CSM-1-057','front',0);
+ put(energy,0,'CSM-1-062','energy',1);
+ runCsmJob(pack,energy,{op:'csm',id:'CSM-1-066',slot:'endStart',owner:0,sourceUid:stored.uid});
+ assert.equal(energy.pending,null);
+
+ let front=open(6606,['CSM-1-066','CSM-1-063','CSM-1-057','CSM-1-062']);
+ const himeno=buryRaid(put(front,0,'CSM-1-066','front',0),take(front,0,'CSM-1-063'));
+ put(front,0,'CSM-1-057','front',1);
+ put(front,0,'CSM-1-062','energy',0);
+ front.phase='attack';
+ front=use(front,{type:'next'});
+ assert.equal(front.pending?.step,'himenoSwap');
+ assert.equal(front.pending.actions.some(a=>a.mode==='skip'),true);
+ assert.equal(front.pending.actions.some(a=>a.mode==='front'&&a.uid!==himeno.uid),true);
+ front=choose(front,a=>a.mode==='skip');
+ assert.equal(front.pending,null);
+ assert.equal(front.players[0].front[0]?.uid,himeno.uid);
+ assertUniversalMatch(packs,front);
 });
 
 test('CSM-1-067 cannot enter the front and the controller alone sees the top card',()=>{

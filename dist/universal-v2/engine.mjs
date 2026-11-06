@@ -19869,6 +19869,17 @@ export function assertUniversalMatch(pack,s){
      throw Error('Forged temporary physical battle grant');
     continue;
    }
+   // CSM-1-061: on play, while Denji is on the field, this character gains
+   // must-block for the turn. The runtime writes only turn and stamp.
+   const csmPowerMust=key==='mustBlockGranted'&&
+    card(pack,physical).id==='CSM-1-061'&&
+    keys.length===2&&keys.every(k=>k==='turn'||k==='stamp')&&
+    field(s.players[owner]).some(c=>c.uid!==physical.uid&&
+     String(card(pack,c).name||'').includes('デンジ'));
+   if(csmPowerMust){
+    if(!turnOk)throw Error('Forged temporary physical battle grant');
+    continue;
+   }
    if(!turnOk||keys.length!==2||keys.some(k=>k!=='turn'&&k!=='stamp')||
     !(card(pack,physical).effects.onPlay?.some(x=>x.op===op)||printedBattle||paidWinDraw))
     throw Error('Forged temporary physical battle grant');
@@ -19982,8 +19993,15 @@ export function assertUniversalMatch(pack,s){
     e.op==='chooseOne'&&e.options?.some(o=>o.then?.some(t=>t.op==='grantSelfAttackDrawThisTurn')));
    const shifted=card(pack,physical).lineShiftOutsideMove?.attackDraw===true&&
     physical.lineShiftUsedTurn===s.turn;
+   // CSM-1-062 retires itself as the cost, then grants the draw to one Denji.
+   const csmBeamRetired=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
+    e.owner===owner&&e.cardId==='CSM-1-062'&&e.reason==='retirement'&&
+    (e.from==='front'||e.from==='energy')&&e.to==='outside'&&
+    s.players[owner].outside.some(c=>c.uid===e.uid&&c.cardId==='CSM-1-062'));
+   const csmDenjiDraw=csmBeamRetired&&
+    String(printedCard.name||'').includes('デンジ')&&printedCard.id!=='CSM-1-062';
    if(!attackDraw||attackDraw.turn!==s.turn||attackDraw.stamp!==physical.fieldEntryStamp||
-    Object.keys(attackDraw).length!==2||!(granted||shifted))
+    Object.keys(attackDraw).length!==2||!(granted||shifted||csmDenjiDraw))
     throw Error('Forged this-turn attack draw');
   }
   if(physical.lineShiftUsedTurn!==undefined&&
