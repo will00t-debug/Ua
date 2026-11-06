@@ -3,7 +3,7 @@
 // same legal buttons as a player.
 import {createCsmV2Pack} from './csm-pack.mjs';
 import {createKmrBattlePack} from './official-entry.mjs';
-import {assertUniversalMatch,legalUniversalActions,newUniversalMatch}
+import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch}
  from './engine.mjs';
 import {validateUniversalDeck} from './pack.mjs';
 import {makeUniversalPreviewReplay} from './preview-replay.mjs';
@@ -67,6 +67,7 @@ function finish(pack,built,label){
 export function loadAuditFixture(name){
  if(name==='kmr054')return heatMetal();
  if(name==='csm008')return denji();
+ if(name==='csm056')return hayakawaFacedown();
  throw Error('Unknown audit fixture '+name);
 }
 function heatMetal(){
@@ -106,4 +107,38 @@ function denji(){
  if(!play)throw Error('CSM-1-008 cannot be played from this audit position');
  return finish(pack,built,
   '稽核 CSM-1-008：普通登場淀治。查看三張、選真紀真加入手牌、排列其餘、放到場外，再選擇後續效果。');
+}
+function playHayakawa(pack,s,owner){
+ s.active=owner;
+ s.phase='main';
+ s.pending=null;
+ for(const ap of s.players[owner].apCards){ap.inPlay=true;ap.ready=true;}
+ put(s,owner,'CSM-1-060','energy',0,true);
+ put(s,owner,'CSM-1-060','energy',1,true);
+ const tucked=['CSM-1-062','CSM-1-067','CSM-1-057'].map(id=>take(s,owner,id));
+ s.players[owner].deck.unshift(...tucked);
+ const aki=take(s,owner,'CSM-1-056');
+ s.players[owner].hand.push(aki);
+ const packs=[pack,pack];
+ const play=legalUniversalActions(packs,s).find(action=>action.type==='play'&&
+  action.uid===aki.uid&&action.line==='front'&&action.slot===0);
+ if(!play)throw Error('CSM-1-056 cannot be played from this audit position');
+ const next=dispatchUniversalAction(packs,s,play,{actor:owner});
+ if(next.pending)throw Error('CSM-1-056 on-play opened an unexpected choice');
+ const host=next.players[owner].front.find(card=>card?.uid===aki.uid);
+ if(!host?.under||host.under.length!==3)throw Error('CSM-1-056 did not tuck three cards');
+ return next;
+}
+function hayakawaFacedown(){
+ const pack=createCsmV2Pack();
+ const built=open(pack,56056,[
+  'CSM-1-056','CSM-1-060','CSM-1-062','CSM-1-067','CSM-1-057'
+ ],{'CSM-1-056':2,'CSM-1-060':4});
+ built.state=playHayakawa(pack,built.state,0);
+ built.state=playHayakawa(pack,built.state,1);
+ built.state.active=0;
+ built.state.phase='main';
+ built.state.pending=null;
+ return finish(pack,built,
+  '稽核鍊鋸人裡向卡：雙方都已用早川秋的登場時，從牌組頂蓋三張。控制者看得到卡名與卡圖，對手只看到卡背。');
 }

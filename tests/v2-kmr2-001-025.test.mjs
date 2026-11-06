@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {KMR_CARDS} from '../dist/kmr-cards.mjs';
 import {KMR2_CARDS} from '../dist/kmr-vol2-cards.mjs';
 import {createKmrBattlePack} from '../dist/universal-v2/official-entry.mjs';
 import {kmr2ChoiceImmune} from '../dist/universal-v2/kmr2-continuous.mjs';
 import {grantContinuousState,originalEffectsDisabled} from '../dist/universal-v2/continuous-states.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
- universalBp,universalCardEnergy,universalImpact,universalImpactNull,universalPrivateChoices,
- zoneRequiredEnergy}
+ universalAttackDamage,universalBp,universalCardEnergy,universalImpact,universalImpactNull,
+ universalPrivateChoices,zoneRequiredEnergy}
  from '../dist/universal-v2/engine.mjs';
 import {controllerDeckWindowCards} from '../dist/universal-v2/preview-actions.mjs';
 
@@ -826,6 +827,104 @@ test('KMR-2-021 can leave its life card, and a skipped attack-end raid does not 
  assert.equal(raid.players[0].front[0]?.stack?.some(card=>card.uid===host2.uid),true);
  assert.equal(raid.raidCount[0],1);
  assertUniversalMatch(packs,raid);
+});
+
+test('KMR-1-021 enters rested only after KMR-2-021 raids Realizing Hopper during the attack',()=>{
+ const hopperName='仮面ライダーゼロワン リアライジングホッパー';
+ const lock='仮面ライダーゼロツー（イズ）|021';
+ const printed=[...KMR_CARDS,...KMR2_CARDS].filter(card=>String(card.effectJa||'').includes(hopperName))
+  .map(card=>card.id).sort();
+ assert.deepEqual(printed,['KMR-1-021','KMR-2-021']);
+ assert.equal(KMR_CARDS.find(card=>card.id==='KMR-1-107').nameJa,hopperName);
+ assert.match(KMR2_CARDS.find(card=>card.id==='KMR-2-021').effectJa,/アタック終了時、自分の手札から〈仮面ライダーゼロワン リアライジングホッパー〉を1枚までこのキャラにレイドさせる/);
+ const counts=fill(['KMR-2-021','KMR-1-107','KMR-1-021','KMR-1-022','KMR-1-106','KMR-1-010','KMR-1-023'],{
+  'KMR-2-021':2,'KMR-1-107':2,'KMR-1-021':2,'KMR-1-010':2});
+ function prepare(intel){
+  const s=fresh(counts);
+  const hosts=[put(s,0,'KMR-2-021','front',0,true)];
+  if(intel){
+   hosts.push(put(s,0,'KMR-2-021','front',1,true));
+   put(s,0,'KMR-1-022','front',2,true);
+   put(s,0,'KMR-1-106','front',3,true);
+  }
+  const hoppers=[take(s,0,'KMR-1-107'),take(s,0,'KMR-1-107')];
+  const copies=[take(s,0,'KMR-1-021'),take(s,0,'KMR-1-021')];
+  park(s,0);
+  s.players[0].hand.push(...hoppers,...copies);
+  const walls=[put(s,1,'KMR-1-010','front',0,true),put(s,1,'KMR-1-010','front',1,true)];
+  ready(s);
+  return {s,hosts,hoppers,copies,walls};
+ }
+ function raidHopper(s,host,hopper,wall){
+  let state=strike(s,host.uid);
+  state=block(state,wall&&state.players[1].front.some(card=>card?.uid===wall.uid)?wall.uid:null);
+  assert.equal(state.phase,'attack');
+  assert.equal(state.pending?.id,'KMR-2-021');
+  assert.equal(state.pending?.step,'raidSelf');
+  state=click(state,action=>action.uid===hopper.uid);
+  assert.equal(state.phase,'attack');
+  assert.equal(state.players[0].front.find(card=>card?.uid===hopper.uid)?.stack?.some(card=>card.uid===host.uid),true);
+  return state;
+ }
+ const short=prepare(false);
+ let quiet=raidHopper(short.s,short.hosts[0],short.hoppers[0],short.walls[0]);
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].hand.filter(card=>card.cardId==='KMR-1-021').length,2);
+ assert.equal(quiet.mainReadyOnceByName[0].includes(lock),false);
+ assertUniversalMatch(packs,quiet);
+
+ const full=prepare(true);
+ let state=raidHopper(full.s,full.hosts[0],full.hoppers[0],full.walls[0]);
+ assert.equal(state.pending?.id,'KMR-1-021');
+ assert.equal(state.pending?.step,'enter');
+ const offered=state.pending.actions.filter(action=>action.mode==='enter');
+ assert.equal(offered.every(action=>action.ready===false&&action.from==='hand'),true);
+ assert.deepEqual([...new Set(offered.map(action=>action.uid))].sort(),full.copies.map(card=>card.uid).sort());
+ const paused=structuredClone(state);
+ const skipped=click(structuredClone(state),action=>action.mode==='skip');
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].hand.filter(card=>card.cardId==='KMR-1-021').length,2);
+ assert.equal(skipped.mainReadyOnceByName[0].includes(lock),false);
+ assert.equal(skipped.phase,'attack');
+ let again=raidHopper(skipped,full.hosts[1],full.hoppers[1],full.walls[1]);
+ assert.equal(again.pending?.id,'KMR-1-021');
+ again=click(again,action=>action.mode==='skip');
+ assert.equal(again.mainReadyOnceByName[0].includes(lock),false);
+
+ state=click(state,action=>action.mode==='enter'&&action.uid===full.copies[0].uid&&action.line==='energy');
+ assert.throws(()=>dispatchUniversalAction(packs,state,{
+  type:'kmr',mode:'enter',uid:full.copies[0].uid,line:'energy',slot:0,from:'hand',ready:false
+ }),/not currently legal|Kamen Rider entry card left|Illegal/);
+ const entered=state.players[0].energy.find(card=>card?.uid===full.copies[0].uid);
+ assert.ok(entered);
+ assert.equal(entered.ready,false);
+ assert.equal(state.players[0].hand.filter(card=>card.cardId==='KMR-1-021').length,1);
+ assert.equal(state.mainReadyOnceByName[0].includes(lock),true);
+ assert.equal(state.pending?.id,'KMR-1-021');
+ assert.equal(state.pending?.step,'own');
+ const grant=state.pending.actions.filter(action=>action.mode==='own').map(action=>action.uid);
+ const hopper=state.players[0].front.find(card=>card?.uid===full.hoppers[0].uid);
+ const shining=state.players[0].front.find(card=>card?.cardId==='KMR-1-022');
+ assert.equal(grant.includes(hopper.uid),true);
+ assert.equal(grant.includes(shining.uid),true);
+ assert.equal(grant.includes(entered.uid),false);
+ assert.equal(grant.includes(state.players[1].front.find(card=>card?.cardId==='KMR-1-010')?.uid),false);
+ state=click(state,action=>action.mode==='own'&&action.uid===shining.uid);
+ assert.equal(universalBp(pack,state,state.players[0].front.find(card=>card?.uid===shining.uid)),5000);
+ assert.equal(universalAttackDamage(pack,state,state.players[0].front.find(card=>card?.uid===shining.uid)),2);
+ const resumed=click(paused,action=>action.mode==='enter'&&action.uid===full.copies[1].uid&&action.line==='energy');
+ assert.equal(resumed.players[0].energy.filter(card=>card?.cardId==='KMR-1-021').length,1);
+ assert.equal(state.players[0].energy.filter(card=>card?.cardId==='KMR-1-021').length,1);
+ let second=strike(state,full.hosts[1].uid);
+ second=block(second,full.walls[1].uid);
+ assert.equal(second.pending?.step,'raidSelf');
+ second=click(second,action=>action.uid===full.hoppers[1].uid);
+ assert.notEqual(second.pending?.id,'KMR-1-021');
+ assert.equal(second.players[0].hand.filter(card=>card.cardId==='KMR-1-021').length,1);
+ assertUniversalMatch(packs,quiet);
+ assertUniversalMatch(packs,state);
+ assertUniversalMatch(packs,resumed);
+ assertUniversalMatch(packs,second);
 });
 
 test('KMR-2-022 locks the name across copies and offers the release only at three facedown cards',()=>{

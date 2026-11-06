@@ -9,6 +9,13 @@
  "rule": "登錄效果或既有測試通過，都不等於這張卡已核對。整張卡通過只發生在每一段都有官方來源、實作位置與驗證，而且沒有未解決項目。",
  "sharedFixes": [
   {
+   "name": "KMR-1-021 的攻擊階段突襲來自 KMR-2-021",
+   "rule": "UA29BT/KMR-1-021：自分のアタックフェイズ中に《仮面ライダーゼロワン リアライジングホッパー》被突襲，且自己場上飛電インテリジェンス至少 3 張時，可從手牌把這張卡休息登場。Q1137：每回合一次只約束這句。Q1138：手牌兩張也不能同一回合各用一次。全庫 effectJa 寫到這個卡名的只有 021 自己與 EX12BT/KMR-2-021。後者在自己的攻擊結束，從手牌把 KMR-1-107 突襲到自己身上。付費突襲在主要階段。沒有另外做一個攻擊階段突襲按鈕。",
+   "where": "dist/universal-v2/engine.mjs performRaid 在 KMR-1-107 突襲完成時排入 onRaidSeen。dist/universal-v2/kmr-runtime.mjs KMR-1-021|onRaidSeen 要求 phase 為 attack、active 為控制者、來源卡名相符、特徵至少 3 張。接受休息登場才寫入卡名鎖。",
+   "affects": "只有這句。登場時的 BP+1000 與傷害 2 仍不受這次鎖限制。主要階段突襲 107 不問。特徵不足不問。放棄不鎖，同一回合之後的另一次攻擊結束突襲仍可問。接受後同一回合第二張不再問。",
+   "evidence": "tests/v2-kmr2-001-025.test.mjs。這句先標成待修正。回歸從 KMR-2-021 的攻擊、阻擋、攻擊結束突襲走完，沒有直接注入待處理狀態。"
+  },
+  {
    "name": "BP 0 以下依規則退場",
    "rule": "Q94（https://www.unionarena-tcg.com/jp/faq/list.php?number=94）：卡牌效果使場上角色 BP 變成 0 以下時退場。Q187：阻擋時效果先處理完，BP 0 的角色才退場，之後不進行戰鬥。Q1139（2024-10-18）：這次退場不是「キャラの効果による退場」，所以 KMR-1-025 的代替退場與 KMR-1-051 的對手效果支付都不能用。Q1898／Q1899（2026-01-09，https://www.unionarena-tcg.com/jp/faq/list.php?freeword=BP%E3%81%8C0）：效果處理途中 BP 一度變成 0，只要該效果結束時 BP 已不是 0，就不退場。",
    "where": "dist/universal-v2/engine.mjs openBpZeroRetirements、continueEffectQueue、retireBatchOne、effect-target。dist/universal-v2/csm-runtime.mjs debuffFront 只記 BP，不在句子中途退場。",
@@ -98,9 +105,9 @@
   "未檢查": 721,
   "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 213,
+  "已驗證": 215,
   "缺資料待確認": 0,
-  "部分核對": 4,
+  "部分核對": 2,
   "無效果": 3,
   "行動值卡": 16,
   "部分條款已記錄": 223,
@@ -109,9 +116,9 @@
    "未檢查": 721,
    "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 213,
+   "已驗證": 215,
    "缺資料待確認": 0,
-   "部分核對": 4,
+   "部分核對": 2,
    "無效果": 0,
    "行動值卡": 0,
    "部分條款已記錄": 223
@@ -166,9 +173,9 @@
     "未檢查": 37,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 74,
+    "已驗證": 75,
     "缺資料待確認": 0,
-    "部分核對": 1,
+    "部分核對": 0,
     "無效果": 1,
     "行動值卡": 0,
     "部分條款已記錄": 75
@@ -182,9 +189,9 @@
     "未檢查": 39,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 59,
+    "已驗證": 60,
     "缺資料待確認": 0,
-    "部分核對": 2,
+    "部分核對": 1,
     "無效果": 0,
     "行動值卡": 0,
     "部分條款已記錄": 61
@@ -5613,11 +5620,11 @@
    "clauses": [
     {
      "text": "自分のアタックフェイズ中に〈仮面ライダーゼロワン リアライジングホッパー〉がレイドした時、自分の場に［特徴：飛電インテリジェンス］が3枚以上ある場合、手札にあるこのカードを自分の場にレストで登場させてもよい。〈仮面ライダーゼロツー（イズ）〉のこの効果は1ターンに1回のみ発動できる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-021 ；Q1137 https://www.unionarena-tcg.com/jp/faq/list.php?number=1137 ；Q1138 https://www.unionarena-tcg.com/jp/faq/list.php?number=1138 ；EX12BT/KMR-2-021 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-021",
+     "implementation": "dist/universal-v2/engine.mjs performRaid 排入 onRaidSeen。dist/universal-v2/kmr-runtime.mjs 要求自己的攻擊階段、來源是《仮面ライダーゼロワン リアライジングホッパー》、場上飛電インテリジェンス至少 3 張。接受才鎖卡名。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kmr2-001-025.test.mjs。這句先標成待修正。卡庫裡會把這張蝗蟲寫進效果的只有 021 與 KMR-2-021。後者在攻擊結束、阻擋結算後，從手牌把 KMR-1-107 突襲上來，階段仍是 attack。特徵只有蝗蟲自己時不問。滿 3 張時兩張手牌都可選，進場是休息。放棄不鎖，下一隻地獄騰蝗再突襲仍可問。接受後鎖上，同一回合第二張不再問。暫停的複本各自只進一張。重複提交被拒絕。登場時仍可指定含「ゼロワン」的角色，自己與 KMR-1-010 不可。主要階段突襲不問，見 tests/v2-kmr-001-025-rest.test.mjs。Q1137、Q1138。",
      "unresolved": ""
     },
     {
@@ -5639,12 +5646,16 @@
      "unresolved": ""
     }
    ],
-   "status": "部分核對",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "KMR-1-021",
      "number": "UA29BT/KMR-1-021",
      "clauses": [
+      {
+       "match": "リアライジングホッパー",
+       "status": "已驗證"
+      },
       {
        "match": "ダメージ（2）",
        "status": "已驗證"
@@ -12210,12 +12221,12 @@
    "clauses": [
     {
      "text": "【レイド】カード名に「フォーゼ」を含むキャラ アクティブにし、フロントLに移動できる【登場時】このキャラは次の自分のターン開始時まで、「【フロントLにある場合】〈仮面ライダーフォーゼ マグネットステイツ〉以外の自分の場の［特徴：天ノ川学園高校］は相手の〔キャラ・トリガー〕の効果で選ばれない。」を得る。自分の場の必要エナジーが3以下のカードを1枚選んでもよい。そうした場合、自分の手札から選んだカードと必要エナジーが同じで消費APが1の［特徴：天ノ川学園高校］を1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
+     "status": "已驗證",
      "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-034",
-     "implementation": "dist/universal-v2/kmr2-runtime.mjs on034；dist/universal-v2/kmr2-continuous.mjs kmr2Protected；dist/universal-v2/kmr2-runtime.mjs oppFront",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs on034。dist/universal-v2/kmr2-continuous.mjs kmr2Protected。生命觸發的 special、colorRetire、colorBounce、colorRestSkip 經 effectSelectionProhibited 用來源種類 trigger 呼叫 choiceBlocked。",
      "discrepancy": "",
-     "evidence": "tests/v2-kmr2-026-040.test.mjs：普通登場不設保護。突襲登場設到下一次自己的回合，可放棄後續。接受時選能量 3 的卡，再把相同能量、消費 AP 1 的學生休息進場。Q1769 的角色選擇由 KMR-2-002 模式 b 驗證：被保護的學生不在名單，非該特徵的 KMR-1-010 仍在。官方卡圖整句在突襲框內。",
-     "unresolved": "相手の觸發效果選擇沒有點過。角色選擇已測，觸發選擇不能算這句通過。"
+     "evidence": "tests/v2-kmr2-026-040.test.mjs。這句先標成待修正。突襲登場後放棄能量選擇，再進入攻擊階段，直接打對手並翻開生命。KMR-2-015 的特別觸發與 KMR-2-011 的顏色觸發都列得出 KMR-1-010 與磁鐵自己，列不出天ノ川学園高校的 KMR-2-040。選學生會被拒絕。選 010 才退場或休息。磁鐵留在能源線時，同一張學生回到特別觸發的名單。角色選擇仍由 KMR-2-002 模式 b 驗證。沒有直接注入待處理狀態。",
+     "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
@@ -12227,7 +12238,7 @@
      "unresolved": ""
     }
    ],
-   "status": "部分核對",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "KMR-2-034",
@@ -12235,7 +12246,7 @@
      "clauses": [
       {
        "match": "【登場時】",
-       "status": "未檢查"
+       "status": "已驗證"
       },
       {
        "match": "【ゲット】",

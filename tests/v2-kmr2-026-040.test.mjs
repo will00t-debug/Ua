@@ -879,6 +879,88 @@ test('KMR-2-034 raid entry can rest a same-energy student, and that student is n
  assertUniversalMatch(packs,state);
 });
 
+test('KMR-2-034 raid entry keeps a student out of a real life trigger choice',()=>{
+ function lifeTop(s,id){
+  const card=take(s,1,id);
+  const buried=s.players[1].life[0];
+  s.players[1].life[0]=card;
+  if(buried)s.players[1].deck.push(buried);
+  return card;
+ }
+ function reveal(triggerId,line){
+  const counts=fill(['KMR-2-034','KMR-2-032','KMR-2-040','KMR-1-010','KMR-2-025','KMR-2-028','KMR-2-036',triggerId]);
+  const s=fresh(counts);
+  put(s,0,'KMR-2-025','energy',1,true);
+  put(s,0,'KMR-2-036','energy',2,true);
+  put(s,0,'KMR-2-028','energy',3,true);
+  const base=put(s,0,'KMR-2-032',line,0,true);
+  const student=put(s,0,'KMR-2-040','front',line==='front'?1:0,true);
+  const other=put(s,0,'KMR-1-010','front',line==='front'?2:1,true);
+  const magnet=take(s,0,'KMR-2-034');
+  park(s,0);
+  s.players[0].hand.push(magnet);
+  ready(s);
+  let state=act(s,action=>action.type==='raid'&&action.uid===magnet.uid&&
+   action.baseUid===base.uid&&(line==='energy'?action.line==='energy':action.line!=='energy'));
+  assert.equal(state.pending?.id,'KMR-2-034');
+  assert.equal(state.pending?.step,'energyPick');
+  state=click(state,action=>action.mode==='skip');
+  assert.equal(state.pending,null);
+  const host=state.players[0][line].find(card=>card?.uid===magnet.uid);
+  assert.ok(host);
+  assert.equal(host.kmr2ShieldUntil>state.players[0].ownTurns,true);
+  lifeTop(state,triggerId);
+  state=act(state,action=>action.type==='next');
+  assert.equal(state.phase,'attack');
+  const attacker=line==='front'?host:other;
+  state=dispatchUniversalAction(packs,state,{type:'attack',uid:attacker.uid});
+  assert.equal(state.pending?.kind,'block');
+  state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+  assert.equal(state.pending?.kind,'life-trigger');
+  assert.equal(state.pending.trigger,pack.cards[triggerId].trigger);
+  return {state,student,other,host};
+ }
+ function chosen(state,mode){
+  return legal(state).filter(action=>action.type==='chooseTrigger'&&action.mode===mode)
+   .map(action=>action.uid).filter(Boolean);
+ }
+ const special=reveal('KMR-2-015','front');
+ const specialTargets=chosen(special.state,'special');
+ assert.equal(specialTargets.includes(special.student.uid),false);
+ assert.equal(specialTargets.includes(special.other.uid),true);
+ assert.equal(specialTargets.includes(special.host.uid),true);
+ assert.throws(()=>dispatchUniversalAction(packs,special.state,{
+  type:'chooseTrigger',mode:'special',uid:special.student.uid}),/not currently legal/);
+ let retired=dispatchUniversalAction(packs,special.state,{
+  type:'chooseTrigger',mode:'special',uid:special.other.uid});
+ assert.equal(retired.players[0].front.some(card=>card?.uid===special.other.uid),false);
+ assert.equal(retired.players[0].front.some(card=>card?.uid===special.student.uid),true);
+ assert.equal(retired.players[0].outside.filter(card=>card.uid===special.other.uid).length,1);
+ assertUniversalMatch(packs,retired);
+
+ const color=reveal('KMR-2-011','front');
+ const colorTargets=chosen(color.state,'colorRestSkip');
+ assert.equal(colorTargets.includes(color.student.uid),false);
+ assert.equal(colorTargets.includes(color.other.uid),true);
+ assert.equal(colorTargets.includes(color.host.uid),true);
+ assert.throws(()=>dispatchUniversalAction(packs,color.state,{
+  type:'chooseTrigger',mode:'colorRestSkip',uid:color.student.uid}),/not currently legal/);
+ let rested=dispatchUniversalAction(packs,color.state,{
+  type:'chooseTrigger',mode:'colorRestSkip',uid:color.other.uid});
+ assert.equal(rested.players[0].front.find(card=>card?.uid===color.other.uid).ready,false);
+ assert.equal(rested.players[0].front.find(card=>card?.uid===color.student.uid).ready,true);
+ assertUniversalMatch(packs,rested);
+
+ const back=reveal('KMR-2-015','energy');
+ const energyHost=back.state.players[0].energy.find(card=>card?.uid===back.host.uid);
+ assert.ok(energyHost);
+ const openTargets=chosen(back.state,'special');
+ assert.equal(openTargets.includes(back.student.uid),true);
+ assert.equal(openTargets.includes(back.other.uid),true);
+ assert.equal(openTargets.includes(energyHost.uid),false);
+ assertUniversalMatch(packs,back.state);
+});
+
 test('KMR-2-028 may retire itself and discard to ready a Fourze that entered from removed',()=>{
  const counts=fill(['KMR-2-028','KMR-2-030','KMR-2-032','KMR-2-025','KMR-2-040','KMR-2-036','KMR-1-010']);
  function reach(){

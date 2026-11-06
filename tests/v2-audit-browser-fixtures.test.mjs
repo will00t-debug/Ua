@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadAuditFixture} from '../dist/universal-v2/audit-browser-fixtures.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
- universalBp,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+ universalBp,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
+import {facedownInspectModel} from '../dist/universal-v2/facedown-inspect.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
 
 test('KMR-2-054 audit board attacks, the AI blocks, and the look stays private',()=>{
@@ -69,4 +70,27 @@ test('CSM-1-008 audit board shows every looked card only to the controller',()=>
  assert.equal(next.pending,null);
  assert.equal(universalBp(packs,next,next.players[0].front.find(c=>c?.uid===ally.uid)),3000);
  assertUniversalMatch(packs,next);
+});
+
+test('CSM-1-056 audit board tucks three cards and hides them from the other seat',()=>{
+ const {packs,state}=loadAuditFixture('csm056');
+ assert.equal(state.pending,null);
+ assert.equal(state.active,0);
+ for(const owner of [0,1]){
+  const host=state.players[owner].front.find(card=>card?.cardId==='CSM-1-056');
+  assert.equal(host.under.length,3);
+  assert.deepEqual(host.under.map(card=>card.cardId),['CSM-1-062','CSM-1-067','CSM-1-057']);
+  const own=universalPublicView(packs,state,owner).players[owner].front.find(card=>card.uid===host.uid);
+  const foe=universalPublicView(packs,state,1-owner).players[owner].front.find(card=>card.uid===host.uid);
+  const ownModel=facedownInspectModel(own);
+  const foeModel=facedownInspectModel(foe);
+  assert.equal(ownModel.private,true);
+  assert.deepEqual(ownModel.cards.map(card=>card.cardId),['CSM-1-062','CSM-1-067','CSM-1-057']);
+  assert.equal(foeModel.cards.every(card=>card.hidden===true&&!card.cardId&&!card.uid&&!card.name),true);
+  assert.equal(foeModel.count,3);
+  const published=JSON.stringify(foe);
+  for(const layer of host.under)
+   assert.equal(published.includes(layer.uid)||published.includes(layer.cardId),false);
+ }
+ assertUniversalMatch(packs,state);
 });
