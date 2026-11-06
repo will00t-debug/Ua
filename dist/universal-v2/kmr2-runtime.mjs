@@ -545,15 +545,20 @@ function on060(pack,s,job){
  offerEnter(s,specOf(job),pool,{ready:false,from:'hand',optional:true,skipOnPlay:true});
 }
 function on061(pack,s,job){
- const names=fieldCards(s,job.owner).filter(c=>token(pack,c,'Ｗ',s)||exact(pack,c,MEM,null)).length;
- offerRetire(pack,s,specOf(job),names*1000,true,null);
+ // 「キャラ」only. 〈メモリチェンジ〉 is the printed name, including the field.
+ const names=fieldCards(s,job.owner).filter(c=>exact(pack,c,MEM,s)||
+  def(pack,c).type==='character'&&token(pack,c,'Ｗ',s)).length;
+ // 1枚選び is mandatory when a legal character exists. まで is not printed.
+ offerRetire(pack,s,specOf(job),names*1000,false,null);
 }
 function on063(pack,s,job){
  onLook(pack,s,job,5,c=>trait(pack,c,RE),{where:'bottom',after:'deployRe'});
 }
 function on065(pack,s,job){
- onLook(pack,s,job,3,c=>def(pack,c).type==='character'&&token(pack,c,'ディケイド',null)||trait(pack,c,RE),
-  {where:'bottom',discard:true});
+ // Decade character, or any re-imagination. Bottom order is printed before
+ // the hand card goes outside.
+ onLook(pack,s,job,3,c=>(def(pack,c).type==='character'&&token(pack,c,'ディケイド',null))||trait(pack,c,RE),
+  {where:'bottom',discard:true,orderBeforeDiscard:true});
 }
 // EX12BT/KMR-2-068: 2枚まで includes zero, one, and two. Placing one card
 // still retires by that card's printed BP and copies that card's turn text.
@@ -611,11 +616,13 @@ function on080(pack,s,job){
    A.location(s,job.owner,self.uid).slot,{});
   const pool=zoneWhere(s,job.owner,'outside',c=>{
    const d=def(pack,c);
-   if(exact(pack,c,'ジーク',null))return false;
+   // Alias ジーク stops when the original effect is off. Printed ジーク stays.
+   if(exact(pack,c,'ジーク',s))return false;
    if(exact(pack,c,PLATFORM,null))return true;
    return d.energy<=1&&d.color==='red'&&trait(pack,c,IMAGIN);
   });
-  offerEnter(s,specOf(job),pool,{ready:false,from:'outside',optional:true});
+  // 1枚まで may be declined. The entered card's 登場時 is not skipped.
+  offerEnter(s,specOf(job),pool,{ready:false,from:'outside',optional:true,skipOnPlay:false});
   return;
  }
  onLook(pack,s,job,3,()=>true,{dest:'outside',where:'bottom',reveal:false,takeMode:'outside',max:1});
@@ -934,7 +941,9 @@ function blocked079(pack,s,job){
 function on079(pack,s,job){
  const base=job.baseUid&&plOf(s,job.owner).outside.find(c=>c.uid===job.baseUid);
  if(!base)return;
- askEnter(s,specOf(job),base.uid,false,'outside',true,null);
+ // Q60: the raid source is already outside. Q1168: its 登場時 still happens.
+ // 1枚まで is the decline. skipOnPlay stays false.
+ askEnter(s,specOf(job),base.uid,false,'outside',true,null,null,false);
 }
 function attackEnd021(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
