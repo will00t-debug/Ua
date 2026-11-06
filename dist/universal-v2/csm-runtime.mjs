@@ -50,7 +50,20 @@ function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
 function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
 function impact(s,c){if(c)c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function sniper(s,c){if(c)c.sniperGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
-function mustBlock(s,c){if(c)c.mustBlockGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
+// The Denji has to be on the field when Power's on-play resolves. The entry
+// event keeps that witness and this entry's stamp, so a later leave does not
+// unmake the grant. cardHasName is the caller's job.
+function grantPowerMust(s,owner,self,witness){
+ const entries=(s.zoneMoveEvents||[]).filter(e=>e.turn===s.turn&&e.uid===self.uid&&
+  e.owner===owner&&e.cardId==='CSM-1-061'&&(e.to==='front'||e.to==='energy')&&
+  !e.csm061Grant);
+ const event=entries.at(-1);
+ if(!event||!Number.isInteger(self.fieldEntryStamp)||self.fieldEntryStamp<1)
+  throw Error('Chainsaw Man Power grant has no entry');
+ event.csm061Grant={witnessUid:witness.uid,stamp:self.fieldEntryStamp};
+ self.mustBlockGranted={turn:s.turn,stamp:self.fieldEntryStamp,sourceUid:self.uid,
+  beneficiaryUid:self.uid,witnessUid:witness.uid};
+}
 function unblocked(s,c,bp){
  if(c)c.blockAtLeastGranted={turn:s.turn,stamp:c.fieldEntryStamp,bp};
 }
@@ -531,9 +544,11 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='CSM-1-061'){
-  if(!nameOn(s,owner,DENJI))return;
   const self=selfOf(s,owner,job.sourceUid);
-  if(self){buff(s,self,1000);mustBlock(s,self);}
+  const witness=chars(s,owner,c=>c.uid!==job.sourceUid&&named(pack,c,DENJI,s))[0];
+  if(!self||!witness)return;
+  buff(s,self,1000);
+  grantPowerMust(s,owner,self,witness);
   return;
  }
  if(id==='CSM-1-066')return; // draw already queued by shared op
@@ -1082,7 +1097,16 @@ export function resolveCsmPending(pack,s,action){
   const t=selfOf(s,owner,a.uid);if(t){buff(s,t,1000);impact(s,t);}
  }else if(step==='grantAttackDraw'&&a.mode==='pick'){
   const t=selfOf(s,owner,a.uid);
-  if(t)t.attackDrawGranted={turn:s.turn,stamp:t.fieldEntryStamp};
+  if(!t||!named(pack,t,DENJI,s))throw Error('Chainsaw Man Beam grant lost Denji');
+  const retired=(s.zoneMoveEvents||[]).filter(e=>e.turn===s.turn&&e.uid===q.sourceUid&&
+   e.owner===owner&&e.cardId==='CSM-1-062'&&e.reason==='retirement'&&
+   (e.from==='front'||e.from==='energy')&&e.to==='outside'&&!e.csm062Grant);
+  const event=retired.at(-1);
+  if(!event||!Number.isInteger(t.fieldEntryStamp)||t.fieldEntryStamp<1)
+   throw Error('Chainsaw Man Beam grant has no retirement');
+  event.csm062Grant={beneficiaryUid:t.uid,stamp:t.fieldEntryStamp};
+  t.attackDrawGranted={turn:s.turn,stamp:t.fieldEntryStamp,sourceUid:q.sourceUid,
+   beneficiaryUid:t.uid};
  }else if(step==='buffTwo'){
   if(a.mode==='pick'){
    buff(s,selfOf(s,owner,a.uid),1000);

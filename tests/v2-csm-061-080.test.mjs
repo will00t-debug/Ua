@@ -211,13 +211,16 @@ test('CSM-1-061 on-play Denji gate writes BP and must-block without a raid',()=>
 
  let s=open(6105,['CSM-1-061','CSM-1-049','CSM-1-060']);
  redFuel(s,0,['CSM-1-060','CSM-1-060','CSM-1-060']);
- put(s,0,'CSM-1-049','front',1);
+ const denji=put(s,0,'CSM-1-049','front',1);
  const power=toHand(s,0,'CSM-1-061');
  s=play(s,power.uid);
  const entered=live(s,0,power.uid);
  assert.equal(universalBp(pack,s,entered),5000);
  assert.equal(entered.mustBlockGranted?.turn,s.turn);
  assert.equal(entered.mustBlockGranted?.stamp,entered.fieldEntryStamp);
+ assert.equal(entered.mustBlockGranted?.sourceUid,entered.uid);
+ assert.equal(entered.mustBlockGranted?.beneficiaryUid,entered.uid);
+ assert.equal(entered.mustBlockGranted?.witnessUid,denji.uid);
  assertUniversalMatch(packs,s);
 });
 
@@ -251,9 +254,201 @@ test('CSM-1-062 retires as a cost and may decline the Denji grant',()=>{
  const receiver=live(granted,0,target.uid);
  assert.equal(receiver.attackDrawGranted?.turn,granted.turn);
  assert.equal(receiver.attackDrawGranted?.stamp,target.fieldEntryStamp);
+ assert.equal(receiver.attackDrawGranted?.sourceUid,cost.uid);
+ assert.equal(receiver.attackDrawGranted?.beneficiaryUid,target.uid);
  assert.equal(granted.players[0].outside.some(c=>c.uid===cost.uid),true);
  assert.equal(granted.pending,null);
  assertUniversalMatch(packs,granted);
+});
+
+function blockChoices(s){
+ return legalUniversalActions(packs,s).filter(a=>a.type==='chooseBlock');
+}
+function throwsForged(s,message){
+ assert.throws(()=>assertUniversalMatch(packs,s),error=>error instanceof Error&&error.message===message);
+}
+
+test('CSM-1-061 keeps this-turn must-block after the printed Denji leaves',()=>{
+ let s=open(6110,['CSM-1-061','CSM-1-049','CSM-1-060','CSM-1-062']);
+ redFuel(s,0,['CSM-1-060','CSM-1-060','CSM-1-060']);
+ const denji=put(s,0,'CSM-1-049','front',1);
+ const power=toHand(s,0,'CSM-1-061');
+ s=play(s,power.uid);
+ const entered=live(s,0,power.uid);
+ assert.equal(entered.mustBlockGranted?.witnessUid,denji.uid);
+ const foe=put(s,1,'CSM-1-062','front',0,true);
+ s=use(s,legalUniversalActions(packs,s).find(a=>a.type==='activate'&&
+  a.uid===denji.uid&&a.mode==='selfRestEnergyRetire'));
+ s=toPhase(s,'attack');
+ assert.equal(live(s,0,denji.uid),undefined);
+ assert.equal(s.players[0].outside.some(c=>c.uid===denji.uid),true);
+ const still=live(s,0,power.uid);
+ assert.equal(universalBp(pack,s,still),5000);
+ assert.equal(still.mustBlockGranted?.turn,s.turn);
+ assert.equal(still.mustBlockGranted?.stamp,still.fieldEntryStamp);
+ assert.equal(still.mustBlockGranted?.witnessUid,denji.uid);
+ assertUniversalMatch(packs,s);
+ // Ordinary entry is rested. Ready this body so the same-turn block window
+ // can show the grant is still live after Denji has left.
+ still.ready=true;
+ s=use(s,{type:'attack',uid:still.uid});
+ const blocks=blockChoices(s);
+ assert.equal(blocks.some(a=>a.uid===null),false);
+ assert.equal(blocks.some(a=>a.uid===foe.uid),true);
+ s=use(s,{type:'chooseBlock',uid:foe.uid});
+ assertUniversalMatch(packs,s);
+});
+
+test('CSM-1-061 ordinary play accepts an alias Denji and still rejects a forged grant',()=>{
+ let s=open(6111,['CSM-1-061','CSM-1-048','CSM-1-060']);
+ redFuel(s,0,['CSM-1-060','CSM-1-060','CSM-1-060']);
+ const alias=put(s,0,'CSM-1-048','front',1);
+ const power=toHand(s,0,'CSM-1-061');
+ s=play(s,power.uid);
+ const entered=live(s,0,power.uid);
+ assert.equal(universalBp(pack,s,entered),5000);
+ assert.equal(entered.mustBlockGranted?.witnessUid,alias.uid);
+ assert.equal(pack.cards['CSM-1-048'].name.includes('デンジ'),false);
+ assertUniversalMatch(packs,s);
+
+ let forged=open(6112,['CSM-1-061','CSM-1-049','CSM-1-060']);
+ redFuel(forged,0,['CSM-1-060','CSM-1-060','CSM-1-060']);
+ const alone=toHand(forged,0,'CSM-1-061');
+ forged=play(forged,alone.uid);
+ const body=live(forged,0,alone.uid);
+ const buried=forged.players[0].deck.find(c=>c.cardId==='CSM-1-049');
+ body.mustBlockGranted={turn:forged.turn,stamp:body.fieldEntryStamp,sourceUid:body.uid,
+  beneficiaryUid:body.uid,witnessUid:buried.uid};
+ throwsForged(forged,'Forged temporary physical battle grant');
+});
+
+test('CSM-1-061 must-block expires next turn and a new entry does not keep the old grant',()=>{
+ let s=open(6113,['CSM-1-061','CSM-1-049','CSM-1-060','CSM-1-062','CSM-1-038','CSM-1-030','CSM-1-001']);
+ redFuel(s,0,['CSM-1-001','CSM-1-060','CSM-1-060','CSM-1-060']);
+ const denji=put(s,0,'CSM-1-049','front',1);
+ put(s,0,'CSM-1-030','front',2);
+ const power=toHand(s,0,'CSM-1-061');
+ s=play(s,power.uid);
+ const entered=live(s,0,power.uid);
+ assert.equal(entered.mustBlockGranted?.stamp,entered.fieldEntryStamp);
+ const foe=put(s,1,'CSM-1-062','front',0,true);
+ let later=passToOwnAttack(s);
+ const expired=live(later,0,power.uid);
+ assert.equal(expired.mustBlockGranted,undefined);
+ assert.equal(universalBp(pack,later,expired),4000);
+ assertUniversalMatch(packs,later);
+ later=use(later,{type:'attack',uid:expired.uid});
+ assert.equal(blockChoices(later).some(a=>a.uid===null),true);
+ assert.equal(blockChoices(later).some(a=>a.uid===foe.uid),true);
+
+ let again=open(6114,['CSM-1-061','CSM-1-049','CSM-1-060','CSM-1-038','CSM-1-030','CSM-1-001']);
+ redFuel(again,0,['CSM-1-001','CSM-1-060','CSM-1-060','CSM-1-060']);
+ const witness=put(again,0,'CSM-1-049','front',1);
+ put(again,0,'CSM-1-030','front',2);
+ const first=toHand(again,0,'CSM-1-061');
+ again=play(again,first.uid);
+ const grantedBody=live(again,0,first.uid);
+ const grantedStamp=grantedBody.fieldEntryStamp;
+ const eventCard=toHand(again,0,'CSM-1-038');
+ again=play(again,eventCard.uid,'event');
+ assert.equal(again.pending?.step,'retireOwn');
+ again=choose(again,a=>a.mode==='pick'&&a.uid===first.uid);
+ const retired=again.players[0].outside.find(c=>c.uid===first.uid);
+ assert.equal(retired.mustBlockGranted,undefined);
+ assert.equal(retired.fieldEntryStamp,null);
+ while(again.pending)again=choose(again,()=>true);
+ const outsideIndex=again.players[0].outside.findIndex(c=>c.uid===first.uid);
+ again.players[0].hand.push(again.players[0].outside.splice(outsideIndex,1)[0]);
+ again=play(again,first.uid);
+ const returned=live(again,0,first.uid);
+ assert.notEqual(returned.fieldEntryStamp,grantedStamp);
+ assert.equal(returned.mustBlockGranted?.stamp,returned.fieldEntryStamp);
+ assert.equal(returned.mustBlockGranted?.witnessUid,witness.uid);
+ assert.equal(returned.mustBlockGranted?.turn,again.turn);
+ assertUniversalMatch(packs,again);
+ returned.mustBlockGranted={...returned.mustBlockGranted,stamp:grantedStamp};
+ throwsForged(again,'Forged temporary physical battle grant');
+});
+
+test('CSM-1-062 grants the attack draw to an alias Denji after the source leaves outside',()=>{
+ let s=open(6210,['CSM-1-062','CSM-1-048','CSM-1-049','CSM-1-060']);
+ const beam=put(s,0,'CSM-1-062','front',0);
+ const alias=put(s,0,'CSM-1-048','front',1);
+ const printed=put(s,0,'CSM-1-049','front',2);
+ s=use(s,legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===beam.uid));
+ assert.equal(s.pending.actions.some(a=>a.mode==='pick'&&a.uid===alias.uid),true);
+ assert.equal(s.pending.actions.some(a=>a.mode==='pick'&&a.uid===printed.uid),true);
+ s=choose(s,a=>a.mode==='pick'&&a.uid===alias.uid);
+ const receiver=live(s,0,alias.uid);
+ assert.equal(receiver.attackDrawGranted?.sourceUid,beam.uid);
+ assert.equal(receiver.attackDrawGranted?.beneficiaryUid,alias.uid);
+ assert.equal(receiver.attackDrawGranted?.stamp,alias.fieldEntryStamp);
+ assertUniversalMatch(packs,s);
+ const retired=s.players[0].outside.find(c=>c.uid===beam.uid);
+ s.players[0].outside=s.players[0].outside.filter(c=>c.uid!==beam.uid);
+ s.players[0].hand.push(retired);
+ assert.equal(s.players[0].outside.some(c=>c.uid===beam.uid),false);
+ assertUniversalMatch(packs,s);
+ const before=s.players[0].deck.length;
+ s=toPhase(s,'attack');
+ s=use(s,{type:'attack',uid:alias.uid});
+ assert.equal(s.players[0].deck.length,before-1);
+ assertUniversalMatch(packs,s);
+
+ let skipped=open(6211,['CSM-1-062','CSM-1-048']);
+ const cost=put(skipped,0,'CSM-1-062','front',0);
+ const denji=put(skipped,0,'CSM-1-048','front',1);
+ skipped=use(skipped,legalUniversalActions(packs,skipped).find(a=>
+  a.type==='activate'&&a.uid===cost.uid));
+ skipped=choose(skipped,a=>a.mode==='skip');
+ const untouched=live(skipped,0,denji.uid);
+ untouched.attackDrawGranted={turn:skipped.turn,stamp:untouched.fieldEntryStamp,
+  sourceUid:cost.uid,beneficiaryUid:untouched.uid};
+ throwsForged(skipped,'Forged this-turn attack draw');
+});
+
+test('CSM-1-062 draw expires, and the Denji does not keep it after leaving and re-entering',()=>{
+ let expired=open(6212,['CSM-1-062','CSM-1-049','CSM-1-060']);
+ const beam=put(expired,0,'CSM-1-062','front',0);
+ const denji=put(expired,0,'CSM-1-049','front',1);
+ const foe=put(expired,1,'CSM-1-060','front',0,true);
+ expired=use(expired,legalUniversalActions(packs,expired).find(a=>
+  a.type==='activate'&&a.uid===beam.uid));
+ expired=choose(expired,a=>a.mode==='pick'&&a.uid===denji.uid);
+ expired=passToOwnAttack(expired);
+ assert.equal(live(expired,0,denji.uid).attackDrawGranted,undefined);
+ assertUniversalMatch(packs,expired);
+ const before=expired.players[0].deck.length;
+ expired=use(expired,{type:'attack',uid:denji.uid});
+ expired=use(expired,{type:'chooseBlock',uid:foe.uid});
+ assert.equal(expired.players[0].deck.length,before);
+ assertUniversalMatch(packs,expired);
+
+ let s=open(6213,['CSM-1-062','CSM-1-049','CSM-1-009','CSM-1-001','CSM-1-060']);
+ redFuel(s,0,['CSM-1-001','CSM-1-060','CSM-1-060','CSM-1-060']);
+ const cost=put(s,0,'CSM-1-062','front',0);
+ const target=put(s,0,'CSM-1-049','front',1);
+ s=use(s,legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===cost.uid));
+ s=choose(s,a=>a.mode==='pick'&&a.uid===target.uid);
+ const oldStamp=live(s,0,target.uid).fieldEntryStamp;
+ const oldGrant={...live(s,0,target.uid).attackDrawGranted};
+ const bounce=toHand(s,0,'CSM-1-009');
+ s=play(s,bounce.uid);
+ assert.equal(s.pending?.kind,'effect-bounce-own');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='chooseOwnBounce'&&
+  a.uid===target.uid),true);
+ s=choose(s,a=>a.type==='chooseOwnBounce'&&a.uid===target.uid);
+ const handed=s.players[0].hand.find(c=>c.uid===target.uid);
+ assert.equal(handed.attackDrawGranted,undefined);
+ assert.equal(handed.fieldEntryStamp,null);
+ s=play(s,target.uid);
+ const returned=live(s,0,target.uid);
+ assert.notEqual(returned.fieldEntryStamp,oldStamp);
+ assert.equal(returned.attackDrawGranted,undefined);
+ assertUniversalMatch(packs,s);
+ returned.attackDrawGranted={...oldGrant,stamp:returned.fieldEntryStamp,
+  beneficiaryUid:returned.uid};
+ throwsForged(s,'Forged this-turn attack draw');
 });
 
 test('CSM-1-063 draws one and then puts one hand card outside',()=>{

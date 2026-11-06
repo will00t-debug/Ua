@@ -4125,9 +4125,9 @@
           "match": "可能ならブロックしなければならない",
           "status": "已驗證",
           "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-061。Q2094：對手有可阻擋的角色就必須指定 1 體，沒有則承受傷害。",
-          "implementation": "dist/universal-v2/csm-runtime.mjs runPlay。場上有電次時寫入本回合 BP+1000 與 mustBlockGranted。dist/universal-v2/engine.mjs 的對局驗證接受這張功率自己、只有 turn 與 stamp、而且場上另有電次。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs grantPowerMust。登場當下用 cardHasName 找場上電次，寫入 mustBlockGranted 的回合、登場實例、來源、受益者與見證電次，並記在該次登場移動上。dist/universal-v2/engine.mjs 只接受這筆紀錄；電次之後離場不會把已取得的效果變成偽造。回合開始時清除。",
           "discrepancy": "",
-          "evidence": "tests/v2-csm-061-080.test.mjs：沒有電次時 BP 維持 4000，沒有強制阻擋。有電次時從手牌普通登場，BP 5000，對局驗證通過。",
+          "evidence": "tests/v2-csm-061-080.test.mjs：沒有電次不取得。印刷電次與別名電次 CSM-1-048 都能取得。電次因自己的效果退場後，強制阻擋仍在。下一個自己的回合效果消失。受益者退場再登場用新的登場實例，貼回舊實例會被拒絕。沒有登場紀錄的偽造狀態也會被拒絕。",
           "unresolved": ""
         },
         {
@@ -4149,9 +4149,9 @@
           "match": "カードを1枚まで引く",
           "status": "已驗證",
           "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-062",
-          "implementation": "dist/universal-v2/csm-runtime.mjs grantAttackDraw。起動時先休息並退場，再選最多 1 張電次。dist/universal-v2/engine.mjs 接受受益者是電次、授予只有 turn 與 stamp，而且本回合有自己的 CSM-1-062 從前線或能源線以退場進到場外。",
+          "implementation": "dist/universal-v2/csm-runtime.mjs grantAttackDraw。先休息並退場，再用 cardHasName 選電次。attackDrawGranted 記下回合、受益者的登場實例、來源與受益者，退場移動另記受益者與登場實例。dist/universal-v2/engine.mjs 用該筆退場紀錄證明，不要求光束仍留在場外。其他兩鍵的自身或換線抽牌維持原證明。",
           "discrepancy": "",
-          "evidence": "tests/v2-csm-061-080.test.mjs：放棄不授予。場上沒有電次就直接結束。指定電次後授予留在那張電次上，對局驗證通過。",
+          "evidence": "tests/v2-csm-061-080.test.mjs：放棄不授予，事後補上授予會被拒絕。印刷電次與別名電次都列在合法選項，指定後驗證通過。光束離開場外後授予仍可抽牌。下一個自己的回合效果消失。受益者回到手牌再登場不繼承，貼回舊授予會被拒絕。",
           "unresolved": ""
         }
       ]

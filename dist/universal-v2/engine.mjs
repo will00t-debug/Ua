@@ -1554,7 +1554,7 @@ function startTurn(pack,s){
   if(unit.reenterOrRaidUntil&&ownerTurns>=unit.reenterOrRaidUntil.untilOwnTurnStart)
    delete unit.reenterOrRaidUntil;
   delete unit.eventReadyOnAttack;delete unit.eventSniperGranted;
-  delete unit.attackBanned;delete unit.attackDrawGranted;delete unit.belowPrintedBlock;delete unit.eventAttackDrawGranted;delete unit.unchosenGranted;delete unit.impactNullThisTurn;delete unit.attackWinDrawGranted;
+  delete unit.attackBanned;delete unit.attackDrawGranted;delete unit.mustBlockGranted;delete unit.belowPrintedBlock;delete unit.eventAttackDrawGranted;delete unit.unchosenGranted;delete unit.impactNullThisTurn;delete unit.attackWinDrawGranted;
   const clearBuriedBattle=layer=>{
    if(!layer)return;
    clearTurnBattleGrants(layer);
@@ -6184,6 +6184,44 @@ function location(s,p,uid){
   if(slot!==-1)return {line,slot,c:s.players[p][line][slot]};
  }
  return null;
+}
+// A granted effect can outlive the source's current zone. Find the physical
+// card in any of this player's zones, including cards buried under a Raid.
+function physicalAnywhere(player,uid){
+ if(!player||typeof uid!=='string')return null;
+ const todo=[];
+ const push=c=>{if(c)todo.push(c);};
+ for(const line of ['front','energy'])for(const c of player[line]||[])push(c);
+ for(const zone of ['hand','deck','life','lifeRevealed','outside','removed','resolvingEvents'])
+  for(const c of player[zone]||[])push(c);
+ const seen=new Set();
+ while(todo.length){
+  const c=todo.pop();
+  if(!c||seen.has(c))continue;
+  seen.add(c);
+  if(c.uid===uid)return c;
+  for(const child of [...(c.stack||[]),...(c.under||[])])push(child);
+ }
+ return null;
+}
+function invalidCsm061Grant(e){
+ const g=e.csm061Grant;
+ if(g===undefined)return false;
+ const keys=g&&typeof g==='object'&&!Array.isArray(g)?Object.keys(g):[];
+ return e.cardId!=='CSM-1-061'||(e.to!=='front'&&e.to!=='energy')||
+  keys.length!==2||keys.some(k=>k!=='witnessUid'&&k!=='stamp')||
+  typeof g.witnessUid!=='string'||!g.witnessUid.startsWith(e.owner+'-')||
+  g.witnessUid===e.uid||!Number.isInteger(g.stamp)||g.stamp<1;
+}
+function invalidCsm062Grant(e){
+ const g=e.csm062Grant;
+ if(g===undefined)return false;
+ const keys=g&&typeof g==='object'&&!Array.isArray(g)?Object.keys(g):[];
+ return e.cardId!=='CSM-1-062'||e.reason!=='retirement'||e.to!=='outside'||
+  (e.from!=='front'&&e.from!=='energy')||
+  keys.length!==2||keys.some(k=>k!=='beneficiaryUid'&&k!=='stamp')||
+  typeof g.beneficiaryUid!=='string'||!g.beneficiaryUid.startsWith(e.owner+'-')||
+  g.beneficiaryUid===e.uid||!Number.isInteger(g.stamp)||g.stamp<1;
 }
 function grantSkipNextActive(s,player,sourceUid){
  const loc=location(s,player,sourceUid);
@@ -19712,7 +19750,8 @@ export function assertUniversalMatch(pack,s){
    (e.attachedToUid!==undefined&&(typeof e.attachedToUid!=='string'||
     !e.attachedToUid.startsWith(e.owner+'-')||e.attachedToUid===e.uid||
     e.from!=='raid-under'||typeof e.wasFaceDown!=='boolean'||
-    JSON.stringify(e.identityViewersBefore)!==JSON.stringify(e.wasFaceDown?[e.owner]:[0,1])))))
+    JSON.stringify(e.identityViewersBefore)!==JSON.stringify(e.wasFaceDown?[e.owner]:[0,1])))||
+   invalidCsm061Grant(e)||invalidCsm062Grant(e)))
   throw Error('Invalid private movement history');
  if(!Array.isArray(s.turnRetireEvents)||s.turnRetireEvents.some(e=>
   !e||e.turn!==s.turn||!playerIndex(e.controller)||
@@ -19871,15 +19910,25 @@ export function assertUniversalMatch(pack,s){
      throw Error('Forged temporary physical battle grant');
     continue;
    }
-   // CSM-1-061: on play, while Denji is on the field, this character gains
-   // must-block for the turn. The runtime writes only turn and stamp.
-   const csmPowerMust=key==='mustBlockGranted'&&
-    card(pack,physical).id==='CSM-1-061'&&
-    keys.length===2&&keys.every(k=>k==='turn'||k==='stamp')&&
-    field(s.players[owner]).some(c=>c.uid!==physical.uid&&
-     String(card(pack,c).name||'').includes('デンジ'));
-   if(csmPowerMust){
-    if(!turnOk)throw Error('Forged temporary physical battle grant');
+   // CSM-1-061: Denji has to be on the field when the on-play grant is
+   // written. The entry event keeps that witness and this entry's stamp.
+   // The grant then lasts for the turn even if that Denji leaves. cardHasName
+   // accepts a printed Denji and an alias; a name substring does not.
+   if(key==='mustBlockGranted'&&card(pack,physical).id==='CSM-1-061'){
+    const shape=keys.length===5&&keys.every(k=>k==='turn'||k==='stamp'||
+     k==='sourceUid'||k==='beneficiaryUid'||k==='witnessUid');
+    const event=(s.zoneMoveEvents||[]).find(e=>e.turn===s.turn&&e.uid===physical.uid&&
+     e.owner===owner&&e.cardId==='CSM-1-061'&&(e.to==='front'||e.to==='energy')&&
+     e.csm061Grant?.stamp===physical.fieldEntryStamp&&
+     e.csm061Grant?.witnessUid===g.witnessUid);
+    const witness=typeof g.witnessUid==='string'?
+     physicalAnywhere(s.players[owner],g.witnessUid):null;
+    const witnessDenji=!!witness&&witness.uid!==physical.uid&&
+     cardHasName(card(pack,witness),'デンジ',false);
+    if(!turnOk||g.turn!==s.turn||g.stamp!==physical.fieldEntryStamp||
+     g.sourceUid!==physical.uid||g.beneficiaryUid!==physical.uid||
+     !shape||!event||!witnessDenji)
+     throw Error('Forged temporary physical battle grant');
     continue;
    }
    if(!turnOk||keys.length!==2||keys.some(k=>k!=='turn'&&k!=='stamp')||
@@ -19995,15 +20044,25 @@ export function assertUniversalMatch(pack,s){
     e.op==='chooseOne'&&e.options?.some(o=>o.then?.some(t=>t.op==='grantSelfAttackDrawThisTurn')));
    const shifted=card(pack,physical).lineShiftOutsideMove?.attackDraw===true&&
     physical.lineShiftUsedTurn===s.turn;
-   // CSM-1-062 retires itself as the cost, then grants the draw to one Denji.
-   const csmBeamRetired=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
-    e.owner===owner&&e.cardId==='CSM-1-062'&&e.reason==='retirement'&&
-    (e.from==='front'||e.from==='energy')&&e.to==='outside'&&
-    s.players[owner].outside.some(c=>c.uid===e.uid&&c.cardId==='CSM-1-062'));
-   const csmDenjiDraw=csmBeamRetired&&
-    String(printedCard.name||'').includes('デンジ')&&printedCard.id!=='CSM-1-062';
+   const drawKeys=attackDraw&&typeof attackDraw==='object'&&!Array.isArray(attackDraw)?
+    Object.keys(attackDraw):[];
+   const plainDraw=drawKeys.length===2&&drawKeys.every(k=>k==='turn'||k==='stamp');
+   // CSM-1-062 retires itself as the cost, then grants one Denji. The
+   // retirement event records the beneficiary and that entry. The source
+   // does not have to still be in outside, and an alias is a Denji.
+   const csmShape=drawKeys.length===4&&drawKeys.every(k=>k==='turn'||k==='stamp'||
+    k==='sourceUid'||k==='beneficiaryUid');
+   const csmEvent=csmShape?(s.zoneMoveEvents||[]).find(e=>e.turn===s.turn&&
+    e.uid===attackDraw.sourceUid&&e.owner===owner&&e.cardId==='CSM-1-062'&&
+    e.reason==='retirement'&&(e.from==='front'||e.from==='energy')&&e.to==='outside'&&
+    e.csm062Grant?.beneficiaryUid===physical.uid&&
+    e.csm062Grant?.stamp===physical.fieldEntryStamp&&
+    attackDraw.beneficiaryUid===physical.uid):null;
+   const csmSource=csmEvent?physicalAnywhere(s.players[owner],csmEvent.uid):null;
+   const csmDenjiDraw=!!csmEvent&&!!csmSource&&csmSource.cardId==='CSM-1-062'&&
+    cardHasName(printedCard,'デンジ',false)&&printedCard.id!=='CSM-1-062';
    if(!attackDraw||attackDraw.turn!==s.turn||attackDraw.stamp!==physical.fieldEntryStamp||
-    Object.keys(attackDraw).length!==2||!(granted||shifted||csmDenjiDraw))
+    !((plainDraw&&(granted||shifted))||csmDenjiDraw))
     throw Error('Forged this-turn attack draw');
   }
   if(physical.lineShiftUsedTurn!==undefined&&
