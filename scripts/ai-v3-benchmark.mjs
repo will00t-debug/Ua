@@ -101,7 +101,7 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
  const script=[];
  const actions=[];
  let steps=0,fallback=0,illegal=0,engineError=null;
- const learned={decisions:0,search:0,settledChoices:0,budgetFallback:0,fallback:0,forced:0,nodes:0,basicNodes:0,deepNodes:0,followBranches:0,maxDepth:0,responses:0};
+ const learned={decisions:0,search:0,settledChoices:0,budgetFallback:0,fallback:0,forced:0,nodes:0,basicNodes:0,deepNodes:0,rootPlanned:0,rootExecuted:0,followBranches:0,maxDepth:0,responses:0};
  const passes={decisions:0,onlyNext:0,voluntaryNext:0,passedDevelopment:0,autonomous:0};
  let mark=aiV3Report();
  const started=performance.now();
@@ -126,6 +126,8 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
     learned.deepNodes+=now.deepNodes-mark.deepNodes;
     learned.forced+=now.forced-mark.forced;
     learned.nodes+=now.nodes-mark.nodes;
+    learned.rootPlanned+=now.rootPlanned-mark.rootPlanned;
+    learned.rootExecuted+=now.rootExecuted-mark.rootExecuted;
     learned.followBranches+=now.followBranches-mark.followBranches;
     learned.responses+=now.responses-mark.responses;
     learned.maxDepth=Math.max(learned.maxDepth,trace?.maxDepth||0);
