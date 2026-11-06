@@ -6,6 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
+import {moveDevelopment} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -119,7 +120,7 @@ export function comparedLines(scored){
    const lists=[...groups.values()];
    const players=new Set(lists.map(list=>list[0].leafPendingPlayer??''));
    if(players.size>1)chosen=[];
-   const idle=list=>list.every(item=>isSafeAction(item.action));
+   const idle=list=>list.every(rowIdle);
    lists.sort((a,b)=>{
     if(idle(a)!==idle(b))return idle(a)?1:-1;
     return b.length-a.length;
@@ -132,10 +133,33 @@ export function comparedLines(scored){
   }
  }
  if(!chosen.length)return {rows:[],shared:false,contested:false,unresolved};
- const idleOnly=chosen.every(item=>isSafeAction(item.action));
- const behind=closed.some(row=>!isSafeAction(row.action)&&!chosen.includes(row));
+ const idleOnly=chosen.every(rowIdle);
+ const behind=closed.some(row=>!rowIdle(row)&&!chosen.includes(row));
  if(idleOnly&&behind)return {rows:[],shared:false,contested:false,unresolved};
  return {rows:chosen,shared:true,contested:false,unresolved};
+}
+function rowIdle(row){
+ if(row?.develops===false)return true;
+ if(row?.develops===true)return false;
+ return isSafeAction(row?.action||{});
+}
+// Passing is not the only non-development action. Moving the last energy a
+// high-cost hand still needs does not count as a line the backup should chase.
+function actionDevelops(pack,state,actor,action){
+ if(!action||isSafeAction(action))return false;
+ if(action.type==='move'&&moveDevelopment(pack,state,actor,action)?.strip)return false;
+ return true;
+}
+function keptEnergy(pack,state,actor,legal,choice,row,strategy){
+ if(choice?.type!=='move')return choice;
+ if(row?.boundary==='terminal'&&row.search>=90000)return choice;
+ if(!moveDevelopment(pack,state,actor,choice)?.strip)return choice;
+ const rest=legal.filter(action=>action.type!=='move'||!moveDevelopment(pack,state,actor,action)?.strip);
+ if(!rest.length)return choice;
+ let ordered=rest;
+ try{ordered=rankLegal(pack,state,actor,rest,strategy);}catch{ordered=rest;}
+ const replacement=reliableChoice(pack,state,actor,rest,null,ordered);
+ return legal.find(item=>same(item,replacement))||choice;
 }
 function doneLine(row){
  return !!(row&&(row.settled||row.boundary==='returned'||row.boundary==='terminal'));
@@ -368,7 +392,8 @@ export function chooseAiV3Action(pack,state,options={}){
    }
    if(typeof options.onRootDone==='function')options.onRootDone({index,action:jobs[index],executed:!!row&&!row.failed});
   }
-  const deepen=[...held.keys()].sort((a,b)=>Number(isSafeAction(held[a].action))-Number(isSafeAction(held[b].action)));
+  const deferDeep=action=>isSafeAction(action)||!!moveDevelopment(pack,state,actor,action)?.strip;
+  const deepen=[...held.keys()].sort((a,b)=>Number(deferDeep(held[a].action))-Number(deferDeep(held[b].action)));
   for(let cursor=0;cursor<deepen.length;cursor++){
    const index=deepen[cursor];
    if(pool.n<8||now()>deadline){
@@ -394,6 +419,8 @@ export function chooseAiV3Action(pack,state,options={}){
    coverage,rootPlan:jobs.map(note),timing:{...timing,totalMs:performance.now()-started},
    softMs:ms,overSoft:now()>deadline,basicNodes:basicSpent,deepNodes:deepSpent
   };
+  for(const row of held)row.develops=actionDevelops(pack,state,actor,row.action);
+  for(const row of unexecuted)row.develops=actionDevelops(pack,state,actor,row.action);
   const scored=held;
   const viewed=scored.map(item=>({action:item.action,search:item.search,opponentTurns:item.opponentTurns,
    settled:item.settled,boundary:item.boundary,cut:item.cut,pending:item.pending,phase:item.phase,nodes:item.nodes,
@@ -414,13 +441,12 @@ export function chooseAiV3Action(pack,state,options={}){
   const discardIncomplete=discardWindow&&legal.some(action=>action.type==='chooseDiscard'&&action.uid&&
    !comparable.some(item=>same(item.action,action)));
   // An idle line that got home does not beat a play whose combo was cut.
-  // Lines that stopped together still compete, including a raid ahead of next.
-  const idleOnly=comparable.length>0&&comparable.every(item=>isSafeAction(item.action));
-  const constructiveCut=scored.some(item=>!isSafeAction(item.action)&&item.boundary!=='returned'&&item.boundary!=='terminal');
-  const missedDevelopment=unexecuted.some(item=>{
-   const action=item.action||item;
-   return !!(action&&action.type&&!isSafeAction(action));
-  });
+  // Spending the last needed energy is not that combo. Lines that stopped
+  // together still compete, including a raid ahead of next.
+  const develops=item=>item?.develops!=null?!!item.develops:actionDevelops(pack,state,actor,item?.action||item);
+  const idleOnly=comparable.length>0&&comparable.every(item=>!develops(item));
+  const constructiveCut=scored.some(item=>develops(item)&&item.boundary!=='returned'&&item.boundary!=='terminal');
+  const missedDevelopment=unexecuted.some(item=>develops(item));
   // A finished next is not a comparison of the plays that never ran.
   const choice=contested?(()=>{
    const doomed=scored.filter(row=>row.boundary==='terminal'&&row.search<=-90000);
@@ -430,27 +456,32 @@ export function chooseAiV3Action(pack,state,options={}){
    try{orderedSafer=rankLegal(pack,state,actor,safer,strategy);}catch{orderedSafer=safer;}
    return reliableChoice(pack,state,actor,safer,null,orderedSafer);
   })():backup;
+  const energySample=legal.find(action=>action.type==='move');
+  const energyView=energySample?moveDevelopment(pack,state,actor,energySample):null;
   if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
+   const kept=keptEnergy(pack,state,actor,legal,choice,null,strategy);
    report.budgetFallback++;
    report.budget++;
-   return finish(choice,'budget-fallback',{
+   return finish(kept,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
     incomplete:true,settled:false,
     hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,
     plan,roots:jobs.length,followBranches,maxDepth,unexecuted,unexplored,...diagnosis,
+    energyKeep:energyView?.strip?energyView:null,
+    replacedMove:same(kept,choice)?null:choice,
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
     sequence:(scored.find(item=>item.sequence?.length)||{}).sequence||[]
    },started);
   }
   if(!scored.length){
-   const backupOnly=reliableChoice(pack,state,actor,legal,hardExact,ordered);
+   const backupOnly=keptEnergy(pack,state,actor,legal,reliableChoice(pack,state,actor,legal,hardExact,ordered),null,strategy);
    report.budgetFallback++;
    report.budget++;
    return finish(backupOnly,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
     incomplete:true,executed:false,settled:false,
     hard:hardExact,hardNodes:hardSlice,strategy,compared:[],unexecuted,unexplored,
-    plan,roots:jobs.length,...diagnosis
+    plan,roots:jobs.length,...diagnosis,energyKeep:energyView?.strip?energyView:null
    },started);
   }
   const observation=actorObservation(pack,state,actor);
@@ -465,14 +496,17 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched');
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
-  if(row?.settled)report.settledChoices++;
-  return finish(exact,now()>deadline?'budget':'search',{
-   actor,seed,worlds:worlds.length,score:row?.search??null,bonus:blended.bonus,
-   opponentTurns:row?.opponentTurns||0,responses:row?.responses||0,
-   actorDecisions:row?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:null,
-   incomplete:!row?.settled,settled:!!row?.settled,hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,
+  const kept=keptEnergy(pack,state,actor,legal,exact,row,strategy);
+  const keptRow=scored.find(item=>same(item.action,kept))||row;
+  if(keptRow?.settled)report.settledChoices++;
+  return finish(kept,now()>deadline?'budget':'search',{
+   actor,seed,worlds:worlds.length,score:keptRow?.search??null,bonus:blended.bonus,
+   opponentTurns:keptRow?.opponentTurns||0,responses:keptRow?.responses||0,
+   actorDecisions:keptRow?.actorDecisions||0,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:null,
+   incomplete:!keptRow?.settled,settled:!!keptRow?.settled,hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,
    unscored:jobs.length-scored.length,
-   unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:row?.sequence||[],
+   unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:keptRow?.sequence||[],
+   energyKeep:energyView?.strip?energyView:null,replacedMove:same(kept,exact)?null:exact,
    ...diagnosis
   },started);
  }catch(error){

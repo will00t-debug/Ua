@@ -91,6 +91,103 @@ function liveBlockers(pack,state,player){
  }
  return live;
 }
+const moveViews=new WeakMap();
+function plainColors(colors){
+ const out={};
+ for(const [color,value] of Object.entries(colors||{}))if(value)out[color]=value;
+ return out;
+}
+function boardSignature(state,actor){
+ const mine=state?.players?.[actor];
+ if(!mine)return '';
+ const ids=zone=>(zone||[]).map(card=>card?.uid||'').join(',');
+ return [state.phase||'',state.turn||0,ids(mine.energy),ids(mine.front),ids(mine.hand)].join('|');
+}
+// Moving off the energy line is legal development only when the color that
+// disappears is no longer needed. The curve, the cards actually in hand, and
+// the energy after this move decide that. A lethal swing, a raid the
+// remaining energy can pay, a front that still meets the curve, or a block
+// when the front is empty are reasons to move anyway.
+export function moveDevelopment(pack,state,actor,action){
+ if(action?.type!=='move'||!action.uid||!state?.players?.[actor])return null;
+ const signature=boardSignature(state,actor);
+ let saved=moveViews.get(state);
+ if(!saved||saved.signature!==signature){
+  saved={signature,views:new Map()};
+  moveViews.set(state,saved);
+ }
+ const key=[action.uid,action.slot??'',action.replaceUid||''].join(':');
+ if(saved.views.has(key))return saved.views.get(key);
+ const view=assessMove(pack,state,actor,action);
+ saved.views.set(key,view);
+ return view;
+}
+function relocatedEnergy(pack,state,actor,action){
+ const mine=state.players?.[actor];
+ if(!mine)return null;
+ const from=(mine.energy||[]).findIndex(card=>card?.uid===action.uid);
+ if(from<0||!Number.isInteger(action.slot)||action.slot<0||action.slot>=(mine.front||[]).length)return null;
+ const moving=mine.energy[from];
+ const previous=mine.front[action.slot];
+ mine.energy[from]=null;
+ mine.front[action.slot]=moving;
+ try{
+  return {colors:plainColors(colorsOf(pack,state,actor)),total:energyOf(pack,state,actor)};
+ }finally{
+  mine.front[action.slot]=previous;
+  mine.energy[from]=moving;
+ }
+}
+function assessMove(pack,state,actor,action){
+ const beforeColors=plainColors(colorsOf(pack,state,actor));
+ const before=energyOf(pack,state,actor);
+ const relocated=relocatedEnergy(pack,state,actor,action);
+ if(!relocated)return null;
+ const afterColors=relocated.colors;
+ const after=relocated.total;
+ const dropped=[];
+ for(const color of new Set([...Object.keys(beforeColors),...Object.keys(afterColors)])){
+  if((afterColors[color]||0)<(beforeColors[color]||0))dropped.push(color);
+ }
+ const parts=strategyParts(pack,state,actor);
+ const catalog=packOf(pack,actor).cards;
+ const hand=(state.players[actor].hand||[]).map(card=>catalog[card?.cardId]).filter(Boolean);
+ const wantsColor=hand.some(printed=>dropped.includes(printed.color)&&(printed.energy||0)>(afterColors[printed.color]||0));
+ const rawStrip=dropped.length>0&&after<parts.curve&&wantsColor;
+ const benefit=moveBenefit(pack,state,actor,action,afterColors,after,parts);
+ const reason=!dropped.length?'energy-held':
+  benefit==='lethal'?'lethal':benefit==='raid'?'raid':benefit==='block'?'block':
+  benefit==='enough'?'enough':rawStrip?'curve-hand':'open';
+ return {before,after,beforeColors,afterColors,dropped,curve:parts.curve,wantsColor,
+  strip:rawStrip&&!benefit,benefit:benefit||null,reason};
+}
+function moveBenefit(pack,state,actor,action,afterColors,after,parts){
+ if(after>=parts.curve)return 'enough';
+ const opp=1-actor;
+ const body=(state.players[actor].energy||[]).find(card=>card?.uid===action.uid);
+ const catalog=packOf(pack,actor).cards;
+ if(body&&body.ready!==false){
+  const life=state.players[opp]?.life;
+  const lifeCount=Array.isArray(life)?life.length:Number(life)||0;
+  const bp=bpOf(pack,state,body);
+  const walls=(state.players[opp].front||[]).filter(Boolean);
+  if(lifeCount===1&&(!walls.length||walls.some(wall=>bp>bpOf(pack,state,wall))))return 'lethal';
+  const baseName=squash(catalog[body.cardId]?.name);
+  if(baseName){
+   for(const card of state.players[actor].hand||[]){
+    const printed=catalog[card?.cardId];
+    if(!printed?.raidName)continue;
+    const names=[printed.raidName,...(printed.raidBaseNames||[])].map(squash);
+    if(!names.includes(baseName))continue;
+    if((printed.energy||0)<=(afterColors[printed.color]||0))return 'raid';
+   }
+  }
+  const ownFront=(state.players[actor].front||[]).filter(Boolean);
+  const threats=(state.players[opp].front||[]).filter(card=>card?.ready);
+  if(!ownFront.length&&threats.some(wall=>bp>=bpOf(pack,state,wall)))return 'block';
+ }
+ return null;
+}
 export function strategyParts(pack,state,actor){
  const catalog=packOf(pack,actor).cards;
  const energy=energyOf(pack,state,actor);
@@ -138,6 +235,10 @@ export function strategyOrder(pack,state,viewer,action){
  if(action.type==='attack')return parts.threat?12:3;
  if(action.type==='play'&&action.line==='front')return 6;
  if(action.type==='activate'||action.type==='event'||action.type==='handActivate')return 5;
+ if(action.type==='move'){
+  const view=moveDevelopment(pack,state,viewer,action);
+  return view?.strip?-4:1;
+ }
  if(action.type==='next')return 0;
  return 1;
 }
@@ -151,6 +252,7 @@ function replyRank(pack,state,action){
  if(action.type==='attack')return 30;
  if(action.type==='play')return 24;
  if(action.type==='activate'||action.type==='event'||action.type==='handActivate')return 20;
+ if(action.type==='move')return moveDevelopment(pack,state,seat,action)?.strip?0:8;
  if(action.type==='next')return 2;
  return 8;
 }

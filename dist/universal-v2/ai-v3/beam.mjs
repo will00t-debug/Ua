@@ -6,7 +6,7 @@ import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {evaluate as staticValue,terminalValue,keepScore} from './eval.mjs';
 import {archetypeRank,actionGroup} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment} from './strategy.mjs';
 import {visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -40,10 +40,18 @@ function byText(a,b){
  const left=JSON.stringify(a),right=JSON.stringify(b);
  return left<right?-1:left>right?1:0;
 }
+function actionRank(pack,state,viewer,action,strategy){
+ let score=archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action)+
+  (strategy==='order'?strategyOrder(pack,state,viewer,action):0);
+ // The default order never sees the strategy switch. A move that strips a
+ // color the hand and curve still need has to fall behind passing here too,
+ // or an unfinished search keeps the old move-first backup.
+ if(action.type==='move'&&moveDevelopment(pack,state,viewer,action)?.strip)score-=8;
+ return score;
+}
 export function rankLegal(pack,state,viewer,legal,strategy){
  const list=dedupe(state,viewer,legal);
- const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action)+
-  (strategy==='order'?strategyOrder(pack,state,viewer,action):0);
+ const rank=action=>actionRank(pack,state,viewer,action,strategy);
  return [...list].sort((a,b)=>{
   const delta=rank(b)-rank(a);
   if(delta)return delta;
@@ -94,8 +102,7 @@ export function selectCandidates(pack,state,viewer,legal,beam,strategy){
    if(spare>=0)picked[spare]=front;
   }
  }
- const rank=action=>archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action)+
-  (strategy==='order'?strategyOrder(pack,state,viewer,action):0);
+ const rank=action=>actionRank(pack,state,viewer,action,strategy);
  picked.sort((a,b)=>rank(b)-rank(a)||byText(a,b));
  return picked;
 }
