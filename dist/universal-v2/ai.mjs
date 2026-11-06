@@ -573,7 +573,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return leave;
  }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
- if(s.pending?.kind==='granted-attack-draw'||s.pending?.kind==='granted-retire-draw')
+ if(s.pending?.kind==='granted-attack-draw'||s.pending?.kind==='granted-retire-draw'||
+  s.pending?.kind==='effect-acquired-attack-draw')
   return legal.find(x=>x.mode==='draw')||legal[0];
  if(s.pending?.kind==='effect-grant-attack'||s.pending?.kind==='effect-grant-retire')return legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];

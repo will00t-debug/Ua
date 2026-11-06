@@ -5,8 +5,11 @@ import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  newUniversalMatch,universalBp,universalEnergyByColor,universalImpactNull,
  universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
-import {controllerChoiceArt,controllerDeckWindowCards}
+import {controllerChoiceArt,controllerDeckWindowCards,uiActionLabel,V2_PENDING_LABELS}
  from '../dist/universal-v2/preview-actions.mjs';
+import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
+import {grantContinuousState,originalEffectsDisabled} from '../dist/universal-v2/continuous-states.mjs';
+import {dispatchRoom} from '../server/domain.mjs';
 import {facedownGallery,facedownInspectModel}
  from '../dist/universal-v2/facedown-inspect.mjs';
 import {csmFacedowns} from '../dist/universal-v2/csm-continuous.mjs';
@@ -256,6 +259,7 @@ test('CSM-1-062 retires as a cost and may decline the Denji grant',()=>{
  assert.equal(receiver.attackDrawGranted?.stamp,target.fieldEntryStamp);
  assert.equal(receiver.attackDrawGranted?.sourceUid,cost.uid);
  assert.equal(receiver.attackDrawGranted?.beneficiaryUid,target.uid);
+ assert.equal(receiver.attackDrawGranted?.upTo,1);
  assert.equal(granted.players[0].outside.some(c=>c.uid===cost.uid),true);
  assert.equal(granted.pending,null);
  assertUniversalMatch(packs,granted);
@@ -266,6 +270,16 @@ function blockChoices(s){
 }
 function throwsForged(s,message){
  assert.throws(()=>assertUniversalMatch(packs,s),error=>error instanceof Error&&error.message===message);
+}
+function loseOriginal(s,target){
+ const source=put(s,1,'CSM-1-060','front',1,true);
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:1,sourceUid:source.uid,
+  targetUid:target.uid,sourceLinked:false,until:{player:1,phase:'start',edge:'start'}});
+ assert.equal(originalEffectsDisabled(s,target),true);
+ return source;
+}
+function drawChoice(s,mode){
+ return choose(s,a=>a.type==='chooseAcquiredAttackDraw'&&a.mode===mode);
 }
 
 test('CSM-1-061 keeps this-turn must-block after the printed Denji leaves',()=>{
@@ -383,16 +397,24 @@ test('CSM-1-062 grants the attack draw to an alias Denji after the source leaves
  assert.equal(receiver.attackDrawGranted?.sourceUid,beam.uid);
  assert.equal(receiver.attackDrawGranted?.beneficiaryUid,alias.uid);
  assert.equal(receiver.attackDrawGranted?.stamp,alias.fieldEntryStamp);
+ assert.equal(receiver.attackDrawGranted?.upTo,1);
  assertUniversalMatch(packs,s);
  const retired=s.players[0].outside.find(c=>c.uid===beam.uid);
  s.players[0].outside=s.players[0].outside.filter(c=>c.uid!==beam.uid);
  s.players[0].hand.push(retired);
  assert.equal(s.players[0].outside.some(c=>c.uid===beam.uid),false);
  assertUniversalMatch(packs,s);
+ const foe=put(s,1,'CSM-1-060','front',0,true);
  const before=s.players[0].deck.length;
  s=toPhase(s,'attack');
  s=use(s,{type:'attack',uid:alias.uid});
+ assert.equal(s.pending?.kind,'effect-acquired-attack-draw');
+ assert.equal(s.players[0].deck.length,before);
+ s=drawChoice(s,'draw');
  assert.equal(s.players[0].deck.length,before-1);
+ assert.equal(s.pending?.kind,'block');
+ assert.equal(s.attacksByUid[alias.uid],1);
+ assert.equal(blockChoices(s).some(a=>a.uid===foe.uid),true);
  assertUniversalMatch(packs,s);
 
  let skipped=open(6211,['CSM-1-062','CSM-1-048']);
@@ -401,9 +423,18 @@ test('CSM-1-062 grants the attack draw to an alias Denji after the source leaves
  skipped=use(skipped,legalUniversalActions(packs,skipped).find(a=>
   a.type==='activate'&&a.uid===cost.uid));
  skipped=choose(skipped,a=>a.mode==='skip');
+ assert.equal(live(skipped,0,denji.uid).attackDrawGranted,undefined);
+ const standing=put(skipped,1,'CSM-1-048','front',0,true);
+ skipped=toPhase(skipped,'attack');
+ const untouchedDeck=skipped.players[0].deck.length;
+ skipped=use(skipped,{type:'attack',uid:denji.uid});
+ assert.equal(skipped.pending?.kind,'block');
+ assert.equal(skipped.players[0].deck.length,untouchedDeck);
+ assert.equal(blockChoices(skipped).some(a=>a.uid===null),true);
+ assert.equal(blockChoices(skipped).some(a=>a.uid===standing.uid),true);
  const untouched=live(skipped,0,denji.uid);
  untouched.attackDrawGranted={turn:skipped.turn,stamp:untouched.fieldEntryStamp,
-  sourceUid:cost.uid,beneficiaryUid:untouched.uid};
+  sourceUid:cost.uid,beneficiaryUid:untouched.uid,upTo:1};
  throwsForged(skipped,'Forged this-turn attack draw');
 });
 
@@ -415,13 +446,21 @@ test('CSM-1-062 draw expires, and the Denji does not keep it after leaving and r
  expired=use(expired,legalUniversalActions(packs,expired).find(a=>
   a.type==='activate'&&a.uid===beam.uid));
  expired=choose(expired,a=>a.mode==='pick'&&a.uid===denji.uid);
+ const saved={...live(expired,0,denji.uid).attackDrawGranted};
  expired=passToOwnAttack(expired);
  assert.equal(live(expired,0,denji.uid).attackDrawGranted,undefined);
  assertUniversalMatch(packs,expired);
  const before=expired.players[0].deck.length;
  expired=use(expired,{type:'attack',uid:denji.uid});
+ assert.equal(expired.pending?.kind,'block');
+ assert.equal(expired.players[0].deck.length,before);
+ const replay=structuredClone(expired);
+ const replayBody=live(replay,0,denji.uid);
+ replayBody.attackDrawGranted={...saved,turn:replay.turn};
+ throwsForged(replay,'Forged this-turn attack draw');
  expired=use(expired,{type:'chooseBlock',uid:foe.uid});
  assert.equal(expired.players[0].deck.length,before);
+ assert.equal(expired.attacksByUid[denji.uid],1);
  assertUniversalMatch(packs,expired);
 
  let s=open(6213,['CSM-1-062','CSM-1-049','CSM-1-009','CSM-1-001','CSM-1-060']);
@@ -446,9 +485,213 @@ test('CSM-1-062 draw expires, and the Denji does not keep it after leaving and r
  assert.notEqual(returned.fieldEntryStamp,oldStamp);
  assert.equal(returned.attackDrawGranted,undefined);
  assertUniversalMatch(packs,s);
- returned.attackDrawGranted={...oldGrant,stamp:returned.fieldEntryStamp,
-  beneficiaryUid:returned.uid};
+ returned.ready=true;
+ const freshDeck=s.players[0].deck.length;
+ const laterFoe=put(s,1,'CSM-1-060','front',0,true);
+ s=toPhase(s,'attack');
+ s=use(s,{type:'attack',uid:returned.uid});
+ assert.equal(s.pending?.kind,'block');
+ assert.equal(s.players[0].deck.length,freshDeck);
+ assert.equal(blockChoices(s).some(a=>a.uid===laterFoe.uid),true);
+ const body=live(s,0,target.uid);
+ body.attackDrawGranted={...oldGrant,stamp:body.fieldEntryStamp,
+  beneficiaryUid:body.uid};
  throwsForged(s,'Forged this-turn attack draw');
+});
+
+test('CSM-1-062 lets printed and alias Denji choose draw 0 or 1 before block',()=>{
+ for(const [seed,id] of [[6220,'CSM-1-049'],[6221,'CSM-1-048']]){
+  let s=open(seed,['CSM-1-062',id,'CSM-1-060']);
+  const beam=put(s,0,'CSM-1-062','front',0);
+  const denji=put(s,0,id,'front',1);
+  const foe=put(s,1,'CSM-1-060','front',0,true);
+  s=use(s,legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===beam.uid));
+  s=choose(s,a=>a.mode==='pick'&&a.uid===denji.uid);
+  assert.equal(live(s,0,denji.uid).attackDrawGranted.upTo,1);
+  s=toPhase(s,'attack');
+  const before=s.players[0].deck.length;
+  const topUid=s.players[0].deck[0].uid;
+  s=use(s,{type:'attack',uid:denji.uid});
+  assert.equal(s.pending?.kind,'effect-acquired-attack-draw');
+  assert.equal(s.players[0].deck.length,before);
+  assert.equal(s.attacksByUid[denji.uid],1);
+  assert.deepEqual(legalUniversalActions(packs,s).filter(a=>a.type==='chooseAcquiredAttackDraw')
+   .map(a=>a.mode),['skip','draw']);
+  assert.equal(V2_PENDING_LABELS[s.pending.kind],'已獲得的攻擊時抽牌，可抽 0 或 1 張');
+  assert.equal(uiActionLabel({type:'chooseAcquiredAttackDraw',mode:'draw'},{pack,state:s}),
+   '已獲得的攻擊時抽 1 張');
+  assert.equal(uiActionLabel({type:'chooseAcquiredAttackDraw',mode:'skip'},{pack,state:s}),
+   '不抽牌');
+  const ai=chooseUniversalAiAction(packs,s);
+  assert.equal(ai.type,'chooseAcquiredAttackDraw');
+  assert.equal(ai.mode,'draw');
+  const mine=universalPrivateChoices(packs,s,0);
+  assert.equal(mine.options.every(option=>option.card===null),true);
+  assert.equal(JSON.stringify(mine).includes('"'+topUid+'"'),false);
+  assert.equal(universalPrivateChoices(packs,s,1),null);
+  for(const viewer of [0,1])
+   assert.equal(JSON.stringify(universalPublicView(packs,s,viewer)).includes('"'+topUid+'"'),false);
+  const paused=structuredClone(s);
+  const skipped=drawChoice(paused,'skip');
+  assert.equal(skipped.players[0].deck.length,before);
+  assert.equal(skipped.players[0].hand.some(c=>c.uid===topUid),false);
+  assert.equal(skipped.pending?.kind,'block');
+  assert.equal(skipped.attacksByUid[denji.uid],1);
+  assert.equal(s.pending?.kind,'effect-acquired-attack-draw');
+  const drew=drawChoice(s,'draw');
+  assert.equal(drew.players[0].deck.length,before-1);
+  assert.equal(drew.players[0].hand.some(c=>c.uid===topUid),true);
+  assert.equal(drew.zoneMoveEvents.filter(e=>e.owner===0&&e.from==='deck'&&
+   e.to==='hand'&&e.uid===topUid).length,1);
+  assert.equal(drew.pending?.kind,'block');
+  assert.equal(drew.attacksByUid[denji.uid],1);
+  assert.throws(()=>use(drew,{type:'chooseAcquiredAttackDraw',mode:'draw'}),
+   /Action not currently legal/);
+  const blocked=use(drew,{type:'chooseBlock',uid:foe.uid});
+  assert.equal(blocked.players[0].deck.length,before-1);
+  assert.equal(blocked.attacksByUid[denji.uid],1);
+  assert.notEqual(blocked.pending?.kind,'effect-acquired-attack-draw');
+  assertUniversalMatch(packs,blocked);
+  assertUniversalMatch(packs,skipped);
+ }
+ let empty=open(6224,['CSM-1-062','CSM-1-049','CSM-1-060']);
+ const cost=put(empty,0,'CSM-1-062','front',0);
+ const denji=put(empty,0,'CSM-1-049','front',1);
+ put(empty,1,'CSM-1-060','front',0,true);
+ empty=use(empty,legalUniversalActions(packs,empty).find(a=>a.type==='activate'&&a.uid===cost.uid));
+ empty=choose(empty,a=>a.mode==='pick'&&a.uid===denji.uid);
+ empty=toPhase(empty,'attack');
+ const parked=empty.players[0].deck.length;
+ empty.players[0].removed.push(...empty.players[0].deck.splice(0));
+ empty=use(empty,{type:'attack',uid:denji.uid});
+ assert.equal(empty.pending?.kind,'block');
+ assert.equal(empty.players[0].deck.length,0);
+ assert.equal(empty.players[0].removed.length>=parked,true);
+ assert.equal(empty.attacksByUid[denji.uid],1);
+ assert.equal(legalUniversalActions(packs,empty).some(a=>a.type==='chooseAcquiredAttackDraw'),false);
+ assertUniversalMatch(packs,empty);
+});
+
+test('CSM-1-062 draw choice remains after the beneficiary loses original effects',()=>{
+ for(const [seed,id] of [[6222,'CSM-1-049'],[6223,'CSM-1-048']]){
+  let s=open(seed,['CSM-1-062',id,'CSM-1-060']);
+  const beam=put(s,0,'CSM-1-062','front',0);
+  const denji=put(s,0,id,'front',1);
+  const foe=put(s,1,'CSM-1-060','front',0,true);
+  s=use(s,legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===beam.uid));
+  s=choose(s,a=>a.mode==='pick'&&a.uid===denji.uid);
+  const receiver=live(s,0,denji.uid);
+  loseOriginal(s,receiver);
+  assert.equal(receiver.attackDrawGranted.upTo,1);
+  assertUniversalMatch(packs,s);
+  s=toPhase(s,'attack');
+  const before=s.players[0].deck.length;
+  const topUid=s.players[0].deck[0].uid;
+  s=use(s,{type:'attack',uid:denji.uid});
+  assert.equal(s.pending?.kind,'effect-acquired-attack-draw');
+  assert.equal(originalEffectsDisabled(s,live(s,0,denji.uid)),true);
+  assert.equal(s.players[0].deck.length,before);
+  s=drawChoice(s,'draw');
+  assert.equal(s.players[0].deck.length,before-1);
+  assert.equal(s.players[0].hand.some(c=>c.uid===topUid),true);
+  assert.equal(s.pending?.kind,'block');
+  assert.equal(s.attacksByUid[denji.uid],1);
+  s=use(s,{type:'chooseBlock',uid:foe.uid});
+  assert.equal(s.players[0].deck.length,before-1);
+  assert.equal(s.attacksByUid[denji.uid],1);
+  assertUniversalMatch(packs,s);
+ }
+});
+
+test('CSM-1-061 must-block remains after the beneficiary loses original effects',()=>{
+ for(const [seed,id] of [[6115,'CSM-1-049'],[6116,'CSM-1-048']]){
+  let s=open(seed,['CSM-1-061',id,'CSM-1-060','CSM-1-062']);
+  redFuel(s,0,['CSM-1-060','CSM-1-060','CSM-1-060']);
+  put(s,0,id,'front',1);
+  const power=toHand(s,0,'CSM-1-061');
+  s=play(s,power.uid);
+  const entered=live(s,0,power.uid);
+  assert.equal(universalBp(pack,s,entered),5000);
+  const foe=put(s,1,'CSM-1-062','front',0,true);
+  loseOriginal(s,entered);
+  assert.equal(universalBp(pack,s,entered),5000);
+  assert.equal(entered.mustBlockGranted?.witnessUid!==undefined,true);
+  assertUniversalMatch(packs,s);
+  entered.ready=true;
+  s=toPhase(s,'attack');
+  s=use(s,{type:'attack',uid:entered.uid});
+  const blocks=blockChoices(s);
+  assert.equal(blocks.some(a=>a.uid===null),false);
+  assert.equal(blocks.some(a=>a.uid===foe.uid),true);
+  s=use(s,{type:'chooseBlock',uid:foe.uid});
+  assert.equal(s.attacksByUid[entered.uid],1);
+  assertUniversalMatch(packs,s);
+ }
+});
+
+test('CSM-1-062 online submit draws once and both seats keep the deck private',()=>{
+ const required=['CSM-1-062','CSM-1-049','CSM-1-060'];
+ const counts=countsFor(required);
+ let match=open(6225,required);
+ const beam=put(match,0,'CSM-1-062','front',0);
+ const denji=put(match,0,'CSM-1-049','front',1);
+ const foe=put(match,1,'CSM-1-060','front',0,true);
+ match=use(match,legalUniversalActions(packs,match).find(a=>a.type==='activate'&&a.uid===beam.uid));
+ match=choose(match,a=>a.mode==='pick'&&a.uid===denji.uid);
+ match=toPhase(match,'attack');
+ const before=match.players[0].deck.length;
+ const topUid=match.players[0].deck[0].uid;
+ match=use(match,{type:'attack',uid:denji.uid});
+ assert.equal(match.pending?.kind,'effect-acquired-attack-draw');
+ const paused=structuredClone(match);
+ let room={code:'CSM06225',status:'playing',revision:1,first:0,match,log:[],updatedAt:1,
+  seats:[0,1].map(side=>({userId:'user'+side,username:'玩家'+side,title:'csm',battleCounts:counts}))};
+ const repos={pruneRooms(){},loadRoom:()=>structuredClone(room),saveRoom:r=>{room=structuredClone(r);}};
+ const host=dispatchRoom(repos,{op:'view',code:room.code,userId:'user0'},2).public;
+ const guest=dispatchRoom(repos,{op:'view',code:room.code,userId:'user1'},3).public;
+ assert.equal(host.yourTurn,true);
+ assert.equal(host.inspection,null);
+ assert.equal(guest.yourTurn,false);
+ assert.equal(guest.inspection,null);
+ assert.equal(guest.choices.length,0);
+ assert.equal(JSON.stringify(host).includes('"'+topUid+'"'),false);
+ assert.equal(JSON.stringify(guest).includes('"'+topUid+'"'),false);
+ const legal=legalUniversalActions(packs,room.match);
+ const drawIndex=legal.findIndex(a=>a.type==='chooseAcquiredAttackDraw'&&a.mode==='draw');
+ const skipIndex=legal.findIndex(a=>a.type==='chooseAcquiredAttackDraw'&&a.mode==='skip');
+ assert.equal(host.choices.some(choice=>choice.index===drawIndex&&choice.mode==='draw'&&
+  choice.label==='已獲得的攻擊時抽 1 張'),true);
+ assert.equal(host.choices.some(choice=>choice.index===skipIndex&&choice.mode==='skip'&&
+  choice.label==='不抽牌'),true);
+ assert.throws(()=>dispatchRoom(repos,{op:'act',code:room.code,userId:'user1',index:drawIndex},4));
+ dispatchRoom(repos,{op:'act',code:room.code,userId:'user0',index:drawIndex},5);
+ assert.equal(room.match.players[0].deck.length,before-1);
+ assert.equal(room.match.players[0].hand.some(c=>c.uid===topUid),true);
+ assert.equal(room.match.pending?.kind,'block');
+ assert.equal(room.match.attacksByUid[denji.uid],1);
+ const afterGuest=dispatchRoom(repos,{op:'view',code:room.code,userId:'user1'},6).public;
+ assert.equal(afterGuest.yourTurn,true);
+ assert.equal(afterGuest.inspection,null);
+ assert.equal(JSON.stringify(afterGuest).includes('"'+topUid+'"'),false);
+ assert.equal(legalUniversalActions(packs,room.match).some(a=>a.type==='chooseAcquiredAttackDraw'),false);
+ const blockIndex=legalUniversalActions(packs,room.match).findIndex(a=>
+  a.type==='chooseBlock'&&a.uid===foe.uid);
+ assert.equal(afterGuest.choices.some(choice=>choice.index===blockIndex&&choice.uid===foe.uid),true);
+ assert.throws(()=>dispatchRoom(repos,{op:'act',code:room.code,userId:'user0',index:drawIndex},7),
+  /現在不是你的回合/);
+ assert.equal(room.match.players[0].deck.length,before-1);
+ dispatchRoom(repos,{op:'act',code:room.code,userId:'user1',index:blockIndex},8);
+ assert.equal(room.match.players[0].deck.length,before-1);
+ assert.equal(room.match.attacksByUid[denji.uid],1);
+ assert.notEqual(room.match.pending?.kind,'effect-acquired-attack-draw');
+ const resumed=drawChoice(paused,'skip');
+ assert.equal(resumed.players[0].deck.length,before);
+ assert.equal(resumed.pending?.kind,'block');
+ assert.equal(resumed.attacksByUid[denji.uid],1);
+ assert.throws(()=>use(resumed,{type:'chooseAcquiredAttackDraw',mode:'skip'}),
+  /Action not currently legal/);
+ assertUniversalMatch(packs,room.match);
+ assertUniversalMatch(packs,resumed);
 });
 
 test('CSM-1-063 draws one and then puts one hand card outside',()=>{

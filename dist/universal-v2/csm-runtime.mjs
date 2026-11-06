@@ -1106,7 +1106,7 @@ export function resolveCsmPending(pack,s,action){
    throw Error('Chainsaw Man Beam grant has no retirement');
   event.csm062Grant={beneficiaryUid:t.uid,stamp:t.fieldEntryStamp};
   t.attackDrawGranted={turn:s.turn,stamp:t.fieldEntryStamp,sourceUid:q.sourceUid,
-   beneficiaryUid:t.uid};
+   beneficiaryUid:t.uid,upTo:1};
  }else if(step==='buffTwo'){
   if(a.mode==='pick'){
    buff(s,selfOf(s,owner,a.uid),1000);

@@ -654,9 +654,12 @@ test('SAO-1-091 looks at two cards only after an attacking battle win, then may 
   targetUid:body.uid,sourceLinked:false,until:{player:0,phase:'attack',edge:'end'}});
  const pawn=place(muted,1,take(muted,1,'SAO-1-001'),'front',0,true);
  muted=reach(silenced.packs,muted,x=>x.phase==='attack');
- assert.equal(legalUniversalActions(silenced.packs,muted).some(a=>a.targetUid),false);
- muted=use(silenced.packs,muted,a=>a.type==='attack'&&a.uid===body.uid);
- muted=dispatchUniversalAction(silenced.packs,muted,{type:'chooseBlock',uid:pawn.uid});
+ // Q974: the on-play sniper was already gained this turn, so losing original
+ // effects does not remove it. The printed battle-win look still turns off.
+ assert.equal(legalUniversalActions(silenced.packs,muted).some(a=>
+  a.type==='attack'&&a.uid===body.uid&&a.targetUid===pawn.uid),true);
+ muted=use(silenced.packs,muted,a=>a.type==='attack'&&a.uid===body.uid&&
+  a.targetUid===pawn.uid);
  assert.notEqual(muted.pending?.kind,'effect-top-order');
  assert.notEqual(muted.pending?.kind,'effect-buff-own');
  conserved(won);

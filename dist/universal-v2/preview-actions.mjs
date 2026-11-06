@@ -68,6 +68,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-hand-outside':'查看牌頂，1 張加入手牌、1 張送至場外',
  'effect-energy-trait-front':'可將能源線上具有指定特徵的角色移至前線',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
+ 'effect-acquired-attack-draw':'已獲得的攻擊時抽牌，可抽 0 或 1 張',
  'effect-optional-tuck-under':'可將牌庫頂 1 張蓋到此角色下方',
  'effect-facedown-outside':'選擇 1 張蓋牌放到場外',
  'effect-may-draw':'可抽1張牌',
@@ -989,6 +990,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
+  case 'chooseAcquiredAttackDraw':return action.mode==='draw'?'已獲得的攻擊時抽 1 張':'不抽牌';
   case 'chooseMayDrawDiscard':return action.mode==='draw'?
    '抽 1 張，再將 '+(state?.pending?.discardCount||1)+' 張手牌送至場外':'不抽牌、不棄牌';
   case 'chooseOptionalTuck':return action.mode==='tuck'?'將牌庫頂 1 張蓋到此角色下方':'不蓋牌';

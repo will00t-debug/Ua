@@ -137,6 +137,16 @@ dist/universal-v2/kmr-runtime.mjs 的對方角色選擇呼叫 effectChoiceProtec
 
 tests/v2-kmr-051-075.test.mjs
 
+### 已取得的效果不受失去原有效果影響
+
+Q974（2024-05-24，https://www.unionarena-tcg.com/jp/faq/list.php?number=974）：角色先取得其他卡授予的效果，之後失去原有效果，已取得的效果仍有效。自己的常時參照會關掉。CSM-1-062 印刷「カードを1枚まで引く」，攻擊時可以抽 0 或 1 張，而且要在阻擋前決定。
+
+dist/universal-v2/engine.mjs acquiredThisTurn、hasCurrentBattleGrant、offerAcquiredAttackDraw。dist/universal-v2/csm-runtime.mjs 的 attackDrawGranted 帶 upTo:1。印刷關鍵字、突襲框、aot2 與 kmr2 的來源句仍看 originalEffectsDisabled。
+
+本回合已寫進登場實例的必須阻擋、狙擊、戰鬥勝利抽牌、攻擊抽牌、事件授予的攻擊抽牌與活動、能源線攻擊，以及攻擊時跳過活動。CSM-1-061 的必須阻擋與 CSM-1-062 的 0 或 1 張抽牌，在受益者失去原有效果後仍在。沒有 upTo 的換線或自身攻擊抽牌維持抽 1 張。偽造、過期與再登場不能沿用舊紀錄。
+
+tests/v2-csm-061-080.test.mjs；tests/v2-sao-eight-shared-batches.test.mjs；tests/v2-sao-sixteen-left-ten.test.mjs；tests/v2-stg-batch21-30.test.mjs
+
 ## 已寫進台帳的條款
 
 - `CSM-1-001` UA53BT/CSM-1-001：已驗證。已驗證 【インパクト無効】（このキャラとバトルをしたキャ／已驗證 【ドロー】カードを1枚引く。
