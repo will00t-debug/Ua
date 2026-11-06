@@ -34,6 +34,9 @@ function dedupe(state,actor,legal){
  return out;
 }
 export function isSafeAction(action){
+ // extraDraw spends an action point and draws. It has no uid, but it is not
+ // a pass: folding it into the one safe slot kept only next.
+ if(action?.type==='extraDraw')return false;
  return action.type==='next'||action.mode==='skip'||action.mode==='decline'||action.uid==null;
 }
 function byText(a,b){
@@ -57,8 +60,10 @@ function compareRanked(pack,state,viewer,a,b,strategy){
  const noise=entryNoise(pack,state,viewer,a)-entryNoise(pack,state,viewer,b);
  if(noise)return noise;
  // Equal discards keep the card we want. A raid bonus must not make the
- // core the first thing thrown away.
- if(a.type==='chooseDiscard'&&a.type===b.type){
+ // core the first thing thrown away. The optional gate uses the same order;
+ // string order was discarding the cheap generator and never reaching the
+ // unaffordable event.
+ if((a.type==='chooseDiscard'||a.type==='chooseDiscardGate')&&a.type===b.type&&a.uid&&b.uid){
   const hand=state.players[viewer]?.hand||[];
   const left=keepScore(pack,state,viewer,hand.find(card=>card?.uid===a.uid));
   const right=keepScore(pack,state,viewer,hand.find(card=>card?.uid===b.uid));

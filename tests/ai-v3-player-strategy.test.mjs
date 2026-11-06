@@ -1111,3 +1111,272 @@ test('a normal blocker and a second blocker still cover the whole attack',()=>{
  play(true,false);
  play(false,true);
 });
+
+function devDeck(){
+ return deck({
+  'BLC-4-066':2,'BLC-1-083':4,'BLC-2-066':3,'BLC-2-069':2,
+  'BLC-2-067':4,'BLC-1-085':2,'BLC-2-073':2,'BLC-4-070':4,
+  'BLC-1-080':2,'BLC-4-005':4
+ });
+}
+function readyAp(state,player){
+ return state.players[player].apCards.filter(card=>card.inPlay&&card.ready).length;
+}
+function reachStart(ap){
+ const packs=[pack,pack];
+ const used=devDeck();
+ let state=newUniversalMatch(packs,{decks:[used,used],seed:21,first:0});
+ for(let guard=0;guard<120&&state.status==='playing';guard++){
+  if(state.active===0&&state.phase==='start'&&!state.pending&&readyAp(state,0)>=ap)break;
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>item.type==='next')||legal[0];
+  state=dispatchUniversalAction(packs,state,action);
+ }
+ assert.equal(state.phase,'start');
+ assert.equal(state.active,0);
+ assert.equal(state.pending,null);
+ assert.ok(readyAp(state,0)>=ap);
+ return {packs,state};
+}
+function wipeSide(state,player){
+ clearHand(state,player);
+ for(const line of ['front','energy']){
+  for(let slot=0;slot<4;slot++){
+   const card=state.players[player][line][slot];
+   if(!card)continue;
+   state.players[player].deck.push(card);
+   state.players[player][line][slot]=null;
+  }
+ }
+}
+function hold(state,player,ids){
+ const cards=ids.map(id=>take(state,player,id));
+ state.players[player].hand.push(...cards);
+ return cards;
+}
+function clockAsk(packs,state){
+ const actor=state.pending?.player??state.active;
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,structuredClone(state),{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ if(trace.reason!=='forced')assert.ok(trace.nodesUsed<=48);
+ if(trace.reason==='budget-fallback'){
+  assert.equal(trace.fallbackKind,'budget');
+  assert.equal(trace.incomplete,true);
+  assert.equal(trace.settled,false);
+ }
+ console.log('clock40',JSON.stringify({
+  action,reason:trace.reason,nodes:trace.nodesUsed??null,fallback:trace.fallbackKind??null,
+  executed:trace.coverage?.executed??null,roots:trace.coverage?.roots??null,
+  cutoff:trace.coverage?.reasons??null,over:trace.overSoft??null
+ }));
+ return {action,trace};
+}
+function passToMain(packs,state){
+ let cursor=state;
+ const passed=[];
+ for(let guard=0;guard<4&&cursor.phase!=='main';guard++){
+  assert.ok(cursor.phase==='start'||cursor.phase==='move');
+  const choice=ask(packs,cursor);
+  passed.push({phase:cursor.phase,type:choice.action.type,reason:choice.trace.reason,nodes:choice.trace.nodesUsed});
+  assert.equal(choice.action.type,'next');
+  cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:0});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ assert.equal(cursor.phase,'main');
+ return {cursor,passed};
+}
+
+test('an optional discard spends the unaffordable event and keeps the generator',()=>{
+ const {packs,state}=reachStart(2);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ place(state,0,take(state,0,'BLC-1-083'),'energy',0);
+ const played=take(state,0,'BLC-4-066');
+ const kept=hold(state,0,['BLC-4-066','BLC-2-069','BLC-2-067','BLC-2-067','BLC-1-085','BLC-2-073']);
+ state.players[0].hand.push(played);
+ setLife(state,0,7);
+ setLife(state,1,7);
+ state.players[0].apCards.forEach((card,index)=>{card.inPlay=index<2;card.ready=index<2;});
+ let cursor=state;
+ for(let guard=0;guard<4&&cursor.phase!=='main';guard++){
+  const step=legalUniversalActions(packs,cursor).find(action=>action.type==='next');
+  cursor=dispatchUniversalAction(packs,cursor,step,{actor:0});
+ }
+ assert.equal(cursor.phase,'main');
+ assert.equal(readyAp(cursor,0),2);
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ const play=legalUniversalActions(packs,cursor).find(action=>action.type==='play'&&action.uid===played.uid&&action.line==='energy');
+ assert.ok(play);
+ cursor=dispatchUniversalAction(packs,cursor,play,{actor:0});
+ assert.equal(cursor.pending?.kind,'effect-discard-gate');
+ assert.equal(readyAp(cursor,0),1);
+ assert.equal(universalEnergyByColor(packs,cursor,0).green,2);
+ assert.equal(cursor.players[0].front.filter(Boolean).length,0);
+ assert.equal(cursor.players[1].front.filter(Boolean).length,0);
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ const clock=clockAsk(packs,cursor);
+ const choice=ask(packs,cursor);
+ assert.equal(choice.action.type,'chooseDiscardGate');
+ assert.equal(choice.action.uid,kept[5].uid);
+ const clockCard=cursor.players[0].hand.find(card=>card.uid===clock.action.uid);
+ console.log('discard clock',clockCard?pack.cards[clockCard.cardId].name:clock.action.uid,clock.trace.reason,'nodes',clock.trace.nodesUsed,'over',clock.trace.overSoft);
+ cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:cursor.pending.player});
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ for(let guard=0;guard<6&&cursor.pending;guard++){
+  const step=ask(packs,cursor);
+  cursor=dispatchUniversalAction(packs,cursor,step.action,{actor:cursor.pending.player});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ assert.equal(cursor.pending,null);
+ assert.equal(cursor.players[0].hand.some(card=>card.uid===kept[5].uid),false);
+ assert.equal(cursor.players[0].outside.some(card=>card.uid===kept[5].uid),true);
+ assert.equal(cursor.players[0].hand.some(card=>card.uid===kept[0].uid),true);
+ assert.equal(cursor.players[0].energy.some(card=>card?.uid===played.uid),true);
+});
+
+test('a short energy line draws before it spends the only payable generator',()=>{
+ const {packs,state}=reachStart(3);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ place(state,0,take(state,0,'BLC-1-083'),'energy',0);
+ place(state,0,take(state,0,'BLC-2-066'),'energy',1);
+ const hand=hold(state,0,['BLC-2-067','BLC-2-067','BLC-2-067','BLC-1-085','BLC-2-073','BLC-4-070']);
+ const generator=hand[5];
+ place(state,1,take(state,1,'BLC-4-070'),'front',0);
+ setLife(state,0,7);
+ setLife(state,1,7);
+ const expensive=take(state,0,'BLC-1-080');
+ const cheap=take(state,0,'BLC-1-083');
+ state.players[0].deck.unshift(expensive,cheap);
+ assert.equal(readyAp(state,0),3);
+ assert.equal(universalEnergyByColor(packs,state,0).green,2);
+ assert.equal(state.players[0].front.filter(Boolean).length,0);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const swapped=structuredClone(state);
+ [swapped.players[0].deck[0],swapped.players[0].deck[1]]=[swapped.players[0].deck[1],swapped.players[0].deck[0]];
+ const clock=clockAsk(packs,state);
+ const drawn=ask(packs,state);
+ const again=ask(packs,swapped);
+ assert.equal(drawn.action.type,'extraDraw');
+ assert.deepEqual(again.action,drawn.action);
+ assert.equal(clock.action.type,'extraDraw');
+ let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ assert.equal(readyAp(cursor,0),2);
+ assert.equal(cursor.players[0].hand.length,7);
+ assert.equal(cursor.players[0].hand.some(card=>card.uid===expensive.uid),true);
+ const main=passToMain(packs,cursor);
+ cursor=main.cursor;
+ assert.equal(readyAp(cursor,0),2);
+ const first=ask(packs,cursor);
+ assert.equal(first.action.type,'play');
+ assert.equal(first.action.line,'energy');
+ assert.equal(first.action.uid,generator.uid);
+ cursor=dispatchUniversalAction(packs,cursor,first.action,{actor:0});
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ assert.equal(universalEnergyByColor(packs,cursor,0).green,3);
+ assert.equal(cursor.players[0].energy.some(card=>card?.uid===generator.uid),true);
+ assert.equal(readyAp(cursor,0),1);
+});
+
+test('a zero-cost draw and the one-cost generator both become energy',()=>{
+ const {packs,state}=reachStart(3);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ place(state,0,take(state,0,'BLC-2-066'),'energy',0);
+ place(state,0,take(state,0,'BLC-2-066'),'energy',1);
+ const hand=hold(state,0,['BLC-2-067','BLC-2-067','BLC-2-067','BLC-1-085','BLC-2-073','BLC-4-070']);
+ const generator=hand[5];
+ place(state,1,take(state,1,'BLC-1-080'),'front',0);
+ setBp(state,state.players[1].front[0],4000);
+ setLife(state,0,7);
+ setLife(state,1,7);
+ const zero=take(state,0,'BLC-1-083');
+ const other=take(state,0,'BLC-1-080');
+ state.players[0].deck.unshift(zero,other);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const hidden=structuredClone(state);
+ [hidden.players[0].deck[0],hidden.players[0].deck[1]]=[hidden.players[0].deck[1],hidden.players[0].deck[0]];
+ assert.deepEqual(ask(packs,hidden).action,ask(packs,state).action);
+ const drawn=ask(packs,state);
+ assert.equal(drawn.action.type,'extraDraw');
+ let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
+ assert.equal(cursor.players[0].hand.some(card=>card.uid===zero.uid),true);
+ assert.equal(readyAp(cursor,0),2);
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ cursor=passToMain(packs,cursor).cursor;
+ const played=[];
+ for(let step=0;step<4&&cursor.phase==='main'&&cursor.active===0&&!cursor.pending;step++){
+  const choice=ask(packs,cursor);
+  const card=cursor.players[0].hand.find(item=>item?.uid===choice.action.uid);
+  played.push(choice.action.type+':'+(choice.action.line||'')+':'+(card?.cardId||''));
+  if(choice.action.type==='next')break;
+  cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:0});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ assert.equal(cursor.players[0].energy.some(card=>card?.uid===zero.uid),true,played.join(' || '));
+ assert.equal(cursor.players[0].energy.some(card=>card?.uid===generator.uid),true,played.join(' || '));
+ assert.equal(universalEnergyByColor(packs,cursor,0).green,4);
+ assert.equal(readyAp(cursor,0),0);
+});
+
+test('a finished three-card plan still draws and keeps the spent action point',()=>{
+ const {packs,state}=reachStart(3);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ for(let slot=0;slot<3;slot++)place(state,0,take(state,0,'BLC-2-066'),'energy',slot);
+ const ours=[0,1].map(slot=>{
+  const card=take(state,0,'BLC-4-005');
+  place(state,0,card,'front',slot);
+  setBp(state,card,4000);
+  return card;
+ });
+ const theirs=[0,1].map(slot=>{
+  const card=take(state,1,'BLC-4-005');
+  place(state,1,card,'front',slot);
+  setBp(state,card,4000);
+  return card;
+ });
+ const hand=hold(state,0,['BLC-1-083','BLC-4-070','BLC-1-080']);
+ setLife(state,0,6);
+ setLife(state,1,6);
+ const low=take(state,0,'BLC-1-083');
+ const high=take(state,0,'BLC-2-067');
+ state.players[0].deck.unshift(high,low);
+ assert.equal(readyAp(state,0),3);
+ assert.equal(universalEnergyByColor(packs,state,0).green,3);
+ assert.equal(ours.length,2);
+ assert.equal(theirs.length,2);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const hidden=structuredClone(state);
+ [hidden.players[0].deck[0],hidden.players[0].deck[1]]=[hidden.players[0].deck[1],hidden.players[0].deck[0]];
+ const clock=clockAsk(packs,state);
+ const drawn=ask(packs,state);
+ assert.equal(drawn.action.type,'extraDraw');
+ assert.deepEqual(ask(packs,hidden).action,drawn.action);
+ assert.equal(clock.action.type,'extraDraw');
+ let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
+ assert.equal(readyAp(cursor,0),2);
+ assert.equal(cursor.players[0].hand.some(card=>card.uid===high.uid),true);
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ cursor=passToMain(packs,cursor).cursor;
+ assert.equal(readyAp(cursor,0),2);
+ const played=[];
+ for(let step=0;step<6&&cursor.phase==='main'&&cursor.active===0&&!cursor.pending;step++){
+  assert.ok(readyAp(cursor,0)<=2);
+  const choice=ask(packs,cursor);
+  const card=cursor.players[0].hand.find(item=>item?.uid===choice.action.uid);
+  played.push({type:choice.action.type,line:choice.action.line||null,id:card?.cardId||null,ap:readyAp(cursor,0),reason:choice.trace.reason,nodes:choice.trace.nodesUsed});
+  if(choice.action.type==='next')break;
+  cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:0});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ const spent=hand.filter(card=>!cursor.players[0].hand.some(item=>item.uid===card.uid));
+ assert.ok(spent.length<=2,JSON.stringify(played));
+ assert.ok(readyAp(cursor,0)<=2);
+ console.log('after draw',JSON.stringify(played));
+});

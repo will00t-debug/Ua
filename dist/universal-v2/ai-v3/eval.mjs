@@ -21,10 +21,40 @@ export function raidMaterialValue(pack,state,player,card){
  }
  return 0;
 }
+function colorsOf(pack,state,player){
+ try{return universalEnergyByColor(pack,state,player)||{};}
+ catch{return {};}
+}
+// What the discard window should hold onto. A payable generator is the energy
+// plan while something in hand still cannot be paid. A cheap body we can play
+// this turn stays. An event is worth keeping only when it can be paid at a
+// live opposing front; a duplicate is the easier copy to spend. Raid material
+// already on our side stays above all of those.
 export function keepScore(pack,state,player,card){
  const printed=packOf(pack,player).cards[card?.cardId];
  if(!printed)return 0;
- return (Number(printed.bp)||0)/400+(printed.gen||0)*2+raidMaterialValue(pack,state,player,card);
+ let score=(Number(printed.bp)||0)/400+(printed.gen||0)*2+raidMaterialValue(pack,state,player,card);
+ const colors=colorsOf(pack,state,player);
+ const have=colors[printed.color]||0;
+ const cost=Number(printed.energy)||0;
+ const payable=cost<=have;
+ const ready=(state.players?.[player]?.apCards||[]).filter(item=>item?.ready).length;
+ const hand=state.players?.[player]?.hand||[];
+ const catalog=packOf(pack,player).cards;
+ let stranded=0;
+ for(const other of hand){
+  const body=catalog[other?.cardId];
+  if(body&&(Number(body.energy)||0)>(colors[body.color]||0))stranded++;
+ }
+ if(payable&&printed.gen>0&&stranded>0)score+=6;
+ if(payable&&printed.type==='character'&&cost<=1&&ready>0)score+=3;
+ if(printed.type==='event'){
+  const foes=(state.players?.[1-player]?.front||[]).filter(Boolean);
+  if(payable&&foes.length)score+=6;
+ }
+ const copies=hand.filter(other=>other?.cardId===card.cardId).length;
+ if(copies>1)score-=Math.min(3,copies-1);
+ return score;
 }
 function lifeScore(n){
  if(n<=0)return -90000;

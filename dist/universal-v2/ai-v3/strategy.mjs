@@ -425,19 +425,94 @@ function blockerLives(pack,state,viewer,action){
  if(!card||!attacker)return false;
  return bpOf(pack,state,card)>=bpOf(pack,state,attacker);
 }
+function unblockedHits(pack,state,actor){
+ const threats=(state.players?.[1-actor]?.front||[]).filter(card=>card?.ready);
+ const ours=(state.players?.[actor]?.front||[]).filter(Boolean);
+ const used=new Set();
+ let hits=0;
+ for(const threat of threats){
+  const bp=bpOf(pack,state,threat);
+  const block=ours.find(body=>!used.has(body.uid)&&bpOf(pack,state,body)>=bp);
+  if(block)used.add(block.uid);
+  else hits++;
+ }
+ return hits;
+}
+function energyPlay(pack,state,uid){
+ try{
+  return legalUniversalActions(pack,state).find(action=>action?.type==='play'&&action.line==='energy'&&action.uid===uid)||null;
+ }catch{return null;}
+}
+function payableCharacters(pack,state,actor){
+ const catalog=packOf(pack,actor).cards;
+ const colors=colorsOf(pack,state,actor);
+ let count=0;
+ for(const card of state.players?.[actor]?.hand||[]){
+  const printed=catalog[card?.cardId];
+  if(!printed||printed.type!=='character')continue;
+  if((Number(printed.energy)||0)<=(colors[printed.color]||0))count++;
+ }
+ return count;
+}
+function reachesStranded(pack,state,actor,printed,extra=0){
+ const colors=colorsOf(pack,state,actor);
+ const have=(colors[printed.color]||0)+(Number(printed.gen)||0)+extra;
+ const catalog=packOf(pack,actor).cards;
+ for(const card of state.players?.[actor]?.hand||[]){
+  const body=catalog[card?.cardId];
+  if(!body||body===printed||body.color!==printed.color)continue;
+  const cost=Number(body.energy)||0;
+  if(cost>(colors[body.color]||0)&&cost<=have)return true;
+ }
+ return false;
+}
+function partnerEnergy(pack,state,actor,printed,uid){
+ const colors=colorsOf(pack,state,actor);
+ const catalog=packOf(pack,actor).cards;
+ let extra=0;
+ for(const card of state.players?.[actor]?.hand||[]){
+  if(!card||card.uid===uid)continue;
+  const body=catalog[card.cardId];
+  if(!body||body.type!=='character'||!(body.gen>0)||body.color!==printed.color)continue;
+  if((Number(body.energy)||0)>(colors[body.color]||0))continue;
+  extra+=Number(body.gen)||0;
+ }
+ return extra;
+}
+// Life can spare the body when the hits we cannot already block would still
+// leave four or more. Below that the generator stays a front candidate.
+function spareForEnergy(pack,state,actor){
+ const life=state.players?.[actor]?.life?.length||0;
+ if(life<4)return false;
+ return life-unblockedHits(pack,state,actor)>=4;
+}
 // A small generator's front line can finish, or stop early with a higher raw
 // score, while its energy line is still cut. That is not a reason to put the
-// generator on the front. A 4000 body is a different play and stays where the
-// search put it. The redirect applies only when the energy line did not get
-// home, and either a payable 4000 is still in hand with AP left for both, or
-// a body is already on the front and this front line merely got home first.
+// generator on the front. A 4000 generator follows the same energy line when
+// the hand is still short and the life total can take the open swings.
+// A 4000 that is needed to stay at four life stays where the search put it.
 export function preferEnergyGenerator(pack,state,actor,choice,rows){
  if(choice?.type!=='play'||choice.line!=='front'||!choice.uid)return choice;
  const catalog=packOf(pack,actor).cards;
  const hand=state.players?.[actor]?.hand||[];
  const chosen=hand.find(card=>card?.uid===choice.uid);
  const printed=chosen&&catalog[chosen.cardId];
- if(!printed||!(printed.gen>0)||(Number(printed.bp)||0)>=4000)return choice;
+ if(!printed||!(printed.gen>0))return choice;
+ const parts=strategyParts(pack,state,actor);
+ // A 4000 that still generates goes to energy when the hand cannot pay its
+ // curve and this is the only body we can play, or this one energy reaches
+ // a card that is stranded now. Another payable body keeps the front line.
+ if((Number(printed.bp)||0)>=4000){
+  const alone=payableCharacters(pack,state,actor)<=1;
+  const pressure=(state.players?.[1-actor]?.front||[]).some(card=>card?.ready);
+  const withPartner=pressure&&reachesStranded(pack,state,actor,printed,partnerEnergy(pack,state,actor,printed,choice.uid));
+  if(spareForEnergy(pack,state,actor)&&(parts.deficit>0||parts.stranded>0)&&
+   (alone||reachesStranded(pack,state,actor,printed)||withPartner)){
+   const energy=energyPlay(pack,state,choice.uid);
+   if(energy)return energy;
+  }
+  return choice;
+ }
  const front=rows.find(row=>row?.action?.type==='play'&&row.action.line==='front'&&row.action.uid===choice.uid);
  const energy=rows.find(row=>row?.action?.type==='play'&&row.action.line==='energy'&&row.action.uid===choice.uid&&row.executed!==false);
  if(!energy||energy.boundary==='terminal')return choice;
@@ -458,6 +533,31 @@ export function preferEnergyGenerator(pack,state,actor,choice,rows){
  const frontHasBody=(state.players?.[actor]?.front||[]).some(Boolean);
  if(mainWaiting||(front?.boundary==='returned'&&frontHasBody))return energy.action;
  return choice;
+}
+// The start-phase draw spends one AP and is scored on the belief deck, not
+// the live top. When the hand is still short of energy and one AP remains
+// afterwards, take the draw and plan the main from the card that arrives.
+// A proven win without the draw, or a proven loss from the draw, stays.
+export function preferEarlyDraw(pack,state,actor,choice,rows){
+ if(state?.phase!=='start'||state.pending)return choice;
+ if(choice?.type==='extraDraw')return choice;
+ let draw=null;
+ try{draw=legalUniversalActions(pack,state).find(action=>action?.type==='extraDraw')||null;}
+ catch{draw=null;}
+ if(!draw)return choice;
+ const ready=(state.players?.[actor]?.apCards||[]).filter(card=>card?.ready).length;
+ if(ready<2)return choice;
+ const life=state.players?.[actor]?.life?.length||0;
+ const front=(state.players?.[actor]?.front||[]).filter(Boolean).length;
+ const threats=(state.players?.[1-actor]?.front||[]).filter(card=>card?.ready).length;
+ if(life<=3&&!front&&threats)return choice;
+ const parts=strategyParts(pack,state,actor);
+ if(parts.deficit<=0&&parts.stranded<=0)return choice;
+ const loss=(rows||[]).find(row=>row?.action?.type==='extraDraw'&&row.boundary==='terminal'&&row.search<=-90000);
+ if(loss)return choice;
+ const win=(rows||[]).find(row=>row?.action?.type==='next'&&row.boundary==='terminal'&&row.search>=90000);
+ if(win)return choice;
+ return draw;
 }
 // A cut search used to copy the energy-before-front rank. That is right when
 // the line still needs a generator. It is the wrong backup once current

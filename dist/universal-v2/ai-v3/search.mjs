@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferEarlyDraw} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -70,7 +70,7 @@ function reliableChoice(pack,state,actor,legal,hardExact,ordered){
   });
  };
  if(kind.startsWith('effect-discard')){
-  const discards=legal.filter(action=>action.uid&&action.type==='chooseDiscard');
+  const discards=legal.filter(action=>action.uid&&(action.type==='chooseDiscard'||action.type==='chooseDiscardGate'));
   if(discards.length)return ranked(discards)[0];
  }
  if(kind==='effect-recover-ap')return legal.find(action=>action.uid)||hardExact||legal[0];
@@ -510,7 +510,8 @@ export function chooseAiV3Action(pack,state,options={}){
   const energySample=legal.find(action=>action.type==='move');
   const energyView=diagnose&&energySample?cachedMoveDevelopment(pack,state,actor,energySample):null;
   if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
-   const kept=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
+   const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
+   const kept=preferEarlyDraw(pack,state,actor,placed,scored);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -526,7 +527,7 @@ export function chooseAiV3Action(pack,state,options={}){
    },started);
   }
   if(!scored.length){
-   const backupOnly=keptEnergy(pack,state,actor,legal,reliableChoice(pack,state,actor,legal,hardExact,ordered),null,strategy);
+   const backupOnly=preferEarlyDraw(pack,state,actor,keptEnergy(pack,state,actor,legal,reliableChoice(pack,state,actor,legal,hardExact,ordered),null,strategy),[]);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -549,7 +550,8 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched',()=>{settle();return spent();});
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
-  const kept=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
+  const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
+  const kept=preferEarlyDraw(pack,state,actor,placed,scored);
   const keptRow=scored.find(item=>same(item.action,kept))||row;
   if(keptRow?.settled)report.settledChoices++;
   settle();
