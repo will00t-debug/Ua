@@ -22,6 +22,16 @@ function use(s,key){if(!used(s,key))s.mainAbilityUsedUids.push(key);}
 function lock(s,owner,key){if(!s.mainReadyOnceByName[owner].includes(key))s.mainReadyOnceByName[owner].push(key);}
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
 function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+// Q94: a character reduced to 0 BP or below leaves by the rule, not as an
+// opponent character effect. The shared effect-target path already does this.
+function applyBp(pack,s,owner,uid,delta){
+ const c=selfOf(s,owner,uid);
+ buff(s,c,delta);
+ if(!c||!delta||A.bp(pack,s,c)>0)return false;
+ const loc=locOf(s,owner,c.uid);
+ if(!loc)return false;
+ return A.retire(pack,s,owner,loc.line,loc.slot,{by:'rule'})===true;
+}
 function impact(s,c){c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function ceiling(s,source,target){
  target.blockAtLeastGranted={turn:s.turn,stamp:target.fieldEntryStamp,bp:4000};
@@ -287,7 +297,9 @@ function offerOppBottom(s,owner,sourceUid,id){
 }
 function layBottom(s,owner,uids,sourceUid){
  // Q2137: these cards start in outside. A deck reorder cannot see them.
- for(const uid of uids){
+ // The first card the opponent chooses becomes the bottom-most, matching
+ // the closed look window that places the first selection at the bottom.
+ for(const uid of uids.slice().reverse()){
   if(!plOf(s,owner).outside.some(c=>c.uid===uid))continue;
   moveUid(A.pack,s,owner,'outside',uid,'deck',sourceUid);
  }
@@ -352,7 +364,7 @@ function runPlay(pack,s,job){
   const top=plOf(s,owner).deck[0];
   const home=hosts(s,owner);
   if(!home.length)return;
-  hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'topOrUnder',data:{uid:top.uid}},[
+  hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'topOrUnder',data:{uid:top.uid,uids:[top.uid]}},[
    {type:'iys',mode:'top'},...home.map(c=>({type:'iys',mode:'host',uid:c.uid}))]);
   return;
  }
@@ -644,7 +656,7 @@ export function resolveIysPending(pack,s,action){
   if(a.mode==='host')tuck(pack,s,q.player,'deck',q.data.uid,selfOf(s,q.player,a.uid),q.sourceUid);
  }else if(step==='oppBottom')continueBottom(s,q,a);
  else if(step==='debuff'&&a.mode==='pick'){
-  const c=selfOf(s,1-q.player,a.uid);buff(s,c,-1000*(q.data.scale||0));
+  applyBp(pack,s,1-q.player,a.uid,-1000*(q.data.scale||0));
  }else if(step==='retireOwn'&&a.mode==='pick'){
   retireUid(pack,s,q.player,a.uid);
   if(!s.pending&&q.id==='IYS-1-039')maybeTuckEvent(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id});
@@ -673,8 +685,12 @@ export function resolveIysPending(pack,s,action){
   offerNarakuRetire(s,{player:q.player,sourceUid:q.sourceUid,id:q.id},true);
  }else if(step==='retireNaraku')retireUid(pack,s,q.player,a.uid);
  else if(step==='debuffOptional'){
-  if(a.mode==='pick'){const c=selfOf(s,1-q.player,a.uid);buff(s,c,-1000);}
-  afterDebuff(pack,s,q);
+  if(a.mode==='pick'){
+   const paused=applyBp(pack,s,1-q.player,a.uid,-1000);
+   if(paused&&s.pending?.kind==='iys')s.pending.data={...(s.pending.data||{}),
+    resume:'afterDebuff',resumePlayer:q.player,resumeSource:q.sourceUid,resumeId:q.id};
+  }
+  if(!s.pending)afterDebuff(pack,s,q);
  }else if(step==='replaceKit'){
   const c=selfOf(s,q.player,q.sourceUid);
   if(c&&a.mode==='double'){A.active(s,q.player,c);doubleAttack(s,c);}
@@ -701,6 +717,13 @@ export function resolveIysPending(pack,s,action){
   A.draw(pack,s,q.player,2,q.sourceUid);
   if(!offerOwnRetire(s,{player:q.player,sourceUid:q.sourceUid,id:q.id}))
    maybeTuckEvent(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id});
+ }
+ if(q.data?.resume==='afterDebuff'){
+  const spec={player:q.data.resumePlayer,sourceUid:q.data.resumeSource,id:q.data.resumeId};
+  if(!s.pending)afterDebuff(pack,s,spec);
+  else if(s.pending.kind==='iys'&&s.pending.id!==spec.id&&s.pending.data?.resume!=='afterDebuff')
+   s.pending.data={...(s.pending.data||{}),resume:'afterDebuff',
+    resumePlayer:spec.player,resumeSource:spec.sourceUid,resumeId:spec.id};
  }
  go(pack,s);
 }
