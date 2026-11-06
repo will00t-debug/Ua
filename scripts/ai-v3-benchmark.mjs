@@ -224,7 +224,7 @@ for(const deck of decks){
   const samples=[];
   const walls=[];
   let fallback=0,budgetFallback=0,search=0,settledChoices=0,forced=0,decisions=0,illegal=0,finished=0;
-  let nodes=0,followBranches=0,maxDepth=0,responses=0;
+  let nodes=0,followBranches=0,maxDepth=0,responses=0,rootPlanned=0,rootExecuted=0;
   let onlyNext=0,voluntaryNext=0,passedDevelopment=0,autonomous=0;
   const games=[];
   for(let g=0;g<GAMES;g++){
@@ -262,6 +262,8 @@ for(const deck of decks){
     settledChoices+=mode==='baseline'?0:(learned.settledChoices||0);
     forced+=mode==='baseline'?0:(learned.forced||0);
     nodes+=learned.nodes||0;
+    rootPlanned+=learned.rootPlanned||0;
+    rootExecuted+=learned.rootExecuted||0;
     followBranches+=learned.followBranches||0;
     responses+=learned.responses||0;
     maxDepth=Math.max(maxDepth,learned.maxDepth||0);
@@ -287,7 +289,9 @@ for(const deck of decks){
    finishedRate:rows.length?finished/rows.length:0,
    completion:rows.length?rows.filter(row=>row.finished||row.steps>=STEPS&&!row.illegal).length/rows.length:0,
    fallbackRate:decisions?fallback/decisions:0,
-   search,forced,nodes,followBranches,maxDepth,responses,
+   search,forced,nodes,rootPlanned,rootExecuted,
+   rootCoverage:rootPlanned?rootExecuted/rootPlanned:0,
+   followBranches,maxDepth,responses,
    // choiceRate is a compared choice. It does not mean the selected line settled.
    choiceRate:decisions?search/decisions:0,
    completedSearchRate:decisions?search/decisions:0,

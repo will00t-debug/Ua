@@ -30,7 +30,7 @@ const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
 function emptyReport(){
  return {decisions:0,forced:0,deferred:0,search:0,settledChoices:0,prior:0,ismcts:0,fallback:0,
   budgetFallback:0,budget:0,unsupported:0,ms:0,maxMs:0,nodes:0,basicNodes:0,deepNodes:0,samples:[],
-  followBranches:0,maxDepth:0,responses:0};
+  rootPlanned:0,rootExecuted:0,followBranches:0,maxDepth:0,responses:0};
 }
 let report=emptyReport();
 let lastTrace=null;
@@ -416,6 +416,8 @@ export function chooseAiV3Action(pack,state,options={}){
    }
    if(typeof options.onRootDone==='function')options.onRootDone({index,action:jobs[index],executed:!!row&&!row.failed});
   }
+  report.rootPlanned+=jobs.length;
+  report.rootExecuted+=held.length;
   const deferDeep=action=>isSafeAction(action)||!!moveDevelopment(pack,state,actor,action)?.strip;
   const deepen=[...held.keys()].sort((a,b)=>Number(deferDeep(held[a].action))-Number(deferDeep(held[b].action)));
   for(let cursor=0;cursor<deepen.length;cursor++){
