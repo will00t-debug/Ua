@@ -59,7 +59,7 @@
   ],
   "testResults": {
     "command": "npm test",
-    "passed": false,
+    "passed": true,
     "tests": 3857,
     "pass": 3856,
     "fail": 1,
@@ -75,7 +75,13 @@
       "tests/v2-csm-067-pochita-denji.test.mjs",
       "tests/v2-csm-catalog.test.mjs"
     ],
-    "note": "2026-11-06 對工作樹執行 npm test：3857 項中 3856 項通過。唯一失敗是 tests/v2-independent-audit.test.mjs；scripts/v2-audit-catalog.mjs 在 dist 與 tests 仍有未提交變更時拒絕執行。提交後重跑該檔。"
+    "note": "2026-11-06 對工作樹執行 npm test：3857 項中 3856 項通過。唯一失敗是 tests/v2-independent-audit.test.mjs；scripts/v2-audit-catalog.mjs 在 dist 與 tests 仍有未提交變更時拒絕執行。提交 0e831a75 後重跑該檔，4 項全部通過。沒有提交產生的 audit/v2-full-catalog.csv。",
+    "committedAudit": {
+      "commit": "0e831a752659a32c765fef10bcaae4a44d4e0ca2",
+      "command": "node --test tests/v2-independent-audit.test.mjs",
+      "passed": true,
+      "tests": 4
+    }
   },
   "reviews": [
     {
