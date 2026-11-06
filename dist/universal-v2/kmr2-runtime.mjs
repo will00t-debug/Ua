@@ -38,7 +38,7 @@ function hold(s,spec,actions){
 }
 function sig(a){
  return JSON.stringify([a?.type,a?.mode,a?.uid??null,a?.line??null,a?.slot??null,
-  a?.replaceUid??null,a?.baseUid??null,a?.key??null,a?.ready??null,a?.from??null,a?.skip??null]);
+  a?.replaceUid??null,a?.baseUid??null,a?.key??null,a?.ready??null,a?.from??null,a?.skipOnPlay??null]);
 }
 function takeAction(q,a){
  const hit=(q.actions||[]).find(x=>sig(x)===sig(a));
@@ -214,18 +214,21 @@ function memoryEntry(c,s){
  const mark=c?.kmr2EnteredBy;
  return !!mark&&mark.turn===s.turn&&(mark.name===MEM||mark.id==='KMR-2-059');
 }
-function askEnter(s,spec,uid,ready,from,skip,next,lines){
+// optional is only the decline. skipOnPlay is only the entry action.
+// A printed てもよい must be able to stay where it is without suppressing 登場時.
+function askEnter(s,spec,uid,ready,from,optional,next,lines,skipOnPlay){
  const pl=plOf(s,spec.player);
  const allowed=Array.isArray(lines)&&lines.length?lines:['front','energy'];
  const actions=[];
  for(const line of allowed)
   for(const choice of A.destinations(pl,line))
    actions.push({type:'kmr2',mode:'enter',uid,line,slot:choice.slot,
-    replaceUid:choice.replaceUid??null,ready,from,skip:skip===true});
+    replaceUid:choice.replaceUid??null,ready,from,skipOnPlay:skipOnPlay===true});
  if(!actions.length)return false;
- if(skip===true)actions.unshift({type:'kmr2',mode:'skip'});
+ if(optional===true)actions.unshift({type:'kmr2',mode:'skip'});
  const carried=spec.data&&typeof spec.data==='object'?{...spec.data}:{};
- return hold(s,{...spec,step:'enter',data:{...carried,uid,ready,from,skip:skip===true,next:next||null}},actions);
+ return hold(s,{...spec,step:'enter',data:{...carried,uid,ready,from,
+  optional:optional===true,skipOnPlay:skipOnPlay===true,next:next||null}},actions);
 }
 // Up to N matching cards. The player picks which card, including none when the
 // print says まで. The first card is not taken automatically.
@@ -247,7 +250,7 @@ function offerEnter(s,spec,pool,opts={}){
 }
 function doEnter(pack,s,owner,a,sourceUid){
  A.enter(pack,s,{owner,from:a.from,uid:a.uid,line:a.line,slot:a.slot,
-  replaceUid:a.replaceUid||undefined,ready:a.ready===true,sourceUid,skipOnPlay:a.skip===true});
+  replaceUid:a.replaceUid||undefined,ready:a.ready===true,sourceUid,skipOnPlay:a.skipOnPlay===true});
 }
 function restCard(s,owner,c,sourceUid){
  if(!c)return;
@@ -849,7 +852,7 @@ function removedReact(pack,s,job){
  const as032=id==='KMR-2-032'||copied.includes('KMR-2-032');
  const selfEffect=source===id||source==='KMR-2-035'&&as035;
  if(as035&&selfEffect){
-  askEnter(s,specOf(job),card.uid,false,'removed',false,null);
+  askEnter(s,specOf(job),card.uid,false,'removed',true,null,null,false);
   return;
  }
  if(as030){askEnter(s,specOf(job),card.uid,false,'removed',true,null);return;}
@@ -1396,8 +1399,9 @@ function resolveStep(pack,s,q,a){
    deployNext:q.data.next,deployStop:q.data.stop!==false
   }:{};
   const next=chain?'deployMore':(q.data.next||null);
+  const skipPlay=q.data.skipOnPlay===true;
   const placed=askEnter(s,{...spec,data:carried},hit.uid,q.data.ready===true,q.data.from||'hand',
-   q.data.skipOnPlay===true,next,q.data.lines);
+   skipPlay,next,q.data.lines,skipPlay);
   if(!placed){
    s.pending=null;
    if(q.data?.next==='removeSelf')

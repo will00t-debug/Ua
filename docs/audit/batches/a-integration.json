@@ -43,8 +43,19 @@
     "open": [
       "KMR-1-021 的攻擊階段突襲句",
       "KMR-2-034 登場時的觸發效果選擇",
-      "KMR-2-035 被自己的效果移除後，接手牌或改休息登場仍可放棄",
-      "鍊鋸人裡向卡的對手視角沒有重測"
+      "鍊鋸人裡向卡的對手視角沒有另開瀏覽器重測"
     ]
+  },
+  "round3": {
+    "checked": "2026-11-06",
+    "baseline": "fad8be045910fbac211abfda6266763cf6b88885",
+    "delivered": [],
+    "missing": [
+      {"group": "B", "branch": "cursor/audit-b3-csm-061-080"},
+      {"group": "C", "branch": "cursor/audit-c3-kmr1-051-075"},
+      {"group": "D", "branch": "cursor/audit-d3-kmr2-041-060"}
+    ],
+    "shared": "KMR-2-035 的休息登場改為可放棄。askEnter 的放棄和 skipOnPlay 分開。060 仍同時不選位置並跳過登場時。",
+    "matrix": "原五作品 60 場保留。另加鍊鋸人紫、假面騎士第一彈黃、第二彈藍，對彼此與對死神綠，兩種子、先後手，共 24 場。"
   }
 }

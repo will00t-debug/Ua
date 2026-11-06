@@ -5,6 +5,8 @@ import {createKmrBattlePack} from '../dist/universal-v2/official-entry.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
  universalBp,universalCardEnergy,universalImpact,universalImpactNull}
  from '../dist/universal-v2/engine.mjs';
+import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {noteKmr2Zone} from '../dist/universal-v2/kmr2-runtime.mjs';
 
 const pack=createKmrBattlePack();
 const packs=[pack,pack];
@@ -531,8 +533,8 @@ test('KMR-2-030 impact needs three non-Fourze students, and its raid attack can 
  assert.equal(state.players[1].removed.some(card=>card.uid===foe.uid),true);
  assert.notEqual(state.pending?.kind,'block');
  while(state.pending?.id==='KMR-2-030'||state.pending?.id==='KMR-2-032'){
-  const choice=state.pending.actions.find(action=>action.mode==='skip')||state.pending.actions[0];
-  if(choice.mode!=='skip')break;
+  const choice=state.pending.actions.find(action=>action.mode==='skip');
+  assert.ok(choice, state.pending.id+' has a decline');
   state=dispatchUniversalAction(packs,state,choice);
  }
  assert.equal(state.players[0].removed.some(card=>card.uid===attacker.uid),true);
@@ -561,7 +563,11 @@ test('KMR-2-030 re-entry after the attack ends does not open a block',()=>{
  let guard=0;
  while(state.pending&&guard++<8){
   const enter=state.pending.actions.find(action=>action.mode==='enter');
-  if(enter){state=dispatchUniversalAction(packs,state,enter);break;}
+  if(enter){
+   assert.notEqual(enter.skipOnPlay,true);
+   state=dispatchUniversalAction(packs,state,enter);
+   break;
+  }
   const skip=state.pending.actions.find(action=>action.mode==='skip');
   assert.ok(skip);
   state=dispatchUniversalAction(packs,state,skip);
@@ -569,7 +575,7 @@ test('KMR-2-030 re-entry after the attack ends does not open a block',()=>{
  assert.equal([...state.players[0].front,...state.players[0].energy].some(card=>card?.uid===attacker.uid),true);
  while(state.pending&&guard++<12){
   const skip=state.pending.actions.find(action=>action.mode==='skip');
-  if(!skip)break;
+  assert.ok(skip, state.pending.id+' has a decline');
   state=dispatchUniversalAction(packs,state,skip);
  }
  assert.notEqual(state.pending?.kind,'block');
@@ -577,32 +583,146 @@ test('KMR-2-030 re-entry after the attack ends does not open a block',()=>{
  assertUniversalMatch(packs,state);
 });
 
-test('KMR-2-035 removes itself and the blocker at attack end after losing the battle',()=>{
- const counts=fill(['KMR-2-035','KMR-2-028','KMR-2-036','KMR-2-040','KMR-2-019']);
- const s=fresh(counts);
- const rider=put(s,0,'KMR-2-035','front',0,true);
+function school(s){
  put(s,0,'KMR-2-028','energy',0,true);
  put(s,0,'KMR-2-036','front',1,true);
  put(s,0,'KMR-2-040','front',2,true);
- const wall=put(s,1,'KMR-2-019','front',0,true);
- ready(s);
+}
+function loseBattle(s,attacker,blocker){
  let state=act(s,action=>action.type==='next');
- state=dispatchUniversalAction(packs,state,{type:'attack',uid:rider.uid});
- state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:wall.uid});
- let guard=0;
- while(state.pending&&guard++<8){
-  const skip=state.pending.actions.find(action=>action.mode==='skip');
-  if(!skip)break;
-  state=dispatchUniversalAction(packs,state,skip);
- }
- assert.equal(state.players[0].front.some(card=>card?.uid===rider.uid),false);
- assert.equal(state.players[1].front.some(card=>card?.uid===wall.uid),false);
- assert.equal(state.players[0].removed.some(card=>card.uid===rider.uid),true);
- assert.equal(state.players[1].removed.some(card=>card.uid===wall.uid),true);
+ state=dispatchUniversalAction(packs,state,{type:'attack',uid:attacker});
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:blocker});
+ return state;
+}
+function once(zone,uid){
+ return zone.filter(card=>card?.uid===uid).length;
+}
+
+test('KMR-2-035 can decline the rested entry after its own effect removes it',()=>{
+ const counts=fill(['KMR-2-035','KMR-2-028','KMR-2-036','KMR-2-040','KMR-2-019']);
+ const declined=fresh(counts);
+ const rider=put(declined,0,'KMR-2-035','front',0,true);
+ school(declined);
+ const wall=put(declined,1,'KMR-2-019','front',0,true);
+ ready(declined);
+ let state=loseBattle(declined,rider.uid,wall.uid);
+ assert.equal(once(state.players[0].removed,rider.uid),1);
+ assert.equal(once(state.players[1].removed,wall.uid),1);
  assert.equal(state.pending?.id,'KMR-2-035');
  assert.equal(state.pending?.step,'enter');
- state=dispatchUniversalAction(packs,state,state.pending.actions.find(action=>action.mode==='skip')||
-  state.pending.actions[0]);
+ const skip=state.pending.actions.find(action=>action.mode==='skip');
+ assert.ok(skip);
+ assert.equal(uiActionLabel(skip,{pack:packs,state}),'不登場，留在移除區');
+ for(const enter of state.pending.actions.filter(action=>action.mode==='enter'))
+  assert.notEqual(enter.skipOnPlay,true);
+ state=dispatchUniversalAction(packs,state,skip);
+ assert.equal(once(state.players[0].removed,rider.uid),1);
+ assert.equal([...state.players[0].front,...state.players[0].energy].some(card=>card?.uid===rider.uid),false);
+ assert.equal(state.pending,null);
+ assert.equal(state.phase,'attack');
+ assert.notEqual(state.pending?.kind,'block');
+ assert.equal(legal(state).some(action=>action.type==='kmr2'&&action.uid===rider.uid),false);
+ assertUniversalMatch(packs,state);
+
+ const accepted=fresh(counts);
+ const coming=put(accepted,0,'KMR-2-035','front',0,true);
+ school(accepted);
+ const blocker=put(accepted,1,'KMR-2-019','front',0,true);
+ ready(accepted);
+ state=loseBattle(accepted,coming.uid,blocker.uid);
+ const enter=state.pending.actions.find(action=>action.mode==='enter'&&action.line==='front'&&action.slot===0);
+ assert.ok(state.pending.actions.some(action=>action.mode==='skip'));
+ assert.ok(enter);
+ assert.notEqual(enter.skipOnPlay,true);
+ assert.match(uiActionLabel(enter,{pack:packs,state}),/以休息狀態登場/);
+ state=dispatchUniversalAction(packs,state,enter);
+ const stood=state.players[0].front[0];
+ assert.equal(stood?.uid,coming.uid);
+ assert.equal(stood.ready,false);
+ assert.equal(once(state.players[0].removed,coming.uid),0);
+ assert.equal(state.pending?.id,'KMR-2-028');
+ assert.equal(state.pending?.step,'payDiscard');
+ const readySkip=state.pending.actions.find(action=>action.mode==='skip');
+ assert.ok(readySkip);
+ state=dispatchUniversalAction(packs,state,readySkip);
+ assert.equal(state.players[0].front[0]?.uid,coming.uid);
+ assert.equal(state.players[0].front[0].ready,false);
+ assert.equal(state.pending,null);
+ assert.equal(state.phase,'attack');
+ assert.notEqual(state.pending?.kind,'block');
+ assertUniversalMatch(packs,state);
+});
+
+test('KMR-2-035 entry can resume after the match is paused',()=>{
+ const counts=fill(['KMR-2-035','KMR-2-028','KMR-2-036','KMR-2-040','KMR-2-019']);
+ const s=fresh(counts);
+ const rider=put(s,0,'KMR-2-035','front',0,true);
+ school(s);
+ const wall=put(s,1,'KMR-2-019','front',0,true);
+ ready(s);
+ const opened=loseBattle(s,rider.uid,wall.uid);
+ assert.equal(opened.pending?.step,'enter');
+ const paused=structuredClone(opened);
+ const skip=paused.pending.actions.find(action=>action.mode==='skip');
+ assert.ok(skip);
+ let state=dispatchUniversalAction(packs,paused,skip);
+ assert.equal(once(state.players[0].removed,rider.uid),1);
+ assert.equal(state.pending,null);
+ assert.equal(state.phase,'attack');
+ assert.notEqual(state.pending?.kind,'block');
+ assert.equal(legal(state).some(action=>action.uid===rider.uid&&action.mode==='enter'),false);
+ assert.equal(opened.pending?.step,'enter');
+ assert.equal(once(opened.players[0].removed,rider.uid),1);
+ const again=structuredClone(opened);
+ const enter=again.pending.actions.find(action=>action.mode==='enter'&&action.line==='front'&&action.slot===0);
+ assert.ok(enter);
+ assert.notEqual(enter.skipOnPlay,true);
+ state=dispatchUniversalAction(packs,again,enter);
+ assert.equal(state.pending?.id,'KMR-2-028');
+ const follow=state.pending.actions.find(action=>action.mode==='skip');
+ assert.ok(follow);
+ state=dispatchUniversalAction(packs,state,follow);
+ assert.equal(state.players[0].front[0]?.uid,rider.uid);
+ assert.equal(state.players[0].front[0].ready,false);
+ assert.equal(once(state.players[0].removed,rider.uid),0);
+ assert.equal(state.pending,null);
+ assert.notEqual(state.pending?.kind,'block');
+ assert.equal(opened.pending?.step,'enter');
+ assertUniversalMatch(packs,state);
+ assertUniversalMatch(packs,opened);
+});
+
+test('KMR-2-035 can decline when every slot would replace another card',()=>{
+ const counts=fill(['KMR-2-035','KMR-2-028','KMR-2-036','KMR-2-040','KMR-2-019','KMR-2-002','KMR-2-010','KMR-2-031']);
+ const s=fresh(counts);
+ const seen=new Set(['KMR-2-035']);
+ for(const line of ['front','energy']){
+  for(let slot=0;slot<4;slot++){
+   const card=s.players[0].deck.find(item=>pack.cards[item.cardId].type==='character'&&!seen.has(item.cardId));
+   seen.add(card.cardId);
+   put(s,0,card.cardId,line,slot,true);
+  }
+ }
+ const rider=take(s,0,'KMR-2-035');
+ s.players[0].removed.push(rider);
+ ready(s);
+ const front=s.players[0].front.map(card=>card.uid);
+ const energy=s.players[0].energy.map(card=>card.uid);
+ noteKmr2Zone(pack,s,{physical:rider,owner:0,from:'front',to:'removed',reason:'own-effect',sourceUid:rider.uid},
+  (source,card)=>source.cards[card.cardId]);
+ let state=act(s,action=>action.type==='next');
+ assert.equal(state.pending?.id,'KMR-2-035');
+ assert.equal(state.pending?.step,'enter');
+ const enters=state.pending.actions.filter(action=>action.mode==='enter');
+ assert.ok(enters.length);
+ assert.equal(enters.every(action=>action.replaceUid),true);
+ const skip=state.pending.actions.find(action=>action.mode==='skip');
+ assert.ok(skip);
+ state=dispatchUniversalAction(packs,state,skip);
+ assert.equal(once(state.players[0].removed,rider.uid),1);
+ assert.deepEqual(state.players[0].front.map(card=>card?.uid),front);
+ assert.deepEqual(state.players[0].energy.map(card=>card?.uid),energy);
+ assert.equal(state.pending,null);
  assert.notEqual(state.pending?.kind,'block');
  assertUniversalMatch(packs,state);
 });
@@ -825,11 +945,21 @@ test('KMR-2-035 may return to hand when another own effect removes it',()=>{
  state=act(state,action=>action.type==='next');
  state=dispatchUniversalAction(packs,state,{type:'attack',uid:attacker.uid});
  state=click(state,action=>action.uid===wall.uid);
- while(state.pending?.id==='KMR-2-030')
-  state=click(state,action=>action.mode==='skip');
+ while(state.pending?.id==='KMR-2-030'){
+  const skip=state.pending.actions.find(action=>action.mode==='skip');
+  assert.ok(skip);
+  state=dispatchUniversalAction(packs,state,skip);
+ }
  assert.equal(state.pending?.id,'KMR-2-035');
- state=click(state,action=>action.mode==='skip');
- assert.equal(state.players[0].removed.some(card=>card.uid===base.uid),true);
+ assert.equal(state.pending?.step,'toHand');
+ const decline=state.pending.actions.find(action=>action.mode==='skip');
+ const takeHand=state.pending.actions.find(action=>action.uid===base.uid);
+ assert.ok(decline);
+ assert.ok(takeHand);
+ assert.equal(uiActionLabel(decline,{pack:packs,state}),'不加入手牌');
+ state=dispatchUniversalAction(packs,state,decline);
+ assert.equal(once(state.players[0].removed,base.uid),1);
+ assert.equal(state.players[0].hand.some(card=>card.uid===base.uid),false);
  assertUniversalMatch(packs,state);
 
  const back=fresh(counts);
@@ -847,10 +977,17 @@ test('KMR-2-035 may return to hand when another own effect removes it',()=>{
  state=act(state,action=>action.type==='next');
  state=dispatchUniversalAction(packs,state,{type:'attack',uid:striker.uid});
  state=click(state,action=>action.uid===foe.uid);
- while(state.pending?.id==='KMR-2-030')
-  state=click(state,action=>action.mode==='skip');
+ while(state.pending?.id==='KMR-2-030'){
+  const skip=state.pending.actions.find(action=>action.mode==='skip');
+  assert.ok(skip);
+  state=dispatchUniversalAction(packs,state,skip);
+ }
+ assert.equal(state.pending?.id,'KMR-2-035');
+ const keep=state.pending.actions.find(action=>action.mode==='skip');
+ assert.ok(keep);
  state=click(state,action=>action.uid===under.uid);
  assert.equal(state.players[0].hand.filter(card=>card.uid===under.uid).length,1);
+ assert.equal(state.players[0].removed.some(card=>card.uid===under.uid),false);
  assertUniversalMatch(packs,state);
 });
 

@@ -442,6 +442,8 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   const index=state.players?.[0]?.life?.findIndex(c=>c?.uid===action.uid)??-1;
   return index>=0?'選擇生命區第 '+(index+1)+' 張（背面）':'選擇背面生命';
  }
+ if(step==='enter'&&mode==='skip')return '不登場，留在移除區';
+ if(step==='toHand'&&mode==='skip')return '不加入手牌';
  if(mode==='skip')return '不發動';
  if(mode==='done')return '完成選擇';
  if(step==='oppDeck'&&mode==='top')return '放到對手牌組上面';
@@ -472,6 +474,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   if(mode==='done')return '不選擇後續效果';
   if(mode==='look')return '查看牌組頂 7 張，可公開 1 張始祖尤米爾';
   if(mode==='deploy')return '從場外使沒有突襲的黃色吉克・葉卡以休息狀態登場';
+ }
+ if(step==='enter'&&mode==='enter'){
+  const place=Number.isInteger(action.slot)?(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1):'';
+  const how=action.ready===false?'以休息狀態登場':'讓這張卡登場';
+  return withClosedCard(pack,state,action,how)+(place?' · '+place:'');
  }
  const table={
   take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',

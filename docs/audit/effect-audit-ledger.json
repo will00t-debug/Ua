@@ -70,6 +70,13 @@
    "where": "dist/universal-v2/engine.mjs effectMoveTo、openBlock、KMR-2-026 出牌門、tuckUnderHost、reorderUnder、kmr2LostBattleRemoval、阻擋上限與狙擊證明。dist/universal-v2/csm-runtime.mjs swapFrontEnergy。",
    "affects": "046 的效果移動、055 的 BP3000、056 的狙擊、048／050／051 的 tuck、026 的出牌、030 的攻擊結束、035 與 040 的戰鬥敗北移除。019 的歐馬形態句沒有改回看受益者。",
    "evidence": "tests/v2-csm-040-060.test.mjs；tests/v2-kmr-026-050.test.mjs；tests/v2-kmr2-026-040.test.mjs；tests/v2-kmr2-001-025.test.mjs"
+  },
+  {
+   "name": "可選登場和跳過登場時分開",
+   "rule": "KMR-2-035 印刷「自分の場にレストで登場させてもよい」。玩家可以放棄，卡留在移除區。放棄不等於跳過登場時。KMR-2-060 的召喚仍同時可以不選位置，而且被召喚的角色不發動登場時。",
+   "where": "dist/universal-v2/kmr2-runtime.mjs askEnter 的 optional 只加放棄，skipOnPlay 只寫在登場行動上。035 自己的效果使用 optional，不使用 skipOnPlay。060 的部署兩個都傳。",
+   "affects": "030、035、079 的可選休息登場會保留登場時。060 的登場時仍不發動。沒有空位以外的替換位置可以放棄，放棄不會挪走場上的卡。",
+   "evidence": "tests/v2-kmr2-026-040.test.mjs 的 035；tests/v2-kmr-set2.test.mjs 的 060"
   }
  ],
  "summary": {
@@ -77,9 +84,9 @@
   "未檢查": 785,
   "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 147,
+  "已驗證": 148,
   "缺資料待確認": 0,
-  "部分核對": 6,
+  "部分核對": 5,
   "無效果": 3,
   "行動值卡": 16,
   "部分條款已記錄": 159,
@@ -88,9 +95,9 @@
    "未檢查": 785,
    "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 147,
+   "已驗證": 148,
    "缺資料待確認": 0,
-   "部分核對": 6,
+   "部分核對": 5,
    "無效果": 0,
    "行動值卡": 0,
    "部分條款已記錄": 159
@@ -161,9 +168,9 @@
     "未檢查": 58,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 38,
+    "已驗證": 39,
     "缺資料待確認": 0,
-    "部分核對": 4,
+    "部分核對": 3,
     "無效果": 0,
     "行動值卡": 0,
     "部分條款已記錄": 42
@@ -11539,12 +11546,12 @@
    "clauses": [
     {
      "text": "【自分のターン中】このカードが自分の効果でリムーブエリアに置かれた時、このカードを『手札に加えてもよい』。このキャラの効果でリムーブエリアに置かれた場合、『自分の場にレストで登場させてもよい』に代わる。",
-     "status": "未檢查",
+     "status": "已驗證",
      "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-035",
-     "implementation": "dist/universal-v2/kmr2-runtime.mjs removedReact",
+     "implementation": "dist/universal-v2/kmr2-runtime.mjs removedReact 與 askEnter。optional 只負責放棄，skipOnPlay 只負責跳過登場時。",
      "discrepancy": "",
-     "evidence": "tests/v2-kmr2-026-040.test.mjs：另一張自己的卡把這張卡放進移除區時，可以放棄或接手牌。",
-     "unresolved": "「改由這張卡自己的效果放進移除區時，改成休息登場」沒有走到。目前能把自己放進移除區的路徑是下面那句，而那句沒有發動。"
+     "evidence": "tests/v2-kmr2-026-040.test.mjs：這句先標成待修正。自己的效果在攻擊結束把 035 放進移除區後，step=enter 有放棄，登場行動的 skipOnPlay 不是 true。放棄後 035 只留在移除區一次，階段仍是 attack，不重開阻擋。接受後以休息狀態回到空的前線，KMR-2-028 看得到這次從移除區登場，放棄 028 後 035 維持休息。暫停用 structuredClone 還原同一選擇，放棄與接受各結算一次。場上沒有空位、只剩替換位置時，放棄不會挪走任何卡。另一張自己的效果移除時，先斷言有放棄再選擇：放棄留在移除區，接受則只進手牌一張。",
+     "unresolved": ""
     },
     {
      "text": "【自分のターン中】このキャラがバトルに敗北したアタック終了時、自分の場にカード名に「フォーゼ」を含まない［特徴：天ノ川学園高校］が3枚以上ある場合、このキャラとこのキャラをブロックしたキャラをリムーブエリアに置く。",
@@ -11565,7 +11572,7 @@
      "unresolved": ""
     }
    ],
-   "status": "部分核對",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "KMR-2-035",
@@ -11573,7 +11580,7 @@
      "clauses": [
       {
        "match": "手札に加えてもよい",
-       "status": "未檢查"
+       "status": "已驗證"
       },
       {
        "match": "バトルに敗北",
