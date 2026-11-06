@@ -3,6 +3,7 @@
 // has to see the opponent's turn before a blocker outranks that energy.
 import {dispatchUniversalAction,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
 import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
+import {aot2Warhammer} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
 import {noteDispatch,spendSharedStep,strategyScore} from './strategy.mjs';
 
@@ -177,12 +178,18 @@ function framedBattle(pack,state){
    const bp=Number(universalBp(pack,state,blocker))||0;
    const others=ready.filter(item=>item.uid!==blocker.uid);
    // Q34: the blocker wins only when its BP is strictly higher. Both
-   // characters stay and Impact does not land. The body is rested for the
-   // rest of this attack, which is the loss the leaf can see.
+   // characters stay and Impact does not land. A second block is available
+   // only when this block stands the body back up. Otherwise it stays
+   // rested, and a loss removes it before any later swing.
    if(bp>atkBp){
-    const rested=front.map(card=>card?.uid===blocker.uid?{...card,ready:false}:card);
-    delta=boardChange(pack,state,actor,defender,rested);
-    delta+=lifeChange(state,actor,defender,unanswered(others,threats));
+    if(reStandsAfterNextBlock(pack,state,blocker)){
+     const kept=ready.map(item=>item.uid===blocker.uid?{...item,uses:1}:item);
+     delta=lifeChange(state,actor,defender,unanswered(kept,threats));
+    }else{
+     const rested=front.map(card=>card?.uid===blocker.uid?{...card,ready:false}:card);
+     delta=boardChange(pack,state,actor,defender,rested);
+     delta+=lifeChange(state,actor,defender,unanswered(others,threats));
+    }
    }
    else{
     const removed=front.map(card=>card?.uid===blocker.uid?null:card);
@@ -204,18 +211,41 @@ function framedBattle(pack,state){
  }
  return rows;
 }
-function blockUses(pack,state,card){
- const owner=Number(String(card?.uid||'').split('-')[0]);
+// The next block stands the body back up only on the same conditions the
+// engine uses: the printed count, a live until-next-start grant, or the
+// shared warhammer check, matched against blocks already spent, plus an
+// earned grant on the first block. Silence drops the printed text. A
+// skip or an active lock still leaves the body rested. This does not
+// dispatch and does not change the match.
+function reStandsAfterNextBlock(pack,state,card){
+ if(!card?.uid)return false;
+ const owner=Number(String(card.uid).split('-')[0]);
  const side=state.players?.[owner];
- let silenced=true;
+ if(!side)return false;
+ const blocked=(Number(state.blocksByUid?.[card.uid])||0)+1;
+ let silenced=true,printed=0,hammer=false;
  try{silenced=originalEffectsDisabled(state,card);}catch{silenced=true;}
- let uses=1;
- if(!silenced&&packOf(pack,owner).cards[card.cardId]?.readyOnBlockCount===1)uses=2;
+ try{
+  printed=Number(packOf(pack,owner).cards[card.cardId]?.readyOnBlockCount)||0;
+  hammer=aot2Warhammer(pack,state,card)===true;
+ }catch{printed=0;hammer=false;}
  const until=card.doubleBlockUntil;
- if(!silenced&&until&&until.stamp===card.fieldEntryStamp&&side&&side.ownTurns<until.untilOwnTurnStart)uses=2;
+ const untilLive=!silenced&&!!until&&until.stamp===card.fieldEntryStamp&&side.ownTurns<until.untilOwnTurnStart;
+ const keyword=Math.max(silenced?0:printed,untilLive?1:0,hammer?1:0);
  const grant=card.doubleBlockGranted;
- if(grant&&grant.stamp===card.fieldEntryStamp&&side&&side.ownTurns<grant.untilOwnTurnStart)uses=2;
- return uses;
+ const earned=!!grant&&grant.stamp===card.fieldEntryStamp&&side.ownTurns<grant.untilOwnTurnStart&&blocked===1;
+ if(!((keyword>0&&blocked===keyword&&!silenced)||earned))return false;
+ let rows=[];
+ try{rows=fieldRestrictions(state,owner,card);}catch{return false;}
+ if(rows.some(row=>row.kind==='cannotActive'||row.kind==='skipNextActive'))return false;
+ if(card.ownEffectActiveOnly){
+  const home=[...(side.front||[]),...(side.energy||[])].some(body=>body?.uid===card.uid);
+  if(!home)return false;
+ }
+ return true;
+}
+function blockUses(pack,state,card){
+ return reStandsAfterNextBlock(pack,state,card)?2:1;
 }
 function blockerView(pack,state,card){
  try{

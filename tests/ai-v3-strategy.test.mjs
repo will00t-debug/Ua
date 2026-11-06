@@ -183,8 +183,20 @@ test('strategy: a real 40ms clock stays inside the match budget',()=>{
   assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
   assert.ok(trace.nodesUsed<=48);
   assert.equal(trace.softMs,40);
-  assert.ok(trace.coverage.executed>=1);
-  assert.ok((trace.compared||[]).every(row=>row.executed!==false&&row.nodes>0&&Number.isFinite(row.search)));
+  if((trace.coverage?.executed||0)===0){
+   assert.equal(trace.reason,'budget-fallback');
+   assert.equal(trace.fallbackKind,'budget');
+   assert.equal(trace.settled,false);
+   assert.equal(trace.executed,false);
+   assert.equal(trace.incomplete,true);
+   assert.ok(!(trace.compared||[]).some(row=>Number.isFinite(row.search)));
+   assert.ok(trace.coverage.roots>=1);
+   assert.equal(trace.unexecuted.length,trace.coverage.roots);
+   assert.ok(trace.unexecuted.every(row=>row.executed===false&&row.nodes===0&&row.reason==='time'));
+  }else{
+   assert.ok(trace.coverage.executed>=1);
+   assert.ok((trace.compared||[]).every(row=>row.executed!==false&&row.nodes>0&&Number.isFinite(row.search)));
+  }
  }
  walls.sort((a,b)=>a-b);
  const at=p=>walls[Math.min(walls.length-1,Math.max(0,Math.ceil(p*walls.length)-1))];
@@ -193,6 +205,58 @@ test('strategy: a real 40ms clock stays inside the match budget',()=>{
  assert.ok(max<500,`strict hang cap exceeded: p50 ${p50} p95 ${p95} max ${max}`);
  console.log('strategy 40ms',action.type,trace.reason,'soft',trace.softMs,'over',trace.overSoft,
   'p50',p50.toFixed(1),'p95',p95.toFixed(1),'max',max.toFixed(1),'nodes',trace.nodesUsed);
+});
+
+function clockSpot(){
+ const {packs,state}=main(bleach,counts);
+ const energy=take(state,0,'BLC-1-042');
+ place(state,0,energy,'energy',0);
+ const body=take(state,0,'BLC-1-042');
+ for(const card of [...state.players[0].hand])state.players[0].deck.push(card);
+ state.players[0].hand.length=0;
+ state.players[0].hand.push(body);
+ return {packs,state};
+}
+test('strategy: a frozen clock still starts every root the node pool can share',()=>{
+ const {packs,state}=clockSpot();
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{
+  ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,meter,diagnose:true
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ assert.ok(trace.coverage.roots>=1);
+ assert.equal(trace.coverage.executed,trace.coverage.roots);
+ assert.ok(trace.coverage.executed>=1);
+ assert.equal(trace.unexecuted.length,0);
+ assert.ok(trace.nodesUsed<=48);
+ assert.ok(trace.nodesUsed>=1);
+ assert.equal(meter.dispatches,trace.nodesUsed);
+});
+
+test('strategy: a clock that is already closed records every root as unexecuted',()=>{
+ const {packs,state}=clockSpot();
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{
+  ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:0,now:()=>0,meter,diagnose:true
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ assert.equal(trace.coverage.executed,0);
+ assert.equal(trace.nodesUsed,0);
+ assert.equal(meter.dispatches,0);
+ assert.equal(trace.reason,'budget-fallback');
+ assert.equal(trace.fallbackKind,'budget');
+ assert.equal(trace.settled,false);
+ assert.equal(trace.executed,false);
+ assert.equal(trace.incomplete,true);
+ assert.ok(!(trace.compared||[]).some(row=>Number.isFinite(row.search)));
+ assert.ok(trace.coverage.roots>=1);
+ assert.equal(trace.unexecuted.length,trace.coverage.roots);
+ assert.ok(trace.unexecuted.every(row=>row.executed===false&&row.nodes===0&&row.reason==='time'));
+ assert.equal(trace.coverage.reasons.time,trace.coverage.roots);
 });
 
 test('strategy: two nodes do not settle the same turn',()=>{

@@ -876,3 +876,238 @@ test('different attacker restrictions use the full pairing, not the lower BP',()
  const backward=open(true);
  assert.ok([...forward,...backward].every(nodes=>nodes<=48));
 });
+
+function doubleDeck(){
+ return deck({
+  'BLC-1-088':2,'BLC-4-036':4,'BLC-1-009':1,'BLC-4-005':2,'BLC-4-022':1,
+  'BLC-4-070':2,'BLC-1-083':4,'BLC-4-068':2,'BLC-4-062':2,'BLC-1-082':2,
+  'BLC-1-050':2,'BLC-2-040':4,'BLC-1-043':2
+ });
+}
+function freshAttack(){
+ const packs=[pack,pack];
+ const built=doubleDeck();
+ let state=newUniversalMatch(packs,{decks:[built,built],seed:11,first:0});
+ for(let guard=0;guard<40&&!(state.active===1&&state.phase==='attack'&&!state.pending);guard++){
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw')||legal[0];
+  state=dispatchUniversalAction(packs,state,action);
+ }
+ clearHand(state,0);
+ clearHand(state,1);
+ return {packs,state};
+}
+function arm(state,card,bp,damage=1,impact=0){
+ setBp(state,card,bp);
+ if(damage===2)card.attackDamageGranted={turn:state.turn,stamp:card.fieldEntryStamp,amount:2};
+ if(impact)card.impactGranted={turn:state.turn,stamp:card.fieldEntryStamp,amount:1};
+}
+function swing(packs,state,uid){
+ const action=legalUniversalActions(packs,state).find(item=>item.type==='attack'&&item.uid===uid);
+ const next=dispatchUniversalAction(packs,state,action,{actor:1});
+ assert.equal(assertUniversalMatch(packs,next),true);
+ assert.equal(next.pending?.kind,'block');
+ return next;
+}
+function follow(packs,start,laterUids){
+ const choices=[];
+ const marks=[];
+ let cursor=start;
+ const started=cursor.players[0].ownTurns;
+ let at=0;
+ for(let guard=0;guard<64;guard++){
+  if(cursor.active===0&&cursor.phase==='start'&&!cursor.pending&&cursor.players[0].ownTurns>started)
+   return {cursor,choices,marks};
+  const legal=legalUniversalActions(packs,cursor);
+  const actor=cursor.pending?.player??cursor.active;
+  let action;
+  if(cursor.pending?.kind==='block'){
+   const choice=ask(packs,cursor);
+   choices.push({attacker:cursor.pending.attackerUid,uid:choice.action.uid??null,
+    nodes:choice.trace.nodesUsed??null,reason:choice.trace.reason,rows:choice.trace.candidates||[]});
+   action=choice.action;
+  }else if(cursor.pending?.kind==='life-trigger'){
+   action=legal.find(item=>item.mode==='get')||legal.find(item=>item.mode==='skip');
+  }else if(cursor.pending?.kind==='life-batch-order'){
+   action=legal.find(item=>item.type==='chooseLifeOrder');
+  }else if(!cursor.pending&&cursor.active===1&&cursor.phase==='attack'){
+   const uid=laterUids[at];
+   action=legal.find(item=>item.type==='attack'&&item.uid===uid)||legal.find(item=>item.type==='next');
+   if(action?.type==='attack')at++;
+  }else action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw');
+  if(!action)throw Error('stuck '+(cursor.pending?.kind||cursor.phase));
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+  if(action.type==='chooseBlock'&&action.uid){
+   const body=cursor.players[0].front.find(card=>card?.uid===action.uid)||null;
+   marks.push({uid:action.uid,life:cursor.players[0].life.length,ready:body?.ready??null,
+    blocks:cursor.blocksByUid?.[action.uid]||0,present:!!body});
+  }
+ }
+ throw Error('our turn did not start');
+}
+test('a printed second block stands again and stops the next attack',()=>{
+ const {packs,state}=freshAttack();
+ const mine=take(state,0,'BLC-1-088');
+ const first=take(state,1,'BLC-1-009');
+ const second=take(state,1,'BLC-4-036');
+ place(state,0,mine,'front',0);
+ place(state,1,first,'front',0);
+ place(state,1,second,'front',1);
+ arm(state,mine,5000);
+ arm(state,first,4000);
+ arm(state,second,4000,2,0);
+ setLife(state,0,7);
+ fillGetLife(state,0);
+ assert.equal(state.players[0].hand.length,0);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const opened=swing(packs,state,first.uid);
+ assert.equal(universalImpact(packs,opened,first),1);
+ assert.equal(universalAttackDamage(packs,opened,second),2);
+ assert.equal(universalImpact(packs,opened,second),0);
+ const played=follow(packs,opened,[second.uid]);
+ assert.deepEqual(played.choices.map(row=>row.uid),[mine.uid,mine.uid]);
+ assert.ok(played.choices.every(row=>row.reason!=='forced'&&row.nodes<=48));
+ assert.deepEqual(played.marks,[
+  {uid:mine.uid,life:7,ready:true,blocks:1,present:true},
+  {uid:mine.uid,life:7,ready:false,blocks:2,present:true}
+ ]);
+ assert.equal(played.cursor.players[0].life.length,7);
+ standing(played.cursor,[mine.uid]);
+ const rows=played.choices[0].rows.filter(row=>row.action?.type==='chooseBlock');
+ const blocked=rows.find(row=>row.action.uid===mine.uid);
+ const passed=rows.find(row=>(row.action.uid??null)===null);
+ assert.ok(blocked&&passed);
+ assert.ok(blocked.battleScore>passed.battleScore);
+ for(const row of rows)if(row.damageOpen)assert.notEqual(row.boundary,'returned');
+});
+
+test('a second block already spent does not stand for two more saves',()=>{
+ const {packs,state}=freshAttack();
+ const mine=take(state,0,'BLC-1-088');
+ const spent=take(state,1,'BLC-4-036');
+ const heavy=take(state,1,'BLC-4-036');
+ const left=take(state,1,'BLC-4-036');
+ const right=take(state,1,'BLC-4-036');
+ place(state,0,mine,'front',0);
+ place(state,1,spent,'front',0);
+ place(state,1,heavy,'front',1);
+ place(state,1,left,'front',2);
+ place(state,1,right,'front',3);
+ arm(state,mine,5000);
+ arm(state,spent,2000);
+ arm(state,heavy,4000,2,0);
+ arm(state,left,3000);
+ arm(state,right,3000);
+ setLife(state,0,7);
+ fillGetLife(state,0);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ let cursor=swing(packs,state,spent.uid);
+ const scripted=legalUniversalActions(packs,cursor).find(action=>action.type==='chooseBlock'&&action.uid===mine.uid);
+ cursor=dispatchUniversalAction(packs,cursor,scripted,{actor:0});
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ assert.equal(cursor.players[0].life.length,7);
+ assert.equal(cursor.players[0].front.find(card=>card?.uid===mine.uid)?.ready,true);
+ assert.equal(cursor.blocksByUid[mine.uid],1);
+ const played=follow(packs,cursor,[heavy.uid,left.uid,right.uid]);
+ assert.equal(played.choices[0].uid,mine.uid);
+ assert.equal(played.choices.filter(row=>row.uid).length,1);
+ assert.equal(played.choices[0].reason!=='forced'&&played.choices[0].nodes<=48,true);
+ assert.deepEqual(played.marks,[{uid:mine.uid,life:7,ready:false,blocks:2,present:true}]);
+ assert.equal(played.cursor.players[0].life.length,5);
+ standing(played.cursor,[mine.uid]);
+});
+
+test('a locked or silenced second block is not a proven later save',()=>{
+ const run=(kind)=>{
+  const {packs,state}=freshAttack();
+  const mine=take(state,0,'BLC-1-088');
+  const first=take(state,1,'BLC-1-009');
+  const second=take(state,1,'BLC-4-036');
+  place(state,0,mine,'front',0);
+  place(state,1,first,'front',0);
+  place(state,1,second,'front',1);
+  arm(state,mine,5000);
+  arm(state,first,4000);
+  arm(state,second,4000,2,0);
+  setLife(state,0,7);
+  fillGetLife(state,0);
+  const until={player:0,phase:'start',edge:'start'};
+  grantContinuousState(state,{kind,controller:0,sourceUid:first.uid,targetUid:mine.uid,sourceLinked:false,
+   ...(kind==='skipNextActive'?{}:{until})});
+  assert.equal(assertUniversalMatch(packs,state),true);
+  const opened=swing(packs,state,first.uid);
+  const played=follow(packs,opened,[second.uid]);
+  assert.deepEqual(played.choices.map(row=>row.uid),[null,mine.uid]);
+  assert.equal(played.choices[1].reason!=='forced'&&played.choices[1].nodes<=48,true);
+  assert.deepEqual(played.marks,[{uid:mine.uid,life:6,ready:false,blocks:1,present:true}]);
+  assert.equal(played.cursor.players[0].life.length,6);
+  standing(played.cursor,[mine.uid]);
+ };
+ run('skipNextActive');
+ run('cannotActive');
+ run('originalEffectsDisabled');
+});
+
+test('a blocker that leaves is not assigned to the next attack',()=>{
+ const {packs,state}=freshAttack();
+ const mine=take(state,0,'BLC-1-088');
+ const first=take(state,1,'BLC-4-036');
+ const second=take(state,1,'BLC-4-036');
+ place(state,0,mine,'front',0);
+ place(state,1,first,'front',0);
+ place(state,1,second,'front',1);
+ arm(state,mine,3000);
+ arm(state,first,4000);
+ arm(state,second,2000,2,0);
+ setLife(state,0,7);
+ fillGetLife(state,0);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const opened=swing(packs,state,first.uid);
+ const played=follow(packs,opened,[second.uid]);
+ assert.deepEqual(played.choices.map(row=>row.uid),[null,mine.uid]);
+ assert.deepEqual(played.marks,[{uid:mine.uid,life:6,ready:true,blocks:1,present:true}]);
+ assert.equal(played.cursor.players[0].life.length,6);
+ standing(played.cursor,[mine.uid]);
+});
+
+test('a normal blocker and a second blocker still cover the whole attack',()=>{
+ const play=(swapUs,swapLater)=>{
+  const {packs,state}=freshAttack();
+  const tall=take(state,0,'BLC-1-088');
+  const short=take(state,0,'BLC-4-036');
+  const first=take(state,1,'BLC-1-009');
+  const mid=take(state,1,'BLC-4-036');
+  const last=take(state,1,'BLC-4-036');
+  place(state,0,tall,'front',swapUs?1:0);
+  place(state,0,short,'front',swapUs?0:1);
+  place(state,1,first,'front',0);
+  place(state,1,mid,'front',1);
+  place(state,1,last,'front',2);
+  arm(state,tall,6000);
+  arm(state,short,4500);
+  arm(state,first,4000);
+  arm(state,mid,4000,2,0);
+  arm(state,last,5000,2,1);
+  if(swapLater){
+   const front=state.players[1].front;
+   [front[1],front[2]]=[front[2],front[1]];
+  }
+  setLife(state,0,7);
+  fillGetLife(state,0);
+  assert.equal(state.players[0].hand.length,0);
+  assert.equal(assertUniversalMatch(packs,state),true);
+  const opened=swing(packs,state,first.uid);
+  const order=swapLater?[last.uid,mid.uid]:[mid.uid,last.uid];
+  const played=follow(packs,opened,order);
+  assert.equal(played.choices.filter(row=>row.uid).length,3);
+  assert.ok(played.choices.every(row=>row.reason!=='forced'&&row.nodes<=48));
+  assert.equal(Math.max(...played.marks.filter(row=>row.uid===tall.uid).map(row=>row.blocks)),2);
+  assert.equal(Math.max(...played.marks.filter(row=>row.uid===short.uid).map(row=>row.blocks)),1);
+  assert.equal(played.cursor.players[0].life.length,7);
+  standing(played.cursor,[tall.uid,short.uid]);
+ };
+ play(false,false);
+ play(true,false);
+ play(false,true);
+});

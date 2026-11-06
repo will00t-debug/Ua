@@ -516,8 +516,8 @@ export function chooseAiV3Action(pack,state,options={}){
    settle();
    return finish(kept,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
-    incomplete:true,settled:false,
-    hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,unscored:Math.max(0,jobs.length-scored.length),missed,
+    incomplete:true,settled:false,executed:scored.length>0,
+    hard:hardExact,hardNodes:hardSlice,strategy,compared:scored.length?viewed:[],unscored:Math.max(0,jobs.length-scored.length),missed,
     plan,roots:jobs.length,followBranches,maxDepth,unexecuted,unexplored,...diagnosis,
     energyKeep:energyView?.strip?energyView:null,
     replacedMove:same(kept,choice)?null:choice,
