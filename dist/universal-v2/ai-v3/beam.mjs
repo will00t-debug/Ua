@@ -6,7 +6,7 @@ import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {evaluate as staticValue,terminalValue,keepScore} from './eval.mjs';
 import {archetypeRank,actionGroup} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch} from './strategy.mjs';
 import {visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -143,7 +143,9 @@ export function positionKey(state,actor,mode,left){
  return parts.join(';');
 }
 function dispatch(pack,state,action){
- return dispatchUniversalAction(pack,state,action,{actor:who(state)});
+ const next=dispatchUniversalAction(pack,state,action,{actor:who(state)});
+ noteDispatch();
+ return next;
 }
 const BATTLE_KINDS=new Set(['block','effect-block-floor','life-trigger']);
 function nowOf(ctx){

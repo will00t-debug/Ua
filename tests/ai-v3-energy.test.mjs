@@ -8,7 +8,7 @@ import {newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {rankLegal} from '../dist/universal-v2/ai-v3/beam.mjs';
-import {moveDevelopment,replyOrder,bindProbeBudget} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {moveDevelopment,replyOrder,bindProbeBudget,cachedMoveDevelopment} from '../dist/universal-v2/ai-v3/strategy.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 
 const OPTS={...MATCH_LIMITS,seed:1,ms:1e9,nodes:48,hardNodes:0};
@@ -63,6 +63,9 @@ function ask(packs,state,strategy){
  resetAiV3Report();
  const action=chooseAiV3Action(packs,state,{...OPTS,actor,...(strategy?{strategy}:{})});
  return {action,trace:lastAiV3Trace(),actor};
+}
+function prove(fn){
+ return bindProbeBudget({pool:{n:64},deadline:Infinity,now:()=>0},fn);
 }
 function climb(packs,state){
  let cursor=state;
@@ -204,7 +207,7 @@ test('energy: one life with an empty front is still worth the move',()=>{
  assert.equal(assertUniversalMatch(packs,state),true);
  const legal=legalUniversalActions(packs,state);
  const move=legal.find(action=>action.type==='move');
- const view=moveDevelopment(packs,state,0,move);
+ const view=prove(()=>moveDevelopment(packs,state,0,move));
  assert.equal(view.reason,'lethal');
  assert.equal(view.strip,false);
  assert.equal(view.after<view.before,true);
@@ -267,7 +270,7 @@ test('energy: winning the battle against a smaller blocker is not lethal',()=>{
  const {packs,state,move}=prepare('BLC-1-045',['BLC-1-056']);
  assert.ok(cardOf('BLC-1-045').bp>cardOf('BLC-1-056').bp);
  assert.equal(cardOf('BLC-1-045').printedImpact||0,0);
- const view=moveDevelopment(packs,state,0,move);
+ const view=prove(()=>moveDevelopment(packs,state,0,move));
  const fought=blockedAttack(packs,state,move);
  console.log('smaller block',view.lethal,view.benefit,view.reason,JSON.stringify(fought.script));
  assert.equal(view.lethal,'no');
@@ -291,7 +294,7 @@ test('energy: winning the battle against a smaller blocker is not lethal',()=>{
 
 test('energy: one weaker blocker among several does not prove lethal',()=>{
  const {packs,state,move}=prepare('BLC-1-045',['BLC-1-056','BLC-1-009']);
- const view=moveDevelopment(packs,state,0,move);
+ const view=prove(()=>moveDevelopment(packs,state,0,move));
  const fought=blockedAttack(packs,state,move);
  console.log('several blockers',view.lethal,JSON.stringify(fought.script));
  assert.equal(view.lethal,'no');
@@ -305,7 +308,7 @@ test('energy: one weaker blocker among several does not prove lethal',()=>{
 
 test('energy: impact and impact-null follow the engine result',()=>{
  const through=prepare('BLC-1-009',['BLC-1-056']);
- const throughView=moveDevelopment(through.packs,through.state,0,through.move);
+ const throughView=prove(()=>moveDevelopment(through.packs,through.state,0,through.move));
  const throughFight=blockedAttack(through.packs,through.state,through.move);
  console.log('impact through',throughView.lethal,JSON.stringify(throughFight.script));
  assert.equal(throughView.lethal,'lethal');
@@ -316,14 +319,14 @@ test('energy: impact and impact-null follow the engine result',()=>{
  assert.equal(trace.plan,'tree');
  assert.ok(trace.nodesUsed<=48);
  const stopped=prepare('BLC-1-009',['BLC-1-008']);
- const stoppedView=moveDevelopment(stopped.packs,stopped.state,0,stopped.move);
+ const stoppedView=prove(()=>moveDevelopment(stopped.packs,stopped.state,0,stopped.move));
  const stoppedFight=blockedAttack(stopped.packs,stopped.state,stopped.move);
  console.log('impact null',stoppedView.lethal,stoppedView.benefit,JSON.stringify(stoppedFight.script));
  assert.equal(stoppedView.lethal,'no');
  assert.notEqual(stoppedView.benefit,'lethal');
  assert.ok(stoppedFight.results.every(followed=>followed.status==='playing'&&followed.players[1].life.length===1));
  const mixed=prepare('BLC-1-009',['BLC-1-056','BLC-1-008']);
- const mixedView=moveDevelopment(mixed.packs,mixed.state,0,mixed.move);
+ const mixedView=prove(()=>moveDevelopment(mixed.packs,mixed.state,0,mixed.move));
  const mixedFight=blockedAttack(mixed.packs,mixed.state,mixed.move);
  console.log('impact choice',mixedView.lethal,JSON.stringify(mixedFight.script));
  assert.equal(mixedView.lethal,'no');
@@ -340,12 +343,125 @@ test('energy: an unproven lethal check does not spend past the shared budget',()
  assert.equal(view.strip,true);
  assert.ok(pool.n>=0&&pool.n<2);
  const open=prepare('BLC-1-045',[]);
- const confirmed=moveDevelopment(open.packs,open.state,0,open.move);
+ const confirmed=prove(()=>moveDevelopment(open.packs,open.state,0,open.move));
  assert.equal(confirmed.lethal,'lethal');
- const {action,trace}=ask(open.packs,open.state);
+ const fresh=prepare('BLC-1-045',[]);
+ const {action,trace}=ask(fresh.packs,fresh.state);
  assert.equal(action.type,'move');
  assert.equal(trace.plan,'tree');
  assert.equal(trace.hardNodes,0);
  assert.ok(trace.nodesUsed<=48);
  console.log('open lethal',confirmed.lethal,JSON.stringify(confirmed.lethalLine));
+});
+
+function liveChoice(nodes,extra={}){
+ const built=prepare('BLC-1-045',[]);
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(built.packs,built.state,{
+  ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',
+  nodes,ms:extra.ms??1e9,now:extra.now||(()=>0),meter,
+  diagnose:extra.diagnose,onRootDone:extra.onRootDone
+ });
+ const trace=lastAiV3Trace();
+ const view=cachedMoveDevelopment(built.packs,built.state,0,built.move);
+ return {built,action,trace,meter,view,nodes};
+}
+function sameAccount(row){
+ assert.equal(row.meter.dispatches,row.trace.nodesUsed);
+ assert.ok(row.trace.nodesUsed<=row.nodes);
+ assert.equal(row.trace.plan,'tree');
+ assert.equal(row.trace.hardNodes,0);
+}
+
+test('budget: the live entry does not simulate a lethal line outside the shared pool',()=>{
+ const zero=liveChoice(0);
+ sameAccount(zero);
+ assert.equal(zero.meter.dispatches,0);
+ assert.equal(zero.action.type,'next');
+ assert.notEqual(zero.view?.benefit,'lethal');
+ assert.notEqual(zero.view?.lethal,'no');
+ if(zero.view)assert.equal(zero.view.lethal,'unproven');
+ const tiny=liveChoice(2);
+ sameAccount(tiny);
+ assert.ok(tiny.meter.dispatches>0&&tiny.meter.dispatches<=2);
+ assert.equal(tiny.action.type,'next');
+ assert.equal(tiny.view.lethal,'unproven');
+ assert.notEqual(tiny.view.benefit,'lethal');
+ const full=liveChoice(48);
+ sameAccount(full);
+ assert.ok(full.meter.dispatches>0);
+ assert.equal(full.action.type,'move');
+ assert.equal(full.view.lethal,'lethal');
+ assert.equal(full.view.benefit,'lethal');
+ console.log('live lethal',full.trace.nodesUsed,full.meter.dispatches,full.view.lethalLine.map(step=>step.type).join(' '));
+ const expired=liveChoice(48,{ms:0});
+ sameAccount(expired);
+ assert.equal(expired.meter.dispatches,0);
+ assert.equal(expired.action.type,'next');
+ assert.notEqual(expired.view?.benefit,'lethal');
+ const built=prepare('BLC-1-045',[]);
+ const meter={dispatches:0};
+ let marked=null;
+ resetAiV3Report();
+ const action=chooseAiV3Action(built.packs,built.state,{
+  ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,nodes:48,ms:40,meter,
+  now(){return marked==null?0:1000;},
+  onRootDone(){if(marked==null)marked=meter.dispatches;}
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(meter.dispatches,marked);
+ assert.equal(trace.nodesUsed,meter.dispatches);
+ assert.ok(trace.nodesUsed<=48);
+ assert.equal(legalUniversalActions(built.packs,built.state).some(item=>item.type===action.type),true);
+ const shown=liveChoice(48,{diagnose:true});
+ const hidden=liveChoice(48,{diagnose:false});
+ assert.equal(shown.action.type,hidden.action.type);
+ assert.equal(shown.action.uid??null,hidden.action.uid??null);
+ assert.equal(shown.meter.dispatches,hidden.meter.dispatches);
+ assert.equal(shown.trace.nodesUsed,hidden.trace.nodesUsed);
+ sameAccount(shown);
+});
+
+test('budget: an earlier unproven result is not a proof that the attack cannot kill',()=>{
+ const built=prepare('BLC-1-045',[]);
+ const pool={n:2};
+ const early=bindProbeBudget({pool,deadline:Infinity,now:()=>0},()=>moveDevelopment(built.packs,built.state,0,built.move));
+ assert.equal(early.lethal,'unproven');
+ assert.notEqual(early.lethal,'no');
+ assert.equal(pool.n,0);
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(built.packs,built.state,{
+  ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,nodes:48,ms:1e9,now:()=>0,meter
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(meter.dispatches>0&&trace.nodesUsed<=48);
+ assert.equal(action.type,'move');
+ assert.equal(cachedMoveDevelopment(built.packs,built.state,0,built.move).lethal,'lethal');
+});
+
+test('budget: a line probe stops at its own quota and a thrown binding restores',()=>{
+ const capped=prepare('BLC-1-045',[]);
+ const pool={n:20};
+ const view=bindProbeBudget({pool,deadline:Infinity,now:()=>0,lineSpent:0,lineCap:2},()=>moveDevelopment(capped.packs,capped.state,0,capped.move));
+ assert.equal(view.lethal,'unproven');
+ assert.notEqual(view.lethal,'no');
+ assert.equal(pool.n,18);
+ const leaked=prepare('BLC-1-045',[]);
+ const held={n:10};
+ assert.throws(()=>bindProbeBudget({pool:held,deadline:Infinity,now:()=>0},()=>{throw new Error('boom');}));
+ moveDevelopment(leaked.packs,leaked.state,0,leaked.move);
+ assert.equal(held.n,10);
+ const outer={n:30},inner={n:5};
+ const nested=prepare('BLC-1-045',[]);
+ bindProbeBudget({pool:outer,deadline:Infinity,now:()=>0},()=>{
+  assert.throws(()=>bindProbeBudget({pool:inner,deadline:Infinity,now:()=>0,lineSpent:0,lineCap:2},()=>{throw new Error('inner');}));
+  assert.equal(inner.n,5);
+  const proved=moveDevelopment(nested.packs,nested.state,0,nested.move);
+  assert.equal(proved.lethal,'lethal');
+ });
+ assert.equal(inner.n,5);
+ assert.ok(outer.n<30&&outer.n>=20);
 });

@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -217,7 +217,7 @@ function rootSlice(poolLeft,jobsLeft,total,roots){
  const room=Math.max(cover,poolLeft-reserved);
  return Math.max(1,Math.min(16,room,Math.max(0,poolLeft)));
 }
-function fallback(pack,state,legal,started,reason){
+function fallback(pack,state,legal,started,reason,account=null){
  report.fallback++;
  const actor=state?.pending?.player??state?.active??0;
  let ordered=legal;
@@ -225,7 +225,8 @@ function fallback(pack,state,legal,started,reason){
  const choice=reliableChoice(pack,state,actor,legal,null,ordered);
  const exact=legal.find(item=>same(item,choice))||legal[0]||null;
  const kind=reason==='no-world'||reason==='unmatched'||reason==='ismcts-empty'?reason:'exception';
- return finish(exact,'budget-fallback',{fallback:true,fallbackKind:kind,fallbackFrom:reason,nodesUsed:0,executed:false,settled:false},started);
+ const nodesUsed=account?account():0;
+ return finish(exact,'budget-fallback',{fallback:true,fallbackKind:kind,fallbackFrom:reason,nodesUsed,executed:false,settled:false},started);
 }
 export function chooseAiV3Action(pack,state,options={}){
  const started=performance.now();
@@ -261,34 +262,36 @@ export function chooseAiV3Action(pack,state,options={}){
   const deadline=Number.isFinite(ms)&&ms<=0?clockStart-1:clockStart+ms;
   const pool={n:total};
   const nodesBefore=report.nodes;
+  const budget={pool,deadline,now};
+  const settle=()=>{report.nodes=nodesBefore+(total-pool.n);};
+  const spent=()=>report.nodes-nodesBefore;
+  const diagnose=options.diagnose!==false;
+  return bindMeter(options.meter,()=>bindProbeBudget(budget,()=>{
+  try{
   const rankStarted=performance.now();
-  const beforeRank=pool.n;
-  const ordered=bindProbeBudget({pool,deadline,now},()=>rankLegal(pack,probe,actor,legal,strategy));
-  report.nodes+=beforeRank-pool.n;
+  const ordered=rankLegal(pack,probe,actor,legal,strategy);
   timing.rankMs=performance.now()-rankStarted;
   if(options.mode==='prior'){
    report.prior++;
    const exact=legal.find(item=>same(item,ordered[0]))||legal[0];
-   return finish(exact,'prior',{actor,seed,worlds:worlds.length,nodesUsed:0,
+   settle();
+   return finish(exact,'prior',{actor,seed,worlds:worlds.length,nodesUsed:spent(),
     candidates:ordered.slice(0,beam).map(action=>({action}))},started);
   }
-  const beforeSelect=pool.n;
-  const ranked=bindProbeBudget({pool,deadline,now},()=>selectCandidates(pack,probe,actor,legal,beam,strategy));
-  report.nodes+=beforeSelect-pool.n;
+  const ranked=selectCandidates(pack,probe,actor,legal,beam,strategy);
   if(options.mode==='ismcts'){
    report.ismcts++;
-   const ismctsPool={n:total};
    const picked=chooseIsmctsAction(pack,worlds,actor,legal,{
-    nodes:total,pool:ismctsPool,beam:1,seed,
+    nodes:pool.n,pool,beam:1,seed,
     actorDecisions:options.actorDecisions??3,
     opponentDecisions:options.opponent===false?0:(options.opponentDecisions??3),
     deadline
    });
-   report.nodes+=total-ismctsPool.n;
    const exact=legal.find(item=>same(item,picked?.action));
-   if(!exact)return fallback(pack,state,legal,started,'ismcts-empty');
+   if(!exact)return fallback(pack,state,legal,started,'ismcts-empty',()=>{settle();return spent();});
+   settle();
    return finish(exact,'ismcts',{actor,seed,worlds:worlds.length,visits:picked.visits,
-    nodesUsed:total-ismctsPool.n,fallback:false},started);
+    nodesUsed:spent(),fallback:false},started);
   }
   const opponentDecisions=options.opponent===false?0:(options.opponentDecisions??MATCH_LIMITS.opponentDecisions);
   resetHardAiReport();
@@ -303,7 +306,6 @@ export function chooseAiV3Action(pack,state,options={}){
   const hardRaw=hardSlice>0&&hardMs>0?chooseStrengthenedHardAction(pack,state,{nodes:hardSlice,ms:hardMs,seed}):null;
   const hardSpent=Math.min(pool.n,hardAiReport().nodes||0);
   pool.n-=hardSpent;
-  report.nodes+=hardSpent;
   const hardExact=legal.find(item=>same(item,hardRaw))||null;
   const jobs=[];
   const push=action=>{if(action&&!jobs.some(item=>same(item,action)))jobs.push(action);};
@@ -362,7 +364,6 @@ export function chooseAiV3Action(pack,state,options={}){
     report.unsupported+=line.unsupported||0;
    }
    if(!n)return {failed:true,reason:failReason||stopReason(),action};
-   report.nodes+=nodes;
    report.transpositionHits=(report.transpositionHits||0)+hits;
    return {action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
     nodes,settled:settled===n,pending,phase,boundary,cut,followBranches,maxDepth,sequence,
@@ -461,11 +462,12 @@ export function chooseAiV3Action(pack,state,options={}){
    return reliableChoice(pack,state,actor,safer,null,orderedSafer);
   })():backup;
   const energySample=legal.find(action=>action.type==='move');
-  const energyView=energySample?moveDevelopment(pack,state,actor,energySample):null;
+  const energyView=diagnose&&energySample?cachedMoveDevelopment(pack,state,actor,energySample):null;
   if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const kept=keptEnergy(pack,state,actor,legal,choice,null,strategy);
    report.budgetFallback++;
    report.budget++;
+   settle();
    return finish(kept,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
     incomplete:true,settled:false,
@@ -481,6 +483,7 @@ export function chooseAiV3Action(pack,state,options={}){
    const backupOnly=keptEnergy(pack,state,actor,legal,reliableChoice(pack,state,actor,legal,hardExact,ordered),null,strategy);
    report.budgetFallback++;
    report.budget++;
+   settle();
    return finish(backupOnly,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
     incomplete:true,executed:false,settled:false,
@@ -497,12 +500,13 @@ export function chooseAiV3Action(pack,state,options={}){
    return mine-base;
   });
   const exact=legal.find(item=>same(item,blended?.action));
-  if(!exact)return fallback(pack,state,legal,started,'unmatched');
+  if(!exact)return fallback(pack,state,legal,started,'unmatched',()=>{settle();return spent();});
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
   const kept=keptEnergy(pack,state,actor,legal,exact,row,strategy);
   const keptRow=scored.find(item=>same(item.action,kept))||row;
   if(keptRow?.settled)report.settledChoices++;
+  settle();
   return finish(kept,now()>deadline?'budget':'search',{
    actor,seed,worlds:worlds.length,score:keptRow?.search??null,bonus:blended.bonus,
    opponentTurns:keptRow?.opponentTurns||0,responses:keptRow?.responses||0,
@@ -516,7 +520,14 @@ export function chooseAiV3Action(pack,state,options={}){
  }catch(error){
   try{
    const legal=legalUniversalActions(pack,state);
-   return fallback(pack,state,legal,started,error?.message||'exception');
+   return fallback(pack,state,legal,started,error?.message||'exception',()=>{settle();return spent();});
+  }catch{settle();return finish(null,'exception',{fallback:true,nodesUsed:spent()},started);}
+ }
+  }));
+ }catch(error){
+  try{
+   const legal=legalUniversalActions(pack,state);
+   return fallback(pack,state,legal,started,error?.message||'exception',0);
   }catch{return finish(null,'exception',{fallback:true},started);}
  }
 }

@@ -3,8 +3,24 @@
 // the field, a ready front that can threaten, and a block that survives.
 // This module does not import or call the frozen search. Card numbers are
 // not special cases. The three callers turn on one feature at a time.
+import {AsyncLocalStorage} from 'node:async_hooks';
 import {universalBp,universalEnergy,universalEnergyByColor,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {packOf} from './observation.mjs';
+
+const probeStore=new AsyncLocalStorage();
+const meterStore=new AsyncLocalStorage();
+export function bindProbeBudget(budget,fn){
+ return probeStore.run(budget||null,fn);
+}
+export function bindMeter(meter,fn){
+ if(!meter)return fn();
+ return meterStore.run(meter,fn);
+}
+export function noteDispatch(){
+ const meter=meterStore.getStore();
+ if(meter)meter.dispatches=(meter.dispatches||0)+1;
+}
+function probeBudget(){return probeStore.getStore()||null;}
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 function energyOf(pack,state,player){
@@ -92,20 +108,15 @@ function liveBlockers(pack,state,player){
  return live;
 }
 const moveViews=new WeakMap();
-let probeBudget=null;
-// Lethal checks made while a search is running spend that search's pool and
-// clock. A direct call, outside a search, still resolves the short line.
-export function bindProbeBudget(budget,fn){
- const previous=probeBudget;
- probeBudget=budget||null;
- try{return fn();}
- finally{probeBudget=previous;}
-}
+// A search binds one pool and clock for its whole call, including the
+// ranking and the short lethal line. Nothing outside that binding may run
+// the line for free.
 function takeProbeNode(){
- const budget=probeBudget;
- if(!budget)return true;
+ const budget=probeBudget();
+ if(!budget)return false;
  const expired=typeof budget.now==='function'&&budget.now()>budget.deadline;
  if(expired||!(budget.pool?.n>0))return false;
+ if(Number.isInteger(budget.lineCap)&&!(budget.lineSpent<budget.lineCap))return false;
  budget.pool.n--;
  if(Number.isInteger(budget.lineSpent))budget.lineSpent++;
  return true;
@@ -126,6 +137,29 @@ function boardSignature(state,actor){
 // the energy after this move decide that. A lethal swing, a raid the
 // remaining energy can pay, a front that still meets the curve, or a block
 // when the front is empty are reasons to move anyway.
+function moveKey(action){
+ return [action.uid,action.slot??'',action.replaceUid||''].join(':');
+}
+function viewEntry(view){
+ const budget=probeBudget();
+ return {view,complete:view?.lethal!=='unproven',pool:budget?.pool||null};
+}
+// A finished yes or no can be reused. An unproven result belongs only to the
+// pool that ran out, so a later call with a real budget can still check.
+function storedMove(saved,key){
+ const entry=saved?.views?.get(key);
+ if(!entry)return null;
+ if(entry.complete)return entry.view;
+ const pool=probeBudget()?.pool||null;
+ if(pool&&entry.pool===pool)return entry.view;
+ return null;
+}
+export function cachedMoveDevelopment(pack,state,actor,action){
+ if(action?.type!=='move'||!action.uid||!state?.players?.[actor])return null;
+ const saved=moveViews.get(state);
+ if(!saved||saved.signature!==boardSignature(state,actor))return null;
+ return saved.views.get(moveKey(action))?.view||null;
+}
 export function moveDevelopment(pack,state,actor,action){
  if(action?.type!=='move'||!action.uid||!state?.players?.[actor])return null;
  const signature=boardSignature(state,actor);
@@ -134,10 +168,23 @@ export function moveDevelopment(pack,state,actor,action){
   saved={signature,views:new Map()};
   moveViews.set(state,saved);
  }
- const key=[action.uid,action.slot??'',action.replaceUid||''].join(':');
- if(saved.views.has(key))return saved.views.get(key);
+ const key=moveKey(action);
+ const memo=probeBudget()?.pool;
+ const memoKey=signature+'#'+key;
+ if(memo?.moveMemo?.has(memoKey)){
+  const entry=memo.moveMemo.get(memoKey);
+  saved.views.set(key,entry);
+  return entry.view;
+ }
+ const hit=storedMove(saved,key);
+ if(hit)return hit;
  const view=assessMove(pack,state,actor,action);
- saved.views.set(key,view);
+ const entry=viewEntry(view);
+ saved.views.set(key,entry);
+ if(memo&&entry.complete){
+  if(!memo.moveMemo)memo.moveMemo=new Map();
+  memo.moveMemo.set(memoKey,entry);
+ }
  return view;
 }
 function relocatedEnergy(pack,state,actor,action){
@@ -184,8 +231,11 @@ function assessMove(pack,state,actor,action){
 function probeStep(pack,cursor,action){
  if(!takeProbeNode())return {stop:'budget'};
  const seat=cursor.pending?.player??cursor.active;
- try{return {state:dispatchUniversalAction(pack,cursor,action,{actor:seat})};}
- catch{return {stop:'error'};}
+ try{
+  const state=dispatchUniversalAction(pack,cursor,action,{actor:seat});
+  noteDispatch();
+  return {state};
+ }catch{return {stop:'error'};}
 }
 function lifeVerdict(cursor,actor){
  if(!cursor)return null;
