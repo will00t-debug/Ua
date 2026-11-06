@@ -411,6 +411,35 @@ function blockerLives(pack,state,viewer,action){
  if(!card||!attacker)return false;
  return bpOf(pack,state,card)>=bpOf(pack,state,attacker);
 }
+// A cut search used to copy the energy-before-front rank. That is right when
+// the line still needs a generator. It is the wrong backup once current
+// energy and AP already pay a large front body, and that body is not an
+// unready raid card sitting behind a bigger friendly attacker.
+export function situationalBackup(pack,state,actor,legal,choice){
+ if(!choice||choice.type!=='play'||choice.line!=='energy')return choice;
+ if(!(energyOf(pack,state,actor)>0))return choice;
+ const mine=state.players?.[actor];
+ if(!mine)return choice;
+ const ready=(mine.apCards||[]).filter(card=>card?.ready).length;
+ if(!ready)return choice;
+ const catalog=packOf(pack,actor).cards;
+ const colors=colorsOf(pack,state,actor);
+ let best=null,bestBp=-1;
+ for(const action of legal||[]){
+  if(action?.type!=='play'||action.line!=='front'||!action.uid)continue;
+  const card=(mine.hand||[]).find(item=>item?.uid===action.uid);
+  const printed=card&&catalog[card.cardId];
+  if(!printed||printed.type!=='character')continue;
+  if((printed.energy||0)>(colors[printed.color]||0))continue;
+  if(printed.raidName&&!raidReady(catalog,printed,mine))continue;
+  const bp=Number(printed.bp)||0;
+  if(bp<3000)continue;
+  const covered=(mine.front||[]).some(body=>body&&(Number(catalog[body.cardId]?.bp)||0)>=bp);
+  if(covered)continue;
+  if(bp>bestBp){bestBp=bp;best=action;}
+ }
+ return best||choice;
+}
 export function strategyOrder(pack,state,viewer,action){
  const parts=strategyParts(pack,state,viewer);
  if(action.type==='chooseBlock'&&action.uid)return blockerLives(pack,state,viewer,action)?16:1;

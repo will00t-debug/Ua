@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -79,7 +79,9 @@ function reliableChoice(pack,state,actor,legal,hardExact,ordered){
   if(picks.length)return ranked(picks)[picks.length-1];
  }
  if(kind==='effect-optional-mill')return legal.find(action=>action.mode==='mill')||hardExact||legal[0];
- return hardExact||ordered[0]||legal[0];
+ const picked=hardExact||ordered[0]||legal[0];
+ if(hardExact)return hardExact;
+ return situationalBackup(pack,state,actor,legal,picked)||picked;
 }
 const BOUNDARY_RANK={terminal:5,returned:4,yielded:3,pending:2,open:1};
 // A finished game outranks a returned turn. When nothing got home, lines
@@ -217,6 +219,16 @@ function rootSlice(poolLeft,jobsLeft,total,roots){
  const room=Math.max(cover,poolLeft-reserved);
  return Math.max(1,Math.min(16,room,Math.max(0,poolLeft)));
 }
+// Nodes reserved for a later root are useless if this root uses the whole
+// clock. This root may spend the same fraction of the time still left as
+// its node slice is of the nodes still reserved. A root that finishes
+// early leaves the remainder, and the global deadline is unchanged.
+function shareDeadline(now,deadline,mine,laterNodes){
+ if(!(laterNodes>0)||!(mine>0)||typeof now!=='function'||!Number.isFinite(deadline))return deadline;
+ const remain=deadline-now();
+ if(!(remain>0))return deadline;
+ return now()+remain*mine/(mine+laterNodes);
+}
 function fallback(pack,state,legal,started,reason,account=null){
  report.fallback++;
  const actor=state?.pending?.player??state?.active??0;
@@ -333,7 +345,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const held=[];
   const note=actionNote;
   const stopReason=()=>pool.n<=0?'nodes':now()>deadline?'time':'unscored';
-  const scoreJob=(action,pass,cap)=>{
+  const scoreJob=(action,pass,cap,lineDeadline)=>{
    let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0,settled=0;
    let pending=null,phase=null,boundary=null,cut=null,sequence=null,sample=null,failReason=null;
    let followBranches=0,maxDepth=1;
@@ -342,7 +354,7 @@ export function chooseAiV3Action(pack,state,options={}){
     if(now()>deadline&&n){report.budget++;failReason=failReason||'time';break;}
     const slice=Math.min(pool.n,pass==='basic'?Math.max(1,cap||basicCap):lineFloor);
     const line=scoreLine(pack,worlds[w].state,actor,action,{
-     nodes:slice,pool,beam,deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass
+     nodes:slice,pool,beam,deadline:lineDeadline??deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass
     });
     if(line?.unexplored?.length)unexplored.push(...line.unexplored);
     if(!line||line.executed===false||!Number.isFinite(line.search)){
@@ -391,7 +403,9 @@ export function chooseAiV3Action(pack,state,options={}){
     unexecuted.push({...note(jobs[index]),action:jobs[index],executed:false,nodes:0,reason:stopReason()});
     continue;
    }
-   const row=scoreJob(jobs[index],'basic',rootSlice(pool.n,jobs.length-index,total,jobs.length));
+   const cap=rootSlice(pool.n,jobs.length-index,total,jobs.length);
+   const laterNodes=Math.max(0,jobs.length-index-1)*coverShare(total,jobs.length);
+   const row=scoreJob(jobs[index],'basic',cap,shareDeadline(now,deadline,cap,laterNodes));
    if(!row||row.failed)unexecuted.push({...note(jobs[index]),action:jobs[index],executed:false,nodes:0,reason:row?.reason||stopReason()});
    else{
     row.basicNodes=row.nodes;

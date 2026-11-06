@@ -514,7 +514,7 @@ test('white sword turn 1 searches the plain energy play before the on-play and b
  assert.ok(onPlay>=0&&quietFront>onPlay);
  const meter={dispatches:0};
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:12,now:()=>meter.dispatches,meter,diagnose:true});
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:24,now:()=>meter.dispatches,meter,diagnose:true});
  const trace=lastAiV3Trace();
  assert.equal(cardId(state,action),'BLC-1-083');
  assert.equal(action.line,'energy');
@@ -523,9 +523,12 @@ test('white sword turn 1 searches the plain energy play before the on-play and b
  assert.ok(trace.rootPlan.findIndex(item=>item.type==='next')>0);
  const quiet=trace.candidates.find(row=>row.action?.line==='energy'&&cardId(state,row.action)==='BLC-1-083');
  const noisy=trace.candidates.find(row=>row.action?.line==='energy'&&cardId(state,row.action)==='BLC-4-066');
+ const front=trace.candidates.find(row=>row.action?.line==='front');
  assert.equal(quiet.boundary,'returned');
  assert.ok(quiet.search>0);
  if(noisy?.boundary==='returned')assert.ok(quiet.search>noisy.search);
+ assert.ok(front&&front.nodes>0);
+ assert.equal(meter.dispatches,trace.nodesUsed);
  assert.ok(meter.dispatches<=48);
 });
 
@@ -539,6 +542,102 @@ test('a legal raid still outranks the plain energy play, and an attack is not pa
  const attackLegal=legalUniversalActions(attackSpot.packs,attackSpot.state);
  assert.equal(attackLegal.some(action=>action.type==='attack'),true);
  resetAiV3Report();
- const action=chooseAiV3Action(attackSpot.packs,attackSpot.state,{...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true});
+ const attackMeter={dispatches:0};
+ const action=chooseAiV3Action(attackSpot.packs,attackSpot.state,{...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,meter:attackMeter,diagnose:true});
  assert.equal(action.type,'attack');
+ assert.equal(attackMeter.dispatches,lastAiV3Trace().nodesUsed);
+ const raidMeter={dispatches:0};
+ resetAiV3Report();
+ chooseAiV3Action(raidSpot.packs,raidSpot.state,{...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,meter:raidMeter,diagnose:true});
+ const raidTrace=lastAiV3Trace();
+ const raidRow=(raidTrace.candidates||[]).find(row=>row.action?.type==='raid');
+ assert.ok(raidRow&&raidRow.nodes>0);
+ assert.ok((raidTrace.candidates||[]).some(row=>row.action?.type==='next'&&row.nodes>0));
+ assert.equal(raidMeter.dispatches,raidTrace.nodesUsed);
+});
+
+function clocked(spot,ms,extra={}){
+ const actor=spot.state.pending?.player??spot.state.active;
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(spot.packs,spot.state,{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',diagnose:true,meter,
+  nodes:extra.nodes??48,ms,now:extra.now||(()=>meter.dispatches)
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=(extra.nodes??48));
+ assert.equal(legalUniversalActions(spot.packs,spot.state).some(item=>same(item,action)),true);
+ return {action,trace,meter,actor};
+}
+
+test('step 17 searches the front before the clock is gone, and a cut does not copy the energy rank',()=>{
+ const spot=whiteSwordAt(8301,1,1,17);
+ const covered=clocked(spot,36);
+ const front=covered.trace.candidates.find(row=>row.action?.line==='front'&&cardId(spot.state,row.action)==='BLC-4-070');
+ assert.ok(front&&front.nodes>=4);
+ assert.equal(cardId(spot.state,covered.action),'BLC-4-070');
+ assert.equal(covered.action.line,'front');
+ assert.equal(covered.trace.fallbackKind,null);
+ const cut=clocked(spot,12);
+ assert.equal(cut.trace.reason,'budget-fallback');
+ assert.equal(cut.trace.fallbackKind,'budget');
+ const started=(cut.trace.candidates||[]).find(row=>row.action?.line==='front');
+ assert.equal(started?.nodes||0,0);
+ assert.equal(cut.action.line,'front');
+ assert.equal(cardId(spot.state,cut.action),'BLC-4-070');
+ const fixed=clocked(spot,1e9,{now:()=>0});
+ assert.equal(fixed.action.line,'front');
+ assert.equal(cardId(spot.state,fixed.action),'BLC-4-070');
+ assert.equal(fixed.trace.reason,'search');
+});
+
+test('a line with no energy keeps the energy play when the search is cut',()=>{
+ const spot=whiteSwordAt(8300,0,0,2);
+ const none=clocked(spot,0);
+ assert.equal(none.meter.dispatches,0);
+ assert.equal(none.action.line,'energy');
+ assert.equal(cardId(spot.state,none.action),'BLC-1-083');
+ const early=clocked(spot,4);
+ assert.equal(early.trace.reason,'budget-fallback');
+ assert.equal(early.action.line,'energy');
+ assert.equal(cardId(spot.state,early.action),'BLC-1-083');
+});
+
+test('a finished on-play line still wins when that score is higher',()=>{
+ const spot=whiteSwordAt(8302,1,1,2);
+ const full=clocked(spot,1e9,{now:()=>0});
+ const rows=full.trace.candidates.filter(row=>row.action?.line==='energy'&&row.boundary==='returned');
+ const loud=rows.find(row=>cardId(spot.state,row.action)==='BLC-4-066');
+ const quiet=rows.find(row=>cardId(spot.state,row.action)==='BLC-1-083');
+ assert.ok(loud&&quiet);
+ assert.ok(loud.search>quiet.search);
+ assert.equal(full.action.line,'energy');
+ assert.equal(cardId(spot.state,full.action),'BLC-4-066');
+});
+
+test('zero, tiny, entry, and mid-search clocks record every transition',()=>{
+ const spot=whiteSwordAt(8301,1,1,17);
+ const zero=clocked(spot,1e9,{nodes:0,now:()=>0});
+ assert.equal(zero.meter.dispatches,0);
+ const tiny=clocked(spot,1e9,{nodes:2,now:()=>0});
+ assert.ok(tiny.meter.dispatches>0&&tiny.meter.dispatches<=2);
+ const entry=clocked(spot,0);
+ assert.equal(entry.meter.dispatches,0);
+ assert.equal(entry.trace.reason,'budget-fallback');
+ const meter={dispatches:0};
+ let jumped=false;
+ resetAiV3Report();
+ const actor=spot.state.pending?.player??spot.state.active;
+ const action=chooseAiV3Action(spot.packs,spot.state,{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,meter,diagnose:true,
+  now(){return jumped?1000:meter.dispatches;},
+  onRootDone(){if(meter.dispatches>0)jumped=true;}
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed>0&&trace.nodesUsed<48);
+ assert.equal(legalUniversalActions(spot.packs,spot.state).some(item=>same(item,action)),true);
+ assert.ok(trace.unexecuted.length>=1);
+ assert.ok(trace.unexecuted.every(row=>row.reason==='time'));
 });

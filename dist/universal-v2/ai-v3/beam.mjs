@@ -163,6 +163,18 @@ function spend(ctx){
  ctx.lineSpent++;
  return true;
 }
+// Charge the node before the transition. The clock can move inside the
+// transition; billing afterwards dropped that step from the record while
+// the transition had already happened. A failed transition returns the node.
+function billedStep(ctx,pack,state,action){
+ if(!spend(ctx))return {budget:true};
+ try{return {state:dispatch(pack,state,action)};}
+ catch{
+  ctx.pool.n++;
+  ctx.lineSpent--;
+  return {error:true};
+ }
+}
 function settleBattle(pack,state,actor,ctx){
  let cursor=state;
  for(let guard=0;guard<6&&cursor.status==='playing'&&cursor.pending&&
@@ -177,10 +189,10 @@ function settleBattle(pack,state,actor,ctx){
    :selectCandidates(pack,cursor,seat,legal,Math.min(4,ctx.beam),maximize?ctx.strategy:null);
   let best=maximize?-Infinity:Infinity,chosen=null;
   for(const action of candidates){
-   if(!room(ctx)){ctx.stats.budget++;break;}
-   let next;
-   try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
-   if(!spend(ctx)){ctx.stats.budget++;break;}
+   const stepped=billedStep(ctx,pack,cursor,action);
+   if(stepped.budget){ctx.stats.budget++;break;}
+   if(stepped.error){ctx.stats.unsupported++;continue;}
+   const next=stepped.state;
    const done=terminalValue(next,actor);
    const value=done!==null?done:evaluate(pack,next,actor,ctx);
    if(chosen===null||(maximize?value>best:value<best)){best=value;chosen=next;}
@@ -198,10 +210,10 @@ function autoAdvance(pack,state,ctx){
    let legal;
    try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
    if(!legal.length)return cursor;
-   if(!room(ctx)){ctx.stats.budget++;return cursor;}
-   try{cursor=dispatch(pack,cursor,legal[0]);}
-   catch{ctx.stats.unsupported++;return cursor;}
-   if(!spend(ctx)){ctx.stats.budget++;return cursor;}
+   const ordered=billedStep(ctx,pack,cursor,legal[0]);
+   if(ordered.budget){ctx.stats.budget++;return cursor;}
+   if(ordered.error){ctx.stats.unsupported++;return cursor;}
+   cursor=ordered.state;
    ctx.stats.orderSteps++;
    continue;
   }
@@ -209,10 +221,10 @@ function autoAdvance(pack,state,ctx){
   let legal;
   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
   if(legal.length===1&&legal[0].type==='next'){
-   if(!room(ctx)){ctx.stats.budget++;return cursor;}
-   try{cursor=dispatch(pack,cursor,legal[0]);}
-   catch{ctx.stats.unsupported++;return cursor;}
-   if(!spend(ctx)){ctx.stats.budget++;return cursor;}
+   const forced=billedStep(ctx,pack,cursor,legal[0]);
+   if(forced.budget){ctx.stats.budget++;return cursor;}
+   if(forced.error){ctx.stats.unsupported++;return cursor;}
+   cursor=forced.state;
    ctx.stats.orderSteps++;
    continue;
   }
@@ -374,9 +386,11 @@ function fastOpponent(pack,cursor,actor,ctx){
   const action=ctx.strategy==='reply'&&seat!==actor
    ?replyAction(pack,cursor,legal)
    :rankLegal(pack,cursor,seat,legal,seat===actor?ctx.strategy:null)[0];
-  if(!action||!room(ctx)){ctx.stats.budget++;break;}
-  try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
-  if(!spend(ctx)){ctx.stats.budget++;break;}
+  if(!action){ctx.stats.budget++;break;}
+  const stepped=billedStep(ctx,pack,cursor,action);
+  if(stepped.budget){ctx.stats.budget++;break;}
+  if(stepped.error){ctx.stats.unsupported++;break;}
+  cursor=stepped.state;
   if(legal.length>1&&seat!==actor)ctx.stats.responses++;
   noteStep(ctx,action,'script');
   cursor=settleBattle(pack,autoAdvance(pack,cursor,ctx),actor,ctx);
@@ -421,9 +435,10 @@ function roll(pack,cursor,actor,ctx,pick){
    if(cursor.pending)halted=true;
    break;
   }
-  if(!room(ctx)){ctx.stats.budget++;break;}
-  try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
-  if(!spend(ctx)){ctx.stats.budget++;break;}
+  const stepped=billedStep(ctx,pack,cursor,action);
+  if(stepped.budget){ctx.stats.budget++;break;}
+  if(stepped.error){ctx.stats.unsupported++;break;}
+  cursor=stepped.state;
   noteStep(ctx,action,'script');
   cursor=settleBattle(pack,autoAdvance(pack,cursor,ctx),actor,ctx);
  }
@@ -472,10 +487,11 @@ function advanceForced(pack,cursor,ctx){
   const ordered=cursor.pending&&ORDER_KINDS.has(cursor.pending.kind);
   if(!ordered&&legal.length!==1)return cursor;
   if(!legal.length)return cursor;
-  if(!room(ctx)){ctx.stats.budget++;return cursor;}
   const action=legal[0];
-  try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;return cursor;}
-  if(!spend(ctx)){ctx.stats.budget++;return cursor;}
+  const stepped=billedStep(ctx,pack,cursor,action);
+  if(stepped.budget){ctx.stats.budget++;return cursor;}
+  if(stepped.error){ctx.stats.unsupported++;return cursor;}
+  cursor=stepped.state;
   noteStep(ctx,action,'forced');
   if(ordered)ctx.stats.orderSteps++;
  }
@@ -524,11 +540,11 @@ function replyFrom(pack,state,actor,ctx,left){
  const mark=ctx.stats.sequence.length;
  let best=null;
  for(const action of candidates){
-  if(!room(ctx)){ctx.stats.budget++;break;}
   ctx.stats.sequence.length=mark;
-  let next;
-  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
-  if(!spend(ctx)){ctx.stats.budget++;break;}
+  const stepped=billedStep(ctx,pack,cursor,action);
+  if(stepped.budget){ctx.stats.budget++;break;}
+  if(stepped.error){ctx.stats.unsupported++;continue;}
+  const next=stepped.state;
   noteStep(ctx,action,'reply');
   if(seat!==actor)ctx.stats.responses++;
   const saved=ctx.replyDepth||0;
@@ -606,9 +622,10 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
    break;
   }
   applyLeaf(ctx,before);
-  let next;
-  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
-  if(!spend(ctx)){ctx.stats.budget++;break;}
+  const stepped=billedStep(ctx,pack,cursor,action);
+  if(stepped.budget){ctx.stats.budget++;break;}
+  if(stepped.error){ctx.stats.unsupported++;continue;}
+  const next=stepped.state;
   noteStep(ctx,action,'reply');
   ctx.stats.responses++;
   const value=planFrom(pack,next,actor,ctx,left,depth+1);
@@ -709,9 +726,10 @@ function planFrom(pack,state,actor,ctx,left,depth){
    break;
   }
   applyLeaf(ctx,before);
-  let next;
-  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
-  if(!spend(ctx)){ctx.stats.budget++;break;}
+  const stepped=billedStep(ctx,pack,cursor,action);
+  if(stepped.budget){ctx.stats.budget++;break;}
+  if(stepped.error){ctx.stats.unsupported++;continue;}
+  const next=stepped.state;
   noteStep(ctx,action,maximize?'choice':'reply');
   if(maximize)ctx.stats.actorDecisions++;
   else ctx.stats.responses++;
@@ -834,10 +852,10 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  let bestPending=ctx.stats.leafPending,bestPhase=ctx.stats.leafPhase;
  for(let i=0;i<ordered.length;i++){
   const action=ordered[i];
-  if(!room(ctx)){ctx.stats.budget++;break;}
-  let next;
-  try{next=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;continue;}
-  if(!spend(ctx)){ctx.stats.budget++;break;}
+  const stepped=billedStep(ctx,pack,cursor,action);
+  if(stepped.budget){ctx.stats.budget++;break;}
+  if(stepped.error){ctx.stats.unsupported++;continue;}
+  let next=stepped.state;
   try{next=settleBattle(pack,next,actor,ctx);}catch{ctx.stats.unsupported++;continue;}
   compared++;
   if(seat===actor)ctx.stats.actorDecisions++;
@@ -905,9 +923,9 @@ function finishScore(pack,state,actor,action,limits,ctx){
   ctx.stats.boundary='open';
   return lineView(ctx,null);
  }
- let next;
- try{next=dispatch(pack,state,action);}catch{return null;}
- if(!spend(ctx)){
+ const stepped=billedStep(ctx,pack,state,action);
+ if(stepped.error)return null;
+ if(stepped.budget){
   ctx.stats.executed=false;
   ctx.stats.settled=false;
   ctx.stats.cut=nowOf(ctx)>ctx.deadline?'time':'nodes';
@@ -915,6 +933,7 @@ function finishScore(pack,state,actor,action,limits,ctx){
   ctx.stats.boundary='open';
   return lineView(ctx,null);
  }
+ const next=stepped.state;
  ctx.stats.executed=true;
  ctx.stats.actorDecisions++;
  noteStep(ctx,action,'root');
