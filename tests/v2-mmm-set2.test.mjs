@@ -232,3 +232,160 @@ test('face-up life stays public and is not a retirement',()=>{
  assert.equal(s.players[0].outside.some(c=>c.uid===sayaka.uid),false);
  assertUniversalMatch(packs,s);
 });
+
+function pick(s,pred){
+ const actions=legalUniversalActions(packs,s);
+ const action=actions.find(pred);
+ if(!action)throw Error('No choice '+(s.pending?.kind||'')+' '+(s.pending?.step||'')+' '+
+  JSON.stringify(actions).slice(0,400));
+ return use(s,action);
+}
+function play(s,uid,line='front'){
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===uid&&
+  a.line===line&&a.replaceUid===undefined);
+ if(!action)throw Error('No play '+uid+' '+line);
+ return use(s,action);
+}
+function raidOnto(s,uid,baseUid){
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===uid&&a.baseUid===baseUid);
+ if(!action)throw Error('No raid '+uid+' onto '+baseUid);
+ return use(s,action);
+}
+function event(s,uid){
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===uid);
+ if(!action)throw Error('No event '+uid);
+ return use(s,action);
+}
+function hand(s,id){
+ const card=take(s,0,id);
+ s.players[0].hand.push(card);
+ return card;
+}
+function located(s,uid){
+ const found=[];
+ const pl=s.players[0];
+ for(const zone of ['hand','deck','life','outside','removed'])
+  for(const c of pl[zone]) if(c?.uid===uid) found.push(zone);
+ for(const zone of ['front','energy']) pl[zone].forEach(c=>{
+  if(c?.uid===uid) found.push(zone);
+ });
+ return found;
+}
+
+// Real EX16BT cards. 029 is already on the front as the raid base, so its
+// own onPlay is not part of this sequence. 032's raid-box onPlay deploys 033.
+test('MMM-2-033 draws only when this entry is an own effect',()=>{
+ const ids=['MMM-2-033','MMM-2-032','MMM-2-029','MMM-2-024','MMM-2-031','MMM-2-025','MMM-2-062'];
+ let s=toPhase(fresh(countsFor(ids),2033),'main');
+ readyAp(s);
+ put(s,0,'MMM-2-031','energy',0,true);
+ put(s,0,'MMM-2-025','energy',1,true);
+ const base=put(s,0,'MMM-2-029','front',0,true);
+ const sana=hand(s,'MMM-2-033');
+ const yachiyo=hand(s,'MMM-2-032');
+ const rena=hand(s,'MMM-2-024');
+ const yachiyoAgain=hand(s,'MMM-2-031');
+ const restore=hand(s,'MMM-2-062');
+ const deck=()=>s.players[0].deck.length;
+ const before=deck();
+ s=raidOnto(s,yachiyo.uid,base.uid);
+ assert.equal(s.pending.step,'deploy');
+ s=pick(s,a=>a.uid===sana.uid&&a.line==='front'&&a.mode==='rest');
+ assert.equal(s.pending,null);
+ assert.equal(deck(),before-1);
+ assert.deepEqual(located(s,sana.uid),['front']);
+ s=play(s,rena.uid);
+ assert.equal(s.pending.kind,'effect-bounce-own');
+ s=pick(s,a=>a.type==='chooseOwnBounce'&&a.uid===sana.uid);
+ assert.deepEqual(located(s,sana.uid),['hand']);
+ s=event(s,restore.uid);
+ while(s.pending?.kind==='effect-recover-ap')
+  s=pick(s,a=>a.type==='chooseApRecovery'&&a.uid);
+ const quiet=deck();
+ s=play(s,sana.uid);
+ assert.equal(s.pending,null);
+ assert.equal(deck(),quiet);
+ assert.deepEqual(located(s,sana.uid),['front']);
+ s=play(s,yachiyoAgain.uid);
+ assert.equal(s.pending.id,'MMM-2-031');
+ assert.equal(s.pending.step,'u031');
+ s=pick(s,a=>a.uid===sana.uid);
+ assert.equal(s.pending.step,'deploy');
+ s=pick(s,a=>a.uid===sana.uid&&a.line==='energy'&&a.mode==='rest');
+ assert.equal(s.pending,null);
+ assert.equal(deck(),quiet-1);
+ assert.deepEqual(located(s,sana.uid),['energy']);
+ assert.equal([...s.players[0].front,...s.players[0].energy,...s.players[0].hand,
+  ...s.players[0].outside].filter(c=>c?.uid===sana.uid).length,1);
+ assertUniversalMatch(packs,s);
+});
+
+// Real EX16BT cards. Moving 033 from front to energy is not a new entry.
+test('MMM-2-033 does not draw again when it only changes lines',()=>{
+ const ids=['MMM-2-033','MMM-2-032','MMM-2-029','MMM-2-025','MMM-2-031'];
+ let s=toPhase(fresh(countsFor(ids),2034),'main');
+ readyAp(s);
+ put(s,0,'MMM-2-031','energy',0,true);
+ put(s,0,'MMM-2-025','energy',1,true);
+ const base=put(s,0,'MMM-2-029','front',0,true);
+ const sana=hand(s,'MMM-2-033');
+ const yachiyo=hand(s,'MMM-2-032');
+ const iroha=hand(s,'MMM-2-025');
+ s=raidOnto(s,yachiyo.uid,base.uid);
+ s=pick(s,a=>a.uid===sana.uid&&a.line==='front');
+ const drawn=s.players[0].deck.length;
+ s=play(s,iroha.uid);
+ const move=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===iroha.uid&&a.mode==='mmm2:0');
+ assert.ok(move);
+ s=use(s,move);
+ assert.equal(s.pending.step,'moveLine');
+ s=pick(s,a=>a.uid===sana.uid&&a.line==='energy'&&a.replaceUid===undefined);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,drawn);
+ assert.deepEqual(located(s,sana.uid),['energy']);
+ assertUniversalMatch(packs,s);
+});
+
+// Real EX16BT cards. 018 rests 014 in from outside. A later paid play of
+// that same card is not another own-effect entry.
+test('MMM-2-014 cuts BP only when this entry is an own effect',()=>{
+ const ids=['MMM-2-014','MMM-2-018','MMM-2-024','MMM-2-013','MMM-2-017','MMM-2-025','MMM-2-031','MMM-2-062'];
+ let s=toPhase(fresh(countsFor(ids),2014),'main');
+ readyAp(s);
+ put(s,0,'MMM-2-013','energy',0,true);
+ put(s,0,'MMM-2-017','energy',1,true);
+ put(s,0,'MMM-2-025','energy',2,true);
+ put(s,0,'MMM-2-031','energy',3,true);
+ put(s,1,'MMM-2-013','front',0,true);
+ const homura=hand(s,'MMM-2-014');
+ s.players[0].outside.push(homura);
+ s.players[0].hand=s.players[0].hand.filter(c=>c.uid!==homura.uid);
+ const memory=hand(s,'MMM-2-018');
+ const rena=hand(s,'MMM-2-024');
+ const restore=hand(s,'MMM-2-062');
+ const foe=s.players[1].front[0];
+ const before=universalBp(packs,s,foe);
+ s=event(s,memory.uid);
+ assert.equal(s.pending.step,'u018');
+ s=pick(s,a=>a.uid===homura.uid);
+ assert.equal(s.pending.step,'u018enter');
+ s=pick(s,a=>a.uid===homura.uid&&a.line==='front');
+ assert.equal(s.pending.step,'u014');
+ s=pick(s,a=>a.mode==='skip');
+ if(s.pending?.step==='u018')s=pick(s,a=>a.mode==='done');
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(packs,s,foe),before);
+ assert.deepEqual(located(s,homura.uid),['front']);
+ s=event(s,restore.uid);
+ while(s.pending?.kind==='effect-recover-ap')
+  s=pick(s,a=>a.type==='chooseApRecovery'&&a.uid);
+ s=play(s,rena.uid);
+ assert.equal(s.pending.kind,'effect-bounce-own');
+ s=pick(s,a=>a.type==='chooseOwnBounce'&&a.uid===homura.uid);
+ assert.deepEqual(located(s,homura.uid),['hand']);
+ s=play(s,homura.uid);
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(packs,s,foe),before);
+ assert.deepEqual(located(s,homura.uid),['front']);
+ assertUniversalMatch(packs,s);
+});

@@ -43,13 +43,20 @@ function outsideEvents(s,owner,exceptUid=null){
 function entries(s,owner,trait){
  return distinctTraitEntryNames(s,owner,trait,c=>def(A.pack,c)).size;
 }
+// MMM-2-003 「手札から登場」. EX16BT has no print that puts this energy-5
+// character back on the field from outside, remove, or deck, so the same-UID
+// source change is not reproduced here. This scan stays until that flow exists.
 function fromHand(s,owner,uid){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===uid&&e.owner===owner&&
   e.from==='hand'&&['front','energy'].includes(e.to));
 }
-function ownEffectEntry(s,uid){
- return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===uid&&e.reason==='own-effect'&&
-  ['front','energy'].includes(e.to)&&!['front','energy'].includes(e.from));
+// 「このキャラが自分の効果で登場」 is this onPlay. handEffect is a character
+// effect from hand. outsideEffect is one from outside. paidPlay is a later
+// play of the same UID. A front/energy move does not run onPlay again.
+const OWN_EFFECT_ENTRY=new Set(['outsideEffect','outsideEffectRaid','recoveredEffect',
+ 'handEffect','handEffectRaid','deckEffect','deckEffectRaid']);
+function thisEntryByOwnEffect(job){
+ return OWN_EFFECT_ENTRY.has(job.entryCause);
 }
 function removedEntry(s,owner){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.controller===owner&&
@@ -252,7 +259,7 @@ function main012b(pack,s,job){
   pool.map(c=>({type:'mmm2',uid:c.uid})));
 }
 function play014(pack,s,job){
- if(s.active!==job.owner||!ownEffectEntry(s,job.sourceUid))return;
+ if(s.active!==job.owner||!thisEntryByOwnEffect(job))return;
  const foes=plOf(s,1-job.owner).front.filter(Boolean);
  if(!foes.length)return;
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u014'},
@@ -331,7 +338,7 @@ function play032(pack,s,job){
  offerDeploy(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,data:{from:'hand'}},cards,false);
 }
 function play033(pack,s,job){
- if(ownEffectEntry(s,job.sourceUid))A.draw(pack,s,job.owner,1);
+ if(thisEntryByOwnEffect(job))A.draw(pack,s,job.owner,1);
 }
 function end035(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);

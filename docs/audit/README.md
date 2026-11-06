@@ -29,13 +29,13 @@
 
 ### 這一次登場只看這一次的來源
 
-「このキャラが場外から登場していた場合」看這一次登場時的 entryCause。outsideEffect、outsideEffectRaid、lifeColorOutside 算從場外登場。同一 UID 本回合較早的場外移動不算。手牌普通登場是 paidPlay。前線與能源線互換不重跑登場時。「自分のキャラの効果で登場」看最近一次非換線進場：reason 必須是 own-effect，來源是自己的角色。較早的角色效果登場不會留到後來的手牌登場。
+「このキャラが場外から登場していた場合」看這一次登場時的 entryCause。outsideEffect、outsideEffectRaid、lifeColorOutside 算從場外登場。同一 UID 本回合較早的場外移動不算。手牌普通登場是 paidPlay。前線與能源線互換不重跑登場時。「自分のキャラの効果で登場」看最近一次非換線進場：reason 必須是 own-effect，來源是自己的角色。較早的角色效果登場不會留到後來的手牌登場。魔法少女 014 與 033 的「自分の効果で登場」看這一次的 entryCause：outsideEffect、outsideEffectRaid、recoveredEffect、handEffect、handEffectRaid、deckEffect、deckEffectRaid。paidPlay 不算。
 
-dist/universal-v2/iys-runtime.mjs thisEntryFromOutside。dist/universal-v2/aot2-runtime.mjs 同一組 entryCause，AOT-2-024 的抽牌選項才打開。dist/universal-v2/engine.mjs enteredByOwnCharacter 改看最近一次進場。
+dist/universal-v2/iys-runtime.mjs thisEntryFromOutside。dist/universal-v2/aot2-runtime.mjs 同一組 entryCause，AOT-2-024 的抽牌選項才打開。dist/universal-v2/engine.mjs enteredByOwnCharacter 改看最近一次進場。dist/universal-v2/mmm-exedra-runtime.mjs thisEntryByOwnEffect，MMM-2-014 與 MMM-2-033 的登場時。
 
-IYS-1-013 的登場時。AOT-2-024 的場外抽牌。BLC-2-005、006 與其他 entry ownCharacter。本回合「有角色從場外登場」的常時（IYS-1-006 到 009、field-conditions ownCharacterFromOutsideThisTurn）仍看整回合。MMM-2-003 的手札登場、MMM-2-014 與 033 的自己效果登場、KJN-1-034 的移除區使用，仍用本回合 .some()，這次沒有走完合法的離場再登場，所以沒改。
+IYS-1-013 的登場時。AOT-2-024 的場外抽牌。BLC-2-005、006 與其他 entry ownCharacter。本回合「有角色從場外登場」的常時（IYS-1-006 到 009、field-conditions ownCharacterFromOutsideThisTurn）仍看整回合。MMM-2-014 與 033 改看這一次登場。MMM-2-003 的手札登場仍用本回合 .some()：EX16BT 沒有把這張能源 5 的曉美焰從場外、移除區或牌組再送上場的印刷效果，同一 UID 換來源沒有合法重現。KJN-1-034 的登場時「リムーブエリアから使用」仍用本回合 .some()：UA52BT 的回手是能源 1 以下，這張是能源 4，沒有離場後再從別的區域登場的合法路徑。034 的啟動仍是整回合「リムーブエリアからカードを使用」。
 
-tests/v2-iys-001-025.test.mjs。tests/v2-aot-set2.test.mjs 的 AOT-2-024。tests/v2-c29-bleach-port.test.mjs 的 BLC-2-006。
+tests/v2-iys-001-025.test.mjs。tests/v2-aot-set2.test.mjs 的 AOT-2-024。tests/v2-c29-bleach-port.test.mjs 的 BLC-2-006。tests/v2-mmm-set2.test.mjs 的 MMM-2-014 與 MMM-2-033：032 突襲後的效果登場會抽牌，回手再普通登場不抽，031 再從手牌效果登場會再抽；025 只換線不抽。014 從場外效果登場後，回手再普通登場不再減 BP。
 
 ### KMR-1-021 的攻擊階段突襲來自 KMR-2-021
 

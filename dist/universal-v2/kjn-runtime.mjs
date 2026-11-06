@@ -82,6 +82,10 @@ function enteredThisTurn(s,owner,c){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===c.uid&&e.owner===owner&&
   ['front','energy'].includes(e.to)&&!['front','energy'].includes(e.from));
 }
+// KJN-1-034 onPlay 「このカードをリムーブエリアから使用」. UA52BT has no print
+// that returns this energy-4 character to hand or re-enters it from another
+// zone after that use, so the same-UID false positive is not reproduced.
+// The activate on this card is the separate turn-wide removedUse check.
 function selfFromRemoved(s,owner,uid){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===uid&&e.owner===owner&&
   e.from==='removed'&&['front','energy'].includes(e.to)&&e.reason==='rule');
