@@ -869,8 +869,9 @@ test('step 24 scores an open battle without calling the cut a finished turn',()=
  const passed=rows.find(row=>lineOf(row)==='next');
  assert.equal(front.stopPending,'block');
  assert.equal(energy.stopPending,'block');
+ assert.equal(passed.stopPending,'life-trigger');
  assert.ok(front.search>energy.search);
- assert.ok(energy.search>passed.search);
+ assert.ok(front.search>passed.search);
  assert.ok(front.search<-28);
  assert.ok(energy.search<-40);
  const followed={};

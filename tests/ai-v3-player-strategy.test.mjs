@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {battleWindowAction,blankSwingAdjustment,provenRebuild} from '../dist/universal-v2/ai-v3/eval.mjs';
+import {bindProbeBudget} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -70,6 +72,18 @@ function setBp(state,card,bp){
 function setLife(state,player,n){
  while(state.players[player].life.length>n)state.players[player].deck.push(state.players[player].life.pop());
 }
+function fillGetLife(state,player){
+ const life=state.players[player].life;
+ const deck=state.players[player].deck;
+ for(let i=0;i<life.length;i++){
+  if(pack.cards[life[i].cardId]?.trigger==='get')continue;
+  const index=deck.findIndex(card=>pack.cards[card.cardId]?.trigger==='get');
+  if(index<0)throw Error('no get trigger in deck');
+  const got=deck.splice(index,1)[0];
+  deck.push(life[i]);
+  life[i]=got;
+ }
+}
 function clearHand(state,player){
  for(const card of [...state.players[player].hand])state.players[player].deck.push(card);
  state.players[player].hand.length=0;
@@ -97,7 +111,7 @@ function ask(packs,state){
  if(trace.reason!=='forced')assert.ok(trace.nodesUsed<=48,trace.reason+' nodes '+trace.nodesUsed);
  return {action,trace};
 }
-function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blockerBp=4000,attackerBp=4000,damage=1,secondBp=0,secondDamage=1}={}){
+function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blockerBp=4000,attackerBp=4000,damage=1,secondBp=0,secondId='BLC-4-062',secondDamage=1,secondImpact=0,getLife=false}={}){
  const {packs,state}=boot('attack',1,0);
  clearHand(state,0);
  const mine=take(state,0,blockerId);
@@ -109,12 +123,14 @@ function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blo
  if(damage===2)foe.attackDamageGranted={turn:state.turn,stamp:foe.fieldEntryStamp,amount:2};
  let second=null;
  if(secondBp){
-  second=take(state,1,'BLC-4-062');
+  second=take(state,1,secondId);
   place(state,1,second,'front',1);
   setBp(state,second,secondBp);
   if(secondDamage===2)second.attackDamageGranted={turn:state.turn,stamp:second.fieldEntryStamp,amount:2};
+  if(secondImpact)second.impactGranted={turn:state.turn,stamp:second.fieldEntryStamp,amount:1};
  }
  setLife(state,0,life);
+ if(getLife)fillGetLife(state,0);
  for(const card of hand||[])state.players[0].hand.push(card(state));
  const swing=legalUniversalActions(packs,state).find(item=>item.type==='attack'&&item.uid===foe.uid);
  const opened=dispatchUniversalAction(packs,state,swing,{actor:1});
@@ -127,6 +143,19 @@ function settle(packs,state,action){
  const after=dispatchUniversalAction(packs,state,action,{actor});
  assert.equal(assertUniversalMatch(packs,after),true);
  return after;
+}
+function march(packs,cursor,pick){
+ const started=cursor.players[0].ownTurns;
+ for(let guard=0;guard<40;guard++){
+  if(cursor.active===0&&cursor.phase==='start'&&!cursor.pending&&cursor.players[0].ownTurns>started)return cursor;
+  const legal=legalUniversalActions(packs,cursor);
+  const actor=cursor.pending?.player??cursor.active;
+  const action=pick(cursor,legal);
+  if(!action)throw Error('stuck '+(cursor.pending?.kind||cursor.phase));
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ throw Error('our turn did not start');
 }
 
 test('a block line that got home does not outrank a life window on a different score',()=>{
@@ -181,6 +210,27 @@ test('four or more life keeps the 4000 on the last clean hit, and three spends i
  assert.equal(held.players[0].life.length,4);
 });
 
+test('a higher attacking BP still loses to keeping the 4000 until three life',()=>{
+ for(const attackerBp of [5000,6000]){
+  for(const life of [5,4]){
+   const opened=blockWindow(life,{attackerBp});
+   assert.equal(universalAttackDamage(opened.packs,opened.state,opened.foe),1);
+   assert.equal(universalImpact(opened.packs,opened.state,opened.foe),0);
+   const choice=ask(opened.packs,opened.state);
+   assert.equal(choice.action.uid??null,null,attackerBp+' at '+life);
+   const after=settle(opened.packs,opened.state,choice.action);
+   assert.equal(after.players[0].front.some(card=>card?.uid===opened.mine.uid),true);
+   assert.ok(after.players[0].life.length===life-1||after.pending);
+  }
+  const low=blockWindow(3,{attackerBp});
+  const spent=ask(low.packs,low.state);
+  assert.equal(spent.action.uid,low.mine.uid);
+  const after=settle(low.packs,low.state,spent.action);
+  assert.equal(after.players[0].front.some(card=>card?.uid===low.mine.uid),false);
+  assert.equal(after.players[0].life.length,3);
+ }
+});
+
 test('a refill counts only when four attacking 4000s are already paid for',()=>{
  const ready=blockWindow(7,{blockerId:'BLC-4-036'});
  for(let slot=1;slot<4;slot++)place(ready.state,0,take(ready.state,0,'BLC-4-036'),'front',slot);
@@ -189,6 +239,8 @@ test('a refill counts only when four attacking 4000s are already paid for',()=>{
  ready.state.players[0].hand.push(refill);
  assert.equal(universalEnergyByColor(ready.packs,ready.state,0).blue>=4,true);
  assert.equal(provenRebuild(ready.packs,ready.state,0,ready.mine.uid).ok,true);
+ const starved=bindProbeBudget({pool:{n:1},deadline:Infinity,now:()=>0},()=>provenRebuild(ready.packs,ready.state,0,ready.mine.uid));
+ assert.equal(starved.ok,false);
  assert.equal(assertUniversalMatch(ready.packs,ready.state),true);
  const fronts=ready.state.players[0].front.filter(Boolean).map(card=>card.uid);
  const choice=ask(ready.packs,ready.state);
@@ -245,6 +297,55 @@ test('a refill counts only when four attacking 4000s are already paid for',()=>{
  parked.state.players[0].hand.push(take(parked.state,0,'BLC-1-050'));
  assert.equal(provenRebuild(parked.packs,parked.state,0,parked.mine.uid).ok,false);
  assert.equal(ask(parked.packs,parked.state).action.uid??null,null);
+ const locked=blockWindow(7,{blockerId:'BLC-4-036'});
+ const lockedBodies=[locked.mine];
+ for(let slot=1;slot<4;slot++){
+  const card=take(locked.state,0,'BLC-4-036');
+  place(locked.state,0,card,'front',slot);
+  lockedBodies.push(card);
+ }
+ for(let slot=0;slot<4;slot++)place(locked.state,0,take(locked.state,0,'BLC-2-040'),'energy',slot);
+ const lockedRefill=take(locked.state,0,'BLC-4-022');
+ locked.state.players[0].hand.push(lockedRefill);
+ const banned=lockedBodies[1];
+ const until={player:1,phase:'start',edge:'start'};
+ grantContinuousState(locked.state,{kind:'cannotAttack',controller:1,sourceUid:locked.foe.uid,targetUid:banned.uid,until,sourceLinked:false});
+ grantContinuousState(locked.state,{kind:'cannotBlock',controller:1,sourceUid:locked.foe.uid,targetUid:banned.uid,until,sourceLinked:false});
+ assert.equal(assertUniversalMatch(locked.packs,locked.state),true);
+ const healthy=lockedBodies.find(card=>card.uid!==banned.uid);
+ assert.equal(provenRebuild(locked.packs,locked.state,0,healthy.uid).ok,false);
+ const lockedChoice=ask(locked.packs,locked.state);
+ assert.equal(lockedChoice.action.uid??null,null);
+ let shown=settle(locked.packs,structuredClone(locked.state),{type:'chooseBlock',uid:healthy.uid});
+ for(let guard=0;guard<20&&!(shown.active===0&&shown.phase==='main'&&!shown.pending);guard++){
+  const legal=legalUniversalActions(locked.packs,shown);
+  const actor=shown.pending?.player??shown.active;
+  const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw')||legal[0];
+  shown=dispatchUniversalAction(locked.packs,shown,action,{actor});
+ }
+ const replay=legalUniversalActions(locked.packs,shown).find(action=>action.type==='play'&&action.line==='front'&&action.uid===lockedRefill.uid);
+ assert.ok(replay);
+ shown=dispatchUniversalAction(locked.packs,shown,replay,{actor:0});
+ for(let guard=0;guard<8&&shown.pending;guard++){
+  const legal=legalUniversalActions(locked.packs,shown);
+  const actor=shown.pending.player??shown.active;
+  const action=legal.find(item=>item.type==='chooseDiscardGate'&&(item.uid??null)===null)||
+   legal.find(item=>item.optional===true&&(item.mode==='pass'||item.mode==='decline'||item.uid==null))||legal[0];
+  shown=dispatchUniversalAction(locked.packs,shown,action,{actor});
+ }
+ for(let guard=0;guard<12&&!(shown.active===0&&shown.phase==='attack'&&!shown.pending);guard++){
+  const legal=legalUniversalActions(locked.packs,shown);
+  const actor=shown.pending?.player??shown.active;
+  const action=legal.find(item=>item.type==='next')||legal[0];
+  shown=dispatchUniversalAction(locked.packs,shown,action,{actor});
+ }
+ const stood=shown.players[0].front.filter(Boolean);
+ assert.equal(stood.length,4);
+ assert.ok(stood.every(card=>universalBp(locked.packs,shown,card)>=4000));
+ assert.equal((shown.players[0].energy||[]).filter(card=>card?.cardId==='BLC-2-040').length,4);
+ const swings=legalUniversalActions(locked.packs,shown).filter(action=>action.type==='attack');
+ assert.equal(swings.filter(action=>stood.some(card=>card.uid===action.uid)).length,3);
+ assert.equal(swings.some(action=>action.uid===banned.uid),false);
 });
 
 test('impact follows the engine result, and a safe block is not spent on the first of two swings',()=>{
@@ -283,6 +384,49 @@ test('impact follows the engine result, and a safe block is not spent on the fir
  assert.equal(firstChoice.action.uid??null,null);
  const saved=settle(first.packs,first.state,firstChoice.action);
  assert.equal(saved.players[0].front.find(card=>card?.uid===first.mine.uid)?.ready,true);
+ const unclean=blockWindow(7,{blockerId:'BLC-4-036',blockerBp:5000,attackerId:'BLC-1-009',attackerBp:4000,secondBp:6000,secondId:'BLC-4-036',secondDamage:2,secondImpact:1,getLife:true});
+ assert.equal(universalImpact(unclean.packs,unclean.state,unclean.foe),1);
+ assert.equal(universalImpact(unclean.packs,unclean.state,unclean.second),1);
+ assert.equal(universalAttackDamage(unclean.packs,unclean.state,unclean.second),2);
+ assert.equal(universalImpactNull(unclean.packs,unclean.state,unclean.mine),false);
+ const front=legalUniversalActions(unclean.packs,unclean.state).filter(action=>action.type==='chooseBlock'&&action.uid);
+ assert.equal(front.length,1);
+ const uncleanChoice=ask(unclean.packs,unclean.state);
+ assert.equal(uncleanChoice.action.uid,unclean.mine.uid);
+ const lines=structuredClone(unclean.state);
+ const playLine=(firstUid,secondUid)=>{
+  let cursor=settle(unclean.packs,structuredClone(lines),{type:'chooseBlock',uid:firstUid});
+  return march(unclean.packs,cursor,(cursor,legal)=>{
+   if(cursor.pending?.kind==='block')
+    return legal.find(action=>action.type==='chooseBlock'&&(action.uid??null)===(secondUid??null));
+   if(cursor.pending?.kind==='life-trigger')
+    return legal.find(action=>action.mode==='get')||legal.find(action=>action.mode==='skip');
+   if(cursor.pending?.kind==='life-batch-order')return legal.find(action=>action.type==='chooseLifeOrder');
+   if(!cursor.pending&&cursor.active===1&&cursor.phase==='attack')
+    return legal.find(action=>action.type==='attack'&&action.uid===unclean.second.uid)||legal.find(action=>action.type==='next');
+   return legal.find(action=>action.type==='next')||legal.find(action=>action.type==='extraDraw');
+  });
+ };
+ const blockedFirst=playLine(unclean.mine.uid,null);
+ assert.equal(blockedFirst.players[0].life.length,5);
+ assert.equal(blockedFirst.players[0].front.find(card=>card?.uid===unclean.mine.uid)?.ready,true);
+ const blockedSecond=playLine(null,unclean.mine.uid);
+ assert.equal(blockedSecond.players[0].life.length,5);
+ assert.equal(blockedSecond.players[0].front.some(card=>card?.uid===unclean.mine.uid),false);
+ const blockedNone=playLine(null,null);
+ assert.equal(blockedNone.players[0].life.length,4);
+ assert.equal(blockedNone.players[0].front.find(card=>card?.uid===unclean.mine.uid)?.ready,true);
+ const chosen=settle(unclean.packs,unclean.state,uncleanChoice.action);
+ const arrived=march(unclean.packs,chosen,(cursor,legal)=>{
+  if(cursor.pending?.kind==='block')return legal.find(action=>action.type==='chooseBlock'&&(action.uid??null)===null);
+  if(cursor.pending?.kind==='life-trigger')return legal.find(action=>action.mode==='get')||legal.find(action=>action.mode==='skip');
+  if(cursor.pending?.kind==='life-batch-order')return legal.find(action=>action.type==='chooseLifeOrder');
+  if(!cursor.pending&&cursor.active===1&&cursor.phase==='attack')
+   return legal.find(action=>action.type==='attack'&&action.uid===unclean.second.uid)||legal.find(action=>action.type==='next');
+  return legal.find(action=>action.type==='next')||legal.find(action=>action.type==='extraDraw');
+ });
+ assert.equal(arrived.players[0].life.length,5);
+ assert.equal(arrived.players[0].front.find(card=>card?.uid===unclean.mine.uid)?.ready,true);
  const small=blockWindow(7,{blockerId:'BLC-1-083',blockerBp:1500});
  assert.equal(ask(small.packs,small.state).action.uid,small.mine.uid);
  const forced=blockWindow(7,{blockerId:'BLC-4-070'});

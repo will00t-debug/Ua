@@ -25,6 +25,20 @@ export function noteDispatch(){
  const meter=meterStack.length?meterStack[meterStack.length-1]:null;
  if(meter)meter.dispatches=(meter.dispatches||0)+1;
 }
+// One transition of a proof that shares the search pool and clock. A direct
+// call with no search binding is the proof itself. The line's own step
+// counter stays untouched so the root can still be billed afterwards.
+export function spendSharedStep(){
+ const budget=probeBudget();
+ if(!budget)return 'free';
+ const expired=typeof budget.now==='function'&&budget.now()>budget.deadline;
+ if(expired||!(budget.pool?.n>1))return 'blocked';
+ budget.pool.n--;
+ return 'spent';
+}
+export function searchPool(){
+ return probeBudget()?.pool||null;
+}
 function probeBudget(){
  return probeStack.length?probeStack[probeStack.length-1]:null;
 }

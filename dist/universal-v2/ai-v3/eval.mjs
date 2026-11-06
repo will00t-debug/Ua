@@ -1,9 +1,10 @@
 // Static position value. It deliberately does not look a turn ahead:
 // a front body is not worth more than developing energy. The beam search
 // has to see the opponent's turn before a blocker outranks that energy.
-import {legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
+import {dispatchUniversalAction,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
+import {fieldRestrictions} from '../continuous-states.mjs';
 import {packOf} from './observation.mjs';
-import {strategyScore} from './strategy.mjs';
+import {noteDispatch,searchPool,spendSharedStep,strategyScore} from './strategy.mjs';
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 // A hand card that can raid a body already on our side is not a generic card.
@@ -118,58 +119,117 @@ function battleOptions(pack,state,actor){
  let legal=[];
  try{legal=legalUniversalActions(pack,state);}catch{return [];}
  const front=state.players[defender].front||[];
+ const threats=laterThreats(pack,state,attacker);
+ const ready=front.filter(card=>card?.ready).map(card=>blockerView(pack,state,card)).filter(Boolean);
  const rows=[];
  for(const action of legal){
   if(action?.type!=='chooseBlock')continue;
   let delta=0;
-  if(!action.uid){
-   delta=lifeChange(state,actor,defender,damage);
-   const ready=(front||[]).filter(card=>card?.ready);
-   const later=laterSwingDamage(pack,state,attacker);
-   // Staying ready answers the largest later swing. The others still connect.
-   if(ready.length&&later.length>1){
-    const eaten=later.sort((a,b)=>b-a).slice(1).reduce((sum,n)=>sum+n,0);
-    if(eaten)delta+=lifeChange(state,actor,defender,eaten);
-   }
-  }
+  if(!action.uid)delta=followUpDelta(pack,state,actor,defender,damage,ready,threats);
   else{
    const blocker=front.find(card=>card?.uid===action.uid);
    if(!blocker)continue;
    const bp=Number(universalBp(pack,state,blocker))||0;
-   // Q34: the blocker wins only when its BP is strictly higher. Equal BP
-   // removes the blocker. Impact life is separate and can still land.
-   const later=laterSwingDamage(pack,state,attacker);
-   const alone=!front.some(card=>card?.ready&&card.uid!==blocker.uid);
-   const uncovered=alone?later.reduce((sum,n)=>sum+n,0):0;
+   const others=ready.filter(item=>item.uid!==blocker.uid);
+   // Q34: the blocker wins only when its BP is strictly higher. Both
+   // characters stay and Impact does not land. The body is rested for the
+   // rest of this attack, which is the loss the leaf can see.
    if(bp>atkBp){
-    // The blocker wins. The engine leaves both characters and deals no life,
-    // including Impact, because Impact is a battle-win hit.
     const rested=front.map(card=>card?.uid===blocker.uid?{...card,ready:false}:card);
     delta=boardChange(pack,state,actor,defender,rested);
-    if(uncovered)delta+=lifeChange(state,actor,defender,uncovered);
-   }else{
+    delta+=lifeChange(state,actor,defender,unanswered(others,threats));
+   }
+   else{
     const removed=front.map(card=>card?.uid===blocker.uid?null:card);
     const body=boardChange(pack,state,actor,defender,removed);
-    // A proven refill pays with known hand cards and leaves four attacking
-    // bodies. It does not read the deck. Otherwise one clean last hit does
-    // not pay for a 4000 while four or more life remain.
     const plan=defender===actor&&bp>=4000?provenRebuild(pack,state,actor,blocker.uid):null;
     if(plan?.ok&&body<0)delta=Math.max(body,-2.2);
     else{
      delta=body;
-     if(holdMain(state,actor,defender,bp,atkBp,damage,impact,later.length)){
+     if(holdMain(state,actor,defender,bp,atkBp,damage,impact,threats.length)){
       const passed=lifeChange(state,actor,defender,damage);
       if(delta>passed)delta=passed-4;
      }
     }
-    const extra=impact>0&&!universalImpactNull(pack,state,blocker)?impact:0;
-    delta+=lifeChange(state,actor,defender,extra);
-    if(uncovered)delta+=lifeChange(state,actor,defender,uncovered);
+    const leak=impact>0&&!universalImpactNull(pack,state,blocker)?impact:0;
+    delta+=lifeChange(state,actor,defender,leak+unanswered(others,threats));
    }
   }
   rows.push({action,delta,damage,impact});
  }
  return rows;
+}
+function blockerView(pack,state,card){
+ try{
+  return {uid:card.uid,bp:Number(universalBp(pack,state,card))||0,
+   nulls:universalImpactNull(pack,state,card)===true};
+ }catch{return null;}
+}
+function threatView(pack,state,card){
+ let damage=1,impact=0,bp=0;
+ try{
+  damage=universalAttackDamage(pack,state,card)||1;
+  impact=universalImpact(pack,state,card)||0;
+  bp=Number(universalBp(pack,state,card))||0;
+ }catch{/* one damage, no impact, no BP */}
+ return {uid:card.uid,damage,impact,bp};
+}
+function laterThreats(pack,state,attacker){
+ const owner=Number(String(attacker?.uid||'').split('-')[0]);
+ const pl=state.players?.[owner];
+ if(!pl)return [];
+ const catalog=packOf(pack,owner).cards;
+ const rows=[];
+ for(const card of pl.front||[]){
+  if(!card?.ready||card.uid===attacker.uid)continue;
+  if(catalog[card.cardId]?.type!=='character')continue;
+  rows.push(threatView(pack,state,card));
+ }
+ if(attacker?.ready)rows.push(threatView(pack,state,attacker));
+ return rows;
+}
+// A later swing is stopped only by a winning block: our BP is higher, the
+// character stays, and Impact does not land. A block that removes the
+// character is not that save.
+function cleanPrevented(blockers,threats){
+ const pool=blockers.map(item=>({bp:item.bp,used:false}));
+ let saved=0;
+ for(const threat of threats.slice().sort((a,b)=>b.damage-a.damage)){
+  const found=pool.find(item=>!item.used&&item.bp>threat.bp);
+  if(!found)continue;
+  found.used=true;
+  saved+=threat.damage;
+ }
+ return saved;
+}
+function unanswered(blockers,threats){
+ return threats.reduce((sum,threat)=>sum+threat.damage,0)-cleanPrevented(blockers,threats);
+}
+function removalDelta(pack,state,actor,defender,uid){
+ const front=state.players[defender].front||[];
+ return boardChange(pack,state,actor,defender,front.map(card=>card?.uid===uid?null:card));
+}
+// Passing keeps the blocker for one later swing. A clean save removes that
+// swing's damage. Blocking and still losing the character, Impact included,
+// is scored as that loss rather than as damage prevented.
+function followUpDelta(pack,state,actor,defender,damage,blockers,threats){
+ const all=damage+threats.reduce((sum,threat)=>sum+threat.damage,0);
+ let best=lifeChange(state,actor,defender,all);
+ const saved=cleanPrevented(blockers,threats);
+ if(saved)best=Math.max(best,lifeChange(state,actor,defender,all-saved));
+ for(const blocker of blockers){
+  for(let i=0;i<threats.length;i++){
+   const threat=threats[i];
+   if(blocker.bp>threat.bp)continue;
+   const leak=threat.impact>0&&!blocker.nulls?threat.impact:0;
+   const rest=blockers.filter(item=>item.uid!==blocker.uid);
+   const others=threats.filter((_,index)=>index!==i);
+   const loss=damage+leak+unanswered(rest,others);
+   const value=lifeChange(state,actor,defender,loss)+removalDelta(pack,state,actor,defender,blocker.uid);
+   if(value>best)best=value;
+  }
+ }
+ return best;
 }
 function apOnNextTurn(state,actor){
  const own=(state.players?.[actor]?.ownTurns||0)+1;
@@ -181,38 +241,39 @@ function colorEnergy(pack,state,actor){
  try{return universalEnergyByColor(pack,state,actor)||{};}
  catch{return {};}
 }
-// One clean last hit, both sides 4000, no Impact, nothing else still ready to
-// attack. While four or more life remain, that hit does not pay for the main.
-// At three the hold is gone and the life step is compared again. Other
-// attacks, other bodies, and a full refill do not use this hold.
+// One clean last hit that removes our 4000, no Impact, nothing else still
+// ready to attack. A higher attacking BP does not make that body more worth
+// losing. While four or more life remain, the hit does not pay for the main.
+// At three the hold is gone and the life step is compared again. A winning
+// block, a cheaper body, two damage, and a full refill do not use this hold.
 function holdMain(state,actor,defender,bp,atkBp,damage,impact,later){
  if(defender!==actor||damage!==1||impact>0||later>0)return false;
- if(bp<4000||atkBp!==bp)return false;
+ if(bp<4000||atkBp<bp)return false;
  const life=state.players?.[actor]?.life?.length||0;
  return life>=4&&life-damage>0;
 }
-function laterSwingDamage(pack,state,attacker){
- const owner=Number(String(attacker?.uid||'').split('-')[0]);
- const pl=state.players?.[owner];
- if(!pl)return [];
- const catalog=packOf(pack,owner).cards;
- const rows=[];
- for(const card of pl.front||[]){
-  if(!card?.ready||card.uid===attacker.uid)continue;
-  if(catalog[card.cardId]?.type!=='character')continue;
-  try{rows.push(universalAttackDamage(pack,state,card)||1);}catch{rows.push(1);}
- }
- if(attacker?.ready){
-  try{rows.push(universalAttackDamage(pack,state,attacker)||1);}catch{rows.push(1);}
- }
- return rows;
+const rebuildProofs=new WeakMap();
+function cachedProof(actor,removedUid,run){
+ const pool=searchPool();
+ if(!pool)return run();
+ let bag=rebuildProofs.get(pool);
+ if(!bag){bag=new Map();rebuildProofs.set(pool,bag);}
+ const key=actor+':'+removedUid;
+ if(bag.has(key))return bag.get(key);
+ const result=run();
+ if(result?.reason!=='budget')bag.set(key,result);
+ return result;
 }
 // The next own turn fills all four front slots from the known hand and the
-// public board. Every body is at least 4000 and can attack that turn. A
-// normal play enters rested, so it does not count. A paid Raid or a printed
-// active entry does. Empty slots are not success. The deck is not consulted,
-// and a plan that takes a generator off the energy line is not a refill.
+// public board. Every body is at least 4000, stands, and has a legal attack
+// after the plan is played. A normal play enters rested, so it does not
+// count. A paid Raid or a printed active entry does. Empty slots, a body
+// that still cannot attack, and a walk the budget cannot finish are not
+// success. The deck is not consulted.
 export function provenRebuild(pack,state,actor,removedUid){
+ return cachedProof(actor,removedUid,()=>planRebuild(pack,state,actor,removedUid));
+}
+function planRebuild(pack,state,actor,removedUid){
  const mine=state?.players?.[actor];
  if(!mine||!Array.isArray(mine.front)||mine.front.length<4)return {ok:false,reason:'none'};
  const catalog=packOf(pack,actor).cards;
@@ -236,7 +297,8 @@ export function provenRebuild(pack,state,actor,removedUid){
  for(let slot=0;slot<planned.length;slot++){
   const current=planned[slot];
   const fieldCard=current&&mine.front.find(card=>card?.uid===current.uid);
-  if(current&&catalog[current.cardId]?.type==='character'&&liveBp(fieldCard)>=4000)continue;
+  if(current&&catalog[current.cardId]?.type==='character'&&liveBp(fieldCard)>=4000&&
+   attacksNextTurn(state,actor,fieldCard))continue;
   let placed=null;
   for(const card of mine.hand||[]){
    if(!card||used.has(card.uid))continue;
@@ -250,7 +312,7 @@ export function provenRebuild(pack,state,actor,removedUid){
    const names=new Set([printed.raidName,...(printed.raidBaseNames||[])].map(squash));
    if(!names.has(squash(catalog[current.cardId]?.name)))continue;
    if((mine.energy||[]).some(body=>body?.uid===current.uid))continue;
-   placed={uid:card.uid,cardId:printed.id,from:'raid'};
+   placed={uid:card.uid,cardId:printed.id,from:'raid',baseUid:current.uid};
    break;
   }
   if(!placed)return {ok:false,reason:'unproven'};
@@ -258,13 +320,92 @@ export function provenRebuild(pack,state,actor,removedUid){
   ap-=catalog[placed.cardId].ap||1;
   planned[slot]=placed;
  }
- if(planned.length<4||planned.some(slot=>!slot||(Number(catalog[slot.cardId]?.bp)||0)<4000&&slot.from==='field'))
-  return {ok:false,reason:'unproven'};
- if(planned.some(slot=>slot.from!=='field'&&(Number(catalog[slot.cardId]?.bp)||0)<4000))
-  return {ok:false,reason:'unproven'};
+ if(planned.length<4||planned.some(slot=>!slot))return {ok:false,reason:'unproven'};
+ if(planned.some(slot=>(Number(catalog[slot.cardId]?.bp)||0)<4000))return {ok:false,reason:'unproven'};
  if((mine.energy||[]).map(card=>card?.uid||'').join(',')!==energy)return {ok:false,reason:'energy'};
+ const walked=walkRebuild(pack,state,actor,removedUid,planned,energy);
+ if(!walked.ok)return walked;
  const fresh=planned.find(slot=>slot.from!=='field');
- return {ok:true,cardId:fresh?.cardId||planned[0].cardId,mode:planned.some(slot=>slot.from==='raid')?'raid':'active',filled:planned.length};
+ return {ok:true,cardId:fresh?.cardId||planned[0].cardId,
+  mode:planned.some(slot=>slot.from==='raid')?'raid':'active',filled:planned.length};
+}
+// A ban that expires on the opponent's next start is still in force on our
+// next attack. One that expires on our own next start is gone before then.
+// Skipping the next refresh leaves the body rested, so it cannot attack.
+function attacksNextTurn(state,actor,card){
+ if(!card)return false;
+ let rows=[];
+ try{rows=fieldRestrictions(state,actor,card);}catch{return false;}
+ if(rows.some(row=>row.kind==='cannotAttack'&&row.until?.player!==actor))return false;
+ if(rows.some(row=>row.kind==='cannotActive'||row.kind==='skipNextActive'))return false;
+ if(card.ownEffectActiveOnly)return false;
+ return true;
+}
+function walkRebuild(pack,state,actor,removedUid,planned,energy){
+ let cursor;
+ try{cursor=structuredClone(state);}catch{return {ok:false,reason:'unproven'};}
+ const queue=planned.filter(slot=>slot.from!=='field');
+ let blocked=false,played=0;
+ for(let step=0;step<12;step++){
+  if(blocked&&played===queue.length&&cursor.active===actor&&cursor.phase==='attack'&&!cursor.pending)
+   return rebuiltPosition(pack,cursor,actor,planned,energy);
+  const ticket=spendSharedStep();
+  if(ticket==='blocked')return {ok:false,reason:'budget'};
+  const action=rebuildAction(pack,cursor,actor,removedUid,queue,played,blocked);
+  if(!action)return {ok:false,reason:'unproven'};
+  try{
+   cursor=dispatchUniversalAction(pack,cursor,action,{actor:cursor.pending?.player??cursor.active});
+  }catch{return {ok:false,reason:'unproven'};}
+  if(ticket==='spent')noteDispatch();
+  if(action.type==='chooseBlock'&&action.uid===removedUid)blocked=true;
+  if(action.type==='play'||action.type==='raid')played++;
+ }
+ return {ok:false,reason:'unproven'};
+}
+function rebuildAction(pack,cursor,actor,removedUid,queue,played,blocked){
+ let legal=[];
+ try{legal=legalUniversalActions(pack,cursor);}catch{return null;}
+ const pending=cursor.pending;
+ if(!blocked&&pending?.kind==='block')
+  return legal.find(action=>action.type==='chooseBlock'&&action.uid===removedUid)||null;
+ if(pending?.kind==='block')
+  return legal.find(action=>action.type==='chooseBlock'&&(action.uid??null)===null)||null;
+ if(pending?.kind==='effect-discard-gate')
+  return legal.find(action=>action.type==='chooseDiscardGate'&&(action.uid??null)===null)||null;
+ if(pending?.kind==='life-trigger')
+  return legal.find(action=>action.type==='chooseTrigger'&&action.mode==='get')||
+   legal.find(action=>action.type==='chooseTrigger'&&action.mode==='skip')||null;
+ if(pending?.kind==='life-batch-order')
+  return legal.find(action=>action.type==='chooseLifeOrder')||null;
+ if(pending){
+  const skip=legal.find(action=>action.type!=='chooseBlock'&&(action.mode==='pass'||action.mode==='skip'||action.mode==='decline'));
+  return skip||null;
+ }
+ if(cursor.active===actor&&cursor.phase==='main'&&played<queue.length){
+  const next=queue[played];
+  if(next.from==='raid')
+   return legal.find(action=>action.type==='raid'&&action.uid===next.uid&&action.baseUid===next.baseUid&&action.line==='front')||null;
+  return legal.find(action=>action.type==='play'&&action.uid===next.uid&&action.line==='front')||null;
+ }
+ return legal.find(action=>action.type==='next')||legal.find(action=>action.type==='extraDraw')||null;
+}
+function rebuiltPosition(pack,state,actor,planned,energy){
+ const bodies=(state.players?.[actor]?.front||[]).filter(Boolean);
+ if(bodies.length!==4)return {ok:false,reason:'unproven'};
+ const want=new Set(planned.map(slot=>slot.uid));
+ if(want.size!==4||bodies.some(card=>!want.has(card.uid)))return {ok:false,reason:'unproven'};
+ let attacks=[];
+ try{attacks=legalUniversalActions(pack,state).filter(action=>action.type==='attack');}
+ catch{return {ok:false,reason:'unproven'};}
+ for(const card of bodies){
+  let bp=0;
+  try{bp=Number(universalBp(pack,state,card))||0;}catch{return {ok:false,reason:'unproven'};}
+  if(bp<4000||card.ready!==true||!attacks.some(action=>action.uid===card.uid))
+   return {ok:false,reason:'unproven'};
+ }
+ const left=(state.players[actor].energy||[]).map(card=>card?.uid||'').join(',');
+ if(left!==energy)return {ok:false,reason:'energy'};
+ return {ok:true};
 }
 function listedEffects(printed,slot){
  const list=printed?.effects?.[slot];
