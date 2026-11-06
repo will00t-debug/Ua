@@ -50,6 +50,10 @@ function fromOutsideThisTurn(s,owner){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.from==='outside'&&
   ['front','energy'].includes(e.to)&&def(A.pack,{uid:e.uid,cardId:e.cardId}).type==='character');
 }
+function enteredFromOutside(s,owner,uid){
+ return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.uid===uid&&
+  e.from==='outside'&&['front','energy'].includes(e.to));
+}
 function traitlessPurple(d){return d.type==='character'&&d.color==='purple'&&!(d.traits||[]).length;}
 function redEvent(d){return d.type==='event'&&d.color==='red';}
 function hosts(s,owner){
@@ -331,15 +335,14 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='IYS-1-013'){
-  if(job.entryCause!=='outsideEffect'&&job.entryCause!=='outsideEffectRaid')return;
+  // 「場外から登場」 is the zone the card left. COLOR life uses lifeColorOutside.
+  if(!enteredFromOutside(s,owner,job.sourceUid))return;
   const pool=chars(s,owner,c=>!c.ready&&named(pack,c,'殺生丸',s));
   if(!pool.length)return;
   hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'activeName'},[
    {type:'iys',mode:'skip'},...pool.map(c=>({type:'iys',mode:'pick',uid:c.uid}))]);
   return;
  }
- if(id==='IYS-1-014')return beginLook(pack,s,job,{count:3,rest:'bottom',dest:'hand',public:true,
-  pred:d=>cardHasTrait(d,TRAIT)});
  if(id==='IYS-1-019')return offerPurple(pack,s,job,2,1,false,'mainEnd');
  if(id==='IYS-1-022'){A.draw(pack,s,owner,1,job.sourceUid);placeHand(pack,s,job);return;}
  if(id==='IYS-1-030'){
@@ -412,6 +415,8 @@ function runPlay(pack,s,job){
 }
 function runOther(pack,s,job){
  const id=job.id,owner=job.owner;
+ if(id==='IYS-1-014'&&job.slot==='onRetire')return beginLook(pack,s,job,{count:3,rest:'bottom',dest:'hand',public:true,
+  pred:d=>cardHasTrait(d,TRAIT)});
  if(id==='IYS-1-007'&&job.slot==='onAttack'){
   if(!fromOutsideThisTurn(s,owner))return;
   hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'mayDraw'},[
