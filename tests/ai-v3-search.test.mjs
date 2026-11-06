@@ -15,7 +15,9 @@ import {featureKeys,hashV4,V4_DIM,V4_FORMAT} from '../dist/universal-v2/ai-v3/v4
 import {holdoutLastMatch,valueLabel} from '../dist/universal-v2/ai-v3/learn-bridge.mjs';
 import {beliefWorld} from '../dist/universal-v2/ai-v3/belief.mjs';
 import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from '../dist/universal-v2/ai-v3/worker-entry.mjs';
-import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalBp} from '../dist/universal-v2/engine.mjs';
+import {battleWindowAction,battleWindowDelta} from '../dist/universal-v2/ai-v3/eval.mjs';
+import {beliefWorlds} from '../dist/universal-v2/ai-v3/belief.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalAttackDamage,universalBp,universalImpact,universalImpactNull} from '../dist/universal-v2/engine.mjs';
 import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLICY} from '../dist/universal-v2/hard-ai.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 
@@ -718,4 +720,166 @@ test('a frozen clock keeps the fixed 48-node choice inside the node cap',()=>{
  assert.equal(fixed.trace.reason,'search');
  assert.ok(fixed.trace.nodesUsed<=48);
  assert.equal(fixed.meter.dispatches,fixed.trace.nodesUsed);
+});
+
+function setBp(packs,state,card,bp){
+ const delta=bp-universalBp(packs,state,card);
+ card.buffs=delta?[{bp:delta,untilTurn:state.turn}]:[];
+}
+function openBlock({life=7,damage=1,impact=0,blockerId='BLC-1-042',attackerId='BLC-1-043',blockerBp=1000,attackerBp=4000}={}){
+ const deck=mainDecks().find(item=>item.title==='bleach');
+ const packs=[deck.pack,deck.pack];
+ let state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:7,first:0});
+ for(let guard=0;guard<16&&!(state.active===1&&state.phase==='attack');guard++){
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw');
+  if(!action)break;
+  state=dispatchUniversalAction(packs,state,action);
+ }
+ const blocker=take(state,0,blockerId);
+ const attacker=take(state,1,attackerId);
+ blocker.ready=true;
+ attacker.ready=true;
+ blocker.fieldEntryStamp=state.nextFieldEntryStamp++;
+ attacker.fieldEntryStamp=state.nextFieldEntryStamp++;
+ state.players[0].front[0]=blocker;
+ state.players[1].front[0]=attacker;
+ while(state.players[0].life.length>life)state.players[0].deck.push(state.players[0].life.pop());
+ setBp(packs,state,blocker,blockerBp);
+ setBp(packs,state,attacker,attackerBp);
+ if(damage===2)attacker.attackDamageGranted={turn:state.turn,stamp:attacker.fieldEntryStamp,amount:2};
+ if(impact>0)attacker.impactGranted={turn:state.turn,stamp:attacker.fieldEntryStamp,amount:impact};
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const swing=legalUniversalActions(packs,state).find(action=>action.type==='attack'&&action.uid===attacker.uid);
+ assert.ok(swing);
+ state=dispatchUniversalAction(packs,state,swing,{actor:1});
+ assert.equal(state.pending?.kind,'block');
+ return {packs,state,blocker,attacker};
+}
+function chosenBlock(packs,state){
+ const action=battleWindowAction(packs,state,0);
+ assert.ok(action);
+ return action.uid?state.players[0].front.find(card=>card?.uid===action.uid)?.cardId||action.uid:null;
+}
+
+test('one life makes a smaller blocker worth more than the character',()=>{
+ const {packs,state,blocker}=openBlock({life:1,blockerBp:1000,attackerBp:4000});
+ assert.equal(universalAttackDamage(packs,state,state.players[1].front[0]),1);
+ assert.equal(chosenBlock(packs,state),blocker.cardId);
+ const blocked=dispatchUniversalAction(packs,state,battleWindowAction(packs,state,0),{actor:0});
+ assert.equal(blocked.players[0].life.length,1);
+ assert.equal(blocked.players[0].front.some(card=>card?.uid===blocker.uid),false);
+ const passed=dispatchUniversalAction(packs,state,legalUniversalActions(packs,state).find(action=>action.type==='chooseBlock'&&!action.uid),{actor:0});
+ assert.equal(passed.players[0].life.length,0);
+});
+
+test('spare life keeps an important character instead of trading it for one damage',()=>{
+ const opened=openBlock({life:7,blockerBp:4000,attackerBp:4000});
+ assert.equal(chosenBlock(opened.packs,opened.state),null);
+ const blocked=dispatchUniversalAction(opened.packs,opened.state,legalUniversalActions(opened.packs,opened.state).find(action=>action.uid===opened.blocker.uid),{actor:0});
+ assert.equal(blocked.players[0].front.some(card=>card?.uid===opened.blocker.uid),false);
+ assert.equal(blocked.players[0].life.length,7);
+});
+
+test('impact, impact-null and multi-damage follow the engine rather than assuming a block saves life',()=>{
+ const plain=openBlock({life:7,blockerBp:2000,attackerBp:4000});
+ assert.equal(chosenBlock(plain.packs,plain.state),plain.blocker.cardId);
+ const impact=openBlock({life:7,blockerBp:2000,attackerBp:4000,impact:1});
+ assert.equal(universalImpact(impact.packs,impact.state,impact.attacker),1);
+ assert.equal(universalImpactNull(impact.packs,impact.state,impact.blocker),false);
+ assert.equal(chosenBlock(impact.packs,impact.state),null);
+ const traded=dispatchUniversalAction(impact.packs,impact.state,legalUniversalActions(impact.packs,impact.state).find(action=>action.uid===impact.blocker.uid),{actor:0});
+ let life=traded;
+ for(let guard=0;guard<4&&life.pending;guard++){
+  const actor=life.pending.player??life.active;
+  const legal=legalUniversalActions(impact.packs,life);
+  const step=legal.find(action=>action.type==='chooseAttackLife')||legal[0];
+  life=dispatchUniversalAction(impact.packs,life,step,{actor});
+ }
+ assert.equal(life.players[0].life.length,6);
+ assert.equal(life.players[0].front.some(card=>card?.uid===impact.blocker.uid),false);
+ const nulled=openBlock({life:7,blockerId:'BLC-1-043',attackerId:'BLC-1-042',blockerBp:2000,attackerBp:4000,impact:1});
+ assert.equal(universalImpactNull(nulled.packs,nulled.state,nulled.blocker),true);
+ assert.equal(chosenBlock(nulled.packs,nulled.state),nulled.blocker.cardId);
+ const stopped=dispatchUniversalAction(nulled.packs,nulled.state,battleWindowAction(nulled.packs,nulled.state,0),{actor:0});
+ assert.equal(stopped.players[0].life.length,7);
+ assert.equal(stopped.players[0].front.some(card=>card?.uid===nulled.blocker.uid),false);
+ const doubled=openBlock({life:7,blockerBp:4000,attackerBp:5000,damage:2});
+ assert.equal(universalAttackDamage(doubled.packs,doubled.state,doubled.attacker),2);
+ assert.equal(chosenBlock(doubled.packs,doubled.state),doubled.blocker.cardId);
+ const single=openBlock({life:7,blockerBp:4000,attackerBp:5000,damage:1});
+ assert.equal(chosenBlock(single.packs,single.state),null);
+});
+
+function nodes48At(target){
+ const report=JSON.parse(readFileSync(new URL('../audit/ai-v3-official-8300-nodes48-white.json',import.meta.url),'utf8'));
+ const deck=battleDecks().find(item=>item.id==='white-sword');
+ const game=report.titles['white-sword'].byMode.tree.games.find(item=>item.seed===8301&&item.first===1&&item.challengerSeat===0);
+ const packs=[deck.pack,deck.pack];
+ let state=newComparedMatch(packs,[deck.counts,deck.counts],8301,1,matchRules('official'));
+ for(const choice of game.opening||[]){
+  const action=legalUniversalActions(packs,state).find(item=>item.type==='openingMulligan'&&item.mode===choice.mode);
+  state=dispatchUniversalAction(packs,state,action,{actor:choice.actor});
+ }
+ for(const step of game.actions){
+  if(step.step===target)return {packs,state};
+  const actor=state.pending?.player??state.active;
+  const action=legalUniversalActions(packs,state).find(item=>JSON.stringify(item)===JSON.stringify(step.action));
+  state=dispatchUniversalAction(packs,state,action,{actor});
+ }
+ throw new Error('missing step '+target);
+}
+function finishNoted(packs,state,root){
+ const world=beliefWorlds(packs,state,0,1,1)[0].state;
+ const go=(cursor,action)=>dispatchUniversalAction(packs,cursor,action,{actor:cursor.pending?.player??cursor.active});
+ let cursor=go(world,root);
+ for(let guard=0;guard<24&&cursor.status==='playing'&&!(!cursor.pending&&cursor.active===0&&cursor.phase==='start'&&cursor.players[0].ownTurns>state.players[0].ownTurns);guard++){
+  const seat=cursor.pending?.player??cursor.active;
+  let action=null;
+  if(cursor.pending?.kind==='block')action=battleWindowAction(packs,cursor,0);
+  if(!action){
+   const legal=legalUniversalActions(packs,cursor);
+   if(seat===0){
+    action=legal.find(item=>item.type==='chooseDiscardGate'&&!item.uid)||
+     legal.find(item=>item.type==='chooseAttackLife')||
+     legal.find(item=>item.type==='next')||legal[0];
+   }else action=rankLegal(packs,cursor,seat,legal,null)[0];
+  }
+  if(!action)break;
+  cursor=go(cursor,action);
+ }
+ return cursor;
+}
+
+test('step 24 scores an open battle without calling the cut a finished turn',()=>{
+ const spot=nodes48At(24);
+ const fixed=clocked(spot,1e9,{now:()=>0});
+ const lineOf=row=>row.action?.line||row.action?.type;
+ const rows=fixed.trace.candidates.filter(row=>['energy','front','next'].includes(lineOf(row)));
+ assert.equal(rows.length,3);
+ for(const row of rows){
+  assert.equal(row.boundary,'pending');
+  assert.equal(row.settled,false);
+  assert.notEqual(row.boundary,'returned');
+  assert.ok(row.nodes<=16);
+ }
+ assert.equal(fixed.trace.nodesUsed,48);
+ const front=rows.find(row=>lineOf(row)==='front');
+ const energy=rows.find(row=>lineOf(row)==='energy');
+ const passed=rows.find(row=>lineOf(row)==='next');
+ assert.equal(front.stopPending,'block');
+ assert.equal(energy.stopPending,'block');
+ assert.ok(front.search>energy.search);
+ assert.ok(energy.search>passed.search);
+ assert.ok(front.search<-28);
+ assert.ok(energy.search<-40);
+ const followed={};
+ for(const row of rows){
+  const end=finishNoted(spot.packs,spot.state,row.action);
+  followed[lineOf(row)]=end.players[0].life.length;
+ }
+ assert.equal(followed.front,6);
+ assert.equal(followed.energy,5);
+ assert.ok(followed.next<=5);
+ assert.equal(lineOf({action:fixed.action}),'front');
 });

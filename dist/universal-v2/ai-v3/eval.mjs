@@ -1,7 +1,7 @@
 // Static position value. It deliberately does not look a turn ahead:
 // a front body is not worth more than developing energy. The beam search
 // has to see the opponent's turn before a blocker outranks that energy.
-import {universalBp,universalEnergy} from '../engine.mjs';
+import {legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalImpact,universalImpactNull} from '../engine.mjs';
 import {packOf} from './observation.mjs';
 import {strategyScore} from './strategy.mjs';
 
@@ -65,25 +65,103 @@ export function terminalValue(state,actor){
  if(mine<=0&&opp>0)return -90000;
  return null;
 }
-export function explainValue(pack,state,actor){
- const opp=1-actor;
- const mine=state.players[actor];
- const handRaid=mine.hand.reduce((sum,card)=>sum+raidMaterialValue(pack,state,actor,card),0);
- const ownBoard=board(pack,state,actor);
- const oppBoard=board(pack,state,opp);
- return {
-  total:evaluate(pack,state,actor),
-  life:lifeScore(mine.life.length)-lifeScore(state.players[opp].life.length),
-  board:ownBoard-oppBoard,
-  handRaid,
-  hand:Math.min(mine.hand.length,6)*2.2,
-  energy:Math.min(universalEnergy(pack,state,actor),6)*6-Math.min(universalEnergy(pack,state,opp),6)*2,
-  ap:mine.apCards.filter(card=>card.ready).length*1.5
- };
+function frontValue(pack,state,cards){
+ let score=0,threat=0;
+ for(const card of cards||[]){
+  if(!card)continue;
+  const bp=Number(universalBp(pack,state,card))||0;
+  score+=4+bp/400+(card.ready?3:0);
+  if(card.ready)threat=Math.max(threat,nextAttack(bp));
+ }
+ return score+threat;
 }
-export function evaluate(pack,state,actor,strategy){
- const done=terminalValue(state,actor);
- if(done!==null)return done;
+function findBody(state,uid){
+ if(!uid)return null;
+ for(const player of state.players||[]){
+  for(const line of ['front','energy']){
+   const card=(player[line]||[]).find(item=>item?.uid===uid);
+   if(card)return card;
+  }
+ }
+ return null;
+}
+function lifeChange(state,actor,player,loss){
+ if(loss<=0)return 0;
+ const have=state.players[player]?.life?.length||0;
+ const delta=lifeScore(Math.max(0,have-loss))-lifeScore(have);
+ return player===actor?delta:-delta;
+}
+function boardChange(pack,state,actor,owner,nextCards){
+ const before=frontValue(pack,state,state.players[owner].front);
+ const after=frontValue(pack,state,nextCards);
+ const delta=after-before;
+ return owner===actor?delta:-delta;
+}
+// A block or life window is scored before the engine has applied it. The
+// adjustment is the public result of the attack that is already open:
+// life from universalAttackDamage, a blocker leaving when the attacker's
+// BP is greater or equal, and Impact only when the engine still counts it.
+// Hidden life cards, hands and deck order are not read. The line stays
+// pending; this is not a completed turn.
+function battleOptions(pack,state,actor){
+ const pending=state?.pending;
+ if(!pending||state.status!=='playing'||pending.kind!=='block')return [];
+ const attacker=findBody(state,pending.attackerUid);
+ const defender=pending.player;
+ if(!attacker||!Number.isInteger(defender))return [];
+ let damage=1,impact=0,atkBp=0;
+ try{
+  damage=universalAttackDamage(pack,state,attacker);
+  impact=universalImpact(pack,state,attacker);
+  atkBp=Number(universalBp(pack,state,attacker))||0;
+ }catch{return [];}
+ let legal=[];
+ try{legal=legalUniversalActions(pack,state);}catch{return [];}
+ const front=state.players[defender].front||[];
+ const rows=[];
+ for(const action of legal){
+  if(action?.type!=='chooseBlock')continue;
+  let delta=0;
+  if(!action.uid)delta=lifeChange(state,actor,defender,damage);
+  else{
+   const blocker=front.find(card=>card?.uid===action.uid);
+   if(!blocker)continue;
+   const bp=Number(universalBp(pack,state,blocker))||0;
+   // Q34: the blocker wins only when its BP is strictly higher. Equal BP
+   // removes the blocker. Impact life is separate and can still land.
+   if(bp>atkBp){
+    const rested=front.map(card=>card?.uid===blocker.uid?{...card,ready:false}:card);
+    delta=boardChange(pack,state,actor,defender,rested);
+   }else{
+    const removed=front.map(card=>card?.uid===blocker.uid?null:card);
+    delta=boardChange(pack,state,actor,defender,removed);
+    const extra=impact>0&&!universalImpactNull(pack,state,blocker)?impact:0;
+    delta+=lifeChange(state,actor,defender,extra);
+   }
+  }
+  rows.push({action,delta,damage,impact});
+ }
+ return rows;
+}
+export function battleWindowAction(pack,state,actor){
+ const rows=battleOptions(pack,state,actor);
+ if(!rows.length)return null;
+ const maximize=(state.pending?.player??state.active)===actor;
+ return rows.reduce((best,row)=>best&&(maximize?row.delta<=best.delta:row.delta>=best.delta)?best:row).action;
+}
+export function battleWindowDelta(pack,state,actor){
+ const pending=state?.pending;
+ if(!pending||state.status!=='playing')return 0;
+ if(pending.kind==='attack-life-target'){
+  const defender=Number.isInteger(pending.defender)?pending.defender:pending.player;
+  return lifeChange(state,actor,defender,pending.count||1);
+ }
+ const rows=battleOptions(pack,state,actor);
+ if(!rows.length)return 0;
+ const maximize=(state.pending?.player??state.active)===actor;
+ return rows.reduce((best,row)=>maximize?Math.max(best,row.delta):Math.min(best,row.delta),maximize?-Infinity:Infinity);
+}
+function positionValue(pack,state,actor,strategy){
  const opp=1-actor;
  let score=lifeScore(state.players[actor].life.length)-lifeScore(state.players[opp].life.length);
  score+=board(pack,state,actor)-board(pack,state,opp);
@@ -95,4 +173,23 @@ export function evaluate(pack,state,actor,strategy){
  score+=state.players[actor].apCards.filter(card=>card.ready).length*1.5;
  if(strategy==='score')score+=strategyScore(pack,state,actor);
  return score;
+}
+export function explainValue(pack,state,actor){
+ const opp=1-actor;
+ const mine=state.players[actor];
+ const handRaid=mine.hand.reduce((sum,card)=>sum+raidMaterialValue(pack,state,actor,card),0);
+ const ownBoard=board(pack,state,actor);
+ const oppBoard=board(pack,state,opp);
+ const battle=battleWindowDelta(pack,state,actor);
+ const life=lifeScore(mine.life.length)-lifeScore(state.players[opp].life.length);
+ const boardScore=ownBoard-oppBoard;
+ const hand=Math.min(mine.hand.length,6)*2.2;
+ const energy=Math.min(universalEnergy(pack,state,actor),6)*6-Math.min(universalEnergy(pack,state,opp),6)*2;
+ const ap=mine.apCards.filter(card=>card.ready).length*1.5;
+ return {total:life+boardScore+handRaid+hand+energy+ap+battle,life,board:boardScore,handRaid,hand,energy,ap,battle};
+}
+export function evaluate(pack,state,actor,strategy){
+ const done=terminalValue(state,actor);
+ if(done!==null)return done;
+ return positionValue(pack,state,actor,strategy)+battleWindowDelta(pack,state,actor);
 }
