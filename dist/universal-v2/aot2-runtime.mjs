@@ -18,7 +18,8 @@ const PIECK='ピーク・フィンガー';
 const FINAL_EREN='エレン・イェーガー（終尾の巨人）';
 const SLOTS=new Set([
  'AOT-2-002|onPlay','AOT-2-003|onPlay','AOT-2-007|onPlay','AOT-2-008|onPlay',
- 'AOT-2-009|main','AOT-2-012|onPlay','AOT-2-013|onPlay','AOT-2-014|onPlay',
+ 'AOT-2-009|main','AOT-2-010|main','AOT-2-012|onPlay','AOT-2-013|onPlay','AOT-2-014|onPlay',
+ 'AOT-2-014|main',
  'AOT-2-016|onPlay','AOT-2-017|onPlay','AOT-2-017|main','AOT-2-019|onPlay',
  'AOT-2-022|onPlay','AOT-2-022|main','AOT-2-024|onPlay','AOT-2-025|onPlay',
  'AOT-2-030|onPlay','AOT-2-030|onRetire','AOT-2-031|main','AOT-2-032|onPlay',
@@ -163,6 +164,9 @@ function offerOrder(s,spec,uids,rest,after){
 function beginLook(s,spec,count,match,opts){
  const window=windowCards(s,spec.player,count);
  if(!window.length)return false;
+ // 公開する looks are shown to both players before the choice. 見て stays private.
+ if(opts.reveal!==false&&A.pack)
+  for(const c of window)publish(A.pack,s,spec.player,c);
  const matches=window.filter(match);
  const data={uids:window.map(c=>c.uid),taken:[],names:[],max:opts.max,min:opts.min||0,
   rest:opts.rest,discard:opts.discard===true,reveal:opts.reveal!==false,
@@ -188,24 +192,31 @@ function finishLook(pack,s,spec,data){
   if(data.reveal)publish(pack,s,spec.player,physical);
   A.move(pack,s,{owner:spec.player,from:'deck',to:data.to,index,reason:'own-effect',sourceUid:spec.sourceUid});
  }
- if(data.discard&&data.taken.length&&pl.hand.length){
-  hold(s,{...spec,step:'discard',data:{need:1,after:data.after}},
-   pl.hand.map(c=>act('discard',{uid:c.uid,zone:'hand'})));
-  return;
- }
  const left=data.uids.filter(uid=>!data.taken.includes(uid)&&pl.deck.some(c=>c.uid===uid));
+ // AOT-2-016 prints the bottom order before the hand discard.
+ const chain=data.discard&&data.taken.length&&pl.hand.length
+  ?(data.after?'discardHand:'+data.after:'discardHand'):data.after;
  if(data.to==='outside'&&data.rest==='outside'){
-  const next=offerOrder(s,spec,left,'bottom',data.after);
+  const next=offerOrder(s,spec,left,'bottom',chain);
   if(next==='pending')return;
  }
  else{
-  const next=offerOrder(s,spec,left,data.rest,data.after);
+  const next=offerOrder(s,spec,left,data.rest,chain);
   if(next==='pending')return;
  }
- if(data.after)follow(pack,s,spec,data.after);
+ if(chain)follow(pack,s,spec,chain);
 }
 function follow(pack,s,spec,code){
  if(!code)return;
+ if(code==='discardHand'||code.startsWith('discardHand:')){
+  const after=code==='discardHand'?null:code.slice('discardHand:'.length)||null;
+  const pl=plOf(s,spec.player);
+  if(pl.hand.length)
+   hold(s,{...spec,step:'discard',data:{need:1,after}},
+    pl.hand.map(c=>act('discard',{uid:c.uid,zone:'hand'})));
+  else if(after)follow(pack,s,spec,after);
+  return;
+ }
  if(code==='048'){deployBlue(pack,s,spec);return;}
  if(code==='053'){pureEnter(pack,s,spec);return;}
  if(code==='032b'){rumbleFollow(pack,s,spec);return;}
@@ -624,11 +635,14 @@ export function legalAot2Activations(pack,s,owner,c){
  if(id==='AOT-2-009'&&names(pack,s,owner)>=4&&!locked(s,owner,onceKey(d.name,id,'main'))&&
   plOf(s,owner).apCards.some(x=>x.ready))
   out.push({type:'activate',uid:c.uid,mode:'aot2:'+id});
+ if(id==='AOT-2-010'&&ready&&!used(s,c.uid+'|AOT-2-010'))
+  out.push({type:'activate',uid:c.uid,mode:'aot2:'+id});
+ if(id==='AOT-2-014'&&ready&&
+  fieldCards(s,owner).some(x=>x.uid!==c.uid&&def(pack,x).type==='character'))
+  out.push({type:'activate',uid:c.uid,mode:'aot2:'+id});
  if(id==='AOT-2-017'&&ready){
   const under=(c.under||[]).filter(x=>x?.faceDown);
   if(under.length)out.push({type:'activate',uid:c.uid,mode:'aot2:'+id});
-  for(let i=0;i<under.length-1;i++)
-   out.push({type:'activate',uid:c.uid,mode:'aot2:'+id+':swap:'+i});
  }
  if(id==='AOT-2-022'&&!enteredThisTurn(s,owner,c)&&!used(s,c.uid+'|AOT-2-022')&&
   plOf(s,owner).apCards.some(x=>x.ready))
@@ -666,6 +680,28 @@ export function activateAot2(pack,s,action){
  }
  const id=def(pack,c).id;
  const spec={player:owner,sourceUid:c.uid,id};
+ if(id==='AOT-2-010'){
+  const key=c.uid+'|AOT-2-010';
+  if(!c.ready||used(s,key))throw Error('Annie main is not legal');
+  if(!Number.isInteger(c.fieldEntryStamp)||c.fieldEntryStamp<1)
+   c.fieldEntryStamp=s.nextFieldEntryStamp++;
+  A.noteRest(s,owner,c);c.ready=false;
+  use(s,key);
+  c.buffs??=[];
+  c.buffs.push({energy:1,untilTurn:s.turn});
+  s.delayedEffects.push({owner,sourceUid:c.uid,fieldEntryStamp:c.fieldEntryStamp,
+   turn:s.turn,op:'retireAtMainEnd'});
+  return;
+ }
+ if(id==='AOT-2-014'){
+  if(!c.ready)throw Error('Pieck main is not legal');
+  const targets=fieldCards(s,owner).filter(x=>x.uid!==c.uid&&def(pack,x).type==='character');
+  if(!targets.length)throw Error('Pieck main is not legal');
+  A.noteRest(s,owner,c);c.ready=false;
+  hold(s,{...spec,step:'buffOne',data:{bp:1000}},
+   targets.map(x=>act('buff',{uid:x.uid,zone:'field'})));
+  return;
+ }
  if(id==='AOT-2-009'){
   const key=onceKey(def(pack,c).name,id,'main');
   if(names(pack,s,owner)<4||locked(s,owner,key)||!pay(pack,s,owner,1,c.uid))
@@ -800,6 +836,13 @@ export function resolveAot2Pending(pack,s,a){
  }
  if(q.step==='discard'){
   s.pending=null;discardSome(pack,s,q,hit);go(pack,s);return;
+ }
+ if(q.step==='buffOne'){
+  s.pending=null;
+  const target=fieldCards(s,owner).find(x=>x.uid===hit.uid);
+  if(!target)throw Error('Buff target left');
+  buff(s,target,q.data.bp);
+  go(pack,s);return;
  }
  if(q.step==='enter'){
   s.pending=null;
