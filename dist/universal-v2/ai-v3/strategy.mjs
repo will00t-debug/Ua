@@ -3,24 +3,31 @@
 // the field, a ready front that can threaten, and a block that survives.
 // This module does not import or call the frozen search. Card numbers are
 // not special cases. The three callers turn on one feature at a time.
-import {AsyncLocalStorage} from 'node:async_hooks';
+// The preview page loads this file in the browser, so the budget stays on
+// a synchronous stack. Search does not await inside the binding.
 import {universalBp,universalEnergy,universalEnergyByColor,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {packOf} from './observation.mjs';
 
-const probeStore=new AsyncLocalStorage();
-const meterStore=new AsyncLocalStorage();
+const probeStack=[];
+const meterStack=[];
 export function bindProbeBudget(budget,fn){
- return probeStore.run(budget||null,fn);
+ probeStack.push(budget||null);
+ try{return fn();}
+ finally{probeStack.pop();}
 }
 export function bindMeter(meter,fn){
  if(!meter)return fn();
- return meterStore.run(meter,fn);
+ meterStack.push(meter);
+ try{return fn();}
+ finally{meterStack.pop();}
 }
 export function noteDispatch(){
- const meter=meterStore.getStore();
+ const meter=meterStack.length?meterStack[meterStack.length-1]:null;
  if(meter)meter.dispatches=(meter.dispatches||0)+1;
 }
-function probeBudget(){return probeStore.getStore()||null;}
+function probeBudget(){
+ return probeStack.length?probeStack[probeStack.length-1]:null;
+}
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 function energyOf(pack,state,player){
@@ -108,6 +115,8 @@ function liveBlockers(pack,state,player){
  return live;
 }
 const moveViews=new WeakMap();
+// A finished view stays on this state object. Another state, even one with
+// the same friendly UIDs, has its own blocker, life, and battle result.
 // A search binds one pool and clock for its whole call, including the
 // ranking and the short lethal line. Nothing outside that binding may run
 // the line for free.
@@ -128,9 +137,12 @@ function plainColors(colors){
 }
 function boardSignature(state,actor){
  const mine=state?.players?.[actor];
- if(!mine)return '';
- const ids=zone=>(zone||[]).map(card=>card?.uid||'').join(',');
- return [state.phase||'',state.turn||0,ids(mine.energy),ids(mine.front),ids(mine.hand)].join('|');
+ const opp=state?.players?.[1-actor];
+ if(!mine||!opp)return '';
+ const ids=zone=>(zone||[]).map(card=>card?card.uid+':'+card.cardId+':'+(card.ready===false?'r':'a'):'').join(',');
+ return [state.phase||'',state.turn||0,state.pending?.kind||'',
+  ids(mine.energy),ids(mine.front),ids(mine.hand),
+  ids(opp.energy),ids(opp.front),(mine.life||[]).length,(opp.life||[]).length].join('|');
 }
 // Moving off the energy line is legal development only when the color that
 // disappears is no longer needed. The curve, the cards actually in hand, and
@@ -169,22 +181,10 @@ export function moveDevelopment(pack,state,actor,action){
   moveViews.set(state,saved);
  }
  const key=moveKey(action);
- const memo=probeBudget()?.pool;
- const memoKey=signature+'#'+key;
- if(memo?.moveMemo?.has(memoKey)){
-  const entry=memo.moveMemo.get(memoKey);
-  saved.views.set(key,entry);
-  return entry.view;
- }
  const hit=storedMove(saved,key);
  if(hit)return hit;
  const view=assessMove(pack,state,actor,action);
- const entry=viewEntry(view);
- saved.views.set(key,entry);
- if(memo&&entry.complete){
-  if(!memo.moveMemo)memo.moveMemo=new Map();
-  memo.moveMemo.set(memoKey,entry);
- }
+ saved.views.set(key,viewEntry(view));
  return view;
 }
 function relocatedEnergy(pack,state,actor,action){

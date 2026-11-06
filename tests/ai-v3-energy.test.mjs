@@ -465,3 +465,164 @@ test('budget: a line probe stops at its own quota and a thrown binding restores'
  assert.equal(inner.n,5);
  assert.ok(outer.n<30&&outer.n>=20);
 });
+
+function ownIdentity(state){
+ const mine=state.players[0];
+ const ids=zone=>(zone||[]).map(card=>card?.uid||'').join(',');
+ return [state.phase,state.turn,ids(mine.energy),ids(mine.front),ids(mine.hand)].join('|');
+}
+function clearFront(state){
+ const copy=structuredClone(state);
+ for(let slot=0;slot<copy.players[1].front.length;slot++){
+  const card=copy.players[1].front[slot];
+  if(!card)continue;
+  copy.players[1].deck.push(card);
+  copy.players[1].front[slot]=null;
+ }
+ return copy;
+}
+function onlyFront(state,id){
+ const copy=clearFront(state);
+ const card=take(copy,1,id);
+ place(copy,1,card,'front',0);
+ return copy;
+}
+function moveOf(packs,state){
+ const uid=state.players[0].energy.find(card=>card)?.uid;
+ return legalUniversalActions(packs,state).find(action=>action.type==='move'&&action.uid===uid);
+}
+function sharePool(pool,fn){
+ return bindProbeBudget({pool,deadline:Infinity,now:()=>0},fn);
+}
+function pairFront(attackerId,blockerId){
+ const built=prepare(attackerId,[blockerId]);
+ const open=clearFront(built.state);
+ assert.equal(assertUniversalMatch(built.packs,open),true);
+ assert.equal(assertUniversalMatch(built.packs,built.state),true);
+ assert.equal(ownIdentity(open),ownIdentity(built.state));
+ assert.notEqual(built.state.players[1].front.filter(Boolean).length,0);
+ assert.equal(open.players[1].front.filter(Boolean).length,0);
+ const move=moveOf(built.packs,built.state);
+ assert.equal(move.uid,moveOf(built.packs,open).uid);
+ return {packs:built.packs,open,walled:built.state,move};
+}
+
+test('cache: an empty front lethal is not reused when a 1500 blocker is present',()=>{
+ const {packs,open,walled,move}=pairFront('BLC-1-045','BLC-1-056');
+ assert.equal(bleach.cards['BLC-1-045'].bp,2000);
+ assert.equal(bleach.cards['BLC-1-045'].impact,undefined);
+ assert.equal(bleach.cards['BLC-1-056'].bp,1500);
+ const pool={n:80};
+ const openView=sharePool(pool,()=>moveDevelopment(packs,open,0,move));
+ const spent=pool.n;
+ const walledView=sharePool(pool,()=>moveDevelopment(packs,walled,0,move));
+ assert.equal(openView.lethal,'lethal');
+ assert.equal(openView.wantsColor,true);
+ assert.equal(walledView.lethal,'no');
+ assert.notEqual(walledView.benefit,'lethal');
+ assert.ok(pool.n<spent);
+ assert.equal(pool.moveMemo,undefined);
+ const freshPool={n:64};
+ const fresh=sharePool(freshPool,()=>moveDevelopment(packs,walled,0,move));
+ assert.equal(fresh.lethal,'no');
+ const fought=blockedAttack(packs,walled,move);
+ assert.ok(fought.results.length>=1);
+ for(const followed of fought.results){
+  assert.equal(followed.players[1].life.length,1);
+  assert.equal(followed.status,'playing');
+ }
+});
+
+test('cache: a blocked result is not reused when the front is empty',()=>{
+ const {packs,open,walled,move}=pairFront('BLC-1-045','BLC-1-056');
+ const pool={n:80};
+ const walledView=sharePool(pool,()=>moveDevelopment(packs,walled,0,move));
+ const spent=pool.n;
+ const openView=sharePool(pool,()=>moveDevelopment(packs,open,0,move));
+ assert.equal(walledView.lethal,'no');
+ assert.equal(openView.lethal,'lethal');
+ assert.equal(openView.benefit,'lethal');
+ assert.ok(pool.n<spent);
+});
+
+test('cache: opponent life, impact null, and blocker BP stay on their own state',()=>{
+ const life=prepare('BLC-1-045',[]);
+ const longer=structuredClone(life.state);
+ const extra=longer.players[1].deck.pop();
+ longer.players[1].life.push(extra);
+ assert.equal(longer.players[1].life.length,2);
+ assert.equal(ownIdentity(longer),ownIdentity(life.state));
+ assert.equal(assertUniversalMatch(life.packs,longer),true);
+ const lifePool={n:80};
+ const shortView=sharePool(lifePool,()=>moveDevelopment(life.packs,life.state,0,life.move));
+ const longView=sharePool(lifePool,()=>moveDevelopment(life.packs,longer,0,life.move));
+ assert.equal(shortView.lethal,'lethal');
+ assert.equal(longView.lethal,'no');
+ const lifeBack={n:80};
+ const longFirst=sharePool(lifeBack,()=>moveDevelopment(life.packs,longer,0,life.move));
+ const shortAfter=sharePool(lifeBack,()=>moveDevelopment(life.packs,life.state,0,life.move));
+ assert.equal(longFirst.lethal,'no');
+ assert.equal(shortAfter.lethal,'lethal');
+ const impact=prepare('BLC-1-009',['BLC-1-008','BLC-1-056','BLC-1-004']);
+ const through=clearFront(impact.state);
+ const nulled=onlyFront(impact.state,'BLC-1-008');
+ const small=onlyFront(impact.state,'BLC-1-056');
+ const tall=onlyFront(impact.state,'BLC-1-004');
+ for(const state of [through,nulled,small,tall]){
+  assert.equal(ownIdentity(state),ownIdentity(impact.state));
+  assert.equal(assertUniversalMatch(impact.packs,state),true);
+ }
+ assert.equal(bleach.cards['BLC-1-009'].bp,3000);
+ assert.equal(bleach.cards['BLC-1-008'].bp,2500);
+ assert.equal(bleach.cards['BLC-1-004'].bp,4000);
+ const impactPool={n:160};
+ const throughView=sharePool(impactPool,()=>moveDevelopment(impact.packs,through,0,impact.move));
+ const nullView=sharePool(impactPool,()=>moveDevelopment(impact.packs,nulled,0,impact.move));
+ const smallView=sharePool(impactPool,()=>moveDevelopment(impact.packs,small,0,impact.move));
+ const tallView=sharePool(impactPool,()=>moveDevelopment(impact.packs,tall,0,impact.move));
+ assert.equal(throughView.lethal,'lethal');
+ assert.equal(nullView.lethal,'no');
+ assert.equal(smallView.lethal,'lethal');
+ assert.equal(tallView.lethal,'no');
+ const reversePool={n:160};
+ const tallFirst=sharePool(reversePool,()=>moveDevelopment(impact.packs,tall,0,impact.move));
+ const smallAfter=sharePool(reversePool,()=>moveDevelopment(impact.packs,small,0,impact.move));
+ const nullFirst=sharePool(reversePool,()=>moveDevelopment(impact.packs,nulled,0,impact.move));
+ const throughAfter=sharePool(reversePool,()=>moveDevelopment(impact.packs,through,0,impact.move));
+ assert.equal(tallFirst.lethal,'no');
+ assert.equal(smallAfter.lethal,'lethal');
+ assert.equal(nullFirst.lethal,'no');
+ assert.equal(throughAfter.lethal,'lethal');
+ const stopped=blockedAttack(impact.packs,nulled,impact.move);
+ assert.ok(stopped.results.every(followed=>followed.status==='playing'&&followed.players[1].life.length===1));
+ const beaten=blockedAttack(impact.packs,tall,impact.move);
+ assert.ok(beaten.results.every(followed=>followed.status==='playing'&&followed.players[1].life.length===1));
+});
+
+test('browser module: strategy does not import a Node builtin',()=>{
+ const source=fs.readFileSync(new URL('../dist/universal-v2/ai-v3/strategy.mjs',import.meta.url),'utf8');
+ assert.equal(/\bfrom\s+['"]node:/.test(source),false);
+ assert.equal(source.includes('AsyncLocalStorage'),false);
+ assert.equal(source.includes('moveMemo'),false);
+});
+
+test('cache: an unproven check stays unproven and the same state can be reused',()=>{
+ const {packs,open,walled,move}=pairFront('BLC-1-045','BLC-1-056');
+ const pool={n:2};
+ const early=sharePool(pool,()=>moveDevelopment(packs,open,0,move));
+ assert.equal(early.lethal,'unproven');
+ assert.notEqual(early.lethal,'no');
+ assert.equal(pool.n,0);
+ const again=sharePool(pool,()=>moveDevelopment(packs,open,0,move));
+ assert.equal(again.lethal,'unproven');
+ const proved=sharePool({n:64},()=>moveDevelopment(packs,open,0,move));
+ assert.equal(proved.lethal,'lethal');
+ const blocked=sharePool({n:64},()=>moveDevelopment(packs,walled,0,move));
+ assert.equal(blocked.lethal,'no');
+ const reuse={n:64};
+ const first=sharePool(reuse,()=>moveDevelopment(packs,walled,0,move));
+ const left=reuse.n;
+ const second=sharePool(reuse,()=>moveDevelopment(packs,walled,0,move));
+ assert.equal(second.lethal,first.lethal);
+ assert.equal(reuse.n,left);
+});
