@@ -50,7 +50,7 @@
       "tests/v2-iys-set1.test.mjs",
       "tests/v2-iys-001-025.test.mjs"
     ],
-    "note": "2026-11-06 在 /agent/repos/Ua-b5 執行上述命令，70 項全部通過。其中 026–050 為 26 項，set1 為 21 項，001–025 為 23 項。沒有跑全庫 npm test；全庫整合由 A 集中執行。"
+    "note": "2026-11-06 在 /agent/repos/Ua-b5 執行上述命令，70 項全部通過。其中 026–050 為 26 項，set1 為 21 項，001–025 為 23 項。沒有跑全庫 npm test；全庫整合由 A 集中執行。提交 90f7964c 後，乾淨工作樹的 node --test tests/v2-independent-audit.test.mjs 為 4 項全部通過。沒有提交產生的 audit/v2-full-catalog.csv 與 summary。"
   },
   "reviews": [
     {
