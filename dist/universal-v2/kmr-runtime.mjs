@@ -161,10 +161,14 @@ function oppFront(s,owner,pred){
  return plOf(s,1-owner).front.filter(c=>c&&(!pred||pred(c)));
 }
 function offerRetire(pack,s,spec,limit,optional,next){
- const targets=oppFront(s,spec.player,c=>A.bp(pack,s,c)<=limit&&
+ // Q1173: a stored BP-range bonus widens this choice. It is spent only when
+ // a character is actually chosen, so a skipped choice leaves it for later.
+ const extra=s.aotBpRange?.[spec.player]||0;
+ const cap=limit+extra;
+ const targets=oppFront(s,spec.player,c=>A.bp(pack,s,c)<=cap&&
   selectable(pack,s,spec.player,spec.id,c));
  if(!targets.length)return false;
- hold(s,{...spec,step:'retire',data:{next:next||null,optional}},[
+ hold(s,{...spec,step:'retire',data:{next:next||null,optional,rangeSpent:extra}},[
   ...(optional?[{type:'kmr',mode:'skip'}]:[]),
   ...targets.map(c=>({type:'kmr',mode:'retire',uid:c.uid}))
  ]);
@@ -703,7 +707,11 @@ const HANDLERS={
  'KMR-1-081|onAttack'(pack,s,job){
   const moved=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===job.owner&&e.from==='hand'&&
    e.to==='outside'&&e.reason==='own-effect');
-  if(moved)A.draw(pack,s,job.owner,1,job.sourceUid);
+  // 「1枚まで」 may draw zero.
+  if(!moved)return;
+  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'mayDraw',data:{}},[
+   {type:'kmr',mode:'skip'},{type:'kmr',mode:'draw'}
+  ]);
  },
  'KMR-1-081|moved'(pack,s,job){
   const gear=plOf(s,job.owner).outside.find(c=>c.uid===job.gearUid);
@@ -786,8 +794,9 @@ const HANDLERS={
  'KMR-1-099|onPlay'(pack,s,job){special099(pack,s,job);},
  'KMR-1-099|trigger'(pack,s,job){special099(pack,s,job);},
  'KMR-1-100|onPlay'(pack,s,job){
+  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
   const own=fieldCards(s,job.owner).filter(c=>def(pack,c).type==='character');
-  offerOwn(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},own,true,'retire2k','own');
+  if(!offerOwn(s,spec,own,true,'retire2k','own'))offerRetire(pack,s,spec,2000,true,null);
  },
  'KMR-1-104|onAttack'(pack,s,job){
   A.draw(pack,s,job.owner,1,job.sourceUid);
@@ -927,8 +936,10 @@ function special096(pack,s,job){
 function special099(pack,s,job){
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
  const wider=fieldCards(s,job.owner).some(c=>token(pack,c,'ファイズ',s));
- if(wider){s.aotBpRange[job.owner]=(s.aotBpRange[job.owner]||0)+1000;}
+ // The printed ceiling becomes 4000 on this choice. The +1000 is the NEXT
+ // BP-range choice, so it is stored after this offer is built.
  offerRetire(pack,s,spec,wider?4000:3000,true,null);
+ if(wider)s.aotBpRange[job.owner]=(s.aotBpRange[job.owner]||0)+1000;
 }
 function sameThen(pack,s,job,next){
  const loc=A.location(s,job.owner,job.sourceUid);
@@ -1306,6 +1317,8 @@ function resolveStep(pack,s,q,a){
  if(q.step==='retire'){
   s.pending=null;
   if(hit.mode!=='skip'){
+   const spent=q.data?.rangeSpent||0;
+   if(spent&&s.aotBpRange)s.aotBpRange[q.player]=Math.max(0,(s.aotBpRange[q.player]||0)-spent);
    const foe=1-q.player;
    const slot=plOf(s,foe).front.findIndex(c=>c?.uid===hit.uid);
    if(slot>=0)A.retire(pack,s,foe,'front',slot,{by:'opponent',controller:q.player,
@@ -1373,7 +1386,12 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='own'||q.step==='ready'||q.step==='retireOwn'){
   s.pending=null;
-  if(hit.mode==='skip')return;
+  if(hit.mode==='skip'){
+   // KMR-1-100: the BP bonus and the retire are separate sentences.
+   if(q.id==='KMR-1-100'&&q.data?.next==='retire2k')
+    offerRetire(pack,s,spec,2000,true,null);
+   return;
+  }
   const c=fieldCards(s,q.player).find(x=>x.uid===hit.uid)||selfOf(s,q.player,hit.uid);
   if(q.step==='ready'&&c)A.active(s,q.player,c);
   else if(q.step==='retireOwn'&&c){
@@ -1552,9 +1570,12 @@ function resolveStep(pack,s,q,a){
   const foe=1-q.player;
   const slot=plOf(s,foe).front.findIndex(c=>c?.uid===hit.uid);
   const retired=slot>=0?plOf(s,foe).front[slot]:null;
-  if(slot>=0)A.retire(pack,s,foe,'front',slot,{by:'opponent'});
+  if(slot>=0)A.retire(pack,s,foe,'front',slot,{by:'opponent',controller:q.player,sourceUid:q.sourceUid});
   const opp=1-q.player;
   if(plOf(s,opp).hand.length>=2&&retired){
+   // A leave replacement is still choosing. The later sentence waits until
+   // the character actually leaves. Paying to stay ends the sentence.
+   if(s.pending){s.kmr088AfterLeave={player:opp,sourceUid:q.sourceUid,id:q.id,uid:retired.uid};return;}
    hold(s,{player:opp,sourceUid:q.sourceUid,id:q.id,step:'punishBack',data:{uid:retired.uid,owner:q.player}},[
     {type:'kmr',mode:'skip'},{type:'kmr',mode:'payback'}
    ]);
@@ -1670,9 +1691,16 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='spend51'){
   s.pending=null;
+  const follow=s.kmr088AfterLeave;
+  delete s.kmr088AfterLeave;
   if(hit.mode==='skip'){
    A.retire(pack,s,q.data.owner,q.data.line,q.data.slot,{postImpact:q.data.postImpact,by:q.data.retireCause?.by||q.data.by,controller:q.data.retireCause?.controller,sourceUid:q.data.retireCause?.sourceUid,skipReplacement:true});
    A.releaseRetirement(s,q,true);
+   if(follow&&plOf(s,follow.player).hand.length>=2)
+    hold(s,{player:follow.player,sourceUid:follow.sourceUid,id:follow.id,step:'punishBack',
+     data:{uid:follow.uid,owner:1-follow.player}},[
+     {type:'kmr',mode:'skip'},{type:'kmr',mode:'payback'}
+    ]);
    return;
   }
   const host=selfOf(s,q.player,q.sourceUid);
