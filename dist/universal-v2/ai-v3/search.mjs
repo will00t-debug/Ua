@@ -310,9 +310,14 @@ export function chooseAiV3Action(pack,state,options={}){
   const jobs=[];
   const push=action=>{if(action&&!jobs.some(item=>same(item,action)))jobs.push(action);};
   push(hardExact);
+  // A settled pass used to run before any play. On a 40ms clock that pass
+  // spends the deadline, and the energy play that would have returned inside
+  // the same node slice never starts. Search the developing roots first.
+  // The pass still runs when any clock remains, and a cut play does not beat
+  // a pass that actually got home.
   const safe=ranked.find(isSafeAction);
+  for(const action of ranked)if(!isSafeAction(action))push(action);
   push(safe);
-  for(const action of ranked)push(action);
   const rootPlan=orderRoots(jobs,options.rootFirst,legal);
   jobs.length=0;
   jobs.push(...rootPlan);

@@ -104,9 +104,12 @@ test('coverage: a clock can stop before the first root, after the first, and aft
  assert.equal(identity(first.trace.compared[0].action),identity(first.trace.rootPlan[0]));
  assert.ok(first.trace.unexecuted.length>=1);
  assert.ok(first.trace.unexecuted.every(row=>row.reason==='time'));
- assert.equal(first.trace.fallbackKind,'budget');
- const firstPlanned=first.trace.rootPlan[0];
- assert.equal(identity(first.action)===identity(firstPlanned)||legal.some(item=>same(item,first.action)),true);
+ const lead=first.trace.compared[0];
+ const settledDevelop=lead.action.type!=='next'&&(lead.boundary==='returned'||lead.boundary==='terminal');
+ if(settledDevelop){
+  assert.equal(first.trace.fallbackKind,null);
+  assert.equal(identity(first.action),identity(lead.action));
+ }else assert.equal(first.trace.fallbackKind,'budget');
 
  clock=1000;
  roots=0;

@@ -4,7 +4,7 @@
 // actor answers blocks and triggers along the way.
 import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {evaluate as staticValue,terminalValue,keepScore} from './eval.mjs';
-import {archetypeRank,actionGroup} from './archetype.mjs';
+import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
 import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch} from './strategy.mjs';
 import {visibleUidSet} from './observation.mjs';
@@ -49,22 +49,26 @@ function actionRank(pack,state,viewer,action,strategy){
  if(action.type==='move'&&moveDevelopment(pack,state,viewer,action)?.strip)score-=8;
  return score;
 }
+function compareRanked(pack,state,viewer,a,b,strategy){
+ const delta=actionRank(pack,state,viewer,b,strategy)-actionRank(pack,state,viewer,a,strategy);
+ if(delta)return delta;
+ // Equal energy plays: resolve the one with no printed on-play first.
+ // The on-play stays in the beam; a finished line can still outscore this one.
+ const noise=entryNoise(pack,state,viewer,a)-entryNoise(pack,state,viewer,b);
+ if(noise)return noise;
+ // Equal discards keep the card we want. A raid bonus must not make the
+ // core the first thing thrown away.
+ if(a.type==='chooseDiscard'&&a.type===b.type){
+  const hand=state.players[viewer]?.hand||[];
+  const left=keepScore(pack,state,viewer,hand.find(card=>card?.uid===a.uid));
+  const right=keepScore(pack,state,viewer,hand.find(card=>card?.uid===b.uid));
+  if(left!==right)return left-right;
+ }
+ return byText(a,b);
+}
 export function rankLegal(pack,state,viewer,legal,strategy){
  const list=dedupe(state,viewer,legal);
- const rank=action=>actionRank(pack,state,viewer,action,strategy);
- return [...list].sort((a,b)=>{
-  const delta=rank(b)-rank(a);
-  if(delta)return delta;
-  // Equal discards keep the card we want. A raid bonus must not make the
-  // core the first thing thrown away.
-  if(a.type==='chooseDiscard'&&a.type===b.type){
-   const hand=state.players[viewer]?.hand||[];
-   const left=keepScore(pack,state,viewer,hand.find(card=>card?.uid===a.uid));
-   const right=keepScore(pack,state,viewer,hand.find(card=>card?.uid===b.uid));
-   if(left!==right)return left-right;
-  }
-  return byText(a,b);
- });
+ return [...list].sort((a,b)=>compareRanked(pack,state,viewer,a,b,strategy));
 }
 export function selectCandidates(pack,state,viewer,legal,beam,strategy){
  const ranked=rankLegal(pack,state,viewer,legal,strategy);
@@ -102,8 +106,7 @@ export function selectCandidates(pack,state,viewer,legal,beam,strategy){
    if(spare>=0)picked[spare]=front;
   }
  }
- const rank=action=>actionRank(pack,state,viewer,action,strategy);
- picked.sort((a,b)=>rank(b)-rank(a)||byText(a,b));
+ picked.sort((a,b)=>compareRanked(pack,state,viewer,a,b,strategy));
  return picked;
 }
 function plain(value){

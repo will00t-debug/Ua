@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {mainDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
-import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,AI_V3_BASELINE,resetAiV3Report,aiV3Report} from '../dist/universal-v2/ai-v3/search.mjs';
+import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,AI_V3_BASELINE,resetAiV3Report,aiV3Report,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {positionKey,searchPosition,rankLegal} from '../dist/universal-v2/ai-v3/beam.mjs';
+import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
+import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {matchGrid,pairedChallenger} from '../dist/universal-v2/ai-v3/compare.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from '../dist/universal-v2/ai-v3/prior.mjs';
@@ -471,4 +473,72 @@ test('an engine-scheduled delayed retirement changes the position key',()=>{
  assert.equal(after.delayedEffects.some(effect=>effect.op==='retireAtMainEnd'&&effect.sourceUid===source.uid),true);
  assert.equal(after.mainAbilityUsedUids.includes(source.uid),true);
  assert.notEqual(positionKey(after,0,'us',2),before);
+});
+
+function cardId(state,action){
+ for(const player of state.players)for(const zone of ['hand','front','energy']){
+  const card=(player[zone]||[]).find(item=>item?.uid===action?.uid);
+  if(card)return card.cardId;
+ }
+ return '';
+}
+function whiteSwordAt(seed,first,seat,target){
+ const report=JSON.parse(readFileSync(new URL('../audit/ai-v3-official-8300-scope-36.json',import.meta.url),'utf8'));
+ const deck=battleDecks().find(item=>item.id==='white-sword');
+ const game=report.titles['white-sword'].byMode.tree.games.find(item=>item.seed===seed&&item.first===first&&item.challengerSeat===seat);
+ const packs=[deck.pack,deck.pack];
+ const rules=matchRules('official');
+ let state=newComparedMatch(packs,[deck.counts,deck.counts],seed,first,rules);
+ for(const choice of game.opening||[]){
+  const action=legalUniversalActions(packs,state).find(item=>item.type==='openingMulligan'&&item.mode===choice.mode);
+  state=dispatchUniversalAction(packs,state,action,{actor:choice.actor});
+ }
+ for(const step of game.actions){
+  if(step.step===target)return {packs,state};
+  const actor=state.pending?.player??state.active;
+  const action=legalUniversalActions(packs,state).find(item=>JSON.stringify(item)===JSON.stringify(step.action));
+  state=dispatchUniversalAction(packs,state,action,{actor});
+ }
+ throw new Error('missing step '+target);
+}
+
+test('white sword turn 1 searches the plain energy play before the on-play and before passing',()=>{
+ const {packs,state}=whiteSwordAt(8300,0,0,2);
+ const actor=0;
+ const legal=legalUniversalActions(packs,state);
+ const ranked=rankLegal(packs,state,actor,legal,null);
+ const energy=ranked.filter(action=>action.type==='play'&&action.line==='energy');
+ assert.equal(cardId(state,energy[0]),'BLC-1-083');
+ const onPlay=ranked.findIndex(action=>action.type==='play'&&action.line==='energy'&&cardId(state,action)==='BLC-4-066');
+ const quietFront=ranked.findIndex(action=>action.type==='play'&&action.line==='front'&&cardId(state,action)==='BLC-1-083');
+ assert.ok(onPlay>=0&&quietFront>onPlay);
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:12,now:()=>meter.dispatches,meter,diagnose:true});
+ const trace=lastAiV3Trace();
+ assert.equal(cardId(state,action),'BLC-1-083');
+ assert.equal(action.line,'energy');
+ assert.equal(trace.rootPlan[0].type,'play');
+ assert.equal(cardId(state,trace.rootPlan[0]),'BLC-1-083');
+ assert.ok(trace.rootPlan.findIndex(item=>item.type==='next')>0);
+ const quiet=trace.candidates.find(row=>row.action?.line==='energy'&&cardId(state,row.action)==='BLC-1-083');
+ const noisy=trace.candidates.find(row=>row.action?.line==='energy'&&cardId(state,row.action)==='BLC-4-066');
+ assert.equal(quiet.boundary,'returned');
+ assert.ok(quiet.search>0);
+ if(noisy?.boundary==='returned')assert.ok(quiet.search>noisy.search);
+ assert.ok(meter.dispatches<=48);
+});
+
+test('a legal raid still outranks the plain energy play, and an attack is not passed',()=>{
+ const raidSpot=whiteSwordAt(8300,0,0,40);
+ const raidLegal=legalUniversalActions(raidSpot.packs,raidSpot.state);
+ const raidRanked=rankLegal(raidSpot.packs,raidSpot.state,0,raidLegal,null);
+ assert.equal(raidRanked[0].type,'raid');
+ const attackSpot=whiteSwordAt(8301,1,1,35);
+ const actor=attackSpot.state.pending?.player??attackSpot.state.active;
+ const attackLegal=legalUniversalActions(attackSpot.packs,attackSpot.state);
+ assert.equal(attackLegal.some(action=>action.type==='attack'),true);
+ resetAiV3Report();
+ const action=chooseAiV3Action(attackSpot.packs,attackSpot.state,{...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true});
+ assert.equal(action.type,'attack');
 });

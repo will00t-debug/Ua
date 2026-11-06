@@ -111,6 +111,18 @@ export function archetypeRank(pack,state,viewer,action){
  }
  return score;
 }
+// An energy play whose printed on-play opens another window spends the first
+// slice inside that window. A same-rank energy play with no on-play can settle
+// in that slice. This is only a tie-break: it does not outrank a raid, an
+// attack, or a pass the search has already scored higher, and it does not
+// prefer the front. A finished on-play line can still win on its score.
+export function entryNoise(pack,state,viewer,action){
+ if(action?.type!=='play'||action?.line!=='energy')return 0;
+ const card=viewerCard(state,viewer,action.uid);
+ const printed=card?packOf(pack,viewer).cards[card.cardId]:null;
+ const onPlay=printed?.effects?.onPlay;
+ return Array.isArray(onPlay)&&onPlay.length?1:0;
+}
 export function actionGroup(state,viewer,action){
  const card=viewerCard(state,viewer,action.uid);
  return [action.type||'',action.mode||'',action.line||'',card?.cardId||''].join('|');

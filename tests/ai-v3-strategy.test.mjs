@@ -92,8 +92,7 @@ test('strategy: keeping the basic energy continuation outscores passing',()=>{
  assert.equal(passed.boundary,'returned');
  assert.equal(played.executed,true);
  assert.ok(played.nodes>0);
- assert.ok(played.search>passed.search);
- assert.ok(played.search>10);
+ assert.ok(played.search>passed.search+10);
  assert.equal((played.sequence||[]).some(step=>step.mode==='selfRestEnergyRetire'),false);
  console.log('strategy develop',action.type,played.search,passed.search);
 });
