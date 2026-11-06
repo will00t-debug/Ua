@@ -112,7 +112,7 @@ function ask(packs,state){
  if(trace.reason!=='forced')assert.ok(trace.nodesUsed<=48,trace.reason+' nodes '+trace.nodesUsed);
  return {action,trace};
 }
-function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blockerBp=4000,attackerBp=4000,damage=1,secondBp=0,secondId='BLC-4-062',secondDamage=1,secondImpact=0,getLife=false}={}){
+function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blockerBp=4000,attackerBp=4000,damage=1,secondBp=0,secondId='BLC-4-062',secondDamage=1,secondImpact=0,thirdBp=0,thirdId='BLC-4-036',thirdDamage=1,thirdImpact=0,getLife=false}={}){
  const {packs,state}=boot('attack',1,0);
  clearHand(state,0);
  const mine=take(state,0,blockerId);
@@ -130,6 +130,14 @@ function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blo
   if(secondDamage===2)second.attackDamageGranted={turn:state.turn,stamp:second.fieldEntryStamp,amount:2};
   if(secondImpact)second.impactGranted={turn:state.turn,stamp:second.fieldEntryStamp,amount:1};
  }
+ let third=null;
+ if(thirdBp){
+  third=take(state,1,thirdId);
+  place(state,1,third,'front',2);
+  setBp(state,third,thirdBp);
+  if(thirdDamage===2)third.attackDamageGranted={turn:state.turn,stamp:third.fieldEntryStamp,amount:2};
+  if(thirdImpact)third.impactGranted={turn:state.turn,stamp:third.fieldEntryStamp,amount:1};
+ }
  setLife(state,0,life);
  if(getLife)fillGetLife(state,0);
  for(const card of hand||[])state.players[0].hand.push(card(state));
@@ -137,7 +145,7 @@ function blockWindow(life,{hand,blockerId='BLC-4-005',attackerId='BLC-4-005',blo
  const opened=dispatchUniversalAction(packs,state,swing,{actor:1});
  assert.equal(assertUniversalMatch(packs,opened),true);
  assert.equal(opened.pending.kind,'block');
- return {packs,state:opened,mine,foe,second};
+ return {packs,state:opened,mine,foe,second,third};
 }
 function settle(packs,state,action){
  const actor=state.pending?.player??state.active;
@@ -657,4 +665,214 @@ test('a rebuild proof stays on the position that produced it',()=>{
  assert.equal(expired.ok,false);
  assert.equal(expired.reason,'budget');
  assert.equal(provenRebuild(ready.packs,starvedState,0,uid).ok,true);
+});
+
+function answer(packs,start,laterUids){
+ const choices=[];
+ let cursor=start;
+ const started=cursor.players[0].ownTurns;
+ let at=0;
+ for(let guard=0;guard<48;guard++){
+  if(cursor.active===0&&cursor.phase==='start'&&!cursor.pending&&cursor.players[0].ownTurns>started)
+   return {cursor,choices};
+  const legal=legalUniversalActions(packs,cursor);
+  const actor=cursor.pending?.player??cursor.active;
+  let action;
+  if(cursor.pending?.kind==='block'){
+   const choice=ask(packs,cursor);
+   choices.push({attacker:cursor.pending.attackerUid,uid:choice.action.uid??null,
+    nodes:choice.trace.nodesUsed??null,reason:choice.trace.reason});
+   action=choice.action;
+  }else if(cursor.pending?.kind==='life-trigger'){
+   action=legal.find(item=>item.mode==='get')||legal.find(item=>item.mode==='skip');
+  }else if(cursor.pending?.kind==='life-batch-order'){
+   action=legal.find(item=>item.type==='chooseLifeOrder');
+  }else if(!cursor.pending&&cursor.active===1&&cursor.phase==='attack'){
+   const uid=laterUids[at];
+   action=legal.find(item=>item.type==='attack'&&item.uid===uid)||legal.find(item=>item.type==='next');
+   if(action?.type==='attack')at++;
+  }else action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw');
+  if(!action)throw Error('stuck '+(cursor.pending?.kind||cursor.phase));
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ throw Error('our turn did not start');
+}
+function standing(state,uids){
+ const front=state.players[0].front.filter(Boolean);
+ assert.equal(front.length,uids.length);
+ for(const uid of uids)assert.equal(front.find(card=>card.uid===uid)?.ready,true);
+}
+function squad(swapUs,swapLater){
+ const opened=blockWindow(7,{blockerId:'BLC-4-036',blockerBp:6000,attackerId:'BLC-1-009',attackerBp:4000,
+  secondBp:4000,secondId:'BLC-4-036',secondDamage:2,secondImpact:0,
+  thirdBp:5000,thirdId:'BLC-4-036',thirdDamage:2,thirdImpact:1,getLife:true});
+ const small=take(opened.state,0,'BLC-4-036');
+ place(opened.state,0,small,'front',1);
+ setBp(opened.state,small,4500);
+ if(swapUs){
+  const front=opened.state.players[0].front;
+  [front[0],front[1]]=[front[1],front[0]];
+ }
+ if(swapLater){
+  const front=opened.state.players[1].front;
+  [front[1],front[2]]=[front[2],front[1]];
+ }
+ assert.equal(opened.state.players[0].hand.length,0);
+ assert.equal(assertUniversalMatch(opened.packs,opened.state),true);
+ assert.equal(universalImpact(opened.packs,opened.state,opened.foe),1);
+ assert.equal(universalAttackDamage(opened.packs,opened.state,opened.second),2);
+ assert.equal(universalImpact(opened.packs,opened.state,opened.second),0);
+ assert.equal(universalAttackDamage(opened.packs,opened.state,opened.third),2);
+ assert.equal(universalImpact(opened.packs,opened.state,opened.third),1);
+ return {...opened,small};
+}
+test('two blockers are assigned across the whole attack, not by front order',()=>{
+ const base=squad(false,false);
+ const first=ask(base.packs,base.state);
+ assert.equal(first.action.uid??null,null);
+ const rows=first.trace.candidates.filter(row=>row.action?.type==='chooseBlock');
+ const passed=rows.find(row=>(row.action.uid??null)===null);
+ assert.ok(passed);
+ for(const row of rows){
+  if(row.damageOpen)assert.notEqual(row.boundary,'returned');
+  if(row.action.uid)assert.ok(passed.battleScore>row.battleScore);
+ }
+ const played=answer(base.packs,base.state,[base.second.uid,base.third.uid]);
+ assert.deepEqual(played.choices.map(row=>row.uid),[null,base.small.uid,base.mine.uid]);
+ assert.deepEqual(played.choices.map(row=>row.attacker),[base.foe.uid,base.second.uid,base.third.uid]);
+ assert.ok(played.choices.every(row=>row.reason!=='forced'&&row.nodes<=48));
+ assert.equal(played.cursor.players[0].life.length,6);
+ standing(played.cursor,[base.mine.uid,base.small.uid]);
+ const worse=march(base.packs,structuredClone(base.state),(cursor,legal)=>{
+  if(cursor.pending?.kind==='block'){
+   const attacker=cursor.pending.attackerUid;
+   if(attacker===base.foe.uid)return legal.find(action=>action.uid===base.mine.uid);
+   if(attacker===base.second.uid)return legal.find(action=>action.uid===base.small.uid);
+   return legal.find(action=>action.type==='chooseBlock'&&(action.uid??null)===null);
+  }
+  if(cursor.pending?.kind==='life-trigger')
+   return legal.find(action=>action.mode==='get')||legal.find(action=>action.mode==='skip');
+  if(cursor.pending?.kind==='life-batch-order')return legal.find(action=>action.type==='chooseLifeOrder');
+  if(!cursor.pending&&cursor.active===1&&cursor.phase==='attack')
+   return legal.find(action=>action.type==='attack'&&action.uid===base.second.uid)||
+    legal.find(action=>action.type==='attack'&&action.uid===base.third.uid)||
+    legal.find(action=>action.type==='next');
+  return legal.find(action=>action.type==='next')||legal.find(action=>action.type==='extraDraw');
+ });
+ assert.equal(worse.players[0].life.length,5);
+ standing(worse,[base.mine.uid,base.small.uid]);
+ const flipped=squad(true,false);
+ const flippedPlay=answer(flipped.packs,flipped.state,[flipped.second.uid,flipped.third.uid]);
+ assert.deepEqual(flippedPlay.choices.map(row=>row.uid),[null,flipped.small.uid,flipped.mine.uid]);
+ assert.equal(flippedPlay.cursor.players[0].life.length,6);
+ standing(flippedPlay.cursor,[flipped.mine.uid,flipped.small.uid]);
+ const reordered=squad(false,true);
+ const reorderedPlay=answer(reordered.packs,reordered.state,[reordered.third.uid,reordered.second.uid]);
+ assert.deepEqual(reorderedPlay.choices.map(row=>row.uid),[null,reordered.mine.uid,reordered.small.uid]);
+ assert.deepEqual(reorderedPlay.choices.map(row=>row.attacker),[reordered.foe.uid,reordered.third.uid,reordered.second.uid]);
+ assert.equal(reorderedPlay.cursor.players[0].life.length,6);
+ standing(reorderedPlay.cursor,[reordered.mine.uid,reordered.small.uid]);
+});
+
+function filledDeck(source,extra){
+ const counts={...extra};
+ let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
+ const triggers={final:0,color:0,special:0,draw:0};
+ for(const [id,n] of Object.entries(counts)){
+  const trigger=source.cards[id]?.trigger;
+  if(triggers[trigger]!==undefined)triggers[trigger]+=n;
+ }
+ for(const card of Object.values(source.cards).filter(item=>!counts[item.id]).sort((a,b)=>a.energy-b.energy||a.id.localeCompare(b.id))){
+  if(total>=50)break;
+  if(triggers[card.trigger]!==undefined&&triggers[card.trigger]>=4)continue;
+  const room=triggers[card.trigger]!==undefined?4-triggers[card.trigger]:4;
+  const n=Math.min(card.maxCopies||4,50-total,room);
+  if(n<=0)continue;
+  counts[card.id]=(counts[card.id]||0)+n;
+  total+=n;
+  if(triggers[card.trigger]!==undefined)triggers[card.trigger]+=n;
+ }
+ const issues=validateUniversalDeck(source,counts);
+ if(issues.length)throw Error(issues.join('; '));
+ return counts;
+}
+test('different attacker restrictions use the full pairing, not the lower BP',()=>{
+ const source=officialV2Pack('solo-leveling');
+ const counts=filledDeck(source,{
+  'SLG-1-024':1,'SLG-1-001':2,'SLG-1-006':2,'SLG-1-015':4,'SLG-1-005':2,'SLG-1-045':4
+ });
+ const packs=[source,source];
+ const open=swap=>{
+  let state=newUniversalMatch(packs,{decks:[counts,counts],seed:11,first:0});
+  for(let guard=0;guard<40&&!(state.active===1&&state.phase==='attack'&&!state.pending);guard++){
+   const legal=legalUniversalActions(packs,state);
+   const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw')||legal[0];
+   state=dispatchUniversalAction(packs,state,action);
+  }
+  const pull=(player,id)=>{
+   for(const zone of ['hand','deck','life','outside','removed']){
+    const list=state.players[player][zone];
+    if(!list)continue;
+    const index=list.findIndex(card=>card?.cardId===id);
+    if(index>=0)return list.splice(index,1)[0];
+   }
+   throw Error('Missing '+id);
+  };
+  for(const player of [0,1]){
+   for(const card of [...state.players[player].hand])state.players[player].deck.push(card);
+   state.players[player].hand.length=0;
+  }
+  const low=pull(0,'SLG-1-001');
+  const high=pull(0,'SLG-1-006');
+  const current=pull(1,'SLG-1-015');
+  const shared=pull(1,'SLG-1-005');
+  const onlyLow=pull(1,'SLG-1-024');
+  place(state,0,low,'front',swap?1:0);
+  place(state,0,high,'front',swap?0:1);
+  place(state,1,current,'front',0);
+  place(state,1,shared,'front',1);
+  place(state,1,onlyLow,'front',2);
+  const raise=(card,bp)=>{
+   const delta=bp-universalBp(packs,state,card);
+   card.buffs=delta?[{bp:delta,untilTurn:state.turn}]:[];
+  };
+  raise(low,3000);
+  raise(high,5000);
+  raise(current,1500);
+  raise(shared,2000);
+  shared.attackDamageGranted={turn:state.turn,stamp:shared.fieldEntryStamp,amount:2};
+  while(state.players[0].life.length>7)state.players[0].deck.push(state.players[0].life.pop());
+  const life=state.players[0].life,deck=state.players[0].deck;
+  for(let i=0;i<life.length;i++){
+   if(source.cards[life[i].cardId]?.trigger==='get')continue;
+   const index=deck.findIndex(card=>source.cards[card.cardId]?.trigger==='get');
+   if(index<0)break;
+   const got=deck.splice(index,1)[0];
+   deck.push(life[i]);
+   life[i]=got;
+  }
+  const swing=legalUniversalActions(packs,state).find(item=>item.type==='attack'&&item.uid===current.uid);
+  state=dispatchUniversalAction(packs,state,swing,{actor:1});
+  assert.equal(assertUniversalMatch(packs,state),true);
+  const lists=uid=>{
+   const copy=structuredClone(state);
+   copy.pending={kind:'block',player:0,attackerUid:uid};
+   return legalUniversalActions(packs,copy).filter(item=>item.type==='chooseBlock'&&item.uid).map(item=>item.uid).sort();
+  };
+  assert.deepEqual(lists(onlyLow.uid),[low.uid]);
+  assert.deepEqual(lists(shared.uid),[high.uid,low.uid].sort());
+  const choice=ask(packs,state);
+  assert.equal(choice.action.uid??null,null);
+  const played=answer(packs,state,[shared.uid,onlyLow.uid]);
+  assert.equal(played.choices[0].uid,null);
+  assert.equal(played.choices[1].uid,high.uid);
+  assert.equal(played.choices[2].uid,low.uid);
+  assert.equal(played.cursor.players[0].life.length,6);
+  standing(played.cursor,[low.uid,high.uid]);
+  return played.choices.map(row=>row.nodes);
+ };
+ const forward=open(false);
+ const backward=open(true);
+ assert.ok([...forward,...backward].every(nodes=>nodes<=48));
 });

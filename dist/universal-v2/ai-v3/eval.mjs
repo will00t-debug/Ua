@@ -2,7 +2,7 @@
 // a front body is not worth more than developing energy. The beam search
 // has to see the opponent's turn before a blocker outranks that energy.
 import {dispatchUniversalAction,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
-import {fieldRestrictions} from '../continuous-states.mjs';
+import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
 import {packOf} from './observation.mjs';
 import {noteDispatch,spendSharedStep,strategyScore} from './strategy.mjs';
 
@@ -204,10 +204,23 @@ function framedBattle(pack,state){
  }
  return rows;
 }
+function blockUses(pack,state,card){
+ const owner=Number(String(card?.uid||'').split('-')[0]);
+ const side=state.players?.[owner];
+ let silenced=true;
+ try{silenced=originalEffectsDisabled(state,card);}catch{silenced=true;}
+ let uses=1;
+ if(!silenced&&packOf(pack,owner).cards[card.cardId]?.readyOnBlockCount===1)uses=2;
+ const until=card.doubleBlockUntil;
+ if(!silenced&&until&&until.stamp===card.fieldEntryStamp&&side&&side.ownTurns<until.untilOwnTurnStart)uses=2;
+ const grant=card.doubleBlockGranted;
+ if(grant&&grant.stamp===card.fieldEntryStamp&&side&&side.ownTurns<grant.untilOwnTurnStart)uses=2;
+ return uses;
+}
 function blockerView(pack,state,card){
  try{
   return {uid:card.uid,bp:Number(universalBp(pack,state,card))||0,
-   nulls:universalImpactNull(pack,state,card)===true};
+   nulls:universalImpactNull(pack,state,card)===true,uses:blockUses(pack,state,card)};
  }catch{return null;}
 }
 function threatView(pack,state,card){
@@ -240,20 +253,32 @@ function laterThreats(pack,state,attacker,defender){
  return rows;
 }
 // A later swing is stopped only by a winning block the engine still allows
-// against that attacker. A higher BP on a character who cannot block, or a
-// list copied from the attack that is open now, is not that save. An
-// unproven list does not reduce the damage.
+// against that attacker. The whole set is matched together: spending the
+// only body who can answer a later swing on an earlier one is not a save.
+// A normal body is used once. A second use exists only when the engine has
+// already given that body another block. Unproven lists do not reduce damage.
 function cleanPrevented(blockers,threats){
- const pool=blockers.map(item=>({uid:item.uid,bp:item.bp,used:false}));
- let saved=0;
- for(const threat of threats.slice().sort((a,b)=>b.damage-a.damage)){
-  if(!(threat.legal instanceof Set))continue;
-  const found=pool.find(item=>!item.used&&item.bp>threat.bp&&threat.legal.has(item.uid));
-  if(!found)continue;
-  found.used=true;
-  saved+=threat.damage;
- }
- return saved;
+ const usable=blockers.filter(item=>item?.uid);
+ const open=threats.filter(threat=>threat?.legal instanceof Set);
+ if(!usable.length||!open.length)return 0;
+ const left=usable.map(item=>item.uses>1?item.uses:1);
+ let best=0;
+ const walk=(index,saved)=>{
+  if(saved>best)best=saved;
+  if(index>=open.length)return;
+  walk(index+1,saved);
+  const threat=open[index];
+  for(let i=0;i<usable.length;i++){
+   if(left[i]<=0)continue;
+   const blocker=usable[i];
+   if(!(blocker.bp>threat.bp)||!threat.legal.has(blocker.uid))continue;
+   left[i]-=1;
+   walk(index+1,saved+threat.damage);
+   left[i]+=1;
+  }
+ };
+ walk(0,0);
+ return best;
 }
 function unanswered(blockers,threats){
  return threats.reduce((sum,threat)=>sum+threat.damage,0)-cleanPrevented(blockers,threats);
