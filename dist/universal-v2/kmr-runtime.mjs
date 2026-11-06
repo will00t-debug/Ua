@@ -840,7 +840,9 @@ const HANDLERS={
  'KMR-1-108|onPlay'(pack,s,job){
   const top=plOf(s,job.owner).deck[0];
   if(!top)return;
-  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'topPlace',data:{uid:top.uid}},[
+  // 見る is private. The whole one-card window stays on data.uids so the
+  // controller sees it and the opponent does not.
+  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'topPlace',data:{uid:top.uid,uids:[top.uid]}},[
    {type:'kmr',mode:'top'},{type:'kmr',mode:'bottom'}
   ]);
  },
@@ -875,7 +877,8 @@ const HANDLERS={
   if(!card||A.energy(pack,s,job.owner)<4||apReady(s,job.owner)<1||plOf(s,job.owner).hand.length<2)return;
   if(!pay(s,job.owner,1,job.sourceUid))return;
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  if(!offerDiscard(s,spec,2,false,'enter111'))return;
+  // 【手札を2枚場外に置く】 is a cost, not 「自分の効果」.
+  if(!offerDiscard(s,spec,2,false,'enter111',{reason:'payment'}))return;
  },
  'KMR-1-111|onRetire'(pack,s,job){
   if(job.by!=='battle')return;
@@ -1399,6 +1402,13 @@ function resolveStep(pack,s,q,a){
     offerRetire(pack,s,spec,2000,true,null);
    return;
   }
+  // KMR-1-111: the chosen character is on the opponent's front, not this player's.
+  if(q.data?.next==='debuff'){
+   s.pending=null;
+   const target=plOf(s,1-q.player).front.find(x=>x?.uid===hit.uid);
+   if(target)buff(s,target,-1000);
+   return;
+  }
   const c=fieldCards(s,q.player).find(x=>x.uid===hit.uid)||selfOf(s,q.player,hit.uid);
   if(q.step==='ready'&&c)A.active(s,q.player,c);
   else if(q.step==='retireOwn'&&c){
@@ -1414,8 +1424,7 @@ function resolveStep(pack,s,q,a){
   else if(c&&q.data?.next==='retire2k'){
    buff(s,c,2000);
    offerRetire(pack,s,spec,2000,true,null);
-  }else if(c&&q.data?.next==='debuff')buff(s,c,-1000);
-  else if(c&&q.data?.next==='replay'){
+  }else if(c&&q.data?.next==='replay'){
    // UA29BT/KMR-1-079: the chosen character's on-play is activated by this card.
    // このキャラ in that text is the activator. Q1897: a silenced chosen card has no on-play.
    const jobs=A.programs(pack,s,c,'onPlay',q.player,'ownEffect',q.sourceUid);
