@@ -5,7 +5,7 @@ import {createKmrV2Pack} from '../dist/universal-v2/kmr-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
  universalAttackDamage,universalBp,universalCardEnergy,universalEnergyByColor,universalImpact,
- universalPrivateChoices,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
+ universalPrivateChoices,universalPublicView,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 
 const pack=createKmrV2Pack();
@@ -781,6 +781,36 @@ test('KMR-1-048 tucks one other Ex-Aid of energy 1 and draws when that happens',
  assert.equal(universalCardEnergy(pack,paid,0,host),0);
  assert.equal(assertUniversalMatch(packs,s),true);
  assert.equal(assertUniversalMatch(packs,paid),true);
+});
+
+test('KMR-1-048 keeps facedown cards under the tucked character and the controller can reorder them',()=>{
+ let s=open(['KMR-1-048','KMR-1-049','KMR-1-036','KMR-1-040','KMR-1-041'],27048);
+ line(s,0,['KMR-1-036']);
+ const target=put(s,0,'KMR-1-049','front',1,true);
+ const hidden=take(s,0,'KMR-1-040');
+ hidden.faceDown=true;hidden.ready=false;hidden.stack=[];hidden.under=[];
+ target.under=[hidden];
+ const base=take(s,0,'KMR-1-041');
+ base.faceDown=false;base.stack=[];base.under=[];
+ target.stack=[base];
+ const rider=take(s,0,'KMR-1-048');
+ onlyHand(s,0,[rider]);
+ ready(s);
+ s=play(s,rider.uid);
+ s=kmr(s,a=>a.mode==='tuck'&&a.uid===target.uid);
+ const host=s.players[0].front.find(c=>c?.uid===rider.uid);
+ assert.equal(host.under.filter(c=>c.faceDown===true).map(c=>c.uid).sort().join(','),
+  [target.uid,hidden.uid].sort().join(','));
+ assert.equal(s.players[0].outside.some(c=>c.uid===base.uid),true);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='reorderUnder'&&a.uid===host.uid),true);
+ silence(s,host,0);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='reorderUnder'&&a.uid===host.uid),true);
+ const opp=universalPublicView(pack,s,1).players[0].front.find(c=>c?.uid===host.uid).underLayers;
+ assert.equal(opp.every(layer=>layer.faceDown===true&&layer.cardId==null&&layer.uid==null),true);
+ const own=universalPublicView(pack,s,0).players[0].front.find(c=>c?.uid===host.uid).underLayers;
+ assert.equal(own.some(layer=>layer.cardId==='KMR-1-049'),true);
+ assert.equal(own.some(layer=>layer.cardId==='KMR-1-040'),true);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
 
 test('KMR-1-049 rests for blue energy and retires at the end of the main',()=>{

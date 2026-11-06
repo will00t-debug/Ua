@@ -1664,6 +1664,24 @@ function clearFieldBody(c){
  clearTurnBattleGrants(next);
  return next;
 }
+function tuckUnderHost(pack,s,owner,hostUid,targetUid,sourceUid){
+ const hostLoc=location(s,owner,hostUid),targetLoc=location(s,owner,targetUid);
+ if(!hostLoc||!targetLoc||hostUid===targetUid)throw Error('Kamen Rider tuck lost a card');
+ const physical=s.players[owner][targetLoc.line][targetLoc.slot];
+ s.players[owner][targetLoc.line][targetLoc.slot]=null;
+ // KMR-1-048 / 050 / 051 and Q1148: facedown cards already under the chosen
+ // character move with it and stay facedown. A raid stack is not 「下の裏向き」.
+ const carried=(physical.under||[]).filter(c=>c&&c.faceDown===true);
+ physical.under=(physical.under||[]).filter(c=>!carried.includes(c));
+ buryRaidLayers(pack,s,owner,physical,sourceUid);
+ const placed=clearFieldBody(physical);
+ placed.faceDown=true;
+ for(const layer of carried){layer.faceDown=true;layer.ready=false;layer.stack=[];}
+ hostLoc.c.under??=[];
+ hostLoc.c.under.push(placed,...carried);
+ recordCompletedMove(pack,s,{physical:placed,owner,from:targetLoc.line,to:'raid-under',
+  reason:'own-effect',sourceUid,wasFaceDown:false});
+}
 function buryRaidLayers(pack,s,owner,top,sourceUid){
  const pl=s.players[owner];
  for(const entry of buriedMoves(top)){
@@ -1972,19 +1990,8 @@ function ensureKmr(){
    stripRaidTopInPlace(pack,s,owner,loc.line,loc.slot,uid);
    return s.players[owner].outside.find(c=>c.uid===uid)||null;
   },
-  tuck:(pack,s,owner,hostUid,targetUid,sourceUid)=>{
-   const hostLoc=location(s,owner,hostUid),targetLoc=location(s,owner,targetUid);
-   if(!hostLoc||!targetLoc||hostUid===targetUid)throw Error('Kamen Rider tuck lost a card');
-   const physical=s.players[owner][targetLoc.line][targetLoc.slot];
-   s.players[owner][targetLoc.line][targetLoc.slot]=null;
-   buryRaidLayers(pack,s,owner,physical,sourceUid);
-   const placed=clearFieldBody(physical);
-   placed.faceDown=true;
-   hostLoc.c.under??=[];
-   hostLoc.c.under.push(placed);
-   recordCompletedMove(pack,s,{physical:placed,owner,from:targetLoc.line,to:'raid-under',
-    reason:'own-effect',sourceUid,wasFaceDown:false});
-  },
+  tuck:(pack,s,owner,hostUid,targetUid,sourceUid)=>
+   tuckUnderHost(pack,s,owner,hostUid,targetUid,sourceUid),
   damage:(pack,s,player)=>damage(pack,s,player),
   toDeck:(pack,s,owner,uid,sourceUid)=>fieldToDeckBottom(pack,s,owner,uid,sourceUid)
  });
@@ -2016,19 +2023,8 @@ function ensureKmr2(){
    stripRaidTopInPlace(pack,s,owner,loc.line,loc.slot,uid);
    return s.players[owner].outside.find(c=>c.uid===uid)||null;
   },
-  tuck:(pack,s,owner,hostUid,targetUid,sourceUid)=>{
-   const hostLoc=location(s,owner,hostUid),targetLoc=location(s,owner,targetUid);
-   if(!hostLoc||!targetLoc||hostUid===targetUid)throw Error('Kamen Rider vol.2 tuck lost a card');
-   const physical=s.players[owner][targetLoc.line][targetLoc.slot];
-   s.players[owner][targetLoc.line][targetLoc.slot]=null;
-   buryRaidLayers(pack,s,owner,physical,sourceUid);
-   const placed=clearFieldBody(physical);
-   placed.faceDown=true;
-   hostLoc.c.under??=[];
-   hostLoc.c.under.push(placed);
-   recordCompletedMove(pack,s,{physical:placed,owner,from:targetLoc.line,to:'raid-under',
-    reason:'own-effect',sourceUid,wasFaceDown:false});
-  },
+  tuck:(pack,s,owner,hostUid,targetUid,sourceUid)=>
+   tuckUnderHost(pack,s,owner,hostUid,targetUid,sourceUid),
   peel:(pack,s,owner,uid,sourceUid)=>peelRaidBase(pack,s,owner,uid,sourceUid),
   remove:(pack,s,owner,uid,sourceUid)=>{
    const loc=location(s,owner,uid);
@@ -2147,6 +2143,18 @@ function continueEffectQueue(pack,s){
   if(job.op==='aot'){ensureAot();runAotJob(pack,s,job);continue;}
   if(job.op==='aot2'){ensureAot2();runAot2Job(pack,s,job);continue;}
   if(job.op==='kmr2'){s.kmrSourceUid=job.sourceUid||null;ensureKmr2();runKmr2Job(pack,s,job);continue;}
+  if(job.op==='kmr2BattleLossRemove'){
+   const loserLoc=location(s,job.owner,job.loserUid);
+   const loser=loserLoc?.c;
+   if(loser&&kmr2LostBattleRemoval(pack,s,loser)){
+    const blockerOwner=Number(String(job.blockerUid||'').split('-')[0]);
+    const blockerLoc=playerIndex(blockerOwner)?location(s,blockerOwner,job.blockerUid):null;
+    removeOwnedField(pack,s,job.owner,loserLoc.line,loserLoc.slot,loser.uid);
+    if(blockerLoc&&s.players[blockerOwner][blockerLoc.line][blockerLoc.slot]?.uid===job.blockerUid)
+     removeOwnedField(pack,s,blockerOwner,blockerLoc.line,blockerLoc.slot,loser.uid);
+   }
+   continue;
+  }
   if(job.op==='kmr2ResumeBattle'){
    const attacker=liveAttacker(s,job.attackerUid);
    const blocker=s.players[job.blockerOwner]?.front?.[job.slot];
@@ -4849,9 +4857,12 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='openBlock'){
    // Internal attack-window continuation, never a user-authored card DSL op.
    // Blocking begins only AFTER all attack-time choices and queued effects.
+   // KMR-2-030: removing the three cards ends THIS attack. A later re-entry
+   // from the removed area does not reopen the block. The attack phase itself
+   // continues, so another character can still attack.
+   if(s.kmr2EndAttack===job.sourceUid){s.kmr2EndAttack=null;return;}
    const attacking=liveAttacker(s,job.sourceUid);
    if(!attacking){
-    if(s.kmr2EndAttack===job.sourceUid){s.kmr2EndAttack=null;return;}
     throw Error('Attack source left the field before blocking');
    }
    const attackLine=location(s,owner,job.sourceUid);
@@ -6776,7 +6787,26 @@ function finishBlockedBattle(pack,s,attacker,blocker,blockerOwner,slot){
    }
    queueAttackWinDraw(pack,s,blockerOwner,blocker,'defender');
    consumeFirstAttackKit(s,attacker);
+   // Q1770 / Q1772: losing the battle removes both characters at attack end.
+   // Q34 already left both on the field. A direct attack never reaches here.
+   if(kmr2LostBattleRemoval(pack,s,attacker))
+    s.effectQueue.push({op:'kmr2BattleLossRemove',owner:s.active,
+     loserUid:attacker.uid,blockerUid:blocker.uid});
   }
+}
+function kmr2LostBattleRemoval(pack,s,loser){
+ if(!loser||originalEffectsDisabled(s,loser))return false;
+ const owner=Number(String(loser.uid).split('-')[0]);
+ if(s.active!==owner)return false;
+ const copied=Array.isArray(loser.kmr2Copied?.ids)?loser.kmr2Copied.ids:[];
+ const ids=[card(pack,loser).id,...copied];
+ const flagged=loser.kmr2LoseRemove?.turn===s.turn&&
+  loser.kmr2LoseRemove.stamp===loser.fieldEntryStamp;
+ const school=field(s.players[owner]).filter(c=>{
+  const d=card(pack,c);
+  return cardHasTrait(d,'天ノ川学園高校')&&!String(d.name||'').includes('フォーゼ');
+ }).length;
+ return (ids.includes('KMR-2-035')&&school>=3)||flagged;
 }
 function kmr2LossReplacement(pack,s,loserOwner,line,slot,winner){
  const loser=s.players[loserOwner][line][slot];
@@ -6801,12 +6831,7 @@ function kmr2LossReplacement(pack,s,loserOwner,line,slot,winner){
    return true;
   }
  }
- const flagged=loser.kmr2LoseRemove?.turn===s.turn&&loser.kmr2LoseRemove.stamp===loser.fieldEntryStamp;
- const school=field(s.players[loserOwner]).filter(c=>{
-  const d=card(pack,c);
-  return cardHasTrait(d,'天ノ川学園高校')&&!String(d.name||'').includes('フォーゼ');
- }).length;
- if(s.active===loserOwner&&((ids.includes('KMR-2-035')&&school>=3)||flagged)){
+ if(kmr2LostBattleRemoval(pack,s,loser)){
   const winnerOwner=winner?Number(String(winner.uid).split('-')[0]):null;
   const winnerLoc=winnerOwner===0||winnerOwner===1?location(s,winnerOwner,winner.uid):null;
   removeOwnedField(pack,s,loserOwner,line,slot,loser.uid);
@@ -7084,6 +7109,11 @@ function effectMoveTo(pack,s,p,moverUid,destLine,slot,replaceUid,sourceUid){
  else delete moving.ownEffectFront;
  recordCompletedMove(pack,s,{physical:moving,owner:p,from:from.line,to:destLine,
   reason:'own-effect',sourceUid});
+ // CSM-1-046: a move made by an effect, outside the move phase, grants the
+ // unblocked text. Player STEP and energy-to-front already call this hook
+ // and the hook itself ignores the move phase.
+ ensureCsm();
+ csmOnMovedOutsideMove(pack,s,p,moving);
 }
 function findOwnLayer(s,owner,uid){
  const visit=c=>{
@@ -16632,10 +16662,10 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'restOutsideFacedown'});
   }
   if(s.phase==='main')for(const c of field(pl)){
-   // Q1585: after looking at own facedown under-cards, place them in any
-   // order. Adjacent swaps reach every order. Opponent cards stay hidden.
-   const layers=originalEffectsDisabled(s,c)||card(pack,c).facedownUnderExtraEnergy!==1?
-    []:directFacedowns(c);
+   // Q1148 / Q1585: the controller may look at facedown cards under their
+   // own card and put them back in any order. Adjacent swaps reach every
+   // order. This is a game rule, not the blue-energy bonus.
+   const layers=directFacedowns(c);
    for(let index=0;index<layers.length-1;index++)
     out.push({type:'reorderUnder',uid:c.uid,index});
   }
@@ -17052,7 +17082,7 @@ export function legalUniversalActions(pack,s){
      {kind:'ownNameOrRaidBase',turn:'any',zone:'field',excludeSelf:false,
       name:d.playRequiresNameOrRaidBase},x=>card(pack,x),()=>0,x=>bp(pack,s,x)):true;
     if(eventNameGate(pack,s,p,d)&&
-     (d.id!=='KMR-2-026'||field(pl).some(x=>String(card(pack,x).name||'').includes('オーズ')))&&
+     (d.id!=='KMR-2-026'||pl.energy.some(x=>x&&String(card(pack,x).name||'').includes('オーズ')))&&
      (!d.playRequiresAnyNames||ownFieldHasAnyName(pack,s,p,d.playRequiresAnyNames))&&
      (!d.playRequiresAllNames||d.playRequiresAllNames.every(name=>ownFieldHasPrintedName(pack,s,p,name)))&&
      (!d.handUseOncePerName||!s.handNameUses[p].includes(d.name))&&named&&
@@ -19232,8 +19262,7 @@ if(ability.op==='characterDualMain'){
   }
   case 'reorderUnder':{
    const host=field(pl).find(c=>c.uid===action.uid);
-   const layers=host&&!originalEffectsDisabled(s,host)&&
-    card(pack,host).facedownUnderExtraEnergy===1?directFacedowns(host):[];
+   const layers=host?directFacedowns(host):[];
    const index=action.index;
    if(!host||!Number.isInteger(index)||index<0||index>=layers.length-1)
     throw Error('Illegal facedown under-card order');
@@ -19819,7 +19848,14 @@ export function assertUniversalMatch(pack,s){
      printed.id==='KJN-1-069'&&(s.mainReadyOnceByName[owner]||[]).includes('KJN-1-069');
     const kmrSniper=keys.length===2&&keys.every(k=>k==='turn'||k==='stamp')&&
      printed.id==='KMR-1-079'&&faceUpRaid(pack,physical);
-    if(!turnOk||!(plain||capped||paidCapped||paidWinDraw||kjnSniper||kmrSniper))throw Error('Forged temporary physical battle grant');
+    // CSM-1-056: the last facedown under this raider went to hand this turn,
+    // and Himeno is on the field. The attack hook writes only turn and stamp.
+    const csmSniper=keys.length===2&&keys.every(k=>k==='turn'||k==='stamp')&&
+     printed.id==='CSM-1-056'&&
+     field(s.players[owner]).some(c=>String(card(pack,c).name||'').includes('姫野'))&&
+     (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.to==='hand'&&
+      e.wasFaceDown===true&&e.sourceUid===physical.uid);
+    if(!turnOk||!(plain||capped||paidCapped||paidWinDraw||kjnSniper||kmrSniper||csmSniper))throw Error('Forged temporary physical battle grant');
     continue;
    }
    if(key==='attackWinDrawGranted'&&keys.length===3&&
@@ -20068,6 +20104,15 @@ export function assertUniversalMatch(pack,s){
     (cardHasTrait(card(pack,physical),'奈落一派')&&
      field(s.players[owner]).some(c=>c.uid!==physical.uid&&card(pack,c).id==='IYS-1-018'&&
       s.mainAbilityUsedUids.includes(c.uid+'|block'))));
+   const csm046=ceiling.bp===4000&&card(pack,physical).id==='CSM-1-046'&&
+    (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===physical.uid&&e.owner===owner&&
+     e.reason==='own-effect'&&((e.from==='front'&&e.to==='energy')||
+      (e.from==='energy'&&e.to==='front')));
+   const csm055=ceiling.bp===3000&&(s.mainReadyOnceByName[owner]||[]).includes('akiBlock')&&
+    field(s.players[owner]).some(c=>card(pack,c).id==='CSM-1-055')&&
+    (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.from==='hand'&&
+     e.to==='outside'&&e.reason==='own-effect'&&
+     field(s.players[owner]).some(src=>src.uid===e.sourceUid&&card(pack,src).id==='CSM-1-055'));
    const ruka=field(s.players[owner]).some(c=>{
     if(c.uid===physical.uid)return false;
     const ability=card(pack,c).mainAbility;
@@ -20081,6 +20126,7 @@ export function assertUniversalMatch(pack,s){
     !Number.isInteger(ceiling.bp)||Object.keys(ceiling).length!==3||
     Object.keys(ceiling).some(k=>!['turn','stamp','bp'].includes(k))||
     !(named||self||printedBlock||departedBlock||handBlock||aided||oppGrant||eventNamed||ruka||iysBlock||
+     csm046||csm055||
      (card(pack,physical).id==='KMR-1-036'&&ceiling.bp===4000&&
       s.mainAbilityUsedUids.includes(physical.uid+'|KMR-1-036'))))
     throw Error('Forged blocker ceiling');

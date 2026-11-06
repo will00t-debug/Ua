@@ -437,14 +437,10 @@ test('KMR-2-026 rests an OOO from hand only while an OOO is on the energy line, 
  park(frontOnly,0);
  frontOnly.players[0].hand.push(blocked);
  ready(frontOnly);
- // The printed gate is the energy line. The shared play check currently
- // accepts any field オーズ, so this event can be played. The card script
- // still refuses the deploy and removes itself.
- let stateFront=play(frontOnly,blocked.uid);
- assert.equal(stateFront.pending,null);
- assert.equal(stateFront.players[0].removed.filter(card=>card.uid===blocked.uid).length,1);
- assert.equal(stateFront.players[0].hand.length,0);
- assertUniversalMatch(packs,stateFront);
+ // Printed gate is the energy line. A front オーズ does not make the event legal.
+ assert.equal(legal(frontOnly).some(action=>action.type==='event'&&action.uid===blocked.uid),false);
+ assert.equal(frontOnly.players[0].hand.some(card=>card.uid===blocked.uid),true);
+ assertUniversalMatch(packs,frontOnly);
 
  const marked=fresh(counts);
  put(marked,0,'KMR-2-004','energy',0,true);
@@ -541,6 +537,73 @@ test('KMR-2-030 impact needs three non-Fourze students, and its raid attack can 
  }
  assert.equal(state.players[0].removed.some(card=>card.uid===attacker.uid),true);
  assert.equal(state.players[0].removed.some(card=>card.uid===under.uid),true);
+ assert.equal(state.phase,'attack');
+ assert.notEqual(state.pending?.kind,'block');
+ assertUniversalMatch(packs,state);
+});
+
+test('KMR-2-030 re-entry after the attack ends does not open a block',()=>{
+ const counts=fill(['KMR-2-030','KMR-2-032','KMR-2-028','KMR-2-036','KMR-2-040','KMR-2-025','KMR-1-010']);
+ const remove=fresh(counts);
+ bluePay(remove,5);
+ const under=put(remove,0,'KMR-2-032','front',0,true);
+ const cosmicTop=take(remove,0,'KMR-2-030');
+ park(remove,0);
+ remove.players[0].hand.push(cosmicTop);
+ ready(remove);
+ let state=raidOnto(remove,cosmicTop.uid,under.uid);
+ const attacker=state.players[0].front.find(card=>card?.cardId==='KMR-2-030');
+ const foe=put(state,1,'KMR-1-010','front',0,true);
+ state=act(state,action=>action.type==='next');
+ state=dispatchUniversalAction(packs,state,{type:'attack',uid:attacker.uid});
+ state=click(state,action=>action.uid===foe.uid);
+ assert.equal(state.phase,'attack');
+ let guard=0;
+ while(state.pending&&guard++<8){
+  const enter=state.pending.actions.find(action=>action.mode==='enter');
+  if(enter){state=dispatchUniversalAction(packs,state,enter);break;}
+  const skip=state.pending.actions.find(action=>action.mode==='skip');
+  assert.ok(skip);
+  state=dispatchUniversalAction(packs,state,skip);
+ }
+ assert.equal([...state.players[0].front,...state.players[0].energy].some(card=>card?.uid===attacker.uid),true);
+ while(state.pending&&guard++<12){
+  const skip=state.pending.actions.find(action=>action.mode==='skip');
+  if(!skip)break;
+  state=dispatchUniversalAction(packs,state,skip);
+ }
+ assert.notEqual(state.pending?.kind,'block');
+ assert.equal(state.phase,'attack');
+ assertUniversalMatch(packs,state);
+});
+
+test('KMR-2-035 removes itself and the blocker at attack end after losing the battle',()=>{
+ const counts=fill(['KMR-2-035','KMR-2-028','KMR-2-036','KMR-2-040','KMR-2-019']);
+ const s=fresh(counts);
+ const rider=put(s,0,'KMR-2-035','front',0,true);
+ put(s,0,'KMR-2-028','energy',0,true);
+ put(s,0,'KMR-2-036','front',1,true);
+ put(s,0,'KMR-2-040','front',2,true);
+ const wall=put(s,1,'KMR-2-019','front',0,true);
+ ready(s);
+ let state=act(s,action=>action.type==='next');
+ state=dispatchUniversalAction(packs,state,{type:'attack',uid:rider.uid});
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:wall.uid});
+ let guard=0;
+ while(state.pending&&guard++<8){
+  const skip=state.pending.actions.find(action=>action.mode==='skip');
+  if(!skip)break;
+  state=dispatchUniversalAction(packs,state,skip);
+ }
+ assert.equal(state.players[0].front.some(card=>card?.uid===rider.uid),false);
+ assert.equal(state.players[1].front.some(card=>card?.uid===wall.uid),false);
+ assert.equal(state.players[0].removed.some(card=>card.uid===rider.uid),true);
+ assert.equal(state.players[1].removed.some(card=>card.uid===wall.uid),true);
+ assert.equal(state.pending?.id,'KMR-2-035');
+ assert.equal(state.pending?.step,'enter');
+ state=dispatchUniversalAction(packs,state,state.pending.actions.find(action=>action.mode==='skip')||
+  state.pending.actions[0]);
+ assert.notEqual(state.pending?.kind,'block');
  assertUniversalMatch(packs,state);
 });
 
@@ -905,8 +968,29 @@ test('KMR-2-040 may leave energy at attack end, and its main marks one Fourze',(
  state=dispatchUniversalAction(packs,state,{type:'attack',uid:fourze.uid});
  state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:winner.uid});
  assert.equal(state.kmr2LastBattle?.attackerWon,false);
- assert.equal(state.players[0].front.some(card=>card?.uid===fourze.uid),true);
- assert.equal(state.players[1].front.some(card=>card?.uid===winner.uid),true);
+ while(state.pending&&(state.pending.id==='KMR-2-032'||state.pending.id==='KMR-2-040')){
+  const skip=state.pending.actions.find(action=>action.mode==='skip');
+  if(!skip)break;
+  state=dispatchUniversalAction(packs,state,skip);
+ }
+ assert.equal(state.players[0].front.some(card=>card?.uid===fourze.uid),false);
+ assert.equal(state.players[1].front.some(card=>card?.uid===winner.uid),false);
+ assert.equal(state.players[0].removed.some(card=>card.uid===fourze.uid),true);
+ assert.equal(state.players[1].removed.some(card=>card.uid===winner.uid),true);
+ assertUniversalMatch(packs,state);
+
+ const direct=fresh(counts);
+ const markerDirect=put(direct,0,'KMR-2-040','front',0,true);
+ const directRider=put(direct,0,'KMR-2-032','front',1,true);
+ put(direct,1,'KMR-1-010','front',0,true);
+ ready(direct);
+ state=act(direct,action=>action.uid===markerDirect.uid);
+ state=click(state,action=>action.uid===directRider.uid);
+ state=act(state,action=>action.type==='next');
+ state=dispatchUniversalAction(packs,state,{type:'attack',uid:directRider.uid});
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+ assert.equal(state.players[0].front.some(card=>card?.uid===directRider.uid),true);
+ assert.equal(state.players[0].removed.some(card=>card.uid===directRider.uid),false);
  assertUniversalMatch(packs,state);
 });
 

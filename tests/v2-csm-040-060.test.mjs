@@ -602,6 +602,9 @@ test('CSM-1-055 cannot activate a branch Aki already chose, and pays the hand ca
  assert.equal(s.pending?.step,'grantBlock3k');
  assert.equal(s.pending.actions.some(a=>a.mode==='skip'),false);
  assert.equal(s.pending.actions.some(a=>a.uid===third.uid),true);
+ s=choose(s,a=>a.mode==='pick'&&a.uid===third.uid);
+ assert.equal(live(s,0,third.uid).blockAtLeastGranted?.bp,3000);
+ assertUniversalMatch(packs,s);
 });
 
 test('CSM-1-056 on play is live without a raid, and the later sentences are not',()=>{
@@ -699,6 +702,7 @@ test('CSM-1-056 on play is live without a raid, and the later sentences are not'
  assert.equal(last.faceDown,false);
  assert.equal(granted.sniperGranted?.turn,grant.turn);
  assert.equal(granted.impactGranted?.amount,1);
+ assertUniversalMatch(packs,grant);
 });
 
 test('raid life of 047, 048 and 056 can be taken or raided onto the printed base',()=>{
@@ -860,4 +864,26 @@ test('life triggers of CSM-1-041 through 060 stay on the printed trigger',()=>{
   assert.equal(s.players[1].life.length,lives-1);
   assertUniversalMatch(packs,s);
  }
+});
+
+test('CSM-1-046 gains the unblocked text when an effect moves it outside the move phase',()=>{
+ let s=open(2046,['CSM-1-046','CSM-1-066','CSM-1-048','CSM-1-041']);
+ const moved=put(s,0,'CSM-1-046','energy',0,true);
+ put(s,0,'CSM-1-041','energy',1,true);
+ const power=put(s,0,'CSM-1-066','front',0,true);
+ const attacker=put(s,1,'CSM-1-048','front',0,true);
+ s.active=1;
+ s.phase='attack';
+ s=use(s,{type:'attack',uid:attacker.uid});
+ s=use(s,{type:'chooseBlock',uid:power.uid});
+ assert.equal(s.players[0].front.some(c=>c?.uid===power.uid),false);
+ assert.equal(s.pending?.id,'CSM-1-066');
+ assert.equal(s.pending?.step,'buffMoveFront');
+ s=choose(s,a=>a.mode==='pick'&&a.uid===moved.uid);
+ if(s.pending?.step==='moveFront')s=choose(s,a=>a.mode==='move'&&(a.uid===moved.uid||a.uid==null));
+ const landed=s.players[0].front.find(c=>c?.uid===moved.uid);
+ assert.ok(landed);
+ assert.equal(landed.blockAtLeastGranted?.bp,4000);
+ assert.equal(landed.csmUnblockedDraw,s.turn);
+ assertUniversalMatch(packs,s);
 });

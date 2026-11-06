@@ -1323,6 +1323,8 @@ function swapFrontEnergy(pack,s,owner,frontUid,energyUid){
   sourceUid:frontUid});
  A.record(pack,s,{physical:pl.energy[ei],owner,from:'front',to:'energy',reason:'own-effect',
   sourceUid:frontUid});
+ csmOnMovedOutsideMove(pack,s,owner,pl.front[fi]);
+ csmOnMovedOutsideMove(pack,s,owner,pl.energy[ei]);
 }
 // Q2095: full front requires an explicit replace choice; no silent auto-remove.
 function offerMoveToFront(pack,s,spec,c){
