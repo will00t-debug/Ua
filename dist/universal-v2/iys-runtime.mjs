@@ -606,6 +606,9 @@ export function resolveIysPending(pack,s,action){
  s.pending=null;
  const step=q.step;
  if(step==='leave'){
+  // Q24/Q28: the stored play is confirmed and paid while this generator
+  // is still on the line. Removal then happens, and the play is placed once.
+  A.confirmDeclared(pack,s,q.data?.originalAction,q.data?.declaredUse);
   if(a.mode==='hand'){
    A.bounce(pack,s,q.player,q.sourceUid,q.sourceUid);
    A.releaseRetirement(s,q,false);
@@ -630,7 +633,8 @@ export function resolveIysPending(pack,s,action){
    previousPending:data.previousPending||null,
    savedPending:data.savedPending||null,
    savedAction:data.savedAction||null,
-   actionActor:Number.isInteger(data.actionActor)?data.actionActor:null
+   actionActor:Number.isInteger(data.actionActor)?data.actionActor:null,
+   declaredUse:data.declaredUse||null
   };
   if(follow.resumeReplace||follow.originalAction||follow.savedPending){
    if(!s.pending)A.resumeDisplace(pack,s,follow);
@@ -642,6 +646,7 @@ export function resolveIysPending(pack,s,action){
     if(follow.savedAction)extra.savedAction=follow.savedAction;
     if(follow.previousPending)extra.previousPending=follow.previousPending;
     if(follow.actionActor!==null)extra.actionActor=follow.actionActor;
+    if(follow.declaredUse)extra.declaredUse=follow.declaredUse;
     s.pending.data={...(s.pending.data||{}),...extra};
    }
   }

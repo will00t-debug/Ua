@@ -4,7 +4,8 @@
 import {createCsmV2Pack} from './csm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
 import {createKmrBattlePack} from './official-entry.mjs';
-import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch}
+import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
+ universalEnergyByColor}
  from './engine.mjs';
 import {validateUniversalDeck} from './pack.mjs';
 import {makeUniversalPreviewReplay} from './preview-replay.mjs';
@@ -70,6 +71,7 @@ export function loadAuditFixture(name){
  if(name==='csm008')return denji();
  if(name==='csm056')return hayakawaFacedown();
  if(name==='iys028')return narakuLeave();
+ if(name==='iys028energy')return energySqueeze();
  if(name==='iys046')return inuyashaDouble();
  throw Error('Unknown audit fixture '+name);
 }
@@ -180,6 +182,32 @@ function narakuLeave(){
  if(!play)throw Error('IYS-1-029 cannot replace IYS-1-028 from this audit position');
  return finish(pack,built,
   '稽核 IYS-1-028：點手牌白童子，再點前線第 1 格的奈落。離場代替出現後按「加入手牌」。奈落應進手牌，白童子佔該格，AP 少 1。');
+}
+function energySqueeze(){
+ const pack=createIysV2Pack();
+ const built=open(pack,28028,[
+  'IYS-1-028','IYS-1-004','IYS-1-029','IYS-1-026','IYS-1-034','IYS-1-031'
+ ],{'IYS-1-028':2,'IYS-1-026':2});
+ const s=built.state;
+ ready(s);
+ const host=put(s,0,'IYS-1-028','energy',0,true);
+ const base=take(s,0,'IYS-1-026');
+ host.stack=[base];
+ host.under=['IYS-1-034','IYS-1-031'].map(id=>{const card=take(s,0,id);card.faceDown=true;return card;});
+ put(s,0,'IYS-1-004','energy',1,true);
+ put(s,0,'IYS-1-029','energy',2,true);
+ put(s,0,'IYS-1-026','energy',3,true);
+ const incoming=take(s,0,'IYS-1-028');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].hand.push(incoming);
+ const packs=[pack,pack];
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&
+  a.uid===incoming.uid&&a.replaceUid===host.uid&&a.line==='energy'&&a.slot===0);
+ if(!play)throw Error('Hand IYS-1-028 cannot replace the energy-line copy');
+ const purple=universalEnergyByColor(packs,s,0).purple||0;
+ if(purple!==4)throw Error('Purple energy is '+purple);
+ return finish(pack,built,
+  '稽核 IYS-1-028：能源恰好 4 紫。點手牌奈落。先按「改為突襲進場」，再按「改為普通進場」。然後點能源線最左邊 BP 4000 的奈落，確認擠位，再按「加入手牌」。新奈落休息佔該格，舊奈落進手牌，AP 少 1。');
 }
 function inuyashaDouble(){
  const pack=createIysV2Pack();

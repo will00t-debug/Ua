@@ -1855,6 +1855,7 @@ function ensureIys(){
   active:attemptFieldActive,noteRest:noteOwnEffectRest,readyAp:readyOneAp,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
   releaseRetirement:(s,q,originalLeft)=>{holdCsmFollow(s,q?.csmFollow,originalLeft);flushRetirement(s,q,originalLeft);},
+  confirmDeclared:(pack,s,original,stored)=>confirmDeclaredContinuation(pack,s,original,stored),
   resumeReplace:(pack,s,resume)=>resumeFullLineReplace(pack,s,resume),
   resumeDisplace:(pack,s,data)=>resumeDisplacedAction(pack,s,data)
  });
@@ -7249,6 +7250,190 @@ function withoutReplacement(action){
  delete next.replaceUid;
  return next;
 }
+// Q24: the energy card designated for removal still counts.
+// Q28: confirm that energy, pay AP once, then use the card.
+// The receipt is taken while that card is still generating. The leave
+// resolution checks it before the card moves, pays once, then places the
+// new card. It does not call dispatchUniversalAction, so the continuation
+// is not a second play and is not rejected when the line falls short.
+// The public action list is unchanged. A mutated receipt does not match.
+function usesDeclaredContinuation(action){
+ return !!action&&['play','raid','move','step'].includes(action.type);
+}
+function canonicalDeclaredAction(action){
+ const out={type:action.type,uid:action.uid};
+ if(typeof action.from==='string')out.from=action.from;
+ if(typeof action.baseUid==='string')out.baseUid=action.baseUid;
+ if(typeof action.line==='string')out.line=action.line;
+ if(Number.isInteger(action.slot))out.slot=action.slot;
+ if(typeof action.replaceUid==='string')out.replaceUid=action.replaceUid;
+ if(typeof action.targetUid==='string')out.targetUid=action.targetUid;
+ return out;
+}
+function declaredUseRecord(pack,s,actor,action){
+ if(!usesDeclaredContinuation(action))throw Error('Forged displaced continuation');
+ if(Object.keys(action).some(k=>!['type','uid','from','baseUid','line','slot','replaceUid','targetUid'].includes(k)))
+  throw Error('Forged displaced continuation');
+ const pl=s.players[actor];
+ if(!pl||!Number.isInteger(action.slot))throw Error('Forged displaced continuation');
+ const canonical=canonicalDeclaredAction(action);
+ if(action.type==='move'||action.type==='step'){
+  const from=action.type==='move'?'energy':'front';
+  const line=action.type==='move'?'front':'energy';
+  const loc=location(s,actor,action.uid);
+  const occupant=pl[line]?.[action.slot];
+  if(!loc||loc.line!==from||!occupant||occupant.uid!==action.replaceUid)
+   throw Error('Forged displaced continuation');
+  return {v:1,kind:'line-shift',actor,action:canonical,cardId:loc.c.cardId,from,line};
+ }
+ const fromRemoved=action.from==='removed';
+ const zone=fromRemoved?pl.removed:pl.hand;
+ const physical=zone.find(c=>c?.uid===action.uid);
+ if(!physical)throw Error('Forged displaced continuation');
+ const d=card(pack,physical);
+ const payment=handApPlan(pack,s,actor,d,{raid:action.type==='raid',uid:physical.uid,
+  ...(fromRemoved?{from:'removed'}:{})});
+ let required=fromRemoved?effectiveRemovedRequiredEnergy(pack,s,actor,d,physical):
+  effectiveHandRequiredEnergy(pack,s,actor,d,physical);
+ if(action.type==='raid'){
+  const base=[...pl.front,...pl.energy].find(c=>c?.uid===action.baseUid);
+  required=Math.max(0,required-(aotRaidCut(pack,s,actor,d)+aot2RaidCut(pack,s,actor,d,base)));
+ }
+ const line=action.type==='raid'?(action.line==='energy'?'energy':'front'):action.line;
+ const occupant=line==='front'||line==='energy'?pl[line]?.[action.slot]:null;
+ const available=universalEnergyByColor(pack,s,actor)[d.color]||0;
+ const apReady=pl.apCards.filter(c=>c.ready).length;
+ let cost=payment.cost;
+ if(action.type==='event'&&d.playApCutOnChosenName){
+  const cut=d.playApCutOnChosenName;
+  const chosen=pl.front.find(x=>x?.uid===action.targetUid);
+  const hit=!!chosen&&cardHasName(card(pack,chosen),cut.name,originalEffectsDisabled(s,chosen));
+  cost=Math.max(0,payment.cost-(hit?cut.amount:0));
+ }
+ if(!occupant||occupant.uid!==action.replaceUid||available<required||cost>apReady)
+  throw Error('Forged displaced continuation');
+ return {v:1,kind:'hand-use',actor,action:canonical,cardId:physical.cardId,color:d.color,
+  required,available,cost,discountIds:[...payment.ids].sort((a,b)=>a-b),apReady};
+}
+function captureDeclaredUse(pack,s,actor,action){
+ if(!usesDeclaredContinuation(action))return null;
+ return declaredUseRecord(pack,s,actor,action);
+}
+function assertDeclaredUse(pack,s,stored){
+ if(!stored||typeof stored!=='object'||Array.isArray(stored))throw Error('Forged displaced continuation');
+ const allowed=stored.kind==='line-shift'?
+  ['v','kind','actor','action','cardId','from','line']:
+  stored.kind==='hand-use'?
+  ['v','kind','actor','action','cardId','color','required','available','cost','discountIds','apReady']:null;
+ const action=stored.action;
+ if(!allowed||Object.keys(stored).some(k=>!allowed.includes(k))||
+  !action||typeof action!=='object'||Array.isArray(action)||
+  Object.keys(action).some(k=>!['type','uid','from','baseUid','line','slot','replaceUid','targetUid'].includes(k)))
+  throw Error('Forged displaced continuation');
+ let live;
+ try{live=declaredUseRecord(pack,s,stored.actor,action);}
+ catch(e){throw Error('Forged displaced continuation');}
+ if(!same(live,stored))throw Error('Forged displaced continuation');
+}
+function assertContinuation(pack,s,original,stored){
+ if(!usesDeclaredContinuation(original)){
+  if(stored)throw Error('Forged displaced continuation');
+  return false;
+ }
+ assertDeclaredUse(pack,s,stored);
+ if(!same(canonicalDeclaredAction(original),stored.action))
+  throw Error('Forged displaced continuation');
+ return true;
+}
+function assertOpenDeclaredUse(pack,s){
+ const q=s.pending;
+ if(!q)return;
+ if(q.kind==='iys'&&q.step==='leave')
+  assertContinuation(pack,s,q.data?.originalAction,q.data?.declaredUse);
+ else if(q.kind==='leave-replacement')
+  assertContinuation(pack,s,q.originalAction,q.declaredUse);
+}
+function confirmDeclaredContinuation(pack,s,original,stored){
+ if(!assertContinuation(pack,s,original,stored))return;
+ settleDeclaredPayment(pack,s,stored);
+}
+function settleDeclaredPayment(pack,s,stored){
+ if(stored.kind!=='hand-use')return;
+ const actor=stored.actor,action=stored.action,pl=s.players[actor];
+ const fromRemoved=action.from==='removed';
+ const zone=fromRemoved?pl.removed:pl.hand;
+ const current=zone.find(c=>c?.uid===action.uid);
+ if(!current||current.cardId!==stored.cardId)throw Error('Forged displaced continuation');
+ const d=card(pack,current);
+ const payment=handApPlan(pack,s,actor,d,{raid:action.type==='raid',uid:current.uid,
+  ...(fromRemoved?{from:'removed'}:{})});
+ let spent=payment.cost;
+ if(action.type==='event'&&d.playApCutOnChosenName){
+  const cut=d.playApCutOnChosenName;
+  const chosen=pl.front.find(x=>x?.uid===action.targetUid);
+  const hit=!!chosen&&cardHasName(card(pack,chosen),cut.name,originalEffectsDisabled(s,chosen));
+  spent=Math.max(0,payment.cost-(hit?cut.amount:0));
+  if(!chosen)throw Error('Forged displaced continuation');
+  current.paidTargetUid=chosen.uid;
+ }
+ if(spent!==stored.cost)throw Error('Forged displaced continuation');
+ spendAp(pl,spent);
+ if(fromRemoved)consumeRemovedApCut(s,actor);
+ else{
+  if(action.type==='event')consumeHandEventApCut(s,actor,d);
+  consumePrintedEnergyApCut(s,actor,d);
+  if(s.kmrMedalAp?.[actor]===s.turn&&d.name==='セルメダル')s.kmrMedalAp[actor]=null;
+  aot2ConsumeFoodAp(pack,s,actor,d);
+  if(cardHasTrait(d,'アドベントカード')&&s.kmr2NextAdventAp?.[actor]===s.turn)s.kmr2NextAdventAp[actor]=null;
+  if(s.kmrPrNextDecadeAp?.[actor]===s.turn&&kmrPrNextDecadeMatches(d))s.kmrPrNextDecadeAp[actor]=null;
+ }
+ consumeNextNamedHandEnergy(s,actor,d);
+ s.continuousStates=s.continuousStates.filter(e=>!payment.ids.includes(e.id));
+ if(!fromRemoved&&(action.type==='play'||action.type==='raid')&&payment.cost===0)
+  s.handZeroApUses.push({turn:s.turn,owner:actor,uid:current.uid,name:d.name});
+ if(action.type==='raid')
+  s.handRaidCuts[actor]=s.handRaidCuts[actor].filter(cut=>!cut.names.includes(d.name));
+}
+function commitDeclaredPlacement(pack,s,stored){
+ const actor=stored.actor,action=stored.action,pl=s.players[actor];
+ if(!pl)throw Error('Forged displaced continuation');
+ if(stored.kind==='line-shift'){
+  const loc=location(s,actor,action.uid);
+  if(!loc||loc.line!==stored.from||loc.c.cardId!==stored.cardId)
+   throw Error('Forged displaced continuation');
+  if(pl[stored.line][action.slot])throw Error('Declared destination is still occupied');
+  pl[loc.line][loc.slot]=null;
+  pl[stored.line][action.slot]=loc.c;
+  recordCompletedMove(pack,s,{physical:loc.c,owner:actor,from:loc.line,to:stored.line,reason:'rule'});
+  s.moved=true;
+  if(!s.movedUids.includes(loc.c.uid))s.movedUids.push(loc.c.uid);
+  ensureCsm();
+  csmOnMovedOutsideMove(pack,s,actor,loc.c);
+  return;
+ }
+ const fromRemoved=action.from==='removed';
+ const zone=fromRemoved?pl.removed:pl.hand;
+ const index=zone.findIndex(c=>c?.uid===action.uid);
+ if(index<0)throw Error('Forged displaced continuation');
+ const current=zone[index];
+ if(current.cardId!==stored.cardId)throw Error('Forged displaced continuation');
+ const line=action.type==='raid'?(action.line==='energy'?'energy':'front'):action.line;
+ if((line!=='front'&&line!=='energy')||pl[line][action.slot])
+  throw Error('Declared destination is still occupied');
+ zone.splice(index,1);
+ if(action.type==='raid'){
+  performRaid(pack,s,actor,current,action.baseUid,line,action.slot,undefined,
+   {entryCause:'paidRaid',entryFrom:fromRemoved?'removed':'hand'});
+  return;
+ }
+ current.ready=defaultEntryReady(pack,s,actor,current);
+ current.fieldEntryStamp=s.nextFieldEntryStamp++;
+ current.entryTurn=s.turn;
+ pl[line][action.slot]=current;
+ recordCompletedMove(pack,s,{physical:current,owner:actor,from:fromRemoved?'removed':'hand',
+  to:line,reason:'rule'});
+ applyEffects(pack,s,current,'onPlay',actor,fromRemoved?'removedUse':'paidPlay');
+}
 function resumeDisplacedAction(pack,s,data){
  if(!data)return;
  if(data.savedPending&&data.savedAction){
@@ -7265,10 +7450,11 @@ function resumeDisplacedAction(pack,s,data){
   return;
  }
  if(data.originalAction){
+  // Payment already happened while the replaced generator was still present.
+  // Place that same card once. Do not ask legalUniversalActions again.
   s.pending=data.previousPending||null;
-  const action=withoutReplacement(data.originalAction);
-  const actor=Number.isInteger(data.actionActor)?data.actionActor:s.active;
-  Object.assign(s,dispatchUniversalAction(pack,s,action,{actor}));
+  if(!data.declaredUse)throw Error('Forged displaced continuation');
+  commitDeclaredPlacement(pack,s,data.declaredUse);
   flushReturnedBase(pack,s);
   return;
  }
@@ -8506,6 +8692,8 @@ function resolveChoice(s,a,pack){
      to:'outside',reason:moved===entry?'protection':'rule',sourceUid:loc.c.uid});
    }
   }else if(a.mode==='leave'){
+    // Confirm and pay the stored play before this generator leaves the line.
+    if(q.originalAction)confirmDeclaredContinuation(pack,s,q.originalAction,q.declaredUse);
     const retiring=card(pack,loc.c),handGrant=loc.c.retireToHandTurn===s.turn,retiredUid=loc.c.uid;
     const cause=q.retireCause||{by:null,controller:null,sourceUid:null};
     const previousCause=s.csmRetireCause??null,previousBy=s.kmrRetireBy??null;
@@ -8532,10 +8720,14 @@ function resolveChoice(s,a,pack){
   if(q.retirementAfter)
    s.effectQueue.push(...(a.mode==='leave'?q.retirementAfter:[]),...q.retirementTail);
   if(q.originalAction&&a.mode==='leave'){
-   // The mandatory full-line removal happens BEFORE the original action.
-   // Resume the same paid play/movement/life Raid, now with a free slot.
-   // Nested life triggers retain their original pending owner and card UID.
+   // The slot is already empty. Finish the play that was confirmed above.
+   // Effect choices that are not a hand play or a line shift still resume
+   // through the public reducer; a paid play does not.
    s.pending=q.previousPending||null;
+   if(q.declaredUse){
+    commitDeclaredPlacement(pack,s,q.declaredUse);
+    return;
+   }
    const resumed={...q.originalAction};delete resumed.replaceUid;
    Object.assign(s,dispatchUniversalAction(pack,s,resumed,{actor:q.player}));
    return;
@@ -17524,8 +17716,9 @@ function displaceTarget(s,action){
  return null;
 }
 // Full-line removal is a leave. Ask IYS-1-028 before any AP, discount,
-// movement, Raid base, or on-play. The same action continues once the
-// slot is empty. A pure front/energy shift has no replaceUid and is not a leave.
+// movement, Raid base, or on-play. Store the energy and AP receipt now,
+// while the replaced card still generates. A pure front/energy shift has
+// no replaceUid and is not a leave.
 function offerFullLineLeave(pack,s,action){
  const target=displaceTarget(s,action);
  if(!target)return false;
@@ -17538,9 +17731,12 @@ function offerFullLineLeave(pack,s,action){
   s.pending.data.savedPending=saved;
   s.pending.data.savedAction={...action};
  }else{
+  const declared=captureDeclaredUse(pack,s,s.active,action);
+  if(!declared)throw Error('Forged displaced continuation');
   s.pending.data.originalAction={...action};
   s.pending.data.previousPending=null;
   s.pending.data.actionActor=s.active;
+  s.pending.data.declaredUse=declared;
  }
  return true;
 }
@@ -17560,7 +17756,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   if(candidate?.uid===action.replaceUid&&protectedLeave(pack,s,candidate)){
    s.pending={kind:'leave-replacement',player:p,uid:candidate.uid,
     line:action.line,slot:action.slot,destination:'removed',
-    postImpact:false,originalAction:{...action},previousPending:s.pending||null};
+    postImpact:false,originalAction:{...action},previousPending:s.pending||null,
+    declaredUse:captureDeclaredUse(pack,s,p,action)};
    assertUniversalMatch(pack,s);
    return s;
   }
@@ -19653,6 +19850,7 @@ export function assertUniversalMatch(pack,s){
  refreshAbsentFieldNames(pack,s);
  if(s.pending&&(!playerIndex(s.pending.player)||!['opening-mulligan','phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-facedown-front','effect-entry-protect','block','attack-life-target','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-acquired-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard','effect-mill-up-to','effect-mill-recover-discard','effect-mill-recover','effect-grant-impact-null','effect-discard-up-to','effect-top-add-one','effect-distinct-trait-buff','effect-energy-mode','effect-may-then','effect-max-bp-impact','effect-outside-or-rest','effect-replay-base','effect-return-raid-base','effect-removed-self-grant','effect-buff-name-or-trait','effect-top-deploy-rest','effect-named-energy','effect-active-one-ap','effect-mode-discard','effect-outside-deck-top','effect-outside-names','effect-active-character','effect-raid-witness-order','effect-raid-attach','effect-raid-witness-move','effect-look-take','effect-discard-mode','effect-facedown-scale','effect-spend-facedown','effect-absorb-front','effect-simon-low','effect-replay-entry','effect-attack-end-raid','effect-retire-capture','effect-retire-at-least','effect-retire-at-most','effect-retire-scaled','effect-hand-bp-may','effect-hand-deploy-may','effect-hand-outside-active','effect-named-duration','effect-top-take-one','effect-reveal-optional','effect-referenced-bp','effect-outside-referenced','effect-reveal-retire','effect-retire-referenced','effect-hand-block','effect-hand-rest-entry','effect-active-other','effect-rest-own-front-draw','effect-raid-base-rest','effect-raid-source-rest','effect-rest-or-retire','effect-rest-skip-may-retire','effect-retire-named-draw','effect-rest-outside-events','effect-rested-retire-impact','effect-hand-named-rest','effect-grant-named-impact','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-rest-front-ap','effect-discard-active','effect-outside-printed-rest','effect-grant-printed-block','effect-move-opp-front','effect-unblocked-rest','effect-energy-swap','effect-deck-named-play','effect-place-hand','effect-substitute-retire','effect-outside-printed-active','effect-bounce-include-self','effect-outside-rest-or-raid','effect-grant-bounce-instead','effect-remove-opp-field','effect-hand-reenter-under','effect-grant-impact','effect-entry-other-impact','effect-front-grant','effect-removed-enter','effect-grant-opp-block','effect-deploy-outside','effect-energy-skip-swap','effect-outside-cost-hand','effect-attack-aid','effect-attack-aid-grant','effect-tuck-damage','effect-active-own-trait','effect-tuck-hand-under','effect-chain-raid-facedown','effect-chain-raid-hand','effect-chain-discard','effect-outside-named-raid','effect-energy-trait-swap','effect-active-lines','effect-active-skip-pair','effect-pay-hand-outside','effect-play-outside-event','effect-release-facedown','effect-hand-trigger-card','effect-active-own-other','effect-grant-field-energy','effect-attack-end-rest','effect-named-energy-bounce','effect-trait-ban-move','effect-entry-rest-front','effect-grant-lose-ready','effect-outside-printed','effect-outside-except','effect-active-either','effect-rest-own','main-active-named','effect-buff-any','effect-retire-tuck-active','effect-grant-named','effect-hand-fresh-name','effect-energy-trait-front','effect-entry-sacrifice','effect-named-double','effect-field-sacrifice-replay','effect-swap-or-buff','effect-swap-pair','effect-mark-opp-start','effect-remove-hand','effect-remove-hand-scale','effect-remove-hand-cap','effect-name-energy-reveal','effect-revealed-energy-hand','effect-mandatory-hand-remove','effect-draw-instead','effect-reveal-opp-top','effect-choose-printed-energy','effect-top-trait-hand','effect-bounce-bp','effect-optional-tuck-under','effect-facedown-outside','effect-may-draw','effect-return-retired','effect-retire-other-front-name','effect-retire-missing-trait','effect-outside-color-trait-active','effect-retire-own-trait','effect-active-any','effect-equal-bp-pair','effect-printed-lock','effect-name-hand-remove','effect-named-field-protect','effect-required-energy','effect-active-energy-named','effect-top-hand-outside','effect-outside-exact-rest','effect-outside-trait-ap-rest','effect-outside-color-ap-rest','effect-outside-active-pair','effect-hand-rest-cap','effect-removed-name-outside','effect-hand-front-active','energy-line-attack-end-swap','effect-name-or-trait-impact','effect-first-attack-kit','effect-named-rest-ready','effect-named-keyword','effect-keyword-mode','effect-name-or-trait-ready','effect-name-or-trait-protect','effect-sacrifice-named','effect-rest-ap-lock','effect-life-to-hand','effect-life-active-self','effect-retire-life-or-hand','effect-hidden-life-hand','effect-rest-reenter','effect-hand-two-outside','effect-front-retire-look','effect-top-hand-one','effect-remove-own-other','effect-buff-other-trait','effect-active-traitless','effect-active-other-trait','effect-shift-slot','effect-energy-shift','effect-recover-event','effect-ordered-subset','effect-rest-own-field','effect-hand-active-noraid','effect-retire-trigger-ceiling','effect-retire-own-other','effect-move-opp-if-event','effect-remove-named-zones','effect-self-to-front','effect-grant-printed-ap','effect-different-field','effect-field-leave-remove','effect-suzuha-attack-end','effect-mayuri-fork','effect-printed-rest-raid','effect-zone-rest-raid','effect-removed-okabe-raid','effect-grant-retire','granted-retire-draw','effect-protect-gen','effect-raid-base-choice','effect-named-ap-outside','effect-attack-discard-active','effect-name-draw','effect-remove-outside-up-to','effect-removed-rest-pair','effect-top-character-outside','effect-peek-top-place','effect-remove-front-self','effect-bounce-named-cut','effect-front-bp-cut','effect-reveal-top-place','effect-life-reenter-grant','effect-sayaka-reenter','effect-tuck-named','effect-hand-girl-rest','effect-mami-active','effect-discard-named-energy','effect-grant-below-printed','effect-block-floor','effect-swap-lines','effect-armed-draw','effect-life-mandatory','effect-trait-kit','effect-life-until','effect-named-fronts','effect-own-attack-kit','effect-active-except','effect-top-deploy','effect-top-take-ready','effect-outside-color-rest','effect-ingot-double','effect-grant-double','effect-attack-end-named','effect-return-then','effect-active-trait-buff','effect-return-trait','effect-rest-gen','effect-retire-field-gen','effect-raid-life','effect-wyrm-look','effect-bottom-retire','effect-outside-bottom','effect-grant-survivor-damage','mmm2','iys','kjn','aot','aot2','kmr','kmr2','csm'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
+ assertOpenDeclaredUse(pack,s);
  if(!Array.isArray(s.triggerActivated)||s.triggerActivated.length!==2||
    s.triggerActivated.some(x=>typeof x!=='boolean'))
   throw Error('Invalid trigger activation ledger');

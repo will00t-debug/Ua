@@ -4,8 +4,9 @@ import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {createIysV2Pack} from '../dist/universal-v2/iys-pack.mjs';
 import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
- newUniversalMatch, universalAttackDamage, universalBp, zoneRequiredEnergy,
- universalImpact, universalImpactNull, universalPrivateChoices, universalPublicView}
+ newUniversalMatch, universalAttackDamage, universalBp, universalEnergyByColor,
+ zoneRequiredEnergy, universalImpact, universalImpactNull, universalPrivateChoices,
+ universalPublicView}
  from '../dist/universal-v2/engine.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 
@@ -112,6 +113,7 @@ function passTo(s,player,phase){
  return s;
 }
 function apReady(s,p=0){return s.players[p].apCards.filter(c=>c.ready).length;}
+function purple(s,p=0){return universalEnergyByColor(pack,s,p).purple||0;}
 function host028(s,slot,baseId,underIds,line='front'){
  const host=put(s,0,'IYS-1-028',line,slot);
  const base=take(s,0,baseId);
@@ -1522,6 +1524,98 @@ test('paid play onto a full line asks IYS-1-028 before spending or moving',()=>{
  assertUniversalMatch(packs,skipped);
 });
 
+test('exact energy still finishes when the replaced IYS-1-028 was generating it',()=>{
+ const counts=countsFor(['IYS-1-028','IYS-1-004','IYS-1-029','IYS-1-026','IYS-1-034','IYS-1-031','IYS-1-041']);
+ const board=(seed,fourthId='IYS-1-026')=>{
+  let s=toPhase(fresh(counts,seed),'main');
+  readyAp(s);
+  const piled=host028(s,0,'IYS-1-026',['IYS-1-034','IYS-1-031'],'energy');
+  put(s,0,'IYS-1-004','energy',1);
+  put(s,0,'IYS-1-029','energy',2);
+  const fourth=put(s,0,fourthId,'energy',3);
+  const incoming=take(s,0,'IYS-1-028');
+  s.players[0].hand.push(incoming);
+  return {s,incoming,fourth,...piled};
+ };
+ const finish=(s,incoming,host,base,under,fourth,mode)=>{
+  assert.equal(s.pending,null);
+  assert.equal(s.players[0].energy.filter(c=>c?.uid===incoming.uid).length,1);
+  assert.equal(s.players[0].energy.filter(c=>c?.cardId==='IYS-1-028').length,1);
+  assert.equal(s.players[0].energy.find(c=>c?.uid===incoming.uid).ready,false);
+  assert.equal(s.players[0].hand.some(c=>c.uid===incoming.uid),false);
+  assert.equal(s.players[0].energy.some(c=>c?.uid===host.uid),false);
+  assert.equal(s.players[0].front.some(c=>c?.uid===host.uid),false);
+  assert.equal(moved(s,incoming.uid,'energy').length,1);
+  assert.equal(s.players[0].outside.filter(c=>c.uid===base.uid).length,1);
+  assert.equal(under.every(card=>s.players[0].outside.filter(c=>c.uid===card.uid).length===1),true);
+  assert.equal(s.players[0].energy.some(c=>c?.uid===fourth.uid),true);
+  assert.equal(purple(s),4);
+  if(mode==='hand'){
+   assert.equal(s.players[0].hand.filter(c=>c.uid===host.uid).length,1);
+   assert.equal(s.players[0].removed.some(c=>c.uid===host.uid),false);
+   assert.equal(moved(s,host.uid,'hand').length,1);
+   assert.ok(moved(s,host.uid,'hand')[0].order<moved(s,incoming.uid,'energy')[0].order);
+  }else{
+   assert.equal(s.players[0].removed.filter(c=>c.uid===host.uid).length,1);
+   assert.equal(s.players[0].hand.some(c=>c.uid===host.uid),false);
+   assert.equal(moved(s,host.uid,'removed').length,1);
+   assert.ok(moved(s,host.uid,'removed')[0].order<moved(s,incoming.uid,'energy')[0].order);
+  }
+  assertUniversalMatch(packs,s);
+ };
+ let {s,incoming,host,base,under,fourth}=board(2825);
+ const before=apReady(s);
+ assert.equal(purple(s),4);
+ const action=onto(s,incoming.uid,host.uid);
+ assert.equal(action.line,'energy');
+ s=use(s,action);
+ assert.equal(s.pending.step,'leave');
+ assert.equal(s.players[0].energy.some(c=>c?.uid===host.uid),true);
+ assert.equal(s.players[0].hand.some(c=>c.uid===incoming.uid),true);
+ assert.equal(apReady(s),before);
+ assert.equal(purple(s),4);
+ const receipt=s.pending.data.declaredUse;
+ assert.equal(receipt.kind,'hand-use');
+ assert.equal(receipt.required,4);
+ assert.equal(receipt.available,4);
+ assert.equal(receipt.cost,1);
+ assert.equal(receipt.cardId,'IYS-1-028');
+ assert.equal(Object.hasOwn(receipt,'skipEnergy'),false);
+ s=roundTrip(s);
+ const handed=choose(s,a=>a.mode==='hand');
+ finish(handed,incoming,host,base,under,fourth,'hand');
+ assert.equal(apReady(handed),before-1);
+ const skipped=choose(s,a=>a.mode==='skip');
+ finish(skipped,incoming,host,base,under,fourth,'skip');
+ assert.equal(apReady(skipped),before-1);
+
+ let short=board(2826,'IYS-1-041');
+ assert.equal(purple(short.s),3);
+ assert.equal(legal(short.s,a=>a.type==='play'&&a.uid===short.incoming.uid),false);
+ assert.throws(()=>use(short.s,{type:'play',uid:short.incoming.uid,line:'energy',slot:0,
+  replaceUid:short.host.uid}),/Action not currently legal/);
+ assert.equal(short.s.players[0].hand.some(c=>c.uid===short.incoming.uid),true);
+ assert.equal(short.s.players[0].energy.some(c=>c?.uid===short.host.uid),true);
+
+ let forged=board(2827);
+ forged.s=use(forged.s,onto(forged.s,forged.incoming.uid,forged.host.uid));
+ forged.s=roundTrip(forged.s);
+ const inflated=JSON.parse(JSON.stringify(forged.s));
+ inflated.pending.data.declaredUse.available=99;
+ assert.throws(()=>assertUniversalMatch(packs,inflated),/Forged displaced continuation/);
+ assert.throws(()=>use(inflated,{type:'iys',mode:'hand'}),/Forged displaced continuation/);
+ const flagged=JSON.parse(JSON.stringify(forged.s));
+ flagged.pending.data.declaredUse.skipEnergy=true;
+ assert.throws(()=>assertUniversalMatch(packs,flagged),/Forged displaced continuation/);
+ assert.throws(()=>use(flagged,{type:'iys',mode:'skip'}),/Forged displaced continuation/);
+ const missing=JSON.parse(JSON.stringify(forged.s));
+ missing.pending.data.declaredUse.action.uid='0-missing';
+ assert.throws(()=>assertUniversalMatch(packs,missing),/Forged displaced continuation/);
+ assert.throws(()=>use(forged.s,{type:'iys',mode:'hand',skipEnergy:true}),/Action not currently legal/);
+ assert.equal(forged.s.pending.step,'leave');
+ assert.equal(apReady(forged.s),before);
+});
+
 test('three facedowns resume the paid play before the rested raid base',()=>{
  const counts=countsFor(['IYS-1-028','IYS-1-048','IYS-1-013','IYS-1-029','IYS-1-034','IYS-1-001','IYS-1-026','IYS-1-010']);
  let s=toPhase(fresh(counts,2815),'main');
@@ -1603,6 +1697,8 @@ test('paid raid, STEP and rule move wait for IYS-1-028, and moving 028 is not a 
  raid=use(raid,legalUniversalActions(packs,raid).find(a=>a.type==='raid'&&
   a.uid===raider.uid&&a.baseUid===base042.uid&&a.replaceUid===host.uid));
  assert.equal(raid.pending.step,'leave');
+ assert.equal(raid.pending.data.declaredUse.kind,'hand-use');
+ assert.ok(raid.pending.data.declaredUse.available>=raid.pending.data.declaredUse.required);
  assert.equal(raid.players[0].hand.some(c=>c.uid===raider.uid),true);
  assert.equal(raid.players[0].energy.some(c=>c?.uid===base042.uid),true);
  assert.equal(apReady(raid),ap);
@@ -1624,6 +1720,7 @@ test('paid raid, STEP and rule move wait for IYS-1-028, and moving 028 is not a 
  fillLine(step,'energy',['IYS-1-041','IYS-1-045','IYS-1-062']);
  step=use(step,onto(step,stepped.uid,energyHost.host.uid,'step'));
  assert.equal(step.pending.step,'leave');
+ assert.equal(step.pending.data.declaredUse.kind,'line-shift');
  assert.equal(step.players[0].front.some(c=>c?.uid===stepped.uid),true);
  assert.equal(step.players[0].energy.some(c=>c?.uid===energyHost.host.uid),true);
  step=choose(step,a=>a.mode==='hand');
