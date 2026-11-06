@@ -222,12 +222,16 @@ function rootSlice(poolLeft,jobsLeft,total,roots){
 // Nodes reserved for a later root are useless if this root uses the whole
 // clock. This root may spend the same fraction of the time still left as
 // its node slice is of the nodes still reserved. A root that finishes
-// early leaves the remainder, and the global deadline is unchanged.
+// early leaves the remainder. One clock sample is used for both the
+// remainder and the child deadline, and the child is never later than the
+// total deadline. A second sample can already be past the total, and adding
+// the earlier remainder to that later sample would extend the search.
 function shareDeadline(now,deadline,mine,laterNodes){
  if(!(laterNodes>0)||!(mine>0)||typeof now!=='function'||!Number.isFinite(deadline))return deadline;
- const remain=deadline-now();
- if(!(remain>0))return deadline;
- return now()+remain*mine/(mine+laterNodes);
+ const current=now();
+ if(!Number.isFinite(current)||!(current<deadline))return deadline;
+ const share=current+(deadline-current)*(mine/(mine+laterNodes));
+ return share<deadline?share:deadline;
 }
 function fallback(pack,state,legal,started,reason,account=null){
  report.fallback++;
@@ -351,10 +355,14 @@ export function chooseAiV3Action(pack,state,options={}){
    let followBranches=0,maxDepth=1;
    for(let w=0;w<worlds.length;w++){
     if(pool.n<=0){report.budget++;failReason=failReason||'nodes';break;}
-    if(now()>deadline&&n){report.budget++;failReason=failReason||'time';break;}
+    // The share above used an earlier sample. Re-read before this world, and
+    // do not start it when the total deadline is already past.
+    if(now()>deadline){report.budget++;failReason=failReason||'time';break;}
     const slice=Math.min(pool.n,pass==='basic'?Math.max(1,cap||basicCap):lineFloor);
+    const requested=Number.isFinite(lineDeadline)?lineDeadline:deadline;
     const line=scoreLine(pack,worlds[w].state,actor,action,{
-     nodes:slice,pool,beam,deadline:lineDeadline??deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass
+     nodes:slice,pool,beam,deadline:requested<deadline?requested:deadline,
+     parentDeadline:deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass
     });
     if(line?.unexplored?.length)unexplored.push(...line.unexplored);
     if(!line||line.executed===false||!Number.isFinite(line.search)){

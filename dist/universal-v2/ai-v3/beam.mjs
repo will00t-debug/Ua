@@ -895,10 +895,12 @@ function lineView(ctx,search){
 export function scoreLine(pack,state,actor,action,limits){
  const pool=limits.pool||{n:limits.nodes};
  const lineCap=Math.min(limits.nodes,pool.n);
+ const parent=Number.isFinite(limits.parentDeadline)?limits.parentDeadline:Infinity;
+ const requested=Number.isFinite(limits.deadline)?limits.deadline:parent;
  const ctx={
   pool,lineCap,lineSpent:0,
   now:limits.now,
-  deadline:limits.deadline??Infinity,
+  deadline:Math.min(requested,parent),
   plan:limits.plan||(limits.finish===false?'tree':'rollout'),
   strategy:limits.strategy||null,
   beam:limits.beam,

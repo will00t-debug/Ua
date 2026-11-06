@@ -152,7 +152,13 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
    if(bucket.passedDevelopment)passes.passedDevelopment++;
    if(script.length<80)script.push(label);
   }
-  if(RECORD)actions.push({step:steps,actor,action});
+  let quality=null;
+  if(V3.has(mode)&&mode===challengerMode){
+   const trace=lastAiV3Trace();
+   if(trace)quality={reason:trace.reason||null,fallbackKind:trace.fallbackKind??null,
+    nodesUsed:Number.isFinite(trace.nodesUsed)?trace.nodesUsed:null,settled:trace.settled===true};
+  }
+  if(RECORD)actions.push({step:steps,actor,action,...(quality||{})});
   try{state=dispatchUniversalAction(packs,state,action,{actor});}
   catch(error){
    illegal++;
@@ -163,6 +169,12 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
   steps++;
  }
  return {title:deck.title,seed,first,steps,illegal,engineError,fallback,ms:samples,acts,script,learned,passes,
+  decisionReasons:actions.reduce((bag,step)=>{
+   if(!step.reason&&step.fallbackKind==null)return bag;
+   const key=step.fallbackKind||step.reason||'search';
+   bag[key]=(bag[key]||0)+1;
+   return bag;
+  },{}),
   finished:state.status==='finished',winner:state.winner,endReason:state.endReason,
   life:state.players.map(player=>player.life.length),
   wall:performance.now()-started,
@@ -177,6 +189,8 @@ function gameView(row){
   onlyNext:row.passes?.onlyNext||0,voluntaryNext:row.passes?.voluntaryNext||0,
   passedDevelopment:row.passes?.passedDevelopment||0,autonomous:row.passes?.autonomous||0,
   challengerWon:row.finished&&(row.winner===0||row.winner===1)?row.winner===row.challengerSeat:null,
+  nodes:row.learned?.nodes??null,settledChoices:row.learned?.settledChoices??null,
+  decisionsLearned:row.learned?.decisions??null,decisionReasons:row.decisionReasons||{},
   ...(row.actions?{actions:row.actions}:{})
  };
 }

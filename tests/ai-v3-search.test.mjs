@@ -641,3 +641,81 @@ test('zero, tiny, entry, and mid-search clocks record every transition',()=>{
  assert.ok(trace.unexecuted.length>=1);
  assert.ok(trace.unexecuted.every(row=>row.reason==='time'));
 });
+
+// The clock stays at the origin until `expireAfter` reads, then reports a
+// time past the total deadline and stays there. The assertion is the
+// deadline invariant: once a read is past that deadline, the decision adds
+// no further engine transition. It does not require shareDeadline to read
+// the clock twice.
+function transitionsAfterExpiry(ms,expireAfter,nowFor){
+ const spot=whiteSwordAt(8301,1,1,17);
+ const meter={dispatches:0};
+ let reads=0;
+ let atExpiry=null;
+ resetAiV3Report();
+ const actor=spot.state.pending?.player??spot.state.active;
+ const action=chooseAiV3Action(spot.packs,spot.state,{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms,meter,diagnose:true,
+  now(){
+   const time=nowFor?nowFor(meter,reads):((reads>=expireAfter)?ms+1000:0);
+   reads++;
+   if(time>ms&&atExpiry==null)atExpiry=meter.dispatches;
+   return time;
+  }
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=48);
+ assert.equal(legalUniversalActions(spot.packs,spot.state).some(item=>same(item,action)),true);
+ return {dispatches:meter.dispatches,atExpiry,added:meter.dispatches-(atExpiry??meter.dispatches),trace,action};
+}
+
+test('a clock that crosses the total deadline adds no later transition',()=>{
+ // Entry reads, the first root's time share, and the reads before its
+ // first transition. One of these is the old second sample that extended
+ // the deadline and billed 16 transitions after the parent deadline.
+ for(let expireAfter=1;expireAfter<=12;expireAfter++){
+  const row=transitionsAfterExpiry(40,expireAfter);
+  assert.notEqual(row.atExpiry,null,'clock crossed '+expireAfter);
+  assert.equal(row.added,0,'transitions after expiry at read '+expireAfter+' ('+row.dispatches+' dispatched, expiry at '+row.atExpiry+')');
+ }
+});
+
+test('expiry after the time share and before the first transition adds nothing',()=>{
+ // Read 4 samples the share. Read 5 admits the world. Read 6 is the check
+ // immediately before the first transition. Crossing there must not bill it.
+ const row=transitionsAfterExpiry(40,6);
+ assert.equal(row.atExpiry,0);
+ assert.equal(row.added,0);
+ assert.equal(row.dispatches,0);
+});
+
+test('a transition already started can finish after the deadline and does not start another',()=>{
+ const row=transitionsAfterExpiry(40,0,(meter,reads)=>{
+  if(reads===0)return 0;
+  return meter.dispatches>=1?1000:meter.dispatches;
+ });
+ assert.equal(row.dispatches,1);
+ assert.equal(row.atExpiry,1);
+ assert.equal(row.added,0);
+});
+
+test('a normal dispatch clock still leaves a later root some nodes',()=>{
+ const spot=whiteSwordAt(8301,1,1,17);
+ const covered=clocked(spot,36);
+ const started=covered.trace.candidates.filter(row=>row.nodes>0);
+ assert.ok(started.length>=2);
+ assert.ok(covered.trace.coverage.executed>=2);
+ assert.equal(cardId(spot.state,covered.action),'BLC-4-070');
+ assert.equal(covered.action.line,'front');
+});
+
+test('a frozen clock keeps the fixed 48-node choice inside the node cap',()=>{
+ const spot=whiteSwordAt(8301,1,1,17);
+ const fixed=clocked(spot,1e9,{now:()=>0});
+ assert.equal(cardId(spot.state,fixed.action),'BLC-4-070');
+ assert.equal(fixed.action.line,'front');
+ assert.equal(fixed.trace.reason,'search');
+ assert.ok(fixed.trace.nodesUsed<=48);
+ assert.equal(fixed.meter.dispatches,fixed.trace.nodesUsed);
+});
