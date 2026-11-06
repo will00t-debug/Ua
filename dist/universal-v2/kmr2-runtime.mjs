@@ -501,6 +501,8 @@ function on055(pack,s,job){
  if(job.slot==='onAttack'){
   if(used(s,job.sourceUid+'|KMR-2-055'))return;
   const pool=plOf(s,job.owner).front.filter(c=>c?.ready&&token(pack,c,'Ｗ',s));
+  if(!pool.length)return;
+  use(s,job.sourceUid+'|KMR-2-055');
   offerList(s,specOf(job),'rest',pool,true,'fang','rest');
   return;
  }
@@ -518,6 +520,9 @@ function on056(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self||!frontOf(s,job.owner,self))return;
  if(nameLocked(s,job.owner,LUNA))return;
+ // Q1776: the on-play activates when this card is on the front. Declining the
+ // optional entry still consumes the once. An energy-line entry never starts it.
+ nameLock(s,job.owner,LUNA);
  const pool=handWhere(s,job.owner,c=>def(pack,c).type==='character'&&def(pack,c).bp<=1500&&
   def(pack,c).color==='green'&&token(pack,c,'Ｗ',s));
  offerEnter(s,specOf(job),pool,{ready:false,from:'hand',optional:true,lock:LUNA});
@@ -1195,7 +1200,7 @@ function resolveStep(pack,s,q,a){
    if(q.data?.next==='memoryDeploy'&&A.location(s,q.player,c.uid))return;
   }
   if(q.step==='ready'&&c)A.active(s,q.player,c);
-  if(q.step==='buff'&&c)buff(s,c,q.data?.bp||1000);
+  if(q.step==='buff'&&c)buff(s,c,q.id==='KMR-2-052'?2000:(q.data?.bp||1000));
   if(q.step==='block'&&c)c.kmr2Block={turn:s.turn,stamp:c.fieldEntryStamp,relation:'atLeast',bp:4000,sourceUid:q.sourceUid};
   if(q.step==='impact'&&c)grantImpact(s,c);
   if(q.step==='triggerSafe'&&c)c.kmr2TriggerImmune={turn:s.turn,stamp:c.fieldEntryStamp,sourceUid:q.sourceUid};
@@ -1425,7 +1430,7 @@ function resolveStep(pack,s,q,a){
     def(pack,c).raidName&&def(pack,c).color!=='yellow');
    offerList(s,spec,'revealHand',pool,true,'draw2discard','reveal');
   }else if(hit.key==='look'&&q.id==='KMR-2-048'){
-   onLook(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id},5,c=>exact(pack,c,MEM,null),{where:'bottom',discard:true});
+   onLook(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id},5,c=>exact(pack,c,MEM,null),{where:'bottom',discard:true,orderBeforeDiscard:true});
   }else if(hit.key==='pay'&&q.id==='KMR-2-048'){
    if(pay(s,q.player,1,q.sourceUid)){
     const c=selfOf(s,q.player,q.sourceUid);
