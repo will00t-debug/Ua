@@ -59,9 +59,9 @@
     },
     "fullSuite": {
       "command": "npm test",
-      "pass": null,
-      "fail": null,
-      "note": "全庫在提交 dist 與 tests 之後執行。目錄檢查會拒絕未提交的 dist、tests、scripts。"
+      "pass": 3853,
+      "fail": 0,
+      "note": "2026-11-06 於 Node 22.23.4 執行，exit 0。全庫通過不代表每張卡的每個句子都正確。051 與 053 的裡向卡卡圖、074 的「選」仍是 A 組共用缺口。"
     }
   },
   "reviews": [
