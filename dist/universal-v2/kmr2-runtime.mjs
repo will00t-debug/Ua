@@ -633,7 +633,7 @@ function on082(pack,s,job){
 }
 function on084(pack,s,job){
  if(apReady(s,job.owner)<1)return;
- const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,null));
+ const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,s));
  if(!vent.length)return;
  hold(s,{...specOf(job),step:'ventPay',data:{}},[
   {type:'kmr2',mode:'skip'},
@@ -641,7 +641,7 @@ function on084(pack,s,job){
  ]);
 }
 function on088(pack,s,job){
- const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,null));
+ const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,s));
  offerList(s,specOf(job),'discard',vent,true,'knightHit','discard');
 }
 function on093(pack,s,job){
@@ -671,6 +671,7 @@ function on099(pack,s,job){
   {type:'kmr2',mode:'two',key:'replay'}
  ]);
 }
+function readyAp099(pack,s,job){offerReadyAp(s,specOf(job));}
 function on100(pack,s,job){
  const pool=ownWhere(s,job.owner,c=>def(pack,c).type==='character');
  offerList(s,specOf(job),'kit',pool,false,null,'own');
@@ -811,7 +812,7 @@ function main067(pack,s,job){
 function main085(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self||used(s,self.uid+'|085'))return;
- const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,null));
+ const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,s));
  if(!vent.length)return;
  use(s,self.uid+'|085');
  offerList(s,specOf(job),'discard',vent,false,'energyAttack','discard');
@@ -962,6 +963,10 @@ function attackEnd021(pack,s,job){
 function attackEnd083(pack,s,job){
  const battle=s.kmr2LastBattle;
  if(!battle||battle.turn!==s.turn||battle.attackerUid!==job.sourceUid||!battle.blockerUid)return;
+ // One blocked attack is one check. A later unblocked attack end keeps the
+ // same record and must not offer the retire again.
+ if(s.kmr2083Battle===battle)return;
+ s.kmr2083Battle=battle;
  const blocker=A.location(s,1-job.owner,battle.blockerUid)?.c;
  if(!blocker||A.bp(pack,s,blocker)>3000)return;
  hold(s,{...specOf(job),step:'retire',data:{next:null}},[
@@ -1072,7 +1077,7 @@ function mainP005(pack,s,job){
  ]);
 }
 function on086(pack,s,job){onLook(pack,s,job,2,riderFilter,{dest:'outside',where:'top',reveal:false,takeMode:'outside'});}
-function on087(pack,s,job){onLook(pack,s,job,3,riderFilter,{where:'bottom',discard:true});}
+function on087(pack,s,job){onLook(pack,s,job,3,riderFilter,{where:'bottom',discard:true,orderBeforeDiscard:true});}
 function on089(pack,s,job){onLook(pack,s,job,6,c=>trait(pack,c,ADVENT),{where:'bottom'});}
 
 const HANDLERS={
@@ -1107,7 +1112,8 @@ const HANDLERS={
  'KMR-2-087|onPlay':on087,'KMR-2-088|onAttack':on088,'KMR-2-089|onPlay':on089,
  'KMR-2-089|main':main089,'KMR-2-093|onPlay':on093,'KMR-2-094|onPlay':on094,
  'KMR-2-094|onRetire':on094,'KMR-2-095|onPlay':on095,'KMR-2-096|onPlay':on096,
- 'KMR-2-097|main':main097,'KMR-2-099|onPlay':on099,'KMR-2-100|onPlay':on100,
+ 'KMR-2-097|main':main097,'KMR-2-099|onPlay':on099,'KMR-2-099|readyAp':readyAp099,
+ 'KMR-2-100|onPlay':on100,
  'KMR-P-003|onPlay':onP003,'KMR-P-004|onPlay':onP004,
  'KMR-P-005|onPlay':onP005,'KMR-P-005|main':mainP005
 };
@@ -1156,8 +1162,10 @@ function resolveStep(pack,s,q,a){
  if(q.step==='discard'){
   if(hit.mode==='skip'){s.pending=null;return;}
   discard(pack,s,q.player,hit.uid,q.sourceUid);
+  // offerList uses one card and does not carry the multi-discard counters.
+  q.data.got??=[];
   q.data.got.push(hit.uid);
-  if(q.data.got.length<q.data.need){
+  if(q.data.got.length<(q.data.need??1)){
    hold(s,{...spec,step:'discard',data:q.data},plOf(s,q.player).hand.map(c=>({type:'kmr2',mode:'discard',uid:c.uid})));
    return;
   }
@@ -1663,13 +1671,16 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='replay'){
   s.pending=null;
-  if(hit.mode==='skip'){A.readyAp(plOf(s,q.player));return;}
-  const c=fieldCards(s,q.player).find(x=>x.uid===hit.uid);
-  if(c){
-   const jobs=A.programs(pack,s,c,'onPlay',q.player,'handEffect',q.sourceUid)||[];
-   if(jobs.length)s.effectQueue.unshift(...jobs);
+  // The AP card is activated after the chosen character's 登場時.
+  // Skipping the character still activates one AP. The player chooses which.
+  s.effectQueue.unshift({op:'kmr2',id:'KMR-2-099',slot:'readyAp',owner:q.player,sourceUid:q.sourceUid});
+  if(hit.mode!=='skip'){
+   const c=fieldCards(s,q.player).find(x=>x.uid===hit.uid);
+   if(c){
+    const jobs=A.programs(pack,s,c,'onPlay',q.player,'handEffect',q.sourceUid)||[];
+    if(jobs.length)s.effectQueue.unshift(...jobs);
+   }
   }
-  A.readyAp(plOf(s,q.player));
   return;
  }
  if(q.step==='pr003Pick'){
@@ -1765,7 +1776,7 @@ export function legalKmr2Activations(pack,s,owner,c){
  if(id==='KMR-2-059'&&c.ready&&ownWhere(s,owner,x=>x.ready&&def(pack,x).energy<=2&&token(pack,x,'Ｗ',s)).length)push();
  if(id==='KMR-2-067'&&frontOf(s,owner,c)&&!used(s,c.uid+'|067')&&
   zoneWhere(s,owner,'outside',x=>trait(pack,x,RE)).length)push();
- if(id==='KMR-2-085'&&!used(s,c.uid+'|085')&&handWhere(s,owner,x=>exact(pack,x,VENT,null)).length)push();
+ if(id==='KMR-2-085'&&!used(s,c.uid+'|085')&&handWhere(s,owner,x=>exact(pack,x,VENT,s)).length)push();
  if(id==='KMR-2-089'&&frontOf(s,owner,c)&&!used(s,c.uid+'|089')&&s.kmr2AdventUsed?.[owner]===s.turn)push();
  if(id==='KMR-2-097'&&c.ready&&ownWhere(s,owner,x=>def(pack,x).type==='character').length)push();
  if(id==='KMR-P-005'&&frontOf(s,owner,c)&&!used(s,c.uid+'|P005'))push();
