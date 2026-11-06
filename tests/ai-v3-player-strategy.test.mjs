@@ -5,7 +5,8 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
-import {battleWindowAction,blankSwingAdjustment,provenRebuild} from '../dist/universal-v2/ai-v3/eval.mjs';
+import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
+import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {bindProbeBudget} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
@@ -239,8 +240,10 @@ test('a refill counts only when four attacking 4000s are already paid for',()=>{
  ready.state.players[0].hand.push(refill);
  assert.equal(universalEnergyByColor(ready.packs,ready.state,0).blue>=4,true);
  assert.equal(provenRebuild(ready.packs,ready.state,0,ready.mine.uid).ok,true);
- const starved=bindProbeBudget({pool:{n:1},deadline:Infinity,now:()=>0},()=>provenRebuild(ready.packs,ready.state,0,ready.mine.uid));
+ const fresh=structuredClone(ready.state);
+ const starved=bindProbeBudget({pool:{n:1},deadline:Infinity,now:()=>0},()=>provenRebuild(ready.packs,fresh,0,ready.mine.uid));
  assert.equal(starved.ok,false);
+ assert.equal(starved.reason,'budget');
  assert.equal(assertUniversalMatch(ready.packs,ready.state),true);
  const fronts=ready.state.players[0].front.filter(Boolean).map(card=>card.uid);
  const choice=ask(ready.packs,ready.state);
@@ -507,4 +510,151 @@ test('a blank attack stays back, and a payable attack effect or a real trade doe
  const tradeSwing=legalUniversalActions(trade.packs,trade.state).find(action=>action.type==='attack'&&action.uid===trade.mine.uid);
  assert.equal(blankSwingAdjustment(trade.packs,trade.state,0,tradeSwing),0);
  assert.equal(ask(trade.packs,trade.state).action.type,'attack');
+});
+
+function resume(secondUid,blockUid){
+ return (cursor,legal)=>{
+  if(cursor.pending?.kind==='block')
+   return legal.find(action=>action.type==='chooseBlock'&&(action.uid??null)===(blockUid??null));
+  if(cursor.pending?.kind==='life-trigger')
+   return legal.find(action=>action.mode==='get')||legal.find(action=>action.mode==='skip');
+  if(cursor.pending?.kind==='life-batch-order')return legal.find(action=>action.type==='chooseLifeOrder');
+  if(!cursor.pending&&cursor.active===1&&cursor.phase==='attack')
+   return legal.find(action=>action.type==='attack'&&action.uid===secondUid)||legal.find(action=>action.type==='next');
+  return legal.find(action=>action.type==='next')||legal.find(action=>action.type==='extraDraw');
+ };
+}
+test('a character that cannot block is not kept as a backup blocker',()=>{
+ const opened=blockWindow(7,{blockerId:'BLC-4-036',blockerBp:5000,attackerId:'BLC-1-009',attackerBp:4000,secondBp:4000,secondId:'BLC-4-036',secondDamage:2,getLife:true});
+ const banned=take(opened.state,0,'BLC-4-036');
+ place(opened.state,0,banned,'front',1);
+ setBp(opened.state,banned,5000);
+ const until={player:1,phase:'start',edge:'start'};
+ grantContinuousState(opened.state,{kind:'cannotBlock',controller:1,sourceUid:opened.foe.uid,targetUid:banned.uid,until,sourceLinked:false});
+ assert.equal(assertUniversalMatch(opened.packs,opened.state),true);
+ const blockers=legalUniversalActions(opened.packs,opened.state).filter(action=>action.type==='chooseBlock'&&action.uid);
+ assert.deepEqual(blockers.map(action=>action.uid),[opened.mine.uid]);
+ const choice=ask(opened.packs,opened.state);
+ assert.equal(choice.action.uid??null,null);
+ const lines=structuredClone(opened.state);
+ const playLine=(firstUid,secondUid)=>march(opened.packs,settle(opened.packs,structuredClone(lines),{type:'chooseBlock',uid:firstUid}),resume(opened.second.uid,secondUid));
+ const blockedFirst=playLine(opened.mine.uid,null);
+ assert.equal(blockedFirst.players[0].life.length,5);
+ assert.equal(blockedFirst.players[0].front.filter(Boolean).length,2);
+ assert.ok(blockedFirst.players[0].front.filter(Boolean).every(card=>card.ready));
+ const blockedSecond=playLine(null,opened.mine.uid);
+ assert.equal(blockedSecond.players[0].life.length,6);
+ assert.equal(blockedSecond.players[0].front.filter(Boolean).length,2);
+ assert.ok(blockedSecond.players[0].front.filter(Boolean).every(card=>card.ready));
+ const arrived=march(opened.packs,settle(opened.packs,opened.state,choice.action),resume(opened.second.uid,opened.mine.uid));
+ assert.equal(arrived.players[0].life.length,6);
+ assert.equal(arrived.players[0].front.filter(Boolean).length,2);
+ assert.ok(arrived.players[0].front.filter(Boolean).every(card=>card.ready));
+ const quiet=blockWindow(7,{blockerBp:5000,attackerId:'BLC-1-009',attackerBp:4000,secondBp:4000,secondDamage:2,getLife:true});
+ grantContinuousState(quiet.state,{kind:'cannotAttack',controller:1,sourceUid:quiet.foe.uid,targetUid:quiet.second.uid,until,sourceLinked:false});
+ assert.equal(assertUniversalMatch(quiet.packs,quiet.state),true);
+ const rested=structuredClone(quiet.state);
+ rested.pending=null;
+ assert.equal(legalUniversalActions(quiet.packs,rested).some(action=>action.type==='attack'&&action.uid===quiet.second.uid),false);
+ assert.equal(ask(quiet.packs,quiet.state).action.uid,quiet.mine.uid);
+});
+
+test('both seats expect the defender to keep the body for the smaller later swing',()=>{
+ const opened=blockWindow(4,{blockerId:'BLC-4-036',blockerBp:4000,attackerBp:6000,secondBp:3000,secondId:'BLC-4-036',secondDamage:1,getLife:true});
+ clearHand(opened.state,1);
+ assert.equal(opened.state.players[0].hand.length,0);
+ assert.equal(provenRebuild(opened.packs,opened.state,0,opened.mine.uid).ok,false);
+ assert.equal(assertUniversalMatch(opened.packs,opened.state),true);
+ const defender=battleWindowAction(opened.packs,opened.state,0);
+ const attacker=battleWindowAction(opened.packs,opened.state,1);
+ assert.equal(defender.type,'chooseBlock');
+ assert.equal(defender.uid??null,null);
+ assert.equal(attacker.uid??null,null);
+ assert.equal(JSON.stringify(defender),JSON.stringify(attacker));
+ const ours=battleWindowDelta(opened.packs,opened.state,0);
+ const theirs=battleWindowDelta(opened.packs,opened.state,1);
+ assert.equal(ours,-45);
+ assert.equal(theirs,-ours);
+ const held=blockWindow(4,{attackerBp:6000});
+ assert.equal(battleWindowAction(held.packs,held.state,0).uid??null,null);
+ assert.equal(battleWindowAction(held.packs,held.state,1).uid??null,null);
+ assert.equal(battleWindowDelta(held.packs,held.state,1),-battleWindowDelta(held.packs,held.state,0));
+ const choice=ask(opened.packs,opened.state);
+ assert.equal(choice.action.uid??null,null);
+ const arrived=march(opened.packs,settle(opened.packs,opened.state,choice.action),resume(opened.second.uid,opened.mine.uid));
+ assert.equal(arrived.players[0].life.length,3);
+ assert.equal(arrived.players[0].front.find(card=>card?.uid===opened.mine.uid)?.ready,true);
+ const spent=march(opened.packs,settle(opened.packs,structuredClone(opened.state),{type:'chooseBlock',uid:opened.mine.uid}),resume(opened.second.uid,null));
+ assert.equal(spent.players[0].life.length,3);
+ assert.equal(spent.players[0].front.some(card=>card?.uid===opened.mine.uid),false);
+});
+
+function paidRebuild(){
+ const ready=blockWindow(7,{blockerId:'BLC-4-036'});
+ for(let slot=1;slot<4;slot++)place(ready.state,0,take(ready.state,0,'BLC-4-036'),'front',slot);
+ for(let slot=0;slot<4;slot++)place(ready.state,0,take(ready.state,0,'BLC-2-040'),'energy',slot);
+ ready.state.players[0].hand.push(take(ready.state,0,'BLC-4-022'));
+ assert.equal(assertUniversalMatch(ready.packs,ready.state),true);
+ return ready;
+}
+function withoutRefill(state){
+ const copy=structuredClone(state);
+ const held=copy.players[0].hand.find(card=>card.cardId==='BLC-4-022');
+ copy.players[0].hand=copy.players[0].hand.filter(card=>card.uid!==held.uid);
+ copy.players[0].deck.push(held);
+ return copy;
+}
+function scoreBlock(packs,state,uid,pool){
+ const limits={nodes:24,pool,deadline:Infinity,now:()=>0,plan:'tree',beam:1,actorDecisions:1,opponentDecisions:0};
+ const block={type:'chooseBlock',uid};
+ const pass={type:'chooseBlock',uid:null};
+ const blocked=scoreLine(packs,state,0,block,limits);
+ const passed=scoreLine(packs,state,0,pass,limits);
+ assert.equal(Number.isFinite(blocked?.battleScore),true);
+ assert.equal(Number.isFinite(passed?.battleScore),true);
+ const blockValue=battleActionValue(packs,state,0,block);
+ const passValue=battleActionValue(packs,state,0,pass);
+ return {blocked,passed,blockValue,passValue};
+}
+test('a rebuild proof stays on the position that produced it',()=>{
+ const ready=paidRebuild();
+ const uid=ready.mine.uid;
+ const missing=withoutRefill(ready.state);
+ const restricted=structuredClone(ready.state);
+ const other=restricted.players[0].front.find(card=>card&&card.uid!==uid);
+ const until={player:1,phase:'start',edge:'start'};
+ grantContinuousState(restricted,{kind:'cannotAttack',controller:1,sourceUid:ready.foe.uid,targetUid:other.uid,until,sourceLinked:false});
+ assert.equal(assertUniversalMatch(ready.packs,missing),true);
+ assert.equal(assertUniversalMatch(ready.packs,restricted),true);
+ const forward={n:400};
+ const proved=scoreBlock(ready.packs,ready.state,uid,forward);
+ const empty=scoreBlock(ready.packs,missing,uid,forward);
+ assert.ok(proved.blockValue>proved.passValue);
+ assert.ok(empty.passValue>empty.blockValue);
+ assert.notEqual(battleWindowAction(ready.packs,ready.state,0).uid??null,null);
+ assert.equal(battleWindowAction(ready.packs,missing,0).uid??null,null);
+ const reverse={n:400};
+ const emptyFirst=scoreBlock(ready.packs,withoutRefill(ready.state),uid,reverse);
+ const provedLater=scoreBlock(ready.packs,structuredClone(ready.state),uid,reverse);
+ assert.ok(emptyFirst.passValue>emptyFirst.blockValue);
+ assert.ok(provedLater.blockValue>provedLater.passValue);
+ const shared={n:400};
+ const locked=bindProbeBudget({pool:shared,deadline:Infinity,now:()=>0},()=>{
+  const kept=provenRebuild(ready.packs,structuredClone(ready.state),0,uid);
+  const banned=provenRebuild(ready.packs,structuredClone(restricted),0,uid);
+  return {kept,banned};
+ });
+ assert.equal(locked.kept.ok,true);
+ assert.equal(locked.banned.ok,false);
+ const starvedState=structuredClone(ready.state);
+ const starved=bindProbeBudget({pool:{n:1},deadline:Infinity,now:()=>0},()=>provenRebuild(ready.packs,starvedState,0,uid));
+ assert.equal(starved.ok,false);
+ assert.equal(starved.reason,'budget');
+ const repeated=bindProbeBudget({pool:{n:1},deadline:Infinity,now:()=>0},()=>provenRebuild(ready.packs,starvedState,0,uid));
+ assert.equal(repeated.ok,false);
+ assert.equal(repeated.reason,'budget');
+ const expired=bindProbeBudget({pool:{n:40},deadline:0,now:()=>1},()=>provenRebuild(ready.packs,starvedState,0,uid));
+ assert.equal(expired.ok,false);
+ assert.equal(expired.reason,'budget');
+ assert.equal(provenRebuild(ready.packs,starvedState,0,uid).ok,true);
 });

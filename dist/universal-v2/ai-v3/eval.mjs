@@ -4,7 +4,7 @@
 import {dispatchUniversalAction,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
 import {fieldRestrictions} from '../continuous-states.mjs';
 import {packOf} from './observation.mjs';
-import {noteDispatch,searchPool,spendSharedStep,strategyScore} from './strategy.mjs';
+import {noteDispatch,spendSharedStep,strategyScore} from './strategy.mjs';
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 // A hand card that can raid a body already on our side is not a generic card.
@@ -98,18 +98,63 @@ function boardChange(pack,state,actor,owner,nextCards){
  const delta=after-before;
  return owner===actor?delta:-delta;
 }
+// Who may attack, and who may block that attacker, is the engine's own
+// list for this public state. Standing and a higher BP are not a block.
+// Each later attacker has its own list. The read is cached on the state
+// object, so another branch does not reuse it. A failed read proves no
+// attack and no prevention.
+const legalityNotes=new WeakMap();
+function legalityNote(state){
+ let note=legalityNotes.get(state);
+ if(!note){note={attacks:undefined,blocks:new Map()};legalityNotes.set(state,note);}
+ return note;
+}
+function attackRights(pack,state){
+ const note=legalityNote(state);
+ if(note.attacks!==undefined)return note.attacks;
+ let legal=[];
+ try{
+  const copy=structuredClone(state);
+  copy.pending=null;
+  legal=legalUniversalActions(pack,copy);
+ }catch{note.attacks=null;return null;}
+ note.attacks=new Set(legal.filter(action=>action.type==='attack'&&action.uid).map(action=>action.uid));
+ return note.attacks;
+}
+function blockRights(pack,state,defender,attackerUid){
+ const note=legalityNote(state);
+ if(note.blocks.has(attackerUid))return note.blocks.get(attackerUid);
+ let legal=[];
+ try{
+  const copy=structuredClone(state);
+  copy.pending={kind:'block',player:defender,attackerUid};
+  legal=legalUniversalActions(pack,copy);
+ }catch{note.blocks.set(attackerUid,null);return null;}
+ const ids=new Set(legal.filter(action=>action.type==='chooseBlock'&&action.uid).map(action=>action.uid));
+ note.blocks.set(attackerUid,ids);
+ return ids;
+}
 // A block or life window is scored before the engine has applied it. The
 // adjustment is the public result of the attack that is already open:
 // life from universalAttackDamage, a blocker leaving when the attacker's
 // BP is greater or equal, and Impact only when the engine still counts it.
-// Hidden life cards, hands and deck order are not read. The line stays
-// pending; this is not a completed turn.
+// The defender's own plan picks the row. Another scorer sees that same
+// plan with the sign turned around. Hidden life cards, hands and deck
+// order are not read. The line stays pending; this is not a completed turn.
 function battleOptions(pack,state,actor){
+ const rows=framedBattle(pack,state);
+ if(!rows.length)return rows;
+ const defender=state.pending?.player;
+ if(!Number.isInteger(actor)||actor===defender)return rows;
+ return rows.map(row=>({action:row.action,delta:-row.delta,damage:row.damage,impact:row.impact}));
+}
+function framedBattle(pack,state){
  const pending=state?.pending;
  if(!pending||state.status!=='playing'||pending.kind!=='block')return [];
  const attacker=findBody(state,pending.attackerUid);
  const defender=pending.player;
  if(!attacker||!Number.isInteger(defender))return [];
+ const actor=defender;
  let damage=1,impact=0,atkBp=0;
  try{
   damage=universalAttackDamage(pack,state,attacker);
@@ -119,7 +164,7 @@ function battleOptions(pack,state,actor){
  let legal=[];
  try{legal=legalUniversalActions(pack,state);}catch{return [];}
  const front=state.players[defender].front||[];
- const threats=laterThreats(pack,state,attacker);
+ const threats=laterThreats(pack,state,attacker,defender);
  const ready=front.filter(card=>card?.ready).map(card=>blockerView(pack,state,card)).filter(Boolean);
  const rows=[];
  for(const action of legal){
@@ -174,28 +219,36 @@ function threatView(pack,state,card){
  }catch{/* one damage, no impact, no BP */}
  return {uid:card.uid,damage,impact,bp};
 }
-function laterThreats(pack,state,attacker){
+function laterThreats(pack,state,attacker,defender){
  const owner=Number(String(attacker?.uid||'').split('-')[0]);
  const pl=state.players?.[owner];
- if(!pl)return [];
- const catalog=packOf(pack,owner).cards;
+ if(!pl||!Number.isInteger(defender))return [];
+ const rights=attackRights(pack,state);
+ if(!rights)return [];
  const rows=[];
+ const add=card=>{
+  if(!card?.ready||!rights.has(card.uid))return;
+  const view=threatView(pack,state,card);
+  view.legal=blockRights(pack,state,defender,card.uid);
+  rows.push(view);
+ };
  for(const card of pl.front||[]){
-  if(!card?.ready||card.uid===attacker.uid)continue;
-  if(catalog[card.cardId]?.type!=='character')continue;
-  rows.push(threatView(pack,state,card));
+  if(!card||card.uid===attacker.uid)continue;
+  add(card);
  }
- if(attacker?.ready)rows.push(threatView(pack,state,attacker));
+ if(attacker?.ready)add(attacker);
  return rows;
 }
-// A later swing is stopped only by a winning block: our BP is higher, the
-// character stays, and Impact does not land. A block that removes the
-// character is not that save.
+// A later swing is stopped only by a winning block the engine still allows
+// against that attacker. A higher BP on a character who cannot block, or a
+// list copied from the attack that is open now, is not that save. An
+// unproven list does not reduce the damage.
 function cleanPrevented(blockers,threats){
- const pool=blockers.map(item=>({bp:item.bp,used:false}));
+ const pool=blockers.map(item=>({uid:item.uid,bp:item.bp,used:false}));
  let saved=0;
  for(const threat of threats.slice().sort((a,b)=>b.damage-a.damage)){
-  const found=pool.find(item=>!item.used&&item.bp>threat.bp);
+  if(!(threat.legal instanceof Set))continue;
+  const found=pool.find(item=>!item.used&&item.bp>threat.bp&&threat.legal.has(item.uid));
   if(!found)continue;
   found.used=true;
   saved+=threat.damage;
@@ -220,6 +273,7 @@ function followUpDelta(pack,state,actor,defender,damage,blockers,threats){
  for(const blocker of blockers){
   for(let i=0;i<threats.length;i++){
    const threat=threats[i];
+   if(!(threat.legal instanceof Set)||!threat.legal.has(blocker.uid))continue;
    if(blocker.bp>threat.bp)continue;
    const leak=threat.impact>0&&!blocker.nulls?threat.impact:0;
    const rest=blockers.filter(item=>item.uid!==blocker.uid);
@@ -252,12 +306,13 @@ function holdMain(state,actor,defender,bp,atkBp,damage,impact,later){
  const life=state.players?.[actor]?.life?.length||0;
  return life>=4&&life-damage>0;
 }
+// One immutable position. A shared search pool is not the same position:
+// another branch can keep this uid and still have a different hand, energy
+// line or restriction. An unfinished walk is not stored.
 const rebuildProofs=new WeakMap();
-function cachedProof(actor,removedUid,run){
- const pool=searchPool();
- if(!pool)return run();
- let bag=rebuildProofs.get(pool);
- if(!bag){bag=new Map();rebuildProofs.set(pool,bag);}
+function cachedProof(state,actor,removedUid,run){
+ let bag=rebuildProofs.get(state);
+ if(!bag){bag=new Map();rebuildProofs.set(state,bag);}
  const key=actor+':'+removedUid;
  if(bag.has(key))return bag.get(key);
  const result=run();
@@ -271,7 +326,7 @@ function cachedProof(actor,removedUid,run){
 // that still cannot attack, and a walk the budget cannot finish are not
 // success. The deck is not consulted.
 export function provenRebuild(pack,state,actor,removedUid){
- return cachedProof(actor,removedUid,()=>planRebuild(pack,state,actor,removedUid));
+ return cachedProof(state,actor,removedUid,()=>planRebuild(pack,state,actor,removedUid));
 }
 function planRebuild(pack,state,actor,removedUid){
  const mine=state?.players?.[actor];

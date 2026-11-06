@@ -130,8 +130,9 @@ test('hard-search-2 plays energy and the full-turn search plays the blocker',()=
  const energy=legalUniversalActions(packs,state).find(action=>action.type==='play'&&action.line==='energy'&&action.uid===body.uid);
  const afterEnergy=dispatchUniversalAction(packs,state,energy,{actor:0});
  assert.equal(losesIfPassed(packs,afterEnergy),true);
+ const frozen={...OPTS,ms:1e9,now:()=>0};
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,OPTS);
+ const action=chooseAiV3Action(packs,state,frozen);
  const trace=lastAiV3Trace();
  assert.equal(action.type,'play');
  assert.equal(action.line,'front');
@@ -139,15 +140,41 @@ test('hard-search-2 plays energy and the full-turn search plays the blocker',()=
  assert.equal(trace.policy,AI_V3_POLICY);
  assert.ok(trace.opponentTurns>=1);
  assert.equal(trace.fallback,false);
+ assert.ok(trace.nodesUsed<=OPTS.nodes);
  const front=dispatchUniversalAction(packs,state,action,{actor:0});
  assert.equal(front.players[0].front.some(card=>card?.uid===body.uid),true);
  assert.equal(legalUniversalActions(packs,state).some(item=>same(item,action)),true);
  const swapped=hiddenSwap(state);
- assert.deepEqual(chooseAiV3Action(packs,swapped,OPTS),action);
+ assert.deepEqual(chooseAiV3Action(packs,swapped,frozen),action);
  const world=beliefWorld(packs,state,0,11,0);
  const trueHand=state.players[1].hand.map(card=>card.cardId).sort().join(',');
  const believed=world.state.players[1].hand.map(card=>card.cardId).sort().join(',');
  assert.notEqual(believed,trueHand);
+});
+
+test('the blocker search stops at its deadline and still returns a legal action',()=>{
+ const {packs,state}=blockerPosition();
+ const meter={dispatches:0};
+ let reads=0;
+ let atExpiry=null;
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{
+  ...OPTS,meter,diagnose:true,
+  now(){
+   const time=reads>=6?OPTS.ms+1000:0;
+   reads++;
+   if(time>OPTS.ms&&atExpiry==null)atExpiry=meter.dispatches;
+   return time;
+  }
+ });
+ const trace=lastAiV3Trace();
+ assert.notEqual(atExpiry,null);
+ assert.equal(meter.dispatches,atExpiry);
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=OPTS.nodes);
+ assert.equal(legalUniversalActions(packs,state).some(item=>same(item,action)),true);
+ assert.ok(trace.unexecuted.length>=1);
+ assert.ok(trace.unexecuted.every(row=>row.reason==='time'));
 });
 
 test('an unblocked lethal attack is taken and an illegal result is refused',()=>{
