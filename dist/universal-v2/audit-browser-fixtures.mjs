@@ -2,6 +2,7 @@
 // loads this module. The board is a real V2 match; the browser then uses the
 // same legal buttons as a player.
 import {createCsmV2Pack} from './csm-pack.mjs';
+import {createIysV2Pack} from './iys-pack.mjs';
 import {createKmrBattlePack} from './official-entry.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch}
  from './engine.mjs';
@@ -68,6 +69,8 @@ export function loadAuditFixture(name){
  if(name==='kmr054')return heatMetal();
  if(name==='csm008')return denji();
  if(name==='csm056')return hayakawaFacedown();
+ if(name==='iys028')return narakuLeave();
+ if(name==='iys046')return inuyashaDouble();
  throw Error('Unknown audit fixture '+name);
 }
 function heatMetal(){
@@ -141,4 +144,85 @@ function hayakawaFacedown(){
  built.state.pending=null;
  return finish(pack,built,
   '稽核鍊鋸人裡向卡：雙方都已用早川秋的登場時，從牌組頂蓋三張。控制者看得到卡名與卡圖，對手只看到卡背。');
+}
+function act(pack,built,action){
+ built.state=dispatchUniversalAction([pack,pack],built.state,action);
+ return built.state;
+}
+function pick(pack,built,pred){
+ const packs=[pack,pack];
+ const action=legalUniversalActions(packs,built.state).find(pred);
+ if(!action)throw Error('No audit action '+(built.state.pending?.step||built.state.phase)+' '+
+  JSON.stringify(legalUniversalActions(packs,built.state).slice(0,6)));
+ return act(pack,built,action);
+}
+function ready(s){
+ s.pending=null;s.phase='main';
+ for(const ap of s.players[0].apCards){ap.inPlay=true;ap.ready=true;}
+}
+function narakuLeave(){
+ const pack=createIysV2Pack();
+ const built=open(pack,28028,[
+  'IYS-1-028','IYS-1-013','IYS-1-034','IYS-1-004','IYS-1-029','IYS-1-026','IYS-1-001','IYS-1-010'
+ ]);
+ const s=built.state;
+ ready(s);
+ const host=put(s,0,'IYS-1-028','front',0,true);
+ const base=take(s,0,'IYS-1-013');
+ host.stack=[base];
+ host.under=['IYS-1-034','IYS-1-004'].map(id=>{const card=take(s,0,id);card.faceDown=true;return card;});
+ for(const [slot,id] of [[1,'IYS-1-026'],[2,'IYS-1-001'],[3,'IYS-1-010']])put(s,0,id,'front',slot,true);
+ const incoming=take(s,0,'IYS-1-029');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].hand.push(incoming);
+ const play=legalUniversalActions([pack,pack],s).find(a=>a.type==='play'&&
+  a.uid===incoming.uid&&a.replaceUid===host.uid&&a.line==='front');
+ if(!play)throw Error('IYS-1-029 cannot replace IYS-1-028 from this audit position');
+ return finish(pack,built,
+  '稽核 IYS-1-028：點手牌白童子，再點前線第 1 格的奈落。離場代替出現後按「加入手牌」。奈落應進手牌，白童子佔該格，AP 少 1。');
+}
+function inuyashaDouble(){
+ const pack=createIysV2Pack();
+ const built=open(pack,46046,[
+  'IYS-1-046','IYS-1-049','IYS-1-042','IYS-1-041','IYS-1-045','IYS-1-062','IYS-1-050','IYS-1-053'
+ ],{'IYS-1-050':2});
+ let s=built.state;
+ ready(s);
+ put(s,0,'IYS-1-041','energy',0,true);
+ put(s,0,'IYS-1-045','energy',1,true);
+ put(s,0,'IYS-1-062','energy',2,true);
+ const base=put(s,0,'IYS-1-042','front',0,true);
+ const raider=take(s,0,'IYS-1-046');
+ s.players[0].hand.push(raider);
+ const raidAction=legalUniversalActions([pack,pack],s).find(a=>a.type==='raid'&&
+  a.uid===raider.uid&&a.baseUid===base.uid&&a.slot===0);
+ if(!raidAction)throw Error('No in-place raid');
+ act(pack,built,raidAction);
+ s=built.state;
+ const actor=take(s,0,'IYS-1-049');
+ s.players[0].hand.push(actor);
+ pick(pack,built,a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front'&&a.replaceUid===undefined);
+ s=built.state;
+ pick(pack,built,a=>a.type==='activate'&&a.uid===actor.uid);
+ pick(pack,built,a=>a.uid===raider.uid);
+ pick(pack,built,a=>a.mode==='skip');
+ pick(pack,built,a=>a.type==='activate'&&a.uid===raider.uid);
+ s=built.state;
+ if(s.pending?.step!=='replaceKit')throw Error('046 did not offer double attack');
+ const fillers=['IYS-1-053','IYS-1-050'];
+ let filler=0;
+ for(let slot=0;slot<4;slot++){
+  if(s.players[0].front[slot])continue;
+  put(s,0,fillers[filler++],'front',slot,true);
+ }
+ const kirara=take(s,0,'IYS-1-050');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].hand.push(kirara);
+ const readyAp=s.players[0].apCards.filter(c=>c.ready).length;
+ if(readyAp!==1)throw Error('046 audit AP is '+readyAp);
+ if(!s.players[0].front.every(Boolean))throw Error('046 audit front is not full');
+ const choice=legalUniversalActions([pack,pack],s).find(a=>a.mode==='double');
+ if(!choice)throw Error('046 audit is not waiting on double attack');
+ return finish(pack,built,
+  '稽核 IYS-1-046：先按「獲得再次攻擊」。再點手牌雲母，點前線犬夜叉那格，普通登場擠掉它。不應出現錯誤。犬夜叉進移除區，雲母佔該格。');
 }

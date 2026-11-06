@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {createIysV2Pack} from '../dist/universal-v2/iys-pack.mjs';
 import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
@@ -110,6 +111,36 @@ function passTo(s,player,phase){
  }
  return s;
 }
+function apReady(s,p=0){return s.players[p].apCards.filter(c=>c.ready).length;}
+function host028(s,slot,baseId,underIds,line='front'){
+ const host=put(s,0,'IYS-1-028',line,slot);
+ const base=take(s,0,baseId);
+ host.stack=[base];
+ const under=underIds.map(id=>{const card=take(s,0,id);card.faceDown=true;return card;});
+ host.under=under;
+ return {host,base,under};
+}
+function fillLine(s,line,ids){
+ let i=0;
+ for(let slot=0;slot<4;slot++){
+  if(s.players[0][line][slot])continue;
+  if(i>=ids.length)throw Error('Need a card for '+line+' '+slot);
+  put(s,0,ids[i++],line,slot);
+ }
+}
+function onto(s,uid,occupantUid,type='play'){
+ const action=legalUniversalActions(packs,s).find(a=>a.type===type&&a.uid===uid&&
+  a.replaceUid===occupantUid);
+ if(!action)throw Error('No '+type+' onto '+occupantUid+' '+
+  JSON.stringify(legalUniversalActions(packs,s).filter(a=>a.uid===uid).slice(0,4)));
+ return action;
+}
+function roundTrip(s){
+ const next=JSON.parse(JSON.stringify(s));
+ assertUniversalMatch(packs,next);
+ return next;
+}
+function moved(s,uid,to){return s.zoneMoveEvents.filter(e=>e.uid===uid&&e.to===to);}
 function facedown(s,owner,host){
  const mine=universalPublicView(packs,s,owner);
  const theirs=universalPublicView(packs,s,1-owner);
@@ -1306,7 +1337,8 @@ test('IYS-1-046 double attack is not generated-energy doubling',()=>{
  assert.equal(universalBp(pack,s,body),4000);
  assert.equal(universalImpact(pack,s,body),0);
  assert.deepEqual(s.energyDoubles,[0,0]);
- assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|double'),true);
+ assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|doubleAttack'),true);
+ assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|double'),false);
  assertUniversalMatch(packs,s);
  crown(s,1,'IYS-1-050');
  s=toPhase(s,'attack');
@@ -1443,4 +1475,341 @@ test('IYS-1-050 nulls impact and a null life trigger does not open a choice',()=
  assert.equal(life.pending,null);
  assert.equal(life.players[1].outside.some(c=>c.uid===trigger.uid),true);
  assertUniversalMatch(packs,life);
+});
+
+test('paid play onto a full line asks IYS-1-028 before spending or moving',()=>{
+ const counts=countsFor(['IYS-1-028','IYS-1-029','IYS-1-013','IYS-1-034','IYS-1-004','IYS-1-026','IYS-1-010','IYS-1-001']);
+ let hand=toPhase(fresh(counts,2813),'main');
+ readyAp(hand);
+ const {host,base,under}=host028(hand,0,'IYS-1-013',['IYS-1-034','IYS-1-004']);
+ fillLine(hand,'front',['IYS-1-026','IYS-1-010','IYS-1-001']);
+ const incoming=take(hand,0,'IYS-1-029');
+ hand.players[0].hand.push(incoming);
+ const before=apReady(hand);
+ hand=use(hand,onto(hand,incoming.uid,host.uid));
+ assert.equal(hand.pending.step,'leave');
+ assert.equal(hand.players[0].front.some(c=>c?.uid===host.uid),true);
+ assert.equal(hand.players[0].hand.some(c=>c.uid===incoming.uid),true);
+ assert.equal(apReady(hand),before);
+ hand=roundTrip(hand);
+ hand=choose(hand,a=>a.mode==='hand');
+ assert.equal(hand.pending,null);
+ assert.equal(hand.players[0].hand.filter(c=>c.uid===host.uid).length,1);
+ assert.equal(hand.players[0].front.filter(c=>c?.uid===incoming.uid).length,1);
+ assert.equal(hand.players[0].outside.filter(c=>c.uid===base.uid).length,1);
+ assert.equal(under.every(card=>hand.players[0].outside.filter(c=>c.uid===card.uid).length===1),true);
+ assert.equal(moved(hand,host.uid,'hand').length,1);
+ assert.equal(moved(hand,incoming.uid,'front').length,1);
+ assert.equal(apReady(hand),before-1);
+ assert.ok(moved(hand,host.uid,'hand')[0].order<moved(hand,incoming.uid,'front')[0].order);
+ assertUniversalMatch(packs,hand);
+
+ let skipped=toPhase(fresh(counts,2814),'main');
+ readyAp(skipped);
+ const staying=host028(skipped,0,'IYS-1-013',['IYS-1-034','IYS-1-004']);
+ fillLine(skipped,'front',['IYS-1-026','IYS-1-010','IYS-1-001']);
+ const played=take(skipped,0,'IYS-1-029');
+ skipped.players[0].hand.push(played);
+ const ap=apReady(skipped);
+ skipped=use(skipped,onto(skipped,played.uid,staying.host.uid));
+ skipped=choose(skipped,a=>a.mode==='skip');
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].removed.filter(c=>c.uid===staying.host.uid).length,1);
+ assert.equal(skipped.players[0].front.filter(c=>c?.uid===played.uid).length,1);
+ assert.equal(moved(skipped,staying.host.uid,'removed').length,1);
+ assert.equal(moved(skipped,played.uid,'front').length,1);
+ assert.equal(apReady(skipped),ap-1);
+ assertUniversalMatch(packs,skipped);
+});
+
+test('three facedowns resume the paid play before the rested raid base',()=>{
+ const counts=countsFor(['IYS-1-028','IYS-1-048','IYS-1-013','IYS-1-029','IYS-1-034','IYS-1-001','IYS-1-026','IYS-1-010']);
+ let s=toPhase(fresh(counts,2815),'main');
+ readyAp(s);
+ const {host,base,under}=host028(s,0,'IYS-1-013',['IYS-1-029','IYS-1-034','IYS-1-001']);
+ fillLine(s,'front',['IYS-1-026','IYS-1-010','IYS-1-048']);
+ const incoming=take(s,0,'IYS-1-048');
+ s.players[0].hand.push(incoming);
+ const before=apReady(s);
+ s=use(s,onto(s,incoming.uid,host.uid));
+ assert.equal(s.pending.step,'leave');
+ assert.equal(apReady(s),before);
+ assert.equal(s.players[0].hand.some(c=>c.uid===incoming.uid),true);
+ s=choose(s,a=>a.mode==='hand');
+ assert.equal(s.players[0].front.filter(c=>c?.uid===incoming.uid).length,1);
+ assert.equal(s.players[0].hand.filter(c=>c.uid===host.uid).length,1);
+ assert.equal(s.players[0].outside.some(c=>c.uid===base.uid),true);
+ assert.equal(legal(s,a=>a.type==='chooseOwnBuff'&&a.uid===null),true);
+ assert.equal(s.pending.step==='deploy',false);
+ s=choose(s,a=>a.type==='chooseOwnBuff'&&a.uid===null);
+ assert.equal(s.pending.step,'deploy');
+ assert.equal(s.players[0].energy.some(c=>c?.uid===base.uid),false);
+ assert.equal(s.players[0].front.some(c=>c?.uid===base.uid),false);
+ s=choose(s,a=>a.mode==='deploy'&&a.uid===base.uid&&a.line==='energy'&&a.slot===0);
+ const returned=s.players[0].energy.find(c=>c?.uid===base.uid);
+ assert.equal(returned.ready,false);
+ assert.equal(s.players[0].front.filter(c=>c?.uid===incoming.uid).length,1);
+ assert.equal(under.every(card=>s.players[0].outside.filter(c=>c.uid===card.uid).length===1),true);
+ assert.equal(moved(s,host.uid,'hand').length,1);
+ assert.equal(moved(s,incoming.uid,'front').length,1);
+ assert.equal(moved(s,base.uid,'energy').length,1);
+ assert.ok(moved(s,host.uid,'hand')[0].order<moved(s,incoming.uid,'front')[0].order);
+ assert.ok(moved(s,incoming.uid,'front')[0].order<moved(s,base.uid,'energy')[0].order);
+ assert.equal(apReady(s),before-1);
+ assertUniversalMatch(packs,s);
+});
+
+test('a silenced or single facedown IYS-1-028 is removed by the paid play',()=>{
+ const counts=countsFor(['IYS-1-028','IYS-1-029','IYS-1-013','IYS-1-034','IYS-1-004','IYS-1-026','IYS-1-010','IYS-1-001']);
+ let silent=toPhase(fresh(counts,2816),'main');
+ readyAp(silent);
+ const source=put(silent,0,'IYS-1-001','energy',0);
+ const {host}=host028(silent,0,'IYS-1-013',['IYS-1-034','IYS-1-004']);
+ fillLine(silent,'front',['IYS-1-026','IYS-1-010','IYS-1-029']);
+ grantContinuousState(silent,{kind:'originalEffectsDisabled',controller:1,sourceUid:source.uid,
+  targetUid:host.uid,sourceLinked:false,until:{player:0,phase:'main',edge:'end'}});
+ const quiet=take(silent,0,'IYS-1-029');
+ silent.players[0].hand.push(quiet);
+ silent=use(silent,onto(silent,quiet.uid,host.uid));
+ assert.equal(silent.pending,null);
+ assert.equal(silent.players[0].removed.filter(c=>c.uid===host.uid).length,1);
+ assert.equal(silent.players[0].front.filter(c=>c?.uid===quiet.uid).length,1);
+ assertUniversalMatch(packs,silent);
+
+ let thin=toPhase(fresh(counts,2817),'main');
+ readyAp(thin);
+ const {host:single}=host028(thin,0,'IYS-1-013',['IYS-1-034']);
+ fillLine(thin,'front',['IYS-1-026','IYS-1-010','IYS-1-001']);
+ const plain=take(thin,0,'IYS-1-029');
+ thin.players[0].hand.push(plain);
+ thin=use(thin,onto(thin,plain.uid,single.uid));
+ assert.equal(thin.pending,null);
+ assert.equal(thin.players[0].removed.filter(c=>c.uid===single.uid).length,1);
+ assert.equal(thin.players[0].front.filter(c=>c?.uid===plain.uid).length,1);
+ assertUniversalMatch(packs,thin);
+});
+
+test('paid raid, STEP and rule move wait for IYS-1-028, and moving 028 is not a leave',()=>{
+ const counts=countsFor(['IYS-1-028','IYS-1-046','IYS-1-042','IYS-1-041','IYS-1-045','IYS-1-062','IYS-1-013','IYS-1-034','IYS-1-004','IYS-1-029','IYS-1-026','IYS-1-053','IYS-1-050']);
+ let raid=toPhase(fresh(counts,2818),'main');
+ readyAp(raid);
+ payRed(raid);
+ const base042=put(raid,0,'IYS-1-042','energy',3);
+ const {host,base,under}=host028(raid,0,'IYS-1-013',['IYS-1-034','IYS-1-004']);
+ fillLine(raid,'front',['IYS-1-029','IYS-1-026','IYS-1-050']);
+ const raider=take(raid,0,'IYS-1-046');
+ raid.players[0].hand.push(raider);
+ const ap=apReady(raid);
+ raid=use(raid,legalUniversalActions(packs,raid).find(a=>a.type==='raid'&&
+  a.uid===raider.uid&&a.baseUid===base042.uid&&a.replaceUid===host.uid));
+ assert.equal(raid.pending.step,'leave');
+ assert.equal(raid.players[0].hand.some(c=>c.uid===raider.uid),true);
+ assert.equal(raid.players[0].energy.some(c=>c?.uid===base042.uid),true);
+ assert.equal(apReady(raid),ap);
+ raid=choose(raid,a=>a.mode==='hand');
+ const top=raid.players[0].front.find(c=>c?.uid===raider.uid);
+ assert.equal(top.stack?.[0]?.uid,base042.uid);
+ assert.equal(raid.players[0].hand.filter(c=>c.uid===host.uid).length,1);
+ assert.equal(raid.players[0].outside.filter(c=>c.uid===base.uid).length,1);
+ assert.equal(under.every(card=>raid.players[0].outside.filter(c=>c.uid===card.uid).length===1),true);
+ assert.equal(moved(raid,base042.uid,'raid-under').length,1);
+ assert.equal(moved(raid,raider.uid,'front').length,1);
+ assert.equal(apReady(raid),ap-1);
+ assert.equal(raid.pending,null);
+ assertUniversalMatch(packs,raid);
+
+ let step=toPhase(fresh(counts,2819),'move');
+ const stepped=put(step,0,'IYS-1-053','front',0);
+ const energyHost=host028(step,0,'IYS-1-013',['IYS-1-034','IYS-1-004'],'energy');
+ fillLine(step,'energy',['IYS-1-041','IYS-1-045','IYS-1-062']);
+ step=use(step,onto(step,stepped.uid,energyHost.host.uid,'step'));
+ assert.equal(step.pending.step,'leave');
+ assert.equal(step.players[0].front.some(c=>c?.uid===stepped.uid),true);
+ assert.equal(step.players[0].energy.some(c=>c?.uid===energyHost.host.uid),true);
+ step=choose(step,a=>a.mode==='hand');
+ assert.equal(step.pending,null);
+ assert.equal(step.players[0].energy.filter(c=>c?.uid===stepped.uid).length,1);
+ assert.equal(step.players[0].hand.filter(c=>c.uid===energyHost.host.uid).length,1);
+ assert.equal(moved(step,stepped.uid,'energy').length,1);
+ assert.equal(moved(step,energyHost.host.uid,'hand').length,1);
+ assertUniversalMatch(packs,step);
+
+ let shift=toPhase(fresh(counts,2820),'move');
+ const mover=put(shift,0,'IYS-1-050','energy',0);
+ const frontHost=host028(shift,0,'IYS-1-013',['IYS-1-034','IYS-1-004']);
+ fillLine(shift,'front',['IYS-1-029','IYS-1-026','IYS-1-053']);
+ shift=use(shift,onto(shift,mover.uid,frontHost.host.uid,'move'));
+ assert.equal(shift.pending.step,'leave');
+ assert.equal(shift.players[0].energy.some(c=>c?.uid===mover.uid),true);
+ shift=choose(shift,a=>a.mode==='skip');
+ assert.equal(shift.pending,null);
+ assert.equal(shift.players[0].front.filter(c=>c?.uid===mover.uid).length,1);
+ assert.equal(shift.players[0].removed.filter(c=>c.uid===frontHost.host.uid).length,1);
+ assert.equal(moved(shift,mover.uid,'front').length,1);
+ assert.equal(moved(shift,frontHost.host.uid,'removed').length,1);
+ assertUniversalMatch(packs,shift);
+
+ let own=toPhase(fresh(counts,2821),'move');
+ const walking=host028(own,0,'IYS-1-013',['IYS-1-034','IYS-1-004'],'energy');
+ own=use(own,legalUniversalActions(packs,own).find(a=>a.type==='move'&&a.uid===walking.host.uid&&
+  a.slot===0&&a.replaceUid===undefined));
+ assert.equal(own.pending,null);
+ assert.equal(own.players[0].front.find(c=>c?.uid===walking.host.uid).under.length,2);
+ assert.equal(own.players[0].hand.some(c=>c.uid===walking.host.uid),false);
+ assert.equal(own.players[0].removed.some(c=>c.uid===walking.host.uid),false);
+ assert.equal(moved(own,walking.host.uid,'front').length,1);
+ assertUniversalMatch(packs,own);
+
+ let crowded=toPhase(fresh(counts,2822),'move');
+ const traveler=host028(crowded,1,'IYS-1-013',['IYS-1-034','IYS-1-004'],'energy');
+ const vanilla=put(crowded,0,'IYS-1-050','front',0);
+ fillLine(crowded,'front',['IYS-1-029','IYS-1-026','IYS-1-053']);
+ crowded=use(crowded,onto(crowded,traveler.host.uid,vanilla.uid,'move'));
+ assert.equal(crowded.pending,null);
+ assert.equal(crowded.players[0].front.find(c=>c?.uid===traveler.host.uid).under.length,2);
+ assert.equal(crowded.players[0].removed.filter(c=>c.uid===vanilla.uid).length,1);
+ assert.equal(crowded.players[0].hand.some(c=>c.uid===traveler.host.uid),false);
+ assertUniversalMatch(packs,crowded);
+});
+
+test('an effect entry onto IYS-1-028 spends the earlier play once',()=>{
+ const counts=countsFor(['IYS-1-008','IYS-1-004','IYS-1-028','IYS-1-013','IYS-1-034','IYS-1-029','IYS-1-001','IYS-1-010','IYS-1-012','IYS-1-026']);
+ let s=toPhase(fresh(counts,2823),'main');
+ readyAp(s);
+ put(s,0,'IYS-1-001','energy',0);
+ put(s,0,'IYS-1-010','energy',1);
+ put(s,0,'IYS-1-012','energy',2);
+ const {host}=host028(s,0,'IYS-1-013',['IYS-1-034','IYS-1-029']);
+ fillLine(s,'front',['IYS-1-026','IYS-1-010','IYS-1-001']);
+ const recruit=take(s,0,'IYS-1-004');
+ s.players[0].outside.push(recruit);
+ const sesshomaru=take(s,0,'IYS-1-008');
+ s.players[0].hand.push(sesshomaru);
+ s.players[0].nextPrintedEnergyApCut={turn:s.turn,amount:1};
+ const before=apReady(s);
+ s=use(s,onto(s,sesshomaru.uid,host.uid));
+ assert.equal(s.pending.step,'leave');
+ assert.equal(apReady(s),before);
+ assert.equal(s.players[0].nextPrintedEnergyApCut.amount,1);
+ assert.equal(s.players[0].hand.some(c=>c.uid===sesshomaru.uid),true);
+ assert.equal(s.players[0].outside.some(c=>c.uid===recruit.uid),true);
+ s=choose(s,a=>a.mode==='hand');
+ assert.equal(s.pending.step,'deploy');
+ assert.equal(s.players[0].front.filter(c=>c?.uid===sesshomaru.uid).length,1);
+ assert.equal(s.players[0].hand.filter(c=>c.uid===host.uid).length,1);
+ assert.equal(s.players[0].nextPrintedEnergyApCut,null);
+ assert.equal(apReady(s),before-1);
+ assert.equal(moved(s,sesshomaru.uid,'front').length,1);
+ s=roundTrip(s);
+ s=choose(s,a=>a.mode==='deploy'&&a.uid===recruit.uid&&a.line==='energy');
+ const entered=s.players[0].energy.find(c=>c?.uid===recruit.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(moved(s,recruit.uid,'energy').length,1);
+ assert.equal(s.players[0].front.filter(c=>c?.uid===sesshomaru.uid).length,1);
+ assert.equal(apReady(s),before-1);
+ assert.equal(s.pending,null);
+ assertUniversalMatch(packs,s);
+
+ let entry=toPhase(fresh(counts,2824),'main');
+ readyAp(entry);
+ put(entry,0,'IYS-1-001','energy',0);
+ put(entry,0,'IYS-1-010','energy',1);
+ put(entry,0,'IYS-1-012','energy',2);
+ const occupied=host028(entry,0,'IYS-1-013',['IYS-1-034','IYS-1-029']);
+ fillLine(entry,'front',['IYS-1-026','IYS-1-010','IYS-1-001']);
+ const outside=take(entry,0,'IYS-1-004');
+ entry.players[0].outside.push(outside);
+ const played=take(entry,0,'IYS-1-008');
+ entry.players[0].hand.push(played);
+ const spent=apReady(entry);
+ entry=play(entry,played.uid,'play','energy');
+ assert.equal(entry.pending.step,'deploy');
+ assert.equal(entry.players[0].energy.filter(c=>c?.uid===played.uid).length,1);
+ assert.equal(apReady(entry),spent-2);
+ entry=choose(entry,a=>a.mode==='deploy'&&a.uid===outside.uid&&a.replaceUid===occupied.host.uid);
+ assert.equal(entry.pending.step,'leave');
+ assert.equal(entry.players[0].front.some(c=>c?.uid===occupied.host.uid),true);
+ assert.equal(entry.players[0].outside.some(c=>c.uid===outside.uid),true);
+ assert.equal(apReady(entry),spent-2);
+ entry=roundTrip(entry);
+ entry=choose(entry,a=>a.mode==='hand');
+ const rested=entry.players[0].front.find(c=>c?.uid===outside.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(entry.players[0].hand.filter(c=>c.uid===occupied.host.uid).length,1);
+ assert.equal(entry.players[0].energy.filter(c=>c?.uid===played.uid).length,1);
+ assert.equal(moved(entry,outside.uid,'front').length,1);
+ assert.equal(moved(entry,played.uid,'energy').length,1);
+ assert.equal(apReady(entry),spent-2);
+ assert.equal(entry.pending,null);
+ assertUniversalMatch(packs,entry);
+});
+
+test('IYS-1-046 double attack survives a legal leave and does not return with the card',()=>{
+ const counts=countsFor(['IYS-1-046','IYS-1-049','IYS-1-042','IYS-1-041','IYS-1-045','IYS-1-062','IYS-1-050','IYS-1-053']);
+ let s=toPhase(fresh(counts,4605),'main');
+ readyAp(s);
+ payRed(s);
+ const base=put(s,0,'IYS-1-042','front',0,true);
+ const raider=take(s,0,'IYS-1-046');
+ s.players[0].hand.push(raider);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&
+  a.uid===raider.uid&&a.baseUid===base.uid&&a.line!=='energy');
+ if(!raid)throw Error('No raid onto the named base');
+ s=use(s,raid);
+ const actor=take(s,0,'IYS-1-049');
+ s.players[0].hand.push(actor);
+ s=play(s,actor.uid);
+ s=use(s,{type:'activate',uid:actor.uid,mode:'iys:0'});
+ s=choose(s,a=>a.uid===raider.uid);
+ s=choose(s,a=>a.mode==='skip');
+ s=use(s,{type:'activate',uid:raider.uid,mode:'iys:0'});
+ s=choose(s,a=>a.mode==='double');
+ const body=s.players[0].front.find(c=>c?.uid===raider.uid);
+ assert.equal(body.readyOnAttackGranted.stamp,body.fieldEntryStamp);
+ assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|doubleAttack'),true);
+ assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|main'),true);
+ assert.deepEqual(s.energyDoubles,[0,0]);
+ const forged=structuredClone(s);
+ forged.mainAbilityUsedUids.push(raider.uid+'|double');
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Forged generated-energy doubling/);
+ const missing=structuredClone(s);
+ missing.mainAbilityUsedUids=missing.mainAbilityUsedUids.filter(k=>k!==raider.uid+'|doubleAttack');
+ assert.throws(()=>assertUniversalMatch(packs,missing),/Forged double-attack grant/);
+ fillLine(s,'front',['IYS-1-050','IYS-1-053','IYS-1-041']);
+ const kirara=take(s,0,'IYS-1-050');
+ s.players[0].hand.push(kirara);
+ assert.equal(apReady(s),1);
+ s=use(s,onto(s,kirara.uid,raider.uid));
+ assert.equal(s.pending,null);
+ const removed=s.players[0].removed.find(c=>c.uid===raider.uid);
+ assert.equal(removed.readyOnAttackGranted,undefined);
+ assert.equal(s.players[0].front.filter(c=>c?.uid===kirara.uid).length,1);
+ assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|doubleAttack'),true);
+ assert.equal(s.mainAbilityUsedUids.includes(raider.uid+'|double'),false);
+ assert.deepEqual(s.energyDoubles,[0,0]);
+ assertUniversalMatch(packs,s);
+ s.players[0].removed.splice(s.players[0].removed.indexOf(removed),1);
+ s.players[0].hand.push(removed);
+ readyAp(s);
+ const inu=s.players[0].energy.find(c=>c?.cardId==='IYS-1-045');
+ const replay=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===raider.uid&&
+  a.baseUid===inu.uid&&a.line!=='energy');
+ if(!replay)throw Error('046 cannot re-enter');
+ s=use(s,replay);
+ const again=s.players[0].front.find(c=>c?.uid===raider.uid);
+ assert.equal(again.readyOnAttackGranted,undefined);
+ assert.equal(again.ready,true);
+ assert.equal(again.stack?.[0]?.uid,inu.uid);
+ assert.equal(legal(s,a=>a.type==='activate'&&a.uid===raider.uid),false);
+ assertUniversalMatch(packs,s);
+ crown(s,1,'IYS-1-053');
+ s=toPhase(s,'attack');
+ s=use(s,{type:'attack',uid:raider.uid});
+ s=choose(s,a=>a.type==='chooseBlock'&&a.uid===null);
+ if(s.pending?.kind==='life-trigger')s=choose(s,a=>a.mode==='skip'||a.uid===null);
+ const rested=s.players[0].front.find(c=>c?.uid===raider.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(legal(s,a=>a.type==='attack'&&a.uid===raider.uid),false);
+ assert.deepEqual(s.energyDoubles,[0,0]);
+ assertUniversalMatch(packs,s);
 });

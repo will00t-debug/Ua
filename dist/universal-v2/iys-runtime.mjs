@@ -29,7 +29,7 @@ function ceiling(s,source,target){
 }
 function doubleAttack(s,c){
  c.readyOnAttackGranted={turn:s.turn,stamp:c.fieldEntryStamp};
- use(s,c.uid+'|double');
+ use(s,c.uid+'|doubleAttack');
 }
 function chars(s,owner,pred){
  return A.field(plOf(s,owner)).filter(c=>def(A.pack,c).type==='character'&&(!pred||pred(c)));
@@ -621,11 +621,29 @@ export function resolveIysPending(pack,s,action){
   }
   // Resume pending battle impact after a replaced leave, even when Naraku returns to hand.
   if(q.data?.postImpact)A.afterImpact(pack,s,q.player,q.data.postImpact);
-  // A full-line move waits until this leave is chosen. Q1898 still owns BP 0.
-  const resume=q.data?.resumeReplace;
-  if(resume){
-   if(!s.pending)A.resumeReplace(pack,s,resume);
-   else s.pending.data={...(s.pending.data||{}),resumeReplace:resume};
+  // The slot is empty. Continue the play, Raid, effect, or move that was
+  // waiting, then the returned-to-hand base. Q1898 still owns BP 0.
+  const data=q.data||{};
+  const follow={
+   resumeReplace:data.resumeReplace||null,
+   originalAction:data.originalAction||null,
+   previousPending:data.previousPending||null,
+   savedPending:data.savedPending||null,
+   savedAction:data.savedAction||null,
+   actionActor:Number.isInteger(data.actionActor)?data.actionActor:null
+  };
+  if(follow.resumeReplace||follow.originalAction||follow.savedPending){
+   if(!s.pending)A.resumeDisplace(pack,s,follow);
+   else{
+    const extra={};
+    if(follow.resumeReplace)extra.resumeReplace=follow.resumeReplace;
+    if(follow.originalAction)extra.originalAction=follow.originalAction;
+    if(follow.savedPending)extra.savedPending=follow.savedPending;
+    if(follow.savedAction)extra.savedAction=follow.savedAction;
+    if(follow.previousPending)extra.previousPending=follow.previousPending;
+    if(follow.actionActor!==null)extra.actionActor=follow.actionActor;
+    s.pending.data={...(s.pending.data||{}),...extra};
+   }
   }
  }else if(step==='lookPick')finishLookTake(pack,s,q,a);
  else if(step==='lookOrder')finishOrder(s,q,a);

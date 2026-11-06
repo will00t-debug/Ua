@@ -61,21 +61,21 @@ tests/v2-bp-zero-retire.test.mjs 用 buffSelf 先減 10000、中間經過 CSM-1-
 
 IYS-1-028：底下有 2 張以上直接裡向卡時，這張角色離場可以改回手牌。Q2129：滿員線沒有空位時，先把被指定的那張放進移除區，再移動。移除是離場，不是退場。回手時只有最上面回到手牌，底下的卡到自己的場外。3 張以上且底板能源 2 以下時，底板可以休息再登場一次。
 
-dist/universal-v2/engine.mjs effectMoveTo。滿員線且指定的就是那個佔格時，先 iysLeaveOffer，選擇結束才把移動來源放進空格。dist/universal-v2/iys-runtime.mjs 的 leave 結束後呼叫 resumeReplace。
+dist/universal-v2/engine.mjs offerFullLineLeave。dispatchUniversalAction 在扣 AP、折扣、移動、突襲底板與登場時之前暫停。付費登場、付費突襲、效果登場、效果移動、STEP 與規則移動的擠位都走這條。leave 結束後 resumeDisplace 才續接原操作一次。effectMoveTo 仍處理直接呼叫。
 
-效果把角色移到滿員線並指定 IYS-1-028 的格子。選回手時 028 進手牌一次，來源接著佔用該格。選維持時 028 進移除區一次，來源同樣進場。付費登場、突襲、STEP 與規則移動仍直接 commitDestination，這次沒有另開那些路徑。
+IYS-1-028 被擠出前線或能源線時先問離場代替。選回手時 028 進手牌一次，來源接著佔格。選維持時 028 進移除區一次。三張裡向卡的底板再登場排在原操作之後。028 自己換線或擠掉別人時不問。效果失效或不足兩張直接裡向卡時不代替。
 
-tests/v2-iys-026-050.test.mjs。IYS-1-001 把無特徵的 013 移到滿員前線的 028。兩張裡向卡選回手、選維持各測一次。既有的退場回手與三張裡向卡再登場仍在同一檔。
+tests/v2-iys-026-050.test.mjs。付費普通登場在選擇前不扣 AP、卡還在手牌；JSON 往返後回手或移除各一次。三張裡向卡先完成登場時，再讓底板休息進能源線。突襲、STEP、規則移動與效果登場各問一次。IYS-1-001 的滿員換位仍在同一檔。
 
 ### 犬夜叉的兩回攻擊不是能量加倍
 
 IYS-1-046 本回合登場時，起動可以把套件換成【2回アタック】。那不是生成能量加倍。能量加倍仍只來自印刷的 doubleGeneratedEnergy 或 doubleEnergyIfNotEntry。
 
-dist/universal-v2/engine.mjs 的對局驗證。uid|double 只在卡是能量加倍來源時才計入 energyDoubles。IYS-1-046 要有本回合、這一次入場的 readyOnAttackGranted 才不算偽造。兩者都不是的 |double 仍拒絕。
+dist/universal-v2/iys-runtime.mjs doubleAttack 寫 uid|doubleAttack。dist/universal-v2/engine.mjs 的能量驗證只認 uid|double，而且來源必須是 doubleGeneratedEnergy 或 doubleEnergyIfNotEntry。readyOnAttackGranted 只代表目前這一次入場的授予，離場時清掉。
 
-選 046 的兩回攻擊後，對局仍然有效，energyDoubles 不增加。套件選項的 BP+1000 與衝擊 1 沒有改。
+選 046 的兩回攻擊後，energyDoubles 不增加，這一次入場可連續攻擊兩次。合法離場後對局仍可驗證。再入場沒有舊的授予，也不能沿用它攻擊第二次。偽造的 uid|double，或沒有 |doubleAttack 的授予，都會被拒絕。
 
-tests/v2-iys-026-050.test.mjs。突襲 046 後用 049 讓它休息，起動選 double，BP 維持 4000、沒有衝擊，並可攻擊兩次。
+tests/v2-iys-026-050.test.mjs。突襲 046 後用 049 讓它休息，起動選 double，可攻擊兩次。滿員前線用剩餘 1 AP 普通登場 050 擠掉 046 後，assertUniversalMatch 通過。再突襲入場沒有 readyOnAttackGranted，攻擊一次後休息。tests/v2-ttg-040-removed-main-ui.test.mjs 與 tests/v2-ttg-six-more.test.mjs 的能量加倍仍通過。
 
 ### IYS-1-044 的效果登場沒有合法來源
 

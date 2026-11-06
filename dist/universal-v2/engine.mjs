@@ -1648,6 +1648,7 @@ function clearTurnBattleGrants(unit){
  delete unit.mustBlockGranted;
  delete unit.attackWinDrawGranted;
  delete unit.blockAtLeastGranted;
+ delete unit.readyOnAttackGranted;
 }
 // Queue printed effects so each pending cross-title target is chosen before
 // remaining steps resolve. Native card packs remain responsible for their own text.
@@ -1854,7 +1855,8 @@ function ensureIys(){
   active:attemptFieldActive,noteRest:noteOwnEffectRest,readyAp:readyOneAp,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
   releaseRetirement:(s,q,originalLeft)=>{holdCsmFollow(s,q?.csmFollow,originalLeft);flushRetirement(s,q,originalLeft);},
-  resumeReplace:(pack,s,resume)=>resumeFullLineReplace(pack,s,resume)
+  resumeReplace:(pack,s,resume)=>resumeFullLineReplace(pack,s,resume),
+  resumeDisplace:(pack,s,data)=>resumeDisplacedAction(pack,s,data)
  });
 }
 let kjnBound=false;
@@ -7229,6 +7231,48 @@ function resumeFullLineReplace(pack,s,resume){
   ensureMmm2();
   finishU045Look(pack,s,resume.afterMmmPlayer,resume.afterMmmSource,resume.afterMmmId);
  }
+}
+// The hand-return trigger is queued by the leave. A move or STEP does not
+// drain the effect queue, so the rested base is offered only after the
+// original card already occupies the vacated slot.
+function flushReturnedBase(pack,s){
+ if(s.pending)return;
+ if(s.effectQueue.some(job=>job&&job.op==='iys'&&job.id==='IYS-1-028'&&job.slot==='reenter'))
+  continueEffectQueue(pack,s);
+}
+function choiceIdentity(action){
+ return [action?.type??'',action?.mode??'',action?.uid??'',action?.line??'',
+  action?.slot??'',action?.baseUid??'',action?.from??'',action?.index??''].join('\u0000');
+}
+function withoutReplacement(action){
+ const next={...action};
+ delete next.replaceUid;
+ return next;
+}
+function resumeDisplacedAction(pack,s,data){
+ if(!data)return;
+ if(data.savedPending&&data.savedAction){
+  const pending=clone(data.savedPending);
+  const action=withoutReplacement(data.savedAction);
+  const key=choiceIdentity(data.savedAction);
+  if(Array.isArray(pending.actions))
+   pending.actions=pending.actions.map(candidate=>
+    candidate&&candidate.replaceUid===data.savedAction.replaceUid&&
+    choiceIdentity(candidate)===key?withoutReplacement(candidate):candidate);
+  s.pending=pending;
+  resolveChoice(s,action,pack);
+  flushReturnedBase(pack,s);
+  return;
+ }
+ if(data.originalAction){
+  s.pending=data.previousPending||null;
+  const action=withoutReplacement(data.originalAction);
+  const actor=Number.isInteger(data.actionActor)?data.actionActor:s.active;
+  Object.assign(s,dispatchUniversalAction(pack,s,action,{actor}));
+  flushReturnedBase(pack,s);
+  return;
+ }
+ if(data.resumeReplace)resumeFullLineReplace(pack,s,data.resumeReplace);
 }
 function findOwnLayer(s,owner,uid){
  const visit=c=>{
@@ -17459,6 +17503,47 @@ function eventNameGate(pack,s,owner,d){
  if(d.id==='IYS-1-039')return ownFieldHasCharacter(pack,s,owner);
  return !d.playRequiresOwnName||ownFieldHasPrintedName(pack,s,owner,d.playRequiresOwnName);
 }
+function displaceTarget(s,action){
+ if(!action||typeof action.replaceUid!=='string'||!Number.isInteger(action.slot))return null;
+ const slot=action.slot;
+ if(slot<0||slot>3)return null;
+ const want=action.replaceUid;
+ if(action.type==='move'||action.type==='step'||action.type==='raid'||action.type==='play'){
+  const line=action.type==='move'?'front':action.type==='step'?'energy':
+   action.type==='raid'?(action.line==='energy'?'energy':'front'):
+   (action.line==='front'||action.line==='energy'?action.line:null);
+  if(!line)return null;
+  const card=s.players[s.active]?.[line]?.[slot];
+  return card?.uid===want?{p:s.active,line,slot,c:card}:null;
+ }
+ for(const owner of [0,1])for(const line of ['front','energy']){
+  if(action.line&&action.line!==line)continue;
+  const card=s.players[owner][line][slot];
+  if(card?.uid===want)return {p:owner,line,slot,c:card};
+ }
+ return null;
+}
+// Full-line removal is a leave. Ask IYS-1-028 before any AP, discount,
+// movement, Raid base, or on-play. The same action continues once the
+// slot is empty. A pure front/energy shift has no replaceUid and is not a leave.
+function offerFullLineLeave(pack,s,action){
+ const target=displaceTarget(s,action);
+ if(!target)return false;
+ if(s.pending?.kind==='iys'&&s.pending.step==='leave'&&s.pending.sourceUid===target.c.uid)
+  return false;
+ const saved=s.pending||null;
+ if(!iysLeaveOffer(pack,s,target.p,target.c,target.line,target.slot,'remove',
+  {postImpact:false,by:null}))return false;
+ if(saved){
+  s.pending.data.savedPending=saved;
+  s.pending.data.savedAction={...action};
+ }else{
+  s.pending.data.originalAction={...action};
+  s.pending.data.previousPending=null;
+  s.pending.data.actionActor=s.active;
+ }
+ return true;
+}
 export function dispatchUniversalAction(pack,source,action,{actor:requested}={}){
  const options=legalUniversalActions(pack,source);
  if(requested!==undefined&&requested!==actor(source))throw Error('Wrong player turn');
@@ -17476,6 +17561,10 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    s.pending={kind:'leave-replacement',player:p,uid:candidate.uid,
     line:action.line,slot:action.slot,destination:'removed',
     postImpact:false,originalAction:{...action},previousPending:s.pending||null};
+   assertUniversalMatch(pack,s);
+   return s;
+  }
+  if(offerFullLineLeave(pack,s,action)){
    assertUniversalMatch(pack,s);
    return s;
   }
@@ -19892,17 +19981,9 @@ export function assertUniversalMatch(pack,s){
    return !!(printed&&(printed.removedMain?.op==='doubleGeneratedEnergy'||
     printed.mainAbility?.op==='doubleEnergyIfNotEntry'));
   };
-  const liveDoubleAttack=k=>{
-   const uid=k.slice(0,-'|double'.length);
-   const physical=[...field(s.players[owner]),...s.players[owner].removed,
-    ...s.players[owner].outside,...s.players[owner].hand].find(c=>c.uid===uid);
-   const grant=physical?.readyOnAttackGranted;
-   return !!(physical&&card(pack,physical).id==='IYS-1-046'&&grant&&
-    grant.turn===s.turn&&grant.stamp===physical.fieldEntryStamp);
-  };
   if(!Number.isInteger(doubles)||doubles<0||doubles>6||
    marked.filter(energyDouble).length!==doubles||
-   marked.some(k=>!energyDouble(k)&&!liveDoubleAttack(k)))
+   marked.some(k=>!energyDouble(k)))
    throw Error('Forged generated-energy doubling');
   const frontSource=s.allFrontEnergy[owner];
   if(frontSource!==null){
@@ -20381,7 +20462,7 @@ export function assertUniversalMatch(pack,s){
      originalEffectsDisabled(s,physical));
    const iysDouble=keys.length===2&&keys.every(k=>k==='turn'||k==='stamp')&&
     card(pack,physical).id==='IYS-1-046'&&
-    s.mainAbilityUsedUids.includes(physical.uid+'|double');
+    s.mainAbilityUsedUids.includes(physical.uid+'|doubleAttack');
    const aot2Levi=keys.length===2&&keys.every(k=>['turn','stamp'].includes(k))&&
     card(pack,physical).id==='AOT-2-009';
    if(!readyGrant||readyGrant.turn!==s.turn||readyGrant.stamp!==physical.fieldEntryStamp||
