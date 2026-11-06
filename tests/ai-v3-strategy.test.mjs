@@ -235,8 +235,10 @@ test('strategy: an unfinished discard pending is not a settled turn',()=>{
  const line=scoreLine(packs,state,0,raid,{nodes:2,deadline:Infinity,actorDecisions:2,opponentDecisions:2});
  assert.equal(line.settled,false);
  assert.equal(line.boundary,'pending');
- assert.equal(line.cut,'pending');
  assert.equal(line.pending,'effect-discard');
+ assert.equal(line.stopPending,'effect-discard');
+ assert.equal(line.cut,'nodes');
+ assert.equal(line.stopReason,'nodes');
  assert.equal(line.returned,false);
  console.log('strategy pending ok',line.exhausted);
 });

@@ -7,6 +7,7 @@ import {evaluate as staticValue,terminalValue,keepScore} from './eval.mjs';
 import {archetypeRank,actionGroup} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
 import {strategyOrder,replyAction,replyOrder} from './strategy.mjs';
+import {visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
  return staticValue(pack,state,actor,ctx?.strategy);
@@ -268,18 +269,82 @@ function classifyLine(ctx,cursor,actor){
   else if(outOfTime)ctx.stats.limit='time';
   else if(ctx.stats.depthHit)ctx.stats.limit='depth';
  }
- if(ctx.stats.settled)ctx.stats.cut=null;
- else if(ctx.stats.depthHit&&!outOfNodes&&!outOfTime)ctx.stats.cut='depth';
- else if(cursor.pending)ctx.stats.cut='pending';
- else if(outOfNodes)ctx.stats.cut='nodes';
- else if(outOfTime)ctx.stats.cut='time';
- else ctx.stats.cut='open';
+ // Life is still unchosen, so the attack's damage has not been scored.
+ ctx.stats.damageOpen=!terminal&&cursor.pending?.kind==='attack-life-target';
+ ctx.stats.stopPending=cursor.pending?.kind||null;
+ ctx.stats.stopPlayer=Number.isInteger(cursor.pending?.player)?cursor.pending.player:null;
+ if(ctx.stats.settled){
+  ctx.stats.cut=null;
+  ctx.stats.stopReason=null;
+ }else if(outOfNodes){
+  ctx.stats.cut='nodes';
+  ctx.stats.stopReason='nodes';
+ }else if(outOfTime){
+  ctx.stats.cut='time';
+  ctx.stats.stopReason='time';
+ }else if(ctx.stats.unhandled&&cursor.pending){
+  // The clock and the node pool still had room. The continuation had no
+  // rule for this window, so the attack is not finished.
+  ctx.stats.cut='unhandled';
+  ctx.stats.stopReason='unhandled';
+  if(!ctx.stats.limit||ctx.stats.limit==='depth')ctx.stats.limit='unhandled';
+ }else if(ctx.stats.depthHit){
+  ctx.stats.cut='depth';
+  ctx.stats.stopReason='depth';
+ }else if(cursor.pending){
+  ctx.stats.cut='pending';
+  ctx.stats.stopReason='pending';
+ }else{
+  ctx.stats.cut='open';
+  ctx.stats.stopReason='open';
+ }
  noteLeaf(ctx,cursor);
+}
+function declines(action){
+ return action?.mode==='skip'||action?.mode==='decline';
+}
+function indexKey(action){
+ return (action?.indices||[]).map(index=>String(index).padStart(2,'0')).join(',');
+}
+function bodyOf(state,uid){
+ if(!uid)return null;
+ for(const player of state.players||[]){
+  for(const zone of ['hand','front','energy','outside','removed']){
+   const card=(player[zone]||[]).find(item=>item?.uid===uid);
+   if(card)return card;
+  }
+ }
+ return null;
+}
+// One legal action is the resolution, not a plan. A real choice uses the
+// legal list only. Hidden LIFE ids are not a tie-break.
+function necessaryChoice(pack,state,actor,legal){
+ if(legal.length===1)return legal[0];
+ const kind=state.pending?.kind||'';
+ if(legal.some(declines))return null;
+ if(kind==='attack-life-target'){
+  return [...legal].filter(action=>action.type==='chooseAttackLife').sort((a,b)=>indexKey(a)<indexKey(b)?-1:1)[0]||null;
+ }
+ const visible=visibleUidSet(pack,state,actor);
+ const discard=kind==='end-hand-limit'||kind.startsWith('effect-discard');
+ const score=action=>{
+  if(!action?.uid||!visible.has(action.uid))return 0;
+  const card=bodyOf(state,action.uid);
+  return card?keepScore(pack,state,actor,card):0;
+ };
+ return [...legal].sort((a,b)=>{
+  const delta=score(a)-score(b);
+  if(delta)return discard?delta:-delta;
+  return byText(a,b);
+ })[0]||null;
 }
 function attackOrEnd(pack,state,actor,legal){
  const pending=continuationAction(pack,state,actor,legal);
  if(pending)return pending;
- if(state.pending)return null;
+ if(state.pending){
+  if((state.pending.player??state.active)!==actor)return null;
+  return necessaryChoice(pack,state,actor,legal);
+ }
  const attack=legal.filter(action=>action.type==='attack');
  if(attack.length){
   attack.sort((a,b)=>keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===b.uid)||{})
@@ -310,7 +375,10 @@ function fastOpponent(pack,cursor,actor,ctx){
 function greedyAction(pack,state,actor,legal){
  const pending=continuationAction(pack,state,actor,legal);
  if(pending)return pending;
- if(state.pending)return null;
+ if(state.pending){
+  if((state.pending.player??state.active)!==actor)return null;
+  return necessaryChoice(pack,state,actor,legal);
+ }
  const attack=legal.filter(action=>action.type==='attack');
  if(attack.length){
   attack.sort((a,b)=>keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===b.uid)||{})
@@ -323,24 +391,31 @@ function greedyAction(pack,state,actor,legal){
  return null;
 }
 function brief(action,kind){
- return {type:action.type,uid:action.uid??null,line:action.line||null,mode:action.mode||null,kind};
+ const row={type:action.type,uid:action.uid??null,line:action.line||null,baseUid:action.baseUid||null,mode:action.mode||null,kind};
+ if(Array.isArray(action.indices))row.indices=action.indices.slice();
+ return row;
 }
 function noteStep(ctx,action,kind){
  if(ctx.stats.sequence)ctx.stats.sequence.push(brief(action,kind));
 }
 function roll(pack,cursor,actor,ctx,pick){
+ let halted=false;
  for(let step=0;step<8&&room(ctx)&&cursor.status==='playing';step++){
   if((cursor.pending?.player??cursor.active)!==actor)break;
   let legal;
   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;break;}
   const action=pick(pack,cursor,actor,legal);
-  if(!action)break;
+  if(!action){
+   if(cursor.pending)halted=true;
+   break;
+  }
   if(!room(ctx)){ctx.stats.budget++;break;}
   try{cursor=dispatch(pack,cursor,action);}catch{ctx.stats.unsupported++;break;}
   if(!spend(ctx)){ctx.stats.budget++;break;}
   noteStep(ctx,action,'script');
   cursor=settleBattle(pack,autoAdvance(pack,cursor,ctx),actor,ctx);
  }
+ ctx.stats.unhandled=halted;
  noteLeaf(ctx,cursor);
  return cursor;
 }
@@ -355,7 +430,9 @@ function leafSnap(ctx){
   leafOwnTurns:ctx.stats.leafOwnTurns,leafTurn:ctx.stats.leafTurn,leafActive:ctx.stats.leafActive,
   opponentTurns:ctx.stats.opponentTurns,responses:ctx.stats.responses,
   sequence:ctx.stats.sequence?ctx.stats.sequence.slice():[],
-  refuted:!!ctx.stats.refuted,unexplored:(ctx.stats.unexplored||[]).slice()
+  refuted:!!ctx.stats.refuted,unexplored:(ctx.stats.unexplored||[]).slice(),
+  damageOpen:!!ctx.stats.damageOpen,stopPending:ctx.stats.stopPending??null,
+  stopPlayer:ctx.stats.stopPlayer??null,stopReason:ctx.stats.stopReason??null,unhandled:!!ctx.stats.unhandled
  };
 }
 function applyLeaf(ctx,snap){
@@ -370,6 +447,11 @@ function applyLeaf(ctx,snap){
  ctx.stats.sequence=snap.sequence.slice();
  ctx.stats.refuted=!!snap.refuted;
  ctx.stats.unexplored=snap.unexplored?snap.unexplored.slice():[];
+ ctx.stats.damageOpen=!!snap.damageOpen;
+ ctx.stats.stopPending=snap.stopPending??null;
+ ctx.stats.stopPlayer=snap.stopPlayer??null;
+ ctx.stats.stopReason=snap.stopReason??null;
+ ctx.stats.unhandled=!!snap.unhandled;
 }
 function advanceForced(pack,cursor,ctx){
  for(let guard=0;guard<12&&room(ctx)&&cursor.status==='playing';guard++){
@@ -774,6 +856,8 @@ function lineView(ctx,search){
   search:finite?search:null,nodes:ctx.lineSpent,executed:!!ctx.stats.executed,settled:!!ctx.stats.settled,
   boundary:ctx.stats.boundary||'open',handedOff:!!ctx.stats.handedOff,returned:!!ctx.stats.returned,
   cut:ctx.stats.cut||null,pending:ctx.stats.leafPending||null,phase:ctx.stats.leafPhase||null,
+  damageOpen:!!ctx.stats.damageOpen,stopPending:ctx.stats.stopPending??null,
+  stopPlayer:ctx.stats.stopPlayer??null,stopReason:ctx.stats.stopReason??null,
   startOwnTurns:ctx.origin?.ownTurns??null,
   leafTurn:ctx.stats.leafTurn??null,leafActive:ctx.stats.leafActive??null,
   refuted:!!ctx.stats.refuted,unexplored:ctx.stats.unexplored||[]};
@@ -794,6 +878,7 @@ export function scoreLine(pack,state,actor,action,limits){
   stats:{orderSteps:0,transpositionHits:0,unsupported:0,budget:0,opponentTurns:0,responses:0,actorDecisions:0,
    boundary:'open',handedOff:false,returned:false,cut:null,limit:null,depthHit:false,layers:0,
    followBranches:0,maxDepth:1,sequence:[],executed:false,refuted:false,unexplored:[],
+   damageOpen:false,stopPending:null,stopPlayer:null,stopReason:null,unhandled:false,
    plan:limits.plan||(limits.finish===false?'tree':'rollout')}
  };
  ctx.finish=ctx.plan==='rollout';

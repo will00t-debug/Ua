@@ -85,20 +85,25 @@ const BOUNDARY_RANK={terminal:5,returned:4,yielded:3,pending:2,open:1};
 // that stopped on the same boundary still compete. A pass that got further
 // than a cut play does not win that comparison by itself.
 export function comparedLines(scored){
- const terminals=scored.filter(item=>item.boundary==='terminal');
+ // A line still waiting to choose LIFE has not scored the attack. Its static
+ // number stays out of the comparison, but it still blocks a finished loss.
+ const unresolved=scored.filter(row=>row&&row.damageOpen).length;
+ const closed=scored.filter(row=>row&&!row.damageOpen);
+ const terminals=closed.filter(item=>item.boundary==='terminal');
  const wins=terminals.filter(item=>item.search>0);
- if(wins.length)return {rows:wins,shared:false,contested:false};
- const returned=scored.filter(item=>item.boundary==='returned');
- if(returned.length)return {rows:returned,shared:false,contested:false};
+ if(wins.length)return {rows:wins,shared:false,contested:false,unresolved};
+ const returned=closed.filter(item=>item.boundary==='returned');
+ if(returned.length)return {rows:returned,shared:false,contested:false,unresolved};
  const losses=terminals.filter(item=>item.search<=-90000);
  // A finished loss is known. It does not erase an alternative that has not
  // been resolved, and that alternative's unfinished score is not a choice.
- if(losses.length&&scored.some(item=>item.boundary!=='terminal'))return {rows:[],shared:false,contested:true};
- if(terminals.length)return {rows:terminals,shared:false,contested:false};
+ if(losses.length&&(closed.some(item=>item.boundary!=='terminal')||unresolved))return {rows:[],shared:false,contested:true,unresolved};
+ if(terminals.length)return {rows:terminals,shared:false,contested:false,unresolved};
+ if(!closed.length)return {rows:[],shared:false,contested:false,unresolved};
  let best=0;
- for(const row of scored)best=Math.max(best,BOUNDARY_RANK[row.boundary]||0);
- if(!best)return {rows:[],shared:false,contested:false};
- const rows=scored.filter(row=>(BOUNDARY_RANK[row.boundary]||0)===best);
+ for(const row of closed)best=Math.max(best,BOUNDARY_RANK[row.boundary]||0);
+ if(!best)return {rows:[],shared:false,contested:false,unresolved};
+ const rows=closed.filter(row=>(BOUNDARY_RANK[row.boundary]||0)===best);
  // yielded and pending are labels, not positions. Incomplete lines share a
  // comparison only when the turn, the player to move, the phase, and the
  // pending effect are the same.
@@ -126,11 +131,11 @@ export function comparedLines(scored){
    }
   }
  }
- if(!chosen.length)return {rows:[],shared:false,contested:false};
+ if(!chosen.length)return {rows:[],shared:false,contested:false,unresolved};
  const idleOnly=chosen.every(item=>isSafeAction(item.action));
- const behind=scored.some(row=>!isSafeAction(row.action)&&!chosen.includes(row));
- if(idleOnly&&behind)return {rows:[],shared:false,contested:false};
- return {rows:chosen,shared:true,contested:false};
+ const behind=closed.some(row=>!isSafeAction(row.action)&&!chosen.includes(row));
+ if(idleOnly&&behind)return {rows:[],shared:false,contested:false,unresolved};
+ return {rows:chosen,shared:true,contested:false,unresolved};
 }
 function doneLine(row){
  return !!(row&&(row.settled||row.boundary==='returned'||row.boundary==='terminal'));
@@ -336,7 +341,9 @@ export function chooseAiV3Action(pack,state,options={}){
     executed:true,refuted:!!sample.refuted,leafTurn:sample.leafTurn??null,
     leafActive:sample.leafActive??null,leafPendingPlayer:sample.leafPendingPlayer??null,
     leafSource:sample.leafSource??null,leafProgress:sample.leafProgress??'',
-    leafOwnTurns:sample.leafOwnTurns??null};
+    leafOwnTurns:sample.leafOwnTurns??null,
+    damageOpen:!!sample.damageOpen,stopPending:sample.stopPending??null,
+    stopPlayer:sample.stopPlayer??null,stopReason:sample.stopReason??null};
   };
   const searchStarted=performance.now();
   let basicSpent=0,deepSpent=0;
@@ -395,6 +402,8 @@ export function chooseAiV3Action(pack,state,options={}){
    leafActive:item.leafActive??null,leafPendingPlayer:item.leafPendingPlayer??null,
    leafSource:item.leafSource??null,leafProgress:item.leafProgress??'',
    leafOwnTurns:item.leafOwnTurns??null,
+   damageOpen:!!item.damageOpen,stopPending:item.stopPending??null,
+   stopPlayer:item.stopPlayer??null,stopReason:item.stopReason??null,
    followBranches:item.followBranches,maxDepth:item.maxDepth,sequence:item.sequence}));
   const followBranches=scored.reduce((sum,item)=>sum+(item.followBranches||0),0);
   const maxDepth=scored.reduce((sum,item)=>Math.max(sum,item.maxDepth||1),1);

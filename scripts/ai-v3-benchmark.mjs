@@ -35,7 +35,8 @@ const askedNodes=process.env.AI_V3_NODES?Number(process.env.AI_V3_NODES):(THINK_
 const BUDGET={...MATCH_LIMITS,ms:askedMs,nodes:askedNodes,seed:1};
 const STRATEGY=process.env.AI_V3_STRATEGY==='score'||process.env.AI_V3_STRATEGY==='order'||process.env.AI_V3_STRATEGY==='reply'
  ?process.env.AI_V3_STRATEGY:null;
-const HARD_NODES=process.env.AI_V3_HARD_NODES!=null&&process.env.AI_V3_HARD_NODES!==''?Number(process.env.AI_V3_HARD_NODES):null;
+ const HARD_NODES=process.env.AI_V3_HARD_NODES!=null&&process.env.AI_V3_HARD_NODES!==''?Number(process.env.AI_V3_HARD_NODES):null;
+const RECORD=process.env.AI_V3_ACTIONS==='1';
 
 function pct(values,p){
  const sorted=values.filter(Number.isFinite).sort((a,b)=>a-b);
@@ -98,6 +99,7 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
  const samples={};
  const acts={};
  const script=[];
+ const actions=[];
  let steps=0,fallback=0,illegal=0,engineError=null;
  const learned={decisions:0,search:0,settledChoices:0,budgetFallback:0,fallback:0,forced:0,nodes:0,basicNodes:0,deepNodes:0,followBranches:0,maxDepth:0,responses:0};
  const passes={decisions:0,onlyNext:0,voluntaryNext:0,passedDevelopment:0,autonomous:0};
@@ -148,6 +150,7 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
    if(bucket.passedDevelopment)passes.passedDevelopment++;
    if(script.length<80)script.push(label);
   }
+  if(RECORD)actions.push({step:steps,actor,action});
   try{state=dispatchUniversalAction(packs,state,action,{actor});}
   catch(error){
    illegal++;
@@ -160,7 +163,9 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
  return {title:deck.title,seed,first,steps,illegal,engineError,fallback,ms:samples,acts,script,learned,passes,
   finished:state.status==='finished',winner:state.winner,endReason:state.endReason,
   life:state.players.map(player=>player.life.length),
-  wall:performance.now()-started};
+  wall:performance.now()-started,
+  ...(RECORD?{actions}:{})
+ };
 }
 function gameView(row){
  return {seed:row.seed,first:row.first,challengerSeat:row.challengerSeat,
@@ -169,7 +174,34 @@ function gameView(row){
   engineError:row.engineError||null,script:row.script||[],
   onlyNext:row.passes?.onlyNext||0,voluntaryNext:row.passes?.voluntaryNext||0,
   passedDevelopment:row.passes?.passedDevelopment||0,autonomous:row.passes?.autonomous||0,
-  challengerWon:row.finished&&(row.winner===0||row.winner===1)?row.winner===row.challengerSeat:null};
+  challengerWon:row.finished&&(row.winner===0||row.winner===1)?row.winner===row.challengerSeat:null,
+  ...(row.actions?{actions:row.actions}:{})
+ };
+}
+function replayGame(deck,game){
+ const {packs,state}=fresh(deck,game.seed,game.first);
+ let cursor=state;
+ for(const choice of game.opening||[]){
+  if(cursor.pending?.kind!=='opening-mulligan'||cursor.pending.player!==choice.actor)return {ok:false,error:'opening-actor'};
+  const legal=legalUniversalActions(packs,cursor);
+  const action=legal.find(item=>item.type==='openingMulligan'&&item.mode===choice.mode);
+  if(!action)return {ok:false,error:'opening-action'};
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor:choice.actor});
+ }
+ for(const step of game.actions||[]){
+  if(cursor.status!=='playing')return {ok:false,error:'already-finished',step:step.step};
+  const actor=cursor.pending?.player??cursor.active;
+  if(actor!==step.actor)return {ok:false,error:'actor',step:step.step,actor,expected:step.actor};
+  const legal=legalUniversalActions(packs,cursor);
+  const action=legal.find(item=>JSON.stringify(item)===JSON.stringify(step.action));
+  if(!action)return {ok:false,error:'action',step:step.step,action:step.action};
+  try{cursor=dispatchUniversalAction(packs,cursor,action,{actor});}
+  catch(error){return {ok:false,error:error.message,step:step.step};}
+ }
+ const life=cursor.players.map(player=>player.life.length);
+ const sameLife=life.length===game.life.length&&life.every((n,index)=>n===game.life[index]);
+ const ok=cursor.status===(game.finished?'finished':'playing')&&cursor.winner===game.winner&&sameLife&&(game.actions||[]).length===game.steps;
+ return {ok,status:cursor.status,winner:cursor.winner,life,steps:(game.actions||[]).length};
 }
 const wanted=new Set((process.env.AI_V3_TITLES||'').split(',').filter(Boolean));
 const decks=(POOL==='battle'?battleDecks():mainDecks()).filter(deck=>!wanted.size||wanted.has(deck.title)||wanted.has(deck.id));
@@ -216,6 +248,11 @@ for(const deck of decks){
     const view=gameView(row);
     view.acts=row.acts[challenger]||{};
     view.opening=openings.get(key).choices;
+    if(RECORD){
+     const replay=replayGame(deck,view);
+     view.replay=replay.ok;
+     if(!replay.ok)view.replayError=replay;
+    }
     games.push(view);
     samples.push(...(row.ms[challenger]||[]));
     walls.push(row.wall);
@@ -268,5 +305,19 @@ for(const deck of decks){
  }
  report.titles[deck.id]=bucket;
 }
+if(RECORD){
+ let replayed=0,replayFailed=0;
+ for(const bucket of Object.values(report.titles)){
+  for(const mode of Object.values(bucket.byMode||{})){
+   for(const game of mode.games||[]){
+    if(!game.actions)continue;
+    replayed++;
+    if(game.replay!==true)replayFailed++;
+   }
+  }
+ }
+ report.replay={replayed,replayFailed};
+}
 console.log(JSON.stringify(report,null,2));
 void hardAiReport();void aiV3Report();
+if(RECORD&&report.replay.replayFailed)process.exitCode=1;

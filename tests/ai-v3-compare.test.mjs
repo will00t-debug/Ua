@@ -141,3 +141,24 @@ test('compare: pending controllers are not the same boundary',()=>{
  assert.equal(samePlayer.rows.length,2);
  console.log('compare pending',controller,'active',pending.active);
 });
+
+test('compare: an unchosen life is not a scored attack',()=>{
+ const raid={type:'raid',uid:'0-11',baseUid:'0-8'};
+ const play={type:'play',uid:'0-11',line:'front'};
+ const open={action:raid,search:500,boundary:'pending',pending:'attack-life-target',damageOpen:true,
+  settled:false,stopReason:'unhandled',stopPending:'attack-life-target',stopPlayer:0};
+ const home={action:play,search:100,boundary:'returned',settled:true,damageOpen:false};
+ const ranked=comparedLines([open,home]);
+ assert.equal(ranked.unresolved,1);
+ assert.equal(ranked.rows.length,1);
+ assert.equal(ranked.rows[0].action.type,'play');
+ const only=comparedLines([open]);
+ assert.equal(only.rows.length,0);
+ assert.equal(only.unresolved,1);
+ const loss=comparedLines([
+  {action:play,search:-100000,boundary:'terminal',settled:true},
+  open
+ ]);
+ assert.equal(loss.contested,true);
+ assert.equal(loss.rows.length,0);
+});
