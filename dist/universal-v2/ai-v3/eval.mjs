@@ -1,7 +1,7 @@
 // Static position value. It deliberately does not look a turn ahead:
 // a front body is not worth more than developing energy. The beam search
 // has to see the opponent's turn before a blocker outranks that energy.
-import {legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalImpact,universalImpactNull} from '../engine.mjs';
+import {legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
 import {packOf} from './observation.mjs';
 import {strategyScore} from './strategy.mjs';
 
@@ -134,7 +134,11 @@ function battleOptions(pack,state,actor){
     delta=boardChange(pack,state,actor,defender,rested);
    }else{
     const removed=front.map(card=>card?.uid===blocker.uid?null:card);
-    delta=boardChange(pack,state,actor,defender,removed);
+    const body=boardChange(pack,state,actor,defender,removed);
+    // A proven refill pays with a known hand card. It does not read the deck.
+    // The body is no longer the whole cost when that card enters ready.
+    const plan=defender===actor&&bp>=4000?provenRebuild(pack,state,actor,blocker.uid):null;
+    delta=plan?.ok&&body<0?Math.max(body,-2.2):body;
     const extra=impact>0&&!universalImpactNull(pack,state,blocker)?impact:0;
     delta+=lifeChange(state,actor,defender,extra);
    }
@@ -142,6 +146,144 @@ function battleOptions(pack,state,actor){
   rows.push({action,delta,damage,impact});
  }
  return rows;
+}
+function apOnNextTurn(state,actor){
+ const own=(state.players?.[actor]?.ownTurns||0)+1;
+ if(own>=3)return 3;
+ if(own===1&&actor===state.first)return 1;
+ return 2;
+}
+function colorEnergy(pack,state,actor){
+ try{return universalEnergyByColor(pack,state,actor)||{};}
+ catch{return {};}
+}
+// The next own turn can replace a body only from the known hand and the
+// public board. A normal play enters rested, so it cannot attack that turn.
+// A paid Raid or a printed active entry can. The deck is not consulted, and
+// a plan that takes a generator off the energy line is not a refill.
+export function provenRebuild(pack,state,actor,removedUid){
+ const mine=state?.players?.[actor];
+ if(!mine)return {ok:false,reason:'none'};
+ const catalog=packOf(pack,actor).cards;
+ const front=(mine.front||[]).map(card=>card&&card.uid===removedUid?null:card);
+ const colors=colorEnergy(pack,state,actor);
+ const ap=apOnNextTurn(state,actor);
+ const energy=(mine.energy||[]).filter(Boolean).map(card=>card.uid).join(',');
+ const place=(slot,card)=>front.map((body,index)=>index===slot?card:body);
+ const readyEnough=cards=>cards.every(card=>!card||(Number(universalBp(pack,state,card))||Number(catalog[card.cardId]?.bp)||0)>=4000);
+ for(const card of mine.hand||[]){
+  const printed=catalog[card?.cardId];
+  if(!printed||printed.type!=='character'||(Number(printed.bp)||0)<4000)continue;
+  if((printed.ap||1)>ap)continue;
+  if((printed.energy||0)>(colors[printed.color]||0))continue;
+  const added={...card,ready:true,cardId:printed.id};
+  if(printed.enterAlwaysActive===true||(printed.enterActiveIfOpponentRest===true&&
+   (state.players[1-actor].front||[]).some(body=>body&&body.ready===false))){
+   const slot=front.findIndex(body=>!body);
+   if(slot<0)continue;
+   const next=place(slot,added);
+   if(!readyEnough(next))continue;
+   if((mine.energy||[]).filter(Boolean).map(body=>body.uid).join(',')!==energy)continue;
+   return {ok:true,cardId:printed.id,mode:'active'};
+  }
+  if(!printed.raidName)continue;
+  const names=new Set([printed.raidName,...(printed.raidBaseNames||[])].map(squash));
+  const slot=front.findIndex(body=>body&&names.has(squash(catalog[body.cardId]?.name)));
+  if(slot<0)continue;
+  const next=place(slot,added);
+  if(!readyEnough(next))continue;
+  return {ok:true,cardId:printed.id,mode:'raid'};
+ }
+ return {ok:false,reason:'unproven'};
+}
+function listedEffects(printed,slot){
+ const list=printed?.effects?.[slot];
+ return Array.isArray(list)?list:[];
+}
+function effectCanStart(pack,state,actor,effect){
+ if(!effect||effect.when)return false;
+ const mine=state.players?.[actor];
+ if(!mine)return false;
+ if(Number(effect.ap)>0&&(mine.apCards||[]).filter(card=>card?.ready).length<Number(effect.ap))return false;
+ const outside=(mine.outside||[]).length;
+ if(effect.op==='removeOutsideThen'&&outside<(effect.count||1))return false;
+ if((effect.op==='optionalRemoveHandThen'||effect.op==='nameEnergyRevealHandRemove')&&!(mine.hand||[]).length)return false;
+ if(effect.op==='nameEnergyRevealHandRemove')return false;
+ const known=effect.op==='draw'||effect.op==='drawDiscard'||effect.op==='buffSelf'||
+  effect.op==='buffOwnField'||effect.op==='buffOwnTraitAllTurn'||effect.op==='skipNextActiveOppRest'||
+  effect.op==='removeOutsideThen';
+ return known;
+}
+function payableTiming(pack,state,actor,attacker,timing){
+ const catalog=packOf(pack,actor).cards;
+ const own=catalog[attacker?.cardId];
+ const slots=timing==='declare'?['onAttack']:timing==='hit'?['unblocked']:timing==='win'?['win']:[];
+ const effects=slots.flatMap(slot=>listedEffects(own,slot));
+ if(timing==='declare'){
+  for(const line of ['front','energy'])for(const card of state.players[actor][line]||[]){
+   if(!card||card.uid===attacker.uid)continue;
+   effects.push(...listedEffects(catalog[card.cardId],'allyAttackEnd'));
+  }
+ }
+ return effects.some(effect=>effectCanStart(pack,state,actor,effect));
+}
+// A swing that a higher ready body can answer, with nothing removed and no
+// life dealt, rests our attacker through the opponent's turn. The returned
+// position has already refreshed that attacker, so the missed block is scored
+// here. A payable declaration effect is a different swing. Hit and win
+// effects are not, because this swing neither connects nor wins.
+export function blankSwingAdjustment(pack,state,actor,action){
+ if(action?.type!=='attack'||state?.pending||state?.status!=='playing')return 0;
+ const attacker=(state.players?.[actor]?.front||[]).find(card=>card?.uid===action.uid);
+ if(!attacker?.ready)return 0;
+ let impact=0,atkBp=0;
+ try{
+  impact=universalImpact(pack,state,attacker)||0;
+  atkBp=Number(universalBp(pack,state,attacker))||0;
+ }catch{return 0;}
+ const walls=(state.players[1-actor]?.front||[]).filter(card=>card?.ready);
+ const blank=walls.some(wall=>{
+  const bp=Number(universalBp(pack,state,wall))||0;
+  if(!(bp>atkBp))return false;
+  const leak=impact>0&&!universalImpactNull(pack,state,wall)?impact:0;
+  return leak<=0;
+ });
+ if(!blank)return 0;
+ // Hit and win effects do not start: the higher body stops the attack, and
+ // impact does not leak. Only a declaration effect that can actually be paid
+ // makes this swing different from resting for nothing.
+ if(payableTiming(pack,state,actor,attacker,'declare'))return 1;
+ let missed=0;
+ for(const threat of walls){
+  let damage=1,threatBp=0,threatImpact=0;
+  try{
+   damage=universalAttackDamage(pack,state,threat)||1;
+   threatBp=Number(universalBp(pack,state,threat))||0;
+   threatImpact=universalImpact(pack,state,threat)||0;
+  }catch{continue;}
+  const mineBp=Number(universalBp(pack,state,attacker))||0;
+  let blocked;
+  if(mineBp>threatBp){
+   const rested=(state.players[actor].front||[]).map(card=>card?.uid===attacker.uid?{...card,ready:false}:card);
+   blocked=boardChange(pack,state,actor,actor,rested);
+  }else{
+   const removed=(state.players[actor].front||[]).map(card=>card?.uid===attacker.uid?null:card);
+   blocked=boardChange(pack,state,actor,actor,removed);
+   if(threatImpact>0&&!universalImpactNull(pack,state,attacker))blocked+=lifeChange(state,actor,actor,threatImpact);
+  }
+  const passed=lifeChange(state,actor,actor,damage);
+  missed=Math.max(missed,blocked-passed);
+ }
+ return missed>0?-missed:0;
+}
+export function battleActionValue(pack,state,actor,action){
+ const rows=battleOptions(pack,state,actor);
+ const row=rows.find(item=>item.action?.type===action?.type&&(item.action?.uid??null)===(action?.uid??null));
+ if(!row)return null;
+ const best=battleWindowDelta(pack,state,actor);
+ const base=evaluate(pack,state,actor);
+ if(!Number.isFinite(base)||!Number.isFinite(best))return null;
+ return base-best+row.delta;
 }
 export function battleWindowAction(pack,state,actor){
  const rows=battleOptions(pack,state,actor);

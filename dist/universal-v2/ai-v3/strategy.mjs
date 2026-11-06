@@ -411,6 +411,40 @@ function blockerLives(pack,state,viewer,action){
  if(!card||!attacker)return false;
  return bpOf(pack,state,card)>=bpOf(pack,state,attacker);
 }
+// A small generator's front line can finish, or stop early with a higher raw
+// score, while its energy line is still cut. That is not a reason to put the
+// generator on the front. A 4000 body is a different play and stays where the
+// search put it. The redirect applies only when the energy line did not get
+// home, and either a payable 4000 is still in hand with AP left for both, or
+// a body is already on the front and this front line merely got home first.
+export function preferEnergyGenerator(pack,state,actor,choice,rows){
+ if(choice?.type!=='play'||choice.line!=='front'||!choice.uid)return choice;
+ const catalog=packOf(pack,actor).cards;
+ const hand=state.players?.[actor]?.hand||[];
+ const chosen=hand.find(card=>card?.uid===choice.uid);
+ const printed=chosen&&catalog[chosen.cardId];
+ if(!printed||!(printed.gen>0)||(Number(printed.bp)||0)>=4000)return choice;
+ const front=rows.find(row=>row?.action?.type==='play'&&row.action.line==='front'&&row.action.uid===choice.uid);
+ const energy=rows.find(row=>row?.action?.type==='play'&&row.action.line==='energy'&&row.action.uid===choice.uid&&row.executed!==false);
+ if(!energy||energy.boundary==='terminal')return choice;
+ // Both lines reached home and energy scored no better: the front placement won fairly.
+ if(front?.boundary==='returned'&&energy.boundary==='returned'&&energy.search<=front.search)return choice;
+ const cut=energy.boundary!=='returned';
+ if(!cut)return choice;
+ const colors=colorsOf(pack,state,actor);
+ const ready=(state.players?.[actor]?.apCards||[]).filter(card=>card?.ready).length;
+ const chosenAp=printed.ap||1;
+ const mainWaiting=hand.some(card=>{
+  if(!card||card.uid===choice.uid)return false;
+  const body=catalog[card.cardId];
+  if(!body||body.type!=='character'||(Number(body.bp)||0)<4000)return false;
+  if((body.energy||0)>(colors[body.color]||0))return false;
+  return ready>=chosenAp+(body.ap||1);
+ });
+ const frontHasBody=(state.players?.[actor]?.front||[]).some(Boolean);
+ if(mainWaiting||(front?.boundary==='returned'&&frontHasBody))return energy.action;
+ return choice;
+}
 // A cut search used to copy the energy-before-front rank. That is right when
 // the line still needs a generator. It is the wrong backup once current
 // energy and AP already pay a large front body, and that body is not an

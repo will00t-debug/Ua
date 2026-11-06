@@ -3,7 +3,7 @@
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
 import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
-import {evaluate as staticValue,terminalValue,keepScore} from './eval.mjs';
+import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
 import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch} from './strategy.mjs';
@@ -925,6 +925,13 @@ function finishScore(pack,state,actor,action,limits,ctx){
   ctx.stats.boundary='open';
   return lineView(ctx,null);
  }
+ const opened=state.pending?.kind;
+ if(opened==='block'||opened==='effect-block-floor'){
+  const battle=battleActionValue(pack,state,actor,action);
+  if(Number.isFinite(battle))ctx.stats.battleScore=battle;
+ }
+ const swing=blankSwingAdjustment(pack,state,actor,action);
+ if(swing)ctx.stats.swing=swing;
  const stepped=billedStep(ctx,pack,state,action);
  if(stepped.error)return null;
  if(stepped.budget){
@@ -939,10 +946,11 @@ function finishScore(pack,state,actor,action,limits,ctx){
  ctx.stats.executed=true;
  ctx.stats.actorDecisions++;
  noteStep(ctx,action,'root');
- if(limits.pass==='basic')return lineView(ctx,finishLine(pack,next,actor,ctx));
- const value=ctx.plan==='rollout'
+ const raw=limits.pass==='basic'?finishLine(pack,next,actor,ctx):ctx.plan==='rollout'
   ?searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions)
   :layered(pack,next,actor,ctx,limits.actorDecisions??2);
+ const swingValue=ctx.stats.swing||0;
+ const value=Number.isFinite(raw)&&Math.abs(raw)<90000?raw+swingValue:raw;
  return lineView(ctx,value);
 }
 export function searchPosition(pack,state,actor,limits={},table=null){

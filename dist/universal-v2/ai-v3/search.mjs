@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -87,7 +87,20 @@ const BOUNDARY_RANK={terminal:5,returned:4,yielded:3,pending:2,open:1};
 // A finished game outranks a returned turn. When nothing got home, lines
 // that stopped on the same boundary still compete. A pass that got further
 // than a cut play does not win that comparison by itself.
+function battleHorizon(scored){
+ const marked=scored.filter(row=>row&&Number.isFinite(row.battleScore));
+ if(marked.length!==scored.length||marked.length<2)return null;
+ if(scored.some(row=>row.boundary==='terminal'&&Math.abs(row.search)>=90000))return null;
+ return {rows:marked.map(row=>({...row,search:row.battleScore,horizon:'battle'})),
+  shared:true,contested:false,unresolved:scored.filter(row=>row.damageOpen).length,horizon:'battle'};
+}
 export function comparedLines(scored){
+ // A block choice carries the public result of that one attack. Lines that
+ // got home and lines still on the life window compare that result. The
+ // stored boundary stays what the search actually reached. A row with no
+ // battle score is unchanged: an unchosen life is still not a finished line.
+ const battle=battleHorizon(scored);
+ if(battle)return battle;
  // A line still waiting to choose LIFE has not scored the attack. Its static
  // number stays out of the comparison, but it still blocks a finished loss.
  const unresolved=scored.filter(row=>row&&row.damageOpen).length;
@@ -397,7 +410,9 @@ export function chooseAiV3Action(pack,state,options={}){
     leafSource:sample.leafSource??null,leafProgress:sample.leafProgress??'',
     leafOwnTurns:sample.leafOwnTurns??null,
     damageOpen:!!sample.damageOpen,stopPending:sample.stopPending??null,
-    stopPlayer:sample.stopPlayer??null,stopReason:sample.stopReason??null};
+    stopPlayer:sample.stopPlayer??null,stopReason:sample.stopReason??null,
+    battleScore:Number.isFinite(sample.battleScore)?sample.battleScore:null,
+    swing:sample.swing||0};
   };
   const searchStarted=performance.now();
   let basicSpent=0,deepSpent=0;
@@ -465,6 +480,8 @@ export function chooseAiV3Action(pack,state,options={}){
    leafOwnTurns:item.leafOwnTurns??null,
    damageOpen:!!item.damageOpen,stopPending:item.stopPending??null,
    stopPlayer:item.stopPlayer??null,stopReason:item.stopReason??null,
+   battleScore:Number.isFinite(item.battleScore)?item.battleScore:null,
+   swing:item.swing||0,
    followBranches:item.followBranches,maxDepth:item.maxDepth,sequence:item.sequence}));
   const followBranches=scored.reduce((sum,item)=>sum+(item.followBranches||0),0);
   const maxDepth=scored.reduce((sum,item)=>Math.max(sum,item.maxDepth||1),1);
@@ -493,7 +510,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const energySample=legal.find(action=>action.type==='move');
   const energyView=diagnose&&energySample?cachedMoveDevelopment(pack,state,actor,energySample):null;
   if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
-   const kept=keptEnergy(pack,state,actor,legal,choice,null,strategy);
+   const kept=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -532,7 +549,7 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched',()=>{settle();return spent();});
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
-  const kept=keptEnergy(pack,state,actor,legal,exact,row,strategy);
+  const kept=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
   const keptRow=scored.find(item=>same(item.action,kept))||row;
   if(keptRow?.settled)report.settledChoices++;
   settle();
