@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -258,8 +258,13 @@ export function chooseAiV3Action(pack,state,options={}){
   const total=pinned?options.nodes:(combat?64:48);
   const ms=Number.isFinite(options.ms)?options.ms:(pinned?1e9:(combat?64:48));
   const strategy=options.strategy==='score'||options.strategy==='order'||options.strategy==='reply'?options.strategy:null;
+  const deadline=Number.isFinite(ms)&&ms<=0?clockStart-1:clockStart+ms;
+  const pool={n:total};
+  const nodesBefore=report.nodes;
   const rankStarted=performance.now();
-  const ordered=rankLegal(pack,probe,actor,legal,strategy);
+  const beforeRank=pool.n;
+  const ordered=bindProbeBudget({pool,deadline,now},()=>rankLegal(pack,probe,actor,legal,strategy));
+  report.nodes+=beforeRank-pool.n;
   timing.rankMs=performance.now()-rankStarted;
   if(options.mode==='prior'){
    report.prior++;
@@ -267,26 +272,25 @@ export function chooseAiV3Action(pack,state,options={}){
    return finish(exact,'prior',{actor,seed,worlds:worlds.length,nodesUsed:0,
     candidates:ordered.slice(0,beam).map(action=>({action}))},started);
   }
-  const ranked=selectCandidates(pack,probe,actor,legal,beam,strategy);
-  const deadline=Number.isFinite(ms)&&ms<=0?clockStart-1:clockStart+ms;
+  const beforeSelect=pool.n;
+  const ranked=bindProbeBudget({pool,deadline,now},()=>selectCandidates(pack,probe,actor,legal,beam,strategy));
+  report.nodes+=beforeSelect-pool.n;
   if(options.mode==='ismcts'){
    report.ismcts++;
-   const pool={n:total};
+   const ismctsPool={n:total};
    const picked=chooseIsmctsAction(pack,worlds,actor,legal,{
-    nodes:total,pool,beam:1,seed,
+    nodes:total,pool:ismctsPool,beam:1,seed,
     actorDecisions:options.actorDecisions??3,
     opponentDecisions:options.opponent===false?0:(options.opponentDecisions??3),
     deadline
    });
-   report.nodes+=total-pool.n;
+   report.nodes+=total-ismctsPool.n;
    const exact=legal.find(item=>same(item,picked?.action));
    if(!exact)return fallback(pack,state,legal,started,'ismcts-empty');
    return finish(exact,'ismcts',{actor,seed,worlds:worlds.length,visits:picked.visits,
-    nodesUsed:total-pool.n,fallback:false},started);
+    nodesUsed:total-ismctsPool.n,fallback:false},started);
   }
   const opponentDecisions=options.opponent===false?0:(options.opponentDecisions??MATCH_LIMITS.opponentDecisions);
-  const pool={n:total};
-  const nodesBefore=report.nodes;
   resetHardAiReport();
   // The old 16-node slice passed moves and front plays that the 48-node
   // baseline took, then the fallback copied that pass. Those nodes stay in

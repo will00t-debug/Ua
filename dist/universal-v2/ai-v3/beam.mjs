@@ -6,7 +6,7 @@ import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {evaluate as staticValue,terminalValue,keepScore} from './eval.mjs';
 import {archetypeRank,actionGroup} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder,moveDevelopment} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget} from './strategy.mjs';
 import {visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -889,10 +889,13 @@ export function scoreLine(pack,state,actor,action,limits){
    plan:limits.plan||(limits.finish===false?'tree':'rollout')}
  };
  ctx.finish=ctx.plan==='rollout';
+ return bindProbeBudget(ctx,()=>finishScore(pack,state,actor,action,limits,ctx));
+}
+function finishScore(pack,state,actor,action,limits,ctx){
  if(!room(ctx)){
   ctx.stats.executed=false;
   ctx.stats.settled=false;
-  ctx.stats.cut=!(pool.n>0)?'nodes':'time';
+  ctx.stats.cut=!(ctx.pool.n>0)?'nodes':'time';
   ctx.stats.limit=ctx.stats.cut;
   ctx.stats.boundary='open';
   return lineView(ctx,null);

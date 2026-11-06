@@ -3,7 +3,7 @@
 // the field, a ready front that can threaten, and a block that survives.
 // This module does not import or call the frozen search. Card numbers are
 // not special cases. The three callers turn on one feature at a time.
-import {universalBp,universalEnergy,universalEnergyByColor} from '../engine.mjs';
+import {universalBp,universalEnergy,universalEnergyByColor,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {packOf} from './observation.mjs';
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
@@ -92,6 +92,24 @@ function liveBlockers(pack,state,player){
  return live;
 }
 const moveViews=new WeakMap();
+let probeBudget=null;
+// Lethal checks made while a search is running spend that search's pool and
+// clock. A direct call, outside a search, still resolves the short line.
+export function bindProbeBudget(budget,fn){
+ const previous=probeBudget;
+ probeBudget=budget||null;
+ try{return fn();}
+ finally{probeBudget=previous;}
+}
+function takeProbeNode(){
+ const budget=probeBudget;
+ if(!budget)return true;
+ const expired=typeof budget.now==='function'&&budget.now()>budget.deadline;
+ if(expired||!(budget.pool?.n>0))return false;
+ budget.pool.n--;
+ if(Number.isInteger(budget.lineSpent))budget.lineSpent++;
+ return true;
+}
 function plainColors(colors){
  const out={};
  for(const [color,value] of Object.entries(colors||{}))if(value)out[color]=value;
@@ -154,24 +172,144 @@ function assessMove(pack,state,actor,action){
  const hand=(state.players[actor].hand||[]).map(card=>catalog[card?.cardId]).filter(Boolean);
  const wantsColor=hand.some(printed=>dropped.includes(printed.color)&&(printed.energy||0)>(afterColors[printed.color]||0));
  const rawStrip=dropped.length>0&&after<parts.curve&&wantsColor;
- const benefit=moveBenefit(pack,state,actor,action,afterColors,after,parts);
+ const judged=moveBenefit(pack,state,actor,action,afterColors,after,parts);
+ const benefit=judged?.benefit||null;
+ const lethal=judged?.lethal||'no';
  const reason=!dropped.length?'energy-held':
   benefit==='lethal'?'lethal':benefit==='raid'?'raid':benefit==='block'?'block':
-  benefit==='enough'?'enough':rawStrip?'curve-hand':'open';
+  benefit==='enough'?'enough':lethal==='unproven'?'unproven':rawStrip?'curve-hand':'open';
  return {before,after,beforeColors,afterColors,dropped,curve:parts.curve,wantsColor,
-  strip:rawStrip&&!benefit,benefit:benefit||null,reason};
+  strip:rawStrip&&!benefit,benefit,lethal,lethalLine:judged?.line||null,reason};
+}
+function probeStep(pack,cursor,action){
+ if(!takeProbeNode())return {stop:'budget'};
+ const seat=cursor.pending?.player??cursor.active;
+ try{return {state:dispatchUniversalAction(pack,cursor,action,{actor:seat})};}
+ catch{return {stop:'error'};}
+}
+function lifeVerdict(cursor,actor){
+ if(!cursor)return null;
+ if(cursor.status==='finished')return cursor.winner===actor?'lethal':'no';
+ const pending=cursor.pending;
+ if(pending?.kind==='attack-life-target'){
+  const life=cursor.players[pending.defender]?.life?.length||0;
+  return life>0&&(pending.count||0)>=life?'lethal':'no';
+ }
+ if(pending?.kind==='life-trigger')return 'unproven';
+ return null;
+}
+function forcedPublic(pack,cursor){
+ let legal=[];
+ try{legal=legalUniversalActions(pack,cursor);}catch{return null;}
+ if(legal.length!==1)return null;
+ const action=legal[0];
+ if(action.type==='chooseAttackLife'||action.type==='chooseTrigger'||action.type==='chooseLifeEffect')return null;
+ return action;
+}
+// One short line: move, pass to the attack, then every legal block. Beating
+// one blocker is not life damage. Impact and impact-null come from the
+// engine result. Hidden life cards and hands are not read. Anything the
+// line cannot settle, including a spent search budget, stays unproven.
+function confirmMoveLethal(pack,state,actor,action){
+ const line=[];
+ const note=(cursor,step)=>{
+  if(line.length>=8)return;
+  line.push({type:step?.type||null,uid:step?.uid??null,phase:cursor?.phase||null,
+   pending:cursor?.pending?.kind||null,life:cursor?.players?.[1-actor]?.life?.length??null,
+   status:cursor?.status||null,winner:cursor?.winner??null});
+ };
+ const act=(cursor,step)=>{
+  const stepped=probeStep(pack,cursor,step);
+  if(stepped.state)note(stepped.state,step);
+  return stepped;
+ };
+ let opened=act(state,action);
+ if(!opened.state)return {verdict:'unproven',line};
+ let cursor=opened.state;
+ for(let guard=0;guard<8&&cursor.status==='playing';guard++){
+  const judged=lifeVerdict(cursor,actor);
+  if(judged)return {verdict:judged,line};
+  if(cursor.pending){
+   const only=forcedPublic(pack,cursor);
+   if(!only)return {verdict:'unproven',line};
+   const stepped=act(cursor,only);
+   if(!stepped.state)return {verdict:'unproven',line};
+   cursor=stepped.state;
+   continue;
+  }
+  const seat=cursor.active;
+  if(seat!==actor)return {verdict:'no',line};
+  if(cursor.phase==='attack')break;
+  if(cursor.phase!=='move'&&cursor.phase!=='main'&&cursor.phase!=='start')return {verdict:'unproven',line};
+  let legal=[];
+  try{legal=legalUniversalActions(pack,cursor);}catch{return {verdict:'unproven',line};}
+  const pass=legal.find(entry=>entry.type==='next');
+  if(!pass)return {verdict:'unproven',line};
+  const stepped=act(cursor,pass);
+  if(!stepped.state)return {verdict:'unproven',line};
+  cursor=stepped.state;
+ }
+ const reached=lifeVerdict(cursor,actor);
+ if(reached)return {verdict:reached,line};
+ if(cursor.status!=='playing'||cursor.phase!=='attack'||cursor.pending)return {verdict:'unproven',line};
+ let legal=[];
+ try{legal=legalUniversalActions(pack,cursor);}catch{return {verdict:'unproven',line};}
+ const attack=legal.find(entry=>entry.type==='attack'&&entry.uid===action.uid&&!entry.targetUid);
+ if(!attack)return {verdict:'no',line};
+ const swung=act(cursor,attack);
+ if(!swung.state)return {verdict:'unproven',line};
+ cursor=swung.state;
+ const afterSwing=lifeVerdict(cursor,actor);
+ if(afterSwing)return {verdict:afterSwing,line};
+ if(cursor.pending?.kind!=='block')return {verdict:'unproven',line};
+ let blocks=[];
+ try{blocks=legalUniversalActions(pack,cursor);}catch{return {verdict:'unproven',line};}
+ const answers=blocks.filter(entry=>entry.type==='chooseBlock'&&entry.uid);
+ const pass=blocks.find(entry=>entry.type==='chooseBlock'&&(entry.uid===null||entry.uid===undefined));
+ const defenses=answers.length?answers:(pass?[pass]:[]);
+ if(!defenses.length)return {verdict:'unproven',line};
+ let lethal=0,saved=0,open=0;
+ for(const defense of defenses){
+  const stepped=act(cursor,defense);
+  if(!stepped.state){open++;continue;}
+  let followed=stepped.state;
+  let verdict=null;
+  for(let guard=0;guard<6&&!verdict;guard++){
+   verdict=lifeVerdict(followed,actor);
+   if(verdict)break;
+   if(followed.status!=='playing'){verdict='no';break;}
+   if(!followed.pending){verdict='no';break;}
+   const only=forcedPublic(pack,followed);
+   if(!only){verdict='unproven';break;}
+   const next=act(followed,only);
+   if(!next.state){verdict='unproven';break;}
+   followed=next.state;
+  }
+  if(!verdict)verdict='unproven';
+  if(verdict==='lethal')lethal++;
+  else if(verdict==='no')saved++;
+  else open++;
+ }
+ if(saved)return {verdict:'no',line};
+ if(lethal&&!open)return {verdict:'lethal',line};
+ return {verdict:'unproven',line};
 }
 function moveBenefit(pack,state,actor,action,afterColors,after,parts){
- if(after>=parts.curve)return 'enough';
+ if(after>=parts.curve)return {benefit:'enough',lethal:'no'};
  const opp=1-actor;
  const body=(state.players[actor].energy||[]).find(card=>card?.uid===action.uid);
  const catalog=packOf(pack,actor).cards;
+ let lethal='no',line=null;
  if(body&&body.ready!==false){
   const life=state.players[opp]?.life;
   const lifeCount=Array.isArray(life)?life.length:Number(life)||0;
+  if(lifeCount===1){
+   const confirmed=confirmMoveLethal(pack,state,actor,action);
+   lethal=confirmed.verdict;
+   line=confirmed.line;
+   if(lethal==='lethal')return {benefit:'lethal',lethal,line};
+  }
   const bp=bpOf(pack,state,body);
-  const walls=(state.players[opp].front||[]).filter(Boolean);
-  if(lifeCount===1&&(!walls.length||walls.some(wall=>bp>bpOf(pack,state,wall))))return 'lethal';
   const baseName=squash(catalog[body.cardId]?.name);
   if(baseName){
    for(const card of state.players[actor].hand||[]){
@@ -179,14 +317,14 @@ function moveBenefit(pack,state,actor,action,afterColors,after,parts){
     if(!printed?.raidName)continue;
     const names=[printed.raidName,...(printed.raidBaseNames||[])].map(squash);
     if(!names.includes(baseName))continue;
-    if((printed.energy||0)<=(afterColors[printed.color]||0))return 'raid';
+    if((printed.energy||0)<=(afterColors[printed.color]||0))return {benefit:'raid',lethal,line};
    }
   }
   const ownFront=(state.players[actor].front||[]).filter(Boolean);
   const threats=(state.players[opp].front||[]).filter(card=>card?.ready);
-  if(!ownFront.length&&threats.some(wall=>bp>=bpOf(pack,state,wall)))return 'block';
+  if(!ownFront.length&&threats.some(wall=>bp>=bpOf(pack,state,wall)))return {benefit:'block',lethal,line};
  }
- return null;
+ return {benefit:null,lethal,line};
 }
 export function strategyParts(pack,state,actor){
  const catalog=packOf(pack,actor).cards;

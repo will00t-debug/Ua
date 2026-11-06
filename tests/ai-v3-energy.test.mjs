@@ -8,7 +8,7 @@ import {newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {rankLegal} from '../dist/universal-v2/ai-v3/beam.mjs';
-import {moveDevelopment,replyOrder} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {moveDevelopment,replyOrder,bindProbeBudget} from '../dist/universal-v2/ai-v3/strategy.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 
 const OPTS={...MATCH_LIMITS,seed:1,ms:1e9,nodes:48,hardNodes:0};
@@ -94,6 +94,59 @@ function climb(packs,state){
  return {energy:universalEnergy(packs,cursor,actor),colors:universalEnergyByColor(packs,cursor,actor),played,pending:cursor.pending?.kind||null};
 }
 const bleach=officialV2Pack('bleach');
+function cardOf(id){return bleach.cards[id];}
+function priceyOf(color){
+ return Object.values(bleach.cards).find(card=>card.type==='character'&&card.color===color&&card.energy>=4);
+}
+function prepare(attackerId,blockerIds,lifeId='BLC-1-042'){
+ const attacker=cardOf(attackerId);
+ const pricey=priceyOf(attacker.color);
+ const extra={[attackerId]:4,[pricey.id]:2,[lifeId]:2};
+ for(const id of blockerIds)extra[id]=Math.max(extra[id]||0,2);
+ const counts=cheapDeck(bleach,extra);
+ const {packs,state}=toMove(bleach,counts);
+ for(const card of [...state.players[0].hand])state.players[0].deck.push(card);
+ state.players[0].hand.length=0;
+ state.players[0].hand.push(take(state,0,pricey.id));
+ place(state,0,take(state,0,attackerId),'energy',0);
+ for(let slot=0;slot<4;slot++)if(state.players[1].front[slot]){
+  state.players[1].deck.push(state.players[1].front[slot]);
+  state.players[1].front[slot]=null;
+ }
+ blockerIds.forEach((id,slot)=>place(state,1,take(state,1,id),'front',slot));
+ while(state.players[1].life.length>1)state.players[1].deck.push(state.players[1].life.pop());
+ const revealed=state.players[1].life[0];
+ if(revealed.cardId!==lifeId){
+  const quiet=take(state,1,lifeId);
+  state.players[1].deck.push(revealed);
+  state.players[1].life[0]=quiet;
+ }
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const move=legalUniversalActions(packs,state).find(action=>action.type==='move'&&action.uid===state.players[0].energy[0].uid);
+ return {packs,state,move,pricey};
+}
+function blockedAttack(packs,state,move){
+ const script=[];
+ let cursor=dispatchUniversalAction(packs,state,move,{actor:0});
+ script.push({type:'move',phase:cursor.phase,pending:cursor.pending?.kind||null,life:cursor.players[1].life.length});
+ for(let guard=0;guard<4&&cursor.status==='playing'&&!cursor.pending&&cursor.phase!=='attack';guard++){
+  const pass=legalUniversalActions(packs,cursor).find(action=>action.type==='next');
+  cursor=dispatchUniversalAction(packs,cursor,pass,{actor:0});
+  script.push({type:'next',phase:cursor.phase,pending:cursor.pending?.kind||null,life:cursor.players[1].life.length});
+ }
+ const attack=legalUniversalActions(packs,cursor).find(action=>action.type==='attack'&&action.uid===move.uid&&!action.targetUid);
+ if(!attack)return {script,attack:false,cursor};
+ cursor=dispatchUniversalAction(packs,cursor,attack,{actor:0});
+ script.push({type:'attack',phase:cursor.phase,pending:cursor.pending?.kind||null,life:cursor.players[1].life.length,status:cursor.status});
+ if(cursor.pending?.kind!=='block')return {script,attack:true,cursor};
+ const answers=legalUniversalActions(packs,cursor).filter(action=>action.type==='chooseBlock'&&action.uid);
+ const results=answers.map(action=>{
+  const followed=dispatchUniversalAction(packs,cursor,action,{actor:1});
+  script.push({type:'chooseBlock',uid:action.uid,life:followed.players[1].life.length,status:followed.status,winner:followed.winner??null,pending:followed.pending?.kind||null});
+  return followed;
+ });
+ return {script,attack:true,cursor,results};
+}
 
 test('energy: a low curve still moves when the color left covers it',()=>{
  const generator=Object.values(bleach.cards).find(card=>card.type==='character'&&card.energy===0&&card.gen>=1&&!card.frontForbidden);
@@ -208,4 +261,91 @@ test('energy: recorded move-phase losses keep the color when the hand is above i
   assert.ok(keepLine.energy>moveLine.energy,item.id+' keep '+keepLine.energy+' move '+moveLine.energy);
   assert.ok(keepLine.played.some(cost=>cost>=1)||keepLine.energy>=2);
  }
+});
+
+test('energy: winning the battle against a smaller blocker is not lethal',()=>{
+ const {packs,state,move}=prepare('BLC-1-045',['BLC-1-056']);
+ assert.ok(cardOf('BLC-1-045').bp>cardOf('BLC-1-056').bp);
+ assert.equal(cardOf('BLC-1-045').printedImpact||0,0);
+ const view=moveDevelopment(packs,state,0,move);
+ const fought=blockedAttack(packs,state,move);
+ console.log('smaller block',view.lethal,view.benefit,view.reason,JSON.stringify(fought.script));
+ assert.equal(view.lethal,'no');
+ assert.notEqual(view.benefit,'lethal');
+ assert.equal(fought.attack,true);
+ assert.ok(fought.results.length>=1);
+ for(const followed of fought.results){
+  assert.equal(followed.players[1].life.length,1);
+  assert.equal(followed.status,'playing');
+ }
+ const {action,trace}=ask(packs,state);
+ assert.equal(trace.plan,'tree');
+ assert.equal(trace.hardNodes,0);
+ assert.ok(trace.nodesUsed<=48);
+ console.log('smaller decision',action.type,view.benefit,view.lethal);
+ if(action.type==='move'){
+  assert.notEqual(view.benefit,'lethal');
+  assert.equal(view.lethal,'no');
+ }else assert.equal(action.type,'next');
+});
+
+test('energy: one weaker blocker among several does not prove lethal',()=>{
+ const {packs,state,move}=prepare('BLC-1-045',['BLC-1-056','BLC-1-009']);
+ const view=moveDevelopment(packs,state,0,move);
+ const fought=blockedAttack(packs,state,move);
+ console.log('several blockers',view.lethal,JSON.stringify(fought.script));
+ assert.equal(view.lethal,'no');
+ assert.notEqual(view.benefit,'lethal');
+ assert.equal(fought.results.length,2);
+ for(const followed of fought.results){
+  assert.equal(followed.players[1].life.length,1);
+  assert.equal(followed.status,'playing');
+ }
+});
+
+test('energy: impact and impact-null follow the engine result',()=>{
+ const through=prepare('BLC-1-009',['BLC-1-056']);
+ const throughView=moveDevelopment(through.packs,through.state,0,through.move);
+ const throughFight=blockedAttack(through.packs,through.state,through.move);
+ console.log('impact through',throughView.lethal,JSON.stringify(throughFight.script));
+ assert.equal(throughView.lethal,'lethal');
+ assert.equal(throughView.benefit,'lethal');
+ assert.ok(throughFight.results.every(followed=>followed.status==='finished'&&followed.winner===0&&followed.players[1].life.length===0));
+ const {action,trace}=ask(through.packs,through.state);
+ assert.equal(action.type,'move');
+ assert.equal(trace.plan,'tree');
+ assert.ok(trace.nodesUsed<=48);
+ const stopped=prepare('BLC-1-009',['BLC-1-008']);
+ const stoppedView=moveDevelopment(stopped.packs,stopped.state,0,stopped.move);
+ const stoppedFight=blockedAttack(stopped.packs,stopped.state,stopped.move);
+ console.log('impact null',stoppedView.lethal,stoppedView.benefit,JSON.stringify(stoppedFight.script));
+ assert.equal(stoppedView.lethal,'no');
+ assert.notEqual(stoppedView.benefit,'lethal');
+ assert.ok(stoppedFight.results.every(followed=>followed.status==='playing'&&followed.players[1].life.length===1));
+ const mixed=prepare('BLC-1-009',['BLC-1-056','BLC-1-008']);
+ const mixedView=moveDevelopment(mixed.packs,mixed.state,0,mixed.move);
+ const mixedFight=blockedAttack(mixed.packs,mixed.state,mixed.move);
+ console.log('impact choice',mixedView.lethal,JSON.stringify(mixedFight.script));
+ assert.equal(mixedView.lethal,'no');
+ const saved=mixedFight.results.filter(followed=>followed.status==='playing'&&followed.players[1].life.length===1);
+ assert.ok(saved.length>=1);
+});
+
+test('energy: an unproven lethal check does not spend past the shared budget',()=>{
+ const {packs,state,move}=prepare('BLC-1-045',[]);
+ const pool={n:2};
+ const view=bindProbeBudget({pool,deadline:Infinity,now:()=>0},()=>moveDevelopment(packs,state,0,move));
+ assert.equal(view.lethal,'unproven');
+ assert.notEqual(view.benefit,'lethal');
+ assert.equal(view.strip,true);
+ assert.ok(pool.n>=0&&pool.n<2);
+ const open=prepare('BLC-1-045',[]);
+ const confirmed=moveDevelopment(open.packs,open.state,0,open.move);
+ assert.equal(confirmed.lethal,'lethal');
+ const {action,trace}=ask(open.packs,open.state);
+ assert.equal(action.type,'move');
+ assert.equal(trace.plan,'tree');
+ assert.equal(trace.hardNodes,0);
+ assert.ok(trace.nodesUsed<=48);
+ console.log('open lethal',confirmed.lethal,JSON.stringify(confirmed.lethalLine));
 });
