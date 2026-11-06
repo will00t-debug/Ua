@@ -1,0 +1,702 @@
+{
+  "group": "B5",
+  "base": "697aa0a89b8e914894eae518991126028fa8c470",
+  "range": "IYS-1-026–IYS-1-050",
+  "updated": "2026-11-06",
+  "sources": {
+    "card": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-0xx",
+    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA50BT_IYS-1-0xx.png",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA50BT",
+    "fetched": "2026-11-06",
+    "note": "026–050 的 effectJa、triggerTextJa 與 2026-11-06 抓取的官網全文去掉空白後一致，頁面沒有誤記。系列 FAQ 更新日期 2026.05.22。落到本範圍的是 Q2133（026）、Q2134（028）、Q2135（030）、Q2136（032）、Q2137（033）、Q2138（036）、Q2139（039）、Q2140（044）、Q2141（046）。028 與 046 的突襲框以 raid-box.mjs 既有清單為準，都只列 main；本輪沒有改 raid-box.mjs，也沒有取得新的 Rugia span.raidBorder。BP 0 以下依綜合規則 Q94 由規則退場。整張已驗證：026、027、029、030、031、032、033、034、035、036、037、038、039、040、041、042、043、044、045、047、048、049、050。部分核對：028、046。"
+  },
+  "sharedGaps": [
+    {
+      "cards": ["IYS-1-028"],
+      "owner": "A",
+      "official": "・2枚以上：このキャラが場を離れる場合、代わりにこのカードを手札に戻す。滿員線換位是場を離れる，去向是移除區，不是退場。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-028",
+      "reproduction": "能源線放無特徵的 IYS-1-013。前線滿員，其中一張是底下有 2 張直接裡向卡的 IYS-1-028。從手牌打出 IYS-1-001 到空的能源格，把 013 移到 028 的格子。retire 與 removeFieldObject 會先問 iysLeaveOffer；commitDestination 直接 vacate。",
+      "expected": "離場前先問回手或維持原去向。選回手時這張 028 進手牌，底下的卡依 Q61 到場外。選維持時這張進移除區。",
+      "actual": "2026-11-06 實測：pending 為 null，028 的 UID 在 removed，不在 hand，也不在 outside。沒有回手選項。",
+      "regression": "tests/v2-iys-set1.test.mjs 的兩張與三張裡向卡，以及 tests/v2-iys-026-050.test.mjs 的退場回手、拒絕回手、一張裡向卡不替代，都通過。沒有把滿員線直接移除寫成預期結果，也沒有提交會失敗的斷言。"
+    },
+    {
+      "cards": ["IYS-1-046"],
+      "owner": "A",
+      "official": "このキャラがこのターン中に登場していた場合、『【2回アタック】』に代えてもよい。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-046",
+      "reproduction": "本回合以突襲讓 IYS-1-046 登場，再用 IYS-1-049 把自己的效果讓它從活動變休息，然後起動。選項同時有 kit 與 double。選 double。iys-runtime 的 doubleAttack 寫入 readyOnAttackGranted，並依引擎的 iysDouble 證明記下 uid|double。",
+      "expected": "這張角色獲得本回合的 2 回攻擊，不另外得到 BP+1000 與衝擊 1。對局仍然有效。能量加倍帳本不增加。",
+      "actual": "選項會出現，選 kit 可以完成並通過 assertUniversalMatch。選 double 時引擎把每一個 uid|double 都算進 generated-energy doubling，而 energyDoubles 沒有增加，assertUniversalMatch 拋出 Forged generated-energy doubling。不能靠增加 energyDoubles 假裝通過。",
+      "regression": "tests/v2-iys-026-050.test.mjs 驗證非本回合登場走套件、本回合登場兩個選項都合法、選套件後 BP 5000、衝擊 1、突襲底板還在，以及未被阻擋的抽牌。沒有把 double 的例外標成通過。"
+    },
+    {
+      "cards": ["IYS-1-044"],
+      "owner": "A",
+      "official": "このキャラはアクティブで登場させる。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-044",
+      "reproduction": "手牌登場走 defaultEntryReady，會讀 enterAlwaysActive。effectEnter 只採用呼叫端傳入的 ready，ready 不是 true 就休息。本範圍沒有任何效果能把 044 以休息登場帶進場：036 只帶無特徵、能量 3 以下、消費 AP1 的紫角色。",
+      "expected": "只要印刷了アクティブで登場，效果登場也應活動，即使呼叫端傳 ready false。",
+      "actual": "手牌打出 044 是活動，普通角色手牌登場是休息，突襲登場是活動。這三條本卡走得到的路徑都符合印刷。缺口在共用的 effectEnter，本範圍碰不到。",
+      "regression": "tests/v2-iys-026-050.test.mjs 的 044 手牌登場斷言 ready true。沒有改 engine.mjs。"
+    }
+  ],
+  "testResults": {
+    "command": "node --test tests/v2-iys-026-050.test.mjs tests/v2-iys-set1.test.mjs tests/v2-iys-001-025.test.mjs",
+    "passed": true,
+    "tests": 70,
+    "pass": 70,
+    "fail": 0,
+    "files": [
+      "tests/v2-iys-026-050.test.mjs",
+      "tests/v2-iys-set1.test.mjs",
+      "tests/v2-iys-001-025.test.mjs"
+    ],
+    "note": "2026-11-06 在 /agent/repos/Ua-b5 執行上述命令，70 項全部通過。其中 026–050 為 26 項，set1 為 21 項，001–025 為 23 項。沒有跑全庫 npm test；全庫整合由 A 集中執行。提交 90f7964c 後，乾淨工作樹的 node --test tests/v2-independent-audit.test.mjs 為 4 項全部通過。沒有提交產生的 audit/v2-full-catalog.csv 與 summary。"
+  },
+  "reviews": [
+    {
+      "cardId": "IYS-1-026",
+      "number": "UA50BT/IYS-1-026",
+      "clauses": [
+        {
+          "match": "直接裡向卡才有衝擊無效與自己回合 BP+1000",
+          "status": "已驗證",
+          "official": "このキャラの下に裏向きのカードがある場合、このキャラは【インパクト無効】を得る。【自分のターン中】このキャラの下に裏向きのカードがある場合、このキャラはBP+1000。Q2133：控制者看得到自己的裡向卡，對手看不到。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-026",
+          "implementation": "iys-pack.mjs passiveBonuses，條件是 directFacedown。正面朝上的突襲疊卡不算。衝擊無效不限回合。BP+1000 只在自己回合。不在突襲框。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。沒有裡向卡時 BP 3000、衝擊不被無效。一張直接裡向卡後，自己回合 BP 4000。換手後 BP 回到 3000，衝擊仍無效。對手公開層只剩 faceDown。",
+          "unresolved": ""
+        },
+        {
+          "match": "カラー",
+          "status": "已驗證",
+          "official": "【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。",
+          "implementation": "triggerProfile deployOutsideCharacter，紫、能量 2 以下、AP1、只放前線、活動。登場原因是 lifeColorOutside，所以 013 的這次登場會打開活動殺生丸。可以不使用。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。013 活動進前線並打開 activeName。001 能量 3，不是對象。能源線不是目的地。略過時生命卡與候補都留在場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-027",
+      "number": "UA50BT/IYS-1-027",
+      "clauses": [
+        {
+          "match": "先減 BP，再活動與衝擊，最後退場奈落一派",
+          "status": "已驗證",
+          "official": "【起動メイン】【ターン1】相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000し、このキャラをアクティブにし、このキャラはこのターン中、【インパクト（1）】を得る。自分の場の［特徴：奈落一派］を1枚退場させる。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-027",
+          "implementation": "iys-runtime startMain 的 debuffOptional，然後 afterDebuff。減 BP 可以略過，略過仍會活動、給衝擊並退場。能源線不是減 BP 對象。只剩自己一張奈落一派時直接退自己。applyBp 在 BP 0 以下呼叫 retire({by:'rule'})。若這次退場被 028 的離場代替暫停，resume afterDebuff 等那個選擇結束再繼續。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。略過時 BP 不變，自己活動並有衝擊 1，然後必須退場。選 048 時 500 降到 0，依 Q94 到場外而不是移除區，之後仍取得衝擊並退場奈落一派。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "共用生命觸發。接受後這張生命卡進手牌。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 042 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-028",
+      "number": "UA50BT/IYS-1-028",
+      "clauses": [
+        {
+          "match": "突襲奈落，裡向張數在框外",
+          "status": "已驗證",
+          "official": "【レイド】〈奈落〉アクティブにし、フロントLに移動できるこのキャラの下の裏向きのカードの枚数により、以下の効果を全て得る。raid-box.mjs 只把 main 放進框。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-028",
+          "implementation": "raidName 奈落。裡向張數效果不在框內，普通登場也有效。起動只在正面朝上的突襲疊卡上合法。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。普通登場沒有起動。bury 成正面朝上的疊卡後才有起動。生命觸發選 get，這張進手牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "2 張以上離場改回手",
+          "status": "部分核對",
+          "official": "・2枚以上：このキャラが場を離れる場合、代わりにこのカードを手札に戻す。Q2134：裡向卡只給控制者看。",
+          "implementation": "engine iysLeaveOffer。directFacedowns 至少 2 張時，退場與 removeFieldObject 先給回手或維持原去向。1 張沒有代替。回手後底下的卡到場外並公開。",
+          "discrepancy": "滿員線換位走 commitDestination，不經過 iysLeaveOffer。",
+          "evidence": "tests/v2-iys-026-050.test.mjs 與 tests/v2-iys-set1.test.mjs。退場可回手、可拒絕、1 張直接退場。對手在回手前看不到裡向 cardId。",
+          "unresolved": "滿員線把有 2 張裡向卡的 028 直接送進移除區，沒有回手選項。見 sharedGaps。本輪沒有改 engine.mjs。"
+        },
+        {
+          "match": "3 張以上回手後可休息登場底板",
+          "status": "已驗證",
+          "official": "・3枚以上：このキャラが自分の場から手札に戻った時、このキャラのレイド元のカードが必要エナジーが2以下で場外にある場合、そのカードを1枚まで自分の場にレストで登場させる。",
+          "implementation": "回手後的 reenter。底板能量 2 以下才可選，休息登場，登場時效果照跑。可以不登場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。三張裡向卡回手後，013 從場外休息登場並打開 activeName；013 維持休息，被選的殺生丸活動。同一 UID 再從手牌登場是 paidPlay，不再打開。tests/v2-iys-001-025.test.mjs 的 013 同樣通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "起動把奈落一派或四魂蓋到奈落下",
+          "status": "已驗證",
+          "official": "【起動メイン】【ターン1】自分の場外から［特徴：奈落一派］か〈四魂のかけら〉を1枚裏向きで自分の場の〈奈落〉1枚の下に置く。",
+          "implementation": "框內 main。場外符合的卡先選，奈落超過一張再選宿主。蓋下去後 faceDown。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。兩張奈落時先選卡再選宿主。對手只看到 faceDown。",
+          "unresolved": ""
+        },
+        {
+          "match": "レイド",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "共用突襲生命觸發。選 get 時這張進手牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。真實傷害翻開後選 get，028 在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-029",
+      "number": "UA50BT/IYS-1-029",
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "已驗證",
+          "official": "效果欄是「-」。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-029",
+          "implementation": "kindProgram plain。登場沒有待處理效果。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用抽牌觸發。牌組少 1 張，生命卡留在場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。抽到的不是這張生命卡。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-030",
+      "number": "UA50BT/IYS-1-030",
+      "clauses": [
+        {
+          "match": "全體奈落一派才看牌庫頂，可放回或蓋到奈落下",
+          "status": "已驗證",
+          "official": "このカードは〈奈落〉としても扱う。【登場時】自分の場にあるキャラが全て［特徴：奈落一派］の場合、自分の山札の上から1枚見て、山札の上に置くか、裏向きで自分の場の〈奈落〉1枚の下に置く。Q2135：蓋下去的卡只給控制者看。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-030",
+          "implementation": "nameAliases 奈落。allNaraku 要求場上至少一張且每一張都有特徵。視窗 data.uids 只有牌庫頂那一張。選 top 留在牌庫頂。選宿主則裡向蓋下。沒有奈落宿主時不看。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。場上有非奈落一派時沒有視窗。全體符合時控制者看得到 cardId，對手的私人選項是 null。放回後牌庫頂不變。蓋到 028 後對手只看到 faceDown。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用抽牌觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 029 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-031",
+      "number": "UA50BT/IYS-1-031",
+      "clauses": [
+        {
+          "match": "退場時最多放兩張到場外，移除不觸發",
+          "status": "已驗證",
+          "official": "【退場時】自分の山札の上から2枚まで場外に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-031",
+          "implementation": "millTop optional count 2。一張一張問，可以停止。不是查看視窗。移除不跑 onRetire。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。退場可放兩張，也可放一張後停止。滿員線把 031 移除時牌組不變，也沒有待處理效果。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用抽牌觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 029 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-032",
+      "number": "UA50BT/IYS-1-032",
+      "clauses": [
+        {
+          "match": "休息後把奈落一派或四魂蓋到奈落下",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】自分の場外から［特徴：奈落一派］か〈四魂のかけら〉を1枚裏向きで自分の場の〈奈落〉1枚の下に置く。Q2136：裡向卡只給控制者看。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-032",
+          "implementation": "場地卡。費用是休息，不是ターン1。休息中不能再起動。再次活動後同一回合可以再蓋。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。第一次休息並蓋下。休息中第二次不合法。把 ready 設回 true 後可以再起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "共用生命觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 042 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-033",
+      "number": "UA50BT/IYS-1-033",
+      "clauses": [
+        {
+          "match": "先抽兩張，有奈落才由對手把最多兩張事件放牌庫底",
+          "status": "已驗證",
+          "official": "カードを2枚引く。自分の場に〈奈落〉がある場合、相手は自身の場外にあるイベントカードを2枚望む順で自身の山札の下に置く。Q2137：場外 0 張或 1 張事件也能使用；只有 1 張時那張必須放到底。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-033",
+          "implementation": "先 draw 2，場上有名為奈落的角色才 offerOppBottom。0 張不開選項。1 張直接放底。2 張以上由對手選到兩張，先選的放最底。沒選的留在場外。layBottom 反轉順序，使第一張成為 deck 最底。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。抽牌後牌組已少 2，待處理玩家是對手。第一張在 deck.at(-1)，第二張在 deck.at(-2)。沒有奈落時仍抽牌，事件留在場外。set1 的 0 張與 1 張通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用抽牌觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 029 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-034",
+      "number": "UA50BT/IYS-1-034",
+      "clauses": [
+        {
+          "match": "最多活動兩張 AP",
+          "status": "已驗證",
+          "official": "自分のAPカードを2枚まで選び、アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-034",
+          "implementation": "recoverAp count 2，可略過。兩張都休息時可以兩張都活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。選兩張後都活動。",
+          "unresolved": ""
+        },
+        {
+          "match": "ファイナル",
+          "status": "已驗證",
+          "official": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+          "implementation": "共用最終觸發。翻開後生命區是空的才提供。接受後牌庫頂進生命，對局繼續。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。唯一一張生命被打掉後才出現 final。接受後生命區是那張牌庫頂。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-035",
+      "number": "UA50BT/IYS-1-035",
+      "clauses": [
+        {
+          "match": "依奈落一派張數減少前線 BP",
+          "status": "已驗證",
+          "official": "相手のフロントLのキャラを1枚選び、自分の場の［特徴：奈落一派］1枚につき、このターン中、BP-1000。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-035",
+          "implementation": "必須選一張對手前線。張數含能源線上的奈落一派。0 張仍要選，減 0。減到 0 以下由 applyBp 以規則退場到場外。能源線不是對象。沒有對手前線時不能打出。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。0 張時 BP 維持 1500。1 張時 1500 變 500。2 張時 042 到場外，不在移除區。能源線角色不能選。",
+          "unresolved": ""
+        },
+        {
+          "match": "スペシャル",
+          "status": "已驗證",
+          "official": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。這是生命關鍵字，不是再結算一次印刷的 BP 效果。",
+          "implementation": "triggerProfile special 是 retireOppFront。從真實的未被阻擋傷害翻開。選一張前線退場。略過不退場。生命卡留在場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。攻擊後跳過阻擋，特殊觸發可退場 BP 4000 的 044，也可略過。set1 仍要求 triggerEffect.op 是 retireOppFront。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-036",
+      "number": "UA50BT/IYS-1-036",
+      "clauses": [
+        {
+          "match": "先抽棄，再可休息登場無特徵紫角色",
+          "status": "已驗證",
+          "official": "カードを1枚引き、自分の手札を1枚場外に置く。その後、自分の場外から必要エナジーが3以下で消費APが1の特徴を持たない紫のキャラカードを1枚まで自分の場にレストで登場させる。Q2138：剛剛棄掉的那張可以是登場對象。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-036",
+          "implementation": "drawDiscard 1，然後 offerPurple，能量 3 以下、AP1、無特徵、可略過、休息。登場原因 outsideEffect，登場時效果照跑。有特徵或能量 4 不能選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。013 休息登場並打開 activeName。029 與 010 不是對象。略過時候補留在場外。set1 的 Q2138 通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用活動觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 047 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-037",
+      "number": "UA50BT/IYS-1-037",
+      "clauses": [
+        {
+          "match": "退場 3000 以下，有殺生丸改成 5000 以下",
+          "status": "已驗證",
+          "official": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈殺生丸〉がある場合、『BP5000以下』に代わる。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-037",
+          "implementation": "retireOppFrontUnderBp，bp 3000，bonusName 殺生丸，bonusBp 5000。正好 3000 可以。4000 在沒有殺生丸時不行。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。045 退場，044 不能選。004 或 009 在場時 044 與 009 都能選。本彈沒有 BP 超過 5000 的角色。",
+          "unresolved": ""
+        },
+        {
+          "match": "スペシャル",
+          "status": "已驗證",
+          "official": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。不受印刷的 BP 上限限制。",
+          "implementation": "與 035 同一個 retireOppFront。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。場上沒有殺生丸時，特殊觸發仍能退場 044。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-038",
+      "number": "UA50BT/IYS-1-038",
+      "clauses": [
+        {
+          "match": "退場 BP3000 以下",
+          "status": "已驗證",
+          "official": "BP3000以下の相手のフロントLのキャラを1枚選び、退場させる。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-038",
+          "implementation": "retireOppFrontUnderBp bp 3000。沒有殺生丸加成。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。3000 退場，4000 不能選。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "生命觸發是「-」。",
+          "implementation": "翻開後沒有生命觸發選項，卡到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-039",
+      "number": "UA50BT/IYS-1-039",
+      "clauses": [
+        {
+          "match": "活動一張 AP、抽兩張、退場、可蓋到奈落下",
+          "status": "已驗證",
+          "official": "このカードは自分の場にキャラがある場合のみ使用できる。自分のAPカードを1枚アクティブにする。カードを2枚引く。自分の場のキャラを1枚退場させる。このカードを自分の場の〈奈落〉1枚の下に裏向きで置いてもよい。Q2139：蓋下後只給控制者看。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-039",
+          "implementation": "使用條件在引擎：場上要有角色，場地卡不算。offerAp 恰好一張休息時直接活動。兩張以上先選一張，不能略過。然後抽 2，必須退場一張自己的角色。退場後若還有奈落，才可把這張事件裡向蓋下，可以略過。唯一的奈落被退場時不再問。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。兩張休息 AP 時先選 AP，再看到牌組少 2，然後退場，再問蓋下。恰好一張時直接活動並進入退場。零張時直接抽牌後退場。退掉唯一奈落後沒有蓋下。三張神無之鏡付得出費用，仍然不能使用。set1 的 Q2139 通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用抽牌觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 029 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-040",
+      "number": "UA50BT/IYS-1-040",
+      "clauses": [
+        {
+          "match": "最多活動兩張 AP",
+          "status": "已驗證",
+          "official": "自分のAPカードを2枚まで選び、アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-040",
+          "implementation": "與 034 同一個 recoverAp2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命還在時最終不發動",
+          "status": "已驗證",
+          "official": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+          "implementation": "翻開後生命區還有卡時不提供 final，這張到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。額外堆一張生命後攻擊，沒有 final 選項。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-041",
+      "number": "UA50BT/IYS-1-041",
+      "clauses": [
+        {
+          "match": "看四張，公開一張紅事件，其餘依選擇放底，拿了才棄手牌",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から4枚見て、赤のイベントカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-041",
+          "implementation": "共用 searchTopOneBottomDiscard，count 4，filter red:event。視窗四張都在。不能選的卡沒有選擇動作。對手私人選項是 null，公開視圖在選擇前沒有視窗 UID。拿走的才公開。其餘由 effect-top-order 依點選順序 push，先選的在這組的上面，最後一張是牌庫底。不拿則排全部四張且不棄手牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。紅事件可拿，其餘三張不可拿。拿了之後必須棄一張。不拿時手牌張數不變，底三張順序與點選順序一致。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "生命觸發是「-」。",
+          "implementation": "目錄 trigger 為空。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 038 與 050 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-042",
+      "number": "UA50BT/IYS-1-042",
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "已驗證",
+          "official": "效果欄是「-」。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-042",
+          "implementation": "plain。登場沒有待處理效果。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "共用生命觸發。這張生命卡進手牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-043",
+      "number": "UA50BT/IYS-1-043",
+      "clauses": [
+        {
+          "match": "空場減兩點紅，自己效果休息後才能起動",
+          "status": "已驗證",
+          "official": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。【起動メイン】【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このキャラをアクティブにし、このターン中、BP+1000。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-043",
+          "implementation": "emptyOwnFieldHandEnergyDiscount 2。手牌費用用 zoneRequiredEnergy。場上有卡時印刷費用 2。起動要求 restedByOwn。普通休息不算。起動後活動並 BP+1000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。空場手牌費用 0，場上有角色後是 2。049 讓它休息後可起動，BP 3000。直接改成休息不能起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用抽牌觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 029 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-044",
+      "number": "UA50BT/IYS-1-044",
+      "clauses": [
+        {
+          "match": "沒有裡向卡不能阻擋，活動登場，傷害 2",
+          "status": "已驗證",
+          "official": "このキャラの下に裏向きのカードがない場合、このキャラはブロックできない。このキャラはアクティブで登場させる。【ダメージ（2）】（このキャラがアタックで与える直接ダメージは2ダメージ）Q2140：裡向卡只給控制者看。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-044",
+          "implementation": "enterAlwaysActive、printedAttackDamage 2。沒有直接裡向卡時阻擋清單不含它。手牌登場由 defaultEntryReady 活動。阻擋中途蓋下一張後可以擋。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs 與 set1。兩張無觸發生命都被打掉，生命區變空，兩張都在場外。手牌打出是活動。沒有裡向卡時不能擋，蓋下後可以。",
+          "unresolved": ""
+        },
+        {
+          "match": "前線休息才可活動，前線才可蓋鐵碎牙",
+          "status": "已驗證",
+          "official": "【起動メイン】【フロントLにある場合】 【ターン1】このキャラがレストの場合のみ発動できる。このキャラをアクティブにする。【起動メイン】【フロントLにある場合】 【ターン1】自分の場外の〈鉄砕牙〉を1枚裏向きでこのキャラの下に置く。",
+          "implementation": "兩個起動都要求在前線。iys:0 還要求自己休息。iys:1 把場外的鐵碎牙裡向蓋到自己底下。能源線兩個都不能用。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。休息的前線 044 可活動。079 蓋下後對手只看到 faceDown。活動後可以阻擋。能源線沒有這兩個起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "共用生命觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 042 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-045",
+      "number": "UA50BT/IYS-1-045",
+      "clauses": [
+        {
+          "match": "自己效果休息後活動，攻擊時 BP4000 以上才抽",
+          "status": "已驗證",
+          "official": "【起動メイン】【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このキャラをアクティブにする。【アタック時】このキャラのBPが4000以上の場合、カードを1枚引く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-045",
+          "implementation": "起動只活動，不加 BP。攻擊抽牌看當下 BP。印刷 3000 不抽。048 給的 +1000 使它變成 4000 後，宣告攻擊、進入阻擋前抽 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。3000 攻擊時牌組不變。4000 攻擊時少 1 張且沒有額外選擇。049 讓它休息後起動，BP 仍是 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "生命觸發是「-」。",
+          "implementation": "目錄 trigger 為空。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 050 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-046",
+      "number": "UA50BT/IYS-1-046",
+      "clauses": [
+        {
+          "match": "突襲犬夜叉，未被阻擋時抽一張在框外",
+          "status": "已驗證",
+          "official": "【レイド】〈犬夜叉〉アクティブにし、フロントLに移動できる【ターン1】このキャラのアタックがブロックされなかった時、カードを1枚引く。Q2141：抽牌在阻擋選擇之後、生命傷害之前。raid-box.mjs 只列 main。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-046",
+          "implementation": "raidName 犬夜叉。抽牌寫在 engine unblockedBeforeDamage，不看突襲框，一回合記一次 uid|unblocked。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。突襲到指定的 042 上，活動在前線，底板還在下面。跳過阻擋後、生命傷害前牌組少 1。set1 的 Q2141 通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "自己效果休息後給套件，本回合登場可改兩回攻擊",
+          "status": "部分核對",
+          "official": "【起動メイン】【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このキャラをアクティブにし、このターン中、『BP+1000と【インパクト（1）】』を得る。このキャラがこのターン中に登場していた場合、『【2回アタック】』に代えてもよい。",
+          "implementation": "框內 main。沒有 restedByOwn 不能起動，普通休息不算。不是本回合登場時直接套件：活動、BP+1000、衝擊 1。本回合登場時先問 kit 或 double。",
+          "discrepancy": "選 double 會被共用的能量加倍帳本拒絕。",
+          "evidence": "tests/v2-iys-026-050.test.mjs。舊登場只給套件，BP 5000、衝擊 1。本回合突襲登場時兩個選項都合法。選 kit 後 BP 5000、衝擊 1，底板仍在。",
+          "unresolved": "選【2回アタック】時 assertUniversalMatch 拋出 Forged generated-energy doubling。見 sharedGaps。本輪沒有改 engine.mjs，也沒有把這個選擇標成通過。"
+        },
+        {
+          "match": "レイド",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "共用突襲生命觸發。與 028 同一關鍵字。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs 以 028 打過選 get。046 本體的突襲登場另在同一檔驗證。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-047",
+      "number": "UA50BT/IYS-1-047",
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "已驗證",
+          "official": "效果欄是「-」。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-047",
+          "implementation": "plain。",
+          "discrepancy": "",
+          "evidence": "目錄效果為空。生命觸發測試沒有打開卡牌效果。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用活動觸發。選一張休息角色，活動並 BP+3000。生命卡到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。050 的 BP 由 2000 變 5000 並活動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-048",
+      "number": "UA50BT/IYS-1-048",
+      "clauses": [
+        {
+          "match": "可給其他角色 BP+1000",
+          "status": "已驗證",
+          "official": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-048",
+          "implementation": "buffOther，anyBuff 1000、optional、excludeSelf。待處理是 effect-buff-own 的 chooseOwnBuff。uid null 是略過。自己不是對象。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。可以略過。選 045 後那張 BP+1000，048 自己沒有這個加值。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用活動觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 047 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-049",
+      "number": "UA50BT/IYS-1-049",
+      "clauses": [
+        {
+          "match": "登場回合休息活動的犬夜叉，再選活動加值或休息對手",
+          "status": "已驗證",
+          "official": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。自分のフロントLのアクティブの〈犬夜叉〉を1枚レストにする。そうした場合、以下から1つ選ぶ。・このキャラをアクティブにし、このターン中、BP+1000。・相手のフロントLのキャラを1枚まで選び、レストにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-049",
+          "implementation": "impactNull 不在框內。起動要求 enteredThisTurn，put 上去的沒有 entryTurn，不能起動。手牌登場可以。必須休息一張活動的前線犬夜叉，沒有略過。之後可活動自己並 BP+1000、休息一張對手前線，或略過後段。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。put 的 049 不能起動。手牌登場後，犬夜叉變休息。選休息時對手前線休息，049 的 BP 維持 3000。選加值時活動並 +1000。阻擋有衝擊的 027 時，050 的生命不減。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "共用生命觸發。",
+          "discrepancy": "",
+          "evidence": "同一關鍵字由 tests/v2-iys-026-050.test.mjs 的 042 打過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-050",
+      "number": "UA50BT/IYS-1-050",
+      "clauses": [
+        {
+          "match": "インパクト無効",
+          "status": "已驗證",
+          "official": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-050",
+          "implementation": "impactNull。阻擋並輸掉時，對手的衝擊不扣生命。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。027 取得衝擊 1 後攻擊，050 阻擋並被退場，生命張數不變。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "生命觸發是「-」。",
+          "implementation": "翻開後沒有生命觸發選項，卡到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-026-050.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}
