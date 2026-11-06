@@ -379,6 +379,40 @@ test('KMR-1-080 grants the unblocked draw only while raided',()=>{
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 
+test('KMR-1-080 may draw zero or one only after an unblocked raided attack',()=>{
+ let skip=open(['KMR-1-080','KMR-1-089',...RED],80082);
+ line(skip,0,['KMR-1-070','KMR-1-083']);
+ const base=put(skip,0,'KMR-1-089','front',0,true);
+ const body=take(skip,0,'KMR-1-080');
+ onlyHand(skip,0,[body]);
+ ready(skip);
+ skip=raidOnto(skip,body.uid,base.uid);
+ assert.equal(onBoard(skip,0,body.uid).unblockedDrawGranted.upTo,1);
+ skip=toAttack(skip);
+ const deck=skip.players[0].deck.length;
+ skip=use(skip,a=>a.type==='attack'&&a.uid===body.uid);
+ skip=use(skip,a=>a.type==='chooseBlock'&&a.uid==null);
+ assert.equal(skip.pending.kind,'effect-may-draw');
+ skip=use(skip,a=>a.type==='chooseMayDraw'&&a.mode==='skip');
+ assert.equal(skip.players[0].deck.length,deck);
+
+ let drawn=open(['KMR-1-080','KMR-1-089',...RED],80083);
+ line(drawn,0,['KMR-1-070','KMR-1-083']);
+ const host=put(drawn,0,'KMR-1-089','front',0,true);
+ const rider=take(drawn,0,'KMR-1-080');
+ onlyHand(drawn,0,[rider]);
+ ready(drawn);
+ drawn=raidOnto(drawn,rider.uid,host.uid);
+ drawn=toAttack(drawn);
+ const before=drawn.players[0].deck.length;
+ drawn=use(drawn,a=>a.type==='attack'&&a.uid===rider.uid);
+ drawn=use(drawn,a=>a.type==='chooseBlock'&&a.uid==null);
+ drawn=use(drawn,a=>a.type==='chooseMayDraw'&&a.mode==='draw');
+ assert.equal(drawn.players[0].deck.length,before-1);
+ assert.equal(assertUniversalMatch(packs,skip),true);
+ assert.equal(assertUniversalMatch(packs,drawn),true);
+});
+
 test('KMR-1-081 stores a BP range, leaves it for a non-range choice, and may draw',()=>{
  const counts=withCopies(['KMR-1-081','KMR-1-084','KMR-1-098','KMR-1-100','KMR-1-082','KMR-1-076','KMR-1-004','KMR-1-070','KMR-1-087'],
   {'KMR-1-081':2,'KMR-1-082':3});
@@ -514,6 +548,40 @@ test('KMR-1-084 draws two only after the optional discard',()=>{
  assert.equal(s.pending,null);
  assert.equal(assertUniversalMatch(packs,skip),true);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('a Faiz gear cost is not 使用, and playing the gear event is',()=>{
+ let cost=open(['KMR-1-081','KMR-1-084','KMR-1-098',...RED],81100);
+ line(cost,0,['KMR-1-070','KMR-1-083']);
+ const rider=put(cost,0,'KMR-1-081','front',0,true);
+ const faiz=put(cost,0,'KMR-1-084','front',1,true);
+ const gear=take(cost,0,'KMR-1-098');
+ onlyHand(cost,0,[gear]);
+ ready(cost);
+ assert.equal(universalBp(packs,cost,faiz),1500);
+ cost=act(cost,rider.uid,'kmr:KMR-1-081');
+ cost=kmr(cost,a=>a.mode==='discard'&&a.uid===gear.uid);
+ assert.equal(cost.pending,null);
+ assert.equal(cost.players[0].outside.some(c=>c.uid===gear.uid),true);
+ assert.notEqual(cost.players[0].deck[0]?.uid,gear.uid);
+ assert.equal(cost.aotBpRange[0],1000);
+ assert.equal(universalBp(packs,cost,onBoard(cost,0,faiz.uid)),1500);
+ cost=toAttack(cost);
+ cost=use(cost,a=>a.type==='attack'&&a.uid===rider.uid);
+ assert.equal(cost.pending.kind,'block');
+
+ let used=open(['KMR-1-084','KMR-1-098',...RED],81101);
+ line(used,0,['KMR-1-070','KMR-1-083']);
+ const body=put(used,0,'KMR-1-084','front',0,true);
+ const bomb=take(used,0,'KMR-1-098');
+ onlyHand(used,0,[bomb]);
+ ready(used);
+ assert.equal(universalBp(packs,used,body),1500);
+ used=event(used,bomb.uid);
+ assert.equal(used.pending,null);
+ assert.equal(universalBp(packs,used,onBoard(used,0,body.uid)),2000);
+ assert.equal(assertUniversalMatch(packs,cost),true);
+ assert.equal(assertUniversalMatch(packs,used),true);
 });
 
 test('KMR-1-085 can only raid, then the attack-phase end removes the top card',()=>{

@@ -12,7 +12,7 @@ import {dirname,resolve} from 'node:path';
 import {createAllV2PreviewRealDecks} from '../dist/universal-v2/preview-real-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
-import {csmPracticeDeck,practiceDeck} from '../dist/universal-v2/official-entry.mjs';
+import {csmPracticeDeck,inuyashaPracticeDeck,practiceDeck} from '../dist/universal-v2/official-entry.mjs';
 import {createKmrV2Pack} from '../dist/universal-v2/kmr-pack.mjs';
 import {createKmr2V2Pack} from '../dist/universal-v2/kmr2-pack.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
@@ -190,18 +190,60 @@ const closed={
  disclaimer:'Existing AI only. An unfinished game is a strategy note. An illegal action, a stuck choice, a UID change or a facedown leak is a rule error.',
  records:closedRecords
 };
+const iysDeck=inuyashaPracticeDeck();
+if(validateUniversalDeck(iysDeck.pack,iysDeck.counts).length||
+ Object.values(iysDeck.counts).reduce((a,b)=>a+b,0)!==50)
+ throw Error('inuyasha is not a legal exact 50-card deck');
+const iysPairs=[['inuyasha','csm'],['inuyasha','kmr-vol1'],['inuyasha','kmr-vol2'],['inuyasha','bleach-green']];
+const iysRecords=[],iysRuleErrors=[],iysStrategy=[];
+for(const [leftKey,rightKey] of iysPairs){
+ for(const first of [0,1])for(const seed of closedSeeds){
+  const left=leftKey==='inuyasha'?iysDeck:closedDecks[leftKey];
+  const right=rightKey==='inuyasha'?iysDeck:closedDecks[rightKey];
+  const packs=[left.pack,right.pack];
+  const entry={presetIds:[leftKey,rightKey],first,seed,pass:false,steps:0,
+   optionalEntries:0,facedownChecks:0,strategy:[],ruleError:null};
+  try{
+   const played=playChecked(packs,[left.counts,right.counts],seed,first);
+   entry.steps=played.steps??0;
+   entry.endReason=played.endReason;
+   entry.winner=played.winner;
+   entry.optionalEntries=played.optionalEntries;
+   entry.facedownChecks=played.facedownChecks;
+   entry.strategy=played.notes;
+   entry.pass=played.status==='finished'&&!played.notes.length;
+   if(played.notes.length)iysStrategy.push(leftKey+' vs '+rightKey+' '+seed+'/'+first+': '+played.notes.join('; '));
+  }catch(e){
+   entry.ruleError=String(e?.message||e);
+   iysRuleErrors.push(leftKey+' vs '+rightKey+' '+seed+'/'+first+': '+entry.ruleError);
+  }
+  iysRecords.push(entry);
+ }
+}
+const inuyasha={
+ candidate:'Inuyasha purple against Chainsaw Man, Kamen Rider vol.1, vol.2, and Bleach green',
+ seeds:closedSeeds,matchCount:iysRecords.length,
+ finished:iysRecords.filter(x=>x.pass).length,
+ ruleErrors:iysRuleErrors.length,strategyNotes:iysStrategy.length,
+ records:iysRecords
+};
 const summary={candidate:'V2 five-title 250-card source-pinned integrated matrix',
  seedValues:seeds,matchCount:results.length,passed:results.filter(x=>x.pass).length,
  failed:errors.length,titles:coverage.map(x=>({title:x.title,ported:x.totalV2Cards})),
  disclaimer:'Only selected real 50-card decks, NOT full printed-FAQ acceptance',
- records:results,closedTitle:closed};
+ records:results,closedTitle:closed,inuyasha};
 mkdirSync(dirname(out),{recursive:true});
 writeFileSync(out,JSON.stringify(summary,null,2)+'\n');
 for(const e of errors.slice(0,12))process.stderr.write(e+'\n');
 for(const e of closedRuleErrors.slice(0,12))process.stderr.write(e+'\n');
 for(const e of closedStrategy.slice(0,8))process.stderr.write(e+'\n');
+for(const e of iysRuleErrors.slice(0,12))process.stderr.write(e+'\n');
+for(const e of iysStrategy.slice(0,8))process.stderr.write(e+'\n');
 process.stdout.write('V2 integrated 5-title matrix: '+summary.passed+'/'+results.length+
  ' finished (failures '+errors.length+'); closed titles '+closed.finished+'/'+closed.matchCount+
  ' finished, rule errors '+closed.ruleErrors+', strategy notes '+closed.strategyNotes+
+ '; inuyasha '+inuyasha.finished+'/'+inuyasha.matchCount+
+ ' finished, rule errors '+inuyasha.ruleErrors+', strategy notes '+inuyasha.strategyNotes+
  '; evidence '+out+'\n');
-if(summary.matchCount!==60||errors.length||closedRuleErrors.length||closed.matchCount!==24)process.exitCode=1;
+if(summary.matchCount!==60||errors.length||closedRuleErrors.length||closed.matchCount!==24||
+ iysRuleErrors.length||inuyasha.matchCount!==16)process.exitCode=1;

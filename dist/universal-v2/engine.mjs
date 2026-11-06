@@ -1203,12 +1203,14 @@ function putOutsideCardUnderDeck(pack,s,owner,uid){
 // Q2433: a field copy that had already lost its original effects stays outside.
 // A life reveal that still offers a trigger choice waits until that choice ends.
 function maybeKmrGearMove(pack,s,{physical,owner,from,to,reason,sourceUid}){
- if(from!=='hand'||to!=='outside'||!kmrGearTrait(pack,physical,card))return;
- if(reason==='payment'){
+ if(!kmrGearTrait(pack,physical,card))return;
+ // 使用 is playing the gear. A printed 【】 cost is payment, not that use
+ // and not 「自分の効果」.
+ if(from==='hand'&&['front','energy','outside','removed'].includes(to)&&reason==='rule'){
   s.kmrGearUsed??=[null,null];
   s.kmrGearUsed[owner]=s.turn;
-  return;
  }
+ if(from!=='hand'||to!=='outside'||reason==='payment')return;
  if(reason!=='own-effect'||s.active!==owner)return;
  const source=typeof sourceUid==='string'?[...field(s.players[owner]),
   ...s.players[owner].outside].find(c=>c?.uid===sourceUid):null;
@@ -2113,6 +2115,24 @@ function openBpZeroRetirements(pack,s){
  queueSimultaneousRetires(s,s.active,jobs);
  return true;
 }
+function selectionBlockedOnlyByCost(pack,s){
+ const q=s.pending;
+ if(!q||s.status!=='playing')return false;
+ const listed=legalPending(pack,s);
+ if(!listed.length)return false;
+ const payable=a=>{
+  if(effectSelectionProhibited(pack,s,a))return false;
+  const apTax=effectSelectionApTax(pack,s,a);
+  const handTax=effectSelectionHandTax(pack,s,a);
+  return !handTax.blocked&&handTax.payable&&
+   !(handTax.cost&&(q.kind==='effect-target-many'||apTax>0))&&
+   apTax<=availableAp(s,q.player);
+ };
+ if(listed.some(payable))return false;
+ // A zero-cost skip stays payable. A list emptied only by prohibition stays
+ // open. Q1780: an unpayable mandatory choice ends without a selection.
+ return listed.some(a=>!effectSelectionProhibited(pack,s,a));
+}
 function continueEffectQueue(pack,s){
  aotMatch=s;
  // Q94 leaves a character still at 0 BP or less. Q1898 / Q1899: that check
@@ -2120,7 +2140,11 @@ function continueEffectQueue(pack,s){
  // Q187: it then happens before the next effect, such as the blocked battle.
  // Q1139: the leave is a rule process. Twelve passes cover chained leaves.
  let bpPasses=0;
- while(!s.pending&&s.status==='playing'){
+ while(s.status==='playing'){
+  if(s.pending){
+   if(selectionBlockedOnlyByCost(pack,s)){s.pending=null;continue;}
+   break;
+  }
   refreshAotFrontLimits(pack,s);
   if(openAotFrontOverflow(pack,s))break;
   // Q1898/Q1899: do not leave at 0 until the current printed effect ends.
@@ -5951,7 +5975,9 @@ function unblockedBeforeDamage(pack,s,attacker){
   jobs.push({op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
  const g=attacker.unblockedDrawGranted;
  if(g&&g.turn===s.turn&&g.stamp===attacker.fieldEntryStamp)
-  jobs.push({op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
+  jobs.push(g.upTo===1
+   ?{op:'optionalDrawOne',owner:s.active,sourceUid:attacker.uid}
+   :{op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
  const printed=card(pack,attacker).unblockedAttack;
  if(printed&&!originalEffectsDisabled(s,attacker)){
   const then=printed.then.map(e=>({...e,owner:s.active,sourceUid:attacker.uid,
@@ -11209,7 +11235,6 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-retire-bp'&&q.destination!=='removed'){
-  if(Number.isInteger(q.limit))spendAotBpRange(pack,s,q.player);
   const thenDraw=q.thenDraw;
   if(a.uid===null&&q.optional){
    s.pending=null;
@@ -11223,6 +11248,8 @@ function resolveChoice(s,a,pack){
     throw Error('Illegal rested front retirement');
   }else if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,retired)>q.limit)
    throw Error('Illegal BP-threshold retirement target');
+  // Q1172/Q1180: the stored range is spent when a character is selected.
+  if(Number.isInteger(q.limit))spendAotBpRange(pack,s,q.player);
   s.pending=null;
   retire(pack,s,opponent,'front',slot,{by:'opponent'});
   if(thenDraw)s.effectQueue.push({op:'draw',count:thenDraw,owner:q.player,sourceUid:q.sourceUid});
@@ -11317,12 +11344,12 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-retire-bp'){
-  if(Number.isInteger(q.limit))spendAotBpRange(pack,s,q.player);
   if(a.uid===null&&q.optional){s.pending=null;continueEffectQueue(pack,s);return;}
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!q.choices.includes(a.uid)||
    (!q.anyFront&&bp(pack,s,s.players[opponent].front[slot])>q.limit))
    throw Error('Illegal BP-threshold retirement target');
+  if(Number.isInteger(q.limit))spendAotBpRange(pack,s,q.player);
   s.pending=null;
   const paused=q.destination==='removed'?
    removeFieldObject(pack,s,opponent,'front',slot,{controller:q.player}):
@@ -20211,12 +20238,17 @@ export function assertUniversalMatch(pack,s){
     return !!effect&&(s.zoneMoveEvents||[]).some(m=>m.turn===s.turn&&m.owner===owner&&
      m.uid===ev.uid&&m.from==='hand'&&m.to==='outside'&&m.reason==='rule');
    });
+   const iysGrantor=cardHasTrait(card(pack,physical),'奈落一派')&&
+    (s.mainAbilityUsedUids||[]).some(key=>{
+     if(!key.endsWith('|block'))return false;
+     const uid=key.slice(0,-'|block'.length);
+     if(!uid.startsWith(owner+'-')||uid===physical.uid)return false;
+     const source=physicalAnywhere(s.players[owner],uid);
+     return !!source&&card(pack,source).id==='IYS-1-018';
+    });
    const iysBlock=ceiling.bp===4000&&(
     ((card(pack,physical).id==='IYS-1-066'||card(pack,physical).id==='IYS-1-070')&&
-     s.mainAbilityUsedUids.includes(physical.uid+'|block'))||
-    (cardHasTrait(card(pack,physical),'奈落一派')&&
-     field(s.players[owner]).some(c=>c.uid!==physical.uid&&card(pack,c).id==='IYS-1-018'&&
-      s.mainAbilityUsedUids.includes(c.uid+'|block'))));
+     s.mainAbilityUsedUids.includes(physical.uid+'|block'))||iysGrantor);
    const csm046=ceiling.bp===4000&&card(pack,physical).id==='CSM-1-046'&&
     (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===physical.uid&&e.owner===owner&&
      e.reason==='own-effect'&&((e.from==='front'&&e.to==='energy')||
@@ -20587,7 +20619,11 @@ export function assertUniversalMatch(pack,s){
    s.mainReadyOnceByName[q.player].includes(printed.name+'|raidFrontOtherRetireDraw');
   const replayDraw=!!src&&!originalEffectsDisabled(s,src)&&
    (printed.effects?.onPlay||[]).some(e=>e.op==='mayDrawOne'&&Object.keys(e).length===1);
-  if(!(raid||replayDraw)||
+  const kmr080=!!src&&printed.id==='KMR-1-080'&&faceUpRaid(pack,src)&&
+   src.unblockedDrawGranted?.turn===s.turn&&
+   src.unblockedDrawGranted.stamp===src.fieldEntryStamp&&
+   src.unblockedDrawGranted.upTo===1;
+  if(!(raid||replayDraw||kmr080)||
    Object.keys(q).length!==3||
    Object.keys(q).some(k=>!['kind','player','sourceUid'].includes(k)))
    throw Error('Invalid raid-front retire draw');
@@ -24013,8 +24049,11 @@ export function assertUniversalMatch(pack,s){
     const granted=printedCard.effects?.onPlay?.some(e=>e.op==='raidBaseNameThen'&&
      e.branches?.some(b=>b.then?.some(t=>t.op==='grantUnblockedDrawThisTurn')));
     const kmrDraw=printedCard.id==='KMR-1-080'&&faceUpRaid(pack,c);
+    const keys=g&&typeof g==='object'&&!Array.isArray(g)?Object.keys(g).sort().join(','):'';
+    const plain=keys==='stamp,turn';
+    const upTo=kmrDraw&&keys==='stamp,turn,upTo'&&g.upTo===1;
     if(!live||!g||g.turn!==s.turn||g.stamp!==c.fieldEntryStamp||!(granted||kmrDraw)||
-     Object.keys(g).length!==2)
+     !(plain||upTo))
      throw Error('Forged unblocked-attack draw grant');
    }
   }

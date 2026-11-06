@@ -684,12 +684,10 @@ test('KMR-2-071 charges one AP to be chosen, and cannot be chosen with none',()=
  ready(locked);
  locked.players[0].apCards.forEach((c,i)=>{c.ready=i===0;});
  state=click(locked,a=>a.type==='event'&&a.uid===forced.uid);
- const open=legalUniversalActions(packs,state);
- assert.equal(state.pending?.id,'KMR-2-077');
- assert.equal(state.pending.actions.some(a=>a.mode==='retire'&&a.uid===only.uid),true);
- assert.equal(state.pending.actions.some(a=>a.mode==='skip'),false);
- assert.equal(open.some(a=>a.uid===only.uid),false);
- assert.equal(open.length,0);
+ assert.equal(state.pending,null);
+ assert.equal(state.players[1].front.some(c=>c?.uid===only.uid),true);
+ assert.equal(legalUniversalActions(packs,state).some(a=>a.type==='next'),true);
+ assertUniversalMatch(packs,state);
 });
 
 test('KMR-2-076 shows six, may take one green Decade, then draws',()=>{

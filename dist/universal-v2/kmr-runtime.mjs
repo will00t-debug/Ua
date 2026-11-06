@@ -43,7 +43,9 @@ function grantImpact(s,c){if(c)c.impactGranted={turn:s.turn,stamp:c.fieldEntrySt
 function grantDamage(s,c){if(c)c.attackDamageGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:2};}
 function grantImmune(s,c){if(c)c.oppChoiceImmuneGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
 function grantSniper(s,c){if(c)c.sniperGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
-function grantUnblockedDraw(s,c){if(c)c.unblockedDrawGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
+function grantUnblockedDraw(s,c){
+ if(c)c.unblockedDrawGranted={turn:s.turn,stamp:c.fieldEntryStamp,upTo:1};
+}
 function token(pack,c,name,s){
  const d=def(pack,c);
  if(d.name?.includes(name))return true;
@@ -61,15 +63,17 @@ function rememberRaid(pack,s,owner,physical){
  }
 }
 function windowCards(s,owner,n){return plOf(s,owner).deck.slice(0,Math.min(n,plOf(s,owner).deck.length));}
-function moveUid(pack,s,owner,from,uid,to,sourceUid,deckPosition){
+function moveUid(pack,s,owner,from,uid,to,sourceUid,deckPosition,reason='own-effect'){
  const index=plOf(s,owner)[from].findIndex(c=>c.uid===uid);
  if(index<0)throw Error('Kamen Rider card left '+from);
- const physical=A.move(pack,s,{owner,from,to,index,reason:'own-effect',sourceUid,
+ const physical=A.move(pack,s,{owner,from,to,index,reason,sourceUid,
   ...(to==='deck'?{deckPosition:deckPosition||'bottom',revealed:false}:{})});
  if(to==='hand')rememberRaid(pack,s,owner,physical);
  return physical;
 }
-function discard(pack,s,owner,uid,sourceUid){return moveUid(pack,s,owner,'hand',uid,'outside',sourceUid);}
+function discard(pack,s,owner,uid,sourceUid,reason='own-effect'){
+ return moveUid(pack,s,owner,'hand',uid,'outside',sourceUid,undefined,reason);
+}
 function lay(pl,uids,where){
  const picked=[];
  for(const uid of uids){
@@ -438,7 +442,7 @@ const HANDLERS={
    const key=job.sourceUid+'|027a';
    if(used(s,key)||!plOf(s,job.owner).hand.length)return;
    use(s,key);
-   offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'buff027');
+   offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'buff027',{reason:'payment'});
   }else if(mode==='b'){
    const loc=A.location(s,job.owner,job.sourceUid);
    if(!loc||loc.line!=='front'||used(s,job.sourceUid+'|027b'))return;
@@ -695,14 +699,17 @@ const HANDLERS={
   offerOwn(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},raided,true,'replay','own');
  },
  'KMR-1-079|onRetire'(pack,s,job){baseRest(pack,s,job);},
- 'KMR-1-080|onPlay'(pack,s,job){const c=selfOf(s,job.owner,job.sourceUid);if(c)grantUnblockedDraw(s,c);},
+ 'KMR-1-080|onPlay'(pack,s,job){
+  const c=selfOf(s,job.owner,job.sourceUid);
+  if(c&&A.raided(pack,c))grantUnblockedDraw(s,c);
+ },
  'KMR-1-080|onRetire'(pack,s,job){baseRest(pack,s,job);},
  'KMR-1-081|main'(pack,s,job){
   const key=job.sourceUid+'|KMR-1-081';
   if(used(s,key)||!plOf(s,job.owner).hand.length)return;
   use(s,key);
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  if(!offerDiscard(s,spec,1,false,'range'))return;
+  if(!offerDiscard(s,spec,1,false,'range',{reason:'payment'}))return;
  },
  'KMR-1-081|onAttack'(pack,s,job){
   const moved=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===job.owner&&e.from==='hand'&&
@@ -782,7 +789,7 @@ const HANDLERS={
   }else if(job.mode==='b'){
    if(used(s,job.sourceUid+'|094b')||!s.raidedThisTurn?.[job.owner]||!plOf(s,job.owner).hand.length)return;
    use(s,job.sourceUid+'|094b');
-   offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'activeSelf');
+   offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'activeSelf',{reason:'payment'});
   }
  },
  'KMR-1-095|onPlay'(pack,s,job){
@@ -845,7 +852,7 @@ const HANDLERS={
   if(!pool.length)return;
   self.ready=false;A.noteRest(s,job.owner,self);
   if(!pay(s,job.owner,1,job.sourceUid))return;
-  offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'deployIntel');
+  offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'deployIntel',{reason:'payment'});
  },
  'KMR-1-109|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
@@ -1223,7 +1230,7 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='discard'||q.step==='optionalDiscardDraw'){
   if(hit.mode==='skip'){s.pending=null;return;}
-  discard(pack,s,q.player,hit.uid,q.sourceUid);
+  discard(pack,s,q.player,hit.uid,q.sourceUid,q.data?.reason==='payment'?'payment':'own-effect');
   if(q.step==='optionalDiscardDraw'){
    s.pending=null;
    A.draw(pack,s,q.player,q.data.draw,q.sourceUid);

@@ -691,6 +691,28 @@ test('IYS-1-018 peeks privately, then grants the block ceiling and must retire a
  assert.ok(legalUniversalActions(packs,grant).some(a=>a.uid===short.uid));
  grant=use(grant,{type:'chooseBlock',uid:short.uid});
  assertUniversalMatch(packs,grant);
+
+ let stay=toPhase(fresh(['IYS-1-018','IYS-1-014','IYS-1-015','IYS-1-027','IYS-1-007','IYS-1-004','IYS-1-010'],1027),'main');
+ const source=put(stay,0,'IYS-1-018','front',0);
+ const bearer=put(stay,0,'IYS-1-014','front',1,true);
+ const extra=put(stay,0,'IYS-1-015','energy',0);
+ const later=put(stay,0,'IYS-1-027','energy',1,true);
+ stay=use(stay,{type:'activate',uid:source.uid,mode:'iys:0'});
+ stay=choose(stay,a=>a.uid===bearer.uid);
+ stay=choose(stay,a=>a.uid===extra.uid);
+ stay=use(stay,{type:'activate',uid:later.uid,mode:'iys:0'});
+ assert.equal(stay.pending.step,'retireNaraku');
+ stay=choose(stay,a=>a.uid===source.uid);
+ assert.equal(stay.players[0].outside.some(c=>c.uid===source.uid),true);
+ assert.equal(stay.players[0].front.some(c=>c?.uid===bearer.uid),true);
+ const wall=put(stay,1,'IYS-1-007','front',0,true);
+ const small=put(stay,1,'IYS-1-004','front',1,true);
+ stay=toPhase(stay,'attack');
+ stay=use(stay,{type:'attack',uid:bearer.uid});
+ assert.equal(legalUniversalActions(packs,stay).some(a=>a.uid===wall.uid),false);
+ assert.ok(legalUniversalActions(packs,stay).some(a=>a.uid===small.uid));
+ stay=use(stay,{type:'chooseBlock',uid:small.uid});
+ assertUniversalMatch(packs,stay);
 });
 
 test('IYS-1-020 bounces an energy-1-or-less character, or itself when none exists',()=>{

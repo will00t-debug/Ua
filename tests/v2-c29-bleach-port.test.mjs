@@ -6122,7 +6122,9 @@ test('BLC-1-081 cannot enter or move to energy, and raises its retirement cap at
  assert.equal(played.pending.choices.includes(lowTall.uid),false);
  assert.equal(fieldCount(played,0),6);
  assert.equal(legalUniversalActions(low.packs,played).some(a=>a.type==='chooseRetireBp'&&a.uid===null),true);
+ played.aotBpRange[0]=1000;
  const declined=dispatchUniversalAction(low.packs,played,{type:'chooseRetireBp',uid:null});
+ assert.equal(declined.aotBpRange[0],1000);
  assert.equal(declined.pending,null);
  assert.equal(declined.players[1].front.some(c=>c?.uid===lowSmall.uid),true);
  assert.equal(universalImpact(low.packs,declined,live(declined,0,lowKen.uid)),1);
@@ -6142,7 +6144,9 @@ test('BLC-1-081 cannot enter or move to energy, and raises its retirement cap at
  assert.equal(raised.pending.limit,4000);
  assert.equal(raised.pending.choices.includes(highTall.uid),true);
  aiOk(high.packs,raised);
+ raised.aotBpRange[0]=1000;
  raised=dispatchUniversalAction(high.packs,raised,{type:'chooseRetireBp',uid:highTall.uid});
+ assert.equal(raised.aotBpRange[0],0);
  assert.equal(raised.pending,null);
  assert.equal(raised.players[1].outside.some(c=>c.uid===highTall.uid),true);
  const parked=main(deck,30674);
