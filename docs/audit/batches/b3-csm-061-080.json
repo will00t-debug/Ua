@@ -1,0 +1,445 @@
+{
+  "group": "B3",
+  "base": "fad8be045910fbac211abfda6266763cf6b88885",
+  "range": "CSM-1-061–CSM-1-080",
+  "updated": "2026-11-06",
+  "sources": {
+    "card": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-0xx",
+    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA53BT_CSM-1-0xx.png",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA53BT",
+    "fetched": "2026-11-06",
+    "note": "061–080 官網全文於 2026-11-06 重新抓取。去掉關鍵字圖後與目錄 effectJa 一致，頁面沒有誤記。已公開的異圖是 061、065、066、067、070 的 _p1，效果與本體相同。其餘 _p1 網址沒有卡頁。系列 FAQ 在此範圍是 Q2093–Q2103，日期 2026.05.15。061、066 的突襲框以官方卡圖確認，沒有改 raid-box.mjs。裡向卡雙方視角用 CSM-1-056 登場時放進的三張裡向卡驗證：控制者的公開視圖與畫面有卡名、cardId、卡圖與由下往上的順序；對手的回應與卡背畫面沒有這些，重排後對手的標記仍是三個相同的 {faceDown:true}。"
+  },
+  "sharedGaps": [
+    {
+      "cards": ["CSM-1-061"],
+      "owner": "A",
+      "official": "【登場時】自己の場に〈デンジ〉がある場合、このキャラはこのターン中、BP+1000と「相手はこのキャラのアタックを可能ならブロックしなければならない。」を得る。這句在突襲框外。Q2094：有可阻擋的角色就必須指定 1 體阻擋，沒有則承受傷害。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-061",
+      "reproduction": "場上有〈デンジ〉，從手牌普通登場 CSM-1-061。csm-runtime 的 onPlay 寫入 BP+1000 與 mustBlockGranted。dispatch 在 assertUniversalMatch 拋出 Forged temporary physical battle grant。證明只接受印刷 op grantSelfMustBlockThisTurn，不接受這張卡的 csm onPlay。",
+      "expected": "這張功率本回合 BP+1000，對手在能阻擋時必須阻擋，對局仍通過驗證。沒有電次時不獲得這兩項。",
+      "actual": "沒有電次的普通登場可以提交。有電次時整次登場動作被拒絕，BP 與強制阻擋都沒有留在對局裡。",
+      "regression": "tests/v2-csm-061-080.test.mjs 用真實登場確認沒有電次時不授予。有電次時只直接呼叫 runCsmJob，確認卡片分支會寫入兩個欄位，沒有把驗證例外當成通過。"
+    },
+    {
+      "cards": ["CSM-1-062"],
+      "owner": "A",
+      "official": "【メイン】【レスト】【このカードを退場させる】自分の場の〈デンジ〉を1枚まで選び、このターン中、「【攻撃時】カードを1枚まで引く。」を与える。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-062",
+      "reproduction": "前線的 CSM-1-062 起動。成本退場後，場上有電次時會問要不要賦予。選那張電次後，dispatch 拋出 Forged this-turn attack draw。attackDrawGranted 的證明只接受 onceChooseProgram 或 lineShiftOutsideMove。",
+      "expected": "光束退場。選中的電次本回合攻擊時可以抽 0 或 1 張，對局仍有效。不選則不賦予。",
+      "actual": "退場、略過、以及場上沒有電次，都可以提交。指定電次的動作不能提交。共用的 granted-attack-draw 本身有略過與抽 1，這次沒有走到那一步。",
+      "regression": "tests/v2-csm-061-080.test.mjs 提交略過與沒有電次的兩條。沒有把指定電次的例外當成正確終態。"
+    },
+    {
+      "cards": ["CSM-1-066"],
+      "owner": "A",
+      "official": "突襲框內：「自分のエンドフェイズ開始時、自分のフロントLの〈姫野〉以外のキャラと自分のエナジーLのキャラを1枚ずつ選び、それらの位置を入れ替えてもよい。」文本沒有要求這張姬野自己在前線。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA53BT%2FCSM-1-066",
+      "reproduction": "把突襲狀態的 CSM-1-066 放在能源線，場上另有非姬野的前線角色與能源角色，從攻擊階段進入結束階段。engine.mjs 約 17420 行只在這張卡位於前線時排入 endStart。",
+      "expected": "正面向上的突襲狀態下，不論這張姬野在前線或能源線，自己的結束階段開始時都可以換位。",
+      "actual": "在前線時會詢問並完成換位。在能源線時引擎不排工作。卡片分支本身不再要求自己在前線。",
+      "regression": "tests/v2-csm-061-080.test.mjs 提交前線突襲的攻擊結束與結束階段換位。能源線只直接呼叫 runCsmJob，確認卡片分支會詢問，沒有把引擎不排工作寫成預期結果。"
+    }
+  ],
+  "closedByBase": [
+    {
+      "cards": ["CSM-1-046"],
+      "note": "fad8be04 讓 effectMoveTo 呼叫 csmOnMovedOutsideMove。tests/v2-csm-040-060.test.mjs 已確認效果移動後獲得 BP4000 阻擋上限與未被阻擋可抽牌，並通過驗證。b2 台帳仍寫著舊缺口，本輪不改那份檔。"
+    },
+    {
+      "cards": ["CSM-1-046", "CSM-1-055"],
+      "note": "fad8be04 的阻擋上限證明接受這兩張卡。055 指定對象後 blockAtLeastGranted.bp 為 3000，對局有效。"
+    },
+    {
+      "cards": ["CSM-1-056"],
+      "note": "fad8be04 的狙擊證明接受 CSM-1-056。多張裡向卡的選擇與最後一張賦予狙擊、衝擊的路徑都通過驗證。"
+    },
+    {
+      "cards": ["CSM-1-047", "CSM-1-048", "CSM-1-051", "CSM-1-054", "CSM-1-056"],
+      "note": "上一輪缺的裡向卡對手視角已由本輪測試補上。控制者看得到依法可看的內容；對手的公開視圖與卡背畫面沒有未公開卡名、cardId、卡圖或排列順序。b2 台帳的「裡向きの確認」沒有回寫。"
+    }
+  ],
+  "testResults": {
+    "command": "npm test",
+    "passed": false,
+    "tests": 3857,
+    "pass": 3856,
+    "fail": 1,
+    "files": [
+      "tests/v2-csm-061-080.test.mjs",
+      "tests/v2-csm-001-010.test.mjs",
+      "tests/v2-csm-011-020.test.mjs",
+      "tests/v2-csm-021-039.test.mjs",
+      "tests/v2-csm-040-060.test.mjs",
+      "tests/v2-csm-set1.test.mjs",
+      "tests/v2-csm-faq.test.mjs",
+      "tests/v2-csm-048-061-raid.test.mjs",
+      "tests/v2-csm-067-pochita-denji.test.mjs",
+      "tests/v2-csm-catalog.test.mjs"
+    ],
+    "note": "2026-11-06 對工作樹執行 npm test：3857 項中 3856 項通過。唯一失敗是 tests/v2-independent-audit.test.mjs；scripts/v2-audit-catalog.mjs 在 dist 與 tests 仍有未提交變更時拒絕執行。提交後重跑該檔。"
+  },
+  "reviews": [
+    {
+      "cardId": "CSM-1-061",
+      "number": "UA53BT/CSM-1-061",
+      "clauses": [
+        {
+          "match": "突襲框",
+          "status": "已驗證",
+          "official": "卡圖：框內是〈パワー〉活動移到前線、【ターン1】的代替退場、以及攻擊並戰鬥勝利時抽 1。【登場時】在框外。異圖 _p1 文本相同。",
+          "implementation": "raid-box.mjs 只列 attackWin 與 leaveReplace。普通登場不抽戰鬥勝利的牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs；tests/v2-csm-048-061-raid.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "バトル勝利で1枚引く",
+          "status": "已驗證",
+          "official": "Q2093：攻擊後與對手角色戰鬥，而且自己的 BP 大於等於對手。不是對玩家造成傷害。",
+          "implementation": "csmOnAttackWin 只在 raidBoxTextLive(attackWin) 時抽 1。正面突襲打贏阻擋者抽 1。普通登場打贏不抽。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "ターン1の代替退場",
+          "status": "已驗證",
+          "official": "BP500 以上的這張卡要退場時，可以改退自己前線另一張 BP4000 以上的角色。每回合 1 次。",
+          "implementation": "只在正面突襲時詢問。詢問當下就消耗本回合次數，拒絕也消耗。接受時代替者退場，原卡留下。沒有合法代替者時不詢問、不消耗。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs；tests/v2-csm-faq.test.mjs 的 Q2093",
+          "unresolved": ""
+        },
+        {
+          "match": "登場時デンジ",
+          "status": "部分核對",
+          "official": "場上有〈デンジ〉時，本回合 BP+1000，而且對手能阻擋就必須阻擋。Q2094。這句不在突襲框。",
+          "implementation": "onPlay 在有電次時寫入 buff 與 mustBlockGranted。沒有電次時直接返回。",
+          "discrepancy": "有電次的登場不能通過共用驗證。見 sharedGaps。",
+          "evidence": "tests/v2-csm-061-080.test.mjs 的無電次登場與 runCsmJob",
+          "unresolved": "依賴 A。"
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-062",
+      "number": "UA53BT/CSM-1-062",
+      "clauses": [
+        {
+          "match": "退場コストと付与",
+          "status": "部分核對",
+          "official": "休息並退場這張卡，然後最多選 1 張自己的電次，本回合獲得「攻擊時最多抽 1」。沒有觸發。",
+          "implementation": "needsLeave 為 true，光束實際退場後才詢問。沒有電次則不詢問。略過不寫入 attackDrawGranted。",
+          "discrepancy": "指定電次時共用驗證拒絕。見 sharedGaps。",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": "依賴 A。"
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-063",
+      "number": "UA53BT/CSM-1-063",
+      "clauses": [
+        {
+          "match": "登場時ドローと手札",
+          "status": "已驗證",
+          "official": "登場時抽 1，然後把自己的手牌 1 張放到場外。觸發是抽 1。",
+          "implementation": "共用 drawDiscard。抽到的牌與原本的手牌都可以放到場外。生命觸發是 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-064",
+      "number": "UA53BT/CSM-1-064",
+      "clauses": [
+        {
+          "match": "手札減能量與衝擊無效",
+          "status": "已驗證",
+          "official": "自己場上沒有卡時，手牌中的這張卡必要能量減 2 紅。衝擊無效是常時能力，不在突襲框。觸發是活動：選 1 張自己的角色，活動並本回合 BP+3000。",
+          "implementation": "emptyOwnFieldHandEnergyDiscount 只在手牌且場上為空時生效。impactNull 在場上即生效。生命的活動觸發把休息角色轉為活動並 +3000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-065",
+      "number": "UA53BT/CSM-1-065",
+      "clauses": [
+        {
+          "match": "起動與色觸發",
+          "status": "已驗證",
+          "official": "主要階段、每回合 1 次、休息：選自己能源線 1 張卡並活動。色觸發是退場對方前線 BP2500 以下的 1 張角色。異圖 _p1 文本相同。",
+          "implementation": "沒有休息中的能源卡時不能起動。只列出休息中的卡。起動後這張姬野休息，同一回合不能再起動。色觸發用 colorRetire。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-066",
+      "number": "UA53BT/CSM-1-066",
+      "clauses": [
+        {
+          "match": "突襲框",
+          "status": "已驗證",
+          "official": "卡圖：框內是〈姫野〉活動移到前線、攻擊結束時可退場自己、以及自己的結束階段開始時與非姬野前線角色換位。登場時抽 1 與退場時在框外。異圖 _p1 文本相同。",
+          "implementation": "raid-box.mjs 列 attackEnd 與 phase。普通登場仍抽 1，攻擊結束不詢問退場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "アタック終了時",
+          "status": "已驗證",
+          "official": "Q2097：時點與同系列攻擊結束效果相同。可以不退場。",
+          "implementation": "只有正面突襲的攻擊者會被詢問。略過則留下。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "エンドフェイズの入替",
+          "status": "部分核對",
+          "official": "自己的結束階段開始時，可選 1 張非姬野前線角色與 1 張能源角色交換。Q2098：波奇塔不能移到前線。",
+          "implementation": "卡片分支列出非姬野前線與可上前線的能源角色，並可略過。能源線上的突襲姬野也會由卡片分支詢問，但引擎只在她位於前線時排工作。",
+          "discrepancy": "能源線上的突襲狀態不會進入結束階段處理。見 sharedGaps。",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": "依賴 A。"
+        },
+        {
+          "match": "退場時",
+          "status": "已驗證",
+          "official": "自己的場上與場外沒有原本 BP4500 以上的卡時，最多選 1 張能源角色，本回合 BP+2000 並移到前線。Q2095：前線滿了要指定替換。Q2096：原本 BP 是印刷 BP。Q2098：波奇塔不能被選。",
+          "implementation": "不要求突襲。場外有印刷 BP5000 的卡時不詢問。沒有時可略過，或加 2000 後移到空的前線格。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs；tests/v2-csm-faq.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-067",
+      "number": "UA53BT/CSM-1-067",
+      "clauses": [
+        {
+          "match": "フロント禁止と山札頂",
+          "status": "已驗證",
+          "official": "不能登場或移動到前線。登場時看自己牌庫頂 1 張，放回頂端或場外。Q2098。色觸發退場對方前線 BP2500 以下的角色。異圖 _p1 文本相同。",
+          "implementation": "frontForbidden。peekTopOne 的私人選項把卡名與 cardId 只給控制者。對手的公開視圖沒有那張牌的 uid 或 cardId。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs；tests/v2-csm-faq.test.mjs",
+          "unresolved": ""
+        },
+        {
+          "match": "デンジを連れて登場",
+          "status": "已驗證",
+          "official": "休息並退場這張卡。可以從場外把必要能量 1 以下的紅色電次以活動狀態登場到能源線。如此做的話，把這張退場的波奇塔裡向放在那個電次下面。Q2099：控制者可以看自己的裡向卡，對手不行。",
+          "implementation": "退場寫在啟動成本裡，needsLeave 為 true，波奇塔實際離場後才選電次與能源格。登場後才把來源 uid 蓋到電次下面。可以不登場。能量 3 的紅電次與紫電次不能選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-067-pochita-denji.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-068",
+      "number": "UA53BT/CSM-1-068",
+      "clauses": [
+        {
+          "match": "退場時回手",
+          "status": "已驗證",
+          "official": "退場時可以把手牌 2 張角色或 1 張事件放到場外。如此做的話，這張卡加入手牌。觸發是抽 1。",
+          "implementation": "可略過，略過則留在場外。付 1 張事件後從場外回手。付角色時先選一張，第二張不能改為略過，兩張都到場外後才回手。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-069",
+      "number": "UA53BT/CSM-1-069",
+      "clauses": [
+        {
+          "match": "アクティブ時の発生エネルギー",
+          "status": "已驗證",
+          "official": "這張角色活動時，發生能量 +1 紅。沒有觸發。",
+          "implementation": "activeExtraEnergy。在能源線活動時紅能量為 2，休息時為 1，在前線時不產生。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-070",
+      "number": "UA53BT/CSM-1-070",
+      "clauses": [
+        {
+          "match": "入替とアタック時退場",
+          "status": "已驗證",
+          "official": "前線、每回合 1 次：與自己能源線 1 張角色換位。攻擊時退場自己場上 1 張真紀真以外的角色。觸發是加入手牌。異圖 _p1 文本相同。Q2098：不能與波奇塔換位。",
+          "implementation": "能源線上的這張卡不能起動。換位選項不含波奇塔。攻擊時必須退場，不能略過，也不能選自己這張真紀真。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-071",
+      "number": "UA53BT/CSM-1-071",
+      "clauses": [
+        {
+          "match": "山札の上から1枚",
+          "status": "已驗證",
+          "official": "主要階段休息：看自己牌庫頂 1 張，放到頂端或底端。觸發是抽 1。",
+          "implementation": "data.window 只有那一張。控制者看得到卡圖。對手的公開視圖沒有 uid 與 cardId。放到底端後，原本的第二張成為頂端。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-072",
+      "number": "UA53BT/CSM-1-072",
+      "clauses": [
+        {
+          "match": "移動フェイズ以外",
+          "status": "已驗證",
+          "official": "攻擊時，若這張角色在本回合的移動階段以外移動過，最多可從場外把必要能量 2 以下的〈早川 アキ〉加入手牌。",
+          "implementation": "效果移動在主要階段寫入 csmMovedOutsideMove。移動階段的能源到前線不寫入。攻擊時只回收能量 2 以下的早川，能量 4 的不能選，也可以不回收。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-073",
+      "number": "UA53BT/CSM-1-073",
+      "clauses": [
+        {
+          "match": "上から4枚",
+          "status": "已驗證",
+          "official": "登場時看牌庫頂 4 張，最多公開 1 張早川秋、電次或帕瓦並加入手牌。其餘按希望的順序放回牌庫底。觸發是加入手牌。",
+          "implementation": "四張都顯示，不能選的留在畫面上。公開紀錄只有被加入手牌的那張。不棄手牌。其餘依選擇順序放到底部。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-074",
+      "number": "UA53BT/CSM-1-074",
+      "clauses": [
+        {
+          "match": "APを2枚まで",
+          "status": "已驗證",
+          "official": "最多活動 2 張自己的 AP。最終觸發：自己沒有生命時，把牌庫頂 1 張放到生命區。",
+          "implementation": "共用 recoverAp count 2，可以少於 2。最終觸發把牌庫頂放進空的生命區，不另外活動 AP。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-075",
+      "number": "UA53BT/CSM-1-075",
+      "clauses": [
+        {
+          "match": "BPと裏向きとAP",
+          "status": "已驗證",
+          "official": "選 1 張自己的角色，本回合 BP+2000。可以把自己早川秋底下的 1 張裡向卡放到場外。如此做的話，活動 1 張 AP，並最多選 1 張自己的早川秋，本回合給予衝擊（1）。Q2100 只談裡向卡可見範圍。觸發是抽 1。",
+          "implementation": "BP 必定加上。裡向卡可以略過，略過則不活動 AP、不給衝擊。有多張時選中的那張離場，不是固定最後一張。先選 AP，再決定要不要給衝擊。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-076",
+      "number": "UA53BT/CSM-1-076",
+      "clauses": [
+        {
+          "match": "見るか下に置く",
+          "status": "已驗證",
+          "official": "二選一。看頂端 2 張，任意張數任意順序放回頂端，其餘放場外，然後可以從場外把能量 1 以下的紅電次活動登場到能源線，並把這張卡裡向放在下面。或者把這張卡裡向放到底下沒有裡向卡的自己電次下面；那個電次不是突襲狀態時，活動 1 張 AP。Q2101。觸發是活動並 BP+3000。",
+          "implementation": "沒有合格電次時不提供第二項。看牌窗口含不能只留在頂端的選擇，對手看不到。登場電次可以略過。第二項把事件蓋到指定電次下，並活動 1 張 AP。本彈沒有印著突襲的電次，突襲狀態的例外沒有合法宿主；實作仍用正面突襲層判斷。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-077",
+      "number": "UA53BT/CSM-1-077",
+      "clauses": [
+        {
+          "match": "退場と裏向き",
+          "status": "已驗證",
+          "official": "自己場上有〈早川 アキ〉才能使用。退場對方前線 1 張目前 BP5000 以下的角色。可以把自己早川秋底下的 1 張裡向卡放到場外。後句沒有「そうした場合」。Q2102。特殊觸發是退場對方前線 1 張角色，沒有 5000 上限。",
+          "implementation": "沒有合法退場對象時仍可翻裡向卡。有對象時，代替退場留下原卡，翻牌仍然發生。特殊觸發可以退場 BP4000 的角色。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs；tests/v2-csm-001-010.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-078",
+      "number": "UA53BT/CSM-1-078",
+      "clauses": [
+        {
+          "match": "2枚か3枚",
+          "status": "已驗證",
+          "official": "抽 2。自己場上有〈早川家〉，或自己的電次底下有裡向卡時，改為抽 3。Q2103。觸發是抽 1。",
+          "implementation": "早川家是場地，放在能源線也算。早川秋底下的裡向卡不改為 3。電次底下有裡向卡時抽 3。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-079",
+      "number": "UA53BT/CSM-1-079",
+      "clauses": [
+        {
+          "match": "APを2枚まで",
+          "status": "已驗證",
+          "official": "與 CSM-1-074 相同：最多活動 2 張 AP。最終觸發相同。",
+          "implementation": "共用 recoverAp count 2。最終觸發把牌庫頂放進空的生命區。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "CSM-1-080",
+      "number": "UA53BT/CSM-1-080",
+      "clauses": [
+        {
+          "match": "BP3000か5000",
+          "status": "已驗證",
+          "official": "退場對方前線 1 張 BP3000 以下的角色。自己場上有電次時，改為 BP5000 以下。特殊觸發沒有這個上限。",
+          "implementation": "用目前 BP。3000 的角色被加到 4000 後，沒有電次時不能選。有電次時 4000 可以選，超過 5000 不能選。沒有合法對象時效果結束。特殊觸發可以退場 BP4000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-csm-061-080.test.mjs",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}
