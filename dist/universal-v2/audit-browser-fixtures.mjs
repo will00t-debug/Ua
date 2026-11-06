@@ -1,6 +1,7 @@
 // Local battle-page positions for the effect audit. A normal match never
 // loads this module. The board is a real V2 match; the browser then uses the
 // same legal buttons as a player.
+import {createAotV2Pack} from './aot-pack.mjs';
 import {createCsmV2Pack} from './csm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
 import {createKmrBattlePack} from './official-entry.mjs';
@@ -73,6 +74,9 @@ export function loadAuditFixture(name){
  if(name==='iys028')return narakuLeave();
  if(name==='iys028energy')return energySqueeze();
  if(name==='iys046')return inuyashaDouble();
+ if(name==='aot010')return leviTrigger();
+ if(name==='aot011')return leviSniper();
+ if(name==='aot2017')return jawStep();
  throw Error('Unknown audit fixture '+name);
 }
 function heatMetal(){
@@ -253,4 +257,85 @@ function inuyashaDouble(){
  if(!choice)throw Error('046 audit is not waiting on double attack');
  return finish(pack,built,
   '稽核 IYS-1-046：先按「獲得再次攻擊」。再點手牌雲母，點前線犬夜叉那格，普通登場擠掉它。不應出現錯誤。犬夜叉進移除區，雲母佔該格。');
+}
+function setLife(s,p,ids){
+ const life=ids.map(id=>take(s,p,id));
+ s.players[p].deck.push(...s.players[p].life.splice(0));
+ s.players[p].life=life;
+}
+function leviTrigger(){
+ const pack=createAotV2Pack();
+ const built=open(pack,10010,[
+  'AOT-1-010','AOT-1-001','AOT-1-003','AOT-1-009','AOT-1-002'
+ ],{'AOT-1-001':2,'AOT-1-003':2});
+ const s=built.state;
+ ready(s);
+ s.phase='attack';
+ const source=put(s,0,'AOT-1-010','front',0,true);
+ const ally=put(s,0,'AOT-1-001','front',1,false);
+ const other=put(s,0,'AOT-1-003','front',2,true);
+ put(s,1,'AOT-1-001','front',0,false);
+ setLife(s,1,['AOT-1-009','AOT-1-003']);
+ const attack=legalUniversalActions([pack,pack],s).find(a=>a.type==='attack'&&a.uid===source.uid&&!a.targetUid);
+ if(!attack)throw Error('AOT-1-010 cannot attack from this audit position');
+ built.audit={source:source.uid,ally:ally.uid,other:other.uid};
+ return finish(pack,built,
+  '稽核 AOT-1-010：宣告利威爾攻擊。按「支付」，再按艾爾文的「給予這個回合的能力」。對手不能阻擋。顏色觸發應可將韓吉返回手牌，不能選休息的艾爾文。');
+}
+function leviSniper(){
+ const pack=createAotV2Pack();
+ const built=open(pack,10011,[
+  'AOT-1-011','AOT-1-007','AOT-1-002','AOT-1-006','AOT-1-015','AOT-1-016','AOT-1-001','AOT-1-003'
+ ],{'AOT-1-003':4});
+ const s=built.state;
+ ready(s);
+ for(const [slot,id] of [[0,'AOT-1-002'],[1,'AOT-1-006'],[2,'AOT-1-015'],[3,'AOT-1-016']])
+  put(s,0,id,'energy',slot,true);
+ const host=put(s,0,'AOT-1-007','front',0,true);
+ const wall=put(s,1,'AOT-1-001','front',0,true);
+ setLife(s,1,['AOT-1-003','AOT-1-003','AOT-1-003']);
+ const raider=take(s,0,'AOT-1-011');
+ s.players[0].hand.push(raider);
+ pick(pack,built,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===host.uid);
+ const levi=built.state.players[0].front.find(c=>c?.uid===raider.uid);
+ if(!levi?.ready||levi.aotThirdSniper?.done!==true)throw Error('Raided Levi did not gain the third-attack sniper');
+ built.state.phase='attack';
+ built.state.pending=null;
+ const attack=legalUniversalActions([pack,pack],built.state).find(a=>a.type==='attack'&&a.uid===raider.uid&&!a.targetUid);
+ if(!attack)throw Error('Raided Levi cannot attack');
+ built.audit={levi:raider.uid,wall:wall.uid};
+ return finish(pack,built,
+  '稽核 AOT-1-011：利威爾已突襲。第一次攻擊後按「不發動」。第二次攻擊後按「支付」。第三次按「狙擊攻擊」打艾爾文，沒有阻擋，結束後不再出現支付。');
+}
+function jawStep(){
+ const pack=createAotV2Pack();
+ const built=open(pack,20017,[
+  'AOT-2-001','AOT-2-003','AOT-2-004','AOT-2-015','AOT-2-017'
+ ],{'AOT-2-001':2,'AOT-2-017':2});
+ const s=built.state;
+ ready(s);
+ put(s,0,'AOT-2-001','energy',0,true);
+ put(s,0,'AOT-2-003','energy',1,true);
+ put(s,0,'AOT-2-001','energy',2,true);
+ const ordinary=take(s,0,'AOT-2-017');
+ s.players[0].hand.push(ordinary);
+ pick(pack,built,a=>a.type==='play'&&a.uid===ordinary.uid&&a.line==='front'&&a.slot===2&&a.replaceUid===undefined);
+ if(built.state.pending)throw Error('Ordinary Jaw Falco opened an effect');
+ const base=put(built.state,0,'AOT-2-015','front',0,true);
+ const raider=take(built.state,0,'AOT-2-017');
+ built.state.players[0].hand.push(raider);
+ pick(pack,built,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid);
+ if(built.state.pending?.step!=='tuck')throw Error('Raided Jaw Falco did not offer the tuck');
+ pick(pack,built,a=>a.mode==='done');
+ if(built.state.pending)throw Error('Skipping the tuck left a choice open');
+ built.state.phase='move';
+ const packs=[pack,pack];
+ const legal=legalUniversalActions(packs,built.state);
+ if(legal.some(a=>a.type==='step'&&a.uid===ordinary.uid))
+  throw Error('Ordinary Jaw Falco still offers STEP');
+ if(!legal.some(a=>a.type==='step'&&a.uid===raider.uid))
+  throw Error('Raided Jaw Falco does not offer STEP');
+ built.audit={ordinary:ordinary.uid,raider:raider.uid};
+ return finish(pack,built,
+  '稽核 AOT-2-017：普通登場的顎之巨人沒有 STEP。突襲的那張有「STEP 移至能源線 4」。點下去後，人應在能源線最右邊，離開前線。');
 }

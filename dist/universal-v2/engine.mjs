@@ -151,6 +151,24 @@ function queueFrontNamedAttackEnd(pack,s,attacker){
  s.effectQueue.push({op:'resolveFrontNamedAttackEndSwap',owner:s.active,
   sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp,name});
 }
+// A sniper or first-attack battle never opens the block window, so the
+// attack-end jobs that the block choice queues have to be queued here.
+// Q982: this is after the battle, and after a life trigger when one was dealt.
+function queueClosedBattleAttackEnd(pack,s,attacker){
+ const endRetire=attacker.attackEndRetireGranted;
+ if(endRetire&&endRetire.turn===s.turn&&endRetire.stamp===attacker.fieldEntryStamp)
+  s.effectQueue.push({op:'retireAttackEndGranted',owner:s.active,
+   sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp,
+   grantSourceUid:endRetire.sourceUid});
+ if(attackEndSwapAvailable(pack,s,attacker)){
+  if(!Number.isInteger(attacker.fieldEntryStamp)||attacker.fieldEntryStamp<1||
+   s.phase!=='attack'||!(s.attacksByUid[attacker.uid]>=1))
+   throw Error('Unproven physical Q2337 attack');
+  s.effectQueue.push({op:'resolveAttackEndSwap',owner:s.active,
+   sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp});
+ }
+ queueOwnAttackEnd(pack,s,attacker);
+}
 function underLeaveProfile(definition){
  return definition.conditionalUnderFaceDown||definition.facedownUnderStanding||null;
 }
@@ -474,6 +492,10 @@ function faceUpRaid(pack,c){
 // Q51: a listed Raid-frame feature is live only in face-up Raid state.
 function raidBoxTextLive(pack,c,feature){
  return !c||!raidBoxListed(card(pack,c).id,feature)||faceUpRaid(pack,c);
+}
+function printedStepLive(pack,s,c){
+ return !!c&&card(pack,c).step===true&&!originalEffectsDisabled(s,c)&&
+  raidBoxTextLive(pack,c,'step');
 }
 function livePassives(pack,s,c){
  if(!c||originalEffectsDisabled(s,c)||!raidBoxTextLive(pack,c,'passive'))return [];
@@ -4866,6 +4888,7 @@ function continueEffectQueue(pack,s){
     queueAttackWinDraw(pack,s,1-owner,defender,'defender');
    }
    queueFrontNamedAttackEnd(pack,s,attacker);
+   queueClosedBattleAttackEnd(pack,s,attacker);
    // The target remains ACTIVE/REST if it survives. No fake block action.
   }else if(job.op==='attackAidOffer'){
    const source=location(s,owner,job.sourceUid);
@@ -4901,6 +4924,8 @@ function continueEffectQueue(pack,s){
     if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner);
    }else grantBattleWinToOtherOwn(pack,s,1-owner,defender,'blocker');
    consumeFirstAttackKit(s,attacker);
+   queueFrontNamedAttackEnd(pack,s,attacker);
+   queueClosedBattleAttackEnd(pack,s,attacker);
   }else if(job.op==='openBlock'){
    // Internal attack-window continuation, never a user-authored card DSL op.
    // Blocking begins only AFTER all attack-time choices and queued effects.
@@ -16625,12 +16650,12 @@ export function legalUniversalActions(pack,s){
   !facedownMoveBanned(pack,s,c)&&
   !card(pack,c).ownEffectMoveOnly&&!cannotMoveLocked(s,p,c)))
    for(const choice of legalDestinations(pl,'front'))out.push({type:'move',uid:c.uid,...choice});
-  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step&&
+  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&printedStepLive(pack,s,c)&&
    !card(pack,c).energyForbidden&&!card(pack,c).energyLineForbidden&&
-   !card(pack,c).ownEffectMoveOnly&&!originalEffectsDisabled(s,c)&&!cannotMoveLocked(s,p,c)))
+   !card(pack,c).ownEffectMoveOnly&&!cannotMoveLocked(s,p,c)))
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
   const stepGrantors=field(pl).filter(c=>card(pack,c).grantStepToOtherOwn===true&&
-   card(pack,c).step===true&&!originalEffectsDisabled(s,c));
+   printedStepLive(pack,s,c));
   if(stepGrantors.length)for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&
    !card(pack,c).step&&card(pack,c).type==='character'&&
    !card(pack,c).energyForbidden&&!card(pack,c).energyLineForbidden&&
@@ -19446,11 +19471,10 @@ if(ability.op==='characterDualMain'){
    const l=location(s,p,action.uid);
    const printed=l&&card(pack,l.c);
    const granted=!!printed&&!printed.step&&field(pl).some(c=>c.uid!==l.c.uid&&
-    card(pack,c).grantStepToOtherOwn===true&&card(pack,c).step===true&&
-    !originalEffectsDisabled(s,c));
+    card(pack,c).grantStepToOtherOwn===true&&printedStepLive(pack,s,c));
    if(!l||l.line!=='front'||printed.energyForbidden||printed.energyLineForbidden||
     printed.ownEffectMoveOnly||s.movedUids.includes(l.c.uid)||
-    !((printed.step&&!originalEffectsDisabled(s,l.c))||granted)||
+    !(printedStepLive(pack,s,l.c)||granted)||
     cannotMoveLocked(s,p,l.c))
     throw Error('Invalid STEP');
    commitDestination(pack,s,p,'energy',action.slot,action.replaceUid);

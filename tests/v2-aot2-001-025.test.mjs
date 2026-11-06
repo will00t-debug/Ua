@@ -630,6 +630,8 @@ test('Jaw Falco tucks only from the raid frame, and the opponent cannot see unde
  ordinary=play(ordinary,played.uid);
  assert.equal(ordinary.pending,null);
  assert.equal((field(ordinary,0,played.uid).under||[]).length,0);
+ ordinary=toSide(ordinary,0,'move');
+ assert.equal(acts(ordinary).some(a=>a.type==='step'&&a.uid===played.uid),false);
 
  let s=toPhase(fresh(counts,171),'main');
  put(s,0,'AOT-2-001','energy',0,true);
@@ -658,7 +660,12 @@ test('Jaw Falco tucks only from the raid frame, and the opponent cannot see unde
  assert.equal(field(s,0,falco.uid).under.length,1);
  assert.equal(field(s,0,falco.uid).ready,false);
  assert.equal(acts(s).some(a=>a.type==='reorderUnder'&&a.uid===falco.uid),false);
- assertUniversalMatch(packs,s);
+ s=toSide(s,0,'move');
+ assert.equal(acts(s).some(a=>a.type==='step'&&a.uid===falco.uid),true);
+ const stepped=use(s,{type:'step',uid:falco.uid,slot:3});
+ assert.equal(stepped.players[0].front.some(c=>c?.uid===falco.uid),false);
+ assert.equal(stepped.players[0].energy[3]?.uid,falco.uid);
+ assertUniversalMatch(packs,stepped);
 });
 
 test('Reiner grants the tax only from the raid on-play, and a new entry drops it',()=>{

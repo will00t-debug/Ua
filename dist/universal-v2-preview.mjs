@@ -2173,7 +2173,7 @@ function restoreMatchLobby(){
 }
 async function startAuditFixture(name){
  try{
-  const {loadAuditFixture}=await import('./universal-v2/audit-browser-fixtures.mjs?v=20261106iysenergy1');
+  const {loadAuditFixture}=await import('./universal-v2/audit-browser-fixtures.mjs?v=20261107r6');
   const fixture=loadAuditFixture(name);
   clearSoloBattle(sessionStorage);
   app.packs=fixture.packs;

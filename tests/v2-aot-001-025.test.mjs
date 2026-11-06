@@ -6,6 +6,7 @@ import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalCardEnergy, universalPrivateChoices,
  zoneRequiredEnergy}
  from '../dist/universal-v2/engine.mjs';
+import {effectChoiceProtected} from '../dist/universal-v2/continuous-states.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 
 const pack=createAotV2Pack();
@@ -459,7 +460,33 @@ test('010 may pay one AP, then may grant 1000 BP and trigger protection',()=>{
  const body=chosen.players[0].front.find(c=>c.uid===target.uid);
  assert.equal(bp(chosen,body),3000);
  assert.equal(body.aotTriggerUnchosen.turn,chosen.turn);
+ assert.equal(effectChoiceProtected(chosen,1,target.uid,'trigger'),true);
+ assert.equal(effectChoiceProtected(chosen,0,target.uid,'trigger'),false);
+ assert.equal(effectChoiceProtected(chosen,1,target.uid,'character'),false);
  finish(chosen);
+});
+
+test('010 blocks the opponent trigger list and still allows this player trigger',()=>{
+ let s=toPhase(fresh(['AOT-1-010','AOT-1-001','AOT-1-009','AOT-1-003'],242),'attack');
+ const source=put(s,0,'AOT-1-010','front',0,true);
+ const target=put(s,0,'AOT-1-001','front',1,false);
+ const bounce=put(s,0,'AOT-1-003','front',2,true);
+ put(s,1,'AOT-1-001','front',0,true);
+ readyAp(s,0,1);
+ setLife(s,1,['AOT-1-009','AOT-1-003']);
+ s=pick(s,a=>a.type==='attack'&&a.uid===source.uid&&!a.targetUid);
+ s=pick(s,a=>a.mode==='pay');
+ s=pick(s,a=>a.mode==='grant'&&a.uid===target.uid);
+ s=pick(s,a=>a.type==='chooseBlock'&&a.uid===null);
+ assert.equal(s.pending.trigger,'color');
+ assert.equal(s.turn,s.players[0].front.find(c=>c.uid===target.uid).aotTriggerUnchosen.turn);
+ const listed=legalUniversalActions(packs,s).filter(a=>a.mode==='colorBounce').map(a=>a.uid);
+ assert.equal(listed.includes(target.uid),false);
+ assert.equal(listed.includes(bounce.uid),true);
+ assert.equal(effectChoiceProtected(s,0,target.uid,'trigger'),false);
+ assert.equal(effectChoiceProtected(s,1,target.uid,'trigger'),true);
+ s=pick(s,a=>a.mode==='colorBounce'&&a.uid===bounce.uid);
+ finish(s);
 });
 
 test('011 raid grants the printed bonuses, and a plain play grants none',()=>{
@@ -516,9 +543,49 @@ test('011 raid grants the printed bonuses, and a plain play grants none',()=>{
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='attack'&&a.targetUid===wall.uid),true);
  s=pick(s,a=>a.type==='attack'&&a.uid===raider.uid&&a.targetUid===wall.uid);
  assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.find(c=>c.uid===raider.uid).aotThirdSniper.done,true);
  assert.equal(s.players[1].front[0],null);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='attack'&&a.uid===raider.uid),false);
  finish(s);
+
+ let open=toPhase(fresh(['AOT-1-011','AOT-1-007','AOT-1-002','AOT-1-006','AOT-1-015','AOT-1-016','AOT-1-001','AOT-1-003'],261),'main');
+ fuel(open);
+ const base=put(open,0,'AOT-1-007','front',0,true);
+ const victim=put(open,1,'AOT-1-001','front',0,true);
+ setLife(open,1,['AOT-1-003','AOT-1-003','AOT-1-003']);
+ const unpaid=toHand(open,0,'AOT-1-011');
+ readyAp(open,0,2);
+ open=raidOnto(open,unpaid.uid,base.uid);
+ open=toPhase(open,'attack');
+ const before=open.players[0].apCards.filter(c=>c.ready).length;
+ open=pick(open,a=>a.type==='attack'&&a.uid===unpaid.uid&&!a.targetUid);
+ open=pick(open,a=>a.type==='chooseBlock'&&a.uid===null);
+ open=pick(open,a=>a.mode==='skip');
+ open=pick(open,a=>a.type==='attack'&&a.uid===unpaid.uid&&!a.targetUid);
+ open=pick(open,a=>a.type==='chooseBlock'&&a.uid===null);
+ open=pick(open,a=>a.mode==='skip');
+ const rested=open.players[0].front.find(c=>c.uid===unpaid.uid);
+ assert.equal(open.players[0].apCards.filter(c=>c.ready).length,before);
+ assert.equal(rested.ready,false);
+ assert.equal(rested.aotThirdSniper.done,false);
+ assert.equal(open.mainAbilityUsedUids.includes(unpaid.uid+'|AOT-1-011|end'),false);
+ assert.equal(legalUniversalActions(packs,open).some(a=>a.type==='attack'&&a.uid===unpaid.uid),false);
+ assert.equal(open.players[1].front[0].uid,victim.uid);
+ // 【2回アタック】 only readies the first attack. Another effect has to
+ // make him active before the third attack, or the once never comes up
+ // on a sniper battle. This set has no such effect during the attack phase.
+ rested.ready=true;
+ assert.equal(legalUniversalActions(packs,open).some(a=>a.type==='attack'&&a.targetUid===victim.uid),true);
+ open=pick(open,a=>a.type==='attack'&&a.uid===unpaid.uid&&a.targetUid===victim.uid);
+ assert.equal(open.players[1].front[0],null);
+ assert.equal(open.pending.step,'pay');
+ assert.equal(open.players[0].front.find(c=>c.uid===unpaid.uid).aotThirdSniper.done,true);
+ open=pick(open,a=>a.mode==='pay');
+ assert.equal(open.players[0].apCards.filter(c=>c.ready).length,before-1);
+ assert.equal(open.players[0].front.find(c=>c.uid===unpaid.uid).ready,true);
+ assert.equal(open.mainAbilityUsedUids.includes(unpaid.uid+'|AOT-1-011|end'),true);
+ assert.equal(legalUniversalActions(packs,open).some(a=>a.mode==='pay'),false);
+ finish(open);
 });
 
 test('013 gains 1000 on the opponent turn only while exact Historia is on this field',()=>{
