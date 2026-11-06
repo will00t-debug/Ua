@@ -544,21 +544,26 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='CSM-1-076'){
+  const hosts=chars(s,owner,c=>named(pack,c,DENJI,s)&&!csmFacedowns(c).length);
+  const event=plOf(s,owner).outside.find(c=>c.uid===job.sourceUid);
   hold(s,{...spec,step:'choose'},[
-   {type:'csm',mode:'look'},{type:'csm',mode:'tuck'}]);
+   {type:'csm',mode:'look'},
+   ...(hosts.length&&event?[{type:'csm',mode:'tuck'}]:[])]);
   return;
  }
  if(id==='CSM-1-077'){
   const foe=fronts(s,1-owner,c=>A.bp(pack,s,c)<=5000);
-  if(!foe.length)return;
+  // The peel is a separate sentence. No legal retire target does not cancel it.
+  if(!foe.length){offerPeelAki(pack,s,spec);return;}
   hold(s,{...spec,step:'retireFoe',data:{peelAki:true}},
    foe.map(c=>({type:'csm',mode:'pick',uid:c.uid})));
   return;
  }
  if(id==='CSM-1-078'){
-  const extra=nameOn(s,owner,HOUSE)||chars(s,owner,c=>named(pack,c,DENJI,s)&&
-   csmFacedowns(c).length>0).length>0;
-  A.draw(pack,s,owner,extra?3:2,job.sourceUid);
+  // 〈早川家〉 is a field. nameOn only walks characters, so the field counts here.
+  const house=A.field(plOf(s,owner)).some(c=>named(pack,c,HOUSE,s));
+  const denjiDown=chars(s,owner,c=>named(pack,c,DENJI,s)&&csmFacedowns(c).length>0).length>0;
+  A.draw(pack,s,owner,house||denjiDown?3:2,job.sourceUid);
  }
 }
 function continue008(pack,s,q){
@@ -657,14 +662,9 @@ function runAttack(pack,s,job){
   return;
  }
  if(id==='CSM-1-072'){
-  const moved=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===job.sourceUid&&
-   e.owner===owner&&((e.from==='front'&&e.to==='energy')||(e.from==='energy'&&e.to==='front'))&&
-   e.reason!=='move-phase');
-  // Move-phase moves are tagged; approximate: any front<->energy this turn
-  // outside the move phase stamp stored on the physical card.
-  const movedAny=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===job.sourceUid&&
-   e.owner===owner&&((e.from==='front'&&e.to==='energy')||(e.from==='energy'&&e.to==='front')));
-  if(!(moved||(movedAny&&self?.csmMovedOutsideMove===s.turn)))return;
+  // Printed 「移動フェイズ以外に移動している場合」. Only an effect move outside
+  // the move phase stamps the card. A move-phase STEP uses reason 'rule'.
+  if(self?.csmMovedOutsideMove!==s.turn)return;
   const cards=plOf(s,owner).outside.filter(c=>named(pack,c,AKI,s)&&def(pack,c).energy<=2);
   if(!cards.length)return;
   hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'recover'},[
@@ -684,6 +684,7 @@ function runAfterOwnRetire(pack,s,job){
    {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
  }else if(job.kind==='grantAttackDraw'){
   const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
+  if(!pool.length)return;
   hold(s,{...spec,step:'grantAttackDraw'},[
    {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
  }else if(job.kind==='denjiEnergy'){
@@ -725,7 +726,7 @@ export function runCsmJob(pack,s,job){
   runAttackEnd(pack,s,job);
  }else if(job.slot==='endStart'){
   const self=selfOf(s,job.owner,job.sourceUid);
-  if(job.id==='CSM-1-066'&&self&&frontLine(s,job.owner,self)){
+  if(job.id==='CSM-1-066'&&self){
    const frontsPool=fronts(s,job.owner,c=>c.uid!==self.uid&&!named(pack,c,HIMENO,s));
    // Q2098: exclude frontForbidden (Pochita) from energy↔front swap pool.
    const energyPool=energyCharsToFront(pack,s,job.owner);
@@ -805,7 +806,7 @@ export function legalCsmActivations(pack,s,owner,c){
   plOf(s,owner).energy.some(x=>x&&!x.ready))out.push(push('csm:0'));
  if(id==='CSM-1-067'&&c.ready)out.push(push('csm:0'));
  if(id==='CSM-1-070'&&frontLine(s,owner,c)&&once(c.uid+'|main')&&
-  plOf(s,owner).energy.some(x=>x&&def(pack,x).type==='character'))out.push(push('csm:0'));
+  energyCharsToFront(pack,s,owner).length)out.push(push('csm:0'));
  if(id==='CSM-1-071'&&c.ready&&plOf(s,owner).deck.length)out.push(push('csm:0'));
  return out;
 }
@@ -886,16 +887,17 @@ export function activateCsm(pack,s,action){
  }
  if(id==='CSM-1-067'){
   restOwn(s,owner,c);
+  // 【このカードを退場させる】 is the cost. Denji enters only after Pochita leaves.
   retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
    {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiEnergy',
-    pochitaUid:c.uid,needsLeave:false});
+    pochitaUid:c.uid,needsLeave:true});
   go(pack,s);return;
  }
  if(id==='CSM-1-070'){
   use(s,c.uid+'|main');
   // Q2098: frontForbidden energy cards cannot swap onto front.
   const pool=energyCharsToFront(pack,s,owner);
-  hold(s,{...spec,step:'swap'},pool.map(x=>({type:'csm',mode:'pick',uid:x.uid})));
+  if(pool.length)hold(s,{...spec,step:'swap'},pool.map(x=>({type:'csm',mode:'pick',uid:x.uid})));
   go(pack,s);return;
  }
  if(id==='CSM-1-071'){
@@ -1030,6 +1032,7 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='ap'){
   if(a.mode==='ap')readyIndex(s,owner,a.index);
   if(q.data?.next==='draw2')A.draw(pack,s,owner,2,q.sourceUid);
+  if(q.data?.next==='impactAki')offerImpactAki(pack,s,q);
   if(q.id==='CSM-1-031')lock(s,owner,'rezeAp');
  }else if(step==='millOne'){
   const left=a.mode==='outside'?q.data.window.filter(uid=>uid!==a.uid):q.data.window;
@@ -1055,13 +1058,19 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='peelAki'){
   if(a.mode==='peel'){
    const host=selfOf(s,owner,a.hostUid);
-   if(host)peelFacedown(pack,s,owner,host,'outside',q.sourceUid);
+   if(host)peelFacedownUid(pack,s,owner,host,a.uid,'outside',q.sourceUid);
    if(q.data?.afterPeel==='impactAp'){
-    offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
-    const akis=chars(s,owner,c=>named(pack,c,AKI,s));
-    if(akis.length)hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'grantImpact'},[
-     {type:'csm',mode:'skip'},...akis.map(c=>({type:'csm',mode:'pick',uid:c.uid}))]);
+    const held=offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{next:'impactAki'}},false);
+    if(!held)offerImpactAki(pack,s,q);
    }
+  }
+ }else if(step==='dreamTuck'&&a.mode==='host'){
+  const host=selfOf(s,owner,a.uid);
+  const event=plOf(s,owner).outside.find(c=>c.uid===q.sourceUid);
+  if(host&&event&&!csmFacedowns(host).length){
+   tuck(pack,s,owner,'outside',event.uid,host,q.sourceUid);
+   if(!faceUpRaidCard(host,def(pack,host)))
+    offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
   }
  }else if(step==='peelBuff'&&a.mode==='peel'){
   const host=selfOf(s,owner,a.hostUid);
@@ -1263,8 +1272,14 @@ function offerPeelAki(pack,s,q){
  if(!hosts.length)return;
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'peelAki',data:q.data},[
   {type:'csm',mode:'skip'},
-  ...hosts.flatMap(h=>csmFacedowns(h).slice(-1).map(c=>({
+  ...hosts.flatMap(h=>csmFacedowns(h).map(c=>({
    type:'csm',mode:'peel',uid:c.uid,hostUid:h.uid})))]);
+}
+function offerImpactAki(pack,s,q){
+ const akis=chars(s,q.player,c=>named(pack,c,AKI,s));
+ if(!akis.length)return;
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'grantImpact'},[
+  {type:'csm',mode:'skip'},...akis.map(c=>({type:'csm',mode:'pick',uid:c.uid}))]);
 }
 function akiOpen(s,owner){
  return {
@@ -1369,10 +1384,12 @@ export function csmOnAttackEnd(pack,s,attacker){
 }
 export function csmOnMovedOutsideMove(pack,s,owner,c){
  const d=def(pack,c);
- if(!d?.csmHook||d.id!=='CSM-1-046'||originalEffectsDisabled(s,c))return;
+ if(!d?.csmHook||originalEffectsDisabled(s,c))return;
  // Printed 「移動フェイズ以外」. Player STEP and energy-to-front are move phase.
  if(s.phase==='move')return;
- s.effectQueue.unshift({op:'csm',id:d.id,slot:'moved',owner,sourceUid:c.uid});
+ if(d.id==='CSM-1-046')
+  s.effectQueue.unshift({op:'csm',id:d.id,slot:'moved',owner,sourceUid:c.uid});
+ else if(d.id==='CSM-1-072')c.csmMovedOutsideMove=s.turn;
 }
 export function csmOnTurnStart(pack,s,owner){
  for(const c of plOf(s,owner).front.concat(plOf(s,owner).energy)){
@@ -1405,9 +1422,10 @@ export function csmLeaveReplace(pack,s,owner,c){
  const pool=fronts(s,owner,x=>x.uid!==c.uid&&A.bp(pack,s,x)>=4000);
  if(!pool.length)return false;
  const loc=locOf(s,owner,c.uid);
+ // 【ターン1】 activates when the replacement is offered. Declining still spends it.
+ use(s,c.uid+'|leave');
  hold(s,{player:owner,sourceUid:c.uid,id:d.id,step:'leaveReplace',
   data:{line:loc?.line,slot:loc?.slot,retireCause:s.csmRetireCause||null}},[
   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
- // Spend |leave only when the substitute branch is accepted (resolveCsmPending).
  return true;
 }

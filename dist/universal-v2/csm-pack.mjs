@@ -91,7 +91,7 @@ const BY_ID={
  'CSM-1-068':{effects:{onRetire:[job('CSM-1-068','onRetire')]}},
  'CSM-1-070':{mainAbility:main('CSM-1-070'),effects:{onAttack:[job('CSM-1-070','onAttack')]}},
  'CSM-1-071':{mainAbility:main('CSM-1-071'),effects:{}},
- 'CSM-1-072':{effects:{onAttack:[job('CSM-1-072','onAttack')]}},
+ 'CSM-1-072':{csmHook:true,effects:{onAttack:[job('CSM-1-072','onAttack')]}},
  'CSM-1-073':{effects:{onPlay:[{
   op:'searchTopOneBottomDiscard',count:4,logic:'any',discard:false,filters:[
    {field:'name',value:AKI},{field:'name',value:AKI_NAME},
