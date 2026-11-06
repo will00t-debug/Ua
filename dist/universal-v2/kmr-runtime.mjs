@@ -563,12 +563,10 @@ const HANDLERS={
   const under=(self?.under||[]).filter(c=>c.faceDown);
   if(!self||used(s,job.sourceUid+'|KMR-1-053')||!under.length)return;
   use(s,job.sourceUid+'|KMR-1-053');
-  const layer=under[0];
-  self.under=self.under.filter(c=>c!==layer);
-  layer.faceDown=false;layer.ready=false;layer.fieldEntryStamp=null;
-  plOf(s,job.owner).outside.push(layer);
-  A.record(pack,s,{physical:layer,owner:job.owner,from:'raid-under',to:'outside',reason:'own-effect',sourceUid:job.sourceUid});
-  offerRetire(pack,s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},3000,true,'bounceInstead');
+  // 1枚: the controller picks which facedown leaves. The bounce is まで.
+  const uids=under.map(c=>c.uid);
+  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'payUnder',uids,
+   data:{uids}},under.map(c=>({type:'kmr',mode:'pay',uid:c.uid})));
  },
  'KMR-1-058|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
@@ -626,10 +624,15 @@ const HANDLERS={
   offerOwn(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},found,false,null,'sparkleHand');
  },
  'KMR-1-070|onAttack'(pack,s,job){
-  const others=fieldCards(s,job.owner).filter(c=>def(pack,c).type==='character');
-  offerOwn(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},others,true,null,'retireOwn');
+  const front=plOf(s,job.owner).front.filter(c=>c&&def(pack,c).type==='character');
+  offerOwn(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},front,true,null,'retireOwn');
  },
  'KMR-1-071|onPlay'(pack,s,job){
+  const self=selfOf(s,job.owner,job.sourceUid);
+  // Paid play and effect entry do not stamp entryTurn. This card's main
+  // exists only on the turn it entered, so the entry itself records the turn.
+  // A raid already stamped it before this effect.
+  if(self&&!Number.isInteger(self.entryTurn))self.entryTurn=s.turn;
   offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,null);
  },
  'KMR-1-071|main'(pack,s,job){
@@ -891,8 +894,10 @@ function special033(pack,s,job){
 function special064(pack,s,job){
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
  let limit=2000;
+ // Q1161: オーズ on the field, then 他の手札 at least 3. The event has already
+ // left the hand, so the remaining hand is those other cards.
  if(fieldCards(s,job.owner).some(c=>token(pack,c,'オーズ',s))){
-  limit=plOf(s,job.owner).hand.length>=4?5000:4000;
+  limit=plOf(s,job.owner).hand.length>=3?5000:4000;
  }
  offerRetire(pack,s,spec,limit,false,null);
 }
@@ -924,7 +929,9 @@ function medalReturn(pack,s,job,name){
    (n.aliases||[]).some(a=>String(a).includes('オーズ')||String(a).includes('バース'))));
  if(!attacked)return;
  const card=plOf(s,job.owner).outside.find(c=>c.uid===job.sourceUid);
- if(!card||!plOf(s,job.owner).hand.length)return;
+ if(!card)return;
+ // Adding this card to hand pays the later bottom. An empty hand can still
+ // return it and then put that same card on the bottom.
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'medalBack',data:{lock:name+'|return'}},[
   {type:'kmr',mode:'skip'},{type:'kmr',mode:'back'}
  ]);
@@ -1291,9 +1298,6 @@ function resolveStep(pack,s,q,a){
   }
   if(q.data?.next==='buffAny')
    offerOwn(s,spec,fieldCards(s,q.player).filter(c=>def(pack,c).type==='character'),true,null,'own');
-  else if(q.data?.next==='bounceInstead'){
-   /* 053 follow-up is a return, handled when the retire target is chosen via mode bounce */
-  }
   return;
  }
  if(q.step==='restOnly'){
@@ -1548,12 +1552,35 @@ function resolveStep(pack,s,q,a){
   offerDiscard(s,spec,2,false,'punishBackReturn',{uid:q.data.uid});
   return;
  }
+ if(q.step==='payUnder'){
+  s.pending=null;
+  const self=selfOf(s,q.player,q.sourceUid);
+  const layer=(self?.under||[]).find(c=>c.uid===hit.uid&&c.faceDown);
+  if(!self||!layer)throw Error('KMR-1-053 facedown left');
+  self.under=self.under.filter(c=>c!==layer);
+  layer.faceDown=false;layer.ready=false;layer.fieldEntryStamp=null;
+  plOf(s,q.player).outside.push(layer);
+  A.record(pack,s,{physical:layer,owner:q.player,from:'raid-under',to:'outside',
+   reason:'own-effect',sourceUid:q.sourceUid});
+  const targets=oppFront(s,q.player,c=>A.bp(pack,s,c)<=3000);
+  if(targets.length)hold(s,{...spec,step:'bounceFront',data:{}},[
+   {type:'kmr',mode:'skip'},
+   ...targets.map(c=>({type:'kmr',mode:'bounce',uid:c.uid}))
+  ]);
+  return;
+ }
+ if(q.step==='bounceFront'){
+  s.pending=null;
+  if(hit.mode==='skip')return;
+  A.bounce(pack,s,1-q.player,hit.uid,q.sourceUid);
+  return;
+ }
  if(q.step==='medalBack'){
   s.pending=null;
   if(hit.mode==='skip')return;
   nameLock(s,q.player,q.data.lock);
   moveUid(pack,s,q.player,'outside',q.sourceUid,'hand',q.sourceUid);
-  const hand=plOf(s,q.player).hand.filter(c=>c.uid!==q.sourceUid);
+  const hand=plOf(s,q.player).hand;
   if(hand.length)hold(s,{...spec,step:'placeHand',data:{bottomOnly:true}},
    hand.map(c=>({type:'kmr',mode:'bottom',uid:c.uid})));
   return;
