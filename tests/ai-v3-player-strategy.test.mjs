@@ -6,7 +6,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
-import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild} from '../dist/universal-v2/ai-v3/eval.mjs';
+import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {bindProbeBudget,energyPlayNet,moveDevelopment} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
@@ -1784,13 +1784,13 @@ function blankDeveloper(id,name,extra){
  card.implementation='printed';
  return Object.assign(card,extra||{});
 }
-function developerPack(){
+function developerPack(gen=0){
  const cards={...pack.cards};
  const baseName=pack.cards['BLC-2-066'].name;
  cards['TEST-BLANK-RAID']=blankDeveloper('TEST-BLANK-RAID','測試白板突襲',{
-  raidName:baseName,raidBaseNames:[baseName]
+  raidName:baseName,raidBaseNames:[baseName],gen
  });
- cards['TEST-BLANK-MAIN']=blankDeveloper('TEST-BLANK-MAIN','測試白板主力',{});
+ cards['TEST-BLANK-MAIN']=blankDeveloper('TEST-BLANK-MAIN','測試白板主力',{gen});
  return {...pack,cards};
 }
 function developerDeck(source){
@@ -1842,8 +1842,8 @@ function plainLife(source,state,player,n){
 function setReadyAp(state,player,n){
  state.players[player].apCards.forEach((card,index)=>{card.inPlay=index<n;card.ready=index<n;});
 }
-function twoMains(actor,life){
- const source=developerPack();
+function twoMains(actor,life,gen=0){
+ const source=developerPack(gen);
  const {packs,state}=reachMain(source,developerDeck(source),actor);
  wipeSide(state,0);
  wipeSide(state,1);
@@ -1892,8 +1892,8 @@ function waveSpot(actor){
 }
 
 test('two payable mains stay on the front and keep the raid base generating',()=>{
- for(const actor of [0,1]){
-  const spot=twoMains(actor,5);
+ for(const gen of [0,1])for(const actor of [0,1]){
+  const spot=twoMains(actor,5,gen);
   const {packs,state,raid,main}=spot;
   const legal=legalUniversalActions(packs,state);
   const raidAction=legal.find(action=>action.type==='raid'&&action.uid===raid.uid&&action.line!=='energy');
@@ -1990,11 +1990,139 @@ test('two payable mains stay on the front and keep the raid base generating',()=
    }
   }
   console.log('two mains',JSON.stringify({
-   actor,score:first.trace.score,raid:raidRow.search,nodes:first.trace.nodesUsed,
+   gen,actor,score:first.trace.score,raid:raidRow.search,nodes:first.trace.nodesUsed,
    order:played.map(action=>action.uid),clock:timed.type,clockLine:timed.line||null,
    clockNodes:timedTrace.nodesUsed,clockReason:timedTrace.reason,clockSettled:timedTrace.settled
   }));
  }
+});
+
+test('a follow-up play stays in the search when the front is busy or the card has an on-play',()=>{
+ for(const actor of [0,1]){
+  for(const variant of ['busy','onplay']){
+   const spot=twoMains(actor,5,1);
+   const {packs,state,raid,main}=spot;
+   if(variant==='busy'){
+    const body=take(state,actor,'BLC-1-083');
+    place(state,actor,body,'front',2);
+    body.ready=false;
+   }else{
+    packs[actor].cards[main.cardId].effects={onPlay:[{op:'draw',n:1}]};
+   }
+   assert.equal(assertUniversalMatch(packs,state),true);
+   const legal=legalUniversalActions(packs,state);
+   assert.equal(legal.some(action=>action.type==='play'&&action.uid===main.uid),true);
+   assert.equal(legal.some(action=>action.type==='play'&&action.uid===raid.uid),true);
+   const choice=frozenAsk(packs,state);
+   const playRow=(choice.trace.candidates||[]).find(row=>row.action?.type==='play'&&row.action.line==='front'&&row.executed!==false);
+   assert.ok(playRow);
+   const other=playRow.action.uid===main.uid?raid.uid:main.uid;
+   const seen=[...(playRow.followSeen||[]),...(playRow.sequence||[]),...(playRow.unexplored||[])];
+   if(!seen.some(step=>step.type==='play'&&step.uid===other)){
+    console.log('missing follow',JSON.stringify({variant,actor,uid:playRow.action.uid,other,follow:playRow.followSeen,seq:playRow.sequence,unexplored:playRow.unexplored,nodes:playRow.nodes}));
+   }
+   assert.equal(seen.some(step=>step.type==='play'&&step.uid===other),true);
+   console.log('follow stays',JSON.stringify({
+    variant,actor,root:playRow.action.uid,
+    follow:(playRow.followSeen||[]).map(step=>[step.type,step.line||'',step.uid||''].join(':')),
+    chosen:choice.action.type,score:choice.trace.score
+   }));
+  }
+ }
+});
+
+function energyRaidSpot(ready=2){
+ const counts=deck({'BLC-2-069':2,'BLC-1-085':2,'BLC-1-080':2,'BLC-1-083':4});
+ const {packs,state}=reachMain(pack,counts,0);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ const base=take(state,0,'BLC-2-069');
+ place(state,0,base,'energy',0);
+ for(let slot=1;slot<4;slot++)place(state,0,take(state,0,'BLC-1-083'),'energy',slot);
+ const raid=take(state,0,'BLC-1-085');
+ const main=take(state,0,'BLC-1-080');
+ state.players[0].hand.push(raid,main);
+ plainLife(pack,state,0,5);
+ plainLife(pack,state,1,5);
+ setReadyAp(state,0,ready);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ assert.equal(universalEnergyByColor(packs,state,0).green,4);
+ return {packs,state,base,raid,main};
+}
+function raidOnto(packs,state,card,base,line){
+ const legal=legalUniversalActions(packs,state);
+ return legal.find(action=>action.type==='raid'&&action.uid===card.uid&&action.baseUid===base.uid&&(line==='energy'?action.line==='energy':action.line!=='energy'));
+}
+
+test('raid energy loss follows the transfer the line actually reached',()=>{
+ const spot=energyRaidSpot(2);
+ const {packs,state,base,raid,main}=spot;
+ const front=raidOnto(packs,state,raid,base,'front');
+ const energy=raidOnto(packs,state,raid,base,'energy');
+ assert.ok(front&&energy);
+ const frontState=settle(packs,structuredClone(state),front);
+ const energyState=settle(packs,structuredClone(state),energy);
+ const frontColors=universalEnergyByColor(packs,frontState,0);
+ const energyColors=universalEnergyByColor(packs,energyState,0);
+ const frontPlays=legalUniversalActions(packs,frontState).filter(action=>action.uid===main.uid&&(action.type==='play'||action.type==='raid'));
+ const energyPlays=legalUniversalActions(packs,energyState).filter(action=>action.uid===main.uid&&(action.type==='play'||action.type==='raid'));
+ assert.equal(frontColors.green,3);
+ assert.equal(energyColors.green,4);
+ assert.equal(frontPlays.length,0);
+ assert.ok(energyPlays.length>0);
+ assert.equal(raidStranded(packs,state,0,front,frontState),2.2);
+ assert.equal(raidStranded(packs,state,0,energy,energyState),0);
+ const played=settle(packs,structuredClone(energyState),energyPlays.find(action=>action.type==='play'&&action.line==='front')||energyPlays[0]);
+ assert.equal(played.players[0].hand.some(card=>card.uid===main.uid),false);
+ assert.equal(raidStranded(packs,state,0,energy,played),0);
+ const raised=twoMains(0,5,0);
+ const baseGen=Number(raised.packs[0].cards['BLC-2-066'].gen)||0;
+ raised.packs[0].cards['TEST-BLANK-RAID'].gen=baseGen+1;
+ raised.packs[1].cards['TEST-BLANK-RAID'].gen=baseGen+1;
+ const raisedBefore=universalEnergyByColor(raised.packs,raised.state,0).green;
+ const raisedRaid=raidOnto(raised.packs,raised.state,raised.raid,raised.base,'energy');
+ assert.ok(raisedRaid);
+ const raisedState=settle(raised.packs,structuredClone(raised.state),raisedRaid);
+ const raisedAfter=universalEnergyByColor(raised.packs,raisedState,0).green;
+ assert.ok(raisedAfter>raisedBefore);
+ assert.equal(raidStranded(raised.packs,raised.state,0,raisedRaid,raisedState),0);
+ const blocked=twoMains(0,5,0);
+ blocked.packs[0].cards['TEST-BLANK-MAIN'].ap=3;
+ blocked.packs[1].cards['TEST-BLANK-MAIN'].ap=3;
+ setReadyAp(blocked.state,0,1);
+ const blockedRaid=legalUniversalActions(blocked.packs,blocked.state).find(action=>action.type==='raid'&&action.uid===blocked.raid.uid&&action.line!=='energy');
+ assert.ok(blockedRaid);
+ assert.equal(legalUniversalActions(blocked.packs,blocked.state).some(action=>action.uid===blocked.main.uid),false);
+ const blockedState=settle(blocked.packs,structuredClone(blocked.state),blockedRaid);
+ assert.ok(universalEnergyByColor(blocked.packs,blockedState,0).green<4);
+ assert.equal(raidStranded(blocked.packs,blocked.state,0,blockedRaid,blockedState),0);
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const choice=chooseAiV3Action(packs,structuredClone(state),{
+  ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter,
+  rootFirst:[energy,front]
+ });
+ const choiceTrace=lastAiV3Trace();
+ assert.equal(meter.dispatches,choiceTrace.nodesUsed);
+ assert.ok(choiceTrace.nodesUsed<=48);
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(choice)),true);
+ const rows=(choiceTrace.candidates||[]).filter(row=>row.action?.type==='raid'&&row.action.uid===raid.uid);
+ const frontRow=rows.find(row=>row.action.baseUid===base.uid&&row.action.line!=='energy'&&row.executed!==false);
+ const energyRow=rows.find(row=>row.action.baseUid===base.uid&&row.action.line==='energy'&&row.executed!==false);
+ assert.ok(frontRow&&energyRow);
+ assert.equal(frontRow.stranded,2.2);
+ assert.equal(frontRow.sequence.some(step=>step.uid===main.uid&&step.type==='play'),false);
+ assert.equal(energyRow.stranded||0,0);
+ const energyPlayed=energyRow.sequence.some(step=>step.uid===main.uid&&step.type==='play');
+ if(energyPlayed)assert.equal(energyRow.stranded||0,0);
+ console.log('raid energy',JSON.stringify({
+  before:{green:4},
+  front:{green:frontColors.green,plays:frontPlays.length,penalty:frontRow.stranded,score:frontRow.search,settled:frontRow.settled},
+  energy:{green:energyColors.green,plays:energyPlays.length,penalty:energyRow.stranded||0,score:energyRow.search,played:energyPlayed,settled:energyRow.settled},
+  raised:{before:raisedBefore,after:raisedAfter,penalty:0},
+  blockedAp:{penalty:0,green:universalEnergyByColor(blocked.packs,blockedState,0).green},
+  chosen:{type:choice.type,line:choice.line||null,score:choiceTrace.score,nodes:choiceTrace.nodesUsed}
+ }));
 });
 
 test('a blank raid that attacks the last life still wins',()=>{

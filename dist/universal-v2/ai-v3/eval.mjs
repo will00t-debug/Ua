@@ -632,28 +632,39 @@ export function blankSwingAdjustment(pack,state,actor,action){
  }
  return missed>0?-missed:0;
 }
-// Raiding an energy generator can leave a character in hand that the color
-// no longer pays. The returned position still counts that card. The credit
-// belongs to a card this turn can no longer play.
-export function raidStranded(pack,state,actor,action){
- if(action?.type!=='raid'||state?.pending||state?.phase!=='main')return 0;
- const mine=state.players?.[actor];
+// A raid changes the energy the engine actually produces: the base leaves,
+// and the raider generates only where that destination allows it. The credit
+// for a hand card stays unless this result left that card in hand and the
+// color no longer pays it. A card this turn could not play for AP or any
+// other legal reason is not a new loss. A later play or a restored color
+// is the line's own result, so the leaf hand is what counts.
+export function raidStranded(pack,state,actor,action,after){
+ if(action?.type!=='raid'||!after||state?.pending||state?.phase!=='main')return 0;
  const catalog=packOf(pack,actor).cards;
- const base=(mine?.energy||[]).find(card=>card?.uid===action.baseUid);
- const printedBase=base&&catalog[base.cardId];
- const gen=Number(printedBase?.gen)||0;
- if(!base||gen<=0||!printedBase.color)return 0;
- let colors;
- try{colors=colorsOf(pack,state,actor);}catch{return 0;}
- const after=(colors[printedBase.color]||0)-gen;
+ let legal;
+ try{legal=legalUniversalActions(pack,state);}catch{return 0;}
+ const payable=new Set();
+ for(const item of legal){
+  if(!item?.uid||item.uid===action.uid)continue;
+  if(item.type!=='play'&&item.type!=='raid')continue;
+  payable.add(item.uid);
+ }
+ let beforeColors,afterColors;
+ try{
+  beforeColors=colorsOf(pack,state,actor);
+  afterColors=colorsOf(pack,after,actor);
+ }catch{return 0;}
+ const hand=after.players?.[actor]?.hand||[];
  let stranded=0;
- for(const card of mine.hand||[]){
-  if(card?.uid===action.uid)continue;
-  const printed=catalog[card?.cardId];
-  if(!printed||printed.type!=='character'||printed.color!==printedBase.color)continue;
+ for(const uid of payable){
+  const card=hand.find(item=>item?.uid===uid);
+  if(!card)continue;
+  const printed=catalog[card.cardId];
+  if(!printed||printed.type!=='character')continue;
   const cost=Number(printed.energy)||0;
-  const have=colors[printed.color]||0;
-  if(cost<=have&&cost>after)stranded++;
+  const had=beforeColors[printed.color]||0;
+  const have=afterColors[printed.color]||0;
+  if(cost<=had&&cost>have)stranded++;
  }
  return stranded*2.2;
 }

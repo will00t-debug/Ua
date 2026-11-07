@@ -246,10 +246,18 @@ function ourPlan(row){
 export function mergeRows(basic,deep){
  if(!deep||!Number.isFinite(deep.search))return basic;
  if(!basic||!Number.isFinite(basic.search))return deep;
- if(deep.refuted&&ourPlan(basic)===ourPlan(deep)&&deep.search<basic.search)return deep;
- if(doneLine(basic)&&!doneLine(deep))return basic;
- if(doneLine(deep)&&!doneLine(basic))return deep;
- return deep.search>basic.search?deep:basic;
+ let kept;
+ if(deep.refuted&&ourPlan(basic)===ourPlan(deep)&&deep.search<basic.search)kept=deep;
+ else if(doneLine(basic)&&!doneLine(deep))kept=basic;
+ else if(doneLine(deep)&&!doneLine(basic))kept=deep;
+ else if(deep.search!==basic.search)kept=deep.search>basic.search?deep:basic;
+ // The same score from a deeper pass is the line that actually compared
+ // the later choice. A tie otherwise keeps the script.
+ else kept=(deep.maxDepth||1)>(basic.maxDepth||1)?deep:basic;
+ if(kept&&!(kept.followSeen||[]).length&&(basic.followSeen||[]).length){
+  kept={...kept,followSeen:basic.followSeen};
+ }
+ return kept;
 }
 function placeKey(row){
  return [row.leafTurn??'',row.leafPendingPlayer??'',row.leafActive??'',row.phase??'',row.pending??'',
@@ -261,6 +269,7 @@ function actionNote(action){
 function wantsRoot(action,want){
  if(!want||want.type!==action?.type)return false;
  if(want.uid!=null&&want.uid!==action.uid)return false;
+ if(want.baseUid!=null&&want.baseUid!==action.baseUid)return false;
  if(want.line!=null&&want.line!==action.line)return false;
  if(want.mode!=null&&want.mode!==action.mode)return false;
  return true;
@@ -468,8 +477,9 @@ export function chooseAiV3Action(pack,state,options={}){
     leafOwnTurns:sample.leafOwnTurns??null,
     damageOpen:!!sample.damageOpen,stopPending:sample.stopPending??null,
     stopPlayer:sample.stopPlayer??null,stopReason:sample.stopReason??null,
-    battleScore:Number.isFinite(sample.battleScore)?sample.battleScore:null,
-    swing:sample.swing||0};
+   battleScore:Number.isFinite(sample.battleScore)?sample.battleScore:null,
+   swing:sample.swing||0,stranded:sample.stranded||0,
+   followSeen:sample.followSeen||[],unexplored:sample.unexplored||[]};
   };
   const searchStarted=performance.now();
   let basicSpent=0,deepSpent=0;
@@ -538,7 +548,8 @@ export function chooseAiV3Action(pack,state,options={}){
    damageOpen:!!item.damageOpen,stopPending:item.stopPending??null,
    stopPlayer:item.stopPlayer??null,stopReason:item.stopReason??null,
    battleScore:Number.isFinite(item.battleScore)?item.battleScore:null,
-   swing:item.swing||0,
+   swing:item.swing||0,stranded:item.stranded||0,
+   followSeen:item.followSeen||[],unexplored:item.unexplored||[],
    followBranches:item.followBranches,maxDepth:item.maxDepth,sequence:item.sequence}));
   const followBranches=scored.reduce((sum,item)=>sum+(item.followBranches||0),0);
   const maxDepth=scored.reduce((sum,item)=>Math.max(sum,item.maxDepth||1),1);

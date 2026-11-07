@@ -2,7 +2,7 @@
 // not extra depth. A voluntary choice or an answer to the opponent is a
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
-import {legalUniversalActions,dispatchUniversalAction,universalEnergyByColor} from '../engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
@@ -327,6 +327,7 @@ function classifyLine(ctx,cursor,actor){
   ctx.stats.cut='open';
   ctx.stats.stopReason='open';
  }
+ ctx.stats.leafState=cursor;
  noteLeaf(ctx,cursor);
 }
 function declines(action){
@@ -379,51 +380,6 @@ function attackOrEnd(pack,state,actor,legal){
   attack.sort((a,b)=>keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===b.uid)||{})
    -keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===a.uid)||{}));
   return attack[0];
- }
- // One normal play enters rested and used to pass with the other main in
- // hand. Continue only with a character this color still pays, and that
- // would no longer be payable if the smallest same-color generator left the
- // energy line. A legal raid stays a later decision. A printed on-play, or a
- // card that stays payable without that generator, stays out of this script.
- if(state.phase==='main'&&!state.pending&&!legal.some(action=>action.type==='raid')){
-  const front=(state.players[actor].front||[]).filter(Boolean);
-  const rested=front.length===1&&front[0]&&!front[0].ready?1:0;
-  const hand=state.players[actor].hand||[];
-  const catalog=packOf(pack,actor).cards;
-  const stranded=printed=>{
-   const cost=Number(printed?.energy)||0;
-   if(!(cost>0)||!printed.color)return false;
-   let gen=0;
-   for(const card of state.players[actor].energy||[]){
-    if(!card)continue;
-    const row=catalog[card.cardId];
-    if(!row||row.color!==printed.color)continue;
-    const produced=Number(row.gen)||0;
-    if(produced>0&&(!gen||produced<gen))gen=produced;
-   }
-   if(!gen)return false;
-   let have=0;
-   try{have=universalEnergyByColor(pack,state,actor)[printed.color]||0;}catch{return false;}
-   return cost<=have&&cost>have-gen;
-  };
-  const plays=legal.filter(action=>{
-   if(action.type!=='play'||action.line!=='front'||!action.uid||rested!==1)return false;
-   const card=hand.find(item=>item?.uid===action.uid);
-   const printed=card&&catalog[card.cardId];
-   const onPlay=printed?.effects?.onPlay;
-   // A generator is its own energy decision. This continuation is only the
-   // main that the raid base was paying for.
-   return printed?.type==='character'&&!(Number(printed.gen)>0)&&
-    !(Array.isArray(onPlay)&&onPlay.length)&&stranded(printed);
-  });
-  if(plays.length){
-   plays.sort((a,b)=>{
-    const left=hand.find(card=>card?.uid===a.uid);
-    const right=hand.find(card=>card?.uid===b.uid);
-    return keepScore(pack,state,actor,right)-keepScore(pack,state,actor,left)||byText(a,b);
-   });
-   return plays[0];
-  }
  }
  return legal.find(action=>action.type==='next')||null;
 }
@@ -509,7 +465,8 @@ function leafSnap(ctx){
   sequence:ctx.stats.sequence?ctx.stats.sequence.slice():[],
   refuted:!!ctx.stats.refuted,unexplored:(ctx.stats.unexplored||[]).slice(),
   damageOpen:!!ctx.stats.damageOpen,stopPending:ctx.stats.stopPending??null,
-  stopPlayer:ctx.stats.stopPlayer??null,stopReason:ctx.stats.stopReason??null,unhandled:!!ctx.stats.unhandled
+  stopPlayer:ctx.stats.stopPlayer??null,stopReason:ctx.stats.stopReason??null,unhandled:!!ctx.stats.unhandled,
+  followSeen:(ctx.stats.followSeen||[]).slice(),leafState:ctx.stats.leafState||null
  };
 }
 function applyLeaf(ctx,snap){
@@ -529,6 +486,8 @@ function applyLeaf(ctx,snap){
  ctx.stats.stopPlayer=snap.stopPlayer??null;
  ctx.stats.stopReason=snap.stopReason??null;
  ctx.stats.unhandled=!!snap.unhandled;
+ ctx.stats.followSeen=snap.followSeen?snap.followSeen.slice():[];
+ ctx.stats.leafState=snap.leafState||null;
 }
 function advanceForced(pack,cursor,ctx){
  for(let guard=0;guard<12&&room(ctx)&&cursor.status==='playing';guard++){
@@ -701,6 +660,82 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
  ctx.stats.maxDepth=Math.max(deepest,depth+1);
  return best.value;
 }
+// The script passes once the attacks are done. The next play, raid, or pass
+// is a normal decision: printed energy, an on-play, and a busy front stay
+// in the candidate list. One level shares this line's node cap. Anything
+// the cap does not reach stays unexplored.
+function followRank(action){
+ if(action?.type==='raid'&&action.line!=='energy')return 0;
+ if(action?.type==='play'&&action.line==='front')return 1;
+ if(action?.type==='raid')return 2;
+ if(action?.type==='play')return 3;
+ return 4;
+}
+function discardRoot(ctx){
+ const kind=ctx.stats.sequence?.[0]?.type||'';
+ return kind==='chooseDiscard'||kind==='chooseDiscardGate';
+}
+function followClock(ctx){
+ if(typeof ctx.now!=='function'||!Number.isFinite(ctx.deadline)||ctx.deadline===Infinity)return true;
+ const left=ctx.deadline-nowOf(ctx);
+ return !Number.isFinite(left)||left>8;
+}
+function canBranchDevelopment(state,actor,legal){
+ if(!state||state.pending||state.active!==actor||state.phase!=='main')return false;
+ if(legal.some(action=>action.type==='attack'))return false;
+ return legal.some(action=>action.type==='play'||action.type==='raid');
+}
+function developmentCandidates(pack,state,actor,legal,ctx){
+ if(!canBranchDevelopment(state,actor,legal))return null;
+ const relevant=legal.filter(action=>action.type==='play'||action.type==='raid'||action.type==='next');
+ const width=Math.max(1,ctx.beam||1);
+ const picked=planCandidates(pack,state,actor,relevant,width,ctx.strategy);
+ const ordered=picked.slice().sort((a,b)=>followRank(a)-followRank(b)||byText(a,b));
+ if(ordered.length<=1||!ordered.some(action=>action.type==='play'||action.type==='raid'))return null;
+ return ordered;
+}
+function branchDevelopment(pack,state,actor,ctx,choices){
+ ctx.stats.followSeen=(ctx.stats.followSeen||[]).concat(choices.map(action=>brief(action,'follow')));
+ ctx.stats.followBranches+=choices.length;
+ const before=leafSnap(ctx);
+ let best=null;
+ let skipped=[];
+ for(let index=0;index<choices.length;index++){
+  const action=choices[index];
+  if(!room(ctx)){
+   ctx.stats.budget++;
+   skipped=choices.slice(index).map(item=>brief(item,'unexplored'));
+   break;
+  }
+  applyLeaf(ctx,before);
+  const stepped=billedStep(ctx,pack,state,action);
+  if(stepped.budget){
+   ctx.stats.budget++;
+   skipped=choices.slice(index).map(item=>brief(item,'unexplored'));
+   break;
+  }
+  if(stepped.error){ctx.stats.unsupported++;continue;}
+  noteStep(ctx,action,'choice');
+  ctx.stats.actorDecisions++;
+  const value=finishLine(pack,stepped.state,actor,ctx);
+  best=keepBest(best,value,leafSnap(ctx),!!ctx.stats.settled,true);
+ }
+ const branches=ctx.stats.followBranches;
+ const deepest=ctx.stats.maxDepth;
+ if(!best){
+  applyLeaf(ctx,before);
+  classifyLine(ctx,state,actor);
+  ctx.stats.followBranches=branches;
+  ctx.stats.maxDepth=deepest;
+  if(skipped.length)ctx.stats.unexplored=(ctx.stats.unexplored||[]).concat(skipped);
+  return evaluate(pack,state,actor,ctx);
+ }
+ applyLeaf(ctx,best.snap);
+ ctx.stats.followBranches=Math.max(branches,ctx.stats.followBranches||0);
+ ctx.stats.maxDepth=Math.max(deepest,ctx.stats.maxDepth||1);
+ if(skipped.length)ctx.stats.unexplored=(ctx.stats.unexplored||[]).concat(skipped);
+ return best.value;
+}
 // After the decision cap, every line walks the same attack-or-end script
 // so a combo can still reach the boundary a bare next already reached.
 function finishLine(pack,cursor,actor,ctx){
@@ -711,6 +746,18 @@ function finishLine(pack,cursor,actor,ctx){
   return terminalValue(cursor,actor)??evaluate(pack,cursor,actor,ctx);
  }
  ctx.finishGuard=(ctx.finishGuard||0)+1;
+ if(ctx.pass==='basic'&&(ctx.plan==='tree'||ctx.plan==='tree-replies')&&!ctx.developed&&!discardRoot(ctx)&&room(ctx)&&followClock(ctx)){
+  let legal=null;
+  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;legal=null;}
+  const choices=legal&&developmentCandidates(pack,cursor,actor,legal,ctx);
+  if(choices){
+   ctx.developed=true;
+   const value=branchDevelopment(pack,cursor,actor,ctx,choices);
+   ctx.developed=false;
+   ctx.finishGuard--;
+   return value;
+  }
+ }
  let state=cursor;
  if(room(ctx)&&state.status==='playing')state=roll(pack,state,actor,ctx,attackOrEnd);
  const mid=terminalValue(state,actor);
@@ -964,6 +1011,7 @@ export function scoreLine(pack,state,actor,action,limits){
    plan:limits.plan||(limits.finish===false?'tree':'rollout')}
  };
  ctx.finish=ctx.plan==='rollout';
+ ctx.pass=limits.pass||null;
  return bindProbeBudget(ctx,()=>finishScore(pack,state,actor,action,limits,ctx));
 }
 function finishScore(pack,state,actor,action,limits,ctx){
@@ -982,8 +1030,6 @@ function finishScore(pack,state,actor,action,limits,ctx){
  }
  const swing=blankSwingAdjustment(pack,state,actor,action);
  if(swing)ctx.stats.swing=swing;
- const stranded=raidStranded(pack,state,actor,action);
- if(stranded)ctx.stats.stranded=stranded;
  const stepped=billedStep(ctx,pack,state,action);
  if(stepped.error)return null;
  if(stepped.budget){
@@ -1002,8 +1048,9 @@ function finishScore(pack,state,actor,action,limits,ctx){
   ?searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions)
   :layered(pack,next,actor,ctx,limits.actorDecisions??2);
  const swingValue=ctx.stats.swing||0;
- const strandedValue=ctx.stats.stranded||0;
- const value=Number.isFinite(raw)&&Math.abs(raw)<90000?raw+swingValue-strandedValue:raw;
+ const stranded=raidStranded(pack,state,actor,action,ctx.stats.leafState||next);
+ if(stranded)ctx.stats.stranded=stranded;
+ const value=Number.isFinite(raw)&&Math.abs(raw)<90000?raw+swingValue-stranded:raw;
  return lineView(ctx,value);
 }
 export function searchPosition(pack,state,actor,limits={},table=null){
