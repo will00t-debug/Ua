@@ -189,7 +189,7 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
  // Keep the existing legal extra-draw handler, but place its button
  // between the two LIFE rails like the reference screenshot.
  const extraDraw=[...(hand.querySelector('.v2-compact-actions')?.querySelectorAll('button')||[])]
-  .find(button=>/支付\\s*1\\s*AP\\s*額外抽牌/.test(button.textContent||''));
+  .find(button=>/支付\s*1\s*AP\s*額外抽牌/.test(button.textContent||''));
  if(extraDraw){
   const extraRail=el('div',{class:'v2-extra-draw-rail'});
   extraRail.append(extraDraw);
