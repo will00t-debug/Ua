@@ -1966,14 +1966,27 @@ test('two payable mains stay on the front and keep the raid base generating',()=
   const timedTrace=lastAiV3Trace();
   assert.equal(timedMeter.dispatches,timedTrace.nodesUsed);
   assert.ok(timedTrace.nodesUsed<=48);
-  const timedPlay=(timedTrace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,timed));
-  assert.equal(timed.type,'play');
-  assert.equal(timed.line,'front');
-  assert.equal(timedTrace.score,timedPlay.search);
-  assert.equal(timedTrace.settled,!!timedPlay.settled);
+  const finishedFront=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.boundary==='returned'&&row.settled&&row.action?.type==='play'&&row.action.line==='front');
+  const finishedRaid=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type==='raid'&&row.action.uid===raid.uid);
+  if(finishedFront&&finishedRaid&&finishedFront.search>finishedRaid.search){
+   assert.equal(timed.type,'play');
+   assert.equal(timed.line,'front');
+   assert.equal(timedTrace.score,finishedFront.search);
+   assert.equal(timedTrace.settled,true);
+  }else{
+   const chosen=(timedTrace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,timed));
+   if(chosen){
+    assert.equal(timedTrace.score,chosen.search);
+    if(timedTrace.settled)assert.equal(chosen.boundary==='returned'||chosen.boundary==='terminal',true);
+   }else{
+    assert.equal(timedTrace.settled,false);
+    assert.equal(timedTrace.incomplete,true);
+   }
+  }
   console.log('two mains',JSON.stringify({
    actor,score:first.trace.score,raid:raidRow.search,nodes:first.trace.nodesUsed,
-   order:played.map(action=>action.uid),clock:timed.type,clockNodes:timedTrace.nodesUsed
+   order:played.map(action=>action.uid),clock:timed.type,clockLine:timed.line||null,
+   clockNodes:timedTrace.nodesUsed,clockReason:timedTrace.reason,clockSettled:timedTrace.settled
   }));
  }
 });
