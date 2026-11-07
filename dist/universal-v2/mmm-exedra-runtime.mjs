@@ -220,7 +220,9 @@ function play003(pack,s,job){
   modes.map(mode=>({type:'mmm2',mode})));
 }
 function replay(pack,s,job){
- const printed=def(pack,{cardId:job.id});
+ const self=selfOf(s,job.owner,job.sourceUid);
+ if(!self)return;
+ const printed=def(pack,self);
  const jobs=(printed.effects?.onPlay||[]).map(e=>({...e,owner:job.owner,sourceUid:job.sourceUid}));
  if(jobs.length)s.effectQueue.unshift(...jobs);
 }
@@ -679,19 +681,29 @@ const STEPS={
   for(const c of left)moveZone(pack,s,q.player,'deck',c.uid,'outside',q.sourceUid);
  },
  u012b(pack,s,q,a){
-  const data=q.data,d=def(pack,plOf(s,q.player).outside.find(c=>c.uid===a.uid)||{});
-  if(data.bottomAt===undefined)data.bottomAt=plOf(s,q.player).deck.length;
-  A.toDeckBottom(pack,s,q.player,'outside',a.uid,q.sourceUid,data.bottomAt);
-  data.picked.push(a.uid);data.sum+=d.energy||0;
-  if(data.sum>=4){
+  const data=q.data;
+  if(a.mode==='done'){
+   if((data.sum||0)<4)throw Error('Madoka bottom is still under 4');
    const self=selfOf(s,q.player,q.sourceUid);
    if(self)A.active(s,q.player,self);
    return;
   }
+  const placed=plOf(s,q.player).outside.find(c=>c.uid===a.uid);
+  const d=def(pack,placed||{});
+  if(!placed||!names(d,'鹿目 まどか',placed,s))throw Error('Illegal Madoka bottom');
+  if(data.bottomAt===undefined)data.bottomAt=plOf(s,q.player).deck.length;
+  A.toDeckBottom(pack,s,q.player,'outside',a.uid,q.sourceUid,data.bottomAt);
+  data.picked.push(a.uid);data.sum=(data.sum||0)+(d.energy||0);
   const pool=plOf(s,q.player).outside.filter(c=>names(def(pack,c),'鹿目 まどか',c,s));
+  if(data.sum>=4&&!pool.length){
+   const self=selfOf(s,q.player,q.sourceUid);
+   if(self)A.active(s,q.player,self);
+   return;
+  }
   if(!pool.length)return;
-  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u012b',data},
-   pool.map(c=>({type:'mmm2',uid:c.uid})));
+  const actions=pool.map(c=>({type:'mmm2',uid:c.uid}));
+  if(data.sum>=4)actions.unshift({type:'mmm2',mode:'done'});
+  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u012b',data},actions);
  },
  u014(pack,s,q,a){
   if(a.mode==='skip')return;
@@ -1027,7 +1039,8 @@ export function legalMmm2Activations(pack,s,owner,c){
   push('mmm2:0',front&&!used(s,c.uid+'|bounce')&&
    ownChars(s,owner,x=>names(def(pack,x),'鹿目 まどか',x,s)).length>0);
   push('mmm2:1',!once(s,owner,'悪魔ほむら|bottom')&&
-   plOf(s,owner).outside.some(x=>names(def(pack,x),'鹿目 まどか',x,s)));
+   plOf(s,owner).outside.filter(x=>names(def(pack,x),'鹿目 まどか',x,s))
+    .reduce((n,x)=>n+(def(pack,x).energy||0),0)>=4);
  }
  if(id==='MMM-2-016'){
   push('mmm2:0',!used(s,c.uid+'|retire')&&
