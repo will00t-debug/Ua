@@ -176,6 +176,31 @@ function keptEnergy(pack,state,actor,legal,choice,row,strategy){
  const replacement=reliableChoice(pack,state,actor,rest,null,ordered);
  return legal.find(item=>same(item,replacement))||choice;
 }
+function tracedRow(scored,action){
+ if(!action)return null;
+ return (scored||[]).find(item=>item?.executed!==false&&same(item.action,action))||null;
+}
+// Equal discard scores have not chosen a card. The backup is the same
+// keep-order used when the search does not finish, and it does not dispatch.
+function discardTie(pack,state,actor,rows,blended){
+ const kind=state.pending?.kind||'';
+ if(!blended||!kind.startsWith('effect-discard')||!Number.isFinite(blended.search))return blended;
+ const best=Math.max(...rows.map(row=>Number.isFinite(row?.search)?row.search:-Infinity));
+ if(!(Math.abs(blended.search-best)<=1e-6))return blended;
+ const tied=rows.filter(row=>{
+  const action=row?.action;
+  if(!action?.uid||!Number.isFinite(row.search)||Math.abs(row.search-best)>1e-6)return false;
+  return action.type==='chooseDiscard'||action.type==='chooseDiscardGate';
+ });
+ if(tied.length<2)return blended;
+ tied.sort((a,b)=>{
+  const delta=keepScore(pack,state,actor,cardOf(state,actor,a.action.uid))-
+   keepScore(pack,state,actor,cardOf(state,actor,b.action.uid));
+  if(delta)return delta;
+  return JSON.stringify(a.action)<JSON.stringify(b.action)?-1:1;
+ });
+ return tied[0].bonus==null?{...tied[0],bonus:blended.bonus||0}:tied[0];
+}
 function doneLine(row){
  return !!(row&&(row.settled||row.boundary==='returned'||row.boundary==='terminal'));
 }
@@ -523,7 +548,8 @@ export function chooseAiV3Action(pack,state,options={}){
     energyKeep:energyView?.strip?energyView:null,
     replacedMove:same(kept,choice)?null:choice,
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
-    sequence:(scored.find(item=>item.sequence?.length)||{}).sequence||[]
+    score:tracedRow(scored,kept)?.search??null,
+    sequence:tracedRow(scored,kept)?.sequence||[]
    },started);
   }
   if(!scored.length){
@@ -541,18 +567,29 @@ export function chooseAiV3Action(pack,state,options={}){
   const observation=actorObservation(pack,state,actor);
   const poolRows=comparable;
   const anchor=poolRows.reduce((best,row)=>row.search>best.search?row:best).action;
-  const blended=blendRoot(poolRows,action=>{
+  const blended=discardTie(pack,state,actor,poolRows,blendRoot(poolRows,action=>{
    const mine=learnBonus(options.prior,observation,action,actor);
    const base=learnBonus(options.prior,observation,anchor,actor);
    return mine-base;
-  });
+  }));
   const exact=legal.find(item=>same(item,blended?.action));
   if(!exact)return fallback(pack,state,legal,started,'unmatched',()=>{settle();return spent();});
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
   const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
-  const kept=preferEarlyDraw(pack,state,actor,placed,scored);
-  const keptRow=scored.find(item=>same(item.action,kept))||row;
+  let kept=preferEarlyDraw(pack,state,actor,placed,scored);
+  let keptRow=tracedRow(scored,kept);
+  // A deadline leaves discard lines at unequal depths. Tied or unfinished
+  // scores are not a reason to throw away the card the keep-order retains.
+  // A line that already won is left alone, and the backup does not dispatch.
+  if(discardWindow&&now()>deadline&&!(keptRow?.boundary==='terminal'&&keptRow.search>=90000)){
+   const rankedDiscard=reliableChoice(pack,state,actor,legal,null,ordered);
+   const backed=legal.find(item=>same(item,rankedDiscard));
+   const backedRow=tracedRow(scored,backed);
+   const backedLoss=backedRow?.boundary==='terminal'&&backedRow.search<=-90000;
+   const keptLoss=keptRow?.boundary==='terminal'&&keptRow.search<=-90000;
+   if(backed&&!(backedLoss&&!keptLoss)){kept=backed;keptRow=backedRow;}
+  }
   if(keptRow?.settled)report.settledChoices++;
   settle();
   return finish(kept,now()>deadline?'budget':'search',{

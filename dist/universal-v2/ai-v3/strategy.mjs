@@ -438,10 +438,64 @@ function unblockedHits(pack,state,actor){
  }
  return hits;
 }
-function energyPlay(pack,state,uid){
+function energyPlays(pack,state,uid){
  try{
-  return legalUniversalActions(pack,state).find(action=>action?.type==='play'&&action.line==='energy'&&action.uid===uid)||null;
- }catch{return null;}
+  return legalUniversalActions(pack,state).filter(action=>action?.type==='play'&&action.line==='energy'&&action.uid===uid);
+ }catch{return [];}
+}
+// Playing onto a full energy line removes the card named by replaceUid.
+// The printed generator is not new energy until that removal is subtracted.
+// The swap is not a dispatch: the search clock and node pool stay put.
+export function energyPlayNet(pack,state,actor,action){
+ const mine=state?.players?.[actor];
+ if(!mine||action?.type!=='play'||action.line!=='energy'||!action.uid)return null;
+ const hand=mine.hand||[];
+ const index=hand.findIndex(card=>card?.uid===action.uid);
+ if(index<0||!Number.isInteger(action.slot))return null;
+ const moving=hand[index];
+ const previous=mine.energy?.[action.slot];
+ if(previous?action.replaceUid!==previous.uid:!!action.replaceUid)return null;
+ const before=plainColors(colorsOf(pack,state,actor));
+ hand.splice(index,1);
+ mine.energy[action.slot]=moving;
+ let after;
+ try{after=plainColors(colorsOf(pack,state,actor));}
+ finally{
+  mine.energy[action.slot]=previous;
+  hand.splice(index,0,moving);
+ }
+ const gain={};
+ for(const color of new Set([...Object.keys(before),...Object.keys(after)]))
+  gain[color]=(after[color]||0)-(before[color]||0);
+ const ready=(mine.apCards||[]).filter(card=>card?.ready).length;
+ const printed=packOf(pack,actor).cards[moving.cardId];
+ const ap=Math.max(0,Number(printed?.ap)||0);
+ return {before,after,gain,ap,readyAfter:Math.max(0,ready-ap)};
+}
+function positiveGain(net){
+ if(!net)return false;
+ return Object.values(net.gain).some(value=>value>0);
+}
+// 'reach' pays a card that is stranded now. 'narrow' only adds some of the
+// missing color. A replacement that does not raise that color is neither.
+function gapProgress(pack,state,actor,net,playedUid,extra=0){
+ if(!positiveGain(net))return null;
+ const catalog=packOf(pack,actor).cards;
+ const played=catalog[(state.players?.[actor]?.hand||[]).find(card=>card?.uid===playedUid)?.cardId];
+ let narrow=false;
+ for(const card of state.players?.[actor]?.hand||[]){
+  if(!card||card.uid===playedUid)continue;
+  const body=catalog[card.cardId];
+  if(!body)continue;
+  const had=net.before[body.color]||0;
+  if((net.gain[body.color]||0)<=0)continue;
+  const cost=Number(body.energy)||0;
+  if(cost<=had)continue;
+  const pool=(net.after[body.color]||0)+(body.color===played?.color?extra:0);
+  if(cost<=pool)return 'reach';
+  if(pool>had)narrow=true;
+ }
+ return narrow?'narrow':null;
 }
 function payableCharacters(pack,state,actor){
  const catalog=packOf(pack,actor).cards;
@@ -453,18 +507,6 @@ function payableCharacters(pack,state,actor){
   if((Number(printed.energy)||0)<=(colors[printed.color]||0))count++;
  }
  return count;
-}
-function reachesStranded(pack,state,actor,printed,extra=0){
- const colors=colorsOf(pack,state,actor);
- const have=(colors[printed.color]||0)+(Number(printed.gen)||0)+extra;
- const catalog=packOf(pack,actor).cards;
- for(const card of state.players?.[actor]?.hand||[]){
-  const body=catalog[card?.cardId];
-  if(!body||body===printed||body.color!==printed.color)continue;
-  const cost=Number(body.energy)||0;
-  if(cost>(colors[body.color]||0)&&cost<=have)return true;
- }
- return false;
 }
 function partnerEnergy(pack,state,actor,printed,uid){
  const colors=colorsOf(pack,state,actor);
@@ -486,13 +528,41 @@ function spareForEnergy(pack,state,actor){
  if(life<4)return false;
  return life-unblockedHits(pack,state,actor)>=4;
 }
+function rowOf(rows,action){
+ if(!action)return null;
+ const key=JSON.stringify(action);
+ return (rows||[]).find(row=>row?.executed!==false&&JSON.stringify(row.action)===key)||null;
+}
+function provenWin(row){return row?.boundary==='terminal'&&row.search>=90000;}
+// Lines that stopped together were already compared. A worse energy score
+// does not get to replace the front just because the color would rise.
+function frontBeatsEnergy(choice,rows){
+ const front=rowOf(rows,choice);
+ if(!front)return false;
+ const matched=(rows||[]).filter(row=>row?.executed!==false&&row.action?.type==='play'&&
+  row.action.line==='energy'&&row.action.uid===choice.uid&&row.boundary===front.boundary);
+ if(!matched.length)return false;
+ return matched.every(row=>front.search>=row.search);
+}
+function provenLoss(row){return row?.boundary==='terminal'&&row.search<=-90000;}
+// A finished win stays. The one finished line that is not an immediate loss
+// stays too. An energy preference that has not itself won is not a substitute.
+function provenChoice(choice,rows){
+ const mine=rowOf(rows,choice);
+ if(!mine||mine.boundary!=='terminal'||!(mine.search>-90000))return false;
+ if(provenWin(mine))return true;
+ const safe=(rows||[]).filter(row=>row?.executed!==false&&row.boundary==='terminal'&&!provenLoss(row));
+ return safe.length===1&&JSON.stringify(safe[0].action)===JSON.stringify(choice);
+}
 // A small generator's front line can finish, or stop early with a higher raw
 // score, while its energy line is still cut. That is not a reason to put the
 // generator on the front. A 4000 generator follows the same energy line when
-// the hand is still short and the life total can take the open swings.
+// the added color is real and the life total can take the open swings.
 // A 4000 that is needed to stay at four life stays where the search put it.
+// A proven win, and the only proven way to avoid an immediate loss, stay.
 export function preferEnergyGenerator(pack,state,actor,choice,rows){
  if(choice?.type!=='play'||choice.line!=='front'||!choice.uid)return choice;
+ if(provenChoice(choice,rows))return choice;
  const catalog=packOf(pack,actor).cards;
  const hand=state.players?.[actor]?.hand||[];
  const chosen=hand.find(card=>card?.uid===choice.uid);
@@ -500,18 +570,37 @@ export function preferEnergyGenerator(pack,state,actor,choice,rows){
  if(!printed||!(printed.gen>0))return choice;
  const parts=strategyParts(pack,state,actor);
  // A 4000 that still generates goes to energy when the hand cannot pay its
- // curve and this is the only body we can play, or this one energy reaches
- // a card that is stranded now. Another payable body keeps the front line.
+ // curve and this is the only body we can play, or this energy reaches a
+ // card that is stranded now. The gain is the color left after replacement.
+ // Another payable body keeps the front line. A proven loss is not a landing spot.
  if((Number(printed.bp)||0)>=4000){
+  if(!(spareForEnergy(pack,state,actor)&&(parts.deficit>0||parts.stranded>0)))return choice;
   const alone=payableCharacters(pack,state,actor)<=1;
   const pressure=(state.players?.[1-actor]?.front||[]).some(card=>card?.ready);
-  const withPartner=pressure&&reachesStranded(pack,state,actor,printed,partnerEnergy(pack,state,actor,printed,choice.uid));
-  if(spareForEnergy(pack,state,actor)&&(parts.deficit>0||parts.stranded>0)&&
-   (alone||reachesStranded(pack,state,actor,printed)||withPartner)){
-   const energy=energyPlay(pack,state,choice.uid);
-   if(energy)return energy;
+  const extra=partnerEnergy(pack,state,actor,printed,choice.uid);
+  let best=null,bestGain=-1;
+  for(const action of energyPlays(pack,state,choice.uid)){
+   if(provenLoss(rowOf(rows,action))||frontBeatsEnergy(choice,rows))continue;
+   const net=energyPlayNet(pack,state,actor,action);
+   const own=gapProgress(pack,state,actor,net,choice.uid,0);
+   const partner=pressure&&extra>0?gapProgress(pack,state,actor,net,choice.uid,extra):null;
+   const useful=own==='reach'||partner==='reach'||(alone&&(own==='narrow'||partner==='narrow'||own==='reach'));
+   if(!useful)continue;
+   const gain=Object.values(net.gain).reduce((sum,value)=>sum+(value>0?value:0),0);
+   const rank=gain*2+(rowOf(rows,action)?1:0);
+   if(rank>bestGain){bestGain=rank;best=action;}
   }
-  return choice;
+  return best||choice;
+ }
+ // A smaller generator follows the same payment rule. One real energy that
+ // pays a stranded card is the development line; the front body can wait.
+ const reaching=energyPlays(pack,state,choice.uid).filter(action=>{
+  if(provenLoss(rowOf(rows,action))||frontBeatsEnergy(choice,rows))return false;
+  return gapProgress(pack,state,actor,energyPlayNet(pack,state,actor,action),choice.uid,0)==='reach';
+ });
+ if(spareForEnergy(pack,state,actor)&&reaching.length){
+  reaching.sort((a,b)=>Number(!!rowOf(rows,b))-Number(!!rowOf(rows,a)));
+  return reaching[0];
  }
  const front=rows.find(row=>row?.action?.type==='play'&&row.action.line==='front'&&row.action.uid===choice.uid);
  const energy=rows.find(row=>row?.action?.type==='play'&&row.action.line==='energy'&&row.action.uid===choice.uid&&row.executed!==false);
@@ -531,8 +620,9 @@ export function preferEnergyGenerator(pack,state,actor,choice,rows){
   return ready>=chosenAp+(body.ap||1);
  });
  const frontHasBody=(state.players?.[actor]?.front||[]).some(Boolean);
- if(mainWaiting||(front?.boundary==='returned'&&frontHasBody))return energy.action;
- return choice;
+ if(!(mainWaiting||(front?.boundary==='returned'&&frontHasBody))||provenLoss(energy))return choice;
+ const net=energyPlayNet(pack,state,actor,energy.action);
+ return positiveGain(net)?energy.action:choice;
 }
 // The start-phase draw spends one AP and is scored on the belief deck, not
 // the live top. When the hand is still short of energy and one AP remains

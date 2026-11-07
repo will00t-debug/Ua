@@ -7,7 +7,7 @@ import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild} from '../dist/universal-v2/ai-v3/eval.mjs';
-import {bindProbeBudget} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,energyPlayNet} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -1190,7 +1190,7 @@ function passToMain(packs,state){
  return {cursor,passed};
 }
 
-test('an optional discard spends the unaffordable event and keeps the generator',()=>{
+function openDiscard(){
  const {packs,state}=reachStart(2);
  wipeSide(state,0);
  wipeSide(state,1);
@@ -1218,10 +1218,31 @@ test('an optional discard spends the unaffordable event and keeps the generator'
  assert.equal(cursor.players[0].front.filter(Boolean).length,0);
  assert.equal(cursor.players[1].front.filter(Boolean).length,0);
  assert.equal(assertUniversalMatch(packs,cursor),true);
+ return {packs,state:cursor,event:kept[5].uid,generator:kept[0].uid,played:played.uid};
+}
+function askUntil(packs,state,at){
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const actor=state.pending?.player??state.active;
+ const action=chooseAiV3Action(packs,state,{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,
+  ms:at==null?1e9:40,now:at==null?()=>0:()=>meter.dispatches>=at?1e9:0
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=48);
+ return {action,trace,meter};
+}
+
+test('an optional discard spends the unaffordable event and keeps the generator',()=>{
+ const opened=openDiscard();
+ const {packs,event,generator,played}=opened;
+ let cursor=opened.state;
  const clock=clockAsk(packs,cursor);
  const choice=ask(packs,cursor);
  assert.equal(choice.action.type,'chooseDiscardGate');
- assert.equal(choice.action.uid,kept[5].uid);
+ assert.equal(choice.action.uid,event);
  const clockCard=cursor.players[0].hand.find(card=>card.uid===clock.action.uid);
  console.log('discard clock',clockCard?pack.cards[clockCard.cardId].name:clock.action.uid,clock.trace.reason,'nodes',clock.trace.nodesUsed,'over',clock.trace.overSoft);
  cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:cursor.pending.player});
@@ -1232,10 +1253,141 @@ test('an optional discard spends the unaffordable event and keeps the generator'
   assert.equal(assertUniversalMatch(packs,cursor),true);
  }
  assert.equal(cursor.pending,null);
- assert.equal(cursor.players[0].hand.some(card=>card.uid===kept[5].uid),false);
- assert.equal(cursor.players[0].outside.some(card=>card.uid===kept[5].uid),true);
- assert.equal(cursor.players[0].hand.some(card=>card.uid===kept[0].uid),true);
- assert.equal(cursor.players[0].energy.some(card=>card?.uid===played.uid),true);
+ assert.equal(cursor.players[0].hand.some(card=>card.uid===event),false);
+ assert.equal(cursor.players[0].outside.some(card=>card.uid===event),true);
+ assert.equal(cursor.players[0].hand.some(card=>card.uid===generator),true);
+ assert.equal(cursor.players[0].energy.some(card=>card?.uid===played),true);
+});
+
+test('the same discard stays on the event at every listed cutoff',()=>{
+ const spot=openDiscard();
+ const cuts=[8,16,24,32,40,44,null];
+ for(const at of cuts){
+  const {action,trace,meter}=askUntil(spot.packs,spot.state,at);
+  const card=spot.state.players[0].hand.find(item=>item.uid===action.uid);
+  assert.equal(action.type,'chooseDiscardGate',String(at));
+  assert.equal(action.uid,spot.event,String(at)+' '+(card?pack.cards[card.cardId].name:''));
+  const row=(trace.candidates||[]).find(item=>item.action?.uid===action.uid);
+  if(row){
+   assert.equal(trace.settled,row.settled===true);
+   assert.equal(trace.score,row.search);
+   if(trace.sequence?.length)assert.equal(trace.sequence[0].uid,action.uid);
+  }else{
+   assert.equal(trace.settled,false);
+   assert.equal(trace.sequence?.length||0,0);
+  }
+  if(at==null){
+   assert.equal(trace.reason,'search');
+   assert.equal(trace.overSoft,false);
+   assert.equal(trace.settled,true);
+  }else{
+   assert.equal(meter.dispatches,at);
+   assert.equal(trace.overSoft,true);
+   assert.ok(trace.reason==='budget'||trace.reason==='budget-fallback');
+  }
+ }
+ const early=askUntil(spot.packs,spot.state,8);
+ assert.equal(early.trace.settled,false);
+ assert.equal(early.trace.incomplete,true);
+ assert.equal(early.trace.coverage.executed,1);
+ assert.equal(early.trace.coverage.unexecuted,3);
+ const unfinished=early.trace.candidates.find(item=>item.action?.uid===spot.event);
+ assert.equal(unfinished.boundary,'yielded');
+ assert.equal(unfinished.settled,false);
+ assert.equal(unfinished.cut,'time');
+ const tied=askUntil(spot.packs,spot.state,24);
+ const eventRow=tied.trace.candidates.find(item=>item.action?.uid===spot.event);
+ const others=tied.trace.candidates.filter(item=>item.action?.uid&&item.action.uid!==spot.event&&item.boundary==='returned');
+ assert.ok(others.length>=1);
+ assert.ok(others.every(item=>item.search===eventRow.search));
+ const open=tied.trace.candidates.find(item=>item.settled!==true);
+ assert.ok(open);
+ if(open.search>eventRow.search)assert.equal(open.settled,false);
+});
+
+function lethalHand(){
+ const packs=[pack,pack];
+ let state=newUniversalMatch(packs,{decks:[counts,counts],seed:11,first:0});
+ for(let guard=0;guard<40&&state.status==='playing';guard++){
+  if(state.active===0&&state.phase==='main'&&!state.pending)break;
+  const legal=legalUniversalActions(packs,state);
+  state=dispatchUniversalAction(packs,state,legal.find(item=>item.type==='next')||legal[0]);
+ }
+ clearHand(state,0);
+ clearHand(state,1);
+ for(const player of [0,1])for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
+  const card=state.players[player][line][slot];
+  if(card){state.players[player].deck.push(card);state.players[player][line][slot]=null;}
+ }
+ const orihime=take(state,0,'BLC-4-022');
+ const heavy=take(state,0,'BLC-4-036');
+ state.players[0].hand.push(orihime,heavy);
+ for(let slot=0;slot<4;slot++)place(state,0,take(state,0,'BLC-2-040'),'energy',slot);
+ setLife(state,0,7);
+ setLife(state,1,1);
+ state.players[0].apCards.forEach((card,index)=>{card.inPlay=index<2;card.ready=index<2;});
+ assert.equal(state.phase,'main');
+ assert.equal(readyAp(state,0),2);
+ assert.equal(universalEnergyByColor(packs,state,0).blue,4);
+ assert.equal(state.players[0].front.filter(Boolean).length,0);
+ assert.equal(state.players[1].front.filter(Boolean).length,0);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ return {packs,state,orihime,heavy};
+}
+
+test('a full energy line does not count a replaced generator as new energy',()=>{
+ const {packs,state,orihime}=lethalHand();
+ const energy=legalUniversalActions(packs,state).find(action=>action.type==='play'&&action.line==='energy'&&action.uid===orihime.uid);
+ const net=energyPlayNet(packs,state,0,energy);
+ assert.equal(net.before.blue,4);
+ assert.equal(net.after.blue,4);
+ assert.equal(net.gain.blue||0,0);
+ assert.equal(net.ap,2);
+ assert.equal(net.readyAfter,0);
+ const held=state.players[0].energy[3];
+ state.players[0].energy[3]=null;
+ state.players[0].hand.push(held);
+ const added=legalUniversalActions(packs,state).find(action=>action.type==='play'&&action.line==='energy'&&action.uid===held.uid&&!action.replaceUid);
+ const grown=energyPlayNet(packs,state,0,added);
+ assert.equal(grown.before.blue,3);
+ assert.equal(grown.after.blue,4);
+ assert.equal(grown.gain.blue,1);
+});
+
+test('a proven win stays on the front when energy would only replace a generator',()=>{
+ const {packs,state,orihime}=lethalHand();
+ const choice=ask(packs,state);
+ assert.equal(choice.action.type,'play');
+ assert.equal(choice.action.line,'front');
+ assert.equal(choice.action.uid,orihime.uid);
+ assert.equal(choice.trace.reason,'search');
+ assert.equal(choice.trace.score,100000);
+ assert.equal(choice.trace.settled,true);
+ assert.equal(choice.trace.sequence[0].type,'play');
+ assert.equal(choice.trace.sequence[0].line,'front');
+ assert.equal(choice.trace.sequence[0].uid,orihime.uid);
+ const front=choice.trace.candidates.find(row=>row.action?.line==='front'&&row.action.uid===orihime.uid);
+ assert.equal(front.boundary,'terminal');
+ assert.equal(front.search,100000);
+ let cursor=dispatchUniversalAction(packs,state,choice.action,{actor:0});
+ assert.equal(assertUniversalMatch(packs,cursor),true);
+ for(let guard=0;guard<12&&cursor.status==='playing';guard++){
+  const legal=legalUniversalActions(packs,cursor);
+  let step;
+  if(cursor.pending?.kind==='effect-discard-gate')
+   step=legal.find(action=>action.type==='chooseDiscardGate'&&(action.uid??null)===null);
+  else if(cursor.pending?.kind==='block')
+   step=legal.find(action=>action.type==='chooseBlock'&&(action.uid??null)===null);
+  else if(cursor.pending?.kind==='life-trigger')
+   step=legal.find(action=>action.type==='chooseTrigger'&&action.mode==='skip')||legal[0];
+  else step=legal.find(action=>action.type==='attack'&&action.uid===orihime.uid)||legal.find(action=>action.type==='next');
+  assert.ok(step,cursor.pending?.kind||cursor.phase);
+  cursor=dispatchUniversalAction(packs,cursor,step,{actor:cursor.pending?.player??cursor.active});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ assert.equal(cursor.status,'finished');
+ assert.equal(cursor.winner,0);
+ assert.equal(cursor.players[1].life.length,0);
 });
 
 test('a short energy line draws before it spends the only payable generator',()=>{
