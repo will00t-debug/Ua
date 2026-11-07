@@ -4,6 +4,11 @@
 // DO NOT infer Japanese aliases from prose, translate strings, or split slash
 // composites. A printed name alias is an explicit card field, never a guess.
 import {originalEffectsDisabled} from './continuous-states.mjs';
+// A face-down card's printed information is not referenced: name, trait,
+// color, required energy, generated energy, BP and effect text. Cards under
+// a host are already outside these field loops. The rule-manual glossary
+// calls that card 「裏向きのカード」.
+export function printedFieldCard(c){return !!c&&c.faceDown!==true;}
 // Q1946: the name printed at the top stays the original name. An alias is
 // additional. Q87 applies that extra name in hand, deck, outside, field,
 // removed, and the other zones. Q50/Q55: a card buried under a Raid is not
@@ -49,7 +54,7 @@ export function usedOwnEventThisTurn(s,owner,printed){
 export function mamiOutsideEventBonus(s,owner,printed){
  const zones=[s.players[owner]?.front,s.players[owner]?.energy];
  for(const zone of zones)for(const c of zone||[]){
-  if(!c)continue;
+  if(!printedFieldCard(c))continue;
   if(printed(c)?.id==='MMM-2-007'&&!originalEffectsDisabled(s,c))return 1;
  }
  return 0;
@@ -76,7 +81,7 @@ export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
   profile.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
  const distinct=new Set();
  for(const cards of zones)for(const physical of cards){
-  if(!physical||profile.excludeSelf&&physical.uid===sourceUid)continue;
+  if(!printedFieldCard(physical)||profile.excludeSelf&&physical.uid===sourceUid)continue;
   const definition=printed(physical);
   if(profile.subject==='character'&&definition.type!=='character')continue;
   // [] means traitless; a source-verified multi-trait card has separate tokens.
@@ -176,7 +181,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // 元々のBPよりBPが低い is live BP against the printed number.
   // Only the opponent's front characters count. Energy-line cards do not.
   if(typeof cardBp!=='function')throw Error('Live BP comparison needs a BP reader');
-  return s.players[1-owner].front.some(c=>c&&printed(c).type==='character'&&
+  return s.players[1-owner].front.some(c=>printedFieldCard(c)&&printed(c).type==='character'&&
    cardBp(c)<printed(c).bp);
  }
  if(condition.kind==='oppFrontBelowPrintedCount'){
@@ -185,13 +190,13 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(typeof cardBp!=='function')throw Error('Live BP comparison needs a BP reader');
   let found=0;
   for(const c of s.players[1-owner].front)
-   if(c&&printed(c).type==='character'&&cardBp(c)<printed(c).bp)found++;
+   if(printedFieldCard(c)&&printed(c).type==='character'&&cardBp(c)<printed(c).bp)found++;
   return found>=condition.min;
  }
  if(condition.kind==='ownFrontNoOtherCharacter'){
   // 自分のフロントLに他のキャラがない. Energy-line cards and fields are
   // not front characters. This physical card does not count as another.
-  return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
+  return !s.players[owner].front.some(c=>printedFieldCard(c)&&c.uid!==sourceUid&&
    printed(c).type==='character');
  }
  if(condition.kind==='selfRequiredEnergyAtLeast'){
@@ -209,7 +214,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // a traitless card satisfies it. A buried Raid layer is not on the field.
   const pl=s.players[owner];
   for(const zone of [pl.front,pl.energy])for(const c of zone){
-   if(!c)continue;
+   if(!printedFieldCard(c))continue;
    const d=printed(c);
    const traits=d.traitComponents||d.traits||[];
    if(traits.some(t=>t!==condition.trait))return false;
@@ -229,7 +234,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    condition.zone==='energy'?[s.players[owner].energy]:
    [s.players[owner].front,s.players[owner].energy];
   for(const area of areas)for(const c of area){
-   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
    const d=printed(c);
    if(d.type==='character'&&cardHasName(d,condition.name,originalEffectsDisabled(s,c)))
     return true;
@@ -250,7 +255,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(events<condition.min)return false;
   const areas=[s.players[owner].front,s.players[owner].energy];
   for(const area of areas)for(const c of area){
-   if(!c||printed(c).type!=='character')continue;
+   if(!printedFieldCard(c)||printed(c).type!=='character')continue;
    if(cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c)))return true;
   }
   return false;
@@ -278,7 +283,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const pl=s.players[owner];
   for(const line of ['front','energy']){
    if(!pl[line].some(c=>c?.uid===sourceUid))continue;
-   return pl[line].some(c=>c&&c.uid!==sourceUid&&
+   return pl[line].some(c=>printedFieldCard(c)&&c.uid!==sourceUid&&
     cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c)));
   }
   return false;
@@ -287,7 +292,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // Hand, outside, and a buried Raid layer do not receive the bonus.
  if(condition.kind==='selfOnField'){
   const area=s.players[owner];
-  return area.front.some(c=>c?.uid===sourceUid)||area.energy.some(c=>c?.uid===sourceUid);
+  return area.front.some(c=>c?.uid===sourceUid&&printedFieldCard(c))||
+   area.energy.some(c=>c?.uid===sourceUid&&printedFieldCard(c));
  }
  if(condition.kind==='ownRestPrintedBpCount')
   return ownRestPrintedBpCount(s,owner,sourceUid,condition,printed)>=condition.min;
@@ -307,7 +313,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const zones=condition.zone==='front'?[pl.front]:
    condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
   for(const zone of zones)for(const c of zone){
-   if(!c)continue;
+   if(!printedFieldCard(c))continue;
    const d=printed(c);
    if(d.type!=='character')continue;
    const silenced=originalEffectsDisabled(s,c);
@@ -326,7 +332,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // not qualify. A mutual lookup stops at the card already being measured.
   if(typeof cardBp!=='function')throw Error('Printed-BP gap needs a live BP reader');
   for(const c of s.players[1-owner].front){
-   if(!c||printed(c).type!=='character')continue;
+   if(!printedFieldCard(c)||printed(c).type!=='character')continue;
    const base=printed(c).bp;
    if(Number.isInteger(base)&&cardBp(c)<base)return true;
   }
@@ -341,7 +347,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const areas=condition.zone==='front'?[foe.front]:
    condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
   for(const area of areas)for(const c of area){
-   if(!c||printed(c).type!=='character')continue;
+   if(!printedFieldCard(c)||printed(c).type!=='character')continue;
    if(cardBp(c)>=condition.minBp)return true;
   }
   return false;
@@ -374,7 +380,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
   let found=0;
   for(const area of areas)for(const c of area){
-   if(!c||printed(c).type!=='character')continue;
+   if(!printedFieldCard(c)||printed(c).type!=='character')continue;
    if(cardBp(c)>=condition.minBp)found++;
   }
   return found>=condition.min;
@@ -386,7 +392,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const zones=condition.zone==='front'?[pl.front]:
    condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
   for(const zone of zones)for(const c of zone){
-   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
    const d=printed(c);
    if(d.type==='character'&&d.ap>=condition.minAp)return true;
   }
@@ -395,7 +401,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  if(condition.kind==='ownFrontNoOtherCharacter'){
   // 他のキャラ is another character on this player's front line. Energy-line
   // cards and fields are a different zone. This card does not count itself.
-  return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
+  return !s.players[owner].front.some(c=>printedFieldCard(c)&&c.uid!==sourceUid&&
    printed(c).type==='character');
  }
  if(condition.kind==='oppFrontCurrentBpBelowPrinted'){
@@ -403,7 +409,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // is read now. Energy-line cards and fields are not the opponent's front.
   // A card sitting exactly at its printed BP does not qualify.
   if(typeof cardBp!=='function')throw Error('Printed BP comparison needs a live BP reader');
-  return s.players[1-owner].front.some(c=>c&&printed(c).type==='character'&&
+  return s.players[1-owner].front.some(c=>printedFieldCard(c)&&printed(c).type==='character'&&
    cardBp(c)<printed(c).bp);
  }
  if(condition.kind==='otherOwnCharacterRetiredThisTurn'){
@@ -438,7 +444,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const names=new Set();
   let found=0;
   for(const zone of zones)for(const c of zone){
-   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
    const d=printed(c);
    if(!cardHasTrait(d,condition.trait))continue;
    found++;
@@ -459,7 +465,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    condition.zone==='energy'?[board.energy]:[board.front,board.energy];
   const kinds=new Set();
   for(const area of areas)for(const c of area){
-   if(!c)continue;
+   if(!printedFieldCard(c))continue;
    const d=printed(c);
    if(d.type!=='character')continue;
    if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
@@ -475,7 +481,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const zones=condition.zone==='front'?[pl.front]:
    condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
   for(const zone of zones)for(const c of zone){
-   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
    const d=printed(c);
    if(d.type!=='character'||d.color!==condition.color||d.energy!==condition.energy)continue;
    if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
@@ -492,7 +498,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    condition.zone==='energy'?[board.energy]:[board.front,board.energy];
   const kinds=new Set();
   for(const area of areas)for(const c of area){
-   if(!c)continue;
+   if(!printedFieldCard(c))continue;
    const d=printed(c);
    if(d.type==='character'&&d.color===condition.color)kinds.add(d.name);
   }
@@ -508,7 +514,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    condition.zone==='energy'?[board.energy]:[board.front,board.energy];
   const kinds=new Set();
   for(const area of areas)for(const c of area){
-   if(!c)continue;
+   if(!printedFieldCard(c))continue;
    const d=printed(c);
    if(d.type!=='character')continue;
    if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
@@ -526,7 +532,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    condition.zone==='energy'?[board.energy]:[board.front,board.energy];
   const kinds=new Set();
   for(const area of areas)for(const c of area){
-   if(!c)continue;
+   if(!printedFieldCard(c))continue;
    const d=printed(c);
    if(d.type!=='character')continue;
    if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
@@ -550,7 +556,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  const remaining=condition.kind==='ownFieldHasAllNames'?new Set(condition.names):null;
  let found=0;
  for(const zone of zones)for(const c of zone){
-  if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type!=='character')continue;
   const silenced=originalEffectsDisabled(s,c);
@@ -582,7 +588,7 @@ export function countOppRestCharacters(s,owner,condition,printed){
   condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
  let found=0;
  for(const area of areas)for(const c of area)
-  if(c&&!c.ready&&printed(c).type==='character')found++;
+  if(printedFieldCard(c)&&!c.ready&&printed(c).type==='character')found++;
  return found;
 }
 // A history of real field-to-OUTSIDE retirements, not current outside count.
@@ -609,7 +615,7 @@ export function countOwnPrintedApAtLeast(s,owner,sourceUid,condition,printed){
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
  let found=0;
  for(const zone of zones)for(const c of zone){
-  if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type==='character'&&d.ap>=condition.minAp)found++;
  }
@@ -627,7 +633,7 @@ export function ownRestPrintedBpCount(s,owner,sourceUid,condition,printed){
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
  let found=0;
  for(const zone of zones)for(const c of zone){
-  if(!c||c.ready||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  if(!printedFieldCard(c)||c.ready||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type!=='character'||!Number.isInteger(d.bp)||d.bp>condition.maxPrintedBp)continue;
   if(cardHasTrait(d,condition.trait))found++;

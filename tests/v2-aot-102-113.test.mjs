@@ -290,6 +290,29 @@ test('105 enters active only while a face-up Eren name is on this field, and imp
  assert.equal(live(named,0,active.uid).ready,true);
  finish(named);
 
+ let covered=toPhase(fresh(ids,10507),'main');
+ fuel(covered,['AOT-1-095','AOT-1-071']);
+ const hidden=put(covered,0,'AOT-1-090','front',0,true);
+ hidden.faceDown=true;
+ readyAp(covered,0,2);
+ const sleeper=toHand(covered,0,'AOT-1-105');
+ covered=play(covered,sleeper.uid);
+ assert.equal(live(covered,0,sleeper.uid).ready,false);
+ assert.equal(universalImpact(packs,covered,live(covered,0,sleeper.uid)),1);
+ finish(covered);
+
+ let buried=toPhase(fresh(ids,10508),'main');
+ fuel(buried,['AOT-1-095','AOT-1-071']);
+ const host=put(buried,0,'AOT-1-078','front',0,true);
+ const under=take(buried,0,'AOT-1-090');
+ under.faceDown=true;
+ host.under=[under];
+ readyAp(buried,0,2);
+ const above=toHand(buried,0,'AOT-1-105');
+ buried=play(buried,above.uid);
+ assert.equal(live(buried,0,above.uid).ready,false);
+ finish(buried);
+
  let foe=toPhase(fresh(ids,10503),'main');
  fuel(foe,['AOT-1-095','AOT-1-071']);
  put(foe,1,'AOT-1-090','front',0,true);
@@ -456,6 +479,19 @@ test('108 enters active at five corps, then rests and retires to buff the corps 
  const school=toHand(s,0,'AOT-1-108');
  s=play(s,school.uid,'energy');
  assert.equal(live(s,0,school.uid).ready,true);
+ const coveredSchool=toPhase(fresh(ids,10804),'main');
+ fuel(coveredSchool,['AOT-1-095']);
+ const down=put(coveredSchool,0,'AOT-1-090','front',0,true);
+ down.faceDown=true;
+ put(coveredSchool,0,'AOT-1-078','front',1,true);
+ put(coveredSchool,0,'AOT-1-079','front',2,true);
+ put(coveredSchool,0,'AOT-1-083','front',3,true);
+ put(coveredSchool,0,'AOT-1-085','energy',3,true);
+ readyAp(coveredSchool,0,1);
+ const hiddenField=toHand(coveredSchool,0,'AOT-1-108');
+ const restedField=play(coveredSchool,hiddenField.uid,'energy');
+ assert.equal(live(restedField,0,hiddenField.uid).ready,false);
+ finish(restedField);
  s=pick(s,a=>a.type==='activate'&&a.uid===school.uid);
  assert.equal(s.pending,null);
  assert.equal(s.players[0].outside.some(c=>c.uid===school.uid),true);
@@ -500,6 +536,42 @@ test('109 retires one opposing front character at 1000 BP per own corps',()=>{
  assert.equal(s.players[1].outside.some(c=>c.uid===legal.uid),true);
  assert.equal(live(s,1,high.uid)?.cardId,'AOT-1-079');
  finish(s);
+
+ let none=toPhase(match(ids,['AOT-1-083','AOT-1-079','AOT-1-078'],10904),'main');
+ fuel(none,['AOT-1-095']);
+ const huge=put(none,1,'AOT-1-083','front',0,true);
+ readyAp(none,0,1);
+ const unused=toHand(none,0,'AOT-1-109');
+ const apBefore=none.players[0].apCards.filter(c=>c.ready).length;
+ assert.equal(legalUniversalActions(packs,none).some(a=>a.type==='event'&&a.uid===unused.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,none,{type:'event',uid:unused.uid}),/not currently legal/);
+ assert.equal(none.players[0].hand.some(c=>c.uid===unused.uid),true);
+ assert.equal(none.players[0].apCards.filter(c=>c.ready).length,apBefore);
+ assert.equal(none.players[1].front.some(c=>c?.uid===huge.uid),true);
+ finish(none);
+
+ let over=toPhase(match(ids,['AOT-1-079','AOT-1-078'],10905),'main');
+ fuel(over,['AOT-1-095']);
+ put(over,0,'AOT-1-090','front',0,true);
+ put(over,0,'AOT-1-078','energy',3,true);
+ const onlyHigh=put(over,1,'AOT-1-079','front',0,true);
+ readyAp(over,0,1);
+ const blocked=toHand(over,0,'AOT-1-109');
+ assert.equal(legalUniversalActions(packs,over).some(a=>a.type==='event'&&a.uid===blocked.uid),false);
+ assert.equal(over.players[1].front.some(c=>c?.uid===onlyHigh.uid),true);
+ finish(over);
+
+ let hiddenCorps=toPhase(match(ids,['AOT-1-083','AOT-1-078'],10906),'main');
+ fuel(hiddenCorps,['AOT-1-095']);
+ const coveredCorps=put(hiddenCorps,0,'AOT-1-090','front',0,true);
+ coveredCorps.faceDown=true;
+ put(hiddenCorps,0,'AOT-1-078','energy',3,true);
+ const stillHigh=put(hiddenCorps,1,'AOT-1-083','front',0,true);
+ readyAp(hiddenCorps,0,1);
+ const unseen=toHand(hiddenCorps,0,'AOT-1-109');
+ assert.equal(legalUniversalActions(packs,hiddenCorps).some(a=>a.type==='event'&&a.uid===unseen.uid),false);
+ assert.equal(hiddenCorps.players[1].front.some(c=>c?.uid===stillHigh.uid),true);
+ finish(hiddenCorps);
 
  let life=toPhase(match(['AOT-1-078'],['AOT-1-109','AOT-1-083','AOT-1-080'],10903,'red','red'),'attack');
  const hitter=put(life,0,'AOT-1-078','front',0,true);

@@ -8,7 +8,7 @@ import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-m
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
 import {matchesPrintedRequiredEnergyAtMost} from './ap-discounts.mjs';
-import {cardHasName,cardHasTrait,cardCountsAsEvent,usedOwnEventThisTurn,matchesOwnDistinctTraits,matchesV2LiveCondition,
+import {cardHasName,cardHasTrait,cardCountsAsEvent,printedFieldCard,usedOwnEventThisTurn,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,countOppRestCharacters,countOwnPrintedApAtLeast,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
  countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs';
 import {bindMmm2,runMmm2Job,legalMmm2Pending,resolveMmm2Pending,
@@ -297,10 +297,13 @@ function defaultEntryReady(pack,s,owner,physical){
  const d=card(pack,physical);
  if(d.enterAlwaysActive===true)return true;
  if(d.enterActiveIfOpponentRest===true&&
-  field(s.players[1-owner]).some(c=>card(pack,c).type==='character'&&!c.ready))return true;
+  field(s.players[1-owner]).some(c=>printedFieldCard(c)&&
+   card(pack,c).type==='character'&&!c.ready))return true;
  if(d.id==='AOT-1-105')return field(s.players[owner]).some(c=>
+  printedFieldCard(c)&&
   nameContainsToken(card(pack,c),'エレン・イェーガー',originalEffectsDisabled(s,c)));
  if(d.id==='AOT-1-108')return field(s.players[owner]).filter(c=>
+  printedFieldCard(c)&&
   cardHasTrait(card(pack,c),'104期兵')).length>=5;
  if(kmrEntryActive(pack,s,owner,d,card))return true;
  return false;
@@ -671,7 +674,7 @@ function calcEnergy(pack,s,p){
 function scaledFrontCeiling(pack,s,owner,profile){
  const count=field(s.players[owner]).filter(c=>{
   const d=card(pack,c);
-  return d.type==='character'&&d.color===profile.color&&d.energy===profile.energy&&
+  return printedFieldCard(c)&&d.type==='character'&&d.color===profile.color&&d.energy===profile.energy&&
    cardHasName(d,profile.name,originalEffectsDisabled(s,c));
  }).length;
  return profile.base+profile.step*count;
@@ -687,6 +690,7 @@ function aotPrintedBp(pack,s,c,printed,suppressed,owner){
  const outs=aotOutsideEvents(pack,s,owner);
  if(printed.id==='AOT-1-024'&&outs>=4)n+=1000;
  if(printed.id==='AOT-1-021'&&field(s.players[owner]).some(x=>
+  printedFieldCard(x)&&
   nameContainsToken(card(pack,x),'ユミル',originalEffectsDisabled(s,x))))n+=500;
  if(printed.id==='AOT-1-004'&&s.phase==='attack'&&s.active===owner&&
   s.aotAttackPhaseApPaid?.[owner]===s.turn)n+=2000;
@@ -16189,6 +16193,7 @@ function retireOppFrontLimitPrinted(pack,s,owner,job){
  if(job.traitCountBonus){
   const bonus=job.traitCountBonus;
   const count=field(s.players[owner]).filter(c=>
+   printedFieldCard(c)&&
    !(bonus.excludeSelf&&c.uid===job.sourceUid)&&
    cardHasTrait(card(pack,c),bonus.trait)).length;
   return count>=bonus.min?bonus.bonusBp:job.bp;
@@ -16198,6 +16203,7 @@ function retireOppFrontLimitPrinted(pack,s,owner,job){
   // Silence removes neither the trait nor the printed name.
   const scale=job.nameOrTraitPerBp;
   const count=field(s.players[owner]).filter(c=>{
+   if(!printedFieldCard(c))return false;
    const silenced=originalEffectsDisabled(s,c);
    const d=card(pack,c);
    return cardHasTrait(d,scale.trait)||cardHasName(d,scale.name,silenced);
@@ -16210,7 +16216,7 @@ function retireOppFrontLimitPrinted(pack,s,owner,job){
   const scale=job.traitNamePerBp;
   const names=new Set();
   for(const c of field(s.players[owner])){
-   if(scale.excludeSelf&&c.uid===job.sourceUid)continue;
+   if(!printedFieldCard(c)||scale.excludeSelf&&c.uid===job.sourceUid)continue;
    const d=card(pack,c);
    if(!cardHasTrait(d,scale.trait))continue;
    if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
@@ -16218,7 +16224,8 @@ function retireOppFrontLimitPrinted(pack,s,owner,job){
   return names.size*scale.per;
  }
  if(job.traitPerBp){
-  const count=field(s.players[owner]).filter(c=>cardHasTrait(card(pack,c),job.traitPerBp.trait)).length;
+  const count=field(s.players[owner]).filter(c=>printedFieldCard(c)&&
+   cardHasTrait(card(pack,c),job.traitPerBp.trait)).length;
   return (job.traitPerBp.base||0)+count*job.traitPerBp.per;
  }
  if(job.raidOrName){
@@ -16226,7 +16233,7 @@ function retireOppFrontLimitPrinted(pack,s,owner,job){
   // The printed name still counts while that character is silenced.
   const raidState=c=>!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
   const oppRaid=field(s.players[1-owner]).some(raidState);
-  const ownName=field(s.players[owner]).some(c=>cardHasName(card(pack,c),
+  const ownName=field(s.players[owner]).some(c=>printedFieldCard(c)&&cardHasName(card(pack,c),
    job.raidOrName.name,originalEffectsDisabled(s,c)));
   return oppRaid||ownName?job.bonusBp:job.bp;
  }
@@ -16237,7 +16244,7 @@ function retireOppFrontLimitPrinted(pack,s,owner,job){
   const d=card(pack,physical);
   return [d.name,...(silenced?[]:d.nameAliases||[])].some(n=>same(n)===same(name));
  };
- const hasField=field(pl).some(c=>names.some(n=>matchesName(c,n,originalEffectsDisabled(s,c))));
+ const hasField=field(pl).some(c=>printedFieldCard(c)&&names.some(n=>matchesName(c,n,originalEffectsDisabled(s,c))));
  const hasOutside=!!job.bonusOutsideName&&pl.outside.some(c=>matchesName(c,job.bonusOutsideName,false));
  // レイド元 is the original raid base, stack[0]. Facedown previous tops sit in under.
  const hasRaidBase=job.bonusRaidBase===true&&field(pl).some(c=>{
@@ -16719,7 +16726,7 @@ function handApPlan(pack,s,owner,d,opts={}){
   if(printedCut&&printedCut.turn===s.turn&&printedCut.amount===1&&d.energy>=5)
    extra+=printedCut.amount;
  }
- if(d.id==='AOT-1-096'&&field(pl).some(c=>nameContainsToken(card(pack,c),'エレン・イェーガー',originalEffectsDisabled(s,c))))
+ if(d.id==='AOT-1-096'&&field(pl).some(c=>printedFieldCard(c)&&nameContainsToken(card(pack,c),'エレン・イェーガー',originalEffectsDisabled(s,c))))
   extra+=1;
  extra+=aot2HandApCut(pack,s,owner,d);
  extra+=kmr2HandApCut(pack,s,owner,d,card,opts.from);
@@ -17869,7 +17876,8 @@ function noteEffectApPaid(pack,s,owner,sourceUid){
  if(list&&!list.includes(color))list.push(color);
 }
 function ownFieldHasPrintedName(pack,s,owner,name){
- return field(s.players[owner]).some(c=>cardHasName(card(pack,c),name,originalEffectsDisabled(s,c)));
+ return field(s.players[owner]).some(c=>printedFieldCard(c)&&
+  cardHasName(card(pack,c),name,originalEffectsDisabled(s,c)));
 }
 function ownFieldHasCharacter(pack,s,owner){
  return field(s.players[owner]).some(c=>card(pack,c).type==='character');
