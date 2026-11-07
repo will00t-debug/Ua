@@ -527,6 +527,16 @@ function faceUpRaid(pack,c){
  const d=c&&card(pack,c);
  return !!d&&!!(d.raidName||d.raidTrait)&&(c.stack||[]).some(x=>x.faceDown!==true);
 }
+// UA29BT/KMR-1-079 activates the chosen raided タロス on-play as itself.
+// Rod Form's on-play then writes the unblocked draw onto the Liner Form.
+// The copied grant stays legal only while that Rod Form is still a live Raid.
+function copiedRodUnblockedDraw(pack,s,owner,c,g){
+ if(!c||card(pack,c).id!=='KMR-1-079'||!faceUpRaid(pack,c)||originalEffectsDisabled(s,c))return false;
+ if(!g||g.upTo!==1||g.copiedFrom!=='KMR-1-080'||g.turn!==s.turn||g.stamp!==c.fieldEntryStamp)return false;
+ if(Object.keys(g).sort().join(',')!=='copiedFrom,stamp,turn,upTo')return false;
+ return field(s.players[owner]).some(other=>other!==c&&card(pack,other).id==='KMR-1-080'&&
+  faceUpRaid(pack,other)&&!originalEffectsDisabled(s,other));
+}
 // Q51: a listed Raid-frame feature is live only in face-up Raid state.
 function raidBoxTextLive(pack,c,feature){
  return !c||!raidBoxListed(card(pack,c).id,feature)||faceUpRaid(pack,c);
@@ -21156,7 +21166,8 @@ export function assertUniversalMatch(pack,s){
    src.unblockedDrawGranted?.turn===s.turn&&
    src.unblockedDrawGranted.stamp===src.fieldEntryStamp&&
    src.unblockedDrawGranted.upTo===1;
-  if(!(raid||replayDraw||kmr080)||
+  const kmr079=copiedRodUnblockedDraw(pack,s,q.player,src,src?.unblockedDrawGranted);
+  if(!(raid||replayDraw||kmr080||kmr079)||
    Object.keys(q).length!==3||
    Object.keys(q).some(k=>!['kind','player','sourceUid'].includes(k)))
    throw Error('Invalid raid-front retire draw');
@@ -24584,11 +24595,12 @@ export function assertUniversalMatch(pack,s){
     const granted=printedCard.effects?.onPlay?.some(e=>e.op==='raidBaseNameThen'&&
      e.branches?.some(b=>b.then?.some(t=>t.op==='grantUnblockedDrawThisTurn')));
     const kmrDraw=printedCard.id==='KMR-1-080'&&faceUpRaid(pack,c);
+    const copied=copiedRodUnblockedDraw(pack,s,p,c,g);
     const keys=g&&typeof g==='object'&&!Array.isArray(g)?Object.keys(g).sort().join(','):'';
     const plain=keys==='stamp,turn';
     const upTo=kmrDraw&&keys==='stamp,turn,upTo'&&g.upTo===1;
-    if(!live||!g||g.turn!==s.turn||g.stamp!==c.fieldEntryStamp||!(granted||kmrDraw)||
-     !(plain||upTo))
+    if(!live||!g||g.turn!==s.turn||g.stamp!==c.fieldEntryStamp||!(granted||kmrDraw||copied)||
+     !(plain||upTo||copied))
      throw Error('Forged unblocked-attack draw grant');
    }
   }

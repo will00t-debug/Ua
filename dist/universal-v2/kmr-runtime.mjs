@@ -47,8 +47,11 @@ function grantImpact(s,c){if(c)c.impactGranted={turn:s.turn,stamp:c.fieldEntrySt
 function grantDamage(s,c){if(c)c.attackDamageGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:2};}
 function grantImmune(s,c){if(c)c.oppChoiceImmuneGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
 function grantSniper(s,c){if(c)c.sniperGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
-function grantUnblockedDraw(s,c){
- if(c)c.unblockedDrawGranted={turn:s.turn,stamp:c.fieldEntryStamp,upTo:1};
+function grantUnblockedDraw(s,c,copiedFrom){
+ if(!c)return;
+ const grant={turn:s.turn,stamp:c.fieldEntryStamp,upTo:1};
+ if(copiedFrom)grant.copiedFrom=copiedFrom;
+ c.unblockedDrawGranted=grant;
 }
 function token(pack,c,name,s){
  const d=def(pack,c);
@@ -705,7 +708,9 @@ const HANDLERS={
  'KMR-1-079|onRetire'(pack,s,job){baseRest(pack,s,job);},
  'KMR-1-080|onPlay'(pack,s,job){
   const c=selfOf(s,job.owner,job.sourceUid);
-  if(c&&A.raided(pack,c))grantUnblockedDraw(s,c);
+  // Q1897 replay rewrites this job onto the activator. このキャラ is that card,
+  // so a raided Liner Form keeps the draw and records which Rod Form it copied.
+  if(c&&A.raided(pack,c))grantUnblockedDraw(s,c,c.cardId==='KMR-1-080'?null:'KMR-1-080');
  },
  'KMR-1-080|onRetire'(pack,s,job){baseRest(pack,s,job);},
  'KMR-1-081|main'(pack,s,job){
