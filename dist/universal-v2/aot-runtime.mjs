@@ -105,10 +105,10 @@ function moveUid(pack,s,owner,from,uid,to,sourceUid){
  return A.move(pack,s,{owner,from,to,index,reason:'own-effect',sourceUid});
 }
 function discard(pack,s,owner,uid,sourceUid){return moveUid(pack,s,owner,'hand',uid,'outside',sourceUid);}
-function offerOrder(s,spec,uids,rest,after){
+function offerOrder(s,spec,uids,rest,after,extra){
  const left=uids.filter(Boolean);
  if(left.length<=1){lay(plOf(s,spec.player),left,rest);return false;}
- hold(s,{...spec,step:'lookOrder',data:{left,built:[],rest,after:after||null,uids:left}},
+ hold(s,{...spec,step:'lookOrder',data:{left,built:[],rest,after:after||null,uids:left,...(extra||{})}},
   left.map(uid=>({type:'aot',mode:'next',uid})));
  return true;
 }
@@ -139,18 +139,26 @@ function finishLook(pack,s,spec,data){
   publish(pack,s,spec.player,physical);
   A.move(pack,s,{owner:spec.player,from:'deck',to:'hand',index,reason:'own-effect',sourceUid:spec.sourceUid});
  }
- if(data.discard&&data.taken.length&&pl.hand.length)
-  return offerDiscard(s,spec,1,false,'afterLook');
  const left=data.uids.filter(uid=>!data.taken.includes(uid));
+ const discardAfter=data.discard&&data.taken.length;
+ const after=discardAfter?'discardLook':(data.after||null);
  if(data.rest==='outside'){
   for(const uid of left){
    const index=pl.deck.findIndex(c=>c.uid===uid);
    if(index>=0)A.move(pack,s,{owner:spec.player,from:'deck',to:'outside',index,
     reason:'own-effect',sourceUid:spec.sourceUid});
   }
+  if(discardAfter&&pl.hand.length){
+   offerDiscard(s,spec,1,false,data.after||null);
+   return 'held';
+  }
   return data.after||null;
  }
- if(offerOrder(s,spec,left,data.rest,data.after))return 'held';
+ if(offerOrder(s,spec,left,data.rest,after,{taken:[...data.taken]}))return 'held';
+ if(discardAfter&&pl.hand.length){
+  offerDiscard(s,spec,1,false,data.after||null);
+  return 'held';
+ }
  return data.after||null;
 }
 function offerDiscard(s,spec,count,optional,next){
@@ -857,9 +865,19 @@ function continueAfter(pack,s,q,after){
   }
   return;
  }
- if(after==='recover63')return;
+ if(after==='recover63'){
+  const uid=(q.data?.taken||[])[0];
+  const c=uid&&plOf(s,q.player).hand.find(x=>x.uid===uid);
+  if(c&&(trait(pack,c,PURE)||contains(pack,c,ROD,s)||contains(pack,c,ZIKE,s)))
+   if(offerReady(s,{player:q.player,sourceUid:q.sourceUid,id:q.id}))return 'held';
+  return;
+ }
  if(after==='modeB'){start64B(s,{player:q.player,sourceUid:q.sourceUid,id:q.id});return 'held';}
- if(after==='afterLook')return;
+ if(after==='afterLook'||after==='discardLook'){
+  if(after==='discardLook'&&plOf(s,q.player).hand.length&&
+   offerDiscard(s,{player:q.player,sourceUid:q.sourceUid,id:q.id},1,false,null))return 'held';
+  return;
+ }
  if(after==='buff36'){buff(s,selfOf(s,q.player,q.sourceUid),1000);return;}
  if(after==='retire93'){
   if(offerRetire(s,{player:q.player,sourceUid:q.sourceUid,id:q.id},2000,true))return 'held';
@@ -869,6 +887,18 @@ function continueAfter(pack,s,q,after){
  if(after==='grant96'){grant096(s,{owner:q.player,sourceUid:q.sourceUid});return 'held';}
  if(after==='energy98')return;
  return null;
+}
+function presentEntryOrder(s,spec,jobs,enteredUids){
+ const ids=[...new Set(enteredUids.filter(Boolean))];
+ const groups=ids.map(uid=>(jobs||[]).filter(j=>j.sourceUid===uid)).filter(g=>g.length);
+ if(groups.length<2){
+  if(jobs?.length)s.effectQueue.unshift(...jobs);
+  return false;
+ }
+ const rest=(jobs||[]).filter(j=>!ids.includes(j.sourceUid));
+ hold(s,{...spec,step:'entryOrder',data:{groups,rest}},
+  groups.map((g,index)=>({type:'aot',mode:'first',index,uid:g[0].sourceUid})));
+ return true;
 }
 function resolve64(pack,s,q){
  const picks=q.data?.picked||[];
@@ -907,17 +937,22 @@ function resolvePair64(pack,s,q,picks){
   return;
  }
  const jobs=[];
+ const entered=[];
  for(const pick of picks){
   if(pick.mode==='raid'||pick.key==='raid'){
    const result=resolveOne64(pack,s,owner,pick,q.sourceUid,true);
    jobs.push(...(result?.jobs||[]));
+   if(result?.uid)entered.push(result.uid);
   }else{
    doEnter(pack,s,owner,{...pick,from:'hand',ready:true},q.sourceUid,true);
-   const entered=selfOf(s,owner,pick.uid);
-   if(entered)jobs.push(...(A.programs(pack,s,entered,'onPlay',owner,'handEffect',q.sourceUid)||[]));
+   const card=selfOf(s,owner,pick.uid);
+   if(card){
+    entered.push(card.uid);
+    jobs.push(...(A.programs(pack,s,card,'onPlay',owner,'handEffect',q.sourceUid)||[]));
+   }
   }
  }
- if(jobs.length)s.effectQueue.unshift(...jobs);
+ presentEntryOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id},jobs,entered);
 }
 export function resolveAotPending(pack,s,action){
  arm(pack);
@@ -949,14 +984,15 @@ export function resolveAotPending(pack,s,action){
      if(q.id==='AOT-1-104')return trait(pack,c,CORPS)&&def(pack,c).energy<=3;
      return true;
     });
-    hold(s,{...spec,step:'lookPick',data},{
-     ...(data.taken.length>=data.min?[{type:'aot',mode:'done'}]:[]),
-     ...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))
-    }.length?[
-     ...(data.taken.length>=data.min?[{type:'aot',mode:'done'}]:[]),
-     ...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))
-    ]:[...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))]);
-    return;
+    // 「まで」 may stop once the minimum is met, even when another match remains.
+    // An object has no length, so the old check never offered that stop.
+    if(matches.length){
+     hold(s,{...spec,step:'lookPick',data},[
+      ...(data.taken.length>=data.min?[{type:'aot',mode:'done'}]:[]),
+      ...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))
+     ]);
+     return;
+    }
    }
   }
   const taken=data.taken.map(uid=>plOf(s,q.player).deck.find(c=>c.uid===uid)).filter(Boolean);
@@ -1163,23 +1199,35 @@ export function resolveAotPending(pack,s,action){
   const raider=selfOf(s,q.player,q.data.raidUid);
   const front=dests(s,q.player,['front']).filter(d=>!d.replaceUid);
   if(raider&&front.length){
-   hold(s,{...spec,step:'moveFront',data:{uid:raider.uid,jobs:[...(q.data.jobs||[]),
-    ...(play?A.programs(pack,s,selfOf(s,q.player,play.uid),'onPlay',q.player,'handEffect',q.sourceUid):[])],
-    dests:front}},[{type:'aot',mode:'skip'},...front.map(d=>({...d,uid:raider.uid}))]);
+   const playJobs=play?A.programs(pack,s,selfOf(s,q.player,play.uid),'onPlay',q.player,'handEffect',q.sourceUid):[];
+   hold(s,{...spec,step:'moveFront',data:{uid:raider.uid,entered:[raider.uid,play?.uid].filter(Boolean),
+    jobs:[...(q.data.jobs||[]),...playJobs],dests:front}},
+    [{type:'aot',mode:'skip'},...front.map(d=>({...d,uid:raider.uid}))]);
    return;
   }
   const jobs=[...(q.data.jobs||[])];
+  const entered=[q.data.raidUid];
   if(play){
-   const entered=selfOf(s,q.player,play.uid);
-   if(entered)jobs.push(...A.programs(pack,s,entered,'onPlay',q.player,'handEffect',q.sourceUid));
+   const card=selfOf(s,q.player,play.uid);
+   if(card){
+    entered.push(card.uid);
+    jobs.push(...A.programs(pack,s,card,'onPlay',q.player,'handEffect',q.sourceUid));
+   }
   }
-  if(jobs.length)s.effectQueue.unshift(...jobs);
+  if(!presentEntryOrder(s,spec,jobs,entered))go(pack,s);
+  return;
+ }
+ if(q.step==='entryOrder'){
+  const groups=q.data?.groups||[];
+  const first=groups[a.index]||[];
+  const second=groups[1-a.index]||[];
+  s.effectQueue.unshift(...(q.data?.rest||[]),...first,...second);
   go(pack,s);return;
  }
  if(q.step==='moveFront'){
   if(a.mode!=='skip')A.moveLine(pack,s,q.player,q.data.uid,a.line,a.slot,a.replaceUid,q.sourceUid);
-  if(q.data.jobs?.length)s.effectQueue.unshift(...q.data.jobs);
-  go(pack,s);return;
+  if(!presentEntryOrder(s,spec,q.data.jobs||[],q.data.entered||[q.data.uid]))go(pack,s);
+  return;
  }
  if(q.step==='fork93'){
   if(a.mode==='draw'){A.draw(pack,s,q.player,1,q.sourceUid);go(pack,s);return;}
