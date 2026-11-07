@@ -66,8 +66,8 @@ test('opening UI never silently traps either choice behind a stale AI busy state
  assert.match(action,/assertUniversalMatch\(app\.packs,nextState\)/);
  assert.match(action,/const nextReplay=appendUniversalReplay/);
  const versions={
-  'dist/universal-v2-battle.html':'universal-v2-preview.mjs?v=20261107look',
-  'dist/universal-v2-preview.html':'universal-v2-preview.mjs?v=20261107look'
+  'dist/universal-v2-battle.html':'universal-v2-preview.mjs?v=20261107liner1',
+  'dist/universal-v2-preview.html':'universal-v2-preview.mjs?v=20261107liner1'
  };
  for(const [file,query] of Object.entries(versions)){
   const html=readFileSync(new URL('../'+file,import.meta.url),'utf8');
