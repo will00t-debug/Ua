@@ -2,6 +2,7 @@
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
 import {makeAttackLifePicker} from './attack-life-picker.mjs';
+import {mountFieldActivationButtons,openFieldActivationPicker} from './field-activation-ui.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
 export {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
 import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,
@@ -14,7 +15,7 @@ export const ONLINE_BATTLE_STYLES=[
  'universal-v2-compact.css','universal-v2-desktop.css','universal-v2-pc-table.css',
  'universal-v2-block.css','universal-v2-zone.css','online-battle.css',
  'universal-v2-reference-table.css','union-arena-card-backs.css',
- 'universal-v2-table-layout-v3.css'
+ 'universal-v2-table-layout-v3.css','universal-v2-neon-board.css'
 ];
 
 export function setOnlineBattleMode(active,doc=globalThis.document){
@@ -279,6 +280,18 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
   cardDefinition:definition,imageSource,imageFallback:img=>{img.src='assets/mark.svg';},
   printedCard:definition,effectCopy:d=>d?.effect||d?.text||'請查看印刷卡面。',openCard,
   backControl:leave,matchupLabel:matchup+' · 房間 '+room.code});
+ if(room.yourTurn&&!paused&&!view.pending&&room.status==='playing'){
+  mountFieldActivationButtons({arena,el,actions:choices,selectedUid,
+   onOpen:(actions,uid)=>{
+    const card=[...view.players[0].front,...view.players[0].energy]
+     .find(entry=>entry?.uid===uid);
+    if(!card)return;
+    openFieldActivationPicker({el,root:target,
+     cardName:card.name||definition(0,card.cardId)?.name||card.cardId,
+     actions,labelOf:action=>action.label||'起動主要能力',
+     onChoose:action=>onAction(action.index)});
+   }});
+ }
  if(paused)middle.append(el('button',{type:'button',class:'v2-inspection-return',text:'返回效果選擇',onClick:onResume}));
  else if(view.pending?.kind==='attack-life-target'&&room.yourTurn&&!desktop){
   const overlay=el('div',{class:'overlay v2-attack-life-overlay'},
