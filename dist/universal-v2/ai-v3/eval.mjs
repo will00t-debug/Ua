@@ -1,7 +1,7 @@
 // Static position value. It deliberately does not look a turn ahead:
 // a front body is not worth more than developing energy. The beam search
 // has to see the opponent's turn before a blocker outranks that energy.
-import {dispatchUniversalAction,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
+import {dispatchUniversalAction,effectiveHandRequiredEnergy,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
 import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
 import {aot2Warhammer} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
@@ -632,12 +632,16 @@ export function blankSwingAdjustment(pack,state,actor,action){
  }
  return missed>0?-missed:0;
 }
-// A raid changes the energy the engine actually produces: the base leaves,
-// and the raider generates only where that destination allows it. The credit
-// for a hand card stays unless this result left that card in hand and the
-// color no longer pays it. A card this turn could not play for AP or any
-// other legal reason is not a new loss. A later play or a restored color
-// is the line's own result, so the leaf hand is what counts.
+// A raid changes the energy the engine actually produces. The penalty is a
+// hand character the raid left in hand when that color paid the effective
+// hand cost before the transfer and does not pay it at the state this line
+// reached. The requirement is effectiveHandRequiredEnergy on the physical
+// card in each of those states, so a discount that is still live keeps its
+// lower cost, and a discount that expired is judged at the new cost. Printed
+// energy is not the requirement. AP and other play bans stay in the legal
+// action filter above this energy check. A later start phase has no play
+// action; that absence is not an energy loss. A card the line already played,
+// or a color the line restored, is the line's own result.
 export function raidStranded(pack,state,actor,action,after){
  if(action?.type!=='raid'||!after||state?.pending||state?.phase!=='main')return 0;
  const catalog=packOf(pack,actor).cards;
@@ -649,22 +653,23 @@ export function raidStranded(pack,state,actor,action,after){
   if(item.type!=='play'&&item.type!=='raid')continue;
   payable.add(item.uid);
  }
- let beforeColors,afterColors;
- try{
-  beforeColors=colorsOf(pack,state,actor);
-  afterColors=colorsOf(pack,after,actor);
- }catch{return 0;}
- const hand=after.players?.[actor]?.hand||[];
+ const beforeHand=state.players?.[actor]?.hand||[];
+ const afterHand=after.players?.[actor]?.hand||[];
  let stranded=0;
  for(const uid of payable){
-  const card=hand.find(item=>item?.uid===uid);
-  if(!card)continue;
-  const printed=catalog[card.cardId];
+  const beforeCard=beforeHand.find(item=>item?.uid===uid);
+  const afterCard=afterHand.find(item=>item?.uid===uid);
+  if(!beforeCard||!afterCard)continue;
+  const printed=catalog[afterCard.cardId];
   if(!printed||printed.type!=='character')continue;
-  const cost=Number(printed.energy)||0;
-  const had=beforeColors[printed.color]||0;
-  const have=afterColors[printed.color]||0;
-  if(cost<=had&&cost>have)stranded++;
+  let beforeNeed,afterNeed;
+  try{
+   beforeNeed=effectiveHandRequiredEnergy(pack,state,actor,printed,beforeCard);
+   afterNeed=effectiveHandRequiredEnergy(pack,after,actor,printed,afterCard);
+  }catch{continue;}
+  const had=colorsOf(pack,state,actor)[printed.color]||0;
+  const have=colorsOf(pack,after,actor)[printed.color]||0;
+  if(beforeNeed<=had&&afterNeed>have)stranded++;
  }
  return stranded*2.2;
 }

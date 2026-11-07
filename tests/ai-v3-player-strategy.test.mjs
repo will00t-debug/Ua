@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
-import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,effectiveHandRequiredEnergy,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
@@ -2123,6 +2123,133 @@ test('raid energy loss follows the transfer the line actually reached',()=>{
   blockedAp:{penalty:0,green:universalEnergyByColor(blocked.packs,blockedState,0).green},
   chosen:{type:choice.type,line:choice.line||null,score:choiceTrace.score,nodes:choiceTrace.nodesUsed}
  }));
+});
+
+function discountMains(actor,rule){
+ const spot=twoMains(actor,5,1);
+ const {packs,state,main}=spot;
+ for(const side of packs)side.cards[main.cardId].otherHandEnergyDiscount={min:rule.min,amount:rule.amount};
+ const beforeZones=state.players[actor].deck.length+state.players[actor].hand.length;
+ const companion=take(state,actor,'BLC-1-083');
+ state.players[actor].hand.push(companion);
+ const afterZones=state.players[actor].deck.length+state.players[actor].hand.length;
+ assert.equal(afterZones,beforeZones);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ assert.equal(universalEnergyByColor(packs,state,actor).green,4);
+ assert.equal(readyAp(state,actor),2);
+ return {...spot,companion};
+}
+function mainCost(packs,state,actor,card){
+ const printed=packs[actor].cards[card.cardId];
+ return {
+  printed:printed.energy,
+  effective:effectiveHandRequiredEnergy(packs,state,actor,printed,card),
+  green:universalEnergyByColor(packs,state,actor).green,
+  ap:readyAp(state,actor),
+  plays:legalUniversalActions(packs,state).filter(action=>action.uid===card.uid&&(action.type==='play'||action.type==='raid')).length
+ };
+}
+
+test('a live hand discount is not an energy loss after the raid',()=>{
+ for(const actor of [0,1]){
+  const held=discountMains(actor,{min:1,amount:1});
+  const {packs,state,raid,main,base,companion}=held;
+  const before=mainCost(packs,state,actor,main);
+  assert.equal(before.printed,4);
+  assert.equal(before.effective,3);
+  assert.equal(before.green,4);
+  assert.equal(before.plays>0,true);
+  const front=raidOnto(packs,state,raid,base,'front');
+  assert.ok(front);
+  const raided=settle(packs,structuredClone(state),front);
+  const afterCard=raided.players[actor].hand.find(card=>card.uid===main.uid);
+  const after=mainCost(packs,raided,actor,afterCard);
+  assert.equal(after.green,3);
+  assert.equal(after.ap,1);
+  assert.equal(after.effective,3);
+  assert.equal(after.plays>0,true);
+  assert.equal(raided.players[actor].hand.some(card=>card.uid===companion.uid),true);
+  const play=legalUniversalActions(packs,raided).find(action=>action.type==='play'&&action.line==='front'&&action.uid===main.uid);
+  const played=settle(packs,structuredClone(raided),play);
+  assert.equal(played.players[actor].front.some(card=>card?.uid===main.uid),true);
+  assert.equal(readyAp(played,actor),0);
+  assert.equal(raidStranded(packs,state,actor,front,raided),0);
+  assert.equal(raidStranded(packs,state,actor,front,played),0);
+  const started=structuredClone(raided);
+  started.phase='start';
+  const startPlays=legalUniversalActions(packs,started).filter(action=>action.type==='play'||action.type==='raid');
+  assert.equal(startPlays.length,0);
+  assert.equal(raidStranded(packs,state,actor,front,started),0);
+  const expired=discountMains(actor,{min:2,amount:1});
+  const expiredFront=raidOnto(expired.packs,expired.state,expired.raid,expired.base,'front');
+  const expiredBefore=mainCost(expired.packs,expired.state,actor,expired.main);
+  const expiredRaid=settle(expired.packs,structuredClone(expired.state),expiredFront);
+  const expiredCard=expiredRaid.players[actor].hand.find(card=>card.uid===expired.main.uid);
+  const expiredAfter=mainCost(expired.packs,expiredRaid,actor,expiredCard);
+  assert.equal(expiredBefore.effective,3);
+  assert.equal(expiredAfter.effective,4);
+  assert.equal(expiredAfter.green,3);
+  assert.equal(expiredAfter.plays,0);
+  assert.equal(raidStranded(expired.packs,expired.state,actor,expiredFront,expiredRaid),2.2);
+  const plain=twoMains(actor,5,1);
+  const plainFront=raidOnto(plain.packs,plain.state,plain.raid,plain.base,'front');
+  const plainRaid=settle(plain.packs,structuredClone(plain.state),plainFront);
+  const plainCard=plainRaid.players[actor].hand.find(card=>card.uid===plain.main.uid);
+  const plainAfter=mainCost(plain.packs,plainRaid,actor,plainCard);
+  assert.equal(plainAfter.printed,4);
+  assert.equal(plainAfter.effective,4);
+  assert.equal(plainAfter.green,3);
+  assert.equal(plainAfter.plays,0);
+  assert.equal(raidStranded(plain.packs,plain.state,actor,plainFront,plainRaid),2.2);
+  const meter={dispatches:0};
+  resetAiV3Report();
+  const choice=chooseAiV3Action(packs,structuredClone(state),{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter,
+   rootFirst:[front]
+  });
+  const trace=lastAiV3Trace();
+  assert.equal(meter.dispatches,trace.nodesUsed);
+  assert.ok(trace.nodesUsed<=48);
+  assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(choice)),true);
+  const raidRow=(trace.candidates||[]).find(row=>row.action?.type==='raid'&&row.action.uid===raid.uid&&row.action.line!=='energy'&&row.executed!==false);
+  assert.ok(raidRow);
+  assert.equal(raidRow.stranded||0,0);
+  assert.equal(raidRow.sequence.some(step=>step.type==='play'&&step.uid===main.uid),true);
+  const chosen=(trace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,choice));
+  if(chosen){
+   assert.equal(trace.score,chosen.search);
+   assert.equal(trace.sequence[0].type,choice.type);
+   if(trace.settled)assert.equal(chosen.boundary==='returned'||chosen.boundary==='terminal',true);
+  }
+  const timedMeter={dispatches:0};
+  resetAiV3Report();
+  const timed=chooseAiV3Action(packs,structuredClone(state),{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
+  });
+  const timedTrace=lastAiV3Trace();
+  assert.equal(timedMeter.dispatches,timedTrace.nodesUsed);
+  assert.ok(timedTrace.nodesUsed<=48);
+  const timedRaid=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type==='raid'&&row.action.uid===raid.uid);
+  if(timedRaid)assert.equal(timedRaid.stranded||0,0);
+  const timedChosen=(timedTrace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,timed));
+  if(timedChosen){
+   assert.equal(timedTrace.score,timedChosen.search);
+   if(timedTrace.settled)assert.equal(timedChosen.boundary==='returned'||timedChosen.boundary==='terminal',true);
+  }else{
+   assert.equal(timedTrace.settled,false);
+   assert.equal(timedTrace.incomplete,true);
+  }
+  console.log('discount raid',JSON.stringify({
+   label:'test-card',actor,
+   before,after,
+   played:{ap:readyAp(played,actor),penalty:0},
+   startPhase:{plays:startPlays.length,penalty:0},
+   expired:{before:expiredBefore,after:expiredAfter,penalty:2.2},
+   plain:{after:plainAfter,penalty:2.2},
+   search:{stranded:raidRow.stranded||0,score:raidRow.search,sequence:raidRow.sequence.map(step=>step.type),settled:raidRow.settled,nodes:trace.nodesUsed,chosen:choice.type},
+   clock:{type:timed.type,nodes:timedTrace.nodesUsed,reason:timedTrace.reason,settled:timedTrace.settled}
+  }));
+ }
 });
 
 test('a blank raid that attacks the last life still wins',()=>{
