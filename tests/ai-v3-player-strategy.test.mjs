@@ -7,7 +7,7 @@ import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild} from '../dist/universal-v2/ai-v3/eval.mjs';
-import {bindProbeBudget,energyPlayNet} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,energyPlayNet,moveDevelopment} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -1531,4 +1531,217 @@ test('a finished three-card plan still draws and keeps the spent action point',(
  assert.ok(spent.length<=2,JSON.stringify(played));
  assert.ok(readyAp(cursor,0)<=2);
  console.log('after draw',JSON.stringify(played));
+});
+
+function reachMove(actor){
+ const packs=[pack,pack];
+ const used=devDeck();
+ let state=newUniversalMatch(packs,{decks:[used,used],seed:21,first:0});
+ for(let guard=0;guard<160&&state.status==='playing';guard++){
+  if(state.active===actor&&state.phase==='move'&&!state.pending&&state.players[0].ownTurns>=2&&state.players[1].ownTurns>=2)break;
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>item.type==='next')||legal[0];
+  state=dispatchUniversalAction(packs,state,action);
+ }
+ assert.equal(state.active,actor);
+ assert.equal(state.phase,'move');
+ assert.equal(state.pending,null);
+ assert.ok(state.players[0].ownTurns>=2&&state.players[1].ownTurns>=2);
+ return {packs,state};
+}
+function lifeSpot(actor){
+ const {packs,state}=reachMove(actor);
+ const opp=1-actor;
+ wipeSide(state,0);
+ wipeSide(state,1);
+ const body=take(state,actor,'BLC-2-069');
+ place(state,actor,body,'energy',0);
+ const stranded=take(state,actor,'BLC-1-080');
+ state.players[actor].hand.push(stranded);
+ const big=take(state,opp,'BLC-4-070');
+ const small=take(state,opp,'BLC-2-066');
+ place(state,opp,big,'front',0);
+ place(state,opp,small,'front',1);
+ setLife(state,actor,2);
+ setLife(state,opp,7);
+ fillGetLife(state,actor);
+ fillGetLife(state,opp);
+ assert.equal(state.players[actor].front.filter(Boolean).length,0);
+ assert.equal(state.players[actor].hand.map(card=>card.cardId).join(','),'BLC-1-080');
+ assert.equal(state.players[opp].hand.length,0);
+ assert.equal(universalEnergyByColor(packs,state,actor).green,1);
+ assert.equal(pack.cards['BLC-1-080'].energy,4);
+ assert.equal(universalBp(packs,state,body),2500);
+ assert.equal(universalBp(packs,state,big),4000);
+ assert.equal(universalBp(packs,state,small),2000);
+ assert.equal(universalAttackDamage(packs,state,big),1);
+ assert.equal(universalAttackDamage(packs,state,small),1);
+ assert.equal(universalImpact(packs,state,big),0);
+ assert.equal(universalImpact(packs,state,small),0);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ return {packs,state,body,big,small,opp};
+}
+function act(packs,cursor,action){
+ const seat=cursor.pending?.player??cursor.active;
+ const next=dispatchUniversalAction(packs,cursor,action,{actor:seat});
+ assert.equal(assertUniversalMatch(packs,next),true);
+ return next;
+}
+// Walk one stretch. Moving the 2500, blocking the 2000, and taking the 4000
+// returns to our next start at 1 life with the character still in play.
+// Passing takes both hits. This is not a claim about the rest of the game.
+function stretch(packs,start,actor,body,big,small,doMove,order){
+ let cursor=start;
+ const began=cursor.players[actor].ownTurns;
+ let moved=!doMove;
+ let sawBlock=false;
+ let lived=false;
+ for(let guard=0;guard<80;guard++){
+  if(cursor.status!=='playing')return {cursor,sawBlock,lived};
+  if(cursor.active===actor&&cursor.phase==='start'&&!cursor.pending&&cursor.players[actor].ownTurns>began)
+   return {cursor,sawBlock,lived};
+  const legal=legalUniversalActions(packs,cursor);
+  const seat=cursor.pending?.player??cursor.active;
+  let action;
+  if(!moved){
+   action=legal.find(item=>item.type==='move'&&item.uid===body.uid&&item.slot===0);
+   moved=true;
+  }else if(cursor.pending?.kind==='block'){
+   const blocking=doMove&&cursor.pending.attackerUid===small.uid;
+   action=blocking
+    ?legal.find(item=>item.type==='chooseBlock'&&item.uid===body.uid)
+    :legal.find(item=>item.type==='chooseBlock'&&(item.uid==null));
+   if(blocking){
+    assert.ok(action,'block against the 2000 is legal');
+    sawBlock=true;
+   }
+  }else if(cursor.pending?.kind==='life-trigger'){
+   action=legal.find(item=>item.type==='chooseTrigger'&&item.mode==='skip');
+   assert.equal(cursor.pending.trigger,'get');
+  }else if(cursor.pending?.kind==='attack-life-target'){
+   action=legal.find(item=>item.type==='chooseAttackLife');
+  }else if(cursor.pending){
+   throw Error('unexpected '+(cursor.pending.kind));
+  }else if(seat!==actor&&cursor.phase==='attack'){
+   const uid=order.find(item=>legal.some(entry=>entry.type==='attack'&&entry.uid===item&&!entry.targetUid));
+   action=uid?legal.find(entry=>entry.type==='attack'&&entry.uid===uid&&!entry.targetUid):legal.find(entry=>entry.type==='next');
+  }else action=legal.find(item=>item.type==='next');
+  assert.ok(action,cursor.pending?.kind||cursor.phase);
+  cursor=act(packs,cursor,action);
+  if(sawBlock&&!lived){
+   assert.equal(cursor.players[actor].front.some(card=>card?.uid===body.uid),true);
+   lived=true;
+  }
+ }
+ throw Error('stretch did not finish');
+}
+function frozenAsk(packs,state){
+ const meter={dispatches:0};
+ const actor=state.pending?.player??state.active;
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=48);
+ return {action,trace};
+}
+
+test('a partial block that saves the last life is not replaced by the losing pass',()=>{
+ for(const actor of [0,1]){
+  const spot=lifeSpot(actor);
+  const {packs,body,big,small}=spot;
+  const orders=[[big.uid,small.uid],[small.uid,big.uid]];
+  for(const order of orders){
+   const saved=stretch(packs,structuredClone(spot.state),actor,body,big,small,true,order);
+   assert.equal(saved.sawBlock,true);
+   assert.equal(saved.lived,true);
+   assert.equal(saved.cursor.status,'playing');
+   assert.equal(saved.cursor.phase,'start');
+   assert.equal(saved.cursor.active,actor);
+   assert.equal(saved.cursor.players[actor].life.length,1);
+   assert.equal(saved.cursor.players[actor].front.some(card=>card?.uid===body.uid),true);
+   const lost=stretch(packs,structuredClone(spot.state),actor,body,big,small,false,order);
+   assert.equal(lost.cursor.status,'finished');
+   assert.equal(lost.cursor.winner,1-actor);
+   assert.equal(lost.cursor.players[actor].life.length,0);
+  }
+  const move=legalUniversalActions(packs,spot.state).find(item=>item.type==='move'&&item.uid===body.uid);
+  const view=moveDevelopment(packs,spot.state,actor,move);
+  assert.equal(view.benefit,'block');
+  assert.equal(view.strip,false);
+  assert.equal(view.reason,'block');
+  const frozen=frozenAsk(packs,spot.state);
+  const moveRow=frozen.trace.candidates.find(row=>row.action?.type==='move'&&row.action.uid===body.uid);
+  const passRow=frozen.trace.candidates.find(row=>row.action?.type==='next');
+  assert.equal(frozen.action.type,'move');
+  assert.equal(frozen.action.uid,body.uid);
+  assert.equal(moveRow.boundary,'returned');
+  assert.equal(moveRow.settled,true);
+  assert.ok(moveRow.search>-90000);
+  assert.equal(passRow.search,-100000);
+  assert.equal(passRow.boundary,'terminal');
+  assert.equal(passRow.settled,true);
+  assert.equal(frozen.trace.score,moveRow.search);
+  assert.equal(frozen.trace.settled,true);
+  assert.equal(frozen.trace.incomplete,false);
+  assert.equal(frozen.trace.sequence[0].type,'move');
+  assert.equal(frozen.trace.sequence[0].uid,body.uid);
+  assert.equal(frozen.trace.replacedMove,null);
+  assert.equal(frozen.trace.reason,'search');
+  console.log('life-save frozen',JSON.stringify({
+   actor,score:frozen.trace.score,nodes:frozen.trace.nodesUsed,boundary:moveRow.boundary,pass:passRow.search
+  }));
+  let roots=0,hot=false;
+  const meter={dispatches:0};
+  resetAiV3Report();
+  const cut=chooseAiV3Action(packs,spot.state,{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
+   now:()=>hot?1e9:0,
+   onRootDone(){roots++;if(roots>=2)hot=true;}
+  });
+  const cutTrace=lastAiV3Trace();
+  const cutMove=cutTrace.candidates.find(row=>row.action?.type==='move'&&row.action.uid===body.uid);
+  const cutPass=cutTrace.candidates.find(row=>row.action?.type==='next');
+  assert.equal(meter.dispatches,cutTrace.nodesUsed);
+  assert.ok(cutTrace.nodesUsed<=48);
+  assert.equal(cut.type,'move');
+  assert.equal(cut.uid,body.uid);
+  assert.equal(cutMove.boundary,'returned');
+  assert.equal(cutMove.settled,true);
+  assert.equal(cutPass.boundary,'terminal');
+  assert.equal(cutPass.search,-100000);
+  assert.equal(cutTrace.score,cutMove.search);
+  assert.equal(cutTrace.sequence[0].type,'move');
+  assert.equal(cutTrace.sequence[0].uid,body.uid);
+  assert.equal(cutTrace.settled,cutMove.settled===true);
+  assert.equal(cutTrace.incomplete,!cutTrace.settled);
+  assert.equal(cutTrace.overSoft,true);
+  assert.notEqual(cut.type,'next');
+  const timedMeter={dispatches:0};
+  resetAiV3Report();
+  const timed=chooseAiV3Action(packs,structuredClone(spot.state),{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
+  });
+  const timedTrace=lastAiV3Trace();
+  assert.equal(timedMeter.dispatches,timedTrace.nodesUsed);
+  assert.ok(timedTrace.nodesUsed<=48);
+  const timedMove=timedTrace.candidates.find(row=>row.executed!==false&&row.action?.type==='move'&&row.action.uid===body.uid);
+  const timedPass=timedTrace.candidates.find(row=>row.executed!==false&&row.action?.type==='next');
+  if(timedMove?.boundary==='returned'&&timedMove.settled&&timedPass?.boundary==='terminal'&&timedPass.search<=-90000){
+   assert.equal(timed.type,'move');
+   assert.equal(timedTrace.score,timedMove.search);
+   assert.equal(timedTrace.sequence[0].type,'move');
+   assert.equal(timedTrace.settled,true);
+  }else{
+   assert.equal(timedTrace.settled,false);
+   assert.equal(timedTrace.incomplete,true);
+  }
+  console.log('clock40 life-save',JSON.stringify({
+   actor,action:timed.type,reason:timedTrace.reason,nodes:timedTrace.nodesUsed,
+   settled:timedTrace.settled,fallback:timedTrace.fallbackKind??null,over:timedTrace.overSoft??null
+  }));
+ }
 });

@@ -5,7 +5,7 @@
 // not special cases. The three callers turn on one feature at a time.
 // The preview page loads this file in the browser, so the budget stays on
 // a synchronous stack. Search does not await inside the binding.
-import {universalBp,universalEnergy,universalEnergyByColor,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
+import {universalBp,universalEnergy,universalEnergyByColor,universalAttackDamage,universalImpact,universalImpactNull,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {packOf} from './observation.mjs';
 
 const probeStack=[];
@@ -233,7 +233,7 @@ function assessMove(pack,state,actor,action){
  const hand=(state.players[actor].hand||[]).map(card=>catalog[card?.cardId]).filter(Boolean);
  const wantsColor=hand.some(printed=>dropped.includes(printed.color)&&(printed.energy||0)>(afterColors[printed.color]||0));
  const rawStrip=dropped.length>0&&after<parts.curve&&wantsColor;
- const judged=moveBenefit(pack,state,actor,action,afterColors,after,parts);
+ const judged=moveBenefit(pack,state,actor,action,beforeColors,afterColors,after,parts);
  const benefit=judged?.benefit||null;
  const lethal=judged?.lethal||'no';
  const reason=!dropped.length?'energy-held':
@@ -358,7 +358,136 @@ function confirmMoveLethal(pack,state,actor,action){
  if(lethal&&!open)return {verdict:'lethal',line};
  return {verdict:'unproven',line};
 }
-function moveBenefit(pack,state,actor,action,afterColors,after,parts){
+// A card the current color can pay, and the color left after the move cannot,
+// is a play keeping that energy actually enables. Cost above the reduced
+// total is not enough: the card was already stranded.
+function keptEnergyEnablesPlay(pack,state,actor,beforeColors,afterColors){
+ const catalog=packOf(pack,actor).cards;
+ const mine=state.players?.[actor];
+ if(!mine)return false;
+ const ready=(mine.apCards||[]).filter(card=>card?.ready).length;
+ for(const card of mine.hand||[]){
+  const printed=catalog[card?.cardId];
+  if(!printed||(printed.type!=='character'&&printed.type!=='event'))continue;
+  const cost=Number(printed.energy)||0;
+  const before=beforeColors[printed.color]||0;
+  const after=afterColors[printed.color]||0;
+  if(!(cost<=before&&cost>after))continue;
+  if(ready<(Number(printed.ap)||0))continue;
+  if(printed.type==='event')return true;
+  const lines=[];
+  if(!printed.frontForbidden)lines.push('front');
+  if(!printed.energyForbidden&&!printed.energyLineForbidden)lines.push('energy');
+  if(lines.some(line=>(mine[line]||[]).some(slot=>!slot)||(mine[line]||[]).some(Boolean)))return true;
+ }
+ return false;
+}
+function attackDamageOf(pack,state,card){
+ try{
+  const damage=universalAttackDamage(pack,state,card);
+  return Number.isFinite(damage)&&damage>0?damage:1;
+ }catch{return null;}
+}
+// Ready front characters, summed as if none of them can be blocked. Life
+// above that total is already safe, so the legal-block read stays unused.
+function openSwingDamage(pack,state,actor){
+ let total=0;
+ for(const card of state.players?.[1-actor]?.front||[]){
+  if(!card?.ready)continue;
+  const damage=attackDamageOf(pack,state,card);
+  if(damage==null)return null;
+  total+=damage;
+ }
+ return total;
+}
+function listedAttacks(pack,state,attacker){
+ const copy=structuredClone(state);
+ copy.pending=null;
+ copy.phase='attack';
+ copy.active=attacker;
+ copy.attacksThisTurn=0;
+ let legal=[];
+ try{legal=legalUniversalActions(pack,copy);}catch{return null;}
+ return legal.filter(action=>action.type==='attack'&&action.uid&&!action.targetUid).map(action=>action.uid);
+}
+function listedBlocks(pack,state,defender,attackerUid){
+ const copy=structuredClone(state);
+ copy.phase='attack';
+ copy.active=1-defender;
+ copy.pending={kind:'block',player:defender,attackerUid};
+ let legal=[];
+ try{legal=legalUniversalActions(pack,copy);}catch{return null;}
+ return new Set(legal.filter(action=>action.type==='chooseBlock'&&action.uid).map(action=>action.uid));
+}
+// The smallest life loss from assigning the front we have now. A block the
+// engine does not list is not a save. Winning on BP keeps the character and
+// spends one block. Losing removes it, and Impact leaks only when the engine
+// still counts it. This read does not dispatch, so it does not take a node.
+function minimumLifeLoss(pack,state,actor){
+ const opp=1-actor;
+ const attacks=listedAttacks(pack,state,opp);
+ if(!attacks)return null;
+ const threats=[];
+ for(const card of state.players?.[opp]?.front||[]){
+  if(!card?.ready||!attacks.includes(card.uid))continue;
+  const damage=attackDamageOf(pack,state,card);
+  if(damage==null)return null;
+  let impact=0;
+  try{impact=universalImpact(pack,state,card)||0;}catch{return null;}
+  const blocks=listedBlocks(pack,state,actor,card.uid);
+  if(!blocks)return null;
+  threats.push({damage,impact,bp:bpOf(pack,state,card),blocks});
+ }
+ const blockers=(state.players?.[actor]?.front||[]).filter(card=>card?.ready).map(card=>{
+  let nulls=false;
+  try{nulls=universalImpactNull(pack,state,card)===true;}catch{nulls=false;}
+  return {uid:card.uid,bp:bpOf(pack,state,card),nulls,uses:1,alive:true};
+ });
+ const walk=(index,left)=>{
+  if(index>=threats.length)return 0;
+  const threat=threats[index];
+  let best=threat.damage+walk(index+1,left);
+  for(let i=0;i<left.length;i++){
+   const blocker=left[i];
+   if(!blocker.alive||blocker.uses<=0||!threat.blocks.has(blocker.uid))continue;
+   const wins=blocker.bp>threat.bp;
+   const leak=!wins&&threat.impact>0&&!blocker.nulls?threat.impact:0;
+   const next=left.map((item,at)=>at===i?(wins?{...item,uses:item.uses-1}:{...item,uses:0,alive:false}):item);
+   const got=leak+walk(index+1,next);
+   if(got<best)best=got;
+  }
+  return best;
+ };
+ return walk(0,blockers);
+}
+// Beating one attacker is not a reason to leave the energy line. It is a
+// block when that one legal save is the difference between losing now and
+// still having a life, and keeping the color does not pay a card in hand.
+function lifeSavingMove(pack,state,actor,action,beforeColors,afterColors){
+ if(keptEnergyEnablesPlay(pack,state,actor,beforeColors,afterColors))return false;
+ const life=state.players?.[actor]?.life?.length||0;
+ if(life<=0)return false;
+ const open=openSwingDamage(pack,state,actor);
+ if(open==null||life>open)return false;
+ const mine=state.players?.[actor];
+ const from=(mine?.energy||[]).findIndex(card=>card?.uid===action.uid);
+ if(!mine||from<0||!Number.isInteger(action.slot))return false;
+ const moving=mine.energy[from];
+ if(!moving||moving.ready===false)return false;
+ const before=minimumLifeLoss(pack,state,actor);
+ if(before==null||life>before)return false;
+ const previous=mine.front[action.slot];
+ mine.energy[from]=null;
+ mine.front[action.slot]=moving;
+ let after=null;
+ try{after=minimumLifeLoss(pack,state,actor);}
+ finally{
+  mine.front[action.slot]=previous;
+  mine.energy[from]=moving;
+ }
+ return after!=null&&life>after;
+}
+function moveBenefit(pack,state,actor,action,beforeColors,afterColors,after,parts){
  if(after>=parts.curve)return {benefit:'enough',lethal:'no'};
  const opp=1-actor;
  const body=(state.players[actor].energy||[]).find(card=>card?.uid===action.uid);
@@ -389,6 +518,7 @@ function moveBenefit(pack,state,actor,action,afterColors,after,parts){
   // One smaller body is not a block. The ready attackers that are still
   // larger stay, and dropping the color the hand needs is still a strip.
   if(!ownFront.length&&threats.length&&threats.every(wall=>bp>=bpOf(pack,state,wall)))return {benefit:'block',lethal,line};
+  if(lifeSavingMove(pack,state,actor,action,beforeColors,afterColors))return {benefit:'block',lethal,line};
  }
  return {benefit:null,lethal,line};
 }

@@ -180,6 +180,26 @@ function tracedRow(scored,action){
  if(!action)return null;
  return (scored||[]).find(item=>item?.executed!==false&&same(item.action,action))||null;
 }
+function finishedSurvival(row){
+ if(!row||row.executed===false||!Number.isFinite(row.search))return false;
+ if(row.boundary==='terminal'&&row.search<=-90000)return false;
+ return row.boundary==='returned'||row.boundary==='terminal';
+}
+function immediateLoss(row){
+ return !!row&&row.executed!==false&&row.boundary==='terminal'&&Number.isFinite(row.search)&&row.search<=-90000;
+}
+// The search already walked this line home, or finished a game that is not
+// an immediate loss. A later preference can still break a tie. It cannot
+// trade that line for an action the same comparison already finished as a
+// loss. A yielded number is not finished, and a root that never ran is not
+// a loss. The check only reads rows the search already paid for.
+function holdSurvival(choice,replacement,rows){
+ if(!choice||!replacement||same(choice,replacement))return replacement;
+ const mine=tracedRow(rows,choice);
+ const alt=tracedRow(rows,replacement);
+ if(finishedSurvival(mine)&&immediateLoss(alt))return choice;
+ return replacement;
+}
 // Equal discard scores have not chosen a card. The backup is the same
 // keep-order used when the search does not finish, and it does not dispatch.
 function discardTie(pack,state,actor,rows,blended){
@@ -536,7 +556,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const energyView=diagnose&&energySample?cachedMoveDevelopment(pack,state,actor,energySample):null;
   if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
-   const kept=preferEarlyDraw(pack,state,actor,placed,scored);
+   const kept=holdSurvival(choice,preferEarlyDraw(pack,state,actor,placed,scored),scored);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -577,7 +597,7 @@ export function chooseAiV3Action(pack,state,options={}){
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
   const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
-  let kept=preferEarlyDraw(pack,state,actor,placed,scored);
+  let kept=holdSurvival(exact,preferEarlyDraw(pack,state,actor,placed,scored),scored);
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished
   // scores are not a reason to throw away the card the keep-order retains.
