@@ -117,8 +117,19 @@
   "round7": {
     "checked": "2026-11-07",
     "baseline": "abeb47f03e19da85c28eed7d1abfdd28b88f2ba9",
-    "delivered": [],
-    "missing": ["B KJN-1-001～025", "C AOT-1-026～050", "D AOT-2-026～050"],
+    "delivered": [
+      {"group": "B", "pr": 341, "branch": "cursor/audit-b7-kjn-001-025", "head": "ea75681f9ceff64a0157a4eaeb6631512cd72525"},
+      {"group": "C", "pr": 339, "branch": "cursor/audit-c7-aot1-026-050", "head": "5e7322d0d3bddac4c1dfcee2abf7a9c41cba1ea7"},
+      {"group": "D", "pr": 340, "branch": "cursor/audit-d7-aot2-026-050", "head": "9d43dceb834e48e0186a2f81c11fcb3bc50f34fa"}
+    ],
+    "missing": [],
+    "shared": [
+      "Q2434：KJN-1-004 從生命放到場外，要等顏色觸發結束才問牌庫頂。",
+      "AOT-1-048 的前線全體 BP+1000 只在起動當下、而且人在前線時成立。",
+      "AOT-1-033、034、063、066 的選擇是效果。沒有對象仍可使用，有對象不能跳過。",
+      "AOT-2-028 只擋住對手角色效果的退場與 BP 減少。全體減 BP 不加在戰鎚上。"
+    ],
+    "ledger": "可出牌 938。已驗證 496。部分核對 1，是 KJN-1-011 的登場與移動限制。缺資料待確認仍是 3，含 AOT-2-008。下一張是 AOT-1-051。KJN-1-013、AOT-2-032、AOT-2-036 這次每一句都有來源與測試，整張改為已驗證。",
     "online": {
       "takeRoom": "CEJ4QJ7Q",
       "zeroRoom": "7PVXTNJL",

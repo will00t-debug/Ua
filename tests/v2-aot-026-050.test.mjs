@@ -501,6 +501,18 @@ test('033 retires one front character, and Historia raises the cap by 1000 per o
  assert.equal(modes(foe,'retire').some(a=>a.uid===still.uid),false);
  foe=pick(foe,a=>a.mode==='retire');
  finish(foe);
+
+ let none=toPhase(fresh(['AOT-1-033','AOT-1-002','AOT-1-007','AOT-1-057'],260471),'main');
+ fuel(none,0,['AOT-1-002','AOT-1-007']);
+ readyAp(none,0,1);
+ const huge=put(none,1,'AOT-1-057','front',0,true);
+ const empty=toHand(none,0,'AOT-1-033');
+ assert.equal(legalUniversalActions(packs,none).some(a=>a.type==='event'&&a.uid===empty.uid),true);
+ none=cast(none,empty.uid);
+ assert.equal(none.pending,null);
+ assert.equal(none.players[0].outside.some(c=>c.uid===empty.uid),true);
+ assert.equal(none.players[1].front.some(c=>c?.uid===huge.uid),true);
+ finish(none);
 });
 
 test('034 retires BP 3000, or BP 5000 while an exact Levi is on the field',()=>{

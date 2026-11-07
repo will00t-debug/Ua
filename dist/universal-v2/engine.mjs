@@ -451,7 +451,7 @@ function draw(pack,s,p,count=1,{reason='rule',sourceUid=null}={}){
 }
 // Each card requires its OWN printed energy color. A mixed-color deck may be
 // legal, but three green icons do not pay a purple energy-3 requirement.
-function choiceBlocked(pack,s,selector,uid,sourceType){
+function choiceBlocked(pack,s,selector,uid,sourceType,purpose=null){
  if(effectChoiceProtected(s,selector,uid,sourceType))return true;
  if(typeof uid==='string'&&(uid[0]==='0'||uid[0]==='1')){
   const immuneOwner=Number(uid[0]);
@@ -466,7 +466,12 @@ function choiceBlocked(pack,s,selector,uid,sourceType){
  if(owner===selector)return false;
  const c=[...s.players[owner].front,...s.players[owner].energy].find(x=>x?.uid===uid);
  if(!c||originalEffectsDisabled(s,c))return false;
- if(aot2Warhammer(pack,s,c)&&sourceType==='character')return true;
+ // EX10BT/AOT-2-028: while both founders are on the field, an opponent
+ // character effect cannot make this card leave or reduce its BP.
+ // Rest, bounce, and other choices stay legal. Events and triggers do not
+ // use this sentence.
+ if(aot2Warhammer(pack,s,c)&&sourceType==='character')
+  return purpose==='retire'||purpose==='bpDown';
  const printed=card(pack,c);
  return printed.oppEffectUntargetable===true||
   (printed.raidOppEffectUntargetable===true&&faceUpRaid(pack,c));
@@ -655,9 +660,6 @@ function aotPrintedBp(pack,s,c,printed,suppressed,owner){
   nameContainsToken(card(pack,x),'ユミル',originalEffectsDisabled(s,x))))n+=500;
  if(printed.id==='AOT-1-004'&&s.phase==='attack'&&s.active===owner&&
   s.aotAttackPhaseApPaid?.[owner]===s.turn)n+=2000;
- if(cardHasTrait(printed,'無垢の巨人'))
-  n+=1000*s.players[owner].front.filter(src=>src&&!originalEffectsDisabled(s,src)&&
-   card(pack,src).id==='AOT-1-048'&&faceUpRaid(pack,src)).length;
  return n;
 }
 function bp(pack,s,c){
@@ -1247,11 +1249,15 @@ function maybeKmrGearMove(pack,s,{physical,owner,from,to,reason,sourceUid}){
  s.effectQueue.push({op:'kmr',id:'KMR-1-081',slot:'moved',owner,
   sourceUid:watcher.uid,gearUid:physical.uid});
 }
+function queueKjnOutsideToDeckTop(pack,s,owner,physical){
+ if(!physical||card(pack,physical).mayOutsideToDeckTop!==true)return;
+ s.effectQueue.unshift({op:'kjn',id:card(pack,physical).id,slot:'deckTop',owner,sourceUid:physical.uid});
+}
 function maybeKjnOutsideToDeckTop(pack,s,{physical,owner,from,to,reason}){
  if(to!=='outside'||card(pack,physical).mayOutsideToDeckTop!==true)return;
  if(lifeTriggerStillPending(pack,s,physical,owner,from,reason))return;
  if(silencedFieldDeparture(s,physical,from))return;
- s.effectQueue.unshift({op:'kjn',id:card(pack,physical).id,slot:'deckTop',owner,sourceUid:physical.uid});
+ queueKjnOutsideToDeckTop(pack,s,owner,physical);
 }
 function maybeOutsideToDeckBottom(pack,s,{physical,owner,from,to,reason}){
  if(to!=='outside'||card(pack,physical).outsideToDeckBottom!==true)return;
@@ -4091,7 +4097,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='retireOppFrontUnderBp'){
    const limit=retireOppFrontLimit(pack,s,owner,job);
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit&&
-    !choiceBlocked(pack,s,owner,c.uid,sourceTypeFromUid(pack,s,job.sourceUid))).map(c=>c.uid);
+    !choiceBlocked(pack,s,owner,c.uid,sourceTypeFromUid(pack,s,job.sourceUid),'retire')).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit,
     ...(job.optional===true?{optional:true}:{})};
   }else if(job.op==='conditionalBounceOrRetireByOwnOutsideNames'){
@@ -4591,11 +4597,15 @@ function continueEffectQueue(pack,s){
    // Official timing is this resolution. Current BP is read once, then the
    // matching physical cards are the only recipients. Later reductions must
    // not drop a card out of the set or pull a new one in.
+   const sourceCharacter=sourceTypeFromUid(pack,s,job.sourceUid)==='character';
    const targets=s.players[foe].front.filter(c=>c&&
     (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
-    (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp));
+    (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)&&
+    !(sourceCharacter&&aot2Warhammer(pack,s,c)));
    // All modifiers land in the SAME effect step, before any of the
    // simultaneous state-based 0-BP retirements or replacement choices.
+   // AOT-2-028 is omitted above: this is not a choice, and an opponent
+   // character effect still must not reduce that BP.
    for(const c of targets){
     c.buffs??=[];c.buffs.push({bp:-job.bp,untilTurn:s.turn});
    }
@@ -5212,7 +5222,7 @@ function continueEffectQueue(pack,s){
     (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
     (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)&&
      cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)&&
-     !choiceBlocked(pack,s,owner,c.uid,sourceTypeFromUid(pack,s,job.sourceUid))).map(c=>c.uid);
+     !choiceBlocked(pack,s,owner,c.uid,sourceTypeFromUid(pack,s,job.sourceUid),'bpDown')).map(c=>c.uid);
    if(targetUids.length){
     if(job.maxTargets===2)s.pending={kind:'effect-target-many',player:owner,
      sourceUid:job.sourceUid,bp:job.bp,choices:targetUids,selected:[],
@@ -11965,6 +11975,10 @@ function resolveChoice(s,a,pack){
   }
   if(!found||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
   const target=found.target;
+  // A leaked character-effect choice still must not reduce AOT-2-028.
+  if(sourceTypeFromUid(pack,s,q.sourceUid)==='character'&&aot2Warhammer(pack,s,target)){
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   target.buffs??=[];
   target.buffs.push({bp:-q.bp,untilTurn:s.turn});
   // Q94: characters at 0 BP or below are sidelined. Q1139: that leave is
@@ -12135,7 +12149,13 @@ function resolveChoice(s,a,pack){
   if(a.mode!=='skip')s.triggerActivated[q.player]=true;
   // A deferred life replacement resolves only after the trigger choice. GET
   // to hand has already left outside, so it is not also put on the bottom.
-  if(!q.batch)putOutsideCardUnderDeck(pack,s,q.player,q.uid);
+  // Q2434: KJN-1-004's optional deck-top waits for that same choice. A direct
+  // life hit moves the card to outside before the trigger pending exists, so
+  // the first attempt returns early and this is the retry.
+  if(!q.batch){
+   putOutsideCardUnderDeck(pack,s,q.player,q.uid);
+   queueKjnOutsideToDeckTop(pack,s,q.player,p.outside.find(c=>c.uid===q.uid));
+  }
   continueEffectQueue(pack,s);
   finishPending(s);
   return;
@@ -16438,12 +16458,23 @@ function aotPrintedSelectionAp(pack,s,selector,uid,sourceType){
  if(aot2SelectTax(s,target))return 1;
  return 0;
 }
+function characterHarmPurpose(q,a){
+ if(q?.kind==='effect-retire-bp'||q?.kind==='effect-substitute-retire')return 'retire';
+ if(q?.kind==='effect-target'||q?.kind==='effect-target-many'||q?.kind==='effect-front-bp-cut')return 'bpDown';
+ if(a?.type==='chooseRetireBp'||a?.type==='chooseRetireAtLeast'||a?.type==='chooseRetireAtMost'||
+  a?.type==='chooseRetireScaled'||a?.type==='chooseRestedRetire'||a?.type==='chooseRetireReferenced'||
+  a?.type==='chooseRestOrRetire')return 'retire';
+ if(a?.type==='chooseTarget'||a?.type==='chooseTargetMany')return 'bpDown';
+ if((a?.type==='aot'||a?.type==='aot2'||a?.type==='kjn'||a?.type==='kmr'||a?.type==='kmr2')&&
+  (a?.mode==='retire'||a?.mode==='retireOwn'))return 'retire';
+ return null;
+}
 function effectSelectionProhibited(pack,s,a){
  const q=s.pending;
  if(!q||typeof a?.uid!=='string')return false;
  if(a.type==='kmr2'||a.type==='kmr'||a.type==='aot'||a.type==='aot2'||TARGETING_CARD_EFFECT_CHOICES.has(a.type)||
   (q.kind==='life-trigger'&&a.type==='chooseTrigger'&&TARGETING_LIFE_MODES.has(a.mode)))
-  return choiceBlocked(pack,s,q.player,a.uid,effectChoiceProvenance(pack,s));
+  return choiceBlocked(pack,s,q.player,a.uid,effectChoiceProvenance(pack,s),characterHarmPurpose(q,a));
  return false;
 }
 function effectSelectionApTax(pack,s,a){

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createAotV2Pack} from '../dist/universal-v2/aot-pack.mjs';
+import {createRezeroV2Pack} from '../dist/universal-v2/rezero-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalAttackDamage, universalBp, universalCardEnergy,
@@ -1267,4 +1268,62 @@ test('Gabi buffs another warrior, doubles both in a raid, and the color trigger 
  assert.equal(life.players[0].outside.some(c=>c.uid===trigger.uid)||
   life.players[0].deck.some(c=>c.uid===trigger.uid),true);
  assertUniversalMatch(packs,life);
+});
+
+test('Ram cannot choose the War Hammer, and the all-front cut skips it',()=>{
+ const rez=createRezeroV2Pack();
+ function fill(title,required){
+  const fillers=Object.values(title.cards).filter(c=>!required.includes(c.id)&&
+   !['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
+  const ids=[...new Set(required)];
+  const caps={special:0,color:0,final:0},counts={};
+  for(const id of ids){
+   const trigger=title.cards[id].trigger;
+   let copies=4;
+   if(trigger==='special'||trigger==='color'||trigger==='final'){
+    copies=Math.min(2,4-caps[trigger]);
+    caps[trigger]+=copies;
+   }
+   counts[id]=copies;
+  }
+  let total=Object.values(counts).reduce((n,x)=>n+x,0);
+  for(const id of fillers){
+   if(total>=50)break;
+   const add=Math.min(4,50-total);
+   counts[id]=add;
+   total+=add;
+  }
+  assert.deepEqual(validateUniversalDeck(title,counts),[]);
+  return counts;
+ }
+ const mixed=[rez,pack];
+ const go=(state,action)=>dispatchUniversalAction(mixed,state,action);
+ let s=newUniversalMatch(mixed,{decks:[fill(rez,['REZ-1-011','REZ-1-007']),
+  fill(pack,['AOT-2-001','AOT-2-020','AOT-2-023','AOT-2-028'])],seed:28028,first:0});
+ for(let guard=0;s.phase!=='main';guard++){
+  if(s.pending)throw Error('Pending blocked Ram setup');
+  s=go(s,{type:'next'});
+  if(guard>8)throw Error('Did not reach main');
+ }
+ for(let i=0;i<4;i++)put(s,0,'REZ-1-007','energy',i,true);
+ put(s,1,'AOT-2-020','energy',0,true);
+ put(s,1,'AOT-2-023','energy',1,true);
+ const hammer=put(s,1,'AOT-2-028','front',0,true);
+ const small=put(s,1,'AOT-2-001','front',1,true);
+ const before=universalBp(mixed,s,small);
+ readyAp(s,0,1);
+ const ram=toHand(s,0,'REZ-1-011');
+ const raidRam=legalUniversalActions(mixed,s).find(a=>a.type==='raid'&&a.uid===ram.uid&&a.line!=='energy');
+ if(!raidRam)throw Error('Ram cannot raid');
+ s=go(s,raidRam);
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ let chosen=structuredClone(s);
+ s=go(s,{type:'chooseEffectMode',mode:'allDown'});
+ assert.equal(universalBp(mixed,s,field(s,1,hammer.uid)),4000);
+ assert.equal(universalBp(mixed,s,field(s,1,small.uid)),before-1000);
+ chosen=go(chosen,{type:'chooseEffectMode',mode:'oneDown'});
+ assert.equal(chosen.pending.kind,'effect-target');
+ assert.equal(chosen.pending.choices.includes(hammer.uid),false);
+ assert.equal(chosen.pending.choices.includes(small.uid),true);
+ assertUniversalMatch(mixed,s);
 });

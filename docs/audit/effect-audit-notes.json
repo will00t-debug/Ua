@@ -1,6 +1,6 @@
 {
  "updated": "2026-11-07",
- "next": "AOT-1-026。私人查看不再把整窗寫進公開紀錄。016 的這句已改回與印刷一致。032 與 036 只核對查看那句，整張卡沒有因此通過。下一張仍是 AOT-1-026。",
+ "next": "AOT-1-051。第七輪已把 KJN-1-001～025、AOT-1-026～050、AOT-2-026～050 的逐條證據寫進台帳。只核到一部分的卡維持部分核對。",
  "sharedFixes": [
   {
    "name": "這一次登場只看這一次的來源",
@@ -190,6 +190,34 @@
    "where": "dist/universal-v2/aot2-runtime.mjs beginLook 的 revealWindow 才寫整窗，reveal 只在 finishLook 公開選中的卡。AOT-2-030 與 KJN-1-056 仍在選擇前公開整窗。dist/universal-v2/kjn-runtime.mjs KJN-1-013 改為 revealTaken，拿進手牌時才公開。公開紀錄、對局紀錄與線上座位都讀 publicReveals 與 publicCardResults，不在畫面上另外隱藏。",
    "affects": "AOT-2-016、AOT-2-032 的始祖尤米爾查看、AOT-2-036，以及 KJN-1-013。AOT-2-024 與 AOT-2-047 本來就沒有公開。AOT-2-030 與 KJN-1-056 維持整窗公開。其他作品的 beginLook 本來就沒有在選擇前公開整窗。",
    "evidence": "tests/v2-aot2-001-025.test.mjs。016 選前、選 0 張、三張都是地鳴時，對手公開畫面沒有那些 UID；選中奇優宓後只有那張。032 與 036 同樣只公開選中的卡，順序與 JSON 往返後雙方畫面一致。030 選擇前兩張都在公開紀錄。tests/v2-kjn-set1.test.mjs 的 013。2026-11-07 線上房間 CEJ4QJ7Q 與 7PVXTNJL：兩個瀏覽器席位。選擇前對手的 inspection、publicReveals 與對局紀錄都是空的。選中キヨミ後只有 AOT-2-004。選完成選擇後，對手仍沒有視窗 UID。"
+  },
+  {
+   "name": "生命觸發結束後才問極光的牌庫頂",
+   "rule": "Q2434（2026-10-23）：KJN-1-004「このカードが場外に置かれた時」從生命區放到場外也要發動。可能なら、このカードを自分の山札の上に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-004",
+   "where": "dist/universal-v2/engine.mjs。直接傷害先把卡移到場外，當時生命觸發還沒開，maybeKjnOutsideToDeckTop 會先返回。觸發選擇結束後，卡仍在場外才 queueKjnOutsideToDeckTop。整批生命揭示改由 lifeRelease 進場外時排隊，不在這裡重複。",
+   "affects": "只有 mayOutsideToDeckTop。目前是 KJN-1-004。拿到手的 GET 不會再問。跳過或結算顏色觸發後，控制者可以留在場外或放到自己牌庫頂。場上先失去原有效果再離場仍不問。",
+   "evidence": "tests/v2-kjn-set1.test.mjs。1 點傷害打出生命最上的 004，跳過顏色觸發後才出現 deckTop，放到牌庫頂。"
+  },
+  {
+   "name": "吉克的前線 BP 跟起動走",
+   "rule": "UA23BT/AOT-1-048 的【起動メイン】【ターン1】：選 1 張以內的無垢の巨人給這個回合的衝擊（1）。這張角色在前線時，自己場上全部無垢の巨人這個回合 BP+1000。後句在發動時檢查前線，只持續那個回合。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+   "where": "dist/universal-v2/aot-runtime.mjs main048。dist/universal-v2/engine.mjs 的 aotPrintedBp 不再因正面突襲在前線就常時加 BP。",
+   "affects": "本範圍沒有第二張同樣的句子。登場時的 +1000 仍是 on048 的這個回合 buff。能量線可以給衝擊，不加全體 BP。沒發動之前，突襲在前線也不加這一段。",
+   "evidence": "tests/v2-aot-set1.test.mjs。突襲放上前線後、起動前，040 維持印刷 BP；起動並跳過衝擊後才 +1000。tests/v2-aot-026-050.test.mjs 的能量線突襲仍只有登場當回合的 +1000。"
+  },
+  {
+   "name": "選擇是效果時，沒有對象仍可使用",
+   "rule": "AOT-1-033、034、066 的「1枚選び、退場させる」與 AOT-1-063 的查看後選 1 張，是效果不是費用。選不到指定張數就處理 0 張，事件仍可使用。有對象時不能跳過。",
+   "where": "dist/universal-v2/aot-runtime.mjs aotMandatoryTargets 不再用有沒有對象決定能不能使用。offerRetire 在沒有對象時直接結束。有對象時不提供跳過。",
+   "affects": "033、034、063、066。其他作品的強制對象閘門沒有套用這句，因為那些句子要各自對原文，不能一次改成都能空過。",
+   "evidence": "tests/v2-aot-026-050.test.mjs。對手只有超標角色時，033 仍可使用，事件進場外，角色不退場。有合法對象時沒有跳過。"
+  },
+  {
+   "name": "戰鎚只擋退場與 BP 減少",
+   "rule": "EX10BT/AOT-2-028：自己場上同時有卡名含エレン與ジーク的角色時，這張角色獲得「相手のキャラの効果で〔退場せず、BPをマイナスされない〕」與【2回ブロック】。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028",
+   "where": "dist/universal-v2/engine.mjs choiceBlocked 只在 purpose 為 retire 或 bpDown 時擋角色效果。effectSelectionProhibited、retireOffer、enemyBpDown、retireOppFrontUnderBp 帶上這個用途。enemyFrontAllBpDown 在套用前略過戰鎚。效果目標的減 BP 若漏進名單，也不寫進 buff。",
+   "affects": "全庫只有這一句。事件仍可退場或減 BP。休息、彈回等其他角色效果選擇不再被一併擋住。拉姆的全體減 BP 不加在戰鎚上，單選減 BP 也選不到。",
+   "evidence": "tests/v2-aot2-026-050.test.mjs。兩次阻擋、039 選不到、013 退場選不到、037 事件可以退場，都還在。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000；改選一張時名單沒有戰鎚。"
   }
  ],
  "reviews": [
@@ -11199,25 +11227,1885 @@
    ]
   },
   {
+   "cardId": "KJN-1-001",
+   "number": "UA52BT/KJN-1-001",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このキャラはアクティブで登場させる。【ダメージ（2）】（このキャラがアタックで与える直接ダメージは2ダメージ）相手はこのキャラのアタックを可能ならこのキャラよりもBPが大きいキャラ",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-001",
+     "implementation": "登場活動與 printedAttackDamage 2。阻擋門檻是 bp 嚴格大於攻擊者。失去原有效果後傷害回到 1，相等或較小的角色可以放棄阻擋。 落敗時以 uid 的 attackLoseReadyTurn 鎖一次。勝出或放棄阻擋不加。同一回合第二次落敗不再加。回合結束後回復。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。付費登場後是活動、傷害 2。BP 4000 對 4000 可以放棄。對上 5000 時不能放棄，也不能選 2000。沉默後傷害 1，可以放棄 5000。 tests/v2-kjn-001-025.test.mjs。第一次輸給 5000 後變活動、BP 5000。接著用生命的活動觸發把阻擋者加到 8000，第二次再輸仍是 BP 5000，而且攻擊後保持休息。換回合後回到 4000。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-001",
+     "implementation": "生命觸發 get。這張進手牌，不進場外。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。打出這張生命後选手牌，生命剩 2。直接傷害 2 會先排生命順序，兩張無觸發的生命卡到場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-002",
+   "number": "UA52BT/KJN-1-002",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】裏向きのカードが下にない自分の場の〈クレア・カゲノー〉を1枚選び、そのキャラの下にこのキャラを裏向きで置く。そうした場合、カードを2枚引き、自分の手札を1枚場外に置く",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-002",
+     "implementation": "與 003、004 共用 tuckSelf。沒有合法宿主就不能啟動。宿主與棄牌都不能跳過。蓋牌後才抽 2、強制棄 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。沒有克蕾雅時不能啟動。蓋到 012 後牌庫少 2、手牌先加 2，再強制棄 1。對手的 under 只有 faceDown，自己看得到 KJN-1-002。蓋下去之後不能再啟動。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-003",
+   "number": "UA52BT/KJN-1-003",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】裏向きのカードが下にない自分の場の〈クレア・カゲノー〉を1枚選び、そのキャラの下にこのキャラを裏向きで置く。そうした場合、カードを2枚引き、自分の手札を1枚場外に置く",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-003",
+     "implementation": "同一條 tuckSelf，draw 2、discard 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。蓋到克蕾雅後抽 2、強制棄 1。對手看不到牌名，自己看得到 KJN-1-003。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-003",
+     "implementation": "生命觸發 draw。抽 1，觸發卡到場外。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選抽牌後牌庫少 1，觸發卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-004",
+   "number": "UA52BT/KJN-1-004",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このカードが場外に置かれた時、このカードを場外から自分の山札の上に置いてもよい。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-004",
+     "implementation": "mayOutsideToDeckTop。maybeKjnOutsideToDeckTop 在 to 為 outside 時排隊 deckTop，但生命觸發尚未結束時直接返回，結束後也不補排。runDeckTop 只在卡還在場外時提供 stay 或 top，top 不公開。",
+     "discrepancy": "從生命區放到場外時，色觸發結束後沒有 deckTop。這是 engine.mjs 的缺口，交給 A。",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。014 棄掉它時先完成可選蓋牌，跳過蓋牌後才出現 stay 或 top。037 的特殊觸發讓場上的它退場會開 deckTop；先沉默再退場不開。011 把它從背面下面放到場外也開 deckTop。色觸發從生命打出後沒有把「沒有 deckTop」寫成正確答案。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-004",
+     "implementation": "共用 drawDiscard。不能跳過棄牌。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。登場後手牌數先不變，再把一張手牌放到場外，角色是休息。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】裏向きのカードが下にない自分の場の〈クレア・カゲノー〉を1枚選び、そのキャラの下にこのキャラを裏向きで置く。そうした場合、カードを2枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-004",
+     "implementation": "tuckSelf，draw 2、discard false。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。蓋到沒有背面卡的克蕾雅後牌庫少 2，沒有棄牌視窗。對手只看到背面。",
+     "unresolved": ""
+    },
+    {
+     "match": "【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-004",
+     "implementation": "黃色 triggerProfile 是 restOppFrontSkipNextActive。對象是取生命的玩家的對手。下一次要變活動時消耗 skipNextActive。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。打出生命後休息自己場上的角色。自己的結束階段消耗那一次，保持休息；再回到自己回合的開始才變活動。若此時意外出現 deckTop，測試只選 stay，不把它當成生命來源的證明。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-005",
+   "number": "UA52BT/KJN-1-005",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】自分の山札の上から1枚見て、山札の上か下に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-005",
+     "implementation": "原本共用 peekTopOrBottom，選項是頂或場外。現在改成作品內的 peekBottom，只有 top 與 bottom，不公開。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。控制者看得到那一張，對手的私人選項是 null，公開揭示沒有這張。選底後它在牌庫底、下一張變成頂。選頂則留在頂。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-005",
+     "implementation": "生命觸發 active。加值加在選到的角色，不是生命卡自己。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選休息的 KJN-1-010 後變活動，BP 由 2000 變成 5000。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-006",
+   "number": "UA52BT/KJN-1-006",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【フロントLにある場合】【手札を1枚場外に置く】【ターン1】自分の山札の上から1枚をリムーブエリアに置く。このターン中、自分はそのカードをリムーブエリアから使用できる",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-006",
+     "implementation": "frontOnly，支付不能跳過。millRemoved 設 kjnRemovedPlay 為本回合。能源線不能啟動。下一回合舊卡不能使用，新噴的可以。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。棄 1 後移除區的卡標上本回合，可以打出。下一回合那張不能打，新噴的可以。能源線沒有這個啟動。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-006",
+     "implementation": "生命觸發 draw。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選抽牌後牌庫少 1。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-007",
+   "number": "UA52BT/KJN-1-007",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】自分の山札の上から3枚見て、〈アレクシア・ミドガル〉か〈ローズ・オリアナ〉か〈ナツメ・カフカ〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-007",
+     "implementation": "共用 searchTopOneBottomDiscard。不能選的牌留在視窗。只公開 searched-to-hand。沒有符合的牌時直接進入三張排序，不公開、不棄牌。放底時最後選的在最底。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。三張都看得到，010 不能選、006 可以選。只公開被拿走的那張。其餘放底後才棄 1，沒拿走的兩張仍隱藏。零張時排序選項帶著三張牌面，對手看不到，不公開、不棄牌。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-007",
+     "implementation": "生命觸發 draw。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選抽牌後牌庫少 1，觸發卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-008",
+   "number": "UA52BT/KJN-1-008",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【手札を1枚場外に置く】このキャラが登場したターン中のみ発動できる。このターン中、次にリムーブエリアから使用するカードの消費APを-1する。〈アレクシア・ミドガル〉の",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-008",
+     "implementation": "enteredThisTurn，支付後 noteCut。手牌使用不消耗 nextRemovedApCut。移除區使用才消耗，下一張恢復原 AP。鎖名是 KJN-1-008。沉默後不能啟動。上一回合登場的不能啟動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。手牌打出仍付 1 AP，減免還在。移除區的 AP1 卡付 0，減免消失。同一回合之後、以及下一回合新噴的卡都付完整 AP。兩張都是本回合登場時，第二張不能啟動。下一回合舊的不能、新登場的可以，沉默後不行。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-009",
+   "number": "UA52BT/KJN-1-009",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【レイド】〈アレクシア・ミドガル〉アクティブにし、フロントLに移動できる【登場時】自分の山札の上から2枚見て、1枚まで手札に加え、残りを望む順で山札の上に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-009",
+     "implementation": "beginLook 不設 revealTaken。rest 是 top。只剩一張時自動放回。普通登場 raidBoxTextLive 不跑 onPlay。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。突襲後看兩張，可以拿 0 或 1。對手看不到視窗，publicReveals 沒有這兩張。拿一張後另一張回到頂。普通登場沒有看牌。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】【フロントLにある場合】【ターン1】自分の山札の上から1枚をリムーブエリアに置く。このターン中、自分はそのカードをリムーブエリアから使用できる。（使用する場合は必要エ",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-009",
+     "implementation": "raid 框的 main。不付手牌。普通登場不能啟動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。突襲狀態下啟動後移除區的卡標上本回合且可以打出。同一回合不能再啟動。普通登場沒有這個啟動。",
+     "unresolved": ""
+    },
+    {
+     "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-009",
+     "implementation": "生命觸發 raid。skip 與 get 不跑 onPlay。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。打出生命後有 skip、get、raid。選 skip 後沒有看牌，卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-010",
+   "number": "UA52BT/KJN-1-010",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-010",
+     "implementation": "生命觸發 draw。 沒有 onPlay 或啟動。登場休息，不開 pending。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選抽牌後牌庫少 1，觸發卡在場外。 tests/v2-kjn-001-025.test.mjs。打出後 pending 是空的，角色休息。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-011",
+   "number": "UA52BT/KJN-1-011",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。【ダメージ（2）】（このキャラがアタックで与える直接ダメージは2ダメージ）",
+     "status": "未檢查",
+     "official": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-011 Q2110（2026.05.15）：下面有背面卡時，效果移動與位置交換也不能把它從能源線移到前線。Q2112：控制者看得到下面的牌。",
+     "implementation": "frontForbidden。facedownMoveBanned 擋住移動階段。effectMoveTo 與 ownSwapCandidates 也有門，但本彈沒有印出移動或交換其他角色的卡。 printedAttackDamage 2。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。沒有打到前線的行動。下面有三張時，移動階段不能移動。自己看得到三張牌名，對手只看到背面。 tests/v2-kjn-001-025.test.mjs。效果把它移到前線後，傷害是 2。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】自分の山札の上から3枚を裏向きでこのキャラの下に置く。",
+     "status": "已驗證",
+     "official": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-011 Q2110（2026.05.15）：下面有背面卡時，效果移動與位置交換也不能把它從能源線移到前線。Q2112：控制者看得到下面的牌。",
+     "implementation": "牌庫不足就放較少。順序保留。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。登場後下面三張的 uid 與牌庫頂的順序一致。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】【エナジーLにある場合】【レストにする】このキャラの下の裏向きのカードを1枚場外に置く。その後、このキャラの下に裏向きのカードがない場合、このキャラをアクティブにし、",
+     "status": "已驗證",
+     "official": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-011 Q2110（2026.05.15）：下面有背面卡時，效果移動與位置交換也不能把它從能源線移到前線。Q2112：控制者看得到下面的牌。",
+     "implementation": "登場是休息，所以要下一回合才能啟動。還有背面卡就只休息、不移動。最後一張才活動並 moveFront。前線滿員時 replace 的原居住者到 removed。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。前兩次拿走背面卡後仍休息、不移動。最後一張後變活動並移到空的前線。另一局在只剩一張時把前線填滿，不能選空格，被換下的角色進移除區。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-011 Q2110（2026.05.15）：下面有背面卡時，效果移動與位置交換也不能把它從能源線移到前線。Q2112：控制者看得到下面的牌。",
+     "implementation": "生命觸發 active。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選休息的 010 後變活動，BP 5000。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-012",
+   "number": "UA52BT/KJN-1-012",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-012",
+     "implementation": "生命觸發 get。進手牌，不進場外。 沒有 onPlay 或啟動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。打出後在手牌，不在場外。 tests/v2-kjn-001-025.test.mjs。打出後 pending 是空的。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-013",
+   "number": "UA52BT/KJN-1-013",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】自分の山札の上から3枚見て、『〈クレア・カゲノー〉か〈シド・カゲノー〉』を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-013",
+     "implementation": "beginLook 的 revealTaken 只公開加入手牌的那張，視窗保持私人。棄牌後才 finishRest，放底的順序會反轉，先選的在最底。席德在場時規則改成 sidChar。場地卡不是角色。沒有拿走就不棄牌、不公開。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。010 不能拿、012 可以拿。publicReveals 只有被拿走的那張。棄牌後才排序，先選的在牌庫底。席德在場時 010 可以拿、035 不能拿。選完成後不公開、不棄牌，三張放底。既有 set1 的「只公開加入手牌的那張」仍通過。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-013",
+     "implementation": "生命觸發 active。這張卡本身的常駐效果沒有衝擊無效。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選休息的角色後變活動。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-014",
+   "number": "UA52BT/KJN-1-014",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。この効果で〈アウロラ〉を場外に置いた場合、そのカードを裏向きのカードが下にない自分の場の〈クレア・カゲノー〉1枚の下に裏向き",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-014",
+     "implementation": "先抽再強制棄。棄到 004 時，004 的 deckTop 會先被排進佇列；afterPay 把它抽出，改成先跑可跳過的 tuckAurora。蓋成功後卡離開場外，deckTop 因卡已不在場外而不做事。不是奧蘿拉就不開蓋牌，也不開 deckTop。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。棄 004 後先出現可跳過的蓋牌，跳過後才是 deckTop。選擇蓋牌後 004 在克蕾雅下面，不再問牌庫頂。棄 010 後兩個視窗都沒有。對手只看到背面。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-014",
+     "implementation": "生命觸發 draw。與登場時的抽棄是不同句子。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選抽牌後牌庫少 1，觸發卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-015",
+   "number": "UA52BT/KJN-1-015",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【レイド】〈クレア・カゲノー〉アクティブにし、フロントLに移動できる【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-015",
+     "implementation": "passiveBonuses 的 selfFacedownUnder 只在自己回合。raidImpactNull 只在 faceUpRaid。普通登場兩者都沒有。沉默後加值與衝擊無效都消失。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。剛突襲、下面還沒牌時 BP 4000、衝擊 0、衝擊無效為真。蓋上 002 後自己回合 BP 5000、衝擊 1，對手只看到背面。換到對手回合加值關閉、衝擊無效仍在。沉默後回到自己回合仍是 BP 4000、衝擊 0、衝擊無效為假。普通登場沒有衝擊無效。",
+     "unresolved": ""
+    },
+    {
+     "match": "【自分のターン中】このキャラの下に裏向きのカードがある場合、このキャラはBP+1000と【インパクト（1）】を得る。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-015",
+     "implementation": "passiveBonuses 的 selfFacedownUnder 只在自己回合。raidImpactNull 只在 faceUpRaid。普通登場兩者都沒有。沉默後加值與衝擊無效都消失。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。剛突襲、下面還沒牌時 BP 4000、衝擊 0、衝擊無效為真。蓋上 002 後自己回合 BP 5000、衝擊 1，對手只看到背面。換到對手回合加值關閉、衝擊無效仍在。沉默後回到自己回合仍是 BP 4000、衝擊 0、衝擊無效為假。普通登場沒有衝擊無效。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】自分の場外から必要エナジーが2以下で消費APが1の黄の〈シド・カゲノー〉を1枚まで自分の場にレストで登場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-015",
+     "implementation": "offerDeploy，optional。019、020 符合，010 不符合。普通登場不跑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。019 可以選、010 不能選，跳過後 019 留在場外。另一局把 020 休息放到能源線。普通登場沒有這個視窗。",
+     "unresolved": ""
+    },
+    {
+     "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-015",
+     "implementation": "生命觸發 raid。skip 不開 deploy。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選 skip 後 pending 是空的，卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-016",
+   "number": "UA52BT/KJN-1-016",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【レイド】〈クレア・カゲノー〉アクティブにし、フロントLに移動できるこのキャラの下に裏向きのカードがある場合、このキャラはBP+1000と【2回アタック】と「【退場時】自分の場外か",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-016",
+     "implementation": "加值與雙重攻擊只在正面突襲且下面有背面卡。onRetire 由 hadFacedown 開啟，能量 1 以下且名字是克蕾雅，可以跳過。014 是能量 3，不能選。沉默後加值消失。普通登場沒有這些。雙重攻擊沒有改 energyDoubles。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。突襲到 013 上，蓋 002 後 BP 5000，對手只看到背面。第一次攻擊後立即活動，第二次不再活動，assertUniversalMatch 通過。退場時 013 可以回手、014 不能。沉默後 BP 回到 4000。普通登場 BP 4000，也沒有強制阻擋旗標。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】自分の場に〈シド・カゲノー〉がある場合、このキャラはこのターン中、「相手はこのキャラの1回目のアタックを可能ならブロックしなければならない。」を得る。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-016",
+     "implementation": "席德在場且突襲 onPlay 結算時設 kjnFirstMustBlock。只在 attacksByUid 為 1 且旗標回合等於本回合時強制。普通登場不設。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。同一回合第一次不能放棄、必須選在場的阻擋者。第二次可以放棄。普通登場沒有旗標。",
+     "unresolved": ""
+    },
+    {
+     "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-016",
+     "implementation": "生命觸發 raid。skip 不設強制阻擋。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選 skip 後 pending 是空的，卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-017",
+   "number": "UA52BT/KJN-1-017",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】自分の山札の上から3枚見て、黄のイベントカードか黄のフィールドカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-017",
+     "implementation": "共用 searchTopOneBottomDiscard，過濾黃色事件或場地。角色不能選。只公開拿走的那張。零張時直接排序。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。010 不能選，035 與 037 可以。只公開 037。其餘放底後才棄 1。零張時三張都在排序選項裡，對手看不到，不公開。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-018",
+   "number": "UA52BT/KJN-1-018",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【レストにする】【ターン1】このキャラはこのターン中、発生エナジー+【黄】と「メインフェイズ終了時、このキャラを退場させる。」を得る。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-018",
+     "implementation": "restEnergy。前線與能源線都能啟動，鎖的是這一張而不是卡名。發生能量只計算能源線上的角色，所以前線的 +1 不進能量池。離開主要階段時退場。沉默後不能啟動。後續紫色 042 仍共用這個 kind，沒有改它。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。能源線啟動後黃色能量 +1，進入攻擊階段時退場。前線可以啟動並休息、退場，但能量池不加。另一張同名仍可啟動。沉默後那張不能啟動。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-019",
+   "number": "UA52BT/KJN-1-019",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-019",
+     "implementation": "impactNull。這張卡是阻擋者時，取消攻擊者的衝擊。沉默後不再取消。生命的活動觸發是另一句，不會讓這張卡自己獲得衝擊無效。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。有衝擊 1 的突襲克蕾雅攻擊，019 阻擋後生命不減。沉默 019 後同樣的戰鬥讓生命少 1，並開出生命卡的抽牌觸發。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-019",
+     "implementation": "生命觸發 active。對象不會因此得到衝擊無效。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選休息的 010 後變活動，那張 010 的衝擊無效仍是假。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-020",
+   "number": "UA52BT/KJN-1-020",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-020",
+     "implementation": "共用 drawDiscard。不能跳過。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。登場後牌庫少 1，再把一張手牌放到場外。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-020",
+     "implementation": "生命觸發 draw。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選抽牌後牌庫再少 1，之後沒有棄牌視窗。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-021",
+   "number": "UA52BT/KJN-1-021",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このキャラがアクティブの場合、このキャラの発生エナジー+【黄】。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-021",
+     "implementation": "能源線活動時，印出的 1 再加 1。休息時只有印出的 1。前線活動是 0。沉默後能源線活動只剩 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。活動能源線是 2，休息是 1，前線活動是 0，沉默後是 1。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-022",
+   "number": "UA52BT/KJN-1-022",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このカードは〈ベータ〉としても扱う。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-022",
+     "implementation": "原本走 activeOwnOther，會排除自己。現在改成作品內 activeAny，包含自己，並可跳過。手牌登場不開視窗。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。手牌打出沒有視窗，而且是休息。移除區打出後可以跳過，也可以選自己或其他角色。選自己後自己活動，另一張維持休息。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】このカードをリムーブエリアから使用していた場合、自分の場のキャラを1枚まで選び、アクティブにする。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-022",
+     "implementation": "nameAliases。攻擊紀錄在未沉默時帶別名。cardHasName 在 silenced 時去掉別名。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。攻擊紀錄的 aliases 是ベータ。沉默後再攻擊是空陣列。cardHasName 在沉默時對ベータ為假，對ナツメ・カフカ為真。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-023",
+   "number": "UA52BT/KJN-1-023",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このカードは〈ベータ〉としても扱う。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-023",
+     "implementation": "fork。抽牌分支是 handEither，沒有 skip，revealed false。棄牌分支走 006 的噴牌。手牌空時不提供 mill。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。兩條都可選。抽牌後不能跳過，選頂後那張在牌庫頂且沒有公開。棄牌後頂牌進移除區並標上本回合，可以打出。手牌只剩這張要打出的卡時，不能選棄牌分支，仍可抽牌。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】以下から1つ選ぶ。・カードを1枚引き、自分の手札を1枚自分の山札の上か下に置く。・自分の手札を1枚場外に置く。そうした場合、自分の山札の上から1枚をリムーブエリアに置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-023",
+     "implementation": "nameAliases。cardHasName 的 silenced 參數會拿掉別名。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。未沉默時 cardHasName 對ベータ為真，沉默參數為真時為假。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-023",
+     "implementation": "生命觸發 draw。與登場二選一分開。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選抽牌後牌庫少 1，觸發卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-024",
+   "number": "UA52BT/KJN-1-024",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このカードは〈ベータ〉としても扱う。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-024",
+     "implementation": "removedUse 看本回合從移除區到前線、能源線或場外的規則移動。對手回合不加。下一自己回合若沒有新的移除區使用，也不加。沉默後不加。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。還沒打出移除區的卡時 BP 1500。打出後 3000。沉默回到 1500。下一自己回合沒有新的移除區使用時是 1500，對手回合也是 1500。",
+     "unresolved": ""
+    },
+    {
+     "match": "【自分のターン中】このターン中に自分がリムーブエリアからカードを使用している場合、このキャラはBP+1500。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-024",
+     "implementation": "cardHasName 在 silenced 時去掉別名。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。沉默參數下 cardHasName 對ベータ為假。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-024",
+     "implementation": "生命觸發 active。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。選休息的 010 後變活動，BP 5000。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "KJN-1-025",
+   "number": "UA52BT/KJN-1-025",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このカードは〈ベータ〉としても扱う。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-025",
+     "implementation": "原本先把一張手牌棄到場外再放牌。現在先抽，再直接 handPlace 到牌庫頂，不進場外、不公開。沒有手牌就不能啟動。能源線不能啟動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。啟動後直接是 handPlace。選中的手牌到牌庫頂，沒有公開，也不在場外。同一回合不能再啟動這條。能源線沒有啟動。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】【フロントLにある場合】【ターン1】カードを1枚引き、自分の手札を1枚自分の山札の上に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-025",
+     "implementation": "kjn:1 與 kjn:0 分開計次。removedUse 為真才提供。選項包含自己。換回合後加值消失。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。還沒有移除區使用時不能啟動。使用後可以選自己，BP 由 4000 變成 5000。同一回合不能再選。換到對手回合回到 4000。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】【フロントLにある場合】【ターン1】このターン中に自分がリムーブエリアからカードを使用している場合のみ発動できる。自分の場のキャラを1枚選び、このターン中、BP+10",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-025",
+     "implementation": "nameAliases。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。未沉默時 cardHasName 對ベータ為真，沉默參數為真時為假。",
+     "unresolved": ""
+    },
+    {
+     "match": "【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-025",
+     "implementation": "同一個 restOppFrontSkipNextActive。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。另組只有 025 的牌組。打出生命後休息自己的角色，自己的結束階段仍休息，下一次開始才活動。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-026",
+   "number": "UA23BT/AOT-1-026",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このキャラがアクティブの場合、このキャラの発生エナジー+【青】。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-026",
+     "implementation": "activeExtraEnergy 1。gen 維持 1。能量線上活動是 2，休息是 1。前線是 0。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。卡圖的青+是這句。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-027",
+   "number": "UA23BT/AOT-1-027",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-027",
+     "implementation": "impactNull。攻擊方戰鬥勝出時，這張擋住衝擊傷害。",
+     "discrepancy": "",
+     "evidence": "048 把衝擊（1）給 041 後，027 阻擋且落敗，生命張數不變。001 阻擋則生命少 1。048 本體的前線 BP 句不因此算已驗證。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】自分の山札の上から5枚見る。その中から青のイベントカードを1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-027",
+     "implementation": "searchTopOneBottomDiscard。整窗只給控制者。不選則 5 張都到底、不公開、不棄牌。選中的藍色事件才是 searched-to-hand，然後強制棄牌。藍色角色、紅色角色、綠色角色不能選。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。對手的 universalPrivateChoices 是 null。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-027",
+     "implementation": "共用 active 觸發。可跳過。",
+     "discrepancy": "",
+     "evidence": "同一檔把休息的 001 活動。036 的跳過不活動。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-028",
+   "number": "UA23BT/AOT-1-028",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【レストにする】自分の山札の上から1枚を公開する。公開したカードが必要エナジーが3以下の青のキャラカードの場合、手札に加える。手札に加えなかった場合、公開したカードを",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-028",
+     "implementation": "付費登場後休息，當回合不能啟動。活動後公開頂端。027 進手牌。能量 4 的藍色角色、綠色角色、藍色事件留在頂端且已公開。牌庫空不能啟動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。公開記在 publicReveals。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-028",
+     "implementation": "共用 get。",
+     "discrepancy": "",
+     "evidence": "同一檔的生命觸發：選 get 後這張在手牌。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-029",
+   "number": "UA23BT/AOT-1-029",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "カードを1枚引き、自分の手札を1枚場外に置く。自分のAPカードを1枚まで選び、アクティブにする。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-029",
+     "implementation": "先抽再強制棄，之後才是可跳過的 AP 回復。跳過不活動。選擇會把剛支付而休息的 AP 活動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。棄牌沒有 uid null。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-029",
+     "implementation": "共用 draw。",
+     "discrepancy": "",
+     "evidence": "同一檔選 draw 後手牌加 1。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-030",
+   "number": "UA23BT/AOT-1-030",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-030",
+     "implementation": "recoverAp count 2。可以 0、先 1 再停止、或 2。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-030",
+     "implementation": "只在這張是最後一張生命時提供 final。選擇後牌庫頂成為生命。前面還有生命時不開這個觸發，牌進場外。",
+     "discrepancy": "",
+     "evidence": "同一檔。生命還有 040 時 pending 是 null。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-031",
+   "number": "UA23BT/AOT-1-031",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。カードを2枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-031",
+     "implementation": "lookKeep，after 為 draw2。0 張：兩張到場外，抽的是下面兩張。留 1 張：那張先被抽走，另一張在場外。兩張都留：依選擇順序抽回，場外沒有視窗牌。視窗不進 publicReveals。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。選過一張後 inspected 仍是 2。對手是 null。020 的既有測試仍過。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-031",
+     "implementation": "與 027 相同的共用 active。",
+     "discrepancy": "",
+     "evidence": "生命觸發由 027 代表。這張沒有自己的 triggerEffect。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-032",
+   "number": "UA23BT/AOT-1-032",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "BP3500以下の相手のフロントLのキャラを1枚まで選び、手札に戻す。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-032",
+     "implementation": "3500 可以選，4000 與能量線不行。跳過則都不回。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。018 與 010 只當目標。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-033",
+   "number": "UA23BT/AOT-1-033",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "『BP2000』以下の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ヒストリア・レイス〉がある場合、自分の場外にあるイベントカード1枚につき、この効果で選べるキャラの",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-033",
+     "implementation": "有對象時不能跳過。沒有希斯特莉亞時 2000 可退、2500 不可。對手的希斯特莉亞不算。自己的希斯特莉亞加上 1 張場外事件和正在結算的這張，上限 4000：3500 可退、5000 不可。",
+     "discrepancy": "沒有任何合法對象時，引擎不讓這張事件被使用。",
+     "evidence": "tests/v2-aot-026-050.test.mjs 只測有對象的上限。",
+     "unresolved": ""
+    },
+    {
+     "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-033",
+     "implementation": "共用 special，沒有 BP 上限。可跳過。",
+     "discrepancy": "",
+     "evidence": "同一檔。6000 的 057 在名單裡。跳過不退場。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-034",
+   "number": "UA23BT/AOT-1-034",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈リヴァイ〉がある場合、『BP5000以下』に代わる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-034",
+     "implementation": "沒有里維時 3000 可退、3500 不可，而且不能跳過。精確名字的 007 把上限改成 5000：5000 可退、6000 不可。〈リヴァイ班〉的 013 不算。對象只看對手前線。",
+     "discrepancy": "沒有合法對象時不能使用這張事件。",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-034",
+     "implementation": "與 033 相同的共用 special。",
+     "discrepancy": "",
+     "evidence": "同一檔選 057，該角色退場。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-035",
+   "number": "UA23BT/AOT-1-035",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "相手の場に青か赤のカードがある場合、手札にあるこのカードの必要エナジーを【緑×1】減らす。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-035",
+     "implementation": "手牌能量 3。對手綠色或自己的藍色都不減。對手能量線上的藍色、或前線紅色，減成 2。能量只有 2 時，沒減費不能登場，有減費可以，登場後休息。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。gen 2 是印刷值。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-036",
+   "number": "UA23BT/AOT-1-036",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。このキャラのBP以下の相手のフロントLのキャラを1枚選び、退場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-036",
+     "implementation": "登場回合、退場前 BP 3000 可以退 3000，不能退 3500。先付手牌變成 4000 後，3500 可以退。退過一次後同回合不再提供退場。下一個自己回合、以及不是本回合登場的副本，都沒有退場。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】【手札を1枚場外に置く】このキャラはこのターン中、BP+1000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-036",
+     "implementation": "與退場分開。沒有一次限制。連付兩次是 +2000。手牌空了不能選這段。",
+     "discrepancy": "",
+     "evidence": "同一檔。卡圖的 + 屬於這段。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-036",
+     "implementation": "共用 active。跳過不活動。",
+     "discrepancy": "",
+     "evidence": "生命觸發測試的跳過。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-037",
+   "number": "UA23BT/AOT-1-037",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-037",
+     "implementation": "自己不是對象。前線與能量線的其他角色可以。跳過不加。加值只到這個回合。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-037",
+     "implementation": "與 029 相同的共用 draw。",
+     "discrepancy": "",
+     "evidence": "029 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-038",
+   "number": "UA23BT/AOT-1-038",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【レイド】〈ロッド・レイス〉アクティブにし、フロントLに移動できる【自分のターン中】このキャラはBP+2000。相手のフロントLにアクティブのキャラがある場合、さらに【ダメージ（2",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-038",
+     "implementation": "普通登場 BP 4000、傷害 1、退場不抽，也不能把被彈回手牌當成退場。突襲後自己回合 BP 6000。對手有活動角色時未阻擋傷害 2；該角色休息時傷害 1。對手回合 BP 回到 4000。突襲狀態被效果退場時抽 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。突襲對象是 037。彈回借用 025，不擴大 025 的驗證。",
+     "unresolved": ""
+    },
+    {
+     "match": "【退場時】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-038",
+     "implementation": "普通登場 BP 4000、傷害 1、退場不抽，也不能把被彈回手牌當成退場。突襲後自己回合 BP 6000。對手有活動角色時未阻擋傷害 2；該角色休息時傷害 1。對手回合 BP 回到 4000。突襲狀態被效果退場時抽 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。突襲對象是 037。彈回借用 025，不擴大 025 的驗證。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-038",
+     "implementation": "與 028 相同的共用 get。",
+     "discrepancy": "",
+     "evidence": "028 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-039",
+   "number": "UA23BT/AOT-1-039",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-039",
+     "implementation": "能量 0 與 1 的角色可選，包含能量線。能量 2 與自己不可選，而且不能跳過。場上只剩能量 2 時，這張立刻回手，另一張留下。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-040",
+   "number": "UA23BT/AOT-1-040",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-040",
+     "implementation": "抽 1 後沒有 pending。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。047、049 讓它休息登場時也會抽，那是它自己的登場效果。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-041",
+   "number": "UA23BT/AOT-1-041",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-041",
+     "implementation": "先抽，再強制棄。沒有跳過。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-041",
+     "implementation": "與 029 相同的共用 draw。",
+     "discrepancy": "",
+     "evidence": "029 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-042",
+   "number": "UA23BT/AOT-1-042",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-042",
+     "implementation": "與 027 相同的共用 active。",
+     "discrepancy": "",
+     "evidence": "027 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-043",
+   "number": "UA23BT/AOT-1-043",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-043",
+     "implementation": "與 029 相同的共用 draw。",
+     "discrepancy": "",
+     "evidence": "029 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-044",
+   "number": "UA23BT/AOT-1-044",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-044",
+     "implementation": "impactNull。攻擊方勝出時不結算衝擊傷害，這張仍因落敗退場。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。衝擊來自 048 的可選賦予，不把 048 的前線 BP 句算成已驗證。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-044",
+     "implementation": "與 027 相同的共用 active。",
+     "discrepancy": "",
+     "evidence": "027 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-045",
+   "number": "UA23BT/AOT-1-045",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-045",
+     "implementation": "與 028 相同的共用 get。",
+     "discrepancy": "",
+     "evidence": "028 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-046",
+   "number": "UA23BT/AOT-1-046",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【レストにする】自分の場の［特徴：無垢の巨人］を1枚選び、このターン中、BP+1000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-046",
+     "implementation": "登場當回合是休息，不能啟動。下一個自己回合可以。沒有無垢的巨人不能啟動，休息也不付。有對象時必須選 1 張，自己不是無垢的巨人。能量線上的對象可以。選完後對象 +1000，這張休息。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-046",
+     "implementation": "與 027 相同的共用 active。",
+     "discrepancy": "",
+     "evidence": "027 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-047",
+   "number": "UA23BT/AOT-1-047",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【自分のターン中】自分の場に［特徴：無垢の巨人］が3枚以上ある場合、このキャラはBP+1500。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-047",
+     "implementation": "2 張時 2500。前線加能量線共 3 張時，自己回合是 4000。對手回合回到 2500。這張自己不是無垢的巨人。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】自分の手札から必要エナジーが2以下で消費APが1の［特徴：無垢の巨人］を1枚まで自分の場にレストで登場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-047",
+     "implementation": "可以跳過，牌庫不動。040 可以進前線且休息，它自己的登場抽 1 會發生。能量 3 的 049 不能選。",
+     "discrepancy": "",
+     "evidence": "同一檔。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-048",
+   "number": "UA23BT/AOT-1-048",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場にある［特徴：無垢の巨人］1枚につき、場以外の全ての場所でこのカードの必要エナジーを【緑×1】減らす。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+     "implementation": "沒有巨人時手牌、生命、牌庫、場外、場上都是 7。1 張在能量線時，手牌、生命、場外是 6，場上仍是 7。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【レイド】〈ジーク・イェーガー〉アクティブにし、フロントLに移動できる【登場時】自分の場の［特徴：無垢の巨人］全ては、このターン中、BP+1000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+     "implementation": "能量線突襲會在登場當回合 +1000，下一個自己回合回到印刷值。普通登場不加，也不能啟動框內能力。突襲登場是活動。",
+     "discrepancy": "",
+     "evidence": "同一檔用能量線，避開前線常駐加成。普通登場看 043 維持 2500。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】【ターン1】自分の場の［特徴：無垢の巨人］を1枚まで選び、このターン中、【インパクト（1）】を与える。このキャラがフロントLにある場合、自分の場の［特徴：無垢の巨人］",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+     "implementation": "能量線可以啟動。跳過不給衝擊，而且消耗【ターン1】。選了才得到衝擊（1），BP 不因此再加。同一回合不能再啟動。",
+     "discrepancy": "前線上的 +1000 目前不看有沒有啟動，而且會留到後面的回合。",
+     "evidence": "同一檔只把能量線的衝擊與一次限制當成通過。",
+     "unresolved": ""
+    },
+    {
+     "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+     "implementation": "生命觸發同時有 get 與 raid。場上有 045 且減費後能量足夠時，可以突襲上去。",
+     "discrepancy": "",
+     "evidence": "同一檔選 raid 後，048 在 045 上面。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-049",
+   "number": "UA23BT/AOT-1-049",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【退場時】自分の手札から必要エナジーが2以下で消費APが1の［特徴：無垢の巨人］を1枚まで自分の場にレストで登場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-049",
+     "implementation": "戰鬥落敗會詢問。可以跳過。選能量線時那張休息登場，040 自己的抽 1 會發生。被 032 彈回手牌不是退場，不詢問。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。這批沒有印代替效果的句子。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-1-050",
+   "number": "UA23BT/AOT-1-050",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-050",
+     "implementation": "與 041 相同。所需能量 0。先抽，再強制棄。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-050",
+     "implementation": "與 029 相同的共用 draw。",
+     "discrepancy": "",
+     "evidence": "029 的生命觸發。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-026",
+   "number": "EX10BT/AOT-2-026",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、このキャラは「このキャラはフロントLにある場合もエナジーを発生させる。」を得る。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-026",
+     "implementation": "dist/universal-v2/aot2-continuous.mjs aot2FrontEnergy。兩邊名稱都在場上才讓前線產生印刷的 1 點，休息也算。能量區本來就產生 1。拿掉一邊名稱後前線回到 0。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Jaw Titan。只有一邊時前線 0，兩邊到齊後休息仍是 1，能量區的另一張也是 1。移走吉克後前線回到 0。assertUniversalMatch。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-026",
+     "implementation": "共用 life-trigger draw。觸發卡進場外，抽 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Jaw Titan。翻開後 pending.trigger 是 draw，手牌 +1，觸發卡在場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-027",
+   "number": "EX10BT/AOT-2-027",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-027",
+     "implementation": "aot2-pack.mjs step:true。raid-box 沒有列 027。普通登場在移動階段可以走到空的能量格，主要階段沒有步驟。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Beast Titan。主要階段沒有 step，移動階段有，走到空格後原格空出。",
+     "unresolved": ""
+    },
+    {
+     "match": "【自分のターン中】自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、このキャラはBP+1500。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-027",
+     "implementation": "aot2-continuous.mjs aot2Bp。只在自己回合且兩邊名稱都在時 +1500。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Beast Titan。自己回合 4000，換到對手回合 2500。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-027",
+     "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Beast Titan。這張自己翻開並抽 1，觸發卡進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-028",
+   "number": "EX10BT/AOT-2-028",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、このキャラは「相手のキャラの効果で〔退場せず、BPをマイナスされない〕。」と【2回ブロック】",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028",
+     "implementation": "兩名創始者都在時，第一次阻擋後先轉回活動，再比 BP。choiceBlocked 與退場、減 BP 的選擇只在用途是 retire 或 bpDown 時擋角色效果。enemyFrontAllBpDown 在套用前略過戰鎚。效果目標的減 BP 即使漏進名單也不寫 buff。事件仍可退場。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。第一次阻擋後戰鎚活動、攻擊者休息並留在場上。第二次戰鎚休息。沒有兩邊名稱時第一次就休息。 tests/v2-aot2-026-050.test.mjs：War Hammer。突襲 013 的退場選不到，039 在始祖都在時選不到、拿掉一邊後可以選。 tests/v2-aot2-026-050.test.mjs：War Hammer。037 可以選戰鎚並把它退到場外。 tests/v2-aot2-026-050.test.mjs。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000。改選一張時名單沒有戰鎚。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028",
+     "implementation": "共用 life-trigger active。與 029 同一路徑：選 1 張角色轉活動並 BP+3000 到回合結束。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 028 的 trigger 是 active，並用 029 走同一結算：休息的 2500 變成活動且 BP 5500。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-029",
+   "number": "EX10BT/AOT-2-029",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、手札にあるこのカードの必要エナジーを【黄×2】減らす。このカードはエナジーLに登場できない。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-029",
+     "implementation": "aot2EnergyCut 只在手牌且兩邊名稱都在時 -2。energyLineForbidden 擋登場、突襲與移入能量區。AOT2_FRONT_PENALTY 含 029。printedAttackDamage 2。卡面沒有寫活動登場，付費普通登場休息。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Colossal Titan。沒有始祖時手牌費用 9、不能打；兩邊都在時手牌 7、能量區沒有登場行動。登場後休息，前線上限 3。下一自己回合攻擊造成 2 點，生命 3 變 1。兩張減上限同時在場時，下一行動必須移走多餘的一張。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-029",
+     "implementation": "共用 life-trigger active。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Colossal Titan。這張自己翻開，選休息的 001 後轉活動且 BP 5500。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-030",
+   "number": "EX10BT/AOT-2-030",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】【退場時】自分の山札の上から2枚を公開する。その中からカード名に「ジーク」を含むカードを1枚まで手札に加える。残りを場外に置く。手札に加えた場合、自分の手札を1枚場外に置",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-030",
+     "implementation": "aot2-runtime.mjs AOT-2-030。登場與退場走同一段。publish 在選擇前把整窗寫進 publicReveals。可選 0。選了才棄 1，剛加入的牌可以棄。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Ksaver。登場選 0 時整窗已公開、兩張都進場外、手牌不棄。選 1 張吉克後只多公開那張進手牌的紀錄，另一張進場外，再棄剛抽到的那張。退場用 049 打出後，待處理是 030 的公開窗，選 0 才把那張退到場外。雙方公開視圖一致。001–025 的 Ksaver 測試仍通過。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-030",
+     "implementation": "共用 life-trigger active。與 029 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 active，並用 029 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-031",
+   "number": "EX10BT/AOT-2-031",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場にカード名に「イェーガー」を含むキャラがある場合のみこのフィールドは登場できる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-031",
+     "implementation": "aot2CannotPlay 擋沒有耶格爾的登場。onPlay 是共用 searchTopOneBottomDiscard，沒有 revealWindow，只在選中時以 searched-to-hand 公開。選 0 只排序，不棄牌。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Founding Ymir。沒有耶格爾不能登場。選繼承者後對方看不到視窗，只有選中的牌公開，其餘在牌庫底且仍隱藏，然後棄剛加入的那張。選 0 後整窗隱藏、牌庫底順序由玩家排、手牌不棄。001–025 的私人查看測試仍通過。",
+     "unresolved": ""
+    },
+    {
+     "match": "【登場時】自分の山札の上から4枚見る。その中から［特徴：巨人継承者］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-031",
+     "implementation": "aot2CannotPlay 擋沒有耶格爾的登場。onPlay 是共用 searchTopOneBottomDiscard，沒有 revealWindow，只在選中時以 searched-to-hand 公開。選 0 只排序，不棄牌。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Founding Ymir。沒有耶格爾不能登場。選繼承者後對方看不到視窗，只有選中的牌公開，其餘在牌庫底且仍隱藏，然後棄剛加入的那張。選 0 後整窗隱藏、牌庫底順序由玩家排、手牌不棄。001–025 的私人查看測試仍通過。",
+     "unresolved": ""
+    },
+    {
+     "match": "【起動メイン】【レストにする】 【手札を2枚場外に置く】 【APを1支払う】自分の場外から必要エナジーが2以下でカード名に「イェーガー」を含む黄のキャラカードを1枚自分の場にレスト",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-031",
+     "implementation": "legalAot2Activations 要求手牌至少 2、有 AP、場外有合法角色。先休息再棄正好 2 張，沒有 done。doEnter 不跳過登場時。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Founding Ymir。休息並付 1 AP，棄 2 張手牌。024 可以休息進指定格，場外的非耶格爾不能選。024 接著提供場外登場才有的抽牌。",
+     "unresolved": ""
+    },
+    {
+     "match": "【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-031",
+     "implementation": "triggerProfile 對 031 是 restOppFrontSkipNextActive，不是 050 的登場。colorRestSkip 休息對方前線，並給 skipNextActive。結束階段的重整消耗這一次，角色維持休息，下一自己開始階段才活動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Founding Ymir。翻開後是 color，沒有登場選項。選 colorRestSkip 後目標休息，對手開始階段仍休息，再回到自己開始階段才活動。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
    "cardId": "AOT-2-032",
    "number": "EX10BT/AOT-2-032",
-   "covers": "查看 7 張。〈始祖ユミル〉最多 1 張公開並加入手牌。其餘任意順序放回牌庫底。",
-   "status": "已驗證",
-   "change": "這句是「見る」再公開選中的卡。選擇前不再把 7 張寫進 publicReveals。",
-   "evidence": "tests/v2-aot2-001-025.test.mjs。合法退掉黃色吉克並跳過擊退後選查看。選擇前對手看不到 7 張。沒有始祖尤米爾、或選 0 張時，7 張放回牌庫底且不公開。選中後只有那張在公開紀錄。JSON 往返後雙方畫面一致。",
-   "remaining": "退掉自己的吉克、擊退對手，以及從場外休息登場沒有突襲的吉克，這次沒有重跑。生命區【特別】也沒有核。整張卡不標已驗證。"
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場のカード名に「ジーク」を含む黄のキャラを1枚退場させる。そうした場合、BP5000以下の相手のフロントLのキャラを1枚まで選び、退場させ、以下から1つまで選ぶ。・自分の山札",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-032",
+     "implementation": "yellowZeke 用包含而不是完全一致，所以獸之巨人是祭品。綠色的〈ジーク・イェーガー〉不是。對方退場可選 0。cap 加上 069 的站立範圍。 rumbleFollow 有 done。查看用 beginLook，沒有 revealWindow。登場只收完全一致、黃色、沒有 raidName 或 raid 觸發的吉克。手牌裡的尤米爾不算在場或場外。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Ksaver watch。沒有黃吉克不能使用。綠吉克不在祭品裡，黃的 023 與 025 在。set2 的三個 032 測試仍通過，包含站立範圍打到 6000、跳過對方退場後仍開尤米爾、以及點選的格子。 tests/v2-aot2-026-050.test.mjs：Ksaver watch。尤米爾在能量區時，選 deploy 可以登場 024，綠吉克與有突襲的 025 不行，也可以選 0。手牌裡的尤米爾不開登場。001–025 的私人 7 張查看仍只公開選中的牌。",
+     "unresolved": ""
+    },
+    {
+     "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-032",
+     "implementation": "triggerProfile special 是 retireOppFront，沒有 BP 上限。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Ksaver watch。攻擊者翻到這張後，special 退掉對方前線的 004。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-033",
+   "number": "EX10BT/AOT-2-033",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-033",
+     "implementation": "共用 recoverAp count 2。第一次選 null 會整段放棄。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：two AP events。選 null 後兩張休息的 AP 仍休息。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-033",
+     "implementation": "生命空了才開 final。選了之後把牌庫頂放進生命，觸發卡不回生命。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：two AP events。生命 0 時翻開 033，選 final 後生命是原來的牌庫頂。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-034",
+   "number": "EX10BT/AOT-2-034",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "このカードは自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがあり、自分の手札が他に2枚以上ある場合のみ使用できる。自分の手札を全て場外に置く。BP50",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-034",
+     "implementation": "aot2CannotPlay 檢查兩個名稱與手牌張數。rumbleRemain 一張一張退，030 的公開選擇插在中間。全部退完才寫 aot2AttackOnly，而且只在同一個 turn 有效。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Rumbling。手牌只剩事件加 1 張時不能使用。打出後手牌清空，030 的公開窗先出現且攻擊限制還沒寫上，選完才退掉 5000 以下，6000 留下。終尾可以攻擊，另一張不行。下一自己回合另一張可以攻擊。set2 沒有 030 的地鳴測試仍通過。LIFE 對照確認 trigger 是 null。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-035",
+   "number": "EX10BT/AOT-2-035",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-035",
+     "implementation": "共用 recoverAp count 2。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：two AP events。035 連續選兩張休息的 AP，加上支付時休息的那張，共兩張回到活動。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-035",
+     "implementation": "與 033 同一條 final。trigger 是 final 就走引擎的空生命補牌，不看卡號。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 035 的 trigger 是 final，並用 033 走同一結算。",
+     "unresolved": ""
+    }
+   ]
   },
   {
    "cardId": "AOT-2-036",
    "number": "EX10BT/AOT-2-036",
+   "round": 7,
    "clauses": [
     {
-     "match": "山札の上から5枚見る",
+     "match": "自分の山札の上から5枚見る。その中から［特徴：地鳴らし］以外の異なるカード名のキャラカードをそれぞれ1枚ずつ合計3枚まで公開し手札に加える。残りを望む順で山札の下に置く。",
      "status": "已驗證",
-     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-036 。5枚を見て、地鳴らし以外の異なるカード名のキャラを合計3枚まで公開し手札。残りは任意順で下。",
-     "implementation": "aot2-runtime.mjs AOT-2-036 beginLook。視窗私人。finishLook 只公開選中的卡。同名第二張不能再選。",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-036",
+     "implementation": "beginLook，distinct，沒有 revealWindow。只公開選中的牌。本輪沒有改這段。",
      "discrepancy": "",
-     "evidence": "tests/v2-aot2-001-025.test.mjs。選擇前控制者看得到 5 張，對手公開畫面沒有。選 0 張或 5 張都是地鳴時不公開，並依序放回牌庫底。選了三個不同卡名後，公開紀錄只有那三張；同名第二張與地鳴角色仍不公開。JSON 往返後雙方畫面一致。assertUniversalMatch。",
+     "evidence": "tests/v2-aot2-001-025.test.mjs：rescue publishes only the distinct chosen characters，以及 Ksaver publishes the whole top two, while Ymir and the rescue stay private。本輪回歸仍通過。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-036",
+     "implementation": "共用 life-trigger draw。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：rescue life。這張自己翻開並抽 1，觸發卡進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-037",
+   "number": "EX10BT/AOT-2-037",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場に［特徴：地鳴らし］以外の黄のキャラのカード名が4種類以上ある場合、手札にあるこのカードの消費APを-1する。『BP5000以下』の相手のフロントLのキャラを1枚選び、退場",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-037",
+     "implementation": "aot2HandApCut 減的是 AP，能量仍是 4。aot2YellowNames 跳過地鳴らし。retireOffer 不可跳過。cap 加上 069。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：everyone together。三種名稱、1 點 AP 不能打。第四種之後可以。沒有米卡莎時 1500 可退、6000 不可。有〈ミカサ・アッカーマン〉時 6000 可退。一張 069 把 5000 的上限抬到剛好打中 6000。",
+     "unresolved": ""
+    },
+    {
+     "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-037",
+     "implementation": "與 032 同一條 retireOppFront。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 special，並用 032 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-038",
+   "number": "EX10BT/AOT-2-038",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-038",
+     "implementation": "共用 buffOwnField，optional、excludeSelf、untilTurn。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Hange。選 0 時對方維持 1500。選了之後 2500，下一自己開始階段回到 1500。LIFE 對照確認 trigger 是 null。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-039",
+   "number": "EX10BT/AOT-2-039",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】BP2500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-2000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-039",
+     "implementation": "共用 enemyBpDown，optional、minBp 2500、untilTurn。用當下 BP，並走 choiceBlocked。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Hange。選 0 時 4000 不變。選了之後 2000，下一自己開始階段回到 4000。戰鎚在始祖都在時不在選項裡。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-039",
+     "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-040",
+   "number": "EX10BT/AOT-2-040",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【レストにする】 【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+【青】。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-040",
+     "implementation": "activeFrontBesides 在休息前就要成立。沒有另一張活動前線時不能啟動。選項沒有 done。能量加成只在能量區計入。每張實體各一次。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Levi rests。前線沒有其他活動角色時不能啟動，自己仍活動。休息另一張後，能量區的這張從 1 變 2，同一張再啟動不合法。第二張複本可以再做一次。人在前線時加成是 0。LIFE 對照確認 trigger 是 null。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-041",
+   "number": "EX10BT/AOT-2-041",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-041",
+     "implementation": "aot2-pack.mjs impactNull。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Levi may pay。在前線時 universalImpactNull 為真。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アタック時】APを1支払ってもよい。そうした場合、自分の場のキャラを2枚まで選び、このターン中、BP+1500。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-041",
+     "implementation": "先 skip 或 pay。沒有活動 AP 不開選擇。付了之後可以 done，或選最多 2 張，包含自己。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Levi may pay。沒有 AP 時沒有 payBuff。skip 不扣 AP、BP 不變。pay 之後選 done，兩張都維持原 BP。pay 之後選自己與另一張，各 +1500。下一自己開始階段回到印刷值。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-041",
+     "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-042",
+   "number": "EX10BT/AOT-2-042",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【レイド】〈リヴァイ〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。その後、自分の手札を1枚場外に置いてもよい。そうした場合、自分のAPカードを1枚まで選び、ア",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-042",
+     "implementation": "raid-box 列 onPlay。programJobs 只在表側突襲時跑。普通登場不抽、不開棄牌。棄牌選 done 就不轉 AP。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：raid Levi。普通登場後沒有待處理、手牌張數不變、角色休息。突襲後抽 1，棄牌選擇存在。選 done 後沒有活動 AP。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アタック時】APを1支払ってもよい。そうした場合、以下から1つ選ぶ。・カードを1枚引き、このキャラはこのターン中、BP+1000。・このキャラはこのターン中、BP+1000と【イ",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-042",
+     "implementation": "onAttack 只在突襲狀態出現。skip 不付。draw 與 impact 都先付 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：raid Levi。普通登場的下一自己回合攻擊不開 042。突襲後 skip 不扣 AP、BP 仍 4000。再攻擊選 draw，手牌 +1、BP 5000、衝擊 0。另一場選 impact，BP 5000、衝擊 1、牌庫不減。",
+     "unresolved": ""
+    },
+    {
+     "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-042",
+     "implementation": "共用 life-trigger raid。可以拿去手牌，或突襲到合法的〈リヴァイ〉上。突襲後登場時仍會問棄牌。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：raid Levi。翻開後 pending 是 raid，get 與突襲到 040 都在。選突襲後這張活動，040 在它下面。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-043",
+   "number": "EX10BT/AOT-2-043",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-043",
+     "implementation": "共用 drawDiscard。剛抽到的牌可以棄。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Sasha。抽 1 後必須棄 1，牌張守恆。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-043",
+     "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-044",
+   "number": "EX10BT/AOT-2-044",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【起動メイン】【レストにする】自分の場外にイベントカードが6枚以上ある場合のみ発動できる。自分の場の他の［特徴：104期兵］を1枚選び、このターン中、BP+1000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-044",
+     "implementation": "events 只數 type event。沒有 done。能量區也可以啟動。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Historia rests。5 張事件不能啟動。6 張真實事件後必須選另一張 104，不能選自己。BP 4000，下一自己開始階段回到 3000。LIFE 對照確認 trigger 是 null。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-045",
+   "number": "EX10BT/AOT-2-045",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】以下から1つ選ぶ。・カードを1枚引き、自分の手札を1枚場外に置く。・自分の場外にイベントカードが2枚以上ある場合、カードを1枚引く。・自分の場外にイベントカードが6枚以上",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-045",
+     "implementation": "d1、d2、d6 依場外事件數出現。棄牌是 aot2 的 discard，不是共用 effect-discard。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Historia chooses。0 張只有 d1，抽 1 後必須棄。2 張有 d2、沒有 d6，抽 1 不棄。6 張選 d6，牌庫少 2，然後棄 1。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-045",
+     "implementation": "共用 life-trigger active。與 029 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 active，並用 029 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-046",
+   "number": "EX10BT/AOT-2-046",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の場外にあるイベントカードの枚数により、このキャラは以下の効果を全て得る。・2枚以上：BP+1000。・4枚以上：【インパクト無効】（このキャラとバトルをしたキャラはこのバトル",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-046",
+     "implementation": "passiveBonuses 看場外事件張數。事件離開場外就消失。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Mikasa。0 張是 2000 且沒有衝擊無效。2 張是 3000 仍沒有。4 張才有。把事件移回牌庫、場外少於 2 張後回到 2000 且衝擊無效消失。牌張守恆。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-046",
+     "implementation": "共用 life-trigger active。與 029 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 active，並用 029 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-047",
+   "number": "EX10BT/AOT-2-047",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【登場時】自分の山札の上から2枚見る。その中からイベントカードを1枚まで場外に置く。残りを望む順で山札の上に置く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-047",
+     "implementation": "beginLook，reveal false，to outside，rest top。視窗沒有事件就直接排順序。選 1 張後單張剩餘直接放回。未選的牌不進 publicReveals。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Armin。選 1 張事件後它在場外且公開，另一張在牌庫頂且對方看不到。選 0 時兩張都隱藏，並由玩家排回牌庫頂。沒有事件時直接排順序。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-047",
+     "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-048",
+   "number": "EX10BT/AOT-2-048",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "自分の山札の上から4枚見る。その中からキャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。その後、自分の手札から必要エナジーが3以下で消費APが1の青のキャラカ",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-048",
+     "implementation": "共用 searchTopOneBottomDiscard，discard false，所以不棄手牌。選完或放棄後先排剩餘，再 deployBlue。登場不跳過登場時。能量 4 的藍角色不能選。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：candy。視窗在選擇前只有自己看得到。選角色後只公開那張，先排其餘再登場。剛加入的 038 可以休息進場，039 不行。放棄搜尋後整窗仍隱藏，手牌裡的 040 仍可以登場，也可以選 0。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-048",
+     "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-049",
+   "number": "EX10BT/AOT-2-049",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "BP2500以下かBP4500以上の相手のフロントLのキャラを1枚選び、退場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-049",
+     "implementation": "n<=cap(2500) 或 n>=4500。沒有 done。4500 的下限不減。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Thunder Spear。2500 可退，3500 與 4000 不可，而且沒有 done。一張 069 之後 3500 可退、4000 仍不可、6000 可退。set2 的 standing BP range 測試仍通過，上限上升且不消耗。LIFE 對照確認 trigger 是 null。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "AOT-2-050",
+   "number": "EX10BT/AOT-2-050",
+   "round": 7,
+   "clauses": [
+    {
+     "match": "【アタック時】自分の場の他の［特徴：マーレの戦士］を1枚まで選び、『このターン中、BP+1000』。選んだキャラがレイド状態の場合、『そのキャラとこのキャラはこのターン中、BP+2",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-050",
+     "implementation": "raidBuff。自己不是目標。done 不加。突襲加值取代而不是疊加，到這個回合結束。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Gabi。選 done 時另一名戰士維持 2500。選非突襲的戰士時對方 3500、自己 2000，下一開始階段回到 2500。突襲中的 053 變成 6000，自己 4000，下一開始階段自己回到 2000。",
+     "unresolved": ""
+    },
+    {
+     "match": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-050",
+     "implementation": "triggerProfile 是 deployHandCharacter，color green、maxEnergy 2、ap 1。色觸發登場自己把 ready 設成 true。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：Gabi。能量 0 的 AOT-1-045 可以登場到前線並活動。能量 3 的 AOT-1-047 不在選項。觸發卡不回生命。",
      "unresolved": ""
     }
    ]

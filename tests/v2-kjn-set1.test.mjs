@@ -218,6 +218,24 @@ test('Q2434 may put Aurora on the deck top, and Q2435 a silenced copy stays outs
  assert.equal(quiet.players[1].outside.some(c=>c.uid===victim.uid),true);
  assert.equal(quiet.players[1].deck.some(c=>c.uid===victim.uid),false);
  assertUniversalMatch(packs,quiet);
+
+ let life=toPhase(fresh(counts,24342),'attack');
+ const hitter=put(life,0,'KJN-1-012','front',0,true);
+ put(life,0,'KJN-1-008','energy',0,true);
+ const revealed=take(life,1,'KJN-1-004');
+ while(life.players[1].life.length)life.players[1].deck.push(life.players[1].life.pop());
+ life.players[1].life.unshift(revealed,take(life,1,'KJN-1-001'));
+ life=use(life,{type:'attack',uid:hitter.uid});
+ life=choose(life,a=>a.type==='chooseBlock'&&a.uid===null);
+ assert.equal(life.pending.kind,'life-trigger');
+ assert.equal(life.pending.step===undefined||life.pending.step!=='deckTop',true);
+ life=choose(life,a=>a.mode==='skip');
+ assert.equal(life.pending.kind,'kjn');
+ assert.equal(life.pending.step,'deckTop');
+ life=choose(life,a=>a.mode==='top');
+ assert.equal(life.players[1].deck[0].uid,revealed.uid);
+ assert.equal(life.players[1].outside.some(c=>c.uid===revealed.uid),false);
+ assertUniversalMatch(packs,life);
 });
 
 test('Elizabeth cannot move to the front while a facedown remains, then her effect can',()=>{

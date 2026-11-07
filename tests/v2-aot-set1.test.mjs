@@ -179,8 +179,11 @@ test('Zeke discounts off-field energy and a raided copy buffs pure titans',()=>{
  assert.equal(zoneRequiredEnergy(packs,s,0,zeke,'field'),7);
  const titan=s.players[0].front[0];
  assert.equal(universalBp(packs,s,titan),pack.cards['AOT-1-040'].bp);
- stackRaid(s,0,'AOT-1-048','AOT-1-045','front',1);
- assert.equal(universalBp(packs,s,titan),pack.cards['AOT-1-040'].bp+1000);
+ const zekeCard=stackRaid(s,0,'AOT-1-048','AOT-1-045','front',1);
+ assert.equal(universalBp(packs,s,titan),pack.cards['AOT-1-040'].bp);
+ s=use(s,{type:'activate',uid:zekeCard.uid,mode:'aot:AOT-1-048'});
+ s=use(s,legalUniversalActions(packs,s).find(a=>a.mode==='skip'));
+ assert.equal(universalBp(packs,s,s.players[0].front[0]),pack.cards['AOT-1-040'].bp+1000);
  assertUniversalMatch(packs,s);
 });
 

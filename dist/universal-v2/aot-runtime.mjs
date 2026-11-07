@@ -640,6 +640,11 @@ function main048(pack,s,job){
  const key=c.uid+'|AOT-1-048';
  if(used(s,key))return;
  use(s,key);
+ // The front BP sentence is part of this activation, checked when it
+ // resolves, and lasts this turn. A face-up raid on the front does not
+ // grant it before the ability is used. The energy line can still grant Impact.
+ if(lineOf(s,job.owner,c)==='front')
+  for(const t of fieldCards(s,job.owner))if(trait(pack,t,PURE))buff(s,t,1000);
  const targets=fieldCards(s,job.owner).filter(x=>trait(pack,x,PURE));
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'impact48'},[
   {type:'aot',mode:'skip'},
@@ -1265,24 +1270,10 @@ export function resolveAotPending(pack,s,action){
  throw Error('Attack on Titan could not resolve '+q.step);
 }
 
-function underCap(job,c,cap,pack,s){
- return !!c&&A.bp(pack,s,c)<=cap&&(!job.payable||job.payable(c));
-}
-export function aotMandatoryTargets(pack,s,owner,job){
- arm(pack);
- if(job.id==='AOT-1-033'){
-  const cap=cap033(pack,s,owner)+rangeExtra(s,owner);
-  return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
- }
- if(job.id==='AOT-1-034'){
-  const cap=(fieldCards(s,owner).some(c=>exact(pack,c,LEVI,s))?5000:3000)+rangeExtra(s,owner);
-  return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
- }
- if(job.id==='AOT-1-066'){
-  const cap=(fieldCards(s,owner).some(c=>contains(pack,c,ZIKE,s))?5000:3000)+rangeExtra(s,owner);
-  return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
- }
- if(job.id==='AOT-1-063')return plOf(s,owner).deck.length>0;
+export function aotMandatoryTargets(){
+ // 「1枚選び」 on AOT-1-033, 034, 063 and 066 is the effect, not a cost.
+ // Zero legal cards still uses the event. A real target stays mandatory
+ // inside offerRetire / the look, which this gate no longer pre-empts.
  return true;
 }
 export function aotRaidCut(pack,s,owner,definition){

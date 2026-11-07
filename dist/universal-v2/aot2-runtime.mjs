@@ -311,7 +311,7 @@ function retireThen(s,who,line,slot,follow,opts={}){
 function retireOffer(s,spec,cards,optional,data,zone='opp'){
  const src=spec.sourceUid?selfOf(s,spec.player,spec.sourceUid):null;
  const type=src?def(A.pack,src).type:'event';
- const legal=cards.filter(c=>!A.blocked||!A.blocked(A.pack,s,spec.player,c.uid,type));
+ const legal=cards.filter(c=>!A.blocked||!A.blocked(A.pack,s,spec.player,c.uid,type,'retire'));
  if(!legal.length)return false;
  hold(s,{...spec,step:'retire',data:data||null},[
   ...(optional?[act('done')]:[]),
