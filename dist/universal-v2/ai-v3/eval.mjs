@@ -25,36 +25,164 @@ function colorsOf(pack,state,player){
  try{return universalEnergyByColor(pack,state,player)||{};}
  catch{return {};}
 }
+const DECK_LOOK=new Set(['peekTopOrBottom','peekTopOne','draw','searchTopUpToTwoBottom','searchTopOneBottomDiscard','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside']);
+function onPlay(printed){
+ const list=printed?.effects?.onPlay;
+ return Array.isArray(list)?list:[];
+}
+function readyAp(state,player){
+ return (state?.players?.[player]?.apCards||[]).filter(item=>item?.ready).length;
+}
+// A generator whose on-play is an optional discard, then a look at the deck.
+// A gated discard, or a draw that does not ask for a discard, is not this chain.
+export function sequencedFilter(printed){
+ if(!printed||printed.type!=='character'||!(printed.gen>0))return false;
+ return onPlay(printed).some(effect=>effect?.op==='discardGate'&&effect.optional!==false&&!effect.when&&
+  (effect.then||[]).some(step=>DECK_LOOK.has(step?.op)&&!step?.when));
+}
+export function lineSwitchBody(printed){
+ if(!printed||printed.type!=='character')return false;
+ if(printed.frontForbidden)return true;
+ return onPlay(printed).some(effect=>effect?.op==='moveOtherAcrossOrRemove'&&!effect.when);
+}
+function plainGenerator(printed){
+ return printed?.type==='character'&&printed.gen>0&&onPlay(printed).length===0;
+}
+function developingDraw(printed){
+ return printed?.type==='character'&&(printed.gen||0)>=2&&
+  onPlay(printed).some(effect=>effect?.op==='draw'&&!effect.when);
+}
+export function recoversActionPoints(printed){
+ return (printed?.type==='event')&&onPlay(printed).some(effect=>effect?.op==='recoverAp'&&(effect.count||0)>=2);
+}
+function sameCostFilters(hand,catalog,printed,card){
+ const cost=Number(printed.energy)||0;
+ return hand.filter(other=>other&&other.uid!==card?.uid&&sequencedFilter(catalog[other.cardId])&&
+  catalog[other.cardId].color===printed.color&&(Number(catalog[other.cardId].energy)||0)===cost);
+}
+function gainedFromFilters(hand,catalog,printed,card,have,ready,slots){
+ let gained=0,ap=ready,room=slots;
+ const extras=hand.filter(other=>other&&other.uid!==card?.uid&&sequencedFilter(catalog[other.cardId])&&
+  catalog[other.cardId].color===printed.color)
+  .map(other=>catalog[other.cardId])
+  .sort((a,b)=>(Number(a.energy)||0)-(Number(b.energy)||0));
+ for(const body of extras){
+  if(ap<=0||room<=0)break;
+  if((Number(body.energy)||0)>have+gained)continue;
+  gained+=body.gen||0;
+  ap-=Number.isInteger(body.ap)?body.ap:1;
+  room-=1;
+ }
+ return have+gained;
+}
+function reachableDevelopment(state,player,printed,card,hand,catalog,colors,ready){
+ const cost=Number(printed.energy)||0;
+ const have=colors[printed.color]||0;
+ if(cost<=have)return true;
+ const slots=(state.players?.[player]?.energy||[]).filter(slot=>!slot).length;
+ return gainedFromFilters(hand,catalog,printed,card,have,ready,slots)>=cost;
+}
+function filterSource(state,player,catalog){
+ const pending=state?.pending;
+ if(pending?.kind!=='effect-discard-gate'||pending.player!==player||!pending.sourceUid)return null;
+ const mine=state.players?.[player];
+ const source=[...(mine?.energy||[]),...(mine?.front||[]),...(mine?.resolvingEvents||[]),...(mine?.hand||[])]
+  .find(body=>body?.uid===pending.sourceUid);
+ const printed=source&&catalog[source.cardId];
+ return sequencedFilter(printed)?printed:null;
+}
 // What the discard window should hold onto. A payable generator is the energy
 // plan while something in hand still cannot be paid. A cheap body we can play
 // this turn stays. An event is worth keeping only when it can be paid at a
 // live opposing front; a duplicate is the easier copy to spend. Raid material
 // already on our side stays above all of those.
+// A plain generator is not that plan once two other cards of the same cost and
+// color already look at the deck. While one of those looks is being paid and
+// the hand can still reach a line-switch or a double-energy draw, that card,
+// the next look, and a refund already in hand stay above one-cost fuel. Raid
+// material is not fuel, and similar energy does not make a card the raid base.
+// A gate with no such follow-up still spends an unaffordable event first.
 export function keepScore(pack,state,player,card){
- const printed=packOf(pack,player).cards[card?.cardId];
+ const catalog=packOf(pack,player).cards;
+ const printed=catalog[card?.cardId];
  if(!printed)return 0;
  let score=(Number(printed.bp)||0)/400+(printed.gen||0)*2+raidMaterialValue(pack,state,player,card);
  const colors=colorsOf(pack,state,player);
  const have=colors[printed.color]||0;
  const cost=Number(printed.energy)||0;
  const payable=cost<=have;
- const ready=(state.players?.[player]?.apCards||[]).filter(item=>item?.ready).length;
+ const ready=readyAp(state,player);
  const hand=state.players?.[player]?.hand||[];
- const catalog=packOf(pack,player).cards;
  let stranded=0;
  for(const other of hand){
   const body=catalog[other?.cardId];
   if(body&&(Number(body.energy)||0)>(colors[body.color]||0))stranded++;
  }
- if(payable&&printed.gen>0&&stranded>0)score+=6;
- if(payable&&printed.type==='character'&&cost<=1&&ready>0)score+=3;
+ const covered=plainGenerator(printed)&&sameCostFilters(hand,catalog,printed,card).length>=2;
+ if(!covered&&payable&&printed.gen>0&&stranded>0)score+=6;
+ if(!covered&&payable&&printed.type==='character'&&cost<=1&&ready>0)score+=3;
  if(printed.type==='event'){
   const foes=(state.players?.[1-player]?.front||[]).filter(Boolean);
   if(payable&&foes.length)score+=6;
  }
  const copies=hand.filter(other=>other?.cardId===card.cardId).length;
  if(copies>1)score-=Math.min(3,copies-1);
+ if(filterSource(state,player,catalog)){
+  const keeper=sequencedFilter(printed)||lineSwitchBody(printed)||developingDraw(printed)||recoversActionPoints(printed);
+  const chain=hand.some(other=>{
+   const body=catalog[other?.cardId];
+   return (lineSwitchBody(body)||developingDraw(body))&&
+    reachableDevelopment(state,player,body,other,hand,catalog,colors,ready);
+  });
+  if(chain&&keeper&&reachableDevelopment(state,player,printed,card,hand,catalog,colors,ready))score+=16;
+  if(chain&&!keeper&&raidMaterialValue(pack,state,player,card)<=0&&
+   printed.type==='character'&&payable&&cost<=1)score-=16;
+ }
  return score;
+}
+// The private peek has already shown this top card. Rank keeping it only when
+// the refund can be paid now. The cards under it stay unread.
+export function payableRefundOnTop(pack,state,player){
+ if(state?.pending?.kind!=='private-top-place'||state.pending.player!==player)return false;
+ const top=state.players?.[player]?.deck?.[0];
+ const printed=top&&packOf(pack,player).cards[top.cardId];
+ if(!recoversActionPoints(printed))return false;
+ const have=colorsOf(pack,state,player)[printed.color]||0;
+ const ap=Number.isInteger(printed.ap)?printed.ap:1;
+ return (Number(printed.energy)||0)<=have&&ap<=readyAp(state,player);
+}
+// Playing this filter to energy is what makes a line-switch in hand payable.
+export function filterEnergyFirst(pack,state,player,action){
+ if(action?.type!=='play'||action.line!=='energy'||!action.uid)return false;
+ const catalog=packOf(pack,player).cards;
+ const hand=state.players?.[player]?.hand||[];
+ const card=hand.find(item=>item?.uid===action.uid);
+ const printed=card&&catalog[card.cardId];
+ if(!sequencedFilter(printed))return false;
+ const pay=Number.isInteger(printed.ap)?printed.ap:1;
+ if(readyAp(state,player)-pay<1)return false;
+ const have=colorsOf(pack,state,player)[printed.color]||0;
+ const slots=(state.players?.[player]?.energy||[]).filter(slot=>!slot).length;
+ const reach=gainedFromFilters(hand,catalog,printed,null,have,readyAp(state,player),slots);
+ return hand.some(other=>{
+  if(!other||other.uid===card.uid)return false;
+  const body=catalog[other.cardId];
+  if(!lineSwitchBody(body)||body.color!==printed.color)return false;
+  const cost=Number(body.energy)||0;
+  return cost>have&&cost<=reach;
+ });
+}
+// The last action point can still play the line-switch once the filters have
+// raised its color. A freshly played body is not given a block from this rank.
+export function lastApLineSwitch(pack,state,player,action){
+ if(action?.type!=='play'||action.line!=='energy'||!action.uid)return false;
+ if(readyAp(state,player)!==1)return false;
+ const catalog=packOf(pack,player).cards;
+ const card=(state.players?.[player]?.hand||[]).find(item=>item?.uid===action.uid);
+ const printed=card&&catalog[card.cardId];
+ if(!lineSwitchBody(printed))return false;
+ const have=colorsOf(pack,state,player)[printed.color]||0;
+ return (Number(printed.energy)||0)<=have;
 }
 function lifeScore(n){
  if(n<=0)return -90000;

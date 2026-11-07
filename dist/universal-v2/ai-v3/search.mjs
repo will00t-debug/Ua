@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferEarlyDraw} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -617,7 +617,7 @@ export function chooseAiV3Action(pack,state,options={}){
   // every line that has not won.
   if(!provenWin&&(!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
-   const kept=holdSurvival(choice,preferEarlyDraw(pack,state,actor,placed,scored),scored);
+   const kept=holdSurvival(choice,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -634,7 +634,7 @@ export function chooseAiV3Action(pack,state,options={}){
    },started);
   }
   if(!scored.length){
-   const backupOnly=preferEarlyDraw(pack,state,actor,keptEnergy(pack,state,actor,legal,reliableChoice(pack,state,actor,legal,hardExact,ordered),null,strategy),[]);
+   const backupOnly=preferConfirmedChoices(pack,state,actor,keptEnergy(pack,state,actor,legal,reliableChoice(pack,state,actor,legal,hardExact,ordered),null,strategy),[]);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -658,7 +658,7 @@ export function chooseAiV3Action(pack,state,options={}){
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
   const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
-  let kept=holdSurvival(exact,preferEarlyDraw(pack,state,actor,placed,scored),scored);
+  let kept=holdSurvival(exact,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished
   // scores are not a reason to throw away the card the keep-order retains.

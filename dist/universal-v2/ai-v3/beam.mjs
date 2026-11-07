@@ -3,7 +3,7 @@
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
 import {dispatchUniversalAction} from '../engine.mjs';
-import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded} from './eval.mjs';
+import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded,filterEnergyFirst,lastApLineSwitch,recoversActionPoints,payableRefundOnTop} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
 import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal} from './strategy.mjs';
@@ -46,6 +46,11 @@ function byText(a,b){
 function actionRank(pack,state,viewer,action,strategy){
  let score=archetypeRank(pack,state,viewer,action)+combatRank(pack,state,viewer,action)+
   (strategy==='order'?strategyOrder(pack,state,viewer,action):0);
+ if(action?.type==='event'&&action.uid){
+  const card=(state.players?.[viewer]?.hand||[]).find(item=>item?.uid===action.uid);
+  const printed=card&&packOf(pack,viewer).cards[card.cardId];
+  if(recoversActionPoints(printed))score+=6;
+ }
  // The default order never sees the strategy switch. A move that strips a
  // color the hand and curve still need has to fall behind passing here too,
  // or an unfinished search keeps the old move-first backup.
@@ -55,6 +60,17 @@ function actionRank(pack,state,viewer,action,strategy){
 function compareRanked(pack,state,viewer,a,b,strategy){
  const delta=actionRank(pack,state,viewer,b,strategy)-actionRank(pack,state,viewer,a,strategy);
  if(delta)return delta;
+ // A deck-look that raises a line-switch comes before another energy play.
+ // Once that color is paid, the last action point keeps the line-switch
+ // ahead of a generic energy play. Score can still pick a finished line.
+ const link=(filterEnergyFirst(pack,state,viewer,a)?0:lastApLineSwitch(pack,state,viewer,a)?1:2)-
+  (filterEnergyFirst(pack,state,viewer,b)?0:lastApLineSwitch(pack,state,viewer,b)?1:2);
+ if(link)return link;
+ if(a.type==='chooseTopCard'&&b.type==='chooseTopCard'&&payableRefundOnTop(pack,state,viewer)){
+  const place=action=>action.mode==='top'?0:1;
+  const placed=place(a)-place(b);
+  if(placed)return placed;
+ }
  // Equal energy plays: resolve the one with no printed on-play first.
  // The on-play stays in the beam; a finished line can still outscore this one.
  const noise=entryNoise(pack,state,viewer,a)-entryNoise(pack,state,viewer,b);
@@ -108,7 +124,16 @@ export function selectCandidates(pack,state,viewer,legal,beam,strategy){
  if(front&&!picked.some(action=>action.type==='play'&&action.line==='front')){
   if(picked.length<width)picked.push(front);
   else{
-   const spare=picked.findIndex(action=>!isSafeAction(action));
+   // The front comparison takes one slot. A deck-look that is what makes a
+   // line-switch payable stays; the next play gives up the slot instead.
+   const keep=action=>{
+    if(filterEnergyFirst(pack,state,viewer,action)||lastApLineSwitch(pack,state,viewer,action))return true;
+    if(action?.type!=='event'||!action.uid)return false;
+    const card=(state.players?.[viewer]?.hand||[]).find(item=>item?.uid===action.uid);
+    return recoversActionPoints(card&&packOf(pack,viewer).cards[card.cardId]);
+   };
+   let spare=picked.findIndex(action=>!isSafeAction(action)&&!keep(action));
+   if(spare<0)spare=picked.findIndex(action=>!isSafeAction(action));
    if(spare>=0)picked[spare]=front;
   }
  }

@@ -7,6 +7,7 @@
 // a synchronous stack. Search does not await inside the binding.
 import {universalBp,universalEnergy,universalEnergyByColor,universalAttackDamage,universalImpact,universalImpactNull,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
 import {packOf} from './observation.mjs';
+import {sequencedFilter,lineSwitchBody,recoversActionPoints,filterEnergyFirst,lastApLineSwitch} from './eval.mjs';
 
 const probeStack=[];
 const meterStack=[];
@@ -769,12 +770,88 @@ export function preferEnergyGenerator(pack,state,actor,choice,rows){
  const net=energyPlayNet(pack,state,actor,energy.action);
  return positiveGain(net)?energy.action:choice;
 }
+function apCost(printed){
+ return Number.isInteger(printed?.ap)?printed.ap:1;
+}
+// Two deck-look generators can raise a line-switch that is not payable yet,
+// and that line-switch spends the last action point. The live deck is not
+// read: a refund counts only after the card is in hand and the cost is legal.
+function filterChainUsesAp(pack,state,actor){
+ const mine=state.players?.[actor];
+ if(!mine)return false;
+ const ready=(mine.apCards||[]).filter(card=>card?.ready).length;
+ if(ready<2)return false;
+ const catalog=packOf(pack,actor).cards;
+ const start=colorsOf(pack,state,actor);
+ const have={...start};
+ let ap=ready;
+ let slots=(mine.energy||[]).filter(slot=>!slot).length;
+ const hand=mine.hand||[];
+ const filters=hand.filter(card=>sequencedFilter(catalog[card?.cardId]))
+  .sort((a,b)=>(catalog[a.cardId].energy||0)-(catalog[b.cardId].energy||0));
+ const used=new Set();
+ for(const card of filters){
+  const printed=catalog[card.cardId];
+  const pay=apCost(printed);
+  if(ap<pay||slots<=0)continue;
+  if((Number(printed.energy)||0)>(have[printed.color]||0))continue;
+  have[printed.color]=(have[printed.color]||0)+(printed.gen||0);
+  ap-=pay;
+  slots-=1;
+  used.add(card.uid);
+ }
+ if(ready-ap<1||ap!==1)return false;
+ return hand.some(card=>{
+  if(used.has(card.uid))return false;
+  const printed=catalog[card.cardId];
+  if(!lineSwitchBody(printed))return false;
+  const cost=Number(printed.energy)||0;
+  const was=cost<=(start[printed.color]||0);
+  const now=cost<=(have[printed.color]||0);
+  return !was&&now&&apCost(printed)<=ap;
+ });
+}
+function inspectedTop(pack,state,actor){
+ const pending=state?.pending;
+ if(pending?.kind!=='private-top-place'||pending.player!==actor)return null;
+ const top=state.players?.[actor]?.deck?.[0];
+ if(!top?.cardId)return null;
+ return packOf(pack,actor).cards[top.cardId]||null;
+}
+// The effect has already shown this top card to its controller. The rest of
+// the deck stays hidden. A refund that this energy and the remaining action
+// points can pay stays on top so the following draw takes it. A refund that
+// cannot be paid yet is not treated as already found.
+function preferInspectedRefund(pack,state,actor,choice){
+ const printed=inspectedTop(pack,state,actor);
+ if(!recoversActionPoints(printed))return choice;
+ const have=colorsOf(pack,state,actor)[printed.color]||0;
+ const ready=(state.players?.[actor]?.apCards||[]).filter(card=>card?.ready).length;
+ if((Number(printed.energy)||0)>have||apCost(printed)>ready)return choice;
+ let keep=null;
+ try{keep=legalUniversalActions(pack,state).find(action=>action?.type==='chooseTopCard'&&action.mode==='top')||null;}
+ catch{keep=null;}
+ return keep||choice;
+}
 // The start-phase draw spends one AP and is scored on the belief deck, not
 // the live top. When the hand is still short of energy and one AP remains
 // afterwards, take the draw and plan the main from the card that arrives.
 // A proven win without the draw, or a proven loss from the draw, stays.
+// A filter chain that spends every action point, including the line-switch
+// backup, does not take the draw. Exactly three playable cards is not enough
+// on its own: the chain has to be the look plus the backup.
 export function preferEarlyDraw(pack,state,actor,choice,rows){
+ if(state?.pending?.kind==='private-top-place')return preferInspectedRefund(pack,state,actor,choice);
  if(state?.phase!=='start'||state.pending)return choice;
+ if(filterChainUsesAp(pack,state,actor)){
+  let pass=null;
+  try{pass=legalUniversalActions(pack,state).find(action=>action?.type==='next')||null;}
+  catch{pass=null;}
+  if(!pass)return choice;
+  const row=(rows||[]).find(item=>item?.action?.type==='next'&&item.executed!==false);
+  if(row?.boundary==='terminal'&&row.search<=-90000)return choice;
+  return pass;
+ }
  if(choice?.type==='extraDraw')return choice;
  let draw=null;
  try{draw=legalUniversalActions(pack,state).find(action=>action?.type==='extraDraw')||null;}
@@ -793,6 +870,85 @@ export function preferEarlyDraw(pack,state,actor,choice,rows){
  const win=(rows||[]).find(row=>row?.action?.type==='next'&&row.boundary==='terminal'&&row.search>=90000);
  if(win)return choice;
  return draw;
+}
+// The refund is in hand and the line-switch backup is legal on the last
+// action point. Playing the refund first is the branch that still leaves the
+// backup. A refund that is not in hand is not assumed from the deck.
+function preferHeldRefund(pack,state,actor,choice,rows){
+ if(state?.pending||state?.phase!=='main')return choice;
+ if((state.players?.[actor]?.apCards||[]).filter(card=>card?.ready).length!==1)return choice;
+ let legal=[];
+ try{legal=legalUniversalActions(pack,state);}catch{return choice;}
+ if(legal.some(action=>filterEnergyFirst(pack,state,actor,action)))return choice;
+ const catalog=packOf(pack,actor).cards;
+ const hand=state.players?.[actor]?.hand||[];
+ const event=legal.find(action=>{
+  if(action?.type!=='event'||!action.uid)return false;
+  const card=hand.find(item=>item?.uid===action.uid);
+  return recoversActionPoints(card&&catalog[card.cardId]);
+ });
+ if(!event)return choice;
+ if(!legal.some(action=>action?.type==='play'&&action.line==='energy'&&action.uid&&
+  lineSwitchBody(catalog[hand.find(item=>item?.uid===action.uid)?.cardId])))return choice;
+ return guarded(choice,rows,event);
+}
+function guarded(choice,rows,play){
+ if(!play)return choice;
+ const row=(rows||[]).find(item=>item?.executed!==false&&JSON.stringify(item.action)===JSON.stringify(play));
+ if(!row||(row.boundary==='terminal'&&row.search<=-90000))return choice;
+ const win=(rows||[]).find(item=>item?.executed!==false&&item.boundary==='terminal'&&item.search>=90000);
+ if(win&&JSON.stringify(win.action)!==JSON.stringify(play))return choice;
+ return play;
+}
+// The look that makes the line-switch payable is played before another energy
+// body. The search still has to have run the line for its score to be used.
+function preferOpenFilter(pack,state,actor,choice,rows){
+ if(state?.pending||state?.phase!=='main')return choice;
+ let legal=[];
+ try{legal=legalUniversalActions(pack,state);}catch{return choice;}
+ const plays=legal.filter(action=>filterEnergyFirst(pack,state,actor,action));
+ const played=plays.find(action=>(rows||[]).some(item=>item?.executed!==false&&JSON.stringify(item.action)===JSON.stringify(action)));
+ return guarded(choice,rows,played);
+}
+// With the looks already played and no refund in hand, the last action point
+// is the line-switch. A rested character that just entered is not a blocker.
+function preferLastSwitch(pack,state,actor,choice,rows){
+ if(state?.pending||state?.phase!=='main')return choice;
+ let legal=[];
+ try{legal=legalUniversalActions(pack,state);}catch{return choice;}
+ if(legal.some(action=>filterEnergyFirst(pack,state,actor,action)))return choice;
+ const catalog=packOf(pack,actor).cards;
+ const hand=state.players?.[actor]?.hand||[];
+ if(legal.some(action=>action?.type==='event'&&recoversActionPoints(catalog[hand.find(card=>card?.uid===action.uid)?.cardId])))return choice;
+ const play=legal.find(action=>lastApLineSwitch(pack,state,actor,action));
+ return guarded(choice,rows,play);
+}
+// Resting the ready front to lift a body that enters rested does not make a
+// blocker when the opponent has nothing on the front. The on-play line move
+// is a different choice and stays.
+function preferKeepReadyFront(pack,state,actor,choice,rows){
+ if(choice?.type!=='activate'||state?.pending)return choice;
+ const foes=(state.players?.[1-actor]?.front||[]).filter(Boolean);
+ if(foes.length)return choice;
+ const mine=state.players?.[actor];
+ const body=[...(mine?.energy||[]),...(mine?.front||[])].find(card=>card?.uid===choice.uid);
+ const printed=body&&packOf(pack,actor).cards[body.cardId];
+ if(printed?.mainAbility?.op!=='restTwoActiveFrontMoveSelf')return choice;
+ const readyFront=(mine?.front||[]).filter(card=>card?.ready).length;
+ if(readyFront<2)return choice;
+ let pass=null;
+ try{pass=legalUniversalActions(pack,state).find(action=>action?.type==='next')||null;}
+ catch{pass=null;}
+ if(!pass)return choice;
+ const row=(rows||[]).find(item=>item?.executed!==false&&JSON.stringify(item.action)===JSON.stringify(pass));
+ if(row?.boundary==='terminal'&&row.search<=-90000)return choice;
+ return pass;
+}
+export function preferConfirmedChoices(pack,state,actor,choice,rows){
+ return preferKeepReadyFront(pack,state,actor,
+  preferLastSwitch(pack,state,actor,
+   preferHeldRefund(pack,state,actor,
+    preferOpenFilter(pack,state,actor,preferEarlyDraw(pack,state,actor,choice,rows),rows),rows),rows),rows);
 }
 // A cut search used to copy the energy-before-front rank. That is right when
 // the line still needs a generator. It is the wrong backup once current
