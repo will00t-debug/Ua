@@ -184,6 +184,8 @@ test('Q2434 may put Aurora on the deck top, and Q2435 a silenced copy stays outs
  assert.equal(s.pending.kind,'kjn');
  assert.equal(s.pending.step,'pay');
  s=choose(s,a=>a.uid===aurora.uid);
+ assert.equal(s.pending.step,'tuckAurora');
+ s=choose(s,a=>a.mode==='skip');
  assert.equal(s.pending.step,'deckTop');
  s=choose(s,a=>a.mode==='top');
  assert.equal(s.pending,null);
@@ -198,10 +200,10 @@ test('Q2434 may put Aurora on the deck top, and Q2435 a silenced copy stays outs
  const source=toHand(stay,0,'KJN-1-014');
  stay=play(stay,source.uid);
  stay=choose(stay,a=>a.uid===held.uid);
- assert.equal(stay.pending.step,'deckTop');
- stay=choose(stay,a=>a.mode==='stay');
  assert.equal(stay.pending.step,'tuckAurora');
  stay=choose(stay,a=>a.mode==='skip');
+ assert.equal(stay.pending.step,'deckTop');
+ stay=choose(stay,a=>a.mode==='stay');
  assert.equal(stay.pending,null);
  assert.equal(stay.players[0].outside.some(c=>c.uid===held.uid),true);
  assertUniversalMatch(packs,stay);
