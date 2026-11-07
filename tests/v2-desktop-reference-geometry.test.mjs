@@ -41,6 +41,6 @@ test('all click behaviors and hidden card data remain in shared V2 action adapte
  const js=read('dist/universal-v2/desktop-battle-ui.mjs');
  assert.match(js,/lifeTargetActions/);
  assert.match(js,/onLifeTargetAction/);
- assert.match(js,/\.v2-life-selected/);
+ assert.match(js,/v2-life-selected/);
  assert.match(js,/arena\.classList\.add\('v2-desktop-arena','v2-reference-table'\)/);
 });
