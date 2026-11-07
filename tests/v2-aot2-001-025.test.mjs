@@ -6,6 +6,7 @@ import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalCardEnergy, universalImpact,
  universalPrivateChoices, universalPublicView, zoneRequiredEnergy}
  from '../dist/universal-v2/engine.mjs';
+import {publicCardResults} from '../dist/universal-v2/public-card-results.mjs';
 
 const pack=createAotV2Pack();
 const packs=[pack,pack];
@@ -109,6 +110,47 @@ function setLife(s,p,n){
 }
 function field(s,p,uid){
  return [...s.players[p].front,...s.players[p].energy].find(c=>c?.uid===uid)||null;
+}
+function roundTrip(s){return JSON.parse(JSON.stringify(s));}
+function oppView(s){return JSON.stringify(universalPublicView(packs,s,1));}
+function listedUids(value,found=new Set()){
+ if(!value||typeof value!=='object')return found;
+ if(typeof value.uid==='string')found.add(value.uid);
+ for(const child of Object.values(value))listedUids(child,found);
+ return found;
+}
+function assertHidden(s,uids){
+ const found=listedUids(universalPublicView(packs,s,1));
+ for(const uid of uids)assert.equal(found.has(uid),false,uid);
+}
+function assertSeen(s,uids){
+ const shown=universalPublicView(packs,s,1).publicReveals.map(entry=>entry.uid);
+ for(const uid of uids)assert.equal(shown.includes(uid),true,uid);
+}
+function assertSameViews(s){
+ const restored=roundTrip(s);
+ assert.deepEqual(universalPublicView(packs,restored,0).publicReveals,
+  universalPublicView(packs,s,0).publicReveals);
+ assert.deepEqual(universalPublicView(packs,restored,1).publicReveals,
+  universalPublicView(packs,s,1).publicReveals);
+ assert.deepEqual(oppView(restored),oppView(s));
+ if(s.pending?.player===0){
+  assert.deepEqual(universalPrivateChoices(packs,restored,0),universalPrivateChoices(packs,s,0));
+  assert.equal(universalPrivateChoices(packs,restored,1),null);
+ }
+}
+function orderRest(s){
+ let guard=0;
+ while(s.pending?.step==='lookOrder'){
+  s=pick(s,a=>true);
+  if(++guard>12)throw Error('order did not finish');
+ }
+ return s;
+}
+function cast(s,uid){
+ const action=acts(s).find(a=>a.type==='event'&&a.uid===uid);
+ if(!action)throw Error('No event for '+uid);
+ return use(s,action);
 }
 function passBlock(s){
  if(s.pending?.kind!=='block')return s;
@@ -583,7 +625,7 @@ test('Falco may buff nobody',()=>{
  assertUniversalMatch(packs,s);
 });
 
-test('Falco reveals three, orders the rest, then discards',()=>{
+test('Falco looks at three privately and reveals only the chosen card',()=>{
  const counts=countsFor(['AOT-2-001','AOT-2-004','AOT-2-005','AOT-2-016','AOT-2-020']);
  let s=toPhase(fresh(counts,16),'main');
  put(s,0,'AOT-2-001','energy',0,true);
@@ -591,18 +633,27 @@ test('Falco reveals three, orders the rest, then discards',()=>{
  stackTop(s,0,['AOT-2-020','AOT-2-004','AOT-2-020']);
  const window=s.players[0].deck.slice(0,3).map(c=>c.uid);
  const payment=toHand(s,0,'AOT-2-001');
- s=play(s,toHand(s,0,'AOT-2-016').uid);
+ const played=toHand(s,0,'AOT-2-016');
+ const before=structuredClone(s);
+ const playAction=acts(s).find(a=>a.type==='play'&&a.uid===played.uid);
+ s=use(s,playAction);
+ assert.equal(publicCardResults(before,s,playAction).length,0);
  assert.equal(s.pending.step,'lookPick');
  const own=universalPrivateChoices(packs,s,0);
  assert.deepEqual(own.inspected.map(c=>c.uid),window);
  assert.equal(own.inspected.some(c=>c.cardId==='AOT-2-020'),true);
  assert.equal(universalPrivateChoices(packs,s,1),null);
- const shown=universalPublicView(packs,s,1).publicReveals.map(c=>c.uid);
- for(const uid of window)assert.equal(shown.includes(uid),true);
+ assertHidden(s,window);
+ assertSameViews(s);
  const takeable=acts(s).filter(a=>a.mode==='take').map(a=>a.uid);
  assert.equal(takeable.length,1);
  const kept=s.players[0].deck.find(c=>c.cardId==='AOT-2-004');
- s=pick(s,a=>a.uid===kept.uid);
+ const beforeTake=structuredClone(s);
+ const take=acts(s).find(a=>a.uid===kept.uid);
+ s=use(s,take);
+ assert.deepEqual(publicCardResults(beforeTake,s,take).map(result=>result.cardId),['AOT-2-004']);
+ assertSeen(s,[kept.uid]);
+ assertHidden(s,window.filter(uid=>uid!==kept.uid));
  assert.equal(s.pending.step,'lookOrder');
  assert.equal(s.pending.step==='discard',false);
  const rest=acts(s).map(a=>a.uid);
@@ -612,11 +663,218 @@ test('Falco reveals three, orders the rest, then discards',()=>{
  const bottom=s.players[0].deck.slice(-2).map(c=>c.uid);
  assert.equal(bottom.includes(rest[0]),true);
  assert.equal(bottom.includes(window.find(uid=>uid!==kept.uid&&uid!==rest[0])),true);
+ assertHidden(s,bottom);
  s=pick(s,a=>a.uid===payment.uid);
  assert.equal(s.players[0].hand.some(c=>c.uid===kept.uid),true);
  assert.equal(s.players[0].outside.some(c=>c.uid===payment.uid),true);
  assert.equal(s.pending,null);
+ assertSeen(s,[kept.uid]);
+ assertHidden(s,bottom);
+ assertSameViews(s);
  assertUniversalMatch(packs,s);
+});
+
+test('Falco publishes nothing when no card is taken or none can be taken',()=>{
+ const counts=countsFor(['AOT-2-001','AOT-2-004','AOT-2-016','AOT-2-020','AOT-2-021']);
+ let skipped=toPhase(fresh(counts,160),'main');
+ put(skipped,0,'AOT-2-001','energy',0,true);
+ readyAp(skipped,0,1);
+ stackTop(skipped,0,['AOT-2-020','AOT-2-004','AOT-2-020']);
+ const window=skipped.players[0].deck.slice(0,3).map(c=>c.uid);
+ const payment=toHand(skipped,0,'AOT-2-001');
+ skipped=play(skipped,toHand(skipped,0,'AOT-2-016').uid);
+ assert.equal(skipped.pending.step,'lookPick');
+ assertHidden(skipped,window);
+ skipped=pick(skipped,a=>a.mode==='done');
+ skipped=orderRest(skipped);
+ assert.equal(skipped.pending,null);
+ assert.deepEqual(skipped.players[0].deck.slice(-3).map(c=>c.uid).sort(),[...window].sort());
+ assert.equal(skipped.players[0].hand.some(c=>c.uid===payment.uid),true);
+ assert.equal(skipped.players[0].outside.some(c=>window.includes(c.uid)),false);
+ assertHidden(skipped,window);
+ assertSameViews(skipped);
+ assertUniversalMatch(packs,skipped);
+
+ let closed=toPhase(fresh(counts,161),'main');
+ put(closed,0,'AOT-2-001','energy',0,true);
+ readyAp(closed,0,1);
+ stackTop(closed,0,['AOT-2-020','AOT-2-021','AOT-2-020']);
+ const rumble=closed.players[0].deck.slice(0,3).map(c=>c.uid);
+ closed=play(closed,toHand(closed,0,'AOT-2-016').uid);
+ assert.equal(closed.pending.step,'lookOrder');
+ assert.deepEqual(universalPrivateChoices(packs,closed,0).inspected.map(c=>c.uid),rumble);
+ assert.equal(universalPrivateChoices(packs,closed,1),null);
+ assertHidden(closed,rumble);
+ assertSameViews(closed);
+ closed=orderRest(closed);
+ assert.equal(closed.pending,null);
+ assert.deepEqual(closed.players[0].deck.slice(-3).map(c=>c.uid).sort(),[...rumble].sort());
+ assertHidden(closed,rumble);
+ assertUniversalMatch(packs,closed);
+});
+
+test('Ksaver publishes the whole top two, while Ymir and the rescue stay private until chosen',()=>{
+ const openCounts=countsFor(['AOT-2-001','AOT-2-004','AOT-2-025','AOT-2-030']);
+ let opened=toPhase(fresh(openCounts,30),'main');
+ readyAp(opened,0,1);
+ stackTop(opened,0,['AOT-2-004','AOT-2-025']);
+ const shown=opened.players[0].deck.slice(0,2).map(c=>c.uid);
+ opened=play(opened,toHand(opened,0,'AOT-2-030').uid);
+ assert.equal(opened.pending.step,'revealOut');
+ assertSeen(opened,shown);
+ assertSameViews(opened);
+ assertUniversalMatch(packs,opened);
+
+ const counts=countsFor(['AOT-2-001','AOT-2-003','AOT-2-004','AOT-2-005','AOT-2-013',
+  'AOT-2-020','AOT-2-021','AOT-2-023','AOT-2-025','AOT-2-031','AOT-2-032']);
+ let look=toPhase(fresh(counts,2032),'main');
+ for(let i=0;i<4;i++)put(look,0,'AOT-2-001','energy',i,true);
+ const beast=put(look,0,'AOT-2-025','front',0,true);
+ put(look,1,'AOT-2-023','front',0,true);
+ readyAp(look,0,1);
+ stackTop(look,0,['AOT-2-004','AOT-2-031','AOT-2-005','AOT-2-020','AOT-2-021','AOT-2-003','AOT-2-023']);
+ const window=look.players[0].deck.slice(0,7).map(c=>c.uid);
+ const ymir=look.players[0].deck.find(c=>c.cardId==='AOT-2-031');
+ look=cast(look,toHand(look,0,'AOT-2-032').uid);
+ look=pick(look,a=>a.uid===beast.uid);
+ look=pick(look,a=>a.mode==='done');
+ const before=structuredClone(look);
+ look=pick(look,a=>a.mode==='look');
+ assert.equal(publicCardResults(before,look,{type:'aot2',mode:'look'}).length,0);
+ assert.equal(look.pending.step,'lookPick');
+ assert.deepEqual(universalPrivateChoices(packs,look,0).inspected.map(c=>c.uid),window);
+ assert.equal(universalPrivateChoices(packs,look,1),null);
+ assert.equal(acts(look).filter(a=>a.mode==='take').map(a=>a.uid).join(),ymir.uid);
+ assertHidden(look,window);
+ assertSameViews(look);
+ const beforeTake=structuredClone(look);
+ const take=acts(look).find(a=>a.uid===ymir.uid);
+ look=use(look,take);
+ assert.deepEqual(publicCardResults(beforeTake,look,take).map(result=>result.cardId),['AOT-2-031']);
+ assertSeen(look,[ymir.uid]);
+ assertHidden(look,window.filter(uid=>uid!==ymir.uid));
+ look=orderRest(look);
+ assert.equal(look.pending,null);
+ assert.equal(look.players[0].hand.some(c=>c.uid===ymir.uid),true);
+ assert.deepEqual(look.players[0].deck.slice(-6).map(c=>c.uid).sort(),
+  window.filter(uid=>uid!==ymir.uid).sort());
+ assertHidden(look,window.filter(uid=>uid!==ymir.uid));
+ assertSameViews(look);
+ assertUniversalMatch(packs,look);
+
+ let skipped=toPhase(fresh(counts,20320),'main');
+ for(let i=0;i<4;i++)put(skipped,0,'AOT-2-001','energy',i,true);
+ const sacrifice=put(skipped,0,'AOT-2-025','front',0,true);
+ put(skipped,1,'AOT-2-023','front',0,true);
+ readyAp(skipped,0,1);
+ stackTop(skipped,0,['AOT-2-004','AOT-2-005','AOT-2-020','AOT-2-021','AOT-2-003','AOT-2-023','AOT-2-013']);
+ const closed=skipped.players[0].deck.slice(0,7).map(c=>c.uid);
+ skipped=cast(skipped,toHand(skipped,0,'AOT-2-032').uid);
+ skipped=pick(skipped,a=>a.uid===sacrifice.uid);
+ skipped=pick(skipped,a=>a.mode==='done');
+ skipped=pick(skipped,a=>a.mode==='look');
+ assert.equal(skipped.pending.step,'lookOrder');
+ assert.deepEqual(universalPrivateChoices(packs,skipped,0).inspected.map(c=>c.uid),closed);
+ assertHidden(skipped,closed);
+ skipped=orderRest(skipped);
+ assert.equal(skipped.pending,null);
+ assert.deepEqual(skipped.players[0].deck.slice(-7).map(c=>c.uid).sort(),[...closed].sort());
+ assertHidden(skipped,closed);
+ assertUniversalMatch(packs,skipped);
+
+ let none=toPhase(fresh(counts,20321),'main');
+ for(let i=0;i<4;i++)put(none,0,'AOT-2-001','energy',i,true);
+ const offered=put(none,0,'AOT-2-025','front',0,true);
+ put(none,1,'AOT-2-023','front',0,true);
+ readyAp(none,0,1);
+ stackTop(none,0,['AOT-2-004','AOT-2-031','AOT-2-005','AOT-2-020','AOT-2-021','AOT-2-003','AOT-2-023']);
+ const mixed=none.players[0].deck.slice(0,7).map(c=>c.uid);
+ none=cast(none,toHand(none,0,'AOT-2-032').uid);
+ none=pick(none,a=>a.uid===offered.uid);
+ none=pick(none,a=>a.mode==='done');
+ none=pick(none,a=>a.mode==='look');
+ none=pick(none,a=>a.mode==='done');
+ none=orderRest(none);
+ assert.equal(none.pending,null);
+ assert.deepEqual(none.players[0].deck.slice(-7).map(c=>c.uid).sort(),[...mixed].sort());
+ assert.equal(none.players[0].hand.some(c=>c.cardId==='AOT-2-031'),false);
+ assertHidden(none,mixed);
+ assertUniversalMatch(packs,none);
+});
+
+test('the rescue publishes only the distinct chosen characters',()=>{
+ const counts=countsFor(['AOT-2-001','AOT-2-003','AOT-2-004','AOT-2-005','AOT-2-020','AOT-2-021','AOT-2-036']);
+ let s=toPhase(fresh(counts,36),'main');
+ for(let i=0;i<4;i++)put(s,0,'AOT-2-001','energy',i,true);
+ readyAp(s,0,1);
+ stackTop(s,0,['AOT-2-020','AOT-2-004','AOT-2-005','AOT-2-004','AOT-2-003']);
+ const window=s.players[0].deck.slice(0,5);
+ const first=window.find(c=>c.cardId==='AOT-2-004');
+ const secondCopy=window.filter(c=>c.cardId==='AOT-2-004')[1];
+ const connie=window.find(c=>c.cardId==='AOT-2-005');
+ const gabi=window.find(c=>c.cardId==='AOT-2-003');
+ const before=structuredClone(s);
+ const event=toHand(s,0,'AOT-2-036');
+ const action=acts(s).find(a=>a.type==='event'&&a.uid===event.uid);
+ s=use(s,action);
+ assert.deepEqual(publicCardResults(before,s,action).map(result=>result.cardId),['AOT-2-036']);
+ assert.equal(s.pending.step,'lookPick');
+ assert.deepEqual(universalPrivateChoices(packs,s,0).inspected.map(c=>c.uid),window.map(c=>c.uid));
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assertHidden(s,window.map(c=>c.uid));
+ assertSameViews(s);
+ const firstTakes=acts(s).filter(a=>a.mode==='take').map(a=>a.uid);
+ assert.equal(firstTakes.includes(first.uid),true);
+ assert.equal(firstTakes.includes(secondCopy.uid),true);
+ assert.equal(firstTakes.includes(window[0].uid),false);
+ s=pick(s,a=>a.uid===first.uid);
+ assertHidden(s,window.map(c=>c.uid));
+ assert.equal(acts(s).some(a=>a.uid===secondCopy.uid),false);
+ s=pick(s,a=>a.uid===connie.uid);
+ const beforeLast=structuredClone(s);
+ const last=acts(s).find(a=>a.uid===gabi.uid);
+ s=use(s,last);
+ const taken=[first.uid,connie.uid,gabi.uid];
+ const left=window.map(c=>c.uid).filter(uid=>!taken.includes(uid));
+ assert.deepEqual(publicCardResults(beforeLast,s,last).map(result=>result.cardId).sort(),
+  ['AOT-2-003','AOT-2-004','AOT-2-005']);
+ assertSeen(s,taken);
+ assertHidden(s,left);
+ s=orderRest(s);
+ assert.equal(s.pending,null);
+ assert.deepEqual(s.players[0].deck.slice(-2).map(c=>c.uid).sort(),[...left].sort());
+ for(const uid of taken)assert.equal(s.players[0].hand.some(c=>c.uid===uid),true);
+ assertHidden(s,left);
+ assertSameViews(s);
+ assertUniversalMatch(packs,s);
+
+ let skipped=toPhase(fresh(counts,360),'main');
+ for(let i=0;i<4;i++)put(skipped,0,'AOT-2-001','energy',i,true);
+ readyAp(skipped,0,1);
+ stackTop(skipped,0,['AOT-2-020','AOT-2-004','AOT-2-005','AOT-2-021','AOT-2-003']);
+ const mixed=skipped.players[0].deck.slice(0,5).map(c=>c.uid);
+ skipped=cast(skipped,toHand(skipped,0,'AOT-2-036').uid);
+ skipped=pick(skipped,a=>a.mode==='done');
+ skipped=orderRest(skipped);
+ assert.equal(skipped.pending,null);
+ assert.deepEqual(skipped.players[0].deck.slice(-5).map(c=>c.uid).sort(),[...mixed].sort());
+ assertHidden(skipped,mixed);
+ assertUniversalMatch(packs,skipped);
+
+ let closed=toPhase(fresh(counts,361),'main');
+ for(let i=0;i<4;i++)put(closed,0,'AOT-2-001','energy',i,true);
+ readyAp(closed,0,1);
+ stackTop(closed,0,['AOT-2-020','AOT-2-021','AOT-2-020','AOT-2-021','AOT-2-020']);
+ const rumble=closed.players[0].deck.slice(0,5).map(c=>c.uid);
+ closed=cast(closed,toHand(closed,0,'AOT-2-036').uid);
+ assert.equal(closed.pending.step,'lookOrder');
+ assert.deepEqual(universalPrivateChoices(packs,closed,0).inspected.map(c=>c.uid),rumble);
+ assertHidden(closed,rumble);
+ assertSameViews(closed);
+ closed=orderRest(closed);
+ assert.deepEqual(closed.players[0].deck.slice(-5).map(c=>c.uid).sort(),[...rumble].sort());
+ assertHidden(closed,rumble);
+ assertUniversalMatch(packs,closed);
 });
 
 test('Jaw Falco tucks only from the raid frame, and the opponent cannot see under it',()=>{

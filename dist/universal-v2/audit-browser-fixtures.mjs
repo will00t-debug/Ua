@@ -6,7 +6,7 @@ import {createCsmV2Pack} from './csm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
 import {createKmrBattlePack} from './official-entry.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
- universalEnergyByColor}
+ universalEnergyByColor,universalPublicView}
  from './engine.mjs';
 import {validateUniversalDeck} from './pack.mjs';
 import {makeUniversalPreviewReplay} from './preview-replay.mjs';
@@ -77,6 +77,7 @@ export function loadAuditFixture(name){
  if(name==='aot010')return leviTrigger();
  if(name==='aot011')return leviSniper();
  if(name==='aot2017')return jawStep();
+ if(name==='aot2016')return falcoLook();
  throw Error('Unknown audit fixture '+name);
 }
 function heatMetal(){
@@ -306,6 +307,29 @@ function leviSniper(){
  built.audit={levi:raider.uid,wall:wall.uid};
  return finish(pack,built,
   '稽核 AOT-1-011：利威爾已突襲。第一次攻擊後按「不發動」。第二次攻擊後按「支付」。第三次按「狙擊攻擊」打艾爾文，沒有阻擋，結束後不再出現支付。');
+}
+function falcoLook(){
+ const pack=createAotV2Pack();
+ const built=open(pack,20016,['AOT-2-001','AOT-2-004','AOT-2-016','AOT-2-020'],
+  {'AOT-2-001':4,'AOT-2-020':4});
+ const s=built.state;
+ ready(s);
+ put(s,0,'AOT-2-001','energy',0,true);
+ const cards=['AOT-2-020','AOT-2-004','AOT-2-020'].map(id=>take(s,0,id));
+ for(const card of [...cards].reverse())s.players[0].deck.unshift(card);
+ const payment=take(s,0,'AOT-2-001');
+ s.players[0].hand.push(payment);
+ const falco=take(s,0,'AOT-2-016');
+ s.players[0].hand.push(falco);
+ pick(pack,built,a=>a.type==='play'&&a.uid===falco.uid&&a.line==='front'&&a.replaceUid===undefined);
+ if(built.state.pending?.step!=='lookPick')throw Error('Falco did not open the private look');
+ const packs=[pack,pack];
+ const reveals=universalPublicView(packs,built.state,1).publicReveals;
+ if(reveals.some(entry=>cards.some(card=>card.uid===entry.uid)))
+  throw Error('The private look published its window');
+ built.audit={window:cards.map(card=>card.uid),take:cards[1].uid,payment:payment.uid};
+ return finish(pack,built,
+  '稽核 AOT-2-016：查看牌組頂三張。不能選的卡留在畫面上。選完之後，對手只看得到公開的那張。');
 }
 function jawStep(){
  const pack=createAotV2Pack();

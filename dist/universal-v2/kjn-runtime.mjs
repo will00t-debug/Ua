@@ -141,10 +141,13 @@ function ruleHit(pack,c,rule,s,owner){
 function beginLook(s,spec,count,rule,opts){
  const window=windowCards(s,spec.player,count);
  if(!window.length)return false;
- if(opts.reveal)for(const c of window)publish(A.pack,s,spec.player,c);
+ // 「見て」 stays private. revealWindow is the printed 「公開する」 of the
+ // whole batch. revealTaken publishes only the card added to hand.
+ if(opts.revealWindow)for(const c of window)publish(A.pack,s,spec.player,c);
  const matches=window.filter(c=>ruleHit(A.pack,c,rule,s,spec.player));
  const data={window:window.map(c=>c.uid),taken:[],names:[],rule,max:opts.max,min:opts.min||0,
-  rest:opts.rest,dest:opts.dest,discard:opts.discard===true,distinct:opts.distinct===true};
+  rest:opts.rest,dest:opts.dest,discard:opts.discard===true,distinct:opts.distinct===true,
+  revealTaken:opts.revealTaken===true};
  if(!matches.length&&opts.min===0){
   if(!offerOrder(s,spec,data.window,opts.rest))finishRest(s,spec,data);
   return true;
@@ -269,7 +272,7 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='KJN-1-013'){
-  beginLook(s,spec,3,'sidChar',{max:1,min:0,rest:'bottom',dest:'hand',discard:true,reveal:true});
+  beginLook(s,spec,3,'sidChar',{max:1,min:0,rest:'bottom',dest:'hand',discard:true,revealTaken:true});
   return;
  }
  if(id==='KJN-1-014'){
@@ -382,6 +385,7 @@ function runPlay(pack,s,job){
  if(id==='KJN-1-056'){
   const window=windowCards(s,owner,2);
   if(!window.length)return;
+  // 「2枚を公開し」 publishes the whole window before the choice.
   for(const c of window)publish(pack,s,owner,c);
   const matches=window.filter(c=>cardHasTrait(def(pack,c),SEVEN));
   hold(s,{...spec,step:'distinctHand',data:{window:window.map(c=>c.uid),taken:[],names:[]}},[
@@ -715,6 +719,7 @@ export function resolveKjnPending(pack,s,action){
    data.taken.push(a.uid);
    const card=plOf(s,owner).deck.find(c=>c.uid===a.uid);
    if(data.distinct&&card)data.names.push(def(pack,card).name);
+   if(data.revealTaken&&data.dest==='hand'&&card)publish(pack,s,owner,card);
    if(data.dest==='hand')moveUid(pack,s,owner,'deck',a.uid,'hand',q.sourceUid);
    else if(data.dest==='outside')moveUid(pack,s,owner,'deck',a.uid,'outside',q.sourceUid);
    if(data.discard){

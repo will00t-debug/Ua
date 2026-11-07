@@ -9,8 +9,8 @@ import {kjnPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
- newUniversalMatch, universalBp, universalCardEnergy, universalPublicView,
- zoneRequiredEnergy}
+ newUniversalMatch, universalBp, universalCardEnergy, universalPrivateChoices,
+ universalPublicView, zoneRequiredEnergy}
  from '../dist/universal-v2/engine.mjs';
 
 const pack=createKjnV2Pack();
@@ -517,4 +517,59 @@ test('a this-turn energy buff on Gamma is counted by the live energy total',()=>
  assert.equal(universalCardEnergy(packs,s,0,live),2);
  assert.equal((live.buffs||[]).some(b=>b.energy===1&&b.untilTurn===s.turn),true);
  assertUniversalMatch(packs,s);
+});
+
+test('Claire publishes only the card she adds, not the private look',()=>{
+ const counts=countsFor(['KJN-1-001','KJN-1-010','KJN-1-012','KJN-1-013','KJN-1-018']);
+ let s=toPhase(fresh(counts,13),'main');
+ put(s,0,'KJN-1-010','energy',0,true);
+ readyAp(s,0,1);
+ const cards=['KJN-1-001','KJN-1-012','KJN-1-018'].map(id=>take(s,0,id));
+ for(const card of [...cards].reverse())s.players[0].deck.unshift(card);
+ const window=cards.map(c=>c.uid);
+ const exposed=state=>{
+  const found=new Set();
+  const walk=value=>{
+   if(!value||typeof value!=='object')return;
+   if(typeof value.uid==='string')found.add(value.uid);
+   for(const child of Object.values(value))walk(child);
+  };
+  walk(universalPublicView(packs,state,1));
+  return found;
+ };
+ s=play(s,toHand(s,0,'KJN-1-013').uid);
+ assert.equal(s.pending.step,'lookPick');
+ assert.deepEqual(universalPrivateChoices(packs,s,0).inspected.map(c=>c.uid),window);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ for(const uid of window)assert.equal(exposed(s).has(uid),false);
+ const chosen=cards[1];
+ s=choose(s,a=>a.mode==='take'&&a.uid===chosen.uid);
+ const reveals=universalPublicView(packs,s,1).publicReveals.map(entry=>entry.uid);
+ assert.equal(reveals.includes(chosen.uid),true);
+ assert.equal(reveals.includes(cards[0].uid),false);
+ assert.equal(reveals.includes(cards[2].uid),false);
+ const after=exposed(s);
+ assert.equal(after.has(chosen.uid),true);
+ assert.equal(after.has(cards[0].uid),false);
+ assert.equal(after.has(cards[2].uid),false);
+ assertUniversalMatch(packs,s);
+
+ let skipped=toPhase(fresh(counts,130),'main');
+ put(skipped,0,'KJN-1-010','energy',0,true);
+ readyAp(skipped,0,1);
+ const closed=['KJN-1-001','KJN-1-012','KJN-1-018'].map(id=>take(skipped,0,id));
+ for(const card of [...closed].reverse())skipped.players[0].deck.unshift(card);
+ const closedUids=closed.map(c=>c.uid);
+ skipped=play(skipped,toHand(skipped,0,'KJN-1-013').uid);
+ skipped=choose(skipped,a=>a.mode==='done');
+ assert.equal(skipped.pending?.step==='lookPick',false);
+ const quiet=new Set();
+ const walk=value=>{
+  if(!value||typeof value!=='object')return;
+  if(typeof value.uid==='string')quiet.add(value.uid);
+  for(const child of Object.values(value))walk(child);
+ };
+ walk(universalPublicView(packs,skipped,1));
+ for(const uid of closedUids)assert.equal(quiet.has(uid),false);
+ assertUniversalMatch(packs,skipped);
 });

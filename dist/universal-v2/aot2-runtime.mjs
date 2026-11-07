@@ -164,8 +164,10 @@ function offerOrder(s,spec,uids,rest,after){
 function beginLook(s,spec,count,match,opts){
  const window=windowCards(s,spec.player,count);
  if(!window.length)return false;
- // 公開する looks are shown to both players before the choice. 見て stays private.
- if(opts.reveal!==false&&A.pack)
+ // 「見て」 stays on the controller's window. 「公開する」 the whole batch is
+ // revealWindow, and only that flag writes the window before the choice.
+ // reveal means the cards actually taken are published in finishLook.
+ if(opts.revealWindow===true&&A.pack)
   for(const c of window)publish(A.pack,s,spec.player,c);
  const matches=window.filter(match);
  const data={uids:window.map(c=>c.uid),taken:[],names:[],max:opts.max,min:opts.min||0,
@@ -429,6 +431,7 @@ export function runAot2Job(pack,s,job){
  }
  if(id==='AOT-2-030'){
   const window=windowCards(s,owner,2);
+  // 「2枚を公開する」 publishes the whole window before the choice.
   for(const c of window)publish(pack,s,owner,c);
   const matches=window.filter(c=>contains(pack,c,'ジーク',s));
   hold(s,{...spec,step:'revealOut',data:{uids:window.map(c=>c.uid),taken:[]}},[
