@@ -69,8 +69,8 @@ function reliableChoice(pack,state,actor,legal,hardExact,ordered){
    return JSON.stringify(a)<JSON.stringify(b)?-1:1;
   });
  };
- if(kind.startsWith('effect-discard')){
-  const discards=legal.filter(action=>action.uid&&(action.type==='chooseDiscard'||action.type==='chooseDiscardGate'));
+ if(kind.startsWith('effect-discard')||kind==='end-hand-limit'){
+  const discards=legal.filter(action=>action.uid&&(action.type==='chooseDiscard'||action.type==='chooseDiscardGate'||action.type==='chooseHandLimit'));
   if(discards.length)return ranked(discards)[0];
  }
  if(kind==='effect-recover-ap')return legal.find(action=>action.uid)||hardExact||legal[0];
@@ -204,13 +204,13 @@ function holdSurvival(choice,replacement,rows){
 // keep-order used when the search does not finish, and it does not dispatch.
 function discardTie(pack,state,actor,rows,blended){
  const kind=state.pending?.kind||'';
- if(!blended||!kind.startsWith('effect-discard')||!Number.isFinite(blended.search))return blended;
+ if(!blended||!(kind.startsWith('effect-discard')||kind==='end-hand-limit')||!Number.isFinite(blended.search))return blended;
  const best=Math.max(...rows.map(row=>Number.isFinite(row?.search)?row.search:-Infinity));
  if(!(Math.abs(blended.search-best)<=1e-6))return blended;
  const tied=rows.filter(row=>{
   const action=row?.action;
   if(!action?.uid||!Number.isFinite(row.search)||Math.abs(row.search-best)>1e-6)return false;
-  return action.type==='chooseDiscard'||action.type==='chooseDiscardGate';
+  return action.type==='chooseDiscard'||action.type==='chooseDiscardGate'||action.type==='chooseHandLimit';
  });
  if(tied.length<2)return blended;
  tied.sort((a,b)=>{

@@ -60,10 +60,11 @@ function compareRanked(pack,state,viewer,a,b,strategy){
  const noise=entryNoise(pack,state,viewer,a)-entryNoise(pack,state,viewer,b);
  if(noise)return noise;
  // Equal discards keep the card we want. A raid bonus must not make the
- // core the first thing thrown away. The optional gate uses the same order;
- // string order was discarding the cheap generator and never reaching the
- // unaffordable event.
- if((a.type==='chooseDiscard'||a.type==='chooseDiscardGate')&&a.type===b.type&&a.uid&&b.uid){
+ // core the first thing thrown away. The optional gate and the end-of-turn
+ // hand limit use the same order. String order was discarding the cheap
+ // generator, or the raid piece with the lowest uid, and never reaching the
+ // event the keep-order would spend.
+ if((a.type==='chooseDiscard'||a.type==='chooseDiscardGate'||a.type==='chooseHandLimit')&&a.type===b.type&&a.uid&&b.uid){
   const hand=state.players[viewer]?.hand||[];
   const left=keepScore(pack,state,viewer,hand.find(card=>card?.uid===a.uid));
   const right=keepScore(pack,state,viewer,hand.find(card=>card?.uid===b.uid));

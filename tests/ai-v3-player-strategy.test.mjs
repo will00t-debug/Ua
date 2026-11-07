@@ -1,12 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,effectiveHandRequiredEnergy,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
-import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
-import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded} from '../dist/universal-v2/ai-v3/eval.mjs';
+import {scoreLine,rankLegal,selectCandidates} from '../dist/universal-v2/ai-v3/beam.mjs';
+import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore} from '../dist/universal-v2/ai-v3/eval.mjs';
+import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
+import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {bindProbeBudget,energyPlayNet,moveDevelopment} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
@@ -2453,4 +2456,98 @@ test('two 4000s both attack into a 5000 and a 3000, and one 4000 still stays bac
    clock:timed.type,clockNodes:timedTrace.nodesUsed,settled:timedTrace.settled
   }));
  }
+});
+
+function minKeep(packs,state,actor){
+ return Math.min(...state.players[actor].hand.map(card=>keepScore(packs,state,actor,card)));
+}
+function replayWhiteHandLimit(){
+ const deck=battleDecks().find(item=>item.id==='white-sword');
+ const audit=JSON.parse(readFileSync(new URL('../audit/ai-v3-official-8300-nodes48-white-reuse.json',import.meta.url),'utf8'));
+ const game=audit.titles['white-sword'].byMode.tree.games
+  .find(item=>item.seed===8302&&item.first===1&&item.challengerSeat===0);
+ const packs=[deck.pack,deck.pack];
+ let state=newComparedMatch(packs,[deck.counts,deck.counts],game.seed,game.first,matchRules('official'));
+ for(const choice of game.opening){
+  const legal=legalUniversalActions(packs,state);
+  state=dispatchUniversalAction(packs,state,legal.find(item=>item.type==='openingMulligan'&&item.mode===choice.mode),{actor:choice.actor});
+ }
+ for(const recorded of game.actions){
+  if(recorded.step===49)return {packs,state};
+  const legal=legalUniversalActions(packs,state);
+  state=dispatchUniversalAction(packs,state,legal.find(item=>JSON.stringify(item)===JSON.stringify(recorded.action)),{actor:recorded.actor});
+ }
+ throw Error('hand-limit snapshot missing');
+}
+test('hand limit spends the lowest keep card and leaves the raid piece',()=>{
+ const {packs,state}=replayWhiteHandLimit();
+ const actor=state.pending.player;
+ const catalog=packs[actor].cards;
+ assert.equal(state.pending.kind,'end-hand-limit');
+ assert.equal(state.phase,'attack');
+ assert.equal(state.players.map(player=>player.life.length).join('-'),'7-7');
+ assert.equal(universalEnergyByColor(packs,state,actor).green,5);
+ const hand=state.players[actor].hand;
+ const raid=hand.find(card=>catalog[card.cardId].energy===4&&catalog[card.cardId].bp===4000&&catalog[card.cardId].raidName);
+ const floor=minKeep(packs,state,actor);
+ assert.ok(raid);
+ assert.ok(keepScore(packs,state,actor,raid)>floor);
+ assert.equal(catalog[hand.find(card=>keepScore(packs,state,actor,card)===floor).cardId].type,'event');
+ const legal=legalUniversalActions(packs,state);
+ const ranked=rankLegal(packs,state,actor,legal,null);
+ assert.equal(keepScore(packs,state,actor,hand.find(card=>card.uid===ranked[0].uid)),floor);
+ const beam=selectCandidates(packs,state,actor,legal,MATCH_LIMITS.beam,null);
+ assert.equal(beam.some(action=>keepScore(packs,state,actor,hand.find(card=>card.uid===action.uid))===floor),true);
+ assert.equal(beam.some(action=>action.uid===raid.uid),false);
+ const choice=ask(packs,state);
+ assert.equal(choice.action.type,'chooseHandLimit');
+ assert.equal(keepScore(packs,state,actor,hand.find(card=>card.uid===choice.action.uid)),floor);
+ assert.notEqual(choice.action.uid,raid.uid);
+ assert.ok(choice.trace.nodesUsed<=48);
+ const spent=dispatchUniversalAction(packs,state,choice.action,{actor});
+ assert.equal(assertUniversalMatch(packs,spent),true);
+ assert.equal(spent.players[actor].hand.some(card=>card.uid===raid.uid),true);
+ assert.equal(spent.players[actor].hand.some(card=>card.uid===choice.action.uid),false);
+
+ const withoutEvents=structuredClone(state);
+ const events=[];
+ withoutEvents.players[actor].hand=withoutEvents.players[actor].hand.filter(card=>{
+  if(catalog[card.cardId].type!=='event')return true;
+  events.push(card);
+  return false;
+ });
+ withoutEvents.players[actor].deck.push(...events);
+ const raised=minKeep(packs,withoutEvents,actor);
+ assert.ok(raised>floor);
+ assert.ok(keepScore(packs,withoutEvents,actor,withoutEvents.players[actor].hand.find(card=>card.uid===raid.uid))>raised);
+ const cheaper=ask(packs,withoutEvents);
+ assert.equal(keepScore(packs,withoutEvents,actor,withoutEvents.players[actor].hand.find(card=>card.uid===cheaper.action.uid)),raised);
+ assert.notEqual(cheaper.action.uid,raid.uid);
+ const kept=dispatchUniversalAction(packs,withoutEvents,cheaper.action,{actor});
+ assert.equal(kept.players[actor].hand.some(card=>card.uid===raid.uid),true);
+
+ const lowLife=structuredClone(state);
+ for(const player of lowLife.players)while(player.life.length>1)player.deck.push(player.life.pop());
+ assert.equal(lowLife.players.map(player=>player.life.length).join('-'),'1-1');
+ const pressured=ask(packs,lowLife);
+ const doomed=new Set((pressured.trace.compared||[])
+  .filter(row=>row.boundary==='terminal'&&row.search<=-90000)
+  .map(row=>row.action?.uid).filter(Boolean));
+ assert.ok(doomed.size>=1);
+ assert.equal(doomed.has(pressured.action.uid),false);
+ const surviving=lowLife.players[actor].hand.filter(card=>!doomed.has(card.uid));
+ const liveFloor=Math.min(...surviving.map(card=>keepScore(packs,lowLife,actor,card)));
+ assert.ok(liveFloor>floor);
+ assert.equal(keepScore(packs,lowLife,actor,lowLife.players[actor].hand.find(card=>card.uid===pressured.action.uid)),liveFloor);
+ assert.notEqual(pressured.action.uid,raid.uid);
+ const lived=dispatchUniversalAction(packs,lowLife,pressured.action,{actor});
+ assert.equal(lived.players[actor].hand.some(card=>card.uid===raid.uid),true);
+
+ const alone=structuredClone(state);
+ const spare=alone.players[actor].hand.filter(card=>card.uid!==raid.uid);
+ alone.players[actor].hand=[alone.players[actor].hand.find(card=>card.uid===raid.uid)];
+ alone.players[actor].deck.push(...spare);
+ const last=ask(packs,alone);
+ assert.equal(last.action.type,'chooseHandLimit');
+ assert.equal(last.action.uid,raid.uid);
 });
