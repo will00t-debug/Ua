@@ -256,6 +256,13 @@ function runAfter(pack,s,job){
 function runPlay(pack,s,job){
  const owner=job.owner,id=job.id;
  const spec={player:owner,sourceUid:job.sourceUid,id};
+ if(id==='KJN-1-005'){
+  const top=plOf(s,owner).deck[0];
+  if(!top)return;
+  hold(s,{...spec,step:'peekBottom',data:{window:[top.uid]}},[
+   {type:'kjn',mode:'top'},{type:'kjn',mode:'bottom'}]);
+  return;
+ }
  if(id==='KJN-1-009'){beginLook(s,spec,2,'any',{max:1,min:0,rest:'top',dest:'hand'});return;}
  if(id==='KJN-1-011'){
   const self=selfOf(s,owner,job.sourceUid);
@@ -287,6 +294,14 @@ function runPlay(pack,s,job){
    return d.type==='character'&&d.color==='yellow'&&d.energy<=2&&d.ap===1&&cardHasName(d,SID);
   });
   offerDeploy(s,{...spec,optional:true},'outside',pool,false,false);
+  return;
+ }
+ if(id==='KJN-1-022'){
+  if(!selfFromRemoved(s,owner,job.sourceUid))return;
+  const pool=chars(s,owner);
+  if(!pool.length)return;
+  hold(s,{...spec,step:'activeAny'},[{type:'kjn',mode:'skip'},
+   ...pool.map(c=>({type:'kjn',mode:'active',uid:c.uid}))]);
   return;
  }
  if(id==='KJN-1-016'){
@@ -558,7 +573,9 @@ function startMain(pack,s,c,mode){
  if(id==='KJN-1-025'&&mode==='kjn:0'){
   use(s,c.uid+'|0');
   A.draw(pack,s,owner,1,c.uid);
-  offerPay(s,{...spec,data:{place:'top'}},'own-effect','handTop');
+  const hand=pl.hand;
+  if(hand.length)hold(s,{...spec,step:'handPlace',data:{where:'top'}},
+   hand.map(c=>({type:'kjn',mode:'place',uid:c.uid})));
   return;
  }
  if(id==='KJN-1-025'&&mode==='kjn:1'){
@@ -657,7 +674,16 @@ function afterPay(pack,s,q,discarded){
  if(next==='006'||next==='009mill'){millRemoved(pack,s,owner,q.sourceUid);return;}
  if(next==='008'){noteCut(s,owner,q.sourceUid);return;}
  if(next==='014'){
-  s.effectQueue.push({op:'kjn',id:'KJN-1-014',slot:'after',owner,sourceUid:q.sourceUid,discardedUid:discarded.uid});
+  // The tuck is the rest of this effect. 004's outside trigger is queued by
+  // the discard move and must wait until the tuck is finished.
+  const tuck={op:'kjn',id:'KJN-1-014',slot:'after',owner,sourceUid:q.sourceUid,discardedUid:discarded.uid};
+  const idx=s.effectQueue.findIndex(j=>j.op==='kjn'&&j.slot==='deckTop'&&
+   j.sourceUid===discarded.uid);
+  if(idx>=0){
+   const queued=s.effectQueue.splice(idx,1)[0];
+   s.effectQueue.unshift(queued);
+   s.effectQueue.unshift(tuck);
+  }else s.effectQueue.push(tuck);
   return;
  }
  if(next==='handTop'){
@@ -678,6 +704,10 @@ function afterPay(pack,s,q,discarded){
   }else if(pl.outside.length>=10){
    const self=selfOf(s,owner,q.sourceUid);if(self)energyBuff(s,self);
   }
+  return;
+ }
+ if(next==='none'&&Array.isArray(q.data?.window)){
+  finishRest(s,{player:owner,sourceUid:q.sourceUid,id:q.id},q.data);
   return;
  }
  if(next==='068'){
@@ -904,6 +934,10 @@ export function resolveKjnPending(pack,s,action){
   const foe=selfOf(s,1-owner,a.uid);if(foe)foe.ready=false;
  }else if(step==='mayActive'&&a.mode==='active'){
   const self=selfOf(s,owner,q.sourceUid);if(self)A.active(s,owner,self);
+ }else if(step==='activeAny'&&a.mode==='active'){
+  const target=selfOf(s,owner,a.uid);if(target)A.active(s,owner,target);
+ }else if(step==='peekBottom'){
+  if(a.mode==='bottom')lay(plOf(s,owner),q.data.window,'bottom');
  }else if(step==='raidGrant'){
   const who=Number(String(q.data.raidUid).split('-')[0]);
   const raider=selfOf(s,who,q.data.raidUid);
