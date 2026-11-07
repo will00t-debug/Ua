@@ -1,0 +1,722 @@
+{
+  "group": "C7",
+  "baseline": "abeb47f03e19da85c28eed7d1abfdd28b88f2ba9",
+  "baseBranch": "cursor/effect-audit-bp-zero-65f8",
+  "range": "UA23BT/AOT-1-026～UA23BT/AOT-1-050。各 1 個印刷。",
+  "updated": "2026-11-07",
+  "sources": {
+    "product": "026～050 是 UA23BT 第一彈，各 1 個印刷。官方繁中頁沒有這批正文，效果以 2026-11-07 抓下的日文卡頁為準。卡頁句子與庫內 effectJa 一致。本輪沒有改 aot-pack、aot-kinds、aot-cards、raid-box、engine 或 aot2。",
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-026 起，至 AOT-1-050。",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA23BT 。2026-11-07 的系列頁只有 Q980～Q994，皆 2024.06.21。Q980=003、Q981=010、Q982=011、Q983=021、Q984/Q985=057、Q986=061、Q987=064、Q988=076、Q989～Q991=077、Q992/Q993=092、Q994=096。沒有一則點名 026～050。後卡的 FAQ 不套用到這批不同的句子。",
+    "raidFrame": "026、036、038、048 的卡圖在 2026-11-07 對過。026 沒有突襲框，青+ 是「活動時發生能量+1」那句。036 沒有突襲框，兩段各自是【起動メイン】，BP+1000 屬於付手牌的那一段。038 整段都在突襲框：突襲條件、自己回合 BP+2000、對手有活動角色時傷害 2、退場時抽 1。048 的減費在框外；登場時全體無垢的巨人 BP+1000，以及【起動メイン】【ターン1】的衝擊與前線追加 BP，都在框內。"
+  },
+  "noEffect": ["AOT-1-042", "AOT-1-043", "AOT-1-045"],
+  "sharedGaps": [
+    {
+      "name": "048 前線上的無垢巨人 BP 沒有綁在起動上",
+      "owner": "A",
+      "rule": "AOT-1-048 突襲框內的【起動メイン】【ターン1】寫：選 1 張以內的無垢的巨人，這個回合得到衝擊（1）。這張角色在前線時，自己場上全部無垢的巨人這個回合 BP+1000。後句只在發動該能力、而且該角色在前線時成立，只持續那個回合。",
+      "where": "dist/universal-v2/engine.mjs 的 aotPrintedBp。每一張正面朝上、且在前線的突襲 048，都會讓全部無垢的巨人 BP+1000。沒有看有沒有發動主能力，也沒有回合截止。能量線上的 048 不吃這段。登場時的 +1000 是另一句，由 aot-runtime 的 on048 做成這個回合的 buff。",
+      "repro": "把 048 正面突襲在前線的 045 上，場上有 040。還沒按起動，040 已經是印刷 BP+1000。這個加成留到之後的自己回合。同一張若突襲在能量線，登場當回合是 +1000，下一個自己回合回到印刷值。",
+      "expected": "沒發動主能力之前，只有登場當回合的那次 +1000。再 +1000 要等主能力發動，只在那個回合，而且 048 要在前線。能量線可以給衝擊，但不給全體 BP。",
+      "affects": "AOT-1-048 的前線 BP 句。本範圍沒有第二張印同樣句子的卡。登場減費、登場時的這個回合 +1000、可選衝擊與【ターン1】已另測。",
+      "regression": "tests/v2-aot-set1.test.mjs 的 Zeke discounts 目前把「沒發動也 +1000」鎖成現況。不要把它改成官方預期，也不要在 main048 再加一次 BP，否則會跟引擎加成疊成兩次。"
+    },
+    {
+      "name": "033 與 034 沒有對象時不能使用",
+      "owner": "A",
+      "rule": "033、034 的「1枚選び」是效果，不是費用。選不到指定張數時，能選多少就處理多少，事件仍可使用，然後沒有角色退場。",
+      "where": "dist/universal-v2/engine.mjs 的 eventMandatoryTargetsAvailable。aot 且 id 為 AOT-1-033、034、063、066 時，沒有落在上限內的對手前線角色，事件不會出現在合法動作。",
+      "repro": "自己場上沒有符合上限的對手前線角色。033 或 034 在手上、能量與 AP 都夠，合法動作裡沒有這個事件。",
+      "expected": "付完費用後事件進場外，退場對象是 0 張。有對象時仍必須選 1 張，不能跳過。上限、希斯特莉亞加值和里維改寫已另測。",
+      "affects": "本範圍是 033 與 034。同一個函式也擋住 063、066；那兩張不在這批，驗證狀態不因此改變。",
+      "regression": "不要改 engine.mjs。本批測試不把「沒有對象就不能使用」寫成正確。"
+    }
+  ],
+  "fixes": [
+    "AOT-1-031 改走 lookKeep。查看 2 張維持私人，任意張數按選擇順序回牌庫頂，其餘到場外，然後才抽 2。視窗裡的牌不會被查看本身加入手牌。020 沒有 after，抽牌不會跑到 020。",
+    "AOT-1-036 的退場是獨立的【ターン1】，只在登場的那個回合、而且只在真正退掉一張時消耗。付手牌的 BP+1000 沒有一次限制，先付再退時會用提高後的 BP 當上限。",
+    "AOT-1-033 在希斯特莉亞在場時，把尚在 resolvingEvents 的這張事件算進場外事件。其他卡仍用原本的 outs()。"
+  ],
+  "testResults": {
+    "related": {
+      "command": "node --test tests/v2-aot-026-050.test.mjs tests/v2-aot-001-025.test.mjs tests/v2-aot-set1.test.mjs tests/v2-aot-faq.test.mjs tests/v2-aot-online.test.mjs tests/v2-aot-set2.test.mjs tests/v2-aot2-001-025.test.mjs",
+      "pass": 124,
+      "fail": 0,
+      "note": "2026-11-07 於 Node v22.23.4 執行，exit 0。新檔 23 項。001～025、set1、faq、online、set2、aot2-001～025 一起跑，因為 runtime 與第二彈共用。沒有改 aot2 檔。全庫交給 A。借用 001、007、018、019、025、057、061、069 只當場面，不擴大那些卡的驗證。"
+    },
+    "fullSuite": null
+  },
+  "reviews": [
+    {
+      "cardId": "AOT-1-026",
+      "number": "UA23BT/AOT-1-026",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "這個角色活動時，發生能量+【青】。沒有突襲框。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-026",
+          "implementation": "activeExtraEnergy 1。gen 維持 1。能量線上活動是 2，休息是 1。前線是 0。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。卡圖的青+是這句。",
+          "unresolved": ""
+        },
+        {
+          "match": "無生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-026",
+          "implementation": "trigger 空白。受到傷害時不開生命觸發。",
+          "discrepancy": "",
+          "evidence": "同一檔以 032 打出無觸發：生命只少 1，沒有 pending。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-027",
+      "number": "UA23BT/AOT-1-027",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "衝擊無效。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-027",
+          "implementation": "impactNull。攻擊方戰鬥勝出時，這張擋住衝擊傷害。",
+          "discrepancy": "",
+          "evidence": "048 把衝擊（1）給 041 後，027 阻擋且落敗，生命張數不變。001 阻擋則生命少 1。048 本體的前線 BP 句不因此算已驗證。",
+          "unresolved": ""
+        },
+        {
+          "match": "登場時看牌庫頂 5 張。其中 1 張以內的藍色事件公開並加入手牌，其餘依序放回牌庫底。有加入時再棄 1 張。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-027",
+          "implementation": "searchTopOneBottomDiscard。整窗只給控制者。不選則 5 張都到底、不公開、不棄牌。選中的藍色事件才是 searched-to-hand，然後強制棄牌。藍色角色、紅色角色、綠色角色不能選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。對手的 universalPrivateChoices 是 null。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】選自己場上 1 張角色，活動並這個回合 BP+3000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-027",
+          "implementation": "共用 active 觸發。可跳過。",
+          "discrepancy": "",
+          "evidence": "同一檔把休息的 001 活動。036 的跳過不活動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-028",
+      "number": "UA23BT/AOT-1-028",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【起動メイン】休息。公開牌庫頂 1 張。是所需能量 3 以下的藍色角色就加入手牌，否則放回頂端。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-028",
+          "implementation": "付費登場後休息，當回合不能啟動。活動後公開頂端。027 進手牌。能量 4 的藍色角色、綠色角色、藍色事件留在頂端且已公開。牌庫空不能啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。公開記在 publicReveals。",
+          "unresolved": ""
+        },
+        {
+          "match": "【GET】把這張加入手牌。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-028",
+          "implementation": "共用 get。",
+          "discrepancy": "",
+          "evidence": "同一檔的生命觸發：選 get 後這張在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-029",
+      "number": "UA23BT/AOT-1-029",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "抽 1，棄 1，然後把 1 個以內的 AP 活動。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-029",
+          "implementation": "先抽再強制棄，之後才是可跳過的 AP 回復。跳過不活動。選擇會把剛支付而休息的 AP 活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。棄牌沒有 uid null。",
+          "unresolved": ""
+        },
+        {
+          "match": "【DRAW】抽 1。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-029",
+          "implementation": "共用 draw。",
+          "discrepancy": "",
+          "evidence": "同一檔選 draw 後手牌加 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-030",
+      "number": "UA23BT/AOT-1-030",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "把 2 個以內的 AP 活動。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-030",
+          "implementation": "recoverAp count 2。可以 0、先 1 再停止、或 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【FINAL】沒有生命時，可以把牌庫頂 1 張放到生命。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-030",
+          "implementation": "只在這張是最後一張生命時提供 final。選擇後牌庫頂成為生命。前面還有生命時不開這個觸發，牌進場外。",
+          "discrepancy": "",
+          "evidence": "同一檔。生命還有 040 時 pending 是 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-031",
+      "number": "UA23BT/AOT-1-031",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "看牌庫頂 2 張。任意張數依序放回頂端，其餘到場外。然後抽 2。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-031",
+          "implementation": "lookKeep，after 為 draw2。0 張：兩張到場外，抽的是下面兩張。留 1 張：那張先被抽走，另一張在場外。兩張都留：依選擇順序抽回，場外沒有視窗牌。視窗不進 publicReveals。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。選過一張後 inspected 仍是 2。對手是 null。020 的既有測試仍過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-031",
+          "implementation": "與 027 相同的共用 active。",
+          "discrepancy": "",
+          "evidence": "生命觸發由 027 代表。這張沒有自己的 triggerEffect。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-032",
+      "number": "UA23BT/AOT-1-032",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "把 1 張以內、BP 3500 以下的對手前線角色彈回手牌。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-032",
+          "implementation": "3500 可以選，4000 與能量線不行。跳過則都不回。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。018 與 010 只當目標。",
+          "unresolved": ""
+        },
+        {
+          "match": "無生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-032",
+          "implementation": "打出後直接進場外，沒有生命觸發。",
+          "discrepancy": "",
+          "evidence": "同一檔的無觸發攻擊。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-033",
+      "number": "UA23BT/AOT-1-033",
+      "status": "部分驗證",
+      "clauses": [
+        {
+          "match": "選 1 張 BP 2000 以下的對手前線角色並退場。自己場上有《ヒストリア・レイス》時，每有 1 張自己的場外事件，上限 +1000。",
+          "status": "部分驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-033",
+          "implementation": "有對象時不能跳過。沒有希斯特莉亞時 2000 可退、2500 不可。對手的希斯特莉亞不算。自己的希斯特莉亞加上 1 張場外事件和正在結算的這張，上限 4000：3500 可退、5000 不可。",
+          "discrepancy": "沒有任何合法對象時，引擎不讓這張事件被使用。",
+          "evidence": "tests/v2-aot-026-050.test.mjs 只測有對象的上限。",
+          "unresolved": "沒有對象時仍應可以付費使用，然後退 0 張。見 sharedGaps。"
+        },
+        {
+          "match": "【SPECIAL】選 1 張對手前線角色並退場。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-033",
+          "implementation": "共用 special，沒有 BP 上限。可跳過。",
+          "discrepancy": "",
+          "evidence": "同一檔。6000 的 057 在名單裡。跳過不退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-034",
+      "number": "UA23BT/AOT-1-034",
+      "status": "部分驗證",
+      "clauses": [
+        {
+          "match": "選 1 張 BP 3000 以下的對手前線角色並退場。自己場上有《リヴァイ》時，上限改成 5000 以下。",
+          "status": "部分驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-034",
+          "implementation": "沒有里維時 3000 可退、3500 不可，而且不能跳過。精確名字的 007 把上限改成 5000：5000 可退、6000 不可。〈リヴァイ班〉的 013 不算。對象只看對手前線。",
+          "discrepancy": "沒有合法對象時不能使用這張事件。",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": "與 033 同一個引擎閘門。見 sharedGaps。"
+        },
+        {
+          "match": "【SPECIAL】選 1 張對手前線角色並退場。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-034",
+          "implementation": "與 033 相同的共用 special。",
+          "discrepancy": "",
+          "evidence": "同一檔選 057，該角色退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-035",
+      "number": "UA23BT/AOT-1-035",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "對手場上有藍色或紅色卡時，這張從手牌登場的所需能量 -1【綠】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-035",
+          "implementation": "手牌能量 3。對手綠色或自己的藍色都不減。對手能量線上的藍色、或前線紅色，減成 2。能量只有 2 時，沒減費不能登場，有減費可以，登場後休息。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。gen 2 是印刷值。",
+          "unresolved": ""
+        },
+        {
+          "match": "無生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-035",
+          "implementation": "與 032 相同，沒有觸發。",
+          "discrepancy": "",
+          "evidence": "032 的無觸發攻擊。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-036",
+      "number": "UA23BT/AOT-1-036",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【起動メイン】【ターン1】只在登場的那個回合，選 1 張 BP 在這張以下的對手前線角色並退場。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-036",
+          "implementation": "登場回合、退場前 BP 3000 可以退 3000，不能退 3500。先付手牌變成 4000 後，3500 可以退。退過一次後同回合不再提供退場。下一個自己回合、以及不是本回合登場的副本，都沒有退場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】把手牌 1 張放到場外，這張這個回合 BP+1000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-036",
+          "implementation": "與退場分開。沒有一次限制。連付兩次是 +2000。手牌空了不能選這段。",
+          "discrepancy": "",
+          "evidence": "同一檔。卡圖的 + 屬於這段。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-036",
+          "implementation": "共用 active。跳過不活動。",
+          "discrepancy": "",
+          "evidence": "生命觸發測試的跳過。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-037",
+      "number": "UA23BT/AOT-1-037",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時選自己場上其他 1 張以內的角色，這個回合 BP+1000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-037",
+          "implementation": "自己不是對象。前線與能量線的其他角色可以。跳過不加。加值只到這個回合。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【DRAW】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-037",
+          "implementation": "與 029 相同的共用 draw。",
+          "discrepancy": "",
+          "evidence": "029 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-038",
+      "number": "UA23BT/AOT-1-038",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲《ロッド・レイス》。框內：自己回合 BP+2000；對手前線有活動角色時傷害是 2；退場時抽 1。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-038",
+          "implementation": "普通登場 BP 4000、傷害 1、退場不抽，也不能把被彈回手牌當成退場。突襲後自己回合 BP 6000。對手有活動角色時未阻擋傷害 2；該角色休息時傷害 1。對手回合 BP 回到 4000。突襲狀態被效果退場時抽 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。突襲對象是 037。彈回借用 025，不擴大 025 的驗證。",
+          "unresolved": ""
+        },
+        {
+          "match": "【GET】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-038",
+          "implementation": "與 028 相同的共用 get。",
+          "discrepancy": "",
+          "evidence": "028 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-039",
+      "number": "UA23BT/AOT-1-039",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時，把自己場上另一張所需能量 1 以下的角色彈回手牌。沒有這樣的角色時彈自己。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-039",
+          "implementation": "能量 0 與 1 的角色可選，包含能量線。能量 2 與自己不可選，而且不能跳過。場上只剩能量 2 時，這張立刻回手，另一張留下。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "無生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-039",
+          "implementation": "與 032 相同。",
+          "discrepancy": "",
+          "evidence": "032 的無觸發攻擊。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-040",
+      "number": "UA23BT/AOT-1-040",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時抽 1。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-040",
+          "implementation": "抽 1 後沒有 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。047、049 讓它休息登場時也會抽，那是它自己的登場效果。",
+          "unresolved": ""
+        },
+        {
+          "match": "無生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-040",
+          "implementation": "與 032 相同。",
+          "discrepancy": "",
+          "evidence": "032 的無觸發攻擊。生命區也用 040 當沒有觸發的牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-041",
+      "number": "UA23BT/AOT-1-041",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時抽 1，然後棄 1。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-041",
+          "implementation": "先抽，再強制棄。沒有跳過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【DRAW】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-041",
+          "implementation": "與 029 相同的共用 draw。",
+          "discrepancy": "",
+          "evidence": "029 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-042",
+      "number": "UA23BT/AOT-1-042",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "無效果。印刷一張。付費登場為休息。",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-042",
+          "implementation": "effectJa 空白。付 1 AP 後休息，沒有 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。printings.length 是 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-042",
+          "implementation": "與 027 相同的共用 active。",
+          "discrepancy": "",
+          "evidence": "027 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-043",
+      "number": "UA23BT/AOT-1-043",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "無效果。印刷一張。付費登場為休息。",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-043",
+          "implementation": "effectJa 空白。所需能量 1，付費後休息，沒有 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【DRAW】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-043",
+          "implementation": "與 029 相同的共用 draw。",
+          "discrepancy": "",
+          "evidence": "029 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-044",
+      "number": "UA23BT/AOT-1-044",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "衝擊無效。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-044",
+          "implementation": "impactNull。攻擊方勝出時不結算衝擊傷害，這張仍因落敗退場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。衝擊來自 048 的可選賦予，不把 048 的前線 BP 句算成已驗證。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-044",
+          "implementation": "與 027 相同的共用 active。",
+          "discrepancy": "",
+          "evidence": "027 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-045",
+      "number": "UA23BT/AOT-1-045",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "無效果。印刷一張。付費登場為休息。",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-045",
+          "implementation": "effectJa 空白。所需能量 0，付費後休息，沒有 pending。名字是 048 的突襲對象。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【GET】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-045",
+          "implementation": "與 028 相同的共用 get。",
+          "discrepancy": "",
+          "evidence": "028 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-046",
+      "number": "UA23BT/AOT-1-046",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【起動メイン】休息。選自己場上 1 張無垢的巨人，這個回合 BP+1000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-046",
+          "implementation": "登場當回合是休息，不能啟動。下一個自己回合可以。沒有無垢的巨人不能啟動，休息也不付。有對象時必須選 1 張，自己不是無垢的巨人。能量線上的對象可以。選完後對象 +1000，這張休息。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-046",
+          "implementation": "與 027 相同的共用 active。",
+          "discrepancy": "",
+          "evidence": "027 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-047",
+      "number": "UA23BT/AOT-1-047",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "自己回合，自己場上的無垢的巨人在 3 張以上時，這張 BP+1500。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-047",
+          "implementation": "2 張時 2500。前線加能量線共 3 張時，自己回合是 4000。對手回合回到 2500。這張自己不是無垢的巨人。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "登場時可讓手牌 1 張所需能量 2 以下、AP 1 的無垢的巨人休息登場。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-047",
+          "implementation": "可以跳過，牌庫不動。040 可以進前線且休息，它自己的登場抽 1 會發生。能量 3 的 049 不能選。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "無生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-047",
+          "implementation": "與 032 相同。",
+          "discrepancy": "",
+          "evidence": "032 的無觸發攻擊。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-048",
+      "number": "UA23BT/AOT-1-048",
+      "status": "部分驗證",
+      "clauses": [
+        {
+          "match": "框外：自己場上每有 1 張無垢的巨人，這張在場以外的所有區域所需能量 -1【綠】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+          "implementation": "沒有巨人時手牌、生命、牌庫、場外、場上都是 7。1 張在能量線時，手牌、生命、場外是 6，場上仍是 7。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲《ジーク・イェーガー》。登場時，自己場上的無垢的巨人這個回合 BP+1000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+          "implementation": "能量線突襲會在登場當回合 +1000，下一個自己回合回到印刷值。普通登場不加，也不能啟動框內能力。突襲登場是活動。",
+          "discrepancy": "",
+          "evidence": "同一檔用能量線，避開前線常駐加成。普通登場看 043 維持 2500。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】【ターン1】選 1 張以內的無垢的巨人，這個回合得到衝擊（1）。這張在前線時，全部無垢的巨人再 BP+1000。",
+          "status": "部分驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+          "implementation": "能量線可以啟動。跳過不給衝擊，而且消耗【ターン1】。選了才得到衝擊（1），BP 不因此再加。同一回合不能再啟動。",
+          "discrepancy": "前線上的 +1000 目前不看有沒有啟動，而且會留到後面的回合。",
+          "evidence": "同一檔只把能量線的衝擊與一次限制當成通過。",
+          "unresolved": "前線 BP 句見 sharedGaps。沒有把 set1 的常駐 +1000 改成預期。"
+        },
+        {
+          "match": "【RAID】可以抽進手牌，或在能量足夠時突襲到《ジーク・イェーガー》上。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-048",
+          "implementation": "生命觸發同時有 get 與 raid。場上有 045 且減費後能量足夠時，可以突襲上去。",
+          "discrepancy": "",
+          "evidence": "同一檔選 raid 後，048 在 045 上面。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-049",
+      "number": "UA23BT/AOT-1-049",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "退場時可讓手牌 1 張所需能量 2 以下、AP 1 的無垢的巨人休息登場。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-049",
+          "implementation": "戰鬥落敗會詢問。可以跳過。選能量線時那張休息登場，040 自己的抽 1 會發生。被 032 彈回手牌不是退場，不詢問。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。這批沒有印代替效果的句子。",
+          "unresolved": ""
+        },
+        {
+          "match": "無生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-049",
+          "implementation": "與 032 相同。",
+          "discrepancy": "",
+          "evidence": "032 的無觸發攻擊。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-050",
+      "number": "UA23BT/AOT-1-050",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時抽 1，然後棄 1。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-050",
+          "implementation": "與 041 相同。所需能量 0。先抽，再強制棄。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-026-050.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【DRAW】。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-050",
+          "implementation": "與 029 相同的共用 draw。",
+          "discrepancy": "",
+          "evidence": "029 的生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}
