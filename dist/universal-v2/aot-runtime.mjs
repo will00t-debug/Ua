@@ -321,12 +321,30 @@ function on022Attack(pack,s,job){
  ]);
 }
 function on031(pack,s,job){
- beginLook(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},2,()=>true,
-  {max:2,min:0,rest:'top',after:'draw2'});
+ // 見る stays private. Any number returns to the top in pick order.
+ // The rest go outside, and the draw happens only after that placement.
+ const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
+ const window=windowCards(s,job.owner,2);
+ if(!window.length){A.draw(pack,s,job.owner,2,job.sourceUid);return;}
+ hold(s,{...spec,step:'lookKeep',data:{uids:window.map(c=>c.uid),kept:[],after:'draw2'}},[
+  {type:'aot',mode:'done'},
+  ...window.map(c=>({type:'aot',mode:'keep',uid:c.uid}))
+ ]);
 }
 function cap033(pack,s,owner){
  let base=2000;
- if(fieldCards(s,owner).some(c=>exact(pack,c,HISTORIA,s)))base+=outs(s,owner)*1000;
+ if(fieldCards(s,owner).some(c=>exact(pack,c,HISTORIA,s))){
+  // The event is used into OUTSIDE before its effect. The engine holds it in
+  // resolvingEvents until the choice finishes, so that copy still counts.
+  const pl=plOf(s,owner),seen=new Set();
+  let events=0;
+  for(const c of [...pl.outside,...(pl.resolvingEvents||[])]){
+   if(seen.has(c.uid))continue;
+   seen.add(c.uid);
+   if(def(pack,c).type==='event'||def(pack,c).alsoEvent===true)events++;
+  }
+  base+=events*1000;
+ }
  return base;
 }
 function on033(pack,s,job){offerRetire(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},cap033(pack,s,job.owner),false);}
@@ -596,7 +614,10 @@ function main028(pack,s,job){
 function main036(pack,s,job){
  const c=requireSelf(s,job);if(!c)return;
  const actions=[];
- if(enteredThisTurn(s,job.owner,c)){
+ const retireKey=c.uid+'|AOT-1-036|retire';
+ // The retire line is its own 【ターン1】, and only on the turn this card entered.
+ // The hand-to-outside BP line is a separate activation with no once.
+ if(!used(s,retireKey)&&enteredThisTurn(s,job.owner,c)){
   const cap=A.bp(pack,s,c)+rangeExtra(s,job.owner);
   for(const t of oppFront(s,job.owner,x=>A.bp(pack,s,x)<=cap))
    actions.push({type:'aot',mode:'retire',uid:t.uid});
@@ -758,7 +779,8 @@ function legalMain(pack,s,owner,c){
  if(id==='AOT-1-022')return front&&!used(s,c.uid+'|AOT-1-022')&&outs(s,owner)>=4&&eventUsed(s,owner);
  if(id==='AOT-1-028')return c.ready&&plOf(s,owner).deck.length>0;
  if(id==='AOT-1-036'){
-  const retire=enteredThisTurn(s,owner,c)&&oppFront(s,owner,t=>A.bp(pack,s,t)<=A.bp(pack,s,c)+rangeExtra(s,owner)).length;
+  const retire=!used(s,c.uid+'|AOT-1-036|retire')&&enteredThisTurn(s,owner,c)&&
+   oppFront(s,owner,t=>A.bp(pack,s,t)<=A.bp(pack,s,c)+rangeExtra(s,owner)).length;
   return retire||plOf(s,owner).hand.length>0;
  }
  if(id==='AOT-1-046')return c.ready&&fieldCards(s,owner).some(x=>trait(pack,x,PURE));
@@ -959,6 +981,7 @@ export function resolveAotPending(pack,s,action){
    }
   }
   finish020(pack,s,spec,data);
+  if(data.after==='draw2')A.draw(pack,s,spec.player,2,spec.sourceUid);
   go(pack,s);return;
  }
  if(q.step==='lookOrder'){
@@ -1103,6 +1126,7 @@ export function resolveAotPending(pack,s,action){
   }
   const slot=plOf(s,1-q.player).front.findIndex(c=>c?.uid===a.uid);
   if(slot<0)throw Error('Attack on Titan retire target left');
+  if(q.id==='AOT-1-036')use(s,q.sourceUid+'|AOT-1-036|retire');
   A.retire(pack,s,1-q.player,'front',slot);
   go(pack,s);return;
  }
