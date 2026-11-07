@@ -2,11 +2,10 @@
 // not extra depth. A voluntary choice or an answer to the opponent is a
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
-import {dispatchUniversalAction} from '../engine.mjs';
 import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded,filterEnergyFirst,lastApLineSwitch,recoversActionPoints,payableRefundOnTop} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal,engineDispatch} from './strategy.mjs';
 import {packOf,visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -177,7 +176,7 @@ export function positionKey(state,actor,mode,left){
  return parts.join(';');
 }
 function dispatch(pack,state,action){
- const next=dispatchUniversalAction(pack,state,action,{actor:who(state)});
+ const next=engineDispatch(pack,state,action,{actor:who(state)});
  noteDispatch();
  return next;
 }

@@ -10,7 +10,7 @@ import {scoreLine,rankLegal,selectCandidates} from '../dist/universal-v2/ai-v3/b
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
-import {bindProbeBudget,energyPlayNet,moveDevelopment,preferConfirmedChoices} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,energyPlayNet,moveDevelopment,preferConfirmedChoices,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -2677,14 +2677,20 @@ test('an unfinished hand limit discards the lowest keep card at every cutoff',()
 function measured(packs,state){
  const actor=state.pending?.player??state.active;
  const meter={dispatches:0};
+ let calls=0;
+ const stop=watchEngineDispatch(()=>{calls++;});
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{
-  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,
-  ms:1e9,now:()=>0
- });
+ let action;
+ try{
+  action=chooseAiV3Action(packs,state,{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,
+   ms:1e9,now:()=>0
+  });
+ }finally{stop();}
  const trace=lastAiV3Trace();
  assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
  if(trace.reason!=='forced'){
+  assert.equal(calls,trace.nodesUsed);
   assert.equal(meter.dispatches,trace.nodesUsed);
   assert.ok(trace.nodesUsed<=48);
   const row=(trace.compared||[]).find(item=>item.executed!==false&&JSON.stringify(item.action)===JSON.stringify(action));
@@ -2888,23 +2894,39 @@ function openShift(actor,{rested=false,ban=false}={}){
  assert.equal(state.players[foe].front.some(Boolean),false);
  return {packs,state,actor,aizen,fronts};
 }
-function askShift(packs,state){
- const actor=state.active;
+function askShift(packs,state,options={}){
+ const actor=state.pending?.player??state.active;
+ const nodes=options.nodes??48;
  const meter={dispatches:0};
+ let calls=0;
+ const stop=watchEngineDispatch(()=>{calls++;});
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{
-  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter
- });
+ let action;
+ try{
+  action=chooseAiV3Action(packs,state,{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes,ms:options.ms??1e9,
+   now:options.now||(()=>0),diagnose:true,meter,
+   ...(options.rootFirst?{rootFirst:options.rootFirst}:{}),
+   ...(options.onRootDone?{onRootDone:info=>options.onRootDone(info,calls)}:{})
+  });
+ }finally{stop();}
  const trace=lastAiV3Trace();
  assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ assert.equal(Number.isInteger(trace.nodesUsed),true);
+ assert.equal(calls,trace.nodesUsed);
  assert.equal(meter.dispatches,trace.nodesUsed);
- assert.ok(trace.nodesUsed<=48);
+ assert.ok(trace.nodesUsed<=nodes);
  const row=(trace.compared||[]).find(item=>item.executed!==false&&JSON.stringify(item.action)===JSON.stringify(action));
- assert.ok(row);
- assert.equal(trace.score,row.search);
- assert.equal(trace.settled,!!row.settled);
- assert.equal(trace.sequence[0].type,action.type);
- return {action,trace,meter,actor};
+ if(row){
+  assert.equal(trace.score,row.search);
+  assert.equal(trace.settled,!!row.settled);
+  assert.equal(trace.sequence[0].type,action.type);
+ }else{
+  assert.equal(trace.score,null);
+  assert.equal(trace.sequence?.length||0,0);
+  assert.equal(trace.settled,false);
+ }
+ return {action,trace,meter,actor,calls};
 }
 function followLine(packs,state,sequence){
  let cursor=state;
@@ -3015,6 +3037,77 @@ test('a rested shift that only taps two attackers is not taken, and a known loss
   ]);
   assert.equal(kept.type,'activate');
   assert.equal(JSON.stringify(kept),JSON.stringify(activate));
+ }
+});
+test('shift checks stay inside 8, 24 and 48 nodes on both seats',()=>{
+ for(const actor of [0,1]){
+  for(const nodes of [8,24,48]){
+   const {packs,state,aizen}=openShift(actor,{ban:true});
+   const asked=askShift(packs,state,{nodes});
+   assert.equal(asked.calls,asked.meter.dispatches);
+   assert.equal(asked.calls,asked.trace.nodesUsed);
+   assert.ok(asked.calls<=nodes);
+   if(nodes===8){
+    assert.equal(asked.action.type,'activate');
+    assert.equal(asked.action.uid,aizen.uid);
+    assert.equal(asked.trace.settled,false);
+    assert.ok(asked.trace.score<90000);
+   }
+   if(nodes===48){
+    assert.equal(asked.action.type,'activate');
+    assert.equal(asked.action.uid,aizen.uid);
+    assert.equal(asked.trace.settled,true);
+    assert.ok(asked.trace.score>=90000);
+   }
+  }
+ }
+});
+test('a cutoff after the winning root does not start another shift walk',()=>{
+ for(const actor of [0,1]){
+  const {packs,state,aizen}=openShift(actor,{ban:true});
+  let time=0;
+  let atCut=null;
+  const asked=askShift(packs,state,{
+   nodes:48,now:()=>time,
+   rootFirst:[{type:'activate',uid:aizen.uid}],
+   onRootDone:(_info,seen)=>{if(atCut==null){atCut=seen;time=1e15;}}
+  });
+  assert.equal(asked.calls,atCut);
+  assert.equal(asked.action.type,'activate');
+  assert.equal(asked.action.uid,aizen.uid);
+  assert.equal(asked.trace.settled,true);
+  assert.ok(asked.trace.score>=90000);
+  assert.equal(asked.trace.reason==='search'||asked.trace.reason==='budget',true);
+  const finished=followLine(packs,state,asked.trace.sequence);
+  assert.equal(finished.status,'finished');
+  assert.equal(finished.winner,actor);
+  assert.equal(finished.endReason,'life-zero');
+ }
+});
+test('an unfinished shift check does not borrow another line',()=>{
+ for(const actor of [0,1]){
+  const opened=openShift(actor,{ban:true});
+  const book=opened.packs[actor];
+  const cards={...book.cards,'BLC-4-060':{...book.cards['BLC-4-060'],attackRequiresName:'無此名稱'}};
+  const packs=[{...book,cards},{...book,cards}];
+  let time=0;
+  let atCut=null;
+  const asked=askShift(packs,opened.state,{
+   nodes:48,now:()=>time,
+   rootFirst:[{type:'activate',uid:opened.aizen.uid}],
+   onRootDone:(_info,seen)=>{if(atCut==null){atCut=seen;time=1e15;}}
+  });
+  assert.equal(asked.calls,atCut);
+  assert.equal(asked.action.type,'activate');
+  assert.equal(asked.action.uid,opened.aizen.uid);
+  const row=(asked.trace.compared||[]).find(item=>item.executed!==false&&item.action?.type==='activate'&&item.action.uid===opened.aizen.uid);
+  assert.ok(row);
+  assert.equal(asked.trace.score,row.search);
+  assert.deepEqual(asked.trace.sequence,row.sequence);
+  assert.equal(asked.trace.settled,!!row.settled);
+  assert.equal(row.boundary==='terminal'&&row.search>=90000,false);
+  const pass=(asked.trace.compared||[]).find(item=>item.action?.type==='next'&&item.executed!==false);
+  if(pass)assert.notEqual(JSON.stringify(asked.trace.sequence),JSON.stringify(pass.sequence));
  }
 });
 test('a covered plain generator is discarded and the next turn keeps the filter chain',()=>{

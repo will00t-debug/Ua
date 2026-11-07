@@ -1,11 +1,11 @@
 // Static position value. It deliberately does not look a turn ahead:
 // a front body is not worth more than developing energy. The beam search
 // has to see the opponent's turn before a blocker outranks that energy.
-import {dispatchUniversalAction,effectiveHandRequiredEnergy,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
+import {effectiveHandRequiredEnergy,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
 import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
 import {aot2Warhammer} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
-import {cachedLegal,noteDispatch,spendSharedStep,strategyScore} from './strategy.mjs';
+import {cachedLegal,engineDispatch,noteDispatch,spendSharedStep,strategyScore} from './strategy.mjs';
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 // A hand card that can raid a body already on our side is not a generic card.
@@ -622,7 +622,7 @@ function walkRebuild(pack,state,actor,removedUid,planned,energy){
   const action=rebuildAction(pack,cursor,actor,removedUid,queue,played,blocked);
   if(!action)return {ok:false,reason:'unproven'};
   try{
-   cursor=dispatchUniversalAction(pack,cursor,action,{actor:cursor.pending?.player??cursor.active});
+   cursor=engineDispatch(pack,cursor,action,{actor:cursor.pending?.player??cursor.active});
   }catch{return {ok:false,reason:'unproven'};}
   if(ticket==='spent')noteDispatch();
   if(action.type==='chooseBlock'&&action.uid===removedUid)blocked=true;

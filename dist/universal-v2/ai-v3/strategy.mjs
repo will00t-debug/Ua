@@ -6,6 +6,8 @@
 // The preview page loads this file in the browser, so the budget stays on
 // a synchronous stack. Search does not await inside the binding.
 import {universalBp,universalEnergy,universalEnergyByColor,universalAttackDamage,universalImpact,universalImpactNull,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
+import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
+import {aot2AttackBlocked} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
 import {sequencedFilter,lineSwitchBody,recoversActionPoints,filterEnergyFirst,lastApLineSwitch} from './eval.mjs';
 
@@ -25,6 +27,21 @@ export function bindMeter(meter,fn){
 export function noteDispatch(){
  const meter=meterStack.length?meterStack[meterStack.length-1]:null;
  if(meter)meter.dispatches=(meter.dispatches||0)+1;
+}
+// One place the search calls the engine. A test watches this, so a walk that
+// forgot to take a node is still visible. Setup and replay call the engine
+// directly and stay outside the count. The watch runs only after the
+// transition returns, matching the node that was kept.
+let engineWatch=null;
+export function watchEngineDispatch(fn){
+ const previous=engineWatch;
+ engineWatch=typeof fn==='function'?fn:null;
+ return ()=>{engineWatch=previous;};
+}
+export function engineDispatch(pack,state,action,extra){
+ const next=dispatchUniversalAction(pack,state,action,extra);
+ if(engineWatch)engineWatch();
+ return next;
 }
 // One transition of a proof that shares the search pool and clock. A direct
 // call with no search binding is the proof itself. The line's own step
@@ -260,7 +277,7 @@ function probeStep(pack,cursor,action){
  if(!takeProbeNode())return {stop:'budget'};
  const seat=cursor.pending?.player??cursor.active;
  try{
-  const state=dispatchUniversalAction(pack,cursor,action,{actor:seat});
+  const state=engineDispatch(pack,cursor,action,{actor:seat});
   noteDispatch();
   return {state};
  }catch{return {stop:'error'};}
@@ -923,47 +940,154 @@ function preferLastSwitch(pack,state,actor,choice,rows){
  const play=legal.find(action=>lastApLineSwitch(pack,state,actor,action));
  return guarded(choice,rows,play);
 }
-// The printed move keeps the body's ready state. Ask the engine whether that
-// body can attack after the move, and whether the fronts it would rest can
-// attack now. A standing body that can attack stays. Resting two real
-// attackers to move a body that still cannot attack does not, unless passing
-// is already a loss.
-function frontAttackersNow(pack,state,actor){
- try{
-  let cursor=structuredClone(state);
-  if(cursor.pending)return [];
-  if(cursor.phase==='main'){
-   const pass=legalUniversalActions(pack,cursor).find(action=>action?.type==='next');
-   if(!pass)return [];
-   cursor=dispatchUniversalAction(pack,cursor,pass,{actor});
-  }
-  if(cursor.phase!=='attack'||cursor.pending||cursor.active!==actor)return [];
-  const attacks=new Set(legalUniversalActions(pack,cursor).filter(action=>action?.type==='attack').map(action=>action.uid));
-  return (state.players?.[actor]?.front||[]).filter(card=>card&&attacks.has(card.uid));
- }catch{return [];}
+// The printed move rests two other fronts and then effectMoveTo. That move
+// keeps the source object, including ready. A confirmed win is not walked
+// again. Ready, attack bans, and a quiet attack entry are read in place.
+// Anything those do not answer takes one shared node before each transition
+// and stops when the clock or the pool is already spent. An unfinished
+// answer stays unknown: it is not proof that the body cannot attack.
+function sameAction(a,b){
+ return JSON.stringify(a)===JSON.stringify(b);
 }
-function attacksAfterShift(pack,state,actor,choice){
+function confirmedWin(rows){
+ return (rows||[]).some(row=>row?.executed!==false&&row.boundary==='terminal'&&row.search>=90000);
+}
+function paidShiftAttack(rows,choice){
+ const row=(rows||[]).find(item=>item?.executed!==false&&sameAction(item.action,choice));
+ return !!row?.sequence?.some(step=>step?.type==='attack'&&step.uid===choice.uid);
+}
+function attackEntryChanges(pack,state,actor){
+ if(state?.phase==='attack'&&!state.pending)return false;
+ if(state?.phase!=='main'||state.pending)return true;
+ if((state.effectQueue||[]).length)return true;
+ if((state.delayedEffects||[]).some(item=>item&&item.turn===state.turn&&item.owner===actor))return true;
+ const mine=state.players?.[actor];
+ const catalog=packOf(pack,actor).cards;
+ const bodies=[...(mine?.front||[]),...(mine?.energy||[])].filter(Boolean);
+ for(const card of bodies){
+  const printed=catalog[card.cardId];
+  if(printed?.phaseEffects?.some(item=>item?.phase==='attack'&&item?.edge==='start'))return true;
+ }
+ return (state.continuousStates||[]).some(item=>item?.until?.player===actor&&item.until.phase==='main'&&
+  item.until.edge==='end'&&(item.kind==='cannotAttack'||item.kind==='cannotActive'||item.kind==='skipNextActive'));
+}
+function readableAttack(pack,state,actor,card){
+ if(!card)return null;
+ if(card.ready!==true)return false;
+ const printed=packOf(pack,actor).cards[card.cardId];
+ if(!printed||printed.type!=='character')return false;
+ try{if(aot2AttackBlocked(pack,state,actor,card))return false;}catch{return null;}
+ if(card.attackBanned&&card.attackBanned.turn===state.turn&&card.attackBanned.stamp===card.fieldEntryStamp&&
+  !originalEffectsDisabled(state,card))return false;
+ let restrictions=[];
+ try{restrictions=fieldRestrictions(state,actor,card);}catch{return null;}
+ if(restrictions.some(row=>row.kind==='cannotAttack'))return false;
+ if(!originalEffectsDisabled(state,card)){
+  if(printed.attackEnergyMin&&energyOf(pack,state,actor)<printed.attackEnergyMin)return false;
+  if(printed.attackDeckAtMost&&(state.players?.[actor]?.deck?.length||0)>printed.attackDeckAtMost)return false;
+  if(printed.attackRequiresName)return null;
+ }
+ const cap=state.attackCap?.[actor];
+ if(cap!=null&&(state.attacksThisTurn||0)>=cap)return false;
+ return true;
+}
+// Charge the shared pool before the transition. A direct call with no search
+// binding is the proof itself. A miss gives the node back. The meter moves
+// only when the transition is kept.
+function chargeSharedDispatch(pack,cursor,action){
+ const budget=probeBudget();
+ const seat=cursor?.pending?.player??cursor?.active;
+ if(!budget){
+  try{return {state:engineDispatch(pack,cursor,action,{actor:seat})};}
+  catch{return {stop:'error'};}
+ }
+ const expired=typeof budget.now==='function'&&budget.now()>budget.deadline;
+ if(expired||!(budget.pool?.n>0))return {stop:'budget'};
+ budget.pool.n--;
+ try{
+  const state=engineDispatch(pack,cursor,action,{actor:seat});
+  noteDispatch();
+  return {state};
+ }catch{
+  budget.pool.n++;
+  return {stop:'error'};
+ }
+}
+function probeShiftAttacks(pack,state,actor,choice){
  try{
   let cursor=structuredClone(state);
-  const seat=()=>cursor.pending?.player??cursor.active;
-  cursor=dispatchUniversalAction(pack,cursor,choice,{actor:seat()});
+  const opened=chargeSharedDispatch(pack,cursor,choice);
+  if(opened.stop)return null;
+  cursor=opened.state;
   for(let guard=0;guard<8&&cursor.pending&&cursor.status==='playing';guard++){
    const steps=legalUniversalActions(pack,cursor);
    const step=steps.find(action=>action?.type==='chooseRestTwo')||steps.find(action=>action?.type==='chooseSelfFront');
    if(!step)return false;
-   cursor=dispatchUniversalAction(pack,cursor,step,{actor:seat()});
+   const stepped=chargeSharedDispatch(pack,cursor,step);
+   if(stepped.stop)return null;
+   cursor=stepped.state;
   }
-  if(cursor.pending||cursor.status!=='playing')return false;
+  if(cursor.pending||cursor.status!=='playing')return null;
   if(cursor.phase==='main'){
    const pass=legalUniversalActions(pack,cursor).find(action=>action?.type==='next');
    if(!pass)return false;
-   cursor=dispatchUniversalAction(pack,cursor,pass,{actor:seat()});
+   const stepped=chargeSharedDispatch(pack,cursor,pass);
+   if(stepped.stop)return null;
+   cursor=stepped.state;
   }
-  if(cursor.phase!=='attack'||cursor.pending||cursor.active!==actor)return false;
+  if(cursor.phase!=='attack'||cursor.pending||cursor.active!==actor)return null;
   const moved=[...(cursor.players?.[actor]?.front||[]),...(cursor.players?.[actor]?.energy||[])].find(card=>card?.uid===choice.uid);
   if(!moved?.ready)return false;
   return legalUniversalActions(pack,cursor).some(action=>action?.type==='attack'&&action.uid===choice.uid);
- }catch{return false;}
+ }catch{return null;}
+}
+function probeFrontAttackers(pack,state,actor){
+ try{
+  let cursor=structuredClone(state);
+  if(cursor.pending)return null;
+  if(cursor.phase==='main'){
+   const pass=legalUniversalActions(pack,cursor).find(action=>action?.type==='next');
+   if(!pass)return null;
+   const stepped=chargeSharedDispatch(pack,cursor,pass);
+   if(stepped.stop)return null;
+   cursor=stepped.state;
+  }
+  if(cursor.phase!=='attack'||cursor.pending||cursor.active!==actor)return null;
+  const attacks=new Set(legalUniversalActions(pack,cursor).filter(action=>action?.type==='attack').map(action=>action.uid));
+  return (state.players?.[actor]?.front||[]).filter(card=>card&&attacks.has(card.uid)).length;
+ }catch{return null;}
+}
+function shiftCanAttack(pack,state,actor,choice,rows){
+ if(paidShiftAttack(rows,choice))return true;
+ const mine=state.players?.[actor];
+ const body=[...(mine?.energy||[]),...(mine?.front||[])].find(card=>card?.uid===choice.uid);
+ if(!body)return null;
+ if(!attackEntryChanges(pack,state,actor)){
+  const read=readableAttack(pack,state,actor,body);
+  if(read===true||read===false)return read;
+ }
+ if(confirmedWin(rows))return null;
+ return probeShiftAttacks(pack,state,actor,choice);
+}
+function frontAttackCount(pack,state,actor,rows){
+ if(state?.phase==='attack'&&!state.pending&&state.active===actor){
+  try{
+   const attacks=new Set(legalUniversalActions(pack,state).filter(action=>action?.type==='attack').map(action=>action.uid));
+   return (state.players?.[actor]?.front||[]).filter(card=>card&&attacks.has(card.uid)).length;
+  }catch{return null;}
+ }
+ if(!attackEntryChanges(pack,state,actor)){
+  const fronts=(state.players?.[actor]?.front||[]).filter(Boolean);
+  let count=0;
+  for(const card of fronts){
+   const open=readableAttack(pack,state,actor,card);
+   if(open==null)return null;
+   if(open)count++;
+  }
+  return count;
+ }
+ if(confirmedWin(rows))return null;
+ return probeFrontAttackers(pack,state,actor);
 }
 function preferKeepReadyFront(pack,state,actor,choice,rows){
  if(choice?.type!=='activate'||state?.pending)return choice;
@@ -973,13 +1097,13 @@ function preferKeepReadyFront(pack,state,actor,choice,rows){
  const body=[...(mine?.energy||[]),...(mine?.front||[])].find(card=>card?.uid===choice.uid);
  const printed=body&&packOf(pack,actor).cards[body.cardId];
  if(printed?.mainAbility?.op!=='restTwoActiveFrontMoveSelf')return choice;
- if(attacksAfterShift(pack,state,actor,choice))return choice;
- if(frontAttackersNow(pack,state,actor).length<2)return choice;
+ if(shiftCanAttack(pack,state,actor,choice,rows)!==false)return choice;
+ if(!(frontAttackCount(pack,state,actor,rows)>=2))return choice;
  let pass=null;
  try{pass=legalUniversalActions(pack,state).find(action=>action?.type==='next')||null;}
  catch{pass=null;}
  if(!pass)return choice;
- const row=(rows||[]).find(item=>item?.executed!==false&&JSON.stringify(item.action)===JSON.stringify(pass));
+ const row=(rows||[]).find(item=>item?.executed!==false&&sameAction(item.action,pass));
  if(row?.boundary==='terminal'&&row.search<=-90000)return choice;
  return pass;
 }
