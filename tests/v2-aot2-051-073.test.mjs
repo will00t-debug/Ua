@@ -526,11 +526,30 @@ test('the Cart Titan gains impact, energy attack and sniper only inside the raid
  line=raidOnto(line,rider.uid,seat.uid,'energy');
  line=pick(line,a=>a.mode==='down');
  assert.equal(universalBp(packs,line,field(line,0,rider.uid)),2000);
- const target=put(line,1,'AOT-2-001','front',0,true);
+ const target=put(line,1,'AOT-2-063','front',0,true);
  line=toPhase(line,'attack');
  const shot=acts(line).find(a=>a.type==='attack'&&a.uid===rider.uid&&a.targetUid===target.uid);
  assert.ok(shot);
+ line=use(line,shot);
+ assert.equal(line.pending?.kind==='block',false);
+ assert.equal(line.players[1].front.some(c=>c?.uid===target.uid),false);
+ assert.equal(field(line,0,rider.uid)!==null,true);
  finish(line);
+
+ let short=toPhase(fresh(counts,565),'main');
+ fuel(short,['AOT-2-051','AOT-2-052','AOT-2-054']);
+ const bench=put(short,0,'AOT-2-054','energy',3,true);
+ readyAp(short);
+ const low=toHand(short,0,'AOT-2-056');
+ short=raidOnto(short,low.uid,bench.uid,'energy');
+ short=pick(short,a=>a.mode==='down');
+ const taller=put(short,1,'AOT-2-001','front',0,true);
+ short=toPhase(short,'attack');
+ short=use(short,acts(short).find(a=>a.type==='attack'&&a.uid===low.uid&&a.targetUid===taller.uid));
+ assert.equal(short.pending?.kind==='block',false);
+ assert.equal(short.players[1].front.some(c=>c?.uid===taller.uid),true);
+ assert.equal(field(short,0,low.uid),null);
+ finish(short);
 
  let down=toPhase(fresh(counts,562),'main');
  fuel(down,['AOT-2-051','AOT-2-052','AOT-2-054']);
@@ -847,7 +866,13 @@ test('Mikasa from hand stays in hand, and the end choice is rested before the re
  assert.equal(choice.ready,false);
  bounced=pick(bounced,a=>a.mode==='enter'&&a.uid===first.uid);
  assert.equal(bounced.players[0].hand.some(c=>c.uid===second.uid),true);
+ const entered=bounced.players[0].front.find(c=>c?.cardId==='AOT-2-066');
+ assert.equal(!!entered,true);
  assert.equal(bounced.players[0].front.filter(c=>c?.cardId==='AOT-2-066').length,1);
+ // End-phase start effects run, then the end refresh sets the turn player's
+ // rested characters active before the opponent's turn. She can block then.
+ assert.equal(entered.ready,true);
+ assert.equal(bounced.active,1);
  finish(bounced);
 });
 

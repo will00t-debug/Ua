@@ -15,12 +15,13 @@
     {
       "name": "057 的選擇保護過了回合仍留在牌上",
       "owner": "A",
+      "resolved": "2026-11-07 整合。startTurn 經 clearTurnBattleGrants 清掉 aotChoiceShield，以及同一形狀的 aotThirdSniper、aotTriggerUnchosen、aotReturnHandAtAttackEnd、aotSpecialReplace。",
       "rule": "AOT-1-057 突襲框內的登場時：這個回合中，這張角色得到「不能被對手的角色效果或觸發效果選取」。Q984 只擋寫有「選び」的效果。自己的效果、事件、場地效果不擋。回合結束後可以再選。",
-      "where": "dist/universal-v2/aot-runtime.mjs 在正面突襲的登場時寫 aotChoiceShield，形狀是 turn、stamp、scope。effectChoiceProtected 會看 turn 是否等於現在的回合，所以下一個回合規則上已經不保護。dist/universal-v2/engine.mjs 的 startTurn 會清掉第二彈的回合旗標，沒有刪 aotChoiceShield。assertAotGrants 要求旗標的 turn 等於現在的回合，留著就丟錯。",
-      "repro": "把 057 正面突襲到 054 上。同一回合對手的角色效果選不到，自己的 067 選得到，事件選得到。再推進到下一個主要階段時，dispatchUniversalAction 在 assertUniversalMatch 丟出 Forged Attack on Titan aotChoiceShield。",
-      "expected": "回合開始時清掉這個旗標。保護只到寫上它的那個回合結束。下一回合可以選這張角色，對局可以繼續。",
-      "affects": "AOT-1-057 的登場時保護句。本範圍沒有第二張寫這個旗標。減張、衝擊、傷害、能量 0 的退場，以及同一回合的保護對象，已另測。",
-      "regression": "tests/v2-aot-faq.test.mjs 的 Q984 停在同一回合。本批只把狀態上的 turn 暫時加 1，確認 effectChoiceProtected 變 false，沒有真的走 startTurn。"
+      "where": "dist/universal-v2/engine.mjs clearTurnBattleGrants。下一回合的 startTurn 會走到每一張場上的牌。",
+      "repro": "把 057 正面突襲到 054 上。同一回合對手的角色效果選不到。再走到下一個主要階段時，旗標已不在，保護是 false，assertUniversalMatch 通過。",
+      "expected": "回合開始時清掉這個旗標。保護只到寫上它的那個回合結束。",
+      "affects": "這一次登場上的「このターン中」選擇旗標。離場時原本就會清。",
+      "regression": "tests/v2-aot-051-075.test.mjs 走到對手的主要階段。"
     }
   ],
   "fixes": [
@@ -224,7 +225,7 @@
     {
       "cardId": "AOT-1-057",
       "number": "UA23BT/AOT-1-057",
-      "status": "部分驗證",
+      "status": "已驗證",
       "clauses": [
         {
           "match": "在前線時，自己前線可放的張數減 1。這句在突襲框外。",
@@ -246,12 +247,12 @@
         },
         {
           "match": "登場時，退掉對方前線全部所需能量 0 的角色。這個回合不能被對手的角色效果或觸發效果選取。",
-          "status": "部分驗證",
+          "status": "已驗證",
           "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA23BT/AOT-1-057",
-          "implementation": "普通登場不退人、不給保護。正面突襲只退能量 0 的 042，能量 5 的 060 留下。同一回合對手的角色、觸發、未知來源選不到；事件、場地、自己的 067 選得到。Q984 的「選び」由 effectChoiceProtected 的範圍對上。跳過生命突襲不跑這句。",
-          "discrepancy": "保護的回合判斷是對的，但旗標在換回合後沒被清掉，下一動會被共用檢查拒絕。",
-          "evidence": "同一檔把 turn 暫時加 1，保護變 false。換回合的例外見 sharedGaps。",
-          "unresolved": "startTurn 沒有刪 aotChoiceShield。交給 A，不改引擎。"
+          "implementation": "普通登場不退人、不給保護。正面突襲只退能量 0 的 042，能量 5 的 060 留下。同一回合對手的角色、觸發、未知來源選不到；事件、場地、自己的 067 選得到。下一回合開始時 clearTurnBattleGrants 刪掉 aotChoiceShield。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-051-075.test.mjs。同一回合保護成立。走到對手主要階段後旗標不在，保護是 false，assertUniversalMatch 通過。",
+          "unresolved": ""
         },
         {
           "match": "【レイド】可以抽進手牌，或在能量足夠時突襲。",

@@ -487,6 +487,23 @@ test('057 reduces front capacity before the raid box, and the box text needs a f
  raided.turn=remembered;
  finish(raided);
 
+ let later=toPhase(fresh(ids,51074),'main');
+ put(later,0,'AOT-1-060','energy',0,true);
+ put(later,0,'AOT-1-060','energy',1,true);
+ put(later,0,'AOT-1-060','energy',2,true);
+ put(later,0,'AOT-1-060','energy',3,true);
+ const hostLater=put(later,0,'AOT-1-054','front',0,true);
+ readyAp(later,0,1);
+ const shielded=toHand(later,0,'AOT-1-057');
+ later=raidOnto(later,shielded.uid,hostLater.uid);
+ assert.equal(effectChoiceProtected(later,1,shielded.uid,'character'),true);
+ later=toActiveMain(later,1);
+ const still=live(later,0,shielded.uid);
+ assert.equal(still.aotChoiceShield,undefined);
+ assert.equal(effectChoiceProtected(later,1,still.uid,'character'),false);
+ assert.equal(effectChoiceProtected(later,1,still.uid,'trigger'),false);
+ finish(later);
+
  let skipped=toPhase(fresh(ids,51070),'attack');
  put(skipped,1,'AOT-1-060','energy',0,true);
  put(skipped,1,'AOT-1-060','energy',1,true);

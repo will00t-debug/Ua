@@ -163,7 +163,10 @@ const RAID_BOX_FEATURES=Object.freeze({
  'AOT-2-058':["onPlay","onAttack"],
  'AOT-2-060':["onPlay","onAttack"],
  'AOT-2-067':["onPlay"],
- 'AOT-2-069':["onPlay"],
+ // EX10BT/AOT-2-069 image: impact, the BP-range bonus and the draw are inside
+ // the raid frame. The front-line limit sits outside it. Q1566 stacks the
+ // bonus once per face-up front raid.
+ 'AOT-2-069':["onPlay","standingBp"],
  'AOT-2-072':["onPlay"],
  'KMR-1-005':["onPlay","main"],
  'KMR-1-013':["onPlay"],

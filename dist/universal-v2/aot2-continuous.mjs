@@ -3,6 +3,7 @@
 // match. Registration is not an official FAQ certification.
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
 import {originalEffectsDisabled} from './continuous-states.mjs';
+import {raidBoxListed} from './raid-box.mjs';
 
 const RUMBLE='地鳴らし';
 const YMIR='始祖ユミル';
@@ -46,13 +47,20 @@ function ymirAnywhere(pack,s,owner){
 }
 function faceUpRaided(pack,c){
  const d=sheet(pack,c);
- return !!d?.raidName&&(c.stack||[]).some(x=>x&&x.faceDown!==true);
+ // Q51 / Q552: a printed Raid top names a card or a trait, and the bonus
+ // needs one face-up card underneath.
+ return !!d&&!!(d.raidName||d.raidTrait)&&(c.stack||[]).some(x=>x&&x.faceDown!==true);
 }
 export function aot2StandingBp(pack,s,owner){
+ // Q1566: each face-up raid copy on the front adds 1000 to a printed 「以下」
+ // ceiling. The sentence is inside the raid frame, so an ordinary front copy
+ // adds nothing. 「以上」 floors are not passed through this number.
  let n=0;
  for(const c of s.players[owner].front){
   if(!c||originalEffectsDisabled(s,c))continue;
-  if(sheet(pack,c)?.id==='AOT-2-069')n+=1000;
+  const d=sheet(pack,c);
+  if(d?.id!=='AOT-2-069'||!raidBoxListed(d.id,'standingBp')||!faceUpRaided(pack,c))continue;
+  n+=1000;
  }
  return n;
 }

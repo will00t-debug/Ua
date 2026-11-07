@@ -1715,6 +1715,14 @@ function clearTurnBattleGrants(unit){
  delete unit.attackWinDrawGranted;
  delete unit.blockAtLeastGranted;
  delete unit.readyOnAttackGranted;
+ // 「このターン中」 selection and battle flags. The next turn's startTurn
+ // walks every field card through here. A leftover whose turn no longer
+ // matches fails the match check and locks the following action.
+ delete unit.aotThirdSniper;
+ delete unit.aotTriggerUnchosen;
+ delete unit.aotChoiceShield;
+ delete unit.aotReturnHandAtAttackEnd;
+ delete unit.aotSpecialReplace;
 }
 // Queue printed effects so each pending cross-title target is chosen before
 // remaining steps resolve. Native card packs remain responsible for their own text.
@@ -4894,7 +4902,12 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='resolveSniperBattle'){
    // Q65-Q70: a designated enemy FRONT character battles without ever
    // blocking. No chooseBlock, REST, block count or onBlock keyword is earned.
-   const attacker=pl.front.find(c=>c?.uid===job.sourceUid);
+   // The attacker may be on the energy line when that physical has earned
+   // an energy-line attack this turn. The defender stays on the front.
+   const attackerLoc=location(s,owner,job.sourceUid);
+   const attacker=attackerLoc&&(attackerLoc.line==='front'||
+    (attackerLoc.line==='energy'&&energyLineAttackLive(s,attackerLoc.c)))?
+    attackerLoc.c:null;
    const defender= s.players[1-owner].front.find(c=>c?.uid===job.targetUid);
    if(s.active!==owner||s.phase!=='attack'||!attacker||!defender||
     attacker.fieldEntryStamp!==job.sourceStamp||
@@ -4930,9 +4943,9 @@ function continueEffectQueue(pack,s){
     if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner,impact);
    }else{
     grantBattleWinToOtherOwn(pack,s,1-owner,defender,'blocker');
-    const attackerSlot=pl.front.findIndex(c=>c?.uid===job.sourceUid);
-    if(attackerSlot<0)throw Error('Attacker left before the lost battle');
-    applyBattleLoss(pack,s,owner,'front',attackerSlot,defender);
+    const lost=location(s,owner,job.sourceUid);
+    if(!lost)throw Error('Attacker left before the lost battle');
+    applyBattleLoss(pack,s,owner,lost.line,lost.slot,defender);
     queueAttackWinDraw(pack,s,1-owner,defender,'defender');
    }
    queueFrontNamedAttackEnd(pack,s,attacker);
@@ -24015,7 +24028,10 @@ export function assertUniversalMatch(pack,s){
   Object.keys(j).length!==2||Object.keys(j).some(k=>!['op','owner'].includes(k))))
   throw Error('Forged energy-line move grant window');
  for(const j of s.effectQueue.filter(e=>e.op==='resolveSniperBattle')){
-  const source=s.players[j.owner]?.front.find(c=>c?.uid===j.sourceUid);
+  const side=s.players[j.owner];
+  const onFront=side?.front.find(c=>c?.uid===j.sourceUid);
+  const onEnergy=side?.energy.find(c=>c?.uid===j.sourceUid);
+  const source=onFront||(onEnergy&&energyLineAttackLive(s,onEnergy)?onEnergy:null);
   const target=s.players[1-j.owner]?.front.find(c=>c?.uid===j.targetUid);
   if(j.owner!==s.active||s.phase!=='attack'||!source||!target||
    !liveSniper(s,source)||

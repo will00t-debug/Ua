@@ -56,6 +56,15 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=card;
  return card;
 }
+function coverRaid(s,p,top,baseId){
+ const base=take(s,p,baseId);
+ base.faceDown=false;
+ base.ready=false;
+ base.stack=[];
+ base.under=[];
+ top.stack=[base];
+ return top;
+}
 function toHand(s,p,id){
  const card=take(s,p,id);
  s.players[p].hand.push(card);
@@ -763,7 +772,7 @@ test('everyone together cuts AP at four names and raises the cap for Mikasa',()=
  put(stood,0,'AOT-2-003','energy',1,true);
  put(stood,0,'AOT-2-004','energy',2,true);
  put(stood,0,'AOT-2-005','energy',3,true);
- put(stood,0,'AOT-2-069','front',0,true);
+ coverRaid(stood,0,put(stood,0,'AOT-2-069','front',0,true),'AOT-2-001');
  const raised=put(stood,1,'AOT-2-013','front',0,true);
  readyAp(stood,0,2);
  stood=cast(stood,toHand(stood,0,'AOT-2-037').uid);
@@ -1193,7 +1202,7 @@ test('Thunder Spear retires only the printed low or high window',()=>{
  assert.equal(acts(s).some(a=>a.mode==='done'),false);
  s=pick(s,a=>a.uid===low.uid);
  assert.equal(s.players[1].outside.some(c=>c.uid===low.uid),true);
- put(s,0,'AOT-2-069','front',0,true);
+ coverRaid(s,0,put(s,0,'AOT-2-069','front',0,true),'AOT-2-041');
  const high=put(s,1,'AOT-2-013','front',0,true);
  s=cast(s,toHand(s,0,'AOT-2-049').uid);
  const second=acts(s).filter(a=>a.mode==='retire').map(a=>a.uid);

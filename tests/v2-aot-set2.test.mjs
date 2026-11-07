@@ -62,6 +62,15 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=card;
  return card;
 }
+function coverRaid(s,p,top,baseId){
+ const base=take(s,p,baseId);
+ base.faceDown=false;
+ base.ready=false;
+ base.stack=[];
+ base.under=[];
+ top.stack=[base];
+ return top;
+}
 function toHand(s,p,id){
  const card=take(s,p,id);
  s.players[p].hand.push(card);
@@ -369,8 +378,11 @@ test('standing BP range raises the Thunder Spear ceiling and is not consumed',()
  s=pick(s,a=>a.uid===huge.uid);
  assert.equal(s.players[1].outside.some(c=>c.uid===huge.uid),true);
 
- put(s,0,'AOT-2-069','front',0,true);
+ const plain=put(s,0,'AOT-2-069','front',0,true);
  const again=toHand(s,0,'AOT-2-049');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===again.uid),false);
+ coverRaid(s,0,plain,'AOT-2-002');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===again.uid),true);
  s=cast(s,again.uid);
  const second=legalUniversalActions(packs,s).filter(a=>a.mode==='retire').map(a=>a.uid);
  assert.equal(second.includes(mid.uid),true);
@@ -380,7 +392,7 @@ test('standing BP range raises the Thunder Spear ceiling and is not consumed',()
 
  const later=toHand(s,0,'AOT-2-049');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===later.uid),false);
- put(s,0,'AOT-2-069','front',1,true);
+ coverRaid(s,0,put(s,0,'AOT-2-069','front',1,true),'AOT-2-008');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===later.uid),true);
  s=cast(s,later.uid);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.mode==='retire'&&a.uid===gap.uid),true);
@@ -775,7 +787,7 @@ test('EX10BT/AOT-2-032 standing range can kill 6000, then a raidless Zeke rests'
  let s=toPhase(fresh(counts,20321),'main');
  for(let i=0;i<4;i++)put(s,0,'AOT-2-001','energy',i,true);
  const beast=put(s,0,'AOT-2-025','front',0,true);
- put(s,0,'AOT-2-069','front',1,true);
+ coverRaid(s,0,put(s,0,'AOT-2-069','front',1,true),'AOT-2-023');
  const huge=put(s,1,'AOT-2-013','front',0,true);
  const ymir=take(s,0,'AOT-2-031');
  s.players[0].outside.push(ymir);

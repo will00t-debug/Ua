@@ -22,8 +22,8 @@
     "note": "2026-11-07 對過 EX10BT 官方頁、上列卡圖與進撃の巨人個別 FAQ，FAQ 收到 Q1589。051–061、063、064、068、070、073 沒有單卡 Q。Q1561 是 062，Q1562 與 Q1589 是 065，Q1563 與 Q1564 是 066，Q1565 是 067，Q1566 是 069，Q1567 是 071，Q1568 是 072。Q1551、Q1586、Q1587 仍是 AOT-2-008，這一批沒有把它們關掉。053、056、058、060 的登場與攻擊句都在深色框內。067 的「只能用自己的效果或突襲登場」在框外，框內才是二選一。069 的前線上限在框外，衝擊、BP 範圍與抽 3 在框內。072 的登場時整段在框內。沒有改 raid-box.mjs、引擎、第一彈或總帳。"
   },
   "counts": {
-    "已驗證": 18,
-    "部分驗證": 3,
+    "已驗證": 21,
+    "部分驗證": 0,
     "待修正": 0,
     "缺資料待確認": 0,
     "無效果": 2
@@ -38,16 +38,18 @@
     {
       "owner": "A",
       "cardId": "AOT-2-069",
+      "resolved": "2026-11-07。aot2StandingBp 只計正面朝上、在前線的突襲複本。兩張合計 +2000。以上的下限不加。",
       "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-069 。https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-069.png 。【フロントLにある場合】指定できる BP 的範圍 +1000，印在突襲框內。Q1566（2025-06-20）：兩張在前線的突襲複本重複，合計 +2000。",
-      "reproduction": "把沒有突襲的 AOT-2-069 放上前線，再使用 AOT-2-049 或 AOT-2-037。「以下」的上限會被抬高 1000。預期：正面朝上突襲且人在前線才加，兩張這樣的複本才是 +2000。aot2StandingBp 現在把每一張前線 069 都算進去。026–050 與 set2 的既有測試鎖住這個較寬的行為，這一批沒有改共用函式，也沒有改那些測試。",
+      "reproduction": "沒有突襲的前線複本不再抬高「以下」。用 AOT-2-002 與 AOT-2-008 各做一次正面突襲，雷槍的中間段與空檔分別在 +1000 與 +2000 後變成合法。",
       "expected": "非突襲的前線複本不加範圍。正面朝上、在前線的突襲複本每張 +1000，兩張 +2000。以上的下限不加。"
     },
     {
       "owner": "A",
       "cardId": "AOT-2-066",
-      "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-066 。エンドフェイズ開始時，レストで登場。",
-      "reproduction": "攻擊階段把紅的 104 期兵彈回手牌，結束階段選一張手牌的 066。選擇本身是 ready:false。接著 advanceAfterEnd 在對手回合前把全場休息角色轉成活動。set2 既有斷言 entered.ready===true，引擎註解寫著 REST 會在對手回合前回到 ACTIVE。這一批沒有改 engine.mjs。",
-      "expected": "她以休息登場，並維持休息直到正式的開始階段，因此對手的回合不能阻擋。現在她在對手回合開始前已被轉成活動。"
+      "resolved": "2026-11-07。對過結束階段順序：結束開始時的效果先發生，然後才把休息角色轉成活動。她以休息登場，對手回合開始前已經活動，可以阻擋。不改 refresh 順序。",
+      "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-066 。エンドフェイズ開始時，レストで登場。規則手冊結束階段：先處理開始時效果，再把回合玩家的休息角色與場地轉成活動。Q85：開始與結束都會轉成活動，AP 卡在結束不轉。",
+      "reproduction": "攻擊階段把紅的 104 期兵彈回手牌，結束開始時選一張手牌的 066，選擇是 ready:false。advanceAfterEnd 接著把她轉成活動，再換到對手。",
+      "expected": "她以休息登場。結束階段的活動重整在這個效果之後，所以對手回合開始時她是活動，可以阻擋。"
     },
     {
       "owner": "A",
@@ -60,8 +62,9 @@
       "owner": "A",
       "cardId": "AOT-2-056",
       "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-056 。BP-2000 之後，這個回合可以從能量線攻擊，並得到狙擊。",
-      "reproduction": "把 056 突襲留在能量線並選擇 BP-2000。攻擊階段看得到指定對方前線的攻擊。送出後 engine.mjs 的 resolveSniperBattle 只在前線找攻擊者，丟出 Unproven physical SNIPER battle。前線上的同一張狙擊可以結算，對方不能阻擋。",
-      "expected": "能量線上的狙擊直接與指定角色戰鬥，不開阻擋。BP 較高的攻擊者讓對方離場。這一批沒有改 engine.mjs。"
+      "resolved": "2026-11-07。resolveSniperBattle 與佇列檢查在 energyLineAttackLive 成立時，從能量線結算攻擊者。勝敗與前線狙擊相同。",
+      "reproduction": "把 056 突襲留在能量線並選擇 BP-2000。指定 BP 2000 的對方前線時攻擊者留下、對方離場。指定 BP 2500 時攻擊者從能量線離場、對方留下。都不開阻擋。",
+      "expected": "能量線上的狙擊直接與指定角色戰鬥，不開阻擋。攻擊者 BP 大於等於對方時對方離場，否則攻擊者離場。"
     }
   ],
   "tests": {
@@ -206,7 +209,7 @@
     {
       "cardId": "AOT-2-056",
       "number": "EX10BT/AOT-2-056",
-      "status": "部分驗證",
+      "status": "已驗證",
       "clauses": [
         {
           "match": "フロントの登場ターンだけインパクト1",
@@ -219,12 +222,12 @@
         },
         {
           "match": "BP-2000 後才能從能量線攻擊並狙擊",
-          "status": "部分驗證",
-          "official": "同上。可選擇 BP-2000。選了才得到能量線攻擊與狙擊。",
-          "implementation": "略過則 BP 維持 4000，能量線不能攻擊。選擇後 BP 2000。前線的指定攻擊不開阻擋，對方離場。能量線的指定攻擊有出現在合法行動裡，送出時引擎只在前線找攻擊者。",
-          "discrepancy": "能量線狙擊的結算在 engine.mjs，攻擊者不在前線就丟錯。",
-          "evidence": "同一檔：能量線選擇後，指定對方前線的攻擊行動存在。前線狙擊沒有 block，指定角色離場，生命不減。",
-          "unresolved": "能量線狙擊的戰鬥結算交給 A。見 sharedGaps。"
+          "status": "已驗證",
+          "official": "同上。可選擇 BP-2000。選了才得到能量線攻擊與狙擊。Q65～Q70：狙擊指定對方前線，對方不能阻擋。",
+          "implementation": "略過則 BP 維持 4000，能量線不能攻擊。選擇後 BP 2000。resolveSniperBattle 在 energyLineAttackLive 成立時從能量線找到攻擊者。勝敗與前線相同。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-051-073.test.mjs。能量線打 BP 2000 時對方離場、車力留下。打 BP 2500 時車力從能量線離場、對方留下。都沒有 block。",
+          "unresolved": ""
         },
         {
           "match": "退場時レイド元を1枚まで",
@@ -483,16 +486,16 @@
     {
       "cardId": "AOT-2-066",
       "number": "EX10BT/AOT-2-066",
-      "status": "部分驗證",
+      "status": "已驗證",
       "clauses": [
         {
           "match": "攻擊階段彈回的紅 104 期兵，結束時可休息登場 1 張",
-          "status": "部分驗證",
-          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-066 。Q1563：對方效果彈回也算。Q1564：手牌兩張只能進一張。印刷是レスト。",
-          "implementation": "主要階段用 004 彈回不開結束選擇。攻擊中的色觸發彈回會開。選擇的 ready 是 false。選一張後另一張留在手牌，名字鎖定。引擎隨後在對手回合前把她轉成活動。",
-          "discrepancy": "休息只存在於登場選擇。advanceAfterEnd 會在對手回合前把全場休息角色轉活動。",
-          "evidence": "同一檔：Mikasa from hand。主要階段彈回後沒有 066 pending。色觸發後 choice.ready 是 false，第二張留在手牌，場上只有 1 張。",
-          "unresolved": "對手回合仍維持休息，交給 A。見 sharedGaps。"
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-066 。Q1563：對方效果彈回也算。Q1564：手牌兩張只能進一張。印刷是レスト。結束階段先處理開始時效果，再把休息角色轉成活動。",
+          "implementation": "主要階段用 004 彈回不開結束選擇。攻擊中的色觸發彈回會開。選擇的 ready 是 false。選一張後另一張留在手牌，名字鎖定。advanceAfterEnd 在換回合前把她轉成活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-051-073.test.mjs。選擇時 ready 是 false。對手回合開始時她是活動，active 是 1。",
+          "unresolved": ""
         },
         {
           "match": "トリガーなし",
@@ -567,7 +570,7 @@
     {
       "cardId": "AOT-2-069",
       "number": "EX10BT/AOT-2-069",
-      "status": "部分驗證",
+      "status": "已驗證",
       "clauses": [
         {
           "match": "框外的前線上限 -1",
@@ -589,12 +592,12 @@
         },
         {
           "match": "框內的 BP 範圍 +1000",
-          "status": "待修正",
+          "status": "已驗證",
           "official": "同上。Q1566：兩張前線突襲複本合計 +2000。只加「以下」，不加「以上」。",
-          "implementation": "aot2StandingBp 把每一張前線 069 都加 1000，沒有檢查突襲。067 的 5000 是先選再判斷，Q1565 確認不加，這條維持。",
-          "discrepancy": "非突襲的前線複本也會抬高「以下」。",
-          "evidence": "067 的測試確認 2000 不被抬成可退。範圍句本身見 sharedGaps。",
-          "unresolved": "突襲限定與兩張 +2000 交給 A。這一批沒有改共用函式。"
+          "implementation": "aot2StandingBp 只加正面朝上、在前線的突襲複本，每張 1000。沉默的複本不加。067 的 5000 是先選再判斷，Q1565 確認不加。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-set2.test.mjs：沒有突襲的 069 不讓下一發雷槍合法。用 002 正面突襲後 3500 合法、4000 不合法。再用 008 正面突襲後 4000 合法。tests/v2-aot2-026-050.test.mjs 的兩處上限也改成正面突襲。",
+          "unresolved": ""
         },
         {
           "match": "前線突襲時抽 3",
