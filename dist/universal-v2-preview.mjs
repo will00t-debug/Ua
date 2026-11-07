@@ -43,6 +43,7 @@ import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
 import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
+import {mountFieldActivationButtons,openFieldActivationPicker} from './universal-v2/field-activation-ui.mjs?v=20261108field1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -1029,7 +1030,7 @@ function legacyCommands(legal){
  const pendingRest=s.pending&&!board?legal.filter(action=>!boardEntryMode(action)):[];
  const pool=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
  const list=[...new Map(pool.map(a=>[JSON.stringify(a),a])).values()]
-  .filter(a=>app.targetChoices||(!boardEntryMode(a)&&!['move','step'].includes(a.type)))
+  .filter(a=>a.type!=='activate'&&(app.targetChoices||(!boardEntryMode(a)&&!['move','step'].includes(a.type))))
   .slice(0,100);
  const selection=app.selectedUid?boardEntrySelection(legal,app.selectedUid):
   {normal:[],raid:[],needsMode:false};
@@ -1671,6 +1672,17 @@ function render(){
    if(!image.src.endsWith('/assets/mark.svg'))image.src='assets/mark.svg';
   }
  });
+ if(uiActor(s)===0&&!app.busy&&!app.inspectionPaused&&!s.pending){
+  mountFieldActivationButtons({arena,el,actions:legal,selectedUid:app.selectedUid,
+   onOpen:(actions,uid)=>{
+    const card=[...s.players[0].front,...s.players[0].energy].find(c=>c?.uid===uid);
+    if(!card)return;
+    openFieldActivationPicker({el,root:target,
+     cardName:printedCatalogue(0,card.cardId)?.name||cardDef(0,card.cardId)?.name||card.cardId,
+     actions,labelOf:action=>uiActionLabel(action,{pack:app.packs,state:s}),
+     onChoose:action=>applyAction(action)});
+   }});
+ }
  const prompt=pendingDialog(legal,v);
  // Keep the review-only return control in the phase row, outside the hand.
  if(prompt)(prompt.classList.contains('v2-inspection-return')?middle:target).append(prompt);

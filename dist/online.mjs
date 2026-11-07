@@ -44,7 +44,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261107layout1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261108neonact1'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -1347,7 +1347,8 @@ function matchView(){
   const effectTarget=effectEntryGallery(room);
   for(const index of effectTarget?.handled||[])shownInGallery.add(index);
   for(const index of lifeOrder?.handled||[])shownInGallery.add(index);
-  const listed=(app.inspectionPaused?[]:dockChoices(room)).filter(choice=>choice!==next&&!shownInGallery.has(choice.index));
+  const listed=(app.inspectionPaused?[]:dockChoices(room)).filter(choice=>
+   choice.type!=='activate'&&choice!==next&&!shownInGallery.has(choice.index));
   visibleChoices=onlineVisibleChoiceGallery(room,listed);
   for(const index of visibleChoices?.handled||[])shownInGallery.add(index);
   const textChoices=listed.filter(choice=>!shownInGallery.has(choice.index));
