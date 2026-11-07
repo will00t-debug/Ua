@@ -488,6 +488,9 @@ function on082(pack,s,job){
  if(c&&traitUsed(s,job.owner,FOOD))A.active(s,job.owner,c);
 }
 function on089(pack,s,job){
+ // The retire is inside the raid frame. A normal entry does not use it.
+ const self=requireSelf(s,job);
+ if(!self||!A.raided(pack,self))return;
  if(!fieldCards(s,job.owner).some(c=>contains(pack,c,EREN,s)))return;
  offerRetire(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},3500,true);
 }
@@ -885,7 +888,16 @@ function continueAfter(pack,s,q,after){
  }
  if(after==='gen62'){energyBuff(s,selfOf(s,q.player,q.sourceUid),1,'green');return;}
  if(after==='grant96'){grant096(s,{owner:q.player,sourceUid:q.sourceUid});return 'held';}
- if(after==='energy98')return;
+ if(after==='energy98'){
+  // The order step used to return before this check, so a 6-energy card
+  // never offered the AP when two or more cards remained.
+  const uid=(q.data?.taken||[])[0];
+  const pl=plOf(s,q.player);
+  const c=uid&&(pl.hand.find(x=>x.uid===uid)||pl.deck.find(x=>x.uid===uid));
+  if(c&&def(pack,c).energy>=6&&
+   offerReady(s,{player:q.player,sourceUid:q.sourceUid,id:q.id||'AOT-1-098'}))return 'held';
+  return;
+ }
  return null;
 }
 function presentEntryOrder(s,spec,jobs,enteredUids){
@@ -1093,9 +1105,22 @@ export function resolveAotPending(pack,s,action){
   if(q.step==='armin'){
    A.draw(pack,s,q.player,2,q.sourceUid);
    if(plOf(s,q.player).hand.length&&offerDiscard(s,spec,1,false,null))return;
-  }else if(q.data?.next){
-   const held=continueAfter(pack,s,q,q.data.next);
-   if(held==='held'||s.pending)return;
+  }else{
+   // A committed 「2枚」 payment discards exactly that many. The first card of
+   // an optional payment can still be declined; declining does not follow next.
+   const need=q.data?.need||1;
+   const got=[...(q.data?.got||[]),a.uid];
+   if(got.length<need){
+    const left=plOf(s,q.player).hand.filter(c=>!got.includes(c.uid));
+    if(left.length<need-got.length)throw Error('Attack on Titan discard payment left the hand');
+    hold(s,{...spec,step:'discard',data:{...q.data,got,need,optional:false}},
+     left.map(c=>({type:'aot',mode:'discard',uid:c.uid})));
+    return;
+   }
+   if(q.data?.next){
+    const held=continueAfter(pack,s,q,q.data.next);
+    if(held==='held'||s.pending)return;
+   }
   }
   go(pack,s);return;
  }
@@ -1231,9 +1256,7 @@ export function resolveAotPending(pack,s,action){
  }
  if(q.step==='fork93'){
   if(a.mode==='draw'){A.draw(pack,s,q.player,1,q.sourceUid);go(pack,s);return;}
-  offerDiscard(s,spec,2,false,'retire93');
-  if(s.pending)s.pending.data.next='retire93';
-  else go(pack,s);
+  if(!offerDiscard(s,spec,2,true,'retire93'))go(pack,s);
   return;
  }
  if(q.step==='fork94'){
