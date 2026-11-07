@@ -23,7 +23,7 @@ const SLOTS=new Set([
  'AOT-2-016|onPlay','AOT-2-017|onPlay','AOT-2-017|main','AOT-2-019|onPlay',
  'AOT-2-022|onPlay','AOT-2-022|main','AOT-2-024|onPlay','AOT-2-025|onPlay',
  'AOT-2-030|onPlay','AOT-2-030|onRetire','AOT-2-031|main','AOT-2-032|onPlay',
- 'AOT-2-034|onPlay','AOT-2-036|onPlay','AOT-2-037|onPlay','AOT-2-040|main',
+ 'AOT-2-034|onPlay','AOT-2-034|remain','AOT-2-036|onPlay','AOT-2-037|onPlay','AOT-2-040|main',
  'AOT-2-041|onAttack','AOT-2-042|onPlay','AOT-2-042|onAttack','AOT-2-044|main',
  'AOT-2-045|onPlay','AOT-2-047|onPlay','AOT-2-048|onPlay','AOT-2-049|onPlay',
  'AOT-2-050|onAttack','AOT-2-051|onPlay','AOT-2-051|main','AOT-2-053|onPlay',
@@ -324,6 +324,23 @@ function doEnter(pack,s,owner,hit,sourceUid){
  A.enter(pack,s,{owner,from,uid:hit.uid,line:hit.line,slot:hit.slot,
   replaceUid:hit.replaceUid,ready:hit.ready===true,sourceUid});
 }
+function activeFrontBesides(s,owner,uid){
+ return plOf(s,owner).front.some(x=>x?.ready&&x.uid!==uid);
+}
+// 「全て退場」 continues after a leave replacement or a 退場時 choice.
+// The attack ban is the last sentence, so it waits until those retires finish.
+function rumbleRemain(pack,s,spec,left){
+ const owner=spec.player;
+ const pending=(left||[]).filter(uid=>A.location(s,1-owner,uid));
+ if(!pending.length){
+  plOf(s,owner).aot2AttackOnly={turn:s.turn,name:FINAL_EREN};
+  return;
+ }
+ const uid=pending[0];
+ const loc=A.location(s,1-owner,uid);
+ retireThen(s,1-owner,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-034',slot:'remain',
+  owner,sourceUid:spec.sourceUid,left:pending.slice(1)}],{by:'opponent',always:true});
+}
 
 export function runAot2Job(pack,s,job){
  A.pack=pack;
@@ -452,15 +469,14 @@ export function runAot2Job(pack,s,job){
   retireOffer(s,spec,yellowZeke(pack,s,owner),false,{then:'032'},'field');
   return;
  }
+ if(id==='AOT-2-034'&&job.slot==='remain'){
+  rumbleRemain(pack,s,spec,job.left||[]);
+  return;
+ }
  if(id==='AOT-2-034'){
   const pl=plOf(s,owner);
   while(pl.hand.length)moveUid(pack,s,owner,'hand',pl.hand[0].uid,'outside',job.sourceUid);
-  for(const c of oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,5000))){
-   const loc=A.location(s,1-owner,c.uid);
-   if(loc)A.retire(pack,s,1-owner,loc.line,loc.slot);
-   if(s.pending)return;
-  }
-  pl.aot2AttackOnly={turn:s.turn,name:FINAL_EREN};
+  rumbleRemain(pack,s,spec,oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,5000)).map(c=>c.uid));
   return;
  }
  if(id==='AOT-2-036'){
@@ -475,9 +491,8 @@ export function runAot2Job(pack,s,job){
  }
  if(id==='AOT-2-041'){
   if(!plOf(s,owner).apCards.some(c=>c.ready))return;
-  const cards=fieldCards(s,owner).filter(c=>def(pack,c).type==='character');
-  hold(s,{...spec,step:'payBuff',data:{ap:1,bp:1500,max:2,taken:[]}},
-   [act('skip'),...cards.map(c=>act('buff',{uid:c.uid,zone:'field'}))]);
+  hold(s,{...spec,step:'payBuff',data:{ap:1,bp:1500,max:2,taken:[],paid:false}},
+   [act('skip'),act('pay')]);
   return;
  }
  if(id==='AOT-2-042'&&job.slot==='onPlay'){
@@ -656,7 +671,7 @@ export function legalAot2Activations(pack,s,owner,c){
    return p.color==='yellow'&&p.type==='character'&&p.energy<=2&&contains(pack,x,'イェーガー',s);
   }))
   out.push({type:'activate',uid:c.uid,mode:'aot2:'+id});
- if(id==='AOT-2-040'&&ready&&!used(s,c.uid+'|AOT-2-040'))
+ if(id==='AOT-2-040'&&ready&&!used(s,c.uid+'|AOT-2-040')&&activeFrontBesides(s,owner,c.uid))
   out.push({type:'activate',uid:c.uid,mode:'aot2:'+id});
  if(id==='AOT-2-044'&&ready&&events(pack,s,owner)>=6&&
   fieldCards(s,owner).some(x=>x.uid!==c.uid&&trait(pack,x,CORPS)))
@@ -736,10 +751,10 @@ export function activateAot2(pack,s,action){
   return;
  }
  if(id==='AOT-2-040'){
-  if(!c.ready||used(s,c.uid+'|AOT-2-040'))throw Error('Levi energy main is not legal');
+  if(!c.ready||used(s,c.uid+'|AOT-2-040')||!activeFrontBesides(s,owner,c.uid))
+   throw Error('Levi energy main is not legal');
   A.noteRest(s,owner,c);c.ready=false;use(s,c.uid+'|AOT-2-040');
   const fronts=plOf(s,owner).front.filter(x=>x?.ready);
-  if(!fronts.length)return;
   hold(s,{...spec,step:'restFront'},fronts.map(x=>act('rest',{uid:x.uid,zone:'front'})));
   return;
  }
@@ -960,11 +975,16 @@ export function resolveAot2Pending(pack,s,a){
   go(pack,s);return;
  }
  if(q.step==='payBuff'){
-  if(hit.mode==='skip'&&!q.data.paid){s.pending=null;go(pack,s);return;}
   if(!q.data.paid){
+   if(hit.mode==='skip'){s.pending=null;go(pack,s);return;}
+   if(hit.mode!=='pay')throw Error('Attack payment was not chosen');
    if(!pay(pack,s,owner,q.data.ap,q.sourceUid))throw Error('Not enough AP');
    q.data.paid=true;
+   const open=fieldCards(s,owner).filter(x=>def(pack,x).type==='character');
+   hold(s,{...spec,step:'payBuff',data:q.data},[act('done'),...open.map(x=>act('buff',{uid:x.uid,zone:'field'}))]);
+   return;
   }
+  if(hit.mode==='done'){s.pending=null;go(pack,s);return;}
   const c=fieldCards(s,owner).find(x=>x.uid===hit.uid);
   if(!c||q.data.taken.includes(c.uid))throw Error('Buff target left');
   buff(s,c,q.data.bp);q.data.taken.push(c.uid);
