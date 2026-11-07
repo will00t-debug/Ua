@@ -1,0 +1,818 @@
+{
+  "group": "B9",
+  "base": "0f6dbef3ee8becdf731fed271db23e7892be845f",
+  "range": "KJN-1-051–KJN-1-080，並補完 KJN-1-048、KJN-1-049 的席德別名與突襲生命觸發",
+  "updated": "2026-11-07",
+  "sources": {
+    "card": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-0xx",
+    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA52BT_KJN-1-0xx.png",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA52BT",
+    "fetched": "2026-11-07",
+    "note": "051–080 與 048、049 的 effectJa 與 2026-11-07 抓取的官網全文一致。本範圍問答皆為 2026.05.15：Q2124–Q2125 是 049，Q2126 是 056，Q2127 是 069，Q2128 是 074。突襲框沿用 raid-box.mjs，本批沒有改它：048 為 onPlay、onRetire 與 frontGeneratesEnergy，049 為 onPlay，056 與 074 為 onPlay 與 main。生命觸發不在框內。048、049 其餘句子已記在 b8-kjn-026-050.json。本輪只改 kjn-pack.mjs、kjn-runtime.mjs、本測試與這份台帳。076 的退場改成不能跳過。075 的看牌改記在 data.window。"
+  },
+  "sharedGaps": [],
+  "testResults": {
+    "command": "node --test tests/v2-kjn-051-080.test.mjs tests/v2-kjn-026-050.test.mjs tests/v2-kjn-001-025.test.mjs tests/v2-kjn-set1.test.mjs tests/v2-kjn-faq.test.mjs",
+    "passed": true,
+    "tests": 114,
+    "pass": 114,
+    "fail": 0,
+    "node": "v22.23.4",
+    "files": [
+      "tests/v2-kjn-051-080.test.mjs",
+      "tests/v2-kjn-026-050.test.mjs",
+      "tests/v2-kjn-001-025.test.mjs",
+      "tests/v2-kjn-set1.test.mjs",
+      "tests/v2-kjn-faq.test.mjs"
+    ],
+    "note": "2026-11-07 在 /agent/repos/Ua-b9 執行上述命令，114 項全部通過。新檔 31 項。001–025、026–050、set1、faq 在本作品改動後重跑。沒有跑全庫 npm test。沒有改 engine.mjs。"
+  },
+  "reviews": [
+    {
+      "cardId": "KJN-1-048",
+      "number": "UA52BT/KJN-1-048",
+      "clauses": [
+        {
+          "match": "也視為席德，沉默後不再是",
+          "status": "已驗證",
+          "official": "このカードは〈シド・カゲノー〉としても扱う。",
+          "implementation": "nameAliases 含席德。沉默後 cardHasName 不再成立，055 的登場時也不再打開。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。前線 048 讓 055 可以棄手牌。沉默後 055 直接結束。",
+          "unresolved": "其餘登場、退場與前線產能句子見 b8。"
+        },
+        {
+          "match": "突襲生命要付印刷能量 6，能量不足只能入手",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "生命觸發不在突襲框。紫能量至少 6 且有突襲對象才可以突襲，不另付 AP。不足 6 只能入手。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。能量足夠時可以突襲到 044，AP 不變，變成活動，底牌是 044，看兩張不公開。能量不足時突襲不合法，入手後在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-049",
+      "number": "UA52BT/KJN-1-049",
+      "clauses": [
+        {
+          "match": "也視為席德",
+          "status": "已驗證",
+          "official": "このカードは〈シド・カゲノー〉としても扱う。",
+          "implementation": "nameAliases 含席德。能源線上的 049 也讓 055 打開棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。能源線 049 使 055 進入 handOut。",
+          "unresolved": "Q2124、Q2125 與登場時其餘句子見 b8。"
+        },
+        {
+          "match": "突襲生命要付印刷能量 8，沒有對象不能突襲",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "能量至少 8 仍要有突襲對象。沒有對象只能入手。突襲成功不另付 AP，並以活動狀態在前線。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。能量足夠但沒有對象時突襲不合法。有 044 時突襲成功，AP 不變，活動，衝擊 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-051",
+      "number": "UA52BT/KJN-1-051",
+      "clauses": [
+        {
+          "match": "場外每 10 張發生能量加 1 紫",
+          "status": "已驗證",
+          "official": "自分の場外にあるカード10枚につき、このキャラの発生エナジー+【紫】。",
+          "implementation": "outsideGroupEnergy，每 10 張 +1。沉默後只剩印刷 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。9 張時產生 1，20 張時產生 3，沉默後產生 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "看牌庫頂兩張，任意張數放回頂端，其餘到場外",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。",
+          "implementation": "看牌不公開。可以兩張都留在頂端並自訂順序，也可以只把一張放到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。對手看不到窗口。全留時順序是後選的那張在上。只留一張時另一張到場外，留下的那張不進公開資訊。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "未驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用 draw 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。067 重現了同一個抽牌觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-052",
+      "number": "UA52BT/KJN-1-052",
+      "clauses": [
+        {
+          "match": "登場時抽 1 張並必須棄 1 張",
+          "status": "已驗證",
+          "official": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+          "implementation": "先抽再棄。不能跳過棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。牌庫少 1。不能選空。棄掉的 041 到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "未驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用 draw 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。067 重現了同一個抽牌觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-053",
+      "number": "UA52BT/KJN-1-053",
+      "clauses": [
+        {
+          "match": "場外 10 張且場上有席德時，前線也產生能量",
+          "status": "已驗證",
+          "official": "自分の場外にカードが10枚以上あり、自分の場に〈シド・カゲノー〉がある場合、このキャラは「このキャラはフロントLでもエナジーを発生させる。」を得る。",
+          "implementation": "兩個條件都要成立。席德被沉默後失去。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。場外 9 張時前線產生 0。滿 10 張且 048 在場時產生 1。沉默 048 後回到 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "未驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用 active 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。065 重現了同一個活動觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-054",
+      "number": "UA52BT/KJN-1-054",
+      "clauses": [
+        {
+          "match": "看三張，最多公開並加入一張七陰，其餘放到牌庫底",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から3枚見て、［特徴：七陰］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+          "implementation": "窗口不公開。只有加入手牌的那張公開。沒有七陰就不能選，也不棄牌。有加入才棄 1 張。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。057 可以選，041 不能選。加入後只公開 057，其餘兩張依選擇在牌庫底。三張都不是七陰時不能選卡，手牌數少 1，三張都不公開。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-055",
+      "number": "UA52BT/KJN-1-055",
+      "clauses": [
+        {
+          "match": "場上有席德時，最多棄兩張並抽相同張數",
+          "status": "已驗證",
+          "official": "【登場時】自分の場に〈シド・カゲノー〉がある場合、自分の手札を2枚まで場外に置いてもよい。そうした場合、この効果で場外に置いたカードと同じ枚数のカードを引く。",
+          "implementation": "沒有活著的席德就不開。可以棄 0 張。棄兩張就抽兩張。049 的別名也算席德。沉默的 048 不算。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。沒有席德時沒有待選。有 049 時可以結束而不抽。再棄兩張後牌庫少 2、手牌剩 2。沉默 048 後沒有待選。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "未驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用 active 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。065 重現了同一個活動觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-056",
+      "number": "UA52BT/KJN-1-056",
+      "clauses": [
+        {
+          "match": "突襲後公開兩張，不同卡名的七陰各最多拿一張",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から2枚を公開し、異なるカード名の［特徴：七陰］をそれぞれ1枚まで手札に加える。残りを場外に置く。突襲框內。",
+          "implementation": "兩張都公開。不是七陰的不能拿。可以兩張都拿，也可以結束。沒拿的到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。057 與 051 都在公開資訊。051 不能拿，057 入手，051 到場外。057 與 059 可以都入手，場外沒有這兩張。",
+          "unresolved": ""
+        },
+        {
+          "match": "前線啟動給自己衝擊 1；七種卡名時改成給一張七陰 BP+1000 與衝擊 1",
+          "status": "已驗證",
+          "official": "【起動メイン】【フロントLにある場合】『このキャラはこのターン中、【インパクト（1）】を得る』。7種類以上なら、場の［特徴：七陰］を1枚選び、BP+1000と【インパクト（1）】を与える。突襲框內。",
+          "implementation": "不足七種時給突襲中的自己衝擊 1。滿七種時必須選一張七陰，不能跳過。選中的 BP+1000 且衝擊 1，自己不加。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。不足七種時自己衝擊 1，同一張不能再啟動。滿七種時不能跳過。能源線 070 變成 BP 3000、衝擊 1，阿爾法自己衝擊 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "同名這個效果一回合只能發動一次",
+          "status": "已驗證",
+          "official": "〈アルファ〉のこの効果は1ターンに1回のみ発動できる。Q2126：兩張突襲狀態也不能各發動一次。",
+          "implementation": "第一張啟動後上同名鎖。第二張同一回合不能啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。兩張都突襲在場。第一張啟動後，第二張沒有啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲生命",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "能量足夠且有對象時可以突襲。突襲後是活動，並進入公開兩張的登場時。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。可以入手，也可以突襲到 052。突襲後活動，待選是 distinctHand。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-057",
+      "number": "UA52BT/KJN-1-057",
+      "clauses": [
+        {
+          "match": "看牌庫頂一張，放回頂端或放到場外",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から1枚見て、山札の上か場外に置く。",
+          "implementation": "看牌不公開。放回頂端不公開。也可以放到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。對手看不到那張。控制者看得到 042。放回後仍在牌庫頂且不在公開資訊。另一張選場外後離開牌庫頂。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-058",
+      "number": "UA52BT/KJN-1-058",
+      "clauses": [
+        {
+          "match": "休息後給其他角色 BP+1000，七種卡名時可以改成兩張",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】自分の場の他のキャラを『1枚』選び、このターン中、BP+1000。7種類以上の場合、『2枚』に代えてもよい。",
+          "implementation": "自己休息，不能選自己。不足七種時必須選一張，不能結束。滿七種時選一張後可以結束，第二張不是必須。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。自己變休息，041 變成 2500。七種時第一張 052 變成 2500，結束後 070 仍是 2000。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "未驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用 active 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。065 重現了同一個活動觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-059",
+      "number": "UA52BT/KJN-1-059",
+      "clauses": [
+        {
+          "match": "看牌庫頂三張並依選擇放回頂端",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から3枚見て、望む順で山札の上に置く。",
+          "implementation": "三張都留在牌庫，不公開，不進場外。順序依選擇。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。對手看不到窗口。放回後頂端順序是所選的三張，場外沒有它們，公開資訊也沒有。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-060",
+      "number": "UA52BT/KJN-1-060",
+      "clauses": [
+        {
+          "match": "活動時發生能量加 1 紫",
+          "status": "已驗證",
+          "official": "このキャラがアクティブの場合、このキャラの発生エナジー+【紫】。",
+          "implementation": "只加在會產生能量的狀態。休息後回到印刷 1。前線不產生，所以是 0。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。能源線活動時產生 2，休息後產生 1。前線產生 0。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-061",
+      "number": "UA52BT/KJN-1-061",
+      "clauses": [
+        {
+          "match": "前線每回合一次，把另一張七陰放牌庫底，然後可以休息登場一張非伊普西龍",
+          "status": "已驗證",
+          "official": "【起動メイン】【フロントLにある場合】【ターン1】他の［特徴：七陰］を1枚山札の下に置く。そうした場合、場外から〈イプシロン〉以外の必要エナジー3以下・消費AP1の紫［特徴：七陰］を1枚までレストで登場させる。その【登場時】は発動しない。",
+          "implementation": "沒有其他七陰不能啟動。放底不能跳過。伊普西龍不能登場。052 可以休息登場，而且登場時不開棄牌。同一張不能再啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。065 到牌庫底。060 不能選。052 休息進能源線後沒有待選。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "未驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用 active 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。065 重現了同一個活動觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-062",
+      "number": "UA52BT/KJN-1-062",
+      "clauses": [
+        {
+          "match": "休息後每回合抽 1 棄 1",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】【ターン1】カードを1枚引き、自分の手札を1枚場外に置く。",
+          "implementation": "先休息再抽。牌庫空了仍然要棄手上那張。同一張不能再啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。牌庫少 1，棄掉的 041 離開手牌，不能再啟動。牌庫被移空後仍進入棄牌，041 到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-063",
+      "number": "UA52BT/KJN-1-063",
+      "clauses": [
+        {
+          "match": "休息並棄 1 張後，最多把牌庫頂一張放到場外；場外滿 10 張才加能量",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】【手札を1枚場外に置く】【ターン1】自分の山札の上から1枚まで場外に置く。場外が10枚以上なら、このターン中、発生エナジー+【紫】。",
+          "implementation": "磨牌可以跳過。被看的牌庫頂不公開。棄牌後場外仍不足 10 就不加能量。磨到第 10 張才加。原本已有 10 張時，跳過磨牌也加。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。場外 8 張再棄 1 張後跳過，產生 1，牌庫頂不動，對手看不到。磨掉那張後場外滿 10，產生 2。原本 10 張並跳過時產生 2。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "未驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用 active 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。065 重現了同一個活動觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-064",
+      "number": "UA52BT/KJN-1-064",
+      "clauses": [
+        {
+          "match": "登場時抽 1 張",
+          "status": "已驗證",
+          "official": "【登場時】カードを1枚引く。",
+          "implementation": "登場後牌庫少 1，沒有後續待選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。登場後牌庫少 1，待選是空。",
+          "unresolved": ""
+        },
+        {
+          "match": "七種卡名時，休息並活動另一張前線七陰",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】【ターン1】7種類以上の場合、自分のフロントLの他の［特徴：七陰］を1枚選び、アクティブにする。",
+          "implementation": "不足七種不能啟動。滿七種時不能跳過，不能選自己。選中的前線角色變活動。同一張不能再啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。休息的 057 變活動。六種以下沒有啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "未驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用 draw 生命觸發。登場時的抽牌是另一句。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。067 重現了同一個抽牌觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-065",
+      "number": "UA52BT/KJN-1-065",
+      "clauses": [
+        {
+          "match": "沒有常駐效果",
+          "status": "已驗證",
+          "official": "效果欄は「-」。",
+          "implementation": "plain。登場後沒有待選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。登場後待選是空，人在前線。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。休息的 052 變活動，BP 4500。065 到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-066",
+      "number": "UA52BT/KJN-1-066",
+      "clauses": [
+        {
+          "match": "七種卡名時不被 BP 4000 以上的角色阻擋",
+          "status": "已驗證",
+          "official": "自分の場に［特徴：七陰］のカード名が7種類以上ある場合、「このキャラはBP4000以上のキャラにブロックされない。」を得る。",
+          "implementation": "滿七種時 BP 4000 的 053 不能擋，較小的 052 可以。六種時 053 可以擋。沉默後 053 可以擋。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。七種時 053 不合法、052 合法。少一種時 053 合法。沉默後 053 合法。",
+          "unresolved": ""
+        },
+        {
+          "match": "自己回合且五種卡名時，登場可給一張角色 BP+1000",
+          "status": "已驗證",
+          "official": "【登場時】5種類以上あり、自分のターン中の場合、自分の場のキャラを1枚まで選び、このターン中、BP+1000。",
+          "implementation": "四種時不開。五種時可以選，也可以跳過。對手回合用顏色觸發登場時不開這個加值。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。四種時沒有待選。五種時 052 從 1500 變成 2500。069 的顏色觸發在對手回合把 066 放到前線後沒有加值待選。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "未驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用 draw 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。067 重現了同一個抽牌觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-067",
+      "number": "UA52BT/KJN-1-067",
+      "clauses": [
+        {
+          "match": "沒有常駐效果",
+          "status": "已驗證",
+          "official": "效果欄は「-」。",
+          "implementation": "plain。登場後沒有待選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。登場後待選是空。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。手牌加 1，牌庫少 1，067 到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-068",
+      "number": "UA52BT/KJN-1-068",
+      "clauses": [
+        {
+          "match": "五種卡名時棄一張，然後活動並 BP+1000",
+          "status": "已驗證",
+          "official": "【起動メイン】【手札を1枚場外に置く】【ターン1】5種類以上の場合のみ発動できる。このキャラをアクティブにする。このターン中、BP+1000。",
+          "implementation": "四種時不能啟動。五種時先休息的這張在棄牌後變活動，BP 4000。同一張不能再啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。三種同伴時沒有啟動。四種同伴時棄 041 後變活動，BP 4000，不能再啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "未驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用 draw 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。067 重現了同一個抽牌觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-069",
+      "number": "UA52BT/KJN-1-069",
+      "clauses": [
+        {
+          "match": "五種以上活動，七種以上再得狙擊；同名一回合一次",
+          "status": "已驗證",
+          "official": "【登場時】種類數により全て発動する。5種類以上：アクティブ。7種類以上：このターン中【狙い撃ち】。〈デルタ〉のこの効果は1ターンに1回のみ。Q2127：第一張發動後，第二張不發動。",
+          "implementation": "條件成立才上同名鎖。不足五種不上鎖，後面的張仍可發動。滿七種的第一張得狙擊，第二張不得。狙擊可以指定前線角色，對方不能擋。換到對手回合後狙擊消失。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。七種時第一張有狙擊，蓋掉一張後登場的第二張沒有。指定 052 後沒有阻擋，052 退場。先在四種時登場不上鎖，補到七種後第二張有狙擊，第一張沒有。對手的主要階段開始後狙擊消失。",
+          "unresolved": ""
+        },
+        {
+          "match": "カラー",
+          "status": "已驗證",
+          "official": "【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。",
+          "implementation": "能量 2 的 066 可以放到空的前線，不能放到能源線。能量 3 的 061 不能選。不另付 AP，登場是活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。066 的測試打開 069 的顏色觸發。066 只能上前線，061 不合法。AP 不變，066 是活動，沒有後續待選。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-070",
+      "number": "UA52BT/KJN-1-070",
+      "clauses": [
+        {
+          "match": "休息另一張活動的前線角色，然後自己這個回合多產生 1 紫",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+【紫】。",
+          "implementation": "沒有活動的前線角色不能啟動。不能跳過。休息後自己產生 2。同一張不能再啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。沒有前線或前線休息時不能啟動。052 變休息，070 也休息，產生 2，不能再啟動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-071",
+      "number": "UA52BT/KJN-1-071",
+      "clauses": [
+        {
+          "match": "可以從手牌休息登場一張能量 2 以下的紫七陰",
+          "status": "已驗證",
+          "official": "【登場時】自分の手札から必要エナジーが2以下で消費APが1の紫の［特徴：七陰］を1枚まで自分の場にレストで登場させる。",
+          "implementation": "065 可以，能量 3 的 061 不行，沒有七陰的 051 不行。可以不登場。登場是休息。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。065 休息進前線。跳過時 065 留在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-072",
+      "number": "UA52BT/KJN-1-072",
+      "clauses": [
+        {
+          "match": "自己回合且五種卡名時 BP+1500",
+          "status": "已驗證",
+          "official": "【自分のターン中】自分の場に［特徴：七陰］のカード名が5種類以上ある場合、このキャラはBP+1500。",
+          "implementation": "四種時是印刷 1500。五種時是 3000。沉默後回到 1500。對手回合回到 1500。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。三種同伴時 1500，補上第四個卡名後 3000，沉默後 1500。對手主要階段是 1500。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "未驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用 draw 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。067 重現了同一個抽牌觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-073",
+      "number": "UA52BT/KJN-1-073",
+      "clauses": [
+        {
+          "match": "前線有席德時發生能量加 1 紫",
+          "status": "已驗證",
+          "official": "自分のフロントLに〈シド・カゲノー〉がある場合、このキャラの発生エナジー+【紫】。",
+          "implementation": "席德在能源線不加。席德在前線才加。沉默席德後失去。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。048 在能源線時 073 產生 1。048 改到前線後產生 2。沉默 048 後產生 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "登場時最多把牌庫頂兩張放到場外",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から2枚まで場外に置く。",
+          "implementation": "可以放 0、1 或 2 張。被看的牌不公開。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。對手看不到兩張。放一張後可以停止，沒放的留在牌庫頂。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "未驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "共用 draw 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。067 重現了同一個抽牌觸發。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-074",
+      "number": "UA52BT/KJN-1-074",
+      "clauses": [
+        {
+          "match": "突襲中使對戰角色失去衝擊",
+          "status": "部分核對",
+          "official": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）。突襲框內。",
+          "implementation": "raidImpactNull。未突襲時旗標是關的。正面向上突襲時旗標是開的。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。直接放上前線時 impact null 為假。突襲到 070 後為真。",
+          "unresolved": "本批沒有打一場實際戰鬥來確認對戰中的衝擊歸零。旗標是戰鬥結算會讀的那個。"
+        },
+        {
+          "match": "可以休息登場一張能量 2 以下的紫七陰；登場後卡名在四種以下才必須把另一張放牌庫底",
+          "status": "已驗證",
+          "official": "【登場時】手札か場外から必要エナジー2以下・消費AP1の紫［特徴：七陰］を1枚レストで登場させてもよい。そうした場合、登場後に七陰のカード名が4種類以下なら、登場させたカード以外を1枚山札の下に置く。Q2128：沒有登場就不必放底。突襲框內。",
+          "implementation": "可以跳過。跳過後沒有放底。登場後超過四種也不放底。四種以下時不能跳過，不能選剛登場的那張。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。跳過後待選是空。登場 062 後已有五種，待選是空，062 休息。再登場另一張 065 後進入放底，不能跳過，不能選剛登場的那張，075 可以放到牌庫底。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲且在前線、七種卡名時，每回合抽 1 張",
+          "status": "已驗證",
+          "official": "【起動メイン】【フロントLにある場合】【ターン1】7種類以上の場合、カードを1枚引く。突襲框內。",
+          "implementation": "未突襲的前線貝塔即使有七種也不能啟動。能源線的複製品不能啟動。突襲中的那張抽 1 後不能再啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。未突襲時沒有啟動。突襲並跳過登場後有七種，可以啟動，手牌加 1，不能再啟動。能源線複製品不能啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲生命",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "可以入手，也可以突襲。突襲後是活動，並進入可跳過的登場時。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。可以入手。突襲到 070 後活動，待選是 betaDeploy，跳過後結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-075",
+      "number": "UA52BT/KJN-1-075",
+      "clauses": [
+        {
+          "match": "以活動狀態登場",
+          "status": "已驗證",
+          "official": "このフィールドはアクティブで登場させる。",
+          "implementation": "enterAlwaysActive。場地卡不能放到前線。放到能源線時是活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。前線登場不合法。能源線登場後是活動，沒有待選。",
+          "unresolved": ""
+        },
+        {
+          "match": "休息後看牌庫頂一張，放回或放到場外；場外滿 10 張才可以加 BP",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】山札の上から1枚見て、山札の上か場外に置く。その後、場外が10枚以上なら、場のキャラを1枚まで選び、このターン中、BP+1000。",
+          "implementation": "看牌記在 data.window，只給看的人。場外 9 張並放回頂端時不加 BP。放到場外湊成 10 張後可以給 052 BP+1000，也可以跳過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。對手看不到 044，控制者看得到。放回後沒有加值。放到場外後 052 可以變成 2500。已有 10 張時放回頂端仍可跳過加值，052 維持 1500。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "未驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "共用 get 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。"
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-076",
+      "number": "UA52BT/KJN-1-076",
+      "clauses": [
+        {
+          "match": "場上有席德時，手牌中的必要能量減 2 紫",
+          "status": "已驗證",
+          "official": "自分の場に〈シド・カゲノー〉がある場合、手札にあるこのカードの必要エナジーを【紫×2】減らす。",
+          "implementation": "有 048 時能量 4 就可以使用印刷 6。能量 3 不夠。沉默的 048 不算。沒有合法退場對象時仍然不能使用。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。紫能量 4 且有 048、對方有 052 時可以使用。能量 3 不能。沉默 048 後不能。對方沒有前線時不能。",
+          "unresolved": ""
+        },
+        {
+          "match": "必須退場一張 BP 5000 以下的對方前線",
+          "status": "已驗證",
+          "official": "BP5000以下の相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "optional:false。不能跳過。當下 BP 超過 5000 的不能選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。不能選空。1500 的 052 可以，加到 6000 的 053 不行。052 退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "スペシャル",
+          "status": "已驗證",
+          "official": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "生命觸發 special。沒有 BP 上限。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。BP 6000 的 053 可以被這個觸發退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-077",
+      "number": "UA52BT/KJN-1-077",
+      "clauses": [
+        {
+          "match": "從場外拿一張消費 AP 1 的七陰；卡名不在場上且能量足夠時可以改成休息登場",
+          "status": "已驗證",
+          "official": "自分の場外から消費APが1の［特徴：七陰］を1枚『手札に加える』。同じカード名が場になく、必要エナジーを満たす場合、『レストで登場させる』に代えてもよい。",
+          "implementation": "場外沒有合法對象就不能使用。同名已在場上時直接入手。能量不夠的也直接入手。卡名是新的且能量足夠時可以改成休息登場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。場上已有 052 時，場外的 052 直接進手。能量 3 的 061 直接進手。065 可以休息進前線。場外只有 041 時事件不合法。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-078",
+      "number": "UA52BT/KJN-1-078",
+      "clauses": [
+        {
+          "match": "依場上七陰的張數退場對方前線",
+          "status": "已驗證",
+          "official": "自分の場の［特徴：七陰］の枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "算張數，不是卡名種類。埋在突襲底下的角色不算。不能跳過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。一張時 1000 的 063 可以，1500 的 072 不行。兩張同名 052 時 1500 可以，4000 的 053 不行。突襲底下的 052 不算，上限仍是 1000。",
+          "unresolved": ""
+        },
+        {
+          "match": "スペシャル",
+          "status": "已驗證",
+          "official": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "生命觸發 special。沒有張數上限。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。4000 的 053 可以被這個觸發退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-079",
+      "number": "UA52BT/KJN-1-079",
+      "clauses": [
+        {
+          "match": "最多活動兩張 AP",
+          "status": "已驗證",
+          "official": "自分のAPカードを2枚まで選び、アクティブにする。",
+          "implementation": "可以選 0 張。兩張休息的 AP 可以都活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。選空後活動 AP 仍是 0。兩張休息的 AP 都變活動後待選結束。",
+          "unresolved": ""
+        },
+        {
+          "match": "ファイナル",
+          "status": "已驗證",
+          "official": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+          "implementation": "生命還在時不發動。生命被打空時可以把牌庫頂放進生命。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。生命還有一張時 079 到場外，生命仍是 1。生命被打空後選擇最終，牌庫頂成為生命，079 到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-080",
+      "number": "UA52BT/KJN-1-080",
+      "clauses": [
+        {
+          "match": "抽三張並把兩張手牌放到場外，然後可以給一張席德這個回合的發生能量加 1 紫",
+          "status": "已驗證",
+          "official": "カードを3枚引き、自分の手札を2枚場外に置く。自分の場の〈シド・カゲノー〉を1枚まで選び、このターン中、発生エナジー+【紫】を与える。",
+          "implementation": "沒有席德時抽棄後結束。有席德時可以跳過。前線與能源線的席德都可以選。加值加在會產生能量的那張上。未突襲的前線 048 不產生，所以仍是 0。能源線從 1 變成 2。沉默的席德不提供選項。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-051-080.test.mjs。沒有席德時兩張棄完就結束，牌庫少 3。有席德時可以跳過，能源線仍產生 1，前線產生 0。再選能源線後產生 2，前線仍是 0。沉默後沒有 energySid，前線產生 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "未驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "共用 active 生命觸發。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "本批沒有打開這張的生命。065 重現了同一個活動觸發。"
+        }
+      ]
+    }
+  ]
+}
