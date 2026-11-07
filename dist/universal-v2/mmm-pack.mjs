@@ -112,7 +112,7 @@ export function mmmPackCard(card){
    {field:'name',value:'百江 なぎさ'},{field:'trait',value:QUINTET}]}]:
   kind==='searchTwoQuintet'?[{op:'searchTopUpToTwoBottom',count:5,max:2,rest:'bottom',
    logic:'any',filters:[{field:'trait',value:QUINTET}]}]:
-  kind==='inspectTwo'?[{op:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]:
+  kind==='inspectTwo'?[{op:'inspectTopAnyOutside',count:2,rest:'top'}]:
   kind==='drawIfMadoka'?[{op:'drawIfOwnName',name:'鹿目 まどか',count:1}]:
   kind==='recoverPurpleGirl'?[{op:'recoverOutsideOne',optional:true,logic:'all',filters:[
    {field:'color',value:'purple'},{field:'trait',value:GIRL}]}]:
