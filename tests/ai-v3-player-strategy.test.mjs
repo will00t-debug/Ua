@@ -1728,8 +1728,8 @@ test('a partial block that saves the last life is not replaced by the losing pas
   const timedTrace=lastAiV3Trace();
   assert.equal(timedMeter.dispatches,timedTrace.nodesUsed);
   assert.ok(timedTrace.nodesUsed<=48);
-  const timedMove=timedTrace.candidates.find(row=>row.executed!==false&&row.action?.type==='move'&&row.action.uid===body.uid);
-  const timedPass=timedTrace.candidates.find(row=>row.executed!==false&&row.action?.type==='next');
+  const timedMove=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type==='move'&&row.action.uid===body.uid);
+  const timedPass=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type==='next');
   if(timedMove?.boundary==='returned'&&timedMove.settled&&timedPass?.boundary==='terminal'&&timedPass.search<=-90000){
    assert.equal(timed.type,'move');
    assert.equal(timedTrace.score,timedMove.search);
