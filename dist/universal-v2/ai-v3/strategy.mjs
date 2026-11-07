@@ -386,7 +386,9 @@ function moveBenefit(pack,state,actor,action,afterColors,after,parts){
   }
   const ownFront=(state.players[actor].front||[]).filter(Boolean);
   const threats=(state.players[opp].front||[]).filter(card=>card?.ready);
-  if(!ownFront.length&&threats.some(wall=>bp>=bpOf(pack,state,wall)))return {benefit:'block',lethal,line};
+  // One smaller body is not a block. The ready attackers that are still
+  // larger stay, and dropping the color the hand needs is still a strip.
+  if(!ownFront.length&&threats.length&&threats.every(wall=>bp>=bpOf(pack,state,wall)))return {benefit:'block',lethal,line};
  }
  return {benefit:null,lethal,line};
 }

@@ -599,6 +599,72 @@ test('cache: opponent life, impact null, and blocker BP stay on their own state'
  assert.ok(beaten.results.every(followed=>followed.status==='playing'&&followed.players[1].life.length===1));
 });
 
+test('energy: a partial block does not spend the color a stranded hand still needs',()=>{
+ const report=JSON.parse(fs.readFileSync(new URL('../audit/ai-v3-official-8300-nodes48-white-reach.json',import.meta.url),'utf8'));
+ const deck=battleDecks().find(row=>row.id==='white-sword');
+ const game=report.titles['white-sword'].byMode.tree.games.find(row=>row.seed===8300&&row.first===0&&row.challengerSeat===0);
+ const packs=[deck.pack,deck.pack];
+ let state=newComparedMatch(packs,[deck.counts,deck.counts],game.seed,game.first);
+ for(const choice of game.opening||[]){
+  const action=legalUniversalActions(packs,state).find(entry=>entry.type==='openingMulligan'&&entry.mode===choice.mode);
+  state=dispatchUniversalAction(packs,state,action,{actor:choice.actor});
+ }
+ for(const row of game.actions){
+  if(row.step===55)break;
+  state=dispatchUniversalAction(packs,state,row.action,{actor:state.pending?.player??state.active});
+ }
+ const actor=state.pending?.player??state.active;
+ const legal=legalUniversalActions(packs,state);
+ const move=legal.find(action=>action.type==='move'&&action.uid==='0-18');
+ const view=moveDevelopment(packs,state,actor,move);
+ assert.equal(state.phase,'move');
+ assert.equal(universalEnergyByColor(packs,state,actor).green,4);
+ assert.equal(view.benefit,null);
+ assert.equal(view.reason,'curve-hand');
+ assert.equal(view.strip,true);
+ assert.equal(view.after,3);
+ resetAiV3Report();
+ const frozen=chooseAiV3Action(packs,state,{...OPTS,actor,seed:game.seed});
+ const trace=lastAiV3Trace();
+ assert.equal(frozen.type,'next');
+ assert.equal(trace.score,trace.candidates.find(row=>row.action?.type==='next').search);
+ assert.equal(trace.sequence[0].type,'next');
+ assert.equal(trace.replacedMove.type,'move');
+ assert.equal(trace.settled,false);
+ assert.ok(trace.nodesUsed<=48);
+ resetAiV3Report();
+ const timed=chooseAiV3Action(packs,structuredClone(state),{...MATCH_LIMITS,actor,seed:game.seed,hardNodes:0,plan:'tree',nodes:48,ms:40});
+ const timedTrace=lastAiV3Trace();
+ assert.equal(timed.type,'next');
+ assert.ok(timedTrace.nodesUsed<=48);
+ console.log('clock40 partial-block',JSON.stringify({
+  action:timed.type,reason:timedTrace.reason,nodes:timedTrace.nodesUsed,fallback:timedTrace.fallbackKind??null,over:timedTrace.overSoft??null
+ }));
+ const main=dispatchUniversalAction(packs,state,frozen,{actor});
+ assert.equal(assertUniversalMatch(packs,main),true);
+ resetAiV3Report();
+ const played=chooseAiV3Action(packs,main,{...OPTS,actor,seed:game.seed});
+ const body=main.players[actor].hand.find(card=>card.uid===played.uid);
+ assert.equal(played.type,'play');
+ assert.equal(played.line,'front');
+ assert.ok((deck.pack.cards[body.cardId].bp||0)>=4000);
+ const stood=dispatchUniversalAction(packs,main,played,{actor});
+ assert.equal(assertUniversalMatch(packs,stood),true);
+ assert.equal(universalEnergyByColor(packs,stood,actor).green,4);
+ assert.equal(stood.players[actor].front.filter(Boolean).length,1);
+ let later=state;
+ for(const row of game.actions){
+  if(row.step>=95)break;
+  if(row.step<55)continue;
+  later=dispatchUniversalAction(packs,later,row.action,{actor:later.pending?.player??later.active});
+ }
+ const historical=game.actions.find(row=>row.step===95).action;
+ const seat=later.pending?.player??later.active;
+ const full=moveDevelopment(packs,later,seat,historical);
+ assert.equal(full.benefit,'block');
+ assert.equal(full.strip,false);
+});
+
 test('browser module: strategy does not import a Node builtin',()=>{
  const source=fs.readFileSync(new URL('../dist/universal-v2/ai-v3/strategy.mjs',import.meta.url),'utf8');
  assert.equal(/\bfrom\s+['"]node:/.test(source),false);
