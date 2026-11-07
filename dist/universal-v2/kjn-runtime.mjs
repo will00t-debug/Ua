@@ -458,11 +458,12 @@ function runPlay(pack,s,job){
 function runRetire(pack,s,job){
  if(job.id==='KJN-1-048'){
   // The retiring Raid top has already moved outside together with its
-  // directly-underlying physical Raid base. Pay one hand card to re-enter
-  // that base REST; no effect is available if the base is absent.
+  // directly-underlying physical Raid base. raidBaseUid is cleared on the
+  // way out; the job captured the base while the top was still face-up.
+  // Pay one hand card to re-enter that base REST. No hand, or no base, and
+  // there is nothing to pay.
   const pl=plOf(s,job.owner);
-  const retired=pl.outside.find(c=>c.uid===job.sourceUid);
-  const baseUid=retired?.raidBaseUid;
+  const baseUid=job.baseUid;
   if(!baseUid||!pl.outside.some(c=>c.uid===baseUid)||!pl.hand.length)return;
   hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'pay',
    data:{reason:'own-effect',next:'048base',baseUid}},[
@@ -794,7 +795,11 @@ export function resolveKjnPending(pack,s,action){
    if(window.length>1)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id},window,'top');
    else if(window.length)lay(plOf(s,owner),window,'top');
   }else if(a.mode==='hand'){
-   offerPay(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{place:'top'}},'own-effect','handTop');
+   // 033 prints 手札を1枚山札の上に置く. The card stays in hand until chosen;
+   // discarding it first would spend a second card.
+   const hand=plOf(s,owner).hand;
+   hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'handPlace',data:{where:'top'}},
+    hand.map(c=>({type:'kjn',mode:'place',uid:c.uid})));
   }else if(a.mode==='removed'){
    const pool=chars(s,owner,x=>x.uid!==q.sourceUid);
    if(pool.length)hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'buff'},[
@@ -806,6 +811,13 @@ export function resolveKjnPending(pack,s,action){
  }else if(step==='handPlace'){
   moveUid(pack,s,owner,'hand',a.uid,'deck',q.sourceUid,'own-effect',
    {deckPosition:q.data.where==='bottom'?'bottom':'top',revealed:false});
+  // 033: placing the hand card is 「そうした場合」. The BP choice is optional
+  // and only exists after that card has actually moved.
+  if(q.id==='KJN-1-033'){
+   const pool=chars(s,owner,x=>x.uid!==q.sourceUid);
+   if(pool.length)hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'buff'},[
+    {type:'kjn',mode:'skip'},...pool.map(x=>({type:'kjn',mode:'buff',uid:x.uid,bp:1000}))]);
+  }
  }else if(step==='tuckSelf'||step==='tuckAurora'){
   if(a.mode==='host'){
    const host=selfOf(s,owner,a.uid);
