@@ -1,0 +1,46 @@
+{
+  "search": "8319deae",
+  "note": "Two fixed positions replayed with the frozen hard walk and the current tree. This is not a 36-game rematch and not a wall-clock reproduction of ebbee6d5.",
+  "whiteSword8300First0Step30": {
+    "hard": {"action": "play:front:1-23", "score": 118.7},
+    "tree": {
+      "action": "raid:1-38",
+      "reason": "search",
+      "score": 71.4,
+      "boundary": "yielded",
+      "compared": [
+        {"action": "next", "search": 63, "boundary": "pending", "cut": "depth"},
+        {"action": "raid:1-38", "search": 71.4, "boundary": "yielded", "cut": "nodes"},
+        {"action": "play:energy:1-38", "search": 72.8, "boundary": "pending", "cut": "pending"},
+        {"action": "play:front:1-38", "search": 65.3, "boundary": "pending", "cut": "depth"}
+      ]
+    },
+    "clock40": {
+      "action": "raid:energy:1-38",
+      "reason": "budget-fallback",
+      "compared": [
+        {"action": "next", "search": 63, "boundary": "pending", "cut": "depth"},
+        {"action": "raid:1-38", "search": 71.4, "boundary": "yielded", "cut": "nodes"},
+        {"action": "play:energy:1-38", "search": 84.7, "boundary": "yielded", "cut": "time"},
+        {"action": "play:front:1-38", "search": 65.3, "boundary": "pending", "cut": "depth"}
+      ]
+    }
+  },
+  "rejectBlue8300First1Step34": {
+    "hard": {"action": "move:0-14", "score": 129},
+    "tree": {
+      "action": "next",
+      "reason": "search",
+      "score": 15.4,
+      "boundary": "pending",
+      "cut": "depth",
+      "compared": [
+        {"action": "next", "search": 15.4, "boundary": "pending", "cut": "depth"},
+        {"action": "move:0-10", "search": 6.1, "boundary": "pending", "cut": "depth"},
+        {"action": "move:0-11", "search": 6.1, "boundary": "pending", "cut": "depth"},
+        {"action": "move:0-14", "search": 12.6, "boundary": "pending", "cut": "depth"}
+      ]
+    },
+    "strategies": {"score": "next", "order": "next", "reply": "next", "hard8": "next", "hard32": "next"}
+  }
+}

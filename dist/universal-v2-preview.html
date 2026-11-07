@@ -120,6 +120,8 @@
      <div class="field"><label for="first-player">先手玩家</label>
       <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
      <p class="shuffle-note"><span aria-hidden="true">⤨</span> 每場新對局都會自動重新洗牌，不需要輸入牌序代碼。</p>
+     <label class="coach-consent" for="ai-v3-preview"><input id="ai-v3-preview" type="checkbox"> 完整回合搜尋預覽</label>
+     <p class="note">預設關閉。開啟後，這場單人對戰的電腦會改用完整回合搜尋，並在你的回合結束後估算對手的下一回合。對局中可以再關掉，回到這場選擇的難度；困難仍是目前的 hard-search-2。線上房間規則不變。</p>
      <label class="coach-consent" for="coach-consent"><input id="coach-consent" type="checkbox"> 提供對戰紀錄改善 AI</label>
      <p class="note">預設關閉，選擇會記住。開啟後，單人對電腦與線上對戰都會在背景記錄你自己的決策；關閉會立刻停止並清掉尚未上傳的佇列。線上對戰只記錄已同意的你，不取得對手的隱藏手牌。不收集姓名、密碼或聊天內容。需要登入。上傳之後，到 <a href="/coach.html">教 AI</a> 按「用這些紀錄學習」，再把難度選成「學習」，電腦才會用這個模型。</p>
     </div>
@@ -141,6 +143,6 @@
   </footer>
  </div>
  <link rel="stylesheet" href="coach.css?v=20261101reviewnav1">
- <script type="module" src="universal-v2-preview.mjs?v=20261105ttg012ap1"></script>
+ <script type="module" src="universal-v2-preview.mjs?v=20261105aiv3beam1"></script>
 </body>
 </html>

@@ -1,0 +1,1849 @@
+{
+  "note": "comboReady is a name match. tests/ai-v3-decks.test.mjs plays one legal raid.",
+  "decks": [
+    {
+      "id": "reject-blue",
+      "name": "我拒絕",
+      "kind": "designated",
+      "color": null,
+      "curve": {
+        "0": 12,
+        "1": 8,
+        "2": 4,
+        "3": 16,
+        "4": 8,
+        "6": 2
+      },
+      "raids": 4,
+      "bases": 16,
+      "energy4Plus": 10,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "BLC-2-019",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-2-016",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-026",
+              "energy": 1,
+              "copies": 4
+            },
+            {
+              "id": "BLC-3-001",
+              "energy": 3,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-027",
+              "energy": 3,
+              "copies": 4
+            }
+          ]
+        }
+      ],
+      "list": [
+        "2x BLC-4-036 グリムジョー・ジャガージャック E6",
+        "4x BLC-2-015 浦原 喜助 E1",
+        "4x BLC-2-016 黒崎 一護 E0",
+        "4x BLC-2-019 黒崎 一護 E4",
+        "4x BLC-2-021 斬月 E0",
+        "4x BLC-2-046 月牙十字衝 E3",
+        "4x BLC-2-047 その名は斬月 E2",
+        "4x BLC-2-049 卍解 E3",
+        "4x BLC-3-001 黒崎 一護 E3",
+        "4x BLC-4-022 井上 織姫 E4",
+        "4x BLC-4-026 黒崎 一護 E1",
+        "4x BLC-4-027 黒崎 一護 E3",
+        "4x BLC-4-034 毒ヶ峰 リルカ E0"
+      ]
+    },
+    {
+      "id": "white-sword",
+      "name": "白劍",
+      "kind": "designated",
+      "color": null,
+      "curve": {
+        "0": 8,
+        "1": 8,
+        "2": 4,
+        "3": 12,
+        "4": 14,
+        "6": 4
+      },
+      "raids": 12,
+      "bases": 26,
+      "energy4Plus": 18,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "BLC-2-067",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-4-070",
+              "energy": 1,
+              "copies": 4
+            },
+            {
+              "id": "BLC-3-008",
+              "energy": 4,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "BLC-1-070",
+          "energy": 6,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-4-066",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "BLC-1-072",
+              "energy": 2,
+              "copies": 4
+            }
+          ]
+        },
+        {
+          "id": "BLC-1-085",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-3-009",
+              "energy": 3,
+              "copies": 4
+            },
+            {
+              "id": "BLC-2-069",
+              "energy": 1,
+              "copies": 4
+            },
+            {
+              "id": "BLC-1-083",
+              "energy": 0,
+              "copies": 4
+            }
+          ]
+        }
+      ],
+      "list": [
+        "2x BLC-3-008 更木 剣八 E4",
+        "4x BLC-1-070 卯ノ花 八千流 E6",
+        "4x BLC-1-072 卯ノ花 烈 E2",
+        "4x BLC-1-083 日番谷 冬獅郎 E0",
+        "4x BLC-1-085 日番谷 冬獅郎 E4",
+        "4x BLC-2-067 更木 剣八 E4",
+        "4x BLC-2-069 日番谷 冬獅郎 E1",
+        "4x BLC-2-073 野晒 E4",
+        "4x BLC-3-009 日番谷 冬獅郎 E3",
+        "4x BLC-4-060 藍染 惣右介 E3",
+        "4x BLC-4-066 卯ノ花 烈 E0",
+        "4x BLC-4-070 更木 剣八 E1",
+        "4x BLC-4-080 卍解 E3"
+      ]
+    },
+    {
+      "id": "renruki",
+      "name": "戀露",
+      "kind": "designated",
+      "color": null,
+      "curve": {
+        "0": 8,
+        "1": 2,
+        "2": 8,
+        "3": 12,
+        "4": 16,
+        "5": 4
+      },
+      "raids": 16,
+      "bases": 34,
+      "energy4Plus": 20,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "BLC-1-041",
+          "energy": 5,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-1-039",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-082",
+              "energy": 3,
+              "copies": 4
+            }
+          ]
+        },
+        {
+          "id": "BLC-1-047",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-4-048",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-049",
+              "energy": 2,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-050",
+              "energy": 4,
+              "copies": 4
+            },
+            {
+              "id": "BLC-2-052",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "BLC-4-050",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-1-047",
+              "energy": 4,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-048",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-049",
+              "energy": 2,
+              "copies": 4
+            },
+            {
+              "id": "BLC-2-052",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "BLC-1-053",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "BLC-4-054",
+              "energy": 3,
+              "copies": 4
+            },
+            {
+              "id": "BLC-4-083",
+              "energy": 2,
+              "copies": 4
+            }
+          ]
+        }
+      ],
+      "list": [
+        "2x BLC-2-052 阿散井 恋次 E1",
+        "4x BLC-1-039 黒崎 一護 E0",
+        "4x BLC-1-041 黒崎 一護 E5",
+        "4x BLC-1-047 阿散井 恋次 E4",
+        "4x BLC-1-053 朽木 ルキア E4",
+        "4x BLC-4-048 阿散井 恋次 E0",
+        "4x BLC-4-049 阿散井 恋次 E2",
+        "4x BLC-4-050 阿散井 恋次 E4",
+        "4x BLC-4-054 朽木 ルキア E3",
+        "4x BLC-4-058 双王蛇尾丸 E4",
+        "4x BLC-4-059 卍解 E3",
+        "4x BLC-4-082 黒崎 一護 E3",
+        "4x BLC-4-083 朽木 ルキア E2"
+      ]
+    },
+    {
+      "id": "sword-art-online-raid",
+      "name": "sword-art-online",
+      "kind": "raid",
+      "color": "yellow",
+      "curve": {
+        "0": 22,
+        "1": 6,
+        "2": 10,
+        "4": 12
+      },
+      "raids": 12,
+      "bases": 18,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "SAO-1-018",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "SAO-1-004",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "SAO-1-005",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "SAO-1-022",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "SAO-1-019",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "SAO-1-020",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "SAO-2-009",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        },
+        {
+          "id": "SAO-1-025",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "SAO-1-023",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "SAO-1-024",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x SAO-1-007 シリカ E2",
+        "1x SAO-1-024 シノン（太陽神ソルス） E2",
+        "1x SAO-1-029 ギガスシダー E2",
+        "1x SAO-2-005 シェータ・シンセシス・トゥエルブ E2",
+        "1x SAO-2-006 ベルクーリ・シンセシス・ワン E2",
+        "1x SAO-2-009 アスナ（創世神ステイシア） E2",
+        "2x SAO-1-001 キリト E0",
+        "2x SAO-1-003 ティーゼ・シュトリーネン E2",
+        "2x SAO-1-005 ユージオ E2",
+        "2x SAO-1-006 ロニエ・アラベル E1",
+        "2x SAO-1-008 ユイ E0",
+        "2x SAO-1-010 アリス・シンセシス・サーティ E0",
+        "2x SAO-1-011 アリス・シンセシス・サーティ E1",
+        "2x SAO-1-020 アスナ（創世神ステイシア） E1",
+        "2x SAO-1-026 リーファ（地神テラリア） E0",
+        "2x SAO-2-008 レンリ・シンセシス・トゥエニセブン E0",
+        "4x SAO-1-004 ユージオ E0",
+        "4x SAO-1-018 ユージオ・シンセシス・サーティツー E4",
+        "4x SAO-1-019 アスナ（創世神ステイシア） E0",
+        "4x SAO-1-022 アスナ（創世神ステイシア） E4",
+        "4x SAO-1-023 シノン（太陽神ソルス） E0",
+        "4x SAO-1-025 シノン（太陽神ソルス） E4"
+      ]
+    },
+    {
+      "id": "solo-leveling-raid",
+      "name": "solo-leveling",
+      "kind": "raid",
+      "color": "green",
+      "curve": {
+        "0": 23,
+        "1": 7,
+        "2": 8,
+        "4": 4,
+        "5": 4,
+        "6": 4
+      },
+      "raids": 12,
+      "bases": 20,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "SLG-1-047",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "SLG-1-015",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-048",
+              "energy": 5,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-049",
+              "energy": 6,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-045",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "SLG-1-046",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "SLG-1-048",
+          "energy": 5,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "SLG-1-015",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-047",
+              "energy": 4,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-049",
+              "energy": 6,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-045",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "SLG-1-046",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "SLG-1-049",
+          "energy": 6,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "SLG-1-015",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-047",
+              "energy": 4,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-048",
+              "energy": 5,
+              "copies": 4
+            },
+            {
+              "id": "SLG-1-045",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "SLG-1-046",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x SLG-1-062 最上 真 E0",
+        "1x SLG-1-063 最上 真 E1",
+        "1x SLG-1-066 イザ E0",
+        "1x SLG-1-071 マリー E0",
+        "2x SLG-1-041 朝比奈 りん E2",
+        "2x SLG-1-042 馬渕 勲 E0",
+        "2x SLG-1-043 水篠 葵 E0",
+        "2x SLG-1-044 水篠 葵 E2",
+        "2x SLG-1-045 水篠 旬 E0",
+        "2x SLG-1-046 水篠 旬 E1",
+        "2x SLG-1-050 観月 絵里 E0",
+        "2x SLG-1-052 諸菱 賢太 E0",
+        "2x SLG-1-054 黒須 圭介 E0",
+        "2x SLG-1-055 向坂 雫 E0",
+        "2x SLG-1-056 向坂 雫 E2",
+        "2x SLG-1-068 K E1",
+        "2x SLG-1-069 ケン E2",
+        "2x SLG-1-070 シーマ E0",
+        "2x SLG-1-075 デイリークエスト E1",
+        "4x SLG-1-015 水篠 旬 E0",
+        "4x SLG-1-047 水篠 旬 E4",
+        "4x SLG-1-048 水篠 旬 E5",
+        "4x SLG-1-049 水篠 旬 E6"
+      ]
+    },
+    {
+      "id": "steins-gate-raid",
+      "name": "steins-gate",
+      "kind": "raid",
+      "color": "blue",
+      "curve": {
+        "0": 13,
+        "1": 12,
+        "2": 13,
+        "4": 12
+      },
+      "raids": 12,
+      "bases": 16,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "STG-1-011",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "STG-1-007",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "STG-1-008",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "STG-1-017",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "STG-1-015",
+              "energy": 1,
+              "copies": 3
+            },
+            {
+              "id": "STG-1-016",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "STG-1-028",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "STG-1-026",
+              "energy": 1,
+              "copies": 3
+            },
+            {
+              "id": "STG-1-025",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "2x STG-1-008 岡部 倫太郎 E2",
+        "2x STG-1-016 椎名 まゆり E2",
+        "2x STG-1-023 フェイリス・ニャンニャン E2",
+        "2x STG-1-025 牧瀬 紅莉栖 E2",
+        "2x STG-1-031 未来ガジェット研究所 E2",
+        "3x STG-1-001 阿万音 鈴羽 E0",
+        "3x STG-1-002 阿万音 鈴羽 E1",
+        "3x STG-1-004 阿万音 鈴羽 E2",
+        "3x STG-1-012 桐生 萌郁 E0",
+        "3x STG-1-015 椎名 まゆり E1",
+        "3x STG-1-019 天王寺 綯 E1",
+        "3x STG-1-020 橋田 至 E0",
+        "3x STG-1-026 牧瀬 紅莉栖 E1",
+        "4x STG-1-007 岡部 倫太郎 E0",
+        "4x STG-1-011 岡部 倫太郎 E4",
+        "4x STG-1-017 椎名 まゆり E4",
+        "4x STG-1-028 牧瀬 紅莉栖 E4"
+      ]
+    },
+    {
+      "id": "rezero-raid",
+      "name": "rezero",
+      "kind": "raid",
+      "color": "yellow",
+      "curve": {
+        "0": 20,
+        "1": 10,
+        "2": 8,
+        "3": 4,
+        "4": 8
+      },
+      "raids": 12,
+      "bases": 31,
+      "energy4Plus": 8,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "REZ-1-011",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "REZ-1-006",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "REZ-1-007",
+              "energy": 0,
+              "copies": 1
+            },
+            {
+              "id": "REZ-2-004",
+              "energy": 0,
+              "copies": 1
+            },
+            {
+              "id": "REZ-1-009",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "REZ-1-008",
+              "energy": 2,
+              "copies": 1
+            },
+            {
+              "id": "REZ-2-006",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        },
+        {
+          "id": "REZ-1-015",
+          "energy": 3,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "REZ-1-012",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "REZ-1-019",
+              "energy": 4,
+              "copies": 4
+            },
+            {
+              "id": "REZ-1-013",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "REZ-1-103",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "REZ-1-014",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "REZ-2-007",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "REZ-1-016",
+              "energy": 2,
+              "copies": 1
+            },
+            {
+              "id": "REZ-2-008",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        },
+        {
+          "id": "REZ-1-019",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "REZ-1-012",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "REZ-1-015",
+              "energy": 3,
+              "copies": 4
+            },
+            {
+              "id": "REZ-1-013",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "REZ-1-103",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "REZ-1-014",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "REZ-2-007",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "REZ-1-016",
+              "energy": 2,
+              "copies": 1
+            },
+            {
+              "id": "REZ-2-008",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x REZ-1-007 ラム E0",
+        "1x REZ-1-008 ラム E2",
+        "1x REZ-1-016 レム E2",
+        "1x REZ-1-023 エミリア E0",
+        "1x REZ-1-025 エミリア E1",
+        "1x REZ-1-028 フェルト E2",
+        "1x REZ-1-105 エミリア E2",
+        "1x REZ-2-001 パック E0",
+        "1x REZ-2-002 フレデリカ・バウマン E2",
+        "1x REZ-2-003 ペトラ・レイテ E2",
+        "1x REZ-2-004 ラム E0",
+        "1x REZ-2-006 ラム E2",
+        "1x REZ-2-007 レム E1",
+        "1x REZ-2-008 レム E2",
+        "2x REZ-1-001 パック E1",
+        "2x REZ-1-005 ペトラ・レイテ E0",
+        "2x REZ-1-009 ラム E1",
+        "2x REZ-1-013 レム E0",
+        "2x REZ-1-014 レム E1",
+        "2x REZ-1-022 エミリア E0",
+        "2x REZ-1-024 エミリア E1",
+        "2x REZ-1-103 レム E0",
+        "4x REZ-1-006 ラム E0",
+        "4x REZ-1-011 ラム E4",
+        "4x REZ-1-012 レム E0",
+        "4x REZ-1-015 レム E3",
+        "4x REZ-1-019 レム E4"
+      ]
+    },
+    {
+      "id": "madoka-raid",
+      "name": "madoka",
+      "kind": "raid",
+      "color": "red",
+      "curve": {
+        "0": 27,
+        "1": 5,
+        "2": 6,
+        "4": 8,
+        "5": 4
+      },
+      "raids": 12,
+      "bases": 26,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "MMM-1-071",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "MMM-1-023",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "MMM-1-086",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "MMM-1-107",
+              "energy": 0,
+              "copies": 1
+            },
+            {
+              "id": "MMM-2-071",
+              "energy": 0,
+              "copies": 1
+            },
+            {
+              "id": "MMM-1-088",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        },
+        {
+          "id": "MMM-1-075",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "MMM-1-039",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "MMM-1-072",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "MMM-2-063",
+              "energy": 0,
+              "copies": 1
+            },
+            {
+              "id": "MMM-1-101",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "MMM-1-074",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        },
+        {
+          "id": "MMM-1-078",
+          "energy": 5,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "MMM-1-006",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "MMM-1-076",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "MMM-1-103",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "MMM-1-077",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x MMM-1-069 キュゥべえ E1",
+        "1x MMM-1-074 暁美 ほむら E2",
+        "1x MMM-1-077 鹿目 まどか E2",
+        "1x MMM-1-080 佐倉 杏子 E2",
+        "1x MMM-1-081 佐倉 杏子 E2",
+        "1x MMM-1-085 巴 マミ E1",
+        "1x MMM-1-088 美樹 さやか E2",
+        "1x MMM-1-101 暁美 ほむら E1",
+        "1x MMM-1-103 鹿目 まどか E1",
+        "1x MMM-1-107 美樹 さやか E0",
+        "1x MMM-2-063 暁美 ほむら E0",
+        "1x MMM-2-066 佐倉 杏子 E1",
+        "1x MMM-2-067 佐倉 杏子 E2",
+        "1x MMM-2-071 美樹 さやか E0",
+        "2x MMM-1-070 志筑 仁美 E0",
+        "2x MMM-1-072 暁美 ほむら E0",
+        "2x MMM-1-076 鹿目 まどか E0",
+        "2x MMM-1-079 佐倉 杏子 E0",
+        "2x MMM-1-084 巴 マミ E0",
+        "2x MMM-1-086 美樹 さやか E0",
+        "4x MMM-1-006 鹿目 まどか E0",
+        "4x MMM-1-023 美樹 さやか E0",
+        "4x MMM-1-039 暁美 ほむら E0",
+        "4x MMM-1-071 人魚の魔女 E4",
+        "4x MMM-1-075 暁美 ほむら E4",
+        "4x MMM-1-078 鹿目 まどか E5"
+      ]
+    },
+    {
+      "id": "inuyasha-raid",
+      "name": "inuyasha",
+      "kind": "raid",
+      "color": "red",
+      "curve": {
+        "0": 22,
+        "1": 9,
+        "2": 7,
+        "4": 12
+      },
+      "raids": 12,
+      "bases": 17,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "IYS-1-046",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "IYS-1-042",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "IYS-1-043",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        },
+        {
+          "id": "IYS-1-059",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "IYS-1-056",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "IYS-1-057",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "IYS-1-066",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "IYS-1-063",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "IYS-1-065",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "IYS-1-064",
+              "energy": 2,
+              "copies": 1
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x IYS-1-043 犬夜叉 E2",
+        "1x IYS-1-051 雲母 E2",
+        "1x IYS-1-052 銀太＆白角 E2",
+        "1x IYS-1-061 七宝 E2",
+        "1x IYS-1-064 日暮 かごめ E2",
+        "1x IYS-1-065 日暮 かごめ E1",
+        "1x IYS-1-069 弥勒 E2",
+        "1x IYS-1-072 骨喰いの井戸 E2",
+        "2x IYS-1-047 楓 E1",
+        "2x IYS-1-048 桔梗 E0",
+        "2x IYS-1-050 雲母 E0",
+        "2x IYS-1-053 鋼牙 E0",
+        "2x IYS-1-055 琥珀 E0",
+        "2x IYS-1-057 珊瑚 E1",
+        "2x IYS-1-060 七宝 E1",
+        "2x IYS-1-067 冥加 E1",
+        "2x IYS-1-068 弥勒 E0",
+        "4x IYS-1-042 犬夜叉 E0",
+        "4x IYS-1-046 犬夜叉 E4",
+        "4x IYS-1-056 珊瑚 E0",
+        "4x IYS-1-059 珊瑚 E4",
+        "4x IYS-1-063 日暮 かごめ E0",
+        "4x IYS-1-066 日暮 かごめ E4"
+      ]
+    },
+    {
+      "id": "kjn-raid",
+      "name": "kjn",
+      "kind": "raid",
+      "color": "yellow",
+      "curve": {
+        "0": 22,
+        "1": 8,
+        "2": 8,
+        "4": 4,
+        "5": 4,
+        "6": 4
+      },
+      "raids": 12,
+      "bases": 19,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "KJN-1-009",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "KJN-1-005",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "KJN-1-007",
+              "energy": 1,
+              "copies": 1
+            }
+          ]
+        },
+        {
+          "id": "KJN-1-015",
+          "energy": 5,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "KJN-1-012",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "KJN-1-016",
+              "energy": 6,
+              "copies": 4
+            },
+            {
+              "id": "KJN-1-013",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "KJN-1-016",
+          "energy": 6,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "KJN-1-012",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "KJN-1-015",
+              "energy": 5,
+              "copies": 4
+            },
+            {
+              "id": "KJN-1-013",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x KJN-1-007 アレクシア・ミドガル E1",
+        "1x KJN-1-010 アンネローゼ・フシアナス E0",
+        "1x KJN-1-020 シド・カゲノー E1",
+        "1x KJN-1-030 ローズ・オリアナ E0",
+        "2x KJN-1-013 クレア・カゲノー E1",
+        "2x KJN-1-018 シド・カゲノー E0",
+        "2x KJN-1-019 シド・カゲノー E0",
+        "2x KJN-1-021 シド・カゲノー E2",
+        "2x KJN-1-022 ナツメ・カフカ E2",
+        "2x KJN-1-024 ナツメ・カフカ E0",
+        "2x KJN-1-026 ベアトリクス E1",
+        "2x KJN-1-027 ベアトリクス E2",
+        "2x KJN-1-031 ローズ・オリアナ E1",
+        "2x KJN-1-032 ローズ・オリアナ E2",
+        "3x KJN-1-002 アウロラ E0",
+        "3x KJN-1-017 シェリー・バーネット E0",
+        "4x KJN-1-005 アレクシア・ミドガル E0",
+        "4x KJN-1-009 アレクシア・ミドガル E4",
+        "4x KJN-1-012 クレア・カゲノー E0",
+        "4x KJN-1-015 クレア・カゲノー E5",
+        "4x KJN-1-016 クレア・カゲノー E6"
+      ]
+    },
+    {
+      "id": "csm-raid",
+      "name": "csm",
+      "kind": "raid",
+      "color": "red",
+      "curve": {
+        "0": 20,
+        "1": 7,
+        "2": 11,
+        "4": 8,
+        "6": 4
+      },
+      "raids": 12,
+      "bases": 16,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "CSM-1-047",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "CSM-1-003",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "CSM-1-049",
+              "energy": 0,
+              "copies": 3
+            },
+            {
+              "id": "CSM-1-050",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "CSM-1-048",
+          "energy": 6,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "CSM-1-003",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "CSM-1-049",
+              "energy": 0,
+              "copies": 3
+            },
+            {
+              "id": "CSM-1-050",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "CSM-1-056",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "CSM-1-052",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "CSM-1-053",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "CSM-1-054",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x CSM-1-043 コベニ E0",
+        "1x CSM-1-053 早川 アキ E1",
+        "1x CSM-1-059 パワー E2",
+        "1x CSM-1-063 姫野 E0",
+        "2x CSM-1-041 荒井 E1",
+        "2x CSM-1-044 コベニ E1",
+        "2x CSM-1-045 コベニ E2",
+        "2x CSM-1-050 デンジ E1",
+        "2x CSM-1-054 早川 アキ E2",
+        "2x CSM-1-062 ビーム E0",
+        "2x CSM-1-064 姫野 E2",
+        "2x CSM-1-067 ポチタ E0",
+        "2x CSM-1-069 マキマ E2",
+        "2x CSM-1-073 早川家 E2",
+        "3x CSM-1-049 デンジ E0",
+        "3x CSM-1-057 パワー E0",
+        "4x CSM-1-003 デンジ E0",
+        "4x CSM-1-047 チェンソーマン E4",
+        "4x CSM-1-048 チェンソーマン E6",
+        "4x CSM-1-052 早川 アキ E0",
+        "4x CSM-1-056 早川 アキ E4"
+      ]
+    },
+    {
+      "id": "aot-raid",
+      "name": "aot",
+      "kind": "raid",
+      "color": "green",
+      "curve": {
+        "0": 20,
+        "1": 8,
+        "2": 10,
+        "4": 4,
+        "5": 4,
+        "7": 4
+      },
+      "raids": 12,
+      "bases": 14,
+      "energy4Plus": 12,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "AOT-1-038",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "AOT-1-037",
+              "energy": 0,
+              "copies": 4
+            }
+          ]
+        },
+        {
+          "id": "AOT-1-048",
+          "energy": 7,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "AOT-1-045",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "AOT-1-046",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "AOT-1-053",
+          "energy": 5,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "AOT-1-051",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "AOT-1-052",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "2x AOT-1-039 車力の巨人 E1",
+        "2x AOT-1-040 無垢の巨人（小柄な巨人） E2",
+        "2x AOT-1-044 ユミル E2",
+        "2x AOT-1-046 ジーク・イェーガー E2",
+        "2x AOT-1-051 アニ・レオンハート E1",
+        "2x AOT-1-052 アニ・レオンハート E2",
+        "2x AOT-1-056 ベルトルト・フーバー E1",
+        "2x AOT-2-055 ピーク・フィンガー E1",
+        "2x AOT-2-059 ライナー＆ベルトルト＆アニ E2",
+        "3x AOT-1-042 無垢の巨人（覗き込む巨人） E0",
+        "3x AOT-1-054 ベルトルト・フーバー E0",
+        "3x AOT-1-058 ライナー・ブラウン E0",
+        "3x AOT-2-054 ピーク・フィンガー E0",
+        "4x AOT-1-037 ロッド・レイス E0",
+        "4x AOT-1-038 ロッド・レイス（巨人） E4",
+        "4x AOT-1-045 ジーク・イェーガー E0",
+        "4x AOT-1-048 ジーク・イェーガー（獣の巨人） E7",
+        "4x AOT-1-053 アニ・レオンハート（女型の巨人） E5"
+      ]
+    },
+    {
+      "id": "kmr-raid",
+      "name": "kmr",
+      "kind": "raid",
+      "color": "red",
+      "curve": {
+        "0": 20,
+        "1": 8,
+        "2": 14,
+        "3": 8
+      },
+      "raids": 14,
+      "bases": 14,
+      "energy4Plus": 0,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "KMR-1-074",
+          "energy": 3,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "KMR-1-090",
+              "energy": 0,
+              "copies": 4
+            }
+          ]
+        },
+        {
+          "id": "KMR-1-075",
+          "energy": 3,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "KMR-1-093",
+              "energy": 0,
+              "copies": 4
+            }
+          ]
+        },
+        {
+          "id": "KMR-1-077",
+          "energy": 2,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "KMR-1-092",
+              "energy": 0,
+              "copies": 4
+            }
+          ]
+        },
+        {
+          "id": "KMR-1-080",
+          "energy": 2,
+          "copies": 2,
+          "bases": [
+            {
+              "id": "KMR-1-089",
+              "energy": 0,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x KMR-2-088 仮面ライダーナイト E2",
+        "1x KMR-2-092 仮面ライダー龍騎 E2",
+        "1x KMR-2-093 仮面ライダー龍騎 E2",
+        "1x KMR-2-097 ソードベント E2",
+        "2x KMR-1-068 オートバジン E1",
+        "2x KMR-1-071 仮面ライダーゼロノス アルタイルフォーム E2",
+        "2x KMR-1-072 仮面ライダーデルタ E0",
+        "2x KMR-1-073 仮面ライダーデルタ E2",
+        "2x KMR-1-078 仮面ライダー電王 プラットフォーム E1",
+        "2x KMR-1-080 仮面ライダー電王 ロッドフォーム E2",
+        "2x KMR-1-082 仮面ライダーファイズ E0",
+        "2x KMR-1-089 ウラタロス E0",
+        "2x KMR-1-091 デネブイマジン E1",
+        "2x KMR-2-090 仮面ライダー龍騎 E0",
+        "2x KMR-2-095 ダークウイング E1",
+        "4x KMR-1-074 仮面ライダー電王 アックスフォーム E3",
+        "4x KMR-1-075 仮面ライダー電王 ガンフォーム E3",
+        "4x KMR-1-077 仮面ライダー電王 ソードフォーム E2",
+        "4x KMR-1-090 キンタロス E0",
+        "4x KMR-1-092 モモタロス E0",
+        "4x KMR-1-093 リュウタロス E0"
+      ]
+    },
+    {
+      "id": "mushoku-tensei-raid",
+      "name": "mushoku-tensei",
+      "kind": "raid",
+      "color": "blue",
+      "curve": {
+        "0": 16,
+        "1": 10,
+        "2": 12,
+        "3": 8,
+        "4": 4
+      },
+      "raids": 12,
+      "bases": 28,
+      "energy4Plus": 4,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "MST-1-008",
+          "energy": 3,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "MST-1-001",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "MST-1-009",
+              "energy": 3,
+              "copies": 4
+            },
+            {
+              "id": "MST-1-002",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "MST-1-003",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "MST-1-007",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "MST-1-004",
+              "energy": 2,
+              "copies": 2
+            },
+            {
+              "id": "MST-1-005",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "MST-1-009",
+          "energy": 3,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "MST-1-001",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "MST-1-008",
+              "energy": 3,
+              "copies": 4
+            },
+            {
+              "id": "MST-1-002",
+              "energy": 0,
+              "copies": 2
+            },
+            {
+              "id": "MST-1-003",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "MST-1-007",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "MST-1-004",
+              "energy": 2,
+              "copies": 2
+            },
+            {
+              "id": "MST-1-005",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "MST-1-025",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "MST-1-022",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "MST-1-024",
+              "energy": 1,
+              "copies": 1
+            },
+            {
+              "id": "MST-1-023",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "1x MST-1-003 エリス E1",
+        "1x MST-1-012 シルフィエット E0",
+        "1x MST-1-020 ルイジェルド E0",
+        "1x MST-1-024 ルーデウス E1",
+        "2x MST-1-002 エリス E0",
+        "2x MST-1-004 エリス E2",
+        "2x MST-1-005 エリス E2",
+        "2x MST-1-007 エリス E1",
+        "2x MST-1-013 シルフィエット E1",
+        "2x MST-1-015 聖獣 E2",
+        "2x MST-1-016 ゼニス E0",
+        "2x MST-1-017 ノルン＆アイシャ E2",
+        "2x MST-1-019 リーリャ E1",
+        "2x MST-1-023 ルーデウス E2",
+        "2x MST-1-027 ロキシー E0",
+        "2x MST-1-028 ロキシー E1",
+        "2x MST-1-029 ロキシー E2",
+        "4x MST-1-001 エリス E0",
+        "4x MST-1-008 エリス E3",
+        "4x MST-1-009 エリス E3",
+        "4x MST-1-022 ルーデウス E0",
+        "4x MST-1-025 ルーデウス E4"
+      ]
+    },
+    {
+      "id": "gurren-lagann-raid",
+      "name": "gurren-lagann",
+      "kind": "raid",
+      "color": "red",
+      "curve": {
+        "0": 18,
+        "1": 10,
+        "2": 10,
+        "3": 4,
+        "4": 8
+      },
+      "raids": 14,
+      "bases": 21,
+      "energy4Plus": 8,
+      "comboReady": true,
+      "pairs": [
+        {
+          "id": "TTG-1-072",
+          "energy": 3,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "TTG-1-042",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "TTG-1-045",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "TTG-1-073",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "TTG-1-009",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "TTG-1-053",
+              "energy": 0,
+              "copies": 3
+            },
+            {
+              "id": "TTG-1-055",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "TTG-1-052",
+              "energy": 2,
+              "copies": 2
+            },
+            {
+              "id": "TTG-1-054",
+              "energy": 2,
+              "copies": 2
+            },
+            {
+              "id": "TTG-1-042",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "TTG-1-045",
+              "energy": 1,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "TTG-1-071",
+          "energy": 4,
+          "copies": 4,
+          "bases": [
+            {
+              "id": "TTG-1-048",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        },
+        {
+          "id": "TTG-1-076",
+          "energy": 2,
+          "copies": 2,
+          "bases": [
+            {
+              "id": "TTG-1-009",
+              "energy": 0,
+              "copies": 4
+            },
+            {
+              "id": "TTG-1-053",
+              "energy": 0,
+              "copies": 3
+            },
+            {
+              "id": "TTG-1-055",
+              "energy": 1,
+              "copies": 2
+            },
+            {
+              "id": "TTG-1-052",
+              "energy": 2,
+              "copies": 2
+            },
+            {
+              "id": "TTG-1-054",
+              "energy": 2,
+              "copies": 2
+            }
+          ]
+        }
+      ],
+      "list": [
+        "2x TTG-1-045 カミナ E1",
+        "2x TTG-1-048 キタン E2",
+        "2x TTG-1-049 ギミー＆ダリー E1",
+        "2x TTG-1-052 シモン E2",
+        "2x TTG-1-054 シモン E2",
+        "2x TTG-1-055 シモン E1",
+        "2x TTG-1-059 ニア E1",
+        "2x TTG-1-063 ブータ E0",
+        "2x TTG-1-065 ヨーコ E1",
+        "2x TTG-1-066 ヨーコ E2",
+        "2x TTG-1-069 リーロン E0",
+        "2x TTG-1-076 ラガン E2",
+        "3x TTG-1-053 シモン E0",
+        "3x TTG-1-058 ニア E0",
+        "4x TTG-1-009 シモン E0",
+        "4x TTG-1-042 カミナ E0",
+        "4x TTG-1-071 キングキタンDX E4",
+        "4x TTG-1-072 グレン E3",
+        "4x TTG-1-073 グレンラガン E4"
+      ]
+    },
+    {
+      "id": "bleach",
+      "name": "bleach",
+      "kind": "practice",
+      "color": null,
+      "curve": {
+        "0": 50
+      },
+      "raids": 0,
+      "bases": 0,
+      "energy4Plus": 0,
+      "comboReady": false,
+      "pairs": [],
+      "list": [
+        "2x BLC-1-051 朽木 ルキア E0",
+        "4x BLC-1-001 アズギアロ・イーバーン E0",
+        "4x BLC-1-002 エス・ノト E0",
+        "4x BLC-1-012 バンビエッタ・バスターバイン E0",
+        "4x BLC-1-016 ベレニケ・ガブリエリ E0",
+        "4x BLC-1-018 ユーグラム・ハッシュヴァルト E0",
+        "4x BLC-1-021 ユーハバッハ E0",
+        "4x BLC-1-034 石田 雨竜 E0",
+        "4x BLC-1-039 黒崎 一護 E0",
+        "4x BLC-1-042 茶渡 泰虎 E0",
+        "4x BLC-1-043 ネル・トゥ E0",
+        "4x BLC-1-045 阿散井 恋次 E0",
+        "4x BLC-1-048 朽木 白哉 E0"
+      ]
+    },
+    {
+      "id": "sword-art-online",
+      "name": "sword-art-online",
+      "kind": "practice",
+      "color": null,
+      "curve": {
+        "0": 50
+      },
+      "raids": 0,
+      "bases": 0,
+      "energy4Plus": 0,
+      "comboReady": false,
+      "pairs": [],
+      "list": [
+        "2x SAO-1-055 ユイ E0",
+        "4x SAO-1-001 キリト E0",
+        "4x SAO-1-004 ユージオ E0",
+        "4x SAO-1-008 ユイ E0",
+        "4x SAO-1-010 アリス・シンセシス・サーティ E0",
+        "4x SAO-1-019 アスナ（創世神ステイシア） E0",
+        "4x SAO-1-023 シノン（太陽神ソルス） E0",
+        "4x SAO-1-026 リーファ（地神テラリア） E0",
+        "4x SAO-1-035 アスナ E0",
+        "4x SAO-1-039 キリト E0",
+        "4x SAO-1-045 ピナ E0",
+        "4x SAO-1-047 リズベット E0",
+        "4x SAO-1-054 サクヤ E0"
+      ]
+    },
+    {
+      "id": "solo-leveling",
+      "name": "solo-leveling",
+      "kind": "practice",
+      "color": null,
+      "curve": {
+        "0": 50
+      },
+      "raids": 0,
+      "bases": 0,
+      "energy4Plus": 0,
+      "comboReady": false,
+      "pairs": [],
+      "list": [
+        "12x SLG-1-030 影の兵士 E0",
+        "2x SLG-1-050 観月 絵里 E0",
+        "4x SLG-1-002 朝比奈 りん E0",
+        "4x SLG-1-005 今宮 さつき E0",
+        "4x SLG-1-007 エシル E0",
+        "4x SLG-1-009 向坂 雫 E0",
+        "4x SLG-1-013 水篠 葵 E0",
+        "4x SLG-1-015 水篠 旬 E0",
+        "4x SLG-1-042 馬渕 勲 E0",
+        "4x SLG-1-043 水篠 葵 E0",
+        "4x SLG-1-045 水篠 旬 E0"
+      ]
+    },
+    {
+      "id": "steins-gate",
+      "name": "steins-gate",
+      "kind": "practice",
+      "color": null,
+      "curve": {
+        "0": 28,
+        "1": 16,
+        "2": 6
+      },
+      "raids": 0,
+      "bases": 0,
+      "energy4Plus": 0,
+      "comboReady": false,
+      "pairs": [],
+      "list": [
+        "2x STG-1-006 漆原 るか E2",
+        "4x STG-1-001 阿万音 鈴羽 E0",
+        "4x STG-1-002 阿万音 鈴羽 E1",
+        "4x STG-1-004 阿万音 鈴羽 E2",
+        "4x STG-1-007 岡部 倫太郎 E0",
+        "4x STG-1-012 桐生 萌郁 E0",
+        "4x STG-1-014 椎名 まゆり E0",
+        "4x STG-1-015 椎名 まゆり E1",
+        "4x STG-1-019 天王寺 綯 E1",
+        "4x STG-1-020 橋田 至 E0",
+        "4x STG-1-024 牧瀬 紅莉栖 E0",
+        "4x STG-1-026 牧瀬 紅莉栖 E1",
+        "4x STG-1-032 エル・プサイ・コングルゥ E0"
+      ]
+    },
+    {
+      "id": "aot",
+      "name": "aot",
+      "kind": "practice",
+      "color": null,
+      "curve": {
+        "0": 36,
+        "1": 14
+      },
+      "raids": 0,
+      "bases": 0,
+      "energy4Plus": 0,
+      "comboReady": false,
+      "pairs": [],
+      "list": [
+        "2x AOT-1-079 コニー・スプリンガー E1",
+        "4x AOT-1-068 カルラ・イェーガー E0",
+        "4x AOT-1-070 ハンネス E1",
+        "4x AOT-1-071 エレン・クルーガー E0",
+        "4x AOT-1-072 グリシャ・イェーガー E1",
+        "4x AOT-1-075 アルミン・アルレルト E0",
+        "4x AOT-1-076 アルミン・アルレルト E1",
+        "4x AOT-1-078 クリスタ・レンズ E0",
+        "4x AOT-1-083 ジャン・キルシュタイン E0",
+        "4x AOT-1-085 ミカサ・アッカーマン E0",
+        "4x AOT-1-090 エレン・イェーガー E0",
+        "4x AOT-1-101 アニ・レオンハート E0",
+        "4x AOT-2-063 コニー・スプリンガー E0"
+      ]
+    }
+  ]
+}
