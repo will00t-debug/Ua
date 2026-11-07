@@ -221,6 +221,18 @@ function discardTie(pack,state,actor,rows,blended){
  });
  return tied[0].bonus==null?{...tied[0],bonus:blended.bonus||0}:tied[0];
 }
+// A follow-up attack that finishes level with passing is the rest of a wave
+// that already started. A tied pass is the lone-swing hold, and it does not
+// apply once this turn has attacked. A worse finished attack stays behind.
+function continueStartedWave(state,rows,blended){
+ if((state?.attacksThisTurn||0)<=0||!blended||blended.action?.type==='attack')return blended;
+ const swings=(rows||[]).filter(row=>row?.action?.type==='attack'&&row.executed!==false&&
+  Number.isFinite(row.search)&&(row.boundary==='returned'||row.boundary==='terminal'));
+ if(!swings.length)return blended;
+ const best=swings.reduce((left,right)=>right.search>left.search?right:left);
+ if(best.search+1e-9<blended.search)return blended;
+ return best;
+}
 function doneLine(row){
  return !!(row&&(row.settled||row.boundary==='returned'||row.boundary==='terminal'));
 }
@@ -587,11 +599,11 @@ export function chooseAiV3Action(pack,state,options={}){
   const observation=actorObservation(pack,state,actor);
   const poolRows=comparable;
   const anchor=poolRows.reduce((best,row)=>row.search>best.search?row:best).action;
-  const blended=discardTie(pack,state,actor,poolRows,blendRoot(poolRows,action=>{
+  const blended=continueStartedWave(state,poolRows,discardTie(pack,state,actor,poolRows,blendRoot(poolRows,action=>{
    const mine=learnBonus(options.prior,observation,action,actor);
    const base=learnBonus(options.prior,observation,anchor,actor);
    return mine-base;
-  }));
+  })));
   const exact=legal.find(item=>same(item,blended?.action));
   if(!exact)return fallback(pack,state,legal,started,'unmatched',()=>{settle();return spent();});
   report.search++;

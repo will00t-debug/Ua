@@ -604,6 +604,11 @@ export function blankSwingAdjustment(pack,state,actor,action){
  // impact does not leak. Only a declaration effect that can actually be paid
  // makes this swing different from resting for nothing.
  if(payableTiming(pack,state,actor,attacker,'declare'))return 1;
+ // One higher body can answer only one swing. Another ready attacker, or a
+ // swing that already happened this turn, is the rest of the wave. The line
+ // scores that follow-up itself. This penalty is only the lone blank swing.
+ const wave=(state.players[actor].front||[]).some(card=>card?.ready&&card.uid!==attacker.uid);
+ if(wave||(state.attacksThisTurn||0)>0)return 0;
  let missed=0;
  for(const threat of walls){
   let damage=1,threatBp=0,threatImpact=0;
@@ -626,6 +631,31 @@ export function blankSwingAdjustment(pack,state,actor,action){
   missed=Math.max(missed,blocked-passed);
  }
  return missed>0?-missed:0;
+}
+// Raiding an energy generator can leave a character in hand that the color
+// no longer pays. The returned position still counts that card. The credit
+// belongs to a card this turn can no longer play.
+export function raidStranded(pack,state,actor,action){
+ if(action?.type!=='raid'||state?.pending||state?.phase!=='main')return 0;
+ const mine=state.players?.[actor];
+ const catalog=packOf(pack,actor).cards;
+ const base=(mine?.energy||[]).find(card=>card?.uid===action.baseUid);
+ const printedBase=base&&catalog[base.cardId];
+ const gen=Number(printedBase?.gen)||0;
+ if(!base||gen<=0||!printedBase.color)return 0;
+ let colors;
+ try{colors=colorsOf(pack,state,actor);}catch{return 0;}
+ const after=(colors[printedBase.color]||0)-gen;
+ let stranded=0;
+ for(const card of mine.hand||[]){
+  if(card?.uid===action.uid)continue;
+  const printed=catalog[card?.cardId];
+  if(!printed||printed.type!=='character'||printed.color!==printedBase.color)continue;
+  const cost=Number(printed.energy)||0;
+  const have=colors[printed.color]||0;
+  if(cost<=have&&cost>after)stranded++;
+ }
+ return stranded*2.2;
 }
 export function battleActionValue(pack,state,actor,action){
  const rows=battleOptions(pack,state,actor);

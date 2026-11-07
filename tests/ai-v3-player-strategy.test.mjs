@@ -1745,3 +1745,365 @@ test('a partial block that saves the last life is not replaced by the losing pas
   }));
  }
 });
+
+// Official 4-cost 4000 raids all print an extra effect. These two are blank
+// test cards: one raids 更木 剣八, the other only plays normally. Neither
+// generates energy or has an entry, raid, attack, or AP effect.
+function blankDeveloper(id,name,extra){
+ const card=structuredClone(pack.cards['BLC-4-005']);
+ card.id=id;
+ card.name=name;
+ card.color='green';
+ card.energy=4;
+ card.ap=1;
+ card.bp=4000;
+ card.gen=0;
+ card.trigger=null;
+ card.effects={};
+ card.mainAbility=null;
+ card.printedMains=[];
+ card.phaseEffects=[];
+ card.passiveBonuses=[];
+ card.ownTurnBp=0;
+ card.raidOwnTurnBp=0;
+ card.raidBp=0;
+ card.raidImpact=0;
+ card.printedAttackDamage=1;
+ card.raidName=null;
+ card.raidBaseNames=[];
+ card.raidRequiresNames=[];
+ card.raidFromRaid=[];
+ card.enterAlwaysActive=false;
+ card.enterActiveIfOpponentRest=false;
+ card.implementation='printed';
+ return Object.assign(card,extra||{});
+}
+function developerPack(){
+ const cards={...pack.cards};
+ const baseName=pack.cards['BLC-2-066'].name;
+ cards['TEST-BLANK-RAID']=blankDeveloper('TEST-BLANK-RAID','測試白板突襲',{
+  raidName:baseName,raidBaseNames:[baseName]
+ });
+ cards['TEST-BLANK-MAIN']=blankDeveloper('TEST-BLANK-MAIN','測試白板主力',{});
+ return {...pack,cards};
+}
+function developerDeck(source){
+ const counts={'TEST-BLANK-RAID':1,'TEST-BLANK-MAIN':1,'BLC-2-066':1,'BLC-1-083':4};
+ let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
+ const triggers={final:0,color:0,special:0,draw:0};
+ for(const [id,n] of Object.entries(counts)){
+  const trigger=source.cards[id]?.trigger;
+  if(triggers[trigger]!==undefined)triggers[trigger]+=n;
+ }
+ for(const card of Object.values(source.cards).filter(item=>!counts[item.id]).sort((a,b)=>a.energy-b.energy||a.id.localeCompare(b.id))){
+  if(total>=50)break;
+  if(triggers[card.trigger]!==undefined&&triggers[card.trigger]>=4)continue;
+  const room=triggers[card.trigger]!==undefined?4-triggers[card.trigger]:4;
+  const n=Math.min(card.maxCopies||4,50-total,room);
+  if(n<=0)continue;
+  counts[card.id]=n;
+  total+=n;
+  if(triggers[card.trigger]!==undefined)triggers[card.trigger]+=n;
+ }
+ const issues=validateUniversalDeck(source,counts);
+ if(issues.length)throw Error(issues.join('; '));
+ return counts;
+}
+function reachMain(source,counts,actor){
+ const packs=[source,source];
+ let state=newUniversalMatch(packs,{decks:[counts,counts],seed:11,first:actor});
+ for(let guard=0;guard<80&&state.status==='playing';guard++){
+  if(state.active===actor&&state.phase==='main'&&!state.pending)break;
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw')||legal[0];
+  state=dispatchUniversalAction(packs,state,action);
+ }
+ assert.equal(state.phase,'main');
+ assert.equal(state.active,actor);
+ assert.equal(state.pending,null);
+ return {packs,state};
+}
+function plainLife(source,state,player,n){
+ const life=state.players[player].life;
+ const deck=state.players[player].deck;
+ while(life.length)deck.push(life.pop());
+ for(let i=0;i<n;i++){
+  const index=deck.findIndex(card=>!source.cards[card.cardId]?.trigger);
+  if(index<0)throw Error('no plain life');
+  life.push(deck.splice(index,1)[0]);
+ }
+}
+function setReadyAp(state,player,n){
+ state.players[player].apCards.forEach((card,index)=>{card.inPlay=index<n;card.ready=index<n;});
+}
+function twoMains(actor,life){
+ const source=developerPack();
+ const {packs,state}=reachMain(source,developerDeck(source),actor);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ const base=take(state,actor,'BLC-2-066');
+ const gens=[take(state,actor,'BLC-1-083'),take(state,actor,'BLC-1-083'),take(state,actor,'BLC-1-083')];
+ place(state,actor,base,'energy',0);
+ gens.forEach((card,index)=>place(state,actor,card,'energy',index+1));
+ const raid=take(state,actor,'TEST-BLANK-RAID');
+ const main=take(state,actor,'TEST-BLANK-MAIN');
+ state.players[actor].hand.push(raid,main);
+ plainLife(source,state,0,life);
+ plainLife(source,state,1,life);
+ setReadyAp(state,actor,2);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ assert.equal(universalEnergyByColor(packs,state,actor).green,4);
+ return {packs,state,raid,main,base};
+}
+function skipOthers(packs,state,actor){
+ let cursor=state;
+ for(let guard=0;guard<8&&cursor.pending&&(cursor.pending.player??cursor.active)!==actor;guard++){
+  const legal=legalUniversalActions(packs,cursor);
+  const action=legal.find(item=>item.mode==='skip'||item.mode==='get'||item.type==='chooseLifeOrder')||legal[0];
+  cursor=settle(packs,cursor,action);
+ }
+ return cursor;
+}
+function waveSpot(actor){
+ const {packs,state}=boot('attack',actor,actor);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ const mine=[take(state,actor,'BLC-4-036'),take(state,actor,'BLC-4-036')];
+ const tall=take(state,1-actor,'BLC-4-005');
+ const short=take(state,1-actor,'BLC-4-062');
+ place(state,actor,mine[0],'front',0);
+ place(state,actor,mine[1],'front',1);
+ place(state,1-actor,tall,'front',0);
+ place(state,1-actor,short,'front',1);
+ for(const card of mine)setBp(state,card,4000);
+ setBp(state,tall,5000);
+ setBp(state,short,3000);
+ plainLife(pack,state,0,4);
+ plainLife(pack,state,1,4);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ assert.equal(legalUniversalActions(packs,state).some(action=>action.type==='play'||action.type==='raid'||action.type==='event'),false);
+ return {packs,state,mine,tall,short};
+}
+
+test('two payable mains stay on the front and keep the raid base generating',()=>{
+ for(const actor of [0,1]){
+  const spot=twoMains(actor,5);
+  const {packs,state,raid,main}=spot;
+  const legal=legalUniversalActions(packs,state);
+  const raidAction=legal.find(action=>action.type==='raid'&&action.uid===raid.uid&&action.line!=='energy');
+  const raided=settle(packs,structuredClone(state),raidAction);
+  assert.equal(universalEnergyByColor(packs,raided,actor).green,3);
+  assert.equal(raided.players[actor].front.find(card=>card?.uid===raid.uid)?.ready,true);
+  assert.equal(legalUniversalActions(packs,raided).some(action=>action.uid===main.uid&&(action.type==='play'||action.type==='raid')),false);
+  const first=frozenAsk(packs,state);
+  const played=[];
+  let cursor=state;
+  let choice=first;
+  for(let guard=0;guard<4&&cursor.active===actor&&cursor.phase==='main'&&!cursor.pending;guard++){
+   assert.notEqual(choice.action.type,'raid');
+   played.push(choice.action);
+   if(choice.action.type==='next')break;
+   cursor=settle(packs,cursor,choice.action);
+   if(cursor.phase!=='main'||cursor.pending)break;
+   const left=legalUniversalActions(packs,cursor);
+   if(left.length===1){
+    resetAiV3Report();
+    const only=chooseAiV3Action(packs,cursor,{
+     ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true
+    });
+    assert.equal(lastAiV3Trace().reason,'forced');
+    assert.equal(only.type,left[0].type);
+    choice={action:only,trace:lastAiV3Trace()};
+   }else choice=frozenAsk(packs,cursor);
+  }
+  const front=cursor.players[actor].front.filter(Boolean);
+  assert.deepEqual(front.map(card=>card.cardId).sort(),['TEST-BLANK-MAIN','TEST-BLANK-RAID']);
+  assert.equal(front.every(card=>card.ready===false),true);
+  assert.equal(universalEnergyByColor(packs,cursor,actor).green,4);
+  assert.equal(cursor.players[actor].apCards.filter(card=>card.ready).length,0);
+  assert.equal(played.filter(action=>action.type==='play'&&action.line==='front').length,2);
+  const playRow=first.trace.candidates.find(row=>row.action?.type==='play'&&row.action.line==='front'&&row.action.uid===first.action.uid);
+  const raidRow=first.trace.candidates.find(row=>row.action?.type==='raid'&&row.action.uid===raid.uid);
+  assert.equal(playRow.executed,true);
+  assert.equal(playRow.boundary,'returned');
+  assert.equal(playRow.settled,true);
+  assert.equal(raidRow.executed,true);
+  assert.equal(raidRow.boundary,'returned');
+  assert.ok(playRow.search>raidRow.search);
+  assert.equal(first.trace.score,playRow.search);
+  assert.equal(first.trace.settled,true);
+  assert.equal(first.trace.replacedMove,null);
+  assert.equal(first.trace.sequence.filter(step=>step.type==='play'&&step.line==='front').length,2);
+  assert.equal(first.trace.sequence.some(step=>step.type==='raid'),false);
+  const meter={dispatches:0};
+  let hot=false;
+  resetAiV3Report();
+  const cut=chooseAiV3Action(packs,structuredClone(state),{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
+   now:()=>hot?1e9:0,
+   onRootDone({action,executed}){if(executed&&action?.type==='play'&&action.line==='front')hot=true;}
+  });
+  const cutTrace=lastAiV3Trace();
+  assert.equal(meter.dispatches,cutTrace.nodesUsed);
+  assert.ok(cutTrace.nodesUsed<=48);
+  const cutPlay=(cutTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type==='play'&&row.action.line==='front');
+  const cutRaid=(cutTrace.candidates||[]).find(row=>row.action?.type==='raid'&&row.action.uid===raid.uid);
+  if(cutPlay?.boundary==='returned'&&cutPlay.settled&&cutRaid?.executed&&cutPlay.search>cutRaid.search){
+   assert.equal(cut.type,'play');
+   assert.equal(cut.line,'front');
+   assert.equal(cutTrace.score,cutPlay.search);
+   assert.equal(cutTrace.sequence.filter(step=>step.type==='play'&&step.line==='front').length,2);
+  }
+  for(const row of cutTrace.unexecuted||[]){
+   assert.equal(row.executed,false);
+   assert.equal(row.search,undefined);
+  }
+  const timedMeter={dispatches:0};
+  resetAiV3Report();
+  const timed=chooseAiV3Action(packs,structuredClone(state),{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
+  });
+  const timedTrace=lastAiV3Trace();
+  assert.equal(timedMeter.dispatches,timedTrace.nodesUsed);
+  assert.ok(timedTrace.nodesUsed<=48);
+  const timedPlay=(timedTrace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,timed));
+  assert.equal(timed.type,'play');
+  assert.equal(timed.line,'front');
+  assert.equal(timedTrace.score,timedPlay.search);
+  assert.equal(timedTrace.settled,!!timedPlay.settled);
+  console.log('two mains',JSON.stringify({
+   actor,score:first.trace.score,raid:raidRow.search,nodes:first.trace.nodesUsed,
+   order:played.map(action=>action.uid),clock:timed.type,clockNodes:timedTrace.nodesUsed
+  }));
+ }
+});
+
+test('a blank raid that attacks the last life still wins',()=>{
+ for(const actor of [0,1]){
+  const {packs,state,raid}=twoMains(actor,1);
+  state.players[1-actor].front=state.players[1-actor].front.map(()=>null);
+  const choice=frozenAsk(packs,state);
+  assert.equal(choice.action.type,'raid');
+  assert.equal(choice.action.uid,raid.uid);
+  const row=choice.trace.candidates.find(item=>item.action?.type==='raid'&&item.action.uid===raid.uid);
+  assert.equal(row.boundary,'terminal');
+  assert.equal(row.settled,true);
+  assert.ok(row.search>=90000);
+  assert.equal(choice.trace.score,row.search);
+  assert.equal(choice.trace.sequence[0].type,'raid');
+  const play=choice.trace.candidates.find(item=>item.action?.type==='play'&&item.action.line==='front');
+  assert.equal(play.executed,true);
+  assert.ok(play.search<row.search);
+ }
+});
+
+function sameAction(left,right){
+ return !!left&&!!right&&left.type===right.type&&(left.uid??null)===(right.uid??null)&&
+  (left.line||null)===(right.line||null)&&(left.baseUid||null)===(right.baseUid||null);
+}
+
+test('two 4000s both attack into a 5000 and a 3000, and one 4000 still stays back',()=>{
+ const single=attackSpot('BLC-4-036');
+ assert.equal(ask(single.packs,single.state).action.type,'next');
+ for(const actor of [0,1]){
+  const spot=waveSpot(actor);
+  const {packs,state,mine,tall,short}=spot;
+  const first=frozenAsk(packs,state);
+  assert.equal(first.action.type,'attack');
+  assert.equal(mine.some(card=>card.uid===first.action.uid),true);
+  const attackRow=first.trace.candidates.find(row=>sameAction(row.action,first.action));
+  const passRow=first.trace.candidates.find(row=>row.action?.type==='next');
+  assert.equal(attackRow.executed,true);
+  assert.equal(attackRow.boundary,'returned');
+  assert.equal(attackRow.settled,true);
+  assert.equal(attackRow.swing,0);
+  assert.ok(attackRow.search>passRow.search);
+  assert.equal(first.trace.score,attackRow.search);
+  assert.equal(first.trace.settled,true);
+  assert.equal(first.trace.replacedMove,null);
+  assert.equal(first.trace.sequence[0].type,'attack');
+  assert.equal(first.trace.sequence[0].uid,first.action.uid);
+  const followed=first.trace.sequence.filter(step=>step.type==='attack'&&mine.some(card=>card.uid===step.uid));
+  assert.equal(followed.length,2);
+  assert.equal(new Set(followed.map(step=>step.uid)).size,2);
+  for(const blockUid of [tall.uid,short.uid,null]){
+   let cursor=settle(packs,structuredClone(state),first.action);
+   assert.equal(cursor.pending.kind,'block');
+   const blocks=legalUniversalActions(packs,cursor);
+   assert.equal(blocks.some(action=>action.type==='chooseBlock'&&action.uid===tall.uid),true);
+   assert.equal(blocks.some(action=>action.type==='chooseBlock'&&action.uid===short.uid),true);
+   const block=blocks.find(action=>action.type==='chooseBlock'&&(action.uid??null)===blockUid);
+   cursor=settle(packs,cursor,block);
+   cursor=skipOthers(packs,cursor,actor);
+   assert.equal(cursor.pending,null);
+   assert.equal(cursor.active,actor);
+   assert.equal(cursor.phase,'attack');
+   const rested=cursor.players[actor].front.find(card=>card?.uid===first.action.uid);
+   const ready=cursor.players[actor].front.find(card=>card?.ready);
+   assert.ok(rested);
+   assert.equal(rested.ready,false);
+   assert.equal(ready.uid===first.action.uid,false);
+   if(blockUid===tall.uid){
+    assert.equal(cursor.players[1-actor].front.some(card=>card?.uid===tall.uid&&card.ready),false);
+    assert.equal(cursor.players[1-actor].front.some(card=>card?.uid===short.uid&&card.ready),true);
+    assert.equal(cursor.players[1-actor].life.length,4);
+   }else if(blockUid===short.uid){
+    assert.equal(cursor.players[1-actor].front.some(card=>card?.uid===short.uid),false);
+    assert.equal(cursor.players[1-actor].front.some(card=>card?.uid===tall.uid&&card.ready),true);
+   }else{
+    assert.equal(cursor.players[1-actor].life.length,3);
+    assert.equal(cursor.players[1-actor].front.filter(card=>card?.ready).length,2);
+   }
+   const second=frozenAsk(packs,cursor);
+   assert.equal(second.action.type,'attack');
+   assert.equal(second.action.uid,ready.uid);
+   const secondRow=second.trace.candidates.find(row=>sameAction(row.action,second.action));
+   const secondPass=second.trace.candidates.find(row=>row.action?.type==='next');
+   assert.equal(secondRow.executed,true);
+   assert.equal(secondRow.boundary,'returned');
+   assert.equal(secondRow.settled,true);
+   assert.ok(secondRow.search>=secondPass.search);
+   assert.equal(second.trace.score,secondRow.search);
+   assert.equal(second.trace.sequence[0].uid,ready.uid);
+   assert.equal(second.trace.settled,true);
+   const opened=settle(packs,cursor,second.action);
+   assert.equal(opened.pending.kind,'block');
+   const secondBlocks=legalUniversalActions(packs,opened);
+   if(blockUid===tall.uid)assert.equal(secondBlocks.some(action=>action.uid===tall.uid),false);
+   else assert.equal(secondBlocks.some(action=>action.uid===tall.uid),true);
+  }
+  const meter={dispatches:0};
+  let hot=false;
+  resetAiV3Report();
+  const cut=chooseAiV3Action(packs,structuredClone(state),{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
+   now:()=>hot?1e9:0,
+   onRootDone({action,executed}){if(executed&&action?.type==='attack')hot=true;}
+  });
+  const cutTrace=lastAiV3Trace();
+  assert.equal(meter.dispatches,cutTrace.nodesUsed);
+  assert.ok(cutTrace.nodesUsed<=48);
+  const cutAttack=(cutTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type==='attack');
+  assert.equal(cut.type,'attack');
+  assert.equal(cutTrace.score,cutAttack.search);
+  assert.equal(cutTrace.sequence[0].type,'attack');
+  for(const row of cutTrace.unexecuted||[])assert.equal(row.executed,false);
+  const timedMeter={dispatches:0};
+  resetAiV3Report();
+  const timed=chooseAiV3Action(packs,structuredClone(state),{
+   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
+  });
+  const timedTrace=lastAiV3Trace();
+  assert.equal(timedMeter.dispatches,timedTrace.nodesUsed);
+  assert.ok(timedTrace.nodesUsed<=48);
+  const timedAttack=(timedTrace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,timed));
+  assert.equal(timed.type,'attack');
+  assert.equal(timedTrace.score,timedAttack.search);
+  assert.equal(timedTrace.sequence[0].uid,timed.uid);
+  assert.equal(timedTrace.settled,!!timedAttack.settled);
+  console.log('two attackers',JSON.stringify({
+   actor,score:first.trace.score,pass:passRow.search,nodes:first.trace.nodesUsed,
+   clock:timed.type,clockNodes:timedTrace.nodesUsed,settled:timedTrace.settled
+  }));
+ }
+});

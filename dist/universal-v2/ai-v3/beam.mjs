@@ -2,12 +2,12 @@
 // not extra depth. A voluntary choice or an answer to the opponent is a
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
-import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
-import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment} from './eval.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalEnergyByColor} from '../engine.mjs';
+import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
 import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch} from './strategy.mjs';
-import {visibleUidSet} from './observation.mjs';
+import {packOf,visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
  return staticValue(pack,state,actor,ctx?.strategy);
@@ -379,6 +379,51 @@ function attackOrEnd(pack,state,actor,legal){
   attack.sort((a,b)=>keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===b.uid)||{})
    -keepScore(pack,state,actor,state.players[actor].front.find(card=>card?.uid===a.uid)||{}));
   return attack[0];
+ }
+ // One normal play enters rested and used to pass with the other main in
+ // hand. Continue only with a character this color still pays, and that
+ // would no longer be payable if the smallest same-color generator left the
+ // energy line. A legal raid stays a later decision. A printed on-play, or a
+ // card that stays payable without that generator, stays out of this script.
+ if(state.phase==='main'&&!state.pending&&!legal.some(action=>action.type==='raid')){
+  const front=(state.players[actor].front||[]).filter(Boolean);
+  const rested=front.length===1&&front[0]&&!front[0].ready?1:0;
+  const hand=state.players[actor].hand||[];
+  const catalog=packOf(pack,actor).cards;
+  const stranded=printed=>{
+   const cost=Number(printed?.energy)||0;
+   if(!(cost>0)||!printed.color)return false;
+   let gen=0;
+   for(const card of state.players[actor].energy||[]){
+    if(!card)continue;
+    const row=catalog[card.cardId];
+    if(!row||row.color!==printed.color)continue;
+    const produced=Number(row.gen)||0;
+    if(produced>0&&(!gen||produced<gen))gen=produced;
+   }
+   if(!gen)return false;
+   let have=0;
+   try{have=universalEnergyByColor(pack,state,actor)[printed.color]||0;}catch{return false;}
+   return cost<=have&&cost>have-gen;
+  };
+  const plays=legal.filter(action=>{
+   if(action.type!=='play'||action.line!=='front'||!action.uid||rested!==1)return false;
+   const card=hand.find(item=>item?.uid===action.uid);
+   const printed=card&&catalog[card.cardId];
+   const onPlay=printed?.effects?.onPlay;
+   // A generator is its own energy decision. This continuation is only the
+   // main that the raid base was paying for.
+   return printed?.type==='character'&&!(Number(printed.gen)>0)&&
+    !(Array.isArray(onPlay)&&onPlay.length)&&stranded(printed);
+  });
+  if(plays.length){
+   plays.sort((a,b)=>{
+    const left=hand.find(card=>card?.uid===a.uid);
+    const right=hand.find(card=>card?.uid===b.uid);
+    return keepScore(pack,state,actor,right)-keepScore(pack,state,actor,left)||byText(a,b);
+   });
+   return plays[0];
+  }
  }
  return legal.find(action=>action.type==='next')||null;
 }
@@ -937,6 +982,8 @@ function finishScore(pack,state,actor,action,limits,ctx){
  }
  const swing=blankSwingAdjustment(pack,state,actor,action);
  if(swing)ctx.stats.swing=swing;
+ const stranded=raidStranded(pack,state,actor,action);
+ if(stranded)ctx.stats.stranded=stranded;
  const stepped=billedStep(ctx,pack,state,action);
  if(stepped.error)return null;
  if(stepped.budget){
@@ -955,7 +1002,8 @@ function finishScore(pack,state,actor,action,limits,ctx){
   ?searchFrom(pack,next,actor,ctx,'us',limits.actorDecisions)
   :layered(pack,next,actor,ctx,limits.actorDecisions??2);
  const swingValue=ctx.stats.swing||0;
- const value=Number.isFinite(raw)&&Math.abs(raw)<90000?raw+swingValue:raw;
+ const strandedValue=ctx.stats.stranded||0;
+ const value=Number.isFinite(raw)&&Math.abs(raw)<90000?raw+swingValue-strandedValue:raw;
  return lineView(ctx,value);
 }
 export function searchPosition(pack,state,actor,limits={},table=null){
