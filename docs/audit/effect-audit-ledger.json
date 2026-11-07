@@ -252,30 +252,44 @@
    "where": "dist/universal-v2/engine.mjs。攻擊階段結束先排 AOT-2-066 的 endStart，advanceAfterEnd 才呼叫 refreshFieldActive，然後才換到對手的回合。",
    "affects": "AOT-2-066 以休息登場。選擇當下 ready 是 false。對手回合開始時她已經活動，可以阻擋。不把重整搬到結束開始時效果之前。",
    "evidence": "tests/v2-aot2-051-073.test.mjs。彈回發生在攻擊階段才會問。選一張後另一張留在手牌。對手回合開始時 ready 是 true，active 是 1。"
+  },
+  {
+   "name": "移除區的使用包含突襲",
+   "rule": "「リムーブエリアから使用できる」與手牌使用同一組行動：可以打出，也可以突襲。突襲仍要有合法的突襲底，並支付那張卡的必要能量與消費 AP。突襲框裡的登場時只在正面突襲後才跑。從移除區普通登場不算突襲。",
+   "where": "dist/universal-v2/engine.mjs。移除區的合法行動在 removedUseMatches 成立時，比照手牌提供 raid。執行時 entryFrom 記成 removed，能量用 effectiveRemovedRequiredEnergy。",
+   "affects": "這個回合被放到移除區、且印刷允許使用的卡。KJN-1-032 放到移除區的 KJN-1-034 可以突襲到玫瑰，然後才問要不要退場一張 BP 4000 以下的對方前線。手牌突襲 034 不退場。從移除區普通登場也不退場。其他作品若也把卡標成這個回合可從移除區使用，突襲走同一條，不依卡號另開。",
+   "evidence": "tests/v2-kjn-026-050.test.mjs。移除區突襲 034 後可以退 BP 1500，也可以跳過。同一局面先普通登場則沒有退場窗。手牌突襲也沒有退場窗。"
+  },
+  {
+   "name": "下面有背面卡時不能換線",
+   "rule": "Q2110（2026.05.15）：印刷「裏向きのカードが下にある場合、移動できない」。效果移動與位置交換也不能把這張從能源線移到前線，或換到另一條線。最後一張背面被自己的啟動拿走之後，自己的啟動才可以把它移到前線。",
+   "where": "dist/universal-v2/engine.mjs facedownMoveBanned 與 refuseCoveredShift。effectMoveTo、ownSwapCandidates、移動階段、STEP，以及攻擊結束交換、能量線互換、效果換線的選擇與結算都看這道門。",
+   "affects": "印了這句的角色。目前是 KJN-1-011。SAO-1-109 的移動與交換在背面還在時選不到它，背面拿走後可以。沒有依卡號另開例外。",
+   "evidence": "tests/v2-kjn-026-050.test.mjs 的 Q2110。tests/v2-kjn-001-025.test.mjs 的移動階段與自己的啟動。"
   }
  ],
  "summary": {
   "total": 957,
-  "未檢查": 390,
+  "未檢查": 365,
   "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 544,
+  "已驗證": 568,
   "缺資料待確認": 3,
-  "部分核對": 1,
+  "部分核對": 2,
   "無效果": 3,
   "行動值卡": 16,
-  "部分條款已記錄": 550,
+  "部分條款已記錄": 575,
   "playable": {
    "total": 938,
-   "未檢查": 390,
+   "未檢查": 365,
    "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 544,
+   "已驗證": 568,
    "缺資料待確認": 3,
-   "部分核對": 1,
+   "部分核對": 2,
    "無效果": 0,
    "行動值卡": 0,
-   "部分條款已記錄": 550
+   "部分條款已記錄": 575
   },
   "ap": {
    "total": 16,
@@ -436,15 +450,15 @@
     "product": "UA52BT",
     "priority": 2,
     "total": 80,
-    "未檢查": 55,
+    "未檢查": 30,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 24,
+    "已驗證": 48,
     "缺資料待確認": 0,
-    "部分核對": 1,
+    "部分核對": 2,
     "無效果": 0,
     "行動值卡": 0,
-    "部分條款已記錄": 25
+    "部分條款已記錄": 50
    },
    {
     "id": "mmm",
@@ -31088,11 +31102,11 @@
    "clauses": [
     {
      "text": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。【ダメージ（2）】（このキャラがアタックで与える直接ダメージは2ダメージ）",
-     "status": "未檢查",
+     "status": "已驗證",
      "official": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-011 Q2110（2026.05.15）：下面有背面卡時，效果移動與位置交換也不能把它從能源線移到前線。Q2112：控制者看得到下面的牌。",
-     "implementation": "frontForbidden。facedownMoveBanned 擋住移動階段。effectMoveTo 與 ownSwapCandidates 也有門，但本彈沒有印出移動或交換其他角色的卡。 printedAttackDamage 2。",
+     "implementation": "frontForbidden。facedownMoveBanned 擋住移動階段、STEP、effectMoveTo、ownSwapCandidates，以及沒有走這兩個 helper 的換線與位置交換。SAO-1-109 的效果移動與位置交換在下面有背面卡時選不到這張；拿掉背面卡後兩者都可以選。自己的啟動仍是印刷例外，最後一張背面離開後才移到前線。printedAttackDamage 2。",
      "discrepancy": "",
-     "evidence": "tests/v2-kjn-001-025.test.mjs。沒有打到前線的行動。下面有三張時，移動階段不能移動。自己看得到三張牌名，對手只看到背面。 tests/v2-kjn-001-025.test.mjs。效果把它移到前線後，傷害是 2。",
+     "evidence": "tests/v2-kjn-001-025.test.mjs。沒有打到前線的行動。下面有三張時，移動階段不能移動。自己看得到三張牌名，對手只看到背面。效果把它移到前線後，傷害是 2。tests/v2-kjn-026-050.test.mjs 的 Q2110：蓋著背面卡時，SAO-1-109 的移動選項沒有這張、交換開不出來；拿掉背面卡後，移動與交換都可以選這張。",
      "unresolved": ""
     },
     {
@@ -31123,7 +31137,7 @@
      "unresolved": ""
     }
    ],
-   "status": "部分核對",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "KJN-1-011",
@@ -31131,7 +31145,7 @@
      "clauses": [
       {
        "match": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。【ダメージ（2）】（このキャラがアタックで与える直接ダメージは2ダメージ）",
-       "status": "未檢查"
+       "status": "已驗證"
       },
       {
        "match": "【登場時】自分の山札の上から3枚を裏向きでこのキャラの下に置く。",
@@ -31948,17 +31962,28 @@
    "clauses": [
     {
      "text": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
+     "implementation": "共用 bounceOwnOtherUnderEnergy，上限 1。不能跳過。沒有合法對象就退回自己。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。能量 0 的 030 可以選，能量 3 的 014 不能選，也不能選自己或跳過。選 030 後 030 回手、026 留在場上。場上只剩能量 3 的角色時，026 自己回手，014 留下。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-026",
+     "number": "UA52BT/KJN-1-026",
+     "clauses": [
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -31977,26 +32002,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【ターン1】相手のフロントLにBP4500以上のキャラがある場合のみ発動できる。このキャラはこのターン中、BP+2000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【起動メイン】【ターン1】相手のフロントLにBP4500以上のキャラがある場合のみ発動できる。このキャラはこのターン中、BP+2000。",
+     "implementation": "條件不成立就不能啟動。成立後加 2000，同一張不能再啟動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。對方只有 2000 時沒有啟動。放上 5000 後啟動，BP 5000，同一回合不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "implementation": "生命觸發 active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。選休息的 010 後變活動，BP 5000。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-027",
+     "number": "UA52BT/KJN-1-027",
+     "clauses": [
+      {
+       "match": "【起",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ア",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32015,35 +32055,54 @@
    "clauses": [
     {
      "text": "【自分のターン中】このキャラはBP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【自分のターン中】このキャラはBP+1000。",
+     "implementation": "ownTurnBp 1000。對手回合回到印刷值。沉默後失去。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。自己回合 5000，換到對手回合 4000，沉默後 4000。",
      "unresolved": ""
     },
     {
      "text": "【登場時】相手のフロントLにBP4500以上のキャラがある場合、このキャラをアクティブにし、BP4500以上の相手のフロントLのキャラを1枚まで選び、レストにする。〈ベアトリクス〉のこの効果は1ターンに1回のみ発動する。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】相手のフロントLにBP4500以上のキャラがある場合、このキャラをアクティブにし、その中から1枚まで選びレストにする。〈ベアトリクス〉のこの効果は1ターンに1回のみ発動する。Q2118：活動是必須。Q2119：同回合第二張不發動。",
+     "implementation": "條件成立才上同名鎖，而且是在選擇休息之前。活動不能跳過。休息可以不選。第一張條件不成立時不上鎖，後面的張可以發動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。有 5000 時登場後是活動，可以休息那張，也可以不休息。同一回合第二張不再活動。第一張面前沒有 4500 時第二張仍會活動。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ゲット】このカードを手札に加える。",
+     "implementation": "生命觸發 get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。打出後這張進手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-028",
+     "number": "UA52BT/KJN-1-028",
+     "clauses": [
+      {
+       "match": "【自",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲ",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32062,26 +32121,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【フロントLにある場合】【ターン1】BP1500以上の自分のフロントLの〈クレア・カゲノー〉を1枚選び、このターン中、BP-1000。そうした場合、カードを1枚引き、自分の手札を1枚場外に置き、このキャラはこのターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【起動メイン】【フロントLにある場合】【ターン1】BP1500以上の自分のフロントLの〈クレア・カゲノー〉を1枚選び、このターン中、BP-1000。そうした場合、カードを1枚引き、自分の手札を1枚場外に置き、このキャラはこのターン中、BP+1000。",
+     "implementation": "能源線不能啟動。克蕾雅不能跳過。抽牌與自己加值在棄牌之前。棄牌走 kjn pay，不是通用棄牌窗。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。能源線的 029 不能啟動。選 1500 的克蕾雅後變成 500，029 變成 4000，牌庫少 1。接著必須棄掉剛抽的那張，手牌歸零，不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ドロー】カードを1枚引く。",
+     "implementation": "生命觸發 draw。這張進場外。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。選抽牌後牌庫少 1，這張不在手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-029",
+     "number": "UA52BT/KJN-1-029",
+     "clauses": [
+      {
+       "match": "【起",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ド",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32100,26 +32174,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から2枚見て、〈アレクシア・ミドガル〉か〈ローズ・オリアナ〉か〈ナツメ・カフカ〉を1枚まで場外に置き、残りを望む順で山札の上に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】自分の山札の上から2枚見て、〈アレクシア・ミドガル〉か〈ローズ・オリアナ〉か〈ナツメ・カフカ〉を1枚まで場外に置き、残りを望む順で山札の上に置く。",
+     "implementation": "見て，不公開。沒有對象就排序。有對象可以不拿。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。窗口不出現在對手的公開資訊。可以只把三人組放到場外，另一張留在牌庫頂。兩張都不是三人組時，先點的那張成為新的頂牌。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ドロー】カードを1枚引く。",
+     "implementation": "生命觸發 draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。選抽牌後牌庫少 1。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-030",
+     "number": "UA52BT/KJN-1-030",
+     "clauses": [
+      {
+       "match": "【登",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ド",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32138,26 +32227,41 @@
    "clauses": [
     {
      "text": "【登場時】以下から1つ選ぶ。・自分の山札の上から3枚見て、望む順で山札の上に置く。・自分の手札を1枚場外に置く。そうした場合、自分の山札の上から1枚をリムーブエリアに置く。このターン中、自分はそのカードをリムーブエリアから使用できる。（使用する場合は必要エナジーを満たす必要があり、消費APを支払う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】以下から1つ選ぶ。・自分の山札の上から3枚見て、望む順で山札の上に置く。・自分の手札を1枚場外に置く。そうした場合、自分の山札の上から1枚をリムーブエリアに置く。このターン中、自分はそのカードをリムーブエリアから使用できる。",
+     "implementation": "手牌或牌庫缺一就不能選棄牌。看牌是私密排序，第一張點選成為頂牌。棄牌後的那張帶當回合移除區使用。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。空手時不能選棄牌。排序後頂三張的順序與點選一致。有手牌時棄 1、頂牌進移除區，當回合可以從移除區打出，換回合後不能。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "implementation": "生命觸發 active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。休息的 010 變活動，BP 5000。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-031",
+     "number": "UA52BT/KJN-1-031",
+     "clauses": [
+      {
+       "match": "【登",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ア",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32176,17 +32280,28 @@
    "clauses": [
     {
      "text": "【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。自分の山札の上から1枚をリムーブエリアに置く。このターン中、自分はそのカードをリムーブエリアから使用できる。（使用する場合は必要エナジーを満たす必要があり、消費APを支払う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。自分の山札の上から1枚をリムーブエリアに置く。このターン中、自分はそのカードをリムーブエリアから使用できる。",
+     "implementation": "入場回合才可啟動。放到移除區的卡當回合可以打出，也可以突襲。使用仍付必要能量與消費 AP。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。直接放上場的 032 不能啟動。從手牌登場後可以，頂牌進移除區並能打出。換回合後不能再啟動。同一張移除區的 034 可以突襲到玫瑰。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-032",
+     "number": "UA52BT/KJN-1-032",
+     "clauses": [
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32205,26 +32320,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【レストにする】以下から1つ選ぶ。・自分の手札を1枚自分の山札の上に置く。そうした場合、自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。・このターン中に自分がリムーブエリアからカードを使用している場合、自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【起動メイン】【レストにする】以下から1つ選ぶ。・自分の手札を1枚自分の山札の上に置く。そうした場合、自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。・このターン中に自分がリムーブエリアからカードを使用している場合、自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。",
+     "implementation": "手牌分支直接選一張放到頂，不再先棄一張。放到頂之後才能選加值，也可以不加。沒有本回合的移除區使用時，第二項不出現。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。休息後沒有移除區選項。選定的手牌成為牌庫頂，另一張角色可以加到 2500。先用 032 打出移除區的卡之後，第二項出現，跳過時玫瑰仍是 1500。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "implementation": "生命觸發 active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。休息的 010 變活動，BP 5000。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-033",
+     "number": "UA52BT/KJN-1-033",
+     "clauses": [
+      {
+       "match": "【起",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ア",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32243,35 +32373,54 @@
    "clauses": [
     {
      "text": "【レイド】〈ローズ・オリアナ〉アクティブにし、フロントLに移動できる【登場時】このカードをリムーブエリアから使用していた場合、BP4000以下の相手のフロントLのキャラを1枚まで選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【レイド】〈ローズ・オリアナ〉アクティブにし、フロントLに移動できる",
+     "implementation": "突襲後頂牌是活動。突襲框的登場時與啟動只在正面突襲時有效。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。從手牌突襲到 030 後，034 在前線且是活動。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】このターン中に自分がリムーブエリアからカードを使用している場合のみ発動できる。このキャラのレイド元のカードを1枚場外に置く。そうした場合、このキャラはこのターン中、【インパクト（1）】を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】このカードをリムーブエリアから使用していた場合、BP4000以下の相手のフロントLのキャラを1枚まで選び、退場させる。",
+     "implementation": "selfFromRemoved 只看這張自己從移除區進場，而且 reason 是 rule。效果在突襲框，普通登場不發動。手牌突襲的 entryFrom 是 hand，不退場。移除區突襲把 entryFrom 記成 removed。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。手牌突襲後沒有退場窗。從移除區普通登場也沒有退場窗，對方留在場上。從移除區突襲到玫瑰後可以退 BP 1500，也可以跳過。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【起動メイン】このターン中に自分がリムーブエリアからカードを使用している場合のみ発動できる。このキャラのレイド元のカードを1枚場外に置く。そうした場合、このキャラはこのターン中、【インパクト（1）】を得る。",
+     "implementation": "沒有移除區使用就不能啟動。有突襲底時把底放到場外並給衝擊 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。只突襲、還沒有移除區使用時不能啟動。先打出移除區的 012 後可以啟動，玫瑰進場外，衝擊 1，不能再啟動。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-034",
+     "number": "UA52BT/KJN-1-034",
+     "clauses": [
+      {
+       "match": "【レイド】〈",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】こ",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32290,35 +32439,54 @@
    "clauses": [
     {
      "text": "このフィールドはアクティブで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "このフィールドはアクティブで登場させる。",
+     "implementation": "只能放到能源線，登場後是活動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。沒有打到前線的行動。登場後是活動。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【レストにする】自分のフロントLのキャラとBP3500以上の相手のフロントLのアクティブのキャラをそれぞれ1枚ずつ選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【起動メイン】【レストにする】自分のフロントLのキャラとBP3500以上の相手のフロントLのアクティブのキャラをそれぞれ1枚ずつ選び、このターン中、BP+1000。",
+     "implementation": "兩邊都不能跳過。休息的對方角色不能選。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。休息的 1500 不能選。自己 1500 與對方活動的 5000 各加 1000。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ゲット】このカードを手札に加える。",
+     "implementation": "生命觸發 get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。打出後這張進手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-035",
+     "number": "UA52BT/KJN-1-035",
+     "clauses": [
+      {
+       "match": "このフ",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲ",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32337,26 +32505,41 @@
    "clauses": [
     {
      "text": "自分のAPカードを2枚まで選び、アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自分のAPカードを2枚まで選び、アクティブにする。",
+     "implementation": "共用 recoverAp，包含 0 張。打出事件花掉的 AP 可以選回來。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。可以不選。連選兩張後，3 張 AP 都是活動。",
      "unresolved": ""
     },
     {
      "text": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【最終】自分のライフが無い場合、自分の山札の上から1枚をライフに置く。",
+     "implementation": "還有生命時不開觸發窗。最後一張生命才提供最終，並把這張放到場外。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。還剩 1 張生命時 pending 是空的。只剩這張生命時可以選最終，牌庫頂成為新的生命，這張在場外。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-036",
+     "number": "UA52BT/KJN-1-036",
+     "clauses": [
+      {
+       "match": "自分のA",
+       "status": "已驗證"
+      },
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32375,26 +32558,41 @@
    "clauses": [
     {
      "text": "『BP2000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ローズ・オリアナ〉がある場合、『BP5000以下』に代わる。このカードをリムーブエリアから使用していた場合、自分の場のキャラを1枚まで選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "『BP2000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ローズ・オリアナ〉がある場合、『BP5000以下』に代わる。このカードをリムーブエリアから使用していた場合、自分の場のキャラを1枚まで選び、このターン中、BP+1000。Q2120：沒有玫瑰也要加。",
+     "implementation": "沒有合法對象就不能打。不能跳過。玫瑰在自己場上時上限 5000。退場之後才開可跳過的加值。不加玫瑰也能加。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。只有 5000 時不能打。放上 1500 後必須退它。自己場上有 030 時，2500 可以退。從移除區打出後先退 1500，再把 030 加到 2500。可以跳過。",
      "unresolved": ""
     },
     {
      "text": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【特殊】相手のフロントLのキャラを1枚選び、退場させる。",
+     "implementation": "生命觸發 special。不套用事件的 BP 上限。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。可以退掉自己場上 BP 5000 的 011。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-037",
+     "number": "UA52BT/KJN-1-037",
+     "clauses": [
+      {
+       "match": "『",
+       "status": "已驗證"
+      },
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32413,26 +32611,41 @@
    "clauses": [
     {
      "text": "『BP3000以下』の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場に〈クレア・カゲノー〉がある場合、『BP5000以下』に代わる。レイド状態で裏向きのカードが下にある自分の場の〈クレア・カゲノー〉を1枚まで選び、このターン中、「相手は効果でこのキャラを選ぶ際、追加で自身の手札を1枚場外に置かないと選べない。」を与える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "『BP3000以下』の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場に〈クレア・カゲノー〉がある場合、『BP5000以下』に代わる。",
+     "implementation": "可以不退。沒有克蕾雅時 5000 不能選。有克蕾雅時 5000 可以選。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。1500 可以選，5000 不能，跳過後兩者都留著。場上有 012 時，2500 與 5000 都可以選。",
      "unresolved": ""
     },
     {
      "text": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "レイド状態で裏向きのカードが下にある自分の場の〈クレア・カゲノー〉を1枚まで選び、このターン中、相手は効果でこのキャラを選ぶ際、追加で自身の手札を1枚場外に置かないと選べない。Q2121：控制者看得到背面，對手看不到。Q2122：沒有手牌就不能選它。",
+     "implementation": "只對正面突襲且下面有背面的克蕾雅。稅是這個回合。選它時先開手牌支付。空手時那個選擇會被拒絕，其他角色仍可選。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。015 突襲 012 後，把 002 蓋到下面。對手只看到背面。跳過退場後可以指定這張克蕾雅。攻擊打到 037 生命時，選克蕾雅會要求棄一張手牌，棄完克蕾雅退場。另一局把手牌移走後，選克蕾雅會丟出例外，改選另一張前線則克蕾雅留下。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-038",
+     "number": "UA52BT/KJN-1-038",
+     "clauses": [
+      {
+       "match": "『",
+       "status": "已驗證"
+      },
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32451,26 +32664,41 @@
    "clauses": [
     {
      "text": "自分のAPカードを2枚まで選び、アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自分のAPカードを2枚まで選び、アクティブにする。",
+     "implementation": "與 036 共用 recoverAp。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。可以不選。連選兩張後 3 張 AP 都是活動。",
      "unresolved": ""
     },
     {
      "text": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【最終】自分のライフが無い場合、自分の山札の上から1枚をライフに置く。",
+     "implementation": "與 036 相同。還有生命時不開窗。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。還剩 1 張生命時 pending 是空的。最後一張可以選最終，牌庫頂進生命，這張在場外。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-039",
+     "number": "UA52BT/KJN-1-039",
+     "clauses": [
+      {
+       "match": "自分のA",
+       "status": "已驗證"
+      },
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32489,44 +32717,67 @@
    "clauses": [
     {
      "text": "このキャラはアクティブで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "このキャラはアクティブで登場させる。",
+     "implementation": "登場後是活動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。沒有席德時登場後是活動、沒有 pending。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の場に〈シド・カゲノー〉がある場合、自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】自分の場に〈シド・カゲノー〉がある場合、自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。",
+     "implementation": "沒有席德，或席德失去原有效果，就不看牌。047 算席德。看牌是私密的。兩張都可以留，先留的成為頂牌。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。有 047 時窗口不出現在對手資訊，兩張都留在頂，先點的在上面。沉默 047 後再登場沒有看牌。",
      "unresolved": ""
     },
     {
      "text": "【アタック時】自分の場外にあるカード10枚につき、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アタック時】自分の場外にあるカード10枚につき、カードを1枚引く。",
+     "implementation": "不足 10 張不抽。恰好 10 張抽 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。場外 10 張時攻擊，手牌加 1、牌庫少 1。沒有湊滿 10 張時手牌不變。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ドロー】カードを1枚引く。",
+     "implementation": "生命觸發 draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。選抽牌後牌庫少 1。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-040",
+     "number": "UA52BT/KJN-1-040",
+     "clauses": [
+      {
+       "match": "こ",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ア",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ド",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32545,17 +32796,28 @@
    "clauses": [
     {
      "text": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
+     "implementation": "與 026 共用，能量顏色是紫。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。能量 0 的 042 可以退回手牌，041 留在場上。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-041",
+     "number": "UA52BT/KJN-1-041",
+     "clauses": [
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32574,17 +32836,28 @@
    "clauses": [
     {
      "text": "【起動メイン】【レストにする】【ターン1】このキャラはこのターン中、発生エナジー+【紫】と「メインフェイズ終了時、このキャラを退場させる。」を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【起動メイン】【レストにする】【ターン1】このキャラはこのターン中、発生エナジー+【紫】と「メインフェイズ終了時、このキャラを退場させる。」を得る。",
+     "implementation": "在能源線時印刷 1，休息後再加 1。同一張不能再選這個啟動。主要階段結束時退場。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。休息前產生 1。啟動後休息、紫色合計 2，不能再啟動。推進階段後這張在場外。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-042",
+     "number": "UA52BT/KJN-1-042",
+     "clauses": [
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32603,35 +32876,54 @@
    "clauses": [
     {
      "text": "このカードは〈ローズ・オリアナ〉としても扱う。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "このカードは〈ローズ・オリアナ〉としても扱う。",
+     "implementation": "nameAliases。cardHasName 看得到。沉默會拿掉別名。026–050 裡沒有另一張紫卡要求玫瑰，所以沒有同色的實際消費者。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。cardHasName 對玫瑰為真，效果失效時只查印刷名則為假。退場與生命觸發在同一檔。",
      "unresolved": ""
     },
     {
      "text": "【退場時】自分の山札の上から2枚まで場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【退場時】自分の山札の上から2枚まで場外に置く。",
+     "implementation": "可選 0、1 或 2。跳過不動牌庫。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。被 037 退場後連選兩次，兩張頂牌都到場外。另一局跳過，牌庫張數不變。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "implementation": "生命觸發 active。1500 的身體加 3000 後是 4500。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。休息的 041 變活動，BP 4500。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-043",
+     "number": "UA52BT/KJN-1-043",
+     "clauses": [
+      {
+       "match": "このカ",
+       "status": "已驗證"
+      },
+      {
+       "match": "【退",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ア",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32650,17 +32942,28 @@
    "clauses": [
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ゲット】このカードを手札に加える。效果欄是 -。",
+     "implementation": "生命觸發 get。沒有 onPlay 或啟動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。打出後 pending 是空的。生命觸發後這張進手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-044",
+     "number": "UA52BT/KJN-1-044",
+     "clauses": [
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32679,17 +32982,28 @@
    "clauses": [
     {
      "text": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+     "implementation": "先抽再強制棄。不能跳過棄牌。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。登場後是棄牌窗，棄完 pending 結束。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-045",
+     "number": "UA52BT/KJN-1-045",
+     "clauses": [
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32708,17 +33022,28 @@
    "clauses": [
     {
      "text": "このキャラがレイドされた時、レイドしたキャラにこのターン中、【インパクト（1）】か【ダメージ（2）】を与える。（レイドしたキャラの【登場時】とこの効果は望む順で処理する）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "このキャラがレイドされた時、レイドしたキャラにこのターン中、【インパクト（1）】か【ダメージ（2）】を与える。レイドしたキャラの【登場時】とこの効果は望む順で処理する。",
+     "implementation": "兩邊都有效果時先選順序。給值不能跳過。衝擊與傷害互斥。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。先處理底牌時，048 得到衝擊 1，接著才是私密的看 2 拿 1。先處理登場時時，拿完牌才選傷害，傷害 2、衝擊 0。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-046",
+     "number": "UA52BT/KJN-1-046",
+     "clauses": [
+      {
+       "match": "こ",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32737,35 +33062,54 @@
    "clauses": [
     {
      "text": "このカードは〈シド・カゲノー〉としても扱う。自分の場外にカードが10枚以上ある場合、このキャラは【インパクト無効】を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "このカードは〈シド・カゲノー〉としても扱う。自分の場外にカードが10枚以上ある場合、このキャラは【インパクト無効】を得る。",
+     "implementation": "040 與 048 會把這張當成席德。場外 10 張時衝擊無效。沉默後失去。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。040 在這張旁邊才看牌，沉默後不看。場外 9 張仍有衝擊，第 10 張後衝擊無效，沉默後恢復。",
      "unresolved": ""
     },
     {
      "text": "【登場時】【フロントLにある場合】自分の場外にカードが10枚以上ある場合、このキャラをアクティブにしてもよい。〈シド・カゲノー〉のこの効果は1ターンに1回のみ発動できる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】【フロントLにある場合】自分の場外にカードが10枚以上ある場合、このキャラをアクティブにしてもよい。〈シド・カゲノー〉のこの効果は1ターンに1回のみ発動できる。Q2123：成功發動後第二張不發動。",
+     "implementation": "條件成立才上同名鎖，而且在選擇活動之前。跳過也會鎖。能源線登場不上鎖。不足 10 張不開也不鎖。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。場外 10 張、打到前線時可以活動，也可以跳過。跳過後同回合第二張不再開。放到能源線的第一張不上鎖。場外 9 張時不開，後面湊滿 10 張的另一張仍可開。",
      "unresolved": ""
     },
     {
      "text": "【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【色】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラを1枚選び、アクティブで登場させる。",
+     "implementation": "能量 3 的角色不提供。登場後是活動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。可以登場能量 0 的 042，而且是活動。能量 3 的 046 不在選項裡。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-047",
+     "number": "UA52BT/KJN-1-047",
+     "clauses": [
+      {
+       "match": "このカ",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登",
+       "status": "已驗證"
+      },
+      {
+       "match": "【カ",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32793,29 +33137,29 @@
     },
     {
      "text": "【レイド】〈シド・カゲノー〉アクティブにし、フロントLに移動できるこのキャラはフロントLでもエナジーを発生させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【レイド】〈シド・カゲノー〉アクティブにし、フロントLに移動できる。このキャラはフロントLでもエナジーを発生させる。",
+     "implementation": "突襲框。正面突襲時前線產生 1。普通放上前線不產生。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。突襲中的 048 產生 1。直接放上前線的 048 產生 0。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の山札の上から2枚見て、1枚手札に加え、残りを場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】自分の山札の上から2枚見て、1枚手札に加え、残りを場外に置く。",
+     "implementation": "看牌不公開，只拿被選的那張進手，另一張到場外。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。與 046 的順序測試：窗口不出現在公開資訊，選中的進手，另一張到場外。",
      "unresolved": ""
     },
     {
      "text": "【退場時】自分の手札を1枚場外に置いてもよい。そうした場合、このキャラのレイド元のカードを1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【退場時】自分の手札を1枚場外に置いてもよい。そうした場合、このキャラのレイド元のカードを1枚まで自分の場にレストで登場させる。",
+     "implementation": "底牌 uid 在離場清掉 raidBaseUid 之前就記在 job 上。有手牌才詢問。沒有手牌不登場。登場是休息。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。被 037 退場後可以棄手牌，再把 044 以休息放到前線。把手牌移走後不再詢問，底牌留在場外、不回場上。",
      "unresolved": ""
     },
     {
@@ -32828,9 +33172,28 @@
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "部分核對",
+   "audits": [
+    {
+     "cardId": "KJN-1-048",
+     "number": "UA52BT/KJN-1-048",
+     "clauses": [
+      {
+       "match": "【レイド】〈",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登",
+       "status": "已驗證"
+      },
+      {
+       "match": "【退",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32858,20 +33221,20 @@
     },
     {
      "text": "【レイド】〈シド・カゲノー〉アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手に1ダメージ）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【レイド】〈シド・カゲノー〉アクティブにし、フロントLに移動できる【インパクト（1）】。只在正面突襲時有衝擊。",
+     "implementation": "raidImpact。普通登場沒有衝擊。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。突襲後衝擊 1。普通登場衝擊 0。",
      "unresolved": ""
     },
     {
      "text": "【登場時】このターン中、次に手札から使用する【レイド】を持たないカードの消費APを-1する。自分の場外から〔【レイド】を持たない［特徴：シャドウガーデン］か〈アイ・アム……〉〕を『1枚』まで選び、選んだカードを手札に加える。自分の場外にあるカード10枚につき、この効果で選べる枚数『+1枚』。この効果で元々の必要エナジーが同じカードは選べない。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【登場時】このターン中、次に手札から使用する【レイド】を持たないカードの消費APを-1する。自分の場外から〔【レイド】を持たない［特徴：シャドウガーデン］か〈アイ・アム……〉〕を選入手牌。場外 10 枚につき +1 枚。元々の必要エナジーが同じ卡片不能重複。Q2124 用印刷能量。Q2125：突襲卡不消耗這個減免。",
+     "implementation": "只在正面突襲時給減免。減免吃到下一張非突襲手牌就用掉。中間打出突襲不消耗。場外回收可以不拿。拿過的印刷能量不再提供。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。突襲後接著突襲 074 仍付 1 點 AP。下一張能量 0 的 042 不付 AP，再下一張 042 付 1。普通登場後 042 仍付 1。場外恰好 10 張時先拿能量 0，能量 0 的另一張消失，能量 1 的仍可拿。",
      "unresolved": ""
     },
     {
@@ -32884,9 +33247,24 @@
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "部分核對",
+   "audits": [
+    {
+     "cardId": "KJN-1-049",
+     "number": "UA52BT/KJN-1-049",
+     "clauses": [
+      {
+       "match": "【レイド】〈",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",
@@ -32905,26 +33283,41 @@
    "clauses": [
     {
      "text": "自分の場外にカードが10枚以上ある場合、このキャラはBP+1500。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自分の場外にカードが10枚以上ある場合、このキャラはBP+1500。",
+     "implementation": "不足 10 張是印刷 2000。滿 10 張是 3500。沉默後回到 2000。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。9 張時 2000，10 張時 3500，沉默後 2000。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+     "implementation": "生命觸發 active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-kjn-026-050.test.mjs。休息的 041 變活動，BP 4500。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "KJN-1-050",
+     "number": "UA52BT/KJN-1-050",
+     "clauses": [
+      {
+       "match": "自分の場外",
+       "status": "已驗證"
+      },
+      {
+       "match": "【",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "kjn",

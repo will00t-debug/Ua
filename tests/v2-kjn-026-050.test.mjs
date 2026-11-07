@@ -9,6 +9,7 @@ import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  universalEnergyByColor, universalImpact, universalImpactNull, universalPrivateChoices,
  universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 
 const pack=createKjnV2Pack();
 const packs=[pack,pack];
@@ -244,6 +245,81 @@ test('KJN-1-011 cannot enter the front or move while covered',()=>{
  assert.equal(move.players[0].front.some(c=>c?.uid===self.uid),true);
  assert.equal(universalAttackDamage(pack,move,find(move,0,self.uid)),2);
  assertUniversalMatch(packs,move);
+});
+
+test('Q2110 keeps a covered Elizabeth off effect moves and position swaps',()=>{
+ const sao=registeredV2TitlePack('sword-art-online');
+ const mixed={kind:pack.kind,id:pack.id,version:pack.version,restrictColors:false,
+  cards:{...pack.cards,'SAO-1-109':sao.cards['SAO-1-109'],
+   'SAO-1-052':sao.cards['SAO-1-052']}};
+ const both=[mixed,mixed];
+ const copies={'KJN-1-011':4,'KJN-1-010':4,'KJN-1-026':4,'SAO-1-109':4,'SAO-1-052':4};
+ let total=20;
+ for(const id of Object.values(pack.cards).filter(c=>c.color==='yellow'&&!copies[c.id]&&
+  !['special','color','final'].includes(c.trigger)).map(c=>c.id).sort()){
+  if(total>=50)break;
+  const add=Math.min(4,50-total);
+  copies[id]=add;total+=add;
+ }
+ assert.equal(total,50);
+ assert.deepEqual(validateUniversalDeck(mixed,copies),[]);
+ function open(seed){
+  let s=newUniversalMatch(both,{decks:[copies,copies],seed,first:0});
+  let guard=0;
+  while(s.phase!=='main'){
+   if(s.pending)throw Error('Opening pending '+s.pending.kind);
+   s=dispatchUniversalAction(both,s,{type:'next'});
+   if(++guard>8)throw Error('Did not reach main');
+  }
+  readyAp(s);
+  return s;
+ }
+ function act(s,pred){
+  const action=legalUniversalActions(both,s).find(pred);
+  if(!action)throw Error('No Q2110 action '+(s.pending?.kind||s.phase)+' '+
+   (s.pending?.step||'')+' '+JSON.stringify(legalUniversalActions(both,s).slice(0,6)));
+  return dispatchUniversalAction(both,s,action);
+ }
+ function covered(seed,hide){
+  let s=open(seed);
+  const blue=take(s,0,'SAO-1-052');
+  blue.ready=true;blue.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].energy[0]=blue;
+  const liz=take(s,0,'KJN-1-011');
+  liz.ready=true;liz.fieldEntryStamp=s.nextFieldEntryStamp++;
+  liz.ownEffectFront=true;
+  if(hide){
+   const down=take(s,0,'KJN-1-010');
+   down.faceDown=true;down.ready=false;down.fieldEntryStamp=null;
+   liz.under=[down];
+  }
+  s.players[0].front[0]=liz;
+  const event=take(s,0,'SAO-1-109');
+  s.players[0].hand.push(event);
+  s.players[0].apCards[0].ready=false;
+  s=act(s,a=>a.type==='event'&&a.uid===event.uid);
+  assert.equal(s.pending.kind,'effect-recover-ap');
+  const rested=s.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+  s=act(s,a=>a.type==='chooseApRecovery'&&a.uid===rested.uid);
+  assert.equal(s.pending.kind,'effect-choice-mode');
+  return {s,liz,blue};
+ }
+ const blocked=covered(21101,true);
+ const moving=act(structuredClone(blocked.s),a=>a.type==='chooseEffectMode'&&a.mode==='move');
+ assert.equal(moving.pending.kind,'effect-line-move');
+ assert.equal(moving.pending.choices.includes(blocked.liz.uid),false);
+ assert.equal(moving.pending.choices.includes(blocked.blue.uid),true);
+ const swapping=act(structuredClone(blocked.s),a=>a.type==='chooseEffectMode'&&a.mode==='swap');
+ assert.equal(swapping.pending,null);
+ assert.equal(swapping.players[0].front.some(c=>c?.uid===blocked.liz.uid),true);
+ const openMove=covered(21102,false);
+ const shifted=act(structuredClone(openMove.s),a=>a.type==='chooseEffectMode'&&a.mode==='move');
+ assert.equal(shifted.pending.kind,'effect-line-move');
+ assert.equal(shifted.pending.choices.includes(openMove.liz.uid),true);
+ const exchanged=act(structuredClone(openMove.s),a=>a.type==='chooseEffectMode'&&a.mode==='swap');
+ assert.equal(exchanged.pending.kind,'effect-swap-lines');
+ assert.equal(exchanged.pending.choices.includes(openMove.liz.uid),true);
+ assertUniversalMatch(both,exchanged);
 });
 
 test('KJN-1-026 and KJN-1-041 bounce another energy-1 character or themselves',()=>{
@@ -544,24 +620,30 @@ test('KJN-1-034 raids onto Rose and retires only after a removed-area raid',()=>
 
  let used=main(ids,34002);
  fuel(used,'KJN-1-026',3);
- put(used,0,'KJN-1-030','front',0,true);
+ const rose=put(used,0,'KJN-1-030','front',0,true);
  const miller=toHand(used,0,'KJN-1-032');
  const buried=top(used,0,['KJN-1-034'])[0];
  used=play(used,miller.uid);
  used=activate(used,miller.uid);
  const victim=put(used,1,'KJN-1-012','front',0,true);
- assert.equal(legal(used,a=>a.type==='raid'&&a.from==='removed'&&a.uid===buried.uid),false);
- used=playRemoved(used,buried.uid);
- assert.equal(used.pending,null);
- assert.equal(used.players[1].front.some(c=>c?.uid===victim.uid),true);
+ assert.equal(legal(used,a=>a.type==='raid'&&a.from==='removed'&&a.uid===buried.uid),true);
+ const quiet=playRemoved(structuredClone(used),buried.uid);
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[1].front.some(c=>c?.uid===victim.uid),true);
+ used=raidRemoved(used,buried.uid,rose.uid);
+ assert.equal(used.pending?.step,'retire');
+ assert.equal(legal(used,a=>a.mode==='skip'),true);
+ used=choose(used,a=>a.mode==='retire'&&a.uid===victim.uid);
+ assert.equal(used.players[1].front.some(c=>c?.uid===victim.uid),false);
  assert.equal(used.players[0].front.some(c=>c?.uid===buried.uid),true);
+ assert.equal(used.players[0].front.find(c=>c?.uid===buried.uid).stack[0].uid,rose.uid);
  assertUniversalMatch(packs,used);
 
  let peeled=main(ids,34003);
  fuel(peeled,'KJN-1-026',3);
- const rose=put(peeled,0,'KJN-1-030','front',0,true);
+ const baseRose=put(peeled,0,'KJN-1-030','front',0,true);
  const cover=toHand(peeled,0,'KJN-1-034');
- peeled=raidOnto(peeled,cover.uid,rose.uid);
+ peeled=raidOnto(peeled,cover.uid,baseRose.uid);
  assert.equal(peeled.pending,null);
  const opener=toHand(peeled,0,'KJN-1-032');
  top(peeled,0,['KJN-1-012']);
@@ -571,7 +653,7 @@ test('KJN-1-034 raids onto Rose and retires only after a removed-area raid',()=>
  peeled=playRemoved(peeled,returned.uid);
  const body=peeled.players[0].front.find(c=>c?.cardId==='KJN-1-034');
  peeled=activate(peeled,body.uid);
- assert.equal(peeled.players[0].outside.some(c=>c.uid===rose.uid),true);
+ assert.equal(peeled.players[0].outside.some(c=>c.uid===baseRose.uid),true);
  assert.equal(universalImpact(pack,peeled,find(peeled,0,body.uid)),1);
  assert.equal(legal(peeled,a=>a.type==='activate'&&a.uid===body.uid),false);
  assertUniversalMatch(packs,peeled);

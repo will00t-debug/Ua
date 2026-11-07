@@ -809,6 +809,12 @@ function facedownMoveBanned(pack,s,c){
  return !!c&&card(pack,c).facedownMoveBanned===true&&!originalEffectsDisabled(s,c)&&
   directFacedowns(c).length>0;
 }
+// Q2110: a covered character cannot change lines, including an effect move
+// or a position swap. The check is the printed restriction, not a card id.
+function refuseCoveredShift(pack,s,...cards){
+ for(const c of cards)if(facedownMoveBanned(pack,s,c))
+  throw Error('Facedown cards ban this move');
+}
 function ownEffectMayMoveToFront(pack,c){
  const d=card(pack,c);
  if(d.type!=='character')return false;
@@ -816,7 +822,9 @@ function ownEffectMayMoveToFront(pack,c){
  return d.mainAbility?.op==='restTwoActiveFrontMoveSelf'||d.ownEffectMoveOnly===true;
 }
 function attackEndSwapEnergyChoices(pack,pl){
- return pl.energy.filter(c=>c&&ownEffectMayMoveToFront(pack,c))
+ const view={players:[pl,pl]};
+ return pl.energy.filter(c=>c&&ownEffectMayMoveToFront(pack,c)&&
+  !facedownMoveBanned(pack,view,c))
   .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
 }
 function markOwnEffectFrontSwap(pack,arriving,leaving){
@@ -831,12 +839,14 @@ function markOwnEffectFrontSwap(pack,arriving,leaving){
 // Q2314 (2026-09-04): after the battle, and after a life trigger check.
 function energyLineAttackEndFrontChoices(pack,s,owner){
  return s.players[owner].front.filter(c=>c&&card(pack,c).type==='character'&&
-  !card(pack,c).energyForbidden&&!(s.attacksByUid[c.uid]>=1))
+  !card(pack,c).energyForbidden&&!facedownMoveBanned(pack,s,c)&&
+  !(s.attacksByUid[c.uid]>=1))
   .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
 }
 function energyLineAttackEndReady(pack,s,c){
  return !!c&&card(pack,c).energyLineAttackEndSwap===true&&
-  !card(pack,c).frontForbidden&&!originalEffectsDisabled(s,c)&&
+  !card(pack,c).frontForbidden&&!facedownMoveBanned(pack,s,c)&&
+  !originalEffectsDisabled(s,c)&&
   c.energyLineAttackEndSwapUsedTurn!==s.turn;
 }
 function queueEnergyLineAttackEndSwaps(pack,s,owner,attackerUid){
@@ -2962,8 +2972,10 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='swapEnergyWithFrontSkip'){
    const pos=location(s,owner,job.sourceUid);
    if(pos&&pos.line==='energy'&&card(pack,pos.c).type==='character'&&
-    !originalEffectsDisabled(s,pos.c)&&pos.c.fieldEntryStamp===job.sourceStamp){
-    const choices=pl.front.filter(c=>c&&s.continuousStates.some(e=>
+    !originalEffectsDisabled(s,pos.c)&&!facedownMoveBanned(pack,s,pos.c)&&
+    pos.c.fieldEntryStamp===job.sourceStamp){
+    const choices=pl.front.filter(c=>c&&!facedownMoveBanned(pack,s,c)&&
+     s.continuousStates.some(e=>
      e.kind==='skipNextActive'&&!e.consumed&&e.targetUid===c.uid&&
      e.targetStamp===c.fieldEntryStamp)).map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
     if(choices.length)s.pending={kind:'effect-energy-skip-swap',player:owner,
@@ -2972,11 +2984,13 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='offerEnergyTraitSwap'){
    const done=Array.isArray(job.done)?job.done:[];
    const sources=pl.energy.filter(c=>c&&!done.includes(c.uid)&&
-    !originalEffectsDisabled(s,c)&&card(pack,c).energyAttackSwap&&
+    !originalEffectsDisabled(s,c)&&!facedownMoveBanned(pack,s,c)&&
+    card(pack,c).energyAttackSwap&&
     raidBoxTextLive(pack,c,'energyAttackSwap'));
    if(sources.length){
     const source=sources[0],trait=card(pack,source).energyAttackSwap.trait;
     const choices=pl.front.filter(c=>c&&card(pack,c).type==='character'&&
+     !facedownMoveBanned(pack,s,c)&&
      cardHasTrait(card(pack,c),trait)).map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
     if(choices.length)s.pending={kind:'effect-energy-trait-swap',player:owner,
      sourceUid:source.uid,sourceStamp:source.fieldEntryStamp,trait,choices,
@@ -4335,6 +4349,7 @@ function continueEffectQueue(pack,s){
     const onFront=pl.front.includes(c);
     return (includeSelf||c.uid!==job.sourceUid)&&
      printed.type==='character'&&
+     !facedownMoveBanned(pack,s,c)&&
      !(printed.energyForbidden&&onFront)&&
      // Q761: a front-banned character on the energy line cannot be moved up.
      !(printed.frontForbidden&&!onFront)&&
@@ -4820,7 +4835,7 @@ function continueEffectQueue(pack,s){
    const open=pl.front.some(c=>!c);
    const choices=!source||originalEffectsDisabled(s,source.c)||!open?[]:
     pl.energy.filter(c=>c&&card(pack,c).type==='character'&&
-     !card(pack,c).frontForbidden&&
+     !card(pack,c).frontForbidden&&!facedownMoveBanned(pack,s,c)&&
      cardHasTrait(card(pack,c),job.trait)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-energy-trait-front',player:owner,
     sourceUid:job.sourceUid,trait:job.trait,choices,selected:[],optional:true};
@@ -5122,11 +5137,13 @@ function continueEffectQueue(pack,s){
    }
   }else if(job.op==='openEnergyMoveGrants'){
    const movers=pl.energy.filter(c=>c&&c.energyMoveOnAttackGranted?.turn===s.turn&&
-    c.energyMoveOnAttackGranted.stamp===c.fieldEntryStamp);
+    c.energyMoveOnAttackGranted.stamp===c.fieldEntryStamp&&
+    !facedownMoveBanned(pack,s,c));
    const slots=pl.front.map((c,i)=>c?null:i).filter(i=>i!==null);
    if(movers.length&&slots.length){
     if(movers.length===1&&slots.length===1){
      const unit=movers[0],from=pl.energy.findIndex(c=>c?.uid===unit.uid);
+     refuseCoveredShift(pack,s,unit);
      pl.energy[from]=null;pl.front[slots[0]]=unit;
      recordCompletedMove(pack,s,{physical:unit,owner,from:'energy',to:'front',
       reason:'own-effect',sourceUid:unit.uid});
@@ -5608,7 +5625,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='mayShiftOwnCharacter'){
    const choices=field(pl).filter(c=>{
     const d=card(pack,c);
-    if(d.type!=='character')return false;
+    if(d.type!=='character'||facedownMoveBanned(pack,s,c))return false;
     if(pl.front.includes(c)&&d.energyForbidden)return false;
     if(pl.energy.includes(c)&&d.frontForbidden)return false;
     return true;
@@ -5710,7 +5727,8 @@ function continueEffectQueue(pack,s){
    const src=pl.front.find(c=>c?.uid===job.sourceUid);
    if(src&&src.fieldEntryStamp===job.sourceStamp&&!originalEffectsDisabled(s,src)&&
     card(pack,src).frontAttackEndNamedSwap===job.name){
-    const choices=pl.energy.filter(c=>c&&cardHasName(card(pack,c),job.name,false))
+    const choices=pl.energy.filter(c=>c&&!facedownMoveBanned(pack,s,c)&&
+     cardHasName(card(pack,c),job.name,false))
      .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
     if(choices.length)s.pending={kind:'effect-attack-end-named',player:owner,
      sourceUid:src.uid,sourceStamp:src.fieldEntryStamp,name:job.name,choices,optional:true};
@@ -8456,6 +8474,7 @@ function resolveChoice(s,a,pack){
    (c.replaceUid??null)===(a.replaceUid??null));
   if(a.mode!=='move'||!unit||unit.fieldEntryStamp!==q.sourceStamp||!choice||
    originalEffectsDisabled(s,unit)||s.onceEffectUses[q.player].includes(q.onceKey)||
+   facedownMoveBanned(pack,s,unit)||
    !facedownNameOnField(pack,s,q.player,q.nameContains))
    throw Error('Facedown front move is no longer legal');
   if(choice.replaceUid){
@@ -8477,6 +8496,7 @@ function resolveChoice(s,a,pack){
    const printed=from>=0?card(pack,p.energy[from]):null;
    if(from<0||!q.choices.includes(a.uid)||q.selected.includes(a.uid)||
     !printed||printed.type!=='character'||printed.frontForbidden||
+    facedownMoveBanned(pack,s,p.energy[from])||
     !cardHasTrait(printed,q.trait)||p.front[a.slot])
     throw Error('Illegal energy-line trait move');
    const unit=p.energy[from];
@@ -8492,7 +8512,8 @@ function resolveChoice(s,a,pack){
  }
  if(q.kind==='effect-energy-front'){
   const from=p.energy.findIndex(c=>c?.uid===a.uid);
-  if(from<0||!q.movers.includes(a.uid)||!q.slots.includes(a.slot)||p.front[a.slot])
+  if(from<0||!q.movers.includes(a.uid)||!q.slots.includes(a.slot)||p.front[a.slot]||
+   facedownMoveBanned(pack,s,p.energy[from]))
    throw Error('Energy-line move grant has no empty front slot');
   const unit=p.energy[from];
   if(unit.energyMoveOnAttackGranted?.turn!==s.turn||
@@ -8652,6 +8673,7 @@ function resolveChoice(s,a,pack){
     !dest||dest.line!=='energy'||!q.choices.some(c=>c.uid===a.uid&&
      c.stamp===dest.c.fieldEntryStamp))
     throw Error('Invalid physical attack-end swap');
+   refuseCoveredShift(pack,s,src.c,dest.c);
    markOwnEffectFrontSwap(pack,dest.c,src.c);
    p.front[src.slot]=dest.c;p.energy[dest.slot]=src.c;
    recordCompletedMove(pack,s,{physical:src.c,owner:q.player,
@@ -8668,6 +8690,7 @@ function resolveChoice(s,a,pack){
     !dest||dest.line!=='front'||card(pack,dest.c).energyForbidden||
     !q.choices.some(c=>c.uid===a.uid&&c.stamp===dest.c.fieldEntryStamp))
     throw Error('Invalid energy-line attack-end swap');
+   refuseCoveredShift(pack,s,src.c,dest.c);
    delete dest.c.ownEffectFront;
    p.energy[src.slot]=dest.c;p.front[dest.slot]=src.c;
    recordCompletedMove(pack,s,{physical:src.c,owner:q.player,
@@ -10972,6 +10995,7 @@ function resolveChoice(s,a,pack){
   if(!src||src.line!=='energy'||src.c.fieldEntryStamp!==q.sourceStamp||
    !dest||dest.line!=='front'||!q.choices.includes(a.uid)||
    card(pack,dest.c).type!=='character'||
+   facedownMoveBanned(pack,s,src.c)||facedownMoveBanned(pack,s,dest.c)||
    (q.name&&!cardHasName(card(pack,dest.c),q.name,originalEffectsDisabled(s,dest.c))))
    throw Error('Illegal energy-line swap');
   p.energy[src.slot]=dest.c;p.front[dest.slot]=src.c;
@@ -11843,7 +11867,8 @@ function resolveChoice(s,a,pack){
    originalEffectsDisabled(s,src.c)||!dest||dest.line!=='front'||
    !q.choices.some(c=>c.uid===a.uid&&c.stamp===dest.c.fieldEntryStamp)||
    !s.continuousStates.some(e=>e.kind==='skipNextActive'&&!e.consumed&&
-    e.targetUid===dest.c.uid&&e.targetStamp===dest.c.fieldEntryStamp))
+    e.targetUid===dest.c.uid&&e.targetStamp===dest.c.fieldEntryStamp)||
+   facedownMoveBanned(pack,s,src.c)||facedownMoveBanned(pack,s,dest.c))
    throw Error('Invalid energy-line skip swap');
   p.energy[src.slot]=dest.c;p.front[dest.slot]=src.c;
   recordCompletedMove(pack,s,{physical:src.c,owner:q.player,from:'energy',
@@ -11864,7 +11889,8 @@ function resolveChoice(s,a,pack){
    originalEffectsDisabled(s,src.c)||card(pack,src.c).energyAttackSwap?.trait!==q.trait||
    !dest||dest.line!=='front'||card(pack,dest.c).type!=='character'||
    !cardHasTrait(card(pack,dest.c),q.trait)||
-   !q.choices.some(c=>c.uid===a.uid&&c.stamp===dest.c.fieldEntryStamp))
+   !q.choices.some(c=>c.uid===a.uid&&c.stamp===dest.c.fieldEntryStamp)||
+   facedownMoveBanned(pack,s,src.c)||facedownMoveBanned(pack,s,dest.c))
    throw Error('Invalid energy-line trait swap');
   p.energy[src.slot]=dest.c;p.front[dest.slot]=src.c;
   recordCompletedMove(pack,s,{physical:src.c,owner:q.player,from:'energy',
@@ -13435,9 +13461,9 @@ function resolveChoice(s,a,pack){
    x.bp===q.bp&&x.allName===q.allName);
   const pl=s.players[q.player];
   const fronts=()=>pl.front.filter(c=>c&&card(pack,c).type==='character'&&
-   !card(pack,c).energyForbidden).map(c=>c.uid);
+   !card(pack,c).energyForbidden&&!facedownMoveBanned(pack,s,c)).map(c=>c.uid);
   const energies=()=>pl.energy.filter(c=>c&&card(pack,c).type==='character'&&
-   !card(pack,c).frontForbidden).map(c=>c.uid);
+   !card(pack,c).frontForbidden&&!facedownMoveBanned(pack,s,c)).map(c=>c.uid);
   const paid=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===q.player&&
    e.from==='hand'&&e.to==='outside'&&e.reason==='payment'&&e.sourceUid===q.sourceUid);
   if(!src||!step||printed.name!==q.sourceName||!paid)
@@ -13467,6 +13493,7 @@ function resolveChoice(s,a,pack){
   const fi=pl.front.findIndex(c=>c?.uid===q.frontUid);
   const ei=pl.energy.findIndex(c=>c?.uid===a.uid);
   const frontCard=pl.front[fi],energyCard=pl.energy[ei];
+  refuseCoveredShift(pack,s,frontCard,energyCard);
   pl.front[fi]=energyCard;pl.energy[ei]=frontCard;
   recordCompletedMove(pack,s,{physical:frontCard,owner:q.player,from:'front',to:'energy',
    reason:'own-effect',sourceUid:q.sourceUid});
@@ -13598,6 +13625,7 @@ function resolveChoice(s,a,pack){
    if(a.uid!==null){
     if(a.uid!==q.energyUid||!pairMaySwap(pack,s,foe,front,energy))
      throw Error('Illegal generated-energy position swap');
+    refuseCoveredShift(pack,s,front,energy);
     side.front[q.frontSlot]=energy;
     side.energy[q.energySlot]=front;
     recordCompletedMove(pack,s,{physical:front,owner:foe,from:'front',to:'energy',
@@ -13747,6 +13775,7 @@ function resolveChoice(s,a,pack){
   const energy=p.energy[loc];
   if(!front||front.uid!==q.frontUid||!energy||energy.uid!==a.uid)
    throw Error('Line swap characters moved');
+  refuseCoveredShift(pack,s,front,energy);
   p.front[q.frontSlot]=energy;
   p.energy[loc]=front;
   recordCompletedMove(pack,s,{physical:front,owner:q.player,from:'front',to:'energy',
@@ -13877,6 +13906,7 @@ function resolveChoice(s,a,pack){
     !dest||dest.line!=='energy'||!q.choices.some(c=>c.uid===a.uid&&c.stamp===dest.c.fieldEntryStamp)||
     !cardHasName(card(pack,dest.c),q.name,false))
     throw Error('Named attack-end swap characters moved');
+   refuseCoveredShift(pack,s,src.c,dest.c);
    p.front[src.slot]=dest.c;p.energy[dest.slot]=src.c;
    recordCompletedMove(pack,s,{physical:src.c,owner:q.player,from:'front',to:'energy',
     reason:'own-effect',sourceUid:src.c.uid});
@@ -16397,7 +16427,8 @@ function lowGenEnergyChoices(pack,s,owner,sourceUid,maxGen){
 function pairMaySwap(pack,s,owner,front,energy){
  return !!front&&!!energy&&!card(pack,energy).frontForbidden&&
   !card(pack,front).energyForbidden&&
-  !cannotMoveLocked(s,owner,front)&&!cannotMoveLocked(s,owner,energy);
+  !cannotMoveLocked(s,owner,front)&&!cannotMoveLocked(s,owner,energy)&&
+  !facedownMoveBanned(pack,s,front)&&!facedownMoveBanned(pack,s,energy);
 }
 function lockCannotMove(s,controller,sourceUid,target){
  grantContinuousState(s,{kind:'cannotMove',controller,sourceUid,targetUid:target.uid,
@@ -16756,6 +16787,7 @@ export function legalUniversalActions(pack,s){
    for(const choice of legalDestinations(pl,'front'))out.push({type:'move',uid:c.uid,...choice});
   for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&printedStepLive(pack,s,c)&&
    !card(pack,c).energyForbidden&&!card(pack,c).energyLineForbidden&&
+   !facedownMoveBanned(pack,s,c)&&
    !card(pack,c).ownEffectMoveOnly&&!cannotMoveLocked(s,p,c)))
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
   const stepGrantors=field(pl).filter(c=>card(pack,c).grantStepToOtherOwn===true&&
@@ -17628,25 +17660,47 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.removed){
    if(!removedUseMatches(pack,s,p,c))continue;
    const d=card(pack,c);
-   if(aot2CannotPlay(pack,s,p,d))continue;
    const payment=handApPlan(pack,s,p,d,{from:'removed',uid:c.uid});
+   const canRaid=!!(d.raidName||d.raidTrait);
+   const raidPayment=canRaid?handApPlan(pack,s,p,d,{from:'removed',raid:true,uid:c.uid}):null;
    const requiredEnergy=effectiveRemovedRequiredEnergy(pack,s,p,d,c);
-   if(requiredEnergy>(produced[d.color]||0)||payment.cost>ap)continue;
-   if(d.type==='event'){
-    if(!eventNameGate(pack,s,p,d))continue;
-    if(d.playRequiresAnyNames&&!ownFieldHasAnyName(pack,s,p,d.playRequiresAnyNames))continue;
-    if(d.playRequiresAllNames&&!d.playRequiresAllNames.every(name=>ownFieldHasPrintedName(pack,s,p,name)))continue;
-    if(d.playRequiresNameOrRaidBase&&!matchesV2LiveCondition(s,p,null,
-     {kind:'ownNameOrRaidBase',turn:'any',zone:'field',excludeSelf:false,
-      name:d.playRequiresNameOrRaidBase},x=>card(pack,x),()=>0,x=>bp(pack,s,x)))continue;
-    if(!eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))continue;
-    out.push({type:'event',uid:c.uid,from:'removed'});
-   }else if(d.type==='character'&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!d.chainRaidOnly&&!d.raidOnlyEntry){
-    for(const line of ['energy','front']){
-     if(line==='energy'&&(d.energyForbidden||d.energyLineForbidden))continue;
-     if(line==='front'&&d.frontForbidden)continue;
-     for(const choice of legalDestinations(pl,line))
-      out.push({type:'play',uid:c.uid,from:'removed',line,...choice});
+   if(canRaid){ensureAot();ensureAot2();}
+   const playBanned=aot2CannotPlay(pack,s,p,d);
+   const raidBanned=playBanned&&d.id!=='AOT-2-067';
+   if(!playBanned&&requiredEnergy<=(produced[d.color]||0)&&payment.cost<=ap){
+    if(d.type==='event'){
+     if(!eventNameGate(pack,s,p,d))continue;
+     if(d.playRequiresAnyNames&&!ownFieldHasAnyName(pack,s,p,d.playRequiresAnyNames))continue;
+     if(d.playRequiresAllNames&&!d.playRequiresAllNames.every(name=>ownFieldHasPrintedName(pack,s,p,name)))continue;
+     if(d.playRequiresNameOrRaidBase&&!matchesV2LiveCondition(s,p,null,
+      {kind:'ownNameOrRaidBase',turn:'any',zone:'field',excludeSelf:false,
+       name:d.playRequiresNameOrRaidBase},x=>card(pack,x),()=>0,x=>bp(pack,s,x)))continue;
+     if(!eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))continue;
+     out.push({type:'event',uid:c.uid,from:'removed'});
+    }else if(d.type==='character'&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!d.chainRaidOnly&&!d.raidOnlyEntry){
+     for(const line of ['energy','front']){
+      if(line==='energy'&&(d.energyForbidden||d.energyLineForbidden))continue;
+      if(line==='front'&&d.frontForbidden)continue;
+      for(const choice of legalDestinations(pl,line))
+       out.push({type:'play',uid:c.uid,from:'removed',line,...choice});
+     }
+    }
+   }
+   // Using a card includes Raid. The same removed-area permission that
+   // allows a play allows a printed Raid, paying that card's energy and AP.
+   if(!raidBanned&&raidPayment&&raidPayment.cost<=ap&&canRaid&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)){
+    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
+     const base=pl[line][slot];
+     if(!validRaidBase(pack,s,p,base,d))continue;
+     const raidCut=aotRaidCut(pack,s,p,d)+aot2RaidCut(pack,s,p,d,base);
+     if(Math.max(0,requiredEnergy-raidCut)>(produced[d.color]||0))continue;
+     if(!d.frontForbidden&&!card(pack,base).frontForbidden){
+      const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
+      for(const choice of dests)
+       out.push({type:'raid',uid:c.uid,from:'removed',baseUid:base.uid,...choice});
+     }
+     if(line==='energy'&&!d.energyLineForbidden&&!card(pack,base).energyLineForbidden)
+      out.push({type:'raid',uid:c.uid,from:'removed',baseUid:base.uid,line:'energy',slot});
     }
    }
   }
@@ -18107,7 +18161,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      break;
     }
     if(printed.op==='frontMoveNamed'){
-     const choices=field(pl).filter(c=>cardHasName(card(pack,c),printed.name,
+     const choices=field(pl).filter(c=>!facedownMoveBanned(pack,s,c)&&
+      cardHasName(card(pack,c),printed.name,
       originalEffectsDisabled(s,c))).map(c=>c.uid);
      if(location(s,p,selected.uid)?.line!=='front'||!choices.length)
       throw Error('Named line move is not legal');
@@ -19389,9 +19444,11 @@ if(ability.op==='characterDualMain'){
    }
    if(ability.op==='energySwapOwnFront'){
     const choices=pl.front.filter(x=>x&&card(pack,x).type==='character'&&
+     !facedownMoveBanned(pack,s,x)&&
      (!ability.name||cardHasName(card(pack,x),ability.name,originalEffectsDisabled(s,x))))
      .map(x=>x.uid);
     if(action.mode!=='energySwap'||!pl.energy.some(x=>x?.uid===selected.uid)||
+     facedownMoveBanned(pack,s,selected)||
      s.mainAbilityUsedUids.includes(selected.uid)||!choices.length)
      throw Error('Energy-line swap is not legal');
     s.mainAbilityUsedUids.push(selected.uid);
@@ -19581,7 +19638,8 @@ if(ability.op==='characterDualMain'){
    const granted=!!printed&&!printed.step&&field(pl).some(c=>c.uid!==l.c.uid&&
     card(pack,c).grantStepToOtherOwn===true&&printedStepLive(pack,s,c));
    if(!l||l.line!=='front'||printed.energyForbidden||printed.energyLineForbidden||
-    printed.ownEffectMoveOnly||s.movedUids.includes(l.c.uid)||
+    printed.ownEffectMoveOnly||facedownMoveBanned(pack,s,l.c)||
+    s.movedUids.includes(l.c.uid)||
     !(printedStepLive(pack,s,l.c)||granted)||
     cannotMoveLocked(s,p,l.c))
     throw Error('Invalid STEP');
@@ -19596,7 +19654,7 @@ if(ability.op==='characterDualMain'){
   case 'play':case 'event':case 'raid':{
    const fromRemoved=action.from==='removed';
    const removedCard=fromRemoved?pl.removed.find(c=>c.uid===action.uid):null;
-   if(fromRemoved&&(action.type==='raid'||s.phase!=='main'||!removedCard||
+   if(fromRemoved&&(s.phase!=='main'||!removedCard||
     !removedUseMatches(pack,s,p,removedCard)))
     throw Error('Removed use is not legal');
    const zone=fromRemoved?pl.removed:pl.hand;
@@ -19642,7 +19700,8 @@ if(ability.op==='characterDualMain'){
     throw Error('This character cannot enter the energy line');
    if(action.type==='raid'){
     const base=[...pl.front,...pl.energy].find(c=>c?.uid===action.baseUid);
-    const required=effectiveHandRequiredEnergy(pack,s,p,d,current);
+    const required=fromRemoved?effectiveRemovedRequiredEnergy(pack,s,p,d,current):
+     effectiveHandRequiredEnergy(pack,s,p,d,current);
     const cut=aotRaidCut(pack,s,p,d)+aot2RaidCut(pack,s,p,d,base);
     const produced=universalEnergyByColor(pack,s,p);
     if(!base||Math.max(0,required-cut)>(produced[d.color]||0))
@@ -19692,7 +19751,7 @@ if(ability.op==='characterDualMain'){
    else if(action.type==='raid'){
     const raidLine=action.line==='energy'?'energy':'front';
     performRaid(pack,s,p,current,action.baseUid,raidLine,action.slot,action.replaceUid,
-     {entryCause:'paidRaid'});
+     {entryCause:'paidRaid',entryFrom:fromRemoved?'removed':'hand'});
    }else{
     commitDestination(pack,s,p,action.line,action.slot,action.replaceUid);
     current.ready=defaultEntryReady(pack,s,p,current);

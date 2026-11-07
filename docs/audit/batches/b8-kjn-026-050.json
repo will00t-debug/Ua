@@ -17,7 +17,7 @@
       "official": "Q2110（2026.05.15）：下面有背面卡時，效果移動與位置交換也不能把這張從能源線移到前線。印刷是「裏向きのカードが下にある場合、移動できない」。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-011",
       "reproduction": "合法黃色牌組。KJN-1-011 在能源線，下面至少一張背面卡。再用一張印有效果移動或位置交換、且目標可以是這張的卡。",
       "expected": "效果移動與位置交換都拒絕把這張移到前線。最後一張背面卡被自己的啟動拿走之後，自己的啟動才可以把它移到前線。",
-      "actual": "移動階段已被拒絕，登場到前線也被拒絕，自己的啟動在最後一張背面離開後可以移到前線。026–050 沒有印出「入れ替」或其他會移動別的角色的句子，所以 Q2110 的效果移動與交換沒有可操作的來源。engine.mjs 的 effectMoveTo 與 ownSwapCandidates 有門，本批沒有改它們，也沒有造一張不存在的移動卡。",
+      "actual": "移動階段已被拒絕，登場到前線也被拒絕，自己的啟動在最後一張背面離開後可以移到前線。026–050 沒有印出「入れ替」或其他會移動別的角色的句子。整合時用既有的 SAO-1-109 重現：蓋著背面卡時，效果移動選不到這張，位置交換也開不出來；拿掉背面卡後兩者都可以選。effectMoveTo、ownSwapCandidates、STEP，以及沒有走這兩個 helper 的換線結算都看 facedownMoveBanned。",
       "regression": "dist/universal-v2/engine.mjs effectMoveTo、ownSwapCandidates、frontForbidden。本批沒有改 engine.mjs。"
     },
     {
@@ -26,7 +26,7 @@
       "official": "032：這個回合可以把放到移除區的那張使用，使用時仍要滿足必要能量與消費 AP。034：從移除區使用這張時，登場時可以退場一張 BP 4000 以下的對方前線角色。034 的登場時在突襲框。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-032 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-034",
       "reproduction": "合法黃色牌組。先把玫瑰放到場上。KJN-1-032 在它登場的回合把牌庫頂的 KJN-1-034 放到移除區。查看這個回合的合法行動。",
       "expected": "移除區的 034 可以突襲到場上的玫瑰，並支付印刷的能量與 AP。突襲成功後，登場時可以選擇退場一張 BP 4000 以下的對方前線角色，也可以不退。",
-      "actual": "移除區只提供 play 與 event，不提供 raid。034 可以正常登場到空格，但那不是突襲，突襲框的登場時不發動，所以沒有退場選擇。手牌突襲 034 不會退場。另一次手牌突襲之後，再用別的卡完成一次移除區使用，啟動可以把突襲底放到場外並得到衝擊 1。",
+      "actual": "整合前移除區只提供 play 與 event。整合後，removedUseMatches 成立的卡可以比照手牌突襲，entryFrom 記成 removed，並支付移除區的能量與 AP。034 從移除區突襲到玫瑰後可以退一張 BP 4000 以下的對方前線，也可以不退。普通登場與手牌突襲仍然不退場。",
       "regression": "dist/universal-v2/engine.mjs 移除區合法行動約 17615–17638 行。本批沒有改 engine.mjs。"
     }
   ],
@@ -52,12 +52,12 @@
       "clauses": [
         {
           "match": "不能登場到前線；下面有背面卡時不能移動",
-          "status": "部分核對",
+          "status": "已驗證",
           "official": "このキャラはフロントLに登場できず、裏向きのカードが下にある場合、移動できない。Q2110（2026.05.15）：效果移動與位置交換也不行。Q2112：控制者看得到下面的牌。",
-          "implementation": "frontForbidden。移動階段由 facedownMoveBanned 拒絕。自己的啟動是印刷上的例外，最後一張背面離開後才活動並移到前線。",
+          "implementation": "frontForbidden。移動階段由 facedownMoveBanned 拒絕。自己的啟動是印刷上的例外，最後一張背面離開後才活動並移到前線。整合時把同一道門接到效果移動與位置交換。",
           "discrepancy": "",
-          "evidence": "tests/v2-kjn-026-050.test.mjs。沒有打到前線的行動。下面有牌時移動階段不能移動。對手只看到背面，控制者看得到牌名。前兩次拿走背面後仍休息、不能移動。最後一張後變活動，可以移到空的前線，傷害 2。026–050 的 effectJa 沒有「入れ替」。",
-          "unresolved": "Q2110 的效果移動與位置交換沒有可操作的卡，留給 A。"
+          "evidence": "tests/v2-kjn-026-050.test.mjs。沒有打到前線的行動。下面有牌時移動階段不能移動。對手只看到背面，控制者看得到牌名。前兩次拿走背面後仍休息、不能移動。最後一張後變活動，可以移到空的前線，傷害 2。Q2110 用 SAO-1-109 重現：蓋著時不能被移動或交換，拿掉背面後可以。",
+          "unresolved": ""
         }
       ]
     },
@@ -211,12 +211,12 @@
       "clauses": [
         {
           "match": "只有登場的那個回合，把頂 1 放到移除區，當回合可使用",
-          "status": "部分核對",
+          "status": "已驗證",
           "official": "【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。自分の山札の上から1枚をリムーブエリアに置く。このターン中、自分はそのカードをリムーブエリアから使用できる。",
-          "implementation": "入場回合才可啟動。放到移除區的卡當回合可以正常登場。突襲沒有從移除區提供。",
+          "implementation": "入場回合才可啟動。放到移除區的卡當回合可以打出，也可以突襲，仍付能量與 AP。",
           "discrepancy": "",
-          "evidence": "tests/v2-kjn-026-050.test.mjs。直接放上場的 032 不能啟動。從手牌登場後可以，頂牌進移除區並能打出。換回合後不能再啟動。移除區沒有突襲行動，見 sharedGaps。",
-          "unresolved": "「使用」是否包含突襲，引擎目前不提供，留給 A。"
+          "evidence": "tests/v2-kjn-026-050.test.mjs。直接放上場的 032 不能啟動。從手牌登場後可以，頂牌進移除區並能打出。換回合後不能再啟動。同一張移除區的 034 可以突襲到玫瑰。",
+          "unresolved": ""
         }
       ]
     },
@@ -259,12 +259,12 @@
         },
         {
           "match": "從移除區使用時，可退場一張 BP 4000 以下的對方前線",
-          "status": "部分核對",
+          "status": "已驗證",
           "official": "【登場時】このカードをリムーブエリアから使用していた場合、BP4000以下の相手のフロントLのキャラを1枚まで選び、退場させる。",
-          "implementation": "selfFromRemoved 只看這張自己從移除區進場。效果在突襲框，普通登場不發動。手牌突襲也不退場。",
+          "implementation": "selfFromRemoved 只看這張自己從移除區進場。效果在突襲框，普通登場不發動。手牌突襲也不退場。移除區突襲把來源記成 removed。",
           "discrepancy": "",
-          "evidence": "tests/v2-kjn-026-050.test.mjs。手牌突襲後沒有退場窗。從移除區普通登場後也沒有退場窗，對方 1500 留在場上。移除區不能突襲，見 sharedGaps。",
-          "unresolved": "從移除區突襲這張之後的退場，留給 A。"
+          "evidence": "tests/v2-kjn-026-050.test.mjs。手牌突襲後沒有退場窗。從移除區普通登場後也沒有退場窗。從移除區突襲到玫瑰後可以退 BP 1500，也可以跳過。",
+          "unresolved": ""
         },
         {
           "match": "本回合用過移除區才能啟動，把一張突襲底放到場外並得到衝擊 1",
@@ -475,12 +475,12 @@
       "clauses": [
         {
           "match": "也視為玫瑰",
-          "status": "部分核對",
+          "status": "已驗證",
           "official": "このカードは〈ローズ・オリアナ〉としても扱う。",
-          "implementation": "nameAliases。cardHasName 看得到。沉默會拿掉別名。026–050 裡沒有另一張紫卡要求玫瑰，所以沒有同色的實際消費者。",
+          "implementation": "nameAliases。cardHasName 看得到。效果失效時只查印刷名。",
           "discrepancy": "",
-          "evidence": "tests/v2-kjn-026-050.test.mjs。cardHasName 對玫瑰為真，只查印刷名時為假。",
-          "unresolved": "沒有同色效果實際把這張當成玫瑰使用。"
+          "evidence": "tests/v2-kjn-026-050.test.mjs。cardHasName 對玫瑰為真，效果失效時為假。",
+          "unresolved": ""
         },
         {
           "match": "退場時可把牌庫頂最多 2 張放到場外",
