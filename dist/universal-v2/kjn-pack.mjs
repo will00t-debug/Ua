@@ -122,7 +122,7 @@ if(kind==='KJN-1-022')return {effects:{onPlay:[job('KJN-1-022','onPlay')]}};
   condition:{kind:'ownNameExists',turn:'any',zone:'front',excludeSelf:false,name:SID},
   extraEnergy:1}],effects:{onPlay:[{op:'millTop',optional:true,count:2}]}};
  if(kind==='KJN-1-076')return {handEnergyWhileName:{name:SID,amount:2},
-  effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:5000}]}};
+  effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:false}]}};
  if(kind==='KJN-1-078')return {effects:{onPlay:[{
   op:'retireOppFrontUnderBp',mandatory:true,traitPerBp:{trait:SEVEN,per:1000}}]}};
  return null;

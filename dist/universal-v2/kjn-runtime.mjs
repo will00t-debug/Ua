@@ -658,7 +658,9 @@ function startMain(pack,s,c,mode){
   restSelf(s,owner,c);
   const top=pl.deck[0];
   if(!top)return;
-  hold(s,{...spec,step:'peekPlace',data:{uid:top.uid}},[
+  // 見て stays private. The closed-choice reader only shows a deck window
+  // stored on data.window, and only to the player who is looking.
+  hold(s,{...spec,step:'peekPlace',data:{window:[top.uid]}},[
    {type:'kjn',mode:'top'},{type:'kjn',mode:'outside'}]);
  }
 }
