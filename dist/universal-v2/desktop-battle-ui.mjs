@@ -186,6 +186,15 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
   if(energy)energy.textContent=Object.entries(player.energyByColor||{})
    .filter(([,amount])=>amount>0).map(([color,amount])=>(colorNames[color]||color)+' '+amount).join(' / ')||'能源 0';
  }
+ // Keep the existing legal extra-draw handler, but place its button
+ // between the two LIFE rails like the reference screenshot.
+ const extraDraw=[...(hand.querySelector('.v2-compact-actions')?.querySelectorAll('button')||[])]
+  .find(button=>/支付\\s*1\\s*AP\\s*額外抽牌/.test(button.textContent||''));
+ if(extraDraw){
+  const extraRail=el('div',{class:'v2-extra-draw-rail'});
+  extraRail.append(extraDraw);
+  lifeRail.append(extraRail);
+ }
  const opponentInfo=opponent.querySelector('.playerInfo');
  const hiddenHand=el('div',{class:'v2-desktop-opponent-hand',
   'aria-label':'對手手牌 '+view.players[1].handCount+' 張'});
