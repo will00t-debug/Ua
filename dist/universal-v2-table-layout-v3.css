@@ -1,0 +1,291 @@
+/* v3: desktop battle table layout geometry.
+   Loaded AFTER the legacy table and photo-card-back styles.
+   Rendering only: battle rules and card action handlers are unchanged. */
+@media (min-width:761px) and (min-height:460px) {
+ body.v2-battle-page.v2-playing #match-view > .arena.v2-reference-table {
+  --pc-card-width: min(9.4dvh, 6.3vw, 82px);
+  --pc-energy-width: calc(var(--pc-card-width) * .79);
+  --pc-hand-width: min(11.8dvh, 7vw, 88px);
+  --v3-rows: minmax(0,35fr) minmax(20px,3fr) minmax(0,34fr) minmax(142px,28fr);
+  display: grid;
+  grid-template-columns: clamp(100px,9.2vw,140px) minmax(0,1fr) clamp(125px,12vw,185px);
+  grid-template-rows: minmax(0,1fr);
+  min-height: 0;
+  overflow: hidden;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-rail {
+  display: grid;
+  grid-template-rows: var(--v3-rows);
+  min-height: 0;
+  min-width: 0;
+ }
+ /* The old desktop .lifeRow uses flex-basis/max-height:17px. Reset BOTH;
+    otherwise seven large card backs collapse onto one red horizontal strip. */
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail {
+  padding: 3px 6px 0 8px;
+  overflow: hidden;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group {
+  grid-column:1;
+  grid-row:3;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:4px;
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group.opponent {grid-row:1}
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .lifeRow {
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  gap:0;
+  width:100%;
+  height:auto;
+  min-height:0;
+  max-height:none;
+  max-width:none;
+  flex-wrap:nowrap;
+  padding:0;
+  margin:0;
+  overflow:visible;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-caption {
+  display:block;
+  flex:0 0 auto;
+  min-height:14px;
+  margin:0 0 3px 3px;
+  color:#dceaff;
+  font-size:10px;
+  line-height:14px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .lifeCard {
+  display:flex;
+  flex:0 0 clamp(16px,2.4dvh,20px);
+  width:100%;
+  min-width:0;
+  height:clamp(16px,2.4dvh,20px);
+  min-height:0;
+  max-height:none;
+  margin:-2px 0 0;
+  padding:1px 5px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid #7299c2;
+  border-radius:5px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .lifeCard:last-of-type {
+  flex-basis:clamp(30px,5.5dvh,43px);
+  height:clamp(30px,5.5dvh,43px);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-removed-zone {
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  margin:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-removed-zone .v2-zone-pile {
+  width:100%;
+  min-height:21px;
+  max-height:27px;
+  margin:0;
+ }
+ /* Fix the implicit CSS Grid auto-columns bug. AP and lines previously
+    occupied different columns, bunching all four card slots at the left. */
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr) minmax(43px,8dvh);
+  grid-auto-columns:minmax(0,1fr);
+  grid-auto-flow:row;
+  align-content:stretch;
+  justify-content:stretch;
+  justify-items:stretch;
+  gap:0;
+  padding:2px 9px 4px 5px;
+  min-width:0;
+  min-height:0;
+  overflow:hidden;
+  position:relative;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea.opponent {
+  grid-template-rows:minmax(43px,8dvh) minmax(0,1fr) minmax(0,1fr);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea .lineGroup {
+  grid-column:1;
+  grid-row:1;
+  display:grid;
+  grid-template-columns:clamp(59px,6vw,82px) minmax(0,1fr);
+  width:100%;
+  max-width:none;
+  min-width:0;
+  min-height:0;
+  justify-self:stretch;
+  align-self:stretch;
+  align-items:center;
+  gap:4px;
+  margin:0;
+  padding:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea .lineGroup:has(.lineLabel.energy) {grid-row:2}
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea.opponent .lineGroup:has(.lineLabel.energy) {grid-row:2}
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea.opponent .lineGroup:has(.lineLabel.front) {grid-row:3}
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea .v2-table-ap {
+  grid-column:1;
+  grid-row:3;
+  align-self:stretch;
+  justify-self:stretch;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea.opponent .v2-table-ap {grid-row:1}
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .slots {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  width:100%;
+  min-width:0;
+  max-width:none;
+  justify-items:center;
+  justify-content:stretch;
+  align-items:center;
+  gap:clamp(3px,.7vw,12px);
+  margin:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .slots > .slot {
+  width:var(--pc-card-width);
+  max-width:100%;
+  min-width:0;
+  justify-self:center;
+  margin:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup .lineLabel {
+  min-width:0;
+  padding:0 2px;
+  text-align:left;
+  line-height:1.4;
+  font-size:10px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .piles {display:none}
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .playerInfo {
+  position:absolute;
+  left:5px;
+  right:8px;
+  top:0;
+  width:auto;
+  height:17px;
+  min-height:0;
+  max-height:none;
+  margin:0;
+  z-index:3;
+  pointer-events:none;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-table-ap .apRow {
+  width:auto;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:7px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-table-ap .apCard {
+  flex:0 0 auto;
+  width:clamp(32px,5dvh,51px);
+  height:clamp(43px,7.4dvh,72px);
+ }
+ /* The old action bar was absolutely positioned over the bottom 30px
+    of the hand, obscuring cards. Give it a real row below the cards. */
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea {
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+  gap:2px;
+  padding:4px 10px 5px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea .handTitle {
+  display:flex;
+  flex:0 0 16px;
+  height:16px;
+  min-height:16px;
+  margin:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea .hand {
+  flex:1 1 auto;
+  height:auto;
+  min-height:0;
+  max-height:none;
+  overflow-x:auto;
+  overflow-y:hidden;
+  justify-content:safe center;
+  padding:2px 4px 0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea .handCard {
+  width:var(--pc-hand-width);
+  height:auto;
+  max-height:calc(100% - 2px);
+  min-height:0;
+  flex-shrink:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea .v2-compact-actions {
+  position:relative;
+  flex:0 0 auto;
+  left:auto;
+  right:auto;
+  bottom:auto;
+  width:100%;
+  min-height:28px;
+  max-height:38px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  margin:1px 0 0;
+  padding:2px 4px;
+  z-index:5;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-rail {
+  padding:3px 7px 0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group {
+  min-width:0;
+  min-height:0;
+  justify-content:space-evenly;
+  margin:4px 0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-controls {
+  min-width:0;
+  min-height:0;
+  padding:4px 0;
+ }
+}
+/* At small laptop viewport heights, shrink cards instead of clipping controls. */
+@media (min-width:761px) and (min-height:460px) and (max-height:570px) {
+ body.v2-battle-page.v2-playing #match-view > .arena.v2-reference-table {
+  --pc-card-width:min(7.4dvh,5.8vw,66px);
+  --pc-hand-width:min(8.2dvh,6.4vw,67px);
+  --v3-rows:minmax(0,35fr) minmax(19px,3fr) minmax(0,34fr) minmax(120px,28fr);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .lifeCard {
+  flex-basis:clamp(13px,2.4dvh,17px);
+  height:clamp(13px,2.4dvh,17px);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .lifeCard:last-of-type {
+  flex-basis:clamp(26px,5dvh,34px);
+  height:clamp(26px,5dvh,34px);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-removed-zone .v2-zone-pile {
+  min-height:18px;
+ }
+}
