@@ -1,0 +1,625 @@
+{
+  "group": "B",
+  "baseline": "ccd6c9a4971f721697d9b7abd43f7a59bb05f40e",
+  "baseBranch": "cursor/effect-audit-round11",
+  "range": "EX16BT/MMM-2-001 至 MMM-2-025。",
+  "updated": "2026-11-07",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX16BT%2FMMM-2-001 起，至 MMM-2-025。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX16BT_MMM-2-001.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX16BT_MMM-2-012.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX16BT_MMM-2-021.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=EX16BT",
+    "checked": "2026-11-07",
+    "note": "2026-11-07 對過 EX16BT 001–025 的官方日文頁與卡圖。001 的抽牌、移除、登場與退場移除都在深色突襲框內，突襲基礎是〈鹿目 まどか〉。012 沒有突襲框；1 ターンに 1 回只接在第二個啟動。021 沒有突襲框，綠的發生能量旁有＋，休息的啟動在框外。範圍內 FAQ 都是 2026-09-18：Q2344（001）、Q2345 與 Q2346（007）、Q2347（008）、Q2348（011）、Q2349（012）、Q2350（016）、Q2351（023）、Q2352（025）。Q2353 起的 027、028、031 與之後不在這組。負面 BP 仍走 characterHarmBlocked，BP 0 仍在效果結束後依規則退到場外。戰鎚回歸仍是 MMM-2-014 減不到活著的戰鎚。沒有改第一彈 mmm-pack.mjs、共用引擎或總帳。"
+  },
+  "counts": {
+    "已驗證": 25,
+    "部分核對": 0,
+    "待修正": 0,
+    "缺資料待確認": 0,
+    "無效果": 0
+  },
+  "fixes": [
+    "MMM-2-012 的第二個啟動：場外〈鹿目 まどか〉印刷能量合計未滿 4 不能啟動。合計達到 4 之後還可以繼續放，選結束才活動；未滿 4 不能結束。先放的一張在牌庫最底下。",
+    "MMM-2-007 再執行登場時時，改讀場上那張實體卡的印刷效果。先前只傳卡號，共用取卡要求實體 UID，啟動會直接失敗。"
+  ],
+  "sharedGaps": [],
+  "tests": {
+    "command": "node --test tests/v2-mmm2-001-025.test.mjs tests/v2-mmm-set2.test.mjs tests/v2-mmm1-001-025.test.mjs tests/v2-mmm1-026-050.test.mjs tests/v2-mmm-set1.test.mjs tests/v2-mmm-set1-faq.test.mjs tests/v2-mmm-set1-rest.test.mjs tests/v2-warhammer-runtime.test.mjs",
+    "result": "Node v22.23.4。139 passed, 0 failed。新檔 27。set2、第一彈 001–025、026–050、set1、FAQ、rest 與戰鎚回歸合在同一輪。沒有跑整庫。MMM-1-001、MMM-1-020 只當對戰與衝擊的夾具。"
+  },
+  "reviews": [
+    {
+      "cardId": "MMM-2-001",
+      "number": "EX16BT/MMM-2-001",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框內登場時抽 1，可移除手牌，再從移除區以休息登場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX16BT%2FMMM-2-001 。Q2344：剛移除的那張若符合條件可以登場。普通登場不看框內文。",
+          "implementation": "raid-box 只列 onPlay 與 onRetire。正面突襲才抽牌。可跳過移除。黃、能量 3 以下、AP1、魔法少女、名稱不是〈鹿目 まどか〉，從移除區休息進場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm2-001-025.test.mjs：付費登場不抽。突襲 004 後抽 1，005 進移除區再休息進前線。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲框內退場時把自己與至多 1 張場外角色移到移除區",
+          "status": "已驗證",
+          "official": "同一頁。把自己放進移除區，再可把 1 張自己的場外角色放進移除區。",
+          "implementation": "自己已在場外就移到移除區。場外角色可跳過。沒有突襲層的退場留在場外。",
+          "discrepancy": "",
+          "evidence": "新檔：對方 BP5000 打贏突襲的 001，001 進移除區，場外的 002 可留著。付費登場的 001 被打退後留在場外，沒有後續選擇。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "生命觸發可入手，能量足夠時也可突襲。",
+          "implementation": "生命突襲。黃能量 5 且基礎是〈鹿目 まどか〉時可以突襲，否則可入手。",
+          "discrepancy": "",
+          "evidence": "新檔生命：007、008、002 湊 5 點黃，突襲 004，活動進場，登場時可跳過。入手也在選項裡。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-002",
+      "number": "EX16BT/MMM-2-002",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【インパクト無効】",
+          "status": "已驗證",
+          "official": "與這張戰鬥的角色，該次戰鬥沒有衝擊。",
+          "implementation": "impactNull。defenderNullifiesImpact 在攻擊方勝出時不結算衝擊。",
+          "discrepancy": "",
+          "evidence": "新檔：MMM-1-020 的衝擊 1 打贏 021 時生命少 1。同一攻擊打贏 002 時生命不變，002 退到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔：未阻擋的 1 點傷害翻開 002，手牌加 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-003",
+      "number": "EX16BT/MMM-2-003",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時必須選一個曉美ほむら效果，各 1 回合 1 次",
+          "status": "已驗證",
+          "official": "同一卡名的兩個選項各只能用一次。甲要手牌登場且場上有アルティメットまどか才抽 1。乙可把移除區的アルティメットまどか放到場外，然後可休息對方前線。",
+          "implementation": "u003 沒有跳過。甲鎖暁美 ほむら|a，乙鎖 |b。沒有移除區目標就結束。接著可跳過休息。",
+          "discrepancy": "",
+          "evidence": "新檔：沒有最終圓時只能選乙且不抽。有最終圓時先選甲抽 1，第二張只能選乙，把移除區的 001 放到場外並休息對方。第三張兩個選項都沒有。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "可活動一張角色。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔生命：翻開後活動休息中的 021。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-004",
+      "number": "EX16BT/MMM-2-004",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "自己場上沒有卡時必要能量減黃 2，登場時看牌頂 1 張",
+          "status": "已驗證",
+          "official": "空場減 2。看自己牌庫頂 1 張，放回頂端或場外。對手不看。",
+          "implementation": "emptyOwnFieldHandEnergyDiscount 2，peekTopOne。私人選項只給操作者。",
+          "discrepancy": "",
+          "evidence": "新檔：空場費用 0，有角色時費用 2。看牌時對手的私人選項是 null，公開揭示沒有那張，可放到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-005",
+      "number": "EX16BT/MMM-2-005",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "可移動 1 次；對方回合 BP+1000",
+          "status": "已驗證",
+          "official": "移動 1 次。對方回合 BP+1000。沒有觸發。",
+          "implementation": "step 與 opponentTurnBp 1000。",
+          "discrepancy": "",
+          "evidence": "新檔：移動階段踏一次後到能量線，不能再踏。自己回合 BP 3000，對方主要階段 4000。生命翻開後沒有觸發選擇，直接進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-006",
+      "number": "EX16BT/MMM-2-006",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "自己場外事件 4 張以上時 BP+1000",
+          "status": "已驗證",
+          "official": "數事件，不是角色。沒有觸發。",
+          "implementation": "ownOutsideEventCountAtLeast 4，任何回合。",
+          "discrepancy": "",
+          "evidence": "新檔：3 張場外事件仍是 2000，第 4 張變成 3000。生命翻開沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-007",
+      "number": "EX16BT/MMM-2-007",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "其他魔法少女在場時不能登場；登場時可給一張角色 BP+1000",
+          "status": "已驗證",
+          "official": "Q2345：複數這張也只加 1。自己以外、名稱不是巴 マミ的魔法少女會擋住登場。登場時可選自己。",
+          "implementation": "引擎 entryBanned。onPlay 是可跳過的 buffOwnField，不排除自己。丘比沒有特徵，不擋。",
+          "discrepancy": "",
+          "evidence": "新檔：杏子在場不能付費登場。杏子離場、另一張巴 マミ在場就可以。登場後可給丘比 +1000，變成 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "啟動再執行登場時；場外事件看成多 1",
+          "status": "已驗證",
+          "official": "Q2346：5 張實際場外事件看成 6，這張自己的啟動也算。複數不疊加。剛付費登場的那張是休息，不能當下啟動。",
+          "implementation": "ready、每張 uid 一次。outsideEvents 加 mamiOutsideEventBonus。replay 讀場上實體的印刷登場時。",
+          "discrepancy": "",
+          "evidence": "新檔：4 張事件時兩張 007 都不能啟動。第 5 張之後兩張活動的都可以。用過的那張不能再用，另一張還可以，並再次打開 +1000 的選擇。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-008",
+      "number": "EX16BT/MMM-2-008",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "移除區有角色因自己效果進場後，抽 1 再棄 1；卡名 1 回",
+          "status": "已驗證",
+          "official": "Q2347：兩張不能在同一回合各用一次。先抽再必須棄。",
+          "implementation": "removedEntry 本回合、活動、美樹 さやか|removed。啟動當下鎖名。棄牌沒有跳過。",
+          "discrepancy": "",
+          "evidence": "新檔：沒有移除區進場時不能啟動。001 把 005 從移除區休息進能量線後可啟動，牌庫少 1，必須棄 1。另一張 008 不能再用。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "可活動一張角色。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔生命：活動休息中的角色。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-009",
+      "number": "EX16BT/MMM-2-009",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "至多 2 張角色 BP+2000，再抽 1；其他場外事件 6 張以上抽 2",
+          "status": "已驗證",
+          "official": "其他事件不含這張自己。巴 マミ的 +1 也算進這個 6。可以一張都不選。",
+          "implementation": "u009 可結束。drawN 在結算當下用 outsideEvents，排除自己。007 在場時 +1。",
+          "discrepancy": "",
+          "evidence": "新檔：選 1 張後結束，該張 4000、另一張維持 1000，抽 1。007 在場且另有 5 張事件時直接結束，抽 2。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "可活動一張角色。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔生命：活動休息中的角色，事件進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-010",
+      "number": "EX16BT/MMM-2-010",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "有鹿目まどか抽 3，否則抽 2；再移除手牌 1 張與這張事件",
+          "status": "已驗證",
+          "official": "011 的別名算〈鹿目 まどか〉。抽完必須把手牌 1 張與場外的這張都放進移除區。",
+          "implementation": "u010 沒有跳過。事件從場外進移除區。",
+          "discrepancy": "",
+          "evidence": "新檔：沒有該名稱時牌庫少 2，有 011 時少 3。手牌與事件都進移除區。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-011",
+      "number": "EX16BT/MMM-2-011",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "回到手牌時可棄紫的アルティメットまどか，再休息登場能量 1 以下的紫角色，並可活動鹿目まどか且 BP+2500",
+          "status": "已驗證",
+          "official": "Q2348：剛放到場外的那張若符合登場條件可以選。這張印刷能量是 5，所以自己不符合。每步都可以不做。別名算〈鹿目 まどか〉。",
+          "implementation": "引擎在自己回合從前線或能量線回到手牌時排入 mmm2。u011 可跳過。能量 5 的自己不在登場名單。u011c 活動並 +2500 到這個回合。",
+          "discrepancy": "",
+          "evidence": "新檔：012 把 011 彈回手牌後可棄這張。它不在登場名單。015 從手牌休息進前線，再被活動，BP 5000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】場外紫角色能量 2 以下 AP1 活動進前線",
+          "status": "已驗證",
+          "official": "從場外選符合的角色，活動進前線。",
+          "implementation": "triggerEffect deployOutsideCharacter。colorOutside，ready true。不付 AP。",
+          "discrepancy": "",
+          "evidence": "新檔生命：014 從場外活動進前線，沒有後續負面 BP。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-012",
+      "number": "EX16BT/MMM-2-012",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "前線、每張 1 回：彈回 1 張鹿目まどか，看頂 2，至多 1 張入手",
+          "status": "已驗證",
+          "official": "必須彈回。看的 2 張只有自己看見。選 1 張入手時其餘進場外。也可以 1 張都不拿。別名算〈暁美 ほむら〉與〈鹿目 まどか〉。",
+          "implementation": "mmm2:0 要在前線，每張 uid 一次。look 的 data.uids 給操作者，對手是 null。",
+          "discrepancy": "",
+          "evidence": "新檔：彈回 004。對手私人選項是 null，自己看到 2 張。選 1 張入手，另一張進場外。同一張不能再彈。",
+          "unresolved": ""
+        },
+        {
+          "match": "場外鹿目まどか能量合計 4 以上時放牌庫底並活動；卡名 1 回",
+          "status": "已驗證",
+          "official": "Q2349 對的是印著 1 ターンに 1 回的這個啟動。望む枚数可以在合計已滿 4 後繼續放。先指定的在最底下。未滿 4 不能啟動，也不能中途結束。",
+          "implementation": "啟動前先加總。u012b 滿 4 才提供結束。結束或放完且已滿 4 才活動。bottomAt 讓第一張停在牌庫底。",
+          "discrepancy": "",
+          "evidence": "新檔：只有一張能量 2 時不能啟動。能量 5 放下後可以結束並活動，剩下的留在場外，那張在牌庫底。兩張能量 2 時第一張之後不能結束，兩張都放下才活動，第一張在最底。另一張 012 不能再用這個啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "可到手牌。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔生命：入手。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-013",
+      "number": "EX16BT/MMM-2-013",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "自己回合、場上有鹿目まどか時 BP+1000",
+          "status": "已驗證",
+          "official": "只在自己回合。011 的別名算。",
+          "implementation": "ownNameExists，turn own。",
+          "discrepancy": "",
+          "evidence": "新檔：沒有該名稱是 3000。011 在能量線時自己回合 4000，對方主要階段回到 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-014",
+      "number": "EX16BT/MMM-2-014",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "因自己效果登場時，可令對方前線 BP-1000 到這個回合",
+          "status": "已驗證",
+          "official": "付費登場不減。可跳過。BP 0 在效果結束後依規則退場，去場外，不是移除區。戰鎚免疫仍擋這個減益。",
+          "implementation": "thisEntryByOwnEffect。u014 先看 characterHarmBlocked。負面 buff 被擋時不寫入。BP 0 的規則退場在效果範圍結束後。",
+          "discrepancy": "",
+          "evidence": "新檔：付費登場沒有選擇，對方 3000 不變。018 從場外休息進場後可減 017 的 1000，017 進場外而非移除區，旁邊 3000 不變。tests/v2-warhammer-runtime.test.mjs：活著的戰鎚減不到。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-015",
+      "number": "EX16BT/MMM-2-015",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時抽 1，必須把手牌 1 張放場外",
+          "status": "已驗證",
+          "official": "沒有跳過。沒有觸發。",
+          "implementation": "drawDiscard。effect-discard 沒有空選項。",
+          "discrepancy": "",
+          "evidence": "新檔：牌庫少 1，必須棄掉指定手牌到場外。生命翻開沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-016",
+      "number": "EX16BT/MMM-2-016",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "每張 1 回：退場另一張能量 4 以下的角色，抽 1 並活動自己",
+          "status": "已驗證",
+          "official": "不能選自己。能量超過 4 不能選。沒有跳過。退場後才抽並活動。",
+          "implementation": "u016a 檢查能量與來源。after 抽 1 並 active。",
+          "discrepancy": "",
+          "evidence": "新檔：012 可退、能量 5 的 011 不可退。退場後牌庫少 1，自己變活動，不能再用。",
+          "unresolved": ""
+        },
+        {
+          "match": "前線公開牌頂；紫牌依能量設定阻擋上下限",
+          "status": "已驗證",
+          "official": "Q2350：能量 1 以下同時有 4000 以上與 2000 以下。公開是公開資訊。可留在頂端或放場外。017 削減牌庫中的紫能量。",
+          "implementation": "publish 後 u016b。deckEnergy 只對紫牌。atLeast 與 atMost 寫進 mmm2Block。",
+          "discrepancy": "",
+          "evidence": "新檔：公開頂端對對方可見。一張場上的 017 把能量 2 的紫牌看成 1，兩個門檻都在，BP1000 與 BP4000 都不能阻擋。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-017",
+      "number": "EX16BT/MMM-2-017",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "每張未沉默的複本使牌庫中紫牌能量減 1；啟動給其他角色 BP+1000",
+          "status": "已驗證",
+          "official": "複本疊加。最低到 0。啟動要休息，必須選其他角色，沒有跳過。",
+          "implementation": "引擎 deckPrintedEnergy。main 休息後 buff，排除自己。",
+          "discrepancy": "",
+          "evidence": "新檔：不能選自己。021 變成 2000。兩張 017 把能量 3 的紫牌頂看成 1，016 的兩個阻擋門檻都成立。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "可活動一張角色。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔生命：活動休息中的角色。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-018",
+      "number": "EX16BT/MMM-2-018",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "從場外休息登場至多 1 張紫能量 1 以下的ほむら與まどか；前線有悪魔ほむら時活動 1 點 AP",
+          "status": "已驗證",
+          "official": "兩邊各至多一張。可以少選。012 的別名是悪魔ほむら，能量 4，不能被這張登場。活動的是 1 點 AP。",
+          "implementation": "u018 可結束。兩邊都選完或沒有剩餘時 finish018。readyOneAp 活動第一張未活動的 AP。",
+          "discrepancy": "",
+          "evidence": "新檔：014 休息進能量線、015 休息進前線。花費 2 點 AP 後回到 1 點活動 AP。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-019",
+      "number": "EX16BT/MMM-2-019",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "休息後抽 1，必須棄 1 張手牌",
+          "status": "已驗證",
+          "official": "沒有跳過。沒有觸發。用過會休息，同一張不能連用。",
+          "implementation": "main019。活動且未休息才能啟動，啟動後休息。",
+          "discrepancy": "",
+          "evidence": "新檔：啟動後休息，牌庫少 1，指定手牌進場外，不能再啟動。生命翻開沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-020",
+      "number": "EX16BT/MMM-2-020",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "自己回合場上有美国織莉子時 BP+1000；退場時可給織莉子 BP+1000",
+          "status": "已驗證",
+          "official": "加值只在自己回合。退場時可選，持續到這個回合。沒有觸發。",
+          "implementation": "ownNameExists turn own。onRetire 是可跳過的名稱 buff。",
+          "discrepancy": "",
+          "evidence": "新檔：023 在場時自己回合 4000，對方回合 3000。被 BP5000 打退後可選 023，BP 變成 5000。生命翻開沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-021",
+      "number": "EX16BT/MMM-2-021",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "發生能量綠＋；休息一次，這個回合能量 +1，主要階段結束時退場",
+          "status": "已驗證",
+          "official": "卡圖沒有突襲框。＋是活動時的追加能量，前線不產生能量。退到場外，不是移除區。沒有觸發。",
+          "implementation": "restSelfGainEnergyRetireEndMain。無色的能量 buff 只在產生能量的區域計入自己的顏色。主要階段結束時依延遲效果退場。",
+          "discrepancy": "",
+          "evidence": "新檔：前線啟動後綠能量不變，離開主要階段進場外。能量線印刷 1，啟動後 2，離開主要階段後綠能量回到 0，卡在場外。生命翻開沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-022",
+      "number": "EX16BT/MMM-2-022",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時可給其他角色 BP+1000 到這個回合",
+          "status": "已驗證",
+          "official": "不能選自己。可跳過。只到這個回合。沒有觸發。",
+          "implementation": "buffOther，excludeSelf。untilTurn。",
+          "discrepancy": "",
+          "evidence": "新檔：自己不在名單。021 變成 2000。對方主要階段回到 1000。生命翻開沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-023",
+      "number": "EX16BT/MMM-2-023",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "活動登場；可棄手牌，再從場外休息登場綠、能量 3 以下、AP1 的呉キリカ",
+          "status": "已驗證",
+          "official": "Q2351：剛放到場外的那張若符合就可以登場。020 是吳キリカ，能量 3、AP1、綠。",
+          "implementation": "enterAlwaysActive。u023 可跳過。offerDeploy 從場外、ready false。",
+          "discrepancy": "",
+          "evidence": "新檔：付費登場後是活動。棄 020 後它從場外休息進前線。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "可到手牌。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔生命：入手。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-024",
+      "number": "EX16BT/MMM-2-024",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時必須把手牌以外、能量 1 以下的一張自己角色回到手牌；沒有就回到自己",
+          "status": "已驗證",
+          "official": "有目標時不能跳過，也不能選能量更高的。沒有目標時把自己彈回。沒有觸發。",
+          "implementation": "bounceOwnOtherUnderEnergy energy 1。沒有其他目標時直接彈自己。",
+          "discrepancy": "",
+          "evidence": "新檔：021 可選，能量 3 的 020 與自己不可選，021 回手。單獨登場時自己回手，沒有選擇。生命翻開沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-2-025",
+      "number": "EX16BT/MMM-2-025",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "每張 1 回：把另一張前線的チームみかづき荘移到能量線；能量線滿了就先移除一張",
+          "status": "已驗證",
+          "official": "Q2352：能量線有空位就直接移動。滿了才選一張放進移除區再移動。不能選自己。",
+          "implementation": "destinations 在滿線時帶 replaceUid。moveLine 把被替下的卡送進移除區。",
+          "discrepancy": "",
+          "evidence": "新檔：另一張 025 移到空的能量線，沒有替換，同一張不能再用。四格都滿時，選中的能量卡進移除區，移動的角色進能量線。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔生命：抽 1。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}
