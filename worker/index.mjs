@@ -239,7 +239,15 @@ export default {
    if((method==='GET'||method==='HEAD')&&pages[path]){
     return currentPage(request,env.ASSETS,pages[path],ONLINE_UI_RELEASE.version);
    }
-   if(method==='GET'||method==='HEAD')return env.ASSETS.fetch(request);
+   if(method==='GET'||method==='HEAD'){
+    const asset=await env.ASSETS.fetch(request);
+    // Rules modules keep a stable address. A phone that stays in one match
+    // must not keep the previous script after this release is published.
+    if(!path.endsWith('.mjs')&&!path.endsWith('.js'))return asset;
+    const response=new Response(asset.body,asset);
+    response.headers.set('cache-control','no-store, max-age=0');
+    return response;
+   }
    return send(404,{error:'找不到頁面。'});
   }catch(error){
    const status=error instanceof ApiError?error.status:500;

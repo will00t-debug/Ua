@@ -22,7 +22,7 @@ import {bindAot,runAotJob,legalAotPending,resolveAotPending,
 import {bindAot2,runAot2Job,legalAot2Pending,resolveAot2Pending,
  legalAot2Activations,activateAot2,aot2MandatoryTargets} from './aot2-runtime.mjs';
 import {bindKmr,runKmrJob,legalKmrPending,resolveKmrPending,
- legalKmrActivations,legalKmrOutside,activateKmr} from './kmr-runtime.mjs';
+ legalKmrActivations,legalKmrOutside,activateKmr} from './kmr-runtime.mjs?v=20261107liner1';
 import {bindKmr2,runKmr2Job,legalKmr2Pending,resolveKmr2Pending,
  legalKmr2Activations,activateKmr2,kmr2Implements,noteKmr2Zone} from './kmr2-runtime.mjs?v=20261104kmrport1';
 import {bindCsm,runCsmJob,legalCsmPending,resolveCsmPending,
