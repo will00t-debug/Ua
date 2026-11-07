@@ -27,7 +27,7 @@
   box-shadow:inset 0 1px 6px #1f99ff55,0 0 6px #005abc66
  }
  body.v2-battle-page.v2-playing #match-view > .arena.v2-reference-table{
-  --pc-card-width:min(10.2dvh,6.4vw,88px);
+  --pc-card-width:min(8.2dvh,6.4vw,78px);
   --pc-energy-width:calc(var(--pc-card-width)*.81);
   --pc-hand-width:min(12dvh,7.1vw,92px);
   --v3-rows:minmax(0,34fr) minmax(28px,4fr) minmax(0,36fr) minmax(154px,26fr);
