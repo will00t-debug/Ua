@@ -2,11 +2,11 @@
 // not extra depth. A voluntary choice or an answer to the opponent is a
 // decision. Once the actor yields, the opponent plays one turn and the
 // actor answers blocks and triggers along the way.
-import {legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
+import {dispatchUniversalAction} from '../engine.mjs';
 import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal} from './strategy.mjs';
 import {packOf,visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -186,7 +186,7 @@ function settleBattle(pack,state,actor,ctx){
   BATTLE_KINDS.has(cursor.pending.kind)&&room(ctx);guard++){
   const seat=who(cursor);
   let legal;
-  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
+  try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
   if(!legal.length)return cursor;
   const maximize=seat===actor;
   const candidates=ctx.strategy==='reply'&&!maximize
@@ -213,7 +213,7 @@ function autoAdvance(pack,state,ctx){
  for(let guard=0;guard<10&&room(ctx)&&cursor.status==='playing';guard++){
   if(cursor.pending&&ORDER_KINDS.has(cursor.pending.kind)){
    let legal;
-   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
+   try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
    if(!legal.length)return cursor;
    const ordered=billedStep(ctx,pack,cursor,legal[0]);
    if(ordered.budget){ctx.stats.budget++;return cursor;}
@@ -224,7 +224,7 @@ function autoAdvance(pack,state,ctx){
   }
   if(cursor.pending)break;
   let legal;
-  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
+  try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
   if(legal.length===1&&legal[0].type==='next'){
    const forced=billedStep(ctx,pack,cursor,legal[0]);
    if(forced.budget){ctx.stats.budget++;return cursor;}
@@ -387,7 +387,7 @@ function fastOpponent(pack,cursor,actor,ctx){
  for(let step=0;step<12&&room(ctx)&&cursor.status==='playing';step++){
   if(!cursor.pending&&cursor.active===actor)break;
   let legal;
-  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;break;}
+  try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;break;}
   const seat=who(cursor);
   const action=ctx.strategy==='reply'&&seat!==actor
    ?replyAction(pack,cursor,legal)
@@ -435,7 +435,7 @@ function roll(pack,cursor,actor,ctx,pick){
  for(let step=0;step<8&&room(ctx)&&cursor.status==='playing';step++){
   if((cursor.pending?.player??cursor.active)!==actor)break;
   let legal;
-  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;break;}
+  try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;break;}
   const action=pick(pack,cursor,actor,legal);
   if(!action){
    if(cursor.pending)halted=true;
@@ -492,7 +492,7 @@ function applyLeaf(ctx,snap){
 function advanceForced(pack,cursor,ctx){
  for(let guard=0;guard<12&&room(ctx)&&cursor.status==='playing';guard++){
   let legal;
-  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
+  try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
   const ordered=cursor.pending&&ORDER_KINDS.has(cursor.pending.kind);
   if(!ordered&&legal.length!==1)return cursor;
   if(!legal.length)return cursor;
@@ -537,7 +537,7 @@ function replyFrom(pack,state,actor,ctx,left){
  if(!room(ctx)||cursor.status!=='playing'||(!cursor.pending&&cursor.active===actor))return cursor;
  if(left<=0)return fastOpponent(pack,cursor,actor,ctx);
  let legal;
- try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
+ try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;return cursor;}
  const seat=who(cursor);
  const candidates=ctx.strategy==='reply'
   ?replyCandidates(pack,cursor,legal,2)
@@ -609,7 +609,7 @@ function answerOpponent(pack,cursor,actor,ctx,left,depth){
   return value;
  }
  let legal;
- try{legal=legalUniversalActions(pack,cursor);}catch{
+ try{legal=cachedLegal(pack,cursor);}catch{
   ctx.stats.unsupported++;
   classifyLine(ctx,cursor,actor);
   return evaluate(pack,cursor,actor,ctx);
@@ -767,7 +767,7 @@ function finishLine(pack,cursor,actor,ctx){
  ctx.finishGuard=(ctx.finishGuard||0)+1;
  if(ctx.pass==='basic'&&(ctx.plan==='tree'||ctx.plan==='tree-replies')&&!ctx.developed&&!discardRoot(ctx)&&room(ctx)){
   let legal=null;
-  try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;legal=null;}
+  try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;legal=null;}
   const choices=legal&&developmentCandidates(pack,cursor,actor,legal,ctx);
   if(!choices)noteFollow(ctx,'no-candidate');
   else if(!followClock(ctx)){
@@ -839,7 +839,7 @@ function planFrom(pack,state,actor,ctx,left,depth){
  if(cursor.pending&&who(cursor)!==actor)return answerOpponent(pack,cursor,actor,ctx,left,depth);
  if(left<=0)return finishLine(pack,cursor,actor,ctx);
  let legal;
- try{legal=legalUniversalActions(pack,cursor);}catch{
+ try{legal=cachedLegal(pack,cursor);}catch{
   ctx.stats.unsupported++;
   classifyLine(ctx,cursor,actor);
   return evaluate(pack,cursor,actor,ctx);
@@ -979,7 +979,7 @@ function searchFrom(pack,state,actor,ctx,mode,left){
  if(left<=0)return remember(ctx,key,evaluate(pack,cursor,actor,ctx),mark);
  const seat=who(cursor);
  let legal;
- try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;return evaluate(pack,cursor,actor,ctx);}
+ try{legal=cachedLegal(pack,cursor);}catch{ctx.stats.unsupported++;return evaluate(pack,cursor,actor,ctx);}
  if(!legal.length)return evaluate(pack,cursor,actor,ctx);
  const candidates=selectCandidates(pack,cursor,seat,legal,ctx.beam);
  const finishRank=action=>action.type==='attack'?0:action.type==='next'?1:2;
@@ -1040,6 +1040,7 @@ export function scoreLine(pack,state,actor,action,limits){
   deadline:Math.min(requested,parent),
   parentDeadline:parent,
   profile:limits.profile||null,
+  legalCache:limits.legalCache||new WeakMap(),
   plan:limits.plan||(limits.finish===false?'tree':'rollout'),
   strategy:limits.strategy||null,
   beam:limits.beam,

@@ -357,7 +357,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const deadline=Number.isFinite(ms)&&ms<=0?clockStart-1:clockStart+ms;
   const pool={n:total};
   const nodesBefore=report.nodes;
-  const budget={pool,deadline,now};
+  const budget={pool,deadline,now,legalCache:new WeakMap()};
   const settle=()=>{report.nodes=nodesBefore+(total-pool.n);};
   const spent=()=>report.nodes-nodesBefore;
   const diagnose=options.diagnose!==false;
@@ -442,7 +442,7 @@ export function chooseAiV3Action(pack,state,options={}){
     const line=scoreLine(pack,worlds[w].state,actor,action,{
      nodes:slice,pool,beam,deadline:requested<deadline?requested:deadline,
      parentDeadline:deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass,
-     profile:options.profile||null
+     legalCache:budget.legalCache,profile:options.profile||null
     });
     if(line?.unexplored?.length)unexplored.push(...line.unexplored);
     if(!line||line.executed===false||!Number.isFinite(line.search)){

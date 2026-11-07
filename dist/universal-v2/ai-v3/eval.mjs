@@ -5,7 +5,7 @@ import {dispatchUniversalAction,effectiveHandRequiredEnergy,legalUniversalAction
 import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
 import {aot2Warhammer} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
-import {noteDispatch,spendSharedStep,strategyScore} from './strategy.mjs';
+import {cachedLegal,noteDispatch,spendSharedStep,strategyScore} from './strategy.mjs';
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 // A hand card that can raid a body already on our side is not a generic card.
@@ -646,7 +646,7 @@ export function raidStranded(pack,state,actor,action,after){
  if(action?.type!=='raid'||!after||state?.pending||state?.phase!=='main')return 0;
  const catalog=packOf(pack,actor).cards;
  let legal;
- try{legal=legalUniversalActions(pack,state);}catch{return 0;}
+ try{legal=cachedLegal(pack,state);}catch{return 0;}
  const payable=new Set();
  for(const item of legal){
   if(!item?.uid||item.uid===action.uid)continue;

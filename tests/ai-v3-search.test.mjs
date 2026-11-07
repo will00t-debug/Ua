@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {mainDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,AI_V3_BASELINE,resetAiV3Report,aiV3Report,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {positionKey,searchPosition,rankLegal} from '../dist/universal-v2/ai-v3/beam.mjs';
+import {bindProbeBudget,cachedLegal} from '../dist/universal-v2/ai-v3/strategy.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {matchGrid,pairedChallenger} from '../dist/universal-v2/ai-v3/compare.mjs';
@@ -910,4 +911,33 @@ test('step 24 scores an open battle without calling the cut a finished turn',()=
  assert.equal(followed.energy,5);
  assert.ok(followed.next<=5);
  assert.equal(lineOf({action:fixed.action}),'front');
+});
+
+test('a legal list is reused only for the same state object and pack',()=>{
+ const deck=mainDecks().find(item=>item.title==='bleach');
+ const {packs,state}=boot(deck,7);
+ const actor=state.active;
+ const cache=new WeakMap();
+ const copy=structuredClone(state);
+ for(const card of copy.players[actor].apCards)card.ready=false;
+ const world=beliefWorld(packs,state,actor,1,0).state;
+ let first,again,otherPack,rested,hidden;
+ bindProbeBudget({legalCache:cache},()=>{
+  first=cachedLegal(packs,state);
+  again=cachedLegal(packs,state);
+  otherPack=cachedLegal([packs[0],packs[1]],state);
+  rested=cachedLegal(packs,copy);
+  hidden=cachedLegal(packs,world);
+ });
+ assert.equal(again,first);
+ assert.deepEqual(first,legalUniversalActions(packs,state));
+ assert.notEqual(otherPack,first);
+ assert.deepEqual(otherPack,first);
+ assert.notEqual(rested,first);
+ assert.deepEqual(rested,legalUniversalActions(packs,copy));
+ assert.notEqual(hidden,first);
+ assert.deepEqual(hidden,legalUniversalActions(packs,world));
+ const outside=cachedLegal(packs,state);
+ assert.notEqual(outside,first);
+ assert.deepEqual(outside,first);
 });

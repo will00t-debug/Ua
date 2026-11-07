@@ -42,6 +42,19 @@ export function searchPool(){
 function probeBudget(){
  return probeStack.length?probeStack[probeStack.length-1]:null;
 }
+// One decision's legal lists. The key is the state object itself plus the
+// pack object: dispatch clones, so a later AP, discount, pending, or hidden
+// world is a different object. The map lives on that decision's budget and
+// is dropped with it. A caller must not mutate the list or the state.
+export function cachedLegal(pack,state){
+ const cache=probeBudget()?.legalCache;
+ if(!cache)return legalUniversalActions(pack,state);
+ const hit=cache.get(state);
+ if(hit&&hit.pack===pack)return hit.list;
+ const list=legalUniversalActions(pack,state);
+ cache.set(state,{pack,list});
+ return list;
+}
 
 function squash(value){return String(value||'').replace(/\s+/g,'');}
 function energyOf(pack,state,player){
