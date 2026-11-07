@@ -213,16 +213,18 @@ function writeLedger(ledger){
   '',
   '## 各系列',
   '',
-  '| 系列 | 商品 | 總數 | 已驗證 | 部分核對 | 缺資料 | 待修正 | 未檢查 | 行動值／無效果 |',
-  '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'];
+  '| 系列 | 商品 | 總數 | 已驗證 | 部分核對 | 已修正待驗證 | 缺資料 | 待修正 | 未檢查 | 行動值／無效果 |',
+  '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'];
  for(const group of ledger.summary.series){
   const aside=(group.行動值卡||0)+(group.無效果||0);
   lines.push('| '+[group.name,group.product,group.total,group.已驗證||0,
-   group.部分核對||0,group.缺資料待確認||0,group.待修正||0,group.未檢查||0,aside].join(' | ')+' |');
+   group.部分核對||0,group.已修正待驗證||0,group.缺資料待確認||0,group.待修正||0,
+   group.未檢查||0,aside].join(' | ')+' |');
  }
  const playable=ledger.summary.playable;
  lines.push('','可出牌 '+playable.total+' 張。整張已驗證 '+(playable.已驗證||0)+
-  ' 張。部分核對 '+(playable.部分核對||0)+' 張。缺資料待確認 '+(playable.缺資料待確認||0)+
+  ' 張。部分核對 '+(playable.部分核對||0)+' 張。已修正待驗證 '+(playable.已修正待驗證||0)+
+  ' 張。缺資料待確認 '+(playable.缺資料待確認||0)+
   ' 張。待修正 '+(playable.待修正||0)+
   ' 張。未檢查 '+(playable.未檢查||0)+' 張。行動值卡 '+ledger.summary.ap.total+
   ' 張、無效果卡 '+ledger.summary.noEffect.total+' 張另行統計，不擋住下一張可出牌。','',

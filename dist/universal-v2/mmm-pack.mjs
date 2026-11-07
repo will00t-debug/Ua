@@ -89,8 +89,8 @@ export function mmmPackCard(card){
  const onPlay=kind==='entryOtherImpact'?[{op:'noteEntryTurn'}]:
   kind==='removedDraw'?[{op:'ifEnteredFromRemoved',then:[{op:'oncePerTurnGate',scope:'name',
    optional:false,then:[{op:'draw',count:1}]}]}]:
-  kind==='removedLook'?[{op:'ifEnteredFromRemoved',then:[{op:'inspectTopArrange',count:2,
-   toOutside:true,rest:'top'}]}]:
+  kind==='removedLook'?[{op:'ifEnteredFromRemoved',then:[{op:'inspectTopAnyOutside',count:2,
+   rest:'top'}]}]:
   kind==='removedActive'?[{op:'ifEnteredFromRemoved',then:[{op:'activeOwnOther',optional:true}]}]:
   kind==='frontImpactDraw'?[{op:'frontGrantKit',bp:2000,impactPlus:1,drawIfName:'暁美 ほむら'}]:
   kind==='frontDoubleCut'?[{op:'frontGrantKit',bp:1000,attackTwice:true}]:

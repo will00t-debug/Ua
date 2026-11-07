@@ -607,7 +607,7 @@ test('Sayaka adds one yellow on the energy line and retires when main ends',()=>
  assertUniversalMatch(packs,front);
 });
 
-test('Sayaka from the removed area can keep both cards or send one outside',()=>{
+test('Sayaka from the removed area can keep, split, or send both looked cards outside',()=>{
  const counts=countsFor(['MMM-1-024','MMM-1-002','MMM-1-025','MMM-1-011','MMM-1-010','MMM-1-006','MMM-1-009']);
  let kept=toPhase(fresh(counts,91026),'main');
  yellow(kept,4);
@@ -619,7 +619,7 @@ test('Sayaka from the removed area can keep both cards or send one outside',()=>
  const raid=toHand(kept,0,'MMM-1-002');
  kept=use(kept,acts(kept).find(a=>a.type==='raid'&&a.uid===raid.uid&&a.baseUid===host.uid));
  kept=use(kept,acts(kept).find(a=>a.type==='play'&&a.from==='removed'&&a.uid===sayaka.uid&&a.line==='energy'));
- assert.equal(kept.pending.kind,'effect-top-inspect');
+ assert.equal(kept.pending.kind,'effect-top-inspect-many');
  assert.equal(universalPrivateChoices(packs,kept,1),null);
  assertHidden(kept,both.map(c=>c.uid));
  kept=pick(kept,a=>a.uid==null);
@@ -638,11 +638,32 @@ test('Sayaka from the removed area can keep both cards or send one outside',()=>
  split=use(split,acts(split).find(a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid));
  split=use(split,acts(split).find(a=>a.type==='play'&&a.from==='removed'&&a.uid===copy.uid&&a.line==='energy'));
  split=pick(split,a=>a.uid===window[0].uid);
+ assert.equal(split.pending.kind,'effect-top-inspect-many');
+ assert.equal(split.players[0].outside.some(c=>c.uid===window[0].uid),false);
+ split=pick(split,a=>a.uid==null);
  assert.equal(split.pending.kind,'effect-top-order');
  assert.equal(split.players[0].outside.some(c=>c.uid===window[0].uid),true);
  split=orderRest(split);
  assert.equal(split.players[0].deck[0].uid,window[1].uid);
  assert.equal(split.players[0].outside.some(c=>c.uid===window[1].uid),false);
+
+ let bothOut=toPhase(fresh(counts,91030),'main');
+ yellow(bothOut,4);
+ const seat=put(bothOut,0,'MMM-1-006','front',0,true);
+ const third=take(bothOut,0,'MMM-1-024');
+ bothOut.players[0].removed.push(third);
+ const pair=stackTop(bothOut,0,['MMM-1-009','MMM-1-006']);
+ readyAp(bothOut,0,2);
+ const cover=toHand(bothOut,0,'MMM-1-002');
+ bothOut=use(bothOut,acts(bothOut).find(a=>a.type==='raid'&&a.uid===cover.uid&&a.baseUid===seat.uid));
+ bothOut=use(bothOut,acts(bothOut).find(a=>a.type==='play'&&a.from==='removed'&&a.uid===third.uid&&a.line==='energy'));
+ assert.equal(universalPrivateChoices(packs,bothOut,1),null);
+ bothOut=pick(bothOut,a=>a.uid===pair[0].uid);
+ bothOut=pick(bothOut,a=>a.uid===pair[1].uid);
+ assert.equal(bothOut.pending,null);
+ assert.equal(pair.every(c=>bothOut.players[0].outside.some(x=>x.uid===c.uid)),true);
+ assert.equal(bothOut.players[0].deck.slice(0,2).some(c=>pair.some(x=>x.uid===c.uid)),false);
+ assertUniversalMatch(packs,bothOut);
  assertUniversalMatch(packs,split);
 });
 

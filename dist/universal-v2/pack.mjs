@@ -2656,9 +2656,15 @@ function verifyProgram(program,path){
     Object.keys(gate.then[0]).length===2;
    const look=then?.length===1&&gate?.op==='inspectTopArrange'&&gate.count===2&&
     gate.toOutside===true&&gate.rest==='top'&&Object.keys(gate).length===4;
+   // 望む枚数 can send every looked card outside. inspectTopArrange stops
+   // after one. The any-count look is the removed-entry form of that sentence.
+   const lookAny=then?.length===1&&gate?.op==='inspectTopAnyOutside'&&gate.count===2&&
+    gate.rest==='top'&&gate.maxOutside===undefined&&
+    gate.drawIfOutsideEnergyAtLeast===undefined&&gate.whenEnteredByCharacter===undefined&&
+    Object.keys(gate).length===3;
    const active=then?.length===1&&gate?.op==='activeOwnOther'&&gate.optional===true&&
     Object.keys(gate).length===2;
-   if(Object.keys(e).length!==2||!Array.isArray(then)||!(draw||look||active))
+   if(Object.keys(e).length!==2||!Array.isArray(then)||!(draw||look||lookAny||active))
     throw Error(path+'['+i+'] invalid removed-entry gate');
    verifyProgram(then,path+'['+i+'].then');
   }
