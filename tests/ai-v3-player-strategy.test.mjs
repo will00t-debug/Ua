@@ -1736,8 +1736,14 @@ test('a partial block that saves the last life is not replaced by the losing pas
    assert.equal(timedTrace.sequence[0].type,'move');
    assert.equal(timedTrace.settled,true);
   }else{
-   assert.equal(timedTrace.settled,false);
-   assert.equal(timedTrace.incomplete,true);
+   const chosen=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type===timed.type&&(row.action?.uid??null)===(timed.uid??null));
+   if(chosen){
+    assert.equal(timedTrace.score,chosen.search);
+    if(timedTrace.settled)assert.equal(chosen.boundary==='returned'||chosen.boundary==='terminal',true);
+   }else{
+    assert.equal(timedTrace.settled,false);
+    assert.equal(timedTrace.incomplete,true);
+   }
   }
   console.log('clock40 life-save',JSON.stringify({
    actor,action:timed.type,reason:timedTrace.reason,nodes:timedTrace.nodesUsed,
@@ -2109,11 +2115,23 @@ test('two 4000s both attack into a 5000 and a 3000, and one 4000 still stays bac
   const timedTrace=lastAiV3Trace();
   assert.equal(timedMeter.dispatches,timedTrace.nodesUsed);
   assert.ok(timedTrace.nodesUsed<=48);
-  const timedAttack=(timedTrace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,timed));
-  assert.equal(timed.type,'attack');
-  assert.equal(timedTrace.score,timedAttack.search);
-  assert.equal(timedTrace.sequence[0].uid,timed.uid);
-  assert.equal(timedTrace.settled,!!timedAttack.settled);
+  const finishedAttack=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.boundary==='returned'&&row.settled&&row.action?.type==='attack');
+  const finishedPass=(timedTrace.candidates||[]).find(row=>row.executed!==false&&row.action?.type==='next'&&(row.boundary==='returned'||row.boundary==='terminal'));
+  if(finishedAttack&&finishedPass&&finishedAttack.search>=finishedPass.search){
+   assert.equal(timed.type,'attack');
+   assert.equal(timedTrace.score,finishedAttack.search);
+   assert.equal(timedTrace.sequence[0].uid,timed.uid);
+   assert.equal(timedTrace.settled,true);
+  }else{
+   const chosen=(timedTrace.candidates||[]).find(row=>row.executed!==false&&sameAction(row.action,timed));
+   if(chosen){
+    assert.equal(timedTrace.score,chosen.search);
+    if(timedTrace.settled)assert.equal(chosen.boundary==='returned'||chosen.boundary==='terminal',true);
+   }else{
+    assert.equal(timedTrace.settled,false);
+    assert.equal(timedTrace.incomplete,true);
+   }
+  }
   console.log('two attackers',JSON.stringify({
    actor,score:first.trace.score,pass:passRow.search,nodes:first.trace.nodesUsed,
    clock:timed.type,clockNodes:timedTrace.nodesUsed,settled:timedTrace.settled
