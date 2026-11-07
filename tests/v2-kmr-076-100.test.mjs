@@ -413,6 +413,63 @@ test('KMR-1-080 may draw zero or one only after an unblocked raided attack',()=>
  assert.equal(assertUniversalMatch(packs,drawn),true);
 });
 
+test('KMR-1-079 copies Rod Form on play and may draw one after an unblocked attack',()=>{
+ let skip=open(['KMR-1-079','KMR-1-080','KMR-1-078','KMR-1-089',...RED],80084);
+ line(skip,0,RED);
+ const ura=put(skip,0,'KMR-1-089','front',0,true);
+ const platform=put(skip,0,'KMR-1-078','energy',3,true);
+ const rod=take(skip,0,'KMR-1-080');
+ const liner=take(skip,0,'KMR-1-079');
+ onlyHand(skip,0,[rod,liner]);
+ ready(skip);
+ skip=raidOnto(skip,rod.uid,ura.uid);
+ assert.equal(onBoard(skip,0,rod.uid).unblockedDrawGranted.copiedFrom,undefined);
+ skip=raidOnto(skip,liner.uid,platform.uid);
+ const live=onBoard(skip,0,liner.uid);
+ assert.equal(live.unblockedDrawGranted,undefined);
+ skip=toAttack(skip);
+ skip=use(skip,a=>a.type==='attack'&&a.uid===live.uid);
+ assert.equal(skip.pending.id,'KMR-1-079');
+ skip=kmr(skip,a=>a.mode==='own'&&a.uid===rod.uid);
+ const granted=onBoard(skip,0,liner.uid).unblockedDrawGranted;
+ assert.equal(granted.upTo,1);
+ assert.equal(granted.copiedFrom,'KMR-1-080');
+ assert.equal(granted.stamp,onBoard(skip,0,liner.uid).fieldEntryStamp);
+ assert.equal(skip.pending.kind,'block');
+ const deck=skip.players[0].deck.length;
+ skip=use(skip,a=>a.type==='chooseBlock'&&a.uid==null);
+ assert.equal(skip.pending.kind,'effect-may-draw');
+ assert.equal(skip.pending.sourceUid,liner.uid);
+ skip=use(skip,a=>a.type==='chooseMayDraw'&&a.mode==='skip');
+ assert.equal(skip.players[0].deck.length,deck);
+
+ let drawn=open(['KMR-1-079','KMR-1-080','KMR-1-078','KMR-1-089',...RED],80085);
+ line(drawn,0,RED);
+ const host=put(drawn,0,'KMR-1-089','front',0,true);
+ const desk=put(drawn,0,'KMR-1-078','energy',3,true);
+ const copied=take(drawn,0,'KMR-1-080');
+ const rider=take(drawn,0,'KMR-1-079');
+ onlyHand(drawn,0,[copied,rider]);
+ ready(drawn);
+ drawn=raidOnto(drawn,copied.uid,host.uid);
+ drawn=raidOnto(drawn,rider.uid,desk.uid);
+ drawn=toAttack(drawn);
+ const before=drawn.players[0].deck.length;
+ drawn=use(drawn,a=>a.type==='attack'&&a.uid===rider.uid);
+ drawn=kmr(drawn,a=>a.mode==='own'&&a.uid===copied.uid);
+ drawn=use(drawn,a=>a.type==='chooseBlock'&&a.uid==null);
+ drawn=use(drawn,a=>a.type==='chooseMayDraw'&&a.mode==='draw');
+ assert.equal(drawn.players[0].deck.length,before-1);
+ assert.equal(assertUniversalMatch(packs,skip),true);
+ assert.equal(assertUniversalMatch(packs,drawn),true);
+ const owner=drawn.players[0];
+ const slot=owner.front.findIndex(c=>c?.uid===copied.uid);
+ assert.ok(slot>=0);
+ owner.outside.push(owner.front[slot]);
+ owner.front[slot]=null;
+ assert.throws(()=>assertUniversalMatch(packs,drawn),/Forged unblocked-attack draw grant/);
+});
+
 test('KMR-1-081 stores a BP range, leaves it for a non-range choice, and may draw',()=>{
  const counts=withCopies(['KMR-1-081','KMR-1-084','KMR-1-098','KMR-1-100','KMR-1-082','KMR-1-076','KMR-1-004','KMR-1-070','KMR-1-087'],
   {'KMR-1-081':2,'KMR-1-082':3});
