@@ -188,6 +188,14 @@ function finishedSurvival(row){
 function immediateLoss(row){
  return !!row&&row.executed!==false&&row.boundary==='terminal'&&Number.isFinite(row.search)&&row.search<=-90000;
 }
+function finishedLine(row){
+ return !!row&&row.executed!==false&&(row.boundary==='returned'||row.boundary==='terminal');
+}
+// Mandatory discards only. An optional gate still has a legal skip, and a
+// finished skip is not rewritten into a discard.
+function mandatoryDiscardKind(kind){
+ return kind==='effect-discard'||kind==='end-hand-limit';
+}
 // The search already walked this line home, or finished a game that is not
 // an immediate loss. A later preference can still break a tie. It cannot
 // trade that line for an action the same comparison already finished as a
@@ -567,9 +575,20 @@ export function chooseAiV3Action(pack,state,options={}){
   const backup=reliableChoice(pack,state,actor,legal,hardExact,ordered);
   const {rows:comparable,shared,contested}=comparedLines(scored);
   const missed=jobs.length>scored.length||scored.some(item=>!item.settled);
-  const discardWindow=(state.pending?.kind||'').startsWith('effect-discard');
+  const pendingKind=state.pending?.kind||'';
+  const discardWindow=pendingKind.startsWith('effect-discard');
   const discardIncomplete=discardWindow&&legal.some(action=>action.type==='chooseDiscard'&&action.uid&&
    !comparable.some(item=>same(item.action,action)));
+  const mandatoryRows=scored.filter(row=>row.executed!==false&&row.action?.uid&&(
+   (pendingKind==='end-hand-limit'&&row.action.type==='chooseHandLimit')||
+   (pendingKind==='effect-discard'&&row.action.type==='chooseDiscard')));
+  const provenWin=scored.some(row=>row.executed!==false&&row.boundary==='terminal'&&row.search>=90000);
+  // Yielded against pending is how far the script walked, not which card is
+  // worse to keep. Until every searched mandatory discard is home together,
+  // the keep-order is the choice. A line that already won stays. A finished
+  // set of lines still compares, so a higher keep card can win on evidence.
+  const discardOpen=mandatoryDiscardKind(pendingKind)&&!provenWin&&
+   mandatoryRows.some(row=>!finishedLine(row));
   // An idle line that got home does not beat a play whose combo was cut.
   // Spending the last needed energy is not that combo. Lines that stopped
   // together still compete, including a raid ahead of next.
@@ -588,7 +607,7 @@ export function chooseAiV3Action(pack,state,options={}){
   })():backup;
   const energySample=legal.find(action=>action.type==='move');
   const energyView=diagnose&&energySample?cachedMoveDevelopment(pack,state,actor,energySample):null;
-  if((!comparable.length||discardIncomplete||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
+  if((!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
    const kept=holdSurvival(choice,preferEarlyDraw(pack,state,actor,placed,scored),scored);
    report.budgetFallback++;
@@ -635,8 +654,15 @@ export function chooseAiV3Action(pack,state,options={}){
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished
   // scores are not a reason to throw away the card the keep-order retains.
-  // A line that already won is left alone, and the backup does not dispatch.
-  if(discardWindow&&now()>deadline&&!(keptRow?.boundary==='terminal'&&keptRow.search>=90000)){
+  // Spending the node pool is the same cutoff: the clock is not the only
+  // way a mandatory discard stops short. A line that already won is left
+  // alone. A finished line is also left alone, so this does not replace a
+  // completed comparison. Optional gates are not in this node cutoff.
+  const nodesSpent=pool.n<=0;
+  const keptWin=keptRow?.boundary==='terminal'&&keptRow.search>=90000;
+  const clockCut=discardWindow&&now()>deadline&&!keptWin;
+  const nodeCut=mandatoryDiscardKind(pendingKind)&&nodesSpent&&!finishedLine(keptRow)&&!keptWin;
+  if(clockCut||nodeCut){
    const rankedDiscard=reliableChoice(pack,state,actor,legal,null,ordered);
    const backed=legal.find(item=>same(item,rankedDiscard));
    const backedRow=tracedRow(scored,backed);

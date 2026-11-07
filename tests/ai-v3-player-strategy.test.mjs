@@ -1125,20 +1125,20 @@ function devDeck(){
 function readyAp(state,player){
  return state.players[player].apCards.filter(card=>card.inPlay&&card.ready).length;
 }
-function reachStart(ap){
+function reachStart(ap,first=0){
  const packs=[pack,pack];
  const used=devDeck();
- let state=newUniversalMatch(packs,{decks:[used,used],seed:21,first:0});
- for(let guard=0;guard<120&&state.status==='playing';guard++){
-  if(state.active===0&&state.phase==='start'&&!state.pending&&readyAp(state,0)>=ap)break;
+ let state=newUniversalMatch(packs,{decks:[used,used],seed:21,first});
+ for(let guard=0;guard<160&&state.status==='playing';guard++){
+  if(state.active===first&&state.phase==='start'&&!state.pending&&readyAp(state,first)>=ap)break;
   const legal=legalUniversalActions(packs,state);
   const action=legal.find(item=>item.type==='next')||legal[0];
   state=dispatchUniversalAction(packs,state,action);
  }
  assert.equal(state.phase,'start');
- assert.equal(state.active,0);
+ assert.equal(state.active,first);
  assert.equal(state.pending,null);
- assert.ok(readyAp(state,0)>=ap);
+ assert.ok(readyAp(state,first)>=ap);
  return {packs,state};
 }
 function wipeSide(state,player){
@@ -1193,35 +1193,38 @@ function passToMain(packs,state){
  return {cursor,passed};
 }
 
-function openDiscard(){
- const {packs,state}=reachStart(2);
+function openDiscard(first=0,dropEvent=false){
+ const {packs,state}=reachStart(2,first);
  wipeSide(state,0);
  wipeSide(state,1);
- place(state,0,take(state,0,'BLC-1-083'),'energy',0);
- const played=take(state,0,'BLC-4-066');
- const kept=hold(state,0,['BLC-4-066','BLC-2-069','BLC-2-067','BLC-2-067','BLC-1-085','BLC-2-073']);
- state.players[0].hand.push(played);
+ place(state,first,take(state,first,'BLC-1-083'),'energy',0);
+ const played=take(state,first,'BLC-4-066');
+ const ids=['BLC-4-066','BLC-2-069','BLC-2-067','BLC-2-067','BLC-1-085'];
+ if(!dropEvent)ids.push('BLC-2-073');
+ const kept=hold(state,first,ids);
+ state.players[first].hand.push(played);
  setLife(state,0,7);
  setLife(state,1,7);
- state.players[0].apCards.forEach((card,index)=>{card.inPlay=index<2;card.ready=index<2;});
+ state.players[first].apCards.forEach((card,index)=>{card.inPlay=index<2;card.ready=index<2;});
  let cursor=state;
  for(let guard=0;guard<4&&cursor.phase!=='main';guard++){
   const step=legalUniversalActions(packs,cursor).find(action=>action.type==='next');
-  cursor=dispatchUniversalAction(packs,cursor,step,{actor:0});
+  cursor=dispatchUniversalAction(packs,cursor,step,{actor:first});
  }
  assert.equal(cursor.phase,'main');
- assert.equal(readyAp(cursor,0),2);
+ assert.equal(readyAp(cursor,first),2);
  assert.equal(assertUniversalMatch(packs,cursor),true);
  const play=legalUniversalActions(packs,cursor).find(action=>action.type==='play'&&action.uid===played.uid&&action.line==='energy');
  assert.ok(play);
- cursor=dispatchUniversalAction(packs,cursor,play,{actor:0});
+ cursor=dispatchUniversalAction(packs,cursor,play,{actor:first});
  assert.equal(cursor.pending?.kind,'effect-discard-gate');
- assert.equal(readyAp(cursor,0),1);
- assert.equal(universalEnergyByColor(packs,cursor,0).green,2);
+ assert.equal(cursor.pending.player,first);
+ assert.equal(readyAp(cursor,first),1);
+ assert.equal(universalEnergyByColor(packs,cursor,first).green,2);
  assert.equal(cursor.players[0].front.filter(Boolean).length,0);
  assert.equal(cursor.players[1].front.filter(Boolean).length,0);
  assert.equal(assertUniversalMatch(packs,cursor),true);
- return {packs,state:cursor,event:kept[5].uid,generator:kept[0].uid,played:played.uid};
+ return {packs,state:cursor,event:dropEvent?null:kept[5].uid,generator:kept[0].uid,played:played.uid,actor:first};
 }
 function askUntil(packs,state,at){
  const meter={dispatches:0};
@@ -2461,11 +2464,11 @@ test('two 4000s both attack into a 5000 and a 3000, and one 4000 still stays bac
 function minKeep(packs,state,actor){
  return Math.min(...state.players[actor].hand.map(card=>keepScore(packs,state,actor,card)));
 }
-function replayWhiteHandLimit(){
+function replayWhiteHandLimit(seed=8302,first=1,seat=0,step=49){
  const deck=battleDecks().find(item=>item.id==='white-sword');
  const audit=JSON.parse(readFileSync(new URL('../audit/ai-v3-official-8300-nodes48-white-reuse.json',import.meta.url),'utf8'));
  const game=audit.titles['white-sword'].byMode.tree.games
-  .find(item=>item.seed===8302&&item.first===1&&item.challengerSeat===0);
+  .find(item=>item.seed===seed&&item.first===first&&item.challengerSeat===seat);
  const packs=[deck.pack,deck.pack];
  let state=newComparedMatch(packs,[deck.counts,deck.counts],game.seed,game.first,matchRules('official'));
  for(const choice of game.opening){
@@ -2473,12 +2476,40 @@ function replayWhiteHandLimit(){
   state=dispatchUniversalAction(packs,state,legal.find(item=>item.type==='openingMulligan'&&item.mode===choice.mode),{actor:choice.actor});
  }
  for(const recorded of game.actions){
-  if(recorded.step===49)return {packs,state};
+  if(recorded.step===step)return {packs,state};
   const legal=legalUniversalActions(packs,state);
   state=dispatchUniversalAction(packs,state,legal.find(item=>JSON.stringify(item)===JSON.stringify(recorded.action)),{actor:recorded.actor});
  }
  throw Error('hand-limit snapshot missing');
 }
+function keepBackup(packs,state,actor){
+ const legal=legalUniversalActions(packs,state).filter(action=>action.uid&&
+  (action.type==='chooseHandLimit'||action.type==='chooseDiscard'||action.type==='chooseDiscardGate'));
+ legal.sort((a,b)=>{
+  const delta=keepScore(packs,state,actor,state.players[actor].hand.find(card=>card.uid===a.uid))
+   -keepScore(packs,state,actor,state.players[actor].hand.find(card=>card.uid===b.uid));
+  if(delta)return delta;
+  return JSON.stringify(a)<JSON.stringify(b)?-1:1;
+ });
+ return legal[0];
+}
+function handCut(packs,state,at,nodes=48){
+ const actor=state.pending.player;
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,structuredClone(state),{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes,diagnose:true,meter,
+  ms:at==null?1e9:40,now:at==null?()=>0:()=>meter.dispatches>=at?1e9:0
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=nodes);
+ return {action,trace,meter,actor};
+}
+// Step 49 used to discard the raid piece. One event line was already
+// searched; the miss was the string order filling the rest of the beam,
+// then the cutoff backup selecting that raid piece back.
 test('hand limit spends the lowest keep card and leaves the raid piece',()=>{
  const {packs,state}=replayWhiteHandLimit();
  const actor=state.pending.player;
@@ -2550,4 +2581,156 @@ test('hand limit spends the lowest keep card and leaves the raid piece',()=>{
  const last=ask(packs,alone);
  assert.equal(last.action.type,'chooseHandLimit');
  assert.equal(last.action.uid,raid.uid);
+});
+
+function assertUnfinishedBackup(packs,state,label){
+ const actor=state.pending.player;
+ const backup=keepBackup(packs,state,actor);
+ const catalog=packs[actor].cards;
+ const hand=state.players[actor].hand;
+ const floor=keepScore(packs,state,actor,hand.find(card=>card.uid===backup.uid));
+ const checks=[null,4,8,12,16,24,32,40,44,48];
+ let first=null;
+ for(const at of checks){
+  const {action,trace}=handCut(packs,state,at);
+  assert.equal(action.type,'chooseHandLimit',label+' '+at);
+  assert.equal(action.uid,backup.uid,label+' '+at);
+  assert.equal(keepScore(packs,state,actor,hand.find(card=>card.uid===action.uid)),floor);
+  assert.equal(trace.reason,'budget-fallback',label+' '+at);
+  assert.equal(trace.incomplete,true);
+  assert.equal(trace.settled,false);
+  const row=(trace.compared||[]).find(item=>item.executed!==false&&item.action?.uid===action.uid);
+  if(row){
+   assert.equal(trace.score,row.search,label+' '+at);
+   assert.equal(row.settled,false);
+   assert.equal(trace.sequence[0].uid,action.uid);
+   assert.notEqual(row.boundary,'returned');
+   assert.notEqual(row.boundary,'terminal');
+  }else{
+   assert.equal(trace.score,null);
+   assert.equal(trace.sequence?.length||0,0);
+  }
+  const further=(trace.compared||[]).filter(item=>item.executed!==false&&item.action?.uid&&item.action.uid!==action.uid&&
+   item.search>row?.search);
+  for(const other of further){
+   const card=hand.find(item=>item.uid===other.action.uid);
+   assert.ok(keepScore(packs,state,actor,card)>=floor,label+' '+at);
+   assert.equal(other.boundary==='terminal'&&other.search>=90000,false,label+' '+at);
+  }
+  if(at==null)first={action,trace,floor};
+ }
+ const again=handCut(packs,state,null);
+ assert.equal(again.action.uid,first.action.uid);
+ assert.equal(catalog[hand.find(card=>card.uid===backup.uid).cardId].type==='event'||
+  catalog[hand.find(card=>card.uid===backup.uid).cardId].type==='character',true);
+ return first;
+}
+
+test('an unfinished hand limit discards the lowest keep card at every cutoff',()=>{
+ const progress=replayWhiteHandLimit(8302,0,0,137);
+ const {packs,state}=progress;
+ const actor=state.pending.player;
+ assert.equal(actor,0);
+ assert.equal(state.pending.kind,'end-hand-limit');
+ assert.equal(state.players.map(player=>player.life.length).join('-'),'6-5');
+ const hand=state.players[actor].hand;
+ const events=hand.filter(card=>packs[actor].cards[card.cardId].type==='event');
+ const floor=minKeep(packs,state,actor);
+ assert.equal(events.filter(card=>keepScore(packs,state,actor,card)===floor).length,2);
+ const cheap=hand.find(card=>packs[actor].cards[card.cardId].energy===0&&packs[actor].cards[card.cardId].bp===1500);
+ assert.ok(keepScore(packs,state,actor,cheap)>floor);
+ const chosen=assertUnfinishedBackup(packs,state,'137');
+ assert.equal(packs[actor].cards[hand.find(card=>card.uid===chosen.action.uid).cardId].type,'event');
+ assert.notEqual(chosen.action.uid,cheap.uid);
+ assert.equal((chosen.trace.compared||[]).some(row=>row.executed!==false&&row.search>chosen.trace.score&&
+  keepScore(packs,state,actor,hand.find(card=>card.uid===row.action?.uid))>chosen.floor),true);
+ const spent=dispatchUniversalAction(packs,state,chosen.action,{actor});
+ assert.equal(assertUniversalMatch(packs,spent),true);
+ assert.equal(spent.players[actor].hand.some(card=>card.uid===cheap.uid),true);
+
+ const watched=replayWhiteHandLimit(8301,0,1,29);
+ assert.equal(watched.state.pending.player,1);
+ assert.equal(watched.state.pending.kind,'end-hand-limit');
+ const seat=watched.state.pending.player;
+ const watchedHand=watched.state.players[seat].hand;
+ const watchedFloor=minKeep(watched.packs,watched.state,seat);
+ const yielded=watchedHand.find(card=>watched.packs[seat].cards[card.cardId].energy===0&&
+  watched.packs[seat].cards[card.cardId].bp===1500);
+ assert.ok(keepScore(watched.packs,watched.state,seat,yielded)>watchedFloor);
+ const observed=assertUnfinishedBackup(watched.packs,watched.state,'29');
+ assert.equal(watched.packs[seat].cards[watchedHand.find(card=>card.uid===observed.action.uid).cardId].type,'character');
+ assert.notEqual(observed.action.uid,yielded.uid);
+ assert.equal((observed.trace.compared||[]).some(row=>row.executed!==false&&row.search>observed.trace.score&&
+  keepScore(watched.packs,watched.state,seat,watchedHand.find(card=>card.uid===row.action?.uid))>observed.floor),true);
+ const removed=dispatchUniversalAction(watched.packs,watched.state,observed.action,{actor:seat});
+ assert.equal(assertUniversalMatch(watched.packs,removed),true);
+ assert.equal(removed.players[seat].hand.some(card=>card.uid===yielded.uid),true);
+});
+
+test('a finished hand-limit comparison keeps its score, including a tied keep order',()=>{
+ const {packs,state}=replayWhiteHandLimit(8302,0,0,137);
+ const {action,trace,actor}=handCut(packs,state,null,480);
+ const hand=state.players[actor].hand;
+ const rows=(trace.compared||[]).filter(row=>row.executed!==false&&row.action?.type==='chooseHandLimit');
+ assert.ok(rows.length>=2);
+ assert.ok(rows.every(row=>row.boundary==='returned'&&row.settled===true));
+ const best=Math.max(...rows.map(row=>row.search));
+ const chosen=rows.find(row=>row.action.uid===action.uid);
+ assert.equal(trace.reason,'search');
+ assert.equal(trace.settled,true);
+ assert.equal(trace.score,best);
+ assert.equal(chosen.search,best);
+ assert.equal(trace.sequence[0].uid,action.uid);
+ const tied=rows.filter(row=>row.search===best);
+ const floor=Math.min(...tied.map(row=>keepScore(packs,state,actor,hand.find(card=>card.uid===row.action.uid))));
+ assert.equal(keepScore(packs,state,actor,hand.find(card=>card.uid===action.uid)),floor);
+ const worse=rows.filter(row=>row.search<best);
+ for(const row of worse)assert.notEqual(row.action.uid,action.uid);
+});
+
+test('an optional discard gate keeps a finished skip comparison and does not ignore it',()=>{
+ for(const seat of [0,1]){
+  const opened=openDiscard(seat,false);
+  const legal=legalUniversalActions(opened.packs,opened.state);
+  assert.equal(legal.some(action=>action.type==='chooseDiscardGate'&&!action.uid),true);
+  const full=ask(opened.packs,opened.state);
+  assert.equal(full.action.type,'chooseDiscardGate');
+  assert.equal(full.action.uid,opened.event);
+  assert.equal(full.trace.reason,'search');
+  assert.equal(full.trace.settled,true);
+  const rows=(full.trace.compared||[]).filter(row=>row.executed!==false);
+  const skip=rows.find(row=>row.action?.type==='chooseDiscardGate'&&!row.action.uid);
+  const event=rows.find(row=>row.action?.uid===opened.event);
+  assert.equal(skip.boundary,'returned');
+  assert.equal(event.boundary,'returned');
+  assert.ok(event.search>skip.search);
+  assert.equal(full.trace.score,event.search);
+  const early=askUntil(opened.packs,opened.state,8);
+  assert.equal(early.action.type,'chooseDiscardGate');
+  assert.equal(early.action.uid,opened.event);
+  assert.notEqual(early.action.uid,null);
+
+  const quiet=openDiscard(seat,true);
+  assert.equal(legalUniversalActions(quiet.packs,quiet.state).some(action=>action.type==='chooseDiscardGate'&&!action.uid),true);
+  const kept=ask(quiet.packs,quiet.state);
+  assert.equal(kept.action.type,'chooseDiscardGate');
+  assert.ok(kept.action.uid);
+  assert.equal(kept.trace.reason,'search');
+  assert.equal(kept.trace.settled,true);
+  const quietRows=(kept.trace.compared||[]).filter(row=>row.executed!==false);
+  const quietSkip=quietRows.find(row=>!row.action?.uid);
+  const picked=quietRows.find(row=>row.action?.uid===kept.action.uid);
+  assert.equal(quietSkip.boundary,'returned');
+  assert.ok(picked.search>quietSkip.search);
+  assert.equal(kept.trace.score,picked.search);
+  const best=Math.max(...quietRows.map(row=>row.search));
+  assert.equal(picked.search,best);
+  const hand=quiet.state.players[seat].hand;
+  const tied=quietRows.filter(row=>row.action?.uid&&row.search===best);
+  const floor=Math.min(...tied.map(row=>keepScore(quiet.packs,quiet.state,seat,hand.find(card=>card.uid===row.action.uid))));
+  assert.equal(keepScore(quiet.packs,quiet.state,seat,hand.find(card=>card.uid===kept.action.uid)),floor);
+  const higher=quietRows.filter(row=>row.action?.uid&&keepScore(quiet.packs,quiet.state,seat,hand.find(card=>card.uid===row.action.uid))>floor);
+  assert.ok(higher.length>=1);
+  assert.ok(higher.every(row=>row.search<picked.search));
+ }
 });
