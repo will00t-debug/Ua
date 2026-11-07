@@ -105,6 +105,19 @@
   border-radius:7px;color:#f1f9ff;
   box-shadow:inset 0 0 6px #5babef3a
  }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-extra-draw-rail{
+  grid-row:2;grid-column:1;
+  align-self:center;display:flex;align-items:center;
+  justify-content:center;min-width:0;min-height:0;padding:2px 0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-extra-draw-rail button{
+  width:100%;min-height:32px;max-width:100%;
+  padding:4px 5px;border:1px solid #5be7ff;
+  border-radius:8px;background:linear-gradient(180deg,#c7faff,#4ea6d7);
+  box-shadow:inset 0 0 9px #fff,0 0 10px #18b8efac;
+  color:#062044;font-size:clamp(9px,.85vw,12px);
+  font-weight:900;white-space:normal;line-height:1.25;cursor:pointer
+ }
  /* Central board: energy and frontline resemble illuminated empty panels. */
  body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea{
   padding:4px clamp(10px,1.2vw,19px) 4px 8px;
