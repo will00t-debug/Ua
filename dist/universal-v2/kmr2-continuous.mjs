@@ -45,12 +45,17 @@ function fieldExact(pack,s,owner,card,name){
  return field(s.players[owner]).some(x=>exactName(card(pack,x),name));
 }
 function enteredNow(s,c){return c?.kmr2EnteredBy?.turn===s.turn;}
+// Q552: a Raid frame is live only while a face-up card is under this top.
+// KMR-2-005 / 012 print the BP, immunity and Impact inside that frame.
+function faceUpRaidStack(c){
+ return (c?.stack||[]).some(layer=>layer&&layer.faceDown!==true);
+}
 
 function bpFor(id,pack,s,c,owner,card){
  let n=0;
- if(id==='KMR-2-005'&&s.active===owner&&enteredNow(s,c))n+=3000;
+ if(id==='KMR-2-005'&&faceUpRaidStack(c)&&enteredNow(s,c))n+=3000;
  if(id==='KMR-2-008'&&s.active===owner&&s.kmr2GochizoLeft?.[owner]===s.turn)n+=1000;
- if(id==='KMR-2-012'&&s.active===owner&&enteredNow(s,c))n+=1000;
+ if(id==='KMR-2-012'&&faceUpRaidStack(c)&&enteredNow(s,c))n+=1000;
  if(id==='KMR-2-023'&&s.active===owner&&facedown(c))n+=1500;
  if(id==='KMR-2-038'&&s.active===owner&&schoolCount(pack,s,owner,card,'メテオ')>=3)n+=1000;
  if(id==='KMR-2-051'&&s.active!==owner&&id!==card(pack,c).id)n-=1500;
@@ -69,7 +74,7 @@ export function kmr2Bp(pack,s,c,printed,suppressed,owner,card){
  return idsOf(printed,c).reduce((n,id)=>n+bpFor(id,pack,s,c,owner,card),0);
 }
 function impactFor(id,pack,s,c,owner,card){
- if(id==='KMR-2-012'&&s.active===owner&&enteredNow(s,c))return 1;
+ if(id==='KMR-2-012'&&faceUpRaidStack(c)&&enteredNow(s,c))return 1;
  if(id==='KMR-2-030'&&s.active===owner&&schoolCount(pack,s,owner,card,'フォーゼ')>=3)return 1;
  if(id==='KMR-2-073'&&s.active===owner&&fieldHas(pack,s,owner,card,'ディケイド'))return 1;
  return 0;
@@ -139,7 +144,7 @@ export function kmr2BlockFloors(pack,s,attacker,card,suppressed){
  return floors;
 }
 export function kmr2ChoiceImmune(pack,s,c,card,suppressed){
- if(!c||suppressed||!enteredNow(s,c))return false;
+ if(!c||suppressed||!enteredNow(s,c)||!faceUpRaidStack(c))return false;
  return idsOf(card(pack,c),c).includes('KMR-2-005');
 }
 export function kmr2Protected(pack,s,target,card,sourceType){

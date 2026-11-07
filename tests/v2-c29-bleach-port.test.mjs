@@ -6122,7 +6122,9 @@ test('BLC-1-081 cannot enter or move to energy, and raises its retirement cap at
  assert.equal(played.pending.choices.includes(lowTall.uid),false);
  assert.equal(fieldCount(played,0),6);
  assert.equal(legalUniversalActions(low.packs,played).some(a=>a.type==='chooseRetireBp'&&a.uid===null),true);
+ played.aotBpRange[0]=1000;
  const declined=dispatchUniversalAction(low.packs,played,{type:'chooseRetireBp',uid:null});
+ assert.equal(declined.aotBpRange[0],1000);
  assert.equal(declined.pending,null);
  assert.equal(declined.players[1].front.some(c=>c?.uid===lowSmall.uid),true);
  assert.equal(universalImpact(low.packs,declined,live(declined,0,lowKen.uid)),1);
@@ -6142,7 +6144,9 @@ test('BLC-1-081 cannot enter or move to energy, and raises its retirement cap at
  assert.equal(raised.pending.limit,4000);
  assert.equal(raised.pending.choices.includes(highTall.uid),true);
  aiOk(high.packs,raised);
+ raised.aotBpRange[0]=1000;
  raised=dispatchUniversalAction(high.packs,raised,{type:'chooseRetireBp',uid:highTall.uid});
+ assert.equal(raised.aotBpRange[0],0);
  assert.equal(raised.pending,null);
  assert.equal(raised.players[1].outside.some(c=>c.uid===highTall.uid),true);
  const parked=main(deck,30674);
@@ -14125,3 +14129,81 @@ function locationLine(s,uid){
 function fieldCount(s,p){
  return [...s.players[p].front,...s.players[p].energy].filter(c=>c&&cardHasTrait(bleach.cards[c.cardId],'護廷十三隊')).length;
 }
+
+test('BLC-2-006 does not draw from an earlier character entry after a later hand play',()=>{
+ const card=bleach.cards['BLC-2-006'];
+ const hit={id:card.id,name:card.name,color:card.color,type:card.type,energy:card.energy,
+  ap:card.ap,bp:card.bp,gen:card.gen,traits:[...card.traits],trigger:card.trigger,
+  triggerEffect:card.triggerEffect,mainAbility:card.mainAbility,implementation:'dsl',effects:card.effects};
+ const deploy={op:'deployOwnHandRest',type:'character',color:'yellow',energy:4,ap:1,max:1};
+ const unit=(id,extra)=>({id,name:id,color:'yellow',type:'character',energy:0,ap:1,bp:2000,
+  gen:1,traits:[],trigger:null,implementation:'dsl',effects:{},...extra});
+ const lab=createUniversalPack({id:'c29-own-character-replay',cards:[
+  hit,unit('SRC',{effects:{onPlay:[deploy]}}),
+  unit('BNC',{effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',energy:4}]}}),
+  ...['A','B','C','D','E','F','G','H','I','J'].map(id=>unit(id,{implementation:'vanilla'}))
+ ]});
+ const ids=['BLC-2-006','SRC','BNC','A','B','C','D','E','F','G','H','I','J'];
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ const both=[lab,lab];
+ let state=newUniversalMatch(both,{decks:[counts,counts],seed:290068,first:0});
+ for(let n=0;n<8&&state.phase!=='main';n++)
+  state=dispatchUniversalAction(both,state,{type:'next'});
+ for(const ap of state.players[0].apCards){ap.inPlay=true;ap.ready=true;}
+ function lift(id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=state.players[0][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('Missing '+id);
+ }
+ for(const id of ['A','B','C','D']){
+  const fuel=lift(id);
+  fuel.ready=true;fuel.fieldEntryStamp=state.nextFieldEntryStamp++;
+  state.players[0].energy[id.charCodeAt(0)-65]=fuel;
+ }
+ const child=lift('BLC-2-006');
+ const source=lift('SRC');
+ const bouncer=lift('BNC');
+ state.players[0].hand.push(child,source,bouncer);
+ const opened=dispatchUniversalAction(both,state,legalUniversalActions(both,state)
+  .find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.replaceUid===undefined));
+ const seat=legalUniversalActions(both,opened).find(a=>a.type==='chooseHandRest'&&a.uid===child.uid&&a.line==='front');
+ const before=opened.players[0].deck.length;
+ state=dispatchUniversalAction(both,opened,seat);
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].deck.length,before-1);
+ state=dispatchUniversalAction(both,state,legalUniversalActions(both,state)
+  .find(a=>a.type==='play'&&a.uid===bouncer.uid&&a.line==='front'&&a.replaceUid===undefined));
+ assert.equal(state.pending.kind,'effect-bounce-own');
+ state=dispatchUniversalAction(both,state,legalUniversalActions(both,state)
+  .find(a=>a.type==='chooseOwnBounce'&&a.uid===child.uid));
+ assert.equal(state.players[0].hand.some(c=>c.uid===child.uid),true);
+ const quiet=state.players[0].deck.length;
+ const paid=legalUniversalActions(both,state).find(a=>a.type==='play'&&a.uid===child.uid&&a.line==='front'&&a.replaceUid===undefined);
+ state=dispatchUniversalAction(both,state,paid);
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].deck.length,quiet);
+ assert.equal(state.players[0].front.some(c=>c?.uid===child.uid),true);
+ for(const ap of state.players[0].apCards){ap.inPlay=true;ap.ready=true;}
+ const bouncerAgain=lift('BNC');
+ const sourceAgain=lift('SRC');
+ state.players[0].hand.push(bouncerAgain,sourceAgain);
+ state=dispatchUniversalAction(both,state,legalUniversalActions(both,state)
+  .find(a=>a.type==='play'&&a.uid===bouncerAgain.uid&&a.line==='front'&&a.replaceUid===undefined));
+ assert.equal(state.pending.kind,'effect-bounce-own');
+ state=dispatchUniversalAction(both,state,legalUniversalActions(both,state)
+  .find(a=>a.type==='chooseOwnBounce'&&a.uid===child.uid));
+ assert.equal(state.players[0].hand.some(c=>c.uid===child.uid),true);
+ const replay=dispatchUniversalAction(both,state,legalUniversalActions(both,state)
+  .find(a=>a.type==='play'&&a.uid===sourceAgain.uid&&a.replaceUid===undefined));
+ const again=legalUniversalActions(both,replay).find(a=>a.type==='chooseHandRest'&&a.uid===child.uid);
+ const deck=replay.players[0].deck.length;
+ state=dispatchUniversalAction(both,replay,again);
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].deck.length,deck-1);
+ assert.equal([...state.players[0].front,...state.players[0].energy,...state.players[0].hand,
+  ...state.players[0].outside].filter(c=>c?.uid===child.uid).length,1);
+ assertUniversalMatch(both,state);
+});

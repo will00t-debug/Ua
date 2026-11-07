@@ -1,0 +1,258 @@
+{
+  "group": "B10",
+  "base": "174f7d92caf69d43f078411355beb39391447812",
+  "range": "KJN-1-051、052、053、055、058、061、063、064、066、068、072、073、075、080 的生命觸發，以及 KJN-1-074 衝擊無效的實際戰鬥",
+  "updated": "2026-11-07",
+  "sources": {
+    "card": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA52BT%2FKJN-1-0xx",
+    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA52BT_KJN-1-0xx.png",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA52BT",
+    "fetched": "2026-11-07",
+    "note": "2026-11-07 再次核對官網。051、064、074、075、080 的全文與生命觸發和卡資料一致。074 的卡別問答仍只有 Q2128（2026.05.15），不涉及衝擊。衝擊無效的戰鬥結算用關鍵字 FAQ Q77（2023.03.17）：阻擋帶衝擊的攻擊並戰敗時，角色退場，但不承受衝擊傷害。Q78：無效只在該次戰鬥中。本範圍沒有新的卡別問答。其餘卡句已記在 b9-kjn-051-080.json。本批沒有改 kjn-pack.mjs、kjn-runtime.mjs、engine.mjs 或全域台帳。"
+  },
+  "sharedGaps": [],
+  "testResults": {
+    "command": "node --test tests/v2-kjn-b10-close.test.mjs tests/v2-kjn-051-080.test.mjs tests/v2-kjn-026-050.test.mjs tests/v2-kjn-001-025.test.mjs tests/v2-kjn-set1.test.mjs tests/v2-kjn-faq.test.mjs",
+    "passed": true,
+    "tests": 129,
+    "pass": 129,
+    "fail": 0,
+    "node": "v22.23.4",
+    "files": [
+      "tests/v2-kjn-b10-close.test.mjs",
+      "tests/v2-kjn-051-080.test.mjs",
+      "tests/v2-kjn-026-050.test.mjs",
+      "tests/v2-kjn-001-025.test.mjs",
+      "tests/v2-kjn-set1.test.mjs",
+      "tests/v2-kjn-faq.test.mjs"
+    ],
+    "note": "2026-11-07 在 /agent/repos/Ua-b10 執行上述命令，129 項全部通過。新檔 15 項。沒有跑全庫 npm test。沒有改作品實作。"
+  },
+  "reviews": [
+    {
+      "cardId": "KJN-1-051",
+      "number": "UA52BT/KJN-1-051",
+      "clauses": [
+        {
+          "match": "ドロー，只抽一張，也可以不抽",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "生命觸發 draw。牌庫空了就不能抽。不發動登場時的看牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。抽到的是原牌庫頂，手牌加 1、牌庫少 1，051 留在場外且不上場，沒有看牌待選。牌庫被移空後不能抽，跳過後手牌不變。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-052",
+      "number": "UA52BT/KJN-1-052",
+      "clauses": [
+        {
+          "match": "ドロー，不連帶登場時的棄牌",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "只抽 1。不打開登場時的棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。手牌加 1、牌庫少 1，待選結束，沒有棄牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-053",
+      "number": "UA52BT/KJN-1-053",
+      "clauses": [
+        {
+          "match": "アクティブ，選自己場上的一張角色",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "可以選休息的前線或已經活動的能源線角色。不能選場地、對方角色或這張生命卡。只給選中的那張 +3000。053 不上場，所以前線產能不開始。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。選已經活動的 052 後仍是活動，BP 4500。休息的 057 維持 2000。場地 075 與對方角色不能選。053 留在場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-055",
+      "number": "UA52BT/KJN-1-055",
+      "clauses": [
+        {
+          "match": "アクティブ，場上有席德也不開登場時棄牌",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "活動對象後結束。048 在場也不進入棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。前線有 048。選休息的 057 後 BP 5000，待選是空，手牌張數不變。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-058",
+      "number": "UA52BT/KJN-1-058",
+      "clauses": [
+        {
+          "match": "アクティブ，不加第二張的啟動加值",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "只處理選中的一張。不休息自己，也不給另一張 BP+1000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。057 變成活動且 BP 5000。另一張 052 仍是 1500 且維持活動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-061",
+      "number": "UA52BT/KJN-1-061",
+      "clauses": [
+        {
+          "match": "アクティブ，不把其他七陰放牌庫底",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "不進入放底或休息登場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。065 留在前線。待選結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-063",
+      "number": "UA52BT/KJN-1-063",
+      "clauses": [
+        {
+          "match": "アクティブ，不磨牌也不加能量",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "牌庫與手牌張數不變。能源線角色的產生能量不變。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。057 變成 BP 5000。052 仍產生 1。沒有磨牌待選。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-064",
+      "number": "UA52BT/KJN-1-064",
+      "clauses": [
+        {
+          "match": "ドロー，不連帶登場時的第二次抽牌",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。登場時的抽牌是另一句。",
+          "implementation": "生命只抽 1。不把 064 登場，也不抽第二張。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。牌庫只少 1，抽到的是原牌庫頂。064 留在場外。待選結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-066",
+      "number": "UA52BT/KJN-1-066",
+      "clauses": [
+        {
+          "match": "ドロー，不提供登場時的 BP+1000",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "對手回合打出生命。五個七陰卡名已在場。抽牌後不開加值，066 不上場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。場上 052 維持 1500。066 不在前線或能源線。待選結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-068",
+      "number": "UA52BT/KJN-1-068",
+      "clauses": [
+        {
+          "match": "ドロー，不要求啟動的棄牌",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "只抽 1。不進入棄牌或活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。手牌加 1、牌庫少 1，待選結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-072",
+      "number": "UA52BT/KJN-1-072",
+      "clauses": [
+        {
+          "match": "ドロー，揭示的卡不進場",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "072 到場外，不上場，所以自己回合的 BP 加值不開始。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。抽 1 張後 072 不在場上。待選結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-073",
+      "number": "UA52BT/KJN-1-073",
+      "clauses": [
+        {
+          "match": "ドロー，不連帶登場時的磨牌",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "只抽 1。場外張數除了這張生命卡之外不增加。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。牌庫少 1，場外張數在選擇前後不變。沒有磨牌待選。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-074",
+      "number": "UA52BT/KJN-1-074",
+      "clauses": [
+        {
+          "match": "突襲中阻擋帶衝擊的攻擊並戰敗時，不承受衝擊傷害",
+          "status": "已驗證",
+          "official": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）。突襲框內。Q77（2023.03.17）：戰敗的角色退場，但不受到衝擊傷害。",
+          "implementation": "raidImpactNull 只在正面向上突襲時生效。普通登場沒有這句。戰鬥失敗仍退場，生命只在沒有無效時減少。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。突襲的 049 有衝擊 1、BP 5000。突襲的 074 阻擋並戰敗後，074 與底牌到場外，兩張生命都還在。普通登場的 074 同樣戰敗後，生命從 2 變成 1，被打出的是沒有觸發的 054。049 在兩場之後仍有衝擊 1，對局沒有結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-075",
+      "number": "UA52BT/KJN-1-075",
+      "clauses": [
+        {
+          "match": "ゲット，加入手牌，不上場也不看牌",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "可以入手，也可以跳過。入手後只在手牌。跳過後留在場外。都不進場，也不打開看牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。入手後手牌加 1、牌庫不變，075 不在場外或場上，沒有看牌待選。跳過後手牌不變，075 留在場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KJN-1-080",
+      "number": "UA52BT/KJN-1-080",
+      "clauses": [
+        {
+          "match": "アクティブ，不結算事件正文",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "只活動一張角色並給 BP+3000。不抽 3 棄 2，也不給席德能量。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kjn-b10-close.test.mjs。場上有 048。選 057 後 BP 5000。牌庫與手牌張數不變。048 仍產生 1。沒有棄牌或能量待選。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

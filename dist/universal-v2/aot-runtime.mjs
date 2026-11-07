@@ -52,7 +52,11 @@ function lock(s,owner,key){
  if(!s.mainReadyOnceByName[owner].includes(key))s.mainReadyOnceByName[owner].push(key);
 }
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function energyBuff(s,c,amount,color){
  if(!c)return;c.buffs??=[];c.buffs.push({energy:amount,color,untilTurn:s.turn});
 }
@@ -101,10 +105,10 @@ function moveUid(pack,s,owner,from,uid,to,sourceUid){
  return A.move(pack,s,{owner,from,to,index,reason:'own-effect',sourceUid});
 }
 function discard(pack,s,owner,uid,sourceUid){return moveUid(pack,s,owner,'hand',uid,'outside',sourceUid);}
-function offerOrder(s,spec,uids,rest,after){
+function offerOrder(s,spec,uids,rest,after,extra){
  const left=uids.filter(Boolean);
  if(left.length<=1){lay(plOf(s,spec.player),left,rest);return false;}
- hold(s,{...spec,step:'lookOrder',data:{left,built:[],rest,after:after||null,uids:left}},
+ hold(s,{...spec,step:'lookOrder',data:{left,built:[],rest,after:after||null,uids:left,...(extra||{})}},
   left.map(uid=>({type:'aot',mode:'next',uid})));
  return true;
 }
@@ -135,18 +139,26 @@ function finishLook(pack,s,spec,data){
   publish(pack,s,spec.player,physical);
   A.move(pack,s,{owner:spec.player,from:'deck',to:'hand',index,reason:'own-effect',sourceUid:spec.sourceUid});
  }
- if(data.discard&&data.taken.length&&pl.hand.length)
-  return offerDiscard(s,spec,1,false,'afterLook');
  const left=data.uids.filter(uid=>!data.taken.includes(uid));
+ const discardAfter=data.discard&&data.taken.length;
+ const after=discardAfter?'discardLook':(data.after||null);
  if(data.rest==='outside'){
   for(const uid of left){
    const index=pl.deck.findIndex(c=>c.uid===uid);
    if(index>=0)A.move(pack,s,{owner:spec.player,from:'deck',to:'outside',index,
     reason:'own-effect',sourceUid:spec.sourceUid});
   }
+  if(discardAfter&&pl.hand.length){
+   offerDiscard(s,spec,1,false,data.after||null);
+   return 'held';
+  }
   return data.after||null;
  }
- if(offerOrder(s,spec,left,data.rest,data.after))return 'held';
+ if(offerOrder(s,spec,left,data.rest,after,{taken:[...data.taken]}))return 'held';
+ if(discardAfter&&pl.hand.length){
+  offerDiscard(s,spec,1,false,data.after||null);
+  return 'held';
+ }
  return data.after||null;
 }
 function offerDiscard(s,spec,count,optional,next){
@@ -185,7 +197,8 @@ function takeRange(s,owner,printed){
 }
 function offerRetire(s,spec,printed,optional){
  const range=takeRange(s,spec.player,printed);
- const choices=oppFront(s,spec.player,c=>A.bp(A.pack,s,c)<=range.cap);
+ const choices=oppFront(s,spec.player,c=>A.bp(A.pack,s,c)<=range.cap&&
+  !A.characterHarmBlocked(A.pack,s,c,'retire'));
  if(!choices.length)return false;
  range.commit();
  hold(s,{...spec,step:'retire',data:{limit:range.cap,optional}},[
@@ -255,14 +268,21 @@ function on010Attack(pack,s,job){
 }
 function on011(pack,s,job){
  const c=requireSelf(s,job);if(!c)return;
- c.aotThirdSniper={turn:s.turn,stamp:c.fieldEntryStamp,done:false};
+ // Sniper is only the third attack. done stays true until that attack is next.
+ c.aotThirdSniper={turn:s.turn,stamp:c.fieldEntryStamp,done:true};
 }
 function on011End(pack,s,job){
  const c=requireSelf(s,job);if(!c||!A.raided(pack,c))return;
+ const sniper=c.aotThirdSniper;
+ if(sniper&&sniper.turn===s.turn&&sniper.stamp===c.fieldEntryStamp&&
+  (s.attacksByUid[c.uid]||0)===2)sniper.done=false;
  const key=c.uid+'|AOT-1-011|end';
  if(used(s,key))return;
+ // 「支払ってもよい」 declines without spending 【ターン1】.
+ // Paying is what activates the once. No ready AP means it cannot activate.
+ if(apReady(s,job.owner)<1)return;
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
- if(!payOrSkip(s,{...spec,data:null},'readySelf')){use(s,key);return;}
+ if(!payOrSkip(s,{...spec,data:null},'readySelf'))return;
 }
 function on014(pack,s,job){
  const c=requireSelf(s,job);if(!c)return;
@@ -273,16 +293,31 @@ function on014(pack,s,job){
  if(!plOf(s,job.owner).hand.length)return;
  if(!offerDiscard(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},1,false,'active14'))return;
 }
+function finish020(pack,s,spec,data){
+ const pl=plOf(s,spec.player);
+ const rest=data.uids.filter(uid=>!data.kept.includes(uid));
+ for(const uid of rest){
+  const index=pl.deck.findIndex(c=>c.uid===uid);
+  if(index>=0)A.move(pack,s,{owner:spec.player,from:'deck',to:'outside',index,
+   reason:'own-effect',sourceUid:spec.sourceUid});
+ }
+ if(data.kept.length)lay(pl,data.kept,'top');
+}
 function on020(pack,s,job){
  const ymir=fieldCards(s,job.owner).some(c=>contains(pack,c,YMIR,s));
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
- if(ymir){
-  if(!beginLook(s,spec,2,()=>true,{max:2,min:0,rest:'outside',after:null}))return;
-  s.pending.data.restMode='ymir';
+ const window=windowCards(s,job.owner,2);
+ if(!window.length)return;
+ if(!ymir){
+  if(window.length>1)offerOrder(s,spec,window.map(c=>c.uid),'top',null);
   return;
  }
- const window=windowCards(s,job.owner,2);
- if(window.length>1)offerOrder(s,spec,window.map(c=>c.uid),'top',null);
+ // Any number returns to the top in the chosen order. The rest go outside.
+ // Nothing in this window is added to hand, and the look stays private.
+ hold(s,{...spec,step:'lookKeep',data:{uids:window.map(c=>c.uid),kept:[]}},[
+  {type:'aot',mode:'done'},
+  ...window.map(c=>({type:'aot',mode:'keep',uid:c.uid}))
+ ]);
 }
 function on021(pack,s,job){
  if(!eventUsed(s,job.owner)||locked(s,job.owner,'AOT-1-021|event'))return;
@@ -299,12 +334,25 @@ function on022Attack(pack,s,job){
  ]);
 }
 function on031(pack,s,job){
- beginLook(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},2,()=>true,
-  {max:2,min:0,rest:'top',after:'draw2'});
+ // 見る stays private. Any number returns to the top in pick order.
+ // The rest go outside, and the draw happens only after that placement.
+ const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
+ const window=windowCards(s,job.owner,2);
+ if(!window.length){A.draw(pack,s,job.owner,2,job.sourceUid);return;}
+ hold(s,{...spec,step:'lookKeep',data:{uids:window.map(c=>c.uid),kept:[],after:'draw2'}},[
+  {type:'aot',mode:'done'},
+  ...window.map(c=>({type:'aot',mode:'keep',uid:c.uid}))
+ ]);
 }
 function cap033(pack,s,owner){
  let base=2000;
- if(fieldCards(s,owner).some(c=>exact(pack,c,HISTORIA,s)))base+=outs(s,owner)*1000;
+ if(fieldCards(s,owner).some(c=>exact(pack,c,HISTORIA,s))){
+  // Q767: the event being used is placed outside only after its effect.
+  // resolvingEvents is that in-flight copy and is not an outside event.
+  const events=plOf(s,owner).outside.filter(c=>
+   def(pack,c).type==='event'||def(pack,c).alsoEvent===true).length;
+  base+=events*1000;
+ }
  return base;
 }
 function on033(pack,s,job){offerRetire(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},cap033(pack,s,job.owner),false);}
@@ -440,6 +488,9 @@ function on082(pack,s,job){
  if(c&&traitUsed(s,job.owner,FOOD))A.active(s,job.owner,c);
 }
 function on089(pack,s,job){
+ // The retire is inside the raid frame. A normal entry does not use it.
+ const self=requireSelf(s,job);
+ if(!self||!A.raided(pack,self))return;
  if(!fieldCards(s,job.owner).some(c=>contains(pack,c,EREN,s)))return;
  offerRetire(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},3500,true);
 }
@@ -574,7 +625,10 @@ function main028(pack,s,job){
 function main036(pack,s,job){
  const c=requireSelf(s,job);if(!c)return;
  const actions=[];
- if(enteredThisTurn(s,job.owner,c)){
+ const retireKey=c.uid+'|AOT-1-036|retire';
+ // The retire line is its own 【ターン1】, and only on the turn this card entered.
+ // The hand-to-outside BP line is a separate activation with no once.
+ if(!used(s,retireKey)&&enteredThisTurn(s,job.owner,c)){
   const cap=A.bp(pack,s,c)+rangeExtra(s,job.owner);
   for(const t of oppFront(s,job.owner,x=>A.bp(pack,s,x)<=cap))
    actions.push({type:'aot',mode:'retire',uid:t.uid});
@@ -597,6 +651,11 @@ function main048(pack,s,job){
  const key=c.uid+'|AOT-1-048';
  if(used(s,key))return;
  use(s,key);
+ // The front BP sentence is part of this activation, checked when it
+ // resolves, and lasts this turn. A face-up raid on the front does not
+ // grant it before the ability is used. The energy line can still grant Impact.
+ if(lineOf(s,job.owner,c)==='front')
+  for(const t of fieldCards(s,job.owner))if(trait(pack,t,PURE))buff(s,t,1000);
  const targets=fieldCards(s,job.owner).filter(x=>trait(pack,x,PURE));
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'impact48'},[
   {type:'aot',mode:'skip'},
@@ -736,7 +795,8 @@ function legalMain(pack,s,owner,c){
  if(id==='AOT-1-022')return front&&!used(s,c.uid+'|AOT-1-022')&&outs(s,owner)>=4&&eventUsed(s,owner);
  if(id==='AOT-1-028')return c.ready&&plOf(s,owner).deck.length>0;
  if(id==='AOT-1-036'){
-  const retire=enteredThisTurn(s,owner,c)&&oppFront(s,owner,t=>A.bp(pack,s,t)<=A.bp(pack,s,c)+rangeExtra(s,owner)).length;
+  const retire=!used(s,c.uid+'|AOT-1-036|retire')&&enteredThisTurn(s,owner,c)&&
+   oppFront(s,owner,t=>A.bp(pack,s,t)<=A.bp(pack,s,c)+rangeExtra(s,owner)).length;
   return retire||plOf(s,owner).hand.length>0;
  }
  if(id==='AOT-1-046')return c.ready&&fieldCards(s,owner).some(x=>trait(pack,x,PURE));
@@ -808,9 +868,19 @@ function continueAfter(pack,s,q,after){
   }
   return;
  }
- if(after==='recover63')return;
+ if(after==='recover63'){
+  const uid=(q.data?.taken||[])[0];
+  const c=uid&&plOf(s,q.player).hand.find(x=>x.uid===uid);
+  if(c&&(trait(pack,c,PURE)||contains(pack,c,ROD,s)||contains(pack,c,ZIKE,s)))
+   if(offerReady(s,{player:q.player,sourceUid:q.sourceUid,id:q.id}))return 'held';
+  return;
+ }
  if(after==='modeB'){start64B(s,{player:q.player,sourceUid:q.sourceUid,id:q.id});return 'held';}
- if(after==='afterLook')return;
+ if(after==='afterLook'||after==='discardLook'){
+  if(after==='discardLook'&&plOf(s,q.player).hand.length&&
+   offerDiscard(s,{player:q.player,sourceUid:q.sourceUid,id:q.id},1,false,null))return 'held';
+  return;
+ }
  if(after==='buff36'){buff(s,selfOf(s,q.player,q.sourceUid),1000);return;}
  if(after==='retire93'){
   if(offerRetire(s,{player:q.player,sourceUid:q.sourceUid,id:q.id},2000,true))return 'held';
@@ -818,8 +888,29 @@ function continueAfter(pack,s,q,after){
  }
  if(after==='gen62'){energyBuff(s,selfOf(s,q.player,q.sourceUid),1,'green');return;}
  if(after==='grant96'){grant096(s,{owner:q.player,sourceUid:q.sourceUid});return 'held';}
- if(after==='energy98')return;
+ if(after==='energy98'){
+  // The order step used to return before this check, so a 6-energy card
+  // never offered the AP when two or more cards remained.
+  const uid=(q.data?.taken||[])[0];
+  const pl=plOf(s,q.player);
+  const c=uid&&(pl.hand.find(x=>x.uid===uid)||pl.deck.find(x=>x.uid===uid));
+  if(c&&def(pack,c).energy>=6&&
+   offerReady(s,{player:q.player,sourceUid:q.sourceUid,id:q.id||'AOT-1-098'}))return 'held';
+  return;
+ }
  return null;
+}
+function presentEntryOrder(s,spec,jobs,enteredUids){
+ const ids=[...new Set(enteredUids.filter(Boolean))];
+ const groups=ids.map(uid=>(jobs||[]).filter(j=>j.sourceUid===uid)).filter(g=>g.length);
+ if(groups.length<2){
+  if(jobs?.length)s.effectQueue.unshift(...jobs);
+  return false;
+ }
+ const rest=(jobs||[]).filter(j=>!ids.includes(j.sourceUid));
+ hold(s,{...spec,step:'entryOrder',data:{groups,rest}},
+  groups.map((g,index)=>({type:'aot',mode:'first',index,uid:g[0].sourceUid})));
+ return true;
 }
 function resolve64(pack,s,q){
  const picks=q.data?.picked||[];
@@ -858,17 +949,22 @@ function resolvePair64(pack,s,q,picks){
   return;
  }
  const jobs=[];
+ const entered=[];
  for(const pick of picks){
   if(pick.mode==='raid'||pick.key==='raid'){
    const result=resolveOne64(pack,s,owner,pick,q.sourceUid,true);
    jobs.push(...(result?.jobs||[]));
+   if(result?.uid)entered.push(result.uid);
   }else{
    doEnter(pack,s,owner,{...pick,from:'hand',ready:true},q.sourceUid,true);
-   const entered=selfOf(s,owner,pick.uid);
-   if(entered)jobs.push(...(A.programs(pack,s,entered,'onPlay',owner,'handEffect',q.sourceUid)||[]));
+   const card=selfOf(s,owner,pick.uid);
+   if(card){
+    entered.push(card.uid);
+    jobs.push(...(A.programs(pack,s,card,'onPlay',owner,'handEffect',q.sourceUid)||[]));
+   }
   }
  }
- if(jobs.length)s.effectQueue.unshift(...jobs);
+ presentEntryOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id},jobs,entered);
 }
 export function resolveAotPending(pack,s,action){
  arm(pack);
@@ -900,14 +996,15 @@ export function resolveAotPending(pack,s,action){
      if(q.id==='AOT-1-104')return trait(pack,c,CORPS)&&def(pack,c).energy<=3;
      return true;
     });
-    hold(s,{...spec,step:'lookPick',data},{
-     ...(data.taken.length>=data.min?[{type:'aot',mode:'done'}]:[]),
-     ...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))
-    }.length?[
-     ...(data.taken.length>=data.min?[{type:'aot',mode:'done'}]:[]),
-     ...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))
-    ]:[...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))]);
-    return;
+    // 「まで」 may stop once the minimum is met, even when another match remains.
+    // An object has no length, so the old check never offered that stop.
+    if(matches.length){
+     hold(s,{...spec,step:'lookPick',data},[
+      ...(data.taken.length>=data.min?[{type:'aot',mode:'done'}]:[]),
+      ...matches.map(c=>({type:'aot',mode:'take',uid:c.uid}))
+     ]);
+     return;
+    }
    }
   }
   const taken=data.taken.map(uid=>plOf(s,q.player).deck.find(c=>c.uid===uid)).filter(Boolean);
@@ -921,6 +1018,23 @@ export function resolveAotPending(pack,s,action){
   if(q.id==='AOT-1-098'&&taken[0]&&def(pack,taken[0]).energy>=6)
    if(offerReady(s,spec))return;
   if(next){const held=continueAfter(pack,s,q,next);if(held==='held'||s.pending)return;}
+  go(pack,s);return;
+ }
+ if(q.step==='lookKeep'){
+  const data=q.data;
+  if(a.mode==='keep'){
+   data.kept.push(a.uid);
+   const left=data.uids.filter(uid=>!data.kept.includes(uid));
+   if(left.length){
+    hold(s,{...spec,step:'lookKeep',data},[
+     {type:'aot',mode:'done'},
+     ...left.map(uid=>({type:'aot',mode:'keep',uid}))
+    ]);
+    return;
+   }
+  }
+  finish020(pack,s,spec,data);
+  if(data.after==='draw2')A.draw(pack,s,spec.player,2,spec.sourceUid);
   go(pack,s);return;
  }
  if(q.step==='lookOrder'){
@@ -940,7 +1054,6 @@ export function resolveAotPending(pack,s,action){
    A.bounce(pack,s,q.player,q.data.uid,q.data.sourceUid);
    go(pack,s);return;
   }
-  if(q.step==='pay'&&q.id==='AOT-1-011')use(s,(q.sourceUid)+'|AOT-1-011|end');
   if(q.data?.after){const held=continueAfter(pack,s,q,q.data.after);if(held==='held'||s.pending)return;}
   if(q.step==='tuck92')deployAfter92(s,{owner:q.player,sourceUid:q.sourceUid,id:q.id});
   go(pack,s);return;
@@ -992,9 +1105,22 @@ export function resolveAotPending(pack,s,action){
   if(q.step==='armin'){
    A.draw(pack,s,q.player,2,q.sourceUid);
    if(plOf(s,q.player).hand.length&&offerDiscard(s,spec,1,false,null))return;
-  }else if(q.data?.next){
-   const held=continueAfter(pack,s,q,q.data.next);
-   if(held==='held'||s.pending)return;
+  }else{
+   // A committed 「2枚」 payment discards exactly that many. The first card of
+   // an optional payment can still be declined; declining does not follow next.
+   const need=q.data?.need||1;
+   const got=[...(q.data?.got||[]),a.uid];
+   if(got.length<need){
+    const left=plOf(s,q.player).hand.filter(c=>!got.includes(c.uid));
+    if(left.length<need-got.length)throw Error('Attack on Titan discard payment left the hand');
+    hold(s,{...spec,step:'discard',data:{...q.data,got,need,optional:false}},
+     left.map(c=>({type:'aot',mode:'discard',uid:c.uid})));
+    return;
+   }
+   if(q.data?.next){
+    const held=continueAfter(pack,s,q,q.data.next);
+    if(held==='held'||s.pending)return;
+   }
   }
   go(pack,s);return;
  }
@@ -1066,6 +1192,7 @@ export function resolveAotPending(pack,s,action){
   }
   const slot=plOf(s,1-q.player).front.findIndex(c=>c?.uid===a.uid);
   if(slot<0)throw Error('Attack on Titan retire target left');
+  if(q.id==='AOT-1-036')use(s,q.sourceUid+'|AOT-1-036|retire');
   A.retire(pack,s,1-q.player,'front',slot);
   go(pack,s);return;
  }
@@ -1097,29 +1224,39 @@ export function resolveAotPending(pack,s,action){
   const raider=selfOf(s,q.player,q.data.raidUid);
   const front=dests(s,q.player,['front']).filter(d=>!d.replaceUid);
   if(raider&&front.length){
-   hold(s,{...spec,step:'moveFront',data:{uid:raider.uid,jobs:[...(q.data.jobs||[]),
-    ...(play?A.programs(pack,s,selfOf(s,q.player,play.uid),'onPlay',q.player,'handEffect',q.sourceUid):[])],
-    dests:front}},[{type:'aot',mode:'skip'},...front.map(d=>({...d,uid:raider.uid}))]);
+   const playJobs=play?A.programs(pack,s,selfOf(s,q.player,play.uid),'onPlay',q.player,'handEffect',q.sourceUid):[];
+   hold(s,{...spec,step:'moveFront',data:{uid:raider.uid,entered:[raider.uid,play?.uid].filter(Boolean),
+    jobs:[...(q.data.jobs||[]),...playJobs],dests:front}},
+    [{type:'aot',mode:'skip'},...front.map(d=>({...d,uid:raider.uid}))]);
    return;
   }
   const jobs=[...(q.data.jobs||[])];
+  const entered=[q.data.raidUid];
   if(play){
-   const entered=selfOf(s,q.player,play.uid);
-   if(entered)jobs.push(...A.programs(pack,s,entered,'onPlay',q.player,'handEffect',q.sourceUid));
+   const card=selfOf(s,q.player,play.uid);
+   if(card){
+    entered.push(card.uid);
+    jobs.push(...A.programs(pack,s,card,'onPlay',q.player,'handEffect',q.sourceUid));
+   }
   }
-  if(jobs.length)s.effectQueue.unshift(...jobs);
+  if(!presentEntryOrder(s,spec,jobs,entered))go(pack,s);
+  return;
+ }
+ if(q.step==='entryOrder'){
+  const groups=q.data?.groups||[];
+  const first=groups[a.index]||[];
+  const second=groups[1-a.index]||[];
+  s.effectQueue.unshift(...(q.data?.rest||[]),...first,...second);
   go(pack,s);return;
  }
  if(q.step==='moveFront'){
   if(a.mode!=='skip')A.moveLine(pack,s,q.player,q.data.uid,a.line,a.slot,a.replaceUid,q.sourceUid);
-  if(q.data.jobs?.length)s.effectQueue.unshift(...q.data.jobs);
-  go(pack,s);return;
+  if(!presentEntryOrder(s,spec,q.data.jobs||[],q.data.entered||[q.data.uid]))go(pack,s);
+  return;
  }
  if(q.step==='fork93'){
   if(a.mode==='draw'){A.draw(pack,s,q.player,1,q.sourceUid);go(pack,s);return;}
-  offerDiscard(s,spec,2,false,'retire93');
-  if(s.pending)s.pending.data.next='retire93';
-  else go(pack,s);
+  if(!offerDiscard(s,spec,2,true,'retire93'))go(pack,s);
   return;
  }
  if(q.step==='fork94'){
@@ -1209,6 +1346,8 @@ function underCap(job,c,cap,pack,s){
 }
 export function aotMandatoryTargets(pack,s,owner,job){
  arm(pack);
+ // Q1119: an event that must choose a target cannot be used when it cannot
+ // choose every required target. 「1枚まで」 stays optional inside resolution.
  if(job.id==='AOT-1-033'){
   const cap=cap033(pack,s,owner)+rangeExtra(s,owner);
   return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));

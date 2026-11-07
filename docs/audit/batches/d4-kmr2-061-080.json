@@ -1,0 +1,582 @@
+{
+  "group": "D",
+  "baseline": "e145a581d600fa459a0dacaa763f8db75c99b74e",
+  "baseBranch": "cursor/effect-audit-bp-zero-65f8",
+  "range": "EX12BT/KMR-2-061 至 KMR-2-080。含補齊 KMR-2-079 既有未檢查條款。",
+  "updated": "2026-11-06",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-061 起，至 KMR-2-080。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX12BT_KMR-2-068.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX12BT_KMR-2-069.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX12BT_KMR-2-079.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=EX12BT",
+    "checked": "2026-11-06",
+    "note": "2026-11-06 對過官方頁。去掉【】圖示後，061–080 的效果句與本地 effectJa 一致，沒有改寫本文的勘誤。066、074 沒有生命觸發。這範圍的 FAQ 是 Q1777（067）、Q1778（068）、Q1779（069）、Q1780（071），都是 2025-10-24。068 的卡圖：深色框是整句登場時，突襲標題與生命條在框外，對應 raid-box onPlay。069 的卡圖：登場時與攻擊時都在深色框內，生命條在框外，對應 onPlay 與 onAttack。079 的卡圖：〈ジーク〉別名在框外，被阻擋與退場時在框內，生命條在框外，對應 onRetire 與 blocked。沒有改 raid-box.mjs。普通登場依既有 defaultEntryReady 休息進場，突襲依 performRaid 活動進場。這不是本組要改的共用規則。"
+  },
+  "counts": {
+    "已驗證": 19,
+    "部分核對": 1
+  },
+  "fixes": [
+    "KMR-2-061 只數角色名稱裡的「Ｗ」，以及場上印刷名稱為〈メモリチェンジ〉的卡。有合法對象時必須退場，沒有「まで」。",
+    "KMR-2-065 先把剩下的牌排到牌庫底，再把手牌放到場外。",
+    "KMR-2-080 在失去原本效果時，不再把別名〈ジーク〉排除。印刷名稱是〈ジーク〉的卡仍排除。可選登場維持 skipOnPlay false。",
+    "KMR-2-079 的退場時把 skipOnPlay 明確設為 false。1枚まで 只負責放棄，突襲來源的登場時仍會發動。"
+  ],
+  "sharedGaps": [
+    {
+      "cards": ["KMR-2-071"],
+      "owner": "A",
+      "official": "Q1780（2025-10-24）：效果寫「選」時，選這張角色要多付 1 AP。付不出來就不能選它。可以改選別張。只有效果允許 0 張或寫「まで」時才能選 0 張。KMR-2-077 是「1枚選び」，沒有「まで」。",
+      "where": "dist/universal-v2/engine.mjs effectSelectionApTax、legalUniversalActions。kmr2SelectTax 本身在對方回合、場上有ディケイド時對這張卡加 1。",
+      "reproduction": "對方回合，ディケイド在能源線。己方前線只有 KMR-2-071。用 KMR-2-077 付掉最後 1 AP 之後，退場選擇只列這張 071，沒有跳過。",
+      "expected": "付不出額外 AP 就不能選 071。077 沒有允許 0 張，這個強制選擇不該停在零個合法行動。",
+      "actual": "pending 仍列出退場 071，legalUniversalActions 是空陣列。有另一個付得起的對象時，071 不在合法行動裡，另一張可以退場。多付 1 AP 時可以選 071。",
+      "regression": "tests/v2-kmr2-061-080.test.mjs 的 071。付得起與改選別張已斷言。零合法行動的案例只記錄現況，沒有改 engine。"
+    }
+  ],
+  "tests": {
+    "command": "node --test tests/v2-kmr2-061-080.test.mjs tests/v2-kmr-set2.test.mjs",
+    "result": "51 passed, 0 failed。新檔 22，set2 回歸 29。沒有跑整庫。"
+  },
+  "reviews": [
+    {
+      "cardId": "KMR-2-061",
+      "number": "EX12BT/KMR-2-061",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "カード名に「Ｗ」を含むキャラと〈メモリチェンジ〉",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-061 。自分の場のカード名に「Ｗ」を含むキャラと〈メモリチェンジ〉の合計枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on061。場含前線與能源。只數角色的「Ｗ」與印刷名〈メモリチェンジ〉。有對象時 optional false。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：沒有名稱時不開退場。一張記憶體切換在能源線，上限 1000，BP 500 退場、BP 4000 不退。兩張「Ｗ」加上記憶體切換，上限 2000，剛好 2000 必須退，沒有跳過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-061 。【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "dist/universal-v2/kmr2-pack.mjs trigger special、retireOppFront。選中後立即退場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：可跳過。接受後攻擊者立即退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-062",
+      "number": "EX12BT/KMR-2-062",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "APカードを2枚まで選び",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-062 。自分のAPカードを2枚まで選び、アクティブにする。",
+          "implementation": "dist/universal-v2/kmr2-pack.mjs recover2。共用 effect-recover-ap，uid 空值結束，最多 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：先付事件的 1 AP。0、1、2 張都測過。062 與 078 同一實作。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-062 。【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+          "implementation": "dist/universal-v2/engine.mjs life-trigger final。生命區還有卡時不提供。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：還有其他生命時沒有最終。最後一張可跳過，生命變 0。接受後原牌庫頂進入生命區。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-063",
+      "number": "EX12BT/KMR-2-063",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "山札の上から5枚見て",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-063 。【登場時】自分の山札の上から5枚見て、［特徴：リ・イマジネーション］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。自分の手札から必要エナジーが2以下で消費APが1の緑の［特徴：リ・イマジネーション］を2枚まで自分の場にレストで登場させる。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on063、deployRe。窗口含不能選的卡。登場 optional true、skipOnPlay false、ready false。滿線時用既有 replace。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：五張都在窗口，非特徵卡不能選且不公開，對方看不到。先排底再登場。登場休息，登場時不略過。可放棄。滿線時被替換的卡進移除區。tests/v2-kmr-set2.test.mjs：最多兩張，兩張都可留在手牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-063 。【ゲット】このカードを手札に加える。",
+          "implementation": "dist/universal-v2/engine.mjs life-trigger get。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：可跳過。同檔對 073、079 接受後進手牌一次。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-064",
+      "number": "EX12BT/KMR-2-064",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "カードを1枚引き、自分の手札を1枚場外に置く。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-064 。【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+          "implementation": "dist/universal-v2/kmr2-pack.mjs drawDiscard。共用 effect-discard，目的地場外，沒有跳過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：先抽一張，再把一張手牌放到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-064 。【ドロー】カードを1枚引く。",
+          "implementation": "dist/universal-v2/engine.mjs life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：可跳過。同檔對 071、075、076、080 接受後手牌加一。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-065",
+      "number": "EX12BT/KMR-2-065",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "山札の上から3枚見て",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-065 。【登場時】自分の山札の上から3枚見て、カード名に「ディケイド」を含むキャラカードか［特徴：リ・イマジネーション］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on065。ディケイド角色或任何リ・イマジネーション。orderBeforeDiscard。窗口不公開給對方。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：三張都看得到。非對象不能選。先排底再把入手代價放到場外。不入手時不棄牌。對方的私人選擇是空的。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-065 。【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "dist/universal-v2/engine.mjs life-trigger active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：休息的己方角色活動，並在本回合 BP+3000。同檔 070、072 共用這句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-066",
+      "number": "EX12BT/KMR-2-066",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "発生エナジー+【緑】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-066 。このキャラがアクティブの場合、このキャラの発生エナジー+【緑】。無觸發。",
+          "implementation": "dist/universal-v2/kmr2-pack.mjs activeExtraEnergy。引擎只在活動且位於能源線，或有前線產能許可時加上。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：活動在能源線是 2，休息是 1，在前線是 0。生命觸發測試中這張卡沒有觸發、進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-067",
+      "number": "EX12BT/KMR-2-067",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【起動メイン】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-067 。Q1777（2025-10-24）：取得 073 的自己回合 BP+1000 與衝擊後，對方回合不適用。【起動メイン】【フロントLにある場合】【ターン1】場外的リ・イマジネーション 1 枚放進移除區，直到下一次自己的回合開始，取得該卡全部自己回合與對方回合效果。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs main067、copyTurn。只在前線，場外沒有對象就不提供。取得的是卡號上的持續效果，持續函式仍看 s.active。不複製登場時與啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：沒有跳過。複製 073 後自己回合 BP 4500、衝擊 1。對方回合 BP 3500、衝擊 0。下一次自己回合開始清除。場外再有對象時，下一個自己的主要階段可以再啟動。能源線不提供。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-067 。【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
+          "implementation": "dist/universal-v2/kmr2-pack.mjs color、deployHandCharacter。綠、能量 2 以下、AP 1。登場時不略過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：064 合法，能量 5 或 AP 2 的 073 不合法。064 活動登場並開啟抽後棄。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-068",
+      "number": "EX12BT/KMR-2-068",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "2枚までリムーブエリアに置く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-068 。Q1778（2025-10-24）：取得到下一次自己回合開始，不讓 BP+1000 與衝擊在對方回合繼續。突襲框只含登場時。全文是抽 1、移除 0 到 2 張リ・イマジネーション、依合計 BP 最多退 1 張、取得那些卡的回合效果。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs offer068、finish068。單人與房間都走 dispatchUniversalAction。非突襲登場不跑這句。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：普通登場不開移除。突襲抽 1、移除 1 張 073，自己回合 BP 5500 衝擊 1，對方回合 4500 衝擊 0。房間裡兩席都移除 2 張，放棄退場仍複製，訪客看不到手牌。tests/v2-kmr-set2.test.mjs：0、1、2 張與退場門檻、移除 1 張仍退場並複製。",
+          "unresolved": ""
+        },
+        {
+          "match": "手札に加えるか",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-068 。【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "dist/universal-v2/engine.mjs life-trigger raid。能量夠時可入手或突襲，不付 AP。突襲後跑登場時。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：手牌有リ・イマジネーション 時，突襲後進入移除選擇。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-069",
+      "number": "EX12BT/KMR-2-069",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "このキャラはアタックできない。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-069 。突襲框含登場時。抽 1，從手牌把最多 1 張消費 AP 1 的綠リ・イマジネーション以活動登場，並在本回合不能攻擊。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on069。offerEnter ready true、optional true、skipOnPlay false，再授予 cannotAttack。普通登場不跑框內句，並依共用規則休息進場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：普通登場休息，過一回合後可攻擊，攻擊時不開。突襲後キバ活動、不能攻擊、skipOnPlay false。",
+          "unresolved": ""
+        },
+        {
+          "match": "アタックがブロックされなかった時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-069 。Q1779（2025-10-24）：在指定阻擋角色的時點、對方選擇是否阻擋之後。【アタック時】可把 1 張己方前線活動的リ・イマジネーション休息。如此則本回合 BP+3000，且未被阻擋時抽 1。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on069 的 rest。接受後 buff 3000 並寫 kmr2UnblockedDraw。unblockedBeforeDamage 在 chooseBlock(null) 之後、傷害之前抽牌。抽牌沒有「まで」。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：休息後未被阻擋抽 1，只抽一次。被阻擋不抽，阻擋者退場，069 留下。",
+          "unresolved": ""
+        },
+        {
+          "match": "手札に加えるか",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-069 。【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "與 068 共用生命突襲。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：068 的生命突襲走同一選擇。069 的框內句由登場測試覆蓋，生命句沒有另一套實作。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-070",
+      "number": "EX12BT/KMR-2-070",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "フロントLでもエナジーを発生させる。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-070 。【自分のターン中】自分の場にカード名に「ディケイド」を含むキャラがある場合、このキャラは「このキャラはフロントLでもエナジーを発生させる。」を得る。",
+          "implementation": "dist/universal-v2/kmr2-continuous.mjs kmr2FrontEnergy。只在自己回合，且場上有名稱含ディケイド的角色。070 自己的名稱不含。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：自己回合前線產 1。對方回合產 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-070 。【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "與 065 共用生命活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：065 的活動觸發測了活動與 BP+3000。070 使用同一觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-071",
+      "number": "EX12BT/KMR-2-071",
+      "status": "部分核對",
+      "clauses": [
+        {
+          "match": "追加でAPを1支払わないと選べない",
+          "status": "部分核對",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-071 。Q1780（2025-10-24）。【相手のターン中】自分の場にカード名に「ディケイド」を含むキャラがある場合、相手はキャラの効果やイベントカードの効果でこのキャラを選ぶ際に、追加でAPを1支払わないと選べない。",
+          "implementation": "dist/universal-v2/kmr2-continuous.mjs kmr2SelectTax。自己回合是 0。對方回合且場上有ディケイド時是 1。引擎對 kmr2 的選擇加稅，付不出的行動不進 legalUniversalActions。阻擋選擇不加稅。",
+          "discrepancy": "唯一強制對象付不出時，選擇停在零個合法行動。見 sharedGaps。",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：自己回合 BP 仍是 3000。有另一張前線時，0 AP 不能選 071、可以退另一張。多付 1 AP 可以退 071。只有 071 時，pending 列出它、沒有跳過、合法行動是空的。",
+          "unresolved": "依賴 A。見 sharedGaps 的 KMR-2-071。"
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-071 。【ドロー】カードを1枚引く。",
+          "implementation": "與 064 共用生命抽牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：064 測了跳過。071 接受後手牌加一。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-072",
+      "number": "EX12BT/KMR-2-072",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "BP2000以下のキャラにブロックされない。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-072 。【自分のターン中】自分の場にカード名に「ディケイド」を含むキャラがある場合、このキャラはBP+500と「このキャラはBP2000以下のキャラにブロックされない。」を得る。",
+          "implementation": "dist/universal-v2/kmr2-continuous.mjs。自己回合且有ディケイド時 BP+500，block floor atMost 2000。BP 2000 以下不能阻擋。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：1500 變 2000。BP 2000 不能阻擋，BP 4000 可以。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-072 。【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "與 065 共用生命活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：065 的活動觸發測了活動與 BP+3000。072 使用同一觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-073",
+      "number": "EX12BT/KMR-2-073",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "消費APを-1する。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-073 。自分の場にカード名に「ディケイド」を含むキャラがある場合、手札にあるこのカードの消費APを-1する。",
+          "implementation": "dist/universal-v2/kmr2-continuous.mjs kmr2HandApCut。只看場上這張卡號，不看回合。複製到別張卡不會讓其他手牌減 AP。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：沒有ディケイド時，1 點活動 AP 打不出印刷 AP 2。有ディケイド時打得出來。",
+          "unresolved": ""
+        },
+        {
+          "match": "BP+1000と【インパクト（1）】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-073 。【自分のターン中】このキャラはBP+1000と【インパクト（1）】を得る。",
+          "implementation": "dist/universal-v2/kmr2-continuous.mjs。只在自己回合。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：自己回合 BP 5000、衝擊 1。對方回合 BP 4000、衝擊 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-073 。【ゲット】このカードを手札に加える。",
+          "implementation": "與 063 共用生命入手。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：接受後進手牌一次。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-074",
+      "number": "EX12BT/KMR-2-074",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "必要エナジーを【緑×2】減らす",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-074 。自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。無觸發。",
+          "implementation": "共用 zoneRequiredEnergy、emptyOwnFieldHandEnergyDiscount。這張卡是綠 2，空場時需求降 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：空場需求 0，沒有產能也能打出。場上有卡時需求 2。生命觸發測試中沒有觸發、進場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【インパクト無効】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-074 。【相手のターン中】自分の場にカード名に「ディケイド」か「ディエンド」を含むキャラがある場合、このキャラはBP+1000と【インパクト無効】を得る。",
+          "implementation": "dist/universal-v2/kmr2-continuous.mjs kmr2ImpactNull。只在對方回合，且場上有ディケイド或ディエンド。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：對方回合 BP 3000、衝擊無效。拿掉那兩張後不再無效。自己回合不是無效。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-075",
+      "number": "EX12BT/KMR-2-075",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "このキャラはBP+1000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-075 。【自分のターン中】自分の場にカード名に「ディケイド」を含むキャラがある場合、このキャラはBP+1000。",
+          "implementation": "dist/universal-v2/kmr2-continuous.mjs。只在自己回合且有ディケイド。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：3000 變 4000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-075 。【ドロー】カードを1枚引く。",
+          "implementation": "與 064 共用生命抽牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：接受後手牌加一。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-076",
+      "number": "EX12BT/KMR-2-076",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "山札の上から6枚見て",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-076 。自分の山札の上から6枚見て、カード名に「ディケイド」を含む緑のキャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。カードを1枚引く。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on076。064 與 066 的名稱都含ディケイド。不入手也抽 1。窗口不公開給對方。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：六張都看得到。070 不能選且不公開。064 與 066 都能入手。放棄後仍抽第 7 張。對方看不到。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-076 。【ドロー】カードを1枚引く。",
+          "implementation": "與 064 共用生命抽牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：接受後手牌加一。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-077",
+      "number": "EX12BT/KMR-2-077",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "『BP3000以下』",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-077 。『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場にカード名に「ディケイド」を含むキャラがある場合、『BP5000以下』に代わる。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on077。有ディケイド時上限 5000。1枚選び，沒有跳過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：沒有ディケイド時只退 3000 以下。有ディケイド時 5000 必須退，5500 不退，沒有跳過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-077 。【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "與 061 共用生命特殊、retireOppFront。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：061 測了跳過與立即退場。077 使用同一觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-078",
+      "number": "EX12BT/KMR-2-078",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "APカードを2枚まで選び",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-078 。自分のAPカードを2枚まで選び、アクティブにする。",
+          "implementation": "與 062 共用 recover2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：078 的 0、1、2 張與 062 同一迴圈。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-078 。【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+          "implementation": "與 062 共用生命最終。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：還有生命時不提供。最後一張可跳過或放回生命區。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-079",
+      "number": "EX12BT/KMR-2-079",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "としても扱う。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-079 。このカードは〈ジーク〉としても扱う。別名在突襲框外。",
+          "implementation": "dist/universal-v2/kmr2-pack.mjs nameAliases ジーク。cardHasName 在失去原本效果時不使用別名，印刷名稱仍在。突襲底板用別名。Q52：有【レイド】的卡不能當底板。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：未沉默時視為ジーク，沉默後不是。可以突襲到印刷名ジーク的 080。不能突襲到另一張 079。",
+          "unresolved": ""
+        },
+        {
+          "match": "ブロックされた時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-079 。【レイド】〈ジーク〉アクティブにし、フロントLに移動できる【ターン1】このキャラがブロックされた時、自分の場に［特徴：イマジン］とカード名に「電王」を含む他のキャラが合計2枚以上ある場合、このキャラをアクティブにする。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs blocked079。既有通過條款，這輪沒有改判定。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-set2.test.mjs：需要突襲、另外兩張イマジン或電王、只有攻擊者、未被阻擋不發動、防守方不拿走、戰鬥只結算一次。這輪重跑仍通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "レイド元のカードを1枚まで",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-079 。Q60：突襲卡離開時，突襲來源到場外。Q1168：同一句退場時帶出的來源，登場時仍發動。【退場時】このキャラのレイド元のカードを1枚まで自分の場にレストで登場させる。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on079。askEnter ready false、optional true、skipOnPlay false。來源已在場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：阻擋敗北後可跳過。登場行動休息且 skipOnPlay false。080 休息進場並開啟自己的看牌。放棄後 080 留在場外，不看牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-079 。【ゲット】このカードを手札に加える。",
+          "implementation": "與 063 共用生命入手。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：接受後進手牌一次。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-2-080",
+      "number": "EX12BT/KMR-2-080",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "メインフェイズ開始時",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-080 。自分のメインフェイズ開始時、このキャラを退場させる。自分の場外から〈ジーク〉以外の必要エナジーが1以下の赤の［特徴：イマジン］か〈仮面ライダー電王 プラットフォーム〉を1枚まで自分の場にレストで登場させる。這句不在突襲框。",
+          "implementation": "dist/universal-v2/kmr2-pack.mjs phase main/start/own。on080 先退自己。exact 帶對局，沉默的別名不算ジーク，印刷名仍算。平台不看特徵與能量。optional true、ready false、skipOnPlay false。進入主要階段才跑，手動指定階段不會跑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：提供平台、ウラタロス、デネブ。不提供 079、綠卡與自己。平台休息登場並開啟登場時。可放棄。滿能源線時替換的卡進移除區。",
+          "unresolved": ""
+        },
+        {
+          "match": "1枚まで場外に置く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-080 。【登場時】自分の山札の上から3枚見て、1枚まで場外に置く。残りを望む順で山札の下に置く。放到場外的那張不公開。",
+          "implementation": "dist/universal-v2/kmr2-runtime.mjs on080 的 onLook。reveal false、dest outside。先選再排剩下的。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：三張都看得到。放到場外的那張不在公開揭露。剩下兩張依點選順序排到底。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX12BT%2FKMR-2-080 。【ドロー】カードを1枚引く。",
+          "implementation": "與 064 共用生命抽牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr2-061-080.test.mjs：接受後手牌加一。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

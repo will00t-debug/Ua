@@ -21,7 +21,11 @@ function used(s,key){return s.mainAbilityUsedUids.includes(key);}
 function use(s,key){if(!used(s,key))s.mainAbilityUsedUids.push(key);}
 function lock(s,owner,key){if(!s.mainReadyOnceByName[owner].includes(key))s.mainReadyOnceByName[owner].push(key);}
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function impact(s,c){c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function ceiling(s,source,target){
  target.blockAtLeastGranted={turn:s.turn,stamp:target.fieldEntryStamp,bp:4000};
@@ -29,7 +33,7 @@ function ceiling(s,source,target){
 }
 function doubleAttack(s,c){
  c.readyOnAttackGranted={turn:s.turn,stamp:c.fieldEntryStamp};
- use(s,c.uid+'|double');
+ use(s,c.uid+'|doubleAttack');
 }
 function chars(s,owner,pred){
  return A.field(plOf(s,owner)).filter(c=>def(A.pack,c).type==='character'&&(!pred||pred(c)));
@@ -49,6 +53,13 @@ function enteredThisTurn(s,owner,c){
 function fromOutsideThisTurn(s,owner){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.from==='outside'&&
   ['front','energy'].includes(e.to)&&def(A.pack,{uid:e.uid,cardId:e.cardId}).type==='character');
+}
+// 「このキャラが場外から登場」 is this entry, not an older move of the same UID.
+// COLOR life from outside is lifeColorOutside. A later play from hand is
+// paidPlay. Moving between front and energy does not run onPlay again.
+const OUTSIDE_ENTRY=new Set(['outsideEffect','outsideEffectRaid','lifeColorOutside']);
+function thisEntryFromOutside(job){
+ return OUTSIDE_ENTRY.has(job.entryCause);
 }
 function traitlessPurple(d){return d.type==='character'&&d.color==='purple'&&!(d.traits||[]).length;}
 function redEvent(d){return d.type==='event'&&d.color==='red';}
@@ -155,7 +166,9 @@ function frontChars(s,owner,pred){
  return plOf(s,owner).front.filter(c=>c&&def(A.pack,c).type==='character'&&(!pred||pred(c)));
 }
 function offerFront(s,spec,owner,pred,optional,step){
- const pool=frontChars(s,owner,pred);
+ const purpose=step==='debuff'||step==='debuffOptional'?'bpDown':
+  step==='retireBp'||step==='retireCap'?'retire':null;
+ const pool=frontChars(s,owner,pred).filter(c=>!purpose||!A.characterHarmBlocked(A.pack,s,c,purpose));
  if(!pool.length)return false;
  hold(s,{...spec,step},[
   ...(optional?[{type:'iys',mode:'skip'}]:[]),
@@ -280,7 +293,9 @@ function offerOppBottom(s,owner,sourceUid,id){
 }
 function layBottom(s,owner,uids,sourceUid){
  // Q2137: these cards start in outside. A deck reorder cannot see them.
- for(const uid of uids){
+ // The first card the opponent chooses becomes the bottom-most, matching
+ // the closed look window that places the first selection at the bottom.
+ for(const uid of uids.slice().reverse()){
   if(!plOf(s,owner).outside.some(c=>c.uid===uid))continue;
   moveUid(A.pack,s,owner,'outside',uid,'deck',sourceUid);
  }
@@ -331,15 +346,13 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='IYS-1-013'){
-  if(job.entryCause!=='outsideEffect'&&job.entryCause!=='outsideEffectRaid')return;
+  if(!thisEntryFromOutside(job))return;
   const pool=chars(s,owner,c=>!c.ready&&named(pack,c,'殺生丸',s));
   if(!pool.length)return;
   hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'activeName'},[
    {type:'iys',mode:'skip'},...pool.map(c=>({type:'iys',mode:'pick',uid:c.uid}))]);
   return;
  }
- if(id==='IYS-1-014')return beginLook(pack,s,job,{count:3,rest:'bottom',dest:'hand',public:true,
-  pred:d=>cardHasTrait(d,TRAIT)});
  if(id==='IYS-1-019')return offerPurple(pack,s,job,2,1,false,'mainEnd');
  if(id==='IYS-1-022'){A.draw(pack,s,owner,1,job.sourceUid);placeHand(pack,s,job);return;}
  if(id==='IYS-1-030'){
@@ -347,7 +360,7 @@ function runPlay(pack,s,job){
   const top=plOf(s,owner).deck[0];
   const home=hosts(s,owner);
   if(!home.length)return;
-  hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'topOrUnder',data:{uid:top.uid}},[
+  hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'topOrUnder',data:{uid:top.uid,uids:[top.uid]}},[
    {type:'iys',mode:'top'},...home.map(c=>({type:'iys',mode:'host',uid:c.uid}))]);
   return;
  }
@@ -412,6 +425,8 @@ function runPlay(pack,s,job){
 }
 function runOther(pack,s,job){
  const id=job.id,owner=job.owner;
+ if(id==='IYS-1-014'&&job.slot==='onRetire')return beginLook(pack,s,job,{count:3,rest:'bottom',dest:'hand',public:true,
+  pred:d=>cardHasTrait(d,TRAIT)});
  if(id==='IYS-1-007'&&job.slot==='onAttack'){
   if(!fromOutsideThisTurn(s,owner))return;
   hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'mayDraw'},[
@@ -493,7 +508,7 @@ function startMain(pack,s,c,mode){
  if(id==='IYS-1-022'){lock(s,owner,'神無');offerTuck(pack,s,spec);return;}
  if(id==='IYS-1-027'){
   use(s,c.uid+'|main');
-  const foe=frontChars(s,1-owner);
+  const foe=frontChars(s,1-owner).filter(c=>!A.characterHarmBlocked(A.pack,s,c,'bpDown'));
   if(foe.length)hold(s,{...spec,step:'debuffOptional'},[
    {type:'iys',mode:'skip'},...foe.map(x=>({type:'iys',mode:'pick',uid:x.uid}))]);
   else{A.active(s,owner,c);impact(s,c);offerNarakuRetire(s,spec,false);}
@@ -597,11 +612,50 @@ export function resolveIysPending(pack,s,action){
  s.pending=null;
  const step=q.step;
  if(step==='leave'){
-  if(a.mode==='hand')A.bounce(pack,s,q.player,q.sourceUid,q.sourceUid);
-  else if(q.data.mode==='remove')A.removeSkip(pack,s,q.player,q.data.line,q.data.slot,q.player);
-  else A.retireSkip(pack,s,q.player,q.data.line,q.data.slot);
+  // Q24/Q28: the stored play is confirmed and paid while this generator
+  // is still on the line. Removal then happens, and the play is placed once.
+  A.confirmDeclared(pack,s,q.data?.originalAction,q.data?.declaredUse);
+  if(a.mode==='hand'){
+   A.bounce(pack,s,q.player,q.sourceUid,q.sourceUid);
+   A.releaseRetirement(s,q,false);
+  }else if(q.data.mode==='remove'){
+   A.removeSkip(pack,s,q.player,q.data.line,q.data.slot,q.player);
+   A.releaseRetirement(s,q,false);
+  }else {
+   const cause=q.data?.retireCause;
+   A.retireSkip(pack,s,q.player,q.data.line,q.data.slot,cause?{
+    by:cause.by||undefined,controller:cause.controller,sourceUid:cause.sourceUid
+   }:{});
+   A.releaseRetirement(s,q,true);
+  }
   // Resume pending battle impact after a replaced leave, even when Naraku returns to hand.
   if(q.data?.postImpact)A.afterImpact(pack,s,q.player,q.data.postImpact);
+  // The slot is empty. Continue the play, Raid, effect, or move that was
+  // waiting, then the returned-to-hand base. Q1898 still owns BP 0.
+  const data=q.data||{};
+  const follow={
+   resumeReplace:data.resumeReplace||null,
+   originalAction:data.originalAction||null,
+   previousPending:data.previousPending||null,
+   savedPending:data.savedPending||null,
+   savedAction:data.savedAction||null,
+   actionActor:Number.isInteger(data.actionActor)?data.actionActor:null,
+   declaredUse:data.declaredUse||null
+  };
+  if(follow.resumeReplace||follow.originalAction||follow.savedPending){
+   if(!s.pending)A.resumeDisplace(pack,s,follow);
+   else{
+    const extra={};
+    if(follow.resumeReplace)extra.resumeReplace=follow.resumeReplace;
+    if(follow.originalAction)extra.originalAction=follow.originalAction;
+    if(follow.savedPending)extra.savedPending=follow.savedPending;
+    if(follow.savedAction)extra.savedAction=follow.savedAction;
+    if(follow.previousPending)extra.previousPending=follow.previousPending;
+    if(follow.actionActor!==null)extra.actionActor=follow.actionActor;
+    if(follow.declaredUse)extra.declaredUse=follow.declaredUse;
+    s.pending.data={...(s.pending.data||{}),...extra};
+   }
+  }
  }else if(step==='lookPick')finishLookTake(pack,s,q,a);
  else if(step==='lookOrder')finishOrder(s,q,a);
  else if(step==='deploy')afterDeploy(pack,s,q,a);
@@ -627,7 +681,7 @@ export function resolveIysPending(pack,s,action){
   if(a.mode==='host')tuck(pack,s,q.player,'deck',q.data.uid,selfOf(s,q.player,a.uid),q.sourceUid);
  }else if(step==='oppBottom')continueBottom(s,q,a);
  else if(step==='debuff'&&a.mode==='pick'){
-  const c=selfOf(s,1-q.player,a.uid);buff(s,c,-1000*(q.data.scale||0));
+  buff(s,selfOf(s,1-q.player,a.uid),-1000*(q.data.scale||0));
  }else if(step==='retireOwn'&&a.mode==='pick'){
   retireUid(pack,s,q.player,a.uid);
   if(!s.pending&&q.id==='IYS-1-039')maybeTuckEvent(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id});
@@ -656,8 +710,8 @@ export function resolveIysPending(pack,s,action){
   offerNarakuRetire(s,{player:q.player,sourceUid:q.sourceUid,id:q.id},true);
  }else if(step==='retireNaraku')retireUid(pack,s,q.player,a.uid);
  else if(step==='debuffOptional'){
-  if(a.mode==='pick'){const c=selfOf(s,1-q.player,a.uid);buff(s,c,-1000);}
-  afterDebuff(pack,s,q);
+  if(a.mode==='pick')buff(s,selfOf(s,1-q.player,a.uid),-1000);
+  if(!s.pending)afterDebuff(pack,s,q);
  }else if(step==='replaceKit'){
   const c=selfOf(s,q.player,q.sourceUid);
   if(c&&a.mode==='double'){A.active(s,q.player,c);doubleAttack(s,c);}

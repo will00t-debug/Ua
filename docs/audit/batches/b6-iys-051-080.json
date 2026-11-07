@@ -1,0 +1,784 @@
+{
+  "group": "B6",
+  "base": "264db10d5d599eee577932f234c40216a04e9e17",
+  "range": "IYS-1-051–IYS-1-080",
+  "updated": "2026-11-07",
+  "sources": {
+    "card": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-0xx",
+    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA50BT_IYS-1-0xx.png",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA50BT",
+    "fetched": "2026-11-07",
+    "note": "051–080 的 effectJa、triggerTextJa 與 2026-11-07 抓取的官網全文去掉空白後一致。第一次比對把全形括號折成半形，誤標 052、053、059；不折括號後三張都在頁面內。頁面沒有誤記。系列清單含 Q2129–Q2143，頁面另顯示 2026.10.30，各問答寫 2026.05.22更新。落到本範圍的只有 Q2142（071）與 Q2143（080）。沒有專屬 FAQ 的卡仍逐句對過印刷。突襲框以 raid-box.mjs 既有清單為準：059 與 071 只列 onPlay，066 列 onPlay 與 main。本輪沒有改 raid-box.mjs，也沒有取得新的 Rugia span.raidBorder。059 的衝擊 1 是 raidImpact，只在正面朝上的突襲狀態生效，不在普通登場。本範圍沒有印刷裡向卡；看牌視窗的雙方可見範圍已實測。作品檔與共用引擎都沒有改。整張已驗證：051–080。"
+  },
+  "sharedGaps": [],
+  "testResults": {
+    "command": "node --test tests/v2-iys-051-080.test.mjs tests/v2-iys-set1.test.mjs",
+    "passed": true,
+    "tests": 51,
+    "pass": 51,
+    "fail": 0,
+    "files": [
+      "tests/v2-iys-051-080.test.mjs",
+      "tests/v2-iys-set1.test.mjs"
+    ],
+    "note": "2026-11-07 在 /agent/repos/Ua-b6 執行上述命令，51 項全部通過。其中 051–080 為 30 項，set1 為 21 項。set1 含本範圍的 Q2142 與 Q2143，作為既有回歸一起跑，不用它代替本批逐句。沒有改 iys-runtime.mjs、iys-pack.mjs、engine.mjs，所以沒有重跑 001–025 與 026–050。沒有跑全庫 npm test。"
+  },
+  "reviews": [
+    {
+      "cardId": "IYS-1-051",
+      "number": "UA50BT/IYS-1-051",
+      "clauses": [
+        {
+          "match": "自己回合且自己的珊瑚已攻擊才 BP+1000",
+          "status": "已驗證",
+          "official": "【自分のターン中】このターン中に自分の〈珊瑚〉がアタックしている場合、このキャラはBP+1000。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-051",
+          "implementation": "iys-pack.mjs passiveBonuses ownNamedAttackedThisTurn，名字珊瑚，只看自己回合。場上有珊瑚但沒攻擊不加。失去原有效果後不加。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。珊瑚未攻擊時 BP 3000。珊瑚攻擊後自己回合 BP 4000，換到對手回合回到 3000。沉默後即使珊瑚已攻擊也是 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。選自己場上的角色，活動並 BP+3000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。實際攻擊打掉這張生命，選休息的角色後變活動，BP 4500，觸發卡到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-052",
+      "number": "UA50BT/IYS-1-052",
+      "clauses": [
+        {
+          "match": "ステップ",
+          "status": "已驗證",
+          "official": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-052",
+          "implementation": "kindProgram step。只在移動階段、從前線到能源線。主要階段沒有。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。移動階段使用後人在能源線、離開前線。主要階段沒有 step。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "生命觸發 draw。抽 1，觸發卡到場外，不加手。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。牌庫少 1，觸發卡在場外、不在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-053",
+      "number": "UA50BT/IYS-1-053",
+      "clauses": [
+        {
+          "match": "ステップ",
+          "status": "已驗證",
+          "official": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-053",
+          "implementation": "與 052 相同的 step。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。移動階段從前線走到能源線。",
+          "unresolved": ""
+        },
+        {
+          "match": "無觸發",
+          "status": "已驗證",
+          "official": "觸發為 -。",
+          "implementation": "生命被打掉後不開 pending，卡到場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-054",
+      "number": "UA50BT/IYS-1-054",
+      "clauses": [
+        {
+          "match": "有かごめ才可選擇活動，並在自己攻擊階段結束且 BP 4000 以下回手",
+          "status": "已驗證",
+          "official": "【登場時】自分の場に〈日暮 かごめ〉がある場合、このキャラをアクティブにしてもよい。そうした場合、このキャラはこのターン中、「自分のアタックフェイズ終了時、このキャラのBPが4000以下の場合、このキャラを手札に戻す。」を得る。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-054",
+          "implementation": "iys-runtime runPlay 054。手牌登場是休息。沒有かごめ不開選項。有則可略過或活動。選活動才記下 iysReturnIfBp。引擎在自己攻擊階段結束、且沒有失去原有效果時才排隊。BP 超過 4000 不回手。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沒有かごめ、或略過時，攻擊階段結束人還在場。選活動後 BP 4000，結束時回手。060 把它加到 5000 就留下。沉默後即使選過活動也不回手。這張自己不必攻擊。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。休息的角色變活動，觸發卡到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-055",
+      "number": "UA50BT/IYS-1-055",
+      "clauses": [
+        {
+          "match": "休息獲得本回合紅能量，主要階段結束退場",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】 【ターン1】このキャラはこのターン中、発生エナジー+【赤】と「メインフェイズ終了時、このキャラを退場させる。」を得る。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-055",
+          "implementation": "kindProgram restEnergy，lines 為 field。能源線的合法清單與前線的合法清單都會提供 selfRestEnergyRetire。解析器接受兩線。前線不產生能量，所以加值只在能源線看得到。每回合一次，主要階段結束退場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。能源線活動時紅 1，起動後休息且紅 2，同一回合不能再起動，結束主要階段後到場外。前線活動時也可以起動，休息後紅仍是 0，結束主要階段後到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "無觸發",
+          "status": "已驗證",
+          "official": "觸發為 -。",
+          "implementation": "生命被打掉後不開 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-056",
+      "number": "UA50BT/IYS-1-056",
+      "clauses": [
+        {
+          "match": "看 2 張，最多把 1 張紅事件放到場外，其餘放回牌庫頂",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から2枚見て、赤のイベントカードを1枚まで場外に置く。残りを望む順で山札の上に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-056",
+          "implementation": "iys-runtime beginLook，視窗整段在 data.uids。不能選的留在畫面上。對手的私人選項是 null，公開畫面不含那些 UID。選中的到場外才公開。略過後排序，先選的在牌庫頂。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。兩張都列出，紅事件可選、角色不可選。對手看不到。取走後那張在場外，剩下的在牌庫頂。兩張都是紅事件時可略過，先選的成為牌庫頂。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-057",
+      "number": "UA50BT/IYS-1-057",
+      "clauses": [
+        {
+          "match": "看 3 張，公開最多 1 張指定名字，其餘放牌庫底，加手才棄 1",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から3枚見て、〈珊瑚〉か〈弥勒〉か〈雲母〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-057",
+          "implementation": "共用 searchTopOneBottomDiscard。視窗三張都給控制者，不能選的 action 為 null。公開只記被拿走的那張。牌庫底不反轉：先選的在底層之上，最後選的在最底。略過不加手、不棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。角色不可選，珊瑚與弥勒可選。對手私人選項為 null，公開畫面不含視窗 UID。取走後有 searched-to-hand，先選的在倒數第二、最後剩下的在最底，然後必須棄 1。三張都不取時手牌只少掉打出的這張。",
+          "unresolved": ""
+        },
+        {
+          "match": "無觸發",
+          "status": "已驗證",
+          "official": "觸發為 -。",
+          "implementation": "生命被打掉後不開 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-058",
+      "number": "UA50BT/IYS-1-058",
+      "clauses": [
+        {
+          "match": "自己回合且場上有弥勒才 BP+1000",
+          "status": "已驗證",
+          "official": "【自分のターン中】自分の場に〈弥勒〉がある場合、このキャラはBP+1000。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-058",
+          "implementation": "passive ownNameExists，自己回合、場上、名字弥勒。對手回合不加。失去原有效果不加。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沒有弥勒是 3000，有則自己回合 4000，換手回到 3000。沉默後是 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "看 3 張，最多 1 張紅事件到場外，其餘放牌庫底",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から3枚見て、赤のイベントカードを1枚まで場外に置く。残りを望む順で山札の下に置く。",
+          "implementation": "iys lay，底層會反轉，所以先選的在最底。不能選的留在視窗。對手看不到。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。只有紅事件可選。取走後那張在場外，先選的剩餘牌在最底。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。牌庫少 1，觸發卡到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-059",
+      "number": "UA50BT/IYS-1-059",
+      "clauses": [
+        {
+          "match": "突襲框內的衝擊 1 與登場抽牌",
+          "status": "已驗證",
+          "official": "【レイド】〈珊瑚〉アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手に1ダメージ）【登場時】カードを『1枚』引き、自分の手札を1枚場外に置く。自分の場に〈弥勒〉がある場合、『2枚』に代えてもよい。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-059",
+          "implementation": "raid-box 只列 onPlay。普通登場不跑登場、衝擊 0。正面朝上突襲到珊瑚上才活動、衝擊 1、抽 1 再棄 1。場上有弥勒時可改抽 2，棄牌仍是 1。沒有略過抽牌。生命觸發在框外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。普通登場牌庫不變、衝擊 0。實際突襲後衝擊 1，抽 1 再棄 1。有弥勒時兩個張數都合法，選 2 後手牌淨增加被 1 張棄牌抵銷。正面朝上突襲打贏 BP 1500 的防禦後，對方生命少 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "レイド",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "生命觸發可选手牌。本測試走入手牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。選 get 後這張在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-060",
+      "number": "UA50BT/IYS-1-060",
+      "clauses": [
+        {
+          "match": "最多給其他角色 BP+1000",
+          "status": "已驗證",
+          "official": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-060",
+          "implementation": "共用 buffOwnField，excludeSelf，optional。自己不是對象，可以略過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。自己不可選，略過是合法選項。選另一張後對方 2500、自己仍 2000。",
+          "unresolved": ""
+        },
+        {
+          "match": "無觸發",
+          "status": "已驗證",
+          "official": "觸發為 -。",
+          "implementation": "生命被打掉後不開 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-061",
+      "number": "UA50BT/IYS-1-061",
+      "clauses": [
+        {
+          "match": "場上沒有卡時手牌能量減 2",
+          "status": "已驗證",
+          "official": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-061",
+          "implementation": "emptyOwnFieldHandEnergyDiscount 2。場上有任何卡就恢復印刷 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。空場手牌需求 0。放上一張角色後是 2。",
+          "unresolved": ""
+        },
+        {
+          "match": "看牌庫頂 1 張，放回頂或場外",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から1枚見て、山札の上か場外に置く。",
+          "implementation": "共用 peekTopOne。控制者的私人選項帶那張卡，對手是 null，公開畫面不含 UID。放到場外後那張才公開。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。選頂端時牌還在牌庫頂。選場外時那張到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "休息並退場，從場外把非七宝的紅 0 能量角色休息登場",
+          "status": "已驗證",
+          "official": "【起動メイン】【レストにする】 【このカードを退場させる】自分の場外から〈七宝〉以外の必要エナジーが0の赤のキャラカードを1枚まで自分の場にレストで登場させる。",
+          "implementation": "iys 起動。兩線都可以。失去原有效果不能起動。七宝與能量不是 0 的卡不是對象。可以不登場。登場的卡是休息，並跑自己的登場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沉默後沒有起動。從能源線支付後自己到場外。060 不可選，063 的前線與能源線都可以。選能源線後休息，並接著抽 1 棄 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "生命觸發 draw。本句與 052、058、062 相同，由那些卡的生命翻面走完；061 本體沒有再翻一次。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs 的 052。觸發程式是同一份 triggerProfile。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-062",
+      "number": "UA50BT/IYS-1-062",
+      "clauses": [
+        {
+          "match": "最多從場外把 1 張紅事件加入手牌",
+          "status": "已驗證",
+          "official": "【登場時】自分の場外から赤のイベントカードを1枚まで手札に加える。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-062",
+          "implementation": "共用 recoverOutsideOne，紅且是事件，optional。紫事件不是對象。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。紅事件可選，紫事件不可選，略過是合法選項。取回後在手牌，紫事件留在場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "生命觸發 draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-063",
+      "number": "UA50BT/IYS-1-063",
+      "clauses": [
+        {
+          "match": "抽 1 再把 1 張手牌放到場外",
+          "status": "已驗證",
+          "official": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-063",
+          "implementation": "共用 drawDiscard，張數 1。必須棄，沒有略過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。牌庫少 1，棄 1 後 pending 結束。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。休息角色變活動且 BP+3000。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-064",
+      "number": "UA50BT/IYS-1-064",
+      "clauses": [
+        {
+          "match": "活動時多產生 1 點紅",
+          "status": "已驗證",
+          "official": "このキャラがアクティブの場合、このキャラの発生エナジー+【赤】。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-064",
+          "implementation": "activeExtraEnergy 1。只在能源線、活動、且沒有失去原有效果時加在印刷發生之上。前線是 0。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。能源線活動 2、休息 1、活動但沉默 1。前線活動 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "無觸發",
+          "status": "已驗證",
+          "official": "觸發為 -。",
+          "implementation": "生命被打掉後不開 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-065",
+      "number": "UA50BT/IYS-1-065",
+      "clauses": [
+        {
+          "match": "看 4 張，公開最多 1 張犬夜叉或かごめ，加手才棄 1",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から4枚見て、〈犬夜叉〉か〈日暮 かごめ〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-065",
+          "implementation": "共用 searchInuKagome。四張都列出，只有名字符合的可選。公開只含被拿走的卡。加手後才棄。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。四張 UID 與視窗一致，只有犬夜叉可選。對手看不到。取走後有公開，排完才棄 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。BP 2000 的角色變成 5000 並活動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-066",
+      "number": "UA50BT/IYS-1-066",
+      "clauses": [
+        {
+          "match": "突襲框內的登場與前線起動",
+          "status": "已驗證",
+          "official": "【レイド】〈日暮 かごめ〉アクティブにし、フロントLに移動できる【登場時】自分の手札から必要エナジーが3以下で消費APが1の赤の〔〈犬夜叉〉か〈日暮 かごめ〉〕を1枚まで自分の場にレストで登場させる。【起動メイン】【フロントLにある場合】 【ターン1】自分のフロントLのアクティブの〈犬夜叉〉を1枚レストにする。そうした場合、このキャラはこのターン中、「このキャラはBP4000以上のキャラにブロックされない。」を得て、自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-066",
+          "implementation": "raid-box 列 onPlay 與 main。普通登場不招募、不能起動。正面朝上突襲才從手牌休息登場，前線與能源線都是目的地，能量 4 或名字不符的不是對象，可以不登場。登場的卡會跑自己的登場。能源線上的正面突襲不能起動。起動只休息前線的活動犬夜叉。略過加值仍有 4000 的防禦上限。上限跟著這張自己，人還在場時生效。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。普通登場 pending 為 null、不能起動。突襲到かごめ上後，054 不可選，065 的兩線都可選，選前線後休息並打開檢索。略過檢索後可以起動。另一張突襲留在能源線時不能起動。能源線的犬夜叉不能被休息，前線的可以。略過加值後，BP 4000 不能防禦，BP 2000 可以。",
+          "unresolved": ""
+        },
+        {
+          "match": "レイド",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "生命觸發可选手牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。選 get 後在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-067",
+      "number": "UA50BT/IYS-1-067",
+      "clauses": [
+        {
+          "match": "把能量 1 以下的其他角色回手，否則自己回手",
+          "status": "已驗證",
+          "official": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-067",
+          "implementation": "共用 bounceOwnOtherUnderEnergy。有對象時必須選，沒有略過，自己不是對象。前線與能源線都算。沒有對象時自己回手、不開選項。能量 4 不是對象。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。能源線的 0 能量可選，前線的能量 4 不可選，自己不可選。選走後便宜的那張在手牌。只有能量 4 時，067 自己回手且沒有 pending。",
+          "unresolved": ""
+        },
+        {
+          "match": "無觸發",
+          "status": "已驗證",
+          "official": "觸發為 -。",
+          "implementation": "生命被打掉後不開 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-068",
+      "number": "UA50BT/IYS-1-068",
+      "clauses": [
+        {
+          "match": "沒有印刷效果",
+          "status": "已驗證",
+          "official": "效果為 -。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-068",
+          "implementation": "kind plain。登場不開 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "生命觸發 get。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。選 get 後這張在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-069",
+      "number": "UA50BT/IYS-1-069",
+      "clauses": [
+        {
+          "match": "抽 1 再把 1 張手牌放到場外",
+          "status": "已驗證",
+          "official": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-069",
+          "implementation": "與 063 相同的 drawDiscard。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。牌庫少 1，棄 1 後結束。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-070",
+      "number": "UA50BT/IYS-1-070",
+      "clauses": [
+        {
+          "match": "前線、有珊瑚、移除 1 張場外事件後獲得防禦上限",
+          "status": "已驗證",
+          "official": "【起動メイン】【フロントLにある場合】 【ターン1】自分の場に〈珊瑚〉がある場合のみ発動できる。自分の場外のイベントカードを1枚リムーブエリアに置く。そうした場合、このキャラはこのターン中、「このキャラはBP4000以上のキャラにブロックされない。」を得る。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-070",
+          "implementation": "iys 起動。必須在前線、有珊瑚、場外有事件。失去原有效果不能起動。移除那張事件後，上限記在這張自己身上。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沒有珊瑚不能起動。能源線上的另一張不能起動。沉默後不能起動。移除事件後，BP 4000 不能防禦，BP 2000 可以。",
+          "unresolved": ""
+        },
+        {
+          "match": "カラー",
+          "status": "已驗證",
+          "official": "【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "紅的 color 是 retireOppFrontUnderBp 2500。可以略過。對象是生命擁有者的對手前線。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。BP 2000 可選，BP 4000 不可選。選退場後低 BP 的到場外，高 BP 的留下。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-071",
+      "number": "UA50BT/IYS-1-071",
+      "clauses": [
+        {
+          "match": "突襲框內移除任意張事件，再依上限退場",
+          "status": "已驗證",
+          "official": "【レイド】〈弥勒〉アクティブにし、フロントLに移動できる【登場時】自分の場外のイベントカードを望む枚数リムーブエリアに置き、『BP2500』以下の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場に〈珊瑚〉がある場合、この効果で場外からリムーブエリアに置いたカード1枚につき、この効果で選べるキャラのBPの範囲+500。Q2142：沒有珊瑚也可以退 BP2500 以下。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-071",
+          "implementation": "raid-box 只列 onPlay。普通登場不開效果。正面突襲後可以移除 0 張。沒有珊瑚時移除事件不加上限。有珊瑚時每張 +500。退場可以略過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。普通登場後事件還在場外。0 張時 BP 2500 可選、3000 不可選，略過後人還在。沒有珊瑚移除 1 張仍是 2500。有珊瑚移除 1 張後 3000 可選、4000 不可選，選退場後目標到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "レイド",
+          "status": "已驗證",
+          "official": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+          "implementation": "生命觸發可选手牌。框外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-072",
+      "number": "UA50BT/IYS-1-072",
+      "clauses": [
+        {
+          "match": "看 4 張，公開最多 1 張，不加手就不棄牌",
+          "status": "已驗證",
+          "official": "【登場時】自分の山札の上から4枚見て、〈犬夜叉〉か〈日暮 かごめ〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-072",
+          "implementation": "searchNoDiscard。與 065 相同的視窗，但 discard 為 false。場域可以登場到能源線。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。四張都列出，只有かごめ可選，對手看不到。取走後手牌張數與打出前相同，沒有棄牌 pending。",
+          "unresolved": ""
+        },
+        {
+          "match": "ゲット",
+          "status": "已驗證",
+          "official": "【ゲット】このカードを手札に加える。",
+          "implementation": "生命觸發 get。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-073",
+      "number": "UA50BT/IYS-1-073",
+      "clauses": [
+        {
+          "match": "最多活動 2 張 AP",
+          "status": "已驗證",
+          "official": "自分のAPカードを2枚まで選び、アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-073",
+          "implementation": "共用 recoverAp count 2，可以略過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。略過是合法選項。選兩張後那兩張活動。",
+          "unresolved": ""
+        },
+        {
+          "match": "ファイナル",
+          "status": "已驗證",
+          "official": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+          "implementation": "生命歸零才開 final。接受後牌庫頂進入生命，對局繼續。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。只留這張生命時翻開有 final。接受後生命是原本的牌庫頂，觸發卡到場外，winner 為 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-074",
+      "number": "UA50BT/IYS-1-074",
+      "clauses": [
+        {
+          "match": "需要かごめ，抽 1，可加犬夜叉，可休息前線犬夜叉再活動 AP",
+          "status": "已驗證",
+          "official": "このカードは自分の場に〈日暮 かごめ〉がある場合のみ使用できる。カードを1枚引く。自分の場の〈犬夜叉〉を1枚まで選び、このターン中、BP+1000。自分のフロントLのアクティブの〈犬夜叉〉を1枚レストにしてもよい。そうした場合、自分のAPカードを1枚アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-074",
+          "implementation": "playRequiresOwnName 日暮 かごめ。抽 1 後，兩線的犬夜叉都能加值，可以不加。休息只限前線活動的犬夜叉，可以不休息。休息了才活動 1 張 AP。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沒有かごめ不能使用。有則抽 1。能源線犬夜叉可加值、不能被休息。休息前線那張後，指定的 AP 變活動。",
+          "unresolved": ""
+        },
+        {
+          "match": "カラー",
+          "status": "已驗證",
+          "official": "【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "與 070 相同。可以略過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。BP 2000 可選、4000 不可選。略過後低 BP 的還在場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-075",
+      "number": "UA50BT/IYS-1-075",
+      "clauses": [
+        {
+          "match": "最多給 1 張角色 BP+2000，有七宝再活動 1 張 AP",
+          "status": "已驗證",
+          "official": "自分の場のキャラを1枚まで選び、このターン中、BP+2000。自分の場に〈七宝〉がある場合、自分のAPカードを1枚アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-075",
+          "implementation": "可以不加值。不加值且沒有七宝就結束。有七宝時，即使不加值也會活動 AP。加值包含自己以外的角色，也包含七宝自己。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沒有七宝時略過加值，pending 結束。有七宝時七宝自己是合法對象；選另一張後 BP 3500，七宝仍 2000，然後只活動被選的那張 AP。",
+          "unresolved": ""
+        },
+        {
+          "match": "アクティブ",
+          "status": "已驗證",
+          "official": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+          "implementation": "生命觸發 active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-076",
+      "number": "UA50BT/IYS-1-076",
+      "clauses": [
+        {
+          "match": "最多活動 2 張 AP",
+          "status": "已驗證",
+          "official": "自分のAPカードを2枚まで選び、アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-076",
+          "implementation": "與 073 相同的 recoverAp。可以 0 張。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。略過後原本休息的 AP 仍休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "ファイナル",
+          "status": "已驗證",
+          "official": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+          "implementation": "還有其他生命時不開 final。生命歸零才開，接受後牌庫頂進生命。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。生命還在時 pending 為 null，生命少 1，觸發卡到場外。只留這張時選 final，生命變成牌庫頂，對局繼續。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-077",
+      "number": "UA50BT/IYS-1-077",
+      "clauses": [
+        {
+          "match": "有弥勒時 AP-1，最多退場 1 張 BP 5000 以下的前線角色",
+          "status": "已驗證",
+          "official": "自分の場に〈弥勒〉がある場合、手札にあるこのカードの消費APを-1する。BP5000以下の相手のフロントLのキャラを1枚まで選び、退場させる。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-077",
+          "implementation": "handApDiscountWhileName 弥勒 1。印刷 AP 2。可以不退場。只限前線。本作品沒有 BP 超過 5000 的角色，所以上限的失敗側沒有更高的卡可放。BP 4000 的前線是合法對象。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。只有 1 點 AP 且沒有弥勒時不能使用；放上弥勒後可以。能源線不是對象。略過後退場目標還在。選 BP 4000 的前線後那張到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "スペシャル",
+          "status": "已驗證",
+          "official": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "triggerProfile retireOppFront。不受印刷 BP 上限約束。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。BP 4000 可以選，退場後到場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-078",
+      "number": "UA50BT/IYS-1-078",
+      "clauses": [
+        {
+          "match": "抽 2 棄 2，有弥勒再活動 1 張 AP",
+          "status": "已驗證",
+          "official": "カードを2枚引き、自分の手札を2枚場外に置く。自分の場に〈弥勒〉がある場合、自分のAPカードを1枚アクティブにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-078",
+          "implementation": "先 drawDiscard 2，兩次棄牌都完成後才跑 after。沒有弥勒不開 AP。有則必須選 1 張休息的 AP，沒有略過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沒有弥勒時牌庫少 2，棄兩次後結束。有弥勒時棄完才開 AP，選一張後那張活動、另一張仍休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "ドロー",
+          "status": "已驗證",
+          "official": "【ドロー】カードを1枚引く。",
+          "implementation": "生命觸發 draw。抽的是 1，不是事件正文的 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。牌庫少 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-079",
+      "number": "UA50BT/IYS-1-079",
+      "clauses": [
+        {
+          "match": "退場上限 3000，場上有犬夜叉改成 5000",
+          "status": "已驗證",
+          "official": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈犬夜叉〉がある場合、『BP5000以下』に代わる。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-079",
+          "implementation": "共用 retireInuyasha。沒有犬夜叉時 3000 可選、4000 不可選。有犬夜叉時 4000 可選。必須有合法對象才能使用。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。沒有犬夜叉時選 3000 退場，4000 不可選。放上犬夜叉後 4000 退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "スペシャル",
+          "status": "已驗證",
+          "official": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "implementation": "不受正文 BP 上限約束。沒有改 triggerEffect.op。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。BP 4000 被特殊觸發退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "IYS-1-080",
+      "number": "UA50BT/IYS-1-080",
+      "clauses": [
+        {
+          "match": "必須休息 1 張對手前線角色",
+          "status": "已驗證",
+          "official": "相手のフロントLのキャラを1枚選び、レストにする。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-080",
+          "implementation": "沒有合法前線角色就不能使用。不能略過。能源線不是對象。使用本身不抽牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。對方只有能源線時不能使用。有珊瑚時使用後前線休息、能源線不可選、牌庫張數不變，事件到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "自己的效果從手牌放到場外，且場上有珊瑚才抽 1",
+          "status": "已驗證",
+          "official": "このカードが自分の効果によって手札から場外に置かれた時、自分の場に〈珊瑚〉がある場合、カードを1枚引く。Q2143：使用事件並到場外不是這個時機；別的效果從手牌放到場外，且有珊瑚，才抽。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-080",
+          "implementation": "引擎 sourceResolutionBoundary 只在 from hand、to outside、reason own-effect 時排隊。iys-runtime moved 再確認珊瑚。使用事件的規則移動不抽。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。069 的棄牌在有珊瑚時，棄掉 080 後牌庫再少 1。沒有珊瑚時牌庫只少 069 自己抽的那 1 張。",
+          "unresolved": ""
+        },
+        {
+          "match": "無觸發",
+          "status": "已驗證",
+          "official": "觸發為 -。",
+          "implementation": "生命被打掉後不開 pending。",
+          "discrepancy": "",
+          "evidence": "tests/v2-iys-051-080.test.mjs。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

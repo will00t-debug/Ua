@@ -646,6 +646,8 @@ function pendingDialog(legal,view){
  if(blockGallery)dialog.classList.add('pending-cards');
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
   el('span',{class:'tag',text:'玩家操作'})));
+ if(document.body.dataset.audit==='aot2016')
+  dialog.append(btn('以對手座位查看',()=>{app.auditViewer=1;render();},'quiet'));
  // The pending overlay covers the board banner. A rejected choice has to
  // appear inside the dialog or the click looks like it did nothing.
  if(app.error)dialog.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
@@ -1507,8 +1509,39 @@ function renderCoachReview(target){
   }
  });
 }
+function renderAuditOpponent(target){
+ const view=universalPublicView(app.packs,app.state,1);
+ const reveals=(view.publicReveals||[]).filter(item=>item&&item.cardId);
+ const panel=el('section',{class:'panel',id:'audit-opponent'});
+ panel.append(el('h2',{text:'對手座位'}),
+  el('p',{class:'note',text:'這是對手看得到的公開畫面。私人查看的牌不會出現在這裡。'}),
+  btn('回到自己的座位',()=>{app.auditViewer=0;render();},'btn'));
+ const row=el('div',{class:'choice-gallery',id:'audit-public-reveals'});
+ if(!reveals.length)row.append(el('p',{id:'audit-no-reveal',text:'目前沒有公開的卡。'}));
+ for(const item of reveals){
+  const printed=app.packs?.[item.owner]?.cards?.[item.cardId];
+  const name=printed?.name||item.cardId;
+  const figure=el('figure',{'aria-label':'公開 '+name});
+  figure.append(choicePicture(item.cardId,name,item.owner),
+   el('figcaption',{text:name+' · '+item.cardId}));
+  row.append(figure);
+ }
+ panel.append(row,el('p',{text:'操控者的牌庫還有 '+view.players[0].deckCount+' 張。順序沒有公開。'}));
+ target.append(panel);
+}
 function render(){
  const target=$('match-view');if(!target)return;
+ if(app.auditViewer===1&&app.state&&document.body.dataset.audit==='aot2016'){
+  clearTimeout(fieldHold);fieldHold=0;
+  closeZoneSheet();
+  closeFacedownOverlays();
+  clearPendingOverlay();
+  clearTriggerOverlay();
+  clearPublicMoveOverlay();
+  target.replaceChildren();
+  renderAuditOpponent(target);
+  return;
+ }
  if(app.coachBattle?.session?.reviewing&&app.replay&&app.packs){
   // A choice that ends the match, such as protecting Al after the last
   // SPECIAL life, sets the post-match review before this paint. Drop the
@@ -1574,7 +1607,9 @@ function render(){
     btn('手動推進 AI 一步',manualAiStep,'btn small'):null,
    s.status==='playing'&&uiActor(s)===1&&app.busy?
     btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null));
- target.append(title,coachBar());
+ target.append(title);
+ const coach=coachBar();
+ if(coach)target.append(coach);
  if(s.status==='playing'&&uiActor(s)===1){
   target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
    el('b',{text:app.busy?'AI 自動操作中':'AI 目前暫停'}),
@@ -2169,6 +2204,26 @@ function restoreMatchLobby(){
  if(['easy','normal','hard','learned'].includes(saved.difficulty))$('ai-level').value=saved.difficulty;
  if(['human','ai'].includes(saved.first))$('first-player').value=saved.first;
 }
+async function startAuditFixture(name){
+ try{
+  const {loadAuditFixture}=await import('./universal-v2/audit-browser-fixtures.mjs?v=20261107look');
+  const fixture=loadAuditFixture(name);
+  clearSoloBattle(sessionStorage);
+  app.packs=fixture.packs;
+  app.state=fixture.state;
+  app.replay=fixture.replay;
+  app.launch={config:{id:'audit-'+name,difficulty:'normal',first:0,recordDeckId:null},
+   decks:[{label:fixture.label},{label:'稽核對手'}],packs:fixture.packs};
+  app.aiDifficulty='normal';
+  app.history=[fixture.label];
+  app.error='';
+  app.selectedUid=null;app.entryMode=null;app.targetChoices=null;
+  document.body.dataset.audit=name;
+  const banner=$('battle-matchup');
+  if(banner)banner.textContent=fixture.label;
+  render();
+ }catch(error){alertText(error?.message||String(error));}
+}
 if(!IS_BATTLE_PAGE){
  restoreMatchLobby();
  for(const button of document.querySelectorAll('[data-deck-side]')){
@@ -2204,7 +2259,8 @@ if(!IS_BATTLE_PAGE){
  syncMatchLobby();
  importAccountLobbyDecks();
 }else{
- const loaded=loadSoloBattle(sessionStorage);
+ const auditName=new URLSearchParams(location.search).get('audit');
+ const loaded=auditName?null:loadSoloBattle(sessionStorage);
  window.matchMedia(DESKTOP_BATTLE_QUERY).addEventListener('change',()=>render());
  const exit=$('exit-battle');
  if(exit)exit.addEventListener('click',event=>{
@@ -2221,7 +2277,9 @@ if(!IS_BATTLE_PAGE){
   if(!coach?.session||coach.session.finished||app.state?.status!=='playing')return;
   coach.finish({completed:false,winner:null,endReason:'interrupted',holdMs:4000,review:false});
  });
- if(loaded){
+ if(auditName){
+  void startAuditFixture(auditName);
+ }else if(loaded){
   app.launch=loaded;app.packs=loaded.packs;
   app.aiDifficulty=loaded.config.difficulty;
   app.recordDeckId=loaded.config.recordDeckId;

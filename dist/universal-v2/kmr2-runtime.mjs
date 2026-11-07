@@ -4,7 +4,7 @@
 // Registration is not an official FAQ certification.
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
 import {originalEffectsDisabled,grantContinuousState} from './continuous-states.mjs';
-import {kmr2CopiedIds} from './kmr2-continuous.mjs';
+import {kmr2ChoiceImmune,kmr2CopiedIds,kmr2Protected} from './kmr2-continuous.mjs';
 import {raidBoxListed} from './raid-box.mjs';
 
 const SCHOOL='天ノ川学園高校';
@@ -38,7 +38,7 @@ function hold(s,spec,actions){
 }
 function sig(a){
  return JSON.stringify([a?.type,a?.mode,a?.uid??null,a?.line??null,a?.slot??null,
-  a?.replaceUid??null,a?.baseUid??null,a?.key??null,a?.ready??null,a?.from??null,a?.skip??null]);
+  a?.replaceUid??null,a?.baseUid??null,a?.key??null,a?.ready??null,a?.from??null,a?.skipOnPlay??null]);
 }
 function takeAction(q,a){
  const hit=(q.actions||[]).find(x=>sig(x)===sig(a));
@@ -49,7 +49,11 @@ function used(s,key){return s.mainAbilityUsedUids.includes(key);}
 function use(s,key){if(!used(s,key))s.mainAbilityUsedUids.push(key);}
 function nameLocked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
 function nameLock(s,owner,key){if(!nameLocked(s,owner,key))s.mainReadyOnceByName[owner].push(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function grantImpact(s,c){if(c)c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function energyBuff(s,c,untilOwn){
  if(!c)return;
@@ -87,10 +91,11 @@ function lay(pl,uids,where){
  if(where==='top')pl.deck.unshift(...picked);
  else pl.deck.push(...picked);
 }
-function offerOrder(s,spec,uids,where,after){
+function offerOrder(s,spec,uids,where,after,extra){
  const left=uids.filter(Boolean);
+ const discardAfter=extra?.discardAfter===true;
  if(left.length<=1){lay(plOf(s,spec.player),left,where);return false;}
- return hold(s,{...spec,step:'lookOrder',data:{left,built:[],where,after:after||null}},
+ return hold(s,{...spec,step:'lookOrder',data:{left,built:[],where,after:after||null,discardAfter}},
   left.map(uid=>({type:'kmr2',mode:'next',uid})));
 }
 function beginLook(s,spec,count,match,opts={}){
@@ -101,7 +106,8 @@ function beginLook(s,spec,count,match,opts={}){
  const takeMode=opts.takeMode||'take';
  const data={uids:window.map(c=>c.uid),taken:[],max:opts.max??1,min:opts.min||0,
   where:opts.where||'bottom',dest:opts.dest||'hand',reveal:opts.reveal!==false,
-  discard:opts.discard===true,after,takeMode};
+  discard:opts.discard===true,orderBeforeDiscard:opts.orderBeforeDiscard===true,
+  after,takeMode};
  const actions=[
   ...(data.min===0?[{type:'kmr2',mode:'done'}]:[]),
   ...matches.map(c=>({type:'kmr2',mode:takeMode,uid:c.uid}))
@@ -130,11 +136,20 @@ function finishLook(pack,s,spec,data){
   A.move(pack,s,{owner:spec.player,from:'deck',to:data.dest==='outside'?'outside':'hand',
    index,reason:'own-effect',sourceUid:spec.sourceUid});
  }
+ const left=data.uids.filter(uid=>!data.taken.includes(uid));
+ // KMR-2-011 prints the bottom order before the hand-to-outside cost.
+ if(data.orderBeforeDiscard&&data.discard&&data.taken.length){
+  if(offerOrder(s,spec,left,data.where,data.after||null,{discardAfter:true}))return 'held';
+  if(pl.hand.length){
+   offerDiscard(s,spec,1,false,data.after||null);
+   return 'held';
+  }
+  return data.after||null;
+ }
  if(data.discard&&data.taken.length&&pl.hand.length){
   offerDiscard(s,spec,1,false,data.after||null);
   return 'held';
  }
- const left=data.uids.filter(uid=>!data.taken.includes(uid));
  if(offerOrder(s,spec,left,data.where,data.after))return 'held';
  return data.after||null;
 }
@@ -153,7 +168,18 @@ function offerList(s,spec,step,cards,optional,next,mode){
   ...cards.map(c=>({type:'kmr2',mode,uid:c.uid}))
  ]);
 }
-function oppFront(s,owner,pred){return plOf(s,1-owner).front.filter(c=>c&&(!pred||pred(c)));}
+function oppFront(s,owner,pred,sourceType='character'){
+ return plOf(s,1-owner).front.filter(c=>c&&
+  !kmr2ChoiceImmune(A.pack,s,c,(p,x)=>def(p,x),!live(s,c))&&
+  !kmr2Protected(A.pack,s,c,(p,x)=>def(p,x),sourceType)&&(!pred||pred(c)));
+}
+function offerReadyAp(s,spec){
+ const rested=plOf(s,spec.player).apCards.filter(c=>c.inPlay&&!c.ready);
+ if(rested.length===1){rested[0].ready=true;return false;}
+ if(rested.length<2)return false;
+ return hold(s,{...spec,step:'readyAp',data:{}},
+  rested.map(c=>({type:'kmr2',mode:'readyAp',uid:c.uid})));
+}
 function offerRetire(pack,s,spec,limit,optional,next){
  const targets=oppFront(s,spec.player,c=>limit==null||A.bp(pack,s,c)<=limit);
  if(!targets.length)return false;
@@ -170,6 +196,14 @@ function pay(s,owner,n,sourceUid){
  return true;
 }
 function specOf(q){return {player:q.player??q.owner,sourceUid:q.sourceUid,id:q.id};}
+function sameEnergyHand(pack,s,owner){
+ const groups=new Map();
+ for(const c of plOf(s,owner).hand){
+  const energy=def(pack,c).energy;
+  groups.set(energy,(groups.get(energy)||0)+1);
+ }
+ return [...groups.values()].some(n=>n>=3);
+}
 function gochizo(pack,s,owner){
  const piles=[...fieldCards(s,owner),...plOf(s,owner).outside];
  return piles.filter(c=>exact(pack,c,GO,s));
@@ -184,17 +218,21 @@ function memoryEntry(c,s){
  const mark=c?.kmr2EnteredBy;
  return !!mark&&mark.turn===s.turn&&(mark.name===MEM||mark.id==='KMR-2-059');
 }
-function askEnter(s,spec,uid,ready,from,skip,next,lines){
+// optional is only the decline. skipOnPlay is only the entry action.
+// A printed てもよい must be able to stay where it is without suppressing 登場時.
+function askEnter(s,spec,uid,ready,from,optional,next,lines,skipOnPlay){
  const pl=plOf(s,spec.player);
  const allowed=Array.isArray(lines)&&lines.length?lines:['front','energy'];
  const actions=[];
  for(const line of allowed)
   for(const choice of A.destinations(pl,line))
    actions.push({type:'kmr2',mode:'enter',uid,line,slot:choice.slot,
-    replaceUid:choice.replaceUid??null,ready,from,skip:skip===true});
+    replaceUid:choice.replaceUid??null,ready,from,skipOnPlay:skipOnPlay===true});
  if(!actions.length)return false;
+ if(optional===true)actions.unshift({type:'kmr2',mode:'skip'});
  const carried=spec.data&&typeof spec.data==='object'?{...spec.data}:{};
- return hold(s,{...spec,step:'enter',data:{...carried,uid,ready,from,skip:skip===true,next:next||null}},actions);
+ return hold(s,{...spec,step:'enter',data:{...carried,uid,ready,from,
+  optional:optional===true,skipOnPlay:skipOnPlay===true,next:next||null}},actions);
 }
 // Up to N matching cards. The player picks which card, including none when the
 // print says まで. The first card is not taken automatically.
@@ -216,7 +254,7 @@ function offerEnter(s,spec,pool,opts={}){
 }
 function doEnter(pack,s,owner,a,sourceUid){
  A.enter(pack,s,{owner,from:a.from,uid:a.uid,line:a.line,slot:a.slot,
-  replaceUid:a.replaceUid||undefined,ready:a.ready===true,sourceUid,skipOnPlay:a.skip===true});
+  replaceUid:a.replaceUid||undefined,ready:a.ready===true,sourceUid,skipOnPlay:a.skipOnPlay===true});
 }
 function restCard(s,owner,c,sourceUid){
  if(!c)return;
@@ -282,7 +320,7 @@ function follow(pack,s,spec,next){
   const c=selfOf(s,spec.player,spec.sourceUid);if(c)A.active(s,spec.player,c);return false;
  }
  if(next==='discard1')return offerDiscard(s,spec,1,false,null);
- if(next==='readyAp'){A.readyAp(plOf(s,spec.player));return false;}
+ if(next==='readyAp'){offerReadyAp(s,spec);return false;}
  if(next==='buff2000'){const c=selfOf(s,spec.player,spec.sourceUid);buff(s,c,2000);return false;}
  if(next==='buff1000self'){const c=selfOf(s,spec.player,spec.sourceUid);buff(s,c,1000);return false;}
  if(next==='energyTurn'){energyBuff(s,selfOf(s,spec.player,spec.sourceUid),false);return false;}
@@ -357,10 +395,12 @@ function on013(pack,s,job){
 }
 function on015(pack,s,job){
  const spec=specOf(job);
- const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=5000);
+ const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=5000,'event');
  if(!targets.length)return;
  const chooser=hasName(pack,s,job.owner,'ガヴ')?job.owner:1-job.owner;
- hold(s,{...spec,player:chooser,step:'pickFront',data:{next:'oppDeck',chooser,actor:job.owner}},[
+ // The effect's controller chooses the character. Only top or bottom
+ // follows the printed 『相手が選んだ方』 / 『自分が選んだ方』.
+ hold(s,{...spec,step:'pickFront',data:{next:'oppDeck',chooser,actor:job.owner}},[
   ...targets.map(c=>({type:'kmr2',mode:'place',uid:c.uid}))
  ]);
 }
@@ -465,6 +505,8 @@ function on055(pack,s,job){
  if(job.slot==='onAttack'){
   if(used(s,job.sourceUid+'|KMR-2-055'))return;
   const pool=plOf(s,job.owner).front.filter(c=>c?.ready&&token(pack,c,'Ｗ',s));
+  if(!pool.length)return;
+  use(s,job.sourceUid+'|KMR-2-055');
   offerList(s,specOf(job),'rest',pool,true,'fang','rest');
   return;
  }
@@ -482,6 +524,9 @@ function on056(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self||!frontOf(s,job.owner,self))return;
  if(nameLocked(s,job.owner,LUNA))return;
+ // Q1776: the on-play activates when this card is on the front. Declining the
+ // optional entry still consumes the once. An energy-line entry never starts it.
+ nameLock(s,job.owner,LUNA);
  const pool=handWhere(s,job.owner,c=>def(pack,c).type==='character'&&def(pack,c).bp<=1500&&
   def(pack,c).color==='green'&&token(pack,c,'Ｗ',s));
  offerEnter(s,specOf(job),pool,{ready:false,from:'hand',optional:true,lock:LUNA});
@@ -504,15 +549,20 @@ function on060(pack,s,job){
  offerEnter(s,specOf(job),pool,{ready:false,from:'hand',optional:true,skipOnPlay:true});
 }
 function on061(pack,s,job){
- const names=fieldCards(s,job.owner).filter(c=>token(pack,c,'Ｗ',s)||exact(pack,c,MEM,null)).length;
- offerRetire(pack,s,specOf(job),names*1000,true,null);
+ // 「キャラ」only. 〈メモリチェンジ〉 is the printed name, including the field.
+ const names=fieldCards(s,job.owner).filter(c=>exact(pack,c,MEM,s)||
+  def(pack,c).type==='character'&&token(pack,c,'Ｗ',s)).length;
+ // 1枚選び is mandatory when a legal character exists. まで is not printed.
+ offerRetire(pack,s,specOf(job),names*1000,false,null);
 }
 function on063(pack,s,job){
  onLook(pack,s,job,5,c=>trait(pack,c,RE),{where:'bottom',after:'deployRe'});
 }
 function on065(pack,s,job){
- onLook(pack,s,job,3,c=>def(pack,c).type==='character'&&token(pack,c,'ディケイド',null)||trait(pack,c,RE),
-  {where:'bottom',discard:true});
+ // Decade character, or any re-imagination. Bottom order is printed before
+ // the hand card goes outside.
+ onLook(pack,s,job,3,c=>(def(pack,c).type==='character'&&token(pack,c,'ディケイド',null))||trait(pack,c,RE),
+  {where:'bottom',discard:true,orderBeforeDiscard:true});
 }
 // EX12BT/KMR-2-068: 2枚まで includes zero, one, and two. Placing one card
 // still retires by that card's printed BP and copies that card's turn text.
@@ -570,11 +620,13 @@ function on080(pack,s,job){
    A.location(s,job.owner,self.uid).slot,{});
   const pool=zoneWhere(s,job.owner,'outside',c=>{
    const d=def(pack,c);
-   if(exact(pack,c,'ジーク',null))return false;
+   // Alias ジーク stops when the original effect is off. Printed ジーク stays.
+   if(exact(pack,c,'ジーク',s))return false;
    if(exact(pack,c,PLATFORM,null))return true;
    return d.energy<=1&&d.color==='red'&&trait(pack,c,IMAGIN);
   });
-  offerEnter(s,specOf(job),pool,{ready:false,from:'outside',optional:true});
+  // 1枚まで may be declined. The entered card's 登場時 is not skipped.
+  offerEnter(s,specOf(job),pool,{ready:false,from:'outside',optional:true,skipOnPlay:false});
   return;
  }
  onLook(pack,s,job,3,()=>true,{dest:'outside',where:'bottom',reveal:false,takeMode:'outside',max:1});
@@ -585,7 +637,7 @@ function on082(pack,s,job){
 }
 function on084(pack,s,job){
  if(apReady(s,job.owner)<1)return;
- const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,null));
+ const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,s));
  if(!vent.length)return;
  hold(s,{...specOf(job),step:'ventPay',data:{}},[
   {type:'kmr2',mode:'skip'},
@@ -593,7 +645,7 @@ function on084(pack,s,job){
  ]);
 }
 function on088(pack,s,job){
- const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,null));
+ const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,s));
  offerList(s,specOf(job),'discard',vent,true,'knightHit','discard');
 }
 function on093(pack,s,job){
@@ -623,6 +675,7 @@ function on099(pack,s,job){
   {type:'kmr2',mode:'two',key:'replay'}
  ]);
 }
+function readyAp099(pack,s,job){offerReadyAp(s,specOf(job));}
 function on100(pack,s,job){
  const pool=ownWhere(s,job.owner,c=>def(pack,c).type==='character');
  offerList(s,specOf(job),'kit',pool,false,null,'own');
@@ -643,9 +696,11 @@ function main002(pack,s,job){
   return;
  }
  if(!frontOf(s,job.owner,self)||used(s,self.uid+'|002b'))return;
+ const targets=oppFront(s,job.owner,c=>A.bp(pack,s,c)<=3000);
+ if(!targets.length)return;
  use(s,self.uid+'|002b');
  restCard(s,job.owner,self,self.uid);
- offerList(s,spec,'rest',oppFront(s,job.owner,c=>A.bp(pack,s,c)<=3000),false,null,'rest');
+ offerList(s,spec,'rest',targets,false,null,'rest');
 }
 function main003(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -687,7 +742,7 @@ function main014(pack,s,job){
 function main017(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self?.ready||used(s,self.uid+'|017'))return;
- const pool=plOf(s,job.owner).front.filter(c=>c?.ready&&def(pack,c).type==='character');
+ const pool=plOf(s,job.owner).front.filter(c=>c?.ready&&c.uid!==self.uid&&def(pack,c).type==='character');
  if(!pool.length)return;
  use(s,self.uid+'|017');
  restCard(s,job.owner,self,self.uid);
@@ -705,10 +760,10 @@ function main022(pack,s,job){
  if(nameLocked(s,job.owner,PARADOX))return;
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self||!frontOf(s,job.owner,self))return;
- hold(s,{...specOf(job),step:'mode',data:{lock:PARADOX}},[
-  {type:'kmr2',mode:'one',key:'tuck'},
-  {type:'kmr2',mode:'two',key:'release'}
- ]);
+ const layers=fieldCards(s,job.owner).flatMap(c=>(c.under||[]).filter(x=>x?.faceDown));
+ const actions=[{type:'kmr2',mode:'one',key:'tuck'}];
+ if(layers.length>=3)actions.push({type:'kmr2',mode:'two',key:'release'});
+ hold(s,{...specOf(job),step:'mode',data:{lock:PARADOX}},actions);
 }
 function main025(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -761,7 +816,7 @@ function main067(pack,s,job){
 function main085(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
  if(!self||used(s,self.uid+'|085'))return;
- const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,null));
+ const vent=handWhere(s,job.owner,c=>exact(pack,c,VENT,s));
  if(!vent.length)return;
  use(s,self.uid+'|085');
  offerList(s,specOf(job),'discard',vent,false,'energyAttack','discard');
@@ -814,10 +869,10 @@ function removedReact(pack,s,job){
  const as032=id==='KMR-2-032'||copied.includes('KMR-2-032');
  const selfEffect=source===id||source==='KMR-2-035'&&as035;
  if(as035&&selfEffect){
-  askEnter(s,specOf(job),card.uid,false,'removed',false,null);
+  askEnter(s,specOf(job),card.uid,false,'removed',true,null,null,false);
   return;
  }
- if(as030){askEnter(s,specOf(job),card.uid,false,'removed',false,null);return;}
+ if(as030){askEnter(s,specOf(job),card.uid,false,'removed',true,null);return;}
  if(as032||as035){
   hold(s,{...specOf(job),step:'toHand',data:{uid:card.uid}},[
    {type:'kmr2',mode:'skip'},{type:'kmr2',mode:'hand',uid:card.uid}
@@ -864,7 +919,7 @@ function blocked048(pack,s,job){
 function offerWBlockedTopPlace(s,spec){
  const top=plOf(s,spec.player).deck[0];
  if(!top)return false;
- return hold(s,{...spec,step:'topPlace',data:{uid:top.uid}},[
+ return hold(s,{...spec,step:'topPlace',data:{uid:top.uid,window:[top.uid]}},[
   {type:'kmr2',mode:'top',uid:top.uid},{type:'kmr2',mode:'bottom',uid:top.uid}
  ]);
 }
@@ -891,7 +946,9 @@ function blocked079(pack,s,job){
 function on079(pack,s,job){
  const base=job.baseUid&&plOf(s,job.owner).outside.find(c=>c.uid===job.baseUid);
  if(!base)return;
- askEnter(s,specOf(job),base.uid,false,'outside',true,null);
+ // Q60: the raid source is already outside. Q1168: its 登場時 still happens.
+ // 1枚まで is the decline. skipOnPlay stays false.
+ askEnter(s,specOf(job),base.uid,false,'outside',true,null,null,false);
 }
 function attackEnd021(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -910,6 +967,10 @@ function attackEnd021(pack,s,job){
 function attackEnd083(pack,s,job){
  const battle=s.kmr2LastBattle;
  if(!battle||battle.turn!==s.turn||battle.attackerUid!==job.sourceUid||!battle.blockerUid)return;
+ // One blocked attack is one check. A later unblocked attack end keeps the
+ // same record and must not offer the retire again.
+ if(s.kmr2083Battle===battle)return;
+ s.kmr2083Battle=battle;
  const blocker=A.location(s,1-job.owner,battle.blockerUid)?.c;
  if(!blocker||A.bp(pack,s,blocker)>3000)return;
  hold(s,{...specOf(job),step:'retire',data:{next:null}},[
@@ -930,6 +991,10 @@ function faceUpRaidCard(c){
 }
 function win019(pack,s,job){
  const unit=selfOf(s,job.owner,job.sourceUid);
+ // Printed color only. Q974: the winner having lost its own effects does
+ // not remove the draw Ohma Form is granting. Recheck the source here so a
+ // copy silenced or removed after the win was noted, with no other live
+ // copy left, does not open the draw.
  if(!unit||def(pack,unit).color==='yellow')return;
  if(!fieldCards(s,job.owner).some(c=>c&&def(pack,c).id==='KMR-2-019'&&live(s,c)&&
   (!raidBoxListed('KMR-2-019','phase')||faceUpRaidCard(c))))return;
@@ -944,7 +1009,9 @@ function on030(pack,s,job){
  offerList(s,specOf(job),'removeTrio',targets,true,null,'remove');
 }
 function on012(pack,s,job){deployGochizo(pack,s,job,false);}
-function on011(pack,s,job){onLook(pack,s,job,3,gavFilter,{where:'bottom',discard:true});}
+function on011(pack,s,job){
+ onLook(pack,s,job,3,gavFilter,{where:'bottom',discard:true,orderBeforeDiscard:true});
+}
 function on041(pack,s,job){
  onLook(pack,s,job,3,c=>trait(pack,c,SCHOOL),{where:'bottom',after:'schoolDiscard'});
 }
@@ -1014,7 +1081,7 @@ function mainP005(pack,s,job){
  ]);
 }
 function on086(pack,s,job){onLook(pack,s,job,2,riderFilter,{dest:'outside',where:'top',reveal:false,takeMode:'outside'});}
-function on087(pack,s,job){onLook(pack,s,job,3,riderFilter,{where:'bottom',discard:true});}
+function on087(pack,s,job){onLook(pack,s,job,3,riderFilter,{where:'bottom',discard:true,orderBeforeDiscard:true});}
 function on089(pack,s,job){onLook(pack,s,job,6,c=>trait(pack,c,ADVENT),{where:'bottom'});}
 
 const HANDLERS={
@@ -1049,7 +1116,8 @@ const HANDLERS={
  'KMR-2-087|onPlay':on087,'KMR-2-088|onAttack':on088,'KMR-2-089|onPlay':on089,
  'KMR-2-089|main':main089,'KMR-2-093|onPlay':on093,'KMR-2-094|onPlay':on094,
  'KMR-2-094|onRetire':on094,'KMR-2-095|onPlay':on095,'KMR-2-096|onPlay':on096,
- 'KMR-2-097|main':main097,'KMR-2-099|onPlay':on099,'KMR-2-100|onPlay':on100,
+ 'KMR-2-097|main':main097,'KMR-2-099|onPlay':on099,'KMR-2-099|readyAp':readyAp099,
+ 'KMR-2-100|onPlay':on100,
  'KMR-P-003|onPlay':onP003,'KMR-P-004|onPlay':onP004,
  'KMR-P-005|onPlay':onP005,'KMR-P-005|main':mainP005
 };
@@ -1088,14 +1156,20 @@ function resolveStep(pack,s,q,a){
   }
   lay(plOf(s,q.player),data.built,data.where);
   s.pending=null;
+  if(data.discardAfter&&plOf(s,q.player).hand.length){
+   offerDiscard(s,spec,1,false,data.after||null);
+   return;
+  }
   follow(pack,s,spec,data.after);
   return;
  }
  if(q.step==='discard'){
   if(hit.mode==='skip'){s.pending=null;return;}
   discard(pack,s,q.player,hit.uid,q.sourceUid);
+  // offerList uses one card and does not carry the multi-discard counters.
+  q.data.got??=[];
   q.data.got.push(hit.uid);
-  if(q.data.got.length<q.data.need){
+  if(q.data.got.length<(q.data.need??1)){
    hold(s,{...spec,step:'discard',data:q.data},plOf(s,q.player).hand.map(c=>({type:'kmr2',mode:'discard',uid:c.uid})));
    return;
   }
@@ -1135,7 +1209,7 @@ function resolveStep(pack,s,q,a){
   if(hit.mode==='skip')return;
   const owner=hit.uid&&hit.uid[0]==='1'&&q.player===0?1:q.player;
   const foe=hit.uid&&String(hit.uid).startsWith((1-q.player)+'-')?1-q.player:q.player;
-  const who=q.step==='toEnergy'||q.step==='removeTrio'?foe:q.player;
+  const who=q.step==='toEnergy'||q.step==='removeTrio'||q.step==='rest'?foe:q.player;
   const c=fieldCards(s,who).find(x=>x.uid===hit.uid)||plOf(s,who).hand.find(x=>x.uid===hit.uid)||
    plOf(s,who).outside.find(x=>x.uid===hit.uid);
   if(q.step==='rest'&&c)restCard(s,who,c,q.sourceUid);
@@ -1147,7 +1221,7 @@ function resolveStep(pack,s,q,a){
    if(q.data?.next==='memoryDeploy'&&A.location(s,q.player,c.uid))return;
   }
   if(q.step==='ready'&&c)A.active(s,q.player,c);
-  if(q.step==='buff'&&c)buff(s,c,q.data?.bp||1000);
+  if(q.step==='buff'&&c)buff(s,c,q.id==='KMR-2-052'?2000:(q.data?.bp||1000));
   if(q.step==='block'&&c)c.kmr2Block={turn:s.turn,stamp:c.fieldEntryStamp,relation:'atLeast',bp:4000,sourceUid:q.sourceUid};
   if(q.step==='impact'&&c)grantImpact(s,c);
   if(q.step==='triggerSafe'&&c)c.kmr2TriggerImmune={turn:s.turn,stamp:c.fieldEntryStamp,sourceUid:q.sourceUid};
@@ -1183,12 +1257,14 @@ function resolveStep(pack,s,q,a){
    moveExtremeTarget(pack,s,q.player,q.sourceUid,c.uid);
   if(q.step==='removeTrio'){
    const self=selfOf(s,q.player,q.sourceUid);
-   const base=self?.stack?.[0];
+   const baseUid=self?.stack?.[0]?.uid||null;
    if(c)A.remove(pack,s,who,c.uid,q.sourceUid);
    if(self)A.remove(pack,s,q.player,self.uid,q.sourceUid);
-   if(base){
-    const loc=A.location(s,q.player,base.uid);
-    if(loc)A.remove(pack,s,q.player,base.uid,q.sourceUid);
+   // Removing the top sends the raid source outside. The print also removes it.
+   if(baseUid){
+    const loc=A.location(s,q.player,baseUid);
+    if(loc)A.remove(pack,s,q.player,baseUid,q.sourceUid);
+    else moveUid(pack,s,q.player,'outside',baseUid,'removed',q.sourceUid);
    }
    s.kmr2EndAttack=q.sourceUid;
   }
@@ -1270,14 +1346,14 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='takeTwo'){
   if(hit.mode==='skip'||hit.mode==='done'){s.pending=null;return;}
-  q.data??={got:[]};
-  q.data.got.push(hit.uid);
+  const data=q.data&&typeof q.data==='object'?q.data:{};
+  data.got=[...(data.got||[]),hit.uid];
   moveUid(pack,s,q.player,'outside',hit.uid,'hand',q.sourceUid);
-  if(q.data.got.length<2){
+  if(data.got.length<2){
    const rest=zoneWhere(s,q.player,'outside',c=>energyPrinted(pack,c)===0&&(def(pack,c).type==='field'||
     def(pack,c).type==='event'||(def(pack,c).type==='character'&&token(pack,c,'オーズ',s))));
    if(!rest.length){s.pending=null;return;}
-   hold(s,{...spec,step:'takeTwo',data:q.data},[
+   hold(s,{...spec,step:'takeTwo',data},[
     {type:'kmr2',mode:'done'},...rest.map(c=>({type:'kmr2',mode:'hand',uid:c.uid}))
    ]);
    return;
@@ -1308,6 +1384,7 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='enter'){
   s.pending=null;
+  if(hit.mode==='skip')return;
   doEnter(pack,s,q.player,hit,q.sourceUid);
   if(q.data?.next==='banEntered'){
    const entered=selfOf(s,q.player,hit.uid);
@@ -1348,8 +1425,9 @@ function resolveStep(pack,s,q,a){
    deployNext:q.data.next,deployStop:q.data.stop!==false
   }:{};
   const next=chain?'deployMore':(q.data.next||null);
+  const skipPlay=q.data.skipOnPlay===true;
   const placed=askEnter(s,{...spec,data:carried},hit.uid,q.data.ready===true,q.data.from||'hand',
-   q.data.skipOnPlay===true,next,q.data.lines);
+   skipPlay,next,q.data.lines,skipPlay);
   if(!placed){
    s.pending=null;
    if(q.data?.next==='removeSelf')
@@ -1360,6 +1438,11 @@ function resolveStep(pack,s,q,a){
  if(q.step==='mode'){
   s.pending=null;
   if(hit.mode==='done'||hit.mode==='skip')return;
+  if(hit.key==='draw'&&q.id==='KMR-2-054'){
+   hold(s,{...spec,step:'mayDraw'},[
+    {type:'kmr2',mode:'skip'},{type:'kmr2',mode:'draw'}]);
+   return;
+  }
   if(hit.key==='draw'){
    A.draw(pack,s,q.player,1,q.sourceUid);
    if(q.id==='KMR-2-018')offerDiscard(s,spec,1,false,null);
@@ -1368,7 +1451,7 @@ function resolveStep(pack,s,q,a){
     def(pack,c).raidName&&def(pack,c).color!=='yellow');
    offerList(s,spec,'revealHand',pool,true,'draw2discard','reveal');
   }else if(hit.key==='look'&&q.id==='KMR-2-048'){
-   onLook(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id},5,c=>exact(pack,c,MEM,null),{where:'bottom',discard:true});
+   onLook(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id},5,c=>exact(pack,c,MEM,null),{where:'bottom',discard:true,orderBeforeDiscard:true});
   }else if(hit.key==='pay'&&q.id==='KMR-2-048'){
    if(pay(s,q.player,1,q.sourceUid)){
     const c=selfOf(s,q.player,q.sourceUid);
@@ -1393,6 +1476,25 @@ function resolveStep(pack,s,q,a){
    const pool=ownWhere(s,q.player,c=>trait(pack,c,MIRROR));
    offerList(s,spec,'replay',pool,true,'readyAp','own');
   }
+  return;
+ }
+ if(q.step==='shiftFull'){
+  s.pending=null;
+  const owner=q.data.owner;
+  const energy=plOf(s,owner).energy;
+  const index=energy.findIndex(c=>c?.uid===hit.uid);
+  if(hit.mode!=='shift'||index<0)throw Error('Energy card to move outside is missing');
+  const displaced=energy[index];
+  energy[index]=null;
+  plOf(s,owner).outside.push(displaced);
+  A.record(pack,s,{physical:displaced,owner,from:'energy',to:'outside',
+   reason:'own-effect',sourceUid:q.sourceUid});
+  const victim=s.players[owner][q.data.line][q.data.slot];
+  if(!victim||victim.uid!==q.data.uid)throw Error('Fuwamaro left before the energy shift');
+  s.players[owner][q.data.line][q.data.slot]=null;
+  energy[index]=victim;
+  A.record(pack,s,{physical:victim,owner,from:q.data.line,to:'energy',
+   reason:'own-effect',sourceUid:q.sourceUid});
   return;
  }
  if(q.step==='mayDraw'){
@@ -1524,6 +1626,13 @@ function resolveStep(pack,s,q,a){
   offerList(s,spec,'impact',pool,true,null,'own');
   return;
  }
+ if(q.step==='readyAp'){
+  s.pending=null;
+  const ap=plOf(s,q.player).apCards.find(c=>c.uid===hit.uid&&c.inPlay&&!c.ready);
+  if(!ap)throw Error('KMR-2-024 rested AP is missing');
+  ap.ready=true;
+  return;
+ }
  if(q.step==='raidSelf'){
   s.pending=null;
   if(hit.mode==='skip')return;
@@ -1566,13 +1675,16 @@ function resolveStep(pack,s,q,a){
  }
  if(q.step==='replay'){
   s.pending=null;
-  if(hit.mode==='skip'){A.readyAp(plOf(s,q.player));return;}
-  const c=fieldCards(s,q.player).find(x=>x.uid===hit.uid);
-  if(c){
-   const jobs=A.programs(pack,s,c,'onPlay',q.player,'handEffect',q.sourceUid)||[];
-   if(jobs.length)s.effectQueue.unshift(...jobs);
+  // The AP card is activated after the chosen character's 登場時.
+  // Skipping the character still activates one AP. The player chooses which.
+  s.effectQueue.unshift({op:'kmr2',id:'KMR-2-099',slot:'readyAp',owner:q.player,sourceUid:q.sourceUid});
+  if(hit.mode!=='skip'){
+   const c=fieldCards(s,q.player).find(x=>x.uid===hit.uid);
+   if(c){
+    const jobs=A.programs(pack,s,c,'onPlay',q.player,'handEffect',q.sourceUid)||[];
+    if(jobs.length)s.effectQueue.unshift(...jobs);
+   }
   }
-  A.readyAp(plOf(s,q.player));
   return;
  }
  if(q.step==='pr003Pick'){
@@ -1646,7 +1758,8 @@ export function legalKmr2Activations(pack,s,owner,c){
  const push=(tail='')=>{out.push({type:'activate',uid:c.uid,mode:tail?'kmr2:'+id+':'+tail:'kmr2:'+id});};
  if(id==='KMR-2-002'){
   if(!c.ready&&!used(s,c.uid+'|002a')&&ownWhere(s,owner,x=>exact(pack,x,GO,s)).length)push('a');
-  if(frontOf(s,owner,c)&&!used(s,c.uid+'|002b'))push('b');
+  if(frontOf(s,owner,c)&&!used(s,c.uid+'|002b')&&
+   oppFront(s,owner,x=>A.bp(pack,s,x)<=3000).length)push('b');
  }
  if(id==='KMR-2-003'&&frontOf(s,owner,c)&&!used(s,c.uid+'|003')&&
   ownWhere(s,owner,x=>x.ready&&exact(pack,x,GO,s)).length)push();
@@ -1658,16 +1771,16 @@ export function legalKmr2Activations(pack,s,owner,c){
   ownWhere(s,owner,x=>exact(pack,x,GO,s)).length)push();
  if(id==='KMR-2-014'&&c.ready&&plOf(s,owner).hand.length&&apReady(s,owner)>=1)push();
  if(id==='KMR-2-017'&&c.ready&&!used(s,c.uid+'|017')&&
-  plOf(s,owner).front.some(x=>x?.ready&&def(pack,x).type==='character'))push();
+  plOf(s,owner).front.some(x=>x?.ready&&x.uid!==c.uid&&def(pack,x).type==='character'))push();
  if(id==='KMR-2-019'&&frontOf(s,owner,c)&&!used(s,c.uid+'|019')&&
   handWhere(s,owner,x=>nonYellowRaid(pack,x)).length)push();
  if(id==='KMR-2-022'&&frontOf(s,owner,c)&&!nameLocked(s,owner,PARADOX))push();
- if(id==='KMR-2-025'&&!used(s,c.uid+'|025'))push();
+ if(id==='KMR-2-025'&&!used(s,c.uid+'|025')&&sameEnergyHand(pack,s,owner))push();
  if(id==='KMR-2-040'&&c.ready&&ownWhere(s,owner,x=>token(pack,x,'フォーゼ',s)).length)push();
  if(id==='KMR-2-059'&&c.ready&&ownWhere(s,owner,x=>x.ready&&def(pack,x).energy<=2&&token(pack,x,'Ｗ',s)).length)push();
  if(id==='KMR-2-067'&&frontOf(s,owner,c)&&!used(s,c.uid+'|067')&&
   zoneWhere(s,owner,'outside',x=>trait(pack,x,RE)).length)push();
- if(id==='KMR-2-085'&&!used(s,c.uid+'|085')&&handWhere(s,owner,x=>exact(pack,x,VENT,null)).length)push();
+ if(id==='KMR-2-085'&&!used(s,c.uid+'|085')&&handWhere(s,owner,x=>exact(pack,x,VENT,s)).length)push();
  if(id==='KMR-2-089'&&frontOf(s,owner,c)&&!used(s,c.uid+'|089')&&s.kmr2AdventUsed?.[owner]===s.turn)push();
  if(id==='KMR-2-097'&&c.ready&&ownWhere(s,owner,x=>def(pack,x).type==='character').length)push();
  if(id==='KMR-P-005'&&frontOf(s,owner,c)&&!used(s,c.uid+'|P005'))push();
@@ -1712,7 +1825,7 @@ export function noteKmr2Zone(pack,s,move,card){
  if(reason==='own-effect'&&from==='removed'&&fieldTo&&s.active===owner&&String(d?.name||'').includes('フォーゼ')){
   for(const watcher of [...s.players[owner].front,...s.players[owner].energy].filter(Boolean)){
    if(card(pack,watcher).id!=='KMR-2-028'||originalEffectsDisabled(s,watcher))continue;
-   s.effectQueue.push({op:'kmr2',id:'KMR-2-028',slot:'entered',owner,sourceUid:watcher.uid,enteredUid:physical.uid});
+   s.effectQueue.unshift({op:'kmr2',id:'KMR-2-028',slot:'entered',owner,sourceUid:watcher.uid,enteredUid:physical.uid});
   }
  }
  if(to==='removed'&&reason==='own-effect'&&s.active===owner){
@@ -1723,7 +1836,7 @@ export function noteKmr2Zone(pack,s,move,card){
    const slotId=HANDLERS[id+'|removed']?id:(copied.includes('KMR-2-035')||copied.includes('KMR-2-030')||copied.includes('KMR-2-032')?(id==='KMR-2-068'?'KMR-2-068':'KMR-2-067'):null);
    const sourceCard=findSource(s,sourceUid);
    const causeId=sourceCard?card(pack,sourceCard).id:'';
-   if(slotId)s.effectQueue.push({op:'kmr2',id:slotId,slot:'removed',owner,sourceUid:live.uid,causeId});
+   if(slotId)s.effectQueue.unshift({op:'kmr2',id:slotId,slot:'removed',owner,sourceUid:live.uid,causeId});
   }
  }
  if(fieldFrom&&!fieldTo){

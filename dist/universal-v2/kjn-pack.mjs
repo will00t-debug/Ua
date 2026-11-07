@@ -87,7 +87,8 @@ function kindProgram(kind,card){
  if(kind==='activeEnergy')return {activeExtraEnergy:1,effects:{}};
  if(kind==='bounce')return {effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',energy:1}]}};
  if(kind==='recoverAp2')return {effects:{onPlay:[{op:'recoverAp',count:2}]}};
- if(kind==='peekTopOrBottom')return {effects:{onPlay:[{op:'peekTopOrBottom'}]}};
+ // KJN-1-005 prints 山札の上か下. The shared peek op places the card outside.
+if(kind==='peekTopOrBottom')return {effects:{onPlay:[job(card.id,'onPlay')]}};
  if(kind==='peekTopOne')return {effects:{onPlay:[{op:'peekTopOne'}]}};
  if(kind==='auroraTuck')return {mainAbility:main(card.id),effects:{}};
  if(kind==='KJN-1-001')return {enterAlwaysActive:true,printedAttackDamage:2,
@@ -101,8 +102,8 @@ function kindProgram(kind,card){
   op:'searchTopOneBottomDiscard',count:3,logic:'any',filters:[
    {field:'colorAndType',value:'yellow:event'},
    {field:'colorAndType',value:'yellow:field'}]}]}};
- if(kind==='KJN-1-022')return {effects:{onPlay:[{
-  op:'ifEnteredFromRemoved',then:[{op:'activeOwnOther',optional:true}]}]}};
+ // 「自分の場のキャラ」includes this card. The shared active op excludes it.
+if(kind==='KJN-1-022')return {effects:{onPlay:[job('KJN-1-022','onPlay')]}};
  if(kind==='KJN-1-024')return {passiveBonuses:[{
   condition:{kind:'ownRemovedUseThisTurn',turn:'own'},bp:1500}],effects:{}};
  if(kind==='KJN-1-043')return {effects:{onRetire:[{op:'millTop',optional:true,count:2}]}};
@@ -121,7 +122,7 @@ function kindProgram(kind,card){
   condition:{kind:'ownNameExists',turn:'any',zone:'front',excludeSelf:false,name:SID},
   extraEnergy:1}],effects:{onPlay:[{op:'millTop',optional:true,count:2}]}};
  if(kind==='KJN-1-076')return {handEnergyWhileName:{name:SID,amount:2},
-  effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:5000}]}};
+  effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:false}]}};
  if(kind==='KJN-1-078')return {effects:{onPlay:[{
   op:'retireOppFrontUnderBp',mandatory:true,traitPerBp:{trait:SEVEN,per:1000}}]}};
  return null;

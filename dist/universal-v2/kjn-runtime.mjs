@@ -29,7 +29,11 @@ function lock(s,owner,key){
  if(!s.mainReadyOnceByName[owner].includes(key))s.mainReadyOnceByName[owner].push(key);
 }
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function energyBuff(s,c){if(!c)return;c.buffs??=[];c.buffs.push({energy:1,untilTurn:s.turn});}
 function grantImpact(s,c){if(c)c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function grantDamage(s,c){if(c)c.attackDamageGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:2};}
@@ -82,6 +86,10 @@ function enteredThisTurn(s,owner,c){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===c.uid&&e.owner===owner&&
   ['front','energy'].includes(e.to)&&!['front','energy'].includes(e.from));
 }
+// KJN-1-034 onPlay 「このカードをリムーブエリアから使用」. UA52BT has no print
+// that returns this energy-4 character to hand or re-enters it from another
+// zone after that use, so the same-UID false positive is not reproduced.
+// The activate on this card is the separate turn-wide removedUse check.
 function selfFromRemoved(s,owner,uid){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===uid&&e.owner===owner&&
   e.from==='removed'&&['front','energy'].includes(e.to)&&e.reason==='rule');
@@ -137,10 +145,13 @@ function ruleHit(pack,c,rule,s,owner){
 function beginLook(s,spec,count,rule,opts){
  const window=windowCards(s,spec.player,count);
  if(!window.length)return false;
- if(opts.reveal)for(const c of window)publish(A.pack,s,spec.player,c);
+ // 「見て」 stays private. revealWindow is the printed 「公開する」 of the
+ // whole batch. revealTaken publishes only the card added to hand.
+ if(opts.revealWindow)for(const c of window)publish(A.pack,s,spec.player,c);
  const matches=window.filter(c=>ruleHit(A.pack,c,rule,s,spec.player));
  const data={window:window.map(c=>c.uid),taken:[],names:[],rule,max:opts.max,min:opts.min||0,
-  rest:opts.rest,dest:opts.dest,discard:opts.discard===true,distinct:opts.distinct===true};
+  rest:opts.rest,dest:opts.dest,discard:opts.discard===true,distinct:opts.distinct===true,
+  revealTaken:opts.revealTaken===true};
  if(!matches.length&&opts.min===0){
   if(!offerOrder(s,spec,data.window,opts.rest))finishRest(s,spec,data);
   return true;
@@ -249,6 +260,13 @@ function runAfter(pack,s,job){
 function runPlay(pack,s,job){
  const owner=job.owner,id=job.id;
  const spec={player:owner,sourceUid:job.sourceUid,id};
+ if(id==='KJN-1-005'){
+  const top=plOf(s,owner).deck[0];
+  if(!top)return;
+  hold(s,{...spec,step:'peekBottom',data:{window:[top.uid]}},[
+   {type:'kjn',mode:'top'},{type:'kjn',mode:'bottom'}]);
+  return;
+ }
  if(id==='KJN-1-009'){beginLook(s,spec,2,'any',{max:1,min:0,rest:'top',dest:'hand'});return;}
  if(id==='KJN-1-011'){
   const self=selfOf(s,owner,job.sourceUid);
@@ -265,7 +283,7 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='KJN-1-013'){
-  beginLook(s,spec,3,'sidChar',{max:1,min:0,rest:'bottom',dest:'hand',discard:true,reveal:true});
+  beginLook(s,spec,3,'sidChar',{max:1,min:0,rest:'bottom',dest:'hand',discard:true,revealTaken:true});
   return;
  }
  if(id==='KJN-1-014'){
@@ -280,6 +298,14 @@ function runPlay(pack,s,job){
    return d.type==='character'&&d.color==='yellow'&&d.energy<=2&&d.ap===1&&cardHasName(d,SID);
   });
   offerDeploy(s,{...spec,optional:true},'outside',pool,false,false);
+  return;
+ }
+ if(id==='KJN-1-022'){
+  if(!selfFromRemoved(s,owner,job.sourceUid))return;
+  const pool=chars(s,owner);
+  if(!pool.length)return;
+  hold(s,{...spec,step:'activeAny'},[{type:'kjn',mode:'skip'},
+   ...pool.map(c=>({type:'kjn',mode:'active',uid:c.uid}))]);
   return;
  }
  if(id==='KJN-1-016'){
@@ -378,6 +404,7 @@ function runPlay(pack,s,job){
  if(id==='KJN-1-056'){
   const window=windowCards(s,owner,2);
   if(!window.length)return;
+  // 「2枚を公開し」 publishes the whole window before the choice.
   for(const c of window)publish(pack,s,owner,c);
   const matches=window.filter(c=>cardHasTrait(def(pack,c),SEVEN));
   hold(s,{...spec,step:'distinctHand',data:{window:window.map(c=>c.uid),taken:[],names:[]}},[
@@ -431,11 +458,12 @@ function runPlay(pack,s,job){
 function runRetire(pack,s,job){
  if(job.id==='KJN-1-048'){
   // The retiring Raid top has already moved outside together with its
-  // directly-underlying physical Raid base. Pay one hand card to re-enter
-  // that base REST; no effect is available if the base is absent.
+  // directly-underlying physical Raid base. raidBaseUid is cleared on the
+  // way out; the job captured the base while the top was still face-up.
+  // Pay one hand card to re-enter that base REST. No hand, or no base, and
+  // there is nothing to pay.
   const pl=plOf(s,job.owner);
-  const retired=pl.outside.find(c=>c.uid===job.sourceUid);
-  const baseUid=retired?.raidBaseUid;
+  const baseUid=job.baseUid;
   if(!baseUid||!pl.outside.some(c=>c.uid===baseUid)||!pl.hand.length)return;
   hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'pay',
    data:{reason:'own-effect',next:'048base',baseUid}},[
@@ -550,7 +578,9 @@ function startMain(pack,s,c,mode){
  if(id==='KJN-1-025'&&mode==='kjn:0'){
   use(s,c.uid+'|0');
   A.draw(pack,s,owner,1,c.uid);
-  offerPay(s,{...spec,data:{place:'top'}},'own-effect','handTop');
+  const hand=pl.hand;
+  if(hand.length)hold(s,{...spec,step:'handPlace',data:{where:'top'}},
+   hand.map(c=>({type:'kjn',mode:'place',uid:c.uid})));
   return;
  }
  if(id==='KJN-1-025'&&mode==='kjn:1'){
@@ -628,7 +658,9 @@ function startMain(pack,s,c,mode){
   restSelf(s,owner,c);
   const top=pl.deck[0];
   if(!top)return;
-  hold(s,{...spec,step:'peekPlace',data:{uid:top.uid}},[
+  // 見て stays private. The closed-choice reader only shows a deck window
+  // stored on data.window, and only to the player who is looking.
+  hold(s,{...spec,step:'peekPlace',data:{window:[top.uid]}},[
    {type:'kjn',mode:'top'},{type:'kjn',mode:'outside'}]);
  }
 }
@@ -649,7 +681,16 @@ function afterPay(pack,s,q,discarded){
  if(next==='006'||next==='009mill'){millRemoved(pack,s,owner,q.sourceUid);return;}
  if(next==='008'){noteCut(s,owner,q.sourceUid);return;}
  if(next==='014'){
-  s.effectQueue.push({op:'kjn',id:'KJN-1-014',slot:'after',owner,sourceUid:q.sourceUid,discardedUid:discarded.uid});
+  // The tuck is the rest of this effect. 004's outside trigger is queued by
+  // the discard move and must wait until the tuck is finished.
+  const tuck={op:'kjn',id:'KJN-1-014',slot:'after',owner,sourceUid:q.sourceUid,discardedUid:discarded.uid};
+  const idx=s.effectQueue.findIndex(j=>j.op==='kjn'&&j.slot==='deckTop'&&
+   j.sourceUid===discarded.uid);
+  if(idx>=0){
+   const queued=s.effectQueue.splice(idx,1)[0];
+   s.effectQueue.unshift(queued);
+   s.effectQueue.unshift(tuck);
+  }else s.effectQueue.push(tuck);
   return;
  }
  if(next==='handTop'){
@@ -670,6 +711,10 @@ function afterPay(pack,s,q,discarded){
   }else if(pl.outside.length>=10){
    const self=selfOf(s,owner,q.sourceUid);if(self)energyBuff(s,self);
   }
+  return;
+ }
+ if(next==='none'&&Array.isArray(q.data?.window)){
+  finishRest(s,{player:owner,sourceUid:q.sourceUid,id:q.id},q.data);
   return;
  }
  if(next==='068'){
@@ -711,6 +756,7 @@ export function resolveKjnPending(pack,s,action){
    data.taken.push(a.uid);
    const card=plOf(s,owner).deck.find(c=>c.uid===a.uid);
    if(data.distinct&&card)data.names.push(def(pack,card).name);
+   if(data.revealTaken&&data.dest==='hand'&&card)publish(pack,s,owner,card);
    if(data.dest==='hand')moveUid(pack,s,owner,'deck',a.uid,'hand',q.sourceUid);
    else if(data.dest==='outside')moveUid(pack,s,owner,'deck',a.uid,'outside',q.sourceUid);
    if(data.discard){
@@ -751,7 +797,11 @@ export function resolveKjnPending(pack,s,action){
    if(window.length>1)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id},window,'top');
    else if(window.length)lay(plOf(s,owner),window,'top');
   }else if(a.mode==='hand'){
-   offerPay(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{place:'top'}},'own-effect','handTop');
+   // 033 prints 手札を1枚山札の上に置く. The card stays in hand until chosen;
+   // discarding it first would spend a second card.
+   const hand=plOf(s,owner).hand;
+   hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'handPlace',data:{where:'top'}},
+    hand.map(c=>({type:'kjn',mode:'place',uid:c.uid})));
   }else if(a.mode==='removed'){
    const pool=chars(s,owner,x=>x.uid!==q.sourceUid);
    if(pool.length)hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'buff'},[
@@ -763,6 +813,13 @@ export function resolveKjnPending(pack,s,action){
  }else if(step==='handPlace'){
   moveUid(pack,s,owner,'hand',a.uid,'deck',q.sourceUid,'own-effect',
    {deckPosition:q.data.where==='bottom'?'bottom':'top',revealed:false});
+  // 033: placing the hand card is 「そうした場合」. The BP choice is optional
+  // and only exists after that card has actually moved.
+  if(q.id==='KJN-1-033'){
+   const pool=chars(s,owner,x=>x.uid!==q.sourceUid);
+   if(pool.length)hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'buff'},[
+    {type:'kjn',mode:'skip'},...pool.map(x=>({type:'kjn',mode:'buff',uid:x.uid,bp:1000}))]);
+  }
  }else if(step==='tuckSelf'||step==='tuckAurora'){
   if(a.mode==='host'){
    const host=selfOf(s,owner,a.uid);
@@ -895,6 +952,10 @@ export function resolveKjnPending(pack,s,action){
   const foe=selfOf(s,1-owner,a.uid);if(foe)foe.ready=false;
  }else if(step==='mayActive'&&a.mode==='active'){
   const self=selfOf(s,owner,q.sourceUid);if(self)A.active(s,owner,self);
+ }else if(step==='activeAny'&&a.mode==='active'){
+  const target=selfOf(s,owner,a.uid);if(target)A.active(s,owner,target);
+ }else if(step==='peekBottom'){
+  if(a.mode==='bottom')lay(plOf(s,owner),q.data.window,'bottom');
  }else if(step==='raidGrant'){
   const who=Number(String(q.data.raidUid).split('-')[0]);
   const raider=selfOf(s,who,q.data.raidUid);

@@ -121,7 +121,8 @@
  body.v2-battle-page.v2-playing #match-view .v2-desktop-table .handArea{
   display:flex;flex-direction:column;min-height:0;height:100%;gap:3px;
   padding:6px 16px 5px;border-top:1px solid #6486ac30;border-radius:0;
-  background:linear-gradient(180deg,#10223511,#0d1829b8);overflow:hidden
+  background:linear-gradient(180deg,#10223511,#0d1829b8);overflow:hidden;
+  position:relative
  }
  body.v2-battle-page.v2-playing #match-view .v2-desktop-table .handTitle{
   flex:0 0 19px;justify-content:center;min-height:19px;font-size:12px;margin:0;color:#b9cce3
@@ -147,8 +148,10 @@
  body.v2-battle-page.v2-playing #match-view .v2-desktop-table .handCard.playable:not(.selected){box-shadow:0 0 0 1px #83b8eb80,0 3px 7px #0007}
  body.v2-battle-page.v2-playing #match-view .v2-desktop-table .handCard.unplayable{opacity:.78}
  body.v2-battle-page.v2-playing #match-view .v2-desktop-table .v2-compact-actions{
-  flex:0 0 auto;display:flex;flex-wrap:nowrap;max-height:36px;min-height:0;
-  overflow-x:auto;overflow-y:hidden;padding:0 2px;gap:5px;align-items:center
+  position:absolute;z-index:6;left:12px;right:12px;bottom:6px;
+  flex:0 0 auto;display:flex;flex-wrap:nowrap;max-height:36px;min-height:32px;
+  overflow-x:auto;overflow-y:hidden;padding:3px 6px;gap:5px;align-items:center;
+  background:#102033f2;border:1px solid #6e93bf;border-radius:8px
  }
  body.v2-battle-page.v2-playing #match-view .v2-desktop-table .v2-compact-actions button{flex:0 0 auto;min-height:28px;font-size:11px;padding:3px 8px}
  body.v2-battle-page.v2-playing #match-view .v2-desktop-table .v2-compact-hint{flex:0 0 auto;font-size:11px}

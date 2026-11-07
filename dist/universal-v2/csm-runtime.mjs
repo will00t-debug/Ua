@@ -47,10 +47,27 @@ function lock(s,owner,key){
  if(!s.mainReadyOnceByName[owner].includes(key))s.mainReadyOnceByName[owner].push(key);
 }
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function impact(s,c){if(c)c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function sniper(s,c){if(c)c.sniperGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
-function mustBlock(s,c){if(c)c.mustBlockGranted={turn:s.turn,stamp:c.fieldEntryStamp};}
+// The Denji has to be on the field when Power's on-play resolves. The entry
+// event keeps that witness and this entry's stamp, so a later leave does not
+// unmake the grant. cardHasName is the caller's job.
+function grantPowerMust(s,owner,self,witness){
+ const entries=(s.zoneMoveEvents||[]).filter(e=>e.turn===s.turn&&e.uid===self.uid&&
+  e.owner===owner&&e.cardId==='CSM-1-061'&&(e.to==='front'||e.to==='energy')&&
+  !e.csm061Grant);
+ const event=entries.at(-1);
+ if(!event||!Number.isInteger(self.fieldEntryStamp)||self.fieldEntryStamp<1)
+  throw Error('Chainsaw Man Power grant has no entry');
+ event.csm061Grant={witnessUid:witness.uid,stamp:self.fieldEntryStamp};
+ self.mustBlockGranted={turn:s.turn,stamp:self.fieldEntryStamp,sourceUid:self.uid,
+  beneficiaryUid:self.uid,witnessUid:witness.uid};
+}
 function unblocked(s,c,bp){
  if(c)c.blockAtLeastGranted={turn:s.turn,stamp:c.fieldEntryStamp,bp};
 }
@@ -79,18 +96,43 @@ function moveUid(pack,s,owner,from,uid,to,sourceUid,reason='own-effect'){
  if(index<0)throw Error('Chainsaw Man card left '+from);
  return A.move(pack,s,{owner,from,to,index,reason,sourceUid});
 }
-function retireUid(pack,s,owner,uid){
+function ownCause(owner,sourceUid){
+ return {by:'own',controller:owner,sourceUid};
+}
+function foeCause(controller,sourceUid){
+ return {by:'opponent',controller,sourceUid};
+}
+function retireUid(pack,s,owner,uid,cause){
  const loc=locOf(s,owner,uid);
  if(!loc)return false;
- return A.retire(pack,s,owner,loc.line,loc.slot)===true;
+ const spec=cause&&typeof cause==='object'?cause:{};
+ return A.retire(pack,s,owner,loc.line,loc.slot,{
+  ...(typeof spec.by==='string'?{by:spec.by}:{}),
+  ...(Number.isInteger(spec.controller)?{controller:spec.controller}:{}),
+  ...(typeof spec.sourceUid==='string'?{sourceUid:spec.sourceUid}:{})
+ })===true;
 }
-// Q94: a character at BP <= 0 retires after the debuff resolves.
-// Use the ordinary retirement path so Raid bases and on-retire effects are kept.
+// The leave trigger is queued in front of this follow-up. A pause keeps the
+// follow-up on the pending until the chosen card actually leaves.
+function retireThen(pack,s,owner,uid,cause,follow){
+ const paused=retireUid(pack,s,owner,uid,cause);
+ if(follow){
+  if(Number.isInteger(s.openEffectScope)&&s.openEffectScope>0)
+   follow.effectScope=s.openEffectScope;
+  if(paused){if(s.pending)s.pending.csmFollow=follow;}
+  else s.effectQueue.push(follow);
+ }
+ return paused;
+}
+// Q1898 / Q1899 (2026-01-09): BP that reaches 0 during an effect does not
+// leave until that effect has finished, and only if it is still 0 then.
+// The queue checkpoint applies Q94 and Q1139 with by:'rule'. Leaving here
+// would drop the same effect's later sentences.
 function debuffFront(pack,s,owner,uid,amount){
  const loc=locOf(s,owner,uid);
  if(!loc||loc.line!=='front')return false;
  buff(s,loc.c,amount);
- return A.bp(pack,s,loc.c)<=0 ? retireUid(pack,s,owner,uid) : false;
+ return false;
 }
 function restOwn(s,owner,c){
  if(!c?.ready)return false;
@@ -144,6 +186,15 @@ function finishLookTake(pack,s,q,a){
    plOf(s,q.player).outside.find(c=>c.uid===a.uid)||null;
   if(data.public&&taken)publish(pack,s,q.player,taken);
  }
+ if(q.id==='CSM-1-008'){
+  if(a.mode==='take'&&taken){
+   q.data.takenUid=taken.uid;
+   q.data.takenCardId=taken.cardId;
+  }
+  if(!offerOrder(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,data:q.data},rest,data.rest)&&
+   q.data.takenUid)continue008(pack,s,q);
+  return;
+ }
  if(data.discard&&a.mode==='take'){
   const hand=plOf(s,q.player).hand.filter(c=>c.uid!==a.uid);
   if(hand.length){
@@ -183,31 +234,48 @@ function afterLookFollow(pack,s,q,taken,rest){
    return;
   }
  }
- if(q.id==='CSM-1-035'){
-  if(is(MAKIMA)){
-   const dates=plOf(s,q.player).outside.filter(c=>named(pack,c,DATE,s));
-   hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'recover',
-    data:{...q.data,left:rest}},[
-    {type:'csm',mode:'skip'},...dates.map(c=>({type:'csm',mode:'take',uid:c.uid}))]);
-   return;
-  }
-  if(is(REZE)){
-   const denji=plOf(s,q.player).outside.filter(c=>named(pack,c,DENJI,s)&&def(pack,c).energy<=1);
-   hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'recover',
-    data:{...q.data,left:rest}},[
-    {type:'csm',mode:'skip'},...denji.map(c=>({type:'csm',mode:'take',uid:c.uid}))]);
-   return;
-  }
+ // Printed order is reveal to hand, arrange the rest, then the follow-up.
+ // 033 may put the card just added outside. 035's outside add is optional.
+ if(q.id==='CSM-1-035'&&(is(MAKIMA)||is(REZE))){
+  q.data.takenUid=taken.uid;
+  scheduleOrderThen(s,q,rest,'follow035');
+  return;
  }
  if(q.id==='CSM-1-033'&&!is(REZE)){
-  const hand=plOf(s,q.player).hand.filter(c=>c.uid!==taken.uid);
-  if(hand.length){
-   hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'discard',
-    data:{...q.data,left:rest}},hand.map(c=>({type:'csm',mode:'discard',uid:c.uid})));
-   return;
-  }
+  q.data.takenUid=taken.uid;
+  scheduleOrderThen(s,q,rest,'discard033');
+  return;
  }
  offerOrder(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,data:q.data},rest,q.data.rest);
+}
+function scheduleOrderThen(s,q,rest,kind){
+ q.data={...q.data,afterOrder:kind};
+ const opened=offerOrder(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,data:q.data},
+  rest,q.data.rest);
+ if(!opened)runAfterOrder(s,q);
+}
+function runAfterOrder(s,q){
+ if(q.data?.afterOrder==='discard033'){
+  const hand=plOf(s,q.player).hand;
+  if(!hand.length)return;
+  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'discard'},
+   hand.map(c=>({type:'csm',mode:'discard',uid:c.uid})));
+  return;
+ }
+ if(q.data?.afterOrder==='follow035')offer035Follow(s,q);
+}
+function offer035Follow(s,q){
+ const taken=plOf(s,q.player).hand.find(c=>c.uid===q.data?.takenUid);
+ if(!taken)return;
+ let pool=[];
+ if(named(A.pack,taken,MAKIMA,s))
+  pool=plOf(s,q.player).outside.filter(c=>named(A.pack,c,DATE,s));
+ else if(named(A.pack,taken,REZE,s))
+  pool=plOf(s,q.player).outside.filter(c=>named(A.pack,c,DENJI,s)&&
+   def(A.pack,c).energy<=1);
+ if(!pool.length)return;
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'recover'},[
+  {type:'csm',mode:'skip'},...pool.map(c=>({type:'csm',mode:'take',uid:c.uid}))]);
 }
 function finishOrder(s,q,a){
  const left=q.data.left.filter(uid=>uid!==a.uid);
@@ -215,6 +283,8 @@ function finishOrder(s,q,a){
  if(left.length<=1){
   lay(plOf(s,q.player),[...built,...left],q.data.rest);
   if(q.data.drawIfSkipped)A.draw(A.pack,s,q.player,1,q.sourceUid);
+  if(q.id==='CSM-1-008'&&q.data.takenUid)continue008(A.pack,s,q);
+  else if(q.data.afterOrder)runAfterOrder(s,q);
   return;
  }
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'lookOrder',
@@ -418,9 +488,11 @@ function runPlay(pack,s,job){
  if(id==='CSM-1-035')return beginLook(pack,s,job,{count:6,rest:'bottom',dest:'hand',
   public:true,discard:false,follow:true,pred:d=>d.type==='character'});
  if(id==='CSM-1-037'){
-  hold(s,{...spec,step:'choose'},[
-   {type:'csm',mode:'aura'},
-   ...(!locked(s,owner,'dateDraw')?[{type:'csm',mode:'draw'}]:[])]);
+  // The BP line must choose a character. The draw line is the name-once branch.
+  const actions=[
+   ...(chars(s,owner).length?[{type:'csm',mode:'aura'}]:[]),
+   ...(!locked(s,owner,'dateDraw')?[{type:'csm',mode:'draw'}]:[])];
+  if(actions.length)hold(s,{...spec,step:'choose'},actions);
   return;
  }
  if(id==='CSM-1-038'){
@@ -432,8 +504,15 @@ function runPlay(pack,s,job){
  if(id==='CSM-1-040'){
   const cap=5000;
   const foe=fronts(s,1-owner,c=>A.bp(pack,s,c)<=cap);
-  if(!foe.length)return;
-  hold(s,{...spec,step:'retireFoe',data:{thenBuff:otherEventsUsed(s,owner,job.sourceUid)>0}},
+  // The BP+1000 sentence is not 「そうした場合」. A missing retire target
+  // still opens it when another event was used this turn. Leave replacement
+  // stays needsLeave:false on the retire path.
+  const thenBuff=otherEventsUsed(s,owner,job.sourceUid)>0;
+  if(!foe.length){
+   if(thenBuff)offerChars(s,spec,null,true,'buffOther');
+   return;
+  }
+  hold(s,{...spec,step:'retireFoe',data:{thenBuff}},
    foe.map(c=>({type:'csm',mode:'pick',uid:c.uid})));
   return;
  }
@@ -469,9 +548,11 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='CSM-1-061'){
-  if(!nameOn(s,owner,DENJI))return;
   const self=selfOf(s,owner,job.sourceUid);
-  if(self){buff(s,self,1000);mustBlock(s,self);}
+  const witness=chars(s,owner,c=>c.uid!==job.sourceUid&&named(pack,c,DENJI,s))[0];
+  if(!self||!witness)return;
+  buff(s,self,1000);
+  grantPowerMust(s,owner,self,witness);
   return;
  }
  if(id==='CSM-1-066')return; // draw already queued by shared op
@@ -482,22 +563,41 @@ function runPlay(pack,s,job){
   return;
  }
  if(id==='CSM-1-076'){
+  const hosts=chars(s,owner,c=>named(pack,c,DENJI,s)&&!csmFacedowns(c).length);
+  const event=plOf(s,owner).outside.find(c=>c.uid===job.sourceUid);
   hold(s,{...spec,step:'choose'},[
-   {type:'csm',mode:'look'},{type:'csm',mode:'tuck'}]);
+   {type:'csm',mode:'look'},
+   ...(hosts.length&&event?[{type:'csm',mode:'tuck'}]:[])]);
   return;
  }
  if(id==='CSM-1-077'){
   const foe=fronts(s,1-owner,c=>A.bp(pack,s,c)<=5000);
-  if(!foe.length)return;
+  // The peel is a separate sentence. No legal retire target does not cancel it.
+  if(!foe.length){offerPeelAki(pack,s,spec);return;}
   hold(s,{...spec,step:'retireFoe',data:{peelAki:true}},
    foe.map(c=>({type:'csm',mode:'pick',uid:c.uid})));
   return;
  }
  if(id==='CSM-1-078'){
-  const extra=nameOn(s,owner,HOUSE)||chars(s,owner,c=>named(pack,c,DENJI,s)&&
-   csmFacedowns(c).length>0).length>0;
-  A.draw(pack,s,owner,extra?3:2,job.sourceUid);
+  // 〈早川家〉 is a field. nameOn only walks characters, so the field counts here.
+  const house=A.field(plOf(s,owner)).some(c=>named(pack,c,HOUSE,s));
+  const denjiDown=chars(s,owner,c=>named(pack,c,DENJI,s)&&csmFacedowns(c).length>0).length>0;
+  A.draw(pack,s,owner,house||denjiDown?3:2,job.sourceUid);
  }
+}
+function continue008(pack,s,q){
+ if(q.data?.handDone){offer008Follow(pack,s,q);return;}
+ const hand=plOf(s,q.player).hand;
+ if(!hand.length){offer008Follow(pack,s,q);return;}
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'discard',
+  data:{...q.data,left:null,handThenFollow:true}},
+  hand.map(c=>({type:'csm',mode:'discard',uid:c.uid})));
+}
+function offer008Follow(pack,s,q){
+ const id=q.data?.takenCardId;
+ if(!id)return;
+ afterLookFollow(pack,s,{...q,data:{...q.data,left:null,handDone:true}},
+  {uid:q.data.takenUid,cardId:id},null);
 }
 function offerTuckUnderDenji(pack,s,spec){
  const hosts=chars(s,spec.player,c=>{
@@ -516,10 +616,11 @@ function offerTuckUnderDenji(pack,s,spec){
 function runRetire(pack,s,job){
  const id=job.id,owner=job.owner,spec={player:owner,sourceUid:job.sourceUid,id};
  if(id==='CSM-1-006'){
-  const byOwn=job.by===owner||job.reason==='own-effect'||
-   (s.zoneMoveEvents||[]).some(e=>e.uid===job.sourceUid&&e.turn===s.turn&&
-    e.reason==='retirement'&&e.controller===owner);
-  // Default draw; may replace with look when own-effect retirement.
+  // Printed: the look replaces the draw only when this character left by
+  // its controller's own effect. A missing cause is not that evidence.
+  // Q1139: BP 0 is a rule leave. Battle and an opponent effect draw 1.
+  const byOwn=job.by==='own'&&job.retireController===owner&&
+   typeof job.retireSourceUid==='string';
   if(byOwn){
    hold(s,{...spec,step:'choose'},[
     {type:'csm',mode:'draw'},{type:'csm',mode:'look'}]);
@@ -580,14 +681,9 @@ function runAttack(pack,s,job){
   return;
  }
  if(id==='CSM-1-072'){
-  const moved=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===job.sourceUid&&
-   e.owner===owner&&((e.from==='front'&&e.to==='energy')||(e.from==='energy'&&e.to==='front'))&&
-   e.reason!=='move-phase');
-  // Move-phase moves are tagged; approximate: any front<->energy this turn
-  // outside the move phase stamp stored on the physical card.
-  const movedAny=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===job.sourceUid&&
-   e.owner===owner&&((e.from==='front'&&e.to==='energy')||(e.from==='energy'&&e.to==='front')));
-  if(!(moved||(movedAny&&self?.csmMovedOutsideMove===s.turn)))return;
+  // Printed 「移動フェイズ以外に移動している場合」. Only an effect move outside
+  // the move phase stamps the card. A move-phase STEP uses reason 'rule'.
+  if(self?.csmMovedOutsideMove!==s.turn)return;
   const cards=plOf(s,owner).outside.filter(c=>named(pack,c,AKI,s)&&def(pack,c).energy<=2);
   if(!cards.length)return;
   hold(s,{player:owner,sourceUid:job.sourceUid,id,step:'recover'},[
@@ -595,10 +691,50 @@ function runAttack(pack,s,job){
  }
 }
 
+function runAfterOwnRetire(pack,s,job){
+ const owner=job.owner,spec={player:owner,sourceUid:job.sourceUid,id:job.id};
+ if(job.kind==='kit016'){
+  const self=selfOf(s,owner,job.sourceUid);
+  if(self){A.active(s,owner,self);buff(s,self,1000);impact(s,self);}
+  offerAp(s,spec,false);
+ }else if(job.kind==='denjiImpact'){
+  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
+  hold(s,{...spec,step:'buffImpact'},[
+   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+ }else if(job.kind==='grantAttackDraw'){
+  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
+  if(!pool.length)return;
+  hold(s,{...spec,step:'grantAttackDraw'},[
+   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+ }else if(job.kind==='denjiEnergy'){
+  const outs=plOf(s,owner).outside.filter(x=>named(pack,x,DENJI,s)&&
+   def(pack,x).color==='red'&&def(pack,x).energy<=1);
+  if(!outs.length)return;
+  hold(s,{...spec,step:'denjiEnergy',data:{pochitaUid:job.pochitaUid||null}},[
+   {type:'csm',mode:'skip'},...outs.map(x=>({type:'csm',mode:'deploy',uid:x.uid}))]);
+ }else if(job.kind==='debuff5k'){
+  offerFront(s,spec,1-owner,null,true,'debuff5k');
+ }else if(job.kind==='choose12'){
+  hold(s,{...spec,step:'afterRetireChoose'},[
+   {type:'csm',mode:'one'},{type:'csm',mode:'two'}]);
+ }else if(job.kind==='ap038'){
+  // Activating an AP does not gate the draw. Zero or one rested AP resolves
+  // immediately; two or more wait for the choice, which then draws.
+  if(!offerAp(s,{...spec,data:{next:'draw2'}},false))
+   A.draw(pack,s,owner,2,job.sourceUid);
+ }
+}
+function runAfterFoeRetire(pack,s,job){
+ const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id,data:{}};
+ if(job.thenBuff)offerChars(s,spec,null,true,'buffOther');
+ if(job.peelAki)offerPeelAki(pack,s,spec);
+}
 export function runCsmJob(pack,s,job){
  arm(pack);
  if(job.slot==='onPlay'||job.slot==='after')runPlay(pack,s,job);
  else if(job.slot==='onRetire')runRetire(pack,s,job);
+ else if(job.slot==='afterOwnRetire')runAfterOwnRetire(pack,s,job);
+ else if(job.slot==='afterFoeRetire')runAfterFoeRetire(pack,s,job);
  else if(job.slot==='onAttack')runAttack(pack,s,job);
  else if(job.slot==='unblocked'){
   if(csmDenjiRetiredThisTurn(s,job.owner,c=>def(pack,c)))
@@ -623,6 +759,9 @@ export function runCsmJob(pack,s,job){
  }else if(job.slot==='moved'){
   const self=selfOf(s,job.owner,job.sourceUid);
   if(self){unblocked(s,self,4000);self.csmUnblockedDraw=s.turn;self.csmMovedOutsideMove=s.turn;}
+ }else if(job.slot==='mayDraw'){
+  if(plOf(s,job.owner).deck.length)hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,
+   step:'mayDraw'},[{type:'csm',mode:'skip'},{type:'csm',mode:'draw'}]);
  }
  go(pack,s);
 }
@@ -676,15 +815,17 @@ export function legalCsmActivations(pack,s,owner,c){
  }
  if(id==='CSM-1-042'&&frontLine(s,owner,c)&&once(c.uid+'|main')&&
   chars(s,owner,x=>x.uid!==c.uid).length)out.push(push('csm:0'));
- if(id==='CSM-1-055'&&frontLine(s,owner,c)&&once(c.uid+'|main')&&plOf(s,owner).hand.length)
-  out.push(push('csm:0'));
+ if(id==='CSM-1-055'&&frontLine(s,owner,c)&&once(c.uid+'|main')&&plOf(s,owner).hand.length){
+  const open=akiOpen(s,owner);
+  if(open.block||open.search)out.push(push('csm:0'));
+ }
  if(id==='CSM-1-059'&&once(c.uid+'|main')&&plOf(s,owner).hand.length)out.push(push('csm:0'));
  if(id==='CSM-1-062'&&c.ready)out.push(push('csm:0'));
  if(id==='CSM-1-065'&&c.ready&&once(c.uid+'|main')&&
   plOf(s,owner).energy.some(x=>x&&!x.ready))out.push(push('csm:0'));
  if(id==='CSM-1-067'&&c.ready)out.push(push('csm:0'));
  if(id==='CSM-1-070'&&frontLine(s,owner,c)&&once(c.uid+'|main')&&
-  plOf(s,owner).energy.some(x=>x&&def(pack,x).type==='character'))out.push(push('csm:0'));
+  energyCharsToFront(pack,s,owner).length)out.push(push('csm:0'));
  if(id==='CSM-1-071'&&c.ready&&plOf(s,owner).deck.length)out.push(push('csm:0'));
  return out;
 }
@@ -699,11 +840,8 @@ export function activateCsm(pack,s,action){
  if(id==='CSM-1-007'){lock(s,owner,'denjiActive');A.active(s,owner,c);go(pack,s);return;}
  if(id==='CSM-1-014'){
   restOwn(s,owner,c);
-  const paused=retireUid(pack,s,owner,c.uid);
-  if(paused)return go(pack,s);
-  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
-  hold(s,{...spec,step:'buffImpact'},[
-   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+  retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiImpact',needsLeave:true});
   return go(pack,s);
  }
  if(id==='CSM-1-017'){
@@ -756,11 +894,8 @@ export function activateCsm(pack,s,action){
  }
  if(id==='CSM-1-062'){
   restOwn(s,owner,c);
-  const paused=retireUid(pack,s,owner,c.uid);
-  if(paused)return go(pack,s);
-  const pool=chars(s,owner,x=>named(pack,x,DENJI,s));
-  hold(s,{...spec,step:'grantAttackDraw'},[
-   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
+  retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'grantAttackDraw',needsLeave:true});
   go(pack,s);return;
  }
  if(id==='CSM-1-065'){
@@ -771,20 +906,17 @@ export function activateCsm(pack,s,action){
  }
  if(id==='CSM-1-067'){
   restOwn(s,owner,c);
-  const paused=retireUid(pack,s,owner,c.uid);
-  if(paused)return go(pack,s);
-  const outs=plOf(s,owner).outside.filter(x=>named(pack,x,DENJI,s)&&
-   def(pack,x).color==='red'&&def(pack,x).energy<=1);
-  if(!outs.length)return go(pack,s);
-  hold(s,{...spec,step:'denjiEnergy',data:{pochitaUid:jobSourceOutside(s,owner,c.uid)}},[
-   {type:'csm',mode:'skip'},...outs.map(x=>({type:'csm',mode:'deploy',uid:x.uid}))]);
+  // 【このカードを退場させる】 is the cost. Denji enters only after Pochita leaves.
+  retireThen(pack,s,owner,c.uid,ownCause(owner,c.uid),
+   {op:'csm',id,slot:'afterOwnRetire',owner,sourceUid:c.uid,kind:'denjiEnergy',
+    pochitaUid:c.uid,needsLeave:true});
   go(pack,s);return;
  }
  if(id==='CSM-1-070'){
   use(s,c.uid+'|main');
   // Q2098: frontForbidden energy cards cannot swap onto front.
   const pool=energyCharsToFront(pack,s,owner);
-  hold(s,{...spec,step:'swap'},pool.map(x=>({type:'csm',mode:'pick',uid:x.uid})));
+  if(pool.length)hold(s,{...spec,step:'swap'},pool.map(x=>({type:'csm',mode:'pick',uid:x.uid})));
   go(pack,s);return;
  }
  if(id==='CSM-1-071'){
@@ -797,10 +929,6 @@ export function activateCsm(pack,s,action){
  }
  go(pack,s);
 }
-function jobSourceOutside(s,owner,uid){
- return plOf(s,owner).outside.find(c=>c.uid===uid)?.uid||null;
-}
-
 export function legalCsmPending(pack,s){arm(pack);return s.pending?.actions||[];}
 
 export function resolveCsmPending(pack,s,action){
@@ -813,7 +941,8 @@ export function resolveCsmPending(pack,s,action){
  else if(step==='lookOrder')finishOrder(s,q,a);
  else if((step==='discard'||step==='discardEnergy')&&a.mode==='discard'){
   moveUid(pack,s,owner,'hand',a.uid,'outside',q.sourceUid);
-  if(q.data?.left)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},
+  if(q.id==='CSM-1-008'&&q.data?.handThenFollow)offer008Follow(pack,s,q);
+  else if(q.data?.left)offerOrder(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:q.data},
    q.data.left,q.data.rest);
   else if(q.id==='CSM-1-055')afterAkiDiscard(pack,s,q);
   else if(q.id==='CSM-1-059'){
@@ -826,18 +955,25 @@ export function resolveCsmPending(pack,s,action){
   }
  }else if(step==='leaveReplace'){
   // Q2093/Q2094: accept retires the chosen substitute; skip resumes the original leave.
+  // A printed 「そうした場合」 stays with the original card. A later sentence
+  // that does not depend on that card leaving still resolves, once.
+  const cause=q.data?.retireCause||null;
   if(a.mode==='pick'){
    use(s,q.sourceUid+'|leave');
-   const paused=retireUid(pack,s,owner,a.uid);
-   if(paused)return go(pack,s);
+   retireUid(pack,s,owner,a.uid,cause);
+   A.releaseRetirement(s,q,false);
+   return go(pack,s);
   }else if(a.mode==='skip'&&q.data?.line!=null&&q.data?.slot!=null&&A.retireSkip){
-   A.retireSkip(pack,s,owner,q.data.line,q.data.slot);
+   A.retireSkip(pack,s,owner,q.data.line,q.data.slot,cause?{
+    by:cause.by||undefined,controller:cause.controller,sourceUid:cause.sourceUid
+   }:{});
+   A.releaseRetirement(s,q,true);
   }
  }else if(step==='retireThenDebuff5k'){
   if(a.mode==='pick'){
-   const paused=retireUid(pack,s,owner,a.uid);
-   if(paused)return go(pack,s);
-   offerFront(s,{player:owner,sourceUid:q.sourceUid,id:q.id},1-owner,null,true,'debuff5k');
+   retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'debuff5k',needsLeave:true});
+   return go(pack,s);
   }
  }else if(step==='debuff5k'&&a.mode==='pick'){
   const paused=debuffFront(pack,s,1-owner,a.uid,-5000);
@@ -891,17 +1027,12 @@ export function resolveCsmPending(pack,s,action){
   }
  }else if(step==='choose')resolveChoose(pack,s,q,a);
  else if(step==='retireThenKit'&&a.mode==='pick'){
-  const paused=retireUid(pack,s,owner,a.uid);
-  if(paused)return go(pack,s);
-  const self=selfOf(s,owner,q.sourceUid);
-  if(self){A.active(s,owner,self);buff(s,self,1000);impact(s,self);}
-  offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
+  retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+   {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'kit016',needsLeave:true});
  }else if(step==='retireThenChoose'){
   if(a.mode==='pick'){
-   const paused=retireUid(pack,s,owner,a.uid);
-   if(paused)return go(pack,s);
-   hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'afterRetireChoose'},[
-    {type:'csm',mode:'one'},{type:'csm',mode:'two'}]);
+   retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+    {op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'choose12',needsLeave:true});
   }
  }else if(step==='afterRetireChoose'){
   if(a.mode==='one'){
@@ -910,18 +1041,17 @@ export function resolveCsmPending(pack,s,action){
   }else A.draw(pack,s,owner,2,q.sourceUid);
  }else if(step==='buffOther2k'&&a.mode==='pick')buff(s,selfOf(s,owner,a.uid),2000);
  else if(step==='retireOwn'&&a.mode==='pick'){
-  const paused=retireUid(pack,s,owner,a.uid);
-  if(paused)return go(pack,s);
-  if(q.id==='CSM-1-038'){offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id,
-   data:{next:'draw2'}},false);}
+  retireThen(pack,s,owner,a.uid,ownCause(owner,q.sourceUid),
+   q.id==='CSM-1-038'?{op:'csm',id:q.id,slot:'afterOwnRetire',owner,sourceUid:q.sourceUid,kind:'ap038',needsLeave:true}:null);
  }else if(step==='retireFoe'&&a.mode==='pick'){
-  retireUid(pack,s,1-owner,a.uid);
-  if(q.data?.thenBuff)offerChars(s,{player:owner,sourceUid:q.sourceUid,id:q.id},
-   null,true,'buffOther');
-  if(q.data?.peelAki)offerPeelAki(pack,s,q);
+  const follow=q.data?.thenBuff||q.data?.peelAki?{op:'csm',id:q.id,slot:'afterFoeRetire',
+   owner,sourceUid:q.sourceUid,thenBuff:q.data?.thenBuff===true,peelAki:q.data?.peelAki===true,
+   needsLeave:false}:null;
+  retireThen(pack,s,1-owner,a.uid,foeCause(owner,q.sourceUid),follow);
  }else if(step==='ap'){
   if(a.mode==='ap')readyIndex(s,owner,a.index);
   if(q.data?.next==='draw2')A.draw(pack,s,owner,2,q.sourceUid);
+  if(q.data?.next==='impactAki')offerImpactAki(pack,s,q);
   if(q.id==='CSM-1-031')lock(s,owner,'rezeAp');
  }else if(step==='millOne'){
   const left=a.mode==='outside'?q.data.window.filter(uid=>uid!==a.uid):q.data.window;
@@ -947,13 +1077,19 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='peelAki'){
   if(a.mode==='peel'){
    const host=selfOf(s,owner,a.hostUid);
-   if(host)peelFacedown(pack,s,owner,host,'outside',q.sourceUid);
+   if(host)peelFacedownUid(pack,s,owner,host,a.uid,'outside',q.sourceUid);
    if(q.data?.afterPeel==='impactAp'){
-    offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
-    const akis=chars(s,owner,c=>named(pack,c,AKI,s));
-    if(akis.length)hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'grantImpact'},[
-     {type:'csm',mode:'skip'},...akis.map(c=>({type:'csm',mode:'pick',uid:c.uid}))]);
+    const held=offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{next:'impactAki'}},false);
+    if(!held)offerImpactAki(pack,s,q);
    }
+  }
+ }else if(step==='dreamTuck'&&a.mode==='host'){
+  const host=selfOf(s,owner,a.uid);
+  const event=plOf(s,owner).outside.find(c=>c.uid===q.sourceUid);
+  if(host&&event&&!csmFacedowns(host).length){
+   tuck(pack,s,owner,'outside',event.uid,host,q.sourceUid);
+   if(!faceUpRaidCard(host,def(pack,host)))
+    offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
   }
  }else if(step==='peelBuff'&&a.mode==='peel'){
   const host=selfOf(s,owner,a.hostUid);
@@ -965,7 +1101,16 @@ export function resolveCsmPending(pack,s,action){
   const t=selfOf(s,owner,a.uid);if(t){buff(s,t,1000);impact(s,t);}
  }else if(step==='grantAttackDraw'&&a.mode==='pick'){
   const t=selfOf(s,owner,a.uid);
-  if(t)t.attackDrawGranted={turn:s.turn,stamp:t.fieldEntryStamp};
+  if(!t||!named(pack,t,DENJI,s))throw Error('Chainsaw Man Beam grant lost Denji');
+  const retired=(s.zoneMoveEvents||[]).filter(e=>e.turn===s.turn&&e.uid===q.sourceUid&&
+   e.owner===owner&&e.cardId==='CSM-1-062'&&e.reason==='retirement'&&
+   (e.from==='front'||e.from==='energy')&&e.to==='outside'&&!e.csm062Grant);
+  const event=retired.at(-1);
+  if(!event||!Number.isInteger(t.fieldEntryStamp)||t.fieldEntryStamp<1)
+   throw Error('Chainsaw Man Beam grant has no retirement');
+  event.csm062Grant={beneficiaryUid:t.uid,stamp:t.fieldEntryStamp};
+  t.attackDrawGranted={turn:s.turn,stamp:t.fieldEntryStamp,sourceUid:q.sourceUid,
+   beneficiaryUid:t.uid,upTo:1};
  }else if(step==='buffTwo'){
   if(a.mode==='pick'){
    buff(s,selfOf(s,owner,a.uid),1000);
@@ -980,11 +1125,14 @@ export function resolveCsmPending(pack,s,action){
   moveUid(pack,s,owner,'hand',a.uid,'outside',q.sourceUid);
   afterAkiDiscard(pack,s,q);
  }else if(step==='akiChoose'){
-  if(a.mode==='block')offerChars(s,{player:owner,sourceUid:q.sourceUid,id:q.id},null,false,'grantBlock3k');
-  else if(a.mode==='search')startAkiSearch(pack,s,q);
+  if(a.mode==='block'){
+   lock(s,owner,'akiBlock');
+   offerChars(s,{player:owner,sourceUid:q.sourceUid,id:q.id},null,false,'grantBlock3k');
+  }else if(a.mode==='search')startAkiSearch(pack,s,q);
  }else if(step==='grantBlock3k'&&a.mode==='pick'){
   unblocked(s,selfOf(s,owner,a.uid),3000);
-  lock(s,owner,'akiBlock');
+ }else if(step==='mayDraw'&&a.mode==='draw'){
+  A.draw(pack,s,owner,1,q.sourceUid);
  }else if(step==='activeEnergy'&&a.mode==='pick'){
   const t=selfOf(s,owner,a.uid);if(t)A.active(s,owner,t);
  }else if(step==='himenoSwap'){
@@ -1003,7 +1151,7 @@ export function resolveCsmPending(pack,s,action){
  }else if(step==='topPlace'){
   const uid=q.data.uid;
   if(a.mode==='bottom')lay(plOf(s,owner),[uid],'bottom');
- } else if(step==='mayRetire'&&a.mode==='retire')retireUid(pack,s,owner,q.sourceUid);
+ } else if(step==='mayRetire'&&a.mode==='retire')retireUid(pack,s,owner,q.sourceUid,ownCause(owner,q.sourceUid));
  else if(step==='buffMoveFront'&&a.mode==='pick'){
   const t=selfOf(s,owner,a.uid);
   if(t){buff(s,t,2000);offerMoveToFront(pack,s,{player:owner,sourceUid:q.sourceUid,id:q.id},t);}
@@ -1064,7 +1212,9 @@ function resolveChoose(pack,s,q,a){
   }else{
    lock(s,owner,'dateDraw');
    A.draw(pack,s,owner,2,q.sourceUid);
-   offerHand(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{nextAp:otherEventsUsed(s,owner,q.sourceUid)>0}},false);
+   const nextAp=otherEventsUsed(s,owner,q.sourceUid)>0;
+   if(!offerHand(s,{player:owner,sourceUid:q.sourceUid,id:q.id,data:{nextAp}},false)&&nextAp)
+    offerAp(s,{player:owner,sourceUid:q.sourceUid,id:q.id},false);
   }
   return;
  }
@@ -1104,50 +1254,45 @@ function offerDreamTuck(pack,s,q){
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'dreamTuck'},
   hosts.map(c=>({type:'csm',mode:'host',uid:c.uid})));
 }
+function finishArrange(pack,s,q,kept){
+ const owner=q.player;
+ lay(plOf(s,owner),kept,q.data.rest||'top');
+ if(q.data.follow==='dream')offerDreamDenji(pack,s,q);
+ else if(q.id==='CSM-1-051')offerTuckUnderDenji(pack,s,{player:owner,
+  sourceUid:q.sourceUid,id:q.id});
+}
+function holdArrange(s,q,window,kept){
+ const left=window.filter(uid=>!kept.includes(uid));
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'arrange',
+  data:{...q.data,window,kept}},[
+  {type:'csm',mode:'done'},
+  ...left.map(uid=>({type:'csm',mode:'keep',uid})),
+  ...window.map(uid=>({type:'csm',mode:'outside',uid}))]);
+}
 function resolveArrange(pack,s,q,a){
  const owner=q.player;
+ const window=q.data.window||[];
+ const kept=q.data.kept||[];
  if(a.mode==='keep'){
-  const kept=[...(q.data.kept||[]),a.uid];
-  const window=q.data.window.filter(uid=>uid!==a.uid);
-  if(!window.length){
-   lay(plOf(s,owner),kept,'top');
-   if(q.data.follow==='dream')offerDreamDenji(pack,s,q);
-   else if(q.id==='CSM-1-051')offerTuckUnderDenji(pack,s,{player:owner,
-    sourceUid:q.sourceUid,id:q.id});
-   return;
-  }
-  hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'arrange',
-   data:{...q.data,window,kept}},[
-   {type:'csm',mode:'done'},
-   ...window.map(uid=>({type:'csm',mode:'keep',uid})),
-   ...[...kept,...window].map(uid=>({type:'csm',mode:'outside',uid}))]);
+  const next=[...kept,a.uid];
+  if(window.every(uid=>next.includes(uid)))finishArrange(pack,s,q,next);
+  else holdArrange(s,q,window,next);
   return;
  }
  if(a.mode==='outside'){
   const index=plOf(s,owner).deck.findIndex(c=>c.uid===a.uid);
   if(index>=0)A.move(pack,s,{owner,from:'deck',to:'outside',index,reason:'own-effect',
    sourceUid:q.sourceUid});
-  const window=q.data.window.filter(uid=>uid!==a.uid);
-  const kept=q.data.kept||[];
-  if(!window.length){
-   lay(plOf(s,owner),kept,'top');
-   if(q.data.follow==='dream')offerDreamDenji(pack,s,q);
-   else if(q.id==='CSM-1-051')offerTuckUnderDenji(pack,s,{player:owner,
-    sourceUid:q.sourceUid,id:q.id});
-   return;
-  }
-  hold(s,{player:owner,sourceUid:q.sourceUid,id:q.id,step:'arrange',
-   data:{...q.data,window,kept}},[
-   {type:'csm',mode:'done'},
-   ...window.map(uid=>({type:'csm',mode:'keep',uid})),
-   ...window.map(uid=>({type:'csm',mode:'outside',uid}))]);
+  const leftWindow=window.filter(uid=>uid!==a.uid);
+  const leftKept=kept.filter(uid=>uid!==a.uid);
+  if(!leftWindow.length||leftWindow.every(uid=>leftKept.includes(uid)))
+   finishArrange(pack,s,q,leftKept);
+  else holdArrange(s,q,leftWindow,leftKept);
   return;
  }
  if(a.mode==='done'){
-  lay(plOf(s,owner),[...(q.data.kept||[]),...q.data.window],'top');
-  if(q.data.follow==='dream')offerDreamDenji(pack,s,q);
-  else if(q.id==='CSM-1-051')offerTuckUnderDenji(pack,s,{player:owner,
-   sourceUid:q.sourceUid,id:q.id});
+  const rest=window.filter(uid=>!kept.includes(uid));
+  finishArrange(pack,s,q,[...kept,...rest]);
  }
 }
 function offerPeelAki(pack,s,q){
@@ -1155,15 +1300,26 @@ function offerPeelAki(pack,s,q){
  if(!hosts.length)return;
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'peelAki',data:q.data},[
   {type:'csm',mode:'skip'},
-  ...hosts.flatMap(h=>csmFacedowns(h).slice(-1).map(c=>({
+  ...hosts.flatMap(h=>csmFacedowns(h).map(c=>({
    type:'csm',mode:'peel',uid:c.uid,hostUid:h.uid})))]);
 }
+function offerImpactAki(pack,s,q){
+ const akis=chars(s,q.player,c=>named(pack,c,AKI,s));
+ if(!akis.length)return;
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'grantImpact'},[
+  {type:'csm',mode:'skip'},...akis.map(c=>({type:'csm',mode:'pick',uid:c.uid}))]);
+}
+function akiOpen(s,owner){
+ return {
+  block:!locked(s,owner,'akiBlock')&&chars(s,owner).length>0,
+  search:!locked(s,owner,'akiSearch')
+ };
+}
 function afterAkiDiscard(pack,s,q){
- const blocked=locked(s,q.player,'akiBlock');
- const searched=locked(s,q.player,'akiSearch');
+ const open=akiOpen(s,q.player);
  const actions=[];
- if(!blocked)actions.push({type:'csm',mode:'block'});
- if(!searched)actions.push({type:'csm',mode:'search'});
+ if(open.block)actions.push({type:'csm',mode:'block'});
+ if(open.search)actions.push({type:'csm',mode:'search'});
  if(!actions.length)return;
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'akiChoose'},actions);
 }
@@ -1210,6 +1366,8 @@ function swapFrontEnergy(pack,s,owner,frontUid,energyUid){
   sourceUid:frontUid});
  A.record(pack,s,{physical:pl.energy[ei],owner,from:'front',to:'energy',reason:'own-effect',
   sourceUid:frontUid});
+ csmOnMovedOutsideMove(pack,s,owner,pl.front[fi]);
+ csmOnMovedOutsideMove(pack,s,owner,pl.energy[ei]);
 }
 // Q2095: full front requires an explicit replace choice; no silent auto-remove.
 function offerMoveToFront(pack,s,spec,c){
@@ -1240,10 +1398,10 @@ export function csmOnAttackWin(pack,s,attacker){
 export function csmOnUnblocked(pack,s,attacker){
  const d=def(pack,attacker);
  if(!d?.csmHook)return;
- if(d.id==='CSM-1-029')
+ if(d.id==='CSM-1-029'&&!originalEffectsDisabled(s,attacker))
   s.effectQueue.unshift({op:'csm',id:d.id,slot:'unblocked',owner:s.active,sourceUid:attacker.uid});
  if(d.id==='CSM-1-046'&&attacker.csmUnblockedDraw===s.turn)
-  A.draw(pack,s,s.active,1,attacker.uid);
+  s.effectQueue.unshift({op:'csm',id:d.id,slot:'mayDraw',owner:s.active,sourceUid:attacker.uid});
 }
 export function csmOnAttackEnd(pack,s,attacker){
  const d=def(pack,attacker);
@@ -1254,15 +1412,19 @@ export function csmOnAttackEnd(pack,s,attacker){
 }
 export function csmOnMovedOutsideMove(pack,s,owner,c){
  const d=def(pack,c);
- if(!d?.csmHook||d.id!=='CSM-1-046'||originalEffectsDisabled(s,c))return;
- s.effectQueue.unshift({op:'csm',id:d.id,slot:'moved',owner,sourceUid:c.uid});
+ if(!d?.csmHook||originalEffectsDisabled(s,c))return;
+ // Printed 「移動フェイズ以外」. Player STEP and energy-to-front are move phase.
+ if(s.phase==='move')return;
+ if(d.id==='CSM-1-046')
+  s.effectQueue.unshift({op:'csm',id:d.id,slot:'moved',owner,sourceUid:c.uid});
+ else if(d.id==='CSM-1-072')c.csmMovedOutsideMove=s.turn;
 }
 export function csmOnTurnStart(pack,s,owner){
  for(const c of plOf(s,owner).front.concat(plOf(s,owner).energy)){
   if(!c||originalEffectsDisabled(s,c))continue;
   const d=def(pack,c);
   if(d.id==='CSM-1-056'&&raidLive(c,d,'phase')&&!csmFacedowns(c).length)
-   retireUid(pack,s,owner,c.uid);
+   retireUid(pack,s,owner,c.uid,ownCause(owner,c.uid));
  }
 }
 export function csmOnAttackDeclare(pack,s,attacker){
@@ -1288,9 +1450,10 @@ export function csmLeaveReplace(pack,s,owner,c){
  const pool=fronts(s,owner,x=>x.uid!==c.uid&&A.bp(pack,s,x)>=4000);
  if(!pool.length)return false;
  const loc=locOf(s,owner,c.uid);
+ // 【ターン1】 activates when the replacement is offered. Declining still spends it.
+ use(s,c.uid+'|leave');
  hold(s,{player:owner,sourceUid:c.uid,id:d.id,step:'leaveReplace',
-  data:{line:loc?.line,slot:loc?.slot}},[
+  data:{line:loc?.line,slot:loc?.slot,retireCause:s.csmRetireCause||null}},[
   {type:'csm',mode:'skip'},...pool.map(x=>({type:'csm',mode:'pick',uid:x.uid}))]);
- // Spend |leave only when the substitute branch is accepted (resolveCsmPending).
  return true;
 }

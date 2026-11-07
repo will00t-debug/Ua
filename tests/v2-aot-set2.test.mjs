@@ -62,6 +62,15 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=card;
  return card;
 }
+function coverRaid(s,p,top,baseId){
+ const base=take(s,p,baseId);
+ base.faceDown=false;
+ base.ready=false;
+ base.stack=[];
+ base.under=[];
+ top.stack=[base];
+ return top;
+}
 function toHand(s,p,id){
  const card=take(s,p,id);
  s.players[p].hand.push(card);
@@ -369,8 +378,11 @@ test('standing BP range raises the Thunder Spear ceiling and is not consumed',()
  s=pick(s,a=>a.uid===huge.uid);
  assert.equal(s.players[1].outside.some(c=>c.uid===huge.uid),true);
 
- put(s,0,'AOT-2-069','front',0,true);
+ const plain=put(s,0,'AOT-2-069','front',0,true);
  const again=toHand(s,0,'AOT-2-049');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===again.uid),false);
+ coverRaid(s,0,plain,'AOT-2-002');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===again.uid),true);
  s=cast(s,again.uid);
  const second=legalUniversalActions(packs,s).filter(a=>a.mode==='retire').map(a=>a.uid);
  assert.equal(second.includes(mid.uid),true);
@@ -380,7 +392,7 @@ test('standing BP range raises the Thunder Spear ceiling and is not consumed',()
 
  const later=toHand(s,0,'AOT-2-049');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===later.uid),false);
- put(s,0,'AOT-2-069','front',1,true);
+ coverRaid(s,0,put(s,0,'AOT-2-069','front',1,true),'AOT-2-008');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===later.uid),true);
  s=cast(s,later.uid);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.mode==='retire'&&a.uid===gap.uid),true);
@@ -775,7 +787,7 @@ test('EX10BT/AOT-2-032 standing range can kill 6000, then a raidless Zeke rests'
  let s=toPhase(fresh(counts,20321),'main');
  for(let i=0;i<4;i++)put(s,0,'AOT-2-001','energy',i,true);
  const beast=put(s,0,'AOT-2-025','front',0,true);
- put(s,0,'AOT-2-069','front',1,true);
+ coverRaid(s,0,put(s,0,'AOT-2-069','front',1,true),'AOT-2-023');
  const huge=put(s,1,'AOT-2-013','front',0,true);
  const ymir=take(s,0,'AOT-2-031');
  s.players[0].outside.push(ymir);
@@ -867,4 +879,53 @@ test('EX10BT/AOT-2-032 Zeke rests on the cell the player taps',()=>{
    .split('const MODE_BOARD_ENTRY')[1].split('function boardEntryMode')[0];
   assert.match(block,/['"]aot2['"]/,file);
  }
+});
+
+test('AOT-2-024 offers the outside draw only for this entry',()=>{
+ const ids=['AOT-2-024','AOT-2-031','AOT-2-004','AOT-2-001','AOT-2-002'];
+ const counts=countsFor(ids);
+ let s=toPhase(fresh(counts,2024),'main');
+ readyAp(s);
+ put(s,0,'AOT-2-031','energy',0,true);
+ const zeke=toHand(s,0,'AOT-2-024');
+ s.players[0].outside.push(zeke);
+ s.players[0].hand=s.players[0].hand.filter(c=>c.uid!==zeke.uid);
+ const bounce=toHand(s,0,'AOT-2-004');
+ const junk=[toHand(s,0,'AOT-2-001'),toHand(s,0,'AOT-2-002')];
+ const ymir=s.players[0].energy[0];
+ const deckBefore=s.players[0].deck.length;
+ s=use(s,{type:'activate',uid:ymir.uid,mode:'aot2:AOT-2-031'});
+ assert.equal(s.pending.step,'discard');
+ s=pick(s,a=>a.uid===junk[0].uid);
+ s=pick(s,a=>a.uid===junk[1].uid);
+ assert.equal(s.pending.step,'enter');
+ s=pick(s,a=>a.mode==='enter'&&a.uid===zeke.uid&&a.line==='front');
+ assert.equal(s.pending.id,'AOT-2-024');
+ assert.equal(s.pending.step,'mode');
+ assert.ok(s.pending.actions.some(a=>a.mode==='draw'));
+ s=pick(s,a=>a.mode==='look');
+ while(s.pending?.step==='lookPick'||s.pending?.step==='lookOrder')
+  s=pick(s,a=>a.mode==='done'||a.mode==='next');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,deckBefore);
+ assert.equal(s.players[0].front.some(c=>c?.uid===zeke.uid),true);
+
+ s=play(s,bounce.uid);
+ assert.equal(s.pending.kind,'effect-bounce-own');
+ s=pick(s,a=>a.uid===zeke.uid);
+ assert.equal(s.players[0].hand.some(c=>c.uid===zeke.uid),true);
+ const beforeHand=s.players[0].deck.length;
+ s=play(s,zeke.uid);
+ assert.equal(s.pending.id,'AOT-2-024');
+ assert.equal(s.pending.step,'lookPick');
+ assert.equal(s.pending.actions.some(a=>a.mode==='draw'),false);
+ while(s.pending?.step==='lookPick'||s.pending?.step==='lookOrder')
+  s=pick(s,a=>a.mode==='done'||a.mode==='next');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,beforeHand);
+ assert.equal(s.players[0].front.some(c=>c?.uid===zeke.uid),true);
+ assert.equal([...s.players[0].front,...s.players[0].energy,...s.players[0].hand,
+  ...s.players[0].deck,...s.players[0].outside,...s.players[0].removed]
+  .filter(c=>c?.uid===zeke.uid).length,1);
+ assertUniversalMatch(packs,s);
 });

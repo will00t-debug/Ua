@@ -74,7 +74,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
- if(s.pending?.kind==='kmr'||s.pending?.kind==='kmr2')return legal.find(a=>a.mode!=='skip')||legal[0];
+ if(s.pending?.kind==='kmr'||s.pending?.kind==='kmr2'||s.pending?.kind==='csm')
+  return legal.find(a=>a.mode!=='skip')||legal[0];
  if(s.pending?.kind==='opening-mulligan'){
   const side=s.pending.player,print=packsOf(pack)[side].cards;
   const starters=s.players[side].hand.filter(c=>{
@@ -572,7 +573,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return leave;
  }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
- if(s.pending?.kind==='granted-attack-draw'||s.pending?.kind==='granted-retire-draw')
+ if(s.pending?.kind==='granted-attack-draw'||s.pending?.kind==='granted-retire-draw'||
+  s.pending?.kind==='effect-acquired-attack-draw')
   return legal.find(x=>x.mode==='draw')||legal[0];
  if(s.pending?.kind==='effect-grant-attack'||s.pending?.kind==='effect-grant-retire')return legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];

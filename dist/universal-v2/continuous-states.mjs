@@ -179,8 +179,10 @@ export function effectChoiceProtected(s,selector,targetUid,sourceType){
  const triggerImmune=target.card.triggerUnchosenGranted;
  if(sourceType==='trigger'&&triggerImmune&&triggerImmune.turn===s.turn&&
   triggerImmune.stamp===target.card.fieldEntryStamp)return true;
+ // 「相手のトリガーの効果で選ばれない」. The chooser is the opponent.
+ // A trigger with no 「相手」 stays on triggerUnchosenGranted and blocks either player.
  const aotTrigger=target.card.aotTriggerUnchosen;
- if(sourceType==='trigger'&&aotTrigger&&aotTrigger.turn===s.turn&&
+ if(sourceType==='trigger'&&selector!==target.owner&&aotTrigger&&aotTrigger.turn===s.turn&&
   aotTrigger.stamp===target.card.fieldEntryStamp)return true;
  const aotShield=target.card.aotChoiceShield;
  if(aotShield&&selector!==target.owner&&aotShield.turn===s.turn&&

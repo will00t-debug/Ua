@@ -59,7 +59,9 @@ export function kmrAttackDamage(pack,s,c,printed,owner,card,suppressed){
  return 0;
 }
 export function kmrImpact(pack,s,c,printed,owner,card,suppressed){
- if(suppressed||printed?.id!=='KMR-1-107'||s.active!==owner||!kmrRaided(printed,c))return 0;
+ // The own-turn Impact line is printed under the raid frame. Raid is not
+ // required. A ready character on this front, including this card, blocks it.
+ if(suppressed||printed?.id!=='KMR-1-107'||s.active!==owner)return 0;
  const chars=s.players[owner].front.filter(x=>x&&card(pack,x).type==='character');
  return chars.some(x=>x.ready)?0:1;
 }

@@ -1,0 +1,724 @@
+{
+  "group": "C",
+  "baseline": "a5bc96e85e8f5c1ee62597feae27b3ec337de653",
+  "baseBranch": "cursor/effect-audit-bp-zero-65f8",
+  "range": "UA29BT/KMR-1-001～UA29BT/KMR-1-025",
+  "updated": "2026-11-05",
+  "sources": {
+    "product": "UA29BT 補充包與 UA29ST 起始牌組。本範圍沒有官方繁中印刷，效果以 dist/kmr-cards.mjs 的 effectJa 為準。",
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-001 起，至 KMR-1-025。KMR-1-025 另有 UA29ST 印刷，文本相同。",
+    "errata": "https://www.unionarena-tcg.com/jp/news/103.php（2024-10-23）只補上 KMR-1-059 的【登場時】。059 不在本範圍。001～025 沒有勘誤。",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA29BT。落到本範圍的是 Q1136、Q1137、Q1138、Q1139、Q1211、Q1473。",
+    "raidFrame": "卡圖 span.raidBorder：KMR-1-005 的登場時與起動主要都在框內；013 只有登場時；019 只有起動主要；022 的衝擊無效與登場時都在框內。raid-box.mjs 對 022 只列 onPlay，衝擊無效沿用 raidImpactNull，正面向上突襲才生效。"
+  },
+  "sharedGaps": [
+    {
+      "name": "付費突襲沒有寫入 entryTurn",
+      "owner": "A",
+      "rule": "KMR-1-019 印刷「このターン中に登場していない場合」。突襲登場也是這個回合的登場。",
+      "where": "dist/universal-v2/engine.mjs performRaid 寫 raidedTurn 與 fieldEntryStamp，不寫 entryTurn。本組沒有改 performRaid。KMR-1-019 在自己的處理裡同時看 entryTurn 與 raidedTurn。",
+      "repro": "主要階段把 KMR-1-019 突襲到 KMR-1-016 上。登場當回合 entryTurn 不是這個回合，raidedTurn 是這個回合。",
+      "expected": "突襲完成後 entryTurn 等於這個回合，讀 entryTurn 的卡都把這次突襲當成已經登場。",
+      "affects": "所有用 entryTurn 判斷「這個回合登場」的卡。019 已用 raidedTurn 得到正確選擇。",
+      "regression": "tests/v2-kmr-001-025-rest.test.mjs 的 019：突襲當回合沒有支付全部，下一自己主要階段才出現。"
+    },
+    {
+      "name": "KMR-1-021 的攻擊階段突襲無法由現有行動產生",
+      "owner": "A",
+      "rule": "KMR-1-021：「自分のアタックフェイズ中」把《仮面ライダーゼロワン リアライジングホッパー》（KMR-1-107）突襲，且自己場上飛電インテリジェンス在 3 張以上時，可從手牌登場 1 張。Q1137：每回合一次只約束這句，不約束登場時。Q1138：手牌兩張也不能在同一回合各用這句一次。",
+      "where": "付費突襲只出現在主要階段。戰鬥不翻開攻擊方自己的生命。dist/universal-v2/kmr-runtime.mjs 的 onRaidSeen 已要求 phase 為 attack、active 為控制者、來源卡名是リアライジングホッパー。本組沒有另做一套攻擊階段突襲。",
+      "repro": "主要階段把 KMR-1-107 突襲到《ライジングホッパー》（KMR-1-023）上，場上已有 022 與 106。手牌的 021 不會被問。",
+      "expected": "自己的攻擊階段中，對 107 的突襲在飛電インテリジェンス滿 3 張時才問 021。接受登場才消耗卡名鎖。跳過不消耗。主要階段的突襲不問。",
+      "affects": "021 這一句的正面路徑，以及 Q1138 的同回合第二張。登場時給《ゼロワン》BP 與傷害已實測。",
+      "regression": "tests/v2-kmr-001-025-rest.test.mjs 的 021 主要階段反例。正面路徑目前沒有合法操作可以走進。"
+    },
+    {
+      "name": "Q1473 的戰鬥敗北回手沒有可打出的卡",
+      "owner": "A",
+      "rule": "Q1473（2025-03-28）：「このバトルで敗北した相手のキャラは退場する代わりに、手札に戻る。」改的是規則處理，不是「相手の効果」。KMR-1-008 的回手抗性擋不住它。",
+      "where": "dist/universal-v2/engine.mjs bounceToHand 在 by 為 battle 時不看 opponentBounceImmune。全庫沒有卡把 battleLoseToHand 設成 true，所以這條路徑沒有對局可打。",
+      "repro": "需要一張印刷該代替的角色與 008 戰鬥，而且 008 戰鬥敗北。目前牌庫沒有這張卡。",
+      "expected": "008 仍被放回手牌。對手角色效果的回手則被抗性擋住。後者已用 EX08BT/SAO-2-024 實測。",
+      "affects": "008 的 FAQ 句子。印刷的衝擊無效、回手抗性、攻擊結束交換都已實測。",
+      "regression": "tests/v2-kmr-001-025-rest.test.mjs 的 SAO-2-024 回手。Q1473 本身沒有回歸案例。"
+    }
+  ],
+  "fixes": [
+    "KMR-1-008／009：場外沒有對應角色時仍可支付手牌並退場。「1枚まで」包含 0 張。",
+    "KMR-1-019：突襲當回合不提供支付 1AP 取得三項。下一自己回合才提供。",
+    "KMR-1-021：起動句只接受自己攻擊階段、而且來源必須是《仮面ライダーゼロワン リアライジングホッパー》。",
+    "KMR-1-022：從手牌帶出場的抽牌改成可跳過。共用的 effect-may-draw 待處理只接受別的印刷，所以這張用自己的 mayDraw 步驟。",
+    "KMR-1-024：牌組或手牌不足 2 張時仍抽得到的張數、棄掉手牌有的張數，然後才問退場。",
+    "KMR-1-025：代替退場看快照下來的來源與原因。能源線上的對象也可以被代。拒絕時帶著原因繼續其他代替，不再問這張。接受時只退前線上的這張，並沿用同一原因。",
+    "假面騎士退場步驟把 sourceUid 與 controller 傳進 retire，001 與 024 的退場才算對手角色效果。"
+  ],
+  "testResults": {
+    "related": {
+      "command": "node --test tests/v2-kmr-001-025.test.mjs tests/v2-kmr-001-025-rest.test.mjs tests/v2-kmr-entry-flow.test.mjs tests/v2-kmr-set1.test.mjs tests/v2-kmr-set2.test.mjs tests/v2-bp-zero-retire.test.mjs",
+      "pass": 72,
+      "fail": 0
+    },
+    "fullSuite": {
+      "command": "npm test",
+      "pass": 3706,
+      "fail": 1,
+      "failure": "tests/v2-independent-audit.test.mjs 呼叫 scripts/v2-audit-catalog.mjs。該腳本在 dist、tests、scripts 還有未提交修改時拒絕執行。失敗發生在本組修正尚未提交，不是效果斷言。",
+      "cleanRerun": "提交 56373b12 後，node --test --test-name-pattern \"report generates from actual catalog\" tests/v2-independent-audit.test.mjs 通過。",
+      "note": "全庫通過不代表每張卡的每個句子都正確。"
+    }
+  },
+  "reviews": [
+    {
+      "cardId": "KMR-1-001",
+      "number": "UA29BT/KMR-1-001",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "場外 AP2 特徵 2 張減黃 5、5 張主動登場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-001 ；Q1136 https://www.unionarena-tcg.com/jp/faq/list.php?number=1136",
+          "implementation": "dist/universal-v2/kmr-continuous.mjs kmrEnergyCut、kmrEntryActive。登場前先算場外張數。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025.test.mjs。無特徵的 AP2 不減費。2 張時費用 5，4 點黃不能出。5 張在登場前就主動進場。登場後磨出第 5 張仍維持休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "衝擊 1、登場時可磨 10 並退 BP4000 以下",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-001",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs on001。查看窗放在 data.uids。",
+          "discrepancy": "",
+          "evidence": "同一測試。衝擊為 1。10 張都在私人選項，對手看不到。BP4000 可退，BP5000 不可。可跳過。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【色】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-001",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger colorRestSkip",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。休息對手前線並跳過下次活動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-002",
+      "number": "UA29BT/KMR-1-002",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "這個回合公開非黃突襲到手牌時 BP+1500",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-002",
+          "implementation": "dist/universal-v2/kmr-continuous.mjs kmrBp。旗標只在自己回合、非黃突襲進手牌時寫入。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025.test.mjs。跳過不公開。黃突襲放回上下都不加 BP。非黃突襲進手牌後自己回合 3000，換對手回合回到 1500。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【抽牌】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-002",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-003",
+      "number": "UA29BT/KMR-1-003",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動主要、回合 1、必須二選一",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-003",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-003|main。沒有旗標不提供。選擇前就消耗回合 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025.test.mjs。攻擊階段不提供。抽牌後強制棄 1。BP+1000 用掉次數。下一自己主要階段次數清空，舊旗標不再提供；把旗標改成新回合才再提供。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【活動】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-003",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。活動並 BP+3000。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-004",
+      "number": "UA29BT/KMR-1-004",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "主動登場、這個回合衝擊 1、攻擊結束 8 個不同假面騎士名",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-004",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs on004、phase004。只算前線上卡名含「ライダー」的不同名稱。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。主動進場，衝擊 1，下一自己主要階段衝擊回到 0。8 個名稱傷害 1。7 個不傷害。放在能源線不傷害。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【取得】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-004",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-005",
+      "number": "UA29BT/KMR-1-005",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框內登場時最多帶 2 張休息、然後可活動",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-005",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-005|onPlay。raid-box 含 onPlay。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。普通登場沒有帶人、也沒有起動。突襲只提供非黃、BP4000 以下、非突襲限定的手牌，休息進前線，沒有突襲模式。可跳過第二張，然後活動剛進場的那張。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲框內起動主要、前線、支付 1AP、回合 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-005",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-005|main。只在前線，支付後給自己場上角色 BP+1000。",
+          "discrepancy": "",
+          "evidence": "同一測試。突襲花 1AP，起動再花 1AP。能源線角色也加，底板不加。同一回合不能再起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【突襲】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-005",
+          "implementation": "dist/universal-v2/engine.mjs 生命突襲。滿足費用才能突到合法底板。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。突到《ジオウ》後是正面向上突襲。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-006",
+      "number": "UA29BT/KMR-1-006",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "沒有卡牌效果",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-006",
+          "implementation": "effectJa 為空，engineKind plain。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發斷言 effectJa 為空。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【活動】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-006",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
+          "discrepancy": "",
+          "evidence": "同一測試。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-007",
+      "number": "UA29BT/KMR-1-007",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "衝擊無效",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-007",
+          "implementation": "dist/universal-v2/kmr-pack.mjs impactNull。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。001 攻擊並擊倒 007，生命張數不變，007 退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【抽牌】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-007",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-008",
+      "number": "UA29BT/KMR-1-008",
+      "status": "部分核對",
+      "clauses": [
+        {
+          "match": "衝擊無效",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-008",
+          "implementation": "dist/universal-v2/kmr-pack.mjs impactNull。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。001 攻擊並擊倒 008，生命張數不變。",
+          "unresolved": ""
+        },
+        {
+          "match": "對手效果不回手",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-008",
+          "implementation": "dist/universal-v2/engine.mjs bounceToHand。reason 為 opponent-effect 時留下。",
+          "discrepancy": "",
+          "evidence": "同一檔。EX08BT/SAO-2-024 支付 AP 後，008 留在前線，BP2000 的 006 回到手牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "攻擊結束可棄手牌、退場、休息帶出疾風",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-008",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs reviveEnd、revivePay。場外 0 張仍可支付。",
+          "discrepancy": "原本場外沒有疾風就整句不發。改成仍可棄牌並退場。",
+          "evidence": "同一檔。可跳過。支付後 008 退場。有疾風時登場行動 ready 為 false，而且沒有突襲模式。對手回合的 008 不問。",
+          "unresolved": ""
+        },
+        {
+          "match": "Q1473 戰鬥敗北回手不是對手效果",
+          "status": "缺資料",
+          "official": "https://www.unionarena-tcg.com/jp/faq/list.php?number=1473",
+          "implementation": "bounceToHand 的 battle 原因不看回手抗性。全庫沒有 battleLoseToHand 的卡。",
+          "discrepancy": "",
+          "evidence": "",
+          "unresolved": "交給 A 組。見 sharedGaps。"
+        },
+        {
+          "match": "生命【活動】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-008",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-009",
+      "number": "UA29BT/KMR-1-009",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "不受 BP 減少、自己回合 BP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-009",
+          "implementation": "dist/universal-v2/engine.mjs bp 的 bpDownImmune 與 ownTurnBp。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。負修正被忽略，自己回合 4000，對手回合 3000。沉默後兩者都消失，3000 再減 1000 成為 2000。",
+          "unresolved": ""
+        },
+        {
+          "match": "攻擊結束可棄手牌、退場、休息帶出剛烈",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-009",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-009|phase 只找《仮面ライダーゲイツリバイブ剛烈》。",
+          "discrepancy": "",
+          "evidence": "同一測試。場外同時有剛烈與其他角色時，只提供剛烈，登場行動 ready 為 false。疾風自己退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【抽牌】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-009",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-010",
+      "number": "UA29BT/KMR-1-010",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動主要休息、黃能源 +1、主要結束退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-010",
+          "implementation": "共用 restSelfGainEnergyRetireEndMain。本組沒有改這個操作。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。能源線休息後仍產生 2。再活動也不能第二次起動。主要結束退場，前線的 025 不代替。放在前線時產生的能源仍是 0。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-011",
+      "number": "UA29BT/KMR-1-011",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時看頂 2，任意張放回上面，其餘放下面",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-011",
+          "implementation": "inspectTopArrange count 2 split。私人選項帶卡圖，對手看不到。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-set1.test.mjs。兩張都可上可下。一張在底、一張在頂時順序正確。只剩 1 張、以及牌組空，都不把牌放進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-012",
+      "number": "UA29BT/KMR-1-012",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時看頂 7，公開最多 1 張非黃突襲到手牌",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-012 ；Q1211 https://www.unionarena-tcg.com/jp/faq/list.php?number=1211",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs 看牌。黃以外依 Q1211 是紅、藍、綠、紫，實作是 color 不是 yellow。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。data.uids 是全部 7 張。只有非黃突襲可拿。不能拿的牌仍在私人選項。公開範圍只有拿走的那張。其餘依選擇放回下面。本彈沒有綠或紫。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【色】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-012",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger colorRestSkip",
+          "discrepancy": "",
+          "evidence": "同一檔生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-013",
+      "number": "UA29BT/KMR-1-013",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框內登場時看頂 5，蓋茨與沃茲同時在場改為 2 張",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-013",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs。raid-box 只有 onPlay。卡名含「ライダー」才能拿。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。普通登場不看牌。突襲且場上有蓋茨與沃茲時最多 2 張。5 張都在查看窗。事件與不含ライダー的牌不能拿。只有《ジオウ》時最多 1 張。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【突襲】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-013",
+          "implementation": "dist/universal-v2/engine.mjs 生命突襲。",
+          "discrepancy": "",
+          "evidence": "同一檔生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-014",
+      "number": "UA29BT/KMR-1-014",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時可公開頂 1，非黃突襲進手牌，否則放上或下",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-014",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs。跳過不公開。黃突襲公開後放回。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025.test.mjs。跳過不進公開紀錄。黃突襲可放下面，不加 002 的 BP。非黃突襲進手牌並公開，002 變成 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【抽牌】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-014",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-015",
+      "number": "UA29BT/KMR-1-015",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "對手場上有藍或紅時手牌費用減 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-015",
+          "implementation": "opponentFieldColorsHandEnergyDiscount，顏色藍與紅，數量 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。沒有對手場牌時 3。藍是 2。藍加紅仍是 2。黃是 3。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-016",
+      "number": "UA29BT/KMR-1-016",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "活動時發生能源 +黃",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-016",
+          "implementation": "activeExtraEnergy 1。休息後只剩印刷產生量。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。能源線活動為 2，休息為 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-017",
+      "number": "UA29BT/KMR-1-017",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "步驟、自己的移動階段從前線到能源",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-017",
+          "implementation": "card.step。移動階段才產生 step 行動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。開始階段沒有步驟。移動階段可移到能源。移完不能再步驟。前線本身不產生能源。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-018",
+      "number": "UA29BT/KMR-1-018",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時抽 1 再棄 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-018",
+          "implementation": "drawDiscard count 1。棄牌沒有跳過。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。牌組減 1，待處理是強制棄牌，結束後手牌 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【抽牌】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-018",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "同一檔生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-019",
+      "number": "UA29BT/KMR-1-019",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框內起動主要，三選一；不是本回合登場才可付 1AP 全拿",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-019",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-019|main。登場當回合同時看 entryTurn 與 raidedTurn。",
+          "discrepancy": "付費突襲不寫 entryTurn。019 另讀 raidedTurn，所以突襲當回合不提供全拿。共用的 entryTurn 交給 A 組。",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。突襲當回合只選衝擊，衝擊 1、傷害仍 1、BP 仍 4000，次數用掉。下一自己主要階段付 1AP 後衝擊 1、傷害 2、BP 5000。普通登場不能起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【突襲】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-019",
+          "implementation": "dist/universal-v2/engine.mjs 生命突襲。",
+          "discrepancy": "",
+          "evidence": "同一檔生命觸發。突到 KMR-1-016。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-020",
+      "number": "UA29BT/KMR-1-020",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "場外四種指定特徵的不同卡名時傷害 2",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-020",
+          "implementation": "dist/universal-v2/kmr-continuous.mjs kmrAttackDamage。同名只算一次。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。沒有場外時傷害 1。三個不同名稱仍是 1。再放一張同名仍是 1。第四個名稱《アークゼロ》後是 2。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-021",
+      "number": "UA29BT/KMR-1-021",
+      "status": "部分核對",
+      "clauses": [
+        {
+          "match": "登場時可選《ゼロワン》，BP+1000 且傷害 2",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-021 ；Q1137 https://www.unionarena-tcg.com/jp/faq/list.php?number=1137",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-021|onPlay。這句不在突襲框，也不受每回合一次約束。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。022 可選，010 與 021 自己不可選。跳過不加。接受後 BP+1000、傷害 2。",
+          "unresolved": ""
+        },
+        {
+          "match": "自己攻擊階段突襲リアライジングホッパー、飛電 3 張、每回合一次",
+          "status": "共用阻塞",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-021 ；Q1138 https://www.unionarena-tcg.com/jp/faq/list.php?number=1138",
+          "implementation": "onRaidSeen 要求攻擊階段、自己的回合、來源卡名是《仮面ライダーゼロワン リアライジングホッパー》。接受登場才鎖卡名。",
+          "discrepancy": "現有行動不能在攻擊階段突襲，所以正面路徑沒有走進。",
+          "evidence": "同一測試。主要階段突襲 107，場上已有 3 張飛電，不問 021，卡名鎖沒有消耗。",
+          "unresolved": "交給 A 組。見 sharedGaps。Q1138 的同回合第二張還沒有正面操作。"
+        },
+        {
+          "match": "生命【取得】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-021",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-022",
+      "number": "UA29BT/KMR-1-022",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框內衝擊無效與登場時帶 1 張休息，手牌帶出才可抽",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-022",
+          "implementation": "raidImpactNull。onPlay 只提供黃、費用 1 以下、AP 1 的角色，休息進場。手牌帶出用自己的 mayDraw，可跳過。",
+          "discrepancy": "原本從手牌帶出是強制抽 1。改成最多 1 張，可以不抽。",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 與 tests/v2-kmr-entry-flow.test.mjs。普通登場沒有衝擊無效、也不帶人。突襲後 006 與 007 可帶，004 與藍卡不可。手牌帶出可跳過，牌組不變，進場是休息。場外帶出不抽。選擇抽牌才讓牌組減 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【突襲】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-022",
+          "implementation": "dist/universal-v2/engine.mjs 生命突襲。",
+          "discrepancy": "",
+          "evidence": "同一檔生命觸發。突到《ゼロワン》後衝擊無效為真。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-023",
+      "number": "UA29BT/KMR-1-023",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "沒有卡牌效果",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-023",
+          "implementation": "effectJa 為空。這張是《ライジングホッパー》，不是 021 要看的リアライジングホッパー。",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發斷言 effectJa 為空。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【取得】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-023",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode get",
+          "discrepancy": "",
+          "evidence": "同一測試。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-024",
+      "number": "UA29BT/KMR-1-024",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時抽 2 棄 2，再依滅亡迅雷.net 提高退場上限",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-024",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-024|onPlay。先抽 2，再棄手牌有的張數，然後才問退場。",
+          "discrepancy": "原本手牌與牌組都少於 2 張就整句結束。改成不足時仍處理抽得到、棄得掉的部分。",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。棄 1 張滅亡迅雷.net 後，BP3000 可退、BP4000 不可，而且可跳過。牌組只剩 1 張時只棄 1 張，然後仍問退場。牌組與手牌都空時直接問退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【活動】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-024",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode active",
+          "discrepancy": "",
+          "evidence": "同一檔生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "KMR-1-025",
+      "number": "UA29BT/KMR-1-025",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "前線上的這張可代替對手角色效果的退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-025 ；Q1139 https://www.unionarena-tcg.com/jp/faq/list.php?number=1139",
+          "implementation": "dist/universal-v2/engine.mjs kmrSubstitute025。來源必須是對手角色。對象可在前線或能源線。這張自己必須在前線，而且沒有沉默。同名《迅 バーニングファルコン》不能被代。拒絕帶 declined025 與原來的原因繼續。接受時退被選的前線 025，skipReplacement，原因不變。",
+          "discrepancy": "原本只看當下的 kmrSourceUid，而且只代前線。拒絕會用 skipReplacement 清掉後續代替。改成快照原因，能源線對象也可代，拒絕不再問這張。",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs。024 退 010 時原因是 opponent、控制者 0、sourceUid 是 024。接受後 010 留下、025 退場並進入退場棄牌。拒絕後 010 退場、025 留下。能源線的 010 也會問，原因仍是 024。事件 KMR-1-030、戰鬥、沉默的前線 025、010 自己的主要結束退場，都不問。另一張 025 是同名，所以不代替，退場的那張仍抽 1 再棄 1，另一張留下。",
+          "unresolved": ""
+        },
+        {
+          "match": "Q1139：BP 0 規則退場不能代替",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/faq/list.php?number=1139",
+          "implementation": "規則退場的 by 是 rule。kmrSubstitute025 只接受 opponent。",
+          "discrepancy": "",
+          "evidence": "tests/v2-bp-zero-retire.test.mjs。IYS-1-025 把 BP 打到 0，010 退場，025 留下，沒有抽牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "退場時抽 1 再棄 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-025",
+          "implementation": "dist/universal-v2/kmr-runtime.mjs KMR-1-025|onRetire。",
+          "discrepancy": "",
+          "evidence": "同一檔。025 戰鬥敗北時牌組減 1，待處理是棄牌，不是代替。接受代替時退場的也是這張，同樣進入棄牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "生命【抽牌】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-025",
+          "implementation": "dist/universal-v2/engine.mjs chooseTrigger mode draw",
+          "discrepancy": "",
+          "evidence": "tests/v2-kmr-001-025-rest.test.mjs 生命觸發。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

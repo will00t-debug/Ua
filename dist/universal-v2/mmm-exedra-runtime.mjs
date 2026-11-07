@@ -12,6 +12,18 @@ const MAGIUS='マギウス';
 const WING='マギウスの翼';
 let A=null;
 export function bindMmm2(api){A=api;}
+export function finishU045Look(pack,s,player,sourceUid,id){
+ const top=plOf(s,player).deck[0];
+ if(!top)return;
+ const energy=A.deckEnergy(pack,s,player,def(pack,top));
+ publish(pack,s,player,top);
+ moveZone(pack,s,player,'deck',top.uid,'hand',sourceUid);
+ if(energy<5)return;
+ const energies=plOf(s,1-player).energy.filter(Boolean);
+ if(!energies.length)return;
+ hold(s,{player,sourceUid,id,step:'u045lock'},
+  skipDo(energies.map(c=>({type:'mmm2',uid:c.uid}))));
+}
 
 function plOf(s,owner){return s.players[owner];}
 function def(pack,c){return A.card(pack,c);}
@@ -29,7 +41,10 @@ function once(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
 function lock(s,owner,key){if(!once(s,owner,key))s.mainReadyOnceByName[owner].push(key);}
 function used(s,key){return s.mainAbilityUsedUids.includes(key);}
 function use(s,key){if(!used(s,key))s.mainAbilityUsedUids.push(key);}
-function buff(s,c,bp){c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(bp<0&&c&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function impact(s,c){c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function damage2(s,c){c.attackDamageGranted={amount:2,turn:s.turn,stamp:c.fieldEntryStamp};}
 function energyPlus(pack,s,c){
@@ -43,13 +58,20 @@ function outsideEvents(s,owner,exceptUid=null){
 function entries(s,owner,trait){
  return distinctTraitEntryNames(s,owner,trait,c=>def(A.pack,c)).size;
 }
+// MMM-2-003 「手札から登場」. EX16BT has no print that puts this energy-5
+// character back on the field from outside, remove, or deck, so the same-UID
+// source change is not reproduced here. This scan stays until that flow exists.
 function fromHand(s,owner,uid){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===uid&&e.owner===owner&&
   e.from==='hand'&&['front','energy'].includes(e.to));
 }
-function ownEffectEntry(s,uid){
- return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===uid&&e.reason==='own-effect'&&
-  ['front','energy'].includes(e.to)&&!['front','energy'].includes(e.from));
+// 「このキャラが自分の効果で登場」 is this onPlay. handEffect is a character
+// effect from hand. outsideEffect is one from outside. paidPlay is a later
+// play of the same UID. A front/energy move does not run onPlay again.
+const OWN_EFFECT_ENTRY=new Set(['outsideEffect','outsideEffectRaid','recoveredEffect',
+ 'handEffect','handEffectRaid','deckEffect','deckEffectRaid']);
+function thisEntryByOwnEffect(job){
+ return OWN_EFFECT_ENTRY.has(job.entryCause);
 }
 function removedEntry(s,owner){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.controller===owner&&
@@ -252,8 +274,8 @@ function main012b(pack,s,job){
   pool.map(c=>({type:'mmm2',uid:c.uid})));
 }
 function play014(pack,s,job){
- if(s.active!==job.owner||!ownEffectEntry(s,job.sourceUid))return;
- const foes=plOf(s,1-job.owner).front.filter(Boolean);
+ if(s.active!==job.owner||!thisEntryByOwnEffect(job))return;
+ const foes=plOf(s,1-job.owner).front.filter(c=>c&&!A.characterHarmBlocked(A.pack,s,c,'bpDown'));
  if(!foes.length)return;
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u014'},
   skipDo(foes.map(c=>({type:'mmm2',uid:c.uid}))));
@@ -331,7 +353,7 @@ function play032(pack,s,job){
  offerDeploy(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,data:{from:'hand'}},cards,false);
 }
 function play033(pack,s,job){
- if(ownEffectEntry(s,job.sourceUid))A.draw(pack,s,job.owner,1);
+ if(thisEntryByOwnEffect(job))A.draw(pack,s,job.owner,1);
 }
 function end035(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -675,6 +697,7 @@ const STEPS={
   if(a.mode==='skip')return;
   const c=plOf(s,1-q.player).front.find(x=>x?.uid===a.uid);
   if(!c)throw Error('Front left');
+  if(A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
   c.buffs??=[];c.buffs.push({bp:-1000,untilTurn:s.turn});
  },
  u016a(pack,s,q,a){
@@ -791,17 +814,15 @@ const STEPS={
   if(a.mode!=='skip'){
    const foe=1-q.player;
    A.moveLine(pack,s,foe,a.uid,'energy',a.slot,a.replaceUid,q.sourceUid);
+   if(s.pending?.data?.resumeReplace){
+    s.pending.data.resumeReplace.afterMmm='u045';
+    s.pending.data.resumeReplace.afterMmmPlayer=q.player;
+    s.pending.data.resumeReplace.afterMmmSource=q.sourceUid;
+    s.pending.data.resumeReplace.afterMmmId=q.id;
+    return;
+   }
   }
-  const top=plOf(s,q.player).deck[0];
-  if(!top)return;
-  const energy=A.deckEnergy(pack,s,q.player,def(pack,top));
-  publish(pack,s,q.player,top);
-  moveZone(pack,s,q.player,'deck',top.uid,'hand',q.sourceUid);
-  if(energy<5)return;
-  const energies=plOf(s,foeOf(q)).energy.filter(Boolean);
-  if(!energies.length)return;
-  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u045lock'},
-   skipDo(energies.map(c=>({type:'mmm2',uid:c.uid}))));
+  finishU045Look(pack,s,q.player,q.sourceUid,q.id);
  },
  u045lock(pack,s,q,a){
   if(a.mode==='skip')return;

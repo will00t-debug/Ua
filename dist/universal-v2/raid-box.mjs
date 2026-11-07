@@ -152,7 +152,8 @@ const RAID_BOX_FEATURES=Object.freeze({
  'AOT-1-107':["onPlay","main"],
  'AOT-1-110':["onPlay","onAttack"],
  'AOT-2-013':["onPlay"],
- 'AOT-2-017':["onPlay","main"],
+ // EX10BT/AOT-2-017 image: 【ステップ】 sits in the dark raid frame with 登場時 and 起動メイン.
+ 'AOT-2-017':["onPlay","main","step"],
  'AOT-2-019':["onPlay"],
  'AOT-2-022':["onPlay","main"],
  'AOT-2-025':["onPlay"],
@@ -162,7 +163,10 @@ const RAID_BOX_FEATURES=Object.freeze({
  'AOT-2-058':["onPlay","onAttack"],
  'AOT-2-060':["onPlay","onAttack"],
  'AOT-2-067':["onPlay"],
- 'AOT-2-069':["onPlay"],
+ // EX10BT/AOT-2-069 image: impact, the BP-range bonus and the draw are inside
+ // the raid frame. The front-line limit sits outside it. Q1566 stacks the
+ // bonus once per face-up front raid.
+ 'AOT-2-069':["onPlay","standingBp"],
  'AOT-2-072':["onPlay"],
  'KMR-1-005':["onPlay","main"],
  'KMR-1-013':["onPlay"],

@@ -7,10 +7,11 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {createKmrBattlePack,kmrPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
- universalBp,universalCardEnergy}
+import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
+ universalBp,universalCardEnergy,universalPrivateChoices}
  from '../dist/universal-v2/engine.mjs';
-import {uiActionLabel,controllerChoiceArt,fieldEffectCopy} from '../dist/universal-v2/preview-actions.mjs';
+import {dispatchRoom} from '../server/domain.mjs';
+import {uiActionLabel,controllerChoiceArt,fieldEffectCopy,pendingFocusCard} from '../dist/universal-v2/preview-actions.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
 const set1=createKmrV2Pack();
@@ -546,10 +547,119 @@ test('W Heat Metal chooses a single top-or-bottom placement after Memory Change 
   assert.equal(state.pending?.step,'topPlace','must not reopen the mode choice');
   assert.deepEqual(state.pending.actions.map(a=>a.mode),['top','bottom']);
   assert.equal(controllerChoiceArt(packs,state,state.pending.actions[0])[0]?.cardId,'KMR-2-020');
+  const focus=pendingFocusCard(packs,state);
+  assert.equal(focus?.cardId,'KMR-2-020');
+  assert.equal(focus?.uid,seen.uid);
+  const printed=KMR2_CARDS.find(card=>card.id===focus.cardId);
+  assert.match(fieldEffectCopy(printed),/インパクト無効|減少/);
+  assert.equal(state.publicReveals.some(entry=>entry.uid===seen.uid),false);
+  assert.equal(universalPrivateChoices(packs,state,1),null);
+  const shown=universalPrivateChoices(packs,state,0);
+  assert.equal(shown?.options?.some(option=>option.card?.cardId==='KMR-2-020'),true);
   state=click(state,a=>a.mode===where);
   assert.equal(state.pending,null);
   assert.equal(state.players[0].deck[where==='top'?0:state.players[0].deck.length-1]?.uid,seen.uid);
  }
+});
+
+test('KMR-2-054 starts when its own attack is blocked and can draw zero or one',()=>{
+ const counts=fill(['KMR-2-054','KMR-2-020','KMR-1-010','KMR-2-059']);
+ function blocked(memory){
+  const s=fresh(counts);
+  const heat=put(s,0,'KMR-2-054','front',0,true);
+  const wall=put(s,1,'KMR-1-010','front',0,true);
+  const seen=take(s,0,'KMR-2-020');
+  s.players[0].deck.unshift(seen);
+  if(memory)heat.kmr2EnteredBy={id:'KMR-2-059',name:'メモリチェンジ',turn:s.turn};
+  ready(s);
+  let state=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='next'));
+  assert.equal(state.phase,'attack');
+  state=dispatchUniversalAction(packs,state,{type:'attack',uid:heat.uid});
+  assert.equal(state.pending?.kind,'block');
+  state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:wall.uid});
+  assert.equal(state.pending?.id,'KMR-2-054');
+  return {state,heat,wall,seen};
+ }
+ const plain=blocked(false);
+ assert.equal(plain.state.pending.step,'topPlace');
+ assert.deepEqual(plain.state.pending.data.window,[plain.seen.uid]);
+ assert.equal(universalPrivateChoices(packs,plain.state,1),null);
+ assert.equal(plain.state.publicReveals.some(entry=>entry.uid===plain.seen.uid),false);
+ const shown=universalPrivateChoices(packs,plain.state,0);
+ assert.equal(shown?.inspected?.some(card=>card.uid===plain.seen.uid),true);
+ const ai=chooseUniversalAiAction(packs,plain.state);
+ assert.equal(legalUniversalActions(packs,plain.state).some(a=>
+  a.type===ai.type&&a.mode===ai.mode&&a.uid===ai.uid),true);
+ let placed=dispatchUniversalAction(packs,plain.state,ai);
+ assert.equal(placed.pending?.id==='KMR-2-054',false);
+ assert.equal(placed.players[0].deck[0]?.uid,plain.seen.uid);
+ assert.equal(placed.players[1].outside.some(c=>c.uid===plain.wall.uid),true);
+ assert.equal(placed.players[0].front.some(c=>c?.uid===plain.heat.uid),true);
+ assertUniversalMatch(packs,placed);
+
+ for(const draw of [false,true]){
+  const changed=blocked(true);
+  assert.equal(changed.state.pending.step,'mode');
+  let state=click(changed.state,a=>a.key==='draw');
+  assert.equal(state.pending?.step,'mayDraw');
+  assert.deepEqual(state.pending.actions.map(a=>a.mode),['skip','draw']);
+  const deck=state.players[0].deck.length,hand=state.players[0].hand.length;
+  state=click(state,a=>a.mode===(draw?'draw':'skip'));
+  assert.equal(state.players[0].deck.length,deck-(draw?1:0));
+  assert.equal(state.players[0].hand.length,hand+(draw?1:0));
+  assert.equal(state.pending?.id==='KMR-2-054',false);
+  assert.equal(state.players[1].outside.some(c=>c.uid===changed.wall.uid),true);
+  assert.equal(state.players[0].front.some(c=>c?.uid===changed.heat.uid),true);
+  assertUniversalMatch(packs,state);
+ }
+});
+
+test('both seats submit KMR-2-054 through the room, and the guest never receives the top card',()=>{
+ const counts=fill(['KMR-2-054','KMR-2-020','KMR-1-010']);
+ const match=fresh(counts);
+ const heat=put(match,0,'KMR-2-054','front',0,true);
+ const wall=put(match,1,'KMR-1-010','front',0,true);
+ const seen=take(match,0,'KMR-2-020');
+ match.players[0].deck.unshift(seen);
+ ready(match);
+ assert.equal(assertUniversalMatch(packs,match),true);
+ let room={code:'HEAT0541',status:'playing',revision:1,first:0,match,log:[],updatedAt:1,
+  seats:[0,1].map(side=>({userId:'user'+side,username:'玩家'+side,title:'kmr',battleCounts:counts}))};
+ const repos={pruneRooms(){},loadRoom:()=>structuredClone(room),saveRoom:r=>{room=structuredClone(r);}};
+ const act=(userId,pred)=>{
+  const view=dispatchRoom(repos,{op:'view',code:room.code,userId},2).public;
+  const index=legalUniversalActions(packs,room.match).findIndex(pred);
+  assert.ok(index>=0,userId);
+  assert.equal(view.choices.some(choice=>choice.index===index),true);
+  return dispatchRoom(repos,{op:'act',code:room.code,userId,index},3);
+ };
+ act('user0',a=>a.type==='next');
+ act('user0',a=>a.type==='attack'&&a.uid===heat.uid);
+ act('user1',a=>a.type==='chooseBlock'&&a.uid===wall.uid);
+ const host=dispatchRoom(repos,{op:'view',code:room.code,userId:'user0'},4).public;
+ const guest=dispatchRoom(repos,{op:'view',code:room.code,userId:'user1'},5).public;
+ assert.equal(host.yourTurn,true);
+ assert.equal(host.inspection?.cards?.some(card=>card.uid===seen.uid&&card.cardId==='KMR-2-020'),true);
+ assert.equal(guest.yourTurn,false);
+ assert.equal(guest.inspection,null);
+ assert.equal(guest.choices.length,0);
+ assert.equal(JSON.stringify(guest).includes(seen.uid),false);
+ assert.throws(()=>dispatchRoom(repos,{op:'act',code:room.code,userId:'user1',index:0},6));
+ const bottom=legalUniversalActions(packs,room.match).findIndex(a=>a.mode==='bottom'&&a.uid===seen.uid);
+ act('user0',a=>a.mode==='bottom'&&a.uid===seen.uid);
+ assert.equal(room.match.players[0].deck.at(-1)?.uid,seen.uid);
+ assert.equal(room.match.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(room.match.players[0].front.some(c=>c?.uid===heat.uid),true);
+ assert.equal(bottom>=0,true);
+ const after=dispatchRoom(repos,{op:'view',code:room.code,userId:'user1'},7).public;
+ assert.equal(JSON.stringify(after).includes(seen.uid),false);
+});
+
+test('two different top-placement cards do not collapse into one effect sheet',()=>{
+ const state={pending:{player:0,kind:'kmr2',step:'topPlace',actions:[
+  {type:'kmr2',mode:'top',uid:'0-1'},{type:'kmr2',mode:'bottom',uid:'0-2'}
+ ]},players:[{deck:[]},{deck:[]}]};
+ assert.equal(pendingFocusCard(packs,state),null);
 });
 
 test('Memory Change asks for a W hand card and destination, entering it ACTIVE',()=>{
@@ -631,4 +741,317 @@ test('W Extreme moves a selected front character even when ENERGY is full',()=>{
  assert.equal(state.players[1].energy.filter(Boolean).length,4);
  assert.equal(state.continuousStates.some(x=>x.kind==='originalEffectsDisabled'&&
   x.sourceUid===extreme.uid&&x.targetUid===target.uid),true);
+});
+
+function buryFaceUp(s,p,card){
+ const under=s.players[p].deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
+function toAttack(s){
+ const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+ assert.ok(next);
+ const attack=dispatchUniversalAction(packs,s,next);
+ assert.equal(attack.phase,'attack');
+ return attack;
+}
+function strike(s,uid){
+ let state=s.phase==='attack'?s:toAttack(s);
+ state=dispatchUniversalAction(packs,state,{type:'attack',uid});
+ assert.equal(state.pending?.kind,'block');
+ return state;
+}
+
+test('blocked attacks use the attacker effect once, and the defender does not borrow it',()=>{
+ const counts=fill(['KMR-2-033','KMR-2-039','KMR-2-048','KMR-2-054','KMR-2-079','KMR-2-028','KMR-2-029','KMR-2-032','KMR-1-010','KMR-1-089','KMR-1-090','KMR-2-059','KMR-2-020']);
+ function board(){
+  const s=fresh(counts);
+  ready(s);
+  return s;
+ }
+ const fourze=board();
+ const rider=put(fourze,0,'KMR-2-033','front',0,true);
+ const wall=put(fourze,1,'KMR-1-010','front',0,true);
+ const known=take(fourze,0,'KMR-2-028');
+ fourze.players[0].deck.unshift(known);
+ const hand=fourze.players[0].hand.length;
+ const life=fourze.players[1].life.length;
+ let state=strike(fourze,rider.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:wall.uid});
+ assert.equal(state.pending?.id,'KMR-2-033');
+ assert.equal(state.pending.step,'mayDraw');
+ assert.equal(state.pending.player,0);
+ const ai=chooseUniversalAiAction(packs,state);
+ assert.equal(legalUniversalActions(packs,state).some(a=>a.type===ai.type&&a.mode===ai.mode),true);
+ state=click(state,a=>a.mode==='draw');
+ assert.equal(state.players[0].hand.some(c=>c.uid===known.uid),true);
+ assert.equal(state.pending?.step,'discard');
+ assert.equal(state.pending.actions.some(a=>a.mode==='skip'),false);
+ const discard=state.players[0].hand.find(c=>c.uid!==known.uid);
+ state=click(state,a=>a.mode==='discard'&&a.uid===discard.uid);
+ assert.equal(state.pending?.id==='KMR-2-033',false);
+ assert.equal(state.players[0].outside.filter(c=>c.uid===discard.uid).length,1);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===wall.uid).length,1);
+ assert.equal(state.players[0].front.some(c=>c?.uid===rider.uid),true);
+ assert.equal(state.players[1].life.length,life);
+ assert.equal(state.players[0].hand.length,hand);
+ assertUniversalMatch(packs,state);
+
+ const skipped=board();
+ const quiet=put(skipped,0,'KMR-2-033','front',0,true);
+ const soft=put(skipped,1,'KMR-1-010','front',0,true);
+ const before=skipped.players[0].hand.length;
+ state=strike(skipped,quiet.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:soft.uid});
+ state=click(state,a=>a.mode==='skip');
+ assert.equal(state.players[0].hand.length,before);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===soft.uid).length,1);
+ assert.equal(state.pending?.id==='KMR-2-033',false);
+ assertUniversalMatch(packs,state);
+
+ const open=board();
+ const free=put(open,0,'KMR-2-033','front',0,true);
+ put(open,1,'KMR-1-010','front',0,true);
+ const openHand=open.players[0].hand.length;
+ state=strike(open,free.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+ assert.notEqual(state.pending?.id,'KMR-2-033');
+ assert.equal(state.players[0].hand.length,openHand);
+ assertUniversalMatch(packs,state);
+
+ const borrowed=board();
+ const other=put(borrowed,0,'KMR-2-028','front',0,true);
+ put(borrowed,1,'KMR-2-033','front',1,false);
+ const cover=put(borrowed,1,'KMR-1-010','front',0,true);
+ const defenderHand=borrowed.players[1].hand.length;
+ state=strike(borrowed,other.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:cover.uid});
+ assert.notEqual(state.pending?.id,'KMR-2-033');
+ assert.equal(state.players[1].hand.length,defenderHand);
+ assert.equal(state.players[1].front.find(c=>c?.cardId==='KMR-2-033').ready,false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===cover.uid).length,1);
+ assertUniversalMatch(packs,state);
+
+ function meteor(withSchool){
+  const s=board();
+  const rider=put(s,0,'KMR-2-039','front',0,true);
+  buryFaceUp(s,0,rider);
+  if(withSchool){
+   put(s,0,'KMR-2-028','energy',0,true);
+   put(s,0,'KMR-2-029','energy',1,true);
+   put(s,0,'KMR-2-032','energy',2,true);
+  }
+  const wall=put(s,1,'KMR-1-010','front',0,true);
+  return {s,rider,wall};
+ }
+ const storm=meteor(true);
+ state=strike(storm.s,storm.rider.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:storm.wall.uid});
+ assert.equal(state.pending?.id,'KMR-2-039');
+ assert.equal(state.pending.step,'discard');
+ assert.equal(state.pending.player,0);
+ const tossed=state.players[0].hand[0];
+ state=click(state,a=>a.mode==='discard'&&a.uid===tossed.uid);
+ const lived=state.players[0].front.find(c=>c?.uid===storm.rider.uid);
+ assert.ok(lived);
+ assert.equal(lived.ready,true);
+ assert.equal(lived.attackDamageGranted?.amount,2);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===storm.wall.uid).length,1);
+ assert.equal(state.pending?.id==='KMR-2-039',false);
+ assert.equal(state.mainAbilityUsedUids.includes(storm.rider.uid+'|039'),true);
+ const again=put(state,1,'KMR-1-010','front',0,true);
+ state=strike(state,storm.rider.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:again.uid});
+ assert.notEqual(state.pending?.id,'KMR-2-039');
+ assert.equal(state.players[0].front.find(c=>c?.uid===storm.rider.uid).ready,false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===again.uid).length,1);
+ assertUniversalMatch(packs,state);
+
+ const short=meteor(false);
+ state=strike(short.s,short.rider.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:short.wall.uid});
+ assert.notEqual(state.pending?.id,'KMR-2-039');
+ assert.equal(state.players[0].front.find(c=>c?.uid===short.rider.uid).ready,false);
+ assert.equal(state.players[0].front.find(c=>c?.uid===short.rider.uid).attackDamageGranted,undefined);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===short.wall.uid).length,1);
+ assertUniversalMatch(packs,state);
+
+ const missed=meteor(true);
+ state=strike(missed.s,missed.rider.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+ assert.equal(state.pending?.id,'KMR-2-039');
+ assert.equal(state.pending.step,'mayDraw');
+ assert.equal(state.pending.actions.some(a=>a.mode==='discard'),false);
+ state=click(state,a=>a.mode==='skip');
+ assert.notEqual(state.pending?.step,'mayDraw');
+ assert.equal(state.players[0].front.find(c=>c?.uid===missed.rider.uid).attackDamageGranted,undefined);
+ assertUniversalMatch(packs,state);
+
+ const foeMeteor=board();
+ const plain=put(foeMeteor,0,'KMR-2-028','front',0,true);
+ const foe=put(foeMeteor,1,'KMR-2-039','front',1,false);
+ buryFaceUp(foeMeteor,1,foe);
+ put(foeMeteor,1,'KMR-2-028','energy',0,true);
+ put(foeMeteor,1,'KMR-2-029','energy',1,true);
+ put(foeMeteor,1,'KMR-2-032','energy',2,true);
+ const foeWall=put(foeMeteor,1,'KMR-1-010','front',0,true);
+ state=strike(foeMeteor,plain.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:foeWall.uid});
+ assert.notEqual(state.pending?.id,'KMR-2-039');
+ assert.equal(state.players[1].front.find(c=>c?.uid===foe.uid).ready,false);
+ assert.equal(state.players[1].front.find(c=>c?.uid===foe.uid).attackDamageGranted,undefined);
+ assertUniversalMatch(packs,state);
+
+ const paid=board();
+ const entering=take(paid,0,'KMR-2-048');
+ entering.kmr2EnteredBy={id:'KMR-2-059',name:'メモリチェンジ',turn:paid.turn};
+ paid.players[0].hand.push(entering);
+ const play=legalUniversalActions(packs,paid).find(a=>a.type==='play'&&a.uid===entering.uid&&a.line==='front');
+ assert.ok(play);
+ state=dispatchUniversalAction(packs,paid,play);
+ assert.equal(state.pending?.id,'KMR-2-048');
+ assert.equal(state.pending.actions.some(a=>a.key==='pay'),true);
+ state=click(state,a=>a.key==='pay');
+ assert.equal(state.players[0].front.find(c=>c?.uid===entering.uid).kmr2BlockActive?.turn,state.turn);
+ assertUniversalMatch(packs,state);
+
+ const granted=board();
+ const w=put(granted,0,'KMR-2-048','front',0,true);
+ w.kmr2BlockActive={turn:granted.turn,stamp:w.fieldEntryStamp};
+ const wWall=put(granted,1,'KMR-1-010','front',0,true);
+ state=strike(granted,w.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:wWall.uid});
+ const stood=state.players[0].front.find(c=>c?.uid===w.uid);
+ assert.ok(stood);
+ assert.equal(stood.ready,true);
+ assert.equal(state.pending?.id==='KMR-2-048',false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===wWall.uid).length,1);
+ assertUniversalMatch(packs,state);
+
+ const ungifted=board();
+ const plainW=put(ungifted,0,'KMR-2-048','front',0,true);
+ const plainWall=put(ungifted,1,'KMR-1-010','front',0,true);
+ state=strike(ungifted,plainW.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:plainWall.uid});
+ assert.equal(state.players[0].front.find(c=>c?.uid===plainW.uid).ready,false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===plainWall.uid).length,1);
+ assert.notEqual(state.pending?.id,'KMR-2-048');
+ assertUniversalMatch(packs,state);
+
+ const openW=board();
+ const standing=put(openW,0,'KMR-2-048','front',0,true);
+ standing.kmr2BlockActive={turn:openW.turn,stamp:standing.fieldEntryStamp};
+ put(openW,1,'KMR-1-010','front',0,true);
+ state=strike(openW,standing.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+ assert.notEqual(state.pending?.id,'KMR-2-048');
+ assert.equal(state.players[0].front.find(c=>c?.uid===standing.uid).ready,false);
+ assertUniversalMatch(packs,state);
+
+ const foeW=board();
+ const foeAttack=put(foeW,0,'KMR-2-028','front',0,true);
+ const foeRider=put(foeW,1,'KMR-2-048','front',1,false);
+ foeRider.kmr2BlockActive={turn:foeW.turn,stamp:foeRider.fieldEntryStamp};
+ const foeCover=put(foeW,1,'KMR-1-010','front',0,true);
+ state=strike(foeW,foeAttack.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:foeCover.uid});
+ assert.equal(state.players[1].front.find(c=>c?.uid===foeRider.uid).ready,false);
+ assert.notEqual(state.pending?.id,'KMR-2-048');
+ assertUniversalMatch(packs,state);
+
+ const bareMeteor=board();
+ const bare=put(bareMeteor,0,'KMR-2-039','front',0,true);
+ put(bareMeteor,0,'KMR-2-028','energy',0,true);
+ put(bareMeteor,0,'KMR-2-029','energy',1,true);
+ put(bareMeteor,0,'KMR-2-032','energy',2,true);
+ const bareWall=put(bareMeteor,1,'KMR-1-010','front',0,true);
+ state=strike(bareMeteor,bare.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:bareWall.uid});
+ assert.notEqual(state.pending?.id,'KMR-2-039');
+ assert.equal(state.players[0].front.find(c=>c?.uid===bare.uid).ready,false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===bareWall.uid).length,1);
+ assertUniversalMatch(packs,state);
+
+ const heat=board();
+ const metal=put(heat,0,'KMR-2-054','front',0,true);
+ const heatWall=put(heat,1,'KMR-1-010','front',0,true);
+ const seen=take(heat,0,'KMR-2-020');
+ heat.players[0].deck.unshift(seen);
+ state=strike(heat,metal.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+ assert.notEqual(state.pending?.id,'KMR-2-054');
+ assert.equal(state.players[0].deck[0]?.uid,seen.uid);
+ assertUniversalMatch(packs,state);
+ const heatFoe=board();
+ const heatAttack=put(heatFoe,0,'KMR-2-028','front',0,true);
+ const heatDefender=put(heatFoe,1,'KMR-2-054','front',1,false);
+ const heatCover=put(heatFoe,1,'KMR-1-010','front',0,true);
+ const hidden=take(heatFoe,1,'KMR-2-020');
+ heatFoe.players[1].deck.unshift(hidden);
+ state=strike(heatFoe,heatAttack.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:heatCover.uid});
+ assert.notEqual(state.pending?.id,'KMR-2-054');
+ assert.equal(state.players[1].deck[0]?.uid,hidden.uid);
+ assert.equal(state.players[1].front.find(c=>c?.uid===heatDefender.uid).ready,false);
+ assertUniversalMatch(packs,state);
+
+ const wing=board();
+ const deno=put(wing,0,'KMR-2-079','front',0,true);
+ buryFaceUp(wing,0,deno);
+ put(wing,0,'KMR-1-089','energy',0,true);
+ put(wing,0,'KMR-1-090','energy',1,true);
+ const wingWall=put(wing,1,'KMR-1-010','front',0,true);
+ state=strike(wing,deno.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:wingWall.uid});
+ assert.equal(state.players[0].front.find(c=>c?.uid===deno.uid).ready,true);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===wingWall.uid).length,1);
+ assert.equal(state.pending?.id==='KMR-2-079',false);
+ assertUniversalMatch(packs,state);
+
+ const lone=board();
+ const solo=put(lone,0,'KMR-2-079','front',0,true);
+ buryFaceUp(lone,0,solo);
+ const soloWall=put(lone,1,'KMR-1-010','front',0,true);
+ state=strike(lone,solo.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:soloWall.uid});
+ assert.equal(state.players[0].front.find(c=>c?.uid===solo.uid).ready,false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===soloWall.uid).length,1);
+ assertUniversalMatch(packs,state);
+
+ const wingOpen=board();
+ const flying=put(wingOpen,0,'KMR-2-079','front',0,true);
+ buryFaceUp(wingOpen,0,flying);
+ put(wingOpen,0,'KMR-1-089','energy',0,true);
+ put(wingOpen,0,'KMR-1-090','energy',1,true);
+ put(wingOpen,1,'KMR-1-010','front',0,true);
+ state=strike(wingOpen,flying.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+ assert.notEqual(state.pending?.id,'KMR-2-079');
+ assert.equal(state.players[0].front.find(c=>c?.uid===flying.uid).ready,false);
+ assertUniversalMatch(packs,state);
+
+ const plainWing=board();
+ const unraided=put(plainWing,0,'KMR-2-079','front',0,true);
+ put(plainWing,0,'KMR-1-089','energy',0,true);
+ put(plainWing,0,'KMR-1-090','energy',1,true);
+ const unraidedWall=put(plainWing,1,'KMR-1-010','front',0,true);
+ state=strike(plainWing,unraided.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:unraidedWall.uid});
+ assert.equal(state.players[0].front.find(c=>c?.uid===unraided.uid).ready,false);
+ assert.equal(state.players[1].outside.filter(c=>c.uid===unraidedWall.uid).length,1);
+ assertUniversalMatch(packs,state);
+
+ const wingFoe=board();
+ const attacker=put(wingFoe,0,'KMR-2-028','front',0,true);
+ const resting=put(wingFoe,1,'KMR-2-079','front',1,false);
+ buryFaceUp(wingFoe,1,resting);
+ put(wingFoe,1,'KMR-1-089','energy',0,true);
+ put(wingFoe,1,'KMR-1-090','energy',1,true);
+ const restWall=put(wingFoe,1,'KMR-1-010','front',0,true);
+ state=strike(wingFoe,attacker.uid);
+ state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:restWall.uid});
+ assert.equal(state.players[1].front.find(c=>c?.uid===resting.uid).ready,false);
+ assert.notEqual(state.pending?.id,'KMR-2-079');
+ assertUniversalMatch(packs,state);
 });
