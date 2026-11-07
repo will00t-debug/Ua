@@ -189,7 +189,7 @@
    "rule": "印刷「見る」時，視窗只給控制者，不能選的卡也留在畫面上。印刷「公開し手札」只公開實際加入手牌的卡。選 0 張、或視窗裡沒有可選的卡時，對手看不到那些卡。印刷「公開する」整批時，選擇前就公開整窗。",
    "where": "dist/universal-v2/aot2-runtime.mjs beginLook 的 revealWindow 才寫整窗，reveal 只在 finishLook 公開選中的卡。AOT-2-030 與 KJN-1-056 仍在選擇前公開整窗。dist/universal-v2/kjn-runtime.mjs KJN-1-013 改為 revealTaken，拿進手牌時才公開。公開紀錄、對局紀錄與線上座位都讀 publicReveals 與 publicCardResults，不在畫面上另外隱藏。",
    "affects": "AOT-2-016、AOT-2-032 的始祖尤米爾查看、AOT-2-036，以及 KJN-1-013。AOT-2-024 與 AOT-2-047 本來就沒有公開。AOT-2-030 與 KJN-1-056 維持整窗公開。其他作品的 beginLook 本來就沒有在選擇前公開整窗。",
-   "evidence": "tests/v2-aot2-001-025.test.mjs。016 選前、選 0 張、三張都是地鳴時，對手公開畫面沒有那些 UID；選中奇優宓後只有那張。032 與 036 同樣只公開選中的卡，順序與 JSON 往返後雙方畫面一致。030 選擇前兩張都在公開紀錄。tests/v2-kjn-set1.test.mjs 的 013。"
+   "evidence": "tests/v2-aot2-001-025.test.mjs。016 選前、選 0 張、三張都是地鳴時，對手公開畫面沒有那些 UID；選中奇優宓後只有那張。032 與 036 同樣只公開選中的卡，順序與 JSON 往返後雙方畫面一致。030 選擇前兩張都在公開紀錄。tests/v2-kjn-set1.test.mjs 的 013。2026-11-07 線上房間 CEJ4QJ7Q 與 7PVXTNJL：兩個瀏覽器席位。選擇前對手的 inspection、publicReveals 與對局紀錄都是空的。選中キヨミ後只有 AOT-2-004。選完成選擇後，對手仍沒有視窗 UID。"
   }
  ],
  "reviews": [
@@ -10886,7 +10886,7 @@
      "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-016 。3枚を見て、地鳴らし以外のキャラを1枚まで公開して手札。残りは任意順で下。加えたら手札を1枚場外。",
      "implementation": "aot2-runtime.mjs beginLook。見る 的視窗不寫 publicReveals。finishLook 只公開實際加入手牌的那張，然後先排底再棄牌。地鳴らし角色留在視窗但不能選。",
      "discrepancy": "",
-     "evidence": "tests/v2-aot2-001-025.test.mjs。選擇前控制者看得到三張，包含不能選的地鳴艾連；對手 privateChoices 是 null，公開畫面也沒有這三張。選 0 張或三張都是地鳴時，牌依序放回牌庫底，仍然不公開，手牌也不棄。選中奇優宓後，公開紀錄、publicCardResults 與雙方公開畫面只有那張；沒選的兩張仍不在對手畫面。JSON 往返後相同。順序先於棄牌。棄牌後奇優宓在手牌，支付的手牌在場外。assertUniversalMatch。",
+     "evidence": "tests/v2-aot2-001-025.test.mjs。選擇前控制者看得到三張，包含不能選的地鳴艾連；對手 privateChoices 是 null，公開畫面也沒有這三張。選 0 張或三張都是地鳴時，牌依序放回牌庫底，仍然不公開，手牌也不棄。選中奇優宓後，公開紀錄、publicCardResults 與雙方公開畫面只有那張；沒選的兩張仍不在對手畫面。JSON 往返後相同。順序先於棄牌。棄牌後奇優宓在手牌，支付的手牌在場外。assertUniversalMatch。2026-11-07 真實線上房間、兩個瀏覽器席位：CEJ4QJ7Q 操作者看到兩張不能選的エレン與一張可選的キヨミ；對手選擇前看不到。點キヨミ後，對手 publicReveals 與紀錄只有 AOT-2-004，UID 只剩 0-4。7PVXTNJL 按完成選擇後，對手的公開紀錄與視窗 UID 仍是空的，操作者接著在私人視窗排三張牌庫底。畫面卡名是引擎包的日文名。起手調度後、打出前，能源、法爾科與牌庫頂三張是放到已開始的對局上，不是從洗牌一路打出。瀏覽器沒有把排底與後續棄牌點完。",
      "unresolved": ""
     }
    ]

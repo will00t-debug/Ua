@@ -295,7 +295,7 @@ dist/universal-v2/aot2-runtime.mjs beginLook 的 revealWindow 才寫整窗，rev
 
 AOT-2-016、AOT-2-032 的始祖尤米爾查看、AOT-2-036，以及 KJN-1-013。AOT-2-024 與 AOT-2-047 本來就沒有公開。AOT-2-030 與 KJN-1-056 維持整窗公開。其他作品的 beginLook 本來就沒有在選擇前公開整窗。
 
-tests/v2-aot2-001-025.test.mjs。016 選前、選 0 張、三張都是地鳴時，對手公開畫面沒有那些 UID；選中奇優宓後只有那張。032 與 036 同樣只公開選中的卡，順序與 JSON 往返後雙方畫面一致。030 選擇前兩張都在公開紀錄。tests/v2-kjn-set1.test.mjs 的 013。
+tests/v2-aot2-001-025.test.mjs。016 選前、選 0 張、三張都是地鳴時，對手公開畫面沒有那些 UID；選中奇優宓後只有那張。032 與 036 同樣只公開選中的卡，順序與 JSON 往返後雙方畫面一致。030 選擇前兩張都在公開紀錄。tests/v2-kjn-set1.test.mjs 的 013。2026-11-07 線上房間 CEJ4QJ7Q 與 7PVXTNJL：兩個瀏覽器席位。選擇前對手的 inspection、publicReveals 與對局紀錄都是空的。選中キヨミ後只有 AOT-2-004。選完成選擇後，對手仍沒有視窗 UID。
 
 ## 已寫進台帳的條款
 
