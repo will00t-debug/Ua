@@ -950,6 +950,44 @@ test('raid Mikasa must choose a printed mode and ignores the standing bonus',()=
  finish(declined);
 });
 
+test('Q1565 judges the 5000 line on current BP and ignores the standing bonus',()=>{
+ const counts=countsFor(['AOT-2-066','AOT-2-067','AOT-2-069','AOT-2-063','AOT-1-069','AOT-1-061']);
+ let raised=toPhase(fresh(counts,15651),'main');
+ fuel(raised,['AOT-1-069','AOT-1-069','AOT-1-069']);
+ const base=put(raised,0,'AOT-2-066','front',0,true);
+ put(raised,0,'AOT-2-069','front',1,true);
+ const conny=put(raised,1,'AOT-2-063','front',0,true);
+ conny.buffs=[{bp:3000,untilTurn:raised.turn}];
+ assert.equal(universalBp(packs,raised,conny),5000);
+ readyAp(raised);
+ const raider=toHand(raised,0,'AOT-2-067');
+ toHand(raised,0,'AOT-2-063');
+ toHand(raised,0,'AOT-2-063');
+ raised=raidOnto(raised,raider.uid,base.uid);
+ raised=pick(raised,a=>a.mode==='battle');
+ raised=pick(raised,a=>a.uid===conny.uid);
+ assert.equal(raised.pending.step,'discard');
+ finish(raised);
+
+ let lowered=toPhase(fresh(counts,15652),'main');
+ fuel(lowered,['AOT-1-069','AOT-1-069','AOT-1-069']);
+ const seat=put(lowered,0,'AOT-2-066','front',0,true);
+ put(lowered,0,'AOT-2-069','front',1,true);
+ const armored=put(lowered,1,'AOT-1-061','front',0,true);
+ armored.buffs=[{bp:-1000,untilTurn:lowered.turn}];
+ assert.equal(universalBp(packs,lowered,armored),4000);
+ readyAp(lowered);
+ const copy=toHand(lowered,0,'AOT-2-067');
+ toHand(lowered,0,'AOT-2-063');
+ toHand(lowered,0,'AOT-2-063');
+ lowered=raidOnto(lowered,copy.uid,seat.uid);
+ lowered=pick(lowered,a=>a.mode==='battle');
+ lowered=pick(lowered,a=>a.uid===armored.uid);
+ assert.equal(lowered.pending,null);
+ assert.equal(lowered.players[1].front.some(c=>c?.uid===armored.uid),true);
+ finish(lowered);
+});
+
 test('Bertolt cuts two red only when the Colossal Titan raids onto him',()=>{
  const counts=countsFor(['AOT-2-068','AOT-2-069','AOT-1-069','AOT-1-070','AOT-2-066','AOT-2-013','AOT-2-013']);
  let s=toPhase(fresh(counts,68),'main');
