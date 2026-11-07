@@ -6,6 +6,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {positionKey,scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
+import {keepScore} from '../dist/universal-v2/ai-v3/eval.mjs';
 
 // Decision checks spend the node budget with a clock that does not expire.
 // Deadline exhaustion is a separate controllable clock. A real 40ms check
@@ -466,4 +467,159 @@ test('strategy: a discard keeps the raid card',()=>{
  assert.equal(raid.type,best.action.type);
  if(raid.type==='raid')assert.equal(raid.uid,core.uid);
  console.log('strategy discard ok',raid.type,best.search);
+});
+
+// Life cards stay at seven. A needed copy sitting in life is swapped with
+// the deck so the count is the one the position asked for.
+function drawCard(state,player,id){
+ for(const zone of ['hand','deck']){
+  const list=state.players[player][zone];
+  const index=list.findIndex(card=>card?.cardId===id);
+  if(index>=0)return list.splice(index,1)[0];
+ }
+ const life=state.players[player].life;
+ const index=life.findIndex(card=>card?.cardId===id);
+ if(index<0)throw Error('Missing '+id);
+ const deck=state.players[player].deck;
+ const swap=deck.findIndex(card=>card&&card.cardId!==id);
+ if(swap<0)throw Error('No deck swap for '+id);
+ const card=life[index];
+ life[index]=deck[swap];
+ deck.splice(swap,1);
+ return card;
+}
+function lethalDiscard(){
+ const opened=main(bleach,counts);
+ const packs=opened.packs;
+ let state=opened.state;
+ let guard=0;
+ while(!(state.active===1&&state.phase==='main')&&state.status==='playing'&&guard++<40){
+  state=dispatchUniversalAction(packs,state,legalUniversalActions(packs,state).find(action=>action.type==='next'));
+ }
+ const actor=1;
+ const rukia=drawCard(state,actor,'BLC-1-051');
+ for(let slot=0;slot<4;slot++)place(state,actor,drawCard(state,actor,'BLC-1-042'),'energy',slot);
+ place(state,actor,rukia,'front',0);
+ while(state.players[0].life.length>1)state.players[0].deck.push(state.players[0].life.pop());
+ for(let slot=0;slot<4;slot++)if(state.players[0].front[slot]){
+  state.players[0].deck.push(state.players[0].front[slot]);
+  state.players[0].front[slot]=null;
+ }
+ for(const card of [...state.players[actor].hand])state.players[actor].deck.push(card);
+ state.players[actor].hand.length=0;
+ for(const id of ['BLC-2-052','BLC-1-053','BLC-1-045','BLC-1-043','BLC-4-059','BLC-1-038'])
+  state.players[actor].hand.push(drawCard(state,actor,id));
+ state.players[actor].apCards.forEach((card,index)=>{card.inPlay=index<2;card.ready=index<2;});
+ assert.equal(state.players[actor].life.length,7);
+ assert.equal(state.players[0].life.length,1);
+ assert.equal(state.players[actor].apCards.filter(card=>card.ready).length,2);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const play=legalUniversalActions(packs,state).find(action=>action.type==='play'&&action.line==='front'&&action.uid===state.players[actor].hand.find(card=>card.cardId==='BLC-2-052').uid);
+ assert.ok(play);
+ state=dispatchUniversalAction(packs,state,play,{actor});
+ assert.equal(state.pending?.kind,'effect-discard');
+ assert.equal(assertUniversalMatch(packs,state),true);
+ const legal=legalUniversalActions(packs,state);
+ assert.equal(legal.filter(action=>action.type==='chooseDiscard').length,6);
+ return {packs,state,actor,rukia,legal};
+}
+function playOutWin(packs,state,action,actor){
+ let cursor=dispatchUniversalAction(packs,structuredClone(state),action,{actor});
+ for(let guard=0;guard<20&&cursor.status==='playing';guard++){
+  const steps=legalUniversalActions(packs,cursor);
+  const who=cursor.pending?.player??cursor.active;
+  const step=steps.find(item=>item.type==='attack')||steps.find(item=>item.type==='next')||
+   steps.find(item=>item.type==='chooseDiscard')||steps[0];
+  cursor=dispatchUniversalAction(packs,cursor,step,{actor:who});
+ }
+ return cursor;
+}
+function askDiscard(packs,state,extra={}){
+ const actor=state.pending.player;
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,ms:1e9,now:()=>0,...extra,meter
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=(extra.nodes||48));
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ return {action,trace,meter,actor};
+}
+
+test('a searched discard win is kept when other discards were not searched',()=>{
+ const {packs,state,actor,rukia,legal}=lethalDiscard();
+ const hand=state.players[actor].hand;
+ const preview=structuredClone(state);
+ let walked=dispatchUniversalAction(packs,preview,legal.find(action=>action.type==='chooseDiscard'),{actor});
+ for(let guard=0;walked.phase!=='attack'&&walked.status==='playing'&&guard<8;guard++){
+  const steps=legalUniversalActions(packs,walked);
+  walked=dispatchUniversalAction(packs,walked,steps.find(action=>action.type==='next'),{actor:walked.pending?.player??walked.active});
+ }
+ assert.equal(legalUniversalActions(packs,walked).some(action=>action.type==='attack'&&action.uid===rukia.uid),true);
+ const full=askDiscard(packs,state);
+ const rows=(full.trace.compared||[]).filter(row=>row.executed!==false&&row.action?.type==='chooseDiscard');
+ assert.equal(rows.length,4);
+ assert.ok(rows.every(row=>row.boundary==='terminal'&&row.search>=90000&&row.settled===true));
+ const chosen=rows.find(row=>row.action.uid===full.action.uid);
+ assert.ok(chosen);
+ const floor=Math.min(...rows.map(row=>keepScore(packs,state,actor,hand.find(card=>card.uid===row.action.uid))));
+ assert.equal(keepScore(packs,state,actor,hand.find(card=>card.uid===full.action.uid)),floor);
+ assert.equal(full.trace.reason,'search');
+ assert.equal(full.trace.score,chosen.search);
+ assert.equal(full.trace.settled,true);
+ assert.equal(full.trace.incomplete,false);
+ assert.deepEqual(full.trace.sequence,chosen.sequence);
+ assert.equal(full.trace.roots,4);
+ assert.equal((full.trace.unexecuted||[]).length,0);
+ assert.ok(legal.some(action=>action.type==='chooseDiscard'&&!rows.some(row=>row.action.uid===action.uid)));
+ const won=playOutWin(packs,state,full.action,actor);
+ assert.equal(won.status,'finished');
+ assert.equal(won.winner,actor);
+
+ const high=hand.find(card=>card.cardId==='BLC-1-053');
+ const low=legal.filter(action=>action.type==='chooseDiscard').sort((a,b)=>{
+  const delta=keepScore(packs,state,actor,hand.find(card=>card.uid===a.uid))-keepScore(packs,state,actor,hand.find(card=>card.uid===b.uid));
+  if(delta)return delta;
+  return JSON.stringify(a)<JSON.stringify(b)?-1:1;
+ })[0];
+ assert.ok(keepScore(packs,state,actor,high)>keepScore(packs,state,actor,hand.find(card=>card.uid===low.uid)));
+ let roots=0;
+ const cut=askDiscard(packs,state,{
+  ms:40,now:()=>roots>=1?1e9:0,
+  rootFirst:[{type:'chooseDiscard',uid:high.uid}],
+  onRootDone(){roots++;}
+ });
+ assert.equal(roots>=1,true);
+ assert.equal(cut.action.type,'chooseDiscard');
+ assert.equal(cut.action.uid,high.uid);
+ assert.notEqual(cut.action.uid,low.uid);
+ const win=(cut.trace.compared||[]).find(row=>row.executed!==false&&row.action?.uid===high.uid);
+ assert.equal(win.boundary,'terminal');
+ assert.ok(win.search>=90000);
+ assert.equal(win.settled,true);
+ assert.equal(cut.trace.score,win.search);
+ assert.deepEqual(cut.trace.sequence,win.sequence);
+ assert.equal(cut.trace.settled,true);
+ assert.equal(cut.trace.incomplete,false);
+ assert.equal(cut.trace.reason,'budget');
+ assert.equal(cut.trace.overSoft,true);
+ assert.ok((cut.trace.unexecuted||[]).some(row=>row.executed===false&&row.action?.uid===low.uid));
+ assert.ok(cut.trace.nodesUsed<48);
+ const cutWin=playOutWin(packs,state,cut.action,actor);
+ assert.equal(cutWin.status,'finished');
+ assert.equal(cutWin.winner,actor);
+
+ const short=askDiscard(packs,state,{
+  nodes:3,rootFirst:[{type:'chooseDiscard',uid:high.uid}]
+ });
+ const inflated=(short.trace.compared||[]).find(row=>row.executed!==false&&Number.isFinite(row.search)&&row.search>=90000&&row.boundary!=='terminal');
+ assert.ok(inflated);
+ assert.notEqual(short.action.uid,inflated.action.uid);
+ assert.equal(short.action.uid,low.uid);
+ assert.equal(short.trace.reason,'budget-fallback');
+ assert.equal(short.trace.settled,false);
+ assert.equal(short.trace.incomplete,true);
+ assert.notEqual(short.trace.score,inflated.search);
 });

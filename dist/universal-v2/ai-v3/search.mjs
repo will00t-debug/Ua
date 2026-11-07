@@ -582,11 +582,16 @@ export function chooseAiV3Action(pack,state,options={}){
   const mandatoryRows=scored.filter(row=>row.executed!==false&&row.action?.uid&&(
    (pendingKind==='end-hand-limit'&&row.action.type==='chooseHandLimit')||
    (pendingKind==='effect-discard'&&row.action.type==='chooseDiscard')));
-  const provenWin=scored.some(row=>row.executed!==false&&row.boundary==='terminal'&&row.search>=90000);
+  // A large pending or yielded number is not a win. Only a line this search
+  // already ran, that is still legal, and that finished as a win counts.
+  const winRows=scored.filter(row=>row.executed!==false&&row.boundary==='terminal'&&row.search>=90000&&
+   legal.some(action=>same(action,row.action)));
+  const provenWin=winRows.length>0;
   // Yielded against pending is how far the script walked, not which card is
   // worse to keep. Until every searched mandatory discard is home together,
-  // the keep-order is the choice. A line that already won stays. A finished
-  // set of lines still compares, so a higher keep card can win on evidence.
+  // and none of them has already won, the keep-order is the choice. A
+  // finished set of lines still compares, so a higher keep card can win on
+  // evidence.
   const discardOpen=mandatoryDiscardKind(pendingKind)&&!provenWin&&
    mandatoryRows.some(row=>!finishedLine(row));
   // An idle line that got home does not beat a play whose combo was cut.
@@ -607,7 +612,10 @@ export function chooseAiV3Action(pack,state,options={}){
   })():backup;
   const energySample=legal.find(action=>action.type==='move');
   const energyView=diagnose&&energySample?cachedMoveDevelopment(pack,state,actor,energySample):null;
-  if((!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
+  // Missing coverage, a spent clock, or an unfinished discard does not
+  // throw away a win this pool already paid for. The backup stays for
+  // every line that has not won.
+  if(!provenWin&&(!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
    const kept=holdSurvival(choice,preferEarlyDraw(pack,state,actor,placed,scored),scored);
    report.budgetFallback++;
@@ -638,7 +646,7 @@ export function chooseAiV3Action(pack,state,options={}){
    },started);
   }
   const observation=actorObservation(pack,state,actor);
-  const poolRows=comparable;
+  const poolRows=provenWin?winRows:comparable;
   const anchor=poolRows.reduce((best,row)=>row.search>best.search?row:best).action;
   const blended=continueStartedWave(state,poolRows,discardTie(pack,state,actor,poolRows,blendRoot(poolRows,action=>{
    const mine=learnBonus(options.prior,observation,action,actor);
@@ -662,7 +670,9 @@ export function chooseAiV3Action(pack,state,options={}){
   const keptWin=keptRow?.boundary==='terminal'&&keptRow.search>=90000;
   const clockCut=discardWindow&&now()>deadline&&!keptWin;
   const nodeCut=mandatoryDiscardKind(pendingKind)&&nodesSpent&&!finishedLine(keptRow)&&!keptWin;
-  if(clockCut||nodeCut){
+  // The same win stays through a later cutoff. Keep-order only runs when
+  // no executed line has finished as a win.
+  if(!provenWin&&(clockCut||nodeCut)){
    const rankedDiscard=reliableChoice(pack,state,actor,legal,null,ordered);
    const backed=legal.find(item=>same(item,rankedDiscard));
    const backedRow=tracedRow(scored,backed);
