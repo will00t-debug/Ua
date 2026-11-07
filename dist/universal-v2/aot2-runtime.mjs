@@ -270,6 +270,16 @@ function pieckHand(pack,s,spec){
  hold(s,{...spec,step:'pick',data:{to:'hand',from:'outside'}},
   [act('done'),...cards.map(c=>act('take',{uid:c.uid,zone:'outside'}))]);
 }
+function pieckOutside(pack,s,owner){
+ return plOf(s,owner).outside.some(c=>def(pack,c).type==='character'&&contains(pack,c,PIECK,s));
+}
+function offerPieckFoe(pack,s,spec,ownRetired){
+ const owner=spec.player;
+ const printed=pieckOutside(pack,s,owner)?5000:3000;
+ const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,printed));
+ if(!retireOffer(s,spec,cards,true,{then:ownRetired?'061':null})&&ownRetired)
+  pieckHand(pack,s,spec);
+}
 function lifeThenRetire(pack,s,spec,printed){
  const life=plOf(s,spec.player).life;
  if(!life.length)return;
@@ -543,6 +553,7 @@ export function runAot2Job(pack,s,job){
   if(lineOf(s,owner,c)==='energy')A.active(s,owner,c);
   return;
  }
+ if(id==='AOT-2-053'&&job.slot==='pure'){pureEnter(pack,s,spec);return;}
  if(id==='AOT-2-053'){
   const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,3000));
   if(!retireOffer(s,spec,cards,true,{then:'053'}))return;
@@ -576,10 +587,15 @@ export function runAot2Job(pack,s,job){
   if(!c||A.bp(pack,s,c)<6000)return;
   A.draw(pack,s,owner,1,job.sourceUid);impact(s,c);return;
  }
+ if(id==='AOT-2-061'&&job.slot==='afterOwn'){
+  offerPieckFoe(pack,s,spec,true);return;
+ }
+ if(id==='AOT-2-061'&&job.slot==='afterFoe'){
+  pieckHand(pack,s,spec);return;
+ }
  if(id==='AOT-2-061'){
   const own=fieldCards(s,owner).filter(c=>def(pack,c).type==='character'&&contains(pack,c,PIECK,s));
-  const raised=plOf(s,owner).outside.some(c=>def(pack,c).type==='character'&&contains(pack,c,PIECK,s));
-  hold(s,{...spec,step:'ownRetire',data:{raised}},[
+  hold(s,{...spec,step:'ownRetire'},[
    act('done'),...own.map(c=>act('retireOwn',{uid:c.uid,zone:'field'}))]);
   return;
  }
@@ -613,10 +629,10 @@ export function runAot2Job(pack,s,job){
    return d.energy<=3&&!hasRaid(d)&&trait(pack,c,CORPS);
   });
   const foes=plOf(s,1-owner).front.filter(Boolean);
-  hold(s,{...spec,step:'mode'},[
-   ...(outs.length?[act('hand')]:[]),
-   ...(foes.length?[act('battle')]:[]),
-   act('done')]);
+  const modes=[];
+  if(outs.length)modes.push(act('hand'));
+  if(foes.length)modes.push(act('battle'));
+  if(modes.length)hold(s,{...spec,step:'mode'},modes);
   return;
  }
  if(id==='AOT-2-069'){
@@ -792,7 +808,10 @@ function discardSome(pack,s,q,a){
  const hit=takeAction(q,a);
  const data=q.data||{};
  data.gone??=[];
- if(hit.mode==='done')throw Error('Discard is required');
+ if(hit.mode==='done'){
+  if(data.optional)return;
+  throw Error('Discard is required');
+ }
  moveUid(pack,s,q.player,'hand',hit.uid,'outside',q.sourceUid);
  data.gone.push(hit.uid);
  data.need-=1;
@@ -884,7 +903,8 @@ export function resolveAot2Pending(pack,s,a){
  if(q.step==='retire'){
   s.pending=null;
   if(hit.mode==='done'){
-   if(q.data?.then==='032b')rumbleFollow(pack,s,spec);
+   if(q.data?.then==='061')pieckHand(pack,s,spec);
+   else if(q.data?.then==='032b')rumbleFollow(pack,s,spec);
    go(pack,s);return;
   }
   const own=hit.zone==='field';
@@ -901,9 +921,17 @@ export function resolveAot2Pending(pack,s,a){
     owner,sourceUid:q.sourceUid}],{by:'opponent',always:true});
    go(pack,s);return;
   }
+  if(q.data?.then==='061'){
+   retireThen(s,who,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-061',slot:'afterFoe',
+    owner,sourceUid:q.sourceUid}],{always:true});
+   go(pack,s);return;
+  }
+  if(q.data?.then==='053'){
+   retireThen(s,who,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-053',slot:'pure',
+    owner,sourceUid:q.sourceUid}]);
+   go(pack,s);return;
+  }
   const paused=A.retire(pack,s,who,loc.line,loc.slot);
-  if(paused===true)return;
-  if(q.data?.then==='053')pureEnter(pack,s,spec);
   go(pack,s);return;
  }
  if(q.step==='mode'){
@@ -1033,16 +1061,16 @@ export function resolveAot2Pending(pack,s,a){
  }
  if(q.step==='ownRetire'){
   s.pending=null;
-  let retired=false;
   if(hit.mode==='retireOwn'){
    const loc=A.location(s,owner,hit.uid);
-   if(loc){A.retire(pack,s,owner,loc.line,loc.slot);retired=true;}
+   if(loc){
+    retireThen(s,owner,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-061',slot:'afterOwn',
+     owner,sourceUid:q.sourceUid}]);
+    go(pack,s);return;
+   }
   }
-  const printed=q.data?.raised?5000:3000;
-  const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,printed));
-  hold(s,{...spec,step:'retire',data:{then:retired?'061':null}},
-   [act('done'),...cards.map(c=>act('retire',{uid:c.uid,zone:'opp'}))]);
-  return;
+  offerPieckFoe(pack,s,spec,false);
+  go(pack,s);return;
  }
  if(q.step==='restFront'){
   s.pending=null;
@@ -1083,8 +1111,8 @@ export function resolveAot2Pending(pack,s,a){
   const foe=plOf(s,1-owner).front.find(c=>c?.uid===hit.uid);
   if(!foe)throw Error('Mikasa target left');
   if(A.bp(pack,s,foe)>=5000&&plOf(s,owner).hand.length>=2)
-   hold(s,{...spec,step:'discard',data:{need:2,after:'mikasaRetire',target:foe.uid}},
-    plOf(s,owner).hand.map(c=>act('discard',{uid:c.uid,zone:'hand'})));
+   hold(s,{...spec,step:'discard',data:{need:2,after:'mikasaRetire',target:foe.uid,optional:true}},
+    [act('done'),...plOf(s,owner).hand.map(c=>act('discard',{uid:c.uid,zone:'hand'}))]);
   go(pack,s);return;
  }
  if(q.step==='levi'){

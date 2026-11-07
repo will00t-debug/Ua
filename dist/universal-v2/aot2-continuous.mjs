@@ -44,6 +44,10 @@ function ymirAnywhere(pack,s,owner){
  const piles=[...fieldOf(s,owner),...s.players[owner].outside];
  return piles.some(c=>cardHasName(sheet(pack,c),YMIR,originalEffectsDisabled(s,c)));
 }
+function faceUpRaided(pack,c){
+ const d=sheet(pack,c);
+ return !!d?.raidName&&(c.stack||[]).some(x=>x&&x.faceDown!==true);
+}
 export function aot2StandingBp(pack,s,owner){
  let n=0;
  for(const c of s.players[owner].front){
@@ -108,7 +112,7 @@ export function aot2Impact(pack,s,c){
  if(!d||originalEffectsDisabled(s,c))return 0;
  const owner=Number(String(c.uid).split('-')[0]);
  if(d.id==='AOT-2-008'&&s.players[1-owner].life.length===1)return 1;
- if(d.id==='AOT-2-056'&&s.players[owner].front.some(x=>x?.uid===c.uid)){
+ if(d.id==='AOT-2-056'&&faceUpRaided(pack,c)&&s.players[owner].front.some(x=>x?.uid===c.uid)){
   const entered=(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.uid===c.uid&&e.owner===owner&&
    ['front','energy'].includes(e.to)&&!['front','energy'].includes(e.from));
   if(entered)return 1;
