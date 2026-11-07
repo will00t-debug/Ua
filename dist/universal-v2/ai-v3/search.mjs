@@ -208,6 +208,16 @@ function holdSurvival(choice,replacement,rows){
  if(finishedSurvival(mine)&&immediateLoss(alt))return choice;
  return replacement;
 }
+// One gate for every preference and backup. A confirmed win is a line this
+// search executed, that is still legal, and that ended as a win. Pending,
+// yielded, and a high score that did not finish are not in the set. When
+// the set is not empty, the action that leaves this function is one of it.
+function constrainConfirmedWin(kept,winRows,legal){
+ if(!winRows?.length)return kept;
+ if(winRows.some(row=>same(row.action,kept)))return kept;
+ const winner=winRows.reduce((best,row)=>row.search>best.search?row:best);
+ return legal.find(action=>same(action,winner.action))||kept;
+}
 // Equal discard scores have not chosen a card. The backup is the same
 // keep-order used when the search does not finish, and it does not dispatch.
 function discardTie(pack,state,actor,rows,blended){
@@ -617,7 +627,7 @@ export function chooseAiV3Action(pack,state,options={}){
   // every line that has not won.
   if(!provenWin&&(!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
-   const kept=holdSurvival(choice,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
+   const kept=constrainConfirmedWin(holdSurvival(choice,preferConfirmedChoices(pack,state,actor,placed,scored),scored),winRows,legal);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -680,6 +690,10 @@ export function chooseAiV3Action(pack,state,options={}){
    const keptLoss=keptRow?.boundary==='terminal'&&keptRow.search<=-90000;
    if(backed&&!(backedLoss&&!keptLoss)){kept=backed;keptRow=backedRow;}
   }
+  // Preferences and the discard backup have all run. A confirmed win is
+  // still the action that goes back, whichever of them tried to leave it.
+  kept=constrainConfirmedWin(kept,winRows,legal);
+  keptRow=tracedRow(scored,kept);
   if(keptRow?.settled)report.settledChoices++;
   settle();
   return finish(kept,now()>deadline?'budget':'search',{

@@ -923,9 +923,48 @@ function preferLastSwitch(pack,state,actor,choice,rows){
  const play=legal.find(action=>lastApLineSwitch(pack,state,actor,action));
  return guarded(choice,rows,play);
 }
-// Resting the ready front to lift a body that enters rested does not make a
-// blocker when the opponent has nothing on the front. The on-play line move
-// is a different choice and stays.
+// The printed move keeps the body's ready state. Ask the engine whether that
+// body can attack after the move, and whether the fronts it would rest can
+// attack now. A standing body that can attack stays. Resting two real
+// attackers to move a body that still cannot attack does not, unless passing
+// is already a loss.
+function frontAttackersNow(pack,state,actor){
+ try{
+  let cursor=structuredClone(state);
+  if(cursor.pending)return [];
+  if(cursor.phase==='main'){
+   const pass=legalUniversalActions(pack,cursor).find(action=>action?.type==='next');
+   if(!pass)return [];
+   cursor=dispatchUniversalAction(pack,cursor,pass,{actor});
+  }
+  if(cursor.phase!=='attack'||cursor.pending||cursor.active!==actor)return [];
+  const attacks=new Set(legalUniversalActions(pack,cursor).filter(action=>action?.type==='attack').map(action=>action.uid));
+  return (state.players?.[actor]?.front||[]).filter(card=>card&&attacks.has(card.uid));
+ }catch{return [];}
+}
+function attacksAfterShift(pack,state,actor,choice){
+ try{
+  let cursor=structuredClone(state);
+  const seat=()=>cursor.pending?.player??cursor.active;
+  cursor=dispatchUniversalAction(pack,cursor,choice,{actor:seat()});
+  for(let guard=0;guard<8&&cursor.pending&&cursor.status==='playing';guard++){
+   const steps=legalUniversalActions(pack,cursor);
+   const step=steps.find(action=>action?.type==='chooseRestTwo')||steps.find(action=>action?.type==='chooseSelfFront');
+   if(!step)return false;
+   cursor=dispatchUniversalAction(pack,cursor,step,{actor:seat()});
+  }
+  if(cursor.pending||cursor.status!=='playing')return false;
+  if(cursor.phase==='main'){
+   const pass=legalUniversalActions(pack,cursor).find(action=>action?.type==='next');
+   if(!pass)return false;
+   cursor=dispatchUniversalAction(pack,cursor,pass,{actor:seat()});
+  }
+  if(cursor.phase!=='attack'||cursor.pending||cursor.active!==actor)return false;
+  const moved=[...(cursor.players?.[actor]?.front||[]),...(cursor.players?.[actor]?.energy||[])].find(card=>card?.uid===choice.uid);
+  if(!moved?.ready)return false;
+  return legalUniversalActions(pack,cursor).some(action=>action?.type==='attack'&&action.uid===choice.uid);
+ }catch{return false;}
+}
 function preferKeepReadyFront(pack,state,actor,choice,rows){
  if(choice?.type!=='activate'||state?.pending)return choice;
  const foes=(state.players?.[1-actor]?.front||[]).filter(Boolean);
@@ -934,8 +973,8 @@ function preferKeepReadyFront(pack,state,actor,choice,rows){
  const body=[...(mine?.energy||[]),...(mine?.front||[])].find(card=>card?.uid===choice.uid);
  const printed=body&&packOf(pack,actor).cards[body.cardId];
  if(printed?.mainAbility?.op!=='restTwoActiveFrontMoveSelf')return choice;
- const readyFront=(mine?.front||[]).filter(card=>card?.ready).length;
- if(readyFront<2)return choice;
+ if(attacksAfterShift(pack,state,actor,choice))return choice;
+ if(frontAttackersNow(pack,state,actor).length<2)return choice;
  let pass=null;
  try{pass=legalUniversalActions(pack,state).find(action=>action?.type==='next')||null;}
  catch{pass=null;}

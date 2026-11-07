@@ -10,7 +10,7 @@ import {scoreLine,rankLegal,selectCandidates} from '../dist/universal-v2/ai-v3/b
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
-import {bindProbeBudget,energyPlayNet,moveDevelopment} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,energyPlayNet,moveDevelopment,preferConfirmedChoices} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -2772,9 +2772,26 @@ function playChain(packs,state,actor,refund){
    assert.ok(entered);
    assert.equal(entered.ready,false);
    assert.equal(universalEnergyByColor(packs,cursor,actor).green,before+(catalog[entered.cardId].gen||0));
+   const standingEnergy=cursor.players[actor].energy.filter(item=>item?.ready);
+   assert.equal(standingEnergy.length,1);
+   const blocker=standingEnergy[0];
+   const restedEntrant=cursor.players[actor].energy.find(item=>item&&item.ready===false&&item.uid!==entered.uid);
+   assert.ok(restedEntrant);
+   const preview=structuredClone(cursor);
+   const previewMove=legalUniversalActions(packs,preview).find(action=>action.type==='chooseLineMove'&&action.uid===restedEntrant.uid);
+   assert.ok(previewMove);
+   let restedCursor=dispatchUniversalAction(packs,preview,previewMove,{actor});
+   if(restedCursor.pending?.kind==='effect-line-slot'){
+    const previewSlot=legalUniversalActions(packs,restedCursor).find(action=>action.type==='chooseLineSlot');
+    restedCursor=dispatchUniversalAction(packs,restedCursor,previewSlot,{actor});
+   }
+   assert.equal(assertUniversalMatch(packs,restedCursor),true);
+   const restedFront=restedCursor.players[actor].front.find(item=>item?.uid===restedEntrant.uid);
+   assert.ok(restedFront);
+   assert.equal(restedFront.ready,false);
    const moved=measured(packs,cursor);
    assert.equal(moved.action.type,'chooseLineMove');
-   if(moved.action.uid)assert.notEqual(moved.action.uid,entered.uid);
+   assert.equal(moved.action.uid,blocker.uid);
    cursor=dispatchUniversalAction(packs,cursor,moved.action,{actor});
    if(cursor.pending?.kind==='effect-line-slot'){
     const slot=measured(packs,cursor);
@@ -2782,10 +2799,15 @@ function playChain(packs,state,actor,refund){
     cursor=dispatchUniversalAction(packs,cursor,slot.action,{actor});
    }
    assert.equal(assertUniversalMatch(packs,cursor),true);
+   const shifted=cursor.players[actor].front.find(item=>item?.uid===blocker.uid);
+   assert.ok(shifted);
+   assert.equal(shifted.ready,true);
+   assert.equal(cursor.players[actor].energy.some(item=>item?.uid===blocker.uid),false);
    const body=[...cursor.players[actor].energy,...cursor.players[actor].front].find(item=>item?.uid===entered.uid);
    assert.equal(body.ready,false);
    assert.equal(cursor.players[actor].energy.some(item=>item?.uid===entered.uid),true);
    assert.equal(cursor.players[actor].front.some(item=>item?.uid===standing.uid&&item.ready),true);
+   for(const card of cursor.players[actor].energy)if(card&&card.uid!==blocker.uid)assert.equal(card.ready,false);
    const passed=measured(packs,cursor);
    assert.equal(passed.action.type,'next');
    return {cursor,spent,keys,refundPlayed:false};
@@ -2816,6 +2838,185 @@ function playChain(packs,state,actor,refund){
  }
  throw Error('chain did not resolve '+keys.join(' > '));
 }
+// Constructed boundary. The attack ban is a fixture from the continuous-state
+// grant, expiring at the granter's next START. It is not a printed effect.
+function openShift(actor,{rested=false,ban=false}={}){
+ const local=deck({'BLC-4-060':2,'BLC-4-070':2,'BLC-1-083':4,'BLC-1-037':2});
+ const packs=[pack,pack];
+ let state=newUniversalMatch(packs,{decks:[local,local],seed:11,first:0});
+ for(let guard=0;guard<80&&state.status==='playing';guard++){
+  if(state.active===actor&&state.phase==='main'&&!state.pending&&state.players[actor].ownTurns>=2)break;
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw')||legal[0];
+  state=dispatchUniversalAction(packs,state,action);
+ }
+ assert.equal(state.active,actor);
+ assert.equal(state.phase,'main');
+ assert.equal(state.pending,null);
+ const foe=1-actor;
+ for(const seat of [actor,foe])for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
+  const card=state.players[seat][line][slot];
+  if(!card)continue;
+  card.ready=false;
+  card.fieldEntryStamp=null;
+  state.players[seat].deck.push(card);
+  state.players[seat][line][slot]=null;
+ }
+ const aizen=take(state,actor,'BLC-4-060');
+ const fronts=[take(state,actor,'BLC-4-070'),take(state,actor,'BLC-1-083')];
+ place(state,actor,aizen,'energy',0);
+ aizen.ready=!rested;
+ place(state,actor,fronts[0],'front',0);
+ place(state,actor,fronts[1],'front',1);
+ if(ban){
+  const until={player:actor,phase:'start',edge:'start'};
+  for(const body of fronts)grantContinuousState(state,{
+   kind:'cannotAttack',controller:actor,sourceUid:aizen.uid,targetUid:body.uid,until,sourceLinked:false
+  });
+ }
+ setLife(state,actor,5);
+ setLife(state,foe,1);
+ const quiet=take(state,foe,'BLC-1-037');
+ state.players[foe].deck.push(state.players[foe].life[0]);
+ state.players[foe].life[0]=quiet;
+ assert.equal(pack.cards[quiet.cardId].trigger,null);
+ for(const card of state.players[actor].apCards)card.ready=false;
+ clearHand(state,actor);
+ clearHand(state,foe);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ assert.equal(state.players[actor].apCards.filter(card=>card.ready).length,0);
+ assert.equal(state.players[foe].front.some(Boolean),false);
+ return {packs,state,actor,aizen,fronts};
+}
+function askShift(packs,state){
+ const actor=state.active;
+ const meter={dispatches:0};
+ resetAiV3Report();
+ const action=chooseAiV3Action(packs,state,{
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter
+ });
+ const trace=lastAiV3Trace();
+ assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
+ assert.equal(meter.dispatches,trace.nodesUsed);
+ assert.ok(trace.nodesUsed<=48);
+ const row=(trace.compared||[]).find(item=>item.executed!==false&&JSON.stringify(item.action)===JSON.stringify(action));
+ assert.ok(row);
+ assert.equal(trace.score,row.search);
+ assert.equal(trace.settled,!!row.settled);
+ assert.equal(trace.sequence[0].type,action.type);
+ return {action,trace,meter,actor};
+}
+function followLine(packs,state,sequence){
+ let cursor=state;
+ const steps=sequence||[];
+ for(const step of steps){
+  if(cursor.status!=='playing')break;
+  const who=cursor.pending?.player??cursor.active;
+  const legal=legalUniversalActions(packs,cursor);
+  const action=legal.find(item=>JSON.stringify(item)===JSON.stringify(step))||
+   legal.find(item=>item.type===step.type&&(item.uid||null)===(step.uid??null)&&(item.mode||null)===(step.mode??null)&&(item.slot??null)===(step.slot??null));
+  if(!action)break;
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor:who});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ for(let guard=0;guard<12&&cursor.status==='playing';guard++){
+  const who=cursor.pending?.player??cursor.active;
+  const legal=legalUniversalActions(packs,cursor);
+  const action=legal.find(item=>item.type==='chooseBlock'&&!item.uid)||
+   legal.find(item=>item.type==='attack')||legal.find(item=>item.type==='next')||legal[0];
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor:who});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ return cursor;
+}
+test('a standing shift that can attack keeps the searched win on both seats',()=>{
+ for(const actor of [0,1]){
+  const opened=openShift(actor,{ban:true});
+  const {packs,state,aizen,fronts}=opened;
+  const legal=legalUniversalActions(packs,state);
+  assert.equal(legal.some(action=>action.type==='activate'&&action.uid===aizen.uid),true);
+  assert.equal(legal.some(action=>action.type==='next'),true);
+  const asked=askShift(packs,state);
+  const rows=(asked.trace.compared||[]).filter(row=>row.executed!==false);
+  const win=rows.find(row=>row.action?.type==='activate'&&row.action.uid===aizen.uid);
+  const pass=rows.find(row=>row.action?.type==='next');
+  assert.equal(win.boundary,'terminal');
+  assert.ok(win.search>=90000);
+  assert.equal(win.settled,true);
+  assert.equal(pass.boundary==='terminal'&&pass.search<=-90000,false);
+  const wins=rows.filter(row=>row.boundary==='terminal'&&row.search>=90000);
+  assert.equal(wins.some(row=>JSON.stringify(row.action)===JSON.stringify(asked.action)),true);
+  assert.equal(asked.action.type,'activate');
+  assert.equal(asked.action.uid,aizen.uid);
+  assert.equal(asked.trace.reason,'search');
+  assert.equal(asked.trace.score,win.search);
+  assert.equal(asked.trace.settled,true);
+  assert.deepEqual(asked.trace.sequence,win.sequence);
+  for(const row of rows)if(row.boundary!=='terminal'||row.search<90000)
+   assert.notEqual(JSON.stringify(row.action),JSON.stringify(asked.action));
+  const finished=followLine(packs,state,asked.trace.sequence);
+  assert.equal(finished.status,'finished');
+  assert.equal(finished.winner,actor);
+  assert.equal(finished.endReason,'life-zero');
+  const activate=legal.find(action=>action.type==='activate'&&action.uid===aizen.uid);
+  const next=legal.find(action=>action.type==='next');
+  const held=preferConfirmedChoices(packs,state,actor,activate,[
+   {action:activate,executed:true,boundary:'yielded',search:500,settled:false},
+   {action:next,executed:true,boundary:'returned',search:400,settled:true}
+  ]);
+  assert.equal(held.type,'activate');
+  void fronts;
+ }
+});
+test('a rested shift that only taps two attackers is not taken, and a known loss is not forced',()=>{
+ for(const actor of [0,1]){
+  const {packs,state,aizen,fronts}=openShift(actor,{rested:true});
+  const asked=askShift(packs,state);
+  assert.notEqual(asked.action.type,'activate');
+  const rows=(asked.trace.compared||[]).filter(row=>row.executed!==false);
+  const shift=rows.find(row=>row.action?.type==='activate');
+  if(shift)assert.equal(shift.boundary==='terminal'&&shift.search>=90000,false);
+  for(const row of rows)if(row.boundary==='terminal'&&row.search<=-90000)
+   assert.notEqual(JSON.stringify(row.action),JSON.stringify(asked.action));
+  const wins=rows.filter(row=>row.boundary==='terminal'&&row.search>=90000);
+  if(wins.length)assert.equal(wins.some(row=>JSON.stringify(row.action)===JSON.stringify(asked.action)),true);
+  let cursor=dispatchUniversalAction(packs,state,asked.action,{actor});
+  assert.equal(cursor.phase,'attack');
+  const swings=legalUniversalActions(packs,cursor).filter(action=>action.type==='attack');
+  assert.equal(swings.some(action=>action.uid===fronts[0].uid),true);
+  assert.equal(swings.some(action=>action.uid===fronts[1].uid),true);
+  assert.equal(swings.some(action=>action.uid===aizen.uid),false);
+  const won=followLine(packs,cursor,[]);
+  assert.equal(won.status,'finished');
+  assert.equal(won.winner,actor);
+  const wasted=structuredClone(state);
+  let walked=dispatchUniversalAction(packs,wasted,legalUniversalActions(packs,wasted).find(action=>action.type==='activate'),{actor});
+  while(walked.pending&&walked.status==='playing'){
+   const steps=legalUniversalActions(packs,walked);
+   const step=steps.find(action=>action.type==='chooseRestTwo')||steps.find(action=>action.type==='chooseSelfFront');
+   walked=dispatchUniversalAction(packs,walked,step,{actor:walked.pending?.player??walked.active});
+  }
+  const pass=legalUniversalActions(packs,walked).find(action=>action.type==='next');
+  walked=dispatchUniversalAction(packs,walked,pass,{actor});
+  const moved=walked.players[actor].front.find(card=>card?.uid===aizen.uid);
+  assert.ok(moved);
+  assert.equal(moved.ready,false);
+  assert.equal(legalUniversalActions(packs,walked).some(action=>action.type==='attack'),false);
+  const activate=legalUniversalActions(packs,state).find(action=>action.type==='activate');
+  const next=legalUniversalActions(packs,state).find(action=>action.type==='next');
+  const avoided=preferConfirmedChoices(packs,state,actor,activate,[
+   {action:activate,executed:true,boundary:'returned',search:10,settled:true},
+   {action:next,executed:true,boundary:'returned',search:20,settled:true}
+  ]);
+  assert.equal(avoided.type,'next');
+  const kept=preferConfirmedChoices(packs,state,actor,activate,[
+   {action:activate,executed:true,boundary:'returned',search:10,settled:true},
+   {action:next,executed:true,boundary:'terminal',search:-100000,settled:true}
+  ]);
+  assert.equal(kept.type,'activate');
+  assert.equal(JSON.stringify(kept),JSON.stringify(activate));
+ }
+});
 test('a covered plain generator is discarded and the next turn keeps the filter chain',()=>{
  const opened=replayWhiteHandLimit(8301,0,1,29);
  const {packs}=opened;
