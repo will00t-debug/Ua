@@ -1,0 +1,685 @@
+{
+  "group": "D",
+  "baseline": "abeb47f03e19da85c28eed7d1abfdd28b88f2ba9",
+  "baseBranch": "cursor/effect-audit-bp-zero-65f8",
+  "range": "EX10BT/AOT-2-026 至 AOT-2-050。",
+  "updated": "2026-11-07",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-026 起，至 AOT-2-050。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-027.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-029.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-042.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?category=カード個別&sub_category=進撃の巨人",
+    "checked": "2026-11-07",
+    "note": "2026-11-07 對過 EX10BT 官方頁、上述卡圖與進撃の巨人個別 FAQ。026–050 沒有單卡 Q。Q1566（2025-06-20）是 AOT-2-069：指定できる BP 的範圍 +1000，只抬高「以下」的上限，不降低「以上」的下限。032、037、049 用這條。027 的【ステップ】在框外，普通登場可以步驟移動，raid-box 沒有列它。029 沒有突襲框。042 的登場時與攻擊時都在深色框內，既有 raid-box 的 onPlay、onAttack 與卡圖一致，沒有改 raid-box.mjs。030 仍在選擇前公開整窗。032、036 的查看仍是私人，只公開選中的牌。繁中頁把 034 印成 032，效果以 effectJa 為準。做到 050 不代表第二彈整彈完成。"
+  },
+  "counts": {
+    "已驗證": 24,
+    "待修正": 1,
+    "缺資料待確認": 0
+  },
+  "fixes": [
+    "AOT-2-034 的全部退場改成一張接一張。退場時的公開選擇先結算，剩下的退場與攻擊限制才接著做。手牌只在一開始全部置到場外。",
+    "AOT-2-040 必須還有另一張活動的前線角色才休息自己。沒有對象時不消耗ターン1，也不給發生能量。",
+    "AOT-2-041 先決定付不付 AP。付了之後可以選 0 張，再選最多 2 張場上角色，包含自己。"
+  ],
+  "sharedGaps": [
+    {
+      "owner": "A",
+      "cardId": "AOT-2-028",
+      "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028 。自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、このキャラは「相手のキャラの効果で〔退場せず、BPをマイナスされない〕。」と【2回ブロック】を得る。",
+      "reproduction": "雙方始祖在場時，突襲後的 AOT-2-013 退場選擇與 AOT-2-039 的 BP 減少都選不到戰鎚；拿掉一邊始祖後 039 可以選。AOT-2-037 事件可以退場。這三條是印刷句，測試已覆蓋。【2回ブロック】本身也正確：第一次阻擋後戰鎚維持活動，BP 較低的攻擊者留在場上並休息，第二次才休息。缺口在 dist/universal-v2/engine.mjs 的 choiceBlocked：只要來源是角色效果就擋下，不限於退場與 BP 減少。同檔 bp() 的 immune 旗標不含 aot2Warhammer，所以不是「選擇」的負面 BP 修正仍會減。本批沒有改 engine.mjs。"
+    }
+  ],
+  "tests": {
+    "command": "node --test tests/v2-aot2-026-050.test.mjs tests/v2-aot-set2.test.mjs tests/v2-aot2-001-025.test.mjs",
+    "result": "72 passed, 0 failed。新檔 24，set2 回歸 21，001–025 回歸 27。沒有跑整庫。"
+  },
+  "reviews": [
+    {
+      "cardId": "AOT-2-026",
+      "number": "EX10BT/AOT-2-026",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "フロントLにある場合もエナジーを発生させる",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-026 。自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、このキャラは「このキャラはフロントLにある場合もエナジーを発生させる。」を得る。",
+          "implementation": "dist/universal-v2/aot2-continuous.mjs aot2FrontEnergy。兩邊名稱都在場上才讓前線產生印刷的 1 點，休息也算。能量區本來就產生 1。拿掉一邊名稱後前線回到 0。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Jaw Titan。只有一邊時前線 0，兩邊到齊後休息仍是 1，能量區的另一張也是 1。移走吉克後前線回到 0。assertUniversalMatch。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】カードを1枚引く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-026 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。觸發卡進場外，抽 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Jaw Titan。翻開後 pending.trigger 是 draw，手牌 +1，觸發卡在場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-027",
+      "number": "EX10BT/AOT-2-027",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【ステップ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-027 。https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-027.png 。【ステップ】印在框外。",
+          "implementation": "aot2-pack.mjs step:true。raid-box 沒有列 027。普通登場在移動階段可以走到空的能量格，主要階段沒有步驟。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Beast Titan。主要階段沒有 step，移動階段有，走到空格後原格空出。",
+          "unresolved": ""
+        },
+        {
+          "match": "自分のターン中 BP+1500",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-027 。【自分のターン中】兩邊名稱都在場上時 BP+1500。",
+          "implementation": "aot2-continuous.mjs aot2Bp。只在自己回合且兩邊名稱都在時 +1500。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Beast Titan。自己回合 4000，換到對手回合 2500。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】カードを1枚引く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-027 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Beast Titan。這張自己翻開並抽 1，觸發卡進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-028",
+      "number": "EX10BT/AOT-2-028",
+      "status": "待修正",
+      "clauses": [
+        {
+          "match": "【2回ブロック】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028 。兩邊名稱都在時得到【2回ブロック】。",
+          "implementation": "engine.mjs 在阻擋時用 aot2Warhammer 當作 readyOnBlockCount 1。第一次阻擋後先轉回活動，再比 BP。BP 較高的阻擋者不把攻擊者打退場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。第一次阻擋後戰鎚活動、攻擊者休息並留在場上。第二次戰鎚休息。沒有兩邊名稱時第一次就休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "相手のキャラの効果で退場せず、BPをマイナスされない",
+          "status": "待修正",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028 。只擋對方角色效果的退場與 BP 減少。",
+          "implementation": "choiceBlocked 在來源是角色時一律擋下。bp() 的 immune 不含戰鎚，非選擇的減益仍會減。",
+          "discrepancy": "印刷句只排除退場與 BP 減少。現行選擇攔截比這句寬，BP 計算又沒有把戰鎚列入免疫。交 A，見 sharedGaps。",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。突襲 013 的退場選不到，039 在始祖都在時選不到、拿掉一邊後可以選。",
+          "unresolved": "不是退場、也不是 BP 減少的角色效果選擇，以及非選擇的 BP 減少，都還沒有按印刷句分開。"
+        },
+        {
+          "match": "イベントでは退場する",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028 。句子的主語是相手のキャラの効果。事件不在這句裡。",
+          "implementation": "choiceBlocked 只在 sourceType 是 character 時返回。037 是事件。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。037 可以選戰鎚並把它退到場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028 。【アクティブ】。",
+          "implementation": "共用 life-trigger active。與 029 同一路徑：選 1 張角色轉活動並 BP+3000 到回合結束。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 028 的 trigger 是 active，並用 029 走同一結算：休息的 2500 變成活動且 BP 5500。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-029",
+      "number": "EX10BT/AOT-2-029",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "手札の必要エナジー-【黄×2】、エナジーLに登場できない、フロント上限-1、ダメージ（2）",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-029 。https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-029.png 。四句都在框外。",
+          "implementation": "aot2EnergyCut 只在手牌且兩邊名稱都在時 -2。energyLineForbidden 擋登場、突襲與移入能量區。AOT2_FRONT_PENALTY 含 029。printedAttackDamage 2。卡面沒有寫活動登場，付費普通登場休息。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Colossal Titan。沒有始祖時手牌費用 9、不能打；兩邊都在時手牌 7、能量區沒有登場行動。登場後休息，前線上限 3。下一自己回合攻擊造成 2 點，生命 3 變 1。兩張減上限同時在場時，下一行動必須移走多餘的一張。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-029 。【アクティブ】。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Colossal Titan。這張自己翻開，選休息的 001 後轉活動且 BP 5500。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-030",
+      "number": "EX10BT/AOT-2-030",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "2枚を公開し、ジークを1枚まで加え、残りを場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-030 。【登場時】【退場時】上から 2 枚を公開する。カード名に「ジーク」を含むカードを 1 枚まで手札に加える。残りを場外。加えた場合、手札を 1 枚場外。",
+          "implementation": "aot2-runtime.mjs AOT-2-030。登場與退場走同一段。publish 在選擇前把整窗寫進 publicReveals。可選 0。選了才棄 1，剛加入的牌可以棄。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Ksaver。登場選 0 時整窗已公開、兩張都進場外、手牌不棄。選 1 張吉克後只多公開那張進手牌的紀錄，另一張進場外，再棄剛抽到的那張。退場用 049 打出後，待處理是 030 的公開窗，選 0 才把那張退到場外。雙方公開視圖一致。001–025 的 Ksaver 測試仍通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-030 。【アクティブ】。",
+          "implementation": "共用 life-trigger active。與 029 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 active，並用 029 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-031",
+      "number": "EX10BT/AOT-2-031",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "イェーガーがいる場合のみ登場、4枚を見て巨人継承者を1枚まで",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-031 。場上沒有カード名に「イェーガー」を含むキャラ就不能登場。登場時看 4 張，公開 1 張まで［特徴：巨人継承者］，其餘任意順序放回牌庫底。加進手牌才棄 1。",
+          "implementation": "aot2CannotPlay 擋沒有耶格爾的登場。onPlay 是共用 searchTopOneBottomDiscard，沒有 revealWindow，只在選中時以 searched-to-hand 公開。選 0 只排序，不棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Founding Ymir。沒有耶格爾不能登場。選繼承者後對方看不到視窗，只有選中的牌公開，其餘在牌庫底且仍隱藏，然後棄剛加入的那張。選 0 後整窗隱藏、牌庫底順序由玩家排、手牌不棄。001–025 的私人查看測試仍通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "起動メインで場外の黄イェーガーをレストで登場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-031 。【レストにする】【手札を2枚場外に置く】【APを1支払う】，必須讓必要エナジー 2 以下、カード名に「イェーガー」を含む黃角色從場外休息登場。",
+          "implementation": "legalAot2Activations 要求手牌至少 2、有 AP、場外有合法角色。先休息再棄正好 2 張，沒有 done。doEnter 不跳過登場時。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Founding Ymir。休息並付 1 AP，棄 2 張手牌。024 可以休息進指定格，場外的非耶格爾不能選。024 接著提供場外登場才有的抽牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】レストにし、次の1回アクティブにならない",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-031 。【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。",
+          "implementation": "triggerProfile 對 031 是 restOppFrontSkipNextActive，不是 050 的登場。colorRestSkip 休息對方前線，並給 skipNextActive。結束階段的重整消耗這一次，角色維持休息，下一自己開始階段才活動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Founding Ymir。翻開後是 color，沒有登場選項。選 colorRestSkip 後目標休息，對手開始階段仍休息，再回到自己開始階段才活動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-032",
+      "number": "EX10BT/AOT-2-032",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "黄のジークを退場させ、相手を1枚まで退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-032 。必須退自己場上カード名に「ジーク」を含む黃角色。成功後，BP5000 以下的對方前線 1 枚まで。",
+          "implementation": "yellowZeke 用包含而不是完全一致，所以獸之巨人是祭品。綠色的〈ジーク・イェーガー〉不是。對方退場可選 0。cap 加上 069 的站立範圍。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Ksaver watch。沒有黃吉克不能使用。綠吉克不在祭品裡，黃的 023 與 025 在。set2 的三個 032 測試仍通過，包含站立範圍打到 6000、跳過對方退場後仍開尤米爾、以及點選的格子。",
+          "unresolved": ""
+        },
+        {
+          "match": "見るか、始祖ユミルがあるとき黄のジークをレストで登場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-032 。其後 1 つまで：看 7 張，公開 1 張まで〈始祖ユミル〉；或自己場上或場外有〈始祖ユミル〉時，從場外把沒有【レイド】的黃〈ジーク・イェーガー〉1 枚まで休息登場。",
+          "implementation": "rumbleFollow 有 done。查看用 beginLook，沒有 revealWindow。登場只收完全一致、黃色、沒有 raidName 或 raid 觸發的吉克。手牌裡的尤米爾不算在場或場外。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Ksaver watch。尤米爾在能量區時，選 deploy 可以登場 024，綠吉克與有突襲的 025 不行，也可以選 0。手牌裡的尤米爾不開登場。001–025 的私人 7 張查看仍只公開選中的牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【特殊】相手のフロントLのキャラを1枚退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-032 。【特殊】。",
+          "implementation": "triggerProfile special 是 retireOppFront，沒有 BP 上限。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Ksaver watch。攻擊者翻到這張後，special 退掉對方前線的 004。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-033",
+      "number": "EX10BT/AOT-2-033",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "APカードを2枚までアクティブ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-033 。自分のAPカードを2枚まで選び、アクティブにする。",
+          "implementation": "共用 recoverAp count 2。第一次選 null 會整段放棄。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：two AP events。選 null 後兩張休息的 AP 仍休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】ライフが0なら山札の上をライフへ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-033 。【ファイナル】。",
+          "implementation": "生命空了才開 final。選了之後把牌庫頂放進生命，觸發卡不回生命。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：two AP events。生命 0 時翻開 033，選 final 後生命是原來的牌庫頂。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-034",
+      "number": "EX10BT/AOT-2-034",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "手札を全て場外、BP5000以下を全て退場、終尾以外でアタックできない",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-034 。場上要有エレン與ジーク，而且手牌另外還有 2 張。手牌全部場外，BP5000 以下的對方前線全部退場，這個回合不能用〈エレン・イェーガー（終尾の巨人）〉以外的角色攻擊。繁中頁印錯成 032，以這段日文為準。沒有生命觸發。",
+          "implementation": "aot2CannotPlay 檢查兩個名稱與手牌張數。rumbleRemain 一張一張退，030 的公開選擇插在中間。全部退完才寫 aot2AttackOnly，而且只在同一個 turn 有效。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Rumbling。手牌只剩事件加 1 張時不能使用。打出後手牌清空，030 的公開窗先出現且攻擊限制還沒寫上，選完才退掉 5000 以下，6000 留下。終尾可以攻擊，另一張不行。下一自己回合另一張可以攻擊。set2 沒有 030 的地鳴測試仍通過。LIFE 對照確認 trigger 是 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-035",
+      "number": "EX10BT/AOT-2-035",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "APカードを2枚までアクティブ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-035 。與 033 同一句。",
+          "implementation": "共用 recoverAp count 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：two AP events。035 連續選兩張休息的 AP，加上支付時休息的那張，共兩張回到活動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-035 。【ファイナル】。",
+          "implementation": "與 033 同一條 final。trigger 是 final 就走引擎的空生命補牌，不看卡號。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 035 的 trigger 是 final，並用 033 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-036",
+      "number": "EX10BT/AOT-2-036",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "5枚から地鳴らし以外の異なるキャラを3枚まで",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-036 。看 5 張，公開合計 3 枚まで、卡名各不相同、沒有地鳴らし的角色。其餘任意順序放回牌庫底。",
+          "implementation": "beginLook，distinct，沒有 revealWindow。只公開選中的牌。本輪沒有改這段。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-001-025.test.mjs：rescue publishes only the distinct chosen characters，以及 Ksaver publishes the whole top two, while Ymir and the rescue stay private。本輪回歸仍通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】カードを1枚引く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-036 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：rescue life。這張自己翻開並抽 1，觸發卡進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-037",
+      "number": "EX10BT/AOT-2-037",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "4種類で消費AP-1、BP5000以下を1枚退場、ミカサで8000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-037 。四種地鳴らし以外的黃角色名時，手牌的消費 AP-1。必須退 1 張 BP5000 以下的對方前線。場上有〈ミカサ・アッカーマン〉時改成 8000。",
+          "implementation": "aot2HandApCut 減的是 AP，能量仍是 4。aot2YellowNames 跳過地鳴らし。retireOffer 不可跳過。cap 加上 069。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：everyone together。三種名稱、1 點 AP 不能打。第四種之後可以。沒有米卡莎時 1500 可退、6000 不可。有〈ミカサ・アッカーマン〉時 6000 可退。一張 069 把 5000 的上限抬到剛好打中 6000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【特殊】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-037 。【特殊】。",
+          "implementation": "與 032 同一條 retireOppFront。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 special，並用 032 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-038",
+      "number": "EX10BT/AOT-2-038",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "他のキャラを1枚まで BP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-038 。【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。沒有生命觸發。",
+          "implementation": "共用 buffOwnField，optional、excludeSelf、untilTurn。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Hange。選 0 時對方維持 1500。選了之後 2500，下一自己開始階段回到 1500。LIFE 對照確認 trigger 是 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-039",
+      "number": "EX10BT/AOT-2-039",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "BP2500以上を1枚まで BP-2000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-039 。【登場時】BP2500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-2000。",
+          "implementation": "共用 enemyBpDown，optional、minBp 2500、untilTurn。用當下 BP，並走 choiceBlocked。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Hange。選 0 時 4000 不變。選了之後 2000，下一自己開始階段回到 4000。戰鎚在始祖都在時不在選項裡。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-039 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-040",
+      "number": "EX10BT/AOT-2-040",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "レストにして、他のアクティブを1枚レスト、発生エナジー+【青】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-040 。【起動メイン】【レストにする】【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合，這個回合發生能量 +【青】。沒有生命觸發。",
+          "implementation": "activeFrontBesides 在休息前就要成立。沒有另一張活動前線時不能啟動。選項沒有 done。能量加成只在能量區計入。每張實體各一次。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Levi rests。前線沒有其他活動角色時不能啟動，自己仍活動。休息另一張後，能量區的這張從 1 變 2，同一張再啟動不合法。第二張複本可以再做一次。人在前線時加成是 0。LIFE 對照確認 trigger 是 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-041",
+      "number": "EX10BT/AOT-2-041",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【インパクト無効】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-041 。【インパクト無効】。",
+          "implementation": "aot2-pack.mjs impactNull。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Levi may pay。在前線時 universalImpactNull 為真。",
+          "unresolved": ""
+        },
+        {
+          "match": "APを1支払ってもよい。2枚まで BP+1500",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-041 。【アタック時】APを1支払ってもよい。そうした場合、自分の場のキャラを2枚まで選び、このターン中、BP+1500。",
+          "implementation": "先 skip 或 pay。沒有活動 AP 不開選擇。付了之後可以 done，或選最多 2 張，包含自己。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Levi may pay。沒有 AP 時沒有 payBuff。skip 不扣 AP、BP 不變。pay 之後選 done，兩張都維持原 BP。pay 之後選自己與另一張，各 +1500。下一自己開始階段回到印刷值。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-041 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-042",
+      "number": "EX10BT/AOT-2-042",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框の登場時：引き、手札を1枚まで場外、APを1枚までアクティブ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-042 。https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-042.png 。【登場時】整段在深色框內。抽 1，然後可以把手牌 1 張放到場外，那樣才可以把 1 張 AP 轉活動。",
+          "implementation": "raid-box 列 onPlay。programJobs 只在表側突襲時跑。普通登場不抽、不開棄牌。棄牌選 done 就不轉 AP。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：raid Levi。普通登場後沒有待處理、手牌張數不變、角色休息。突襲後抽 1，棄牌選擇存在。選 done 後沒有活動 AP。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲框のアタック時：支払ってから引くかインパクト",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-042.png 。【アタック時】也在框內。可以付 1 AP，然後二選一：抽 1 且 BP+1000，或 BP+1000 與【インパクト（1）】。",
+          "implementation": "onAttack 只在突襲狀態出現。skip 不付。draw 與 impact 都先付 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：raid Levi。普通登場的下一自己回合攻擊不開 042。突襲後 skip 不扣 AP、BP 仍 4000。再攻擊選 draw，手牌 +1、BP 5000、衝擊 0。另一場選 impact，BP 5000、衝擊 1、牌庫不減。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-042 。【レイド】。",
+          "implementation": "共用 life-trigger raid。可以拿去手牌，或突襲到合法的〈リヴァイ〉上。突襲後登場時仍會問棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：raid Levi。翻開後 pending 是 raid，get 與突襲到 040 都在。選突襲後這張活動，040 在它下面。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-043",
+      "number": "EX10BT/AOT-2-043",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "1枚引き、手札を1枚場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-043 。【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+          "implementation": "共用 drawDiscard。剛抽到的牌可以棄。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Sasha。抽 1 後必須棄 1，牌張守恆。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-043 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-044",
+      "number": "EX10BT/AOT-2-044",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "場外イベント6枚で他の104期兵を BP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-044 。【起動メイン】【レストにする】場外事件至少 6 張才可以。必須選另一張［特徴：104期兵］，這個回合 BP+1000。沒有ターン1，也沒有生命觸發。",
+          "implementation": "events 只數 type event。沒有 done。能量區也可以啟動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Historia rests。5 張事件不能啟動。6 張真實事件後必須選另一張 104，不能選自己。BP 4000，下一自己開始階段回到 3000。LIFE 對照確認 trigger 是 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-045",
+      "number": "EX10BT/AOT-2-045",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "場外イベントの枚数で3つのドローから1つ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-045 。【登場時】三選一。永遠可以抽 1 再棄 1。場外事件至少 2 張可以只抽 1。至少 6 張可以抽 2 再棄 1。",
+          "implementation": "d1、d2、d6 依場外事件數出現。棄牌是 aot2 的 discard，不是共用 effect-discard。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Historia chooses。0 張只有 d1，抽 1 後必須棄。2 張有 d2、沒有 d6，抽 1 不棄。6 張選 d6，牌庫少 2，然後棄 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-045 。【アクティブ】。",
+          "implementation": "共用 life-trigger active。與 029 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 active，並用 029 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-046",
+      "number": "EX10BT/AOT-2-046",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "場外イベント2枚で BP+1000、4枚でインパクト無効",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-046 。2 枚以上 BP+1000。4 枚以上再得【インパクト無効】。兩條都要。",
+          "implementation": "passiveBonuses 看場外事件張數。事件離開場外就消失。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Mikasa。0 張是 2000 且沒有衝擊無效。2 張是 3000 仍沒有。4 張才有。把事件移回牌庫、場外少於 2 張後回到 2000 且衝擊無效消失。牌張守恆。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-046 。【アクティブ】。",
+          "implementation": "共用 life-trigger active。與 029 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 active，並用 029 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-047",
+      "number": "EX10BT/AOT-2-047",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "2枚を見て、イベントを1枚まで場外、残りは山札の上",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-047 。【登場時】看 2 張，事件 1 枚まで放到場外。其餘任意順序放回牌庫頂。",
+          "implementation": "beginLook，reveal false，to outside，rest top。視窗沒有事件就直接排順序。選 1 張後單張剩餘直接放回。未選的牌不進 publicReveals。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Armin。選 1 張事件後它在場外且公開，另一張在牌庫頂且對方看不到。選 0 時兩張都隱藏，並由玩家排回牌庫頂。沒有事件時直接排順序。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-047 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-048",
+      "number": "EX10BT/AOT-2-048",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "4枚からキャラを1枚まで、その後青を1枚までレストで登場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-048 。看 4 張，公開 1 張まで角色，其餘任意順序放回牌庫底。然後手牌裡必要能量 3 以下、消費 AP 1 的藍角色 1 枚まで休息登場。",
+          "implementation": "共用 searchTopOneBottomDiscard，discard false，所以不棄手牌。選完或放棄後先排剩餘，再 deployBlue。登場不跳過登場時。能量 4 的藍角色不能選。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：candy。視窗在選擇前只有自己看得到。選角色後只公開那張，先排其餘再登場。剛加入的 038 可以休息進場，039 不行。放棄搜尋後整窗仍隱藏，手牌裡的 040 仍可以登場，也可以選 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-048 。【ドロー】。",
+          "implementation": "共用 life-trigger draw。與 026 同一路徑。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs 確認 trigger 是 draw，並用 026 走同一結算。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-049",
+      "number": "EX10BT/AOT-2-049",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "BP2500以下かBP4500以上を1枚退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-049 。BP2500以下かBP4500以上の相手のフロントLのキャラを1枚選び、退場させる。沒有生命觸發。Q1566 只抬高「以下」。",
+          "implementation": "n<=cap(2500) 或 n>=4500。沒有 done。4500 的下限不減。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Thunder Spear。2500 可退，3500 與 4000 不可，而且沒有 done。一張 069 之後 3500 可退、4000 仍不可、6000 可退。set2 的 standing BP range 測試仍通過，上限上升且不消耗。LIFE 對照確認 trigger 是 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-050",
+      "number": "EX10BT/AOT-2-050",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "他のマーレの戦士を1枚まで。レイドなら両方+2000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-050 。【アタック時】自分の場の他の［特徴：マーレの戦士］を1枚まで。普通是那個角色 BP+1000。選中的是突襲狀態時，那個角色和這張都改成 +2000。",
+          "implementation": "raidBuff。自己不是目標。done 不加。突襲加值取代而不是疊加，到這個回合結束。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Gabi。選 done 時另一名戰士維持 2500。選非突襲的戰士時對方 3500、自己 2000，下一開始階段回到 2500。突襲中的 053 變成 6000，自己 4000，下一開始階段自己回到 2000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】緑のキャラをアクティブで登場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-050 。【カラー】手札的綠角色，必要能量 2 以下、消費 AP 1，活動登場。",
+          "implementation": "triggerProfile 是 deployHandCharacter，color green、maxEnergy 2、ap 1。色觸發登場自己把 ready 設成 true。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：Gabi。能量 0 的 AOT-1-045 可以登場到前線並活動。能量 3 的 AOT-1-047 不在選項。觸發卡不回生命。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}
