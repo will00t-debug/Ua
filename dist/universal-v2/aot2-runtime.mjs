@@ -27,8 +27,9 @@ const SLOTS=new Set([
  'AOT-2-041|onAttack','AOT-2-042|onPlay','AOT-2-042|onAttack','AOT-2-044|main',
  'AOT-2-045|onPlay','AOT-2-047|onPlay','AOT-2-048|onPlay','AOT-2-049|onPlay',
  'AOT-2-050|onAttack','AOT-2-051|onPlay','AOT-2-051|main','AOT-2-053|onPlay',
- 'AOT-2-055|onPlay','AOT-2-056|onPlay','AOT-2-056|onRetire','AOT-2-058|onAttack',
- 'AOT-2-060|onPlay','AOT-2-060|onAttack','AOT-2-061|onPlay','AOT-2-062|onPlay',
+ 'AOT-2-053|pure','AOT-2-055|onPlay','AOT-2-056|onPlay','AOT-2-056|onRetire','AOT-2-058|onAttack',
+ 'AOT-2-060|onPlay','AOT-2-060|onAttack','AOT-2-061|onPlay','AOT-2-061|afterOwn',
+ 'AOT-2-061|recover','AOT-2-062|onPlay',
  'AOT-2-065|onPlay','AOT-2-066|endStart','AOT-2-067|onPlay','AOT-2-069|onPlay',
  'AOT-2-071|main','AOT-2-071|onAttack','AOT-2-072|onPlay','AOT-2-073|onPlay'
 ]);
@@ -262,6 +263,19 @@ function rumbleFollow(pack,s,spec){
  const deploy=ymirAnywhere(pack,s,owner)?act('deploy'):null;
  const actions=[act('done'),look,...(deploy?[deploy]:[])];
  hold(s,{...spec,step:'mode',data:null},actions);
+}
+function offerPieckOpp(pack,s,spec,retired){
+ const owner=spec.player;
+ const raised=plOf(s,owner).outside.some(c=>def(pack,c).type==='character'&&
+  contains(pack,c,PIECK,s));
+ const printed=raised?5000:3000;
+ const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,printed));
+ if(!cards.length){
+  if(retired)pieckHand(pack,s,spec);
+  return;
+ }
+ hold(s,{...spec,step:'retire',data:{then:retired?'061':null}},
+  [act('done'),...cards.map(c=>act('retire',{uid:c.uid,zone:'opp'}))]);
 }
 function pieckHand(pack,s,spec){
  const cards=plOf(s,spec.player).outside.filter(c=>def(pack,c).type==='character'&&
@@ -543,6 +557,7 @@ export function runAot2Job(pack,s,job){
   if(lineOf(s,owner,c)==='energy')A.active(s,owner,c);
   return;
  }
+ if(id==='AOT-2-053'&&job.slot==='pure'){pureEnter(pack,s,spec);return;}
  if(id==='AOT-2-053'){
   const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,3000));
   if(!retireOffer(s,spec,cards,true,{then:'053'}))return;
@@ -576,10 +591,12 @@ export function runAot2Job(pack,s,job){
   if(!c||A.bp(pack,s,c)<6000)return;
   A.draw(pack,s,owner,1,job.sourceUid);impact(s,c);return;
  }
+ if(id==='AOT-2-061'&&job.slot==='afterOwn'){offerPieckOpp(pack,s,spec,true);return;}
+ if(id==='AOT-2-061'&&job.slot==='recover'){pieckHand(pack,s,spec);return;}
  if(id==='AOT-2-061'){
   const own=fieldCards(s,owner).filter(c=>def(pack,c).type==='character'&&contains(pack,c,PIECK,s));
-  const raised=plOf(s,owner).outside.some(c=>def(pack,c).type==='character'&&contains(pack,c,PIECK,s));
-  hold(s,{...spec,step:'ownRetire',data:{raised}},[
+  if(!own.length){offerPieckOpp(pack,s,spec,false);return;}
+  hold(s,{...spec,step:'ownRetire'},[
    act('done'),...own.map(c=>act('retireOwn',{uid:c.uid,zone:'field'}))]);
   return;
  }
@@ -613,10 +630,12 @@ export function runAot2Job(pack,s,job){
    return d.energy<=3&&!hasRaid(d)&&trait(pack,c,CORPS);
   });
   const foes=plOf(s,1-owner).front.filter(Boolean);
-  hold(s,{...spec,step:'mode'},[
+  // 「以下から1つ選ぶ」 is one bullet. Each bullet is まで, so zero is chosen inside it.
+  const actions=[
    ...(outs.length?[act('hand')]:[]),
-   ...(foes.length?[act('battle')]:[]),
-   act('done')]);
+   ...(foes.length?[act('battle')]:[])];
+  if(!actions.length)return;
+  hold(s,{...spec,step:'mode'},actions);
   return;
  }
  if(id==='AOT-2-069'){
@@ -792,7 +811,11 @@ function discardSome(pack,s,q,a){
  const hit=takeAction(q,a);
  const data=q.data||{};
  data.gone??=[];
- if(hit.mode==='done')throw Error('Discard is required');
+ // 067's two-card discard is 「置いてもよい」. Declining pays nothing and does not retire.
+ if(hit.mode==='done'){
+  if(data.optional)return;
+  throw Error('Discard is required');
+ }
  moveUid(pack,s,q.player,'hand',hit.uid,'outside',q.sourceUid);
  data.gone.push(hit.uid);
  data.need-=1;
@@ -885,6 +908,8 @@ export function resolveAot2Pending(pack,s,a){
   s.pending=null;
   if(hit.mode==='done'){
    if(q.data?.then==='032b')rumbleFollow(pack,s,spec);
+   else if(q.data?.then==='061')
+    s.effectQueue.unshift({op:'aot2',id:'AOT-2-061',slot:'recover',owner,sourceUid:q.sourceUid});
    go(pack,s);return;
   }
   const own=hit.zone==='field';
@@ -901,9 +926,18 @@ export function resolveAot2Pending(pack,s,a){
     owner,sourceUid:q.sourceUid}],{by:'opponent',always:true});
    go(pack,s);return;
   }
+  if(q.data?.then==='053'){
+   retireThen(s,who,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-053',slot:'pure',
+    owner,sourceUid:q.sourceUid}]);
+   go(pack,s);return;
+  }
+  if(q.data?.then==='061'){
+   retireThen(s,who,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-061',slot:'recover',
+    owner,sourceUid:q.sourceUid}]);
+   go(pack,s);return;
+  }
   const paused=A.retire(pack,s,who,loc.line,loc.slot);
   if(paused===true)return;
-  if(q.data?.then==='053')pureEnter(pack,s,spec);
   go(pack,s);return;
  }
  if(q.step==='mode'){
@@ -1033,15 +1067,16 @@ export function resolveAot2Pending(pack,s,a){
  }
  if(q.step==='ownRetire'){
   s.pending=null;
-  let retired=false;
   if(hit.mode==='retireOwn'){
    const loc=A.location(s,owner,hit.uid);
-   if(loc){A.retire(pack,s,owner,loc.line,loc.slot);retired=true;}
+   if(loc){
+    // The 5000 window is read after this leave, so a Pieck who just left counts.
+    retireThen(s,owner,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-061',slot:'afterOwn',
+     owner,sourceUid:q.sourceUid}]);
+    go(pack,s);return;
+   }
   }
-  const printed=q.data?.raised?5000:3000;
-  const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,printed));
-  hold(s,{...spec,step:'retire',data:{then:retired?'061':null}},
-   [act('done'),...cards.map(c=>act('retire',{uid:c.uid,zone:'opp'}))]);
+  offerPieckOpp(pack,s,spec,false);
   return;
  }
  if(q.step==='restFront'){
@@ -1083,8 +1118,8 @@ export function resolveAot2Pending(pack,s,a){
   const foe=plOf(s,1-owner).front.find(c=>c?.uid===hit.uid);
   if(!foe)throw Error('Mikasa target left');
   if(A.bp(pack,s,foe)>=5000&&plOf(s,owner).hand.length>=2)
-   hold(s,{...spec,step:'discard',data:{need:2,after:'mikasaRetire',target:foe.uid}},
-    plOf(s,owner).hand.map(c=>act('discard',{uid:c.uid,zone:'hand'})));
+   hold(s,{...spec,step:'discard',data:{need:2,after:'mikasaRetire',target:foe.uid,optional:true}},
+    [act('done'),...plOf(s,owner).hand.map(c=>act('discard',{uid:c.uid,zone:'hand'}))]);
   go(pack,s);return;
  }
  if(q.step==='levi'){

@@ -724,7 +724,7 @@ test('the rescue life trigger draws, and the look stays private until a name is 
  assertUniversalMatch(packs,life);
 });
 
-test('everyone together cuts AP at four names and raises the cap for Mikasa',()=>{
+test('everyone together cuts AP at four names, and a non-raid Colossal does not raise it',()=>{
  const counts=countsFor(['AOT-2-001','AOT-2-003','AOT-2-004','AOT-2-005','AOT-2-008','AOT-2-013','AOT-2-020','AOT-2-037','AOT-2-069']);
  let full=toPhase(fresh(counts,37),'main');
  put(full,0,'AOT-2-003','energy',0,true);
@@ -766,10 +766,9 @@ test('everyone together cuts AP at four names and raises the cap for Mikasa',()=
  put(stood,0,'AOT-2-069','front',0,true);
  const raised=put(stood,1,'AOT-2-013','front',0,true);
  readyAp(stood,0,2);
- stood=cast(stood,toHand(stood,0,'AOT-2-037').uid);
- assert.equal(acts(stood).some(a=>a.mode==='retire'&&a.uid===raised.uid),true);
- stood=pick(stood,a=>a.mode==='retire'&&a.uid===raised.uid);
- assert.equal(stood.players[1].outside.some(c=>c.uid===raised.uid),true);
+ const event=toHand(stood,0,'AOT-2-037');
+ assert.equal(acts(stood).some(a=>a.type==='event'&&a.uid===event.uid),false);
+ assert.equal(field(stood,1,raised.uid)!==null,true);
  assertUniversalMatch(packs,stood);
 });
 
@@ -1197,7 +1196,7 @@ test('Thunder Spear retires only the printed low or high window',()=>{
  const high=put(s,1,'AOT-2-013','front',0,true);
  s=cast(s,toHand(s,0,'AOT-2-049').uid);
  const second=acts(s).filter(a=>a.mode==='retire').map(a=>a.uid);
- assert.equal(second.includes(mid.uid),true);
+ assert.equal(second.includes(mid.uid),false);
  assert.equal(second.includes(gap.uid),false);
  assert.equal(second.includes(high.uid),true);
  assertUniversalMatch(packs,s);

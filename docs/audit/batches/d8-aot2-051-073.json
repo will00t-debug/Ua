@@ -1,0 +1,633 @@
+{
+  "group": "D",
+  "baseline": "9ca8e5b34bd0dc270143e705900511ec754be58b",
+  "baseBranch": "cursor/effect-audit-bp-zero-65f8",
+  "range": "EX10BT/AOT-2-051 至 AOT-2-073。",
+  "updated": "2026-11-07",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-051 起，至 AOT-2-073。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-053.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-056.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-058.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-060.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-067.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-069.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-072.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?category=カード個別&sub_category=進撃の巨人",
+    "checked": "2026-11-07",
+    "note": "2026-11-07 對過 EX10BT 官方頁、上述卡圖與進撃の巨人個別 FAQ。本組用到 Q1561、Q1562、Q1563、Q1564、Q1565、Q1566、Q1567、Q1568、Q1589，皆 2025-06-20。053、056、058、060、067、069、072 的突襲框位置與 raid-box.mjs 既有時機一致，沒有改 raid-box.mjs。069 的站立句在框內，非突襲狀態不加；兩張突襲狀態疊加的棋盤這次沒有打出來。056 從能量區指定攻擊與不擋時的傷害結算仍由共用引擎只找前線攻擊者。AOT-2-008 的 Q1551 既有缺口不因這批完成而關閉。沒有改第一彈、engine.mjs、全域台帳。戰鎚的來源類型免疫維持第九輪的判定。"
+  },
+  "counts": {
+    "已驗證": 20,
+    "部分核對": 3,
+    "待修正": 0,
+    "缺資料待確認": 0
+  },
+  "fixes": [
+    "AOT-2-056 的登場回合衝擊與 AOT-2-069 的指定範圍 +1000 都改成只在正面朝上的突襲狀態生效。069 的前線張數 −1 仍不看突襲。",
+    "AOT-2-061 在自己的皮克退場之後才重算 5000 窗口，回收也會接著發生。突襲中的 056 先把手牌的突襲元收回，再進對手窗口。",
+    "AOT-2-053 的付費登場改到退場結算之後才開，退場暫停時不會把付費選擇丟掉。",
+    "AOT-2-067 有任一選項時必須選一個；兩張手牌的捨棄仍可拒絕。BP5000 以上用當下 BP，不吃站立加成。",
+    "既有測試把非突襲的 069 當成站立來源，已改成官方的否定結果。"
+  ],
+  "sharedGaps": [
+    {
+      "owner": "A",
+      "cardId": "AOT-2-056",
+      "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-056 。https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-056.png 。突襲框內：そうした場合、このキャラはこのターン中、「エナジーLからアタックできる。」と【狙い撃ち】を得る。指定した場合、相手はブロックできない。",
+      "reproduction": "把 AOT-2-056 突襲在能量區的 AOT-2-054 上，選 BP−2000。攻擊階段同時出現指定 AOT-2-063 的攻擊，以及不指定的能量區攻擊。送出指定攻擊時，engine.mjs resolveSniperBattle 只在前線找攻擊者，丟出 Unproven physical SNIPER battle。不指定的攻擊可以進到阻擋；放棄阻擋時 unblockedLifeDamage 同樣只找前線，丟出 Unproven unblocked life damage。選擇阻擋並打完這場戰鬥可以結算。預期：指定的前線角色直接與能量區上的車力戰鬥、沒有阻擋；不指定且沒被擋時，攻擊者留在能量區並造成生命傷害。"
+    }
+  ],
+  "tests": {
+    "command": "node --test tests/v2-aot2-051-073.test.mjs tests/v2-aot-set2.test.mjs tests/v2-aot2-026-050.test.mjs",
+    "result": "70 passed, 0 failed。新檔 24，set2 回歸 21，026–050 回歸 25。Node 22。沒有跑整庫。"
+  },
+  "reviews": [
+    {
+      "cardId": "AOT-2-051",
+      "number": "EX10BT/AOT-2-051",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "能量區登場時變活動",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-051 。【登場時】【エナジーLにある場合】このキャラをアクティブにする。",
+          "implementation": "aot2-runtime.mjs 登場在能量區時把這張設為活動。普通前線登場維持休息。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-051-073.test.mjs：Falco activates。能量區登場後 ready。",
+          "unresolved": ""
+        },
+        {
+          "match": "休息並捨一張，再給另一名戰士 1000 或突襲 2000",
+          "status": "已驗證",
+          "official": "同上。【起動メイン】必須休息自己、把正好 1 張手牌置場外，再選另一張戰士。突襲狀態改 +2000。",
+          "implementation": "沒有跳過整段。手牌捨棄沒有 done。對象不含自己。突襲對象用 2000。",
+          "discrepancy": "",
+          "evidence": "同檔 Falco activates 與 Falco gives a raided warrior 2000。突襲中的 056 變 6000，法爾科自己不加。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同上。【アクティブ】。",
+          "implementation": "共用 active。休息角色活動並 BP+3000 到回合結束。",
+          "discrepancy": "",
+          "evidence": "同檔 each life kind。051 翻開後選休息的 070，ready 且 BP 1500 變 4500。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-052",
+      "number": "EX10BT/AOT-2-052",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "看 5 張，最多公開 1 張無垢巨人，其餘置底，不棄手牌",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-052 。上から5枚見る。無垢の巨人を1枚まで公開し手札。残りは下。沒有棄手牌。",
+          "implementation": "searchTopOneBottomDiscard，noHandDiscard。選擇前不公開整窗，只公開拿走的那張。",
+          "discrepancy": "",
+          "evidence": "同檔 Zeke looks。對手的 private choices 是 null，整窗不在公開檢視。不拿時手牌張數不變、無垢巨人留在牌庫。拿走時只公開那張，其餘在牌庫底，手牌仍留著原本那張。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同上。【ドロー】。",
+          "implementation": "共用 draw。符號逐張核對；這個種類用 057 實際翻開一次。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-053",
+      "number": "EX10BT/AOT-2-053",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時退場與付費休息登場都在突襲框內",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-053 。https://www.unionarena-tcg.com/jp/images/cardlist/card/EX10BT_AOT-2-053.png 。BP3000以下を1枚まで退場。退場させた場合，可付 1 AP，場外無垢巨人 1 張以內休息登場。",
+          "implementation": "raid-box onPlay。退場用 retireThen 接到 pure，退場暫停時付費選擇還在。付費可拒絕。登場 ready 為 false。普通登場不開退場。",
+          "discrepancy": "",
+          "evidence": "同檔 Beast Titan。普通登場沒有 pending，對手留場。突襲拒絕退場後沒有付費、無垢巨人留在場外。付費後 2000 的對象退場、4000 不在窗口、無垢巨人休息進場、AP 用完。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "同上。【レイド】。",
+          "implementation": "共用 raid 觸發。符號逐張核對；這個種類用 060 實際突襲一次。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind 的 060 生命突襲。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-054",
+      "number": "EX10BT/AOT-2-054",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "無效果文本，【ゲット】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-054 。effectJa 空白。【ゲット】。",
+          "implementation": "engineKind plain。生命觸發把這張加入手牌。",
+          "discrepancy": "",
+          "evidence": "同檔 each life kind。054 翻開後進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-055",
+      "number": "EX10BT/AOT-2-055",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "最多給另一名戰士 1000，突襲則 2000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-055 。1枚まで。突襲狀態改 +2000。可以不選。",
+          "implementation": "與 050 共用 raidBuff，self 為 false，有 done。",
+          "discrepancy": "",
+          "evidence": "同檔 Pieck may buff nothing。不選時對象維持 2000。突襲中的 056 變 6000，皮克自己維持 2000。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-056",
+      "number": "EX10BT/AOT-2-056",
+      "status": "部分核對",
+      "clauses": [
+        {
+          "match": "前線且本回合登場的突襲狀態才有衝擊 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-056 。卡圖確認這句在突襲框內，且要求フロントL。",
+          "implementation": "aot2Impact 同時要求正面朝上的突襲、在前線、本回合從場外進場。",
+          "discrepancy": "",
+          "evidence": "同檔 Cart Titan。普通登場衝擊 0，沒有登場選擇。能量區突襲的衝擊也是 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "可選 BP−2000，然後獲得能量區攻擊與狙擊",
+          "status": "部分核對",
+          "official": "同上。卡圖確認三句都在框內。拒絕則兩者都不獲得。指定時對手不能阻擋。",
+          "implementation": "跳過不加旗標。選了之後寫 aot2EnergyAttack 與 aot2Sniper。引擎有提供指定攻擊。結算指定戰鬥與不擋時的傷害時，只在前線找攻擊者。",
+          "discrepancy": "能量區上的指定攻擊與放棄阻擋都會在共用引擎丟錯。第二彈沒有改引擎。",
+          "evidence": "同檔 Cart Titan。選減 BP 後是 2000，兩個旗標都在本回合。攻擊階段同時有指定與不指定。不指定可以進到阻擋，擋下後戰鬥結算。指定攻擊沒有送出。",
+          "unresolved": "指定後的無阻擋戰鬥，以及不擋時的生命傷害，見 sharedGaps。交給 A。"
+        },
+        {
+          "match": "退場時把突襲元收回手牌",
+          "status": "已驗證",
+          "official": "同上。【退場時】レイド元を1枚まで手札。卡圖確認在框內。",
+          "implementation": "raid-box onRetire。061 的退場佇列先跑這段，再算對手窗口。",
+          "discrepancy": "",
+          "evidence": "同檔 raided Cart Titan returns its base。突襲元回到手牌後，061 才開 5000 窗口。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "同上。【レイド】。",
+          "implementation": "符號逐張核對。種類結算用 060。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-057",
+      "number": "EX10BT/AOT-2-057",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "無效果文本，【ドロー】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-057 。effectJa 空白。【ドロー】。",
+          "implementation": "engineKind plain。抽 1，觸發卡進場外。",
+          "discrepancy": "",
+          "evidence": "同檔 each life kind。057 翻開後手牌 +1，觸發卡在場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-058",
+      "number": "EX10BT/AOT-2-058",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框內看 4 張戰士，不棄手牌；BP6000 以上才抽",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-058 。卡圖確認登場查看與攻擊抽牌都在框內。沒有棄手牌。",
+          "implementation": "noHandDiscard。普通登場不查看。攻擊時用當下 BP。",
+          "discrepancy": "",
+          "evidence": "同檔 Jaw Titan。普通登場沒有查看。突襲查看對對手不公開。4000 時攻擊不抽。055 把突襲戰士加到 6000 後攻擊抽 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同上。【ゲット】。",
+          "implementation": "符號逐張核對。種類結算用 054。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-059",
+      "number": "EX10BT/AOT-2-059",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "同時視為萊納、貝特霍爾德、亞妮",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-059 。三個名稱都算。",
+          "implementation": "名稱別名。060 的突襲名是萊納，可以疊在這張上，不能疊在 AOT-2-001。",
+          "discrepancy": "",
+          "evidence": "同檔 triple name。060 突襲在 059 上成立。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同上。【アクティブ】。",
+          "implementation": "符號逐張核對。種類結算用 051。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-060",
+      "number": "EX10BT/AOT-2-060",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲中衝擊無效；可棄 1 張後 +2000；6000 以上抽牌並得衝擊 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-060 。卡圖確認三句都在框內。棄牌可拒絕。",
+          "implementation": "raidImpactNull。空手牌不開棄牌。拒絕不加 BP。攻擊時 BP 夠才抽並給本回合衝擊。",
+          "discrepancy": "",
+          "evidence": "同檔 triple name。拒絕時維持 4000。棄牌後 6000，攻擊抽牌且衝擊 1。突襲期間 impact null 為真。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "同上。【レイド】。可拿取或突襲。",
+          "implementation": "生命區翻開後兩個選項都在。選突襲會把宿主壓在正面朝上的牌堆下，並以活動進場。",
+          "discrepancy": "",
+          "evidence": "同檔 each life kind。060 的生命觸發列出 get，選突襲到 059 後 ready，宿主在 stack。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-061",
+      "number": "EX10BT/AOT-2-061",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "可退自己的皮克，再退對手；場外已有皮克才是 5000；之後最多收回 1 張",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-061 。自己的退場先算。5000 看當下場外。回收只在這張效果退過自己的角色時發生，且是之後。",
+          "implementation": "自己的退場用 retireThen 接到 afterOwn，再重算窗口。對手退場或拒絕都接到 recover。名稱包含皮克的 054、055、056 都算。上限走 cap()。",
+          "discrepancy": "",
+          "evidence": "同檔 ambush。沒有自己的皮克時直接是 3000 窗口。退掉自己的皮克後窗口變 5000，剛退的那張可以收回。突襲中的 056 先把突襲元收回，再進對手窗口。",
+          "unresolved": ""
+        },
+        {
+          "match": "【特殊】",
+          "status": "已驗證",
+          "official": "同上。【特殊】。",
+          "implementation": "生命觸發打出這張事件。對手前線 1500 的 070 在 3000 窗口內並退場，之後沒有下一個選擇。",
+          "discrepancy": "",
+          "evidence": "同檔 each life kind。pending.trigger 是 special，攻擊者進場外，pending 結束。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-062",
+      "number": "EX10BT/AOT-2-062",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "本回合下一張食材 AP−1，可疊，非食材不清除",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-062 。Q1561：先用一張不符合條件的卡，減免不消失。",
+          "implementation": "aot2FoodAp 以本回合累加。食材使用時整段清除。",
+          "discrepancy": "",
+          "evidence": "同檔 Nicolo。兩張疊成 −2。中間打 063 後減免還在。073 以 1 AP 打出，下一張 073 在 0 AP 時不合法。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-063",
+      "number": "EX10BT/AOT-2-063",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "衝擊無效",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-063 。與自己戰鬥的角色在該戰鬥中失去衝擊。",
+          "implementation": "impactNull，不是突襲框。阻擋勝利只結算攻擊者的衝擊，無效後生命不減。",
+          "discrepancy": "",
+          "evidence": "同檔 Connie。071 先取得衝擊 1 再攻擊，063 阻擋後被退場，生命維持 3。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-064",
+      "number": "EX10BT/AOT-2-064",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "攻擊時看 3 張並按所選順序放回頂端",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-064 。見る。望む順で山札の上。",
+          "implementation": "inspectTopArrange，rest 為 top。查看不公開。",
+          "discrepancy": "",
+          "evidence": "同檔 Jean。pending 是 effect-top-order，整窗對對手隱藏，選完的 3 張在牌庫頂。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同上。【アクティブ】。",
+          "implementation": "符號逐張核對。種類結算用 051。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-065",
+      "number": "EX10BT/AOT-2-065",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "本回合用過食材才活動，且同名一回合只在真正發動後鎖定",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-065 。Q1589：條件不成立不算發動。Q1562：發動過後同回合第二張不發動。",
+          "implementation": "沒有食材使用就在上鎖前回傳。上鎖鍵是薩莎的名稱。",
+          "discrepancy": "",
+          "evidence": "同檔 Sasha stays locked。沒吃過時維持休息且第二張仍可活動。吃過後第一張活動，第二張不再活動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同上。【ドロー】。",
+          "implementation": "符號逐張核對。種類結算用 057。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-066",
+      "number": "EX10BT/AOT-2-066",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "本回合攻擊階段有紅色 104 期兵回手時，可讓 1 張休息進前線",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-066 。Q1563：對手效果在自己的攻擊階段把手牌收回也算。Q1564：手牌兩張只進一張。拒絕不消耗同名一次。",
+          "implementation": "aot2CorpsReturned 在自己的攻擊階段、任何原因回手時寫下本回合。結束時可選 ready:false 的登場。上鎖只在真的登場時寫入。登場後共用的回合結束重整會把休息角色轉成活動，與 set2 既有期望一致。",
+          "discrepancy": "",
+          "evidence": "同檔 Mikasa offers a rested replay。AOT-1-009 的 colorBounce 在自己的攻擊階段收回士兵後，結束階段的登場選項 ready 都是 false。兩張手牌只進一張，另一張留在手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-067",
+      "number": "EX10BT/AOT-2-067",
+      "status": "部分核對",
+      "clauses": [
+        {
+          "match": "只能以自己的效果或突襲登場",
+          "status": "部分核對",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-067 。卡圖確認這句在框外。",
+          "implementation": "aot2CannotPlay 擋手牌登場。突襲不受這條限制。效果登場不走 play 檢查。",
+          "discrepancy": "",
+          "evidence": "同檔 raid Mikasa must choose。手牌登場不合法，突襲登場合法。",
+          "unresolved": "本組沒有一張效果會把 067 從手牌或場外登場。沒有打出「自己的效果可登場」。這不是引擎缺口。"
+        },
+        {
+          "match": "突襲框內必須選一個；104 期兵有篩選；5000 的棄牌可拒絕且不吃站立",
+          "status": "已驗證",
+          "official": "同上。卡圖確認兩個項目在框內。Q1565：5000 不是「BP 的範圍」，站立不加。項目內的「まで」可以選 0。",
+          "implementation": "兩個池都空才不開選擇；有選項時沒有整段 done。兩張棄牌帶 optional。BP 用當下數值，不走 cap()。有突襲的牌不進手牌項目。",
+          "discrepancy": "",
+          "evidence": "同檔 raid Mikasa。低 BP 選了不退場也不要求棄牌。5000 以上拒絕棄牌則不退場。手牌項目不含 069，含能量 1 且沒有突襲的 070。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "同上。【レイド】。",
+          "implementation": "符號逐張核對。種類結算用 060。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-068",
+      "number": "EX10BT/AOT-2-068",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "只有紅色的超大型巨人突襲到這張時減紅 2",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-068 。名稱相同的黃色 AOT-2-013 不減。",
+          "implementation": "aot2RaidCut 要求紅色且名稱完全一致，宿主是 068。",
+          "discrepancy": "",
+          "evidence": "同檔 Bertolt。7 點紅可以突襲 069。7 點黃不能突襲 013。沒有 068 時 6 點紅不能打出也不能突襲 069。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同上。【ドロー】。",
+          "implementation": "符號逐張核對。種類結算用 057。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-069",
+      "number": "EX10BT/AOT-2-069",
+      "status": "部分核對",
+      "clauses": [
+        {
+          "match": "在前線時前線上限 −1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-069 。卡圖確認這句在框外。",
+          "implementation": "AOT2_FRONT_PENALTY，不看突襲。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-set2.test.mjs：the Colossal Titans stack the front-line limit。本檔把非突襲 069 與另一張角色同時放上前線後仍能突襲 072。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲狀態才有衝擊 1，且只在前線的登場時抽 3",
+          "status": "已驗證",
+          "official": "同上。卡圖確認衝擊、站立與抽 3 都在框內。抽 3 還要求在前線。",
+          "implementation": "raidImpact 只在突襲狀態。onPlay 還要求框內時機與前線。",
+          "discrepancy": "",
+          "evidence": "同檔 Bertolt。突襲到 068 後衝擊 1，牌庫至少少 3 張。沒有宿主的 6 點紅不能登場。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲狀態在前線時指定範圍 +1000，複數疊加",
+          "status": "部分核對",
+          "official": "同上。Q1566：只算突襲狀態，兩張疊成 +2000。只抬高「以下」，不降低「以上」。",
+          "implementation": "aot2StandingBp 只數前線上正面朝上的突襲 069，每張 +1000。cap() 加到上限。",
+          "discrepancy": "",
+          "evidence": "同檔 raid-state Colossals。非突襲 069 在場時，072 的 5000 窗口不含 6000 的 013。一張突襲 069 在場時含。set2 與 026–050 的雷槍、032、037 也改成非突襲不加。",
+          "unresolved": "兩張同時在前線的 +2000 沒有打出。兩張突襲會把已減少的前線占滿，支付用的 7 點紅也占滿能量區，本組沒有另一色、可在該局面支付的範圍效果。不把這一張標成整張已驗證。"
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同上。【ゲット】。",
+          "implementation": "符號逐張核對。種類結算用 054。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-070",
+      "number": "EX10BT/AOT-2-070",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "看 3 張，最多公開 1 張 104 期兵，其餘置底；拿了才棄 1 張手牌",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-070 。先公開加入，再置底，加入了才棄手牌。",
+          "implementation": "共用搜尋。不拿時不棄、整窗維持隱藏。拿了先公開選中的那張，置底後才棄手牌。",
+          "discrepancy": "",
+          "evidence": "同檔 Eren publishes。不拿時手牌保留、窗口隱藏。拿走 066 後只公開那張，置底後才進入棄牌並棄掉留在手牌的那張。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同上。【ドロー】。",
+          "implementation": "符號逐張核對。種類結算用 057。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-071",
+      "number": "EX10BT/AOT-2-071",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "衝擊無效；一回合一次把 1 張生命加入手牌並得衝擊 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-071 。Q1567：加入手牌不公開、不確認觸發。",
+          "implementation": "每張 uid 一次，不要求活動。生命選擇是私人。沒有 publicReveals。",
+          "discrepancy": "",
+          "evidence": "同檔 Eren adds a hidden life。對手的 private choices 是 null。加入後本回合衝擊 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "攻擊時看頂端；能量 3 以下的 104 期兵可公開拿走；生命 3 以下改為抽 1",
+          "status": "已驗證",
+          "official": "同上。看是私人。不拿則放回頂或底。生命 3 以下整段改成抽 1。",
+          "implementation": "生命長度先判斷。公開只發生在加入手牌。頂或底不公開。",
+          "discrepancy": "",
+          "evidence": "同檔 Eren adds a hidden life。生命較多時查看不公開；生命 3 以下改為抽牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同上。【アクティブ】。",
+          "implementation": "符號逐張核對。種類結算用 051。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-072",
+      "number": "EX10BT/AOT-2-072",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲框內 +1000 到下一次自己的回合開始，然後必須選一個，項目內可選 0",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-072 。卡圖確認整段在框內。生命加入手牌不公開。Q1568 同 Q1567。生命 3 以下才有第三項。上限走站立。",
+          "implementation": "untilOwnTurnStart 用自己的回合數。模式沒有整段跳過。life 與 bare 依生命張數出現。退場可 done。",
+          "discrepancy": "",
+          "evidence": "同檔 Attack Titan。加值穿過對手回合，下一次自己的開始回到 4000。生命模式的選擇不公開。bare 在生命 2 張時可選，退場可拒絕。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "同上。【レイド】。",
+          "implementation": "符號逐張核對。種類結算用 060。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-2-073",
+      "number": "EX10BT/AOT-2-073",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "必須選一種人數；人數內可選 0，抽牌仍照印的張數",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-073 。1 張抽 2、2 張抽 1、3 張不抽。",
+          "implementation": "模式沒有跳過。foodBuff 在 done 或選滿時抽對應張數。食材會吃 062 的減免。",
+          "discrepancy": "",
+          "evidence": "同檔 seafood。選 1 張但不成加值仍抽 2。選 3 張並加兩名後手牌少 1，代表沒有抽牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同上。【アクティブ】。",
+          "implementation": "符號逐張核對。種類結算用 051。",
+          "discrepancy": "",
+          "evidence": "同檔 life symbols 與 each life kind。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

@@ -350,7 +350,7 @@ test('the Colossal Titans stack the front-line limit',()=>{
  assertUniversalMatch(packs,s);
 });
 
-test('standing BP range raises the Thunder Spear ceiling and is not consumed',()=>{
+test('a non-raid Colossal does not raise the Thunder Spear ceiling',()=>{
  const counts=countsFor(['AOT-2-049','AOT-1-002','AOT-1-015','AOT-2-002','AOT-2-008','AOT-2-013','AOT-2-069']);
  let s=toPhase(fresh(counts,2049),'main');
  put(s,0,'AOT-1-002','energy',0,true);
@@ -371,19 +371,10 @@ test('standing BP range raises the Thunder Spear ceiling and is not consumed',()
 
  put(s,0,'AOT-2-069','front',0,true);
  const again=toHand(s,0,'AOT-2-049');
- s=cast(s,again.uid);
- const second=legalUniversalActions(packs,s).filter(a=>a.mode==='retire').map(a=>a.uid);
- assert.equal(second.includes(mid.uid),true);
- assert.equal(second.includes(gap.uid),false);
- s=pick(s,a=>a.uid===mid.uid);
- assert.equal(s.players[0].front.some(c=>c?.cardId==='AOT-2-069'),true);
-
- const later=toHand(s,0,'AOT-2-049');
- assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===later.uid),false);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===again.uid),false);
  put(s,0,'AOT-2-069','front',1,true);
- assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===later.uid),true);
- s=cast(s,later.uid);
- assert.equal(legalUniversalActions(packs,s).some(a=>a.mode==='retire'&&a.uid===gap.uid),true);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===again.uid),false);
+ assert.equal(s.players[0].front.filter(c=>c?.cardId==='AOT-2-069').length,2);
  assertUniversalMatch(packs,s);
 });
 
@@ -770,7 +761,7 @@ test('EX10BT/AOT-2-032 retires an own yellow Zeke, and skipping the kill still o
  assertUniversalMatch(packs,s);
 });
 
-test('EX10BT/AOT-2-032 standing range can kill 6000, then a raidless Zeke rests',()=>{
+test('EX10BT/AOT-2-032 a non-raid Colossal does not kill 6000, then a raidless Zeke rests',()=>{
  const counts=countsFor(['AOT-2-032','AOT-2-001','AOT-2-023','AOT-2-025','AOT-2-013','AOT-2-031','AOT-2-069']);
  let s=toPhase(fresh(counts,20321),'main');
  for(let i=0;i<4;i++)put(s,0,'AOT-2-001','energy',i,true);
@@ -787,11 +778,8 @@ test('EX10BT/AOT-2-032 standing range can kill 6000, then a raidless Zeke rests'
  const event=toHand(s,0,'AOT-2-032');
  s=cast(s,event.uid);
  s=pick(s,a=>a.uid===beast.uid);
- const kills=legalUniversalActions(packs,s).filter(a=>a.mode==='retire').map(a=>a.uid);
- assert.equal(kills.includes(huge.uid),true);
- s=pick(s,a=>a.uid===huge.uid);
- assert.equal(s.players[1].outside.some(c=>c.uid===huge.uid),true);
  assert.equal(s.pending.step,'mode');
+ assert.equal(s.players[1].front.some(c=>c?.uid===huge.uid),true);
  const deploy=legalUniversalActions(packs,s).find(a=>a.mode==='deploy');
  assert.equal(uiActionLabel(deploy,{pack:packs,state:s}),'從場外使沒有突襲的黃色吉克・葉卡以休息狀態登場');
  s=pick(s,a=>a.mode==='deploy');
