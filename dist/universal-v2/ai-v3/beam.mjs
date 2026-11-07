@@ -675,10 +675,29 @@ function discardRoot(ctx){
  const kind=ctx.stats.sequence?.[0]?.type||'';
  return kind==='chooseDiscard'||kind==='chooseDiscardGate';
 }
+function clockLeft(ctx,deadline){
+ if(typeof ctx.now!=='function'||!Number.isFinite(deadline)||deadline===Infinity)return Infinity;
+ return deadline-nowOf(ctx);
+}
+// The 8ms margin is the whole decision's deadline. A root slice is only the
+// share kept for a later root; it is not a reason to skip a follow-up while
+// the shared clock and the shared node pool can still run it.
 function followClock(ctx){
- if(typeof ctx.now!=='function'||!Number.isFinite(ctx.deadline)||ctx.deadline===Infinity)return true;
- const left=ctx.deadline-nowOf(ctx);
+ const deadline=Number.isFinite(ctx.parentDeadline)?ctx.parentDeadline:ctx.deadline;
+ const left=clockLeft(ctx,deadline);
  return !Number.isFinite(left)||left>8;
+}
+function noteFollow(ctx,reason,extra){
+ if(!ctx.profile)return;
+ const now=nowOf(ctx);
+ const parent=ctx.parentDeadline;
+ ctx.profile.follows.push({
+  reason,sliceLeft:Number.isFinite(ctx.deadline)?ctx.deadline-now:null,
+  parentLeft:Number.isFinite(parent)?parent-now:null,
+  nodes:ctx.pool.n,lineSpent:ctx.lineSpent,root:ctx.stats.sequence?.[0]?.type||null,
+  rootLine:ctx.stats.sequence?.[0]?.line||null,rootUid:ctx.stats.sequence?.[0]?.uid??null,
+  ...extra
+ });
 }
 function canBranchDevelopment(state,actor,legal){
  if(!state||state.pending||state.active!==actor||state.phase!=='main')return false;
@@ -704,14 +723,14 @@ function branchDevelopment(pack,state,actor,ctx,choices){
   const action=choices[index];
   if(!room(ctx)){
    ctx.stats.budget++;
-   skipped=choices.slice(index).map(item=>brief(item,'unexplored'));
+   skipped=choices.slice(index).map(item=>({...brief(item,'unexplored'),reason:ctx.pool.n>0&&ctx.lineSpent<ctx.lineCap?'time':'nodes'}));
    break;
   }
   applyLeaf(ctx,before);
   const stepped=billedStep(ctx,pack,state,action);
   if(stepped.budget){
    ctx.stats.budget++;
-   skipped=choices.slice(index).map(item=>brief(item,'unexplored'));
+   skipped=choices.slice(index).map(item=>({...brief(item,'unexplored'),reason:nowOf(ctx)>ctx.deadline?'time':'nodes'}));
    break;
   }
   if(stepped.error){ctx.stats.unsupported++;continue;}
@@ -746,17 +765,38 @@ function finishLine(pack,cursor,actor,ctx){
   return terminalValue(cursor,actor)??evaluate(pack,cursor,actor,ctx);
  }
  ctx.finishGuard=(ctx.finishGuard||0)+1;
- if(ctx.pass==='basic'&&(ctx.plan==='tree'||ctx.plan==='tree-replies')&&!ctx.developed&&!discardRoot(ctx)&&room(ctx)&&followClock(ctx)){
+ if(ctx.pass==='basic'&&(ctx.plan==='tree'||ctx.plan==='tree-replies')&&!ctx.developed&&!discardRoot(ctx)&&room(ctx)){
   let legal=null;
   try{legal=legalUniversalActions(pack,cursor);}catch{ctx.stats.unsupported++;legal=null;}
   const choices=legal&&developmentCandidates(pack,cursor,actor,legal,ctx);
-  if(choices){
+  if(!choices)noteFollow(ctx,'no-candidate');
+  else if(!followClock(ctx)){
+   // Listed, not dispatched. The one-card script may still get home. That
+   // return is not a comparison of these choices.
+   noteFollow(ctx,'parent-clock',{listed:choices.length});
+   ctx.stats.followSeen=(ctx.stats.followSeen||[]).concat(choices.map(action=>brief(action,'follow')));
+   ctx.stats.unexplored=(ctx.stats.unexplored||[]).concat(choices.map(action=>({...brief(action,'unexplored'),reason:'clock'})));
+  }else{
+   const sliceLeft=clockLeft(ctx,ctx.deadline);
+   const parentLeft=clockLeft(ctx,ctx.parentDeadline);
+   // A slice that is already most of the way through the 8ms margin can
+   // finish the follow-up if it is allowed to reach that margin. A nearly
+   // empty slice is not extended, and the decision deadline is never moved.
+   const margin=nowOf(ctx)+8;
+   const raised=Number.isFinite(ctx.parentDeadline)&&margin<ctx.parentDeadline?margin:ctx.parentDeadline;
+   const widen=Number.isFinite(sliceLeft)&&sliceLeft>4&&sliceLeft<=8&&parentLeft>8&&
+    Number.isFinite(raised)&&raised>ctx.deadline;
+   noteFollow(ctx,widen?'branch-parent':'branch',{listed:choices.length,sliceLeft,parentLeft});
+   const saved=ctx.deadline;
+   if(widen)ctx.deadline=raised;
    ctx.developed=true;
-   const value=branchDevelopment(pack,cursor,actor,ctx,choices);
-   ctx.developed=false;
-   ctx.finishGuard--;
+   let value;
+   try{value=branchDevelopment(pack,cursor,actor,ctx,choices);}
+   finally{ctx.deadline=saved;ctx.developed=false;ctx.finishGuard--;}
    return value;
   }
+ }else if(ctx.pass==='basic'&&!ctx.developed&&ctx.profile){
+  noteFollow(ctx,!room(ctx)?'no-room':discardRoot(ctx)?'discard':'closed');
  }
  let state=cursor;
  if(room(ctx)&&state.status==='playing')state=roll(pack,state,actor,ctx,attackOrEnd);
@@ -998,6 +1038,8 @@ export function scoreLine(pack,state,actor,action,limits){
   pool,lineCap,lineSpent:0,
   now:limits.now,
   deadline:Math.min(requested,parent),
+  parentDeadline:parent,
+  profile:limits.profile||null,
   plan:limits.plan||(limits.finish===false?'tree':'rollout'),
   strategy:limits.strategy||null,
   beam:limits.beam,

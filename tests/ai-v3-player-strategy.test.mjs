@@ -1997,6 +1997,67 @@ test('two payable mains stay on the front and keep the raid base generating',()=
  }
 });
 
+test('a follow-up uses the decision clock when the root slice is already inside 8ms',()=>{
+ for(const gen of [0,1])for(const actor of [0,1]){
+  const spot=twoMains(actor,5,gen);
+  const {packs,state,raid,main}=spot;
+  const ask=(step)=>{
+   const meter={dispatches:0};
+   resetAiV3Report();
+   const action=chooseAiV3Action(packs,structuredClone(state),{
+    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
+    now:()=>meter.dispatches*step
+   });
+   const trace=lastAiV3Trace();
+   assert.equal(meter.dispatches,trace.nodesUsed);
+   assert.ok(trace.nodesUsed<48);
+   assert.ok(trace.nodesUsed>0);
+   return {action,trace};
+  };
+  const open=ask(1.25);
+  const openPlay=(open.trace.candidates||[]).find(row=>row.action?.type==='play'&&row.action.line==='front'&&row.executed!==false);
+  const openRaid=(open.trace.candidates||[]).find(row=>row.action?.type==='raid'&&row.action.uid===raid.uid);
+  const openPlays=(open.trace.sequence||[]).filter(step=>step.type==='play'&&step.line==='front');
+  assert.equal(open.action.type,'play');
+  assert.equal(open.action.line,'front');
+  assert.equal(openPlays.length,2);
+  assert.deepEqual(openPlays.map(step=>step.uid).sort(),[raid.uid,main.uid].sort());
+  assert.equal(openPlay.boundary,'returned');
+  assert.equal(openPlay.settled,true);
+  assert.equal(openRaid.executed,true);
+  assert.equal(openRaid.settled,true);
+  assert.ok(openPlay.search>openRaid.search);
+  assert.equal(open.trace.score,openPlay.search);
+  assert.equal(open.trace.settled,true);
+  let cursor=structuredClone(state);
+  for(const step of openPlays){
+   const legal=legalUniversalActions(packs,cursor);
+   const play=legal.find(item=>item.type==='play'&&item.line==='front'&&item.uid===step.uid);
+   assert.ok(play);
+   cursor=settle(packs,cursor,play);
+  }
+  assert.deepEqual(cursor.players[actor].front.filter(Boolean).map(card=>card.cardId).sort(),['TEST-BLANK-MAIN','TEST-BLANK-RAID']);
+  assert.equal(universalEnergyByColor(packs,cursor,actor).green,4);
+  const tight=ask(2);
+  const tightPlay=(tight.trace.candidates||[]).find(row=>row.action?.type==='play'&&row.action.line==='front'&&row.executed!==false);
+  const tightRaid=(tight.trace.candidates||[]).find(row=>row.action?.type==='raid'&&row.action.uid===raid.uid);
+  const tightPlays=(tightPlay.sequence||[]).filter(step=>step.type==='play'&&step.line==='front');
+  const other=tightPlay.action.uid===main.uid?raid.uid:main.uid;
+  assert.equal(tightPlays.length,1);
+  assert.equal(tightPlay.settled,false);
+  assert.equal(tightPlay.followSeen.some(step=>step.type==='play'&&step.line==='front'&&step.uid===other),true);
+  assert.equal(tightPlay.unexplored.some(step=>step.type==='play'&&step.line==='front'&&step.uid===other&&step.reason==='clock'),true);
+  assert.equal(tight.trace.sequence.some(step=>step.uid===other),false);
+  assert.equal(tightRaid.settled,true);
+  assert.ok(tightRaid.search>tightPlay.search);
+  assert.equal(tight.action.type,'raid');
+  assert.equal(tight.action.uid,raid.uid);
+  assert.equal(tight.trace.score,tightRaid.search);
+  assert.equal(tight.trace.settled,true);
+  assert.notEqual(tight.trace.score,tightPlay.search);
+ }
+});
+
 test('a follow-up play stays in the search when the front is busy or the card has an on-play',()=>{
  for(const actor of [0,1]){
   for(const variant of ['busy','onplay']){

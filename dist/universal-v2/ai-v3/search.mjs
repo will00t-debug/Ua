@@ -441,7 +441,8 @@ export function chooseAiV3Action(pack,state,options={}){
     const requested=Number.isFinite(lineDeadline)?lineDeadline:deadline;
     const line=scoreLine(pack,worlds[w].state,actor,action,{
      nodes:slice,pool,beam,deadline:requested<deadline?requested:deadline,
-     parentDeadline:deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass
+     parentDeadline:deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass,
+     profile:options.profile||null
     });
     if(line?.unexplored?.length)unexplored.push(...line.unexplored);
     if(!line||line.executed===false||!Number.isFinite(line.search)){
@@ -495,7 +496,17 @@ export function chooseAiV3Action(pack,state,options={}){
    }
    const cap=rootSlice(pool.n,jobs.length-index,total,jobs.length);
    const laterNodes=Math.max(0,jobs.length-index-1)*coverShare(total,jobs.length);
-   const row=scoreJob(jobs[index],'basic',cap,shareDeadline(now,deadline,cap,laterNodes));
+   const sliceDeadline=shareDeadline(now,deadline,cap,laterNodes);
+   if(options.profile)options.profile.roots.push({
+    index,type:jobs[index].type,line:jobs[index].line||null,uid:jobs[index].uid??null,
+    startMs:now()-clockStart,sliceMs:Number.isFinite(sliceDeadline)?sliceDeadline-clockStart:null,
+    totalMs:deadline-clockStart,cap,laterNodes,nodesBefore:total-pool.n
+   });
+   const row=scoreJob(jobs[index],'basic',cap,sliceDeadline);
+   if(options.profile){
+    const root=options.profile.roots[options.profile.roots.length-1];
+    root.endMs=now()-clockStart;root.nodesAfter=total-pool.n;root.executed=!!row&&!row.failed;
+   }
    if(!row||row.failed)unexecuted.push({...note(jobs[index]),action:jobs[index],executed:false,nodes:0,reason:row?.reason||stopReason()});
    else{
     row.basicNodes=row.nodes;
