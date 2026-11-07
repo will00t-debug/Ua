@@ -49,7 +49,11 @@ function used(s,key){return s.mainAbilityUsedUids.includes(key);}
 function use(s,key){if(!used(s,key))s.mainAbilityUsedUids.push(key);}
 function nameLocked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
 function nameLock(s,owner,key){if(!nameLocked(s,owner,key))s.mainReadyOnceByName[owner].push(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function grantImpact(s,c){if(c)c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function energyBuff(s,c,untilOwn){
  if(!c)return;

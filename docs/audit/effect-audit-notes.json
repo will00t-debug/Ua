@@ -206,18 +206,18 @@
    "evidence": "tests/v2-aot-set1.test.mjs。突襲放上前線後、起動前，040 維持印刷 BP；起動並跳過衝擊後才 +1000。tests/v2-aot-026-050.test.mjs 的能量線突襲仍只有登場當回合的 +1000。"
   },
   {
-   "name": "選擇是效果時，沒有對象仍可使用",
-   "rule": "AOT-1-033、034、066 的「1枚選び、退場させる」與 AOT-1-063 的查看後選 1 張，是效果不是費用。選不到指定張數就處理 0 張，事件仍可使用。有對象時不能跳過。",
-   "where": "dist/universal-v2/aot-runtime.mjs aotMandatoryTargets 不再用有沒有對象決定能不能使用。offerRetire 在沒有對象時直接結束。有對象時不提供跳過。",
-   "affects": "033、034、063、066。其他作品的強制對象閘門沒有套用這句，因為那些句子要各自對原文，不能一次改成都能空過。",
-   "evidence": "tests/v2-aot-026-050.test.mjs。對手只有超標角色時，033 仍可使用，事件進場外，角色不退場。有合法對象時沒有跳過。"
+   "name": "強制選擇的事件要選得滿",
+   "rule": "Q1119（https://www.unionarena-tcg.com/jp/faq/list.php?type=0）：事件必須選擇對象，而且不能選滿全部必要對象時，不能使用。「1枚まで」可以選零張，不在這條裡。AOT-1-033、034、066 的「1枚選び、退場させる」與 AOT-1-063 的查看後選 1 張都是必要對象。角色的登場時效果不套用這條事件使用限制。",
+   "where": "dist/universal-v2/aot-runtime.mjs aotMandatoryTargets。033 用修正後的 cap033，034 在精確〈リヴァイ〉時改 5000，066 在卡名含ジーク・イェーガー時改 5000，063 要求牌組至少 1 張。有對象時 offerRetire 不提供跳過。",
+   "affects": "只改這四張的使用閘門。063 後段的「APカードを1枚まで」與 025、032 的「1枚まで」仍可選零張。沒有把這條套到角色登場時。063 與 066 沒有因此整張標成已驗證。",
+   "evidence": "tests/v2-aot-026-050.test.mjs。034 前線沒有合法對象時不在合法動作裡，使用會被拒絕，AP 不扣，事件留在手牌。有對象時不能跳過，里維才把上限改成 5000。066 沒有對象不能使用，3000 與吉克名字的 5000 各自成立。063 牌組空了不能使用，有牌時查看必須拿 1 張。025 沒有對手仍可登場，有對象時可以選零張。"
   },
   {
    "name": "戰鎚只擋退場與 BP 減少",
    "rule": "EX10BT/AOT-2-028：自己場上同時有卡名含エレン與ジーク的角色時，這張角色獲得「相手のキャラの効果で〔退場せず、BPをマイナスされない〕」與【2回ブロック】。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028",
-   "where": "dist/universal-v2/engine.mjs choiceBlocked 只在 purpose 為 retire 或 bpDown 時擋角色效果。effectSelectionProhibited、retireOffer、enemyBpDown、retireOppFrontUnderBp 帶上這個用途。enemyFrontAllBpDown 在套用前略過戰鎚。效果目標的減 BP 若漏進名單，也不寫進 buff。",
-   "affects": "全庫只有這一句。事件仍可退場或減 BP。休息、彈回等其他角色效果選擇不再被一併擋住。拉姆的全體減 BP 不加在戰鎚上，單選減 BP 也選不到。",
-   "evidence": "tests/v2-aot2-026-050.test.mjs。兩次阻擋、039 選不到、013 退場選不到、037 事件可以退場，都還在。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000；改選一張時名單沒有戰鎚。"
+   "where": "dist/universal-v2/engine.mjs choiceBlocked 只在 purpose 為 retire 或 bpDown 時擋角色效果。characterHarmBlocked 用效果開始時記下的來源類型與控制者，接到 retire 與實際的負面 BP。來源離場後仍用那個類型。犬夜叉、魔法少女、假面騎士、鍊鋸人、咒術與兩彈巨人的 runtime buff 都走這一句。enemyFrontAllBpDown 與效果目標的減 BP 也走同一句。",
+   "affects": "全庫只有這一句。事件、觸發、戰鬥、BP 0 的規則退場、休息、彈回與自己的效果不套用。拉姆的全體減 BP 不加在戰鎚上。",
+   "evidence": "tests/v2-aot2-026-050.test.mjs。兩次阻擋、039 選不到、013 退場選不到、037 事件可以退場。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000。tests/v2-warhammer-runtime.test.mjs。IYS-1-027 選不到戰鎚，奈落仍退場，027 活動並得到衝擊，BP 維持 4000。拿掉一個名字或效果失效後變成 3000。來源離場後仍是角色效果。桔梗可以休息戰鎚。034 在里維時可以把戰鎚退場。MMM-2-014 的登場時減不到，缺一個名字時可以減。"
   }
  ],
  "reviews": [
@@ -12071,9 +12071,9 @@
      "match": "『BP2000』以下の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ヒストリア・レイス〉がある場合、自分の場外にあるイベントカード1枚につき、この効果で選べるキャラの",
      "status": "已驗證",
      "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-033",
-     "implementation": "有對象時不能跳過。沒有希斯特莉亞時 2000 可退、2500 不可。對手的希斯特莉亞不算。自己的希斯特莉亞加上 1 張場外事件和正在結算的這張，上限 4000：3500 可退、5000 不可。",
-     "discrepancy": "沒有任何合法對象時，引擎不讓這張事件被使用。",
-     "evidence": "tests/v2-aot-026-050.test.mjs 只測有對象的上限。",
+     "implementation": "Q767：使用中的事件要等效果結束才進場外，resolvingEvents 不算場外。沒有希斯特莉亞時上限 2000。自己的希斯特莉亞加上已經在場外的事件，每張 +1000；場外一張時上限 3000，3500 不能選。選擇期間事件在 resolvingEvents，選完才從手牌進場外一次，而且在對象退場之後。Q1119：沒有合法對象不能使用。有對象時不能跳過。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。希斯特莉亞、場外沒有事件時上限 2000，3000 不能退。場外已有一張時上限 3000，3500 不能退。只有超標角色時不在合法動作裡，AP 不扣，事件留在手牌。",
      "unresolved": ""
     },
     {
@@ -12096,9 +12096,9 @@
      "match": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈リヴァイ〉がある場合、『BP5000以下』に代わる。",
      "status": "已驗證",
      "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-034",
-     "implementation": "沒有里維時 3000 可退、3500 不可，而且不能跳過。精確名字的 007 把上限改成 5000：5000 可退、6000 不可。〈リヴァイ班〉的 013 不算。對象只看對手前線。",
-     "discrepancy": "沒有合法對象時不能使用這張事件。",
-     "evidence": "tests/v2-aot-026-050.test.mjs。",
+     "implementation": "Q1119：沒有合法必要對象時不能使用，不扣 AP，事件留在手牌。有對象時不能跳過。沒有里維時 3000 可退、3500 不可。精確名字的 007 把上限改成 5000：5000 可退、6000 不可。〈リヴァイ班〉的 013 不算。對象只看對手前線。",
+     "discrepancy": "",
+     "evidence": "tests/v2-aot-026-050.test.mjs。前線沒有角色時 034 不在合法動作裡。有 3000 與里維時的 5000 仍不能跳過。",
      "unresolved": ""
     },
     {
@@ -12553,9 +12553,9 @@
      "match": "自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、このキャラは「相手のキャラの効果で〔退場せず、BPをマイナスされない〕。」と【2回ブロック】",
      "status": "已驗證",
      "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028",
-     "implementation": "兩名創始者都在時，第一次阻擋後先轉回活動，再比 BP。choiceBlocked 與退場、減 BP 的選擇只在用途是 retire 或 bpDown 時擋角色效果。enemyFrontAllBpDown 在套用前略過戰鎚。效果目標的減 BP 即使漏進名單也不寫 buff。事件仍可退場。",
+     "implementation": "兩名創始者都在、而且這張角色的原文還在時，對手的角色效果不能讓它退場或減 BP。來源類型與控制者在效果開始時記下，來源之後離場仍用那個類型。實際的 retire 與負面 BP 都檢查。休息、彈回、事件、觸發、戰鬥、BP 0 規則退場與自己的效果不套用。第一次阻擋後先轉回活動，再比 BP。",
      "discrepancy": "",
-     "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。第一次阻擋後戰鎚活動、攻擊者休息並留在場上。第二次戰鎚休息。沒有兩邊名稱時第一次就休息。 tests/v2-aot2-026-050.test.mjs：War Hammer。突襲 013 的退場選不到，039 在始祖都在時選不到、拿掉一邊後可以選。 tests/v2-aot2-026-050.test.mjs：War Hammer。037 可以選戰鎚並把它退到場外。 tests/v2-aot2-026-050.test.mjs。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000。改選一張時名單沒有戰鎚。",
+     "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。第一次阻擋後戰鎚活動、攻擊者休息並留在場上。第二次戰鎚休息。沒有兩邊名稱時第一次就休息。突襲 013 的退場選不到，039 在始祖都在時選不到、拿掉一邊後可以選。037 可以選戰鎚並把它退到場外。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000。tests/v2-warhammer-runtime.test.mjs。IYS-1-027 減不到，奈落仍退場。缺一個名字或效果失效後 BP 變 3000。來源離場後仍擋住。桔梗可以休息。MMM-2-014 減不到。",
      "unresolved": ""
     },
     {

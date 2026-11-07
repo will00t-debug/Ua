@@ -476,6 +476,36 @@ function choiceBlocked(pack,s,selector,uid,sourceType,purpose=null){
  return printed.oppEffectUntargetable===true||
   (printed.raidOppEffectUntargetable===true&&faceUpRaid(pack,c));
 }
+// The printed type is captured when the effect starts. A later leave does
+// not turn a character effect into an unknown source, and a trigger job
+// stays a trigger even though the physical card is a character.
+function stampEffectProvenance(pack,s,uid,controller,job){
+ const ctrl=Number.isInteger(controller)?controller:
+  (typeof uid==='string'&&/^([01])-/.test(uid)?Number(uid[0]):null);
+ if(job?.slot==='trigger'||job?.reason==='life-trigger'){
+  s.effectProvenance={uid:uid||null,kind:'trigger',controller:ctrl};
+  return;
+ }
+ const live=sourceTypeFromUid(pack,s,uid);
+ if(live!=='unknown'){
+  s.effectProvenance={uid:uid||null,kind:live,controller:ctrl};
+  return;
+ }
+ const prev=s.effectProvenance;
+ if(prev&&prev.uid===uid&&prev.kind&&prev.kind!=='unknown')return;
+ s.effectProvenance={uid:uid||null,kind:'unknown',controller:ctrl};
+}
+// EX10BT/AOT-2-028: an opponent CHARACTER effect cannot retire this card or
+// reduce its BP. Events, triggers, battle, the BP-0 rule, rest, bounce,
+// and the controller's own effects are outside that sentence.
+function characterHarmBlocked(pack,s,target,purpose,by){
+ if(by==='battle'||by==='rule')return false;
+ if(purpose!=='retire'&&purpose!=='bpDown')return false;
+ if(!target||originalEffectsDisabled(s,target)||!aot2Warhammer(pack,s,target))return false;
+ const prov=s.effectProvenance;
+ if(!prov||prov.kind!=='character'||!Number.isInteger(prov.controller))return false;
+ return prov.controller!==Number(String(target.uid).split('-')[0]);
+}
 let finishBound=false;
 function ensureFinish(){
  if(finishBound)return;
@@ -1657,6 +1687,14 @@ function legalNamedPayment(pack,physical,payment){
 function payableHand(pack,s,owner,payment){
  return s.players[owner].hand.filter(c=>legalNamedPayment(pack,c,payment));
 }
+function eventResolvesBeforeOutside(definition){
+ // Q767: the event being used is placed outside after its effect. Only the
+ // sentences that read the outside-event count, plus the existing conditional
+ // bounce, use this path. Other events stay on their own audited timing.
+ return (definition?.effects?.onPlay||[]).some(e=>
+  e.op==='conditionalBounceOrRetireByOwnOutsideNames'||
+  (e.op==='aot'&&e.id==='AOT-1-033'));
+}
 function sourceMoveBoundary(pack,s,owner,sourceUid){
  // Q2143 collects 飛来骨 inside this boundary, so it must open when that
  // card is in a loaded pack even if no card prints moveTriggers.
@@ -1852,7 +1890,7 @@ function ensureMmm2(){
  if(mmm2Bound)return;
  mmm2Bound=true;
  bindMmm2({
-  card,draw:(pack,s,owner,count)=>draw(pack,s,owner,count),field,location,bp,
+  card,characterHarmBlocked,draw:(pack,s,owner,count)=>draw(pack,s,owner,count),field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
   retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
@@ -1870,7 +1908,7 @@ function ensureIys(){
  if(iysBound)return;
  iysBound=true;
  bindIys({
-  card,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
+  card,characterHarmBlocked,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
@@ -1893,7 +1931,7 @@ function ensureKjn(){
  if(kjnBound)return;
  kjnBound=true;
  bindKjn({
-  card,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
+  card,characterHarmBlocked,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
@@ -1911,7 +1949,7 @@ function ensureCsm(){
  if(csmBound)return;
  csmBound=true;
  bindCsm({
-  card,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
+  card,characterHarmBlocked,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
@@ -1953,7 +1991,7 @@ function ensureAot(){
  if(aotBound)return;
  aotBound=true;
  bindAot({
-  card,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
+  card,characterHarmBlocked,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
@@ -1991,7 +2029,7 @@ function ensureAot2(){
  if(aot2Bound)return;
  aot2Bound=true;
  bindAot2({
-  card,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
+  card,characterHarmBlocked,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
@@ -2009,7 +2047,7 @@ function ensureKmr(){
  if(kmrBound)return;
  kmrBound=true;
  bindKmr({
-  card,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
+  card,characterHarmBlocked,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
@@ -2044,7 +2082,7 @@ function ensureKmr2(){
  if(kmr2Bound)return;
  kmr2Bound=true;
  bindKmr2({
-  card,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
+  card,characterHarmBlocked,draw:(pack,s,owner,count,sourceUid)=>draw(pack,s,owner,count,{reason:'own-effect',sourceUid}),
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
@@ -2203,6 +2241,7 @@ function continueEffectQueue(pack,s){
   refreshAbsentFieldNames(pack,s);
   const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
   s.kmrSourceUid=job.sourceUid||null;
+  if(typeof job.sourceUid==='string')stampEffectProvenance(pack,s,job.sourceUid,job.owner,job);
   ensureFinish();
   if(finishJob(pack,s,job))continue;
   if(job.op==='aot'){ensureAot();runAotJob(pack,s,job);continue;}
@@ -4597,11 +4636,10 @@ function continueEffectQueue(pack,s){
    // Official timing is this resolution. Current BP is read once, then the
    // matching physical cards are the only recipients. Later reductions must
    // not drop a card out of the set or pull a new one in.
-   const sourceCharacter=sourceTypeFromUid(pack,s,job.sourceUid)==='character';
    const targets=s.players[foe].front.filter(c=>c&&
     (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
     (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)&&
-    !(sourceCharacter&&aot2Warhammer(pack,s,c)));
+    !characterHarmBlocked(pack,s,c,'bpDown'));
    // All modifiers land in the SAME effect step, before any of the
    // simultaneous state-based 0-BP retirements or replacement choices.
    // AOT-2-028 is omitted above: this is not a choice, and an opponent
@@ -7029,6 +7067,10 @@ function retire(pack,s,p,line,slot,opts={}){
  const by=cause.by;
  const c=s.players[p][line][slot];
  if(!c)throw Error('Cannot retire empty field');
+ // EX10BT/AOT-2-028 applies when the leave actually happens. A character
+ // effect keeps the type captured at its start, including after that
+ // source has left. Battle and the BP-0 rule are not that sentence.
+ if(characterHarmBlocked(pack,s,c,'retire',by))return false;
  if(kmrAnchored(pack,s,c,card,originalEffectsDisabled))return false;
  const previousCause=s.csmRetireCause??null;
  const previousBy=s.kmrRetireBy??null;
@@ -7753,8 +7795,15 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);
   return;
  }
- if(q.kind==='life-trigger')s.kmrSourceUid=null;
- else if(typeof q.sourceUid==='string')s.kmrSourceUid=q.sourceUid;
+ if(q.kind==='life-trigger'){
+  s.kmrSourceUid=null;
+  stampEffectProvenance(pack,s,q.uid,q.player,{slot:'trigger'});
+ }else if(typeof q.sourceUid==='string'){
+  s.kmrSourceUid=q.sourceUid;
+  const prev=s.effectProvenance;
+  if(!(prev&&prev.uid===q.sourceUid&&prev.kind==='trigger'))
+   stampEffectProvenance(pack,s,q.sourceUid,q.player,null);
+ }
  ensureFinish();
  if(q.kind==='kmr2'){ensureKmr2();resolveKmr2Pending(pack,s,a);return;}
  if(q.kind==='kmr'){ensureKmr();resolveKmrPending(pack,s,a);return;}
@@ -10204,6 +10253,9 @@ function resolveChoice(s,a,pack){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const target=s.players[1-q.player].front.find(c=>c?.uid===a.uid);
   if(!target||!q.choices.includes(a.uid))throw Error('Illegal front BP cut');
+  if(characterHarmBlocked(pack,s,target,'bpDown')){
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   target.buffs??=[];
   target.buffs.push({bp:-q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -11943,8 +11995,9 @@ function resolveChoice(s,a,pack){
     if(!found)throw Error('Selected multi-target left the front line');
     return found;
    });
-   for(const c of targets){c.buffs??=[];c.buffs.push({bp:-q.bp,untilTurn:s.turn});}
-   const lethal=targets.filter(c=>bp(pack,s,c)<=0);
+   const applied=targets.filter(c=>!characterHarmBlocked(pack,s,c,'bpDown'));
+   for(const c of applied){c.buffs??=[];c.buffs.push({bp:-q.bp,untilTurn:s.turn});}
+   const lethal=applied.filter(c=>bp(pack,s,c)<=0);
    s.pending=null;
    queueSimultaneousRetires(s,q.player,lethal.map(c=>({
     op:'retireBatchOne',owner:q.player,targetPlayer:foe,uid:c.uid
@@ -11976,7 +12029,8 @@ function resolveChoice(s,a,pack){
   if(!found||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
   const target=found.target;
   // A leaked character-effect choice still must not reduce AOT-2-028.
-  if(sourceTypeFromUid(pack,s,q.sourceUid)==='character'&&aot2Warhammer(pack,s,target)){
+  // The type is the one captured when this effect started.
+  if(characterHarmBlocked(pack,s,target,'bpDown')){
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   target.buffs??=[];
@@ -16434,16 +16488,15 @@ const TARGETING_LIFE_MODES=new Set([
 function effectChoiceProvenance(pack,s){
  const q=s.pending;
  if(q?.kind==='life-trigger')return 'trigger';
- const player=q&&s.players[q.player];
- // A paid EVENT resolves from the owner's OUTSIDE, not from FIELD.
- // Resolved revealed LIFE effects are handled above as Trigger provenance.
- const physical=q&&typeof q.sourceUid==='string'
-  ?(location(s,q.player,q.sourceUid)?.c||
-    player?.outside.find(c=>c.uid===q.sourceUid)||
-    player?.resolvingEvents.find(c=>c.uid===q.sourceUid)||
-    player?.removed.find(c=>c.uid===q.sourceUid)||
-    player?.lifeRevealed?.find(c=>c.uid===q.sourceUid)):null;
- return physical?card(pack,physical).type:'unknown';
+ const uid=typeof q?.sourceUid==='string'?q.sourceUid:null;
+ const stamped=s.effectProvenance;
+ // A trigger stays a trigger for this effect even though the card is a character.
+ if(stamped&&stamped.uid===uid&&stamped.kind==='trigger')return 'trigger';
+ const live=uid?sourceTypeFromUid(pack,s,uid):'unknown';
+ if(live!=='unknown')return live;
+ // The source may already have left. Keep the type captured when it started.
+ if(stamped&&stamped.uid===uid&&stamped.kind&&stamped.kind!=='unknown')return stamped.kind;
+ return 'unknown';
 }
 function aotPrintedSelectionAp(pack,s,selector,uid,sourceType){
  if(sourceType!=='character'&&sourceType!=='event')return 0;
@@ -16467,14 +16520,21 @@ function characterHarmPurpose(q,a){
  if(a?.type==='chooseTarget'||a?.type==='chooseTargetMany')return 'bpDown';
  if((a?.type==='aot'||a?.type==='aot2'||a?.type==='kjn'||a?.type==='kmr'||a?.type==='kmr2')&&
   (a?.mode==='retire'||a?.mode==='retireOwn'))return 'retire';
+ if(q?.kind==='iys'&&(q.step==='debuff'||q.step==='debuffOptional')&&a?.mode==='pick')return 'bpDown';
+ if(q?.kind==='iys'&&(q.step==='retireBp'||q.step==='retireCap')&&a?.mode==='pick')return 'retire';
+ if(q?.kind==='mmm2'&&q.step==='u014'&&a?.type==='mmm2'&&a?.mode!=='skip')return 'bpDown';
  return null;
 }
 function effectSelectionProhibited(pack,s,a){
  const q=s.pending;
  if(!q||typeof a?.uid!=='string')return false;
- if(a.type==='kmr2'||a.type==='kmr'||a.type==='aot'||a.type==='aot2'||TARGETING_CARD_EFFECT_CHOICES.has(a.type)||
+ const purpose=characterHarmPurpose(q,a);
+ const runtimeHarm=(a.type==='iys'||a.type==='mmm2'||a.type==='kjn'||a.type==='csm')&&
+  (purpose==='retire'||purpose==='bpDown');
+ if(a.type==='kmr2'||a.type==='kmr'||a.type==='aot'||a.type==='aot2'||runtimeHarm||
+  TARGETING_CARD_EFFECT_CHOICES.has(a.type)||
   (q.kind==='life-trigger'&&a.type==='chooseTrigger'&&TARGETING_LIFE_MODES.has(a.mode)))
-  return choiceBlocked(pack,s,q.player,a.uid,effectChoiceProvenance(pack,s),characterHarmPurpose(q,a));
+  return choiceBlocked(pack,s,q.player,a.uid,effectChoiceProvenance(pack,s),purpose);
  return false;
 }
 function effectSelectionApTax(pack,s,a){
@@ -17912,6 +17972,10 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    continueEffectQueue(pack,s);
    break;
   case 'activate':{
+   if(typeof action.uid==='string'){
+    s.kmrSourceUid=action.uid;
+    stampEffectProvenance(pack,s,action.uid,p,null);
+   }
    if(typeof action.mode==='string'&&action.mode.startsWith('mmm2:')){
     ensureMmm2();activateMmm2(pack,s,action);break;
    }
@@ -19589,8 +19653,7 @@ if(ability.op==='characterDualMain'){
    if(action.type==='raid')
     s.handRaidCuts[p]=s.handRaidCuts[p].filter(cut=>!cut.names.includes(d.name));
    if(action.type==='event'){
-    const deferred=(d.effects?.onPlay||[]).some(e=>
-     e.op==='conditionalBounceOrRetireByOwnOutsideNames');
+    const deferred=eventResolvesBeforeOutside(d);
     if(deferred){
      // Generic pending-source lifecycle. Q767 excludes this EVENT until its
      // complete printed effect ends; no title-specific reducer or timer.
@@ -24267,9 +24330,8 @@ export function assertUniversalMatch(pack,s){
    const printed=card(pack,c);
    const jobs=s.effectQueue.filter(e=>e.op==='completeResolvingEvent'&&e.owner===p&&
     e.sourceUid===c.uid);
-   const bounce=printed.type==='event'&&printed.effects?.onPlay?.some(e=>
-    e.op==='conditionalBounceOrRetireByOwnOutsideNames')&&jobs.length===1&&
-    jobs[0].destination===undefined;
+   const bounce=printed.type==='event'&&eventResolvesBeforeOutside(printed)&&
+    jobs.length===1&&jobs[0].destination===undefined;
    const removed=printed.type==='event'&&jobs.length===1&&
     jobs[0].destination==='removed'&&jobs[0].from==='outside'&&
     field(pl).some(src=>src.uid===jobs[0].causeUid&&!originalEffectsDisabled(s,src)&&

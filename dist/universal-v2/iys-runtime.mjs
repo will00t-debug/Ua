@@ -21,7 +21,11 @@ function used(s,key){return s.mainAbilityUsedUids.includes(key);}
 function use(s,key){if(!used(s,key))s.mainAbilityUsedUids.push(key);}
 function lock(s,owner,key){if(!s.mainReadyOnceByName[owner].includes(key))s.mainReadyOnceByName[owner].push(key);}
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function impact(s,c){c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function ceiling(s,source,target){
  target.blockAtLeastGranted={turn:s.turn,stamp:target.fieldEntryStamp,bp:4000};
@@ -162,7 +166,9 @@ function frontChars(s,owner,pred){
  return plOf(s,owner).front.filter(c=>c&&def(A.pack,c).type==='character'&&(!pred||pred(c)));
 }
 function offerFront(s,spec,owner,pred,optional,step){
- const pool=frontChars(s,owner,pred);
+ const purpose=step==='debuff'||step==='debuffOptional'?'bpDown':
+  step==='retireBp'||step==='retireCap'?'retire':null;
+ const pool=frontChars(s,owner,pred).filter(c=>!purpose||!A.characterHarmBlocked(A.pack,s,c,purpose));
  if(!pool.length)return false;
  hold(s,{...spec,step},[
   ...(optional?[{type:'iys',mode:'skip'}]:[]),
@@ -502,7 +508,7 @@ function startMain(pack,s,c,mode){
  if(id==='IYS-1-022'){lock(s,owner,'神無');offerTuck(pack,s,spec);return;}
  if(id==='IYS-1-027'){
   use(s,c.uid+'|main');
-  const foe=frontChars(s,1-owner);
+  const foe=frontChars(s,1-owner).filter(c=>!A.characterHarmBlocked(A.pack,s,c,'bpDown'));
   if(foe.length)hold(s,{...spec,step:'debuffOptional'},[
    {type:'iys',mode:'skip'},...foe.map(x=>({type:'iys',mode:'pick',uid:x.uid}))]);
   else{A.active(s,owner,c);impact(s,c);offerNarakuRetire(s,spec,false);}

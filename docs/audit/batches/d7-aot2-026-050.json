@@ -16,8 +16,8 @@
     "note": "2026-11-07 對過 EX10BT 官方頁、上述卡圖與進撃の巨人個別 FAQ。026–050 沒有單卡 Q。Q1566（2025-06-20）是 AOT-2-069：指定できる BP 的範圍 +1000，只抬高「以下」的上限，不降低「以上」的下限。032、037、049 用這條。027 的【ステップ】在框外，普通登場可以步驟移動，raid-box 沒有列它。029 沒有突襲框。042 的登場時與攻擊時都在深色框內，既有 raid-box 的 onPlay、onAttack 與卡圖一致，沒有改 raid-box.mjs。030 仍在選擇前公開整窗。032、036 的查看仍是私人，只公開選中的牌。繁中頁把 034 印成 032，效果以 effectJa 為準。做到 050 不代表第二彈整彈完成。"
   },
   "counts": {
-    "已驗證": 24,
-    "待修正": 1,
+    "已驗證": 25,
+    "待修正": 0,
     "缺資料待確認": 0
   },
   "fixes": [
@@ -30,7 +30,7 @@
       "owner": "A",
       "cardId": "AOT-2-028",
       "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028 。自分の場にカード名に「エレン」を含むキャラとカード名に「ジーク」を含むキャラがある場合、このキャラは「相手のキャラの効果で〔退場せず、BPをマイナスされない〕。」と【2回ブロック】を得る。",
-      "reproduction": "雙方始祖在場時，突襲後的 AOT-2-013 退場選擇與 AOT-2-039 的 BP 減少都選不到戰鎚；拿掉一邊始祖後 039 可以選。AOT-2-037 事件可以退場。這三條是印刷句，測試已覆蓋。【2回ブロック】本身也正確：第一次阻擋後戰鎚維持活動，BP 較低的攻擊者留在場上並休息，第二次才休息。缺口在 dist/universal-v2/engine.mjs 的 choiceBlocked：只要來源是角色效果就擋下，不限於退場與 BP 減少。同檔 bp() 的 immune 旗標不含 aot2Warhammer，所以不是「選擇」的負面 BP 修正仍會減。本批沒有改 engine.mjs。"
+      "reproduction": "雙方始祖在場時，突襲後的 AOT-2-013 退場選擇與 AOT-2-039 的 BP 減少都選不到戰鎚；拿掉一邊始祖後 039 可以選。AOT-2-037 事件可以退場。這三條是印刷句，測試已覆蓋。【2回ブロック】本身也正確：第一次阻擋後戰鎚維持活動，BP 較低的攻擊者留在場上並休息，第二次才休息。第七輪把選擇範圍限於退場與減 BP。第八輪補上作品 runtime：實際減 BP 與退場都檢查，來源離場後仍保留該效果原本的來源類型。休息、事件、觸發、戰鬥與自己的效果不套用。拉姆的全體減 BP 仍跳過戰鎚。"
     }
   ],
   "tests": {
@@ -100,7 +100,7 @@
     {
       "cardId": "AOT-2-028",
       "number": "EX10BT/AOT-2-028",
-      "status": "待修正",
+      "status": "已驗證",
       "clauses": [
         {
           "match": "【2回ブロック】",
@@ -113,12 +113,12 @@
         },
         {
           "match": "相手のキャラの効果で退場せず、BPをマイナスされない",
-          "status": "待修正",
+          "status": "已驗證",
           "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028 。只擋對方角色效果的退場與 BP 減少。",
-          "implementation": "choiceBlocked 在來源是角色時一律擋下。bp() 的 immune 不含戰鎚，非選擇的減益仍會減。",
-          "discrepancy": "印刷句只排除退場與 BP 減少。現行選擇攔截比這句寬，BP 計算又沒有把戰鎚列入免疫。交 A，見 sharedGaps。",
-          "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。突襲 013 的退場選不到，039 在始祖都在時選不到、拿掉一邊後可以選。",
-          "unresolved": "不是退場、也不是 BP 減少的角色效果選擇，以及非選擇的 BP 減少，都還沒有按印刷句分開。"
+          "implementation": "選擇只在退場與減 BP 時擋住角色效果。實際的 retire 與負面 BP 也檢查，來源離場後仍保留原本的來源類型。休息、彈回、事件、觸發、戰鬥與自己的效果不套用。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot2-026-050.test.mjs：War Hammer。突襲 013 的退場選不到，039 在始祖都在時選不到、拿掉一邊後可以選。拉姆全體減 BP 不加在戰鎚上。tests/v2-warhammer-runtime.test.mjs。IYS-1-027 與 MMM-2-014 減不到。缺一個名字或效果失效後可以減。桔梗可以休息。034 可以退場。",
+          "unresolved": ""
         },
         {
           "match": "イベントでは退場する",

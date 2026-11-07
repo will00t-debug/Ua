@@ -317,25 +317,25 @@ dist/universal-v2/aot-runtime.mjs main048。dist/universal-v2/engine.mjs 的 aot
 
 tests/v2-aot-set1.test.mjs。突襲放上前線後、起動前，040 維持印刷 BP；起動並跳過衝擊後才 +1000。tests/v2-aot-026-050.test.mjs 的能量線突襲仍只有登場當回合的 +1000。
 
-### 選擇是效果時，沒有對象仍可使用
+### 強制選擇的事件要選得滿
 
-AOT-1-033、034、066 的「1枚選び、退場させる」與 AOT-1-063 的查看後選 1 張，是效果不是費用。選不到指定張數就處理 0 張，事件仍可使用。有對象時不能跳過。
+Q1119（https://www.unionarena-tcg.com/jp/faq/list.php?type=0）：事件必須選擇對象，而且不能選滿全部必要對象時，不能使用。「1枚まで」可以選零張，不在這條裡。AOT-1-033、034、066 的「1枚選び、退場させる」與 AOT-1-063 的查看後選 1 張都是必要對象。角色的登場時效果不套用這條事件使用限制。
 
-dist/universal-v2/aot-runtime.mjs aotMandatoryTargets 不再用有沒有對象決定能不能使用。offerRetire 在沒有對象時直接結束。有對象時不提供跳過。
+dist/universal-v2/aot-runtime.mjs aotMandatoryTargets。033 用修正後的 cap033，034 在精確〈リヴァイ〉時改 5000，066 在卡名含ジーク・イェーガー時改 5000，063 要求牌組至少 1 張。有對象時 offerRetire 不提供跳過。
 
-033、034、063、066。其他作品的強制對象閘門沒有套用這句，因為那些句子要各自對原文，不能一次改成都能空過。
+只改這四張的使用閘門。063 後段的「APカードを1枚まで」與 025、032 的「1枚まで」仍可選零張。沒有把這條套到角色登場時。063 與 066 沒有因此整張標成已驗證。
 
-tests/v2-aot-026-050.test.mjs。對手只有超標角色時，033 仍可使用，事件進場外，角色不退場。有合法對象時沒有跳過。
+tests/v2-aot-026-050.test.mjs。034 前線沒有合法對象時不在合法動作裡，使用會被拒絕，AP 不扣，事件留在手牌。有對象時不能跳過，里維才把上限改成 5000。066 沒有對象不能使用，3000 與吉克名字的 5000 各自成立。063 牌組空了不能使用，有牌時查看必須拿 1 張。025 沒有對手仍可登場，有對象時可以選零張。
 
 ### 戰鎚只擋退場與 BP 減少
 
 EX10BT/AOT-2-028：自己場上同時有卡名含エレン與ジーク的角色時，這張角色獲得「相手のキャラの効果で〔退場せず、BPをマイナスされない〕」與【2回ブロック】。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-028
 
-dist/universal-v2/engine.mjs choiceBlocked 只在 purpose 為 retire 或 bpDown 時擋角色效果。effectSelectionProhibited、retireOffer、enemyBpDown、retireOppFrontUnderBp 帶上這個用途。enemyFrontAllBpDown 在套用前略過戰鎚。效果目標的減 BP 若漏進名單，也不寫進 buff。
+dist/universal-v2/engine.mjs choiceBlocked 只在 purpose 為 retire 或 bpDown 時擋角色效果。characterHarmBlocked 用效果開始時記下的來源類型與控制者，接到 retire 與實際的負面 BP。來源離場後仍用那個類型。犬夜叉、魔法少女、假面騎士、鍊鋸人、咒術與兩彈巨人的 runtime buff 都走這一句。enemyFrontAllBpDown 與效果目標的減 BP 也走同一句。
 
-全庫只有這一句。事件仍可退場或減 BP。休息、彈回等其他角色效果選擇不再被一併擋住。拉姆的全體減 BP 不加在戰鎚上，單選減 BP 也選不到。
+全庫只有這一句。事件、觸發、戰鬥、BP 0 的規則退場、休息、彈回與自己的效果不套用。拉姆的全體減 BP 不加在戰鎚上。
 
-tests/v2-aot2-026-050.test.mjs。兩次阻擋、039 選不到、013 退場選不到、037 事件可以退場，都還在。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000；改選一張時名單沒有戰鎚。
+tests/v2-aot2-026-050.test.mjs。兩次阻擋、039 選不到、013 退場選不到、037 事件可以退場。拉姆突襲後選全體減 BP，戰鎚維持 4000，旁邊的角色少 1000。tests/v2-warhammer-runtime.test.mjs。IYS-1-027 選不到戰鎚，奈落仍退場，027 活動並得到衝擊，BP 維持 4000。拿掉一個名字或效果失效後變成 3000。來源離場後仍是角色效果。桔梗可以休息戰鎚。034 在里維時可以把戰鎚退場。MMM-2-014 的登場時減不到，缺一個名字時可以減。
 
 ## 已寫進台帳的條款
 

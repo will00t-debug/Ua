@@ -41,7 +41,10 @@ function once(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
 function lock(s,owner,key){if(!once(s,owner,key))s.mainReadyOnceByName[owner].push(key);}
 function used(s,key){return s.mainAbilityUsedUids.includes(key);}
 function use(s,key){if(!used(s,key))s.mainAbilityUsedUids.push(key);}
-function buff(s,c,bp){c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(bp<0&&c&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function impact(s,c){c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};}
 function damage2(s,c){c.attackDamageGranted={amount:2,turn:s.turn,stamp:c.fieldEntryStamp};}
 function energyPlus(pack,s,c){
@@ -272,7 +275,7 @@ function main012b(pack,s,job){
 }
 function play014(pack,s,job){
  if(s.active!==job.owner||!thisEntryByOwnEffect(job))return;
- const foes=plOf(s,1-job.owner).front.filter(Boolean);
+ const foes=plOf(s,1-job.owner).front.filter(c=>c&&!A.characterHarmBlocked(A.pack,s,c,'bpDown'));
  if(!foes.length)return;
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u014'},
   skipDo(foes.map(c=>({type:'mmm2',uid:c.uid}))));
@@ -694,6 +697,7 @@ const STEPS={
   if(a.mode==='skip')return;
   const c=plOf(s,1-q.player).front.find(x=>x?.uid===a.uid);
   if(!c)throw Error('Front left');
+  if(A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
   c.buffs??=[];c.buffs.push({bp:-1000,untilTurn:s.turn});
  },
  u016a(pack,s,q,a){

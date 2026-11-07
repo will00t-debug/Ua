@@ -49,7 +49,11 @@ function lock(s,owner,key){
 }
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
 function onceKey(name,id,slot){return name+'|'+id+'|'+slot;}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function impact(s,c){
  if(c&&Number.isInteger(c.fieldEntryStamp))
   c.impactGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:1};

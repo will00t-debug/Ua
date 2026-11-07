@@ -465,12 +465,19 @@ test('033 retires one front character, and Historia raises the cap by 1000 per o
  const event=toHand(s,0,'AOT-1-033');
  s=cast(s,event.uid);
  assert.equal(s.pending.step,'retire');
+ assert.equal(s.players[0].resolvingEvents.some(c=>c.uid===event.uid),true);
+ assert.equal(s.players[0].outside.some(c=>c.uid===event.uid),false);
  assert.equal(modes(s,'skip').length,0);
  const choices=modes(s,'retire').map(a=>a.uid);
  assert.equal(choices.includes(legal.uid),true);
  assert.equal(choices.includes(over.uid),false);
  s=pick(s,a=>a.mode==='retire'&&a.uid===legal.uid);
  assert.equal(s.players[1].outside.some(c=>c.uid===legal.uid),true);
+ assert.equal(s.players[0].resolvingEvents.some(c=>c.uid===event.uid),false);
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===event.uid&&e.to==='outside').length,1);
+ const eventMove=s.zoneMoveEvents.find(e=>e.uid===event.uid&&e.to==='outside');
+ const targetMove=s.zoneMoveEvents.find(e=>e.uid===legal.uid&&e.to==='outside');
+ assert.ok(targetMove.order<eventMove.order);
  finish(s);
 
  let raised=toPhase(fresh(['AOT-1-033','AOT-1-019','AOT-1-029','AOT-1-002','AOT-1-006','AOT-1-013','AOT-1-018','AOT-1-061'],26046),'main');
@@ -483,13 +490,34 @@ test('033 retires one front character, and Historia raises the cap by 1000 per o
  const at5000=put(raised,1,'AOT-1-061','front',2,true);
  const historia=toHand(raised,0,'AOT-1-033');
  raised=cast(raised,historia.uid);
+ assert.equal(raised.pending.data.limit,3000);
+ assert.equal(raised.players[0].resolvingEvents.some(c=>c.uid===historia.uid),true);
  const raisedChoices=modes(raised,'retire').map(a=>a.uid);
  assert.equal(raisedChoices.includes(at3000.uid),true);
- assert.equal(raisedChoices.includes(at3500.uid),true);
+ assert.equal(raisedChoices.includes(at3500.uid),false);
  assert.equal(raisedChoices.includes(at5000.uid),false);
- raised=pick(raised,a=>a.mode==='retire'&&a.uid===at3500.uid);
- assert.equal(raised.players[1].outside.some(c=>c.uid===at3500.uid),true);
+ raised=pick(raised,a=>a.mode==='retire'&&a.uid===at3000.uid);
+ assert.equal(raised.players[1].outside.some(c=>c.uid===at3000.uid),true);
+ assert.equal(raised.players[1].front.some(c=>c?.uid===at3500.uid),true);
+ assert.equal(raised.zoneMoveEvents.filter(e=>e.uid===historia.uid&&e.to==='outside').length,1);
  finish(raised);
+
+ let bare=toPhase(fresh(['AOT-1-033','AOT-1-019','AOT-1-002','AOT-1-006','AOT-1-001','AOT-1-013'],260462),'main');
+ fuel(bare,0,['AOT-1-002','AOT-1-006']);
+ readyAp(bare,0,1);
+ put(bare,0,'AOT-1-019','front',0,true);
+ const at2000=put(bare,1,'AOT-1-001','front',0,true);
+ const at3000bare=put(bare,1,'AOT-1-013','front',1,true);
+ const ownEvent=toHand(bare,0,'AOT-1-033');
+ bare=cast(bare,ownEvent.uid);
+ assert.equal(bare.pending.data.limit,2000);
+ assert.equal(bare.players[0].outside.some(c=>c.uid===ownEvent.uid),false);
+ assert.equal(modes(bare,'retire').some(a=>a.uid===at2000.uid),true);
+ assert.equal(modes(bare,'retire').some(a=>a.uid===at3000bare.uid),false);
+ bare=pick(bare,a=>a.mode==='retire'&&a.uid===at2000.uid);
+ assert.equal(bare.players[1].front.some(c=>c?.uid===at3000bare.uid),true);
+ assert.equal(bare.players[0].outside.filter(c=>c.uid===ownEvent.uid).length,1);
+ finish(bare);
 
  let foe=toPhase(fresh(['AOT-1-033','AOT-1-019','AOT-1-002','AOT-1-007','AOT-1-002'],26047),'main');
  fuel(foe,0,['AOT-1-002','AOT-1-007']);
@@ -507,10 +535,11 @@ test('033 retires one front character, and Historia raises the cap by 1000 per o
  readyAp(none,0,1);
  const huge=put(none,1,'AOT-1-057','front',0,true);
  const empty=toHand(none,0,'AOT-1-033');
- assert.equal(legalUniversalActions(packs,none).some(a=>a.type==='event'&&a.uid===empty.uid),true);
- none=cast(none,empty.uid);
- assert.equal(none.pending,null);
- assert.equal(none.players[0].outside.some(c=>c.uid===empty.uid),true);
+ const apBefore=none.players[0].apCards.filter(c=>c.ready).length;
+ assert.equal(legalUniversalActions(packs,none).some(a=>a.type==='event'&&a.uid===empty.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,none,{type:'event',uid:empty.uid}),/not currently legal/);
+ assert.equal(none.players[0].hand.some(c=>c.uid===empty.uid),true);
+ assert.equal(none.players[0].apCards.filter(c=>c.ready).length,apBefore);
  assert.equal(none.players[1].front.some(c=>c?.uid===huge.uid),true);
  finish(none);
 });
@@ -548,6 +577,105 @@ test('034 retires BP 3000, or BP 5000 while an exact Levi is on the field',()=>{
  assert.equal(namedChoices.includes(squad.uid),false);
  named=pick(named,a=>a.mode==='retire'&&a.uid===at5000.uid);
  assert.equal(named.players[1].outside.some(c=>c.uid===at5000.uid),true);
+ finish(named);
+
+ let vacant=toPhase(fresh(['AOT-1-034','AOT-1-002','AOT-1-006'],260482),'main');
+ fuel(vacant,0,['AOT-1-002','AOT-1-006']);
+ readyAp(vacant,0,1);
+ const unused=toHand(vacant,0,'AOT-1-034');
+ const apLeft=vacant.players[0].apCards.filter(c=>c.ready).length;
+ assert.equal(legalUniversalActions(packs,vacant).some(a=>a.type==='event'&&a.uid===unused.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,vacant,{type:'event',uid:unused.uid}),/not currently legal/);
+ assert.equal(vacant.players[0].hand.some(c=>c.uid===unused.uid),true);
+ assert.equal(vacant.players[0].apCards.filter(c=>c.ready).length,apLeft);
+ finish(vacant);
+});
+
+test('025 enters with no opponent and its up-to-one bounce can choose zero',()=>{
+ let empty=toPhase(fresh(['AOT-1-025','AOT-1-002','AOT-1-006'],260483),'main');
+ fuel(empty,0,['AOT-1-002','AOT-1-006']);
+ readyAp(empty,0,2);
+ const mikasa=toHand(empty,0,'AOT-1-025');
+ assert.equal(legalUniversalActions(packs,empty).some(a=>a.type==='play'&&a.uid===mikasa.uid),true);
+ empty=play(empty,mikasa.uid);
+ assert.equal(empty.pending,null);
+ assert.equal(empty.players[0].front.some(c=>c?.uid===mikasa.uid),true);
+ finish(empty);
+
+ let chosen=toPhase(fresh(['AOT-1-025','AOT-1-002','AOT-1-006','AOT-1-001'],260484),'main');
+ fuel(chosen,0,['AOT-1-002','AOT-1-006']);
+ readyAp(chosen,0,2);
+ const target=put(chosen,1,'AOT-1-001','front',0,true);
+ const again=toHand(chosen,0,'AOT-1-025');
+ chosen=play(chosen,again.uid);
+ assert.equal(chosen.pending.kind,'effect-bounce-bp');
+ assert.equal(legalUniversalActions(packs,chosen).some(a=>a.uid===null),true);
+ assert.equal(legalUniversalActions(packs,chosen).some(a=>a.uid===target.uid),true);
+ chosen=pick(chosen,a=>a.uid===null);
+ assert.equal(chosen.pending,null);
+ assert.equal(chosen.players[1].front.some(c=>c?.uid===target.uid),true);
+ assert.equal(chosen.players[0].front.some(c=>c?.uid===again.uid),true);
+ finish(chosen);
+});
+
+test('063 needs a deck card, and 066 follows its own BP and name',()=>{
+ let bare=toPhase(fresh(['AOT-1-063','AOT-1-039'],260485),'main');
+ fuel(bare,0,['AOT-1-039']);
+ readyAp(bare,0,1);
+ while(bare.players[0].deck.length)bare.players[0].removed.push(bare.players[0].deck.pop());
+ const look=toHand(bare,0,'AOT-1-063');
+ assert.equal(legalUniversalActions(packs,bare).some(a=>a.type==='event'&&a.uid===look.uid),false);
+ bare.players[0].deck.push(bare.players[0].removed.pop());
+ assert.equal(legalUniversalActions(packs,bare).some(a=>a.type==='event'&&a.uid===look.uid),true);
+ bare=cast(bare,look.uid);
+ assert.equal(bare.pending.step,'lookPick');
+ assert.equal(modes(bare,'done').length,0);
+ assert.equal(modes(bare,'take').length>0,true);
+ bare=pick(bare,a=>a.mode==='take');
+ let guard=0;
+ while(bare.pending){
+  if(bare.pending.step==='lookOrder')bare=pick(bare,a=>a.mode==='next');
+  else if(bare.pending.step==='ready'){
+   assert.equal(modes(bare,'skip').length,1);
+   bare=pick(bare,a=>a.mode==='skip');
+  }else throw Error('Unexpected 063 step '+bare.pending.step);
+  if(++guard>8)throw Error('063 did not finish');
+ }
+ assert.equal(bare.players[0].outside.filter(c=>c.uid===look.uid).length,1);
+ finish(bare);
+
+ let low=toPhase(fresh(['AOT-1-066','AOT-1-039','AOT-1-013','AOT-1-018'],260486),'main');
+ fuel(low,0,['AOT-1-039','AOT-1-039']);
+ readyAp(low,0,1);
+ const at3000=put(low,1,'AOT-1-013','front',0,true);
+ const at3500=put(low,1,'AOT-1-018','front',1,true);
+ const plain=toHand(low,0,'AOT-1-066');
+ assert.equal(legalUniversalActions(packs,low).some(a=>a.type==='event'&&a.uid===plain.uid),true);
+ low=cast(low,plain.uid);
+ assert.equal(modes(low,'skip').length,0);
+ assert.equal(modes(low,'retire').some(a=>a.uid===at3000.uid),true);
+ assert.equal(modes(low,'retire').some(a=>a.uid===at3500.uid),false);
+ low=pick(low,a=>a.mode==='retire'&&a.uid===at3000.uid);
+ finish(low);
+
+ let none=toPhase(fresh(['AOT-1-066','AOT-1-039'],260487),'main');
+ fuel(none,0,['AOT-1-039','AOT-1-039']);
+ readyAp(none,0,1);
+ const blocked=toHand(none,0,'AOT-1-066');
+ assert.equal(legalUniversalActions(packs,none).some(a=>a.type==='event'&&a.uid===blocked.uid),false);
+
+ let named=toPhase(fresh(['AOT-1-066','AOT-1-039','AOT-2-023','AOT-1-061','AOT-1-057'],260488),'main');
+ fuel(named,0,['AOT-1-039','AOT-1-039']);
+ readyAp(named,0,1);
+ put(named,0,'AOT-2-023','front',0,true);
+ const at5000=put(named,1,'AOT-1-061','front',0,true);
+ const at6000=put(named,1,'AOT-1-057','front',1,true);
+ const raised=toHand(named,0,'AOT-1-066');
+ named=cast(named,raised.uid);
+ assert.equal(modes(named,'skip').length,0);
+ assert.equal(modes(named,'retire').some(a=>a.uid===at5000.uid),true);
+ assert.equal(modes(named,'retire').some(a=>a.uid===at6000.uid),false);
+ named=pick(named,a=>a.mode==='retire'&&a.uid===at5000.uid);
  finish(named);
 });
 

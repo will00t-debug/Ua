@@ -52,7 +52,11 @@ function lock(s,owner,key){
  if(!s.mainReadyOnceByName[owner].includes(key))s.mainReadyOnceByName[owner].push(key);
 }
 function locked(s,owner,key){return s.mainReadyOnceByName[owner].includes(key);}
-function buff(s,c,bp){if(!c||!bp)return;c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});}
+function buff(s,c,bp){
+ if(!c||!bp)return;
+ if(bp<0&&A.characterHarmBlocked(A.pack,s,c,'bpDown'))return;
+ c.buffs??=[];c.buffs.push({bp,untilTurn:s.turn});
+}
 function energyBuff(s,c,amount,color){
  if(!c)return;c.buffs??=[];c.buffs.push({energy:amount,color,untilTurn:s.turn});
 }
@@ -185,7 +189,8 @@ function takeRange(s,owner,printed){
 }
 function offerRetire(s,spec,printed,optional){
  const range=takeRange(s,spec.player,printed);
- const choices=oppFront(s,spec.player,c=>A.bp(A.pack,s,c)<=range.cap);
+ const choices=oppFront(s,spec.player,c=>A.bp(A.pack,s,c)<=range.cap&&
+  !A.characterHarmBlocked(A.pack,s,c,'retire'));
  if(!choices.length)return false;
  range.commit();
  hold(s,{...spec,step:'retire',data:{limit:range.cap,optional}},[
@@ -334,15 +339,10 @@ function on031(pack,s,job){
 function cap033(pack,s,owner){
  let base=2000;
  if(fieldCards(s,owner).some(c=>exact(pack,c,HISTORIA,s))){
-  // The event is used into OUTSIDE before its effect. The engine holds it in
-  // resolvingEvents until the choice finishes, so that copy still counts.
-  const pl=plOf(s,owner),seen=new Set();
-  let events=0;
-  for(const c of [...pl.outside,...(pl.resolvingEvents||[])]){
-   if(seen.has(c.uid))continue;
-   seen.add(c.uid);
-   if(def(pack,c).type==='event'||def(pack,c).alsoEvent===true)events++;
-  }
+  // Q767: the event being used is placed outside only after its effect.
+  // resolvingEvents is that in-flight copy and is not an outside event.
+  const events=plOf(s,owner).outside.filter(c=>
+   def(pack,c).type==='event'||def(pack,c).alsoEvent===true).length;
   base+=events*1000;
  }
  return base;
@@ -1270,10 +1270,26 @@ export function resolveAotPending(pack,s,action){
  throw Error('Attack on Titan could not resolve '+q.step);
 }
 
-export function aotMandatoryTargets(){
- // 「1枚選び」 on AOT-1-033, 034, 063 and 066 is the effect, not a cost.
- // Zero legal cards still uses the event. A real target stays mandatory
- // inside offerRetire / the look, which this gate no longer pre-empts.
+function underCap(job,c,cap,pack,s){
+ return !!c&&A.bp(pack,s,c)<=cap&&(!job.payable||job.payable(c));
+}
+export function aotMandatoryTargets(pack,s,owner,job){
+ arm(pack);
+ // Q1119: an event that must choose a target cannot be used when it cannot
+ // choose every required target. 「1枚まで」 stays optional inside resolution.
+ if(job.id==='AOT-1-033'){
+  const cap=cap033(pack,s,owner)+rangeExtra(s,owner);
+  return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
+ }
+ if(job.id==='AOT-1-034'){
+  const cap=(fieldCards(s,owner).some(c=>exact(pack,c,LEVI,s))?5000:3000)+rangeExtra(s,owner);
+  return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
+ }
+ if(job.id==='AOT-1-066'){
+  const cap=(fieldCards(s,owner).some(c=>contains(pack,c,ZIKE,s))?5000:3000)+rangeExtra(s,owner);
+  return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
+ }
+ if(job.id==='AOT-1-063')return plOf(s,owner).deck.length>0;
  return true;
 }
 export function aotRaidCut(pack,s,owner,definition){
