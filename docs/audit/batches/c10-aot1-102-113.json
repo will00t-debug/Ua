@@ -1,0 +1,402 @@
+{
+  "group": "C10",
+  "baseline": "174f7d92caf69d43f078411355beb39391447812",
+  "baseBranch": "cursor/effect-audit-bp-zero-65f8",
+  "range": "UA23ST/AOT-1-102～UA23ST/AOT-1-113。各 1 個印刷。101 已列無效果，本批不重建。",
+  "updated": "2026-11-07",
+  "sources": {
+    "product": "102～113 是 UA23ST 起始牌組，各 1 個印刷。官方繁中頁沒有這批正文，效果以 2026-11-07 抓下的日文卡頁與卡圖為準。卡頁句子與庫內 effectJa 一致。本輪沒有改第一彈實作。只新增測試與本檔。沒有改 aot-pack、aot-kinds、aot-cards、raid-box、engine、aot2 或全域台帳。",
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-102 起，至 AOT-1-113。",
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA23BT 。2026-11-07 的系列頁只有 Q980～Q994，皆 2024.06.21，沒有一則點名 102～113。Q995 是 107 的生命主能力範圍，Q996 是 112 的選擇追加 AP，Q997 是 113 的前線上限；三則都在既有 faq 測試，卡資料裡的物件沒有改。",
+    "raidFrame": "102～113 的卡圖在 2026-11-07 對過。107 的抽 1 與生命主能力整段在突襲框內，觸發是レイド。110 的登場 BP-2000 與攻擊時支付後彈回整段在突襲框內，觸發是レイド。105 的活動登場與衝擊（1）不在框內。102、103、104、106、108、109、111、112、113 沒有突襲框。raid-box 已列 107 的 onPlay 與 main、110 的 onPlay 與 onAttack。本批沒有改 raid-box。"
+  },
+  "noEffect": ["AOT-1-102"],
+  "sharedGaps": [
+    {
+      "name": "109 沒有對象時不能使用",
+      "owner": "A",
+      "rule": "AOT-1-109 的「1枚選び」是效果，不是費用。選不到指定張數時，事件仍可使用，然後退 0 張。有對象時必須選 1 張，不能跳過。",
+      "where": "dist/universal-v2/engine.mjs 的 eventMandatoryTargetsAvailable。retireOppFrontUnderBp 且 mandatory 為 true 時，沒有落在上限內的對手前線角色，事件不會出現在合法動作。109 的程式在 aot-pack 把這句標成 mandatory。033、034、063、066 走同一個函式的另一段，本批沒有改它們。",
+      "repro": "109 在手上，紅色能量 4、AP 1。自己場上沒有 104期兵，對手前線有 BP 2000 的角色。合法動作裡沒有這個事件。自己有 2 張 104期兵、對手前線只有 BP 2500 時也一樣。",
+      "expected": "付完費用後事件進場外，退場對象是 0 張。有 BP 落在「自己場上 104期兵張數 ×1000」以內的對手前線角色時，仍必須選 1 張，不能跳過，能量線不是對象。",
+      "affects": "AOT-1-109。033、034、063、066 的狀態不因此改變。",
+      "regression": "不要改 engine.mjs。本批測試不把「沒有對象就不能使用」寫成正確。faq 與 set1 也不要改。"
+    },
+    {
+      "name": "105 把蓋住的角色當成有卡名",
+      "owner": "A",
+      "rule": "AOT-1-105 只在自己場上有卡名包含「エレン・イェーガー」的角色時以活動狀態登場。蓋住的卡片不具有印刷卡名，不能滿足這句。",
+      "where": "dist/universal-v2/engine.mjs 的 defaultEntryReady。AOT-1-105 只對自己前線與能量線的卡片做 nameContainsToken，沒有看 faceDown。放在角色底下的突襲層不在 field() 裡，不在這次重現。",
+      "repro": "自己前線放一張 faceDown 的 AOT-1-090，能量與 AP 足夠，從手牌把 105 放到前線。105 以活動狀態登場。",
+      "expected": "蓋住的 090 不算卡名。105 以休息狀態登場。正面朝上的 090 在前線或能量線仍使 105 活動。只有「エレン・クルーガー」或只有對手的艾倫時仍休息。衝擊（1）不受這句影響。",
+      "affects": "AOT-1-105 的活動登場。108 的五張 104期兵計數在同一函式，本批沒有對蓋牌重現。",
+      "regression": "不要改 engine.mjs。本批測試只鎖正面朝上的卡名，不把蓋牌也活動寫成正確。"
+    }
+  ],
+  "fixes": [],
+  "testResults": {
+    "related": {
+      "command": "node --test tests/v2-aot-102-113.test.mjs tests/v2-aot-076-100.test.mjs tests/v2-aot-051-075.test.mjs tests/v2-aot-026-050.test.mjs tests/v2-aot-001-025.test.mjs tests/v2-aot-set1.test.mjs tests/v2-aot-faq.test.mjs",
+      "pass": 141,
+      "fail": 0,
+      "note": "2026-11-07 於 Node v22.23.4 執行，exit 0。新檔 13 項。076～100、051～075、026～050、001～025、set1、faq 一起跑。093 可拒絕、答應後棄滿兩張，098 排完牌庫底才回 AP，事件必要對象、私人看牌與回合旗標仍通過。沒有改那些舊測試。全庫交給 A。借用 001、002、004、006、007、008、035、039、042、045、060、071、078、079、080、082、083、085、086、090、092、095、100 只當場面，不擴大那些卡的驗證。"
+    },
+    "fullSuite": null
+  },
+  "reviews": [
+    {
+      "cardId": "AOT-1-102",
+      "number": "UA23ST/AOT-1-102",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "沒有效果。沒有突襲框。",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-102",
+          "implementation": "付費放到前線後沒有待處理。休息登場，BP 3000。卡圖沒有突襲框，發生能量 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖 UA23ST/AOT-1-102。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】選自己場上 1 張角色，活動並這個回合 BP+3000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-102",
+          "implementation": "生命觸發是 active。可跳過。選休息中的角色後它活動，BP 由 500 變 3500。",
+          "discrepancy": "",
+          "evidence": "同一檔以 078 打出這張生命。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-103",
+      "number": "UA23ST/AOT-1-103",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【ステップ】自己的移動階段可從前線移到能量線。沒有突襲框，沒有生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-103",
+          "implementation": "移動階段可從前線步進一次，之後同一移動階段不能再步進。打出生命後直接進場外，沒有觸發。卡圖是步驟句，發生能量 1，BP 2500。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖 UA23ST/AOT-1-103。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-104",
+      "number": "UA23ST/AOT-1-104",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【登場時】【エナジーLにある場合】二選一：查看牌庫頂 3 張，最多公開 1 張能量 3 以下的 104期兵入手，其餘依所選順序放牌庫底；或從手牌把最多 1 張能量 3 以下、AP 1 的紅色 104期兵以活動狀態放到空的前線，並給予這個回合攻擊階段結束回手。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-104",
+          "implementation": "放到前線不開選擇。放到能量線必須在查看與登場之間選一項，沒有跳過。查看時對手看不到視窗。能量 4 的 077 與事件不能拿，能量 2 的 104期兵可以。只公開拿走的那張。不拿時三張都放底，第一下點的是最底，且不公開。登場只給 090，不給能量 4 的 077 與 AP 2 的 105，也可以一張都不出。出的角色活動，並在這個攻擊階段結束回手。沒有突襲框，沒有生命觸發。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖沒有突襲框，也沒有觸發列。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-105",
+      "number": "UA23ST/AOT-1-105",
+      "status": "部分驗證",
+      "clauses": [
+        {
+          "match": "自己場上有卡名包含「エレン・イェーガー」的角色時，這張以活動狀態登場。沒有突襲框。",
+          "status": "部分驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-105",
+          "implementation": "沒有艾倫、只有「エレン・クルーガー」、或只有對手的 090 時休息登場。自己能量線上正面的 090 使它活動。衝擊不在這句裡。",
+          "discrepancy": "自己場上蓋住的 090 也會讓它活動。",
+          "evidence": "tests/v2-aot-102-113.test.mjs 只測正面卡名。卡圖沒有突襲框。",
+          "unresolved": "蓋住的角色不應算卡名。見 sharedGaps。"
+        },
+        {
+          "match": "【インパクト（1）】攻擊並在對戰中勝利時，對對手造成 1 點傷害。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-105",
+          "implementation": "印刷衝擊是 1，沒有艾倫時也是 1。對 BP 500 的角色戰鬥勝利後，對手生命少 1，該角色進場外。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】抽 1 張。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-105",
+          "implementation": "生命觸發是 draw。選抽牌後手牌多 1。",
+          "discrepancy": "",
+          "evidence": "同一檔以 078 打出這張生命。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-106",
+      "number": "UA23ST/AOT-1-106",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "自己生命在 3 以下時，這張 BP+1000。沒有突襲框，沒有生命觸發。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-106",
+          "implementation": "生命 4 是印刷 3000。生命 3、生命 0，以及對手回合而自己生命仍在 3 以下，都是 4000。打出生命後直接進場外。卡圖是 3000+，發生能量 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖 UA23ST/AOT-1-106。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-107",
+      "number": "UA23ST/AOT-1-107",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【レイド】〈エレン・イェーガー〉。整段效果在突襲框內。正面突襲時活動，並可移到前線。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-107",
+          "implementation": "突襲在 090 上以活動狀態進前線。普通登場不抽牌，也不能發動主能力。卡圖整段在框內。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖 UA23ST/AOT-1-107。",
+          "unresolved": ""
+        },
+        {
+          "match": "【登場時】抽 1 張。只在突襲框內。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-107",
+          "implementation": "正面突襲到前線或能量線都抽 1。普通登場不抽。",
+          "discrepancy": "",
+          "evidence": "同一檔。Q995 另見 tests/v2-aot-faq.test.mjs。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】【フロントLにある場合】把 1 張自己的生命放到場外。如此則最多活動 1 張自己的 AP。〈エレン・イェーガー〉的這個效果一回合一次。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-107",
+          "implementation": "只在前線的正面突襲上可發動。生命必須選 1 張，沒有跳過，對手看不到選擇。選中的生命進場外，不開生命觸發。之後活動 AP 可以跳過。同一回合第二張正面突襲的 107 仍抽 1，但不能再發動。下一個自己回合次數回來。能量線上的突襲不能發動。",
+          "discrepancy": "",
+          "evidence": "同一檔。Q995 說明「這個效果」只指主能力，另見 faq 測試。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】加入手牌，或在滿足能量時突襲。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-107",
+          "implementation": "防守方有 4 紅能量時，生命觸發同時提供獲得與突襲到自己的 090。選突襲後這張在前線。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-108",
+      "number": "UA23ST/AOT-1-108",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "自己場上的 104期兵 有 5 張以上時，這張場地以活動狀態登場。沒有突襲框。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-108",
+          "implementation": "自己 4 張 104期兵 時休息登場，不能發動。自己 5 張（能量線算）時活動登場。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖沒有突襲框。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】休息並使這張退場，然後自己場上全部 104期兵 這個回合 BP+1000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-108",
+          "implementation": "發動後這張進場外。當時在場的自己 104期兵 各 +1000。對手的 104期兵 不加。之後才登場的 104期兵 不加。下一個自己回合加成消失。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】這張加入手牌。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-108",
+          "implementation": "生命觸發是 get。選獲得後進手牌。",
+          "discrepancy": "",
+          "evidence": "同一檔以 078 打出這張生命。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-109",
+      "number": "UA23ST/AOT-1-109",
+      "status": "部分驗證",
+      "clauses": [
+        {
+          "match": "選 1 張 BP 在自己場上 104期兵 張數 ×1000 以下的對手前線角色並退場。沒有突襲框。",
+          "status": "部分驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-109",
+          "implementation": "自己前線 1 張與能量線 1 張 104期兵 時上限 2000。2000 的前線角色可退，2500 與能量線上的同名不可，也不能跳過。",
+          "discrepancy": "沒有落在上限內的對手前線角色時，事件不能使用。",
+          "evidence": "tests/v2-aot-102-113.test.mjs 只測有對象。卡圖沒有突襲框。",
+          "unresolved": "沒有對象時仍應付費使用，然後退 0 張。見 sharedGaps。"
+        },
+        {
+          "match": "【スペシャル】選 1 張對手前線角色並退場。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-109",
+          "implementation": "共用 special，沒有 BP 上限。可跳過。選了就退場。",
+          "discrepancy": "",
+          "evidence": "同一檔以 078 打出這張生命。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-110",
+      "number": "UA23ST/AOT-1-110",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【レイド】〈リヴァイ〉。登場時的 BP-2000 與攻擊時的支付彈回都在突襲框內。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-110",
+          "implementation": "普通登場沒有減 BP 的選擇。把普通登場的這張活動後攻擊，直接進入阻擋，不要求支付。正面突襲在 007 上以活動狀態進場。卡圖兩句都在框內，顏色是青。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖 UA23ST/AOT-1-110。",
+          "unresolved": ""
+        },
+        {
+          "match": "【登場時】最多選 1 張 BP 2500 以上的對手前線角色，這個回合 BP-2000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-110",
+          "implementation": "只在正面突襲時出現，可以不選。2500 的 008 可選，2000 的 001 與能量線上的 008 不可。選了之後這個回合是 500，下一個自己回合回到 2500。跳過則維持 2500。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アタック時】可支付 1 點 AP。如此則最多選 1 張 BP 2000 以下的對手前線角色，回到手牌。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-110",
+          "implementation": "正面突襲且還有活動 AP 時，攻擊可支付或跳過。跳過不彈回。支付後 1500 的前線角色可回手，2500 與能量線上的角色不可，也可以不選。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】加入手牌，或在滿足能量時突襲。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-110",
+          "implementation": "防守方有 5 青能量時，生命觸發可突襲到自己的 007。選突襲後這張在前線。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-111",
+      "number": "UA23ST/AOT-1-111",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【フロントLにある場合】自己的攻擊階段開始時，若這張活動，最多活動 1 張自己的 AP。沒有突襲框。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-111",
+          "implementation": "自己攻擊階段開始、這張在前線且活動、有休息 AP 時可選可跳過。選了就活動那張 AP。跳過後進到對手的攻擊階段不會再開。這張休息，或在能量線，自己的攻擊階段開始都不開。卡圖是 3500+，沒有突襲框。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。卡圖 UA23ST/AOT-1-111。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アタック時】可支付 1 點 AP。如此則這張這個回合 BP+500。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-111",
+          "implementation": "有活動 AP 時攻擊可支付。支付後 BP 4000，下一個自己回合回到 3500。沒有活動 AP 時直接進入阻擋，BP 維持 3500。這句不在突襲框。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】抽 1 張。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-111",
+          "implementation": "生命觸發是 draw。選抽牌後手牌多 1。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-112",
+      "number": "UA23ST/AOT-1-112",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【相手のターン中】對手以角色或事件效果選這張時，必須再付 1 點 AP。沒有突襲框。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-112",
+          "implementation": "生命的 special 觸發不是角色或事件效果。防守方 AP 全休息時，仍可選這張，也可以跳過。角色與事件的追加 AP 由既有 Q986、Q996 測試。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。Q986 與 Q996 另見 tests/v2-aot-faq.test.mjs。卡圖沒有突襲框。",
+          "unresolved": ""
+        },
+        {
+          "match": "【登場時】最多退 1 張對手前線角色。上限平常是 BP 2000，自己發生能量 8 以上時改成 4000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-112",
+          "implementation": "發生能量 5 時上限 2000。2000 可選，2500 與能量線不可，可以跳過。發生能量 8 時上限 4000，4000 可退。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】選自己場上 1 張角色，活動並這個回合 BP+3000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-112",
+          "implementation": "生命觸發是 active。選休息中的角色後它活動，BP 由 2000 變 5000。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "AOT-1-113",
+      "number": "UA23ST/AOT-1-113",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "這張不能在能量線登場。在前線時，自己前線可放的張數減 1。沒有突襲框。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-113",
+          "implementation": "手牌沒有放到能量線的動作，可以放到前線。在場時前線上限是 3。已有 3 張再登場會要求移到除外區，移完前線剩 3。Q985、Q997 另證兩張減張數的卡疊成上限 2，且先由回合玩家移。",
+          "discrepancy": "",
+          "evidence": "tests/v2-aot-102-113.test.mjs。Q985 與 Q997 另見 tests/v2-aot-faq.test.mjs。set1 另證不能放能量線。卡圖沒有突襲框。",
+          "unresolved": ""
+        },
+        {
+          "match": "【登場時】最多選 1 張對手場上的場地並退場。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-113",
+          "implementation": "對手能量線上的場地可選，角色不可。可以跳過。選了的場地進場外，另一張場地留下。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】抽 1 張。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23ST%2FAOT-1-113",
+          "implementation": "生命觸發是 draw。選抽牌後手牌多 1。",
+          "discrepancy": "",
+          "evidence": "同一檔。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}
