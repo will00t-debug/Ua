@@ -1,0 +1,339 @@
+/* UNION ARENA V2 — blue neon tabletop (reference composition).
+   Loaded after the baseline and laptop geometry. Rules are untouched.
+   Desktop only: mobile uses the established compact V2 battlefield. */
+@media (min-width:761px) and (min-height:460px) {
+ body.v2-battle-page.v2-playing {
+  background:#021126;
+ }
+ body.v2-battle-page.v2-playing #match-view .matchHeader.v2-desktop-header{
+  background:
+   linear-gradient(120deg,transparent 0 49%,#0067c41f 49.3% 50%,transparent 50.3%),
+   linear-gradient(110deg,#07172e 0%,#002e54 59%,#021329 100%);
+  border-bottom:1px solid #249ffd;
+  box-shadow:inset 0 -2px 9px #05adff65,0 1px 8px #008dff55;
+  color:#eef7ff;
+  min-height:48px;
+  flex-basis:48px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-desktop-header h1{
+  font-size:clamp(17px,2.15vw,30px);font-weight:900;
+  font-style:italic;letter-spacing:.035em;
+  color:#fff;text-shadow:0 0 12px #40a6ff66
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-desktop-header :is(.v2-desktop-back,.v2-desktop-log-toggle,.v2-mobile-menu-toggle){
+  border:1px solid #4baff9;min-height:32px;
+  color:#edf8ff;border-radius:8px;
+  background:linear-gradient(180deg,#174373b0,#061d3eeb);
+  box-shadow:inset 0 1px 6px #1f99ff55,0 0 6px #005abc66
+ }
+ body.v2-battle-page.v2-playing #match-view > .arena.v2-reference-table{
+  --pc-card-width:min(10.2dvh,6.4vw,88px);
+  --pc-energy-width:calc(var(--pc-card-width)*.81);
+  --pc-hand-width:min(12dvh,7.1vw,92px);
+  --v3-rows:minmax(0,34fr) minmax(28px,4fr) minmax(0,36fr) minmax(154px,26fr);
+  grid-template-columns:clamp(144px,14.1vw,235px) minmax(0,1fr) clamp(162px,14vw,232px);
+  gap:0;
+  background:
+   repeating-linear-gradient(130deg,transparent 0px,transparent 120px,#166ab00c 121px,transparent 123px),
+   linear-gradient(120deg,#010d21,#071e3b 58%,#020e27);
+  box-shadow:inset 0 0 50px #0489ff12;
+  border:0;
+  color:#eaf6ff;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table{
+  border-inline:1px solid #1676ad77;
+  background:
+   radial-gradient(ellipse at 46% 35%,#094b812d 0%,transparent 65%),
+   linear-gradient(180deg,#041e3b,#00142d 45%,#052244 100%);
+ }
+ /* Seven actual face-down backs, rather than the previous collapsed LIFE row. */
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail{
+  padding:8px 10px 6px;
+  row-gap:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group{
+  position:relative;
+  gap:4px;
+  padding:8px 10px 7px;
+  margin:0 0 5px;
+  border:1px solid #ae62ff;
+  border-radius:12px;
+  background:linear-gradient(160deg,#2d144a66,#081a3655 35%,#0d1235);
+  box-shadow:inset 0 0 22px #7a34f526,0 0 8px #743afa38;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group.opponent{
+  border-color:#e73b6c;
+  background:linear-gradient(155deg,#4b103157,#061d365a 45%,#09152d);
+  box-shadow:inset 0 0 22px #ed274824,0 0 8px #ff33573c;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-caption{
+  min-height:25px;
+  flex:0 0 auto;
+  margin:0 0 5px;
+  padding:4px 4px 5px;
+  font-weight:800;
+  font-size:clamp(10px,1vw,14px);
+  color:#f8f5ff;
+  text-shadow:0 0 5px #cd78ff;
+  border-bottom:1px solid #a17bff80;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group.opponent .v2-life-caption{
+  text-shadow:0 0 6px #ff6b87;border-bottom-color:#fa6b8a88
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .lifeCard{
+  flex-basis:clamp(21px,3.05dvh,29px);
+  height:clamp(21px,3.05dvh,29px);
+  min-height:0;
+  max-height:none;
+  margin:-2px 0 0;
+  border-radius:5px;
+  box-shadow:inset 0 1px 2px #fff5,0 1px 2px #0009;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .lifeCard:last-of-type{
+  flex-basis:clamp(29px,4.4dvh,42px);
+  height:clamp(29px,4.4dvh,42px);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .v2-life-number{
+  font-size:clamp(11px,1vw,14px);
+  color:#fff;
+  background:linear-gradient(90deg,#140208bd,#47142586);
+  min-width:18px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-removed-zone .v2-zone-pile{
+  border:1px solid #7da7f4aa;
+  background:linear-gradient(180deg,#193153,#07192f);
+  border-radius:7px;color:#f1f9ff;
+  box-shadow:inset 0 0 6px #5babef3a
+ }
+ /* Central board: energy and frontline resemble illuminated empty panels. */
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea{
+  padding:4px clamp(10px,1.2vw,19px) 4px 8px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table > .playerArea .lineGroup{
+  border-bottom:1px solid #2a79b134;
+  gap:clamp(5px,1.1vw,18px);
+  grid-template-columns:clamp(93px,11vw,160px) minmax(0,1fr)
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup .lineLabel{
+  color:#e3f5ff;
+  font-size:clamp(10px,.96vw,14px);
+  font-weight:800;
+  white-space:normal;
+  text-shadow:0 0 7px #168af5a3;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup .lineLabel.energy::before{
+  content:"⚡";margin-right:8px;color:#ffcc53;font-size:19px
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup .lineLabel.front::before{
+  content:"⚔";margin-right:8px;color:#bfeaff;font-size:19px
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .slots{
+  width:100%;
+  min-width:0;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(5px,1vw,19px);
+  justify-items:center;
+  align-items:center;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .slots > .slot:not(.occupied){
+  width:min(93%,155px);
+  height:clamp(54px,8.2dvh,82px);
+  max-height:100%;
+  aspect-ratio:auto;
+  display:grid;place-items:center;
+  border:1.4px solid #278cce;
+  border-radius:9px;
+  background:linear-gradient(140deg,#042242bb,#092e5599);
+  box-shadow:inset 0 0 17px #006fc52e,0 0 4px #005cb15c;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .slots > .slot:not(.occupied):hover{
+  border-color:#77d8ff;box-shadow:inset 0 0 16px #1a9fff42,0 0 10px #179bff67
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .slotIndex{
+  font-size:clamp(12px,1.35vw,20px);
+  font-weight:600;
+  color:#d7f7ff;
+  opacity:1;
+  position:static;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .slots > .slot.occupied{
+  width:var(--pc-card-width);height:auto;max-width:100%;
+  aspect-ratio:63/88;
+  border-radius:5px;
+  box-shadow:0 0 8px #0479db70;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .slot.selected{
+  outline:3px solid #b05cff;outline-offset:3px;
+  box-shadow:0 0 12px #ae49ffbb
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-table-ap .apCard{
+  border-color:#6898c5;
+  border-radius:5px;
+  box-shadow:0 0 8px #0a76d588;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-table-ap .apArt.ready{
+  border-color:#ffd86a;
+  box-shadow:0 0 12px #ffaf32dd,inset 0 0 12px #ffec7c72
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-middle-controls{
+  background:linear-gradient(90deg,transparent,#02498255,transparent);
+  box-shadow:inset 0 1px #46aeff6b,inset 0 -1px #268bff88;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table .v2-middle-controls:before,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table .v2-middle-controls:after{
+  background:#3da1f7;box-shadow:0 0 8px #24aeff
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-desktop-table .phaseBar span.current{
+  font-size:clamp(11px,1.15vw,16px);
+  font-weight:900;color:#ecf8ff;
+  text-shadow:0 0 7px #63c6ff;
+ }
+ /* Deck / outside on the right with two independent blue glass panels. */
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-rail{
+  padding:7px 9px 3px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group{
+  border:1px solid #48a8ed;
+  border-radius:11px;
+  padding:8px 5px;
+  margin:0 0 5px;
+  background:linear-gradient(150deg,#082c55d9,#061a3ce0);
+  box-shadow:inset 0 0 18px #2779eb25,0 0 8px #167ed656
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-deck-stack,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-outside-preview,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-outside-placeholder{
+  width:clamp(44px,7.6dvh,75px);
+  border-radius:7px;
+  box-shadow:3px -2px 0 #102947,5px -4px 0 #8eacc5,0 0 12px #096ee98a
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-pile-label{
+  font-size:clamp(12px,1vw,16px);font-weight:700
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-pile-count{
+  font-size:clamp(16px,1.5vw,24px);font-weight:800;text-shadow:0 0 8px #56b0ff
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-controls .v2-middle-next button{
+  width:100%;min-height:52px;
+  font-size:clamp(13px,1.35vw,20px);
+  font-weight:900;
+  border:1px solid #ffc35c;
+  border-radius:9px;
+  background:linear-gradient(180deg,#aa6324,#4c2b13 52%,#d18b24);
+  color:#fff9ea;
+  box-shadow:inset 0 0 9px #ffe288b6,0 0 11px #ffab32a3;
+  text-shadow:0 1px 3px #2a1600
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-controls .phaseAction{
+  font-size:11px;color:#c8dffa;
+ }
+ /* Bottom hand is its own framed panel, never covered by action controls. */
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea{
+  padding:5px 13px 6px;
+  margin:6px 3px 3px;
+  width:calc(100% - 6px);
+  height:calc(100% - 9px);
+  border:1px solid #339ce3;
+  border-radius:15px;
+  background:linear-gradient(170deg,#062547d6,#031731ec);
+  box-shadow:inset 0 0 21px #0a73bf1d,0 0 8px #0066be5e
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea .handTitle{
+  font-weight:900;font-size:clamp(11px,1vw,14px);
+  color:#eff8ff;text-shadow:0 0 7px #d35dff;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .handArea .hand{
+  gap:clamp(4px,.55vw,9px);
+  justify-content:safe center;
+  padding:3px 6px 1px;
+ }
+}
+/* Selected character → one visible activation button, as its own grid sibling.
+   Works in AI and online without nested buttons or changing combat click flow. */
+#match-view .lineGroup > .slots {position:relative}
+#match-view .v2-field-activate-button{
+ display:flex;align-items:center;justify-content:center;
+ justify-self:center;align-self:end;
+ position:relative;z-index:8;
+ min-width:46px;
+ padding:5px 9px;
+ transform:translateY(12%);
+ border:1px solid #ffc76e;border-radius:7px;
+ background:linear-gradient(180deg,#f5c252,#a75c06);
+ color:#18130c;font-size:12px;font-weight:900;
+ box-shadow:0 0 12px #ffa326bd,0 1px 5px #000a;
+ cursor:pointer;touch-action:manipulation;
+}
+#match-view .v2-field-activate-button:focus-visible{
+ outline:3px solid #fff3a0;outline-offset:2px
+}
+#match-view .v2-activation-overlay{
+ position:fixed;inset:0;z-index:200;
+ display:grid;place-items:center;overflow:auto;
+ padding:16px;background:#020815d9;
+ backdrop-filter:blur(7px);
+}
+#match-view .v2-activation-dialog{
+ width:min(570px,100%);max-height:calc(100dvh - 32px);
+ display:flex;flex-direction:column;gap:13px;
+ overflow:auto;padding:20px;
+ color:#edf8ff;border-radius:15px;
+ border:1px solid #4ac7ff;
+ background:linear-gradient(150deg,#123868,#061831 70%);
+ box-shadow:0 0 30px #008cff7d,0 16px 45px #000b;
+}
+#match-view .v2-activation-dialog-header{
+ display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+ border-bottom:1px solid #3593c877;padding-bottom:10px;
+}
+#match-view .v2-activation-eyebrow{color:#8ad4ff;font-size:11px}
+#match-view .v2-activation-dialog h2{margin:3px 0;font-size:21px;color:#fff}
+#match-view .v2-activation-dialog p{margin:0;color:#c6e2f7;font-size:13px}
+#match-view .v2-activation-options{display:flex;flex-direction:column;gap:10px}
+#match-view .v2-activation-option{
+ display:flex;flex-direction:column;gap:6px;text-align:left;
+ width:100%;padding:12px 15px;border-radius:9px;
+ border:1px solid #3987b9;background:#082c55;
+ color:#eaf8ff;cursor:pointer;
+}
+#match-view .v2-activation-option:hover,
+#match-view .v2-activation-option:focus-visible{
+ border-color:#ffce7a;box-shadow:inset 0 0 9px #078ced55
+}
+#match-view .v2-activation-option strong{color:#ffcf81;font-size:14px}
+#match-view .v2-activation-option span{line-height:1.6;font-size:13px}
+#match-view .v2-activation-close,
+#match-view .v2-activation-cancel{
+ color:#e9f7ff;border:1px solid #578fbb;border-radius:7px;
+ background:#163e63;padding:7px 13px;cursor:pointer
+}
+@media (max-width:760px) {
+ #match-view .v2-field-activate-button{
+  min-width:44px;font-size:11px;padding:4px 6px;transform:translateY(9%);
+ }
+ #match-view .v2-activation-dialog{padding:15px}
+ #match-view .v2-activation-dialog h2{font-size:18px}
+}
+@media (min-width:761px) and (max-height:700px) {
+ body.v2-battle-page.v2-playing #match-view > .arena.v2-reference-table{
+  --v3-rows:minmax(0,34fr) minmax(24px,4fr) minmax(0,36fr) minmax(128px,26fr);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-rail .lifeCard{
+  flex-basis:clamp(16px,2.75dvh,23px);
+  height:clamp(16px,2.75dvh,23px);
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-caption{
+  min-height:19px;padding:2px 2px 3px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group{
+  padding:4px 6px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .lineGroup > .slots > .slot:not(.occupied){
+  height:clamp(46px,7dvh,68px)
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-deck-stack,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-outside-preview,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group .v2-outside-placeholder{
+  width:clamp(37px,6.5dvh,58px)
+ }
+}
