@@ -526,8 +526,10 @@ test('the Cart Titan gains impact, energy attack and sniper only inside the raid
  line=raidOnto(line,rider.uid,seat.uid,'energy');
  line=pick(line,a=>a.mode==='down');
  assert.equal(universalBp(packs,line,field(line,0,rider.uid)),2000);
+ const target=put(line,1,'AOT-2-001','front',0,true);
  line=toPhase(line,'attack');
- assert.equal(acts(line).some(a=>a.type==='attack'&&a.uid===rider.uid),true);
+ const shot=acts(line).find(a=>a.type==='attack'&&a.uid===rider.uid&&a.targetUid===target.uid);
+ assert.ok(shot);
  finish(line);
 
  let down=toPhase(fresh(counts,562),'main');
