@@ -1,5 +1,14 @@
 {
   "baseline": "2d1a1ff5",
+  "seedCorrection": {
+    "supersedes": ["energy.white-sword-step-12.result", "energy.unchanged"],
+    "historicalClaim": "reject-blue step 13, renruki step 15, and white-sword step 55 return next for the default and all eight cells.",
+    "keptRawRecord": "audit/ai-v3-factor-split.json is the search-seed-1 dump and was not rewritten. audit/ai-v3-ab-front-energy-regression.json passed game.seed, which is 8300, and was not rewritten.",
+    "setting": "scripts/ai-v3-factor-split.mjs hardcoded seed 1. scripts/ai-v3-ab-front-energy.mjs passed game.seed. The search seed shuffles the hidden zones of the one belief world. It is not the match seed. A different action at the other seed is not a program change.",
+    "searchSeed1": "reject-blue step 13: baseline and the cells without tree coverage plus the final gate return next. named-ab, tree-base-final and tree-open-final return move uid 0-10. white-sword step 12: those same three cells return move uid 0-32. renruki step 15 and white-sword step 55 return next for every cell.",
+    "searchSeed8300": "reject-blue step 13 returns next for every cell, including named A+B. white-sword step 12 still returns move uid 0-32 for the same three tree-plus-final cells. renruki step 15 and white-sword step 55 return next for every cell.",
+    "table": "audit/ai-v3-main-front.json records gameSeed, searchSeed, source, replay and the state hash for both seeds. Within one seed only the factors change."
+  },
   "settings": "plan tree, hardNodes 0, nodes 48, ms 1e9, now 0. Existing snapshots only. No matches.",
   "switches": "All new factor combinations stay off. A named variant is unchanged: ab is coverage tree, raid base off, gate final. ab-front is coverage root, raid base on, gate energy. The search and the worker read only options.variant or options.factors. They do not read process.",
   "reproduce": "tree-open-final matches named ab, and root-base-energy matches named ab-front, on every recorded field of the three front snapshots, the four move snapshots, and the filter chain. The comparison ignores only the cell id.",
@@ -38,9 +47,9 @@
       "search": "Default and every root-coverage cell search next at yielded -19.55. Every tree-coverage cell searches move uid 0-32 at yielded -3.8. Raid base does not change the search.",
       "energyKeep": "On the tree search, the energy keep changes move uid 0-32 to next. Next was executed at pending -36.55. This is a different action, not the same card.",
       "gate": "The energy-position gate does not apply to a move. The final gate sees pending next against yielded move and keeps the move. The generator preference does not touch it.",
-      "result": "Default, every root cell, and every energy-gate cell return next. Only tree coverage plus the final gate returns move uid 0-32. That is the named A+B action. The other three move snapshots stay next for every cell."
+      "result": "At search seed 1, default, every root cell, and every energy-gate cell return next. Only tree coverage plus the final gate returns move uid 0-32. That is the named A+B action. See seedCorrection for the other three snapshots. The sentence that all eight cells return next on those three was wrong at this file's own search seed."
     },
-    "unchanged": "reject-blue step 13, renruki step 15, and white-sword step 55 return next for the default and all eight cells."
+    "unchanged": "Superseded by seedCorrection. renruki step 15 and white-sword step 55 do return next for every cell at both recorded search seeds. reject-blue step 13 does not: at search seed 1 the three tree-plus-final cells return move uid 0-10, and at search seed 8300 every cell returns next."
   },
   "filter": {
     "where": "white-sword 8301 first 0 seat 1 step 29, then both deck orders",

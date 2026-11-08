@@ -1,0 +1,888 @@
+{
+  "steps": [
+    {
+      "phase": "move",
+      "pending": null,
+      "returned": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "card": null
+      },
+      "reason": "budget-fallback",
+      "nodesUsed": 48,
+      "dispatches": 48,
+      "factorsBound": true,
+      "searched": true
+    },
+    {
+      "phase": "main",
+      "pending": null,
+      "returned": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-8",
+        "mode": null,
+        "card": {
+          "uid": "1-8",
+          "id": "BLC-4-066",
+          "name": "卯ノ花 烈",
+          "type": "character",
+          "energy": 0,
+          "bp": 1500
+        }
+      },
+      "reason": "budget-fallback",
+      "nodesUsed": 48,
+      "dispatches": 48,
+      "factorsBound": true,
+      "searched": true
+    },
+    {
+      "phase": "main",
+      "pending": "effect-discard-gate",
+      "returned": {
+        "type": "chooseDiscardGate",
+        "line": null,
+        "uid": "1-16",
+        "mode": null,
+        "card": {
+          "uid": "1-16",
+          "id": "BLC-2-069",
+          "name": "日番谷 冬獅郎",
+          "type": "character",
+          "energy": 1,
+          "bp": 2500
+        }
+      },
+      "reason": "budget-fallback",
+      "nodesUsed": 48,
+      "dispatches": 48,
+      "factorsBound": true,
+      "searched": true
+    },
+    {
+      "phase": "main",
+      "pending": "private-top-place",
+      "returned": {
+        "type": "chooseTopCard",
+        "line": null,
+        "uid": null,
+        "mode": "bottom",
+        "card": null
+      },
+      "reason": "search",
+      "nodesUsed": 32,
+      "dispatches": 32,
+      "factorsBound": true,
+      "searched": true
+    },
+    {
+      "phase": "main",
+      "pending": null,
+      "returned": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-9",
+        "mode": null,
+        "card": {
+          "uid": "1-9",
+          "id": "BLC-4-066",
+          "name": "卯ノ花 烈",
+          "type": "character",
+          "energy": 0,
+          "bp": 1500
+        }
+      },
+      "reason": "search",
+      "nodesUsed": 48,
+      "dispatches": 48,
+      "factorsBound": true,
+      "searched": true
+    },
+    {
+      "phase": "main",
+      "pending": "effect-discard-gate",
+      "returned": {
+        "type": "chooseDiscardGate",
+        "line": null,
+        "uid": "1-23",
+        "mode": null,
+        "card": {
+          "uid": "1-23",
+          "id": "BLC-4-070",
+          "name": "更木 剣八",
+          "type": "character",
+          "energy": 1,
+          "bp": 4000
+        }
+      },
+      "reason": "budget-fallback",
+      "nodesUsed": 48,
+      "dispatches": 48,
+      "factorsBound": true,
+      "searched": true
+    },
+    {
+      "phase": "main",
+      "pending": "private-top-place",
+      "returned": {
+        "type": "chooseTopCard",
+        "line": null,
+        "uid": null,
+        "mode": "bottom",
+        "card": null
+      },
+      "reason": "search",
+      "nodesUsed": 32,
+      "dispatches": 32,
+      "factorsBound": true,
+      "searched": true
+    }
+  ],
+  "board": {
+    "source": "white-sword gameSeed 8301 first 0 seat 1, replayed to own start from step 29, then the plain deck order with no refund card",
+    "searchSeed": 1,
+    "gameSeed": 8301,
+    "stateHash": "854a5a9d3d7172b1d1531be36438fe70337db68c75757c66732d33b010cd6a97",
+    "phase": "main",
+    "pending": null,
+    "active": 1,
+    "actor": 1,
+    "readyAp": 1,
+    "life": [
+      7,
+      7
+    ],
+    "energy": {
+      "green": 3
+    },
+    "hand": [
+      {
+        "uid": "1-3",
+        "id": "BLC-3-009",
+        "name": "日番谷 冬獅郎",
+        "type": "character",
+        "energy": 3,
+        "bp": 2000,
+        "ready": false
+      },
+      {
+        "uid": "1-5",
+        "id": "BLC-4-060",
+        "name": "藍染 惣右介",
+        "type": "character",
+        "energy": 3,
+        "bp": 4000,
+        "ready": false
+      },
+      {
+        "uid": "1-13",
+        "id": "BLC-2-067",
+        "name": "更木 剣八",
+        "type": "character",
+        "energy": 4,
+        "bp": 4000,
+        "ready": false
+      },
+      {
+        "uid": "1-26",
+        "id": "BLC-1-070",
+        "name": "卯ノ花 八千流",
+        "type": "character",
+        "energy": 6,
+        "bp": 4000,
+        "ready": false
+      },
+      {
+        "uid": "1-24",
+        "id": "BLC-1-070",
+        "name": "卯ノ花 八千流",
+        "type": "character",
+        "energy": 6,
+        "bp": 4000,
+        "ready": false
+      },
+      {
+        "uid": "1-41",
+        "id": "BLC-3-008",
+        "name": "更木 剣八",
+        "type": "character",
+        "energy": 4,
+        "bp": 3000,
+        "ready": false
+      },
+      {
+        "uid": "1-40",
+        "id": "BLC-3-008",
+        "name": "更木 剣八",
+        "type": "character",
+        "energy": 4,
+        "bp": 3000,
+        "ready": false
+      }
+    ],
+    "front": [
+      {
+        "uid": "1-22",
+        "id": "BLC-4-070",
+        "name": "更木 剣八",
+        "type": "character",
+        "energy": 1,
+        "bp": 4000,
+        "ready": true
+      }
+    ],
+    "energyLine": [
+      {
+        "uid": "1-11",
+        "id": "BLC-4-066",
+        "name": "卯ノ花 烈",
+        "type": "character",
+        "energy": 0,
+        "bp": 1500,
+        "ready": true
+      },
+      {
+        "uid": "1-8",
+        "id": "BLC-4-066",
+        "name": "卯ノ花 烈",
+        "type": "character",
+        "energy": 0,
+        "bp": 1500,
+        "ready": false
+      },
+      {
+        "uid": "1-9",
+        "id": "BLC-4-066",
+        "name": "卯ノ花 烈",
+        "type": "character",
+        "energy": 0,
+        "bp": 1500,
+        "ready": false
+      }
+    ],
+    "candidate": {
+      "id": "main-front",
+      "factors": {
+        "coverage": "root",
+        "raidBase": true,
+        "gate": "main-front"
+      },
+      "factorsBound": true,
+      "searched": true,
+      "legalCount": 14,
+      "searchSeed": 1,
+      "returned": {
+        "type": "play",
+        "line": "front",
+        "uid": "1-3",
+        "mode": null,
+        "card": {
+          "uid": "1-3",
+          "id": "BLC-3-009",
+          "name": "日番谷 冬獅郎",
+          "type": "character",
+          "energy": 3,
+          "bp": 2000
+        }
+      },
+      "reason": "search",
+      "score": 108.85000000000001,
+      "nodesUsed": 48,
+      "dispatches": 48,
+      "accounted": true,
+      "phase": "main",
+      "pending": null,
+      "stages": [
+        {
+          "stage": "search",
+          "type": "play",
+          "line": "front",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "yielded",
+          "search": 108.85000000000001,
+          "executed": true
+        },
+        {
+          "stage": "energy-keep",
+          "type": "play",
+          "line": "front",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "yielded",
+          "search": 108.85000000000001,
+          "executed": true
+        },
+        {
+          "stage": "generator",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "energy-gate",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "early-draw",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "open-filter",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "refund",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "line-switch",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "ready-front",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "held",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "final-gate",
+          "type": "play",
+          "line": "front",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "yielded",
+          "search": 108.85000000000001,
+          "executed": true
+        },
+        {
+          "stage": "returned",
+          "type": "play",
+          "line": "front",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "yielded",
+          "search": 108.85000000000001,
+          "executed": true
+        }
+      ],
+      "rewrites": [
+        {
+          "at": "generator",
+          "from": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-3",
+            "card": "BLC-3-009"
+          },
+          "to": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-3",
+            "card": "BLC-3-009"
+          },
+          "sameUid": true,
+          "differentCard": false,
+          "beforeExecuted": true,
+          "afterExecuted": true,
+          "beforeBoundary": "yielded",
+          "afterBoundary": "pending",
+          "beforeSearch": 108.85000000000001,
+          "afterSearch": 18.299999999999997
+        },
+        {
+          "at": "line-switch",
+          "from": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-3",
+            "card": "BLC-3-009"
+          },
+          "to": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-5",
+            "card": "BLC-4-060"
+          },
+          "sameUid": false,
+          "differentCard": true,
+          "beforeExecuted": true,
+          "afterExecuted": true,
+          "beforeBoundary": "pending",
+          "afterBoundary": "pending",
+          "beforeSearch": 18.299999999999997,
+          "afterSearch": 11.299999999999997
+        },
+        {
+          "at": "final-gate",
+          "from": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-5",
+            "card": "BLC-4-060"
+          },
+          "to": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-3",
+            "card": "BLC-3-009"
+          },
+          "sameUid": false,
+          "differentCard": true,
+          "beforeExecuted": true,
+          "afterExecuted": true,
+          "beforeBoundary": "pending",
+          "afterBoundary": "yielded",
+          "beforeSearch": 11.299999999999997,
+          "afterSearch": 108.85000000000001
+        }
+      ]
+    },
+    "baselineOnSameState": {
+      "id": "baseline",
+      "factors": {
+        "coverage": null,
+        "raidBase": false,
+        "gate": null
+      },
+      "factorsBound": true,
+      "searched": true,
+      "legalCount": 14,
+      "searchSeed": 1,
+      "returned": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-5",
+        "mode": null,
+        "card": {
+          "uid": "1-5",
+          "id": "BLC-4-060",
+          "name": "藍染 惣右介",
+          "type": "character",
+          "energy": 3,
+          "bp": 4000
+        }
+      },
+      "reason": "search",
+      "score": 11.299999999999997,
+      "nodesUsed": 48,
+      "dispatches": 48,
+      "accounted": true,
+      "phase": "main",
+      "pending": null,
+      "stages": [
+        {
+          "stage": "search",
+          "type": "play",
+          "line": "front",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "yielded",
+          "search": 108.85000000000001,
+          "executed": true
+        },
+        {
+          "stage": "energy-keep",
+          "type": "play",
+          "line": "front",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "yielded",
+          "search": 108.85000000000001,
+          "executed": true
+        },
+        {
+          "stage": "generator",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "energy-gate",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "early-draw",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "open-filter",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "refund",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-3",
+          "mode": null,
+          "card": {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "name": "日番谷 冬獅郎",
+            "type": "character",
+            "energy": 3,
+            "bp": 2000
+          },
+          "boundary": "pending",
+          "search": 18.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "line-switch",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "ready-front",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "held",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "final-gate",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        },
+        {
+          "stage": "returned",
+          "type": "play",
+          "line": "energy",
+          "uid": "1-5",
+          "mode": null,
+          "card": {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "name": "藍染 惣右介",
+            "type": "character",
+            "energy": 3,
+            "bp": 4000
+          },
+          "boundary": "pending",
+          "search": 11.299999999999997,
+          "executed": true
+        }
+      ],
+      "rewrites": [
+        {
+          "at": "generator",
+          "from": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-3",
+            "card": "BLC-3-009"
+          },
+          "to": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-3",
+            "card": "BLC-3-009"
+          },
+          "sameUid": true,
+          "differentCard": false,
+          "beforeExecuted": true,
+          "afterExecuted": true,
+          "beforeBoundary": "yielded",
+          "afterBoundary": "pending",
+          "beforeSearch": 108.85000000000001,
+          "afterSearch": 18.299999999999997
+        },
+        {
+          "at": "line-switch",
+          "from": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-3",
+            "card": "BLC-3-009"
+          },
+          "to": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-5",
+            "card": "BLC-4-060"
+          },
+          "sameUid": false,
+          "differentCard": true,
+          "beforeExecuted": true,
+          "afterExecuted": true,
+          "beforeBoundary": "pending",
+          "afterBoundary": "pending",
+          "beforeSearch": 18.299999999999997,
+          "afterSearch": 11.299999999999997
+        }
+      ]
+    }
+  }
+}

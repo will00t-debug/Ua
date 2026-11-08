@@ -1,0 +1,73 @@
+{
+  "baselineCommit": "4e75db78",
+  "candidate": {"coverage": "root", "raidBase": true, "gate": "main-front"},
+  "default": "off. The eight cells and the named variants a, b, ab, and ab-front are unchanged. Live budget stays 48 nodes and 40ms.",
+  "decision": "The candidate keeps the three-AP front and then breaks the confirmed line switch in the filter chain's main phase. It is not strategy-compatible, so it is not sent to matches. No validation seed was taken. 9100 and above stay reserved. This is not a strength result.",
+  "searchSeed": {
+    "mix": "ai-v3-factor-split.mjs hardcoded seed 1. ai-v3-ab-front-energy.mjs passed game.seed, which is 8300. The search seed shuffles hidden zones inside the one belief world. The two results are different settings, not a regression or an improvement.",
+    "rejectBlueStep13": {
+      "gameSeed": 8300,
+      "stateHash": "f76f7f061d6106610b62122fe46fe910650f9922e4da5cebacc297a230b273cf",
+      "source": "audit/ai-v3-official-8300-life-36.json",
+      "replay": "reached",
+      "searchSeed1": "named-ab, tree-base-final, and tree-open-final return move uid 0-10. Every other cell, including the new candidate, returns next.",
+      "searchSeed8300": "Every cell, including named A+B and the candidate, returns next."
+    },
+    "whiteSwordStep12": {
+      "gameSeed": 8300,
+      "stateHash": "bf9775a44cb3e2d936dd6a6ec2a8a76c8d6d0191aa38cee64b94053797440cfc",
+      "searchSeed1": "The same three tree-plus-final cells return move uid 0-32. The candidate returns next.",
+      "searchSeed8300": "The same three cells still return move uid 0-32. The candidate returns next. This move does not depend on which of these two search seeds is used."
+    },
+    "renrukiStep15": {
+      "stateHash": "ceb6f42b0247f3f1db79aadcd0a7f14a0cdb22b5b23e3de031cd0f264a4e6d18",
+      "bothSeeds": "Every cell returns next."
+    },
+    "whiteSwordStep55": {
+      "stateHash": "87a368f696cabe96c01cf1d4cff4f8c8c6a274c3dac2901610e1d114c32c0434",
+      "source": "audit/ai-v3-official-8300-nodes48-white-reach.json",
+      "bothSeeds": "Every cell returns next."
+    },
+    "historicalClaim": "The sentence that the other three move snapshots are next for all eight cells is withdrawn. The raw dumps were kept."
+  },
+  "fronts": {
+    "searchSeed": 1,
+    "lastAp": {"hash": "3efedea4586a", "baseline": "energy uid 0-20", "candidate": "front uid 0-20", "sameAs": "named ab and ab-front"},
+    "twoAp": {"hash": "86e1632563c4", "all": "energy uid 0-11"},
+    "threeAp": {"hash": "a3c626d9239b", "baseline": "energy uid 1-8", "abFront": "energy uid 1-8", "candidate": "front uid 1-23", "sameAs": "named ab. The late gate restores the executed front after the open filter switches to a different uid. Boundaries differ, yielded 18.85 against pending -69.1."}
+  },
+  "filter": {
+    "where": "white-sword gameSeed 8301 first 0 seat 1 step 29, search seed 1, official opening",
+    "kept": "Discards the covered 0-cost Hitsugaya uid 1-33. Start stays next and the next turn has 3 AP. Two Unohana swaps spend uids 1-16 and 1-23. The payable FINAL line recovers 2 AP.",
+    "broken": "On the line with no FINAL, the main phase plays a front instead of the Aizen energy line switch, then passes. The standing blocker is not moved and the new character does not enter rested.",
+    "mainGateCount": 1,
+    "startWasNotTheOnlyCheck": true
+  },
+  "conflict": {
+    "stateHash": "854a5a9d3d7172b1d1531be36438fe70337db68c75757c66732d33b010cd6a97",
+    "phase": "main",
+    "pending": null,
+    "actor": 1,
+    "readyAp": 1,
+    "life": [7, 7],
+    "energy": {"green": 3},
+    "front": "BLC-4-070 uid 1-22 standing, energy 1, bp 4000",
+    "energyLine": "Three BLC-4-066. uid 1-11 standing. uids 1-8 and 1-9 rested.",
+    "hand": "BLC-3-009 uid 1-3 energy 3 bp 2000; BLC-4-060 uid 1-5 energy 3 bp 4000; BLC-2-067 uid 1-13 energy 4 bp 4000; two BLC-1-070 energy 6 bp 4000; two BLC-3-008 energy 4 bp 3000.",
+    "stages": [
+      "search: play front uid 1-3, executed, yielded 108.85",
+      "generator: same uid energy, executed, pending 18.3",
+      "line-switch: energy uid 1-5, a different card, executed, pending 11.3",
+      "late gate: boundaries differ, so the searched front uid 1-3 is restored"
+    ],
+    "baselineOnTheSameState": "energy uid 1-5, the line switch. Search seed 1, 48 nodes, 48 dispatches.",
+    "candidate": "front uid 1-3. Factors were bound: root, raid base, main-front. 48 nodes, 48 dispatches.",
+    "question": "The executed front reached a later boundary than the line-switch energy play. The evidence rule therefore puts the front back, and the confirmed line switch does not happen. Should that confirmed switch stay, or should the searched front stay? No card number and no snapshot was exempted."
+  },
+  "accounting": "108 searched snapshot decisions. Every one bound the requested factors. dispatches matched nodesUsed. None exceeded 48.",
+  "tests": {
+    "default": "node --test tests/ai-v3-*.test.mjs: 132 pass, 0 fail.",
+    "candidateOn": "AI_V3_TEST_FACTORS root/raidBase/main-front on energy, strategy, plan, raid, and player-strategy: 87 pass, 1 fail. The failure is the filter chain. Lethal, block, raid, hand discount, the no-process entry, and the worker passed with the candidate enabled."
+  },
+  "matches": "Not run. Tuning seeds 8401 and 8402 were not reused. No new validation seed."
+}

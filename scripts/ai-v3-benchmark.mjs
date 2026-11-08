@@ -237,7 +237,7 @@ const report={policy:AI_V3_POLICY,baseline:ANCHOR,hard:HARD_AI_POLICY,
   legacyThrough:'88ee9db6',
   note:'Tables through 88ee9db6 dealt seven LIFE cards immediately and did not mulligan. Those win/loss rows are a different rules setting.'
  },
- budget:{ms:BUDGET.ms,nodes:BUDGET.nodes},titles:{}};
+ budget:{ms:BUDGET.ms,nodes:BUDGET.nodes,searchSeed:BUDGET.seed},titles:{}};
 for(const deck of decks){
  console.error('deck',deck.id,new Date().toISOString());
  const bucket={byMode:{},completion:0,played:0,opening:[]};

@@ -42,7 +42,7 @@ export function factorsForVariant(variant){
 export function normalizeFactors(asked){
  if(!asked||typeof asked!=='object')return null;
  const coverage=asked.coverage==='root'||asked.coverage==='tree'?asked.coverage:null;
- const gate=asked.gate==='energy'||asked.gate==='final'?asked.gate:null;
+ const gate=asked.gate==='energy'||asked.gate==='final'||asked.gate==='main-front'?asked.gate:null;
  return {coverage,raidBase:asked.raidBase===true,gate};
 }
 export function bindVariant(variant,fn,factors){
@@ -829,6 +829,26 @@ export function frontEvidenceChoice(state,actor,previous,choice,rows){
  if(previous?.type!=='play'||previous.line!=='front')return choice;
  const toEnergy=choice?.type==='play'&&choice.line==='energy';
  if(!toEnergy&&choice?.type!=='next')return choice;
+ return evidencedChoice(previous,choice,rows);
+}
+// The main-front gate sits after energy, confirmed choices, and survival
+// protection. It reads only rows this search already paid for. A normal
+// character's executed front play can be kept when a later preference
+// changed it to an energy play or to passing. Energy may be another card.
+// The same evidence rule decides: a same-boundary line that does not score
+// worse still replaces the front, including a 4000. Start, move, discard,
+// trigger, and every other original choice stay with the preference.
+export function mainFrontEvidenceChoice(pack,state,actor,previous,choice,rows){
+ if(!state||state.phase!=='main'||state.pending||state.active!==actor)return choice;
+ if(previous?.type!=='play'||previous.line!=='front'||!previous.uid)return choice;
+ const toEnergy=choice?.type==='play'&&choice.line==='energy';
+ if(!toEnergy&&choice?.type!=='next')return choice;
+ const before=rowOf(rows,previous);
+ if(!before||!Number.isFinite(before.search))return choice;
+ const hand=state.players?.[actor]?.hand||[];
+ const card=hand.find(item=>item?.uid===previous.uid);
+ const printed=card&&packOf(pack,actor).cards?.[card.cardId];
+ if(printed?.type!=='character')return choice;
  return evidencedChoice(previous,choice,rows);
 }
 // Lines that stopped together were already compared. A worse energy score

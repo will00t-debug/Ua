@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,mainFrontEvidenceChoice,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -37,9 +37,11 @@ let lastTrace=null;
 export function resetAiV3Report(){report=emptyReport();lastTrace=null;}
 export function aiV3Report(){return {...report,samples:report.samples.slice()};}
 export function lastAiV3Trace(){return lastTrace?{...lastTrace,candidates:lastTrace.candidates?.map(row=>({...row}))}:null;}
-function gatePreference(state,actor,previous,preferred,rows){
- if(searchFactors().gate!=='final')return preferred;
- return evidencedChoice(previous,preferred,rows);
+function gatePreference(pack,state,actor,previous,preferred,rows){
+ const gate=searchFactors().gate;
+ if(gate==='final')return evidencedChoice(previous,preferred,rows);
+ if(gate==='main-front')return mainFrontEvidenceChoice(pack,state,actor,previous,preferred,rows);
+ return preferred;
 }
 function gateFrontEnergy(state,actor,previous,placed,rows){
  if(searchFactors().gate!=='energy')return placed;
@@ -62,7 +64,7 @@ function finish(action,reason,extra,started){
  report.ms+=ms;
  report.maxMs=Math.max(report.maxMs,ms);
  if(report.samples.length<4000)report.samples.push(Math.round(ms*10)/10);
- lastTrace={policy:AI_V3_POLICY,baseline:AI_V3_BASELINE,reason,ms,action:action?.type||null,...extra};
+ lastTrace={policy:AI_V3_POLICY,baseline:AI_V3_BASELINE,reason,ms,action:action?.type||null,...extra,factors:searchFactors()};
  report.followBranches+=extra.followBranches||0;
  report.maxDepth=Math.max(report.maxDepth||0,extra.maxDepth||0);
  report.responses+=extra.responses||0;
@@ -665,7 +667,7 @@ export function chooseAiV3Action(pack,state,options={}){
    const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
    const confirmed=confirmedTrace.choice;
    const preferred=holdSurvival(choice,confirmed,scored);
-   const gated=gatePreference(state,actor,choice,preferred,scored);
+   const gated=gatePreference(pack,state,actor,choice,preferred,scored);
    const kept=constrainConfirmedWin(gated,winRows,legal);
    report.budgetFallback++;
    report.budget++;
@@ -713,7 +715,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
   const confirmed=confirmedTrace.choice;
   const heldChoice=holdSurvival(exact,confirmed,scored);
-  const gated=gatePreference(state,actor,exact,heldChoice,scored);
+  const gated=gatePreference(pack,state,actor,exact,heldChoice,scored);
   let kept=gated;
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished

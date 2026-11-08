@@ -7,14 +7,14 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
 import {buildAiV3Request,handleAiV3Request} from '../dist/universal-v2/ai-v3/worker-entry.mjs';
-import {searchVariant,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {searchVariant,searchFactors,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
 import {withTestVariant} from './ai-v3-variant.mjs';
 import {openLethalShift} from '../scripts/ai-v3-lethal-shift.mjs';
 import {scoreLine,rankLegal,selectCandidates,selectionTrace} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
-import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,moveDevelopment,preferConfirmedChoices} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,mainFrontEvidenceChoice,moveDevelopment,preferConfirmedChoices} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 const chooseRaw=chooseAiV3Action;
 function choose(packs,state,options){
@@ -3335,6 +3335,68 @@ test('an evidence gate keeps a searched line unless the replacement matches its 
  assert.equal(frontEvidenceChoice(discarding,0,front,energy,rows).line,'energy');
  const event={type:'event',uid:'refund'};
  assert.equal(frontEvidenceChoice(main,0,front,event,rows).type,'event');
+ const bodyPack={cards:{ken:{type:'character',bp:4000,energy:1},note:{type:'event',bp:0,energy:0}}};
+ const bodyState={phase:'main',pending:null,active:0,players:[{hand:[{uid:'k',cardId:'ken'},{uid:'n',cardId:'note'}]}]};
+ const ken={type:'play',line:'front',uid:'k'};
+ const kenEnergy={type:'play',line:'energy',uid:'k'};
+ const otherEnergy={type:'play',line:'energy',uid:'other'};
+ const note={type:'play',line:'front',uid:'n'};
+ const executed=[
+  {action:ken,search:18.85,boundary:'yielded',executed:true},
+  {action:otherEnergy,search:-69.1,boundary:'pending',executed:true}
+ ];
+ assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,ken,otherEnergy,executed).uid,'k');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,ken,kenEnergy,[
+  {action:ken,search:10,boundary:'yielded',executed:true},
+  {action:kenEnergy,search:12,boundary:'yielded',executed:true}
+ ]).line,'energy');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,ken,kenEnergy,[
+  {action:ken,search:30,boundary:'yielded',executed:false}
+ ]).line,'energy');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,ken,pass,[
+  {action:ken,search:null,boundary:'yielded',executed:true}
+ ]).type,'next');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,note,kenEnergy,[
+  {action:note,search:8,boundary:'yielded',executed:true}
+ ]).line,'energy');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,start,0,{type:'extraDraw'},pass,[
+  {action:{type:'extraDraw'},search:70.6,boundary:'yielded',executed:true},
+  {action:pass,search:7.8,boundary:'yielded',executed:true}
+ ]).type,'next');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,moving,0,{type:'move',uid:'0-32'},pass,[
+  {action:{type:'move',uid:'0-32'},search:-3.8,boundary:'yielded',executed:true}
+ ]).type,'next');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,discarding,0,ken,kenEnergy,executed).line,'energy');
+});
+
+test('the main-front candidate is enabled only by explicit factors',()=>{
+ const factors={coverage:'root',raidBase:true,gate:'main-front'};
+ for(const actor of [0,1]){
+  const opened=openShift(actor,{ban:true});
+  let seen=null;
+  const stop=watchEngineDispatch(()=>{if(!seen)seen=searchFactors();});
+  resetAiV3Report();
+  const action=chooseRaw(opened.packs,opened.state,{
+   actor,seed:1,...MATCH_LIMITS,nodes:48,ms:1e9,now:()=>0,hardNodes:0,diagnose:true,factors
+  });
+  stop();
+  assert.deepEqual(seen,factors);
+  assert.deepEqual(lastAiV3Trace().factors,factors);
+  assert.equal(action.type,'activate');
+  assert.equal(lastAiV3Trace().reason,'search');
+  assert.equal(lastAiV3Trace().nodesUsed,37);
+ }
+ let idle=null;
+ const stopIdle=watchEngineDispatch(()=>{if(!idle)idle=searchFactors();});
+ resetAiV3Report();
+ const opened=openShift(0,{ban:true});
+ chooseRaw(opened.packs,opened.state,{
+  actor:0,seed:1,...MATCH_LIMITS,nodes:48,ms:1e9,now:()=>0,hardNodes:0,diagnose:true
+ });
+ stopIdle();
+ assert.equal(idle.gate,null);
+ assert.equal(idle.coverage,null);
+ assert.equal(idle.raidBase,false);
 });
 
 function hideProcess(fn){
