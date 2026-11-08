@@ -1,6 +1,6 @@
 {
   "baselineCommit": "4a028a15",
-  "decision": "reserveAp stays off. The 8440-8442 flips were diagnosed without changing the planner. Passing makes one more rested energy than drawing in all 12, and neither side attacks that turn. The same visible position covers both the 7 new wins and the 5 lost wins, so there is no split to turn on. No new seeds. 9100 and above stay reserved.",
+  "decision": "reserveAp stays off. The 8440-8442 flips were diagnosed without changing the planner. Passing makes one more rested energy than drawing in all 12, and neither side attacks that turn. The same visible position covers both the 7 new wins and the 5 lost wins, so there is no split to turn on. The next own main was then observed. The extra energy becomes an attack in three games and a rested body in two others. No legal main was mis-ranked at the same stop, so nothing was changed. No new seeds. 9100 and above stay reserved.",
   "reserveAp": {
     "default": false,
     "bounceCorrection": {
@@ -73,6 +73,12 @@
       "newSeeds": false,
       "strategyChanged": false,
       "result": "no visible split; default stays off"
+    },
+    "nextMain": {
+      "report": "audit/ai-v3-reserve-ap-next-main-summary.json",
+      "detail": "audit/ai-v3-reserve-ap-next-main.json",
+      "script": "scripts/ai-v3-reserve-ap-next-main.mjs",
+      "result": "three moved energy bodies attack and two rested bodies enter; no same-stop defect; default stays off"
     }
   },
   "search": {
