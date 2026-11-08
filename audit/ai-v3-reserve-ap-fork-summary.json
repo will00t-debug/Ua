@@ -1,0 +1,92 @@
+{
+  "base": "c03c2763",
+  "default": "off",
+  "changed": false,
+  "newSeeds": false,
+  "sources": [
+    "audit/ai-v3-reserve-ap-bounce-8440-baseline.json",
+    "audit/ai-v3-reserve-ap-bounce-8440.json"
+  ],
+  "detail": "audit/ai-v3-reserve-ap-fork.json",
+  "script": "scripts/ai-v3-reserve-ap-fork.mjs",
+  "settings": {
+    "opponent": "hard-search-2",
+    "plan": "tree",
+    "searchSeed": 1,
+    "nodes": 48,
+    "ms": 1000000000,
+    "actorDecisions": 2,
+    "opponentDecisions": 2,
+    "beam": 4,
+    "worlds": 1,
+    "stepLimit": 400,
+    "branches": {
+      "draw-off": "force extraDraw, then reserveAp off",
+      "pass-off": "force next, then reserveAp off",
+      "draw-on": "force extraDraw, then reserveAp on",
+      "pass-on": "force next, then reserveAp on"
+    }
+  },
+  "check": {
+    "flips": 12,
+    "gained": 7,
+    "lost": 5,
+    "sameStateBeforeTheAction": 12,
+    "bothChoicesLegal": 12,
+    "firstDifference": "extraDraw versus next",
+    "drawOffReplaysBaseline": 12,
+    "passOnReplaysCandidate": 12,
+    "illegal": 0,
+    "dispatchEqualsNodes": true,
+    "maxNodes": 48
+  },
+  "answers": {
+    "commonDifference": "沒有。12 場共同的是這一手多 1 點橫置能源，這件事在新增的 7 勝和丟失的 5 勝裡都發生。最終勝負沒有同一個方向。",
+    "visibleSplit": "不能。決策當下看得見的生命、AP、空前線、能源差距和可出的產能張數，在該留和該抽的局面裡重疊。",
+    "decision": "證據不足。reserveAp 維持關閉。不開新種子，不改策略。"
+  },
+  "sameAtTheDecision": {
+    "life": "12 場都是 7 對 7",
+    "ap": 2,
+    "fronts": "雙方都空",
+    "plan": "keep 為真，完整出牌比少一次多 1 點能源，兩次出牌對一次",
+    "opponentHand": 6
+  },
+  "thisTurn": {
+    "energy": "保留 AP 的能源總數都比抽牌多 1，和規劃器的完整／少一次相同。起點是 0 的到 2 對 1，起點是 1 的到 3 對 2。",
+    "combat": "多出的能源都在本回合橫置的產能角色上。12 場都沒有角色站立，也沒有攻擊。已知手牌裡付不起的高 BP 角色沒有因此站上前線。",
+    "nextTurnLife": "下一回合開始時，11 場兩邊仍是 7 對 7。白劍兩邊都是 6 對 7。這一手沒有在下一回合開始前改寫生命。",
+    "drawnCards": "抽到的牌公開後，沒有一張在這一回合回 AP、發動找牌或用來防守。兩張被打上能源（STG-1-002、SAO-1-001），那兩場仍然是保留 AP 的分支才勝。其餘留在手牌；其中幾張的對局是抽牌分支才勝。"
+  },
+  "branches": {
+    "passWinsEvenIfLaterOff": [
+      "steins-gate-raid 8440 first 1 seat 1",
+      "sword-art-online-raid 8441 first 1 seat 1",
+      "sword-art-online-raid 8442 first 1 seat 1",
+      "white-sword 8441 first 0 seat 0"
+    ],
+    "drawWinsEvenIfLaterOff": [
+      "steins-gate-raid 8440 first 0 seat 0",
+      "steins-gate-raid 8441 first 1 seat 1",
+      "steins-gate-raid 8442 first 0 seat 0",
+      "steins-gate-raid 8442 first 1 seat 1",
+      "sword-art-online-raid 8440 first 1 seat 1"
+    ],
+    "onlyContinuingReserveWins": [
+      "steins-gate-raid 8440 first 1 seat 0",
+      "steins-gate-raid 8441 first 0 seat 1"
+    ],
+    "laterReserveWinsEitherFirstAction": [
+      "sword-art-online-raid 8441 first 0 seat 1"
+    ],
+    "drawWinLostIfReserveStaysOn": [
+      "steins-gate-raid 8441 first 1 seat 1",
+      "steins-gate-raid 8442 first 1 seat 1"
+    ]
+  },
+  "notes": [
+    "白劍 8441、先手 0、座位 0、第 15 步，基準和候選的紀錄原因都是 budget-fallback，48 節點沒有搜完。強制保留的兩條分支都勝，但後面開關開著是 186 步，關著是 312 步。",
+    "刀劍 8401、先手 0、座位 0、第 12 步的玩家選擇沒有改。這次沒有把 2 AP 一律不抽，也沒有重跑 3 AP 或卯之花、FINAL、藍染。策略程式沒有變。",
+    "8440–8442 只作這次診斷。9100 以上仍保留。沒有要玩家再選的快照：這些局面在可見條件上同形，再選一手不能分開 7 勝和 5 敗。"
+  ]
+}

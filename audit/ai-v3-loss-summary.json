@@ -1,6 +1,6 @@
 {
   "baselineCommit": "4a028a15",
-  "decision": "reserveAp stays off. After the bounce-state correction, the rerun adjustment set was 2-22 versus 3-21 and the locked 8440-8442 validation was 7-29 versus 9-27. Both paired intervals contain 0, so the gain is not separated from a flat result. The planner was not edited after the adjustment rerun. No 40ms run. 8430-8432 stay the pre-fix check. 9100 and above stay reserved.",
+  "decision": "reserveAp stays off. The 8440-8442 flips were diagnosed without changing the planner. Passing makes one more rested energy than drawing in all 12, and neither side attacks that turn. The same visible position covers both the 7 new wins and the 5 lost wins, so there is no split to turn on. No new seeds. 9100 and above stay reserved.",
   "reserveAp": {
     "default": false,
     "bounceCorrection": {
@@ -64,6 +64,15 @@
       "byDeckNote": "Wins-losses out of 12 games per deck. The earlier note wrote the sword-art candidate as 2-12 and Steins;Gate as 1-12, which used the game count as the loss count. These rows are the pre-fix candidate. They are not a result for the planner after the bounce-state correction.",
       "gained": ["sword-art-online-raid 8431 first 1 seat 0", "sword-art-online-raid 8431 first 1 seat 1", "steins-gate-raid 8431 first 1 seat 0"],
       "lost": ["steins-gate-raid 8431 first 1 seat 1"]
+    },
+    "forkDiagnosis": {
+      "sources": ["audit/ai-v3-reserve-ap-bounce-8440-baseline.json", "audit/ai-v3-reserve-ap-bounce-8440.json"],
+      "report": "audit/ai-v3-reserve-ap-fork-summary.json",
+      "detail": "audit/ai-v3-reserve-ap-fork.json",
+      "script": "scripts/ai-v3-reserve-ap-fork.mjs",
+      "newSeeds": false,
+      "strategyChanged": false,
+      "result": "no visible split; default stays off"
     }
   },
   "search": {
