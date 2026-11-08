@@ -1,0 +1,574 @@
+{
+  "baselineSha": "528ab2045e435c30db88294d01d49430d770c012",
+  "default": "off",
+  "reason": "A+B raised the locked tuning and validation pair scores, and the same direction remained inside the 40ms group. It is not the default: with it on, confirmed routes move a color they keep, and the filter chain draws instead of passing.",
+  "snapshots": "audit/ai-v3-front-evidence-positions.json",
+  "tuningSeeds": [
+    8401,
+    8402
+  ],
+  "validationSeeds": [
+    8410,
+    8411,
+    8412
+  ],
+  "clock": {
+    "seed": 8410,
+    "decks": [
+      "white-sword",
+      "sword-art-online-raid",
+      "steins-gate-raid"
+    ],
+    "first": [
+      0,
+      1
+    ],
+    "seats": [
+      0,
+      1
+    ],
+    "ms": 40,
+    "nodes": 48,
+    "preselected": true
+  },
+  "decks": [
+    "white-sword",
+    "sword-art-online-raid",
+    "steins-gate-raid"
+  ],
+  "conditions": "official opening, hard-search-2 at the same 48-node budget, no clock except the 40ms group, both seats and both firsts, each setting once",
+  "tuning": {
+    "baseline": {
+      "record": {
+        "win": 2,
+        "loss": 22,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 12,
+        "mean": -0.4167,
+        "low": -0.5,
+        "high": -0.2917
+      },
+      "meter": {
+        "games": 24,
+        "decisions": 1415,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 0,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 0,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 2,
+            "loss": 6,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        }
+      }
+    },
+    "a": {
+      "record": {
+        "win": 0,
+        "loss": 24,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 12,
+        "mean": -0.5,
+        "low": -0.5,
+        "high": -0.5
+      },
+      "meter": {
+        "games": 24,
+        "decisions": 1280,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 0,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 0,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 0,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        }
+      },
+      "versusBaseline": {
+        "n": 12,
+        "mean": -0.0833,
+        "low": -0.2083,
+        "high": 0
+      }
+    },
+    "b": {
+      "record": {
+        "win": 4,
+        "loss": 20,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 12,
+        "mean": -0.3333,
+        "low": -0.4583,
+        "high": -0.2083
+      },
+      "meter": {
+        "games": 24,
+        "decisions": 1534,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 2,
+            "loss": 6,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 2,
+            "loss": 6,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 0,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        }
+      },
+      "versusBaseline": {
+        "n": 12,
+        "mean": 0.0833,
+        "low": -0.125,
+        "high": 0.2917
+      }
+    },
+    "ab": {
+      "record": {
+        "win": 7,
+        "loss": 17,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 12,
+        "mean": -0.2083,
+        "low": -0.3333,
+        "high": -0.0833
+      },
+      "meter": {
+        "games": 24,
+        "decisions": 1515,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 3,
+            "loss": 5,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.125,
+            "low": -0.375,
+            "high": 0
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 2,
+            "loss": 6,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 2,
+            "loss": 6,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 4,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        }
+      },
+      "versusBaseline": {
+        "n": 12,
+        "mean": 0.2083,
+        "low": 0.0417,
+        "high": 0.375
+      }
+    }
+  },
+  "validation": {
+    "baseline": {
+      "record": {
+        "win": 3,
+        "loss": 33,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 18,
+        "mean": -0.4167,
+        "low": -0.5,
+        "high": -0.3333
+      },
+      "meter": {
+        "games": 36,
+        "decisions": 1737,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 0,
+            "loss": 12,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 6,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 0,
+            "loss": 12,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 6,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 3,
+            "loss": 9,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 6,
+            "mean": -0.25,
+            "low": -0.4167,
+            "high": -0.0833
+          }
+        }
+      }
+    },
+    "ab": {
+      "record": {
+        "win": 10,
+        "loss": 26,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 18,
+        "mean": -0.2222,
+        "low": -0.3333,
+        "high": -0.0833
+      },
+      "meter": {
+        "games": 36,
+        "decisions": 2288,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 4,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 6,
+            "mean": -0.1667,
+            "low": -0.4167,
+            "high": 0.1667
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 2,
+            "loss": 10,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 6,
+            "mean": -0.3333,
+            "low": -0.5,
+            "high": -0.1667
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 4,
+            "loss": 8,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 6,
+            "mean": -0.1667,
+            "low": -0.3333,
+            "high": 0
+          }
+        }
+      },
+      "versusBaseline": {
+        "n": 18,
+        "mean": 0.1944,
+        "low": 0.0278,
+        "high": 0.3611
+      }
+    }
+  },
+  "clock40": {
+    "baseline": {
+      "record": {
+        "win": 1,
+        "loss": 11,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 6,
+        "mean": -0.4167,
+        "low": -0.5,
+        "high": -0.25
+      },
+      "meter": {
+        "games": 12,
+        "decisions": 561,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 0,
+            "loss": 4,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 2,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 0,
+            "loss": 4,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 2,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 1,
+            "loss": 3,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 2,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        }
+      }
+    },
+    "ab": {
+      "record": {
+        "win": 4,
+        "loss": 8,
+        "unfinished": 0
+      },
+      "hardGap": {
+        "n": 6,
+        "mean": -0.1667,
+        "low": -0.3333,
+        "high": 0
+      },
+      "meter": {
+        "games": 12,
+        "decisions": 748,
+        "maxNodes": 48,
+        "over": 0,
+        "mismatch": 0,
+        "replayFail": 0
+      },
+      "byDeck": {
+        "white-sword": {
+          "record": {
+            "win": 1,
+            "loss": 3,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 2,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        },
+        "sword-art-online-raid": {
+          "record": {
+            "win": 2,
+            "loss": 2,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 2,
+            "mean": 0,
+            "low": 0,
+            "high": 0
+          }
+        },
+        "steins-gate-raid": {
+          "record": {
+            "win": 1,
+            "loss": 3,
+            "unfinished": 0
+          },
+          "hardGap": {
+            "n": 2,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        }
+      },
+      "versusBaseline": {
+        "n": 6,
+        "mean": 0.25,
+        "low": -0.0833,
+        "high": 0.5
+      }
+    }
+  },
+  "budgetBottleneck": "On the three-action-point snapshot, 48 nodes with A+B keeps the 4000 front that search had selected. 192 and 768 nodes select the 2500 energy instead, at a finished comparable boundary. A 48-node unfinished front score is not the same quality as those deeper lines. The match gain still appeared on seeds that were not used to choose the score.",
+  "nextHypothesis": "Limit the evidence gate to a searched front replacement. The general gate is what moves a kept color and what draws through the filter chain. Do not refit that narrower gate on 8410-8412."
+}

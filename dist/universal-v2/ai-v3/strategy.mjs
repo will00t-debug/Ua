@@ -24,6 +24,16 @@ export function bindMeter(meter,fn){
  try{return fn();}
  finally{meterStack.pop();}
 }
+// A and B stay off unless a comparison asks for them. Null is the 528ab204 path.
+const variantStack=[];
+export function bindVariant(variant,fn){
+ variantStack.push(variant==='a'||variant==='b'||variant==='ab'?variant:null);
+ try{return fn();}
+ finally{variantStack.pop();}
+}
+export function searchVariant(){
+ return variantStack.length?variantStack[variantStack.length-1]:null;
+}
 export function noteDispatch(){
  const meter=meterStack.length?meterStack[meterStack.length-1]:null;
  if(meter)meter.dispatches=(meter.dispatches||0)+1;
@@ -691,12 +701,72 @@ function spareForEnergy(pack,state,actor){
  if(life<4)return false;
  return life-unblockedHits(pack,state,actor)>=4;
 }
+// Same four steps as the static eval's next attack. This ranks one front
+// slot; it is not a second copy of the position score.
+function attackSteps(bp){
+ if(bp>=4000)return 12;
+ if(bp>=3000)return 8;
+ if(bp>=2000)return 4;
+ return 0;
+}
+// The reserved front slot used to follow string order. The score mixes the
+// body's attack, what its printed effect adds, whether this turn can pay it,
+// and the energy the curve still wants from a generator. No one term is a filter.
+export function frontCoverageScore(pack,state,viewer,action){
+ if(action?.type!=='play'||action?.line!=='front'||!action.uid)return null;
+ const catalog=packOf(pack,viewer).cards;
+ const card=(state.players?.[viewer]?.hand||[]).find(item=>item?.uid===action.uid);
+ const printed=card&&catalog[card.cardId];
+ if(!printed||printed.type!=='character')return null;
+ const bp=Number(printed.bp)||0;
+ const cost=Number(printed.energy)||0;
+ const gen=Number(printed.gen)||0;
+ const colors=colorsOf(pack,state,viewer);
+ const payable=cost<=(colors[printed.color]||0);
+ let contest=0;
+ const threats=(state.players?.[1-viewer]?.front||[]).filter(item=>item?.ready);
+ if(threats.length){
+  let answered=0;
+  for(const threat of threats)if(bp>=bpOf(pack,state,threat))answered++;
+  contest=answered/threats.length*6;
+ }
+ const plays=printed.effects?.onPlay;
+ let effect=0;
+ if(Array.isArray(plays)&&plays.length)effect+=Math.min(plays.length,2)*2;
+ if(raidReady(catalog,printed,state.players?.[viewer]))effect+=4;
+ else if(printed.raidName)effect+=1;
+ if(printed.trigger)effect+=1;
+ if(printed.mainAbility||(Array.isArray(printed.printedMains)&&printed.printedMains.length))effect+=1;
+ const costTerm=payable?-cost*0.5:-20-cost;
+ const parts=strategyParts(pack,state,viewer);
+ const energyUse=gen>0&&(parts.deficit>0||parts.stranded>0)?Math.min(gen,2)*2+Math.min(parts.deficit,3):0;
+ return attackSteps(bp)+contest+effect+costTerm-energyUse;
+}
 function rowOf(rows,action){
  if(!action)return null;
  const key=JSON.stringify(action);
  return (rows||[]).find(row=>row?.executed!==false&&JSON.stringify(row.action)===key)||null;
 }
 function provenWin(row){return row?.boundary==='terminal'&&row.search>=90000;}
+// A preference may replace the searched action only when that replacement was
+// searched to the same boundary and did not score worse there. A deeper line
+// is not treated as better. A confirmed win stays, and a known immediate loss
+// is not put back over another line.
+export function evidencedChoice(previous,choice,rows){
+ if(!previous||!choice||JSON.stringify(previous)===JSON.stringify(choice))return choice;
+ const before=rowOf(rows,previous);
+ const after=rowOf(rows,choice);
+ if(provenWin(before))return previous;
+ if(provenWin(after))return choice;
+ if(provenLoss(before)){
+  if(!provenLoss(after))return choice;
+ }else if(provenLoss(after))return previous;
+ if(!before||!Number.isFinite(before.search))return choice;
+ if(!after||!Number.isFinite(after.search))return previous;
+ if(after.boundary!==before.boundary)return previous;
+ if(after.search<before.search)return previous;
+ return choice;
+}
 // Lines that stopped together were already compared. A worse energy score
 // does not get to replace the front just because the color would rise.
 function frontBeatsEnergy(choice,rows){

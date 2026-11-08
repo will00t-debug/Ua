@@ -6,11 +6,11 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,effectiveHandRequiredEnergy,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
-import {scoreLine,rankLegal,selectCandidates} from '../dist/universal-v2/ai-v3/beam.mjs';
+import {scoreLine,rankLegal,selectCandidates,selectionTrace} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
-import {bindProbeBudget,energyPlayNet,moveDevelopment,preferConfirmedChoices,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,moveDevelopment,preferConfirmedChoices,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -3254,4 +3254,77 @@ test('an optional discard gate keeps a finished skip comparison and does not ign
   assert.ok(higher.length>=1);
   assert.ok(higher.every(row=>row.search<picked.search));
  }
+});
+
+test('front coverage uses cost, energy, attack and effect, and stays off by default',()=>{
+ const {packs,state}=reachStart(2);
+ wipeSide(state,0);
+ wipeSide(state,1);
+ for(let slot=0;slot<3;slot++)place(state,0,take(state,0,'BLC-2-066'),'energy',slot);
+ place(state,0,take(state,0,'BLC-4-066'),'energy',3);
+ const held=hold(state,0,['BLC-2-069','BLC-4-070','BLC-1-085']);
+ const early=held.find(card=>card.cardId==='BLC-1-085');
+ const late=held.find(card=>card.cardId==='BLC-2-069');
+ if(String(early.uid)<String(late.uid)){early.cardId='BLC-2-069';late.cardId='BLC-1-085';}
+ place(state,1,take(state,1,'BLC-4-070'),'front',0);
+ let main=state;
+ for(let guard=0;guard<3&&main.phase!=='main';guard++){
+  const step=legalUniversalActions(packs,main).find(action=>action.type==='next');
+  main=dispatchUniversalAction(packs,main,step,{actor:0});
+ }
+ assert.equal(main.phase,'main');
+ assert.equal(assertUniversalMatch(packs,main),true);
+ const legal=legalUniversalActions(packs,main);
+ const byId=id=>legal.find(action=>action.type==='play'&&action.line==='front'&&
+  main.players[0].hand.find(card=>card.uid===action.uid)?.cardId===id);
+ const small=byId('BLC-2-069'),ken=byId('BLC-4-070'),effect=byId('BLC-1-085');
+ assert.ok(small&&ken&&effect);
+ const score=action=>frontCoverageScore(packs,main,0,action);
+ assert.ok(score(effect)>score(ken));
+ assert.ok(score(ken)>score(small));
+ const low=structuredClone(main);
+ for(let slot=1;slot<4;slot++){
+  low.players[0].deck.push(low.players[0].energy[slot]);
+  low.players[0].energy[slot]=null;
+ }
+ assert.ok(frontCoverageScore(packs,low,0,effect)<frontCoverageScore(packs,low,0,ken));
+ const plain=selectionTrace(packs,main,0,legal,4,null);
+ const covered=bindVariant('a',()=>selectionTrace(packs,main,0,legal,4,null));
+ const plainFront=plain.picked.find(action=>action.type==='play'&&action.line==='front');
+ const coveredFront=covered.picked.find(action=>action.type==='play'&&action.line==='front');
+ assert.equal(JSON.stringify(plainFront),JSON.stringify(plain.ranked.find(action=>action.type==='play'&&action.line==='front')));
+ assert.notEqual(plainFront.uid,effect.uid);
+ assert.equal(coveredFront.uid,effect.uid);
+ assert.equal(covered.notes.find(note=>note.action.uid===effect.uid&&note.action.line==='front').reason,'front-slot');
+ assert.equal(covered.picked.filter(action=>action.type==='play'&&action.line==='front').length,1);
+});
+
+test('an evidence gate keeps a searched line unless the replacement matches its boundary',()=>{
+ const front={type:'play',line:'front',uid:'body'};
+ const energy={type:'play',line:'energy',uid:'body'};
+ const other={type:'play',line:'energy',uid:'other'};
+ const win={type:'attack',uid:'body'};
+ assert.equal(evidencedChoice(front,energy,[
+  {action:front,search:30,boundary:'yielded',executed:true}
+ ]).uid,front.uid);
+ assert.equal(evidencedChoice(front,energy,[
+  {action:front,search:-12,boundary:'yielded',executed:true},
+  {action:energy,search:4,boundary:'yielded',executed:true}
+ ]).line,'energy');
+ assert.equal(evidencedChoice(front,energy,[
+  {action:front,search:4,boundary:'yielded',executed:true},
+  {action:energy,search:20,boundary:'pending',executed:true}
+ ]).line,'front');
+ assert.equal(evidencedChoice(win,energy,[
+  {action:win,search:100000,boundary:'terminal',executed:true},
+  {action:energy,search:40,boundary:'returned',executed:true}
+ ]).type,'attack');
+ assert.equal(evidencedChoice(front,other,[
+  {action:front,search:-100000,boundary:'terminal',executed:true},
+  {action:other,search:-10,boundary:'yielded',executed:true}
+ ]).uid,'other');
+ assert.equal(evidencedChoice(front,other,[
+  {action:front,search:10,boundary:'yielded',executed:true},
+  {action:other,search:-100000,boundary:'terminal',executed:true}
+ ]).line,'front');
 });

@@ -36,6 +36,7 @@ const BUDGET={...MATCH_LIMITS,ms:askedMs,nodes:askedNodes,seed:1};
 const STRATEGY=process.env.AI_V3_STRATEGY==='score'||process.env.AI_V3_STRATEGY==='order'||process.env.AI_V3_STRATEGY==='reply'
  ?process.env.AI_V3_STRATEGY:null;
  const HARD_NODES=process.env.AI_V3_HARD_NODES!=null&&process.env.AI_V3_HARD_NODES!==''?Number(process.env.AI_V3_HARD_NODES):null;
+const VARIANT=process.env.AI_V3_VARIANT==='a'||process.env.AI_V3_VARIANT==='b'||process.env.AI_V3_VARIANT==='ab'?process.env.AI_V3_VARIANT:null;
 const RECORD=process.env.AI_V3_ACTIONS==='1';
 
 function pct(values,p){
@@ -54,9 +55,10 @@ function choose(mode,pack,state,actor){
   return {action,fallback:false};
  }
  if(mode==='rollout'||mode==='tree'||mode==='tree-replies'){
-  const action=chooseAiV3Action(pack,state,{actor,...BUDGET,plan:mode,strategy:STRATEGY,
+  const meter={dispatches:0};
+  const action=chooseAiV3Action(pack,state,{actor,...BUDGET,plan:mode,strategy:STRATEGY,variant:VARIANT,meter,
    ...(Number.isInteger(HARD_NODES)?{hardNodes:HARD_NODES}:{})});
-  return {action,fallback:false};
+  return {action,fallback:false,dispatches:meter.dispatches};
  }
  const options={actor,...BUDGET,plan:'rollout',strategy:STRATEGY};
  if(mode==='prior')options.mode='prior';
@@ -158,7 +160,8 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
    if(trace)quality={reason:trace.reason||null,fallbackKind:trace.fallbackKind??null,
     nodesUsed:Number.isFinite(trace.nodesUsed)?trace.nodesUsed:null,settled:trace.settled===true};
   }
-  if(RECORD)actions.push({step:steps,actor,action,...(quality||{})});
+  if(RECORD)actions.push({step:steps,actor,action,...(quality||{}),
+   ...(Number.isInteger(picked.dispatches)?{dispatches:picked.dispatches}:{})});
   try{state=dispatchUniversalAction(packs,state,action,{actor});}
   catch(error){
    illegal++;
@@ -223,7 +226,7 @@ const wanted=new Set((process.env.AI_V3_TITLES||'').split(',').filter(Boolean));
 const decks=(POOL==='battle'?battleDecks():mainDecks()).filter(deck=>!wanted.size||wanted.has(deck.title)||wanted.has(deck.id));
 const report={policy:AI_V3_POLICY,baseline:ANCHOR,hard:HARD_AI_POLICY,
  split:FINAL?'final':'dev',seed0:SEED0,steps:STEPS,games:GAMES,modes:MODES,pool:POOL,opponent:OPPONENT,anchor:ANCHOR,
- strategy:STRATEGY,hardNodes:Number.isInteger(HARD_NODES)?HARD_NODES:0,
+ strategy:STRATEGY,hardNodes:Number.isInteger(HARD_NODES)?HARD_NODES:0,variant:VARIANT,
  rules:{
   name:RULES.openingMulligan?'official':'legacy',
   openingMulligan:RULES.openingMulligan,attackerChoosesLife:RULES.attackerChoosesLife,

@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,evidencedChoice,searchVariant} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -379,7 +379,11 @@ export function chooseAiV3Action(pack,state,options={}){
   const settle=()=>{report.nodes=nodesBefore+(total-pool.n);};
   const spent=()=>report.nodes-nodesBefore;
   const diagnose=options.diagnose!==false;
-  return bindMeter(options.meter,()=>bindProbeBudget(budget,()=>{
+  // A+B won the locked 8401/8402 and 8410-8412 tables, but it also moves a color
+  // the confirmed energy routes keep and it draws through the filter chain.
+  // Those routes stay on this default. Ask for variant 'ab' to run the candidate.
+  const variant=options.variant==='a'||options.variant==='b'||options.variant==='ab'?options.variant:null;
+  return bindMeter(options.meter,()=>bindProbeBudget(budget,()=>bindVariant(variant,()=>{
   try{
   const rankStarted=performance.now();
   const ordered=rankLegal(pack,probe,actor,legal,strategy);
@@ -627,7 +631,9 @@ export function chooseAiV3Action(pack,state,options={}){
   // every line that has not won.
   if(!provenWin&&(!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
-   const kept=constrainConfirmedWin(holdSurvival(choice,preferConfirmedChoices(pack,state,actor,placed,scored),scored),winRows,legal);
+   const preferred=holdSurvival(choice,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
+   const gated=searchVariant()==='b'||searchVariant()==='ab'?evidencedChoice(choice,preferred,scored):preferred;
+   const kept=constrainConfirmedWin(gated,winRows,legal);
    report.budgetFallback++;
    report.budget++;
    settle();
@@ -669,6 +675,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const row=scored.find(item=>same(item.action,exact));
   const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
   let kept=holdSurvival(exact,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
+  if(searchVariant()==='b'||searchVariant()==='ab')kept=evidencedChoice(exact,kept,scored);
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished
   // scores are not a reason to throw away the card the keep-order retains.
@@ -712,7 +719,7 @@ export function chooseAiV3Action(pack,state,options={}){
    return fallback(pack,state,legal,started,error?.message||'exception',()=>{settle();return spent();});
   }catch{settle();return finish(null,'exception',{fallback:true,nodesUsed:spent()},started);}
  }
-  }));
+  })));
  }catch(error){
   try{
    const legal=legalUniversalActions(pack,state);

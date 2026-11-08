@@ -5,7 +5,7 @@
 import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded,filterEnergyFirst,lastApLineSwitch,recoversActionPoints,payableRefundOnTop} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal,engineDispatch} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal,engineDispatch,frontCoverageScore,searchVariant} from './strategy.mjs';
 import {packOf,visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -91,37 +91,68 @@ export function rankLegal(pack,state,viewer,legal,strategy){
  const list=dedupe(state,viewer,legal);
  return [...list].sort((a,b)=>compareRanked(pack,state,viewer,a,b,strategy));
 }
-export function selectCandidates(pack,state,viewer,legal,beam,strategy){
+function coveredFront(pack,state,viewer,ranked){
+ const variant=searchVariant();
+ if(variant!=='a'&&variant!=='ab')return ranked.find(action=>action.type==='play'&&action.line==='front')||null;
+ let best=null,bestScore=-Infinity;
+ for(const action of ranked){
+  const score=frontCoverageScore(pack,state,viewer,action);
+  if(score==null||!(score>bestScore))continue;
+  best=action;
+  bestScore=score;
+ }
+ return best;
+}
+// The trace is the beam itself. selectCandidates returns the same list.
+export function selectionTrace(pack,state,viewer,legal,beam,strategy){
  const ranked=rankLegal(pack,state,viewer,legal,strategy);
  const width=Math.max(1,beam||1);
  const picked=[],seen=new Set(),groups=new Set();
- const take=action=>{
+ const reason=new Map();
+ const mark=(action,label)=>{
+  const key=JSON.stringify(action);
+  if(!reason.has(key))reason.set(key,label);
+ };
+ const take=(action,label)=>{
   const key=JSON.stringify(action);
   if(seen.has(key))return;
   seen.add(key);
   picked.push(action);
+  reason.set(key,label);
  };
  for(const action of ranked){
   const group=actionGroup(state,viewer,action);
-  if(groups.has(group))continue;
+  if(groups.has(group)){mark(action,'group');continue;}
   groups.add(group);
-  take(action);
+  take(action,'group-slot');
   if(picked.length>=width)break;
  }
  for(const action of ranked){
-  if(picked.length>=width)break;
-  take(action);
+  if(picked.length>=width){mark(action,'width');continue;}
+  take(action,'fill');
  }
  const safe=ranked.find(isSafeAction);
  if(safe&&!picked.some(action=>same(action,safe))){
-  if(picked.length<width)picked.push(safe);
-  else picked[picked.length-1]=safe;
+  if(picked.length<width)take(safe,'safe-slot');
+  else{
+   reason.set(JSON.stringify(picked[picked.length-1]),'replaced-by-safe');
+   picked[picked.length-1]=safe;
+   reason.set(JSON.stringify(safe),'safe-slot');
+  }
  }
  // Energy outranks a front play, and a width of four then never looks at the
  // front. Keep one front play so the search can compare it with energy.
- const front=ranked.find(action=>action.type==='play'&&action.line==='front');
- if(front&&!picked.some(action=>action.type==='play'&&action.line==='front')){
-  if(picked.length<width)picked.push(front);
+ // Variant A ranks that slot by cost, energy use, attack and effect together.
+ const front=coveredFront(pack,state,viewer,ranked);
+ const held=picked.findIndex(action=>action.type==='play'&&action.line==='front');
+ const coverage=searchVariant()==='a'||searchVariant()==='ab';
+ if(front&&held>=0&&coverage&&!same(picked[held],front)){
+  reason.set(JSON.stringify(picked[held]),'replaced-by-front');
+  picked[held]=front;
+  reason.set(JSON.stringify(front),'front-slot');
+ }
+ if(front&&held<0){
+  if(picked.length<width)take(front,'front-slot');
   else{
    // The front comparison takes one slot. A deck-look that is what makes a
    // line-switch payable stays; the next play gives up the slot instead.
@@ -133,11 +164,20 @@ export function selectCandidates(pack,state,viewer,legal,beam,strategy){
    };
    let spare=picked.findIndex(action=>!isSafeAction(action)&&!keep(action));
    if(spare<0)spare=picked.findIndex(action=>!isSafeAction(action));
-   if(spare>=0)picked[spare]=front;
+   if(spare>=0){
+    reason.set(JSON.stringify(picked[spare]),'replaced-by-front');
+    picked[spare]=front;
+    reason.set(JSON.stringify(front),'front-slot');
+   }
   }
  }
+ for(const action of ranked)mark(action,'width');
  picked.sort((a,b)=>compareRanked(pack,state,viewer,a,b,strategy));
- return picked;
+ const notes=ranked.map(action=>({action,reason:reason.get(JSON.stringify(action))||'width'}));
+ return {ranked,picked,notes};
+}
+export function selectCandidates(pack,state,viewer,legal,beam,strategy){
+ return selectionTrace(pack,state,viewer,legal,beam,strategy).picked;
 }
 function plain(value){
  if(value==null)return '';
