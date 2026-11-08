@@ -4,8 +4,14 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
+import {withTestVariant} from './ai-v3-variant.mjs';
 import {explainValue} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
+
+const chooseRaw=chooseAiV3Action;
+function choose(packs,state,options){
+ return chooseRaw(packs,state,withTestVariant(options));
+}
 
 function deck(pack,extra){
  const counts={...extra};
@@ -63,7 +69,7 @@ function ask(packs,state){
  resetAiV3Report();
  const env=process.env.AI_V3_TEST_VARIANT;
  const variant=env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,nodes:48,hardNodes:0,...(variant?{variant}:{})});
+ const action=choose(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,nodes:48,hardNodes:0,...(variant?{variant}:{})});
  return {action,trace:lastAiV3Trace()};
 }
 
@@ -259,7 +265,7 @@ test('raid: official life choice still finishes the rested lethal',()=>{
  for(let i=0;i<7;i++){
   resetAiV3Report();
   const started=performance.now();
-  const action=chooseAiV3Action(on.packs,on.state,{...MATCH_LIMITS,actor:0,seed:1,ms:40,nodes:48,hardNodes:0});
+  const action=choose(on.packs,on.state,{...MATCH_LIMITS,actor:0,seed:1,ms:40,nodes:48,hardNodes:0});
   samples.push(performance.now()-started);
   const trace=lastAiV3Trace();
   if(trace.overSoft)overSoft++;

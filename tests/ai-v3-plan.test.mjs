@@ -4,7 +4,13 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace} from '../dist/universal-v2/ai-v3/search.mjs';
+import {withTestVariant} from './ai-v3-variant.mjs';
 import {scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
+
+const chooseRaw=chooseAiV3Action;
+function choose(packs,state,options){
+ return chooseRaw(packs,state,withTestVariant(options));
+}
 
 function deck(pack,extra){
  const counts={...extra};
@@ -70,7 +76,7 @@ function ask(plan,nodes){
  // Fixed nodes and no clock. A parallel run must not decide whether the combo is found.
  const env=process.env.AI_V3_TEST_VARIANT;
  const variant=env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
- const action=chooseAiV3Action(packs,state,{
+ const action=choose(packs,state,{
   actor:0,seed:1,nodes,ms:1e9,beam:4,opponentDecisions:1,worlds:1,plan,
   ...(variant?{variant}:{})
  });
@@ -221,7 +227,7 @@ test('a block the opponent can survive is not scored as our win',()=>{
   const row=blockPosition(seat);
   for(const plan of ['tree','tree-replies']){
    resetAiV3Report();
-   const action=chooseAiV3Action(row.packs,row.state,{
+   const action=choose(row.packs,row.state,{
     actor:seat,seed:1,nodes:180,ms:1e9,beam:4,opponentDecisions:2,worlds:1,plan
    });
    const legal=legalUniversalActions(row.packs,row.state);

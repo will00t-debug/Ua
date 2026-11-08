@@ -6,11 +6,20 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,effectiveHandRequiredEnergy,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {chooseAiV3Action,lastAiV3Trace,MATCH_LIMITS,resetAiV3Report,comparedLines} from '../dist/universal-v2/ai-v3/search.mjs';
+import {buildAiV3Request,handleAiV3Request} from '../dist/universal-v2/ai-v3/worker-entry.mjs';
+import {searchVariant,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {withTestVariant} from './ai-v3-variant.mjs';
+import {openLethalShift} from '../scripts/ai-v3-lethal-shift.mjs';
 import {scoreLine,rankLegal,selectCandidates,selectionTrace} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
-import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,moveDevelopment,preferConfirmedChoices,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,moveDevelopment,preferConfirmedChoices} from '../dist/universal-v2/ai-v3/strategy.mjs';
+
+const chooseRaw=chooseAiV3Action;
+function choose(packs,state,options){
+ return chooseRaw(packs,state,withTestVariant(options));
+}
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -113,7 +122,7 @@ function ask(packs,state,variant){
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
  const selected=askedVariant(variant);
- const action=chooseAiV3Action(packs,state,{
+ const action=choose(packs,state,{
   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,
   ...(selected?{variant:selected}:{})
  });
@@ -1167,7 +1176,7 @@ function hold(state,player,ids){
 function clockAsk(packs,state){
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
- const action=chooseAiV3Action(packs,structuredClone(state),{
+ const action=choose(packs,structuredClone(state),{
   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true
  });
  const trace=lastAiV3Trace();
@@ -1237,7 +1246,7 @@ function askUntil(packs,state,at){
  const meter={dispatches:0};
  resetAiV3Report();
  const actor=state.pending?.player??state.active;
- const action=chooseAiV3Action(packs,state,{
+ const action=choose(packs,state,{
   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,
   ms:at==null?1e9:40,now:at==null?()=>0:()=>meter.dispatches>=at?1e9:0
  });
@@ -1652,7 +1661,7 @@ function frozenAsk(packs,state){
  const meter={dispatches:0};
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{
+ const action=choose(packs,state,{
   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter
  });
  const trace=lastAiV3Trace();
@@ -1710,7 +1719,7 @@ test('a partial block that saves the last life is not replaced by the losing pas
   let roots=0,hot=false;
   const meter={dispatches:0};
   resetAiV3Report();
-  const cut=chooseAiV3Action(packs,spot.state,{
+  const cut=choose(packs,spot.state,{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
    now:()=>hot?1e9:0,
    onRootDone(){roots++;if(roots>=2)hot=true;}
@@ -1735,7 +1744,7 @@ test('a partial block that saves the last life is not replaced by the losing pas
   assert.notEqual(cut.type,'next');
   const timedMeter={dispatches:0};
   resetAiV3Report();
-  const timed=chooseAiV3Action(packs,structuredClone(spot.state),{
+  const timed=choose(packs,structuredClone(spot.state),{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
   });
   const timedTrace=lastAiV3Trace();
@@ -1927,7 +1936,7 @@ test('two payable mains stay on the front and keep the raid base generating',()=
    const left=legalUniversalActions(packs,cursor);
    if(left.length===1){
     resetAiV3Report();
-    const only=chooseAiV3Action(packs,cursor,{
+    const only=choose(packs,cursor,{
      ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true
     });
     assert.equal(lastAiV3Trace().reason,'forced');
@@ -1957,7 +1966,7 @@ test('two payable mains stay on the front and keep the raid base generating',()=
   const meter={dispatches:0};
   let hot=false;
   resetAiV3Report();
-  const cut=chooseAiV3Action(packs,structuredClone(state),{
+  const cut=choose(packs,structuredClone(state),{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
    now:()=>hot?1e9:0,
    onRootDone({action,executed}){if(executed&&action?.type==='play'&&action.line==='front')hot=true;}
@@ -1979,7 +1988,7 @@ test('two payable mains stay on the front and keep the raid base generating',()=
   }
   const timedMeter={dispatches:0};
   resetAiV3Report();
-  const timed=chooseAiV3Action(packs,structuredClone(state),{
+  const timed=choose(packs,structuredClone(state),{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
   });
   const timedTrace=lastAiV3Trace();
@@ -2017,7 +2026,7 @@ test('a follow-up uses the decision clock when the root slice is already inside 
   const ask=(step)=>{
    const meter={dispatches:0};
    resetAiV3Report();
-   const action=chooseAiV3Action(packs,structuredClone(state),{
+   const action=choose(packs,structuredClone(state),{
     ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
     now:()=>meter.dispatches*step
    });
@@ -2172,7 +2181,7 @@ test('raid energy loss follows the transfer the line actually reached',()=>{
  assert.equal(raidStranded(blocked.packs,blocked.state,0,blockedRaid,blockedState),0);
  const meter={dispatches:0};
  resetAiV3Report();
- const choice=chooseAiV3Action(packs,structuredClone(state),{
+ const choice=choose(packs,structuredClone(state),{
   ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter,
   rootFirst:[energy,front]
  });
@@ -2277,7 +2286,7 @@ test('a live hand discount is not an energy loss after the raid',()=>{
   assert.equal(raidStranded(plain.packs,plain.state,actor,plainFront,plainRaid),2.2);
   const meter={dispatches:0};
   resetAiV3Report();
-  const choice=chooseAiV3Action(packs,structuredClone(state),{
+  const choice=choose(packs,structuredClone(state),{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,meter,
    rootFirst:[front]
   });
@@ -2297,7 +2306,7 @@ test('a live hand discount is not an energy loss after the raid',()=>{
   }
   const timedMeter={dispatches:0};
   resetAiV3Report();
-  const timed=chooseAiV3Action(packs,structuredClone(state),{
+  const timed=choose(packs,structuredClone(state),{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
   });
   const timedTrace=lastAiV3Trace();
@@ -2423,7 +2432,7 @@ test('two 4000s both attack into a 5000 and a 3000, and one 4000 still stays bac
   const meter={dispatches:0};
   let hot=false;
   resetAiV3Report();
-  const cut=chooseAiV3Action(packs,structuredClone(state),{
+  const cut=choose(packs,structuredClone(state),{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter,
    now:()=>hot?1e9:0,
    onRootDone({action,executed}){if(executed&&action?.type==='attack')hot=true;}
@@ -2438,7 +2447,7 @@ test('two 4000s both attack into a 5000 and a 3000, and one 4000 still stays bac
   for(const row of cutTrace.unexecuted||[])assert.equal(row.executed,false);
   const timedMeter={dispatches:0};
   resetAiV3Report();
-  const timed=chooseAiV3Action(packs,structuredClone(state),{
+  const timed=choose(packs,structuredClone(state),{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:40,diagnose:true,meter:timedMeter
   });
   const timedTrace=lastAiV3Trace();
@@ -2504,7 +2513,7 @@ function handCut(packs,state,at,nodes=48){
  const actor=state.pending.player;
  const meter={dispatches:0};
  resetAiV3Report();
- const action=chooseAiV3Action(packs,structuredClone(state),{
+ const action=choose(packs,structuredClone(state),{
   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes,diagnose:true,meter,
   ms:at==null?1e9:40,now:at==null?()=>0:()=>meter.dispatches>=at?1e9:0
  });
@@ -2690,7 +2699,7 @@ function measured(packs,state,variant){
  const selected=askedVariant(variant);
  let action;
  try{
-  action=chooseAiV3Action(packs,state,{
+  action=choose(packs,state,{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,
    ms:1e9,now:()=>0,...(selected?{variant:selected}:{})
   });
@@ -2855,52 +2864,7 @@ function playChain(packs,state,actor,refund,variant){
 // Constructed boundary. The attack ban is a fixture from the continuous-state
 // grant, expiring at the granter's next START. It is not a printed effect.
 function openShift(actor,{rested=false,ban=false}={}){
- const local=deck({'BLC-4-060':2,'BLC-4-070':2,'BLC-1-083':4,'BLC-1-037':2});
- const packs=[pack,pack];
- let state=newUniversalMatch(packs,{decks:[local,local],seed:11,first:0});
- for(let guard=0;guard<80&&state.status==='playing';guard++){
-  if(state.active===actor&&state.phase==='main'&&!state.pending&&state.players[actor].ownTurns>=2)break;
-  const legal=legalUniversalActions(packs,state);
-  const action=legal.find(item=>item.type==='next')||legal.find(item=>item.type==='extraDraw')||legal[0];
-  state=dispatchUniversalAction(packs,state,action);
- }
- assert.equal(state.active,actor);
- assert.equal(state.phase,'main');
- assert.equal(state.pending,null);
- const foe=1-actor;
- for(const seat of [actor,foe])for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
-  const card=state.players[seat][line][slot];
-  if(!card)continue;
-  card.ready=false;
-  card.fieldEntryStamp=null;
-  state.players[seat].deck.push(card);
-  state.players[seat][line][slot]=null;
- }
- const aizen=take(state,actor,'BLC-4-060');
- const fronts=[take(state,actor,'BLC-4-070'),take(state,actor,'BLC-1-083')];
- place(state,actor,aizen,'energy',0);
- aizen.ready=!rested;
- place(state,actor,fronts[0],'front',0);
- place(state,actor,fronts[1],'front',1);
- if(ban){
-  const until={player:actor,phase:'start',edge:'start'};
-  for(const body of fronts)grantContinuousState(state,{
-   kind:'cannotAttack',controller:actor,sourceUid:aizen.uid,targetUid:body.uid,until,sourceLinked:false
-  });
- }
- setLife(state,actor,5);
- setLife(state,foe,1);
- const quiet=take(state,foe,'BLC-1-037');
- state.players[foe].deck.push(state.players[foe].life[0]);
- state.players[foe].life[0]=quiet;
- assert.equal(pack.cards[quiet.cardId].trigger,null);
- for(const card of state.players[actor].apCards)card.ready=false;
- clearHand(state,actor);
- clearHand(state,foe);
- assert.equal(assertUniversalMatch(packs,state),true);
- assert.equal(state.players[actor].apCards.filter(card=>card.ready).length,0);
- assert.equal(state.players[foe].front.some(Boolean),false);
- return {packs,state,actor,aizen,fronts};
+ return openLethalShift(actor,{rested,ban});
 }
 function askShift(packs,state,options={}){
  const actor=state.pending?.player??state.active;
@@ -2911,11 +2875,12 @@ function askShift(packs,state,options={}){
  resetAiV3Report();
  let action;
  try{
-  action=chooseAiV3Action(packs,state,{
+  action=choose(packs,state,{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes,ms:options.ms??1e9,
    now:options.now||(()=>0),diagnose:true,meter,
    ...(options.rootFirst?{rootFirst:options.rootFirst}:{}),
-   ...(options.onRootDone?{onRootDone:info=>options.onRootDone(info,calls)}:{})
+   ...(options.onRootDone?{onRootDone:info=>options.onRootDone(info,calls)}:{}),
+   ...(options.variant?{variant:options.variant}:{})
   });
  }finally{stop();}
  const trace=lastAiV3Trace();
@@ -3364,4 +3329,121 @@ test('an evidence gate keeps a searched line unless the replacement matches its 
  assert.equal(frontEvidenceChoice(discarding,0,front,energy,rows).line,'energy');
  const event={type:'event',uid:'refund'};
  assert.equal(frontEvidenceChoice(main,0,front,event,rows).type,'event');
+});
+
+function hideProcess(fn){
+ const descriptor=Object.getOwnPropertyDescriptor(globalThis,'process');
+ Object.defineProperty(globalThis,'process',{
+  configurable:true,
+  get(){throw new ReferenceError('process is not defined');}
+ });
+ try{return fn();}
+ finally{Object.defineProperty(globalThis,'process',descriptor);}
+}
+function entrySearch(packs,state,{variant,ms=1e9,clock='fixed'}={}){
+ const actor=state.pending?.player??state.active;
+ const meter={dispatches:0};
+ let seen='missing';
+ const stop=watchEngineDispatch(()=>{if(seen==='missing')seen=searchVariant();});
+ resetAiV3Report();
+ const now=clock==='fixed'?()=>0:()=>performance.now();
+ let action;
+ try{
+  action=chooseRaw(packs,state,{
+   actor,seed:1,...MATCH_LIMITS,nodes:48,ms,now,hardNodes:0,meter,diagnose:true,
+   ...(variant?{variant}:{})
+  });
+ }finally{stop();}
+ return {action,trace:lastAiV3Trace(),meter,seen,actor};
+}
+test('the default entry searches without process, on the main thread and through the worker',()=>{
+ const previous=process.env.AI_V3_TEST_VARIANT;
+ process.env.AI_V3_TEST_VARIANT='ab-front';
+ try{
+  for(const actor of [0,1]){
+   const opened=openShift(actor,{ban:true});
+   const asked=hideProcess(()=>entrySearch(opened.packs,opened.state));
+   assert.equal(asked.seen,null);
+   assert.equal(asked.trace.reason,'search');
+   assert.equal(asked.trace.fallbackKind??null,null);
+   assert.equal(asked.trace.fallbackFrom??null,null);
+   assert.equal(asked.trace.nodesUsed,37);
+   assert.equal(asked.meter.dispatches,asked.trace.nodesUsed);
+   assert.equal(asked.trace.score,100000);
+   assert.equal(asked.trace.settled,true);
+   assert.equal(asked.action.type,'activate');
+   assert.equal(asked.action.uid,opened.aizen.uid);
+   const legal=legalUniversalActions(opened.packs,opened.state);
+   assert.equal(legal.some(item=>JSON.stringify(item)===JSON.stringify(asked.action)),true);
+   const finished=followLine(opened.packs,opened.state,asked.trace.sequence);
+   assert.equal(finished.status,'finished');
+   assert.equal(finished.winner,actor);
+   assert.equal(finished.endReason,'life-zero');
+
+   const request=buildAiV3Request(opened.packs,opened.state,actor,{
+    requestId:7,stateVersion:3,seed:1,nodes:48,ms:1e9
+   });
+   assert.equal(Object.hasOwn(request,'variant'),false);
+   let workerSeen='missing';
+   const stopWorker=watchEngineDispatch(()=>{if(workerSeen==='missing')workerSeen=searchVariant();});
+   const worker=hideProcess(()=>handleAiV3Request(request));
+   stopWorker();
+   assert.equal(worker.error,null);
+   assert.equal(workerSeen,null);
+   assert.equal(worker.search.reason,'search');
+   assert.equal(worker.search.fallbackKind,null);
+   assert.equal(worker.search.fallbackFrom,null);
+   assert.equal(worker.search.nodesUsed,asked.trace.nodesUsed);
+   assert.equal(worker.search.score,asked.trace.score);
+   assert.equal(worker.search.settled,true);
+   assert.equal(JSON.stringify(worker.action),JSON.stringify(asked.action));
+
+   let namedSeen='missing';
+   const stopNamed=watchEngineDispatch(()=>{if(namedSeen==='missing')namedSeen=searchVariant();});
+   const named=hideProcess(()=>handleAiV3Request({...request,requestId:8,variant:'ab-front'}));
+   stopNamed();
+   assert.equal(named.error,null);
+   assert.equal(namedSeen,'ab-front');
+   assert.equal(named.search.reason,'search');
+   assert.equal(named.search.fallbackKind,null);
+   assert.equal(named.action.type,'activate');
+   assert.equal(named.action.uid,opened.aizen.uid);
+   assert.equal(named.search.score,100000);
+
+   const explicit=hideProcess(()=>entrySearch(opened.packs,opened.state,{variant:'ab-front'}));
+   assert.equal(explicit.seen,'ab-front');
+   assert.equal(explicit.trace.reason,'search');
+   assert.equal(explicit.trace.fallbackKind??null,null);
+   assert.equal(explicit.meter.dispatches,explicit.trace.nodesUsed);
+   assert.ok(explicit.trace.nodesUsed<=48);
+   assert.equal(explicit.action.type,'activate');
+   assert.equal(explicit.action.uid,opened.aizen.uid);
+   assert.equal(explicit.trace.score,100000);
+   const explicitWin=followLine(opened.packs,opened.state,explicit.trace.sequence);
+   assert.equal(explicitWin.status,'finished');
+   assert.equal(explicitWin.winner,actor);
+
+   const timed=hideProcess(()=>entrySearch(opened.packs,opened.state,{ms:40,clock:'live'}));
+   assert.equal(timed.trace.fallbackKind==='exception',false);
+   assert.notEqual(timed.trace.fallbackFrom,'process is not defined');
+   assert.equal(timed.meter.dispatches,timed.trace.nodesUsed);
+   assert.ok(timed.trace.nodesUsed<=48);
+   assert.equal(legal.some(item=>JSON.stringify(item)===JSON.stringify(timed.action)),true);
+   const liveRequest=buildAiV3Request(opened.packs,opened.state,actor,{
+    requestId:9,stateVersion:4,seed:1
+   });
+   assert.equal(liveRequest.ms,40);
+   assert.equal(liveRequest.nodes,48);
+   assert.equal(Object.hasOwn(liveRequest,'variant'),false);
+   const liveWorker=hideProcess(()=>handleAiV3Request(liveRequest));
+   assert.equal(liveWorker.error,null);
+   assert.equal(liveWorker.search.fallbackKind==='exception',false);
+   assert.notEqual(liveWorker.search.fallbackFrom,'process is not defined');
+   assert.ok(liveWorker.search.nodesUsed<=48);
+   assert.equal(legal.some(item=>JSON.stringify(item)===JSON.stringify(liveWorker.action)),true);
+  }
+ }finally{
+  if(previous==null)delete process.env.AI_V3_TEST_VARIANT;
+  else process.env.AI_V3_TEST_VARIANT=previous;
+ }
 });

@@ -2,10 +2,21 @@
 // actor-belief world. A result is discarded unless request id, state
 // version and actor still match, and the action is on the live legal list.
 import {legalUniversalActions} from '../engine.mjs';
-import {chooseAiV3Action,AI_V3_POLICY,MATCH_LIMITS} from './search.mjs';
+import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS} from './search.mjs';
 import {beliefWorld} from './belief.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function searchReport(){
+ const trace=lastAiV3Trace()||{};
+ return {
+  reason:trace.reason??null,
+  fallbackKind:trace.fallbackKind??null,
+  fallbackFrom:trace.fallbackFrom??null,
+  nodesUsed:Number.isFinite(trace.nodesUsed)?trace.nodesUsed:null,
+  score:Number.isFinite(trace.score)?trace.score:null,
+  settled:trace.settled===true
+ };
+}
 export function buildAiV3Request(pack,state,actor,{requestId,stateVersion,seed=1,mode,prior,nodes,ms}={}){
  const world=beliefWorld(pack,state,actor,seed,0);
  if(!world)return null;
@@ -28,15 +39,19 @@ export function handleAiV3Request(message){
   return {requestId,stateVersion,actor,error:'hidden-field',action:null,policy:AI_V3_POLICY};
  try{
   const legal=legalUniversalActions(message.pack,message.state);
+  const asked=message.variant;
+  const variant=asked==='a'||asked==='b'||asked==='ab'||asked==='ab-front'?asked:null;
   const action=chooseAiV3Action(message.pack,message.state,{
    actor,seed:message.seed,mode:message.mode,prior:message.prior,
-   nodes:message.nodes,ms:message.ms,worlds:1
+   nodes:message.nodes,ms:message.ms,worlds:1,
+   ...(variant?{variant}:{})
   });
   const exact=legal.find(item=>same(item,action))||null;
-  if(!exact)return {requestId,stateVersion,actor,error:'not-legal',action:null,policy:AI_V3_POLICY};
-  return {requestId,stateVersion,actor,error:null,action:exact,policy:AI_V3_POLICY};
+  const search=searchReport();
+  if(!exact)return {requestId,stateVersion,actor,error:'not-legal',action:null,policy:AI_V3_POLICY,search};
+  return {requestId,stateVersion,actor,error:null,action:exact,policy:AI_V3_POLICY,search};
  }catch(error){
-  return {requestId,stateVersion,actor,error:error?.message||'exception',action:null,policy:AI_V3_POLICY};
+  return {requestId,stateVersion,actor,error:error?.message||'exception',action:null,policy:AI_V3_POLICY,search:searchReport()};
  }
 }
 export function acceptAiV3Result(current,result){

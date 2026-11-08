@@ -6,12 +6,17 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,universalEnergy,universalEnergyByColor,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
+import {withTestVariant} from './ai-v3-variant.mjs';
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {rankLegal} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {moveDevelopment,replyOrder,bindProbeBudget,cachedMoveDevelopment} from '../dist/universal-v2/ai-v3/strategy.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 
 const OPTS={...MATCH_LIMITS,seed:1,ms:1e9,nodes:48,hardNodes:0};
+const chooseRaw=chooseAiV3Action;
+function choose(packs,state,options){
+ return chooseRaw(packs,state,withTestVariant(options));
+}
 function cheapDeck(pack,extra){
  const counts={...extra};
  let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
@@ -66,7 +71,7 @@ function ask(packs,state,strategy){
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
  const variant=testVariant();
- const action=chooseAiV3Action(packs,state,{...OPTS,actor,...(strategy?{strategy}:{}),...(variant?{variant}:{})});
+ const action=choose(packs,state,{...OPTS,actor,...(strategy?{strategy}:{}),...(variant?{variant}:{})});
  return {action,trace:lastAiV3Trace(),actor};
 }
 function prove(fn){
@@ -363,7 +368,7 @@ function liveChoice(nodes,extra={}){
  const built=prepare('BLC-1-045',[]);
  const meter={dispatches:0};
  resetAiV3Report();
- const action=chooseAiV3Action(built.packs,built.state,{
+ const action=choose(built.packs,built.state,{
   ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',
   nodes,ms:extra.ms??1e9,now:extra.now||(()=>0),meter,
   diagnose:extra.diagnose,onRootDone:extra.onRootDone
@@ -409,7 +414,7 @@ test('budget: the live entry does not simulate a lethal line outside the shared 
  const meter={dispatches:0};
  let marked=null;
  resetAiV3Report();
- const action=chooseAiV3Action(built.packs,built.state,{
+ const action=choose(built.packs,built.state,{
   ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,nodes:48,ms:40,meter,
   now(){return marked==null?0:1000;},
   onRootDone(){if(marked==null)marked=meter.dispatches;}
@@ -437,7 +442,7 @@ test('budget: an earlier unproven result is not a proof that the attack cannot k
  assert.equal(pool.n,0);
  const meter={dispatches:0};
  resetAiV3Report();
- const action=chooseAiV3Action(built.packs,built.state,{
+ const action=choose(built.packs,built.state,{
   ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,nodes:48,ms:1e9,now:()=>0,meter
  });
  const trace=lastAiV3Trace();
@@ -629,7 +634,7 @@ test('energy: a partial block does not spend the color a stranded hand still nee
  assert.equal(view.strip,true);
  assert.equal(view.after,3);
  resetAiV3Report();
- const frozen=chooseAiV3Action(packs,state,{...OPTS,actor,seed:game.seed,...(testVariant()?{variant:testVariant()}:{})});
+ const frozen=choose(packs,state,{...OPTS,actor,seed:game.seed,...(testVariant()?{variant:testVariant()}:{})});
  const trace=lastAiV3Trace();
  assert.equal(frozen.type,'next');
  assert.equal(trace.score,trace.candidates.find(row=>row.action?.type==='next').search);
@@ -638,7 +643,7 @@ test('energy: a partial block does not spend the color a stranded hand still nee
  assert.equal(trace.settled,false);
  assert.ok(trace.nodesUsed<=48);
  resetAiV3Report();
- const timed=chooseAiV3Action(packs,structuredClone(state),{...MATCH_LIMITS,actor,seed:game.seed,hardNodes:0,plan:'tree',nodes:48,ms:40,...(testVariant()?{variant:testVariant()}:{})});
+ const timed=choose(packs,structuredClone(state),{...MATCH_LIMITS,actor,seed:game.seed,hardNodes:0,plan:'tree',nodes:48,ms:40,...(testVariant()?{variant:testVariant()}:{})});
  const timedTrace=lastAiV3Trace();
  assert.equal(timed.type,'next');
  assert.ok(timedTrace.nodesUsed<=48);
@@ -648,7 +653,7 @@ test('energy: a partial block does not spend the color a stranded hand still nee
  const main=dispatchUniversalAction(packs,state,frozen,{actor});
  assert.equal(assertUniversalMatch(packs,main),true);
  resetAiV3Report();
- const played=chooseAiV3Action(packs,main,{...OPTS,actor,seed:game.seed,...(testVariant()?{variant:testVariant()}:{})});
+ const played=choose(packs,main,{...OPTS,actor,seed:game.seed,...(testVariant()?{variant:testVariant()}:{})});
  const body=main.players[actor].hand.find(card=>card.uid===played.uid);
  assert.equal(played.type,'play');
  assert.equal(played.line,'front');
@@ -675,6 +680,10 @@ test('browser module: strategy does not import a Node builtin',()=>{
  assert.equal(/\bfrom\s+['"]node:/.test(source),false);
  assert.equal(source.includes('AsyncLocalStorage'),false);
  assert.equal(source.includes('moveMemo'),false);
+ const search=fs.readFileSync(new URL('../dist/universal-v2/ai-v3/search.mjs',import.meta.url),'utf8');
+ const worker=fs.readFileSync(new URL('../dist/universal-v2/ai-v3/worker-entry.mjs',import.meta.url),'utf8');
+ assert.equal(/\bprocess\s*\./.test(search),false);
+ assert.equal(/\bprocess\s*\./.test(worker),false);
 });
 
 test('cache: an unproven check stays unproven and the same state can be reused',()=>{

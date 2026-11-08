@@ -388,13 +388,14 @@ export function chooseAiV3Action(pack,state,options={}){
   const settle=()=>{report.nodes=nodesBefore+(total-pool.n);};
   const spent=()=>report.nodes-nodesBefore;
   const diagnose=options.diagnose!==false;
-  // A, B, A+B and ab-front stay opt-in. ab-front keeps A's front slot and
-  // gates only the energy-generator rewrite of a searched main-phase front.
-  // Confirmed choices, including the filter chain and the start-phase pass,
-  // still run after that gate. The match path leaves options.variant and
-  // AI_V3_TEST_VARIANT unset. The test name only lets a regression run the
-  // candidate without editing each call.
-  const asked=options.variant||process.env.AI_V3_TEST_VARIANT;
+  // A, B, A+B and ab-front stay opt-in. This file is loaded by the browser,
+  // which has no process global, so the entry reads only options.variant.
+  // A missing or unknown value is the default search. Tests and the
+  // benchmark read their environment and pass the value in. ab-front keeps
+  // A's front slot and gates only the energy-generator rewrite of a searched
+  // main-phase front. Confirmed choices, including the filter chain and the
+  // start-phase pass, still run after that gate.
+  const asked=options.variant;
   const variant=asked==='a'||asked==='b'||asked==='ab'||asked==='ab-front'?asked:null;
   return bindMeter(options.meter,()=>bindProbeBudget(budget,()=>bindVariant(variant,()=>{
   try{

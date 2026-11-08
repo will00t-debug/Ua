@@ -4,6 +4,7 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {chooseAiV3Action,resetAiV3Report,lastAiV3Trace,MATCH_LIMITS} from '../dist/universal-v2/ai-v3/search.mjs';
+import {withTestVariant} from './ai-v3-variant.mjs';
 import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 import {positionKey,scoreLine} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {keepScore} from '../dist/universal-v2/ai-v3/eval.mjs';
@@ -12,6 +13,10 @@ import {keepScore} from '../dist/universal-v2/ai-v3/eval.mjs';
 // Deadline exhaustion is a separate controllable clock. A real 40ms check
 // stays inside the match budget and does not require one tactical result.
 const OPTS={...MATCH_LIMITS,seed:1,mode:'beam',ms:1e9};
+const chooseRaw=chooseAiV3Action;
+function choose(packs,state,options){
+ return chooseRaw(packs,state,withTestVariant(options));
+}
 function deck(pack,extra){
  const counts={...extra};
  let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
@@ -61,7 +66,7 @@ function ask(packs,state){
  resetAiV3Report();
  const env=process.env.AI_V3_TEST_VARIANT;
  const variant=env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
- return chooseAiV3Action(packs,state,{...OPTS,actor,...(variant?{variant}:{})});
+ return choose(packs,state,{...OPTS,actor,...(variant?{variant}:{})});
 }
 const bleach=officialV2Pack('bleach');
 const counts=deck(bleach,{
@@ -83,7 +88,7 @@ test('strategy: keeping the basic energy continuation outscores passing',()=>{
  assert.equal(hard.line,'energy');
  assert.equal(hard.uid,body.uid);
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,hardNodes:0,nodes:48});
+ const action=choose(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,hardNodes:0,nodes:48});
  const trace=lastAiV3Trace();
  const played=trace.compared.find(row=>row.action.type==='play'&&row.action.line==='energy');
  const passed=trace.compared.find(row=>row.action.type==='next');
@@ -111,7 +116,7 @@ test('strategy: a cut search records the boundary and may still skip',()=>{
  resetAiV3Report();
  let ticks=0;
  const now=()=>ticks++===0?1000:5000;
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:40,now,nodes:48});
+ const action=choose(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:40,now,nodes:48});
  const trace=lastAiV3Trace();
  assert.equal(legalUniversalActions(packs,state).some(item=>item.type===action.type),true);
  assert.equal(trace.nodesUsed,0);
@@ -137,7 +142,7 @@ test('strategy: an expired clock does not score an unplayed lethal or recovery',
   state.players[1].front[slot]=null;
  }
  resetAiV3Report();
- const lethal=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:0,nodes:48});
+ const lethal=choose(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:0,nodes:48});
  const lethalTrace=lastAiV3Trace();
  assert.equal(lethal.type,'attack');
  assert.equal(lethal.uid,attacker.uid);
@@ -158,7 +163,7 @@ test('strategy: an expired clock does not score an unplayed lethal or recovery',
  const pending=dispatchUniversalAction(ready,recover,play,{actor:0});
  assert.equal(pending.pending.kind,'effect-recover-ap');
  resetAiV3Report();
- const recovered=chooseAiV3Action(ready,pending,{...MATCH_LIMITS,actor:0,seed:1,ms:0,nodes:48});
+ const recovered=choose(ready,pending,{...MATCH_LIMITS,actor:0,seed:1,ms:0,nodes:48});
  const recoveredTrace=lastAiV3Trace();
  assert.equal(recovered.type,'chooseApRecovery');
  assert.ok(recovered.uid);
@@ -180,7 +185,7 @@ test('strategy: a real 40ms clock stays inside the match budget',()=>{
  for(let sample=0;sample<7;sample++){
   resetAiV3Report();
   const started=performance.now();
-  action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1});
+  action=choose(packs,state,{...MATCH_LIMITS,actor:0,seed:1});
   walls.push(performance.now()-started);
   trace=lastAiV3Trace();
   assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
@@ -224,7 +229,7 @@ test('strategy: a frozen clock still starts every root the node pool can share',
  const {packs,state}=clockSpot();
  const meter={dispatches:0};
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{
+ const action=choose(packs,state,{
   ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,meter,diagnose:true
  });
  const trace=lastAiV3Trace();
@@ -242,7 +247,7 @@ test('strategy: a clock that is already closed records every root as unexecuted'
  const {packs,state}=clockSpot();
  const meter={dispatches:0};
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{
+ const action=choose(packs,state,{
   ...MATCH_LIMITS,actor:0,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:0,now:()=>0,meter,diagnose:true
  });
  const trace=lastAiV3Trace();
@@ -455,7 +460,7 @@ test('strategy: a discard keeps the raid card',()=>{
  assert.equal(action.type,'chooseDiscard');
  assert.notEqual(action.uid,core.uid);
  resetAiV3Report();
- const loaded=chooseAiV3Action(packs,pending,{...MATCH_LIMITS,actor:pending.pending.player,ms:1,nodes:4});
+ const loaded=choose(packs,pending,{...MATCH_LIMITS,actor:pending.pending.player,ms:1,nodes:4});
  assert.equal(loaded.type,'chooseDiscard');
  assert.notEqual(loaded.uid,core.uid);
  const trace=lastAiV3Trace();
@@ -540,7 +545,7 @@ function askDiscard(packs,state,extra={}){
  const actor=state.pending.player;
  const meter={dispatches:0};
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{
+ const action=choose(packs,state,{
   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,ms:1e9,now:()=>0,...extra,meter
  });
  const trace=lastAiV3Trace();

@@ -60,7 +60,7 @@ function choose(mode,pack,state,actor){
    ...(Number.isInteger(HARD_NODES)?{hardNodes:HARD_NODES}:{})});
   return {action,fallback:false,dispatches:meter.dispatches};
  }
- const options={actor,...BUDGET,plan:'rollout',strategy:STRATEGY};
+ const options={actor,...BUDGET,plan:'rollout',strategy:STRATEGY,variant:VARIANT};
  if(mode==='prior')options.mode='prior';
  if(mode==='belief'){options.mode='belief';options.worlds=2;}
  if(mode==='ismcts')options.mode='ismcts';
