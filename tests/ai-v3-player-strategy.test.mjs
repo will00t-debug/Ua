@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,effectiveHandRequiredEnergy,universalBp,universalEnergyByColor,universalImpact,universalImpactNull,universalAttackDamage} from '../dist/universal-v2/engine.mjs';
@@ -14,7 +15,7 @@ import {scoreLine,rankLegal,selectCandidates,selectionTrace} from '../dist/unive
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
-import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,mainFrontEvidenceChoice,moveDevelopment,preferConfirmedChoices} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,mainFrontEvidenceChoice,moveDevelopment,normalizeFactors,preferConfirmedChoices,preferReserveAp,reserveApPlan} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 const chooseRaw=chooseAiV3Action;
 function choose(packs,state,options){
@@ -121,10 +122,11 @@ function askedVariant(explicit){
 function ask(packs,state,variant){
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
- const selected=askedVariant(variant);
+ const factors=variant&&typeof variant==='object'?variant:null;
+ const selected=factors?null:askedVariant(variant);
  const action=choose(packs,state,{
   ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,
-  ...(selected?{variant:selected}:{})
+  ...(factors?{factors}:selected?{variant:selected}:{})
  });
  const trace=lastAiV3Trace();
  assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
@@ -1426,6 +1428,7 @@ test('a short energy line draws before it spends the only payable generator',()=
  const expensive=take(state,0,'BLC-1-080');
  const cheap=take(state,0,'BLC-1-083');
  state.players[0].deck.unshift(expensive,cheap);
+ assert.equal(reserveApPlan(packs,state,0).keep,false);
  assert.equal(readyAp(state,0),3);
  assert.equal(universalEnergyByColor(packs,state,0).green,2);
  assert.equal(state.players[0].front.filter(Boolean).length,0);
@@ -1436,6 +1439,7 @@ test('a short energy line draws before it spends the only payable generator',()=
  const drawn=ask(packs,state);
  const again=ask(packs,swapped);
  assert.equal(drawn.action.type,'extraDraw');
+ assert.equal(ask(packs,state,{reserveAp:true}).action.type,'extraDraw');
  assert.deepEqual(again.action,drawn.action);
  assert.equal(clock.action.type,'extraDraw');
  let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
@@ -1469,6 +1473,7 @@ test('a zero-cost draw and the one-cost generator both become energy',()=>{
  setBp(state,state.players[1].front[0],4000);
  setLife(state,0,7);
  setLife(state,1,7);
+ assert.equal(reserveApPlan(packs,state,0).keep,false);
  const zero=take(state,0,'BLC-1-083');
  const other=take(state,0,'BLC-1-080');
  state.players[0].deck.unshift(zero,other);
@@ -1478,6 +1483,7 @@ test('a zero-cost draw and the one-cost generator both become energy',()=>{
  assert.deepEqual(ask(packs,hidden).action,ask(packs,state).action);
  const drawn=ask(packs,state);
  assert.equal(drawn.action.type,'extraDraw');
+ assert.equal(ask(packs,state,{reserveAp:true}).action.type,'extraDraw');
  let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
  assert.equal(cursor.players[0].hand.some(card=>card.uid===zero.uid),true);
  assert.equal(readyAp(cursor,0),2);
@@ -1521,6 +1527,7 @@ test('a finished three-card plan still draws and keeps the spent action point',(
  const low=take(state,0,'BLC-1-083');
  const high=take(state,0,'BLC-2-067');
  state.players[0].deck.unshift(high,low);
+ assert.equal(reserveApPlan(packs,state,0).keep,false);
  assert.equal(readyAp(state,0),3);
  assert.equal(universalEnergyByColor(packs,state,0).green,3);
  assert.equal(ours.length,2);
@@ -1531,6 +1538,7 @@ test('a finished three-card plan still draws and keeps the spent action point',(
  const clock=clockAsk(packs,state);
  const drawn=ask(packs,state);
  assert.equal(drawn.action.type,'extraDraw');
+ assert.equal(ask(packs,state,{reserveAp:true}).action.type,'extraDraw');
  assert.deepEqual(ask(packs,hidden).action,drawn.action);
  assert.equal(clock.action.type,'extraDraw');
  let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
@@ -1553,6 +1561,237 @@ test('a finished three-card plan still draws and keeps the spent action point',(
  assert.ok(spent.length<=2,JSON.stringify(played));
  assert.ok(readyAp(cursor,0)<=2);
  console.log('after draw',JSON.stringify(played));
+});
+
+function reachPairing(title,seed,first,seat,step){
+ const report=JSON.parse(readFileSync(new URL('../audit/ai-v3-main-front-8401-baseline.json',import.meta.url),'utf8'));
+ const deck=battleDecks().find(item=>item.id===title);
+ const game=report.titles[title].byMode.tree.games
+  .find(item=>item.seed===seed&&item.first===first&&item.challengerSeat===seat);
+ const packs=[deck.pack,deck.pack];
+ let state=newComparedMatch(packs,[deck.counts,deck.counts],game.seed,game.first,matchRules('official'));
+ for(const choice of game.opening||[]){
+  const legal=legalUniversalActions(packs,state);
+  state=dispatchUniversalAction(packs,state,legal.find(item=>item.type==='openingMulligan'&&item.mode===choice.mode),{actor:choice.actor});
+ }
+ for(const recorded of game.actions||[]){
+  if(recorded.step===step)return {packs,state};
+  const actor=state.pending?.player??state.active;
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>JSON.stringify(item)===JSON.stringify(recorded.action));
+  if(!action)throw Error('missing '+title+' step '+recorded.step);
+  state=dispatchUniversalAction(packs,state,action,{actor});
+ }
+ throw Error('missing '+title+' step '+step);
+}
+function stateHash(state){
+ return createHash('sha256').update(JSON.stringify(state)).digest('hex');
+}
+function stageType(trace,name){
+ return (trace.stages||[]).find(row=>row.stage===name)?.type??null;
+}
+function passUntilMain(packs,state,actor){
+ let cursor=state;
+ for(let guard=0;guard<4&&cursor.phase!=='main';guard++){
+  const choice=ask(packs,cursor,{reserveAp:true});
+  assert.equal(choice.action.type,'next');
+  cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:cursor.pending?.player??cursor.active});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ assert.equal(cursor.phase,'main');
+ assert.equal(cursor.active,actor);
+ assert.equal(readyAp(cursor,actor),2);
+ return cursor;
+}
+test('a known two-play energy line keeps the action point instead of drawing',()=>{
+ const {packs,state}=reachPairing('sword-art-online-raid',8401,0,0,12);
+ const actor=0;
+ assert.equal(stateHash(state),'c1484be66f78d0038e0feb0900488bded8c29edd0a34a330ed75b7f507a2247f');
+ assert.equal(state.phase,'start');
+ assert.equal(state.pending,null);
+ assert.deepEqual(state.players.map(player=>player.life.length),[7,7]);
+ assert.equal(readyAp(state,actor),2);
+ assert.equal(universalEnergyByColor(packs,state,actor).yellow,1);
+ assert.equal(state.players[actor].front.filter(Boolean).length,0);
+ assert.equal(state.players[actor].hand.length,7);
+ const plan=reserveApPlan(packs,state,actor);
+ assert.equal(plan.keep,true);
+ assert.ok(plan.starters>=2);
+ assert.ok(plan.full.plays>=2);
+ assert.ok(plan.full.energy>plan.short.energy);
+ const baseline=measured(packs,state);
+ const held=measured(packs,state,{reserveAp:true});
+ assert.equal(baseline.action.type,'extraDraw');
+ assert.equal(stageType(baseline.trace,'search'),'next');
+ assert.equal(stageType(baseline.trace,'early-draw'),'extraDraw');
+ assert.equal(stageType(baseline.trace,'reserve-ap'),null);
+ assert.equal(baseline.trace.factors.reserveAp,undefined);
+ assert.equal(held.action.type,'next');
+ assert.equal(stageType(held.trace,'search'),'next');
+ assert.equal(stageType(held.trace,'early-draw'),'extraDraw');
+ assert.equal(stageType(held.trace,'reserve-ap'),'next');
+ assert.equal(held.trace.factors.reserveAp,true);
+ assert.equal(held.trace.nodesUsed<=48,true);
+ const draw={type:'extraDraw'};
+ assert.equal(preferReserveAp(packs,state,actor,draw,[]).type,'extraDraw');
+ bindVariant(null,()=>{
+  assert.equal(preferReserveAp(packs,state,actor,draw,[]).type,'next');
+  assert.equal(preferReserveAp(packs,state,actor,draw,[
+   {action:draw,executed:true,boundary:'terminal',search:100000}
+  ]).type,'extraDraw');
+  assert.equal(preferReserveAp(packs,state,actor,draw,[
+   {action:{type:'next'},executed:true,boundary:'terminal',search:-100000}
+  ]).type,'extraDraw');
+ },{reserveAp:true});
+ const main=passUntilMain(packs,state,actor);
+ assert.equal(universalEnergyByColor(packs,main,actor).yellow,1);
+ const route=[];
+ let cursor=main;
+ for(let guard=0;guard<6&&cursor.phase==='main'&&cursor.status==='playing';guard++){
+  const seat=cursor.pending?.player??cursor.active;
+  const choice=ask(packs,cursor,{reserveAp:true});
+  const card=(cursor.players[actor].hand||[]).find(item=>item?.uid===choice.action.uid);
+  const printed=card&&packs[actor].cards[card.cardId];
+  route.push({type:choice.action.type,line:choice.action.line||null,uid:choice.action.uid||null,id:printed?.id||null,pending:cursor.pending?.kind||null});
+  cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:seat});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+  if(!cursor.pending&&choice.action.type==='next')break;
+ }
+ assert.deepEqual(route.filter(step=>step.type==='play').map(step=>step.uid+':'+step.id+':'+step.line),
+  ['0-38:SAO-1-020:energy','0-0:SAO-1-004:energy']);
+ assert.equal(universalEnergyByColor(packs,cursor,actor).yellow,3);
+ assert.equal(readyAp(cursor,actor),0);
+ const scripted=passUntilMain(packs,structuredClone(state),actor);
+ const catalog=packs[actor].cards;
+ const played=[];
+ let walked=scripted;
+ for(let n=0;n<2;n++){
+  const play=legalUniversalActions(packs,walked).find(action=>{
+   if(action.type!=='play'||action.line!=='energy')return false;
+   const card=walked.players[actor].hand.find(item=>item.uid===action.uid);
+   const printed=catalog[card.cardId];
+   return printed.energy===0&&(printed.gen||0)>0&&
+    !(printed.effects?.onPlay||[]).some(effect=>effect.op==='bounceOwnOtherUnderEnergy'&&effect.optional!==true);
+  });
+  assert.ok(play);
+  played.push(play.uid);
+  walked=dispatchUniversalAction(packs,walked,play,{actor});
+  while(walked.pending){
+   const step=legalUniversalActions(packs,walked)[0];
+   walked=dispatchUniversalAction(packs,walked,step,{actor:walked.pending.player});
+  }
+  assert.equal(assertUniversalMatch(packs,walked),true);
+ }
+ assert.deepEqual(played,['0-19','0-25']);
+ assert.equal(universalEnergyByColor(packs,walked,actor).yellow,3);
+});
+
+test('the action-point hold still applies when the search itself draws',()=>{
+ const {packs,state}=reachPairing('white-sword',8401,0,1,5);
+ const actor=1;
+ assert.equal(stateHash(state).slice(0,16),'0e9fa558fbd33eb7');
+ assert.equal(state.phase,'start');
+ assert.deepEqual(state.players.map(player=>player.life.length),[7,7]);
+ assert.equal(readyAp(state,actor),2);
+ assert.equal(Object.keys(universalEnergyByColor(packs,state,actor)).length,0);
+ assert.equal(reserveApPlan(packs,state,actor).keep,true);
+ const baseline=measured(packs,state);
+ const held=measured(packs,state,{reserveAp:true});
+ assert.equal(baseline.action.type,'extraDraw');
+ assert.equal(stageType(baseline.trace,'search'),'extraDraw');
+ assert.equal(stageType(baseline.trace,'early-draw'),'extraDraw');
+ assert.equal(held.action.type,'next');
+ assert.equal(stageType(held.trace,'search'),'extraDraw');
+ assert.equal(stageType(held.trace,'early-draw'),'extraDraw');
+ assert.equal(stageType(held.trace,'reserve-ap'),'next');
+ const main=passUntilMain(packs,state,actor);
+ const catalog=packs[actor].cards;
+ const played=[];
+ let cursor=main;
+ for(let n=0;n<2;n++){
+  const play=legalUniversalActions(packs,cursor).find(action=>{
+   if(action.type!=='play'||action.line!=='energy')return false;
+   const card=cursor.players[actor].hand.find(item=>item.uid===action.uid);
+   const printed=catalog[card.cardId];
+   return printed.id==='BLC-1-083';
+  });
+  played.push(play.uid);
+  cursor=dispatchUniversalAction(packs,cursor,play,{actor});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ assert.deepEqual(played,['1-35','1-33']);
+ assert.equal(universalEnergyByColor(packs,cursor,actor).green,2);
+});
+
+test('one generator, a line that still fits, a payable refund, or a life that cannot spare does not keep the action point',()=>{
+ const opened=reachPairing('white-sword',8401,0,1,5);
+ const {packs}=opened;
+ const actor=1;
+ function bench(){
+  const state=structuredClone(opened.state);
+  wipeSide(state,0);
+  wipeSide(state,1);
+  setLife(state,0,7);
+  setLife(state,1,7);
+  return state;
+ }
+ function zero(state){
+  return take(state,actor,'BLC-1-083');
+ }
+ const kept=bench();
+ place(kept,actor,take(kept,actor,'BLC-4-066'),'energy',0);
+ place(kept,actor,take(kept,actor,'BLC-4-066'),'energy',1);
+ kept.players[actor].hand.push(zero(kept),zero(kept));
+ assert.equal(assertUniversalMatch(packs,kept),true);
+ assert.equal(universalEnergyByColor(packs,kept,actor).green,2);
+ const keptPlan=reserveApPlan(packs,kept,actor);
+ assert.equal(keptPlan.keep,true);
+ assert.equal(keptPlan.full.energy,4);
+ assert.equal(keptPlan.short.energy,3);
+ const lone=bench();
+ place(lone,actor,take(lone,actor,'BLC-4-066'),'energy',0);
+ lone.players[actor].hand.push(zero(lone),take(lone,actor,'BLC-2-067'),take(lone,actor,'BLC-2-067'));
+ assert.equal(reserveApPlan(packs,lone,actor).starters,1);
+ assert.equal(reserveApPlan(packs,lone,actor).keep,false);
+ bindVariant(null,()=>{
+  assert.equal(preferReserveAp(packs,lone,actor,{type:'extraDraw'},[]).type,'extraDraw');
+ },{reserveAp:true});
+ const unpaid=bench();
+ place(unpaid,actor,take(unpaid,actor,'BLC-4-066'),'energy',0);
+ unpaid.players[actor].hand.push(zero(unpaid),zero(unpaid),take(unpaid,actor,'BLC-4-080'));
+ assert.equal(universalEnergyByColor(packs,unpaid,actor).green,1);
+ const unpaidPlan=reserveApPlan(packs,unpaid,actor);
+ assert.equal(unpaidPlan.refund,undefined);
+ assert.equal(unpaidPlan.keep,true);
+ const later=bench();
+ place(later,actor,take(later,actor,'BLC-4-066'),'energy',0);
+ place(later,actor,take(later,actor,'BLC-4-066'),'energy',1);
+ later.players[actor].hand.push(zero(later),zero(later),take(later,actor,'BLC-4-080'));
+ const laterPlan=reserveApPlan(packs,later,actor);
+ assert.equal(laterPlan.refund,true);
+ assert.equal(laterPlan.keep,false);
+ const paid=bench();
+ place(paid,actor,take(paid,actor,'BLC-3-008'),'energy',0);
+ place(paid,actor,take(paid,actor,'BLC-4-066'),'energy',1);
+ paid.players[actor].hand.push(zero(paid),zero(paid),take(paid,actor,'BLC-4-080'));
+ assert.equal(universalEnergyByColor(packs,paid,actor).green,3);
+ assert.equal(reserveApPlan(packs,paid,actor).refund,true);
+ assert.equal(reserveApPlan(packs,paid,actor).keep,false);
+ bindVariant(null,()=>{
+  assert.equal(preferReserveAp(packs,paid,actor,{type:'extraDraw'},[]).type,'extraDraw');
+  assert.equal(preferReserveAp(packs,later,actor,{type:'extraDraw'},[]).type,'extraDraw');
+  assert.equal(preferReserveAp(packs,kept,actor,{type:'extraDraw'},[]).type,'next');
+ },{reserveAp:true});
+ const low=structuredClone(kept);
+ setLife(low,actor,3);
+ place(low,1-actor,take(low,1-actor,'BLC-4-070'),'front',0);
+ assert.equal(reserveApPlan(packs,low,actor).keep,false);
+ bindVariant(null,()=>{
+  assert.equal(preferReserveAp(packs,low,actor,{type:'extraDraw'},[]).type,'extraDraw');
+ },{reserveAp:true});
+ const threatened=ask(packs,low);
+ const spared=ask(packs,low,{reserveAp:true});
+ assert.equal(spared.action.type,threatened.action.type);
 });
 
 function reachMove(actor){
@@ -3085,7 +3324,7 @@ test('an unfinished shift check does not borrow another line',()=>{
  }
 });
 test('a covered plain generator is discarded and the next turn keeps the filter chain',()=>{
- for(const variant of [null,'ab-front',{coverage:'root',raidBase:true,gate:'main-front'}])filterChain(variant);
+ for(const variant of [null,'ab-front',{coverage:'root',raidBase:true,gate:'main-front'},{reserveAp:true}])filterChain(variant);
 });
 function filterChain(variant){
  const opened=replayWhiteHandLimit(8301,0,1,29);
@@ -3093,7 +3332,7 @@ function filterChain(variant){
  const actor=opened.state.pending.player;
  const catalog=packs[actor].cards;
  const discard=measured(packs,opened.state,variant);
- if(variant&&typeof variant==='object')assert.deepEqual(discard.trace.factors,variant);
+ if(variant&&typeof variant==='object')assert.deepEqual(discard.trace.factors,normalizeFactors(variant));
  const plain=opened.state.players[actor].hand.find(card=>card.uid===discard.action.uid);
  const printed=catalog[plain.cardId];
  assert.equal(discard.action.type,'chooseHandLimit');

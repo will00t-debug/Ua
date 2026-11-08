@@ -5,7 +5,7 @@
 // not special cases. The three callers turn on one feature at a time.
 // The preview page loads this file in the browser, so the budget stays on
 // a synchronous stack. Search does not await inside the binding.
-import {universalBp,universalEnergy,universalEnergyByColor,universalAttackDamage,universalImpact,universalImpactNull,legalUniversalActions,dispatchUniversalAction} from '../engine.mjs';
+import {universalBp,universalEnergy,universalEnergyByColor,universalAttackDamage,universalImpact,universalImpactNull,legalUniversalActions,dispatchUniversalAction,effectiveHandRequiredEnergy} from '../engine.mjs';
 import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
 import {aot2AttackBlocked} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
@@ -43,7 +43,11 @@ export function normalizeFactors(asked){
  if(!asked||typeof asked!=='object')return null;
  const coverage=asked.coverage==='root'||asked.coverage==='tree'?asked.coverage:null;
  const gate=asked.gate==='energy'||asked.gate==='final'||asked.gate==='main-front'?asked.gate:null;
- return {coverage,raidBase:asked.raidBase===true,gate};
+ const factors={coverage,raidBase:asked.raidBase===true,gate};
+ // Keeping the action points for a known energy line is a separate opt-in.
+ // Named variants do not turn it on.
+ if(asked.reserveAp===true)factors.reserveAp=true;
+ return factors;
 }
 export function bindVariant(variant,fn,factors){
  const named=variant==='a'||variant==='b'||variant==='ab'||variant==='ab-front'?variant:null;
@@ -1034,6 +1038,223 @@ function preferInspectedRefund(pack,state,actor,choice){
  catch{keep=null;}
  return keep||choice;
 }
+function onPlayList(printed){
+ const list=printed?.effects?.onPlay;
+ return Array.isArray(list)?list:[];
+}
+// A mandatory bounce is part of entering. An optional bounce can be declined,
+// so it does not reduce the line. The printed energy cap is the only filter.
+function mandatoryBounceEnergy(printed){
+ const effect=onPlayList(printed).find(item=>item?.op==='bounceOwnOtherUnderEnergy'&&
+  item.optional!==true&&Number.isInteger(item.energy));
+ return effect?effect.energy:null;
+}
+// AP comes back only from a refund already printed on this card, with no
+// gate and no optional decline. A card still in the deck is not a plan.
+function unconditionalRefund(printed){
+ let count=0;
+ for(const effect of onPlayList(printed)){
+  if(effect?.op!=='recoverAp'||!(Number(effect.count)>0))continue;
+  if(effect.optional===true||effect.when||effect.whenName||effect.require)continue;
+  count+=Number(effect.count);
+ }
+ return count;
+}
+function colorTotal(colors){
+ return Object.values(colors||{}).reduce((sum,value)=>sum+(Number(value)||0),0);
+}
+function producedBy(pack,state,actor,slot){
+ const mine=state.players?.[actor];
+ const card=mine?.energy?.[slot];
+ if(!card)return 0;
+ const before=colorTotal(colorsOf(pack,state,actor));
+ mine.energy[slot]=null;
+ let after=before;
+ try{after=colorTotal(colorsOf(pack,state,actor));}
+ finally{mine.energy[slot]=card;}
+ return before-after;
+}
+function energyBoard(pack,state,actor){
+ const mine=state.players?.[actor];
+ const catalog=packOf(pack,actor).cards;
+ const energy=(mine?.energy||[null,null,null,null]).map((card,slot)=>{
+  if(!card)return null;
+  const printed=catalog[card.cardId];
+  return {uid:card.uid,color:printed?.color||'',energy:Number(printed?.energy)||0,produce:producedBy(pack,state,actor,slot)};
+ });
+ const fronts=(mine?.front||[]).filter(Boolean).map(card=>{
+  const printed=catalog[card.cardId];
+  return {uid:card.uid,energy:Number(printed?.energy)||0};
+ });
+ return {energy,fronts,total:colorTotal(colorsOf(pack,state,actor))};
+}
+function copyBoard(board){
+ return {
+  energy:board.energy.map(body=>body?{...body}:null),
+  fronts:board.fronts.map(body=>({...body})),
+  total:board.total
+ };
+}
+function handDevelopment(pack,state,actor,card){
+ const printed=packOf(pack,actor).cards[card?.cardId];
+ if(!printed||printed.energyForbidden||printed.energyLineForbidden)return null;
+ const refund=unconditionalRefund(printed);
+ const character=printed.type==='character';
+ if(!character&&!(printed.type==='event'&&refund>0))return null;
+ return {
+  uid:card.uid,color:printed.color,cost:effectiveHandRequiredEnergy(pack,state,actor,printed,card),
+  ap:apCost(printed),printed:Number(printed.energy)||0,produce:character?(Number(printed.gen)||0):0,
+  bounce:character?mandatoryBounceEnergy(printed):null,refund,character,event:printed.type==='event'
+ };
+}
+// Place one known character on the energy line. The result is the best
+// legal slot after a mandatory bounce and after the card that slot already
+// held. Self-bounce leaves no new energy. Optional bounces are declined.
+function placeDevelopment(board,colors,option){
+ if(!option?.character||(colors[option.color]||0)<option.cost)return null;
+ let best=null;
+ for(let slot=0;slot<board.energy.length;slot++){
+  const replaced=board.energy[slot];
+  const energy=board.energy.map(body=>body?{...body}:null);
+  energy[slot]={uid:option.uid,color:option.color,energy:option.printed,produce:option.produce};
+  let bounced=null,self=false;
+  if(option.bounce!=null){
+   const targets=[];
+   energy.forEach((body,index)=>{
+    if(body&&body.uid!==option.uid&&body.energy<=option.bounce)
+     targets.push({kind:'energy',index,produce:body.produce||0});
+   });
+   board.fronts.forEach((body,index)=>{
+    if(body&&body.energy<=option.bounce)targets.push({kind:'front',index,produce:0});
+   });
+   if(!targets.length){energy[slot]=null;self=true;}
+   else{
+    targets.sort((a,b)=>a.produce-b.produce||(a.kind==='front'?-1:1));
+    bounced=targets[0];
+    if(bounced.kind==='energy')energy[bounced.index]=null;
+   }
+  }
+  const stayed=!self&&!!energy[slot];
+  const net=(stayed?option.produce:0)-(replaced?.produce||0)-(bounced?.kind==='energy'?bounced.produce:0);
+  if(!(net>0))continue;
+  const nextColors=plainColors(colors);
+  const drop=body=>{
+   if(!body?.produce)return;
+   nextColors[body.color]=(nextColors[body.color]||0)-body.produce;
+   if(nextColors[body.color]<=0)delete nextColors[body.color];
+  };
+  drop(replaced);
+  if(bounced?.kind==='energy')drop(board.energy[bounced.index]);
+  if(stayed)nextColors[option.color]=(nextColors[option.color]||0)+option.produce;
+  const next={energy,fronts:board.fronts.map(body=>({...body})),total:colorTotal(nextColors)};
+  if(!best||net>best.net)best={board:next,colors:nextColors,net};
+ }
+ return best;
+}
+function reachableEnergy(options,board,colors,ap){
+ const memo=new Map();
+ function walk(opts,current,have,left){
+  const key=left+'|'+Object.entries(have).sort().join(';')+'|'+
+   current.energy.map(body=>body?.uid||'-').join(',')+'|'+opts.map(item=>item.uid).join(',');
+  const saved=memo.get(key);
+  if(saved)return saved;
+  let best={energy:current.total,plays:0};
+  const keep=candidate=>{
+   if(candidate.energy>best.energy||candidate.energy===best.energy&&candidate.plays>best.plays)best=candidate;
+  };
+  if(left>0){
+   for(let index=0;index<opts.length;index++){
+    const option=opts[index];
+    if(option.ap>left)continue;
+    const rest=opts.filter((_,item)=>item!==index);
+    if(option.event){
+     if((have[option.color]||0)<option.cost)continue;
+     keep(walk(rest,current,have,left-option.ap+option.refund));
+     continue;
+    }
+    const placed=placeDevelopment(current,have,option);
+    if(!placed)continue;
+    const next=walk(rest,placed.board,placed.colors,left-option.ap+option.refund);
+    keep({energy:next.energy,plays:next.plays+1});
+   }
+  }
+  memo.set(key,best);
+  return best;
+ }
+ return walk(options,board,colors,ap);
+}
+// A refund already in hand counts when its cost and action point fit now, or
+// after a known energy play this turn can pay for. The deck is not read, and
+// a draw is not assumed to bring the refund back.
+function refundReachable(plays,refunds,board,colors,ap){
+ const payable=(have,left)=>refunds.some(option=>option.ap<=left&&(have[option.color]||0)>=option.cost);
+ if(payable(colors,ap))return true;
+ if(!plays.length||!refunds.length||ap<=0)return false;
+ const memo=new Set();
+ function walk(opts,current,have,left){
+  const key=left+'|'+Object.entries(have).sort().join(';')+'|'+
+   current.energy.map(body=>body?.uid||'-').join(',')+'|'+opts.map(item=>item.uid).join(',');
+  if(memo.has(key))return false;
+  memo.add(key);
+  if(left<=0)return false;
+  for(let index=0;index<opts.length;index++){
+   const option=opts[index];
+   if(option.ap>left)continue;
+   const placed=placeDevelopment(current,have,option);
+   if(!placed)continue;
+   const nextAp=left-option.ap+option.refund;
+   if(option.refund>0||payable(placed.colors,nextAp))return true;
+   if(walk(opts.filter((_,item)=>item!==index),placed.board,placed.colors,nextAp))return true;
+  }
+  return false;
+ }
+ return walk(plays,board,colors,ap);
+}
+// The known hand can finish an energy line with the action points it already
+// has, and spending one of them to draw removes a play that line needs.
+// One usable generator, a line that still fits after the draw, and a refund
+// that can already be paid are not this case. The deck is not read.
+export function reserveApPlan(pack,state,actor){
+ const none={keep:false,starters:0,full:null,short:null};
+ const mine=state?.players?.[actor];
+ if(!mine||state.phase!=='start'||state.pending)return none;
+ if(!spareForEnergy(pack,state,actor))return none;
+ const ready=(mine.apCards||[]).filter(card=>card?.ready).length;
+ if(ready<2)return none;
+ const colors=plainColors(colorsOf(pack,state,actor));
+ const board=energyBoard(pack,state,actor);
+ const options=(mine.hand||[]).map(card=>handDevelopment(pack,state,actor,card)).filter(Boolean);
+ const payable=option=>option.ap<=ready&&(colors[option.color]||0)>=option.cost;
+ if(options.some(option=>option.refund>0&&payable(option)))return {...none,starters:0,refund:true};
+ const starters=options.filter(option=>option.character&&payable(option)&&placeDevelopment(board,colors,option));
+ if(starters.length<2)return {keep:false,starters:starters.length,full:null,short:null};
+ const full=reachableEnergy(starters,board,colors,ready);
+ const short=reachableEnergy(starters,copyBoard(board),plainColors(colors),ready-1);
+ const refunds=options.filter(option=>option.refund>0);
+ const refund=refundReachable(starters,refunds,copyBoard(board),plainColors(colors),ready);
+ return {
+  keep:!refund&&full.plays>=2&&full.energy>short.energy,
+  starters:starters.length,full,short,ready,...(refund?{refund:true}:{})
+ };
+}
+// Search may already have chosen the draw. This still returns the pass when
+// the known line needs the action point the draw would spend. A proven win
+// on the draw, and a proven loss on the pass, stay where they are.
+export function preferReserveAp(pack,state,actor,choice,rows){
+ if(searchFactors().reserveAp!==true)return choice;
+ if(choice?.type!=='extraDraw')return choice;
+ const won=(rows||[]).find(row=>row?.executed!==false&&row.action?.type==='extraDraw'&&
+  row.boundary==='terminal'&&row.search>=90000);
+ if(won)return choice;
+ const loss=(rows||[]).find(row=>row?.executed!==false&&row.action?.type==='next'&&
+  row.boundary==='terminal'&&row.search<=-90000);
+ if(loss)return choice;
+ if(!reserveApPlan(pack,state,actor).keep)return choice;
+ let pass=null;
+ try{pass=legalUniversalActions(pack,state).find(action=>action?.type==='next')||null;}
+ catch{pass=null;}
+ return pass||choice;
+}
 // The start-phase draw spends one AP and is scored on the belief deck, not
 // the live top. When the hand is still short of energy and one AP remains
 // afterwards, take the draw and plan the main from the card that arrives.
@@ -1293,11 +1514,15 @@ function preferKeepReadyFront(pack,state,actor,choice,rows){
 }
 export function confirmedChoiceTrace(pack,state,actor,choice,rows){
  const early=preferEarlyDraw(pack,state,actor,choice,rows);
- const opened=preferOpenFilter(pack,state,actor,early,rows);
+ const reserved=searchFactors().reserveAp===true?preferReserveAp(pack,state,actor,early,rows):early;
+ const opened=preferOpenFilter(pack,state,actor,reserved,rows);
  const refund=preferHeldRefund(pack,state,actor,opened,rows);
  const switched=preferLastSwitch(pack,state,actor,refund,rows);
  const ready=preferKeepReadyFront(pack,state,actor,switched,rows);
- return {choice:ready,steps:[['early-draw',early],['open-filter',opened],['refund',refund],['line-switch',switched],['ready-front',ready]]};
+ const steps=[['early-draw',early]];
+ if(searchFactors().reserveAp===true)steps.push(['reserve-ap',reserved]);
+ steps.push(['open-filter',opened],['refund',refund],['line-switch',switched],['ready-front',ready]);
+ return {choice:ready,steps};
 }
 export function preferConfirmedChoices(pack,state,actor,choice,rows){
  return confirmedChoiceTrace(pack,state,actor,choice,rows).choice;

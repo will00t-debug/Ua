@@ -1,6 +1,28 @@
 {
   "baselineCommit": "4a028a15",
-  "decision": "No candidate. The recurring gaps are real, and none of them is a single generic change that the replays support. The evidence gate was not touched. The default policy stays as it is. No 8401/8402 pair was run, and no validation seed was taken.",
+  "decision": "reserveAp stays off. The 8401/8402 point estimate moved from 2-22 to 3-21, and the pre-registered 8430-8432 check moved from 1-35 to 3-33. Both paired intervals include 0, so the gain is not separated from a flat result. The definition was not edited after the development pair. No 40ms run. 9100 and above stay reserved.",
+  "reserveAp": {
+    "default": false,
+    "development": {
+      "seeds": [8401, 8402],
+      "baseline": "2-22",
+      "candidate": "3-21",
+      "hardGap": {"baseline": -0.4166666666666667, "candidate": -0.375},
+      "relative": {"n": 12, "mean": 0.041666666666666664},
+      "gained": ["sword-art-online-raid 8402 first 1 seat 1", "steins-gate-raid 8401 first 0 seat 0", "steins-gate-raid 8401 first 1 seat 0"],
+      "lost": ["steins-gate-raid 8401 first 1 seat 1", "steins-gate-raid 8402 first 0 seat 0"]
+    },
+    "validation": {
+      "seeds": [8430, 8431, 8432],
+      "lockedIn": "audit/ai-v3-reserve-ap-seed-lock.json",
+      "baseline": "1-35",
+      "candidate": "3-33",
+      "hardGap": {"baseline": -0.4722222222222222, "candidate": -0.4166666666666667},
+      "relative": {"n": 18, "mean": 0.05555555555555555, "low": 0, "high": 0.16666666666666666},
+      "gained": ["sword-art-online-raid 8431 first 1 seat 0", "sword-art-online-raid 8431 first 1 seat 1", "steins-gate-raid 8431 first 1 seat 0"],
+      "lost": ["steins-gate-raid 8431 first 1 seat 1"]
+    }
+  },
   "search": {
     "seed": 1,
     "nodes": 48,
@@ -41,7 +63,8 @@
       "decks": 3,
       "decisions": 104,
       "chains": 104,
-      "what": "74 of these are the search's own choice. 30 are the early-draw preference replacing next. On the three opening snapshots, 192 nodes and four actor decisions still draw. Two of those draws had already returned and scored at least as high as passing. This is the confirmed short-energy draw, not a cut line."
+      "scope": "The 104 draws are only the 22 losses, and only while our life is at least 4. They are not all 24 games. Across all 24 games, start draws with our life at least 4 are 119: these 104, plus 15 in the 2 wins. The 22 losses have 26 further start draws at our life of 3 or less, and the 2 wins have 1. All 22 losses contain at least one of the 104.",
+      "what": "Of those 104, 74 are the search's own choice and 30 are the early-draw preference replacing next. On the three opening snapshots, 192 nodes and four actor decisions still draw. Two of those draws had already returned and scored at least as high as passing. This is the confirmed short-energy draw, not a cut line."
     },
     {
       "name": "generator front rewritten to energy",
