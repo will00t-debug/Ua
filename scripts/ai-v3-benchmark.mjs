@@ -19,6 +19,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
 import {matchGrid,pairedChallenger} from '../dist/universal-v2/ai-v3/compare.mjs';
 import {matchRules,newComparedMatch,applySharedOpening,cloneMatch,nextBuckets} from '../dist/universal-v2/ai-v3/opening.mjs';
+import {normalizeFactors} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 const GAMES=Number(process.env.AI_V3_GAMES||1);
 const STEPS=Number(process.env.AI_V3_STEPS||24);
@@ -37,6 +38,7 @@ const STRATEGY=process.env.AI_V3_STRATEGY==='score'||process.env.AI_V3_STRATEGY=
  ?process.env.AI_V3_STRATEGY:null;
  const HARD_NODES=process.env.AI_V3_HARD_NODES!=null&&process.env.AI_V3_HARD_NODES!==''?Number(process.env.AI_V3_HARD_NODES):null;
 const VARIANT=process.env.AI_V3_VARIANT==='a'||process.env.AI_V3_VARIANT==='b'||process.env.AI_V3_VARIANT==='ab'||process.env.AI_V3_VARIANT==='ab-front'?process.env.AI_V3_VARIANT:null;
+const FACTORS=process.env.AI_V3_FACTORS?normalizeFactors(JSON.parse(process.env.AI_V3_FACTORS)):null;
 const RECORD=process.env.AI_V3_ACTIONS==='1';
 
 function pct(values,p){
@@ -56,11 +58,12 @@ function choose(mode,pack,state,actor){
  }
  if(mode==='rollout'||mode==='tree'||mode==='tree-replies'){
   const meter={dispatches:0};
-  const action=chooseAiV3Action(pack,state,{actor,...BUDGET,plan:mode,strategy:STRATEGY,variant:VARIANT,meter,
+  const action=chooseAiV3Action(pack,state,{actor,...BUDGET,plan:mode,strategy:STRATEGY,meter,
+   ...(FACTORS?{factors:FACTORS}:{variant:VARIANT}),
    ...(Number.isInteger(HARD_NODES)?{hardNodes:HARD_NODES}:{})});
   return {action,fallback:false,dispatches:meter.dispatches};
  }
- const options={actor,...BUDGET,plan:'rollout',strategy:STRATEGY,variant:VARIANT};
+ const options={actor,...BUDGET,plan:'rollout',strategy:STRATEGY,...(FACTORS?{factors:FACTORS}:{variant:VARIANT})};
  if(mode==='prior')options.mode='prior';
  if(mode==='belief'){options.mode='belief';options.worlds=2;}
  if(mode==='ismcts')options.mode='ismcts';
@@ -226,7 +229,7 @@ const wanted=new Set((process.env.AI_V3_TITLES||'').split(',').filter(Boolean));
 const decks=(POOL==='battle'?battleDecks():mainDecks()).filter(deck=>!wanted.size||wanted.has(deck.title)||wanted.has(deck.id));
 const report={policy:AI_V3_POLICY,baseline:ANCHOR,hard:HARD_AI_POLICY,
  split:FINAL?'final':'dev',seed0:SEED0,steps:STEPS,games:GAMES,modes:MODES,pool:POOL,opponent:OPPONENT,anchor:ANCHOR,
- strategy:STRATEGY,hardNodes:Number.isInteger(HARD_NODES)?HARD_NODES:0,variant:VARIANT,
+ strategy:STRATEGY,hardNodes:Number.isInteger(HARD_NODES)?HARD_NODES:0,variant:FACTORS?null:VARIANT,factors:FACTORS,
  rules:{
   name:RULES.openingMulligan?'official':'legacy',
   openingMulligan:RULES.openingMulligan,attackerChoosesLife:RULES.attackerChoosesLife,

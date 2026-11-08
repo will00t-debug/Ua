@@ -3274,6 +3274,9 @@ test('front coverage uses cost, energy, attack and effect, and stays off by defa
  const plain=selectionTrace(packs,main,0,legal,4,null);
  const covered=bindVariant('a',()=>selectionTrace(packs,main,0,legal,4,null));
  const narrowed=bindVariant('ab-front',()=>selectionTrace(packs,main,0,legal,4,null));
+ const factored=bindVariant(null,()=>selectionTrace(packs,main,0,legal,4,null),{coverage:'root',raidBase:true,gate:'energy'});
+ const bundled=bindVariant(null,()=>selectionTrace(packs,main,0,legal,4,null),{coverage:'tree',raidBase:false,gate:'final'});
+ const closed=bindVariant(null,()=>selectionTrace(packs,main,0,legal,4,null),{coverage:null,raidBase:false,gate:null});
  const plainFront=plain.picked.find(action=>action.type==='play'&&action.line==='front');
  const coveredFront=covered.picked.find(action=>action.type==='play'&&action.line==='front');
  assert.equal(JSON.stringify(plainFront),JSON.stringify(plain.ranked.find(action=>action.type==='play'&&action.line==='front')));
@@ -3282,6 +3285,9 @@ test('front coverage uses cost, energy, attack and effect, and stays off by defa
  assert.equal(covered.notes.find(note=>note.action.uid===effect.uid&&note.action.line==='front').reason,'front-slot');
  assert.equal(covered.picked.filter(action=>action.type==='play'&&action.line==='front').length,1);
  assert.equal(narrowed.picked.find(action=>action.type==='play'&&action.line==='front').uid,effect.uid);
+ assert.equal(JSON.stringify(factored.picked),JSON.stringify(narrowed.picked));
+ assert.equal(JSON.stringify(bundled.picked),JSON.stringify(covered.picked));
+ assert.equal(JSON.stringify(closed.picked),JSON.stringify(plain.picked));
 });
 
 test('an evidence gate keeps a searched line unless the replacement matches its boundary',()=>{

@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,evidencedChoice,frontEvidenceChoice,searchVariant,setFrontCoverage} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -38,13 +38,23 @@ export function resetAiV3Report(){report=emptyReport();lastTrace=null;}
 export function aiV3Report(){return {...report,samples:report.samples.slice()};}
 export function lastAiV3Trace(){return lastTrace?{...lastTrace,candidates:lastTrace.candidates?.map(row=>({...row}))}:null;}
 function gatePreference(state,actor,previous,preferred,rows){
- const variant=searchVariant();
- if(variant==='b'||variant==='ab')return evidencedChoice(previous,preferred,rows);
- return preferred;
+ if(searchFactors().gate!=='final')return preferred;
+ return evidencedChoice(previous,preferred,rows);
 }
 function gateFrontEnergy(state,actor,previous,placed,rows){
- if(searchVariant()!=='ab-front')return placed;
+ if(searchFactors().gate!=='energy')return placed;
  return frontEvidenceChoice(state,actor,previous,placed,rows);
+}
+function stageOf(rows,action){
+ const row=tracedRow(rows,action);
+ return {
+  type:action?.type||null,line:action?.line||null,uid:action?.uid??null,mode:action?.mode||null,
+  boundary:row?.boundary??null,search:Number.isFinite(row?.search)?row.search:null,
+  executed:!!row
+ };
+}
+function preferenceStages(rows,steps){
+ return steps.map(([stage,action])=>({stage,...stageOf(rows,action)}));
 }
 
 function finish(action,reason,extra,started){
@@ -389,14 +399,18 @@ export function chooseAiV3Action(pack,state,options={}){
   const spent=()=>report.nodes-nodesBefore;
   const diagnose=options.diagnose!==false;
   // A, B, A+B and ab-front stay opt-in. This file is loaded by the browser,
-  // which has no process global, so the entry reads only options.variant.
-  // A missing or unknown value is the default search. Tests and the
-  // benchmark read their environment and pass the value in. ab-front keeps
-  // A's front slot and gates only the energy-generator rewrite of a searched
-  // main-phase front. Confirmed choices, including the filter chain and the
-  // start-phase pass, still run after that gate.
+  // which has no process global, so the entry reads only options.variant
+  // and an explicit options.factors object. A missing or unknown value is
+  // the default search. Tests and the benchmark read their environment and
+  // pass the value in. Explicit factors separate coverage scope, raid-base
+  // retention and the evidence-gate position. They replace a named variant
+  // for that call. ab-front keeps A's front slot at the root only, retains
+  // a raid base, and gates only the energy-generator rewrite of a searched
+  // main-phase front.
   const asked=options.variant;
-  const variant=asked==='a'||asked==='b'||asked==='ab'||asked==='ab-front'?asked:null;
+  const explicit=normalizeFactors(options.factors);
+  const variant=explicit?null:(asked==='a'||asked==='b'||asked==='ab'||asked==='ab-front'?asked:null);
+  const factors=explicit||factorsForVariant(variant);
   return bindMeter(options.meter,()=>bindProbeBudget(budget,()=>bindVariant(variant,()=>{
   try{
   const rankStarted=performance.now();
@@ -410,7 +424,7 @@ export function chooseAiV3Action(pack,state,options={}){
     candidates:ordered.slice(0,beam).map(action=>({action}))},started);
   }
   const ranked=selectCandidates(pack,probe,actor,legal,beam,strategy);
-  if(variant==='ab-front')setFrontCoverage(false);
+  if(factors.coverage==='root')setFrontCoverage(false);
   if(options.mode==='ismcts'){
    report.ismcts++;
    const picked=chooseIsmctsAction(pack,worlds,actor,legal,{
@@ -645,8 +659,12 @@ export function chooseAiV3Action(pack,state,options={}){
   // throw away a win this pool already paid for. The backup stays for
   // every line that has not won.
   if(!provenWin&&(!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
-   const placed=gateFrontEnergy(state,actor,choice,preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored),scored);
-   const preferred=holdSurvival(choice,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
+   const retained=keptEnergy(pack,state,actor,legal,choice,null,strategy);
+   const generated=preferEnergyGenerator(pack,state,actor,retained,scored);
+   const placed=gateFrontEnergy(state,actor,choice,generated,scored);
+   const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
+   const confirmed=confirmedTrace.choice;
+   const preferred=holdSurvival(choice,confirmed,scored);
    const gated=gatePreference(state,actor,choice,preferred,scored);
    const kept=constrainConfirmedWin(gated,winRows,legal);
    report.budgetFallback++;
@@ -658,6 +676,7 @@ export function chooseAiV3Action(pack,state,options={}){
     hard:hardExact,hardNodes:hardSlice,strategy,compared:scored.length?viewed:[],unscored:Math.max(0,jobs.length-scored.length),missed,
     plan,roots:jobs.length,followBranches,maxDepth,unexecuted,unexplored,...diagnosis,
     energyKeep:energyView?.strip?energyView:null,
+    stages:diagnose?preferenceStages(scored,[['search',choice],['energy-keep',retained],['generator',generated],['energy-gate',placed],...confirmedTrace.steps,['held',preferred],['final-gate',gated],['returned',kept]]):null,
     replacedMove:same(kept,choice)?null:choice,
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
     score:tracedRow(scored,kept)?.search??null,
@@ -688,9 +707,14 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched',()=>{settle();return spent();});
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
-  const placed=gateFrontEnergy(state,actor,exact,preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored),scored);
-  let kept=holdSurvival(exact,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
-  kept=gatePreference(state,actor,exact,kept,scored);
+  const retained=keptEnergy(pack,state,actor,legal,exact,row,strategy);
+  const generated=preferEnergyGenerator(pack,state,actor,retained,scored);
+  const placed=gateFrontEnergy(state,actor,exact,generated,scored);
+  const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
+  const confirmed=confirmedTrace.choice;
+  const heldChoice=holdSurvival(exact,confirmed,scored);
+  const gated=gatePreference(state,actor,exact,heldChoice,scored);
+  let kept=gated;
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished
   // scores are not a reason to throw away the card the keep-order retains.
@@ -725,7 +749,9 @@ export function chooseAiV3Action(pack,state,options={}){
    incomplete:!keptRow?.settled,settled:!!keptRow?.settled,hard:hardExact,hardNodes:hardSlice,strategy,compared:viewed,
    unscored:jobs.length-scored.length,
    unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:keptRow?.sequence||[],
-   energyKeep:energyView?.strip?energyView:null,replacedMove:same(kept,exact)?null:exact,
+   energyKeep:energyView?.strip?energyView:null,
+   stages:diagnose?preferenceStages(scored,[['search',exact],['energy-keep',retained],['generator',generated],['energy-gate',placed],...confirmedTrace.steps,['held',heldChoice],['final-gate',gated],['returned',kept]]):null,
+   replacedMove:same(kept,exact)?null:exact,
    ...diagnosis
   },started);
  }catch(error){
@@ -733,8 +759,8 @@ export function chooseAiV3Action(pack,state,options={}){
    const legal=legalUniversalActions(pack,state);
    return fallback(pack,state,legal,started,error?.message||'exception',()=>{settle();return spent();});
   }catch{settle();return finish(null,'exception',{fallback:true,nodesUsed:spent()},started);}
- }finally{if(variant==='ab-front')setFrontCoverage(true);}
-  })));
+  }finally{if(factors.coverage==='root')setFrontCoverage(true);}
+  },explicit||undefined)));
  }catch(error){
   try{
    const legal=legalUniversalActions(pack,state);

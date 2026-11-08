@@ -3,6 +3,7 @@
 // version and actor still match, and the action is on the live legal list.
 import {legalUniversalActions} from '../engine.mjs';
 import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS} from './search.mjs';
+import {normalizeFactors} from './strategy.mjs';
 import {beliefWorld} from './belief.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -41,10 +42,12 @@ export function handleAiV3Request(message){
   const legal=legalUniversalActions(message.pack,message.state);
   const asked=message.variant;
   const variant=asked==='a'||asked==='b'||asked==='ab'||asked==='ab-front'?asked:null;
+  const factors=normalizeFactors(message.factors);
   const action=chooseAiV3Action(message.pack,message.state,{
    actor,seed:message.seed,mode:message.mode,prior:message.prior,
    nodes:message.nodes,ms:message.ms,worlds:1,
-   ...(variant?{variant}:{})
+   ...(factors?{factors}:{}),
+   ...(variant&&!factors?{variant}:{})
   });
   const exact=legal.find(item=>same(item,action))||null;
   const search=searchReport();

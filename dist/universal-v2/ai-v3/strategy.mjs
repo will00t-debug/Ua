@@ -25,14 +25,39 @@ export function bindMeter(meter,fn){
  finally{meterStack.pop();}
 }
 // A and B stay off unless a comparison asks for them. Null is the 528ab204 path.
+// The three comparison factors are coverage scope, raid-base retention, and
+// where the evidence gate sits. A named variant is one fixed bundle. An
+// explicit factors object is the separated comparison and stays off unless
+// the caller passes it. This module does not read the process global.
 const variantStack=[];
-export function bindVariant(variant,fn){
- variantStack.push(variant==='a'||variant==='b'||variant==='ab'||variant==='ab-front'?variant:null);
+const factorStack=[];
+const NO_FACTORS={coverage:null,raidBase:false,gate:null};
+export function factorsForVariant(variant){
+ if(variant==='a')return {coverage:'tree',raidBase:false,gate:null};
+ if(variant==='b')return {coverage:null,raidBase:false,gate:'final'};
+ if(variant==='ab')return {coverage:'tree',raidBase:false,gate:'final'};
+ if(variant==='ab-front')return {coverage:'root',raidBase:true,gate:'energy'};
+ return {coverage:null,raidBase:false,gate:null};
+}
+export function normalizeFactors(asked){
+ if(!asked||typeof asked!=='object')return null;
+ const coverage=asked.coverage==='root'||asked.coverage==='tree'?asked.coverage:null;
+ const gate=asked.gate==='energy'||asked.gate==='final'?asked.gate:null;
+ return {coverage,raidBase:asked.raidBase===true,gate};
+}
+export function bindVariant(variant,fn,factors){
+ const named=variant==='a'||variant==='b'||variant==='ab'||variant==='ab-front'?variant:null;
+ const resolved=factors?normalizeFactors(factors):factorsForVariant(named);
+ variantStack.push(named);
+ factorStack.push(resolved||NO_FACTORS);
  try{return fn();}
- finally{variantStack.pop();}
+ finally{factorStack.pop();variantStack.pop();}
 }
 export function searchVariant(){
  return variantStack.length?variantStack[variantStack.length-1]:null;
+}
+export function searchFactors(){
+ return factorStack.length?factorStack[factorStack.length-1]:NO_FACTORS;
 }
 let allowFrontCoverage=true;
 export function setFrontCoverage(on){
@@ -42,14 +67,14 @@ export function setFrontCoverage(on){
 }
 export function frontCoverageOn(){
  if(!allowFrontCoverage)return false;
- const variant=searchVariant();
- return variant==='a'||variant==='ab'||variant==='ab-front';
+ const coverage=searchFactors().coverage;
+ return coverage==='root'||coverage==='tree';
 }
 // The coverage winner does not evict the hand card it would raid onto.
 // That base stays in the beam so the raid is still a follow-up. The score
 // itself is unchanged.
 export function coverageKeepsRaidBase(pack,state,viewer,incoming,displaced){
- if(searchVariant()!=='ab-front')return false;
+ if(!searchFactors().raidBase)return false;
  if(incoming?.type!=='play'||incoming.line!=='front')return false;
  if(displaced?.type!=='play'||displaced.line!=='front')return false;
  const hand=state.players?.[viewer]?.hand||[];
@@ -1216,11 +1241,16 @@ function preferKeepReadyFront(pack,state,actor,choice,rows){
  if(row?.boundary==='terminal'&&row.search<=-90000)return choice;
  return pass;
 }
+export function confirmedChoiceTrace(pack,state,actor,choice,rows){
+ const early=preferEarlyDraw(pack,state,actor,choice,rows);
+ const opened=preferOpenFilter(pack,state,actor,early,rows);
+ const refund=preferHeldRefund(pack,state,actor,opened,rows);
+ const switched=preferLastSwitch(pack,state,actor,refund,rows);
+ const ready=preferKeepReadyFront(pack,state,actor,switched,rows);
+ return {choice:ready,steps:[['early-draw',early],['open-filter',opened],['refund',refund],['line-switch',switched],['ready-front',ready]]};
+}
 export function preferConfirmedChoices(pack,state,actor,choice,rows){
- return preferKeepReadyFront(pack,state,actor,
-  preferLastSwitch(pack,state,actor,
-   preferHeldRefund(pack,state,actor,
-    preferOpenFilter(pack,state,actor,preferEarlyDraw(pack,state,actor,choice,rows),rows),rows),rows),rows);
+ return confirmedChoiceTrace(pack,state,actor,choice,rows).choice;
 }
 // A cut search used to copy the energy-before-front rank. That is right when
 // the line still needs a generator. It is the wrong backup once current
