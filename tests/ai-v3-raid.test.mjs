@@ -61,7 +61,9 @@ function readyAp(state,n){
 }
 function ask(packs,state){
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,nodes:48,hardNodes:0});
+ const env=process.env.AI_V3_TEST_VARIANT;
+ const variant=env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
+ const action=chooseAiV3Action(packs,state,{...MATCH_LIMITS,actor:0,seed:1,ms:1e9,nodes:48,hardNodes:0,...(variant?{variant}:{})});
  return {action,trace:lastAiV3Trace()};
 }
 

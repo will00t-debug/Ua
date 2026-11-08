@@ -5,7 +5,7 @@
 import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded,filterEnergyFirst,lastApLineSwitch,recoversActionPoints,payableRefundOnTop} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal,engineDispatch,frontCoverageScore,searchVariant} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal,engineDispatch,frontCoverageScore,frontCoverageOn,coverageKeepsRaidBase} from './strategy.mjs';
 import {packOf,visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -92,8 +92,7 @@ export function rankLegal(pack,state,viewer,legal,strategy){
  return [...list].sort((a,b)=>compareRanked(pack,state,viewer,a,b,strategy));
 }
 function coveredFront(pack,state,viewer,ranked){
- const variant=searchVariant();
- if(variant!=='a'&&variant!=='ab')return ranked.find(action=>action.type==='play'&&action.line==='front')||null;
+ if(!frontCoverageOn())return ranked.find(action=>action.type==='play'&&action.line==='front')||null;
  let best=null,bestScore=-Infinity;
  for(const action of ranked){
   const score=frontCoverageScore(pack,state,viewer,action);
@@ -145,8 +144,8 @@ export function selectionTrace(pack,state,viewer,legal,beam,strategy){
  // Variant A ranks that slot by cost, energy use, attack and effect together.
  const front=coveredFront(pack,state,viewer,ranked);
  const held=picked.findIndex(action=>action.type==='play'&&action.line==='front');
- const coverage=searchVariant()==='a'||searchVariant()==='ab';
- if(front&&held>=0&&coverage&&!same(picked[held],front)){
+ const coverage=frontCoverageOn();
+ if(front&&held>=0&&coverage&&!same(picked[held],front)&&!coverageKeepsRaidBase(pack,state,viewer,front,picked[held])){
   reason.set(JSON.stringify(picked[held]),'replaced-by-front');
   picked[held]=front;
   reason.set(JSON.stringify(front),'front-slot');

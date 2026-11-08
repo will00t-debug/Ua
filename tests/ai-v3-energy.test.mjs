@@ -58,10 +58,15 @@ function toMove(pack,counts){
  }
  return {packs,state};
 }
+function testVariant(){
+ const env=process.env.AI_V3_TEST_VARIANT;
+ return env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
+}
 function ask(packs,state,strategy){
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
- const action=chooseAiV3Action(packs,state,{...OPTS,actor,...(strategy?{strategy}:{})});
+ const variant=testVariant();
+ const action=chooseAiV3Action(packs,state,{...OPTS,actor,...(strategy?{strategy}:{}),...(variant?{variant}:{})});
  return {action,trace:lastAiV3Trace(),actor};
 }
 function prove(fn){
@@ -624,7 +629,7 @@ test('energy: a partial block does not spend the color a stranded hand still nee
  assert.equal(view.strip,true);
  assert.equal(view.after,3);
  resetAiV3Report();
- const frozen=chooseAiV3Action(packs,state,{...OPTS,actor,seed:game.seed});
+ const frozen=chooseAiV3Action(packs,state,{...OPTS,actor,seed:game.seed,...(testVariant()?{variant:testVariant()}:{})});
  const trace=lastAiV3Trace();
  assert.equal(frozen.type,'next');
  assert.equal(trace.score,trace.candidates.find(row=>row.action?.type==='next').search);
@@ -633,7 +638,7 @@ test('energy: a partial block does not spend the color a stranded hand still nee
  assert.equal(trace.settled,false);
  assert.ok(trace.nodesUsed<=48);
  resetAiV3Report();
- const timed=chooseAiV3Action(packs,structuredClone(state),{...MATCH_LIMITS,actor,seed:game.seed,hardNodes:0,plan:'tree',nodes:48,ms:40});
+ const timed=chooseAiV3Action(packs,structuredClone(state),{...MATCH_LIMITS,actor,seed:game.seed,hardNodes:0,plan:'tree',nodes:48,ms:40,...(testVariant()?{variant:testVariant()}:{})});
  const timedTrace=lastAiV3Trace();
  assert.equal(timed.type,'next');
  assert.ok(timedTrace.nodesUsed<=48);
@@ -643,7 +648,7 @@ test('energy: a partial block does not spend the color a stranded hand still nee
  const main=dispatchUniversalAction(packs,state,frozen,{actor});
  assert.equal(assertUniversalMatch(packs,main),true);
  resetAiV3Report();
- const played=chooseAiV3Action(packs,main,{...OPTS,actor,seed:game.seed});
+ const played=chooseAiV3Action(packs,main,{...OPTS,actor,seed:game.seed,...(testVariant()?{variant:testVariant()}:{})});
  const body=main.players[actor].hand.find(card=>card.uid===played.uid);
  assert.equal(played.type,'play');
  assert.equal(played.line,'front');

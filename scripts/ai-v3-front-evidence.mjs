@@ -19,7 +19,7 @@ const targets=[
  {id:'two-ap',seed:8301,first:0,seat:0,step:31,role:'front building, two action points, empty front'},
  {id:'three-ap',seed:8301,first:0,seat:1,step:41,role:'attack tempo, three action points, empty front'}
 ];
-const variants=[null,'a','b','ab'];
+const variants=[null,'a','b','ab','ab-front'];
 const budgets=[48,192,768];
 
 function reach(target){
@@ -133,7 +133,16 @@ const out={
  },
  positions
 };
-writeFileSync('audit/ai-v3-front-evidence-positions.json',JSON.stringify(out));
+writeFileSync('audit/ai-v3-front-evidence-positions.json',JSON.stringify(out,null,2));
+writeFileSync('audit/ai-v3-ab-front-positions.json',JSON.stringify({
+ baseline:'528ab2045e435c30db88294d01d49430d770c012',
+ note:'Recomputed with ab-front. Root coverage matches A, and ab-front does not evict a front the incoming card raids onto. The ab-front gate rewrites only the same-card energy line of a searched main-phase front, before confirmed choices. It does not undo a later different-card energy choice, a start-phase pass, or a move.',
+ positions:positions.map(position=>({
+  id:position.id,board:position.board,
+  baselineBeam:position.baselineBeam,variantABeam:position.variantABeam,
+  searches:position.searches
+ }))
+},null,2));
 for(const position of positions){
  console.log('\n##',position.id,position.recorded.action.card,position.recorded.reason);
  console.log('baseline beam',position.baselineBeam.map(item=>item.card||item.type).join(' | '));

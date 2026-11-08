@@ -68,8 +68,11 @@ function ask(plan,nodes){
  const {packs,state,base,core}=position();
  resetAiV3Report();
  // Fixed nodes and no clock. A parallel run must not decide whether the combo is found.
+ const env=process.env.AI_V3_TEST_VARIANT;
+ const variant=env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
  const action=chooseAiV3Action(packs,state,{
-  actor:0,seed:1,nodes,ms:1e9,beam:4,opponentDecisions:1,worlds:1,plan
+  actor:0,seed:1,nodes,ms:1e9,beam:4,opponentDecisions:1,worlds:1,plan,
+  ...(variant?{variant}:{})
  });
  const trace=lastAiV3Trace();
  return {action,trace,base,core,packs,state,legal:legalUniversalActions(packs,state)};

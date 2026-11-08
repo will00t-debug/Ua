@@ -36,7 +36,7 @@ const BUDGET={...MATCH_LIMITS,ms:askedMs,nodes:askedNodes,seed:1};
 const STRATEGY=process.env.AI_V3_STRATEGY==='score'||process.env.AI_V3_STRATEGY==='order'||process.env.AI_V3_STRATEGY==='reply'
  ?process.env.AI_V3_STRATEGY:null;
  const HARD_NODES=process.env.AI_V3_HARD_NODES!=null&&process.env.AI_V3_HARD_NODES!==''?Number(process.env.AI_V3_HARD_NODES):null;
-const VARIANT=process.env.AI_V3_VARIANT==='a'||process.env.AI_V3_VARIANT==='b'||process.env.AI_V3_VARIANT==='ab'?process.env.AI_V3_VARIANT:null;
+const VARIANT=process.env.AI_V3_VARIANT==='a'||process.env.AI_V3_VARIANT==='b'||process.env.AI_V3_VARIANT==='ab'||process.env.AI_V3_VARIANT==='ab-front'?process.env.AI_V3_VARIANT:null;
 const RECORD=process.env.AI_V3_ACTIONS==='1';
 
 function pct(values,p){

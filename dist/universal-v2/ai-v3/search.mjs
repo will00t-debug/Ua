@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,evidencedChoice,searchVariant} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,evidencedChoice,frontEvidenceChoice,searchVariant,setFrontCoverage} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -37,6 +37,15 @@ let lastTrace=null;
 export function resetAiV3Report(){report=emptyReport();lastTrace=null;}
 export function aiV3Report(){return {...report,samples:report.samples.slice()};}
 export function lastAiV3Trace(){return lastTrace?{...lastTrace,candidates:lastTrace.candidates?.map(row=>({...row}))}:null;}
+function gatePreference(state,actor,previous,preferred,rows){
+ const variant=searchVariant();
+ if(variant==='b'||variant==='ab')return evidencedChoice(previous,preferred,rows);
+ return preferred;
+}
+function gateFrontEnergy(state,actor,previous,placed,rows){
+ if(searchVariant()!=='ab-front')return placed;
+ return frontEvidenceChoice(state,actor,previous,placed,rows);
+}
 
 function finish(action,reason,extra,started){
  const ms=performance.now()-started;
@@ -379,10 +388,14 @@ export function chooseAiV3Action(pack,state,options={}){
   const settle=()=>{report.nodes=nodesBefore+(total-pool.n);};
   const spent=()=>report.nodes-nodesBefore;
   const diagnose=options.diagnose!==false;
-  // A+B won the locked 8401/8402 and 8410-8412 tables, but it also moves a color
-  // the confirmed energy routes keep and it draws through the filter chain.
-  // Those routes stay on this default. Ask for variant 'ab' to run the candidate.
-  const variant=options.variant==='a'||options.variant==='b'||options.variant==='ab'?options.variant:null;
+  // A, B, A+B and ab-front stay opt-in. ab-front keeps A's front slot and
+  // gates only the energy-generator rewrite of a searched main-phase front.
+  // Confirmed choices, including the filter chain and the start-phase pass,
+  // still run after that gate. The match path leaves options.variant and
+  // AI_V3_TEST_VARIANT unset. The test name only lets a regression run the
+  // candidate without editing each call.
+  const asked=options.variant||process.env.AI_V3_TEST_VARIANT;
+  const variant=asked==='a'||asked==='b'||asked==='ab'||asked==='ab-front'?asked:null;
   return bindMeter(options.meter,()=>bindProbeBudget(budget,()=>bindVariant(variant,()=>{
   try{
   const rankStarted=performance.now();
@@ -396,6 +409,7 @@ export function chooseAiV3Action(pack,state,options={}){
     candidates:ordered.slice(0,beam).map(action=>({action}))},started);
   }
   const ranked=selectCandidates(pack,probe,actor,legal,beam,strategy);
+  if(variant==='ab-front')setFrontCoverage(false);
   if(options.mode==='ismcts'){
    report.ismcts++;
    const picked=chooseIsmctsAction(pack,worlds,actor,legal,{
@@ -630,9 +644,9 @@ export function chooseAiV3Action(pack,state,options={}){
   // throw away a win this pool already paid for. The backup stays for
   // every line that has not won.
   if(!provenWin&&(!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
-   const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored);
+   const placed=gateFrontEnergy(state,actor,choice,preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,choice,null,strategy),scored),scored);
    const preferred=holdSurvival(choice,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
-   const gated=searchVariant()==='b'||searchVariant()==='ab'?evidencedChoice(choice,preferred,scored):preferred;
+   const gated=gatePreference(state,actor,choice,preferred,scored);
    const kept=constrainConfirmedWin(gated,winRows,legal);
    report.budgetFallback++;
    report.budget++;
@@ -673,9 +687,9 @@ export function chooseAiV3Action(pack,state,options={}){
   if(!exact)return fallback(pack,state,legal,started,'unmatched',()=>{settle();return spent();});
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
-  const placed=preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored);
+  const placed=gateFrontEnergy(state,actor,exact,preferEnergyGenerator(pack,state,actor,keptEnergy(pack,state,actor,legal,exact,row,strategy),scored),scored);
   let kept=holdSurvival(exact,preferConfirmedChoices(pack,state,actor,placed,scored),scored);
-  if(searchVariant()==='b'||searchVariant()==='ab')kept=evidencedChoice(exact,kept,scored);
+  kept=gatePreference(state,actor,exact,kept,scored);
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished
   // scores are not a reason to throw away the card the keep-order retains.
@@ -718,7 +732,7 @@ export function chooseAiV3Action(pack,state,options={}){
    const legal=legalUniversalActions(pack,state);
    return fallback(pack,state,legal,started,error?.message||'exception',()=>{settle();return spent();});
   }catch{settle();return finish(null,'exception',{fallback:true,nodesUsed:spent()},started);}
- }
+ }finally{if(variant==='ab-front')setFrontCoverage(true);}
   })));
  }catch(error){
   try{

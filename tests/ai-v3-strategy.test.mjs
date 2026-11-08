@@ -59,7 +59,9 @@ function main(pack,counts,first=0){
 function ask(packs,state){
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
- return chooseAiV3Action(packs,state,{...OPTS,actor});
+ const env=process.env.AI_V3_TEST_VARIANT;
+ const variant=env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
+ return chooseAiV3Action(packs,state,{...OPTS,actor,...(variant?{variant}:{})});
 }
 const bleach=officialV2Pack('bleach');
 const counts=deck(bleach,{

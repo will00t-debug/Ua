@@ -27,12 +27,38 @@ export function bindMeter(meter,fn){
 // A and B stay off unless a comparison asks for them. Null is the 528ab204 path.
 const variantStack=[];
 export function bindVariant(variant,fn){
- variantStack.push(variant==='a'||variant==='b'||variant==='ab'?variant:null);
+ variantStack.push(variant==='a'||variant==='b'||variant==='ab'||variant==='ab-front'?variant:null);
  try{return fn();}
  finally{variantStack.pop();}
 }
 export function searchVariant(){
  return variantStack.length?variantStack[variantStack.length-1]:null;
+}
+let allowFrontCoverage=true;
+export function setFrontCoverage(on){
+ const previous=allowFrontCoverage;
+ allowFrontCoverage=!!on;
+ return previous;
+}
+export function frontCoverageOn(){
+ if(!allowFrontCoverage)return false;
+ const variant=searchVariant();
+ return variant==='a'||variant==='ab'||variant==='ab-front';
+}
+// The coverage winner does not evict the hand card it would raid onto.
+// That base stays in the beam so the raid is still a follow-up. The score
+// itself is unchanged.
+export function coverageKeepsRaidBase(pack,state,viewer,incoming,displaced){
+ if(searchVariant()!=='ab-front')return false;
+ if(incoming?.type!=='play'||incoming.line!=='front')return false;
+ if(displaced?.type!=='play'||displaced.line!=='front')return false;
+ const hand=state.players?.[viewer]?.hand||[];
+ const catalog=packOf(pack,viewer).cards;
+ const next=hand.find(card=>card?.uid===incoming.uid);
+ const base=hand.find(card=>card?.uid===displaced.uid);
+ const printed=next&&catalog[next.cardId];
+ const under=base&&catalog[base.cardId];
+ return !!(printed?.raidName&&under?.name&&printed.raidName===under.name);
 }
 export function noteDispatch(){
  const meter=meterStack.length?meterStack[meterStack.length-1]:null;
@@ -766,6 +792,19 @@ export function evidencedChoice(previous,choice,rows){
  if(after.boundary!==before.boundary)return previous;
  if(after.search<before.search)return previous;
  return choice;
+}
+// ab-front uses the same evidence rule, and only for one replacement:
+// our main phase, nothing pending, the search chose a front play, and a
+// later preference changed it to an energy play or to passing. Start-phase
+// draws, moves, discards, triggers and every other choice stay as the
+// preference left them. A same-boundary energy line that scores at least
+// as high still replaces the front.
+export function frontEvidenceChoice(state,actor,previous,choice,rows){
+ if(!state||state.phase!=='main'||state.pending||state.active!==actor)return choice;
+ if(previous?.type!=='play'||previous.line!=='front')return choice;
+ const toEnergy=choice?.type==='play'&&choice.line==='energy';
+ if(!toEnergy&&choice?.type!=='next')return choice;
+ return evidencedChoice(previous,choice,rows);
 }
 // Lines that stopped together were already compared. A worse energy score
 // does not get to replace the front just because the color would rise.

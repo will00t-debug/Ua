@@ -1,0 +1,99 @@
+{
+  "candidate": "ab-front",
+  "default": "off",
+  "parent": "1fe918a6a6de168f435ccd1d6c23c19d34868120",
+  "baselineSha": "528ab2045e435c30db88294d01d49430d770c012",
+  "decision": "Leave ab-front off. On the locked validation seeds the paired score against 528ab204 is -0.0278 and the interval includes 0. The A+B gain from 8410-8412 is not kept. No parameter was changed after the 8420-8422 games.",
+  "what": "ab-front keeps A's front-slot coverage at the root only, and does not evict a front the incoming card raids onto. Its evidence gate runs only on preferEnergyGenerator, before confirmed choices: our main phase, nothing pending, the search chose a front, and that preference rewrote the same card onto its energy line or onto next. A same-boundary energy line that scores at least as high still replaces the front. Confirmed wins and immediate losses stay protected. Start-phase draws, the filter chain, moves, discards and triggers are not gated. Full A, B and A+B stay available as historical comparisons. A's coverage weights are unchanged.",
+  "limit": "A later confirmed choice can still replace a searched front with a different card's energy line. At the three-AP snapshot, 48 nodes, A and ab-front search the 4000 front (score 18.85) and then play the 1500 energy. Full A+B keeps the 4000. Gating that final choice undoes the filter chain, so ab-front does not.",
+  "tests": {
+    "default": "node --test tests/ai-v3-*.test.mjs: 130 pass, 0 fail. AI_V3_TEST_VARIANT unset.",
+    "abFrontOn": "AI_V3_TEST_VARIANT=ab-front node --test tests/ai-v3-energy.test.mjs tests/ai-v3-strategy.test.mjs tests/ai-v3-plan.test.mjs tests/ai-v3-raid.test.mjs tests/ai-v3-player-strategy.test.mjs: 86 pass, 0 fail.",
+    "filterChain": "White-sword seed 8301, first 0, challenger seat 1, step 29. Default and ab-front both discard the covered 0-cost generator, keep 3 AP, play two Unohana swaps, line-switch with Aizen, leave the new character rested, and recover to 2 AP when FINAL is payable. Full A+B at that start still chooses extraDraw and leaves 2 AP."
+  },
+  "energyRegression": {
+    "file": "audit/ai-v3-ab-front-energy-regression.json",
+    "settings": "official opening replay, plan tree, hardNodes 0, nodes 48, ms 1e9, now 0",
+    "reproduced": {
+      "deck": "white-sword",
+      "seed": 8300,
+      "first": 0,
+      "challengerSeat": 0,
+      "step": 12,
+      "phase": "move",
+      "energy": {"green": 1},
+      "baseline": "next",
+      "ab": "move uid 0-32",
+      "abFront": "next"
+    },
+    "unchanged": "reject-blue step 13, renruki step 15, and white-sword step 55 stay next under baseline, A+B and ab-front."
+  },
+  "snapshots": {
+    "file": "audit/ai-v3-ab-front-positions.json",
+    "lastAp": "Coverage puts the 1/4000 front in the slot. ab-front returns that front at 48, 192 and 768, matching A. Baseline returns it only at 48, by budget fallback, and returns the 0/1500 energy at 192 and 768.",
+    "twoAp": "Coverage replaces the second 0/1500 front with the other 1/4000. At 48 nodes the search itself returns the 0/1500 energy for baseline, A, A+B and ab-front. At 192 every version falls back to the 4000. At 768 every version returns the 1500. The deeper line is not treated as better.",
+    "threeAp": "Coverage puts the 1/4000 in the beam and 48 nodes searches it at 18.85. A and ab-front then play the 0/1500 energy. Full A+B keeps the 4000. At 192 and 768 the 4000 scores below the 1/2500; A+B returns the 2500 and ab-front stays with A on the 1500 energy."
+  },
+  "bootstrap": "Seat-pair diffs, xorshift seed 2463534242, 1000 resamples, percentiles 25 and 974. This reproduces the published 8401 A+B interval. Versus hard-search-2 and versus 528ab204 are separate numbers. Unfinished is not a win.",
+  "conditions": "official opening, matched hard-search-2, hardNodes 0, nodes 48, both seats and both firsts, each setting once. No clock except the preselected 40ms group. 8401 and 8402 baseline and A+B were not rerun.",
+  "tuning": {
+    "seeds": [8401, 8402],
+    "baseline": {"win": 2, "loss": 22, "unfinished": 0, "hardGap": {"n": 12, "mean": -0.4167, "low": -0.5, "high": -0.2917}},
+    "ab": {"win": 7, "loss": 17, "unfinished": 0, "hardGap": {"n": 12, "mean": -0.2083, "low": -0.3333, "high": -0.0833}, "versusBaseline": {"n": 12, "mean": 0.2083, "low": 0.0417, "high": 0.375}},
+    "abFront": {
+      "win": 2, "loss": 22, "unfinished": 0,
+      "hardGap": {"n": 12, "mean": -0.4167, "low": -0.5, "high": -0.2917},
+      "versusBaseline": {"n": 12, "mean": 0, "low": -0.1667, "high": 0.1667},
+      "versusAb": {"n": 12, "mean": -0.2083, "low": -0.375, "high": -0.0417},
+      "meter": {"games": 24, "decisions": 1382, "maxNodes": 48, "over": 0, "mismatch": 0, "replayed": 24, "replayFail": 0},
+      "byDeck": {
+        "white-sword": {"win": 1, "loss": 7, "hardGap": {"n": 4, "mean": -0.375, "low": -0.5, "high": -0.125}, "versusBaseline": {"n": 4, "mean": 0.125, "low": 0, "high": 0.375}},
+        "sword-art-online-raid": {"win": 0, "loss": 8, "hardGap": {"n": 4, "mean": -0.5, "low": -0.5, "high": -0.5}, "versusBaseline": {"n": 4, "mean": 0, "low": 0, "high": 0}},
+        "steins-gate-raid": {"win": 1, "loss": 7, "hardGap": {"n": 4, "mean": -0.375, "low": -0.5, "high": -0.125}, "versusBaseline": {"n": 4, "mean": -0.125, "low": -0.5, "high": 0.25}}
+      },
+      "wins": "Both baseline wins were lost and two other games were gained, so the record stays 2-22. Lost: steins-gate-raid 8401 first 1 seat 1, step 48 next became play front 1-6; steins-gate-raid 8402 first 0 seat 0, step 32 play front 0-2 became play front 0-37. Gained: white-sword 8402 first 0 seat 0, step 30 play energy 0-10 became play energy 0-19; steins-gate-raid 8401 first 0 seat 0, step 31 play front 0-0 became play front 0-38. 22 of 24 games diverge before the end."
+    }
+  },
+  "validation": {
+    "seeds": [8420, 8421, 8422],
+    "lockedIn": "audit/ai-v3-ab-front-seed-lock.json",
+    "notUsed": "8410-8412 stay historical. 9100 and above stay reserved.",
+    "baseline": {
+      "win": 6, "loss": 30, "unfinished": 0,
+      "hardGap": {"n": 18, "mean": -0.3333, "low": -0.4444, "high": -0.2222},
+      "meter": {"games": 36, "decisions": 1937, "maxNodes": 48, "over": 0, "mismatch": 0, "replayed": 36, "replayFail": 0},
+      "byDeck": {
+        "white-sword": {"win": 1, "loss": 11, "hardGap": {"n": 6, "mean": -0.4167, "low": -0.5, "high": -0.25}},
+        "sword-art-online-raid": {"win": 3, "loss": 9, "hardGap": {"n": 6, "mean": -0.25, "low": -0.4167, "high": -0.0833}},
+        "steins-gate-raid": {"win": 2, "loss": 10, "hardGap": {"n": 6, "mean": -0.3333, "low": -0.5, "high": -0.1667}}
+      }
+    },
+    "abFront": {
+      "win": 5, "loss": 31, "unfinished": 0,
+      "hardGap": {"n": 18, "mean": -0.3611, "low": -0.4444, "high": -0.25},
+      "versusBaseline": {"n": 18, "mean": -0.0278, "low": -0.1389, "high": 0.0833},
+      "meter": {"games": 36, "decisions": 1778, "maxNodes": 48, "over": 0, "mismatch": 0, "replayed": 36, "replayFail": 0},
+      "byDeck": {
+        "white-sword": {"win": 3, "loss": 9, "hardGap": {"n": 6, "mean": -0.25, "low": -0.4167, "high": -0.0833}, "versusBaseline": {"n": 6, "mean": 0.1667, "low": 0, "high": 0.3333}},
+        "sword-art-online-raid": {"win": 0, "loss": 12, "hardGap": {"n": 6, "mean": -0.5, "low": -0.5, "high": -0.5}, "versusBaseline": {"n": 6, "mean": -0.25, "low": -0.4167, "high": -0.0833}},
+        "steins-gate-raid": {"win": 2, "loss": 10, "hardGap": {"n": 6, "mean": -0.3333, "low": -0.5, "high": -0.1667}, "versusBaseline": {"n": 6, "mean": 0, "low": 0, "high": 0}}
+      },
+      "wins": "Gained white-sword 8420 first 1 seat 1 (step 48 energy 1-28 became front 1-28) and white-sword 8422 first 0 seat 1 (step 39 energy 1-29 became front 1-29). Lost sword-art-online-raid 8420 first 1 seat 1 (step 27 front 1-11 became front 1-49), 8421 first 1 seat 1 (step 30 energy 1-2 became front 1-25), and 8422 first 0 seat 0 (step 28 energy 0-0 became front 0-0)."
+    }
+  },
+  "clock": {
+    "seed": 8420,
+    "games": 12,
+    "ms": 40,
+    "nodes": 48,
+    "order": "baseline process finished, then the ab-front process. Each process plays its 12 games in order and does not discard the first decision.",
+    "baseline": {"win": 1, "loss": 11, "unfinished": 0, "hardGap": {"n": 6, "mean": -0.4167, "low": -0.5, "high": -0.25}, "meter": {"decisions": 659, "maxNodes": 48, "over": 0, "mismatch": 0, "replayed": 12, "replayFail": 0}},
+    "abFront": {
+      "win": 0, "loss": 12, "unfinished": 0,
+      "hardGap": {"n": 6, "mean": -0.5, "low": -0.5, "high": -0.5},
+      "versusBaseline": {"n": 6, "mean": -0.0833, "low": -0.25, "high": 0},
+      "meter": {"decisions": 617, "maxNodes": 48, "over": 0, "mismatch": 0, "replayed": 12, "replayFail": 0},
+      "lost": "steins-gate-raid 8420 first 1 seat 0, step 30 play front 1-39 became play front 1-28. The interval includes 0. This 12-game group is not a stable result."
+    }
+  }
+}

@@ -10,7 +10,7 @@ import {scoreLine,rankLegal,selectCandidates,selectionTrace} from '../dist/unive
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
-import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,moveDevelopment,preferConfirmedChoices,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,moveDevelopment,preferConfirmedChoices,watchEngineDispatch} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 // Player strategy, stated as situations rather than card lists.
 // 1. Both sides 4000, no Impact, the opponent's last swing, and no proven
@@ -104,11 +104,18 @@ function boot(phase,active,first=0){
  }
  return {packs,state};
 }
-function ask(packs,state){
+function askedVariant(explicit){
+ if(explicit==='a'||explicit==='b'||explicit==='ab'||explicit==='ab-front')return explicit;
+ const env=process.env.AI_V3_TEST_VARIANT;
+ return env==='a'||env==='b'||env==='ab'||env==='ab-front'?env:null;
+}
+function ask(packs,state,variant){
  const actor=state.pending?.player??state.active;
  resetAiV3Report();
+ const selected=askedVariant(variant);
  const action=chooseAiV3Action(packs,state,{
-  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true
+  ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,ms:1e9,now:()=>0,diagnose:true,
+  ...(selected?{variant:selected}:{})
  });
  const trace=lastAiV3Trace();
  assert.equal(legalUniversalActions(packs,state).some(item=>JSON.stringify(item)===JSON.stringify(action)),true);
@@ -2674,17 +2681,18 @@ test('an unfinished hand limit discards the lowest keep card at every cutoff',()
  for(const card of filters)assert.equal(removed.players[seat].hand.some(item=>item.uid===card.uid),true);
 });
 
-function measured(packs,state){
+function measured(packs,state,variant){
  const actor=state.pending?.player??state.active;
  const meter={dispatches:0};
  let calls=0;
  const stop=watchEngineDispatch(()=>{calls++;});
  resetAiV3Report();
+ const selected=askedVariant(variant);
  let action;
  try{
   action=chooseAiV3Action(packs,state,{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,
-   ms:1e9,now:()=>0
+   ms:1e9,now:()=>0,...(selected?{variant:selected}:{})
   });
  }finally{stop();}
  const trace=lastAiV3Trace();
@@ -2745,7 +2753,7 @@ function orderDeck(state,actor,catalog,refund){
  const top=[raid(),raid(),quiet(),refund?take(card=>recoversActionPoints(catalog[card.cardId])):quiet(),quiet()];
  deck.unshift(...top);
 }
-function playChain(packs,state,actor,refund){
+function playChain(packs,state,actor,refund,variant){
  const catalog=packs[actor].cards;
  let cursor=state;
  const fuel=new Set(cursor.players[actor].hand.filter(card=>{
@@ -2758,7 +2766,7 @@ function playChain(packs,state,actor,refund){
  let filtersPlayed=0;
  for(let guard=0;guard<16&&cursor.status==='playing'&&cursor.active===actor;guard++){
   if(!cursor.pending&&cursor.phase==='attack')break;
-  const choice=measured(packs,cursor);
+  const choice=measured(packs,cursor,variant);
   const card=cursor.players[actor].hand.find(item=>item?.uid===choice.action.uid);
   const key=choice.action.type+':'+(choice.action.line||choice.action.mode||'');
   keys.push(key);
@@ -2795,12 +2803,12 @@ function playChain(packs,state,actor,refund){
    const restedFront=restedCursor.players[actor].front.find(item=>item?.uid===restedEntrant.uid);
    assert.ok(restedFront);
    assert.equal(restedFront.ready,false);
-   const moved=measured(packs,cursor);
+   const moved=measured(packs,cursor,variant);
    assert.equal(moved.action.type,'chooseLineMove');
    assert.equal(moved.action.uid,blocker.uid);
    cursor=dispatchUniversalAction(packs,cursor,moved.action,{actor});
    if(cursor.pending?.kind==='effect-line-slot'){
-    const slot=measured(packs,cursor);
+    const slot=measured(packs,cursor,variant);
     assert.equal(slot.action.type,'chooseLineSlot');
     cursor=dispatchUniversalAction(packs,cursor,slot.action,{actor});
    }
@@ -2814,7 +2822,7 @@ function playChain(packs,state,actor,refund){
    assert.equal(cursor.players[actor].energy.some(item=>item?.uid===entered.uid),true);
    assert.equal(cursor.players[actor].front.some(item=>item?.uid===standing.uid&&item.ready),true);
    for(const card of cursor.players[actor].energy)if(card&&card.uid!==blocker.uid)assert.equal(card.ready,false);
-   const passed=measured(packs,cursor);
+   const passed=measured(packs,cursor,variant);
    assert.equal(passed.action.type,'next');
    return {cursor,spent,keys,refundPlayed:false};
   }
@@ -2828,7 +2836,7 @@ function playChain(packs,state,actor,refund){
    assert.equal(readyAp(cursor,actor),paid-1);
    let recovered=0;
    while(cursor.pending?.kind==='effect-recover-ap'&&recovered<2){
-    const step=measured(packs,cursor);
+    const step=measured(packs,cursor,variant);
     assert.equal(step.action.type,'chooseApRecovery');
     const readyBefore=readyAp(cursor,actor);
     cursor=dispatchUniversalAction(packs,cursor,step.action,{actor});
@@ -2842,7 +2850,7 @@ function playChain(packs,state,actor,refund){
   cursor=dispatchUniversalAction(packs,cursor,choice.action,{actor:cursor.pending?.player??cursor.active});
   assert.equal(assertUniversalMatch(packs,cursor),true);
  }
- throw Error('chain did not resolve '+keys.join(' > '));
+ throw Error('chain did not resolve '+String(variant)+' '+keys.join(' > '));
 }
 // Constructed boundary. The attack ban is a fixture from the continuous-state
 // grant, expiring at the granter's next START. It is not a printed effect.
@@ -3111,11 +3119,14 @@ test('an unfinished shift check does not borrow another line',()=>{
  }
 });
 test('a covered plain generator is discarded and the next turn keeps the filter chain',()=>{
+ for(const variant of [null,'ab-front'])filterChain(variant);
+});
+function filterChain(variant){
  const opened=replayWhiteHandLimit(8301,0,1,29);
  const {packs}=opened;
  const actor=opened.state.pending.player;
  const catalog=packs[actor].cards;
- const discard=measured(packs,opened.state);
+ const discard=measured(packs,opened.state,variant);
  const plain=opened.state.players[actor].hand.find(card=>card.uid===discard.action.uid);
  const printed=catalog[plain.cardId];
  assert.equal(discard.action.type,'chooseHandLimit');
@@ -3135,15 +3146,20 @@ test('a covered plain generator is discarded and the next turn keeps the filter 
  assert.equal(readyAp(start,actor),3);
  assert.equal(readyAp(other,actor),3);
  assert.equal(universalEnergyByColor(packs,start,actor).green,1);
- const kept=measured(packs,start);
- const keptOther=measured(packs,other);
+ const kept=measured(packs,start,variant);
+ const keptOther=measured(packs,other,variant);
+ if(variant==null){
+  const wide=measured(packs,start,'ab');
+  assert.equal(wide.action.type,'extraDraw');
+  assert.equal(readyAp(dispatchUniversalAction(packs,start,wide.action,{actor}),actor),2);
+ }
  assert.equal(kept.action.type,'next');
  assert.deepEqual(keptOther.action,kept.action);
  assert.notEqual(kept.trace.score,null);
  let plainCursor=dispatchUniversalAction(packs,start,kept.action,{actor});
  let finalCursor=dispatchUniversalAction(packs,other,keptOther.action,{actor});
- const plainLine=playChain(packs,plainCursor,actor,false);
- const finalLine=playChain(packs,finalCursor,actor,true);
+ const plainLine=playChain(packs,plainCursor,actor,false,variant);
+ const finalLine=playChain(packs,finalCursor,actor,true,variant);
  assert.deepEqual(plainLine.keys.slice(0,6),finalLine.keys.slice(0,6));
  assert.equal(plainLine.keys[6],'chooseTopCard:bottom');
  assert.equal(finalLine.keys[6],'chooseTopCard:top');
@@ -3152,7 +3168,7 @@ test('a covered plain generator is discarded and the next turn keeps the filter 
  assert.equal(plainLine.refundPlayed,false);
  assert.equal(finalLine.refundPlayed,true);
  assert.equal(plainLine.cursor.players[actor].energy.some(card=>card&&catalog[card.cardId].frontForbidden&&card.ready===false),true);
-});
+}
 
 test('the filter exception follows the hand and does not invent a missing backup',()=>{
  const opened=replayWhiteHandLimit(8301,0,1,29);
@@ -3179,13 +3195,15 @@ test('the filter exception follows the hand and does not invent a missing backup
   keepScore(packs,none,actor,none.players[actor].hand.find(card=>card.uid===noneChoice.action.uid)));
  const missing=structuredClone(state);
  exchange(missing,actor,backup.uid,card=>!lineSwitchBody(catalog[card.cardId])&&catalog[card.cardId].type==='character'&&catalog[card.cardId].energy>1);
- const still=measured(packs,missing);
- assert.equal(still.action.uid,plain.uid);
- let cursor=dispatchUniversalAction(packs,missing,still.action,{actor});
- cursor=scriptToOwnStart(packs,cursor,actor);
- const drawn=measured(packs,cursor);
- assert.equal(drawn.action.type,'extraDraw');
- assert.notEqual(drawn.trace.score,null);
+ for(const variant of [null,'ab-front']){
+  const still=measured(packs,missing,variant);
+  assert.equal(still.action.uid,plain.uid);
+  let cursor=dispatchUniversalAction(packs,missing,still.action,{actor});
+  cursor=scriptToOwnStart(packs,cursor,actor);
+  const drawn=measured(packs,cursor,variant);
+  assert.equal(drawn.action.type,'extraDraw');
+  assert.notEqual(drawn.trace.score,null);
+ }
 });
 
 test('a finished hand-limit comparison keeps its score, including a tied keep order',()=>{
@@ -3290,6 +3308,7 @@ test('front coverage uses cost, energy, attack and effect, and stays off by defa
  assert.ok(frontCoverageScore(packs,low,0,effect)<frontCoverageScore(packs,low,0,ken));
  const plain=selectionTrace(packs,main,0,legal,4,null);
  const covered=bindVariant('a',()=>selectionTrace(packs,main,0,legal,4,null));
+ const narrowed=bindVariant('ab-front',()=>selectionTrace(packs,main,0,legal,4,null));
  const plainFront=plain.picked.find(action=>action.type==='play'&&action.line==='front');
  const coveredFront=covered.picked.find(action=>action.type==='play'&&action.line==='front');
  assert.equal(JSON.stringify(plainFront),JSON.stringify(plain.ranked.find(action=>action.type==='play'&&action.line==='front')));
@@ -3297,6 +3316,7 @@ test('front coverage uses cost, energy, attack and effect, and stays off by defa
  assert.equal(coveredFront.uid,effect.uid);
  assert.equal(covered.notes.find(note=>note.action.uid===effect.uid&&note.action.line==='front').reason,'front-slot');
  assert.equal(covered.picked.filter(action=>action.type==='play'&&action.line==='front').length,1);
+ assert.equal(narrowed.picked.find(action=>action.type==='play'&&action.line==='front').uid,effect.uid);
 });
 
 test('an evidence gate keeps a searched line unless the replacement matches its boundary',()=>{
@@ -3327,4 +3347,21 @@ test('an evidence gate keeps a searched line unless the replacement matches its 
   {action:front,search:10,boundary:'yielded',executed:true},
   {action:other,search:-100000,boundary:'terminal',executed:true}
  ]).line,'front');
+ const main={phase:'main',pending:null,active:0};
+ const start={phase:'start',pending:null,active:0};
+ const moving={phase:'move',pending:null,active:0};
+ const discarding={phase:'main',pending:{kind:'end-hand-limit',player:0},active:0};
+ const pass={type:'next'};
+ const rows=[{action:front,search:30,boundary:'yielded',executed:true}];
+ assert.equal(frontEvidenceChoice(main,0,front,energy,rows).line,'front');
+ assert.equal(frontEvidenceChoice(main,0,front,pass,rows).type,'play');
+ assert.equal(frontEvidenceChoice(main,0,front,energy,[
+  {action:front,search:-12,boundary:'yielded',executed:true},
+  {action:energy,search:4,boundary:'yielded',executed:true}
+ ]).line,'energy');
+ assert.equal(frontEvidenceChoice(start,0,front,energy,rows).line,'energy');
+ assert.equal(frontEvidenceChoice(moving,0,front,pass,rows).type,'next');
+ assert.equal(frontEvidenceChoice(discarding,0,front,energy,rows).line,'energy');
+ const event={type:'event',uid:'refund'};
+ assert.equal(frontEvidenceChoice(main,0,front,event,rows).type,'event');
 });
