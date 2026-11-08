@@ -1,8 +1,31 @@
 {
   "baselineCommit": "4a028a15",
-  "decision": "reserveAp stays off. The 8401/8402 point estimate moved from 2-22 to 3-21, and the pre-registered 8430-8432 check moved from 1-35 to 3-33. Both paired intervals include 0, so the gain is not separated from a flat result. The definition was not edited after the development pair. No 40ms run. 9100 and above stay reserved.",
+  "decision": "reserveAp stays off. The bounce-state correction was rerun on 8401/8402: baseline 2-22, candidate 3-21, paired difference +0.0417 with an interval that contains 0. That point estimate is a new measurement; the pre-fix 3-21 and the 8430-8432 3-33 are not reused as this version's result. The definition is frozen and 8440-8442 are locked for a validation that has not been run. 8430-8432 stay the pre-fix check. No 40ms run. 9100 and above stay reserved.",
   "reserveAp": {
     "default": false,
+    "bounceCorrection": {
+      "seeds": [8401, 8402],
+      "files": ["audit/ai-v3-reserve-ap-bounce-8401-baseline.json", "audit/ai-v3-reserve-ap-bounce-8401.json"],
+      "baseline": "2-22",
+      "candidate": "3-21",
+      "hardGap": {"baseline": -0.4166666666666667, "candidate": -0.375},
+      "relative": {"n": 12, "mean": 0.041666666666666664, "low": -0.08333333333333333, "high": 0.16666666666666666, "containsZero": true},
+      "byDeck": {
+        "white-sword": {"baseline": "0-8", "candidate": "0-8"},
+        "sword-art-online-raid": {"baseline": "0-8", "candidate": "1-7"},
+        "steins-gate-raid": {"baseline": "2-6", "candidate": "2-6"}
+      },
+      "gained": ["sword-art-online-raid 8402 first 1 seat 1 step 11", "steins-gate-raid 8401 first 0 seat 0 step 14", "steins-gate-raid 8401 first 1 seat 0 step 5"],
+      "lost": ["steins-gate-raid 8401 first 1 seat 1 step 14", "steins-gate-raid 8402 first 0 seat 0 step 12"],
+      "replayFailed": 0,
+      "maxNodes": 48,
+      "note": "Measured after the planner removes a bounced character from the next board. Twenty-one games first differ by replacing extraDraw with next. The five result flips are the games listed above. This is not the pre-fix pair copied forward."
+    },
+    "nextValidation": {
+      "seeds": [8440, 8441, 8442],
+      "lockedIn": "audit/ai-v3-reserve-ap-bounce-seed-lock.json",
+      "status": "locked before the games were run"
+    },
     "development": {
       "seeds": [8401, 8402],
       "baseline": "2-22",
@@ -19,6 +42,12 @@
       "candidate": "3-33",
       "hardGap": {"baseline": -0.4722222222222222, "candidate": -0.4166666666666667},
       "relative": {"n": 18, "mean": 0.05555555555555555, "low": 0, "high": 0.16666666666666666},
+      "byDeck": {
+        "white-sword": {"baseline": "0-12", "candidate": "0-12"},
+        "sword-art-online-raid": {"baseline": "0-12", "candidate": "2-10"},
+        "steins-gate-raid": {"baseline": "1-11", "candidate": "1-11"}
+      },
+      "byDeckNote": "Wins-losses out of 12 games per deck. The earlier note wrote the sword-art candidate as 2-12 and Steins;Gate as 1-12, which used the game count as the loss count. These rows are the pre-fix candidate. They are not a result for the planner after the bounce-state correction.",
       "gained": ["sword-art-online-raid 8431 first 1 seat 0", "sword-art-online-raid 8431 first 1 seat 1", "steins-gate-raid 8431 first 1 seat 0"],
       "lost": ["steins-gate-raid 8431 first 1 seat 1"]
     }

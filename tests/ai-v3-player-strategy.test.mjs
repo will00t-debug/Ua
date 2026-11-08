@@ -14,7 +14,7 @@ import {openLethalShift} from '../scripts/ai-v3-lethal-shift.mjs';
 import {scoreLine,rankLegal,selectCandidates,selectionTrace} from '../dist/universal-v2/ai-v3/beam.mjs';
 import {battleActionValue,battleWindowAction,battleWindowDelta,blankSwingAdjustment,provenRebuild,raidStranded,keepScore,sequencedFilter,lineSwitchBody,recoversActionPoints} from '../dist/universal-v2/ai-v3/eval.mjs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
-import {matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
+import {applySharedOpening,matchRules,newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {bindProbeBudget,bindVariant,energyPlayNet,evidencedChoice,frontCoverageScore,frontEvidenceChoice,mainFrontEvidenceChoice,moveDevelopment,normalizeFactors,preferConfirmedChoices,preferReserveAp,reserveApPlan} from '../dist/universal-v2/ai-v3/strategy.mjs';
 
 const chooseRaw=chooseAiV3Action;
@@ -1792,6 +1792,140 @@ test('one generator, a line that still fits, a payable refund, or a life that ca
  const threatened=ask(packs,low);
  const spared=ask(packs,low,{reserveAp:true});
  assert.equal(spared.action.type,threatened.action.type);
+});
+
+function saoDevelopment(fill){
+ const deck=battleDecks().find(item=>item.id==='sword-art-online-raid');
+ const packs=[deck.pack,deck.pack];
+ let state=newComparedMatch(packs,[deck.counts,deck.counts],8401,0,matchRules('official'));
+ ({state}=applySharedOpening(packs,state));
+ for(let guard=0;guard<80&&state.status==='playing';guard++){
+  if(state.active===0&&state.phase==='start'&&!state.pending&&readyAp(state,0)>=2)break;
+  const legal=legalUniversalActions(packs,state);
+  const action=legal.find(item=>item.type==='next')||legal[0];
+  state=dispatchUniversalAction(packs,state,action,{actor:state.pending?.player??state.active});
+ }
+ wipeSide(state,0);
+ wipeSide(state,1);
+ setLife(state,0,7);
+ setLife(state,1,7);
+ fill(state);
+ assert.equal(assertUniversalMatch(packs,state),true);
+ assert.equal(state.phase,'start');
+ assert.equal(state.pending,null);
+ assert.deepEqual(state.players.map(player=>player.life.length),[7,7]);
+ assert.equal(readyAp(state,0),2);
+ return {packs,state};
+}
+function cardCensus(state,player){
+ const owned=[];
+ const side=state.players[player];
+ for(const zone of ['hand','deck','life','outside','removed'])
+  for(const card of side[zone]||[])owned.push(card.uid);
+ for(const line of ['front','energy'])
+  for(const card of side[line]||[])if(card)owned.push(card.uid);
+ return owned.sort();
+}
+function toMain(packs,state){
+ let cursor=state;
+ for(let guard=0;guard<4&&cursor.phase!=='main';guard++){
+  const action=legalUniversalActions(packs,cursor).find(item=>item.type==='next');
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor:cursor.pending?.player??cursor.active});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ assert.equal(cursor.phase,'main');
+ assert.equal(readyAp(cursor,0),2);
+ return cursor;
+}
+function settleOptional(packs,state){
+ let cursor=state;
+ for(let guard=0;guard<4&&cursor.pending&&cursor.pending.kind!=='effect-bounce-own';guard++){
+  const action=legalUniversalActions(packs,cursor)[0];
+  cursor=dispatchUniversalAction(packs,cursor,action,{actor:cursor.pending.player});
+  assert.equal(assertUniversalMatch(packs,cursor),true);
+ }
+ return cursor;
+}
+function bestEnergy(packs,state,limit,accept){
+ let best=null;
+ function consider(cursor,played){
+  if(!accept(played))return;
+  const energy=universalEnergyByColor(packs,cursor,0).yellow||0;
+  if(!best||energy>best.energy)best={energy,played:[...played]};
+ }
+ function walk(cursor,left,played){
+  consider(cursor,played);
+  if(left<=0||cursor.pending||cursor.phase!=='main')return;
+  const seen=new Set();
+  for(const action of legalUniversalActions(packs,cursor)){
+   if(action.type!=='play'||action.line!=='energy')continue;
+   const key=action.uid+'@'+action.slot+':'+(action.replaceUid||'');
+   if(seen.has(key))continue;
+   seen.add(key);
+   const id=cursor.players[0].hand.find(card=>card.uid===action.uid)?.cardId;
+   let next=settleOptional(packs,dispatchUniversalAction(packs,structuredClone(cursor),action,{actor:0}));
+   const choices=next.pending?.kind==='effect-bounce-own'?legalUniversalActions(packs,next):[null];
+   for(const choice of choices){
+    const done=choice?dispatchUniversalAction(packs,structuredClone(next),choice,{actor:0}):next;
+    assert.equal(assertUniversalMatch(packs,done),true);
+    walk(settleOptional(packs,done),left-1,played.concat(id));
+   }
+  }
+ }
+ walk(state,limit,[]);
+ return best;
+}
+test('a bounced front leaves the line, so a second mandatory bounce cannot spend it again',()=>{
+ const {packs,state}=saoDevelopment(board=>{
+  for(const [slot,id] of [[0,'SAO-1-022'],[1,'SAO-1-022'],[2,'SAO-1-025'],[3,'SAO-1-025']])
+   place(board,0,take(board,0,id),'energy',slot);
+  place(board,0,take(board,0,'SAO-1-004'),'front',0);
+  board.players[0].hand.push(take(board,0,'SAO-1-006'),take(board,0,'SAO-1-006'));
+ });
+ assert.equal(universalEnergyByColor(packs,state,0).yellow,4);
+ assert.equal(state.players[0].front.filter(Boolean).length,1);
+ assert.equal(state.players[0].energy.filter(Boolean).length,4);
+ const plan=reserveApPlan(packs,state,0);
+ assert.equal(plan.full.energy,5);
+ assert.equal(plan.short.energy,5);
+ assert.equal(plan.keep,false);
+ bindVariant(null,()=>{
+  assert.equal(preferReserveAp(packs,state,0,{type:'extraDraw'},[]).type,'extraDraw');
+ },{reserveAp:true});
+ const main=toMain(packs,state);
+ const owned=cardCensus(main,0);
+ const once=bestEnergy(packs,main,1,played=>played.length===1&&played[0]==='SAO-1-006');
+ const both=bestEnergy(packs,main,2,played=>played.filter(id=>id==='SAO-1-006').length===2);
+ assert.equal(once.energy,5);
+ assert.equal(both.energy,4);
+ assert.deepEqual(cardCensus(main,0),owned);
+ const first=legalUniversalActions(packs,main).find(action=>action.type==='play'&&action.line==='energy'&&action.replaceUid);
+ let played=dispatchUniversalAction(packs,structuredClone(main),first,{actor:0});
+ const bounce=legalUniversalActions(packs,played).find(action=>action.type==='chooseOwnBounce');
+ played=dispatchUniversalAction(packs,played,bounce,{actor:0});
+ const returned=played.players[0].hand.find(card=>card.cardId==='SAO-1-004');
+ assert.ok(returned);
+ assert.equal(played.players[0].front.filter(Boolean).length,0);
+ const replay=legalUniversalActions(packs,played).find(action=>action.type==='play'&&action.line==='energy'&&action.uid===returned.uid);
+ assert.ok(replay);
+ const again=settleOptional(packs,dispatchUniversalAction(packs,structuredClone(played),replay,{actor:0}));
+ assert.equal(universalEnergyByColor(packs,again,0).yellow<=5,true);
+ assert.equal(again.players[0].energy.some(card=>card?.uid===returned.uid)||again.players[0].hand.some(card=>card.uid===returned.uid),true);
+});
+test('a character that returned to hand can be played onto an open energy slot',()=>{
+ const {packs,state}=saoDevelopment(board=>{
+  place(board,0,take(board,0,'SAO-1-022'),'energy',0);
+  place(board,0,take(board,0,'SAO-1-004'),'front',0);
+  board.players[0].hand.push(take(board,0,'SAO-1-006'),take(board,0,'SAO-1-006'));
+ });
+ assert.equal(universalEnergyByColor(packs,state,0).yellow,1);
+ const plan=reserveApPlan(packs,state,0);
+ assert.equal(plan.full.energy,4);
+ assert.equal(plan.short.energy,3);
+ assert.equal(plan.keep,true);
+ const main=toMain(packs,state);
+ const line=bestEnergy(packs,main,2,played=>played[0]==='SAO-1-006'&&played[1]==='SAO-1-004');
+ assert.equal(line.energy,4);
 });
 
 function reachMove(actor){

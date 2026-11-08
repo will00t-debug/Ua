@@ -1074,64 +1074,80 @@ function producedBy(pack,state,actor,slot){
  finally{mine.energy[slot]=card;}
  return before-after;
 }
-function energyBoard(pack,state,actor){
- const mine=state.players?.[actor];
- const catalog=packOf(pack,actor).cards;
- const energy=(mine?.energy||[null,null,null,null]).map((card,slot)=>{
-  if(!card)return null;
-  const printed=catalog[card.cardId];
-  return {uid:card.uid,color:printed?.color||'',energy:Number(printed?.energy)||0,produce:producedBy(pack,state,actor,slot)};
- });
- const fronts=(mine?.front||[]).filter(Boolean).map(card=>{
-  const printed=catalog[card.cardId];
-  return {uid:card.uid,energy:Number(printed?.energy)||0};
- });
- return {energy,fronts,total:colorTotal(colorsOf(pack,state,actor))};
-}
-function copyBoard(board){
- return {
-  energy:board.energy.map(body=>body?{...body}:null),
-  fronts:board.fronts.map(body=>({...body})),
-  total:board.total
- };
-}
-function handDevelopment(pack,state,actor,card){
- const printed=packOf(pack,actor).cards[card?.cardId];
+function developmentOption(printed,card,cost){
  if(!printed||printed.energyForbidden||printed.energyLineForbidden)return null;
  const refund=unconditionalRefund(printed);
  const character=printed.type==='character';
  if(!character&&!(printed.type==='event'&&refund>0))return null;
  return {
-  uid:card.uid,color:printed.color,cost:effectiveHandRequiredEnergy(pack,state,actor,printed,card),
-  ap:apCost(printed),printed:Number(printed.energy)||0,produce:character?(Number(printed.gen)||0):0,
-  bounce:character?mandatoryBounceEnergy(printed):null,refund,character,event:printed.type==='event'
+  uid:card.uid,color:printed.color,cost,ap:apCost(printed),printed:Number(printed.energy)||0,
+  produce:character?(Number(printed.gen)||0):0,bounce:character?mandatoryBounceEnergy(printed):null,
+  refund,character,event:printed.type==='event'
  };
+}
+function copyBody(body){
+ if(!body)return null;
+ return {...body,replay:body.replay?{...body.replay}:null};
+}
+function energyBoard(pack,state,actor){
+ const mine=state.players?.[actor];
+ const catalog=packOf(pack,actor).cards;
+ const replay=card=>{
+  const printed=catalog[card?.cardId];
+  return printed?developmentOption(printed,card,effectiveHandRequiredEnergy(pack,state,actor,printed,card)):null;
+ };
+ const energy=(mine?.energy||[null,null,null,null]).map((card,slot)=>{
+  if(!card)return null;
+  const printed=catalog[card.cardId];
+  return {uid:card.uid,color:printed?.color||'',energy:Number(printed?.energy)||0,
+   produce:producedBy(pack,state,actor,slot),replay:replay(card)};
+ });
+ const fronts=(mine?.front||[]).filter(Boolean).map(card=>{
+  const printed=catalog[card.cardId];
+  return {uid:card.uid,energy:Number(printed?.energy)||0,replay:replay(card)};
+ });
+ return {energy,fronts,total:colorTotal(colorsOf(pack,state,actor))};
+}
+function copyBoard(board){
+ return {energy:board.energy.map(copyBody),fronts:board.fronts.map(copyBody),total:board.total};
+}
+function handDevelopment(pack,state,actor,card){
+ const printed=packOf(pack,actor).cards[card?.cardId];
+ if(!printed)return null;
+ return developmentOption(printed,card,effectiveHandRequiredEnergy(pack,state,actor,printed,card));
 }
 // Place one known character on the energy line. The result is the best
 // legal slot after a mandatory bounce and after the card that slot already
-// held. Self-bounce leaves no new energy. Optional bounces are declined.
+// held. A bounced character leaves its zone and returns to hand, so a later
+// play can use that same card. The card a full line replaces is removed and
+// does not return. Self-bounce leaves no new energy. Optional bounces are declined.
 function placeDevelopment(board,colors,option){
  if(!option?.character||(colors[option.color]||0)<option.cost)return null;
  let best=null;
  for(let slot=0;slot<board.energy.length;slot++){
   const replaced=board.energy[slot];
-  const energy=board.energy.map(body=>body?{...body}:null);
-  energy[slot]={uid:option.uid,color:option.color,energy:option.printed,produce:option.produce};
-  let bounced=null,self=false;
+  const energy=board.energy.map(copyBody);
+  const fronts=board.fronts.map(copyBody);
+  energy[slot]={uid:option.uid,color:option.color,energy:option.printed,produce:option.produce,replay:{...option}};
+  let bounced=null,self=false,returned=null;
   if(option.bounce!=null){
    const targets=[];
    energy.forEach((body,index)=>{
     if(body&&body.uid!==option.uid&&body.energy<=option.bounce)
      targets.push({kind:'energy',index,produce:body.produce||0});
    });
-   board.fronts.forEach((body,index)=>{
-    if(body&&body.energy<=option.bounce)targets.push({kind:'front',index,produce:0});
+   fronts.forEach((body,index)=>{
+    if(body&&body.uid!==option.uid&&body.energy<=option.bounce)
+     targets.push({kind:'front',index,produce:0});
    });
    if(!targets.length){energy[slot]=null;self=true;}
    else{
     targets.sort((a,b)=>a.produce-b.produce||(a.kind==='front'?-1:1));
     bounced=targets[0];
+    const source=bounced.kind==='energy'?board.energy[bounced.index]:board.fronts[bounced.index];
+    returned=source?.replay?{...source.replay}:null;
     if(bounced.kind==='energy')energy[bounced.index]=null;
+    else fronts.splice(bounced.index,1);
    }
   }
   const stayed=!self&&!!energy[slot];
@@ -1146,21 +1162,39 @@ function placeDevelopment(board,colors,option){
   drop(replaced);
   if(bounced?.kind==='energy')drop(board.energy[bounced.index]);
   if(stayed)nextColors[option.color]=(nextColors[option.color]||0)+option.produce;
-  const next={energy,fronts:board.fronts.map(body=>({...body})),total:colorTotal(nextColors)};
-  if(!best||net>best.net)best={board:next,colors:nextColors,net};
+  const next={energy,fronts,total:colorTotal(nextColors)};
+  if(!best||net>best.net)best={board:next,colors:nextColors,net,returned};
  }
  return best;
+}
+function withReturn(options,returned){
+ if(!returned||options.some(item=>item.uid===returned.uid))return options;
+ return options.concat(returned);
+}
+// The key has to name every zone a later play can see. Energy slots carry
+// the printed cost and the energy they still make. Fronts are bounce
+// targets. Hand entries are the cards that can still be played, including
+// one that just returned. Action points and the color totals are included.
+function planKey(left,have,board,options){
+ const colors=Object.entries(have).sort().map(entry=>entry.join(':')).join(',');
+ const energy=board.energy.map(body=>body?body.uid+'/'+body.energy+'/'+body.produce:'-').join(',');
+ const fronts=board.fronts.map(body=>body.uid+'/'+body.energy).sort().join(',');
+ const hand=options.map(item=>[item.uid,item.cost,item.ap,item.produce,item.bounce??'',item.refund].join('/')).sort().join(',');
+ return left+'|'+colors+'|'+energy+'|'+fronts+'|'+hand;
 }
 function reachableEnergy(options,board,colors,ap){
  const memo=new Map();
  function walk(opts,current,have,left){
-  const key=left+'|'+Object.entries(have).sort().join(';')+'|'+
-   current.energy.map(body=>body?.uid||'-').join(',')+'|'+opts.map(item=>item.uid).join(',');
+  const key=planKey(left,have,current,opts);
   const saved=memo.get(key);
   if(saved)return saved;
   let best={energy:current.total,plays:0};
+  memo.set(key,best);
   const keep=candidate=>{
-   if(candidate.energy>best.energy||candidate.energy===best.energy&&candidate.plays>best.plays)best=candidate;
+   if(candidate.energy>best.energy||candidate.energy===best.energy&&candidate.plays>best.plays){
+    best={energy:candidate.energy,plays:candidate.plays};
+    memo.set(key,best);
+   }
   };
   if(left>0){
    for(let index=0;index<opts.length;index++){
@@ -1174,12 +1208,11 @@ function reachableEnergy(options,board,colors,ap){
     }
     const placed=placeDevelopment(current,have,option);
     if(!placed)continue;
-    const next=walk(rest,placed.board,placed.colors,left-option.ap+option.refund);
+    const next=walk(withReturn(rest,placed.returned),placed.board,placed.colors,left-option.ap+option.refund);
     keep({energy:next.energy,plays:next.plays+1});
    }
   }
-  memo.set(key,best);
-  return best;
+  return memo.get(key);
  }
  return walk(options,board,colors,ap);
 }
@@ -1187,13 +1220,13 @@ function reachableEnergy(options,board,colors,ap){
 // after a known energy play this turn can pay for. The deck is not read, and
 // a draw is not assumed to bring the refund back.
 function refundReachable(plays,refunds,board,colors,ap){
- const payable=(have,left)=>refunds.some(option=>option.ap<=left&&(have[option.color]||0)>=option.cost);
- if(payable(colors,ap))return true;
- if(!plays.length||!refunds.length||ap<=0)return false;
+ const payable=(list,have,left)=>list.some(option=>option.ap<=left&&(have[option.color]||0)>=option.cost);
+ if(payable(refunds,colors,ap))return true;
+ const onBoard=[...board.energy,...board.fronts].some(body=>body?.replay?.refund>0);
+ if(!plays.length||ap<=0||!refunds.length&&!onBoard)return false;
  const memo=new Set();
- function walk(opts,current,have,left){
-  const key=left+'|'+Object.entries(have).sort().join(';')+'|'+
-   current.energy.map(body=>body?.uid||'-').join(',')+'|'+opts.map(item=>item.uid).join(',');
+ function walk(opts,current,have,left,refundList){
+  const key=planKey(left,have,current,opts)+'|'+refundList.map(item=>item.uid).sort().join(',');
   if(memo.has(key))return false;
   memo.add(key);
   if(left<=0)return false;
@@ -1203,12 +1236,13 @@ function refundReachable(plays,refunds,board,colors,ap){
    const placed=placeDevelopment(current,have,option);
    if(!placed)continue;
    const nextAp=left-option.ap+option.refund;
-   if(option.refund>0||payable(placed.colors,nextAp))return true;
-   if(walk(opts.filter((_,item)=>item!==index),placed.board,placed.colors,nextAp))return true;
+   const nextRefunds=placed.returned?.refund>0?refundList.concat(placed.returned):refundList;
+   if(option.refund>0||payable(nextRefunds,placed.colors,nextAp))return true;
+   if(walk(withReturn(opts.filter((_,item)=>item!==index),placed.returned),placed.board,placed.colors,nextAp,nextRefunds))return true;
   }
   return false;
  }
- return walk(plays,board,colors,ap);
+ return walk(plays,board,colors,ap,refunds);
 }
 // The known hand can finish an energy line with the action points it already
 // has, and spending one of them to draw removes a play that line needs.
