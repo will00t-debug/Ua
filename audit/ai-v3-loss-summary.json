@@ -1,6 +1,6 @@
 {
   "baselineCommit": "4a028a15",
-  "decision": "reserveAp stays off. The bounce-state correction was rerun on 8401/8402: baseline 2-22, candidate 3-21, paired difference +0.0417 with an interval that contains 0. That point estimate is a new measurement; the pre-fix 3-21 and the 8430-8432 3-33 are not reused as this version's result. The definition is frozen and 8440-8442 are locked for a validation that has not been run. 8430-8432 stay the pre-fix check. No 40ms run. 9100 and above stay reserved.",
+  "decision": "reserveAp stays off. After the bounce-state correction, the rerun adjustment set was 2-22 versus 3-21 and the locked 8440-8442 validation was 7-29 versus 9-27. Both paired intervals contain 0, so the gain is not separated from a flat result. The planner was not edited after the adjustment rerun. No 40ms run. 8430-8432 stay the pre-fix check. 9100 and above stay reserved.",
   "reserveAp": {
     "default": false,
     "bounceCorrection": {
@@ -24,7 +24,21 @@
     "nextValidation": {
       "seeds": [8440, 8441, 8442],
       "lockedIn": "audit/ai-v3-reserve-ap-bounce-seed-lock.json",
-      "status": "locked before the games were run"
+      "status": "run after the lock was committed in 8a92eaa3",
+      "files": ["audit/ai-v3-reserve-ap-bounce-8440-baseline.json", "audit/ai-v3-reserve-ap-bounce-8440.json"],
+      "baseline": "7-29",
+      "candidate": "9-27",
+      "hardGap": {"baseline": -0.3055555555555556, "candidate": -0.25},
+      "relative": {"n": 18, "mean": 0.05555555555555555, "low": -0.1388888888888889, "high": 0.25, "containsZero": true},
+      "byDeck": {
+        "white-sword": {"baseline": "0-12", "candidate": "1-11"},
+        "sword-art-online-raid": {"baseline": "3-9", "candidate": "5-7"},
+        "steins-gate-raid": {"baseline": "4-8", "candidate": "3-9"}
+      },
+      "replayFailed": 0,
+      "maxNodes": 48,
+      "clock40ms": "not run",
+      "note": "Every result flip starts as extraDraw replaced by next. The interval contains 0, so the default stays off and the pre-registered 40ms was not run."
     },
     "development": {
       "seeds": [8401, 8402],
