@@ -20353,20 +20353,20 @@
           "searchSeed": 1,
           "returned": {
             "type": "play",
-            "line": "front",
-            "uid": "1-23",
+            "line": "energy",
+            "uid": "1-8",
             "mode": null,
             "card": {
-              "uid": "1-23",
-              "id": "BLC-4-070",
-              "name": "更木 剣八",
+              "uid": "1-8",
+              "id": "BLC-4-066",
+              "name": "卯ノ花 烈",
               "type": "character",
-              "energy": 1,
-              "bp": 4000
+              "energy": 0,
+              "bp": 1500
             }
           },
           "reason": "search",
-          "score": 18.85,
+          "score": -69.1,
           "nodesUsed": 48,
           "dispatches": 48,
           "accounted": true,
@@ -20556,37 +20556,37 @@
             {
               "stage": "final-gate",
               "type": "play",
-              "line": "front",
-              "uid": "1-23",
+              "line": "energy",
+              "uid": "1-8",
               "mode": null,
               "card": {
-                "uid": "1-23",
-                "id": "BLC-4-070",
-                "name": "更木 剣八",
+                "uid": "1-8",
+                "id": "BLC-4-066",
+                "name": "卯ノ花 烈",
                 "type": "character",
-                "energy": 1,
-                "bp": 4000
+                "energy": 0,
+                "bp": 1500
               },
-              "boundary": "yielded",
-              "search": 18.85,
+              "boundary": "pending",
+              "search": -69.1,
               "executed": true
             },
             {
               "stage": "returned",
               "type": "play",
-              "line": "front",
-              "uid": "1-23",
+              "line": "energy",
+              "uid": "1-8",
               "mode": null,
               "card": {
-                "uid": "1-23",
-                "id": "BLC-4-070",
-                "name": "更木 剣八",
+                "uid": "1-8",
+                "id": "BLC-4-066",
+                "name": "卯ノ花 烈",
                 "type": "character",
-                "energy": 1,
-                "bp": 4000
+                "energy": 0,
+                "bp": 1500
               },
-              "boundary": "yielded",
-              "search": 18.85,
+              "boundary": "pending",
+              "search": -69.1,
               "executed": true
             }
           ],
@@ -20636,29 +20636,6 @@
               "afterBoundary": "pending",
               "beforeSearch": null,
               "afterSearch": -69.1
-            },
-            {
-              "at": "final-gate",
-              "from": {
-                "type": "play",
-                "line": "energy",
-                "uid": "1-8",
-                "card": "BLC-4-066"
-              },
-              "to": {
-                "type": "play",
-                "line": "front",
-                "uid": "1-23",
-                "card": "BLC-4-070"
-              },
-              "sameUid": false,
-              "differentCard": true,
-              "beforeExecuted": true,
-              "afterExecuted": true,
-              "beforeBoundary": "pending",
-              "afterBoundary": "yielded",
-              "beforeSearch": -69.1,
-              "afterSearch": 18.85
             }
           ]
         }
@@ -22625,8 +22602,8 @@
           ]
         },
         "plain": {
-          "ok": false,
-          "break": "unresolved",
+          "ok": true,
+          "break": null,
           "keys": [
             "next:",
             "play:energy",
@@ -22635,15 +22612,18 @@
             "play:energy",
             "chooseDiscardGate:",
             "chooseTopCard:bottom",
-            "play:front",
+            "play:energy",
+            "chooseLineMove:",
+            "chooseLineSlot:",
             "next:"
           ],
           "spent": [
             "1-16",
             "1-23"
           ],
-          "standingReady": null,
-          "entrantRested": null,
+          "refundPlayed": false,
+          "standingReady": true,
+          "entrantRested": true,
           "main": [
             {
               "phase": "main",
@@ -22764,19 +22744,19 @@
             {
               "phase": "main",
               "pending": null,
-              "key": "play:front",
+              "key": "play:energy",
               "returned": {
                 "type": "play",
-                "line": "front",
-                "uid": "1-3",
+                "line": "energy",
+                "uid": "1-5",
                 "mode": null,
                 "card": {
-                  "uid": "1-3",
-                  "id": "BLC-3-009",
-                  "name": "日番谷 冬獅郎",
+                  "uid": "1-5",
+                  "id": "BLC-4-060",
+                  "name": "藍染 惣右介",
                   "type": "character",
                   "energy": 3,
-                  "bp": 2000
+                  "bp": 4000
                 }
               },
               "search": {
@@ -22843,34 +22823,11 @@
                   "afterBoundary": "pending",
                   "beforeSearch": 18.299999999999997,
                   "afterSearch": 11.299999999999997
-                },
-                {
-                  "at": "final-gate",
-                  "from": {
-                    "type": "play",
-                    "line": "energy",
-                    "uid": "1-5",
-                    "card": "BLC-4-060"
-                  },
-                  "to": {
-                    "type": "play",
-                    "line": "front",
-                    "uid": "1-3",
-                    "card": "BLC-3-009"
-                  },
-                  "sameUid": false,
-                  "differentCard": true,
-                  "beforeExecuted": true,
-                  "afterExecuted": true,
-                  "beforeBoundary": "pending",
-                  "afterBoundary": "yielded",
-                  "beforeSearch": 11.299999999999997,
-                  "afterSearch": 108.85000000000001
                 }
               ],
               "nodesUsed": 48,
               "dispatches": 48,
-              "gateChanged": true,
+              "gateChanged": false,
               "factors": {
                 "coverage": "root",
                 "raidBase": true,
@@ -22888,15 +22845,49 @@
                 "mode": null,
                 "card": null
               },
-              "search": null,
-              "rewrites": [],
-              "nodesUsed": null,
-              "dispatches": 0,
+              "search": {
+                "stage": "search",
+                "type": "activate",
+                "line": null,
+                "uid": "1-5",
+                "mode": "restTwoMove",
+                "card": null,
+                "boundary": "pending",
+                "search": -15.949999999999996,
+                "executed": true
+              },
+              "rewrites": [
+                {
+                  "at": "ready-front",
+                  "from": {
+                    "type": "activate",
+                    "line": null,
+                    "uid": "1-5",
+                    "card": null
+                  },
+                  "to": {
+                    "type": "next",
+                    "line": null,
+                    "uid": null,
+                    "card": null
+                  },
+                  "sameUid": false,
+                  "differentCard": true,
+                  "beforeExecuted": true,
+                  "afterExecuted": true,
+                  "beforeBoundary": "pending",
+                  "afterBoundary": "yielded",
+                  "beforeSearch": -15.949999999999996,
+                  "afterSearch": 122.85000000000001
+                }
+              ],
+              "nodesUsed": 48,
+              "dispatches": 48,
               "gateChanged": false,
               "factors": {
-                "coverage": null,
-                "raidBase": false,
-                "gate": null
+                "coverage": "root",
+                "raidBase": true,
+                "gate": "main-front"
               }
             }
           ]
@@ -23134,125 +23125,8 @@
             }
           ]
         },
-        "mainGate": [
-          {
-            "phase": "main",
-            "pending": null,
-            "key": "play:front",
-            "returned": {
-              "type": "play",
-              "line": "front",
-              "uid": "1-3",
-              "mode": null,
-              "card": {
-                "uid": "1-3",
-                "id": "BLC-3-009",
-                "name": "日番谷 冬獅郎",
-                "type": "character",
-                "energy": 3,
-                "bp": 2000
-              }
-            },
-            "search": {
-              "stage": "search",
-              "type": "play",
-              "line": "front",
-              "uid": "1-3",
-              "mode": null,
-              "card": {
-                "uid": "1-3",
-                "id": "BLC-3-009",
-                "name": "日番谷 冬獅郎",
-                "type": "character",
-                "energy": 3,
-                "bp": 2000
-              },
-              "boundary": "yielded",
-              "search": 108.85000000000001,
-              "executed": true
-            },
-            "rewrites": [
-              {
-                "at": "generator",
-                "from": {
-                  "type": "play",
-                  "line": "front",
-                  "uid": "1-3",
-                  "card": "BLC-3-009"
-                },
-                "to": {
-                  "type": "play",
-                  "line": "energy",
-                  "uid": "1-3",
-                  "card": "BLC-3-009"
-                },
-                "sameUid": true,
-                "differentCard": false,
-                "beforeExecuted": true,
-                "afterExecuted": true,
-                "beforeBoundary": "yielded",
-                "afterBoundary": "pending",
-                "beforeSearch": 108.85000000000001,
-                "afterSearch": 18.299999999999997
-              },
-              {
-                "at": "line-switch",
-                "from": {
-                  "type": "play",
-                  "line": "energy",
-                  "uid": "1-3",
-                  "card": "BLC-3-009"
-                },
-                "to": {
-                  "type": "play",
-                  "line": "energy",
-                  "uid": "1-5",
-                  "card": "BLC-4-060"
-                },
-                "sameUid": false,
-                "differentCard": true,
-                "beforeExecuted": true,
-                "afterExecuted": true,
-                "beforeBoundary": "pending",
-                "afterBoundary": "pending",
-                "beforeSearch": 18.299999999999997,
-                "afterSearch": 11.299999999999997
-              },
-              {
-                "at": "final-gate",
-                "from": {
-                  "type": "play",
-                  "line": "energy",
-                  "uid": "1-5",
-                  "card": "BLC-4-060"
-                },
-                "to": {
-                  "type": "play",
-                  "line": "front",
-                  "uid": "1-3",
-                  "card": "BLC-3-009"
-                },
-                "sameUid": false,
-                "differentCard": true,
-                "beforeExecuted": true,
-                "afterExecuted": true,
-                "beforeBoundary": "pending",
-                "afterBoundary": "yielded",
-                "beforeSearch": 11.299999999999997,
-                "afterSearch": 108.85000000000001
-              }
-            ],
-            "nodesUsed": 48,
-            "dispatches": 48,
-            "gateChanged": true,
-            "factors": {
-              "coverage": "root",
-              "raidBase": true,
-              "gate": "main-front"
-            }
-          }
-        ],
-        "confirmed": false
+        "mainGate": [],
+        "confirmed": true
       }
     ]
   }

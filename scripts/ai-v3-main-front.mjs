@@ -309,7 +309,10 @@ function dumpConflict(){
  const steps=[];
  for(let guard=0;guard<16&&cursor.status==='playing';guard++){
   const choice=ask(opened.packs,cursor,spec,1);
-  if(choice.returned.type==='play'&&choice.returned.line==='front'){
+  const handCard=(cursor.players[actor].hand||[]).find(item=>item?.uid===choice.returned.uid);
+  const body=handCard&&opened.packs[actor].cards[handCard.cardId];
+  const lineSwitch=choice.returned.type==='play'&&choice.returned.line==='energy'&&lineSwitchBody(body);
+  if(lineSwitch||(choice.returned.type==='play'&&choice.returned.line==='front')){
    const baseline=ask(opened.packs,cursor,cells[0],1);
    const pack=opened.packs[actor];
    const player=cursor.players[actor];
@@ -323,7 +326,8 @@ function dumpConflict(){
     front:describeZone(pack,player.front),
     energyLine:describeZone(pack,player.energy),
     candidate:publicRun(choice),
-    baselineOnSameState:publicRun(baseline)
+    baselineOnSameState:publicRun(baseline),
+    sameAction:sameAction(choice.returned,actionOf(opened.packs[actor],cursor.players[actor].hand,baseline.raw))
    };
    writeFileSync('audit/ai-v3-main-front-conflict.json',JSON.stringify({steps,board},null,2));
    console.log(JSON.stringify(board,null,2));
@@ -333,7 +337,7 @@ function dumpConflict(){
    nodesUsed:choice.nodesUsed,dispatches:choice.dispatches,factorsBound:choice.factorsBound,searched:choice.searched});
   cursor=dispatchUniversalAction(opened.packs,cursor,choice.raw,{actor:cursor.pending?.player??cursor.active});
  }
- throw Error('front rewrite not reached');
+ throw Error('line switch was not reached');
 }
 if(process.argv.includes('--board'))dumpConflict();
 else{

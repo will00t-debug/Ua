@@ -2696,12 +2696,13 @@ function measured(packs,state,variant){
  let calls=0;
  const stop=watchEngineDispatch(()=>{calls++;});
  resetAiV3Report();
- const selected=askedVariant(variant);
+ const factors=variant&&typeof variant==='object'?variant:null;
+ const selected=factors?null:askedVariant(variant);
  let action;
  try{
   action=choose(packs,state,{
    ...MATCH_LIMITS,actor,seed:1,hardNodes:0,plan:'tree',nodes:48,diagnose:true,meter,
-   ms:1e9,now:()=>0,...(selected?{variant:selected}:{})
+   ms:1e9,now:()=>0,...(factors?{factors}:selected?{variant:selected}:{})
   });
  }finally{stop();}
  const trace=lastAiV3Trace();
@@ -3084,7 +3085,7 @@ test('an unfinished shift check does not borrow another line',()=>{
  }
 });
 test('a covered plain generator is discarded and the next turn keeps the filter chain',()=>{
- for(const variant of [null,'ab-front'])filterChain(variant);
+ for(const variant of [null,'ab-front',{coverage:'root',raidBase:true,gate:'main-front'}])filterChain(variant);
 });
 function filterChain(variant){
  const opened=replayWhiteHandLimit(8301,0,1,29);
@@ -3092,6 +3093,7 @@ function filterChain(variant){
  const actor=opened.state.pending.player;
  const catalog=packs[actor].cards;
  const discard=measured(packs,opened.state,variant);
+ if(variant&&typeof variant==='object')assert.deepEqual(discard.trace.factors,variant);
  const plain=opened.state.players[actor].hand.find(card=>card.uid===discard.action.uid);
  const printed=catalog[plain.cardId];
  assert.equal(discard.action.type,'chooseHandLimit');
@@ -3346,6 +3348,10 @@ test('an evidence gate keeps a searched line unless the replacement matches its 
   {action:otherEnergy,search:-69.1,boundary:'pending',executed:true}
  ];
  assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,ken,otherEnergy,executed).uid,'k');
+ assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,ken,otherEnergy,[
+  {action:ken,search:100000,boundary:'terminal',executed:true},
+  {action:otherEnergy,search:11.3,boundary:'pending',executed:true}
+ ]).uid,'k');
  assert.equal(mainFrontEvidenceChoice(bodyPack,bodyState,0,ken,kenEnergy,[
   {action:ken,search:10,boundary:'yielded',executed:true},
   {action:kenEnergy,search:12,boundary:'yielded',executed:true}

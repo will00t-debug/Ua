@@ -535,6 +535,27 @@ export function chooseAiV3Action(pack,state,options={}){
    swing:sample.swing||0,stranded:sample.stranded||0,
    followSeen:sample.followSeen||[],unexplored:sample.unexplored||[]};
   };
+  // The late front gate only compares lines that stopped together. Spend the
+  // nodes still in this same pool to bring the shorter line up to the longer
+  // one's boundary. A line that runs past that boundary, or a pool that is
+  // already empty, leaves the rows as they are.
+  function alignMainFront(previous,choice,rows){
+   if(searchFactors().gate!=='main-front'||!(pool.n>0)||now()>deadline)return rows;
+   const key=action=>JSON.stringify(action);
+   const found=action=>(rows||[]).find(row=>row?.executed!==false&&key(row.action)===key(action));
+   const before=found(previous),after=found(choice);
+   if(!before||!after||before.boundary===after.boundary)return rows;
+   if(!Number.isFinite(before.search)||!Number.isFinite(after.search))return rows;
+   if((before.boundary==='terminal'&&before.search>=90000)||(after.boundary==='terminal'&&after.search>=90000))return rows;
+   const beforeRank=BOUNDARY_RANK[before.boundary]||0;
+   const afterRank=BOUNDARY_RANK[after.boundary]||0;
+   if(!beforeRank||!afterRank||beforeRank===afterRank)return rows;
+   const low=beforeRank<afterRank?previous:choice;
+   const target=Math.max(beforeRank,afterRank);
+   const extended=scoreJob(low,'deep');
+   if(!extended||extended.failed||(BOUNDARY_RANK[extended.boundary]||0)!==target)return rows;
+   return rows.map(row=>key(row.action)===key(low)?{...extended,action:row.action,executed:true}:row);
+  }
   const searchStarted=performance.now();
   let basicSpent=0,deepSpent=0;
   for(let index=0;index<jobs.length;index++){
@@ -667,7 +688,7 @@ export function chooseAiV3Action(pack,state,options={}){
    const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
    const confirmed=confirmedTrace.choice;
    const preferred=holdSurvival(choice,confirmed,scored);
-   const gated=gatePreference(pack,state,actor,choice,preferred,scored);
+   const gated=gatePreference(pack,state,actor,choice,preferred,alignMainFront(choice,preferred,scored));
    const kept=constrainConfirmedWin(gated,winRows,legal);
    report.budgetFallback++;
    report.budget++;
@@ -715,7 +736,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
   const confirmed=confirmedTrace.choice;
   const heldChoice=holdSurvival(exact,confirmed,scored);
-  const gated=gatePreference(pack,state,actor,exact,heldChoice,scored);
+  const gated=gatePreference(pack,state,actor,exact,heldChoice,alignMainFront(exact,heldChoice,scored));
   let kept=gated;
   let keptRow=tracedRow(scored,kept);
   // A deadline leaves discard lines at unequal depths. Tied or unfinished

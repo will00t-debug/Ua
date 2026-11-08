@@ -831,13 +831,34 @@ export function frontEvidenceChoice(state,actor,previous,choice,rows){
  if(!toEnergy&&choice?.type!=='next')return choice;
  return evidencedChoice(previous,choice,rows);
 }
+// A confirmed play is affordable when it is legal now and its printed action
+// points and color cost fit what is already on the field. A pass has no cost.
+function confirmedPayable(pack,state,actor,choice){
+ if(!choice)return false;
+ let legal=[];
+ try{legal=legalUniversalActions(pack,state);}catch{return false;}
+ if(!legal.some(action=>JSON.stringify(action)===JSON.stringify(choice)))return false;
+ if(choice.type==='next')return true;
+ if((choice.type!=='play'&&choice.type!=='event')||!choice.uid)return false;
+ const mine=state.players?.[actor];
+ const card=[...(mine?.hand||[])].find(item=>item?.uid===choice.uid);
+ const printed=card&&packOf(pack,actor).cards?.[card.cardId];
+ if(!printed||(printed.type!=='character'&&printed.type!=='event'))return false;
+ const cost=Number(printed.energy)||0;
+ const have=colorsOf(pack,state,actor)[printed.color]||0;
+ const ready=(mine?.apCards||[]).filter(item=>item?.ready).length;
+ return cost<=have&&apCost(printed)<=ready;
+}
 // The main-front gate sits after energy, confirmed choices, and survival
-// protection. It reads only rows this search already paid for. A normal
-// character's executed front play can be kept when a later preference
-// changed it to an energy play or to passing. Energy may be another card.
-// The same evidence rule decides: a same-boundary line that does not score
-// worse still replaces the front, including a 4000. Start, move, discard,
-// trigger, and every other original choice stay with the preference.
+// protection. A searched character front is compared with the later energy
+// play or pass only when both lines reached the same boundary. A different
+// boundary is not a reason to cancel the confirmed plan. The caller may spend
+// the nodes still in the shared pool to bring the shorter line up to that
+// boundary first. When the pool cannot produce that comparison, the confirmed
+// plan stays if it is legal and payable. A proven win still comes first.
+// The same-boundary rule is unchanged: a line that does not score worse
+// replaces the front, including a 4000. Start, move, discard, trigger, and
+// every other original choice stay with the preference.
 export function mainFrontEvidenceChoice(pack,state,actor,previous,choice,rows){
  if(!state||state.phase!=='main'||state.pending||state.active!==actor)return choice;
  if(previous?.type!=='play'||previous.line!=='front'||!previous.uid)return choice;
@@ -849,7 +870,16 @@ export function mainFrontEvidenceChoice(pack,state,actor,previous,choice,rows){
  const card=hand.find(item=>item?.uid===previous.uid);
  const printed=card&&packOf(pack,actor).cards?.[card.cardId];
  if(printed?.type!=='character')return choice;
- return evidencedChoice(previous,choice,rows);
+ const after=rowOf(rows,choice);
+ if(provenWin(before))return previous;
+ if(provenWin(after))return choice;
+ if(provenLoss(before)){
+  if(!provenLoss(after))return choice;
+ }else if(provenLoss(after))return previous;
+ if(after&&Number.isFinite(after.search)&&after.boundary===before.boundary)
+  return evidencedChoice(previous,choice,rows);
+ if(!after||!Number.isFinite(after.search))return previous;
+ return confirmedPayable(pack,state,actor,choice)?choice:previous;
 }
 // Lines that stopped together were already compared. A worse energy score
 // does not get to replace the front just because the color would rise.
