@@ -166,6 +166,26 @@
         "mean": -0.0833,
         "low": -0.2083,
         "high": 0
+      },
+      "versusBaselineByDeck": {
+        "white-sword": {
+          "n": 4,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "sword-art-online-raid": {
+          "n": 4,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "steins-gate-raid": {
+          "n": 4,
+          "mean": -0.25,
+          "low": -0.5,
+          "high": 0
+        }
       }
     },
     "b": {
@@ -234,6 +254,26 @@
         "mean": 0.0833,
         "low": -0.125,
         "high": 0.2917
+      },
+      "versusBaselineByDeck": {
+        "white-sword": {
+          "n": 4,
+          "mean": 0.25,
+          "low": 0,
+          "high": 0.5
+        },
+        "sword-art-online-raid": {
+          "n": 4,
+          "mean": 0.25,
+          "low": 0,
+          "high": 0.5
+        },
+        "steins-gate-raid": {
+          "n": 4,
+          "mean": -0.25,
+          "low": -0.5,
+          "high": 0
+        }
       }
     },
     "ab": {
@@ -302,6 +342,26 @@
         "mean": 0.2083,
         "low": 0.0417,
         "high": 0.375
+      },
+      "versusBaselineByDeck": {
+        "white-sword": {
+          "n": 4,
+          "mean": 0.375,
+          "low": 0.125,
+          "high": 0.5
+        },
+        "sword-art-online-raid": {
+          "n": 4,
+          "mean": 0.25,
+          "low": 0,
+          "high": 0.5
+        },
+        "steins-gate-raid": {
+          "n": 4,
+          "mean": 0,
+          "low": -0.375,
+          "high": 0.375
+        }
       }
     }
   },
@@ -434,6 +494,26 @@
         "mean": 0.1944,
         "low": 0.0278,
         "high": 0.3611
+      },
+      "versusBaselineByDeck": {
+        "white-sword": {
+          "n": 6,
+          "mean": 0.3333,
+          "low": 0.0833,
+          "high": 0.6667
+        },
+        "sword-art-online-raid": {
+          "n": 6,
+          "mean": 0.1667,
+          "low": 0,
+          "high": 0.3333
+        },
+        "steins-gate-raid": {
+          "n": 6,
+          "mean": 0.0833,
+          "low": -0.25,
+          "high": 0.4167
+        }
       }
     }
   },
@@ -566,9 +646,30 @@
         "mean": 0.25,
         "low": -0.0833,
         "high": 0.5
+      },
+      "versusBaselineByDeck": {
+        "white-sword": {
+          "n": 2,
+          "mean": 0.25,
+          "low": 0,
+          "high": 0.5
+        },
+        "sword-art-online-raid": {
+          "n": 2,
+          "mean": 0.5,
+          "low": 0.5,
+          "high": 0.5
+        },
+        "steins-gate-raid": {
+          "n": 2,
+          "mean": 0,
+          "low": -0.5,
+          "high": 0.5
+        }
       }
     }
   },
   "budgetBottleneck": "On the three-action-point snapshot, 48 nodes with A+B keeps the 4000 front that search had selected. 192 and 768 nodes select the 2500 energy instead, at a finished comparable boundary. A 48-node unfinished front score is not the same quality as those deeper lines. The match gain still appeared on seeds that were not used to choose the score.",
-  "nextHypothesis": "Limit the evidence gate to a searched front replacement. The general gate is what moves a kept color and what draws through the filter chain. Do not refit that narrower gate on 8410-8412."
+  "nextHypothesis": "Limit the evidence gate to a searched front replacement. The general gate is what moves a kept color and what draws through the filter chain. Do not refit that narrower gate on 8410-8412.",
+  "note": "versusBaseline is the paired change against 528ab204. hardGap is each version against hard-search-2. The two numbers are not interchangeable. Both use deck, seed and first player as the pair, then both seats."
 }
