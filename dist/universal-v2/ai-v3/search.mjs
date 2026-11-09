@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,mainFrontEvidenceChoice,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,mainFrontEvidenceChoice,generatorEvidenceChoice,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -470,6 +470,14 @@ export function chooseAiV3Action(pack,state,options={}){
   jobs.length=0;
   jobs.push(...rootPlan);
   const actorDecisions=options.actorDecisions??MATCH_LIMITS.actorDecisions;
+  // alignRoots is a separate opt-in. The first look gives every root the
+  // same share of this pool, so a later boundary is not an accident of who
+  // was searched longer. Block and discard choices keep the normal slices.
+  const alignKind=state.pending?.kind||'';
+  const alignOn=searchFactors().alignRoots===true&&jobs.length>=2
+   &&state.phase!=='attack'&&alignKind!=='block'&&alignKind!=='effect-block-floor'
+   &&!mandatoryDiscardKind(alignKind);
+  const equalCap=alignOn?coverShare(total,jobs.length):0;
   // Each root first keeps a scripted continuation inside its share of the
   // budget. Nodes left after every root has had that share deepen the lines.
   const seats=Math.max(2,Math.min(jobs.length||2,4));
@@ -568,7 +576,8 @@ export function chooseAiV3Action(pack,state,options={}){
     unexecuted.push({...note(jobs[index]),action:jobs[index],executed:false,nodes:0,reason:stopReason()});
     continue;
    }
-   const cap=rootSlice(pool.n,jobs.length-index,total,jobs.length);
+   const room=rootSlice(pool.n,jobs.length-index,total,jobs.length);
+   const cap=equalCap?Math.min(room,equalCap):room;
    const laterNodes=Math.max(0,jobs.length-index-1)*coverShare(total,jobs.length);
    const sliceDeadline=shareDeadline(now,deadline,cap,laterNodes);
    if(options.profile)options.profile.roots.push({
@@ -593,6 +602,54 @@ export function chooseAiV3Action(pack,state,options={}){
   }
   report.rootPlanned+=jobs.length;
   report.rootExecuted+=held.length;
+  const rowRank=row=>BOUNDARY_RANK[row.boundary]||0;
+  const cutDevelopment=row=>row&&row.executed!==false&&row.cut==='nodes'&&actionDevelops(pack,state,actor,row.action);
+  const provenRow=row=>row?.boundary==='terminal'&&row.search>=90000;
+  // A developing root that stopped early is searched again, once, with a
+  // wider slice of the nodes still in this pool. The new walk replaces the
+  // short one only when it catches the boundary the others already reached,
+  // or it is a proven win. Jumping past that boundary is not a comparison.
+  function extendBehind(){
+   if(!alignOn)return;
+   const stuck=new Set();
+   let guard=held.length*2;
+   while(pool.n>=8&&now()<=deadline&&guard-->0){
+    const best=held.reduce((rank,row)=>Math.max(rank,rowRank(row)),0);
+    const behind=held.filter(row=>cutDevelopment(row)&&rowRank(row)<best&&!stuck.has(row));
+    if(!behind.length)break;
+    behind.sort((a,b)=>rowRank(a)-rowRank(b));
+    const row=behind[0];
+    const index=held.indexOf(row);
+    const before=pool.n;
+    const previous=rowRank(row);
+    const extended=scoreJob(row.action,'basic',Math.min(pool.n,24));
+    deepSpent+=extended?.nodes||0;
+    report.deepNodes+=extended?.nodes||0;
+    if(!extended||extended.failed||pool.n>=before){stuck.add(row);continue;}
+    const next=rowRank(extended);
+    const win=provenRow(extended);
+    if(win||(next>previous&&next<=best)){
+     extended.action=row.action;
+     extended.basicNodes=row.basicNodes||0;
+     extended.deepNodes=(row.deepNodes||0)+(extended.nodes||0);
+     extended.nodes=(extended.basicNodes||0)+(extended.deepNodes||0);
+     extended.executed=true;
+     held[index]=extended;
+    }
+    if(rowRank(held[index])<=previous)stuck.add(held[index]);
+   }
+  }
+  function generatorStep(previous,rows){
+   const raw=preferEnergyGenerator(pack,state,actor,previous,rows);
+   const gated=searchFactors().evidenceGenerator===true?generatorEvidenceChoice(previous,raw,rows):raw;
+   return {raw,gated};
+  }
+  function generatorStages(step){
+   const stages=[['generator',step.raw]];
+   if(searchFactors().evidenceGenerator===true)stages.push(['generator-evidence',step.gated]);
+   return stages;
+  }
+  extendBehind();
   const deferDeep=action=>isSafeAction(action)||!!moveDevelopment(pack,state,actor,action)?.strip;
   const deepen=[...held.keys()].sort((a,b)=>Number(deferDeep(held[a].action))-Number(deferDeep(held[b].action)));
   for(let cursor=0;cursor<deepen.length;cursor++){
@@ -603,15 +660,31 @@ export function chooseAiV3Action(pack,state,options={}){
    }
    const deep=scoreJob(held[index].action,'deep');
    if(deep&&!deep.failed){
+    // A longer walk that leaves the shared boundary is not a better score.
+    // A proven win is kept. The nodes are already spent either way.
+    if(alignOn){
+     const win=provenRow(deep);
+     const same=deep.boundary===held[index].boundary&&deep.search>held[index].search;
+     deepSpent+=deep.nodes||0;
+     report.deepNodes+=deep.nodes||0;
+     if(!win&&!same)continue;
+    }
     const merged=mergeRows(held[index],deep);
     merged.basicNodes=held[index].basicNodes||0;
-    merged.deepNodes=deep.nodes||0;
+    merged.deepNodes=(held[index].deepNodes||0)+(deep.nodes||0);
     merged.nodes=(merged.basicNodes||0)+(merged.deepNodes||0);
-    deepSpent+=deep.nodes||0;
-    report.deepNodes+=deep.nodes||0;
+    if(!alignOn){
+     deepSpent+=deep.nodes||0;
+     report.deepNodes+=deep.nodes||0;
+    }
     held[index]=merged;
    }
   }
+  // One root got home and a developing root is still cut. Their scores are
+  // not a ranking. The legal backup stays; the short line is not a loss.
+  const alignRefused=alignOn&&!held.some(provenRow)&&held.some(row=>row.boundary==='returned'||row.boundary==='terminal')
+   &&held.some(row=>cutDevelopment(row)&&rowRank(row)<Math.max(...held.filter(item=>item.boundary==='returned'||item.boundary==='terminal').map(rowRank)));
+  const alignNote=alignOn?{equalCap,refused:!!alignRefused}:null;
   timing.searchMs=performance.now()-searchStarted;
   const reasons={time:0,nodes:0,unscored:0};
   for(const row of unexecuted)reasons[row.reason]=(reasons[row.reason]||0)+1;
@@ -681,9 +754,10 @@ export function chooseAiV3Action(pack,state,options={}){
   // Missing coverage, a spent clock, or an unfinished discard does not
   // throw away a win this pool already paid for. The backup stays for
   // every line that has not won.
-  if(!provenWin&&(!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
+  if(!provenWin&&(alignRefused||!comparable.length||discardIncomplete||discardOpen||(idleOnly&&(constructiveCut||missedDevelopment)))&&choice){
    const retained=keptEnergy(pack,state,actor,legal,choice,null,strategy);
-   const generated=preferEnergyGenerator(pack,state,actor,retained,scored);
+   const generatedStep=generatorStep(retained,scored);
+   const generated=generatedStep.gated;
    const placed=gateFrontEnergy(state,actor,choice,generated,scored);
    const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
    const confirmed=confirmedTrace.choice;
@@ -699,8 +773,9 @@ export function chooseAiV3Action(pack,state,options={}){
     hard:hardExact,hardNodes:hardSlice,strategy,compared:scored.length?viewed:[],unscored:Math.max(0,jobs.length-scored.length),missed,
     plan,roots:jobs.length,followBranches,maxDepth,unexecuted,unexplored,...diagnosis,
     energyKeep:energyView?.strip?energyView:null,
-    stages:diagnose?preferenceStages(scored,[['search',choice],['energy-keep',retained],['generator',generated],['energy-gate',placed],...confirmedTrace.steps,['held',preferred],['final-gate',gated],['returned',kept]]):null,
+    stages:diagnose?preferenceStages(scored,[['search',choice],['energy-keep',retained],...generatorStages(generatedStep),['energy-gate',placed],...confirmedTrace.steps,['held',preferred],['final-gate',gated],['returned',kept]]):null,
     replacedMove:same(kept,choice)?null:choice,
+    ...(alignNote?{align:alignNote}:{}),
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
     score:tracedRow(scored,kept)?.search??null,
     sequence:tracedRow(scored,kept)?.sequence||[]
@@ -731,7 +806,8 @@ export function chooseAiV3Action(pack,state,options={}){
   report.search++;
   const row=scored.find(item=>same(item.action,exact));
   const retained=keptEnergy(pack,state,actor,legal,exact,row,strategy);
-  const generated=preferEnergyGenerator(pack,state,actor,retained,scored);
+  const generatedStep=generatorStep(retained,scored);
+  const generated=generatedStep.gated;
   const placed=gateFrontEnergy(state,actor,exact,generated,scored);
   const confirmedTrace=confirmedChoiceTrace(pack,state,actor,placed,scored);
   const confirmed=confirmedTrace.choice;
@@ -773,7 +849,8 @@ export function chooseAiV3Action(pack,state,options={}){
    unscored:jobs.length-scored.length,
    unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:keptRow?.sequence||[],
    energyKeep:energyView?.strip?energyView:null,
-   stages:diagnose?preferenceStages(scored,[['search',exact],['energy-keep',retained],['generator',generated],['energy-gate',placed],...confirmedTrace.steps,['held',heldChoice],['final-gate',gated],['returned',kept]]):null,
+   stages:diagnose?preferenceStages(scored,[['search',exact],['energy-keep',retained],...generatorStages(generatedStep),['energy-gate',placed],...confirmedTrace.steps,['held',heldChoice],['final-gate',gated],['returned',kept]]):null,
+   ...(alignNote?{align:alignNote}:{}),
    replacedMove:same(kept,exact)?null:exact,
    ...diagnosis
   },started);

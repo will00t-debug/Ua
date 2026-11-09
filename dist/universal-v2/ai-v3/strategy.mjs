@@ -52,6 +52,11 @@ export function normalizeFactors(asked){
  // that adds a body now, but leaves that play unpaid, is not taken while a
  // search is still unfinished. Named variants do not turn it on.
  if(asked.holdInfo===true)factors.holdInfo=true;
+ // Equalize root boundaries inside the same node pool. Off unless asked.
+ if(asked.alignRoots===true)factors.alignRoots=true;
+ // A generator may move a searched front onto energy only with a searched
+ // energy line at the same boundary. Off unless asked.
+ if(asked.evidenceGenerator===true)factors.evidenceGenerator=true;
  return factors;
 }
 export function bindVariant(variant,fn,factors){
@@ -889,6 +894,31 @@ export function evidencedChoice(previous,choice,rows){
  if(after.boundary!==before.boundary)return previous;
  if(after.search<before.search)return previous;
  return choice;
+}
+// The generator preference can name an energy play the beam never ran.
+// That play is not evidence. Keep the searched front unless the energy line
+// was executed, stopped on the same boundary, and did not score worse.
+// A proven win stays. An executed terminal line that is not an immediate
+// loss can still leave a finished loss. An energy line that was not searched
+// is not that save, and a shallower score is not a reason to switch.
+export function generatorEvidenceChoice(previous,choice,rows){
+ if(previous?.type!=='play'||previous.line!=='front'||!previous.uid)return choice;
+ if(choice?.type!=='play'||choice.line!=='energy')return choice;
+ if(JSON.stringify(previous)===JSON.stringify(choice))return choice;
+ const before=rowOf(rows,previous);
+ const after=rowOf(rows,choice);
+ if(provenWin(before))return previous;
+ if(provenWin(after))return choice;
+ if(provenLoss(before)&&terminalSave(after))return choice;
+ if(provenLoss(after))return previous;
+ if(!after||after.executed===false||!Number.isFinite(after.search))return previous;
+ if(!before||before.executed===false||!Number.isFinite(before.search))return previous;
+ if(after.boundary!==before.boundary)return previous;
+ if(after.search<before.search)return previous;
+ return choice;
+}
+function terminalSave(row){
+ return !!row&&row.executed!==false&&row.boundary==='terminal'&&Number.isFinite(row.search)&&row.search>-90000;
 }
 // ab-front uses the same evidence rule, and only for one replacement:
 // our main phase, nothing pending, the search chose a front play, and a
