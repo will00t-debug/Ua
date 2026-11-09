@@ -1,0 +1,69 @@
+{
+  "base": "f10be46f",
+  "factor": "holdInfo",
+  "default": false,
+  "turnsOnReserveAp": false,
+  "newSeeds": false,
+  "rulesEngine": "unchanged",
+  "hardAi": "unchanged",
+  "case": {
+    "key": "steins-gate-raid|8442|0|0",
+    "index": 28,
+    "phase": "move",
+    "life": [7, 7],
+    "ap": 2,
+    "blue": 4,
+    "ownFront": "empty",
+    "opponent": "STG-1-002 standing",
+    "move": "STG-1-023 uid 0-44, blue 4 to 2",
+    "hand": ["STG-1-017", "STG-1-002", "STG-1-008", "STG-1-016", "STG-1-017", "STG-1-001", "STG-1-025"],
+    "withHoldInfo": {
+      "benefit": "block",
+      "strip": false,
+      "reason": "block",
+      "before": 4,
+      "after": 2,
+      "action": "move"
+    },
+    "why": "STG-1-017 onPlay is listed in the raid frame, so a normal entry does not draw. No Mayuri base is on the board, so the raid is illegal. STG-1-008 and STG-1-016 stay payable at 2 blue."
+  },
+  "boundary": {
+    "note": "Not the step-28 decision. Other energy bodies are moved onto the deck and the hand is only STG-1-008.",
+    "default": "move, benefit block, strip false",
+    "holdInfo": "reason info-front, strip true, before 2, after 0, action next",
+    "then": "main plays STG-1-008 to the front; the play draws and opens effect-discard",
+    "orders": [
+      {"topBefore": "STG-1-025:0-46", "handAfterDraw": ["STG-1-025:0-46"], "discard": "0-46"},
+      {"topBefore": "STG-1-001:0-17", "handAfterDraw": ["STG-1-001:0-17"], "discard": "0-17"}
+    ],
+    "preDrawActionsMatch": true,
+    "clock40ms": {"action": "next", "reason": "budget-fallback", "nodes": 46, "dispatches": 46, "softMs": 40, "elapsedMs": 41}
+  },
+  "comparison": {
+    "seeds": [8401, 8402],
+    "titles": ["white-sword", "sword-art-online-raid", "steins-gate-raid"],
+    "games": 24,
+    "rules": "official",
+    "opponent": "hard-search-2",
+    "plan": "tree",
+    "searchSeed": 1,
+    "nodes": 48,
+    "ms": 1000000000,
+    "baseline": "2-22",
+    "candidate": "1-23",
+    "byDeck": {
+      "white-sword": {"baseline": "0-8", "candidate": "0-8"},
+      "sword-art-online-raid": {"baseline": "0-8", "candidate": "0-8"},
+      "steins-gate-raid": {"baseline": "2-6", "candidate": "1-7"}
+    },
+    "relative": {"n": 12, "mean": -0.041666666666666664, "low": -0.125, "high": 0, "containsZero": true},
+    "resultFlip": "steins-gate-raid 8402 first 0 seat 0, baseline win to candidate loss",
+    "actionDifferences": 5,
+    "illegal": 0,
+    "replayFailed": 0,
+    "maxNodes": 48,
+    "dispatchMismatch": 0,
+    "files": ["audit/ai-v3-hold-info-8401-baseline.json", "audit/ai-v3-hold-info-8401.json"],
+    "ranAt": "2026-11-09 10:28–10:32 Asia/Taipei"
+  }
+}

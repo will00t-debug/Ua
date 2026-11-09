@@ -1440,6 +1440,7 @@ test('a short energy line draws before it spends the only payable generator',()=
  const again=ask(packs,swapped);
  assert.equal(drawn.action.type,'extraDraw');
  assert.equal(ask(packs,state,{reserveAp:true}).action.type,'extraDraw');
+ assert.equal(ask(packs,state,{holdInfo:true}).action.type,'extraDraw');
  assert.deepEqual(again.action,drawn.action);
  assert.equal(clock.action.type,'extraDraw');
  let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
@@ -1484,6 +1485,7 @@ test('a zero-cost draw and the one-cost generator both become energy',()=>{
  const drawn=ask(packs,state);
  assert.equal(drawn.action.type,'extraDraw');
  assert.equal(ask(packs,state,{reserveAp:true}).action.type,'extraDraw');
+ assert.equal(ask(packs,state,{holdInfo:true}).action.type,'extraDraw');
  let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
  assert.equal(cursor.players[0].hand.some(card=>card.uid===zero.uid),true);
  assert.equal(readyAp(cursor,0),2);
@@ -1539,6 +1541,7 @@ test('a finished three-card plan still draws and keeps the spent action point',(
  const drawn=ask(packs,state);
  assert.equal(drawn.action.type,'extraDraw');
  assert.equal(ask(packs,state,{reserveAp:true}).action.type,'extraDraw');
+ assert.equal(ask(packs,state,{holdInfo:true}).action.type,'extraDraw');
  assert.deepEqual(ask(packs,hidden).action,drawn.action);
  assert.equal(clock.action.type,'extraDraw');
  let cursor=dispatchUniversalAction(packs,state,drawn.action,{actor:0});
@@ -1632,6 +1635,10 @@ test('a known two-play energy line keeps the action point instead of drawing',()
  assert.equal(stageType(held.trace,'reserve-ap'),'next');
  assert.equal(held.trace.factors.reserveAp,true);
  assert.equal(held.trace.nodesUsed<=48,true);
+ const info=measured(packs,state,{holdInfo:true});
+ assert.equal(info.action.type,'extraDraw');
+ assert.equal(info.trace.factors.holdInfo,true);
+ assert.equal(info.trace.factors.reserveAp,undefined);
  const draw={type:'extraDraw'};
  assert.equal(preferReserveAp(packs,state,actor,draw,[]).type,'extraDraw');
  bindVariant(null,()=>{
@@ -3458,7 +3465,7 @@ test('an unfinished shift check does not borrow another line',()=>{
  }
 });
 test('a covered plain generator is discarded and the next turn keeps the filter chain',()=>{
- for(const variant of [null,'ab-front',{coverage:'root',raidBase:true,gate:'main-front'},{reserveAp:true}])filterChain(variant);
+ for(const variant of [null,'ab-front',{coverage:'root',raidBase:true,gate:'main-front'},{reserveAp:true},{holdInfo:true}])filterChain(variant);
 });
 function filterChain(variant){
  const opened=replayWhiteHandLimit(8301,0,1,29);

@@ -1,6 +1,6 @@
 {
   "baselineCommit": "4a028a15",
-  "decision": "reserveAp stays off. The 8440-8442 flips were diagnosed without changing the planner. Passing makes one more rested energy than drawing in all 12, and neither side attacks that turn. The same visible position covers both the 7 new wins and the 5 lost wins, so there is no split to turn on. The next own main was then observed. The extra energy becomes an attack in three games and a rested body in two others. No legal main was mis-ranked at the same stop, so nothing was changed. No new seeds. 9100 and above stay reserved.",
+  "decision": "reserveAp stays off. The 8440-8442 flips were diagnosed without changing the planner. Passing makes one more rested energy than drawing in all 12, and neither side attacks that turn. The same visible position covers both the 7 new wins and the 5 lost wins, so there is no split to turn on. The next own main was then observed. The extra energy becomes an attack in three games and a rested body in two others. No legal main was mis-ranked at the same stop, so nothing was changed. No new seeds. 9100 and above stay reserved. holdInfo is a separate default-off candidate. The live Mayuri entry text is inside the raid frame, so that move stays. The 8401-8402 pair is 2-22 against 1-23 and the interval contains 0.",
   "reserveAp": {
     "default": false,
     "bounceCorrection": {
@@ -80,6 +80,26 @@
       "script": "scripts/ai-v3-reserve-ap-next-main.mjs",
       "result": "three moved energy bodies attack and two rested bodies enter; no same-stop defect; default stays off"
     }
+  },
+  "holdInfo": {
+    "default": false,
+    "turnsOnReserveAp": false,
+    "files": ["audit/ai-v3-hold-info-8401-baseline.json", "audit/ai-v3-hold-info-8401.json"],
+    "summary": "audit/ai-v3-hold-info-summary.json",
+    "seeds": [8401, 8402],
+    "baseline": "2-22",
+    "candidate": "1-23",
+    "relative": {"n": 12, "mean": -0.041666666666666664, "low": -0.125, "high": 0, "containsZero": true},
+    "byDeck": {
+      "white-sword": {"baseline": "0-8", "candidate": "0-8"},
+      "sword-art-online-raid": {"baseline": "0-8", "candidate": "0-8"},
+      "steins-gate-raid": {"baseline": "2-6", "candidate": "1-7"}
+    },
+    "lost": ["steins-gate-raid 8402 first 0 seat 0"],
+    "replayFailed": 0,
+    "illegal": 0,
+    "maxNodes": 48,
+    "note": "Player-choice compliance and match result are separate. The live step-28 Mayuri draw is raid-frame text, so the candidate still moves. This pair is not a strength claim."
   },
   "search": {
     "seed": 1,

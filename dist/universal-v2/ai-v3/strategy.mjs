@@ -9,6 +9,7 @@ import {universalBp,universalEnergy,universalEnergyByColor,universalAttackDamage
 import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
 import {aot2AttackBlocked} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
+import {raidBoxListed} from '../raid-box.mjs';
 import {sequencedFilter,lineSwitchBody,recoversActionPoints,filterEnergyFirst,lastApLineSwitch} from './eval.mjs';
 
 const probeStack=[];
@@ -47,6 +48,10 @@ export function normalizeFactors(asked){
  // Keeping the action points for a known energy line is a separate opt-in.
  // Named variants do not turn it on.
  if(asked.reserveAp===true)factors.reserveAp=true;
+ // Keeping the energy a known front play needs is a separate opt-in. A move
+ // that adds a body now, but leaves that play unpaid, is not taken while a
+ // search is still unfinished. Named variants do not turn it on.
+ if(asked.holdInfo===true)factors.holdInfo=true;
  return factors;
 }
 export function bindVariant(variant,fn,factors){
@@ -258,9 +263,14 @@ function boardSignature(state,actor){
 // disappears is no longer needed. The curve, the cards actually in hand, and
 // the energy after this move decide that. A lethal swing, a raid the
 // remaining energy can pay, a front that still meets the curve, or a block
-// when the front is empty are reasons to move anyway.
+// when the front is empty are reasons to move anyway. holdInfo is off unless
+// this search asked for it. While it is on, an empty front is not a reason
+// to move when that move leaves a known front play unpaid, and that play
+// would have drawn or looked at new cards. The view is cached per factor, so
+// a default call and an opted-in call on the same state do not share a row.
 function moveKey(action){
- return [action.uid,action.slot??'',action.replaceUid||''].join(':');
+ const hold=searchFactors().holdInfo===true?'hold':'';
+ return [action.uid,action.slot??'',action.replaceUid||'',hold].join(':');
 }
 function viewEntry(view){
  const budget=probeBudget();
@@ -332,11 +342,12 @@ function assessMove(pack,state,actor,action){
  const judged=moveBenefit(pack,state,actor,action,beforeColors,afterColors,after,parts);
  const benefit=judged?.benefit||null;
  const lethal=judged?.lethal||'no';
- const reason=!dropped.length?'energy-held':
+ const infoHold=!!judged?.stranded&&!benefit;
+ const reason=infoHold?'info-front':!dropped.length?'energy-held':
   benefit==='lethal'?'lethal':benefit==='raid'?'raid':benefit==='block'?'block':
   benefit==='enough'?'enough':lethal==='unproven'?'unproven':rawStrip?'curve-hand':'open';
  return {before,after,beforeColors,afterColors,dropped,curve:parts.curve,wantsColor,
-  strip:rawStrip&&!benefit,benefit,lethal,lethalLine:judged?.line||null,reason};
+  strip:(rawStrip&&!benefit)||infoHold,benefit,lethal,lethalLine:judged?.line||null,reason};
 }
 function probeStep(pack,cursor,action){
  if(!takeProbeNode())return {stop:'budget'};
@@ -559,8 +570,8 @@ function minimumLifeLoss(pack,state,actor){
 // Beating one attacker is not a reason to leave the energy line. It is a
 // block when that one legal save is the difference between losing now and
 // still having a life, and keeping the color does not pay a card in hand.
-function lifeSavingMove(pack,state,actor,action,beforeColors,afterColors){
- if(keptEnergyEnablesPlay(pack,state,actor,beforeColors,afterColors))return false;
+function lifeSavingMove(pack,state,actor,action,beforeColors,afterColors,ignoreEnabledPlay=false){
+ if(!ignoreEnabledPlay&&keptEnergyEnablesPlay(pack,state,actor,beforeColors,afterColors))return false;
  const life=state.players?.[actor]?.life?.length||0;
  if(life<=0)return false;
  const open=openSwingDamage(pack,state,actor);
@@ -583,8 +594,61 @@ function lifeSavingMove(pack,state,actor,action,beforeColors,afterColors){
  }
  return after!=null&&life>after;
 }
+// A draw or a look that is printed on the play and is not behind an optional
+// choice or a condition. The live deck is not read. An optional follow-up,
+// such as choosing a character after the draw, is not itself the information.
+const PUBLIC_INFO=new Set(['draw','peekTopOne','peekTopOrBottom','millTop','drawDiscard',
+ 'searchDeckOne','searchDeckMany','searchDeckWhere','searchTopOneBottomDiscard',
+ 'searchTopUpToTwoBottom','searchTopAddOneMillRest','inspectTopArrange','inspectTopAnyOutside']);
+function effectInforms(effect){
+ if(!effect||typeof effect!=='object')return false;
+ if(effect.optional===true||effect.when||effect.whenName||effect.require)return false;
+ if(PUBLIC_INFO.has(effect.op))return true;
+ return Array.isArray(effect.then)&&effect.then.some(effectInforms);
+}
+// Q51: a timing listed in the raid frame does not resolve on an ordinary
+// entry. Printed text that stays inside that frame is not information this
+// play will gain. The lookup is the shared frame table, not a card exception.
+function liveOnPlayInforms(printed){
+ if(!printed||raidBoxListed(printed.id,'onPlay'))return false;
+ return onPlayList(printed).some(effectInforms);
+}
+// The main-phase list is read on a copy. This is not a transition, so it does
+// not take a search node and does not reveal the deck.
+function listedFrontPlay(pack,state,actor,uid){
+ if(state?.pending)return false;
+ const copy=structuredClone(state);
+ copy.phase='main';
+ copy.active=actor;
+ try{
+  return legalUniversalActions(pack,copy).some(action=>action?.type==='play'&&action.line==='front'&&action.uid===uid);
+ }catch{return false;}
+}
+// The hand can pay a front character, that character's entry gains new
+// information, and the energy after this move can no longer pay it. A play
+// that is still payable, or that cannot enter the front, is not this case.
+function infoFrontStranded(pack,state,actor,beforeColors,afterColors){
+ const mine=state.players?.[actor];
+ if(!mine)return false;
+ const catalog=packOf(pack,actor).cards;
+ const ready=(mine.apCards||[]).filter(card=>card?.ready).length;
+ for(const card of mine.hand||[]){
+  const printed=catalog[card?.cardId];
+  if(!printed||printed.type!=='character'||printed.frontForbidden)continue;
+  if(!liveOnPlayInforms(printed))continue;
+  let cost;
+  try{cost=effectiveHandRequiredEnergy(pack,state,actor,printed,card);}catch{continue;}
+  const before=beforeColors[printed.color]||0;
+  const after=afterColors[printed.color]||0;
+  if(!(cost<=before&&cost>after))continue;
+  if(ready<apCost(printed))continue;
+  if(listedFrontPlay(pack,state,actor,card.uid))return true;
+ }
+ return false;
+}
 function moveBenefit(pack,state,actor,action,beforeColors,afterColors,after,parts){
- if(after>=parts.curve)return {benefit:'enough',lethal:'no'};
+ const stranded=searchFactors().holdInfo===true&&infoFrontStranded(pack,state,actor,beforeColors,afterColors);
+ if(after>=parts.curve&&!stranded)return {benefit:'enough',lethal:'no',stranded:false};
  const opp=1-actor;
  const body=(state.players[actor].energy||[]).find(card=>card?.uid===action.uid);
  const catalog=packOf(pack,actor).cards;
@@ -596,7 +660,7 @@ function moveBenefit(pack,state,actor,action,beforeColors,afterColors,after,part
    const confirmed=confirmMoveLethal(pack,state,actor,action);
    lethal=confirmed.verdict;
    line=confirmed.line;
-   if(lethal==='lethal')return {benefit:'lethal',lethal,line};
+   if(lethal==='lethal')return {benefit:'lethal',lethal,line,stranded};
   }
   const bp=bpOf(pack,state,body);
   const baseName=squash(catalog[body.cardId]?.name);
@@ -606,17 +670,21 @@ function moveBenefit(pack,state,actor,action,beforeColors,afterColors,after,part
     if(!printed?.raidName)continue;
     const names=[printed.raidName,...(printed.raidBaseNames||[])].map(squash);
     if(!names.includes(baseName))continue;
-    if((printed.energy||0)<=(afterColors[printed.color]||0))return {benefit:'raid',lethal,line};
+    if((printed.energy||0)<=(afterColors[printed.color]||0))return {benefit:'raid',lethal,line,stranded};
    }
   }
   const ownFront=(state.players[actor].front||[]).filter(Boolean);
   const threats=(state.players[opp].front||[]).filter(card=>card?.ready);
   // One smaller body is not a block. The ready attackers that are still
   // larger stay, and dropping the color the hand needs is still a strip.
-  if(!ownFront.length&&threats.length&&threats.every(wall=>bp>=bpOf(pack,state,wall)))return {benefit:'block',lethal,line};
-  if(lifeSavingMove(pack,state,actor,action,beforeColors,afterColors))return {benefit:'block',lethal,line};
+  // Matching the front while holdInfo is on does not justify a move that
+  // leaves a known information play unpaid. A confirmed lethal, a raid the
+  // remaining energy pays, and a move that is the difference between losing
+  // now and still having a life stay available.
+  if(!stranded&&!ownFront.length&&threats.length&&threats.every(wall=>bp>=bpOf(pack,state,wall)))return {benefit:'block',lethal,line,stranded};
+  if(lifeSavingMove(pack,state,actor,action,beforeColors,afterColors,stranded))return {benefit:'block',lethal,line,stranded};
  }
- return {benefit:null,lethal,line};
+ return {benefit:null,lethal,line,stranded};
 }
 export function strategyParts(pack,state,actor){
  const catalog=packOf(pack,actor).cards;
