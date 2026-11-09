@@ -492,7 +492,7 @@ export function chooseAiV3Action(pack,state,options={}){
   const scoreJob=(action,pass,cap,lineDeadline)=>{
    let totalScore=0,n=0,turns=0,responses=0,decisions=0,nodes=0,hits=0,settled=0;
    let pending=null,phase=null,boundary=null,cut=null,sequence=null,sample=null,failReason=null;
-   let followBranches=0,maxDepth=1;
+   let followBranches=0,maxDepth=1,lastLine=null,lastSlice=0;
    for(let w=0;w<worlds.length;w++){
     if(pool.n<=0){report.budget++;failReason=failReason||'nodes';break;}
     // The share above used an earlier sample. Re-read before this world, and
@@ -505,6 +505,8 @@ export function chooseAiV3Action(pack,state,options={}){
      parentDeadline:deadline,now,actorDecisions,opponentDecisions,plan,strategy,pass,
      legalCache:budget.legalCache,profile:options.profile||null
     });
+    lastLine=line||lastLine;
+    lastSlice=slice;
     if(line?.unexplored?.length)unexplored.push(...line.unexplored);
     if(!line||line.executed===false||!Number.isFinite(line.search)){
      const kind=line?.limit==='time'||line?.cut==='time'?'time':line?.limit==='nodes'||line?.cut==='nodes'?'nodes':stopReason();
@@ -529,7 +531,26 @@ export function chooseAiV3Action(pack,state,options={}){
     hits+=line.transpositionHits||0;
     report.unsupported+=line.unsupported||0;
    }
-   if(!n)return {failed:true,reason:failReason||stopReason(),action};
+   if(!n){
+    // A caller that asks for a profile can see why a root spent its slice
+    // and still produced no finite score. The decision itself is unchanged.
+    if(Array.isArray(options.profile?.dropped)){
+     const kinds={};
+     for(const step of lastLine?.sequence||[])kinds[step.kind||'none']=(kinds[step.kind||'none']||0)+1;
+     options.profile.dropped.push({
+      type:action?.type||null,line:action?.line||null,uid:action?.uid??null,mode:action?.mode||null,
+      slice:lastSlice,executed:lastLine?.executed===true,search:Number.isFinite(lastLine?.search)?lastLine.search:null,
+      nodes:lastLine?.nodes||0,boundary:lastLine?.boundary||null,cut:lastLine?.cut||null,limit:lastLine?.limit||null,
+      stopReason:lastLine?.stopReason||null,stopPending:lastLine?.stopPending||null,stopPlayer:lastLine?.stopPlayer??null,
+      pending:lastLine?.pending||null,phase:lastLine?.phase||null,
+      responses:lastLine?.responses||0,actorDecisions:lastLine?.actorDecisions||0,
+      opponentTurns:lastLine?.opponentTurns||0,orderSteps:lastLine?.orderSteps||0,
+      followBranches:lastLine?.followBranches||0,maxDepth:lastLine?.maxDepth||1,
+      kinds,reason:failReason||stopReason()
+     });
+    }
+    return {failed:true,reason:failReason||stopReason(),action};
+   }
    report.transpositionHits=(report.transpositionHits||0)+hits;
    return {action,search:totalScore/n,opponentTurns:turns,responses,actorDecisions:decisions,
     nodes,settled:settled===n,pending,phase,boundary,cut,followBranches,maxDepth,sequence,
@@ -751,6 +772,23 @@ export function chooseAiV3Action(pack,state,options={}){
   })():backup;
   const energySample=legal.find(action=>action.type==='move');
   const energyView=diagnose&&energySample?cachedMoveDevelopment(pack,state,actor,energySample):null;
+  if(options.profile){
+   options.profile.gate={
+    scored:scored.length,comparable:comparable.length,contested:!!contested,
+    discardIncomplete:!!discardIncomplete,discardOpen:!!discardOpen,idleOnly:!!idleOnly,
+    constructiveCut:!!constructiveCut,missedDevelopment:!!missedDevelopment,
+    provenWin:!!provenWin,alignRefused:!!alignRefused
+   };
+   options.profile.lines=scored.map(row=>({
+    type:row.action?.type||null,line:row.action?.line||null,uid:row.action?.uid??null,
+    boundary:row.boundary||null,search:Number.isFinite(row.search)?Math.round(row.search*10)/10:null,
+    nodes:row.nodes||0,cut:row.cut||null,phase:row.phase||null,pending:row.pending||null,
+    stopPending:row.stopPending||null,stopPlayer:row.stopPlayer??null,
+    leafTurn:row.leafTurn??null,leafActive:row.leafActive??null,leafPendingPlayer:row.leafPendingPlayer??null,
+    responses:row.responses||0,opponentTurns:row.opponentTurns||0,actorDecisions:row.actorDecisions||0,
+    followBranches:row.followBranches||0,maxDepth:row.maxDepth||1,develops:row.develops===true,settled:!!row.settled
+   }));
+  }
   // Missing coverage, a spent clock, or an unfinished discard does not
   // throw away a win this pool already paid for. The backup stays for
   // every line that has not won.
