@@ -107,10 +107,14 @@ export function walkTo(deck,game,step){
 }
 
 function rowOf(trace,action){
- const rows=[...(trace?.candidates||[]),...(trace?.unexecuted||[])];
- return rows.find(row=>sameId(row.action,action))||null;
+ // A finished comparison stores the rows on candidates. A budget fallback
+ // stores the same finite scores on compared and leaves candidates empty.
+ // An unexecuted stub must not hide the row that actually scored.
+ const rows=[...(trace?.candidates||[]),...(trace?.compared||[]),...(trace?.unexecuted||[])];
+ const hits=rows.filter(row=>sameId(row.action,action));
+ return hits.find(row=>row.executed!==false&&Number.isFinite(row.search))||hits[0]||null;
 }
-function rootsOf(trace){
+export function rootsOf(trace){
  const planned=trace?.rootPlan||[];
  return planned.map(note=>{
   const action=note.action||note;
@@ -191,6 +195,8 @@ export function ask(packs,state,actor,extra){
   rewrite,finishedBetter,unfinishedHigher,roots,missingGroups,absent,boundaries,
   unequalBoundaries:boundaries.length>1,
   developingUnexecuted:roots.filter(row=>!row.executed&&row.develops).length,
+  // Scores on compared count. This is a pool that never wrote a finite root
+  // score, not a fallback whose scores were stored beside candidates.
   spentWithoutScore:roots.length>0&&executed.length===0&&nodesUsed>0,
   cutShort:cutShort.length,
   factors:{holdInfo:factors.holdInfo===true,reserveAp:factors.reserveAp===true},

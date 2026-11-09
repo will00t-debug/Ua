@@ -778,7 +778,8 @@
     "unscoredFallback": {
       "decisions": 250,
       "returnedInsideRoots": 205,
-      "returnedOutsideRoots": 45
+      "returnedOutsideRoots": 45,
+      "reading": "The name is historical. These 250 are budget fallbacks. Each root has a finite score on compared, and the earlier reader looked only at candidates. None of the 250 is a search that spent the pool without a score. rootsOf now reads compared."
     },
     "blockBattle": "The eight finishedSameBoundary rows without a rewrite are all block choices. Their comparison uses battleScore. Where the battle scores differ, the chosen line has the better battle score. Where they tie, a tie-break remains. The static search gap is not an eval inversion."
   },
@@ -798,7 +799,7 @@
       "depth": 845,
       "coverage": 8,
       "score": 8,
-      "reading": "depth is any decision with a root cut before returned or terminal, unequal boundaries, or a pool spent with no score. It is not 845 decisions whose action would change. 4 of the 13 deepened snapshots changed at 192 nodes. coverage is a whole category missing from the beam. score is a higher static number on another returned or terminal line, and the block check shows those eight are battle-score ties or battle-score wins."
+      "reading": "depth is any decision with a root cut before returned or terminal, or unequal boundaries. The old 'pool spent with no score' clause counted budget fallbacks whose scores were on compared. It is not 845 decisions whose action would change. 4 of the 13 deepened snapshots changed at 192 nodes. coverage is a whole category missing from the beam. score is a higher static number on another returned or terminal line, and the block check shows those eight are battle-score ties or battle-score wins."
     },
     "notThePrimaryCause": [
       "Front, raid, draw, attack, and move each had a representative in the beam whenever they were legal. Only energy was absent as a category, in 8 of 1267 decisions. Leaving other card groups outside the width-4 beam happened in 278 decisions and is the beam width, not a missing category.",
@@ -836,14 +837,14 @@
       {
         "rank": 3,
         "cause": "coverage",
-        "title": "When the 48-node pool scores nothing, the fallback can return a legal action that never entered the beam.",
+        "title": "When the scored lines do not share a stop, the legal backup can return an action that never entered the beam.",
         "evidence": [
-          "250 decisions spend the pool and record no scored root. All 250 are budget fallbacks. 205 of the returned actions are still one of the searched roots. 45 are not.",
-          "sword-art-online-raid|8401|0|1 step 67, full hash b33c262781bec2a0fd12cc315de5a167ffd7eab8bd07e1491c40d56d74bdf78c. 75 legal actions. Energy plays are legal and are the missing category. The four roots are raid-energy 1-7, raid 1-7, front 1-13, and next, and none receives a score. The fallback returns raid uid 1-13, which is outside those roots. 192 and 768 search the same four roots, all still yielded, and play the front of uid 1-13. The real 40ms clock cuts on time and returns raid-energy uid 1-7. Energy still does not enter at 768. hard-search-2 raids uid 1-15. No finished comparison exists, so the missing energy play is not shown to be better."
+          "250 decisions are budget fallbacks. Each has a finite score on compared. The earlier 'no scored root' sentence read only candidates. 205 of the returned actions are still one of the searched roots. 45 are not.",
+          "sword-art-online-raid|8401|0|1 step 67, full hash b33c262781bec2a0fd12cc315de5a167ffd7eab8bd07e1491c40d56d74bdf78c. 75 legal actions. Energy plays are legal and are the missing category. The four roots are raid-energy 1-7, raid 1-7, front 1-13, and next. All four have finite scores and stop in different places. The fallback returns raid uid 1-13, which is outside those roots. 192 and 768 search the same four roots, all still yielded, and play the front of uid 1-13. The real 40ms clock cuts on time and returns raid-energy uid 1-7. Energy still does not enter at 768. hard-search-2 raids uid 1-15. The stops are not comparable, so the missing energy play is not shown to be better."
         ],
-        "expectedImpact": "The 45 unscored decisions would return a searched root instead of a card the beam excluded. The other 205 already do. The eight missing-energy decisions are a separate beam-width question, and the one that was deepened still does not play energy at 768.",
+        "expectedImpact": "The 45 outside-beam backups would return a searched root instead of a card the beam excluded. The other 205 already do. The eight missing-energy decisions are a separate beam-width question, and the one that was deepened still does not play energy at 768.",
         "sideEffects": "The current backup is allowed to use the full rank order, including a developing play outside the width-4 beam. Restricting it can pass when that outside play was the ranker's preference.",
-        "suggestedFix": "Record the case. Do not make it the first code change. A later default-off probe can force the unscored fallback to stay inside the beam and replay these 45. It should not reserve a new energy slot on the strength of this one position.",
+        "suggestedFix": "Record the case. Do not make it the first code change. A later default-off probe can force this outside-beam backup to stay inside the beam and replay these 45. It should not reserve a new energy slot on the strength of this one position. The scores were already on compared.",
         "implementNext": false
       }
     ],

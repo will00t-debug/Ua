@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Replay the 250 loss-game decisions that spent the 48-node pool and kept
-// no finite root score. Search seed 1, clockless. This does not change the
-// default policy. A profile records why each root was dropped.
+// Replay the 250 loss-game budget fallbacks once labeled as having no
+// score. Those roots already have finite scores on compared. Search seed 1,
+// clockless. This does not change the default policy. A profile records
+// where each scored line stopped.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {performance} from 'node:perf_hooks';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
