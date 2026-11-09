@@ -6,7 +6,7 @@ import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLI
 import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
-import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,mainFrontEvidenceChoice,generatorEvidenceChoice,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
+import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,mainFrontEvidenceChoice,generatorEvidenceChoice,laterEnergyCandidates,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
 import {keepScore} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
@@ -832,7 +832,14 @@ export function chooseAiV3Action(pack,state,options={}){
    },started);
   }
   const observation=actorObservation(pack,state,actor);
-  const poolRows=provenWin?winRows:comparable;
+  // laterEnergy is opt-in. Unfinished scores from different phases are not
+  // ranked. An executed energy line that reached a later phase replaces an
+  // earlier front of another card as the set being ranked. A proven win
+  // still comes from winRows. Raids and same-card energy stay put.
+  const later=searchFactors().laterEnergy===true?laterEnergyCandidates(state,actor,scored,comparable):null;
+  const laterLines=later?.length?comparedLines(later):null;
+  const phaseGuarded=laterLines?.rows?.length&&!laterLines.contested?laterLines.rows:comparable;
+  const poolRows=provenWin?winRows:phaseGuarded;
   const anchor=poolRows.reduce((best,row)=>row.search>best.search?row:best).action;
   const blended=continueStartedWave(state,poolRows,discardTie(pack,state,actor,poolRows,blendRoot(poolRows,action=>{
    const mine=learnBonus(options.prior,observation,action,actor);

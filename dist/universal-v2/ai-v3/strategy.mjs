@@ -57,6 +57,10 @@ export function normalizeFactors(asked){
  // A generator may move a searched front onto energy only with a searched
  // energy line at the same boundary. Off unless asked.
  if(asked.evidenceGenerator===true)factors.evidenceGenerator=true;
+ // An executed energy play that reached a later phase is not dropped for an
+ // earlier front of another card. Off unless asked. Named variants and the
+ // other switches do not turn it on.
+ if(asked.laterEnergy===true)factors.laterEnergy=true;
  return factors;
 }
 export function bindVariant(variant,fn,factors){
@@ -994,6 +998,38 @@ function frontBeatsEnergy(choice,rows){
  return matched.every(row=>front.search>=row.search);
 }
 function provenLoss(row){return row?.boundary==='terminal'&&row.search<=-90000;}
+const PHASE_RANK={start:1,move:2,main:3,attack:4};
+const STOP_RANK={terminal:5,returned:4,yielded:3,pending:2,open:1};
+function phaseRank(row){return PHASE_RANK[row?.phase]||0;}
+function stopRank(row){return STOP_RANK[row?.boundary]||0;}
+// Idle main only. The comparable set is an unfinished front, and an executed
+// energy play of a different card stopped at a later phase. Those scores are
+// not ranked against each other. The caller receives the later energy lines
+// so the earlier front is not the winner by default. A returned or terminal
+// line, a raid already in the comparison, and the same card's own energy
+// stay with the existing comparison. A proven loss is not a landing spot.
+export function laterEnergyCandidates(state,actor,scored,comparable){
+ if(!state||state.phase!=='main'||state.pending||state.active!==actor)return null;
+ if(!comparable?.length)return null;
+ if(comparable.some(row=>row?.boundary==='returned'||row?.boundary==='terminal'))return null;
+ if((scored||[]).some(row=>row?.executed!==false&&row.boundary==='terminal'&&row.search>=90000))return null;
+ const front=row=>row?.executed!==false&&row.action?.type==='play'&&row.action.line==='front';
+ const energy=row=>row?.executed!==false&&row.action?.type==='play'&&row.action.line==='energy'&&Number.isFinite(row.search);
+ const developing=comparable.filter(row=>row?.action?.type!=='next'&&row?.action?.type!=='extraDraw');
+ if(!developing.length||!developing.every(front))return null;
+ if(comparable.some(row=>row?.action?.type==='raid'))return null;
+ const frontPhase=Math.max(...developing.map(phaseRank));
+ const frontUids=new Set(developing.map(row=>row.action.uid));
+ const later=(scored||[]).filter(row=>energy(row)&&!provenLoss(row)&&!frontUids.has(row.action.uid)&&phaseRank(row)>frontPhase);
+ if(!later.length)return null;
+ const furthest=Math.max(...later.map(phaseRank));
+ const reached=later.filter(row=>phaseRank(row)===furthest);
+ const deepest=Math.max(...reached.map(stopRank));
+ const sameStop=reached.filter(row=>stopRank(row)===deepest);
+ const raids=(scored||[]).filter(row=>row?.executed!==false&&row.action?.type==='raid'&&!provenLoss(row)&&
+  phaseRank(row)>=furthest&&stopRank(row)>=deepest);
+ return [...sameStop,...raids];
+}
 // A finished win stays. The one finished line that is not an immediate loss
 // stays too. An energy preference that has not itself won is not a substitute.
 function provenChoice(choice,rows){
