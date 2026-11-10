@@ -24,6 +24,10 @@ test('a phase lane is the idle phase, and every pending choice is its own lane',
  assert.equal(sourceFor('start', 'main'), 'v3');
  assert.equal(sourceFor('pending', 'pending'), 'hard');
  assert.equal(sourceFor('battle', 'attack'), 'v3');
+ assert.equal(sourceFor('hybrid-main-v1', 'main'), 'hard');
+ assert.equal(sourceFor('hybrid-main-v1', 'pending'), 'v3');
+ assert.equal(sourceFor('hybrid-main-v1', 'start'), 'v3');
+ assert.equal(sourceFor('hybrid-main-v1', 'battle'), 'v3');
  assert.equal(coversRoot(
   {type: 'play', uid: '0-20', line: 'energy', mode: null},
   {type: 'play', uid: '0-20', line: 'energy', slot: 1}), true);

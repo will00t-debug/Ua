@@ -51,6 +51,7 @@ export function laneOf(state) {
 export function sourceFor(mode, lane) {
  if (mode === 'hard') return 'hard';
  if (mode === 'v3') return 'v3';
+ if (mode === HYBRID_MAIN_POLICY) return hybridSource(lane);
  return mode === lane ? 'hard' : 'v3';
 }
 
