@@ -5,27 +5,14 @@
   "git": {
     "deploymentEnabled": {
       "**": false,
-      "main": true
+      "main": true,
+      "cursor/hybrid-main-v1-preview-0ca0": true
     }
   },
   "rewrites": [
     {
       "source": "/",
       "destination": "/online.html"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/",
-      "missing": [{"type": "query", "key": "stay"}],
-      "destination": "https://ua-arena.will00t.workers.dev/online.html",
-      "permanent": false
-    },
-    {
-      "source": "/:path*",
-      "missing": [{"type": "query", "key": "stay"}],
-      "destination": "https://ua-arena.will00t.workers.dev/:path*",
-      "permanent": false
     }
   ]
 }
