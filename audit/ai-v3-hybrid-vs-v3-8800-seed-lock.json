@@ -1,0 +1,33 @@
+{
+  "programSha": "494f6a9e1dbfdbe226ffae07381e8ceba997e65c",
+  "namedBeforeResults": true,
+  "seeds": [8800, 8801, 8802, 8803, 8804, 8805, 8806, 8807, 8808, 8809, 8810, 8811, 8812, 8813, 8814, 8815, 8816, 8817, 8818, 8819, 8820, 8821, 8822, 8823, 8824, 8825, 8826, 8827, 8828, 8829, 8830, 8831, 8832, 8833, 8834, 8835, 8836, 8837, 8838, 8839, 8840, 8841, 8842, 8843, 8844, 8845, 8846, 8847, 8848, 8849],
+  "reservedFrom": 9100,
+  "notReused": [8600, 8601, 8602, 8700, 8701, 8702],
+  "policies": {
+    "hybrid": "hybrid-main-v1",
+    "opponent": "ai-v3-beam-1"
+  },
+  "opponentIsNot": "hard-search-2",
+  "nodes": 48,
+  "ms": 40,
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "experiments": "off",
+  "decks": [
+    {"id": "white-sword", "seeds": [8800, 8801, 8802, 8803, 8804, 8805, 8806, 8807, 8808, 8809, 8810, 8811, 8812, 8813, 8814, 8815, 8816], "games": 68},
+    {"id": "sword-art-online-raid", "seeds": [8817, 8818, 8819, 8820, 8821, 8822, 8823, 8824, 8825, 8826, 8827, 8828, 8829, 8830, 8831, 8832, 8833], "games": 68},
+    {"id": "steins-gate-raid", "seeds": [8834, 8835, 8836, 8837, 8838, 8839, 8840, 8841, 8842, 8843, 8844, 8845, 8846, 8847, 8848, 8849], "games": 64}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "games": 200,
+  "blocks": 50,
+  "opening": "Same seed deals seat 0 then seat 1 before either mulligan. The shared hard mulligan runs in first-player order, then LIFE is dealt. Swapping the hybrid seat at the same first replays that opened state. Changing first changes who mulligans first. Both seats use the same deck list.",
+  "bootstrap": "1000 resamples of the 50 seed-deck blocks of four games. Percentile indexes 25 and 974. Generator mulberry32(8800). A block rate is hybrid wins divided by four. The interval contains 50 percent when the low percentile is at most 0.5 and the high percentile is at least 0.5.",
+  "note": "8800–8849 were named before any of these games. The opponent is ai-v3-beam-1 on every decision, not hard-search-2. 8600–8702 are not reused. 9100+ is not used. These seeds are not rerun after the result is known."
+}
