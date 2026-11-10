@@ -15,6 +15,7 @@ import {matchGrid} from '../dist/universal-v2/ai-v3/compare.mjs';
 import {applySharedOpening, cloneMatch, newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {legalUniversalActions, dispatchUniversalAction, universalBp, universalEnergyByColor} from '../dist/universal-v2/engine.mjs';
 import {chooseStrengthenedHardAction, resetHardAiReport, lastHardAiTrace, HARD_AI_POLICY} from '../dist/universal-v2/hard-ai.mjs';
+import {chooseHybridMainAction, hybridLane, hybridSource, HYBRID_MAIN_POLICY} from '../dist/universal-v2/ai-v3/hybrid-main.mjs';
 
 export const PHASE_MODES = ['v3', 'hard', 'start', 'move', 'main', 'battle', 'pending'];
 export const PHASE_TITLES = ['white-sword', 'sword-art-online-raid', 'steins-gate-raid'];
@@ -40,12 +41,7 @@ export function actionKey(action) {
 }
 
 export function laneOf(state) {
- if (state?.pending) return 'pending';
- if (state?.phase === 'start') return 'start';
- if (state?.phase === 'move') return 'move';
- if (state?.phase === 'main') return 'main';
- if (state?.phase === 'attack') return 'battle';
- return 'other';
+ return hybridLane(state);
 }
 
 // 'hard' and 'v3' are the two reference policies. A phase name uses hard only
@@ -114,13 +110,18 @@ export function chooseDecision(packs, state, mode, seat = null) {
  const lane = laneOf(state);
  // The swapped phase applies only to the measured seat. The other seat is
  // always frozen hard-search-2, including in the pure v3 reference.
- const source = seat == null || actor === seat ? sourceFor(mode, lane) : 'hard';
+ const measured = seat == null || actor === seat;
+ const routed = measured && (mode === 'main' || mode === HYBRID_MAIN_POLICY);
+ const source = routed ? hybridSource(lane) : (measured ? sourceFor(mode, lane) : 'hard');
  const legal = legalUniversalActions(packs, state);
  const budget = activeSearch();
  const started = performance.now();
  let raw = null;
  let trace = null;
- if (source === 'hard') {
+ if (routed) {
+  raw = chooseHybridMainAction(packs, state, {actor, ...MATCH_LIMITS, ...budget});
+  trace = source === 'hard' ? lastHardAiTrace() : lastAiV3Trace();
+ } else if (source === 'hard') {
   resetHardAiReport();
   raw = chooseStrengthenedHardAction(packs, state, {nodes: budget.nodes, ms: budget.ms, seed: budget.seed});
   trace = lastHardAiTrace();
@@ -556,7 +557,7 @@ export function summarizeGames(games, baseline) {
  return {
   base: PHASE_SEEDS.join(',') === '8401,8402'
    ? '340f781e3ea8314bf011622730a77a9ca948872b'
-   : '4cb7796a7350bd64e7d13e8724793c0131640aac',
+   : '00edd601b22439875713aeb06f35ca9b1a6717f4',
   rules: 'official', opponent: HARD_AI_POLICY, searchSeed: budget.seed,
   nodes: budget.nodes, clock: budget.ms === 1e9 ? '1e9' : String(budget.ms), liveBudget: MATCH_LIMITS,
   hardPolicy: HARD_AI_POLICY, defaultAi: 'unchanged',

@@ -31,6 +31,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {chooseAiV3Action,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
+import {HYBRID_MAIN_POLICY} from './universal-v2/ai-v3/hybrid-main.mjs';
 import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from './universal-v2/ai-v3/worker-entry.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
@@ -1582,6 +1583,13 @@ function render(){
      resetAi();app.error='';
      if(uiActor(app.state)===1)driveAi();
      else render();
+    },'btn small'):null,
+   s.status==='playing'?
+    btn(hybridMainOn()?'關閉主階段混合':'主階段混合實驗',()=>{
+     setHybridMain(!hybridMainOn());
+     resetAi();app.error='';
+     if(uiActor(app.state)===1)driveAi();
+     else render();
     },'btn small'):null));
  target.append(title,coachBar());
  if(s.status==='playing'&&uiActor(s)===1){
@@ -1771,6 +1779,14 @@ function manualAiStep(){
  }
 }
 function driveAi(){
+ if(hybridMainOn()){
+  if(document.body)document.body.dataset.aiPolicy=HYBRID_MAIN_POLICY;
+  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
+  app.busy=true;app.autoMoves=0;app.sequence++;
+  app.aiPhaseKey=null;app.aiPhaseCount=0;
+  driveSearchPreview(app.sequence,HYBRID_MAIN_POLICY);
+  return;
+ }
  if(searchPreviewOn()){
   if(document.body)document.body.dataset.aiPolicy=AI_V3_POLICY;
   if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
@@ -1839,8 +1855,17 @@ function driveAi(){
  app.aiTimer=setTimeout(chunk,16);render();
 }
 const SEARCH_PREVIEW_KEY='ua-ai-v3-preview';
+const HYBRID_MAIN_KEY='ua-hybrid-main-v1';
 function searchPreviewOn(){
  try{return localStorage.getItem(SEARCH_PREVIEW_KEY)==='1';}catch{return false;}
+}
+function hybridMainOn(){
+ try{return localStorage.getItem(HYBRID_MAIN_KEY)==='1';}catch{return false;}
+}
+function setHybridMain(on){
+ try{localStorage.setItem(HYBRID_MAIN_KEY,on?'1':'0');}catch{}
+ const box=$('hybrid-main-v1');
+ if(box)box.checked=!!on;
 }
 function setSearchPreview(on){
  try{localStorage.setItem(SEARCH_PREVIEW_KEY,on?'1':'0');}catch{}
@@ -1872,11 +1897,12 @@ function commitAiAction(choice,reason){
  app.aiCompletedSteps++;
  app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
 }
-function driveSearchPreview(sequence){
- if(document.body)document.body.dataset.aiPolicy=AI_V3_POLICY;
+function driveSearchPreview(sequence,policy=null){
+ const hybrid=policy===HYBRID_MAIN_POLICY;
+ if(document.body)document.body.dataset.aiPolicy=hybrid?HYBRID_MAIN_POLICY:AI_V3_POLICY;
  const step=()=>{
   if(sequence!==app.sequence)return;
-  if(!searchPreviewOn()){app.busy=false;driveAi();return;}
+  if(hybrid?!hybridMainOn():!searchPreviewOn()){app.busy=false;driveAi();return;}
   if(!app.state||app.state.status!=='playing'||uiActor(app.state)!==1){
    app.busy=false;app.aiTimer=null;app.error='';render();return;
   }
@@ -1890,7 +1916,8 @@ function driveSearchPreview(sequence){
   const requestId=++searchRequest;
   const stateVersion=(app.aiStateVersion=(app.aiStateVersion||0)+1);
   const request=buildAiV3Request(app.packs,app.state,actor,{
-   requestId,stateVersion,seed:stateVersion,nodes:MATCH_LIMITS.nodes,ms:MATCH_LIMITS.ms
+   requestId,stateVersion,seed:stateVersion,nodes:MATCH_LIMITS.nodes,ms:MATCH_LIMITS.ms,
+   ...(hybrid?{policy:HYBRID_MAIN_POLICY}:{})
   });
   let settled=false;
   const finish=(action,reason)=>{
@@ -1920,13 +1947,17 @@ function driveSearchPreview(sequence){
   const worker=request?searchWorkerHandle():null;
   if(!worker||!request){
    try{
-    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
-    finish(action,null);
-   }catch{finish(null,'search-failed');}
+    if(hybrid)finish(request?handleAiV3Request(request).action:null,request?null:'no-world');
+    else{
+     const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
+     finish(action,null);
+    }
+   }catch{finish(null,hybrid?'hybrid-failed':'search-failed');}
    return;
   }
   const timer=setTimeout(()=>{
    worker.removeEventListener('message',onMessage);
+   if(hybrid){finish(null,'worker-timeout');return;}
    try{
     const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
     finish(action,'worker-timeout');
@@ -2337,6 +2368,12 @@ if(!IS_BATTLE_PAGE){
   searchPreview.checked=searchPreviewOn();
   searchPreview.addEventListener('change',()=>setSearchPreview(searchPreview.checked));
  }
+ const hybridMain=$('hybrid-main-v1');
+ if(hybridMain){
+  hybridMain.checked=hybridMainOn();
+  hybridMain.addEventListener('change',()=>setHybridMain(hybridMain.checked));
+ }
+ document.documentElement.dataset.hybridMainReady='1';
  syncMatchLobby();
  importAccountLobbyDecks();
 }else{
