@@ -67,6 +67,14 @@ test('opening UI never silently traps either choice behind a stale AI busy state
  assert.match(action,/const nextReplay=appendUniversalReplay/);
  for(const file of ['dist/universal-v2-battle.html','dist/universal-v2-preview.html']){
   const html=readFileSync(new URL('../'+file,import.meta.url),'utf8');
-  assert.match(html,/universal-v2-preview\.mjs\?v=20261110hybridmain1/);
+  assert.match(html,/universal-v2-preview\.mjs\?v=20261110aipolicy1/);
  }
+ const lobby=readFileSync(new URL('../dist/universal-v2-preview.html',import.meta.url),'utf8');
+ assert.match(lobby,/id="ai-policy-live"/);
+ assert.match(lobby,/id="use-ai-v3"/);
+ assert.match(lobby,/id="use-hybrid-main"/);
+ assert.match(lobby,/id="use-difficulty-ai"/);
+ assert.doesNotMatch(lobby,/id="ai-v3-preview"[^>]*checked/);
+ assert.doesNotMatch(lobby,/id="hybrid-main-v1"[^>]*checked/);
+ assert.match(source,/else\{\s*\/\/ Draw the player's controls[\s\S]*?app\.busy=false;app\.aiTimer=null;app\.error='';\s*render\(\);/);
 });

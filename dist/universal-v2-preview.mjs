@@ -1546,11 +1546,13 @@ function render(){
    el('h2',{text:'尚未開始對戰'}),
    el('p',{text:'請先在對戰設定頁選擇雙方牌組與 AI 難度，再開始 V2 對戰。'}),
    el('a',{href:'/universal-v2-preview.html',text:'返回對戰設定'})));
+  paintAiPolicy();
   return;
  }
  const s=app.state;
  if(s.phase==='setup'&&s.pending?.kind==='opening-mulligan'){
   renderOpeningMulligan(target,s);
+  paintAiPolicy();
   return;
  }
  const v=universalPublicView(app.packs,s,0),legal=presentLifeRaid(legalUniversalActions(app.packs,s));
@@ -1594,7 +1596,7 @@ function render(){
  target.append(title,coachBar());
  if(s.status==='playing'&&uiActor(s)===1){
   target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
-   el('b',{text:app.busy?'AI 自動操作中':'AI 目前暫停'}),
+   el('b',{text:(app.busy?'AI 自動操作中':'AI 目前暫停')+' · '+currentAiPolicy()}),
    el('span',{text:'　進度 '+app.aiCompletedSteps+' 步 · 最近：'+app.lastAiProgress+
     ' · 待處理合法動作 '+legal.length+
     '。若沒有反應，按上方「手動推進 AI 一步」；按一下就會使用 V2 合法動作推進一次。'})));
@@ -1664,6 +1666,7 @@ function render(){
  if(handAfterRender)handAfterRender.scrollLeft=oldHandScroll;
  // Replacing the entire match subtree must not jump the desktop viewport.
  if(IS_BATTLE_PAGE&&preserveScroll)window.scrollTo(window.scrollX,oldScroll);
+ paintAiPolicy();
 }
 function applyAction(a){
  if(a?.lifeRaidSource)a=a.lifeRaidSource;
@@ -1866,11 +1869,60 @@ function setHybridMain(on){
  try{localStorage.setItem(HYBRID_MAIN_KEY,on?'1':'0');}catch{}
  const box=$('hybrid-main-v1');
  if(box)box.checked=!!on;
+ paintAiPolicy();
 }
 function setSearchPreview(on){
  try{localStorage.setItem(SEARCH_PREVIEW_KEY,on?'1':'0');}catch{}
  const box=$('ai-v3-preview');
  if(box)box.checked=!!on;
+ paintAiPolicy();
+}
+function currentAiPolicy(){
+ if(hybridMainOn())return HYBRID_MAIN_POLICY;
+ if(searchPreviewOn())return AI_V3_POLICY;
+ const difficulty=app.aiDifficulty||$('ai-level')?.value||'normal';
+ return aiPolicyFor(difficulty);
+}
+function paintAiPolicy(){
+ const policy=currentAiPolicy();
+ if(document.body)document.body.dataset.aiPolicy=policy;
+ const lane=document.documentElement.dataset.aiLane||'';
+ const source=document.documentElement.dataset.aiSource||'';
+ const route=policy===HYBRID_MAIN_POLICY&&lane?' · 上一手 '+lane+'/'+source:'';
+ const text='目前 AI policy：'+policy+route;
+ const live=$('ai-policy-live');
+ if(live)live.textContent=text;
+ const banner=$('battle-matchup');
+ if(!banner)return;
+ const decks=app.launch?.decks;
+ const names=decks?((decks[0]?.label||'')+' vs '+(decks[1]?.label||'')+' · '):'';
+ banner.textContent=names+text;
+}
+function rememberAiRoute(result){
+ const route=result?.search?.route;
+ if(!route?.lane)return;
+ let log=[];
+ try{log=JSON.parse(document.documentElement.dataset.aiRouteLog||'[]');}catch{log=[];}
+ log.push({
+  policy:result.policy||currentAiPolicy(),
+  lane:route.lane,
+  source:route.source||'',
+  pending:app.state?.pending?.kind||null
+ });
+ document.documentElement.dataset.aiRouteLog=JSON.stringify(log.slice(-80));
+ document.documentElement.dataset.aiLane=route.lane;
+ document.documentElement.dataset.aiSource=route.source||'';
+}
+function useOriginalAiV3(){
+ setHybridMain(false);
+ setSearchPreview(true);
+}
+function useHybridMain(){
+ setHybridMain(true);
+}
+function useDifficultyAi(){
+ setHybridMain(false);
+ setSearchPreview(false);
 }
 let searchWorker=null;
 let searchRequest=0;
@@ -1923,11 +1975,19 @@ function driveSearchPreview(sequence,policy=null){
   const finish=(action,reason)=>{
    if(settled||sequence!==app.sequence||stateVersion!==app.aiStateVersion)return;
    settled=true;
+   if(reason==='worker-timeout'){
+    const timeouts=Number(document.documentElement.dataset.aiTimeouts||'0')+1;
+    document.documentElement.dataset.aiTimeouts=String(timeouts);
+   }
    try{
     const currentLegal=legalUniversalActions(app.packs,app.state);
     const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal:currentLegal},{
      requestId,stateVersion,actor,action,error:action?null:'empty'
     });
+    if(!accepted.ok){
+     const rejected=Number(document.documentElement.dataset.aiRejected||'0')+1;
+     document.documentElement.dataset.aiRejected=String(rejected);
+    }
     const choice=accepted.ok?accepted.action:chooseProgressSafeAiAction(app.packs,app.state,{
      difficulty:'hard',actionsInPhase:app.aiPhaseCount
     }).action;
@@ -1935,9 +1995,15 @@ function driveSearchPreview(sequence,policy=null){
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
     maybeFinishCoach();
     saveBattleProgress();
-    render();
-    if(app.state.status==='playing'&&uiActor(app.state)===1)app.aiTimer=setTimeout(step,16);
-    else{app.busy=false;app.aiTimer=null;app.error='';}
+    if(app.state.status==='playing'&&uiActor(app.state)===1){
+     render();
+     app.aiTimer=setTimeout(step,16);
+    }else{
+     // Draw the player's controls only after the thinking flag is cleared.
+     // Rendering first hides 下一階段 and the match looks frozen.
+     app.busy=false;app.aiTimer=null;app.error='';
+     render();
+    }
    }catch(error){
     app.busy=false;app.aiTimer=null;
     app.error='電腦操作已暫停：'+(error?.message||String(error));
@@ -1947,7 +2013,11 @@ function driveSearchPreview(sequence,policy=null){
   const worker=request?searchWorkerHandle():null;
   if(!worker||!request){
    try{
-    if(hybrid)finish(request?handleAiV3Request(request).action:null,request?null:'no-world');
+    if(hybrid){
+     const local=request?handleAiV3Request(request):null;
+     rememberAiRoute(local);
+     finish(local?local.action:null,request?null:'no-world');
+    }
     else{
      const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
      finish(action,null);
@@ -1968,6 +2038,7 @@ function driveSearchPreview(sequence,policy=null){
    if(data.requestId!==requestId)return;
    clearTimeout(timer);
    worker.removeEventListener('message',onMessage);
+   rememberAiRoute(data);
    const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal},{...data,legal:undefined});
    if(!accepted.ok){finish(null,accepted.reason);return;}
    finish(accepted.action,null);
@@ -1977,7 +2048,11 @@ function driveSearchPreview(sequence,policy=null){
   catch{
    clearTimeout(timer);
    worker.removeEventListener('message',onMessage);
-   try{finish(handleAiV3Request(request).action,null);}catch{finish(null,'worker-post');}
+   try{
+    const local=handleAiV3Request(request);
+    rememberAiRoute(local);
+    finish(local.action,null);
+   }catch{finish(null,'worker-post');}
   }
  };
  app.aiTimer=setTimeout(step,16);
@@ -2373,6 +2448,10 @@ if(!IS_BATTLE_PAGE){
   hybridMain.checked=hybridMainOn();
   hybridMain.addEventListener('change',()=>setHybridMain(hybridMain.checked));
  }
+ $('use-ai-v3')?.addEventListener('click',()=>{useOriginalAiV3();markLobbyChanged();});
+ $('use-hybrid-main')?.addEventListener('click',()=>{useHybridMain();markLobbyChanged();});
+ $('use-difficulty-ai')?.addEventListener('click',()=>{useDifficultyAi();markLobbyChanged();});
+ paintAiPolicy();
  document.documentElement.dataset.hybridMainReady='1';
  syncMatchLobby();
  importAccountLobbyDecks();
