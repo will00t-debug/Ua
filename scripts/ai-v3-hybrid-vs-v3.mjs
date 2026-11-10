@@ -22,7 +22,7 @@ export const PROGRAM_SHA = '494f6a9e1dbfdbe226ffae07381e8ceba997e65c';
 const LOCK_URL = new URL('../audit/ai-v3-hybrid-vs-v3-8800-seed-lock.json', import.meta.url);
 const SUMMARY_URL = new URL('../audit/ai-v3-hybrid-vs-v3-8800-summary.json', import.meta.url);
 const OUT = process.env.AI_V3_OUT || '/tmp/ai-v3-hybrid-vs-v3-8800';
-const STEPS = 400;
+const STEPS = Number(process.env.AI_V3_STEPS || 400);
 const BUDGET = {nodes: 48, ms: 40, seed: 1};
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -455,7 +455,13 @@ function runShard() {
  const jobs = assertSchedule(lock);
  const shard = Number(process.env.AI_V3_SHARD || 0);
  const shards = Number(process.env.AI_V3_SHARDS || 1);
- const mine = jobs.filter((_, index) => index % shards === shard);
+ let mine = jobs.filter((_, index) => index % shards === shard);
+ if (process.env.AI_V3_ONLY) {
+  const [deck, seed, first, seat] = process.env.AI_V3_ONLY.split(':');
+  mine = mine.filter(job => job.deck === deck && job.seed === Number(seed)
+   && job.first === Number(first) && job.hybridSeat === Number(seat));
+ }
+ const outFile = process.env.AI_V3_ONLY ? `${OUT}/replay.json` : `${OUT}/shard-${shard}.json`;
  const decks = new Map(battleDecks().map(deck => [deck.id, deck]));
  mkdirSync(OUT, {recursive: true});
  const games = [];
@@ -464,7 +470,7 @@ function runShard() {
   const game = playGame(decks.get(job.deck), job);
   game.seconds = Math.round((performance.now() - started) / 100) / 10;
   games.push(game);
-  writeFileSync(`${OUT}/shard-${shard}.json`, JSON.stringify({shard, shards, games}));
+  writeFileSync(outFile, JSON.stringify({shard, shards, games}));
   const mark = game.hybridWon ? 'hybrid' : game.v3Won ? 'v3' : game.draw ? 'draw' : 'unfinished';
   console.error('game', job.deck, job.seed, 'first', job.first, 'seat', job.hybridSeat,
    mark, game.life.join('-'), game.steps, game.seconds + 's');
