@@ -6,7 +6,7 @@
 //   node scripts/ai-v3-phase-hybrid.mjs
 //   AI_V3_SHARD=0 AI_V3_SHARDS=4 node scripts/ai-v3-phase-hybrid.mjs
 //   AI_V3_MERGE=1 node scripts/ai-v3-phase-hybrid.mjs
-import {mkdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {mkdirSync, readFileSync, unlinkSync, writeFileSync} from 'node:fs';
 import {performance} from 'node:perf_hooks';
 import {fileURLToPath} from 'node:url';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
@@ -14,13 +14,21 @@ import {chooseAiV3Action, lastAiV3Trace, resetAiV3Report, MATCH_LIMITS} from '..
 import {matchGrid} from '../dist/universal-v2/ai-v3/compare.mjs';
 import {applySharedOpening, cloneMatch, newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {legalUniversalActions, dispatchUniversalAction, universalBp, universalEnergyByColor} from '../dist/universal-v2/engine.mjs';
-import {chooseStrengthenedHardAction, resetHardAiReport, HARD_AI_POLICY} from '../dist/universal-v2/hard-ai.mjs';
+import {chooseStrengthenedHardAction, resetHardAiReport, lastHardAiTrace, HARD_AI_POLICY} from '../dist/universal-v2/hard-ai.mjs';
 
 export const PHASE_MODES = ['v3', 'hard', 'start', 'move', 'main', 'battle', 'pending'];
 export const PHASE_TITLES = ['white-sword', 'sword-art-online-raid', 'steins-gate-raid'];
-export const PHASE_SEEDS = [8401, 8402];
+// Unset env keeps the exposed 8401–8402 table. A validation run names its
+// seeds before the games start and does not change this default.
+export const PHASE_SEEDS = (process.env.AI_V3_SEEDS || '8401,8402').split(',')
+ .map(item => Number(item)).filter(Number.isFinite);
 const SEARCH = {nodes: 48, ms: 1e9, seed: 1, plan: 'tree'};
 const STEPS = 400;
+
+function activeSearch() {
+ if (process.env.AI_V3_MS === '40') return {nodes: 48, ms: 40, seed: 1, plan: 'tree'};
+ return SEARCH;
+}
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 // Legal lists omit empty fields. The search root copies the same action with
@@ -91,6 +99,16 @@ function colorsOf(pack, state, player) {
  return Object.fromEntries(Object.entries(colors).filter(([, value]) => value));
 }
 
+function killLines(source, trace, legal) {
+ if (source === 'v3') {
+  const rows = trace?.candidates?.length ? trace.candidates : (trace?.compared || []);
+  return rows.filter(row => row?.executed !== false && row.boundary === 'terminal' && row.search >= 90000
+   && legal.some(action => same(action, row.action)));
+ }
+ return (trace?.candidates || []).filter(row => row?.score >= 50000
+  && legal.some(action => same(action, row.action)));
+}
+
 export function chooseDecision(packs, state, mode, seat = null) {
  const actor = state.pending?.player ?? state.active;
  const lane = laneOf(state);
@@ -98,22 +116,29 @@ export function chooseDecision(packs, state, mode, seat = null) {
  // always frozen hard-search-2, including in the pure v3 reference.
  const source = seat == null || actor === seat ? sourceFor(mode, lane) : 'hard';
  const legal = legalUniversalActions(packs, state);
+ const budget = activeSearch();
+ const started = performance.now();
  let raw = null;
  let trace = null;
  if (source === 'hard') {
   resetHardAiReport();
-  raw = chooseStrengthenedHardAction(packs, state, {nodes: SEARCH.nodes, ms: SEARCH.ms, seed: SEARCH.seed});
+  raw = chooseStrengthenedHardAction(packs, state, {nodes: budget.nodes, ms: budget.ms, seed: budget.seed});
+  trace = lastHardAiTrace();
  } else {
   resetAiV3Report();
-  raw = chooseAiV3Action(packs, state, {actor, ...MATCH_LIMITS, ...SEARCH});
+  raw = chooseAiV3Action(packs, state, {actor, ...MATCH_LIMITS, ...budget});
   trace = lastAiV3Trace();
  }
+ const elapsed = performance.now() - started;
  const action = legal.find(item => same(item, raw)) || null;
+ const wins = killLines(source, trace, legal);
+ const taken = !!(action && wins.some(row => same(row.action, action)));
  return {
   actor, lane, source, action, legal: !!action, legalCount: legal.length,
   reason: trace?.reason || null,
   fallbackKind: trace?.fallbackKind || null,
   nodesUsed: Number.isFinite(trace?.nodesUsed) ? trace.nodesUsed : null,
+  elapsed, killWins: wins.length, killTaken: taken,
   trace
  };
 }
@@ -166,10 +191,20 @@ function playFrom(packs, state, seat, mode, reference) {
  let watch = null;
  let illegal = 0;
  let fallbacks = 0;
+ let hardBudget = 0;
  let v3Decisions = 0;
  let hardDecisions = 0;
+ let frontPlays = 0;
+ let energyPlays = 0;
+ let phaseErrors = 0;
+ let abandonedKills = 0;
+ let equivalentWins = 0;
+ let maxNodes = 0;
  let firstDiff = null;
  const laneChoices = {};
+ const laneSources = {};
+ const times = [];
+ const killNotes = [];
  let steps = 0;
  while (cursor.status === 'playing' && steps < STEPS) {
   const beforeActor = cursor.pending?.player ?? cursor.active;
@@ -180,8 +215,26 @@ function playFrom(packs, state, seat, mode, reference) {
   if (picked.actor === seat) {
    if (picked.source === 'hard') hardDecisions++;
    else v3Decisions++;
+   times.push(picked.elapsed);
+   if (Number.isFinite(picked.nodesUsed)) maxNodes = Math.max(maxNodes, picked.nodesUsed);
    if (picked.legalCount > 1) laneChoices[picked.lane] = (laneChoices[picked.lane] || 0) + 1;
    if (picked.reason === 'budget-fallback') fallbacks++;
+   if (picked.source === 'hard' && picked.reason === 'budget') hardBudget++;
+   const bag = laneSources[picked.lane] || {v3: 0, hard: 0, illegal: 0};
+   bag[picked.source] = (bag[picked.source] || 0) + 1;
+   if (!picked.legal) bag.illegal++;
+   laneSources[picked.lane] = bag;
+   if (sourceFor(mode, picked.lane) !== picked.source) phaseErrors++;
+   if (picked.action?.type === 'play' && picked.action.line === 'front') frontPlays++;
+   if (picked.action?.type === 'play' && picked.action.line === 'energy') energyPlays++;
+   if (picked.killWins > 1 && picked.killTaken) equivalentWins++;
+   if (picked.killWins > 0 && !picked.killTaken) {
+    abandonedKills++;
+    if (killNotes.length < 8) killNotes.push({
+     step: steps, lane: picked.lane, source: picked.source,
+     wins: picked.killWins, chosen: label(picked.action)
+    });
+   }
   }
   const prior = reference?.[steps] || null;
   if (prior && !same(prior.action, picked.action) && !firstDiff) {
@@ -248,7 +301,16 @@ function playFrom(packs, state, seat, mode, reference) {
   mode, steps, illegal, finished: cursor.status === 'finished', winner: cursor.winner,
   endReason: cursor.endReason || null, life,
   challengerWon: cursor.status === 'finished' && cursor.winner === seat,
-  fallbacks, v3Decisions, hardDecisions, laneChoices, firstDiff, turns, totals,
+  fallbacks, hardBudget, v3Decisions, hardDecisions, laneChoices, laneSources,
+  frontPlays, energyPlays, phaseErrors, abandonedKills, equivalentWins, killNotes, maxNodes,
+  decisionMs: {
+   count: times.length,
+   sum: times.reduce((sum, value) => sum + value, 0),
+   p50: percentile(times, Math.floor((times.length - 1) / 2)),
+   p95: percentile(times, Math.floor((times.length - 1) * 0.95)),
+   samples: times.map(value => Math.round(value * 10) / 10)
+  },
+  firstDiff, turns, totals,
   lastEnergy: last?.energy || {}, lastFront: last?.front ?? null, lastFrontBp: last?.frontBp ?? null,
   lastHand: last?.hand ?? null, lastPayable: last?.payable ?? null,
   script: mode === 'v3' ? script : undefined
@@ -293,7 +355,14 @@ function playJob(job, modes) {
 }
 
 function mean(values) {
- return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+ const finite = values.filter(value => Number.isFinite(value));
+ return finite.length ? finite.reduce((sum, value) => sum + value, 0) / finite.length : null;
+}
+
+function percentile(values, index) {
+ const sorted = values.filter(value => Number.isFinite(value)).sort((a, b) => a - b);
+ if (!sorted.length) return null;
+ return sorted[Math.min(sorted.length - 1, Math.max(0, index))];
 }
 
 function pairedRelative(base, other) {
@@ -381,7 +450,48 @@ function briefGame(row, prior) {
  };
 }
 
+function levelOf(rows) {
+ const samples = rows.flatMap(row => row.decisionMs?.samples || []);
+ return {
+  attacks: mean(rows.map(row => num(row, 'attacks'))),
+  connecting: mean(rows.map(row => num(row, 'connecting'))),
+  raids: mean(rows.map(row => num(row, 'raids'))),
+  frontPlays: mean(rows.map(row => row.frontPlays || 0)),
+  energyPlays: mean(rows.map(row => row.energyPlays || 0)),
+  apLeft: mean(rows.map(row => num(row, 'apLeft'))),
+  apReady: mean(rows.map(row => num(row, 'apReady'))),
+  ownLife: mean(rows.map(row => row.life?.[row.challengerSeat])),
+  oppLife: mean(rows.map(row => row.life?.[1 - row.challengerSeat])),
+  fallbacks: mean(rows.map(row => row.fallbacks || 0)),
+  hardBudget: mean(rows.map(row => row.hardBudget || 0)),
+  decisionP50: mean(rows.map(row => row.decisionMs?.p50)),
+  decisionP95: mean(rows.map(row => row.decisionMs?.p95)),
+  decisionPooledP50: percentile(samples, Math.floor((samples.length - 1) / 2)),
+  decisionPooledP95: percentile(samples, Math.floor((samples.length - 1) * 0.95)),
+  decisions: rows.reduce((sum, row) => sum + (row.v3Decisions || 0) + (row.hardDecisions || 0), 0),
+  abandonedKills: rows.reduce((sum, row) => sum + (row.abandonedKills || 0), 0),
+  equivalentWins: rows.reduce((sum, row) => sum + (row.equivalentWins || 0), 0),
+  phaseErrors: rows.reduce((sum, row) => sum + (row.phaseErrors || 0), 0),
+  maxNodes: rows.reduce((max, row) => Math.max(max, row.maxNodes || 0), 0)
+ };
+}
+
+function mergeLanes(rows) {
+ const out = {};
+ for (const row of rows) {
+  for (const [lane, bag] of Object.entries(row.laneSources || {})) {
+   const slot = out[lane] || {v3: 0, hard: 0, illegal: 0};
+   slot.v3 += bag.v3 || 0;
+   slot.hard += bag.hard || 0;
+   slot.illegal += bag.illegal || 0;
+   out[lane] = slot;
+  }
+ }
+ return out;
+}
+
 export function summarizeGames(games, baseline) {
+ const budget = activeSearch();
  const modes = [...new Set(games.map(row => row.mode))];
  const v3 = games.filter(row => row.mode === 'v3');
  const byMode = {};
@@ -390,7 +500,11 @@ export function summarizeGames(games, baseline) {
   const byDeck = {};
   for (const title of PHASE_TITLES) {
    const slice = rows.filter(row => row.deck === title);
-   byDeck[title] = recordOf(slice);
+   byDeck[title] = {
+    ...recordOf(slice),
+    levels: levelOf(slice),
+    relativeToV3: mode === 'v3' ? null : pairedRelative(v3.filter(row => row.deck === title), slice)
+   };
   }
   const first = {};
   let outsideRoots = 0;
@@ -406,10 +520,16 @@ export function summarizeGames(games, baseline) {
   }
   byMode[mode] = {
    ...recordOf(rows), byDeck,
+   levels: levelOf(rows),
+   laneSources: mergeLanes(rows),
    fallbacks: rows.reduce((sum, row) => sum + row.fallbacks, 0),
+   hardBudget: rows.reduce((sum, row) => sum + (row.hardBudget || 0), 0),
    relativeToV3: mode === 'v3' ? null : pairedRelative(v3, rows),
    resourcesVersusV3: mode === 'v3' ? null : resourceDelta(v3, rows),
    flips: mode === 'v3' ? null : flipsOf(v3, rows),
+   abandonedNotes: rows.flatMap(row => (row.killNotes || []).map(note => ({
+    deck: row.deck, seed: row.seed, first: row.first, seat: row.challengerSeat, ...note
+   }))).slice(0, 40),
    firstDiffGames: compared,
    firstDiffInSwappedLane: rows.filter(row => row.firstDiff && row.firstDiff.lane === mode).length,
    hybridActionInsideV3Roots: insideRoots,
@@ -434,9 +554,11 @@ export function summarizeGames(games, baseline) {
   reproduced = {matched, missed, misses};
  }
  return {
-  base: '340f781e3ea8314bf011622730a77a9ca948872b',
-  rules: 'official', opponent: HARD_AI_POLICY, searchSeed: SEARCH.seed,
-  nodes: SEARCH.nodes, clock: '1e9', liveBudget: MATCH_LIMITS,
+  base: PHASE_SEEDS.join(',') === '8401,8402'
+   ? '340f781e3ea8314bf011622730a77a9ca948872b'
+   : '4cb7796a7350bd64e7d13e8724793c0131640aac',
+  rules: 'official', opponent: HARD_AI_POLICY, searchSeed: budget.seed,
+  nodes: budget.nodes, clock: budget.ms === 1e9 ? '1e9' : String(budget.ms), liveBudget: MATCH_LIMITS,
   hardPolicy: HARD_AI_POLICY, defaultAi: 'unchanged',
   seeds: PHASE_SEEDS, titles: PHASE_TITLES,
   note: 'A phase swap changes the later state. The win gap is the whole continuation, not the effect of one decision. Hidden deck order is not a strategy input; belief worlds keep search seed 1.',
@@ -451,8 +573,12 @@ export function summarizeGames(games, baseline) {
  };
 }
 
-function shardPath(shard) {
- return new URL(`../audit/ai-v3-phase-hybrid-shard-${shard}.json`, import.meta.url);
+function auditUrl(kind, shard = null) {
+ const tag = process.env.AI_V3_TAG || '';
+ const prefix = tag ? `ai-v3-phase-hybrid-${tag}` : 'ai-v3-phase-hybrid';
+ if (kind === 'shard') return new URL(`../audit/${prefix}-shard-${shard}.json`, import.meta.url);
+ if (kind === 'summary') return new URL(`../audit/${prefix}-summary.json`, import.meta.url);
+ return new URL(`../audit/${prefix}.json`, import.meta.url);
 }
 
 function cardIdOf(pack, state, uid) {
@@ -516,12 +642,21 @@ function main() {
  if (process.env.AI_V3_MERGE === '1') {
   const shards = Number(process.env.AI_V3_SHARDS || 4);
   const games = [];
-  for (let shard = 0; shard < shards; shard++) games.push(...JSON.parse(readFileSync(shardPath(shard), 'utf8')));
-  const baseline = JSON.parse(readFileSync(new URL('../audit/ai-v3-hold-info-8401-baseline.json', import.meta.url), 'utf8'));
+  for (let shard = 0; shard < shards; shard++) games.push(...JSON.parse(readFileSync(auditUrl('shard', shard), 'utf8')));
+  const sameExposed = PHASE_SEEDS.join(',') === '8401,8402';
+  const baseline = sameExposed
+   ? JSON.parse(readFileSync(new URL('../audit/ai-v3-hold-info-8401-baseline.json', import.meta.url), 'utf8'))
+   : null;
   const summary = summarizeGames(games, baseline);
+  for (const game of games) if (game.decisionMs) delete game.decisionMs.samples;
   mkdirSync(new URL('../audit/', import.meta.url), {recursive: true});
-  writeFileSync(new URL('../audit/ai-v3-phase-hybrid.json', import.meta.url), JSON.stringify({summary, games}));
-  writeFileSync(new URL('../audit/ai-v3-phase-hybrid-summary.json', import.meta.url), JSON.stringify(summary, null, 2));
+  writeFileSync(auditUrl('games'), JSON.stringify({summary, games}));
+  writeFileSync(auditUrl('summary'), JSON.stringify(summary, null, 2));
+  if (process.env.AI_V3_TAG) {
+   for (let shard = 0; shard < shards; shard++) {
+    try { unlinkSync(auditUrl('shard', shard)); } catch { /* shard already removed */ }
+   }
+  }
   console.log(JSON.stringify(summary, null, 2));
   return;
  }
@@ -536,7 +671,7 @@ function main() {
  }
  jobs = jobs.filter((_, index) => index % shards === shard);
  const games = jobs.flatMap(job => playJob(job, modes));
- if (shards > 1) writeFileSync(shardPath(shard), JSON.stringify(games));
+ if (shards > 1) writeFileSync(auditUrl('shard', shard), JSON.stringify(games));
  else {
   const summary = summarizeGames(games, null);
   console.log(JSON.stringify({summary, games}, null, 2));
