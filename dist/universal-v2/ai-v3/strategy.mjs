@@ -61,6 +61,10 @@ export function normalizeFactors(asked){
  // earlier front of another card. Off unless asked. Named variants and the
  // other switches do not turn it on.
  if(asked.laterEnergy===true)factors.laterEnergy=true;
+ // The idle-main front slot replaces the lowest-ranked root already in the
+ // beam. The default still replaces the first unprotected root. Off unless
+ // asked. Named variants and the other switches do not turn it on.
+ if(asked.frontSpare===true)factors.frontSpare=true;
  return factors;
 }
 export function bindVariant(variant,fn,factors){

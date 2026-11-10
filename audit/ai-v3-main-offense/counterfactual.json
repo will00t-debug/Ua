@@ -1,0 +1,962 @@
+[
+  {
+    "deck": "white-sword",
+    "seed": 8401,
+    "first": 0,
+    "seat": 0,
+    "step": 27,
+    "kind": "different-stop",
+    "v3": "play:energy:0-16",
+    "hard": "play:energy:0-20",
+    "seconds": 11.4,
+    "at": {
+      "life": [
+        7,
+        7
+      ],
+      "ap": 2,
+      "energy": {
+        "green": 1
+      },
+      "front": 0,
+      "ready": 0,
+      "bp": 0
+    },
+    "v3Line": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        2
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 3
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 7,
+          "attacks": 1,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              6,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 5
+            },
+            "front": 2,
+            "ready": 2,
+            "bp": 8000
+          }
+        },
+        {
+          "turn": 9,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              6,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 6
+            },
+            "front": 4,
+            "ready": 4,
+            "bp": 13000
+          }
+        }
+      ]
+    },
+    "hardLine": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        2
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 3
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 7,
+          "attacks": 1,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              6,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 5
+            },
+            "front": 2,
+            "ready": 2,
+            "bp": 8000
+          }
+        },
+        {
+          "turn": 9,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              6,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 6
+            },
+            "front": 4,
+            "ready": 4,
+            "bp": 13000
+          }
+        }
+      ]
+    }
+  },
+  {
+    "deck": "white-sword",
+    "seed": 8402,
+    "first": 0,
+    "seat": 0,
+    "step": 2,
+    "kind": "lower-score",
+    "v3": "play:energy:0-33",
+    "hard": "play:energy:0-10",
+    "seconds": 8.2,
+    "at": {
+      "life": [
+        7,
+        7
+      ],
+      "ap": 1,
+      "energy": {},
+      "front": 0,
+      "ready": 0,
+      "bp": 0
+    },
+    "v3Line": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        4
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 1
+            },
+            "front": 1,
+            "ready": 1,
+            "bp": 4000
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 1,
+          "raids": 0,
+          "damage": 1,
+          "end": {
+            "life": [
+              7,
+              6
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 3
+            },
+            "front": 1,
+            "ready": 1,
+            "bp": 4000
+          }
+        }
+      ]
+    },
+    "hardLine": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        5
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 2
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              6,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "green": 4
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        }
+      ]
+    }
+  },
+  {
+    "deck": "sword-art-online-raid",
+    "seed": 8402,
+    "first": 0,
+    "seat": 0,
+    "step": 2,
+    "kind": "beam-front",
+    "v3": "play:energy:0-19",
+    "hard": "play:energy:0-10",
+    "seconds": 7.8,
+    "at": {
+      "life": [
+        7,
+        7
+      ],
+      "ap": 1,
+      "energy": {},
+      "front": 0,
+      "ready": 0,
+      "bp": 0
+    },
+    "v3Line": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        3
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 2
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 2
+            },
+            "front": 2,
+            "ready": 2,
+            "bp": 3000
+          }
+        }
+      ]
+    },
+    "hardLine": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        6
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 2
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 2
+            },
+            "front": 1,
+            "ready": 1,
+            "bp": 3000
+          }
+        }
+      ]
+    }
+  },
+  {
+    "deck": "sword-art-online-raid",
+    "seed": 8402,
+    "first": 1,
+    "seat": 1,
+    "step": 2,
+    "kind": "same-card-front",
+    "v3": "play:front:1-17",
+    "hard": "play:energy:1-17",
+    "seconds": 11,
+    "at": {
+      "life": [
+        7,
+        7
+      ],
+      "ap": 1,
+      "energy": {},
+      "front": 0,
+      "ready": 0,
+      "bp": 0
+    },
+    "v3Line": {
+      "winner": 0,
+      "won": false,
+      "life": [
+        2,
+        0
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {},
+            "front": 1,
+            "ready": 1,
+            "bp": 2000
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 1,
+          "raids": 0,
+          "damage": 1,
+          "end": {
+            "life": [
+              6,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 1
+            },
+            "front": 1,
+            "ready": 1,
+            "bp": 2000
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 1,
+          "raids": 0,
+          "damage": 1,
+          "end": {
+            "life": [
+              5,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 2
+            },
+            "front": 2,
+            "ready": 2,
+            "bp": 4000
+          }
+        }
+      ]
+    },
+    "hardLine": {
+      "winner": 0,
+      "won": false,
+      "life": [
+        2,
+        0
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 2
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "yellow": 2
+            },
+            "front": 2,
+            "ready": 2,
+            "bp": 4000
+          }
+        }
+      ]
+    }
+  },
+  {
+    "deck": "steins-gate-raid",
+    "seed": 8402,
+    "first": 0,
+    "seat": 0,
+    "step": 2,
+    "kind": "beam-front",
+    "v3": "play:energy:0-22",
+    "hard": "play:energy:0-19",
+    "seconds": 12.8,
+    "at": {
+      "life": [
+        7,
+        7
+      ],
+      "ap": 1,
+      "energy": {},
+      "front": 0,
+      "ready": 0,
+      "bp": 0
+    },
+    "v3Line": {
+      "winner": 0,
+      "won": true,
+      "life": [
+        5,
+        0
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 2
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 3
+            },
+            "front": 1,
+            "ready": 1,
+            "bp": 2000
+          }
+        }
+      ]
+    },
+    "hardLine": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        2
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 1,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 3,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 2
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 5,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 3
+            },
+            "front": 1,
+            "ready": 1,
+            "bp": 2000
+          }
+        }
+      ]
+    }
+  },
+  {
+    "deck": "steins-gate-raid",
+    "seed": 8401,
+    "first": 1,
+    "seat": 0,
+    "step": 8,
+    "kind": "tie",
+    "v3": "play:energy:0-16",
+    "hard": "play:energy:0-19",
+    "seconds": 13.9,
+    "at": {
+      "life": [
+        7,
+        7
+      ],
+      "ap": 1,
+      "energy": {},
+      "front": 0,
+      "ready": 0,
+      "bp": 0
+    },
+    "v3Line": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        1
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 2,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 4,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 2
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 6,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 2
+            },
+            "front": 2,
+            "ready": 2,
+            "bp": 3000
+          }
+        }
+      ]
+    },
+    "hardLine": {
+      "winner": 1,
+      "won": false,
+      "life": [
+        0,
+        3
+      ],
+      "unfinished": false,
+      "illegal": 0,
+      "buckets": [
+        {
+          "turn": 2,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 4,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 1
+            },
+            "front": 0,
+            "ready": 0,
+            "bp": 0
+          }
+        },
+        {
+          "turn": 6,
+          "attacks": 0,
+          "raids": 0,
+          "damage": 0,
+          "end": {
+            "life": [
+              7,
+              7
+            ],
+            "ap": 0,
+            "energy": {
+              "blue": 1
+            },
+            "front": 2,
+            "ready": 2,
+            "bp": 4000
+          }
+        }
+      ]
+    }
+  }
+]

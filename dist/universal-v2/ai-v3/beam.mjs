@@ -5,7 +5,7 @@
 import {evaluate as staticValue,terminalValue,keepScore,battleActionValue,blankSwingAdjustment,raidStranded,filterEnergyFirst,lastApLineSwitch,recoversActionPoints,payableRefundOnTop} from './eval.mjs';
 import {archetypeRank,actionGroup,entryNoise} from './archetype.mjs';
 import {combatRank} from './combat.mjs';
-import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal,engineDispatch,frontCoverageScore,frontCoverageOn,coverageKeepsRaidBase} from './strategy.mjs';
+import {strategyOrder,replyAction,replyOrder,moveDevelopment,bindProbeBudget,noteDispatch,cachedLegal,engineDispatch,frontCoverageScore,frontCoverageOn,coverageKeepsRaidBase,searchFactors} from './strategy.mjs';
 import {packOf,visibleUidSet} from './observation.mjs';
 
 function evaluate(pack,state,actor,ctx){
@@ -161,8 +161,24 @@ export function selectionTrace(pack,state,viewer,legal,beam,strategy){
     const card=(state.players?.[viewer]?.hand||[]).find(item=>item?.uid===action.uid);
     return recoversActionPoints(card&&packOf(pack,viewer).cards[card.cardId]);
    };
-   let spare=picked.findIndex(action=>!isSafeAction(action)&&!keep(action));
-   if(spare<0)spare=picked.findIndex(action=>!isSafeAction(action));
+   // Default keeps the historical slot: the first unprotected root, which is
+   // the highest-ranked one. frontSpare is opt-in and only on an idle main.
+   // It gives that slot up from the bottom, so the top-ranked root stays.
+   const fromBottom=searchFactors().frontSpare===true&&state.phase==='main'&&!state.pending;
+   let spare=-1;
+   if(fromBottom){
+    for(let index=picked.length-1;index>=0;index--){
+     if(!isSafeAction(picked[index])&&!keep(picked[index])){spare=index;break;}
+    }
+    if(spare<0){
+     for(let index=picked.length-1;index>=0;index--){
+      if(!isSafeAction(picked[index])){spare=index;break;}
+     }
+    }
+   }else{
+    spare=picked.findIndex(action=>!isSafeAction(action)&&!keep(action));
+    if(spare<0)spare=picked.findIndex(action=>!isSafeAction(action));
+   }
    if(spare>=0){
     reason.set(JSON.stringify(picked[spare]),'replaced-by-front');
     picked[spare]=front;
