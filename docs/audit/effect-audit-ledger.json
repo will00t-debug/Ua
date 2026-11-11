@@ -305,26 +305,26 @@
  ],
  "summary": {
   "total": 957,
-  "未檢查": 98,
+  "未檢查": 73,
   "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 836,
+  "已驗證": 861,
   "缺資料待確認": 3,
   "部分核對": 1,
   "無效果": 3,
   "行動值卡": 16,
-  "部分條款已記錄": 840,
+  "部分條款已記錄": 865,
   "playable": {
    "total": 938,
-   "未檢查": 98,
+   "未檢查": 73,
    "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 836,
+   "已驗證": 861,
    "缺資料待確認": 3,
    "部分核對": 1,
    "無效果": 0,
    "行動值卡": 0,
-   "部分條款已記錄": 840
+   "部分條款已記錄": 865
   },
   "ap": {
    "total": 16,
@@ -533,15 +533,15 @@
     "product": "UA28BT 等",
     "priority": 2,
     "total": 113,
-    "未檢查": 63,
+    "未檢查": 38,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 50,
+    "已驗證": 75,
     "缺資料待確認": 0,
     "部分核對": 0,
     "無效果": 0,
     "行動值卡": 0,
-    "部分條款已記錄": 50
+    "部分條款已記錄": 75
    }
   ]
  },
@@ -47416,26 +47416,41 @@
    "clauses": [
     {
      "text": "【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】『BP1000』以下の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場の必要エナジーが0の青の〈ナツキ・スバル〉1枚につき、この効果で選べるキャラのBPの範囲+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-051。2026-11-11 卡圖右緣是白底突襲框，登場時在框內。普通登場不退場。突襲後可退現在 BP 1000 以下的對手前線，場上每張能源 0 的藍菜月昴再加 1000。可以不選。",
+     "implementation": "raid-box 保留 onPlay。raidRemScaledRetire。retireOppFrontScaledBp，base 1000、step 1000、name ナツキ・スバル、color blue、energy 0、optional。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：普通登場 pending 為空、角色休息、牌組張數不變。突襲到 048 後活動，一張 037 把上限放到 2000，只列 BP 2000 的 038，可跳過，選了才退場。tests/v2-rezero-rem-energy-raid-tap.test.mjs 用 051 從能源線突襲，可留在能源線或移到前線，入場後活動。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。生命翻開後這張進手牌。",
+     "implementation": "共用 life-trigger get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 051，同一張進手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-051",
+     "number": "UA40BT/REZ-1-051",
+     "clauses": [
+      {
+       "match": "【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47454,26 +47469,41 @@
    "clauses": [
     {
      "text": "【登場時】以下から1つ選ぶ。・自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで自分の場にアクティブで登場させる。・自分の場のキャラを1枚手札に戻してもよい。そうした場合、このキャラをアクティブにし、自分の場外から必要エナジーを満たし消費APが1の青の〈ナツキ・スバル〉を1枚まで自分の場にレストで登場させるかレイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-052。必須二選一。其一從場外把能源 0 的藍菜月昴以活動狀態登場。其二可先把手上的角色回手，然後這張活動，並從場外把付得起、AP 1 的藍菜月昴休息登場或突襲。",
+     "implementation": "remSubaruEntryChoice。chooseOne 不可跳過。activeZero 走 deployOutsidePrintedActive。bounceRaid 走 bounceThenAffordableSubaru，ap 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：activeZero 只列出能源 0 的 037，能源 4 的 040 留在場外，037 活動進前線。bounceRaid 先把 036 回手，接著 effect-outside-rest-or-raid 含場外 037，選休息登場後 037 在前線且休息。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 052。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-052",
+     "number": "UA40BT/REZ-1-052",
+     "clauses": [
+      {
+       "match": "【登場時】以下から1つ選ぶ。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47492,44 +47522,67 @@
    "clauses": [
     {
      "text": "【レイド】〈レム〉アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-053。2026-11-11 卡圖：突襲條下面是插圖，衝擊印在插圖上，不在白底框內。普通登場也有衝擊 1。",
+     "implementation": "2026-11-11 從 raid-box.mjs 拿掉 onPlay 與 onAttack。raidImpact 改為 printedImpact 1。沒有改 engine.mjs。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：普通登場沒有疊卡，衝擊仍是 1。tests/v2-rezero-rem-energy-raid-tap.test.mjs 用 053 從能源線突襲，可留後排或移到前線，入場後活動。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。可從場外把一張能源 0 的藍菜月昴休息登場。沒有合法對象就跳過。",
+     "implementation": "deployOutsidePrintedRest。energy 0、color blue、optional。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：普通登場的選擇只有場外能源 0 的藍 037。突襲到 048 且場外沒有對象時 pending 為空。",
      "unresolved": ""
     },
     {
      "text": "【アタック時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで選び、このターン中、「このキャラはBP4000以上のキャラにブロックされない。」を与える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。攻擊時可給場上的能源 0 藍菜月昴「不被 BP 4000 以上的角色阻擋」，持續到這個回合結束。可以不選。",
+     "implementation": "onAttack grantPrintedBlockAtLeast，bp 4000、optional。不再受突襲框限制。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：突襲後的攻擊打開 effect-grant-printed-block，對象是場上的 037。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。生命觸發可回手。沒有合法突襲對象時不能改選突襲。",
+     "implementation": "共用 life-trigger raid。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 053：沒有 raid 模式，選 get 後進手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-053",
+     "number": "UA40BT/REZ-1-053",
+     "clauses": [
+      {
+       "match": "【レイド】〈レム〉アクティブにし、フロントLに移動できる【インパクト（1）】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アタック時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47548,17 +47601,28 @@
    "clauses": [
     {
      "text": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-054。有其他能源 1 以下的角色時必須回其中一張，不能回自己，也不能放棄。沒有合法對象時改回自己。這是回手，不是退場。",
+     "implementation": "bounce。bounceOwnOtherUnderEnergy，energy 1。沒有對象時自動把自己回手。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：049（能源 1）可選，056（能源 2）與自己不可選，也不能選空。回手後 049 在手牌、不在場外。場上只有自己時，054 回手，沒有 pending，也不進場外。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-054",
+     "number": "UA40BT/REZ-1-054",
+     "clauses": [
+      {
+       "match": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47577,17 +47641,28 @@
    "clauses": [
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-055。效果欄是空的。生命觸發才抽 1 張。普通登場不抽。",
+     "implementation": "kind plain。沒有 onPlay。共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：055 登場後牌組只少被打出的那張，pending 為空。生命迴圈翻 055 後手牌加 1，這張進場外。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-055",
+     "number": "UA40BT/REZ-1-055",
+     "clauses": [
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47606,17 +47681,28 @@
    "clauses": [
     {
      "text": "【登場時】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-056。登場抽 1 張。沒有生命觸發。",
+     "implementation": "kind draw。onPlay draw count 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：056 登場後手牌比登場前多 1，牌組少抽到的那張。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-056",
+     "number": "UA40BT/REZ-1-056",
+     "clauses": [
+      {
+       "match": "【登場時】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47635,26 +47721,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から4枚見る。その中から〈クルシュ・カルステン〉か〈フェリス〉か〈ヴィルヘルム・ヴァン・アストレア〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-057。看牌頂 4 張。可公開一張庫爾修、菲利斯或威爾海姆到手牌。其餘依自己的順序放牌底。加進手牌才棄 1 張。查看不公開，不合格的仍留在窗口但不能選。",
+     "implementation": "searchNames。searchTopOneBottomDiscard count 4，三個名字，privateLook。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：窗口是 036、055、042、034。對方的私人選項是空的，公開揭示沒有這四張。055 可以選，036 不能。不拿時四張都排到底且不棄牌。拿 055 後才必須棄掉手牌的 036。",
      "unresolved": ""
     },
     {
      "text": "【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。只回現在 BP 3500 以下的對手前線。",
+     "implementation": "colorBounce。上限 3500。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：057 當生命。BP 3000 的 041 可回手，BP 4000 的 040 不在選擇裡。生命迴圈也用 057 回了 BP 2000 的攻擊者。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-057",
+     "number": "UA40BT/REZ-1-057",
+     "clauses": [
+      {
+       "match": "【登場時】自分の山札の上から4枚見る。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47673,44 +47774,67 @@
    "clauses": [
     {
      "text": "【レイド】〈クルシュ・カルステン〉アクティブにし、フロントLに移動できる【フロントLにある場合】自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-058。2026-11-11 卡圖右緣是插圖，手牌 BP 那句在突襲條下面，不在白底框。人在前線時，自己效果參照手牌角色 BP 可加 1000。Q1570、Q1574。",
+     "implementation": "2026-11-11 從 raid-box.mjs 拿掉 onPlay、main、handBpMayWhileFront。handBpMayWhileFront 1000 只在前線。沒有改 engine.mjs。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：沒有疊卡的普通登場，handCharacterBpMayAmount 是 1000。045 公開 076 時可接受或拒絕；接受後 045 從 1500 變成 4000。把 058 移到能源線後加值變 0。同一檔把 058 突襲到 055 上，入場活動，底板在堆疊裡，登場時仍打開。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の山札の上から2枚見る。その中からカードを1枚手札に加え、残りを場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。看牌頂 2 張，必須拿 1 張到手牌，另 1 張到場外。查看不公開。",
+     "implementation": "cruschHandBp。takeTopHandRestOutside count 2。普通登場也跑。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：普通登場、堆疊是空的，仍打開 effect-top-take-one，窗口是私人的，不能放棄。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】自分か相手の場のキャラを1枚まで選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。只在前線，每回合一次，可給自己或對手場上的一張角色這個回合 BP+1000。可以不選。能源線不能起動。",
+     "implementation": "mainAbility frontOnceProgram，frontOnly、oncePerTurn，然後 buffEither bp 1000、optional。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：前線 058 給對手 036，BP 從 2000 變 3000，同一張不能再起動。第二張放在能源線時沒有 frontOnce。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger raid。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 058。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-058",
+     "number": "UA40BT/REZ-1-058",
+     "clauses": [
+      {
+       "match": "【レイド】〈クルシュ・カルステン〉アクティブにし、フロントLに移動できる【フロントLにある場合】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】自分の山札の上から2枚見る。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】【フロントLにある場合】 【ターン1】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47729,17 +47853,28 @@
    "clauses": [
     {
      "text": "相手の場に黄か紫のカードがある場合、手札にあるこのカードの必要エナジーを【青×1】減らす。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-059。對手場上有黃或紫時，手牌中的這張必要藍能量減 1。前線與能源線都算。沒有時維持印刷的 3。",
+     "implementation": "handDiscount。opponentFieldColorsHandEnergyDiscount，黃與紫各減 1，實際要求不會低於 0 以外的疊加；這張只印減 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：空場是 3。對手前線有黃 007 時是 2。換成能源線的紫 068 仍是 2。換成藍 043 回到 3。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-059",
+     "number": "UA40BT/REZ-1-059",
+     "clauses": [
+      {
+       "match": "相手の場に黄か紫のカードがある場合",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47758,26 +47893,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【レストにする】 【このカードを退場させる】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがキャラカードの場合、公開したカードのBP以下の相手のフロントLのキャラを1枚まで選び、退場させる。〈フリューゲルの大樹〉のこの効果は1ターンに1回のみ発動できる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-060。休息並退場，公開 1 張手牌放牌底。公開的是角色時，可退現在 BP 不高於那張印刷 BP 的對手前線。這個卡名一回合只能起動一次。Q1571、Q1572。",
+     "implementation": "restLeaveRevealRetire。oncePerName。公開後 chooseRevealRetire，角色才開 effect-retire-referenced，上限是那張被參照的 BP，optional。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：公開 027（BP 4000），上限 4000，只列 4000 的那張，被加到 5000 的 036 不能選。大樹進場外，牌底是公開的那張，揭示是公開的。同一回合第二張 060 不能再起動。Q1571 的下一個自己的主要階段在 tests/v2-re0-official-faq.test.mjs，用的也是 060。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 060。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-060",
+     "number": "UA40BT/REZ-1-060",
+     "clauses": [
+      {
+       "match": "【起動メイン】【レストにする】 【このカードを退場させる】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47796,26 +47946,41 @@
    "clauses": [
     {
      "text": "自分のAPカードを2枚まで選び、アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-061。最多活動 2 張自己的 AP。可以少選。",
+     "implementation": "recoverAp2。recoverAp count 2。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：061 自己把 2 張休息的 AP 都活動。可以在第 1 張之後停止。",
      "unresolved": ""
     },
     {
      "text": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。沒有生命時，把牌頂放進生命區。",
+     "implementation": "共用 life-trigger final。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 061，牌頂變成新的生命。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-061",
+     "number": "UA40BT/REZ-1-061",
+     "clauses": [
+      {
+       "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ファイナル】自分のライフが無い場合",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47834,26 +47999,41 @@
    "clauses": [
     {
      "text": "自分の場の〈レム〉を1枚選び、このターン中、BP+1000と【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与え、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-062。必須選場上的一張雷姆。這個回合 BP+1000 與衝擊 +1，然後抽 1 張。沒有雷姆不能使用。",
+     "implementation": "remImpactDraw。buffNamedImpactDraw，name レム、bp 1000、impactPlus 1、draw 1。沒有對象時事件不進合法行動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：場上沒有雷姆時 062 不在合法行動。有 048 時只能選她，不能放棄。BP 從 1500 變 2500，衝擊 1，手牌加 1。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 062。休息的 007 活動後 BP 5000。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-062",
+     "number": "UA40BT/REZ-1-062",
+     "clauses": [
+      {
+       "match": "自分の場の〈レム〉を1枚選び",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47872,26 +48052,41 @@
    "clauses": [
     {
      "text": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈レム〉がある場合、『BP5000以下』に代わる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-063。必須退一張現在 BP 3000 以下的對手前線。場上有雷姆時上限改 5000。沒有合法對象不能使用，AP 不扣。與 REZ-1-031 同一句。",
+     "implementation": "與 031 同一個 remRetire。retireOppFrontUnderBp，bp 3000、bonusName レム、bonusBp 5000、mandatory true。onPlay 深比較相等。沒有改 engine.mjs。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：063 的 onPlay 與 031 深相等。沒有合法前線時直接使用會被拒，AP 不扣，卡留在手牌。沒有雷姆時 036（2000）可退、058（4000）不可。場上有 048 時上限 5000，058 可退。",
      "unresolved": ""
     },
     {
      "text": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。生命觸發必須選一張對手前線退場，沒有 BP 上限。",
+     "implementation": "共用 life-trigger special。retireOppFront。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 063，攻擊者退到場外。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-063",
+     "number": "UA40BT/REZ-1-063",
+     "clauses": [
+      {
+       "match": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47910,26 +48105,41 @@
    "clauses": [
     {
      "text": "自分のAPカードを2枚まで選び、アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-064。與 061 同句，這張自己測。最多活動 2 張 AP，可以少選。",
+     "implementation": "recoverAp2。recoverAp count 2。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：064 自己活動 2 張，也可以在第 1 張之後停止。",
      "unresolved": ""
     },
     {
      "text": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger final。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 064。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-064",
+     "number": "UA40BT/REZ-1-064",
+     "clauses": [
+      {
+       "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ファイナル】自分のライフが無い場合",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47948,26 +48158,41 @@
    "clauses": [
     {
      "text": "自分の効果で自分の手札から公開しているこのカードは元々のBPが4000のキャラカードとしても扱う。BP4500以上の相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-065。這是事件，不能當角色打出或突襲。必須退現在 BP 4500 以上的對手前線。自己的效果從手牌公開它時，也當成印刷 BP 4000 的角色。Q1573、Q1574。",
+     "implementation": "handRevealRetire。handRevealCharacterBp 4000。onPlay retireOppFrontAtLeastBp，bp 4500，必須有對象。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：手牌中的 065 沒有 play 或 raid。現在 BP 4500 的前線才使得出，選後退場。060 公開它時上限是 4000，只列 BP 4000 的 027，4500 的不能選，065 進牌底而不是場上。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 065。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-065",
+     "number": "UA40BT/REZ-1-065",
+     "clauses": [
+      {
+       "match": "自分の効果で自分の手札から公開しているこのカードは元々のBPが4000のキャラカードとしても扱う。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -47986,26 +48211,41 @@
    "clauses": [
     {
      "text": "このカードは自分の場に〈クルシュ・カルステン〉がある場合のみ使用できる。BP5000以下の相手のフロントLのキャラを1枚選び、退場させる。このターン中、自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-066。場上要有庫爾修才可以使用。必須退現在 BP 5000 以下的對手前線。這個回合，自己效果參照手牌角色 BP 時可以加 1000。",
+     "implementation": "cruschRetireHandBp。playRequiresOwnName クルシュ・カルステン。retireOppFrontAtMostBp bp 5000，然後 grantHandCharacterBpMay amount 1000。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：能源線沒有庫爾修時事件不合法。有 055 時上限 5000，2000 的 036 可選，加到 5500 的 058 不可，不能放棄。選完後 handCharacterBpMayAmount 是 1000。",
      "unresolved": ""
     },
     {
      "text": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger special。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 066。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-066",
+     "number": "UA40BT/REZ-1-066",
+     "clauses": [
+      {
+       "match": "このカードは自分の場に〈クルシュ・カルステン〉がある場合のみ使用できる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48024,44 +48264,67 @@
    "clauses": [
     {
      "text": "このキャラはアクティブで場に登場させる。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-067。付費登場就是活動。與它戰鬥的角色在這場戰鬥中失去衝擊。",
+     "implementation": "garfielEntry。enterAlwaysActive、impactNull。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：登場後 ready 為 true。有衝擊的 053 打過來，067 阻擋時生命不變；同一狀態改由 068 阻擋則生命少 1。",
      "unresolved": ""
     },
     {
      "text": "【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-2500。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。可選一張對手前線，這個回合 BP-2500。可以不選。",
+     "implementation": "enemyBpDown bp 2500、optional、zone front。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：可跳過，058 維持 4000。選了之後 058 從 4000 變 1500。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】このキャラをアクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。只在前線，每回合一次，把自己活動。能源線不能起動。",
+     "implementation": "mainAbility frontOnceProgram，frontOnly、oncePerTurn，然後 activeSelf。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：休息後可從前線起動並活動，同一張不能再起動。能源線的另一張沒有 frontOnce。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 067。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-067",
+     "number": "UA40BT/REZ-1-067",
+     "clauses": [
+      {
+       "match": "このキャラはアクティブで場に登場させる。【インパクト無効】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-2500。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】【フロントLにある場合】 【ターン1】このキャラをアクティブにする。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48080,17 +48343,28 @@
    "clauses": [
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-068。效果欄是空的。普通登場不抽、不開選擇，角色休息。生命觸發才活動並 BP+3000。",
+     "implementation": "kind plain。沒有 onPlay。共用 life-trigger active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：068 從手牌登場後 pending 為空、ready 為 false、牌組張數不變，也沒有 own-effect 進手牌。生命迴圈翻的是 068。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-068",
+     "number": "UA40BT/REZ-1-068",
+     "clauses": [
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48109,17 +48383,28 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から3枚見る。その中から〈ナツキ・スバル〉か〈ベアトリス〉か〈禁書庫〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-069。看牌頂 3 張。可公開一張菜月昴、碧翠絲或禁書庫到手牌。其餘放牌底。加進手牌才棄 1 張。查看不公開。",
+     "implementation": "searchNames。searchTopOneBottomDiscard count 3，三個名字。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：窗口依序是 007、068、094。007 不能選，068 與 094 可以。對方看不到窗口，公開揭示沒有這三張。不拿時不棄牌。拿 094 後才公開它，並必須棄手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-069",
+     "number": "UA40BT/REZ-1-069",
+     "clauses": [
+      {
+       "match": "【登場時】自分の山札の上から3枚見る。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48138,17 +48423,28 @@
    "clauses": [
     {
      "text": "【登場時】以下から1つ選ぶ。・カードを1枚引き、自分の手札を1枚自分の山札の上か場外に置く。・APを1支払ってもよい。そうした場合、自分の山札の上から1枚公開し、『手札に加える』。公開したカードが必要エナジーを満たす〈ベアトリス〉の場合、『自分の場にレストで登場させるかレイドさせる』に代えてもよい。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-070。必須二選一。其一抽 1 張，再把手牌 1 張放到牌頂或場外，不能放棄。其二可付 1 AP；付了才公開牌頂。是付得起能量的碧翠絲時，可改為休息登場或突襲，否則進手牌。沒有 AP 就什麼都不公開。",
+     "implementation": "drawOrBeatriceReveal。chooseOne 不可跳過。drawPlace 是 drawThenPlaceHand。revealBeatrice 是 optionalPayApThen ap 1，然後 revealTopHandOrAffordableNamed，names 只有 ベアトリス。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：不能選 skip。抽牌後手牌加 1，必須把一張放到牌頂。沒有 AP 時牌頂的 072 不動、沒有 deck-top 公開。有 AP 時可跳過且不付；付了之後 072 開 effect-deck-named-play。牌頂不是碧翠絲時公開進手牌，pending 結束。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-070",
+     "number": "UA40BT/REZ-1-070",
+     "clauses": [
+      {
+       "match": "【登場時】以下から1つ選ぶ。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48167,35 +48463,54 @@
    "clauses": [
     {
      "text": "【レイド】〈ナツキ・スバル〉アクティブにし、フロントLに移動できる【登場時】自分の山札の上から2枚見る。その中から1枚まで場外に置く。残りを望む順で山札の上に置く。カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-071。2026-11-11 卡圖是白底突襲框，登場時在框內。普通登場不看牌、不抽。突襲後看牌頂 2 張，最多 1 張到場外，其餘放回牌頂，然後抽 1 張。突襲入場活動，底板留在下面。",
+     "implementation": "raid-box 保留 onPlay。raidPeekBeatriceReveal。inspectTopArrange count 2、toOutside、rest top，然後 draw 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：沒有底板的普通登場 pending 為空、休息、牌組不減。突襲到 068 上後活動，底板在堆疊裡，打開 effect-top-inspect，佇列裡有抽 1。看完並留在牌頂後手牌加 1。",
      "unresolved": ""
     },
     {
      "text": "【アタック時】【ターン1】APを1支払ってもよい。そうした場合、自分の山札の上から1枚公開し、『手札に加える』。公開したカードが必要エナジーを満たす〈ベアトリス〉の場合、『自分の場にレストで登場させるかレイドさせる』に代えてもよい。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。攻擊時每回合一次，可付 1 AP 公開牌頂。付得起的碧翠絲可休息登場或突襲，否則進手牌。沒有 AP 不公開，但這一次仍算用過。",
+     "implementation": "onAttack optionalPayApThen ap 1、oncePerAttackTurn，然後 revealTopHandOrAffordableNamed，names ベアトリス。raid-box 保留 onAttack。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：突襲後的第一次攻擊打開付 AP。付了之後牌頂 072 是 effect-deck-named-play，接手牌後才進入阻擋。同一回合第二次攻擊直接阻擋，attack-ap 只有一筆。沒有 AP 時直接阻擋，不公開牌頂，once 仍寫入。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger raid。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 071。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-071",
+     "number": "UA40BT/REZ-1-071",
+     "clauses": [
+      {
+       "match": "【レイド】〈ナツキ・スバル〉アクティブにし、フロントLに移動できる【登場時】",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アタック時】【ターン1】APを1支払ってもよい。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48214,17 +48529,28 @@
    "clauses": [
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-072。效果欄是空的。普通登場不抽、不開選擇。生命觸發進手牌。",
+     "implementation": "kind plain。沒有 onPlay。共用 life-trigger get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：072 從手牌登場後 pending 為空、ready 為 false、牌組不變。生命迴圈翻的是 072，同一張進手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-072",
+     "number": "UA40BT/REZ-1-072",
+     "clauses": [
+      {
+       "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48243,26 +48569,41 @@
    "clauses": [
     {
      "text": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-073。先抽 1 張，再必須棄 1 張手牌。不能放棄。",
+     "implementation": "drawDiscard。drawDiscard count 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：手牌中的 073 登場後牌組少 1，effect-discard 不能選空。棄掉的 007 進場外。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。生命觸發只抽，不再棄牌。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 073，手牌加 1，這張進場外。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-073",
+     "number": "UA40BT/REZ-1-073",
+     "clauses": [
+      {
+       "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48281,26 +48622,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の場の〈ナツキ・スバル〉を1枚まで選び、次の自分のターン開始時まで、「このキャラが手札に戻す効果以外の相手の効果で場を離れる場合、代わりに手札に戻す。」を与える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-074。可給場上的一張菜月昴，直到自己下一個回合開始：對手效果讓它離場、且不是回手效果時，改為回手。可以不選。戰鬥敗北仍退場。Q1575。",
+     "implementation": "beatriceBounceInstead。grantBounceInstead，name ナツキ・スバル、optional。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：只列前線的 068，可跳過。選了之後，對手用 063 退它，068 回手、不進場外，也不記成退場。另一場戰鬥中 058 打贏，068 阻擋後進場外，並記成退場。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。",
+     "implementation": "共用 life-trigger active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 074。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-074",
+     "number": "UA40BT/REZ-1-074",
+     "clauses": [
+      {
+       "match": "【登場時】自分の場の〈ナツキ・スバル〉を1枚まで選び",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
@@ -48319,26 +48675,41 @@
    "clauses": [
     {
      "text": "【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-075。只有這一次是自己的效果登場才抽。手牌付費登場不抽。",
+     "implementation": "drawIfOwnEffect。draw count 1，entry ownEffect。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs：付費打出後 pending 為空、ready 為 false、牌組不變。070 付 AP 公開付得起的 075 並休息登場後，手牌加 1，進場紀錄是 deck、own-effect。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。生命觸發的抽與登場條件無關。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 075。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "REZ-1-075",
+     "number": "UA40BT/REZ-1-075",
+     "clauses": [
+      {
+       "match": "【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
