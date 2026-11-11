@@ -83,9 +83,9 @@ const RAID_BOX_FEATURES=Object.freeze({
  'REZ-1-071':["onPlay","onAttack"],
  'REZ-1-077':["onPlay","passive"],
  'REZ-1-078':["onPlay","passive"],
- 'REZ-1-089':["main","blockBpRestriction","unblockedRestFront"],
- 'REZ-1-090':["onPlay","main"],
- 'REZ-1-093':["onPlay","main"],
+ // 2026-11-11 card images: 089, 090 and 093 print the effect text on
+ // the illustration under the raid bar, not inside a white raid panel.
+ // 015's panel stays near-white; these three match the outside text of 027.
  'REZ-1-106':["onAttack","passive"],
  'REZ-2-058':["onPlay","onAttack","attackEndRestPrintedBp"],
  'REZ-2-062':["main"],

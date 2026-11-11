@@ -155,7 +155,7 @@ function onPlay(card,kind){
   name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}];
  if(kind==='trialRemoveActive')return [{op:'removeNamedOutsideActive',name:TRIAL_NAME}];
  if(kind==='remRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000,mandatory:true}];
- if(kind==='emiliaRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}];
+ if(kind==='emiliaRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000,mandatory:true}];
  if(kind==='minaRetire')return [{op:'retireOppFrontTiered',bp:3000,tiers:[
   {names:['ベアトリス'],bp:4000},
   {names:['ベアトリス','ナツキ・スバル'],bp:5000}]}];
@@ -368,7 +368,7 @@ export function rezeroPackCard(card){
   ...(kind==='raidPeekBeatriceReveal'?{raidName:'ナツキ・スバル'}:{}),
   ...(kind==='deckCharacterEntryActive'?{passiveBonuses:[{
    bp:500,condition:{kind:'ownDeckCharacterEntryThisTurn',turn:'own'}}]}:{}),
-  ...(kind==='raidEmiliaBlockRestSwap'?{raidName:'エミリア',raidImpactNull:true,
+  ...(kind==='raidEmiliaBlockRestSwap'?{raidName:'エミリア',impactNull:true,
    unblockedRestFront:true,
    blockBpRestriction:{relation:'atMost',bp:2000,condition:null},
    mainAbility:{op:'energySwapOwnFront',line:'energy',oncePerTurn:true}}:{}),
