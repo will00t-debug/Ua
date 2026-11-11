@@ -577,20 +577,17 @@ export function recommendFrom(agree, counters) {
   {id: 'B', lanes: ['pending']},
   {id: 'C', lanes: ['start', 'move']}
  ];
- const qualified = [];
- for (const spec of specs) {
+ const evaluated = specs.map(spec => {
   const rates = laneDisagreement(agree, spec.lanes);
   const each = spec.lanes.every(lane => (agree[lane]?.n || 0) >= 40);
   const windows = (counters || []).filter(row => spec.lanes.includes(row.lane) && Number.isFinite(row.ownLifeDelta));
   const up = windows.filter(row => row.ownLifeDelta > 0).length;
   const down = windows.filter(row => row.ownLifeDelta < 0).length;
-  const benefit = windows.length >= 2 && up >= 2 && down === 0;
-  const row = {id: spec.id, sample: rates.n, disagreement: rates.rate, eachLaneAtLeast40: each, benefitWindows: windows.length, lifeUp: up, lifeDown: down, benefit};
-  if (each && rates.rate >= 0.15 && benefit) qualified.push(row);
- }
- if (qualified.length !== 1) return {selected: null, qualified};
- qualified.sort((a, b) => b.disagreement - a.disagreement);
- return {selected: qualified[0].id, qualified};
+  return {id: spec.id, sample: rates.n, disagreement: rates.rate, eachLaneAtLeast40: each, benefitWindows: windows.length, lifeUp: up, lifeDown: down, benefit: windows.length >= 2 && up >= 2 && down === 0};
+ });
+ const qualified = evaluated.filter(row => row.eachLaneAtLeast40 && row.disagreement >= 0.15 && row.benefit);
+ if (qualified.length !== 1) return {selected: null, evaluated, qualified};
+ return {selected: qualified[0].id, evaluated, qualified};
 }
 
 function writeReport() {
@@ -599,13 +596,30 @@ function writeReport() {
  const counters = JSON.parse(readFileSync(`${OUT}/counterfactual.json`, 'utf8'));
  const leak = publicRecordLeaks({summary: summary.record, shadow: agreement(shadow), counters});
  if (leak) throw new Error('Report leaked ' + leak);
+ const picks = [
+  row => row.lane === 'start' && row.original?.type === 'extraDraw' && row.hard?.type === 'next',
+  row => row.lane === 'move' && row.original?.type === 'next' && row.hard?.type === 'move',
+  row => row.lane === 'battle' && row.original?.type === 'attack' && row.hard?.type === 'next',
+  row => row.anomaly === true && row.v3?.score === -90000 && Number.isFinite(row.hard?.bp),
+  row => row.lane === 'main' && row.agree === false
+ ];
  const examples = [];
  const used = new Set();
- for (const lane of ['start', 'move', 'battle', 'pending', 'main']) {
-  const row = shadow.find(item => item.lane === lane && !used.has(item.stateId));
+ for (const pick of picks) {
+  const row = shadow.find(item => pick(item) && !used.has(item.stateId));
   if (!row) continue;
   used.add(row.stateId);
   examples.push(row);
+ }
+ const pass = brief => brief?.type === 'chooseBlock' && brief.bp == null;
+ const blocks = shadow.filter(row => row.pending === 'block');
+ const lethal = shadow.filter(row => row.anomaly === true);
+ const pendingKinds = {};
+ for (const row of shadow.filter(item => item.lane === 'pending')) {
+  const kind = row.pending || 'none';
+  const item = pendingKinds[kind] || (pendingKinds[kind] = {n: 0, disagree: 0});
+  item.n++;
+  if (!row.agree) item.disagree++;
  }
  const report = {
   kind: 'phase-sample-9010',
@@ -636,6 +650,22 @@ function writeReport() {
   startSplit: pattern(shadow, 'start', row => row.v3.type !== row.hard.type),
   moveSplit: pattern(shadow, 'move', row => row.v3.type !== row.hard.type || row.v3.line !== row.hard.line || row.v3.bp !== row.hard.bp),
   pendingSplit: pattern(shadow, 'pending', row => row.agree === false),
+  pendingByKind: pendingKinds,
+  blockSample: {
+   n: blocks.length,
+   agree: blocks.filter(row => row.agree).length,
+   originalPass: blocks.filter(row => pass(row.original)).length,
+   v3Pass: blocks.filter(row => pass(row.v3)).length,
+   hardPass: blocks.filter(row => pass(row.hard)).length,
+   hardBlocksAnOriginalPass: blocks.filter(row => pass(row.original) && !pass(row.hard)).length
+  },
+  lethalMarks: {
+   n: lethal.length,
+   v3ScoreMinus90000: lethal.filter(row => row.v3?.score === -90000).length,
+   hardBlocks: lethal.filter(row => Number.isFinite(row.hard?.bp)).length,
+   v3Blocks: lethal.filter(row => Number.isFinite(row.v3?.bp)).length,
+   note: 'The -90000 score is AI v3 terminalValue for an unfinished own-life-0 line. hard-search-2 uses its own scores and does not emit -100000 on these passes. Both policies pass most of these marks, so the shared action is not fixed by routing pending to hard. The numeric gap itself is v3.'
+  },
   examples: examples.slice(0, 5),
   counterfactual: counters,
   recommendation: recommendFrom(agreement(shadow), counters),
