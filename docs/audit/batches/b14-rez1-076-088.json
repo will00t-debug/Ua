@@ -1,0 +1,378 @@
+{
+  "group": "B14",
+  "baseline": "0ced13aac83f7a8b283ed80113abb010a05b4c5e",
+  "baseBranch": "cursor/audit-round11-integrate-65f8",
+  "range": "UA40BT/REZ-1-076 至 REZ-1-088。",
+  "updated": "2026-11-11",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-076 起，至 REZ-1-088。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-076.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-077.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-078.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-086.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-088.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA40BT",
+    "checked": "2026-11-11",
+    "note": "2026-11-11 用 detail_iframe.php 與 600x837 卡圖對過 REZ-1-076～088。官網「発生エナジー」欄位這 13 張都印成橫線；卡圖紫珠是 076～078 與 081～087 各 1 顆，079、080、088 各 2 顆，086 另有活動時 +1。珠數與 dist/rezero-cards.mjs 的 gen 一致，不當成缺資料。077 與 078 的黑條是突襲行動，白底框才是面板：077 是自己回合菜月昴在場 BP+500，以及登場時移動；078 是菜月昴在場就有衝擊 1，以及登場時活動與自己效果登場才抽牌。076 與 079～088 沒有白底框。效果、必要能量、AP、BP、觸發和 effectJa 一致。UA40BT FAQ 這段用到 Q1576（077 能源線滿員先移除再移動）、Q1577（不能移動的突襲基礎被突襲後新頂端可以移動）、Q1578（085 先打非艾蜜莉雅不會消耗下一次減費）。Q1569～Q1575 與 Q1579～Q1580 不在這 13 張。沒有改 engine.mjs、rezero-pack.mjs、rezero-cards.mjs 或 raid-box.mjs。"
+  },
+  "counts": {
+    "已驗證": 13,
+    "部分核對": 0,
+    "待修正": 0,
+    "缺資料待確認": 0,
+    "無效果": 0
+  },
+  "fixes": [],
+  "sharedGaps": [],
+  "tests": {
+    "command": "node --test tests/v2-rez1-076-088.test.mjs tests/v2-rez1-051-075.test.mjs tests/v2-rez1-026-050.test.mjs tests/v2-rez1-001-025.test.mjs tests/v2-re0-set1-batch.test.mjs tests/v2-re0-official-faq.test.mjs tests/v2-effect-audit-ledger.test.mjs tests/v2-raid-box-all-titles.test.mjs tests/v2-rezero-rem-energy-raid-tap.test.mjs",
+    "result": "Node v22.23.4。168 passed, 0 failed。新檔 20，051～075 為 25，026～050 為 25，001～025 為 10，set1 65，官方 FAQ 15，台帳 3，raid-box 1，051／053 能源線突襲 4。沒有改共用台帳。沒有跑整庫。"
+  },
+  "reviews": [
+    {
+      "cardId": "REZ-1-076",
+      "number": "UA40BT/REZ-1-076",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【インパクト無効】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-076。與這張戰鬥的角色在該戰鬥中失去衝擊。",
+          "implementation": "beatriceHandTop 帶 impactNull。防守方印刷衝擊無效，且攻擊方 BP 不低於防守方時，攻擊方這場不造成衝擊傷害。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：突襲後的 078（場上有菜月昴，衝擊 1、BP 4000）打進阻擋的 076（BP 3000），076 退場，生命張數不變。同一攻擊打進沒有衝擊無效的 081，生命少 1 張。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】【フロントLにある場合】 【ターン1】手札を1枚山札の上に置き、BP+1000",
+          "status": "已驗證",
+          "official": "同一頁。必須放 1 張，不是最多 1 張。放上去才 BP+1000，只到這個回合。手牌是私人資訊。能源線不能啟動。空手上不能啟動。",
+          "implementation": "mainAbility frontOnceProgram，frontOnly、oncePerTurn，then handTopBuffSelf bp 1000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：對手的 private choices 是 null，公開 pending 沒有 choices。不能選 uid null。選中的手牌成為牌頂，原本的牌頂變成第二張，沒有公開揭示。BP 從 3000 變 4000，同一回合不能再啟動，對手主要階段回到 3000。空手與能源線都沒有啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラートリガー】場外の紫、必要エナジー2以下、消費AP1をアクティブで登場",
+          "status": "已驗證",
+          "official": "同一頁。可跳過。只到前線。能源 4 的 087、黃色 007 與事件 098 不能選。",
+          "implementation": "colorTrigger deployOutsideCharacter，purple、maxEnergy 2、ap 1、frontOnly。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：生命翻開後可選 085 與 086 的前線，沒有能源線目的地。087、007、098 不在選項。跳過時卡留在場外。選 085 後活動登場，AP 張數不變。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-077",
+      "number": "UA40BT/REZ-1-077",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【レイド】〈ベアトリス〉アクティブにし、フロントLに移動できる",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-077。黑條是突襲行動，不在白底框內。付費突襲與生命突襲都讓新頂端活動，並可從能源線移到前線。",
+          "implementation": "raidName ベアトリス。突襲行動走共用突襲，不靠 raid-box 的 onPlay。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：付費突襲後活動，疊的是 072。生命突襲在能源付足時可指定前線，入場後活動且疊著原來的 072。沒付能源時突襲模式不出現，改入手牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【自分のターン中】〈ナツキ・スバル〉がある場合、BP+500",
+          "status": "已驗證",
+          "official": "同一頁。2026-11-11 卡圖這句在白底框內。普通登場沒有。對手回合沒有。菜月昴在能源線也算自己的場。",
+          "implementation": "raid-box 保留 passive。passiveBonuses bp 500，ownNameExists，turn own，zone field。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：普通登場時場上有菜月昴，pending 為空、角色休息、BP 仍是 3500，對手前線沒被移動。突襲後 BP 4000；把 active 改成對手後回到 3500。raid-box 的 onPlay 與 passive 都是 true，076 與 079～088 則是 false。",
+          "unresolved": ""
+        },
+        {
+          "match": "【登場時】相手のフロントLを1枚までエナジーLへ。自分の効果で登場していた場合、次の自分のターン開始時まで移動できない",
+          "status": "已驗證",
+          "official": "同一頁，白底框內。最多 1 張，可以不選。付費登場與生命突襲不是自己的效果，不給不能移動。自己的效果讓它突襲時才鎖到下一個自己回合開始。Q1576：能源線四格都有卡時，先選一張移除，再把前線角色移進去。Q1577：被鎖住的突襲基礎被突襲後，新頂端不受那次鎖定。",
+          "implementation": "raid-box 保留 onPlay。moveOppFrontToEnergy，optional，lockIfEntry ownEffect。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：付費突襲 pending.lock 是 false，可跳過，移動後沒有 cannotMove。生命突襲同樣 lock false。滿員時恰好 4 個 replaceUid，被選的能源卡進移除區，不回手也不進場外。tests/v2-re0-set1-batch.test.mjs 用實驗事件讓 077 以自己的效果突襲，pending.lock 為 true，移動後不能移動也不能踏步，下一個自己回合開始時鎖定消失。tests/v2-re0-official-faq.test.mjs 的 Q1577 確認新頂端的 fieldEntryStamp 不受舊鎖定。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイドトリガー】手札に加えるか、突襲する",
+          "status": "已驗證",
+          "official": "同一頁。沒有付得起的突襲基礎時只能入手。",
+          "implementation": "共用 life-trigger raid。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs 的生命迴圈與 077 專用案例：沒有能源時沒有突襲選項，選 get 後這張進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-078",
+      "number": "UA40BT/REZ-1-078",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【レイド】〈ベアトリス〉アクティブにし、フロントLに移動できる",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-078。黑條在白底框外。",
+          "implementation": "raidName ベアトリス。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：付費突襲後活動。生命突襲指定前線後活動，並疊著 072。",
+          "unresolved": ""
+        },
+        {
+          "match": "自分の場に〈ナツキ・スバル〉がある場合、【インパクト（1）】",
+          "status": "已驗證",
+          "official": "同一頁。2026-11-11 卡圖這句在白底框內，沒有「自己的回合」限制。普通登場沒有衝擊。菜月昴離開場上後衝擊消失。能源線上的菜月昴也算場上。",
+          "implementation": "raid-box 保留 passive。passiveBonuses impact 1，ownNameExists，turn any，zone field。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：普通登場衝擊 0，菜月昴維持休息，牌組張數不變。突襲且菜月昴在前線時衝擊 1；把菜月昴改放到能源線仍是 1；移出後變成 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "【登場時】〈ナツキ・スバル〉を1枚までアクティブ。自分の効果で登場していた場合、1枚引く",
+          "status": "已驗證",
+          "official": "同一頁，白底框內。最多 1 張，可以不選。其他名字與這張自己不能選。付費突襲與生命突襲不抽。第一彈沒有印刷效果會讓碧翠絲登場，自己效果的抽牌用實驗事件重現。",
+          "implementation": "raid-box 保留 onPlay。activeOwnNamed ナツキ・スバル max 1 optional，以及 draw count 1 entry ownEffect。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：付費突襲的選項只有菜月昴，不含 081 與自己。跳過不抽牌，選了才活動，牌組張數不變。生命突襲把菜月昴活動後牌組張數不變。實驗包 rez-078-own 的事件讓它突襲後，選完菜月昴抽 1 張。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイドトリガー】手札に加えるか、突襲する",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger raid。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs 的生命迴圈：沒付能源時選 get，這張進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-079",
+      "number": "UA40BT/REZ-1-079",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "相手の場に黄か青がある場合、手札の必要エナジーを紫1減らす",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-079。黃或藍，不是兩者相加。只看對手場上，場外不算。只減這張手牌。沒有突襲符號，沒有觸發。卡圖 2 顆紫珠。",
+          "implementation": "handDiscount colors yellow 與 blue，amount 1。zoneRequiredEnergy 只在 hand 區套用，對手上任一張黃或藍就減 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：沒有對手顏色時必要能量 3，且不能登場。對手只有紫 068 仍是 3。黃 007 只在場外仍是 3。黃在前線且藍在能源線時這張變 2，088 仍是 3。黃與藍同時在場也只減 1。拿掉黃、留下藍仍是 2。這張沒有突襲行動。登場後 pending 為空。生命迴圈沒有觸發，卡進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-080",
+      "number": "UA40BT/REZ-1-080",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【登場時】必要エナジー1以下の他のキャラを手札に戻す。戻せない場合、このキャラを手札に戻す",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-080。有合法對象時必須選，不能跳過。能源 2 以上與自己不是對象。前線與能源線都算場上。沒有對象時這張回手，不開選擇。沒有觸發。卡圖 2 顆紫珠。",
+          "implementation": "onPlay bounceOwnOtherUnderEnergy energy 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：081（能源 0）與 084（能源 1）在選項，085（能源 2）與自己不在。pending 沒有 optional，uid null 不合法。選 081 後它回手，080 留在前線。場上只有 085 時 pending 為空，080 回手。生命迴圈沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-081",
+      "number": "UA40BT/REZ-1-081",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-081。效果欄是橫線。卡圖 1 顆紫珠，BP 2000。",
+          "implementation": "engineKind plain。沒有 onPlay。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：登場後 pending 為空，牌組張數不變，手牌少的是這張，BP 2000，角色休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロートリガー】カードを1枚引く",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：生命翻開後選 draw，手牌加 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-082",
+      "number": "UA40BT/REZ-1-082",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【起動メイン】【レストにする】 【ターン1】発生エナジー+紫、メイン終了時に退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-082。前線與能源線都能啟動。已經休息就不能支付。一回合一次，再次活動也不能再啟動。發生能量只在能源線計入。主要階段結束時這張退場。沒有觸發。",
+          "implementation": "mainAbility restSelfGainEnergyRetireEndMain，lines field，oncePerTurn，extraEnergy 1。結束主要階段時 retireAtMainEnd 用 fieldEntryStamp 對上。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：休息的 086 在能源線產生 1。啟動後變 2 並休息。再把它活動，仍不能第二次啟動。進入攻擊階段後退場，紫能量回到 0。前線上已經休息時不能啟動；活動後啟動不增加紫能量，主要階段結束時從前線進場外。生命迴圈沒有觸發。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-083",
+      "number": "UA40BT/REZ-1-083",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【登場時】上から2枚見る。1枚まで場外に置き、残りを望む順で山札の上に置く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-083。查看是私人的。場外最多 1 張，可以不放。剩下的由玩家排，先選的在最上面。放到場外後那張變成公開。牌組沒有卡就不開視窗。只剩 1 張且放到場外時不再排順序。",
+          "implementation": "onPlay inspectTopArrange count 2，toOutside，rest top。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：看 081 與 068。對手 private choices 是 null，公開 pending 沒有 uids，擁有者看得到兩張。跳過場外後把 068 排在 081 前面，068 成為牌頂。改把 081 放到場外會公開它，剩下的 068 直接成為牌頂。牌組只剩 1 張並放到場外後沒有順序視窗，牌組變空。空牌組登場時 pending 為空。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブトリガー】自分のキャラ1枚をアクティブにし、このターン中BP+3000",
+          "status": "已驗證",
+          "official": "同一頁。生命迴圈確認符號會開在這張上，並讓選中的角色活動且 BP+3000。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs 的生命迴圈：選休息的 081 後它活動，BP 5000。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-084",
+      "number": "UA40BT/REZ-1-084",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-084。效果欄是橫線。卡圖 1 顆紫珠，BP 2500。",
+          "implementation": "engineKind plain。沒有 onPlay。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：登場後 pending 為空，牌組張數不變，BP 2500。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブトリガー】自分のキャラ1枚をアクティブにし、このターン中BP+3000",
+          "status": "已驗證",
+          "official": "同一頁。可以不選。前線與能源線都能選。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：選項含前線 081 與能源線 068。跳過時兩者都維持休息。選 081 後它活動且 BP 5000，068 仍休息。生命迴圈用同一符號再確認一次。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-085",
+      "number": "UA40BT/REZ-1-085",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【起動メイン】【フロントL】 【ターン1】自分の効果でアクティブからレストになったことがある場合、次の手札の〈エミリア〉を紫1減らす",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-085。只限前線，一回合一次。手動活動再休息不算。減的是這個回合下一張從手牌使用的艾蜜莉雅，紫 1。先使用其他卡不消耗。Q1578 同此。沒用掉就在下一個自己回合開始時消失。能源 0 的艾蜜莉雅也會消耗。",
+          "implementation": "mainAbility frontOnceProgram，frontOnly、oncePerTurn、requireOwnEffectRest，then discountNextNamedHandEnergy name エミリア color purple amount 1。startTurn 清空 nextNamedHandEnergy。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：登場後、手動活動再休息、以及還沒被自己的效果休息之前，都不能啟動。098 把它從活動休息後可以啟動。暫時放到能源線不能啟動。啟動後 088 的手牌必要能量從 3 變 2，068 仍是 0。打出 068 不消耗；打出能源 0 的 081 後折扣消失，088 回到 3。同一張不能再啟動。另複本走到下一個自己的主要階段，折扣已清空。tests/v2-re0-official-faq.test.mjs 的 Q1578 也確認先打非艾蜜莉雅不會消耗。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロートリガー】カードを1枚引く",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs 的生命迴圈：選 draw 後手牌加 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-086",
+      "number": "UA40BT/REZ-1-086",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "アクティブの場合、発生エナジー+紫",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-086。卡圖 1 顆紫珠再加活動時的 +。只在能源線且活動時多 1。休息時只有印刷的 1。前線不論活動或休息都不產生。沒有登場時效果，沒有觸發。",
+          "implementation": "activeExtraEnergy 1。沒有 onPlay。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：活動的能源線是 2，休息後是 1。前線活動或休息都不增加。登場後 pending 為空，牌組張數不變。生命迴圈沒有觸發，卡進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-087",
+      "number": "UA40BT/REZ-1-087",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【自分のターン中】BP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-087。沒有限定前線。對手回合沒有。",
+          "implementation": "ownTurnBp 1000。bp() 在自己是行動玩家時加上，不看區域。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：沒有試練時登場，pending 為空、角色休息、BP 4000。改放到能源線仍是 4000。對手主要階段是 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【登場時】自分の場外の〈”聖域”の”試練”〉を1枚リムーブしてもよい。そうした場合、アクティブ",
+          "status": "已驗證",
+          "official": "同一頁。可以不選。只有自己場外的那張名字。手牌與對手場外不是對象。不選就維持休息，卡留在場外。選了才移除並活動。",
+          "implementation": "onPlay removeNamedOutsideActive，name 來自 REZ-1-098 的 nameJa。optional。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：自己場外有 098、手牌有 081、對手場外有 098 時，選項只有自己的 098。跳過維持休息且 098 留在場外。選了之後 098 進移除區，這張活動，BP 4000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロートリガー】カードを1枚引く",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs 的生命迴圈：選 draw 後手牌加 1。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-088",
+      "number": "UA40BT/REZ-1-088",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【起動メイン】【フロントL】 【ターン1】自分の効果でレストになったことがある場合、アクティブにし、次の自分のターン開始時までBP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-088。只限前線，一回合一次。能源線不能啟動。加值留到對手回合，下一個自己回合開始時消失。卡圖 2 顆紫珠。",
+          "implementation": "mainAbility frontOnceProgram，frontOnly、oncePerTurn、requireOwnEffectRest，then activeSelf 與 buffSelfUntilNextOwnStart bp 1000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs：登場後不能啟動。098 把它休息後，放到能源線仍不能啟動。回到前線啟動後活動，BP 4000，不能再啟動。對手主要階段仍是 4000。下一個自己的主要階段回到 3000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブトリガー】自分のキャラ1枚をアクティブにし、このターン中BP+3000",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-076-088.test.mjs 的生命迴圈：選休息的 081 後它活動，BP 5000。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}
