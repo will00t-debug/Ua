@@ -384,8 +384,12 @@ function play041(pack,s,job){
  if(self)self.mmm2DoubleAttack=s.turn;
 }
 function attack041(pack,s,job){
+ // 【ターン1】 is this physical card. Q2353's three names include this
+ // entry, but a second swing from 【2回アタック】 does not look again.
+ if(used(s,job.sourceUid+'|look'))return;
  if(entries(s,job.owner,VILLA)<3)return;
- look(pack,s,job,3,'u041');
+ use(s,job.sourceUid+'|look');
+ look(pack,s,job,3,'u041',c=>cardHasTrait(def(pack,c),VILLA));
 }
 function main043(pack,s,job){
  const targets=ownChars(s,job.owner,c=>c.uid!==job.sourceUid);
@@ -419,7 +423,12 @@ function play045(pack,s,job){
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u045'},
   [{type:'mmm2',mode:'skip'},...actions]);
 }
-function play046(pack,s,job){look(pack,s,job,2,'u046');}
+function play046(pack,s,job){
+ look(pack,s,job,2,'u046',c=>{
+  const d=def(pack,c);
+  return cardHasTrait(d,MAGIUS)||cardHasTrait(d,WING);
+ });
+}
 function main047(pack,s,job){
  const hand=plOf(s,job.owner).hand;
  if(!hand.length)return;
@@ -554,11 +563,13 @@ function play073(pack,s,job){
   skipDo(girls.map(c=>({type:'mmm2',uid:c.uid}))));
 }
 
-function look(pack,s,job,count,step){
- const uids=plOf(s,job.owner).deck.slice(0,count).map(c=>c.uid);
- if(!uids.length)return;
- hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step,data:{uids,picked:[]}},
-  [{type:'mmm2',mode:'done'},...uids.map(uid=>({type:'mmm2',uid}))]);
+function look(pack,s,job,count,step,ok){
+ const cards=plOf(s,job.owner).deck.slice(0,count);
+ if(!cards.length)return;
+ const legal=typeof ok==='function'?cards.filter(ok):cards;
+ hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step,
+  data:{uids:cards.map(c=>c.uid),picked:[]}},
+  [{type:'mmm2',mode:'done'},...legal.map(c=>({type:'mmm2',uid:c.uid}))]);
 }
 function lookOne(pack,s,job){
  const top=plOf(s,job.owner).deck[0];
@@ -843,6 +854,7 @@ const STEPS={
  u046(pack,s,q,a){takeWindow(pack,s,q,a,1,c=>{
   const d=def(pack,c);return cardHasTrait(d,MAGIUS)||cardHasTrait(d,WING);
  },'top',true);},
+ orderWindow,
  u047(pack,s,q,a){
   moveZone(pack,s,q.player,'hand',a.uid,'deck',q.sourceUid,{deckPosition:'top',revealed:false});
   const self=selfOf(s,q.player,q.sourceUid);
@@ -987,11 +999,42 @@ function takeWindow(pack,s,q,a,max,ok,rest,toOutside){
  }
  const pl=plOf(s,q.player);
  const left=pl.deck.filter(c=>data.uids.includes(c.uid));
- if(rest==='top'||!left.length)return;
- const ids=new Set(left.map(c=>c.uid));
- const kept=[],moved=[];
- for(const c of pl.deck)(ids.has(c.uid)?moved:kept).push(c);
- pl.deck=[...kept,...moved];
+ if(!left.length)return;
+ // 望む順. One remaining card has no order. Two or more stay private
+ // until the player picks the top of that group downward.
+ if(left.length===1){
+  if(rest==='top')return;
+  const ids=new Set(left.map(c=>c.uid));
+  const kept=[],moved=[];
+  for(const c of pl.deck)(ids.has(c.uid)?moved:kept).push(c);
+  pl.deck=[...kept,...moved];
+  return;
+ }
+ const uids=left.map(c=>c.uid);
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'orderWindow',
+  data:{uids,order:[],rest}},uids.map(uid=>({type:'mmm2',uid})));
+}
+function orderWindow(pack,s,q,a){
+ const data=q.data;
+ if(!data.uids.includes(a.uid)||data.order.includes(a.uid))
+  throw Error('Illegal deck order');
+ data.order.push(a.uid);
+ const remain=data.uids.filter(uid=>!data.order.includes(uid));
+ if(remain.length>1){
+  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'orderWindow',data},
+   remain.map(uid=>({type:'mmm2',uid})));
+  return;
+ }
+ const seq=[...data.order,...remain];
+ const pl=plOf(s,q.player);
+ const window=pl.deck.splice(0,data.uids.length);
+ if(window.length!==data.uids.length||window.some(c=>!data.uids.includes(c.uid)))
+  throw Error('Inspected deck window was changed');
+ const byUid=new Map(window.map(c=>[c.uid,c]));
+ const ordered=seq.map(uid=>byUid.get(uid));
+ if(ordered.some(c=>!c))throw Error('Ordered card left the window');
+ if(data.rest==='top')pl.deck.unshift(...ordered);
+ else pl.deck.push(...ordered);
 }
 function apply072(pack,s,q,picked){
  const order=['a','b'].filter(m=>picked.includes(m));
