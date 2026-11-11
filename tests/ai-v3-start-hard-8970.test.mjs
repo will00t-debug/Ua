@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {existsSync, readFileSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {applySharedOpening, newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {AI_V3_POLICY} from '../dist/universal-v2/ai-v3/search.mjs';
@@ -8,7 +8,7 @@ import {
  chooseHybridMainAction, chooseHybridStartHardAction, hybridSource, hybridStartHardSource,
  lastHybridRoute, HYBRID_MAIN_POLICY, HYBRID_START_HARD_POLICY
 } from '../dist/universal-v2/ai-v3/hybrid-main.mjs';
-import {buildAiV3Request, handleAiV3Request} from '../dist/universal-v2/ai-v3/worker-entry.mjs';
+import {acceptAiV3Result, buildAiV3Request, handleAiV3Request} from '../dist/universal-v2/ai-v3/worker-entry.mjs';
 import {legalUniversalActions} from '../dist/universal-v2/engine.mjs';
 import {advanceFrom, loadStartHardLock, startHardJobs} from '../scripts/ai-v3-start-hard-ab.mjs';
 
@@ -40,7 +40,7 @@ test('8970-9009 is locked before any start-hard game', () => {
  assert.equal(lock.doesNotReplace, 'audit/ai-v3-hybrid-vs-hard-9050-summary.json');
 });
 
-test('start-hard changes only the start lane and the worker ignores the name', () => {
+test('start-hard changes only the start lane and the worker accepts the name', () => {
  assert.equal(hybridSource('start'), 'v3');
  assert.equal(hybridSource('main'), 'hard');
  assert.equal(hybridStartHardSource('start'), 'hard');
@@ -69,14 +69,16 @@ test('start-hard changes only the start lane and the worker ignores the name', (
  assert.equal(nextRoute.ms, 40);
  assert.ok(legal.some(action => same(action, next)));
  const request = buildAiV3Request(packs, state, actor, {requestId: 1, stateVersion: 1, seed: 1, nodes: 48, ms: 40, policy: HYBRID_START_HARD_POLICY});
- assert.equal(Object.hasOwn(request, 'policy'), false);
- const handled = handleAiV3Request({...request, policy: HYBRID_START_HARD_POLICY});
- assert.equal(handled.policy, AI_V3_POLICY);
- assert.equal(handled.search?.route, undefined);
- for (const path of ['dist/universal-v2-preview.html', 'dist/universal-v2-preview.mjs', 'dist/universal-v2-battle.html']) {
-  if (!existsSync(path)) continue;
-  assert.equal(readFileSync(path, 'utf8').includes('hybrid-start-hard-v1'), false, path);
- }
+ assert.equal(request.policy, HYBRID_START_HARD_POLICY);
+ const handled = handleAiV3Request(request);
+ assert.equal(handled.policy, HYBRID_START_HARD_POLICY);
+ assert.equal(handled.search.route.source, 'hard');
+ assert.equal(handled.search.route.lane, 'start');
+ assert.equal(same(handled.action, next), true);
+ assert.equal(acceptAiV3Result({requestId: 1, stateVersion: 1, actor, legal}, handled).ok, true);
+ const lobby = readFileSync('dist/universal-v2-preview.html', 'utf8');
+ assert.match(lobby, /id="use-hybrid-start-hard"/);
+ assert.doesNotMatch(lobby, /id="hybrid-start-hard-v1"[^>]*checked/);
 });
 
 test('the start-hard gate needs the win gap, the interval, white sword, and safety', () => {

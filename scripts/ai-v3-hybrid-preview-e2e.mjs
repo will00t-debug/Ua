@@ -189,7 +189,7 @@ try {
  const defaults = await snap();
  if (defaults.hybridChecked !== false || defaults.previewChecked !== false) report.problems.push('default-not-off');
  if (!defaults.policyText.includes('normal') && !defaults.policyText.includes('這場難度')) report.problems.push('default-policy');
- if (!defaults.script.includes('20261110aipolicy1')) report.problems.push('cache');
+ if (!defaults.script.includes('20261112starthard1')) report.problems.push('cache');
  await evalPage(`(() => {
   document.getElementById('use-ai-v3').click();
   return document.body.dataset.aiPolicy;
@@ -324,7 +324,7 @@ try {
   if (game.problem) report.problems.push(game.deck + '-' + game.problem);
   if (game.hiddenDump) report.problems.push(game.deck + '-hidden');
   if (game.badRoutes?.length) report.problems.push(game.deck + '-route');
-  if (!game.script.includes('20261110aipolicy1')) report.problems.push(game.deck + '-cache');
+  if (!game.script.includes('20261112starthard1')) report.problems.push(game.deck + '-cache');
  }
  await browser.send('Emulation.setDeviceMetricsOverride', {width: 1366, height: 900, deviceScaleFactor: 1, mobile: false}, session);
  if (!only) {

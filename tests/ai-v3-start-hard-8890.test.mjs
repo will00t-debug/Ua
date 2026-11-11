@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {existsSync, readFileSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {applySharedOpening, newComparedMatch} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {AI_V3_POLICY} from '../dist/universal-v2/ai-v3/search.mjs';
@@ -8,7 +8,7 @@ import {
  chooseHybridMainAction, chooseHybridStartHardAction, hybridSource, hybridStartHardSource,
  lastHybridRoute, HYBRID_MAIN_POLICY, HYBRID_START_HARD_POLICY
 } from '../dist/universal-v2/ai-v3/hybrid-main.mjs';
-import {buildAiV3Request, handleAiV3Request} from '../dist/universal-v2/ai-v3/worker-entry.mjs';
+import {acceptAiV3Result, buildAiV3Request, handleAiV3Request} from '../dist/universal-v2/ai-v3/worker-entry.mjs';
 import {legalUniversalActions} from '../dist/universal-v2/engine.mjs';
 import {acceptIndependent, independentJobs, loadIndependentLock, routesOk} from '../scripts/ai-v3-start-hard-8890.mjs';
 
@@ -57,7 +57,7 @@ test('8890-8929 is locked before any independent game', () => {
  for (let seed = 8970; seed <= 9099; seed++) assert.equal(used.has(seed), false);
 });
 
-test('the frozen start route is unchanged and the worker ignores the name', () => {
+test('the frozen start route is unchanged and the worker accepts the named policy', () => {
  const lock = loadIndependentLock();
  for (const [lane, source] of Object.entries(lock.routes.A)) assert.equal(hybridSource(lane), source);
  for (const [lane, source] of Object.entries(lock.routes.B)) assert.equal(hybridStartHardSource(lane), source);
@@ -82,14 +82,25 @@ test('the frozen start route is unchanged and the worker ignores the name', () =
  assert.equal(nextRoute.ms, 40);
  assert.ok(legal.some(action => same(action, next)));
  const request = buildAiV3Request(packs, state, actor, {requestId: 1, stateVersion: 1, seed: 1, nodes: 48, ms: 40, policy: HYBRID_START_HARD_POLICY});
- assert.equal(Object.hasOwn(request, 'policy'), false);
- const handled = handleAiV3Request({...request, policy: HYBRID_START_HARD_POLICY});
- assert.equal(handled.policy, AI_V3_POLICY);
- assert.equal(handled.search?.route, undefined);
- for (const path of ['dist/universal-v2-preview.html', 'dist/universal-v2-preview.mjs', 'dist/universal-v2-battle.html']) {
-  if (!existsSync(path)) continue;
-  assert.equal(readFileSync(path, 'utf8').includes('hybrid-start-hard-v1'), false, path);
- }
+ assert.equal(request.policy, HYBRID_START_HARD_POLICY);
+ assert.equal(request.seed, 1);
+ assert.equal(request.nodes, 48);
+ assert.equal(request.ms, 40);
+ const handled = handleAiV3Request(request);
+ assert.equal(handled.policy, HYBRID_START_HARD_POLICY);
+ assert.equal(handled.search.route.source, 'hard');
+ assert.equal(handled.search.route.lane, 'start');
+ assert.equal(acceptAiV3Result({requestId: 1, stateVersion: 1, actor, legal}, handled).ok, true);
+ const plain = buildAiV3Request(packs, state, actor, {requestId: 2, stateVersion: 2, seed: 1, nodes: 48, ms: 40});
+ assert.equal(Object.hasOwn(plain, 'policy'), false);
+ assert.equal(handleAiV3Request(plain).policy, AI_V3_POLICY);
+ const unknown = buildAiV3Request(packs, state, actor, {requestId: 3, stateVersion: 3, seed: 1, nodes: 48, ms: 40, policy: 'settle-life'});
+ assert.equal(Object.hasOwn(unknown, 'policy'), false);
+ assert.equal(handleAiV3Request({...unknown, policy: 'paid-front'}).policy, AI_V3_POLICY);
+ const lobby = readFileSync('dist/universal-v2-preview.html', 'utf8');
+ assert.match(lobby, /id="hybrid-start-hard-v1"/);
+ assert.doesNotMatch(lobby, /id="hybrid-start-hard-v1"[^>]*checked/);
+ assert.match(readFileSync('dist/universal-v2-preview.mjs', 'utf8'), /ua-hybrid-start-hard-v1/);
 });
 
 test('the independent gate needs every pre-registered item', () => {

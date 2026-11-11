@@ -3,7 +3,7 @@
 // version and actor still match, and the action is on the live legal list.
 import {legalUniversalActions} from '../engine.mjs';
 import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS} from './search.mjs';
-import {chooseHybridMainAction,lastHybridRoute,HYBRID_MAIN_POLICY} from './hybrid-main.mjs';
+import {chooseHybridMainAction,chooseHybridStartHardAction,lastHybridRoute,HYBRID_MAIN_POLICY,HYBRID_START_HARD_POLICY} from './hybrid-main.mjs';
 import {lastHardAiTrace} from '../hard-ai.mjs';
 import {normalizeFactors} from './strategy.mjs';
 import {beliefWorld} from './belief.mjs';
@@ -27,12 +27,15 @@ export function buildAiV3Request(pack,state,actor,{requestId,stateVersion,seed=1
   sealed:true,
   requestId,stateVersion,actor,seed,mode:mode||'beam',prior:prior||null,
   nodes:nodes??MATCH_LIMITS.nodes,ms:ms??MATCH_LIMITS.ms,
-  ...(policy===HYBRID_MAIN_POLICY?{policy:HYBRID_MAIN_POLICY}:{}),
+  ...(namedPolicy({policy})===AI_V3_POLICY?{}:{policy:namedPolicy({policy})}),
   pack,state:world.state
  };
 }
+const NAMED_POLICIES=new Set([HYBRID_MAIN_POLICY,HYBRID_START_HARD_POLICY]);
 function namedPolicy(message){
- return message?.policy===HYBRID_MAIN_POLICY?HYBRID_MAIN_POLICY:AI_V3_POLICY;
+ const policy=message?.policy;
+ if(policy==null||policy==='')return AI_V3_POLICY;
+ return NAMED_POLICIES.has(policy)?policy:AI_V3_POLICY;
 }
 export function handleAiV3Request(message){
  const requestId=message?.requestId??null;
@@ -57,16 +60,18 @@ export function handleAiV3Request(message){
    delete rawFactors.paidFront;
   }
   const factors=normalizeFactors(rawFactors&&Object.keys(rawFactors).length?rawFactors:null);
-  const hybrid=policy===HYBRID_MAIN_POLICY;
+  const hybrid=policy===HYBRID_MAIN_POLICY||policy===HYBRID_START_HARD_POLICY;
   const limits={
    actor,seed:message.seed,mode:message.mode,prior:message.prior,
    nodes:message.nodes,ms:message.ms,worlds:1,
    ...(factors?{factors}:{}),
    ...(variant&&!factors?{variant}:{})
   };
-  const action=hybrid
-   ?chooseHybridMainAction(message.pack,message.state,limits)
-   :chooseAiV3Action(message.pack,message.state,limits);
+  const action=policy===HYBRID_START_HARD_POLICY
+   ?chooseHybridStartHardAction(message.pack,message.state,limits)
+   :policy===HYBRID_MAIN_POLICY
+    ?chooseHybridMainAction(message.pack,message.state,limits)
+    :chooseAiV3Action(message.pack,message.state,limits);
   const exact=legal.find(item=>same(item,action))||null;
   const route=hybrid?lastHybridRoute():null;
   const search=hybrid&&route?.source==='hard'?hardSearchReport():searchReport();
