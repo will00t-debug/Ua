@@ -11,15 +11,21 @@
 //
 //   node scripts/ai-v3-benchmark.mjs
 //   AI_V3_GAMES=1 AI_V3_STEPS=30 node scripts/ai-v3-benchmark.mjs
+//   AI_V3_DIAGNOSE=1 records the live choice after the timed search. Default off.
+//   AI_V3_DIAG_DIR=/tmp/ai-v3-diagnose writes full states locally and not to git.
+import {realpathSync} from 'node:fs';
 import {performance} from 'node:perf_hooks';
+import {fileURLToPath} from 'node:url';
 import {mainDecks,battleDecks} from '../dist/universal-v2/ai-v3/decks.mjs';
 import {chooseAiV3Action,resetAiV3Report,aiV3Report,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS,THINK_BUDGETS} from '../dist/universal-v2/ai-v3/search.mjs';
 import {legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
-import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,HARD_AI_POLICY} from '../dist/universal-v2/hard-ai.mjs';
+import {chooseStrengthenedHardAction,resetHardAiReport,hardAiReport,lastHardAiTrace,HARD_AI_POLICY} from '../dist/universal-v2/hard-ai.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
 import {matchGrid,pairedChallenger} from '../dist/universal-v2/ai-v3/compare.mjs';
+import {chooseHybridMainAction,lastHybridRoute,HYBRID_MAIN_POLICY} from '../dist/universal-v2/ai-v3/hybrid-main.mjs';
 import {matchRules,newComparedMatch,applySharedOpening,cloneMatch,nextBuckets} from '../dist/universal-v2/ai-v3/opening.mjs';
 import {normalizeFactors} from '../dist/universal-v2/ai-v3/strategy.mjs';
+import {captureDecision,diagnoseEnabled,writeLocalSnapshot} from './ai-v3-decision-log.mjs';
 
 const GAMES=Number(process.env.AI_V3_GAMES||1);
 const STEPS=Number(process.env.AI_V3_STEPS||24);
@@ -56,6 +62,10 @@ function choose(mode,pack,state,actor){
   const action=chooseStrengthenedHardAction(pack,state,{nodes:BUDGET.nodes,ms:BUDGET.ms,seed:BUDGET.seed});
   return {action,fallback:false};
  }
+ if(mode==='hybrid'){
+  const action=chooseHybridMainAction(pack,state,{actor,nodes:BUDGET.nodes,ms:BUDGET.ms,seed:BUDGET.seed});
+  return {action,fallback:false};
+ }
  if(mode==='rollout'||mode==='tree'||mode==='tree-replies'){
   const meter={dispatches:0};
   const action=chooseAiV3Action(pack,state,{actor,...BUDGET,plan:mode,strategy:STRATEGY,meter,
@@ -69,6 +79,18 @@ function choose(mode,pack,state,actor){
  if(mode==='ismcts')options.mode='ismcts';
  const action=chooseAiV3Action(pack,state,options);
  return {action,fallback:false};
+}
+function traceOf(mode){
+ if(mode==='hybrid'){
+  const route=lastHybridRoute()||{};
+  const source=route.source||null;
+  return {policy:route.policy||HYBRID_MAIN_POLICY,source,lane:route.lane||null,
+   trace:source==='hard'?lastHardAiTrace():lastAiV3Trace()};
+ }
+ if(mode==='baseline')return {policy:HARD_AI_POLICY,source:'hard',lane:null,trace:lastHardAiTrace()};
+ if(mode==='live')return {policy:'live',source:'live',lane:null,trace:null};
+ const trace=lastAiV3Trace();
+ return {policy:trace?.policy||AI_V3_POLICY,source:'v3',lane:null,trace};
 }
 function fresh(deck,seed,first){
  const packs=[deck.pack,deck.pack];
@@ -106,6 +128,8 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
  const script=[];
  const actions=[];
  let steps=0,fallback=0,illegal=0,engineError=null;
+ const diagnose=diagnoseEnabled();
+ const diagnosed=[];
  const learned={decisions:0,search:0,settledChoices:0,budgetFallback:0,fallback:0,forced:0,nodes:0,basicNodes:0,deepNodes:0,rootPlanned:0,rootExecuted:0,followBranches:0,maxDepth:0,responses:0};
  const passes={decisions:0,onlyNext:0,voluntaryNext:0,passedDevelopment:0,autonomous:0};
  let mark=aiV3Report();
@@ -165,13 +189,27 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
   }
   if(RECORD)actions.push({step:steps,actor,action,...(quality||{}),
    ...(Number.isInteger(picked.dispatches)?{dispatches:picked.dispatches}:{})});
-  try{state=dispatchUniversalAction(packs,state,action,{actor});}
+  const beforeState=state;
+  let nextState;
+  try{nextState=dispatchUniversalAction(packs,state,action,{actor});}
   catch(error){
    illegal++;
    engineError=error.message;
    console.error('engine',deck.id,seed,first,challengerMode,action.type,error.message);
    break;
   }
+  if(diagnose){
+   const meta=traceOf(mode);
+   const captured=captureDecision({
+    packs,before:beforeState,after:nextState,actor,first,legal,chosen:action,
+    policy:meta.policy,source:meta.source,lane:meta.lane,trace:meta.trace,
+    wallMs:ms,nodesBudget:BUDGET.nodes,msBudget:BUDGET.ms,step:steps,
+    keepState:process.env.AI_V3_DIAG_DIR?'flagged':false,withId:true
+   });
+   if(diagnosed.length<80||captured.flags.length)diagnosed.push(captured.public);
+   if(captured.local&&process.env.AI_V3_DIAG_DIR)writeLocalSnapshot(process.env.AI_V3_DIAG_DIR,captured.local);
+  }
+  state=nextState;
   steps++;
  }
  return {title:deck.title,seed,first,steps,illegal,engineError,fallback,ms:samples,acts,script,learned,passes,
@@ -184,7 +222,8 @@ function play(deck,seed,first,leftMode,rightMode,challengerMode,opening){
   finished:state.status==='finished',winner:state.winner,endReason:state.endReason,
   life:state.players.map(player=>player.life.length),
   wall:performance.now()-started,
-  ...(RECORD?{actions}:{})
+  ...(RECORD?{actions}:{}),
+  ...(diagnose&&diagnosed.length?{diagnosed}:{})
  };
 }
 function gameView(row){
@@ -197,7 +236,8 @@ function gameView(row){
   challengerWon:row.finished&&(row.winner===0||row.winner===1)?row.winner===row.challengerSeat:null,
   nodes:row.learned?.nodes??null,settledChoices:row.learned?.settledChoices??null,
   decisionsLearned:row.learned?.decisions??null,decisionReasons:row.decisionReasons||{},
-  ...(row.actions?{actions:row.actions}:{})
+  ...(row.actions?{actions:row.actions}:{}),
+  ...(row.diagnosed?{diagnosed:row.diagnosed}:{})
  };
 }
 function replayGame(deck,game){
@@ -225,6 +265,7 @@ function replayGame(deck,game){
  const ok=cursor.status===(game.finished?'finished':'playing')&&cursor.winner===game.winner&&sameLife&&(game.actions||[]).length===game.steps;
  return {ok,status:cursor.status,winner:cursor.winner,life,steps:(game.actions||[]).length};
 }
+function benchmarkMain(){
 const wanted=new Set((process.env.AI_V3_TITLES||'').split(',').filter(Boolean));
 const decks=(POOL==='battle'?battleDecks():mainDecks()).filter(deck=>!wanted.size||wanted.has(deck.title)||wanted.has(deck.id));
 const report={policy:AI_V3_POLICY,baseline:ANCHOR,hard:HARD_AI_POLICY,
@@ -347,3 +388,11 @@ if(RECORD){
 console.log(JSON.stringify(report,null,2));
 void hardAiReport();void aiV3Report();
 if(RECORD&&report.replay.replayFailed)process.exitCode=1;
+}
+function invokedDirectly(){
+ const entry=process.argv[1];
+ if(!entry)return false;
+ try{return realpathSync(entry)===realpathSync(fileURLToPath(import.meta.url));}
+ catch{return false;}
+}
+if(invokedDirectly())benchmarkMain();
