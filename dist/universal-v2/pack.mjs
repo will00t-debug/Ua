@@ -1530,7 +1530,9 @@ function verifyProgram(program,path){
    !Array.isArray(e.then)||e.then.length!==1||e.then[0]?.op!=='draw'||
    ![1,2].includes(e.then[0]?.count)||
    Object.keys(e.then[0]).some(k=>!['op','count'].includes(k))||
-   Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','then'].includes(k))))
+   (e.optional!==undefined&&e.optional!==false)||
+   Object.keys(e).length!==2+Number(e.optional===false)||
+   Object.keys(e).some(k=>!['op','then','optional'].includes(k))))
    throw Error(path+'['+i+'] invalid optional life-to-hand draw');
   if(e.op==='outsideTriggerDrawBranch'&&(
    e.color!=='blue'||e.maxEnergy!==3||e.atMost!==3||Object.keys(e).length!==4||

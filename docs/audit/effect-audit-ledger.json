@@ -294,30 +294,37 @@
    "where": "dist/universal-v2/mmm-exedra-runtime.mjs legalMmm2Activations 以印刷能量合計作為閘門。u012b 在合計已達 4 時提供結束，未達 4 不能結束。",
    "affects": "只有 012 的第二個起動。第一個彈回並看牌的起動不變。",
    "evidence": "tests/v2-mmm2-001-025.test.mjs。只有能量 2 的一張不能啟動。能量達到 4 後可以再放，選結束才活動。"
+  },
+  {
+   "name": "MMM-1-092 有生命時必須接手牌再抽 2",
+   "rule": "UA31BT/MMM-1-092：把自己的生命區 1 張加入手牌。成功之後才抽 2。印刷沒有「てもよい」。有生命時不能放棄。沒有生命時這句不成立，不能憑空抽 2。",
+   "where": "dist/universal-v2/mmm-pack.mjs lifeDraw2 帶 optional:false。dist/universal-v2/pack.mjs 只允許這個 op 額外出現 optional:false。dist/universal-v2/engine.mjs 在 optional 為 false 時不提供放棄，而且先移動生命再抽牌。",
+   "affects": "只有 092。SAO-1-021 的「加えてもよい」仍是省略 optional 的可放棄版本，抽 1 張。",
+   "evidence": "tests/v2-mmm1-092-life.test.mjs。tests/v2-c28-catalog-port.test.mjs 的 SAO-1-021 仍可選不拿。"
   }
  ],
  "summary": {
   "total": 957,
-  "未檢查": 123,
-  "待修正": 1,
+  "未檢查": 98,
+  "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 810,
+  "已驗證": 836,
   "缺資料待確認": 3,
   "部分核對": 1,
   "無效果": 3,
   "行動值卡": 16,
-  "部分條款已記錄": 815,
+  "部分條款已記錄": 840,
   "playable": {
    "total": 938,
-   "未檢查": 123,
-   "待修正": 1,
+   "未檢查": 98,
+   "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 810,
+   "已驗證": 836,
    "缺資料待確認": 3,
    "部分核對": 1,
    "無效果": 0,
    "行動值卡": 0,
-   "部分條款已記錄": 815
+   "部分條款已記錄": 840
   },
   "ap": {
    "total": 16,
@@ -495,9 +502,9 @@
     "priority": 2,
     "total": 113,
     "未檢查": 12,
-    "待修正": 1,
+    "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 99,
+    "已驗證": 100,
     "缺資料待確認": 0,
     "部分核對": 0,
     "無效果": 1,
@@ -510,15 +517,15 @@
     "product": "EX16BT",
     "priority": 2,
     "total": 73,
-    "未檢查": 48,
+    "未檢查": 23,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 24,
+    "已驗證": 49,
     "缺資料待確認": 0,
     "部分核對": 1,
     "無效果": 0,
     "行動值卡": 0,
-    "部分條款已記錄": 25
+    "部分條款已記錄": 50
    },
    {
     "id": "rez",
@@ -40244,12 +40251,12 @@
    "clauses": [
     {
      "text": "自分のライフエリアにあるカードを1枚手札に加える。そうした場合、カードを2枚引く。",
-     "status": "待修正",
+     "status": "已驗證",
      "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31BT/MMM-1-092。沒有「てもよい」。有生命就要選一張接手牌，然後抽 2。刀劍神域那張寫「加えてもよい」的才是可放棄。",
-     "implementation": "lifeDraw2。optionalOwnLifeToHandThenDraw。engine.mjs 把 optional 寫死為 true。pack.mjs 不允許這個 op 再帶別的欄位。",
-     "discrepancy": "生命還在時可以選 uid null，然後一張都不抽。印刷是必須選一張再抽 2。",
-     "evidence": "tests/v2-mmm-set1.test.mjs：放棄接手牌時牌庫不變。這次沒有改 engine.mjs。",
-     "unresolved": "請 A 組在共用引擎加上必選的生命接手牌再抽牌，或讓這個 op 接受必選旗標。這組只回報，不改共用引擎。"
+     "implementation": "lifeDraw2。optionalOwnLifeToHandThenDraw 帶 optional:false。有生命時合法選項沒有放棄。成功把手牌外的那張生命加入手牌之後才抽 2。沒有生命時不抽。SAO-1-021 省略 optional，仍可放棄並只抽 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-092-life.test.mjs。有生命時不能選 uid null，選一張後那張在手牌、牌庫少 2、另一張生命留著。沒有生命時沒有選擇、牌庫不變。tests/v2-mmm-set1.test.mjs 改為斷言放棄不合法。tests/v2-c28-catalog-port.test.mjs 的 SAO-1-021 仍可放棄。",
+     "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
@@ -40261,7 +40268,7 @@
      "unresolved": ""
     }
    ],
-   "status": "待修正",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "MMM-1-092",
@@ -40269,7 +40276,7 @@
      "clauses": [
       {
        "match": "自分のライフエリアにあるカードを1枚手札に加える。",
-       "status": "待修正"
+       "status": "已驗證"
       },
       {
        "match": "【ドロー】カードを1枚引く。",
@@ -42556,17 +42563,28 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から3枚見て、〈環 うい〉か［特徴：チームみかづき荘］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX16BT%2FMMM-2-026 。沒有生命觸發。",
+     "implementation": "共用 searchTopOneBottomDiscard。整段視窗進私人選擇。不符合的不能選。沒加入手牌就不棄牌。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-026-050.test.mjs：不符合的仍看得到。加入手牌後必須棄另一張。沒選時不棄。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-026",
+     "number": "EX16BT/MMM-2-026",
+     "clauses": [
+      {
+       "match": "【登場時】自分の山札の上から3枚見て、〈環 うい〉か［特徴：チームみかづき荘］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42585,17 +42603,28 @@
    "clauses": [
     {
      "text": "【登場時】このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一系列頁。Q2353：自己是第 3 種時可以抽。",
+     "implementation": "onPlay ifLiveThen，ownDistinctTraitEntriesThisTurn 至少 3。算的是本回合登場，不是場上現有張數。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：只有 2 種不抽。自己當第 3 種時牌庫少 1。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-027",
+     "number": "EX16BT/MMM-2-027",
+     "clauses": [
+      {
+       "match": "【登場時】このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42614,44 +42643,67 @@
    "clauses": [
     {
      "text": "【レイド】〈環 いろは〉アクティブにし、フロントLに移動できるこのターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラはBP4000以上のキャラにブロックされない。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2354：自己是第 3 種時條件成立。突襲框只包登場與啟動。 同一頁。突襲基礎是〈環 いろは〉。",
+     "implementation": "engine.mjs 既有的 MMM-2-028 分支，不看突襲層。本輪沒有改共用引擎。 raid-box 只列 onPlay 與 main。正面突襲才進這兩段。啟動可少於 2 張就結束。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：付費登場、不足 3 種時 BP4000 以上仍可阻擋。第 3 種登場後不可阻擋。付費登場沒有登場加值，也不能啟動。 新檔：突襲 026 後可選自己 +1000，再啟動給能源線 +1000，同一回合不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の場のキャラを1枚まで選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。突襲基礎是〈環 いろは〉。",
+     "implementation": "raid-box 只列 onPlay 與 main。正面突襲才進這兩段。啟動可少於 2 張就結束。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：突襲 026 後可選自己 +1000，再啟動給能源線 +1000，同一回合不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】自分の場のキャラを2枚まで選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "同一頁。突襲基礎是〈環 いろは〉。",
+     "implementation": "raid-box 只列 onPlay 與 main。正面突襲才進這兩段。啟動可少於 2 張就結束。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：突襲 026 後可選自己 +1000，再啟動給能源線 +1000，同一回合不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "生命觸發可入手，綠能量夠且有彩羽時可突襲。",
+     "implementation": "共用 life-trigger raid。需要綠 3 與〈環 いろは〉。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：3 點綠、基礎 026，入手與突襲都在選項裡。選入手進手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-028",
+     "number": "EX16BT/MMM-2-028",
+     "clauses": [
+      {
+       "match": "【レイド】〈環 いろは〉アクティブにし、フロントLに移動できるこのターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラはBP4000以上のキャラにブロックされない。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】自分の場のキャラを1枚まで選び、このターン中、BP+1000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】【フロントLにある場合】 【ターン1】自分の場のキャラを2枚まで選び、このターン中、BP+1000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42670,26 +42722,41 @@
    "clauses": [
     {
      "text": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽牌後棄 1。沒有可跳過。",
+     "implementation": "共用 drawDiscard。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：登場後牌庫少 1，必須選棄牌，沒有空選項。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "生命只抽 1，不棄牌。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：未阻擋傷害翻開後只抽 1，沒有棄牌選擇。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-029",
+     "number": "EX16BT/MMM-2-029",
+     "clauses": [
+      {
+       "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42708,26 +42775,41 @@
    "clauses": [
     {
      "text": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自己的移動階段可從前線走到能源線。",
+     "implementation": "共用 step。能源線上的這張不能再步進。主要階段沒有步進。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：移動階段從前線進能源。旁邊的 042 不能步進。主要階段與已在能源線都不能步進。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-030",
+     "number": "EX16BT/MMM-2-030",
+     "clauses": [
+      {
+       "match": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42746,26 +42828,41 @@
    "clauses": [
     {
      "text": "【登場時】自分のターン中の場合、自分の場の必要エナジーが2以下の［特徴：チームみかづき荘］を1枚手札に戻してもよい。そうした場合、自分の手札から必要エナジーが3以下で消費APが1の緑の［特徴：チームみかづき荘］を1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2355：剛回到手牌的那張若符合條件可以再登場。可跳過退回。",
+     "implementation": "play031 只在自己回合。能源超過 2 不能退。休息登場含剛退回的那張。對方回合不開這段。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：028 不能退。退回 029 後能休息放回前線，並接著處理 029 的棄牌。跳過時 029 留在場上。",
      "unresolved": ""
     },
     {
      "text": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "可從手牌休息登場綠、能源 2 以下、AP1 的角色。",
+     "implementation": "triggerEffect deployHandCharacter，maxEnergy 2。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：029 可以，能源 4 的 032 不行。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-031",
+     "number": "EX16BT/MMM-2-031",
+     "clauses": [
+      {
+       "match": "【登場時】自分のターン中の場合、自分の場の必要エナジーが2以下の［特徴：チームみかづき荘］を1枚手札に戻してもよい。そうした場合、自分の手札から必要エナジーが3以下で消費APが1の緑の［特徴：チームみかづき荘］を1枚まで自分の場にレストで登場させる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42784,35 +42881,54 @@
    "clauses": [
     {
      "text": "【レイド】〈七海 やちよ〉アクティブにし、フロントLに移動できる【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラは【インパクト（1）】を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "普通登場不看框內文。突襲基礎是〈七海 やちよ〉。",
+     "implementation": "raid-box 列 onPlay 與 passive。raidImpactNull 只在正面突襲。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：直接放上場沒有衝擊無效也沒有衝擊。突襲後兩者都在，登場可跳過。",
      "unresolved": ""
     },
     {
      "text": "【登場時】自分の手札から必要エナジーが3以下で消費APが1の緑の［特徴：チームみかづき荘］を1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "普通登場不看框內文。突襲基礎是〈七海 やちよ〉。",
+     "implementation": "raid-box 列 onPlay 與 passive。raidImpactNull 只在正面突襲。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：直接放上場沒有衝擊無效也沒有衝擊。突襲後兩者都在，登場可跳過。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "綠能量夠且基礎是八千代才可突襲，否則入手。",
+     "implementation": "需要綠 4 與〈七海 やちよ〉。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：035 加兩張 029 湊 4 點，基礎 030，突襲與入手都在。選入手。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-032",
+     "number": "EX16BT/MMM-2-032",
+     "clauses": [
+      {
+       "match": "【レイド】〈七海 やちよ〉アクティブにし、フロントLに移動できる【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラは【インパクト（1）】を得る。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】自分の手札から必要エナジーが3以下で消費APが1の緑の［特徴：チームみかづき荘］を1枚まで自分の場にレストで登場させる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42831,26 +42947,41 @@
    "clauses": [
     {
      "text": "【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "付費登場不抽。",
+     "implementation": "play033 只認 own-effect entry。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：付費登場牌庫不變。031 把它休息登場後抽 1。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-033",
+     "number": "EX16BT/MMM-2-033",
+     "clauses": [
+      {
+       "match": "【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42869,17 +43000,28 @@
    "clauses": [
     {
      "text": "自分のフロントLに異なるカード名の［特徴：チームみかづき荘］が2種類以上ある場合、このキャラの発生エナジー+【緑】。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "條件看前線的不同卡名。這張在前線時本身不產生。",
+     "implementation": "passiveBonuses extraEnergy，zone front。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：只有 1 種時產生 1。第 2 種後產生 2。放在前線的複製品產生 0。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-034",
+     "number": "EX16BT/MMM-2-034",
+     "clauses": [
+      {
+       "match": "自分のフロントLに異なるカード名の［特徴：チームみかづき荘］が2種類以上ある場合、このキャラの発生エナジー+【緑】。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42898,26 +43040,41 @@
    "clauses": [
     {
      "text": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【エナジーLにある場合】自分のアタックフェイズ終了時、自分のフロントLの特徴に「チームみかづき荘」を持つキャラを1枚選び、このキャラと位置を入れ替えてもよい。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "可跳過。不在能源線不換。",
+     "implementation": "impactNull。attack end 的 mmm2 只在能源線，目標限三日月莊。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：攻擊結束可換成前線的 026，也可跳過。不在能源線沒有選擇。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "活動 1 張並在這個回合 BP+3000。",
+     "implementation": "共用 life-trigger active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：活動休息中的 042，BP 變成 4500。不能選攻擊方。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-035",
+     "number": "EX16BT/MMM-2-035",
+     "clauses": [
+      {
+       "match": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【エナジーLにある場合】自分のアタックフェイズ終了時、自分のフロントLの特徴に「チームみかづき荘」を持つキャラを1枚選び、このキャラと位置を入れ替えてもよい。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42936,17 +43093,28 @@
    "clauses": [
     {
      "text": "【自分のターン中】このキャラはBP+500。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "對方回合沒有這段。沒有生命觸發。",
+     "implementation": "ownTurnBp 500。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：自己回合 4000。換邊後 3500。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-036",
+     "number": "EX16BT/MMM-2-036",
+     "clauses": [
+      {
+       "match": "【自分のターン中】このキャラはBP+500。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -42965,26 +43133,41 @@
    "clauses": [
     {
      "text": "このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラはBP+1500。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "算登場次數，不是場上張數。",
+     "implementation": "passiveBonuses，ownDistinctTraitEntriesThisTurn 至少 3。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "027 的測試：2 種時印刷 1500。第 3 種登場後 3000。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-037",
+     "number": "EX16BT/MMM-2-037",
+     "clauses": [
+      {
+       "match": "このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラはBP+1500。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43003,35 +43186,54 @@
    "clauses": [
     {
      "text": "このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラはBP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2357：兩張只能有一張發動攻擊時。Q2356：沒被阻擋的時點在指定阻擋之後。",
+     "implementation": "被動加值走條件。attack038 鎖深月 フェリシア|attack。傷害 2 記在這張實體卡。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：兩張都到 5000 後，先攻擊的那張傷害 2，另一張仍是 1。",
      "unresolved": ""
     },
     {
      "text": "【アタック時】相手のフロントLにキャラがあり、このキャラのBPが5000以上の場合、このキャラはこのターン中、【ダメージ（2）】を得る。〈深月 フェリシア〉のこの効果は1ターンに1回のみ発動する。このキャラのアタックがブロックされなかった時、このキャラはこのターンのエンドフェイズにアクティブにならない。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2356：在對方決定不阻擋之後。被阻擋就沒有這段。",
+     "implementation": "engine.mjs 既有的 MMM-2-038 分支，在未阻擋結算時記下 mmm2SkipEndActive。本輪沒有改共用引擎。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：不阻擋後換回合仍休息。被阻擋的那張換回合會活動。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "活動並 BP+3000。",
+     "implementation": "共用 life-trigger active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-038",
+     "number": "EX16BT/MMM-2-038",
+     "clauses": [
+      {
+       "match": "このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、このキャラはBP+1000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アタック時】相手のフロントLにキャラがあり、このキャラのBPが5000以上の場合、このキャラはこのターン中、【ダメージ（2）】を得る。〈深月 フェリシア〉のこの効果は1ターンに1回のみ発動する。このキャラのアタックがブロックされなかった時、このキャラはこのターンのエンドフェイズにアクティブにならない。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43050,26 +43252,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の場の他の［特徴：チームみかづき荘］を1枚まで選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "不能選自己，也不能選沒有該特徵的角色。可跳過。",
+     "implementation": "buffOwnField，excludeSelf，特徵過濾。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：自己與 042 不在選項。選 037 後 BP+1000。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-039",
+     "number": "EX16BT/MMM-2-039",
+     "clauses": [
+      {
+       "match": "【登場時】自分の場の他の［特徴：チームみかづき荘］を1枚まで選び、このターン中、BP+1000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43088,26 +43305,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【レストにする】自分の場の他の［特徴：チームみかづき荘］を1枚選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "費用是休息，不是每回合 1 次。再活動後可以再付。",
+     "implementation": "必須休息且場上有其他三日月莊。沒有回合鎖。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：休息後不能再啟動。把 ready 設回後可以再給同一張 +1000。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-040",
+     "number": "EX16BT/MMM-2-040",
+     "clauses": [
+      {
+       "match": "【起動メイン】【レストにする】自分の場の他の［特徴：チームみかづき荘］を1枚選び、このターン中、BP+1000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43126,44 +43358,67 @@
    "clauses": [
     {
      "text": "このキャラはアクティブで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "2 回攻擊只在登場的那個回合。",
+     "implementation": "enterAlwaysActive。onPlay 把 mmm2DoubleAttack 設成這個回合。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：付費登場是活動。第一次攻擊結算後仍活動，可以再攻擊一次。",
      "unresolved": ""
     },
     {
      "text": "【登場時】このキャラはこのターン中、【2回アタック】を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "2 回攻擊只在登場的那個回合。",
+     "implementation": "enterAlwaysActive。onPlay 把 mmm2DoubleAttack 設成這個回合。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：付費登場是活動。第一次攻擊結算後仍活動，可以再攻擊一次。",
      "unresolved": ""
     },
     {
      "text": "【アタック時】【ターン1】このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、自分の山札の上から3枚見て、［特徴：チームみかづき荘］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "第二次攻擊不再看。不能把沒有特徵的卡加入手牌。",
+     "implementation": "本輪修正。實體卡 uid|look 記在回合用過的清單，回合開始會清掉。可選項只留三日月莊。剩下 2 張以上進 orderWindow，由上到下放到牌庫底。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：視窗 3 張都看得到，阿莉娜不能選。選完放底的順序是先選的在上面。第二次攻擊直接進阻擋，不再看牌。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "加入手牌。",
+     "implementation": "共用 life-trigger get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-041",
+     "number": "EX16BT/MMM-2-041",
+     "clauses": [
+      {
+       "match": "このキャラはアクティブで登場させる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】このキャラはこのターン中、【2回アタック】を得る。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アタック時】【ターン1】このターン中に自分の場に異なるカード名の［特徴：チームみかづき荘］が3種類以上登場している場合、自分の山札の上から3枚見て、［特徴：チームみかづき荘］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43182,17 +43437,28 @@
    "clauses": [
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "效果欄是「-」。生命加入手牌。",
+     "implementation": "vanilla。共用 life-trigger get。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：翻開後入手，不抽牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-042",
+     "number": "EX16BT/MMM-2-042",
+     "clauses": [
+      {
+       "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43211,35 +43477,54 @@
    "clauses": [
     {
      "text": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "不能選自己。能源線不能啟動。",
+     "implementation": "emptyOwnFieldHandEnergyDiscount 2。main 只在前線，目標排除自己。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：空場費用 0，有角色後費用 2。放到牌庫頂後自己 4000，同一回合不能再啟動。能源線上的複製品沒有啟動。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】自分の場の他のキャラを1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、BP+2000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "不能選自己。能源線不能啟動。",
+     "implementation": "emptyOwnFieldHandEnergyDiscount 2。main 只在前線，目標排除自己。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：空場費用 0，有角色後費用 2。放到牌庫頂後自己 4000，同一回合不能再啟動。能源線上的複製品沒有啟動。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-043",
+     "number": "EX16BT/MMM-2-043",
+     "clauses": [
+      {
+       "match": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】【フロントLにある場合】 【ターン1】自分の場の他のキャラを1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、BP+2000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43258,35 +43543,54 @@
    "clauses": [
     {
      "text": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "公開是公開。能源 5 以上會記下這個回合。",
+     "implementation": "impactNull。main044a 公開後二選一。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：公開 045 後放回牌庫頂，deckRevealEnergy5 是這個回合。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】自分の山札の上から1枚を公開し、山札の上か場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "公開是公開。能源 5 以上會記下這個回合。",
+     "implementation": "impactNull。main044a 公開後二選一。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：公開 045 後放回牌庫頂，deckRevealEnergy5 是這個回合。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】このターン中に自分の山札から必要エナジーが5以上のカードが公開されている場合のみ発動できる。このキャラをアクティブにする。〈アリナ・グレイ〉のこの効果は1ターンに1回のみ発動できる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2358：兩張只能活動其中一張。",
+     "implementation": "第二個啟動看 deckRevealEnergy5。鎖在卡名，不鎖在單張。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：公開前不能活動。公開後前線與能源線各有一次，用掉一個後另一個消失。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-044",
+     "number": "EX16BT/MMM-2-044",
+     "clauses": [
+      {
+       "match": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】【フロントLにある場合】 【ターン1】自分の山札の上から1枚を公開し、山札の上か場外に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】このターン中に自分の山札から必要エナジーが5以上のカードが公開されている場合のみ発動できる。このキャラをアクティブにする。〈アリナ・グレイ〉のこの効果は1ターンに1回のみ発動できる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43305,35 +43609,54 @@
    "clauses": [
     {
      "text": "相手のフロントLのキャラ2枚につき、このキャラはBP+500。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "能源線不算。1 張不加。",
+     "implementation": "engine.mjs 既有的 madokaPair。本輪沒有改共用引擎。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔與 set2：0 或 1 張是 4000，2 張是 4500。對方能源線不加。",
      "unresolved": ""
     },
     {
      "text": "【レイド】〈アリナ・グレイ〉アクティブにし、フロントLに移動できる【登場時】相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。自分の山札の上から1枚を公開し手札に加える。公開したカードの必要エナジーが5以上の場合、相手のエナジーLのキャラを1枚まで選び、次の自分のターン開始時まで、「このキャラは移動できない。」を与える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2359：目標線滿了就先移除 1 張再移動。Q2360：被鎖的角色突襲後仍可移動，突襲基礎上的效果不會留在新的最上面。普通登場不看這段。",
+     "implementation": "raid-box 只列 onPlay。滿線走既有的移除再移動。lockMove 用 cannotMove，到自己回合開始。突襲目的地不看 cannotMove，所以被鎖的能源線角色仍可突襲到前線。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：付費登場不移動、不公開。突襲後可把對方移進能源，滿線時先移除。公開能源未滿 5 不鎖。鎖上的角色在對方移動階段不能走，但對方仍可把 045 突襲到前線，舊卡留在疊層裡。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "綠 6 且基礎是〈アリナ・グレイ〉才可突襲。",
+     "implementation": "能量不夠時只有入手。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：只有 1 點綠時沒有突襲。兩種前線三日月讓 034 再產生 1 點、湊滿 6 後，基礎 042 可以突襲，也可入手。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-045",
+     "number": "EX16BT/MMM-2-045",
+     "clauses": [
+      {
+       "match": "相手のフロントLのキャラ2枚につき、このキャラはBP+500。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】〈アリナ・グレイ〉アクティブにし、フロントLに移動できる【登場時】相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。自分の山札の上から1枚を公開し手札に加える。公開したカードの必要エナジーが5以上の場合、相手のエナジーLのキャラを1枚まで選び、次の自分のターン開始時まで、「このキャラは移動できない。」を与える。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43352,26 +43675,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から2枚見て、［特徴：マギウス］か［特徴：マギウスの翼］を1枚まで場外に置く。残りを望む順で山札の上に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "放場外的那張是公開移動。看過但不能選的卡不公開。只剩 1 張就沒有順序。",
+     "implementation": "本輪修正。可選項只留兩個特徵。整段視窗仍在私人選擇。剩下 2 張進 orderWindow 放回牌庫頂。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：三日月莊看得到但不能選。兩張都留著時先選的在牌庫頂。選走一張後剩下的留在頂端，對方看不到它，放場外的那張對方看得到。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "活動並 BP+3000。",
+     "implementation": "共用 life-trigger active。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-046",
+     "number": "EX16BT/MMM-2-046",
+     "clauses": [
+      {
+       "match": "【登場時】自分の山札の上から2枚見て、［特徴：マギウス］か［特徴：マギウスの翼］を1枚まで場外に置く。残りを望む順で山札の上に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43390,26 +43728,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【ターン1】自分の手札を1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、発生エナジー+【緑】。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "必須選 1 張，沒有跳過。放到頂的卡不公開。",
+     "implementation": "沒有 skip。energyPlus 只到這個回合。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：選完後產生從 1 變 2，牌在牌庫頂，對方公開資訊看不到那張。不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "與 031 相同的手牌休息登場範圍。",
+     "implementation": "triggerEffect deployHandCharacter，綠、能源 2 以下、AP1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：029 可以，032 不行。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-047",
+     "number": "EX16BT/MMM-2-047",
+     "clauses": [
+      {
+       "match": "【起動メイン】【ターン1】自分の手札を1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、発生エナジー+【緑】。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43428,26 +43781,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から3枚見て、望む順で山札の上に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "3 張都要排。對方看不到。",
+     "implementation": "共用 inspectTopArrange，rest top。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：3 張都選完後牌庫頂順序與選擇一致，公開資訊沒有這些 uid。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-048",
+     "number": "EX16BT/MMM-2-048",
+     "clauses": [
+      {
+       "match": "【登場時】自分の山札の上から3枚見て、望む順で山札の上に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43466,44 +43834,67 @@
    "clauses": [
     {
      "text": "【レイド】〈里見 灯花〉アクティブにし、フロントLに移動できるこのキャラはフロントLでもエナジーを発生させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "普通登場沒有這三段。突襲基礎是〈里見 灯花〉。放頂不公開。",
+     "implementation": "raid-box 列 onPlay、main、frontGeneratesEnergy。登場沒有跳過。啟動只能放頂，不能改放場外。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：普通前線產生 0，也不能啟動。突襲後抽 2，必須放場外或放頂，前線產生 1。啟動再抽 1 並把 1 張放回頂，同一回合不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【登場時】カードを2枚引き、自分の手札を1枚自分の山札の上か場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "普通登場沒有這三段。突襲基礎是〈里見 灯花〉。放頂不公開。",
+     "implementation": "raid-box 列 onPlay、main、frontGeneratesEnergy。登場沒有跳過。啟動只能放頂，不能改放場外。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：普通前線產生 0，也不能啟動。突襲後抽 2，必須放場外或放頂，前線產生 1。啟動再抽 1 並把 1 張放回頂，同一回合不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】カードを1枚引き、自分の手札を1枚自分の山札の上に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "普通登場沒有這三段。突襲基礎是〈里見 灯花〉。放頂不公開。",
+     "implementation": "raid-box 列 onPlay、main、frontGeneratesEnergy。登場沒有跳過。啟動只能放頂，不能改放場外。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：普通前線產生 0，也不能啟動。突襲後抽 2，必須放場外或放頂，前線產生 1。啟動再抽 1 並把 1 張放回頂，同一回合不能再啟動。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "綠 5 且基礎是燈花才可突襲。",
+     "implementation": "需要綠 5 與〈里見 灯花〉。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命：035 加 3 張 029 湊 5 點，基礎 046，突襲與入手都在。選入手。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-049",
+     "number": "EX16BT/MMM-2-049",
+     "clauses": [
+      {
+       "match": "【レイド】〈里見 灯花〉アクティブにし、フロントLに移動できるこのキャラはフロントLでもエナジーを発生させる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】カードを2枚引き、自分の手札を1枚自分の山札の上か場外に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】【フロントLにある場合】 【ターン1】カードを1枚引き、自分の手札を1枚自分の山札の上に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -43522,26 +43913,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から3枚見て、［特徴：マギウス］か［特徴：マギウスの翼］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2361：用這段公開 055 時，055 的公開時效果要等 050 整段登場，含棄牌，結束後才開。",
+     "implementation": "共用 searchTopOneBottomDiscard。055 的公開掛在公開紀錄，搜尋效果結束後才進佇列。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔：三日月莊不能選。選 055 後先排剩餘、再棄牌，然後才是 055 的選擇。給 050 衝擊 1 與 BP+1000。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "抽 1 張。登場的棄牌不會在生命觸發再做一次。",
+     "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "新檔生命迴圈。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-050",
+     "number": "EX16BT/MMM-2-050",
+     "clauses": [
+      {
+       "match": "【登場時】自分の山札の上から3枚見て、［特徴：マギウス］か［特徴：マギウスの翼］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",

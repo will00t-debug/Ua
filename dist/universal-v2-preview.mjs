@@ -628,6 +628,8 @@ function pendingDialog(legal,view){
  const title=s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
   '依序放回牌庫底':payAp!==null?
   '是否支付 '+payAp+' AP，讓此角色以活動狀態登場':
+  s.pending.kind==='effect-life-to-hand'&&s.pending.optional===false?
+  '將 1 張生命加入手牌':
   (V2_PENDING_LABELS[s.pending.kind]||s.pending.kind);
  const triggerChoice=s.pending.kind==='life-trigger';
  const blocking=s.pending.kind==='block'&&view.battle;

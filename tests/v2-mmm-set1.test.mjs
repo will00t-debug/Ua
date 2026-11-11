@@ -290,7 +290,9 @@ test('MMM-1-080 gains 1000 BP only after a life card reaches hand, and 092 draws
  readyAp(skipped);
  const stay=skipped.players[0].deck.length;
  skipped=play(skipped,other.uid,'event');
- skipped=use(skipped,{type:'chooseLifeToHand',uid:null});
+ assert.equal(skipped.pending.optional,false);
+ assert.equal(legalUniversalActions(packs,skipped).some(a=>a.uid===null),false);
+ assert.throws(()=>use(skipped,{type:'chooseLifeToHand',uid:null}),/not currently legal/);
  assert.equal(skipped.players[0].deck.length,stay);
  assert.equal(universalBp(packs,skipped,quiet),3000);
  assert.equal(assertUniversalMatch(packs,skipped),true);
