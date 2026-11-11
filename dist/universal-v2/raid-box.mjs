@@ -77,8 +77,9 @@ const RAID_BOX_FEATURES=Object.freeze({
  'REZ-1-019':["onPlay","main"],
  'REZ-1-020':["onPlay","main"],
  'REZ-1-051':["onPlay"],
- 'REZ-1-053':["onPlay","onAttack"],
- 'REZ-1-058':["onPlay","main","handBpMayWhileFront"],
+ // 2026-11-11 card images: 053 and 058 print the effect text on the
+ // illustration under the raid bar, not inside a raid panel. 051 and 071
+ // keep a solid panel, so only those timings stay raid-gated.
  'REZ-1-071':["onPlay","onAttack"],
  'REZ-1-077':["onPlay","passive"],
  'REZ-1-078':["onPlay","passive"],

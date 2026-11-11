@@ -4900,8 +4900,8 @@ test('Rem raids onto Rem, rests a blue zero-cost Subaru, and grants a 4000 block
  const printed=pack.cards['REZ-1-053'];
  assert.equal(printed.raidName,'レム');
  assert.equal(printed.energy,5);
- assert.equal(printed.raidImpact,1);
- assert.equal(printed.printedImpact,0);
+ assert.equal(printed.raidImpact,0);
+ assert.equal(printed.printedImpact,1);
  assert.deepEqual(printed.effects.onPlay,[{op:'deployOutsidePrintedRest',name:'ナツキ・スバル',
   color:'blue',energy:0,optional:true}]);
  assert.deepEqual(printed.effects.onAttack,[{op:'grantPrintedBlockAtLeast',name:'ナツキ・スバル',
