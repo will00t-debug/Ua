@@ -265,7 +265,7 @@ test('all one hundred thirteen whole prints enter the V2 pack',()=>{
  assert.deepEqual(pack.cards['REZ-1-063'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-063'].color,'blue');
  assert.deepEqual(pack.cards['REZ-1-100'].effects.onPlay,[{
-  op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}]);
+  op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000,mandatory:true}]);
  assert.deepEqual(pack.cards['REZ-1-100'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-100'].color,'purple');
  assert.equal(pack.cards['REZ-1-096'].type,'event');
@@ -5232,8 +5232,8 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
  assert.equal(printed.raidName,'エミリア');
  assert.equal(printed.energy,5);
  assert.equal(printed.bp,4000);
- assert.equal(printed.raidImpactNull,true);
- assert.equal(printed.impactNull,false);
+ assert.equal(printed.raidImpactNull,false);
+ assert.equal(printed.impactNull,true);
  assert.equal(printed.unblockedRestFront,true);
  assert.deepEqual(printed.blockBpRestriction,{relation:'atMost',bp:2000,condition:null});
  assert.deepEqual(printed.mainAbility,{op:'energySwapOwnFront',line:'energy',oncePerTurn:true});
