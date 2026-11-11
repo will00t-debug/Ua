@@ -126,6 +126,21 @@ test('the decision log records own costs and does not carry hidden zones', () =>
  assert.equal(oppIds.size > 0, true);
 });
 
+test('8930 keeps paidFront off after the locked comparison', () => {
+ const summary = JSON.parse(readFileSync(new URL('../audit/ai-v3-paid-front-8930-summary.json', import.meta.url), 'utf8'));
+ assert.equal(summary.defaultRemainsOff, true);
+ assert.equal(summary.secondSetPlayed, false);
+ assert.equal(summary.games.length, 160);
+ assert.equal(summary.summary.A.overall.wins, 120);
+ assert.equal(summary.summary.B.overall.wins, 116);
+ assert.equal(summary.summary.A.thinHighEnergy, 142);
+ assert.equal(summary.summary.B.thinHighEnergy, 15);
+ assert.equal(summary.summary.safetyA, true);
+ assert.equal(summary.summary.safetyB, true);
+ assert.equal(summary.summary.advanceTo8970, false);
+ assert.equal(summary.summary.paired.low < -0.05, true);
+});
+
 test('the 8930 lock is fixed before any comparison game', () => {
  const lock = loadPaidFrontLock();
  const jobs = paidFrontJobs(lock);
