@@ -229,6 +229,34 @@ function holdSurvival(choice,replacement,rows){
  if(finishedSurvival(mine)&&immediateLoss(alt))return choice;
  return replacement;
 }
+// Draw, get and active resolve without putting a card back into LIFE.
+// FINAL can, and SPECIAL or a COLOR/RAID onPlay is an effect this comparison
+// has not finished, so those triggers stay on the original ranking.
+const NONSAVING_LIFE_TRIGGER=new Set(['draw','get','active']);
+function unsettledLifeZero(row){
+ if(!row||row.executed===false||row.boundary!=='terminal')return false;
+ if(!(row.search<=-90000&&row.search>-100000))return false;
+ return (row.stopPending||row.pending)==='life-trigger';
+}
+// Opt-in. A block search that already reached the opponent's turn survived
+// this attack and then lost later. That later loss is not a win. It only
+// replaces an unsettled life-zero whose trigger cannot restore LIFE. A block
+// that also stops on this attack, including Impact that still takes the last
+// life, is not in the set. Proven wins are applied after this returns.
+export function preferLivedBlock(state,choice,rows){
+ if(searchFactors().settleLife!==true||state?.pending?.kind!=='block'||!choice)return choice;
+ const mine=tracedRow(rows,choice);
+ if(!mine||!unsettledLifeZero(mine)||!NONSAVING_LIFE_TRIGGER.has(mine.leafTrigger))return choice;
+ const lived=(rows||[]).filter(row=>row?.executed!==false&&row.action?.type==='chooseBlock'&&row.action.uid
+  &&row.boundary==='terminal'&&row.search<=-100000&&(row.opponentTurns||0)>0);
+ if(!lived.length)return choice;
+ lived.sort((a,b)=>{
+  const delta=(b.battleScore??-Infinity)-(a.battleScore??-Infinity);
+  if(delta)return delta;
+  return JSON.stringify(a.action)<JSON.stringify(b.action)?-1:1;
+ });
+ return lived[0].action;
+}
 // One gate for every preference and backup. A confirmed win is a line this
 // search executed, that is still legal, and that ended as a win. Pending,
 // yielded, and a high score that did not finish are not in the set. When
@@ -558,8 +586,9 @@ export function chooseAiV3Action(pack,state,options={}){
     leafActive:sample.leafActive??null,leafPendingPlayer:sample.leafPendingPlayer??null,
     leafSource:sample.leafSource??null,leafProgress:sample.leafProgress??'',
     leafOwnTurns:sample.leafOwnTurns??null,
-    damageOpen:!!sample.damageOpen,stopPending:sample.stopPending??null,
-    stopPlayer:sample.stopPlayer??null,stopReason:sample.stopReason??null,
+   damageOpen:!!sample.damageOpen,stopPending:sample.stopPending??null,
+   stopPlayer:sample.stopPlayer??null,stopReason:sample.stopReason??null,
+   leafTrigger:sample.leafTrigger||null,
    battleScore:Number.isFinite(sample.battleScore)?sample.battleScore:null,
    swing:sample.swing||0,stranded:sample.stranded||0,
    followSeen:sample.followSeen||[],unexplored:sample.unexplored||[]};
@@ -726,6 +755,7 @@ export function chooseAiV3Action(pack,state,options={}){
    leafOwnTurns:item.leafOwnTurns??null,
    damageOpen:!!item.damageOpen,stopPending:item.stopPending??null,
    stopPlayer:item.stopPlayer??null,stopReason:item.stopReason??null,
+   leafTrigger:item.leafTrigger||null,
    battleScore:Number.isFinite(item.battleScore)?item.battleScore:null,
    swing:item.swing||0,stranded:item.stranded||0,
    followSeen:item.followSeen||[],unexplored:item.unexplored||[],
@@ -879,6 +909,11 @@ export function chooseAiV3Action(pack,state,options={}){
    const backedLoss=backedRow?.boundary==='terminal'&&backedRow.search<=-90000;
    const keptLoss=keptRow?.boundary==='terminal'&&keptRow.search<=-90000;
    if(backed&&!(backedLoss&&!keptLoss)){kept=backed;keptRow=backedRow;}
+  }
+  const livedBlock=preferLivedBlock(state,kept,scored);
+  if(livedBlock&&!same(livedBlock,kept)){
+   const swapped=legal.find(item=>same(item,livedBlock));
+   if(swapped){kept=swapped;keptRow=tracedRow(scored,kept);}
   }
   // Preferences and the discard backup have all run. A confirmed win is
   // still the action that goes back, whichever of them tried to leave it.

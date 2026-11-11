@@ -65,6 +65,12 @@ export function normalizeFactors(asked){
  // beam. The default still replaces the first unprotected root. Off unless
  // asked. Named variants and the other switches do not turn it on.
  if(asked.frontSpare===true)factors.frontSpare=true;
+ // An unsettled life-zero from a trigger that cannot put a card back into
+ // LIFE is not ranked above a block the same search already walked into the
+ // opponent's turn. FINAL and SPECIAL stay untouched: FINAL can return a
+ // life, and SPECIAL is an unresolved effect. Off unless asked. Named
+ // variants and the other switches do not turn it on.
+ if(asked.settleLife===true)factors.settleLife=true;
  return factors;
 }
 export function bindVariant(variant,fn,factors){

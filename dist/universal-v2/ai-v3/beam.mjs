@@ -350,6 +350,7 @@ function noteLeaf(ctx,state){
  ctx.stats.leafOwnTurns=state.players?.map(player=>player.ownTurns??0)||null;
  ctx.stats.leafTurn=state.turn??null;
  ctx.stats.leafActive=state.active;
+ ctx.stats.leafTrigger=pending?.kind==='life-trigger'?(pending.trigger||null):null;
 }
 // A line is settled only when the game is over, or the actor has handed the
 // turn to the opponent and come back to that actor's next turn start.
@@ -541,6 +542,7 @@ function leafSnap(ctx){
   leafSource:ctx.stats.leafSource??null,leafProgress:ctx.stats.leafProgress??'',
   leafPhase:ctx.stats.leafPhase,
   leafOwnTurns:ctx.stats.leafOwnTurns,leafTurn:ctx.stats.leafTurn,leafActive:ctx.stats.leafActive,
+  leafTrigger:ctx.stats.leafTrigger||null,
   opponentTurns:ctx.stats.opponentTurns,responses:ctx.stats.responses,
   sequence:ctx.stats.sequence?ctx.stats.sequence.slice():[],
   refuted:!!ctx.stats.refuted,unexplored:(ctx.stats.unexplored||[]).slice(),
@@ -557,6 +559,7 @@ function applyLeaf(ctx,snap){
  ctx.stats.leafSource=snap.leafSource??null;ctx.stats.leafProgress=snap.leafProgress??'';
  ctx.stats.leafPhase=snap.leafPhase;
  ctx.stats.leafOwnTurns=snap.leafOwnTurns;ctx.stats.leafTurn=snap.leafTurn;ctx.stats.leafActive=snap.leafActive;
+ ctx.stats.leafTrigger=snap.leafTrigger||null;
  ctx.stats.opponentTurns=snap.opponentTurns;ctx.stats.responses=snap.responses;
  ctx.stats.sequence=snap.sequence.slice();
  ctx.stats.refuted=!!snap.refuted;
