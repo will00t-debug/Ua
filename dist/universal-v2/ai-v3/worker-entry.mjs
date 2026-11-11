@@ -49,10 +49,13 @@ export function handleAiV3Request(message){
   const legal=legalUniversalActions(message.pack,message.state);
   const asked=message.variant;
   const variant=asked==='a'||asked==='b'||asked==='ab'||asked==='ab-front'?asked:null;
-  // settleLife is a Node benchmark candidate. A sealed worker request cannot
-  // turn it on, so the live hybrid and AI v3 stay on the default comparison.
+  // settleLife and paidFront are Node benchmark candidates. A sealed worker
+  // request cannot turn them on, so the live hybrid and AI v3 stay default.
   const rawFactors=message.factors&&typeof message.factors==='object'?{...message.factors}:null;
-  if(rawFactors)delete rawFactors.settleLife;
+  if(rawFactors){
+   delete rawFactors.settleLife;
+   delete rawFactors.paidFront;
+  }
   const factors=normalizeFactors(rawFactors&&Object.keys(rawFactors).length?rawFactors:null);
   const hybrid=policy===HYBRID_MAIN_POLICY;
   const limits={
