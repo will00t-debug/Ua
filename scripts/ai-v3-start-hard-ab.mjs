@@ -393,9 +393,10 @@ function mergeShards() {
   gap: summary.gap,
   whiteDrop: summary.whiteDrop,
   doesNotReplace: 'audit/ai-v3-hybrid-vs-hard-9050-summary.json',
-  secondSetPlayed: false,
+  independentSetPlayed: false,
   policyDefault: 'off',
-  menuAdded: false
+  menuAdded: false,
+  conclusion: summary.advance ? 'enter-independent-check' : 'stay-off'
  };
  writeFileSync(`${OUT}/merged.json`, JSON.stringify({pairs, summary}));
  if (process.env.AI_V3_REPORT === '1') {
