@@ -7,6 +7,8 @@ import {chooseAiV3Action,lastAiV3Trace,resetAiV3Report,MATCH_LIMITS} from './sea
 import {preferPaidFront} from './paid-front.mjs';
 
 export const HYBRID_MAIN_POLICY='hybrid-main-v1';
+// Benchmark-only. The worker and the battle menu do not accept this name.
+export const HYBRID_START_HARD_POLICY='hybrid-start-hard-v1';
 
 export function hybridLane(state){
  if(state?.pending)return 'pending';
@@ -19,6 +21,10 @@ export function hybridLane(state){
 
 export function hybridSource(lane){
  return lane==='main'?'hard':'v3';
+}
+
+export function hybridStartHardSource(lane){
+ return lane==='main'||lane==='start'?'hard':'v3';
 }
 
 let lastRoute=null;
@@ -103,6 +109,32 @@ export function chooseHybridMainAction(pack,state,options={}){
  }else{
   resetAiV3Report();
   action=chooseAiV3Action(pack,state,{...options,actor,nodes,ms,seed,worlds:options.worlds??1});
+ }
+ try{noteHybridDecision(pack,state,actor,action,source==='hard'?lastHardAiTrace():lastAiV3Trace(),lane);}
+ catch{/* a diagnostic snapshot must not change the action */}
+ return action;
+}
+
+// Idle start and idle main ask hard-search-2. Move, attack, and every pending
+// stay on AI v3. Hard still chooses extraDraw or next; this router does not
+// forbid a draw. paidFront and settleLife are not applied.
+export function chooseHybridStartHardAction(pack,state,options={}){
+ const actor=options.actor??(state?.pending?.player??state?.active);
+ const lane=hybridLane(state);
+ const source=hybridStartHardSource(lane);
+ const nodes=Number.isInteger(options.nodes)?options.nodes:MATCH_LIMITS.nodes;
+ const ms=Number.isFinite(options.ms)?options.ms:MATCH_LIMITS.ms;
+ const seed=Number.isInteger(options.seed)?options.seed:1;
+ lastRoute={policy:HYBRID_START_HARD_POLICY,lane,source,actor,nodes,ms};
+ let action;
+ if(source==='hard'){
+  resetHardAiReport();
+  action=chooseStrengthenedHardAction(pack,state,{nodes,ms,seed});
+ }else{
+  resetAiV3Report();
+  const forwarded={...options,actor,nodes,ms,seed,worlds:options.worlds??1};
+  delete forwarded.factors;
+  action=chooseAiV3Action(pack,state,forwarded);
  }
  try{noteHybridDecision(pack,state,actor,action,source==='hard'?lastHardAiTrace():lastAiV3Trace(),lane);}
  catch{/* a diagnostic snapshot must not change the action */}
