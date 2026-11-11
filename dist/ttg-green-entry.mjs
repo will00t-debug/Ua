@@ -19,7 +19,9 @@ const objectHasUniqueUids=(pl)=>{
  const ids=[...(pl.deck||[]),...(pl.hand||[]),...(pl.life||[]),...(pl.outside||[]),...ownField(pl).map(x=>x.card)].flatMap(walk);
  return ids.every(Boolean)&&new Set(ids).size===ids.length;
 };
-const printedCost=c=>c.energy??TTG_BY_ID[c.cardId]?.energy;
+// Required/printed energy comparisons (e.g. Nia 014) use the original
+// printed number, never a temporary per-physical-card energy override.
+const printedCost=c=>TTG_BY_ID[c.cardId]?.energy;
 const isSafeStandalone=c=>!(c.stack||[]).length&&!(c.under||[]).length;
 function context(state,player,sourceUid){
  if(![0,1].includes(player)||!state?.players?.[player])throw new Error('Invalid TTG green entry owner');
