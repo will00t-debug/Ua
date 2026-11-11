@@ -124,8 +124,8 @@ function put(s,p,id,line,slot,ready=true){
  return card;
 }
 function toMain(seed){
- let s=newUniversalMatch(packs,{decks:[countsFor(['MMM-1-006','MMM-2-012','MMM-2-016']),
-  countsFor(['MMM-1-006','MMM-2-012','MMM-2-016'])],seed,first:0});
+ let s=newUniversalMatch(packs,{decks:[countsFor(['MMM-1-006','MMM-2-004','MMM-2-012','MMM-2-016']),
+  countsFor(['MMM-1-006','MMM-2-004','MMM-2-012','MMM-2-016'])],seed,first:0});
  let guard=0;
  while(s.phase!=='main'){
   if(s.pending)throw Error('Pending '+s.pending.kind);
@@ -139,8 +139,9 @@ test('a live Homura card offers two different main buttons',()=>{
  const s=toMain(2012);
  const homura=put(s,0,'MMM-2-012','front',0,true);
  put(s,0,'MMM-1-006','front',1,true);
- const buried=take(s,0,'MMM-1-006');
- s.players[0].outside.push(buried);
+ const buried=take(s,0,'MMM-2-004');
+ const other=take(s,0,'MMM-2-004');
+ s.players[0].outside.push(buried,other);
  const acts=legalUniversalActions(packs,s).filter(action=>action.type==='activate'&&action.uid===homura.uid);
  assert.equal(acts.length,2);
  const text=acts.map(action=>uiActionLabel(action,{pack:packs,state:s}));
