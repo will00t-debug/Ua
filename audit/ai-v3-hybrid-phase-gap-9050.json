@@ -1,0 +1,2178 @@
+{
+  "source": "audit/ai-v3-hybrid-vs-hard-9050-summary.json",
+  "headline": "audit/ai-v3-hybrid-vs-hard-9050-headline.json",
+  "programBase": "c9253ccc27903601f13343d0e984d27f7c98029f",
+  "matchHeadSha": "556af011c6ee91ed367b4f52caf6f328d4e00454",
+  "diagnosisBase": "90e0e60725b7c23e3cd263d7a8eaaee6967bf2cd",
+  "games": 200,
+  "record": {
+    "games": 200,
+    "wins": 91,
+    "losses": 109,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.455
+  },
+  "whiteSecond": {
+    "games": 34,
+    "wins": 9,
+    "losses": 25,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.2647058823529412
+  },
+  "reranMatches": false,
+  "changedAi": false,
+  "seeds": "9050-9099 only",
+  "phaseDecisionTotals": {
+    "stored": false,
+    "hybridDecisions": 16858,
+    "note": "16858 hybrid decisions are not split by phase. Key decisions exist only for the 109 losses, at most 8 per game, ranked toward extra-draw and the anomaly flags. Those 680 rows are not the phase mix."
+  },
+  "phases": {
+    "start": {
+      "storedSignal": "extra-draw choices and per-turn extraDraw",
+      "events": {
+        "wins": 514,
+        "losses": 562,
+        "gamesWithAny": {
+          "wins": 91,
+          "losses": 109
+        },
+        "whiteSecond": 196,
+        "whiteSecondLosses": 144
+      },
+      "turnsWithExtraDraw": {
+        "wins": "514/657",
+        "losses": "562/724",
+        "whiteSecond": "196/213"
+      },
+      "association": "Every win and every loss used extraDraw. Per-turn rates are close. This record does not show a missed start action that separates wins from losses.",
+      "freshSample": {
+        "scope": "6 retained loss snapshots, not all start decisions",
+        "hardChoseNext": 6,
+        "v3MatchedOriginalExtraDraw": 5,
+        "rows": [
+          {
+            "deck": "white-sword",
+            "seed": 9050,
+            "hybridIsFirst": true,
+            "step": 0,
+            "stateId": "c96e7ce688e5bb328548a6fb892eb139f273e5517d7c5e62b468d743a1539337",
+            "lane": "start",
+            "ownTurn": 1,
+            "original": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "originalSource": "v3",
+            "v3Same": false,
+            "hardSame": false,
+            "v3": {
+              "type": "next",
+              "line": null,
+              "bp": null
+            },
+            "hard": {
+              "type": "next",
+              "line": null,
+              "bp": null
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 9050,
+            "hybridIsFirst": false,
+            "step": 7,
+            "stateId": "ee030f206810b2752ec10f2d511ccc66d13161eb9a692f99f5740194add70b7d",
+            "lane": "start",
+            "ownTurn": 1,
+            "original": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "originalSource": "v3",
+            "v3Same": true,
+            "hardSame": false,
+            "v3": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "hard": {
+              "type": "next",
+              "line": null,
+              "bp": null
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 9067,
+            "hybridIsFirst": false,
+            "step": 5,
+            "stateId": "f54f093499c27743ad68da2425c22d1e1357bebc5de5d4fe5b8bcc3381a4a6d1",
+            "lane": "start",
+            "ownTurn": 1,
+            "original": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "originalSource": "v3",
+            "v3Same": true,
+            "hardSame": false,
+            "v3": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "hard": {
+              "type": "next",
+              "line": null,
+              "bp": null
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 9068,
+            "hybridIsFirst": true,
+            "step": 12,
+            "stateId": "bddb5acbefeda2dbc0598bcde5caca9b9da6e7ab5c3830e4ae399f45dd0737c8",
+            "lane": "start",
+            "ownTurn": 2,
+            "original": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "originalSource": "v3",
+            "v3Same": true,
+            "hardSame": false,
+            "v3": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "hard": {
+              "type": "next",
+              "line": null,
+              "bp": null
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 9084,
+            "hybridIsFirst": false,
+            "step": 5,
+            "stateId": "0f361a2eff181f148eb445d8b0c38d99ebd34bc6c3d3f6adf6349189a86a671a",
+            "lane": "start",
+            "ownTurn": 1,
+            "original": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "originalSource": "v3",
+            "v3Same": true,
+            "hardSame": false,
+            "v3": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "hard": {
+              "type": "next",
+              "line": null,
+              "bp": null
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 9085,
+            "hybridIsFirst": true,
+            "step": 14,
+            "stateId": "aef905fcb5aadeccb25e5163a04ba156bcfaafb0b84d1ff95d0b30878e2a0cb1",
+            "lane": "start",
+            "ownTurn": 2,
+            "original": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "originalSource": "v3",
+            "v3Same": true,
+            "hardSame": false,
+            "v3": {
+              "type": "extraDraw",
+              "line": null,
+              "bp": null
+            },
+            "hard": {
+              "type": "next",
+              "line": null,
+              "bp": null
+            }
+          }
+        ]
+      }
+    },
+    "move": {
+      "storedSignal": "one retained loss decision",
+      "events": 1,
+      "association": "No move-phase total exists. One position cannot rank this phase.",
+      "freshSample": [
+        {
+          "deck": "sword-art-online-raid",
+          "seed": 9079,
+          "hybridIsFirst": true,
+          "step": 128,
+          "stateId": "977fd92f894807a410b02052c90bb6c747af6811c2822bbf5c92879324e93ab7",
+          "lane": "move",
+          "ownTurn": 7,
+          "original": {
+            "type": "move",
+            "line": null,
+            "bp": 2000
+          },
+          "originalSource": "v3",
+          "v3Same": true,
+          "hardSame": false,
+          "v3": {
+            "type": "move",
+            "line": null,
+            "bp": 2000
+          },
+          "hard": {
+            "type": "move",
+            "line": null,
+            "bp": 4000
+          }
+        }
+      ]
+    },
+    "attack": {
+      "storedSignal": "per-own-turn attack counts. Attack declarations were not snapshotted.",
+      "attacks": {
+        "wins": "390/657",
+        "losses": "338/724",
+        "whiteSecond": "99/213",
+        "whiteSecondLosses": "64/155"
+      },
+      "earlyAttacksOwnTurn1to4": {
+        "wins": "104/364",
+        "losses": "102/436",
+        "whiteSecond": "36/136"
+      },
+      "gamesWithNoAttack": {
+        "wins": 0,
+        "losses": 5,
+        "lossesAllWhiteSword": true,
+        "whiteSecondLosses": 2
+      },
+      "gamesWithNoConnect": {
+        "wins": 0,
+        "losses": 8,
+        "whiteSecond": 4
+      },
+      "association": "Losses record fewer attacks per own turn. Five white-sword losses never attack. The record has no attacker-choice log, so a wrong-attacker claim is not available."
+    },
+    "pending": {
+      "storedSignal": "defender-lethal flags and their snapshots. Discard, trigger and effect choices were not retained.",
+      "defenderLethal": {
+        "events": 30,
+        "wins": 0,
+        "losses": 30,
+        "whiteSecond": 6
+      },
+      "otherPendingKindsRetained": 0,
+      "association": "All 30 lethal marks are in losses. That is an association. The one-step block result does not prove those 30 passes caused the 109 losses."
+    }
+  },
+  "whiteSecondAnomalies": {
+    "games": 34,
+    "wins": 9,
+    "losses": 25,
+    "winRate": 0.2647058823529412,
+    "frontPlays": "15/213 own turns, against 145/657 in wins",
+    "frontPlaysInLosses": "13/155",
+    "energyPlays": "249 energy plays across 213 own turns",
+    "extraDrawTurns": "196/213",
+    "attacks": "99/213",
+    "turn4FrontMaxSum": "116000/34",
+    "turn4Front4000": "33/34",
+    "whiteSecondLossTurn4FrontMaxSum": "79000/25",
+    "thinFrontEvents": 55,
+    "thinFrontEventsInThoseLosses": 44,
+    "lethal": 6,
+    "note": "Fewer front plays and more thin-front energy sit in the main phase, which already uses hard-search-2. Association only."
+  },
+  "lethal": {
+    "events": [
+      {
+        "deck": "white-sword",
+        "seed": 9050,
+        "first": 1,
+        "hybridSeat": 1,
+        "hybridIsFirst": true,
+        "step": 164,
+        "stateId": "6073e7f2eeee7b78c46a65fbc3ef48913088f7ab68db22cd22d4d6d2d6abd630",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 1500,
+        "blockCount": 1,
+        "higherBpBlocks": 1,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 40.8,
+          "wallMs": 40.9,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 9,
+            "searchMs": 43.1,
+            "wallMs": 43.8,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 7,
+            "searchMs": 18.7,
+            "wallMs": 19,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9054,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 131,
+        "stateId": "867569602c578ef9d37ba5673427131c24ce137229ac0f6349c567b34c5b4fad",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 38,
+          "wallMs": 38.1,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 26,
+            "searchMs": 41.4,
+            "wallMs": 41.4,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 7,
+            "searchMs": 11.7,
+            "wallMs": 11.7,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9055,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 135,
+        "stateId": "15c12e358075d3df66bf84a22df040ed9fdaab5914d4ed6c00de32be4bf618a3",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 30,
+          "searchMs": 32,
+          "wallMs": 32.1,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 28,
+            "searchMs": 41.1,
+            "wallMs": 41.1,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 7,
+            "searchMs": 10.9,
+            "wallMs": 10.9,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9057,
+        "first": 0,
+        "hybridSeat": 0,
+        "hybridIsFirst": true,
+        "step": 165,
+        "stateId": "d4ad3bc46f35783eeefaa399ddde18d990ce671519895f256b9c149311fa5b94",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 43,
+          "searchMs": 43.9,
+          "wallMs": 44.1,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 32,
+            "searchMs": 41.1,
+            "wallMs": 41.1,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 17,
+            "searchMs": 22.1,
+            "wallMs": 22.1,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9057,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 205,
+        "stateId": "08a1b3b6be212ab8cfacd636003df91a4a84cf6bf3c0b969653d46decf2dcf64",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 38,
+          "searchMs": 41.8,
+          "wallMs": 41.9,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 34,
+            "searchMs": 41.3,
+            "wallMs": 41.3,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 25.4,
+            "wallMs": 25.4,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9060,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 148,
+        "stateId": "a198c1fe11d594910e6f85f9d6f91402ad25b18a979b0028cbd9525fef754219",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 40,
+          "searchMs": 40.7,
+          "wallMs": 40.9,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 36,
+            "searchMs": 41.5,
+            "wallMs": 41.6,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 25,
+            "wallMs": 25,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9060,
+        "first": 1,
+        "hybridSeat": 1,
+        "hybridIsFirst": true,
+        "step": 150,
+        "stateId": "de73f749e7eb3bfeb08f66529e7abe0b3a978a6c2132865916bbaefc4d1ae209",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 40,
+          "searchMs": 41.3,
+          "wallMs": 41.4,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 36,
+            "searchMs": 41.2,
+            "wallMs": 41.2,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 25.8,
+            "wallMs": 26,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9061,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 125,
+        "stateId": "b98169480213bf24fafdcec9d95222b93b6712be6045bf2567b56336f24b2342",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 2000,
+        "blockCount": 1,
+        "higherBpBlocks": 1,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 25.9,
+          "wallMs": 26,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": false,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": false,
+          "v3": {
+            "nodesUsed": 29,
+            "searchMs": 32.5,
+            "wallMs": 32.5,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 9,
+            "searchMs": 11.4,
+            "wallMs": 11.4,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9062,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 238,
+        "stateId": "4aa88ea27d21453c3651b1d6c801b6cb7ba0a878961bc59951cc0ec2b831838a",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 30,
+          "searchMs": 30.7,
+          "wallMs": 30.8,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 30,
+            "searchMs": 34.2,
+            "wallMs": 34.3,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 11,
+            "searchMs": 11.9,
+            "wallMs": 12,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9063,
+        "first": 1,
+        "hybridSeat": 1,
+        "hybridIsFirst": true,
+        "step": 145,
+        "stateId": "84c6e809f7acbfa817933b86d5a86ae16ad1748034c028ee67f55d650ca6a0d9",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 41,
+          "searchMs": 39.2,
+          "wallMs": 39.3,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": false,
+          "hardPass": true,
+          "v3SameAsOriginal": false,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 37,
+            "searchMs": 41.2,
+            "wallMs": 41.2,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 24.8,
+            "wallMs": 24.9,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "white-sword",
+        "seed": 9066,
+        "first": 0,
+        "hybridSeat": 0,
+        "hybridIsFirst": true,
+        "step": 173,
+        "stateId": "fed16263d4cb17a39e0a712e1d58316b690b966f5a4d6d6aaf02e4065ab374b4",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 30,
+          "searchMs": 29,
+          "wallMs": 29.1,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 30,
+            "searchMs": 32.6,
+            "wallMs": 32.7,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 9,
+            "searchMs": 11.4,
+            "wallMs": 11.4,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9072,
+        "first": 1,
+        "hybridSeat": 1,
+        "hybridIsFirst": true,
+        "step": 109,
+        "stateId": "14ed1680f0f241e4ea659718ff4ed8d30ef2fcc307740ba519a26fd3ca976c2f",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 3500,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 26.4,
+          "wallMs": 26.5,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 29,
+            "searchMs": 30.2,
+            "wallMs": 30.2,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 7,
+            "searchMs": 8.6,
+            "wallMs": 8.7,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9073,
+        "first": 1,
+        "hybridSeat": 1,
+        "hybridIsFirst": true,
+        "step": 154,
+        "stateId": "c6153e72226db6a60fb2d66a09e5a01ceea299e98ff2dc52293f2aa9f6cd77d8",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 30.6,
+          "wallMs": 30.8,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 29,
+            "searchMs": 33.4,
+            "wallMs": 33.4,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 9,
+            "searchMs": 12.4,
+            "wallMs": 12.4,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9074,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 168,
+        "stateId": "25734f0085bf0bdbe23144c809b0c9d5b5e42e8f53f2ea78ccd0373a0c8ddbe3",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 3,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 3,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 40.7,
+          "wallMs": 40.8,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": false,
+          "hardPass": true,
+          "v3SameAsOriginal": false,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 32,
+            "searchMs": 40.9,
+            "wallMs": 40.9,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 48,
+            "searchMs": 55.7,
+            "wallMs": 55.7,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9074,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 158,
+        "stateId": "99c30ce917813cfee6b25b6b4db7d0a994752d3a8a88b125c7e11907bb5e9481",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 38,
+          "searchMs": 37.7,
+          "wallMs": 37.8,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": false,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": false,
+          "v3": {
+            "nodesUsed": 37,
+            "searchMs": 41.2,
+            "wallMs": 41.2,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 23.1,
+            "wallMs": 23.1,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9076,
+        "first": 0,
+        "hybridSeat": 0,
+        "hybridIsFirst": true,
+        "step": 131,
+        "stateId": "f35aec2489cff1249e02cd54fbfca3579c2bf1413ec13f350f462f50b7f82294",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 30,
+          "searchMs": 29.2,
+          "wallMs": 29.3,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 30,
+            "searchMs": 29.4,
+            "wallMs": 29.4,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 11,
+            "searchMs": 12.3,
+            "wallMs": 12.3,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9076,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 132,
+        "stateId": "7d0d813e58bc35ae9c132b1be8d530217b7fdd8284b0dc38eb0c21771960defd",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 40,
+          "searchMs": 40.8,
+          "wallMs": 41,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 38,
+            "searchMs": 42.4,
+            "wallMs": 42.4,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 25.9,
+            "wallMs": 25.9,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9077,
+        "first": 1,
+        "hybridSeat": 1,
+        "hybridIsFirst": true,
+        "step": 176,
+        "stateId": "3cd29f06f23a580d8d4b7763bbb7d98987223f04a6a3f7ec404f9ea0a9ebaee8",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 40,
+          "searchMs": 41.2,
+          "wallMs": 41.4,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 37,
+            "searchMs": 41.4,
+            "wallMs": 41.5,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 24.1,
+            "wallMs": 24.1,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "sword-art-online-raid",
+        "seed": 9082,
+        "first": 0,
+        "hybridSeat": 0,
+        "hybridIsFirst": true,
+        "step": 140,
+        "stateId": "48b146130b3df8333735a8b527c823881cce5fee81f3ff746d16bc44c8c3e421",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 39,
+          "searchMs": 41.4,
+          "wallMs": 41.6,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 36,
+            "searchMs": 41,
+            "wallMs": 41,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 21,
+            "searchMs": 25.7,
+            "wallMs": 25.7,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9084,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 179,
+        "stateId": "eccc2a7fc975b29d2da0cae81e8d2206ec6941f801d319cad04f51573d4e6a9a",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 2500,
+        "blockCount": 1,
+        "higherBpBlocks": 1,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 30,
+          "searchMs": 25.8,
+          "wallMs": 25.9,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 30,
+            "searchMs": 28.7,
+            "wallMs": 28.7,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 7,
+            "searchMs": 8.1,
+            "wallMs": 8.1,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9084,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 173,
+        "stateId": "541c65cbe0cd6c4f8061038c24b55c042c7148b9b831ae92656d2073ba82531f",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 25,
+          "searchMs": 41.3,
+          "wallMs": 41.4,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 29,
+            "searchMs": 34.5,
+            "wallMs": 34.5,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 11,
+            "searchMs": 12,
+            "wallMs": 12.1,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9085,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 159,
+        "stateId": "8be131ec162b7dc2058a24d75bfbd95b555c8cfbf4458a0ee5528938f77d3799",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 3000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 29.2,
+          "wallMs": 29.4,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 29,
+            "searchMs": 32.4,
+            "wallMs": 32.4,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 7,
+            "searchMs": 8,
+            "wallMs": 8,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9089,
+        "first": 0,
+        "hybridSeat": 0,
+        "hybridIsFirst": true,
+        "step": 217,
+        "stateId": "68d7031e23def3c988a00e1abea1a4bc2848c2a5b7b15d0a13b92b0087019a21",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 39,
+          "searchMs": 41.4,
+          "wallMs": 41.5,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 35,
+            "searchMs": 43.5,
+            "wallMs": 43.5,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 19,
+            "searchMs": 21.4,
+            "wallMs": 21.4,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9089,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 218,
+        "stateId": "34a543932cd39061695ac069550efc33491feae5d1db9a87cf0baa4b1bb8c02f",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 35,
+          "searchMs": 41.3,
+          "wallMs": 41.4,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 36,
+            "searchMs": 40.9,
+            "wallMs": 40.9,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 27,
+            "searchMs": 28.9,
+            "wallMs": 28.9,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9089,
+        "first": 0,
+        "hybridSeat": 1,
+        "hybridIsFirst": false,
+        "step": 185,
+        "stateId": "b4d6441b8e2ef9bb63b4995a2aadaad754749120ea30ac0e8f83e44685c5d3ad",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 37,
+          "searchMs": 40.7,
+          "wallMs": 40.8,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 37,
+            "searchMs": 41.2,
+            "wallMs": 41.2,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 27,
+            "searchMs": 26.9,
+            "wallMs": 27,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9090,
+        "first": 0,
+        "hybridSeat": 0,
+        "hybridIsFirst": true,
+        "step": 192,
+        "stateId": "3ce1e4ca5df6a0cc14d8390422ce9c49a8daf724b5c21e60bf040342721ce47e",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 39,
+          "searchMs": 40.9,
+          "wallMs": 41,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 39,
+            "searchMs": 40.9,
+            "wallMs": 40.9,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 23,
+            "searchMs": 24.5,
+            "wallMs": 24.5,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9093,
+        "first": 0,
+        "hybridSeat": 0,
+        "hybridIsFirst": true,
+        "step": 176,
+        "stateId": "d0c20e46fe88d49a6d53c2729186329103908648b535663ff2f2c79bb0637362",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 46,
+          "searchMs": 40.6,
+          "wallMs": 40.7,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": false,
+          "hardPass": true,
+          "v3SameAsOriginal": false,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 42,
+            "searchMs": 41,
+            "wallMs": 41,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 17,
+            "searchMs": 17.4,
+            "wallMs": 17.4,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9097,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 190,
+        "stateId": "8974a58a3a244148ff8f49daa03aca07ace58e6305621fe699dc57073d86c05f",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 29,
+          "searchMs": 32.8,
+          "wallMs": 32.9,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 29,
+            "searchMs": 29.5,
+            "wallMs": 29.5,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 9,
+            "searchMs": 9.8,
+            "wallMs": 9.8,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9097,
+        "first": 1,
+        "hybridSeat": 1,
+        "hybridIsFirst": true,
+        "step": 239,
+        "stateId": "08a4492d15cef2cfd042365e6380d859d884fbcb3f7d35c526e3ef8a06f5d41e",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 2,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 2,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 42,
+          "searchMs": 40.6,
+          "wallMs": 40.7,
+          "reason": "budget"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": false,
+          "hardPass": true,
+          "v3SameAsOriginal": false,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 37,
+            "searchMs": 41.2,
+            "wallMs": 41.2,
+            "reason": "budget"
+          },
+          "hard": {
+            "nodesUsed": 17,
+            "searchMs": 17.7,
+            "wallMs": 17.8,
+            "reason": "search"
+          }
+        }
+      },
+      {
+        "deck": "steins-gate-raid",
+        "seed": 9098,
+        "first": 1,
+        "hybridSeat": 0,
+        "hybridIsFirst": false,
+        "step": 194,
+        "stateId": "155c27323b9dbb6e82f43fe2c303cd76b9f3fa14d7a6bc83a1d929bd1f0b9b2b",
+        "verified": true,
+        "class": "block-avoids-immediate-loss",
+        "damage": 1,
+        "impact": 0,
+        "attackerBp": 4000,
+        "blockCount": 1,
+        "higherBpBlocks": 0,
+        "blocksThatKeepLife": 1,
+        "passStopsAt": "attack-life-target",
+        "original": {
+          "source": "v3",
+          "lane": "pending",
+          "choice": "pass",
+          "blockScore": -100000,
+          "passScore": -90000,
+          "nodesUsed": 27,
+          "searchMs": 31.8,
+          "wallMs": 32,
+          "reason": "search"
+        },
+        "freshSearch": {
+          "notOriginal40ms": true,
+          "v3Pass": true,
+          "hardPass": true,
+          "v3SameAsOriginal": true,
+          "hardSameAsOriginal": true,
+          "v3": {
+            "nodesUsed": 27,
+            "searchMs": 28.3,
+            "wallMs": 28.3,
+            "reason": "search"
+          },
+          "hard": {
+            "nodesUsed": 5,
+            "searchMs": 6.9,
+            "wallMs": 6.9,
+            "reason": "search"
+          }
+        }
+      }
+    ],
+    "snapshotsVerified": 30,
+    "classes": {
+      "block-avoids-immediate-loss": 30,
+      "impact-still-removes-last-life": 0,
+      "trigger-unresolved": 0,
+      "insufficient": 0
+    },
+    "impact": 0,
+    "damage": 1,
+    "higherBpBlockExists": 3,
+    "noHigherBpBlock": 27,
+    "passStopsAt": "attack-life-target",
+    "lifeUnchangedOnPassReturn": true,
+    "score": "Every original block candidate is -100000. The pass is -90000. terminalValue returns -90000 when the match is unfinished and own life is 0, and -100000 when the match has finished as a loss.",
+    "reasons": {
+      "budget": 16,
+      "search": 14
+    },
+    "oneStepMeaning": "Dispatching each legal block on a clone keeps own life above 0 and does not open a life trigger. Impact is 0, so a block that loses the battle still does not remove a life. When blocker BP is not strictly higher, the blocker leaves. Only 3 positions have a strictly higher blocker, so neither character leaves. The pass action returns with life unchanged and pending attack-life-target. The life card and its trigger were not read.",
+    "freshSearch": {
+      "both-pass": 24,
+      "hard-block-v3-pass": 2,
+      "v3-block-hard-pass": 4,
+      "both-block": 0
+    },
+    "freshSearchNote": "Fresh 48/40 searches are not the original 40ms decisions. Hard passes on 28 of 30. Fresh v3 passes on 26 and blocks on 4, so 4 fresh v3 choices differ from the recorded pass."
+  },
+  "examples": [
+    {
+      "kind": "defender-lethal",
+      "why": "已驗證的原始致命阻擋。一步結算後，BP 4000 的阻擋讓生命停在 3–1，衝擊是 0。通過停在 attack-life-target，生命還沒扣。原始 v3 把阻擋評成 -100000、通過評成 -90000。",
+      "deck": "white-sword",
+      "seed": 9050,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "step": 164,
+      "stateId": "6073e7f2eeee7b78c46a65fbc3ef48913088f7ab68db22cd22d4d6d2d6abd630",
+      "verifiedOriginal": true,
+      "phase": "attack",
+      "pending": "block",
+      "lane": "pending",
+      "source": "v3",
+      "original": {
+        "chosen": {
+          "type": "chooseBlock",
+          "line": null,
+          "bp": null
+        },
+        "candidates": [
+          {
+            "type": "chooseBlock",
+            "line": null,
+            "bp": 4000,
+            "score": -100000
+          },
+          {
+            "type": "chooseBlock",
+            "line": null,
+            "bp": null,
+            "score": -90000
+          }
+        ],
+        "nodesUsed": 29,
+        "searchMs": 40.8,
+        "wallMs": 40.9,
+        "reason": "budget",
+        "lifeBefore": [
+          3,
+          1
+        ],
+        "lifeAfter": [
+          3,
+          1
+        ]
+      },
+      "freshSearch": {
+        "notOriginal40ms": true,
+        "v3": {
+          "sameAsOriginal": true,
+          "chosen": {
+            "type": "chooseBlock",
+            "line": null,
+            "bp": null
+          },
+          "nodesUsed": 9,
+          "wallMs": 43.8,
+          "reason": "budget",
+          "top": [
+            {
+              "type": "chooseBlock",
+              "line": null,
+              "bp": 4000,
+              "score": -100000
+            },
+            {
+              "type": "chooseBlock",
+              "line": null,
+              "bp": null,
+              "score": -90000
+            }
+          ]
+        },
+        "hard": {
+          "sameAsOriginal": true,
+          "chosen": {
+            "type": "chooseBlock",
+            "line": null,
+            "bp": null
+          },
+          "nodesUsed": 7,
+          "wallMs": 19,
+          "reason": "search",
+          "top": [
+            {
+              "type": "chooseBlock",
+              "line": null,
+              "bp": null,
+              "score": -184.7
+            },
+            {
+              "type": "chooseBlock",
+              "line": null,
+              "bp": 4000,
+              "score": -250.7
+            }
+          ]
+        }
+      },
+      "oneStep": {
+        "impact": 0,
+        "attackerBp": 1500,
+        "blockerBp": 4000,
+        "higher": true,
+        "blockLife": [
+          3,
+          1
+        ],
+        "passPending": "attack-life-target",
+        "passLife": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "kind": "thin-front-high-bp-energy",
+      "why": "已驗證的薄前線高 BP 能源。這手在主階段，原始來源是 hard-search-2。用來對照 v3 與 hard，不把它重算成原始 40ms。",
+      "deck": "white-sword",
+      "seed": 9050,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "step": 29,
+      "stateId": "df743fb4a373aea31d68c9d265092b1c142ca59165d3433fb1a24120ac527f7f",
+      "verifiedOriginal": true,
+      "phase": "main",
+      "pending": null,
+      "lane": "main",
+      "source": "hard",
+      "original": {
+        "chosen": {
+          "type": "play",
+          "line": "energy",
+          "bp": 4000
+        },
+        "candidates": [
+          {
+            "type": "play",
+            "line": "energy",
+            "bp": 4000,
+            "score": 59.6
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "bp": 1500,
+            "score": 31.2
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "bp": 1500,
+            "score": 31.2
+          },
+          {
+            "type": "next",
+            "line": null,
+            "bp": null,
+            "score": -62.8
+          }
+        ],
+        "nodesUsed": 27,
+        "searchMs": 45.9,
+        "wallMs": 46,
+        "reason": "budget",
+        "lifeBefore": [
+          7,
+          7
+        ],
+        "lifeAfter": [
+          7,
+          7
+        ]
+      },
+      "freshSearch": {
+        "notOriginal40ms": true,
+        "v3": {
+          "sameAsOriginal": false,
+          "chosen": {
+            "type": "play",
+            "line": "energy",
+            "bp": 1500
+          },
+          "nodesUsed": 39,
+          "wallMs": 43.9,
+          "reason": "budget-fallback",
+          "top": []
+        },
+        "hard": {
+          "sameAsOriginal": true,
+          "chosen": {
+            "type": "play",
+            "line": "energy",
+            "bp": 4000
+          },
+          "nodesUsed": 48,
+          "wallMs": 45.4,
+          "reason": "search",
+          "top": [
+            {
+              "type": "play",
+              "line": "energy",
+              "bp": 4000,
+              "score": 59.6
+            },
+            {
+              "type": "play",
+              "line": "front",
+              "bp": 4000,
+              "score": 49.1
+            },
+            {
+              "type": "play",
+              "line": "energy",
+              "bp": 1500,
+              "score": 31.2
+            },
+            {
+              "type": "play",
+              "line": "energy",
+              "bp": 1500,
+              "score": 31.2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "kind": "early-raid-other",
+      "why": "已驗證的前四回合有合法高 BP 突襲卻放上能源。原始來源同樣是 hard-search-2。",
+      "deck": "white-sword",
+      "seed": 9050,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "step": 67,
+      "stateId": "50fcbf3ded7b82e03a02ab44ba075e94707263b5e354e1f43938b1a126f95bc1",
+      "verifiedOriginal": true,
+      "phase": "main",
+      "pending": null,
+      "lane": "main",
+      "source": "hard",
+      "original": {
+        "chosen": {
+          "type": "play",
+          "line": "energy",
+          "bp": 4000
+        },
+        "candidates": [
+          {
+            "type": "play",
+            "line": "energy",
+            "bp": 4000,
+            "score": 90.7
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "bp": 4000,
+            "score": 57.7
+          },
+          {
+            "type": "next",
+            "line": null,
+            "bp": null,
+            "score": 42.4
+          }
+        ],
+        "nodesUsed": 18,
+        "searchMs": 41.9,
+        "wallMs": 42.1,
+        "reason": "budget",
+        "lifeBefore": [
+          7,
+          6
+        ],
+        "lifeAfter": [
+          7,
+          6
+        ]
+      },
+      "freshSearch": {
+        "notOriginal40ms": true,
+        "v3": {
+          "sameAsOriginal": false,
+          "chosen": {
+            "type": "play",
+            "line": "energy",
+            "bp": 4000
+          },
+          "nodesUsed": 36,
+          "wallMs": 42.1,
+          "reason": "budget",
+          "top": [
+            {
+              "type": "raid",
+              "line": "energy",
+              "bp": 4000,
+              "score": -6.499999999999997
+            },
+            {
+              "type": "play",
+              "line": "energy",
+              "bp": 4000,
+              "score": 44.95
+            },
+            {
+              "type": "play",
+              "line": "front",
+              "bp": 4000,
+              "score": 41.95
+            },
+            {
+              "type": "next",
+              "line": null,
+              "bp": null,
+              "score": -2.6999999999999957
+            }
+          ]
+        },
+        "hard": {
+          "sameAsOriginal": true,
+          "chosen": {
+            "type": "play",
+            "line": "energy",
+            "bp": 4000
+          },
+          "nodesUsed": 33,
+          "wallMs": 44.1,
+          "reason": "budget",
+          "top": [
+            {
+              "type": "play",
+              "line": "energy",
+              "bp": 4000,
+              "score": 90.7
+            },
+            {
+              "type": "raid",
+              "line": null,
+              "bp": 4000,
+              "score": 68.4
+            },
+            {
+              "type": "raid",
+              "line": null,
+              "bp": 4000,
+              "score": 57.7
+            },
+            {
+              "type": "raid",
+              "line": "energy",
+              "bp": 4000,
+              "score": 43.7
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "candidates": {
+    "A": {
+      "route": "main hard, attack hard, other lanes v3",
+      "evidence": "Losses have fewer stored attacks per own turn (338/724 versus 390/657) and 5 white-sword losses never attack. No attack-declaration snapshot exists, so v3 and hard were not compared on the same attack.",
+      "downside": "Attack volume is an association. Adding hard to every attack decision spends the 48/40 budget on a lane with no measured disagreement.",
+      "scope": "Every attack declaration. Pending during attack would stay v3."
+    },
+    "B": {
+      "route": "main hard, pending hard, other lanes v3",
+      "evidence": "The 30 lethal marks are the only retained pending weakness, and they are all in losses. On those same verified positions a fresh hard search still passes 28 times and blocks 2. The original pass-versus-block scores are a v3 terminal-value gap. settleLife already tried to prefer the lived block and did not raise win rate, so it stays off.",
+      "downside": "Routing all pending to hard would change discards, triggers and effect choices that were not retained. The fresh hard query does not show that hard blocks these lethal attacks.",
+      "scope": "Every pending choice, including blocks."
+    },
+    "C": {
+      "route": "main hard, start and move hard, other lanes v3",
+      "evidence": "extraDraw occurs in all 91 wins and all 109 losses. On 6 retained loss snapshots, fresh hard chooses next while the original v3 choice was extraDraw. Move has 1 retained decision.",
+      "downside": "The start sample is six loss snapshots. Wins use extraDraw at a similar rate, so skipping it is not a measured gain against hard-search-2.",
+      "scope": "Start and move decisions."
+    }
+  },
+  "recommendation": {
+    "selected": null,
+    "reason": "None of A, B or C has enough evidence to be the single next A/B. B is the closest label for the lethal marks, and the fresh hard query answers it: hard also passes. A has no same-position attack comparison. C has a six-snapshot start disagreement that does not separate the 91 wins from the 109 losses. The shared block evaluation remains the clearest anomaly, and the previous settleLife test is not a reason to turn that switch back on."
+  },
+  "informationGaps": [
+    "Hybrid decision totals are not stored by phase. 16858 is the only decision count.",
+    "Snapshots and key decisions were kept only for losses, and only for ranked flags, at most 8 per game.",
+    "Wins have no local snapshots, so v3 and hard were not asked on winning positions.",
+    "Discard, life-trigger resolution and effect choices were not retained.",
+    "The pass continuation stops at attack-life-target. Life cards and triggers were not opened, so a trigger save is unknown. End-of-game life 0 is not attributed to that one pass.",
+    "Fresh searches use a new 40ms clock. They are labeled separately from the recorded live choice.",
+    "Move-phase quality cannot be ranked from one decision."
+  ]
+}
