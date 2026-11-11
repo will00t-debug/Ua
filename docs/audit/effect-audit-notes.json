@@ -1,6 +1,6 @@
 {
  "updated": "2026-11-11",
- "next": "第十三輪已寫入 REZ-1-051～075。053 與 058 的效果在突襲條下的插圖上，已從 raid-box 移出；053 的衝擊改為印刷衝擊。063 與 031 的必須目標條件相同。MMM-2-012 的「也視為曉美焰」沒有獨立測試，台帳維持部分核對。AOT-2-008、KMR-1-085、IYS-1-044 仍缺資料。",
+ "next": "第十三輪已併入 REZ-1-051～075 與 UA31ST／MMM-1-101～113。053 與 058 的效果在突襲條下的插圖上，已從 raid-box 移出。MMM-1-110 的登場時與起動改為框外，一般登場也會發動。MMM-1-107 維持無效果。MMM-2-051～073 的批次紀錄在下一個提交寫入。MMM-2-012 的「也視為曉美焰」沒有獨立測試，台帳維持部分核對。AOT-2-008、KMR-1-085、IYS-1-044 仍缺資料。",
  "sharedFixes": [
   {
    "name": "這一次登場只看這一次的來源",
@@ -22310,6 +22310,318 @@
      "implementation": "共用 life-trigger draw。",
      "discrepancy": "",
      "evidence": "tests/v2-rez1-051-075.test.mjs 的生命迴圈翻的是 075。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-101",
+   "number": "UA31ST/MMM-1-101",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "カードを1枚引き、自分の手札を1枚場外",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-101。登場時抽 1，然後必須把 1 張手牌放場外。沒有生命觸發。",
+     "implementation": "drawDiscard，count 1。effect-discard 沒有 uid null。付費登場是休息，同一回合不能攻擊。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：牌庫少 1，抽到的那張在手牌。棄掉另一張後它進場外，抽到的留下。沒有放棄。登場後 ready 為 false，沒有攻擊行動。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-102",
+   "number": "UA31ST/MMM-1-102",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "山札の下に置いてもよい",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-102。可以把場上的まどか放到牌庫底。那樣做才抽 1，並且最多把 1 張能源 4 以下、AP 1 的紅色魔法少女休息登場。",
+     "implementation": "homuraTuck。tuckNamedDrawDeploy。chooseTuckNamed 可以 uid null。接受後才開 effect-hand-girl-rest，也可以放棄。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：放棄時まどか留在場上，牌庫不變，072 仍在手牌。接受後牌庫張數不變、まどか在牌庫底。072 與能源 4 的 104 可以選。能源 5 的 078、黃色的 006、沒有魔法少女特徵的 068 不能選。放棄登場後兩張都留在手牌。tests/v2-mmm-set1-rest.test.mjs 有接受並休息登場的路徑。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-102。與 108、110 同一句。",
+     "implementation": "共用 life-trigger get。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：102 翻開後同一張 UID 進手牌，不能改選抽牌。開頭斷言 108 與 110 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-103",
+   "number": "UA31ST/MMM-1-103",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "〈鹿目 まどか〉以外",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-103。看牌庫頂 4 張。最多公開 1 張まどか以外的魔法少女接手牌，其餘依序放牌庫底。有加進手牌才必須棄 1 張。沒有生命觸發。",
+     "implementation": "excludeGirlSearch。searchTopOneBottomDiscard，count 4，excludeName 鹿目 まどか。視窗留在 pending.uids。放棄不加牌就沒有 effect-discard。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：4 張都在檢視窗。072 與 014 可以選，まどか與事件不能選。對手看不到視窗。放棄後 4 張都到牌庫底，手牌沒有它們，也沒有棄牌。選了 014 之後它被公開，其餘仍隱藏，棄牌沒有 uid null。tests/v2-mmm-set1.test.mjs 另有接受後棄牌的路徑。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-104",
+   "number": "UA31ST/MMM-1-104",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "2種類以上",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-104。卡圖 https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31ST_MMM-1-104.png 確認兩段都在突襲框內。自己除外。2 種以上，未被阻擋的攻擊抽 1。4 種以上，自己的回合 BP+1000 與衝擊 1。同名只算一種。",
+     "implementation": "madokaKinds。raid-box 列出 passive 與 girlNameUnblockedDraw。girlNameUnblockedDraw 2。passive 是 ownDistinctTraitNames，turn own，min 4，excludeSelf，bp 1000，impact 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：付費普通登場休息，BP 4000、衝擊 0。沒有突襲層時，4 個名字的未被阻擋攻擊不抽牌，打贏 BP1500 的阻擋者後生命仍是 2。實際突襲到まどか後，4 張同名ほむら是 1 種，不抽牌。杏子加まどか是 2 種，放棄阻擋後牌庫少 1，BP 仍是 4000。4 種時自己回合 BP 5000、衝擊 1，換到對方回合回到 4000 與 0。打贏阻擋者後對方生命少 1。tests/v2-mmm-set1-rest.test.mjs 用正面向上的下層重現同一段。",
+     "unresolved": ""
+    },
+    {
+     "match": "【レイド】このカードを手札に加えるか",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-104。能源夠可以突襲，否則接手牌。",
+     "implementation": "共用 life-trigger raid。raidName 鹿目 まどか。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：可以接手牌，也可以突襲到まどか。杏子不是合法底板。突襲後同一張在前線、ready 為 true，底板在堆疊底。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-105",
+   "number": "UA31ST/MMM-1-105",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "BP+3000",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-105。效果是「-」。生命翻開後選 1 張自己的角色，變成主動，這個回合 BP+3000。與 106、113 同一句。",
+     "implementation": "沒有效果程式。共用 life-trigger active。trigger 是 active。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：105 翻開後休息的 072 變主動，BP 增加 3000。開頭斷言 106 與 113 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-106",
+   "number": "UA31ST/MMM-1-106",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "アクティブで場に登場",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-106。卡圖確認沒有突襲框。付費登場也是主動。自己的回合開始時這張退場。",
+     "implementation": "enterRetireDraw。enterAlwaysActive。phaseEffects 在自己的 start 執行 retireSelfAtOwnStart。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：登場後 ready 為 true，同一回合可以攻擊。對方的回合開始時還在場上。下一個自己的回合開始時這張在場外，格子是空的。",
+     "unresolved": ""
+    },
+    {
+     "match": "カードを2枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-106。登場時抽 2。沒有「てもよい」。",
+     "implementation": "onPlay draw，count 2。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：牌庫少 2，兩張指定 UID 都進手牌，沒有選擇。",
+     "unresolved": ""
+    },
+    {
+     "match": "BP+3000",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-106。與 105 同一句。",
+     "implementation": "共用 life-trigger active。triggerTextJa 與 105 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：105 已實際把角色轉成主動並加 3000。開頭斷言 106 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-108",
+   "number": "UA31ST/MMM-1-108",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "場外に置いてもよい",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-108。可以棄 1 張手牌。那樣做才可以從場外把最多 1 張能源 3 以下、AP 1 的魔法少女加入手牌。",
+     "implementation": "handOutsideGirl。discardGate optional true，接著 recoverOutsideOne optional true。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm-set1.test.mjs：空手牌沒有選擇，場外的魔法少女留著。放棄棄牌就不回收。能源 3 以下、AP 1 的魔法少女可以回手。能源 4 與非魔法少女不能選。回收本身也可以放棄。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-108。與 102 同一句。",
+     "implementation": "共用 life-trigger get。triggerTextJa 與 102 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：102 已實際進手牌。開頭斷言 108 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-109",
+   "number": "UA31ST/MMM-1-109",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "合計3枚まで",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-109。看牌庫頂 5 張。最多公開 3 張不同卡名的魔法少女，每種名字 1 張。其餘依序放牌庫底。可以少拿。",
+     "implementation": "distinctGirlLook。searchTopUpToTwoBottom，count 5，max 3，distinctNames true，rest bottom。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：5 張都在檢視窗。事件與非魔法少女不能選。一張都不拿時全部到牌庫底，對手看不到。拿了 1 張同名後，另一張同名不能再選，可以停止。被公開的那張對手看得到，其餘仍隱藏。tests/v2-mmm-set1.test.mjs 拿滿 3 個不同名字。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-109。與 111、112 同一句。",
+     "implementation": "共用 life-trigger draw。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：109 翻開後牌庫少 1，牌庫頂那張進手牌，這張觸發卡留在場外。開頭斷言 111 與 112 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-110",
+   "number": "UA31ST/MMM-1-110",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "消費APを-1",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-110。卡圖 https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31ST_MMM-1-110.png 確認這句在突襲框外。這個回合，下一張從手牌使用、能源 3 以下的事件 AP-1。Q1270（2024-11-22）：先用不符合條件的卡，減成不會消失。",
+     "implementation": "mamiRaidActive。noteNextHandEventApCut，maxEnergy 3，amount 1。raid-box 不再把 onPlay 列進框內。回合開始時兩邊的 nextHandEventApCut 清空。角色登場與能源 4 的事件不消耗它。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：普通登場沒有突襲層，仍寫下減 1。實際突襲到マミ後也寫下。角色登場後還在。能源 4 的 029 付 1 點 AP，減成還在。能源 3 的 034 付 0 點，減成消失。下一個回合開始時是 null。tests/v2-mmm-set1-rest.test.mjs 在正面向上的突襲狀態重現 Q1270。",
+     "unresolved": ""
+    },
+    {
+     "match": "6枚以上",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-110。卡圖確認起動在框外。每回合 1 次。先把 1 張手牌放場外。自己的場外要先有 6 張以上事件。然後必須選 1 張自己的其他角色變成主動。Q1269（2024-11-22）：場外 5 張時，不能靠這次棄牌湊成第 6 張。",
+     "implementation": "outsideEventDiscardActive，oncePerTurn，min 6。raid-box 不再把 main 列進框內。effect-mami-active 沒有 uid null，也不能選自己。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：普通登場後場外 5 張事件時沒有起動。第 6 張從牌庫進場外之後才可以，棄掉的手牌不事先計入。必須選其他角色，休息的 006 變主動，同一回合不能再起動。tests/v2-mmm-set1-rest.test.mjs 在突襲狀態重現 Q1269。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-110。與 102 同一句。",
+     "implementation": "共用 life-trigger get。triggerTextJa 與 102 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：102 已實際進手牌。開頭斷言 110 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-111",
+   "number": "UA31ST/MMM-1-111",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "インパクト無効",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-111。卡圖確認這句在框外。與這張戰鬥的角色在這場戰鬥中失去衝擊。",
+     "implementation": "removedActive。impactNull true。不是突襲框條件。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：手牌登場後 universalImpactNull 為 true。突襲後衝擊 1 的 090 攻擊，111 阻擋並退場，對方生命仍是 2。",
+     "unresolved": ""
+    },
+    {
+     "match": "リムーブエリアから登場",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-111。只有從移除區登場時，才可以把最多 1 張自己的其他角色變成主動。",
+     "implementation": "ifEnteredFromRemoved，接著 activeOwnOther optional true。使用權限來自 002 的 frontRemovedUse：正面向上的突襲，非突襲、非まどか的魔法少女。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：手牌登場沒有選擇。002 還沒有正面向上的下層時，不能從移除區使用。有下層之後可以登場，能選 002 或其他角色，不能選自己，也可以放棄。接受後休息的 006 變主動，111 自己仍是休息。tests/v2-mmm-set1.test.mjs 另有手牌登場不開啟這句的斷言。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-111。與 109 同一句。",
+     "implementation": "共用 life-trigger draw。triggerTextJa 與 109 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：109 已實際抽牌。開頭斷言 111 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-112",
+   "number": "UA31ST/MMM-1-112",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "2以下の〈鹿目 まどか〉",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-112。退場時最多把 1 張場外、能源 2 以下的まどか加入手牌。Q1271（2024-11-22）：紅與黃都可以，只要能源 2 以下。",
+     "implementation": "madokaRecover。recoverOutsideNamedEnergy，name 鹿目 まどか，maxEnergy 2，optional true。不看顏色。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：戰鬥落敗後黃色能源 0 的 006 與紫色能源 0 的 047 可以選，能源 5 的 078 不能選。放棄後三張都留在場外。接受後 006 進手牌，112 在場外。tests/v2-mmm-set1.test.mjs 回收紅色能源 1 的 103。tests/v2-mmm-set1-faq.test.mjs 另有 Q1271。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-112。與 109 同一句。",
+     "implementation": "共用 life-trigger draw。triggerTextJa 與 109 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：109 已實際抽牌。開頭斷言 112 的觸發句相同。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "MMM-1-113",
+   "number": "UA31ST/MMM-1-113",
+   "round": 13,
+   "status": "已驗證",
+   "clauses": [
+    {
+     "match": "BP+500",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-113。自己的場上有其他 4 張以上五重奏時，這張 BP+500。自己不算。對方的不算。不是只限自己的回合。",
+     "implementation": "quintetBp。ownCardTraitCount，turn any，min 4，zone field，excludeSelf，trait ピュエラ・マギ・ホーリー・クインテット，bp 500。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：自己加上 3 張其他五重奏是 2500。第 4 張其他的進來後是 3000。換到對方回合仍是 3000。拿掉 1 張回到 2500。對方 4 張五重奏不加。付費登場休息，沒有起動，只有 1 張其他的時候是 2500。",
+     "unresolved": ""
+    },
+    {
+     "match": "BP+3000",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA31ST/MMM-1-113。與 105 同一句。",
+     "implementation": "共用 life-trigger active。triggerTextJa 與 105 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-mmm1-101-113.test.mjs：105 已實際把角色轉成主動並加 3000。開頭斷言 113 的觸發句相同。",
      "unresolved": ""
     }
    ]

@@ -65,7 +65,7 @@ const RAID_BOX_FEATURES=Object.freeze({
  'MMM-1-083':["onAttack","lifeToHandDoubleAttack"],
  'MMM-1-090':["main"],
  'MMM-1-104':["passive","girlNameUnblockedDraw"],
- 'MMM-1-110':["onPlay","main"],
+ // MMM-1-110：卡圖只有〈巴 マミ〉那一行在突襲框內。登場時的減 AP 與起動在框外，一般登場也要發動。
  'MMM-2-001':["onPlay","onRetire"],
  'MMM-2-028':["onPlay","main"],
  'MMM-2-032':["onPlay","passive"],
