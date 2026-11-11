@@ -377,7 +377,8 @@ function clockRollup(games, side) {
   deferred: rows.reduce((sum, row) => sum + row.deferred, 0),
   forced: rows.reduce((sum, row) => sum + row.forced, 0),
   p50: percentile(rows.map(row => row.p50), 0.5),
-  p95: percentile(rows.map(row => row.p95), 0.5)
+  p95: percentile(rows.map(row => row.p95), 0.5),
+  note: 'p50 and p95 are medians of the per-game percentiles. over40 counts decisions whose wall time passed the soft 40 ms deadline. Node compliance is overNodes and maxNodes.'
  };
 }
 
