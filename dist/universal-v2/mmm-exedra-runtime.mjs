@@ -468,6 +468,8 @@ function revealed055(pack,s,job){
  if(once(s,job.owner,'梓 みふゆ|revealed'))return;
  const targets=ownChars(s,job.owner,c=>cardHasTrait(def(pack,c),MAGIUS));
  if(!targets.length)return;
+ // Q2362: opening the choice spends the name lock. Skipping still activated it.
+ lock(s,job.owner,'梓 みふゆ|revealed');
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u055'},
   skipDo(targets.map(c=>({type:'mmm2',uid:c.uid}))));
 }
@@ -505,7 +507,7 @@ function main057(pack,s,job){
  }
  offer057(pack,s,job);
 }
-function play060(pack,s,job){look(pack,s,job,4,'u060');}
+function play060(pack,s,job){look(pack,s,job,4,'look060');}
 function play061(pack,s,job){
  const count=A.field(plOf(s,job.owner)).reduce((n,c)=>{
   const d=def(pack,c);
@@ -519,7 +521,7 @@ function play061(pack,s,job){
 }
 function play063(pack,s,job){
  const hand=plOf(s,job.owner).hand;
- if(!hand.length){lookOne(pack,s,job);return;}
+ if(!hand.length)return;
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u063'},
   skipDo(hand.map(c=>({type:'mmm2',uid:c.uid}))));
 }
@@ -548,9 +550,13 @@ function main071(pack,s,job){
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u071'},
   life.map(c=>({type:'mmm2',uid:c.uid})));
 }
+function other072(s,player,sourceUid){
+ return (girlNames(s,player,sourceUid)>=4||lifeToHand(s,player))&&
+  ownChars(s,player,c=>c.uid!==sourceUid).length>0;
+}
 function main072(pack,s,job){
  const modes=['a'];
- if(girlNames(s,job.owner,job.sourceUid)>=4||lifeToHand(s,job.owner))modes.push('b');
+ if(other072(s,job.owner,job.sourceUid))modes.push('b');
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u072',data:{picked:[]}},
   [{type:'mmm2',mode:'done'},...modes.map(mode=>({type:'mmm2',mode}))]);
 }
@@ -574,7 +580,8 @@ function look(pack,s,job,count,step,ok){
 function lookOne(pack,s,job){
  const top=plOf(s,job.owner).deck[0];
  if(!top){A.draw(pack,s,job.owner,1);return;}
- hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'placeOne'},
+ hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'placeOne',
+  data:{uids:[top.uid]}},
   [{type:'mmm2',mode:'top'},{type:'mmm2',mode:'bottom'}]);
 }
 function drawDiscard(pack,s,job){
@@ -877,7 +884,6 @@ const STEPS={
   if(a.mode==='skip')return;
   const c=ownChars(s,q.player).find(x=>x.uid===a.uid&&cardHasTrait(def(pack,x),MAGIUS));
   if(!c)throw Error('Magius left');
-  lock(s,q.player,'梓 みふゆ|revealed');
   buff(s,c,1000);impact(s,c);
  },
  u056(pack,s,q,a){
@@ -898,7 +904,7 @@ const STEPS={
   A.enter(pack,s,{owner:q.player,from,uid:a.uid,line:a.line,slot:a.slot,
    replaceUid:a.replaceUid,ready:q.data.ready===true,sourceUid:q.sourceUid});
  },
- u060(pack,s,q,a){takeWindow(pack,s,q,a,2,()=>true,'top');},
+ look060(pack,s,q,a){takeWindow(pack,s,q,a,2,()=>true,'top');},
  u061(pack,s,q,a){
   const foe=1-q.player,loc=A.location(s,foe,a.uid);
   if(!loc)throw Error('Front left');
@@ -907,7 +913,8 @@ const STEPS={
   else s.effectQueue.push({op:'mmm2',id:'MMM-2-061',slot:'after',owner:q.player,sourceUid:q.sourceUid});
  },
  u063(pack,s,q,a){
-  if(a.mode!=='skip')moveZone(pack,s,q.player,'hand',a.uid,'outside',q.sourceUid);
+  if(a.mode==='skip')return;
+  moveZone(pack,s,q.player,'hand',a.uid,'outside',q.sourceUid);
   lookOne(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id});
  },
  placeOne(pack,s,q,a){
@@ -928,7 +935,9 @@ const STEPS={
  drawOpt(pack,s,q,a){if(a.mode==='do')A.draw(pack,s,q.player,1);},
  u069(pack,s,q,a){
   if(a.mode!=='do')return;
-  const printed=def(pack,{cardId:'MMM-2-069'});
+  const source=plOf(s,q.player).outside.find(c=>c.uid===q.sourceUid)||selfOf(s,q.player,q.sourceUid);
+  if(!source)throw Error('Mami left');
+  const printed=def(pack,source);
   s.effectQueue.unshift(...(printed.effects.onPlay||[]).map(e=>({...e,owner:q.player,sourceUid:q.sourceUid})));
  },
  u071(pack,s,q,a){
@@ -944,7 +953,7 @@ const STEPS={
    if(data.picked.includes(a.mode)||data.picked.length>=2)throw Error('Repeated option');
    data.picked.push(a.mode);
    const left=['a','b'].filter(m=>!data.picked.includes(m)&&
-    (m==='a'||girlNames(s,q.player,q.sourceUid)>=4||lifeToHand(s,q.player)));
+    (m==='a'||other072(s,q.player,q.sourceUid)));
    if(data.picked.length<2&&left.length){
     hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u072b',data},
      [{type:'mmm2',mode:'done'},...left.map(mode=>({type:'mmm2',mode}))]);
