@@ -143,3 +143,16 @@
 | [TTG-1-011](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-011) | 自己回合且總能源8時 BP2500→4000；主階段同一實體每回合一次，二選一為發生綠能源+1或前線也產能源；持續到下一次自己回合開始而非當前回合結束 | 兩張同名卡同場、Raid疊底與跨卡能源暫時倍率的完整官方情境 |
 
 此批測試曾因人工測試局面忘記更新能源快取及使用複製前的角色參照而失敗；已修正**測試前置條件**並保留實體卡片檢查，不是降低引擎驗證強度。仍維持正式全卡 `auto:false` 標記。
+
+
+## 2026-10-14：天元突破 TTG-1-018～020 官方逐卡驗收情境（待 CI）
+
+獨立分支 `audit/ttg018-020-official-20261014`；本輪新增 `tests/ttg-official-acceptance-018-020.test.mjs` 六項真實 **50 張實體卡對局核心**可執行案例。對照日本官方個別卡文，不等於正式全卡效力／所有 FAQ 完成：
+
+| 卡號 | 本輪新增核心驗證 | 仍待整卡完成 |
+|---|---|---|
+| [TTG-1-018](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-018) | 主階段 REST 成本、綠產能 +1、再度 ACTIVE 不可同一回合重新啟動；切換主階段至攻擊階段時自動退場、即時失去產能；若布塔在前線不會憑空生產能源但仍會退場。兩種來源均檢查 50 張實體守恆 | Raid 疊底及離場替代／其他角色回收來源／同時退場時點 |
+| [TTG-1-019](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-019) | ACTIVE／REST 切換即時重新結算綠色產能（2 vs 1）；能源線移到前線後普通情況不產能，若其他效果讓前線產能則 ACTIVE 獎勵正確生效 | 其他「前線也產能」能力、大量倍增及 Raid 疊底持續效果 |
+| [TTG-1-020](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-020) | 己方空場手牌需求能源 2→0；對方場上有卡不影響自己的折扣；仍必須支付真正 AP；登場後第二張不能繼續享受空場優惠；STEP 只有移動階段可合法移入空能源格，REST 不會自動 ACTIVE；生命 ACTIVE 必須公開揭示、可選擇發動或放棄、選己方角色 ACTIVE 及 BP+3000 | 完整傷害排隊／多重 Trigger 與回合結束 Buff 清除、真人手機逐按鈕驗收 |
+
+本輪沿用現有正式 Beta 核心判定程式，不變更 `auto:false` 或作品 `playable:false` 宣告；仍須看 GitHub Actions Node 22 及瀏覽器入口測試狀態，暫不合併 `main`、暫不部署。之後由 **TTG-1-021～023** 繼續逐卡驗收。
