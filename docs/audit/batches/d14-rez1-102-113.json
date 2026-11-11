@@ -1,0 +1,335 @@
+{
+ "group": "D14",
+ "baseline": "0ced13aac83f7a8b283ed80113abb010a05b4c5e",
+ "baseBranch": "cursor/audit-round11-integrate-65f8",
+ "range": "UA40ST/REZ-1-102 至 REZ-1-113。委託書寫 UA40BT，印刷商品與卡圖都是預組 UA40ST。UA40BT 076～100 不在這一批。",
+ "updated": "2026-11-11",
+ "official": {
+  "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-102 起，至 REZ-1-113。",
+  "images": [
+   "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-104.png",
+   "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-106.png",
+   "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-110.png",
+   "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-111.png",
+   "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-112.png"
+  ],
+  "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA40BT",
+  "checked": "2026-11-11",
+  "note": "2026-11-11 用 detail.php 對過 UA40ST/REZ-1-102～113。效果、必要能量、AP、BP、發生能量與觸發和 dist/rezero-cards.mjs 一致。106 卡圖的衝擊與攻擊時都在紫色突襲框內，raid-box 的 onAttack 與 passive 保留；普通登場沒有這兩句。110 的發生能量是藍色一點。這 12 張的卡片頁只掛 Q1582（104 的元々のBP 是卡面左下印刷 BP）。沒有改 engine.mjs、pack.mjs 或 raid-box.mjs。整體台帳由 A 組整合，這份不改 effect-audit-notes.json 與 effect-audit-ledger.json。"
+ },
+ "counts": {
+  "已驗證": 12,
+  "部分核對": 0,
+  "待修正": 0,
+  "缺資料待確認": 0,
+  "無效果": 0
+ },
+ "fixes": [],
+ "sharedGaps": [],
+ "tests": {
+  "command": "node --test tests/v2-rez1-102-113.test.mjs tests/v2-re0-set1-batch.test.mjs tests/v2-re0-official-faq.test.mjs tests/v2-rezero-rem-energy-raid-tap.test.mjs tests/v2-raid-box-all-titles.test.mjs",
+  "result": "Node v22.23.4。96 passed, 0 failed。新檔 11，set1 64，官方 FAQ 16，raid-box 1，能源線突襲 4。沒有跑整庫。"
+ },
+ "reviews": [
+  {
+   "cardId": "REZ-1-102",
+   "number": "UA40ST/REZ-1-102",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "自分の場に〈フェルト〉がある場合",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-102。自己回合、自己場上有〈フェルト〉時這張 BP+1000。",
+     "implementation": "feltTurnBp。passiveBonuses bp 1000，ownNameExists，zone field，turn own，name フェルト。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：102 在前線是 3000，028 放上能源線變成 4000，換對手回合回到 3000，換成 007 仍是 3000。tests/v2-rez1-102-113.test.mjs：對手前線的 028 與放到場外的 028 都不是 4000，自己前線的 028 才是 4000，移出場外回到 3000。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び",
+     "status": "已驗證",
+     "official": "同一頁。生命翻開後選自己場上 1 張角色，活動，並在這個回合 BP+3000。",
+     "implementation": "共用 life-trigger active。triggerTextJa 與 103、104 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs 的生命迴圈翻的是 102。休息的 007 被選中後活動，BP 由 2000 變成 5000，102 進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-103",
+   "number": "UA40ST/REZ-1-103",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-103。效果欄是 -。生命觸發與 102、104 相同。",
+     "implementation": "plain。沒有登場、攻擊或常駐程式。共用 life-trigger active。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs 的生命迴圈翻的是 103。休息的 007 活動且 BP 變成 5000，103 進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-104",
+   "number": "UA40ST/REZ-1-104",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "アクティブで場に登場させる",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-104。這張以活動狀態登場。不是突襲卡。",
+     "implementation": "activeFrontDownDraw。enterAlwaysActive。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs 與 tests/v2-rez1-102-113.test.mjs：付費從手牌登場後 ready 為 true。",
+     "unresolved": ""
+    },
+    {
+     "match": "BP1500以上の相手のフロントL",
+     "status": "已驗證",
+     "official": "同一頁。登場時可選最多 2 張對手前線、現在 BP 1500 以上的角色，這個回合 BP-1000。可以不選。",
+     "implementation": "onPlay enemyBpDown，bp 1000，optional，minBp 1500，maxTargets 2，zone front，untilTurn 為當前回合。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：BP 500 的 005 與能源線上的 014 不能選；012 與前線 014 可以，兩張分別降到 500 與 1500；uid null 則不降。tests/v2-rez1-102-113.test.mjs：012 由 1500 降到 500，下一個人的主要階段回到 1500。",
+     "unresolved": ""
+    },
+    {
+     "match": "元々のBPよりBPが低い",
+     "status": "已驗證",
+     "official": "同一頁。攻擊時，對手前線有現在 BP 低於印刷 BP 的角色就抽 1 張。Q1582：元々のBP 是卡面左下的印刷 BP。",
+     "implementation": "onAttack drawIfOppFrontBelowPrinted count 1。比較 live BP 與印刷 BP。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：前線低於印刷 BP 時，擋牌結算前牌組少 1；只有能源線變低、或前線沒有變低，都不抽。tests/v2-re0-official-faq.test.mjs 的 Q1582 用同一句再跑一次。",
+     "unresolved": ""
+    },
+    {
+     "match": "【アクティブ】自分の場のキャラを1枚選び",
+     "status": "已驗證",
+     "official": "同一頁。生命觸發與 102、103 相同。",
+     "implementation": "共用 life-trigger active。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs 的生命迴圈翻的是 104。休息的 007 活動且 BP 變成 5000，104 進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-105",
+   "number": "UA40ST/REZ-1-105",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "イベントカードを使用している場合",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-105。自己回合、這個回合已經使用過事件時 BP+1000。觸發是 -。",
+     "implementation": "eventTurnBp。passiveBonuses bp 1000，ownEventUsedThisTurn，turn own。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：使用 029 前是 3000，使用後是 4000，換到對手回合回到 3000。tests/v2-rez1-102-113.test.mjs：下一個自己的主要階段、ownTurns 為 2 時仍是 3000。生命迴圈翻到 105 時沒有觸發，卡片進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-106",
+   "number": "UA40ST/REZ-1-106",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "イベントカードが6枚以上",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-106。2026-11-11 卡圖：突襲〈エミリア〉，以及場外事件 6 張以上得到衝擊 1，都在紫色突襲框內。",
+     "implementation": "raidEventImpactPeek。raidName エミリア。raid-box 保留 passive。ownOutsideEventCountAtLeast min 6、impact 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：實際突襲到 022。5 張場外事件時衝擊 0，第 6 張才是 1；5 張時打贏不扣生命，6 張時生命少 1。tests/v2-rez1-102-113.test.mjs：沒有疊放的普通登場，6 張場外事件衝擊仍是 0。",
+     "unresolved": ""
+    },
+    {
+     "match": "山札の上から1枚見る",
+     "status": "已驗證",
+     "official": "同一頁與同一張卡圖。攻擊時看牌組頂 1 張，放回頂端或場外；這個回合用過事件再抽 1。這句在突襲框內。",
+     "implementation": "raid-box 保留 onAttack。peekTopOne，然後 drawIfOwnEventUsed count 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：突襲後、擋牌前先選頂端或場外；用過事件時看完再抽 1，牌組少 1。tests/v2-rez1-102-113.test.mjs：普通登場後攻擊直接進入擋牌，牌組張數不變。",
+     "unresolved": ""
+    },
+    {
+     "match": "手札に加えるか、必要エナジーを満たしている場合",
+     "status": "已驗證",
+     "official": "同一頁。生命翻開後可加入手牌；必要能量足夠時可以突襲。",
+     "implementation": "共用 life-trigger raid。能量不足時不提供突襲。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs：對手有 4 點黃能量與 022 時，106 從生命突襲到 022 上，活動，移動原因是 life-trigger。沒有能量時不能突襲，改加入手牌。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-107",
+   "number": "UA40ST/REZ-1-107",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "APを1支払ってもよい",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-107。登場時可支付 1 點 AP。支付後必須二選一：對手棄 1 張手牌且自己抽 1；或這張活動，並可從場外把最多 1 張〈徽章〉加入手牌。",
+     "implementation": "feltPayBlock。onPlay optionalPayAp cost 1，然後 chooseOne：oppDiscardDraw 與 activeBadge。徽章回收 optional、count 1。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：AP 不夠就沒有選擇並休息登場。AP 夠時可跳過，仍休息。支付後對手棄牌且牌組少 1；對手沒有手牌仍抽 1。選活動時 107 活動，109 可回收也可不拿；沒有徽章仍會活動。",
+     "unresolved": ""
+    },
+    {
+     "match": "BP4000以上のキャラにブロックされない",
+     "status": "已驗證",
+     "official": "同一頁。啟動主要，每回合 1 次，棄 1 張手牌。這個回合這張不能被 BP 4000 以上的角色擋。棄牌不能跳過。",
+     "implementation": "main handBlock。effect-hand-block 沒有 uid null。blockAtLeastGranted bp 4000，並在下一個回合開始清除。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：必須棄牌，BP 4000 的 053 不能擋，較低的 007 可以；同一張不能再啟動，另一張可以；休息且沒有手牌不能啟動。tests/v2-rez1-102-113.test.mjs：同一回合 053 不能擋，下一回合標記消失，053 可以擋下 3000 的 107，兩張都留在場上。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える",
+     "status": "已驗證",
+     "official": "同一頁。生命翻開後這張進手牌。108 的句子相同。",
+     "implementation": "共用 life-trigger get。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs 的生命迴圈翻的是 107，同一張進手牌，不進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-108",
+   "number": "UA40ST/REZ-1-108",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "山札の上か下に置く",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-108。啟動主要，每回合 1 次，休息這張，看牌組頂 1 張，放回頂端或底端。",
+     "implementation": "fieldPeek。main restSelfThen peekTopOrBottom。private-top-place。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：108 放到能源線並休息，休息中不能啟動。下一個自己的主要階段可以啟動；放回頂端時頂端不變，放到底端時原頂端到底部。空牌組只休息、不開選擇。同一回合手動活動後不能再啟動。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ゲット】このカードを手札に加える",
+     "status": "已驗證",
+     "official": "同一頁。生命翻開後這張進手牌。",
+     "implementation": "共用 life-trigger get。triggerTextJa 與 107 相同。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs 的生命迴圈翻的是 108，同一張進手牌，不進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-109",
+   "number": "UA40ST/REZ-1-109",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "王選候補者］かイベントカードを1枚まで",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-109。看牌組頂 5 張。最多公開 1 張王選候補者或事件並加入手牌，其餘依序放到底端。公開的是王選候補者時，可把最多 1 張 AP 變成活動。觸發是 -。",
+     "implementation": "candidateApSearch。inspectTopTraitOrEvent count 5，然後可選的 effect-recover-ap。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：5 張都不是對象時只排序，手牌不變，AP 不活動。公開事件 062 不開 AP 回復。公開 022 後才開 effect-recover-ap，選休息中的 AP 會活動。另一次對有對象的窗口選 uid null，5 張都到底端，手牌與 AP 都不變。生命迴圈翻到 109 時沒有觸發，卡片進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-110",
+   "number": "UA40ST/REZ-1-110",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "発生エナジー+【青】",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-110。2026-11-11 卡圖是藍色一點。自己前線有〈ナツキ・スバル〉時，這張發生能量 +1 藍。觸發是 -。",
+     "implementation": "subaruFrontEnergy。passive energy 1 blue，ownNameExists，zone front，turn any，name ナツキ・スバル。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：110 在能源線是藍 1，自己前線的 068 變成 2，068 改放能源線回到 1。tests/v2-rez1-102-113.test.mjs：對手前線的 068 仍是藍 1。生命迴圈翻到 110 時沒有觸發，卡片進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-111",
+   "number": "UA40ST/REZ-1-111",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "〈クルシュ・カルステン〉としても〈フェリス〉としても",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-111。這張也視為〈クルシュ・カルステン〉與〈フェリス〉。",
+     "implementation": "aliasTopKeep。nameAliases 為這兩個名字。066 的 playRequiresOwnName 讀這個名字。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs：能源線上的 043〈フェリス〉不能使用 066。111 登場後 066 可以打出，並把 BP 1500 的前線退場，手牌 BP 參照變成 +1000。",
+     "unresolved": ""
+    },
+    {
+     "match": "望む枚数を望む順で山札の上に置き",
+     "status": "已驗證",
+     "official": "同一頁。登場時看牌組頂 2 張。任意張數依序放回頂端，其餘放場外。觸發是 -。",
+     "implementation": "onPlay inspectTopAnyOutside count 2，rest top。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：兩張都留在頂端，順序可交換。tests/v2-rez1-102-113.test.mjs：窗口就是那 2 張；1 張進場外，另 1 張放回頂端。生命迴圈翻到 111 時沒有觸發，卡片進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-112",
+   "number": "UA40ST/REZ-1-112",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "山札からキャラカードを登場させるかレイド",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-112。自己回合，這個回合已從牌組讓角色登場或突襲時 BP+500。",
+     "implementation": "deckCharacterEntryActive。passiveBonuses bp 500，ownDeckCharacterEntryThisTurn，turn own。牌組到前線或能源線、原因 own-effect 的角色移動才算，突襲與登場共用這一筆。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：付費登場是 3500。097 讓 068 從牌組登場後變成 4000；對手的移動階段回到 3500，下一個自己的主要階段仍是 3500。tests/v2-rez1-102-113.test.mjs：097 把 077 從牌組突襲到 072 上，112 由 3500 變成 4000，移動原因是 own-effect。",
+     "unresolved": ""
+    },
+    {
+     "match": "自分の効果で登場していた場合",
+     "status": "已驗證",
+     "official": "同一頁。登場時，若這張是因自己的效果登場，則變成活動。觸發是 -。",
+     "implementation": "onPlay activeSelfIf entry ownEffect。",
+     "discrepancy": "",
+     "evidence": "tests/v2-re0-set1-batch.test.mjs：付費從手牌登場維持休息。097 把牌組頂的 112 登場後是活動，移動是 deck 到 front、原因 own-effect。生命迴圈翻到 112 時沒有觸發，卡片進場外。",
+     "unresolved": ""
+    }
+   ]
+  },
+  {
+   "cardId": "REZ-1-113",
+   "number": "UA40ST/REZ-1-113",
+   "round": 14,
+   "clauses": [
+    {
+     "match": "”聖域”の”試練”",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-113。登場時可棄 1 張手牌，或休息 1 張自己前線的活動角色。這樣做之後，從場外把 1 張〈”聖域”の”試練”〉加入手牌。支付可以不做；支付後的回收不是「まで」。",
+     "implementation": "sanctuaryRecover。onPlay payHandOrRestForNamed，name 為 REZ-1-098 的印刷名，optional。一張時直接加入手牌；多張時 effect-add-named 沒有 uid null。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs 使用目錄上的 098。沒有手牌也沒有活動前線時不開選擇。有對象時可跳過，098 留在場外。棄牌或休息後，098 進手牌，109 留在場外。兩張 098 必須選一張，不能跳過。對手場外的 098 不算。",
+     "unresolved": ""
+    },
+    {
+     "match": "【ドロー】カードを1枚引く",
+     "status": "已驗證",
+     "official": "同一頁。生命翻開後抽 1 張。",
+     "implementation": "共用 life-trigger draw。",
+     "discrepancy": "",
+     "evidence": "tests/v2-rez1-102-113.test.mjs 的生命迴圈翻的是 113。選擇抽牌後手牌加 1，113 進場外。",
+     "unresolved": ""
+    }
+   ]
+  }
+ ]
+}
