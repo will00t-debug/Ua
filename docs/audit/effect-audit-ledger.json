@@ -2,9 +2,9 @@
  "generatedFrom": "scripts/build-effect-audit-ledger.mjs",
  "updated": "2026-11-11",
  "next": {
-  "id": "MMM-2-051",
-  "number": "EX16BT/MMM-2-051",
-  "series": "魔法少女小圓第二彈"
+  "id": "REZ-1-076",
+  "number": "UA40BT/REZ-1-076",
+  "series": "Re:Zero"
  },
  "rule": "登錄效果或既有測試通過，都不等於這張卡已核對。整張卡通過只發生在每一段都有官方來源、實作位置與驗證，而且沒有未解決項目。",
  "sharedFixes": [
@@ -301,30 +301,44 @@
    "where": "dist/universal-v2/mmm-pack.mjs lifeDraw2 帶 optional:false。dist/universal-v2/pack.mjs 只允許這個 op 額外出現 optional:false。dist/universal-v2/engine.mjs 在 optional 為 false 時不提供放棄，而且先移動生命再抽牌。",
    "affects": "只有 092。SAO-1-021 的「加えてもよい」仍是省略 optional 的可放棄版本，抽 1 張。",
    "evidence": "tests/v2-mmm1-092-life.test.mjs。tests/v2-c28-catalog-port.test.mjs 的 SAO-1-021 仍可選不拿。"
+  },
+  {
+   "name": "MMM-2-055 只在自己回合的公開才發動",
+   "rule": "EX16BT/MMM-2-055：自分のターン中に這張卡從自己的牌庫被公開時，才可選擇 1 張自己場上的マギウス，這個回合 BP+1000 並獲得衝擊 1。Q2361：050 整段，含棄牌，結束後才開。Q2362：同一回合已經發動過就不能再發動。開出選擇時就鎖，跳過也算發動過。沒有マギウス時不鎖。",
+   "where": "dist/universal-v2/engine.mjs notePublicDeckReveal。公開與費用 5 的紀錄照常留下。s.active 不是這張卡的擁有者時不排入。dist/universal-v2/mmm-exedra-runtime.mjs revealed055 在開出選擇時寫入梓 みふゆ|revealed。",
+   "affects": "只有 055 的公開時。KMR-1-113 公開對手牌頂仍可留在上面或放到場外。其他作品呼叫同一個 helper 的公開沒有改流程。",
+   "evidence": "tests/v2-mmm2-055-opponent-turn.test.mjs。tests/v2-mmm2-051-073.test.mjs 的 Q2361 與 Q2362。"
+  },
+  {
+   "name": "MMM-2-012 在場上同時算曉美焰",
+   "rule": "EX16BT/MMM-2-012 的印刷名是悪魔ほむら，並且「このカードは〈暁美 ほむら〉としても扱う」。場上的這張卡讓需要暁美 ほむら的效果成立。",
+   "where": "dist/universal-v2/mmm-pack.mjs devilHomura 的 nameAliases。dist/universal-v2/field-conditions.mjs cardHasName。dist/universal-v2/engine.mjs ownFieldHasPrintedName。",
+   "affects": "012 的這句。MMM-1-039 的印刷名仍是暁美 ほむら。鹿目圓不會被當成曉美焰。",
+   "evidence": "tests/v2-mmm2-012-alias.test.mjs。既有 tests/v2-mmm-set1.test.mjs 的 MMM-1-062 仍只在印刷的曉美焰在場時抽牌。"
   }
  ],
  "summary": {
   "total": 957,
-  "未檢查": 61,
+  "未檢查": 38,
   "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 873,
+  "已驗證": 897,
   "缺資料待確認": 3,
-  "部分核對": 1,
+  "部分核對": 0,
   "無效果": 3,
   "行動值卡": 16,
-  "部分條款已記錄": 877,
+  "部分條款已記錄": 900,
   "playable": {
    "total": 938,
-   "未檢查": 61,
+   "未檢查": 38,
    "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 873,
+   "已驗證": 897,
    "缺資料待確認": 3,
-   "部分核對": 1,
+   "部分核對": 0,
    "無效果": 0,
    "行動值卡": 0,
-   "部分條款已記錄": 877
+   "部分條款已記錄": 900
   },
   "ap": {
    "total": 16,
@@ -517,15 +531,15 @@
     "product": "EX16BT",
     "priority": 2,
     "total": 73,
-    "未檢查": 23,
+    "未檢查": 0,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 49,
+    "已驗證": 73,
     "缺資料待確認": 0,
-    "部分核對": 1,
+    "部分核對": 0,
     "無效果": 0,
     "行動值卡": 0,
-    "部分條款已記錄": 50
+    "部分條款已記錄": 73
    },
    {
     "id": "rez",
@@ -42005,11 +42019,11 @@
    "clauses": [
     {
      "text": "このカードは〈暁美 ほむら〉としても扱う。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "印刷名是悪魔ほむら。這句讓場上的這張卡同時算暁美 ほむら。",
+     "implementation": "nameAliases 是暁美 ほむら。cardHasName 在效果沒有失效時把別名算進名稱。MMM-1-062 的抽牌用 ownFieldHasPrintedName。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-012-alias.test.mjs。場上只有 012 時，062 讓它 BP+2000、獲得衝擊，並多抽 1。場上只有鹿目圓時，BP 與衝擊仍加上，但不抽那 1 張。",
      "unresolved": ""
     },
     {
@@ -42040,7 +42054,7 @@
      "unresolved": ""
     }
    ],
-   "status": "部分核對",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "MMM-2-012",
@@ -42056,6 +42070,16 @@
       },
       {
        "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    },
+    {
+     "cardId": "MMM-2-012",
+     "number": "EX16BT/MMM-2-012",
+     "clauses": [
+      {
+       "match": "このカードは〈暁美 ほむら〉としても扱う。",
        "status": "已驗證"
       }
      ]
@@ -44146,26 +44170,41 @@
    "clauses": [
     {
      "text": "【登場時】【エナジーLにある場合】自分の手札を1枚場外に置いてもよい。そうした場合、このキャラをアクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "登場時，在能源線才可把 1 張手牌放到場外，然後主動自己。前線登場不開這段。",
+     "implementation": "play051 先看位置。u051 跳過就不動；選了才移出場外並主動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-051-073.test.mjs：前線沒有選擇。能源線跳過維持原休息狀態。棄牌後主動。",
      "unresolved": ""
     },
     {
      "text": "【起動メイン】【レストにする】 【APを1支払う】 【ターン1】自分の山札の上から1枚を公開し手札に加える。公開したカードの必要エナジーが5以上の場合、このターン中、次に手札から使用する元々の必要エナジーが5以上のカードの消費APを-1する。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "起動：休息、支付 1 AP、每回合 1 次。公開牌庫頂加入手牌。印刷費用 5 以上時，下一張印刷費用 5 以上的手牌 AP-1。",
+     "implementation": "main051 公開並設定 nextPrintedEnergyApCut。費用不到 5 不設定。費用 4 的事件不消耗這次減免。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：公開 052 不減 AP。公開 056 後，058 不消耗減免；060 在 0 AP 時可打出，打出後減免消失。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-051",
+     "number": "EX16BT/MMM-2-051",
+     "clauses": [
+      {
+       "match": "【登場時】【エナジーLにある場合】自分の手札を1枚場外に置いてもよい。そうした場合、このキャラをアクティブにする。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【起動メイン】【レストにする】 【APを1支払う】 【ターン1】自分の山札の上から1枚を公開し手札に加える。公開したカードの必要エナジーが5以上の場合、このターン中、次に手札から使用する元々の必要エナジーが5以上のカードの消費APを-1する。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44184,17 +44223,28 @@
    "clauses": [
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "效果只有「-」。生命是抽牌。",
+     "implementation": "plain。登場不開選擇、不抽牌。生命觸發只抽 1 張。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：登場後牌庫張數不變。生命抽牌後沒有其他選擇。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-052",
+     "number": "EX16BT/MMM-2-052",
+     "clauses": [
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44213,17 +44263,28 @@
    "clauses": [
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "效果只有「-」。生命是主動，BP+3000。",
+     "implementation": "plain。生命主動把休息的角色轉成主動並給 3000。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：登場 BP 仍是 2000。生命主動後 042 變成主動且 BP 4500。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-053",
+     "number": "EX16BT/MMM-2-053",
+     "clauses": [
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44242,17 +44303,28 @@
    "clauses": [
     {
      "text": "このキャラがアクティブの場合、このキャラの発生エナジー+【緑】。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "這張角色主動時，產生的綠能量 +1。沒有觸發。",
+     "implementation": "activeExtraEnergy 1。休息時只剩印刷的 1。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：主動時能量 2、綠 2。休息後能量 1、綠 1。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-054",
+     "number": "EX16BT/MMM-2-054",
+     "clauses": [
+      {
+       "match": "このキャラがアクティブの場合、このキャラの発生エナジー+【緑】。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44271,35 +44343,54 @@
    "clauses": [
     {
      "text": "自分のターン中にこのカードが山札から公開された時、自分の場の［特徴：マギウス］を1枚まで選び、このターン中、BP+1000と【インパクト（1）】を与える。〈梓 みふゆ〉のこの効果は1ターンに1回のみ発動できる。手札にあるこのカードの必要エナジーを【緑×2】減らす。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2361：050 公開這張並加入手牌時，要等 050 整段，含棄牌，結束後才開 055。 Q2362：同一回合第二張不能再發動。跳過也算發動過。 手牌費用減綠 2。自己回合場上有 3 種マギウス時 BP+1000。",
+     "implementation": "notePublicDeckReveal 先把效果排進佇列。050 先排序、再棄牌，然後才是 u055。 有マギウス目標才鎖「梓 みふゆ|revealed」，而且在開出選擇時就鎖。 printedHandEnergyDiscount 2。被動條件 ownDistinctTraitNames。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：選 055 後先是牌庫排序與棄牌，棄完才是 u055。給 050 BP+1000 與衝擊 1。 同檔：跳過後名字鎖已在。第二張用 051 公開，不再開選擇。 同檔：手牌費用是 3。自己回合 BP 4000，換對方回合變回 3000。 tests/v2-mmm2-055-opponent-turn.test.mjs。KMR-1-113 在對手回合公開牌庫頂的 055。公開之後可以留在上面或放到場外。留在上面時沒有 u055，名字鎖也沒有，場上的マギウス BP 不變。換到自己的主要階段，051 公開這張才開選擇。跳過之後鎖還在，同一回合另一張 051 再公開不再開。",
      "unresolved": ""
     },
     {
      "text": "【自分のターン中】自分の場に異なるカード名の［特徴：マギウス］が3種類以上ある場合、このキャラはBP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "手牌費用減綠 2。自己回合場上有 3 種マギウス時 BP+1000。",
+     "implementation": "printedHandEnergyDiscount 2。被動條件 ownDistinctTraitNames。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：手牌費用是 3。自己回合 BP 4000，換對方回合變回 3000。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】選擇 1 張自己的角色，活動並在這個回合 BP+3000。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-round13-life-triggers.test.mjs",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-055",
+     "number": "EX16BT/MMM-2-055",
+     "clauses": [
+      {
+       "match": "自分のターン中にこのカードが山札から公開された時、自分の場の［特徴：マギウス］を1枚まで選び、このターン中、BP+1000と【インパクト（1）】を与える。〈梓 みふゆ〉のこの効果は1ターンに1回のみ発動できる。手札にあるこのカードの必要エナジーを【緑×2】減らす。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【自分のターン中】自分の場に異なるカード名の［特徴：マギウス］が3種類以上ある場合、このキャラはBP+1000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44318,35 +44409,54 @@
    "clauses": [
     {
      "text": "このターン中に自分の山札から必要エナジーが5以上のカードが公開されている場合、このキャラは【ダメージ（2）】を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "這個回合公開過費用 5 以上的牌時，傷害 2。否則傷害 1。",
+     "implementation": "共用引擎既有的 MMM-2-056 分支。這組只驗證，沒有改引擎。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：051 公開 055 後攻擊，3 張生命剩 1。沒公開時 3 張剩 2。",
      "unresolved": ""
     },
     {
      "text": "【登場時】このキャラをアクティブにする。自分の場に異なるカード名の［特徴：マギウス］が3種類以上ある場合、以下から1つ選ぶ。このターン中に〈ホーリーマミ〉が既に選んだ効果は選べない。・自分のAPカードを1枚アクティブにする。このキャラはこのターン中、BP+1000。・このキャラはこのターン中、BP+1000と【インパクト（1）】を得る。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "登場一定主動。場上有 3 種マギウス時必須選一個還沒用過的選項，不能跳過。",
+     "implementation": "play056。不足 3 種就只主動。選項 a 會鎖，第二張只能選 b。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：2 種時沒有選擇且主動。3 種時 a 回復 AP 並 BP+1000；第二張沒有 a，b 給 BP+1000 與衝擊 1。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ドロー】抽 1 張。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-round13-life-triggers.test.mjs",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-056",
+     "number": "EX16BT/MMM-2-056",
+     "clauses": [
+      {
+       "match": "このターン中に自分の山札から必要エナジーが5以上のカードが公開されている場合、このキャラは【ダメージ（2）】を得る。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】このキャラをアクティブにする。自分の場に異なるカード名の［特徴：マギウス］が3種類以上ある場合、以下から1つ選ぶ。このターン中に〈ホーリーマミ〉が既に選んだ効果は選べない。・自分のAPカードを1枚アクティブにする。このキャラはこのターン中、BP+1000。・このキャラはこのターン中、BP+1000と【インパクト（1）】を得る。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44365,26 +44475,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【レストにする】 【このカードを退場させる】自分の手札か場外から〈チームみかづき荘ー！〉以外の必要エナジーが0以下の緑の［特徴：チームみかづき荘］を1枚まで自分の場にレストで登場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "場地卡只能放能源線。起動要休息並讓這張退場，然後可從手牌或場外把 1 張費用 0 的綠三日月莊角色休息登場。不能選這張卡自己的名字。",
+     "implementation": "main057 先退場。offer057 過濾顏色、費用、特徵、種類與名字。可以跳過。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：不能打到前線。アリナ與場外的另一張場地卡不能選。菲莉西亞休息登場。沒有目標時支付後退場，不開選擇。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ドロー】抽 1 張。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-round13-life-triggers.test.mjs",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-057",
+     "number": "EX16BT/MMM-2-057",
+     "clauses": [
+      {
+       "match": "【起動メイン】【レストにする】 【このカードを退場させる】自分の手札か場外から〈チームみかづき荘ー！〉以外の必要エナジーが0以下の緑の［特徴：チームみかづき荘］を1枚まで自分の場にレストで登場させる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44403,26 +44528,41 @@
    "clauses": [
     {
      "text": "自分の山札の上から5枚見て、異なるカード名の［特徴：チームみかづき荘］をそれぞれ1枚ずつ合計3枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "看牌庫頂 5 張。不同卡名的三日月莊最多 3 張公開加入手牌。剩下的全部望む順放到牌庫底。",
+     "implementation": "共用 searchTopUpToTwoBottom。不能選的仍留在私人視窗。加入的才公開。剩下每一張都要排，包含最後一張。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：アリナ不能選。選了いろは之後，另一張いろは看得到但不能再選。2 張剩餘排到底，先選的比較靠近這段的上面。沒有符合的牌時不公開、不加入，5 張都要排。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ドロー】抽 1 張。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-round13-life-triggers.test.mjs",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-058",
+     "number": "EX16BT/MMM-2-058",
+     "clauses": [
+      {
+       "match": "自分の山札の上から5枚見て、異なるカード名の［特徴：チームみかづき荘］をそれぞれ1枚ずつ合計3枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44441,26 +44581,41 @@
    "clauses": [
     {
      "text": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈環 いろは〉がある場合、『BP5000以下』に代わる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "讓對方前線 BP3000 以下的 1 張退場。自己場上有環いろは時改成 5000 以下。生命特殊是無條件退場，不抽不棄。",
+     "implementation": "retireOppFrontUnderBp，bonusName 環 いろは，bonusBp 5000。沒有跳過。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：沒有いろは時 2000 可退、3500 不可。有いろは時 3500 可退。生命特殊可退 4000 的杏子，手牌張數不變。",
      "unresolved": ""
     },
     {
      "text": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "讓對方前線 BP3000 以下的 1 張退場。自己場上有環いろは時改成 5000 以下。生命特殊是無條件退場，不抽不棄。",
+     "implementation": "retireOppFrontUnderBp，bonusName 環 いろは，bonusBp 5000。沒有跳過。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：沒有いろは時 2000 可退、3500 不可。有いろは時 3500 可退。生命特殊可退 4000 的杏子，手牌張數不變。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-059",
+     "number": "EX16BT/MMM-2-059",
+     "clauses": [
+      {
+       "match": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈環 いろは〉がある場合、『BP5000以下』に代わる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44479,26 +44634,41 @@
    "clauses": [
     {
      "text": "手札にあるこのカードの必要エナジーを【緑×2】減らす。自分の山札の上から4枚見て、2枚まで手札に加える。残りを望む順で山札の上に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "手牌費用減綠 2。看牌庫頂 4 張，最多 2 張加入手牌，不公開。剩下 2 張以上望む順放回牌庫頂。只剩 1 張不再問。生命抽牌不看牌。 要和 MMM-2-041、046 的查看與排序相容。",
+     "implementation": "look060 私人視窗含不能再選的牌。orderWindow 的 rest 是 top。先選的成為新的牌庫頂。 041 只許三日月莊、每張實體每回合一次、剩餘放牌庫底。046 只許マギウス或翼、放到場外、剩餘放牌庫頂。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：費用是 3。4 張都能選，對手看不到。拿 2 張後先選的在 deck[0]。只剩 1 張時沒有順序詢問。一張都不拿時 4 張都排回頂端。生命只抽 1 張。 同檔的相容測試，以及既有 tests/v2-mmm2-026-050.test.mjs 的 041、046 仍通過。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "手牌費用減綠 2。看牌庫頂 4 張，最多 2 張加入手牌，不公開。剩下 2 張以上望む順放回牌庫頂。只剩 1 張不再問。生命抽牌不看牌。",
+     "implementation": "look060 私人視窗含不能再選的牌。orderWindow 的 rest 是 top。先選的成為新的牌庫頂。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：費用是 3。4 張都能選，對手看不到。拿 2 張後先選的在 deck[0]。只剩 1 張時沒有順序詢問。一張都不拿時 4 張都排回頂端。生命只抽 1 張。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-060",
+     "number": "EX16BT/MMM-2-060",
+     "clauses": [
+      {
+       "match": "手札にあるこのカードの必要エナジーを【緑×2】減らす。自分の山札の上から4枚見て、2枚まで手札に加える。残りを望む順で山札の上に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44517,26 +44687,41 @@
    "clauses": [
     {
      "text": "自分の場の［特徴：マギウス］と［特徴：マギウスの翼］の合計枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。カードを1枚引き、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自己場上マギウス與マギウスの翼的張數和 ×1000 以下的對方前線必須選 1 張退場。然後抽 1、棄 1。沒有目標也要抽棄。生命特殊不使用這個上限，也不抽棄。",
+     "implementation": "play061 把兩種特徵分開加總。沒有目標就直接 drawDiscard。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：只有 1 張翼時上限 1000，3500 不退，仍抽棄。1 張マギウス加 1 張翼時 1500 可退、3500 不可，退完才棄牌。生命特殊退掉 3500，手牌張數不變。",
      "unresolved": ""
     },
     {
      "text": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自己場上マギウス與マギウスの翼的張數和 ×1000 以下的對方前線必須選 1 張退場。然後抽 1、棄 1。沒有目標也要抽棄。生命特殊不使用這個上限，也不抽棄。",
+     "implementation": "play061 把兩種特徵分開加總。沒有目標就直接 drawDiscard。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：只有 1 張翼時上限 1000，3500 不退，仍抽棄。1 張マギウス加 1 張翼時 1500 可退、3500 不可，退完才棄牌。生命特殊退掉 3500，手牌張數不變。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-061",
+     "number": "EX16BT/MMM-2-061",
+     "clauses": [
+      {
+       "match": "自分の場の［特徴：マギウス］と［特徴：マギウスの翼］の合計枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。カードを1枚引き、自分の手札を1枚場外に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44555,26 +44740,41 @@
    "clauses": [
     {
      "text": "自分のAPカードを2枚まで選び、アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "最多主動 2 張 AP，可以少選。生命最終只在生命歸零時把牌庫頂放進生命。生命還有牌時不當最終觸發。",
+     "implementation": "recoverAp count 2，可以跳過。最終觸發沿用共用規則。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：3 張休息的 AP 只能回復 2 張。跳過則維持休息。上面還有生命時 062 不出最終。最後 1 張才把牌庫頂放進生命，對局繼續。",
      "unresolved": ""
     },
     {
      "text": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "最多主動 2 張 AP，可以少選。生命最終只在生命歸零時把牌庫頂放進生命。生命還有牌時不當最終觸發。",
+     "implementation": "recoverAp count 2，可以跳過。最終觸發沿用共用規則。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：3 張休息的 AP 只能回復 2 張。跳過則維持休息。上面還有生命時 062 不出最終。最後 1 張才把牌庫頂放進生命，對局繼續。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-062",
+     "number": "EX16BT/MMM-2-062",
+     "clauses": [
+      {
+       "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44593,26 +44793,41 @@
    "clauses": [
     {
      "text": "【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "登場時可以把手牌放到場外。那樣做才看牌庫頂、放到上或下、再抽 1 張。空手牌或跳過都不要看、不要抽。",
+     "implementation": "修正前空手牌也會看牌抽牌。現在只有真的放到場外才 lookOne。看過的牌留在私人視窗。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：只有自己時牌庫不變。跳過時手牌與牌庫都不動。放到牌庫下後，抽到的是下一張，看過的在牌庫底，而且不公開。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】選擇 1 張自己的角色，活動並在這個回合 BP+3000。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-051-073.test.mjs：生命選活動，休息的角色變活動且 BP+3000。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-063",
+     "number": "EX16BT/MMM-2-063",
+     "clauses": [
+      {
+       "match": "【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、カードを1枚引く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44631,17 +44846,28 @@
    "clauses": [
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "效果只有「-」。生命是抽牌。卡名是鹿目まどか，給 073 使用。",
+     "implementation": "plain。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：登場不抽牌、BP 2000。生命只抽 1 張。073 選到這張時另給衝擊 1。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-064",
+     "number": "EX16BT/MMM-2-064",
+     "clauses": [
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44660,26 +44886,41 @@
    "clauses": [
     {
      "text": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "2 回阻擋：這個回合第一次阻擋後主動。第二次維持休息。",
+     "implementation": "readyOnBlockCount 1。阻擋方 BP 較高時雙方都不退場。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：第一次阻擋後主動，生命張數不變。第二次阻擋後休息。",
      "unresolved": ""
     },
     {
      "text": "【登場時】このターン中に自分がライフエリアにあるカードを手札に加えている場合、カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "登場時，這個回合已經把生命牌加入手牌才抽 1 張。",
+     "implementation": "ifLiveThen ownLifeToHandThisTurn。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：沒有移生命時登場不抽。071 把生命加入手牌後，065 登場抽 1 張。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-065",
+     "number": "EX16BT/MMM-2-065",
+     "clauses": [
+      {
+       "match": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）",
+       "status": "已驗證"
+      },
+      {
+       "match": "【登場時】このターン中に自分がライフエリアにあるカードを手札に加えている場合、カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44698,17 +44939,28 @@
    "clauses": [
     {
      "text": "【登場時】自分の山札の上から4枚見て、〈佐倉 杏子〉か〈美樹 さやか〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "看牌庫頂 4 張。杏子或沙耶香最多 1 張公開加入手牌。剩下的望む順放牌庫底。有加入才棄 1 張手牌。",
+     "implementation": "共用 searchTopOneBottomDiscard。不符合的留在私人視窗。沒加入就不棄。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：まどか與マミ不能選但仍看得到。加入的杏子公開。3 張剩餘都要排到底。4 張都不符合時不棄牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-066",
+     "number": "EX16BT/MMM-2-066",
+     "clauses": [
+      {
+       "match": "【登場時】自分の山札の上から4枚見て、〈佐倉 杏子〉か〈美樹 さやか〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44727,35 +44979,54 @@
    "clauses": [
     {
      "text": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自己場上沒有牌時，手牌費用減紅 2。自己回合，其他魔法少女有 4 種名字，或這個回合把生命牌加入手牌時，BP+1000。",
+     "implementation": "emptyOwnFieldHandEnergyDiscount 2。被動是兩個條件擇一，而且只在自己回合。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：空場費用 0，有牌變 2。4 種名字時 BP 3000，換回合變 2000。只有 071 把生命加入手牌時也是 3000。",
      "unresolved": ""
     },
     {
      "text": "【自分のターン中】このカード以外の自分の場の［特徴：魔法少女］のカード名が4種類以上あるか、このターン中に自分がライフエリアにあるカードを手札に加えている場合、このキャラはBP+1000。このキャラがレイドされた時、自分の場のキャラを1枚まで選び、このターン中、「このキャラのアタックがブロックされなかった時、カードを1枚まで引く。」を与える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "自己場上沒有牌時，手牌費用減紅 2。自己回合，其他魔法少女有 4 種名字，或這個回合把生命牌加入手牌時，BP+1000。 Q2363：被突襲時可把「沒被阻擋就最多抽 1」給自己的角色。時機是阻擋選擇之後。被阻擋不抽。",
+     "implementation": "emptyOwnFieldHandEnergyDiscount 2。被動是兩個條件擇一，而且只在自己回合。 onRaided 寫入 mmm2UnblockedDraw。引擎在阻擋方放棄阻擋後才排 drawOpt。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：空場費用 0，有牌變 2。4 種名字時 BP 3000，換回合變 2000。只有 071 把生命加入手牌時也是 3000。 同檔：MMM-1-083 突襲 067。宣告攻擊時先是阻擋。放棄後才可抽。對方阻擋時牌庫不變。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】選擇 1 張自己的角色，活動並在這個回合 BP+3000。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-round13-life-triggers.test.mjs",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-067",
+     "number": "EX16BT/MMM-2-067",
+     "clauses": [
+      {
+       "match": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【自分のターン中】このカード以外の自分の場の［特徴：魔法少女］のカード名が4種類以上あるか、このターン中に自分がライフエリアにあるカードを手札に加えている場合、このキャラはBP+1000。このキャラがレイドされた時、自分の場のキャラを1枚まで選び、このターン中、「このキャラのアタックがブロックされなかった時、カードを1枚まで引く。」を与える。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44774,26 +45045,41 @@
    "clauses": [
     {
      "text": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "登場時抽 1、棄 1。生命抽牌不再棄。",
+     "implementation": "drawDiscard。生命觸發只走抽牌。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：登場後必須棄牌，不能跳過。生命抽牌後沒有棄牌。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "登場時抽 1、棄 1。生命抽牌不再棄。",
+     "implementation": "drawDiscard。生命觸發只走抽牌。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：登場後必須棄牌，不能跳過。生命抽牌後沒有棄牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-068",
+     "number": "EX16BT/MMM-2-068",
+     "clauses": [
+      {
+       "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44812,35 +45098,54 @@
    "clauses": [
     {
      "text": "【レイド】〈巴 マミ〉アクティブにし、フロントLに移動できる【登場時】自分の山札の上から4枚見て、［特徴：魔法少女］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "突襲巴マミ。突襲框內的登場才看 4 張、公開 1 張魔法少女加入手牌，剩餘望む順放牌庫底，不棄牌。普通登場不檢索。",
+     "implementation": "raid box 只在突襲狀態放行 onPlay。noHandDiscard。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：付費登場後牌庫頂不變。突襲後事件與場地卡不能選，魔法少女公開加入，剩餘排到底，沒有棄牌。",
      "unresolved": ""
     },
     {
      "text": "【退場時】このカード以外の自分の場の［特徴：魔法少女］のカード名が4種類以上ある場合、このカードの【登場時】を発動してもよい。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "退場時，其他魔法少女有 4 種名字才可以再發動登場。普通登場的退場不開。生命可以拿或突襲。",
+     "implementation": "retire069。重演時改讀場外的實體卡。不足 4 種不開。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：普通登場被退場沒有選擇。突襲且 4 種名字時可重演，選了之後再開檢索。不足 4 種沒有選擇。生命有突襲與拿取。",
      "unresolved": ""
     },
     {
      "text": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "退場時，其他魔法少女有 4 種名字才可以再發動登場。普通登場的退場不開。生命可以拿或突襲。",
+     "implementation": "retire069。重演時改讀場外的實體卡。不足 4 種不開。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：普通登場被退場沒有選擇。突襲且 4 種名字時可重演，選了之後再開檢索。不足 4 種沒有選擇。生命有突襲與拿取。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-069",
+     "number": "EX16BT/MMM-2-069",
+     "clauses": [
+      {
+       "match": "【レイド】〈巴 マミ〉アクティブにし、フロントLに移動できる【登場時】自分の山札の上から4枚見て、［特徴：魔法少女］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【退場時】このカード以外の自分の場の［特徴：魔法少女］のカード名が4種類以上ある場合、このカードの【登場時】を発動してもよい。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44859,26 +45164,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【レストにする】このターン中に自分がライフエリアにあるカードを手札に加えている場合のみ発動できる。カードを1枚引く。このキャラを自分のライフエリアに表向きで置く。〈美樹 さやか〉のこの効果は1ターンに1回のみ発動できる。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2365：這個回合把生命牌加入手牌才可起動。抽 1，然後把自己正面放進生命。同一回合第二張不能起動。",
+     "implementation": "名字鎖「美樹 さやか|life」。沒有生命移動時不提供起動。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：沒移動生命時不能起動。071 之後第一張抽牌並正面進生命。第二張沒有起動。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2366 正面生命是公開資訊。Q2364 之後被打到仍可發動抽牌觸發。",
+     "implementation": "公開視圖有 faceUpLife。觸發檢查仍開抽牌。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：對手看得到這張正面生命。換回合打到它時出現抽牌觸發。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-070",
+     "number": "EX16BT/MMM-2-070",
+     "clauses": [
+      {
+       "match": "【起動メイン】【レストにする】このターン中に自分がライフエリアにあるカードを手札に加えている場合のみ発動できる。カードを1枚引く。このキャラを自分のライフエリアに表向きで置く。〈美樹 さやか〉のこの効果は1ターンに1回のみ発動できる。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44897,26 +45217,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【ターン1】自分のライフエリアにあるカードを1枚手札に加える。そうした場合、このキャラはこのターン中、BP+2000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2367：每回合 1 次，把 1 張生命加入手牌，不公開、不做觸發檢查，然後自己 BP+2000。 Q2368：最後 1 張生命移走後，先做完這張的效果，再判定敗北。",
+     "implementation": "u071 直接從生命移到手牌。沒有公開紀錄。 同一動作成完 BP，finishPending 才把對局結束。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：手牌有那張生命，公開清單與對手視圖都沒有。BP 4000。同一張不能再起動。 同檔：BP 已是 4000，生命 0，status finished，endReason life-zero，勝者是對手。",
      "unresolved": ""
     },
     {
      "text": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【アクティブ】選擇 1 張自己的角色，活動並在這個回合 BP+3000。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-round13-life-triggers.test.mjs",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-071",
+     "number": "EX16BT/MMM-2-071",
+     "clauses": [
+      {
+       "match": "【起動メイン】【ターン1】自分のライフエリアにあるカードを1枚手札に加える。そうした場合、このキャラはこのターン中、BP+2000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44935,26 +45270,41 @@
    "clauses": [
     {
      "text": "【起動メイン】【ターン1】以下から2つまで選ぶ。・このキャラはこのターン中、BP+1000。・このカード以外の自分の場の［特徴：魔法少女］のカード名が4種類以上あるか、このターン中に自分がライフエリアにあるカードを手札に加えている場合、自分の場の他のキャラを1枚選び、このターン中、BP+1000。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2369：每回合 1 次，最多選 2 個，不能選同一個。可以一個都不選。 Q2370：兩個都選時由上往下。先自己 BP+1000，再選另一張角色 BP+1000。生命是拿取。",
+     "implementation": "u072 拒絕重複。沒有其他角色，或條件不成立時，不提供第二項。 apply072 固定先 a 再 b。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：單獨一張沒有 b，選完成後 BP 不變。有另一張但條件不成立時也沒有 b。先選 b 之後不能再選 b。 同檔：先點 b 再點 a。輪到選另一張時，自己已是 4000，まどか仍是 2000。選完後まどか 3000。生命拿取加入手牌。",
      "unresolved": ""
     },
     {
      "text": "【ゲット】このカードを手札に加える。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "Q2370：兩個都選時由上往下。先自己 BP+1000，再選另一張角色 BP+1000。生命是拿取。",
+     "implementation": "apply072 固定先 a 再 b。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：先點 b 再點 a。輪到選另一張時，自己已是 4000，まどか仍是 2000。選完後まどか 3000。生命拿取加入手牌。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-072",
+     "number": "EX16BT/MMM-2-072",
+     "clauses": [
+      {
+       "match": "【起動メイン】【ターン1】以下から2つまで選ぶ。・このキャラはこのターン中、BP+1000。・このカード以外の自分の場の［特徴：魔法少女］のカード名が4種類以上あるか、このターン中に自分がライフエリアにあるカードを手札に加えている場合、自分の場の他のキャラを1枚選び、このターン中、BP+1000。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ゲット】このカードを手札に加える。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "mmm2",
@@ -44973,26 +45323,41 @@
    "clauses": [
     {
      "text": "〈それぞれの想いを胸に〉は1ターンに1枚のみ使用できる。カードを1枚引く。自分の場の［特徴：魔法少女］を1枚まで選び、このターン中、BP+2000。選んだキャラが〈鹿目 まどか〉の場合、さらにこのターン中、【インパクト（1）】を与える。自分の場の［特徴：魔法少女］のカード名が5種類以上ある場合、自分のAPカードを1枚アクティブにする。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "每回合只能用 1 張。抽 1。可選 1 張魔法少女 BP+2000。選到鹿目まどか再給衝擊 1。 Q2371：魔法少女有 5 種名字時，即使選的不是まどか，或跳過加成，也回復 1 張 AP。",
+     "implementation": "handUseOncePerName。u073 只在卡名是鹿目まどか時給衝擊。 play073 先記下 many。選擇結束後只要名字夠就 readyAp。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "同檔：まどか BP 4000 且衝擊 1，第二張不能再用。マミ只有 BP+2000，沒有衝擊。生命抽牌不加成。 同檔：選月咲，BP+2000、沒有衝擊，AP 回復。跳過加成也回復。不足 5 種時不回復。",
      "unresolved": ""
     },
     {
      "text": "【ドロー】カードを1枚引く。",
-     "status": "未檢查",
-     "official": "",
-     "implementation": "",
+     "status": "已驗證",
+     "official": "【ドロー】抽 1 張。生命抽牌不發動使用時的效果。",
+     "implementation": "共用 life trigger。",
      "discrepancy": "",
-     "evidence": "",
+     "evidence": "tests/v2-mmm2-051-073.test.mjs：生命選抽牌，旁邊的角色 BP 不變。",
      "unresolved": ""
     }
    ],
-   "status": "未檢查",
-   "audits": [],
-   "partial": false
+   "status": "已驗證",
+   "audits": [
+    {
+     "cardId": "MMM-2-073",
+     "number": "EX16BT/MMM-2-073",
+     "clauses": [
+      {
+       "match": "〈それぞれの想いを胸に〉は1ターンに1枚のみ使用できる。カードを1枚引く。自分の場の［特徴：魔法少女］を1枚まで選び、このターン中、BP+2000。選んだキャラが〈鹿目 まどか〉の場合、さらにこのターン中、【インパクト（1）】を与える。自分の場の［特徴：魔法少女］のカード名が5種類以上ある場合、自分のAPカードを1枚アクティブにする。",
+       "status": "已驗證"
+      },
+      {
+       "match": "【ドロー】カードを1枚引く。",
+       "status": "已驗證"
+      }
+     ]
+    }
+   ],
+   "partial": true
   },
   {
    "series": "rez",
