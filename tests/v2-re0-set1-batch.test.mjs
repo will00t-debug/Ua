@@ -258,7 +258,7 @@ test('all one hundred thirteen whole prints enter the V2 pack',()=>{
   op:'removeNamedOutsideActive',name:REZERO_BY_ID['REZ-1-098'].nameJa}]);
  assert.equal(pack.cards['REZ-1-087'].ownTurnBp,1000);
  assert.deepEqual(pack.cards['REZ-1-031'].effects.onPlay,[{
-  op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}]);
+  op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000,mandatory:true}]);
  assert.deepEqual(pack.cards['REZ-1-031'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-031'].type,'event');
  assert.deepEqual(pack.cards['REZ-1-063'].effects.onPlay,pack.cards['REZ-1-031'].effects.onPlay);
@@ -3890,7 +3890,8 @@ test('Subaru raids onto Subaru, draws, then may REST the raid base after retirem
  assert.ok(play);
  const deck=plain.players[0].deck.length;
  plain=dispatchUniversalAction(packs,plain,play);
- assert.equal(plain.players[0].deck.length,deck);
+ // 2026-11-11 card image: 【登場時】 sits on the white field under the raid bar.
+ assert.equal(plain.players[0].deck.length,deck-1);
  assert.equal(at(plain,0,played.uid).ready,false);
  assert.equal(at(plain,0,played.uid).stack.length,0);
  at(plain,0,played.uid).ready=true;

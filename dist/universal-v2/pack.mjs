@@ -2187,11 +2187,14 @@ function verifyProgram(program,path){
      integer(e.scaleBp,e.bp+1)&&e.scaleBp<=50000&&
      Object.keys(e).every(k=>['op','bp','scaleTrait','scaleMin','scaleBp'].includes(k));
    }else{
+    const mandatory=e.mandatory===true;
     headRetireOk=integer(e.bp,1)&&e.bp<=50000&&typeof e.bonusName==='string'&&
      !!e.bonusName.trim()&&integer(e.bonusBp,e.bp)&&e.bonusBp<=50000&&
      (e.bonusOutsideName===undefined||(typeof e.bonusOutsideName==='string'&&
       !!e.bonusOutsideName.trim()&&e.bonusOutsideName.length<=80))&&
-     Object.keys(e).every(k=>['op','bp','bonusName','bonusBp','bonusOutsideName'].includes(k));
+     (e.mandatory===undefined||mandatory)&&
+     Object.keys(e).every(k=>['op','bp','bonusName','bonusBp','bonusOutsideName',
+      ...(mandatory?['mandatory']:[])].includes(k));
    }
    if(e.op==='removeOppFrontUnderBp'&&!headRetireOk)
     throw Error(path+'['+i+'] unsupported printed BP retirement profile');
