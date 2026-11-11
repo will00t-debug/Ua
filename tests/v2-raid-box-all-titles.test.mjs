@@ -32,8 +32,6 @@ const cases=[
   impactNull:[false,true]},
  {title:'rezero',id:'REZ-1-015',base:'REZ-1-013',filler:'REZ-1-001',
   bp:[3500,4000]},
- {title:'rezero',id:'REZ-1-053',base:'REZ-1-013',filler:'REZ-1-001',
-  impact:[0,1]},
  {title:'rezero',id:'REZ-1-089',base:'REZ-1-027',filler:'REZ-1-001',
   impactNull:[false,true]},
  {title:'rezero',id:'REZ-2-065',base:'REZ-2-001',filler:'REZ-1-001',

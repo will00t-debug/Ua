@@ -361,7 +361,7 @@ export function rezeroPackCard(card){
   ...(kind==='raidRemHandImpact'?{raidName:'レム',mainAbility:{
    op:'frontOnceGrantImpactNamed',frontOnly:true,oncePerTurn:true,excludeSelf:true,
    names:['ラム','レム']}}:{}),
-  ...(kind==='raidRemImpactSubaruBlock'?{raidName:'レム',raidImpact:1}:{}),
+  ...(kind==='raidRemImpactSubaruBlock'?{raidName:'レム',printedImpact:1}:{}),
   ...(kind==='raidBeatriceMoveLock'?{raidName:'ベアトリス',passiveBonuses:[{
    bp:500,condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,
     name:'ナツキ・スバル'}}]}:{}),
