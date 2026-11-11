@@ -154,7 +154,7 @@ function onPlay(card,kind){
  if(kind==='returnPrintedActive')return [{op:'returnPrintedActiveBuff',
   name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}];
  if(kind==='trialRemoveActive')return [{op:'removeNamedOutsideActive',name:TRIAL_NAME}];
- if(kind==='remRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}];
+ if(kind==='remRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000,mandatory:true}];
  if(kind==='emiliaRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}];
  if(kind==='minaRetire')return [{op:'retireOppFrontTiered',bp:3000,tiers:[
   {names:['ベアトリス'],bp:4000},
