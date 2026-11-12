@@ -91,9 +91,11 @@ test('the stored ledger keeps unchecked cards unchecked and recounts its own cur
  assert.equal(iys.clauses.find(clause=>clause.text.includes('スペシャル'))?.status,'已驗證');
  assert.equal(iys.status,'已驗證');
  const activeEntry=ledger.cards.find(card=>card.id==='IYS-1-044');
- assert.equal(activeEntry.status,'缺資料待確認');
+ assert.equal(activeEntry.status,'已驗證');
+ assert.equal(activeEntry.clauses.find(clause=>clause.text.includes('アクティブで登場'))?.status,'已驗證');
  const facedownRaid=ledger.cards.find(card=>card.id==='KMR-1-085');
- assert.equal(facedownRaid.status,'缺資料待確認');
+ assert.equal(facedownRaid.status,'已驗證');
+ assert.equal(facedownRaid.clauses.find(clause=>clause.text.includes('一番上のカードを場外'))?.status,'已驗證');
  assert.equal(ledger.cards.find(card=>card.id==='AOT-1-001').status,'已驗證');
  assert.equal(ledger.cards.find(card=>card.id==='AOT-1-051').status,'已驗證');
  assert.equal(ledger.cards.find(card=>card.id==='AOT-1-075').status,'已驗證');
@@ -116,7 +118,11 @@ test('the stored ledger keeps unchecked cards unchecked and recounts its own cur
  assert.equal(ledger.cards.find(card=>card.id==='MMM-1-026').status,'已驗證');
  assert.equal(ledger.cards.find(card=>card.id==='MMM-1-050').status,'已驗證');
  assert.equal(ledger.cards.find(card=>card.id==='KJN-1-050').status,'已驗證');
- assert.equal(ledger.cards.find(card=>card.id==='AOT-2-008').status,'缺資料待確認');
+ const mikasa=ledger.cards.find(card=>card.id==='AOT-2-008');
+ assert.equal(mikasa.status,'已驗證');
+ assert.equal(mikasa.clauses.find(clause=>clause.text.includes('インパクト'))?.status,'已驗證');
+ assert.equal(ledger.summary.playable.缺資料待確認||0,0);
+ assert.equal(ledger.summary.playable.已驗證,938);
  const cursor=playable.find(card=>card.status==='未檢查');
  assert.equal(ledger.next?.id,cursor?.id);
  for(const review of notes.reviews){

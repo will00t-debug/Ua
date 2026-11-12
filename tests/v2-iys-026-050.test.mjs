@@ -802,7 +802,7 @@ test('IYS-1-035 scales BP from a real play and retires one front character from 
 });
 
 test('IYS-1-036 rest-deploys a legal outside character, and that character\'s on-play still runs',()=>{
- const counts=countsFor(['IYS-1-036','IYS-1-013','IYS-1-004','IYS-1-029','IYS-1-010','IYS-1-001']);
+ const counts=countsFor(['IYS-1-036','IYS-1-013','IYS-1-004','IYS-1-029','IYS-1-010','IYS-1-001','IYS-1-044']);
  let s=toPhase(fresh(counts,3601),'main');
  readyAp(s);
  payPurple(s);
@@ -810,7 +810,8 @@ test('IYS-1-036 rest-deploys a legal outside character, and that character\'s on
  const rin=take(s,0,'IYS-1-013');
  const trait=take(s,0,'IYS-1-029');
  const costly=take(s,0,'IYS-1-010');
- s.players[0].outside.push(rin,trait,costly);
+ const inu=take(s,0,'IYS-1-044');
+ s.players[0].outside.push(rin,trait,costly,inu);
  const event=take(s,0,'IYS-1-036');
  const spare=take(s,0,'IYS-1-001');
  s.players[0].hand.push(event,spare);
@@ -824,6 +825,7 @@ test('IYS-1-036 rest-deploys a legal outside character, and that character\'s on
  assert.equal(legal(s,a=>a.mode==='deploy'&&a.uid===rin.uid),true);
  assert.equal(legal(s,a=>a.uid===trait.uid),false);
  assert.equal(legal(s,a=>a.uid===costly.uid),false);
+ assert.equal(legal(s,a=>a.uid===inu.uid),false);
  assert.equal(legal(s,a=>a.mode==='skip'),true);
  s=choose(s,a=>a.mode==='deploy'&&a.uid===rin.uid&&a.line==='front');
  assert.equal(s.players[0].front.find(c=>c?.uid===rin.uid).ready,false);
@@ -1137,7 +1139,7 @@ test('IYS-1-043 discounts an empty field, and only an own-effect rest opens the 
 });
 
 test('IYS-1-044 deals two life, blocks only with a facedown, and tucks Tessaiga from the front',()=>{
- const counts=countsFor(['IYS-1-044','IYS-1-079','IYS-1-050','IYS-1-041','IYS-1-042','IYS-1-047','IYS-1-045','IYS-1-062']);
+ const counts=countsFor(['IYS-1-044','IYS-1-079','IYS-1-050','IYS-1-041','IYS-1-042','IYS-1-047','IYS-1-045','IYS-1-062','IYS-1-001']);
  let damage=toPhase(fresh(counts,4401),'attack');
  const attacker=put(damage,0,'IYS-1-044','front',0,true);
  const first=onlyLife(damage,1,'IYS-1-050');
@@ -1188,6 +1190,25 @@ test('IYS-1-044 deals two life, blocks only with a facedown, and tucks Tessaiga 
  played=play(played,fromHand.uid);
  assert.equal(played.players[0].front.find(c=>c?.uid===fromHand.uid).ready,true);
  assertUniversalMatch(packs,played);
+
+ let rested=toPhase(fresh(counts,4406),'main');
+ const source=take(rested,0,'IYS-1-001');
+ rested.players[0].outside.push(source);
+ const asked=take(rested,0,'IYS-1-044');
+ rested.players[0].outside.push(asked);
+ rested.pending={kind:'iys',player:0,sourceUid:source.uid,id:'IYS-1-036',step:'deploy',
+  data:{follow:null},actions:[
+   {type:'iys',mode:'skip'},
+   {type:'iys',mode:'deploy',uid:asked.uid,line:'front',slot:0}
+  ]};
+ assert.equal(legal(rested,a=>a.mode==='deploy'&&a.uid===asked.uid&&a.line==='front'),true);
+ rested=choose(rested,a=>a.mode==='deploy'&&a.uid===asked.uid&&a.line==='front'&&a.slot===0);
+ const entered=rested.players[0].front.find(c=>c?.uid===asked.uid);
+ assert.equal(entered.ready,true);
+ assert.equal(entered.entryTurn,rested.turn);
+ assert.equal(rested.pending,null);
+ assert.equal(rested.players[0].outside.some(c=>c.uid===asked.uid),false);
+ assertUniversalMatch(packs,rested);
 
  let bare=toPhase(fresh(counts,4404),'attack');
  const swinger=put(bare,0,'IYS-1-047','front',0,true);
