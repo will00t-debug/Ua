@@ -7,8 +7,11 @@ import {join} from 'node:path';
 import {imcCatalog,imcCardFace,imcEditorCards} from '../dist/imc/catalog.mjs';
 import {IMC_BOOSTER,IMC_GROUPS,IMC_PROMO_IDS,IMC_STARTER,IMC_STARTER_DECK_IDS} from '../dist/imc/product.mjs';
 import {loadImcOfficialStarter} from '../dist/imc/starter-deck.mjs';
-import {createImcV2Pack,imcProgramFor} from '../dist/universal-v2/imc-pack.mjs';
+import {createImcV2Pack,imcProgramFor,IMC_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/imc-pack.mjs';
 import {assertImcSharedRequest,imcRange,imcSharedRequests,runImcJob} from '../dist/universal-v2/imc-runtime.mjs';
+import {IMC_REQUESTS_001_050} from '../dist/universal-v2/imc/requests-001-050.mjs';
+import {IMC_REQUESTS_051_100} from '../dist/universal-v2/imc/requests-051-100.mjs';
+import {IMC_REQUESTS_STARTER} from '../dist/universal-v2/imc/requests-starter.mjs';
 import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
@@ -85,20 +88,30 @@ test('starter loader names 18 kinds and does not invent the 50-card list',()=>{
  assert.match(starter.reason,/50/);
 });
 
-test('IMC battle pack is empty, so unfinished cards cannot start a match',()=>{
+test('ready IMC cards stay in the controlled pack and cannot open an official match',()=>{
  const pack=officialV2Pack('imc');
+ const built=createImcV2Pack();
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'imc');
- assert.equal(pack.version,'imc-ua55-none');
- assert.deepEqual(pack.cards,{});
- assert.equal(createImcV2Pack().version,'imc-ua55-none');
- assert.equal(imcProgramFor('IMC-1-001'),null);
+ assert.equal(pack.version,built.version);
+ assert.equal(Object.keys(pack.cards).length,38);
+ assert.equal(pack.cards['IMC-1-001'].id,'IMC-1-001');
+ assert.equal(pack.cards['IMC-1-003'],undefined);
+ assert.equal(pack.cards['IMC-1-098'],undefined);
+ assert.equal(pack.cards['IMC-1-102'],undefined);
+ assert.equal(imcProgramFor('IMC-1-001').ready,true);
+ assert.equal(imcProgramFor('IMC-1-003'),null);
+ const unfinished=v2DeckReport('imc',{'IMC-1-003':4});
+ assert.equal(unfinished.ok,false);
+ assert.match(unfinished.issues.join('\n'),/IMC-1-003/);
+ assert.match(unfinished.issues.join('\n'),/尚未開放正式對戰/);
  const report=v2DeckReport('imc',{'IMC-1-001':4});
  assert.equal(report.ok,false);
- assert.match(report.issues.join('\n'),/IMC-1-001/);
+ assert.match(report.issues.join('\n'),new RegExp(IMC_OFFICIAL_MATCH_CLOSED));
  const status=editorV2Status('imc',{'IMC-1-001':4});
  assert.equal(status.ready,false);
- assert.equal(status.registered,0);
+ assert.equal(status.registered,38);
+ assert.match(status.issues.join('\n'),/尚未開放正式對戰/);
  assert.throws(()=>normalizeEditorCounts('imc',{'IMC-1-AP01':1}),/無效卡號/);
  assert.deepEqual(normalizeEditorCounts('imc',{'UA55BT/IMC-1-001':2}),{'IMC-1-001':2});
  assert.deepEqual(LEGACY_DECK_KEYS.imc,['ua-imc-draft-v1','ua-imc-saved-v1']);
@@ -109,10 +122,10 @@ test('IMC battle pack is empty, so unfinished cards cannot start a match',()=>{
  assert.equal(Object.keys(officialV2Pack('csm').cards).length,80);
  assert.equal(TITLES.find(item=>item.id==='bleach').playable,true);
  assert.throws(()=>prepareSoloBattle({
-  mine:{pack,counts:{'IMC-1-001':50},label:'草稿'},
-  foe:{pack,counts:{'IMC-1-001':50},label:'草稿'},
+  mine:{pack,counts:{'IMC-1-001':4},label:'草稿'},
+  foe:{pack,counts:{'IMC-1-001':4},label:'草稿'},
   first:0,difficulty:'easy'
- }),/Unregistered\/unsupported card: IMC-1-001/);
+ }),new RegExp(IMC_OFFICIAL_MATCH_CLOSED));
  assert.match(read('dist/universal-v2-preview.mjs'),/raw\.title==='imc'/);
  assert.doesNotMatch(read('dist/universal-v2/engine.mjs'),/op==='imc'/);
 });
@@ -149,7 +162,7 @@ test('IMC-1-098 reuses draw and the next trait AP discount, and the entry grant 
  assert.equal(matchesV2LiveCondition(state,0,null,condition,printed),true);
 });
 
-test('IMC-1-102 raid and impact pieces exist, and the printed-BP count is not a shared retirement op',()=>{
+test('IMC-1-102 raid and impact pieces exist, and the printed-BP ceiling stays off the battle pack',()=>{
  const card=imcCatalog().byId.get('IMC-1-102');
  assert.equal(card.number,'UA55ST/IMC-1-102');
  assert.equal(card.bp,4000);
@@ -173,8 +186,9 @@ test('IMC-1-102 raid and impact pieces exist, and the printed-BP count is not a 
    trait:'new generations',printedBp:4000,per:1000,excludeSelf:true
   }}
  ]}};
- assert.throws(()=>createUniversalPack({id:'probe',version:'imc-102-scale',cards:[scaled]}),
-  /unsupported printed BP retirement profile/);
+ const accepted=createUniversalPack({id:'probe',version:'imc-102-scale',cards:[scaled]});
+ assert.equal(accepted.cards['PROBE-102'].effects.onPlay[1].printedBpTraitCount.per,1000);
+ assert.equal(createImcV2Pack().cards['IMC-1-102'],undefined);
 });
 
 test('group ranges, request files and the audit ledger stay separate',()=>{
@@ -187,7 +201,9 @@ test('group ranges, request files and the audit ledger stay separate',()=>{
  assert.equal(imcRange('IMC-1-114'),null);
  assert.equal(imcRange('IMC-1-AP01'),null);
  assert.throws(()=>runImcJob(null,null,{op:'imc',id:'IMC-1-098'}),/C 組還沒有/);
- assert.deepEqual(imcSharedRequests(),[]);
+ assert.deepEqual(imcSharedRequests().map(row=>row.cardId),[
+  ...IMC_REQUESTS_001_050,...IMC_REQUESTS_051_100,...IMC_REQUESTS_STARTER
+ ].map(row=>row.cardId));
  assert.throws(()=>assertImcSharedRequest({
   cardId:'IMC-1-098',sentence:'x',existingOps:[],whyNotEnough:'x',proposal:'x'
  }),/existing op/);

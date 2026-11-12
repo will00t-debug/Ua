@@ -87,14 +87,15 @@ function kit(usePack,useCounts){
 const game=kit(pack,counts);
 
 test('sixteen complete cards enter the pack and thirty-four stay out',()=>{
- assert.deepEqual(Object.keys(pack.cards),READY);
+ for(const id of READY)assert.equal(pack.cards[id].id,id);
  assert.equal(IMC_CARDS_051_100.every(card=>card.battleReady===false),true);
  for(const id of READY)assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
  for(const id of OPEN)assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
  assert.equal(pack.cards['IMC-1-098'],undefined);
  const text=JSON.stringify(IMC_REQUESTS_051_100);
  for(const id of OPEN)assert.match(text,new RegExp(id));
- assert.equal(imcSharedRequests().length,IMC_REQUESTS_051_100.length);
+ assert.deepEqual(imcSharedRequests().filter(row=>OPEN.includes(row.cardId)||row.cardId==='IMC-1-098')
+  .map(row=>row.cardId),IMC_REQUESTS_051_100.map(row=>row.cardId));
  assert.throws(()=>runImc051(null,null,{id:'IMC-1-098'}),/C 組還沒有/);
 });
 

@@ -2,7 +2,7 @@
 // Booster reprints stay in C's program file. AP cards are not programs.
 // A ready entry needs implementation 'dsl' or 'vanilla'. A printed effect cannot be vanilla.
 // Only a card whose whole printed sentence is an existing shared op is ready.
-// IMC-1-102's printed-BP ceiling is not one of those ops; see requests-starter.mjs.
+// IMC-1-102 can use printedBpTraitCount, but D still has to test the whole sentence.
 export const IMC_PROGRAMS_STARTER=Object.freeze({
  'IMC-1-105':{
   ready:true,

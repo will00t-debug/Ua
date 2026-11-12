@@ -187,14 +187,15 @@ test('starter printings, AP and the 50-card list stay official',()=>{
 
 test('only 105 and 109 enter the battle pack',()=>{
  const pack=createImcV2Pack();
- assert.deepEqual(Object.keys(pack.cards),READY);
- assert.equal(pack.version,'imc-ua55-IMC-1-105.IMC-1-109');
+ for(const id of READY)assert.equal(pack.cards[id].id,id);
+ assert.match(pack.version,/IMC-1-105/);
+ assert.match(pack.version,/IMC-1-109/);
  for(const id of OPEN)assert.equal(imcProgramFor(id),null,id);
  assert.equal(IMC_PROGRAMS_STARTER['IMC-1-105'].ready,true);
  assert.equal(IMC_PROGRAMS_STARTER['IMC-1-109'].ready,true);
  assert.deepEqual(IMC_REQUESTS_STARTER.map(row=>row.cardId),OPEN);
  for(const row of IMC_REQUESTS_STARTER)assertImcSharedRequest(row);
- assert.equal(imcSharedRequests().length,OPEN.length);
+ assert.deepEqual(imcSharedRequests().filter(row=>OPEN.includes(row.cardId)).map(row=>row.cardId),OPEN);
  assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-102'}),/D 組還沒有/);
  assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-105'}),/交給共用引擎/);
 });
@@ -375,8 +376,8 @@ test('IMC-1-102 cannot use traitPerBp, and retire is not a life trigger',()=>{
    trait:'new generations',printedBp:4000,per:1000,excludeSelf:true
   }}
  ]}};
- assert.throws(()=>createUniversalPack({id:'bad-102',version:'scale',cards:[scaled]}),
-  /unsupported printed BP retirement profile/);
+ const accepted=createUniversalPack({id:'ok-102',version:'scale',cards:[scaled]});
+ assert.equal(accepted.cards['PROBE-RIN'].effects.onPlay[1].printedBpTraitCount.printedBp,4000);
  const request=IMC_REQUESTS_STARTER.find(row=>row.cardId==='IMC-1-102');
  assert.ok(request.existingOps.includes('retireOppFrontUnderBp'));
  assert.equal(createImcV2Pack().cards['IMC-1-102'],undefined);

@@ -15,7 +15,7 @@ import {createKjnV2Pack} from './kjn-pack.mjs';
 import {createCsmV2Pack} from './csm-pack.mjs';
 import {createAotV2Pack} from './aot-pack.mjs';
 import {createKmrV2Pack,KMR_STARTER_IDS,kmrPackCard} from './kmr-pack.mjs';
-import {createImcV2Pack} from './imc-pack.mjs';
+import {createImcV2Pack,IMC_OFFICIAL_MATCH_CLOSED} from './imc-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -92,6 +92,7 @@ export function v2DeckReport(title,counts){
   '。這些卡不能進入 V2 對戰，效果也不會被略過。'
  ]:[];
  const issues=[...warnings];
+ if(title==='imc')issues.push(IMC_OFFICIAL_MATCH_CLOSED);
  // Catalogue drafts store every card at 0. A zero is not in the deck, so an
  // A zero-count catalogue id is not in the deck and must not block a legal list.
  const listed=Object.fromEntries(positiveCounts(counts));

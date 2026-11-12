@@ -107,7 +107,7 @@ UA55BT/IMC-1-098 是紅色事件，能量 4、AP 1、特殊觸發。日文效果
 - `nextEligibleHandPlayApDiscount`，`filter:{trait:'お願い！シンデレラ'}`。Q1210 只扣下一張符合的手牌使用，每次 -1
 - 特殊觸發退場一張對手前線：`trigger:'special'` 加上 `triggerEffect:{op:'retireOppFront'}`
 
-還沒有的機制是後段。`ownDistinctTraitNames` 計算的是場上（前線與能源線）帶該特徵的不同印刷卡名，場外不計。`countOwnOutsideDistinctPrintedNames` 只算場外，而且依顏色與種類，不依特徵。`enterAlwaysActive` 是卡本身的印刷登場方式，不是「這個回合、下一張或全部符合特徵的卡，活動登場」的持續授予。這段先留在 C 組。這輪不加共用 helper。
+後段現在用 `ownDistinctTraitNames` 的 `zone:'fieldOutside'`，以及 `grantTraitActiveEntryThisTurn`。`zone:'field'` 仍然不含場外。`countOwnOutsideDistinctPrintedNames` 只算場外，而且依顏色與種類，不依特徵。`enterAlwaysActive` 仍是卡本身的印刷登場方式。098 要由 C 組把整句寫進 program 並通過測試，才能 `ready:true`。
 
 UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1、突襲觸發。特徵印刷是 `new generations／お願い！シンデレラ`。突襲框只有〈渋谷 凛〉的標準突襲句。登場時這張角色這個回合獲得衝擊 1，並可選最多 1 張對手前線角色，其目前 BP 在「自己場上其他、特徵 new generations、原本 BP 恰好 4000」的張數 ×1000 以下時退場。
 
@@ -118,10 +118,25 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - 原本 BP 是 `definition.bp`。`printedBp` 篩選與 `ownRestPrintedBpCount` 都讀印刷值，不讀目前 BP
 - 「1 枚まで」對應既有退場 op 的 `optional:true`
 
-還沒有的機制是那個上限。`retireOppFrontUnderBp` 的 `traitPerBp` 是特徵張數 ×1000，`traitNamePerBp` 是同一特徵的不同卡名 ×1000。兩者都沒有「原本 BP 恰好 4000，而且排除自己」的條件。把 `printedBpTraitCount` 放進這個 op 會被拒絕。101、102、103、106 的 FAQ 都碰到原本 BP，公式可能不同，所以這輪不抽成共用 helper。102 之後由 D 組用既有 op 組合能涵蓋的部分，其餘先寫進 `requests-starter.mjs`。
+上限現在是 `retireOppFrontUnderBp` 的 `printedBpTraitCount`：其他自己角色、指定特徵、印刷 BP 恰好為 N 的張數 ×1000，再和對手前線的目前 BP 比較。`traitPerBp` 與 `traitNamePerBp` 維持原來的公式。102 仍由 D 組把衝擊與這個上限寫進 program 並通過測試，才能 `ready:true`。101、103、106 的公式不同，不能直接套這一個上限。
 
 ## 已經可重用、這輪不要重做
 
 抽牌、棄牌、目前 BP、AP 支付、突襲登場、普通登場、生命傷害、生命觸發、合法選牌、選擇最多 N 張與必選 N 張、每回合一次、牌庫公開、查看與排序、多特徵的 `traitComponents`、同名與不同名計數，都沿用現行 V2。`cardHasTrait` 同時看 `traits` 與 `traitComponents`。斜線特徵把印刷字串放在 `traits[0]`，拆開的部分放在 `traitComponents`，兩者用 `／` 接回必須相同。
 
-場上與場外要合併計數時，先確認現有條件的區域。`ownDistinctTraitNames` 的區域是前線、能源線或兩者，不含場外。`ownNameAbsent` 才可以點名場外。不要假設一個場上計數會自動加上場外。
+場上與場外要合併計數時，先確認現有條件的區域。`ownDistinctTraitNames` 的 `zone:'field'` 是前線與能源線，不含場外。`zone:'fieldOutside'` 才把場外算進不同印刷卡名，同名仍只算一種。`ownNameAbsent` 也可以點名場外。不要假設一個場上計數會自動加上場外。
+
+## 第一輪整合已可重用
+
+這些是共用引擎的新增或轉送，不是第二套戰鬥引擎。卡片仍要由負責的組寫進自己的 programs，並用該組測試打過整個印刷句，才能 `ready:true`。A 組沒有替未測完的卡改 ready。
+
+- `ownPrintedTraitCount`：場上角色、指定特徵、印刷 BP 或印刷必要能源恰好為 N。比較的是卡面數字，不是目前 BP。
+- `retireOppFrontUnderBp` 的 `printedBpTraitCount`：排除來源後，上述張數乘 1000，再和對手前線的目前 BP 比較。`optional:true` 可以不選。
+- `ifLiveThen` 可以接 `drawDiscard` 一張，或 `activeOwnTrait` 最多一張。
+- `buffOwnCharactersAll` 加 `zone:'front'` 時只加前線。
+- `grantTraitActiveEntryThisTurn`：`scope:'next'` 使下一張符合特徵的新入場角色活動，用過即止；`scope:'all'` 維持到這個回合結束。
+- `nextEligibleHandPlayApDiscount` 加 `fromUsedEvent:true` 時，來源可以是已經放到場外的事件，仍然只減下一張符合的手牌使用。
+- `deployOwnHandRest` 在 `ap:null` 時不要求印刷消費 AP，可加 `line:'front'`、顏色、必要能源上限與特徵。
+- `activeExtraEnergy`、`ownTurnBp`、`opponentTurnBp`、`emptyOwnFieldHandEnergyDiscount`、`enterAlwaysActive`、`readyOnBlockCount`、`unblockedAttack`、`frontForbidden`、`blockBpRestriction`、`passiveBonuses` 已能從 IMC program 送進對戰卡。`passiveBonuses` 沿用既有條件，所以印刷張數、場外卡名與印刷必要能源可以決定 BP 或發生能源。沒有 `ready:true` 的卡不會進對戰包。
+
+`op:'imc'` 仍沒有接進 `engine.mjs`。現有 38 張 ready 卡走既有 op。作品維持 `playable:false`。即使牌組裡每一張都已 ready，`editorV2Status`、`v2DeckReport` 與 `prepareSoloBattle` 仍拒絕正式對戰。受控測試用 `newUniversalMatch(createImcV2Pack(), ...)`。
