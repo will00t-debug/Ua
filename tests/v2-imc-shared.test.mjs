@@ -1,0 +1,415 @@
+// Shared IMC helpers execute through the existing V2 reducer.
+// Unfinished cards stay out of the pack, and the series stays closed
+// to official matches.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createImcV2Pack,imcBattleCard,IMC_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/imc-pack.mjs';
+import {IMC_PROGRAMS_001_050} from '../dist/universal-v2/imc/programs-001-050.mjs';
+import {IMC_PROGRAMS_051_100} from '../dist/universal-v2/imc/programs-051-100.mjs';
+import {IMC_PROGRAMS_STARTER} from '../dist/universal-v2/imc/programs-starter.mjs';
+import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {countOwnPrintedTrait,matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
+ assertUniversalMatch,universalBp,universalEnergyByColor} from '../dist/universal-v2/engine.mjs';
+import {editorV2Status} from '../dist/v2-editor-compat.mjs';
+import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
+import {prepareSoloBattle} from '../dist/universal-v2/solo-battle-session.mjs';
+import {imcCatalog} from '../dist/imc/catalog.mjs';
+import {createService} from '../server/domain.mjs';
+import {openDatabase} from '../server/sqlite.mjs';
+
+const readyOf=programs=>Object.entries(programs).filter(([,program])=>program.ready===true).map(([id])=>id);
+const READY=[
+ ...readyOf(IMC_PROGRAMS_001_050),
+ ...readyOf(IMC_PROGRAMS_051_100),
+ ...readyOf(IMC_PROGRAMS_STARTER)
+];
+
+function face(extra){
+ return {
+  id:extra.id,name:extra.name||extra.id,color:extra.color||'red',
+  type:extra.type||'character',energy:extra.energy??0,ap:extra.ap??1,
+  bp:extra.bp??2000,gen:extra.gen??1,traits:extra.traits||[],trigger:null,
+  implementation:extra.implementation||'dsl',effects:extra.effects||{},...extra
+ };
+}
+function fillers(n){
+ return Array.from({length:n},(_,i)=>face({
+  id:'FILL-'+String(i+1).padStart(2,'0'),name:'填充'+i,implementation:'vanilla',bp:1000
+ }));
+}
+function countsOf(cards,spec){
+ const counts={};
+ let total=0;
+ for(const [id,n] of Object.entries(spec)){counts[id]=n;total+=n;}
+ const each=Math.floor((50-total)/fillers(1).length)||0;
+ void each;
+ let left=50-total;
+ for(const card of cards.filter(card=>card.id.startsWith('FILL-'))){
+  const n=Math.min(4,left);
+  if(n<=0)break;
+  counts[card.id]=n;left-=n;
+ }
+ assert.equal(left,0);
+ return counts;
+}
+function match(cards,spec,seed=1){
+ const bodies=[...cards,...fillers(13)];
+ const pack=createUniversalPack({id:'probe',version:'imc-shared-'+seed,cards:bodies});
+ const counts=countsOf(bodies,spec);
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ const state=newUniversalMatch(pack,{decks:[counts,counts],seed,first:0});
+ return {pack,state};
+}
+function pull(s,p,id){
+ for(const zone of ['deck','hand','life','outside']){
+  const cards=s.players[p][zone],index=cards.findIndex(c=>c.cardId===id);
+  if(index>=0)return cards.splice(index,1)[0];
+ }
+ throw Error('Missing '+id);
+}
+function hold(s,id,p=0){
+ const card=s.players[p].hand.find(c=>c.cardId===id)||pull(s,p,id);
+ if(!s.players[p].hand.includes(card))s.players[p].hand.push(card);
+ return card;
+}
+function seat(s,p,id,line,slot){
+ const card=pull(s,p,id);
+ card.ready=false;
+ card.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[p][line][slot]=card;
+ return card;
+}
+function legalReadyCounts(pack){
+ const counts={};
+ const caps={final:0,color:0,special:0};
+ let total=0;
+ for(const id of Object.keys(pack.cards)){
+  if(total>=50)break;
+  const card=pack.cards[id];
+  let copies=Math.min(4,50-total);
+  if(Object.prototype.hasOwnProperty.call(caps,card.trigger))
+   copies=Math.min(copies,4-caps[card.trigger]);
+  if(copies<=0)continue;
+  counts[id]=copies;total+=copies;
+  if(Object.prototype.hasOwnProperty.call(caps,card.trigger))caps[card.trigger]+=copies;
+ }
+ assert.equal(total,50);
+ return counts;
+}
+function fuel(s,n=1,p=0){
+ s.players[p].apCards.forEach((c,i)=>{c.inPlay=i<n;c.ready=i<n;});
+}
+function main(pack,s){
+ for(let i=0;i<6&&s.phase!=='main';i++){
+  const next=legalUniversalActions(pack,s).find(a=>a.type==='next');
+  assert.ok(next,s.phase);
+  s=dispatchUniversalAction(pack,s,next);
+ }
+ assert.equal(s.phase,'main');
+ return s;
+}
+function play(pack,s,id,line='front'){
+ const card=hold(s,id);
+ const action=legalUniversalActions(pack,s).find(a=>a.type==='play'&&a.uid===card.uid&&a.line===line);
+ assert.ok(action,id+' '+line+' '+(s.pending?.kind||s.phase));
+ return [dispatchUniversalAction(pack,s,action),card];
+}
+function printed(card){return {name:card.name,traits:card.traits,type:'character',bp:card.bp,energy:card.energy};}
+
+test('the integrated pack executes exactly the 38 ready cards',()=>{
+ const pack=createImcV2Pack();
+ assert.deepEqual(Object.keys(pack.cards),READY);
+ assert.equal(READY.length,38);
+ for(const id of ['IMC-1-003','IMC-1-050','IMC-1-098','IMC-1-102','IMC-1-113'])
+  assert.equal(pack.cards[id],undefined,id);
+ const counts=legalReadyCounts(pack);
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ assert.equal(editorV2Status('imc',counts).ready,false);
+ assert.match(editorV2Status('imc',counts).issues.join('\n'),/尚未開放正式對戰/);
+ assert.equal(v2DeckReport('imc',counts).ok,false);
+ assert.throws(()=>prepareSoloBattle({
+  mine:{pack:officialV2Pack('imc'),counts,label:'灰姑娘'},
+  foe:{pack:officialV2Pack('imc'),counts,label:'灰姑娘'},
+  first:0,difficulty:'easy'
+ }),new RegExp(IMC_OFFICIAL_MATCH_CLOSED));
+ let s=newUniversalMatch(pack,{decks:[counts,counts],seed:19,first:0});
+ assert.equal(assertUniversalMatch(pack,s),true);
+ s=main(pack,s);
+ fuel(s);
+ let entered;
+ [s,entered]=play(pack,s,'IMC-1-001','energy');
+ assert.equal(s.players[0].energy.find(c=>c.uid===entered.uid).ready,false);
+ assert.equal(universalEnergyByColor(pack,s,0).yellow,1);
+ s.players[0].energy.find(c=>c.uid===entered.uid).ready=true;
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>
+  a.type==='activate'&&a.uid===entered.uid&&a.mode==='selfRestEnergyRetire'));
+ assert.equal(universalEnergyByColor(pack,s,0).yellow,2);
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.type==='next'));
+ assert.equal(s.phase,'attack');
+ assert.equal(s.players[0].outside.some(c=>c.uid===entered.uid),true);
+ assert.equal(universalEnergyByColor(pack,s,0).yellow||0,0);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('printed trait counts ignore live BP and can include outside names',()=>{
+ const state={players:[
+  {front:[{uid:'0-1',name:'自己',traits:['STAR'],type:'character',bp:4000,energy:2,buffs:[{bp:3000}]}],
+   energy:[{uid:'0-2',name:'能源',traits:['STAR'],type:'character',bp:2000,energy:0,buffs:[{bp:3000}]}],
+   outside:[
+    {uid:'0-3',name:'自己',traits:['STAR'],type:'character'},
+    {uid:'0-4',name:'場外',traits:['STAR'],type:'character'}
+   ]},
+  {front:[],energy:[],outside:[]}
+ ]};
+ const read=c=>c;
+ assert.equal(countOwnPrintedTrait(state,0,'0-9',{
+  zone:'field',excludeSelf:true,trait:'STAR',printedBp:4000
+ },read),1);
+ assert.equal(countOwnPrintedTrait(state,0,'0-1',{
+  zone:'field',excludeSelf:true,trait:'STAR',printedBp:4000
+ },read),0);
+ assert.equal(countOwnPrintedTrait(state,0,null,{
+  zone:'field',excludeSelf:false,trait:'STAR',printedBp:5000
+ },read),0);
+ assert.equal(matchesV2LiveCondition(state,0,null,{
+  kind:'ownPrintedTraitCount',turn:'any',min:1,zone:'front',excludeSelf:false,
+  trait:'STAR',printedEnergy:2
+ },printed),true);
+ assert.equal(matchesV2LiveCondition(state,0,null,{
+  kind:'ownDistinctTraitNames',turn:'any',min:3,zone:'field',excludeSelf:false,trait:'STAR'
+ },printed),false);
+ assert.equal(matchesV2LiveCondition(state,0,null,{
+  kind:'ownDistinctTraitNames',turn:'any',min:3,zone:'fieldOutside',excludeSelf:false,trait:'STAR'
+ },printed),true);
+ assert.equal(matchesV2LiveCondition(state,0,'0-1',{
+  kind:'ownDistinctTraitNames',turn:'any',min:2,zone:'field',excludeSelf:true,trait:'STAR'
+ },printed),false);
+});
+
+test('printed-BP retirement compares the opponent live BP and can be declined',()=>{
+ const actor=face({id:'ACT',name:'來源',bp:4000,traits:['STAR'],effects:{onPlay:[{
+  op:'retireOppFrontUnderBp',optional:true,
+  printedBpTraitCount:{trait:'STAR',printedBp:4000,per:1000,excludeSelf:true}
+ }]}});
+ const other=face({id:'OTHER',name:'其他',bp:4000,traits:['STAR'],implementation:'vanilla'});
+ const inflated=face({id:'LOW',name:'加值',bp:2000,traits:['STAR'],implementation:'vanilla'});
+ const small=face({id:'SMALL',name:'低',bp:1000,implementation:'vanilla'});
+ const tall=face({id:'TALL',name:'高',bp:1500,implementation:'vanilla'});
+ const {pack,state}=match([actor,other,inflated,small,tall],
+  {ACT:1,OTHER:1,LOW:1,SMALL:1,TALL:1},7);
+ let s=state;
+ const mine=seat(s,0,'OTHER','energy',0);
+ mine.buffs.push({bp:5000,untilTurn:s.turn});
+ const boosted=seat(s,0,'LOW','front',1);
+ boosted.buffs.push({bp:3000,untilTurn:s.turn});
+ const foeSmall=seat(s,1,'SMALL','front',0);
+ const foeTall=seat(s,1,'TALL','front',1);
+ s=main(pack,s);fuel(s);
+ const life=s.players[1].life.length;
+ [s]=play(pack,s,'ACT');
+ assert.equal(s.pending.kind,'effect-retire-bp');
+ assert.equal(s.pending.limit,1000);
+ assert.deepEqual(s.pending.choices,[foeSmall.uid]);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.uid===null),true);
+ s=dispatchUniversalAction(pack,s,{type:'chooseRetireBp',uid:foeSmall.uid});
+ assert.equal(s.players[1].outside.some(c=>c.uid===foeSmall.uid),true);
+ assert.equal(s.players[1].life.length,life);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('a front-only turn buff leaves the energy line unchanged',()=>{
+ const actor=face({id:'ACT',name:'前線',type:'event',energy:0,ap:1,bp:0,gen:0,effects:{onPlay:[
+  {op:'buffOwnCharactersAll',bp:1000,zone:'front'}]}});
+ const front=face({id:'FRONT',implementation:'vanilla',bp:2000});
+ const energy=face({id:'ENERGY',implementation:'vanilla',bp:2000});
+ const {pack,state}=match([actor,front,energy],{ACT:1,FRONT:1,ENERGY:1},8);
+ let s=state;
+ seat(s,0,'FRONT','front',0);
+ seat(s,0,'ENERGY','energy',0);
+ s=main(pack,s);fuel(s);
+ const cast=hold(s,'ACT');
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.type==='event'&&a.uid===cast.uid));
+ const frontCard=s.players[0].front.find(c=>c?.cardId==='FRONT');
+ const energyCard=s.players[0].energy.find(c=>c?.cardId==='ENERGY');
+ assert.equal(universalBp(pack,s,frontCard),3000);
+ assert.equal(universalBp(pack,s,energyCard),2000);
+ assert.equal(s.players[0].outside.some(c=>c.uid===cast.uid),true);
+});
+
+test('the next matching character enters active once, and all-scope lasts the turn',()=>{
+ const next=face({id:'NEXT',traits:['STAR'],effects:{onPlay:[
+  {op:'grantTraitActiveEntryThisTurn',trait:'STAR',scope:'next'}]}});
+ const star=face({id:'STAR',name:'星',traits:['STAR'],implementation:'vanilla'});
+ const plain=face({id:'PLAIN',name:'普通',implementation:'vanilla'});
+ let built=match([next,star,plain],{NEXT:1,STAR:4,PLAIN:2},9);
+ let s=main(built.pack,built.state);fuel(s,3);
+ let entered;
+ [s,entered]=play(built.pack,s,'NEXT');
+ assert.equal(s.players[0].front.find(c=>c.uid===entered.uid).ready,false);
+ [s,entered]=play(built.pack,s,'STAR');
+ assert.equal(s.players[0].front.find(c=>c.uid===entered.uid).ready,true);
+ [s,entered]=play(built.pack,s,'STAR','energy');
+ assert.equal(s.players[0].energy.find(c=>c.uid===entered.uid).ready,false);
+ assert.equal(s.traitEntryGrants.length,0);
+
+ const all=face({id:'ALL',effects:{onPlay:[
+  {op:'grantTraitActiveEntryThisTurn',trait:'STAR',scope:'all'},
+  {op:'deployOwnHandRest',type:'character',color:'yellow',energy:5,ap:null,
+   max:1,trait:'STAR',line:'front'}]}});
+ const yellowStar=face({id:'STAR',name:'星',color:'yellow',traits:['STAR'],implementation:'vanilla'});
+ built=match([all,yellowStar,plain],{ALL:1,STAR:4,PLAIN:2},10);
+ s=main(built.pack,built.state);fuel(s,3);
+ const rested=hold(s,'STAR');
+ [s]=play(built.pack,s,'ALL');
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ s=dispatchUniversalAction(built.pack,s,legalUniversalActions(built.pack,s).find(a=>
+  a.type==='chooseHandRest'&&a.uid===rested.uid&&a.line==='front'));
+ assert.equal(s.players[0].front.find(c=>c.uid===rested.uid).ready,true);
+ [s,entered]=play(built.pack,s,'STAR');
+ assert.equal(s.players[0].front.find(c=>c.uid===entered.uid).ready,true);
+ [s,entered]=play(built.pack,s,'PLAIN');
+ assert.equal(s.players[0].front.find(c=>c.uid===entered.uid).ready,false);
+ assert.equal(s.traitEntryGrants.length,1);
+ assert.equal(s.traitEntryGrants[0].consumed,false);
+ const turn=s.turn;
+ for(let i=0;i<8&&s.turn===turn;i++){
+  const step=legalUniversalActions(built.pack,s).find(a=>a.type==='next');
+  assert.ok(step,s.phase);
+  s=dispatchUniversalAction(built.pack,s,step);
+ }
+ assert.notEqual(s.turn,turn);
+ assert.deepEqual(s.traitEntryGrants,[]);
+});
+
+test('an event discount survives outside and is consumed by the next matching hand play',()=>{
+ const event=face({id:'EVT',name:'事件',type:'event',energy:0,ap:1,bp:0,gen:0,effects:{onPlay:[
+  {op:'draw',count:1},
+  {op:'nextEligibleHandPlayApDiscount',fromUsedEvent:true,filter:{trait:'STAR'}}
+ ]}});
+ const star=face({id:'STAR',name:'星',traits:['STAR'],implementation:'vanilla'});
+ const plain=face({id:'PLAIN',name:'普通',implementation:'vanilla'});
+ const {pack,state}=match([event,star,plain],{EVT:2,STAR:4,PLAIN:2},11);
+ let s=main(pack,state);fuel(s);
+ const cast=hold(s,'EVT');
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.type==='event'&&a.uid===cast.uid));
+ assert.equal(s.players[0].outside.some(c=>c.uid===cast.uid),true);
+ s.players[0].apCards.forEach(c=>{c.inPlay=false;c.ready=false;});
+ const starCard=hold(s,'STAR');
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.type==='play'&&a.uid===starCard.uid),true);
+ const plainCard=hold(s,'PLAIN');
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.type==='play'&&a.uid===plainCard.uid),false);
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.type==='play'&&a.uid===starCard.uid));
+ const second=hold(s,'STAR');
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.type==='play'&&a.uid===second.uid),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('hand REST can require color, printed energy and trait without a printed AP',()=>{
+ const actor=face({id:'ACT',effects:{onPlay:[{
+  op:'deployOwnHandRest',type:'character',color:'yellow',energy:2,ap:null,
+  max:1,trait:'STAR',line:'front'
+ }]}});
+ const yes=face({id:'YES',name:'符合',color:'yellow',ap:2,energy:2,traits:['STAR'],implementation:'vanilla'});
+ const costly=face({id:'COST',name:'太貴',color:'yellow',ap:1,energy:3,traits:['STAR'],implementation:'vanilla'});
+ const blue=face({id:'BLUE',name:'藍',color:'blue',ap:1,energy:1,traits:['STAR'],implementation:'vanilla'});
+ const {pack,state}=match([actor,yes,costly,blue],{ACT:1,YES:1,COST:1,BLUE:1},12);
+ let s=main(pack,state);fuel(s);
+ hold(s,'YES');hold(s,'COST');hold(s,'BLUE');
+ [s]=play(pack,s,'ACT');
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ const choices=legalUniversalActions(pack,s).filter(a=>a.type==='chooseHandRest'&&a.uid);
+ assert.equal(new Set(choices.map(a=>a.uid)).size,1);
+ assert.equal(choices.every(a=>a.line==='front'),true);
+ const chosen=s.players[0].hand.find(c=>c.uid===choices[0].uid);
+ assert.equal(chosen.cardId,'YES');
+ s=dispatchUniversalAction(pack,s,choices[0]);
+ assert.equal(s.players[0].front.find(c=>c.uid===chosen.uid).ready,false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('a printed-BP gate draws, and a live BP buff does not open it',()=>{
+ const when={kind:'ownPrintedTraitCount',turn:'any',min:1,zone:'field',excludeSelf:true,
+  trait:'STAR',printedBp:4000};
+ const actor=face({id:'ACT',bp:2000,traits:['STAR'],effects:{onPlay:[
+  {op:'ifLiveThen',when,then:[{op:'draw',count:1}]}]}});
+ const high=face({id:'HIGH',bp:4000,traits:['STAR'],implementation:'vanilla'});
+ const low=face({id:'LOW',bp:2000,traits:['STAR'],implementation:'vanilla'});
+ createUniversalPack({id:'probe',version:'imc-follow',cards:[
+  face({id:'DISC',effects:{onPlay:[{op:'ifLiveThen',when,then:[{op:'drawDiscard',count:1}]}]}}),
+  face({id:'WAKE',effects:{onPlay:[{op:'ifLiveThen',when,then:[
+   {op:'activeOwnTrait',optional:true,max:1,trait:'STAR'}]}]}})
+ ]});
+ let built=match([actor,high,low],{ACT:1,HIGH:1,LOW:1},13);
+ let s=built.state;
+ seat(s,0,'HIGH','front',0);
+ s=main(built.pack,s);fuel(s);
+ hold(s,'ACT');
+ const before=s.players[0].hand.length;
+ [s]=play(built.pack,s,'ACT');
+ assert.equal(s.players[0].hand.length,before);
+ assert.equal(assertUniversalMatch(built.pack,s),true);
+ built=match([actor,low],{ACT:1,LOW:1},14);
+ s=built.state;
+ const boosted=seat(s,0,'LOW','front',0);
+ boosted.buffs.push({bp:3000,untilTurn:s.turn});
+ s=main(built.pack,s);fuel(s);
+ hold(s,'ACT');
+ const quiet=s.players[0].hand.length;
+ [s]=play(built.pack,s,'ACT');
+ assert.equal(s.players[0].hand.length,quiet-1);
+});
+
+test('an existing active-energy field can pass through an IMC battle card',()=>{
+ const card=imcCatalog().byId.get('IMC-1-005');
+ const battle=imcBattleCard(card,{
+  ready:true,implementation:'dsl',activeExtraEnergy:1,
+  notes:'測試轉送，不把這張卡標進對戰包。'
+ });
+ const pack=createUniversalPack({id:'probe',version:'imc-forward',cards:[battle]});
+ assert.equal(pack.cards['IMC-1-005'].activeExtraEnergy,1);
+ assert.equal(createImcV2Pack().cards['IMC-1-005'],undefined);
+ const gated=face({id:'GATE',name:'門檻',bp:2000,energy:0,gen:0,traits:['STAR'],passiveBonuses:[
+  {condition:{kind:'ownPrintedTraitCount',turn:'any',min:2,zone:'field',excludeSelf:true,
+   trait:'STAR',printedEnergy:2},bp:1500},
+  {condition:{kind:'ownDistinctTraitNames',turn:'any',min:2,zone:'fieldOutside',excludeSelf:false,
+   trait:'STAR'},bp:1000},
+  {condition:{kind:'ownCardTraitCount',turn:'any',min:2,zone:'field',excludeSelf:false,
+   trait:'STAR'},extraEnergy:1}
+ ]});
+ const other=face({id:'TWO',name:'另一名',energy:2,traits:['STAR'],implementation:'vanilla'});
+ const built=match([gated,other],{GATE:1,TWO:2},15);
+ let s=built.state;
+ const host=seat(s,0,'GATE','energy',0);
+ assert.equal(universalBp(built.pack,s,host),2000);
+ seat(s,0,'TWO','front',0);
+ assert.equal(universalBp(built.pack,s,host),3000);
+ assert.equal(universalEnergyByColor(built.pack,s,0).red,1);
+ seat(s,0,'TWO','front',1);
+ assert.equal(universalBp(built.pack,s,host),4500);
+ assert.equal(createImcV2Pack().cards['IMC-1-027'],undefined);
+ assert.equal(createImcV2Pack().cards['IMC-1-070'],undefined);
+ assert.equal(createImcV2Pack().cards['IMC-1-081'],undefined);
+});
+
+test('a legal ready IMC deck can be saved and cannot open a room',async()=>{
+ const pack=createImcV2Pack();
+ const counts=legalReadyCounts(pack);
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ const dir=await mkdtemp(join(tmpdir(),'ua-imc-shared-'));
+ const sql=openDatabase(join(dir,'account.sqlite'));
+ const service=createService({sql,now:()=>Date.parse('2026-11-12T03:00:00Z')});
+ try{
+  const {token}=await service.register({username:'imcshare',password:'correct-horse-123'},{ip:'127.0.0.1'});
+  const saved=await service.saveDeck(token,{name:'灰姑娘完成卡',title:'imc',counts});
+  assert.equal(saved.deck.playable,false);
+  await assert.rejects(()=>service.createRoom(token,{deckId:saved.deck.id,first:'me'}),
+   error=>error?.status===400);
+ }finally{
+  sql.close();
+  await rm(dir,{recursive:true,force:true});
+ }
+});

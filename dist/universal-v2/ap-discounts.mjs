@@ -43,7 +43,8 @@ export function validateHandDiscount(s,e){
  if(Object.keys(e).length!==10||Object.keys(e).some(k=>!['id','kind','controller','sourceUid','sourceCardId','sourceStamp','turn','until','consumed','filter'].includes(k))||
   e.kind!==DISCOUNT_KIND||![0,1].includes(e.controller)||!Number.isInteger(e.id)||e.id<1||e.id>=s.nextContinuousStateId||
   typeof e.sourceUid!=='string'||!new RegExp('^'+e.controller+'-\\d+$').test(e.sourceUid)||
-  typeof e.sourceCardId!=='string'||!e.sourceCardId||!Number.isInteger(e.sourceStamp)||e.sourceStamp<1||e.sourceStamp>=s.nextFieldEntryStamp||
+  typeof e.sourceCardId!=='string'||!e.sourceCardId||!Number.isInteger(e.sourceStamp)||e.sourceStamp<0||
+  (e.sourceStamp!==0&&(e.sourceStamp<1||e.sourceStamp>=s.nextFieldEntryStamp))||
   e.turn!==s.turn||e.consumed!==false||e.until?.player!==s.active||e.until?.phase!=='attack'||e.until?.edge!=='end'||Object.keys(e.until).length!==3)
   throw Error('Invalid hand-play discount accounting');
  return true;
@@ -53,6 +54,16 @@ export function grantHandDiscount(s,owner,source,filter){
  if(!source||!Number.isInteger(source.fieldEntryStamp))throw Error('Hand discount requires stamped source');
  const e={id:s.nextContinuousStateId,kind:DISCOUNT_KIND,controller:owner,
   sourceUid:source.uid,sourceCardId:source.cardId,sourceStamp:source.fieldEntryStamp,
+  turn:s.turn,until:{player:s.active,phase:'attack',edge:'end'},consumed:false,filter:{...filter}};
+ s.nextContinuousStateId++;validateHandDiscount(s,e);s.continuousStates.push(e);
+}
+// An event has already left the field. The discount is proved by the printed
+// op on that physical card, not by a field-entry stamp.
+export function grantHandDiscountFromUsedEvent(s,owner,source,filter){
+ validatePrintedPlayFilter(filter);
+ if(!source)throw Error('Hand discount requires a used event');
+ const e={id:s.nextContinuousStateId,kind:DISCOUNT_KIND,controller:owner,
+  sourceUid:source.uid,sourceCardId:source.cardId,sourceStamp:0,
   turn:s.turn,until:{player:s.active,phase:'attack',edge:'end'},consumed:false,filter:{...filter}};
  s.nextContinuousStateId++;validateHandDiscount(s,e);s.continuousStates.push(e);
 }
@@ -89,4 +100,14 @@ export function definitionGrantsDiscount(value,filter){
   Object.keys(value.filter).length===Object.keys(filter).length&&
   Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
  return Object.values(value).some(v=>v&&typeof v==='object'&&definitionGrantsDiscount(v,filter));
+}
+// Stamp 0 belongs only to an event that has already left the field.
+// A field character cannot borrow that stamp.
+export function definitionGrantsUsedEventDiscount(value,filter){
+ if(!value||typeof value!=='object')return false;
+ if(value.op===DISCOUNT_KIND&&value.fromUsedEvent===true&&value.filter&&
+  Object.keys(value.filter).length===Object.keys(filter).length&&
+  Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
+ return Object.values(value).some(v=>v&&typeof v==='object'&&
+  definitionGrantsUsedEventDiscount(v,filter));
 }

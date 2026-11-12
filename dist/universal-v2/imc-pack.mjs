@@ -10,8 +10,12 @@ import {imcRange} from './imc-runtime.mjs';
 
 const PROGRAM_KEYS=new Set([
  'ready','implementation','effects','mainAbility','triggerEffect','raidName','impactNull',
- 'printedImpact','nameAliases','step','run','notes'
+ 'printedImpact','nameAliases','step','run','notes',
+ 'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
+ 'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
+ 'passiveBonuses'
 ]);
+export const IMC_OFFICIAL_MATCH_CLOSED='偶像大師灰姑娘女孩尚未開放正式對戰。';
 
 function programs(){
  return {
@@ -44,7 +48,10 @@ export function imcBattleCard(card,program){
  if(program.implementation==='vanilla'&&printed)
   throw Error(card.id+' 有印刷效果，不能標成 vanilla');
  const extra={implementation:program.implementation};
- for(const key of ['effects','mainAbility','triggerEffect','raidName','impactNull','printedImpact','nameAliases','step']){
+ for(const key of ['effects','mainAbility','triggerEffect','raidName','impactNull','printedImpact','nameAliases','step',
+  'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
+  'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
+  'passiveBonuses']){
   if(program[key]!==undefined)extra[key]=program[key];
  }
  return {

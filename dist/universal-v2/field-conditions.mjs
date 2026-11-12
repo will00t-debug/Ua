@@ -25,6 +25,23 @@ export function cardHasTrait(definition,trait){
  return (definition?.traits||[]).includes(trait)||
   (definition?.traitComponents||[]).includes(trait);
 }
+// Printed BP and printed required energy are the card-face numbers. A live
+// BP bonus, a generated pip, and a cost discount are not this count.
+// Fields, the opponent, hand, deck, and Raid layers are outside the zones.
+export function countOwnPrintedTrait(s,owner,sourceUid,{zone='field',excludeSelf=false,trait,printedBp,printedEnergy}={},printed){
+ const pl=s.players[owner];
+ const zones=zone==='front'?[pl.front]:zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ let found=0;
+ for(const area of zones)for(const c of area){
+  if(!printedFieldCard(c)||(excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(d.type!=='character'||!cardHasTrait(d,trait))continue;
+  if(printedBp!==undefined&&d.bp!==printedBp)continue;
+  if(printedEnergy!==undefined&&d.energy!==printedEnergy)continue;
+  found++;
+ }
+ return found;
+}
 // 「全ての場所でイベントカードとしても扱う」adds an event identity.
 // The printed type stays character, so play, front, and energy rules do not
 // change. Effects that count or search for an event card include it.
@@ -439,8 +456,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // field. It is not the character-only ownTraitCount predicate.
   // カード名がN種類 counts distinct printed names among those cards.
   const pl=s.players[owner];
+  // fieldOutside is 場 plus 場外. Distinct names still collapse copies.
+  // Hand, deck, removed, and Raid layers stay out.
   const zones=condition.zone==='front'?[pl.front]:
-   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+   condition.zone==='energy'?[pl.energy]:
+   condition.zone==='fieldOutside'?[pl.front,pl.energy,pl.outside]:
+   [pl.front,pl.energy];
   const names=new Set();
   let found=0;
   for(const zone of zones)for(const c of zone){
@@ -452,6 +473,9 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return condition.kind==='ownDistinctTraitNames'?names.size>=condition.min:
    found>=condition.min;
+ }
+ if(condition.kind==='ownPrintedTraitCount'){
+  return countOwnPrintedTrait(s,owner,sourceUid,condition,printed)>=condition.min;
  }
  if(condition.kind==='ownDistinctTraitEntriesThisTurn')
   return distinctTraitEntryNames(s,owner,condition.trait,printed).size>=condition.min;
