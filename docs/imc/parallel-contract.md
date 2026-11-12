@@ -138,13 +138,13 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - `nextEligibleHandPlayApDiscount` 加 `fromUsedEvent:true` 時，來源可以是已經放到場外的事件，仍然只減下一張符合的手牌使用。
 - `deployOwnHandRest` 在 `ap:null` 時不要求印刷消費 AP，可加 `line`、顏色、必要能源上限與特徵。`sourceLine:'front'` 或 `'energy'` 檢查的是效果來源所在列，省略時不檢查。`line` 才是被召喚角色的目的地，省略時前線與能源線都可以。IMC-1-023 已用 `sourceLine:'front'`。042 與 079 沒有 `sourceLine`，行為不變。
 - `peekTopOne` 是私下看自己牌頂 1 張，放回頂部或放到場外。只有控制者看得到那張卡，公開畫面不含卡 uid。IMC-1-017 已用。這不是公開。
-- `revealTopTraitOptionalHand` 公開自己牌頂 1 張。印刷特徵相符時可以加入手牌，也可以放回頂或底；不相符時只有頂或底，不能進場外。雙方都看得到公開窗。它可以放在 `ifLiveThen` 的 `then`。IMC-1-006 的整句現在寫得出來，但仍不標 ready。016 的看牌用 `peekTopOne`，抽棄後回收與 BP 切換還沒有，016 仍不標 ready。
+- `revealTopTraitOptionalHand` 公開自己牌頂 1 張。印刷特徵相符時可以加入手牌，也可以放回頂或底；不相符時只有頂或底，不能進場外。雙方都看得到公開窗。它可以放在 `ifLiveThen` 的 `then`。IMC-1-006 已用這句並標成 ready。016 的看牌用 `peekTopOne`，抽棄後回收與 BP 切換還沒有，016 仍不標 ready。
 - `activeExtraEnergy`、`ownTurnBp`、`opponentTurnBp`、`emptyOwnFieldHandEnergyDiscount`、`enterAlwaysActive`、`readyOnBlockCount`、`unblockedAttack`、`frontForbidden`、`blockBpRestriction`、`passiveBonuses` 已能從 IMC program 送進對戰卡。`passiveBonuses` 沿用既有條件，所以印刷張數、場外卡名與印刷必要能源可以決定 BP 或發生能源。發生能源沿用這張卡自己的顏色。沒有 `ready:true` 的卡不會進對戰包。
 - `searchTopOneBottomDiscard` 既有 `noHandDiscard:true`。IMC-1-106 已用這個旗標看 3 張且不棄手牌；105 的窗口才會在入手後棄一張手牌。
 
 ## 第三階段共用機制
 
-這些形狀可以讓負責的組寫進自己的 programs。整句測試通過之前，006、008、015、046、049、055、060、083、084、104、110 維持不在對戰包。A 組沒有改這三組的 programs，也沒有把它們標成 ready。
+第三輪整合後，B 組 006、008、015、046、049，C 組 055、060、069、083、084，D 組 104、110 已寫進各組 programs，整句測試通過，並標成 ready。069 沿用 C 組已含的 #383，沒有再套一次。對戰包是這 12 張加上原先 61 張，共 73 張。016 的看牌、抽棄後回收與 BP 切換仍不完整，維持不在對戰包。作品 playable 仍是 false。
 
 - `selfCurrentBpAtLeast` 讀這張角色的目前 BP。`otherOwnCharacterBpAtLeast` 讀另一張自己角色的目前 BP，`excludeSelf` 必須是 true。兩者都看目前 BP，不看印刷 BP。`oppCharacterBpAtLeast` 本來就是目前 BP。
 - `onceBuffSelfWhen` 保留原本的兩段 `logic:'any'`。另一個形狀是 `oncePerTurn:true`，BP 為 500 的倍數，`when` 是上面的對手或自己其他角色門檻。成立才出現啟動，同一回合再用一次不會出現，下一回合清除使用紀錄後恢復。
