@@ -1,0 +1,39 @@
+{
+  "programBase": "a94e221ecacb93d3245ab869e587bfa9b78995f7",
+  "namedBeforeResults": true,
+  "seeds": [8930, 8931, 8932, 8933, 8934, 8935, 8936, 8937, 8938, 8939, 8940, 8941, 8942, 8943, 8944, 8945, 8946, 8947, 8948, 8949, 8950, 8951, 8952, 8953, 8954, 8955, 8956, 8957, 8958, 8959, 8960, 8961, 8962, 8963, 8964, 8965, 8966, 8967, 8968, 8969],
+  "reservedFrom": 9100,
+  "notReused": [8850, 8889, 8890, 8929],
+  "secondSetReserved": [8970, 9009],
+  "policies": {
+    "A": "hybrid-main-v1",
+    "B": "hybrid-main-v1+paidFront",
+    "opponent": "ai-v3-beam-1"
+  },
+  "opponentIsNot": "hard-search-2",
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "experiments": "paidFront only on B, default off everywhere else",
+  "decks": [
+    {"id": "white-sword", "seeds": [8930, 8931, 8932, 8933, 8934, 8935, 8936, 8937, 8938, 8939, 8940, 8941, 8942, 8943], "games": 56},
+    {"id": "sword-art-online-raid", "seeds": [8944, 8945, 8946, 8947, 8948, 8949, 8950, 8951, 8952, 8953, 8954, 8955, 8956], "games": 52},
+    {"id": "steins-gate-raid", "seeds": [8957, 8958, 8959, 8960, 8961, 8962, 8963, 8964, 8965, 8966, 8967, 8968, 8969], "games": 52}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "gamesPerArm": 160,
+  "blocks": 40,
+  "opening": "Both arms clone one shared opening. The seed deals seat 0 then seat 1, the shared hard mulligan runs in first-player order, then LIFE is dealt.",
+  "thinHighEnergy": "Hybrid's idle main play puts a character of live BP at least 3000 onto energy, the front has no live BP of 3000, and a legal raid or front play of live BP at least 3000 exists.",
+  "bootstrap": "Paired difference is B wins minus A wins, divided by four, for each of the 40 seed blocks. 1000 resamples, mulberry32(8930), percentile indexes 25 and 974.",
+  "advanceTo8970": "Only if both arms have illegal, unfinished, phaseErrors, abandonedKills, and overNodes all at 0, maxNodes at most 48, pending stays on AI v3, B's thinHighEnergy count is strictly below A's, and the paired interval's low percentile is greater than -0.05. Otherwise paidFront stays off and 8970 is not played. Do not retune and rerun 8930-8969.",
+  "secondSetPlan": "If this set advances, 8970-8983 white-sword, 8984-8996 sword-art-online-raid, 8997-9009 steins-gate-raid, the same four cells, the same 48 nodes and real 40 ms, and the same acceptance. Those seeds are named here, before either set is played. 9100+ stays unused.",
+  "note": "8930-8969 were named before any of these games. The opponent is frozen ai-v3-beam-1. hard-search-2, cards, and the rules engine are not modified. The candidate is not the default."
+}

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadAuditFixture} from '../dist/universal-v2/audit-browser-fixtures.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
- universalBp,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
-import {controllerDeckWindowCards,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+ universalBp,universalEnergyByColor,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
+import {boardEntrySelection,controllerDeckWindowCards,uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 import {facedownInspectModel} from '../dist/universal-v2/facedown-inspect.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
 
@@ -170,5 +170,133 @@ test('CSM-1-055 audit board names both branches, pays once, and does not activat
  assert.equal(legalUniversalActions(packs,next).some(action=>action.type==='activate'),false);
  assert.equal(next.players[0].front.some(card=>card?.uid===decoy.uid),true);
  assert.equal(next.players[0].front.some(card=>card?.uid===aki.uid),true);
+ assertUniversalMatch(packs,next);
+});
+
+test('STG-1-006 audit activation rests the source, buffs another character, and the turn can continue',()=>{
+ const {packs,state}=loadAuditFixture('stg006');
+ const source=state.players[0].energy[0];
+ const ally=state.players[0].front[0];
+ assert.equal(source.cardId,'STG-1-006');
+ assert.equal(ally.cardId,'STG-1-001');
+ assert.equal(source.ready,true);
+ assert.equal(state.phase,'main');
+ assert.equal(state.players[0].apCards.filter(card=>card.ready).length,3);
+ const activate=legalUniversalActions(packs,state).find(action=>action.type==='activate'&&action.uid===source.uid);
+ assert.equal(activate.mode,'selfRestBuff');
+ let next=dispatchUniversalAction(packs,state,activate,{actor:0});
+ assert.equal(next.pending?.kind,'effect-buff-own');
+ assert.equal(next.players[0].energy[0].ready,false);
+ assert.equal(next.players[0].apCards.filter(card=>card.ready).length,3);
+ assert.equal(universalEnergyByColor(packs,next,0).blue,1);
+ const choice=legalUniversalActions(packs,next).find(action=>action.type==='chooseOwnBuff'&&action.uid===ally.uid);
+ const label=uiActionLabel(choice,{pack:packs,state:next});
+ assert.match(label,/鈴羽/);
+ assert.match(label,/BP＋1000/);
+ assert.equal(label.includes('退場'),false);
+ next=dispatchUniversalAction(packs,next,choice,{actor:0});
+ assert.equal(next.pending,null);
+ assert.equal(next.players[0].front[0].uid,ally.uid);
+ assert.equal(universalBp(packs,next,next.players[0].front[0]),3000);
+ assert.equal(next.players[0].energy[0].ready,false);
+ const pass=legalUniversalActions(packs,next).find(action=>action.type==='next');
+ assert.ok(pass);
+ next=dispatchUniversalAction(packs,next,pass,{actor:0});
+ assert.equal(next.phase,'attack');
+ assert.equal(legalUniversalActions(packs,next).length>0,true);
+ assertUniversalMatch(packs,next);
+});
+
+test('BLC-2-067 audit hand can enter normally or by raid, and the occupied non-base cell cannot',()=>{
+ const {packs,state}=loadAuditFixture('blc067dual');
+ const hand=state.players[0].hand[0];
+ const base=state.players[0].energy[0];
+ assert.equal(hand.cardId,'BLC-2-067');
+ assert.equal(state.players[0].hand.length,1);
+ assert.equal(base.cardId,'BLC-4-070');
+ assert.equal(state.players[0].front[0].cardId,'BLC-1-083');
+ assert.equal(universalEnergyByColor(packs,state,0).green,4);
+ assert.equal(state.players[0].apCards.filter(card=>card.ready).length,3);
+ const legal=legalUniversalActions(packs,state);
+ const selection=boardEntrySelection(legal,hand.uid);
+ assert.equal(selection.needsMode,false);
+ assert.equal(selection.normal.some(action=>action.type==='play'&&action.line==='front'&&action.slot===1&&action.replaceUid===undefined),true);
+ assert.equal(selection.raid.some(action=>action.type==='raid'&&action.baseUid===base.uid&&action.slot===1),true);
+ assert.equal(selection.normal.some(action=>action.type==='play'&&action.replaceUid===base.uid),true);
+ assert.equal(legal.some(action=>action.uid===hand.uid&&action.line==='front'&&action.slot===0),false);
+ const normal=dispatchUniversalAction(packs,structuredClone(state),selection.normal.find(action=>action.line==='front'&&action.slot===1),{actor:0});
+ assert.equal(normal.players[0].front[1].cardId,'BLC-2-067');
+ assert.equal(normal.players[0].front[1].ready,false);
+ assert.equal(normal.players[0].front[1].stack?.length||0,0);
+ assert.equal(normal.players[0].energy.every(card=>card?.cardId==='BLC-4-070'),true);
+ assert.equal(normal.players[0].apCards.filter(card=>card.ready).length,2);
+ assert.equal(universalEnergyByColor(packs,normal,0).green,4);
+ assert.equal(normal.players[0].front[0].cardId,'BLC-1-083');
+ const raidAction=selection.raid.find(action=>action.baseUid===base.uid&&action.slot===1&&action.line!=='energy');
+ const raided=dispatchUniversalAction(packs,structuredClone(state),raidAction,{actor:0});
+ assert.equal(raided.players[0].front[1].cardId,'BLC-2-067');
+ assert.equal(raided.players[0].front[1].ready,true);
+ assert.equal(raided.players[0].front[1].stack[0].cardId,'BLC-4-070');
+ assert.equal(raided.players[0].energy[0],null);
+ assert.equal(raided.players[0].apCards.filter(card=>card.ready).length,2);
+ assert.equal(universalEnergyByColor(packs,raided,0).green,3);
+ assert.equal(raided.players[0].front[0].uid,state.players[0].front[0].uid);
+ const squeeze=selection.normal.find(action=>action.line==='energy'&&action.slot===0&&action.replaceUid===base.uid);
+ const squeezed=dispatchUniversalAction(packs,structuredClone(state),squeeze,{actor:0});
+ assert.equal(squeezed.players[0].energy[0].cardId,'BLC-2-067');
+ assert.equal(squeezed.players[0].energy[0].ready,false);
+ assert.equal(squeezed.players[0].removed.some(card=>card.uid===base.uid),true);
+ assert.equal(squeezed.players[0].front[1],null);
+ assert.equal(squeezed.players[0].apCards.filter(card=>card.ready).length,2);
+ assert.equal(universalEnergyByColor(packs,squeezed,0).green,4);
+ const continued=dispatchUniversalAction(packs,normal,legalUniversalActions(packs,normal).find(action=>action.type==='next'),{actor:0});
+ assert.equal(continued.phase,'attack');
+ assert.equal(legalUniversalActions(packs,continued).some(action=>action.type==='attack'||action.type==='next'),true);
+ assertUniversalMatch(packs,continued);
+});
+
+test('KMR-1-085 audit board keeps the facedown on the character that stayed',()=>{
+ const {packs,state}=loadAuditFixture('kmr085');
+ const base=state.players[0].front.find(c=>c?.cardId==='KMR-1-084');
+ const hidden=base.under[0];
+ assert.equal(base.ready,false);
+ assert.equal(hidden.faceDown,true);
+ assert.equal(state.players[0].outside.some(c=>c.cardId==='KMR-1-085'),true);
+ assert.equal(state.players[0].outside.some(c=>c.uid===hidden.uid),false);
+ assert.equal(JSON.stringify(universalPublicView(packs,state,1)).includes(hidden.uid),false);
+ assert.equal(universalPublicView(packs,state,0).players[0].front
+  .some(c=>c?.underLayers?.some(layer=>layer.uid===hidden.uid&&layer.cardId===hidden.cardId)),true);
+ assert.equal(state.pending?.step,'revive');
+ assert.equal(state.phase,'attack');
+ assertUniversalMatch(packs,state);
+});
+
+test('AOT-2-008 audit board asks the defender to put one life card outside',()=>{
+ const {packs,state}=loadAuditFixture('aot2008');
+ assert.equal(state.pending.kind,'effect-own-life-outside');
+ assert.equal(V2_PENDING_LABELS[state.pending.kind],'將 1 張自己的生命放到場外');
+ assert.equal(universalPrivateChoices(packs,state,1),null);
+ const labels=legalUniversalActions(packs,state).map(action=>uiActionLabel(action,{pack:packs,state}));
+ assert.equal(labels.length,2);
+ assert.equal(labels.every(label=>label.startsWith('將 ')&&label.endsWith(' 放到場外')),true);
+ const chosen=state.players[0].life[0];
+ const next=dispatchUniversalAction(packs,state,{type:'chooseOwnLifeOutside',uid:chosen.uid},{actor:0});
+ assert.equal(next.players[0].life.length,1);
+ assert.equal(next.players[0].outside.some(c=>c.uid===chosen.uid),true);
+ assert.equal(next.pending?.kind==='life-trigger',false);
+ assert.equal(next.status,'playing');
+ assertUniversalMatch(packs,next);
+});
+
+test('IYS-1-044 audit board enters active when the effect asked for rest',()=>{
+ const {packs,state}=loadAuditFixture('iys044');
+ const asked=state.players[0].outside.find(c=>c.cardId==='IYS-1-044');
+ const action=legalUniversalActions(packs,state).find(a=>a.mode==='deploy'&&a.uid===asked.uid);
+ assert.equal(uiActionLabel(action,{pack:packs,state}).includes('犬夜叉'),true);
+ const next=dispatchUniversalAction(packs,state,action,{actor:0});
+ const entered=next.players[0].front.find(c=>c?.uid===asked.uid);
+ assert.equal(entered.ready,true);
+ assert.equal(next.players[0].outside.some(c=>c.uid===asked.uid),false);
+ assert.equal(next.pending,null);
  assertUniversalMatch(packs,next);
 });

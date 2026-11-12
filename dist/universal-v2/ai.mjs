@@ -336,7 +336,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-retire-life-or-hand')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='life')||legal.find(a=>a.mode==='hand')||legal[0];
- if(s.pending?.kind==='effect-hidden-life-hand'||s.pending?.kind==='effect-hand-two-outside')
+ if(s.pending?.kind==='effect-hidden-life-hand'||s.pending?.kind==='effect-hand-two-outside'||
+  s.pending?.kind==='effect-own-life-outside')
   return legal[0];
  if(s.pending?.kind==='effect-rest-reenter')
   return legal.find(a=>a.replaceUid===undefined)||legal[0];

@@ -120,6 +120,20 @@
      <div class="field"><label for="first-player">先手玩家</label>
       <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
      <p class="shuffle-note"><span aria-hidden="true">⤨</span> 每場新對局都會自動重新洗牌，不需要輸入牌序代碼。</p>
+     <label class="coach-consent" for="ai-v3-preview"><input id="ai-v3-preview" type="checkbox"> 完整回合搜尋預覽</label>
+     <p class="note">預設關閉。開啟後，這場單人對戰的電腦會改用完整回合搜尋，並在你的回合結束後估算對手的下一回合。對局中可以再關掉，回到這場選擇的難度；困難仍是目前的 hard-search-2。線上房間規則不變。</p>
+     <label class="coach-consent" for="hybrid-main-v1"><input id="hybrid-main-v1" type="checkbox"> 主階段混合實驗</label>
+     <p class="note">預設關閉，不會改掉目前的難度或完整回合搜尋。打開後這場單人對戰使用 hybrid-main-v1：空閒主階段由 hard-search-2 決定，開始、移動、攻擊，以及阻擋、觸發、棄牌等所有 pending 仍由 AI v3 決定。關掉就回到原本的選擇。線上房間規則不變。</p>
+     <label class="coach-consent" for="hybrid-start-hard-v1"><input id="hybrid-start-hard-v1" type="checkbox"> 新混合 AI（開始＋主階段 hard）</label>
+     <p class="note">預設關閉，必須自己打開。這台瀏覽器會記住 hybrid-start-hard-v1，不會把原本的難度或主階段混合改成它。開始與空閒主階段由 hard-search-2 決定，移動、攻擊，以及全部 pending 仍由 AI v3 決定。48 節點、40ms、搜尋種子 1。線上房間規則不變。</p>
+     <p id="ai-policy-live" class="note" role="status">目前 AI policy：這場難度。預設不是 hybrid-main-v1，也不是 hybrid-start-hard-v1，也還沒有改成原版 AI v3。</p>
+     <div class="ai-policy-switch" role="group" aria-label="選擇這場單人對戰的 AI">
+      <button type="button" id="use-ai-v3">使用原版 AI v3</button>
+      <button type="button" id="use-hybrid-main">使用主階段混合</button>
+      <button type="button" id="use-hybrid-start-hard">使用新混合 AI</button>
+      <button type="button" id="use-difficulty-ai">回到這場難度</button>
+     </div>
+     <p class="note">這四個按鈕只寫在這台瀏覽器，重新整理後仍是剛才選的那一個。原版 AI v3 是 ai-v3-beam-1。主階段混合是 hybrid-main-v1。新混合 AI 是 hybrid-start-hard-v1。回到這場難度會關掉三者，電腦沿用上面選的簡單、普通、困難或學習。正式站和其他玩家不受影響。</p>
      <label class="coach-consent" for="coach-consent"><input id="coach-consent" type="checkbox"> 提供對戰紀錄改善 AI</label>
      <p class="note">預設關閉，選擇會記住。開啟後，單人對電腦與線上對戰都會在背景記錄你自己的決策；關閉會立刻停止並清掉尚未上傳的佇列。線上對戰只記錄已同意的你，不取得對手的隱藏手牌。不收集姓名、密碼或聊天內容。需要登入。上傳之後，到 <a href="/coach.html">教 AI</a> 按「用這些紀錄學習」，再把難度選成「學習」，電腦才會用這個模型。</p>
     </div>
@@ -141,6 +155,6 @@
   </footer>
  </div>
  <link rel="stylesheet" href="coach.css?v=20261101reviewnav1">
- <script type="module" src="universal-v2-preview.mjs?v=20261112imc1"></script>
+ <script type="module" src="universal-v2-preview.mjs?v=20261112starthard1"></script>
 </body>
 </html>

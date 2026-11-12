@@ -1,6 +1,6 @@
 {
  "generatedFrom": "scripts/build-effect-audit-ledger.mjs",
- "updated": "2026-11-11",
+ "updated": "2026-11-12",
  "next": null,
  "rule": "登錄效果或既有測試通過，都不等於這張卡已核對。整張卡通過只發生在每一段都有官方來源、實作位置與驗證，而且沒有未解決項目。",
  "sharedFixes": [
@@ -40,11 +40,11 @@
    "evidence": "tests/v2-iys-026-050.test.mjs。突襲 046 後用 049 讓它休息，起動選 double，可攻擊兩次。滿員前線用剩餘 1 AP 普通登場 050 擠掉 046 後，assertUniversalMatch 通過。再突襲入場沒有 readyOnAttackGranted，攻擊一次後休息。tests/v2-ttg-040-removed-main-ui.test.mjs 與 tests/v2-ttg-six-more.test.mjs 的能量加倍仍通過。"
   },
   {
-   "name": "IYS-1-044 的效果登場沒有合法來源",
-   "rule": "印刷「このキャラはアクティブで登場させる」。手牌登場與突襲登場會活動。效果登場的 effectEnter 採用呼叫端傳入的 ready，不讀 enterAlwaysActive。",
-   "where": "dist/universal-v2/engine.mjs defaultEntryReady 讀 enterAlwaysActive。effectEnter 沒有改。",
-   "affects": "UA50BT 沒有把這張能源 4、消費 AP 2 的無特徵犬夜叉以休息狀態用效果送上場的印刷來源。036 只帶能源 3 以下、消費 AP 1、無特徵的紫角色。沒有合法重現，不把效果登場標成通過，也不另造規則。",
-   "evidence": "tests/v2-iys-026-050.test.mjs 的手牌登場、兩點傷害與沒有裡向卡不能阻擋。突襲登場沿用共通的活動突襲。"
+   "name": "アクティブで登場させる 也適用效果登場",
+   "rule": "IYS-1-044 印刷「このキャラはアクティブで登場させる」。這句不看登場來源。效果如果要求休息登場，這張仍然活動。手牌登場與突襲登場本來就活動。",
+   "where": "dist/universal-v2/engine.mjs effectEnter。enterAlwaysActive 為真時，呼叫端傳入的 ready 不能把它做成休息。defaultEntryReady 的付費登場維持原樣。",
+   "affects": "走 effectEnter 的效果登場。UA50BT 仍然沒有印刷來源能選到這張能源 4、消費 AP 2 的紅角色。IYS-1-036 的名單還是只含能源 3 以下、消費 AP 1、無特徵的紫角色。沒有這面旗的角色，休息登場仍然休息。",
+   "evidence": "tests/v2-iys-026-050.test.mjs。036 的登場名單沒有 044，合法的 013 仍休息進場。044 走同一個 iys deploy 步驟與 afterDeploy，請求的 ready 是 false，進場後是活動，entryTurn 是這一回合。手牌打出仍是活動。"
   },
   {
    "name": "看牌頂的單一選擇顯示卡圖與效果",
@@ -159,11 +159,11 @@
    "evidence": "tests/v2-kmr2-061-080.test.mjs。付不出時 pending 清空，071 留在場上，下一步合法。付得出時仍要付那 1 AP。"
   },
   {
-   "name": "抽走突襲頂時，頂下的裡向卡沒有官方去向",
-   "rule": "KMR-1-085 在自己的攻擊階段結束，把突襲狀態最上面的卡放到場外。Q1174 到 Q1178 只處理突襲疊層：底板留在場上，不發登場時，休息狀態沿用。沒有條文說明突襲頂自己底下、不屬於突襲疊層的裡向卡要去哪。",
-   "where": "dist/universal-v2/engine.mjs stripRaidTopInPlace 仍把離開的頂做成空的 under。沒有替那些裡向卡指定場外、移除區或留在底板。",
-   "affects": "只有突襲頂另外帶著裡向卡的那一局。沒有裡向卡的 085 維持頂進場外、底板休息、加成消失、不發登場時。",
-   "evidence": "tests/v2-kmr-076-100.test.mjs 的無裡向卡路徑。這條維持缺資料待確認。"
+   "name": "抽走突襲頂時，頂下的裡向卡留在場上",
+   "rule": "Q1175：只把突襲最上面的卡放到場外時，下面的卡留在場上。Q1177 的活動或休息沿用給的是正面朝上的那張。突襲頂自己底下的裡向卡不是那張正面底板，所以繼續裡向，留在留下的角色下面，不公開，也不送到場外。疊了兩層以上、兩張底板，或底板本身是裡向，仍然不抽。",
+   "where": "dist/universal-v2/engine.mjs raidTopStripWithUnder、keepTopFacedownsOnBase。KMR 與 KMR2 的 strip、stripRaidTopInPlace、對手的 effect-strip-raid-top，以及自己回合開始的 stripOwnRaidTopInPlace 都走這條。狙擊、支付手牌的離場代替、deployOwnRaidBaseRest 仍只用兩張都正面的 strippableRaidTop。",
+   "affects": "KMR-1-085 的攻擊階段結束。沒有裡向卡時，頂進場外、底板沿用休息、加成清掉、不發登場時。有直接裡向卡時，那張卡改掛在留下的角色下面。",
+   "evidence": "tests/v2-kmr-076-100.test.mjs 的無裡向卡與有裡向卡兩局。tests/v2-raid-top-strip-round7.test.mjs 的頂下與底下兩種裡向卡。嵌套疊層、兩張底板、裡向底板與正面的底下卡仍不抽。"
   },
   {
    "name": "對手的觸發才選不到",
@@ -318,8 +318,8 @@
   "未檢查": 0,
   "待修正": 0,
   "已修正待驗證": 0,
-  "已驗證": 935,
-  "缺資料待確認": 3,
+  "已驗證": 938,
+  "缺資料待確認": 0,
   "部分核對": 0,
   "無效果": 3,
   "行動值卡": 16,
@@ -329,8 +329,8 @@
    "未檢查": 0,
    "待修正": 0,
    "已修正待驗證": 0,
-   "已驗證": 935,
-   "缺資料待確認": 3,
+   "已驗證": 938,
+   "缺資料待確認": 0,
    "部分核對": 0,
    "無效果": 0,
    "行動值卡": 0,
@@ -386,8 +386,8 @@
     "未檢查": 0,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 111,
-    "缺資料待確認": 1,
+    "已驗證": 112,
+    "缺資料待確認": 0,
     "部分核對": 0,
     "無效果": 1,
     "行動值卡": 0,
@@ -466,8 +466,8 @@
     "未檢查": 0,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 72,
-    "缺資料待確認": 1,
+    "已驗證": 73,
+    "缺資料待確認": 0,
     "部分核對": 0,
     "無效果": 0,
     "行動值卡": 0,
@@ -482,8 +482,8 @@
     "未檢查": 0,
     "待修正": 0,
     "已修正待驗證": 0,
-    "已驗證": 79,
-    "缺資料待確認": 1,
+    "已驗證": 80,
+    "缺資料待確認": 0,
     "部分核對": 0,
     "無效果": 0,
     "行動值卡": 0,
@@ -9476,12 +9476,12 @@
     },
     {
      "text": "【レイド】カード名に「ファイズ」を含むキャラアクティブにし、フロントLに移動できる自分のアタックフェイズ終了時、レイド状態のこのキャラの一番上のカードを場外に置く。",
-     "status": "缺資料待確認",
-     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-085 。Q1174、Q1175、Q1176、Q1177、Q1178。",
-     "implementation": "攻擊階段結束，而且仍是突襲狀態，才 strip。底板留下，休息狀態沿用，上面的 BP 加成清掉，底板不發登場時。",
-     "discrepancy": "沒有裡向卡時，頂進場外、底板休息留下、不發登場時。頂卡自己底下、不屬於突襲疊層的裡向卡沒有官方去向，程式沒有另送去一個區域。",
-     "evidence": "同一測試。頂進場外。084 休息留下，buffs 是空的，接著沒有它的登場時，而是另一張 008 的階段結束。",
-     "unresolved": "頂卡自己底下的裡向卡沒有官方去向，見 sharedGaps。沒有裡向卡的這局已驗證。"
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-085 。Q1174、Q1175、Q1176、Q1177、Q1178（2024-10-18）。Q1175：下面的卡留在場上。Q1177：正面朝上的那張沿用活動或休息。",
+     "implementation": "攻擊階段結束，而且仍是突襲狀態，才 strip。底板留下，休息狀態沿用，上面的 BP 加成清掉，底板不發登場時。頂下的直接裡向卡改掛在留下的角色下面，維持裡向，不公開。",
+     "discrepancy": "",
+     "evidence": "tests/v2-kmr-076-100.test.mjs。沒有裡向卡時，頂進場外，084 休息留下，buffs 是空的，接著是 008 的階段結束。有裡向卡時，頂的 under 是空的，裡向卡在 084 下面，對手的公開畫面沒有那張卡的 uid，公開揭示沒有增加。",
+     "unresolved": ""
     },
     {
      "text": "【アタック時】【ターン1】このキャラをアクティブにし、カードを2枚引く。その後、自分の手札の［特徴：ファイズギア］を1枚場外に置いてもよい。そうした場合、BP1500以下の相手のフロントLのキャラを1枚まで選び、退場させる。",
@@ -9502,7 +9502,7 @@
      "unresolved": ""
     }
    ],
-   "status": "缺資料待確認",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "KMR-1-085",
@@ -9514,7 +9514,7 @@
       },
       {
        "match": "自分のアタックフェイズ終了時、レイド状態のこのキャラの一番上のカードを場外に置く。",
-       "status": "缺資料待確認"
+       "status": "已驗證"
       },
       {
        "match": "【アタック時】【ターン1】このキャラをアクティブにし、カードを2枚引く。その後、自分の手札の［特徴：ファイズギア］を1枚場外に置いてもよい。そうした場合、BP1500以下の相手のフロントLのキャラを1枚まで選び、退場させる。",
@@ -23326,12 +23326,12 @@
    "clauses": [
     {
      "text": "このキャラはBP5000以上のキャラにブロックされない。相手のライフが1の場合、このキャラは【インパクト（1）】を得る。",
-     "status": "缺資料待確認",
-     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-008 。このキャラはBP5000以上のキャラにブロックされない。相手のライフが1の場合、このキャラは【インパクト（1）】を得る。Q1551（2025-06-20）：戰鬥解決中才變成生命 1 時，インパクトは発動しません。",
-     "implementation": "blockBpRestriction atLeast 5000。aot2Impact 看當下生命張數。impactOnBattleWin 在阻擋者退場前先決定傷害。",
+     "status": "已驗證",
+     "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX10BT%2FAOT-2-008 。このキャラはBP5000以上のキャラにブロックされない。相手のライフが1の場合、このキャラは【インパクト（1）】を得る。Q1551（2025-06-20，https://www.unionarena-tcg.com/jp/faq/list.php?series=EX10BT）：對方生命 2，三笠攻擊，桂小太郎阻擋並戰敗，退場時把自己的 1 張生命放到場外，生命變成 1，衝擊不發動。Q95：效果把生命放到場外不會做觸發確認。",
+     "implementation": "blockBpRestriction atLeast 5000。aot2Impact 看當下生命張數。finishBlockedBattle 在 applyBattleLoss 之前先決定 impact。GNT-1-054 的退場時是 ownLifeToOutside，用 moveOwnedLinear 把選中的生命放到場外，不呼叫 damage。",
      "discrepancy": "",
-     "evidence": "tests/v2-aot2-001-025.test.mjs：Mikasa。生命 2 時 6000 不能阻擋、1500 可以，且沒有額外傷害。生命 1 時衝擊使生命歸零。生命 2 的阻擋勝出不會因為後來才變 1 而補傷害這段，沒有用 GNT-1-054 的退場效果重現。",
-     "unresolved": "Q1551 的「阻擋者退場效果在解決中把生命打成 1」沒有最小重現。靜態的生命 1 與生命 2 已測。不能把這句算已驗證。"
+     "evidence": "tests/v2-aot2-001-025.test.mjs：生命 2 時 6000 不能阻擋、1500 可以。生命 1 時衝擊使生命歸零。tests/v2-aot2-q1551.test.mjs：真實的 AOT-2-008 對 BP 4000 的 GNT-1-054。5000 不能擋，4000 可以。戰後生命從 2 變 1，對局仍在進行，沒有生命觸發，公開揭示沒有增加。控制者看得到兩張生命，對手看不到。",
+     "unresolved": ""
     },
     {
      "text": "【登場時】自分の場に［特徴：地鳴らし］以外の黄のキャラのカード名が4種類以上あり、相手のライフが5以下の場合、このキャラをアクティブにする。〈ミカサ・アッカーマン〉のこの効果は1ターンに1回のみ発動する。",
@@ -23352,7 +23352,7 @@
      "unresolved": ""
     }
    ],
-   "status": "缺資料待確認",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "AOT-2-008",
@@ -23360,7 +23360,7 @@
      "clauses": [
       {
        "match": "BP5000以上のキャラにブロックされない",
-       "status": "缺資料待確認"
+       "status": "已驗證"
       },
       {
        "match": "1ターンに1回のみ発動する",
@@ -29236,12 +29236,12 @@
    "clauses": [
     {
      "text": "このキャラの下に裏向きのカードがない場合、このキャラはブロックできない。このキャラはアクティブで登場させる。【ダメージ（2）】（このキャラがアタックで与える直接ダメージは2ダメージ）",
-     "status": "缺資料待確認",
+     "status": "已驗證",
      "official": "このキャラの下に裏向きのカードがない場合、このキャラはブロックできない。このキャラはアクティブで登場させる。【ダメージ（2）】（このキャラがアタックで与える直接ダメージは2ダメージ）Q2140：裡向卡只給控制者看。https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA50BT%2FIYS-1-044",
-     "implementation": "enterAlwaysActive、printedAttackDamage 2。沒有直接裡向卡時阻擋清單不含它。手牌登場由 defaultEntryReady 活動。阻擋中途蓋下一張後可以擋。",
+     "implementation": "enterAlwaysActive、printedAttackDamage 2。effectEnter 在呼叫端要求休息時仍把這張做成活動。沒有直接裡向卡時阻擋清單不含它。手牌登場由 defaultEntryReady 活動。",
      "discrepancy": "",
-     "evidence": "tests/v2-iys-026-050.test.mjs 與 set1。兩張無觸發生命都被打掉，生命區變空，兩張都在場外。手牌打出是活動。沒有裡向卡時不能擋，蓋下後可以。",
-     "unresolved": "effectEnter 不讀 enterAlwaysActive。UA50BT 沒有把能源 4、消費 AP 2 的無特徵犬夜叉以休息狀態用效果登場的印刷來源。手牌與突襲會活動，這兩條有測試。效果登場沒有合法重現，沒有改，也不標成通過。"
+     "evidence": "tests/v2-iys-026-050.test.mjs 與 set1。兩張無觸發生命都被打掉。手牌打出是活動。沒有裡向卡時不能擋，蓋下後可以。036 的登場名單沒有這張。效果登場經 iys 的 deploy 與 afterDeploy，請求休息，進場是活動。",
+     "unresolved": ""
     },
     {
      "text": "【起動メイン】【フロントLにある場合】 【ターン1】このキャラがレストの場合のみ発動できる。このキャラをアクティブにする。",
@@ -29271,7 +29271,7 @@
      "unresolved": ""
     }
    ],
-   "status": "缺資料待確認",
+   "status": "已驗證",
    "audits": [
     {
      "cardId": "IYS-1-044",
@@ -29279,7 +29279,7 @@
      "clauses": [
       {
        "match": "このキャラの下に裏",
-       "status": "缺資料待確認"
+       "status": "已驗證"
       },
       {
        "match": "【起動メイン】【フロントLにある場合】 【ターン1】こ",

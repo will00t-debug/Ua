@@ -1,0 +1,51 @@
+{
+  "programBase": "2b93663f64be64d1923bbb73a3c6ead7560cb61f",
+  "namedBeforeResults": true,
+  "kind": "start-hard-8890-independent",
+  "seeds": [8890, 8891, 8892, 8893, 8894, 8895, 8896, 8897, 8898, 8899, 8900, 8901, 8902, 8903, 8904, 8905, 8906, 8907, 8908, 8909, 8910, 8911, 8912, 8913, 8914, 8915, 8916, 8917, 8918, 8919, 8920, 8921, 8922, 8923, 8924, 8925, 8926, 8927, 8928, 8929],
+  "reservedFrom": 9100,
+  "notReused": [8970, 9009, 9010, 9099],
+  "priorUse": "8890-8929 was named in audit/ai-v3-settle-life-8850-seed-lock.json as the unplayed second set. advanceTo8890 is false and that summary says the range was not played. The paid-front 8930 lock and the start-hard 8970 lock list 8890-8929 as not reused. No audit summary stores a match seed in 8890-8929. No test plays these integers as an AI strength match. They were not used to tune hybrid-start-hard-v1. 8970-9009 is the earlier exploration and is not replayed or added into this win rate. 9010-9099 is not reused. 9100+ is not used.",
+  "policies": {
+    "A": "hybrid-main-v1",
+    "B": "hybrid-start-hard-v1",
+    "opponent": "hard-search-2"
+  },
+  "routes": {
+    "A": {"start": "v3", "move": "v3", "main": "hard", "battle": "v3", "pending": "v3"},
+    "B": {"start": "hard", "move": "v3", "main": "hard", "battle": "v3", "pending": "v3"}
+  },
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "experiments": "off. B is the unchanged benchmark policy from programBase. It does not forbid extraDraw. Hard chooses extraDraw or next itself. settleLife and paidFront stay off. The policy is not a menu item, the worker does not accept its name, and a pass does not make it the official default.",
+  "decks": [
+    {"id": "white-sword", "seeds": [8890, 8891, 8892, 8893, 8894, 8895, 8896, 8897, 8898, 8899, 8900, 8901, 8902, 8903], "games": 56},
+    {"id": "sword-art-online-raid", "seeds": [8904, 8905, 8906, 8907, 8908, 8909, 8910, 8911, 8912, 8913, 8914, 8915, 8916], "games": 52},
+    {"id": "steins-gate-raid", "seeds": [8917, 8918, 8919, 8920, 8921, 8922, 8923, 8924, 8925, 8926, 8927, 8928, 8929], "games": 52}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "gamesPerArm": 160,
+  "blocks": 40,
+  "opening": "Both arms clone one shared opening. The seed deals seat 0 then seat 1, the shared hard mulligan runs in first-player order, then LIFE is dealt.",
+  "metrics": {
+    "extraDrawRate": "Hybrid-seat idle start actions that are extraDraw, divided by extraDraw plus next.",
+    "apUsed": "Ready AP cards when a hybrid own turn opens, minus ready AP cards when that turn ends, floored at zero. The reported average divides the sum by the number of hybrid own turns. apLeft is the same end-of-turn ready count, averaged per own turn.",
+    "firstFront": "First hybrid own turn on which the front holds a character with live BP above 0. Turns are counted when that seat enters an idle start.",
+    "firstRaid": "First hybrid own turn with a raid.",
+    "firstConnect": "First hybrid own turn whose attack reduces the opponent life count.",
+    "decisionMs": "Hybrid-seat decision wall times. P50 is the sorted index floor((n-1)/2). P95 is floor((n-1)*0.95). The pooled figures use every hybrid decision. gameMeanP50 and gameMeanP95 average the same indexes inside each game. Wall time over 40 ms is reported and is not a pass gate. A node count above 48 is a failure."
+  },
+  "bootstrap": "Paired difference is B wins minus A wins, divided by four, for each of the 40 seed blocks. An unfinished game is not a win. 1000 resamples, mulberry32(8890), percentile indexes 25 and 974.",
+  "accept": "B is marked passed-independent-validation only if every item holds. The paired mean is greater than 0 and the paired interval low is greater than 0. B's win rate is at least 0.05 above A's. White-sword's win rate does not fall by more than 0.05. Both arms have illegal, routing errors, unfinished, and overNodes all at 0, with maxNodes at most 48. B's abandoned proven-kill count is not above A's. Every hybrid start decision uses v3 on A and hard on B, and every move, main, battle, and pending decision uses the locked route, with each of those five lanes observed at least once. Otherwise B stays off. Do not retune and do not rerun 8890-8929. A pass still leaves the policy off the menu and does not change the official default. Do not add these games to the 8970-9009 exploration.",
+  "explorationFile": "audit/ai-v3-start-hard-8970.json",
+  "doesNotReplace": ["audit/ai-v3-start-hard-8970.json", "audit/ai-v3-hybrid-vs-hard-9050-summary.json"],
+  "note": "8890-8929 were named before any of these games. The candidate code is the hybrid-start-hard-v1 already at programBase. Cards, the rules engine, search scores, and that router are not modified."
+}

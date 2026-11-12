@@ -274,6 +274,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-filter-many-choice':'查看牌頂，選擇要加入手牌的卡',
  'effect-return-retired':'是否將剛退場的卡加入手牌',
  'effect-life-to-hand':'是否將生命加入手牌',
+ 'effect-own-life-outside':'將 1 張自己的生命放到場外',
  'effect-life-active-self':'將 1 張生命加入手牌並使自身活動',
  'effect-name-draw':'名稱成立時是否抽 1 張',
  'effect-outside-traitless-rest':'可讓場外沒有特徵的角色以休息狀態登場',
@@ -1015,6 +1016,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHiddenLifeHand':return '將1張生命加入手牌';
   case 'chooseRestReenter':return '以 Rest 登場於'+(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
   case 'chooseHandTwoOutside':return '將 '+name()+' 送至場外';
+  case 'chooseOwnLifeOutside':return '將 '+name()+' 放到場外';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'chooseMillUpTo':return action.mode==='mill'?'再將牌庫頂 1 張送場外':'停止送場外';
   case 'chooseMillDiscard':return action.uid===null?'不棄手牌，不回收':'棄掉 '+name()+'，接著回收';
@@ -1126,7 +1128,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseFrontGrant':return '本回合賦予 '+name()+' BP 與印刷的追加能力';
   case 'chooseRemovedEnter':return action.uid===null?'不從移除區登場':'讓 '+name()+' 從移除區休息登場';
   case 'chooseMainBuff':return '指定 '+name()+'，本回合 BP＋1000';
-  case 'chooseOwnBuff':case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseOwnBuff':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP＋'+amount;
+  }
+  case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseRestOutsideEvents':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';

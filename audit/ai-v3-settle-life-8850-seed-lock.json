@@ -1,0 +1,41 @@
+{
+  "programBase": "89e49ccbf5db93bb3c66adf8fde01ae534e1d2da",
+  "namedBeforeResults": true,
+  "seeds": [8850, 8851, 8852, 8853, 8854, 8855, 8856, 8857, 8858, 8859, 8860, 8861, 8862, 8863, 8864, 8865, 8866, 8867, 8868, 8869, 8870, 8871, 8872, 8873, 8874, 8875, 8876, 8877, 8878, 8879, 8880, 8881, 8882, 8883, 8884, 8885, 8886, 8887, 8888, 8889],
+  "reservedFrom": 9100,
+  "notReused": [8600, 8601, 8602, 8700, 8701, 8702, 8800, 8849],
+  "secondSetReserved": [8890, 8929],
+  "policies": {
+    "A": "hybrid-main-v1",
+    "B": "hybrid-main-v1+settleLife",
+    "opponent": "ai-v3-beam-1"
+  },
+  "opponentIsNot": "hard-search-2",
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "experiments": "settleLife only on B, default off everywhere else",
+  "decks": [
+    {"id": "white-sword", "seeds": [8850, 8851, 8852, 8853, 8854, 8855, 8856, 8857, 8858, 8859, 8860, 8861, 8862, 8863], "games": 56},
+    {"id": "sword-art-online-raid", "seeds": [8864, 8865, 8866, 8867, 8868, 8869, 8870, 8871, 8872, 8873, 8874, 8875, 8876], "games": 52},
+    {"id": "steins-gate-raid", "seeds": [8877, 8878, 8879, 8880, 8881, 8882, 8883, 8884, 8885, 8886, 8887, 8888, 8889], "games": 52}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "gamesPerArm": 160,
+  "blocks": 40,
+  "opening": "Both arms clone one shared opening. The seed deals seat 0 then seat 1, the shared hard mulligan runs in first-player order, then LIFE is dealt. Swapping the hybrid seat at the same first replays that opened state.",
+  "lethalPass": "Hybrid is to block, damage is at least the current life, the pass line stopped on a life trigger whose type is draw, get, or active with a search score in (-100000, -90000], and a searched block is a finished loss at or below -100000 with opponentTurns greater than 0. Choosing the pass counts. FINAL, SPECIAL, color, raid, and an unknown trigger do not count.",
+  "lifeSaved": "The chosen block is one of those later-loss rows, and dispatching it leaves the defender's life length unchanged and the game still playing.",
+  "badTrade": "That same save removes the blocker or still applies impact. It is a trade, not a win.",
+  "bootstrap": "Paired difference is B wins minus A wins, divided by four, for each of the 40 seed blocks. 1000 resamples, mulberry32(8850), percentile indexes 25 and 974.",
+  "advanceTo8890": "Only if both arms have illegal, unfinished, phaseErrors, abandonedKills, and overNodes all at 0, maxNodes at most 48, B's lethalPass count is strictly below A's, and the paired interval's low percentile is greater than -0.05. Otherwise settleLife stays off and 8890 is not played. Do not retune and rerun 8850–8889.",
+  "secondSetPlan": "If this set advances, 8890–8903 white-sword, 8904–8916 sword-art-online-raid, 8917–8929 steins-gate-raid, the same four cells, the same 48 nodes and real 40 ms, and the same acceptance. Those seeds are named here, before either set is played. 9100+ stays unused.",
+  "note": "8850–8889 were named before any of these games. The opponent is frozen ai-v3-beam-1. hard-search-2, cards, and the rules engine are not modified. The candidate is not the default."
+}

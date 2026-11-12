@@ -252,7 +252,7 @@ test('group ranges, request files and the audit ledger stay separate',()=>{
   }
  }
  assert.equal(ledger.summary.playable.total,938);
- assert.equal(ledger.summary.playable.已驗證,935);
+ assert.equal(ledger.summary.playable.已驗證,938);
  assert.equal(ledger.summary.series.some(series=>series.id==='imc'),false);
  assert.doesNotMatch(read('scripts/build-effect-audit-ledger.mjs'),/id:'imc'/);
 });
