@@ -265,11 +265,15 @@ test('front once and name once stay separate, and 110 is unchanged',()=>{
   x.uid===bareSrc.uid&&x.mode==='frontOnce'),false);
 
  const imc=createImcV2Pack();
- assert.equal(Object.keys(imc.cards).length,79);
+ assert.equal(Object.keys(imc.cards).length,82);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.minSelfBp,4000);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.then[0].op,'chooseOne');
- for(const id of ['IMC-1-020','IMC-1-024','IMC-1-028','IMC-1-111'])
-  assert.equal(imc.cards[id],undefined);
+ assert.equal(imc.cards['IMC-1-020'].effects.onPlay[0].skipWhen.kind,'selfOwnEffectRaid');
+ assert.equal(imc.cards['IMC-1-024'].effects.onAttack[1].firstOwnAttack,true);
+ assert.equal(imc.cards['IMC-1-052'].mainAbility.op,'restSelfThen');
+ assert.equal(imc.cards['IMC-1-054'].nameActive.op,'nameOnceActive');
+ assert.equal(imc.cards['IMC-1-111'].effects.onAttack[0].when.kind,'ownRaidColorTrait');
+ assert.equal(imc.cards['IMC-1-028'],undefined);
  assert.equal(getTitle('imc').playable,false);
 });
 

@@ -427,7 +427,7 @@ test('a trait-count retire ceiling includes the source unless told not to',()=>{
  assert.equal(legalUniversalActions(blocked.pack,blocked.s).some(a=>a.type==='event'&&a.uid===event.uid),false);
 });
 
-test('the ready trait ceiling and the 79-card pack stay unchanged',()=>{
+test('the ready trait ceiling stays on 030, and the pack is 82 cards',()=>{
  const job=IMC_PROGRAMS_001_050['IMC-1-030'].effects.onPlay[0];
  assert.equal(job.op,'retireOppFrontUnderBp');
  assert.equal(job.scaleExcludeSelf,undefined);
@@ -435,13 +435,16 @@ test('the ready trait ceiling and the 79-card pack stay unchanged',()=>{
  assert.equal(job.scaleMin,3);
  assert.equal(job.scaleBp,5000);
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,79);
+ assert.equal(Object.keys(pack.cards).length,82);
  assert.equal(pack.cards['IMC-1-030'].effects.onPlay[0].scaleExcludeSelf,undefined);
  assert.equal(pack.cards['IMC-1-062'].effects.onPlay[0].scaleBp,5000);
  assert.equal(pack.cards['IMC-1-087'].effects.onPlay[0].energyExact,2);
  assert.equal(pack.cards['IMC-1-099'].effects.onPlay[0].bp,2000);
  assert.equal(pack.cards['IMC-1-113'].effects.onPlay[0].optional,true);
- for(const id of ['IMC-1-020','IMC-1-024','IMC-1-028','IMC-1-051','IMC-1-111'])
+ assert.equal(pack.cards['IMC-1-020'].mainAbility.then[0].op,'raidOwnHandNamed');
+ assert.equal(pack.cards['IMC-1-024'].effects.onPlay[1].when.kind,'selfOwnEffectRaid');
+ assert.equal(pack.cards['IMC-1-111'].effects.onAttack[0].op,'drawDiscard');
+ for(const id of ['IMC-1-028','IMC-1-051'])
   assert.equal(pack.cards[id],undefined,id);
 });
 
