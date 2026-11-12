@@ -2,8 +2,43 @@
 // Booster reprints stay in C's program file. AP cards are not programs.
 // A ready entry needs implementation 'dsl' or 'vanilla'. A printed effect cannot be vanilla.
 // Only a card whose whole printed sentence is an existing shared op is ready.
-// IMC-1-102 can use printedBpTraitCount, but D still has to test the whole sentence.
 export const IMC_PROGRAMS_STARTER=Object.freeze({
+ 'IMC-1-101':{
+  ready:true,
+  implementation:'dsl',
+  // 【インパクト無効】は登場句之外。
+  impactNull:true,
+  // 自分の場。元々のBP 4000 的 new generations 含自己，達 3 張才抽 1。
+  effects:{onPlay:[{
+   op:'ifLiveThen',
+   when:{kind:'ownPrintedTraitCount',turn:'any',min:3,zone:'field',excludeSelf:false,
+    trait:'new generations',printedBp:4000},
+   then:[{op:'draw',count:1}]
+  }]}
+ },
+ 'IMC-1-102':{
+  ready:true,
+  implementation:'dsl',
+  // 突襲框只有〈渋谷 凛〉。登場時在框外，普通登場與突襲登場都結算。
+  raidName:'渋谷 凛',
+  effects:{onPlay:[
+   {op:'grantSelfImpactThisTurn',amount:1},
+   {op:'retireOppFrontUnderBp',optional:true,printedBpTraitCount:{
+    trait:'new generations',printedBp:4000,per:1000,excludeSelf:true
+   }}
+  ]}
+ },
+ 'IMC-1-103':{
+  ready:true,
+  implementation:'dsl',
+  // 【アタック時】只數自己前線。印刷 BP 4000 的 new generations 達 3 張才抽 1 棄 1。
+  effects:{onAttack:[{
+   op:'ifLiveThen',
+   when:{kind:'ownPrintedTraitCount',turn:'any',min:3,zone:'front',excludeSelf:false,
+    trait:'new generations',printedBp:4000},
+   then:[{op:'drawDiscard',count:1}]
+  }]}
+ },
  'IMC-1-105':{
   ready:true,
   implementation:'dsl',
@@ -14,6 +49,29 @@ export const IMC_PROGRAMS_STARTER=Object.freeze({
    count:3,
    filter:{field:'trait',value:'new generations'}
   }]}
+ },
+ 'IMC-1-106':{
+  ready:true,
+  implementation:'dsl',
+  // 突襲框只有〈本田 未央〉。看 3 張不棄手牌。活動段等印刷 BP 4000 達 4 張。
+  raidName:'本田 未央',
+  effects:{onPlay:[
+   {op:'searchTopOneBottomDiscard',count:3,noHandDiscard:true,
+    filter:{field:'trait',value:'new generations'}},
+   {op:'ifLiveThen',
+    when:{kind:'ownPrintedTraitCount',turn:'any',min:4,zone:'field',excludeSelf:false,
+     trait:'new generations',printedBp:4000},
+    then:[{op:'activeOwnTrait',optional:true,max:1,trait:'new generations'}]}
+  ]}
+ },
+ 'IMC-1-108':{
+  ready:true,
+  implementation:'dsl',
+  // 只加自己前線。能源線不加。然後抽 1。
+  effects:{onPlay:[
+   {op:'buffOwnCharactersAll',bp:1000,zone:'front'},
+   {op:'draw',count:1}
+  ]}
  },
  'IMC-1-109':{
   ready:true,
