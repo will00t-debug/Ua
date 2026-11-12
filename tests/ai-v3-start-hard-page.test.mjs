@@ -31,7 +31,7 @@ test('the live worker whitelist keeps the verified start-hard routes', () => {
  assert.equal(handled.search.route.source, 'hard');
  assert.equal(same(handled.action, direct), true);
  assert.equal(acceptAiV3Result({requestId: 7, stateVersion: 4, actor, legal}, handled).ok, true);
- const dirty = handleAiV3Request({...request, requestId: 8, factors: {settleLife: true, paidFront: true}});
+ const dirty = handleAiV3Request({...request, requestId: 8, factors: {settleLife: true, paidFront: true, curveFront: true}});
  assert.equal(dirty.search.route.source, 'hard');
  assert.equal(same(dirty.action, direct), true);
  assert.equal(handleAiV3Request({...request, opponentHand: ['secret']}).error, 'hidden-field');
