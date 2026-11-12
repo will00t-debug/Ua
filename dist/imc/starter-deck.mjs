@@ -1,7 +1,8 @@
 // D group owns this file. The official product page says the starter is a
 // 50-card deck of 18 kinds, plus 3 copies of one AP card, plus four new-text
 // R cards. It does not publish the per-card copy counts, so this loader
-// refuses to build a 50-card list.
+// refuses to build a 50-card list. Rechecked 2026-11-12: the product page,
+// the series 570055 card list, and the Bandai catalog still have no counts.
 import {IMC_PROMO_IDS,IMC_STARTER,IMC_STARTER_DECK_IDS} from './product.mjs';
 import {imcCatalog} from './catalog.mjs';
 
@@ -29,6 +30,15 @@ export function loadImcOfficialStarter(){
    return {id,number:card.number,name:card.nameJa,color:card.color,rarity:card.rarity};
   }),
   ap:{id:IMC_STARTER.apId,copies:IMC_STARTER.apCopies,set:'UA55ST',deckLegal:false},
-  reason:'官方商品頁公布 50 張、18 種與 AP 3 張，卡表有這 18 個編號。商品頁與卡表沒有公布每一種的張數，所以不組成 50 張牌組。'
+  countSearch:{
+   date:'2026-11-12',
+   found:false,
+   sources:[
+    IMC_STARTER.url,
+    IMC_STARTER.list,
+    'https://www.bandai.co.jp/catalog/item.php?jan_cd=4582770012507000'
+   ]
+  },
+  reason:'官方商品頁公布 50 張、18 種與 AP 3 張，卡表有這 18 個編號。2026-11-12 再查商品頁、series 570055 卡表與萬代目錄，仍沒有每一種的張數，所以不組成 50 張牌組。'
  };
 }
