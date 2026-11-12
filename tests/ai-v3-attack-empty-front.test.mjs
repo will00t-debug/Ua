@@ -107,8 +107,8 @@ function openAttack(base, packPair, bodies) {
  assert.equal(assertUniversalMatch(packPair, state), true);
  return {state, placed};
 }
-function decide(packPair, state) {
- const action = chooseHybridStartHardAction(packPair, state, CLOCK);
+function decide(packPair, state, limits = CLOCK) {
+ const action = chooseHybridStartHardAction(packPair, state, limits);
  return {action, trace: lastAiV3Trace(), route: lastHybridRoute()};
 }
 function rowsOf(trace) {
@@ -265,15 +265,27 @@ describe('hybrid attack into an empty front', {concurrency: false}, () => {
   assert.equal(universalImpact(mixed, state, attacker), 0);
   const legal = legalUniversalActions(mixed, state);
   assert.ok(legal.some(action => action.type === 'attack' && action.uid === attacker.uid));
-  const {action, trace} = decide(mixed, state);
-  const compared = rowsOf(trace);
-  assert.equal(action?.type, 'next', JSON.stringify(compared));
-  assert.ok(exact(legal, action));
-  const attackRow = (trace?.candidates || []).find(row => row.action?.type === 'attack');
-  const passRow = (trace?.candidates || []).find(row => row.action?.type === 'next');
+  // 48 nodes, with the clock loose enough that a slow runner still finishes
+  // both lines. The 40ms match budget can stop them at different leaves, and
+  // that cutoff is not a second copy of this tie.
+  const finished = decide(mixed, state, {...CLOCK, ms: 2000});
+  const compared = rowsOf(finished.trace);
+  assert.equal(finished.action?.type, 'next', JSON.stringify(compared));
+  assert.ok(exact(legal, finished.action));
+  const attackRow = (finished.trace?.candidates || []).find(row => row.action?.type === 'attack');
+  const passRow = (finished.trace?.candidates || []).find(row => row.action?.type === 'next');
   assert.equal(attackRow?.boundary, 'returned');
   assert.equal(passRow?.boundary, 'returned');
   assert.ok(Math.abs(attackRow.search - passRow.search) <= 1e-9);
+  const live = decide(mixed, state);
+  assert.ok(exact(legal, live.action));
+  assert.ok(live.action?.type === 'attack' || live.action?.type === 'next');
+  const liveAttack = (live.trace?.candidates || []).find(row => row.action?.type === 'attack');
+  const livePass = (live.trace?.candidates || []).find(row => row.action?.type === 'next');
+  if (liveAttack?.boundary === 'returned' && livePass?.boundary === 'returned'
+   && Math.abs(liveAttack.search - livePass.search) <= 1e-9) {
+   assert.equal(live.action.type, 'next', JSON.stringify(rowsOf(live.trace)));
+  }
  });
 
  test('E. raid Impact stays live, and a must-block defender still has no skip', () => {
