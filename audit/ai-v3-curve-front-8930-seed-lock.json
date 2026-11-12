@@ -1,0 +1,41 @@
+{
+  "programBase": "a94e221ecacb93d3245ab869e587bfa9b78995f7",
+  "branchHeadAtLock": "781cef62f940d5fc6464d3522cdeaead8f7c5a41",
+  "namedBeforeResults": true,
+  "seeds": [8930, 8931, 8932, 8933, 8934, 8935, 8936, 8937, 8938, 8939, 8940, 8941, 8942, 8943, 8944, 8945, 8946, 8947, 8948, 8949, 8950, 8951, 8952, 8953, 8954, 8955, 8956, 8957, 8958, 8959, 8960, 8961, 8962, 8963, 8964, 8965, 8966, 8967, 8968, 8969],
+  "reservedFrom": 9100,
+  "previouslyUsedSameRange": "8930-8969 already measured paidFront against ai-v3-beam-1. This lock reuses that range for a different candidate, as the task names it. It is not treated as an unseen holdout.",
+  "secondSetReserved": [8970, 9009],
+  "previouslyUsedHoldout": "8970-9009 already measured hybrid-start-hard-v1 against hybrid-main-v1. It stays unplayed unless this lock's advance rule passes, and the candidate is not retuned in between.",
+  "policies": {
+    "A": "hybrid-main-v1",
+    "B": "hybrid-main-v1+curveFront",
+    "opponent": "ai-v3-beam-1"
+  },
+  "opponentIsNot": "hard-search-2",
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "experiments": "curveFront only on B, default off everywhere else. paidFront and settleLife stay off. hard-search-2 and AI v3 are not modified.",
+  "decks": [
+    {"id": "white-sword", "seeds": [8930, 8931, 8932, 8933, 8934, 8935, 8936, 8937, 8938, 8939, 8940, 8941, 8942, 8943], "games": 56},
+    {"id": "sword-art-online-raid", "seeds": [8944, 8945, 8946, 8947, 8948, 8949, 8950, 8951, 8952, 8953, 8954, 8955, 8956], "games": 52},
+    {"id": "steins-gate-raid", "seeds": [8957, 8958, 8959, 8960, 8961, 8962, 8963, 8964, 8965, 8966, 8967, 8968, 8969], "games": 52}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "gamesPerArm": 160,
+  "blocks": 40,
+  "opening": "Both arms clone one shared opening. The seed deals seat 0 then seat 1, the shared hard mulligan runs in first-player order, then LIFE is dealt.",
+  "record": "After each timed choice, a public row stores the candidate briefs and scores and the dispatched action brief. A private action tape replays from the shared opening and must rebuild the same life and status. The tape is not passed to either chooser. No full-state clone runs inside the search.",
+  "bootstrap": "Paired difference is B wins minus A wins, divided by four, for each of the 40 seed blocks. 1000 resamples, mulberry32(8930), percentile indexes 25 and 974.",
+  "advanceTo8970": "Only if both arms have illegal, unfinished, phaseErrors, abandonedKills, overNodes, leaks and replay failures all at 0, maxNodes at most 48, pending stays on AI v3, the paired interval's low percentile is greater than -0.05, B's overall wins are strictly greater than A's, B's white-sword second-player wins are at least A's, and B's energy-short count is at most A's plus the larger of 10 and 5 percent of A's. Otherwise curveFront stays off and 8970-9009 is not played. Do not retune the candidate after reading 8930-8969.",
+  "secondSetPlan": "If this set advances, 8970-8983 white-sword, 8984-8996 sword-art-online-raid, 8997-9009 steins-gate-raid, the same four cells, the same 48 nodes and real 40 ms, and the same acceptance. Those seeds are named here, before either set is played. 9100+ stays unused.",
+  "note": "The candidate was frozen with this lock, before any 8930-8969 curveFront game. The opponent is frozen ai-v3-beam-1."
+}

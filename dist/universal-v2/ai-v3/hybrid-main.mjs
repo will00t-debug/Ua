@@ -5,6 +5,7 @@ import {legalUniversalActions,universalBp,universalEnergyByColor} from '../engin
 import {chooseStrengthenedHardAction,lastHardAiTrace,resetHardAiReport} from '../hard-ai.mjs';
 import {chooseAiV3Action,lastAiV3Trace,resetAiV3Report,MATCH_LIMITS} from './search.mjs';
 import {preferPaidFront} from './paid-front.mjs';
+import {preferCurveFront} from './curve-front.mjs';
 
 export const HYBRID_MAIN_POLICY='hybrid-main-v1';
 // Benchmark-only. The worker and the battle menu do not accept this name.
@@ -100,11 +101,16 @@ export function chooseHybridMainAction(pack,state,options={}){
  if(source==='hard'){
   resetHardAiReport();
   action=chooseStrengthenedHardAction(pack,state,{nodes,ms,seed});
-  if(options.factors?.paidFront===true){
+  if(options.factors?.paidFront===true||options.factors?.curveFront===true){
    const legal=legalUniversalActions(pack,state);
-   const swapped=preferPaidFront(pack,state,actor,action,legal,lastHardAiTrace());
+   let swapped=action;
+   if(options.factors?.paidFront===true)swapped=preferPaidFront(pack,state,actor,swapped,legal,lastHardAiTrace());
+   if(options.factors?.curveFront===true)swapped=preferCurveFront(pack,state,actor,swapped,legal,lastHardAiTrace());
    const exact=legal.find(item=>JSON.stringify(item)===JSON.stringify(swapped));
-   if(exact)action=exact;
+   if(exact){
+    if(options.factors?.curveFront===true&&JSON.stringify(exact)!==JSON.stringify(action))lastRoute={...lastRoute,curveSwap:true};
+    action=exact;
+   }
   }
  }else{
   resetAiV3Report();
@@ -117,7 +123,7 @@ export function chooseHybridMainAction(pack,state,options={}){
 
 // Idle start and idle main ask hard-search-2. Move, attack, and every pending
 // stay on AI v3. Hard still chooses extraDraw or next; this router does not
-// forbid a draw. paidFront and settleLife are not applied.
+// forbid a draw. paidFront, curveFront and settleLife are not applied.
 export function chooseHybridStartHardAction(pack,state,options={}){
  const actor=options.actor??(state?.pending?.player??state?.active);
  const lane=hybridLane(state);
