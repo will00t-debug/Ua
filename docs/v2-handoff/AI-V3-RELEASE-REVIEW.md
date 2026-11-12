@@ -26,4 +26,17 @@
 
 ## 沒有帶進這個分支的資料
 
-135 個純研究 audit 沒有複製。13 個回歸會讀到的大型檔改成等價子集：只留測試實際重放的對局，或測試斷言會讀到的欄位，數值來自來源檔，沒有改寫勝敗。11 個小型鎖、基準針與霓虹驗收紀錄保持原文。
+134 個純研究 audit 沒有複製。13 個回歸會讀到的大型檔改成等價子集：只留測試實際重放的對局，或測試斷言會讀到的欄位，數值來自來源檔，沒有改寫勝敗。12 個小型鎖、基準針與霓虹驗收紀錄保持原文。`docs/v2-handoff/AI-V3-MILESTONE.md` 與 18 支只用於研究重跑的腳本也留在來源分支。
+
+## 本分支驗證
+
+`npm test`（Node.js 22.23.4，乾淨工作樹）4676 pass、0 fail。比 main 多出的是這次帶入的 AI 與稽核入口測試。
+
+Chrome 驗收用的是腳本原預算，沒有縮短 150000ms。
+
+- `scripts/ai-v3-neon-mobile-acceptance.mjs`：412×915，`ok: true`。STG-1-006 先選角色再啟動；BLC-2-067 普通進場、突襲進場、擠位取消與確認都走完。
+- `scripts/ai-v3-start-hard-preview-e2e.mjs`：三個選項預設未勾，policy 是 `normal`。桌面 1366 與手機 412 各打完白劍、刀劍神域、命運石之門。開始階段來源都是 hard，pending 沒有落到 hard。七張生命、AP、霓虹樣式都在。`raidCommit` 4、`squeezeConfirms` 15、`activateChoice` 3。`ok: true`。
+
+手機驗收重跑後，`audit/ai-v3-neon-mobile-acceptance.json` 與 PR #370 的 SHA256 `26488b7798c64339c60bf96d07f60b688d0bdded88ed0899eb2a5843b7220d3d` 相同，所以照原文放進來。桌面加手機的對局驗收是這次新跑的，寫在 `audit/ai-v3-release-chrome-start-hard-e2e.json`。來源清單裡的 `audit/ai-v3-start-hard-preview-e2e.json` 仍是舊研究檔，沒有被這次的結果蓋掉。
+
+`git diff 4cac28f8fb7ea0ad6d046fa1de64a54d501a7791 -- dist/universal-v2/ai-v3` 是空的。大廳 HTML、稽核局面與進場動作與該提交相同。`dist/universal-v2-preview.mjs` 只多了公開頁忽略 `?audit=` 的那一層。

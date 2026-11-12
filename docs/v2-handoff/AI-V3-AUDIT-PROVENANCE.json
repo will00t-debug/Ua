@@ -18,11 +18,11 @@
   "note": "Original audit bytes are not deleted. omitted-research files, and the pre-slim bytes of slimmed-equivalent files, remain on the commits above. A slimmed file keeps the games or fields the regression tests replay or assert, copied from the source bytes.",
   "counts": {
     "auditFilesOnSource": 159,
-    "includedVerbatim": 11,
+    "includedVerbatim": 12,
     "slimmedEquivalent": 13,
-    "omittedResearch": 135,
+    "omittedResearch": 134,
     "sourceBytes": 85317685,
-    "releaseBytes": 1288361
+    "releaseBytes": 1329013
   },
   "files": [
     {
@@ -648,7 +648,8 @@
       "sha256": "26488b7798c64339c60bf96d07f60b688d0bdded88ed0899eb2a5843b7220d3d",
       "gitBlob": "8d204a59e7458e50996fb63707927fbba0bbcbec",
       "pullRequest320Blob": null,
-      "disposition": "omitted-research"
+      "disposition": "included-verbatim",
+      "note": "This branch reran the mobile acceptance script and reproduced these exact source bytes."
     },
     {
       "path": "audit/ai-v3-official-8300-a09f5449-36.json",
