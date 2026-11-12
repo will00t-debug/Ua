@@ -15,8 +15,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-080',
   sentence:'自分の場に必要エナジーが2の［特徴：Starry-Go-Round］が N 枚以上。',
   existingOps:['drawIfOwnTraitCount'],
-  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084、087、099 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場還沒有整句。',
-  proposal:'081、082、083、084、087、099 已完成。其餘 '+ENERGY+' 先不標 ready。078 還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
+  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084、087、099 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看可以用 lookTopScript：頂 6 張、紅、Starry-Go-Round、印刷必要能源恰好 2、只休息登場、其餘放牌底。078 的程式還沒寫，不能標 ready。',
+  proposal:'081、082、083、084、087、099 已完成。其餘 '+ENERGY+' 先不標 ready。078 用 lookTopScript 看 6 張，恰好能源 2 的紅 Starry 只休息登場。'
  },
  {
   cardId:'IMC-1-051',
@@ -50,8 +50,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-065',
   sentence:'上から3枚見て、青の［特徴：ガールズ・イン・ザ・フロンティア］を1枚までレストで登場させるかレイドする。',
   existingOps:['searchTopOneBottomDiscard','deployOwnHandRestOrRaid'],
-  whyNotEnough:'查看窗的其餘張要排到牌底。現有休息登場或突襲的來源是手牌，不是這 3 張。',
-  proposal:'私人查看窗內最多 1 張休息登場或突襲，不能選的留在窗裡，其餘自訂順序放牌底。065 先不標 ready。'
+  whyNotEnough:'查看窗的其餘張要排到牌底。現有休息登場或突襲的來源是手牌，不是這 3 張。共用的 lookTopScript 已能從查看的 3 張休息登場或突襲，來源是牌庫窗。065 的程式還沒寫，不能標 ready。',
+  proposal:'用 lookTopScript 私人查看窗內最多 1 張休息登場或突襲，不能選的留在窗裡，其餘自訂順序放牌底。065 先不標 ready。'
  },
  {
   cardId:'IMC-1-072',

@@ -44,6 +44,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-trait-event':'查看牌頂，公開王選候補者或事件',
  'effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
  'effect-top-order':'排列牌庫頂或底',
+ 'effect-top-script':'查看牌庫頂並選擇',
+ 'effect-bottom-own':'可將 1 張自己的角色放到牌庫底',
  'effect-optional-mill':'可逐張將牌庫頂送場外（每次 1 張，可繼續或停止）',
  'effect-mill-up-to':'可將牌庫頂至多數張送場外',
  'effect-mill-recover-discard':'可棄 1 張手牌以回收剛才送出場外的卡',
@@ -1213,6 +1215,14 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseEnergyShift':return action.uid===null?'不移動能源線角色':
    '將 '+name()+' 移到前線 '+(action.slot+1);
   case 'chooseRecoverEvent':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseTopScript':
+   if(action.mode==='confirm')return '確認加入手牌，其餘之後排列';
+   if(action.mode==='skip')return '這個步驟不選';
+   if(action.mode==='pick')return '選擇 '+name();
+   if(action.mode==='raid')return '從查看的牌突襲登場：'+name()+suffix();
+   if(action.mode==='enter')return '從查看的牌休息登場：'+name()+suffix();
+   return '查看後的選擇';
+  case 'chooseBottomOwn':return action.uid===null?'不放到牌庫底，也不查看':'將 '+name()+' 放到牌庫底';
   case 'chooseOrderedSubset':{
    if(action.mode==='confirm')return '依印刷順序結算所選效果';
    const option=state?.pending?.options?.find(o=>o.id===action.id);
@@ -1774,7 +1784,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 // Epsilon, Beta, or a raidless yellow Zeke stays normal entry and does not
 // invent Raid.
 const MODE_BOARD_ENTRY=new Set([
- 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseTopScript',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
  'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2','aot2','csm'
 ]);

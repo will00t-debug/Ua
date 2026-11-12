@@ -567,7 +567,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 // Epsilon, Beta, or a raidless yellow Zeke stays normal entry and does not
 // invent Raid.
 const MODE_BOARD_ENTRY=new Set([
- 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseTopScript',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
  'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','aot2'
 ]);
