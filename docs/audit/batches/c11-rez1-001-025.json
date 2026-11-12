@@ -1,0 +1,713 @@
+{
+  "group": "C11",
+  "baseline": "ccd6c9a4971f721697d9b7abd43f7a59bb05f40e",
+  "baseBranch": "cursor/effect-audit-round11",
+  "range": "UA40BT/REZ-1-001 至 REZ-1-025。",
+  "updated": "2026-11-07",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-001 起，至 REZ-1-025。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-011.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-015.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-019.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-020.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA40BT",
+    "checked": "2026-11-07",
+    "note": "2026-11-07 用 detail.php 對過 REZ-1-001～025。效果、必要能量、AP、BP、發生能量、特徵與觸發都和 dist/rezero-cards.mjs 的 effectJa 一致。頁面把能量與關鍵字圖示抽掉，括號裡的句子仍在。002 與 015 的 BP 印成帶加號，本地記基礎值。006 與 016 的發生能量印成黃＋，本地發生能量是 1，效果再加 1。011、015、019、020 的卡圖確認深色框，和 raid-box.mjs 一致，沒有改它。015 的自己回合 BP+500 在框內，實作是 raidOwnTurnBp，不是框功能清單。UA40BT FAQ 搜尋結果 12 件，Q1569～Q1580，日期都是 2025-06-20。沒有一則點名 001～025。Q1569 定義「次の1回アクティブにならない」，018 的顏色觸發印的是同一句，這次用 018 自己翻開。Q1570～Q1580 的 058、060、065、074、077、085、089、090 不在這組，沒有關掉。這 25 張都沒有印「次の自分のターン開始時まで」。回手是 024，退場代替是 011，兩者沒有混用。沒有改引擎、pack.mjs、raid-box.mjs、第二彈或總帳。"
+  },
+  "counts": {
+    "已驗證": 22,
+    "部分核對": 0,
+    "待修正": 0,
+    "缺資料待確認": 0,
+    "無效果": 3
+  },
+  "fixes": [],
+  "sharedGaps": [],
+  "tests": {
+    "command": "node --test tests/v2-rez1-001-025.test.mjs tests/v2-re0-set1-batch.test.mjs tests/v2-re0-official-faq.test.mjs",
+    "result": "Node v22.23.4。90 passed, 0 failed。新檔 10，set1 與 FAQ 回歸 80。沒有跑整庫。"
+  },
+  "reviews": [
+    {
+      "cardId": "REZ-1-001",
+      "number": "UA40BT/REZ-1-001",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "全ての場所でイベントカードとしても扱う",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-001 。手牌、場上、場外都算事件。",
+          "implementation": "alsoEvent。alsoEvent 為真時各區域都算事件。",
+          "discrepancy": "",
+          "evidence": "tests/v2-re0-set1-batch.test.mjs：Puck counts as an event card。從手牌打出後，109 的牌頂選擇看得到這張，場上的帕克不算場外事件。",
+          "unresolved": ""
+        },
+        {
+          "match": "インパクト無効、このバトル中",
+          "status": "已驗證",
+          "official": "同一頁。和這張戰鬥的角色在這場戰鬥失去衝擊。",
+          "implementation": "impactNull。",
+          "discrepancy": "",
+          "evidence": "同一測試：帕克阻擋有衝擊的雷姆，生命不減；沒有衝擊無效的碧翠絲阻擋則生命減 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同一頁。選自己場上 1 張角色，變成活動，這個回合 BP+3000。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔的活動觸發翻的是 005。001 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-002",
+      "number": "UA40BT/REZ-1-002",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "全ての場所でイベントカードとしても扱う",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-002 。",
+          "implementation": "alsoEvent。場外的 002 計入事件張數。",
+          "discrepancy": "",
+          "evidence": "set1：Emilia and outside events raise Puck。第 4 張場外事件用的是 002，BP 從 3000 到 4000。",
+          "unresolved": ""
+        },
+        {
+          "match": "自分のターン中、エミリアかつ場外イベント4枚以上でBP+1000",
+          "status": "已驗證",
+          "official": "同一頁。只在自己回合。愛蜜莉雅在場，場外事件至少 4 張。",
+          "implementation": "alsoEmiliaActive 的 passiveBonuses。ownNameAndOutsideEvents，turn own，min 4。",
+          "discrepancy": "",
+          "evidence": "同一測試：3 張 001 不夠。加上 002 後是 4000。對方主要階段回到 3000，自己的下一主要階段又是 4000。",
+          "unresolved": ""
+        },
+        {
+          "match": "登場時、エミリアかつ場外イベント6枚以上なら手札1枚を場外に置いてアクティブにしてもよい",
+          "status": "已驗證",
+          "official": "同一頁。可以不做。手牌空、沒有愛蜜莉雅、或場外事件少於 6，都不開。",
+          "implementation": "optionalHandOutsideActiveIf。name エミリア，minEvents 6。",
+          "discrepancy": "",
+          "evidence": "同一測試：6 張時可棄可拒。棄了才活動，BP 同時是 4000。5 張、沒有愛蜜莉雅、手牌空，都沒有 pending。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔的抽牌觸發翻的是 007。002 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-003",
+      "number": "UA40BT/REZ-1-003",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "相手の場に青か紫がある場合、手札の必要エナジーを黄1減らす",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-003 。對方場上有藍或紫才減。",
+          "implementation": "handDiscount。opponentFieldColorsHandEnergyDiscount，藍與紫各減 1。",
+          "discrepancy": "",
+          "evidence": "set1：step, draw-discard, bounce。對方能源線有藍時必要能量 2，拿走後回到 3。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "同一頁。觸發是 -。",
+          "implementation": "trigger null。",
+          "discrepancy": "",
+          "evidence": "卡資料 trigger 為 null，沒有 triggerEffect。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-004",
+      "number": "UA40BT/REZ-1-004",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、1枚引き、このターンにイベントを使用していればAPを1枚までアクティブ",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-004 。先抽 1。這個回合用過事件，才可以選最多 1 張 AP。",
+          "implementation": "drawThenEventAp。draw 1，接著 recoverAp，require ownEventUsed。",
+          "discrepancy": "",
+          "evidence": "set1：draw plus event-gated AP recovery。沒有用過事件時只抽牌，沒有 AP 選擇。先用 029 之後才開 1 張 AP，可以回復。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔的抽牌觸發翻的是 007。004 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-005",
+      "number": "UA40BT/REZ-1-005",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、自分の他のキャラを1枚まで、このターン中BP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-005 。不能選自己。可以不選。",
+          "implementation": "buffOther。enemy 以外的自己其他角色，untilTurn。",
+          "discrepancy": "",
+          "evidence": "set1：buffs, top windows。選另一張拉姆，BP 從 2000 到 3000。可以拒絕。場上只有自己時不開 pending，BP 維持 500。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同一頁。選 1 張自己的角色，變成活動，這個回合 BP+3000。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔：life triggers。005 翻開後，休息的 014 變成活動，BP 從 2500 到 5500。對方主要階段回到 2500。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-006",
+      "number": "UA40BT/REZ-1-006",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動メイン、レスト、ターン1、このターン中に発生エナジー+黄とメイン終了時退場を得る",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-006 。先休息。得到的是這個回合的能力，不是印刷能力本身。期限是這個回合，退場點是主要階段結束。",
+          "implementation": "restEnergyRetire。restSelfGainEnergyRetireEndMain。buffs 的 energy untilTurn，delayedEffects 的 retireAtMainEnd。",
+          "discrepancy": "",
+          "evidence": "set1：empty-field Step, rest energy。能源線從 1 變 2，主要階段結束退場。前線啟動不加顏色合計，仍然退場。新檔：原有效果失效之後，啟動不出現。先啟動再失效，黃仍是 2，進入攻擊階段時退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "同一頁。觸發是 -。",
+          "implementation": "trigger null。",
+          "discrepancy": "",
+          "evidence": "卡資料 trigger 為 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-007",
+      "number": "UA40BT/REZ-1-007",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-007 。效果為 -。能量 0、BP 2000、發生能量 1。",
+          "implementation": "plain。",
+          "discrepancy": "",
+          "evidence": "沒有效果程式。新檔用她當能源與生命攻擊者。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1 張。觸發卡本身進場外。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔：life triggers。007 翻開後手牌加 1，這張進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-008",
+      "number": "UA40BT/REZ-1-008",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【ステップ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-008 。自己的移動階段可從前線到能源線。",
+          "implementation": "step。",
+          "discrepancy": "",
+          "evidence": "set1：step, draw-discard。008 在移動階段從前線進能源線。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同一頁。與 005 同一句。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔的活動觸發翻的是 005。008 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-009",
+      "number": "UA40BT/REZ-1-009",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、上3枚を見てラムかレムかロズワールを1枚まで公開して手札、残りは下、加えたら手札1枚を場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-009 。見る是私人查看。公開的只有拿走的那張。可以不拿，不拿就不棄牌。",
+          "implementation": "searchNames。searchTopOneBottomDiscard，三個名字，logic any。",
+          "discrepancy": "",
+          "evidence": "set1：buffs, top windows。只有拉姆可選。拒絕後三張照指定順序到牌底，不棄牌。拿走後 publicReveals 是 007，再棄 1 張。新檔：查看中對方的私人選項是 null，公開畫面沒有窗口 UID。公開的只有被拿走的 007。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "同一頁。觸發是 -。",
+          "implementation": "trigger null。",
+          "discrepancy": "",
+          "evidence": "卡資料 trigger 為 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-010",
+      "number": "UA40BT/REZ-1-010",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、自分の場にレムかロズワールがある場合、1枚引く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-010 。場包含前線與能源線。沒有該名字就不抽。",
+          "implementation": "drawIfRemOrRoswaal。drawIfOwnName，names レム與ロズワール・L・メイザース。field() 含能源線。",
+          "discrepancy": "",
+          "evidence": "set1：name union。前線有雷姆時抽 1，換成非該名字時不抽。實驗牌的羅茲瓦爾也抽。新檔：能源線的 012 也抽 1，場上沒有該名字時牌庫張數不變。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔的抽牌觸發翻的是 007。010 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-011",
+      "number": "UA40BT/REZ-1-011",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【レイド】ラム。相手ターンのフロントで、相手効果によるレムの退場を代わりに退場してもよい",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-011 。卡圖整段在深色框。只代替退場，不代替回手。只在對方回合、前線、正面突襲。可以拒絕。",
+          "implementation": "ramSubstituteDown。raidName ラム，substituteOppRetire name レム。raid-box 列 onPlay 與 substituteOppRetire。",
+          "discrepancy": "",
+          "evidence": "set1：Ram substitutes for Rem。對方事件退場時兩張正面突襲的拉姆都可選。拒絕則雷姆退場。接受則拉姆退場、雷姆留下。能源線、原有效果失效、戰鬥敗退、顏色回手、非雷姆，都不代替。",
+          "unresolved": ""
+        },
+        {
+          "match": "登場時、全前線BP1500以上をこのターン-1000、または1枚までBP2500以上をこのターン-2000",
+          "status": "已驗證",
+          "official": "同一頁。必須選其中一項。兩項都是這個回合。第二項可以不選對象。普通登場不發動。",
+          "implementation": "chooseOne，optional false。allDown 是 enemyFrontAllBpDown。oneDown 是 optional enemyBpDown。programJobs 在非正面突襲時不跑。",
+          "discrepancy": "",
+          "evidence": "set1：不能跳過。全體減成打中 1500 與 2500，打不中 1000。單減只提供 2500，可以拒絕。對方主要階段恢復。新檔：普通登場沒有 pending。正面突襲必須在 allDown 與 oneDown 中選，BP 500 不變，1500 與 2500 下降，對方主要階段恢復。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】トリガー",
+          "status": "已驗證",
+          "official": "同一頁。可到手牌，或能量足夠時突襲。",
+          "implementation": "共用 life-trigger raid。登場時接在突襲之後。",
+          "discrepancy": "",
+          "evidence": "新檔：life triggers。能量足夠時突襲到 008 上，進入活動，接著必須做登場時的二選一。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-012",
+      "number": "UA40BT/REZ-1-012",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-012 。效果為 -。能量 0、BP 1500。",
+          "implementation": "plain。",
+          "discrepancy": "",
+          "evidence": "沒有效果程式。新檔用她當 015 的減 BP 對象。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同一頁。將這張加入手牌。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔：life triggers。012 翻開後只進手牌一次，不留在牌庫。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-013",
+      "number": "UA40BT/REZ-1-013",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "インパクト無効、このバトル中",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-013 。和 001 同一句。",
+          "implementation": "impactNull。",
+          "discrepancy": "",
+          "evidence": "set1 的衝擊戰鬥用的是 001。013 印的是同一句，卡資料同樣是 impactNull。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同一頁。與 005 同一句。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔的活動觸發翻的是 005。013 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-014",
+      "number": "UA40BT/REZ-1-014",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【ステップ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-014 。與 008 同一句。",
+          "implementation": "step。",
+          "discrepancy": "",
+          "evidence": "set1 的移動用的是 008。014 印的是同一句，卡資料同樣是 step。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "同一頁。觸發是 -。",
+          "implementation": "trigger null。",
+          "discrepancy": "",
+          "evidence": "卡資料 trigger 為 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-015",
+      "number": "UA40BT/REZ-1-015",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【レイド】レム。自分のターン中BP+500。登場時1枚引き1枚場外。起動メイン、ターン1、BP1500以上を1枚このターン-1000。アタック時、場のキャラが全てレムなら1枚引き1枚場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-015 。卡圖整段在深色框。BP+500 只在自己回合。減 BP 是「1枚選び」，不能拒絕。觸發是ゲット，不是突襲。",
+          "implementation": "raidRemTurnBpDraw。raidName レム，raidOwnTurnBp 500。onPlay drawDiscard。main frontOnceProgram 接 enemyBpDown，不是 optional。onAttack drawDiscardIfEveryOwnCharacterNamed。raid-box 列 onPlay、onAttack、main。",
+          "discrepancy": "",
+          "evidence": "set1：Rem raids onto Rem, gains 500 BP。突襲後先抽再棄。自己回合 BP 4000，換成對方回合是 3500。能源線不能啟動。沒有 1500 以上的前線時不開。攻擊時場上有非雷姆就不抽，埋在下面的不算場上。新檔：普通登場沒有抽牌、BP 是 3500、沒有啟動。突襲後的 -1000 在對方主要階段恢復，BP+500 也同時消失。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同一頁。與 012 同一句。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔的獲得觸發翻的是 012。015 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-016",
+      "number": "UA40BT/REZ-1-016",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "アクティブの場合、発生エナジー+黄",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-016 。只有活動時多一點黃。休息後回到印刷的一點。",
+          "implementation": "activeEnergy。activeExtraEnergy 1。gen 是 1。",
+          "discrepancy": "",
+          "evidence": "set1：step, draw-discard。016 活動加 007，黃是 3。016 休息後黃是 2。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "同一頁。觸發是 -。",
+          "implementation": "trigger null。",
+          "discrepancy": "",
+          "evidence": "卡資料 trigger 為 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-017",
+      "number": "UA40BT/REZ-1-017",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "インパクト無効、このバトル中",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-017 。和 001 同一句。",
+          "implementation": "impactNull。",
+          "discrepancy": "",
+          "evidence": "set1 的衝擊戰鬥用的是 001。017 印的是同一句，卡資料同樣是 impactNull。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔的抽牌觸發翻的是 007。017 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-018",
+      "number": "UA40BT/REZ-1-018",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、BP2500以上の相手フロントを1枚まで、このターン中BP-2000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-018 。可以不選。低於 2500 的不能選。",
+          "implementation": "frontDown2500。enemyBpDown，optional，minBp 2500，zone front。",
+          "discrepancy": "",
+          "evidence": "set1：buffs, top windows。只提供 BP 2500 的 014，2000 的拉姆不在選項。選了之後 2500 變 500。可以拒絕，BP 維持 2500。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】相手フロントを1枚レスト、次の1回アクティブにならない",
+          "status": "已驗證",
+          "official": "同一頁。Q1569 定義這句：開始、結束或活動效果要讓它活動時，那一次不活動，然後標記用掉。",
+          "implementation": "triggerEffect restOppFrontSkipNextActive。",
+          "discrepancy": "",
+          "evidence": "新檔：018 翻開後把旁觀的 008 休息，skipNextActive 還在。自己的下一個開始階段，那張仍休息且標記已用掉。對方的下一個開始階段才活動。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-019",
+      "number": "UA40BT/REZ-1-019",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【レイド】レム。登場時、手札から黄でAP1、必要エナジー3以下のラムかレムを1枚までレストで登場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-019 。卡圖整段在深色框。可以不登場。普通登場不發動。",
+          "implementation": "raidRemHandImpact。deployOwnHandNamedRest，yellow，maxEnergy 3，ap 1，names ラム與レム，optional。raid-box 列 onPlay 與 main。",
+          "discrepancy": "",
+          "evidence": "set1：Rem raids onto Rem, rests one cheap。008 與 014 可選。017、紫卡、愛蜜莉雅不可。可以拒絕。登場的是休息。新檔：普通登場沒有 pending，也沒有賦予衝擊的啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "起動メイン、フロント、ターン1、ラムか他のレムを1枚まで、このターン中インパクト1",
+          "status": "已驗證",
+          "official": "同一頁。不能選自己。可以不賦予。期限是這個回合，不是下一個自己回合開始。",
+          "implementation": "frontOnceGrantImpactNamed。excludeSelf。",
+          "discrepancy": "",
+          "evidence": "set1：能源線不能啟動。場上沒有其他拉姆或雷姆時不開。選了之後衝擊 1，自己仍是 0。自己的下一次開始階段回到 0。新檔：不能選自己。對方主要階段衝擊已經是 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】トリガー",
+          "status": "已驗證",
+          "official": "同一頁。與 011 同一句。",
+          "implementation": "共用 life-trigger raid。",
+          "discrepancy": "",
+          "evidence": "新檔的突襲觸發翻的是 011。019 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-020",
+      "number": "UA40BT/REZ-1-020",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【レイド】レム。登場時、自分の場のキャラが全て特徴なしならこのターン中インパクト1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-020 。卡圖整段在深色框。場上有特徵就不取得。普通登場不取得。期限是這個回合。",
+          "implementation": "remTraitlessSniper。impactIfEveryOwnTraitless。",
+          "discrepancy": "",
+          "evidence": "set1：traitless Rem。全體無特徵時衝擊 1。場上有 086 時是 0。普通登場是 0，也沒有狙擊啟動。對方主要階段衝擊回到 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "起動メイン、ターン1、このターン中に狙撃とBP4000以上を指定できないを得て、レイド元を1枚場外",
+          "status": "已驗證",
+          "official": "同一頁。狙擊與限制都是得到的這個回合能力。把突襲對象放場外是效果，不是費用。",
+          "implementation": "sniperThenRaidBaseOutside。sniperGranted 的 turn 是這個回合，maxBp 4000。乾淨的突襲對象才送出場外。",
+          "discrepancy": "",
+          "evidence": "同一測試：啟動後突襲對象在場外，移動原因是 own-effect。BP 1500 可以狙擊，BP 4000 的 011 不能。一回合一次。對方主要階段 sniperGranted 消失。突襲對象底下有蓋牌時，共用的 strippableRaidTop 不拆，狙擊仍然取得。這是既有引擎規則，沒有這張的 FAQ 要求改寫。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】トリガー",
+          "status": "已驗證",
+          "official": "同一頁。與 011 同一句。",
+          "implementation": "共用 life-trigger raid。",
+          "discrepancy": "",
+          "evidence": "新檔的突襲觸發翻的是 011。020 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-021",
+      "number": "UA40BT/REZ-1-021",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動メイン、フロント、ターン1、ラムとレムが両方いる場合のみ、1枚引き1枚場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-021 。只有拉姆、只有雷姆、或名字在對方場上，都不能啟動。",
+          "implementation": "namesDrawDiscard。frontOnceProgram，requireAllNames ラム與レム，then drawDiscard。",
+          "discrepancy": "",
+          "evidence": "set1：Roswaal draws and discards。只有雷姆或只有拉姆時沒有啟動。兩張都在時抽 1 再棄 1，之後不能再啟動。對方的拉姆不算。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔的抽牌觸發翻的是 007。021 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-022",
+      "number": "UA40BT/REZ-1-022",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "効果なし、特徴王選候補者",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-022 。效果為 -。特徵是王選候補者。能量 0、BP 1500。",
+          "implementation": "plain。traits 含王選候補者。",
+          "discrepancy": "",
+          "evidence": "沒有效果程式。020 的無特徵判斷會把她算成有特徵。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同一頁。與 012 同一句。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔的獲得觸發翻的是 012。022 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-023",
+      "number": "UA40BT/REZ-1-023",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、1枚引き、自分の手札を1枚場外に置く",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-023 。抽了就必須棄 1 張。特徵是王選候補者。",
+          "implementation": "drawDiscard。",
+          "discrepancy": "",
+          "evidence": "set1：step, draw-discard。登場後 pending 是 effect-discard。棄 1 張後手牌少 1，這張不在手牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1 張。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔的抽牌觸發翻的是 007。023 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-024",
+      "number": "UA40BT/REZ-1-024",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、必要エナジー1以下の自分の他のキャラを1枚手札に戻す。戻せなければ自分を戻す",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-024 。這是回手，不是退場，也不是退場代替。能源 1 以下包含 0 與 1。不能選自己以外的高能源角色。",
+          "implementation": "bounce。bounceOwnOtherUnderEnergy，energy 1。沒有合法對象就把自己回手。",
+          "discrepancy": "",
+          "evidence": "set1：能源 0 的 013 可選，能源 3 的 003 不可。沒有合法對象時自己回手。新檔：能源 1 的 014 可選，能源 2 的 008 不可，也不能選自己。回手後在手牌、不在場外，沒有退場事件。只剩能源 2 時自己回手，同樣沒有退場事件。",
+          "unresolved": ""
+        },
+        {
+          "match": "トリガーなし",
+          "status": "已驗證",
+          "official": "同一頁。觸發是 -。",
+          "implementation": "trigger null。",
+          "discrepancy": "",
+          "evidence": "卡資料 trigger 為 null。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-025",
+      "number": "UA40BT/REZ-1-025",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "登場時、上3枚を見て1枚まで場外、残りを望む順で上",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-025 。見る是私人查看。1枚まで包含 0 張。留在牌頂的不公開。",
+          "implementation": "topOutside。inspectTopArrange，count 3，toOutside，rest top。不是 inspectTopAnyOutside。",
+          "discrepancy": "",
+          "evidence": "set1：buffs, top windows。可以放 1 張場外再排剩下兩張，也可以 0 張全留在牌頂。新檔：查看中對方看不到窗口。0 張時三張都不進場外，公開畫面沒有那些 UID。放 1 張後，留下的兩張仍不在對方公開畫面。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同一頁。與 005 同一句。",
+          "implementation": "共用 life-trigger active。",
+          "discrepancy": "",
+          "evidence": "新檔的活動觸發翻的是 005。025 印的是同一句。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

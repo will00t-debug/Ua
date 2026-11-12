@@ -1,0 +1,604 @@
+{
+  "group": "D",
+  "baseline": "ccd6c9a4971f721697d9b7abd43f7a59bb05f40e",
+  "baseBranch": "cursor/effect-audit-round11",
+  "range": "UA31BT/MMM-1-051 至 MMM-1-075。",
+  "updated": "2026-11-07",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-051 起，至 MMM-1-075。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-056.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-071.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-075.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA31BT",
+    "checked": "2026-11-07",
+    "note": "2026-11-07 對過 UA31BT 051–075 的官方頁。效果正文、必要能量、AP、BP、發生能量、特徵與觸發都和 dist/madoka-cards.mjs 的 effectJa 一致。頁面把關鍵詞圖示拆掉，所以【登場時】等標籤不在純文字裡，句子本體仍在。059 的頁面在 BP 旁有加號標記，本地基礎 BP 是 3000。056、071、075 的卡圖確認深色突襲框。056 與 075 的登場時在框內。071 的傷害（2）與 BP2000 以下不能阻擋都在框內；別名與生命 5 以上不能使用在框外。範圍內 FAQ 只有 Q1261（075，2024-11-22）：同一登場時先放上場的〈鹿目 まどか〉可以滿足後面的條件，答案是可以。024 與 048 仍是 inspectTopAnyOutside，兩張都可以放場外。沒有改第二彈、共用引擎、raid-box.mjs 或總帳。"
+  },
+  "counts": {
+    "已驗證": 23,
+    "部分核對": 0,
+    "待修正": 0,
+    "缺資料待確認": 0,
+    "無效果": 2
+  },
+  "fixes": [],
+  "sharedGaps": [],
+  "tests": {
+    "command": "node --test tests/v2-mmm1-051-075.test.mjs tests/v2-mmm-set1.test.mjs tests/v2-mmm-set1-faq.test.mjs tests/v2-mmm-set1-rest.test.mjs tests/v2-mmm1-001-025.test.mjs tests/v2-mmm1-026-050.test.mjs",
+    "result": "Node v22.23.4。116 passed, 0 failed。新檔 18。set1、FAQ、rest、001–025 與 026–050 回歸合在同一輪是 98。沒有跑整庫。"
+  },
+  "reviews": [
+    {
+      "cardId": "MMM-1-051",
+      "number": "UA31BT/MMM-1-051",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【登場時】抽 1，必須把手牌 1 張放場外",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-051 。抽到之後必須放場外，沒有跳過。",
+          "implementation": "drawDiscard。抽完開 effect-discard，沒有 uid null。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm1-051-075.test.mjs：牌庫少 1，登場的杏子留在場上，手牌有一張進場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1。牌庫沒有牌就不能抽。",
+          "implementation": "共用 life-trigger draw。空牌庫不提供抽牌，跳過把觸發牌留在場外。",
+          "discrepancy": "",
+          "evidence": "新檔：051 翻開後只抽原本的牌庫頂，觸發牌留在場外，不開登場時。牌庫搬空後不能抽，跳過也不進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-052",
+      "number": "UA31BT/MMM-1-052",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動メイン、ターン1、BP5000以上才把自己變成活動",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-052 。看的是現在的 BP。沒有觸發。",
+          "implementation": "bpActive。cardOnceActiveIfBp，minBp 5000，每張每回合一次。前線與能量線都可以。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm-set1.test.mjs：印刷 4000 不能啟動。這個回合 +1000 之後可以，啟動後再啟動不合法。能量線的另一張同樣只成功一次。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-053",
+      "number": "UA31BT/MMM-1-053",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-053 。效果為 -。能量 0、BP 1500。",
+          "implementation": "plain。沒有 onPlay。",
+          "discrepancy": "",
+          "evidence": "官方頁與 engine kind 都是空白。生命觸發只把手牌加回來，沒有另外開效果。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同一頁。這張牌進手牌。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔：053 翻開後選取，同一張 UID 進手牌，場外不再留著。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-054",
+      "number": "UA31BT/MMM-1-054",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【インパクト無効】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-054 。和這張戰鬥的角色在這場戰鬥中失去衝擊。",
+          "implementation": "impactNull。不在突襲框。敗北仍退場，對方生命不掉。",
+          "discrepancy": "",
+          "evidence": "新檔：BP4000 且有衝擊的 052 打贏 054，054 進場外，兩張無觸發生命都還在，攻擊方衝擊仍是 1。對照的 053 被打贏時生命從 2 變 1。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔：054 翻開後只抽牌庫頂，觸發牌留在場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-055",
+      "number": "UA31BT/MMM-1-055",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動メイン、前線且活動、ターン1，なぎさ或其他クインテット BP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-055 。自己不在前線、或已經休息、或場上沒有合法對象，都不能啟動。",
+          "implementation": "mamiFrontBuff。frontActiveOnceNameOrTrait，requiresActive。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm-set1.test.mjs：前線活動可以；休息、能量線、以及場上沒有なぎさ或其他クインテット時都不合法。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】場外紫、能量 2 以下、AP1 的角色，前線活動登場",
+          "status": "已驗證",
+          "official": "同一頁。只能放前線，活動登場。能量 4 的紫角色不能選。",
+          "implementation": "triggerEffect deployOutsideCharacter，purple、maxEnergy 2、ap 1、frontOnly。觸發牌自己若符合也在場外，可以選。",
+          "discrepancy": "",
+          "evidence": "新檔：055 的顏色觸發可把場外的 053 與觸發牌自己放到前線活動。056 不在選項。沒有能量線目的地。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-056",
+      "number": "UA31BT/MMM-1-056",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲〈巴 マミ〉，登場時看 4，至多 1 張紫、能量 2 以下、AP1 的角色休息登場，其餘放牌庫底",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-056 。卡圖的登場時在突襲框內。看牌包含不能選的牌。可以不登場。",
+          "implementation": "mamiRaidLook。lookTopDeployRest。raid-box 只列 onPlay。窗口給操作者，對手的公開畫面沒有這些 UID。",
+          "discrepancy": "",
+          "evidence": "新檔：普通登場不看牌、衝擊 0。突襲後 4 張都在私人窗口，只有 055 能休息登場，場地、事件不能選，放棄後 4 張都到牌庫底。set1 另測過選一張登場，以及其他クインテット滿 4 張時這個回合衝擊 1，不滿時可以放棄且衝擊仍是 0。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "同一頁。能量夠可以突襲，否則到手牌。",
+          "implementation": "共用 life-trigger raid。能量不足時沒有突襲選項。",
+          "discrepancy": "",
+          "evidence": "新檔：056 翻開時能量不夠，只能取到手牌，不開看牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-057",
+      "number": "UA31BT/MMM-1-057",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動メイン、休息、ターン1，這個回合發生能量+紫，主要階段結束時退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-057 。加的是紫。前線角色本來不產生能量。沒有觸發。",
+          "implementation": "restEnergyRetire。lines 是 field。延遲到自己的主要階段結束。",
+          "discrepancy": "",
+          "evidence": "新檔：能量線從紫 1 變 2。同一回合把她轉回活動也不能再啟動。進入攻擊階段後她在場外，紫能量回到 0。前線啟動後產生的能量仍是 0，主要階段結束也退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-058",
+      "number": "UA31BT/MMM-1-058",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【登場時】必須把手上能量 1 以下的其他角色回手，否則把自己回手",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-058 。能量 2 以上不能選。場地不是角色。不能跳過。沒有觸發。",
+          "implementation": "bounce。bounceOwnOtherUnderEnergy，energy 1。沒有合格對象就把手上的自己回手。",
+          "discrepancy": "",
+          "evidence": "新檔：旁邊只有能量 2 的 054 與場地時，058 自己回手，那兩張留下。有能量 0 的 053 時必須選她，058 留在場上，沒有放棄。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-059",
+      "number": "UA31BT/MMM-1-059",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【登場時】至多 1 張自己的角色，這個回合 BP+1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-059 。包含自己。可以不選。對方角色不能選。沒有觸發。",
+          "implementation": "buffAny。buffOwnField，optional，excludeSelf false。untilTurn 是這個回合。",
+          "discrepancy": "",
+          "evidence": "新檔：自己與友方都在選項，對方不在。選自己後 BP 從 3000 到 4000，友方仍是 1500。下一個自己的主要階段回到 3000。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-060",
+      "number": "UA31BT/MMM-1-060",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【登場時】至多 1 張場外紫的魔法少女回手",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-060 。可以不拿。事件與紅角色不能拿。",
+          "implementation": "recoverPurpleGirl。recoverOutsideOne，optional，顏色紫且特徵魔法少女。",
+          "discrepancy": "",
+          "evidence": "新檔：選項只有 053。事件與 068 不在。放棄後她留在場外。另一局拿進手牌。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同一頁。選自己場上的角色，變成活動，這個回合 BP+3000。已經活動的也能選。",
+          "implementation": "共用 life-trigger active。只列角色，不含場地與翻開的生命牌。",
+          "discrepancy": "",
+          "evidence": "新檔：060 翻開後，場地與生命牌不能選。選已經活動的 054，BP+3000，休息的 053 維持休息與 1500。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-061",
+      "number": "UA31BT/MMM-1-061",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動メイン、休息並棄 1，抽 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-061 。沒有寫每回合一次。沒有手牌就不能付。",
+          "implementation": "fieldDiscardDraw。fieldRestDiscardDraw。棄牌不是可選。再把她轉成活動就能再付。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm-set1.test.mjs：空手牌不能啟動。休息、棄 1、牌庫少 1。轉回活動後可以再啟動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同一頁。這張牌進手牌。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔：061 翻開後同一張 UID 進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-062",
+      "number": "UA31BT/MMM-1-062",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "前線角色這個回合 BP+2000 與衝擊+1；場上有ほむら才抽 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-062 。必須選前線角色。沒有前線就不能使用。沒有ほむら就不抽。",
+          "implementation": "frontImpactDraw。frontGrantKit，bp 2000、impactPlus 1、drawIfName 暁美 ほむら。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm-set1.test.mjs：沒有前線時事件不合法。只有まどか時 BP+2000、衝擊+1、不抽。有ほむら時抽 1，加值只在選中的那張。",
+          "unresolved": ""
+        },
+        {
+          "match": "【アクティブ】",
+          "status": "已驗證",
+          "official": "同一頁。與 060 同一句。",
+          "implementation": "共用 life-trigger active。能量線的角色也是自己的角色。",
+          "discrepancy": "",
+          "evidence": "新檔：062 翻開後，休息的能量線 053 變成活動，BP 從 1500 到 4500。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-063",
+      "number": "UA31BT/MMM-1-063",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "至多 2 張 AP 變成活動",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-063 。可以一張都不選。",
+          "implementation": "recoverAp2。recoverAp count 2。uid null 可以停。",
+          "discrepancy": "",
+          "evidence": "新檔：連續選兩張休息的 AP，兩張都變活動。另一局一開始放棄，那張 AP 維持休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】",
+          "status": "已驗證",
+          "official": "同一頁。自己沒有生命時，才把牌庫頂放進生命區。還有生命就不能用。",
+          "implementation": "共用 life-trigger final。生命還在時不開選項，牌直接進場外。生命歸零且牌庫有牌時才可選。",
+          "discrepancy": "",
+          "evidence": "新檔：下面還有一張生命時，063 進場外且沒有選項，剩下的生命仍是 1。她是最後一張生命時，選取後牌庫頂成為唯一生命，觸發牌留在場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-064",
+      "number": "UA31BT/MMM-1-064",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "退場 BP2000 以下，每張クインテット再加 1000",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-064 。必須選。沒有クインテット時上限是 2000。",
+          "implementation": "traitRetire。traitPerBp，base 2000、per 1000、mandatory。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm-set1.test.mjs：沒有クインテット時上限 2000，只有 069 可選，不能放棄。場上有一張時上限 3000，選中的角色進場外。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】",
+          "status": "已驗證",
+          "official": "同一頁。退場對方前線一張，沒有 BP 上限。",
+          "implementation": "triggerEffect retireOppFront。",
+          "discrepancy": "",
+          "evidence": "新檔：064 翻開後可以退掉 BP 6500 的前線。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-065",
+      "number": "UA31BT/MMM-1-065",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "看牌庫頂 5，至多公開 2 張クインテット到手，其餘放牌庫底",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-065 。看的視窗包含不能拿的牌。可以一張都不拿。只有公開到手的牌公開。",
+          "implementation": "searchTwoQuintet。searchTopUpToTwoBottom，max 2。私人窗口。公開的才進 publicReveals。",
+          "discrepancy": "",
+          "evidence": "新檔：5 張都在操作者的窗口，對手看不到。場地與兩張事件不能選。一張都不拿時沒有公開，5 張都到牌庫底。拿兩張クインテット時只有那兩張公開進手，其餘到底部。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔：065 翻開後只抽牌庫頂，不開看 5 張。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-066",
+      "number": "UA31BT/MMM-1-066",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "退場 BP3000 以下；場上有ほむら則改成 5000 以下",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-066 。必須選。超過上限的不能選。",
+          "implementation": "homuraRetire。bonusName 暁美 ほむら、bonusBp 5000、mandatory。",
+          "discrepancy": "",
+          "evidence": "新檔：沒有ほむら時上限 3000，只有 054 可選，不能放棄，她進場外，4000 的留下。有 072 時 5000 可選、6500 不可選。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】",
+          "status": "已驗證",
+          "official": "同一頁。沒有 BP 上限。",
+          "implementation": "triggerEffect retireOppFront。",
+          "discrepancy": "",
+          "evidence": "新檔：066 翻開後可以退掉 BP 6500 的前線。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-067",
+      "number": "UA31BT/MMM-1-067",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "選ほむら使用時 AP-1；前線這個回合 BP+1000 與 2 回攻擊",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-067 。AP 減免只在選中的是ほむら時。2 回攻擊是這個回合第一次攻擊後變活動。",
+          "implementation": "frontDoubleCut。playApCutOnChosenName 與 frontGrantKit attackTwice。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm-set1.test.mjs：只剩 1 點 AP 時只能選ほむら。選她之後第一次攻擊結束仍是活動。有 2 點 AP 時另一張前線也能選，減免與 2 回攻擊只在選中的那張。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】",
+          "status": "已驗證",
+          "official": "同一頁。沒有 BP 上限。",
+          "implementation": "triggerEffect retireOppFront。",
+          "discrepancy": "",
+          "evidence": "新檔：067 翻開後可以退掉 BP 6500 的前線。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-068",
+      "number": "UA31BT/MMM-1-068",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "對方場上有黃或紫時，手牌中的這張必要能量減紅 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-068 。只有手牌。對方只有紅不夠。減的是 1，不是每張再減。沒有觸發。",
+          "implementation": "oppColorsRed。opponentFieldColorsHandEnergyDiscount，黃與紫，amount 1。",
+          "discrepancy": "",
+          "evidence": "新檔：沒有合格牌或對方只有紅的 072 時，必要能量維持 3。對方有黃的まどか時變成 2，那張離開後回到 3。兩張紫角色也只減到 2。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-069",
+      "number": "UA31BT/MMM-1-069",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【退場時】這張牌進手牌",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-069 。不是可選。戰鬥敗北也是退場。沒有觸發。",
+          "implementation": "fieldReturn。returnRetiredToHand，optional false。",
+          "discrepancy": "",
+          "evidence": "新檔：BP2000 的丘比擋住 BP4000 的攻擊並敗北，同一張 UID 進手牌，不在場外。攻擊方沒有衝擊，生命維持 2。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-070",
+      "number": "UA31BT/MMM-1-070",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "起動メイン、休息、ターン1，這個回合發生能量+赤，主要階段結束時退場",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-070 。加的是紅。沒有觸發。",
+          "implementation": "restEnergyRetire。與 057 同一程式，顏色跟印刷走。",
+          "discrepancy": "",
+          "evidence": "新檔：能量線從紅 1 變 2，休息。進入攻擊階段後她在場外，紅能量回到 0。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-071",
+      "number": "UA31BT/MMM-1-071",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "也當作さやか；自己生命 5 以上不能使用",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-071 。這兩句在突襲框外。生命 4 可以使用。",
+          "implementation": "mermaidWitch。nameAliases 美樹 さやか。playLifeAtMost 4。",
+          "discrepancy": "",
+          "evidence": "tests/v2-mmm-set1.test.mjs：生命 5 時不能登場也不能突襲。生命 4 時可以突襲到さやか，不能突襲到其他名字。別名讓需要さやか的效果把她算進去。",
+          "unresolved": ""
+        },
+        {
+          "match": "突襲框內：傷害（2），BP2000 以下的角色不能阻擋",
+          "status": "已驗證",
+          "official": "同一頁與卡圖。兩句都在深色框內。普通登場仍是 1 點傷害，BP2000 以下可以阻擋。",
+          "implementation": "raidAttackDamage 2 只在正面向上突襲。blockBpRestriction 由 raid-box 列出，同樣只在那個狀態。",
+          "discrepancy": "",
+          "evidence": "新檔：沒有突襲時傷害 1，BP1500 與 BP3000 都能阻擋。正面向上突襲後傷害 2，BP1500 不能阻擋，BP3000 可以，不阻擋時兩張生命都離開。set1 另測過突襲後直接打 2 點並排生命順序。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同一頁。這張牌進手牌。生命觸發不在突襲框。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔：071 翻開後同一張 UID 進手牌，不開突襲框裡的句子。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-072",
+      "number": "UA31BT/MMM-1-072",
+      "status": "無效果",
+      "clauses": [
+        {
+          "match": "効果なし",
+          "status": "無效果",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-072 。效果為 -。特徵魔法少女。能量 0、BP 1500。",
+          "implementation": "plain。",
+          "discrepancy": "",
+          "evidence": "官方頁與 engine kind 都是空白。她在 075 的測試裡只當突襲對象。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】",
+          "status": "已驗證",
+          "official": "同一頁。這張牌進手牌。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "新檔：072 翻開後同一張 UID 進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-073",
+      "number": "UA31BT/MMM-1-073",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【ステップ】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-073 。只在自己的移動階段，從前線到能量線。沒有這能力的角色不行。",
+          "implementation": "step。printedStepLive 只在移動階段列出。",
+          "discrepancy": "",
+          "evidence": "新檔：移動階段 073 可以進能量線第 1 格，旁邊的 072 不能。主要階段沒有 step。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】",
+          "status": "已驗證",
+          "official": "同一頁。抽 1。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "新檔：073 翻開後只抽牌庫頂。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-074",
+      "number": "UA31BT/MMM-1-074",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "【登場時】自己場上有まどか才抽 1",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-074 。能量線也是場上。對方的まどか不算。沒有觸發。",
+          "implementation": "drawIfMadoka。drawIfOwnName。",
+          "discrepancy": "",
+          "evidence": "新檔：場上沒有時牌庫不變。自己能量線有 076 時牌庫少 1。只有對方前線有まどか時不抽。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "MMM-1-075",
+      "number": "UA31BT/MMM-1-075",
+      "status": "已驗證",
+      "clauses": [
+        {
+          "match": "突襲〈暁美 ほむら〉。登場時至多休息登場 1 張紅、能量 2 以下、AP1 的魔法少女",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-075 。卡圖的登場時在突襲框內。可以不登場。黃的まどか不能選。",
+          "implementation": "homuraRaidLock。deployOwnHandSpecial。raid-box 只列 onPlay。",
+          "discrepancy": "",
+          "evidence": "新檔：普通登場不開登場時，手牌的まどか留下。突襲後可以放棄登場。076 可選並休息進前線，黃的 006 不可選。",
+          "unresolved": ""
+        },
+        {
+          "match": "自己場上有まどか時，至多 1 張對方前線到下一個自己的回合開始不能攻擊",
+          "status": "已驗證",
+          "official": "同一頁。Q1261（2024-11-22）問同一登場時剛放上場的まどか算不算，官方答案是可以。可以不選。沒有まどか就不給這個效果。",
+          "implementation": "forbidAttackOppFrontOne。when 是 ownNameExists，接在登場之後。until nextOwnTurnStart。optional。",
+          "discrepancy": "",
+          "evidence": "新檔：不登場且場上本來沒有まどか時，沒有攻擊禁止。Q1261 的順序會開 effect-attack-ban。選中的角色在對方攻擊階段不能攻擊，下一個自己的回合開始之後的攻擊階段可以。set1 與 FAQ 檔有同一句的另一條重現。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】",
+          "status": "已驗證",
+          "official": "同一頁。能量夠可以突襲到ほむら，否則到手牌。生命觸發不在突襲框，但突襲成功後框內登場時才會發動。",
+          "implementation": "共用 life-trigger raid。能量夠且有合法基座才列出突襲。",
+          "discrepancy": "",
+          "evidence": "新檔：075 當生命翻開，能量夠時可以突襲到前線的 072。突襲後同一張在基座上面。若手牌有合格角色，登場時會開，測試選擇不登場。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

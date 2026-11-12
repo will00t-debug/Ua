@@ -73,6 +73,8 @@ export function loadAuditFixture(name){
  if(name==='kmr054')return heatMetal();
  if(name==='csm008')return denji();
  if(name==='csm056')return hayakawaFacedown();
+ if(name==='csm056raid')return hayakawaRaidReady();
+ if(name==='csm055act')return akiActivateReady();
  if(name==='iys028')return narakuLeave();
  if(name==='iys028energy')return energySqueeze();
  if(name==='iys046')return inuyashaDouble();
@@ -216,6 +218,62 @@ function pick(pack,built,pred){
 function ready(s){
  s.pending=null;s.phase='main';
  for(const ap of s.players[0].apCards){ap.inPlay=true;ap.ready=true;}
+}
+function hayakawaRaidReady(){
+ const pack=createCsmV2Pack();
+ const built=open(pack,56112,[
+  'CSM-1-056','CSM-1-052','CSM-1-057','CSM-1-060','CSM-1-062','CSM-1-067'
+ ],{'CSM-1-056':2,'CSM-1-057':2,'CSM-1-060':4});
+ const s=built.state;
+ ready(s);
+ put(s,0,'CSM-1-060','energy',0);
+ put(s,0,'CSM-1-060','energy',1);
+ const base=put(s,0,'CSM-1-052','front',0,true);
+ const decoy=put(s,0,'CSM-1-057','front',1,true);
+ const tucked=['CSM-1-062','CSM-1-067','CSM-1-057'].map(id=>take(s,0,id));
+ s.players[0].deck.unshift(...tucked);
+ const aki=take(s,0,'CSM-1-056');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].hand.push(aki);
+ const packs=[pack,pack];
+ const legal=legalUniversalActions(packs,s);
+ const raids=legal.filter(action=>action.type==='raid'&&action.uid===aki.uid);
+ if(!raids.some(action=>action.baseUid===base.uid&&action.slot===0&&action.line!=='energy'))
+  throw Error('CSM-1-056 cannot raid onto CSM-1-052');
+ if(raids.some(action=>action.baseUid===decoy.uid))
+  throw Error('CSM-1-057 was treated as an Aki raid base');
+ if(!legal.some(action=>action.type==='play'&&action.uid===aki.uid))
+  throw Error('Ordinary play should stay available beside the raid');
+ if((universalEnergyByColor(pack,s,0).red||0)<4)
+  throw Error('CSM-1-056 raid does not have four red energy');
+ if(!s.players[0].apCards.some(card=>card.inPlay&&card.ready))
+  throw Error('CSM-1-056 raid does not have a ready AP');
+ return finish(pack,built,
+  '稽核 CSM-1-056：手牌早川秋可突襲到場上的 CSM-1-052。帕瓦不是底板。突襲支付 1 AP，疊放並活動，框外登場時使 BP+1000 並蓋三張；框內的攻擊時效果此時不發動。');
+}
+function akiActivateReady(){
+ const pack=createCsmV2Pack();
+ const built=open(pack,55155,[
+  'CSM-1-055','CSM-1-052','CSM-1-001','CSM-1-049','CSM-1-057','CSM-1-041'
+ ],{'CSM-1-057':2});
+ const s=built.state;
+ ready(s);
+ const aki=put(s,0,'CSM-1-055','front',0,true);
+ const decoy=put(s,0,'CSM-1-052','front',1,true);
+ const looked=['CSM-1-001','CSM-1-049','CSM-1-057'].map(id=>take(s,0,id));
+ s.players[0].deck.unshift(...looked);
+ const payment=take(s,0,'CSM-1-041');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].hand.push(payment);
+ const packs=[pack,pack];
+ const legal=legalUniversalActions(packs,s);
+ const activations=legal.filter(action=>action.type==='activate');
+ if(activations.length!==1||activations[0].uid!==aki.uid||activations[0].mode!=='csm:0')
+  throw Error('CSM-1-055 activation is not the only legal activate');
+ if(legal.some(action=>action.type==='activate'&&action.uid===decoy.uid))
+  throw Error('CSM-1-052 offered an activation');
+ return finish(pack,built,
+  '稽核 CSM-1-055：只點場上的早川秋會出現啟動。支付手牌後選擇查看三張，小紅不能選，帕瓦可以加入手牌。同一張不能再啟動。');
 }
 function narakuLeave(){
  const pack=createIysV2Pack();

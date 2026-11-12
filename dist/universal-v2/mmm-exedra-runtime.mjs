@@ -220,7 +220,9 @@ function play003(pack,s,job){
   modes.map(mode=>({type:'mmm2',mode})));
 }
 function replay(pack,s,job){
- const printed=def(pack,{cardId:job.id});
+ const self=selfOf(s,job.owner,job.sourceUid);
+ if(!self)return;
+ const printed=def(pack,self);
  const jobs=(printed.effects?.onPlay||[]).map(e=>({...e,owner:job.owner,sourceUid:job.sourceUid}));
  if(jobs.length)s.effectQueue.unshift(...jobs);
 }
@@ -382,8 +384,12 @@ function play041(pack,s,job){
  if(self)self.mmm2DoubleAttack=s.turn;
 }
 function attack041(pack,s,job){
+ // 【ターン1】 is this physical card. Q2353's three names include this
+ // entry, but a second swing from 【2回アタック】 does not look again.
+ if(used(s,job.sourceUid+'|look'))return;
  if(entries(s,job.owner,VILLA)<3)return;
- look(pack,s,job,3,'u041');
+ use(s,job.sourceUid+'|look');
+ look(pack,s,job,3,'u041',c=>cardHasTrait(def(pack,c),VILLA));
 }
 function main043(pack,s,job){
  const targets=ownChars(s,job.owner,c=>c.uid!==job.sourceUid);
@@ -417,7 +423,12 @@ function play045(pack,s,job){
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u045'},
   [{type:'mmm2',mode:'skip'},...actions]);
 }
-function play046(pack,s,job){look(pack,s,job,2,'u046');}
+function play046(pack,s,job){
+ look(pack,s,job,2,'u046',c=>{
+  const d=def(pack,c);
+  return cardHasTrait(d,MAGIUS)||cardHasTrait(d,WING);
+ });
+}
 function main047(pack,s,job){
  const hand=plOf(s,job.owner).hand;
  if(!hand.length)return;
@@ -457,6 +468,8 @@ function revealed055(pack,s,job){
  if(once(s,job.owner,'梓 みふゆ|revealed'))return;
  const targets=ownChars(s,job.owner,c=>cardHasTrait(def(pack,c),MAGIUS));
  if(!targets.length)return;
+ // Q2362: opening the choice spends the name lock. Skipping still activated it.
+ lock(s,job.owner,'梓 みふゆ|revealed');
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u055'},
   skipDo(targets.map(c=>({type:'mmm2',uid:c.uid}))));
 }
@@ -494,7 +507,7 @@ function main057(pack,s,job){
  }
  offer057(pack,s,job);
 }
-function play060(pack,s,job){look(pack,s,job,4,'u060');}
+function play060(pack,s,job){look(pack,s,job,4,'look060');}
 function play061(pack,s,job){
  const count=A.field(plOf(s,job.owner)).reduce((n,c)=>{
   const d=def(pack,c);
@@ -508,7 +521,7 @@ function play061(pack,s,job){
 }
 function play063(pack,s,job){
  const hand=plOf(s,job.owner).hand;
- if(!hand.length){lookOne(pack,s,job);return;}
+ if(!hand.length)return;
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u063'},
   skipDo(hand.map(c=>({type:'mmm2',uid:c.uid}))));
 }
@@ -537,9 +550,13 @@ function main071(pack,s,job){
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u071'},
   life.map(c=>({type:'mmm2',uid:c.uid})));
 }
+function other072(s,player,sourceUid){
+ return (girlNames(s,player,sourceUid)>=4||lifeToHand(s,player))&&
+  ownChars(s,player,c=>c.uid!==sourceUid).length>0;
+}
 function main072(pack,s,job){
  const modes=['a'];
- if(girlNames(s,job.owner,job.sourceUid)>=4||lifeToHand(s,job.owner))modes.push('b');
+ if(other072(s,job.owner,job.sourceUid))modes.push('b');
  hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'u072',data:{picked:[]}},
   [{type:'mmm2',mode:'done'},...modes.map(mode=>({type:'mmm2',mode}))]);
 }
@@ -552,16 +569,19 @@ function play073(pack,s,job){
   skipDo(girls.map(c=>({type:'mmm2',uid:c.uid}))));
 }
 
-function look(pack,s,job,count,step){
- const uids=plOf(s,job.owner).deck.slice(0,count).map(c=>c.uid);
- if(!uids.length)return;
- hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step,data:{uids,picked:[]}},
-  [{type:'mmm2',mode:'done'},...uids.map(uid=>({type:'mmm2',uid}))]);
+function look(pack,s,job,count,step,ok){
+ const cards=plOf(s,job.owner).deck.slice(0,count);
+ if(!cards.length)return;
+ const legal=typeof ok==='function'?cards.filter(ok):cards;
+ hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step,
+  data:{uids:cards.map(c=>c.uid),picked:[]}},
+  [{type:'mmm2',mode:'done'},...legal.map(c=>({type:'mmm2',uid:c.uid}))]);
 }
 function lookOne(pack,s,job){
  const top=plOf(s,job.owner).deck[0];
  if(!top){A.draw(pack,s,job.owner,1);return;}
- hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'placeOne'},
+ hold(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id,step:'placeOne',
+  data:{uids:[top.uid]}},
   [{type:'mmm2',mode:'top'},{type:'mmm2',mode:'bottom'}]);
 }
 function drawDiscard(pack,s,job){
@@ -679,19 +699,29 @@ const STEPS={
   for(const c of left)moveZone(pack,s,q.player,'deck',c.uid,'outside',q.sourceUid);
  },
  u012b(pack,s,q,a){
-  const data=q.data,d=def(pack,plOf(s,q.player).outside.find(c=>c.uid===a.uid)||{});
-  if(data.bottomAt===undefined)data.bottomAt=plOf(s,q.player).deck.length;
-  A.toDeckBottom(pack,s,q.player,'outside',a.uid,q.sourceUid,data.bottomAt);
-  data.picked.push(a.uid);data.sum+=d.energy||0;
-  if(data.sum>=4){
+  const data=q.data;
+  if(a.mode==='done'){
+   if((data.sum||0)<4)throw Error('Madoka bottom is still under 4');
    const self=selfOf(s,q.player,q.sourceUid);
    if(self)A.active(s,q.player,self);
    return;
   }
+  const placed=plOf(s,q.player).outside.find(c=>c.uid===a.uid);
+  const d=def(pack,placed||{});
+  if(!placed||!names(d,'鹿目 まどか',placed,s))throw Error('Illegal Madoka bottom');
+  if(data.bottomAt===undefined)data.bottomAt=plOf(s,q.player).deck.length;
+  A.toDeckBottom(pack,s,q.player,'outside',a.uid,q.sourceUid,data.bottomAt);
+  data.picked.push(a.uid);data.sum=(data.sum||0)+(d.energy||0);
   const pool=plOf(s,q.player).outside.filter(c=>names(def(pack,c),'鹿目 まどか',c,s));
+  if(data.sum>=4&&!pool.length){
+   const self=selfOf(s,q.player,q.sourceUid);
+   if(self)A.active(s,q.player,self);
+   return;
+  }
   if(!pool.length)return;
-  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u012b',data},
-   pool.map(c=>({type:'mmm2',uid:c.uid})));
+  const actions=pool.map(c=>({type:'mmm2',uid:c.uid}));
+  if(data.sum>=4)actions.unshift({type:'mmm2',mode:'done'});
+  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u012b',data},actions);
  },
  u014(pack,s,q,a){
   if(a.mode==='skip')return;
@@ -831,6 +861,7 @@ const STEPS={
  u046(pack,s,q,a){takeWindow(pack,s,q,a,1,c=>{
   const d=def(pack,c);return cardHasTrait(d,MAGIUS)||cardHasTrait(d,WING);
  },'top',true);},
+ orderWindow,
  u047(pack,s,q,a){
   moveZone(pack,s,q.player,'hand',a.uid,'deck',q.sourceUid,{deckPosition:'top',revealed:false});
   const self=selfOf(s,q.player,q.sourceUid);
@@ -853,7 +884,6 @@ const STEPS={
   if(a.mode==='skip')return;
   const c=ownChars(s,q.player).find(x=>x.uid===a.uid&&cardHasTrait(def(pack,x),MAGIUS));
   if(!c)throw Error('Magius left');
-  lock(s,q.player,'梓 みふゆ|revealed');
   buff(s,c,1000);impact(s,c);
  },
  u056(pack,s,q,a){
@@ -874,7 +904,7 @@ const STEPS={
   A.enter(pack,s,{owner:q.player,from,uid:a.uid,line:a.line,slot:a.slot,
    replaceUid:a.replaceUid,ready:q.data.ready===true,sourceUid:q.sourceUid});
  },
- u060(pack,s,q,a){takeWindow(pack,s,q,a,2,()=>true,'top');},
+ look060(pack,s,q,a){takeWindow(pack,s,q,a,2,()=>true,'top');},
  u061(pack,s,q,a){
   const foe=1-q.player,loc=A.location(s,foe,a.uid);
   if(!loc)throw Error('Front left');
@@ -883,7 +913,8 @@ const STEPS={
   else s.effectQueue.push({op:'mmm2',id:'MMM-2-061',slot:'after',owner:q.player,sourceUid:q.sourceUid});
  },
  u063(pack,s,q,a){
-  if(a.mode!=='skip')moveZone(pack,s,q.player,'hand',a.uid,'outside',q.sourceUid);
+  if(a.mode==='skip')return;
+  moveZone(pack,s,q.player,'hand',a.uid,'outside',q.sourceUid);
   lookOne(pack,s,{owner:q.player,sourceUid:q.sourceUid,id:q.id});
  },
  placeOne(pack,s,q,a){
@@ -904,7 +935,9 @@ const STEPS={
  drawOpt(pack,s,q,a){if(a.mode==='do')A.draw(pack,s,q.player,1);},
  u069(pack,s,q,a){
   if(a.mode!=='do')return;
-  const printed=def(pack,{cardId:'MMM-2-069'});
+  const source=plOf(s,q.player).outside.find(c=>c.uid===q.sourceUid)||selfOf(s,q.player,q.sourceUid);
+  if(!source)throw Error('Mami left');
+  const printed=def(pack,source);
   s.effectQueue.unshift(...(printed.effects.onPlay||[]).map(e=>({...e,owner:q.player,sourceUid:q.sourceUid})));
  },
  u071(pack,s,q,a){
@@ -920,7 +953,7 @@ const STEPS={
    if(data.picked.includes(a.mode)||data.picked.length>=2)throw Error('Repeated option');
    data.picked.push(a.mode);
    const left=['a','b'].filter(m=>!data.picked.includes(m)&&
-    (m==='a'||girlNames(s,q.player,q.sourceUid)>=4||lifeToHand(s,q.player)));
+    (m==='a'||other072(s,q.player,q.sourceUid)));
    if(data.picked.length<2&&left.length){
     hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'u072b',data},
      [{type:'mmm2',mode:'done'},...left.map(mode=>({type:'mmm2',mode}))]);
@@ -975,11 +1008,42 @@ function takeWindow(pack,s,q,a,max,ok,rest,toOutside){
  }
  const pl=plOf(s,q.player);
  const left=pl.deck.filter(c=>data.uids.includes(c.uid));
- if(rest==='top'||!left.length)return;
- const ids=new Set(left.map(c=>c.uid));
- const kept=[],moved=[];
- for(const c of pl.deck)(ids.has(c.uid)?moved:kept).push(c);
- pl.deck=[...kept,...moved];
+ if(!left.length)return;
+ // 望む順. One remaining card has no order. Two or more stay private
+ // until the player picks the top of that group downward.
+ if(left.length===1){
+  if(rest==='top')return;
+  const ids=new Set(left.map(c=>c.uid));
+  const kept=[],moved=[];
+  for(const c of pl.deck)(ids.has(c.uid)?moved:kept).push(c);
+  pl.deck=[...kept,...moved];
+  return;
+ }
+ const uids=left.map(c=>c.uid);
+ hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'orderWindow',
+  data:{uids,order:[],rest}},uids.map(uid=>({type:'mmm2',uid})));
+}
+function orderWindow(pack,s,q,a){
+ const data=q.data;
+ if(!data.uids.includes(a.uid)||data.order.includes(a.uid))
+  throw Error('Illegal deck order');
+ data.order.push(a.uid);
+ const remain=data.uids.filter(uid=>!data.order.includes(uid));
+ if(remain.length>1){
+  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'orderWindow',data},
+   remain.map(uid=>({type:'mmm2',uid})));
+  return;
+ }
+ const seq=[...data.order,...remain];
+ const pl=plOf(s,q.player);
+ const window=pl.deck.splice(0,data.uids.length);
+ if(window.length!==data.uids.length||window.some(c=>!data.uids.includes(c.uid)))
+  throw Error('Inspected deck window was changed');
+ const byUid=new Map(window.map(c=>[c.uid,c]));
+ const ordered=seq.map(uid=>byUid.get(uid));
+ if(ordered.some(c=>!c))throw Error('Ordered card left the window');
+ if(data.rest==='top')pl.deck.unshift(...ordered);
+ else pl.deck.push(...ordered);
 }
 function apply072(pack,s,q,picked){
  const order=['a','b'].filter(m=>picked.includes(m));
@@ -1027,7 +1091,8 @@ export function legalMmm2Activations(pack,s,owner,c){
   push('mmm2:0',front&&!used(s,c.uid+'|bounce')&&
    ownChars(s,owner,x=>names(def(pack,x),'鹿目 まどか',x,s)).length>0);
   push('mmm2:1',!once(s,owner,'悪魔ほむら|bottom')&&
-   plOf(s,owner).outside.some(x=>names(def(pack,x),'鹿目 まどか',x,s)));
+   plOf(s,owner).outside.filter(x=>names(def(pack,x),'鹿目 まどか',x,s))
+    .reduce((n,x)=>n+(def(pack,x).energy||0),0)>=4);
  }
  if(id==='MMM-2-016'){
   push('mmm2:0',!used(s,c.uid+'|retire')&&

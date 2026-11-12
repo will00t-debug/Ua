@@ -258,14 +258,14 @@ test('all one hundred thirteen whole prints enter the V2 pack',()=>{
   op:'removeNamedOutsideActive',name:REZERO_BY_ID['REZ-1-098'].nameJa}]);
  assert.equal(pack.cards['REZ-1-087'].ownTurnBp,1000);
  assert.deepEqual(pack.cards['REZ-1-031'].effects.onPlay,[{
-  op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}]);
+  op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000,mandatory:true}]);
  assert.deepEqual(pack.cards['REZ-1-031'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-031'].type,'event');
  assert.deepEqual(pack.cards['REZ-1-063'].effects.onPlay,pack.cards['REZ-1-031'].effects.onPlay);
  assert.deepEqual(pack.cards['REZ-1-063'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-063'].color,'blue');
  assert.deepEqual(pack.cards['REZ-1-100'].effects.onPlay,[{
-  op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}]);
+  op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000,mandatory:true}]);
  assert.deepEqual(pack.cards['REZ-1-100'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-100'].color,'purple');
  assert.equal(pack.cards['REZ-1-096'].type,'event');
@@ -3890,7 +3890,8 @@ test('Subaru raids onto Subaru, draws, then may REST the raid base after retirem
  assert.ok(play);
  const deck=plain.players[0].deck.length;
  plain=dispatchUniversalAction(packs,plain,play);
- assert.equal(plain.players[0].deck.length,deck);
+ // 2026-11-11 card image: 【登場時】 sits on the white field under the raid bar.
+ assert.equal(plain.players[0].deck.length,deck-1);
  assert.equal(at(plain,0,played.uid).ready,false);
  assert.equal(at(plain,0,played.uid).stack.length,0);
  at(plain,0,played.uid).ready=true;
@@ -4899,8 +4900,8 @@ test('Rem raids onto Rem, rests a blue zero-cost Subaru, and grants a 4000 block
  const printed=pack.cards['REZ-1-053'];
  assert.equal(printed.raidName,'レム');
  assert.equal(printed.energy,5);
- assert.equal(printed.raidImpact,1);
- assert.equal(printed.printedImpact,0);
+ assert.equal(printed.raidImpact,0);
+ assert.equal(printed.printedImpact,1);
  assert.deepEqual(printed.effects.onPlay,[{op:'deployOutsidePrintedRest',name:'ナツキ・スバル',
   color:'blue',energy:0,optional:true}]);
  assert.deepEqual(printed.effects.onAttack,[{op:'grantPrintedBlockAtLeast',name:'ナツキ・スバル',
@@ -5231,8 +5232,8 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
  assert.equal(printed.raidName,'エミリア');
  assert.equal(printed.energy,5);
  assert.equal(printed.bp,4000);
- assert.equal(printed.raidImpactNull,true);
- assert.equal(printed.impactNull,false);
+ assert.equal(printed.raidImpactNull,false);
+ assert.equal(printed.impactNull,true);
  assert.equal(printed.unblockedRestFront,true);
  assert.deepEqual(printed.blockBpRestriction,{relation:'atMost',bp:2000,condition:null});
  assert.deepEqual(printed.mainAbility,{op:'energySwapOwnFront',line:'energy',oncePerTurn:true});

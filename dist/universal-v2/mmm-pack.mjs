@@ -137,7 +137,8 @@ export function mmmPackCard(card){
   kind==='distinctRetire'?[{op:'retireOppFrontUnderBp',optional:true,traitNamePerBp:{
    trait:GIRL,per:1000,excludeSelf:true}}]:
   kind==='restDraw3'?[{op:'restNamedActiveFrontThenDraw',draw:3}]:
-  kind==='lifeDraw2'?[{op:'optionalOwnLifeToHandThenDraw',then:[{op:'draw',count:2}]}]:
+  kind==='lifeDraw2'?[{op:'optionalOwnLifeToHandThenDraw',optional:false,
+   then:[{op:'draw',count:2}]}]:
   kind==='excludeGirlSearch'?[{op:'searchTopOneBottomDiscard',count:4,
    filter:{field:'trait',value:GIRL},excludeName:'鹿目 まどか'}]:
   kind==='sayakaLifeRetire'?[{op:'retireOppFrontUnderBp',bp:3000,bonusName:'美樹 さやか',

@@ -3893,10 +3893,11 @@ function continueEffectQueue(pack,s){
    if(loc)bounceToHand(pack,s,owner,job.sourceUid,job.sourceUid);
   }else if(job.op==='optionalOwnLifeToHandThenDraw'){
    // Any own life card, not only the top. Identities stay hidden until the
-   // chosen card enters hand. No life card means the optional take cannot start.
+   // chosen card enters hand. No life card means the take cannot start, and
+   // the contingent draw does not happen. optional:false is a printed must.
    if(pl.life.length)s.pending={kind:'effect-life-to-hand',player:owner,
-    sourceUid:job.sourceUid,choices:pl.life.map(c=>c.uid),optional:true,
-    drawCount:job.then[0].count};
+    sourceUid:job.sourceUid,choices:pl.life.map(c=>c.uid),
+    optional:job.optional!==false,drawCount:job.then[0].count};
   }else if(job.op==='grantOtherImpactThisTurn'){
    const matches=c=>{
     const d=card(pack,c);
@@ -9311,7 +9312,9 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-life-to-hand'){
-  if(a.uid!==null){
+  if(a.uid===null){
+   if(q.optional===false)throw Error('Life to hand is mandatory');
+  }else{
    const index=p.life.findIndex(c=>c.uid===a.uid);
    if(index<0||!q.choices.includes(a.uid))
     throw Error('Life card is not an available own life card');
@@ -14614,7 +14617,7 @@ function legalPending(pack,s){
   p.deck.slice(0,q.uids.length).some(c=>c.uid===uid))
   .map(uid=>({type:'chooseTopHandOne',uid}));
  if(q.kind==='effect-life-to-hand')return [
-  {type:'chooseLifeToHand',uid:null},
+  ...(q.optional===false?[]:[{type:'chooseLifeToHand',uid:null}]),
   ...p.life.filter(c=>q.choices.includes(c.uid)).map(c=>({type:'chooseLifeToHand',uid:c.uid}))
  ];
  if(q.kind==='effect-life-active-self')return p.life.filter(c=>q.choices.includes(c.uid))

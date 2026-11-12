@@ -443,6 +443,10 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   const index=state.players?.[0]?.life?.findIndex(c=>c?.uid===action.uid)??-1;
   return index>=0?'選擇生命區第 '+(index+1)+' 張（背面）':'選擇背面生命';
  }
+ if(step==='akiChoose'&&mode==='block')
+  return '選擇「這個回合不會被 BP3000 以下的角色阻擋」';
+ if(step==='akiChoose'&&mode==='search')
+  return '查看牌組頂 3 張，可將早川秋、淀治或帕瓦加入手牌';
  if(step==='enter'&&mode==='skip')return '不登場，留在移除區';
  if(step==='toHand'&&mode==='skip')return '不加入手牌';
  if(mode==='skip')return '不發動';
@@ -745,6 +749,7 @@ const MMM2_TARGET={
  u051:'將這張手牌放到場外',
  u055:'這個回合使這張角色 BP＋1000，並獲得衝擊 1',
  u060:'將這張卡加入手牌',
+ look060:'將這張卡加入手牌',
  u061:'使這張角色退場',
  u063:'將這張手牌放到場外',
  u067:'這張角色攻擊沒被阻擋時，可以抽 1 張',
@@ -814,7 +819,8 @@ export function uiActionLabel(action,{pack,state}={}){
    '宣告攻擊：'+name();
   case 'activateRemoved':return '起動移除區主要：本回合產生能源變為 2 倍';
   case 'activate':
-   if(typeof action.mode==='string'&&(action.mode.startsWith('kmr:')||action.mode.startsWith('kmr2:')))
+   if(typeof action.mode==='string'&&(action.mode.startsWith('kmr:')||
+    action.mode.startsWith('kmr2:')||action.mode.startsWith('csm:')))
     return '起動主要：'+name();
    return action.mode==='namesActive'?
     '起動主要：場上同時有指定名稱時，將此角色轉為 ACTIVE':
