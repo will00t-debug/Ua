@@ -1429,18 +1429,21 @@ test('051 recovers one LiPPS at printed energy 2 or less and stays unfinished',(
  assert.equal(assertUniversalMatch(probe,s),true);
 });
 
-test('052 and 054 stay out because the union choice cannot pay their printed activate',()=>{
+test('052 and 054 stay out while their activate shapes are shared rules',()=>{
  assert.equal(pack.cards['IMC-1-052'],undefined);
  assert.equal(pack.cards['IMC-1-054'],undefined);
  const union={op:'chooseFrontOrOwnTrait',bp:500,optional:false,trait:'LiPPS',excludeName:'速水 奏'};
- const rested={...bare('REST','速水 奏',{traits:['LiPPS']}),mainAbility:{
+ const rested={...bare('REST','速水 奏',{traits:['LiPPS'],implementation:'dsl'}),mainAbility:{
   op:'restSelfThen',frontOnly:false,then:[union]}};
- assert.throws(()=>createUniversalPack({id:'rest',version:'imc-052',cards:[rested]}),
-  /unsupported main action ability/);
- const front={...bare('FRONT','速水 奏',{energy:4,bp:4000,traits:['LiPPS']}),mainAbility:{
-  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[union]}};
- assert.throws(()=>createUniversalPack({id:'front',version:'imc-054',cards:[front]}),
-  /unsupported main action ability/);
+ const restPack=createUniversalPack({id:'rest',version:'imc-052',cards:[rested]});
+ assert.equal(restPack.cards.REST.mainAbility.then[0].op,'chooseFrontOrOwnTrait');
+ const front={...bare('FRONT','速水 奏',{energy:4,bp:4000,traits:['LiPPS'],implementation:'dsl'}),
+  mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[union]},
+  nameActive:{op:'nameOnceActive',scope:'name',when:{
+   kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500}}};
+ const frontPack=createUniversalPack({id:'front',version:'imc-054',cards:[front]});
+ assert.equal(frontPack.cards.FRONT.nameActive.when.minBp,4500);
+ assert.equal(frontPack.cards.FRONT.ready,undefined);
 });
 
 test('062 must retire one front character at 3000, or 5000 with three Frontier characters',()=>{

@@ -29,15 +29,15 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-052',
   sentence:'相手のフロントLのキャラか、〈速水 奏〉以外の自分の場の［特徴：LiPPS］を1枚選び、BP+500。',
   existingOps:['buffOwnTrait','enemyBpDown'],
-  whyNotEnough:'chooseFrontOrOwnTrait 已能在同一次選擇裡選對手前線，或自己場上帶特徵且排除指定卡名的角色，必選時不能跳過，BP+500。印刷是起動並休息。restSelfThen 只接受 millTop 或 buffSelfUntilNextOwnStart，不能接這個選擇。改成登場時會弄錯時機，所以不放進程式。054 的前線一回合一次是同一句，也接不進去。',
-  proposal:'讓休息起動可以接 chooseFrontOrOwnTrait。在那之前 052 不標 ready。'
+  whyNotEnough:'chooseFrontOrOwnTrait 已能在同一次選擇裡選對手前線，或自己場上帶特徵且排除指定卡名的角色。restSelfThen 現在可以接這句：先休息，沒有合法目標就不產生選擇，也不能起動。這是起動，不是登場。整張程式還沒寫，所以不標 ready。',
+  proposal:'mainAbility 用 restSelfThen，frontOnly false，then 接 chooseFrontOrOwnTrait。不要放進 onPlay。'
  },
  {
   cardId:'IMC-1-054',
   sentence:'〈速水 奏〉のこの効果は1ターンに1回のみ。相手の場にBP4500以上のキャラがある場合のみ、このキャラをアクティブにする。',
   existingOps:['draw'],
-  whyNotEnough:'跨陣營選擇的 op 已有，但 frontOnceProgram 與 restSelfThen 都不接受它，所以第二句起動不能接上。同名一回合一次的活動自身仍不支援對手目前 BP≥4500。Q2240 只算活動那句，Q2241 兩張同名共用一次。BP4500 以上不能阻擋也還沒有整句。',
-  proposal:'同名一次的活動條件與跨陣營起動都補上之前，054 不標 ready。'
+  whyNotEnough:'第二句起動可用 frontOnceProgram 接 chooseFrontOrOwnTrait，前線、每回合一張卡一次。活動自身用 nameActive，when 是 oppCharacterBpAtLeast、場上、目前 BP 4500。Q2240 只算活動那句，Q2241 兩張同名共用 nameOnceActive 的名字鎖。BP4500 以上不能阻擋沿用既有 blockBpRestriction，relation atLeast、bp 4500、condition null。整張程式還沒寫。',
+  proposal:'nameActive 寫活動自身。mainAbility 寫前線每回合一次的跨陣營選擇。blockBpRestriction 寫不能被 4500 以上阻擋。三句都寫完並測試前不標 ready。'
  },
  {
   cardId:'IMC-1-057',
