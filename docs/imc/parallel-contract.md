@@ -77,7 +77,7 @@ A 組維護作品註冊、目錄合併、對戰包、分流、抓取腳本與這
 }
 ```
 
-`implementation` 只能是 `dsl` 或 `vanilla`。有印刷效果的卡不能標 `vanilla`。`ready:true` 的卡會交給 `createUniversalPack`，所以效果必須是既有 op 能接受的形狀。允許的程式欄位是 `ready`、`implementation`、`effects`、`mainAbility`、`triggerEffect`、`raidName`、`impactNull`、`printedImpact`、`nameAliases`、`step`、`run`、`notes`。其他欄位會在 `imcProgramFor` 被拒絕。
+`implementation` 只能是 `dsl` 或 `vanilla`。有印刷效果的卡不能標 `vanilla`。`ready:true` 的卡會交給 `createUniversalPack`，所以效果必須是既有 op 能接受的形狀。允許的程式欄位是 `ready`、`implementation`、`effects`、`mainAbility`、`triggerEffect`、`raidName`、`impactNull`、`printedImpact`、`nameAliases`、`step`、`run`、`notes`，以及 `activeExtraEnergy`、`ownTurnBp`、`opponentTurnBp`、`emptyOwnFieldHandEnergyDiscount`、`enterAlwaysActive`、`readyOnBlockCount`、`unblockedAttack`、`frontForbidden`、`blockBpRestriction`、`passiveBonuses`。其他欄位會在 `imcProgramFor` 被拒絕。
 
 `runImcJob(pack, state, job)` 依卡號分流。`job` 是 `{op:'imc', id, slot}`。001～050 進 `runImc001`，051～100 進 `runImc051`，101～113 進 `runImcStarter`。這輪的引擎還沒有 `op:'imc'`。句子能寫成既有 op 時，放在 `effects` 即可，不必等引擎改動。需要閉環處理時，先寫進該組的 requests，等 A 把 `op:'imc'` 加進效果表與 `engine.mjs` 之後，`run` 才會被呼叫。
 
@@ -107,7 +107,7 @@ UA55BT/IMC-1-098 是紅色事件，能量 4、AP 1、特殊觸發。日文效果
 - `nextEligibleHandPlayApDiscount`，`filter:{trait:'お願い！シンデレラ'}`。Q1210 只扣下一張符合的手牌使用，每次 -1
 - 特殊觸發退場一張對手前線：`trigger:'special'` 加上 `triggerEffect:{op:'retireOppFront'}`
 
-後段現在用 `ownDistinctTraitNames` 的 `zone:'fieldOutside'`，以及 `grantTraitActiveEntryThisTurn`。`zone:'field'` 仍然不含場外。`countOwnOutsideDistinctPrintedNames` 只算場外，而且依顏色與種類，不依特徵。`enterAlwaysActive` 仍是卡本身的印刷登場方式。098 要由 C 組把整句寫進 program 並通過測試，才能 `ready:true`。
+後段的兩個零件已經分開存在：`ownDistinctTraitNames` 的 `zone:'fieldOutside'` 計算場上加場外的不同印刷卡名，`grantTraitActiveEntryThisTurn` 可以讓下一張或這個回合全部符合特徵的新入場角色活動。`zone:'field'` 仍然不含場外。`countOwnOutsideDistinctPrintedNames` 只算場外，而且依顏色與種類，不依特徵。`enterAlwaysActive` 仍是卡本身的印刷登場方式。`ifLiveThen` 還不能把 `grantTraitActiveEntryThisTurn` 接成後續，所以「6 種改下一張、9 種改全部」不能組成同一句。098 先不要標 `ready:true`。
 
 UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1、突襲觸發。特徵印刷是 `new generations／お願い！シンデレラ`。突襲框只有〈渋谷 凛〉的標準突襲句。登場時這張角色這個回合獲得衝擊 1，並可選最多 1 張對手前線角色，其目前 BP 在「自己場上其他、特徵 new generations、原本 BP 恰好 4000」的張數 ×1000 以下時退場。
 
@@ -137,6 +137,7 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - `grantTraitActiveEntryThisTurn`：`scope:'next'` 使下一張符合特徵的新入場角色活動，用過即止；`scope:'all'` 維持到這個回合結束。
 - `nextEligibleHandPlayApDiscount` 加 `fromUsedEvent:true` 時，來源可以是已經放到場外的事件，仍然只減下一張符合的手牌使用。
 - `deployOwnHandRest` 在 `ap:null` 時不要求印刷消費 AP，可加 `line:'front'`、顏色、必要能源上限與特徵。
-- `activeExtraEnergy`、`ownTurnBp`、`opponentTurnBp`、`emptyOwnFieldHandEnergyDiscount`、`enterAlwaysActive`、`readyOnBlockCount`、`unblockedAttack`、`frontForbidden`、`blockBpRestriction`、`passiveBonuses` 已能從 IMC program 送進對戰卡。`passiveBonuses` 沿用既有條件，所以印刷張數、場外卡名與印刷必要能源可以決定 BP 或發生能源。沒有 `ready:true` 的卡不會進對戰包。
+- `activeExtraEnergy`、`ownTurnBp`、`opponentTurnBp`、`emptyOwnFieldHandEnergyDiscount`、`enterAlwaysActive`、`readyOnBlockCount`、`unblockedAttack`、`frontForbidden`、`blockBpRestriction`、`passiveBonuses` 已能從 IMC program 送進對戰卡。`passiveBonuses` 沿用既有條件，所以印刷張數、場外卡名與印刷必要能源可以決定 BP 或發生能源。發生能源沿用這張卡自己的顏色。沒有 `ready:true` 的卡不會進對戰包。
+- `searchTopOneBottomDiscard` 既有 `noHandDiscard:true`。IMC-1-106 的看 3 張不棄手牌，要用這個旗標；105 的窗口才會在入手後棄一張手牌。106 的活動段用 `ifLiveThen` 接 `activeOwnTrait`。D 組仍要自己寫 program 與測試。
 
 `op:'imc'` 仍沒有接進 `engine.mjs`。現有 38 張 ready 卡走既有 op。作品維持 `playable:false`。即使牌組裡每一張都已 ready，`editorV2Status`、`v2DeckReport` 與 `prepareSoloBattle` 仍拒絕正式對戰。受控測試用 `newUniversalMatch(createImcV2Pack(), ...)`。
