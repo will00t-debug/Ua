@@ -1,0 +1,1136 @@
+{
+  "baselineCommit": "4a028a15",
+  "decision": "reserveAp stays off. The 8440-8442 flips were diagnosed without changing the planner. Passing makes one more rested energy than drawing in all 12, and neither side attacks that turn. The same visible position covers both the 7 new wins and the 5 lost wins, so there is no split to turn on. The next own main was then observed. The extra energy becomes an attack in three games and a rested body in two others. No legal main was mis-ranked at the same stop, so nothing was changed. No new seeds. 9100 and above stay reserved. holdInfo is a separate default-off candidate. The live Mayuri entry text is inside the raid frame, so that move stays. The 8401-8402 pair is 2-22 against 1-23 and the interval contains 0.",
+  "reserveAp": {
+    "default": false,
+    "bounceCorrection": {
+      "seeds": [8401, 8402],
+      "files": ["audit/ai-v3-reserve-ap-bounce-8401-baseline.json", "audit/ai-v3-reserve-ap-bounce-8401.json"],
+      "baseline": "2-22",
+      "candidate": "3-21",
+      "hardGap": {"baseline": -0.4166666666666667, "candidate": -0.375},
+      "relative": {"n": 12, "mean": 0.041666666666666664, "low": -0.08333333333333333, "high": 0.16666666666666666, "containsZero": true},
+      "byDeck": {
+        "white-sword": {"baseline": "0-8", "candidate": "0-8"},
+        "sword-art-online-raid": {"baseline": "0-8", "candidate": "1-7"},
+        "steins-gate-raid": {"baseline": "2-6", "candidate": "2-6"}
+      },
+      "gained": ["sword-art-online-raid 8402 first 1 seat 1 step 11", "steins-gate-raid 8401 first 0 seat 0 step 14", "steins-gate-raid 8401 first 1 seat 0 step 5"],
+      "lost": ["steins-gate-raid 8401 first 1 seat 1 step 14", "steins-gate-raid 8402 first 0 seat 0 step 12"],
+      "replayFailed": 0,
+      "maxNodes": 48,
+      "note": "Measured after the planner removes a bounced character from the next board. Twenty-one games first differ by replacing extraDraw with next. The five result flips are the games listed above. This is not the pre-fix pair copied forward."
+    },
+    "nextValidation": {
+      "seeds": [8440, 8441, 8442],
+      "lockedIn": "audit/ai-v3-reserve-ap-bounce-seed-lock.json",
+      "status": "run after the lock was committed in 8a92eaa3",
+      "files": ["audit/ai-v3-reserve-ap-bounce-8440-baseline.json", "audit/ai-v3-reserve-ap-bounce-8440.json"],
+      "baseline": "7-29",
+      "candidate": "9-27",
+      "hardGap": {"baseline": -0.3055555555555556, "candidate": -0.25},
+      "relative": {"n": 18, "mean": 0.05555555555555555, "low": -0.1388888888888889, "high": 0.25, "containsZero": true},
+      "byDeck": {
+        "white-sword": {"baseline": "0-12", "candidate": "1-11"},
+        "sword-art-online-raid": {"baseline": "3-9", "candidate": "5-7"},
+        "steins-gate-raid": {"baseline": "4-8", "candidate": "3-9"}
+      },
+      "replayFailed": 0,
+      "maxNodes": 48,
+      "clock40ms": "not run",
+      "note": "Every result flip starts as extraDraw replaced by next. The interval contains 0, so the default stays off and the pre-registered 40ms was not run."
+    },
+    "development": {
+      "seeds": [8401, 8402],
+      "baseline": "2-22",
+      "candidate": "3-21",
+      "hardGap": {"baseline": -0.4166666666666667, "candidate": -0.375},
+      "relative": {"n": 12, "mean": 0.041666666666666664},
+      "gained": ["sword-art-online-raid 8402 first 1 seat 1", "steins-gate-raid 8401 first 0 seat 0", "steins-gate-raid 8401 first 1 seat 0"],
+      "lost": ["steins-gate-raid 8401 first 1 seat 1", "steins-gate-raid 8402 first 0 seat 0"]
+    },
+    "validation": {
+      "seeds": [8430, 8431, 8432],
+      "lockedIn": "audit/ai-v3-reserve-ap-seed-lock.json",
+      "baseline": "1-35",
+      "candidate": "3-33",
+      "hardGap": {"baseline": -0.4722222222222222, "candidate": -0.4166666666666667},
+      "relative": {"n": 18, "mean": 0.05555555555555555, "low": 0, "high": 0.16666666666666666},
+      "byDeck": {
+        "white-sword": {"baseline": "0-12", "candidate": "0-12"},
+        "sword-art-online-raid": {"baseline": "0-12", "candidate": "2-10"},
+        "steins-gate-raid": {"baseline": "1-11", "candidate": "1-11"}
+      },
+      "byDeckNote": "Wins-losses out of 12 games per deck. The earlier note wrote the sword-art candidate as 2-12 and Steins;Gate as 1-12, which used the game count as the loss count. These rows are the pre-fix candidate. They are not a result for the planner after the bounce-state correction.",
+      "gained": ["sword-art-online-raid 8431 first 1 seat 0", "sword-art-online-raid 8431 first 1 seat 1", "steins-gate-raid 8431 first 1 seat 0"],
+      "lost": ["steins-gate-raid 8431 first 1 seat 1"]
+    },
+    "forkDiagnosis": {
+      "sources": ["audit/ai-v3-reserve-ap-bounce-8440-baseline.json", "audit/ai-v3-reserve-ap-bounce-8440.json"],
+      "report": "audit/ai-v3-reserve-ap-fork-summary.json",
+      "detail": "audit/ai-v3-reserve-ap-fork.json",
+      "script": "scripts/ai-v3-reserve-ap-fork.mjs",
+      "newSeeds": false,
+      "strategyChanged": false,
+      "result": "no visible split; default stays off"
+    },
+    "nextMain": {
+      "report": "audit/ai-v3-reserve-ap-next-main-summary.json",
+      "detail": "audit/ai-v3-reserve-ap-next-main.json",
+      "script": "scripts/ai-v3-reserve-ap-next-main.mjs",
+      "result": "three moved energy bodies attack and two rested bodies enter; no same-stop defect; default stays off"
+    }
+  },
+  "holdInfo": {
+    "default": false,
+    "turnsOnReserveAp": false,
+    "files": ["audit/ai-v3-hold-info-8401-baseline.json", "audit/ai-v3-hold-info-8401.json"],
+    "summary": "audit/ai-v3-hold-info-summary.json",
+    "seeds": [8401, 8402],
+    "baseline": "2-22",
+    "candidate": "1-23",
+    "relative": {"n": 12, "mean": -0.041666666666666664, "low": -0.125, "high": 0, "containsZero": true},
+    "byDeck": {
+      "white-sword": {"baseline": "0-8", "candidate": "0-8"},
+      "sword-art-online-raid": {"baseline": "0-8", "candidate": "0-8"},
+      "steins-gate-raid": {"baseline": "2-6", "candidate": "1-7"}
+    },
+    "lost": ["steins-gate-raid 8402 first 0 seat 0"],
+    "replayFailed": 0,
+    "illegal": 0,
+    "maxNodes": 48,
+    "note": "Player-choice compliance and match result are separate. The live step-28 Mayuri draw is raid-frame text, so the candidate still moves. This pair is not a strength claim."
+  },
+  "search": {
+    "seed": 1,
+    "nodes": 48,
+    "clock": "none",
+    "games": 24,
+    "losses": 22,
+    "replayMismatches": 0
+  },
+  "counts": {
+    "multiChoiceDecisions": 1415,
+    "lossDecisions": 1251,
+    "nodeCutLines": 3136,
+    "budgetFallbacks": 269,
+    "budgetFallbacksWithDifferentStoppingPlaces": 248,
+    "attackMissingFromBeam": 1,
+    "samePlaceScoreWorseThanPeer": {
+      "decisions": 12,
+      "lossGames": 10,
+      "note": "After requiring the same stopping place, the remaining inversions are block versus pass."
+    },
+    "provenLossBlockTie": {
+      "decisions": 19,
+      "lossGames": 14,
+      "decks": 3,
+      "ownLife": {
+        "1": 13,
+        "2": 4,
+        "3": 2
+      },
+      "lifeAtLeast4": 0,
+      "note": "Both lines are terminal losses at -90000 or -100000, so the battle margin is not the comparison. Almost all of these are at 1 or 2 life."
+    }
+  },
+  "classes": [
+    {
+      "name": "start extraDraw instead of next",
+      "lossGames": 22,
+      "decks": 3,
+      "decisions": 104,
+      "chains": 104,
+      "scope": "The 104 draws are only the 22 losses, and only while our life is at least 4. They are not all 24 games. Across all 24 games, start draws with our life at least 4 are 119: these 104, plus 15 in the 2 wins. The 22 losses have 26 further start draws at our life of 3 or less, and the 2 wins have 1. All 22 losses contain at least one of the 104.",
+      "what": "Of those 104, 74 are the search's own choice and 30 are the early-draw preference replacing next. On the three opening snapshots, 192 nodes and four actor decisions still draw. Two of those draws had already returned and scored at least as high as passing. This is the confirmed short-energy draw, not a cut line."
+    },
+    {
+      "name": "generator front rewritten to energy",
+      "lossGames": 11,
+      "winGames": 0,
+      "decks": 3,
+      "decisions": 21,
+      "what": "The first rewrite in each of those games was replayed with the searched front instead. One game flipped to a win. The other ten stayed losses, and several finished with the opponent further ahead. Hard-search-2 also played an energy card on all eleven, and it was the same card on three. The flipped game's front was not the card hard played. One replayed win is not a cause."
+    },
+    {
+      "name": "best executed energy score replaces the forced generator energy",
+      "changed": 7,
+      "games": 6,
+      "decks": 2,
+      "what": "Keeping the higher raw energy score matched hard three times and left hard four times, including one spot where the current action already matched hard. Same-budget hard agreement went from 5 to 7 of 21. That is not a stable rule."
+    }
+  ],
+  "hardReferenceWhileBothLifeAtLeast4": {
+    "decisions": 784,
+    "agree": 334,
+    "differ": 450,
+    "games": 22,
+    "top": [
+      {
+        "name": "start extraDraw -> next",
+        "decisions": 98,
+        "chains": 98,
+        "games": 22,
+        "decks": 3
+      },
+      {
+        "name": "main play:energy -> play:energy",
+        "decisions": 75,
+        "chains": 75,
+        "games": 21,
+        "decks": 3
+      },
+      {
+        "name": "main play:front -> play:energy",
+        "decisions": 38,
+        "chains": 38,
+        "games": 18,
+        "decks": 3
+      },
+      {
+        "name": "attack/block block -> block-pass",
+        "decisions": 33,
+        "chains": 33,
+        "games": 17,
+        "decks": 3
+      },
+      {
+        "name": "attack attack -> next",
+        "decisions": 19,
+        "chains": 19,
+        "games": 13,
+        "decks": 3
+      },
+      {
+        "name": "attack/end-hand-limit chooseHandLimit -> chooseHandLimit",
+        "decisions": 25,
+        "chains": 21,
+        "games": 12,
+        "decks": 3
+      },
+      {
+        "name": "main activate -> next",
+        "decisions": 15,
+        "chains": 15,
+        "games": 10,
+        "decks": 3
+      },
+      {
+        "name": "move next -> move",
+        "decisions": 12,
+        "chains": 12,
+        "games": 9,
+        "decks": 3
+      }
+    ],
+    "note": "A different hard action is a reference only. The largest class is the start-phase draw. The next exact-action classes are a different energy card, a front where hard plays energy, and a block where hard passes. At life of 4 or more the block lines do not have a same-place battle score that prefers the pass."
+  },
+  "snapshots": [
+    {
+      "deck": "white-sword",
+      "gameSeed": 8401,
+      "searchSeed": 1,
+      "first": 0,
+      "seat": 0,
+      "step": 10,
+      "phase": "start",
+      "pending": null,
+      "hash": "bed7fa80d10469c310f551da91b31b0df0f550b8788b99d4f14494c2f24c0a36",
+      "life": [
+        7,
+        7
+      ],
+      "readyAp": 2,
+      "energy": {},
+      "legal": 2,
+      "hard": "next",
+      "nodes48": {
+        "action": "extraDraw",
+        "reason": "budget-fallback",
+        "nodes": 48,
+        "dispatches": 48,
+        "lines": [
+          {
+            "label": "extraDraw",
+            "boundary": "pending",
+            "search": -61.3,
+            "nodes": 32,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "next",
+            "boundary": "yielded",
+            "search": -59.8,
+            "nodes": 16,
+            "cut": "nodes",
+            "settled": false
+          }
+        ]
+      },
+      "nodes192": "extraDraw",
+      "actorDecisions4": "extraDraw"
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "gameSeed": 8401,
+      "searchSeed": 1,
+      "first": 0,
+      "seat": 0,
+      "step": 12,
+      "phase": "start",
+      "pending": null,
+      "hash": "c1484be66f78d0038e0feb0900488bded8c29edd0a34a330ed75b7f507a2247f",
+      "life": [
+        7,
+        7
+      ],
+      "readyAp": 2,
+      "energy": {
+        "yellow": 1
+      },
+      "legal": 2,
+      "hard": "next",
+      "nodes48": {
+        "action": "extraDraw",
+        "reason": "search",
+        "nodes": 48,
+        "dispatches": 48,
+        "lines": [
+          {
+            "label": "extraDraw",
+            "boundary": "returned",
+            "search": 9.1,
+            "nodes": 27,
+            "cut": null,
+            "settled": true
+          },
+          {
+            "label": "next",
+            "boundary": "returned",
+            "search": 9.1,
+            "nodes": 21,
+            "cut": null,
+            "settled": true
+          }
+        ]
+      },
+      "nodes192": "extraDraw",
+      "actorDecisions4": "extraDraw"
+    },
+    {
+      "deck": "steins-gate-raid",
+      "gameSeed": 8401,
+      "searchSeed": 1,
+      "first": 0,
+      "seat": 0,
+      "step": 14,
+      "phase": "start",
+      "pending": null,
+      "hash": "2ce082bc31ffaa039894802f49ee60b6e61db9aa85bf45d7e9c90c9c80f97a4a",
+      "life": [
+        7,
+        7
+      ],
+      "readyAp": 2,
+      "energy": {
+        "blue": 1
+      },
+      "legal": 2,
+      "hard": "next",
+      "nodes48": {
+        "action": "extraDraw",
+        "reason": "search",
+        "nodes": 48,
+        "dispatches": 48,
+        "lines": [
+          {
+            "label": "extraDraw",
+            "boundary": "returned",
+            "search": -11.8,
+            "nodes": 28,
+            "cut": null,
+            "settled": true
+          },
+          {
+            "label": "next",
+            "boundary": "returned",
+            "search": -31.8,
+            "nodes": 20,
+            "cut": null,
+            "settled": true
+          }
+        ]
+      },
+      "nodes192": "extraDraw",
+      "actorDecisions4": "extraDraw"
+    },
+    {
+      "deck": "white-sword",
+      "gameSeed": 8401,
+      "searchSeed": 1,
+      "first": 0,
+      "seat": 0,
+      "step": 27,
+      "phase": "main",
+      "pending": null,
+      "hash": "e7f6fae2e4540ac3a267d086417c754f5108bdf943640c32388ba8eb432816b2",
+      "life": [
+        7,
+        7
+      ],
+      "readyAp": 2,
+      "energy": {
+        "green": 1
+      },
+      "legal": 15,
+      "hard": "play:energy:0-20",
+      "nodes48": {
+        "action": "play:energy:0-16",
+        "reason": "search",
+        "nodes": 48,
+        "dispatches": 48,
+        "lines": [
+          {
+            "label": "play:energy:0-20",
+            "boundary": "yielded",
+            "search": -34.7,
+            "nodes": 16,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "play:energy:0-16",
+            "boundary": "pending",
+            "search": -115.7,
+            "nodes": 16,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "play:front:0-16",
+            "boundary": "yielded",
+            "search": 22.4,
+            "nodes": 8,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "next",
+            "boundary": "yielded",
+            "search": -24.9,
+            "nodes": 8,
+            "cut": "nodes",
+            "settled": false
+          }
+        ]
+      },
+      "nodes192": "play:energy:0-20",
+      "actorDecisions4": "play:energy:0-16"
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "gameSeed": 8401,
+      "searchSeed": 1,
+      "first": 0,
+      "seat": 0,
+      "step": 56,
+      "phase": "main",
+      "pending": null,
+      "hash": "3169ea8f006febee0a21c0636d9e07ece48d62376c81571194c1dbbc7f2c366f",
+      "life": [
+        6,
+        6
+      ],
+      "readyAp": 1,
+      "energy": {
+        "yellow": 3
+      },
+      "legal": 21,
+      "hard": "play:energy:0-11",
+      "nodes48": {
+        "action": "play:energy:0-11",
+        "reason": "search",
+        "nodes": 48,
+        "dispatches": 48,
+        "lines": [
+          {
+            "label": "play:energy:0-19",
+            "boundary": "pending",
+            "search": -101.8,
+            "nodes": 16,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "play:energy:0-24",
+            "boundary": "pending",
+            "search": -101.8,
+            "nodes": 16,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "play:front:0-11",
+            "boundary": "yielded",
+            "search": 18.4,
+            "nodes": 8,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "next",
+            "boundary": "yielded",
+            "search": 13.1,
+            "nodes": 8,
+            "cut": "nodes",
+            "settled": false
+          }
+        ]
+      },
+      "nodes192": "next",
+      "actorDecisions4": "play:energy:0-11"
+    },
+    {
+      "deck": "steins-gate-raid",
+      "gameSeed": 8401,
+      "searchSeed": 1,
+      "first": 0,
+      "seat": 1,
+      "step": 20,
+      "phase": "main",
+      "pending": null,
+      "hash": "2c109cd2fcfb146d944ce9fd8804cf587fe0d2957609337d39b85b89b4264bf3",
+      "life": [
+        7,
+        7
+      ],
+      "readyAp": 1,
+      "energy": {
+        "blue": 1
+      },
+      "legal": 36,
+      "hard": "play:energy:1-32",
+      "nodes48": {
+        "action": "play:energy:1-20",
+        "reason": "search",
+        "nodes": 48,
+        "dispatches": 48,
+        "lines": [
+          {
+            "label": "play:energy:1-29",
+            "boundary": "yielded",
+            "search": -43.1,
+            "nodes": 16,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "play:energy:1-32",
+            "boundary": "pending",
+            "search": -22.1,
+            "nodes": 16,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "play:front:1-20",
+            "boundary": "yielded",
+            "search": -26.8,
+            "nodes": 8,
+            "cut": "nodes",
+            "settled": false
+          },
+          {
+            "label": "next",
+            "boundary": "yielded",
+            "search": -34.8,
+            "nodes": 8,
+            "cut": "nodes",
+            "settled": false
+          }
+        ]
+      },
+      "nodes192": "play:energy:1-32",
+      "actorDecisions4": "play:energy:1-20"
+    }
+  ],
+  "frontBranch": {
+    "games": 11,
+    "hardEnergyLine": 11,
+    "hardSameCard": 3,
+    "controlWins": 0,
+    "branchWins": 1,
+    "rows": [
+      {
+        "id": "white-sword|8401|first0|seat0",
+        "step": 27,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "0-16",
+          "mode": null,
+          "card": "0-16 BLC-2-069 日番谷 冬獅郎 1/2500 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-16",
+          "mode": null,
+          "card": "0-16 BLC-2-069 日番谷 冬獅郎 1/2500 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-20",
+          "mode": null,
+          "card": "0-20 BLC-4-070 更木 剣八 1/4000 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            2
+          ],
+          "steps": 194,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            6
+          ],
+          "steps": 150,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "white-sword|8401|first0|seat1",
+        "step": 51,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "1-21",
+          "mode": null,
+          "card": "1-21 BLC-4-070 更木 剣八 1/4000 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-6",
+          "mode": null,
+          "card": "1-6 BLC-4-060 藍染 惣右介 3/4000 gen 2"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-6",
+          "mode": null,
+          "card": "1-6 BLC-4-060 藍染 惣右介 3/4000 gen 2"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            1,
+            0
+          ],
+          "steps": 244,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            5,
+            0
+          ],
+          "steps": 159,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "white-sword|8401|first1|seat1",
+        "step": 25,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "1-20",
+          "mode": null,
+          "card": "1-20 BLC-4-070 更木 剣八 1/4000 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-11",
+          "mode": null,
+          "card": "1-11 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-31",
+          "mode": null,
+          "card": "1-31 BLC-1-072 卯ノ花 烈 2/2000 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            2,
+            0
+          ],
+          "steps": 172,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            4,
+            0
+          ],
+          "steps": 185,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "white-sword|8402|first0|seat0",
+        "step": 32,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "0-19",
+          "mode": null,
+          "card": "0-19 BLC-2-069 日番谷 冬獅郎 1/2500 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-19",
+          "mode": null,
+          "card": "0-19 BLC-2-069 日番谷 冬獅郎 1/2500 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-9",
+          "mode": null,
+          "card": "0-9 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            4
+          ],
+          "steps": 174,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            2,
+            0
+          ],
+          "steps": 259,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": true
+      },
+      {
+        "id": "white-sword|8402|first0|seat1",
+        "step": 38,
+        "life": [
+          7,
+          6
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "1-11",
+          "mode": null,
+          "card": "1-11 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-11",
+          "mode": null,
+          "card": "1-11 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-31",
+          "mode": null,
+          "card": "1-31 BLC-1-072 卯ノ花 烈 2/2000 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            6,
+            0
+          ],
+          "steps": 183,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            6,
+            0
+          ],
+          "steps": 135,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "white-sword|8402|first1|seat0",
+        "step": 21,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "0-10",
+          "mode": null,
+          "card": "0-10 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-10",
+          "mode": null,
+          "card": "0-10 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-10",
+          "mode": null,
+          "card": "0-10 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            2
+          ],
+          "steps": 175,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            2
+          ],
+          "steps": 180,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "white-sword|8402|first1|seat1",
+        "step": 30,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "1-9",
+          "mode": null,
+          "card": "1-9 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-9",
+          "mode": null,
+          "card": "1-9 BLC-4-066 卯ノ花 烈 0/1500 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-7",
+          "mode": null,
+          "card": "1-7 BLC-4-060 藍染 惣右介 3/4000 gen 2"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            6,
+            0
+          ],
+          "steps": 166,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            3,
+            0
+          ],
+          "steps": 341,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "sword-art-online-raid|8401|first0|seat0",
+        "step": 56,
+        "life": [
+          6,
+          6
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "0-11",
+          "mode": null,
+          "card": "0-11 SAO-1-019 アスナ（創世神ステイシア） 0/1500 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-11",
+          "mode": null,
+          "card": "0-11 SAO-1-019 アスナ（創世神ステイシア） 0/1500 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-11",
+          "mode": null,
+          "card": "0-11 SAO-1-019 アスナ（創世神ステイシア） 0/1500 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            4
+          ],
+          "steps": 151,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            5
+          ],
+          "steps": 131,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "steins-gate-raid|8401|first0|seat1",
+        "step": 20,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "1-20",
+          "mode": null,
+          "card": "1-20 STG-1-012 桐生 萌郁 0/1000 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-20",
+          "mode": null,
+          "card": "1-20 STG-1-012 桐生 萌郁 0/1000 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-32",
+          "mode": null,
+          "card": "1-32 STG-1-015 椎名 まゆり 1/2000 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            7,
+            0
+          ],
+          "steps": 121,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 0,
+          "life": [
+            3,
+            0
+          ],
+          "steps": 158,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "steins-gate-raid|8401|first1|seat0",
+        "step": 20,
+        "life": [
+          7,
+          7
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "0-0",
+          "mode": null,
+          "card": "0-0 STG-1-007 岡部 倫太郎 0/2000 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-0",
+          "mode": null,
+          "card": "0-0 STG-1-007 岡部 倫太郎 0/2000 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-32",
+          "mode": null,
+          "card": "0-32 STG-1-015 椎名 まゆり 1/2000 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            1
+          ],
+          "steps": 201,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            3
+          ],
+          "steps": 166,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      },
+      {
+        "id": "steins-gate-raid|8402|first1|seat0",
+        "step": 45,
+        "life": [
+          7,
+          6
+        ],
+        "search": {
+          "type": "play",
+          "line": "front",
+          "uid": "0-20",
+          "mode": null,
+          "card": "0-20 STG-1-012 桐生 萌郁 0/1000 gen 1"
+        },
+        "kept": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-20",
+          "mode": null,
+          "card": "0-20 STG-1-012 桐生 萌郁 0/1000 gen 1"
+        },
+        "hard": {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-30",
+          "mode": null,
+          "card": "0-30 STG-1-002 阿万音 鈴羽 1/2500 gen 1"
+        },
+        "control": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            4
+          ],
+          "steps": 151,
+          "illegal": 0
+        },
+        "branch": {
+          "status": "finished",
+          "winner": 1,
+          "life": [
+            0,
+            4
+          ],
+          "steps": 231,
+          "illegal": 0
+        },
+        "controlWon": false,
+        "branchWon": false
+      }
+    ]
+  },
+  "notChanged": [
+    "evidence gate",
+    "rules engine",
+    "card runtime",
+    "hard-ai.mjs",
+    "MATCH_LIMITS",
+    "confirmed early draw, energy keep, filter chain, FINAL refund, and the no-FINAL line switch"
+  ]
+}

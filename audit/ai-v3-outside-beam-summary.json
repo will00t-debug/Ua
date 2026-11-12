@@ -1,0 +1,1155 @@
+{
+  "base": "e9b864c4d802acda8378970c9a2e4c8ea6b2f48f",
+  "searchSeed": 1,
+  "nodes": 48,
+  "clock": "1e9",
+  "decisions": 45,
+  "kinds": {
+    "play:energy": 21,
+    "play:front": 13,
+    "raid:energy": 6,
+    "raid:": 5
+  },
+  "why": {
+    "evicted-for-front": 32,
+    "situational-backup": 13
+  },
+  "decks": {
+    "sword-art-online-raid play:energy": 10,
+    "steins-gate-raid play:energy": 9,
+    "sword-art-online-raid play:front": 6,
+    "steins-gate-raid play:front": 6,
+    "white-sword raid:": 3,
+    "sword-art-online-raid raid:energy": 3,
+    "white-sword play:energy": 2,
+    "white-sword raid:energy": 2,
+    "white-sword play:front": 1,
+    "sword-art-online-raid raid:": 1,
+    "steins-gate-raid raid:energy": 1,
+    "steins-gate-raid raid:": 1
+  },
+  "inLiveBeam": 0,
+  "beliefBeam": 0,
+  "sameCardOtherMode": 29,
+  "beamReason": {
+    "replaced-by-front": 32,
+    "width": 13
+  },
+  "provenKill": 0,
+  "rankTopInBeam": 0,
+  "preference": 0,
+  "situational": 13,
+  "representatives": [
+    {
+      "id": "sword-art-online-raid|8401|0|1",
+      "step": 67,
+      "kind": "raid:",
+      "legal": 75,
+      "why": "evicted-for-front",
+      "action": "raid::1-13:"
+    },
+    {
+      "id": "steins-gate-raid|8401|0|0",
+      "step": 98,
+      "kind": "play:energy",
+      "legal": 75,
+      "why": "evicted-for-front",
+      "action": "play:energy:0-21:"
+    },
+    {
+      "id": "sword-art-online-raid|8402|1|1",
+      "step": 132,
+      "kind": "play:front",
+      "legal": 58,
+      "why": "situational-backup",
+      "action": "play:front:1-49:"
+    },
+    {
+      "id": "sword-art-online-raid|8402|1|0",
+      "step": 90,
+      "kind": "raid:energy",
+      "legal": 75,
+      "why": "evicted-for-front",
+      "action": "raid:energy:0-6:"
+    },
+    {
+      "id": "steins-gate-raid|8402|1|1",
+      "step": 124,
+      "kind": "raid:",
+      "legal": 100,
+      "why": "evicted-for-front",
+      "action": "raid::1-10:"
+    },
+    {
+      "id": "white-sword|8402|1|0",
+      "step": 68,
+      "kind": "raid:energy",
+      "legal": 66,
+      "why": "evicted-for-front",
+      "action": "raid:energy:0-37:"
+    }
+  ],
+  "playouts": [
+    {
+      "id": "sword-art-online-raid|8401|0|1",
+      "step": 67,
+      "kind": "raid:",
+      "fallback": "raid::1-13:",
+      "recordedLife": [
+        2,
+        0
+      ],
+      "recordedWinner": 0,
+      "controlLife": [
+        2,
+        0
+      ],
+      "controlWinner": 0,
+      "controlMatchesRecord": true,
+      "deep": "play:front:1-13:",
+      "deepInBeam48": true,
+      "deepReason": "search",
+      "hard": "raid::1-15:",
+      "branches": [
+        {
+          "name": "fallback",
+          "label": "raid::1-13:",
+          "life": [
+            2,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 6,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            5
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 8,
+          "illegal": 0,
+          "steps": 155
+        },
+        {
+          "name": "beam",
+          "label": "raid:energy:1-7:",
+          "life": [
+            3,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 5,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            5
+          ],
+          "turnEnergy": {
+            "yellow": 3
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 8,
+          "illegal": 0,
+          "steps": 174
+        },
+        {
+          "name": "beam",
+          "label": "raid::1-7:",
+          "life": [
+            2,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 6,
+          "attacksThisTurn": 2,
+          "turnLife": [
+            5,
+            5
+          ],
+          "turnEnergy": {
+            "yellow": 3
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 3
+          },
+          "immediateAp": 0,
+          "immediatePayable": 6,
+          "illegal": 0,
+          "steps": 146
+        },
+        {
+          "name": "beam",
+          "label": "play:front:1-13:",
+          "life": [
+            1,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 6,
+          "attacksThisTurn": 0,
+          "turnLife": [
+            7,
+            5
+          ],
+          "turnEnergy": {
+            "yellow": 3
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 8,
+          "illegal": 0,
+          "steps": 178
+        },
+        {
+          "name": "beam",
+          "label": "next:::",
+          "life": [
+            1,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 7,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            5
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 1,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 185
+        },
+        {
+          "name": "hard",
+          "label": "raid::1-15:",
+          "life": [
+            2,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 6,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            5
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 8,
+          "illegal": 0,
+          "steps": 155
+        }
+      ]
+    },
+    {
+      "id": "steins-gate-raid|8401|0|0",
+      "step": 98,
+      "kind": "play:energy",
+      "fallback": "play:energy:0-21:",
+      "recordedLife": [
+        0,
+        4
+      ],
+      "recordedWinner": 1,
+      "controlLife": [
+        0,
+        4
+      ],
+      "controlWinner": 1,
+      "controlMatchesRecord": true,
+      "deep": "play:energy:0-25:",
+      "deepInBeam48": true,
+      "deepReason": "search",
+      "hard": "play:front:0-4:",
+      "branches": [
+        {
+          "name": "fallback",
+          "label": "play:energy:0-21:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            5
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "beam",
+          "label": "play:energy:0-30:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            5
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "beam",
+          "label": "play:energy:0-25:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            5
+          ],
+          "turnEnergy": {
+            "blue": 5
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 5
+          },
+          "immediateAp": 1,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "beam",
+          "label": "play:front:0-21:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            5
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "beam",
+          "label": "next:::",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            5
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 2,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 2,
+          "immediatePayable": 10,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "hard",
+          "label": "play:front:0-4:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            5
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 152
+        }
+      ]
+    },
+    {
+      "id": "sword-art-online-raid|8402|1|1",
+      "step": 132,
+      "kind": "play:front",
+      "fallback": "play:front:1-49:",
+      "recordedLife": [
+        2,
+        0
+      ],
+      "recordedWinner": 0,
+      "controlLife": [
+        2,
+        0
+      ],
+      "controlWinner": 0,
+      "controlMatchesRecord": true,
+      "deep": "play:front:1-14:",
+      "deepInBeam48": true,
+      "deepReason": "search",
+      "hard": "play:front:1-15:",
+      "branches": [
+        {
+          "name": "fallback",
+          "label": "play:front:1-49:",
+          "life": [
+            2,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 2,
+          "turnLife": [
+            2,
+            3
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 188
+        },
+        {
+          "name": "beam",
+          "label": "play:energy:1-4:",
+          "life": [
+            3,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            3,
+            3
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 155
+        },
+        {
+          "name": "beam",
+          "label": "play:energy:1-8:",
+          "life": [
+            2,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            2,
+            3
+          ],
+          "turnEnergy": {
+            "yellow": 3
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 186
+        },
+        {
+          "name": "beam",
+          "label": "play:front:1-14:",
+          "life": [
+            1,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 0,
+          "turnLife": [
+            3,
+            3
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 182
+        },
+        {
+          "name": "beam",
+          "label": "next:::",
+          "life": [
+            3,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            3,
+            3
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 2,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 2,
+          "immediatePayable": 8,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "hard",
+          "label": "play:front:1-15:",
+          "life": [
+            1,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 0,
+          "turnLife": [
+            3,
+            3
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 182
+        }
+      ]
+    },
+    {
+      "id": "sword-art-online-raid|8402|1|0",
+      "step": 90,
+      "kind": "raid:energy",
+      "fallback": "raid:energy:0-6:",
+      "recordedLife": [
+        0,
+        4
+      ],
+      "recordedWinner": 1,
+      "controlLife": [
+        0,
+        4
+      ],
+      "controlWinner": 1,
+      "controlMatchesRecord": true,
+      "deep": "raid::0-6:",
+      "deepInBeam48": true,
+      "deepReason": "search",
+      "hard": "raid::0-6:",
+      "branches": [
+        {
+          "name": "fallback",
+          "label": "raid:energy:0-6:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 3,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "beam",
+          "label": "raid::0-6:",
+          "life": [
+            0,
+            5
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "yellow": 3
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 3
+          },
+          "immediateAp": 0,
+          "immediatePayable": 6,
+          "illegal": 0,
+          "steps": 140
+        },
+        {
+          "name": "beam",
+          "label": "play:energy:0-6:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 3,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "beam",
+          "label": "play:front:0-6:",
+          "life": [
+            0,
+            3
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 4,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 9,
+          "illegal": 0,
+          "steps": 157
+        },
+        {
+          "name": "beam",
+          "label": "next:::",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 3,
+          "attacksThisTurn": 0,
+          "turnLife": [
+            4,
+            7
+          ],
+          "turnEnergy": {
+            "yellow": 4
+          },
+          "turnAp": 1,
+          "immediateEnergy": {
+            "yellow": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 10,
+          "illegal": 0,
+          "steps": 155
+        }
+      ]
+    },
+    {
+      "id": "steins-gate-raid|8402|1|1",
+      "step": 124,
+      "kind": "raid:",
+      "fallback": "raid::1-10:",
+      "recordedLife": [
+        6,
+        0
+      ],
+      "recordedWinner": 0,
+      "controlLife": [
+        6,
+        0
+      ],
+      "controlWinner": 0,
+      "controlMatchesRecord": true,
+      "deep": "play:front:1-10:",
+      "deepInBeam48": true,
+      "deepReason": "search",
+      "hard": "raid::1-15:",
+      "branches": [
+        {
+          "name": "fallback",
+          "label": "raid::1-10:",
+          "life": [
+            6,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            2
+          ],
+          "turnEnergy": {
+            "blue": 5
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 11,
+          "illegal": 0,
+          "steps": 149
+        },
+        {
+          "name": "beam",
+          "label": "raid:energy:1-13:",
+          "life": [
+            6,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            2
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 10,
+          "illegal": 0,
+          "steps": 154
+        },
+        {
+          "name": "beam",
+          "label": "raid::1-13:",
+          "life": [
+            6,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            2
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 3
+          },
+          "immediateAp": 0,
+          "immediatePayable": 5,
+          "illegal": 0,
+          "steps": 148
+        },
+        {
+          "name": "beam",
+          "label": "play:front:1-10:",
+          "life": [
+            7,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 0,
+          "attacksThisTurn": 0,
+          "turnLife": [
+            7,
+            2
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 10,
+          "illegal": 0,
+          "steps": 145
+        },
+        {
+          "name": "beam",
+          "label": "next:::",
+          "life": [
+            6,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            2
+          ],
+          "turnEnergy": {
+            "blue": 5
+          },
+          "turnAp": 1,
+          "immediateEnergy": {
+            "blue": 4
+          },
+          "immediateAp": 1,
+          "immediatePayable": 11,
+          "illegal": 0,
+          "steps": 153
+        },
+        {
+          "name": "hard",
+          "label": "raid::1-15:",
+          "life": [
+            6,
+            0
+          ],
+          "winner": 0,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            6,
+            2
+          ],
+          "turnEnergy": {
+            "blue": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "blue": 3
+          },
+          "immediateAp": 0,
+          "immediatePayable": 5,
+          "illegal": 0,
+          "steps": 148
+        }
+      ]
+    },
+    {
+      "id": "white-sword|8402|1|0",
+      "step": 68,
+      "kind": "raid:energy",
+      "fallback": "raid:energy:0-37:",
+      "recordedLife": [
+        0,
+        2
+      ],
+      "recordedWinner": 1,
+      "controlLife": [
+        0,
+        3
+      ],
+      "controlWinner": 1,
+      "controlMatchesRecord": false,
+      "deep": "play:energy:0-37:",
+      "deepInBeam48": true,
+      "deepReason": "search",
+      "hard": "raid::0-37:",
+      "branches": [
+        {
+          "name": "fallback",
+          "label": "raid:energy:0-37:",
+          "life": [
+            0,
+            3
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 4,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "green": 5
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "green": 5
+          },
+          "immediateAp": 0,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 144
+        },
+        {
+          "name": "beam",
+          "label": "raid::0-37:",
+          "life": [
+            0,
+            4
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 6,
+          "attacksThisTurn": 2,
+          "turnLife": [
+            4,
+            5
+          ],
+          "turnEnergy": {
+            "green": 4
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "green": 4
+          },
+          "immediateAp": 0,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 174
+        },
+        {
+          "name": "beam",
+          "label": "play:energy:0-37:",
+          "life": [
+            0,
+            5
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 2,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "green": 5
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "green": 5
+          },
+          "immediateAp": 0,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 119
+        },
+        {
+          "name": "beam",
+          "label": "play:front:0-37:",
+          "life": [
+            0,
+            1
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 6,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "green": 5
+          },
+          "turnAp": 0,
+          "immediateEnergy": {
+            "green": 5
+          },
+          "immediateAp": 0,
+          "immediatePayable": 7,
+          "illegal": 0,
+          "steps": 191
+        },
+        {
+          "name": "beam",
+          "label": "next:::",
+          "life": [
+            0,
+            6
+          ],
+          "winner": 1,
+          "won": false,
+          "attacks": 1,
+          "attacksThisTurn": 1,
+          "turnLife": [
+            4,
+            6
+          ],
+          "turnEnergy": {
+            "green": 5
+          },
+          "turnAp": 1,
+          "immediateEnergy": {
+            "green": 5
+          },
+          "immediateAp": 1,
+          "immediatePayable": 8,
+          "illegal": 0,
+          "steps": 120
+        }
+      ]
+    }
+  ],
+  "flips": [],
+  "conclusion": {
+    "switch": false,
+    "reason": "32 of the 45 are the live rank order after the front slot evicts that action from the beam. 13 replace that energy play with an uncovered character of BP 3000 or more. None of the 45 has a proven kill in the searched lines. Six continuations, including sword-art-online-raid 8401 first 0 seat 1 step 67, keep the same winner for the fallback, every searched root, and the 48-node hard-search-2 action. A 192-node search returns an in-beam action at all six, and those lines also lose. No default-off switch is added."
+  }
+}

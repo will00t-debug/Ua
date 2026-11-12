@@ -1,0 +1,50 @@
+{
+  "programBase": "3a406676ee2cb461cc79ab3936bb132ed14068f4",
+  "namedBeforeResults": true,
+  "seeds": [8970, 8971, 8972, 8973, 8974, 8975, 8976, 8977, 8978, 8979, 8980, 8981, 8982, 8983, 8984, 8985, 8986, 8987, 8988, 8989, 8990, 8991, 8992, 8993, 8994, 8995, 8996, 8997, 8998, 8999, 9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009],
+  "reservedFrom": 9100,
+  "notReused": [8890, 8929, 9010, 9099],
+  "priorUse": "8970-9009 were named as the unplayed paidFront second set and were not played. No AI seed lock, summary, or tuning run uses them as a measured match. The integers 8971 and 9009 appear as local RNG arguments in card-rule unit tests. Those tests do not play hybrid-main-v1 against hard-search-2 and do not tune search parameters. They are not a prior AI strategy measurement. 8890-8929 stays reserved for a later independent check and is not used in this round. 9010-9099 is not reused. 9100+ is not used.",
+  "policies": {
+    "A": "hybrid-main-v1",
+    "B": "hybrid-start-hard-v1",
+    "opponent": "hard-search-2"
+  },
+  "routes": {
+    "A": {"start": "v3", "move": "v3", "main": "hard", "battle": "v3", "pending": "v3"},
+    "B": {"start": "hard", "move": "v3", "main": "hard", "battle": "v3", "pending": "v3"}
+  },
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "experiments": "off. B does not forbid extraDraw. Hard chooses extraDraw or next itself. settleLife and paidFront stay off. The new policy is not a menu item and the worker does not accept its name.",
+  "decks": [
+    {"id": "white-sword", "seeds": [8970, 8971, 8972, 8973, 8974, 8975, 8976, 8977, 8978, 8979, 8980, 8981, 8982, 8983], "games": 56},
+    {"id": "sword-art-online-raid", "seeds": [8984, 8985, 8986, 8987, 8988, 8989, 8990, 8991, 8992, 8993, 8994, 8995, 8996], "games": 52},
+    {"id": "steins-gate-raid", "seeds": [8997, 8998, 8999, 9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009], "games": 52}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "gamesPerArm": 160,
+  "blocks": 40,
+  "opening": "Both arms clone one shared opening. The seed deals seat 0 then seat 1, the shared hard mulligan runs in first-player order, then LIFE is dealt.",
+  "metrics": {
+    "extraDrawRate": "Hybrid-seat idle start actions that are extraDraw, divided by extraDraw plus next.",
+    "deployAfterDraw": "An own turn whose start action was extraDraw, and a later idle action that same turn is a front play or a raid. Compared with the same count after next. This is a description, not a pass gate.",
+    "apLeft": "Ready AP cards at the end of each hybrid own turn, averaged per own turn.",
+    "firstFront": "First hybrid own turn on which the front holds a character. Turns are counted when that seat enters an idle start.",
+    "firstRaid": "First hybrid own turn with a raid.",
+    "firstConnect": "First hybrid own turn whose attack reduces the opponent life count.",
+    "softClock": "Wall time over 40 ms is reported. It is a soft deadline and is not a pass gate. A node count above 48 is a failure."
+  },
+  "bootstrap": "Paired difference is B wins minus A wins, divided by four, for each of the 40 seed blocks. An unfinished game is not a win. 1000 resamples, mulberry32(8970), percentile indexes 25 and 974.",
+  "advance": "B enters an independent check on 8890-8929 only if every item holds: B's win rate is at least 0.05 above A's, the paired interval low is greater than 0, white-sword's win rate does not fall by more than 0.05, both arms have illegal, routing errors, unfinished, and overNodes all at 0 with maxNodes at most 48, and B's abandoned proven-kill count is not above A's. Otherwise B stays off. Do not retune and do not rerun 8970-9009. 8890-8929 is not played in this round.",
+  "doesNotReplace": "audit/ai-v3-hybrid-vs-hard-9050-summary.json",
+  "note": "8970-9009 were named before any of these games. The opponent is frozen hard-search-2. Cards, the rules engine, search scores, and the hybrid-main-v1 routes are not modified."
+}

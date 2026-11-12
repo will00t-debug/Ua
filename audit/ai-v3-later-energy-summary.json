@@ -1,0 +1,79 @@
+{
+  "games": 36,
+  "seeds": [
+    8500,
+    8501,
+    8502
+  ],
+  "ms": 1000000000,
+  "byMode": {
+    "v3": {
+      "wins": 1,
+      "games": 36,
+      "illegal": 0,
+      "unfinished": 0,
+      "abandonedKills": 2,
+      "fallbacks": 9.694444444444445,
+      "nodes": 2211.6666666666665,
+      "decisions": 75.22222222222223,
+      "decisionP50": 47.47222222222222,
+      "decisionP95": 99.86111111111111,
+      "choices": {
+        "front": 2.6666666666666665,
+        "energy": 7.333333333333333,
+        "raid": 0.9444444444444444
+      },
+      "apLeft": 0.17733084816418146,
+      "attacks": 2.638888888888889,
+      "raids": 0.9444444444444444,
+      "ownLife": 0.19444444444444445,
+      "oppLife": 4.555555555555555
+    },
+    "later": {
+      "wins": 1,
+      "games": 36,
+      "illegal": 0,
+      "unfinished": 0,
+      "abandonedKills": 2,
+      "fallbacks": 9.5,
+      "nodes": 2065.277777777778,
+      "decisions": 70.88888888888889,
+      "decisionP50": 43.52777777777778,
+      "decisionP95": 87.52777777777777,
+      "choices": {
+        "front": 1.6111111111111112,
+        "energy": 7.694444444444445,
+        "raid": 1
+      },
+      "apLeft": 0.20502645502645503,
+      "attacks": 2.0277777777777777,
+      "raids": 1,
+      "ownLife": 0.19444444444444445,
+      "oppLife": 4.805555555555555
+    }
+  },
+  "decks": {
+    "white-sword": {
+      "v3": "1-11",
+      "later": "1-11"
+    },
+    "sword-art-online-raid": {
+      "v3": "0-12",
+      "later": "0-12"
+    },
+    "steins-gate-raid": {
+      "v3": "0-12",
+      "later": "0-12"
+    }
+  },
+  "paired": {
+    "pairs": 18,
+    "skipped": 0,
+    "delta": 0,
+    "low": 0,
+    "high": 0,
+    "containsZero": true
+  },
+  "flips": [],
+  "changed": 22
+}

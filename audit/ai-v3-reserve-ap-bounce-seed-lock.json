@@ -1,0 +1,27 @@
+{
+  "lockedBeforeResults": true,
+  "validationSeeds": [8440, 8441, 8442],
+  "lockedBefore": "the 8440 games. The 8401/8402 rerun below was already finished and is the reason these seeds were chosen.",
+  "clock": {
+    "seed": 8440,
+    "decks": ["white-sword", "sword-art-online-raid", "steins-gate-raid"],
+    "first": [0, 1],
+    "seats": [0, 1],
+    "games": 12,
+    "ms": 40,
+    "nodes": 48,
+    "warmup": "the benchmark process plays every game in order; the first decision of the process is not discarded"
+  },
+  "unusedBelow9100CheckedAgainst": "audit seed0 values 5000, 8100, 8200, 8300, 8401, 8410, 8420, 8430, 9100, 88001, 91001 and 94001",
+  "notUsed": "8430-8432 stay the pre-fix reserveAp validation and are not a new validation of this planner. 8410-8412 stay historical. 8420-8422 stay the ab-front validation. 8401-8402 stay this adjustment rerun. 9100 and above stay reserved.",
+  "adjustment": {
+    "seeds": [8401, 8402],
+    "baseline": "2-22",
+    "candidate": "3-21",
+    "relativeMean": 0.041666666666666664,
+    "intervalContainsZero": true
+  },
+  "devSeeds": [8401, 8402],
+  "candidate": "reserveAp",
+  "default": "off"
+}

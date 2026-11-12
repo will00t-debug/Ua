@@ -1,0 +1,292 @@
+{
+  "base": "f3be0f4cfa9c6cf3cbe30ad47e90225623f90fc6",
+  "switches": {
+    "alignRoots": false,
+    "evidenceGenerator": false
+  },
+  "defaultChange": false,
+  "validationSeeds": null,
+  "note": "Both switches stay off. The clockless 8401-8402 table is the reproducible comparison. Real 40ms is a separate clock. An interval that includes 0 is not a strength gain. 9100 and above stay reserved. No new validation seed was taken.",
+  "regressions": {
+    "command": "node --test tests/ai-v3-*.test.mjs",
+    "passed": 155,
+    "failed": 0
+  },
+  "snapshots": {
+    "white-sword|8402|1|0|step8": {
+      "default": "play energy 0-33, returned -24, while energy 0-10 is yielded -24",
+      "alignRoots": "play energy 0-10. All four roots stop at yielded/main. 0-10 has the highest score there. Nodes 47, dispatches 47.",
+      "evidenceGenerator": "unchanged"
+    },
+    "white-sword|8402|1|1|step33": {
+      "default": "play front 1-37",
+      "alignRoots": "still play front 1-37. The raid stops in move and the front stops in main, so the yielded scores are not one comparison. A longer raid walk reaches pending/block and is not used to outrank the main-phase lines.",
+      "evidenceGenerator": "unchanged"
+    },
+    "steins-gate-raid|8401|0|1|step20": {
+      "default": "search picks front 1-20, generator rewrites it to energy 1-20, which is not in the four roots",
+      "evidenceGenerator": "keeps front 1-20. The energy line of that card was not executed.",
+      "alignRoots": "picks searched energy 1-29, the best yielded line. Energy 1-32 stays pending and is not treated as better."
+    },
+    "lethal": "activate, terminal 100000, settled, with neither switch, either switch, and both. Nodes stay at or under 48."
+  },
+  "table": {
+    "seeds": [
+      8401,
+      8402
+    ],
+    "searchSeed": 1,
+    "opponent": "hard-search-2",
+    "rules": "official",
+    "nodes": 48,
+    "games": 24,
+  "deckOrder": ["white-sword", "sword-art-online-raid", "steins-gate-raid"],
+    "illegal": 0,
+    "replayFailed": 0,
+    "maxNodes": 48,
+    "baselineMatchesPreviousRecord": true,
+    "clockless": {
+      "baseline": {
+        "record": "2-22",
+        "byDeck": {
+          "white-sword": "0-8",
+          "sword-art-online-raid": "0-8",
+          "steins-gate-raid": "2-6"
+        },
+        "budgetFallback": 269,
+        "pairedVsHard": [
+          -0.4167,
+          -0.5,
+          -0.2917
+        ],
+        "p50ms": [
+          45.2,
+          44.9,
+          44.2
+        ],
+        "p95ms": [
+          58.8,
+          65.4,
+          63.6
+        ]
+      },
+      "alignRoots": {
+        "record": "3-21",
+        "byDeck": {
+          "white-sword": "0-8",
+          "sword-art-online-raid": "1-7",
+          "steins-gate-raid": "2-6"
+        },
+        "budgetFallback": 182,
+        "pairedVsHard": [
+          -0.375,
+          -0.5,
+          -0.25
+        ],
+        "versusBaseline": {
+          "winDelta": 1,
+          "mean": 0.0417,
+          "low": 0,
+          "high": 0.125
+        },
+        "gamesWithDifferentAction": 24,
+        "firstDifferenceKinds": {
+          "next to extraDraw": 12,
+          "energy to other energy": 8,
+          "energy to front": 2,
+          "front to energy": 2
+        },
+        "flips": [
+          "sword-art-online-raid 8401 first 1 seat 1 loss to win",
+          "steins-gate-raid 8401 first 1 seat 0 loss to win",
+          "steins-gate-raid 8401 first 1 seat 1 win to loss",
+          "steins-gate-raid 8402 first 0 seat 0 win to loss",
+          "steins-gate-raid 8402 first 0 seat 1 loss to win"
+        ],
+        "p50ms": [
+          43.4,
+          46.1,
+          43.5
+        ],
+        "p95ms": [
+          62.5,
+          63.6,
+          62.3
+        ]
+      },
+      "evidenceGenerator": {
+        "record": "2-22",
+        "byDeck": {
+          "white-sword": "0-8",
+          "sword-art-online-raid": "0-8",
+          "steins-gate-raid": "2-6"
+        },
+        "budgetFallback": 285,
+        "pairedVsHard": [
+          -0.4167,
+          -0.5,
+          -0.2917
+        ],
+        "versusBaseline": {
+          "winDelta": 0,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "gamesWithDifferentAction": 10,
+        "firstDifferenceKinds": {
+          "energy to front": 10
+        },
+        "p50ms": [
+          44.8,
+          44.4,
+          43.5
+        ],
+        "p95ms": [
+          58.7,
+          65.4,
+          64.2
+        ]
+      },
+      "both": {
+        "record": "1-23",
+        "byDeck": {
+          "white-sword": "0-8",
+          "sword-art-online-raid": "0-8",
+          "steins-gate-raid": "1-7"
+        },
+        "budgetFallback": 192,
+        "pairedVsHard": [
+          -0.4583,
+          -0.5,
+          -0.375
+        ],
+        "versusBaseline": {
+          "winDelta": -1,
+          "mean": -0.0417,
+          "low": -0.125,
+          "high": 0
+        },
+        "gamesWithDifferentAction": 24,
+        "firstDifferenceKinds": {
+          "next to extraDraw": 12,
+          "energy to other energy": 6,
+          "energy to front": 4,
+          "front to energy": 2
+        },
+        "p50ms": [
+          45.5,
+          46.7,
+          43.1
+        ],
+        "p95ms": [
+          61.7,
+          72.0,
+          60.8
+        ]
+      }
+    },
+    "ms40": {
+      "note": "Real 40ms, same 48 node cap. Almost every game diverges from its clockless script, so this is not the strength table.",
+      "baseline": {
+        "record": "2-22",
+        "byDeck": {
+          "white-sword": "1-7",
+          "sword-art-online-raid": "0-8",
+          "steins-gate-raid": "1-7"
+        },
+        "budgetFallback": 241,
+        "gamesDifferentFromClockless": 24,
+        "p50ms": [
+          40.9,
+          40.8,
+          40.8
+        ],
+        "p95ms": [
+          42.7,
+          42.6,
+          42.6
+        ]
+      },
+      "alignRoots": {
+        "record": "5-19",
+        "byDeck": {
+          "white-sword": "0-8",
+          "sword-art-online-raid": "3-5",
+          "steins-gate-raid": "2-6"
+        },
+        "budgetFallback": 167,
+        "versusBaseline": {
+          "winDelta": 3,
+          "mean": 0.125,
+          "low": -0.0833,
+          "high": 0.2917
+        },
+        "gamesDifferentFromClockless": 22,
+        "p50ms": [
+          40.7,
+          41.1,
+          41.0
+        ],
+        "p95ms": [
+          42.3,
+          43.3,
+          43.1
+        ]
+      },
+      "evidenceGenerator": {
+        "record": "5-19",
+        "byDeck": {
+          "white-sword": "2-6",
+          "sword-art-online-raid": "1-7",
+          "steins-gate-raid": "2-6"
+        },
+        "budgetFallback": 272,
+        "versusBaseline": {
+          "winDelta": 3,
+          "mean": 0.125,
+          "low": -0.0417,
+          "high": 0.2917
+        },
+        "gamesDifferentFromClockless": 24,
+        "p50ms": [
+          41.0,
+          41.0,
+          40.8
+        ],
+        "p95ms": [
+          42.7,
+          42.9,
+          42.7
+        ]
+      },
+      "both": {
+        "record": "5-19",
+        "byDeck": {
+          "white-sword": "0-8",
+          "sword-art-online-raid": "2-6",
+          "steins-gate-raid": "3-5"
+        },
+        "budgetFallback": 174,
+        "versusBaseline": {
+          "winDelta": 3,
+          "mean": 0.125,
+          "low": -0.0417,
+          "high": 0.2917
+        },
+        "gamesDifferentFromClockless": 22,
+        "p50ms": [
+          40.8,
+          41.0,
+          40.9
+        ],
+        "p95ms": [
+          42.8,
+          43.0,
+          42.9
+        ]
+      }
+    }
+  },
+  "recommendation": "Keep both switches off. alignRoots has a same-stop fix at white-sword 8402 step 8 and does not take the step 33 raid across phases. On the reproducible table it is +1 with an interval that includes 0, and 12 of the first differences are an opening pass becoming a draw. evidenceGenerator keeps the searched front at steins-gate 8401 step 20 and changes 10 games from an energy play to a front play, with no win difference. Both together are -1. Real 40ms does not separate them from clock noise. No validation seed was locked."
+}

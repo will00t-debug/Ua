@@ -1,0 +1,168 @@
+{
+  "games": 60,
+  "main": 1163,
+  "agrees": 493,
+  "diffs": 670,
+  "illegal": 0,
+  "firstDiffs": 60,
+  "klass": {
+    "B": 245,
+    "A": 423,
+    "C": 2
+  },
+  "why": {
+    "B:different-stop": 175,
+    "A:beam:replaced-by-safe": 66,
+    "A:beam:group": 83,
+    "A:beam:width": 226,
+    "B:lower-score": 50,
+    "A:beam:replaced-by-front": 48,
+    "B:tie-or-backup": 18,
+    "B:fallback-discarded-score": 2,
+    "C:rewritten:refund": 1,
+    "C:rewritten:unknown": 1
+  },
+  "pair": {
+    "energy->energy": 243,
+    "event->energy": 12,
+    "front->raid": 24,
+    "front->front": 26,
+    "event->event": 2,
+    "energy->front": 61,
+    "front->event": 4,
+    "raid->energy": 15,
+    "energy->next": 25,
+    "energy->event": 15,
+    "front->energy": 102,
+    "front->next": 9,
+    "raid->raid": 27,
+    "energy->raid": 25,
+    "activate->next": 35,
+    "front->activate": 4,
+    "next->activate": 3,
+    "energy->activate": 8,
+    "next->front": 3,
+    "next->energy": 11,
+    "next->raid": 12,
+    "raid->front": 1,
+    "raid->next": 1,
+    "event->front": 1,
+    "activate->activate": 1
+  },
+  "rewrite": {
+    "generator": 35,
+    "unknown": 2,
+    "line-switch": 4,
+    "refund": 1
+  },
+  "first": {
+    "klass": {
+      "B": 28,
+      "A": 32
+    },
+    "why": {
+      "B:different-stop": 10,
+      "A:beam:width": 6,
+      "B:tie-or-backup": 10,
+      "B:lower-score": 8,
+      "A:beam:replaced-by-front": 14,
+      "A:beam:group": 5,
+      "A:beam:replaced-by-safe": 7
+    },
+    "pair": {
+      "energy->energy": 48,
+      "front->energy": 10,
+      "energy->front": 1,
+      "next->energy": 1
+    },
+    "rewrite": {
+      "generator": 2
+    }
+  },
+  "deck": {
+    "white-sword": {
+      "diffs": 220,
+      "first": 20,
+      "klass": {
+        "B": 99,
+        "A": 119,
+        "C": 2
+      },
+      "pair": {
+        "energy->energy": 72,
+        "event->energy": 12,
+        "front->raid": 11,
+        "front->front": 2,
+        "event->event": 2,
+        "energy->front": 11,
+        "front->event": 4,
+        "raid->energy": 13,
+        "energy->next": 14,
+        "energy->event": 15,
+        "front->energy": 27,
+        "front->next": 3,
+        "activate->next": 8,
+        "next->front": 2,
+        "raid->raid": 8,
+        "energy->raid": 6,
+        "next->energy": 5,
+        "raid->front": 1,
+        "event->front": 1,
+        "next->raid": 3
+      }
+    },
+    "sword-art-online-raid": {
+      "diffs": 206,
+      "first": 20,
+      "klass": {
+        "A": 145,
+        "B": 61
+      },
+      "pair": {
+        "energy->energy": 81,
+        "front->energy": 36,
+        "front->front": 10,
+        "raid->raid": 12,
+        "energy->raid": 8,
+        "energy->front": 18,
+        "raid->energy": 1,
+        "activate->next": 14,
+        "front->raid": 4,
+        "next->activate": 3,
+        "energy->next": 7,
+        "next->raid": 4,
+        "raid->next": 1,
+        "next->energy": 4,
+        "energy->activate": 1,
+        "front->next": 1,
+        "activate->activate": 1
+      }
+    },
+    "steins-gate-raid": {
+      "diffs": 244,
+      "first": 20,
+      "klass": {
+        "B": 85,
+        "A": 159
+      },
+      "pair": {
+        "energy->energy": 90,
+        "front->energy": 39,
+        "front->next": 5,
+        "energy->raid": 11,
+        "raid->raid": 7,
+        "front->front": 14,
+        "energy->front": 32,
+        "front->activate": 4,
+        "activate->next": 13,
+        "raid->energy": 1,
+        "energy->activate": 7,
+        "energy->next": 4,
+        "front->raid": 9,
+        "next->raid": 5,
+        "next->front": 1,
+        "next->energy": 2
+      }
+    }
+  }
+}

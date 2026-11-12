@@ -1,0 +1,62 @@
+{
+  "baseline": "2d1a1ff5",
+  "seedCorrection": {
+    "supersedes": ["energy.white-sword-step-12.result", "energy.unchanged"],
+    "historicalClaim": "reject-blue step 13, renruki step 15, and white-sword step 55 return next for the default and all eight cells.",
+    "keptRawRecord": "audit/ai-v3-factor-split.json is the search-seed-1 dump and was not rewritten. audit/ai-v3-ab-front-energy-regression.json passed game.seed, which is 8300, and was not rewritten.",
+    "setting": "scripts/ai-v3-factor-split.mjs hardcoded seed 1. scripts/ai-v3-ab-front-energy.mjs passed game.seed. The search seed shuffles the hidden zones of the one belief world. It is not the match seed. A different action at the other seed is not a program change.",
+    "searchSeed1": "reject-blue step 13: baseline and the cells without tree coverage plus the final gate return next. named-ab, tree-base-final and tree-open-final return move uid 0-10. white-sword step 12: those same three cells return move uid 0-32. renruki step 15 and white-sword step 55 return next for every cell.",
+    "searchSeed8300": "reject-blue step 13 returns next for every cell, including named A+B. white-sword step 12 still returns move uid 0-32 for the same three tree-plus-final cells. renruki step 15 and white-sword step 55 return next for every cell.",
+    "table": "audit/ai-v3-main-front.json records gameSeed, searchSeed, source, replay and the state hash for both seeds. Within one seed only the factors change."
+  },
+  "settings": "plan tree, hardNodes 0, nodes 48, ms 1e9, now 0. Existing snapshots only. No matches.",
+  "switches": "All new factor combinations stay off. A named variant is unchanged: ab is coverage tree, raid base off, gate final. ab-front is coverage root, raid base on, gate energy. The search and the worker read only options.variant or options.factors. They do not read process.",
+  "reproduce": "tree-open-final matches named ab, and root-base-energy matches named ab-front, on every recorded field of the three front snapshots, the four move snapshots, and the filter chain. The comparison ignores only the cell id.",
+  "decision": "No cell is sent to matches. The action changes that separate full A+B from ab-front all require the final evidence gate. That gate also replaces the confirmed start-phase pass with an extra draw, so it breaks the three-AP line. Every energy-gate cell keeps the confirmed chain and does not change these snapshot actions away from ab-front. Tree coverage still fails the practical raid line and the live hand-discount regression, which is why coverage stays at the root for ab-front. Raid-base retention does not move any of these snapshots. Experiments stay off. No validation seed was taken. 9100 and above stay reserved. 8300-8302, 8401-8402, 8410-8412 and 8420-8422 stay exposed.",
+  "factors": {
+    "coverage": "Root coverage and tree coverage put the same front in the root beam on all three front snapshots. Tree coverage is what makes the white-sword move snapshot search uid 0-32. Root coverage searches next there, the same action as the default. A deeper searched line is not treated as a better line. With the energy gate and raid-base retention off, tree coverage still fails the practical raid search and the live hand-discount check. The filter chain still passes. Root coverage does not have that raid failure.",
+    "raidBase": "On or off, the final action, the searched action, and the filter chain stay the same on every snapshot in this file. The coverage winner on these hands is not raiding the card it displaces. The practical raid beam remains covered by the existing regression.",
+    "gate": "The energy-position gate only sees the generator rewrite of a searched front. The final gate sees the action after the confirmed choices. The lost final actions are restored by the final gate, and that is also the gate that undoes the start-phase pass."
+  },
+  "fronts": {
+    "last-ap": {
+      "where": "white-sword 8300 first 1 seat 0 step 22, main",
+      "beam": "Default front slot is BLC-4-066 uid 0-10. Every coverage cell, root or tree, replaces that slot with BLC-4-070 uid 0-20. Raid base does not change the slot.",
+      "search": "Default backup names the uid 0-20 front, but that front was not executed, so it is not search evidence. Coverage executes it at yielded 30.85.",
+      "rewrites": "The generator preference changes uid 0-20 from front to its own energy line. That energy line was not executed. The energy gate and the final gate each put the same uid back on the front. Confirmed choices do not change it. This is the same card, not a different one.",
+      "result": "Default returns energy uid 0-20. All eight cells return front uid 0-20. 48 nodes, 48 dispatches."
+    },
+    "two-ap": {
+      "where": "white-sword 8301 first 0 seat 0 step 31, main",
+      "beam": "Default front slot is BLC-4-066 uid 0-11. Coverage replaces it with BLC-4-070 uid 0-23.",
+      "result": "Every cell, including the default, returns energy BLC-4-066 uid 0-11. The search executed that line at yielded -56.35. No preference rewrites it. The front that left the beam is not the returned action."
+    },
+    "three-ap": {
+      "where": "white-sword 8301 first 0 seat 1 step 41, main",
+      "beam": "Default front slot is BLC-2-069 uid 1-16. Every coverage cell replaces it with BLC-4-070 uid 1-23. Root and tree match. Raid base does not change it.",
+      "search": "Default executes front uid 1-16 at yielded 18.85. Coverage executes front uid 1-23 at yielded 18.85.",
+      "generator": "The generator preference moves the searched front onto that same uid's energy line. For uid 1-23 that energy line was not executed, so it is not search evidence.",
+      "openFilter": "The open-filter choice then leaves that card and plays energy BLC-4-066 uid 1-8, a different uid, at pending -69.1. That line was executed.",
+      "gates": "The energy gate restores uid 1-23 before the open filter, and the open filter still replaces it with uid 1-8. The final gate runs after that replacement. The boundaries differ, yielded against pending, so the gate keeps the searched front uid 1-23. The deeper boundary is recorded and is not by itself a better line.",
+      "result": "Default and every energy-gate cell return energy uid 1-8. Every final-gate cell returns front uid 1-23. 48 nodes, 48 dispatches."
+    }
+  },
+  "energy": {
+    "white-sword-step-12": {
+      "where": "white-sword 8300 first 0 seat 0 step 12, move",
+      "search": "Default and every root-coverage cell search next at yielded -19.55. Every tree-coverage cell searches move uid 0-32 at yielded -3.8. Raid base does not change the search.",
+      "energyKeep": "On the tree search, the energy keep changes move uid 0-32 to next. Next was executed at pending -36.55. This is a different action, not the same card.",
+      "gate": "The energy-position gate does not apply to a move. The final gate sees pending next against yielded move and keeps the move. The generator preference does not touch it.",
+      "result": "At search seed 1, default, every root cell, and every energy-gate cell return next. Only tree coverage plus the final gate returns move uid 0-32. That is the named A+B action. See seedCorrection for the other three snapshots. The sentence that all eight cells return next on those three was wrong at this file's own search seed."
+    },
+    "unchanged": "Superseded by seedCorrection. renruki step 15 and white-sword step 55 do return next for every cell at both recorded search seeds. reject-blue step 13 does not: at search seed 1 the three tree-plus-final cells return move uid 0-10, and at search seed 8300 every cell returns next."
+  },
+  "filter": {
+    "where": "white-sword 8301 first 0 seat 1 step 29, then both deck orders",
+    "discard": "Every cell discards BLC-1-083 日番谷 冬獅郎 uid 1-33, the 0-cost generator with no on-play effect and the lowest keep score.",
+    "start": "The search chooses extraDraw at yielded 70.6. The early-draw choice changes it to next at yielded 7.8. Both lines were executed and stopped on the same boundary. The final gate restores extraDraw because the replacement scores lower. The energy gate does not see a start-phase draw.",
+    "kept": "Default and every energy-gate cell pass, leave 3 AP, play two filter swaps, spend uids 1-16 and 1-23, recover 2 AP only on the payable FINAL line, and on the other line move the standing blocker. The new character stays the energy body.",
+    "broken": "Every final-gate cell, including named A+B, draws at the start instead of passing. The rest of the confirmed chain is not played. Coverage scope and raid-base retention do not change this."
+  },
+  "accounting": "The recorded decisions use 48 nodes and 48 dispatches, with no exception fallback. Unexecuted rows are marked and are not used as evidence."
+}

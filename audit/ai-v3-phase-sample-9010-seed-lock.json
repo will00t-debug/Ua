@@ -1,0 +1,60 @@
+{
+  "programBase": "98b7ffd9b58e4fb7244579a28a25dc5e1493dab7",
+  "namedBeforeResults": true,
+  "seeds": [9010, 9011, 9012, 9013, 9014, 9015, 9016, 9017, 9018, 9019, 9020, 9021, 9022, 9023, 9024, 9025, 9026, 9027, 9028, 9029, 9030, 9031, 9032, 9033, 9034, 9035, 9036, 9037, 9038, 9039, 9040, 9041, 9042, 9043, 9044, 9045, 9046, 9047, 9048, 9049],
+  "reservedFrom": 9100,
+  "notReused": [8800, 8849, 8850, 8889, 8890, 8929, 8930, 8969, 8970, 9009, 9050, 9099],
+  "priorUse": "9010-9049 are not in any AI seed lock, summary, or tuning run. The same integers appear as local RNG arguments in card-rule unit tests. Those tests do not play hybrid-main-v1 or hard-search-2 and do not tune search parameters. They are not a prior AI measurement. 8970-9009 stays reserved and unplayed. 9050-9099 stays the published 200-game record and is not overwritten. 9100+ is not used.",
+  "policies": {
+    "hybrid": "hybrid-main-v1",
+    "opponent": "hard-search-2"
+  },
+  "experiments": "off",
+  "switches": {"settleLife": false, "paidFront": false},
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "steps": 1200,
+  "sameDeck": true,
+  "opening": "shared-hard-mulligan",
+  "decks": [
+    {"id": "white-sword", "seeds": [9010, 9011, 9012, 9013, 9014, 9015, 9016, 9017, 9018, 9019, 9020, 9021, 9022, 9023], "games": 56},
+    {"id": "sword-art-online-raid", "seeds": [9024, 9025, 9026, 9027, 9028, 9029, 9030, 9031, 9032, 9033, 9034, 9035, 9036], "games": 52},
+    {"id": "steins-gate-raid", "seeds": [9037, 9038, 9039, 9040, 9041, 9042, 9043, 9044, 9045, 9046, 9047, 9048, 9049], "games": 52}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "games": 160,
+  "blocks": 40,
+  "bootstrap": "1000 resamples of the 40 seed-deck blocks of four games. A block rate is hybrid wins divided by four. An unfinished, drawn, or illegal game stays in the block and counts as not a win. Percentile indexes 25 and 974. Generator mulberry32(9010).",
+  "sample": {
+    "namedBeforeGames": true,
+    "counts": "every decision of both seats, after the timed chooser returns",
+    "snapshots": "hybrid seat only",
+    "laneIndexes": [0, 3, 7],
+    "lanes": ["start", "move", "main", "battle", "pending"],
+    "doesNotDependOn": ["win", "loss", "flag", "disagreement"],
+    "anomalyExtra": "defender-lethal",
+    "anomalyCapPerGame": 1,
+    "fullState": "local directory only",
+    "mustNotCommit": ["deck order", "opponent hand", "life cards"]
+  },
+  "shadow": "After all 160 games, saved snapshots are asked of AI v3 and hard-search-2 again at 48 nodes and 40 ms. Those answers are shadow decisions. They do not replace the recorded action or the recorded win.",
+  "counterfactual": "At most one position per lane, chosen after shadow as the largest absolute score gap among disagreements in that lane. Force the other policy's legal action once, then play 16 steps with the original policies. Report life only. A winner change is not proof that the swap would have won the match.",
+  "recommendRule": {
+    "minLaneSample": 40,
+    "minDisagreement": 0.15,
+    "benefit": "At least two counterfactual windows for that candidate finish with own life greater than the original line, and none finish lower. One window is not enough. Disagreement alone is not a benefit.",
+    "oneCandidate": true,
+    "else": null
+  },
+  "nodeCompliance": "A traced decision is over the node budget when nodesUsed is greater than 48. Wall time above 40 ms is counted. A game is not dropped for a soft timeout.",
+  "unfinished": "A game still playing at 1200 steps is unfinished. It stays in the 160 and in its block. It is not a win.",
+  "note": "9010-9049 were named before any of these games. No search parameter, route, or score function is changed after the result. The 9050-9099 record is a different file and stays as published."
+}
