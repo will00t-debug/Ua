@@ -154,7 +154,13 @@ function blockedAttack(packs,state,move){
  if(cursor.pending?.kind!=='block')return {script,attack:true,cursor};
  const answers=legalUniversalActions(packs,cursor).filter(action=>action.type==='chooseBlock'&&action.uid);
  const results=answers.map(action=>{
-  const followed=dispatchUniversalAction(packs,cursor,action,{actor:1});
+  let followed=dispatchUniversalAction(packs,cursor,action,{actor:1});
+  // Impact now opens the same attacker life choice as a direct attack.
+  // Finish that one legal selection so the assertion sees the settled life.
+  if(followed.pending?.kind==='attack-life-target'){
+   const choice=legalUniversalActions(packs,followed).find(entry=>entry.type==='chooseAttackLife');
+   followed=dispatchUniversalAction(packs,followed,choice,{actor:followed.pending.player});
+  }
   script.push({type:'chooseBlock',uid:action.uid,life:followed.players[1].life.length,status:followed.status,winner:followed.winner??null,pending:followed.pending?.kind||null});
   return followed;
  });
