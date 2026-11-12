@@ -107,5 +107,26 @@ export const IMC_PROGRAMS_STARTER=Object.freeze({
      {op:'buffOwnCurrentBp',minBp:3000,bp:2000,optional:false,excludeSelf:false}]}
    ]}]
   }
+ },
+ 'IMC-1-111':{
+  implementation:'dsl',
+  // 登場時可付 1 AP。付了才從場外拿 1 張黃、ポジティブパッション、持有突襲的卡。
+  // 沒有合法卡就不再開選擇。攻擊時的抽棄仍沒有共用條件，所以整張不標 ready。
+  effects:{onPlay:[{
+   op:'optionalPayApThen',ap:1,optional:true,
+   then:[{op:'recoverOutsideFiltered',optional:false,max:1,
+    trait:'ポジティブパッション',color:'yellow',raidKeyword:true}]
+  }]}
+ },
+ 'IMC-1-113':{
+  ready:true,
+  implementation:'dsl',
+  // 與 IMC-1-027 相同：場上該特徵達 4 張（含自己與場地）時，發生能源 + 這張卡的藍。
+  passiveBonuses:[{extraEnergy:1,condition:{kind:'ownCardTraitCount',turn:'any',min:4,
+   zone:'field',excludeSelf:false,trait:'LiPPS'}}],
+  // 【登場時】最多 1 張。對手只限前線。自己場上只限 LiPPS，並排除〈速水 奏〉。
+  effects:{onPlay:[{
+   op:'chooseFrontOrOwnTrait',bp:500,optional:true,trait:'LiPPS',excludeName:'速水 奏'
+  }]}
  }
 });
