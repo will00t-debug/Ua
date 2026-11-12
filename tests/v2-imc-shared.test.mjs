@@ -13,8 +13,8 @@ import {IMC_PROGRAMS_STARTER} from '../dist/universal-v2/imc/programs-starter.mj
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {countOwnPrintedTrait,matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalBp,universalEnergyByColor,universalPrivateChoices,
- universalPublicView} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalBp,universalEnergyByColor,universalImpact,
+ universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 import {prepareSoloBattle} from '../dist/universal-v2/solo-battle-session.mjs';
@@ -134,10 +134,18 @@ test('the integrated pack executes exactly the ready cards',()=>{
   'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-098','IMC-1-100','IMC-1-101','IMC-1-102',
   'IMC-1-103','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109'
  ];
- const unfinished=['IMC-1-003','IMC-1-006','IMC-1-016','IMC-1-049','IMC-1-080','IMC-1-104','IMC-1-113'];
+ const unfinished=['IMC-1-003','IMC-1-006','IMC-1-008','IMC-1-015','IMC-1-016','IMC-1-046',
+  'IMC-1-049','IMC-1-055','IMC-1-060','IMC-1-080','IMC-1-083','IMC-1-084','IMC-1-104',
+  'IMC-1-110','IMC-1-113'];
  assert.deepEqual(Object.keys(pack.cards),expected);
  assert.deepEqual(READY,expected);
  for(const id of unfinished)assert.equal(pack.cards[id],undefined,id);
+ const nine=pack.cards['IMC-1-098'].effects.onPlay[2];
+ assert.equal(nine.op,'ifLiveThen');
+ assert.equal(nine.when.min,9);
+ assert.equal(nine.then[0].scope,'all');
+ assert.equal(nine.else[0].when.min,6);
+ assert.equal(nine.else[0].then[0].scope,'next');
  assert.equal(pack.cards['IMC-1-017'].effects.onPlay[0].op,'peekTopOne');
  assert.equal(pack.cards['IMC-1-023'].effects.onPlay[0].sourceLine,'front');
  assert.equal(pack.cards['IMC-1-023'].effects.onPlay[0].line,undefined);
@@ -473,4 +481,396 @@ test('a legal ready IMC deck can be saved and cannot open a room',async()=>{
   sql.close();
   await rm(dir,{recursive:true,force:true});
  }
+});
+
+function advance(pack,s,active,phase){
+ const turn=s.turn;
+ for(let i=0;i<20&&(s.turn===turn||s.active!==active||s.phase!==phase);i++){
+  const legal=legalUniversalActions(pack,s);
+  const step=s.pending
+   ?legal.find(a=>a.uid==null||a.mode==='skip'||a.mode==='decline')
+   :legal.find(a=>a.type==='next');
+  assert.ok(step,(s.pending?.kind||s.phase)+' active '+s.active);
+  s=dispatchUniversalAction(pack,s,step);
+ }
+ assert.equal(s.active,active);
+ assert.equal(s.phase,phase);
+ assert.notEqual(s.turn,turn);
+ return s;
+}
+function ownMainAgain(pack,s){return advance(pack,s,0,'main');}
+function opponentMain(pack,s){return advance(pack,s,1,'main');}
+function attacksOf(pack,s,uid){
+ return legalUniversalActions(pack,s).filter(a=>a.type==='attack'&&a.uid===uid);
+}
+
+test('another character current BP opens one self buff per turn',()=>{
+ const actor=face({id:'ACT',name:'來源',bp:2000,mainAbility:{
+  op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,
+  when:{kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',excludeSelf:true,minBp:5000}}});
+ const high=face({id:'HIGH',name:'高',bp:4000,implementation:'vanilla'});
+ const printed=face({id:'PRINT',name:'印刷',bp:5000,implementation:'vanilla'});
+ const {pack,state}=match([actor,high,printed],{ACT:1,HIGH:1,PRINT:1},31);
+ let s=main(pack,state);
+ const self=seat(s,0,'ACT','energy',0);
+ self.ready=true;
+ const other=seat(s,0,'HIGH','front',0);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='onceBuffSelf'),false);
+ other.buffs=[{bp:1000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,other),5000);
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>
+  a.mode==='onceBuffSelf'&&a.uid===self.uid));
+ assert.equal(universalBp(pack,s,s.players[0].energy.find(c=>c?.uid===self.uid)),3000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='onceBuffSelf'),false);
+ s=ownMainAgain(pack,s);
+ const back=s.players[0].energy.find(c=>c?.uid===self.uid);
+ assert.equal(universalBp(pack,s,back),2000);
+ const lowered=seat(s,0,'PRINT','front',1);
+ lowered.buffs=[{bp:-1000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,lowered),4000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='onceBuffSelf'),false);
+ lowered.buffs=[];
+ assert.equal(universalBp(pack,s,lowered),5000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.uid===back.uid&&a.mode==='onceBuffSelf'),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('an opponent current BP of 4500 opens one self buff',()=>{
+ const actor=face({id:'ACT',name:'來源',bp:2000,mainAbility:{
+  op:'onceBuffSelfWhen',oncePerTurn:true,bp:2000,
+  when:{kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500}}});
+ const foe=face({id:'FOE',name:'對手',bp:4000,implementation:'vanilla'});
+ const tall=face({id:'TALL',name:'能源',bp:5000,implementation:'vanilla'});
+ const {pack,state}=match([actor,foe,tall],{ACT:1,FOE:1,TALL:1},32);
+ let s=main(pack,state);
+ const self=seat(s,0,'ACT','front',0);
+ const front=seat(s,1,'FOE','front',0);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='onceBuffSelf'),false);
+ front.buffs=[{bp:500,untilTurn:s.turn}];
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.mode==='onceBuffSelf'));
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===self.uid)),4000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='onceBuffSelf'),false);
+ s=ownMainAgain(pack,s);
+ const back=s.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(universalBp(pack,s,back),2000);
+ const energy=seat(s,1,'TALL','energy',0);
+ energy.buffs=[{bp:-1000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,energy),4000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='onceBuffSelf'),false);
+ energy.buffs=[];
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.uid===back.uid&&a.mode==='onceBuffSelf'),true);
+});
+
+test('resting the source buffs one other character of the printed trait',()=>{
+ const actor=face({id:'ACT',name:'來源',bp:2000,traits:['STAR'],mainAbility:{
+  op:'restSelfBuffOther',bp:1000,trait:'STAR'}});
+ const star=face({id:'STAR',name:'星',bp:2000,traits:['STAR'],implementation:'vanilla'});
+ const plain=face({id:'PLAIN',name:'普通',bp:2000,implementation:'vanilla'});
+ const {pack,state}=match([actor,star,plain],{ACT:1,STAR:1,PLAIN:1},33);
+ let s=main(pack,state);
+ const source=seat(s,0,'ACT','energy',0);
+ source.ready=true;
+ const matchCard=seat(s,0,'STAR','front',0);
+ const other=seat(s,0,'PLAIN','front',1);
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>
+  a.mode==='selfRestBuff'&&a.uid===source.uid));
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.deepEqual(s.pending.choices,[matchCard.uid]);
+ s=dispatchUniversalAction(pack,s,{type:'chooseOwnBuff',uid:matchCard.uid});
+ const rested=s.players[0].energy.find(c=>c?.uid===source.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===matchCard.uid)),3000);
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===other.uid)),2000);
+ rested.ready=true;
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='selfRestBuff'&&a.uid===source.uid),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('an attack reveal and draw-discard follow the acting character current BP',()=>{
+ const reveal=face({id:'REV',name:'公開',bp:4000,effects:{onAttack:[{
+  op:'ifLiveThen',when:{kind:'selfCurrentBpAtLeast',turn:'any',minBp:5000},
+  then:[{op:'revealTopTraitOptionalHand',trait:'STAR'}]}]}});
+ const draw=face({id:'DRAW',name:'抽棄',bp:2000,effects:{onAttack:[{
+  op:'ifLiveThen',when:{kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',
+   excludeSelf:true,minBp:5000},
+  then:[{op:'drawDiscard',count:1}]}]}});
+ const ally=face({id:'ALLY',name:'同伴',bp:2000,implementation:'vanilla'});
+ const tallAlly=face({id:'TALL',name:'印刷高',bp:5000,implementation:'vanilla'});
+ const top=face({id:'TOP',name:'牌頂',traits:['STAR'],implementation:'vanilla'});
+ let built=match([reveal,top],{REV:1,TOP:1},34);
+ let s=main(built.pack,built.state);
+ const quiet=seat(s,0,'REV','front',0);
+ quiet.ready=true;
+ const hidden=pull(s,0,'TOP');
+ s.players[0].deck.unshift(hidden);
+ s=dispatchUniversalAction(built.pack,s,legalUniversalActions(built.pack,s).find(a=>a.type==='next'));
+ assert.equal(s.phase,'attack');
+ s=dispatchUniversalAction(built.pack,s,{type:'attack',uid:quiet.uid});
+ assert.notEqual(s.pending?.kind,'effect-reveal-trait-choice');
+ assert.equal(s.players[0].deck[0]?.uid,hidden.uid);
+ quiet.buffs=[{bp:1000,untilTurn:s.turn}];
+ built=match([reveal,top],{REV:1,TOP:1},35);
+ s=main(built.pack,built.state);
+ const loud=seat(s,0,'REV','front',0);
+ loud.ready=true;
+ loud.buffs=[{bp:1000,untilTurn:s.turn}];
+ const shown=pull(s,0,'TOP');
+ s.players[0].deck.unshift(shown);
+ s=dispatchUniversalAction(built.pack,s,legalUniversalActions(built.pack,s).find(a=>a.type==='next'));
+ s=dispatchUniversalAction(built.pack,s,{type:'attack',uid:loud.uid});
+ assert.equal(s.pending.kind,'effect-reveal-trait-choice');
+ assert.equal(s.pending.mayHand,true);
+ assert.equal(universalPrivateChoices(built.pack,s,1),null);
+ const view=universalPublicView(built.pack,s,1);
+ assert.equal(view.publicReveals.some(row=>row.uid===shown.uid),true);
+ assert.equal(JSON.stringify(view.pending).includes(shown.uid),false);
+
+ built=match([draw,ally],{DRAW:1,ALLY:1},36);
+ s=main(built.pack,built.state);
+ const actor=seat(s,0,'DRAW','front',0);
+ actor.ready=true;
+ const printed=seat(s,0,'ALLY','energy',0);
+ printed.buffs=[{bp:3000,untilTurn:s.turn}];
+ const hand=s.players[0].hand.length;
+ s=dispatchUniversalAction(built.pack,s,legalUniversalActions(built.pack,s).find(a=>a.type==='next'));
+ s=dispatchUniversalAction(built.pack,s,{type:'attack',uid:actor.uid});
+ assert.equal(s.players[0].hand.length,hand+1);
+ assert.equal(s.pending.kind,'effect-discard');
+ built=match([draw,tallAlly],{DRAW:1,TALL:1},361);
+ s=main(built.pack,built.state);
+ const quietActor=seat(s,0,'DRAW','front',0);
+ quietActor.ready=true;
+ const reduced=seat(s,0,'TALL','front',1);
+ reduced.buffs=[{bp:-1000,untilTurn:s.turn}];
+ assert.equal(universalBp(built.pack,s,reduced),4000);
+ const quietHand=s.players[0].hand.length;
+ s=dispatchUniversalAction(built.pack,s,legalUniversalActions(built.pack,s).find(a=>a.type==='next'));
+ s=dispatchUniversalAction(built.pack,s,{type:'attack',uid:quietActor.uid});
+ assert.equal(s.players[0].hand.length,quietHand);
+ assert.notEqual(s.pending?.kind,'effect-discard');
+});
+
+test('a BP band returns either low or high opposing front characters',()=>{
+ const actor=face({id:'ACT',name:'回手',bp:2000,effects:{onPlay:[{
+  op:'bounceOppFrontOneUnderBp',bp:2500,orAtLeast:4500,optional:true}]}});
+ const low=face({id:'LOW',name:'低',bp:2000,implementation:'vanilla'});
+ const mid=face({id:'MID',name:'中',bp:3000,implementation:'vanilla'});
+ const high=face({id:'HIGH',name:'高',bp:4000,implementation:'vanilla'});
+ const edge=face({id:'EDGE',name:'緣',bp:2500,implementation:'vanilla'});
+ const {pack,state}=match([actor,low,mid,high,edge],{ACT:1,LOW:1,MID:1,HIGH:1,EDGE:1},37);
+ let s=main(pack,state);fuel(s);
+ const small=seat(s,1,'LOW','front',0);
+ const middle=seat(s,1,'MID','front',1);
+ const tall=seat(s,1,'HIGH','front',2);
+ const bound=seat(s,1,'EDGE','front',3);
+ tall.buffs=[{bp:500,untilTurn:s.turn}];
+ small.buffs=[{bp:1000,untilTurn:s.turn}];
+ [s]=play(pack,s,'ACT');
+ assert.equal(s.pending.kind,'effect-bounce-bp');
+ assert.equal(s.pending.choices.includes(bound.uid),true);
+ assert.equal(s.pending.choices.includes(tall.uid),true);
+ assert.equal(s.pending.choices.includes(small.uid),false);
+ assert.equal(s.pending.choices.includes(middle.uid),false);
+ const forged=structuredClone(s);
+ forged.pending.orAtLeast=4500;
+ forged.pending.choices.push(middle.uid);
+ assert.throws(()=>dispatchUniversalAction(pack,forged,{type:'chooseBounceBp',uid:middle.uid}),
+  /Forged BP band|Illegal BP-threshold return target/);
+ s=dispatchUniversalAction(pack,s,{type:'chooseBounceBp',uid:null});
+ assert.equal(s.players[1].front.some(c=>c?.uid===tall.uid),true);
+ const source=s.players[0].front.find(c=>c?.cardId==='ACT');
+ source.ready=true;
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.type==='next'));
+ assert.equal(s.phase,'attack');
+ assert.equal(source.attackBanned,undefined);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.type==='attack'&&a.uid===source.uid),true);
+});
+
+test('a trait grant stops high current BP characters from blocking',()=>{
+ const granter=face({id:'GRANT',name:'限制',bp:2000,traits:['STAR'],printedImpact:1,effects:{onPlay:[{
+  op:'grantOwnTraitBlockAtLeast',trait:'STAR',bp:4000,optional:true}]}});
+ const star=face({id:'STAR',name:'星',bp:3000,traits:['STAR'],implementation:'vanilla'});
+ const plain=face({id:'PLAIN',name:'普通',bp:3000,implementation:'vanilla'});
+ const low=face({id:'LOW',name:'低擋',bp:3500,implementation:'vanilla'});
+ const mid=face({id:'MID',name:'中擋',bp:3000,implementation:'vanilla'});
+ const high=face({id:'HIGH',name:'高擋',bp:4500,implementation:'vanilla'});
+ const {pack,state}=match([granter,star,plain,low,mid,high],
+  {GRANT:1,STAR:1,PLAIN:1,LOW:1,MID:1,HIGH:1},38);
+ let s=main(pack,state);fuel(s,2);
+ const granted=seat(s,0,'STAR','front',0);
+ const open=seat(s,0,'PLAIN','front',1);
+ const small=seat(s,1,'LOW','front',0);
+ const middle=seat(s,1,'MID','front',1);
+ const tall=seat(s,1,'HIGH','front',2);
+ for(const card of [small,middle,tall])card.ready=true;
+ middle.buffs=[{bp:1000,untilTurn:s.turn}];
+ tall.buffs=[{bp:-1000,untilTurn:s.turn}];
+ [s]=play(pack,s,'GRANT');
+ assert.equal(s.pending.kind,'effect-block-ceiling');
+ assert.equal(s.pending.choices.includes(granted.uid),true);
+ assert.equal(s.pending.choices.includes(open.uid),false);
+ assert.equal(universalPrivateChoices(pack,s,0),null);
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ const skipped=dispatchUniversalAction(pack,structuredClone(s),{type:'chooseBlockCeiling',uid:null});
+ assert.equal(skipped.players[0].front.find(c=>c?.uid===granted.uid).blockAtLeastGranted,undefined);
+ s=dispatchUniversalAction(pack,s,{type:'chooseBlockCeiling',uid:granted.uid});
+ assert.equal(universalImpact(pack,s,s.players[0].front.find(c=>c?.cardId==='GRANT')),1);
+ s.players[0].front.find(c=>c?.uid===granted.uid).ready=true;
+ s.players[0].front.find(c=>c?.uid===open.uid).ready=true;
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.type==='next'));
+ assert.equal(attacksOf(pack,s,granted.uid).every(a=>a.targetUid===undefined),true);
+ const restricted=dispatchUniversalAction(pack,structuredClone(s),attacksOf(pack,s,granted.uid)[0]);
+ assert.equal(restricted.pending.kind,'block');
+ const blocked=legalUniversalActions(pack,restricted).filter(a=>a.type==='chooseBlock').map(a=>a.uid);
+ assert.equal(blocked.includes(small.uid),true);
+ assert.equal(blocked.includes(tall.uid),true);
+ assert.equal(blocked.includes(middle.uid),false);
+ assert.equal(blocked.includes(null),true);
+ const normal=dispatchUniversalAction(pack,structuredClone(s),attacksOf(pack,s,open.uid)[0]);
+ const everyone=legalUniversalActions(pack,normal).filter(a=>a.type==='chooseBlock').map(a=>a.uid);
+ assert.equal(everyone.includes(middle.uid),true);
+ assert.equal(granted.sniperGranted,undefined);
+ assert.equal(assertUniversalMatch(pack,restricted),true);
+});
+
+test('sniper still chooses a target and does not open a block window',()=>{
+ const sniper=face({id:'SNIPE',name:'狙擊',bp:2000,effects:{onPlay:[{op:'grantSelfSniperThisTurn'}]}});
+ const wall=face({id:'WALL',name:'牆',bp:4000,implementation:'vanilla'});
+ const {pack,state}=match([sniper,wall],{SNIPE:1,WALL:1},39);
+ let s=main(pack,state);fuel(s);
+ const target=seat(s,1,'WALL','front',0);
+ target.ready=true;
+ [s]=play(pack,s,'SNIPE');
+ const attacker=s.players[0].front.find(c=>c.cardId==='SNIPE');
+ attacker.ready=true;
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.type==='next'));
+ const shot=legalUniversalActions(pack,s).find(a=>a.type==='attack'&&a.uid===attacker.uid&&a.targetUid===target.uid);
+ assert.ok(shot);
+ s=dispatchUniversalAction(pack,s,shot);
+ assert.notEqual(s.pending?.kind,'block');
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('two named characters reduce one hand character AP and the cost stays at zero or above',()=>{
+ const rin=face({id:'RIN',name:'渋谷 凛',implementation:'vanilla'});
+ const mio=face({id:'MIO',name:'本田 未央',implementation:'vanilla'});
+ const payer=face({id:'PAY',name:'降費',ap:2,handApDiscountWhileAllNames:{
+  names:['渋谷 凛','本田 未央'],amount:1}});
+ const cheap=face({id:'ONE',name:'一費',ap:1,handApDiscountWhileAllNames:{
+  names:['渋谷 凛','本田 未央'],amount:1}});
+ const plain=face({id:'PLAIN',name:'普通',ap:2,implementation:'vanilla'});
+ const {pack,state}=match([rin,mio,payer,cheap,plain],{RIN:1,MIO:1,PAY:1,ONE:1,PLAIN:1},40);
+ let s=main(pack,state);fuel(s);
+ const first=seat(s,0,'RIN','front',0);
+ const second=seat(s,0,'MIO','energy',0);
+ const pay=hold(s,'PAY');
+ const other=hold(s,'PLAIN');
+ const one=hold(s,'ONE');
+ const playable=()=>legalUniversalActions(pack,s).filter(a=>a.type==='play').map(a=>a.uid);
+ assert.equal(playable().includes(pay.uid),true);
+ assert.equal(playable().includes(other.uid),false);
+ s.players[0].energy[0]=null;
+ s.players[0].outside.push(second);
+ assert.equal(playable().includes(pay.uid),false);
+ s.players[0].outside.pop();
+ s.players[0].energy[0]=second;
+ assert.equal(playable().includes(pay.uid),true);
+ fuel(s,0);
+ assert.equal(playable().includes(one.uid),true);
+ assert.equal(playable().includes(pay.uid),false);
+ s.players[0].front[0]=null;
+ s.players[0].outside.push(first);
+ assert.equal(playable().includes(one.uid),false);
+ fuel(s,1);
+ assert.equal(playable().includes(one.uid),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('a front character at the current BP chooses one buff branch per turn',()=>{
+ const actor=face({id:'ACT',name:'前線',bp:5000,mainAbility:{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,minSelfBp:4000,
+  then:[{op:'chooseOne',optional:false,options:[
+   {id:'flat',label:'這個回合 BP+1000',turn:'any',then:[
+    {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:false,excludeSelf:false}]},
+   {id:'high',label:'這個回合 BP+2000',turn:'any',then:[
+    {op:'buffOwnCurrentBp',minBp:3000,bp:2000,optional:false,excludeSelf:false}]}
+  ]}]}});
+ const low=face({id:'LOW',name:'低',bp:2000,implementation:'vanilla'});
+ const {pack,state}=match([actor,low],{ACT:1,LOW:1},41);
+ let s=main(pack,state);
+ const source=seat(s,0,'ACT','energy',0);
+ const other=seat(s,0,'LOW','front',1);
+ assert.equal(universalBp(pack,s,source),5000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='frontOnce'),false);
+ s.players[0].energy[0]=null;
+ s.players[0].front[0]=source;
+ source.buffs=[{bp:-1500,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,source),3500);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='frontOnce'),false);
+ source.buffs=[{bp:-2000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,source),3000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='frontOnce'),false);
+ source.buffs=[{bp:-1000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,source),4000);
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.mode==='frontOnce'));
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ assert.deepEqual(s.pending.options.map(o=>o.id),['flat','high']);
+ s=dispatchUniversalAction(pack,s,{type:'chooseEffectMode',mode:'flat'});
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.equal(s.pending.bp,1000);
+ assert.equal(s.pending.choices.includes(other.uid),true);
+ s=dispatchUniversalAction(pack,s,{type:'chooseOwnBuff',uid:other.uid});
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===other.uid)),3000);
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===source.uid)),4000);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.mode==='frontOnce'),false);
+ s=ownMainAgain(pack,s);
+ const back=s.players[0].front.find(c=>c?.uid===source.uid);
+ const ally=s.players[0].front.find(c=>c?.uid===other.uid);
+ assert.equal(universalBp(pack,s,back),5000);
+ assert.equal(universalBp(pack,s,ally),2000);
+ back.buffs=[{bp:1000,untilTurn:s.turn}];
+ s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.mode==='frontOnce'&&a.uid===back.uid));
+ s=dispatchUniversalAction(pack,s,{type:'chooseEffectMode',mode:'high'});
+ assert.equal(s.pending.bp,2000);
+ assert.equal(s.pending.choices.includes(ally.uid),false);
+ assert.equal(s.pending.choices.includes(back.uid),true);
+ s=dispatchUniversalAction(pack,s,{type:'chooseOwnBuff',uid:back.uid});
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===back.uid)),8000);
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===ally.uid)),2000);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('an own-turn printed-energy count does not read live BP',()=>{
+ const host=face({id:'HOST',name:'自己',bp:2000,energy:2,traits:['STAR'],passiveBonuses:[{
+  condition:{kind:'ownPrintedTraitCount',turn:'own',min:3,zone:'field',excludeSelf:false,
+   trait:'STAR',printedEnergy:2},bp:1000}]});
+ const always=face({id:'ANY',name:'常駐',bp:2000,energy:2,traits:['STAR'],passiveBonuses:[{
+  condition:{kind:'ownPrintedTraitCount',turn:'any',min:3,zone:'field',excludeSelf:false,
+   trait:'STAR',printedEnergy:2},bp:1000}]});
+ const ally=face({id:'ALLY',name:'同伴',bp:2000,energy:2,traits:['STAR'],implementation:'vanilla'});
+ const costly=face({id:'COST',name:'三費',bp:2000,energy:3,traits:['STAR'],implementation:'vanilla'});
+ const {pack,state}=match([host,always,ally,costly],{HOST:1,ANY:1,ALLY:1,COST:1},42);
+ let s=main(pack,state);
+ const mine=seat(s,0,'HOST','front',0);
+ const stay=seat(s,0,'ANY','energy',0);
+ assert.equal(universalBp(pack,s,mine),2000);
+ const extra=seat(s,0,'COST','front',1);
+ extra.buffs=[{bp:4000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,mine),2000);
+ const third=seat(s,0,'ALLY','front',2);
+ assert.equal(universalBp(pack,s,mine),3000);
+ assert.equal(universalBp(pack,s,stay),3000);
+ s=opponentMain(pack,s);
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===mine.uid)),2000);
+ assert.equal(universalBp(pack,s,s.players[0].energy.find(c=>c?.uid===stay.uid)),3000);
+ s=ownMainAgain(pack,s);
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c?.uid===mine.uid)),3000);
+});
+
+test('a nested public reveal stays on a character play or attack effect',()=>{
+ assert.throws(()=>createUniversalPack({id:'probe',version:'imc-reveal-event',cards:[
+  face({id:'EVT',name:'事件',type:'event',energy:0,ap:1,bp:0,gen:0,effects:{onPlay:[{
+   op:'ifLiveThen',when:{kind:'selfCurrentBpAtLeast',turn:'any',minBp:5000},
+   then:[{op:'revealTopTraitOptionalHand',trait:'STAR'}]}]}})
+ ]}),/public trait reveal/);
 });
