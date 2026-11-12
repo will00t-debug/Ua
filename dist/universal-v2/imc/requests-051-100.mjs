@@ -1,43 +1,29 @@
 // C group owns this file. One object per shared-engine gap.
 // cardId, sentence, existingOps, whyNotEnough, proposal.
-const NAMES='IMC-1-068、IMC-1-069、IMC-1-070、IMC-1-071、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093、IMC-1-098';
-const ENERGY='IMC-1-078、IMC-1-080、IMC-1-081、IMC-1-082、IMC-1-083、IMC-1-084、IMC-1-087、IMC-1-099';
+const NAMES='IMC-1-068、IMC-1-069、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093、IMC-1-098';
+const ENERGY='IMC-1-078、IMC-1-080、IMC-1-083、IMC-1-084、IMC-1-087、IMC-1-099';
 
 export const IMC_REQUESTS_051_100=[
  {
   cardId:'IMC-1-098',
   sentence:'カードを1枚引く。次に使う特徴の手札は消費AP-1。場と場外のカード名が6種類以上なら次の1枚をアクティブ、9種類以上なら全てをアクティブ。',
-  existingOps:['draw','nextEligibleHandPlayApDiscount'],
-  whyNotEnough:'抽 1 可以結算。nextEligibleHandPlayApDiscount 結算時只用 field() 找來源，事件使用後已在場外，會丟出 Unproven hand discount source，所以不能掛上。ownDistinctTraitNames 只算前線與能源線，場外不算。也沒有「本回合下一張」與「本回合全部」活動登場的持續狀態。一般登場目前預設休息，enterAlwaysActive 不在 IMC 程式白名單。',
-  proposal:'讓這個既有 AP-1 接受場外的事件來源，而且只在下一張符合特徵的手牌使用時消耗。另給持續狀態：同一組卡名、同名一次、自己要算、只影響該特徵，持續到本回合結束。6 種只改下一張，9 種改全部。一般前線登場是否活動也要能從 IMC 程式表達。抽 1 與特殊生命觸發已測，整張不標 ready。'
+  existingOps:['draw','nextEligibleHandPlayApDiscount','grantTraitActiveEntryThisTurn'],
+  whyNotEnough:'抽 1 與特殊生命觸發可以結算。fromUsedEvent 已能讓使用後在場外的事件當 AP-1 來源。fieldOutside 也已能算場加場外、同名一次。grantTraitActiveEntryThisTurn 有 next 與 all，但 ifLiveThen 的後續不能接它，所以 6 種只改下一張、9 種改全部不能做成同一句。',
+  proposal:'讓 ifLiveThen 能接 grantTraitActiveEntryThisTurn。6 種只改下一張符合特徵的手牌，9 種改本回合全部，同名只算一次且自己要算。整張先不標 ready。'
  },
  {
   cardId:'IMC-1-068',
   sentence:'自分の場と場外に［特徴：お願い！シンデレラ］のカード名が合計 N 種類以上。',
   existingOps:['draw','retireOppFrontUnderBp'],
-  whyNotEnough:'同上，ownDistinctTraitNames 的 zone 沒有場外。IMC-1-068 的二選一、IMC-1-069 的抽牌替換、IMC-1-070 到 IMC-1-075、IMC-1-093 的加攻與衝擊都要用這個數字，而且 FAQ 規定這張自己要算進去。',
-  proposal:'共用條件增加場與場外、依印刷卡名去重、可包含來源自己。影響 '+NAMES+'。在這之前這些卡不標 ready。'
+  whyNotEnough:'ownDistinctTraitNames 的 fieldOutside 已能把場上與場外依印刷卡名去重，自己也可以算。070 與 071 已用。068 的二選一、069 的抽牌替換、072 的勝利抽牌與手牌進場外、073 的不能上前線、074 的其餘句子、075 的回手再登場、093 的加攻與衝擊、098 的 6 與 9 種活動登場，都還沒有整句。',
+  proposal:'070 與 071 已完成。其餘 '+NAMES+' 先不標 ready。'
  },
  {
   cardId:'IMC-1-080',
   sentence:'自分の場に必要エナジーが2の［特徴：Starry-Go-Round］が N 枚以上。',
   existingOps:['drawIfOwnTraitCount'],
-  whyNotEnough:'ownCardTraitCount 與 drawIfOwnTraitCount 只數特徵，不過濾印刷必要能源恰好 2。以下與恰好不同。',
-  proposal:'場上張數條件加上印刷必要能源恰好 N。影響 '+ENERGY+'。078 的登場還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
- },
- {
-  cardId:'IMC-1-090',
-  sentence:'このキャラがアクティブの場合、発生エナジー+赤。',
-  existingOps:['grantFrontEnergyOwnOtherFrontTrait'],
-  whyNotEnough:'activeExtraEnergy、emptyOwnFieldHandEnergyDiscount、blockBpRestriction、frontForbidden、opponentTurnBp、unblockedAttack、ownTurnBp 都已在引擎，但 IMC 程式白名單不接收、對戰包也不會抄過去。',
-  proposal:'請 A 組讓這些既有欄位能從 IMC program 進到對戰卡。影響 IMC-1-054 的阻擋限制、IMC-1-061 的未被阻擋、IMC-1-073 的不能上前線、IMC-1-077 的空場減能源、IMC-1-090 的活動能源、IMC-1-097 的對方回合 BP-1000。'
- },
- {
-  cardId:'IMC-1-066',
-  sentence:'カードを2枚引く。相手の場にBP4500以上のキャラがある場合、さらにカードを1枚引く。',
-  existingOps:['draw','drawIfOppCharacterBpAtLeast'],
-  whyNotEnough:'drawIfOppCharacterBpAtLeast 的語意符合，但驗證只允許角色的登場時，事件不能使用。',
-  proposal:'讓這個既有抽牌條件能用在事件登場，或提供事件可用的同一條件。066 先不標 ready，避免只做成無條件抽 2。'
+  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，081 與 082 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場、083 與 084 的自己回合、087 的場外張數、099 的退場上限都還沒有整句。',
+  proposal:'081 與 082 已完成。其餘 '+ENERGY+' 先不標 ready。078 還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
  },
  {
   cardId:'IMC-1-051',
@@ -64,21 +50,21 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-054',
   sentence:'〈速水 奏〉のこの効果は1ターンに1回のみ。相手の場にBP4500以上のキャラがある場合のみ、このキャラをアクティブにする。',
   existingOps:['draw'],
-  whyNotEnough:'nameOnceActive 的 when 只有對手前線低於印刷 BP，或場外沒有某名字。不能表達 BP≥4500。第二句與 052 同一目標聯集。阻擋限制欄位也進不了程式。',
+  whyNotEnough:'nameOnceActive 的 when 只有對手前線低於印刷 BP，或場外沒有某名字。不能表達 BP≥4500。第二句與 052 同一目標聯集。',
   proposal:'同名一回合一次的活動自身，門檻改為對手有目前 BP≥4500。Q2240 只算這一句，Q2241 兩張同名共用一次。054 先不標 ready。'
  },
  {
   cardId:'IMC-1-057',
   sentence:'手札から必要エナジーが2以下の青の［特徴：LiPPS］をレストで登場させる。アタックしてバトルに敗北した時アクティブ。BP4500以上なら引く。',
   existingOps:['deployOwnHandRest','drawIfOppCharacterBpAtLeast'],
-  whyNotEnough:'deployOwnHandRest 強制比對消費 AP，印刷沒有寫消費 AP。Q2242 要求沒有登場也要抽。敗北後一回合一次的活動，以及突襲框內外尚未用卡圖判定。',
-  proposal:'手牌休息登場的 AP 改為可省略。抽牌與登場分開。框內外確定前不把登場時寫進 raid-box。IMC-1-057、IMC-1-079、IMC-1-075 都碰到沒寫 AP 的手牌休息登場。'
+  whyNotEnough:'deployOwnHandRest 的 ap:null 已能做沒有寫消費 AP 的手牌休息登場，079 已用。057 還有敗北後一回合一次的活動，達標抽牌與登場要分開，以及突襲框內外尚未用卡圖判定。Q2242 要求沒有登場也要抽。',
+  proposal:'抽牌與登場分開。框內外確定前不把登場時寫進 raid-box。057 與 075 仍有手牌休息登場以外的句子。'
  },
  {
   cardId:'IMC-1-061',
   sentence:'ブロックされなかった時、カードを1枚まで引く。APをアクティブにした場合、アタックフェイズ終了時に手札へ戻す。',
   existingOps:['draw','recoverAp'],
-  whyNotEnough:'unblockedAttack 進不了 IMC 程式。Q2243 的時機是阻擋指定之後。沒有「本回合攻擊階段結束時，這張回手」的暫時規則。retireAtMainEnd 是主要階段結束退場，不是攻擊階段結束回手。',
+  whyNotEnough:'unblockedAttack 已能進 IMC 程式，但這張還有攻擊階段結束回手。Q2243 的時機是阻擋指定之後。沒有「本回合攻擊階段結束時，這張回手」的暫時規則。retireAtMainEnd 是主要階段結束退場，不是攻擊階段結束回手。',
   proposal:'既有未被阻擋的可選抽牌要能掛到 IMC 卡，並新增攻擊階段結束回手的暫時授予。061 先不標 ready。'
  },
  {
@@ -134,7 +120,7 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-097',
   sentence:'このキャラはアタックできない。アタックフェイズ開始時、APを1支払うと元々の効果を失う。相手のターン中、BP-1000。',
   existingOps:['draw'],
-  whyNotEnough:'不能攻擊目前是被賦予的 fieldRestrictions，不是會隨 originalEffectsDisabled 關掉的印刷旗標。沒有攻擊階段開始可付 1 AP 的時機。opponentTurnBp 進不了 IMC 程式。Q2250 到 Q2252：失去的是印刷效果，已獲得效果與別人給的 2 回阻擋留下。',
+  whyNotEnough:'opponentTurnBp 已能進 IMC 程式。不能攻擊目前是被賦予的 fieldRestrictions，不是會隨 originalEffectsDisabled 關掉的印刷旗標。沒有攻擊階段開始可付 1 AP 的時機。Q2250 到 Q2252：失去的是印刷效果，已獲得效果與別人給的 2 回阻擋留下。',
   proposal:'印刷的不能攻擊與對方回合 BP-1000 在失去原效果時一起停止，已獲得效果不停。攻擊階段開始的可選 AP 支付寫成持續狀態。097 先不標 ready。'
  }
 ];
