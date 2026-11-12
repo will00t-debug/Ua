@@ -20,6 +20,13 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   mainAbility:{op:'restSelfGainEnergyRetireEndMain',lines:'field',
    oncePerTurn:true,extraEnergy:1}
  }),
+ 'IMC-1-069':play([{
+  op:'ifLiveThen',
+  when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+   trait:'お願い！シンデレラ',min:6},
+  then:[{op:'draw',count:1}],
+  else:[{op:'drawDiscard',count:1}]
+ }]),
  'IMC-1-070':Object.freeze({
   ready:true,implementation:'dsl',
   passiveBonuses:[{bp:1000,condition:{
