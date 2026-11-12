@@ -30,6 +30,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261107liner1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
+import {policyDifficulty} from './universal-v2/ai-policy-label.mjs';
 import {chooseAiV3Action,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
 import {HYBRID_MAIN_POLICY,HYBRID_START_HARD_POLICY} from './universal-v2/ai-v3/hybrid-main.mjs';
 import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from './universal-v2/ai-v3/worker-entry.mjs';
@@ -1961,8 +1962,14 @@ function currentAiPolicy(){
  if(hybridStartOn())return HYBRID_START_HARD_POLICY;
  if(hybridMainOn())return HYBRID_MAIN_POLICY;
  if(searchPreviewOn())return AI_V3_POLICY;
- const difficulty=app.aiDifficulty||$('ai-level')?.value||'normal';
- return aiPolicyFor(difficulty);
+ // app.aiDifficulty stays 'normal' until a battle is launched. Reading it
+ // first hid the lobby selection. A live match keeps its launched value.
+ const lobby=$('ai-level')?.value;
+ return aiPolicyFor(policyDifficulty({
+  matchStarted:!!app.state,
+  matchDifficulty:app.aiDifficulty,
+  lobbyDifficulty:lobby
+ }));
 }
 function paintAiPolicy(){
  const policy=currentAiPolicy();
@@ -2366,6 +2373,7 @@ async function importAccountLobbyDecks(){
   // a previously saved account deck now that its option exists.
   if($('my-title').value===mineAtStart&&$('ai-title').value===foeAtStart) restoreMatchLobby();
   syncMatchLobby();
+  paintAiPolicy();
  }
  if(!note||prior)return;
  const ready=rows.filter(row=>row.ready).length;
@@ -2534,11 +2542,13 @@ if(!IS_BATTLE_PAGE){
    if(!['easy','normal','hard','learned'].includes(difficulty))return;
    $('ai-level').value=difficulty;
    syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+   paintAiPolicy();
   });
  }
  for(const id of ['my-title','ai-title','ai-level','first-player']){
   $(id).addEventListener('change',()=>{
    syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+   if(id==='ai-level')paintAiPolicy();
   });
  }
  $('start-game').addEventListener('click',()=>{
