@@ -1,0 +1,29 @@
+{
+  "pinnedAt": "2026-11-05T16:20:00+08:00",
+  "main": "03bd60f7237e1b1ecdd1002eac167f718b2947b7",
+  "mainSubject": "Merge PR #318: fix Simon Q2266 discard and mandatory AP recovery",
+  "deployed": {
+    "worker": "ua-arena",
+    "url": "https://ua-arena.will00t.workers.dev/",
+    "run": "41983603518",
+    "runUrl": "https://github.com/will00t-debug/Ua/actions/runs/41983603518",
+    "conclusion": "success",
+    "createdAt": "2026-11-05T06:54:58Z",
+    "uiHeader": "BIFPPOIQ",
+    "previewCache": "20261105ttg012ap1",
+    "hardPolicy": "hard-search-2",
+    "learnPolicy": "learned-v1",
+    "learnFormat": "ua-v2-learn-v1"
+  },
+  "pr294": {
+    "url": "https://github.com/will00t-debug/Ua/pull/294",
+    "state": "open",
+    "merged": false,
+    "head": "cac9fef39f945afd0051041c6db82208fd9ff98d",
+    "learnPolicy": "learned-v4",
+    "learnFormat": "ua-v2-learn-v4",
+    "rawGap": 0,
+    "note": "Not deployed. Removing RAW_GAP is not treated as a strength result."
+  },
+  "hardAiSha256": "f202dc4fcc07b9f7d794cc6fa3c486836cb8bf9d3ab8be69c16ebe733d40b262"
+}

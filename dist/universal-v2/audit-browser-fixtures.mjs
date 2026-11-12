@@ -2,11 +2,13 @@
 // loads this module. The board is a real V2 match; the browser then uses the
 // same legal buttons as a player.
 import {createAotV2Pack} from './aot-pack.mjs';
+import {createBleachV2Pack} from './bleach-pack.mjs';
 import {createCsmV2Pack} from './csm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
+import {createStgV2Pack} from './stg-pack.mjs';
 import {createKmrBattlePack} from './official-entry.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
- universalEnergyByColor,universalPublicView}
+ universalBp,universalEnergyByColor,universalPublicView}
  from './engine.mjs';
 import {validateUniversalDeck} from './pack.mjs';
 import {makeUniversalPreviewReplay} from './preview-replay.mjs';
@@ -80,7 +82,55 @@ export function loadAuditFixture(name){
  if(name==='aot011')return leviSniper();
  if(name==='aot2017')return jawStep();
  if(name==='aot2016')return falcoLook();
+ if(name==='stg006')return rukaActivate();
+ if(name==='blc067dual')return kenpachiDual();
  throw Error('Unknown audit fixture '+name);
+}
+function rukaActivate(){
+ const pack=createStgV2Pack();
+ const built=open(pack,6006,['STG-1-006','STG-1-001'],{'STG-1-006':2,'STG-1-001':2});
+ const s=built.state;
+ ready(s);
+ const source=put(s,0,'STG-1-006','energy',0,true);
+ const ally=put(s,0,'STG-1-001','front',0,true);
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ const packs=[pack,pack];
+ const acts=legalUniversalActions(packs,s).filter(a=>a.type==='activate');
+ if(acts.length!==1||acts[0].uid!==source.uid||acts[0].mode!=='selfRestBuff')
+  throw Error('STG-1-006 audit activate is '+JSON.stringify(acts));
+ if(!source.ready||universalBp(packs,s,ally)!==2000)
+  throw Error('STG-1-006 audit board is not ready to activate');
+ const readyAp=s.players[0].apCards.filter(card=>card.ready).length;
+ if(readyAp!==3)throw Error('STG-1-006 audit AP is '+readyAp);
+ built.audit={source:source.uid,ally:ally.uid};
+ return finish(pack,built,
+  '稽核 STG-1-006：點能源線漆原琉華，按「啟動」，再按「確認發動」。然後指定阿萬音鈴羽。漆原轉為休息，阿萬音本回合 BP＋1000，AP 維持 3。之後可按下一階段。');
+}
+function kenpachiDual(){
+ const pack=createBleachV2Pack();
+ const built=open(pack,2067,['BLC-2-067','BLC-4-070','BLC-1-083'],
+  {'BLC-2-067':2,'BLC-4-070':4,'BLC-1-083':2});
+ const s=built.state;
+ ready(s);
+ const bases=[];
+ for(let slot=0;slot<4;slot++)bases.push(put(s,0,'BLC-4-070','energy',slot,true));
+ const occupant=put(s,0,'BLC-1-083','front',0,true);
+ const incoming=take(s,0,'BLC-2-067');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].hand.push(incoming);
+ const packs=[pack,pack];
+ const legal=legalUniversalActions(packs,s).filter(a=>a.uid===incoming.uid);
+ const normal=legal.find(a=>a.type==='play'&&a.line==='front'&&a.slot===1&&a.replaceUid===undefined);
+ const raid=legal.find(a=>a.type==='raid'&&a.baseUid===bases[0].uid&&a.slot===1&&a.line!=='energy');
+ const squeeze=legal.find(a=>a.type==='play'&&a.line==='energy'&&a.slot===0&&a.replaceUid===bases[0].uid);
+ if(!normal||!raid||!squeeze)throw Error('BLC-2-067 does not have both entry modes');
+ if(legal.some(a=>a.line==='front'&&a.slot===0))
+  throw Error('The occupied non-base front cell is selectable');
+ const green=universalEnergyByColor(packs,s,0).green||0;
+ if(green!==4)throw Error('BLC-2-067 audit energy is '+green);
+ built.audit={hand:incoming.uid,base:bases[0].uid,occupant:occupant.uid};
+ return finish(pack,built,
+  '稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。');
 }
 function heatMetal(){
  const pack=createKmrBattlePack();
