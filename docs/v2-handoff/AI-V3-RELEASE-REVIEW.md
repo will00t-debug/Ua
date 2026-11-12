@@ -39,4 +39,4 @@ Chrome 驗收用的是腳本原預算，沒有縮短 150000ms。
 
 手機驗收重跑後，`audit/ai-v3-neon-mobile-acceptance.json` 與 PR #370 的 SHA256 `26488b7798c64339c60bf96d07f60b688d0bdded88ed0899eb2a5843b7220d3d` 相同，所以照原文放進來。桌面加手機的對局驗收是這次新跑的，寫在 `audit/ai-v3-release-chrome-start-hard-e2e.json`。來源清單裡的 `audit/ai-v3-start-hard-preview-e2e.json` 仍是舊研究檔，沒有被這次的結果蓋掉。
 
-`git diff 4cac28f8fb7ea0ad6d046fa1de64a54d501a7791 -- dist/universal-v2/ai-v3` 是空的。大廳 HTML、稽核局面與進場動作與該提交相同。`dist/universal-v2-preview.mjs` 只多了公開頁忽略 `?audit=` 的那一層。
+大廳 HTML、稽核局面與進場動作與該提交相同。`dist/universal-v2-preview.mjs` 只多了公開頁忽略 `?audit=` 的那一層。`hybrid-main.mjs` 後來只改了一句註解：Worker 白名單接受 `hybrid-start-hard-v1`，戰鬥選單預設不勾。函式、路由、評分與 48 節點／40ms 沒有改。種子鎖裡「worker does not accept its name」是當時實驗原文，沒有改寫。

@@ -7,7 +7,7 @@ import {chooseAiV3Action,lastAiV3Trace,resetAiV3Report,MATCH_LIMITS} from './sea
 import {preferPaidFront} from './paid-front.mjs';
 
 export const HYBRID_MAIN_POLICY='hybrid-main-v1';
-// Benchmark-only. The worker and the battle menu do not accept this name.
+// Opt-in. The worker whitelist accepts this name. The battle menu leaves it unchecked.
 export const HYBRID_START_HARD_POLICY='hybrid-start-hard-v1';
 
 export function hybridLane(state){
