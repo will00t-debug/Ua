@@ -109,14 +109,22 @@ export const IMC_PROGRAMS_STARTER=Object.freeze({
   }
  },
  'IMC-1-111':{
+  ready:true,
   implementation:'dsl',
   // 登場時可付 1 AP。付了才從場外拿 1 張黃、ポジティブパッション、持有突襲的卡。
-  // 攻擊抽棄可用 drawDiscard 的 ownRaidColorTrait。這句還沒寫上，所以不標 ready。
-  effects:{onPlay:[{
-   op:'optionalPayApThen',ap:1,optional:true,
-   then:[{op:'recoverOutsideFiltered',optional:false,max:1,
-    trait:'ポジティブパッション',color:'yellow',raidKeyword:true}]
-  }]}
+  // 攻擊時自己場上要同時有黃色、該特徵、突襲關鍵字，才抽 1 再把 1 張手牌置於場外。
+  effects:{
+   onPlay:[{
+    op:'optionalPayApThen',ap:1,optional:true,
+    then:[{op:'recoverOutsideFiltered',optional:false,max:1,
+     trait:'ポジティブパッション',color:'yellow',raidKeyword:true}]
+   }],
+   onAttack:[{
+    op:'drawDiscard',count:1,discardCount:1,
+    when:{kind:'ownRaidColorTrait',turn:'any',zone:'field',color:'yellow',
+     trait:'ポジティブパッション',raidKeyword:true}
+   }]
+  }
  },
  'IMC-1-113':{
   ready:true,

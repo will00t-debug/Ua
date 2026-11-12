@@ -10,13 +10,6 @@ export const IMC_REQUESTS_STARTER=[
   proposal:'場域休息並退場後抽 1，再可選最多 1 張符合顏色、AP 與能源上限的手牌角色，以休息狀態登場。'
  },
  {
-  cardId:'IMC-1-111',
-  sentence:'攻擊時，自己場上有持有突襲的黃色 Positive Passion 才抽 1 張，並將 1 張手牌放到場外。',
-  existingOps:['drawDiscard','drawDiscardIfFieldAny','recoverOutsideFiltered'],
-  whyNotEnough:'登場時付 1 AP 後回收已經寫進程式。攻擊抽棄現在可用 drawDiscard 加 when: ownRaidColorTrait，顏色、特徵與突襲關鍵字要同時成立；沒有 when 的 drawDiscard 維持原樣。整張程式還沒把攻擊句寫上，所以不標 ready。',
-  proposal:'onAttack 用 drawDiscard count 1、discardCount 1，when 為 ownRaidColorTrait，zone field，黃色、ポジティブパッション、raidKeyword true。'
- },
- {
   cardId:'IMC-1-112',
   sentence:'突襲與衝擊無效在框外。登場時可將 1 張自己場上角色放到牌庫底；若做了，看牌庫頂 3 張，其中最多 1 張藍色 Girls in the Frontier 以休息狀態登場，另 1 張任意卡加入手牌，其餘依序放回牌庫底。Q2258：入手不限特徵。',
   existingOps:['searchTopOneBottomDiscard','bounceOwnOtherUnderEnergy'],
