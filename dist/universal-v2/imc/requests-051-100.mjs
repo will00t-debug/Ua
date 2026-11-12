@@ -1,7 +1,7 @@
 // C group owns this file. One object per shared-engine gap.
 // cardId, sentence, existingOps, whyNotEnough, proposal.
 const NAMES='IMC-1-068、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093';
-const ENERGY='IMC-1-078、IMC-1-080、IMC-1-087、IMC-1-099';
+const ENERGY='IMC-1-078、IMC-1-080';
 
 export const IMC_REQUESTS_051_100=[
  {
@@ -15,29 +15,29 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-080',
   sentence:'自分の場に必要エナジーが2の［特徴：Starry-Go-Round］が N 枚以上。',
   existingOps:['drawIfOwnTraitCount'],
-  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場、087 的場外張數、099 的退場上限都還沒有整句。',
-  proposal:'081、082、083、084 已完成。其餘 '+ENERGY+' 先不標 ready。078 還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
+  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084、087、099 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場還沒有整句。',
+  proposal:'081、082、083、084、087、099 已完成。其餘 '+ENERGY+' 先不標 ready。078 還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
  },
  {
   cardId:'IMC-1-051',
   sentence:'自分の場外から必要エナジーが2以下の［特徴：LiPPS］を1枚まで手札に加える。起動はレストかつ退場，對手有 BP4500 以上才可，再從場外休息登場藍的 LiPPS。',
   existingOps:['recoverOutsideUnderEnergy','deployOutsideFiltered'],
-  whyNotEnough:'場外回收只看必要能源，沒有特徵。deployOutsideFiltered 是進場，不是回手。起動的雙費用與顏色加特徵的場外休息登場沒有對上的單一 op。',
-  proposal:'場外依特徵與必要能源上限回手，以及休息並退場後的場外休息登場。051 整張先不標 ready。'
+  whyNotEnough:'登場時的場外回手已用 recoverOutsideFiltered：特徵 LiPPS、印刷必要能源 2 以下、最多 1 張、可以不拿。這句在程式裡，但 ready 仍是 false。起動要先休息並使這張退場，而且對手場上要有目前 BP4500 以上，才能把場外能源 2 以下的藍色 LiPPS 休息登場。現有進場沒有這個雙費用。',
+  proposal:'回手已完成且不進對戰包。休息、退場、BP 門檻與藍色場外休息登場補齊前，051 不標 ready。'
  },
  {
   cardId:'IMC-1-052',
   sentence:'相手のフロントLのキャラか、〈速水 奏〉以外の自分の場の［特徴：LiPPS］を1枚選び、BP+500。',
   existingOps:['buffOwnTrait','enemyBpDown'],
-  whyNotEnough:'現有加攻的目標是自己場上或對手場上其中一種，沒有這個聯集，也沒有排除指定卡名。054 的第二個起動是同一句。',
-  proposal:'一個必選目標：對手前線，或自己場上帶特徵且不是指定卡名。052 與 054 先不標 ready。'
+  whyNotEnough:'chooseFrontOrOwnTrait 已能在同一次選擇裡選對手前線，或自己場上帶特徵且排除指定卡名的角色，必選時不能跳過，BP+500。印刷是起動並休息。restSelfThen 只接受 millTop 或 buffSelfUntilNextOwnStart，不能接這個選擇。改成登場時會弄錯時機，所以不放進程式。054 的前線一回合一次是同一句，也接不進去。',
+  proposal:'讓休息起動可以接 chooseFrontOrOwnTrait。在那之前 052 不標 ready。'
  },
  {
   cardId:'IMC-1-054',
   sentence:'〈速水 奏〉のこの効果は1ターンに1回のみ。相手の場にBP4500以上のキャラがある場合のみ、このキャラをアクティブにする。',
   existingOps:['draw'],
-  whyNotEnough:'nameOnceActive 的 when 只有對手前線低於印刷 BP，或場外沒有某名字。不能表達 BP≥4500。第二句與 052 同一目標聯集。',
-  proposal:'同名一回合一次的活動自身，門檻改為對手有目前 BP≥4500。Q2240 只算這一句，Q2241 兩張同名共用一次。054 先不標 ready。'
+  whyNotEnough:'跨陣營選擇的 op 已有，但 frontOnceProgram 與 restSelfThen 都不接受它，所以第二句起動不能接上。同名一回合一次的活動自身仍不支援對手目前 BP≥4500。Q2240 只算活動那句，Q2241 兩張同名共用一次。BP4500 以上不能阻擋也還沒有整句。',
+  proposal:'同名一次的活動條件與跨陣營起動都補上之前，054 不標 ready。'
  },
  {
   cardId:'IMC-1-057',
@@ -52,13 +52,6 @@ export const IMC_REQUESTS_051_100=[
   existingOps:['draw','recoverAp'],
   whyNotEnough:'unblockedAttack 已能進 IMC 程式，但這張還有攻擊階段結束回手。Q2243 的時機是阻擋指定之後。沒有「本回合攻擊階段結束時，這張回手」的暫時規則。retireAtMainEnd 是主要階段結束退場，不是攻擊階段結束回手。',
   proposal:'既有未被阻擋的可選抽牌要能掛到 IMC 卡，並新增攻擊階段結束回手的暫時授予。061 先不標 ready。'
- },
- {
-  cardId:'IMC-1-062',
-  sentence:'BP3000以下を1枚選び退場。特徴が3枚以上ならBP5000以下に代わる。',
-  existingOps:['retireOppFrontUnderBp'],
-  whyNotEnough:'traitCountBonus 的驗證形狀是可選且排除自身。這句是必須選 1 張，門檻依場上特徵張數從 3000 升到 5000。099 是 2000 升到 5000，另外還有恰好能源 2 的張數才加攻。',
-  proposal:'必須退場的 BP 上限能依場上特徵張數替換，不能改成可選，也不能漏算自己。062 與 099 先不標 ready。'
  },
  {
   cardId:'IMC-1-064',
@@ -87,13 +80,6 @@ export const IMC_REQUESTS_051_100=[
   existingOps:['bounceOwnOtherUnderEnergy','deployOwnHandRest'],
   whyNotEnough:'可選回手的 then 只接場外回收，不能限特徵，也不能接手牌休息登場。Q2248 要求剛回手的那張可以再登場，所以必須先完成回手再看手牌。種類數門檻另外缺場外。',
   proposal:'可選、限特徵與必要能源的回手，成功後才從新手牌休息登場，而且不額外加上印刷沒有的消費 AP。075 先不標 ready。'
- },
- {
-  cardId:'IMC-1-087',
-  sentence:'場外の必要エナジーが2のStarry-Go-Roundを1枚、場上已有3張則2枚，手札に加える。',
-  existingOps:['recoverOutsideUnderEnergy','deployOutsideFiltered'],
-  whyNotEnough:'回收沒有「恰好必要能源 2」加特徵，張數上限也不能依場上恰好能源 2 的張數從 1 改成 2。攻擊時的加攻可以重用，但整句未齊。突襲框內外未量。',
-  proposal:'場外依特徵與恰好必要能源回手，張數上限看場上同一條件。IMC-1-087 與 IMC-1-094 的突襲框確定前不寫 raid-box。'
  },
  {
   cardId:'IMC-1-094',
