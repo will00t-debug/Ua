@@ -3,6 +3,8 @@ import {IMC_PROGRAMS_STARTER} from './programs-starter.mjs';
 
 export function runImcStarter(pack,state,job){
  const program=IMC_PROGRAMS_STARTER[job?.id];
+ if(program?.implementation==='dsl'||program?.implementation==='vanilla')
+  throw Error('IMC D 組這張卡交給共用引擎：'+job?.id);
  if(typeof program?.run!=='function')
   throw Error('IMC D 組還沒有這個效果的處理函式：'+job?.id);
  return program.run(pack,state,job);
