@@ -13,7 +13,8 @@ import {IMC_PROGRAMS_STARTER} from '../dist/universal-v2/imc/programs-starter.mj
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {countOwnPrintedTrait,matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalBp,universalEnergyByColor} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalBp,universalEnergyByColor,universalPrivateChoices,
+ universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 import {prepareSoloBattle} from '../dist/universal-v2/solo-battle-session.mjs';
@@ -120,12 +121,26 @@ function play(pack,s,id,line='front'){
 }
 function printed(card){return {name:card.name,traits:card.traits,type:'character',bp:card.bp,energy:card.energy};}
 
-test('the integrated pack executes exactly the 38 ready cards',()=>{
+test('the integrated pack executes exactly the ready cards',()=>{
  const pack=createImcV2Pack();
- assert.deepEqual(Object.keys(pack.cards),READY);
- assert.equal(READY.length,38);
- for(const id of ['IMC-1-003','IMC-1-050','IMC-1-098','IMC-1-102','IMC-1-113'])
-  assert.equal(pack.cards[id],undefined,id);
+ const expected=[
+  'IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-007','IMC-1-010','IMC-1-013','IMC-1-014',
+  'IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-021','IMC-1-022','IMC-1-023','IMC-1-025',
+  'IMC-1-026','IMC-1-027','IMC-1-030','IMC-1-031','IMC-1-034','IMC-1-035','IMC-1-038',
+  'IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045','IMC-1-047','IMC-1-048',
+  'IMC-1-050','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-059','IMC-1-063','IMC-1-066',
+  'IMC-1-067','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
+  'IMC-1-082','IMC-1-085','IMC-1-086','IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091',
+  'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-098','IMC-1-100','IMC-1-101','IMC-1-102',
+  'IMC-1-103','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109'
+ ];
+ const unfinished=['IMC-1-003','IMC-1-006','IMC-1-016','IMC-1-049','IMC-1-080','IMC-1-104','IMC-1-113'];
+ assert.deepEqual(Object.keys(pack.cards),expected);
+ assert.deepEqual(READY,expected);
+ for(const id of unfinished)assert.equal(pack.cards[id],undefined,id);
+ assert.equal(pack.cards['IMC-1-017'].effects.onPlay[0].op,'peekTopOne');
+ assert.equal(pack.cards['IMC-1-023'].effects.onPlay[0].sourceLine,'front');
+ assert.equal(pack.cards['IMC-1-023'].effects.onPlay[0].line,undefined);
  const counts=legalReadyCounts(pack);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  assert.equal(editorV2Status('imc',counts).ready,false);
@@ -371,7 +386,7 @@ test('an existing active-energy field can pass through an IMC battle card',()=>{
  });
  const pack=createUniversalPack({id:'probe',version:'imc-forward',cards:[battle]});
  assert.equal(pack.cards['IMC-1-005'].activeExtraEnergy,1);
- assert.equal(createImcV2Pack().cards['IMC-1-005'],undefined);
+ assert.equal(createImcV2Pack().cards['IMC-1-005'].activeExtraEnergy,1);
  const gated=face({id:'GATE',name:'門檻',bp:2000,energy:0,gen:0,traits:['STAR'],passiveBonuses:[
   {condition:{kind:'ownPrintedTraitCount',turn:'any',min:2,zone:'field',excludeSelf:true,
    trait:'STAR',printedEnergy:2},bp:1500},
@@ -390,9 +405,55 @@ test('an existing active-energy field can pass through an IMC battle card',()=>{
  assert.equal(universalEnergyByColor(built.pack,s,0).red,1);
  seat(s,0,'TWO','front',1);
  assert.equal(universalBp(built.pack,s,host),4500);
- assert.equal(createImcV2Pack().cards['IMC-1-027'],undefined);
- assert.equal(createImcV2Pack().cards['IMC-1-070'],undefined);
- assert.equal(createImcV2Pack().cards['IMC-1-081'],undefined);
+ assert.equal(createImcV2Pack().cards['IMC-1-027'].passiveBonuses[0].extraEnergy,1);
+ assert.equal(createImcV2Pack().cards['IMC-1-070'].passiveBonuses[0].condition.zone,'fieldOutside');
+ assert.equal(createImcV2Pack().cards['IMC-1-081'].passiveBonuses[0].condition.printedEnergy,2);
+});
+
+test('a public trait reveal is visible to both players and a private look is not',()=>{
+ const actor=face({id:'ACT',energy:0,effects:{onPlay:[
+  {op:'revealTopTraitOptionalHand',trait:'STAR'}]}});
+ const star=face({id:'STAR',name:'星',traits:['STAR'],implementation:'vanilla'});
+ const plain=face({id:'PLAIN',name:'普通',traits:[],implementation:'vanilla'});
+ const open=()=>{
+  const built=match([actor,star,plain],{ACT:1,STAR:2,PLAIN:2},21);
+  let s=main(built.pack,built.state);
+  fuel(s);
+  return {built,s};
+ };
+ let {built,s}=open();
+ const hidden=pull(s,0,'PLAIN');
+ s.players[0].deck.unshift(hidden);
+ [s]=play(built.pack,s,'ACT');
+ assert.equal(s.pending.kind,'effect-reveal-trait-choice');
+ assert.equal(s.pending.mayHand,false);
+ assert.deepEqual(legalUniversalActions(built.pack,s).map(a=>a.mode),['top','bottom']);
+ assert.equal(universalPrivateChoices(built.pack,s,1),null);
+ const shown=universalPublicView(built.pack,s,1);
+ assert.equal(shown.publicReveals.some(row=>row.cardId==='PLAIN'&&row.uid===hidden.uid),true);
+ assert.equal(JSON.stringify(shown.pending).includes(hidden.uid),false);
+ s=dispatchUniversalAction(built.pack,s,{type:'chooseRevealTrait',mode:'bottom'});
+ assert.equal(s.players[0].deck.at(-1).uid,hidden.uid);
+ assert.equal(assertUniversalMatch(built.pack,s),true);
+
+ ({built,s}=open());
+ const matchCard=pull(s,0,'STAR');
+ s.players[0].deck.unshift(matchCard);
+ [s]=play(built.pack,s,'ACT');
+ assert.equal(s.pending.mayHand,true);
+ assert.deepEqual(legalUniversalActions(built.pack,s).map(a=>a.mode),['hand','top','bottom']);
+ s=dispatchUniversalAction(built.pack,s,{type:'chooseRevealTrait',mode:'top'});
+ assert.equal(s.players[0].deck[0].uid,matchCard.uid);
+ assert.equal(assertUniversalMatch(built.pack,s),true);
+
+ ({built,s}=open());
+ const taken=pull(s,0,'STAR');
+ s.players[0].deck.unshift(taken);
+ [s]=play(built.pack,s,'ACT');
+ s=dispatchUniversalAction(built.pack,s,{type:'chooseRevealTrait',mode:'hand'});
+ assert.ok(s.players[0].hand.some(c=>c.uid===taken.uid));
+ assert.equal(s.publicReveals.some(row=>row.kind==='searched-to-hand'&&row.uid===taken.uid),true);
+ assert.equal(assertUniversalMatch(built.pack,s),true);
 });
 
 test('a legal ready IMC deck can be saved and cannot open a room',async()=>{

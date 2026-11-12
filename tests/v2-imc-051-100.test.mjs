@@ -16,16 +16,15 @@ const READY=['IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-059','IMC-1-063',
  'IMC-1-066','IMC-1-067','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077',
  'IMC-1-079','IMC-1-081','IMC-1-082','IMC-1-085','IMC-1-086','IMC-1-088',
  'IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095','IMC-1-096',
- 'IMC-1-100'];
+ 'IMC-1-098','IMC-1-100'];
 const OPEN=['IMC-1-051','IMC-1-052','IMC-1-054','IMC-1-055','IMC-1-057',
  'IMC-1-060','IMC-1-061','IMC-1-062','IMC-1-064','IMC-1-065','IMC-1-068',
  'IMC-1-069','IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-078',
  'IMC-1-080','IMC-1-083','IMC-1-084','IMC-1-087','IMC-1-093','IMC-1-094',
- 'IMC-1-097','IMC-1-098','IMC-1-099'];
+ 'IMC-1-097','IMC-1-099'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
-counts['IMC-1-088']+=2;
 
 function kit(usePack,useCounts){
  const act=(s,action)=>dispatchUniversalAction(usePack,s,action);
@@ -87,12 +86,12 @@ function kit(usePack,useCounts){
 }
 const game=kit(pack,counts);
 
-test('twenty-four complete cards enter the pack and twenty-six stay out',()=>{
+test('twenty-five complete cards enter the pack and twenty-five stay out',()=>{
  for(const id of READY)assert.equal(pack.cards[id].id,id);
  assert.equal(IMC_CARDS_051_100.every(card=>card.battleReady===false),true);
  for(const id of READY)assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
  for(const id of OPEN)assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
- assert.equal(pack.cards['IMC-1-098'],undefined);
+ assert.equal(pack.cards['IMC-1-098'].effects.onPlay[2].else[0].then[0].scope,'next');
  const text=JSON.stringify(IMC_REQUESTS_051_100);
  for(const id of OPEN)assert.match(text,new RegExp(id));
  assert.deepEqual(imcSharedRequests().filter(row=>OPEN.includes(row.cardId)||row.cardId==='IMC-1-098')
@@ -356,6 +355,7 @@ test('088 has no effect, 089 can step, and 092 peeks privately onto the top or o
  game.seat(s,0,'IMC-1-096','energy',0);
  game.seat(s,0,'IMC-1-089','energy',1);
  s=game.reach(s,'main');
+ game.hold(s,0,'IMC-1-092');
  game.setTop(s,0,['IMC-1-086']);
  const secret=s.players[0].deck[0];
  const deck=s.players[0].deck.length;
@@ -447,76 +447,106 @@ test('life triggers on the ready cards draw, ready, or rebuild the last life',()
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
-test('IMC-1-098 draws one and does not turn field names or an event into the missing grants',()=>{
+test('IMC-1-098 discounts the next trait play and switches six names to the next entry',()=>{
  const card=IMC_CARDS_051_100.find(c=>c.id==='IMC-1-098');
  const program=IMC_PROGRAMS_051_100['IMC-1-098'];
- assert.notEqual(program.ready,true);
- assert.deepEqual(program.effects.onPlay.map(step=>step.op),['draw']);
+ assert.equal(program.ready,true);
+ assert.deepEqual(program.effects.onPlay.map(step=>step.op),
+  ['draw','nextEligibleHandPlayApDiscount','ifLiveThen']);
+ assert.equal(program.effects.onPlay[2].then[0].scope,'all');
+ assert.equal(program.effects.onPlay[2].else[0].then[0].scope,'next');
  assert.equal(program.triggerEffect.op,'retireOppFront');
  assert.equal(card.trigger,'special');
- assert.match(card.effectJa,/カードを1枚引く/);
- assert.match(card.effectJa,/消費APを-1する/);
- assert.match(card.effectJa,/合計6種類以上/);
- assert.match(card.effectJa,/合計9種類以上/);
+ const allies=Array.from({length:9},(_,i)=>({
+  id:'N'+i,name:'名'+i,color:'red',type:'character',energy:0,ap:1,bp:1500,gen:1,
+  trigger:null,traits:[TRAIT],implementation:'vanilla'
+ }));
+ const plain={id:'PLAIN',name:'普通',color:'red',type:'character',energy:0,ap:1,bp:1500,gen:0,
+  trigger:null,traits:['OTHER'],implementation:'vanilla'};
+ const filler=Array.from({length:2},(_,i)=>({
+  id:'F'+i,name:'填'+i,color:'red',type:'character',energy:0,ap:1,bp:1000,gen:0,
+  trigger:null,traits:[],implementation:'vanilla'
+ }));
  const shell={
   id:card.id,name:card.nameJa,color:card.color,type:card.type,energy:card.energy,
   ap:card.ap,bp:card.bp,gen:card.gen,trigger:card.trigger,traits:[],
   implementation:'dsl',effects:program.effects,triggerEffect:program.triggerEffect
  };
- const fillerIds=['IMC-1-053','IMC-1-058','IMC-1-067','IMC-1-076','IMC-1-085',
-  'IMC-1-086','IMC-1-088','IMC-1-089','IMC-1-091','IMC-1-092','IMC-1-095','IMC-1-096'];
- const filler=fillerIds.map(id=>{
-  const c=IMC_CARDS_051_100.find(x=>x.id===id);
-  return {id:c.id,name:c.nameJa,color:c.color,type:c.type,energy:c.energy,
-   ap:c.ap,bp:c.bp,gen:c.gen,trigger:c.trigger,traits:[...c.traits],
-   ...(c.traitComponents?{traitComponents:[...c.traitComponents]}:{}),
-   implementation:'vanilla'};
- });
- const probe=createUniversalPack({id:'imc-098',version:'probe',cards:[shell,...filler]});
- const probeCounts=Object.fromEntries(fillerIds.map(id=>[id,4]));
- probeCounts['IMC-1-098']=2;
+ const probe=createUniversalPack({id:'imc-098',version:'probe',cards:[shell,...allies,plain,...filler]});
+ const probeCounts={...Object.fromEntries(allies.map(c=>[c.id,4])),PLAIN:4,F0:4,F1:4,'IMC-1-098':2};
  const local=kit(probe,probeCounts);
+ const fuel=s=>{
+  s.players[0].apCards.forEach((c,i)=>{c.inPlay=i<3;c.ready=i<3;});
+ };
+ const placeNames=(s,outside)=>{
+  for(let i=0;i<4;i++)local.seat(s,0,'N'+i,'energy',i);
+  for(let i=0;i<outside;i++)s.players[0].outside.push(local.pull(s,0,'N'+(4+i)));
+ };
  let s=local.fresh(9800);
- local.seat(s,0,'IMC-1-096','energy',0);
- local.seat(s,0,'IMC-1-096','energy',1);
- local.seat(s,0,'IMC-1-089','energy',2);
- local.seat(s,0,'IMC-1-089','energy',3);
+ placeNames(s,2);
  s=local.reach(s,'main');
- s.players[0].apCards[1].inPlay=true;
- s.players[0].apCards[1].ready=true;
- s.players[0].apCards[2].inPlay=true;
- s.players[0].apCards[2].ready=true;
+ fuel(s);
+ assert.equal(universalEnergyByColor(probe,s,0).red,4);
  local.hold(s,0,'IMC-1-098');
- const names=['島村卯月','渋谷凛','本田未央','城ヶ崎美嘉','諸星きらり','双葉杏'];
- const state={players:[{front:names.map((name,i)=>({uid:'0-'+i,name,traits:[TRAIT]})),
-  energy:[],outside:[]},{front:[],energy:[],outside:[]}]};
- const printed=physical=>({name:physical.name,traits:physical.traits,type:'character'});
- assert.equal(matchesV2LiveCondition(state,0,null,{kind:'ownDistinctTraitNames',turn:'any',
-  min:6,zone:'field',excludeSelf:false,trait:TRAIT},printed),true);
- state.players[0].front=[];
- state.players[0].outside=names.map((name,i)=>({uid:'0-'+i,name,traits:[TRAIT]}));
- assert.equal(matchesV2LiveCondition(state,0,null,{kind:'ownDistinctTraitNames',turn:'any',
-  min:1,zone:'field',excludeSelf:false,trait:TRAIT},printed),false);
  const before=s.players[0].deck.length;
- const ap=s.players[0].apCards.filter(c=>c.ready).length;
  s=local.cast(s,'IMC-1-098');
  assert.equal(s.players[0].deck.length,before-1);
- assert.equal(s.players[0].apCards.filter(c=>c.ready).length,ap-1);
- assert.equal(s.continuousStates.length,0);
- assert.equal(s.pending,null);
- const outsider=local.hold(s,0,'IMC-1-086');
- s=local.play(s,'IMC-1-086');
- assert.equal(s.players[0].front.find(c=>c?.uid===outsider.uid).ready,false);
- const matching=local.hold(s,0,'IMC-1-091');
- s=local.play(s,'IMC-1-091');
- assert.equal(s.players[0].front.find(c=>c?.uid===matching.uid).ready,false);
- assert.equal(s.continuousStates.some(e=>e.kind==='nextEligibleHandPlayApDiscount'),false);
+ assert.equal(s.players[0].outside.some(c=>c.cardId==='IMC-1-098'),true);
+ assert.equal(s.traitEntryGrants.length,1);
+ assert.equal(s.traitEntryGrants[0].scope,'next');
+ s.players[0].apCards.forEach(c=>{c.ready=false;});
+ const matching=local.hold(s,0,'N0');
+ const other=local.hold(s,0,'PLAIN');
+ assert.equal(local.legal(s).some(a=>a.type==='play'&&a.uid===matching.uid),true);
+ assert.equal(local.legal(s).some(a=>a.type==='play'&&a.uid===other.uid),false);
+ s.players[0].apCards[0].ready=true;
+ s=local.play(s,'PLAIN');
+ assert.equal(s.players[0].front.find(c=>c?.cardId==='PLAIN').ready,false);
+ assert.equal(s.traitEntryGrants.length,1);
+ s.players[0].apCards.forEach(c=>{c.ready=false;});
+ s=local.play(s,'N0');
+ assert.equal(s.players[0].front.find(c=>c?.uid===matching.uid).ready,true);
+ assert.equal(s.traitEntryGrants.length,0);
+ s.players[0].apCards[0].ready=true;
+ const second=local.hold(s,0,'N0');
+ s=local.play(s,'N0');
+ assert.equal(s.players[0].front.find(c=>c?.uid===second.uid).ready,false);
  assert.equal(assertUniversalMatch(probe,s),true);
 
  s=local.fresh(9801);
+ placeNames(s,5);
+ s=local.reach(s,'main');
+ fuel(s);
+ s=local.cast(s,'IMC-1-098');
+ assert.equal(s.traitEntryGrants[0].scope,'all');
+ s.players[0].apCards.forEach(c=>{c.ready=false;});
+ const first=local.hold(s,0,'N0');
+ s=local.play(s,'N0');
+ assert.equal(s.players[0].front.find(c=>c?.uid===first.uid).ready,true);
+ s.players[0].apCards[0].ready=true;
+ s=local.play(s,'PLAIN');
+ assert.equal(s.players[0].front.find(c=>c?.cardId==='PLAIN').ready,false);
+ assert.equal(s.traitEntryGrants.length,1);
+ s.players[0].apCards[1].ready=true;
+ const later=local.hold(s,0,'N1');
+ s=local.play(s,'N1');
+ assert.equal(s.players[0].front.find(c=>c?.uid===later.uid).ready,true);
+ const turn=s.turn;
+ for(let i=0;i<8&&s.turn===turn;i++){
+  if(s.pending?.kind==='end-hand-limit'){
+   s=local.act(s,{type:'chooseHandLimit',uid:s.players[s.pending.player].hand[0].uid});
+   continue;
+  }
+  s=local.act(s,local.legal(s).find(a=>a.type==='next'));
+ }
+ assert.notEqual(s.turn,turn);
+ assert.deepEqual(s.traitEntryGrants,[]);
+ assert.equal(assertUniversalMatch(probe,s),true);
+
+ s=local.fresh(9802);
  const special=local.pull(s,0,'IMC-1-098');
  s.players[0].outside.push(special);
- const foe=local.seat(s,1,'IMC-1-058','front',0);
+ const foe=local.seat(s,1,'PLAIN','front',0);
  s.pending={kind:'life-trigger',player:0,uid:special.uid,trigger:'special'};
  s=local.act(s,local.legal(s).find(a=>a.mode==='special'&&a.uid===foe.uid));
  assert.ok(s.players[1].outside.some(c=>c.uid===foe.uid));

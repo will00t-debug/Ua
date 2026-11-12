@@ -64,14 +64,22 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-092':play([{op:'peekTopOne'}]),
  'IMC-1-095':play([{op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]),
  'IMC-1-096':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
- 'IMC-1-100':play([{op:'recoverAp',count:2}]),
- // Draw and the special trigger are done. fieldOutside and the event
- // discount exist, but one ifLiveThen cannot switch 6 kinds into the next
- // play and 9 kinds into every play.
  'IMC-1-098':Object.freeze({
-  implementation:'dsl',
+  ready:true,implementation:'dsl',
   triggerEffect:{op:'retireOppFront'},
-  effects:{onPlay:[{op:'draw',count:1}]},
-  notes:'AP-1、場加場外的不同卡名，以及下一張或全部活動登場，見 requests。'
- })
+  effects:{onPlay:[
+   {op:'draw',count:1},
+   {op:'nextEligibleHandPlayApDiscount',fromUsedEvent:true,
+    filter:{trait:'お願い！シンデレラ'}},
+   {op:'ifLiveThen',
+    when:{kind:'ownDistinctTraitNames',turn:'any',min:9,zone:'fieldOutside',
+     excludeSelf:false,trait:'お願い！シンデレラ'},
+    then:[{op:'grantTraitActiveEntryThisTurn',trait:'お願い！シンデレラ',scope:'all'}],
+    else:[{op:'ifLiveThen',
+     when:{kind:'ownDistinctTraitNames',turn:'any',min:6,zone:'fieldOutside',
+      excludeSelf:false,trait:'お願い！シンデレラ'},
+     then:[{op:'grantTraitActiveEntryThisTurn',trait:'お願い！シンデレラ',scope:'next'}]}]}
+  ]}
+ }),
+ 'IMC-1-100':play([{op:'recoverAp',count:2}])
 });

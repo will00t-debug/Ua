@@ -1,22 +1,15 @@
 // C group owns this file. One object per shared-engine gap.
 // cardId, sentence, existingOps, whyNotEnough, proposal.
-const NAMES='IMC-1-068、IMC-1-069、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093、IMC-1-098';
+const NAMES='IMC-1-068、IMC-1-069、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093';
 const ENERGY='IMC-1-078、IMC-1-080、IMC-1-083、IMC-1-084、IMC-1-087、IMC-1-099';
 
 export const IMC_REQUESTS_051_100=[
  {
-  cardId:'IMC-1-098',
-  sentence:'カードを1枚引く。次に使う特徴の手札は消費AP-1。場と場外のカード名が6種類以上なら次の1枚をアクティブ、9種類以上なら全てをアクティブ。',
-  existingOps:['draw','nextEligibleHandPlayApDiscount','grantTraitActiveEntryThisTurn'],
-  whyNotEnough:'抽 1 與特殊生命觸發可以結算。fromUsedEvent 已能讓使用後在場外的事件當 AP-1 來源。fieldOutside 也已能算場加場外、同名一次。grantTraitActiveEntryThisTurn 有 next 與 all，但 ifLiveThen 的後續不能接它，所以 6 種只改下一張、9 種改全部不能做成同一句。',
-  proposal:'讓 ifLiveThen 能接 grantTraitActiveEntryThisTurn。6 種只改下一張符合特徵的手牌，9 種改本回合全部，同名只算一次且自己要算。整張先不標 ready。'
- },
- {
   cardId:'IMC-1-068',
   sentence:'自分の場と場外に［特徴：お願い！シンデレラ］のカード名が合計 N 種類以上。',
   existingOps:['draw','retireOppFrontUnderBp'],
-  whyNotEnough:'ownDistinctTraitNames 的 fieldOutside 已能把場上與場外依印刷卡名去重，自己也可以算。070 與 071 已用。068 的二選一、069 的抽牌替換、072 的勝利抽牌與手牌進場外、073 的不能上前線、074 的其餘句子、075 的回手再登場、093 的加攻與衝擊、098 的 6 與 9 種活動登場，都還沒有整句。',
-  proposal:'070 與 071 已完成。其餘 '+NAMES+' 先不標 ready。'
+  whyNotEnough:'ownDistinctTraitNames 的 fieldOutside 已能把場上與場外依印刷卡名去重，自己也可以算。070、071 與 098 已用。068 的二選一、069 的抽牌替換、072 的勝利抽牌與手牌進場外、073 的不能上前線、074 的其餘句子、075 的回手再登場、093 的加攻與衝擊，都還沒有整句。',
+  proposal:'070、071 與 098 已完成。其餘 '+NAMES+' 先不標 ready。'
  },
  {
   cardId:'IMC-1-080',

@@ -291,6 +291,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-bounce-named-cut':'可將手牌角色返回手牌',
  'effect-front-bp-cut':'可降低敵方前線 BP',
  'effect-reveal-top-place':'公開的牌留在上面，或放到牌庫底',
+ 'effect-reveal-trait-choice':'公開牌頂，符合特徵可加入手牌，否則放回頂或底',
  'effect-life-reenter-grant':'將 1 張生命加入手牌',
  'effect-sayaka-reenter':'美樹沙耶香以休息狀態再登場，或突襲',
  'effect-tuck-named':'可將角色放到牌庫底',
@@ -1226,6 +1227,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseBounceNamedCut':return action.uid===null?'不把手牌角色返回手牌':'將 '+name()+' 返回手牌';
   case 'chooseFrontBpCut':return action.uid===null?'不降低敵方 BP':'使 '+name()+' 的 BP 降低';
   case 'chooseRevealTop':return action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
+  case 'chooseRevealTrait':return action.mode==='hand'?'將公開且符合特徵的牌加入手牌':
+   action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
   case 'chooseLifeReenter':return '將 1 張生命加入手牌';
   case 'chooseSayakaReenter':return action.mode==='raid'?'以效果突襲'+suffix():'以休息狀態再登場'+suffix();
   case 'chooseTuckNamed':return action.uid===null?'不把角色放到牌庫底':'將 '+name()+' 放到牌庫底';

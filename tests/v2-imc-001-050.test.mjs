@@ -11,17 +11,17 @@ import {assertImcSharedRequest} from '../dist/universal-v2/imc-runtime.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalBp,universalImpact,
- universalImpactNull,universalPrivateChoices,universalCardEnergy,zoneRequiredEnergy
+ universalImpactNull,universalPrivateChoices,universalPublicView,universalCardEnergy,zoneRequiredEnergy
 } from '../dist/universal-v2/engine.mjs';
 
 const pack=createImcV2Pack();
 const byId=Object.fromEntries(IMC_CARDS_001_050.map(c=>[c.id,c]));
 const READY=['IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-007','IMC-1-010','IMC-1-013','IMC-1-014',
- 'IMC-1-018','IMC-1-019','IMC-1-021','IMC-1-022','IMC-1-025','IMC-1-026','IMC-1-027',
+ 'IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-021','IMC-1-022','IMC-1-023','IMC-1-025','IMC-1-026','IMC-1-027',
  'IMC-1-030','IMC-1-031','IMC-1-034','IMC-1-035','IMC-1-038','IMC-1-040','IMC-1-041',
  'IMC-1-042','IMC-1-044','IMC-1-045','IMC-1-047','IMC-1-048','IMC-1-050'];
 const OPEN=['IMC-1-003','IMC-1-004','IMC-1-006','IMC-1-008','IMC-1-009',
- 'IMC-1-011','IMC-1-012','IMC-1-015','IMC-1-016','IMC-1-017','IMC-1-020','IMC-1-023',
+ 'IMC-1-011','IMC-1-012','IMC-1-015','IMC-1-016','IMC-1-020',
  'IMC-1-024','IMC-1-028','IMC-1-029','IMC-1-032','IMC-1-033',
  'IMC-1-036','IMC-1-037','IMC-1-039','IMC-1-043','IMC-1-046','IMC-1-049'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
@@ -1135,5 +1135,69 @@ test('IMC-1-050 is active after the first block of the turn and its active trigg
  s=act(s,{type:'chooseTrigger',mode:'active',uid:rested.uid});
  assert.equal(live(s,rested.uid).ready,true);
  assert.equal(universalBp(pack,s,live(s,rested.uid)),5000);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('IMC-1-017 shows its top card only to its controller, then puts it outside or back',()=>{
+ let s=reach(fresh(17001,{'IMC-1-017':1}),'main');
+ readyAp(s,1);
+ const seen=setTop(s,0,['IMC-1-021'])[0];
+ [s]=play(s,'IMC-1-017');
+ assert.equal(s.pending.kind,'private-top-choice');
+ const mine=universalPrivateChoices(pack,s,0);
+ assert.equal(mine.options.every(option=>option.card.cardId==='IMC-1-021'),true);
+ assert.deepEqual(mine.options.map(option=>option.action.mode),['top','outside']);
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ const shown=universalPublicView(pack,s,1);
+ assert.equal(shown.pending.kind,'private-top-choice');
+ assert.equal(JSON.stringify(shown).includes(seen.uid),false);
+ s=act(s,{type:'chooseTopCard',mode:'outside'});
+ assert.ok(s.players[0].outside.some(c=>c.uid===seen.uid));
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=reach(fresh(17002,{'IMC-1-017':1}),'main');
+ readyAp(s,1);
+ const stays=setTop(s,0,['IMC-1-025'])[0];
+ [s]=play(s,'IMC-1-017');
+ s=act(s,{type:'chooseTopCard',mode:'top'});
+ assert.equal(s.players[0].deck[0].uid,stays.uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===stays.uid),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('IMC-1-023 rests a yellow Passion card only when it entered the front',()=>{
+ let s=reach(fresh(23001,{'IMC-1-023':1,'IMC-1-001':3,'IMC-1-021':1,'IMC-1-019':1,'IMC-1-007':1}),'main');
+ fuel(s,['IMC-1-001','IMC-1-001','IMC-1-001']);
+ readyAp(s,1);
+ hold(s,'IMC-1-021');
+ hold(s,'IMC-1-019');
+ hold(s,'IMC-1-007');
+ [s]=play(s,'IMC-1-023','front');
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ const choices=legal(s).filter(a=>a.type==='chooseHandRest'&&a.uid);
+ const ids=new Set(choices.map(a=>s.players[0].hand.find(c=>c.uid===a.uid).cardId));
+ assert.equal(ids.has('IMC-1-021'),true);
+ assert.equal(ids.has('IMC-1-019'),false);
+ assert.equal(ids.has('IMC-1-007'),false);
+ for(const id of ids){
+  const printed=pack.cards[id];
+  assert.equal(printed.color,'yellow',id);
+  assert.ok(printed.energy<=2,id);
+  assert.equal([...printed.traits,...(printed.traitComponents||[])].includes('ポジティブパッション'),true,id);
+ }
+ assert.equal(choices.some(a=>a.line==='front'),true);
+ assert.equal(choices.some(a=>a.line==='energy'),true);
+ const chosen=choices.find(a=>a.line==='energy');
+ s=act(s,chosen);
+ assert.equal(s.players[0].energy.find(c=>c?.uid===chosen.uid).ready,false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=reach(fresh(23002,{'IMC-1-023':1,'IMC-1-001':3,'IMC-1-021':1}),'main');
+ fuel(s,['IMC-1-001','IMC-1-001','IMC-1-001']);
+ readyAp(s,1);
+ hold(s,'IMC-1-021');
+ [s]=play(s,'IMC-1-023','energy');
+ assert.equal(s.pending,null);
+ assert.ok(s.players[0].hand.some(c=>c.cardId==='IMC-1-021'));
  assert.equal(assertUniversalMatch(pack,s),true);
 });
