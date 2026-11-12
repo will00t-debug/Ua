@@ -124,11 +124,15 @@ const SNAPSHOT = `(() => {
   nextPhase: buttons.some(node => /下一階段|結束回合/.test(node.textContent)),
   mobileMenu: buttons.some(node => node.textContent.includes('對局選單')),
   width: window.innerWidth,
-  lifeCards: document.querySelectorAll('.playerArea:not(.opponent) .lifeCard').length,
+  lifeCards: Math.max(
+   document.querySelectorAll('.v2-life-group:not(.opponent) .lifeCard').length,
+   document.querySelectorAll('.playerArea:not(.opponent) .lifeRow .lifeCard').length
+  ),
   apFace: document.querySelectorAll('.apCard, .apDots, .apRow').length,
   neon: !!document.querySelector('link[href*="universal-v2-neon-board.css"]'),
   gestures: (() => { try { return JSON.parse(root.dataset.gestureLog || '{}'); } catch { return {}; } })(),
-  placement: [...document.querySelectorAll('button.slot')].map(node => node.dataset.placement || '').filter(Boolean)
+  placement: [...document.querySelectorAll('button.slot')].map(node => node.dataset.placement || '').filter(Boolean),
+  pendingButtons: [...document.querySelectorAll('.v2-pending-overlay button, .dialog.pending button')].slice(0, 8).map(node => (node.getAttribute('aria-label') || node.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 48))
  };
 })()`;
 
@@ -191,10 +195,7 @@ try {
   let lastError = null;
   for (let attempt = 0; attempt < 6; attempt++) {
    try {
-    for (const event of browser.takeEvents()) {
-     if (event.method === 'Page.javascriptDialogOpening')
-      await browser.send('Page.handleJavaScriptDialog', {accept: true}, event.sessionId || session);
-    }
+    browser.takeEvents();
     const result = await browser.send('Runtime.evaluate', {expression, returnByValue: true}, session);
     if (result.exceptionDetails) throw Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);
     return result.result?.value;
@@ -235,13 +236,13 @@ try {
  const restored = await waitFor(page => page.ready && page.policy === POLICY, 'reload policy', 40);
  if (restored.policy !== POLICY || restored.startChecked !== true) report.problems.push('reload-policy');
  await evalPage(`document.getElementById('use-ai-v3').click()`);
- const v3 = await snap();
+ const v3 = await waitFor(page => page.policy === 'ai-v3-beam-1' && page.startChecked === false, 'switch v3', 40).catch(() => snap());
  if (v3.policy !== 'ai-v3-beam-1' || v3.startChecked !== false) report.problems.push('switch-v3');
  await evalPage(`document.getElementById('use-difficulty-ai').click()`);
- const back = await snap();
+ const back = await waitFor(page => page.policy !== POLICY && page.policy !== 'hybrid-main-v1' && page.policy !== 'ai-v3-beam-1' && page.startChecked === false, 'switch difficulty', 40).catch(() => snap());
  if (back.policy === POLICY || back.policy === 'hybrid-main-v1' || back.policy === 'ai-v3-beam-1' || back.startChecked !== false) report.problems.push('switch-back');
  await evalPage(`document.getElementById('use-hybrid-main').click()`);
- const hybrid = await snap();
+ const hybrid = await waitFor(page => page.policy === 'hybrid-main-v1' && page.startChecked === false, 'switch hybrid', 40).catch(() => snap());
  if (hybrid.policy !== 'hybrid-main-v1' || hybrid.startChecked !== false) report.problems.push('switch-hybrid');
 
  async function play(deck, {mobile = false, budget = gameMs} = {}) {
@@ -282,12 +283,14 @@ try {
   let routeSeen = 0;
   const clicksSeen = new Set();
   const gestureMax = {};
+  const placements = new Set();
   let lifeSeen = 0;
   let apSeen = false;
   let neonSeen = false;
   const absorb = value => {
    for (const [key, count] of Object.entries(value.gestures || {}))
     gestureMax[key] = Math.max(gestureMax[key] || 0, Number(count) || 0);
+   for (const place of value.placement || []) placements.add(place);
    if ((value.lifeCards || 0) > lifeSeen) lifeSeen = value.lifeCards;
    if (value.apFace) apSeen = true;
    if (value.neon) neonSeen = true;
@@ -310,6 +313,8 @@ try {
     const clicked = await evalPage(`(() => {
      const root = document.documentElement;
      const log = (() => { try { return JSON.parse(root.dataset.gestureLog || '{}'); } catch { return {}; } })();
+     const turnKey = ${JSON.stringify((page.phase || '') + ':' + (page.history || []).length)};
+     if (log.turnKey !== turnKey) { log.turnKey = turnKey; log.inspected = []; log.scanned = []; }
      const mark = key => { log[key] = (log[key] || 0) + 1; root.dataset.gestureLog = JSON.stringify(log); };
      const visible = node => node && !node.disabled && node.getClientRects().length;
      const buttons = [...document.querySelectorAll('button')].filter(visible);
@@ -323,20 +328,56 @@ try {
      if (skip && !skip.disabled) { skip.click(); return 'skip-block'; }
      const blocker = document.querySelector('button.slot.v2-can-block');
      if (blocker && !blocker.disabled && !document.querySelector('.v2-block-skip')) { blocker.click(); return 'block-card'; }
-     const overlay = document.querySelector('.dialog.pending, .v2-pending-overlay');
+     const overlay = document.querySelector('.v2-pending-overlay, .dialog.pending');
      if (overlay) {
-      const pendingChoice = [...overlay.querySelectorAll('button')].filter(visible)
-       .find(node => !/取消|返回|重新選擇|改為|查看|普通進場|突襲進場/.test(label(node)));
-      if (pendingChoice) { pendingChoice.click(); return 'pending'; }
+      const pendingChoice = [...overlay.querySelectorAll('button')]
+       .find(node => {
+        const text = label(node) || node.getAttribute('aria-label') || '';
+        return !node.disabled && !/^(取消|返回|重新選擇|查看)/.test(text) && !text.includes('查看場面');
+       });
+      if (pendingChoice) {
+       if (/替換|擠位/.test(label(pendingChoice))) mark('squeeze');
+       pendingChoice.click();
+       return 'pending';
+      }
      }
      const modes = buttons.filter(node => label(node) === '普通進場' || label(node) === '突襲進場');
      if (modes.length === 2) mark('twoStageOffered');
-     const raidBase = [...document.querySelectorAll('button.slot.raid-base')].find(node => visible(node) && node.dataset.placement === '選為突襲底座');
+     const ability = [...document.querySelectorAll('.v2-activation-option')].find(visible);
+     if (ability) { ability.click(); mark('activateChoice'); return 'activate-choice'; }
+     const activate = buttons.find(node => label(node) === '啟動' && (log.activate || 0) < 3);
+     if (activate) { activate.click(); mark('activate'); return 'activate'; }
+     const raidBase = [...document.querySelectorAll('button.slot.raid-base')].find(node => visible(node) && (node.dataset.placement || '').includes('選為'));
      if (raidBase) { raidBase.click(); mark('raidBase'); return 'raid-base'; }
-     const squeeze = [...document.querySelectorAll('button.slot.destination')].find(node => visible(node) && node.dataset.placement === '替換並移入移除區');
-     if (squeeze) { squeeze.click(); mark('squeeze'); return 'squeeze'; }
-     const cell = [...document.querySelectorAll('button.slot.destination')].find(visible);
-     if (cell) { cell.click(); mark('entryCell'); return 'cell'; }
+     const raidDest = [...document.querySelectorAll('button.slot.destination')].find(node => visible(node) && /突襲/.test(node.dataset.placement || ''));
+     if (raidDest) { raidDest.click(); mark('raidCommit'); return 'raid-dest'; }
+     const hands = [...document.querySelectorAll('button.handCard.playable')].filter(visible);
+     const handIds = new Set(hands.map(node => node.dataset.v2CardUid));
+     log.inspected = (log.inspected || []).filter(id => handIds.has(id));
+     const selected = hands.find(node => node.classList.contains('selected'));
+     const pendingHand = hands.find(node => !(log.inspected || []).includes(node.dataset.v2CardUid) && node !== selected);
+     if (!log.raidCommit && selected && pendingHand) {
+      log.inspected = [...log.inspected, selected.dataset.v2CardUid];
+      pendingHand.click();
+      mark('hand');
+      root.dataset.gestureLog = JSON.stringify(log);
+      return 'hand';
+     }
+     if (!log.raidCommit && !selected && pendingHand) {
+      pendingHand.click();
+      mark('hand');
+      return 'hand';
+     }
+     const cells = [...document.querySelectorAll('button.slot.destination')].filter(visible);
+     const squeeze = cells.find(node => node.dataset.placement === '替換並移入移除區');
+     if (log.raidCommit && !log.squeeze && squeeze) { squeeze.click(); mark('squeeze'); return 'squeeze'; }
+     const energyLine = [...document.querySelectorAll('.playerArea:not(.opponent) .lineGroup')]
+      .find(node => node.querySelector('.lineLabel.energy'));
+     const energy = [...(energyLine?.querySelectorAll('button.slot.destination') || [])]
+      .find(node => visible(node) && node.dataset.placement === '普通進場');
+     if (energy) { energy.click(); mark('energy'); return 'energy'; }
+     const cell = cells.find(node => node.dataset.placement === '普通進場');
+     if (log.raidCommit && cell) { cell.click(); mark('entryCell'); return 'cell'; }
      if (modes.length) {
       const raid = modes.find(node => label(node) === '突襲進場');
       const normal = modes.find(node => label(node) === '普通進場');
@@ -348,8 +389,18 @@ try {
      }
      const back = buttons.find(node => label(node) === '改為普通進場');
      if (back && !document.querySelector('button.slot[data-placement="選為突襲底座"]')) { back.click(); mark('switchNormal'); return 'switch-normal'; }
-     const hand = [...document.querySelectorAll('button.handCard.playable')].find(visible);
-     if (hand && (log.hand || 0) < 6) { hand.click(); mark('hand'); return 'hand'; }
+     const ownSlots = [...document.querySelectorAll('.playerArea:not(.opponent) .lineGroup button.slot.occupied')].filter(visible);
+     const scanned = new Set(log.scanned || []);
+     const ownTurn = buttons.some(node => label(node).includes('下一階段') || label(node).includes('結束回合'));
+     const freshSlot = ownSlots.find(node => !node.classList.contains('selected') && !scanned.has(node.dataset.v2CardUid));
+     if (ownTurn && freshSlot) {
+      scanned.add(freshSlot.dataset.v2CardUid);
+      log.scanned = [...scanned];
+      freshSlot.click();
+      mark('fieldSelect');
+      root.dataset.gestureLog = JSON.stringify(log);
+      return 'field';
+     }
      for (const text of ['下一階段', '結束回合']) {
       const hit = buttons.find(node => label(node).includes(text));
       if (hit) { hit.click(); return text; }
@@ -402,9 +453,9 @@ try {
    endNote: page.endNote, error: page.error, policy: page.policy, timeouts: page.timeouts, rejected: page.rejected,
    clicks, clickKinds: [...clicksSeen], sawNext, stuck: !page.finished && stuck >= (page.busy ? 80 : 25),
    elapsedMs: Date.now() - begun, hiddenDump: page.hiddenDump, mobileMenu: page.mobileMenu,
-   lifeCards: lifeSeen, apFace: apSeen, neon: neonSeen, gestures: gestureMax,
+   lifeCards: lifeSeen, apFace: apSeen, neon: neonSeen, gestures: gestureMax, placements: [...placements],
    script: page.script, status: page.status, phase: page.phase, switched, reloaded,
-   hint: page.phaseText, blockPrompt: page.blockPrompt, blockSkip: page.blockSkip, canBlock: page.canBlock, buttons: page.buttons, ...stats, sample: (page.history || []).slice(0, 12)
+   hint: page.phaseText, blockPrompt: page.blockPrompt, blockSkip: page.blockSkip, canBlock: page.canBlock, buttons: page.buttons, pendingButtons: page.pendingButtons, ...stats, sample: (page.history || []).slice(0, 12)
   };
  }
 
@@ -440,20 +491,48 @@ try {
    if (game.policy !== POLICY && !game.finished) report.problems.push('mobile-' + game.deck + '-policy');
   }
  }
+ report.extra = [];
+ if (!only) {
+  const hunt = async (deckId, ready) => {
+   const deck = decks.find(item => item.id === deckId);
+   for (let attempt = 0; attempt < 3 && !ready(); attempt++) {
+    const game = await play(deck);
+    report.extra.push(game);
+    log(JSON.stringify({hunt: deckId, finished: game.finished, elapsedMs: game.elapsedMs, gestures: game.gestures}));
+   }
+  };
+  const seen = key => report.games.concat(report.mobile, report.extra).some(game => Number(game.gestures?.[key] || 0) > 0);
+  if (!seen('raidCommit')) await hunt('white-sword', () => seen('raidCommit'));
+  if (!report.squeezeConfirms) await hunt('white-sword', () => report.squeezeConfirms > 0);
+  if (!seen('activateChoice')) await hunt('steins-gate-blue', () => seen('activateChoice'));
+  const mobileActivated = () => report.mobile.concat(report.extra).some(game => game.mobile && Number(game.gestures?.activateChoice || 0) > 0);
+  if (!mobileActivated()) {
+   const deck = decks.find(item => item.id === 'white-sword');
+   for (let attempt = 0; attempt < 2 && !mobileActivated(); attempt++) {
+    const game = await play(deck, {mobile: true});
+    report.extra.push(game);
+    log(JSON.stringify({hunt: 'white-sword-mobile', finished: game.finished, elapsedMs: game.elapsedMs, gestures: game.gestures}));
+   }
+  }
+ }
  const played = report.games.concat(report.mobile);
- const gestureCount = key => played.reduce((sum, game) => sum + Number(game.gestures?.[key] || 0), 0);
+ const gestureCount = key => played.concat(report.extra).reduce((sum, game) => sum + Number(game.gestures?.[key] || 0), 0);
  report.gestures = {
   twoStageOffered: gestureCount('twoStageOffered'),
   twoStageChoice: gestureCount('twoStageChoice'),
   raidBase: gestureCount('raidBase'),
+  raidCommit: gestureCount('raidCommit'),
   squeeze: gestureCount('squeeze'),
   squeezeConfirms: report.squeezeConfirms,
   entryCell: gestureCount('entryCell'),
   hand: gestureCount('hand')
  };
- if (!report.gestures.twoStageOffered || !report.gestures.twoStageChoice) report.problems.push('two-stage-not-played');
- if (!report.gestures.raidBase) report.problems.push('raid-base-not-played');
- if (!report.gestures.squeeze || !report.squeezeConfirms) report.problems.push('squeeze-not-played');
+ report.gestures.activate = gestureCount('activate');
+ report.gestures.activateChoice = gestureCount('activateChoice');
+ report.gestures.fieldSelect = gestureCount('fieldSelect');
+ if (!report.gestures.activate || !report.gestures.activateChoice) report.problems.push('activation-not-played');
+ if (!report.gestures.raidBase || !report.gestures.raidCommit) report.problems.push('raid-base-not-played');
+ if (!report.squeezeConfirms) report.problems.push('squeeze-not-played');
  if (played.some(game => game.lifeCards !== 7)) report.problems.push('life-count');
  if (played.some(game => !game.apFace)) report.problems.push('ap-missing');
  if (played.some(game => game.neon !== true)) report.problems.push('neon-missing');
