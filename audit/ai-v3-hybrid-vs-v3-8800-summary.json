@@ -1,0 +1,3251 @@
+{
+  "programSha": "494f6a9e1dbfdbe226ffae07381e8ceba997e65c",
+  "headSha": "b526977c364c9c5e281d9d53ea55721e59aeb335",
+  "lockSha256": "deef0b084f68dc6797241691905320c4a3c3fe0142c5b349b3244fd60ea892eb",
+  "policies": {
+    "hybrid": "hybrid-main-v1",
+    "opponent": "ai-v3-beam-1"
+  },
+  "nodes": 48,
+  "ms": 40,
+  "searchSeed": 1,
+  "generatedAt": "2026-11-10T13:24:49.593Z",
+  "games": 200,
+  "record": {
+    "games": 200,
+    "wins": 150,
+    "losses": 50,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.75
+  },
+  "byDeck": {
+    "white-sword": {
+      "games": 68,
+      "wins": 46,
+      "losses": 22,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.6764705882352942
+    },
+    "sword-art-online-raid": {
+      "games": 68,
+      "wins": 56,
+      "losses": 12,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.8235294117647058
+    },
+    "steins-gate-raid": {
+      "games": 64,
+      "wins": 48,
+      "losses": 16,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.75
+    }
+  },
+  "hybridFirst": {
+    "games": 100,
+    "wins": 86,
+    "losses": 14,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.86
+  },
+  "hybridSecond": {
+    "games": 100,
+    "wins": 64,
+    "losses": 36,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.64
+  },
+  "seat0": {
+    "games": 100,
+    "wins": 71,
+    "losses": 29,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.71
+  },
+  "seat1": {
+    "games": 100,
+    "wins": 79,
+    "losses": 21,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.79
+  },
+  "interval": {
+    "n": 50,
+    "mean": 0.75,
+    "low": 0.69,
+    "high": 0.805,
+    "containsHalf": false
+  },
+  "incompleteBlocks": [],
+  "containsHalf": false,
+  "strongerThanV3": true,
+  "hybrid": {
+    "attacks": 11.805,
+    "connecting": 3.675,
+    "raids": 3.285,
+    "frontPlays": 1.885,
+    "energyPlays": 9.425,
+    "ownLife": 3.64,
+    "oppLife": 0.84,
+    "apLeft": 3.13,
+    "apUsed": 20.785,
+    "apReady": 23.915,
+    "turns": 8.805,
+    "attacksPerTurn": 1.3272767094017095,
+    "raidsPerTurn": 0.3744177350427351,
+    "frontPerTurn": 0.20001161338661336,
+    "energyPerTurn": 1.085094835719836,
+    "fallbacks": 12.065,
+    "hardBudget": 2281,
+    "fallbackTotal": 2413,
+    "deferred": 524,
+    "overNodes": 0,
+    "abandonedKills": 0,
+    "equivalentWins": 535,
+    "phaseErrors": 0,
+    "maxNodes": 48,
+    "decisionP50": 38.19168741500048,
+    "decisionP95": 44.07180619000035,
+    "decisionPooledP50": 39.4,
+    "decisionPooledP95": 44.5,
+    "decisions": 20638,
+    "laneSources": {
+      "start": {
+        "v3": 3020,
+        "hard": 0
+      },
+      "move": {
+        "v3": 2329,
+        "hard": 0
+      },
+      "main": {
+        "v3": 0,
+        "hard": 4812
+      },
+      "battle": {
+        "v3": 3973,
+        "hard": 0
+      },
+      "pending": {
+        "v3": 6504,
+        "hard": 0
+      }
+    }
+  },
+  "v3": {
+    "attacks": 7.965,
+    "connecting": 1.83,
+    "raids": 1.775,
+    "frontPlays": 2.775,
+    "energyPlays": 11.87,
+    "ownLife": 0.84,
+    "oppLife": 3.64,
+    "apLeft": 0.665,
+    "apUsed": 22.5,
+    "apReady": 23.165,
+    "turns": 8.555,
+    "attacksPerTurn": 0.8700789349539347,
+    "raidsPerTurn": 0.2096696914196915,
+    "frontPerTurn": 0.32374519924519907,
+    "energyPerTurn": 1.3628267427017422,
+    "fallbacks": 13.23,
+    "hardBudget": 0,
+    "fallbackTotal": 2646,
+    "deferred": 274,
+    "overNodes": 0,
+    "abandonedKills": 0,
+    "equivalentWins": 238,
+    "phaseErrors": 0,
+    "maxNodes": 48,
+    "decisionP50": 37.1976112350002,
+    "decisionP95": 42.8876766550016,
+    "decisionPooledP50": 38.8,
+    "decisionPooledP95": 43.2,
+    "decisions": 19916,
+    "laneSources": {
+      "start": {
+        "v3": 2995,
+        "hard": 0
+      },
+      "move": {
+        "v3": 2374,
+        "hard": 0
+      },
+      "main": {
+        "v3": 5241,
+        "hard": 0
+      },
+      "battle": {
+        "v3": 3257,
+        "hard": 0
+      },
+      "pending": {
+        "v3": 6049,
+        "hard": 0
+      }
+    }
+  },
+  "illegal": 0,
+  "unfinished": 0,
+  "exceptions": [],
+  "abandonedNotes": [],
+  "gameRows": [
+    {
+      "deck": "white-sword",
+      "seed": 8800,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 148,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8800,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 155,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8800,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 149,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8800,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 273,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8801,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 156,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8801,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 254,
+      "life": [
+        0,
+        1
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8801,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 180,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8801,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 187,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8802,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 235,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8802,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 179,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8802,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 199,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8802,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 191,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8803,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 217,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8803,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 109,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8803,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 258,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8803,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 191,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8804,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 206,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8804,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 192,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8804,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 226,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8804,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 185,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8805,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 149,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8805,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 160,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8805,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 160,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8805,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 221,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8806,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 131,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8806,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 96,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8806,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 122,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8806,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 177,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8807,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 148,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8807,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 199,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8807,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 167,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8807,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 184,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8808,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 233,
+      "life": [
+        1,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8808,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 200,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8808,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 268,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8808,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 202,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8809,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 155,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8809,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 271,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8809,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 166,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8809,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 128,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8810,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 137,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8810,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 162,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8810,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 218,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8810,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 299,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8811,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 182,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8811,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 250,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8811,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 245,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8811,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 170,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8812,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 294,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8812,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 193,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8812,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 172,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8812,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 246,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8813,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 256,
+      "life": [
+        0,
+        1
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8813,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 192,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8813,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 338,
+      "life": [
+        1,
+        2
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8813,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 256,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8814,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 230,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8814,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 210,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8814,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 263,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8814,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 241,
+      "life": [
+        1,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8815,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 260,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8815,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 233,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8815,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 223,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8815,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 254,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8816,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 236,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8816,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 190,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8816,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 250,
+      "life": [
+        1,
+        0
+      ]
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8816,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 147,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8817,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 201,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8817,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 222,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8817,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 183,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8817,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 190,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8818,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 170,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8818,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 172,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8818,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 208,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8818,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 187,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8819,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 159,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8819,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 197,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8819,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 177,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8819,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 165,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8820,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 208,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8820,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 192,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8820,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 128,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8820,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 132,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8821,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 121,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8821,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 153,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8821,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 203,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8821,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 144,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8822,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 234,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8822,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 195,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8822,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 160,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8822,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 152,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8823,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 209,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8823,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 196,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8823,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 166,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8823,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 157,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8824,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 195,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8824,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 176,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8824,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 206,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8824,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 213,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8825,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 262,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8825,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 212,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8825,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 171,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8825,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 192,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8826,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 200,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8826,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 219,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8826,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 194,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8826,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 146,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8827,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 199,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8827,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 137,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8827,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 168,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8827,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 154,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8828,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 176,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8828,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 236,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8828,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 151,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8828,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 135,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8829,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 140,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8829,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 213,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8829,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 136,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8829,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 118,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8830,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 228,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8830,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 219,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8830,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 222,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8830,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 183,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8831,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 218,
+      "life": [
+        0,
+        1
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8831,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 241,
+      "life": [
+        0,
+        1
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8831,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 178,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8831,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 177,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8832,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 175,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8832,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 162,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8832,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 185,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8832,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 129,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8833,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 152,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8833,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 177,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8833,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 175,
+      "life": [
+        0,
+        1
+      ]
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8833,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 139,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8834,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 263,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8834,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 319,
+      "life": [
+        2,
+        3
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8834,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 308,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8834,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 298,
+      "life": [
+        4,
+        1
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8835,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 187,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8835,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 216,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8835,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 246,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8835,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 232,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8836,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 268,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8836,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 228,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8836,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 262,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8836,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 144,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8837,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 264,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8837,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 314,
+      "life": [
+        2,
+        1
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8837,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 209,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8837,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 133,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8838,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 221,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8838,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 194,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8838,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 210,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8838,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 143,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8839,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 267,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8839,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 183,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8839,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 346,
+      "life": [
+        0,
+        2
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8839,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 131,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8840,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 201,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8840,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 260,
+      "life": [
+        2,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8840,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 262,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8840,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 178,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8841,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 179,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8841,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 340,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8841,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 259,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8841,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 173,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8842,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 195,
+      "life": [
+        7,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8842,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 148,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8842,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 143,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8842,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 156,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8843,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 247,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8843,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 316,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8843,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 198,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8843,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 337,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8844,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 219,
+      "life": [
+        4,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8844,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 195,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8844,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 214,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8844,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 137,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8845,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 382,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8845,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 327,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8845,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 192,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8845,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 204,
+      "life": [
+        0,
+        5
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8846,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 194,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8846,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 218,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8846,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 251,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8846,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 251,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8847,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 284,
+      "life": [
+        0,
+        1
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8847,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 226,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8847,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 180,
+      "life": [
+        3,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8847,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 156,
+      "life": [
+        0,
+        7
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8848,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 225,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8848,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": false,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 194,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8848,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 285,
+      "life": [
+        0,
+        3
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8848,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 151,
+      "life": [
+        0,
+        6
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8849,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 168,
+      "life": [
+        6,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8849,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 0,
+      "steps": 238,
+      "life": [
+        5,
+        0
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8849,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 189,
+      "life": [
+        0,
+        4
+      ]
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8849,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridWon": true,
+      "finished": true,
+      "illegal": 0,
+      "winner": 1,
+      "steps": 232,
+      "life": [
+        0,
+        3
+      ]
+    }
+  ],
+  "capReplacement": {
+    "deck": "steins-gate-raid",
+    "seed": 8845,
+    "first": 0,
+    "hybridSeat": 0,
+    "cappedSteps": 400,
+    "cappedLife": [
+      2,
+      1
+    ],
+    "cappedStatus": "still playing, no illegal action",
+    "replacementSteps": 382,
+    "replacementLife": [
+      3,
+      0
+    ],
+    "replacementWinner": "hybrid",
+    "reason": "The 400-step harness ceiling stopped a live game. The same cell was played once more with a 1200-step ceiling and the same policy, budget, seed, seat and first player. It finished in 382 steps. The other 199 games were not replayed. The real 40ms clock makes the second playout a new game, not a continuation."
+  },
+  "deckIntervals": {
+    "white-sword": {
+      "n": 17,
+      "mean": 0.6764705882352942,
+      "low": 0.5735294117647058,
+      "high": 0.7794117647058824,
+      "containsHalf": false
+    },
+    "sword-art-online-raid": {
+      "n": 17,
+      "mean": 0.8235294117647058,
+      "low": 0.7352941176470589,
+      "high": 0.8970588235294118,
+      "containsHalf": false
+    },
+    "steins-gate-raid": {
+      "n": 16,
+      "mean": 0.75,
+      "low": 0.625,
+      "high": 0.859375,
+      "containsHalf": false
+    }
+  },
+  "playedFrom": "b526977c364c9c5e281d9d53ea55721e59aeb335",
+  "releaseFixture": {
+    "kind": "equivalent-outcome-rows",
+    "sourceCommit": "4cac28f8fb7ea0ad6d046fa1de64a54d501a7791",
+    "sourcePath": "audit/ai-v3-hybrid-vs-v3-8800-summary.json",
+    "kept": "headline fields plus every game row outcome without per-decision traces"
+  }
+}
