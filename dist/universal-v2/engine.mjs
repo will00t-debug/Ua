@@ -20246,6 +20246,10 @@ function assertKmr2Grants(s){
 export function assertUniversalMatch(pack,s){
  const packs=playerPacks(pack),isSame=packs[0].id===packs[1].id&&packs[0].version===packs[1].version;
  if(s?.players){assertAotGrants(pack,s);assertKmr2Grants(s);}
+ // Rooms saved before this ledger have no grants. An empty list keeps those
+ // matches playable. A non-array value is still rejected.
+ if(s?.version===UNIVERSAL_V2_VERSION&&s?.players&&s.traitEntryGrants==null)
+  s.traitEntryGrants=[];
  if(Array.isArray(s?.traitEntryGrants))assertTraitEntryGrants(s,c=>card(pack,c));
  else if(s?.version===UNIVERSAL_V2_VERSION&&s?.players)throw Error('Missing trait entry grants');
  if(s?.version!==UNIVERSAL_V2_VERSION||

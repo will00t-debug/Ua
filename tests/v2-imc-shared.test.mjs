@@ -121,6 +121,17 @@ function play(pack,s,id,line='front'){
 }
 function printed(card){return {name:card.name,traits:card.traits,type:'character',bp:card.bp,energy:card.energy};}
 
+test('a match saved before trait entry grants revives with an empty ledger',()=>{
+ const pack=createImcV2Pack();
+ const counts=legalReadyCounts(pack);
+ const s=newUniversalMatch(pack,{decks:[counts,counts],seed:19,first:0});
+ delete s.traitEntryGrants;
+ assert.equal(assertUniversalMatch(pack,s),true);
+ assert.deepEqual(s.traitEntryGrants,[]);
+ s.traitEntryGrants='forged';
+ assert.throws(()=>assertUniversalMatch(pack,s),/Missing trait entry grants/);
+});
+
 test('the integrated pack executes exactly the ready cards',()=>{
  const pack=createImcV2Pack();
  const expected=[
