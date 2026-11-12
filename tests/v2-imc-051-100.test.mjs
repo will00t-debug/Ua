@@ -13,18 +13,19 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 
 const READY=['IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-059','IMC-1-063',
- 'IMC-1-066','IMC-1-067','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077',
- 'IMC-1-079','IMC-1-081','IMC-1-082','IMC-1-085','IMC-1-086','IMC-1-088',
- 'IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095','IMC-1-096',
- 'IMC-1-098','IMC-1-100'];
+ 'IMC-1-066','IMC-1-067','IMC-1-069','IMC-1-070','IMC-1-071','IMC-1-076',
+ 'IMC-1-077','IMC-1-079','IMC-1-081','IMC-1-082','IMC-1-085','IMC-1-086',
+ 'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095',
+ 'IMC-1-096','IMC-1-098','IMC-1-100'];
 const OPEN=['IMC-1-051','IMC-1-052','IMC-1-054','IMC-1-055','IMC-1-057',
  'IMC-1-060','IMC-1-061','IMC-1-062','IMC-1-064','IMC-1-065','IMC-1-068',
- 'IMC-1-069','IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-078',
- 'IMC-1-080','IMC-1-083','IMC-1-084','IMC-1-087','IMC-1-093','IMC-1-094',
- 'IMC-1-097','IMC-1-099'];
+ 'IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-078','IMC-1-080',
+ 'IMC-1-083','IMC-1-084','IMC-1-087','IMC-1-093','IMC-1-094','IMC-1-097',
+ 'IMC-1-099'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
+delete counts['IMC-1-098'];
 
 function kit(usePack,useCounts){
  const act=(s,action)=>dispatchUniversalAction(usePack,s,action);
@@ -86,7 +87,7 @@ function kit(usePack,useCounts){
 }
 const game=kit(pack,counts);
 
-test('twenty-five complete cards enter the pack and twenty-five stay out',()=>{
+test('twenty-six complete cards enter the pack and twenty-four stay out',()=>{
  for(const id of READY)assert.equal(pack.cards[id].id,id);
  assert.equal(IMC_CARDS_051_100.every(card=>card.battleReady===false),true);
  for(const id of READY)assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
@@ -1042,4 +1043,137 @@ test('090 adds one red energy while it is active on the energy line',()=>{
  assert.equal(universalEnergyByColor(pack,s,0).red,2);
  assert.equal(universalEnergyByColor(pack,s,0).blue,2);
  assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('069 draws and discards below six names, and only draws once at six or more',()=>{
+ const effect=pack.cards['IMC-1-069'].effects.onPlay[0];
+ assert.equal(effect.op,'ifLiveThen');
+ assert.deepEqual(effect.then,[{op:'draw',count:1}]);
+ assert.deepEqual(effect.else,[{op:'drawDiscard',count:1}]);
+ assert.equal(effect.when.kind,'ownDistinctTraitNames');
+ assert.equal(effect.when.zone,'fieldOutside');
+ assert.equal(effect.when.min,6);
+ assert.equal(effect.when.excludeSelf,false);
+ assert.equal(pack.cards['IMC-1-088'].name,pack.cards['IMC-1-089'].name);
+ assert.equal(pack.cards['IMC-1-088'].name,pack.cards['IMC-1-090'].name);
+ assert.notEqual(pack.cards['IMC-1-069'].name,pack.cards['IMC-1-088'].name);
+ function fuel(s){
+  game.seat(s,0,'IMC-1-088','energy',0);
+  game.seat(s,0,'IMC-1-089','energy',1);
+  return game.reach(s,'main');
+ }
+ let s=fuel(game.fresh(6900));
+ game.hold(s,0,'IMC-1-069');
+ let deck=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-069');
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.pending.kind,'effect-discard');
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseDiscard',uid:null}),/not currently legal/);
+ const discarded=s.players[0].hand[0];
+ s=game.act(s,{type:'chooseDiscard',uid:discarded.uid});
+ assert.ok(s.players[0].outside.some(c=>c.uid===discarded.uid));
+ assert.equal(s.players[0].removed.some(c=>c.uid===discarded.uid),false);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=fuel(game.fresh(6901));
+ for(const [id,line,slot] of [['IMC-1-070','front',0],['IMC-1-071','front',1],
+  ['IMC-1-091','front',2],['IMC-1-090','front',3]])game.seat(s,0,id,line,slot);
+ game.hold(s,0,'IMC-1-069');
+ deck=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-069','energy');
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.pending.kind,'effect-discard');
+ s=game.act(s,{type:'chooseDiscard',uid:s.players[0].hand[0].uid});
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=fuel(game.fresh(6902));
+ for(const [id,line,slot] of [['IMC-1-070','front',0],['IMC-1-071','front',1],
+  ['IMC-1-091','front',2],['IMC-1-096','front',3]])game.seat(s,0,id,line,slot);
+ game.hold(s,0,'IMC-1-069');
+ const hand=s.players[0].hand.length;
+ const outside=s.players[0].outside.length;
+ deck=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-069','energy');
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.players[0].hand.length,hand);
+ assert.equal(s.players[0].outside.length,outside);
+ assert.equal(s.pending,null);
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseDiscard',uid:s.players[0].hand[0].uid}),
+  /not currently legal/);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=fuel(game.fresh(6903));
+ for(const [id,line,slot] of [['IMC-1-070','front',0],['IMC-1-071','front',1],
+  ['IMC-1-091','front',2]])game.seat(s,0,id,line,slot);
+ const parked=game.pull(s,0,'IMC-1-096');
+ s.players[0].outside.push(parked);
+ game.hold(s,0,'IMC-1-069');
+ deck=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-069');
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=fuel(game.fresh(6904));
+ for(const [id,line,slot] of [['IMC-1-070','front',0],['IMC-1-071','front',1],
+  ['IMC-1-091','front',2]])game.seat(s,0,id,line,slot);
+ game.hold(s,0,'IMC-1-096');
+ game.hold(s,0,'IMC-1-069');
+ s=game.play(s,'IMC-1-069');
+ assert.equal(s.pending.kind,'effect-discard');
+ s=game.act(s,{type:'chooseDiscard',uid:s.players[0].hand.find(c=>c.cardId!=='IMC-1-096').uid});
+ assert.ok(s.players[0].hand.some(c=>c.cardId==='IMC-1-096'));
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(6905);
+ s=game.reach(s,'main');
+ game.seat(s,0,'IMC-1-088','energy',0);
+ const short=game.hold(s,0,'IMC-1-069');
+ assert.equal(game.legal(s).some(a=>a.type==='play'&&a.uid===short.uid),false);
+ game.seat(s,0,'IMC-1-059','energy',1);
+ assert.equal(universalEnergyByColor(pack,s,0).red,1);
+ assert.equal(universalEnergyByColor(pack,s,0).blue,2);
+ assert.throws(()=>game.act(structuredClone(s),{type:'play',uid:short.uid,line:'front',slot:0}),
+  /not currently legal/);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(6906);
+ const life=game.pull(s,0,'IMC-1-069');
+ s.players[0].outside.push(life);
+ const before=s.players[0].hand.length;
+ deck=s.players[0].deck.length;
+ s.pending={kind:'life-trigger',player:0,uid:life.uid,trigger:'draw'};
+ s=game.act(s,game.legal(s).find(a=>a.mode==='draw'));
+ assert.equal(s.players[0].hand.length,before+1);
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.notEqual(s.pending?.kind,'effect-discard');
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ const printed=IMC_CARDS_051_100.find(c=>c.id==='IMC-1-069');
+ const actor=bare('IMC-1-069',printed.nameJa,{energy:printed.energy,bp:printed.bp,
+  gen:printed.gen,trigger:printed.trigger,traits:[...printed.traits],implementation:'dsl',
+  effects:structuredClone(IMC_PROGRAMS_051_100['IMC-1-069'].effects)});
+ const names=['神崎 蘭子','城ヶ崎 美嘉','城ヶ崎 莉嘉','島村 卯月','本田 未央','双葉 杏'];
+ const named=names.map((name,i)=>bare('IMC-N'+(i+1),name,{traits:[TRAIT]}));
+ const blanks=['IMC-X1','IMC-X2','IMC-X3','IMC-X4','IMC-X5']
+  .map((id,i)=>bare(id,'無特徵'+i));
+ const generator=bare('IMC-RED','紅能源',{gen:3});
+ const probe=createUniversalPack({id:'imc-069',version:'probe',
+  cards:[actor,...named,generator,...blanks]});
+ const probeCounts=Object.fromEntries([actor,...named,generator,...blanks].map(c=>[c.id,4]));
+ probeCounts['IMC-1-069']=2;
+ const local=kit(probe,probeCounts);
+ s=local.fresh(6907);
+ s=local.reach(s,'main');
+ local.seat(s,0,'IMC-RED','energy',0);
+ named.forEach((card,i)=>local.seat(s,0,card.id,i<4?'front':'energy',i<4?i:i-3));
+ local.hold(s,0,'IMC-1-069');
+ deck=s.players[0].deck.length;
+ const sevenHand=s.players[0].hand.length;
+ s=local.play(s,'IMC-1-069','energy');
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.players[0].hand.length,sevenHand);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(probe,s),true);
 });
