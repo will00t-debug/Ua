@@ -1,0 +1,38 @@
+{
+  "programBase": "c9253ccc27903601f13343d0e984d27f7c98029f",
+  "namedBeforeResults": true,
+  "seeds": [9050, 9051, 9052, 9053, 9054, 9055, 9056, 9057, 9058, 9059, 9060, 9061, 9062, 9063, 9064, 9065, 9066, 9067, 9068, 9069, 9070, 9071, 9072, 9073, 9074, 9075, 9076, 9077, 9078, 9079, 9080, 9081, 9082, 9083, 9084, 9085, 9086, 9087, 9088, 9089, 9090, 9091, 9092, 9093, 9094, 9095, 9096, 9097, 9098, 9099],
+  "reservedFrom": 9100,
+  "notReused": [8800, 8849, 8850, 8889, 8890, 8929, 8930, 8969, 8970, 9009],
+  "policies": {
+    "hybrid": "hybrid-main-v1",
+    "opponent": "hard-search-2"
+  },
+  "experiments": "off",
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "steps": 1200,
+  "sameDeck": true,
+  "opening": "shared-hard-mulligan",
+  "decks": [
+    {"id": "white-sword", "seeds": [9050, 9051, 9052, 9053, 9054, 9055, 9056, 9057, 9058, 9059, 9060, 9061, 9062, 9063, 9064, 9065, 9066], "games": 68},
+    {"id": "sword-art-online-raid", "seeds": [9067, 9068, 9069, 9070, 9071, 9072, 9073, 9074, 9075, 9076, 9077, 9078, 9079, 9080, 9081, 9082, 9083], "games": 68},
+    {"id": "steins-gate-raid", "seeds": [9084, 9085, 9086, 9087, 9088, 9089, 9090, 9091, 9092, 9093, 9094, 9095, 9096, 9097, 9098, 9099], "games": 64}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "games": 200,
+  "blocks": 50,
+  "bootstrap": "1000 resamples of the 50 seed-deck blocks of four games. A block rate is hybrid wins divided by four. An unfinished, drawn, or illegal game stays in the block and counts as not a win. Percentile indexes 25 and 974. Generator mulberry32(9050).",
+  "nodeCompliance": "Every traced decision is compliant when nodesUsed is absent or at most 48. Both policies are called with 48 nodes and 40 ms. The hard search deadline is soft, so wall time above 40 ms is counted and does not drop a game. A node count above 48 is not compliant.",
+  "diagnose": "The benchmark record is off unless AI_V3_DIAGNOSE=1. This match records after the chooser returns. Full states are written only under the local diagnostic directory and are not committed. The dispatched action is the original choice; a later timed replay must not replace it.",
+  "unfinished": "A game still playing at 1200 steps is unfinished. It stays in the 200 and in its block. It is not a win and it is not removed.",
+  "note": "9050-9099 were named before any of these games. No search parameter is changed after the result. 9100+ is not used. This measurement does not turn on a candidate switch."
+}

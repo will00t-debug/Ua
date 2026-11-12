@@ -1,0 +1,1164 @@
+{
+  "base": "f21c94fc",
+  "cited": "audit/ai-v3-reserve-ap-fork.json",
+  "note": "Windows stop at the next own attack phase. Cited wins are the earlier full games, not a new sample.",
+  "settings": {
+    "opponent": "hard-search-2",
+    "nodes": 48,
+    "searchSeed": 1,
+    "ms": 1000000000,
+    "actorDecisions": 2,
+    "stepLimit": 400
+  },
+  "releaseFixture": {
+    "kind": "equivalent-assertion-projection",
+    "sourceCommit": "4cac28f8fb7ea0ad6d046fa1de64a54d501a7791",
+    "sourcePath": "audit/ai-v3-reserve-ap-next-main.json",
+    "kept": "12 rows: branch ok, search.mismatch, attackClosed, ended, source, nextStart.energyByColor, and entry id/attacked/moved/ready"
+  },
+  "rows": [
+    {
+      "key": "steins-gate-raid|8440|0|0",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": []
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": []
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": []
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": []
+        }
+      }
+    },
+    {
+      "key": "steins-gate-raid|8440|1|0",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 1
+            }
+          },
+          "entries": []
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 1
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-007",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": []
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": []
+        }
+      }
+    },
+    {
+      "key": "steins-gate-raid|8440|1|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-012",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-002",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-002",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": []
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": []
+        }
+      }
+    },
+    {
+      "key": "steins-gate-raid|8441|0|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 1
+            }
+          },
+          "entries": []
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 1
+            }
+          },
+          "entries": []
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": []
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": []
+        }
+      }
+    },
+    {
+      "key": "steins-gate-raid|8441|1|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-020",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-007",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-020",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-007",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "steins-gate-raid|8442|0|0",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-002",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-002",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 4
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-002",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-023",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 4
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-002",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-023",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "steins-gate-raid|8442|1|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-002",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            },
+            {
+              "id": "STG-1-004",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-002",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-002",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            },
+            {
+              "id": "STG-1-004",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "blue": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "STG-1-001",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "STG-1-002",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            },
+            {
+              "id": "STG-1-004",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "sword-art-online-raid|8440|1|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-1-023",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "SAO-1-004",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-1-023",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "SAO-1-004",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-1-025",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-1-025",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "sword-art-online-raid|8441|0|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 1
+            }
+          },
+          "entries": []
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 1
+            }
+          },
+          "entries": []
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": []
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": []
+        }
+      }
+    },
+    {
+      "key": "sword-art-online-raid|8441|1|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-1-023",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-1-023",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-2-006",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-2-006",
+              "attacked": true,
+              "moved": true,
+              "ready": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "sword-art-online-raid|8442|1|1",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-2-009",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-2-009",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-2-009",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "yellow": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "SAO-2-009",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "key": "white-sword|8441|0|0",
+      "branches": {
+        "draw-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "baseline-replay",
+          "nextStart": {
+            "energyByColor": {
+              "green": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "BLC-4-066",
+              "attacked": false,
+              "ready": false
+            }
+          ]
+        },
+        "draw-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "green": 2
+            }
+          },
+          "entries": [
+            {
+              "id": "BLC-4-066",
+              "attacked": false,
+              "ready": false
+            }
+          ]
+        },
+        "pass-off": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 48
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "search",
+          "nextStart": {
+            "energyByColor": {
+              "green": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "BLC-2-069",
+              "attacked": true,
+              "ready": true
+            }
+          ]
+        },
+        "pass-on": {
+          "ok": true,
+          "search": {
+            "mismatch": 0,
+            "maxNodes": 0
+          },
+          "attackClosed": true,
+          "ended": null,
+          "source": "candidate-replay",
+          "nextStart": {
+            "energyByColor": {
+              "green": 3
+            }
+          },
+          "entries": [
+            {
+              "id": "BLC-3-009",
+              "attacked": false,
+              "moved": false,
+              "ready": false
+            },
+            {
+              "id": "BLC-2-069",
+              "attacked": true,
+              "ready": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

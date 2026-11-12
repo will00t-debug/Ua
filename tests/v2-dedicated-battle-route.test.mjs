@@ -101,7 +101,7 @@ test('setup launches the new URL and battle-only boot preserves V2 reducer, AI a
  assert.match(code,/if\(!IS_BATTLE_PAGE\)renderDesignatedDecks\(\)/);
  assert.match(code,/if\(!IS_BATTLE_PAGE\)importV2EditorDeck\(\)/);
  assert.match(code,/if\(!IS_BATTLE_PAGE\)\{/);
- assert.match(code,/const auditName=new URLSearchParams\(location\.search\)\.get\('audit'\)/);
+ assert.match(code,/const auditName=auditFixtureName\(location\.search, location\.hostname\)/);
  assert.match(code,/const loaded=auditName\?null:loadSoloBattle\(sessionStorage\)/);
  assert.match(code,/if\(auditName\)\{\s*void startAuditFixture\(auditName\);\s*\}else if\(loaded\)/);
  assert.match(code,/if\(!restoreBattleProgress\(\)\)void startGame\(\)/);
