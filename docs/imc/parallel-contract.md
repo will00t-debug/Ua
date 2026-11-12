@@ -157,3 +157,12 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - `frontOnceProgram` 可以加 `minSelfBp`，後續是既有的二選一。只有前線、目前 BP 達門檻的角色能啟動，每回合一次，下一回合恢復。選一個分支就只跑那個分支，沿用啟動、選擇、再選目標的既有畫面。
 
 `op:'imc'` 仍沒有接進 `engine.mjs`。ready 卡走既有 op。作品維持 `playable:false`。即使牌組裡每一張都已 ready，`editorV2Status`、`v2DeckReport` 與 `prepareSoloBattle` 仍拒絕正式對戰。受控測試用 `newUniversalMatch(createImcV2Pack(), ...)`。
+
+## 第四階段共用機制
+
+第 4 輪只加共用能力。下面這些卡仍不進對戰包，也不標 ready。B、C、D 要用新 op 寫整句並通過該張卡的測試，才能標 ready。
+
+- `chooseFrontOrOwnTrait` 是同一次選擇。目標是對手前線角色，或自己場上帶指定特徵的角色。`excludeName` 只排除自己場上的那個印刷卡名，不排除對手。`optional:false` 是必須選 1 張，沒有跳過；`optional:true` 是最多 1 張。沒有合法目標時不開空的選擇。必須選的事件在沒有目標時不能使用。這不是 `buffAnyCharacter`：後者仍可選雙方能量區。052 的登場是必須選。113 的登場是最多 1 張。054 的第二句是同一個聯集，但它的同名一回合一次、以及對手目前 BP≥4500 才能活動自身，這輪沒有做。113 的 LiPPS 張數產生藍能源也沒有做。
+- `recoverOutsideFiltered` 從自己場外加入手牌。可以指定特徵、顏色、印刷必要能源恰好 N、印刷必要能源 N 以下、以及持有突襲關鍵字（印刷 `raidName`）。不能同時寫恰好與以下。不看目前能源，也不看消費 AP。`max` 是 1 或 2。`raiseMax` 在自己場上、指定特徵且印刷必要能源恰好為該數字的角色達到張數時，把上限提高；預設把效果來源算進去，`excludeSelf:true` 才排除。角色張數沿用 `countOwnPrintedTrait`（條件 `ownPrintedTraitCount`），場地不算。`optional:true` 可以少拿或跳過；`optional:false` 有牌就必須拿到上限或沒有牌為止。沒有合法牌時不開選擇；必須選的事件不能使用。它可以放進 `optionalPayApThen` 的後續。051 的回手、087 的恰好能源與張數上限、111 的付費後入手可以用這句。051 的休息並退場後再從場外休息登場、111 的攻擊抽棄，這輪沒有做。
+- `retireOppFrontUnderBp` 的 `scaleTrait` 本來就會在特徵達標時改 BP 上限，而且預設把效果來源算進去。030 與 SLG-1-077 維持這個形狀。新增 `scaleExcludeSelf:true` 才不計算來源。這句仍是必須選 1 張，不能跳過。沒有合法目標時，角色效果不開選擇；事件不能使用。062 是 3000，3 張升到 5000，來源要算進去，所以不要加 `scaleExcludeSelf`。099 的退場上限同樣用這句；099 另外的恰好能源加攻這輪沒有做。既有的 `traitCountBonus` 仍是可選且排除自身。
+- `selfOwnEffectRaid` 只回答 Q2230 的「自分の效果でレイド」。成立的登場原因是 `handEffectRaid`、`outsideEffectRaid`、`deckEffectRaid`、`removedEffectRaid` 與 `lifeRaid`。付費手牌突襲 `paidRaid`、手牌或場外的普通效果登場、以及 `OWN_EFFECT_ENTRY` 裡的非突襲登場，都不成立。`turn` 必須是 `any`，因為對方回合的突襲觸發也算。它讀這次登場效果帶來的 `entryCause`，不改突襲底板、位置或登場／突襲效果的結算順序。020、024、028 可以用 `ifLiveThen` 接上既有句子。跳過下一次活動、具名手牌突襲的起動、傷害（2）、以及 028 的兩個不同選項，這輪沒有改寫。

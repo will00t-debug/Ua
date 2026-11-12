@@ -25,6 +25,16 @@ export function cardHasTrait(definition,trait){
  return (definition?.traits||[]).includes(trait)||
   (definition?.traitComponents||[]).includes(trait);
 }
+// Q2230 (UA30BT/IMC-1-020): 「自分の効果でレイド」 includes an effect that
+// raids this card and this card's Raid life trigger. Paying AP to Raid
+// from hand does not. This is not 「自分の効果で登場」: that question keeps
+// life triggers outside OWN_EFFECT_ENTRY, and it includes non-raid entries.
+const OWN_EFFECT_RAID_CAUSES=new Set([
+ 'handEffectRaid','outsideEffectRaid','deckEffectRaid','removedEffectRaid','lifeRaid'
+]);
+export function ownEffectRaidCause(entryCause){
+ return OWN_EFFECT_RAID_CAUSES.has(entryCause);
+}
 // Printed BP and printed required energy are the card-face numbers. A live
 // BP bonus, a generated pip, and a cost discount are not this count.
 // Fields, the opponent, hand, deck, and Raid layers are outside the zones.
@@ -118,17 +128,19 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 // not when a card is played. This is distinct from once-resolved turn buffs.
 // Field predicates use this controller's front and energy. Hand, deck,
 // removed, and Raid under-cards stay out unless a clause names 場外.
-export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp,requiredEnergyOf){
+export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp,requiredEnergyOf,entryCause=null){
  // A printed 「かつ」 is one bonus with every clause true. The outer turn
  // is the printed turn icon. Each clause keeps its own closed predicate.
  if(condition?.logic==='all'||condition?.logic==='any'){
   if(condition.turn==='own'&&s.active!==owner)return false;
   if(condition.turn==='opponent'&&s.active===owner)return false;
-  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp,requiredEnergyOf);
+  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp,requiredEnergyOf,entryCause);
   return condition.logic==='any'?condition.checks.some(hit):condition.checks.every(hit);
  }
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // The on-play job carries the entry cause. A later check does not invent one.
+ if(condition.kind==='selfOwnEffectRaid')return ownEffectRaidCause(entryCause);
  // 「自分のターン中」かつ「このキャラの下に裏向きのカード」. The physical
  // field card is the one being measured. A buried layer is not itself.
  if(condition.kind==='ownTurnFacedownUnder'){
