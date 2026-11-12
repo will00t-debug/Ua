@@ -1,0 +1,17 @@
+{
+  "validation": [8600, 8601, 8602],
+  "namedBeforeResults": true,
+  "reservedNext": [8700, 8701, 8702],
+  "reservedFrom": 9100,
+  "exposed": [8401, 8402, 8500, 8501, 8502],
+  "modes": ["v3", "main", "hard"],
+  "opponent": "hard-search-2",
+  "searchSeed": 1,
+  "nodes": 48,
+  "clocks": ["1e9", "40"],
+  "decks": ["white-sword", "sword-art-online-raid", "steins-gate-raid"],
+  "cells": "first 0 and 1, challenger seat 0 and 1, 36 games per mode",
+  "switches": "frontSpare, laterEnergy, alignRoots, evidenceGenerator, reserveAp and holdInfo stay off",
+  "pass": "Both the clockless table and the real 40ms table must have a main-versus-v3 paired interval that excludes 0 with a positive mean. Illegal, unfinished, phase-routing errors and true abandoned proven kills must all be 0. Nodes stay at most 48. Full hard-search-2 is a reference, not the pass bar.",
+  "note": "8600–8602 were named before any of these games ran and are used once. 8401–8402 and 8500–8502 stay exposed. 8700–8702 and 9100+ are not used this round. A miss stops the round; the same seeds are not retuned."
+}

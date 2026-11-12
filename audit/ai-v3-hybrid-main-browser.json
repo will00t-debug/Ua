@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "process": "undefined",
+  "mainHybrid": {"policy": "hybrid-main-v1", "type": "play", "uid": "1-35", "line": "energy", "lane": "main", "source": "hard", "nodesUsed": 44},
+  "mainV3": {"policy": "ai-v3-beam-1", "type": "play", "uid": "1-33", "line": "energy", "nodesUsed": 48},
+  "pendingHybrid": {"policy": "hybrid-main-v1", "type": "chooseDiscardGate", "uid": "0-44", "lane": "pending", "source": "v3", "nodesUsed": 48},
+  "sameAsNode": {"mainHybrid": true, "mainV3": true, "pendingHybrid": true, "eightStepPlay": true},
+  "clock40": {"sameAction": true, "nodeNodes": 44, "browserNodes": 35, "browserError": null},
+  "hiddenField": "hidden-field",
+  "lobbyDefaultOff": true,
+  "searchPreviewLeftOff": true,
+  "toggleOnThenOff": true,
+  "note": "Clockless actions and the eight-step continuation matched. The real 40ms action matched; the browser used 35 nodes and Node used 44 because the live clock stopped the search at different moments. Both stayed within 48."
+}

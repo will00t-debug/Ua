@@ -1,0 +1,8 @@
+{
+  "adjustment": [8500, 8501, 8502],
+  "namedBeforeResults": true,
+  "independent": null,
+  "reservedFrom": 9100,
+  "clock": "48 nodes, clock removed for the adjustment table; 40ms only if the adjustment interval excludes zero",
+  "note": "8500–8502 were named for this round before any of these games ran. 8401–8402 stay the earlier diagnostic set. 8600–8602 is written into independent only after the adjustment interval excludes zero, and before those games start."
+}

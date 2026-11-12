@@ -1,0 +1,447 @@
+{
+  "policy": "ai-v3-beam-1",
+  "baseline": "hard-search-2",
+  "split": "dev",
+  "seed0": 8100,
+  "steps": 16,
+  "games": 1,
+  "modes": [
+    "baseline",
+    "prior",
+    "beam",
+    "belief",
+    "ismcts"
+  ],
+  "titles": {
+    "bleach": {
+      "byMode": {
+        "baseline": {
+          "decisions": 32,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 33.00910699999986,
+          "p95": 51.82422500000007,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "prior": {
+          "decisions": 16,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 1.148529999999937,
+          "p95": 5.095367000000124,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "beam": {
+          "decisions": 20,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 29.960837000000083,
+          "p95": 32.03443000000016,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "belief": {
+          "decisions": 20,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 40.27945499999987,
+          "p95": 41.53727499999968,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "ismcts": {
+          "decisions": 20,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 40.249780999999984,
+          "p95": 40.412299000000075,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        }
+      },
+      "completion": 10,
+      "played": 10
+    },
+    "sword-art-online": {
+      "byMode": {
+        "baseline": {
+          "decisions": 32,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 22.94063700000015,
+          "p95": 50.000576999999794,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "prior": {
+          "decisions": 16,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 0.6419820000000982,
+          "p95": 1.726611000000048,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "beam": {
+          "decisions": 20,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 29.112145000000055,
+          "p95": 36.70366800000011,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "belief": {
+          "decisions": 20,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 33.16338799999994,
+          "p95": 41.60196300000007,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "ismcts": {
+          "decisions": 20,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 40.222617000000355,
+          "p95": 41.24007100000017,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        }
+      },
+      "completion": 10,
+      "played": 10
+    },
+    "solo-leveling": {
+      "byMode": {
+        "baseline": {
+          "decisions": 32,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 21.752754999999524,
+          "p95": 32.87464700000055,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "prior": {
+          "decisions": 16,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 0.6132880000004661,
+          "p95": 1.0138280000001032,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "beam": {
+          "decisions": 17,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 27.279601999999613,
+          "p95": 42.790616999999656,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "belief": {
+          "decisions": 17,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 28.854307999999946,
+          "p95": 42.111119000000144,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "ismcts": {
+          "decisions": 17,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 40.19319799999994,
+          "p95": 41.217665999999554,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        }
+      },
+      "completion": 10,
+      "played": 10
+    },
+    "steins-gate": {
+      "byMode": {
+        "baseline": {
+          "decisions": 32,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 20.988556000000244,
+          "p95": 43.80404599999929,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "prior": {
+          "decisions": 16,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 0.6334520000000339,
+          "p95": 0.9345700000012584,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "beam": {
+          "decisions": 19,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 31.155056999999942,
+          "p95": 41.138622999998915,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "belief": {
+          "decisions": 19,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 36.08727200000067,
+          "p95": 46.41988200000014,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "ismcts": {
+          "decisions": 19,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 40.41243000000031,
+          "p95": 42.87576099999933,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        }
+      },
+      "completion": 10,
+      "played": 10
+    },
+    "aot": {
+      "byMode": {
+        "baseline": {
+          "decisions": 32,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 29.37083800000073,
+          "p95": 46.5204219999996,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "prior": {
+          "decisions": 16,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 0.6457769999997254,
+          "p95": 1.5201450000004115,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "beam": {
+          "decisions": 19,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 32.113076999999976,
+          "p95": 34.5039310000011,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "belief": {
+          "decisions": 19,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 40.48885999999948,
+          "p95": 42.06971499999963,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        },
+        "ismcts": {
+          "decisions": 18,
+          "illegal": 0,
+          "finished": 0,
+          "games": 2,
+          "completion": 1,
+          "fallbackRate": 0,
+          "p50": 40.23113700000067,
+          "p95": 41.03647500000079,
+          "paired": {
+            "n": 0,
+            "mean": null,
+            "low": null,
+            "high": null
+          }
+        }
+      },
+      "completion": 10,
+      "played": 10
+    }
+  }
+}

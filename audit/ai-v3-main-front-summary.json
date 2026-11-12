@@ -1,0 +1,54 @@
+{
+  "baselineCommit": "f373eacf",
+  "candidate": {"coverage": "root", "raidBase": true, "gate": "main-front"},
+  "default": "off. The eight cells and the named variants are unchanged. Live budget stays 48 nodes and 40ms.",
+  "entry": "A normal character entry rests. The earlier note that the new character did not enter rested was wrong about that rule. The confirmed plan, after two Unohana swaps and with no FINAL, is the energy line switch: it keeps four green and the standing blocker. The entrant rests.",
+  "gate": "The late gate no longer cancels a confirmed plan because the searched front and the replacement stopped on different boundaries. Both lines are compared only when they reach the same boundary. Remaining nodes in the same 48-node pool may be spent to bring the shorter line up to that boundary. If the pool cannot produce the comparison, the confirmed plan stays when it is legal and its printed action points and color cost are already payable. A proven win still comes first. A same-boundary line that does not score worse still replaces the front, including a 4000. No card number is special.",
+  "decision": "Strategy regression passes and the confirmed line switch stays, but the 8401-8402 paired score against this round's default is -0.0417 and the interval includes 0. The point estimate is worse. The candidate stays off. No validation seed was taken. 9100 and above stay reserved. This is not a strength gain.",
+  "searchSeed": {
+    "mix": "Factor split used search seed 1. The older energy replay passed game.seed 8300. Those are different belief shuffles, not a program change. The raw dumps were kept.",
+    "rejectBlueStep13": "Search seed 1: named A+B, tree-base-final and tree-open-final move uid 0-10. Search seed 8300: every cell, including named A+B, is next.",
+    "table": "audit/ai-v3-main-front.json"
+  },
+  "fronts": {
+    "searchSeed": 1,
+    "lastAp": "Candidate returns front uid 0-20, the same as named A+B and ab-front. The energy line of that card was not executed, so it is not a completed alternative. Baseline returns that card's energy.",
+    "twoAp": "Baseline, named A+B, ab-front and the candidate all return energy uid 0-11.",
+    "threeAp": "Candidate returns energy uid 1-8, the same as the default and ab-front. The searched front and that energy line did not share a boundary inside the 48 nodes, and the confirmed energy play is payable, so the front is not put back. Named A+B still returns front uid 1-23 through the older final gate."
+  },
+  "filter": {
+    "where": "white-sword gameSeed 8301 first 0 seat 1 step 29, search seed 1",
+    "candidate": "Discards the covered 0-cost generator, passes the start with 3 AP, plays two filter swaps, line-switches on the plain deck, and recovers 2 AP only when FINAL is payable. The plain path leaves the standing blocker on the front and the entrant rested. The late gate does not rewrite that main-phase play. State hash at the switch is 854a5a9d3d7172b1d1531be36438fe70337db68c75757c66732d33b010cd6a97. Ready AP 1, green 3. Candidate and baseline both play energy uid 1-5. 48 nodes, 48 dispatches, factors bound."
+  },
+  "tuning": {
+    "seeds": [8401, 8402],
+    "searchSeed": 1,
+    "clock": "none",
+    "nodes": 48,
+    "decks": ["white-sword", "sword-art-online-raid", "steins-gate-raid"],
+    "opponent": "hard-search-2",
+    "unfinished": 0,
+    "baseline": {"record": "2-22", "hardGap": -0.4167, "low": -0.5, "high": -0.2917},
+    "candidate": {"record": "1-23", "hardGap": -0.4583, "low": -0.5, "high": -0.375},
+    "paired": {"mean": -0.0417, "low": -0.1667, "high": 0.0833},
+    "decksResult": {
+      "white-sword": {"baseline": "0-8", "candidate": "0-8", "paired": 0},
+      "sword-art-online-raid": {"baseline": "0-8", "candidate": "0-8", "paired": 0},
+      "steins-gate-raid": {"baseline": "2-6", "candidate": "1-7", "paired": -0.125, "low": -0.5, "high": 0.375}
+    },
+    "gained": ["steins-gate 8401 first 0 seat 0, step 31, front uid 0-0 to front uid 0-38"],
+    "lost": [
+      "steins-gate 8401 first 1 seat 1, step 48, next to front uid 1-6",
+      "steins-gate 8402 first 0 seat 0, step 32, front uid 0-2 to front uid 0-37"
+    ],
+    "meter": {
+      "baseline": {"decisions": 1415, "maxNodes": 48, "mismatch": 0, "replayed": 24, "replayFail": 0},
+      "candidate": {"decisions": 1378, "maxNodes": 48, "mismatch": 0, "replayed": 24, "replayFail": 0}
+    }
+  },
+  "tests": {
+    "default": "node --test tests/ai-v3-*.test.mjs: 132 pass, 0 fail. The filter test passes the candidate factors explicitly.",
+    "candidateOn": "AI_V3_TEST_FACTORS root, raid base, main-front on energy, strategy, plan, raid, and player-strategy: 88 pass, 0 fail."
+  },
+  "validation": "Not run. The tuning pair did not improve."
+}

@@ -1,0 +1,296 @@
+{
+  "decisions": 250,
+  "matched": 250,
+  "inBeam": 205,
+  "outsideBeam": 45,
+  "buckets": {
+    "different-boundary": 147,
+    "discard-unfinished": 78,
+    "idle-versus-cut": 15,
+    "no-shared-boundary": 5,
+    "contested-loss": 5
+  },
+  "byDeck": {
+    "white-sword different-boundary": 66,
+    "sword-art-online-raid different-boundary": 44,
+    "steins-gate-raid different-boundary": 37,
+    "white-sword discard-unfinished": 34,
+    "sword-art-online-raid discard-unfinished": 22,
+    "steins-gate-raid discard-unfinished": 22,
+    "sword-art-online-raid idle-versus-cut": 7,
+    "white-sword idle-versus-cut": 6,
+    "white-sword no-shared-boundary": 3,
+    "white-sword contested-loss": 3,
+    "sword-art-online-raid no-shared-boundary": 2,
+    "steins-gate-raid idle-versus-cut": 2,
+    "sword-art-online-raid contested-loss": 1,
+    "steins-gate-raid contested-loss": 1
+  },
+  "phase": {
+    "attack": 105,
+    "main": 85,
+    "start": 41,
+    "move": 19
+  },
+  "pending": {
+    "none": 145,
+    "end-hand-limit": 73,
+    "effect-discard-gate": 8,
+    "effect-discard": 5,
+    "attack-life-target": 4,
+    "effect-top-inspect-many": 4,
+    "effect-line-move": 3,
+    "block": 3,
+    "effect-recover-ap": 2,
+    "effect-buff-own": 2,
+    "effect-rest-lock": 1
+  },
+  "boundaries": {
+    "yielded": 514,
+    "pending": 246,
+    "open": 45,
+    "returned": 10,
+    "terminal": 7
+  },
+  "cuts": {
+    "nodes": 796,
+    "none": 17,
+    "depth": 7,
+    "unhandled": 2
+  },
+  "stopPending": {
+    "none": 574,
+    "block": 69,
+    "attack-life-target": 50,
+    "end-hand-limit": 48,
+    "life-trigger": 29,
+    "effect-bounce-own": 10,
+    "effect-discard": 7,
+    "effect-top-filter-choice": 6,
+    "effect-buff-own": 6,
+    "effect-mayuri-fork": 5,
+    "effect-line-slot": 4,
+    "effect-rest-two": 4,
+    "effect-top-inspect-many": 3,
+    "effect-self-front": 2,
+    "effect-raid-leave": 2,
+    "effect-named-fronts": 2,
+    "effect-line-move": 1
+  },
+  "outsideByBucket": {
+    "different-boundary": 45
+  },
+  "outsideByPhase": {
+    "main none": 45
+  },
+  "outsideByAction": {
+    "play": 34,
+    "raid": 11
+  },
+  "zeroScore": 0,
+  "placeCounts": {
+    "2 places": 189,
+    "4 places": 23,
+    "1 places": 20,
+    "3 places": 18
+  },
+  "examples": {
+    "different-boundary": [
+      {
+        "id": "white-sword|8401|0|0",
+        "step": 10,
+        "phase": "start",
+        "pending": null,
+        "legal": 2,
+        "action": "extraDraw:::",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|0|0",
+        "step": 14,
+        "phase": "main",
+        "pending": "effect-discard-gate",
+        "legal": 9,
+        "action": "chooseDiscardGate::0-44:",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|0|0",
+        "step": 26,
+        "phase": "move",
+        "pending": null,
+        "legal": 5,
+        "action": "next:::",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|0|0",
+        "step": 46,
+        "phase": "main",
+        "pending": "effect-recover-ap",
+        "legal": 4,
+        "action": "chooseApRecovery::AP0-0:",
+        "inBeam": true
+      }
+    ],
+    "no-shared-boundary": [
+      {
+        "id": "white-sword|8401|0|0",
+        "step": 107,
+        "phase": "attack",
+        "pending": "attack-life-target",
+        "legal": 6,
+        "action": "chooseAttackLife:::",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|0|0",
+        "step": 146,
+        "phase": "attack",
+        "pending": "attack-life-target",
+        "legal": 4,
+        "action": "chooseAttackLife:::",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|1|0",
+        "step": 110,
+        "phase": "attack",
+        "pending": "attack-life-target",
+        "legal": 7,
+        "action": "chooseAttackLife:::",
+        "inBeam": true
+      },
+      {
+        "id": "sword-art-online-raid|8401|1|0",
+        "step": 39,
+        "phase": "attack",
+        "pending": null,
+        "legal": 2,
+        "action": "attack::0-25:",
+        "inBeam": true
+      }
+    ],
+    "idle-versus-cut": [
+      {
+        "id": "white-sword|8401|0|1",
+        "step": 18,
+        "phase": "start",
+        "pending": null,
+        "legal": 2,
+        "action": "extraDraw:::",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|1|0",
+        "step": 5,
+        "phase": "start",
+        "pending": null,
+        "legal": 2,
+        "action": "extraDraw:::",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|1|0",
+        "step": 108,
+        "phase": "attack",
+        "pending": null,
+        "legal": 2,
+        "action": "attack::0-3:",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8402|1|0",
+        "step": 5,
+        "phase": "start",
+        "pending": null,
+        "legal": 2,
+        "action": "extraDraw:::",
+        "inBeam": true
+      }
+    ],
+    "discard-unfinished": [
+      {
+        "id": "white-sword|8401|0|1",
+        "step": 64,
+        "phase": "attack",
+        "pending": "end-hand-limit",
+        "legal": 9,
+        "action": "chooseHandLimit::1-45:",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|0|1",
+        "step": 83,
+        "phase": "attack",
+        "pending": "end-hand-limit",
+        "legal": 10,
+        "action": "chooseHandLimit::1-30:",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|0|1",
+        "step": 84,
+        "phase": "attack",
+        "pending": "end-hand-limit",
+        "legal": 9,
+        "action": "chooseHandLimit::1-32:",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|0|1",
+        "step": 146,
+        "phase": "attack",
+        "pending": "end-hand-limit",
+        "legal": 10,
+        "action": "chooseHandLimit::1-35:",
+        "inBeam": true
+      }
+    ],
+    "contested-loss": [
+      {
+        "id": "white-sword|8401|0|1",
+        "step": 231,
+        "phase": "attack",
+        "pending": null,
+        "legal": 3,
+        "action": "attack::1-4:",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8401|1|1",
+        "step": 167,
+        "phase": "attack",
+        "pending": "block",
+        "legal": 4,
+        "action": "chooseBlock::1-7:",
+        "inBeam": true
+      },
+      {
+        "id": "white-sword|8402|0|0",
+        "step": 159,
+        "phase": "attack",
+        "pending": null,
+        "legal": 2,
+        "action": "attack::0-12:",
+        "inBeam": true
+      },
+      {
+        "id": "sword-art-online-raid|8401|1|1",
+        "step": 141,
+        "phase": "attack",
+        "pending": "block",
+        "legal": 2,
+        "action": "chooseBlock:::",
+        "inBeam": true
+      }
+    ]
+  },
+  "conclusion": {
+    "firstScore": false,
+    "reason": "All 250 decisions already have finite root scores. The backup runs because those scores do not share a comparable stop. A switch whose job is to obtain a score would not change them. Equalizing slices was already measured as alignRoots and the paired interval included 0.",
+    "zeroScore": 0,
+    "measurement": "spentWithoutScore read candidates and unexecuted. Budget fallback stores the scored rows on compared and omits candidates, so the flag counted scored fallbacks as unscored."
+  },
+  "base": "950291d291cddbdb9d0597ac3bba76358a1336be"
+}

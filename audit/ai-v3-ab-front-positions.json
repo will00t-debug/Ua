@@ -1,0 +1,3766 @@
+{
+  "baseline": "528ab2045e435c30db88294d01d49430d770c012",
+  "note": "Recomputed with ab-front. Root coverage matches A, and ab-front does not evict a front the incoming card raids onto. The ab-front gate rewrites only the same-card energy line of a searched main-phase front, before confirmed choices. It does not undo a later different-card energy choice, a start-phase pass, or a move.",
+  "positions": [
+    {
+      "id": "last-ap",
+      "board": {
+        "phase": "main",
+        "turn": 4,
+        "life": [
+          7,
+          7
+        ],
+        "ap": 1,
+        "energy": {
+          "green": 1
+        },
+        "hand": [
+          {
+            "uid": "0-11",
+            "id": "BLC-4-066",
+            "energy": 0,
+            "bp": 1500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "active",
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "0-10",
+            "id": "BLC-4-066",
+            "energy": 0,
+            "bp": 1500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "active",
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "0-14",
+            "id": "BLC-2-067",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "更木 剣八",
+            "onPlay": [
+              "raidBaseEnergyThen"
+            ]
+          },
+          {
+            "uid": "0-18",
+            "id": "BLC-2-069",
+            "energy": 1,
+            "bp": 2500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": null,
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "0-43",
+            "id": "BLC-2-073",
+            "energy": 4,
+            "bp": 0,
+            "gen": 0,
+            "ap": 1,
+            "trigger": "special",
+            "raid": null,
+            "onPlay": [
+              "retireOppFrontUnderBp"
+            ]
+          },
+          {
+            "uid": "0-15",
+            "id": "BLC-2-067",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "更木 剣八",
+            "onPlay": [
+              "raidBaseEnergyThen"
+            ]
+          },
+          {
+            "uid": "0-39",
+            "id": "BLC-1-085",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "日番谷 冬獅郎",
+            "onPlay": [
+              "restOppFrontLockActive"
+            ]
+          },
+          {
+            "uid": "0-24",
+            "id": "BLC-1-070",
+            "energy": 6,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "卯ノ花 烈",
+            "onPlay": [
+              "searchTopUpToTwoBottom",
+              "nextEligibleHandPlayApDiscount"
+            ]
+          },
+          {
+            "uid": "0-20",
+            "id": "BLC-4-070",
+            "energy": 1,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "draw",
+            "raid": null,
+            "onPlay": []
+          },
+          {
+            "uid": "0-12",
+            "id": "BLC-2-067",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "更木 剣八",
+            "onPlay": [
+              "raidBaseEnergyThen"
+            ]
+          }
+        ],
+        "front": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "readyFront": [],
+        "foeReady": [
+          {
+            "uid": "1-21",
+            "id": "BLC-4-070",
+            "energy": 1,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "draw",
+            "raid": null,
+            "onPlay": []
+          }
+        ]
+      },
+      "baselineBeam": [
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-10",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-18",
+          "mode": null,
+          "card": "BLC-2-069:1/2500"
+        },
+        {
+          "type": "play",
+          "line": "front",
+          "uid": "0-10",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null,
+          "card": null
+        }
+      ],
+      "variantABeam": [
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-10",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-18",
+          "mode": null,
+          "card": "BLC-2-069:1/2500"
+        },
+        {
+          "type": "play",
+          "line": "front",
+          "uid": "0-20",
+          "mode": null,
+          "card": "BLC-4-070:1/4000"
+        },
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null,
+          "card": null
+        }
+      ],
+      "searches": [
+        {
+          "variant": "baseline",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "budget-fallback",
+          "score": null,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -2.3999999999999995,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -20.65,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "baseline",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-10",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "baseline",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-10",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": null,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 30.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -20.65,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": null,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": null,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "budget-fallback",
+          "score": null,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -2.3999999999999995,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -20.65,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-10",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-10",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": 30.85,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 30.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -20.65,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": 30.85,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 30.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -20.65,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-20",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": -107.35,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-10",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -55.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-18",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -63.849999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-20",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -107.35,
+              "boundary": "returned"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -82.35,
+              "boundary": "pending"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-ap",
+      "board": {
+        "phase": "main",
+        "turn": 5,
+        "life": [
+          7,
+          7
+        ],
+        "ap": 2,
+        "energy": {
+          "green": 1
+        },
+        "hand": [
+          {
+            "uid": "0-40",
+            "id": "BLC-3-008",
+            "energy": 4,
+            "bp": 3000,
+            "gen": 2,
+            "ap": 1,
+            "trigger": null,
+            "raid": null,
+            "onPlay": []
+          },
+          {
+            "uid": "0-8",
+            "id": "BLC-4-066",
+            "energy": 0,
+            "bp": 1500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "active",
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "0-38",
+            "id": "BLC-1-085",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "日番谷 冬獅郎",
+            "onPlay": [
+              "restOppFrontLockActive"
+            ]
+          },
+          {
+            "uid": "0-11",
+            "id": "BLC-4-066",
+            "energy": 0,
+            "bp": 1500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "active",
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "0-41",
+            "id": "BLC-3-008",
+            "energy": 4,
+            "bp": 3000,
+            "gen": 2,
+            "ap": 1,
+            "trigger": null,
+            "raid": null,
+            "onPlay": []
+          },
+          {
+            "uid": "0-13",
+            "id": "BLC-2-067",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "更木 剣八",
+            "onPlay": [
+              "raidBaseEnergyThen"
+            ]
+          },
+          {
+            "uid": "0-43",
+            "id": "BLC-2-073",
+            "energy": 4,
+            "bp": 0,
+            "gen": 0,
+            "ap": 1,
+            "trigger": "special",
+            "raid": null,
+            "onPlay": [
+              "retireOppFrontUnderBp"
+            ]
+          },
+          {
+            "uid": "0-15",
+            "id": "BLC-2-067",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "更木 剣八",
+            "onPlay": [
+              "raidBaseEnergyThen"
+            ]
+          },
+          {
+            "uid": "0-23",
+            "id": "BLC-4-070",
+            "energy": 1,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "draw",
+            "raid": null,
+            "onPlay": []
+          }
+        ],
+        "front": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "readyFront": [],
+        "foeReady": [
+          {
+            "uid": "1-22",
+            "id": "BLC-4-070",
+            "energy": 1,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "draw",
+            "raid": null,
+            "onPlay": []
+          }
+        ]
+      },
+      "baselineBeam": [
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-23",
+          "mode": null,
+          "card": "BLC-4-070:1/4000"
+        },
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-11",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "play",
+          "line": "front",
+          "uid": "0-11",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null,
+          "card": null
+        }
+      ],
+      "variantABeam": [
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-23",
+          "mode": null,
+          "card": "BLC-4-070:1/4000"
+        },
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "0-11",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "play",
+          "line": "front",
+          "uid": "0-23",
+          "mode": null,
+          "card": "BLC-4-070:1/4000"
+        },
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null,
+          "card": null
+        }
+      ],
+      "searches": [
+        {
+          "variant": "baseline",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -56.349999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -40.099999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -56.349999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -35.9,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -60.05,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "baseline",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "budget-fallback",
+          "score": 3.6000000000000014,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 3.6000000000000014,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -25.65,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -65.6,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -116.85,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "baseline",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -30.849999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 691,
+          "dispatches": 691,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -44.949999999999996,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -91.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -56.349999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -40.099999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -56.349999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 8.600000000000001,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -60.05,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "budget-fallback",
+          "score": 3.6000000000000014,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 3.6000000000000014,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -25.65,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -12.949999999999996,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -116.85,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -30.849999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 691,
+          "dispatches": 691,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -31.099999999999998,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -91.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -56.349999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -40.099999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -56.349999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -35.9,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -60.05,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "budget-fallback",
+          "score": 3.6000000000000014,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 3.6000000000000014,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -25.65,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -65.6,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -116.85,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -30.849999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 691,
+          "dispatches": 691,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -44.949999999999996,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -91.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -56.349999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -40.099999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -56.349999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 8.600000000000001,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -60.05,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "budget-fallback",
+          "score": 3.6000000000000014,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 3.6000000000000014,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -25.65,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -12.949999999999996,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -116.85,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -30.849999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 691,
+          "dispatches": 691,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -31.099999999999998,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -91.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -56.349999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -40.099999999999994,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -56.349999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 8.600000000000001,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -60.05,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "budget-fallback",
+          "score": 3.6000000000000014,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "0-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 3.6000000000000014,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -25.65,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -12.949999999999996,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -116.85,
+              "boundary": "pending"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "0-11",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -30.849999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 691,
+          "dispatches": 691,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "0-11",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -30.849999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "0-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -31.099999999999998,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -91.85,
+              "boundary": "yielded"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "three-ap",
+      "board": {
+        "phase": "main",
+        "turn": 6,
+        "life": [
+          7,
+          7
+        ],
+        "ap": 3,
+        "energy": {
+          "green": 1
+        },
+        "hand": [
+          {
+            "uid": "1-23",
+            "id": "BLC-4-070",
+            "energy": 1,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "draw",
+            "raid": null,
+            "onPlay": []
+          },
+          {
+            "uid": "1-8",
+            "id": "BLC-4-066",
+            "energy": 0,
+            "bp": 1500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "active",
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "1-3",
+            "id": "BLC-3-009",
+            "energy": 3,
+            "bp": 2000,
+            "gen": 2,
+            "ap": 1,
+            "trigger": "color",
+            "raid": null,
+            "onPlay": [
+              "draw"
+            ]
+          },
+          {
+            "uid": "1-16",
+            "id": "BLC-2-069",
+            "energy": 1,
+            "bp": 2500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": null,
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "1-5",
+            "id": "BLC-4-060",
+            "energy": 3,
+            "bp": 4000,
+            "gen": 2,
+            "ap": 1,
+            "trigger": "get",
+            "raid": null,
+            "onPlay": [
+              "moveOtherAcrossOrRemove"
+            ]
+          },
+          {
+            "uid": "1-13",
+            "id": "BLC-2-067",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "更木 剣八",
+            "onPlay": [
+              "raidBaseEnergyThen"
+            ]
+          },
+          {
+            "uid": "1-9",
+            "id": "BLC-4-066",
+            "energy": 0,
+            "bp": 1500,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "active",
+            "raid": null,
+            "onPlay": [
+              "discardGate"
+            ]
+          },
+          {
+            "uid": "1-26",
+            "id": "BLC-1-070",
+            "energy": 6,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "卯ノ花 烈",
+            "onPlay": [
+              "searchTopUpToTwoBottom",
+              "nextEligibleHandPlayApDiscount"
+            ]
+          },
+          {
+            "uid": "1-30",
+            "id": "BLC-1-072",
+            "energy": 2,
+            "bp": 2000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": null,
+            "raid": null,
+            "onPlay": [
+              "draw"
+            ]
+          }
+        ],
+        "front": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "readyFront": [],
+        "foeReady": [
+          {
+            "uid": "0-13",
+            "id": "BLC-2-067",
+            "energy": 4,
+            "bp": 4000,
+            "gen": 1,
+            "ap": 1,
+            "trigger": "raid",
+            "raid": "更木 剣八",
+            "onPlay": [
+              "raidBaseEnergyThen"
+            ]
+          }
+        ]
+      },
+      "baselineBeam": [
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-8",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-16",
+          "mode": null,
+          "card": "BLC-2-069:1/2500"
+        },
+        {
+          "type": "play",
+          "line": "front",
+          "uid": "1-16",
+          "mode": null,
+          "card": "BLC-2-069:1/2500"
+        },
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null,
+          "card": null
+        }
+      ],
+      "variantABeam": [
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-8",
+          "mode": null,
+          "card": "BLC-4-066:0/1500"
+        },
+        {
+          "type": "play",
+          "line": "energy",
+          "uid": "1-16",
+          "mode": null,
+          "card": "BLC-2-069:1/2500"
+        },
+        {
+          "type": "play",
+          "line": "front",
+          "uid": "1-23",
+          "mode": null,
+          "card": "BLC-4-070:1/4000"
+        },
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null,
+          "card": null
+        }
+      ],
+      "searches": [
+        {
+          "variant": "baseline",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -123.6,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": 18.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -25.9,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "baseline",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -29.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -19.549999999999997,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "baseline",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": 5.650000000000002,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -18.349999999999998,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -123.6,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 18.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -25.9,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -29.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -7.799999999999997,
+              "boundary": "open"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "a",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": 5.650000000000002,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -44.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "reason": "search",
+          "score": 18.85,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -123.6,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": 18.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -25.9,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "reason": "search",
+          "score": -29.599999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -29.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -19.549999999999997,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "b",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "reason": "search",
+          "score": 5.650000000000002,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": 5.650000000000002,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -18.349999999999998,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "reason": "search",
+          "score": 18.85,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -123.6,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 18.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -25.9,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "reason": "search",
+          "score": -29.599999999999994,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -29.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -7.799999999999997,
+              "boundary": "open"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "reason": "search",
+          "score": 5.650000000000002,
+          "searched": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null,
+            "card": null
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": 5.650000000000002,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -44.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 48,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "front",
+            "uid": "1-23",
+            "mode": null,
+            "card": "BLC-4-070:1/4000"
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -123.6,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": 18.85,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -25.9,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 192,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "nodesUsed": 192,
+          "dispatches": 192,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": -29.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -7.799999999999997,
+              "boundary": "open"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        },
+        {
+          "variant": "ab-front",
+          "nodes": 768,
+          "returned": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-8",
+            "mode": null,
+            "card": "BLC-4-066:0/1500"
+          },
+          "reason": "search",
+          "score": -69.1,
+          "searched": {
+            "type": "play",
+            "line": "energy",
+            "uid": "1-16",
+            "mode": null,
+            "card": "BLC-2-069:1/2500"
+          },
+          "nodesUsed": 704,
+          "dispatches": 704,
+          "over": false,
+          "rows": [
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-8",
+                "mode": null,
+                "card": "BLC-4-066:0/1500"
+              },
+              "search": -69.1,
+              "boundary": "pending"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "energy",
+                "uid": "1-16",
+                "mode": null,
+                "card": "BLC-2-069:1/2500"
+              },
+              "search": 5.650000000000002,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "play",
+                "line": "front",
+                "uid": "1-23",
+                "mode": null,
+                "card": "BLC-4-070:1/4000"
+              },
+              "search": -44.599999999999994,
+              "boundary": "yielded"
+            },
+            {
+              "action": {
+                "type": "next",
+                "line": null,
+                "uid": null,
+                "mode": null,
+                "card": null
+              },
+              "search": -79.85,
+              "boundary": "yielded"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -30,6 +30,9 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261107liner1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
+import {chooseAiV3Action,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
+import {HYBRID_MAIN_POLICY,HYBRID_START_HARD_POLICY} from './universal-v2/ai-v3/hybrid-main.mjs';
+import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from './universal-v2/ai-v3/worker-entry.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
@@ -1577,11 +1580,13 @@ function render(){
    el('h2',{text:'尚未開始對戰'}),
    el('p',{text:'請先在對戰設定頁選擇雙方牌組與 AI 難度，再開始 V2 對戰。'}),
    el('a',{href:'/universal-v2-preview.html',text:'返回對戰設定'})));
+  paintAiPolicy();
   return;
  }
  const s=app.state;
  if(s.phase==='setup'&&s.pending?.kind==='opening-mulligan'){
   renderOpeningMulligan(target,s);
+  paintAiPolicy();
   return;
  }
  const v=universalPublicView(app.packs,s,0),legal=presentLifeRaid(legalUniversalActions(app.packs,s));
@@ -1607,13 +1612,39 @@ function render(){
    s.status==='playing'&&uiActor(s)===1?
     btn('手動推進 AI 一步',manualAiStep,'btn small'):null,
    s.status==='playing'&&uiActor(s)===1&&app.busy?
-    btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null));
+    btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null,
+   s.status==='playing'?
+    btn(searchPreviewOn()?'關閉搜尋預覽':'完整回合搜尋',()=>{
+     const next=!searchPreviewOn();
+     if(next)setHybridStart(false);
+     setSearchPreview(next);
+     resetAi();app.error='';
+     if(uiActor(app.state)===1)driveAi();
+     else render();
+    },'btn small'):null,
+   s.status==='playing'?
+    btn(hybridMainOn()?'關閉主階段混合':'主階段混合實驗',()=>{
+     setHybridStart(false);
+     setHybridMain(!hybridMainOn());
+     resetAi();app.error='';
+     if(uiActor(app.state)===1)driveAi();
+     else render();
+    },'btn small'):null,
+   s.status==='playing'?
+    btn(hybridStartOn()?'關閉新混合 AI':'新混合 AI',()=>{
+     const next=!hybridStartOn();
+     if(next){setHybridMain(false);setSearchPreview(false);}
+     setHybridStart(next);
+     resetAi();app.error='';
+     if(uiActor(app.state)===1)driveAi();
+     else render();
+    },'btn small'):null));
  target.append(title);
  const coach=coachBar();
  if(coach)target.append(coach);
  if(s.status==='playing'&&uiActor(s)===1){
   target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
-   el('b',{text:app.busy?'AI 自動操作中':'AI 目前暫停'}),
+   el('b',{text:(app.busy?'AI 自動操作中':'AI 目前暫停')+' · '+currentAiPolicy()}),
    el('span',{text:'　進度 '+app.aiCompletedSteps+' 步 · 最近：'+app.lastAiProgress+
     ' · 待處理合法動作 '+legal.length+
     '。若沒有反應，按上方「手動推進 AI 一步」；按一下就會使用 V2 合法動作推進一次。'})));
@@ -1694,6 +1725,7 @@ function render(){
  if(handAfterRender)handAfterRender.scrollLeft=oldHandScroll;
  // Replacing the entire match subtree must not jump the desktop viewport.
  if(IS_BATTLE_PAGE&&preserveScroll)window.scrollTo(window.scrollX,oldScroll);
+ paintAiPolicy();
 }
 function applyAction(a){
  if(a?.lifeRaidSource)a=a.lifeRaidSource;
@@ -1809,6 +1841,30 @@ function manualAiStep(){
  }
 }
 function driveAi(){
+ if(hybridStartOn()){
+  if(document.body)document.body.dataset.aiPolicy=HYBRID_START_HARD_POLICY;
+  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
+  app.busy=true;app.autoMoves=0;app.sequence++;
+  app.aiPhaseKey=null;app.aiPhaseCount=0;
+  driveSearchPreview(app.sequence,HYBRID_START_HARD_POLICY);
+  return;
+ }
+ if(hybridMainOn()){
+  if(document.body)document.body.dataset.aiPolicy=HYBRID_MAIN_POLICY;
+  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
+  app.busy=true;app.autoMoves=0;app.sequence++;
+  app.aiPhaseKey=null;app.aiPhaseCount=0;
+  driveSearchPreview(app.sequence,HYBRID_MAIN_POLICY);
+  return;
+ }
+ if(searchPreviewOn()){
+  if(document.body)document.body.dataset.aiPolicy=AI_V3_POLICY;
+  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
+  app.busy=true;app.autoMoves=0;app.sequence++;
+  app.aiPhaseKey=null;app.aiPhaseCount=0;
+  driveSearchPreview(app.sequence);
+  return;
+ }
  if(document.body)document.body.dataset.aiPolicy=aiPolicyFor(app.aiDifficulty);
  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
  app.busy=true;app.autoMoves=0;app.sequence++;
@@ -1867,6 +1923,229 @@ function driveAi(){
   }
  }
  app.aiTimer=setTimeout(chunk,16);render();
+}
+const SEARCH_PREVIEW_KEY='ua-ai-v3-preview';
+const HYBRID_MAIN_KEY='ua-hybrid-main-v1';
+const HYBRID_START_KEY='ua-hybrid-start-hard-v1';
+function searchPreviewOn(){
+ try{return localStorage.getItem(SEARCH_PREVIEW_KEY)==='1';}catch{return false;}
+}
+function hybridMainOn(){
+ try{return localStorage.getItem(HYBRID_MAIN_KEY)==='1';}catch{return false;}
+}
+function hybridStartOn(){
+ try{return localStorage.getItem(HYBRID_START_KEY)==='1';}catch{return false;}
+}
+function setHybridMain(on){
+ try{localStorage.setItem(HYBRID_MAIN_KEY,on?'1':'0');}catch{}
+ const box=$('hybrid-main-v1');
+ if(box)box.checked=!!on;
+ paintAiPolicy();
+}
+function setHybridStart(on){
+ try{localStorage.setItem(HYBRID_START_KEY,on?'1':'0');}catch{}
+ const box=$('hybrid-start-hard-v1');
+ if(box)box.checked=!!on;
+ paintAiPolicy();
+}
+function setSearchPreview(on){
+ try{localStorage.setItem(SEARCH_PREVIEW_KEY,on?'1':'0');}catch{}
+ const box=$('ai-v3-preview');
+ if(box)box.checked=!!on;
+ paintAiPolicy();
+}
+function currentAiPolicy(){
+ if(hybridStartOn())return HYBRID_START_HARD_POLICY;
+ if(hybridMainOn())return HYBRID_MAIN_POLICY;
+ if(searchPreviewOn())return AI_V3_POLICY;
+ const difficulty=app.aiDifficulty||$('ai-level')?.value||'normal';
+ return aiPolicyFor(difficulty);
+}
+function paintAiPolicy(){
+ const policy=currentAiPolicy();
+ if(document.body)document.body.dataset.aiPolicy=policy;
+ const lane=document.documentElement.dataset.aiLane||'';
+ const source=document.documentElement.dataset.aiSource||'';
+ const routed=policy===HYBRID_MAIN_POLICY||policy===HYBRID_START_HARD_POLICY;
+ const route=routed&&lane?' · 上一手 '+lane+'/'+source:'';
+ const text='目前 AI policy：'+policy+route;
+ const live=$('ai-policy-live');
+ if(live)live.textContent=text;
+ const banner=$('battle-matchup');
+ if(!banner||document.body?.dataset.audit)return;
+ const decks=app.launch?.decks;
+ const names=decks?((decks[0]?.label||'')+' vs '+(decks[1]?.label||'')+' · '):'';
+ banner.textContent=names+text;
+}
+function rememberAiRoute(result){
+ const route=result?.search?.route;
+ if(!route?.lane)return;
+ let log=[];
+ try{log=JSON.parse(document.documentElement.dataset.aiRouteLog||'[]');}catch{log=[];}
+ log.push({
+  policy:result.policy||currentAiPolicy(),
+  lane:route.lane,
+  source:route.source||'',
+  pending:app.state?.pending?.kind||null
+ });
+ document.documentElement.dataset.aiRouteLog=JSON.stringify(log.slice(-80));
+ document.documentElement.dataset.aiLane=route.lane;
+ document.documentElement.dataset.aiSource=route.source||'';
+}
+function useOriginalAiV3(){
+ setHybridStart(false);
+ setHybridMain(false);
+ setSearchPreview(true);
+}
+function useHybridMain(){
+ setHybridStart(false);
+ setHybridMain(true);
+}
+function useHybridStart(){
+ setSearchPreview(false);
+ setHybridMain(false);
+ setHybridStart(true);
+}
+function useDifficultyAi(){
+ setHybridStart(false);
+ setHybridMain(false);
+ setSearchPreview(false);
+}
+let searchWorker=null;
+let searchRequest=0;
+function searchWorkerHandle(){
+ if(searchWorker)return searchWorker;
+ try{
+  searchWorker=new Worker(new URL('./universal-v2/ai-v3/browser-worker.mjs',import.meta.url),{type:'module'});
+  return searchWorker;
+ }catch{return null;}
+}
+function commitAiAction(choice,reason){
+ const previous=app.state;
+ const replayIndex=app.replay.actions.length;
+ app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
+ rememberAi(choice,replayIndex);
+ app.replay=appendUniversalReplay(app.replay,choice,1);
+ notePublicMove(app.packs,previous,app.state,choice,1);
+ pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
+ if(reason){
+  app.aiFallbacks++;
+  pushHistory('AI 使用 V2 合法備援操作（'+reason+'），避免對局停住。');
+ }
+ app.aiPhaseCount++;
+ app.aiCompletedSteps++;
+ app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
+}
+function driveSearchPreview(sequence,policy=null){
+ const hybrid=policy===HYBRID_MAIN_POLICY||policy===HYBRID_START_HARD_POLICY;
+ if(document.body)document.body.dataset.aiPolicy=hybrid?policy:AI_V3_POLICY;
+ const step=()=>{
+  if(sequence!==app.sequence)return;
+  const still=policy===HYBRID_START_HARD_POLICY?hybridStartOn():policy===HYBRID_MAIN_POLICY?hybridMainOn():searchPreviewOn();
+  if(!still){app.busy=false;driveAi();return;}
+  if(!app.state||app.state.status!=='playing'||uiActor(app.state)!==1){
+   app.busy=false;app.aiTimer=null;app.error='';render();return;
+  }
+  if(++app.autoMoves>app.maxAuto){
+   app.busy=false;
+   app.error='電腦操作已達安全上限，請下載重播檔供除錯。';
+   render();return;
+  }
+  const legal=legalUniversalActions(app.packs,app.state);
+  const actor=1;
+  const requestId=++searchRequest;
+  const stateVersion=(app.aiStateVersion=(app.aiStateVersion||0)+1);
+  const request=buildAiV3Request(app.packs,app.state,actor,{
+   requestId,stateVersion,seed:policy===HYBRID_START_HARD_POLICY?1:stateVersion,
+   nodes:MATCH_LIMITS.nodes,ms:MATCH_LIMITS.ms,
+   ...(hybrid?{policy}:{})
+  });
+  let settled=false;
+  const finish=(action,reason)=>{
+   if(settled||sequence!==app.sequence||stateVersion!==app.aiStateVersion)return;
+   settled=true;
+   if(reason==='worker-timeout'){
+    const timeouts=Number(document.documentElement.dataset.aiTimeouts||'0')+1;
+    document.documentElement.dataset.aiTimeouts=String(timeouts);
+   }
+   try{
+    const currentLegal=legalUniversalActions(app.packs,app.state);
+    const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal:currentLegal},{
+     requestId,stateVersion,actor,action,error:action?null:'empty'
+    });
+    if(!accepted.ok){
+     const rejected=Number(document.documentElement.dataset.aiRejected||'0')+1;
+     document.documentElement.dataset.aiRejected=String(rejected);
+    }
+    const choice=accepted.ok?accepted.action:chooseProgressSafeAiAction(app.packs,app.state,{
+     difficulty:'hard',actionsInPhase:app.aiPhaseCount
+    }).action;
+    commitAiAction(choice,accepted.ok?reason:reason||accepted.reason);
+    if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
+    maybeFinishCoach();
+    saveBattleProgress();
+    if(app.state.status==='playing'&&uiActor(app.state)===1){
+     render();
+     app.aiTimer=setTimeout(step,16);
+    }else{
+     // Draw the player's controls only after the thinking flag is cleared.
+     // Rendering first hides 下一階段 and the match looks frozen.
+     app.busy=false;app.aiTimer=null;app.error='';
+     render();
+    }
+   }catch(error){
+    app.busy=false;app.aiTimer=null;
+    app.error='電腦操作已暫停：'+(error?.message||String(error));
+    try{render();}catch{}
+   }
+  };
+  const worker=request?searchWorkerHandle():null;
+  if(!worker||!request){
+   try{
+    if(hybrid){
+     const local=request?handleAiV3Request(request):null;
+     rememberAiRoute(local);
+     finish(local?local.action:null,request?null:'no-world');
+    }
+    else{
+     const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
+     finish(action,null);
+    }
+   }catch{finish(null,hybrid?'hybrid-failed':'search-failed');}
+   return;
+  }
+  const timer=setTimeout(()=>{
+   worker.removeEventListener('message',onMessage);
+   if(hybrid){finish(null,'worker-timeout');return;}
+   try{
+    const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
+    finish(action,'worker-timeout');
+   }catch{finish(null,'worker-timeout');}
+  },700);
+  const onMessage=event=>{
+   const data=event.data||{};
+   if(data.requestId!==requestId)return;
+   clearTimeout(timer);
+   worker.removeEventListener('message',onMessage);
+   rememberAiRoute(data);
+   const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal},{...data,legal:undefined});
+   if(!accepted.ok){finish(null,accepted.reason);return;}
+   finish(accepted.action,null);
+  };
+  worker.addEventListener('message',onMessage);
+  try{worker.postMessage(request);}
+  catch{
+   clearTimeout(timer);
+   worker.removeEventListener('message',onMessage);
+   try{
+    const local=handleAiV3Request(request);
+    rememberAiRoute(local);
+    finish(local.action,null);
+   }catch{finish(null,'worker-post');}
+  }
+ };
+ app.aiTimer=setTimeout(step,16);
+ render();
 }
 function resetAi(){
  app.sequence++;if(app.aiTimer!==null)clearTimeout(app.aiTimer);
@@ -2218,7 +2497,7 @@ function restoreMatchLobby(){
 }
 async function startAuditFixture(name){
  try{
-  const {loadAuditFixture}=await import('./universal-v2/audit-browser-fixtures.mjs?v=20261107look');
+  const {loadAuditFixture}=await import('./universal-v2/audit-browser-fixtures.mjs?v=20261112mobile1');
   const fixture=loadAuditFixture(name);
   clearSoloBattle(sessionStorage);
   app.packs=fixture.packs;
@@ -2268,6 +2547,36 @@ if(!IS_BATTLE_PAGE){
   coachConsent.checked=coachApi().consent();
   coachConsent.addEventListener('change',()=>coachApi().setConsent(coachConsent.checked));
  }
+ const searchPreview=$('ai-v3-preview');
+ if(searchPreview){
+  searchPreview.checked=searchPreviewOn();
+  searchPreview.addEventListener('change',()=>{
+   if(searchPreview.checked)setHybridStart(false);
+   setSearchPreview(searchPreview.checked);
+  });
+ }
+ const hybridMain=$('hybrid-main-v1');
+ if(hybridMain){
+  hybridMain.checked=hybridMainOn();
+  hybridMain.addEventListener('change',()=>{
+   if(hybridMain.checked)setHybridStart(false);
+   setHybridMain(hybridMain.checked);
+  });
+ }
+ const hybridStart=$('hybrid-start-hard-v1');
+ if(hybridStart){
+  hybridStart.checked=hybridStartOn();
+  hybridStart.addEventListener('change',()=>{
+   if(hybridStart.checked){setHybridMain(false);setSearchPreview(false);}
+   setHybridStart(hybridStart.checked);
+  });
+ }
+ $('use-ai-v3')?.addEventListener('click',()=>{useOriginalAiV3();markLobbyChanged();});
+ $('use-hybrid-main')?.addEventListener('click',()=>{useHybridMain();markLobbyChanged();});
+ $('use-hybrid-start-hard')?.addEventListener('click',()=>{useHybridStart();markLobbyChanged();});
+ $('use-difficulty-ai')?.addEventListener('click',()=>{useDifficultyAi();markLobbyChanged();});
+ paintAiPolicy();
+ document.documentElement.dataset.hybridMainReady='1';
  syncMatchLobby();
  importAccountLobbyDecks();
 }else{

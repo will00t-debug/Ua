@@ -1,0 +1,1568 @@
+{
+  "kind": "phase-sample-9010",
+  "programBase": "98b7ffd9b58e4fb7244579a28a25dc5e1493dab7",
+  "headSha": "8012d8af7c37fbae34cd2a41668ef4a4b6e86ab6",
+  "lockSha256": "19456177c5469b0517dd1cbe2696591306244d94649b695517f690ecdd4ebcb4",
+  "games": 160,
+  "record": {
+    "games": 160,
+    "wins": 81,
+    "losses": 79,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.50625
+  },
+  "byDeck": {
+    "white-sword": {
+      "games": 56,
+      "wins": 20,
+      "losses": 36,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.35714285714285715
+    },
+    "sword-art-online-raid": {
+      "games": 52,
+      "wins": 23,
+      "losses": 29,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.4423076923076923
+    },
+    "steins-gate-raid": {
+      "games": 52,
+      "wins": 38,
+      "losses": 14,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.7307692307692307
+    }
+  },
+  "hybridFirst": {
+    "games": 80,
+    "wins": 39,
+    "losses": 41,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.4875
+  },
+  "hybridSecond": {
+    "games": 80,
+    "wins": 42,
+    "losses": 38,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.525
+  },
+  "whiteFirst": {
+    "games": 28,
+    "wins": 8,
+    "losses": 20,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.2857142857142857
+  },
+  "whiteSecond": {
+    "games": 28,
+    "wins": 12,
+    "losses": 16,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.42857142857142855
+  },
+  "interval": {
+    "n": 40,
+    "mean": 0.50625,
+    "low": 0.40625,
+    "high": 0.6125
+  },
+  "illegal": 0,
+  "routingErrors": 0,
+  "overNodes": 0,
+  "unfinished": 0,
+  "hitStepCap": 0,
+  "actionReplayFailures": 0,
+  "snapshotFailures": 0,
+  "incompleteBlocks": [],
+  "counts": {
+    "hybrid": {
+      "start": {
+        "n": 1947,
+        "legal": 3056,
+        "nodeN": 1109,
+        "nodes": 44648,
+        "overNodes": 0,
+        "wall": 43930.54246199994,
+        "over40": 786,
+        "budget": 866,
+        "forced": 838,
+        "deferred": 0,
+        "types": {
+          "extraDraw": 838,
+          "next": 1109
+        },
+        "pending": {}
+      },
+      "move": {
+        "n": 1381,
+        "legal": 9867,
+        "nodeN": 1161,
+        "nodes": 46349,
+        "overNodes": 0,
+        "wall": 49036.6640729995,
+        "over40": 1008,
+        "budget": 1039,
+        "forced": 220,
+        "deferred": 0,
+        "types": {
+          "next": 1109,
+          "move": 262,
+          "step": 10
+        },
+        "pending": {}
+      },
+      "main": {
+        "n": 3078,
+        "legal": 75268,
+        "nodeN": 2161,
+        "nodes": 73393,
+        "overNodes": 0,
+        "wall": 88034.79422999996,
+        "over40": 1715,
+        "budget": 1489,
+        "forced": 917,
+        "deferred": 0,
+        "types": {
+          "next": 1109,
+          "play:energy": 1226,
+          "raid": 408,
+          "activate": 58,
+          "play:front": 256,
+          "event": 20,
+          "raid:energy": 1
+        },
+        "pending": {}
+      },
+      "battle": {
+        "n": 2069,
+        "legal": 4163,
+        "nodeN": 1124,
+        "nodes": 35338,
+        "overNodes": 0,
+        "wall": 47886.32454799998,
+        "over40": 1110,
+        "budget": 1114,
+        "forced": 945,
+        "deferred": 0,
+        "types": {
+          "next": 1028,
+          "attack": 1041
+        },
+        "pending": {}
+      },
+      "pending": {
+        "n": 5068,
+        "legal": 20720,
+        "nodeN": 3991,
+        "nodes": 130100,
+        "overNodes": 0,
+        "wall": 154830.8935279997,
+        "over40": 2904,
+        "budget": 3011,
+        "forced": 716,
+        "deferred": 361,
+        "types": {
+          "chooseDiscardGate": 69,
+          "chooseTopCard": 61,
+          "chooseHandLimit": 446,
+          "chooseBlock": 1459,
+          "chooseLineMove": 74,
+          "chooseLineSlot": 66,
+          "chooseAttackLife": 839,
+          "chooseTrigger": 516,
+          "chooseRestLock": 66,
+          "chooseRestTwo": 32,
+          "chooseSelfFront": 16,
+          "chooseRaidLeave": 9,
+          "chooseApRecovery": 11,
+          "chooseTopFilteredMany": 22,
+          "chooseTopOrder": 512,
+          "chooseTrigger:front": 16,
+          "chooseTrigger:energy": 10,
+          "chooseRetireBp": 14,
+          "chooseOutsideRecovery": 1,
+          "chooseLifeOrder": 16,
+          "chooseDiscard": 181,
+          "chooseRestGen": 192,
+          "chooseTopFiltered": 72,
+          "chooseOwnBuff": 105,
+          "chooseOwnBounce": 57,
+          "chooseNamedFronts": 1,
+          "chooseDrawInstead": 1,
+          "choosePrintedRestRaid:energy": 29,
+          "chooseMayuriFork": 59,
+          "chooseInspectedOutside": 106,
+          "choosePrintedRestRaid:front": 8,
+          "choosePhaseOrder": 2
+        },
+        "pending": {
+          "effect-discard-gate": 69,
+          "private-top-place": 61,
+          "end-hand-limit": 446,
+          "block": 1459,
+          "effect-line-move": 74,
+          "effect-line-slot": 66,
+          "attack-life-target": 839,
+          "life-trigger": 542,
+          "effect-rest-lock": 66,
+          "effect-rest-two": 32,
+          "effect-self-front": 16,
+          "effect-raid-leave": 9,
+          "effect-recover-ap": 11,
+          "effect-top-filter-many-choice": 22,
+          "effect-top-order": 512,
+          "effect-retire-bp": 14,
+          "effect-recover-outside": 1,
+          "life-batch-order": 16,
+          "effect-discard": 181,
+          "effect-rest-gen": 192,
+          "effect-top-filter-choice": 72,
+          "effect-buff-own": 105,
+          "effect-bounce-own": 57,
+          "effect-named-fronts": 1,
+          "effect-draw-instead": 1,
+          "effect-printed-rest-raid": 37,
+          "effect-mayuri-fork": 59,
+          "effect-top-inspect-many": 106,
+          "phase-order": 2
+        }
+      }
+    },
+    "hard": {
+      "start": {
+        "n": 1354,
+        "legal": 2462,
+        "nodeN": 1108,
+        "nodes": 31050,
+        "overNodes": 0,
+        "wall": 32037.98153399977,
+        "over40": 226,
+        "budget": 50,
+        "forced": 246,
+        "deferred": 0,
+        "types": {
+          "next": 1108,
+          "extraDraw": 246
+        },
+        "pending": {}
+      },
+      "move": {
+        "n": 1400,
+        "legal": 10605,
+        "nodeN": 1190,
+        "nodes": 50922,
+        "overNodes": 0,
+        "wall": 50103.82674100006,
+        "over40": 873,
+        "budget": 514,
+        "forced": 210,
+        "deferred": 0,
+        "types": {
+          "next": 1108,
+          "move": 291,
+          "step": 1
+        },
+        "pending": {}
+      },
+      "main": {
+        "n": 3098,
+        "legal": 58328,
+        "nodeN": 2457,
+        "nodes": 85789,
+        "overNodes": 0,
+        "wall": 95143.85106000029,
+        "over40": 1723,
+        "budget": 1439,
+        "forced": 641,
+        "deferred": 0,
+        "types": {
+          "play:energy": 1280,
+          "next": 1108,
+          "raid": 331,
+          "event": 53,
+          "play:front": 244,
+          "activate": 68,
+          "raid:energy": 14
+        },
+        "pending": {}
+      },
+      "pending": {
+        "n": 4116,
+        "legal": 17283,
+        "nodeN": 3378,
+        "nodes": 97472,
+        "overNodes": 0,
+        "wall": 107027.90555099992,
+        "over40": 1425,
+        "budget": 609,
+        "forced": 362,
+        "deferred": 376,
+        "types": {
+          "chooseDiscardGate": 88,
+          "chooseTopCard": 51,
+          "chooseLineMove": 79,
+          "chooseLineSlot": 48,
+          "chooseAttackLife": 810,
+          "chooseBlock": 1014,
+          "chooseRestLock": 63,
+          "chooseTrigger": 473,
+          "chooseRetireBp": 27,
+          "chooseApRecovery": 51,
+          "chooseTopFilteredMany": 35,
+          "chooseTopOrder": 549,
+          "chooseHandLimit": 86,
+          "chooseLifeOrder": 13,
+          "chooseTrigger:front": 55,
+          "chooseOutsideRecovery": 7,
+          "chooseRestTwo": 16,
+          "chooseSelfFront": 8,
+          "chooseRaidLeave": 6,
+          "chooseTrigger:energy": 2,
+          "chooseDiscard": 118,
+          "chooseRestGen": 127,
+          "chooseOwnBounce": 46,
+          "chooseOwnBuff": 182,
+          "chooseNamedFronts": 3,
+          "chooseTopFiltered": 59,
+          "choosePrintedRestRaid:front": 7,
+          "chooseMayuriFork": 40,
+          "choosePrintedRestRaid:energy": 8,
+          "chooseInspectedOutside": 43,
+          "choosePrintedRestRaid": 2
+        },
+        "pending": {
+          "effect-discard-gate": 88,
+          "private-top-place": 51,
+          "effect-line-move": 79,
+          "effect-line-slot": 48,
+          "attack-life-target": 810,
+          "block": 1014,
+          "effect-rest-lock": 63,
+          "life-trigger": 530,
+          "effect-retire-bp": 27,
+          "effect-recover-ap": 51,
+          "effect-top-filter-many-choice": 35,
+          "effect-top-order": 549,
+          "end-hand-limit": 86,
+          "life-batch-order": 13,
+          "effect-recover-outside": 7,
+          "effect-rest-two": 16,
+          "effect-self-front": 8,
+          "effect-raid-leave": 6,
+          "effect-discard": 118,
+          "effect-rest-gen": 127,
+          "effect-bounce-own": 46,
+          "effect-buff-own": 182,
+          "effect-named-fronts": 3,
+          "effect-top-filter-choice": 59,
+          "effect-printed-rest-raid": 17,
+          "effect-mayuri-fork": 40,
+          "effect-top-inspect-many": 43
+        }
+      },
+      "battle": {
+        "n": 2509,
+        "legal": 7594,
+        "nodeN": 2030,
+        "nodes": 63832,
+        "overNodes": 0,
+        "wall": 65628.64925299973,
+        "over40": 837,
+        "budget": 71,
+        "forced": 479,
+        "deferred": 0,
+        "types": {
+          "next": 1029,
+          "attack": 1480
+        },
+        "pending": {}
+      }
+    },
+    "hybridWin": {
+      "start": {
+        "n": 1033,
+        "legal": 1633,
+        "nodeN": 600,
+        "nodes": 24362,
+        "overNodes": 0,
+        "wall": 23846.942098999956,
+        "over40": 426,
+        "budget": 469,
+        "forced": 433,
+        "deferred": 0,
+        "types": {
+          "extraDraw": 433,
+          "next": 600
+        },
+        "pending": {}
+      },
+      "move": {
+        "n": 753,
+        "legal": 5452,
+        "nodeN": 651,
+        "nodes": 26534,
+        "overNodes": 0,
+        "wall": 27447.93846799952,
+        "over40": 567,
+        "budget": 579,
+        "forced": 102,
+        "deferred": 0,
+        "types": {
+          "next": 600,
+          "move": 149,
+          "step": 4
+        },
+        "pending": {}
+      },
+      "main": {
+        "n": 1720,
+        "legal": 42232,
+        "nodeN": 1225,
+        "nodes": 42038,
+        "overNodes": 0,
+        "wall": 49822.40236799988,
+        "over40": 969,
+        "budget": 836,
+        "forced": 495,
+        "deferred": 0,
+        "types": {
+          "next": 600,
+          "play:energy": 662,
+          "raid": 238,
+          "play:front": 179,
+          "event": 6,
+          "activate": 35
+        },
+        "pending": {}
+      },
+      "battle": {
+        "n": 1174,
+        "legal": 2527,
+        "nodeN": 696,
+        "nodes": 21638,
+        "overNodes": 0,
+        "wall": 29716.536031999934,
+        "over40": 690,
+        "budget": 690,
+        "forced": 478,
+        "deferred": 0,
+        "types": {
+          "next": 519,
+          "attack": 655
+        },
+        "pending": {}
+      },
+      "pending": {
+        "n": 2647,
+        "legal": 10564,
+        "nodeN": 2091,
+        "nodes": 70402,
+        "overNodes": 0,
+        "wall": 83306.49492499954,
+        "over40": 1605,
+        "budget": 1669,
+        "forced": 332,
+        "deferred": 224,
+        "types": {
+          "chooseHandLimit": 163,
+          "chooseBlock": 676,
+          "chooseDiscardGate": 25,
+          "chooseTopCard": 22,
+          "chooseLineMove": 30,
+          "chooseLineSlot": 26,
+          "chooseRestLock": 30,
+          "chooseAttackLife": 555,
+          "chooseApRecovery": 4,
+          "chooseTopFilteredMany": 11,
+          "chooseTopOrder": 333,
+          "chooseTrigger": 182,
+          "chooseRetireBp": 4,
+          "chooseTrigger:energy": 4,
+          "chooseOutsideRecovery": 1,
+          "chooseRestTwo": 12,
+          "chooseSelfFront": 6,
+          "chooseTrigger:front": 2,
+          "chooseLifeOrder": 2,
+          "chooseRaidLeave": 5,
+          "chooseOwnBuff": 69,
+          "chooseRestGen": 115,
+          "chooseOwnBounce": 35,
+          "chooseDiscard": 125,
+          "chooseTopFiltered": 52,
+          "choosePrintedRestRaid:energy": 22,
+          "chooseMayuriFork": 46,
+          "chooseInspectedOutside": 82,
+          "choosePrintedRestRaid:front": 6,
+          "choosePhaseOrder": 2
+        },
+        "pending": {
+          "end-hand-limit": 163,
+          "block": 676,
+          "effect-discard-gate": 25,
+          "private-top-place": 22,
+          "effect-line-move": 30,
+          "effect-line-slot": 26,
+          "effect-rest-lock": 30,
+          "attack-life-target": 555,
+          "effect-recover-ap": 4,
+          "effect-top-filter-many-choice": 11,
+          "effect-top-order": 333,
+          "life-trigger": 188,
+          "effect-retire-bp": 4,
+          "effect-recover-outside": 1,
+          "effect-rest-two": 12,
+          "effect-self-front": 6,
+          "life-batch-order": 2,
+          "effect-raid-leave": 5,
+          "effect-buff-own": 69,
+          "effect-rest-gen": 115,
+          "effect-bounce-own": 35,
+          "effect-discard": 125,
+          "effect-top-filter-choice": 52,
+          "effect-printed-rest-raid": 28,
+          "effect-mayuri-fork": 46,
+          "effect-top-inspect-many": 82,
+          "phase-order": 2
+        }
+      }
+    },
+    "hybridLoss": {
+      "start": {
+        "n": 914,
+        "legal": 1423,
+        "nodeN": 509,
+        "nodes": 20286,
+        "overNodes": 0,
+        "wall": 20083.600362999983,
+        "over40": 360,
+        "budget": 397,
+        "forced": 405,
+        "deferred": 0,
+        "types": {
+          "extraDraw": 405,
+          "next": 509
+        },
+        "pending": {}
+      },
+      "move": {
+        "n": 628,
+        "legal": 4415,
+        "nodeN": 510,
+        "nodes": 19815,
+        "overNodes": 0,
+        "wall": 21588.725604999978,
+        "over40": 441,
+        "budget": 460,
+        "forced": 118,
+        "deferred": 0,
+        "types": {
+          "next": 509,
+          "move": 113,
+          "step": 6
+        },
+        "pending": {}
+      },
+      "main": {
+        "n": 1358,
+        "legal": 33036,
+        "nodeN": 936,
+        "nodes": 31355,
+        "overNodes": 0,
+        "wall": 38212.39186200008,
+        "over40": 746,
+        "budget": 653,
+        "forced": 422,
+        "deferred": 0,
+        "types": {
+          "next": 509,
+          "play:energy": 564,
+          "raid": 170,
+          "activate": 23,
+          "play:front": 77,
+          "event": 14,
+          "raid:energy": 1
+        },
+        "pending": {}
+      },
+      "battle": {
+        "n": 895,
+        "legal": 1636,
+        "nodeN": 428,
+        "nodes": 13700,
+        "overNodes": 0,
+        "wall": 18169.788516000044,
+        "over40": 420,
+        "budget": 424,
+        "forced": 467,
+        "deferred": 0,
+        "types": {
+          "next": 509,
+          "attack": 386
+        },
+        "pending": {}
+      },
+      "pending": {
+        "n": 2421,
+        "legal": 10156,
+        "nodeN": 1900,
+        "nodes": 59698,
+        "overNodes": 0,
+        "wall": 71524.39860300015,
+        "over40": 1299,
+        "budget": 1342,
+        "forced": 384,
+        "deferred": 137,
+        "types": {
+          "chooseDiscardGate": 44,
+          "chooseTopCard": 39,
+          "chooseHandLimit": 283,
+          "chooseBlock": 783,
+          "chooseLineMove": 44,
+          "chooseLineSlot": 40,
+          "chooseAttackLife": 284,
+          "chooseTrigger": 334,
+          "chooseRestLock": 36,
+          "chooseRestTwo": 20,
+          "chooseSelfFront": 10,
+          "chooseRaidLeave": 4,
+          "chooseTrigger:front": 14,
+          "chooseTrigger:energy": 6,
+          "chooseRetireBp": 10,
+          "chooseTopFilteredMany": 11,
+          "chooseTopOrder": 179,
+          "chooseApRecovery": 7,
+          "chooseLifeOrder": 14,
+          "chooseDiscard": 56,
+          "chooseRestGen": 77,
+          "chooseTopFiltered": 20,
+          "chooseOwnBuff": 36,
+          "chooseOwnBounce": 22,
+          "chooseNamedFronts": 1,
+          "chooseDrawInstead": 1,
+          "chooseInspectedOutside": 24,
+          "chooseMayuriFork": 13,
+          "choosePrintedRestRaid:energy": 7,
+          "choosePrintedRestRaid:front": 2
+        },
+        "pending": {
+          "effect-discard-gate": 44,
+          "private-top-place": 39,
+          "end-hand-limit": 283,
+          "block": 783,
+          "effect-line-move": 44,
+          "effect-line-slot": 40,
+          "attack-life-target": 284,
+          "life-trigger": 354,
+          "effect-rest-lock": 36,
+          "effect-rest-two": 20,
+          "effect-self-front": 10,
+          "effect-raid-leave": 4,
+          "effect-retire-bp": 10,
+          "effect-top-filter-many-choice": 11,
+          "effect-top-order": 179,
+          "effect-recover-ap": 7,
+          "life-batch-order": 14,
+          "effect-discard": 56,
+          "effect-rest-gen": 77,
+          "effect-top-filter-choice": 20,
+          "effect-buff-own": 36,
+          "effect-bounce-own": 22,
+          "effect-named-fronts": 1,
+          "effect-draw-instead": 1,
+          "effect-top-inspect-many": 24,
+          "effect-mayuri-fork": 13,
+          "effect-printed-rest-raid": 9
+        }
+      }
+    },
+    "whiteFirst": {
+      "start": {
+        "n": 329,
+        "legal": 513,
+        "nodeN": 184,
+        "nodes": 7238,
+        "overNodes": 0,
+        "wall": 7195.947999000054,
+        "over40": 126,
+        "budget": 145,
+        "forced": 145,
+        "deferred": 0,
+        "types": {
+          "extraDraw": 145,
+          "next": 184
+        },
+        "pending": {}
+      },
+      "move": {
+        "n": 236,
+        "legal": 1315,
+        "nodeN": 171,
+        "nodes": 6375,
+        "overNodes": 0,
+        "wall": 7105.766657,
+        "over40": 143,
+        "budget": 149,
+        "forced": 65,
+        "deferred": 0,
+        "types": {
+          "next": 184,
+          "move": 52
+        },
+        "pending": {}
+      },
+      "main": {
+        "n": 469,
+        "legal": 8752,
+        "nodeN": 314,
+        "nodes": 10148,
+        "overNodes": 0,
+        "wall": 12912.937255000004,
+        "over40": 256,
+        "budget": 219,
+        "forced": 155,
+        "deferred": 0,
+        "types": {
+          "next": 184,
+          "play:energy": 198,
+          "raid": 53,
+          "activate": 8,
+          "event": 12,
+          "play:front": 14
+        },
+        "pending": {}
+      },
+      "battle": {
+        "n": 320,
+        "legal": 571,
+        "nodeN": 159,
+        "nodes": 4928,
+        "overNodes": 0,
+        "wall": 6783.1604710000165,
+        "over40": 156,
+        "budget": 158,
+        "forced": 161,
+        "deferred": 0,
+        "types": {
+          "next": 176,
+          "attack": 144
+        },
+        "pending": {}
+      },
+      "pending": {
+        "n": 834,
+        "legal": 3635,
+        "nodeN": 667,
+        "nodes": 20117,
+        "overNodes": 0,
+        "wall": 25029.817907999946,
+        "over40": 453,
+        "budget": 460,
+        "forced": 145,
+        "deferred": 22,
+        "types": {
+          "chooseDiscardGate": 29,
+          "chooseTopCard": 28,
+          "chooseHandLimit": 111,
+          "chooseBlock": 255,
+          "chooseLineMove": 33,
+          "chooseLineSlot": 31,
+          "chooseAttackLife": 110,
+          "chooseTrigger": 115,
+          "chooseRestLock": 28,
+          "chooseRestTwo": 16,
+          "chooseSelfFront": 8,
+          "chooseRaidLeave": 4,
+          "chooseTrigger:front": 8,
+          "chooseTrigger:energy": 6,
+          "chooseRetireBp": 9,
+          "chooseTopFilteredMany": 8,
+          "chooseTopOrder": 24,
+          "chooseApRecovery": 5,
+          "chooseLifeOrder": 6
+        },
+        "pending": {
+          "effect-discard-gate": 29,
+          "private-top-place": 28,
+          "end-hand-limit": 111,
+          "block": 255,
+          "effect-line-move": 33,
+          "effect-line-slot": 31,
+          "attack-life-target": 110,
+          "life-trigger": 129,
+          "effect-rest-lock": 28,
+          "effect-rest-two": 16,
+          "effect-self-front": 8,
+          "effect-raid-leave": 4,
+          "effect-retire-bp": 9,
+          "effect-top-filter-many-choice": 8,
+          "effect-top-order": 24,
+          "effect-recover-ap": 5,
+          "life-batch-order": 6
+        }
+      }
+    },
+    "whiteSecond": {
+      "start": {
+        "n": 362,
+        "legal": 556,
+        "nodeN": 194,
+        "nodes": 7264,
+        "overNodes": 0,
+        "wall": 7917.247172000063,
+        "over40": 157,
+        "budget": 171,
+        "forced": 168,
+        "deferred": 0,
+        "types": {
+          "extraDraw": 168,
+          "next": 194
+        },
+        "pending": {}
+      },
+      "move": {
+        "n": 271,
+        "legal": 1696,
+        "nodeN": 226,
+        "nodes": 8355,
+        "overNodes": 0,
+        "wall": 9564.430359000022,
+        "over40": 213,
+        "budget": 219,
+        "forced": 45,
+        "deferred": 0,
+        "types": {
+          "next": 194,
+          "move": 77
+        },
+        "pending": {}
+      },
+      "main": {
+        "n": 540,
+        "legal": 11853,
+        "nodeN": 377,
+        "nodes": 12398,
+        "overNodes": 0,
+        "wall": 16417.55573699993,
+        "over40": 339,
+        "budget": 303,
+        "forced": 163,
+        "deferred": 0,
+        "types": {
+          "next": 194,
+          "play:energy": 239,
+          "raid": 69,
+          "play:front": 22,
+          "activate": 8,
+          "event": 8
+        },
+        "pending": {}
+      },
+      "battle": {
+        "n": 360,
+        "legal": 709,
+        "nodeN": 196,
+        "nodes": 6257,
+        "overNodes": 0,
+        "wall": 8340.05860900005,
+        "over40": 196,
+        "budget": 196,
+        "forced": 164,
+        "deferred": 0,
+        "types": {
+          "next": 182,
+          "attack": 178
+        },
+        "pending": {}
+      },
+      "pending": {
+        "n": 932,
+        "legal": 4251,
+        "nodeN": 743,
+        "nodes": 23017,
+        "overNodes": 0,
+        "wall": 28786.154266999987,
+        "over40": 531,
+        "budget": 546,
+        "forced": 151,
+        "deferred": 38,
+        "types": {
+          "chooseHandLimit": 137,
+          "chooseBlock": 260,
+          "chooseDiscardGate": 37,
+          "chooseTopCard": 33,
+          "chooseLineMove": 41,
+          "chooseLineSlot": 35,
+          "chooseRestLock": 38,
+          "chooseAttackLife": 135,
+          "chooseTrigger": 97,
+          "chooseRestTwo": 16,
+          "chooseSelfFront": 8,
+          "chooseApRecovery": 6,
+          "chooseTopFilteredMany": 14,
+          "chooseTopOrder": 42,
+          "chooseTrigger:front": 8,
+          "chooseTrigger:energy": 4,
+          "chooseOutsideRecovery": 1,
+          "chooseLifeOrder": 10,
+          "chooseRetireBp": 5,
+          "chooseRaidLeave": 5
+        },
+        "pending": {
+          "end-hand-limit": 137,
+          "block": 260,
+          "effect-discard-gate": 37,
+          "private-top-place": 33,
+          "effect-line-move": 41,
+          "effect-line-slot": 35,
+          "effect-rest-lock": 38,
+          "attack-life-target": 135,
+          "life-trigger": 109,
+          "effect-rest-two": 16,
+          "effect-self-front": 8,
+          "effect-recover-ap": 6,
+          "effect-top-filter-many-choice": 14,
+          "effect-top-order": 42,
+          "effect-recover-outside": 1,
+          "life-batch-order": 10,
+          "effect-retire-bp": 5,
+          "effect-raid-leave": 5
+        }
+      }
+    }
+  },
+  "sampleCount": 2353,
+  "shadowCount": 2353,
+  "shadowAgreement": {
+    "main": {
+      "n": 480,
+      "agree": 252,
+      "v3Same": 252,
+      "hardSame": 473
+    },
+    "pending": {
+      "n": 501,
+      "agree": 334,
+      "v3Same": 479,
+      "hardSame": 337
+    },
+    "battle": {
+      "n": 471,
+      "agree": 400,
+      "v3Same": 439,
+      "hardSame": 397
+    },
+    "start": {
+      "n": 479,
+      "agree": 269,
+      "v3Same": 466,
+      "hardSame": 276
+    },
+    "move": {
+      "n": 422,
+      "agree": 315,
+      "v3Same": 403,
+      "hardSame": 313
+    }
+  },
+  "attackSplit": {
+    "n": 471,
+    "hit": 31
+  },
+  "startSplit": {
+    "n": 479,
+    "hit": 210
+  },
+  "moveSplit": {
+    "n": 422,
+    "hit": 102
+  },
+  "pendingSplit": {
+    "n": 501,
+    "hit": 167
+  },
+  "pendingByKind": {
+    "attack-life-target": {
+      "n": 39,
+      "disagree": 5
+    },
+    "block": {
+      "n": 107,
+      "disagree": 18
+    },
+    "end-hand-limit": {
+      "n": 49,
+      "disagree": 30
+    },
+    "effect-line-slot": {
+      "n": 8,
+      "disagree": 2
+    },
+    "effect-discard": {
+      "n": 43,
+      "disagree": 18
+    },
+    "effect-rest-gen": {
+      "n": 18,
+      "disagree": 14
+    },
+    "life-trigger": {
+      "n": 36,
+      "disagree": 6
+    },
+    "effect-buff-own": {
+      "n": 28,
+      "disagree": 23
+    },
+    "effect-top-order": {
+      "n": 60,
+      "disagree": 0
+    },
+    "effect-bounce-own": {
+      "n": 19,
+      "disagree": 5
+    },
+    "effect-discard-gate": {
+      "n": 42,
+      "disagree": 21
+    },
+    "private-top-place": {
+      "n": 11,
+      "disagree": 2
+    },
+    "effect-top-filter-choice": {
+      "n": 14,
+      "disagree": 6
+    },
+    "effect-line-move": {
+      "n": 9,
+      "disagree": 6
+    },
+    "effect-rest-two": {
+      "n": 1,
+      "disagree": 0
+    },
+    "effect-rest-lock": {
+      "n": 4,
+      "disagree": 3
+    },
+    "effect-top-filter-many-choice": {
+      "n": 2,
+      "disagree": 1
+    },
+    "effect-top-inspect-many": {
+      "n": 5,
+      "disagree": 4
+    },
+    "effect-recover-ap": {
+      "n": 2,
+      "disagree": 0
+    },
+    "effect-raid-leave": {
+      "n": 1,
+      "disagree": 1
+    },
+    "effect-printed-rest-raid": {
+      "n": 1,
+      "disagree": 1
+    },
+    "life-batch-order": {
+      "n": 1,
+      "disagree": 0
+    },
+    "effect-mayuri-fork": {
+      "n": 1,
+      "disagree": 1
+    }
+  },
+  "blockSample": {
+    "n": 107,
+    "agree": 89,
+    "originalPass": 91,
+    "v3Pass": 88,
+    "hardPass": 92,
+    "hardBlocksAnOriginalPass": 7
+  },
+  "lethalMarks": {
+    "n": 21,
+    "v3ScoreMinus90000": 20,
+    "hardBlocks": 6,
+    "v3Blocks": 3,
+    "note": "The -90000 score is AI v3 terminalValue for an unfinished own-life-0 line. hard-search-2 uses its own scores and does not emit -100000 on these passes. Both policies pass most of these marks, so the shared action is not fixed by routing pending to hard. The numeric gap itself is v3."
+  },
+  "examples": [
+    {
+      "shadow": true,
+      "notOriginal": true,
+      "stateId": "008b03b5a87b3ed71a0deef0f87a404d8875a19fe6f2c1ba4bc2ec659b6774a9",
+      "title": "steins-gate-raid",
+      "seed": 9043,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "lane": "start",
+      "pending": null,
+      "step": 6,
+      "anomaly": false,
+      "original": {
+        "type": "extraDraw",
+        "line": null,
+        "mode": null,
+        "hidden": false
+      },
+      "originalSource": "v3",
+      "v3": {
+        "type": "extraDraw",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "score": -17.3,
+        "nodesUsed": 47,
+        "wallMs": 41.2,
+        "reason": "budget"
+      },
+      "hard": {
+        "type": "next",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "score": 0.9,
+        "nodesUsed": 11,
+        "wallMs": 8.5,
+        "reason": "search"
+      },
+      "v3Same": true,
+      "hardSame": false,
+      "agree": false
+    },
+    {
+      "shadow": true,
+      "notOriginal": true,
+      "stateId": "00c134ad7570344d3eedaa2a94c507e2bb74769af0d2b002c7e34520c62de4c2",
+      "title": "steins-gate-raid",
+      "seed": 9039,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "lane": "move",
+      "pending": null,
+      "step": 139,
+      "anomaly": false,
+      "original": {
+        "type": "next",
+        "line": null,
+        "mode": null,
+        "hidden": false
+      },
+      "originalSource": "v3",
+      "v3": {
+        "type": "next",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "score": -77.7,
+        "nodesUsed": 26,
+        "wallMs": 45,
+        "reason": "budget"
+      },
+      "hard": {
+        "type": "move",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "bp": 2500,
+        "cost": 1,
+        "gen": 1,
+        "color": "blue",
+        "cardType": "character",
+        "score": -31.2,
+        "nodesUsed": 30,
+        "wallMs": 40.9,
+        "reason": "budget"
+      },
+      "v3Same": true,
+      "hardSame": false,
+      "agree": false
+    },
+    {
+      "shadow": true,
+      "notOriginal": true,
+      "stateId": "03eef1ed72750a64bba930e4afec486c53b926f6cca46e6433052a644cee248a",
+      "title": "sword-art-online-raid",
+      "seed": 9033,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "lane": "battle",
+      "pending": null,
+      "step": 58,
+      "anomaly": false,
+      "original": {
+        "type": "attack",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "bp": 3000,
+        "cost": 2,
+        "gen": 1,
+        "color": "yellow",
+        "cardType": "character"
+      },
+      "originalSource": "v3",
+      "v3": {
+        "type": "attack",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "bp": 3000,
+        "cost": 2,
+        "gen": 1,
+        "color": "yellow",
+        "cardType": "character",
+        "score": 34.2,
+        "nodesUsed": 20,
+        "wallMs": 41,
+        "reason": "budget"
+      },
+      "hard": {
+        "type": "next",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "score": 57,
+        "nodesUsed": 18,
+        "wallMs": 22.1,
+        "reason": "search"
+      },
+      "v3Same": true,
+      "hardSame": false,
+      "agree": false
+    },
+    {
+      "shadow": true,
+      "notOriginal": true,
+      "stateId": "0a7003f1a44996e586e859f4c565f60dae22fcda4d878140fc0a562e9cd65fb8",
+      "title": "white-sword",
+      "seed": 9010,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "lane": "pending",
+      "pending": "block",
+      "step": 220,
+      "anomaly": true,
+      "original": {
+        "type": "chooseBlock",
+        "line": null,
+        "mode": null,
+        "hidden": false
+      },
+      "originalSource": "v3",
+      "v3": {
+        "type": "chooseBlock",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "score": -90000,
+        "nodesUsed": 29,
+        "wallMs": 33.2,
+        "reason": "search"
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "bp": 4000,
+        "cost": 4,
+        "gen": 1,
+        "color": "green",
+        "cardType": "character",
+        "score": -49.3,
+        "nodesUsed": 9,
+        "wallMs": 10.5,
+        "reason": "search"
+      },
+      "v3Same": true,
+      "hardSame": false,
+      "agree": false
+    },
+    {
+      "shadow": true,
+      "notOriginal": true,
+      "stateId": "00029316666753756132f7e0ceb75ba30b308fc06c71e6cdac693582eaa08931",
+      "title": "white-sword",
+      "seed": 9011,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "lane": "main",
+      "pending": null,
+      "step": 52,
+      "anomaly": false,
+      "original": {
+        "type": "play",
+        "line": "energy",
+        "mode": null,
+        "hidden": false,
+        "bp": 2000,
+        "cost": 3,
+        "gen": 2,
+        "color": "green",
+        "cardType": "character"
+      },
+      "originalSource": "hard",
+      "v3": {
+        "type": "event",
+        "line": null,
+        "mode": null,
+        "hidden": false,
+        "bp": 0,
+        "cost": 3,
+        "gen": 0,
+        "color": "green",
+        "cardType": "event",
+        "score": null,
+        "nodesUsed": 4,
+        "wallMs": 48,
+        "reason": "budget-fallback"
+      },
+      "hard": {
+        "type": "play",
+        "line": "energy",
+        "mode": null,
+        "hidden": false,
+        "bp": 2000,
+        "cost": 3,
+        "gen": 2,
+        "color": "green",
+        "cardType": "character",
+        "score": 189,
+        "nodesUsed": 16,
+        "wallMs": 44.9,
+        "reason": "budget"
+      },
+      "v3Same": false,
+      "hardSame": true,
+      "agree": false
+    }
+  ],
+  "counterfactual": [
+    {
+      "label": "counterfactual",
+      "notARecordedResult": true,
+      "lane": "battle",
+      "title": "white-sword",
+      "seed": 9011,
+      "step": 98,
+      "stateId": "0d9dbf06fc4aac2a18e7570b1fab9248408ee0ca8f4c33276be1c2bf932f3274",
+      "forced": "hard",
+      "originalLife": [
+        2,
+        5
+      ],
+      "alternateLife": [
+        2,
+        5
+      ],
+      "ownLifeDelta": 0,
+      "originalStatus": "playing",
+      "alternateStatus": "playing",
+      "window": 16
+    },
+    {
+      "lane": "battle",
+      "stateId": "1c68df228dc3d10ba651282c52c6b879d6993957432e0fab13f90d48ba97eaf6",
+      "skipped": "forced action not rematched"
+    },
+    {
+      "label": "counterfactual",
+      "notARecordedResult": true,
+      "lane": "pending",
+      "title": "white-sword",
+      "seed": 9010,
+      "step": 220,
+      "stateId": "0a7003f1a44996e586e859f4c565f60dae22fcda4d878140fc0a562e9cd65fb8",
+      "forced": "hard",
+      "originalLife": [
+        1,
+        0
+      ],
+      "alternateLife": [
+        1,
+        0
+      ],
+      "ownLifeDelta": 0,
+      "originalStatus": "finished",
+      "alternateStatus": "finished",
+      "window": 16
+    },
+    {
+      "label": "counterfactual",
+      "notARecordedResult": true,
+      "lane": "pending",
+      "title": "white-sword",
+      "seed": 9013,
+      "step": 160,
+      "stateId": "3e1f5f0d96215b985a93569210755f5c23eef399b1d0eba788e5f2e85c5cea87",
+      "forced": "hard",
+      "originalLife": [
+        0,
+        2
+      ],
+      "alternateLife": [
+        0,
+        2
+      ],
+      "ownLifeDelta": 0,
+      "originalStatus": "finished",
+      "alternateStatus": "finished",
+      "window": 16
+    },
+    {
+      "label": "counterfactual",
+      "notARecordedResult": true,
+      "lane": "start",
+      "title": "white-sword",
+      "seed": 9023,
+      "step": 27,
+      "stateId": "2e084d0122f06d729de4bed8e03aca0ea7d36c1a225433127359f61f47c3a177",
+      "forced": "hard",
+      "originalLife": [
+        7,
+        5
+      ],
+      "alternateLife": [
+        7,
+        5
+      ],
+      "ownLifeDelta": 0,
+      "originalStatus": "playing",
+      "alternateStatus": "playing",
+      "window": 16
+    },
+    {
+      "label": "counterfactual",
+      "notARecordedResult": true,
+      "lane": "start",
+      "title": "sword-art-online-raid",
+      "seed": 9025,
+      "step": 28,
+      "stateId": "e9fe8d396f8e1d6230b168a18309a9ce26a6a99bfd7d5ae808c19d70ab49bcdb",
+      "forced": "hard",
+      "originalLife": [
+        7,
+        7
+      ],
+      "alternateLife": [
+        7,
+        7
+      ],
+      "ownLifeDelta": 0,
+      "originalStatus": "playing",
+      "alternateStatus": "playing",
+      "window": 16
+    },
+    {
+      "label": "counterfactual",
+      "notARecordedResult": true,
+      "lane": "move",
+      "title": "white-sword",
+      "seed": 9019,
+      "step": 180,
+      "stateId": "4ad3760e401563367b0ad483f4a2351a01ba845d1f22ccdc57189b91ac3649c6",
+      "forced": "hard",
+      "originalLife": [
+        0,
+        2
+      ],
+      "alternateLife": [
+        0,
+        2
+      ],
+      "ownLifeDelta": 0,
+      "originalStatus": "finished",
+      "alternateStatus": "finished",
+      "window": 16
+    },
+    {
+      "label": "counterfactual",
+      "notARecordedResult": true,
+      "lane": "move",
+      "title": "white-sword",
+      "seed": 9011,
+      "step": 100,
+      "stateId": "fdda6abdd9e746e47767df21703e1652d10ad7cc69d9d7e280904ee53d57bcbc",
+      "forced": "hard",
+      "originalLife": [
+        0,
+        7
+      ],
+      "alternateLife": [
+        0,
+        7
+      ],
+      "ownLifeDelta": 0,
+      "originalStatus": "finished",
+      "alternateStatus": "finished",
+      "window": 16
+    },
+    {
+      "lane": "main",
+      "stateId": "57897548881e3f545b3418e308c0ab2e33c14d768135e26c418f9dd7da05e6d5",
+      "skipped": "forced action not rematched"
+    },
+    {
+      "lane": "main",
+      "stateId": "0bc002c8431139eb37a6435bb00f914bcd0f7b48baa4dd24d87cc0223446b758",
+      "skipped": "forced action not rematched"
+    }
+  ],
+  "recommendation": {
+    "selected": null,
+    "evaluated": [
+      {
+        "id": "A",
+        "sample": 471,
+        "disagreement": 0.15074309978768577,
+        "eachLaneAtLeast40": true,
+        "benefitWindows": 1,
+        "lifeUp": 0,
+        "lifeDown": 0,
+        "benefit": false
+      },
+      {
+        "id": "B",
+        "sample": 501,
+        "disagreement": 0.3333333333333333,
+        "eachLaneAtLeast40": true,
+        "benefitWindows": 2,
+        "lifeUp": 0,
+        "lifeDown": 0,
+        "benefit": false
+      },
+      {
+        "id": "C",
+        "sample": 901,
+        "disagreement": 0.3518312985571587,
+        "eachLaneAtLeast40": true,
+        "benefitWindows": 4,
+        "lifeUp": 0,
+        "lifeDown": 0,
+        "benefit": false
+      }
+    ],
+    "qualified": []
+  },
+  "doesNotReplace": "audit/ai-v3-hybrid-vs-hard-9050-summary.json",
+  "localSnapshotsCommitted": false
+}

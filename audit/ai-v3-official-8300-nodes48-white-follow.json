@@ -1,0 +1,1034 @@
+{
+  "policy": "ai-v3-beam-1",
+  "baseline": "baseline",
+  "hard": "hard-search-2",
+  "seed0": 8300,
+  "games": [
+    {
+      "seed": 8300,
+      "first": 0,
+      "challengerSeat": 0,
+      "challengerIsFirst": true,
+      "steps": 166,
+      "illegal": 0,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        5
+      ],
+      "engineError": null,
+      "onlyNext": 21,
+      "voluntaryNext": 7,
+      "passedDevelopment": 6,
+      "autonomous": 55,
+      "challengerWon": false,
+      "nodes": 2326,
+      "settledChoices": 15,
+      "decisionsLearned": 80,
+      "decisionReasons": {
+        "search": 38,
+        "forced": 25,
+        "budget": 17
+      },
+      "acts": {
+        "next": 28,
+        "play-energy": 8,
+        "extraDraw": 6,
+        "chooseDiscardGate": 3,
+        "chooseTopCard": 3,
+        "play-front": 3,
+        "block-pass": 8,
+        "chooseTrigger": 6,
+        "attack": 3,
+        "chooseHandLimit": 3,
+        "block": 4,
+        "chooseAttackLife": 2,
+        "move": 1,
+        "raid": 1,
+        "chooseRestLock": 1
+      },
+      "replay": true,
+      "budgetFallback": 17,
+      "actionCount": 166,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 166,
+      "baselineLife": [
+        0,
+        5
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 13,
+          "actor": 0,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 13,
+          "actor": 0,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8300,
+      "first": 0,
+      "challengerSeat": 1,
+      "challengerIsFirst": false,
+      "steps": 251,
+      "illegal": 0,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "life": [
+        2,
+        0
+      ],
+      "engineError": null,
+      "onlyNext": 27,
+      "voluntaryNext": 13,
+      "passedDevelopment": 12,
+      "autonomous": 96,
+      "challengerWon": false,
+      "nodes": 4291,
+      "settledChoices": 19,
+      "decisionsLearned": 131,
+      "decisionReasons": {
+        "search": 80,
+        "forced": 35,
+        "budget": 16
+      },
+      "acts": {
+        "extraDraw": 9,
+        "next": 40,
+        "play-energy": 14,
+        "chooseDiscardGate": 2,
+        "chooseTopCard": 2,
+        "chooseHandLimit": 5,
+        "move": 7,
+        "attack": 8,
+        "block": 12,
+        "chooseAttackLife": 5,
+        "play-front": 4,
+        "raid": 1,
+        "chooseLineMove": 2,
+        "chooseLineSlot": 2,
+        "activate": 1,
+        "chooseRestTwo": 2,
+        "chooseSelfFront": 1,
+        "block-pass": 7,
+        "chooseTrigger": 6,
+        "chooseRaidLeave": 1
+      },
+      "replay": true,
+      "budgetFallback": 16,
+      "actionCount": 251,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 176,
+      "baselineLife": [
+        2,
+        0
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 25,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 25,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8300,
+      "first": 1,
+      "challengerSeat": 0,
+      "challengerIsFirst": false,
+      "steps": 204,
+      "illegal": 0,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        2
+      ],
+      "engineError": null,
+      "onlyNext": 24,
+      "voluntaryNext": 8,
+      "passedDevelopment": 8,
+      "autonomous": 72,
+      "challengerWon": false,
+      "nodes": 3119,
+      "settledChoices": 17,
+      "decisionsLearned": 99,
+      "decisionReasons": {
+        "budget": 13,
+        "forced": 27,
+        "search": 59
+      },
+      "acts": {
+        "extraDraw": 8,
+        "next": 32,
+        "play-energy": 9,
+        "chooseHandLimit": 4,
+        "block-pass": 8,
+        "chooseTrigger": 6,
+        "move": 2,
+        "chooseDiscardGate": 1,
+        "chooseTopCard": 1,
+        "attack": 9,
+        "chooseLineMove": 1,
+        "chooseLineSlot": 1,
+        "raid": 2,
+        "chooseRestLock": 2,
+        "chooseAttackLife": 5,
+        "block": 5,
+        "play-front": 3
+      },
+      "replay": true,
+      "budgetFallback": 13,
+      "actionCount": 204,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 217,
+      "baselineLife": [
+        0,
+        6
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 42,
+          "actor": 0,
+          "type": "play",
+          "uid": "0-19",
+          "line": "energy",
+          "slot": 1,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        },
+        "baseline": {
+          "step": 42,
+          "actor": 0,
+          "type": "play",
+          "uid": "0-10",
+          "line": "energy",
+          "slot": 1,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8300,
+      "first": 1,
+      "challengerSeat": 1,
+      "challengerIsFirst": true,
+      "steps": 165,
+      "illegal": 0,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "life": [
+        3,
+        0
+      ],
+      "engineError": null,
+      "onlyNext": 20,
+      "voluntaryNext": 8,
+      "passedDevelopment": 7,
+      "autonomous": 55,
+      "challengerWon": false,
+      "nodes": 2428,
+      "settledChoices": 12,
+      "decisionsLearned": 82,
+      "decisionReasons": {
+        "search": 41,
+        "forced": 27,
+        "budget": 14
+      },
+      "acts": {
+        "next": 28,
+        "play-energy": 8,
+        "extraDraw": 6,
+        "move": 3,
+        "chooseDiscardGate": 2,
+        "chooseTopCard": 2,
+        "attack": 4,
+        "chooseAttackLife": 4,
+        "block": 5,
+        "block-pass": 7,
+        "chooseTrigger": 6,
+        "raid": 3,
+        "chooseRestLock": 2,
+        "chooseHandLimit": 1,
+        "play-front": 1
+      },
+      "replay": true,
+      "budgetFallback": 14,
+      "actionCount": 165,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 174,
+      "baselineLife": [
+        1,
+        0
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 15,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 15,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8301,
+      "first": 0,
+      "challengerSeat": 0,
+      "challengerIsFirst": true,
+      "steps": 183,
+      "illegal": 0,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        6
+      ],
+      "engineError": null,
+      "onlyNext": 22,
+      "voluntaryNext": 10,
+      "passedDevelopment": 9,
+      "autonomous": 61,
+      "challengerWon": false,
+      "nodes": 2597,
+      "settledChoices": 12,
+      "decisionsLearned": 88,
+      "decisionReasons": {
+        "search": 49,
+        "forced": 27,
+        "budget": 12
+      },
+      "acts": {
+        "next": 32,
+        "play-energy": 7,
+        "extraDraw": 7,
+        "play-front": 3,
+        "block": 2,
+        "chooseDiscardGate": 2,
+        "chooseTopCard": 2,
+        "move": 1,
+        "attack": 5,
+        "block-pass": 8,
+        "chooseTrigger": 7,
+        "chooseHandLimit": 7,
+        "raid": 2,
+        "chooseRestLock": 2,
+        "chooseAttackLife": 1
+      },
+      "replay": true,
+      "budgetFallback": 12,
+      "actionCount": 183,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 161,
+      "baselineLife": [
+        0,
+        5
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 14,
+          "actor": 0,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 14,
+          "actor": 0,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8301,
+      "first": 0,
+      "challengerSeat": 1,
+      "challengerIsFirst": false,
+      "steps": 150,
+      "illegal": 0,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "life": [
+        3,
+        0
+      ],
+      "engineError": null,
+      "onlyNext": 18,
+      "voluntaryNext": 6,
+      "passedDevelopment": 5,
+      "autonomous": 53,
+      "challengerWon": false,
+      "nodes": 2291,
+      "settledChoices": 13,
+      "decisionsLearned": 73,
+      "decisionReasons": {
+        "search": 43,
+        "forced": 20,
+        "budget": 10
+      },
+      "acts": {
+        "extraDraw": 5,
+        "next": 24,
+        "play-energy": 8,
+        "chooseDiscardGate": 1,
+        "chooseTopCard": 1,
+        "play-front": 2,
+        "chooseHandLimit": 4,
+        "block": 2,
+        "block-pass": 7,
+        "chooseTrigger": 7,
+        "attack": 5,
+        "chooseAttackLife": 3,
+        "move": 1,
+        "raid": 1,
+        "chooseLineMove": 1,
+        "chooseLineSlot": 1
+      },
+      "replay": true,
+      "budgetFallback": 10,
+      "actionCount": 150,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 167,
+      "baselineLife": [
+        5,
+        0
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 25,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 25,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8301,
+      "first": 1,
+      "challengerSeat": 0,
+      "challengerIsFirst": false,
+      "steps": 232,
+      "illegal": 0,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        3
+      ],
+      "engineError": null,
+      "onlyNext": 23,
+      "voluntaryNext": 13,
+      "passedDevelopment": 11,
+      "autonomous": 83,
+      "challengerWon": false,
+      "nodes": 3663,
+      "settledChoices": 18,
+      "decisionsLearned": 109,
+      "decisionReasons": {
+        "budget": 11,
+        "forced": 26,
+        "search": 72
+      },
+      "acts": {
+        "extraDraw": 7,
+        "next": 36,
+        "play-energy": 9,
+        "play-front": 5,
+        "chooseDiscardGate": 3,
+        "chooseTopCard": 3,
+        "chooseHandLimit": 3,
+        "attack": 8,
+        "block": 9,
+        "move": 4,
+        "raid": 2,
+        "block-pass": 7,
+        "chooseTrigger": 7,
+        "chooseRestLock": 1,
+        "chooseAttackLife": 4,
+        "chooseRaidLeave": 1
+      },
+      "replay": true,
+      "budgetFallback": 11,
+      "actionCount": 232,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 211,
+      "baselineLife": [
+        0,
+        5
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 60,
+          "actor": 0,
+          "type": "play",
+          "uid": "0-22",
+          "line": "energy",
+          "slot": 2,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        },
+        "baseline": {
+          "step": 60,
+          "actor": 0,
+          "type": "play",
+          "uid": "0-10",
+          "line": "energy",
+          "slot": 2,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8301,
+      "first": 1,
+      "challengerSeat": 1,
+      "challengerIsFirst": true,
+      "steps": 218,
+      "illegal": 0,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        2
+      ],
+      "engineError": null,
+      "onlyNext": 25,
+      "voluntaryNext": 14,
+      "passedDevelopment": 12,
+      "autonomous": 86,
+      "challengerWon": true,
+      "nodes": 3944,
+      "settledChoices": 13,
+      "decisionsLearned": 116,
+      "decisionReasons": {
+        "search": 77,
+        "forced": 30,
+        "budget": 9
+      },
+      "acts": {
+        "next": 39,
+        "play-energy": 13,
+        "chooseDiscardGate": 1,
+        "chooseTopCard": 1,
+        "extraDraw": 8,
+        "play-front": 5,
+        "attack": 13,
+        "block": 8,
+        "block-pass": 4,
+        "chooseTrigger": 4,
+        "move": 8,
+        "chooseAttackLife": 8,
+        "chooseHandLimit": 2,
+        "chooseLineMove": 1,
+        "chooseLineSlot": 1
+      },
+      "replay": true,
+      "budgetFallback": 9,
+      "actionCount": 218,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 214,
+      "baselineLife": [
+        1,
+        0
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 31,
+          "actor": 1,
+          "type": "play",
+          "uid": "1-22",
+          "line": "energy",
+          "slot": 1,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        },
+        "baseline": {
+          "step": 31,
+          "actor": 1,
+          "type": "play",
+          "uid": "1-22",
+          "line": "front",
+          "slot": 1,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8302,
+      "first": 0,
+      "challengerSeat": 0,
+      "challengerIsFirst": true,
+      "steps": 221,
+      "illegal": 0,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        3
+      ],
+      "engineError": null,
+      "onlyNext": 26,
+      "voluntaryNext": 10,
+      "passedDevelopment": 9,
+      "autonomous": 71,
+      "challengerWon": false,
+      "nodes": 3148,
+      "settledChoices": 16,
+      "decisionsLearned": 106,
+      "decisionReasons": {
+        "search": 59,
+        "forced": 35,
+        "budget": 12
+      },
+      "acts": {
+        "next": 36,
+        "play-energy": 11,
+        "chooseDiscardGate": 3,
+        "chooseTopCard": 3,
+        "extraDraw": 8,
+        "block-pass": 7,
+        "chooseTrigger": 6,
+        "move": 6,
+        "attack": 7,
+        "block": 7,
+        "play-front": 3,
+        "raid": 1,
+        "chooseRestLock": 1,
+        "chooseAttackLife": 4,
+        "chooseHandLimit": 3
+      },
+      "replay": true,
+      "budgetFallback": 12,
+      "actionCount": 221,
+      "comparedTo": "f89f9016",
+      "baselineWon": true,
+      "baselineSteps": 259,
+      "baselineLife": [
+        4,
+        0
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 36,
+          "actor": 0,
+          "type": "play",
+          "uid": "0-22",
+          "line": "energy",
+          "slot": 1,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        },
+        "baseline": {
+          "step": 36,
+          "actor": 0,
+          "type": "play",
+          "uid": "0-22",
+          "line": "front",
+          "slot": 1,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8302,
+      "first": 0,
+      "challengerSeat": 1,
+      "challengerIsFirst": false,
+      "steps": 120,
+      "illegal": 0,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "life": [
+        7,
+        0
+      ],
+      "engineError": null,
+      "onlyNext": 14,
+      "voluntaryNext": 6,
+      "passedDevelopment": 6,
+      "autonomous": 38,
+      "challengerWon": false,
+      "nodes": 1602,
+      "settledChoices": 6,
+      "decisionsLearned": 57,
+      "decisionReasons": {
+        "budget": 6,
+        "forced": 19,
+        "search": 31,
+        "deferred-baseline": 1
+      },
+      "acts": {
+        "extraDraw": 5,
+        "next": 20,
+        "play-energy": 7,
+        "chooseDiscardGate": 2,
+        "chooseHandLimit": 6,
+        "block-pass": 5,
+        "chooseTrigger": 5,
+        "chooseLifeOrder": 1,
+        "move": 2,
+        "attack": 1,
+        "block": 2,
+        "chooseTopCard": 1
+      },
+      "replay": true,
+      "budgetFallback": 6,
+      "actionCount": 120,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 120,
+      "baselineLife": [
+        7,
+        0
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 23,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 23,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8302,
+      "first": 1,
+      "challengerSeat": 0,
+      "challengerIsFirst": false,
+      "steps": 210,
+      "illegal": 0,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        3
+      ],
+      "engineError": null,
+      "onlyNext": 24,
+      "voluntaryNext": 8,
+      "passedDevelopment": 8,
+      "autonomous": 69,
+      "challengerWon": false,
+      "nodes": 3129,
+      "settledChoices": 9,
+      "decisionsLearned": 98,
+      "decisionReasons": {
+        "budget": 12,
+        "forced": 29,
+        "search": 57
+      },
+      "acts": {
+        "extraDraw": 8,
+        "next": 32,
+        "play-energy": 12,
+        "chooseDiscardGate": 2,
+        "chooseHandLimit": 8,
+        "block-pass": 6,
+        "move": 6,
+        "attack": 7,
+        "block": 7,
+        "chooseAttackLife": 4,
+        "chooseTrigger": 3,
+        "raid": 1,
+        "chooseRestLock": 1,
+        "chooseTopCard": 1
+      },
+      "replay": true,
+      "budgetFallback": 12,
+      "actionCount": 210,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 212,
+      "baselineLife": [
+        0,
+        3
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 21,
+          "actor": 0,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 21,
+          "actor": 0,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    },
+    {
+      "seed": 8302,
+      "first": 1,
+      "challengerSeat": 1,
+      "challengerIsFirst": true,
+      "steps": 147,
+      "illegal": 0,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "life": [
+        6,
+        0
+      ],
+      "engineError": null,
+      "onlyNext": 19,
+      "voluntaryNext": 9,
+      "passedDevelopment": 8,
+      "autonomous": 45,
+      "challengerWon": false,
+      "nodes": 1995,
+      "settledChoices": 10,
+      "decisionsLearned": 70,
+      "decisionReasons": {
+        "search": 38,
+        "forced": 25,
+        "budget": 7
+      },
+      "acts": {
+        "next": 28,
+        "play-energy": 6,
+        "chooseDiscardGate": 1,
+        "chooseTopCard": 1,
+        "extraDraw": 6,
+        "move": 2,
+        "play-front": 2,
+        "attack": 3,
+        "chooseAttackLife": 1,
+        "block": 3,
+        "chooseHandLimit": 5,
+        "block-pass": 7,
+        "chooseTrigger": 5
+      },
+      "replay": true,
+      "budgetFallback": 7,
+      "actionCount": 147,
+      "comparedTo": "f89f9016",
+      "baselineWon": false,
+      "baselineSteps": 178,
+      "baselineLife": [
+        2,
+        0
+      ],
+      "firstDivergence": {
+        "now": {
+          "step": 18,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "budget-fallback"
+        },
+        "baseline": {
+          "step": 18,
+          "actor": 1,
+          "type": "next",
+          "uid": null,
+          "line": null,
+          "slot": null,
+          "baseUid": null,
+          "mode": null,
+          "nodesUsed": 48,
+          "reason": "search"
+        }
+      }
+    }
+  ],
+  "modes": [
+    "tree"
+  ],
+  "pool": "battle",
+  "hardNodes": 0,
+  "budget": {
+    "ms": 1000000000,
+    "nodes": 48
+  },
+  "rules": {
+    "name": "official",
+    "openingMulligan": true,
+    "attackerChoosesLife": true,
+    "opening": "shared-hard-mulligan",
+    "legacyThrough": "88ee9db6",
+    "note": "Tables through 88ee9db6 dealt seven LIFE cards immediately and did not mulligan. Those win/loss rows are a different rules setting."
+  },
+  "comparedTo": "f89f9016",
+  "result": {
+    "wins": 1,
+    "losses": 11,
+    "baseline": "1-11",
+    "unchanged": true
+  },
+  "replay": {
+    "replayed": 12,
+    "replayFailed": 0
+  },
+  "metrics": {
+    "decisions": 1109,
+    "search": 644,
+    "forced": 325,
+    "budgetFallback": 139,
+    "nodes": 34533,
+    "settledLineRate": 0.1442741208295762,
+    "illegal": 0,
+    "finished": 12
+  }
+}

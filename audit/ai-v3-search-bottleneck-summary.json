@@ -1,0 +1,858 @@
+{
+  "base": "ef3377aa437147071f3212cceb4456e6b78ae2e7",
+  "source": "audit/ai-v3-hold-info-8401-baseline.json",
+  "losses": 22,
+  "wins": 2,
+  "scanned": 1267,
+  "snapshots": 13,
+  "illegal": 0,
+  "replayMismatches": 0,
+  "dispatchMismatches": 0,
+  "population": {
+    "none": 271,
+    "rewrite": 135,
+    "depth": 845,
+    "coverage": 8,
+    "score": 8
+  },
+  "populationFlags": {
+    "rewrite": 135,
+    "rewriteBy": {
+      "energy-keep move/ -> next/": 69,
+      "early-draw next/ -> extraDraw/": 38,
+      "generator play/front -> play/energy": 21,
+      "line-switch play/energy -> play/energy": 3,
+      "ready-front activate/ -> next/": 1,
+      "early-draw extraDraw/ -> next/": 1,
+      "line-switch play/front -> play/energy": 1,
+      "energy-keep move/ -> move/": 1
+    },
+    "finishedSameBoundary": 10,
+    "finishedSameBoundaryWithoutRewrite": 8,
+    "categoryAbsent": 8,
+    "absentBy": {
+      "energy": 8
+    },
+    "cardGroupsLeftOut": 278,
+    "budgetFallback": 250,
+    "unequalBoundaries": 426,
+    "cutShort": 720,
+    "spentWithoutScore": 250,
+    "developingUnexecuted": 0
+  },
+  "selected": [
+    {
+      "id": "steins-gate-raid|8401|0|1",
+      "step": 20,
+      "why": "rewrite-generator",
+      "phase": "main",
+      "pending": null,
+      "internal": "rewrite",
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "unchanged",
+        "n768": "depth"
+      },
+      "action": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-20",
+        "mode": null,
+        "slot": 1
+      },
+      "hard": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-32",
+        "mode": null,
+        "slot": 1
+      }
+    },
+    {
+      "id": "white-sword|8401|1|0",
+      "step": 5,
+      "why": "rewrite-early-draw",
+      "phase": "start",
+      "pending": null,
+      "internal": "rewrite",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "extraDraw",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "extraDraw",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "sword-art-online-raid|8401|0|0",
+      "step": 14,
+      "why": "rewrite-energy-keep",
+      "phase": "move",
+      "pending": null,
+      "internal": "rewrite",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "steins-gate-raid|8402|0|1",
+      "step": 66,
+      "why": "score-finished",
+      "phase": "attack",
+      "pending": "block",
+      "internal": "score",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "chooseBlock",
+        "line": null,
+        "uid": "1-42",
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "sword-art-online-raid|8401|0|1",
+      "step": 67,
+      "why": "coverage-energy",
+      "phase": "main",
+      "pending": null,
+      "internal": "coverage",
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "depth",
+        "n768": "depth"
+      },
+      "action": {
+        "type": "raid",
+        "line": null,
+        "uid": "1-13",
+        "mode": null,
+        "slot": 0
+      },
+      "hard": {
+        "type": "raid",
+        "line": null,
+        "uid": "1-15",
+        "mode": null,
+        "slot": 0
+      }
+    },
+    {
+      "id": "white-sword|8402|1|1",
+      "step": 33,
+      "why": "depth-raid",
+      "phase": "main",
+      "pending": null,
+      "internal": "depth",
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "unchanged",
+        "n768": "depth"
+      },
+      "action": {
+        "type": "play",
+        "line": "front",
+        "uid": "1-37",
+        "mode": null,
+        "slot": 0
+      },
+      "hard": {
+        "type": "raid",
+        "line": null,
+        "uid": "1-39",
+        "mode": null,
+        "slot": 0
+      }
+    },
+    {
+      "id": "white-sword|8402|1|0",
+      "step": 8,
+      "why": "depth-cut",
+      "phase": "main",
+      "pending": null,
+      "internal": "depth",
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "unchanged",
+        "n768": "depth"
+      },
+      "action": {
+        "type": "play",
+        "line": "energy",
+        "uid": "0-33",
+        "mode": null,
+        "slot": 0
+      },
+      "hard": {
+        "type": "play",
+        "line": "energy",
+        "uid": "0-10",
+        "mode": null,
+        "slot": 0
+      }
+    },
+    {
+      "id": "steins-gate-raid|8401|1|0",
+      "step": 19,
+      "why": "unscored",
+      "phase": "move",
+      "pending": null,
+      "internal": "depth",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "sword-art-online-raid|8401|1|0",
+      "step": 18,
+      "why": "budget",
+      "phase": "start",
+      "pending": null,
+      "internal": "rewrite",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "extraDraw",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "white-sword|8401|0|1",
+      "step": 5,
+      "why": "start-draw",
+      "phase": "start",
+      "pending": null,
+      "internal": "none",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "extraDraw",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "sword-art-online-raid|8402|0|0",
+      "step": 13,
+      "why": "move",
+      "phase": "move",
+      "pending": null,
+      "internal": "depth",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "next",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "steins-gate-raid|8402|1|0",
+      "step": 24,
+      "why": "attack",
+      "phase": "attack",
+      "pending": null,
+      "internal": "none",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "attack",
+        "line": null,
+        "uid": "0-47",
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "attack",
+        "line": null,
+        "uid": "0-47",
+        "mode": null,
+        "slot": null
+      }
+    },
+    {
+      "id": "steins-gate-raid|8402|1|0",
+      "step": 40,
+      "why": "block",
+      "phase": "attack",
+      "pending": "block",
+      "internal": "depth",
+      "deeper": {
+        "n192": "unchanged",
+        "n192d4": "unchanged",
+        "ms40": "unchanged"
+      },
+      "action": {
+        "type": "chooseBlock",
+        "line": null,
+        "uid": "0-47",
+        "mode": null,
+        "slot": null
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "line": null,
+        "uid": null,
+        "mode": null,
+        "slot": null
+      }
+    }
+  ],
+  "changedAtHigherBudget": [
+    {
+      "id": "steins-gate-raid|8401|0|1",
+      "step": 20,
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "unchanged",
+        "n768": "depth"
+      },
+      "from": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-20",
+        "mode": null,
+        "slot": 1
+      },
+      "n192": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-32",
+        "mode": null,
+        "slot": 1
+      },
+      "n192d4": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-32",
+        "mode": null,
+        "slot": 1
+      },
+      "n768": {
+        "type": "play",
+        "line": "energy",
+        "uid": "1-32",
+        "mode": null,
+        "slot": 1
+      }
+    },
+    {
+      "id": "sword-art-online-raid|8401|0|1",
+      "step": 67,
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "depth",
+        "n768": "depth"
+      },
+      "from": {
+        "type": "raid",
+        "line": null,
+        "uid": "1-13",
+        "mode": null,
+        "slot": 0
+      },
+      "n192": {
+        "type": "play",
+        "line": "front",
+        "uid": "1-13",
+        "mode": null,
+        "slot": 1
+      },
+      "n192d4": {
+        "type": "play",
+        "line": "front",
+        "uid": "1-13",
+        "mode": null,
+        "slot": 1
+      },
+      "n768": {
+        "type": "play",
+        "line": "front",
+        "uid": "1-13",
+        "mode": null,
+        "slot": 1
+      }
+    },
+    {
+      "id": "white-sword|8402|1|1",
+      "step": 33,
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "unchanged",
+        "n768": "depth"
+      },
+      "from": {
+        "type": "play",
+        "line": "front",
+        "uid": "1-37",
+        "mode": null,
+        "slot": 0
+      },
+      "n192": {
+        "type": "raid",
+        "line": null,
+        "uid": "1-37",
+        "mode": null,
+        "slot": 0
+      },
+      "n192d4": {
+        "type": "raid",
+        "line": null,
+        "uid": "1-37",
+        "mode": null,
+        "slot": 0
+      },
+      "n768": {
+        "type": "raid",
+        "line": null,
+        "uid": "1-37",
+        "mode": null,
+        "slot": 0
+      }
+    },
+    {
+      "id": "white-sword|8402|1|0",
+      "step": 8,
+      "deeper": {
+        "n192": "depth",
+        "n192d4": "depth",
+        "ms40": "unchanged",
+        "n768": "depth"
+      },
+      "from": {
+        "type": "play",
+        "line": "energy",
+        "uid": "0-33",
+        "mode": null,
+        "slot": 0
+      },
+      "n192": {
+        "type": "play",
+        "line": "energy",
+        "uid": "0-10",
+        "mode": null,
+        "slot": 0
+      },
+      "n192d4": {
+        "type": "play",
+        "line": "energy",
+        "uid": "0-10",
+        "mode": null,
+        "slot": 0
+      },
+      "n768": {
+        "type": "play",
+        "line": "energy",
+        "uid": "0-10",
+        "mode": null,
+        "slot": 0
+      }
+    }
+  ],
+  "hashNote": "snapshot.hash is the full state, including hidden zones. snapshot.publicHash is the public view only.",
+  "scoreNote": "finishedSameBoundary compares only returned or terminal lines. A higher yielded or pending number is stored as unfinishedHigher and is not a score error. Card groups left outside the width-4 beam are not a missing category.",
+  "note": "Counts come from the current default on the recorded 22 losses in audit/ai-v3-hold-info-8401-baseline.json. The older loss summary read a different baseline. A different hard action is a reference only.",
+  "followUp": {
+    "searchSeed": 1,
+    "clock": "192-node probes use ms 1e9 and actorDecisions 2",
+    "generator": {
+      "decisions": 21,
+      "actionChangedAt192": 10,
+      "unchangedAt192": 11,
+      "returnedOutside48Roots": 7,
+      "rows": [
+        {
+          "change": "FLIP",
+          "id": "white-sword|8401|0|0",
+          "step": 27,
+          "at48": "play:energy:0-16:",
+          "reason48": "search",
+          "at192": "play:energy:0-20:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8401|0|0",
+          "step": 44,
+          "at48": "play:energy:0-23:",
+          "reason48": "search",
+          "at192": "play:energy:0-23:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8401|0|0",
+          "step": 45,
+          "at48": "event::0-48:",
+          "reason48": "search",
+          "at192": "event::0-48:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "FLIP",
+          "id": "white-sword|8401|0|0",
+          "step": 48,
+          "at48": "play:energy:0-3:",
+          "reason48": "search",
+          "at192": "event::0-49:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "FLIP",
+          "id": "white-sword|8401|0|0",
+          "step": 72,
+          "at48": "play:energy:0-2:",
+          "reason48": "search",
+          "at192": "play:energy:0-22:",
+          "reason192": "budget-fallback",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8401|0|1",
+          "step": 51,
+          "at48": "play:energy:1-6:",
+          "reason48": "search",
+          "at192": "play:energy:1-6:",
+          "reason192": "budget-fallback",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8401|0|1",
+          "step": 101,
+          "at48": "play:energy:1-4:",
+          "reason48": "search",
+          "at192": "play:energy:1-4:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8401|1|1",
+          "step": 25,
+          "at48": "play:energy:1-11:",
+          "reason48": "budget-fallback",
+          "at192": "play:energy:1-11:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8401|1|1",
+          "step": 89,
+          "at48": "play:energy:1-17:",
+          "reason48": "search",
+          "at192": "play:energy:1-17:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "FLIP",
+          "id": "white-sword|8402|0|0",
+          "step": 32,
+          "at48": "play:energy:0-19:",
+          "reason48": "search",
+          "at192": "play:energy:0-28:",
+          "reason192": "search",
+          "returnedInside48Roots": false
+        },
+        {
+          "change": "FLIP",
+          "id": "white-sword|8402|0|0",
+          "step": 52,
+          "at48": "play:energy:0-20:",
+          "reason48": "search",
+          "at192": "play:energy:0-28:",
+          "reason192": "search",
+          "returnedInside48Roots": false
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8402|0|1",
+          "step": 38,
+          "at48": "play:energy:1-11:",
+          "reason48": "search",
+          "at192": "play:energy:1-11:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "FLIP",
+          "id": "white-sword|8402|0|1",
+          "step": 157,
+          "at48": "play:energy:1-18:",
+          "reason48": "search",
+          "at192": "play:energy:1-21:",
+          "reason192": "budget-fallback",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8402|1|0",
+          "step": 21,
+          "at48": "play:energy:0-10:",
+          "reason48": "search",
+          "at192": "play:energy:0-10:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "FLIP",
+          "id": "white-sword|8402|1|0",
+          "step": 42,
+          "at48": "play:energy:0-19:",
+          "reason48": "search",
+          "at192": "play:energy:0-22:",
+          "reason192": "budget-fallback",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "FLIP",
+          "id": "white-sword|8402|1|0",
+          "step": 43,
+          "at48": "play:energy:0-20:",
+          "reason48": "search",
+          "at192": "event::0-47:",
+          "reason192": "search",
+          "returnedInside48Roots": false
+        },
+        {
+          "change": "same",
+          "id": "white-sword|8402|1|1",
+          "step": 30,
+          "at48": "play:energy:1-9:",
+          "reason48": "search",
+          "at192": "play:energy:1-9:",
+          "reason192": "search",
+          "returnedInside48Roots": true
+        },
+        {
+          "change": "FLIP",
+          "id": "sword-art-online-raid|8401|0|0",
+          "step": 56,
+          "at48": "play:energy:0-11:",
+          "reason48": "search",
+          "at192": "next:::",
+          "reason192": "search",
+          "returnedInside48Roots": false
+        },
+        {
+          "change": "FLIP",
+          "id": "steins-gate-raid|8401|0|1",
+          "step": 20,
+          "at48": "play:energy:1-20:",
+          "reason48": "search",
+          "at192": "play:energy:1-32:",
+          "reason192": "search",
+          "returnedInside48Roots": false
+        },
+        {
+          "change": "same",
+          "id": "steins-gate-raid|8401|1|0",
+          "step": 20,
+          "at48": "play:energy:0-0:",
+          "reason48": "search",
+          "at192": "play:energy:0-0:",
+          "reason192": "search",
+          "returnedInside48Roots": false
+        },
+        {
+          "change": "same",
+          "id": "steins-gate-raid|8402|1|0",
+          "step": 45,
+          "at48": "play:energy:0-20:",
+          "reason48": "search",
+          "at192": "play:energy:0-20:",
+          "reason192": "search",
+          "returnedInside48Roots": false
+        }
+      ]
+    },
+    "unscoredFallback": {
+      "decisions": 250,
+      "returnedInsideRoots": 205,
+      "returnedOutsideRoots": 45,
+      "reading": "The name is historical. These 250 are budget fallbacks. Each root has a finite score on compared, and the earlier reader looked only at candidates. None of the 250 is a search that spent the pool without a score. rootsOf now reads compared."
+    },
+    "blockBattle": "The eight finishedSameBoundary rows without a rewrite are all block choices. Their comparison uses battleScore. Where the battle scores differ, the chosen line has the better battle score. Where they tie, a tie-break remains. The static search gap is not an eval inversion."
+  },
+  "diagnosis": {
+    "question": "Which of coverage, depth, same-boundary eval, or a later rewrite explains the 48-node losses. None was assumed.",
+    "source": "The current default, factors null, on the 22 losses in audit/ai-v3-hold-info-8401-baseline.json. The older loss summary read a different baseline, so its hashes are not reused as this position.",
+    "snapshots": 13,
+    "decks": [
+      "white-sword",
+      "sword-art-online-raid",
+      "steins-gate-raid"
+    ],
+    "probes": "Each snapshot was asked at 48 nodes / actorDecisions 2, 192 / 2, 192 / 4, and a real 40ms clock. 768 nodes was asked only when 192 or 192/4 changed the action. Search seed 1. No counterfactual playout.",
+    "exclusiveCause": {
+      "none": 271,
+      "rewrite": 135,
+      "depth": 845,
+      "coverage": 8,
+      "score": 8,
+      "reading": "depth is any decision with a root cut before returned or terminal, or unequal boundaries. The old 'pool spent with no score' clause counted budget fallbacks whose scores were on compared. It is not 845 decisions whose action would change. 4 of the 13 deepened snapshots changed at 192 nodes. coverage is a whole category missing from the beam. score is a higher static number on another returned or terminal line, and the block check shows those eight are battle-score ties or battle-score wins."
+    },
+    "notThePrimaryCause": [
+      "Front, raid, draw, attack, and move each had a representative in the beam whenever they were legal. Only energy was absent as a category, in 8 of 1267 decisions. Leaving other card groups outside the width-4 beam happened in 278 decisions and is the beam width, not a missing category.",
+      "early-draw rewrote next to extraDraw 38 times. At white-sword|8401|1|0 step 5 both lines return and tie at -52 once given 192 nodes, and the preference still draws. hard-search-2 also draws. The action does not change.",
+      "energy-keep rewrote a move to next 69 times. At sword-art-online-raid|8401|0|0 step 14 the 48-node lines both return, move 17.1 and next -3.6, and the preference passes. At 192 nodes both return at 17.1. The apparent gap closes. hard-search-2 also passes. The action does not change.",
+      "No finished play, energy, or raid line was returned below another line that stopped on the same returned or terminal boundary. The eight static block gaps are battle-horizon comparisons."
+    ],
+    "priorities": [
+      {
+        "rank": 1,
+        "cause": "depth",
+        "title": "A root cut below returned loses to a line that reached a further boundary, before the two can be compared.",
+        "evidence": [
+          "white-sword|8402|1|1 step 33, full hash 9d9ebf3b5a790304da68ceb8565935d23ea3fe3b09297447ab08cf357696dff6. Life 7-7, 1 AP, 4 green. Hand includes two BLC-1-085. The raid of uid 1-37 is in the beam and stops at pending after 16 nodes. The front play of the same card reaches yielded. 48 nodes and the real 40ms clock play it to the front. 192 nodes, 192 with actorDecisions 4, and 768 nodes all raid, because the raid reaches returned while the front is still yielded. The raid is legal. It was not excluded, rewritten, or outscored on the same boundary. hard-search-2 raids the other copy, uid 1-39. That is a reference, not a verdict. The front line is still yielded at 768, so the two scores are not comparable.",
+          "white-sword|8402|1|0 step 8, full hash e7db30e774f413a42b406004a5721e5735d897407274aa9c09505bb7457253b8. Two zero-cost energy plays. 48 nodes returns BLC-1-083 uid 0-33 because it reached returned at -24, while BLC-4-066 uid 0-10 is still yielded at the same -24. 192 and 768 bring both to returned at -24, and the tie selects uid 0-10. hard-search-2 also selects uid 0-10. Equal scores are not an eval miss."
+        ],
+        "expectedImpact": "The match stays at 48 nodes. Some main-phase plays would change where one developing root is cut and another has already reached a further boundary. Two reproduced positions change, and they stay changed at 768. This does not say the 24-game record would move.",
+        "sideEffects": "Nodes spent finishing the shorter root are taken from the roots that already stopped. A pass or a second play can stop earlier. A yielded number must still not be compared with a returned number.",
+        "suggestedFix": "Inside the same 48-node pool, extend a cut developing root up to the boundary another root has already reached before the ranking step. alignMainFront already does this when the main-front gate is on. The default gate is not that. Keep the experiment default-off until a fixed replay measures it.",
+        "implementNext": true
+      },
+      {
+        "rank": 2,
+        "cause": "rewrite",
+        "title": "The generator preference can replace a searched front play with an energy play the beam did not run.",
+        "evidence": [
+          "21 generator rewrites in the 1267 decisions. The same 21 were asked again at 192 nodes, seed 1, no clock. 10 returned a different action. 7 of the 48-node results were not among the searched roots.",
+          "steins-gate-raid|8401|0|1 step 20, full hash 2c109cd2fcfb146d944ce9fd8804cf587fe0d2957609337d39b85b89b4264bf3. Life 7-7, 1 AP, 1 blue. 48 nodes searches energy 1-29, energy 1-32, front 1-20, and next. None reaches returned. The search takes the front of STG-1-012 uid 1-20, then the generator stage rewrites it to energy of that same card, which is not in the four roots. 192 and 768 finish the three plays at returned and play energy STG-1-015 uid 1-32, score -39.6 against -47.6 for the other two. No rewrite. The real 40ms clock matches the 48-node rewrite. hard-search-2 also plays energy uid 1-32. 11 of the 21 keep the same action at 192, and several of those still apply the generator rewrite, so deleting the preference would also move positions where the deeper search agrees."
+        ],
+        "expectedImpact": "Only the generator replacement changes, and only when its energy play was not searched to the same boundary. 10 of 21 probed positions already disagree with a 192-node search. The other 11 should stay. This is not a win-rate claim.",
+        "sideEffects": "A small generator whose energy line was cut would stay on the front. That is the case the preference was written to avoid. A same-boundary energy line that scores at least as high can still replace the front.",
+        "suggestedFix": "Run the generator replacement through the same rule as evidencedChoice: the energy play has to have been executed, stopped on the same boundary, and not scored worse. Do not return an energy play that is absent from the scored rows. Ship it default-off and replay before any default change.",
+        "implementNext": true
+      },
+      {
+        "rank": 3,
+        "cause": "coverage",
+        "title": "When the scored lines do not share a stop, the legal backup can return an action that never entered the beam.",
+        "evidence": [
+          "250 decisions are budget fallbacks. Each has a finite score on compared. The earlier 'no scored root' sentence read only candidates. 205 of the returned actions are still one of the searched roots. 45 are not.",
+          "sword-art-online-raid|8401|0|1 step 67, full hash b33c262781bec2a0fd12cc315de5a167ffd7eab8bd07e1491c40d56d74bdf78c. 75 legal actions. Energy plays are legal and are the missing category. The four roots are raid-energy 1-7, raid 1-7, front 1-13, and next. All four have finite scores and stop in different places. The fallback returns raid uid 1-13, which is outside those roots. 192 and 768 search the same four roots, all still yielded, and play the front of uid 1-13. The real 40ms clock cuts on time and returns raid-energy uid 1-7. Energy still does not enter at 768. hard-search-2 raids uid 1-15. The stops are not comparable, so the missing energy play is not shown to be better."
+        ],
+        "expectedImpact": "The 45 outside-beam backups would return a searched root instead of a card the beam excluded. The other 205 already do. The eight missing-energy decisions are a separate beam-width question, and the one that was deepened still does not play energy at 768.",
+        "sideEffects": "The current backup is allowed to use the full rank order, including a developing play outside the width-4 beam. Restricting it can pass when that outside play was the ranker's preference.",
+        "suggestedFix": "Record the case. Do not make it the first code change. A later default-off probe can force this outside-beam backup to stay inside the beam and replay these 45. It should not reserve a new energy slot on the strength of this one position. The scores were already on compared.",
+        "implementNext": false
+      }
+    ],
+    "enoughToImplement": {
+      "defaultChange": false,
+      "nextRound": true,
+      "reason": "Two mechanisms change a legal action and are attributed. The cut-root boundary and the unsearched generator replacement can be implemented as default-off experiments. There is not enough evidence to turn either on, to change early-draw or energy-keep, or to change a weight. No counterfactual game was played, and one win would not be a strength result. holdInfo and reserveAp stay off."
+    }
+  },
+  "clockAgreement": "12 of 13 snapshots return the same action at 48 nodes / 40ms as at 48 nodes / no clock. The exception is sword-art-online-raid|8401|0|1 step 67."
+}

@@ -1,0 +1,210 @@
+{
+  "games": 60,
+  "seeds": [
+    8401,
+    8402,
+    8500,
+    8501,
+    8502
+  ],
+  "ms": 1000000000,
+  "byMode": {
+    "v3": {
+      "wins": 3,
+      "games": 60,
+      "illegal": 0,
+      "unfinished": 0,
+      "abandonedKills": 2,
+      "fallbacks": 10.3,
+      "nodes": 2378.7,
+      "decisions": 78.75,
+      "decisionP50": 60.56666666666667,
+      "decisionP95": 108.91666666666667,
+      "choices": {
+        "front": 2.9833333333333334,
+        "energy": 7.616666666666666,
+        "raid": 0.95
+      },
+      "apLeft": 0.15463263588263587,
+      "attacks": 2.8666666666666667,
+      "raids": 0.95,
+      "ownLife": 0.21666666666666667,
+      "oppLife": 4.283333333333333
+    },
+    "spare": {
+      "wins": 7,
+      "games": 60,
+      "illegal": 0,
+      "unfinished": 0,
+      "abandonedKills": 4,
+      "fallbacks": 9.966666666666667,
+      "nodes": 2304.366666666667,
+      "decisions": 75.48333333333333,
+      "decisionP50": 57.35,
+      "decisionP95": 103.71666666666667,
+      "choices": {
+        "front": 2.783333333333333,
+        "energy": 6.95,
+        "raid": 1.45
+      },
+      "apLeft": 0.1513293650793651,
+      "attacks": 2.533333333333333,
+      "raids": 1.45,
+      "ownLife": 0.43333333333333335,
+      "oppLife": 4.566666666666666
+    }
+  },
+  "decks": {
+    "white-sword": {
+      "v3": "1-19",
+      "spare": "5-15"
+    },
+    "sword-art-online-raid": {
+      "v3": "0-20",
+      "spare": "0-20"
+    },
+    "steins-gate-raid": {
+      "v3": "2-18",
+      "spare": "2-18"
+    }
+  },
+  "paired": {
+    "pairs": 30,
+    "skipped": 0,
+    "delta": 0.06666666666666667,
+    "low": 0,
+    "high": 0.13333333333333333,
+    "containsZero": true
+  },
+  "flips": [
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8401,
+      "first": 1,
+      "seat": 0,
+      "from": "loss",
+      "to": "win",
+      "firstDiff": {
+        "step": 8,
+        "v3": "play:energy:0-16",
+        "spare": "play:energy:0-0",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8502,
+      "first": 0,
+      "seat": 0,
+      "from": "loss",
+      "to": "win",
+      "firstDiff": {
+        "step": 15,
+        "v3": "play:energy:0-21",
+        "spare": "play:energy:0-10",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8401,
+      "first": 1,
+      "seat": 1,
+      "from": "loss",
+      "to": "win",
+      "firstDiff": {
+        "step": 89,
+        "v3": "play:energy:1-17",
+        "spare": "play:energy:1-20",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8402,
+      "first": 0,
+      "seat": 0,
+      "from": "win",
+      "to": "loss",
+      "firstDiff": {
+        "step": 2,
+        "v3": "play:energy:0-22",
+        "spare": "play:energy:0-19",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8402,
+      "first": 1,
+      "seat": 0,
+      "from": "loss",
+      "to": "win",
+      "firstDiff": {
+        "step": 43,
+        "v3": "play:energy:0-20",
+        "spare": "play:front:0-20",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8401,
+      "first": 1,
+      "seat": 1,
+      "from": "win",
+      "to": "loss",
+      "firstDiff": {
+        "step": 2,
+        "v3": "play:energy:1-22",
+        "spare": "play:energy:1-20",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8500,
+      "first": 0,
+      "seat": 1,
+      "from": "loss",
+      "to": "win",
+      "firstDiff": {
+        "step": 23,
+        "v3": "play:energy:1-16",
+        "spare": "play:energy:1-22",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8500,
+      "first": 1,
+      "seat": 1,
+      "from": "loss",
+      "to": "win",
+      "firstDiff": {
+        "step": 14,
+        "v3": "play:energy:1-17",
+        "spare": "play:energy:1-0",
+        "v3Kill": null,
+        "spareKill": null,
+        "abandoned": false
+      }
+    }
+  ],
+  "changed": 58
+}

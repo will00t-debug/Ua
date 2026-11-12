@@ -1,0 +1,480 @@
+{
+  "policy": "ai-v3-beam-1",
+  "baseline": "live-hard",
+  "split": "dev",
+  "seed0": 8200,
+  "steps": 400,
+  "games": 1,
+  "modes": [
+    "beam"
+  ],
+  "pool": "battle",
+  "opponent": "default",
+  "budget": {
+    "ms": 800,
+    "nodes": 960
+  },
+  "titles": {
+    "reject-blue": {
+      "byMode": {
+        "beam": {
+          "decisions": 212,
+          "illegal": 0,
+          "finished": 4,
+          "games": [
+            {
+              "seed": 8200,
+              "first": 0,
+              "challengerSeat": 0,
+              "challengerIsFirst": true,
+              "steps": 145,
+              "illegal": 0,
+              "finished": true,
+              "winner": 1,
+              "endReason": "life-zero",
+              "life": [
+                0,
+                5
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 28,
+                "play-energy": 5,
+                "move": 5,
+                "attack": 4,
+                "block": 6,
+                "block-pass": 7,
+                "chooseTrigger": 4,
+                "extraDraw": 1,
+                "chooseDiscard": 4,
+                "chooseHandBottom": 1,
+                "chooseTopFiltered": 2,
+                "chooseTopOrder": 4,
+                "play-front": 1
+              },
+              "budgetFallback": 16
+            },
+            {
+              "seed": 8200,
+              "first": 0,
+              "challengerSeat": 1,
+              "challengerIsFirst": false,
+              "steps": 96,
+              "illegal": 0,
+              "finished": true,
+              "winner": 0,
+              "endReason": "life-zero",
+              "life": [
+                5,
+                0
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 20,
+                "play-energy": 2,
+                "move": 2,
+                "attack": 2,
+                "block-pass": 7,
+                "chooseTrigger": 5,
+                "extraDraw": 1,
+                "chooseHandLimit": 3
+              },
+              "budgetFallback": 6
+            },
+            {
+              "seed": 8200,
+              "first": 1,
+              "challengerSeat": 0,
+              "challengerIsFirst": false,
+              "steps": 131,
+              "illegal": 0,
+              "finished": true,
+              "winner": 1,
+              "endReason": "life-zero",
+              "life": [
+                0,
+                4
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 24,
+                "play-energy": 5,
+                "chooseDiscard": 3,
+                "chooseHandBottom": 2,
+                "move": 3,
+                "attack": 4,
+                "block": 4,
+                "block-pass": 7,
+                "chooseTrigger": 4,
+                "play-front": 1
+              },
+              "budgetFallback": 9
+            },
+            {
+              "seed": 8200,
+              "first": 1,
+              "challengerSeat": 1,
+              "challengerIsFirst": true,
+              "steps": 92,
+              "illegal": 0,
+              "finished": true,
+              "winner": 0,
+              "endReason": "life-zero",
+              "life": [
+                5,
+                0
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 20,
+                "play-energy": 2,
+                "move": 2,
+                "attack": 2,
+                "block-pass": 7,
+                "chooseTrigger": 5,
+                "extraDraw": 1,
+                "chooseHandLimit": 2
+              },
+              "budgetFallback": 4
+            }
+          ],
+          "finishedRate": 1,
+          "completion": 1,
+          "fallbackRate": 0,
+          "search": 81,
+          "forced": 94,
+          "completedSearchRate": 0.38207547169811323,
+          "choiceSearchRate": 0.6982758620689655,
+          "budgetFallback": 35,
+          "budgetFallbackRate": 0.1650943396226415,
+          "p50": 36.83595200000127,
+          "p95": 123.9439829999992,
+          "paired": {
+            "n": 2,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        }
+      },
+      "completion": 4,
+      "played": 4
+    },
+    "white-sword": {
+      "byMode": {
+        "beam": {
+          "decisions": 290,
+          "illegal": 0,
+          "finished": 4,
+          "games": [
+            {
+              "seed": 8200,
+              "first": 0,
+              "challengerSeat": 0,
+              "challengerIsFirst": true,
+              "steps": 188,
+              "illegal": 0,
+              "finished": true,
+              "winner": 1,
+              "endReason": "life-zero",
+              "life": [
+                0,
+                3
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 32,
+                "play-energy": 10,
+                "move": 5,
+                "chooseDiscardGate": 3,
+                "play-front": 3,
+                "attack": 8,
+                "raid": 1,
+                "block": 11,
+                "block-pass": 7,
+                "chooseTrigger": 6,
+                "extraDraw": 1,
+                "chooseTopCard": 2,
+                "chooseLineMove": 1,
+                "chooseLineSlot": 1
+              },
+              "budgetFallback": 32
+            },
+            {
+              "seed": 8200,
+              "first": 0,
+              "challengerSeat": 1,
+              "challengerIsFirst": false,
+              "steps": 82,
+              "illegal": 0,
+              "finished": true,
+              "winner": 0,
+              "endReason": "life-zero",
+              "life": [
+                6,
+                0
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 16,
+                "play-energy": 2,
+                "chooseDiscardGate": 1,
+                "chooseTopCard": 1,
+                "move": 1,
+                "attack": 1,
+                "block": 1,
+                "extraDraw": 1,
+                "chooseHandLimit": 2,
+                "block-pass": 7,
+                "chooseTrigger": 5
+              },
+              "budgetFallback": 8
+            },
+            {
+              "seed": 8200,
+              "first": 1,
+              "challengerSeat": 0,
+              "challengerIsFirst": false,
+              "steps": 237,
+              "illegal": 0,
+              "finished": true,
+              "winner": 0,
+              "endReason": "life-zero",
+              "life": [
+                2,
+                0
+              ],
+              "challengerWon": true,
+              "acts": {
+                "next": 39,
+                "play-energy": 13,
+                "move": 7,
+                "chooseDiscardGate": 3,
+                "chooseTopCard": 3,
+                "attack": 17,
+                "extraDraw": 6,
+                "block": 11,
+                "block-pass": 5,
+                "chooseTrigger": 4,
+                "chooseLineMove": 1,
+                "chooseLineSlot": 1,
+                "play-front": 3,
+                "raid": 1,
+                "chooseRestLock": 1,
+                "chooseHandLimit": 1
+              },
+              "budgetFallback": 54
+            },
+            {
+              "seed": 8200,
+              "first": 1,
+              "challengerSeat": 1,
+              "challengerIsFirst": true,
+              "steps": 92,
+              "illegal": 0,
+              "finished": true,
+              "winner": 0,
+              "endReason": "life-zero",
+              "life": [
+                6,
+                0
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 20,
+                "play-energy": 1,
+                "chooseDiscardGate": 1,
+                "chooseTopCard": 1,
+                "move": 1,
+                "attack": 1,
+                "block": 2,
+                "block-pass": 7,
+                "extraDraw": 2,
+                "chooseHandLimit": 4,
+                "chooseTrigger": 5
+              },
+              "budgetFallback": 9
+            }
+          ],
+          "finishedRate": 1,
+          "completion": 1,
+          "fallbackRate": 0,
+          "search": 96,
+          "forced": 91,
+          "completedSearchRate": 0.3310344827586207,
+          "choiceSearchRate": 0.4824120603015075,
+          "budgetFallback": 103,
+          "budgetFallbackRate": 0.35517241379310344,
+          "p50": 40.730680000000575,
+          "p95": 130.53525099999752,
+          "paired": {
+            "n": 2,
+            "mean": -0.25,
+            "low": -0.5,
+            "high": 0
+          }
+        }
+      },
+      "completion": 4,
+      "played": 4
+    },
+    "renruki": {
+      "byMode": {
+        "beam": {
+          "decisions": 227,
+          "illegal": 0,
+          "finished": 4,
+          "games": [
+            {
+              "seed": 8200,
+              "first": 0,
+              "challengerSeat": 0,
+              "challengerIsFirst": true,
+              "steps": 111,
+              "illegal": 0,
+              "finished": true,
+              "winner": 1,
+              "endReason": "life-zero",
+              "life": [
+                0,
+                6
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 24,
+                "play-energy": 2,
+                "chooseTopTraitOutside": 1,
+                "chooseTopOrder": 2,
+                "move": 1,
+                "attack": 1,
+                "block": 3,
+                "extraDraw": 1,
+                "chooseHandLimit": 1,
+                "block-pass": 7,
+                "chooseTrigger": 6,
+                "play-front": 2,
+                "chooseDiscard": 1
+              },
+              "budgetFallback": 11
+            },
+            {
+              "seed": 8200,
+              "first": 0,
+              "challengerSeat": 1,
+              "challengerIsFirst": false,
+              "steps": 136,
+              "illegal": 0,
+              "finished": true,
+              "winner": 0,
+              "endReason": "life-zero",
+              "life": [
+                3,
+                0
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 24,
+                "play-energy": 3,
+                "chooseTopCard": 1,
+                "play-front": 1,
+                "chooseDiscard": 1,
+                "move": 2,
+                "chooseTopTraitOutside": 2,
+                "chooseTopOrder": 4,
+                "attack": 4,
+                "block": 2,
+                "extraDraw": 2,
+                "chooseHandLimit": 3,
+                "block-pass": 7,
+                "chooseTrigger": 6
+              },
+              "budgetFallback": 19
+            },
+            {
+              "seed": 8200,
+              "first": 1,
+              "challengerSeat": 0,
+              "challengerIsFirst": false,
+              "steps": 107,
+              "illegal": 0,
+              "finished": true,
+              "winner": 1,
+              "endReason": "life-zero",
+              "life": [
+                0,
+                6
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 20,
+                "play-energy": 3,
+                "chooseTopTraitOutside": 1,
+                "chooseTopOrder": 2,
+                "move": 1,
+                "attack": 1,
+                "chooseHandLimit": 1,
+                "block": 1,
+                "block-pass": 7,
+                "chooseTrigger": 6,
+                "chooseDiscard": 1
+              },
+              "budgetFallback": 11
+            },
+            {
+              "seed": 8200,
+              "first": 1,
+              "challengerSeat": 1,
+              "challengerIsFirst": true,
+              "steps": 146,
+              "illegal": 0,
+              "finished": true,
+              "winner": 0,
+              "endReason": "life-zero",
+              "life": [
+                4,
+                0
+              ],
+              "challengerWon": false,
+              "acts": {
+                "next": 28,
+                "play-energy": 5,
+                "chooseTopCard": 1,
+                "move": 3,
+                "attack": 4,
+                "chooseTopTraitOutside": 2,
+                "chooseTopOrder": 4,
+                "chooseDiscard": 1,
+                "play-front": 1,
+                "block-pass": 7,
+                "extraDraw": 2,
+                "block": 3,
+                "chooseTrigger": 6,
+                "chooseHandLimit": 2
+              },
+              "budgetFallback": 19
+            }
+          ],
+          "finishedRate": 1,
+          "completion": 1,
+          "fallbackRate": 0,
+          "search": 61,
+          "forced": 100,
+          "completedSearchRate": 0.2687224669603524,
+          "choiceSearchRate": 0.5041322314049587,
+          "budgetFallback": 60,
+          "budgetFallbackRate": 0.2643171806167401,
+          "p50": 24.565537000002223,
+          "p95": 102.58853400000226,
+          "paired": {
+            "n": 2,
+            "mean": -0.5,
+            "low": -0.5,
+            "high": -0.5
+          }
+        }
+      },
+      "completion": 4,
+      "played": 4
+    }
+  }
+}

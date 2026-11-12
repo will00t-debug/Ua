@@ -1,0 +1,605 @@
+{
+  "note": "Four move-phase positions from the 8300 life and reach records, measured again at 48 nodes with no clock. Only white-sword seed 8300 first 0 seat 0 step 12 still changes: baseline and ab-front pass, and full A+B moves uid 0-32. reject-blue step 13, renruki step 15, and white-sword step 55 stay next under baseline, A+B, and ab-front. ab-front does not gate the move phase. This file is the reproduction, not a new parameter.",
+  "positions": [
+    {
+      "label": "move-color",
+      "source": "audit/ai-v3-official-8300-life-36.json",
+      "deck": "reject-blue",
+      "seed": 8300,
+      "first": 0,
+      "challengerSeat": 0,
+      "step": 13,
+      "settings": "official opening replay, plan tree, hardNodes 0, nodes 48, ms 1e9, now 0",
+      "phase": "move",
+      "pending": null,
+      "actor": 0,
+      "energy": {
+        "blue": 1
+      },
+      "legal": [
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        }
+      ],
+      "opening": [
+        {
+          "actor": 0,
+          "mode": "keep"
+        },
+        {
+          "actor": 1,
+          "mode": "redraw"
+        }
+      ],
+      "runs": [
+        {
+          "variant": "baseline",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": true,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "blue": 1
+          }
+        },
+        {
+          "variant": "ab",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "budget-fallback",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": false,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "blue": 1
+          }
+        },
+        {
+          "variant": "ab-front",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": true,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "blue": 1
+          }
+        }
+      ]
+    },
+    {
+      "label": "move-color",
+      "source": "audit/ai-v3-official-8300-life-36.json",
+      "deck": "white-sword",
+      "seed": 8300,
+      "first": 0,
+      "challengerSeat": 0,
+      "step": 12,
+      "settings": "official opening replay, plan tree, hardNodes 0, nodes 48, ms 1e9, now 0",
+      "phase": "move",
+      "pending": null,
+      "actor": 0,
+      "energy": {
+        "green": 1
+      },
+      "legal": [
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        }
+      ],
+      "opening": [
+        {
+          "actor": 0,
+          "mode": "keep"
+        },
+        {
+          "actor": 1,
+          "mode": "redraw"
+        }
+      ],
+      "runs": [
+        {
+          "variant": "baseline",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "budget-fallback",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": false,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "green": 1
+          }
+        },
+        {
+          "variant": "ab",
+          "action": {
+            "type": "move",
+            "line": null,
+            "uid": "0-32",
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": false,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "green": 1
+          }
+        },
+        {
+          "variant": "ab-front",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "budget-fallback",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": false,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "green": 1
+          }
+        }
+      ]
+    },
+    {
+      "label": "move-color",
+      "source": "audit/ai-v3-official-8300-life-36.json",
+      "deck": "renruki",
+      "seed": 8300,
+      "first": 0,
+      "challengerSeat": 0,
+      "step": 15,
+      "settings": "official opening replay, plan tree, hardNodes 0, nodes 48, ms 1e9, now 0",
+      "phase": "move",
+      "pending": null,
+      "actor": 0,
+      "energy": {
+        "purple": 1
+      },
+      "legal": [
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-14",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-14",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-14",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-14",
+          "mode": null
+        }
+      ],
+      "opening": [
+        {
+          "actor": 0,
+          "mode": "keep"
+        },
+        {
+          "actor": 1,
+          "mode": "redraw"
+        }
+      ],
+      "runs": [
+        {
+          "variant": "baseline",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": true,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "purple": 1
+          }
+        },
+        {
+          "variant": "ab",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": true,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "purple": 1
+          }
+        },
+        {
+          "variant": "ab-front",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": null,
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": true,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "purple": 1
+          }
+        }
+      ]
+    },
+    {
+      "label": "partial-block",
+      "source": "audit/ai-v3-official-8300-nodes48-white-reach.json",
+      "deck": "white-sword",
+      "seed": 8300,
+      "first": 0,
+      "challengerSeat": 0,
+      "step": 55,
+      "settings": "official opening replay, plan tree, hardNodes 0, nodes 48, ms 1e9, now 0",
+      "phase": "move",
+      "pending": null,
+      "actor": 0,
+      "energy": {
+        "green": 4
+      },
+      "legal": [
+        {
+          "type": "next",
+          "line": null,
+          "uid": null,
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-32",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-10",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-11",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-11",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-11",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-11",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-18",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-18",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-18",
+          "mode": null
+        },
+        {
+          "type": "move",
+          "line": null,
+          "uid": "0-18",
+          "mode": null
+        }
+      ],
+      "opening": [
+        {
+          "actor": 0,
+          "mode": "keep"
+        },
+        {
+          "actor": 1,
+          "mode": "redraw"
+        }
+      ],
+      "runs": [
+        {
+          "variant": "baseline",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": "move",
+            "line": null,
+            "uid": "0-18",
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": false,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "green": 4
+          }
+        },
+        {
+          "variant": "ab",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": "move",
+            "line": null,
+            "uid": "0-18",
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": false,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "green": 4
+          }
+        },
+        {
+          "variant": "ab-front",
+          "action": {
+            "type": "next",
+            "line": null,
+            "uid": null,
+            "mode": null
+          },
+          "reason": "search",
+          "replacedMove": {
+            "type": "move",
+            "line": null,
+            "uid": "0-18",
+            "mode": null
+          },
+          "nodesUsed": 48,
+          "dispatches": 48,
+          "settled": false,
+          "phase": "move",
+          "pending": null,
+          "energy": {
+            "green": 4
+          }
+        }
+      ]
+    }
+  ]
+}

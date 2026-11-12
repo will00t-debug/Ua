@@ -1,0 +1,7453 @@
+{
+  "lockCommit": "8401831a9375c826d77976dfacb3b68d334b9301",
+  "baseSha": "89e49ccbf5db93bb3c66adf8fde01ae534e1d2da",
+  "lock": "audit/ai-v3-settle-life-8850-seed-lock.json",
+  "clock": "real-40ms",
+  "nodes": 48,
+  "arms": {
+    "A": "hybrid-main-v1",
+    "B": "hybrid-main-v1+settleLife",
+    "opponent": "ai-v3-beam-1"
+  },
+  "gamesPerArm": 160,
+  "seeds": "8850-8889",
+  "secondSetPlayed": false,
+  "reservedFrom": 9100,
+  "candidateDefault": "off",
+  "advanceTo8890": false,
+  "advanceReason": "Paired interval low is -0.075, which is not greater than the pre-registered -0.05. Safety passed and lethal passes fell from 4 to 0, but the win-rate bar did not. 8890-8929 was not played. The switch stays off.",
+  "summary": {
+    "A": {
+      "overall": {
+        "games": 160,
+        "finished": 160,
+        "wins": 122,
+        "losses": 38,
+        "winRate": 0.7625
+      },
+      "white": {
+        "games": 56,
+        "finished": 56,
+        "wins": 42,
+        "losses": 14,
+        "winRate": 0.75
+      },
+      "sao": {
+        "games": 52,
+        "finished": 52,
+        "wins": 47,
+        "losses": 5,
+        "winRate": 0.9038461538461539
+      },
+      "steins": {
+        "games": 52,
+        "finished": 52,
+        "wins": 33,
+        "losses": 19,
+        "winRate": 0.6346153846153846
+      },
+      "first": {
+        "games": 80,
+        "finished": 80,
+        "wins": 65,
+        "losses": 15,
+        "winRate": 0.8125
+      },
+      "second": {
+        "games": 80,
+        "finished": 80,
+        "wins": 57,
+        "losses": 23,
+        "winRate": 0.7125
+      },
+      "whiteSecond": {
+        "games": 28,
+        "finished": 28,
+        "wins": 21,
+        "losses": 7,
+        "winRate": 0.75
+      },
+      "whiteFirst": {
+        "games": 28,
+        "finished": 28,
+        "wins": 21,
+        "losses": 7,
+        "winRate": 0.75
+      },
+      "lethalPass": 4,
+      "lifeSaved": 7,
+      "badTrade": 6,
+      "blockStillLostLife": 0,
+      "fallbacks": 4227,
+      "hardBudget": 1834,
+      "phaseErrors": 0,
+      "abandonedKills": 0,
+      "overNodes": 0,
+      "illegal": 0,
+      "unfinished": 0,
+      "maxNodes": 48,
+      "pendingOther": 0,
+      "decisionP50": 38.74116299999878,
+      "decisionP95": 46.20671499997843
+    },
+    "B": {
+      "overall": {
+        "games": 160,
+        "finished": 160,
+        "wins": 122,
+        "losses": 38,
+        "winRate": 0.7625
+      },
+      "white": {
+        "games": 56,
+        "finished": 56,
+        "wins": 41,
+        "losses": 15,
+        "winRate": 0.7321428571428571
+      },
+      "sao": {
+        "games": 52,
+        "finished": 52,
+        "wins": 43,
+        "losses": 9,
+        "winRate": 0.8269230769230769
+      },
+      "steins": {
+        "games": 52,
+        "finished": 52,
+        "wins": 38,
+        "losses": 14,
+        "winRate": 0.7307692307692307
+      },
+      "first": {
+        "games": 80,
+        "finished": 80,
+        "wins": 69,
+        "losses": 11,
+        "winRate": 0.8625
+      },
+      "second": {
+        "games": 80,
+        "finished": 80,
+        "wins": 53,
+        "losses": 27,
+        "winRate": 0.6625
+      },
+      "whiteSecond": {
+        "games": 28,
+        "finished": 28,
+        "wins": 18,
+        "losses": 10,
+        "winRate": 0.6428571428571429
+      },
+      "whiteFirst": {
+        "games": 28,
+        "finished": 28,
+        "wins": 23,
+        "losses": 5,
+        "winRate": 0.8214285714285714
+      },
+      "lethalPass": 0,
+      "lifeSaved": 21,
+      "badTrade": 21,
+      "blockStillLostLife": 0,
+      "fallbacks": 4204,
+      "hardBudget": 1852,
+      "phaseErrors": 0,
+      "abandonedKills": 0,
+      "overNodes": 0,
+      "illegal": 0,
+      "unfinished": 0,
+      "maxNodes": 48,
+      "pendingOther": 0,
+      "decisionP50": 38.45988399999624,
+      "decisionP95": 45.67916199998581
+    },
+    "paired": {
+      "n": 40,
+      "mean": 0,
+      "low": -0.075,
+      "high": 0.075,
+      "containsZero": true,
+      "aboveDrop": false
+    },
+    "safetyA": true,
+    "safetyB": true,
+    "advanceTo8890": false
+  },
+  "splits": {
+    "whiteFirst": {
+      "A": "21/28",
+      "B": "23/28"
+    },
+    "whiteSecond": {
+      "A": "21/28",
+      "B": "18/28"
+    },
+    "saoFirst": {
+      "A": "26/26",
+      "B": "23/26"
+    },
+    "saoSecond": {
+      "A": "21/26",
+      "B": "20/26"
+    },
+    "steinsFirst": {
+      "A": "18/26",
+      "B": "23/26"
+    },
+    "steinsSecond": {
+      "A": "15/26",
+      "B": "15/26"
+    },
+    "flips": {
+      "Aonly": 21,
+      "Bonly": 21,
+      "both": 101,
+      "neither": 17
+    },
+    "lethalByDeck": {
+      "A": {
+        "white": 1,
+        "sao": 0,
+        "steins": 3
+      },
+      "B": {
+        "white": 0,
+        "sao": 0,
+        "steins": 0
+      }
+    },
+    "savedByDeck": {
+      "A": {
+        "white": 1,
+        "sao": 3,
+        "steins": 3
+      },
+      "B": {
+        "white": 5,
+        "sao": 3,
+        "steins": 13
+      }
+    }
+  },
+  "positions": {
+    "white8810": "40ms diagnosis board was not stored. Clockless replay did not reach a hybrid lethal block.",
+    "steins8848": "40ms diagnosis board was not stored. Clockless replay did not reach a hybrid lethal block.",
+    "sao8831": "40ms diagnosis board was not stored. Clockless replay did not reach a hybrid lethal block.",
+    "white8801": {
+      "fixture": "tests/fixtures/ai-v3-settle-life-8801.json",
+      "step": 338,
+      "life": 1,
+      "damage": 1,
+      "impact": 0,
+      "atkBp": 4000,
+      "trigger": "active",
+      "default": "pass, search -90000, pending life-trigger, opponentTurns 0",
+      "settleLife": "block a ready 4000, search -100000, opponentTurns 1",
+      "after": "life stays 1, status playing, pending is not life-trigger. The blocker can still leave. This is not a win."
+    }
+  },
+  "games": [
+    {
+      "deck": "white-sword",
+      "seed": 8850,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 151,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 47
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          1
+        ],
+        "endReason": "life-zero",
+        "steps": 220,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8851,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 233,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 208,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8852,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 147,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 178,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8853,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 115,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 132,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8854,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 161,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 176,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8855,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 254,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 204,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8856,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 241,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 231,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8857,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 191,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 185,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8858,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 141,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 238,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8859,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 216,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 213,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8860,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 288,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 254,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8861,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 202,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 231,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8862,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 255,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 240,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8863,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 137,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 276,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8864,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 165,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 160,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8865,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 334,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 158,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8866,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 165,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 154,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8867,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 167,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 267,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8868,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 156,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 120,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8869,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 188,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 164,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8870,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 151,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 190,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8871,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 175,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 142,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8872,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 145,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 177,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8873,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 151,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 159,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8874,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 165,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 152,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8875,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 134,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 159,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8876,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 177,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 160,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8877,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 351,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 164,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8878,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 177,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 200,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8879,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 272,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 289,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8880,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 239,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 298,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8881,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 363,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 255,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8882,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 175,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 197,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8883,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 241,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 123,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8884,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 196,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 327,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8885,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 163,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 163,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8886,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          1
+        ],
+        "endReason": "life-zero",
+        "steps": 346,
+        "lethalPass": 0,
+        "lifeSaved": 2,
+        "badTrade": 2,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 226,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8887,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 174,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 201,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8888,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 221,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 187,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8889,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 178,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 139,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8850,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 236,
+        "lethalPass": 1,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 347,
+        "lethalPass": 0,
+        "lifeSaved": 4,
+        "badTrade": 4,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8851,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 195,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 200,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8852,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 258,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 182,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8853,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 243,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 337,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8854,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 199,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 190,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8855,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 195,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 185,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8856,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 157,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 231,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8857,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 157,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 212,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8858,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 184,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          1
+        ],
+        "endReason": "life-zero",
+        "steps": 278,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8859,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 236,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 189,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8860,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 259,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 216,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8861,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 245,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 254,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8862,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 330,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 294,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8863,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 119,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 131,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8864,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 178,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 191,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8865,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 304,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          1
+        ],
+        "endReason": "life-zero",
+        "steps": 360,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8866,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 139,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 139,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8867,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 199,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 206,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8868,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 179,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 141,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8869,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 325,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 216,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8870,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 167,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 157,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8871,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 191,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 198,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8872,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 169,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 174,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8873,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 214,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 326,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8874,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 172,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 123,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8875,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 270,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 147,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8876,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 271,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 203,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8877,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 200,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 194,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8878,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 187,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 172,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8879,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 293,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 344,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8880,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 360,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 236,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8881,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 195,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          1
+        ],
+        "endReason": "life-zero",
+        "steps": 280,
+        "lethalPass": 0,
+        "lifeSaved": 2,
+        "badTrade": 2,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8882,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          5
+        ],
+        "endReason": "required-draw-empty",
+        "steps": 246,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 248,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8883,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 227,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 190,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8884,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 177,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          7,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 177,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8885,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 174,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 222,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8886,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 315,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 287,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8887,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 175,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 197,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8888,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 197,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 312,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8889,
+      "first": 1,
+      "hybridSeat": 0,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 245,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 191,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8850,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 203,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 43
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 242,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8851,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 194,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 171,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8852,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 261,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 204,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8853,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 164,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 156,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8854,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 237,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 188,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8855,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 200,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 228,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8856,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 175,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 187,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8857,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 212,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 141,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8858,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 199,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 173,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8859,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 197,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 197,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8860,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 119,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 259,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8861,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 142,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 142,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8862,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 267,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 202,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8863,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 158,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 152,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8864,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 180,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 143,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8865,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 149,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 174,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8866,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          1
+        ],
+        "endReason": "life-zero",
+        "steps": 278,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 260,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8867,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 154,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 187,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8868,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 154,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 130,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8869,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 171,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 257,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8870,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 119,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 121,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8871,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 163,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 180,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8872,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 142,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 164,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8873,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 165,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 144,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8874,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 132,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 185,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8875,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 180,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 157,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8876,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 193,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 259,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8877,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 142,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 172,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8878,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 216,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 237,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8879,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 307,
+        "lethalPass": 1,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 241,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8880,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 206,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 149,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8881,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 169,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 199,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8882,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 251,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 299,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8883,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 202,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 215,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8884,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 289,
+        "lethalPass": 1,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 214,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8885,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 289,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 196,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8886,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 195,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 215,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8887,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 235,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          1,
+          1
+        ],
+        "endReason": "required-draw-empty",
+        "steps": 396,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8888,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 153,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 183,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8889,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 155,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 186,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8850,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 242,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 186,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8851,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 177,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 146,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8852,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 192,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 229,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8853,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          1,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 268,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 287,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8854,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 236,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 332,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8855,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 189,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 152,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8856,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 192,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 146,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8857,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 266,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 257,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8858,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 268,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 241,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8859,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 202,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          6,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 192,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8860,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 218,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 184,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8861,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 230,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 232,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8862,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 207,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          5,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 181,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "white-sword",
+      "seed": 8863,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 209,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 194,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8864,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 187,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          1
+        ],
+        "endReason": "life-zero",
+        "steps": 185,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8865,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 264,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 155,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8866,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 163,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 156,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8867,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 179,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 226,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8868,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 187,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 149,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8869,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 182,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 276,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8870,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 139,
+        "lethalPass": 0,
+        "lifeSaved": 2,
+        "badTrade": 2,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 156,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8871,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 169,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 156,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8872,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 149,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 151,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8873,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 271,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 259,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8874,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 181,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          2,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 226,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8875,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 189,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          7
+        ],
+        "endReason": "life-zero",
+        "steps": 135,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "sword-art-online-raid",
+      "seed": 8876,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 145,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 166,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8877,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 153,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 163,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8878,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 243,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 289,
+        "lethalPass": 0,
+        "lifeSaved": 2,
+        "badTrade": 2,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8879,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 274,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 326,
+        "lethalPass": 0,
+        "lifeSaved": 3,
+        "badTrade": 3,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8880,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          5,
+          1
+        ],
+        "endReason": "required-draw-empty",
+        "steps": 432,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 403,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8881,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 230,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 252,
+        "lethalPass": 0,
+        "lifeSaved": 2,
+        "badTrade": 2,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8882,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 225,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 208,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8883,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 325,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 238,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8884,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 248,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 313,
+        "lethalPass": 0,
+        "lifeSaved": 2,
+        "badTrade": 2,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8885,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          4,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 203,
+        "lethalPass": 1,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          4
+        ],
+        "endReason": "life-zero",
+        "steps": 187,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8886,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          3
+        ],
+        "endReason": "life-zero",
+        "steps": 326,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          2
+        ],
+        "endReason": "life-zero",
+        "steps": 301,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8887,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 272,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 290,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8888,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 224,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": false,
+        "finished": true,
+        "life": [
+          3,
+          0
+        ],
+        "endReason": "life-zero",
+        "steps": 272,
+        "lethalPass": 0,
+        "lifeSaved": 1,
+        "badTrade": 1,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    },
+    {
+      "deck": "steins-gate-raid",
+      "seed": 8889,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "A": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          5
+        ],
+        "endReason": "life-zero",
+        "steps": 277,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      },
+      "B": {
+        "won": true,
+        "finished": true,
+        "life": [
+          0,
+          6
+        ],
+        "endReason": "life-zero",
+        "steps": 299,
+        "lethalPass": 0,
+        "lifeSaved": 0,
+        "badTrade": 0,
+        "blockStillLostLife": 0,
+        "illegal": 0,
+        "abandonedKills": 0,
+        "phaseErrors": 0,
+        "overNodes": 0,
+        "maxNodes": 48
+      }
+    }
+  ]
+}

@@ -1,0 +1,1135 @@
+{
+  "source": "audit/ai-v3-hybrid-vs-hard-9050-summary.json",
+  "extractedFromStoredAggregates": true,
+  "programBase": "c9253ccc27903601f13343d0e984d27f7c98029f",
+  "summaryHeadSha": "556af011c6ee91ed367b4f52caf6f328d4e00454",
+  "lockSha256": "2d8b932fed3af2500cb939638051c0110e45939947b9e09113daee6061f376ff",
+  "policies": {
+    "hybrid": "hybrid-main-v1",
+    "opponent": "hard-search-2"
+  },
+  "nodes": 48,
+  "ms": 40,
+  "steps": 1200,
+  "searchSeed": 1,
+  "experiments": "off",
+  "generatedAt": "2026-11-11T12:46:17.923Z",
+  "games": 200,
+  "record": {
+    "games": 200,
+    "wins": 91,
+    "losses": 109,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.455
+  },
+  "byDeck": {
+    "white-sword": {
+      "games": 68,
+      "wins": 24,
+      "losses": 44,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.35294117647058826
+    },
+    "sword-art-online-raid": {
+      "games": 68,
+      "wins": 31,
+      "losses": 37,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.45588235294117646
+    },
+    "steins-gate-raid": {
+      "games": 64,
+      "wins": 36,
+      "losses": 28,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.5625
+    }
+  },
+  "hybridFirst": {
+    "games": 100,
+    "wins": 47,
+    "losses": 53,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.47
+  },
+  "hybridSecond": {
+    "games": 100,
+    "wins": 44,
+    "losses": 56,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.44
+  },
+  "whiteFirst": {
+    "games": 34,
+    "wins": 15,
+    "losses": 19,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.4411764705882353
+  },
+  "whiteSecond": {
+    "games": 34,
+    "wins": 9,
+    "losses": 25,
+    "draws": 0,
+    "unfinished": 0,
+    "winRate": 0.2647058823529412
+  },
+  "interval": {
+    "n": 50,
+    "mean": 0.455,
+    "low": 0.385,
+    "high": 0.53
+  },
+  "intervalContainsHalf": true,
+  "strongerThanHalf": false,
+  "illegal": 0,
+  "routingErrors": 0,
+  "unfinished": 0,
+  "hitStepCap": 0,
+  "actionReplayFailures": 0,
+  "incompleteBlocks": [],
+  "clock": {
+    "hybrid": {
+      "decisions": 16858,
+      "overNodes": 0,
+      "maxNodes": 48,
+      "over40": 8340,
+      "over80": 1,
+      "deferred": 441,
+      "forced": 4469,
+      "p50": 39.8,
+      "p95": 44.7,
+      "note": "p50 and p95 are medians of the per-game percentiles. over40 counts decisions whose wall time passed the soft 40 ms deadline. Node compliance is overNodes and maxNodes."
+    },
+    "hard": {
+      "decisions": 15699,
+      "overNodes": 0,
+      "maxNodes": 48,
+      "over40": 5410,
+      "over80": 32,
+      "deferred": 481,
+      "forced": 2466,
+      "p50": 30.9,
+      "p95": 48.4,
+      "note": "p50 and p95 are medians of the per-game percentiles. over40 counts decisions whose wall time passed the soft 40 ms deadline. Node compliance is overNodes and maxNodes."
+    }
+  },
+  "flags": {
+    "extra-draw": 1076,
+    "thin-front-high-bp-energy": 195,
+    "legal-raid-other": 163,
+    "proven-kill": 97,
+    "equivalent-wins": 44,
+    "early-raid-other": 20,
+    "defender-lethal": 30
+  },
+  "lossFlags": {
+    "extra-draw": 562,
+    "thin-front-high-bp-energy": 120,
+    "legal-raid-other": 75,
+    "early-raid-other": 9,
+    "defender-lethal": 30,
+    "proven-kill": 2,
+    "equivalent-wins": 2
+  },
+  "lossGames": 109,
+  "examples": [
+    {
+      "kind": "defender-lethal",
+      "deck": "white-sword",
+      "seed": 9050,
+      "first": 1,
+      "hybridSeat": 1,
+      "hybridIsFirst": true,
+      "endReason": "life-zero",
+      "life": [
+        3,
+        0
+      ],
+      "decision": {
+        "step": 164,
+        "stateId": "6073e7f2eeee7b78c46a65fbc3ef48913088f7ab68db22cd22d4d6d2d6abd630",
+        "phase": "attack",
+        "pending": "block",
+        "turn": 14,
+        "ownTurn": 7,
+        "actor": 1,
+        "first": 1,
+        "seatRole": "first",
+        "policy": "hybrid-main-v1",
+        "source": "v3",
+        "lane": "pending",
+        "nodesUsed": 29,
+        "nodesBudget": 48,
+        "searchMs": 40.8,
+        "wallMs": 40.9,
+        "msBudget": 40,
+        "reason": "budget",
+        "apReady": 1,
+        "lifeBefore": [
+          3,
+          1
+        ],
+        "lifeAfter": [
+          3,
+          1
+        ],
+        "legalCount": 2,
+        "legal": [
+          {
+            "type": "chooseBlock",
+            "line": null,
+            "mode": null,
+            "hidden": false
+          },
+          {
+            "type": "chooseBlock",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          }
+        ],
+        "chosen": {
+          "type": "chooseBlock",
+          "line": null,
+          "mode": null,
+          "hidden": false
+        },
+        "chosenIndex": 0,
+        "candidates": [
+          {
+            "type": "chooseBlock",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character",
+            "score": -100000
+          },
+          {
+            "type": "chooseBlock",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "score": -90000
+          }
+        ],
+        "flags": [
+          "defender-lethal"
+        ],
+        "choiceSource": "live-dispatch",
+        "verified": true
+      }
+    },
+    {
+      "kind": "thin-front-high-bp-energy",
+      "deck": "white-sword",
+      "seed": 9050,
+      "first": 0,
+      "hybridSeat": 0,
+      "hybridIsFirst": true,
+      "endReason": "life-zero",
+      "life": [
+        0,
+        1
+      ],
+      "decision": {
+        "step": 29,
+        "stateId": "df743fb4a373aea31d68c9d265092b1c142ca59165d3433fb1a24120ac527f7f",
+        "phase": "main",
+        "pending": null,
+        "turn": 5,
+        "ownTurn": 3,
+        "actor": 0,
+        "first": 0,
+        "seatRole": "first",
+        "policy": "hybrid-main-v1",
+        "source": "hard",
+        "lane": "main",
+        "nodesUsed": 27,
+        "nodesBudget": 48,
+        "searchMs": 45.9,
+        "wallMs": 46,
+        "msBudget": 40,
+        "reason": "budget",
+        "apReady": 2,
+        "lifeBefore": [
+          7,
+          7
+        ],
+        "lifeAfter": [
+          7,
+          7
+        ],
+        "legalCount": 22,
+        "legal": [
+          {
+            "type": "next",
+            "line": null,
+            "mode": null,
+            "hidden": false
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          }
+        ],
+        "chosen": {
+          "type": "play",
+          "line": "energy",
+          "mode": null,
+          "hidden": false,
+          "bp": 4000,
+          "cost": 1,
+          "gen": 1,
+          "color": "green",
+          "cardType": "character"
+        },
+        "chosenIndex": 15,
+        "candidates": [
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 1,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character",
+            "score": 59.6
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character",
+            "score": 31.2
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character",
+            "score": 31.2
+          },
+          {
+            "type": "next",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "score": -62.8
+          }
+        ],
+        "flags": [
+          "thin-front-high-bp-energy"
+        ],
+        "choiceSource": "live-dispatch",
+        "verified": true
+      }
+    },
+    {
+      "kind": "early-raid-other",
+      "deck": "white-sword",
+      "seed": 9050,
+      "first": 0,
+      "hybridSeat": 1,
+      "hybridIsFirst": false,
+      "endReason": "life-zero",
+      "life": [
+        3,
+        0
+      ],
+      "decision": {
+        "step": 67,
+        "stateId": "50fcbf3ded7b82e03a02ab44ba075e94707263b5e354e1f43938b1a126f95bc1",
+        "phase": "main",
+        "pending": null,
+        "turn": 8,
+        "ownTurn": 4,
+        "actor": 1,
+        "first": 0,
+        "seatRole": "second",
+        "policy": "hybrid-main-v1",
+        "source": "hard",
+        "lane": "main",
+        "nodesUsed": 18,
+        "nodesBudget": 48,
+        "searchMs": 41.9,
+        "wallMs": 42.1,
+        "msBudget": 40,
+        "reason": "budget",
+        "apReady": 2,
+        "lifeBefore": [
+          7,
+          6
+        ],
+        "lifeAfter": [
+          7,
+          6
+        ],
+        "legalCount": 39,
+        "legal": [
+          {
+            "type": "next",
+            "line": null,
+            "mode": null,
+            "hidden": false
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 2,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 2,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 2,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 2,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 2000,
+            "cost": 2,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 3,
+            "gen": 2,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 1500,
+            "cost": 0,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "play",
+            "line": "front",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character"
+          }
+        ],
+        "chosen": {
+          "type": "play",
+          "line": "energy",
+          "mode": null,
+          "hidden": false,
+          "bp": 4000,
+          "cost": 4,
+          "gen": 2,
+          "color": "green",
+          "cardType": "character"
+        },
+        "chosenIndex": 1,
+        "candidates": [
+          {
+            "type": "play",
+            "line": "energy",
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 2,
+            "color": "green",
+            "cardType": "character",
+            "score": 90.7
+          },
+          {
+            "type": "raid",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "bp": 4000,
+            "cost": 4,
+            "gen": 1,
+            "color": "green",
+            "cardType": "character",
+            "score": 57.7
+          },
+          {
+            "type": "next",
+            "line": null,
+            "mode": null,
+            "hidden": false,
+            "score": 42.4
+          }
+        ],
+        "flags": [
+          "thin-front-high-bp-energy",
+          "legal-raid-other",
+          "early-raid-other"
+        ],
+        "choiceSource": "live-dispatch",
+        "verified": true
+      }
+    }
+  ],
+  "snapshots": {
+    "path": "/tmp/ai-v3-hybrid-vs-hard-9050/snapshots",
+    "committed": false,
+    "presentOnThisMachine": true,
+    "fileCount": 680
+  },
+  "keyDecisions": {
+    "count": 680,
+    "verifiedTrue": 680
+  },
+  "consistency": {
+    "summaryGames": 200,
+    "gameRows": 200,
+    "deckGames": {
+      "white-sword": 68,
+      "sword-art-online-raid": 68,
+      "steins-gate-raid": 64
+    },
+    "deckGamesSum": 200,
+    "hybridFirstGames": 100,
+    "hybridSecondGames": 100,
+    "firstPlusSecond": 200,
+    "storedAggregatesMatchGameRows": true
+  },
+  "informationGaps": [
+    "這份精簡報告與來源摘要都不含隱藏牌序、對手手牌或完整私人局面。",
+    "完整局面只在本機目錄，localSnapshotsCommitted 為 false，沒有進入公開 Git。",
+    "三個代表局面的 verified 都是 true。來源摘要裡的關鍵決策 verified 也都是 true。",
+    "代表局面的 lifeAfter 是該次選擇結算當下的生命。對局結束生命寫在例子的 life。來源摘要沒有另外保存選擇之後的逐步結算。"
+  ]
+}

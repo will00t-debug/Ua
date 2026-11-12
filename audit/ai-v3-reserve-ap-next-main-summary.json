@@ -1,0 +1,99 @@
+{
+  "base": "f21c94fc",
+  "default": "off",
+  "changed": false,
+  "newSeeds": false,
+  "sample": "The 12 snapshots are diagnostic. They are not a win-rate sample.",
+  "cited": "audit/ai-v3-reserve-ap-fork.json",
+  "detail": "audit/ai-v3-reserve-ap-next-main.json",
+  "script": "scripts/ai-v3-reserve-ap-next-main.mjs",
+  "window": "Next own turn, from its start through the end of its attack phase. A finish earlier than that records the reason. Recorded branches are replayed. The 12 branches that matched neither full game are searched only until that attack phase ends.",
+  "settings": {
+    "opponent": "hard-search-2",
+    "plan": "tree",
+    "searchSeed": 1,
+    "nodes": 48,
+    "ms": 1000000000,
+    "actorDecisions": 2,
+    "beam": 4,
+    "worlds": 1
+  },
+  "check": {
+    "windows": 48,
+    "replayed": 36,
+    "searchedToAttackEnd": 12,
+    "closed": 48,
+    "illegal": 0,
+    "dispatchMismatch": 0
+  },
+  "becameAttack": [
+    {
+      "key": "steins-gate-raid|8442|0|0",
+      "result": "lost",
+      "energy": "blue 2 on the draw, blue 4 on the pass",
+      "body": "STG-1-023 菲伊麗絲・喵喵, BP 2500, already on the energy line. Active, so she generates one extra blue.",
+      "what": "The pass moves her onto the empty front and she attacks. The draw line has two blue and does not have her."
+    },
+    {
+      "key": "steins-gate-raid|8441|1|1",
+      "result": "lost",
+      "energy": "blue 2 on the draw, blue 3 on the pass",
+      "body": "STG-1-001 阿萬音鈴羽, BP 2000, the extra energy card.",
+      "what": "The pass moves her to the front and she attacks. The draw line attacks a different energy body, STG-1-007. A 4-cost is still unpaid at 3."
+    },
+    {
+      "key": "sword-art-online-raid|8441|1|1",
+      "result": "gained",
+      "energy": "yellow 2 on the draw, yellow 3 on the pass",
+      "body": "SAO-2-006, BP 2500, the extra energy card.",
+      "what": "The pass moves her to the front and she attacks. The draw line attacks SAO-1-023 instead. Both lines attack. SAO-2-009, the 3000, was payable on both lines and was not played to the front."
+    }
+  ],
+  "becameRestedBody": [
+    {
+      "key": "sword-art-online-raid|8440|1|1",
+      "result": "lost",
+      "body": "SAO-1-025, cost 4, BP 3500.",
+      "what": "Energy starts at 3, so she is not payable yet. The search chooses the front play of SAO-1-004, BP 500. The generator rule then plays that 500 to energy. She becomes payable and enters rested. She does not attack. The draw line, at 2 energy, plays the 500 and SAO-1-023 to the front instead."
+    },
+    {
+      "key": "white-sword|8441|0|0",
+      "result": "gained",
+      "body": "BLC-3-009, cost 3, BP 2000, on-play draw. BLC-4-060 藍染, cost 3, BP 4000.",
+      "what": "Both are payable at 3 green and unpaid at 2. The recorded pass plays BLC-3-009 to the front rested, and plays 藍染 to energy. 藍染 is not a normal front play. The attack in both pass games is BLC-2-069, BP 2500, drawn during this turn, so it was not known at the start of the turn. The draw line does not play the 3-cost body and does not make that attack."
+    }
+  ],
+  "becameEnergyOnly": [
+    {
+      "key": "steins-gate-raid|8440|1|1",
+      "result": "gained",
+      "body": "STG-1-011 岡部倫太郎, cost 4, BP 4000.",
+      "what": "The pass raids him onto the energy line. He stays there, active, and does not attack. The other 4-cost cards stay unpaid at the start of the turn."
+    }
+  ],
+  "payableNotPlayed": [
+    {
+      "key": "steins-gate-raid|8442|0|0",
+      "card": "STG-1-017 椎名真由里, cost 4, BP 4000, two copies.",
+      "witness": "At the move phase, passing keeps blue 4 and AP 2. Her front play is legal. She enters rested and cannot attack. The recorded line moves STG-1-023 instead.",
+      "layer": "different-stop",
+      "why": "The pass reaches the main phase. The move is cut while the phase is still move. The search does not compare those scores. The budget fallback returns the move. moveDevelopment reports benefit block and strip false: the front is empty, so the existing rule allows the move even though blue drops from 4 to 2 and the hand still wants that color. This is not a same-stop mis-rank."
+    },
+    {
+      "key": "sword-art-online-raid|8441|0|1",
+      "card": "SAO-2-009, cost 2, BP 3000.",
+      "witness": "Legal on the front once energy is 2. The pass spends the action point on another energy play.",
+      "layer": "not-in-roots",
+      "why": "The front play is outside the beam of 4. It is not a root the 48-node search dropped after scoring it."
+    }
+  ],
+  "layers": {
+    "not-in-roots": "Outside the beam. The live search keeps four roots.",
+    "different-stop": "Expanded, then cut by the node pool at a different phase or pending than the line that was returned. Scores are not compared.",
+    "preference": "The generator rule and the line-switch rule. SAO-1-004's front line was moved to energy, which is what paid SAO-1-025. The white line-switch is the confirmed 藍染 route.",
+    "higher-not-chosen": 0,
+    "scored-lower": 0
+  },
+  "decision": "No definite search, calculation, or post-process defect. reserveAp stays off. No experiment switch. No weight change. The confirmed 刀劍 8401 step 12, the 3 AP draw, and the 卯之花 / FINAL / 藍染 lines were not retouched. No new seeds. 9100 and above stay reserved.",
+  "questions": []
+}

@@ -1,0 +1,2321 @@
+{
+  "base": "340f781e3ea8314bf011622730a77a9ca948872b",
+  "rules": "official",
+  "opponent": "hard-search-2",
+  "searchSeed": 1,
+  "nodes": 48,
+  "clock": "1e9",
+  "liveBudget": {
+    "nodes": 48,
+    "ms": 40,
+    "beam": 4,
+    "actorDecisions": 2,
+    "opponentDecisions": 2,
+    "worlds": 1
+  },
+  "hardPolicy": "hard-search-2",
+  "defaultAi": "unchanged",
+  "seeds": [
+    8401,
+    8402
+  ],
+  "titles": [
+    "white-sword",
+    "sword-art-online-raid",
+    "steins-gate-raid"
+  ],
+  "note": "A phase swap changes every later decision, so a win gap is not the effect of one choice. 8401-8402 reproduces the saved baseline and is not a new validation set. Hidden deck order is not read to choose an action. Belief worlds keep search seed 1. connecting counts a life drop only before the next attack is declared, so life change is the damage measure.",
+  "lanes": {
+    "start": "idle start: extraDraw or next",
+    "move": "idle move: front and energy moves",
+    "main": "idle main: play, raid, event, activate",
+    "battle": "idle attack: attack choice and passing",
+    "pending": "any pending, including block, trigger, discard and life target"
+  },
+  "reproduced": {
+    "matched": 24,
+    "missed": 0,
+    "misses": []
+  },
+  "byMode": {
+    "v3": {
+      "wins": 2,
+      "losses": 22,
+      "unfinished": 0,
+      "illegal": 0,
+      "byDeck": {
+        "white-sword": {
+          "wins": 0,
+          "losses": 8,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "sword-art-online-raid": {
+          "wins": 0,
+          "losses": 8,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "steins-gate-raid": {
+          "wins": 2,
+          "losses": 6,
+          "unfinished": 0,
+          "illegal": 0
+        }
+      },
+      "fallbacks": 269,
+      "relativeToV3": null,
+      "resourcesVersusV3": null,
+      "flips": null,
+      "firstDiffGames": 0,
+      "firstDiffInSwappedLane": 0,
+      "hybridActionInsideV3Roots": 0,
+      "hybridActionOutsideV3Roots": 0,
+      "firstDiffPairs": {}
+    },
+    "hard": {
+      "wins": 12,
+      "losses": 12,
+      "unfinished": 0,
+      "illegal": 0,
+      "byDeck": {
+        "white-sword": {
+          "wins": 4,
+          "losses": 4,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "sword-art-online-raid": {
+          "wins": 4,
+          "losses": 4,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "steins-gate-raid": {
+          "wins": 4,
+          "losses": 4,
+          "unfinished": 0,
+          "illegal": 0
+        }
+      },
+      "fallbacks": 0,
+      "relativeToV3": {
+        "n": 12,
+        "mean": 0.4166666666666667,
+        "low": 0.2916666666666667,
+        "high": 0.5,
+        "containsZero": false
+      },
+      "resourcesVersusV3": {
+        "attacks": {
+          "n": 24,
+          "mean": 0.4583333333333333
+        },
+        "connecting": {
+          "n": 24,
+          "mean": 0.08333333333333333
+        },
+        "raids": {
+          "n": 24,
+          "mean": 0.9583333333333334
+        },
+        "apLeft": {
+          "n": 24,
+          "mean": 2.1666666666666665
+        },
+        "apReady": {
+          "n": 24,
+          "mean": -3.375
+        },
+        "fallbacks": {
+          "n": 24,
+          "mean": -11.208333333333334
+        },
+        "ownLife": {
+          "n": 24,
+          "mean": 1.0416666666666667
+        },
+        "oppLife": {
+          "n": 24,
+          "mean": -2.5833333333333335
+        }
+      },
+      "flips": {
+        "gained": [
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              4
+            ],
+            "hybridLife": [
+              1,
+              0
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-18",
+              "hybrid": "play:energy:0-19",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-18",
+                "play:energy:0-25",
+                "play:front:0-18",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-023",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              5
+            ],
+            "hybridLife": [
+              1,
+              0
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-19",
+              "hybrid": "play:energy:0-10",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-19",
+                "play:energy:0-27",
+                "play:front:0-10",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-023",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              4
+            ],
+            "hybridLife": [
+              2,
+              0
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-18",
+              "hybrid": "play:energy:0-19",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-18",
+                "play:energy:0-19",
+                "play:front:0-18",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-001",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              1,
+              0
+            ],
+            "hybridLife": [
+              0,
+              6
+            ],
+            "firstDiff": {
+              "step": 5,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {},
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8402,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              6,
+              0
+            ],
+            "hybridLife": [
+              0,
+              4
+            ],
+            "firstDiff": {
+              "step": 7,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {},
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              7,
+              0
+            ],
+            "hybridLife": [
+              0,
+              1
+            ],
+            "firstDiff": {
+              "step": 5,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {},
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8401,
+            "first": 1,
+            "seat": 0,
+            "v3Life": [
+              0,
+              6
+            ],
+            "hybridLife": [
+              4,
+              0
+            ],
+            "firstDiff": {
+              "step": 5,
+              "actor": 0,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {},
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8402,
+            "first": 1,
+            "seat": 0,
+            "v3Life": [
+              0,
+              4
+            ],
+            "hybridLife": [
+              2,
+              0
+            ],
+            "firstDiff": {
+              "step": 5,
+              "actor": 0,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {},
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              2,
+              0
+            ],
+            "hybridLife": [
+              0,
+              2
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 1,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:1-33",
+              "hybrid": "play:energy:1-35",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:1-33",
+                "play:energy:1-35",
+                "play:front:1-33",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "BLC-1-083",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8402,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              6,
+              0
+            ],
+            "hybridLife": [
+              0,
+              4
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 1,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:1-34",
+              "hybrid": "play:energy:1-35",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:1-34",
+                "play:energy:1-35",
+                "play:front:1-34",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "BLC-1-083",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              6,
+              0
+            ],
+            "hybridLife": [
+              0,
+              2
+            ],
+            "firstDiff": {
+              "step": 16,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "blue": 1
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          }
+        ],
+        "lost": [
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              5,
+              0
+            ],
+            "hybridLife": [
+              0,
+              1
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-22",
+              "hybrid": "play:energy:0-19",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-22",
+                "play:energy:0-47",
+                "play:front:0-19",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-020",
+              "sameCard": false
+            }
+          }
+        ]
+      },
+      "firstDiffGames": 24,
+      "firstDiffInSwappedLane": 0,
+      "hybridActionInsideV3Roots": 18,
+      "hybridActionOutsideV3Roots": 6,
+      "firstDiffPairs": {
+        "start|next->extraDraw": 1,
+        "main|play:energy:0-33->play:energy:0-10": 1,
+        "main|play:energy:0-18->play:energy:0-19": 2,
+        "main|play:energy:0-19->play:energy:0-10": 1,
+        "main|play:energy:0-22->play:energy:0-19": 1,
+        "start|extraDraw->next": 13,
+        "pending|chooseHandLimit:0-44->chooseHandLimit:0-45": 1,
+        "main|play:energy:1-33->play:energy:1-35": 1,
+        "main|play:energy:1-34->play:energy:1-35": 1,
+        "main|play:energy:1-31->play:energy:1-27": 1,
+        "main|play:front:1-17->play:energy:1-17": 1
+      }
+    },
+    "start": {
+      "wins": 8,
+      "losses": 16,
+      "unfinished": 0,
+      "illegal": 0,
+      "byDeck": {
+        "white-sword": {
+          "wins": 2,
+          "losses": 6,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "sword-art-online-raid": {
+          "wins": 2,
+          "losses": 6,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "steins-gate-raid": {
+          "wins": 4,
+          "losses": 4,
+          "unfinished": 0,
+          "illegal": 0
+        }
+      },
+      "fallbacks": 153,
+      "relativeToV3": {
+        "n": 12,
+        "mean": 0.25,
+        "low": 0.125,
+        "high": 0.375,
+        "containsZero": false
+      },
+      "resourcesVersusV3": {
+        "attacks": {
+          "n": 24,
+          "mean": 0.7083333333333334
+        },
+        "connecting": {
+          "n": 24,
+          "mean": 0.041666666666666664
+        },
+        "raids": {
+          "n": 24,
+          "mean": 0.041666666666666664
+        },
+        "apLeft": {
+          "n": 24,
+          "mean": 1.9583333333333333
+        },
+        "apReady": {
+          "n": 24,
+          "mean": -1.125
+        },
+        "fallbacks": {
+          "n": 24,
+          "mean": -4.833333333333333
+        },
+        "ownLife": {
+          "n": 24,
+          "mean": 0.75
+        },
+        "oppLife": {
+          "n": 24,
+          "mean": -1.2916666666666667
+        }
+      },
+      "flips": {
+        "gained": [
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              5
+            ],
+            "hybridLife": [
+              4,
+              0
+            ],
+            "firstDiff": {
+              "step": 11,
+              "actor": 0,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "yellow": 1
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              4
+            ],
+            "hybridLife": [
+              1,
+              0
+            ],
+            "firstDiff": {
+              "step": 14,
+              "actor": 0,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "blue": 1
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              7,
+              0
+            ],
+            "hybridLife": [
+              0,
+              3
+            ],
+            "firstDiff": {
+              "step": 5,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {},
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              2,
+              0
+            ],
+            "hybridLife": [
+              0,
+              3
+            ],
+            "firstDiff": {
+              "step": 11,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "green": 1
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8402,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              6,
+              0
+            ],
+            "hybridLife": [
+              0,
+              2
+            ],
+            "firstDiff": {
+              "step": 13,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "budget-fallback",
+              "v3Fallback": "budget",
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "green": 1
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8401,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              5,
+              0
+            ],
+            "hybridLife": [
+              0,
+              2
+            ],
+            "firstDiff": {
+              "step": 12,
+              "actor": 1,
+              "lane": "start",
+              "source": "hard",
+              "pending": null,
+              "phase": "start",
+              "v3": "extraDraw",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "yellow": 1
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "extraDraw",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          }
+        ],
+        "lost": []
+      },
+      "firstDiffGames": 24,
+      "firstDiffInSwappedLane": 24,
+      "hybridActionInsideV3Roots": 24,
+      "hybridActionOutsideV3Roots": 0,
+      "firstDiffPairs": {
+        "start|next->extraDraw": 1,
+        "start|extraDraw->next": 23
+      }
+    },
+    "move": {
+      "wins": 5,
+      "losses": 19,
+      "unfinished": 0,
+      "illegal": 0,
+      "byDeck": {
+        "white-sword": {
+          "wins": 2,
+          "losses": 6,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "sword-art-online-raid": {
+          "wins": 1,
+          "losses": 7,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "steins-gate-raid": {
+          "wins": 2,
+          "losses": 6,
+          "unfinished": 0,
+          "illegal": 0
+        }
+      },
+      "fallbacks": 267,
+      "relativeToV3": {
+        "n": 12,
+        "mean": 0.125,
+        "low": 0.041666666666666664,
+        "high": 0.25,
+        "containsZero": false
+      },
+      "resourcesVersusV3": {
+        "attacks": {
+          "n": 24,
+          "mean": 0.375
+        },
+        "connecting": {
+          "n": 24,
+          "mean": 0
+        },
+        "raids": {
+          "n": 24,
+          "mean": 0
+        },
+        "apLeft": {
+          "n": 24,
+          "mean": -0.16666666666666666
+        },
+        "apReady": {
+          "n": 24,
+          "mean": 1.375
+        },
+        "fallbacks": {
+          "n": 24,
+          "mean": -0.08333333333333333
+        },
+        "ownLife": {
+          "n": 24,
+          "mean": 0.3333333333333333
+        },
+        "oppLife": {
+          "n": 24,
+          "mean": -0.7083333333333334
+        }
+      },
+      "flips": {
+        "gained": [
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              1,
+              0
+            ],
+            "hybridLife": [
+              0,
+              2
+            ],
+            "firstDiff": {
+              "step": 78,
+              "actor": 1,
+              "lane": "move",
+              "source": "hard",
+              "pending": null,
+              "phase": "move",
+              "v3": "next",
+              "hybrid": "move:1-33:",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                5,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "green": 4
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "move:1-31:",
+                "move:1-33:",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": null,
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              2,
+              0
+            ],
+            "hybridLife": [
+              0,
+              3
+            ],
+            "firstDiff": {
+              "step": 64,
+              "actor": 1,
+              "lane": "move",
+              "source": "hard",
+              "pending": null,
+              "phase": "move",
+              "v3": "step:1-25",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                5
+              ],
+              "ap": 2,
+              "energy": {
+                "yellow": 2
+              },
+              "v3InRoots": false,
+              "rootLabels": [
+                "step:1-25",
+                "move:1-27:",
+                "move:1-43:",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-001",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              2,
+              0
+            ],
+            "hybridLife": [
+              0,
+              1
+            ],
+            "firstDiff": {
+              "step": 50,
+              "actor": 1,
+              "lane": "move",
+              "source": "hard",
+              "pending": null,
+              "phase": "move",
+              "v3": "move:1-11:",
+              "hybrid": "move:1-35:",
+              "v3Reason": "budget-fallback",
+              "v3Fallback": "budget",
+              "hybridInV3Roots": true,
+              "life": [
+                6,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "green": 4
+              },
+              "v3InRoots": false,
+              "rootLabels": [
+                "move:1-11:",
+                "move:1-35:",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "BLC-4-066",
+              "sameCard": false
+            }
+          }
+        ],
+        "lost": []
+      },
+      "firstDiffGames": 22,
+      "firstDiffInSwappedLane": 22,
+      "hybridActionInsideV3Roots": 18,
+      "hybridActionOutsideV3Roots": 4,
+      "firstDiffPairs": {
+        "move|move:0-16:->move:0-23:": 1,
+        "move|next->move:0-19:": 1,
+        "move|move:0-38:->next": 1,
+        "move|next->move:0-37:": 1,
+        "move|next->move:0-18:": 1,
+        "move|move:0-3:->move:0-9:": 1,
+        "move|next->move:1-33:": 1,
+        "move|move:1-11:->move:1-34:": 1,
+        "move|step:1-25->next": 1,
+        "move|next->move:1-25:": 2,
+        "move|move:1-22:->next": 1,
+        "move|next->move:0-35:": 1,
+        "move|move:0-10:->move:0-33:": 1,
+        "move|move:0-25:->next": 1,
+        "move|next->move:0-6:": 1,
+        "move|next->move:0-16:": 1,
+        "move|move:0-47:->next": 1,
+        "move|move:1-11:->move:1-35:": 1,
+        "move|next->move:1-12:": 1,
+        "move|move:1-31:->next": 1,
+        "move|next->move:1-30:": 1
+      }
+    },
+    "main": {
+      "wins": 14,
+      "losses": 10,
+      "unfinished": 0,
+      "illegal": 0,
+      "byDeck": {
+        "white-sword": {
+          "wins": 3,
+          "losses": 5,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "sword-art-online-raid": {
+          "wins": 4,
+          "losses": 4,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "steins-gate-raid": {
+          "wins": 7,
+          "losses": 1,
+          "unfinished": 0,
+          "illegal": 0
+        }
+      },
+      "fallbacks": 236,
+      "relativeToV3": {
+        "n": 12,
+        "mean": 0.5,
+        "low": 0.3333333333333333,
+        "high": 0.6666666666666666,
+        "containsZero": false
+      },
+      "resourcesVersusV3": {
+        "attacks": {
+          "n": 24,
+          "mean": 1.125
+        },
+        "connecting": {
+          "n": 24,
+          "mean": 0.08333333333333333
+        },
+        "raids": {
+          "n": 24,
+          "mean": 2.2916666666666665
+        },
+        "apLeft": {
+          "n": 24,
+          "mean": 0.041666666666666664
+        },
+        "apReady": {
+          "n": 24,
+          "mean": 0.625
+        },
+        "fallbacks": {
+          "n": 24,
+          "mean": -1.375
+        },
+        "ownLife": {
+          "n": 24,
+          "mean": 1.0416666666666667
+        },
+        "oppLife": {
+          "n": 24,
+          "mean": -3.0833333333333335
+        }
+      },
+      "flips": {
+        "gained": [
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              2
+            ],
+            "hybridLife": [
+              4,
+              0
+            ],
+            "firstDiff": {
+              "step": 27,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-16",
+              "hybrid": "play:energy:0-20",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "green": 1
+              },
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-20",
+                "play:energy:0-16",
+                "play:front:0-16",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "BLC-2-069",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              4
+            ],
+            "hybridLife": [
+              1,
+              0
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-18",
+              "hybrid": "play:energy:0-19",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-18",
+                "play:energy:0-25",
+                "play:front:0-18",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-023",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              5
+            ],
+            "hybridLife": [
+              1,
+              0
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-19",
+              "hybrid": "play:energy:0-10",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-19",
+                "play:energy:0-27",
+                "play:front:0-10",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-023",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              0,
+              4
+            ],
+            "hybridLife": [
+              2,
+              0
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-18",
+              "hybrid": "play:energy:0-19",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-18",
+                "play:energy:0-19",
+                "play:front:0-18",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-001",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              1,
+              0
+            ],
+            "hybridLife": [
+              0,
+              3
+            ],
+            "firstDiff": {
+              "step": 8,
+              "actor": 1,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:1-33",
+              "hybrid": "play:energy:1-35",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:1-33",
+                "play:energy:1-35",
+                "play:front:1-33",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "BLC-1-083",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              7,
+              0
+            ],
+            "hybridLife": [
+              0,
+              2
+            ],
+            "firstDiff": {
+              "step": 8,
+              "actor": 1,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:1-22",
+              "hybrid": "play:energy:1-40",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:1-22",
+                "play:energy:1-47",
+                "play:front:1-20",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-020",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              7,
+              0
+            ],
+            "hybridLife": [
+              0,
+              1
+            ],
+            "firstDiff": {
+              "step": 8,
+              "actor": 1,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:1-46",
+              "hybrid": "play:energy:1-17",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:1-2",
+                "play:energy:1-46",
+                "play:front:1-17",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-025",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 1,
+            "seat": 0,
+            "v3Life": [
+              0,
+              6
+            ],
+            "hybridLife": [
+              6,
+              0
+            ],
+            "firstDiff": {
+              "step": 20,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:front:0-34",
+              "hybrid": "play:energy:0-35",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-34",
+                "play:energy:0-35",
+                "play:front:0-34",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "BLC-1-083",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8401,
+            "first": 1,
+            "seat": 0,
+            "v3Life": [
+              0,
+              6
+            ],
+            "hybridLife": [
+              1,
+              0
+            ],
+            "firstDiff": {
+              "step": 8,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-0",
+              "hybrid": "play:energy:0-19",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-25",
+                "play:energy:0-0",
+                "play:front:0-0",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-004",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8401,
+            "first": 1,
+            "seat": 0,
+            "v3Life": [
+              0,
+              1
+            ],
+            "hybridLife": [
+              3,
+              0
+            ],
+            "firstDiff": {
+              "step": 8,
+              "actor": 0,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:0-16",
+              "hybrid": "play:energy:0-19",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:0-16",
+                "play:energy:0-19",
+                "play:front:0-0",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-001",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8402,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              2,
+              0
+            ],
+            "hybridLife": [
+              0,
+              1
+            ],
+            "firstDiff": {
+              "step": 2,
+              "actor": 1,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:front:1-17",
+              "hybrid": "play:energy:1-17",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": false,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {},
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:1-25",
+                "play:energy:1-27",
+                "play:front:1-17",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-023",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              6,
+              0
+            ],
+            "hybridLife": [
+              0,
+              3
+            ],
+            "firstDiff": {
+              "step": 19,
+              "actor": 1,
+              "lane": "main",
+              "source": "hard",
+              "pending": null,
+              "phase": "main",
+              "v3": "play:energy:1-2",
+              "hybrid": "play:energy:1-25",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 1,
+              "energy": {
+                "blue": 1
+              },
+              "v3InRoots": false,
+              "rootLabels": [
+                "play:energy:1-2",
+                "play:energy:1-25",
+                "play:front:1-2",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-007",
+              "sameCard": false
+            }
+          }
+        ],
+        "lost": []
+      },
+      "firstDiffGames": 24,
+      "firstDiffInSwappedLane": 24,
+      "hybridActionInsideV3Roots": 12,
+      "hybridActionOutsideV3Roots": 12,
+      "firstDiffPairs": {
+        "main|play:energy:0-16->play:energy:0-20": 1,
+        "main|play:energy:0-33->play:energy:0-10": 2,
+        "main|play:energy:0-18->play:energy:0-19": 2,
+        "main|play:energy:0-19->play:energy:0-10": 2,
+        "main|play:energy:0-22->play:energy:0-19": 1,
+        "main|play:energy:1-33->play:energy:1-35": 2,
+        "main|play:energy:1-34->play:energy:1-11": 1,
+        "main|play:energy:1-25->play:energy:1-35": 1,
+        "main|play:energy:1-25->play:energy:1-17": 1,
+        "main|play:energy:1-22->play:energy:1-40": 1,
+        "main|play:energy:1-46->play:energy:1-17": 1,
+        "main|play:front:0-34->play:energy:0-35": 1,
+        "main|play:energy:0-0->play:energy:0-19": 1,
+        "main|play:energy:0-16->play:energy:0-19": 1,
+        "main|play:energy:0-47->play:energy:0-19": 1,
+        "main|play:energy:1-34->play:energy:1-35": 1,
+        "main|play:energy:1-31->play:energy:1-27": 1,
+        "main|play:front:1-17->play:energy:1-17": 1,
+        "main|play:energy:1-30->play:energy:1-36": 1,
+        "main|play:energy:1-2->play:energy:1-25": 1
+      }
+    },
+    "battle": {
+      "wins": 3,
+      "losses": 21,
+      "unfinished": 0,
+      "illegal": 0,
+      "byDeck": {
+        "white-sword": {
+          "wins": 1,
+          "losses": 7,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "sword-art-online-raid": {
+          "wins": 1,
+          "losses": 7,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "steins-gate-raid": {
+          "wins": 1,
+          "losses": 7,
+          "unfinished": 0,
+          "illegal": 0
+        }
+      },
+      "fallbacks": 242,
+      "relativeToV3": {
+        "n": 12,
+        "mean": 0.041666666666666664,
+        "low": -0.08333333333333333,
+        "high": 0.16666666666666666,
+        "containsZero": true
+      },
+      "resourcesVersusV3": {
+        "attacks": {
+          "n": 24,
+          "mean": -0.3333333333333333
+        },
+        "connecting": {
+          "n": 24,
+          "mean": 0.041666666666666664
+        },
+        "raids": {
+          "n": 24,
+          "mean": 0.20833333333333334
+        },
+        "apLeft": {
+          "n": 24,
+          "mean": 0.08333333333333333
+        },
+        "apReady": {
+          "n": 24,
+          "mean": 1
+        },
+        "fallbacks": {
+          "n": 24,
+          "mean": -1.125
+        },
+        "ownLife": {
+          "n": 24,
+          "mean": 0
+        },
+        "oppLife": {
+          "n": 24,
+          "mean": -0.08333333333333333
+        }
+      },
+      "flips": {
+        "gained": [
+          {
+            "deck": "white-sword",
+            "seed": 8401,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              1,
+              0
+            ],
+            "hybridLife": [
+              0,
+              4
+            ],
+            "firstDiff": {
+              "step": 59,
+              "actor": 1,
+              "lane": "battle",
+              "source": "hard",
+              "pending": null,
+              "phase": "attack",
+              "v3": "attack:1-23",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                6,
+                7
+              ],
+              "ap": 0,
+              "energy": {
+                "green": 4
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "attack:1-23",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "BLC-4-070",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "sword-art-online-raid",
+            "seed": 8401,
+            "first": 0,
+            "seat": 1,
+            "v3Life": [
+              2,
+              0
+            ],
+            "hybridLife": [
+              0,
+              1
+            ],
+            "firstDiff": {
+              "step": 95,
+              "actor": 1,
+              "lane": "battle",
+              "source": "hard",
+              "pending": null,
+              "phase": "attack",
+              "v3": "attack:1-13",
+              "hybrid": "next",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                6,
+                3
+              ],
+              "ap": 0,
+              "energy": {
+                "yellow": 4
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "attack:1-13",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "SAO-1-022",
+              "sameCard": false
+            }
+          }
+        ],
+        "lost": [
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              5,
+              0
+            ],
+            "hybridLife": [
+              0,
+              4
+            ],
+            "firstDiff": {
+              "step": 124,
+              "actor": 0,
+              "lane": "battle",
+              "source": "hard",
+              "pending": null,
+              "phase": "attack",
+              "v3": "attack:0-3",
+              "hybrid": "next",
+              "v3Reason": "budget-fallback",
+              "v3Fallback": "budget",
+              "hybridInV3Roots": true,
+              "life": [
+                6,
+                4
+              ],
+              "ap": 0,
+              "energy": {
+                "blue": 3
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "attack:0-3",
+                "attack:0-47",
+                "next"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-007",
+              "sameCard": false
+            }
+          }
+        ]
+      },
+      "firstDiffGames": 20,
+      "firstDiffInSwappedLane": 20,
+      "hybridActionInsideV3Roots": 20,
+      "hybridActionOutsideV3Roots": 0,
+      "firstDiffPairs": {
+        "battle|attack:0-13->attack:0-26": 1,
+        "battle|attack:0-38->next": 1,
+        "battle|attack:0-28->next": 1,
+        "battle|attack:0-19->next": 1,
+        "battle|attack:0-3->next": 1,
+        "battle|attack:1-23->next": 1,
+        "battle|attack:1-13->next": 1,
+        "battle|attack:1-45->next": 1,
+        "battle|attack:1-22->attack:1-39": 1,
+        "battle|attack:0-34->next": 1,
+        "battle|attack:0-2->next": 1,
+        "battle|next->attack:0-22": 1,
+        "battle|attack:0-47->next": 1,
+        "battle|attack:0-18->next": 1,
+        "battle|attack:0-42->next": 1,
+        "battle|attack:1-11->attack:1-13": 1,
+        "battle|attack:1-39->next": 1,
+        "battle|attack:1-43->next": 1,
+        "battle|attack:1-17->next": 1,
+        "battle|attack:1-29->next": 1
+      }
+    },
+    "pending": {
+      "wins": 0,
+      "losses": 24,
+      "unfinished": 0,
+      "illegal": 0,
+      "byDeck": {
+        "white-sword": {
+          "wins": 0,
+          "losses": 8,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "sword-art-online-raid": {
+          "wins": 0,
+          "losses": 8,
+          "unfinished": 0,
+          "illegal": 0
+        },
+        "steins-gate-raid": {
+          "wins": 0,
+          "losses": 8,
+          "unfinished": 0,
+          "illegal": 0
+        }
+      },
+      "fallbacks": 126,
+      "relativeToV3": {
+        "n": 12,
+        "mean": -0.08333333333333333,
+        "low": -0.20833333333333334,
+        "high": 0,
+        "containsZero": true
+      },
+      "resourcesVersusV3": {
+        "attacks": {
+          "n": 24,
+          "mean": -0.5416666666666666
+        },
+        "connecting": {
+          "n": 24,
+          "mean": 0.041666666666666664
+        },
+        "raids": {
+          "n": 24,
+          "mean": -0.08333333333333333
+        },
+        "apLeft": {
+          "n": 24,
+          "mean": -0.125
+        },
+        "apReady": {
+          "n": 24,
+          "mean": -4
+        },
+        "fallbacks": {
+          "n": 24,
+          "mean": -5.958333333333333
+        },
+        "ownLife": {
+          "n": 24,
+          "mean": -0.25
+        },
+        "oppLife": {
+          "n": 24,
+          "mean": 0.9166666666666666
+        }
+      },
+      "flips": {
+        "gained": [],
+        "lost": [
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8402,
+            "first": 0,
+            "seat": 0,
+            "v3Life": [
+              5,
+              0
+            ],
+            "hybridLife": [
+              0,
+              5
+            ],
+            "firstDiff": {
+              "step": 46,
+              "actor": 0,
+              "lane": "pending",
+              "source": "hard",
+              "pending": "block",
+              "phase": "attack",
+              "v3": "block:0-2",
+              "hybrid": "block-pass",
+              "v3Reason": "search",
+              "v3Fallback": null,
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 0,
+              "energy": {
+                "blue": 3
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "block:0-2",
+                "block-pass"
+              ],
+              "hybridCard": null,
+              "v3Card": "STG-1-007",
+              "sameCard": false
+            }
+          },
+          {
+            "deck": "steins-gate-raid",
+            "seed": 8401,
+            "first": 1,
+            "seat": 1,
+            "v3Life": [
+              0,
+              1
+            ],
+            "hybridLife": [
+              4,
+              0
+            ],
+            "firstDiff": {
+              "step": 50,
+              "actor": 1,
+              "lane": "pending",
+              "source": "hard",
+              "pending": "end-hand-limit",
+              "phase": "attack",
+              "v3": "chooseHandLimit:1-40",
+              "hybrid": "chooseHandLimit:1-38",
+              "v3Reason": "budget-fallback",
+              "v3Fallback": "budget",
+              "hybridInV3Roots": true,
+              "life": [
+                7,
+                7
+              ],
+              "ap": 2,
+              "energy": {
+                "blue": 5
+              },
+              "v3InRoots": true,
+              "rootLabels": [
+                "chooseHandLimit:1-40",
+                "chooseHandLimit:1-47",
+                "chooseHandLimit:1-20",
+                "chooseHandLimit:1-38"
+              ],
+              "hybridCard": "STG-1-004",
+              "v3Card": "STG-1-008",
+              "sameCard": false
+            }
+          }
+        ]
+      },
+      "firstDiffGames": 24,
+      "firstDiffInSwappedLane": 24,
+      "hybridActionInsideV3Roots": 19,
+      "hybridActionOutsideV3Roots": 5,
+      "firstDiffPairs": {
+        "pending|chooseDiscardGate:0-44->chooseDiscardGate:0-45": 1,
+        "pending|chooseLineMove:0-19->chooseLineMove:0-20": 1,
+        "pending|chooseOwnBuff:0-18->chooseOwnBuff:": 1,
+        "pending|block:0-28->block-pass": 1,
+        "pending|chooseAttackLife:->chooseAttackLife:": 2,
+        "pending|block:0-2->block-pass": 1,
+        "pending|chooseHandLimit:1-45->chooseHandLimit:1-15": 1,
+        "pending|chooseDiscardGate:1-37->chooseDiscardGate:": 1,
+        "pending|chooseHandLimit:1-20->chooseHandLimit:1-33": 1,
+        "pending|block:1-17->block-pass": 2,
+        "pending|chooseHandLimit:1-6->chooseHandLimit:1-30": 1,
+        "pending|chooseInspectedOutside:1-14->chooseInspectedOutside:": 1,
+        "pending|chooseHandLimit:0-44->chooseHandLimit:0-45": 1,
+        "pending|chooseDiscardGate:->chooseDiscardGate:0-47": 1,
+        "pending|chooseHandLimit:0-21->chooseHandLimit:0-19": 1,
+        "pending|chooseOwnBuff:0-19->chooseOwnBuff:0-28": 1,
+        "pending|block:0-21->block-pass": 1,
+        "pending|chooseDiscardGate:1-43->chooseDiscardGate:": 1,
+        "pending|chooseDiscardGate:1-31->chooseDiscardGate:": 1,
+        "pending|block:1-26->block-pass": 1,
+        "pending|chooseHandLimit:1-40->chooseHandLimit:1-38": 1,
+        "pending|block:1-19->block-pass": 1
+      }
+    }
+  },
+  "conclusion": {
+    "switch": false,
+    "defaultAi": "unchanged",
+    "hardSearch2": "unchanged",
+    "budget": "48 nodes, clockless here, live budget still 48/40",
+    "reproduced": "24/24 winners and life totals match audit/ai-v3-hold-info-8401-baseline.json. Record 2-22.",
+    "answers": {
+      "improvesMostOften": "idle main. 14-10, twelve gains and no losses against v3. Paired +0.50 [0.333, 0.667]. Raids +2.29 per game, declared attacks +1.12, opponent life -3.08. Not a causal claim.",
+      "worsens": "pending. 0-24, the two v3 wins become losses. Paired -0.083 [-0.208, 0], includes 0. One lost win is a searched block that hard passes.",
+      "includesZero": "move +0.125 [0, 0.25]. battle +0.042 [-0.083, 0.208].",
+      "start": "8-16, six gains, no losses, +0.25 [0.125, 0.375]. 23 of 24 first differences are extraDraw to next, and both actions were in the beam. That is the draw choice already measured by reserveAp.",
+      "hardReference": "12-12 when both seats are hard. Replacing every phase is a smaller gain than replacing only main, because hard pending play gives wins back."
+    },
+    "mechanism": {
+      "notDepth": "At the representative main win both energy plays had already spent 16 nodes and reached a boundary.",
+      "mainFirstDifferences": {
+        "sameEnergyPlayAlreadyScored": 12,
+        "energyLineOfACardWhoseFrontWasScored": 8,
+        "cardNeverEnteredTheBeam": 4,
+        "gains": [
+          6,
+          3,
+          3
+        ]
+      },
+      "representative": {
+        "deck": "white-sword",
+        "seed": 8401,
+        "first": 0,
+        "seat": 0,
+        "step": 27,
+        "v3": "energy BLC-2-069 日番谷 冬獅郎 uid 0-16",
+        "hard": "energy BLC-4-070 更木 剣八 uid 0-20",
+        "scores": "0-20 yielded attack -34.7 in 16 nodes. Front 0-16 yielded move +22.35 in 8 nodes. Search returned that front and the generator wrote the same card onto energy.",
+        "result": "life 0-2 became 4-0. The later game is not evidence that this one card is the cause."
+      }
+    },
+    "nextExperiment": "Default off, not added. On an idle main decision, an energy play that was executed and reached a later phase is not replaced by an earlier-phase front of another card, and the generator does not turn that front into the other card. No score weights, no card-number exception. It has to be paired on a fresh set. This 24-game gap is the exposed diagnostic set."
+  }
+}

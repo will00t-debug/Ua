@@ -1,0 +1,341 @@
+{
+  "kind": "start-hard-8890-independent",
+  "programBase": "2b93663f64be64d1923bbb73a3c6ead7560cb61f",
+  "headSha": "722c9167e444a634fb9907d9918912bb49d3f164",
+  "lockSha256": "054eb43947c971f0ddb5cb1a066b37285363b6b3d25a89c93d66f09642da692d",
+  "gamesPerArm": 160,
+  "combinedWithExploration": false,
+  "exploration": {
+    "set": "8970-9009",
+    "file": "audit/ai-v3-start-hard-8970.json",
+    "combinedWithValidation": false,
+    "A": {
+      "wins": 67,
+      "games": 160,
+      "winRate": 0.41875
+    },
+    "B": {
+      "wins": 97,
+      "games": 160,
+      "winRate": 0.60625
+    },
+    "paired": {
+      "n": 40,
+      "mean": 0.1875,
+      "low": 0.1,
+      "high": 0.275
+    }
+  },
+  "A": {
+    "overall": {
+      "games": 160,
+      "finished": 160,
+      "wins": 64,
+      "losses": 96,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.4
+    },
+    "white": {
+      "games": 56,
+      "finished": 56,
+      "wins": 14,
+      "losses": 42,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.25
+    },
+    "sao": {
+      "games": 52,
+      "finished": 52,
+      "wins": 24,
+      "losses": 28,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.46153846153846156
+    },
+    "steins": {
+      "games": 52,
+      "finished": 52,
+      "wins": 26,
+      "losses": 26,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.5
+    },
+    "first": {
+      "games": 80,
+      "finished": 80,
+      "wins": 36,
+      "losses": 44,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.45
+    },
+    "second": {
+      "games": 80,
+      "finished": 80,
+      "wins": 28,
+      "losses": 52,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.35
+    },
+    "whiteFirst": {
+      "games": 28,
+      "finished": 28,
+      "wins": 9,
+      "losses": 19,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.32142857142857145
+    },
+    "whiteSecond": {
+      "games": 28,
+      "finished": 28,
+      "wins": 5,
+      "losses": 23,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.17857142857142858
+    },
+    "extraDraw": 847,
+    "next": 1112,
+    "otherStart": 0,
+    "extraDrawRate": 0.43236345074017357,
+    "apUsed": 2.468525179856115,
+    "apUsedPerGame": 17.15625,
+    "apLeft": 0.17176258992805754,
+    "ownTurns": 1112,
+    "firstFront": 3.39375,
+    "neverFront": 0,
+    "firstRaid": 4.402684563758389,
+    "neverRaid": 11,
+    "firstAttack": 3.8050314465408803,
+    "firstConnect": 5.1679389312977095,
+    "neverConnect": 29,
+    "decisionMs": {
+      "count": 13579,
+      "p50": 40.21644400001969,
+      "p95": 45.16706999996677,
+      "gameMeanP50": 37.92570861250154,
+      "gameMeanP95": 44.73252281875137
+    },
+    "budget": 6854,
+    "decisions": 13579,
+    "over40": 6863,
+    "over80": 2,
+    "overNodes": 0,
+    "maxNodes": 48,
+    "phaseErrors": 0,
+    "startMismatches": 0,
+    "otherMismatches": 0,
+    "lanes": {
+      "start": {
+        "v3": 1959,
+        "hard": 0,
+        "other": 0
+      },
+      "move": {
+        "v3": 1373,
+        "hard": 0,
+        "other": 0
+      },
+      "main": {
+        "v3": 0,
+        "hard": 3093,
+        "other": 0
+      },
+      "battle": {
+        "v3": 2044,
+        "hard": 0,
+        "other": 0
+      },
+      "pending": {
+        "v3": 5110,
+        "hard": 0,
+        "other": 0
+      },
+      "other": {
+        "v3": 0,
+        "hard": 0,
+        "other": 0
+      }
+    },
+    "abandonedKills": 0,
+    "lethalPasses": 34,
+    "illegal": 0,
+    "unfinished": 0,
+    "hitStepCap": 0
+  },
+  "B": {
+    "overall": {
+      "games": 160,
+      "finished": 160,
+      "wins": 101,
+      "losses": 59,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.63125
+    },
+    "white": {
+      "games": 56,
+      "finished": 56,
+      "wins": 25,
+      "losses": 31,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.44642857142857145
+    },
+    "sao": {
+      "games": 52,
+      "finished": 52,
+      "wins": 35,
+      "losses": 17,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.6730769230769231
+    },
+    "steins": {
+      "games": 52,
+      "finished": 52,
+      "wins": 41,
+      "losses": 11,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.7884615384615384
+    },
+    "first": {
+      "games": 80,
+      "finished": 80,
+      "wins": 50,
+      "losses": 30,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.625
+    },
+    "second": {
+      "games": 80,
+      "finished": 80,
+      "wins": 51,
+      "losses": 29,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.6375
+    },
+    "whiteFirst": {
+      "games": 28,
+      "finished": 28,
+      "wins": 8,
+      "losses": 20,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.2857142857142857
+    },
+    "whiteSecond": {
+      "games": 28,
+      "finished": 28,
+      "wins": 17,
+      "losses": 11,
+      "draws": 0,
+      "unfinished": 0,
+      "winRate": 0.6071428571428571
+    },
+    "extraDraw": 127,
+    "next": 1101,
+    "otherStart": 0,
+    "extraDrawRate": 0.10342019543973942,
+    "apUsed": 2.172570390554042,
+    "apUsedPerGame": 14.95,
+    "apLeft": 0.4641235240690282,
+    "ownTurns": 1101,
+    "firstFront": 2.58125,
+    "neverFront": 0,
+    "firstRaid": 3.6953642384105962,
+    "neverRaid": 9,
+    "firstAttack": 3.125,
+    "firstConnect": 4.412162162162162,
+    "neverConnect": 12,
+    "decisionMs": {
+      "count": 13326,
+      "p50": 38.73273899999913,
+      "p95": 45.464450999999826,
+      "gameMeanP50": 37.125530449999054,
+      "gameMeanP95": 44.87595133750129
+    },
+    "budget": 5992,
+    "decisions": 13326,
+    "over40": 6301,
+    "over80": 0,
+    "overNodes": 0,
+    "maxNodes": 48,
+    "phaseErrors": 0,
+    "startMismatches": 0,
+    "otherMismatches": 0,
+    "lanes": {
+      "start": {
+        "v3": 0,
+        "hard": 1228,
+        "other": 0
+      },
+      "move": {
+        "v3": 1508,
+        "hard": 0,
+        "other": 0
+      },
+      "main": {
+        "v3": 0,
+        "hard": 3489,
+        "other": 0
+      },
+      "battle": {
+        "v3": 2271,
+        "hard": 0,
+        "other": 0
+      },
+      "pending": {
+        "v3": 4830,
+        "hard": 0,
+        "other": 0
+      },
+      "other": {
+        "v3": 0,
+        "hard": 0,
+        "other": 0
+      }
+    },
+    "abandonedKills": 0,
+    "lethalPasses": 9,
+    "illegal": 0,
+    "unfinished": 0,
+    "hitStepCap": 0
+  },
+  "paired": {
+    "n": 40,
+    "mean": 0.23125,
+    "low": 0.1375,
+    "high": 0.33125
+  },
+  "gates": {
+    "pairedPositive": true,
+    "intervalLow": true,
+    "gapAtLeast5": true,
+    "whiteDrop": true,
+    "safety": true,
+    "kills": true,
+    "routes": true
+  },
+  "advance": true,
+  "safety": true,
+  "gap": 0.23124999999999996,
+  "whiteDrop": -0.19642857142857145,
+  "officialDefault": false,
+  "policyDefault": "off",
+  "menuAdded": false,
+  "passedIndependentValidation": true,
+  "conclusion": "passed-independent-validation",
+  "doesNotReplace": [
+    "audit/ai-v3-start-hard-8970.json",
+    "audit/ai-v3-hybrid-vs-hard-9050-summary.json"
+  ]
+}
