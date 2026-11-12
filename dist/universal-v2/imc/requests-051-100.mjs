@@ -1,7 +1,7 @@
 // C group owns this file. One object per shared-engine gap.
 // cardId, sentence, existingOps, whyNotEnough, proposal.
 const NAMES='IMC-1-068、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093';
-const ENERGY='IMC-1-078、IMC-1-080、IMC-1-083、IMC-1-084、IMC-1-087、IMC-1-099';
+const ENERGY='IMC-1-078、IMC-1-080、IMC-1-087、IMC-1-099';
 
 export const IMC_REQUESTS_051_100=[
  {
@@ -15,8 +15,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-080',
   sentence:'自分の場に必要エナジーが2の［特徴：Starry-Go-Round］が N 枚以上。',
   existingOps:['drawIfOwnTraitCount'],
-  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，但 turn 鎖成 any，不能表達【自分のターン中】。081 與 082 沒有回合限制所以已用。083 是自己回合才 BP+1000。084 還有階梯；step 已能進程式，但自己回合的張數加攻還沒有，不能只做階梯。ownTurnBp 不能附上張數條件。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場、087 的場外張數、099 的退場上限都還沒有整句。',
-  proposal:'讓 ownPrintedTraitCount 能使用 turn:own，通過時才給 BP。083 與 084 在這之前不標 ready。081 與 082 已完成。其餘 '+ENERGY+' 先不標 ready。'
+  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場、087 的場外張數、099 的退場上限都還沒有整句。',
+  proposal:'081、082、083、084 已完成。其餘 '+ENERGY+' 先不標 ready。078 還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
  },
  {
   cardId:'IMC-1-051',
@@ -31,13 +31,6 @@ export const IMC_REQUESTS_051_100=[
   existingOps:['buffOwnTrait','enemyBpDown'],
   whyNotEnough:'現有加攻的目標是自己場上或對手場上其中一種，沒有這個聯集，也沒有排除指定卡名。054 的第二個起動是同一句。',
   proposal:'一個必選目標：對手前線，或自己場上帶特徵且不是指定卡名。052 與 054 先不標 ready。'
- },
- {
-  cardId:'IMC-1-055',
-  sentence:'【ターン1】相手の場にBP4500以上のキャラがある場合のみ、このキャラはこのターン中、BP+2000。',
-  existingOps:['buffSelf','drawIfOppCharacterBpAtLeast'],
-  whyNotEnough:'onceBuffSelfWhen 鎖死 BP+1000，條件也不是對手場上目前 BP 至少 4500。060 的衝擊無效可以用 impactNull，但同一句一回合一次的 BP+2000 還沒有，所以兩張都不做半套。',
-  proposal:'一回合一次的自身 BP+2000，只有對手場上有目前 BP≥4500 的角色時才出現這個啟動。IMC-1-055 與 IMC-1-060 先不標 ready。'
  },
  {
   cardId:'IMC-1-054',

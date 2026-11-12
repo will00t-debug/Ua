@@ -5,10 +5,20 @@ const play=effects=>({ready:true,implementation:'dsl',effects:{onPlay:effects}})
 
 export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-053':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
+ 'IMC-1-055':Object.freeze({
+  ready:true,implementation:'dsl',
+  mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:2000,
+   when:{kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500}}
+ }),
  'IMC-1-056':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'LiPPS'}}]),
  'IMC-1-058':play([{op:'drawDiscard',count:1}]),
  'IMC-1-059':play([{op:'drawDiscard',count:1}]),
+ 'IMC-1-060':Object.freeze({
+  ready:true,implementation:'dsl',impactNull:true,
+  mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:2000,
+   when:{kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500}}
+ }),
  'IMC-1-063':play([{op:'recoverAp',count:2}]),
  'IMC-1-066':play([
   {op:'draw',count:2},
@@ -58,6 +68,18 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
   passiveBonuses:[{extraEnergy:1,condition:{
    kind:'ownPrintedTraitCount',turn:'any',zone:'field',excludeSelf:false,
+   trait:'Starry-Go-Round',min:3,printedEnergy:2}}]
+ }),
+ 'IMC-1-083':Object.freeze({
+  ready:true,implementation:'dsl',
+  passiveBonuses:[{bp:1000,condition:{
+   kind:'ownPrintedTraitCount',turn:'own',zone:'field',excludeSelf:false,
+   trait:'Starry-Go-Round',min:3,printedEnergy:2}}]
+ }),
+ 'IMC-1-084':Object.freeze({
+  ready:true,implementation:'dsl',step:true,
+  passiveBonuses:[{bp:1500,condition:{
+   kind:'ownPrintedTraitCount',turn:'own',zone:'field',excludeSelf:false,
    trait:'Starry-Go-Round',min:3,printedEnergy:2}}]
  }),
  'IMC-1-085':play([{op:'inspectTopTraitOutside',count:2,
