@@ -94,6 +94,14 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:Chainsaw_Man_(Japanese)_logo.svg',
   credit:'藤本タツキ／集英社・MAPPA',
   license:'PD text logo'
+ }),
+ // Commons has this wordmark as a PNG. There is no SVG in the Idolmaster logos category.
+ imc:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/b/b4/THE_IDOLM%40STER_CINDERELLA_GIRLS_Logo.png',
+  label:'偶像大師 灰姑娘女孩',
+  source:'https://commons.wikimedia.org/wiki/File:THE_IDOLM@STER_CINDERELLA_GIRLS_Logo.png',
+  credit:'Bandai Namco Entertainment',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;

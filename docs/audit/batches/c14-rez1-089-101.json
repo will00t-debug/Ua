@@ -1,0 +1,408 @@
+{
+  "group": "C14",
+  "baseline": "0ced13aac83f7a8b283ed80113abb010a05b4c5e",
+  "baseBranch": "cursor/audit-round11-integrate-65f8",
+  "range": "UA40BT/REZ-1-089 至 REZ-1-101。101 的目錄編號是 UA40ST/REZ-1-101。",
+  "updated": "2026-11-11",
+  "official": {
+    "cards": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-089 起，至 REZ-1-101。101 用 UA40ST/REZ-1-101。",
+    "images": [
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-089.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-090.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-093.png",
+      "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-101.png"
+    ],
+    "faq": "https://www.unionarena-tcg.com/jp/faq/list.php?series=UA40BT",
+    "checked": "2026-11-11",
+    "note": "2026-11-11 用 detail.php 對過 REZ-1-089～101，並用卡圖效果區亮度對過突襲框。015 的白底框中位亮度 236；027 的框外文字 219。089 是 196、090 是 194、093 是 84，三張都印在突襲條下面的插圖上，已從 raid-box 拿掉。089 的衝擊無效改為 impactNull，普通登場也有效。100 的「1枚選び」補上 mandatory，沒有合法前線就不能使用、不付 AP。UA40BT FAQ 是 Q1569～Q1582。這組用到 Q1579（089 沒被防禦時，休息選擇在生命傷害之前）、Q1580（090 支付突襲後立即活動，休息限定的起動還不能用）、Q1581（101 底下恰好一張裏向，持有者看得到編號，對手只看卡背，手牌支付是非公開）。沒有改 engine.mjs，也沒有改共用台帳或 README。"
+  },
+  "counts": {
+    "已驗證": 13,
+    "部分核對": 0,
+    "待修正": 0,
+    "缺資料待確認": 0,
+    "無效果": 0
+  },
+  "fixes": [
+    {
+      "cards": ["REZ-1-089", "REZ-1-090", "REZ-1-093"],
+      "change": "從 dist/universal-v2/raid-box.mjs 移除。卡圖確認效果在突襲條下面的插圖上，普通登場也結算。077、078、106 不在這輪，沒有改。"
+    },
+    {
+      "cards": ["REZ-1-089"],
+      "change": "raidImpactNull 改為 impactNull。衝擊無效印在框外，普通登場也使對戰對手在該次對戰中失去衝擊。沒有改 engine.mjs。"
+    },
+    {
+      "cards": ["REZ-1-100"],
+      "change": "emiliaRetire 的 retireOppFrontUnderBp 加上 mandatory。印刷是「1枚選び」。沒有合法前線時事件不合法、不付 AP。場上有愛蜜莉雅才把上限換成 5000。只影響 REZ-1-100。"
+    }
+  ],
+  "sharedGaps": [],
+  "tests": {
+    "command": "node --test tests/v2-rez1-089-101.test.mjs tests/v2-rez1-051-075.test.mjs tests/v2-rez1-026-050.test.mjs tests/v2-rez1-001-025.test.mjs tests/v2-re0-set1-batch.test.mjs tests/v2-re0-official-faq.test.mjs tests/v2-raid-box-all-titles.test.mjs tests/v2-rezero-rem-energy-raid-tap.test.mjs",
+    "result": "Node v22.23.4。159 passed, 0 failed。新檔 14，其餘 Re:Zero 回歸 145。沒有跑整庫，也沒有重建共用台帳。"
+  },
+  "reviews": [
+    {
+      "cardId": "REZ-1-089",
+      "number": "UA40BT/REZ-1-089",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【インパクト無効】",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-089。2026-11-11 卡圖效果區中位亮度 196，比框外基準 027 更暗，不在白底突襲框。衝擊無效、BP2000 以下不能防禦、沒被防禦時可休息 1 張對手前線，普通登場都有效。Q1579：休息選擇在生命傷害之前，可以不選。",
+          "implementation": "raid-box 不再列 main、blockBpRestriction、unblockedRestFront。impactNull。blockBpRestriction atMost 2000。unblockedRestFront。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：沒有疊放的普通登場仍是衝擊無效。BP2000 不能防禦，現在 BP 加到 2500 就可以。不防禦後先開休息選擇，生命還沒少；跳過或選一張之後生命才減 1。tests/v2-re0-official-faq.test.mjs 的 Q1579 仍通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】【エナジーLにある場合】 【ターン1】",
+          "status": "已驗證",
+          "official": "同一頁。只在能源線、每回合 1 次，和自己前線的一張角色交換位置。",
+          "implementation": "mainAbility energySwapOwnFront，line energy，oncePerTurn。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：在前線不能起動。移到能源線後可選被換下來的前線角色，不能選自己。交換後同一回合再移回能源線也不能再起動。沒有前線時不能起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】このカードを手札に加えるか",
+          "status": "已驗證",
+          "official": "同一頁。生命觸發可加入手牌。沒有突襲對象時不能選突襲。",
+          "implementation": "共用 life-trigger raid。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs 的生命迴圈翻的是 089。沒有突襲對象，選加入手牌後同一張進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-090",
+      "number": "UA40BT/REZ-1-090",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-3500。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-090。卡圖效果區中位亮度 194，在框外。普通登場也可選最多 1 張對手前線，本回合 BP-3500。可以不選。Q1580 只規範支付突襲後的活動狀態。",
+          "implementation": "raid-box 不再列 onPlay。enemyBpDown bp 3500 optional zone front。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：沒有疊放也開 effect-target。跳過則 BP 不變。選了 BP4000 的角色後變成 500。角色仍在場。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】【フロントLにある場合】 【ターン1】このキャラがレストの場合のみ",
+          "status": "已驗證",
+          "official": "同一頁。只在前線、這張休息、每回合 1 次。可退現在 BP1500 以下的對手前線最多 1 張。不論有沒有退場，這張都活動並在本回合得到衝擊 1。",
+          "implementation": "restedFrontRetireReadyImpact。沒有合法對象時直接活動並給衝擊。有對象時可放棄，放棄後仍活動並給衝擊。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：活動中或在能源線不能起動。沒有 BP1500 以下的對象時不開選擇，直接活動且衝擊 1。有對象時 BP4000 不在名單，降到 500 的才在。放棄或退場之後都活動且衝擊 1，同一回合不能再起動。tests/v2-re0-official-faq.test.mjs 的 Q1580 仍通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】このカードを手札に加えるか",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger raid。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 090，沒有突襲對象時加入手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-091",
+      "number": "UA40BT/REZ-1-091",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【登場時】自分の山札の上から7枚見る。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-091。看牌組上 7 張，最多公開 1 張名字是「”聖域”の”試練”」的加入手牌，其餘自選順序放牌底。只有加進手牌才棄 1 張手牌。沒有生命觸發。",
+          "implementation": "searchTopOneBottomDiscard count 7，filter name 為 REZ-1-098 的 nameJa。視窗非公開，只有取走的那張公開。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：7 張都不是試煉時，整窗要排進牌底，手牌張數不變，也不棄牌。取到真正的 098 時，其餘 6 張不能選，對手看不到視窗。排完才必須棄 1 張，不能放棄。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-092",
+      "number": "UA40BT/REZ-1-092",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-092。抽 1 張後必須把 1 張手牌放到場外。",
+          "implementation": "drawDiscard count 1。牌組和手牌都空時不發明棄牌。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：抽 1 後不能選放棄。棄掉後手牌回到登場前的張數。牌組和手牌都空時 pending 為空。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】カードを1枚引く。",
+          "status": "已驗證",
+          "official": "同一頁。生命觸發只抽 1 張，不棄牌。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 092。抽 1 張後 pending 為空，這張進場外。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-093",
+      "number": "UA40BT/REZ-1-093",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【レイド】〈エキドナ〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-093。卡圖效果區中位亮度 84，在框外。普通登場也抽 1 張。",
+          "implementation": "raid-box 不再列 onPlay。draw count 1。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：沒有疊放，登場後牌組少 1 張，pending 為空。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】【フロントLにある場合】 【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。",
+          "status": "已驗證",
+          "official": "同一頁。只在前線、每回合 1 次。必須休息 1 張自己的活動前線。有休息才抽 1 張。",
+          "implementation": "frontOnceProgram 接 restOwnActiveFrontDraw。沒有活動前線時不能起動。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：沒有活動前線、或人在能源線時不能起動。休息指定的活動角色後才抽 1 張，同一回合不能再起動。不能放棄。",
+          "unresolved": ""
+        },
+        {
+          "match": "【レイド】このカードを手札に加えるか",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger raid。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 093，沒有突襲對象時加入手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-094",
+      "number": "UA40BT/REZ-1-094",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【登場時】自分の手札を1枚場外に置いてもよい。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-094。場域。可把 1 張手牌放到場外，有做才把這張場域轉為活動。手牌沒有就不能選。",
+          "implementation": "optionalDiscardActiveSelf。只能登場到能源線。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：不能登場到前線。放棄則維持休息。棄牌後活動，那張牌進場外。手牌是空的時不開選擇，維持休息。",
+          "unresolved": ""
+        },
+        {
+          "match": "【起動メイン】【レストにする】 【ターン1】カードを1枚引き",
+          "status": "已驗證",
+          "official": "同一頁。休息這張，抽 1 張，必須把 1 張手牌放到牌組上面。每回合 1 次。",
+          "implementation": "mainAbility restSelfThen 接 drawHandTop。frontOnly false。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：活動後才可起動。抽到的牌進手，指定的手牌放到牌頂且不公開。同一回合把這張轉回活動也不能再起動。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】このカードを手札に加える。",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 094，同一張進手牌。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-095",
+      "number": "UA40BT/REZ-1-095",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-095。最多活動 2 張自己的 AP。可以少選。這張自己付 1 AP。",
+          "implementation": "recoverAp count 2。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs 對 095 本身各跑一次。使用後有 3 張休息的 AP。選滿 2 張，或選 1 張後停止。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】自分のライフが無い場合",
+          "status": "已驗證",
+          "official": "同一頁。自己沒有生命時，把牌組頂放進生命區。",
+          "implementation": "共用 life-trigger final。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 095，牌組頂變成生命。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-096",
+      "number": "UA40BT/REZ-1-096",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-096。必須選 1 張。沒有碧翠絲是 3000，有碧翠絲是 4000，碧翠絲和菜月昴都在是 5000。看現在 BP。沒有合法對象就不能使用。",
+          "implementation": "retireOppFrontTiered。eventMandatoryTargetsAvailable 本來就把這個 op 當成必須有對象。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：BP4000 時事件不合法，AP 不減。降到 2500 後上限 3000，不能放棄，選了才退場。只有碧翠絲時 BP4000 合法、BP5000 不合法。再放上菜月昴後上限 5000 並退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger special。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 096，選攻擊者後退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-097",
+      "number": "UA40BT/REZ-1-097",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "自分の山札の上から3枚見る。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-097。看 3 張，任意張數以任意順序留在上面，其餘放場外，視窗不公開。然後公開牌頂。付得起的菜月昴或碧翠絲可改為休息登場或突襲，否則進手牌。牌組被看完就不再公開。",
+          "implementation": "inspectTopAnyOutside count 3，接著 revealTopHandOrAffordableNamed，名字是ナツキ・スバル與ベアトリス。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs 打的是 097。3 張視窗對手看不到。1 張放場外、2 張留在上面後，公開的 068 可進手或休息登場，沒有突襲對象就不能突襲。3 張都放場外且牌組空時不公開。牌頂是愛蜜莉雅時直接進手，不開登場選擇。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ドロー】カードを1枚引く。",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger draw。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 097，抽 1 張後 pending 為空。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-098",
+      "number": "UA40BT/REZ-1-098",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "カードを2枚引き、自分の手札を1枚場外に置く。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-098。抽 2 張後必須棄 1 張。然後可休息 1 張自己的活動前線。有休息才可活動最多 1 張 AP。沒有活動前線就停在棄牌之後。",
+          "implementation": "drawDiscard count 2 discardCount 1，接著 optionalRestFrontRecoverAp。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs 打的是 098。牌組少 3 張（事件本身離組再抽 2）。不能放棄棄牌。跳過休息則 AP 不變。休息後只活動 1 張 AP。沒有活動前線時棄完就結束。",
+          "unresolved": ""
+        },
+        {
+          "match": "【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚",
+          "status": "已驗證",
+          "official": "同一頁。從場外把能源 2 以下、AP 1 的紫色角色以活動狀態放到自己前線。",
+          "implementation": "triggerEffect deployOutsideCharacter，color purple，maxEnergy 2，ap 1，frontOnly。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 098。場外的 REZ-1-072 以 colorOutside 活動登場到前線。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-099",
+      "number": "UA40BT/REZ-1-099",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "自分のAPカードを2枚まで選び、アクティブにする。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-099。句子和 095 相同，這張要自己測。最多活動 2 張 AP，可以少選。",
+          "implementation": "recoverAp count 2。和 095 同一個 op，測試打的是 099。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs 對 099 本身選滿 2 張，以及選 1 張後停止。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ファイナル】自分のライフが無い場合",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger final。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 099，牌組頂變成生命。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-100",
+      "number": "UA40BT/REZ-1-100",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈エミリア〉がある場合",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40BT/REZ-1-100。必須選 1 張。沒有愛蜜莉雅是 3000，場上有愛蜜莉雅改成 5000。看現在 BP。沒有合法對象就不能使用，也不付 AP。",
+          "implementation": "emiliaRetire 的 retireOppFrontUnderBp 加上 mandatory。bonusName エミリア，bonusBp 5000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：能源線沒有愛蜜莉雅時，BP4000 不能使用且 AP 不變。降到 2500 後上限 3000，不能放棄。場上有愛蜜莉雅時 BP5500 不合法、BP4500 合法並退場。",
+          "unresolved": ""
+        },
+        {
+          "match": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger special。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 100，選攻擊者後退場。",
+          "unresolved": ""
+        }
+      ]
+    },
+    {
+      "cardId": "REZ-1-101",
+      "number": "UA40ST/REZ-1-101",
+      "round": 14,
+      "clauses": [
+        {
+          "match": "【自分のターン中】このキャラの下に裏向きのカードがある場合、このキャラはBP+1000。",
+          "status": "已驗證",
+          "official": "https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA40ST/REZ-1-101。自己回合、這張底下有裏向卡時 BP+1000。對手回合沒有這項加值。",
+          "implementation": "passiveBonuses ownTurnFacedownUnder，bp 1000。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：沒有裏向卡是 3000。放上一張後自己回合是 4000，換到對手回合回到 3000。重新登場後的自己回合又是 4000。",
+          "unresolved": ""
+        },
+        {
+          "match": "【退場時】自分の場に〈エミリア〉があり、このキャラの下に裏向きのカードがない場合",
+          "status": "已驗證",
+          "official": "同一頁。場上有愛蜜莉雅、且底下沒有裏向卡時，可把 1 張手牌放到場外。有做才把這張以休息狀態放回前線，並把那張牌裏向放在底下。可以不做。Q1581：持有者看得到底下的編號，對手只看卡背；手牌選擇不公開。Q34：防禦方 BP 較高時攻擊方不離場，所以這次用 BP 較高的攻擊讓 101 以防禦方敗北而退場。",
+          "implementation": "handOutsideReenterFaceDown，name エミリア，optional。hadFacedown 時不開選擇。",
+          "discrepancy": "",
+          "evidence": "tests/v2-rez1-089-101.test.mjs：底下已有裏向卡時，防禦敗北後退場且不開支付。清掉裏向卡後，同一種敗北會開非公開的手牌選擇。放棄則留在場外，場上的愛蜜莉雅還在。支付後休息放回前線，底下恰好那一張。持有者的公開畫面看得到編號，對手只看到卡背。沒有愛蜜莉雅時不開選擇。tests/v2-re0-official-faq.test.mjs 的 Q1581 仍通過。",
+          "unresolved": ""
+        },
+        {
+          "match": "【ゲット】このカードを手札に加える。",
+          "status": "已驗證",
+          "official": "同一頁。",
+          "implementation": "共用 life-trigger get。",
+          "discrepancy": "",
+          "evidence": "生命迴圈翻的是 101，同一張進手牌。",
+          "unresolved": ""
+        }
+      ]
+    }
+  ]
+}

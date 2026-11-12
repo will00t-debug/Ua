@@ -1530,7 +1530,9 @@ function verifyProgram(program,path){
    !Array.isArray(e.then)||e.then.length!==1||e.then[0]?.op!=='draw'||
    ![1,2].includes(e.then[0]?.count)||
    Object.keys(e.then[0]).some(k=>!['op','count'].includes(k))||
-   Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','then'].includes(k))))
+   (e.optional!==undefined&&e.optional!==false)||
+   Object.keys(e).length!==2+Number(e.optional===false)||
+   Object.keys(e).some(k=>!['op','then','optional'].includes(k))))
    throw Error(path+'['+i+'] invalid optional life-to-hand draw');
   if(e.op==='outsideTriggerDrawBranch'&&(
    e.color!=='blue'||e.maxEnergy!==3||e.atMost!==3||Object.keys(e).length!==4||
@@ -2187,11 +2189,14 @@ function verifyProgram(program,path){
      integer(e.scaleBp,e.bp+1)&&e.scaleBp<=50000&&
      Object.keys(e).every(k=>['op','bp','scaleTrait','scaleMin','scaleBp'].includes(k));
    }else{
+    const mandatory=e.mandatory===true;
     headRetireOk=integer(e.bp,1)&&e.bp<=50000&&typeof e.bonusName==='string'&&
      !!e.bonusName.trim()&&integer(e.bonusBp,e.bp)&&e.bonusBp<=50000&&
      (e.bonusOutsideName===undefined||(typeof e.bonusOutsideName==='string'&&
       !!e.bonusOutsideName.trim()&&e.bonusOutsideName.length<=80))&&
-     Object.keys(e).every(k=>['op','bp','bonusName','bonusBp','bonusOutsideName'].includes(k));
+     (e.mandatory===undefined||mandatory)&&
+     Object.keys(e).every(k=>['op','bp','bonusName','bonusBp','bonusOutsideName',
+      ...(mandatory?['mandatory']:[])].includes(k));
    }
    if(e.op==='removeOppFrontUnderBp'&&!headRetireOk)
     throw Error(path+'['+i+'] unsupported printed BP retirement profile');

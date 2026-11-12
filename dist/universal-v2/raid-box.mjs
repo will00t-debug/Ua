@@ -65,7 +65,7 @@ const RAID_BOX_FEATURES=Object.freeze({
  'MMM-1-083':["onAttack","lifeToHandDoubleAttack"],
  'MMM-1-090':["main"],
  'MMM-1-104':["passive","girlNameUnblockedDraw"],
- 'MMM-1-110':["onPlay","main"],
+ // MMM-1-110：卡圖只有〈巴 マミ〉那一行在突襲框內。登場時的減 AP 與起動在框外，一般登場也要發動。
  'MMM-2-001':["onPlay","onRetire"],
  'MMM-2-028':["onPlay","main"],
  'MMM-2-032':["onPlay","passive"],
@@ -76,18 +76,16 @@ const RAID_BOX_FEATURES=Object.freeze({
  'REZ-1-015':["onPlay","onAttack","main"],
  'REZ-1-019':["onPlay","main"],
  'REZ-1-020':["onPlay","main"],
- 'REZ-1-027':["onPlay"],
- 'REZ-1-040':["onPlay","onRetire"],
- 'REZ-1-044':["onPlay"],
  'REZ-1-051':["onPlay"],
- 'REZ-1-053':["onPlay","onAttack"],
- 'REZ-1-058':["onPlay","main","handBpMayWhileFront"],
+ // 2026-11-11 card images: 053 and 058 print the effect text on the
+ // illustration under the raid bar, not inside a raid panel. 051 and 071
+ // keep a solid panel, so only those timings stay raid-gated.
  'REZ-1-071':["onPlay","onAttack"],
  'REZ-1-077':["onPlay","passive"],
  'REZ-1-078':["onPlay","passive"],
- 'REZ-1-089':["main","blockBpRestriction","unblockedRestFront"],
- 'REZ-1-090':["onPlay","main"],
- 'REZ-1-093':["onPlay","main"],
+ // 2026-11-11 card images: 089, 090 and 093 print the effect text on
+ // the illustration under the raid bar, not inside a white raid panel.
+ // 015's panel stays near-white; these three match the outside text of 027.
  'REZ-1-106':["onAttack","passive"],
  'REZ-2-058':["onPlay","onAttack","attackEndRestPrintedBp"],
  'REZ-2-062':["main"],
