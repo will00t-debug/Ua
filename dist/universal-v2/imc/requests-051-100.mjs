@@ -1,22 +1,22 @@
 // C group owns this file. One object per shared-engine gap.
 // cardId, sentence, existingOps, whyNotEnough, proposal.
-const NAMES='IMC-1-068、IMC-1-069、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093';
-const ENERGY='IMC-1-078、IMC-1-080、IMC-1-083、IMC-1-084、IMC-1-087、IMC-1-099';
+const NAMES='IMC-1-068、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093';
+const ENERGY='IMC-1-078、IMC-1-080、IMC-1-087、IMC-1-099';
 
 export const IMC_REQUESTS_051_100=[
  {
   cardId:'IMC-1-068',
   sentence:'自分の場と場外に［特徴：お願い！シンデレラ］のカード名が合計 N 種類以上。',
   existingOps:['draw','retireOppFrontUnderBp'],
-  whyNotEnough:'ownDistinctTraitNames 的 fieldOutside 已能把場上與場外依印刷卡名去重，自己也可以算。070、071 與 098 已用。068 的二選一、069 的抽牌替換、072 的勝利抽牌與手牌進場外、073 的不能上前線、074 的其餘句子、075 的回手再登場、093 的加攻與衝擊，都還沒有整句。',
-  proposal:'070、071 與 098 已完成。其餘 '+NAMES+' 先不標 ready。'
+  whyNotEnough:'ownDistinctTraitNames 的 fieldOutside 已能把場上與場外依印刷卡名去重，自己也可以算。070、071、098 與 069 已用。068 的二選一、072 的勝利抽牌與手牌進場外、073 的不能上前線、074 的其餘句子、075 的回手再登場、093 的加攻與衝擊，都還沒有整句。',
+  proposal:'070、071、098 與 069 已完成。其餘 '+NAMES+' 先不標 ready。'
  },
  {
   cardId:'IMC-1-080',
   sentence:'自分の場に必要エナジーが2の［特徴：Starry-Go-Round］が N 枚以上。',
   existingOps:['drawIfOwnTraitCount'],
-  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，081 與 082 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場、083 與 084 的自己回合、087 的場外張數、099 的退場上限都還沒有整句。',
-  proposal:'081 與 082 已完成。其餘 '+ENERGY+' 先不標 ready。078 還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
+  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看窗休息登場、087 的場外張數、099 的退場上限都還沒有整句。',
+  proposal:'081、082、083、084 已完成。其餘 '+ENERGY+' 先不標 ready。078 還要把查看的 6 張裡恰好能源 2 的紅 Starry 休息登場。'
  },
  {
   cardId:'IMC-1-051',
@@ -31,13 +31,6 @@ export const IMC_REQUESTS_051_100=[
   existingOps:['buffOwnTrait','enemyBpDown'],
   whyNotEnough:'現有加攻的目標是自己場上或對手場上其中一種，沒有這個聯集，也沒有排除指定卡名。054 的第二個起動是同一句。',
   proposal:'一個必選目標：對手前線，或自己場上帶特徵且不是指定卡名。052 與 054 先不標 ready。'
- },
- {
-  cardId:'IMC-1-055',
-  sentence:'【ターン1】相手の場にBP4500以上のキャラがある場合のみ、このキャラはこのターン中、BP+2000。',
-  existingOps:['buffSelf','drawIfOppCharacterBpAtLeast'],
-  whyNotEnough:'onceBuffSelfWhen 鎖死 BP+1000，而且條件不是對手目前 BP 至少 4500。nameOnceActive 的 when 也沒有這個條件。IMC-1-060 是同一句再加衝擊無效。',
-  proposal:'一回合一次的自身加攻，啟動前就檢查對手場上有目前 BP≥4500，沒有就不出現。IMC-1-055 與 IMC-1-060 先不標 ready。'
  },
  {
   cardId:'IMC-1-054',
