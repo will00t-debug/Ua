@@ -223,3 +223,28 @@ test('the 8930 curveFront lock is fixed before any comparison game', () => {
  assert.equal(interval.n, 4);
  assert.equal(Number.isFinite(interval.low) && Number.isFinite(interval.high), true);
 });
+
+test('8930 is not confirmed on 8970, so curveFront stays off', () => {
+ const summary = JSON.parse(readFileSync(new URL('../audit/ai-v3-curve-front-8930-summary.json', import.meta.url), 'utf8'));
+ assert.equal(summary.programSha, '143e872bb3ec864144abde567fe468b6d7c5d74d');
+ assert.equal(summary.defaultRemainsOff, true);
+ assert.equal(summary.candidateUntunedBetweenSets, true);
+ assert.equal(summary.switch, 'off');
+ assert.equal(summary.firstSet.games.length, 160);
+ assert.equal(summary.secondSet.games.length, 160);
+ assert.equal(summary.firstSet.summary.A.overall.wins, 119);
+ assert.equal(summary.firstSet.summary.B.overall.wins, 125);
+ assert.equal(summary.firstSet.summary.A.whiteSecond.wins, 17);
+ assert.equal(summary.firstSet.summary.B.whiteSecond.wins, 19);
+ assert.equal(summary.firstSet.summary.safetyA, true);
+ assert.equal(summary.firstSet.summary.safetyB, true);
+ assert.equal(summary.firstSet.summary.advanceTo8970, true);
+ assert.equal(summary.secondSet.summary.A.overall.wins, 128);
+ assert.equal(summary.secondSet.summary.B.overall.wins, 127);
+ assert.equal(summary.secondSet.summary.A.whiteSecond.wins, 18);
+ assert.equal(summary.secondSet.summary.B.whiteSecond.wins, 18);
+ assert.equal(summary.secondSet.summary.safetyA, true);
+ assert.equal(summary.secondSet.summary.safetyB, true);
+ assert.equal(summary.secondSet.summary.advanceTo8970, false);
+ assert.equal(summary.secondSet.summary.paired.low < -0.05, true);
+});
