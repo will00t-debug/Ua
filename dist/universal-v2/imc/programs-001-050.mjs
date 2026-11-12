@@ -61,6 +61,13 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
   effects:{onPlay:[{op:'draw',count:1}]},
   triggerEffect:{op:'restOppFrontSkipNextActive'},
   notes:'登場時に1枚引く。カラートリガーは014と同じ。'},
+ 'IMC-1-020':{ready:true,implementation:'dsl',raidName:'高森 藍子',
+  mainAbility:{op:'restSelfThen',frontOnly:true,oncePerTurn:true,then:[
+   {op:'raidOwnHandNamed',optional:true,max:1,requireAffordableEnergy:true,
+    names:['本田 未央','日野 茜']}]},
+  effects:{onPlay:[{op:'restOppFrontOne',optional:true,
+   skipWhen:{kind:'selfOwnEffectRaid',turn:'any'}}]},
+  notes:'突襲框是高森 藍子，登場後活動，能量區的底板可以移到前線。登場時最多休息 1 張對方前線；只有自己的效果突襲（Q2230，含對方回合的生命突襲）才讓選中的那張跳過下一次活動。付費突襲與普通登場不跳過。起動只在前線、休息自己、每回合一次，只突襲手牌中滿足能源的本田 未央或日野 茜，不提供休息登場。'},
  'IMC-1-021':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'drawDiscard',count:1}]},
   notes:'登場時、1枚引き、手札を1枚場外。ドロートリガーはカード表。'},
@@ -71,6 +78,21 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
   effects:{onPlay:[{op:'deployOwnHandRest',type:'character',color:'yellow',energy:2,ap:null,
    max:1,trait:'ポジティブパッション',sourceLine:'front'}]},
   notes:'登場時，只有這張卡在前線才讓手牌中黃、費用 2 以下的積極熱情休息登場。sourceLine 是來源，不是登場目的地。アクティブトリガー是卡表。'},
+ 'IMC-1-024':{ready:true,implementation:'dsl',raidName:'日野 茜',impactNull:true,
+  effects:{
+   onPlay:[
+    {op:'buffSelf',bp:1000},
+    {op:'ifLiveThen',when:{kind:'selfOwnEffectRaid',turn:'any'},
+     then:[{op:'grantSelfAttackDamageThisTurn',amount:2}]}
+   ],
+   onAttack:[
+    {op:'draw',count:1},
+    {op:'optionalPayApThen',ap:1,optional:true,firstOwnAttack:true,then:[
+     {op:'raidOwnHandNamed',optional:true,max:1,requireAffordableEnergy:true,
+      names:['本田 未央','高森 藍子']}]}
+   ]
+  },
+  notes:'突襲框是日野 茜。衝擊無效。登場 BP+1000；只有自己的效果突襲才再獲得本回合傷害（2）（Q2233）。攻擊先抽 1。本回合自己角色第一次攻擊才可支付 1 AP，然後只突襲手牌中滿足能源的本田 未央或高森 藍子。'},
  'IMC-1-025':vanilla('効果欄は「-」。ドロートリガーはカード表の trigger。'),
  'IMC-1-026':{ready:true,implementation:'dsl',ownTurnBp:1000,
   notes:'自己回合 BP+1000。對方回合不加。前線與能量區都算。沒有生命觸發。'},
