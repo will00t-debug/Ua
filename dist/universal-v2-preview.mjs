@@ -638,7 +638,7 @@ function pendingDialog(legal,view){
  const triggerChoice=s.pending.kind==='life-trigger';
  const blocking=s.pending.kind==='block'&&view.battle;
  // A view-only pause: no action, state transition, or hidden-card disclosure.
- const canPeek=!triggerChoice&&!blocking&&(gallery||!!focus||
+ const canPeek=!triggerChoice&&!blocking&&(gallery||!!focus||!!source||
   /top|search|look|inspect|deck|outside|hand/i.test(s.pending.kind));
  if(canPeek&&app.inspectionPaused){
   return el('div',{class:'v2-inspection-return',role:'status'},

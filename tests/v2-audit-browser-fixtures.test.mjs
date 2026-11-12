@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {loadAuditFixture} from '../dist/universal-v2/audit-browser-fixtures.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  universalBp,universalEnergyByColor,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
-import {boardEntrySelection,controllerDeckWindowCards,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {boardEntrySelection,controllerDeckWindowCards,uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 import {facedownInspectModel} from '../dist/universal-v2/facedown-inspect.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
 
@@ -253,4 +253,50 @@ test('BLC-2-067 audit hand can enter normally or by raid, and the occupied non-b
  assert.equal(continued.phase,'attack');
  assert.equal(legalUniversalActions(packs,continued).some(action=>action.type==='attack'||action.type==='next'),true);
  assertUniversalMatch(packs,continued);
+});
+
+test('KMR-1-085 audit board keeps the facedown on the character that stayed',()=>{
+ const {packs,state}=loadAuditFixture('kmr085');
+ const base=state.players[0].front.find(c=>c?.cardId==='KMR-1-084');
+ const hidden=base.under[0];
+ assert.equal(base.ready,false);
+ assert.equal(hidden.faceDown,true);
+ assert.equal(state.players[0].outside.some(c=>c.cardId==='KMR-1-085'),true);
+ assert.equal(state.players[0].outside.some(c=>c.uid===hidden.uid),false);
+ assert.equal(JSON.stringify(universalPublicView(packs,state,1)).includes(hidden.uid),false);
+ assert.equal(universalPublicView(packs,state,0).players[0].front
+  .some(c=>c?.underLayers?.some(layer=>layer.uid===hidden.uid&&layer.cardId===hidden.cardId)),true);
+ assert.equal(state.pending?.step,'revive');
+ assert.equal(state.phase,'attack');
+ assertUniversalMatch(packs,state);
+});
+
+test('AOT-2-008 audit board asks the defender to put one life card outside',()=>{
+ const {packs,state}=loadAuditFixture('aot2008');
+ assert.equal(state.pending.kind,'effect-own-life-outside');
+ assert.equal(V2_PENDING_LABELS[state.pending.kind],'將 1 張自己的生命放到場外');
+ assert.equal(universalPrivateChoices(packs,state,1),null);
+ const labels=legalUniversalActions(packs,state).map(action=>uiActionLabel(action,{pack:packs,state}));
+ assert.equal(labels.length,2);
+ assert.equal(labels.every(label=>label.startsWith('將 ')&&label.endsWith(' 放到場外')),true);
+ const chosen=state.players[0].life[0];
+ const next=dispatchUniversalAction(packs,state,{type:'chooseOwnLifeOutside',uid:chosen.uid},{actor:0});
+ assert.equal(next.players[0].life.length,1);
+ assert.equal(next.players[0].outside.some(c=>c.uid===chosen.uid),true);
+ assert.equal(next.pending?.kind==='life-trigger',false);
+ assert.equal(next.status,'playing');
+ assertUniversalMatch(packs,next);
+});
+
+test('IYS-1-044 audit board enters active when the effect asked for rest',()=>{
+ const {packs,state}=loadAuditFixture('iys044');
+ const asked=state.players[0].outside.find(c=>c.cardId==='IYS-1-044');
+ const action=legalUniversalActions(packs,state).find(a=>a.mode==='deploy'&&a.uid===asked.uid);
+ assert.equal(uiActionLabel(action,{pack:packs,state}).includes('犬夜叉'),true);
+ const next=dispatchUniversalAction(packs,state,action,{actor:0});
+ const entered=next.players[0].front.find(c=>c?.uid===asked.uid);
+ assert.equal(entered.ready,true);
+ assert.equal(next.players[0].outside.some(c=>c.uid===asked.uid),false);
+ assert.equal(next.pending,null);
+ assertUniversalMatch(packs,next);
 });

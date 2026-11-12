@@ -5,12 +5,13 @@ import {createAotV2Pack} from './aot-pack.mjs';
 import {createBleachV2Pack} from './bleach-pack.mjs';
 import {createCsmV2Pack} from './csm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
+import {createKmrV2Pack} from './kmr-pack.mjs';
 import {createStgV2Pack} from './stg-pack.mjs';
 import {createKmrBattlePack} from './official-entry.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
  universalBp,universalEnergyByColor,universalPublicView}
  from './engine.mjs';
-import {validateUniversalDeck} from './pack.mjs';
+import {createUniversalPack,validateUniversalDeck} from './pack.mjs';
 import {makeUniversalPreviewReplay} from './preview-replay.mjs';
 
 function take(s,p,id){
@@ -84,6 +85,9 @@ export function loadAuditFixture(name){
  if(name==='aot2016')return falcoLook();
  if(name==='stg006')return rukaActivate();
  if(name==='blc067dual')return kenpachiDual();
+ if(name==='kmr085')return faizTopFacedown();
+ if(name==='aot2008')return mikasaImpactLife();
+ if(name==='iys044')return inuyashaActiveEntry();
  throw Error('Unknown audit fixture '+name);
 }
 function rukaActivate(){
@@ -470,4 +474,156 @@ function jawStep(){
  built.audit={ordinary:ordinary.uid,raider:raider.uid};
  return finish(pack,built,
   '稽核 AOT-2-017：普通登場的顎之巨人沒有 STEP。突襲的那張有「STEP 移至能源線 4」。點下去後，人應在能源線最右邊，離開前線。');
+}
+function usePacks(packs,s,pred){
+ const action=legalUniversalActions(packs,s).find(pred);
+ if(!action)throw Error('No audit action '+(s.pending?.kind||s.phase)+'/'+(s.pending?.step||''));
+ return dispatchUniversalAction(packs,s,action);
+}
+function reach(packs,s,phase){
+ let guard=0;
+ while(s.phase!==phase){
+  if(s.pending)throw Error('Pending '+s.pending.kind+' blocked '+phase);
+  s=dispatchUniversalAction(packs,s,{type:'next'});
+  if(++guard>12)throw Error('Did not reach '+phase+' from '+s.phase);
+ }
+ return s;
+}
+function faizTopFacedown(){
+ const pack=createKmrV2Pack();
+ const built=open(pack,85086,[
+  'KMR-1-085','KMR-1-084','KMR-1-008','KMR-1-098','KMR-1-082','KMR-1-006',
+  'KMR-1-070','KMR-1-083','KMR-1-087'
+ ],{});
+ const packs=[pack,pack];
+ let s=built.state;
+ ['KMR-1-070','KMR-1-083','KMR-1-087'].forEach((id,i)=>put(s,0,id,'energy',i,true));
+ const base=put(s,0,'KMR-1-084','front',0,true);
+ put(s,0,'KMR-1-008','front',1,true);
+ const body=take(s,0,'KMR-1-085');
+ const gear=take(s,0,'KMR-1-098');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].hand.push(body,gear);
+ ready(s);
+ s=usePacks(packs,s,a=>a.type==='raid'&&a.uid===body.uid&&a.baseUid===base.uid);
+ const live=s.players[0].front.find(c=>c?.uid===body.uid);
+ put(s,1,'KMR-1-082','front',0,true);
+ put(s,1,'KMR-1-006','front',1,true);
+ s=reach(packs,s,'attack');
+ s=usePacks(packs,s,a=>a.type==='attack'&&a.uid===live.uid);
+ s=usePacks(packs,s,a=>a.type==='kmr'&&a.mode==='discard'&&a.uid===gear.uid);
+ s=usePacks(packs,s,a=>a.type==='kmr'&&a.mode==='skip');
+ s=usePacks(packs,s,a=>a.type==='chooseBlock'&&a.uid==null);
+ if(s.pending?.kind==='life-trigger'){
+  const skip=legalUniversalActions(packs,s).find(a=>a.type==='chooseTrigger'&&a.mode==='skip');
+  if(skip)s=dispatchUniversalAction(packs,s,skip);
+ }
+ const top=s.players[0].front.find(c=>c?.uid===live.uid);
+ top.ready=false;
+ top.buffs=[{bp:500,untilTurn:s.turn}];
+ const hidden=s.players[0].deck.pop();
+ hidden.faceDown=true;hidden.ready=false;hidden.fieldEntryStamp=null;
+ top.under=[hidden];
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=usePacks(packs,s,a=>a.type==='choosePhaseOrder'&&a.key.startsWith(live.uid+':'));
+ const stayed=s.players[0].front.find(c=>c?.uid===base.uid);
+ if(!stayed||stayed.ready!==false||stayed.buffs.length!==0||
+  s.pending?.step!=='revive'||
+  !stayed.under.some(c=>c.uid===hidden.uid&&c.faceDown===true))
+  throw Error('KMR-1-085 audit did not keep the facedown on the base '+
+   JSON.stringify({card:stayed?.cardId,ready:stayed?.ready,buffs:stayed?.buffs?.length,
+    under:stayed?.under?.map(c=>c.cardId),pending:s.pending?.kind+'/'+s.pending?.step,
+    outside:s.players[0].outside.map(c=>c.cardId)}));
+ if(s.players[0].outside.some(c=>c.uid===hidden.uid)||
+  !s.players[0].outside.some(c=>c.uid===live.uid&&c.under.length===0))
+  throw Error('KMR-1-085 audit moved the wrong card outside');
+ if(JSON.stringify(universalPublicView(packs,s,1)).includes(hidden.uid))
+  throw Error('KMR-1-085 audit showed the facedown to the opponent');
+ built.state=s;
+ built.audit={base:base.uid,top:live.uid,hidden:hidden.uid};
+ return finish(pack,built,
+  '稽核 KMR-1-085：攻擊階段結束後，突襲頂的法伊茲已在場外。留下的角色是休息，正下方有 1 張裏向卡。先按「查看場面與手牌」，再點「裏向 1」。這個視窗是 008 的另一個效果，還沒結算。');
+}
+function mikasaImpactLife(){
+ const aot=createAotV2Pack();
+ const katsura={
+  id:'GNT-1-054',name:'桂 小太郎',color:'purple',type:'character',energy:3,ap:1,
+  bp:4000,gen:1,traits:['松下村塾'],trigger:'get',implementation:'dsl',
+  effects:{onRetire:[{op:'ownLifeToOutside'}]}
+ };
+ const fillers=Array.from({length:12},(_,i)=>({
+  id:'GNT-F-'+String(i).padStart(3,'0'),name:'銀魂填充 '+i,color:'purple',
+  type:'character',energy:1,ap:1,bp:i===3?5000:1000,gen:1,
+  trigger:i<2?'get':null,implementation:'vanilla'
+ }));
+ const gnt=createUniversalPack({id:'gnt-q1551',cards:[katsura,...fillers]});
+ const required=['AOT-2-008','AOT-2-001'];
+ const pool=Object.values(aot.cards).filter(c=>!required.includes(c.id)&&
+  !['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
+ const aotDeck={};
+ const caps={special:0,color:0,final:0};
+ for(const id of required){
+  const trigger=aot.cards[id].trigger;
+  let copies=4;
+  if(trigger==='special'||trigger==='color'||trigger==='final'){
+   copies=Math.min(2,4-caps[trigger]);
+   caps[trigger]+=copies;
+  }
+  aotDeck[id]=copies;
+ }
+ let total=Object.values(aotDeck).reduce((n,x)=>n+x,0);
+ for(const id of pool){
+  if(total>=50)break;
+  const trigger=aot.cards[id].trigger;
+  let add=Math.min(4,50-total);
+  if(trigger==='special'||trigger==='color'||trigger==='final')
+   add=Math.min(add,4-(caps[trigger]||0));
+  if(add<=0)continue;
+  aotDeck[id]=add;total+=add;
+  if(Object.prototype.hasOwnProperty.call(caps,trigger))caps[trigger]+=add;
+ }
+ const gntDeck=Object.fromEntries([katsura,...fillers].map((c,i)=>[c.id,i===12?2:4]));
+ const packs=[gnt,aot];
+ const decks=[gntDeck,aotDeck];
+ let s=newUniversalMatch(packs,{decks,seed:1551,first:1});
+ s=reach(packs,s,'attack');
+ put(s,1,'AOT-2-001','energy',0,true);
+ const mikasa=put(s,1,'AOT-2-008','front',0,true);
+ const wall=put(s,0,'GNT-1-054','front',0,true);
+ put(s,0,'GNT-F-003','front',1,true);
+ const first=take(s,0,'GNT-F-000');
+ const second=take(s,0,'GNT-F-001');
+ s.players[0].deck.push(...s.players[0].life.splice(0));
+ s.players[0].life.push(first,second);
+ s=usePacks(packs,s,a=>a.type==='attack'&&a.uid===mikasa.uid);
+ s=usePacks(packs,s,a=>a.type==='chooseBlock'&&a.uid===wall.uid);
+ if(s.pending?.kind!=='effect-own-life-outside'||s.pending.player!==0||
+  s.players[0].life.length!==2)
+  throw Error('Q1551 audit did not ask for an own life card');
+ assertUniversalMatch(packs,s);
+ return {packs,state:s,label:
+  '稽核 AOT-2-008／Q1551：桂小太郎擋下三笠並退場。選 1 張自己的生命放到場外。生命會從 2 變成 1，這次沒有衝擊。',
+  replay:makeUniversalPreviewReplay(packs,{decks,seed:1551,first:1}),
+  audit:{life:[first.uid,second.uid],wall:wall.uid,mikasa:mikasa.uid}};
+}
+function inuyashaActiveEntry(){
+ const pack=createIysV2Pack();
+ const built=open(pack,4406,['IYS-1-044','IYS-1-001','IYS-1-036'],{});
+ const s=built.state;
+ s.pending=null;s.phase='main';
+ const source=take(s,0,'IYS-1-001');
+ s.players[0].outside.push(source);
+ const asked=take(s,0,'IYS-1-044');
+ s.players[0].outside.push(asked);
+ s.pending={kind:'iys',player:0,sourceUid:source.uid,id:'IYS-1-036',step:'deploy',
+  data:{follow:null},actions:[
+   {type:'iys',mode:'skip'},
+   {type:'iys',mode:'deploy',uid:asked.uid,line:'front',slot:0}
+  ]};
+ const legal=legalUniversalActions([pack,pack],s);
+ if(!legal.some(a=>a.mode==='deploy'&&a.uid===asked.uid&&a.line==='front'&&a.slot===0))
+  throw Error('IYS-1-044 audit did not offer the effect entry');
+ built.audit={inu:asked.uid,source:source.uid};
+ return finish(pack,built,
+  '稽核 IYS-1-044：這個效果要求犬夜叉以休息狀態登場。點「讓犬夜叉登場」之後，場上的犬夜叉是活動，沒有橫置。');
 }
