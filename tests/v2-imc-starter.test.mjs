@@ -18,7 +18,7 @@ import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 
 const catalog=imcCatalog();
 const STARTER_IDS=IMC_CARDS_STARTER.map(card=>card.id);
-const READY=['IMC-1-101','IMC-1-102','IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110','IMC-1-113'];
+const READY=['IMC-1-101','IMC-1-102','IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110','IMC-1-111','IMC-1-113'];
 const OPEN=STARTER_IDS.filter(id=>!READY.includes(id));
 
 function face(id,extra={}){
@@ -158,6 +158,7 @@ const mainFillers=[
  filler('NORAID',{name:'無突襲',color:'yellow',traits:['ポジティブパッション'],bp:2000}),
  filler('BLUERAID',{name:'藍情熱',color:'blue',traits:['ポジティブパッション'],raidName:'藍情熱',bp:2000}),
  filler('YOTHER',{name:'黃別特徵',color:'yellow',traits:['LiPPS'],raidName:'黃別特徵',bp:2000}),
+ filler('PASSFIELD',{name:'情熱場域',type:'field',color:'yellow',traits:['ポジティブパッション'],bp:0,energy:0,gen:0}),
  filler('TWO',{name:'普通',ap:2,bp:2000}),
  filler('HIT',{name:'衝擊',bp:4000,implementation:'dsl',printedImpact:true}),
  filler('BASE',{name:'渋谷 凛',bp:4000})
@@ -223,12 +224,22 @@ test('finished starter cards enter the battle pack and unfinished cards stay out
  assert.equal(pack.cards['IMC-1-102'].raidName,'渋谷 凛');
  assert.equal(pack.cards['IMC-1-106'].raidName,'本田 未央');
  assert.equal(pack.cards['IMC-1-106'].effects.onPlay[0].noHandDiscard,true);
+ assert.equal(pack.cards['IMC-1-103'].effects.onAttack[0].then[0].op,'drawDiscard');
+ assert.equal(pack.cards['IMC-1-103'].effects.onAttack[0].then[0].when,undefined);
  assert.equal(pack.cards['IMC-1-113'].passiveBonuses[0].condition.kind,'ownCardTraitCount');
  assert.equal(pack.cards['IMC-1-113'].passiveBonuses[0].condition.min,4);
  assert.equal(pack.cards['IMC-1-113'].effects.onPlay[0].excludeName,'速水 奏');
- assert.equal(pack.cards['IMC-1-111'],undefined);
- assert.notEqual(IMC_PROGRAMS_STARTER['IMC-1-111'].ready,true);
- assert.equal(IMC_PROGRAMS_STARTER['IMC-1-111'].effects.onAttack,undefined);
+ assert.equal(pack.cards['IMC-1-111'].effects.onPlay[0].op,'optionalPayApThen');
+ assert.equal(pack.cards['IMC-1-111'].effects.onPlay[0].then[0].raidKeyword,true);
+ assert.equal(pack.cards['IMC-1-111'].effects.onAttack[0].op,'drawDiscard');
+ assert.equal(pack.cards['IMC-1-111'].effects.onAttack[0].count,1);
+ assert.equal(pack.cards['IMC-1-111'].effects.onAttack[0].discardCount,1);
+ assert.deepEqual(pack.cards['IMC-1-111'].effects.onAttack[0].when,{
+  kind:'ownRaidColorTrait',turn:'any',zone:'field',color:'yellow',
+  trait:'ポジティブパッション',raidKeyword:true});
+ assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-111'}),/交給共用引擎/);
+ assert.equal(IMC_PROGRAMS_STARTER['IMC-1-107'],undefined);
+ assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'],undefined);
 });
 
 test('IMC-1-105 looks at three, adds one new generations, and can decline',()=>{
@@ -1055,23 +1066,98 @@ test('IMC-1-113 buffs one legal character and adds blue energy at four LiPPS',()
  assertUniversalMatch(energy.packs,board);
 });
 
+test('IMC-1-111 draws one and discards one only for its own yellow raiding Positive Passion',()=>{
+ const {packs,s}=match(mainPack,['IMC-1-111','RAIDY','NORAID','BLUERAID','YOTHER','YFUEL','PLAIN'],1115);
+ const attacker=put(s,0,'IMC-1-111','front',0,true);
+ const ally=put(s,0,'RAIDY','energy',0,true);
+ const held=take(s,0,'PLAIN');
+ s.players[0].hand.push(held);
+ let state=toPhase(packs,s,'main');
+ state=dispatchUniversalAction(packs,state,{type:'next'});
+ assert.equal(state.phase,'attack');
+ const before=state.players[0].hand.length;
+ const drawn=state.players[0].deck[0].uid;
+ state=dispatchUniversalAction(packs,state,{type:'attack',uid:attacker.uid});
+ assert.equal(state.players[0].hand.length,before+1);
+ assert.equal(state.players[0].hand.some(card=>card.uid===drawn),true);
+ assert.equal(state.pending.kind,'effect-discard');
+ const discards=legalUniversalActions(packs,state).filter(action=>action.type==='chooseDiscard');
+ assert.equal(discards.some(action=>action.uid===drawn),true);
+ assert.equal(discards.some(action=>action.uid===held.uid),true);
+ assert.equal(discards.some(action=>action.uid===null),false);
+ state=dispatchUniversalAction(packs,state,{type:'chooseDiscard',uid:drawn});
+ assert.equal(state.players[0].hand.some(card=>card.uid===drawn),false);
+ assert.equal(state.players[0].outside.some(card=>card.uid===drawn),true);
+ assert.equal(state.players[0].hand.length,before);
+ if(state.pending?.kind==='block')
+  state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:null});
+ if(state.pending?.kind==='life-trigger')
+  state=dispatchUniversalAction(packs,state,{type:'chooseTrigger',mode:'skip'});
+ state=nextOwnMain(packs,state);
+ const returned=state.players[0].front.find(card=>card?.uid===attacker.uid);
+ const still=state.players[0].energy.find(card=>card?.uid===ally.uid);
+ assert.equal(returned.ready,true);
+ state=dispatchUniversalAction(packs,state,{type:'next'});
+ const again=state.players[0].hand.length;
+ const second=state.players[0].deck[0].uid;
+ state=dispatchUniversalAction(packs,state,{type:'attack',uid:returned.uid});
+ assert.equal(state.players[0].hand.length,again+1);
+ assert.equal(state.pending.kind,'effect-discard');
+ assert.equal(legalUniversalActions(packs,state).some(action=>action.type==='chooseDiscard'&&action.uid===second),true);
+ state=dispatchUniversalAction(packs,state,{type:'chooseDiscard',uid:second});
+ assert.equal(state.players[0].outside.some(card=>card.uid===second),true);
+ assert.equal(still.cardId,'RAIDY');
+ assertUniversalMatch(packs,state);
+
+ function quiet(id,owner,line,seed){
+  const opened=match(mainPack,['IMC-1-111','RAIDY','NORAID','BLUERAID','YOTHER','PLAIN','PASSFIELD'],seed);
+  const who=put(opened.s,0,'IMC-1-111','front',0,true);
+  put(opened.s,owner,id,line,line==='front'?1:0,true);
+  let board=toPhase(opened.packs,opened.s,'main');
+  board=dispatchUniversalAction(opened.packs,board,{type:'next'});
+  const size=board.players[0].hand.length;
+  board=dispatchUniversalAction(opened.packs,board,{type:'attack',uid:who.uid});
+  assert.equal(board.players[0].hand.length,size,id);
+  assert.notEqual(board.pending?.kind,'effect-discard',id);
+ }
+ quiet('RAIDY',1,'energy',1116);
+ quiet('NORAID',0,'energy',1117);
+ quiet('BLUERAID',0,'front',1118);
+ quiet('YOTHER',0,'energy',1119);
+ quiet('PASSFIELD',0,'energy',1122);
+ const alone=match(mainPack,['IMC-1-111','PLAIN','YFUEL'],1120);
+ const solo=put(alone.s,0,'IMC-1-111','front',0,true);
+ let bare=toPhase(alone.packs,alone.s,'main');
+ bare=dispatchUniversalAction(alone.packs,bare,{type:'next'});
+ const bareSize=bare.players[0].hand.length;
+ bare=dispatchUniversalAction(alone.packs,bare,{type:'attack',uid:solo.uid});
+ assert.equal(bare.players[0].hand.length,bareSize);
+ assert.notEqual(bare.pending?.kind,'effect-discard');
+
+ const openCard=face('OPEN',{name:'無條件',color:'green',implementation:'dsl',effects:{
+  onAttack:[{op:'drawDiscard',count:1,discardCount:1}]}});
+ const plainPack=createUniversalPack({id:'imc-open-discard',version:'plain',cards:[
+  openCard,...mainFillers.filter(card=>['PLAIN','FUEL','NG4','WISH','TALL','SHORT','MID','HUGE','WALL','ZERO','DRAW','TWO'].includes(card.id))]});
+ const opened=match(plainPack,['OPEN','PLAIN','FUEL'],1121);
+ const green=put(opened.s,0,'OPEN','front',0,true);
+ let free=toPhase(opened.packs,opened.s,'main');
+ free=dispatchUniversalAction(opened.packs,free,{type:'next'});
+ const freeSize=free.players[0].hand.length;
+ const freeTop=free.players[0].deck[0].uid;
+ free=dispatchUniversalAction(opened.packs,free,{type:'attack',uid:green.uid});
+ assert.equal(free.players[0].hand.length,freeSize+1);
+ assert.equal(free.pending.kind,'effect-discard');
+ assert.equal(legalUniversalActions(opened.packs,free).some(action=>action.uid===freeTop),true);
+ free=dispatchUniversalAction(opened.packs,free,{type:'chooseDiscard',uid:freeTop});
+ assert.equal(free.players[0].outside.some(card=>card.uid===freeTop),true);
+ assertUniversalMatch(opened.packs,free);
+});
+
 test('unfinished starter cards stay out and name the shared op they cannot reuse',()=>{
  const sentences={
   'IMC-1-107':['fieldRestRetireThen','deployOwnHandSpecial'],
   'IMC-1-112':['searchTopOneBottomDiscard','Q2258']
  };
- const attack=IMC_REQUESTS_STARTER.find(row=>row.cardId==='IMC-1-111');
- assert.equal(JSON.stringify(attack).includes('drawDiscardIfFieldAny'),true);
- assert.equal(JSON.stringify(attack).includes('攻擊時'),true);
- assert.throws(()=>createUniversalPack({id:'imc-111-gap',version:'gap',cards:[{
-  id:'GAP',name:'缺口',color:'yellow',type:'character',energy:1,ap:1,bp:2000,gen:1,
-  trigger:null,traits:['ポジティブパッション'],implementation:'dsl',effects:{onAttack:[{
-   op:'ifLiveThen',
-   when:{kind:'ownYellowRaidTrait',turn:'any',min:1,zone:'field',excludeSelf:false,
-    trait:'ポジティブパッション',color:'yellow'},
-   then:[{op:'drawDiscard',count:1}]
-  }]}
- }]}),/invalid passive condition/);
  for(const [id,needles] of Object.entries(sentences)){
   assert.equal(IMC_PROGRAMS_STARTER[id],undefined,id);
   assert.equal(IMC_PROGRAMS_STARTER[id]?.ready,undefined,id);
