@@ -81,13 +81,38 @@ for(const ready of [false,true])test(`stripped base does not revive pre-Raid buf
  assert.notEqual(survivor.fieldEntryStamp,oldStamp);
  assert.equal(s.turnRetireEvents.length,0);assert.equal(assertUniversalMatch(packs,s),true);
 });
-for(const shape of ['top-under','base-under','nested-stack','two-bases','facedown-base'])
+for(const shape of ['top-under','base-under'])
+ test(`Q1175 ${shape} stays facedown on the promoted base and is not revealed`,()=>{
+  const {s:opened,top,base}=setup(true,(s,top,base)=>{
+   const extra=take(s,1,'RAID-4');extra.faceDown=true;
+   if(shape==='top-under')top.under=[extra];
+   else base.under=[extra];
+  });
+  const hidden=shape==='top-under'?top.under[0]:base.under[0];
+  assert.equal(opened.pending?.kind,'effect-strip-raid-top');
+  const reveals=opened.publicReveals.length;
+  const s=dispatchUniversalAction(packs,opened,{type:'chooseRaidTopStrip',uid:top.uid});
+  const survivor=s.players[1].front[0];
+  const departed=s.players[1].outside.find(c=>c.uid===top.uid);
+  assert.equal(survivor.uid,base.uid);
+  assert.equal(survivor.ready,false);
+  assert.deepEqual(survivor.buffs,[]);
+  assert.equal(survivor.under.some(c=>c.uid===hidden.uid&&c.faceDown===true),true);
+  assert.equal(departed.under.length,0);
+  assert.equal(s.players[1].outside.some(c=>c.uid===hidden.uid),false);
+  assert.equal(s.turnRetireEvents.length,0);
+  assert.equal(s.publicReveals.length,reveals);
+  assert.equal(s.publicReveals.some(r=>r.uid===hidden.uid),false);
+  assert.equal(JSON.stringify(universalPublicView(packs,s,0)).includes(hidden.uid),false);
+  assert.equal(JSON.stringify(universalPublicView(packs,s,1)).includes(hidden.uid),true);
+  assert.equal(assertUniversalMatch(packs,s),true);
+ });
+for(const shape of ['nested-stack','two-bases','facedown-base','faceup-under'])
  test(`unverified ${shape} is fail-closed without losing or revealing cards`,()=>{
   const {s,top}=setup(true,(s,top,base)=>{
    if(shape==='facedown-base'){base.faceDown=true;return;}
-   const extra=take(s,1,'RAID-4');extra.faceDown=true;
-   if(shape==='top-under')top.under=[extra];
-   if(shape==='base-under')base.under=[extra];
+   const extra=take(s,1,'RAID-4');extra.faceDown=shape!=='faceup-under';
+   if(shape==='faceup-under')top.under=[extra];
    if(shape==='nested-stack')base.stack=[extra];
    if(shape==='two-bases')top.stack.push(extra);
   });
@@ -95,5 +120,8 @@ for(const shape of ['top-under','base-under','nested-stack','two-bases','facedow
   assert.equal(s.turnRetireEvents.length,0);assert.equal(assertUniversalMatch(packs,s),true);
   const publicView=JSON.stringify(universalPublicView(packs,s,0));
   const hidden=[...(top.under||[]),...(top.stack||[]).flatMap(c=>[...(c.under||[]),...(c.stack||[])])];
-  for(const c of hidden)assert.ok(!publicView.includes(c.uid));
+  for(const c of hidden){
+   assert.equal(s.players[1].outside.some(x=>x.uid===c.uid),false);
+   if(c.faceDown===true)assert.equal(publicView.includes(c.uid),false);
+  }
  });
