@@ -18,7 +18,7 @@ import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 
 const catalog=imcCatalog();
 const STARTER_IDS=IMC_CARDS_STARTER.map(card=>card.id);
-const READY=['IMC-1-105','IMC-1-109'];
+const READY=['IMC-1-101','IMC-1-102','IMC-1-103','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109'];
 const OPEN=STARTER_IDS.filter(id=>!READY.includes(id));
 
 function face(id,extra={}){
@@ -106,8 +106,6 @@ function match(pack,required,seed){
  return {packs,counts,s:newUniversalMatch(packs,{decks:[counts,counts],seed,first:0})};
 }
 
-const battle105=imcBattleCard(catalog.byId.get('IMC-1-105'),imcProgramFor('IMC-1-105'));
-const battle109=imcBattleCard(catalog.byId.get('IMC-1-109'),imcProgramFor('IMC-1-109'));
 const mainFillers=[
  filler('NG4',{name:'渋谷 凛',bp:4000,traits:ngTraits,traitComponents:ngParts}),
  filler('NG15',{name:'本田 未央',bp:1500,traits:ngTraits,traitComponents:ngParts}),
@@ -121,36 +119,14 @@ const mainFillers=[
  filler('WALL',{bp:3000}),
  filler('DRAW',{name:'抽牌角色',bp:2000,trigger:'draw'}),
  filler('ZERO',{bp:500}),
- filler('FUEL',{bp:1000})
+ filler('FUEL',{bp:1000,gen:5}),
+ filler('HIT',{name:'衝擊',bp:4000,implementation:'dsl',printedImpact:true}),
+ filler('BASE',{name:'渋谷 凛',bp:4000})
 ];
+const battle=(id)=>imcBattleCard(catalog.byId.get(id),imcProgramFor(id));
 const mainPack=createUniversalPack({id:'imc-d',version:'starter-ready',cards:[
- battle105,battle109,...mainFillers
+ ...READY.map(battle),...mainFillers
 ]});
-
-const probeCards=[
- face('PROBE-SELF',{name:'渋谷 凛',bp:4000,energy:1,traits:ngTraits,traitComponents:ngParts,
-  implementation:'dsl',effects:{onPlay:[{op:'retireOppFrontUnderBp',mandatory:true,
-   traitPerBp:{trait:'new generations',per:1000}}]}}),
- face('PROBE-RIN',{name:'渋谷 凛',bp:4000,energy:1,trigger:'raid',raidName:'渋谷 凛',
-  implementation:'dsl',effects:{onPlay:[{op:'grantSelfImpactThisTurn',amount:1}]}}),
- face('PROBE-OPT',{name:'任意退場',type:'event',bp:0,gen:0,implementation:'dsl',
-  effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:2000,optional:true}]}}),
- face('PROBE-NULL',{name:'衝擊無效',bp:2000,implementation:'dsl',impactNull:true}),
- face('PROBE-HIT',{name:'衝擊',bp:4000,implementation:'dsl',printedImpact:true}),
- filler('BASE',{name:'渋谷 凛',bp:4000}),
- filler('NG4',{name:'渋谷 凛',bp:4000,traits:ngTraits,traitComponents:ngParts}),
- filler('NG15',{name:'低BP',bp:1500,traits:ngTraits,traitComponents:ngParts}),
- filler('BP45',{bp:4500}),
- filler('BP55',{bp:5500}),
- filler('DRAW',{name:'抽牌角色',bp:2000,trigger:'draw'}),
- filler('FUEL',{bp:1000}),
- filler('LIFE',{bp:1000}),
- filler('F2',{bp:1000}),
- filler('MID',{bp:2000}),
- filler('TALL',{bp:3000}),
- filler('HUGE',{bp:5000})
-];
-const probePack=createUniversalPack({id:'imc-d-probe',version:'102-pieces',cards:probeCards});
 
 test('starter printings, AP and the 50-card list stay official',()=>{
  assert.deepEqual(IMC_STARTER_PRINTINGS.map(row=>row.number),
@@ -185,19 +161,23 @@ test('starter printings, AP and the 50-card list stay official',()=>{
  assert.equal(catalog.cards.every(card=>card.battleReady===false),true);
 });
 
-test('only 105 and 109 enter the battle pack',()=>{
+test('finished starter cards enter the battle pack and unfinished cards stay out',()=>{
  const pack=createImcV2Pack();
- for(const id of READY)assert.equal(pack.cards[id].id,id);
- assert.match(pack.version,/IMC-1-105/);
- assert.match(pack.version,/IMC-1-109/);
- for(const id of OPEN)assert.equal(imcProgramFor(id),null,id);
- assert.equal(IMC_PROGRAMS_STARTER['IMC-1-105'].ready,true);
- assert.equal(IMC_PROGRAMS_STARTER['IMC-1-109'].ready,true);
+ for(const id of READY){
+  assert.equal(pack.cards[id].id,id);
+  assert.equal(IMC_PROGRAMS_STARTER[id].ready,true);
+  assert.equal(catalog.byId.get(id).battleReady,false);
+ }
+ for(const id of OPEN)assert.equal(pack.cards[id],undefined,id);
  assert.deepEqual(IMC_REQUESTS_STARTER.map(row=>row.cardId),OPEN);
  for(const row of IMC_REQUESTS_STARTER)assertImcSharedRequest(row);
  assert.deepEqual(imcSharedRequests().filter(row=>OPEN.includes(row.cardId)).map(row=>row.cardId),OPEN);
- assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-102'}),/D 組還沒有/);
- assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-105'}),/交給共用引擎/);
+ assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-104'}),/D 組還沒有/);
+ assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-102'}),/交給共用引擎/);
+ assert.equal(pack.cards['IMC-1-101'].impactNull,true);
+ assert.equal(pack.cards['IMC-1-102'].raidName,'渋谷 凛');
+ assert.equal(pack.cards['IMC-1-106'].raidName,'本田 未央');
+ assert.equal(pack.cards['IMC-1-106'].effects.onPlay[0].noHandDiscard,true);
 });
 
 test('IMC-1-105 looks at three, adds one new generations, and can decline',()=>{
@@ -369,157 +349,304 @@ test('IMC-1-109 retires by current BP and its special trigger is separate',()=>{
  assertUniversalMatch(trigger.packs,damaged);
 });
 
-test('IMC-1-102 cannot use traitPerBp, and retire is not a life trigger',()=>{
- const scaled={...probeCards.find(card=>card.id==='PROBE-RIN'),effects:{onPlay:[
-  {op:'grantSelfImpactThisTurn',amount:1},
-  {op:'retireOppFrontUnderBp',optional:true,printedBpTraitCount:{
-   trait:'new generations',printedBp:4000,per:1000,excludeSelf:true
-  }}
- ]}};
- const accepted=createUniversalPack({id:'ok-102',version:'scale',cards:[scaled]});
- assert.equal(accepted.cards['PROBE-RIN'].effects.onPlay[1].printedBpTraitCount.printedBp,4000);
- const request=IMC_REQUESTS_STARTER.find(row=>row.cardId==='IMC-1-102');
- assert.ok(request.existingOps.includes('retireOppFrontUnderBp'));
- assert.equal(createImcV2Pack().cards['IMC-1-102'],undefined);
+test('IMC-1-101 draws for three printed-BP 4000 allies and stops battle impact',()=>{
+ const {packs,s}=match(mainPack,['IMC-1-101','NG4','NG15','WISH','FIELD','FUEL'],1011);
+ readyAp(s);
+ put(s,0,'NG4','front',0);
+ put(s,0,'NG4','energy',0);
+ put(s,0,'FUEL','energy',1);
+ const actor=take(s,0,'IMC-1-101');
+ s.players[0].hand.push(actor);
+ let state=toPhase(packs,s,'main');
+ const hand=state.players[0].hand.length;
+ const deck=state.players[0].deck.length;
+ state=play(packs,state,actor.uid);
+ const body=state.players[0].front.find(card=>card?.uid===actor.uid);
+ assert.ok(body);
+ assert.equal(body.ready,false);
+ assert.equal(universalImpactNull(packs,state,body),true);
+ assert.equal(state.players[0].hand.length,hand);
+ assert.equal(state.players[0].deck.length,deck-1);
+ assert.equal(state.pending,null);
 
- const {packs,s}=match(probePack,['PROBE-SELF','NG4','NG15','BP45','BP55','FUEL'],1021);
+ const short=match(mainPack,['IMC-1-101','NG4','NG15','WISH','FIELD','FUEL'],1012);
+ readyAp(short.s);
+ put(short.s,0,'NG4','front',0);
+ const boosted=put(short.s,0,'NG15','front',1);
+ boosted.buffs=[{bp:2500,untilTurn:short.s.turn}];
+ put(short.s,0,'WISH','energy',0);
+ put(short.s,0,'FIELD','energy',1);
+ put(short.s,0,'FUEL','energy',2);
+ const early=take(short.s,0,'IMC-1-101');
+ short.s.players[0].hand.push(early);
+ let quiet=toPhase(short.packs,short.s,'main');
+ const before=quiet.players[0].deck.length;
+ quiet=play(short.packs,quiet,early.uid);
+ assert.equal(quiet.players[0].deck.length,before);
+ assert.equal(quiet.pending,null);
+
+ const battle=match(mainPack,['IMC-1-101','HIT','WALL','ZERO','FUEL'],1013);
+ const defender=put(battle.s,1,'IMC-1-101','front',0,true);
+ const attacker=put(battle.s,0,'HIT','front',0,true);
+ assert.equal(universalImpact(battle.packs,battle.s,attacker),1);
+ battle.s.players[1].deck.push(...battle.s.players[1].life.splice(0));
+ battle.s.players[1].life=[take(battle.s,1,'ZERO'),take(battle.s,1,'FUEL')];
+ let blocked=toPhase(battle.packs,battle.s,'main');
+ blocked=dispatchUniversalAction(battle.packs,blocked,{type:'next'});
+ blocked=dispatchUniversalAction(battle.packs,blocked,{type:'attack',uid:attacker.uid});
+ if(blocked.pending?.kind==='block')
+  blocked=dispatchUniversalAction(battle.packs,blocked,{type:'chooseBlock',uid:defender.uid});
+ assert.equal(blocked.players[1].front.some(card=>card?.uid===defender.uid),false);
+ assert.equal(blocked.players[1].life.length,2);
+
+ const open=match(mainPack,['HIT','WALL','ZERO','FUEL'],1014);
+ const victim=put(open.s,1,'WALL','front',0,true);
+ const hitter=put(open.s,0,'HIT','front',0,true);
+ open.s.players[1].deck.push(...open.s.players[1].life.splice(0));
+ open.s.players[1].life=[take(open.s,1,'ZERO'),take(open.s,1,'FUEL')];
+ let broken=toPhase(open.packs,open.s,'main');
+ broken=dispatchUniversalAction(open.packs,broken,{type:'next'});
+ broken=dispatchUniversalAction(open.packs,broken,{type:'attack',uid:hitter.uid});
+ if(broken.pending?.kind==='block')
+  broken=dispatchUniversalAction(open.packs,broken,{type:'chooseBlock',uid:victim.uid});
+ assert.equal(broken.players[1].life.length,1);
+});
+
+test('IMC-1-102 retires by other printed-BP 4000 characters and gains impact on both entries',()=>{
+ const {packs,s}=match(mainPack,['IMC-1-102','NG4','NG15','FIELD','FUEL','MID','TALL','HUGE','SHORT'],1021);
  readyAp(s);
  put(s,0,'NG4','front',0);
  put(s,0,'NG4','front',1);
  put(s,0,'NG4','front',2);
  put(s,0,'NG15','energy',0);
- const lowPrinted=s.players[0].energy[0];
- assert.equal(catalog.byId.get('IMC-1-102').bp,4000);
- const over=put(s,1,'BP45','front',0);
- const tooHigh=put(s,1,'BP55','front',1);
- const actor=take(s,0,'PROBE-SELF');
+ put(s,0,'FIELD','energy',1);
+ put(s,0,'FUEL','energy',2);
+ const low=put(s,1,'SHORT','front',0);
+ low.buffs=[{bp:3000,untilTurn:s.turn}];
+ const legal=put(s,1,'HUGE','front',1);
+ legal.buffs=[{bp:-3000,untilTurn:s.turn}];
+ const above=put(s,1,'TALL','front',2);
+ assert.equal(universalBp(packs,s,low),4000);
+ assert.equal(universalBp(packs,s,legal),2000);
+ const actor=take(s,0,'IMC-1-102');
  s.players[0].hand.push(actor);
  let state=toPhase(packs,s,'main');
- state=play(packs,state,actor.uid);
- assert.equal(state.pending.kind,'effect-retire-bp');
- assert.equal(state.pending.limit,5000);
- assert.deepEqual(state.pending.choices,[over.uid]);
- assert.equal(universalBp(packs,state,lowPrinted),1500);
  const lives=state.players[1].life.length;
- state=dispatchUniversalAction(packs,state,{type:'chooseRetireBp',uid:over.uid});
- assert.equal(state.players[1].outside.filter(card=>card.uid===over.uid).length,1);
- assert.equal(state.players[1].front.some(card=>card?.uid===tooHigh.uid),true);
+ state=play(packs,state,actor.uid);
+ const body=state.players[0].front.find(card=>card?.uid===actor.uid);
+ assert.equal(body.ready,false);
+ assert.equal(universalImpact(packs,state,body),1);
+ assert.equal(state.pending.kind,'effect-retire-bp');
+ assert.equal(state.pending.limit,3000);
+ assert.deepEqual(state.pending.choices,[legal.uid]);
+ assert.equal(legalUniversalActions(packs,state).some(a=>a.uid===null),true);
+ assert.throws(()=>dispatchUniversalAction(packs,state,{type:'chooseRetireBp',uid:low.uid}),/not currently legal/);
+ state=dispatchUniversalAction(packs,state,{type:'chooseRetireBp',uid:legal.uid});
+ assert.equal(state.players[1].outside.filter(card=>card.uid===legal.uid).length,1);
+ assert.equal(state.players[1].front.some(card=>card?.uid===above.uid),true);
+ assert.equal(state.players[1].front.some(card=>card?.uid===low.uid),true);
  assert.equal(state.players[1].life.length,lives);
- assert.equal(state.pending,null);
+ assert.notEqual(state.pending?.kind,'life-trigger');
 
- const optional=match(probePack,['PROBE-OPT','FUEL','MID','TALL','HUGE','DRAW'],1022);
- readyAp(optional.s);
- put(optional.s,0,'FUEL','energy',0);
- const exact=put(optional.s,1,'MID','front',0);
- const above=put(optional.s,1,'TALL','front',1);
- const event=take(optional.s,0,'PROBE-OPT');
- optional.s.players[0].hand.push(event);
- let choice=toPhase(optional.packs,optional.s,'main');
- choice=play(optional.packs,choice,event.uid,'event');
- assert.deepEqual(choice.pending.choices,[exact.uid]);
- assert.equal(legalUniversalActions(optional.packs,choice).some(a=>a.uid===null),true);
- choice=dispatchUniversalAction(optional.packs,choice,{type:'chooseRetireBp',uid:null});
- assert.equal(choice.players[1].front.some(card=>card?.uid===exact.uid),true);
- assert.equal(choice.players[1].front.some(card=>card?.uid===above.uid),true);
- assert.equal(choice.pending,null);
+ const declined=match(mainPack,['IMC-1-102','NG4','FUEL','SHORT'],1022);
+ readyAp(declined.s);
+ put(declined.s,0,'NG4','front',0);
+ put(declined.s,0,'FUEL','energy',0);
+ const kept=put(declined.s,1,'SHORT','front',0);
+ const passing=take(declined.s,0,'IMC-1-102');
+ declined.s.players[0].hand.push(passing);
+ let skip=toPhase(declined.packs,declined.s,'main');
+ skip=play(declined.packs,skip,passing.uid);
+ assert.equal(skip.pending.limit,1000);
+ assert.deepEqual(skip.pending.choices,[kept.uid]);
+ skip=dispatchUniversalAction(declined.packs,skip,{type:'chooseRetireBp',uid:null});
+ assert.equal(skip.players[1].front.some(card=>card?.uid===kept.uid),true);
+ assert.equal(skip.pending,null);
 
- const current=match(probePack,['PROBE-OPT','FUEL','HUGE','DRAW','TALL'],1023);
- readyAp(current.s);
- put(current.s,0,'FUEL','energy',0);
- const debuffed=put(current.s,1,'HUGE','front',0);
- const triggered=put(current.s,1,'DRAW','front',1);
- const stayed=put(current.s,1,'TALL','front',2);
- debuffed.buffs=[{bp:-3500,untilTurn:current.s.turn}];
- assert.equal(universalBp(current.packs,current.s,debuffed),1500);
- assert.equal(universalBp(current.packs,current.s,stayed),3000);
- const again=take(current.s,0,'PROBE-OPT');
- current.s.players[0].hand.push(again);
- let picked=toPhase(current.packs,current.s,'main');
- const life=picked.players[1].life.length;
- picked=play(current.packs,picked,again.uid,'event');
- assert.deepEqual([...picked.pending.choices].sort(),[debuffed.uid,triggered.uid].sort());
- picked=dispatchUniversalAction(current.packs,picked,{type:'chooseRetireBp',uid:triggered.uid});
- assert.equal(picked.players[1].outside.some(card=>card.uid===triggered.uid),true);
- assert.equal(picked.players[1].front.some(card=>card?.uid===debuffed.uid),true);
- assert.equal(picked.players[1].front.some(card=>card?.uid===stayed.uid),true);
- assert.equal(picked.players[1].life.length,life);
- assert.notEqual(picked.pending?.kind,'life-trigger');
+ const empty=match(mainPack,['IMC-1-102','NG15','FUEL','SHORT'],1023);
+ readyAp(empty.s);
+ put(empty.s,0,'NG15','front',0);
+ put(empty.s,0,'FUEL','energy',0);
+ const untouched=put(empty.s,1,'SHORT','front',0);
+ const alone=take(empty.s,0,'IMC-1-102');
+ empty.s.players[0].hand.push(alone);
+ let none=toPhase(empty.packs,empty.s,'main');
+ none=play(empty.packs,none,alone.uid);
+ assert.equal(universalImpact(empty.packs,none,none.players[0].front.find(card=>card?.uid===alone.uid)),1);
+ assert.equal(none.players[1].front.some(card=>card?.uid===untouched.uid),true);
+ assert.equal(none.pending,null);
 
- const raid=match(probePack,['PROBE-RIN','BASE','FUEL'],1024);
+ const raid=match(mainPack,['IMC-1-102','NG4','FUEL','SHORT'],1024);
  readyAp(raid.s);
+ put(raid.s,0,'NG4','front',1);
  put(raid.s,0,'FUEL','energy',0);
- const base=put(raid.s,0,'BASE','front',0,false);
- const rin=take(raid.s,0,'PROBE-RIN');
+ const buriedTarget=put(raid.s,1,'SHORT','front',0);
+ const base=put(raid.s,0,'NG4','front',0,false);
+ const rin=take(raid.s,0,'IMC-1-102');
  raid.s.players[0].hand.push(rin);
  let raided=toPhase(raid.packs,raid.s,'main');
  const raidAction=legalUniversalActions(raid.packs,raided).find(a=>a.type==='raid'&&a.uid===rin.uid&&a.baseUid===base.uid);
  assert.ok(raidAction);
  raided=dispatchUniversalAction(raid.packs,raided,raidAction);
  const top=raided.players[0].front.find(card=>card?.uid===rin.uid);
- assert.ok(top);
  assert.equal(top.ready,true);
  assert.equal(top.stack.some(card=>card.uid===base.uid),true);
  assert.equal(universalImpact(raid.packs,raided,top),1);
- assert.equal(raided.pending,null);
-
- const normal=match(probePack,['PROBE-RIN','FUEL'],1025);
- readyAp(normal.s);
- put(normal.s,0,'FUEL','energy',0);
- const played=take(normal.s,0,'PROBE-RIN');
- normal.s.players[0].hand.push(played);
- let entered=toPhase(normal.packs,normal.s,'main');
- entered=play(normal.packs,entered,played.uid);
- const body=entered.players[0].front.find(card=>card?.uid===played.uid);
- assert.ok(body);
- assert.equal(body.ready,false);
- assert.equal(universalImpact(normal.packs,entered,body),1);
- assert.equal(entered.pending,null);
- assertUniversalMatch(normal.packs,entered);
+ assert.equal(raided.pending.kind,'effect-retire-bp');
+ assert.equal(raided.pending.limit,1000);
+ assert.deepEqual(raided.pending.choices,[buriedTarget.uid]);
 });
 
-test('IMC-1-101 impact null stops battle impact, and the draw is not a trait count',()=>{
- assert.equal(IMC_PROGRAMS_STARTER['IMC-1-101'],undefined);
- const row=IMC_REQUESTS_STARTER.find(item=>item.cardId==='IMC-1-101');
- assert.ok(row.existingOps.includes('drawIfOwnTraitCount'));
- const {packs,s}=match(probePack,['PROBE-NULL','PROBE-HIT','LIFE','FUEL'],1011);
- const defender=put(s,1,'PROBE-NULL','front',0,true);
- const attacker=put(s,0,'PROBE-HIT','front',0,true);
- assert.equal(universalImpactNull(packs,s,defender),true);
- assert.equal(universalImpact(packs,s,attacker),1);
- s.players[1].deck.push(...s.players[1].life.splice(0));
- const first=take(s,1,'LIFE');
- const second=take(s,1,'FUEL');
- s.players[1].life=[first,second];
+test('IMC-1-103 draws and discards only when three qualifying characters are on the front',()=>{
+ const {packs,s}=match(mainPack,['IMC-1-103','NG4','NG15','FUEL','WALL'],1031);
+ readyAp(s);
+ const attacker=put(s,0,'IMC-1-103','front',0,true);
+ put(s,0,'NG4','front',1);
+ put(s,0,'NG4','front',2);
+ put(s,0,'FUEL','energy',0);
+ put(s,1,'WALL','front',0,true);
  let state=toPhase(packs,s,'main');
+ const hand=state.players[0].hand.length;
+ const deck=state.players[0].deck.length;
  state=dispatchUniversalAction(packs,state,{type:'next'});
  state=dispatchUniversalAction(packs,state,{type:'attack',uid:attacker.uid});
- if(state.pending?.kind==='block')
-  state=dispatchUniversalAction(packs,state,{type:'chooseBlock',uid:defender.uid});
- assert.equal(state.players[1].front.some(card=>card?.uid===defender.uid),false);
- assert.equal(state.players[1].life.length,2);
+ assert.equal(state.pending.kind,'effect-discard');
+ assert.equal(state.players[0].hand.length,hand+1);
+ assert.equal(state.players[0].deck.length,deck-1);
+ const dumped=state.players[0].hand.find(card=>card.cardId!=='IMC-1-103');
+ state=dispatchUniversalAction(packs,state,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(state.players[0].outside.some(card=>card.uid===dumped.uid),true);
+ assert.equal(state.players[0].hand.length,hand);
+ assert.equal(state.pending?.kind,'block');
+
+ const miss=match(mainPack,['IMC-1-103','NG4','NG15','FUEL','WALL'],1032);
+ readyAp(miss.s);
+ const quiet=put(miss.s,0,'IMC-1-103','front',0,true);
+ put(miss.s,0,'NG4','front',1);
+ const fake=put(miss.s,0,'NG15','front',2);
+ fake.buffs=[{bp:2500,untilTurn:miss.s.turn}];
+ put(miss.s,0,'NG4','energy',0);
+ put(miss.s,0,'FUEL','energy',1);
+ put(miss.s,1,'WALL','front',0,true);
+ let denied=toPhase(miss.packs,miss.s,'main');
+ const held=denied.players[0].hand.length;
+ denied=dispatchUniversalAction(miss.packs,denied,{type:'next'});
+ denied=dispatchUniversalAction(miss.packs,denied,{type:'attack',uid:quiet.uid});
+ assert.equal(denied.pending?.kind,'block');
+ assert.equal(denied.players[0].hand.length,held);
+ assert.equal(denied.players[0].outside.some(card=>card.uid===quiet.uid),false);
+});
+
+test('IMC-1-106 looks at three without a discard, then activates only at four printed 4000',()=>{
+ const {packs,s}=match(mainPack,['IMC-1-106','NG4','WISH','PLAIN','FUEL'],1061);
+ readyAp(s);
+ put(s,0,'NG4','front',0);
+ put(s,0,'NG4','front',1);
+ const rested=put(s,0,'NG4','front',2,false);
+ put(s,0,'FUEL','energy',0);
+ const window=setTop(s,0,['NG4','WISH','PLAIN']);
+ const actor=take(s,0,'IMC-1-106');
+ s.players[0].hand.push(actor);
+ let state=toPhase(packs,s,'main');
+ const hand=state.players[0].hand.length;
+ state=play(packs,state,actor.uid);
+ const entered=state.players[0].front.find(card=>card?.uid===actor.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(state.pending.kind,'effect-top-filter-choice');
+ assert.equal(legalUniversalActions(packs,state).some(a=>a.type==='chooseTopFiltered'&&a.uid===window[1].uid),false);
+ state=dispatchUniversalAction(packs,state,{type:'chooseTopFiltered',uid:window[0].uid});
+ assert.equal(state.publicReveals.at(-1).kind,'searched-to-hand');
+ assert.notEqual(state.pending?.kind,'effect-discard');
+ state=order(packs,state,[window[2].uid,window[1].uid]);
+ assert.equal(state.pending.kind,'effect-active-own-trait');
+ assert.equal(state.pending.choices.includes(rested.uid),true);
+ assert.equal(state.pending.choices.includes(entered.uid),true);
+ assert.equal(legalUniversalActions(packs,state).some(a=>a.uid===null),true);
+ state=dispatchUniversalAction(packs,state,{type:'chooseActiveOwnTrait',uid:rested.uid});
+ assert.equal(state.players[0].front.find(card=>card?.uid===rested.uid).ready,true);
+ assert.equal(state.players[0].front.find(card=>card?.uid===entered.uid).ready,false);
+ assert.equal(state.players[0].hand.length,hand);
+ assert.equal(state.players[0].hand.some(card=>card.uid===window[0].uid),true);
+ assert.equal(state.pending,null);
+
+ const few=match(mainPack,['IMC-1-106','NG4','WISH','PLAIN','FUEL'],1062);
+ readyAp(few.s);
+ put(few.s,0,'NG4','front',0);
+ put(few.s,0,'NG4','front',1);
+ put(few.s,0,'FUEL','energy',0);
+ const blank=setTop(few.s,0,['WISH','PLAIN','WISH']);
+ const second=take(few.s,0,'IMC-1-106');
+ few.s.players[0].hand.push(second);
+ let quiet=toPhase(few.packs,few.s,'main');
+ const outside=quiet.players[0].outside.length;
+ quiet=play(few.packs,quiet,second.uid);
+ assert.equal(quiet.pending.kind,'effect-top-order');
+ quiet=order(few.packs,quiet,blank.map(card=>card.uid));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].outside.length,outside);
+ assert.equal(quiet.players[0].front.find(card=>card?.uid===second.uid).ready,false);
+
+ const raid=match(mainPack,['IMC-1-106','NG15','WISH','PLAIN','FUEL'],1063);
+ readyAp(raid.s);
+ put(raid.s,0,'FUEL','energy',0);
+ const base=put(raid.s,0,'NG15','front',0,false);
+ const seen=setTop(raid.s,0,['WISH','PLAIN','WISH']);
+ const mio=take(raid.s,0,'IMC-1-106');
+ raid.s.players[0].hand.push(mio);
+ let raided=toPhase(raid.packs,raid.s,'main');
+ const action=legalUniversalActions(raid.packs,raided).find(a=>a.type==='raid'&&a.uid===mio.uid&&a.baseUid===base.uid);
+ assert.ok(action);
+ raided=dispatchUniversalAction(raid.packs,raided,action);
+ const top=raided.players[0].front.find(card=>card?.uid===mio.uid);
+ assert.equal(top.ready,true);
+ assert.equal(top.stack.some(card=>card.uid===base.uid),true);
+ assert.equal(raided.pending.kind,'effect-top-order');
+ raided=order(raid.packs,raided,seen.map(card=>card.uid));
+ assert.equal(raided.pending,null);
+ assert.equal(raided.players[0].hand.some(card=>seen.some(item=>item.uid===card.uid)),false);
+});
+
+test('IMC-1-108 raises only front characters and then draws',()=>{
+ const {packs,s}=match(mainPack,['IMC-1-108','NG4','PLAIN','WALL','FUEL'],1081);
+ readyAp(s);
+ const front=put(s,0,'NG4','front',0);
+ const energy=put(s,0,'PLAIN','energy',0);
+ put(s,0,'FUEL','energy',1);
+ const foe=put(s,1,'WALL','front',0);
+ const event=take(s,0,'IMC-1-108');
+ s.players[0].hand.push(event);
+ let state=toPhase(packs,s,'main');
+ const deck=state.players[0].deck.length;
+ state=play(packs,state,event.uid,'event');
+ const liveFront=state.players[0].front.find(card=>card?.uid===front.uid);
+ const liveEnergy=state.players[0].energy.find(card=>card?.uid===energy.uid);
+ const liveFoe=state.players[1].front.find(card=>card?.uid===foe.uid);
+ assert.equal(universalBp(packs,state,liveFront),5000);
+ assert.equal(universalBp(packs,state,liveEnergy),2500);
+ assert.equal(universalBp(packs,state,liveFoe),3000);
+ assert.equal(state.players[0].deck.length,deck-1);
+ assert.equal(state.players[0].outside.some(card=>card.uid===event.uid),true);
+ assert.equal(state.pending,null);
  assertUniversalMatch(packs,state);
 
- const open=match(probePack,['PROBE-HIT','LIFE','FUEL','F2'],1012);
- const victim=put(open.s,1,'F2','front',0,true);
- const hitter=put(open.s,0,'PROBE-HIT','front',0,true);
- open.s.players[1].deck.push(...open.s.players[1].life.splice(0));
- open.s.players[1].life=[take(open.s,1,'LIFE'),take(open.s,1,'FUEL')];
- let broken=toPhase(open.packs,open.s,'main');
- broken=dispatchUniversalAction(open.packs,broken,{type:'next'});
- broken=dispatchUniversalAction(open.packs,broken,{type:'attack',uid:hitter.uid});
- if(broken.pending?.kind==='block')
-  broken=dispatchUniversalAction(open.packs,broken,{type:'chooseBlock',uid:victim.uid});
- assert.equal(broken.players[1].front.some(card=>card?.uid===victim.uid),false);
- assert.equal(broken.players[1].life.length,1);
+ const bare=match(mainPack,['IMC-1-108','PLAIN','FUEL'],1082);
+ readyAp(bare.s);
+ const line=put(bare.s,0,'PLAIN','energy',0);
+ put(bare.s,0,'FUEL','energy',1);
+ const only=take(bare.s,0,'IMC-1-108');
+ bare.s.players[0].hand.push(only);
+ let drawn=toPhase(bare.packs,bare.s,'main');
+ const pile=drawn.players[0].deck.length;
+ drawn=play(bare.packs,drawn,only.uid,'event');
+ assert.equal(universalBp(bare.packs,drawn,drawn.players[0].energy.find(card=>card?.uid===line.uid)),2500);
+ assert.equal(drawn.players[0].deck.length,pile-1);
+ assert.equal(drawn.pending,null);
 });
 
 test('unfinished starter cards stay out and name the shared op they cannot reuse',()=>{
  const sentences={
-  'IMC-1-103':['drawDiscard','印刷'],
   'IMC-1-104':['nextEligibleHandPlayApDiscount','渋谷 凛'],
-  'IMC-1-106':['searchTopOneBottomDiscard','activeOwnTrait'],
   'IMC-1-107':['fieldRestRetireThen','deployOwnHandSpecial'],
-  'IMC-1-108':['buffOwnCharactersAll','前線'],
   'IMC-1-110':['frontOnceProgram','4000'],
   'IMC-1-111':['payApDiscardOutsideRaid','突襲'],
   'IMC-1-112':['searchTopOneBottomDiscard','Q2258'],
@@ -527,13 +654,14 @@ test('unfinished starter cards stay out and name the shared op they cannot reuse
  };
  for(const [id,needles] of Object.entries(sentences)){
   assert.equal(IMC_PROGRAMS_STARTER[id],undefined,id);
+  assert.equal(IMC_PROGRAMS_STARTER[id]?.ready,undefined,id);
   const request=IMC_REQUESTS_STARTER.find(row=>row.cardId===id);
   assert.ok(request,id);
   for(const needle of needles)
    assert.equal(JSON.stringify(request).includes(needle),true,id+' '+needle);
   assert.equal(catalog.byId.get(id).battleReady,false,id);
  }
- assert.equal(catalog.byId.get('IMC-1-112').faq.some(row=>row.id==='Q2258'),true);
- assert.equal(catalog.byId.get('IMC-1-102').trigger,'raid');
- assert.match(catalog.byId.get('IMC-1-102').effectJa,/【登場時】このキャラはこのターン中、【インパクト（1）】/);
+ assert.equal(loadImcOfficialStarter().ready,false);
+ assert.equal(loadImcOfficialStarter().counts,null);
 });
+

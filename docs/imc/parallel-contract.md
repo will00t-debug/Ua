@@ -107,7 +107,7 @@ UA55BT/IMC-1-098 是紅色事件，能量 4、AP 1、特殊觸發。日文效果
 - `nextEligibleHandPlayApDiscount`，`filter:{trait:'お願い！シンデレラ'}`。Q1210 只扣下一張符合的手牌使用，每次 -1
 - 特殊觸發退場一張對手前線：`trigger:'special'` 加上 `triggerEffect:{op:'retireOppFront'}`
 
-後段的兩個零件已經分開存在：`ownDistinctTraitNames` 的 `zone:'fieldOutside'` 計算場上加場外的不同印刷卡名，`grantTraitActiveEntryThisTurn` 可以讓下一張或這個回合全部符合特徵的新入場角色活動。`zone:'field'` 仍然不含場外。`countOwnOutsideDistinctPrintedNames` 只算場外，而且依顏色與種類，不依特徵。`enterAlwaysActive` 仍是卡本身的印刷登場方式。`ifLiveThen` 還不能把 `grantTraitActiveEntryThisTurn` 接成後續，所以「6 種改下一張、9 種改全部」不能組成同一句。098 先不要標 `ready:true`。
+`ownDistinctTraitNames` 的 `zone:'fieldOutside'` 計算場上加場外的不同印刷卡名。`zone:'field'` 仍然不含場外。`countOwnOutsideDistinctPrintedNames` 只算場外，而且依顏色與種類，不依特徵。`enterAlwaysActive` 仍是卡本身的印刷登場方式。`ifLiveThen` 現在可以把 `grantTraitActiveEntryThisTurn` 接在 `then`，也可以用長度 1 的 `else` 接另一個 `ifLiveThen`。098 用 9 種走 `scope:'all'`，否則 6 種走 `scope:'next'`，兩段不會同時成立。不符合特徵的登場不消耗 `next`。授權在下一個回合開始時清除。098 已標 `ready:true`。
 
 UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1、突襲觸發。特徵印刷是 `new generations／お願い！シンデレラ`。突襲框只有〈渋谷 凛〉的標準突襲句。登場時這張角色這個回合獲得衝擊 1，並可選最多 1 張對手前線角色，其目前 BP 在「自己場上其他、特徵 new generations、原本 BP 恰好 4000」的張數 ×1000 以下時退場。
 
@@ -118,7 +118,7 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - 原本 BP 是 `definition.bp`。`printedBp` 篩選與 `ownRestPrintedBpCount` 都讀印刷值，不讀目前 BP
 - 「1 枚まで」對應既有退場 op 的 `optional:true`
 
-上限現在是 `retireOppFrontUnderBp` 的 `printedBpTraitCount`：其他自己角色、指定特徵、印刷 BP 恰好為 N 的張數 ×1000，再和對手前線的目前 BP 比較。`traitPerBp` 與 `traitNamePerBp` 維持原來的公式。102 仍由 D 組把衝擊與這個上限寫進 program 並通過測試，才能 `ready:true`。101、103、106 的公式不同，不能直接套這一個上限。
+上限是 `retireOppFrontUnderBp` 的 `printedBpTraitCount`：其他自己角色、指定特徵、印刷 BP 恰好為 N 的張數 ×1000，再和對手前線的目前 BP 比較。`traitPerBp` 與 `traitNamePerBp` 維持原來的公式。102、101、103、106 已各自用自己的公式標 `ready:true`。不能把 102 的上限套到公式不同的卡上。
 
 ## 已經可重用、這輪不要重做
 
@@ -132,12 +132,14 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 
 - `ownPrintedTraitCount`：場上角色、指定特徵、印刷 BP 或印刷必要能源恰好為 N。比較的是卡面數字，不是目前 BP。
 - `retireOppFrontUnderBp` 的 `printedBpTraitCount`：排除來源後，上述張數乘 1000，再和對手前線的目前 BP 比較。`optional:true` 可以不選。
-- `ifLiveThen` 可以接 `drawDiscard` 一張，或 `activeOwnTrait` 最多一張。
-- `buffOwnCharactersAll` 加 `zone:'front'` 時只加前線。
-- `grantTraitActiveEntryThisTurn`：`scope:'next'` 使下一張符合特徵的新入場角色活動，用過即止；`scope:'all'` 維持到這個回合結束。
+- `ifLiveThen` 可以接 `drawDiscard` 一張、`activeOwnTrait` 最多一張，或 `grantTraitActiveEntryThisTurn`。可選的 `else` 長度是 1，內容是另一個 `ifLiveThen` 或同樣的後續。條件成立只跑 `then`，不成立只跑 `else`。
+- `buffOwnCharactersAll` 加 `zone:'front'` 時只加前線。IMC-1-108 已用。
+- `grantTraitActiveEntryThisTurn`：`scope:'next'` 使下一張符合特徵的新入場角色活動，用過即止；`scope:'all'` 維持到下一個回合開始。不符合特徵的登場不消耗 `next`。
 - `nextEligibleHandPlayApDiscount` 加 `fromUsedEvent:true` 時，來源可以是已經放到場外的事件，仍然只減下一張符合的手牌使用。
-- `deployOwnHandRest` 在 `ap:null` 時不要求印刷消費 AP，可加 `line:'front'`、顏色、必要能源上限與特徵。
+- `deployOwnHandRest` 在 `ap:null` 時不要求印刷消費 AP，可加 `line`、顏色、必要能源上限與特徵。`sourceLine:'front'` 或 `'energy'` 檢查的是效果來源所在列，省略時不檢查。`line` 才是被召喚角色的目的地，省略時前線與能源線都可以。IMC-1-023 已用 `sourceLine:'front'`。042 與 079 沒有 `sourceLine`，行為不變。
+- `peekTopOne` 是私下看自己牌頂 1 張，放回頂部或放到場外。只有控制者看得到那張卡，公開畫面不含卡 uid。IMC-1-017 已用。這不是公開。
+- `revealTopTraitOptionalHand` 公開自己牌頂 1 張。印刷特徵相符時可以加入手牌，也可以放回頂或底；不相符時只有頂或底，不能進場外。雙方都看得到公開窗。IMC-1-006 的公開段可以用它，但攻擊門檻與每回合一次的加攻還沒有，006 仍不標 ready。016 的看牌用 `peekTopOne`，抽棄後回收與 BP 切換還沒有，016 仍不標 ready。
 - `activeExtraEnergy`、`ownTurnBp`、`opponentTurnBp`、`emptyOwnFieldHandEnergyDiscount`、`enterAlwaysActive`、`readyOnBlockCount`、`unblockedAttack`、`frontForbidden`、`blockBpRestriction`、`passiveBonuses` 已能從 IMC program 送進對戰卡。`passiveBonuses` 沿用既有條件，所以印刷張數、場外卡名與印刷必要能源可以決定 BP 或發生能源。發生能源沿用這張卡自己的顏色。沒有 `ready:true` 的卡不會進對戰包。
-- `searchTopOneBottomDiscard` 既有 `noHandDiscard:true`。IMC-1-106 的看 3 張不棄手牌，要用這個旗標；105 的窗口才會在入手後棄一張手牌。106 的活動段用 `ifLiveThen` 接 `activeOwnTrait`。D 組仍要自己寫 program 與測試。
+- `searchTopOneBottomDiscard` 既有 `noHandDiscard:true`。IMC-1-106 已用這個旗標看 3 張且不棄手牌；105 的窗口才會在入手後棄一張手牌。
 
-`op:'imc'` 仍沒有接進 `engine.mjs`。現有 38 張 ready 卡走既有 op。作品維持 `playable:false`。即使牌組裡每一張都已 ready，`editorV2Status`、`v2DeckReport` 與 `prepareSoloBattle` 仍拒絕正式對戰。受控測試用 `newUniversalMatch(createImcV2Pack(), ...)`。
+`op:'imc'` 仍沒有接進 `engine.mjs`。ready 卡走既有 op。作品維持 `playable:false`。即使牌組裡每一張都已 ready，`editorV2Status`、`v2DeckReport` 與 `prepareSoloBattle` 仍拒絕正式對戰。受控測試用 `newUniversalMatch(createImcV2Pack(), ...)`。

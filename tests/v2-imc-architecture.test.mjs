@@ -24,6 +24,27 @@ import ledger from '../docs/audit/effect-audit-ledger.json' with {type:'json'};
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const pad=n=>'IMC-1-'+String(n).padStart(3,'0');
+const READY_IDS=[
+ 'IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-007','IMC-1-010','IMC-1-013','IMC-1-014',
+ 'IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-021','IMC-1-022','IMC-1-023','IMC-1-025',
+ 'IMC-1-026','IMC-1-027','IMC-1-030','IMC-1-031','IMC-1-034','IMC-1-035','IMC-1-038',
+ 'IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045','IMC-1-047','IMC-1-048',
+ 'IMC-1-050','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-059','IMC-1-063','IMC-1-066',
+ 'IMC-1-067','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
+ 'IMC-1-082','IMC-1-085','IMC-1-086','IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091',
+ 'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-098','IMC-1-100','IMC-1-101','IMC-1-102',
+ 'IMC-1-103','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109'
+];
+const UNFINISHED_IDS=[
+ 'IMC-1-003','IMC-1-004','IMC-1-006','IMC-1-008','IMC-1-009','IMC-1-011','IMC-1-012',
+ 'IMC-1-015','IMC-1-016','IMC-1-020','IMC-1-024','IMC-1-028','IMC-1-029','IMC-1-032',
+ 'IMC-1-033','IMC-1-036','IMC-1-037','IMC-1-039','IMC-1-043','IMC-1-046','IMC-1-049',
+ 'IMC-1-051','IMC-1-052','IMC-1-054','IMC-1-055','IMC-1-057','IMC-1-060','IMC-1-061',
+ 'IMC-1-062','IMC-1-064','IMC-1-065','IMC-1-068','IMC-1-069','IMC-1-072','IMC-1-073',
+ 'IMC-1-074','IMC-1-075','IMC-1-078','IMC-1-080','IMC-1-083','IMC-1-084','IMC-1-087',
+ 'IMC-1-093','IMC-1-094','IMC-1-097','IMC-1-099','IMC-1-104','IMC-1-107','IMC-1-110',
+ 'IMC-1-111','IMC-1-112','IMC-1-113'
+];
 
 test('official IMC identities load and stay unverified',()=>{
  const catalog=imcCatalog();
@@ -94,13 +115,22 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'imc');
  assert.equal(pack.version,built.version);
- assert.equal(Object.keys(pack.cards).length,38);
- assert.equal(pack.cards['IMC-1-001'].id,'IMC-1-001');
- assert.equal(pack.cards['IMC-1-003'],undefined);
- assert.equal(pack.cards['IMC-1-098'],undefined);
- assert.equal(pack.cards['IMC-1-102'],undefined);
+ assert.deepEqual(Object.keys(pack.cards),READY_IDS);
+ assert.equal(READY_IDS.length,61);
+ assert.equal(UNFINISHED_IDS.length,52);
+ for(const id of UNFINISHED_IDS){
+  assert.equal(pack.cards[id],undefined,id);
+  assert.notEqual(imcProgramFor(id)?.ready,true,id);
+ }
+ assert.equal(pack.cards['IMC-1-050'].readyOnBlockCount,1);
+ assert.equal(pack.cards['IMC-1-066'].effects.onPlay[1].when.minBp,4500);
+ assert.equal(pack.cards['IMC-1-098'].effects.onPlay[2].else[0].then[0].scope,'next');
+ assert.equal(pack.cards['IMC-1-102'].effects.onPlay[1].printedBpTraitCount.per,1000);
+ assert.equal(pack.cards['IMC-1-106'].effects.onPlay[0].noHandDiscard,true);
+ assert.equal(pack.cards['IMC-1-108'].effects.onPlay[0].zone,'front');
  assert.equal(imcProgramFor('IMC-1-001').ready,true);
  assert.equal(imcProgramFor('IMC-1-003'),null);
+ assert.equal(imcProgramFor('IMC-1-098').ready,true);
  const unfinished=v2DeckReport('imc',{'IMC-1-003':4});
  assert.equal(unfinished.ok,false);
  assert.match(unfinished.issues.join('\n'),/IMC-1-003/);
@@ -110,7 +140,7 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
  assert.match(report.issues.join('\n'),new RegExp(IMC_OFFICIAL_MATCH_CLOSED));
  const status=editorV2Status('imc',{'IMC-1-001':4});
  assert.equal(status.ready,false);
- assert.equal(status.registered,38);
+ assert.equal(status.registered,READY_IDS.length);
  assert.match(status.issues.join('\n'),/尚未開放正式對戰/);
  assert.throws(()=>normalizeEditorCounts('imc',{'IMC-1-AP01':1}),/無效卡號/);
  assert.deepEqual(normalizeEditorCounts('imc',{'UA55BT/IMC-1-001':2}),{'IMC-1-001':2});
@@ -162,7 +192,7 @@ test('IMC-1-098 reuses draw and the next trait AP discount, and the entry grant 
  assert.equal(matchesV2LiveCondition(state,0,null,condition,printed),true);
 });
 
-test('IMC-1-102 raid and impact pieces exist, and the printed-BP ceiling stays off the battle pack',()=>{
+test('IMC-1-102 raid and impact use the printed-BP ceiling inside the battle pack',()=>{
  const card=imcCatalog().byId.get('IMC-1-102');
  assert.equal(card.number,'UA55ST/IMC-1-102');
  assert.equal(card.bp,4000);
@@ -188,7 +218,8 @@ test('IMC-1-102 raid and impact pieces exist, and the printed-BP ceiling stays o
  ]}};
  const accepted=createUniversalPack({id:'probe',version:'imc-102-scale',cards:[scaled]});
  assert.equal(accepted.cards['PROBE-102'].effects.onPlay[1].printedBpTraitCount.per,1000);
- assert.equal(createImcV2Pack().cards['IMC-1-102'],undefined);
+ assert.equal(createImcV2Pack().cards['IMC-1-102'].raidName,'渋谷 凛');
+ assert.equal(createImcV2Pack().cards['IMC-1-113'],undefined);
 });
 
 test('group ranges, request files and the audit ledger stay separate',()=>{
