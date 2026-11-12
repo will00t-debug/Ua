@@ -369,6 +369,25 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='selfCurrentBpAtLeast'){
+  // このキャラのBP. Printed BP and a live bonus are different numbers.
+  if(typeof cardBp!=='function')throw Error('Current BP condition needs a live BP reader');
+  const physical=[s.players[owner].front,s.players[owner].energy]
+   .flat().find(c=>c?.uid===sourceUid);
+  return !!physical&&printedFieldCard(physical)&&cardBp(physical)>=condition.minBp;
+ }
+ if(condition.kind==='otherOwnCharacterBpAtLeast'){
+  // 他のキャラ. The card being measured never satisfies its own gate.
+  if(typeof cardBp!=='function')throw Error('Current BP condition needs a live BP reader');
+  const board=s.players[owner];
+  const areas=condition.zone==='front'?[board.front]:
+   condition.zone==='energy'?[board.energy]:[board.front,board.energy];
+  for(const area of areas)for(const c of area){
+   if(!c||c.uid===sourceUid||!printedFieldCard(c)||printed(c).type!=='character')continue;
+   if(cardBp(c)>=condition.minBp)return true;
+  }
+  return false;
+ }
  if(condition.kind==='ownRemovedCountAtLeast')
   return (s.players[owner].removed||[]).length>=condition.min;
  if(condition.kind==='ownRemovedDistinctTrait'){

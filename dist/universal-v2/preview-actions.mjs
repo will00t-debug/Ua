@@ -335,7 +335,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-printed-ap':'是否給予衝擊',
  'effect-different-field':'可從場外以休息狀態登場',
  'effect-hand-fresh-name':'可從手牌讓新名稱的角色以休息狀態登場',
- 'effect-block-floor':'是否設定阻擋下限'
+ 'effect-block-floor':'是否設定阻擋下限',
+ 'effect-block-ceiling':'是否讓角色不被高 BP 阻擋'
 });
 export function isExactLegal(action,legal){
  return Array.isArray(legal)&&legal.some(candidate=>
@@ -578,6 +579,7 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
   chooseAttackEndRest:['不在攻擊結束時休息','攻擊結束時休息這張卡'],
   chooseAttackEndSwap:['不在攻擊結束時交換','攻擊結束時與這張卡交換'],
   chooseBlockFloor:['不設定阻擋下限','給這張卡阻擋下限'],
+  chooseBlockCeiling:['不限制阻擋','這張卡不會被高 BP 角色阻擋'],
   chooseBottomRetire:['結束放到牌底','將這張場外卡放到牌底'],
   chooseBounceBp:['不返回手牌','將這張卡返回手牌並結算 BP'],
   chooseEnergyFront:['將這張卡移到前線','將這張卡移到前線'],

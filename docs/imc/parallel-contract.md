@@ -138,8 +138,22 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - `nextEligibleHandPlayApDiscount` 加 `fromUsedEvent:true` 時，來源可以是已經放到場外的事件，仍然只減下一張符合的手牌使用。
 - `deployOwnHandRest` 在 `ap:null` 時不要求印刷消費 AP，可加 `line`、顏色、必要能源上限與特徵。`sourceLine:'front'` 或 `'energy'` 檢查的是效果來源所在列，省略時不檢查。`line` 才是被召喚角色的目的地，省略時前線與能源線都可以。IMC-1-023 已用 `sourceLine:'front'`。042 與 079 沒有 `sourceLine`，行為不變。
 - `peekTopOne` 是私下看自己牌頂 1 張，放回頂部或放到場外。只有控制者看得到那張卡，公開畫面不含卡 uid。IMC-1-017 已用。這不是公開。
-- `revealTopTraitOptionalHand` 公開自己牌頂 1 張。印刷特徵相符時可以加入手牌，也可以放回頂或底；不相符時只有頂或底，不能進場外。雙方都看得到公開窗。IMC-1-006 的公開段可以用它，但攻擊門檻與每回合一次的加攻還沒有，006 仍不標 ready。016 的看牌用 `peekTopOne`，抽棄後回收與 BP 切換還沒有，016 仍不標 ready。
+- `revealTopTraitOptionalHand` 公開自己牌頂 1 張。印刷特徵相符時可以加入手牌，也可以放回頂或底；不相符時只有頂或底，不能進場外。雙方都看得到公開窗。它可以放在 `ifLiveThen` 的 `then`。IMC-1-006 的整句現在寫得出來，但仍不標 ready。016 的看牌用 `peekTopOne`，抽棄後回收與 BP 切換還沒有，016 仍不標 ready。
 - `activeExtraEnergy`、`ownTurnBp`、`opponentTurnBp`、`emptyOwnFieldHandEnergyDiscount`、`enterAlwaysActive`、`readyOnBlockCount`、`unblockedAttack`、`frontForbidden`、`blockBpRestriction`、`passiveBonuses` 已能從 IMC program 送進對戰卡。`passiveBonuses` 沿用既有條件，所以印刷張數、場外卡名與印刷必要能源可以決定 BP 或發生能源。發生能源沿用這張卡自己的顏色。沒有 `ready:true` 的卡不會進對戰包。
 - `searchTopOneBottomDiscard` 既有 `noHandDiscard:true`。IMC-1-106 已用這個旗標看 3 張且不棄手牌；105 的窗口才會在入手後棄一張手牌。
+
+## 第三階段共用機制
+
+這些形狀可以讓負責的組寫進自己的 programs。整句測試通過之前，006、008、015、046、049、055、060、083、084、104、110 維持不在對戰包。A 組沒有改這三組的 programs，也沒有把它們標成 ready。
+
+- `selfCurrentBpAtLeast` 讀這張角色的目前 BP。`otherOwnCharacterBpAtLeast` 讀另一張自己角色的目前 BP，`excludeSelf` 必須是 true。兩者都看目前 BP，不看印刷 BP。`oppCharacterBpAtLeast` 本來就是目前 BP。
+- `onceBuffSelfWhen` 保留原本的兩段 `logic:'any'`。另一個形狀是 `oncePerTurn:true`，BP 為 500 的倍數，`when` 是上面的對手或自己其他角色門檻。成立才出現啟動，同一回合再用一次不會出現，下一回合清除使用紀錄後恢復。
+- `restSelfBuffOther` 可以只帶 `bp` 與 `trait`。來源要休息，目標必須是另一張該特徵角色，沒有每回合一次。原本的無名形狀與具名突襲形狀不變。
+- `ifLiveThen` 的後續可以是 `revealTopTraitOptionalHand`。公開句仍只能出現在角色的登場或攻擊效果，包含包在條件裡的時候。
+- `bounceOppFrontOneUnderBp` 可以加 `orAtLeast`。目標的目前 BP 在 `bp` 以下或 `orAtLeast` 以上才合法，中間的角色不能選。沒有 `orAtLeast` 的舊句仍只看上限。顏色觸發的回手不受這個區間影響。
+- `ownPrintedTraitCount` 的 `turn` 可以是 `any` 或 `own`。`own` 只在自己回合成立，比較的仍是印刷 BP 或印刷必要能源。081、082 維持 `any`，對手回合也成立。
+- `grantOwnTraitBlockAtLeast` 是角色登場時的可選效果。最多指定 1 張自己場上、具有該特徵的角色。這個回合，目前 BP 達到門檻的角色不能阻擋它。未達門檻的阻擋者仍可選。這不是攻擊限制，也不改貫通、衝擊或狙擊的既有路徑。
+- `handApDiscountWhileAllNames` 是角色欄位。兩個指定卡名同時在自己場上時，這張手牌的消費 AP 減 1，支付不會低於 0。場面改變後重新計算。既有的單名事件減費不變。
+- `frontOnceProgram` 可以加 `minSelfBp`，後續是既有的二選一。只有前線、目前 BP 達門檻的角色能啟動，每回合一次，下一回合恢復。選一個分支就只跑那個分支，沿用啟動、選擇、再選目標的既有畫面。
 
 `op:'imc'` 仍沒有接進 `engine.mjs`。ready 卡走既有 op。作品維持 `playable:false`。即使牌組裡每一張都已 ready，`editorV2Status`、`v2DeckReport` 與 `prepareSoloBattle` 仍拒絕正式對戰。受控測試用 `newUniversalMatch(createImcV2Pack(), ...)`。
