@@ -29,9 +29,9 @@ const READY_IDS=[
  'IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-021','IMC-1-022','IMC-1-023','IMC-1-025',
  'IMC-1-026','IMC-1-027','IMC-1-030','IMC-1-031','IMC-1-034','IMC-1-035','IMC-1-038',
  'IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045','IMC-1-047','IMC-1-048',
- 'IMC-1-050','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-059','IMC-1-063','IMC-1-066',
- 'IMC-1-067','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
- 'IMC-1-082','IMC-1-085','IMC-1-086','IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091',
+ 'IMC-1-050','IMC-1-053','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059','IMC-1-060','IMC-1-063','IMC-1-066',
+ 'IMC-1-067','IMC-1-069','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
+ 'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091',
  'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-098','IMC-1-100','IMC-1-101','IMC-1-102',
  'IMC-1-103','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109'
 ];
@@ -39,9 +39,9 @@ const UNFINISHED_IDS=[
  'IMC-1-003','IMC-1-004','IMC-1-006','IMC-1-008','IMC-1-009','IMC-1-011','IMC-1-012',
  'IMC-1-015','IMC-1-016','IMC-1-020','IMC-1-024','IMC-1-028','IMC-1-029','IMC-1-032',
  'IMC-1-033','IMC-1-036','IMC-1-037','IMC-1-039','IMC-1-043','IMC-1-046','IMC-1-049',
- 'IMC-1-051','IMC-1-052','IMC-1-054','IMC-1-055','IMC-1-057','IMC-1-060','IMC-1-061',
- 'IMC-1-062','IMC-1-064','IMC-1-065','IMC-1-068','IMC-1-069','IMC-1-072','IMC-1-073',
- 'IMC-1-074','IMC-1-075','IMC-1-078','IMC-1-080','IMC-1-083','IMC-1-084','IMC-1-087',
+ 'IMC-1-051','IMC-1-052','IMC-1-054','IMC-1-057','IMC-1-061',
+ 'IMC-1-062','IMC-1-064','IMC-1-065','IMC-1-068','IMC-1-072','IMC-1-073',
+ 'IMC-1-074','IMC-1-075','IMC-1-078','IMC-1-080','IMC-1-087',
  'IMC-1-093','IMC-1-094','IMC-1-097','IMC-1-099','IMC-1-104','IMC-1-107','IMC-1-110',
  'IMC-1-111','IMC-1-112','IMC-1-113'
 ];
@@ -116,8 +116,8 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
  assert.equal(pack.id,'imc');
  assert.equal(pack.version,built.version);
  assert.deepEqual(Object.keys(pack.cards),READY_IDS);
- assert.equal(READY_IDS.length,61);
- assert.equal(UNFINISHED_IDS.length,52);
+ assert.equal(READY_IDS.length,66);
+ assert.equal(UNFINISHED_IDS.length,47);
  for(const id of UNFINISHED_IDS){
   assert.equal(pack.cards[id],undefined,id);
   assert.notEqual(imcProgramFor(id)?.ready,true,id);
