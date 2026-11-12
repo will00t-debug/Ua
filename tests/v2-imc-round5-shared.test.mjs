@@ -265,10 +265,10 @@ test('front once and name once stay separate, and 110 is unchanged',()=>{
   x.uid===bareSrc.uid&&x.mode==='frontOnce'),false);
 
  const imc=createImcV2Pack();
- assert.equal(Object.keys(imc.cards).length,77);
+ assert.equal(Object.keys(imc.cards).length,79);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.minSelfBp,4000);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.then[0].op,'chooseOne');
- for(const id of ['IMC-1-020','IMC-1-024','IMC-1-028','IMC-1-052','IMC-1-054','IMC-1-111'])
+ for(const id of ['IMC-1-020','IMC-1-024','IMC-1-028','IMC-1-111'])
   assert.equal(imc.cards[id],undefined);
  assert.equal(getTitle('imc').playable,false);
 });
