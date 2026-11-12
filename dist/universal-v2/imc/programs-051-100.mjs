@@ -9,7 +9,20 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   effects:{onPlay:[{op:'recoverOutsideFiltered',optional:true,max:1,
    trait:'LiPPS',energyAtMost:2}]}
  }),
+ 'IMC-1-052':Object.freeze({
+  ready:true,implementation:'dsl',
+  mainAbility:{op:'restSelfThen',frontOnly:false,then:[{
+   op:'chooseFrontOrOwnTrait',bp:500,optional:false,trait:'LiPPS',excludeName:'速水 奏'}]}
+ }),
  'IMC-1-053':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
+ 'IMC-1-054':Object.freeze({
+  ready:true,implementation:'dsl',
+  blockBpRestriction:{relation:'atLeast',bp:4500,condition:null},
+  nameActive:{op:'nameOnceActive',scope:'name',when:{
+   kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500}},
+  mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{
+   op:'chooseFrontOrOwnTrait',bp:500,optional:false,trait:'LiPPS',excludeName:'速水 奏'}]}
+ }),
  'IMC-1-055':Object.freeze({
   ready:true,implementation:'dsl',
   mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:2000,

@@ -9,7 +9,7 @@ import {IMC_PROGRAMS_STARTER} from './imc/programs-starter.mjs';
 import {imcRange} from './imc-runtime.mjs';
 
 const PROGRAM_KEYS=new Set([
- 'ready','implementation','effects','mainAbility','triggerEffect','raidName','impactNull',
+ 'ready','implementation','effects','mainAbility','nameActive','triggerEffect','raidName','impactNull',
  'printedImpact','nameAliases','step','run','notes',
  'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
  'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
@@ -48,7 +48,7 @@ export function imcBattleCard(card,program){
  if(program.implementation==='vanilla'&&printed)
   throw Error(card.id+' 有印刷效果，不能標成 vanilla');
  const extra={implementation:program.implementation};
- for(const key of ['effects','mainAbility','triggerEffect','raidName','impactNull','printedImpact','nameAliases','step',
+ for(const key of ['effects','mainAbility','nameActive','triggerEffect','raidName','impactNull','printedImpact','nameAliases','step',
   'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
   'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
   'passiveBonuses','handApDiscountWhileAllNames']){
