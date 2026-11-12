@@ -1117,7 +1117,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseFrontGrant':return '本回合賦予 '+name()+' BP 與印刷的追加能力';
   case 'chooseRemovedEnter':return action.uid===null?'不從移除區登場':'讓 '+name()+' 從移除區休息登場';
   case 'chooseMainBuff':return '指定 '+name()+'，本回合 BP＋1000';
-  case 'chooseOwnBuff':case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseOwnBuff':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP＋'+amount;
+  }
+  case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseRestOutsideEvents':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';

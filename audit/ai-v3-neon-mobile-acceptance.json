@@ -1,0 +1,1460 @@
+{
+  "ok": true,
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "problems": [],
+  "dialogs": [
+    {
+      "text": "確認擠位？\n將取代 更木 剣八 所在的能源線格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。",
+      "accept": false
+    },
+    {
+      "text": "確認擠位？\n將取代 更木 剣八 所在的能源線格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。",
+      "accept": true
+    }
+  ],
+  "shots": [
+    "/opt/cursor/artifacts/neon-activate-before.png",
+    "/opt/cursor/artifacts/neon-activate-selected.png",
+    "/opt/cursor/artifacts/neon-activate-menu.png",
+    "/opt/cursor/artifacts/neon-activate-choice.png",
+    "/opt/cursor/artifacts/neon-activate-resolved.png",
+    "/opt/cursor/artifacts/neon-activate-continued.png",
+    "/opt/cursor/artifacts/neon-dual-initial.png",
+    "/opt/cursor/artifacts/neon-dual-offered.png",
+    "/opt/cursor/artifacts/neon-dual-raid-mode.png",
+    "/opt/cursor/artifacts/neon-dual-raid-base.png",
+    "/opt/cursor/artifacts/neon-dual-raid-after.png",
+    "/opt/cursor/artifacts/neon-dual-normal-after.png",
+    "/opt/cursor/artifacts/neon-dual-squeeze-ready.png",
+    "/opt/cursor/artifacts/neon-dual-squeeze-cancelled.png",
+    "/opt/cursor/artifacts/neon-dual-squeeze-reveal.png",
+    "/opt/cursor/artifacts/neon-dual-squeeze-after.png"
+  ],
+  "activate": {
+    "before": {
+      "width": 412,
+      "height": 915,
+      "audit": "stg006",
+      "phase": "主要",
+      "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "blue 1",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →"
+      ],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "2000",
+          "stack": "",
+          "label": "你的前線1 阿万音 鈴羽",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 漆原 るか",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線4 空位",
+          "visible": true
+        }
+      ],
+      "history": [
+        "稽核 STG-1-006：點能源線漆原琉華，按「啟動」，再按「確認發動」。然後指定阿萬音鈴羽。漆原轉為休息，阿萬音本回合 BP＋1000，AP 維持 3。之後可按下一階段。"
+      ],
+      "error": ""
+    },
+    "selectedClick": "你的能源線1 漆原 るか",
+    "selected": {
+      "width": 412,
+      "height": 915,
+      "audit": "stg006",
+      "phase": "主要",
+      "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "blue 1",
+      "activate": "啟動",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →",
+        "啟動"
+      ],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "2000",
+          "stack": "",
+          "label": "你的前線1 阿万音 鈴羽",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": true,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 漆原 るか",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線4 空位",
+          "visible": true
+        }
+      ],
+      "history": [
+        "稽核 STG-1-006：點能源線漆原琉華，按「啟動」，再按「確認發動」。然後指定阿萬音鈴羽。漆原轉為休息，阿萬音本回合 BP＋1000，AP 維持 3。之後可按下一階段。"
+      ],
+      "error": ""
+    },
+    "menu": {
+      "width": 412,
+      "height": 915,
+      "audit": "stg006",
+      "phase": "主要",
+      "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "blue 1",
+      "activate": "啟動",
+      "menu": [
+        "確認發動主要能力：REST 自身，指定另一張己方角色本回合 BP 加成"
+      ],
+      "pending": [],
+      "controls": [
+        "下一階段 →",
+        "啟動"
+      ],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "2000",
+          "stack": "",
+          "label": "你的前線1 阿万音 鈴羽",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": true,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 漆原 るか",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線4 空位",
+          "visible": true
+        }
+      ],
+      "history": [
+        "稽核 STG-1-006：點能源線漆原琉華，按「啟動」，再按「確認發動」。然後指定阿萬音鈴羽。漆原轉為休息，阿萬音本回合 BP＋1000，AP 維持 3。之後可按下一階段。"
+      ],
+      "error": ""
+    },
+    "chosen": {
+      "width": 412,
+      "height": 915,
+      "audit": "stg006",
+      "phase": "主要",
+      "hint": "請完成效果選擇。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "blue 1",
+      "activate": "",
+      "menu": [],
+      "pending": [
+        "查看場面與手牌",
+        "阿万音 鈴羽我方 · 前線 1 · BP 2000本回合使 BP＋1000"
+      ],
+      "controls": [],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "2000",
+          "stack": "",
+          "label": "你的前線1 阿万音 鈴羽",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": true,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 漆原 るか",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線4 空位",
+          "visible": true
+        }
+      ],
+      "history": [
+        "你：主要能力：REST 自身，指定另一張己方角色本回合 BP 加成",
+        "稽核 STG-1-006：點能源線漆原琉華，按「啟動」，再按「確認發動」。然後指定阿萬音鈴羽。漆原轉為休息，阿萬音本回合 BP＋1000，AP 維持 3。之後可按下一階段。"
+      ],
+      "error": ""
+    },
+    "resolved": {
+      "width": 412,
+      "height": 915,
+      "audit": "stg006",
+      "phase": "主要",
+      "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "blue 1",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →"
+      ],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "3000",
+          "stack": "",
+          "label": "你的前線1 阿万音 鈴羽",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": true,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 漆原 るか",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線4 空位",
+          "visible": true
+        }
+      ],
+      "history": [
+        "你：本回合使 阿万音 鈴羽 BP＋1000",
+        "你：主要能力：REST 自身，指定另一張己方角色本回合 BP 加成",
+        "稽核 STG-1-006：點能源線漆原琉華，按「啟動」，再按「確認發動」。然後指定阿萬音鈴羽。漆原轉為休息，阿萬音本回合 BP＋1000，AP 維持 3。之後可按下一階段。"
+      ],
+      "error": ""
+    },
+    "continuedClick": "下一階段 →",
+    "continued": {
+      "width": 412,
+      "height": 915,
+      "audit": "stg006",
+      "phase": "攻擊",
+      "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "blue 1",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "結束回合 →"
+      ],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "3000",
+          "stack": "",
+          "label": "你的前線1 阿万音 鈴羽",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": true,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 漆原 るか",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線4 空位",
+          "visible": true
+        }
+      ],
+      "history": [
+        "你：前進下一階段／結束回合",
+        "你：本回合使 阿万音 鈴羽 BP＋1000",
+        "你：主要能力：REST 自身，指定另一張己方角色本回合 BP 加成",
+        "稽核 STG-1-006：點能源線漆原琉華，按「啟動」，再按「確認發動」。然後指定阿萬音鈴羽。漆原轉為休息，阿萬音本回合 BP＋1000，AP 維持 3。之後可按下一階段。"
+      ],
+      "error": ""
+    }
+  },
+  "dual": {
+    "handClick": "更木 剣八",
+    "offered": {
+      "width": 412,
+      "height": 915,
+      "audit": "blc067dual",
+      "phase": "主要",
+      "hint": "先選角色。能選擇時再決定突襲進場或普通進場，最後直接點要登場的格子。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "green 4",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →",
+        "改為突襲進場"
+      ],
+      "hand": [
+        {
+          "name": "更木 剣八",
+          "selected": true
+        }
+      ],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "1500",
+          "stack": "",
+          "label": "你的前線1 日番谷 冬獅郎",
+          "visible": true
+        },
+        {
+          "placement": "普通進場",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位，普通進場",
+          "visible": true
+        },
+        {
+          "placement": "普通進場",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位，普通進場",
+          "visible": true
+        },
+        {
+          "placement": "普通進場",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位，普通進場",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 更木 剣八，選為突襲底座",
+          "visible": true
+        },
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線2 更木 剣八，選為突襲底座",
+          "visible": true
+        },
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線3 更木 剣八，選為突襲底座",
+          "visible": true
+        },
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線4 更木 剣八，選為突襲底座",
+          "visible": true
+        }
+      ],
+      "history": [
+        "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+      ],
+      "error": ""
+    },
+    "raidMode": {
+      "width": 412,
+      "height": 915,
+      "audit": "blc067dual",
+      "phase": "主要",
+      "hint": "先選角色。能選擇時再決定突襲進場或普通進場，最後直接點要登場的格子。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "green 4",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →",
+        "改為普通進場"
+      ],
+      "hand": [
+        {
+          "name": "更木 剣八",
+          "selected": true
+        }
+      ],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "1500",
+          "stack": "",
+          "label": "你的前線1 日番谷 冬獅郎",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 更木 剣八，選為突襲底座",
+          "visible": true
+        },
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線2 更木 剣八，選為突襲底座",
+          "visible": true
+        },
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線3 更木 剣八，選為突襲底座",
+          "visible": true
+        },
+        {
+          "placement": "選為突襲底座",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線4 更木 剣八，選為突襲底座",
+          "visible": true
+        }
+      ],
+      "history": [
+        "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+      ],
+      "error": ""
+    },
+    "baseLocked": {
+      "width": 412,
+      "height": 915,
+      "audit": "blc067dual",
+      "phase": "主要",
+      "hint": "先選角色。能選擇時再決定突襲進場或普通進場，最後直接點要登場的格子。",
+      "ap": "3/3 AP",
+      "apReady": 3,
+      "energy": "green 4",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →",
+        "改為普通進場",
+        "重新選擇底板"
+      ],
+      "hand": [
+        {
+          "name": "更木 剣八",
+          "selected": true
+        }
+      ],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "1500",
+          "stack": "",
+          "label": "你的前線1 日番谷 冬獅郎",
+          "visible": true
+        },
+        {
+          "placement": "突襲進場",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線2 空位，突襲進場",
+          "visible": true
+        },
+        {
+          "placement": "突襲進場",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位，突襲進場",
+          "visible": true
+        },
+        {
+          "placement": "突襲進場",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位，突襲進場",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "突襲留後線",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 更木 剣八，突襲留後線",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線2 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線3 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線4 更木 剣八",
+          "visible": true
+        }
+      ],
+      "history": [
+        "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+      ],
+      "error": ""
+    },
+    "raided": {
+      "width": 412,
+      "height": 915,
+      "audit": "blc067dual",
+      "phase": "主要",
+      "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+      "ap": "2/3 AP",
+      "apReady": 2,
+      "energy": "green 3",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →"
+      ],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "1500",
+          "stack": "",
+          "label": "你的前線1 日番谷 冬獅郎",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "4000",
+          "stack": "RAID 1",
+          "label": "你的前線2 更木 剣八，衝擊1",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的能源線1 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線2 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線3 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線4 更木 剣八",
+          "visible": true
+        }
+      ],
+      "history": [
+        "你：突襲登場：更木 剣八 · 底板 更木 剣八 → 前線 2",
+        "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+      ],
+      "error": ""
+    },
+    "normal": {
+      "width": 412,
+      "height": 915,
+      "audit": "blc067dual",
+      "phase": "主要",
+      "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+      "ap": "2/3 AP",
+      "apReady": 2,
+      "energy": "green 4",
+      "activate": "",
+      "menu": [],
+      "pending": [],
+      "controls": [
+        "下一階段 →"
+      ],
+      "hand": [],
+      "front": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "1500",
+          "stack": "",
+          "label": "你的前線1 日番谷 冬獅郎",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": true,
+          "selected": false,
+          "bp": "4000",
+          "stack": "",
+          "label": "你的前線2 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線3 空位",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "",
+          "stack": "",
+          "label": "你的前線4 空位",
+          "visible": true
+        }
+      ],
+      "energyLine": [
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線1 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線2 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線3 更木 剣八",
+          "visible": true
+        },
+        {
+          "placement": "",
+          "rested": false,
+          "selected": false,
+          "bp": "◆ 1",
+          "stack": "",
+          "label": "你的能源線4 更木 剣八",
+          "visible": true
+        }
+      ],
+      "history": [
+        "你：普通登場：更木 剣八 · 前線 2",
+        "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+      ],
+      "error": ""
+    },
+    "energyBefore": "green 4",
+    "squeeze": {
+      "squeezeReady": {
+        "width": 412,
+        "height": 915,
+        "audit": "blc067dual",
+        "phase": "主要",
+        "hint": "先選角色。能選擇時再決定突襲進場或普通進場，最後直接點要登場的格子。",
+        "ap": "3/3 AP",
+        "apReady": 3,
+        "energy": "green 4",
+        "activate": "",
+        "menu": [],
+        "pending": [],
+        "controls": [
+          "下一階段 →",
+          "改為突襲進場"
+        ],
+        "hand": [
+          {
+            "name": "更木 剣八",
+            "selected": true
+          }
+        ],
+        "front": [
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "1500",
+            "stack": "",
+            "label": "你的前線1 日番谷 冬獅郎",
+            "visible": true
+          },
+          {
+            "placement": "普通進場",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線2 空位，普通進場",
+            "visible": true
+          },
+          {
+            "placement": "普通進場",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線3 空位，普通進場",
+            "visible": true
+          },
+          {
+            "placement": "普通進場",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線4 空位，普通進場",
+            "visible": true
+          }
+        ],
+        "energyLine": [
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線1 更木 剣八，替換並移入移除區",
+            "visible": true
+          },
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線2 更木 剣八，替換並移入移除區",
+            "visible": true
+          },
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線3 更木 剣八，替換並移入移除區",
+            "visible": true
+          },
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線4 更木 剣八，替換並移入移除區",
+            "visible": true
+          }
+        ],
+        "history": [
+          "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+        ],
+        "error": ""
+      },
+      "cancelled": {
+        "width": 412,
+        "height": 915,
+        "audit": "blc067dual",
+        "phase": "主要",
+        "hint": "先選角色。能選擇時再決定突襲進場或普通進場，最後直接點要登場的格子。",
+        "ap": "3/3 AP",
+        "apReady": 3,
+        "energy": "green 4",
+        "activate": "",
+        "menu": [],
+        "pending": [],
+        "controls": [
+          "下一階段 →",
+          "改為突襲進場"
+        ],
+        "hand": [
+          {
+            "name": "更木 剣八",
+            "selected": true
+          }
+        ],
+        "front": [
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "1500",
+            "stack": "",
+            "label": "你的前線1 日番谷 冬獅郎",
+            "visible": true
+          },
+          {
+            "placement": "普通進場",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線2 空位，普通進場",
+            "visible": true
+          },
+          {
+            "placement": "普通進場",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線3 空位，普通進場",
+            "visible": true
+          },
+          {
+            "placement": "普通進場",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線4 空位，普通進場",
+            "visible": true
+          }
+        ],
+        "energyLine": [
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線1 更木 剣八，替換並移入移除區",
+            "visible": true
+          },
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線2 更木 剣八，替換並移入移除區",
+            "visible": true
+          },
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線3 更木 剣八，替換並移入移除區",
+            "visible": true
+          },
+          {
+            "placement": "替換並移入移除區",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線4 更木 剣八，替換並移入移除區",
+            "visible": true
+          }
+        ],
+        "history": [
+          "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+        ],
+        "error": ""
+      },
+      "squeezed": {
+        "width": 412,
+        "height": 915,
+        "audit": "blc067dual",
+        "phase": "主要",
+        "hint": "點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。",
+        "ap": "2/3 AP",
+        "apReady": 2,
+        "energy": "green 4",
+        "activate": "",
+        "menu": [],
+        "pending": [],
+        "controls": [
+          "下一階段 →"
+        ],
+        "hand": [],
+        "front": [
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "1500",
+            "stack": "",
+            "label": "你的前線1 日番谷 冬獅郎",
+            "visible": true
+          },
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線2 空位",
+            "visible": true
+          },
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線3 空位",
+            "visible": true
+          },
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "",
+            "stack": "",
+            "label": "你的前線4 空位",
+            "visible": true
+          }
+        ],
+        "energyLine": [
+          {
+            "placement": "",
+            "rested": true,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線1 更木 剣八",
+            "visible": true
+          },
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線2 更木 剣八",
+            "visible": true
+          },
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線3 更木 剣八",
+            "visible": true
+          },
+          {
+            "placement": "",
+            "rested": false,
+            "selected": false,
+            "bp": "◆ 1",
+            "stack": "",
+            "label": "你的能源線4 更木 剣八",
+            "visible": true
+          }
+        ],
+        "history": [
+          "你：送至移除區 更木 剣八（BLC-4-070）",
+          "稽核 BLC-2-067：同一張手牌可普通登場或突襲。能源線 4 張更木剣八是合法底板。前線第 1 格的日番谷冬獅郎不能當底板，也不能被這張手牌佔用。"
+        ],
+        "error": ""
+      },
+      "removed": true,
+      "dialogs": [
+        {
+          "text": "確認擠位？\n將取代 更木 剣八 所在的能源線格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。",
+          "accept": false
+        },
+        {
+          "text": "確認擠位？\n將取代 更木 剣八 所在的能源線格子，原角色及底牌會依規則處理。\n取消可保留目前選好的突襲底板。",
+          "accept": true
+        }
+      ]
+    }
+  }
+}
