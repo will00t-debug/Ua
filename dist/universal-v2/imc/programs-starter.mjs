@@ -39,6 +39,14 @@ export const IMC_PROGRAMS_STARTER=Object.freeze({
    then:[{op:'drawDiscard',count:1}]
   }]}
  },
+ 'IMC-1-104':{
+  ready:true,
+  implementation:'dsl',
+  // 自分の場に〈渋谷 凛〉と〈本田 未央〉が同時にあるときだけ、手札のこのカードの消費 AP-1。
+  // 一名離場就重算。支付下限是 0。【カラー】BP2500以下是生命觸發，不是這段降費。
+  handApDiscountWhileAllNames:{names:['渋谷 凛','本田 未央'],amount:1},
+  triggerEffect:{op:'retireOppFrontUnderBp',bp:2500}
+ },
  'IMC-1-105':{
   ready:true,
   implementation:'dsl',
@@ -83,6 +91,21 @@ export const IMC_PROGRAMS_STARTER=Object.freeze({
    op:'retireOppFrontUnderBp',
    mandatory:true,
    traitPerBp:{trait:'new generations',per:1000}
-  }]}
+   }]}
+ },
+ 'IMC-1-110':{
+  ready:true,
+  implementation:'dsl',
+  // 【起動メイン】【フロントL】【ターン1】このキャラのBPが4000以上。
+  // 二選一：任意自己角色這個回合 +1000，或目前 BP 3000 以上的自己角色這個回合 +2000。
+  mainAbility:{
+   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,minSelfBp:4000,
+   then:[{op:'chooseOne',optional:false,options:[
+    {id:'plus1000',label:'選擇1張自己場上的角色卡，在這個回合中，BP+1000。',turn:'any',then:[
+     {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:false,excludeSelf:false}]},
+    {id:'plus2000',label:'選擇1張自己場上BP3000以上的角色卡，在這個回合中，BP+2000。',turn:'any',then:[
+     {op:'buffOwnCurrentBp',minBp:3000,bp:2000,optional:false,excludeSelf:false}]}
+   ]}]
+  }
  }
 });

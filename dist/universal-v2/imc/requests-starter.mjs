@@ -3,25 +3,11 @@
 // These cards stay out of the battle pack until A group can express the sentence.
 export const IMC_REQUESTS_STARTER=[
  {
-  cardId:'IMC-1-104',
-  sentence:'自己場上同時有〈渋谷 凛〉與〈本田 未央〉時，手牌中的這張角色消耗 AP-1。',
-  existingOps:['nextEligibleHandPlayApDiscount'],
-  whyNotEnough:'nextEligibleHandPlayApDiscount 是下一張使用的折扣，不是這張卡在兩名角色同時在場時的手牌 AP。handApDiscountWhileName 只接受事件與單一卡名，而且 D 組程式欄位不能帶這個被動。',
-  proposal:'角色手牌 AP-1，條件是自己場上同時存在兩張指定卡名。兩名都要在，不能只看其中一名。'
- },
- {
   cardId:'IMC-1-107',
   sentence:'啟動主要：將這張場域休息並退場，抽 1 張，然後可將手牌中 1 張能源需求 3 以下、消耗 AP 1 的紅色角色以休息狀態登場。',
   existingOps:['fieldRestRetireThen','deployOwnHandSpecial'],
   whyNotEnough:'fieldRestRetireThen 的後續只接受場外登場、抽 2 棄 1，或強制的手牌休息／突襲登場。deployOwnHandSpecial 能表示紅、AP 1、能源 3 以下、休息，但不能接在場域休息退場抽 1 之後。',
   proposal:'場域休息並退場後抽 1，再可選最多 1 張符合顏色、AP 與能源上限的手牌角色，以休息狀態登場。'
- },
- {
-  cardId:'IMC-1-110',
-  sentence:'啟動主要，僅限前線，每回合 1 次，而且這張角色目前 BP 在 4000 以上。二選一：自己場上 1 張角色 BP+1000，或自己場上 1 張目前 BP 3000 以上的角色 BP+2000。',
-  existingOps:['frontOnceProgram','buffOwnField'],
-  whyNotEnough:'frontOnceProgram 沒有「自己目前 BP 至少 4000」這道門，也不能在「任意自己角色 +1000」與「目前 BP 至少 3000 的自己角色 +2000」之間二選一。',
-  proposal:'前線、每回合 1 次、來源目前 BP 達門檻後，提供這兩個既有加值選擇。'
  },
  {
   cardId:'IMC-1-111',
