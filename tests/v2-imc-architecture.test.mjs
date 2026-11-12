@@ -33,7 +33,8 @@ const READY_IDS=[
  'IMC-1-067','IMC-1-069','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087','IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091',
  'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-101','IMC-1-102',
- 'IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110'
+ 'IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110',
+ 'IMC-1-113'
 ];
 const UNFINISHED_IDS=[
  'IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012',
@@ -43,7 +44,7 @@ const UNFINISHED_IDS=[
  'IMC-1-064','IMC-1-065','IMC-1-068','IMC-1-072','IMC-1-073',
  'IMC-1-074','IMC-1-075','IMC-1-078','IMC-1-080',
  'IMC-1-093','IMC-1-094','IMC-1-097','IMC-1-107',
- 'IMC-1-111','IMC-1-112','IMC-1-113'
+ 'IMC-1-111','IMC-1-112'
 ];
 
 test('official IMC identities load and stay unverified',()=>{
@@ -116,8 +117,8 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
  assert.equal(pack.id,'imc');
  assert.equal(pack.version,built.version);
  assert.deepEqual(Object.keys(pack.cards),READY_IDS);
- assert.equal(READY_IDS.length,76);
- assert.equal(UNFINISHED_IDS.length,37);
+ assert.equal(READY_IDS.length,77);
+ assert.equal(UNFINISHED_IDS.length,36);
  for(const id of UNFINISHED_IDS){
   assert.equal(pack.cards[id],undefined,id);
   assert.notEqual(imcProgramFor(id)?.ready,true,id);
@@ -219,7 +220,8 @@ test('IMC-1-102 raid and impact use the printed-BP ceiling inside the battle pac
  const accepted=createUniversalPack({id:'probe',version:'imc-102-scale',cards:[scaled]});
  assert.equal(accepted.cards['PROBE-102'].effects.onPlay[1].printedBpTraitCount.per,1000);
  assert.equal(createImcV2Pack().cards['IMC-1-102'].raidName,'渋谷 凛');
- assert.equal(createImcV2Pack().cards['IMC-1-113'],undefined);
+ assert.equal(createImcV2Pack().cards['IMC-1-113'].effects.onPlay[0].op,'chooseFrontOrOwnTrait');
+ assert.equal(createImcV2Pack().cards['IMC-1-111'],undefined);
 });
 
 test('group ranges, request files and the audit ledger stay separate',()=>{

@@ -166,3 +166,18 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - `recoverOutsideFiltered` 從自己場外加入手牌。可以指定特徵、顏色、印刷必要能源恰好 N、印刷必要能源 N 以下、以及持有突襲關鍵字（印刷 `raidName`）。不能同時寫恰好與以下。不看目前能源，也不看消費 AP。`max` 是 1 或 2。`raiseMax` 在自己場上、指定特徵且印刷必要能源恰好為該數字的角色達到張數時，把上限提高；預設把效果來源算進去，`excludeSelf:true` 才排除。角色張數沿用 `countOwnPrintedTrait`（條件 `ownPrintedTraitCount`），場地不算。`optional:true` 可以少拿或跳過；`optional:false` 有牌就必須拿到上限或沒有牌為止。沒有合法牌時不開選擇；必須選的事件不能使用。它可以放進 `optionalPayApThen` 的後續。051 的回手、087 的恰好能源與張數上限、111 的付費後入手可以用這句。051 的休息並退場後再從場外休息登場、111 的攻擊抽棄，這輪沒有做。
 - `retireOppFrontUnderBp` 的 `scaleTrait` 本來就會在特徵達標時改 BP 上限，而且預設把效果來源算進去。030 與 SLG-1-077 維持這個形狀。新增 `scaleExcludeSelf:true` 才不計算來源。這句仍是必須選 1 張，不能跳過。沒有合法目標時，角色效果不開選擇；事件不能使用。062 是 3000，3 張升到 5000，來源要算進去，所以不要加 `scaleExcludeSelf`。099 的退場上限同樣用這句；099 另外的恰好能源加攻這輪沒有做。既有的 `traitCountBonus` 仍是可選且排除自身。
 - `selfOwnEffectRaid` 只回答 Q2230 的「自分の效果でレイド」。成立的登場原因是 `handEffectRaid`、`outsideEffectRaid`、`deckEffectRaid`、`removedEffectRaid` 與 `lifeRaid`。付費手牌突襲 `paidRaid`、手牌或場外的普通效果登場、以及 `OWN_EFFECT_ENTRY` 裡的非突襲登場，都不成立。`turn` 必須是 `any`，因為對方回合的突襲觸發也算。它讀這次登場效果帶來的 `entryCause`，不改突襲底板、位置或登場／突襲效果的結算順序。020、024、028 可以用 `ifLiveThen` 接上既有句子。跳過下一次活動、具名手牌突襲的起動、傷害（2）、以及 028 的兩個不同選項，這輪沒有改寫。
+
+## 第四輪整合
+
+基準是 PR #391。依序併入 B 組 #393、C 組 #394、D 組 #392。對戰包從 73 張變成 77 張。作品 `playable` 仍是 false。
+
+已進對戰包：
+
+- C 組 IMC-1-062、IMC-1-087、IMC-1-099。062 是必須退場，3000，場上 3 張「ガールズ・イン・ザ・フロンティア」含來源時改 5000。087 用恰好印刷能源 2 的 Starry-Go-Round 回手，3 張時上限改 2，攻擊時可選自己角色 BP+1000。099 的退場是 2000，3 張時改 5000；恰好印刷能源 2 的 Starry 達 4 張時可選自己角色 BP+1000。
+- D 組 IMC-1-113。登場是可跳過的 `chooseFrontOrOwnTrait`。場上 LiPPS 達 4 張時，沿用 `ownCardTraitCount` 與 `extraEnergy`，產生這張藍卡自己的 1 點藍能源。場地算進張數。
+
+沒有進對戰包：
+
+- B 組 020、024、028 的測試與 requests 保留。`selfOwnEffectRaid` 已驗證，整句仍缺跳過活動、只突襲的手牌起動、條件傷害（2）與兩個選項。
+- 051 只有場外回手寫進程式，`ready` 仍是 false。052、054 的跨陣營選擇接不進休息起動與前線每回合一次。111 的付費回收已寫進程式，攻擊抽棄仍在 request。
+

@@ -143,9 +143,10 @@ test('the integrated pack executes exactly the ready cards',()=>{
   'IMC-1-067','IMC-1-069','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
   'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087','IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091',
   'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-101','IMC-1-102',
-  'IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110'
+  'IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110',
+  'IMC-1-113'
  ];
- const unfinished=['IMC-1-003','IMC-1-016','IMC-1-051','IMC-1-080','IMC-1-107','IMC-1-113'];
+ const unfinished=['IMC-1-003','IMC-1-016','IMC-1-051','IMC-1-080','IMC-1-107','IMC-1-111'];
  assert.deepEqual(Object.keys(pack.cards),expected);
  assert.deepEqual(READY,expected);
  for(const id of unfinished)assert.equal(pack.cards[id],undefined,id);
