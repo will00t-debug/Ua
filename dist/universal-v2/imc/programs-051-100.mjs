@@ -4,6 +4,11 @@
 const play=effects=>({ready:true,implementation:'dsl',effects:{onPlay:effects}});
 
 export const IMC_PROGRAMS_051_100=Object.freeze({
+ 'IMC-1-051':Object.freeze({
+  ready:false,implementation:'dsl',
+  effects:{onPlay:[{op:'recoverOutsideFiltered',optional:true,max:1,
+   trait:'LiPPS',energyAtMost:2}]}
+ }),
  'IMC-1-053':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
  'IMC-1-055':Object.freeze({
   ready:true,implementation:'dsl',
@@ -18,6 +23,12 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   ready:true,implementation:'dsl',impactNull:true,
   mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:2000,
    when:{kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500}}
+ }),
+ 'IMC-1-062':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFront'},
+  effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,
+   scaleTrait:'ガールズ・イン・ザ・フロンティア',scaleMin:3,scaleBp:5000}]}
  }),
  'IMC-1-063':play([{op:'recoverAp',count:2}]),
  'IMC-1-066':play([
@@ -85,6 +96,15 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-085':play([{op:'inspectTopTraitOutside',count:2,
   trait:'Starry-Go-Round',rest:'top'}]),
  'IMC-1-086':Object.freeze({ready:true,implementation:'dsl',printedImpact:1}),
+ 'IMC-1-087':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'前川 みく',
+  effects:{
+   onPlay:[{op:'recoverOutsideFiltered',optional:true,max:1,trait:'Starry-Go-Round',
+    energyExact:2,raiseMax:{trait:'Starry-Go-Round',energyExact:2,min:3,max:2}}],
+   onAttack:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+    bp:1000,optional:true,excludeSelf:false}]
+  }
+ }),
  'IMC-1-088':Object.freeze({ready:true,implementation:'vanilla'}),
  'IMC-1-089':Object.freeze({ready:true,implementation:'dsl',step:true,
   effects:{onPlay:[{op:'peekTopOne'}]}}),
@@ -108,6 +128,17 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
      when:{kind:'ownDistinctTraitNames',turn:'any',min:6,zone:'fieldOutside',
       excludeSelf:false,trait:'お願い！シンデレラ'},
      then:[{op:'grantTraitActiveEntryThisTurn',trait:'お願い！シンデレラ',scope:'next'}]}]}
+  ]}
+ }),
+ 'IMC-1-099':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFront'},
+  effects:{onPlay:[
+   {op:'retireOppFrontUnderBp',bp:2000,scaleTrait:'Starry-Go-Round',scaleMin:3,scaleBp:5000},
+   {op:'ifLiveThen',when:{kind:'ownPrintedTraitCount',turn:'any',zone:'field',
+    excludeSelf:false,trait:'Starry-Go-Round',min:4,printedEnergy:2},
+    then:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+     bp:1000,optional:true,excludeSelf:false}]}
   ]}
  }),
  'IMC-1-100':play([{op:'recoverAp',count:2}])
