@@ -224,3 +224,94 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - 033 用名字入手。065 用藍色特徵的休息或突襲。078 用紅、Starry-Go-Round、印刷必要能源恰好 2、只休息。112 用置底後的兩步：藍色特徵休息登場，再加上任意 1 張入手。Q2258 入手不限特徵。這些句子現在表現得了，卡牌程式仍由 B、C、D 寫。
 - IMC-1-011 與 IMC-1-012 這輪沒有做。兩張都是自己回合、自己的 BP 被增加時，每回合一次再加 BP，但 011 是 +1000，012 是 +500，而且 012 後面還有 BP 達標才取得的狙擊，以及攻擊時的抽牌。加 BP 的地方散在被動、暫時效果和各作品的結算裡。要先分得開印刷被動、暫時加值、效果自己造成的追加 BP，以及回合重置，不能讓 012 的追加 BP 再觸發自己。這會碰到很多作品的加值路徑，留到下一輪。`grantSelfSniperThisTurn` 是立刻取得，不能拿來寫 012 那個稍後才判斷的狙擊。
 
+## 第六階段後續共用機制
+
+基準是 PR #404 的 `ac47eb40589a5f78a8fcfc7f2a2012e6b8203b73`。這輪補三個共用缺口。011、012、039、051、061、075、107 的句子已經表現得了，程式仍由 B、C、D 寫。`ready` 維持 false，這七張不進 82 張對戰包。作品 `playable` 仍是 false。官方預組 `counts` 仍是 null。075 的場上加場外種類數 BP 還沒有對應欄位，所以 075 整張仍不能標 ready。
+
+`fieldRestRetireThen` 的三個後續維持原樣：場外指定登場、抽 2 棄 1、強制的手牌休息或突襲。新的連續支付用 `restRetireSequence`。
+
+### BP 增加觀察者
+
+角色欄位 `bpGainFollow:{bp}`。`bp` 是 500 到 5000 的 500 倍數。只有這一個鍵。`implementation` 寫 `dsl`。011 是 `{bp:1000}`，012 是 `{bp:500}`。
+
+觀察的是這張卡自己身上、尚未標成追加的正數暫時 BP。`untilTurn` 等於目前回合，或 `untilOwnTurnStart` 仍活著，都算。`ownTurnBp`、`opponentTurnBp`、`raidOwnTurnBp`、`passiveBonuses` 與 `ownEffectPresenceBp` 是印刷被動，不進這個觀察。追加 BP 會標上 `bpGainFollow:true`，下一次檢查不再把它算成新的增加。
+
+卡片第一次被看到時只記下目前的暫時 BP，不追加。之後暫時 BP 變高，而且是這張卡控制者的回合、這張卡沒有被沉默、這個回合還沒追加過，才加上印刷的那個數字，持續到這個回合結束。對方回合的增加會更新記下來的數字，不消耗每回合一次。沉默期間的增加也只更新數字。追加發生後，同一個回合再被加值不會再追加。
+
+### 動態狙擊
+
+`grantConditionalSniperThisTurn` 只放角色的 `onPlay`，鍵只有 `op` 與 `minBp`。`minBp` 是 500 的倍數，500 到 50000。012 寫 `{op:'grantConditionalSniperThisTurn',minBp:7000}`。它記下本回合、這次登場的門檻。宣告攻擊時重讀目前 BP。達到門檻才有狙擊目標；之後掉下去就沒有。`grantSelfSniperThisTurn` 仍是立刻取得，012 的登場句用條件式這句。
+
+012 的攻擊句沿用 `{op:'drawIfSelfBpAtLeast',bp:5000,count:1}`。突襲框沿用既有 `raidName:'城ヶ崎 莉嘉'`，那一行留在圖上，不寫進 `effects`。
+
+012 的程式形狀：
+
+```js
+{implementation:'dsl',raidName:'城ヶ崎 莉嘉',bpGainFollow:{bp:500},
+ effects:{onPlay:[{op:'grantConditionalSniperThisTurn',minBp:7000}],
+  onAttack:[{op:'drawIfSelfBpAtLeast',bp:5000,count:1}]}}
+```
+
+011 只有 `implementation:'dsl'` 與 `bpGainFollow:{bp:1000}`。
+
+### 休息退場後的連續登場
+
+`mainAbility` 用 `restRetireSequence`。角色與場域都可以。費用固定是先休息這張、再讓這張退場，兩步都做，不能只做一步。`then` 恰好一步，而且是 `deployOutsideColorTraitRest` 或 `deployOwnHandRest`。`gate` 可省略；寫了就只能是 `{kind:'oppCharacterBpAtLeast',bp}`，`bp` 為 500 的倍數。`draw` 可省略；寫了就只能是 `1`。抽牌在退場之後、後續選擇之前。後續登場是最多 1 張，可以不選。場外沒有合法卡時，費用仍然付完，不開 pending。跳過登場不會把休息或退場還原。
+
+門檻不成立時，起動不出現。場域必須在能量區。角色在前線或能量區都可以。登場發生時，來源已經在場外，後續不要求來源還留在場上。
+
+051 的登場回手維持現有 `recoverOutsideFiltered`。起動接在同一個程式：
+
+```js
+{op:'restRetireSequence',gate:{kind:'oppCharacterBpAtLeast',bp:4500},
+ then:[{op:'deployOutsideColorTraitRest',color:'blue',trait:'LiPPS',
+  maxEnergy:2,ready:false,optional:true}]}
+```
+
+107 是場域：
+
+```js
+{op:'restRetireSequence',draw:1,
+ then:[{op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:1}]}
+```
+
+抽到的那張在手牌選擇裡。手牌登場沿用既有的選卡與休息進場，能量區與前線都能放。
+
+### 自己效果的在場 BP 與連續移動
+
+角色欄位 `ownEffectPresenceBp`，500 到 5000 的 500 倍數。039 寫 `1000`。自己的回合，而且這張卡本回合以自己的效果新進入前線或能量區，或被自己的效果在兩條線之間移動，BP 才加上這個數字。付費登場、移動階段的移動與步進是規則移動，不加。離開場上就清掉這兩個紀錄。這個加值是被動，不觸發 `bpGainFollow`。
+
+039 的起動：
+
+```js
+{op:'discardExactFrontMove',line:'energy',dest:'front',attackEnd:'energy',
+ trait:'ガールズ・イン・ザ・フロンティア',count:3}
+```
+
+六個鍵都要在。來源要在能量區，手牌至少 1 張，前線帶該特徵的角色恰好是 `count` 張。先選 1 張手牌放場外，付完才移動。空位只有一個就直接移過去。空位有兩個以上時開 `effect-move-self`，動作是 `chooseMoveSelf`，帶 `line`、`slot`，目標列滿了再帶 `replaceUid`。被換下的卡進移除區。Q2238 用這個既有的滿列置換。移動完成後，這張卡本回合得到「這張卡的攻擊結束時，移到能量區」。那是這張卡的攻擊結束，排在戰鬥與生命觸發確認之後。Q2239：對玩家造成傷害時，觸發確認結束才移動。能量區只剩一個空位就直接回去；要選位置時同樣用 `chooseMoveSelf`。`grantSelfAttackEndSwapThisTurn` 仍是交換，039 用上面這句。
+
+### 攻擊階段結束回手
+
+061 的未被阻擋抽牌沿用 `unblockedAttack:{optional:true,then:[{op:'draw',count:1}]}`。登場是兩步：
+
+```js
+{op:'activeSelf'}
+{op:'optionalReadyApThen',then:[{op:'grantAttackPhaseEndHand'}]}
+```
+
+`optionalReadyApThen` 只放角色的 `onPlay`，`then` 恰好是只有 `op` 的 `grantAttackPhaseEndHand`。場上有休息的自己 AP 才開選擇，可以不活動。真正活動了 1 張 AP，才授予「這個攻擊階段結束時，這張卡回手」。跳過，或沒有休息的 AP，都不授予。回手發生在攻擊階段結束、下一階段開始之前。生命觸發還開著時，階段不能往下走。Q2243 仍是未被阻擋抽牌的時機，抽牌句子本身沒有改。
+
+### 回手後的手牌休息登場
+
+`bounceOwnOtherUnderEnergy` 的特徵形 `then` 現在也可以是 `deployOwnHandRest`。沒有 `trait` 的舊形仍只接同樣費用的場外回收。075 的登場：
+
+```js
+{op:'bounceOwnOtherUnderEnergy',optional:true,energy:1,trait:'お願い！シンデレラ',
+ then:[{op:'deployOwnHandRest',type:'character',color:'red',energy:1,ap:null,
+  max:1,trait:'お願い！シンデレラ'}]}
+```
+
+`ap:null` 表示印刷沒有另寫消費 AP。回手可以跳過；跳過就不看手牌。回手成功後，剛回到手牌的那張會出現在休息登場的選項裡。Q2248 用這個順序。沒有合法手牌時仍可跳過。075 印刷能源是 4，自己不符合「能源 1 以下」，場上符合的同伴可以回手。
+
+075 另一句是自己回合、場上與場外的「お願い！シンデレラ」卡名合計 6 種以上才 BP+1000。`ownDistinctTraitNames` 的 `fieldOutside` 能數種類，還沒有接到 BP。這句留在 C 組，075 先不標 ready。
+

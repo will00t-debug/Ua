@@ -8,7 +8,7 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-068',
   sentence:'自分の場と場外に［特徴：お願い！シンデレラ］のカード名が合計 N 種類以上。',
   existingOps:['draw','retireOppFrontUnderBp'],
-  whyNotEnough:'ownDistinctTraitNames 的 fieldOutside 已能把場上與場外依印刷卡名去重，自己也可以算。070、071、098 與 069 已用。068 的二選一、072 的勝利抽牌與手牌進場外、073 的不能上前線、074 的其餘句子、075 的回手再登場、093 的加攻與衝擊，都還沒有整句。',
+  whyNotEnough:'ownDistinctTraitNames 的 fieldOutside 已能把場上與場外依印刷卡名去重，自己也可以算。070、071、098 與 069 已用。068 的二選一、072 的勝利抽牌與手牌進場外、073 的不能上前線、074 的其餘句子、093 的加攻與衝擊，都還沒有整句。075 的登場回手已能寫，場上加場外 6 種的 BP 還沒有接到這個數字。',
   proposal:'070、071、098 與 069 已完成。其餘 '+NAMES+' 先不標 ready。'
  },
  {
@@ -22,8 +22,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-051',
   sentence:'自分の場外から必要エナジーが2以下の［特徴：LiPPS］を1枚まで手札に加える。起動はレストかつ退場，對手有 BP4500 以上才可，再從場外休息登場藍的 LiPPS。',
   existingOps:['recoverOutsideUnderEnergy','deployOutsideFiltered'],
-  whyNotEnough:'登場時的場外回手已用 recoverOutsideFiltered：特徵 LiPPS、印刷必要能源 2 以下、最多 1 張、可以不拿。這句在程式裡，但 ready 仍是 false。起動要先休息並使這張退場，而且對手場上要有目前 BP4500 以上，才能把場外能源 2 以下的藍色 LiPPS 休息登場。現有進場沒有這個雙費用。',
-  proposal:'回手已完成且不進對戰包。休息、退場、BP 門檻與藍色場外休息登場補齊前，051 不標 ready。'
+  whyNotEnough:'登場時的場外回手已用 recoverOutsideFiltered：特徵 LiPPS、印刷必要能源 2 以下、最多 1 張、可以不拿。起動用 restRetireSequence：先休息再退場，對手場上目前 BP4500 以上才出現，然後 deployOutsideColorTraitRest 最多 1 張藍色 LiPPS。費用付完才選擇，可以不登場。051 的起動還沒寫進程式，ready 仍是 false。',
+  proposal:'保留現有 onPlay。mainAbility 用 restRetireSequence，gate 為 oppCharacterBpAtLeast 4500，then 為藍色 LiPPS、maxEnergy 2、ready false、optional true 的 deployOutsideColorTraitRest。程式完成前不要標 ready。'
  },
  {
   cardId:'IMC-1-057',
@@ -36,8 +36,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-061',
   sentence:'ブロックされなかった時、カードを1枚まで引く。APをアクティブにした場合、アタックフェイズ終了時に手札へ戻す。',
   existingOps:['draw','recoverAp'],
-  whyNotEnough:'unblockedAttack 已能進 IMC 程式，但這張還有攻擊階段結束回手。Q2243 的時機是阻擋指定之後。沒有「本回合攻擊階段結束時，這張回手」的暫時規則。retireAtMainEnd 是主要階段結束退場，不是攻擊階段結束回手。',
-  proposal:'既有未被阻擋的可選抽牌要能掛到 IMC 卡，並新增攻擊階段結束回手的暫時授予。061 先不標 ready。'
+  whyNotEnough:'未被阻擋的可選抽牌沿用 unblockedAttack。Q2243 的時機維持在阻擋指定之後。登場的活動自身用 activeSelf。可選活動 1 張 AP 用 optionalReadyApThen，做到才接 grantAttackPhaseEndHand。跳過或不存在休息的 AP 都不回手。061 的程式還沒寫，不能標 ready。',
+  proposal:'unblockedAttack 的 then 為 draw count 1。onPlay 先 activeSelf，再 optionalReadyApThen，then 恰好是 grantAttackPhaseEndHand。程式完成前不要標 ready。'
  },
  {
   cardId:'IMC-1-064',
@@ -64,8 +64,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-075',
   sentence:'必要エナジーが1以下の自分の場の特徴を1枚手札に戻してもよい。そうした場合、手札から同じ條件をレストで登場させる。',
   existingOps:['bounceOwnOtherUnderEnergy','deployOwnHandRest'],
-  whyNotEnough:'可選回手的 then 只接場外回收，不能限特徵，也不能接手牌休息登場。Q2248 要求剛回手的那張可以再登場，所以必須先完成回手再看手牌。種類數門檻另外缺場外。',
-  proposal:'可選、限特徵與必要能源的回手，成功後才從新手牌休息登場，而且不額外加上印刷沒有的消費 AP。075 先不標 ready。'
+  whyNotEnough:'登場回手用 bounceOwnOtherUnderEnergy：optional、energy 1、特徵お願い！シンデレラ，then 為 deployOwnHandRest，ap 寫 null。Q2248 剛回手的那張會在更新後的手牌裡。跳過回手就不開登場。場上與場外合計 6 種的 BP 還沒有欄位，ownDistinctTraitNames 只負責計數。075 先不標 ready。',
+  proposal:'先寫登場的回手再休息登場。種類數 BP 補上之前，075 維持 ready false。'
  },
  {
   cardId:'IMC-1-094',
