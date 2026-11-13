@@ -7,6 +7,7 @@ export const V2_MOVE_ZONES=Object.freeze(['hand','deck','life','lifeRevealed','o
 export function appendCompletedMove(s,move){
  const {uid,cardId,owner,controller,from,to,reason,sourceUid=null,
   sourceCardId=null,sourceName=null,sourceColor=null,sourceOnField=false,
+  sourceTraits=[],
   attachedToUid=null,wasFaceDown=false,deckPosition=null,revealed=false}=move;
  if(![0,1].includes(owner)||![0,1].includes(controller)||
   typeof uid!=='string'||!uid.startsWith(owner+'-')||
@@ -18,6 +19,9 @@ export function appendCompletedMove(s,move){
   (sourceName!==null&&typeof sourceName!=='string')||
   (sourceColor!==null&&typeof sourceColor!=='string')||
   typeof sourceOnField!=='boolean'||typeof wasFaceDown!=='boolean'||
+  !Array.isArray(sourceTraits)||sourceTraits.length>8||
+  new Set(sourceTraits).size!==sourceTraits.length||
+  sourceTraits.some(t=>typeof t!=='string'||!t.trim()||t.length>80)||
   (attachedToUid!==null&&(typeof attachedToUid!=='string'||
    !attachedToUid.startsWith(owner+'-')||attachedToUid===uid||from!=='raid-under'))||
   (to==='deck'&&deckPosition!=='bottom'&&deckPosition!=='top')||
@@ -36,6 +40,7 @@ export function appendCompletedMove(s,move){
   throw Error('Zone provenance must follow an actual completed destination');
  const e={order:s.nextZoneMoveOrder++,turn:s.turn,uid,cardId,owner,controller,
   from,to,reason,sourceUid,sourceCardId,sourceName,sourceColor,sourceOnField,
+  ...(sourceTraits.length?{sourceTraits:[...sourceTraits]}:{}),
   ...(to==='deck'?{deckPosition,revealed}:{}),
   ...(attachedToUid!==null?{attachedToUid,wasFaceDown,
    identityViewersBefore:wasFaceDown?[owner]:[0,1]}:{})};
@@ -45,9 +50,11 @@ export function appendCompletedMove(s,move){
 // Narrow predicate family for future declared printed triggers; does not
 // authorize a real card effect or automatically enqueue one.
 // Data-driven source filter, not permission to enqueue unreviewed official
-// triggers. Source card identity refers to the cause's FIELD top at move time.
+// triggers. sourceOnField is true only when the cause is still a visible
+// front or energy card. sourceTrait matches a printed trait snapshotted onto
+// the event, including a cause that has already left the field.
 const FILTER_KEYS=Object.freeze(['owner','controller','from','to','reason','reasons',
- 'sourceUid','sourceCardId','sourceName','sourceColor','sourceOnField','cardId',
+ 'sourceUid','sourceCardId','sourceName','sourceColor','sourceOnField','sourceTrait','cardId',
  'deckPosition','revealed']);
 export function validateCompletedMoveCondition(condition){
  if(!condition||typeof condition!=='object'||Array.isArray(condition)||
@@ -82,11 +89,19 @@ export function validateCompletedMoveCondition(condition){
   throw Error('Invalid no-op zone move condition');
  return Object.freeze({...condition,...(condition.reasons?{reasons:Object.freeze([...condition.reasons])}:{})});
 }
+function conditionHits(e,q){
+ return Object.entries(q).every(([k,v])=>{
+  if(k==='reasons')return v.includes(e.reason);
+  // The event stores the cause's printed traits. A missing snapshot never
+  // matches, so older events do not gain a trait trigger.
+  if(k==='sourceTrait')return Array.isArray(e.sourceTraits)&&e.sourceTraits.includes(v);
+  return e[k]===v;
+ });
+}
 export function matchesCompletedMove(e,condition){
  const q=validateCompletedMoveCondition(condition);
  if(!e||typeof e!=='object'||!Number.isInteger(e.order))return false;
- return Object.entries(q).every(([k,v])=>k==='reasons'
-  ?v.includes(e.reason):e[k]===v);
+ return conditionHits(e,q);
 }
 // The caller decides when the causing source operation has completely
 // finished. Never call effects or enqueue during the physical move itself:
@@ -96,6 +111,5 @@ export function completedMovesMatching(s,condition,{afterOrder=0}={}){
  const q=validateCompletedMoveCondition(condition);
  if(!Number.isInteger(afterOrder)||afterOrder<0||
   !Array.isArray(s?.zoneMoveEvents))throw Error('Invalid move trigger scan');
- return s.zoneMoveEvents.filter(e=>e.order>afterOrder&&
-  Object.entries(q).every(([k,v])=>k==='reasons'?v.includes(e.reason):e[k]===v));
+ return s.zoneMoveEvents.filter(e=>e.order>afterOrder&&conditionHits(e,q));
 }

@@ -265,7 +265,7 @@ function loadCovers(){
  // Loaded only after login. The account script itself stays a classic script so
  // the login screen can boot even when the card catalogue is unavailable.
  try{
-  Promise.all([import('./title-registry.mjs?v=20261104kmrpr1'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
+  Promise.all([import('./title-registry.mjs?v=20261112imc1'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
    coverCatalogue={titles:titles.TITLES,summarize:gallery.summarizeDeck};
    if(app.user)render();
   }).catch(()=>{});
@@ -567,7 +567,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 // Epsilon, Beta, or a raidless yellow Zeke stays normal entry and does not
 // invent Raid.
 const MODE_BOARD_ENTRY=new Set([
- 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseTopScript',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
  'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','aot2'
 ]);
