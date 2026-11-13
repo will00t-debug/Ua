@@ -7,6 +7,7 @@ import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
+import {boardEntryMode,uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 
 const ENERGY={
  kind:'ownOtherRequiredEnergyAtLeast', turn:'any', zone:'field',
@@ -357,11 +358,15 @@ test('051 draws once when an attack is not blocked and can replay the raid botto
  assert.equal(assertUniversalMatch(again.pack,state),true);
  assert.equal(state.pending?.kind,'effect-raid-bottom-active');
  assert.equal(state.pending.baseUid,base.uid);
+ assert.equal(V2_PENDING_LABELS[state.pending.kind],'可將這疊突襲最下方的卡以活動狀態登場');
  assert.ok(legalUniversalActions(again.pack,state).some(a=>
   a.type==='chooseRaidBottomActive'&&a.uid===null));
  const entry=legalUniversalActions(again.pack,state).find(a=>
   a.type==='chooseRaidBottomActive'&&a.uid===base.uid&&a.line==='front');
  assert.ok(entry);
+ assert.equal(boardEntryMode(entry),'normal');
+ assert.match(uiActionLabel({type:'chooseRaidBottomActive',uid:null},
+  {pack:again.pack,state}),/不將突襲最下段/);
  state=dispatchUniversalAction(again.pack,state,entry);
  assert.equal(assertUniversalMatch(again.pack,state),true);
  const entered=placed(state,0,base.uid);
