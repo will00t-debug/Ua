@@ -25,9 +25,9 @@ import ledger from '../docs/audit/effect-audit-ledger.json' with {type:'json'};
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const pad=n=>'IMC-1-'+String(n).padStart(3,'0');
 const READY_IDS=[
- 'IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010','IMC-1-013','IMC-1-014','IMC-1-015',
+ 'IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010','IMC-1-011','IMC-1-012','IMC-1-013','IMC-1-014','IMC-1-015',
  'IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021','IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025',
- 'IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-030','IMC-1-031','IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038',
+ 'IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-030','IMC-1-031','IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-039',
  'IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045','IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049',
  'IMC-1-050','IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059','IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-065','IMC-1-066',
  'IMC-1-067','IMC-1-069','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
@@ -37,9 +37,9 @@ const READY_IDS=[
  'IMC-1-111','IMC-1-112','IMC-1-113'
 ];
 const UNFINISHED_IDS=[
- 'IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012',
+ 'IMC-1-003','IMC-1-004','IMC-1-009',
  'IMC-1-016','IMC-1-029','IMC-1-032',
- 'IMC-1-037','IMC-1-039','IMC-1-043',
+ 'IMC-1-037','IMC-1-043',
  'IMC-1-051','IMC-1-057','IMC-1-061',
  'IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073',
  'IMC-1-074','IMC-1-075',
@@ -117,8 +117,8 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
  assert.equal(pack.version,built.version);
  assert.deepEqual(Object.keys(pack.cards),READY_IDS);
  assert.deepEqual([...READY_IDS,...UNFINISHED_IDS].sort(),Array.from({length:113},(_,i)=>pad(i+1)));
- assert.equal(READY_IDS.length,89);
- assert.equal(UNFINISHED_IDS.length,24);
+ assert.equal(READY_IDS.length,92);
+ assert.equal(UNFINISHED_IDS.length,21);
  for(const id of UNFINISHED_IDS){
   assert.equal(pack.cards[id],undefined,id);
   assert.notEqual(imcProgramFor(id)?.ready,true,id);
