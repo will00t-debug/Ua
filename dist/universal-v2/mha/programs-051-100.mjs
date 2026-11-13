@@ -4,6 +4,15 @@
 const play=effects=>({ready:true,implementation:'dsl',effects:{onPlay:effects}});
 
 export const MHA_PROGRAMS_051_100=Object.freeze({
+ 'MHA-1-051':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'通形 ミリオ',
+  blockBpRestriction:{relation:'atMost',bp:3000,condition:null},
+  unblockedAttack:{oncePerTurn:true,optional:false,then:[{op:'draw',count:1}]},
+  effects:{onRetire:[{op:'deployRaidBottomActive',optional:true,when:{
+   kind:'ownOtherRequiredEnergyAtLeast',turn:'any',zone:'field',
+   excludeSelf:true,minEnergy:4,min:3
+  }}]}
+ }),
  'MHA-1-052':Object.freeze({
   ready:true,implementation:'dsl',
   effects:{onAttack:[{op:'enemyBpDown',bp:500,optional:true,minBp:1000,zone:'field'}]}
@@ -19,6 +28,13 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
    ]
   }]}
  }),
+ 'MHA-1-054':play([{
+  op:'searchTopOneBottomDiscard',count:7,discard:false,logic:'all',filters:[
+   {field:'type',value:'field'},
+   {field:'color',value:'green'},
+   {field:'printedRequiredEnergyAtMost',value:2}
+  ]
+ }]),
  'MHA-1-057':Object.freeze({ready:true,implementation:'vanilla'}),
  'MHA-1-058':play([{op:'drawDiscard',count:1}]),
  'MHA-1-061':play([{op:'draw',count:1}]),

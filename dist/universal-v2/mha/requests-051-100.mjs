@@ -8,20 +8,6 @@ export const MHA_A_GROUP_WIRING={
 
 export const MHA_REQUESTS_051_100=[
  {
-  cardId:'MHA-1-051',
-  sentence:'レイド〈通形 ミリオ〉。BP3000以下にブロックされない。ターン1、アタックしてブロックされなかった時1枚引く。退場時、必要エナジー4以上の他キャラが3枚以上なら、レイドの一番下をフロントLにアクティブで登場させてもよい。',
-  existingOps:['blockBpRestriction','raidName','grantUnblockedDrawThisTurn','unblockedAttack','replayRaidBase'],
-  whyNotEnough:'blockBpRestriction 沿用 {relation:atMost, bp:3000, condition:null}，不要重做。unblockedAttack 另有 {oncePerTurn:true, optional:false, then:[{op:draw, count:1}]}。同一張第二次未被阻擋不抽，被阻擋不消耗這次。退場用 {op:deployRaidBottomActive, optional:true, when:{kind:ownOtherRequiredEnergyAtLeast, turn:any, zone:field, excludeSelf:true, minEnergy:4, min:3}}，最下段以活動狀態上前排。三句都還要寫進程式，不要標 ready。',
-  proposal:'沿用 050 的 atMost 3000 與 raidName。另需一回合一次、攻擊未被阻擋時強制抽 1，以及退場時其他必要能源 4 以上達 3 張才可把突襲最下段活動放到前線 L。051はreadyにしない。'
- },
- {
-  cardId:'MHA-1-054',
-  sentence:'山札の上から7枚を見て、必要エナジー2以下の緑のフィールドを1枚まで公開して手札に加え、残りは望む順で下に置く。',
-  existingOps:['searchTopOneBottomDiscard','lookTopScript','inspectTopArrange'],
-  whyNotEnough:'searchTopOneBottomDiscard 可以 count:7、discard:false、logic:all，filters 為 type field 或 event、color、printedRequiredEnergyAtMost。不合格的牌留在視窗且不能選。取到的牌才公開，其餘放回底部，不棄手牌。角色複合窗的 discard:false 仍被拒絕。這張仍未寫程式，不要標 ready。',
-  proposal:'看頂7張，公開加入最多1張綠、能源2以下的場域，其餘依選擇放牌底。054はreadyにしない。'
- },
- {
   cardId:'MHA-1-055',
   sentence:'ステップ。登場時、必要エナジー4以上の他キャラが3枚以上なら、BP5000以下の相手フロントを1枚まで退場。',
   existingOps:['step','retireOppFrontUnderBp','ifLiveThen','oppFrontCountAtLeast'],
@@ -46,7 +32,7 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-060',
   sentence:'レイド〈緑谷 出久〉。自分のターン中BP+500。アタック時ターン1、手札1枚を場外に置いてもよい。そうしたら他の必要エナジー3以下を1枚までアクティブ。',
   existingOps:['raidName','ownTurnBp','optionalRemoveHandThen','activeOwnOne'],
-  whyNotEnough:'ownTurnBp 與 raidName 是引擎卡欄，MHA 程式白名單目前不轉交。即便轉交，攻擊時的【ターン1】可選手牌放場外、做到才活動其他非綠谷出久且必要能源 3 以下，仍不是 optionalRemoveHandThen 或具名 activeOwnOne。不要只上 BP+500 就標 ready。',
+  whyNotEnough:'raidName 與 ownTurnBp 已能從 MHA 程式轉交，但仍不是整句。攻擊時的【ターン1】可選手牌放場外、做到才活動其他非綠谷出久且必要能源 3 以下，仍不是 optionalRemoveHandThen 或具名 activeOwnOne。不要只上突襲框與 BP+500 就標 ready。',
   proposal:'突襲框是綠谷出久。自己回合BP+500。攻擊時一回合一次，可把手牌1張放場外，做到才活動最多1張其他必要能源3以下。060はreadyにしない。'
  },
  {
