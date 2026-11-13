@@ -3,11 +3,6 @@
 // These cards stay out of IMC_PROGRAMS_001_050. op:'imc' is not wired, and a
 // partial program must not be marked ready.
 export const IMC_REQUESTS_001_050=[
- {cardId:'IMC-1-004',
-  sentence:'自分の［特徴：BEYOND THE STARLIGHT］の効果でこのカードが手札から場外に置かれた時、自分の場の［特徴：BEYOND THE STARLIGHT］を1枚まで選び、このターン中、BP+1000。',
-  existingOps:['buffAnyCharacter'],
-  whyNotEnough:'moveTriggers 的手牌到場外只認 sourceName，不認來源特徵。具名來源在名字不同時不會觸發，即使特徵同為 BEYOND THE STARLIGHT。IMC 程式欄也沒有轉送 moveTriggers。',
-  proposal:'手牌到場外的移動觸發改認來源特徵 BEYOND THE STARLIGHT，然後最多一張同特徵本回合 BP+1000。不要用固定名字代替。'},
  {cardId:'IMC-1-009',
   sentence:'このキャラはアクティブで登場させる。【登場時】カードを1枚引き、自分の手札から必要エナジーが3以下で消費APが1の特徴に「BEYOND THE STARLIGHT」を持つ黄のキャラカードを1枚まで自分の場にレストで登場させるかレイドさせる。登場かレイドさせたキャラの元々の必要エナジー1につき、このキャラはこのターン中、BP-1000。',
   existingOps:['draw','deployOwnHandRest'],

@@ -27,6 +27,14 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
    kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',excludeSelf:true,minBp:5000}},
   altMainAbility:{op:'frontOnceActiveSelf',frontOnly:true,oncePerTurn:true,minSelfBp:5000},
   notes:'對方回合，這張卡在場上 BP+1000，並得到衝擊無效。自己回合兩者都沒有。第一段每回合一次：其他自己角色目前 BP≥5000 才讓自己 BP+1000。第二段是另一句起動，只在前線、自己目前 BP≥5000、每回合一次，把自己變成活動。兩段的使用紀錄分開。活動觸發是卡表。'},
+ 'IMC-1-004':{ready:true,implementation:'dsl',
+  moveTriggers:[{
+   when:{from:'hand',to:'outside',sourceTrait:'BEYOND THE STARLIGHT',
+    reasons:['payment','own-effect']},
+   then:[{op:'buffOwnField',filter:{field:'trait',value:'BEYOND THE STARLIGHT'},
+    bp:1000,optional:true,excludeSelf:false}]
+  }],
+  notes:'自己的 BEYOND THE STARLIGHT 效果把手牌的這張卡放到場外時，最多選 1 張自己場上的同特徵，本回合 BP+1000。支付或效果都算。沒有這個特徵的來源、以及其他區域的移動，不觸發。抽牌觸發是卡表。'},
  'IMC-1-005':{ready:true,implementation:'dsl',activeExtraEnergy:1,
   notes:'活動時，這張卡的發生能量 +1（黃）。休息時不加。前線不產生能量。沒有生命觸發。'},
  'IMC-1-006':{ready:true,implementation:'dsl',emptyOwnFieldHandEnergyDiscount:2,
