@@ -51,6 +51,14 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
    when:{kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',excludeSelf:true,minBp:5000},
    then:[{op:'drawDiscard',count:1}]}]},
   notes:'攻擊時，其他自己角色的目前 BP≥5000 才抽 1 並強制棄 1。印刷 BP 不算。自己與對方的角色不算。活動觸發是卡表。'},
+ 'IMC-1-016':{ready:true,implementation:'dsl',raidName:'北条 加蓮',
+  effects:{onPlay:[
+   {op:'drawDiscard',count:1},
+   {op:'recoverOutsideFiltered',optional:true,max:1,trait:'BEYOND THE STARLIGHT',energyAtMost:3}
+  ]},
+  mainAbility:{op:'frontPeekThenBuffOthers',frontOnly:true,oncePerTurn:true,
+   minSelfBp:5000,highBp:7000,bp:1000},
+  notes:'突襲框是北条 加蓮。登場抽 1 並強制棄 1，然後最多回收 1 張場外費用 3 以下的 BEYOND THE STARLIGHT。Q2229：剛棄掉的那張可以回收。前線、每回合 1 次、目前 BP≥5000 才看牌庫頂 1 張，放回頂部或場外。之後其他角色本回合 BP+1000；自己目前 BP≥7000 則改為全部。'},
  'IMC-1-017':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'peekTopOne'}]},
   notes:'登場時，私下看自己牌庫頂 1 張，放回頂部或放到場外。不是公開。'},
@@ -111,6 +119,11 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
     then:[{op:'activeOwnTrait',optional:true,max:1,trait:'ポジティブパッション'}]}
   ]}]},
   notes:'突襲框是本田 未央。衝擊 1。登場最多選 2 個不同選項，依印刷順序結算。可回手能源 3 以下的積極熱情，成功才從手牌休息登場或突襲日野 茜或高森 藍子。只有自己的效果突襲才活動最多 1 張積極熱情。'},
+ 'IMC-1-029':{ready:true,implementation:'dsl',enterAlwaysActive:true,
+  triggerEffect:{op:'retireOppFront'},
+  mainAbility:{op:'fieldDiscardOrRestImpact',bp:1000,triggerBp:3000,trigger:'special',
+   trait:'BEYOND THE STARLIGHT',minBp:7000,impact:1},
+  notes:'場域以活動登場。棄 1 張手牌後，最多 1 張自己角色本回合 BP+1000；棄掉的是特殊觸發則改為 +3000。另一段休息自己，自己場上角色全部是 BEYOND THE STARLIGHT 時，給 1 張目前 BP≥7000 的角色本回合衝擊 1。特殊觸發是對方前線 1 張退場。'},
  'IMC-1-030':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,scaleTrait:'ポジティブパッション',
    scaleMin:3,scaleBp:5000}]},
@@ -140,6 +153,14 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
   effects:{onPlay:[{op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,
    max:1,trait:'ガールズ・イン・ザ・フロンティア'}]},
   notes:'登場時，手牌中藍、費用 2 以下、ガールズ・イン・ザ・フロンティア，最多 1 張休息登場。不限 AP、前線或能量區、可跳過。不是突襲。'},
+ 'IMC-1-043':{ready:true,implementation:'dsl',raidName:'渋谷 凛',
+  effects:{
+   onRetire:[{op:'returnOwnRaidBase',optional:true,max:1}],
+   onAttack:[{op:'bottomOwnCharacterThen',optional:true,max:1,type:'character',then:[{
+    op:'lookTopScript',count:3,rest:'bottom',afterEntered:'discardActive',takes:[{
+     to:'rest',type:'character',max:1,color:'blue',trait:'ガールズ・イン・ザ・フロンティア'}]}]}]
+  },
+  notes:'突襲框是渋谷 凛。退場時最多把直接突襲元 1 張放回手牌，不要求場上另有名字。攻擊可把 1 張自己角色置底；做到才看頂 3，藍色ガールズ・イン・ザ・フロンティア最多 1 張只休息登場，其餘依序放底。之後可棄 1 張手牌，才把剛登場的那張改為活動。每一步跳過就停止。'},
  'IMC-1-044':{ready:true,implementation:'dsl',impactNull:true,
   notes:'印刷のインパクト無効。アクティブトリガーはカード表。'},
  'IMC-1-045':{ready:true,implementation:'dsl',activeExtraEnergy:1,

@@ -44,6 +44,11 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
    scaleTrait:'ガールズ・イン・ザ・フロンティア',scaleMin:3,scaleBp:5000}]}
  }),
  'IMC-1-063':play([{op:'recoverAp',count:2}]),
+ 'IMC-1-064':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFront'},
+  effects:{onPlay:[{op:'bounceOrRetireOppByFieldTrait',bp:5000,min:3,trait:'LiPPS'}]}
+ }),
  'IMC-1-065':Object.freeze({
   ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'lookTopScript',count:3,rest:'bottom',takes:[{
@@ -58,6 +63,20 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   ready:true,implementation:'dsl',
   mainAbility:{op:'restSelfGainEnergyRetireEndMain',lines:'field',
    oncePerTurn:true,extraEnergy:1}
+ }),
+ 'IMC-1-068':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{onPlay:[{op:'choosePrintedOptions',max:1,optional:true,options:[
+   {id:'retire',label:'退場其他角色後抽 2 並休息登場',then:[{
+    op:'optionalRetireOwnOtherThen',then:[
+     {op:'draw',count:2},
+     {op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:2,
+      trait:'お願い！シンデレラ'}]}]},
+   {id:'front',label:'退場對手前線',when:{
+    kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+    trait:'お願い！シンデレラ',min:9},
+    then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
+  ]}]}
  }),
  'IMC-1-069':play([{
   op:'ifLiveThen',
@@ -77,6 +96,13 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   passiveBonuses:[{bp:1500,condition:{
    kind:'ownDistinctTraitNames',turn:'own',zone:'fieldOutside',excludeSelf:false,
    trait:'お願い！シンデレラ',min:6}}]
+ }),
+ 'IMC-1-072':Object.freeze({
+  ready:true,implementation:'dsl',
+  attackWinDraw:{count:1,optional:true,condition:{
+   kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+   trait:'お願い！シンデレラ',min:9}},
+  effects:{onPlay:[{op:'optionalHandTraitOutsideThenActive',trait:'お願い！シンデレラ'}]}
  }),
  'IMC-1-076':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'Starry-Go-Round'}}]),
@@ -141,8 +167,20 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-090':Object.freeze({ready:true,implementation:'dsl',activeExtraEnergy:1}),
  'IMC-1-091':play([{op:'drawDiscard',count:1}]),
  'IMC-1-092':play([{op:'peekTopOne'}]),
+ 'IMC-1-094':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'島村 卯月',
+  effects:{
+   onPlay:[{op:'takeTopHandRestOutside',count:2}],
+   onAttack:[{op:'optionalHandOutsideThenRaidBase'}]
+  }
+ }),
  'IMC-1-095':play([{op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]),
  'IMC-1-096':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
+ 'IMC-1-097':Object.freeze({
+  ready:true,implementation:'dsl',cannotAttack:true,opponentTurnBp:-1000,
+  phaseEffects:[{phase:'attack',edge:'start',turn:'own',then:[{
+   op:'optionalPayApThen',ap:1,optional:true,then:[{op:'silencePrintedSelf'}]}]}]
+ }),
  'IMC-1-098':Object.freeze({
   ready:true,implementation:'dsl',
   triggerEffect:{op:'retireOppFront'},
