@@ -14,11 +14,11 @@ import {runImcStarter} from '../dist/universal-v2/imc/runtime-starter.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  newUniversalMatch,universalBp,universalCardEnergy,universalEnergyByColor,universalImpact,universalImpactNull,
- universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+ universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 
 const catalog=imcCatalog();
 const STARTER_IDS=IMC_CARDS_STARTER.map(card=>card.id);
-const READY=['IMC-1-101','IMC-1-102','IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110','IMC-1-111','IMC-1-112','IMC-1-113'];
+const READY=['IMC-1-101','IMC-1-102','IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-107','IMC-1-108','IMC-1-109','IMC-1-110','IMC-1-111','IMC-1-112','IMC-1-113'];
 const OPEN=STARTER_IDS.filter(id=>!READY.includes(id));
 
 function face(id,extra={}){
@@ -214,7 +214,7 @@ test('finished starter cards enter the battle pack and unfinished cards stay out
  assert.deepEqual(imcSharedRequests().filter(row=>OPEN.includes(row.cardId)).map(row=>row.cardId),OPEN);
  assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-104'}),/交給共用引擎/);
  assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-110'}),/交給共用引擎/);
- assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-107'}),/D 組還沒有/);
+ assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-107'}),/交給共用引擎/);
  assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-102'}),/交給共用引擎/);
  assert.deepEqual(pack.cards['IMC-1-104'].handApDiscountWhileAllNames,{names:['渋谷 凛','本田 未央'],amount:1});
  assert.equal(pack.cards['IMC-1-104'].triggerEffect.bp,2500);
@@ -238,7 +238,10 @@ test('finished starter cards enter the battle pack and unfinished cards stay out
   kind:'ownRaidColorTrait',turn:'any',zone:'field',color:'yellow',
   trait:'ポジティブパッション',raidKeyword:true});
  assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-111'}),/交給共用引擎/);
- assert.equal(IMC_PROGRAMS_STARTER['IMC-1-107'],undefined);
+ assert.equal(IMC_PROGRAMS_STARTER['IMC-1-107'].ready,true);
+ assert.equal(pack.cards['IMC-1-107'].mainAbility.op,'restRetireSequence');
+ assert.equal(pack.cards['IMC-1-107'].mainAbility.draw,1);
+ assert.equal(pack.cards['IMC-1-107'].mainAbility.then[0].op,'deployOwnHandRest');
  assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'].ready,true);
  assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'].raidName,'渋谷 凛');
  assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'].impactNull,true);
@@ -1157,20 +1160,159 @@ test('IMC-1-111 draws one and discards one only for its own yellow raiding Posit
  assertUniversalMatch(opened.packs,free);
 });
 
-test('unfinished starter cards stay out and name the shared op they cannot reuse',()=>{
- const sentences={
-  'IMC-1-107':['fieldRestRetireThen','deployOwnHandSpecial']
- };
- for(const [id,needles] of Object.entries(sentences)){
-  assert.equal(IMC_PROGRAMS_STARTER[id],undefined,id);
-  assert.equal(IMC_PROGRAMS_STARTER[id]?.ready,undefined,id);
-  const request=IMC_REQUESTS_STARTER.find(row=>row.cardId===id);
-  assert.ok(request,id);
-  for(const needle of needles)
-   assert.equal(JSON.stringify(request).includes(needle),true,id+' '+needle);
-  assert.equal(catalog.byId.get(id).battleReady,false,id);
+test('IMC-1-107 rests, leaves, draws, then optionally rests a red hand character',()=>{
+ const office=battle('IMC-1-107');
+ const cards=[
+  office,
+  filler('RED3',{name:'合格',color:'red',energy:3,ap:1,bp:2000}),
+  filler('RAID',{name:'有突襲',color:'red',energy:2,ap:1,bp:1500,raidName:'有突襲'}),
+  filler('DRAWN',{name:'抽到',color:'red',energy:1,ap:1,bp:1000}),
+  filler('HIEN',{name:'太貴',color:'red',energy:4,ap:1,bp:2000}),
+  filler('AP2',{name:'兩點',color:'red',energy:1,ap:2,bp:2000}),
+  filler('BLUE',{name:'藍',color:'blue',energy:1,ap:1,bp:2000}),
+  filler('EVENT',{name:'事件',type:'event',color:'red',energy:1,ap:1,bp:0}),
+  filler('FUEL',{name:'能源',color:'red',bp:1000,gen:5}),
+  filler('PLAIN',{bp:2500}),
+  filler('WALL',{bp:3000}),
+  filler('ZERO',{bp:500}),
+  filler('SPARE',{bp:1500})
+ ];
+ const built=createUniversalPack({id:'imc-107',version:'107',cards});
+ const opened=match(built,cards.map(card=>card.id),1071);
+ readyAp(opened.s);
+ put(opened.s,0,'FUEL','energy',0,false);
+ const held=take(opened.s,0,'IMC-1-107');
+ opened.s.players[0].hand.push(held);
+ let paid=toPhase(opened.packs,opened.s,'main');
+ const apBeforePlay=paid.players[0].apCards.filter(card=>card.ready).length;
+ paid=play(opened.packs,paid,held.uid,'play','energy');
+ assert.equal(paid.pending,null);
+ assert.equal(paid.players[0].energy.find(card=>card?.uid===held.uid).ready,false);
+ assert.equal(paid.players[0].apCards.filter(card=>card.ready).length,apBeforePlay-1);
+ assert.equal(legalUniversalActions(opened.packs,paid).some(action=>
+  action.uid===held.uid&&action.mode==='restRetireSequence'),false);
+ paid.players[0].energy.find(card=>card?.uid===held.uid).ready=true;
+ assert.equal(legalUniversalActions(opened.packs,paid).some(action=>
+  action.uid===held.uid&&action.mode==='restRetireSequence'),true);
+
+ const scene=match(built,cards.map(card=>card.id),1072);
+ const zone=put(scene.s,0,'IMC-1-107','energy',0,true);
+ const legalHand=take(scene.s,0,'RED3');
+ const raider=take(scene.s,0,'RAID');
+ const costly=take(scene.s,0,'HIEN');
+ const twoAp=take(scene.s,0,'AP2');
+ const blue=take(scene.s,0,'BLUE');
+ const event=take(scene.s,0,'EVENT');
+ const drawn=take(scene.s,0,'DRAWN');
+ scene.s.players[0].hand.push(legalHand,raider,costly,twoAp,blue,event);
+ scene.s.players[0].deck.unshift(drawn);
+ const handBefore=scene.s.players[0].hand.length;
+ const apBefore=scene.s.players[0].apCards.filter(card=>card.ready).length;
+ const fuel=scene.s.players[0].energy.find(card=>card?.cardId==='FUEL')||
+  put(scene.s,0,'FUEL','energy',1,false);
+ let s=toPhase(scene.packs,scene.s,'main');
+ s=dispatchUniversalAction(scene.packs,s,{type:'activate',uid:zone.uid,mode:'restRetireSequence'});
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ assert.ok(s.players[0].outside.some(card=>card.uid===zone.uid));
+ assert.equal(s.players[0].energy.some(card=>card?.uid===zone.uid),false);
+ assert.equal(s.players[0].energy.some(card=>card?.uid===fuel.uid),true);
+ assert.equal(s.players[0].hand.length,handBefore+1);
+ assert.ok(s.players[0].hand.some(card=>card.uid===drawn.uid));
+ assert.ok(s.pending.choices.includes(legalHand.uid));
+ assert.ok(s.pending.choices.includes(raider.uid));
+ assert.ok(s.pending.choices.includes(drawn.uid));
+ for(const uid of s.pending.choices){
+  const card=s.players[0].hand.find(item=>item.uid===uid);
+  const printed=built.cards[card.cardId];
+  assert.equal(printed.type,'character');
+  assert.equal(printed.color,'red');
+  assert.ok(printed.energy<=3);
+  assert.equal(printed.ap,1);
  }
+ assert.equal(s.pending.choices.includes(costly.uid),false);
+ assert.equal(s.pending.choices.includes(twoAp.uid),false);
+ assert.equal(s.pending.choices.includes(blue.uid),false);
+ assert.equal(s.pending.choices.includes(event.uid),false);
+ assert.equal(s.pending.choices.includes(zone.uid),false);
+ const actions=legalUniversalActions(scene.packs,s);
+ assert.equal(actions.some(action=>action.type==='chooseHandRestOrRaid'||action.mode==='raid'),false);
+ assert.equal(actions.some(action=>action.type==='chooseHandRest'&&action.uid===raider.uid&&action.line==='front'),true);
+ assert.equal(actions.some(action=>action.type==='chooseHandRest'&&action.uid===raider.uid&&action.line==='energy'),true);
+ assert.equal(actions.some(action=>action.type==='chooseHandRest'&&action.uid===costly.uid),false);
+ assert.equal(s.players[0].apCards.filter(card=>card.ready).length,apBefore);
+ const mine=universalPrivateChoices(scene.packs,s,0);
+ assert.ok(mine.options.some(option=>option.action.uid===drawn.uid&&option.card.cardId==='DRAWN'));
+ assert.equal(universalPrivateChoices(scene.packs,s,1),null);
+ const hidden=universalPublicView(scene.packs,s,1);
+ assert.equal(hidden.players[0].hand,null);
+ assert.equal(JSON.stringify(hidden).includes(drawn.uid),false);
+ assert.equal(JSON.stringify(hidden).includes('DRAWN'),false);
+ assert.equal(hidden.pending.kind,'effect-hand-rest');
+ assert.equal(hidden.pending.choices,undefined);
+ const seen=new Set();
+ for(const player of s.players){
+  for(const zoneName of ['deck','hand','life','outside','removed'])
+   for(const card of player[zoneName]){
+    assert.equal(seen.has(card.uid),false,card.uid);
+    seen.add(card.uid);
+   }
+  for(const line of ['front','energy'])
+   for(const card of player[line])if(card){
+    assert.equal(seen.has(card.uid),false,card.uid);
+    seen.add(card.uid);
+   }
+ }
+ s=dispatchUniversalAction(scene.packs,s,{type:'chooseHandRest',uid:drawn.uid,line:'front',slot:0});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.find(card=>card?.uid===drawn.uid).ready,false);
+ assert.equal(s.players[0].hand.some(card=>card.uid===drawn.uid),false);
+ assert.equal(s.players[0].apCards.filter(card=>card.ready).length,apBefore);
+ assert.ok(s.players[0].outside.some(card=>card.uid===zone.uid));
+ assert.equal(assertUniversalMatch(scene.packs,s),true);
+
+ const skipped=match(built,cards.map(card=>card.id),1073);
+ const resting=put(skipped.s,0,'IMC-1-107','energy',0,true);
+ const top=take(skipped.s,0,'DRAWN');
+ skipped.s.players[0].deck.unshift(top);
+ let decline=toPhase(skipped.packs,skipped.s,'main');
+ const beforeSkip=decline.players[0].apCards.filter(card=>card.ready).length;
+ decline=dispatchUniversalAction(skipped.packs,decline,{type:'activate',uid:resting.uid,mode:'restRetireSequence'});
+ decline=dispatchUniversalAction(skipped.packs,decline,{type:'chooseHandRest',uid:null});
+ assert.equal(decline.pending,null);
+ assert.ok(decline.players[0].hand.some(card=>card.uid===top.uid));
+ assert.ok(decline.players[0].outside.some(card=>card.uid===resting.uid));
+ assert.equal(decline.players[0].energy.some(card=>card?.uid===resting.uid),false);
+ assert.equal(decline.players[0].front.some(card=>card&&card.uid===top.uid),false);
+ assert.equal(legalUniversalActions(skipped.packs,decline).some(action=>action.uid===resting.uid),false);
+ assert.equal(decline.players[0].apCards.filter(card=>card.ready).length,beforeSkip);
+ assert.equal(assertUniversalMatch(skipped.packs,decline),true);
+
+ const empty=match(built,cards.map(card=>card.id),1074);
+ const quiet=put(empty.s,0,'IMC-1-107','energy',0,true);
+ const stay=take(empty.s,0,'RED3');
+ empty.s.players[0].hand.push(stay);
+ empty.s.players[0].removed.push(...empty.s.players[0].deck.splice(0));
+ let bare=toPhase(empty.packs,empty.s,'main');
+ const size=bare.players[0].hand.length;
+ bare=dispatchUniversalAction(empty.packs,bare,{type:'activate',uid:quiet.uid,mode:'restRetireSequence'});
+ assert.equal(bare.players[0].hand.length,size);
+ assert.equal(bare.pending.kind,'effect-hand-rest');
+ assert.ok(bare.pending.choices.includes(stay.uid));
+ bare=dispatchUniversalAction(empty.packs,bare,{type:'chooseHandRest',uid:null});
+ assert.equal(bare.pending,null);
+ assert.ok(bare.players[0].outside.some(card=>card.uid===quiet.uid));
+ assert.equal(assertUniversalMatch(empty.packs,bare),true);
+
+ const none=match(built,cards.map(card=>card.id),1075);
+ const alone=put(none.s,0,'IMC-1-107','energy',0,true);
+ none.s.players[0].removed.push(...none.s.players[0].hand.splice(0),...none.s.players[0].deck.splice(0));
+ let vacant=toPhase(none.packs,none.s,'main');
+ vacant=dispatchUniversalAction(none.packs,vacant,{type:'activate',uid:alone.uid,mode:'restRetireSequence'});
+ assert.equal(vacant.pending,null);
+ assert.ok(vacant.players[0].outside.some(card=>card.uid===alone.uid));
+ assert.equal(vacant.players[0].hand.length,0);
  assert.equal(loadImcOfficialStarter().ready,false);
  assert.equal(loadImcOfficialStarter().counts,null);
+ assert.equal(assertUniversalMatch(none.packs,vacant),true);
 });
 

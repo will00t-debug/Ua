@@ -72,6 +72,18 @@ export const IMC_PROGRAMS_STARTER=Object.freeze({
     then:[{op:'activeOwnTrait',optional:true,max:1,trait:'new generations'}]}
   ]}
  },
+ 'IMC-1-107':{
+  ready:true,
+  implementation:'dsl',
+  // 【起動メイン】先休息再退場，抽 1，然後從更新後的手牌選最多 1 張。
+  // 紅色、必要能源 3 以下、消耗 AP 1 的角色只休息登場。不提供突襲，也不另付 AP。
+  // 可以不登場。休息與退場不會因為跳過而還原。
+  mainAbility:{
+   op:'restRetireSequence',
+   draw:1,
+   then:[{op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:1}]
+  }
+ },
  'IMC-1-108':{
   ready:true,
   implementation:'dsl',
