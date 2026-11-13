@@ -2320,3 +2320,13 @@ test('094 looks at two cards and stays unfinished because the attack cannot rest
  assert.equal(s.pending,null);
  assert.equal(assertUniversalMatch(look,s),true);
 });
+
+test('068 still cannot choose at most one composite on-play option',()=>{
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-068'],undefined);
+ assert.equal(pack.cards['IMC-1-068'],undefined);
+ assert.throws(()=>createUniversalPack({id:'probe',version:'imc-068',cards:[
+  bare('GAP','蘭子',{implementation:'dsl',effects:{onPlay:[{op:'choosePrintedOptions',max:1,optional:true,options:[
+   {id:'retire',label:'退場後抽牌登場',then:[{op:'draw',count:2}]},
+   {id:'front',label:'九種後退場',then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
+  ]}]}})]}),/invalid printed option set/);
+});
