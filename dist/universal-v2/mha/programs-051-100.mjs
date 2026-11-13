@@ -8,6 +8,17 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   ready:true,implementation:'dsl',
   effects:{onAttack:[{op:'enemyBpDown',bp:500,optional:true,minBp:1000,zone:'field'}]}
  }),
+ 'MHA-1-053':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{onAttack:[{
+   op:'chooseOne',optional:false,
+   options:[
+    {id:'bp',label:'このターンBP+1000',turn:'any',then:[{op:'buffSelf',bp:1000}]},
+    {id:'impact',label:'このターンインパクト1',turn:'any',
+     then:[{op:'grantSelfImpactThisTurn',amount:1}]}
+   ]
+  }]}
+ }),
  'MHA-1-057':Object.freeze({ready:true,implementation:'vanilla'}),
  'MHA-1-058':play([{op:'drawDiscard',count:1}]),
  'MHA-1-061':play([{op:'draw',count:1}]),
