@@ -11,10 +11,10 @@ import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEner
  universalImpactNull} from '../dist/universal-v2/engine.mjs';
 
 const READY=[
- 'MHA-1-008','MHA-1-012','MHA-1-015','MHA-1-016','MHA-1-019','MHA-1-021','MHA-1-022',
- 'MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037',
- 'MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046','MHA-1-047',
- 'MHA-1-049','MHA-1-050'
+ 'MHA-1-001','MHA-1-008','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016',
+ 'MHA-1-018','MHA-1-019','MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028',
+ 'MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041',
+ 'MHA-1-043','MHA-1-046','MHA-1-047','MHA-1-049','MHA-1-050'
 ];
 const STANDARD_TRIGGER={
  active:'【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。',
@@ -47,6 +47,15 @@ const probePacks=[probe,probe];
 
 function deck(source, extra={}){
  const counts={...extra};
+ const pinned=[
+  'MHA-1-001','MHA-1-008','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016',
+  'MHA-1-018','MHA-1-019','MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028',
+  'MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041',
+  'MHA-1-043','MHA-1-046','MHA-1-047','MHA-1-049','MHA-1-050',
+  'PROBE-IMPACT','PROBE-TALL','PROBE-OVER'
+ ];
+ for(const id of pinned)
+  if(source.cards[id]&&!counts[id])counts[id]=id==='MHA-1-016'?2:1;
  const limited=new Set(['special','color','final']);
  let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
  for(const card of Object.values(source.cards).sort((a,b)=>a.id<b.id?-1:1)){
@@ -177,7 +186,8 @@ test('only a fully matched program is ready, and official play stays closed',()=
  }
  const official=officialV2Pack('mha');
  assert.equal(official.id,'mha');
- assert.equal(official.cards['MHA-1-001'],undefined);
+ assert.equal(official.cards['MHA-1-001'].id,'MHA-1-001');
+ assert.equal(official.cards['MHA-1-002'],undefined);
  const closed=v2DeckReport('mha',{'MHA-1-008':4});
  assert.equal(closed.ok,false);
  assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
@@ -652,4 +662,240 @@ test('027 gains 1000 BP only while Overhaul is on the owner front',()=>{
  cover.stack=[overhaul];
  assert.equal(universalBp(probe,s,chrono),4000);
  assert.equal(assertUniversalMatch(probePacks,s),true);
+});
+
+function keepOneLife(s,owner){
+ const kept=s.players[owner].life[0];
+ s.players[owner].deck.push(...s.players[owner].life.slice(1));
+ s.players[owner].life=[kept];
+ return kept;
+}
+
+test('001 is impact-null and draws then discards exactly one card when it retires',()=>{
+ let entered=open(pack,1001);
+ const eri=toHand(entered,0,'MHA-1-001');
+ const deck=entered.players[0].deck.length;
+ entered=toPhase(entered,'main');
+ entered=use(entered,findAct(entered,a=>a.type==='play'&&a.uid===eri.uid,'play'));
+ assert.equal(entered.pending,null);
+ assert.equal(entered.players[0].deck.length,deck);
+ assert.equal(assertUniversalMatch(packs,entered),true);
+
+ let s=open(probe,1002);
+ put(s,0,'PROBE-IMPACT','front',0,true);
+ const blocker=put(s,1,'MHA-1-001','front',0,true);
+ assert.equal(universalImpactNull(probe,s,blocker),true);
+ s.players[1].deck.push(...s.players[1].hand);
+ s.players[1].hand=[];
+ const drawn=s.players[1].deck[0];
+ const life=s.players[1].life.length;
+ s=toPhase(s,'attack');
+ s=use(s,findAct(s,a=>a.type==='attack','attack'));
+ s=use(s,findAct(s,a=>a.type==='chooseBlock'&&a.uid===blocker.uid,'block'));
+ assert.equal(s.players[1].life.length,life);
+ assert.equal(s.players[1].front[0],null);
+ assert.equal(s.players[1].outside.some(c=>c.uid===blocker.uid),true);
+ assert.equal(s.pending.kind,'effect-discard');
+ assert.equal(s.players[1].hand.length,1);
+ assert.equal(s.players[1].hand[0].uid,drawn.uid);
+ assert.throws(()=>use(s,{type:'chooseDiscard',uid:'missing'}),/Action not currently legal/);
+ s=use(s,{type:'chooseDiscard',uid:drawn.uid});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[1].hand.length,0);
+ assert.equal(s.players[1].outside.some(c=>c.uid===drawn.uid),true);
+ assert.equal(assertUniversalMatch(probePacks,s),true);
+
+ let empty=open(probe,1003);
+ put(empty,0,'PROBE-IMPACT','front',0,true);
+ const gone=put(empty,1,'MHA-1-001','front',0,true);
+ empty.players[1].deck.push(...empty.players[1].hand);
+ empty.players[1].hand=[];
+ empty.players[1].outside.push(...empty.players[1].deck);
+ empty.players[1].deck=[];
+ const before=empty.players[1].outside.length;
+ empty=toPhase(empty,'attack');
+ empty=use(empty,findAct(empty,a=>a.type==='attack','attack'));
+ empty=use(empty,findAct(empty,a=>a.type==='chooseBlock'&&a.uid===gone.uid,'block'));
+ assert.equal(empty.pending,null);
+ assert.equal(empty.players[1].hand.length,0);
+ assert.equal(empty.players[1].outside.length,before+1);
+ assert.equal(empty.players[1].life.length,life);
+ assert.equal(assertUniversalMatch(probePacks,empty),true);
+});
+
+test('013 takes one life before activating another front character, and Q429 loses only after that',()=>{
+ let short=open(pack,1301);
+ put(short,0,'MHA-1-012','energy',0,true);
+ const unpaid=toHand(short,0,'MHA-1-013');
+ short=toPhase(short,'main');
+ assert.equal(acts(short).some(a=>a.type==='play'&&a.uid===unpaid.uid),false);
+ assert.throws(()=>use(short,{type:'play',uid:unpaid.uid,line:'front',slot:0}),/Action not currently legal/);
+ assert.equal(assertUniversalMatch(packs,short),true);
+
+ let skipped=open(pack,1302);
+ put(skipped,0,'MHA-1-016','energy',0,true);
+ const resting=put(skipped,0,'MHA-1-008','front',0,false);
+ const dabi=toHand(skipped,0,'MHA-1-013');
+ const kept=keepOneLife(skipped,0);
+ skipped=toPhase(skipped,'main');
+ skipped=use(skipped,findAct(skipped,a=>a.type==='play'&&a.uid===dabi.uid&&a.slot===1,'play'));
+ assert.equal(skipped.pending.kind,'effect-life-to-hand');
+ skipped=use(skipped,{type:'chooseLifeToHand',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].life.length,1);
+ assert.equal(live(skipped,0,resting.uid).ready,false);
+ assert.equal(skipped.status,'playing');
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+
+ let s=open(pack,1303);
+ put(s,0,'MHA-1-016','energy',0,true);
+ const other=put(s,0,'MHA-1-008','front',0,false);
+ const back=put(s,0,'MHA-1-015','energy',1,true);
+ const incoming=toHand(s,0,'MHA-1-013');
+ const life=keepOneLife(s,0);
+ s=toPhase(s,'main');
+ s=use(s,findAct(s,a=>a.type==='play'&&a.uid===incoming.uid&&a.slot===1,'play'));
+ assert.equal(s.status,'playing');
+ assert.equal(acts(s).some(a=>a.type==='chooseLifeToHand'&&a.uid===life.uid),true);
+ assert.throws(()=>use(s,{type:'chooseLifeToHand',uid:'missing'}),/Action not currently legal/);
+ s=use(s,{type:'chooseLifeToHand',uid:life.uid});
+ assert.equal(s.status,'playing');
+ assert.equal(s.players[0].life.length,0);
+ assert.equal(s.players[0].hand.some(c=>c.uid===life.uid),true);
+ assert.equal(s.pending.kind,'effect-active-own-other');
+ assert.equal(acts(s).some(a=>a.type==='chooseActiveOwnOther'&&a.uid===other.uid),true);
+ assert.equal(acts(s).some(a=>a.uid===back.uid),false);
+ assert.equal(acts(s).some(a=>a.uid===incoming.uid),false);
+ assert.equal(acts(s).some(a=>a.type==='chooseActiveOwnOther'&&a.uid===null),true);
+ assert.throws(()=>use(s,{type:'chooseActiveOwnOther',uid:back.uid}),/Action not currently legal/);
+ s=use(s,{type:'chooseActiveOwnOther',uid:other.uid});
+ assert.equal(live(s,0,other.uid).ready,true);
+ assert.equal(s.status,'finished');
+ assert.equal(s.winner,1);
+ assert.equal(s.endReason,'life-zero');
+});
+
+test('014 raids Dabi, then retires one opposing front of BP 3500 or less, and Q430 loses after that',()=>{
+ assert.equal(pack.cards['MHA-1-014'].raidName,'荼毘');
+ let short=open(pack,1401);
+ put(short,0,'MHA-1-016','energy',0,true);
+ const unpaid=toHand(short,0,'MHA-1-014');
+ short=toPhase(short,'main');
+ assert.equal(acts(short).some(a=>a.type==='play'&&a.uid===unpaid.uid),false);
+ assert.throws(()=>use(short,{type:'play',uid:unpaid.uid,line:'front',slot:0}),/Action not currently legal/);
+
+ let raid=open(pack,1402);
+ put(raid,0,'MHA-1-016','energy',0,true);
+ put(raid,0,'MHA-1-021','energy',1,true);
+ const base=put(raid,0,'MHA-1-013','energy',2,false);
+ const wrong=put(raid,0,'MHA-1-008','energy',3,false);
+ const raider=toHand(raid,0,'MHA-1-014');
+ raid=toPhase(raid,'main');
+ const raids=acts(raid).filter(a=>a.type==='raid'&&a.uid===raider.uid);
+ assert.equal(raids.some(a=>a.baseUid===base.uid&&a.line!=='energy'),true);
+ assert.equal(raids.some(a=>a.baseUid===wrong.uid),false);
+ raid=use(raid,findAct(raid,a=>a.type==='raid'&&a.uid===raider.uid&&a.line!=='energy','raid'));
+ assert.equal(raid.pending.kind,'effect-life-to-hand');
+ raid=use(raid,{type:'chooseLifeToHand',uid:null});
+ const top=raid.players[0].front.find(Boolean);
+ assert.equal(top.cardId,'MHA-1-014');
+ assert.equal(top.ready,true);
+ assert.equal(top.stack[0].cardId,'MHA-1-013');
+ assert.equal(raid.pending,null);
+ assert.equal(assertUniversalMatch(packs,raid),true);
+
+ let skipped=open(probe,1403);
+ put(skipped,0,'MHA-1-016','energy',0,true);
+ put(skipped,0,'MHA-1-021','energy',1,true);
+ const tall=put(skipped,1,'PROBE-TALL','front',0,true);
+ const incoming=toHand(skipped,0,'MHA-1-014');
+ keepOneLife(skipped,0);
+ skipped=toPhase(skipped,'main');
+ skipped=use(skipped,findAct(skipped,a=>a.type==='play'&&a.uid===incoming.uid,'play'));
+ skipped=use(skipped,{type:'chooseLifeToHand',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(live(skipped,1,tall.uid)?.cardId,'PROBE-TALL');
+ assert.equal(skipped.status,'playing');
+ assert.equal(assertUniversalMatch(probePacks,skipped),true);
+
+ let s=open(probe,1404);
+ put(s,0,'MHA-1-016','energy',0,true);
+ put(s,0,'MHA-1-021','energy',1,true);
+ const legal=put(s,1,'PROBE-TALL','front',0,true);
+ const high=put(s,1,'PROBE-IMPACT','front',1,true);
+ const back=put(s,1,'MHA-1-015','energy',0,true);
+ const dabi=toHand(s,0,'MHA-1-014');
+ const life=keepOneLife(s,0);
+ s=toPhase(s,'main');
+ s=use(s,findAct(s,a=>a.type==='play'&&a.uid===dabi.uid,'play'));
+ s=use(s,{type:'chooseLifeToHand',uid:life.uid});
+ assert.equal(s.status,'playing');
+ assert.equal(s.pending.kind,'effect-retire-bp');
+ assert.equal(acts(s).some(a=>a.type==='chooseRetireBp'&&a.uid===legal.uid),true);
+ assert.equal(acts(s).some(a=>a.uid===high.uid),false);
+ assert.equal(acts(s).some(a=>a.uid===back.uid),false);
+ assert.equal(acts(s).some(a=>a.type==='chooseRetireBp'&&a.uid===null),true);
+ assert.throws(()=>use(s,{type:'chooseRetireBp',uid:high.uid}),/Action not currently legal/);
+ s=use(s,{type:'chooseRetireBp',uid:legal.uid});
+ assert.equal(s.players[1].front[0],null);
+ assert.equal(s.players[1].outside.some(c=>c.uid===legal.uid),true);
+ assert.equal(live(s,1,high.uid)?.cardId,'PROBE-IMPACT');
+ assert.equal(s.status,'finished');
+ assert.equal(s.winner,1);
+ assert.equal(s.endReason,'life-zero');
+});
+
+test('018 grants its own attack-win draw from either line, once per turn',()=>{
+ let energy=open(pack,1801);
+ const back=put(energy,0,'MHA-1-018','energy',0,false);
+ energy=toPhase(energy,'main');
+ assert.equal(acts(energy).some(a=>a.type==='activate'&&a.uid===back.uid&&a.mode==='frontOnce'),true);
+ energy=use(energy,findAct(energy,a=>a.type==='activate'&&a.uid===back.uid,'activate'));
+ assert.equal(live(energy,0,back.uid).attackWinDrawGranted.turn,energy.turn);
+ assert.equal(acts(energy).some(a=>a.type==='activate'&&a.uid===back.uid),false);
+ assert.throws(()=>use(energy,{type:'activate',uid:back.uid,mode:'frontOnce'}),/Action not currently legal/);
+ assert.equal(assertUniversalMatch(packs,energy),true);
+
+ let plain=open(pack,1802);
+ const quiet=put(plain,0,'MHA-1-018','front',0,true);
+ put(plain,1,'MHA-1-015','front',0,true);
+ const deck=plain.players[0].deck.length;
+ const hand=plain.players[0].hand.length;
+ plain=toPhase(plain,'attack');
+ assert.equal(acts(plain).some(a=>a.type==='activate'&&a.uid===quiet.uid),false);
+ plain=use(plain,findAct(plain,a=>a.type==='attack','attack'));
+ plain=use(plain,findAct(plain,a=>a.type==='chooseBlock'&&a.uid!==null,'block'));
+ assert.equal(plain.players[0].deck.length,deck);
+ assert.equal(plain.players[0].hand.length,hand);
+ assert.equal(plain.players[1].front[0],null);
+ assert.equal(assertUniversalMatch(packs,plain),true);
+
+ let lost=open(pack,1803);
+ const weak=put(lost,0,'MHA-1-018','front',0,true);
+ put(lost,1,'MHA-1-016','front',0,true);
+ lost=toPhase(lost,'main');
+ lost=use(lost,findAct(lost,a=>a.type==='activate'&&a.uid===weak.uid,'activate'));
+ const lostDeck=lost.players[0].deck.length;
+ lost=toPhase(lost,'attack');
+ lost=use(lost,findAct(lost,a=>a.type==='attack','attack'));
+ lost=use(lost,findAct(lost,a=>a.type==='chooseBlock'&&a.uid!==null,'block'));
+ assert.equal(lost.players[0].deck.length,lostDeck);
+ assert.equal(live(lost,0,weak.uid)?.cardId,'MHA-1-018');
+ assert.equal(live(lost,1,lost.players[1].front[0].uid)?.cardId,'MHA-1-016');
+ assert.equal(assertUniversalMatch(packs,lost),true);
+
+ let s=open(pack,1804);
+ const toga=put(s,0,'MHA-1-018','front',0,true);
+ put(s,1,'MHA-1-015','front',0,true);
+ s=toPhase(s,'main');
+ s=use(s,findAct(s,a=>a.type==='activate'&&a.uid===toga.uid,'activate'));
+ const before=s.players[0].deck.length;
+ const held=s.players[0].hand.length;
+ s=toPhase(s,'attack');
+ s=use(s,findAct(s,a=>a.type==='attack','attack'));
+ s=use(s,findAct(s,a=>a.type==='chooseBlock'&&a.uid!==null,'block'));
+ assert.equal(s.players[0].deck.length,before-1);
+ assert.equal(s.players[0].hand.length,held+1);
+ assert.equal(s.players[1].front[0],null);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
