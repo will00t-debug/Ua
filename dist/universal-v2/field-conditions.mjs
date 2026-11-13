@@ -141,6 +141,20 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  if(condition.turn==='opponent'&&s.active===owner)return false;
  // The on-play job carries the entry cause. A later check does not invent one.
  if(condition.kind==='selfOwnEffectRaid')return ownEffectRaidCause(entryCause);
+ // 自分の場に、指定顏色、特徵，而且持有突襲關鍵字的角色。三項要同時成立。
+ if(condition.kind==='ownRaidColorTrait'){
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  for(const zone of zones)for(const c of zone){
+   if(!printedFieldCard(c))continue;
+   const d=printed(c);
+   if(d.type!=='character'||d.color!==condition.color)continue;
+   if(!cardHasTrait(d,condition.trait))continue;
+   if(typeof d.raidName==='string'&&d.raidName.trim())return true;
+  }
+  return false;
+ }
  // 「自分のターン中」かつ「このキャラの下に裏向きのカード」. The physical
  // field card is the one being measured. A buried layer is not itself.
  if(condition.kind==='ownTurnFacedownUnder'){

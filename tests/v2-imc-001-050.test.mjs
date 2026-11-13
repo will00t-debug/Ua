@@ -1822,14 +1822,17 @@ test('Q2230 counts an effect raid and a life raid, not a paid raid or a plain en
  assert.equal(assertUniversalMatch(life.pack,hit),true);
 });
 
-test('IMC-1-020 cannot attach skip-next-active to the raid cause or raid without a rest entry',()=>{
+test('IMC-1-020 stays out while an effect raid can skip the chosen character',()=>{
  const row=IMC_REQUESTS_001_050.find(item=>item.cardId==='IMC-1-020');
  assert.match(row.whyNotEnough,/skipWhen/);
  assert.match(row.whyNotEnough,/deployOwnHandRestOrRaid/);
  assert.equal(IMC_PROGRAMS_001_050['IMC-1-020'],undefined);
  assert.equal(pack.cards['IMC-1-020'],undefined);
- probeReject({id:'SKIP',name:'條件',effects:{onPlay:[{op:'restOppFrontOne',optional:true,
-  skipWhen:{kind:'selfOwnEffectRaid',turn:'any'}}]}},/invalid uncapped opponent REST target/);
+ const accepted=createUniversalPack({id:'probe',version:'imc-b5-skip',cards:[probeFace({
+  id:'SKIP',name:'條件',effects:{onPlay:[{op:'restOppFrontOne',optional:true,
+   skipWhen:{kind:'selfOwnEffectRaid',turn:'any'}}]}
+ })]});
+ assert.equal(accepted.cards.SKIP.effects.onPlay[0].skipWhen.kind,'selfOwnEffectRaid');
  probeReject({id:'LIVE',name:'條件',effects:{onPlay:[{op:'ifLiveThen',
   when:{kind:'selfOwnEffectRaid',turn:'any'},
   then:[{op:'restOppFrontOne',optional:true,skipNextActive:true}]}]}},/invalid live-condition follow-up/);
@@ -1880,15 +1883,18 @@ test('IMC-1-020 cannot attach skip-next-active to the raid cause or raid without
  assert.equal(assertUniversalMatch(named.pack,s),true);
 });
 
-test('IMC-1-024 cannot earn damage 2 from the raid cause, and once per attack is not the first attack',()=>{
+test('IMC-1-024 stays out while raid damage is gated and once per attack is not the first attack',()=>{
  const row=IMC_REQUESTS_001_050.find(item=>item.cardId==='IMC-1-024');
  assert.match(row.whyNotEnough,/grantSelfAttackDamageThisTurn/);
  assert.match(row.whyNotEnough,/oncePerAttackTurn/);
  assert.equal(IMC_PROGRAMS_001_050['IMC-1-024'],undefined);
  assert.equal(pack.cards['IMC-1-024'],undefined);
- probeReject({id:'DMG',name:'傷害',effects:{onPlay:[{op:'ifLiveThen',
-  when:{kind:'selfOwnEffectRaid',turn:'any'},
-  then:[{op:'grantSelfAttackDamageThisTurn',amount:2}]}]}},/invalid live-condition follow-up/);
+ const accepted=createUniversalPack({id:'probe',version:'imc-b5-dmg',cards:[probeFace({
+  id:'DMG',name:'傷害',effects:{onPlay:[{op:'ifLiveThen',
+   when:{kind:'selfOwnEffectRaid',turn:'any'},
+   then:[{op:'grantSelfAttackDamageThisTurn',amount:2}]}]}
+ })]});
+ assert.equal(accepted.cards.DMG.effects.onPlay[0].then[0].amount,2);
  const bare=probeOpen([
   probeFace({id:'DMG',name:'傷害',effects:{onPlay:[{op:'grantSelfAttackDamageThisTurn',amount:2}]}})
  ],27);

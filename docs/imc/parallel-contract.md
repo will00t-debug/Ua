@@ -181,3 +181,17 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 - B 組 020、024、028 的測試與 requests 保留。`selfOwnEffectRaid` 已驗證，整句仍缺跳過活動、只突襲的手牌起動、條件傷害（2）與兩個選項。
 - 051 只有場外回手寫進程式，`ready` 仍是 false。052、054 的跨陣營選擇接不進休息起動與前線每回合一次。111 的付費回收已寫進程式，攻擊抽棄仍在 request。
 
+## 第五階段共用機制
+
+第 5 輪只加共用能力。下面這些卡仍不進對戰包，也不標 ready。B、C、D 要用新句子寫整張卡並通過該張卡的測試，才能標 ready。
+
+- `restSelfThen` 可以接一個 `chooseFrontOrOwnTrait`。`frontOnly:false` 是前線或能量區都能休息自己。`oncePerTurn:true` 是這張實體卡的每回合一次。先休息，然後才選目標。必須選而且沒有合法目標時，不能起動，也不留下空的 pending。052 用這句，而且是起動，不要放進 onPlay。
+- `frontOnceProgram` 可以接一個 `chooseFrontOrOwnTrait`。054 的第二句是前線、每回合一次、這張卡一次。沒有合法目標時不能起動。IMC-1-110 的 `minSelfBp` 加 `chooseOne` 維持原樣。
+- `nameActive` 是同一張卡的另一句起動。形狀與 `nameOnceActive` 相同。`when` 可以是 `oppCharacterBpAtLeast`、`zone:'field'`、`minBp` 為 500 的倍數。這看的是對手角色目前 BP，前線與能量區都算。Q2240 這句不鎖住同一張卡的其他起動。Q2241 同名卡共用這一句。054 的「BP4500 以上不能阻擋」沿用 `blockBpRestriction`：`relation:'atLeast'`、`bp:4500`、`condition:null`。
+- `restOppFrontOne` 的 `skipWhen` 可以是 `selfOwnEffectRaid`。它讀這次登場的 `entryCause`。只有選中的那張角色跳過下一次活動。付費突襲與休息登場不會跳過。生命突襲會。既有的 `skipNextActive` 會在開始、結束與活動效果各消耗一次。
+- `ifLiveThen` 的後續可以是 `grantSelfAttackDamageThisTurn`、`amount:2`，而且 `when` 必須是 `selfOwnEffectRaid`。付費突襲得不到傷害（2）。單獨把傷害（2）放在登場仍會被拒絕。
+- `raidOwnHandNamed` 只從手牌突襲。名字最多兩個，必須滿足能源，而且最多 1 張、可以跳過。沒有合法突襲底板時不開選擇。它不提供休息登場。`deployOwnHandRestOrRaid` 仍會提供休息登場。020 的起動是 `restSelfThen` 接這句。
+- `optionalPayApThen` 的 `firstOwnAttack:true` 只在 `attacksThisTurn===1` 時出現。那是本回合自己角色的第一次攻擊，不是這張卡自己的每一次攻擊。`oncePerAttackTurn` 維持原意，不能兩個同時寫。它只能放在 onAttack。024 的付費後接 `raidOwnHandNamed`。
+- `drawDiscard` 可以加 `when`。沒有 `when` 的舊句子不檢查場上。`ownRaidColorTrait` 要同時符合顏色、特徵與突襲關鍵字，而且是自己場上的角色。條件不成立時不抽牌、不開棄牌。成立時先抽再棄。111 用這句。不要改寫沒有 `when` 的 `drawDiscard`。
+- 028 的最多兩個不同選項仍沒有做。`chooseUpToDistinctOrdered` 還是鎖在活動、加攻、休息。Q2234 到 Q2236 要等之後的 pending，不在這輪改選擇架構。
+

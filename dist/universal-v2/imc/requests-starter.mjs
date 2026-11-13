@@ -13,8 +13,8 @@ export const IMC_REQUESTS_STARTER=[
   cardId:'IMC-1-111',
   sentence:'攻擊時，自己場上有持有突襲的黃色 Positive Passion 才抽 1 張，並將 1 張手牌放到場外。',
   existingOps:['drawDiscard','drawDiscardIfFieldAny','recoverOutsideFiltered'],
-  whyNotEnough:'登場時付 1 AP 後回收，已能用 optionalPayApThen 接 recoverOutsideFiltered，條件是黃色、ポジティブパッション、突襲關鍵字。整張仍不能 ready：drawDiscard 不看場上。drawDiscardIfFieldAny 同時要求卡名與特徵，不看顏色與突襲關鍵字。ownCardTraitCount 只數特徵，不是黃色或沒有突襲的卡也會成立。',
-  proposal:'攻擊時，自己場上至少有 1 張黃色、特徵為ポジティブパッション、且持有突襲關鍵字的卡，才抽 1 並將 1 張手牌置於場外。沒有那種卡就不抽。'
+  whyNotEnough:'登場時付 1 AP 後回收已經寫進程式。攻擊抽棄現在可用 drawDiscard 加 when: ownRaidColorTrait，顏色、特徵與突襲關鍵字要同時成立；沒有 when 的 drawDiscard 維持原樣。整張程式還沒把攻擊句寫上，所以不標 ready。',
+  proposal:'onAttack 用 drawDiscard count 1、discardCount 1，when 為 ownRaidColorTrait，zone field，黃色、ポジティブパッション、raidKeyword true。'
  },
  {
   cardId:'IMC-1-112',
