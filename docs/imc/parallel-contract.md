@@ -580,3 +580,11 @@ phaseEffects:[{phase:'attack',edge:'start',turn:'own',then:[{
 
 仍未標 ready 的 7 張是 011、012、039、051、061、075、107。075 的回手與休息登場還沒寫完，不因為被動 BP 欄位已存在就標 ready。`playable` 維持 false。官方預組 `counts` 維持 null。這次整合沒有合併 `main`，也沒有部署。
 
+## 第 9 輪 A 組
+
+共用操作契約在 `docs/v2-handoff/V2-R9A-shared-ops.md`。011、012、039、051、061、075、107 的句子在這條整合基準上已經表現得了，這一輪沒有重寫，也沒有標 ready。
+
+PR #410 只把 IMC-1-107 標成 ready，基準比 #424 舊，而且沒有引擎改動。不要把那個提交摘進來。D 組寫 107 時複製契約裡的 `restRetireSequence`，用目前引擎重跑之後才標 ready。
+
+075 的 6 種卡名 BP 仍用第七輪的 `passiveBonuses`。回手句寫完之前維持 ready false。
+
