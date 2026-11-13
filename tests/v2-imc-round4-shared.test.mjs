@@ -435,7 +435,7 @@ test('the ready trait ceiling stays on 030, and later ready cards stay in the pa
  assert.equal(job.scaleMin,3);
  assert.equal(job.scaleBp,5000);
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,106);
+ assert.equal(Object.keys(pack.cards).length,113);
  assert.deepEqual(['IMC-1-028','IMC-1-033','IMC-1-036','IMC-1-065','IMC-1-078','IMC-1-080','IMC-1-112']
   .filter(id=>pack.cards[id]),['IMC-1-028','IMC-1-033','IMC-1-036','IMC-1-065','IMC-1-078','IMC-1-080','IMC-1-112']);
  assert.equal(pack.cards['IMC-1-030'].effects.onPlay[0].scaleExcludeSelf,undefined);
@@ -447,7 +447,9 @@ test('the ready trait ceiling stays on 030, and later ready cards stay in the pa
  assert.equal(pack.cards['IMC-1-024'].effects.onPlay[1].when.kind,'selfOwnEffectRaid');
  assert.equal(pack.cards['IMC-1-111'].effects.onAttack[0].op,'drawDiscard');
  assert.equal(pack.cards['IMC-1-028'].effects.onPlay[0].op,'choosePrintedOptions');
- assert.equal(pack.cards['IMC-1-051'],undefined);
+ assert.equal(pack.cards['IMC-1-051'].mainAbility.op,'restRetireSequence');
+ assert.equal(pack.cards['IMC-1-051'].effects.onPlay[0].op,'recoverOutsideFiltered');
+ assert.equal(pack.cards['IMC-1-051'].triggerEffect.bp,3500);
 });
 
 test('own-effect raid is the effect or life raid, not a paid raid or a plain entry',()=>{

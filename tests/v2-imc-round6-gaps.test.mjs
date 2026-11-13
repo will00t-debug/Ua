@@ -1,5 +1,5 @@
 // Shared gaps after round 6. Synthetic cards exercise the new engine.
-// IMC-1-011, 012, 039, 051, 061, 075 and 107 stay out of the battle pack.
+// IMC-1-011, 012, 039, 051, 061, 075 and 107 are complete programs in the pack.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -529,12 +529,22 @@ test('a trait bounce updates the hand before the optional rest entry',()=>{
  assert.equal(s.players[0].hand.some(c=>c.uid===target.uid),false);
 });
 
-test('the new shared cards stay out of the IMC battle pack',()=>{
+test('the seven former gaps are ready programs and the starter recipe stays unpublished',()=>{
  const ids=['IMC-1-011','IMC-1-012','IMC-1-039','IMC-1-051','IMC-1-061','IMC-1-075','IMC-1-107'];
  const programs={...IMC_PROGRAMS_001_050,...IMC_PROGRAMS_051_100,...IMC_PROGRAMS_STARTER};
- for(const id of ids)assert.notEqual(programs[id]?.ready,true);
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,106);
+ assert.deepEqual(Object.keys(pack.cards),Array.from({length:113},(_,i)=>'IMC-1-'+String(i+1).padStart(3,'0')));
+ for(const id of ids){
+  assert.equal(programs[id].ready,true,id);
+  assert.equal(pack.cards[id].id,id);
+ }
+ assert.equal(pack.cards['IMC-1-011'].bpGainFollow.bp,1000);
+ assert.equal(pack.cards['IMC-1-012'].bpGainFollow.bp,500);
+ assert.equal(pack.cards['IMC-1-039'].ownEffectPresenceBp,1000);
+ assert.equal(pack.cards['IMC-1-051'].mainAbility.then[0].color,'blue');
+ assert.equal(pack.cards['IMC-1-061'].unblockedAttack.then[0].count,1);
+ assert.equal(pack.cards['IMC-1-075'].effects.onPlay[0].then[0].ap,null);
+ assert.equal(pack.cards['IMC-1-107'].mainAbility.then[0].max,1);
  assert.equal(getTitle('imc').playable,false);
  assert.equal(loadImcOfficialStarter().counts,null);
 });

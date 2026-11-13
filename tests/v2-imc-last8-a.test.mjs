@@ -94,17 +94,23 @@ function live(s,uid){
   .find(c=>c?.uid===uid);
 }
 
-test('the eight cards are ready and the other gaps stay requests',()=>{
- assert.equal(Object.keys(pack.cards).length,106);
+test('the eight cards are ready and the former gaps are now complete programs',()=>{
+ assert.equal(Object.keys(pack.cards).length,113);
  assert.equal(getTitle('imc').playable,false);
  assert.deepEqual(validateUniversalDeck(pack,COUNTS),[]);
  for(const id of DONE){
   assert.equal(pack.cards[id].id,id);
   assert.equal(imcProgramFor(id).ready,true);
  }
+ assert.equal(pack.cards['IMC-1-011'].bpGainFollow.bp,1000);
+ assert.equal(pack.cards['IMC-1-012'].effects.onPlay[0].minBp,7000);
+ assert.equal(pack.cards['IMC-1-051'].mainAbility.then[0].op,'deployOutsideColorTraitRest');
+ assert.equal(pack.cards['IMC-1-075'].passiveBonuses[0].condition.min,6);
+ assert.equal(pack.cards['IMC-1-107'].mainAbility.draw,1);
  for(const id of ['IMC-1-011','IMC-1-012','IMC-1-051','IMC-1-075','IMC-1-107'])
-  assert.equal(pack.cards[id],undefined);
+  assert.equal(imcProgramFor(id).ready,true,id);
  const requests=[...IMC_REQUESTS_001_050,...IMC_REQUESTS_051_100].map(row=>row.cardId);
+ assert.deepEqual(requests,[]);
  for(const id of DONE)assert.equal(requests.includes(id),false);
  assert.equal(assertUniversalMatch(pack,fresh(8)),true);
 });

@@ -265,7 +265,7 @@ test('front once and name once stay separate, and 110 is unchanged',()=>{
   x.uid===bareSrc.uid&&x.mode==='frontOnce'),false);
 
  const imc=createImcV2Pack();
- assert.equal(Object.keys(imc.cards).length,106);
+ assert.equal(Object.keys(imc.cards).length,113);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.minSelfBp,4000);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.then[0].op,'chooseOne');
  assert.equal(imc.cards['IMC-1-020'].effects.onPlay[0].skipWhen.kind,'selfOwnEffectRaid');
@@ -274,7 +274,9 @@ test('front once and name once stay separate, and 110 is unchanged',()=>{
  assert.equal(imc.cards['IMC-1-054'].nameActive.op,'nameOnceActive');
  assert.equal(imc.cards['IMC-1-111'].effects.onAttack[0].when.kind,'ownRaidColorTrait');
  assert.equal(imc.cards['IMC-1-028'].effects.onPlay[0].op,'choosePrintedOptions');
- assert.equal(imc.cards['IMC-1-107'],undefined);
+ assert.equal(imc.cards['IMC-1-107'].mainAbility.op,'restRetireSequence');
+ assert.equal(imc.cards['IMC-1-107'].mainAbility.draw,1);
+ assert.equal(imc.cards['IMC-1-107'].mainAbility.then[0].ap,1);
  assert.equal(getTitle('imc').playable,false);
 });
 

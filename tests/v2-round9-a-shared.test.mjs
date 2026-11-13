@@ -125,9 +125,16 @@ const lasting={op:'buffSelfUntilNextOwnStart',bp:1000,line:'front'};
 const lookTake={to:'hand',max:1,publish:true,type:'character',thenDrawIfName:'緑谷 出久'};
 const kit={op:'grantOwnFieldAttackKit',bp:2500,optional:false,sniperNames:['オールマイト','緑谷 出久']};
 
-test('the seven IMC cards and the MHA starter gaps stay out of the battle packs',()=>{
+test('the seven IMC cards are in the battle pack and the MHA starter gaps stay out',()=>{
  const imc=createImcV2Pack();
- for(const id of OPEN)assert.equal(imc.cards[id],undefined);
+ for(const id of OPEN)assert.equal(imc.cards[id].id,id);
+ assert.equal(imc.cards['IMC-1-011'].bpGainFollow.bp,1000);
+ assert.equal(imc.cards['IMC-1-012'].effects.onPlay[0].op,'grantConditionalSniperThisTurn');
+ assert.equal(imc.cards['IMC-1-039'].mainAbility.op,'discardExactFrontMove');
+ assert.equal(imc.cards['IMC-1-051'].mainAbility.op,'restRetireSequence');
+ assert.equal(imc.cards['IMC-1-061'].unblockedAttack.optional,true);
+ assert.equal(imc.cards['IMC-1-075'].effects.onPlay[0].op,'bounceOwnOtherUnderEnergy');
+ assert.equal(imc.cards['IMC-1-107'].mainAbility.draw,1);
  const mha=createMhaV2Pack();
  for(const id of MHA_OPEN)assert.equal(mha.cards[id],undefined);
 });

@@ -11,7 +11,6 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 
 const beyond='BEYOND THE STARLIGHT';
 const wish='お願い！シンデレラ';
-const OPEN=['IMC-1-011','IMC-1-012','IMC-1-039','IMC-1-051','IMC-1-061','IMC-1-075','IMC-1-107'];
 const DONE=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-016','IMC-1-029','IMC-1-032','IMC-1-037','IMC-1-043','IMC-1-057','IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-093','IMC-1-094','IMC-1-097'];
 function face(extra){
  const effects=extra.effects||{};
@@ -131,8 +130,12 @@ function live(s,uid){
 
 test('the battle pack is the cards that are actually ready',()=>{
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,106);
- for(const id of OPEN)assert.equal(pack.cards[id],undefined);
+ assert.deepEqual(Object.keys(pack.cards),Array.from({length:113},(_,i)=>'IMC-1-'+String(i+1).padStart(3,'0')));
+ assert.equal(pack.cards['IMC-1-011'].bpGainFollow.bp,1000);
+ assert.equal(pack.cards['IMC-1-039'].mainAbility.dest,'front');
+ assert.equal(pack.cards['IMC-1-061'].effects.onPlay[0].op,'activeSelf');
+ assert.equal(pack.cards['IMC-1-075'].effects.onPlay[0].trait,'お願い！シンデレラ');
+ assert.equal(pack.cards['IMC-1-107'].mainAbility.then[0].type,'character');
  for(const id of DONE)assert.equal(pack.cards[id].id,id);
 });
 

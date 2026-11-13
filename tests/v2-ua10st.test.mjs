@@ -3,11 +3,16 @@ import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalEnergyByColor} from '../dist/universal-v2/engine.mjs';
-import {mhaCatalog} from '../dist/mha/catalog.mjs';
+import {mhaCatalog,mhaEditorCards} from '../dist/mha/catalog.mjs';
 import {UA10ST_PRODUCT} from '../dist/mha/ua10st-cards.mjs';
 import {createMhaV2Pack,mhaBattleCard,mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
 import {MHA_UA10ST_PROGRAMS} from '../dist/universal-v2/mha/programs.mjs';
 import {MHA_UA10ST_REQUESTS} from '../dist/universal-v2/mha/requests.mjs';
+import {MHA_PROGRAMS_001_050} from '../dist/universal-v2/mha/programs-001-050.mjs';
+import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
+import {MHA_REQUESTS_001_050} from '../dist/universal-v2/mha/requests-001-050.mjs';
+import {MHA_REQUESTS_051_100} from '../dist/universal-v2/mha/requests-051-100.mjs';
+import {getTitle} from '../dist/title-registry.mjs';
 
 const READY=['MHA-1-034','MHA-1-036','MHA-1-041','MHA-1-044','MHA-1-052',
  'MHA-1-057','MHA-1-061','MHA-1-065','MHA-1-103','MHA-1-104'];
@@ -144,6 +149,53 @@ test('only complete UA10ST sentences enter the battle pack',()=>{
  }
  const four=Object.fromEntries(READY.map(id=>[id,4]));
  assert.match(validateUniversalDeck(pack,four).join('\n'),/50/);
+});
+
+test('the closed MHA pack is 49 ready cards among 109 distinct deck cards',()=>{
+ const editor=mhaEditorCards();
+ assert.equal(editor.length,109);
+ assert.equal(new Set(editor.map(card=>card.id)).size,109);
+ assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
+ const ready=Object.keys(pack.cards);
+ assert.equal(ready.length,49);
+ const pending=editor.map(card=>card.id).filter(id=>!pack.cards[id]);
+ assert.equal(pending.length,60);
+ assert.deepEqual(ready,editor.map(card=>card.id).filter(id=>pack.cards[id]));
+ assert.equal(pack.cards['MHA-1-012'].mainAbility.op,'restSelfGainEnergyRetireEndMain');
+ assert.equal(pack.cards['MHA-1-012'].mainAbility.extraEnergy,1);
+ assert.equal(pack.cards['MHA-1-019'].mainAbility.then[0].op,'enemyBpDown');
+ assert.equal(pack.cards['MHA-1-019'].mainAbility.then[0].minBp,1500);
+ assert.equal(pack.cards['MHA-1-019'].mainAbility.then[0].zone,'front');
+ assert.equal(pack.cards['MHA-1-027'].passiveBonuses[0].condition.kind,'ownNameOrRaidBase');
+ assert.equal(pack.cards['MHA-1-027'].passiveBonuses[0].condition.zone,'front');
+ assert.equal(pack.cards['MHA-1-027'].passiveBonuses[0].condition.name,'オーバーホール');
+ assert.equal(pack.cards['MHA-1-053'].effects.onAttack[0].op,'chooseOne');
+ assert.equal(pack.cards['MHA-1-053'].effects.onAttack[0].optional,false);
+ assert.deepEqual(pack.cards['MHA-1-053'].effects.onAttack[0].options.map(option=>option.id),['bp','impact']);
+ assert.equal(pack.cards['MHA-1-053'].effects.onAttack[0].options[1].then[0].amount,1);
+ for(const id of ['MHA-1-012','MHA-1-019','MHA-1-027','MHA-1-053'])
+  assert.equal(pending.includes(id),false);
+ for(const id of OPEN){
+  assert.equal(pending.includes(id),true,id);
+  assert.equal(pack.cards[id],undefined,id);
+ }
+ const requestIds=new Set([
+  ...Object.keys(MHA_REQUESTS_001_050),
+  ...MHA_REQUESTS_051_100.map(row=>row.cardId),
+  ...MHA_UA10ST_REQUESTS.map(row=>row.cardId)
+ ]);
+ assert.equal(requestIds.size,60);
+ assert.deepEqual([...requestIds].sort(),pending.slice().sort());
+ const sharedPending=MHA_UA10ST_REQUESTS.map(row=>row.cardId)
+  .filter(id=>MHA_REQUESTS_051_100.some(row=>row.cardId===id)||Object.hasOwn(MHA_REQUESTS_001_050,id));
+ assert.deepEqual(sharedPending,['MHA-1-063']);
+ assert.equal(getTitle('mha').playable,false);
+ assert.equal(getTitle('imc').playable,false);
+ assert.equal(UA10ST_PRODUCT.recipe,null);
+ assert.equal(MHA_PROGRAMS_001_050['MHA-1-012'].ready,true);
+ assert.equal(MHA_PROGRAMS_001_050['MHA-1-019'].ready,true);
+ assert.equal(MHA_PROGRAMS_001_050['MHA-1-027'].ready,true);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-053'].ready,true);
 });
 
 test('MHA-1-034 adds green energy only while active',()=>{
