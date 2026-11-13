@@ -427,7 +427,7 @@ test('a trait-count retire ceiling includes the source unless told not to',()=>{
  assert.equal(legalUniversalActions(blocked.pack,blocked.s).some(a=>a.type==='event'&&a.uid===event.uid),false);
 });
 
-test('the ready trait ceiling stays on 030, and the pack is 82 cards',()=>{
+test('the ready trait ceiling stays on 030, and the pack is 83 cards',()=>{
  const job=IMC_PROGRAMS_001_050['IMC-1-030'].effects.onPlay[0];
  assert.equal(job.op,'retireOppFrontUnderBp');
  assert.equal(job.scaleExcludeSelf,undefined);
@@ -435,7 +435,7 @@ test('the ready trait ceiling stays on 030, and the pack is 82 cards',()=>{
  assert.equal(job.scaleMin,3);
  assert.equal(job.scaleBp,5000);
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,82);
+ assert.equal(Object.keys(pack.cards).length,83);
  assert.equal(pack.cards['IMC-1-030'].effects.onPlay[0].scaleExcludeSelf,undefined);
  assert.equal(pack.cards['IMC-1-062'].effects.onPlay[0].scaleBp,5000);
  assert.equal(pack.cards['IMC-1-087'].effects.onPlay[0].energyExact,2);
