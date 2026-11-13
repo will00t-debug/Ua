@@ -100,6 +100,17 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
   passiveBonuses:[{extraEnergy:1,condition:{kind:'ownCardTraitCount',turn:'any',min:4,
    zone:'field',excludeSelf:false,trait:'ポジティブパッション'}}],
   notes:'場上ポジティブパッション達 4 張（含自己與場地）時，發生能量 +黃。休息也加。未滿 4、對方的角色、前線本身不產生能量。'},
+ 'IMC-1-028':{ready:true,implementation:'dsl',raidName:'本田 未央',printedImpact:1,
+  effects:{onPlay:[{op:'choosePrintedOptions',max:2,optional:true,options:[
+   {id:'bounce',label:'回手後休息登場或突襲',then:[{
+    op:'bounceOwnOtherUnderEnergy',optional:true,energy:3,trait:'ポジティブパッション',
+    then:[{op:'deployOwnHandRestOrRaid',type:'character',color:'yellow',ap:1,
+     maxEnergy:30,max:1,optional:true,requireAffordableEnergy:true,
+     names:['日野 茜','高森 藍子']}]}]},
+   {id:'active',label:'活動積極熱情',when:{kind:'selfOwnEffectRaid',turn:'any'},
+    then:[{op:'activeOwnTrait',optional:true,max:1,trait:'ポジティブパッション'}]}
+  ]}]},
+  notes:'突襲框是本田 未央。衝擊 1。登場最多選 2 個不同選項，依印刷順序結算。可回手能源 3 以下的積極熱情，成功才從手牌休息登場或突襲日野 茜或高森 藍子。只有自己的效果突襲才活動最多 1 張積極熱情。'},
  'IMC-1-030':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,scaleTrait:'ポジティブパッション',
    scaleMin:3,scaleBp:5000}]},
@@ -108,6 +119,10 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
  'IMC-1-031':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'recoverAp',count:2}]},
   notes:'APを2枚までアクティブ。ファイナルトリガーはカード表。'},
+ 'IMC-1-033':{ready:true,implementation:'dsl',
+  effects:{onPlay:[{op:'lookTopScript',count:6,rest:'bottom',takes:[{
+   to:'hand',eachName:true,publish:true,names:['本田 未央','日野 茜','高森 藍子']}]}]},
+  notes:'查看牌庫頂 6 張。本田 未央、日野 茜、高森 藍子各最多 1 張公開入手。其餘依選擇順序放回牌底。不能選的留在窗裡。'},
  'IMC-1-034':{ready:true,implementation:'dsl',mainAbility:energyRetire,
   notes:'001と同じ起動。発生エナジーの色はこのカードの青。'},
  'IMC-1-035':vanilla('効果欄は「-」。ドロートリガーはカード表の trigger。'),
