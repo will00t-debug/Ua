@@ -102,6 +102,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:THE_IDOLM@STER_CINDERELLA_GIRLS_Logo.png',
   credit:'Bandai Namco Entertainment',
   license:'PD text logo'
+ }),
+ mha:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/0/06/My-hero-academia-jpn.svg',
+  label:'我的英雄學院',
+  source:'https://commons.wikimedia.org/wiki/File:My-hero-academia-jpn.svg',
+  credit:'堀越耕平',
+  license:'Public domain'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;

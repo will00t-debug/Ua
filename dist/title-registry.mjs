@@ -17,6 +17,7 @@ import {KMR2_CARDS} from './kmr-vol2-cards.mjs';
 import {KMR_PR_CARDS} from './kmr-pr-cards.mjs';
 import {CSM_CARDS} from './csm-cards.mjs';
 import {imcEditorCards} from './imc/catalog.mjs';
+import {mhaEditorCards} from './mha/catalog.mjs';
 // Isolated catalogue/deck editing; unfinished series are not match-playable.
 export const TITLES=[
  {id:'bleach',label:'BLEACH 千年血戰篇',cards:CARDS,presets:PRESETS,playable:true},
@@ -32,7 +33,8 @@ export const TITLES=[
  {id:'aot',label:'進擊的巨人',cards:[...AOT_CARDS,...AOT2_CARDS],presets:[],playable:false},
  {id:'kmr',label:'假面騎士',cards:[...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS],presets:[],playable:false},
  {id:'csm',label:'鏈鋸人',cards:CSM_CARDS,presets:[],playable:false},
- {id:'imc',label:'偶像大師 灰姑娘女孩',cards:imcEditorCards(),presets:[],playable:false}
+ {id:'imc',label:'偶像大師 灰姑娘女孩',cards:imcEditorCards(),presets:[],playable:false},
+ {id:'mha',label:'我的英雄學院',cards:mhaEditorCards(),presets:[],playable:false}
 ];
 export function titleOfCard(card){return TITLES.some(t=>t.id===card?.title)?card.title:'bleach';}
 export function getTitle(id){return TITLES.find(t=>t.id===id)||null;}

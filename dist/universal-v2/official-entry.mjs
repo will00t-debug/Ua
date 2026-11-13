@@ -16,6 +16,7 @@ import {createCsmV2Pack} from './csm-pack.mjs';
 import {createAotV2Pack} from './aot-pack.mjs';
 import {createKmrV2Pack,KMR_STARTER_IDS,kmrPackCard} from './kmr-pack.mjs';
 import {createImcV2Pack,IMC_OFFICIAL_MATCH_CLOSED} from './imc-pack.mjs';
+import {createMhaV2Pack,MHA_OFFICIAL_MATCH_CLOSED} from './mha-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -66,6 +67,7 @@ export function officialV2Pack(title){
  if(title==='aot')return createAotBattlePack();
  if(title==='kmr')return createKmrBattlePack();
  if(title==='imc')return createImcBattlePack();
+ if(title==='mha')return createMhaBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -93,6 +95,7 @@ export function v2DeckReport(title,counts){
  ]:[];
  const issues=[...warnings];
  if(title==='imc')issues.push(IMC_OFFICIAL_MATCH_CLOSED);
+ if(title==='mha')issues.push(MHA_OFFICIAL_MATCH_CLOSED);
  // Catalogue drafts store every card at 0. A zero is not in the deck, so an
  // A zero-count catalogue id is not in the deck and must not block a legal list.
  const listed=Object.fromEntries(positiveCounts(counts));
@@ -195,6 +198,12 @@ let imcBattlePack=null;
 export function createImcBattlePack(){
  if(!imcBattlePack)imcBattlePack=createImcV2Pack();
  return imcBattlePack;
+}
+
+let mhaBattlePack=null;
+export function createMhaBattlePack(){
+ if(!mhaBattlePack)mhaBattlePack=createMhaV2Pack();
+ return mhaBattlePack;
 }
 
 let kmrBattlePack=null;

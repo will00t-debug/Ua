@@ -3,6 +3,7 @@
 // never live card order. The existing V2 reducer owns all game state/actions.
 import {officialV2Pack} from './official-entry.mjs';
 import {IMC_OFFICIAL_MATCH_CLOSED} from './imc-pack.mjs';
+import {MHA_OFFICIAL_MATCH_CLOSED} from './mha-pack.mjs';
 import {validateUniversalDeck} from './pack.mjs';
 
 export const SOLO_BATTLE_ENTRY_KEY='ua-v2-solo-battle-entry-v1';
@@ -22,6 +23,7 @@ export function prepareSoloBattle({mine,foe,first,difficulty,recordDeckId=null,n
    throw Error('第 '+(index+1)+' 副牌組未準備好。');
   const pack=officialV2Pack(entry.pack.id);
   if(pack.id==='imc')throw Error(IMC_OFFICIAL_MATCH_CLOSED);
+  if(pack.id==='mha')throw Error(MHA_OFFICIAL_MATCH_CLOSED);
   if(pack.version!==entry.pack.version)
    throw Error('牌組規則版本已更新，請重新選擇。');
   const issues=validateUniversalDeck(pack,entry.counts);
@@ -64,6 +66,7 @@ export function loadSoloBattle(storage,{now=Date.now()}={}){
     throw Error('Invalid stored battle deck');
    const pack=officialV2Pack(entry.title);
    if(pack.id==='imc')throw Error(IMC_OFFICIAL_MATCH_CLOSED);
+  if(pack.id==='mha')throw Error(MHA_OFFICIAL_MATCH_CLOSED);
    if(pack.version!==entry.packVersion)throw Error('Rule pack changed');
    const issues=validateUniversalDeck(pack,entry.counts);
    if(issues.length)throw Error('Stored deck no longer playable');

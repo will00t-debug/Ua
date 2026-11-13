@@ -28,8 +28,8 @@ delete counts['IMC-1-065'];
 delete counts['IMC-1-078'];
 for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])delete counts[id];
 for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-057','IMC-1-058','IMC-1-062','IMC-1-063',
- 'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-073','IMC-1-074','IMC-1-076','IMC-1-080','IMC-1-083','IMC-1-085','IMC-1-087','IMC-1-088','IMC-1-090','IMC-1-091',
- 'IMC-1-092','IMC-1-093','IMC-1-095','IMC-1-096','IMC-1-077','IMC-1-089','IMC-1-099','IMC-1-100'])counts[id]=1;
+ 'IMC-1-060','IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-073','IMC-1-074','IMC-1-076','IMC-1-080','IMC-1-081','IMC-1-083','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
+ 'IMC-1-092','IMC-1-093','IMC-1-095','IMC-1-096','IMC-1-077','IMC-1-099','IMC-1-100'])counts[id]=1;
 
 function kit(usePack,useCounts){
  const act=(s,action)=>dispatchUniversalAction(usePack,s,action);

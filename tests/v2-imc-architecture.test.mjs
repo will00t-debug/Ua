@@ -132,11 +132,12 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
  assert.equal(pack.cards['IMC-1-054'].mainAbility.op,'frontOnceProgram');
  assert.equal(pack.cards['IMC-1-111'].effects.onAttack[0].when.kind,'ownRaidColorTrait');
  assert.equal(imcProgramFor('IMC-1-001').ready,true);
- assert.equal(imcProgramFor('IMC-1-003'),null);
+ assert.equal(imcProgramFor('IMC-1-003').ready,true);
+ assert.equal(imcProgramFor('IMC-1-011'),null);
  assert.equal(imcProgramFor('IMC-1-098').ready,true);
- const unfinished=v2DeckReport('imc',{'IMC-1-003':4});
+ const unfinished=v2DeckReport('imc',{'IMC-1-011':4});
  assert.equal(unfinished.ok,false);
- assert.match(unfinished.issues.join('\n'),/IMC-1-003/);
+ assert.match(unfinished.issues.join('\n'),/IMC-1-011/);
  assert.match(unfinished.issues.join('\n'),/尚未開放正式對戰/);
  const report=v2DeckReport('imc',{'IMC-1-001':4});
  assert.equal(report.ok,false);

@@ -4,6 +4,7 @@ import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261104kmrport1';
 import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261112imc1';
 import {IMC_OFFICIAL_MATCH_CLOSED} from './universal-v2/imc-pack.mjs';
+import {MHA_OFFICIAL_MATCH_CLOSED} from './universal-v2/mha-pack.mjs';
 
 export const LEGACY_DECK_KEYS=Object.freeze({
  bleach:['bleach-arena-deck-v1','bleach-arena-saved-decks-v1'],
@@ -19,7 +20,8 @@ export const LEGACY_DECK_KEYS=Object.freeze({
  aot:['ua-aot-draft-v1','ua-aot-saved-v1'],
  kmr:['ua-kmr-draft-v1','ua-kmr-saved-v1'],
  csm:['ua-csm-draft-v1','ua-csm-saved-v1'],
- imc:['ua-imc-draft-v1','ua-imc-saved-v1']
+ imc:['ua-imc-draft-v1','ua-imc-saved-v1'],
+ mha:['ua-mha-draft-v1','ua-mha-saved-v1']
 });
 export const V2_EDITOR_TRANSFER_KEY='ua-v2-editor-deck-v1';
 export const titleCatalogue=id=>TITLES.find(t=>t.id===id)||null;
@@ -27,7 +29,7 @@ export function registeredPackForEditor(title){
  if(!titleCatalogue(title))return null;
  // Re:Zero stays outside the five-title census. All 73 regular EX17BT
  // cards share the set-1 battle pack. AP cards are not deck cards.
- if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc')return officialV2Pack(title);
+ if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha')return officialV2Pack(title);
  return registeredV2TitlePack(title);
 }
 export function normalizeEditorCounts(title,input){
@@ -94,5 +96,6 @@ export function editorV2Status(title,counts,pack=registeredPackForEditor(title))
   }
  }
  if(title==='imc')errors.push(IMC_OFFICIAL_MATCH_CLOSED);
+ if(title==='mha')errors.push(MHA_OFFICIAL_MATCH_CLOSED);
  return {supported,issues:errors,ready:errors.length===0,total,registered:supported.size,pack,counts:v2Counts};
 }
