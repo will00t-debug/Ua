@@ -22,9 +22,9 @@ const READY=['IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-
  'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
  'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-030','IMC-1-031',
  'IMC-1-034','IMC-1-035','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045',
- 'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050'];
-const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012','IMC-1-016','IMC-1-028',
- 'IMC-1-029','IMC-1-032','IMC-1-033','IMC-1-036','IMC-1-037','IMC-1-039','IMC-1-043'];
+ 'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050','IMC-1-028','IMC-1-033'];
+const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012','IMC-1-016',
+ 'IMC-1-029','IMC-1-032','IMC-1-036','IMC-1-037','IMC-1-039','IMC-1-043'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
  'IMC-1-002','IMC-1-035','IMC-1-040','IMC-1-038','IMC-1-034','IMC-1-047','IMC-1-018',
  'IMC-1-022','IMC-1-041','IMC-1-044'];
@@ -2079,7 +2079,8 @@ test('IMC-1-024 gains damage 2 only from its own effect raid and pays on the fir
  assert.equal(program.effects.onAttack[1].firstOwnAttack,true);
  assert.deepEqual(program.effects.onAttack[1].then[0].names,['本田 未央','高森 藍子']);
  assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-024'),false);
- assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-028'),true);
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-028'),false);
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-033'),false);
  assert.equal(pack.cards['IMC-1-024'].impactNull,true);
 
  let s=reach(fresh(24001,PAIR),'main');
@@ -2301,13 +2302,12 @@ test('IMC-1-024 gains damage 2 only from its own effect raid and pays on the fir
  }
 });
 
-test('IMC-1-028 keeps the ordered choice locked while the raid cause can active a trait',()=>{
- const row=IMC_REQUESTS_001_050.find(item=>item.cardId==='IMC-1-028');
- assert.match(row.whyNotEnough,/chooseUpToDistinctOrdered/);
- assert.match(row.whyNotEnough,/Q2234/);
- assert.match(row.whyNotEnough,/Q2235/);
- assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'],undefined);
- assert.equal(pack.cards['IMC-1-028'],undefined);
+test('IMC-1-028 uses printed options while the old ordered trio stays locked',()=>{
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'].ready,true);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'].printedImpact,1);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'].raidName,'本田 未央');
+ assert.equal(pack.cards['IMC-1-028'].effects.onPlay[0].op,'choosePrintedOptions');
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-028'),false);
  probeReject({
   id:'TWO',name:'二選',
   effects:{onPlay:[{op:'chooseUpToDistinctOrdered',max:2,options:[

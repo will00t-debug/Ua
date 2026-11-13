@@ -18,7 +18,7 @@ import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 
 const catalog=imcCatalog();
 const STARTER_IDS=IMC_CARDS_STARTER.map(card=>card.id);
-const READY=['IMC-1-101','IMC-1-102','IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110','IMC-1-111','IMC-1-113'];
+const READY=['IMC-1-101','IMC-1-102','IMC-1-103','IMC-1-104','IMC-1-105','IMC-1-106','IMC-1-108','IMC-1-109','IMC-1-110','IMC-1-111','IMC-1-112','IMC-1-113'];
 const OPEN=STARTER_IDS.filter(id=>!READY.includes(id));
 
 function face(id,extra={}){
@@ -239,7 +239,11 @@ test('finished starter cards enter the battle pack and unfinished cards stay out
   trait:'ポジティブパッション',raidKeyword:true});
  assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-111'}),/交給共用引擎/);
  assert.equal(IMC_PROGRAMS_STARTER['IMC-1-107'],undefined);
- assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'],undefined);
+ assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'].ready,true);
+ assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'].raidName,'渋谷 凛');
+ assert.equal(IMC_PROGRAMS_STARTER['IMC-1-112'].impactNull,true);
+ assert.equal(pack.cards['IMC-1-112'].effects.onPlay[0].op,'bottomOwnCharacterThen');
+ assert.throws(()=>runImcStarter(null,null,{id:'IMC-1-112'}),/交給共用引擎/);
 });
 
 test('IMC-1-105 looks at three, adds one new generations, and can decline',()=>{
@@ -1155,8 +1159,7 @@ test('IMC-1-111 draws one and discards one only for its own yellow raiding Posit
 
 test('unfinished starter cards stay out and name the shared op they cannot reuse',()=>{
  const sentences={
-  'IMC-1-107':['fieldRestRetireThen','deployOwnHandSpecial'],
-  'IMC-1-112':['searchTopOneBottomDiscard','Q2258']
+  'IMC-1-107':['fieldRestRetireThen','deployOwnHandSpecial']
  };
  for(const [id,needles] of Object.entries(sentences)){
   assert.equal(IMC_PROGRAMS_STARTER[id],undefined,id);

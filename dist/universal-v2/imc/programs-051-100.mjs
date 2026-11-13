@@ -44,6 +44,11 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
    scaleTrait:'ガールズ・イン・ザ・フロンティア',scaleMin:3,scaleBp:5000}]}
  }),
  'IMC-1-063':play([{op:'recoverAp',count:2}]),
+ 'IMC-1-065':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{onPlay:[{op:'lookTopScript',count:3,rest:'bottom',takes:[{
+   to:'restOrRaid',type:'character',max:1,color:'blue',trait:'ガールズ・イン・ザ・フロンティア'}]}]}
+ }),
  'IMC-1-066':play([
   {op:'draw',count:2},
   {op:'ifLiveThen',when:{kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500},
@@ -78,6 +83,11 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-077':Object.freeze({
   ready:true,implementation:'dsl',emptyOwnFieldHandEnergyDiscount:2,
   effects:{onPlay:[{op:'drawDiscard',count:1}]}
+ }),
+ 'IMC-1-078':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'アナスタシア',impactNull:true,
+  effects:{onPlay:[{op:'lookTopScript',count:6,rest:'bottom',takes:[{
+   to:'rest',type:'character',max:1,color:'red',trait:'Starry-Go-Round',energyExact:2}]}]}
  }),
  'IMC-1-079':play([{op:'deployOwnHandRest',type:'character',color:'red',
   energy:2,ap:null,max:1,trait:'Starry-Go-Round'}]),

@@ -1,7 +1,6 @@
 // C group owns this file. One object per shared-engine gap.
 // cardId, sentence, existingOps, whyNotEnough, proposal.
 const NAMES='IMC-1-068、IMC-1-072、IMC-1-073、IMC-1-074、IMC-1-075、IMC-1-093';
-const ENERGY='IMC-1-078、IMC-1-080';
 
 export const IMC_REQUESTS_051_100=[
  {
@@ -15,8 +14,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-080',
   sentence:'自分の場に必要エナジーが2の［特徴：Starry-Go-Round］が N 枚以上。',
   existingOps:['drawIfOwnTraitCount'],
-  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084、087、099 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。078 的查看可以用 lookTopScript：頂 6 張、紅、Starry-Go-Round、印刷必要能源恰好 2、只休息登場、其餘放牌底。078 的程式還沒寫，不能標 ready。',
-  proposal:'081、082、083、084、087、099 已完成。其餘 '+ENERGY+' 先不標 ready。078 用 lookTopScript 看 6 張，恰好能源 2 的紅 Starry 只休息登場。'
+  whyNotEnough:'ownPrintedTraitCount 已能數恰好印刷必要能源，turn 可以是 own。081、082、083、084、087、099 與 078 已用。080 還要把這個數字用在能源線上的活動登場，以及休息後加攻。',
+  proposal:'081、082、083、084、087、099 與 078 已完成。080 先不標 ready。'
  },
  {
   cardId:'IMC-1-051',
@@ -45,13 +44,6 @@ export const IMC_REQUESTS_051_100=[
   existingOps:['conditionalBounceOrRetireByOwnOutsideNames'],
   whyNotEnough:'現有替換看的是場外卡名，不是場上特徵張數。這句是必須選 1 張回手，達標時可以改退場。',
   proposal:'必須回手，並可依場上特徵張數改為退場。064 先不標 ready。'
- },
- {
-  cardId:'IMC-1-065',
-  sentence:'上から3枚見て、青の［特徴：ガールズ・イン・ザ・フロンティア］を1枚までレストで登場させるかレイドする。',
-  existingOps:['searchTopOneBottomDiscard','deployOwnHandRestOrRaid'],
-  whyNotEnough:'查看窗的其餘張要排到牌底。現有休息登場或突襲的來源是手牌，不是這 3 張。共用的 lookTopScript 已能從查看的 3 張休息登場或突襲，來源是牌庫窗。065 的程式還沒寫，不能標 ready。',
-  proposal:'用 lookTopScript 私人查看窗內最多 1 張休息登場或突襲，不能選的留在窗裡，其餘自訂順序放牌底。065 先不標 ready。'
  },
  {
   cardId:'IMC-1-072',

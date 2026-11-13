@@ -17,14 +17,16 @@ const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-
  'IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087',
  'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095',
- 'IMC-1-096','IMC-1-098','IMC-1-099','IMC-1-100'];
+ 'IMC-1-096','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-065','IMC-1-078'];
 const OPEN=['IMC-1-051','IMC-1-057','IMC-1-061',
- 'IMC-1-064','IMC-1-065','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074',
- 'IMC-1-075','IMC-1-078','IMC-1-080','IMC-1-093','IMC-1-094','IMC-1-097'];
+ 'IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074',
+ 'IMC-1-075','IMC-1-080','IMC-1-093','IMC-1-094','IMC-1-097'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
 delete counts['IMC-1-098'];
+delete counts['IMC-1-065'];
+delete counts['IMC-1-078'];
 for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-062','IMC-1-063',
  'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
  'IMC-1-092','IMC-1-095','IMC-1-099','IMC-1-100'])counts[id]=1;
@@ -89,7 +91,7 @@ function kit(usePack,useCounts){
 }
 const game=kit(pack,counts);
 
-test('thirty-five complete cards enter the pack and fifteen stay out',()=>{
+test('thirty-seven complete cards enter the pack and thirteen stay out',()=>{
  for(const id of READY)assert.equal(pack.cards[id].id,id);
  assert.equal(IMC_CARDS_051_100.every(card=>card.battleReady===false),true);
  for(const id of READY)assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
