@@ -26,20 +26,6 @@ export const IMC_REQUESTS_051_100=[
   proposal:'回手已完成且不進對戰包。休息、退場、BP 門檻與藍色場外休息登場補齊前，051 不標 ready。'
  },
  {
-  cardId:'IMC-1-052',
-  sentence:'相手のフロントLのキャラか、〈速水 奏〉以外の自分の場の［特徴：LiPPS］を1枚選び、BP+500。',
-  existingOps:['buffOwnTrait','enemyBpDown'],
-  whyNotEnough:'chooseFrontOrOwnTrait 已能在同一次選擇裡選對手前線，或自己場上帶特徵且排除指定卡名的角色。restSelfThen 現在可以接這句：先休息，沒有合法目標就不產生選擇，也不能起動。這是起動，不是登場。整張程式還沒寫，所以不標 ready。',
-  proposal:'mainAbility 用 restSelfThen，frontOnly false，then 接 chooseFrontOrOwnTrait。不要放進 onPlay。'
- },
- {
-  cardId:'IMC-1-054',
-  sentence:'〈速水 奏〉のこの効果は1ターンに1回のみ。相手の場にBP4500以上のキャラがある場合のみ、このキャラをアクティブにする。',
-  existingOps:['draw'],
-  whyNotEnough:'第二句起動可用 frontOnceProgram 接 chooseFrontOrOwnTrait，前線、每回合一張卡一次。活動自身用 nameActive，when 是 oppCharacterBpAtLeast、場上、目前 BP 4500。Q2240 只算活動那句，Q2241 兩張同名共用 nameOnceActive 的名字鎖。BP4500 以上不能阻擋沿用既有 blockBpRestriction，relation atLeast、bp 4500、condition null。整張程式還沒寫。',
-  proposal:'nameActive 寫活動自身。mainAbility 寫前線每回合一次的跨陣營選擇。blockBpRestriction 寫不能被 4500 以上阻擋。三句都寫完並測試前不標 ready。'
- },
- {
   cardId:'IMC-1-057',
   sentence:'手札から必要エナジーが2以下の青の［特徴：LiPPS］をレストで登場させる。アタックしてバトルに敗北した時アクティブ。BP4500以上なら引く。',
   existingOps:['deployOwnHandRest','drawIfOppCharacterBpAtLeast'],
