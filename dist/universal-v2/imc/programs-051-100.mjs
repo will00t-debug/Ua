@@ -30,6 +30,14 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  }),
  'IMC-1-056':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'LiPPS'}}]),
+ 'IMC-1-057':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'宮本 フレデリカ',
+  attackLoseActiveOnce:{once:'card'},
+  effects:{onPlay:[
+   {op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,trait:'LiPPS'},
+   {op:'drawIfOppCharacterBpAtLeast',minBp:4500,count:1}
+  ]}
+ }),
  'IMC-1-058':play([{op:'drawDiscard',count:1}]),
  'IMC-1-059':play([{op:'drawDiscard',count:1}]),
  'IMC-1-060':Object.freeze({

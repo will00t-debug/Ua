@@ -534,7 +534,7 @@ test('the new shared cards stay out of the IMC battle pack',()=>{
  const programs={...IMC_PROGRAMS_001_050,...IMC_PROGRAMS_051_100,...IMC_PROGRAMS_STARTER};
  for(const id of ids)assert.notEqual(programs[id]?.ready,true);
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,97);
+ assert.equal(Object.keys(pack.cards).length,105);
  assert.equal(getTitle('imc').playable,false);
  assert.equal(loadImcOfficialStarter().counts,null);
 });

@@ -9,13 +9,6 @@ export const IMC_REQUESTS_051_100=[
   proposal:'保留現有 onPlay。mainAbility 用 restRetireSequence，gate 為 oppCharacterBpAtLeast 4500，then 為藍色 LiPPS、maxEnergy 2、ready false、optional true 的 deployOutsideColorTraitRest。程式完成前不要標 ready。'
  },
  {
-  cardId:'IMC-1-057',
-  sentence:'手札から必要エナジーが2以下の青の［特徴：LiPPS］をレストで登場させる。アタックしてバトルに敗北した時アクティブ。BP4500以上なら引く。',
-  existingOps:['deployOwnHandRest','drawIfOppCharacterBpAtLeast','attackLoseReadyTurn'],
-  whyNotEnough:'deployOwnHandRest 的 ap:null 已能做沒有寫消費 AP 的手牌休息登場。drawIfOppCharacterBpAtLeast 能在對手目前 BP4500 以上時抽 1。Q2242 要求沒有登場也要抽。attackLoseReadyTurn 固定附帶 BP+1000，不是這張「自己的回合中一次，攻擊並在戰鬥中敗北時活動」。突襲框只有〈宮本 フレデリカ〉。',
-  proposal:'抽牌與登場分開，敗北後一回合一次只活動、不加攻。框內只有具名突襲。057 先不標 ready。'
- },
- {
   cardId:'IMC-1-061',
   sentence:'ブロックされなかった時、カードを1枚まで引く。APをアクティブにした場合、アタックフェイズ終了時に手札へ戻す。',
   existingOps:['draw','recoverAp'],

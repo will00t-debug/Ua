@@ -4,6 +4,7 @@ import {IMC_CARDS_051_100} from '../dist/imc/cards-051-100.mjs';
 import {IMC_PROGRAMS_051_100} from '../dist/universal-v2/imc/programs-051-100.mjs';
 import {IMC_REQUESTS_051_100} from '../dist/universal-v2/imc/requests-051-100.mjs';
 import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {runImc051} from '../dist/universal-v2/imc/runtime-051-100.mjs';
 import {imcSharedRequests} from '../dist/universal-v2/imc-runtime.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -12,13 +13,13 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 
-const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059',
+const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-057','IMC-1-058','IMC-1-059',
  'IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-064','IMC-1-066','IMC-1-067','IMC-1-068','IMC-1-069',
  'IMC-1-070','IMC-1-071','IMC-1-072','IMC-1-073','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087',
  'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-093','IMC-1-094','IMC-1-095',
  'IMC-1-096','IMC-1-097','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-065'];
-const OPEN=['IMC-1-051','IMC-1-057','IMC-1-061','IMC-1-074','IMC-1-075'];
+const OPEN=['IMC-1-051','IMC-1-061','IMC-1-074','IMC-1-075'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
@@ -26,9 +27,9 @@ delete counts['IMC-1-098'];
 delete counts['IMC-1-065'];
 delete counts['IMC-1-078'];
 for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])delete counts[id];
-for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-062','IMC-1-063',
+for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-057','IMC-1-058','IMC-1-062','IMC-1-063',
  'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-073','IMC-1-076','IMC-1-080','IMC-1-083','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
- 'IMC-1-092','IMC-1-093','IMC-1-095','IMC-1-096','IMC-1-077','IMC-1-099','IMC-1-100'])counts[id]=1;
+ 'IMC-1-092','IMC-1-093','IMC-1-095','IMC-1-096','IMC-1-077','IMC-1-089','IMC-1-099','IMC-1-100'])counts[id]=1;
 
 function kit(usePack,useCounts){
  const act=(s,action)=>dispatchUniversalAction(usePack,s,action);
@@ -1950,7 +1951,7 @@ test('080 is active only from the energy line when three energy-2 Starry cards a
 test('the remaining round-6 sentences stay unfinished and reject the nearest existing shape',()=>{
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0].op,'recoverOutsideFiltered');
- for(const id of ['IMC-1-057','IMC-1-061','IMC-1-074','IMC-1-075'])
+ for(const id of ['IMC-1-061','IMC-1-074','IMC-1-075'])
   assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
  for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])
   assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
@@ -1960,7 +1961,6 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
  const text=JSON.stringify(IMC_REQUESTS_051_100);
  const needles={
   'IMC-1-051':'restRetireSequence',
-  'IMC-1-057':'敗北後一回合一次',
   'IMC-1-061':'grantAttackPhaseEndHand',
   'IMC-1-074':'最多 2 張',
   'IMC-1-075':'種類數'
@@ -2230,5 +2230,157 @@ test('IMC-1-093 buffs one chosen character at six names and gives that character
  s=game.act(s,game.legal(s).find(a=>a.mode==='colorRetire'&&a.uid===cheap.uid));
  assert.ok(s.players[1].outside.some(c=>c.uid===cheap.uid));
  assert.ok(s.players[1].front.some(c=>c?.uid===tall.uid));
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+
+test('057 rests a blue LiPPS from hand, draws at 4500 even when that entry is skipped, raids only Frederica, and activates once after a lost attack',()=>{
+ const printed=pack.cards['IMC-1-057'];
+ assert.equal(printed.trigger,'raid');
+ assert.equal(printed.raidName,'宮本 フレデリカ');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.bp,4000);
+ assert.equal(printed.color,'blue');
+ assert.deepEqual(printed.attackLoseActiveOnce,{once:'card'});
+ assert.deepEqual(printed.effects.onPlay,[
+  {op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,trait:'LiPPS'},
+  {op:'drawIfOppCharacterBpAtLeast',minBp:4500,count:1}
+ ]);
+ assert.equal(printed.effects.onPlay[0].ap,null);
+ function park(s){
+  s.players[0].deck.push(...s.players[0].hand.splice(0));
+ }
+ function pay(s){
+  game.seat(s,0,'IMC-1-052','energy',0);
+  game.seat(s,0,'IMC-1-053','energy',1);
+  game.seat(s,0,'IMC-1-056','energy',2);
+  return game.reach(s,'main');
+ }
+ let s=pay(game.fresh(5700));
+ const wall=game.seat(s,1,'IMC-1-054','front',0);
+ findCard(s,1,wall.uid).buffs=[{bp:500,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,findCard(s,1,wall.uid)),4500);
+ park(s);
+ const legal=game.hold(s,0,'IMC-1-060');
+ const tall=game.hold(s,0,'IMC-1-059');
+ const red=game.hold(s,0,'IMC-1-076');
+ game.hold(s,0,'IMC-1-057');
+ const deck=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-057');
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ assert.equal(s.pending.choices.includes(legal.uid),true);
+ assert.equal(s.pending.choices.includes(tall.uid),false);
+ assert.equal(s.pending.choices.includes(red.uid),false);
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseHandRest',uid:tall.uid,line:'front',slot:1}),
+  /not currently legal/);
+ s=game.act(s,{type:'chooseHandRest',uid:null});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.players[0].hand.some(c=>c.uid===legal.uid),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=pay(game.fresh(5701));
+ game.seat(s,1,'IMC-1-054','front',0);
+ park(s);
+ game.hold(s,0,'IMC-1-060');
+ game.hold(s,0,'IMC-1-057');
+ const quiet=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-057');
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ s=game.act(s,{type:'chooseHandRest',uid:null});
+ assert.equal(s.players[0].deck.length,quiet);
+ assert.equal(s.pending,null);
+
+ s=pay(game.fresh(5702));
+ const high=game.seat(s,1,'IMC-1-054','front',0);
+ findCard(s,1,high.uid).buffs=[{bp:500,untilTurn:s.turn}];
+ park(s);
+ game.hold(s,0,'IMC-1-059');
+ game.hold(s,0,'IMC-1-076');
+ game.hold(s,0,'IMC-1-057');
+ const empty=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-057');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,empty-1);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=pay(game.fresh(5703));
+ park(s);
+ const chosen=game.hold(s,0,'IMC-1-060');
+ game.hold(s,0,'IMC-1-057');
+ const foe=game.seat(s,1,'IMC-1-054','front',0);
+ findCard(s,1,foe.uid).buffs=[{bp:500,untilTurn:s.turn}];
+ const before=s.players[0].deck.length;
+ s=game.play(s,'IMC-1-057');
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ s=game.act(s,game.legal(s).find(a=>a.type==='chooseHandRest'&&a.uid===chosen.uid&&a.line==='front'));
+ const entered=s.players[0].front.find(c=>c?.uid===chosen.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(s.players[0].deck.length,before-1);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=pay(game.fresh(5704));
+ const base=game.seat(s,0,'IMC-1-055','front',0);
+ const other=game.seat(s,0,'IMC-1-058','front',1);
+ park(s);
+ const raider=game.hold(s,0,'IMC-1-057');
+ const raids=game.legal(s).filter(a=>a.type==='raid'&&a.uid===raider.uid);
+ assert.equal(raids.some(a=>a.baseUid===base.uid),true);
+ assert.equal(raids.some(a=>a.baseUid===other.uid),false);
+ s=game.act(s,raids.find(a=>a.baseUid===base.uid&&a.slot===0&&a.line!=='energy'));
+ const top=s.players[0].front.find(c=>c?.cardId==='IMC-1-057');
+ assert.equal(top.ready,true);
+ assert.equal(top.stack[0].uid,base.uid);
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(pack,s,top),4000);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ function lose(state,uid){
+  state=game.reach(state,'attack');
+  state=game.act(state,{type:'attack',uid});
+  const blocker=state.players[1].front.find(c=>c?.ready&&c.cardId==='IMC-1-054');
+  assert.equal(state.pending.kind,'block');
+  return game.act(state,{type:'chooseBlock',uid:blocker.uid});
+ }
+ s=game.fresh(5705);
+ const loser=game.seat(s,0,'IMC-1-057','front',0);
+ const first=game.seat(s,1,'IMC-1-054','front',0);
+ const second=game.seat(s,1,'IMC-1-054','front',1);
+ s=game.reach(s,'main');
+ findCard(s,1,first.uid).buffs=[{bp:500,untilTurn:s.turn}];
+ findCard(s,1,second.uid).buffs=[{bp:500,untilTurn:s.turn}];
+ s=lose(s,loser.uid);
+ assert.equal(findCard(s,0,loser.uid).ready,true);
+ assert.equal(universalBp(pack,s,findCard(s,0,loser.uid)),4000);
+ assert.equal(s.onceEffectUses[0].includes('uid:'+loser.uid+'|attackLoseActiveOnce'),true);
+ s=lose(s,loser.uid);
+ assert.equal(findCard(s,0,loser.uid).ready,false);
+ assert.equal(universalBp(pack,s,findCard(s,0,loser.uid)),4000);
+
+ s=game.fresh(5706);
+ const winner=game.seat(s,0,'IMC-1-057','front',0);
+ const weak=game.seat(s,1,'IMC-1-058','front',0);
+ s=game.reach(s,'attack');
+ s=game.act(s,{type:'attack',uid:winner.uid});
+ s=game.act(s,{type:'chooseBlock',uid:weak.uid});
+ assert.ok(s.players[1].outside.some(c=>c.uid===weak.uid));
+ assert.equal(findCard(s,0,winner.uid).ready,false);
+ assert.equal(universalBp(pack,s,findCard(s,0,winner.uid)),4000);
+ assert.equal(s.onceEffectUses[0].includes('uid:'+winner.uid+'|attackLoseActiveOnce'),false);
+
+ s=game.fresh(5707);
+ const hidden=game.seat(s,0,'IMC-1-057','front',0);
+ const taller=game.seat(s,1,'IMC-1-054','front',0);
+ s=game.reach(s,'main');
+ findCard(s,1,taller.uid).buffs=[{bp:500,untilTurn:s.turn}];
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:0,
+  sourceUid:hidden.uid,targetUid:hidden.uid,sourceLinked:false,
+  until:{player:0,phase:'start',edge:'start'}});
+ s=lose(s,hidden.uid);
+ assert.equal(findCard(s,0,hidden.uid).ready,false);
+ assert.equal(universalBp(pack,s,findCard(s,0,hidden.uid)),4000);
+ assert.equal(s.onceEffectUses[0].includes('uid:'+hidden.uid+'|attackLoseActiveOnce'),false);
  assert.equal(assertUniversalMatch(pack,s),true);
 });
