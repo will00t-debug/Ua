@@ -213,16 +213,16 @@ test('only complete UA10ST sentences enter the battle pack',()=>{
  assert.match(validateUniversalDeck(pack,four).join('\n'),/50/);
 });
 
-test('the closed packs are IMC 113 and MHA 59 ready cards among 109',()=>{
+test('the closed packs are IMC 113 and MHA 60 ready cards among 109',()=>{
  const editor=mhaEditorCards();
  assert.equal(editor.length,109);
  assert.equal(new Set(editor.map(card=>card.id)).size,109);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
  const ready=Object.keys(pack.cards);
  assert.deepEqual(ready,editor.map(card=>card.id).filter(id=>pack.cards[id]));
- assert.equal(ready.length,59);
+ assert.equal(ready.length,60);
  const pending=editor.map(card=>card.id).filter(id=>!pack.cards[id]);
- assert.equal(pending.length,50);
+ assert.equal(pending.length,49);
  assert.equal(pack.cards['MHA-1-051'].unblockedAttack.oncePerTurn,true);
  assert.equal(pack.cards['MHA-1-051'].effects.onRetire[0].op,'deployRaidBottomActive');
  assert.equal(pack.cards['MHA-1-054'].effects.onPlay[0].discard,false);
@@ -252,7 +252,7 @@ test('the closed packs are IMC 113 and MHA 59 ready cards among 109',()=>{
   ...MHA_REQUESTS_051_100.map(row=>row.cardId),
   ...MHA_UA10ST_REQUESTS.map(row=>row.cardId)
  ]);
- assert.equal(requestIds.size,50);
+ assert.equal(requestIds.size,49);
  assert.deepEqual([...requestIds].sort(),pending.slice().sort());
  assert.equal(getTitle('mha').playable,false);
  assert.equal(getTitle('imc').playable,false);

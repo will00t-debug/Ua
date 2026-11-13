@@ -50,13 +50,6 @@ export const MHA_REQUESTS_051_100=[
   proposal:'看頂3張，最多公開1張角色入手，其餘放牌底。再從手牌休息登場最多1張綠角色。對手前線有3張以上且該角色是歐爾麥特時改為活動。066はreadyにしない。'
  },
  {
-  cardId:'MHA-1-070',
-  sentence:'起動メイン。手札1枚を場外に置く。ターン1でこのキャラをアクティブ。',
-  existingOps:['optionalHandOutsideActiveIf','discardHandBuffSelf'],
-  whyNotEnough:'optionalHandOutsideActiveIf は效果句的條件，不是起動。discardHandBuffSelf はBPか發生能量で、活動自身ではない。',
-  proposal:'起動時必須把手牌1張放場外，一回合一次，然後把這張角色活動。070はreadyにしない。'
- },
- {
   cardId:'MHA-1-071',
   sentence:'登場時、自分の手札を1枚場外に置く。',
   existingOps:['drawDiscard','optionalRemoveHandThen'],
