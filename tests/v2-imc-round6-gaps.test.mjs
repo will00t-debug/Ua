@@ -1,5 +1,5 @@
 // Shared gaps after round 6. Synthetic cards exercise the new engine.
-// IMC-1-011, 012, 039, 051, 061, 075 and 107 stay out of the battle pack.
+// IMC-1-011, 012 and 039 are in the battle pack. 051, 061, 075 and 107 stay out.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -530,11 +530,12 @@ test('a trait bounce updates the hand before the optional rest entry',()=>{
 });
 
 test('the new shared cards stay out of the IMC battle pack',()=>{
- const ids=['IMC-1-011','IMC-1-012','IMC-1-039','IMC-1-051','IMC-1-061','IMC-1-075','IMC-1-107'];
+ const ids=['IMC-1-051','IMC-1-061','IMC-1-075','IMC-1-107'];
  const programs={...IMC_PROGRAMS_001_050,...IMC_PROGRAMS_051_100,...IMC_PROGRAMS_STARTER};
  for(const id of ids)assert.notEqual(programs[id]?.ready,true);
+ for(const id of ['IMC-1-011','IMC-1-012','IMC-1-039'])assert.equal(programs[id]?.ready,true,id);
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,89);
+ assert.equal(Object.keys(pack.cards).length,92);
  assert.equal(getTitle('imc').playable,false);
  assert.equal(loadImcOfficialStarter().counts,null);
 });
