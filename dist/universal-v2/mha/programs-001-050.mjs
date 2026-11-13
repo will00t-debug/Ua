@@ -8,17 +8,42 @@ const vanilla=Object.freeze({ready:true, implementation:'vanilla'});
 
 export const MHA_PROGRAMS_001_050=Object.freeze({
  'MHA-1-008':vanilla,
+ 'MHA-1-012':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'restSelfGainEnergyRetireEndMain', lines:'field', oncePerTurn:true, extraEnergy:1
+  })
+ }),
  'MHA-1-015':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onRetire:Object.freeze([{op:'draw', count:1}])})
  }),
  'MHA-1-016':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
+ 'MHA-1-019':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
+   then:Object.freeze([{
+    op:'enemyBpDown', bp:1000, optional:false, minBp:1500, zone:'front'
+   }])
+  })
+ }),
  'MHA-1-021':Object.freeze({
   ready:true, implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:Object.freeze({colors:Object.freeze(['green','red']), amount:1})
  }),
  'MHA-1-022':play(Object.freeze([{op:'bounceOwnOtherUnderEnergy', energy:1}])),
  'MHA-1-024':vanilla,
+ 'MHA-1-027':Object.freeze({
+  ready:true, implementation:'dsl',
+  passiveBonuses:Object.freeze([Object.freeze({
+   condition:Object.freeze({
+    kind:'ownNameOrRaidBase', turn:'any', zone:'front', excludeSelf:false,
+    name:'オーバーホール'
+   }),
+   bp:1000
+  })])
+ }),
  'MHA-1-028':play(Object.freeze([{op:'drawDiscard', count:1}])),
  'MHA-1-032':play(Object.freeze([{op:'recoverAp', count:2}])),
  'MHA-1-034':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
