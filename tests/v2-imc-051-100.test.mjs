@@ -2331,6 +2331,22 @@ test('068 still cannot choose at most one composite on-play option',()=>{
   ]}]}})]}),/invalid printed option set/);
 });
 
+test('097 still has no attack-phase payment that removes only its printed effects',()=>{
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-097'],undefined);
+ assert.equal(pack.cards['IMC-1-097'],undefined);
+ assert.throws(()=>createUniversalPack({id:'probe',version:'imc-097-when',cards:[
+  bare('GAP','未央',{implementation:'dsl',effects:{onAttackPhaseStart:[{op:'draw',count:1}]}})
+ ]}),/timing onAttackPhaseStart unsupported/);
+ assert.throws(()=>createUniversalPack({id:'probe',version:'imc-097-pay',cards:[
+  bare('GAP','未央',{implementation:'dsl',effects:{onPlay:[{op:'payApLoseOriginalEffects',ap:1}]}})
+ ]}),/effect op unsupported/);
+ const onlyBp=createUniversalPack({id:'probe',version:'imc-097-bp',cards:[
+  bare('GAP','未央',{implementation:'dsl',opponentTurnBp:-1000})
+ ]});
+ assert.equal(onlyBp.cards.GAP.opponentTurnBp,-1000);
+ assert.equal(onlyBp.cards.GAP.effects.onPlay,undefined);
+});
+
 test('072 still cannot draw by trait names after a win or activate after a trait leaves hand',()=>{
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-072'],undefined);
  assert.equal(pack.cards['IMC-1-072'],undefined);
