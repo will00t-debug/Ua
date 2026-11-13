@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
-import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
+import {grantContinuousState,originalEffectsDisabled} from '../dist/universal-v2/continuous-states.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalImpact,universalPrivateChoices,
  universalPublicView} from '../dist/universal-v2/engine.mjs';
@@ -26,7 +26,8 @@ function face(extra){
   ...rest,
   implementation:implementation||(Object.keys(effects).length||rest.mainAbility||
    rest.altMainAbility||rest.moveTriggers||rest.attackLoseActiveOnce||
-   rest.attackLoseReadyTurn||rest.passiveBonuses?'dsl':'vanilla'),
+   rest.attackLoseReadyTurn||rest.passiveBonuses||rest.cannotAttack||
+   rest.attackWinDraw||rest.phaseEffects?'dsl':'vanilla'),
   effects
  };
 }
@@ -77,6 +78,28 @@ function seat(s,p,id,line,slot,ready=true){
 }
 function fuel(s,n=2,p=0){
  s.players[p].apCards.forEach((c,i)=>{c.inPlay=i<n;c.ready=i<n;});
+}
+function cast(pack,s,id,p=0){
+ const card=hold(s,id,p);
+ fuel(s,2,p);
+ const action=legalUniversalActions(pack,s).find(a=>a.uid===card.uid&&a.type==='event');
+ assert.ok(action,id);
+ const next=dispatchUniversalAction(pack,s,action);
+ assert.equal(assertUniversalMatch(pack,next),true);
+ return next;
+}
+function walk(pack,s,player,phase){
+ let guard=0;
+ while(!(s.active===player&&s.phase===phase&&!s.pending)){
+  if(s.pending?.kind==='end-hand-limit'){
+   s=act(pack,s,a=>a.type==='chooseHandLimit');
+   continue;
+  }
+  if(s.pending)return s;
+  s=dispatchUniversalAction(pack,s,{type:'next'});
+  if(++guard>30)throw Error('Did not reach '+player+' '+phase+' from '+s.phase);
+ }
+ return s;
 }
 function act(pack,s,pred){
  const action=legalUniversalActions(pack,s).find(pred);
@@ -754,4 +777,525 @@ test('a live draw can be replaced by looking at the top two cards',()=>{
  assert.equal(moves(s,second.uid).filter(e=>e.from==='deck'&&e.to==='hand').length,1);
  assert.equal(moves(s,first.uid).filter(e=>e.from==='deck'&&e.to==='outside').length,1);
  assert.equal(assertUniversalMatch(many.pack,s),true);
+});
+
+test('a front peek then buffs one other character or every other character from current BP',()=>{
+ const peek={op:'frontPeekThenBuffOthers',frontOnly:true,oncePerTurn:true,
+  minSelfBp:5000,highBp:7000,bp:1000};
+ const cards=[
+  face({id:'SELF',name:'看牌',bp:5000,mainAbility:peek}),
+  face({id:'HIGH',name:'高看',bp:7000,mainAbility:peek}),
+  face({id:'ALLY',name:'同伴',bp:2000}),
+  face({id:'OTHER',name:'另一',bp:2500}),
+  face({id:'SECRET',name:'秘密',bp:1000})
+ ];
+ const low=open(cards,201);
+ fuel(low.s);
+ const self=seat(low.s,0,'SELF','front',0,true);
+ const ally=seat(low.s,0,'ALLY','front',1,true);
+ const other=seat(low.s,0,'OTHER','energy',0,true);
+ const secret=pull(low.s,0,'SECRET');
+ low.s.players[0].deck.unshift(secret);
+ let s=act(low.pack,low.s,a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='peekBuffOthers');
+ assert.equal(s.pending.kind,'private-top-choice');
+ assert.equal(s.pending.follow,'buffOthers');
+ const mine=universalPrivateChoices(low.pack,s,0);
+ assert.equal(mine.options[0].card.cardId,'SECRET');
+ assert.equal(universalPrivateChoices(low.pack,s,1),null);
+ const shown=JSON.stringify(universalPublicView(low.pack,s,1));
+ assert.equal(shown.includes(secret.uid),false);
+ s=act(low.pack,s,a=>a.type==='chooseTopCard'&&a.mode==='top');
+ assert.equal(s.pending.kind,'effect-peek-buff');
+ assert.equal(legalUniversalActions(low.pack,s).some(a=>a.uid===null),false);
+ s=act(low.pack,s,a=>a.type==='choosePeekBuff'&&a.uid===ally.uid);
+ assert.equal(universalBp(low.pack,s,live(s,ally.uid)),3000);
+ assert.equal(universalBp(low.pack,s,live(s,other.uid)),2500);
+ assert.equal(legalUniversalActions(low.pack,s).some(a=>a.uid===self.uid&&a.mode==='peekBuffOthers'),false);
+ assert.throws(()=>dispatchUniversalAction(low.pack,s,
+  {type:'activate',uid:self.uid,mode:'peekBuffOthers'}),/Action not currently legal/);
+ assert.equal(s.players[0].deck[0].uid,secret.uid);
+
+ const high=open(cards,202);
+ fuel(high.s);
+ const tall=seat(high.s,0,'HIGH','front',0,true);
+ const left=seat(high.s,0,'ALLY','front',1,true);
+ const right=seat(high.s,0,'OTHER','front',2,true);
+ const hidden=pull(high.s,0,'SECRET');
+ high.s.players[0].deck.unshift(hidden);
+ s=act(high.pack,high.s,a=>a.type==='activate'&&a.uid===tall.uid&&a.mode==='peekBuffOthers');
+ s=act(high.pack,s,a=>a.type==='chooseTopCard'&&a.mode==='outside');
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(high.pack,s,live(s,left.uid)),3000);
+ assert.equal(universalBp(high.pack,s,live(s,right.uid)),3500);
+ assert.equal(moves(s,hidden.uid).some(e=>e.from==='deck'&&e.to==='outside'&&
+  e.reason==='own-effect'&&e.sourceUid===tall.uid),true);
+ const turned=passTo(high.pack,dispatchUniversalAction(high.pack,s,{type:'next'}),0,'main');
+ assert.equal(legalUniversalActions(high.pack,turned).some(a=>a.uid===tall.uid&&
+  a.mode==='peekBuffOthers'),true);
+
+ const side=open(cards,203);
+ fuel(side.s);
+ const energy=seat(side.s,0,'SELF','energy',0,true);
+ assert.equal(legalUniversalActions(side.pack,side.s).some(a=>a.uid===energy.uid&&
+  a.mode==='peekBuffOthers'),false);
+ side.s.players[0].outside.push(...side.s.players[0].deck.splice(0));
+ const empty=open(cards,204);
+ fuel(empty.s);
+ const lone=seat(empty.s,0,'HIGH','front',0,true);
+ const mate=seat(empty.s,0,'ALLY','front',1,true);
+ empty.s.players[0].outside.push(...empty.s.players[0].deck.splice(0));
+ s=act(empty.pack,empty.s,a=>a.type==='activate'&&a.uid===lone.uid&&a.mode==='peekBuffOthers');
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(empty.pack,s,live(s,mate.uid)),3000);
+});
+
+test('a field discard scales the buff and a separate rest grants impact',()=>{
+ const main={op:'fieldDiscardOrRestImpact',bp:1000,triggerBp:3000,trigger:'special',
+  trait:beyond,minBp:7000,impact:1};
+ const cards=[
+  face({id:'FIELD',name:'場地',type:'field',bp:0,mainAbility:main,traits:[beyond]}),
+  face({id:'TALL',name:'高',bp:7000,traits:[beyond]}),
+  face({id:'SHORT',name:'低',bp:2000,traits:[beyond]}),
+  face({id:'PLAIN',name:'無',bp:8000}),
+  face({id:'SPECIAL',name:'特殊',bp:1000,trigger:'special',
+   triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'draw',count:1}]}}),
+  face({id:'NORMAL',name:'普通',bp:1000,trigger:'draw'})
+ ];
+ const opened=open(cards,211);
+ fuel(opened.s);
+ const fieldCard=seat(opened.s,0,'FIELD','energy',0,true);
+ const tall=seat(opened.s,0,'TALL','front',0,true);
+ const short=seat(opened.s,0,'SHORT','front',1,true);
+ const special=hold(opened.s,'SPECIAL');
+ hold(opened.s,'NORMAL');
+ const modes=()=>legalUniversalActions(opened.pack,opened.s)
+  .filter(a=>a.type==='activate'&&a.uid===fieldCard.uid).map(a=>a.mode).sort();
+ assert.deepEqual(modes(),['discardScale','restImpact']);
+ let s=act(opened.pack,opened.s,a=>a.mode==='discardScale'&&a.uid===fieldCard.uid);
+ assert.equal(s.pending.kind,'effect-discard-scale');
+ s=act(opened.pack,s,a=>a.type==='chooseDiscardScale'&&a.uid===special.uid);
+ assert.equal(s.pending.kind,'effect-scale-buff');
+ assert.equal(s.players[0].outside.some(c=>c.uid===special.uid),true);
+ assert.equal(moves(s,special.uid).some(e=>e.from==='hand'&&e.to==='outside'&&
+  e.reason==='own-effect'&&e.sourceUid===fieldCard.uid),true);
+ s=act(opened.pack,s,a=>a.type==='chooseScaleBuff'&&a.uid===null);
+ assert.equal(universalBp(opened.pack,s,live(s,tall.uid)),7000);
+ assert.deepEqual(legalUniversalActions(opened.pack,s)
+  .filter(a=>a.type==='activate'&&a.uid===fieldCard.uid).map(a=>a.mode).sort(),
+  ['discardScale','restImpact']);
+ const normal=s.players[0].hand.find(c=>c.cardId==='NORMAL');
+ s=act(opened.pack,s,a=>a.mode==='discardScale'&&a.uid===fieldCard.uid);
+ s=act(opened.pack,s,a=>a.type==='chooseDiscardScale'&&a.uid===normal.uid);
+ s=act(opened.pack,s,a=>a.type==='chooseScaleBuff'&&a.uid===short.uid);
+ assert.equal(universalBp(opened.pack,s,live(s,short.uid)),3000);
+ assert.equal(live(s,fieldCard.uid).ready,true);
+ s=act(opened.pack,s,a=>a.mode==='restImpact'&&a.uid===fieldCard.uid);
+ assert.equal(live(s,fieldCard.uid).ready,false);
+ assert.equal(s.pending.kind,'effect-rest-impact');
+ assert.equal(s.pending.choices.includes(short.uid),false);
+ s=act(opened.pack,s,a=>a.type==='chooseRestImpact'&&a.uid===tall.uid);
+ assert.equal(universalImpact(opened.pack,s,live(s,tall.uid)),1);
+ assert.equal(legalUniversalActions(opened.pack,s).some(a=>a.uid===fieldCard.uid&&
+  a.mode==='restImpact'),false);
+ live(s,fieldCard.uid).ready=true;
+ assert.equal(legalUniversalActions(opened.pack,s).some(a=>a.uid===fieldCard.uid&&
+  a.mode==='restImpact'),true);
+
+ const blocked=open(cards,212);
+ fuel(blocked.s);
+ const area=seat(blocked.s,0,'FIELD','energy',0,true);
+ seat(blocked.s,0,'PLAIN','front',0,true);
+ hold(blocked.s,'NORMAL');
+ assert.deepEqual(legalUniversalActions(blocked.pack,blocked.s)
+  .filter(a=>a.type==='activate'&&a.uid===area.uid).map(a=>a.mode),['discardScale']);
+ assert.throws(()=>dispatchUniversalAction(blocked.pack,blocked.s,
+  {type:'activate',uid:area.uid,mode:'restImpact'}),/Action not currently legal/);
+});
+
+test('an event bounce can become a retirement when enough field traits are present',()=>{
+ const cards=[
+  face({id:'EVENT',name:'回手',type:'event',bp:0,effects:{onPlay:[{
+   op:'bounceOrRetireOppByFieldTrait',bp:5000,min:3,trait:'LiPPS'}]}}),
+  face({id:'A',name:'甲',bp:2000,traits:['LiPPS']}),
+  face({id:'B',name:'乙',bp:2000,traits:['LiPPS']}),
+  face({id:'C',name:'丙',bp:2000,traits:['LiPPS']}),
+  face({id:'FOE',name:'對手',bp:4000}),
+  face({id:'BIG',name:'大',bp:6000})
+ ];
+ const few=open(cards,221);
+ fuel(few.s);
+ seat(few.s,0,'A','front',0,true);
+ seat(few.s,0,'B','energy',0,true);
+ const foe=seat(few.s,1,'FOE','front',0,true);
+ const big=seat(few.s,1,'BIG','front',1,true);
+ let s=cast(few.pack,few.s,'EVENT');
+ assert.equal(s.pending.kind,'effect-field-trait-bounce');
+ assert.equal(legalUniversalActions(few.pack,s).some(a=>a.mode==='retire'),false);
+ assert.equal(legalUniversalActions(few.pack,s).some(a=>a.uid===big.uid),false);
+ assert.throws(()=>dispatchUniversalAction(few.pack,s,
+  {type:'chooseFieldTraitBounce',uid:foe.uid,mode:'retire'}),/Action not currently legal/);
+ assert.equal(s.players[1].front[0].uid,foe.uid);
+ const event=s.players[0].resolvingEvents.find(c=>c.cardId==='EVENT')||
+  s.players[0].outside.find(c=>c.cardId==='EVENT');
+ s=act(few.pack,s,a=>a.type==='chooseFieldTraitBounce'&&a.uid===foe.uid&&a.mode==='bounce');
+ assert.ok(s.players[1].hand.some(c=>c.uid===foe.uid));
+ assert.equal(moves(s,foe.uid).some(e=>e.from==='front'&&e.to==='hand'&&
+  e.reason==='opponent-effect'&&e.sourceUid===event.uid),true);
+
+ const many=open(cards,222);
+ fuel(many.s);
+ seat(many.s,0,'A','front',0,true);
+ seat(many.s,0,'B','front',1,true);
+ seat(many.s,0,'C','energy',0,true);
+ const target=seat(many.s,1,'FOE','front',0,true);
+ s=cast(many.pack,many.s,'EVENT');
+ assert.equal(legalUniversalActions(many.pack,s).some(a=>a.uid===target.uid&&a.mode==='retire'),true);
+ s=act(many.pack,s,a=>a.type==='chooseFieldTraitBounce'&&a.uid===target.uid&&a.mode==='retire');
+ assert.ok(s.players[1].outside.some(c=>c.uid===target.uid));
+ assert.equal(s.players[1].front.some(c=>c?.uid===target.uid),false);
+});
+
+test('a look can rest one card, bottom the rest, then discard to activate only that card',()=>{
+ const girl='FRONT';
+ const look={op:'bottomOwnCharacterThen',optional:true,max:1,type:'character',then:[{
+  op:'lookTopScript',count:3,rest:'bottom',afterEntered:'discardActive',
+  takes:[{to:'rest',type:'character',max:1,color:'blue',trait:girl}]
+ }]};
+ const cards=[
+  face({id:'LOOK',name:'查看',bp:3000,raidName:'底板',effects:{
+   onAttack:[look],
+   onRetire:[{op:'returnOwnRaidBase',optional:true,max:1}]
+  }}),
+  face({id:'GIRL',name:'女孩',color:'blue',bp:2000,traits:[girl],
+   effects:{onPlay:[{op:'draw',count:1}]}}),
+  face({id:'JUNK',name:'雜一',bp:1000}),
+  face({id:'JUNK2',name:'雜二',bp:1000}),
+  face({id:'BASE',name:'底板',bp:1500}),
+  face({id:'AWAY',name:'放底',bp:1800}),
+  face({id:'HAND',name:'手牌',bp:1000}),
+  face({id:'RETIRE',name:'退場',bp:1000,effects:{onPlay:[{
+   op:'retireOwnCharacterOne',optional:true,after:[{op:'draw',count:1}]
+  }]}})
+ ];
+ const skipped=open(cards,231);
+ fuel(skipped.s);
+ const actor=seat(skipped.s,0,'LOOK','front',0,true);
+ seat(skipped.s,0,'AWAY','front',1,true);
+ let s=walk(skipped.pack,skipped.s,0,'attack');
+ s=act(skipped.pack,s,a=>a.type==='attack'&&a.uid===actor.uid);
+ assert.equal(s.pending.kind,'effect-bottom-own');
+ s=act(skipped.pack,s,a=>a.type==='chooseBottomOwn'&&a.uid===null);
+ assert.notEqual(s.pending?.kind,'effect-top-script');
+ assert.notEqual(s.pending?.kind,'effect-entered-discard');
+
+ const entered=open(cards,232);
+ fuel(entered.s);
+ const attacker=seat(entered.s,0,'LOOK','front',0,true);
+ const away=seat(entered.s,0,'AWAY','front',1,true);
+ const girlCard=pull(entered.s,0,'GIRL');
+ const junk=pull(entered.s,0,'JUNK');
+ const junk2=pull(entered.s,0,'JUNK2');
+ entered.s.players[0].deck.unshift(girlCard,junk,junk2);
+ const handBefore=entered.s.players[0].hand.length;
+ s=walk(entered.pack,entered.s,0,'attack');
+ s=act(entered.pack,s,a=>a.type==='attack'&&a.uid===attacker.uid);
+ s=act(entered.pack,s,a=>a.type==='chooseBottomOwn'&&a.uid===away.uid);
+ assert.equal(s.pending.kind,'effect-top-script');
+ assert.equal(legalUniversalActions(entered.pack,s).some(a=>a.mode==='raid'),false);
+ const hidden=JSON.stringify(universalPublicView(entered.pack,s,1));
+ assert.equal(hidden.includes(girlCard.uid),false);
+ assert.equal(universalPrivateChoices(entered.pack,s,1),null);
+ assert.ok(universalPrivateChoices(entered.pack,s,0).options.some(o=>o.card?.cardId==='GIRL'));
+ s=act(entered.pack,s,a=>a.type==='chooseTopScript'&&a.mode==='enter'&&a.uid===girlCard.uid);
+ assert.equal(s.players[0].hand.length,handBefore+1);
+ assert.equal(live(s,girlCard.uid).ready,false);
+ assert.equal(moves(s,girlCard.uid).some(e=>e.from==='deck'&&e.to==='front'&&
+  e.sourceUid===attacker.uid),true);
+ while(s.pending?.kind==='effect-top-order'){
+  s=act(entered.pack,s,a=>a.type==='chooseTopOrder');
+ }
+ assert.equal(s.pending.kind,'effect-entered-discard');
+ const kept=s.players[0].hand[0];
+ s=act(entered.pack,s,a=>a.type==='chooseEnteredDiscard'&&a.uid===null);
+ assert.equal(live(s,girlCard.uid).ready,false);
+ assert.ok(s.players[0].hand.some(c=>c.uid===kept.uid));
+
+ const paid=open(cards,233);
+ fuel(paid.s);
+ const payer=seat(paid.s,0,'LOOK','front',0,true);
+ const awayPaid=seat(paid.s,0,'AWAY','front',1,true);
+ const coming=pull(paid.s,0,'GIRL');
+ const a=pull(paid.s,0,'JUNK');
+ const b=pull(paid.s,0,'JUNK2');
+ paid.s.players[0].deck.unshift(coming,a,b);
+ const cost=hold(paid.s,'HAND');
+ s=walk(paid.pack,paid.s,0,'attack');
+ s=act(paid.pack,s,a=>a.type==='attack'&&a.uid===payer.uid);
+ s=act(paid.pack,s,a=>a.type==='chooseBottomOwn'&&a.uid===awayPaid.uid);
+ s=act(paid.pack,s,a=>a.type==='chooseTopScript'&&a.mode==='enter'&&a.uid===coming.uid);
+ while(s.pending?.kind==='effect-top-order')s=act(paid.pack,s,a=>a.type==='chooseTopOrder');
+ s=act(paid.pack,s,a=>a.type==='chooseEnteredDiscard'&&a.uid===cost.uid);
+ assert.equal(live(s,coming.uid).ready,true);
+ assert.equal(moves(s,cost.uid).some(e=>e.from==='hand'&&e.to==='outside'&&
+  e.reason==='own-effect'&&e.sourceUid===payer.uid),true);
+
+ const raid=open(cards,234);
+ fuel(raid.s);
+ const base=seat(raid.s,0,'BASE','front',0,true);
+ const top=hold(raid.s,'LOOK');
+ const remover=hold(raid.s,'RETIRE');
+ s=act(raid.pack,raid.s,a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid&&a.slot===0);
+ const raider=s.players[0].front.find(c=>c?.uid===top.uid);
+ assert.ok(raider.stack.some(c=>c.uid===base.uid));
+ s=act(raid.pack,s,a=>a.type==='play'&&a.uid===remover.uid&&a.line==='front'&&
+  a.slot===1&&a.replaceUid===undefined);
+ assert.equal(s.pending.kind,'effect-retire-own-character');
+ s=act(raid.pack,s,a=>a.type==='chooseOwnCharacterRetire'&&a.uid===top.uid);
+ assert.equal(s.pending?.kind,'effect-return-raid-base');
+ assert.ok(s.players[0].outside.some(c=>c.uid===base.uid));
+ assert.equal(moves(s,base.uid).some(e=>e.from==='raid-under'&&e.to==='outside'&&
+  e.reason==='rule'&&e.attachedToUid===top.uid),true);
+ s=act(raid.pack,s,a=>a.type==='chooseReturnRaidBase'&&a.uid===base.uid);
+ assert.ok(s.players[0].hand.some(c=>c.uid===base.uid));
+ assert.equal(moves(s,base.uid).some(e=>e.from==='outside'&&e.to==='hand'&&
+  e.sourceUid===top.uid),true);
+});
+
+test('one printed option set lets the player take at most one composite sentence',()=>{
+ const wishOption={op:'choosePrintedOptions',max:1,optional:true,options:[
+  {id:'retire',label:'退自己',then:[{op:'optionalRetireOwnOtherThen',then:[
+   {op:'draw',count:2},
+   {op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:2,trait:wish}
+  ]}]},
+  {id:'front',label:'退對手',when:{kind:'ownDistinctTraitNames',turn:'any',
+   zone:'fieldOutside',excludeSelf:false,trait:wish,min:9},
+   then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
+ ]};
+ assert.throws(()=>createUniversalPack({id:'probe',version:'old-068',cards:[face({
+  id:'OLD',effects:{onPlay:[{op:'choosePrintedOptions',max:1,optional:true,options:[
+   {id:'retire',label:'退場',then:[{op:'draw',count:2}]},
+   {id:'front',label:'退場對手',then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
+  ]}]}})]}),/invalid printed option set/);
+ const names=Array.from({length:8},(_,i)=>face({
+  id:'N'+i,name:'名'+i,traits:[wish],bp:1000
+ }));
+ const cards=[
+  face({id:'SELF',name:'本體',traits:[wish],effects:{onPlay:[wishOption]}}),
+  face({id:'OTHER',name:'其他',bp:2000}),
+  face({id:'RED',name:'紅',color:'red',energy:2,ap:1,traits:[wish],bp:1500}),
+  face({id:'FOE',name:'對手',bp:3000}),
+  ...names
+ ];
+ const few=open(cards,241);
+ fuel(few.s);
+ const other=seat(few.s,0,'OTHER','front',1,true);
+ const self=hold(few.s,'SELF');
+ const red=hold(few.s,'RED');
+ let s=act(few.pack,few.s,a=>a.type==='play'&&a.uid===self.uid&&a.slot===0&&
+  a.replaceUid===undefined);
+ assert.equal(s.pending.kind,'effect-ordered-subset');
+ assert.deepEqual(s.pending.options.map(o=>o.id),['retire']);
+ s=act(few.pack,s,a=>a.type==='chooseOrderedSubset'&&a.mode==='confirm');
+ assert.equal(live(s,other.uid).uid,other.uid);
+ const again=open(cards,242);
+ fuel(again.s);
+ const victim=seat(again.s,0,'OTHER','front',1,true);
+ const actor=hold(again.s,'SELF');
+ hold(again.s,'RED');
+ const before=again.s.players[0].hand.length;
+ s=act(again.pack,again.s,a=>a.type==='play'&&a.uid===actor.uid&&a.slot===0&&
+  a.replaceUid===undefined);
+ s=act(again.pack,s,a=>a.type==='chooseOrderedSubset'&&a.mode==='pick'&&a.id==='retire');
+ s=act(again.pack,s,a=>a.type==='chooseOrderedSubset'&&a.mode==='confirm');
+ assert.equal(s.pending.kind,'effect-option-retire-own');
+ s=act(again.pack,s,a=>a.type==='chooseRetireOwnOther'&&a.uid===victim.uid);
+ assert.ok(s.players[0].outside.some(c=>c.uid===victim.uid));
+ assert.equal(s.players[0].hand.length,before+1);
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ s=act(again.pack,s,a=>a.type==='chooseHandRest'&&a.uid===red.uid);
+ assert.equal(live(s,red.uid).ready,false);
+ assert.equal(moves(s,red.uid).some(e=>e.from==='hand'&&(e.to==='front'||e.to==='energy')),true);
+
+ const many=open(cards,243);
+ fuel(many.s);
+ for(let i=0;i<4;i++)seat(many.s,0,'N'+i,i<3?'front':'energy',i<3?i+1:0,true);
+ for(let i=4;i<8;i++)many.s.players[0].outside.push(pull(many.s,0,'N'+i));
+ seat(many.s,1,'FOE','front',0,true);
+ const ninth=hold(many.s,'SELF');
+ s=act(many.pack,many.s,a=>a.type==='play'&&a.uid===ninth.uid&&a.slot===0&&
+  a.replaceUid===undefined);
+ assert.deepEqual(s.pending.options.map(o=>o.id).sort(),['front','retire']);
+ s=act(many.pack,s,a=>a.type==='chooseOrderedSubset'&&a.mode==='pick'&&a.id==='retire');
+ assert.throws(()=>dispatchUniversalAction(many.pack,s,
+  {type:'chooseOrderedSubset',mode:'pick',id:'front'}),/Action not currently legal/);
+});
+
+test('a trait payment can activate, and a battle win can optionally draw one',()=>{
+ const cards=[
+  face({id:'SELF',name:'勝利',bp:8000,traits:[wish],attackWinDraw:{
+   count:1,optional:true,condition:{kind:'ownDistinctTraitNames',turn:'any',
+    zone:'fieldOutside',excludeSelf:false,trait:wish,min:9}
+  },effects:{onPlay:[{op:'optionalHandTraitOutsideThenActive',trait:wish}]}}),
+  face({id:'PAY',name:'支付',traits:[wish],bp:1000}),
+  face({id:'WALL',name:'牆',bp:1500}),
+  ...Array.from({length:8},(_,i)=>face({id:'N'+i,name:'名'+i,traits:[wish],bp:1000}))
+ ];
+ const quiet=open(cards,251);
+ fuel(quiet.s);
+ const self=hold(quiet.s,'SELF');
+ quiet.s.players[0].deck.push(...quiet.s.players[0].hand.filter(c=>c.uid!==self.uid));
+ quiet.s.players[0].hand=[self];
+ let s=act(quiet.pack,quiet.s,a=>a.type==='play'&&a.uid===self.uid&&a.slot===0&&
+  a.replaceUid===undefined);
+ assert.equal(s.pending,null);
+ const paid=open(cards,252);
+ fuel(paid.s);
+ const actor=hold(paid.s,'SELF');
+ const cost=hold(paid.s,'PAY');
+ s=act(paid.pack,paid.s,a=>a.type==='play'&&a.uid===actor.uid&&a.slot===0&&
+  a.replaceUid===undefined);
+ assert.equal(s.pending.kind,'effect-hand-trait-active');
+ live(s,actor.uid).ready=false;
+ s=act(paid.pack,s,a=>a.type==='chooseHandTraitActive'&&a.uid===null);
+ assert.equal(live(s,actor.uid).ready,false);
+ assert.ok(s.players[0].hand.some(c=>c.uid===cost.uid));
+ const again=open(cards,253);
+ fuel(again.s);
+ const winner=hold(again.s,'SELF');
+ const payment=hold(again.s,'PAY');
+ s=act(again.pack,again.s,a=>a.type==='play'&&a.uid===winner.uid&&a.line==='front'&&
+  a.slot===0&&a.replaceUid===undefined);
+ s=act(again.pack,s,a=>a.type==='chooseHandTraitActive'&&a.uid===payment.uid);
+ assert.equal(live(s,winner.uid).ready,true);
+ assert.equal(moves(s,payment.uid).some(e=>e.from==='hand'&&e.to==='outside'&&
+  e.reason==='payment'&&e.sourceUid===winner.uid),true);
+ for(let i=0;i<4;i++)seat(s,0,'N'+i,i<3?'front':'energy',i<3?i+1:0,true);
+ for(let i=4;i<8;i++)s.players[0].outside.push(pull(s,0,'N'+i));
+ seat(s,1,'WALL','front',0,true);
+ const deck=s.players[0].deck.length;
+ s=walk(again.pack,s,0,'attack');
+ s=act(again.pack,s,a=>a.type==='attack'&&a.uid===winner.uid);
+ s=dispatchUniversalAction(again.pack,s,{type:'chooseBlock',uid:s.players[1].front[0].uid});
+ assert.equal(s.pending.kind,'effect-attack-win-draw');
+ s=act(again.pack,s,a=>a.type==='chooseAttackWinDraw'&&a.mode==='skip');
+ assert.equal(s.players[0].deck.length,deck);
+ const drawn=open(cards,254);
+ fuel(drawn.s);
+ const striker=seat(drawn.s,0,'SELF','front',0,true);
+ for(let i=0;i<4;i++)seat(drawn.s,0,'N'+i,i<3?'front':'energy',i<3?i+1:0,true);
+ for(let i=4;i<8;i++)drawn.s.players[0].outside.push(pull(drawn.s,0,'N'+i));
+ const wall=seat(drawn.s,1,'WALL','front',0,true);
+ const before=drawn.s.players[0].deck.length;
+ s=walk(drawn.pack,drawn.s,0,'attack');
+ s=act(drawn.pack,s,a=>a.type==='attack'&&a.uid===striker.uid);
+ s=dispatchUniversalAction(drawn.pack,s,{type:'chooseBlock',uid:wall.uid});
+ s=act(drawn.pack,s,a=>a.type==='chooseAttackWinDraw'&&a.mode==='draw');
+ assert.equal(s.players[0].deck.length,before-1);
+ assert.equal(s.zoneMoveEvents.some(e=>e.to==='hand'&&e.from==='deck'&&
+  e.reason==='own-effect'&&e.sourceUid===striker.uid),true);
+});
+
+test('a hand payment during an attack can rest the live raid base onto the field',()=>{
+ const cards=[
+  face({id:'TOP',name:'上層',bp:4000,raidName:'底板',effects:{
+   onAttack:[{op:'optionalHandOutsideThenRaidBase'}]
+  }}),
+  face({id:'BASE',name:'底板',bp:2000}),
+  face({id:'PAY',name:'支付',bp:1000}),
+  face({id:'OTHER',name:'其他',bp:1500})
+ ];
+ const paid=open(cards,261);
+ fuel(paid.s);
+ const base=seat(paid.s,0,'BASE','front',0,true);
+ const top=hold(paid.s,'TOP');
+ const cost=hold(paid.s,'PAY');
+ let s=act(paid.pack,paid.s,a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid&&a.slot===0);
+ s=walk(paid.pack,s,0,'attack');
+ s=act(paid.pack,s,a=>a.type==='attack'&&a.uid===top.uid);
+ assert.equal(s.pending.kind,'effect-pay-raid-base');
+ s=act(paid.pack,s,a=>a.type==='choosePayRaidBase'&&a.uid===null);
+ assert.equal(s.players[0].front[0].stack.some(c=>c.uid===base.uid),true);
+ const again=open(cards,262);
+ fuel(again.s);
+ const under=seat(again.s,0,'BASE','front',0,true);
+ const raider=hold(again.s,'TOP');
+ const payment=hold(again.s,'PAY');
+ s=act(again.pack,again.s,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===under.uid&&a.slot===0);
+ s=walk(again.pack,s,0,'attack');
+ s=act(again.pack,s,a=>a.type==='attack'&&a.uid===raider.uid);
+ s=act(again.pack,s,a=>a.type==='choosePayRaidBase'&&a.uid===payment.uid);
+ assert.equal(s.pending.kind,'effect-raid-under-rest');
+ s=act(again.pack,s,a=>a.type==='chooseRaidUnderRest'&&a.uid===under.uid&&a.line==='front');
+ assert.equal(live(s,under.uid).ready,false);
+ assert.equal(s.players[0].front.find(c=>c?.uid===raider.uid).stack.some(c=>c.uid===under.uid),false);
+ assert.equal(live(s,under.uid).raidBaseUid,undefined);
+ assert.equal(moves(s,under.uid).some(e=>e.from==='raid-under'&&e.to==='front'&&
+  e.attachedToUid===raider.uid&&e.sourceUid===raider.uid),true);
+ assert.equal(moves(s,payment.uid).some(e=>e.from==='hand'&&e.to==='outside'&&
+  e.reason==='payment'),true);
+ const empty=open(cards,263);
+ fuel(empty.s);
+ const lonely=seat(empty.s,0,'BASE','front',1,true);
+ const plain=hold(empty.s,'TOP');
+ s=act(empty.pack,empty.s,a=>a.type==='play'&&a.uid===plain.uid&&a.line==='front'&&
+  a.slot===0&&a.replaceUid===undefined);
+ s.players[0].deck.push(...s.players[0].hand);
+ s.players[0].hand=[];
+ live(s,plain.uid).ready=true;
+ s=walk(empty.pack,s,0,'attack');
+ s=act(empty.pack,s,a=>a.type==='attack'&&a.uid===plain.uid);
+ assert.notEqual(s.pending?.kind,'effect-pay-raid-base');
+ assert.equal(live(s,lonely.uid).uid,lonely.uid);
+});
+
+test('paying AP at the attack start removes only this turn printed effects',()=>{
+ const cards=[
+  face({id:'SELF',name:'沉默',bp:3000,cannotAttack:true,ownTurnBp:1000,opponentTurnBp:-1000,
+   phaseEffects:[{phase:'attack',edge:'start',turn:'own',then:[{
+    op:'optionalPayApThen',ap:1,optional:true,then:[{op:'silencePrintedSelf'}]
+   }]}]}),
+  face({id:'GRANT',name:'禁止',type:'field',bp:0})
+ ];
+ const broke=open(cards,271);
+ fuel(broke.s,0);
+ const self=seat(broke.s,0,'SELF','front',0,true);
+ let s=walk(broke.pack,broke.s,0,'attack');
+ assert.equal(s.pending,null);
+ assert.equal(legalUniversalActions(broke.pack,s).some(a=>a.type==='attack'&&a.uid===self.uid),false);
+ const skipped=open(cards,272);
+ fuel(skipped.s);
+ const quiet=seat(skipped.s,0,'SELF','front',0,true);
+ s=walk(skipped.pack,skipped.s,0,'attack');
+ assert.equal(s.pending.kind,'effect-optional-pay-ap');
+ const readyAp=()=>s.players[0].apCards.filter(c=>c.ready).length;
+ const beforeSkip=readyAp();
+ s=act(skipped.pack,s,a=>a.type==='chooseOptionalPayAp'&&a.mode==='skip');
+ assert.equal(readyAp(),beforeSkip);
+ assert.equal(originalEffectsDisabled(s,quiet),false);
+ assert.equal(universalBp(skipped.pack,s,quiet),4000);
+ const paid=open(cards,273);
+ fuel(paid.s);
+ const actor=seat(paid.s,0,'SELF','front',0,true);
+ actor.impactGranted={turn:paid.s.turn,stamp:actor.fieldEntryStamp,amount:1};
+ s=walk(paid.pack,paid.s,0,'attack');
+ const beforePay=s.players[0].apCards.filter(c=>c.ready).length;
+ s=act(paid.pack,s,a=>a.type==='chooseOptionalPayAp'&&a.mode==='pay');
+ assert.equal(s.players[0].apCards.filter(c=>c.ready).length,beforePay-1);
+ assert.equal(originalEffectsDisabled(s,actor),true);
+ actor.buffs=[{bp:2000,untilTurn:s.turn}];
+ assert.equal(universalBp(paid.pack,s,actor),5000);
+ assert.equal(legalUniversalActions(paid.pack,s).some(a=>a.type==='attack'&&a.uid===actor.uid),true);
+ const grant=seat(paid.s,0,'GRANT','energy',0,true);
+ grantContinuousState(s,{kind:'cannotAttack',controller:0,sourceUid:grant.uid,
+  targetUid:actor.uid,until:{player:0,phase:'start',edge:'start'}});
+ assert.equal(legalUniversalActions(paid.pack,s).some(a=>a.type==='attack'&&a.uid===actor.uid),false);
+ assert.equal(actor.impactGranted.amount,1);
+ s=walk(paid.pack,s,1,'main');
+ assert.equal(originalEffectsDisabled(s,actor),false);
+ assert.equal(universalBp(paid.pack,s,actor),2000);
+ s=walk(paid.pack,s,0,'attack');
+ if(s.pending?.kind==='effect-optional-pay-ap')
+  s=act(paid.pack,s,a=>a.type==='chooseOptionalPayAp'&&a.mode==='skip');
+ assert.equal(originalEffectsDisabled(s,actor),false);
+ assert.equal(legalUniversalActions(paid.pack,s).some(a=>a.type==='attack'&&a.uid===actor.uid),false);
 });

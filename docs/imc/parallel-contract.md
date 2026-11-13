@@ -337,7 +337,7 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 
 基準是 PR #409 的 `1b49925c6d48f13e94fddb6811e333979b84a060`。這一輪只加共用引擎、共用契約與共用測試。沒有編寫逐卡程式，沒有把任何一張標成 ready，對戰包仍是 89 張。作品 `playable` 仍是 false。官方預組 `counts` 仍是 null。B、C、D 可以開始寫下面已解鎖的句子。整句測試通過之前，不要標 ready。
 
-`imc-pack.mjs` 的程式欄位新增 `altMainAbility`、`moveTriggers`、`attackLoseActiveOnce`。`passiveBonuses` 原本就能複製。
+`imc-pack.mjs` 的程式欄位可以複製 `altMainAbility`、`moveTriggers`、`attackLoseActiveOnce`、`cannotAttack`、`attackWinDraw`、`phaseEffects`。`passiveBonuses` 原本就能複製。
 
 ### 兩段獨立起動
 
@@ -443,7 +443,126 @@ attackLoseActiveOnce:{once:'card'}
 
 9 種成立才查看牌頂 2 張，選 1 張入手，另一張進場外。兩張都是合法選擇，出現在操作者的非公開 `options`，每張帶 `cardId`、卡名與顏色。這個 pending 沒有另附 `inspected`。對手的非公開選擇是 null，公開畫面不含這兩張牌庫 UID。不成立時走 `else` 的抽 1，不查看。
 
-### 這輪還沒有解鎖
+### 看牌頂之後依現在 BP 加攻
 
-016 看牌頂之後依現在 BP 改加攻範圍、029 依棄牌觸發種類改數值、043 多段查看登場與突襲底板回手、064 回手改成退場、068 最多選一個複合印刷選項、072 戰鬥勝利後依卡名種類抽牌與付費活動、094 手牌進場外之後讓突襲底板休息登場、097 攻擊階段開始支付 AP 並失去印刷效果的範圍。這些仍不要標 ready。011、012、039、051、061、107 在第六輪已經表現得了，這輪沒有替各組寫程式。
+016 是角色 `mainAbility`，六個鍵都要在。不要用 `frontOnceProgram` 加 `peekTopOne`。
+
+```js
+mainAbility:{op:'frontPeekThenBuffOthers',frontOnly:true,oncePerTurn:true,
+ minSelfBp:5000,highBp:7000,bp:1000}
+```
+
+`highBp` 必須大於 `minSelfBp`。三個 BP 都是 500 的倍數，`bp` 最大 5000。只在前線、現在 BP 達 `minSelfBp`、這回合還沒用過、效果沒有失効時，動作是 `{type:'activate',mode:'peekBuffOthers'}`。使用紀錄在 `mainAbilityUsedUids`。牌庫有牌時先開既有的 `private-top-choice`，`follow` 是 `buffOthers`。操作者看牌頂，對手的非公開選擇是 null，公開畫面不含那張 UID。放到場外之後才結算加攻。現在 BP 達 `highBp`，其他己方角色全部本回合加 `bp`，不再選擇。不足 `highBp` 時必須選 1 張其他己方角色，pending 是 `effect-peek-buff`，不能跳過。牌庫是空的仍依當時 BP 加攻，不開查看。能量區不提供。
+
+### 場域依棄牌觸發改數值，休息則給衝擊
+
+029 是場域 `mainAbility`，七個鍵都要在：
+
+```js
+mainAbility:{op:'fieldDiscardOrRestImpact',bp:1000,triggerBp:3000,
+ trigger:'special',trait:'BEYOND THE STARLIGHT',minBp:7000,impact:1}
+```
+
+`trigger` 只能是 `special`。棄牌與休息是兩條獨立起動，沒有每回合一次，也不共用使用紀錄。效果失効時兩條都不提供。棄牌在手牌有牌時提供，動作是 `discardScale`，不休息場域。選一張手牌放到場外，理由是 `own-effect`。被棄的那張印刷 `trigger` 等於 `special` 時，加攻用 `triggerBp`，否則用 `bp`。場上沒有角色就結束。有角色才開 `effect-scale-buff`，可以跳過。休息要場域是活動狀態，而且每一張己方角色都有那個特徵，其中至少一張現在 BP 達 `minBp`。場域自己不算角色。動作是 `restImpact`，先休息場域，再選一張達標角色，給本回合衝擊 `impact`。結算時會再查特徵與 BP。
+
+特殊觸發的測試卡本身要有合法的 `triggerEffect`。只寫 `trigger:'special'` 仍會被拒絕。
+
+### 查看、休息登場、棄牌活動，以及突襲底板回手
+
+043 的攻擊句必須是角色唯一的 `onAttack`。`afterEntered` 不能寫在最外層的 `lookTopScript`。
+
+```js
+{op:'bottomOwnCharacterThen',optional:true,max:1,type:'character',then:[{
+ op:'lookTopScript',count:3,rest:'bottom',afterEntered:'discardActive',
+ takes:[{to:'rest',type:'character',max:1,color:'blue',trait:'ガールズ・イン・ザ・フロンティア'}]
+}]}
+```
+
+跳過放底就不會查看。查看裡這條 `to:'rest'` 不提供突襲。跳過登場會把查看窗放到牌底，不開棄牌。休息登場成功時，那張卡的 `onPlay` 先結算，剩下的牌才排順序放到底，之後才開 `effect-entered-discard`。登場或突襲當下、還沒有開新選擇之前，查看窗先從牌庫拿開，所以這段抽到的是查看窗下面的牌。若登場效果先開了選擇，查看窗會放回牌頂，卡片數量才對得上；那個選擇之後的抽牌仍看得到查看窗。棄牌可以跳過，登場的卡維持休息。棄了才活動剛登場的那張，移動理由是 `own-effect`。對手看不到查看窗。
+
+突襲底板回手仍是唯一的角色 `onRetire`，而且卡上要有 `raidName`。無卡名條件的新形是三個鍵：
+
+```js
+{op:'returnOwnRaidBase',optional:true,max:1}
+```
+
+只有 `optional:true` 的兩個鍵仍是非法。舊的 `when:{kind:'ownNameExists',...}` 三鍵形沒有改。回手只看這一回合、這張退場卡的直接底板：帳本是 `raid-under` 到 `outside`、理由 `rule`、`attachedToUid` 是退場卡，而且退場卡在場外並帶著同一個 `raidBaseUid`。被阻擋而攻擊敗北時雙方都不退場，所以不會因此回手。
+
+### 場上特徵夠多時，回手可以改成退場
+
+064 是事件唯一的 `onPlay`：
+
+```js
+{op:'bounceOrRetireOppByFieldTrait',bp:5000,min:3,trait:'LiPPS'}
+```
+
+`bp` 是 500 的倍數。`min` 是 1 到 8。目標是現在 BP 不超過 `bp` 的對手前線角色。選擇時再決定 `bounce` 或 `retire`。`retire` 只在己方場上帶該特徵的卡片張數達 `min` 時合法。算的是張數，不是卡名種類，場域自己要算，結算時再算一次。張數不足時，退場動作不在合法清單裡。回手的移動是 `front` 到 `hand`，理由 `opponent-effect`。
+
+`conditionalBounceOrRetireByOwnOutsideNames` 仍不能加 `trait`。
+
+### 最多選一個複合印刷選項
+
+068 是 `choosePrintedOptions` 的第二個精確形。`max` 是 1，`optional` 是 true，正好兩個選項。一個 `then` 是 `optionalRetireOwnOtherThen`，而且這個選項不能有 `when`。裡面正好兩步，例如抽 2，再接已有的 `deployOwnHandRest`。另一個 `then` 是 `retireOppFrontOneUnderBp`，而且必須有 `when`。
+
+```js
+{op:'choosePrintedOptions',max:1,optional:true,options:[
+ {id:'retire',label:'退自己',then:[{op:'optionalRetireOwnOtherThen',then:[
+  {op:'draw',count:2},
+  {op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:2,trait:'お願い！シンデレラ'}
+ ]}]},
+ {id:'front',label:'退對手',when:{kind:'ownDistinctTraitNames',turn:'any',
+  zone:'fieldOutside',excludeSelf:false,trait:'お願い！シンデレラ',min:9},
+  then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
+]}
+```
+
+`optionalRetireOwnOtherThen` 不能當最外層效果。什麼都不選就結束。選了退自己再跳過，不會抽牌，也不會登場。`max:1` 選了一項就不能再選另一項。`when` 在開選項時不成立，那個選項不會出現。抽 2 再直接接沒有 `when` 的 `retireOppFrontOneUnderBp` 仍是 `invalid printed option set`。`max:2` 的活動、加攻、休息舊形沒有改。
+
+### 付費活動，以及戰鬥勝利後的可選抽牌
+
+072 的登場句必須是角色唯一的 `onPlay`：
+
+```js
+{op:'optionalHandTraitOutsideThenActive',trait:'お願い！シンデレラ'}
+```
+
+手牌沒有該特徵就不會開選擇，角色維持登場時的狀態。跳過不活動、手牌不動。支付把那張手牌放到場外，理由是 `payment`，然後只活動效果來源。來源已經不在場上就只完成支付。
+
+戰鬥勝利抽牌是第三個 `attackWinDraw`。舊的具名抽牌與本回合移動抽牌仍是強制的，不能加 `optional`。
+
+```js
+attackWinDraw:{count:1,optional:true,condition:{
+ kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+ trait:'お願い！シンデレラ',min:9}}
+```
+
+條件在攻擊勝利、仍是攻擊階段、這張卡的攻擊次數至少 1、牌庫還有牌時才開 `effect-attack-win-draw`。可以跳過。抽 1 的理由是 `own-effect`。沒有 `optional` 的 `ownDistinctTraitNames` 仍會被拒絕。
+
+### 手牌進場外之後，突襲底板休息登場
+
+094 必須是角色唯一的 `onAttack`。不要用 `deployOwnRaidBaseRest`，那個仍只能寫在 `onRetire`。
+
+```js
+{op:'optionalHandOutsideThenRaidBase'}
+```
+
+手牌是空的就不會開支付。跳過時，手牌與突襲疊層都不動。支付的理由是 `payment`。來源仍在，而且 `stack[0]` 是角色時，才選那張底板的休息登場位置。底板離開疊層，以休息狀態進前線或能量區，移動是 `raid-under` 到該列，`attachedToUid` 是攻擊者。攻擊者留下。若 `raidBaseUid` 就是這張底板，登場後會清掉。底板的 `onPlay` 用 `outsideEffect`。
+
+### 攻擊階段開始支付 AP，失去本回合印刷效果
+
+097 的角色要 `implementation:'dsl'`，並寫 `cannotAttack:true`。印刷的不能攻擊會擋攻擊清單。效果失効之後，這條印刷限制不再擋。別人給的 `cannotAttack` 連續狀態仍會擋，而且必須在給予方下一次自己的開始階段結束。
+
+階段效果只能是自己的攻擊階段開始，而且 `then` 只有這一個支付：
+
+```js
+phaseEffects:[{phase:'attack',edge:'start',turn:'own',then:[{
+ op:'optionalPayApThen',ap:1,optional:true,then:[{op:'silencePrintedSelf'}]
+}]}]
+```
+
+`silencePrintedSelf` 只能出現在這條 `phaseEffects` 的 `then` 裡。沒有休息的 AP 不開選擇，也不失効。跳過不付、不失効。付成功才把 `originalEffectsDisabled` 給這張卡，持續到對手的開始階段。既有的 BP 修正、衝擊與別人給的連續狀態都留著。自己回合的 `ownTurnBp` 在失効期間不加成。失効結束後，對手回合的 `opponentTurnBp` 照常計算。自己下一個開始階段之後，印刷的不能攻擊恢復。Q2250 到 Q2252：失去印刷效果不會清掉修正或其他連續賦予。
+
+### 這輪仍不要替各組寫程式
+
+011、012、039、051、061、107 在第六輪已經表現得了。075 的回手與休息登場仍是 C 組的整句。上面新解鎖的卡也先不要標 ready。對戰包維持 89 張。`playable` 維持 false。官方預組 `counts` 維持 null。
 

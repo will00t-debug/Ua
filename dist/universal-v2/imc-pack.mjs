@@ -14,7 +14,7 @@ const PROGRAM_KEYS=new Set([
  'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
  'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
  'passiveBonuses','handApDiscountWhileAllNames','bpGainFollow','ownEffectPresenceBp',
- 'altMainAbility','moveTriggers','attackLoseActiveOnce'
+ 'altMainAbility','moveTriggers','attackLoseActiveOnce','cannotAttack','attackWinDraw','phaseEffects'
 ]);
 export const IMC_OFFICIAL_MATCH_CLOSED='偶像大師灰姑娘女孩尚未開放正式對戰。';
 
@@ -53,7 +53,7 @@ export function imcBattleCard(card,program){
   'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
   'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
   'passiveBonuses','handApDiscountWhileAllNames','bpGainFollow','ownEffectPresenceBp',
-  'altMainAbility','moveTriggers','attackLoseActiveOnce']){
+  'altMainAbility','moveTriggers','attackLoseActiveOnce','cannotAttack','attackWinDraw','phaseEffects']){
   if(program[key]!==undefined)extra[key]=program[key];
  }
  return {
