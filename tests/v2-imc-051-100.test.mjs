@@ -6,20 +6,20 @@ import {IMC_REQUESTS_051_100} from '../dist/universal-v2/imc/requests-051-100.mj
 import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
 import {runImc051} from '../dist/universal-v2/imc/runtime-051-100.mjs';
 import {imcSharedRequests} from '../dist/universal-v2/imc-runtime.mjs';
-import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
+import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPublicView,universalBp,universalEnergyByColor,
+ assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp,universalEnergyByColor,
  zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 
 const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059',
  'IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-064','IMC-1-066','IMC-1-067','IMC-1-068','IMC-1-069',
- 'IMC-1-070','IMC-1-071','IMC-1-072','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
+ 'IMC-1-070','IMC-1-071','IMC-1-072','IMC-1-073','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087',
  'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-094','IMC-1-095',
  'IMC-1-096','IMC-1-097','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-065'];
 const OPEN=['IMC-1-051','IMC-1-057','IMC-1-061',
- 'IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-093'];
+ 'IMC-1-074','IMC-1-075','IMC-1-093'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
@@ -28,7 +28,7 @@ delete counts['IMC-1-065'];
 delete counts['IMC-1-078'];
 for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])delete counts[id];
 for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-062','IMC-1-063',
- 'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-080','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
+ 'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-073','IMC-1-076','IMC-1-080','IMC-1-083','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
  'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-099','IMC-1-100'])counts[id]=1;
 
 function kit(usePack,useCounts){
@@ -1951,7 +1951,7 @@ test('080 is active only from the energy line when three energy-2 Starry cards a
 test('the remaining round-6 sentences stay unfinished and reject the nearest existing shape',()=>{
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0].op,'recoverOutsideFiltered');
- for(const id of ['IMC-1-057','IMC-1-061','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-093'])
+ for(const id of ['IMC-1-057','IMC-1-061','IMC-1-074','IMC-1-075','IMC-1-093'])
   assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
  for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])
   assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
@@ -1963,7 +1963,6 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
   'IMC-1-051':'restRetireSequence',
   'IMC-1-057':'敗北後一回合一次',
   'IMC-1-061':'grantAttackPhaseEndHand',
-  'IMC-1-073':'取代抽 1',
   'IMC-1-074':'最多 2 張',
   'IMC-1-075':'種類數',
   'IMC-1-093':'另外給衝擊'
@@ -1977,12 +1976,9 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
   {id:'retire',label:'退場',then:[{op:'draw',count:2}]},
   {id:'front',label:'退場對手',then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
  ]}]}} ,/invalid printed option set/);
- const looked=createUniversalPack({id:'probe',version:'gap-073',cards:[
-  bare('GAP','缺口',{implementation:'dsl',effects:{onPlay:[{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
-   excludeSelf:false,trait:TRAIT,min:9},then:[{op:'takeTopHandRestOutside',count:2}],
-   else:[{op:'draw',count:1}]}]}})]});
- assert.equal(looked.cards.GAP.effects.onPlay[0].then[0].op,'takeTopHandRestOutside');
- assert.notEqual(IMC_PROGRAMS_051_100['IMC-1-073']?.ready,true);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-073'].ready,true);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-073'].frontForbidden,true);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-073'].effects.onPlay[0].else[0].op,'draw');
  reject({effects:{onAttack:[{op:'buffOwnField',filter:{field:'type',value:'character'},
   bp:1000,optional:true,excludeSelf:false,count:2}]}},/invalid own-field BP choice/);
  const bounced=createUniversalPack({id:'probe',version:'gap-075',cards:[
@@ -2005,4 +2001,114 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
   {op:'draw',count:1},
   {op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:1}
  ]}},/unsupported main action ability/);
+});
+
+test('IMC-1-073 stays off the front and replaces the draw only at nine names',()=>{
+ assert.equal(pack.cards['IMC-1-073'].frontForbidden,true);
+ const names=['小日向 美穂','城ヶ崎 莉嘉','渋谷 凛','島村 卯月','本田 未央','神崎 蘭子','多田 李衣菜','三村 かな子'];
+ function open(seed,kept){
+  const catalog=IMC_CARDS_051_100.find(c=>c.id==='IMC-1-073');
+  const program=IMC_PROGRAMS_051_100['IMC-1-073'];
+  const anzu={id:catalog.id,name:catalog.nameJa,color:catalog.color,type:catalog.type,
+   energy:catalog.energy,ap:catalog.ap,bp:catalog.bp,gen:catalog.gen,trigger:catalog.trigger,
+   traits:[...catalog.traits],implementation:'dsl',frontForbidden:true,effects:program.effects};
+  const extras=names.slice(0,kept).map((name,i)=>({
+   id:'NM-'+i,name,color:'red',type:'character',energy:0,ap:1,bp:1000,gen:0,
+   traits:[TRAIT],trigger:null,implementation:'vanilla'}));
+  const bodies=[anzu,...extras,
+   {id:'GEN',name:'能源',color:'red',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'vanilla'},
+   {id:'PLAIN',name:'無特徵',color:'red',type:'character',energy:0,ap:1,bp:1500,gen:0,traits:['別的'],trigger:null,implementation:'vanilla'},
+   {id:'TOP-A',name:'甲',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:0,traits:[],trigger:null,implementation:'vanilla'},
+   {id:'TOP-B',name:'乙',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:0,traits:[],trigger:null,implementation:'vanilla'}];
+  while(bodies.length<16)bodies.push({id:'FILL-'+bodies.length,name:'填充'+bodies.length,
+   color:'red',type:'character',energy:0,ap:1,bp:1000,gen:0,traits:[],trigger:null,implementation:'vanilla'});
+  const built=createUniversalPack({id:'probe',version:'imc-073-'+seed,cards:bodies});
+  const deck={};let left=50;
+  for(const card of bodies){const n=Math.min(4,left);if(!n)break;deck[card.id]=n;left-=n;}
+  assert.equal(left,0);
+  assert.deepEqual(validateUniversalDeck(built,deck),[]);
+  let s=newUniversalMatch(built,{decks:[deck,deck],seed,first:0});
+  const act=(state,action)=>dispatchUniversalAction(built,state,action);
+  const legal=state=>legalUniversalActions(built,state);
+  for(let i=0;i<6&&s.phase!=='main';i++)s=act(s,legal(s).find(a=>a.type==='next'));
+  function pull(id){
+   for(const zone of ['deck','hand','life','outside']){
+    const list=s.players[0][zone],index=list.findIndex(c=>c.cardId===id);
+    if(index>=0)return list.splice(index,1)[0];
+   }
+   throw Error('Missing '+id);
+  }
+  const gen=pull('GEN');gen.ready=false;s.players[0].energy[0]=gen;
+  for(const extra of extras)s.players[0].outside.push(pull(extra.id));
+  s.players[0].outside.push(pull('PLAIN'));
+  const top=[pull('TOP-A'),pull('TOP-B')];
+  s.players[0].deck.unshift(...top);
+  const self=s.players[0].hand.find(c=>c.cardId==='IMC-1-073')||pull('IMC-1-073');
+  if(!s.players[0].hand.includes(self))s.players[0].hand.push(self);
+  return {built,s,act,legal,self,top};
+ }
+ const nine=open(73001,8);
+ let s=nine.s;
+ assert.equal(nine.legal(s).some(a=>a.type==='play'&&a.uid===nine.self.uid&&a.line==='front'),false);
+ const deck=s.players[0].deck.length;
+ s=nine.act(s,nine.legal(s).find(a=>a.type==='play'&&a.uid===nine.self.uid&&a.line==='energy'));
+ assert.equal(s.pending.kind,'effect-top-take-one');
+ assert.deepEqual(s.pending.uids,nine.top.map(c=>c.uid));
+ assert.equal(s.players[0].deck.length,deck);
+ const mine=universalPrivateChoices(nine.built,s,0);
+ assert.equal(mine.inspected,undefined);
+ assert.deepEqual(mine.options.map(option=>option.card.cardId),['TOP-A','TOP-B']);
+ assert.ok(mine.options.every(option=>option.card.name&&option.card.color));
+ assert.equal(universalPrivateChoices(nine.built,s,1),null);
+ const shown=JSON.stringify(universalPublicView(nine.built,s,1));
+ assert.equal(shown.includes('"'+nine.top[0].uid+'"'),false);
+ assert.equal(shown.includes('"'+nine.top[1].uid+'"'),false);
+ assert.equal(universalPublicView(nine.built,s,1).players[0].hand,null);
+ assert.equal(nine.legal(s).some(a=>a.uid===null),false);
+ s=nine.act(s,{type:'chooseTopTakeOne',uid:nine.top[1].uid});
+ assert.equal(s.pending,null);
+ assert.ok(s.players[0].hand.some(c=>c.uid===nine.top[1].uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===nine.top[0].uid));
+ assert.equal(s.players[0].deck.length,deck-2);
+ assert.equal(s.players[0].energy.some(c=>c?.uid===nine.self.uid),true);
+ assert.equal(assertUniversalMatch(nine.built,s),true);
+
+ const eight=open(73002,7);
+ s=eight.s;
+ const before=s.players[0].deck.length;
+ const window=s.players[0].deck.slice(0,2).map(c=>c.uid);
+ s=eight.act(s,eight.legal(s).find(a=>a.type==='play'&&a.uid===eight.self.uid&&a.line==='energy'));
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,before-1);
+ assert.equal(s.players[0].deck.slice(0,2).some(c=>window.includes(c.uid)),true);
+ assert.equal(s.players[0].outside.some(c=>window.includes(c.uid)),false);
+ const rested=s;
+
+ const one=open(73003,8);
+ s=one.s;
+ const kept=s.players[0].deck[0];
+ s.players[0].removed.push(...s.players[0].deck.splice(1));
+ s=one.act(s,one.legal(s).find(a=>a.type==='play'&&a.uid===one.self.uid&&a.line==='energy'));
+ assert.equal(s.pending,null);
+ assert.ok(s.players[0].hand.some(c=>c.uid===kept.uid));
+ assert.equal(s.players[0].deck.length,0);
+ const none=open(73004,8);
+ s=none.s;
+ s.players[0].removed.push(...s.players[0].deck.splice(0));
+ const hand=s.players[0].hand.length;
+ s=none.act(s,none.legal(s).find(a=>a.type==='play'&&a.uid===none.self.uid&&a.line==='energy'));
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.length,hand-1);
+ assert.equal(s.players[0].deck.length,0);
+ assert.equal(assertUniversalMatch(none.built,s),true);
+
+ s=rested;
+ const who=s.active;
+ for(let i=0;i<8&&s.active===who;i++)s=eight.act(s,eight.legal(s).find(a=>a.type==='next'));
+ for(let i=0;i<8&&s.active!==0;i++)s=eight.act(s,eight.legal(s).find(a=>a.type==='next'));
+ for(let i=0;i<4&&s.phase!=='move';i++)s=eight.act(s,eight.legal(s).find(a=>a.type==='next'));
+ assert.equal(s.phase,'move');
+ const parked=s.players[0].energy.find(c=>c?.cardId==='IMC-1-073');
+ assert.equal(eight.legal(s).some(a=>a.type==='move'&&a.uid===parked.uid),false);
+ assert.equal(assertUniversalMatch(eight.built,s),true);
 });
