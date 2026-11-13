@@ -1159,6 +1159,20 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'choosePeekBuff':return '本回合使 '+name()+' BP 增加';
+  case 'chooseFieldTraitBounce':return action.mode==='retire'?'使 '+name()+' 退場':
+   '將 '+name()+' 放回手牌';
+  case 'chooseDiscardScale':return '將 '+name()+' 放到場外';
+  case 'chooseScaleBuff':return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP 增加';
+  case 'chooseRestImpact':return '使 '+name()+' 獲得衝擊';
+  case 'chooseHandTraitActive':return action.uid===null?'不支付，角色維持原狀':
+   '將 '+name()+' 放到場外，並使這張角色活動';
+  case 'choosePayRaidBase':return action.uid===null?'不支付':
+   '將 '+name()+' 放到場外';
+  case 'chooseRaidUnderRest':return '使突襲底板以休息狀態登場'+suffix();
+  case 'chooseAttackWinDraw':return action.mode==='draw'?'抽 1 張':'不抽牌';
+  case 'chooseEnteredDiscard':return action.uid===null?'不棄牌，角色維持休息':
+   '將 '+name()+' 放到場外，並使剛登場的角色活動';
   case 'chooseRetireOwnOther':return action.uid===null?'不使卡片退場':'使 '+name()+' 退場';
   case 'chooseRemoveNamedZone':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區';
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
