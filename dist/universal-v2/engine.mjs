@@ -2431,6 +2431,8 @@ function scriptCardMatches(pack,physical,take){
   if(take.to==='rest'&&Number.isInteger(take.energyExact)&&d.energy!==take.energyExact)return false;
   return true;
  }
+ if(take.to==='hand'&&take.publish===true&&take.type==='character')
+  return d.type==='character';
  return take.to==='hand'&&take.publish===false;
 }
 function lookCanRest(pl,definition){
@@ -2640,6 +2642,23 @@ function resolveLookScript(pack,s,a){
  if(a.mode==='skip'){
   s.pending=null;
   continueLook(pack,s,q,q.uids,q.used,q.usedNames,q.index+1);
+  return;
+ }
+ if(a.mode==='pick'&&take.to==='hand'&&take.publish===true&&take.type==='character'){
+  const index=q.uids.indexOf(a.uid);
+  const physical=index>=0?p.deck[index]:null;
+  if(!physical||physical.uid!==a.uid||!scriptCardMatches(pack,physical,take)||
+   q.used.includes(a.uid))throw Error('Look script cannot take that card');
+  const taken=moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index,
+   reason:'own-effect',sourceUid:q.sourceUid});
+  publishLookHand(pack,s,q.player,taken);
+  const uids=q.uids.filter(uid=>uid!==a.uid);
+  lookWindow(p,uids);
+  s.pending=null;
+  if(typeof take.thenDrawIfName==='string'&&
+   cardHasName(card(pack,taken),take.thenDrawIfName,originalEffectsDisabled(s,taken)))
+   s.effectQueue.unshift({op:'draw',owner:q.player,count:1,sourceUid:q.sourceUid});
+  continueLook(pack,s,q,uids,[...q.used,a.uid],[...q.usedNames,card(pack,taken).name],q.index+1);
   return;
  }
  if(a.mode==='pick'&&take.to==='hand'&&take.publish===false){
@@ -3861,8 +3880,12 @@ function continueEffectQueue(pack,s){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source||!Number.isInteger(source.fieldEntryStamp))
     throw Error('Next-own-start BP source has left its physical field entry');
-   source.buffs??=[];
-   source.buffs.push({bp:job.bp,untilOwnTurnStart:pl.ownTurns+1});
+   // 「フロントLにある場合」 is read when the on-play job resolves.
+   // Entering on the energy line does not gain this lasting BP.
+   if(!(job.line==='front'&&!pl.front.includes(source))){
+    source.buffs??=[];
+    source.buffs.push({bp:job.bp,untilOwnTurnStart:pl.ownTurns+1});
+   }
   }else if(job.op==='grantSelfAttackEndSwapThisTurn'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source||!Number.isInteger(source.fieldEntryStamp))
@@ -6365,7 +6388,10 @@ function continueEffectQueue(pack,s){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     Number.isInteger(c.fieldEntryStamp)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-own-attack-kit',player:owner,
-    sourceUid:job.sourceUid,bp:job.bp,sniperName:job.sniperName,choices,optional:false};
+    sourceUid:job.sourceUid,bp:job.bp,
+    ...(Array.isArray(job.sniperNames)?{sniperNames:[...job.sniperNames]}:
+     {sniperName:job.sniperName}),
+    choices,optional:false};
    else if(job.optional!==true){
     // An empty field does not make the event illegal; the printed choice has no target.
    }
@@ -15175,13 +15201,15 @@ function resolveChoice(s,a,pack){
  if(q.kind==='effect-own-attack-kit'){
   if(a.uid===null)throw Error('Attack kit cannot be skipped');
   const target=field(p).find(c=>c.uid===a.uid);
+  const names=Array.isArray(q.sniperNames)?q.sniperNames:
+   (typeof q.sniperName==='string'?[q.sniperName]:[]);
   if(!target||!q.choices.includes(a.uid)||card(pack,target).type!=='character'||
-   !Number.isInteger(target.fieldEntryStamp)||q.bp!==2500)
+   !Number.isInteger(target.fieldEntryStamp)||q.bp!==2500||!names.length)
    throw Error('Illegal attack kit target');
   target.buffs??=[];
   target.buffs.push({bp:q.bp,untilTurn:s.turn});
   target.attackWinDrawGranted={turn:s.turn,stamp:target.fieldEntryStamp,sourceUid:q.sourceUid};
-  if(cardHasName(card(pack,target),q.sniperName,originalEffectsDisabled(s,target)))
+  if(names.some(name=>cardHasName(card(pack,target),name,originalEffectsDisabled(s,target))))
    target.eventSniperGranted={turn:s.turn,stamp:target.fieldEntryStamp,
     sourceUid:q.sourceUid,bp:q.bp};
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -22051,9 +22079,12 @@ export function assertUniversalMatch(pack,s){
     keys.every(k=>['turn','stamp','sourceUid'].includes(k))&&
     cardHasName(card(pack,physical),stripGrant.name,originalEffectsDisabled(s,physical));
    const kitGrant=findGrant(programs,'grantOwnFieldAttackKit');
+   const kitNamed=!!kitGrant&&(typeof kitGrant.sniperName==='string'?
+    cardHasName(card(pack,physical),kitGrant.sniperName,originalEffectsDisabled(s,physical)):
+    Array.isArray(kitGrant.sniperNames)&&kitGrant.sniperNames.some(name=>
+     cardHasName(card(pack,physical),name,originalEffectsDisabled(s,physical))));
    const kitOk=!!kitGrant&&kitGrant.bp===2500&&sniper.bp===2500&&keys.length===4&&
-    keys.every(k=>['turn','stamp','sourceUid','bp'].includes(k))&&
-    cardHasName(card(pack,physical),kitGrant.sniperName,originalEffectsDisabled(s,physical));
+    keys.every(k=>['turn','stamp','sourceUid','bp'].includes(k))&&kitNamed;
    if(!src||sniper.turn!==s.turn||sniper.stamp!==physical.fieldEntryStamp||!(buff||strip||kitOk))
     throw Error('Forged event sniper grant');
   }
@@ -22429,6 +22460,8 @@ export function assertUniversalMatch(pack,s){
      (ability?.op==='frontOnceProgram'&&ability.requireOwnEffectRest===true&&
       ability.oncePerTurn===true&&ability.frontOnly===true&&
       ability.then?.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp))||
+     card(pack,physical).effects.onPlay?.some(e=>e.op==='buffSelfUntilNextOwnStart'&&
+      e.line==='front'&&e.bp===buff.bp)||
      card(pack,physical).effects.onPlay?.some(e=>e.op==='galaxyBurstEntry'&&e.bp===buff.bp)||
      card(pack,physical).effects.onPlay?.some(e=>e.op==='optionalLifeToHandUntilStart'&&
       e.bp===buff.bp&&e.untargetable===true)||
