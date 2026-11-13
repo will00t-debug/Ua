@@ -175,6 +175,17 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-090':Object.freeze({ready:true,implementation:'dsl',activeExtraEnergy:1}),
  'IMC-1-091':play([{op:'drawDiscard',count:1}]),
  'IMC-1-092':play([{op:'peekTopOne'}]),
+ 'IMC-1-093':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
+  effects:{onPlay:[{op:'ifLiveThen',when:{
+   kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+   trait:'お願い！シンデレラ',min:6},
+   then:[{op:'buffOwnField',filter:{field:'trait',value:'お願い！シンデレラ'},
+    bp:1000,optional:true,excludeSelf:false,
+    impactIf:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+     excludeSelf:false,trait:'お願い！シンデレラ',min:9}}]}]}
+ }),
  'IMC-1-094':Object.freeze({
   ready:true,implementation:'dsl',raidName:'島村 卯月',
   effects:{

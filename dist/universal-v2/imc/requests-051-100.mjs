@@ -36,11 +36,4 @@ export const IMC_REQUESTS_051_100=[
   whyNotEnough:'登場回手用 bounceOwnOtherUnderEnergy：optional、energy 1、特徵お願い！シンデレラ，then 為 deployOwnHandRest，ap 寫 null。Q2248 剛回手的那張會在更新後的手牌裡。跳過回手就不開登場。場上與場外合計 6 種的 BP 還沒有欄位，ownDistinctTraitNames 只負責計數。075 先不標 ready。',
   proposal:'先寫登場的回手再休息登場。種類數 BP 補上之前，075 維持 ready false。'
  },
- {
-  cardId:'IMC-1-093',
-  sentence:'6種類以上なら自分の特徴を1枚まで BP+1000。9種類以上ならさらにこのターン中、インパクト（1）。',
-  existingOps:['ifLiveThen','buffOwnField','grantSelfImpactThisTurn','ownDistinctTraitNames'],
-  whyNotEnough:'6 種時的可選加攻可以是 ifLiveThen 接 buffOwnField。9 種時印刷是先選那張加攻，再另外給衝擊 1。ifLiveThen 只能接一句，而且不接受 grantSelfImpactThisTurn。grantSelfImpactThisTurn 也只給自己，不能先假定衝擊在被選的那張上。Q2249：自己算進種類。',
-  proposal:'6 種可選 1 張自己的指定特徵加攻。9 種時同一句還要再給衝擊 1，目標依印刷，不加猜。093 先不標 ready。'
- },
 ];
