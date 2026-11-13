@@ -911,28 +911,32 @@ function removalStep(pack,state,k,ranked,already){
  if(k===already)return legal.find(action=>action.type==='chooseRemoveOutside'&&action.mode==='done')||null;
  return legal.find(action=>action.type==='chooseRemoveOutside'&&action.mode==='pick'&&action.uid===ranked[0]?.uid)||null;
 }
+function projection(state){
+ const copy={...state,pending:null};
+ const line=cards=>(cards||[]).map(card=>card?{...card,buffs:[...(card.buffs||[])]}:null);
+ copy.players=state.players.map(player=>({
+  ...player,front:line(player.front),energy:line(player.energy)
+ }));
+ return copy;
+}
 function projectScale(pack,state,actor,k,targetUid,ranked,already){
  const first=removalStep(pack,state,k,ranked,already);
  if(!first)return null;
- const copy=structuredClone(state);
- copy.pending=null;
- const drop=new Set(state.pending?.selected||[]);
- for(const card of ranked.slice(0,Math.max(0,k-already)))drop.add(card.uid);
+ const chosen=new Set(state.pending?.selected||[]);
  let spent=0;
- const mine=copy.players[actor];
- mine.outside=(mine.outside||[]).filter(card=>{
-  if(!drop.has(card.uid))return true;
-  spent+=outsideFuel(pack,state,actor,card);
-  return false;
- });
+ for(const card of state.players?.[actor]?.outside||[]){
+  if(chosen.has(card.uid))spent+=outsideFuel(pack,state,actor,card);
+ }
+ for(const card of ranked.slice(0,Math.max(0,k-already)))spent+=outsideFuel(pack,state,actor,card);
+ const copy=projection(state);
  if(k>0&&targetUid){
   const foe=copy.players[1-actor];
-  for(const line of ['front','energy']){
-   const slot=(foe[line]||[]).findIndex(card=>card?.uid===targetUid);
+  for(const zone of ['front','energy']){
+   const slot=(foe[zone]||[]).findIndex(card=>card?.uid===targetUid);
    if(slot<0)continue;
-   const card=foe[line][slot];
-   card.buffs=[...(card.buffs||[]),{bp:-k*state.pending.scalePer,untilTurn:copy.turn}];
-   if((Number(universalBp(pack,copy,card))||0)<=0)foe[line][slot]=null;
+   const card=foe[zone][slot];
+   card.buffs.push({bp:-k*state.pending.scalePer,untilTurn:copy.turn});
+   if((Number(universalBp(pack,copy,card))||0)<=0)foe[zone][slot]=null;
   }
  }
  const score=evaluate(pack,copy,actor)+threatenedLife(pack,copy,actor)-spent;
