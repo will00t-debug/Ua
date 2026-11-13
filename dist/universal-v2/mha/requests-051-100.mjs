@@ -10,29 +10,22 @@ export const MHA_REQUESTS_051_100=[
  {
   cardId:'MHA-1-051',
   sentence:'レイド〈通形 ミリオ〉。BP3000以下にブロックされない。ターン1、アタックしてブロックされなかった時1枚引く。退場時、必要エナジー4以上の他キャラが3枚以上なら、レイドの一番下をフロントLにアクティブで登場させてもよい。',
-  existingOps:['blockBpRestriction','unblockedAttack','draw','raidName'],
-  whyNotEnough:'blockBpRestriction は「BP以上でないとブロックできない」か条件付きで、この「BP3000以下にはブロックされない」とは向きが違う。unblockedAttack は任意の1効果だけで、ターン1と退場時のレイド下段登場を同時に持たない。',
-  proposal:'BP3000以下のブロック拒否、ターン1の非ブロック抽牌、退場時に他の必要エナジー4以上が3枚以上ならレイド最下段をフロントLへアクティブ登場。051はreadyにしない。'
- },
- {
-  cardId:'MHA-1-053',
-  sentence:'アタック時、このターンのBP+1000かインパクト1のどちらか1つを選ぶ。',
-  existingOps:['chooseOne','buffSelf','grantSelfImpactThisTurn'],
-  whyNotEnough:'chooseOne の既存形は活動か抽牌などの決まった続きで、自分へのBP+1000と衝撃1の二択にはなっていない。',
-  proposal:'攻撃時に自分へ本回合 BP+1000、または本回合衝擊1をちょうど1つ選ぶ。053はreadyにしない。'
+  existingOps:['blockBpRestriction','raidName','grantUnblockedDrawThisTurn','unblockedAttack','replayRaidBase'],
+  whyNotEnough:'第 9 輪 A 契約把 atMost 寫成方向相反。引擎實際是 relation atMost 時，BP 小於等於該值的角色不能阻擋，050 已用 {relation:atMost, bp:3000, condition:null}。不要重做這句。unblockedAttack 必須 optional:true，而且每次未被阻擋都會發，不是【ターン1】的強制抽 1。grantUnblockedDrawThisTurn 只能從 onPlay 發一次。oppFrontCountAtLeast 只數張數，不讀其他角色的必要能源。replayRaidBase 不是把突襲最下段活動放到前線 L。三句沒有齊，不要只上阻擋就標 ready。',
+  proposal:'沿用 050 的 atMost 3000 與 raidName。另需一回合一次、攻擊未被阻擋時強制抽 1，以及退場時其他必要能源 4 以上達 3 張才可把突襲最下段活動放到前線 L。051はreadyにしない。'
  },
  {
   cardId:'MHA-1-054',
   sentence:'山札の上から7枚を見て、必要エナジー2以下の緑のフィールドを1枚まで公開して手札に加え、残りは望む順で下に置く。',
   existingOps:['searchTopOneBottomDiscard','lookTopScript','inspectTopArrange'],
-  whyNotEnough:'既存の看牌は特徵、卡名或任意卡。沒有「綠、場域、必要能源2以下、看7張、最多1張公開入手、其餘任意順序放牌底」。活動觸發是卡表，不能代替這句。',
+  whyNotEnough:'第 9 輪的 lookTopScript 公開入手只接受 type:character，不能拿來選綠場域。searchTopOneBottomDiscard 的複合篩選可以是綠場域且必要能源 2 以下、看 7 張，但複合窗的 discard:false 只開放給卡名 any。預設會再棄 1 張手牌。054 公開最多 1 張後不棄手牌。活動觸發不能代替這句。',
   proposal:'看頂7張，公開加入最多1張綠、能源2以下的場域，其餘依選擇放牌底。054はreadyにしない。'
  },
  {
   cardId:'MHA-1-055',
   sentence:'ステップ。登場時、必要エナジー4以上の他キャラが3枚以上なら、BP5000以下の相手フロントを1枚まで退場。',
-  existingOps:['step','retireOppFrontUnderBp'],
-  whyNotEnough:'step だけでは登場時の枚数條件がない。必要エナジー4以上の他キャラを数える live condition がない。',
+  existingOps:['step','retireOppFrontUnderBp','ifLiveThen','oppFrontCountAtLeast'],
+  whyNotEnough:'step 已有。oppFrontCountAtLeast 只數正面朝上的前線角色，不讀必要能源。ifLiveThen 的後續沒有 retireOppFrontUnderBp。登場時「其他必要能源 4 以上達 3 張才最多退場 1 張對手前線 BP 5000 以下」仍不能整句寫。',
   proposal:'保留步驟。登場時只在其他必要能源4以上的角色有3張以上時，最多退場1張對手前線BP5000以下。055はreadyにしない。'
  },
  {
@@ -45,15 +38,15 @@ export const MHA_REQUESTS_051_100=[
  {
   cardId:'MHA-1-059',
   sentence:'登場時、手札から必要エナジー3以下・消費AP1の緑キャラを1枚までアクティブで登場させるかレイド。カラートリガーは必要エナジー2以下・消費AP1の緑を1枚アクティブで登場。',
-  existingOps:['deployOwnHandRestOrRaid','deployHandCharacter'],
-  whyNotEnough:'deployOwnHandRestOrRaid は休息かレイドで、登場時の「アクティブで登場させるかレイド」と上限1が同じ形ではない。カラートリガーの2以下とも数が違う。',
+  existingOps:['deployOwnHandRestOrRaid','deployOwnHandActiveNoRaid','deployHandCharacter'],
+  whyNotEnough:'顏色觸發與 050 相同，是 triggerEffect deployHandCharacter、綠、能源 2 以下、消耗 AP 1。登場句是最多 1 張、綠、能源 3 以下、消耗 AP 1，而且是活動登場或突襲。deployOwnHandActiveNoRaid 禁止突襲，deployOwnHandRestOrRaid 是休息或突襲。不能只寫觸發就標 ready。',
   proposal:'登場時は最多1張、綠、能源3以下、消耗AP1，活動登場或突襲。顏色觸發是必須1張、綠、能源2以下、消耗AP1、活動登場。059はreadyにしない。'
  },
  {
   cardId:'MHA-1-060',
   sentence:'レイド〈緑谷 出久〉。自分のターン中BP+500。アタック時ターン1、手札1枚を場外に置いてもよい。そうしたら他の必要エナジー3以下を1枚までアクティブ。',
   existingOps:['raidName','ownTurnBp','optionalRemoveHandThen','activeOwnOne'],
-  whyNotEnough:'ownTurnBp は常時の自分ターンBPで、このカードの+500と突襲框を同時に検証していない。手札を場外にした後の「他の必要エナジー3以下を活動」は activeOwnOne の名前指定ではない。',
+  whyNotEnough:'ownTurnBp 與 raidName 是引擎卡欄，MHA 程式白名單目前不轉交。即便轉交，攻擊時的【ターン1】可選手牌放場外、做到才活動其他非綠谷出久且必要能源 3 以下，仍不是 optionalRemoveHandThen 或具名 activeOwnOne。不要只上 BP+500 就標 ready。',
   proposal:'突襲框是綠谷出久。自己回合BP+500。攻擊時一回合一次，可把手牌1張放場外，做到才活動最多1張其他必要能源3以下。060はreadyにしない。'
  },
  {
@@ -73,8 +66,8 @@ export const MHA_REQUESTS_051_100=[
  {
   cardId:'MHA-1-066',
   sentence:'上から3枚見てキャラ1枚まで公開して手札、残りは下。手札の緑キャラ1枚までレストで登場。相手フロントが3枚以上で、そのキャラがオールマイトならアクティブ。',
-  existingOps:['lookTopScript','deployOwnHandRest','activeSelfIf'],
-  whyNotEnough:'看3張拿角色、再休息登場綠角色、而且只有對手前線3張以上且登場的是歐爾麥特才改成活動。這三句沒有同一個現成 op。',
+  existingOps:['lookTopScript','deployOwnHandRest','activeSelfIf','oppFrontCountAtLeast'],
+  whyNotEnough:'看頂 3 張、公開最多 1 張角色入手、其餘放牌底，已可用 lookTopScript，count 3、takes 為 type:character、publish true、不要 thenDrawIfName。後面接的休息登場沒有特徵，lookTopScript 的 rest 入手仍必須有特徵。對手前線 3 張以上且登場的是歐爾麥特才改活動也還沒有。066 不要標 ready。',
   proposal:'看頂3張，最多公開1張角色入手，其餘放牌底。再從手牌休息登場最多1張綠角色。對手前線有3張以上且該角色是歐爾麥特時改為活動。066はreadyにしない。'
  },
  {
