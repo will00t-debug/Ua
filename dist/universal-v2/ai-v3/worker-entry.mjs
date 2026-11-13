@@ -4,6 +4,7 @@
 import {legalUniversalActions} from '../engine.mjs';
 import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS} from './search.mjs';
 import {chooseHybridMainAction,chooseHybridStartHardAction,lastHybridRoute,HYBRID_MAIN_POLICY,HYBRID_START_HARD_POLICY} from './hybrid-main.mjs';
+import {publicSearchLines} from './attack-diagnostic.mjs';
 import {lastHardAiTrace} from '../hard-ai.mjs';
 import {normalizeFactors} from './strategy.mjs';
 import {beliefWorld} from './belief.mjs';
@@ -17,6 +18,8 @@ function searchReport(){
   fallbackFrom:trace.fallbackFrom??null,
   nodesUsed:Number.isFinite(trace.nodesUsed)?trace.nodesUsed:null,
   score:Number.isFinite(trace.score)?trace.score:null,
+  ms:Number.isFinite(trace.ms)?trace.ms:null,
+  lines:publicSearchLines(trace),
   settled:trace.settled===true
  };
 }

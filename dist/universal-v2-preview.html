@@ -126,6 +126,8 @@
      <p class="note">預設關閉，不會改掉目前的難度或完整回合搜尋。打開後這場單人對戰使用 hybrid-main-v1：空閒主階段由 hard-search-2 決定，開始、移動、攻擊，以及阻擋、觸發、棄牌等所有 pending 仍由 AI v3 決定。關掉就回到原本的選擇。線上房間規則不變。</p>
      <label class="coach-consent" for="hybrid-start-hard-v1"><input id="hybrid-start-hard-v1" type="checkbox"> 新混合 AI（開始＋主階段 hard）</label>
      <p class="note">預設關閉，必須自己打開。這台瀏覽器會記住 hybrid-start-hard-v1，不會把原本的難度或主階段混合改成它。開始與空閒主階段由 hard-search-2 決定，移動、攻擊，以及全部 pending 仍由 AI v3 決定。48 節點、40ms、搜尋種子 1。線上房間規則不變。</p>
+     <label class="coach-consent" for="attack-diagnostic"><input id="attack-diagnostic" type="checkbox"> 記錄攻擊決策</label>
+     <p class="note">預設關閉。打開後，電腦每次攻擊階段決策結束才寫一行公開診斷：前線位置、角色 UID、ACTIVE／REST、合法攻擊與結束、policy、分數、節點、耗時與備援。不讀取、不公開任何手牌、牌庫順序或未翻開的生命卡，也不佔用 40ms 搜尋。</p>
      <p id="ai-policy-live" class="note" role="status">目前 AI policy：這場難度。預設不是 hybrid-main-v1，也不是 hybrid-start-hard-v1，也還沒有改成原版 AI v3。</p>
      <div class="ai-policy-switch" role="group" aria-label="選擇這場單人對戰的 AI">
       <button type="button" id="use-ai-v3">使用原版 AI v3</button>
@@ -155,6 +157,6 @@
   </footer>
  </div>
  <link rel="stylesheet" href="coach.css?v=20261101reviewnav1">
- <script type="module" src="universal-v2-preview.mjs?v=20261112policysync1"></script>
+ <script type="module" src="universal-v2-preview.mjs?v=20261112attackdiag1"></script>
 </body>
 </html>
