@@ -59,6 +59,18 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
   effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:7,
    filter:{field:'colorAndType',value:'yellow:field'}}]},
   notes:'上から7枚見て黄のフィールドを1枚まで公開し手札。残りは下。加えたら手札を1枚場外。'},
+ 'IMC-1-011':{ready:true,implementation:'dsl',bpGainFollow:{bp:1000},
+  notes:'自己回合、暫時 BP 變高時，每回合一次再 +1000。印刷被動與這次追加本身不重觸發。對方回合不加。抽牌觸發是卡表。'},
+ 'IMC-1-012':{ready:true,implementation:'dsl',raidName:'城ヶ崎 莉嘉',bpGainFollow:{bp:500},
+  effects:{
+   onPlay:[{op:'grantConditionalSniperThisTurn',minBp:7000}],
+   onAttack:[{op:'drawIfSelfBpAtLeast',bp:5000,count:1}]
+  },
+  notes:'突襲框是城ヶ崎 莉嘉。自己回合暫時 BP 變高時，每回合一次再 +500，追加本身不重觸發。登場後這個回合，宣告攻擊時 BP 達 7000 才有狙擊。攻擊時目前 BP 達 5000 才抽 1。'},
+ 'IMC-1-039':{ready:true,implementation:'dsl',ownEffectPresenceBp:1000,
+  mainAbility:{op:'discardExactFrontMove',line:'energy',dest:'front',attackEnd:'energy',
+   trait:'ガールズ・イン・ザ・フロンティア',count:3},
+  notes:'只有本回合以自己的效果登場或移動，自己回合才 BP+1000。Q2237 移動階段不算。起動在能量線，棄 1 張手牌，前線正好 3 張指定特徵才移到前線，並在這個回合的攻擊結束後回到能量線。Q2238 滿列先選 1 張進移除區。Q2239 攻擊結束排在生命觸發確認之後。'},
  'IMC-1-013':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'buffOwnField',filter:{field:'trait',value:'BEYOND THE STARLIGHT'},
    bp:1000,optional:true,excludeSelf:true}]},
