@@ -14,7 +14,7 @@ test('six-title production editor cannot load old battle engine or old app scrip
  for(const dependency of ['engine.mjs','match-runtime.mjs','ttg-core-match.mjs','solo-match.mjs','ai-v2.mjs'])
   assert.doesNotMatch(code,new RegExp("from ['\"][^'\"]*"+dependency.replace('.','\\.')+"['\"]"));
  assert.match(read('../vercel.json'),/online\.html/);
- assert.equal(TITLES.length,13);
+ assert.equal(TITLES.length,14);
  assert.equal(TITLES.find(t=>t.id==='steins-gate').cards.length,80);
  assert.equal(TITLES.find(t=>t.id==='madoka').cards.length,186);
  assert.equal(TITLES.find(t=>t.id==='madoka').playable,false);
@@ -28,6 +28,9 @@ test('six-title production editor cannot load old battle engine or old app scrip
  assert.equal(TITLES.find(t=>t.id==='kmr').playable,false);
  assert.equal(TITLES.find(t=>t.id==='csm').cards.length,80);
  assert.equal(TITLES.find(t=>t.id==='csm').playable,false);
+ assert.equal(TITLES.find(t=>t.id==='imc').cards.length,113);
+ assert.equal(TITLES.find(t=>t.id==='imc').playable,false);
+ assert.equal(TITLES.find(t=>t.id==='imc').cards.every(card=>card.battleReady===false&&card.deckLegal===true),true);
 });
 test('old browser keys remain the backing stores, not deleted or migrated destructively',()=>{
  assert.deepEqual(LEGACY_DECK_KEYS.bleach,['bleach-arena-deck-v1','bleach-arena-saved-decks-v1']);
