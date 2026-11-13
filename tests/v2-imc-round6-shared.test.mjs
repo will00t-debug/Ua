@@ -521,8 +521,10 @@ test('the same ops work outside IMC while unfinished cards stay out of the pack'
  assert.equal(s.pending,null);
  assert.equal(s.players[0].front.some(c=>c?.uid===named.uid),true);
  const imc=createImcV2Pack();
- assert.equal(Object.keys(imc.cards).length,82);
- for(const id of ['IMC-1-028','IMC-1-033','IMC-1-065','IMC-1-078','IMC-1-112','IMC-1-011','IMC-1-012']){
+ assert.equal(Object.keys(imc.cards).length,89);
+ assert.deepEqual(['IMC-1-028','IMC-1-033','IMC-1-036','IMC-1-065','IMC-1-078','IMC-1-080','IMC-1-112']
+  .every(id=>imc.cards[id]?.id===id),true);
+ for(const id of ['IMC-1-011','IMC-1-012']){
   assert.equal(imc.cards[id],undefined,id);
   assert.equal(IMC_PROGRAMS_001_050[id]?.ready,undefined,id);
   assert.equal(IMC_PROGRAMS_051_100[id]?.ready,undefined,id);

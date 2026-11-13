@@ -94,6 +94,10 @@ test('the settings page offers the new policy without selecting it', () => {
  assert.match(page, /seed:policy===HYBRID_START_HARD_POLICY\?1:stateVersion/);
  assert.match(page, /driveSearchPreview\(app\.sequence,HYBRID_START_HARD_POLICY\)/);
  assert.doesNotMatch(page, /setItem\(HYBRID_START_KEY,localStorage\.getItem\(HYBRID_MAIN_KEY\)/);
- assert.match(battle, /universal-v2-preview\.mjs\?v=20261112policysync1/);
- assert.match(lobby, /universal-v2-preview\.mjs\?v=20261112policysync1/);
+ assert.match(battle, /universal-v2-preview\.mjs\?v=20261112attackdiag1/);
+ assert.match(lobby, /universal-v2-preview\.mjs\?v=20261112attackdiag1/);
+ assert.match(lobby, /id="attack-diagnostic"/);
+ assert.doesNotMatch(lobby, /id="attack-diagnostic"[^>]*checked/);
+ assert.match(page, /const ATTACK_DIAGNOSTIC_KEY='ua-attack-diagnostic'/);
+ assert.match(page, /getItem\(ATTACK_DIAGNOSTIC_KEY\)==='1'/);
 });

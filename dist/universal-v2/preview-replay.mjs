@@ -45,16 +45,20 @@ export function publicPreviewActionLabel(packs,before,after,action,player){
  const safe=(uid&&!reveal)?null:before;
  return actor+'：'+uiActionLabel(action,safe?{pack:packs,state:safe}:{});
 }
-export function makeUniversalPreviewReplay(packs,{decks,seed,first,openingMulligan=false}){
+export function makeUniversalPreviewReplay(packs,{decks,seed,first,openingMulligan=false,attackerChoosesLife=false}={}){
  if(!Array.isArray(packs)||packs.length!==2||
   !Array.isArray(decks)||decks.length!==2||
-  !numeric(seed)||seed<1||!numeric(first)||first>1||typeof openingMulligan!=='boolean')
+  !numeric(seed)||seed<1||!numeric(first)||first>1||typeof openingMulligan!=='boolean'||
+  typeof attackerChoosesLife!=='boolean')
   throw Error('Invalid replay setup');
  // Clone records: never retain a mutable reference to live deck inputs.
+ // Older tapes omit attackerChoosesLife and stay on automatic top-of-LIFE.
  const initialCounts=decks.map(c=>Object.fromEntries(Object.entries(c)));
  return {
   format:'ua-universal-v2-preview',version:UNIVERSAL_PREVIEW_REPLAY_VERSION,
-  playerTitles:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),seed,first,openingMulligan,initialCounts,actions:[]
+  playerTitles:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),seed,first,openingMulligan,
+  ...(attackerChoosesLife?{attackerChoosesLife:true}:{}),
+  initialCounts,actions:[]
  };
 }
 export function appendUniversalReplay(replay,action,player){
@@ -76,10 +80,13 @@ export function replayUniversalPreview(packs,tape,{maxActions=15000}={}){
   !Array.isArray(tape.actions)||tape.actions.length>maxActions||
   !Number.isSafeInteger(tape.seed)||tape.seed<1||tape.seed>999999999||
   ![0,1].includes(tape.first)||
-  (tape.openingMulligan!==undefined&&typeof tape.openingMulligan!=='boolean'))throw Error('Invalid preview replay format/title');
+  (tape.openingMulligan!==undefined&&typeof tape.openingMulligan!=='boolean')||
+  (tape.attackerChoosesLife!==undefined&&typeof tape.attackerChoosesLife!=='boolean'))
+  throw Error('Invalid preview replay format/title');
  let state=newUniversalMatch(packs,{
   decks:tape.initialCounts,seed:tape.seed,first:tape.first,
-  openingMulligan:tape.openingMulligan===true
+  openingMulligan:tape.openingMulligan===true,
+  attackerChoosesLife:tape.attackerChoosesLife===true
  });
  for(const [index,entry]of tape.actions.entries()){
   if(!entry||![0,1].includes(entry.actor)||!entry.action)

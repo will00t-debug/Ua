@@ -20,11 +20,11 @@ const pack=createImcV2Pack();
 const byId=Object.fromEntries(IMC_CARDS_001_050.map(c=>[c.id,c]));
 const READY=['IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010',
  'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
- 'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-030','IMC-1-031',
- 'IMC-1-034','IMC-1-035','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045',
+ 'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-030','IMC-1-031',
+ 'IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045',
  'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050'];
-const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012','IMC-1-016','IMC-1-028',
- 'IMC-1-029','IMC-1-032','IMC-1-033','IMC-1-036','IMC-1-037','IMC-1-039','IMC-1-043'];
+const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012','IMC-1-016',
+ 'IMC-1-029','IMC-1-032','IMC-1-037','IMC-1-039','IMC-1-043'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
  'IMC-1-002','IMC-1-035','IMC-1-040','IMC-1-038','IMC-1-034','IMC-1-047','IMC-1-018',
  'IMC-1-022','IMC-1-041','IMC-1-044'];
@@ -2079,7 +2079,8 @@ test('IMC-1-024 gains damage 2 only from its own effect raid and pays on the fir
  assert.equal(program.effects.onAttack[1].firstOwnAttack,true);
  assert.deepEqual(program.effects.onAttack[1].then[0].names,['本田 未央','高森 藍子']);
  assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-024'),false);
- assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-028'),true);
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-028'),false);
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-033'),false);
  assert.equal(pack.cards['IMC-1-024'].impactNull,true);
 
  let s=reach(fresh(24001,PAIR),'main');
@@ -2301,13 +2302,12 @@ test('IMC-1-024 gains damage 2 only from its own effect raid and pays on the fir
  }
 });
 
-test('IMC-1-028 keeps the ordered choice locked while the raid cause can active a trait',()=>{
- const row=IMC_REQUESTS_001_050.find(item=>item.cardId==='IMC-1-028');
- assert.match(row.whyNotEnough,/chooseUpToDistinctOrdered/);
- assert.match(row.whyNotEnough,/Q2234/);
- assert.match(row.whyNotEnough,/Q2235/);
- assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'],undefined);
- assert.equal(pack.cards['IMC-1-028'],undefined);
+test('IMC-1-028 uses printed options while the old ordered trio stays locked',()=>{
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'].ready,true);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'].printedImpact,1);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-028'].raidName,'本田 未央');
+ assert.equal(pack.cards['IMC-1-028'].effects.onPlay[0].op,'choosePrintedOptions');
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-028'),false);
  probeReject({
   id:'TWO',name:'二選',
   effects:{onPlay:[{op:'chooseUpToDistinctOrdered',max:2,options:[
@@ -2395,4 +2395,491 @@ test('IMC-1-028 keeps the ordered choice locked while the raid cause can active 
  assert.equal(hit.pending.choices.includes(mate.uid),true);
  assert.equal(hit.players[1].front.find(c=>c?.uid===mate.uid).ready,false);
  assert.equal(assertUniversalMatch(life.pack,hit),true);
+});
+
+function openRequest(id){
+ const row=IMC_REQUESTS_001_050.find(item=>item.cardId===id);
+ assert.ok(row,id);
+ assert.equal(IMC_PROGRAMS_001_050[id],undefined);
+ assert.equal(pack.cards[id],undefined);
+ return row;
+}
+function probeYield(built,s){
+ const who=s.active;
+ for(let i=0;i<8&&s.active===who;i++){
+  if(s.pending?.kind==='end-hand-limit'){
+   s=dispatchUniversalAction(built,s,{type:'chooseHandLimit',uid:s.players[s.pending.player].hand[0].uid});
+   continue;
+  }
+  assert.equal(s.pending,null);
+  s=dispatchUniversalAction(built,s,legalUniversalActions(built,s).find(a=>a.type==='next'));
+ }
+ assert.notEqual(s.active,who);
+ return s;
+}
+const ownEffectEntry={condition:{kind:'ownEffectCharacterEntryOrRaidThisTurn',turn:'own'},bp:1000};
+
+test('IMC-1-036 gains 1000 after your own effect entry or effect raid',()=>{
+ const program=IMC_PROGRAMS_001_050['IMC-1-036'];
+ assert.equal(program.ready,true);
+ assert.deepEqual(program.passiveBonuses,[ownEffectEntry]);
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-036'),false);
+ assert.equal(pack.cards['IMC-1-036'].bp,3000);
+ assert.equal(byId['IMC-1-036'].effectJa.includes('自分の効果で登場'),true);
+
+ let s=reach(fresh(36001,{'IMC-1-036':1}),'main');
+ const seated=seat(s,0,'IMC-1-036','front',0,true);
+ assert.equal(universalBp(pack,s,live(s,seated.uid)),3000);
+
+ s=reach(fresh(36002,{'IMC-1-036':1,'IMC-1-034':2}),'main');
+ fuel(s,['IMC-1-034','IMC-1-034']);
+ let paid;
+ [s,paid]=play(s,'IMC-1-036','front');
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(pack,s,live(s,paid.uid)),3000);
+
+ s=reach(fresh(36003,{'IMC-1-036':1,'IMC-1-035':1}),'main');
+ const waiting=seat(s,0,'IMC-1-036','front',0,true);
+ [s]=play(s,'IMC-1-035','energy');
+ assert.equal(universalBp(pack,s,live(s,waiting.uid)),3000);
+
+ s=reach(fresh(36004,{'IMC-1-042':1,'IMC-1-036':1,'IMC-1-034':4}),'main');
+ fuel(s,['IMC-1-034','IMC-1-034','IMC-1-034']);
+ const fromHand=hold(s,'IMC-1-036');
+ [s]=play(s,'IMC-1-042','front');
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ assert.equal(s.pending.choices.includes(fromHand.uid),true);
+ s=act(s,legal(s).find(a=>a.type==='chooseHandRest'&&a.uid===fromHand.uid&&a.line==='front'));
+ assert.equal(live(s,fromHand.uid).ready,false);
+ assert.equal(universalBp(pack,s,live(s,fromHand.uid)),4000);
+ s=yieldTurn(s);
+ assert.equal(universalBp(pack,s,live(s,fromHand.uid)),3000);
+ s=yieldTurn(s);
+ assert.equal(s.active,0);
+ assert.equal(universalBp(pack,s,live(s,fromHand.uid)),3000);
+
+ s=reach(fresh(36005,{'IMC-1-042':1,'IMC-1-036':1,'IMC-1-045':1,'IMC-1-034':4}),'main');
+ fuel(s,['IMC-1-034','IMC-1-034','IMC-1-034']);
+ const host=seat(s,0,'IMC-1-036','front',1,true);
+ const other=hold(s,'IMC-1-045');
+ [s]=play(s,'IMC-1-042','front');
+ s=act(s,legal(s).find(a=>a.type==='chooseHandRest'&&a.uid===other.uid&&a.line==='energy'));
+ assert.equal(live(s,other.uid).ready,false);
+ assert.equal(universalBp(pack,s,live(s,host.uid)),4000);
+
+ s=reach(fresh(36006,{...PAIR,'IMC-1-036':1}),'main');
+ fuel(s,['IMC-1-023','IMC-1-001','IMC-1-001','IMC-1-001']);
+ const base=s.players[0].energy[0];
+ const src=seat(s,0,'IMC-1-020','front',0,true);
+ const natsu=seat(s,0,'IMC-1-036','front',1,true);
+ const akane=hold(s,'IMC-1-024');
+ s=take(s,a=>a.type==='activate'&&a.uid===src.uid&&a.mode==='selfRestThen');
+ s=take(s,a=>a.uid===akane.uid&&a.mode==='raid'&&a.baseUid===base.uid&&a.line==='front');
+ assert.equal(universalBp(pack,s,live(s,natsu.uid)),4000);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=reach(fresh(36007,{...PAIR,'IMC-1-036':1}),'main');
+ fuel(s,['IMC-1-023','IMC-1-001','IMC-1-001','IMC-1-001']);
+ readyAp(s,2);
+ assert.equal(energy(s).yellow,5);
+ const paidBase=s.players[0].energy[0];
+ const still=seat(s,0,'IMC-1-036','front',1,true);
+ const payer=hold(s,'IMC-1-024');
+ const paidRaid=legal(s).find(a=>a.type==='raid'&&a.uid===payer.uid&&a.baseUid===paidBase.uid&&a.line!=='energy');
+ assert.ok(paidRaid);
+ s=act(s,paidRaid);
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(pack,s,live(s,still.uid)),3000);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ const witnessBonus=[{...ownEffectEntry}];
+ const guest={id:'GUEST',name:'來客',color:'blue',energy:2,traits:['ガールズ・イン・ザ・フロンティア']};
+ const cards=[
+  probeFace({id:'WITNESS',name:'見證',bp:3000,implementation:'dsl',passiveBonuses:witnessBonus}),
+  probeFace({id:'EVENT',name:'事件',type:'event',bp:0,energy:0,effects:{onPlay:[
+   {op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,
+    trait:'ガールズ・イン・ザ・フロンティア'}]}}),
+  probeFace(guest),
+  probeFace({id:'HOOK',name:'角色',color:'blue',effects:{onPlay:[
+   {op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,
+    trait:'ガールズ・イン・ザ・フロンティア'}]}}),
+  probeFace({id:'GEN',name:'青',color:'blue',energy:0,gen:1})
+ ];
+ const byEvent=probeOpen(cards,36008);
+ let scene=byEvent.s;
+ probeFuel(scene);
+ const seen=probeSeat(scene,0,'WITNESS','front',0,true);
+ probeHold(scene,'GUEST');
+ const event=probeHold(scene,'EVENT');
+ scene=dispatchUniversalAction(byEvent.pack,scene,legalUniversalActions(byEvent.pack,scene)
+  .find(a=>a.type==='event'&&a.uid===event.uid));
+ const brought=scene.players[0].hand.find(c=>c.cardId==='GUEST');
+ scene=dispatchUniversalAction(byEvent.pack,scene,legalUniversalActions(byEvent.pack,scene)
+  .find(a=>a.type==='chooseHandRest'&&a.uid===brought.uid&&a.line==='energy'));
+ assert.equal(universalBp(byEvent.pack,scene,scene.players[0].front.find(c=>c?.uid===seen.uid)),4000);
+ const byRule=probeOpen(cards,36009);
+ scene=byRule.s;
+ probeFuel(scene,2);
+ probeSeat(scene,0,'GEN','energy',0,false);
+ probeSeat(scene,0,'GEN','energy',1,false);
+ const quiet=probeSeat(scene,0,'WITNESS','front',0,true);
+ [scene]=probePlay(byRule.pack,scene,'GUEST','energy');
+ assert.equal(universalBp(byRule.pack,scene,scene.players[0].front.find(c=>c?.uid===quiet.uid)),3000);
+ assert.equal(assertUniversalMatch(byRule.pack,scene),true);
+});
+
+test('IMC-1-004 still cannot trigger from a source trait',()=>{
+ const row=openRequest('IMC-1-004');
+ assert.equal(row.whyNotEnough.includes('sourceName'),true);
+ probeReject({id:'TRAIT',name:'特徵',implementation:'dsl',moveTriggers:[{
+  when:{from:'hand',to:'outside',sourceOnField:true,sourceTrait:'BEYOND THE STARLIGHT',reasons:['own-effect']},
+  then:[{op:'buffAnyCharacter',bp:1000,optional:true,excludeSelf:false}]
+ }]},/Invalid zone move condition/);
+ const buff={op:'buffAnyCharacter',bp:1000,optional:true,excludeSelf:false};
+ const when=name=>({from:'hand',to:'outside',sourceOnField:true,sourceName:name,reasons:['own-effect']});
+ const cards=[
+  probeFace({id:'HOOK',name:'使之',energy:0,traits:['BEYOND THE STARLIGHT'],
+   effects:{onPlay:[{op:'drawDiscard',count:1}]}}),
+  probeFace({id:'FOUR',name:'自己',implementation:'dsl',moveTriggers:[{when:when('別的卡'),then:[buff]}]}),
+  probeFace({id:'NAMED',name:'具名',implementation:'dsl',moveTriggers:[{when:when('使之'),then:[buff]}]})
+ ];
+ const missed=probeOpen(cards,4001);
+ let s=missed.s;
+ probeFuel(s);
+ probeHold(s,'FOUR');
+ [s]=probePlay(missed.pack,s,'HOOK');
+ const lost=s.players[0].hand.find(c=>c.cardId==='FOUR');
+ s=dispatchUniversalAction(missed.pack,s,{type:'chooseDiscard',uid:lost.uid});
+ assert.notEqual(s.pending?.kind,'effect-buff-any');
+ assert.ok(s.players[0].outside.some(c=>c.uid===lost.uid));
+ assert.equal(universalBp(missed.pack,s,s.players[0].front.find(c=>c?.cardId==='HOOK')),2000);
+ const hit=probeOpen(cards,4002);
+ s=hit.s;
+ probeFuel(s);
+ probeHold(s,'NAMED');
+ [s]=probePlay(hit.pack,s,'HOOK');
+ const moved=s.players[0].hand.find(c=>c.cardId==='NAMED');
+ s=dispatchUniversalAction(hit.pack,s,{type:'chooseDiscard',uid:moved.uid});
+ assert.equal(s.pending.kind,'effect-buff-any');
+ assert.equal(s.pending.choices.includes(s.players[0].front.find(c=>c?.cardId==='HOOK').uid),true);
+});
+
+test('IMC-1-029 cannot switch the buff by the discarded trigger',()=>{
+ const row=openRequest('IMC-1-029');
+ assert.equal(row.whyNotEnough.includes('discardHandBuff'),true);
+ const cards=[
+  probeFace({id:'SELF',name:'自己',bp:2000,implementation:'dsl',printedMains:[
+   {op:'discardHandBuff',id:'buff',discard:1,bp:1000}]}),
+  probeFace({id:'SPECIAL',name:'特殊',trigger:'special',bp:1000,
+   triggerEffect:{op:'retireOppFront'}}),
+  probeFace({id:'OTHER',name:'其他',bp:3000})
+ ];
+ const opened=probeOpen(cards,29001);
+ let s=opened.s;
+ const self=probeSeat(s,0,'SELF','front',0,true);
+ const special=probeHold(s,'SPECIAL');
+ const other=probeHold(s,'OTHER');
+ s=dispatchUniversalAction(opened.pack,s,legalUniversalActions(opened.pack,s)
+  .find(a=>a.type==='activate'&&a.uid===self.uid));
+ assert.equal(s.pending.kind,'effect-mode-discard');
+ s=dispatchUniversalAction(opened.pack,s,{type:'chooseModeDiscard',uid:special.uid});
+ assert.equal(universalBp(opened.pack,s,s.players[0].front.find(c=>c.uid===self.uid)),3000);
+ assert.ok(s.players[0].hand.some(c=>c.uid===other.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===special.uid));
+ assert.equal(s.pending,null);
+});
+
+test('IMC-1-032 cannot add impact only to the chosen name',()=>{
+ const row=openRequest('IMC-1-032');
+ assert.equal(row.whyNotEnough.includes('bonusNames'),true);
+ const beyond='BEYOND THE STARLIGHT';
+ const rika='城ヶ崎 莉嘉';
+ const cards=[
+  probeFace({id:'BONUS',name:'加攻',energy:0,effects:{onPlay:[{op:'buffOwnField',
+   filter:{field:'trait',value:beyond},bp:2000,optional:true,excludeSelf:true,
+   bonusNames:[rika],bonusBp:3000}]}}),
+  probeFace({id:'BOTH',name:'衝擊',energy:0,effects:{onPlay:[{op:'buffNameOrTraitImpact',
+   name:rika,trait:beyond,bp:2000,impact:1,duration:'turn',upTo:1,optional:true}]}}),
+  probeFace({id:'RIKA',name:rika,traits:[beyond],bp:2000}),
+  probeFace({id:'ALLY',name:'同伴',traits:[beyond],bp:2000})
+ ];
+ const named=probeOpen(cards,32001);
+ let s=named.s;
+ probeFuel(s);
+ const star=probeSeat(s,0,'RIKA','front',0,true);
+ const ally=probeSeat(s,0,'ALLY','front',1,true);
+ [s]=probePlay(named.pack,s,'BONUS');
+ assert.equal(s.pending.kind,'effect-buff-own');
+ s=dispatchUniversalAction(named.pack,s,{type:'chooseOwnBuff',uid:star.uid});
+ assert.equal(universalBp(named.pack,s,s.players[0].front.find(c=>c.uid===star.uid)),5000);
+ assert.equal(universalImpact(named.pack,s,s.players[0].front.find(c=>c.uid===star.uid)),0);
+ assert.equal(universalBp(named.pack,s,s.players[0].front.find(c=>c.uid===ally.uid)),2000);
+ const wide=probeOpen(cards,32002);
+ s=wide.s;
+ probeFuel(s);
+ const plain=probeSeat(s,0,'ALLY','energy',0,true);
+ [s]=probePlay(wide.pack,s,'BOTH');
+ assert.equal(s.pending.kind,'effect-name-or-trait-impact');
+ assert.equal(s.pending.choices.includes(plain.uid),true);
+ s=dispatchUniversalAction(wide.pack,s,{type:'chooseNameOrTraitImpact',uid:plain.uid});
+ assert.equal(universalImpact(wide.pack,s,s.players[0].energy.find(c=>c?.uid===plain.uid)),1);
+});
+
+test('IMC-1-037 draws only after a character effect and cannot buy impact',()=>{
+ const row=openRequest('IMC-1-037');
+ assert.equal(row.whyNotEnough.includes('grantSelfImpactThisTurn'),true);
+ probeReject({id:'PAY',name:'付費',effects:{onAttack:[{op:'optionalPayApThen',ap:1,optional:true,
+  then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}},/invalid optional AP payment/);
+ const rest={op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,trait:'星'};
+ const cards=[
+  probeFace({id:'NATS',name:'夏樹',color:'blue',energy:2,traits:['星'],
+   effects:{onPlay:[{op:'draw',count:1,entry:'ownCharacter'}]}}),
+  probeFace({id:'HERO',name:'角色',color:'blue',effects:{onPlay:[rest]}}),
+  probeFace({id:'EVENT',name:'事件',type:'event',bp:0,energy:0,effects:{onPlay:[rest]}}),
+  probeFace({id:'GEN',name:'青',color:'blue',energy:0,gen:1})
+ ];
+ const character=probeOpen(cards,37001);
+ let s=character.s;
+ probeFuel(s);
+ probeHold(s,'NATS');
+ const before=s.players[0].deck.length;
+ [s]=probePlay(character.pack,s,'HERO');
+ const brought=s.players[0].hand.find(c=>c.cardId==='NATS');
+ s=dispatchUniversalAction(character.pack,s,legalUniversalActions(character.pack,s)
+  .find(a=>a.type==='chooseHandRest'&&a.uid===brought.uid&&a.line==='front'));
+ assert.equal(s.players[0].deck.length,before-1);
+ const paid=probeOpen(cards,37002);
+ s=paid.s;
+ probeFuel(s,2);
+ probeSeat(s,0,'GEN','energy',0,false);
+ probeSeat(s,0,'GEN','energy',1,false);
+ probeHold(s,'NATS');
+ const quiet=s.players[0].deck.length;
+ [s]=probePlay(paid.pack,s,'NATS');
+ assert.equal(s.players[0].deck.length,quiet);
+ assert.equal(s.pending,null);
+ const event=probeOpen(cards,37003);
+ s=event.s;
+ probeFuel(s);
+ probeHold(s,'NATS');
+ const cast=probeHold(s,'EVENT');
+ const held=s.players[0].deck.length;
+ s=dispatchUniversalAction(event.pack,s,legalUniversalActions(event.pack,s)
+  .find(a=>a.type==='event'&&a.uid===cast.uid));
+ const again=s.players[0].hand.find(c=>c.cardId==='NATS');
+ s=dispatchUniversalAction(event.pack,s,legalUniversalActions(event.pack,s)
+  .find(a=>a.type==='chooseHandRest'&&a.uid===again.uid&&a.line==='energy'));
+ assert.equal(s.players[0].deck.length,held);
+ assert.equal(assertUniversalMatch(event.pack,s),true);
+});
+
+test('IMC-1-009 cannot filter the trait or scale its own BP down',()=>{
+ const row=openRequest('IMC-1-009');
+ assert.equal(row.whyNotEnough.includes('deployOwnHandRestOrRaid'),true);
+ const hand={op:'deployOwnHandRestOrRaid',type:'character',color:'yellow',maxEnergy:3,ap:1,
+  max:1,optional:true,names:null};
+ probeReject({id:'TRAIT',name:'特徵',effects:{onPlay:[{...hand,trait:'BEYOND THE STARLIGHT'}]}},
+  /invalid hand REST or Raid entry/);
+ const cards=[
+  probeFace({id:'NINE',name:'美嘉',energy:0,bp:3000,enterAlwaysActive:true,
+   effects:{onPlay:[{op:'draw',count:1},hand]}}),
+  probeFace({id:'PLAIN',name:'普通',color:'yellow',energy:3,ap:1,bp:1500}),
+  probeFace({id:'BEYOND',name:'星光',color:'yellow',energy:2,ap:1,bp:1500,
+   traits:['BEYOND THE STARLIGHT']})
+ ];
+ const opened=probeOpen(cards,9001);
+ let s=opened.s;
+ probeFuel(s);
+ const plain=probeHold(s,'PLAIN');
+ probeHold(s,'BEYOND');
+ probeHold(s,'NINE');
+ const deck=s.players[0].deck.length;
+ let self;
+ [s,self]=probePlay(opened.pack,s,'NINE');
+ assert.equal(s.players[0].front.find(c=>c?.uid===self.uid).ready,true);
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.pending.kind,'effect-hand-rest-or-raid');
+ assert.equal(s.pending.choices.includes(plain.uid),true);
+ s=dispatchUniversalAction(opened.pack,s,legalUniversalActions(opened.pack,s)
+  .find(a=>a.type==='chooseHandRestOrRaid'&&a.mode==='enter'&&a.uid===plain.uid&&a.line==='energy'));
+ assert.equal(universalBp(opened.pack,s,s.players[0].front.find(c=>c?.uid===self.uid)),3000);
+ assert.equal(assertUniversalMatch(opened.pack,s),true);
+});
+
+test('IMC-1-016 recovers the card it just discarded and cannot switch the buff',()=>{
+ const row=openRequest('IMC-1-016');
+ assert.equal(row.whyNotEnough.includes('Q2229'),true);
+ probeReject({id:'SWITCH',name:'切換',mainAbility:{op:'frontOnceProgram',frontOnly:true,
+  oncePerTurn:true,minSelfBp:5000,then:[{op:'peekTopOne'}]}},/unsupported main action ability/);
+ const cards=[
+  probeFace({id:'HOOK',name:'加蓮',energy:0,effects:{onPlay:[
+   {op:'drawDiscard',count:1},
+   {op:'recoverOutsideFiltered',optional:true,max:1,trait:'BEYOND THE STARLIGHT',energyAtMost:3}]}}),
+  probeFace({id:'LOW',name:'低費',energy:3,traits:['BEYOND THE STARLIGHT']}),
+  probeFace({id:'HIGH',name:'高費',energy:4,traits:['BEYOND THE STARLIGHT']}),
+  probeFace({id:'OTHER',name:'其他',energy:1})
+ ];
+ const opened=probeOpen(cards,16001);
+ let s=opened.s;
+ probeFuel(s);
+ const low=probeHold(s,'LOW');
+ const high=probePull(s,0,'HIGH');
+ s.players[0].outside.push(high);
+ probeHold(s,'OTHER');
+ [s]=probePlay(opened.pack,s,'HOOK');
+ assert.equal(s.pending.kind,'effect-discard');
+ s=dispatchUniversalAction(opened.pack,s,{type:'chooseDiscard',uid:low.uid});
+ assert.equal(s.pending.kind,'effect-recover-outside');
+ assert.equal(s.pending.choices.includes(low.uid),true);
+ assert.equal(s.pending.choices.includes(high.uid),false);
+ s=dispatchUniversalAction(opened.pack,s,{type:'chooseOutsideRecovery',uid:low.uid});
+ assert.ok(s.players[0].hand.some(c=>c.uid===low.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===high.uid));
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(opened.pack,s),true);
+});
+
+test('IMC-1-011 and IMC-1-012 stay unprogrammed after the BP observer exists',()=>{
+ const later=openRequest('IMC-1-011');
+ const sniper=openRequest('IMC-1-012');
+ assert.equal(later.whyNotEnough.includes('bpGainFollow'),true);
+ assert.equal(sniper.whyNotEnough.includes('grantSelfSniperThisTurn'),true);
+ probeReject({id:'WATCH',name:'觀察',effects:{onPlay:[{op:'whenBpIncreased',bp:1000}]}},
+  /effect op unsupported/);
+ const cards=[
+  probeFace({id:'ONCE',name:'一次',bp:3000,effects:{onPlay:[{op:'buffSelf',bp:1000}]}}),
+  probeFace({id:'RIKA',name:'城ヶ崎 莉嘉',bp:4000,effects:{
+   onPlay:[{op:'grantSelfSniperThisTurn'}],
+   onAttack:[{op:'drawIfSelfBpAtLeast',bp:5000,count:1}]}})
+ ];
+ const buffed=probeOpen(cards,11001);
+ let s=buffed.s;
+ probeFuel(s);
+ let self;
+ [s,self]=probePlay(buffed.pack,s,'ONCE');
+ assert.equal(universalBp(buffed.pack,s,s.players[0].front.find(c=>c?.uid===self.uid)),4000);
+ const early=probeOpen(cards,12001);
+ s=early.s;
+ probeFuel(s);
+ [s,self]=probePlay(early.pack,s,'RIKA');
+ assert.equal(s.players[0].front.find(c=>c?.uid===self.uid).sniperGranted.turn,s.turn);
+ assert.equal(universalBp(early.pack,s,s.players[0].front.find(c=>c?.uid===self.uid)),4000);
+ s.players[0].front.find(c=>c?.uid===self.uid).ready=true;
+ s=probeTo(early.pack,s,'attack');
+ const deck=s.players[0].deck.length;
+ s=probeClearBlock(early.pack,dispatchUniversalAction(early.pack,s,{type:'attack',uid:self.uid}));
+ assert.equal(s.players[0].deck.length,deck);
+ const tall=probeOpen(cards,12002);
+ s=tall.s;
+ probeFuel(s);
+ const ready=probeSeat(s,0,'RIKA','front',0,true);
+ ready.buffs=[{bp:1000,untilTurn:s.turn}];
+ assert.equal(universalBp(tall.pack,s,ready),5000);
+ assert.equal(ready.sniperGranted,undefined);
+ s=probeTo(tall.pack,s,'attack');
+ const before=s.players[0].deck.length;
+ s=probeClearBlock(tall.pack,dispatchUniversalAction(tall.pack,s,{type:'attack',uid:ready.uid}));
+ assert.equal(s.players[0].deck.length,before-1);
+});
+
+test('IMC-1-003 can show one bonus and one activate, not both printed activates',()=>{
+ const row=openRequest('IMC-1-003');
+ assert.equal(row.whyNotEnough.includes('mainAbility'),true);
+ probeReject({id:'SECOND',name:'第二段',mainAbility:{op:'frontOnceProgram',frontOnly:true,
+  oncePerTurn:true,minSelfBp:5000,then:[{op:'activeSelf'}]}},/unsupported main action ability/);
+ const cards=[
+  probeFace({id:'SELF',name:'自己',bp:3000,implementation:'dsl',
+   passiveBonuses:[{condition:{kind:'selfOnField',turn:'opponent'},bp:1000,impactNull:true}],
+   mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{
+    kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',excludeSelf:true,minBp:5000}}}),
+  probeFace({id:'TALL',name:'高BP',bp:5000})
+ ];
+ const opened=probeOpen(cards,3001);
+ let s=opened.s;
+ const self=probeSeat(s,0,'SELF','front',0,true);
+ const tall=probeSeat(s,0,'TALL','front',1,true);
+ assert.equal(universalBp(opened.pack,s,self),3000);
+ assert.equal(universalImpactNull(opened.pack,s,self),false);
+ s=dispatchUniversalAction(opened.pack,s,legalUniversalActions(opened.pack,s)
+  .find(a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='onceBuffSelf'));
+ assert.equal(universalBp(opened.pack,s,s.players[0].front.find(c=>c.uid===self.uid)),4000);
+ assert.equal(universalBp(opened.pack,s,s.players[0].front.find(c=>c.uid===tall.uid)),5000);
+ s=probeYield(opened.pack,s);
+ assert.equal(s.active,1);
+ const later=s.players[0].front.find(c=>c.uid===self.uid);
+ assert.equal(universalBp(opened.pack,s,later),4000);
+ assert.equal(universalImpactNull(opened.pack,s,later),true);
+ assert.equal(assertUniversalMatch(opened.pack,s),true);
+});
+
+test('IMC-1-039 cannot use an unconditional own-turn bonus or an exact trait count',()=>{
+ const row=openRequest('IMC-1-039');
+ assert.equal(row.whyNotEnough.includes('Q2237'),true);
+ probeReject({id:'EXACT',name:'正好',implementation:'dsl',passiveBonuses:[{
+  condition:{kind:'ownTraitCount',turn:'own',zone:'front',excludeSelf:false,
+   trait:'ガールズ・イン・ザ・フロンティア',min:3,exact:true},bp:1000}]},
+  /invalid or cyclic passive condition/);
+ const cards=[probeFace({id:'MOVE',name:'移動',bp:3000,ownTurnBp:1000,implementation:'dsl'})];
+ const opened=probeOpen(cards,39001);
+ const self=probeSeat(opened.s,0,'MOVE','energy',0,true);
+ assert.equal(universalBp(opened.pack,opened.s,self),4000);
+});
+
+test('IMC-1-043 can bottom then rest from the look, and then stops',()=>{
+ const row=openRequest('IMC-1-043');
+ assert.equal(row.whyNotEnough.includes('lookTopScript'),true);
+ probeReject({id:'BASE',name:'底板',effects:{onRetire:[{op:'returnOwnRaidBase',optional:true}]}},
+  /invalid raid-base hand return/);
+ const look={op:'bottomOwnCharacterThen',optional:true,max:1,type:'character',then:[{
+  op:'lookTopScript',count:3,rest:'bottom',takes:[{
+   to:'rest',type:'character',max:1,color:'blue',trait:'ガールズ・イン・ザ・フロンティア'}]}]};
+ probeReject({id:'FOLLOW',name:'後續',effects:{onAttack:[{...look,then:[
+  {op:'lookTopScript',count:3,rest:'bottom',takes:[{to:'rest',type:'character',max:1,color:'blue',
+   trait:'ガールズ・イン・ザ・フロンティア'}]},
+  {op:'draw',count:1}]}]}},/invalid bottom-then look/);
+ const cards=[
+  probeFace({id:'SRC',name:'志希',energy:0,effects:{onAttack:[look]}}),
+  probeFace({id:'OTHER',name:'其他',color:'yellow'}),
+  probeFace({id:'BLUE',name:'藍',color:'blue',traits:['ガールズ・イン・ザ・フロンティア']}),
+  probeFace({id:'RED',name:'紅',color:'red'}),
+  probeFace({id:'LEFT',name:'剩下',color:'green'})
+ ];
+ const skipped=probeOpen(cards,43001);
+ let s=skipped.s;
+ probeFuel(s);
+ const marker=probePull(s,0,'LEFT');
+ s.players[0].deck.unshift(marker);
+ const src=probeSeat(s,0,'SRC','front',0,true);
+ s=probeTo(skipped.pack,s,'attack');
+ s=probeClearBlock(skipped.pack,dispatchUniversalAction(skipped.pack,s,{type:'attack',uid:src.uid}));
+ assert.equal(s.pending.kind,'effect-bottom-own');
+ s=dispatchUniversalAction(skipped.pack,s,{type:'chooseBottomOwn',uid:null});
+ assert.notEqual(s.pending?.kind,'effect-top-script');
+ s=probeClearBlock(skipped.pack,s);
+ assert.equal(s.players[0].deck[0].uid,marker.uid);
+ const opened=probeOpen(cards,43002);
+ s=opened.s;
+ probeFuel(s);
+ const other=probeSeat(s,0,'OTHER','front',1,true);
+ const window=[];
+ for(const id of ['BLUE','RED','LEFT'])window.push(probePull(s,0,id));
+ s.players[0].deck.unshift(...window);
+ const attacker=probeSeat(s,0,'SRC','front',0,true);
+ s=probeTo(opened.pack,s,'attack');
+ s=probeClearBlock(opened.pack,dispatchUniversalAction(opened.pack,s,{type:'attack',uid:attacker.uid}));
+ s=dispatchUniversalAction(opened.pack,s,{type:'chooseBottomOwn',uid:other.uid});
+ assert.equal(s.pending.kind,'effect-top-script');
+ assert.equal(legalUniversalActions(opened.pack,s).some(a=>a.mode==='raid'),false);
+ assert.equal(legalUniversalActions(opened.pack,s).some(a=>a.mode==='enter'&&a.uid===window[0].uid),true);
+ s=dispatchUniversalAction(opened.pack,s,legalUniversalActions(opened.pack,s)
+  .find(a=>a.mode==='enter'&&a.uid===window[0].uid&&a.line==='energy'));
+ assert.equal(s.players[0].energy.find(c=>c?.uid===window[0].uid).ready,false);
+ while(s.pending?.kind==='effect-top-order')
+  s=dispatchUniversalAction(opened.pack,s,{type:'chooseTopOrder',uid:s.pending.uids.find(id=>!s.pending.order.includes(id))});
+ assert.notEqual(s.pending?.kind,'effect-discard');
+ assert.notEqual(s.pending?.kind,'effect-mode-discard');
+ assert.equal(s.players[0].hand.some(c=>c.uid===window[1].uid),false);
+ assert.ok(s.players[0].deck.some(c=>c.uid===window[1].uid));
+ s=probeClearBlock(opened.pack,s);
+ assert.equal(assertUniversalMatch(opened.pack,s),true);
 });

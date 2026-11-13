@@ -8,14 +8,15 @@ export function makeAttackLifePicker({el,lifeCount,count,actions,onAction}){
  const root=el('section',{class:'v2-life-picker',role:'group',
   'aria-label':'進攻方選擇對手血區位置'});
  const status=el('p',{class:'v2-life-picker-status',
-  text:'選擇 '+count+' 張生命卡 · 0/'+count});
+  text:count>1?'請選擇要攻擊的生命卡 · 0/'+count:'請選擇要攻擊的生命卡'});
  const cards=el('div',{class:'v2-life-picker-cards'});
  const nodes=[];
  const match=()=>choices.find(a=>
   JSON.stringify(a.indices)===JSON.stringify([...selected].sort((a,b)=>a-b)));
  let confirm;
  const refresh=()=>{
-  status.textContent='選擇 '+count+' 張生命卡 · '+selected.size+'/'+count;
+  status.textContent=count>1?
+   '請選擇要攻擊的生命卡 · '+selected.size+'/'+count:'請選擇要攻擊的生命卡';
   for(const node of nodes){
    const yes=selected.has(Number(node.dataset.lifeIndex));
    node.classList.toggle('selected',yes);node.setAttribute('aria-pressed',String(yes));
@@ -38,7 +39,7 @@ export function makeAttackLifePicker({el,lifeCount,count,actions,onAction}){
    }},el('span',{text:String(index+1)}),el('strong',{text:'♠'}));
   nodes.push(node);cards.append(node);
  }
- root.append(el('h3',{text:'指定要攻擊的血區'}),status,cards);
+ root.append(el('h3',{text:'請選擇要攻擊的生命卡'}),status,cards);
  if(count>1){
   confirm=el('button',{type:'button',class:'v2-life-picker-confirm',disabled:true,
    text:'確認攻擊 '+count+' 張',onClick:()=>{const action=match();if(action)onAction(action);}});
