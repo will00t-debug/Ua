@@ -54,11 +54,11 @@ export const UA10ST_PRODUCT={
  title:'僕のヒーローアカデミア',
  product:'https://www.unionarena-tcg.com/jp/products/decks/mha-1.php',
  cardList:'https://www.unionarena-tcg.com/jp/cardlist/?search=true&series=570010',
- fetched:'2026-11-13',
+ fetched:'2026-11-14',
  deckCards:50,
  apCardsInProduct:3,
  recipe:null,
- recipeStatus:'待查：商品頁只寫構築牌組 50 張與行動值卡 3 張。官方卡表沒有各卡張數，這裡不補。'
+ recipeStatus:'待查：2026-11-14 再查商品頁與 series=570010 卡表。兩者都只確認構築牌組 50 張與行動值卡 3 張，沒有各卡張數，這裡不補。'
 };
 
 export const UA10ST_CARDS=[

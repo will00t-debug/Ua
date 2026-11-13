@@ -57,13 +57,6 @@ export const MHA_REQUESTS_051_100=[
   proposal:'發目明在場才活動登場。登場時最多1張自己角色本回合BP+1000。起動是休息後退場，自己全部角色本回合BP+500。062はreadyにしない。'
  },
  {
-  cardId:'MHA-1-063',
-  sentence:'自分のキャラ1枚にこのターンBP+2500とバトル勝利時のドローを与える。オールマイトか緑谷出久ならさらに狙い撃ち。',
-  existingOps:['grantNamedBuffAttackDraw','grantConditionalSniperThisTurn'],
-  whyNotEnough:'grantNamedBuffAttackDraw は名前が先に固定される。這張是先選任意自己角色給BP與勝利抽牌，選中的名字是歐爾麥特或綠谷出久才再給狙擊。',
-  proposal:'選1張自己角色，本回合BP+2500，並在戰鬥勝利時抽1。若該角色是歐爾麥特或綠谷出久，再給本回合狙擊。特殊觸發維持退場1張對手前線。063はreadyにしない。'
- },
- {
   cardId:'MHA-1-066',
   sentence:'上から3枚見てキャラ1枚まで公開して手札、残りは下。手札の緑キャラ1枚までレストで登場。相手フロントが3枚以上で、そのキャラがオールマイトならアクティブ。',
   existingOps:['lookTopScript','deployOwnHandRest','activeSelfIf'],
