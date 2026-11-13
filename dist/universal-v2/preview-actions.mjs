@@ -29,7 +29,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',
  'effect-entry-rest-front':'將前線 ACTIVE 角色轉為 REST',
  'effect-retire-tuck-active':'可退場 1 張其他角色，裏向放在此角色下方並 ACTIVE','end-hand-limit':'手牌上限',
- 'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
+ 'effect-discard':'選擇棄牌','effect-move-self':'選擇移動位置','effect-discard-cost':'支付棄牌成本',
  'effect-may-draw-discard':'選擇是否抽牌並棄牌',
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
@@ -1065,6 +1065,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseGrantNamed':return action.uid===null?'不給予這項能力':'給予 '+name()+' 這個回合的能力';
   case 'choosePrintedApImpact':return action.uid===null?'不給予衝擊':'給予 '+name()+' 衝擊 1';
   case 'chooseSelfFront':return action.slot===null?'不移動到前線':'移動到前線 '+(action.slot+1);
+  case 'chooseMoveSelf':{
+   const line=action.line==='energy'?'能源線':'前線';
+   const replace=action.replaceUid?'，並將原位置的卡放入移除區':'';
+   return '將這張卡移動到'+line+' '+(action.slot+1)+replace;
+  }
   case 'chooseDifferentField':return action.uid===null?'不從場外登場':'以休息狀態登場 '+name()+suffix();
   case 'chooseOwnFieldRetire':return action.uid===null?'不退場場域':'退場場域 '+name();
   case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
