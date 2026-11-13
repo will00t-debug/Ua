@@ -69,8 +69,9 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
    button.classList.toggle('v2-life-selected',chosen);
    button.setAttribute('aria-pressed',String(chosen));
   }
-  if(lifeInstruction)lifeInstruction.textContent=
-   '進攻方選擇 '+requiredLifeCards+' 張血區：'+selectedLifeIndices.size+'/'+requiredLifeCards;
+  if(lifeInstruction)lifeInstruction.textContent=requiredLifeCards>1?
+   '請選擇要攻擊的生命卡 '+selectedLifeIndices.size+'/'+requiredLifeCards:
+   '請選擇要攻擊的生命卡';
   if(lifeConfirm)lifeConfirm.disabled=selectedLifeIndices.size!==requiredLifeCards||!matchedLifeAction();
  }
  function selectLifeIndex(index){
@@ -112,8 +113,8 @@ export function mountDesktopBattlefield({arena,header,log,view,selectedUid,el,
    ...lifeCards
   );
   if(targets){
-   lifeInstruction=el('p',{class:'v2-life-instruction',text:
-    '進攻方選擇 '+requiredLifeCards+' 張血區：0/'+requiredLifeCards});
+   lifeInstruction=el('p',{class:'v2-life-instruction',text:requiredLifeCards>1?
+    '請選擇要攻擊的生命卡 0/'+requiredLifeCards:'請選擇要攻擊的生命卡'});
    lifeTools.push(lifeInstruction);
    if(requiredLifeCards>1){
     lifeConfirm=el('button',{type:'button',class:'v2-life-confirm',disabled:true,

@@ -225,7 +225,7 @@ try {
  report.defaults = {policy: defaults.policy, hybridChecked: defaults.hybridChecked, startChecked: defaults.startChecked, previewChecked: defaults.previewChecked, stored: defaults.stored};
  if (defaults.hybridChecked !== false || defaults.previewChecked !== false || defaults.startChecked !== false) report.problems.push('default-not-off');
  if (defaults.policy === POLICY || defaults.policy === 'hybrid-main-v1' || defaults.policy === 'ai-v3-beam-1') report.problems.push('default-policy');
- if (!defaults.script.includes('20261112policysync1')) report.problems.push('cache');
+ if (!defaults.script.includes('20261112attackdiag1')) report.problems.push('cache');
  await evalPage(`(() => { localStorage.setItem('ua-hybrid-main-v1','1'); localStorage.removeItem('ua-hybrid-start-hard-v1'); location.reload(); })()`);
  const kept = await waitFor(page => page.ready && page.policy === 'hybrid-main-v1' && page.startChecked === false, 'old hybrid stays', 40);
  if (kept.policy !== 'hybrid-main-v1' || kept.startChecked !== false) report.problems.push('migrated-old-hybrid');
@@ -473,7 +473,7 @@ try {
   if (game.pendingHard) report.problems.push(game.deck + '-pending-hard');
   if (game.rejected) report.problems.push(game.deck + '-rejected');
   if (game.timeouts) report.problems.push(game.deck + '-timeout');
-  if (!game.script.includes('20261112policysync1')) report.problems.push(game.deck + '-cache');
+  if (!game.script.includes('20261112attackdiag1')) report.problems.push(game.deck + '-cache');
   if (game.policy !== POLICY) report.problems.push(game.deck + '-policy');
  }
  if (!only) {

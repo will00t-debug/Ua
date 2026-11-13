@@ -2787,13 +2787,13 @@ function continueEffectQueue(pack,s){
    if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
    else s.pending={kind:'retirement-order',player:owner,entries:job.entries};
   }else if(job.op==='battleImpactDamage')
-   applyImpactHits(pack,s,job.defender,job.amount);
+   applyImpactHits(pack,s,job.defender,job.amount,impactAttackerHint(job));
   else if(job.op==='advanceAfterAttack')advanceAfterEnd(pack,s,owner);
    else if(job.op==='additionalBattleDamage'){
     // The previous life trigger (if any) has already fully resolved.
     // Never collapse separate LIFE cards into one draw or bypass triggers.
     if(job.remaining>1)s.effectQueue.unshift({...job,remaining:job.remaining-1});
-    damage(pack,s,job.defender);
+    applyImpactHits(pack,s,job.defender,true,impactAttackerHint(job));
    }
   else if(job.op==='chooseOne'){
    // A mandatory printed choose-one may be conditional on HOW the physical
@@ -5481,6 +5481,8 @@ function continueEffectQueue(pack,s){
     const impact=hits>0&&!impactNullActive(pack,s,defender)&&
      !standingImpactNull(pack,s,defender)&&
      !defenderNullifiesImpact(pack,s,defender)?impactFlag(hits):false;
+    if(s.attackerChoosesLife===true&&impact)
+     s.impactAttacker={uid:attacker.uid,stamp:attacker.fieldEntryStamp};
     const replacement=applyBattleLoss(pack,s,1-owner,'front',defenderSlot,attacker,{postImpact:impact});
     // An earned draw belongs to the real attacking victor, never direct
     // LIFE. Preserve the existing onRetire-before-followup effect ordering.
@@ -5489,7 +5491,7 @@ function continueEffectQueue(pack,s){
     queueAttackWinRecovery(pack,s,owner,attacker);
     queueAttackWinDraw(pack,s,owner,attacker);
     queueAttackWinLook(pack,s,owner,attacker);
-    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner,impact);
+    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner,impact,attacker);
    }else{
     grantBattleWinToOtherOwn(pack,s,1-owner,defender,'blocker');
     const lost=location(s,owner,job.sourceUid);
@@ -5529,9 +5531,11 @@ function continueEffectQueue(pack,s){
     const defenderSlot=s.players[1-owner].front.findIndex(c=>c?.uid===job.targetUid);
     const impact=impactOnBattleWin(pack,s,attacker)>0&&
      !defenderNullifiesImpact(pack,s,defender);
+    if(s.attackerChoosesLife===true&&impact)
+     s.impactAttacker={uid:attacker.uid,stamp:attacker.fieldEntryStamp};
     const replacement=applyBattleLoss(pack,s,1-owner,'front',defenderSlot,attacker,{postImpact:impact});
     queueAttackWinRecovery(pack,s,owner,attacker);
-    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner);
+    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner,1,attacker);
    }else grantBattleWinToOtherOwn(pack,s,1-owner,defender,'blocker');
    consumeFirstAttackKit(s,attacker);
    queueFrontNamedAttackEnd(pack,s,attacker);
@@ -7506,6 +7510,8 @@ function finishBlockedBattle(pack,s,attacker,blocker,blockerOwner,slot){
     !standingImpactNull(pack,s,blocker)&&
     !liveUntilNextOwnStart(s,blocker,'impactNullUntil')&&
     !defenderNullifiesImpact(pack,s,blocker)?impactFlag(hits):false;
+   if(s.attackerChoosesLife===true&&impact)
+    s.impactAttacker={uid:attacker.uid,stamp:attacker.fieldEntryStamp};
    const earnedSelfDraw=hasCurrentBattleGrant(s,attacker,'attackWinDrawGranted');
    const replacement=applyBattleLoss(pack,s,blockerOwner,'front',slot,attacker,{postImpact:impact});
    if(earnedSelfDraw)s.effectQueue.splice(retirementJobsInserted,0,
@@ -7513,7 +7519,7 @@ function finishBlockedBattle(pack,s,attacker,blocker,blockerOwner,slot){
    queueAttackWinRecovery(pack,s,s.active,attacker);
    queueAttackWinDraw(pack,s,s.active,attacker);
    queueAttackWinLook(pack,s,s.active,attacker);
-   if(impact&&!replacement)queueImpactAfterRetirement(pack,s,blockerOwner,impact);
+   if(impact&&!replacement)queueImpactAfterRetirement(pack,s,blockerOwner,impact,attacker);
    consumeFirstAttackKit(s,attacker);
   }else{
    // Official Q34 (2023-03-17): blocker BP strictly greater means the blocker
@@ -7792,21 +7798,61 @@ function impactHitCount(value){
  if(Number.isInteger(value)&&value>1)return value;
  return 0;
 }
-function applyImpactHits(pack,s,defender,hits){
+function impactAttackerHint(job){
+ return typeof job?.attackerUid==='string'&&Number.isInteger(job.attackerStamp)?
+  {uid:job.attackerUid,stamp:job.attackerStamp}:null;
+}
+function impactAttackerRef(attacker){
+ return attacker&&typeof attacker.uid==='string'&&Number.isInteger(attacker.fieldEntryStamp)?
+  {uid:attacker.uid,stamp:attacker.fieldEntryStamp}:
+  attacker&&typeof attacker.uid==='string'&&Number.isInteger(attacker.stamp)?
+   {uid:attacker.uid,stamp:attacker.stamp}:null;
+}
+// The attacking player chooses the physical LIFE cards. A delayed retirement
+// still names the character that won the battle; if that body has left, the
+// only remaining attacker on the active side is used. Two or more unnamed
+// attackers cannot be guessed.
+function impactLifeAttacker(s,defender,hinted){
+ if(s.phase!=='attack'||s.active!==1-defender)return null;
+ const hint=impactAttackerRef(hinted)||impactAttackerRef(s.impactAttacker);
+ const hintedLive=hint&&liveAttacker(s,hint.uid);
+ if(hintedLive&&hintedLive.fieldEntryStamp===hint.stamp)return hintedLive;
+ const bodies=[...s.players[s.active].front,...s.players[s.active].energy]
+  .filter(c=>c&&(s.attacksByUid[c.uid]||0)>=1);
+ return bodies.length===1?bodies[0]:null;
+}
+function applyImpactHits(pack,s,defender,hits,hinted){
  const n=impactHitCount(hits);
  if(n<1)return;
+ // Official life targeting is opt-in. Impact is one battle-damage check per
+ // hit, so a trigger on the first card still finishes before the next hit.
+ // DAMAGE 2 stays a single simultaneous choice in the unblocked path.
+ const attacker=s.attackerChoosesLife===true&&
+  !s.lifeRevealBatch&&!s.players.some(p=>p.lifeRevealed.length)?
+  impactLifeAttacker(s,defender,hinted):null;
+ delete s.impactAttacker;
+ if(attacker&&s.players[defender].life.length>0){
+  if(n>1)s.effectQueue.unshift({op:'additionalBattleDamage',owner:defender,
+   defender,remaining:n-1,attackerUid:attacker.uid,attackerStamp:attacker.fieldEntryStamp});
+  s.pending={kind:'attack-life-target',player:s.active,defender,
+   attackerUid:attacker.uid,attackerStamp:attacker.fieldEntryStamp,
+   count:1,suppressActive:false};
+  return;
+ }
  if(n>1)s.effectQueue.unshift({op:'additionalBattleDamage',owner:defender,
   defender,remaining:n-1});
  damage(pack,s,defender);
 }
-function queueImpactAfterRetirement(pack,s,defender,hits=1){
+function queueImpactAfterRetirement(pack,s,defender,hits=1,attacker=null){
  // Q74: printed 退場時 finishes before Impact's life check.
  const n=impactHitCount(hits);
  if(n<1)return;
- const job=n>1?{op:'battleImpactDamage',owner:defender,defender,amount:n}:
-  {op:'battleImpactDamage',owner:defender,defender};
+ const ref=impactAttackerRef(attacker);
+ const named=ref?{attackerUid:ref.uid,attackerStamp:ref.stamp}:{};
+ const job=n>1?{op:'battleImpactDamage',owner:defender,defender,amount:n,...named}:
+  {op:'battleImpactDamage',owner:defender,defender,...named};
  if(retirementJobsInserted>0)s.effectQueue.splice(retirementJobsInserted,0,job);
- else applyImpactHits(pack,s,defender,n>1?n:true);
+ else applyImpactHits(pack,s,defender,n>1?n:true,ref);
 }
 // Full lines are allowed, but replacement is a mandatory explicit choice.
 // The displaced card (and any Raid layers) goes to REMOVAL, not sideline.
@@ -24575,6 +24621,13 @@ export function assertUniversalMatch(pack,s){
  }
  if(s.attackerChoosesLife!==undefined&&typeof s.attackerChoosesLife!=='boolean')
   throw Error('Invalid LIFE targeting mode');
+ if(s.impactAttacker!==undefined){
+  const a=s.impactAttacker,live=a&&liveAttacker(s,a.uid);
+  if(s.attackerChoosesLife!==true||s.phase!=='attack'||!a||typeof a.uid!=='string'||
+   !a.uid.startsWith(s.active+'-')||!Number.isInteger(a.stamp)||a.stamp<1||
+   Object.keys(a).length!==2||(live&&live.fieldEntryStamp!==a.stamp))
+   throw Error('Invalid deferred impact attacker');
+ }
  if(s.pending?.kind==='attack-life-target'){
   if(s.attackerChoosesLife!==true)throw Error('Inactive LIFE targeting mode');
   const q=s.pending,attacker=liveAttacker(s,q.attackerUid);

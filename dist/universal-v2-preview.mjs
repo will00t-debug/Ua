@@ -31,9 +31,10 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {policyDifficulty} from './universal-v2/ai-policy-label.mjs';
-import {chooseAiV3Action,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
+import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
 import {HYBRID_MAIN_POLICY,HYBRID_START_HARD_POLICY} from './universal-v2/ai-v3/hybrid-main.mjs';
 import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from './universal-v2/ai-v3/worker-entry.mjs';
+import {formatAttackDiagnostic,publicAttackDiagnostic,publicSearchLines} from './universal-v2/ai-v3/attack-diagnostic.mjs';
 import {auditFixtureName} from './universal-v2/audit-entry.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
@@ -1931,6 +1932,10 @@ function driveAi(){
 const SEARCH_PREVIEW_KEY='ua-ai-v3-preview';
 const HYBRID_MAIN_KEY='ua-hybrid-main-v1';
 const HYBRID_START_KEY='ua-hybrid-start-hard-v1';
+const ATTACK_DIAGNOSTIC_KEY='ua-attack-diagnostic';
+function attackDiagnoseOn(){
+ try{return localStorage.getItem(ATTACK_DIAGNOSTIC_KEY)==='1';}catch{return false;}
+}
 function searchPreviewOn(){
  try{return localStorage.getItem(SEARCH_PREVIEW_KEY)==='1';}catch{return false;}
 }
@@ -2030,6 +2035,15 @@ function searchWorkerHandle(){
   return searchWorker;
  }catch{return null;}
 }
+function finishedSearch(trace){
+ return {
+  reason:trace?.reason||null,
+  fallbackKind:trace?.fallbackKind||null,
+  nodesUsed:Number.isFinite(trace?.nodesUsed)?trace.nodesUsed:null,
+  ms:Number.isFinite(trace?.ms)?trace.ms:null,
+  lines:publicSearchLines(trace)
+ };
+}
 function commitAiAction(choice,reason){
  const previous=app.state;
  const replayIndex=app.replay.actions.length;
@@ -2071,7 +2085,7 @@ function driveSearchPreview(sequence,policy=null){
    ...(hybrid?{policy}:{})
   });
   let settled=false;
-  const finish=(action,reason)=>{
+  const finish=(action,reason,search=null)=>{
    if(settled||sequence!==app.sequence||stateVersion!==app.aiStateVersion)return;
    settled=true;
    if(reason==='worker-timeout'){
@@ -2090,7 +2104,17 @@ function driveSearchPreview(sequence,policy=null){
     const choice=accepted.ok?accepted.action:chooseProgressSafeAiAction(app.packs,app.state,{
      difficulty:'hard',actionsInPhase:app.aiPhaseCount
     }).action;
+    const decision=app.state;
+    let diagnostic=null;
+    if(attackDiagnoseOn()&&decision?.phase==='attack'&&!decision.pending){
+     try{
+      diagnostic=publicAttackDiagnostic(app.packs,decision,actor,{
+       action:choice,route:search?.route||null,search,fallback:reason
+      });
+     }catch{diagnostic=null;}
+    }
     commitAiAction(choice,accepted.ok?reason:reason||accepted.reason);
+    if(diagnostic)pushHistory(formatAttackDiagnostic(diagnostic));
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
     maybeFinishCoach();
     saveBattleProgress();
@@ -2115,11 +2139,11 @@ function driveSearchPreview(sequence,policy=null){
     if(hybrid){
      const local=request?handleAiV3Request(request):null;
      rememberAiRoute(local);
-     finish(local?local.action:null,request?null:'no-world');
+     finish(local?local.action:null,request?null:'no-world',local?.search||null);
     }
     else{
      const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
-     finish(action,null);
+     finish(action,null,finishedSearch(lastAiV3Trace()));
     }
    }catch{finish(null,hybrid?'hybrid-failed':'search-failed');}
    return;
@@ -2129,7 +2153,7 @@ function driveSearchPreview(sequence,policy=null){
    if(hybrid){finish(null,'worker-timeout');return;}
    try{
     const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
-    finish(action,'worker-timeout');
+    finish(action,'worker-timeout',finishedSearch(lastAiV3Trace()));
    }catch{finish(null,'worker-timeout');}
   },700);
   const onMessage=event=>{
@@ -2139,8 +2163,8 @@ function driveSearchPreview(sequence,policy=null){
    worker.removeEventListener('message',onMessage);
    rememberAiRoute(data);
    const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal},{...data,legal:undefined});
-   if(!accepted.ok){finish(null,accepted.reason);return;}
-   finish(accepted.action,null);
+   if(!accepted.ok){finish(null,accepted.reason,data.search||null);return;}
+   finish(accepted.action,null,data.search||null);
   };
   worker.addEventListener('message',onMessage);
   try{worker.postMessage(request);}
@@ -2150,7 +2174,7 @@ function driveSearchPreview(sequence,policy=null){
    try{
     const local=handleAiV3Request(request);
     rememberAiRoute(local);
-    finish(local.action,null);
+    finish(local.action,null,local.search||null);
    }catch{finish(null,'worker-post');}
   }
  };
@@ -2582,6 +2606,13 @@ if(!IS_BATTLE_PAGE){
   hybridStart.addEventListener('change',()=>{
    if(hybridStart.checked){setHybridMain(false);setSearchPreview(false);}
    setHybridStart(hybridStart.checked);
+  });
+ }
+ const attackDiagnostic=$('attack-diagnostic');
+ if(attackDiagnostic){
+  attackDiagnostic.checked=attackDiagnoseOn();
+  attackDiagnostic.addEventListener('change',()=>{
+   try{localStorage.setItem(ATTACK_DIAGNOSTIC_KEY,attackDiagnostic.checked?'1':'0');}catch{}
   });
  }
  $('use-ai-v3')?.addEventListener('click',()=>{useOriginalAiV3();markLobbyChanged();});
