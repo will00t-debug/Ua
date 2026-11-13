@@ -21,6 +21,20 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
  'IMC-1-002':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',energy:1}]},
   notes:'登場時、必要エナジー1以下の他の自分のキャラを1枚手札へ。無ければ自分を戻す。'},
+ 'IMC-1-003':{ready:true,implementation:'dsl',
+  passiveBonuses:[{bp:1000,impactNull:true,condition:{kind:'selfOnField',turn:'opponent'}}],
+  mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{
+   kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',excludeSelf:true,minBp:5000}},
+  altMainAbility:{op:'frontOnceActiveSelf',frontOnly:true,oncePerTurn:true,minSelfBp:5000},
+  notes:'對方回合，這張卡在場上 BP+1000，並得到衝擊無效。自己回合兩者都沒有。第一段每回合一次：其他自己角色目前 BP≥5000 才讓自己 BP+1000。第二段是另一句起動，只在前線、自己目前 BP≥5000、每回合一次，把自己變成活動。兩段的使用紀錄分開。活動觸發是卡表。'},
+ 'IMC-1-004':{ready:true,implementation:'dsl',
+  moveTriggers:[{
+   when:{from:'hand',to:'outside',sourceTrait:'BEYOND THE STARLIGHT',
+    reasons:['payment','own-effect']},
+   then:[{op:'buffOwnField',filter:{field:'trait',value:'BEYOND THE STARLIGHT'},
+    bp:1000,optional:true,excludeSelf:false}]
+  }],
+  notes:'自己的 BEYOND THE STARLIGHT 效果把手牌的這張卡放到場外時，最多選 1 張自己場上的同特徵，本回合 BP+1000。支付或效果都算。沒有這個特徵的來源、以及其他區域的移動，不觸發。抽牌觸發是卡表。'},
  'IMC-1-005':{ready:true,implementation:'dsl',activeExtraEnergy:1,
   notes:'活動時，這張卡的發生能量 +1（黃）。休息時不加。前線不產生能量。沒有生命觸發。'},
  'IMC-1-006':{ready:true,implementation:'dsl',emptyOwnFieldHandEnergyDiscount:2,
@@ -34,6 +48,13 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
  'IMC-1-008':{ready:true,implementation:'dsl',
   mainAbility:{op:'restSelfBuffOther',bp:1000,trait:'BEYOND THE STARLIGHT'},
   notes:'休息自己，強制選另一張 BEYOND THE STARLIGHT，本回合 BP+1000。來源與對象分開。沒有每回合一次。抽牌觸發是卡表。'},
+ 'IMC-1-009':{ready:true,implementation:'dsl',enterAlwaysActive:true,
+  effects:{onPlay:[
+   {op:'draw',count:1},
+   {op:'deployOwnHandRestOrRaid',type:'character',color:'yellow',maxEnergy:3,ap:1,
+    max:1,optional:true,names:null,trait:'BEYOND THE STARLIGHT',energyPenalty:1000}
+  ]},
+  notes:'活動登場。抽 1。手牌中黃、費用 3 以下、AP 1、BEYOND THE STARLIGHT，最多 1 張，休息登場或突襲。成功後，這張卡本回合 BP 減少實際登場那張的印刷必要能源×1000。跳過不扣。活動觸發是卡表。'},
  'IMC-1-010':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:7,
    filter:{field:'colorAndType',value:'yellow:field'}}]},
