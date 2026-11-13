@@ -14,20 +14,20 @@ import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs'
 
 const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059',
  'IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-066','IMC-1-067','IMC-1-069',
- 'IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-081',
+ 'IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-079','IMC-1-080','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087',
  'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095',
  'IMC-1-096','IMC-1-098','IMC-1-099','IMC-1-100'];
 const OPEN=['IMC-1-051','IMC-1-057','IMC-1-061',
  'IMC-1-064','IMC-1-065','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074',
- 'IMC-1-075','IMC-1-078','IMC-1-080','IMC-1-093','IMC-1-094','IMC-1-097'];
+ 'IMC-1-075','IMC-1-078','IMC-1-093','IMC-1-094','IMC-1-097'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
 delete counts['IMC-1-098'];
 for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-062','IMC-1-063',
- 'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
- 'IMC-1-092','IMC-1-095','IMC-1-099','IMC-1-100'])counts[id]=1;
+ 'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-080','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
+ 'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-099','IMC-1-100'])counts[id]=1;
 
 function kit(usePack,useCounts){
  const act=(s,action)=>dispatchUniversalAction(usePack,s,action);
@@ -89,7 +89,7 @@ function kit(usePack,useCounts){
 }
 const game=kit(pack,counts);
 
-test('thirty-five complete cards enter the pack and fifteen stay out',()=>{
+test('thirty-six complete cards enter the pack and fourteen stay out',()=>{
  for(const id of READY)assert.equal(pack.cards[id].id,id);
  assert.equal(IMC_CARDS_051_100.every(card=>card.battleReady===false),true);
  for(const id of READY)assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
@@ -1879,4 +1879,124 @@ test('099 retires at 2000 or 5000 and buffs only at four printed energy-2 Starry
  const blocked=game.hold(s,0,'IMC-1-099');
  assert.equal(game.legal(s).some(a=>a.type==='event'&&a.uid===blocked.uid),false);
  assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('080 is active only from the energy line when three energy-2 Starry cards are on the field, then must buff another character',()=>{
+ const card=pack.cards['IMC-1-080'];
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.effects.onPlay[0].op,'activeSelfIf');
+ assert.equal(card.effects.onPlay[0].line,'energy');
+ assert.equal(card.effects.onPlay[0].when.excludeSelf,false);
+ assert.equal(card.effects.onPlay[0].when.printedEnergy,2);
+ assert.equal(card.effects.onPlay[0].when.min,3);
+ assert.equal(card.mainAbility.op,'restSelfBuffOther');
+ assert.equal(card.mainAbility.bp,1000);
+ assert.equal(card.mainAbility.oncePerTurn,undefined);
+ let s=game.fresh(8000);
+ game.seat(s,0,'IMC-1-082','energy',0);
+ game.seat(s,0,'IMC-1-086','energy',1);
+ s=game.reach(s,'main');
+ s=game.play(s,'IMC-1-080','energy');
+ const self=s.players[0].energy.find(c=>c?.cardId==='IMC-1-080');
+ assert.equal(self.ready,true);
+
+ let front=game.fresh(8001);
+ game.seat(front,0,'IMC-1-082','energy',0);
+ game.seat(front,0,'IMC-1-086','energy',1);
+ front=game.reach(front,'main');
+ front=game.play(front,'IMC-1-080','front');
+ assert.equal(front.players[0].front.find(c=>c?.cardId==='IMC-1-080').ready,false);
+
+ let short=game.fresh(8002);
+ game.seat(short,0,'IMC-1-082','energy',0);
+ game.seat(short,0,'IMC-1-081','energy',1);
+ short=game.reach(short,'main');
+ short=game.play(short,'IMC-1-080','energy');
+ assert.equal(short.players[0].energy.find(c=>c?.cardId==='IMC-1-080').ready,false);
+
+ s=game.fresh(8003);
+ game.seat(s,0,'IMC-1-082','energy',0);
+ game.seat(s,0,'IMC-1-086','energy',1);
+ const ally=game.seat(s,0,'IMC-1-076','front',0);
+ s=game.reach(s,'main');
+ s=game.play(s,'IMC-1-080','energy');
+ const actor=s.players[0].energy.find(c=>c?.cardId==='IMC-1-080');
+ assert.equal(actor.ready,true);
+ s=game.act(s,{type:'activate',uid:actor.uid,mode:'selfRestBuff'});
+ assert.equal(findCard(s,0,actor.uid).ready,false);
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.equal(s.pending.optional,false);
+ assert.equal(s.pending.excludeSelf,true);
+ assert.equal(s.pending.bp,1000);
+ assert.equal(s.pending.choices.includes(actor.uid),false);
+ assert.ok(s.pending.choices.includes(ally.uid));
+ assert.equal(game.legal(s).some(a=>a.type==='chooseOwnBuff'&&a.uid===null),false);
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseOwnBuff',uid:null}),/not currently legal/);
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseOwnBuff',uid:actor.uid}),/not currently legal/);
+ s=game.act(s,{type:'chooseOwnBuff',uid:ally.uid});
+ assert.equal(universalBp(pack,s,findCard(s,0,ally.uid)),pack.cards['IMC-1-076'].bp+1000);
+ assert.equal(universalBp(pack,s,findCard(s,0,actor.uid)),2000);
+ findCard(s,0,actor.uid).ready=true;
+ assert.ok(game.legal(s).some(a=>a.type==='activate'&&a.uid===actor.uid&&a.mode==='selfRestBuff'));
+
+ const alone=game.fresh(8004);
+ const only=game.seat(alone,0,'IMC-1-080','energy',0);
+ const quiet=game.reach(alone,'main');
+ assert.equal(game.legal(quiet).some(a=>a.type==='activate'&&a.uid===only.uid),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('the remaining round-6 sentences stay unfinished and reject the nearest existing shape',()=>{
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0].op,'recoverOutsideFiltered');
+ for(const id of ['IMC-1-057','IMC-1-061','IMC-1-064','IMC-1-065','IMC-1-068',
+  'IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-078','IMC-1-093','IMC-1-094','IMC-1-097'])
+  assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
+ const text=JSON.stringify(IMC_REQUESTS_051_100);
+ const needles={
+  'IMC-1-051':'休息並使這張退場',
+  'IMC-1-057':'敗北後一回合一次',
+  'IMC-1-061':'攻擊階段結束時這張回手',
+  'IMC-1-064':'場上特徵張數',
+  'IMC-1-065':'D 組負責程式',
+  'IMC-1-068':'最多 1 個',
+  'IMC-1-072':'可選把 1 張手牌特徵放到場外',
+  'IMC-1-073':'取代抽 1',
+  'IMC-1-074':'最多 2 張',
+  'IMC-1-075':'只寫休息登場',
+  'IMC-1-078':'D 組寫程式',
+  'IMC-1-093':'另外給衝擊',
+  'IMC-1-094':'只接受退場時機',
+  'IMC-1-097':'Q2250'
+ };
+ for(const [id,needle] of Object.entries(needles))assert.match(text,new RegExp(id+'[\\s\\S]*'+needle));
+ const reject=(extra,pattern)=>assert.throws(()=>createUniversalPack({id:'probe',version:'gap',cards:[
+  bare('GAP','缺口',{implementation:'dsl',...extra})]}),pattern);
+ reject({effects:{onPlay:[{op:'conditionalBounceOrRetireByOwnOutsideNames',bp:5000,min:3,trait:'LiPPS'}]}},
+  /invalid conditional named OUTSIDE effect/);
+ reject({effects:{onPlay:[{op:'choosePrintedOptions',max:1,optional:true,options:[
+  {id:'retire',label:'退場',then:[{op:'draw',count:2}]},
+  {id:'front',label:'退場對手',then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
+ ]}]}} ,/invalid printed option set/);
+ reject({effects:{onPlay:[{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+  excludeSelf:false,trait:TRAIT,min:9},then:[{op:'takeTopHandRestOutside',count:2}],
+  else:[{op:'draw',count:1}]}]}},/invalid live-condition follow-up/);
+ reject({effects:{onAttack:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+  bp:1000,optional:true,excludeSelf:false,count:2}]}},/invalid own-field BP choice/);
+ reject({effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',optional:true,energy:1,trait:TRAIT,
+  then:[{op:'deployOwnHandRest',type:'character',color:'red',energy:1,ap:null,max:1,trait:TRAIT}]}]}},
+  /optional energy bounce follow-up must recover/);
+ reject({effects:{onPlay:[{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+  excludeSelf:false,trait:TRAIT,min:9},then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}},
+  /invalid live-condition follow-up/);
+ reject({effects:{onAttack:[{op:'deployOwnRaidBaseRest',optional:true}]}},
+  /raid-base rest entry is a character onRetire effect/);
+ reject({attackWinDraw:{count:1,condition:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+  excludeSelf:false,trait:TRAIT,min:9}}},/invalid attacking-victory distinct-name draw/);
+ reject({attackLoseReadyTurn:true},/invalid attack-loss ready turn/);
+ reject({mainAbility:{op:'restLeaveRevealRetire',oncePerName:true}},/unsupported main action ability/);
+ reject({type:'field',bp:0,mainAbility:{op:'fieldRestRetireThen',then:[
+  {op:'draw',count:1},
+  {op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:1}
+ ]}},/unsupported main action ability/);
 });

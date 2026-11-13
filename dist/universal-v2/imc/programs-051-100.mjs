@@ -81,6 +81,13 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  }),
  'IMC-1-079':play([{op:'deployOwnHandRest',type:'character',color:'red',
   energy:2,ap:null,max:1,trait:'Starry-Go-Round'}]),
+ 'IMC-1-080':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{onPlay:[{op:'activeSelfIf',line:'energy',when:{
+   kind:'ownPrintedTraitCount',turn:'any',zone:'field',excludeSelf:false,
+   trait:'Starry-Go-Round',min:3,printedEnergy:2}}]},
+  mainAbility:{op:'restSelfBuffOther',bp:1000}
+ }),
  'IMC-1-081':Object.freeze({
   ready:true,implementation:'dsl',
   passiveBonuses:[{bp:1500,condition:{
