@@ -44,13 +44,6 @@ export const IMC_REQUESTS_051_100=[
   proposal:'攻擊勝利的可選抽 1，門檻是 9 種特徵卡名。可選手牌特徵進場外，做到才活動自身。072 先不標 ready。'
  },
  {
-  cardId:'IMC-1-073',
-  sentence:'フロントLに登場できない。9種類以上なら上から2枚見て1枚まで手札、残りは場外。そうでないなら1枚引く。',
-  existingOps:['frontForbidden','takeTopHandRestOutside','draw','ownDistinctTraitNames'],
-  whyNotEnough:'frontForbidden 能禁止上前線與移到前線。takeTopHandRestOutside 是看 2 張、最多 1 張入手、其餘場外，但 ifLiveThen 的後續不接受它。Q2247：9 種時自己算，而且是取代抽 1，不是多抽。',
-  proposal:'不能上前線。9 種（含自己）時改為看 2 張、最多 1 張任意卡入手、其餘場外；否則抽 1。073 先不標 ready。'
- },
- {
   cardId:'IMC-1-074',
   sentence:'インパクトを無効にする。9種類以上なら自分のキャラを2枚まで、このターン中 BP+1000。',
   existingOps:['impactNull','buffOwnField','ownDistinctTraitNames'],
