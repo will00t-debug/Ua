@@ -21,10 +21,10 @@ const byId=Object.fromEntries(IMC_CARDS_001_050.map(c=>[c.id,c]));
 const READY=['IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010',
  'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
  'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-030','IMC-1-031',
- 'IMC-1-032','IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045',
+ 'IMC-1-032','IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-037','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045',
  'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050'];
 const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012','IMC-1-016',
- 'IMC-1-029','IMC-1-037','IMC-1-039','IMC-1-043'];
+ 'IMC-1-029','IMC-1-039','IMC-1-043'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
  'IMC-1-002','IMC-1-035','IMC-1-040','IMC-1-038','IMC-1-034','IMC-1-047','IMC-1-018',
  'IMC-1-022','IMC-1-041','IMC-1-044'];
@@ -2665,17 +2665,15 @@ test('IMC-1-032 draws, then one choice adds BP and impact only to 城ヶ崎 莉�
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
-test('IMC-1-037 draws only after a character effect; the AP impact shape is shared',()=>{
- const row=openRequest('IMC-1-037');
- assert.equal(row.whyNotEnough.includes('grantSelfImpactThisTurn'),true);
- assert.equal(IMC_PROGRAMS_001_050['IMC-1-037'],undefined);
- createUniversalPack({id:'probe',version:'imc-b4-gap-PAY',cards:[probeFace({
-  id:'PAY',name:'付費',effects:{onAttack:[{op:'optionalPayApThen',ap:1,optional:true,
-   then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}})]});
- const rest={op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,trait:'星'};
+test('IMC-1-037 draws only after a character effect and gains impact after paying 1 AP',()=>{
+ assert.equal(pack.cards['IMC-1-037'].effects.onPlay[0].entry,'ownCharacter');
+ assert.equal(pack.cards['IMC-1-037'].effects.onAttack[0].then[0].op,'grantSelfImpactThisTurn');
+ const rest={op:'deployOwnHandRest',type:'character',color:'blue',energy:4,ap:1,max:1,
+  trait:'ガールズ・イン・ザ・フロンティア'};
+ const printed=IMC_PROGRAMS_001_050['IMC-1-037'];
  const cards=[
-  probeFace({id:'NATS',name:'夏樹',color:'blue',energy:2,traits:['星'],
-   effects:{onPlay:[{op:'draw',count:1,entry:'ownCharacter'}]}}),
+  probeFace({id:'IMC-1-037',name:'木村 夏樹',color:'blue',energy:4,ap:1,bp:4000,gen:1,
+   traits:['ガールズ・イン・ザ・フロンティア'],effects:printed.effects}),
   probeFace({id:'HERO',name:'角色',color:'blue',effects:{onPlay:[rest]}}),
   probeFace({id:'EVENT',name:'事件',type:'event',bp:0,energy:0,effects:{onPlay:[rest]}}),
   probeFace({id:'GEN',name:'青',color:'blue',energy:0,gen:1})
@@ -2683,36 +2681,75 @@ test('IMC-1-037 draws only after a character effect; the AP impact shape is shar
  const character=probeOpen(cards,37001);
  let s=character.s;
  probeFuel(s);
- probeHold(s,'NATS');
+ probeHold(s,'IMC-1-037');
  const before=s.players[0].deck.length;
  [s]=probePlay(character.pack,s,'HERO');
- const brought=s.players[0].hand.find(c=>c.cardId==='NATS');
+ const brought=s.players[0].hand.find(c=>c.cardId==='IMC-1-037');
  s=dispatchUniversalAction(character.pack,s,legalUniversalActions(character.pack,s)
   .find(a=>a.type==='chooseHandRest'&&a.uid===brought.uid&&a.line==='front'));
  assert.equal(s.players[0].deck.length,before-1);
+ assert.equal(s.pending,null);
  const paid=probeOpen(cards,37002);
  s=paid.s;
- probeFuel(s,2);
- probeSeat(s,0,'GEN','energy',0,false);
- probeSeat(s,0,'GEN','energy',1,false);
- probeHold(s,'NATS');
+ probeFuel(s,4);
+ for(let i=0;i<4;i++)probeSeat(s,0,'GEN','energy',i,false);
+ probeHold(s,'IMC-1-037');
  const quiet=s.players[0].deck.length;
- [s]=probePlay(paid.pack,s,'NATS');
+ let self;
+ [s,self]=probePlay(paid.pack,s,'IMC-1-037');
  assert.equal(s.players[0].deck.length,quiet);
  assert.equal(s.pending,null);
+ assert.equal(universalImpact(paid.pack,s,self),0);
  const event=probeOpen(cards,37003);
  s=event.s;
  probeFuel(s);
- probeHold(s,'NATS');
- const cast=probeHold(s,'EVENT');
+ probeHold(s,'IMC-1-037');
+ const castCard=probeHold(s,'EVENT');
  const held=s.players[0].deck.length;
  s=dispatchUniversalAction(event.pack,s,legalUniversalActions(event.pack,s)
-  .find(a=>a.type==='event'&&a.uid===cast.uid));
- const again=s.players[0].hand.find(c=>c.cardId==='NATS');
+  .find(a=>a.type==='event'&&a.uid===castCard.uid));
+ const again=s.players[0].hand.find(c=>c.cardId==='IMC-1-037');
  s=dispatchUniversalAction(event.pack,s,legalUniversalActions(event.pack,s)
   .find(a=>a.type==='chooseHandRest'&&a.uid===again.uid&&a.line==='energy'));
  assert.equal(s.players[0].deck.length,held);
  assert.equal(assertUniversalMatch(event.pack,s),true);
+
+ s=reach(fresh(37010,{'IMC-1-037':1,'IMC-1-034':4}),'main');
+ fuel(s,['IMC-1-034','IMC-1-034','IMC-1-034','IMC-1-034']);
+ hold(s,'IMC-1-037');
+ const deck=s.players[0].deck.length;
+ [s,self]=play(s,'IMC-1-037');
+ assert.equal(s.players[0].deck.length,deck);
+ assert.equal(live(s,self.uid).ready,false);
+ s=yieldTurn(s);
+ s=yieldTurn(s);
+ assert.equal(s.active,0);
+ s=reach(s,'attack');
+ assert.equal(live(s,self.uid).ready,true);
+ readyAp(s,1);
+ s=strike(s,self.uid);
+ assert.equal(s.pending.kind,'effect-optional-pay-ap');
+ const points=s.players[0].apCards.filter(c=>c.ready).length;
+ const declined=act(structuredClone(s),{type:'chooseOptionalPayAp',mode:'skip'});
+ assert.equal(universalImpact(pack,declined,live(declined,self.uid)),0);
+ assert.equal(declined.players[0].apCards.filter(c=>c.ready).length,points);
+ assert.notEqual(declined.pending?.kind,'effect-optional-pay-ap');
+ s=act(s,{type:'chooseOptionalPayAp',mode:'pay'});
+ assert.equal(universalImpact(pack,s,live(s,self.uid)),1);
+ assert.equal(s.players[0].apCards.filter(c=>c.ready).length,points-1);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=reach(fresh(37011,{'IMC-1-037':1,'IMC-1-034':4}),'main');
+ fuel(s,['IMC-1-034','IMC-1-034','IMC-1-034','IMC-1-034']);
+ [s,self]=play(s,'IMC-1-037');
+ s=yieldTurn(s);
+ s=yieldTurn(s);
+ s=reach(s,'attack');
+ readyAp(s,0);
+ s=strike(s,self.uid);
+ assert.notEqual(s.pending?.kind,'effect-optional-pay-ap');
+ assert.equal(universalImpact(pack,s,live(s,self.uid)),0);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
 
 test('IMC-1-009 program stays absent; an unfiltered REST entry does not cut BP',()=>{

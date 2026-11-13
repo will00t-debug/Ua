@@ -136,6 +136,13 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
  'IMC-1-036':{ready:true,implementation:'dsl',
   passiveBonuses:[{condition:{kind:'ownEffectCharacterEntryOrRaidThisTurn',turn:'own'},bp:1000}],
   notes:'自己回合，本回合自己的效果讓角色登場或效果突襲時 BP+1000。引擎把登場含突襲。付費登場、付費突襲與生命觸發不是 own-effect。對方回合不加。印刷是「自分の効果」，事件或場地效果讓角色登場也算。'},
+ 'IMC-1-037':{ready:true,implementation:'dsl',
+  effects:{
+   onPlay:[{op:'draw',count:1,entry:'ownCharacter'}],
+   onAttack:[{op:'optionalPayApThen',ap:1,optional:true,
+    then:[{op:'grantSelfImpactThisTurn',amount:1}]}]
+  },
+  notes:'自己的角色效果登場才抽 1。攻擊時可付 1AP，付成才得本回合衝擊 1。沒有可付的 AP 不開選擇、不給衝擊。跳過不付、不給。活動觸發是卡表。'},
  'IMC-1-038':{ready:true,implementation:'dsl',
   effects:{onRetire:[{op:'draw',count:1}]},
   notes:'退場時に1枚引く。手札へ戻す、リムーブは退場ではない。アクティブトリガーはカード表。'},
