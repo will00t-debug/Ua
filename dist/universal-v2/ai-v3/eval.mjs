@@ -1,7 +1,7 @@
 // Static position value. It deliberately does not look a turn ahead:
 // a front body is not worth more than developing energy. The beam search
 // has to see the opponent's turn before a blocker outranks that energy.
-import {effectiveHandRequiredEnergy,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
+import {dispatchUniversalAction,effectiveHandRequiredEnergy,legalUniversalActions,universalAttackDamage,universalBp,universalEnergy,universalEnergyByColor,universalImpact,universalImpactNull} from '../engine.mjs';
 import {fieldRestrictions,originalEffectsDisabled} from '../continuous-states.mjs';
 import {aot2Warhammer} from '../aot2-continuous.mjs';
 import {packOf} from './observation.mjs';
@@ -859,4 +859,138 @@ export function evaluate(pack,state,actor,strategy){
  const done=terminalValue(state,actor);
  if(done!==null)return done;
  return positionValue(pack,state,actor,strategy)+battleWindowDelta(pack,state,actor);
+}
+// One removed card has to earn its place. The card is already outside, so the
+// hand plan in keepScore does not apply in full: only a share of it is a
+// later payment. A one-point BP tick does not spend a raid piece. Retiring a
+// body, or taking away a hit that life cannot afford, still does. This is
+// the finished payment, not the score of a single pick.
+function outsideFuel(pack,state,actor,card){
+ return Math.max(1,keepScore(pack,state,actor,card)*0.2);
+}
+function act(pack,cursor,action){
+ return dispatchUniversalAction(pack,cursor,action,{actor:cursor.pending?.player??cursor.active});
+}
+function readyBp(pack,state,actor){
+ let best=0;
+ for(const card of state.players?.[actor]?.front||[]){
+  if(!card?.ready)continue;
+  const bp=Number(universalBp(pack,state,card))||0;
+  if(bp>best)best=bp;
+ }
+ return best;
+}
+// Declining the block pays attack damage. A strictly higher ready body can
+// win that battle, so the hit is not forced. Impact is the cost of losing
+// the block, which this line does not have to accept.
+function forcedAttackLoss(pack,state,actor){
+ if(!state||state.status!=='playing'||state.pending)return 0;
+ const foe=1-actor;
+ const blockers=(state.players?.[actor]?.front||[]).filter(card=>card?.ready)
+  .map(card=>({bp:Number(universalBp(pack,state,card))||0,used:false}));
+ const attackers=(state.players?.[foe]?.front||[]).filter(card=>card?.ready)
+  .sort((a,b)=>(Number(universalBp(pack,state,b))||0)-(Number(universalBp(pack,state,a))||0));
+ let loss=0;
+ for(const attacker of attackers){
+  const bp=Number(universalBp(pack,state,attacker))||0;
+  const stop=blockers.find(blocker=>!blocker.used&&blocker.bp>bp);
+  if(stop){stop.used=true;continue;}
+  loss+=Math.max(0,Number(universalAttackDamage(pack,state,attacker))||0);
+ }
+ return loss;
+}
+function threatenedLife(pack,state,actor){
+ const loss=forcedAttackLoss(pack,state,actor);
+ if(loss<=0)return 0;
+ const have=state.players?.[actor]?.life?.length||0;
+ return lifeScore(Math.max(0,have-loss))-lifeScore(have);
+}
+function removalStep(pack,state,k,ranked,already){
+ const legal=legalUniversalActions(pack,state);
+ if(k<=0)return legal.find(action=>action.type==='chooseRemoveOutside'&&action.mode==='skip')||null;
+ if(k===already)return legal.find(action=>action.type==='chooseRemoveOutside'&&action.mode==='done')||null;
+ return legal.find(action=>action.type==='chooseRemoveOutside'&&action.mode==='pick'&&action.uid===ranked[0]?.uid)||null;
+}
+function projectScale(pack,state,actor,k,targetUid,ranked,already){
+ const first=removalStep(pack,state,k,ranked,already);
+ if(!first)return null;
+ const copy=structuredClone(state);
+ copy.pending=null;
+ const drop=new Set(state.pending?.selected||[]);
+ for(const card of ranked.slice(0,Math.max(0,k-already)))drop.add(card.uid);
+ let spent=0;
+ const mine=copy.players[actor];
+ mine.outside=(mine.outside||[]).filter(card=>{
+  if(!drop.has(card.uid))return true;
+  spent+=outsideFuel(pack,state,actor,card);
+  return false;
+ });
+ if(k>0&&targetUid){
+  const foe=copy.players[1-actor];
+  for(const line of ['front','energy']){
+   const slot=(foe[line]||[]).findIndex(card=>card?.uid===targetUid);
+   if(slot<0)continue;
+   const card=foe[line][slot];
+   card.buffs=[...(card.buffs||[]),{bp:-k*state.pending.scalePer,untilTurn:copy.turn}];
+   if((Number(universalBp(pack,copy,card))||0)<=0)foe[line][slot]=null;
+  }
+ }
+ const score=evaluate(pack,copy,actor)+threatenedLife(pack,copy,actor)-spent;
+ return {score,first,k};
+}
+// The removal window pays one card at a time, then chooses one enemy. A
+// two-step search never sees the tenth payment, so it can stop while the
+// threatened body is still on the field. This reads the finished payment:
+// how many of the cheapest outside cards, and which one enemy, leave the
+// best final position. It does not name a card.
+function scaledTargetAction(pack,state,actor){
+ let best=null;
+ for(const action of legalUniversalActions(pack,state)){
+  if(action.type!=='chooseTarget')continue;
+  let cursor=null;
+  try{cursor=act(pack,state,action);}catch{continue;}
+  if(cursor.pending)continue;
+  const score=evaluate(pack,cursor,actor)+threatenedLife(pack,cursor,actor);
+  if(!best||score>best.score+1e-9)best={score,action};
+ }
+ return best?.action||null;
+}
+export function scaledOutsideAction(pack,state,actor){
+ const pending=state?.pending;
+ if((pending?.player??state?.active)!==actor)return null;
+ if(pending?.kind==='effect-target')return scaledTargetAction(pack,state,actor);
+ if(pending?.kind!=='effect-remove-outside'||pending.any!==true||!(pending.scalePer>0))return null;
+ const selected=pending.selected||[];
+ const already=selected.length;
+ const chosen=new Set(selected);
+ const ranked=(state.players?.[actor]?.outside||[])
+  .filter(card=>pending.choices?.includes(card.uid)&&!chosen.has(card.uid))
+  .sort((a,b)=>keepScore(pack,state,actor,a)-keepScore(pack,state,actor,b)||(a.uid<b.uid?-1:1));
+ const max=already+ranked.length;
+ const per=pending.scalePer;
+ const ours=readyBp(pack,state,actor);
+ const steps=new Set([already]);
+ if(!already)steps.add(0);
+ steps.add(max);
+ for(const card of state.players?.[1-actor]?.front||[]){
+  if(!card)continue;
+  let bp=0;
+  try{bp=Number(universalBp(pack,state,card))||0;}catch{continue;}
+  if(bp<=0)continue;
+  steps.add(Math.min(max,Math.ceil(bp/per)));
+  if(ours>0&&bp>=ours)steps.add(Math.min(max,Math.ceil((bp-ours+1)/per)));
+ }
+ let best=null;
+ const foes=(state.players?.[1-actor]?.front||[]).filter(Boolean).map(card=>card.uid);
+ for(const k of steps){
+  if(k<already||k>max)continue;
+  const menus=k<=0||!foes.length?[null]:foes;
+  for(const target of menus){
+   let row=null;
+   try{row=projectScale(pack,state,actor,k,target,ranked,already);}catch{row=null;}
+   if(!row)continue;
+   if(!best||row.score>best.score+1e-9||(Math.abs(row.score-best.score)<=1e-9&&row.k<best.k))best=row;
+  }
+ }
+ return best?.first||null;
 }

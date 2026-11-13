@@ -75,6 +75,10 @@ export function normalizeFactors(asked){
  // The public battle ledger already compares BP, Impact and Impact null.
  // Off unless asked. Named variants and the other switches do not turn it on.
  if(asked.publicBlock===true)factors.publicBlock=true;
+ // A scaled outside payment is one finished choice: how many cards leave,
+ // then which enemy that total reduces. Off unless asked. Named variants
+ // and the other switches do not turn it on.
+ if(asked.scaleOutside===true)factors.scaleOutside=true;
  return factors;
 }
 export function bindVariant(variant,fn,factors){
