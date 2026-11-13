@@ -12,11 +12,11 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPublicView,universalBp,universalCardEnergy,
  universalImpactNull,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-1-052','MHA-1-057','MHA-1-058','MHA-1-061','MHA-1-064','MHA-1-065',
+const READY=['MHA-1-052','MHA-1-053','MHA-1-057','MHA-1-058','MHA-1-061','MHA-1-064','MHA-1-065',
  'MHA-1-067','MHA-1-068','MHA-1-069','MHA-1-073','MHA-1-075','MHA-1-077','MHA-1-078',
  'MHA-1-079','MHA-1-080','MHA-1-082','MHA-1-083','MHA-1-086','MHA-1-088','MHA-1-092',
  'MHA-1-094','MHA-1-097','MHA-1-098'];
-const OPEN=['MHA-1-051','MHA-1-053','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059',
+const OPEN=['MHA-1-051','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059',
  'MHA-1-060','MHA-1-062','MHA-1-063','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072',
  'MHA-1-074','MHA-1-076','MHA-1-081','MHA-1-084','MHA-1-085','MHA-1-087','MHA-1-089',
  'MHA-1-090','MHA-1-091','MHA-1-093','MHA-1-095','MHA-1-096','MHA-1-099','MHA-1-100'];
@@ -171,6 +171,75 @@ test('MHA-1-052 lowers one opposing character of BP 1000 or more, on either line
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
+test('MHA-1-053 must choose this-turn BP or impact on attack, and only the chosen one resolves',()=>{
+ let s=game.fresh(5301);
+ const self=game.seat(s,0,'MHA-1-053','front',0);
+ const low=game.seat(s,1,'MHA-1-078','front',0);
+ s=game.reach(s,'main');
+ assert.equal(game.legal(s).some(a=>a.type==='chooseEffectMode'),false);
+ s=game.reach(s,'attack');
+ s=game.act(s,{type:'attack',uid:self.uid});
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ assert.equal(s.pending.optional,false);
+ assert.deepEqual(s.pending.options.map(o=>o.id),['bp','impact']);
+ assert.equal(game.legal(s).some(a=>a.mode==='skip'),false);
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseEffectMode',mode:'skip'}),/not currently legal|Invalid|Illegal/);
+ const buffed=game.act(structuredClone(s),{type:'chooseEffectMode',mode:'bp'});
+ const boosted=buffed.players[0].front.find(c=>c.uid===self.uid);
+ assert.equal(universalBp(pack,buffed,boosted),4000);
+ assert.equal(boosted.impactGranted,undefined);
+ assert.equal(buffed.pending.kind,'block');
+ const life=buffed.players[1].life.length;
+ const won=game.act(buffed,{type:'chooseBlock',uid:low.uid});
+ assert.equal(won.players[1].life.length,life);
+ assert.ok(won.players[1].outside.some(c=>c.uid===low.uid));
+ assert.equal(won.pending,null);
+ assert.equal(assertUniversalMatch(pack,won),true);
+
+ s=game.fresh(5302);
+ const hitter=game.seat(s,0,'MHA-1-053','front',0);
+ const wall=game.seat(s,1,'MHA-1-078','front',0);
+ const tall=game.seat(s,1,'MHA-1-080','front',1);
+ s=game.reach(s,'attack');
+ s=game.act(s,{type:'attack',uid:hitter.uid});
+ const impacted=game.act(s,{type:'chooseEffectMode',mode:'impact'});
+ const bearer=impacted.players[0].front.find(c=>c.uid===hitter.uid);
+ assert.equal(universalBp(pack,impacted,bearer),3000);
+ assert.equal(bearer.impactGranted.amount,1);
+ assert.equal(bearer.impactGranted.turn,impacted.turn);
+ const before=impacted.players[1].life.length;
+ const hit=game.act(impacted,{type:'chooseBlock',uid:wall.uid});
+ assert.equal(hit.players[1].life.length,before-1);
+ assert.equal(hit.players[1].front.some(c=>c?.uid===tall.uid),true);
+ assert.equal(assertUniversalMatch(pack,hit)===true||hit.pending?.kind==='life-trigger',true);
+
+ s=game.fresh(5303);
+ const loser=game.seat(s,0,'MHA-1-053','front',0);
+ const bigger=game.seat(s,1,'MHA-1-080','front',0);
+ s=game.reach(s,'attack');
+ s=game.act(s,{type:'attack',uid:loser.uid});
+ s=game.act(s,{type:'chooseEffectMode',mode:'impact'});
+ const lives=s.players[1].life.length;
+ s=game.act(s,{type:'chooseBlock',uid:bigger.uid});
+ assert.equal(s.players[1].life.length,lives);
+ assert.equal(s.players[0].front.some(c=>c?.uid===loser.uid),true);
+ assert.equal(s.players[1].front.some(c=>c?.uid===bigger.uid),true);
+
+ s=game.fresh(5304);
+ const climber=game.seat(s,0,'MHA-1-053','front',0);
+ const rival=game.seat(s,1,'MHA-1-080','front',0);
+ s=game.reach(s,'attack');
+ s=game.act(s,{type:'attack',uid:climber.uid});
+ s=game.act(s,{type:'chooseEffectMode',mode:'bp'});
+ const still=s.players[1].life.length;
+ s=game.act(s,{type:'chooseBlock',uid:rival.uid});
+ assert.equal(universalBp(pack,s,s.players[0].front.find(c=>c.uid===climber.uid)),4000);
+ assert.equal(s.players[1].life.length,still);
+ assert.ok(s.players[1].outside.some(c=>c.uid===rival.uid));
+ assert.equal(s.players[0].front.find(c=>c.uid===climber.uid).impactGranted,undefined);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
 test('MHA-1-057, 078, 082 and 088 have no printed effect and enter rested',()=>{
  for(const [id,color] of [['MHA-1-057','green'],['MHA-1-078','red'],['MHA-1-082','red'],['MHA-1-088','red']]){
   let s=game.fresh(5700+Number(id.slice(-3)));
@@ -189,6 +258,7 @@ test('MHA-1-058 draws one and puts one hand card outside, and an empty deck stil
  let s=game.fresh(5801);
  game.fuel(s,0,['MHA-1-057']);
  s=game.reach(s,'main');
+ game.hold(s,0,'MHA-1-058');
  const hand=s.players[0].hand.length;
  s=game.play(s,'MHA-1-058');
  assert.equal(s.pending.kind,'effect-discard');
