@@ -383,7 +383,8 @@ function shareDeadline(now,deadline,mine,laterNodes){
 // root has not compared the attack. The public ledger is the same BP,
 // Impact and Impact-null result the finished window already uses. It
 // applies only while a legal block action is still unscored. A window
-// whose every action was scored keeps that comparison.
+// whose every action was scored keeps that comparison. The sealed worker
+// leaves this switch off, so an attack clock is not sent through it.
 function publicBlockChoice(pack,state,actor,legal,scored){
  if(searchFactors().publicBlock!==true||state?.pending?.kind!=='block')return null;
  const covered=action=>scored.some(row=>row&&row.executed!==false&&same(row.action,action));
