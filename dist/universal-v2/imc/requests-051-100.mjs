@@ -44,13 +44,6 @@ export const IMC_REQUESTS_051_100=[
   proposal:'不能上前線。9 種（含自己）時改為看 2 張、最多 1 張任意卡入手、其餘場外；否則抽 1。073 先不標 ready。'
  },
  {
-  cardId:'IMC-1-074',
-  sentence:'インパクトを無効にする。9種類以上なら自分のキャラを2枚まで、このターン中 BP+1000。',
-  existingOps:['impactNull','buffOwnField','ownDistinctTraitNames'],
-  whyNotEnough:'impactNull 能做衝擊無效。buffOwnField 是最多 1 張。這句在攻擊時、9 種（含自己）才可選最多 2 張自己場上角色，這個回合 BP+1000。',
-  proposal:'衝擊無效之外，攻擊時依 9 種卡名，可選最多 2 張自己場上角色加攻。074 先不標 ready。'
- },
- {
   cardId:'IMC-1-075',
   sentence:'必要エナジーが1以下の自分の場の特徴を1枚手札に戻してもよい。そうした場合、手札から同じ條件をレストで登場させる。',
   existingOps:['bounceOwnOtherUnderEnergy','deployOwnHandRest'],
