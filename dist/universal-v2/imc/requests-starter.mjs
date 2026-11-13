@@ -6,8 +6,8 @@ export const IMC_REQUESTS_STARTER=[
   cardId:'IMC-1-107',
   sentence:'啟動主要：將這張場域休息並退場，抽 1 張，然後可將手牌中 1 張能源需求 3 以下、消耗 AP 1 的紅色角色以休息狀態登場。',
   existingOps:['fieldRestRetireThen','deployOwnHandSpecial'],
-  whyNotEnough:'fieldRestRetireThen 的後續只接受場外登場、抽 2 棄 1，或強制的手牌休息／突襲登場。deployOwnHandSpecial 能表示紅、AP 1、能源 3 以下、休息，但不能接在場域休息退場抽 1 之後。',
-  proposal:'場域休息並退場後抽 1，再可選最多 1 張符合顏色、AP 與能源上限的手牌角色，以休息狀態登場。'
+  whyNotEnough:'fieldRestRetireThen 的後續只能是一句：場外登場、抽 2 棄 1，或強制的手牌休息／突襲登場。107 要先休息並退場，抽 1，再可選最多 1 張紅色、印刷必要能源 3 以下、消耗 AP 1 的角色，而且只休息登場。deployOwnHandSpecial 能表示那張手牌，但不能接在抽 1 後面，也不能拿掉突襲。',
+  proposal:'場域休息並退場後抽 1，再可選最多 1 張符合顏色、消耗 AP 與能源上限的手牌角色，只以休息狀態登場。補齊前 107 不標 ready。'
  },
  {
   cardId:'IMC-1-112',
