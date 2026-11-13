@@ -13,7 +13,8 @@ const PROGRAM_KEYS=new Set([
  'printedImpact','nameAliases','step','run','notes',
  'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
  'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
- 'passiveBonuses','handApDiscountWhileAllNames','bpGainFollow','ownEffectPresenceBp'
+ 'passiveBonuses','handApDiscountWhileAllNames','bpGainFollow','ownEffectPresenceBp',
+ 'altMainAbility','moveTriggers','attackLoseActiveOnce'
 ]);
 export const IMC_OFFICIAL_MATCH_CLOSED='偶像大師灰姑娘女孩尚未開放正式對戰。';
 
@@ -51,7 +52,8 @@ export function imcBattleCard(card,program){
  for(const key of ['effects','mainAbility','nameActive','triggerEffect','raidName','impactNull','printedImpact','nameAliases','step',
   'activeExtraEnergy','ownTurnBp','opponentTurnBp','emptyOwnFieldHandEnergyDiscount',
   'enterAlwaysActive','readyOnBlockCount','unblockedAttack','frontForbidden','blockBpRestriction',
-  'passiveBonuses','handApDiscountWhileAllNames','bpGainFollow','ownEffectPresenceBp']){
+  'passiveBonuses','handApDiscountWhileAllNames','bpGainFollow','ownEffectPresenceBp',
+  'altMainAbility','moveTriggers','attackLoseActiveOnce']){
   if(program[key]!==undefined)extra[key]=program[key];
  }
  return {

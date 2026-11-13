@@ -1085,13 +1085,17 @@ function verifyProgram(program,path){
     const namesOk=e.names===null||(Array.isArray(e.names)&&e.names.length>=1&&
      e.names.length<=6&&new Set(e.names).size===e.names.length&&
      e.names.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80));
+    const handExtras=Number(e.requireAffordableEnergy===true)+
+     Number(e.trait!==undefined)+Number(e.energyPenalty!==undefined);
     if(e.type!=='character'||
      !['blue','yellow','green','purple','red'].includes(e.color)||
      !integer(e.maxEnergy)||e.maxEnergy>30||!integer(e.ap,1)||e.ap>3||
      !integer(e.max,1)||e.max>4||(e.optional!==true&&e.optional!==false)||!namesOk||
      (e.requireAffordableEnergy!==undefined&&e.requireAffordableEnergy!==true)||
-     Object.keys(e).length!==8+Number(e.requireAffordableEnergy===true)||
-     Object.keys(e).some(k=>!['op','type','color','maxEnergy','ap','max','optional','names','requireAffordableEnergy'].includes(k)))
+     (e.trait!==undefined&&(typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80))||
+     (e.energyPenalty!==undefined&&e.energyPenalty!==1000)||
+     Object.keys(e).length!==8+handExtras||
+     Object.keys(e).some(k=>!['op','type','color','maxEnergy','ap','max','optional','names','requireAffordableEnergy','trait','energyPenalty'].includes(k)))
      throw Error(path+'['+i+'] invalid hand REST or Raid entry');
    }
    if(e.op==='raidOwnHandNamed'){
@@ -1126,7 +1130,7 @@ function verifyProgram(program,path){
      e.then.length<1||e.then.length>3||
      Object.keys(e).length!==4+Number(e.when!==undefined)+Number(e.ownTurn===true)+Number(attackOnce)+Number(firstOwn)||
      Object.keys(e).some(k=>!['op','ap','optional','then','when','ownTurn','oncePerAttackTurn','firstOwnAttack'].includes(k))||
-     e.then.some(x=>!['draw','deployOwnHandRestOrRaid','raidOwnHandNamed','deployOutsideNameRest','revealTopHandOrAffordableNamed','chooseOne','bounceOppFrontOneUnderBp','bottomThenRetireFront','recoverOutsideFiltered'].includes(x?.op)&&
+     e.then.some(x=>!['draw','deployOwnHandRestOrRaid','raidOwnHandNamed','deployOutsideNameRest','revealTopHandOrAffordableNamed','chooseOne','bounceOppFrontOneUnderBp','bottomThenRetireFront','recoverOutsideFiltered','grantSelfImpactThisTurn'].includes(x?.op)&&
       !paidRetire(x)))
      throw Error(path+'['+i+'] invalid optional AP payment');
     verifyProgram(e.then,path+'['+i+'].then');
@@ -1925,12 +1929,14 @@ function verifyProgram(program,path){
      Object.keys(follow).length===2&&
      Object.keys(follow).every(k=>k==='op'||k==='amount');
     const sniper=follow?.op==='grantSelfSniperThisTurn'&&Object.keys(follow).length===1;
+    const topTake=follow?.op==='takeTopHandRestOutside'&&follow.count===2&&
+     Object.keys(follow).length===2;
     const grant=follow?.op==='grantTraitActiveEntryThisTurn'&&
      typeof follow.trait==='string'&&!!follow.trait.trim()&&follow.trait.length<=80&&
      (follow.scope==='next'||follow.scope==='all')&&Object.keys(follow).length===3&&
      Object.keys(follow).every(k=>k==='op'||k==='trait'||k==='scope');
     return ['buffOwnField','enemyFrontAllBpDown','recoverAp'].includes(follow?.op)||
-     liveDraw||liveDiscard||liveActive||sniper||grant||reveal||raidDamage;
+     liveDraw||liveDiscard||liveActive||sniper||grant||reveal||raidDamage||topTake;
    };
    const follow=e.then?.[0];
    const elseStep=e.else?.[0];
@@ -2048,9 +2054,14 @@ function verifyProgram(program,path){
      e.bonusNames.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80)&&
      new Set(e.bonusNames).size===e.bonusNames.length&&
      integer(e.bonusBp,e.bp+1)&&e.bonusBp<=5000))||
-    Object.keys(e).some(k=>!['op','filter','also','bp','optional','excludeSelf','zone','bonusNames','bonusBp','attackEndRetire'].includes(k));
+    (e.impactIfName!==undefined&&(typeof e.impactIfName!=='string'||!e.impactIfName.trim()||
+     e.impactIfName.length>80||e.impactIf!==undefined||e.bonusNames!==undefined))||
+    (e.impactIf!==undefined&&(e.bonusNames!==undefined||e.impactIfName!==undefined))||
+    (e.max!==undefined&&!(e.max===2&&e.optional===true))||
+    Object.keys(e).some(k=>!['op','filter','also','bp','optional','excludeSelf','zone','bonusNames','bonusBp','attackEndRetire','impactIfName','impactIf','max'].includes(k));
    if(headBad&&v2Bad)
     throw Error(path+'['+i+'] invalid own-field BP choice');
+   if(!v2Bad&&e.impactIf)assertLiveCondition(e.impactIf,path+'['+i+'].impactIf');
   }
   if(e.op==='buffOwnCurrentBp'&&(
    !integer(e.minBp,500)||e.minBp>50000||e.minBp%500!==0||
@@ -4446,7 +4457,7 @@ function normalize(card,packId){
    Object.keys(x).some(k=>!['when','then'].includes(k))||
    !x.when||typeof x.when!=='object'||Array.isArray(x.when)||
    !Array.isArray(x.then)||!x.then.length||x.then.length>3||
-   x.then.some(job=>!['draw','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','activeOwnNamed','buffAnyCharacter','grantNamedFieldProtection'].includes(job?.op))))
+   x.then.some(job=>!['draw','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','activeOwnNamed','buffAnyCharacter','grantNamedFieldProtection','buffOwnField'].includes(job?.op))))
   throw Error(card.id+' invalid source-qualified moved-card trigger');
  for(const [i,entry] of moveTriggers.entries()){
   const when=validateCompletedMoveCondition(entry.when);
@@ -4464,7 +4475,15 @@ function normalize(card,packId){
    Array.isArray(when.reasons)&&when.reasons.length>=1&&
    when.reasons.every(r=>['payment','own-effect'].includes(r))&&
    Object.keys(when).every(k=>['from','to','reasons','sourceName','sourceColor','sourceOnField'].includes(k));
-  if(!revealedBottom&&!namedOutside)
+  const traitOutside=when.from==='hand'&&when.to==='outside'&&
+   typeof when.sourceTrait==='string'&&!!when.sourceTrait.trim()&&
+   when.sourceName===undefined&&when.sourceOnField===undefined&&
+   when.sourceColor===undefined&&
+   Array.isArray(when.reasons)&&when.reasons.length>=1&&when.reasons.length<=2&&
+   when.reasons.every((reason,index)=>['payment','own-effect'].includes(reason)&&
+    when.reasons.indexOf(reason)===index)&&
+   Object.keys(when).every(k=>['from','to','reasons','sourceTrait'].includes(k));
+  if(!revealedBottom&&!namedOutside&&!traitOutside)
    throw Error(card.id+' unsupported moved-card source condition');
   if(revealedBottom&&(entry.then.length!==1||entry.then[0]?.op!=='buffAnyCharacter'))
    throw Error(card.id+' revealed bottom trigger may only buff one character');
@@ -4734,11 +4753,11 @@ function normalize(card,packId){
   !integer(playLifeAtMost,0)||playLifeAtMost>20))
   throw Error(card.id+' invalid life total use limit');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  mainAbility||nameActive||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.forceHigherBpBlock||card.attackLoseReadyTurn||card.facedownDoubleAttack||card.facedownMoveBanned||card.mayOutsideToDeckTop||card.outsideGroupEnergy||card.frontEnergyWhen||card.handEnergyWhileName||card.doubleAttackIfFrontNames||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||card.alsoEvent||card.handBpMayWhileFront||
+  mainAbility||nameActive||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.forceHigherBpBlock||card.attackLoseReadyTurn||card.altMainAbility||card.attackLoseActiveOnce||card.facedownDoubleAttack||card.facedownMoveBanned||card.mayOutsideToDeckTop||card.outsideGroupEnergy||card.frontEnergyWhen||card.handEnergyWhileName||card.doubleAttackIfFrontNames||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||card.alsoEvent||card.handBpMayWhileFront||
   card.printedImpact||card.raidImpact||card.raidImpactNull||card.printedAttackDamage||card.raidAttackDamage||card.raidBp||card.raidOwnTurnImpact||card.raidExtraDamage||card.raidOppEffectUntargetable||card.readyOnAttackCount||card.readyOnBlockCount||
 card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.raidOwnTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||card.playRequiresAllNames||card.attackEndRestPrintedBp||card.facedownUnderStanding||outsideEventHandEnergyDiscount||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidTrait||card.attackEnergyMin||card.blockEnergyMin||unblockedAttack||printedMains||card.playRequiresNameOrRaidBase||card.handUseOncePerName||card.playApCutOnChosenName||card.removeUnlessUsed||card.removedMain||card.bpPerOwnRaid||card.extraRaidHost||card.mutualPlayBan||playLifeAtMost!==null||card.handFieldEnergyAura||card.chainRaidOnly||card.chainRaidNoSameTurn||card.chainRaidUnique||card.oppEffectUntargetable||card.energyLineForbidden||card.aotHook||card.attackDeckAtMost||card.attackRequiresName||card.ownTurnImpact||card.noOwnFieldTypeHandDiscount||card.facedownUnderEnergy||card.retireCapture||card.raidAttach||card.raidWitness||card.unblockedRestFront||card.substituteOppRetire||attackAid||fieldTraitEnergyDiscount||energyAttackSwap||frontRetireHandGrant||card.battleRemoveInstead||card.energyForbidden||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName||card.handApDiscountWhileAllNames||card.energyLineAttackEndSwap||card.attackWinActiveOnce||card.opponentRestImmune||card.opponentBounceImmune||card.battleLoseToHand||card.grantStepToOtherOwn||card.step||card.ownEffectMoveOnly||card.ownEffectActiveOnly||card.attackLoseStay||card.outsideRaidReturn||outsideEventPairEnergyDiscount||card.frontRemovedUse||card.playRequiresAnyNames||card.frontNameRemoveShield||card.lifeToHandDoubleAttack||card.girlNameUnblockedDraw||card.lineShiftOutsideMove||card.frontPrintedEnergyAura||card.frontAttackEndNamedSwap||card.attackWinLookBuff||card.otherHandEnergyDiscount||card.anyLineShiftOutsideMove||card.kmrHook||card.kmr2Hook||card.csmHook||card.raidNameAlsoIncludes||card.raidOnlyEntry||card.raidNameIncludes||card.raidHostNameIncludes||card.bpGainFollow||card.ownEffectPresenceBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!nameActiveOk&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&!card.forceHigherBpBlock&&!card.attackLoseReadyTurn&&!card.facedownDoubleAttack&&!card.facedownMoveBanned&&!card.mayOutsideToDeckTop&&!card.outsideGroupEnergy&&!card.frontEnergyWhen&&!card.handEnergyWhileName&&!card.doubleAttackIfFrontNames&&
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!nameActiveOk&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&!card.forceHigherBpBlock&&!card.attackLoseReadyTurn&&!card.altMainAbility&&!card.attackLoseActiveOnce&&!card.facedownDoubleAttack&&!card.facedownMoveBanned&&!card.mayOutsideToDeckTop&&!card.outsideGroupEnergy&&!card.frontEnergyWhen&&!card.handEnergyWhileName&&!card.doubleAttackIfFrontNames&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&!card.alsoEvent&&!card.handBpMayWhileFront&&
   !card.printedImpact&&!card.raidImpact&&!card.raidImpactNull&&!card.printedAttackDamage&&!card.raidAttackDamage&&!card.raidBp&&!card.raidOwnTurnImpact&&!card.raidExtraDamage&&!card.raidOppEffectUntargetable&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
 !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.raidOwnTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!attackWinDraw&&!emptyOwnFieldHandEnergyDiscount&&!outsideEventHandEnergyDiscount&&!card.facedownUnderStanding&&!card.attackEndRestPrintedBp&&!card.playRequiresAllNames&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidTrait&&!card.attackEnergyMin&&!card.blockEnergyMin&&!unblockedAttack&&!printedMains&&!card.playRequiresNameOrRaidBase&&!card.handUseOncePerName&&!card.playApCutOnChosenName&&!card.removeUnlessUsed&&!card.removedMain&&!card.bpPerOwnRaid&&!card.extraRaidHost&&!card.mutualPlayBan&&playLifeAtMost===null&&!card.handFieldEnergyAura&&!card.chainRaidOnly&&!card.oppEffectUntargetable&&!card.energyLineForbidden&&!card.aotHook&&!card.attackDeckAtMost&&!card.attackRequiresName&&!card.ownTurnImpact&&!card.noOwnFieldTypeHandDiscount&&!card.facedownUnderEnergy&&!card.retireCapture&&!card.raidAttach&&!card.raidWitness&&!card.unblockedRestFront&&!card.substituteOppRetire&&!attackAid&&!fieldTraitEnergyDiscount&&!energyAttackSwap&&!frontRetireHandGrant&&!card.battleRemoveInstead&&!card.energyForbidden&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName&&!card.handApDiscountWhileAllNames&&!card.energyLineAttackEndSwap&&!card.attackWinActiveOnce&&!card.opponentRestImmune&&!card.opponentBounceImmune&&!card.battleLoseToHand&&!card.grantStepToOtherOwn&&!card.step&&!card.ownEffectMoveOnly&&!card.ownEffectActiveOnly&&!card.attackLoseStay&&!card.outsideRaidReturn&&!outsideEventPairEnergyDiscount&&!card.frontRemovedUse&&!card.playRequiresAnyNames&&!card.frontNameRemoveShield&&!card.lifeToHandDoubleAttack&&!card.girlNameUnblockedDraw&&!card.lineShiftOutsideMove&&!card.frontPrintedEnergyAura&&!card.frontAttackEndNamedSwap&&!card.attackWinLookBuff&&!card.otherHandEnergyDiscount&&!card.anyLineShiftOutsideMove&&!card.kmrHook&&!card.kmr2Hook&&!card.csmHook&&!card.raidNameAlsoIncludes&&!card.raidOnlyEntry&&!card.raidNameIncludes&&!card.raidHostNameIncludes&&!card.bpGainFollow&&!card.ownEffectPresenceBp)
@@ -5683,6 +5702,20 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
   card.type!=='character'||card.attackLoseReadyTurn?.bp!==1000||
   Object.keys(card.attackLoseReadyTurn).length!==1))
   throw Error(card.id+' invalid attack-loss ready turn');
+ if(card.attackLoseActiveOnce!==undefined&&(
+  card.type!=='character'||implemented!=='dsl'||
+  card.attackLoseActiveOnce?.once!=='card'||
+  Object.keys(card.attackLoseActiveOnce).length!==1||
+  card.attackLoseReadyTurn!==undefined))
+  throw Error(card.id+' invalid attack-loss active once');
+ if(card.altMainAbility!==undefined){
+  const alt=card.altMainAbility;
+  if(card.type!=='character'||implemented!=='dsl'||
+   alt?.op!=='frontOnceActiveSelf'||alt.frontOnly!==true||alt.oncePerTurn!==true||
+   !integer(alt.minSelfBp,500)||alt.minSelfBp>50000||alt.minSelfBp%500!==0||
+   Object.keys(alt).length!==4)
+   throw Error(card.id+' invalid second front activate');
+ }
  if(card.facedownDoubleAttack!==undefined&&(
   card.type!=='character'||card.facedownDoubleAttack!==true))
   throw Error(card.id+' invalid facedown double attack');
@@ -5860,6 +5893,8 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
    enterAlwaysActive:card.enterAlwaysActive===true,
    forceHigherBpBlock:card.forceHigherBpBlock===true,
    attackLoseReadyTurn:card.attackLoseReadyTurn?Object.freeze({bp:1000}):null,
+   ...(card.attackLoseActiveOnce?{attackLoseActiveOnce:Object.freeze({once:'card'})}:{}),
+   ...(card.altMainAbility?{altMainAbility:Object.freeze({...card.altMainAbility})}:{}),
    facedownDoubleAttack:card.facedownDoubleAttack===true,
    facedownMoveBanned:card.facedownMoveBanned===true,
    mayOutsideToDeckTop:card.mayOutsideToDeckTop===true,

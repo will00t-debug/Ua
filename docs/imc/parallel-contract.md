@@ -313,7 +313,7 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 
 `ap:null` 表示印刷沒有另寫消費 AP。回手可以跳過；跳過就不看手牌。回手成功後，剛回到手牌的那張會出現在休息登場的選項裡。Q2248 用這個順序。沒有合法手牌時仍可跳過。075 印刷能源是 4，自己不符合「能源 1 以下」，場上符合的同伴可以回手。
 
-075 另一句是自己回合、場上與場外的「お願い！シンデレラ」卡名合計 6 種以上才 BP+1000。`ownDistinctTraitNames` 的 `fieldOutside` 能數種類，還沒有接到 BP。這句留在 C 組，075 先不標 ready。
+075 另一句是自己回合、場上與場外的「お願い！シンデレラ」卡名合計 6 種以上才 BP+1000。這句用第七輪公布的 `passiveBonuses`，形狀與已進對戰包的 071 相同，BP 是 1000。075 整張還有回手與休息登場，先不標 ready。
 
 ## 第六輪整合
 
@@ -330,6 +330,120 @@ UA55ST/IMC-1-102 是紅色角色，能量 5、AP 1、BP 4000、產生能量紅 1
 沒有進對戰包，共 24 張：
 
 - B 組 003、004、009、011、012、016、029、032、037、039、043。011、012、039 的句子已經表現得了，程式還沒寫。
-- C 組 051、057、061、064、068、072、073、074、075、093、094、097。051 的回手已在程式裡，`ready` 仍是 false。061 與 075 的登場句已經表現得了。075 的 6 種卡名 BP 還沒有欄位。
+- C 組 051、057、061、064、068、072、073、074、075、093、094、097。051 的回手已在程式裡，`ready` 仍是 false。061 與 075 的登場句已經表現得了。075 的 6 種卡名 BP 用第七輪的 `passiveBonuses`。
 - D 組 107。缺口維持 `fieldRestRetireThen` 與 `deployOwnHandSpecial`。程式用 `restRetireSequence`，抽 1 再接只休息的 `deployOwnHandRest`。還沒寫，不能標 ready。
+
+## 第七輪 A 組共用能力
+
+基準是 PR #409 的 `1b49925c6d48f13e94fddb6811e333979b84a060`。這一輪只加共用引擎、共用契約與共用測試。沒有編寫逐卡程式，沒有把任何一張標成 ready，對戰包仍是 89 張。作品 `playable` 仍是 false。官方預組 `counts` 仍是 null。B、C、D 可以開始寫下面已解鎖的句子。整句測試通過之前，不要標 ready。
+
+`imc-pack.mjs` 的程式欄位新增 `altMainAbility`、`moveTriggers`、`attackLoseActiveOnce`。`passiveBonuses` 原本就能複製。
+
+### 兩段獨立起動
+
+003 的第一段維持 `mainAbility` 的 `onceBuffSelfWhen`。第二段是角色欄位，不放進 `mainAbility`，也不使用 `printedMains`：
+
+```js
+altMainAbility:{op:'frontOnceActiveSelf',frontOnly:true,oncePerTurn:true,minSelfBp:5000}
+```
+
+四個鍵都要在。`minSelfBp` 是 500 到 50000 的 500 倍數，看的是現在 BP。只在前線提供，動作是 `{type:'activate',mode:'altFrontActive'}`。使用紀錄在 `altMainAbilityUsedUids`，與 `mainAbilityUsedUids` 分開。用了第一段，第二段還在；用了第二段，第一段還在。下一回合兩段都回來。能量區、BP 不足、已經用過、效果被失効，都不會提供第二段。突襲後看得見的那張仍在前線，可以起動。`frontOnceProgram` 加 `minSelfBp` 再接 `activeSelf` 仍是非法形，不要改用那句。
+
+### 依來源特徵的手牌進場外
+
+004 的觸發寫在被移動的那張卡的 `moveTriggers`。條件不要寫 `sourceName`，也不要寫 `sourceOnField`：
+
+```js
+moveTriggers:[{
+ when:{from:'hand',to:'outside',sourceTrait:'BEYOND THE STARLIGHT',
+  reasons:['payment','own-effect']},
+ then:[{op:'buffOwnField',filter:{field:'trait',value:'BEYOND THE STARLIGHT'},
+  bp:1000,optional:true,excludeSelf:false}]
+}]
+```
+
+`reasons` 可以是 `payment`、`own-effect`，或兩者各一次。移動發生時，原因卡的印刷特徵會寫進該筆帳本的 `sourceTraits`。原因卡在前線、能量區、結算中、手牌、場外、牌庫、生命或移除區都會留下 `sourceUid` 與 `sourceCardId`。只有原因卡當時真的在前線或能量區，`sourceOnField` 才是 true。自己把自己從場上彈回手牌仍記成在場上，與舊帳本相同。沒有 `sourceTraits` 的舊事件不會新符合特徵條件。`sourceTrait` 與 `sourceOnField` 寫在同一條條件仍會被拒絕。具名的 `sourceName` 觸發沒有改。
+
+### 同一次選擇之後的衝擊
+
+032、093 都用一次 `buffOwnField`。不要拆成兩次選擇。`impactIfName` 與 `impactIf` 只能有一個，而且不能和 `bonusNames` 一起用。
+
+032：
+
+```js
+{op:'buffOwnField',filter:{field:'trait',value:'BEYOND THE STARLIGHT'},
+ bp:2000,optional:true,excludeSelf:true,impactIfName:'城ヶ崎 莉嘉'}
+```
+
+選到的那張印刷卡名相同，才在那張卡得到本回合衝擊 1。選到其他合法角色只加 BP。跳過兩者都沒有。
+
+093 的衝擊看結算當下，不看選擇打開時：
+
+```js
+{op:'buffOwnField',filter:{field:'trait',value:'お願い！シンデレラ'},
+ bp:1000,optional:true,excludeSelf:false,
+ impactIf:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+  excludeSelf:false,trait:'お願い！シンデレラ',min:9}}
+```
+
+條件不成立時，選到的卡仍得到 BP，不得到衝擊。條件成立時，衝擊只在被選的那張。`bonusNames` 與 `buffNameOrTraitImpact` 的舊行為沒有改。
+
+### 支付 AP 成功之後
+
+037 的攻擊句：
+
+```js
+{op:'optionalPayApThen',ap:1,optional:true,
+ then:[{op:'grantSelfImpactThisTurn',amount:1}]}
+```
+
+`grantSelfImpactThisTurn` 現在可以放進這個 `then`。其他 `then` 沒有放寬。沒有休息的 AP 不會開選擇，也不會給衝擊。跳過不付 AP、不給衝擊。付成功才給這張角色本回合衝擊 1。`firstOwnAttack` 與 `oncePerAttackTurn` 的規則沒有改。
+
+### 場上與場外的卡名種類 BP
+
+075 的 BP 不用新欄位。與 070、071 相同：
+
+```js
+passiveBonuses:[{bp:1000,condition:{
+ kind:'ownDistinctTraitNames',turn:'own',zone:'fieldOutside',excludeSelf:false,
+ trait:'お願い！シンデレラ',min:6}}]
+```
+
+種類數不滿 6 是印刷 BP。場上或場外加進第 6 種不同卡名，下一次讀 BP 就加上 1000。少一種立刻回到印刷 BP。同名只算一次。自己要算進去。手牌、牌庫、移除區與突襲底下的層不算。對方回合不加。075 的回手與休息登場仍要 C 組寫完整句，這張先不標 ready。
+
+### 這輪另外解鎖的共用句子
+
+057 敗北後只活動、不加 BP。與 `attackLoseReadyTurn` 不能寫在同一張卡：
+
+```js
+attackLoseActiveOnce:{once:'card'}
+```
+
+自己這張卡在自己的攻擊裡敗北時活動，每回合一次。效果被失効不會活動。`attackLoseReadyTurn` 仍是活動並 BP+1000。
+
+074 的 `buffOwnField` 在 `optional:true` 時可以加 `max:2`。同一次效果最多選兩張不同的合法角色。選了第一張，剩下的選擇裡不會再有它。可以跳過，跳過不加。沒有 `max` 的舊句仍只能選一張。
+
+009 的手牌休息或突襲可以加特徵，並在成功之後依登場那張的印刷能源扣自己的 BP：
+
+```js
+{op:'deployOwnHandRestOrRaid',type:'character',color:'yellow',maxEnergy:3,ap:1,
+ max:1,optional:true,names:null,trait:'BEYOND THE STARLIGHT',energyPenalty:1000}
+```
+
+`trait` 與 `energyPenalty` 都可以單獨省略。`energyPenalty` 只能是 1000，扣的是實際登場或突襲那張卡的印刷必要能源乘 1000，本回合減在效果來源上。跳過不扣。沒有 `trait` 的舊句仍不看特徵、不扣 BP。休息與突襲兩條路都扣。
+
+073 的 `ifLiveThen` 現在可以接 `takeTopHandRestOutside`。`count` 仍只能是 2：
+
+```js
+{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+ excludeSelf:false,trait:'お願い！シンデレラ',min:9},
+ then:[{op:'takeTopHandRestOutside',count:2}],
+ else:[{op:'draw',count:1}]}
+```
+
+9 種成立才查看牌頂 2 張，選 1 張入手，另一張進場外。兩張都是合法選擇，出現在操作者的非公開 `options`，每張帶 `cardId`、卡名與顏色。這個 pending 沒有另附 `inspected`。對手的非公開選擇是 null，公開畫面不含這兩張牌庫 UID。不成立時走 `else` 的抽 1，不查看。
+
+### 這輪還沒有解鎖
+
+016 看牌頂之後依現在 BP 改加攻範圍、029 依棄牌觸發種類改數值、043 多段查看登場與突襲底板回手、064 回手改成退場、068 最多選一個複合印刷選項、072 戰鬥勝利後依卡名種類抽牌與付費活動、094 手牌進場外之後讓突襲底板休息登場、097 攻擊階段開始支付 AP 並失去印刷效果的範圍。這些仍不要標 ready。011、012、039、051、061、107 在第六輪已經表現得了，這輪沒有替各組寫程式。
 
