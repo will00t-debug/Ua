@@ -11,8 +11,8 @@ import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEner
  universalImpactNull} from '../dist/universal-v2/engine.mjs';
 
 const READY=[
- 'MHA-1-008','MHA-1-015','MHA-1-016','MHA-1-021','MHA-1-022',
- 'MHA-1-024','MHA-1-028','MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037',
+ 'MHA-1-008','MHA-1-012','MHA-1-015','MHA-1-016','MHA-1-019','MHA-1-021','MHA-1-022',
+ 'MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037',
  'MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046','MHA-1-047',
  'MHA-1-049','MHA-1-050'
 ];
@@ -35,6 +35,10 @@ function probePack(){
  cards.push({
   id:'PROBE-TALL', name:'高BP探針', color:'red', type:'character', energy:0,
   ap:1, bp:3500, gen:1, trigger:null, traits:[], implementation:'vanilla'
+ });
+ cards.push({
+  id:'PROBE-OVER', name:'オーバーホール', color:'purple', type:'character', energy:4,
+  ap:1, bp:4000, gen:1, trigger:null, traits:['死穢八斎會'], implementation:'vanilla'
  });
  return createUniversalPack({id:'mha-probe', cards, version:'mha-c-probe'});
 }
@@ -560,5 +564,92 @@ test('050 color trigger deploys one green AP-1 character of energy 2 or less, ac
  const entered=s.players[1].front.find(c=>c?.uid===legal.uid);
  assert.equal(entered.ready,true);
  assert.equal(s.players[1].outside.some(c=>c.uid===revealed.uid),true);
+ assert.equal(assertUniversalMatch(probePacks,s),true);
+});
+
+test('012 rests for one purple energy this turn and leaves at the end of main',()=>{
+ let s=open(pack,1201);
+ const spinner=put(s,0,'MHA-1-012','energy',0,true);
+ s=toPhase(s,'main');
+ assert.equal(universalEnergyByColor(pack,s,0).purple,1);
+ assert.equal(acts(s).some(a=>a.type==='activate'&&a.uid===spinner.uid&&a.mode==='selfRestEnergyRetire'),true);
+ s=use(s,findAct(s,a=>a.type==='activate'&&a.uid===spinner.uid,'activate'));
+ assert.equal(live(s,0,spinner.uid).ready,false);
+ assert.equal(universalEnergyByColor(pack,s,0).purple,2);
+ assert.equal(universalEnergyByColor(pack,s,0).green||0,0);
+ assert.equal(acts(s).some(a=>a.type==='activate'&&a.uid===spinner.uid),false);
+ assert.throws(()=>use(s,{type:'activate',uid:spinner.uid,mode:'selfRestEnergyRetire'}),/Action not currently legal/);
+ s=use(s,{type:'next'});
+ assert.equal(s.phase,'attack');
+ assert.equal(s.players[0].outside.some(c=>c.uid===spinner.uid),true);
+ assert.equal(universalEnergyByColor(pack,s,0).purple||0,0);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let front=open(pack,1202);
+ const seated=put(front,0,'MHA-1-012','front',0,true);
+ front=toPhase(front,'main');
+ const second=front.players[0].front.find(c=>c?.uid===seated.uid);
+ assert.equal(acts(front).some(a=>a.type==='activate'&&a.uid===second.uid),true);
+ second.ready=false;
+ assert.equal(acts(front).some(a=>a.type==='activate'&&a.uid===second.uid),false);
+ assert.equal(assertUniversalMatch(packs,front),true);
+});
+
+test('019 on the front once per turn reduces one opposing front character of BP 1500 or more',()=>{
+ let empty=open(pack,1901);
+ const sidelined=put(empty,0,'MHA-1-019','energy',0,true);
+ put(empty,1,'MHA-1-016','front',0,true);
+ empty=toPhase(empty,'main');
+ assert.equal(acts(empty).some(a=>a.type==='activate'&&a.uid===sidelined.uid),false);
+
+ let s=open(pack,1902);
+ const toga=put(s,0,'MHA-1-019','front',0,true);
+ const low=put(s,1,'MHA-1-015','front',0,true);
+ const exact=put(s,1,'MHA-1-008','front',1,true);
+ const back=put(s,1,'MHA-1-016','energy',0,true);
+ s=toPhase(s,'main');
+ assert.equal(universalBp(pack,s,exact),1500);
+ assert.equal(acts(s).some(a=>a.type==='activate'&&a.uid===toga.uid),true);
+ s=use(s,findAct(s,a=>a.type==='activate'&&a.uid===toga.uid,'activate'));
+ assert.equal(s.pending.kind,'effect-target');
+ assert.equal(s.pending.choices.includes(exact.uid),true);
+ assert.equal(s.pending.choices.includes(low.uid),false);
+ assert.equal(s.pending.choices.includes(back.uid),false);
+ assert.equal(acts(s).some(a=>a.type==='chooseTarget'&&a.uid===null),false);
+ assert.throws(()=>use(s,{type:'chooseTarget',uid:low.uid}),/Action not currently legal/);
+ s=use(s,{type:'chooseTarget',uid:exact.uid});
+ assert.equal(universalBp(pack,s,live(s,1,exact.uid)),500);
+ assert.equal(universalBp(pack,s,live(s,1,low.uid)),1000);
+ assert.equal(universalBp(pack,s,live(s,1,back.uid)),2500);
+ assert.equal(live(s,1,exact.uid).buffs.some(b=>b.bp===-1000&&b.untilTurn===s.turn),true);
+ assert.equal(acts(s).some(a=>a.type==='activate'&&a.uid===toga.uid),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let short=open(pack,1903);
+ const waiting=put(short,0,'MHA-1-019','front',0,true);
+ put(short,1,'MHA-1-015','front',0,true);
+ short=toPhase(short,'main');
+ assert.equal(acts(short).some(a=>a.type==='activate'&&a.uid===waiting.uid),false);
+ assert.equal(assertUniversalMatch(packs,short),true);
+});
+
+test('027 gains 1000 BP only while Overhaul is on the owner front',()=>{
+ let s=open(probe,2701);
+ const chrono=put(s,0,'MHA-1-027','front',0,true);
+ const overhaul=put(s,0,'PROBE-OVER','energy',0,true);
+ assert.equal(universalBp(probe,s,chrono),3000);
+ s.players[0].energy[0]=null;
+ s.players[0].front[1]=overhaul;
+ assert.equal(universalBp(probe,s,chrono),4000);
+ s.players[0].front[0]=null;
+ s.players[0].energy[1]=chrono;
+ assert.equal(universalBp(probe,s,chrono),4000);
+ s.players[0].front[1]=null;
+ s.players[0].energy[0]=overhaul;
+ assert.equal(universalBp(probe,s,chrono),3000);
+ const cover=put(s,0,'MHA-1-008','front',0,true);
+ s.players[0].energy[0]=null;
+ cover.stack=[overhaul];
+ assert.equal(universalBp(probe,s,chrono),4000);
  assert.equal(assertUniversalMatch(probePacks,s),true);
 });
