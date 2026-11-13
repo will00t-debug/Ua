@@ -25,6 +25,33 @@ export function cardHasTrait(definition,trait){
  return (definition?.traits||[]).includes(trait)||
   (definition?.traitComponents||[]).includes(trait);
 }
+// Q2230 (UA30BT/IMC-1-020): 「自分の効果でレイド」 includes an effect that
+// raids this card and this card's Raid life trigger. Paying AP to Raid
+// from hand does not. This is not 「自分の効果で登場」: that question keeps
+// life triggers outside OWN_EFFECT_ENTRY, and it includes non-raid entries.
+const OWN_EFFECT_RAID_CAUSES=new Set([
+ 'handEffectRaid','outsideEffectRaid','deckEffectRaid','removedEffectRaid','lifeRaid'
+]);
+export function ownEffectRaidCause(entryCause){
+ return OWN_EFFECT_RAID_CAUSES.has(entryCause);
+}
+// Printed BP and printed required energy are the card-face numbers. A live
+// BP bonus, a generated pip, and a cost discount are not this count.
+// Fields, the opponent, hand, deck, and Raid layers are outside the zones.
+export function countOwnPrintedTrait(s,owner,sourceUid,{zone='field',excludeSelf=false,trait,printedBp,printedEnergy}={},printed){
+ const pl=s.players[owner];
+ const zones=zone==='front'?[pl.front]:zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ let found=0;
+ for(const area of zones)for(const c of area){
+  if(!printedFieldCard(c)||(excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(d.type!=='character'||!cardHasTrait(d,trait))continue;
+  if(printedBp!==undefined&&d.bp!==printedBp)continue;
+  if(printedEnergy!==undefined&&d.energy!==printedEnergy)continue;
+  found++;
+ }
+ return found;
+}
 // 「全ての場所でイベントカードとしても扱う」adds an event identity.
 // The printed type stays character, so play, front, and energy rules do not
 // change. Effects that count or search for an event card include it.
@@ -101,17 +128,19 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 // not when a card is played. This is distinct from once-resolved turn buffs.
 // Field predicates use this controller's front and energy. Hand, deck,
 // removed, and Raid under-cards stay out unless a clause names 場外.
-export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp,requiredEnergyOf){
+export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp,requiredEnergyOf,entryCause=null){
  // A printed 「かつ」 is one bonus with every clause true. The outer turn
  // is the printed turn icon. Each clause keeps its own closed predicate.
  if(condition?.logic==='all'||condition?.logic==='any'){
   if(condition.turn==='own'&&s.active!==owner)return false;
   if(condition.turn==='opponent'&&s.active===owner)return false;
-  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp,requiredEnergyOf);
+  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp,requiredEnergyOf,entryCause);
   return condition.logic==='any'?condition.checks.some(hit):condition.checks.every(hit);
  }
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // The on-play job carries the entry cause. A later check does not invent one.
+ if(condition.kind==='selfOwnEffectRaid')return ownEffectRaidCause(entryCause);
  // 「自分のターン中」かつ「このキャラの下に裏向きのカード」. The physical
  // field card is the one being measured. A buried layer is not itself.
  if(condition.kind==='ownTurnFacedownUnder'){
@@ -352,6 +381,25 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='selfCurrentBpAtLeast'){
+  // このキャラのBP. Printed BP and a live bonus are different numbers.
+  if(typeof cardBp!=='function')throw Error('Current BP condition needs a live BP reader');
+  const physical=[s.players[owner].front,s.players[owner].energy]
+   .flat().find(c=>c?.uid===sourceUid);
+  return !!physical&&printedFieldCard(physical)&&cardBp(physical)>=condition.minBp;
+ }
+ if(condition.kind==='otherOwnCharacterBpAtLeast'){
+  // 他のキャラ. The card being measured never satisfies its own gate.
+  if(typeof cardBp!=='function')throw Error('Current BP condition needs a live BP reader');
+  const board=s.players[owner];
+  const areas=condition.zone==='front'?[board.front]:
+   condition.zone==='energy'?[board.energy]:[board.front,board.energy];
+  for(const area of areas)for(const c of area){
+   if(!c||c.uid===sourceUid||!printedFieldCard(c)||printed(c).type!=='character')continue;
+   if(cardBp(c)>=condition.minBp)return true;
+  }
+  return false;
+ }
  if(condition.kind==='ownRemovedCountAtLeast')
   return (s.players[owner].removed||[]).length>=condition.min;
  if(condition.kind==='ownRemovedDistinctTrait'){
@@ -439,8 +487,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // field. It is not the character-only ownTraitCount predicate.
   // カード名がN種類 counts distinct printed names among those cards.
   const pl=s.players[owner];
+  // fieldOutside is 場 plus 場外. Distinct names still collapse copies.
+  // Hand, deck, removed, and Raid layers stay out.
   const zones=condition.zone==='front'?[pl.front]:
-   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+   condition.zone==='energy'?[pl.energy]:
+   condition.zone==='fieldOutside'?[pl.front,pl.energy,pl.outside]:
+   [pl.front,pl.energy];
   const names=new Set();
   let found=0;
   for(const zone of zones)for(const c of zone){
@@ -452,6 +504,9 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return condition.kind==='ownDistinctTraitNames'?names.size>=condition.min:
    found>=condition.min;
+ }
+ if(condition.kind==='ownPrintedTraitCount'){
+  return countOwnPrintedTrait(s,owner,sourceUid,condition,printed)>=condition.min;
  }
  if(condition.kind==='ownDistinctTraitEntriesThisTurn')
   return distinctTraitEntryNames(s,owner,condition.trait,printed).size>=condition.min;

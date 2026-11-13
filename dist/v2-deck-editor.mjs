@@ -1,6 +1,6 @@
 // Production deck editor: catalogue, drafts and Universal V2 bridge only.
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
-import {TITLES} from './title-registry.mjs?v=20261104kmrpr1';
+import {TITLES} from './title-registry.mjs?v=20261112imc1';
 import {PRESETS} from './cards.mjs';
 import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261104kmrport1';
 import {validDeckCoverId} from './deck-cover-selection.mjs';
@@ -8,7 +8,7 @@ import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
 import {BUILTIN_BLEACH_V2_DECKS,builtinBleachDeck} from './v2-bleach-builtins.mjs';
 import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,editorV2Status}
- from './v2-editor-compat.mjs?v=20261104kmrport1';
+ from './v2-editor-compat.mjs?v=20261112imc1';
 import {readDeckRecord,renderDeckRecord} from './deck-records.mjs';
 
 const $=s=>document.querySelector(s);
