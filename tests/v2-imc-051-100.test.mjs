@@ -12,24 +12,23 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 
-const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059',
- 'IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-066','IMC-1-067','IMC-1-069',
- 'IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
+const READY=['IMC-1-051','IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059',
+ 'IMC-1-060','IMC-1-061','IMC-1-062','IMC-1-063','IMC-1-066','IMC-1-067','IMC-1-069',
+ 'IMC-1-070','IMC-1-071','IMC-1-075','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087',
  'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095',
  'IMC-1-096','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-065'];
-const OPEN=['IMC-1-051','IMC-1-057','IMC-1-061',
- 'IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074',
- 'IMC-1-075','IMC-1-093','IMC-1-094','IMC-1-097'];
+const OPEN=['IMC-1-057','IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074',
+ 'IMC-1-093','IMC-1-094','IMC-1-097'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
 delete counts['IMC-1-098'];
 delete counts['IMC-1-065'];
 delete counts['IMC-1-078'];
-for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-062','IMC-1-063',
- 'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-080','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
- 'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-099','IMC-1-100'])counts[id]=1;
+for(const id of ['IMC-1-051','IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-061','IMC-1-062','IMC-1-063',
+ 'IMC-1-066','IMC-1-069','IMC-1-070','IMC-1-071','IMC-1-075','IMC-1-076','IMC-1-077','IMC-1-080','IMC-1-085','IMC-1-087',
+ 'IMC-1-088','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-099','IMC-1-100'])counts[id]=1;
 
 function kit(usePack,useCounts){
  const act=(s,action)=>dispatchUniversalAction(usePack,s,action);
@@ -91,7 +90,7 @@ function kit(usePack,useCounts){
 }
 const game=kit(pack,counts);
 
-test('thirty-eight complete cards enter the pack and twelve stay out',()=>{
+test('forty-one complete cards enter the pack and nine stay out',()=>{
  for(const id of READY)assert.equal(pack.cards[id].id,id);
  assert.equal(IMC_CARDS_051_100.every(card=>card.battleReady===false),true);
  for(const id of READY)assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
@@ -1377,58 +1376,94 @@ test('084 steps and gains 1500 only on its turn at three printed energy-2 Starry
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
-test('051 recovers one LiPPS at printed energy 2 or less and stays unfinished',()=>{
- assert.equal(pack.cards['IMC-1-051'],undefined);
- assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
- const effect=IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0];
- assert.deepEqual(effect,{op:'recoverOutsideFiltered',optional:true,max:1,
+test('051 keeps the outside recovery and rests then leaves before a blue LiPPS rests in',()=>{
+ const card=pack.cards['IMC-1-051'];
+ assert.equal(card.trigger,'color');
+ assert.deepEqual(card.triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.deepEqual(card.effects.onPlay[0],{op:'recoverOutsideFiltered',optional:true,max:1,
   trait:'LiPPS',energyAtMost:2});
- const bodies=[
-  bare('SRC','城ヶ崎 美嘉',{traits:['LiPPS'],implementation:'dsl',effects:{onPlay:[effect]}}),
-  bare('LOW','低',{traits:['LiPPS'],energy:1}),
-  bare('EXACT','恰好',{traits:['LiPPS'],energy:2}),
-  bare('HIGH','過高',{traits:['LiPPS'],energy:3,gen:2}),
-  bare('OTHER','其他',{energy:1,gen:1})
- ];
- const fillers=Array.from({length:10},(_,i)=>bare('FILL'+i,'填充'+i));
- const cards=[...bodies,...fillers];
- const probe=createUniversalPack({id:'probe',version:'imc-051',cards});
- const probeCounts={};
- let left=50;
- for(const card of cards){
-  const n=Math.min(4,left);
-  probeCounts[card.id]=n;
-  left-=n;
- }
- assert.equal(left,0);
- const local=kit(probe,probeCounts);
- let s=local.fresh(5100);
- s=local.reach(s,'main');
- const low=local.pull(s,0,'LOW'),exact=local.pull(s,0,'EXACT');
- const high=local.pull(s,0,'HIGH'),other=local.pull(s,0,'OTHER');
+ assert.equal(card.mainAbility.op,'restRetireSequence');
+ assert.deepEqual(card.mainAbility.gate,{kind:'oppCharacterBpAtLeast',bp:4500});
+ assert.equal(card.mainAbility.then[0].op,'deployOutsideColorTraitRest');
+ let s=game.fresh(5100);
+ s=game.reach(s,'main');
+ for(const [id,slot] of [['IMC-1-052',0],['IMC-1-055',1],['IMC-1-056',2]])
+  game.seat(s,0,id,'energy',slot);
+ const low=game.pull(s,0,'IMC-1-058');
+ const exact=game.pull(s,0,'IMC-1-060');
+ const high=game.pull(s,0,'IMC-1-059');
+ const other=game.pull(s,0,'IMC-1-076');
  s.players[0].outside.push(low,exact,high,other);
- s=local.play(s,'SRC');
+ s=game.play(s,'IMC-1-051');
  assert.equal(s.pending.kind,'effect-recover-outside');
- assert.equal(s.pending.remaining,undefined);
  assert.ok(s.pending.choices.includes(low.uid));
  assert.ok(s.pending.choices.includes(exact.uid));
  assert.equal(s.pending.choices.includes(high.uid),false);
  assert.equal(s.pending.choices.includes(other.uid),false);
- assert.ok(local.legal(s).some(a=>a.type==='chooseOutsideRecovery'&&a.uid===null));
- s=local.act(s,{type:'chooseOutsideRecovery',uid:exact.uid});
- assert.equal(s.pending,null);
- assert.ok(s.players[0].hand.some(c=>c.uid===exact.uid));
- assert.ok(s.players[0].outside.some(c=>c.uid===low.uid));
- assert.equal(assertUniversalMatch(probe,s),true);
+ s=game.act(s,{type:'chooseOutsideRecovery',uid:null});
+ const played=s.players[0].front.find(c=>c?.cardId==='IMC-1-051');
+ assert.equal(played.ready,false);
+ played.ready=true;
+ const quiet=game.seat(s,1,'IMC-1-054','front',0);
+ assert.equal(universalBp(pack,s,quiet),4000);
+ assert.equal(game.legal(s).some(a=>a.type==='activate'&&a.uid===played.uid),false);
+ quiet.buffs=[{bp:500,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,quiet),4500);
+ s=game.act(s,game.legal(s).find(a=>a.type==='activate'&&a.mode==='restRetireSequence'&&a.uid===played.uid));
+ const left=s.players[0].outside.find(c=>c.uid===played.uid);
+ assert.equal(left.ready,false);
+ assert.equal(s.players[0].front.some(c=>c?.uid===played.uid),false);
+ assert.equal(s.pending.kind,'effect-outside-color-rest');
+ assert.ok(s.pending.choices.includes(low.uid));
+ assert.ok(s.pending.choices.includes(exact.uid));
+ assert.equal(s.pending.choices.includes(high.uid),false);
+ assert.equal(s.pending.choices.includes(other.uid),false);
+ assert.equal(s.pending.choices.includes(played.uid),false);
+ s=game.act(s,game.legal(s).find(a=>a.type==='chooseOutsideColorRest'&&a.uid===low.uid&&a.line==='front'));
+ assert.equal(s.players[0].front.find(c=>c?.uid===low.uid).ready,false);
+ assert.equal(s.players[0].outside.some(c=>c.uid===played.uid),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
 
- s=local.fresh(5101);
- s=local.reach(s,'main');
- const rejected=local.pull(s,0,'HIGH');
- s.players[0].outside.push(rejected);
- s=local.play(s,'SRC');
+ s=game.fresh(5101);
+ s=game.reach(s,'main');
+ const source=game.seat(s,0,'IMC-1-051','energy',0);
+ const foe=game.seat(s,1,'IMC-1-088','energy',0);
+ foe.buffs=[{bp:2500,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,foe),4500);
+ const legal=game.pull(s,0,'IMC-1-053');
+ const illegal=game.pull(s,0,'IMC-1-059');
+ s.players[0].outside.push(legal,illegal);
+ s=game.act(s,game.legal(s).find(a=>a.type==='activate'&&a.uid===source.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
+ s=game.act(s,{type:'chooseOutsideColorRest',uid:null});
  assert.equal(s.pending,null);
- assert.ok(s.players[0].outside.some(c=>c.uid===rejected.uid));
- assert.equal(assertUniversalMatch(probe,s),true);
+ assert.ok(s.players[0].outside.some(c=>c.uid===legal.uid));
+ assert.equal(s.players[0].energy.some(c=>c?.uid===source.uid),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(5102);
+ s=game.reach(s,'main');
+ const spent=game.seat(s,0,'IMC-1-051','front',0);
+ const gated=game.seat(s,1,'IMC-1-054','energy',0);
+ gated.buffs=[{bp:500,untilTurn:s.turn}];
+ s.players[0].outside.push(game.pull(s,0,'IMC-1-059'));
+ s=game.act(s,game.legal(s).find(a=>a.type==='activate'&&a.uid===spent.uid));
+ assert.equal(s.pending,null);
+ assert.ok(s.players[0].outside.some(c=>c.uid===spent.uid));
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(5103);
+ s=game.reach(s,'main');
+ const lowFoe=game.seat(s,1,'IMC-1-088','front',0);
+ const highFoe=game.seat(s,1,'IMC-1-054','front',1);
+ const color=game.pull(s,0,'IMC-1-051');
+ s.players[0].outside.push(color);
+ s.pending={kind:'life-trigger',player:0,uid:color.uid,trigger:'color'};
+ assert.deepEqual(game.legal(s).filter(a=>a.mode==='colorBounce').map(a=>a.uid),[lowFoe.uid]);
+ s=game.act(s,game.legal(s).find(a=>a.mode==='colorBounce'&&a.uid===lowFoe.uid));
+ assert.ok(s.players[1].hand.some(c=>c.uid===lowFoe.uid));
+ assert.ok(s.players[1].front.some(c=>c?.uid===highFoe.uid));
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
 
 test('052 rests from either line, then must buff one legal union target',()=>{
@@ -1948,26 +1983,24 @@ test('080 is active only from the energy line when three energy-2 Starry cards a
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
-test('the remaining round-6 sentences stay unfinished and reject the nearest existing shape',()=>{
- assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
- assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0].op,'recoverOutsideFiltered');
- for(const id of ['IMC-1-057','IMC-1-061','IMC-1-064','IMC-1-068',
-  'IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-093','IMC-1-094','IMC-1-097'])
+test('the remaining round-7 sentences stay unfinished and reject the nearest existing shape',()=>{
+ for(const id of ['IMC-1-057','IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073',
+  'IMC-1-074','IMC-1-093','IMC-1-094','IMC-1-097'])
   assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,true);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-061'].ready,true);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-075'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-065'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-078'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-080'].ready,true);
  const text=JSON.stringify(IMC_REQUESTS_051_100);
  const needles={
-  'IMC-1-051':'restRetireSequence',
   'IMC-1-057':'敗北後一回合一次',
-  'IMC-1-061':'grantAttackPhaseEndHand',
   'IMC-1-064':'場上特徵張數',
   'IMC-1-068':'最多 1 個',
   'IMC-1-072':'可選把 1 張手牌特徵放到場外',
   'IMC-1-073':'取代抽 1',
   'IMC-1-074':'最多 2 張',
-  'IMC-1-075':'種類數',
   'IMC-1-093':'另外給衝擊',
   'IMC-1-094':'只接受退場時機',
   'IMC-1-097':'Q2250'
@@ -1992,7 +2025,7 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
    then:[{op:'deployOwnHandRest',type:'character',color:'red',energy:1,ap:null,max:1,trait:TRAIT}]
   }]}})]});
  assert.equal(bounced.cards.GAP.effects.onPlay[0].then[0].op,'deployOwnHandRest');
- assert.equal(IMC_PROGRAMS_051_100['IMC-1-075']?.ready,undefined);
+ assert.equal(pack.cards['IMC-1-075'].effects.onPlay[0].then[0].ap,null);
  reject({effects:{onPlay:[{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
   excludeSelf:false,trait:TRAIT,min:9},then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}},
   /invalid live-condition follow-up/);
@@ -2006,4 +2039,162 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
   {op:'draw',count:1},
   {op:'deployOwnHandRest',type:'character',color:'red',energy:3,ap:1,max:1}
  ]}},/unsupported main action ability/);
+});
+
+test('061 becomes active, returns at attack end only after readying an AP, and draws after an unblocked attack',()=>{
+ const card=pack.cards['IMC-1-061'];
+ assert.equal(card.trigger,'color');
+ assert.deepEqual(card.triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.deepEqual(card.unblockedAttack,{optional:true,then:[{op:'draw',count:1}]});
+ assert.equal(card.effects.onPlay[0].op,'activeSelf');
+ assert.deepEqual(card.effects.onPlay[1],{op:'optionalReadyApThen',then:[{op:'grantAttackPhaseEndHand'}]});
+ let s=game.fresh(6100);
+ s=game.reach(s,'main');
+ for(const [id,slot] of [['IMC-1-052',0],['IMC-1-053',1],['IMC-1-055',2]])
+  game.seat(s,0,id,'energy',slot);
+ for(let i=0;i<2;i++){s.players[0].apCards[i].inPlay=true;s.players[0].apCards[i].ready=true;}
+ s=game.play(s,'IMC-1-061','energy');
+ const entered=s.players[0].energy.find(c=>c?.cardId==='IMC-1-061');
+ assert.equal(entered.ready,true);
+ assert.equal(s.pending.kind,'effect-recover-ap');
+ const paid=structuredClone(s);
+ const ignored=game.act(paid,{type:'chooseApRecovery',uid:null});
+ assert.equal(ignored.players[0].energy.find(c=>c?.uid===entered.uid).attackPhaseEndHand,undefined);
+ assert.equal(assertUniversalMatch(pack,ignored),true);
+
+ s=game.fresh(6101);
+ s=game.reach(s,'main');
+ for(const [id,slot] of [['IMC-1-052',0],['IMC-1-053',1],['IMC-1-055',2],['IMC-1-056',3]])
+  game.seat(s,0,id,'energy',slot);
+ for(let i=0;i<2;i++){s.players[0].apCards[i].inPlay=true;s.players[0].apCards[i].ready=true;}
+ s=game.play(s,'IMC-1-061');
+ const front=s.players[0].front.find(c=>c?.cardId==='IMC-1-061');
+ assert.equal(front.ready,true);
+ assert.equal(s.pending.kind,'effect-recover-ap');
+ const declined=structuredClone(s);
+ const skipped=game.act(declined,game.legal(declined).find(a=>a.type==='chooseApRecovery'&&a.uid===null));
+ const stayed=skipped.players[0].front.find(c=>c?.uid===front.uid);
+ assert.equal(stayed.attackPhaseEndHand,undefined);
+ let ended=game.reach(skipped,'attack');
+ for(const line of ['front','energy'])
+  for(const c of ended.players[0][line])if(c)c.ready=false;
+ ended=game.act(ended,game.legal(ended).find(a=>a.type==='next'));
+ assert.ok(ended.players[0].front.some(c=>c?.uid===front.uid));
+ assert.equal(assertUniversalMatch(pack,ended),true);
+ const restedUid=game.legal(s).find(a=>a.type==='chooseApRecovery'&&a.uid).uid;
+ s=game.act(s,game.legal(s).find(a=>a.type==='chooseApRecovery'&&a.uid===restedUid));
+ assert.equal(s.players[0].apCards.find(c=>c.uid===restedUid).ready,true);
+ const granted=s.players[0].front.find(c=>c?.uid===front.uid);
+ assert.equal(granted.attackPhaseEndHand.turn,s.turn);
+ s=game.reach(s,'attack');
+ for(const line of ['front','energy'])
+  for(const c of s.players[0][line])if(c)c.ready=false;
+ s=game.act(s,game.legal(s).find(a=>a.type==='next'));
+ assert.ok(s.players[0].hand.some(c=>c.uid===front.uid));
+ assert.equal(s.players[0].front.some(c=>c?.uid===front.uid),false);
+ while(s.pending?.kind==='end-hand-limit'){
+  const victim=s.players[s.pending.player].hand.find(c=>c.uid!==front.uid);
+  s=game.act(s,{type:'chooseHandLimit',uid:victim.uid});
+ }
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(6102);
+ s=game.reach(s,'attack');
+ const attacker=game.seat(s,0,'IMC-1-061','front',0);
+ const blocker=game.seat(s,1,'IMC-1-058','front',0);
+ const deck=s.players[0].deck.length;
+ s=game.act(s,{type:'attack',uid:attacker.uid});
+ assert.equal(s.pending.kind,'block');
+ assert.equal(s.players[0].deck.length,deck);
+ const blocked=structuredClone(s);
+ const fought=game.act(blocked,game.legal(blocked).find(a=>a.type==='chooseBlock'&&a.uid===blocker.uid));
+ assert.notEqual(fought.pending?.kind,'effect-may-then');
+ assert.equal(fought.players[0].deck.length,deck);
+ assert.ok(fought.players[1].outside.some(c=>c.uid===blocker.uid));
+ s=game.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.pending.kind,'effect-may-then');
+ assert.equal(s.players[0].deck.length,deck);
+ const passed=structuredClone(s);
+ const quiet=game.act(passed,game.legal(passed).find(a=>a.type==='chooseMayThen'&&a.mode==='skip'));
+ assert.equal(quiet.players[0].deck.length,deck);
+ s=game.act(s,game.legal(s).find(a=>a.type==='chooseMayThen'&&a.mode==='do'));
+ assert.equal(s.players[0].deck.length,deck-1);
+ while(s.pending?.kind==='life-trigger'){
+  const skip=game.legal(s).find(a=>a.mode==='skip');
+  assert.ok(skip);
+  s=game.act(s,skip);
+ }
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(6103);
+ s=game.reach(s,'main');
+ const lowFoe=game.seat(s,1,'IMC-1-058','front',0);
+ const highFoe=game.seat(s,1,'IMC-1-087','front',1);
+ const color=game.pull(s,0,'IMC-1-061');
+ s.players[0].outside.push(color);
+ s.pending={kind:'life-trigger',player:0,uid:color.uid,trigger:'color'};
+ assert.deepEqual(game.legal(s).filter(a=>a.mode==='colorBounce').map(a=>a.uid),[lowFoe.uid]);
+ assert.equal(game.legal(s).some(a=>a.mode==='skip'),true);
+ s=game.act(s,game.legal(s).find(a=>a.mode==='colorBounce'&&a.uid===lowFoe.uid));
+ assert.ok(s.players[1].hand.some(c=>c.uid===lowFoe.uid));
+ assert.ok(s.players[1].front.some(c=>c?.uid===highFoe.uid));
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('075 bounces an energy-1 ally and can rest that card immediately, then gains 1000 at six names on its turn',()=>{
+ const card=pack.cards['IMC-1-075'];
+ assert.equal(card.bp,4000);
+ assert.equal(card.effects.onPlay[0].op,'bounceOwnOtherUnderEnergy');
+ assert.equal(card.effects.onPlay[0].optional,true);
+ assert.equal(card.effects.onPlay[0].energy,1);
+ assert.equal(card.effects.onPlay[0].then[0].op,'deployOwnHandRest');
+ assert.equal(card.effects.onPlay[0].then[0].ap,null);
+ assert.deepEqual(card.passiveBonuses[0],{bp:1000,condition:{
+  kind:'ownDistinctTraitNames',turn:'own',zone:'fieldOutside',excludeSelf:false,
+  trait:TRAIT,min:6}});
+ let s=game.fresh(7500);
+ s=game.reach(s,'main');
+ for(const [id,slot] of [['IMC-1-080',0],['IMC-1-081',1],['IMC-1-082',2],['IMC-1-086',3]])
+  game.seat(s,0,id,'energy',slot);
+ const ally=game.seat(s,0,'IMC-1-071','front',0);
+ const wrong=game.seat(s,0,'IMC-1-076','front',1);
+ const replay=game.hold(s,0,'IMC-1-070');
+ const tall=game.hold(s,0,'IMC-1-090');
+ s=game.play(s,'IMC-1-075');
+ assert.equal(s.pending.kind,'effect-bounce-own');
+ assert.ok(s.pending.choices.includes(ally.uid));
+ assert.equal(s.pending.choices.includes(wrong.uid),false);
+ const declined=structuredClone(s);
+ const skipped=game.act(declined,{type:'chooseOwnBounce',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.ok(skipped.players[0].front.some(c=>c?.uid===ally.uid));
+ assert.equal(skipped.players[0].hand.some(c=>c.uid===ally.uid),false);
+ s=game.act(s,{type:'chooseOwnBounce',uid:ally.uid});
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ assert.ok(s.players[0].hand.some(c=>c.uid===ally.uid));
+ assert.ok(s.pending.choices.includes(ally.uid));
+ assert.ok(s.pending.choices.includes(replay.uid));
+ assert.equal(s.pending.choices.includes(tall.uid),false);
+ assert.equal(game.legal(s).some(a=>a.mode==='raid'||a.type==='raid'),false);
+ s=game.act(s,game.legal(s).find(a=>a.type==='chooseHandRest'&&a.uid===ally.uid&&a.line==='front'));
+ assert.equal(s.players[0].front.find(c=>c?.uid===ally.uid).ready,false);
+ assert.equal(s.players[0].hand.some(c=>c.uid===ally.uid),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(7501);
+ s=game.reach(s,'main');
+ const self=game.seat(s,0,'IMC-1-075','front',0);
+ for(const [id,line,slot] of [['IMC-1-069','front',1],['IMC-1-070','front',2],
+  ['IMC-1-071','energy',0],['IMC-1-088','energy',1]])game.seat(s,0,id,line,slot);
+ assert.equal(bpAt(pack,s,self.uid),4000);
+ const sixth=game.pull(s,0,'IMC-1-091');
+ s.players[0].outside.push(sixth);
+ assert.equal(bpAt(pack,s,self.uid),5000);
+ s=passTurn(game,s);
+ assert.equal(s.active,1);
+ assert.equal(bpAt(pack,s,self.uid),4000);
+ s=passTurn(game,s);
+ assert.equal(s.active,0);
+ assert.equal(bpAt(pack,s,self.uid),5000);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });

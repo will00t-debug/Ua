@@ -530,11 +530,14 @@ test('a trait bounce updates the hand before the optional rest entry',()=>{
 });
 
 test('the new shared cards stay out of the IMC battle pack',()=>{
- const ids=['IMC-1-011','IMC-1-012','IMC-1-039','IMC-1-051','IMC-1-061','IMC-1-075','IMC-1-107'];
+ const ids=['IMC-1-011','IMC-1-012','IMC-1-039','IMC-1-107'];
  const programs={...IMC_PROGRAMS_001_050,...IMC_PROGRAMS_051_100,...IMC_PROGRAMS_STARTER};
  for(const id of ids)assert.notEqual(programs[id]?.ready,true);
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,89);
+ assert.equal(Object.keys(pack.cards).length,92);
+ assert.equal(pack.cards['IMC-1-051'].mainAbility.gate.bp,4500);
+ assert.equal(pack.cards['IMC-1-061'].effects.onPlay[1].op,'optionalReadyApThen');
+ assert.equal(pack.cards['IMC-1-075'].effects.onPlay[0].then[0].op,'deployOwnHandRest');
  assert.equal(getTitle('imc').playable,false);
  assert.equal(loadImcOfficialStarter().counts,null);
 });
