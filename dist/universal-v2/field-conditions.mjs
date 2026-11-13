@@ -618,6 +618,23 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return kinds.size>=condition.min;
  }
+ if(condition.kind==='ownOtherRequiredEnergyAtLeast'){
+  // 自分の場の他のキャラで、必要エナジーがN以上のものがM枚以上.
+  // The retiring card is already outside when a leave effect asks. A
+  // facedown card and a field are not characters. Both lines count.
+  if(typeof requiredEnergyOf!=='function')
+   throw Error('Required-energy condition needs a reader');
+  if(condition.turn==='own'&&s.active!==owner)return false;
+  if(condition.turn==='opponent'&&s.active===owner)return false;
+  const board=s.players[owner];
+  let found=0;
+  for(const area of [board.front,board.energy])for(const c of area){
+   if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   if(printed(c).type!=='character')continue;
+   if(requiredEnergyOf(c)>=condition.minEnergy)found++;
+  }
+  return found>=condition.min;
+ }
  if(condition.kind==='ownNameAbsent'&&condition.zone==='outside'){
   // 自分の場外に〈名前〉がない. Hand, deck, removed, the field, and the
   // opponent's outside are not this zone. Raid under-cards are not outside.

@@ -17,9 +17,10 @@ const READY=['MHA-1-052','MHA-1-053','MHA-1-057','MHA-1-058','MHA-1-061','MHA-1-
  'MHA-1-079','MHA-1-080','MHA-1-082','MHA-1-083','MHA-1-086','MHA-1-088','MHA-1-092',
  'MHA-1-094','MHA-1-097','MHA-1-098'];
 const OPEN=['MHA-1-051','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059',
- 'MHA-1-060','MHA-1-062','MHA-1-063','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072',
+ 'MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072',
  'MHA-1-074','MHA-1-076','MHA-1-081','MHA-1-084','MHA-1-085','MHA-1-087','MHA-1-089',
  'MHA-1-090','MHA-1-091','MHA-1-093','MHA-1-095','MHA-1-096','MHA-1-099','MHA-1-100'];
+const VIA_STARTER=['MHA-1-063'];
 const LIMITED=new Set(['MHA-1-064','MHA-1-097','MHA-1-065','MHA-1-098']);
 const pack=createMhaV2Pack();
 
@@ -141,13 +142,20 @@ test('official 051–100 exist once, and only complete programs enter the pack',
   assert.notEqual(MHA_PROGRAMS_051_100[id]?.ready,true,id);
  }
  for(const id of READY)assert.equal(MHA_PROGRAMS_051_100[id].ready,true,id);
+ for(const id of VIA_STARTER){
+  assert.equal(MHA_PROGRAMS_051_100[id],undefined,id);
+  assert.equal(pack.cards[id].effects.onPlay[0].op,'grantOwnFieldAttackKit');
+  assert.equal(pack.cards[id].effects.onPlay[0].bp,2500);
+  assert.deepEqual(pack.cards[id].effects.onPlay[0].sniperNames,['オールマイト','緑谷 出久']);
+  assert.equal(pack.cards[id].triggerEffect.op,'retireOppFront');
+ }
  assert.deepEqual(MHA_REQUESTS_051_100.map(row=>row.cardId),OPEN);
  for(const row of MHA_REQUESTS_051_100){
   assert.ok(row.sentence&&row.whyNotEnough&&row.proposal,row.cardId);
   assert.ok(row.existingOps.length,row.cardId);
  }
  assert.throws(()=>runMha051(null,null,{id:'MHA-1-051'}),/D 組還沒有/);
- assert.equal(new Set([...READY,...OPEN]).size,50);
+ assert.equal(new Set([...READY,...OPEN,...VIA_STARTER]).size,50);
 });
 
 test('MHA-1-052 lowers one opposing character of BP 1000 or more, on either line',()=>{

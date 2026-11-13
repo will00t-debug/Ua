@@ -1,37 +1,38 @@
-// Cards in UA10BT 001-050 whose whole printed sentence is not an existing
-// V2 operation. These stay out of the battle pack. A group owns the shared
-// engine change; C group does not approximate them.
+// Cards in UA10BT 001-050 that are not ready. 001, 013, 014 and 018 now
+// have a shared shape; write the program and a behavior test before
+// marking them ready. The other sentences still need an engine operation.
+// C group does not approximate a missing sentence.
 // MHA-1-044 is the same card as the UA10ST printing. Its activate is
 // restSelfGainEnergyRetireEndMain, so it is ready and is not listed here.
 export const MHA_REQUESTS_001_050=Object.freeze({
  'MHA-1-001':gap('衝擊無效，以及退場時抽 1 張再把手牌 1 張放到場外。',
-  '退場時機允許單純 draw，不允許 drawDiscard。只做其中一句會漏掉另一句。'),
+  'onRetire 的 {op:drawDiscard, count:1} 已可與 impactNull 同時成立。抽 1 張後把 1 張手牌放到場外。count 不是 1，或另帶 discardCount，會被拒絕。這張仍未寫程式，不要標 ready。'),
  'MHA-1-002':gap('登場時可選的磨牌 3 張，以及主階段橫置並退場後從場外取死穢八斎會角色或〈“個性”消失弾〉。Q421：指名卡不必有特徵。',
-  'millTop 的 3 張只存在於後面接著回收的特殊形。主階段的二選一搜尋沒有對應操作。'),
+  '可選磨 3 的後段目前只允許回收 1 張紫角色。這張要在接受磨牌後回收死穢八斎會角色或指名卡，主階段還要先橫置並退場才能搜尋。'),
  'MHA-1-003':gap('自己場上有 3 張以上帶【起動メイン】的角色時，這張 BP+1000。',
-  '現有被動加值看特徵或卡名，不計數【起動メイン】關鍵字。'),
+  '需要被動條件計數自己場上帶【起動メイン】的角色，至少 3 張才 BP+1000。ownFrontCountAtLeast 只數前線張數，ownNameExists 只看卡名。'),
  'MHA-1-004':gap('3 張以上【起動メイン】時手牌紫能量-3、印刷衝擊 1，以及每回合一次複製同列其他角色的【起動メイン】（其他オール・フォー・ワン除外）。',
-  '三句要同時成立。只登衝擊會漏掉能量與複製。'),
+  '003 的關鍵字張數還沒有。手牌紫能量 -3、印刷衝擊 1，與每回合一次複製同列其他起動（其他オール・フォー・ワン除外）必須同時成立。'),
  'MHA-1-005':gap('場上沒有オール・フォー・ワン或死柄木 弔就不能攻擊或阻擋；自己回合 BP+2000；每回合一次賦予傷害 2。',
-  '沒有「指名任一角色在場才可攻防」加上自己回合 BP 與單次傷害的同一張卡形。'),
+  'ownTurnBp 與登場時的 grantSelfAttackDamageThisTurn 已存在，但不能用。傷害 2 是主階段每回合一次才賦予，而且任一指名角色不在場時攻擊與阻擋都不合法。'),
  'MHA-1-006':gap('主階段支付 1 張手牌到場外，每回合一次，二選一：把自己的一張角色移到另一列，或交換一張前排與一張能量列角色。',
-  '沒有這個支付後的移動或交換選項。'),
+  '需要支付 1 張手牌後的每回合一次二選一：移動一張自己角色到另一列，或交換一張前排與一張能量列。現有移動與交換都不是這個支付。'),
  'MHA-1-007':gap('印刷衝擊 1，且自己回合中敗給這張的對手角色改回手牌。Q424。',
-  'battleLoseToHand 不能單獨代表「只在自己回合」。只登衝擊會漏掉後句。'),
+  'battleLoseToHand 只能是 true，沒有自己回合門。printedImpact 1 不能代替後句。需要只在自己回合把戰敗的對手角色改回手牌。'),
  'MHA-1-009':gap('自己回合中敗給這張的角色改放退場區；主階段支付 1 張手牌後這張本回合衝擊 +1。Q425。',
-  '戰鬥敗北改退場區，以及支付後的單回合衝擊，都沒有對應操作。'),
+  '需要自己回合的戰敗改放退場區，以及支付 1 張手牌後本回合衝擊 +1。兩句都還沒有，不能只做其中一句。'),
  'MHA-1-010':gap('突襲〈死柄木 弔〉、戰鬥敗北改退場，以及前排每回合一次移除對手前排 BP2000 以下。Q426。',
-  'raidName 只覆蓋突襲框。敗北置換與移除不是現有操作。'),
+  'raidName 只覆蓋突襲框。還需要自己回合戰敗改退場區，以及前排每回合一次把對手前排目前 BP 2000 以下放到退場區。removeOppFrontUnderBp 不能放進 frontOnceProgram。'),
  'MHA-1-011':gap('擋過這張的角色下一次不橫置回復；主階段每回合一次使對手本回合必須盡可能阻擋。Q427、Q428。',
-  'grantSelfMustBlockThisTurn 只是第二句，而且現有形是登場時。第一句的阻擋鎖定沒有操作。'),
+  '擋過這張的角色下一次不回復還沒有操作。grantSelfMustBlockThisTurn 只接登場時；包進每回合一次的主階段會被拒絕。兩句都要有。'),
  'MHA-1-013':gap('登場時可以把 1 張生命放入手牌；若如此，可以橫置回復自己其他前排 1 張。Q429。',
-  '沒有「生命入手後才回復其他前排」的連鎖。'),
+  'optionalOwnLifeToHandThenDraw 的後段可以是 {op:activeOwnOther, optional:true, line:front}。只在生命入手後活動其他自己前排，能量列不算。拒絕入手則不做。生命變 0 要等這段結束才敗北。這張仍未寫程式，不要標 ready。'),
  'MHA-1-014':gap('突襲〈荼毘〉。登場時可以把 1 張生命放入手牌；若如此，退場對手前排 BP3500 以下 1 張。Q430。',
-  '生命入手與條件退場不是現有登場操作。突襲名不能代替後句。'),
+  '同一生命入手的後段可以是 {op:retireOppFrontUnderBp, bp:3500, optional:true}。突襲〈荼毘〉用 raidName。拒絕入手則不退場。這張仍未寫程式，不要標 ready。'),
  'MHA-1-017':gap('突襲〈トゥワイス〉。登場時可以把這疊突襲最下方的卡以橫置回復狀態登場。',
-  '沒有把突襲疊最底下一張登場的操作。'),
+  'deployRaidBottomActive 只接受退場時，而且要帶其他角色必要能源的 when。017 是登場時把最下段以活動狀態登場，沒有那道張數門。寫在 onPlay 會被拒絕。'),
  'MHA-1-018':gap('主階段每回合一次：本回合這張攻擊並戰鬥勝利時抽 1 張。',
-  'grantSelfAttackWinDrawThisTurn 目前只接在登場時。前排每回合一次的程式不能包這個操作。'),
+  'frontOnceProgram 可以 frontOnly:false、oncePerTurn:true，then 只有 {op:grantSelfAttackWinDrawThisTurn}。前排或能量列都能起動。本回合這張攻擊並戰鬥勝利才抽 1。frontOnly true、多一個鍵，或改成強制阻擋，仍被拒絕。這張仍未寫程式，不要標 ready。'),
  'MHA-1-020':gap('任何帶突襲觸發的自己角色可以突襲到這張上。登場時公開牌庫頂 1 張入手；若沒有突襲觸發，把手牌 1 張放到場外。Q431。',
   '沒有「被任意突襲觸發卡當作突襲基」以及公開頂牌的條件棄牌。'),
  'MHA-1-023':gap('前排主階段每回合一次：其他自己角色 BP+1000；若是ジェントル・クリミナル則改 +2000 並獲得狙擊。',
