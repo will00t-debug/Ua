@@ -7,7 +7,7 @@ import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
 import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,mainFrontEvidenceChoice,generatorEvidenceChoice,laterEnergyCandidates,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
-import {keepScore} from './eval.mjs';
+import {keepScore,battleWindowAction} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
 
@@ -378,6 +378,19 @@ function shareDeadline(now,deadline,mine,laterNodes){
  if(!Number.isFinite(current)||!(current<deadline))return deadline;
  const share=current+(deadline-current)*(mine/(mine+laterNodes));
  return share<deadline?share:deadline;
+}
+// A block root is searched before passing. A clock that dies after that
+// root has not compared the attack. The public ledger is the same BP,
+// Impact and Impact-null result the finished window already uses. It
+// applies only while a legal block action is still unscored. A window
+// whose every action was scored keeps that comparison.
+function publicBlockChoice(pack,state,actor,legal,scored){
+ if(searchFactors().publicBlock!==true||state?.pending?.kind!=='block')return null;
+ const covered=action=>scored.some(row=>row&&row.executed!==false&&same(row.action,action));
+ if(!legal.some(action=>action?.type==='chooseBlock'&&!covered(action)))return null;
+ let ledger=null;
+ try{ledger=battleWindowAction(pack,state,actor);}catch{return null;}
+ return legal.find(item=>same(item,ledger))||null;
 }
 function fallback(pack,state,legal,started,reason,account=null){
  report.fallback++;
@@ -832,10 +845,12 @@ export function chooseAiV3Action(pack,state,options={}){
    const preferred=holdSurvival(choice,confirmed,scored);
    const gated=gatePreference(pack,state,actor,choice,preferred,alignMainFront(choice,preferred,scored));
    const kept=constrainConfirmedWin(gated,winRows,legal);
+   const ledger=publicBlockChoice(pack,state,actor,legal,scored);
+   const sealed=ledger||kept;
    report.budgetFallback++;
    report.budget++;
    settle();
-   return finish(kept,'budget-fallback',{
+   return finish(sealed,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
     incomplete:true,settled:false,executed:scored.length>0,
     hard:hardExact,hardNodes:hardSlice,strategy,compared:scored.length?viewed:[],unscored:Math.max(0,jobs.length-scored.length),missed,
@@ -845,20 +860,24 @@ export function chooseAiV3Action(pack,state,options={}){
     replacedMove:same(kept,choice)?null:choice,
     ...(alignNote?{align:alignNote}:{}),
     responses:scored.reduce((sum,item)=>sum+(item.responses||0),0),
-    score:tracedRow(scored,kept)?.search??null,
-    sequence:tracedRow(scored,kept)?.sequence||[]
+    score:tracedRow(scored,sealed)?.search??null,
+    sequence:tracedRow(scored,sealed)?.sequence||[],
+    ...(ledger?{blockLedger:true}:{})
    },started);
   }
   if(!scored.length){
    const backupOnly=preferConfirmedChoices(pack,state,actor,keptEnergy(pack,state,actor,legal,reliableChoice(pack,state,actor,legal,hardExact,ordered),null,strategy),[]);
+   const ledger=publicBlockChoice(pack,state,actor,legal,scored);
+   const sealed=ledger||backupOnly;
    report.budgetFallback++;
    report.budget++;
    settle();
-   return finish(backupOnly,'budget-fallback',{
+   return finish(sealed,'budget-fallback',{
     actor,seed,worlds:worlds.length,nodesUsed:report.nodes-nodesBefore,fallback:false,fallbackKind:'budget',
     incomplete:true,executed:false,settled:false,
     hard:hardExact,hardNodes:hardSlice,strategy,compared:[],unexecuted,unexplored,
-    plan,roots:jobs.length,...diagnosis,energyKeep:energyView?.strip?energyView:null
+    plan,roots:jobs.length,...diagnosis,energyKeep:energyView?.strip?energyView:null,
+    ...(ledger?{blockLedger:true}:{})
    },started);
   }
   const observation=actorObservation(pack,state,actor);
@@ -918,6 +937,8 @@ export function chooseAiV3Action(pack,state,options={}){
   // Preferences and the discard backup have all run. A confirmed win is
   // still the action that goes back, whichever of them tried to leave it.
   kept=constrainConfirmedWin(kept,winRows,legal);
+  const ledger=publicBlockChoice(pack,state,actor,legal,scored);
+  if(ledger)kept=ledger;
   keptRow=tracedRow(scored,kept);
   if(keptRow?.settled)report.settledChoices++;
   settle();
@@ -929,6 +950,7 @@ export function chooseAiV3Action(pack,state,options={}){
    unscored:jobs.length-scored.length,
    unexecuted,unexplored,candidates:viewed,plan,roots:jobs.length,followBranches,maxDepth,sequence:keptRow?.sequence||[],
    energyKeep:energyView?.strip?energyView:null,
+   ...(ledger?{blockLedger:true}:{}),
    stages:diagnose?preferenceStages(scored,[['search',exact],['energy-keep',retained],...generatorStages(generatedStep),['energy-gate',placed],...confirmedTrace.steps,['held',heldChoice],['final-gate',gated],['returned',kept]]):null,
    ...(alignNote?{align:alignNote}:{}),
    replacedMove:same(kept,exact)?null:exact,

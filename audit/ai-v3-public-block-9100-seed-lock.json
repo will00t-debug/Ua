@@ -1,0 +1,45 @@
+{
+  "programBase": "905f7d30966c682d0d43a92802352cf82381eae7",
+  "namedBeforeResults": true,
+  "played": false,
+  "seeds": [9100, 9101, 9102, 9103, 9104, 9105, 9106, 9107],
+  "reservedFrom": 9108,
+  "notReused": [8800, 8850, 8890, 8929, 8930, 8970, 9009, 9010, 9050, 9099],
+  "priorUse": "9100-9107 were not used by the 8800, 8850, 8890, 8930, 8970, 9010 or 9050 locks. 9108 and above stays unused. This file names the sample before any of these games are played.",
+  "policies": {
+    "A": "hybrid-start-hard-v1",
+    "B": "hybrid-start-hard-v1+publicBlock"
+  },
+  "routes": {
+    "pending": "v3",
+    "start": "hard",
+    "main": "hard",
+    "move": "v3",
+    "battle": "v3"
+  },
+  "nodes": 48,
+  "ms": 40,
+  "clock": "real",
+  "searchSeed": 1,
+  "rules": "official-v2",
+  "experiments": "A leaves publicBlock off. B passes only publicBlock:true into the pending AI v3 call. settleLife and paidFront stay off. The worker strips publicBlock. The menu does not send it.",
+  "decks": [
+    {"id": "white-sword", "seeds": [9100, 9101, 9102, 9103], "games": 16}
+  ],
+  "cells": [
+    {"hybridSeat": 0, "first": 0, "hybridIsFirst": true},
+    {"hybridSeat": 0, "first": 1, "hybridIsFirst": false},
+    {"hybridSeat": 1, "first": 1, "hybridIsFirst": true},
+    {"hybridSeat": 1, "first": 0, "hybridIsFirst": false}
+  ],
+  "gamesPerArm": 16,
+  "opponent": "hard-search-2",
+  "metrics": [
+    "winRate",
+    "wrongBlocks: equal or lower BP, Impact still lands, and passing was legal",
+    "trades: blocker removed while life loss is not smaller than passing",
+    "survival: blocks that keep a game which passing would finish"
+  ],
+  "enable": "Do not turn publicBlock on from this lock. One position matrix is not a match sample. Play 9100-9103 only as this paired schedule, then keep the candidate off unless B does not increase wrong blocks and the paired win interval is above zero.",
+  "note": "Named before play. No game in this range has been run."
+}
