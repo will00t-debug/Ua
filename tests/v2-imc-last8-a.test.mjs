@@ -95,14 +95,14 @@ function live(s,uid){
 }
 
 test('the eight cards are ready and the other gaps stay requests',()=>{
- assert.equal(Object.keys(pack.cards).length,97);
+ assert.equal(Object.keys(pack.cards).length,106);
  assert.equal(getTitle('imc').playable,false);
  assert.deepEqual(validateUniversalDeck(pack,COUNTS),[]);
  for(const id of DONE){
   assert.equal(pack.cards[id].id,id);
   assert.equal(imcProgramFor(id).ready,true);
  }
- for(const id of ['IMC-1-003','IMC-1-011','IMC-1-051','IMC-1-073','IMC-1-107'])
+ for(const id of ['IMC-1-011','IMC-1-012','IMC-1-051','IMC-1-075','IMC-1-107'])
   assert.equal(pack.cards[id],undefined);
  const requests=[...IMC_REQUESTS_001_050,...IMC_REQUESTS_051_100].map(row=>row.cardId);
  for(const id of DONE)assert.equal(requests.includes(id),false);

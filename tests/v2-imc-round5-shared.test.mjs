@@ -265,7 +265,7 @@ test('front once and name once stay separate, and 110 is unchanged',()=>{
   x.uid===bareSrc.uid&&x.mode==='frontOnce'),false);
 
  const imc=createImcV2Pack();
- assert.equal(Object.keys(imc.cards).length,105);
+ assert.equal(Object.keys(imc.cards).length,106);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.minSelfBp,4000);
  assert.equal(imc.cards['IMC-1-110'].mainAbility.then[0].op,'chooseOne');
  assert.equal(imc.cards['IMC-1-020'].effects.onPlay[0].skipWhen.kind,'selfOwnEffectRaid');

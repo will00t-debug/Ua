@@ -120,6 +120,14 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
    then:[{op:'takeTopHandRestOutside',count:2}],
    else:[{op:'draw',count:1}]}]}
  }),
+ 'IMC-1-074':Object.freeze({
+  ready:true,implementation:'dsl',impactNull:true,
+  effects:{onAttack:[{op:'ifLiveThen',
+   when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+    trait:'お願い！シンデレラ',min:9},
+   then:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+    bp:1000,optional:true,excludeSelf:false,max:2}]}]}
+ }),
  'IMC-1-076':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'Starry-Go-Round'}}]),
  'IMC-1-077':Object.freeze({
