@@ -7046,13 +7046,15 @@ function tuckFieldBottom(pack,s,p,line,slot,sourceUid){
  };
  const physical=reset(top);
  s.players[p].deck.push(physical);
+ // The visible card leaves the field line it occupied. Buried Raid layers
+ // were never that line: each one leaves raid-under for outside, once.
  recordCompletedMove(pack,s,{physical,owner:p,from:line,to:'deck',deckPosition:'bottom',
   reason:'own-effect',sourceUid});
  for(const entry of buried){
   const layer=reset(entry.physical);
   s.players[p].outside.push(layer);
-  recordCompletedMove(pack,s,{physical:layer,owner:p,from:line,to:'outside',
-   reason:'rule',sourceUid,attachedToUid:top.uid,wasFaceDown:entry.wasFaceDown});
+  recordCompletedMove(pack,s,{...entry,physical:layer,owner:p,from:'raid-under',to:'outside',
+   reason:'rule',sourceUid});
  }
  return physical;
 }

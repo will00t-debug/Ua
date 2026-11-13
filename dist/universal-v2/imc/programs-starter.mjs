@@ -126,6 +126,21 @@ export const IMC_PROGRAMS_STARTER=Object.freeze({
    }]
   }
  },
+ 'IMC-1-112':{
+  ready:true,
+  implementation:'dsl',
+  raidName:'渋谷 凛',
+  impactNull:true,
+  // 可選把 1 張自己場上角色置底。做到才看頂 3：藍色指定特徵最多 1 張只休息登場，另 1 張任意卡不公開入手。
+  effects:{onPlay:[{
+   op:'bottomOwnCharacterThen',optional:true,max:1,type:'character',then:[{
+    op:'lookTopScript',count:3,rest:'bottom',takes:[
+     {to:'rest',type:'character',max:1,color:'blue',trait:'ガールズ・イン・ザ・フロンティア'},
+     {to:'hand',max:1,publish:false}
+    ]
+   }]
+  }]}
+ },
  'IMC-1-113':{
   ready:true,
   implementation:'dsl',
