@@ -30,6 +30,14 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  }),
  'IMC-1-056':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'LiPPS'}}]),
+ 'IMC-1-057':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'宮本 フレデリカ',
+  attackLoseActiveOnce:{once:'card'},
+  effects:{onPlay:[
+   {op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,trait:'LiPPS'},
+   {op:'drawIfOppCharacterBpAtLeast',minBp:4500,count:1}
+  ]}
+ }),
  'IMC-1-058':play([{op:'drawDiscard',count:1}]),
  'IMC-1-059':play([{op:'drawDiscard',count:1}]),
  'IMC-1-060':Object.freeze({
@@ -77,6 +85,14 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   passiveBonuses:[{bp:1500,condition:{
    kind:'ownDistinctTraitNames',turn:'own',zone:'fieldOutside',excludeSelf:false,
    trait:'お願い！シンデレラ',min:6}}]
+ }),
+ 'IMC-1-074':Object.freeze({
+  ready:true,implementation:'dsl',impactNull:true,
+  effects:{onAttack:[{op:'ifLiveThen',
+   when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+    trait:'お願い！シンデレラ',min:9},
+   then:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+    bp:1000,optional:true,excludeSelf:false,max:2}]}]}
  }),
  'IMC-1-076':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'Starry-Go-Round'}}]),
@@ -141,6 +157,10 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-090':Object.freeze({ready:true,implementation:'dsl',activeExtraEnergy:1}),
  'IMC-1-091':play([{op:'drawDiscard',count:1}]),
  'IMC-1-092':play([{op:'peekTopOne'}]),
+ 'IMC-1-094':Object.freeze({
+  ready:false,implementation:'dsl',raidName:'島村 卯月',
+  effects:{onPlay:[{op:'takeTopHandRestOutside',count:2}]}
+ }),
  'IMC-1-095':play([{op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]),
  'IMC-1-096':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
  'IMC-1-098':Object.freeze({

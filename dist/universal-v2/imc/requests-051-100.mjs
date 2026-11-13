@@ -16,13 +16,6 @@ export const IMC_REQUESTS_051_100=[
   proposal:'保留現有 onPlay。mainAbility 用 restRetireSequence，gate 為 oppCharacterBpAtLeast 4500，then 為藍色 LiPPS、maxEnergy 2、ready false、optional true 的 deployOutsideColorTraitRest。程式完成前不要標 ready。'
  },
  {
-  cardId:'IMC-1-057',
-  sentence:'手札から必要エナジーが2以下の青の［特徴：LiPPS］をレストで登場させる。アタックしてバトルに敗北した時アクティブ。BP4500以上なら引く。',
-  existingOps:['deployOwnHandRest','drawIfOppCharacterBpAtLeast','attackLoseReadyTurn'],
-  whyNotEnough:'deployOwnHandRest 的 ap:null 已能做沒有寫消費 AP 的手牌休息登場。drawIfOppCharacterBpAtLeast 能在對手目前 BP4500 以上時抽 1。Q2242 要求沒有登場也要抽。attackLoseReadyTurn 固定附帶 BP+1000，不是這張「自己的回合中一次，攻擊並在戰鬥中敗北時活動」。突襲框只有〈宮本 フレデリカ〉。',
-  proposal:'抽牌與登場分開，敗北後一回合一次只活動、不加攻。框內只有具名突襲。057 先不標 ready。'
- },
- {
   cardId:'IMC-1-061',
   sentence:'ブロックされなかった時、カードを1枚まで引く。APをアクティブにした場合、アタックフェイズ終了時に手札へ戻す。',
   existingOps:['draw','recoverAp'],
@@ -51,13 +44,6 @@ export const IMC_REQUESTS_051_100=[
   proposal:'不能上前線。9 種（含自己）時改為看 2 張、最多 1 張任意卡入手、其餘場外；否則抽 1。073 先不標 ready。'
  },
  {
-  cardId:'IMC-1-074',
-  sentence:'インパクトを無効にする。9種類以上なら自分のキャラを2枚まで、このターン中 BP+1000。',
-  existingOps:['impactNull','buffOwnField','ownDistinctTraitNames'],
-  whyNotEnough:'impactNull 能做衝擊無效。buffOwnField 是最多 1 張。這句在攻擊時、9 種（含自己）才可選最多 2 張自己場上角色，這個回合 BP+1000。',
-  proposal:'衝擊無效之外，攻擊時依 9 種卡名，可選最多 2 張自己場上角色加攻。074 先不標 ready。'
- },
- {
   cardId:'IMC-1-075',
   sentence:'必要エナジーが1以下の自分の場の特徴を1枚手札に戻してもよい。そうした場合、手札から同じ條件をレストで登場させる。',
   existingOps:['bounceOwnOtherUnderEnergy','deployOwnHandRest'],
@@ -75,8 +61,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-094',
   sentence:'アタック時、手札を1枚場外に置いてもよい。そうした場合、レイド元を1枚レストで登場させる。',
   existingOps:['takeTopHandRestOutside','deployOwnRaidBaseRest'],
-  whyNotEnough:'登場時看 2 張、最多 1 張進手、其餘場外，takeTopHandRestOutside 是這句。攻擊句要可選把 1 張手牌放場外，做到才讓這張突襲元休息登場。deployOwnRaidBaseRest 只接受退場時機，而且沒有手牌進場外的費用。突襲框只有〈島村 卯月〉。',
-  proposal:'登場時沿用看 2 張入手、其餘場外。攻擊時可選手牌進場外，做到才讓突襲元休息登場。094 先不標 ready。'
+  whyNotEnough:'登場時看 2 張、選 1 張進手、另一張進場外，程式已寫 takeTopHandRestOutside，ready 仍是 false。這個查看沒有跳過，必須從窗口選 1 張。攻擊句要可選把 1 張手牌放場外，做到才讓這張突襲元休息登場。deployOwnRaidBaseRest 只接受退場時機；放在 onAttack 會丟「raid-base rest entry is a character onRetire effect」，而且沒有手牌進場外的費用。突襲框只有〈島村 卯月〉。',
+  proposal:'登場時已寫進程式，整句還沒完成，不標 ready。缺的是攻擊時可選手牌進場外，做到才讓突襲元以休息狀態登場。'
  },
  {
   cardId:'IMC-1-097',
