@@ -1,7 +1,7 @@
 const PUBLIC_EDITOR_ONLY = typeof window !== 'undefined' && typeof window.location?.assign === 'function' && ['http:','https:'].includes(window.location.protocol);
 import {CARDS,BY_ID,PRESETS,TYPE_NAMES,TRIGGER_NAMES,validateDeck,SETS,COLOR_NAMES,pendingCards,deckColors} from './cards.mjs?v=9.1.0';
 import {normalizeCounts,emptyDeck,parseDeck,formatDeck,readSavedDecks,sameCounts} from './decks.mjs?v=8';
-import {TITLES} from './title-registry.mjs?v=20261104kmrpr1';
+import {TITLES} from './title-registry.mjs?v=20261112imc1';
 import {renderVisualDeckBuilder} from './visual-deck-builder.mjs';
 import {v2DeckReport} from './universal-v2/official-entry.mjs';
 import {SAO_CARDS,SAO_BY_ID,saoDeckIssues} from './sao-cards.mjs';
