@@ -19,12 +19,12 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 
 const pack=createImcV2Pack();
 const byId=Object.fromEntries(IMC_CARDS_001_050.map(c=>[c.id,c]));
-const READY=['IMC-1-001','IMC-1-002','IMC-1-003','IMC-1-004','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010',
+const READY=['IMC-1-001','IMC-1-002','IMC-1-003','IMC-1-004','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-009','IMC-1-010',
  'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-016','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
  'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-029','IMC-1-030','IMC-1-031',
  'IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-043','IMC-1-044','IMC-1-045',
  'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050'];
-const OPEN=['IMC-1-009','IMC-1-011','IMC-1-012',
+const OPEN=['IMC-1-011','IMC-1-012',
  'IMC-1-032','IMC-1-037','IMC-1-039'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
  'IMC-1-002','IMC-1-035','IMC-1-040','IMC-1-038','IMC-1-034','IMC-1-047','IMC-1-018',
@@ -2758,38 +2758,112 @@ test('IMC-1-037 draws only after a character effect; the AP impact shape is shar
  assert.equal(assertUniversalMatch(event.pack,s),true);
 });
 
-test('IMC-1-009 program stays absent; an unfiltered REST entry does not cut BP',()=>{
- const row=openRequest('IMC-1-009');
- assert.equal(row.whyNotEnough.includes('deployOwnHandRestOrRaid'),true);
- assert.equal(IMC_PROGRAMS_001_050['IMC-1-009'],undefined);
- const hand={op:'deployOwnHandRestOrRaid',type:'character',color:'yellow',maxEnergy:3,ap:1,
-  max:1,optional:true,names:null};
- createUniversalPack({id:'probe',version:'imc-b4-gap-TRAIT',cards:[probeFace({
-  id:'TRAIT',name:'特徵',effects:{onPlay:[{...hand,trait:'BEYOND THE STARLIGHT',energyPenalty:1000}]}})]});
- const cards=[
-  probeFace({id:'NINE',name:'美嘉',energy:0,bp:3000,enterAlwaysActive:true,
-   effects:{onPlay:[{op:'draw',count:1},hand]}}),
-  probeFace({id:'PLAIN',name:'普通',color:'yellow',energy:3,ap:1,bp:1500}),
-  probeFace({id:'BEYOND',name:'星光',color:'yellow',energy:2,ap:1,bp:1500,
-   traits:['BEYOND THE STARLIGHT']})
- ];
- const opened=probeOpen(cards,9001);
- let s=opened.s;
- probeFuel(s);
- const plain=probeHold(s,'PLAIN');
- probeHold(s,'BEYOND');
- probeHold(s,'NINE');
+test('IMC-1-009 enters active and cuts BP by the entered card printed energy',()=>{
+ const program=IMC_PROGRAMS_001_050['IMC-1-009'];
+ const beyond='BEYOND THE STARLIGHT';
+ assert.equal(program.ready,true);
+ assert.equal(program.enterAlwaysActive,true);
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-009'),false);
+ assert.equal(pack.cards['IMC-1-009'].bp,4000);
+ assert.equal(pack.cards['IMC-1-009'].energy,4);
+ assert.equal(pack.cards['IMC-1-009'].ap,2);
+ assert.equal(pack.cards['IMC-1-009'].effects.onPlay[1].trait,beyond);
+ assert.equal(pack.cards['IMC-1-009'].effects.onPlay[1].energyPenalty,1000);
+ assert.equal(pack.cards['IMC-1-009'].effects.onPlay[1].maxEnergy,3);
+ assert.equal(byId['IMC-1-009'].trigger,'active');
+ assert.equal(byId['IMC-1-009'].effectJa.includes('アクティブで登場'),true);
+ assert.equal(byId['IMC-1-009'].effectJa.includes('BP-1000'),true);
+ function openNine(seed,extra){
+  let s=reach(fresh(seed,{'IMC-1-009':2,'IMC-1-001':4,...extra}),'main');
+  fuel(s,['IMC-1-001','IMC-1-001','IMC-1-001','IMC-1-001']);
+  readyAp(s,2);
+  assert.equal(energy(s).yellow,4);
+  return s;
+ }
+ let s=openNine(9001,{'IMC-1-007':1,'IMC-1-008':1,'IMC-1-004':1,'IMC-1-021':1,'IMC-1-020':1});
+ const zero=hold(s,'IMC-1-007');
+ const two=hold(s,'IMC-1-008');
+ const three=hold(s,'IMC-1-004');
+ const passion=hold(s,'IMC-1-021');
+ const costly=hold(s,'IMC-1-009');
+ const wrong=hold(s,'IMC-1-020');
+ const actor=pull(s,0,'IMC-1-009');
+ s.players[0].hand.push(actor);
+ setTop(s,0,['IMC-1-025']);
  const deck=s.players[0].deck.length;
- let self;
- [s,self]=probePlay(opened.pack,s,'NINE');
- assert.equal(s.players[0].front.find(c=>c?.uid===self.uid).ready,true);
+ let self=actor;
+ s=act(s,legal(s).find(a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front'));
+ assert.equal(live(s,self.uid).ready,true);
  assert.equal(s.players[0].deck.length,deck-1);
  assert.equal(s.pending.kind,'effect-hand-rest-or-raid');
- assert.equal(s.pending.choices.includes(plain.uid),true);
- s=dispatchUniversalAction(opened.pack,s,legalUniversalActions(opened.pack,s)
-  .find(a=>a.type==='chooseHandRestOrRaid'&&a.mode==='enter'&&a.uid===plain.uid&&a.line==='energy'));
- assert.equal(universalBp(opened.pack,s,s.players[0].front.find(c=>c?.uid===self.uid)),3000);
- assert.equal(assertUniversalMatch(opened.pack,s),true);
+ assert.equal(s.pending.trait,beyond);
+ for(const uid of [zero.uid,two.uid,three.uid])assert.equal(s.pending.choices.includes(uid),true,uid);
+ for(const uid of [passion.uid,costly.uid,wrong.uid,self.uid])
+  assert.equal(s.pending.choices.includes(uid),false,uid);
+ assert.equal(legal(s).some(a=>a.mode==='raid'),false);
+ assert.throws(()=>act(structuredClone(s),{type:'chooseHandRestOrRaid',mode:'enter',
+  uid:passion.uid,line:'energy',slot:1}),/Action not currently legal/);
+ const skipped=act(structuredClone(s),{type:'chooseHandRestOrRaid',uid:null});
+ assert.equal(universalBp(pack,skipped,live(skipped,self.uid)),4000);
+ assert.ok(skipped.players[0].hand.some(c=>c.uid===two.uid));
+ s=act(s,{type:'chooseHandRestOrRaid',mode:'enter',uid:zero.uid,line:'front',slot:1});
+ assert.equal(s.players[0].front.find(c=>c?.uid===zero.uid).ready,false);
+ assert.equal(universalBp(pack,s,live(s,self.uid)),4000);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=openNine(9002,{'IMC-1-008':1});
+ const mid=hold(s,'IMC-1-008');
+ setTop(s,0,['IMC-1-021']);
+ [s,self]=play(s,'IMC-1-009');
+ s=act(s,{type:'chooseHandRestOrRaid',mode:'enter',uid:mid.uid,line:'front',slot:1});
+ assert.equal(s.players[0].front.find(c=>c?.uid===mid.uid).ready,false);
+ assert.equal(universalBp(pack,s,live(s,self.uid)),2000);
+
+ s=openNine(9003,{'IMC-1-004':1});
+ const top=hold(s,'IMC-1-004');
+ setTop(s,0,['IMC-1-021']);
+ [s,self]=play(s,'IMC-1-009');
+ s=act(s,{type:'chooseHandRestOrRaid',mode:'enter',uid:top.uid,line:'front',slot:1});
+ assert.equal(universalBp(pack,s,live(s,self.uid)),1000);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=openNine(9004,{'IMC-1-021':1});
+ for(const card of [...s.players[0].hand]){
+  if(card.cardId==='IMC-1-009')continue;
+  s.players[0].hand.splice(s.players[0].hand.indexOf(card),1);
+  s.players[0].deck.push(card);
+ }
+ setTop(s,0,['IMC-1-021']);
+ [s,self]=play(s,'IMC-1-009');
+ assert.equal(s.pending,null);
+ assert.equal(live(s,self.uid).ready,true);
+ assert.equal(universalBp(pack,s,live(s,self.uid)),4000);
+
+ const cards=[
+  sourceCard('IMC-1-009'),
+  probeFace({id:'RAIDER',name:'突襲',color:'yellow',energy:3,ap:1,bp:1500,traits:[beyond],
+   raidName:'底板'}),
+  probeFace({id:'BASE',name:'底板',bp:1500}),
+  probeFace({id:'GEN',name:'黃',color:'yellow',energy:0,gen:1,implementation:'vanilla'})
+ ];
+ const raided=probeOpen(cards,9005);
+ let scene=raided.s;
+ probeFuel(scene,2);
+ for(let i=0;i<4;i++)probeSeat(scene,0,'GEN','energy',i,false);
+ const base=probeSeat(scene,0,'BASE','front',1,true);
+ const raider=probeHold(scene,'RAIDER');
+ const source=probeHold(scene,'IMC-1-009');
+ scene=dispatchUniversalAction(raided.pack,scene,legalUniversalActions(raided.pack,scene)
+  .find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'));
+ assert.equal(scene.players[0].front.find(c=>c?.uid===source.uid).ready,true);
+ assert.equal(scene.pending.kind,'effect-hand-rest-or-raid');
+ assert.equal(legalUniversalActions(raided.pack,scene).some(a=>a.mode==='raid'&&a.uid===raider.uid&&
+  a.baseUid===base.uid),true);
+ scene=dispatchUniversalAction(raided.pack,scene,legalUniversalActions(raided.pack,scene)
+  .find(a=>a.type==='chooseHandRestOrRaid'&&a.mode==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid));
+ assert.equal(scene.players[0].front.some(c=>c?.uid===raider.uid),true);
+ assert.equal(universalBp(raided.pack,scene,scene.players[0].front.find(c=>c?.uid===source.uid)),1000);
+ assert.equal(assertUniversalMatch(raided.pack,scene),true);
 });
 
 test('IMC-1-016 can recover the card it just discarded, and the old front peek stays rejected',()=>{

@@ -48,6 +48,13 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
  'IMC-1-008':{ready:true,implementation:'dsl',
   mainAbility:{op:'restSelfBuffOther',bp:1000,trait:'BEYOND THE STARLIGHT'},
   notes:'休息自己，強制選另一張 BEYOND THE STARLIGHT，本回合 BP+1000。來源與對象分開。沒有每回合一次。抽牌觸發是卡表。'},
+ 'IMC-1-009':{ready:true,implementation:'dsl',enterAlwaysActive:true,
+  effects:{onPlay:[
+   {op:'draw',count:1},
+   {op:'deployOwnHandRestOrRaid',type:'character',color:'yellow',maxEnergy:3,ap:1,
+    max:1,optional:true,names:null,trait:'BEYOND THE STARLIGHT',energyPenalty:1000}
+  ]},
+  notes:'活動登場。抽 1。手牌中黃、費用 3 以下、AP 1、BEYOND THE STARLIGHT，最多 1 張，休息登場或突襲。成功後，這張卡本回合 BP 減少實際登場那張的印刷必要能源×1000。跳過不扣。活動觸發是卡表。'},
  'IMC-1-010':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:7,
    filter:{field:'colorAndType',value:'yellow:field'}}]},
