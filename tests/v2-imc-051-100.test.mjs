@@ -9,7 +9,7 @@ import {runImc051} from '../dist/universal-v2/imc/runtime-051-100.mjs';
 import {imcSharedRequests} from '../dist/universal-v2/imc-runtime.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPublicView,universalBp,universalEnergyByColor,
+ assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp,universalEnergyByColor,
  zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 
@@ -2275,4 +2275,48 @@ test('074 keeps impact null and buffs two different characters only at nine wish
  assert.equal(universalBp(probe,s,findCard(s,0,skipped.plain.uid)),2000);
  assert.equal(s.pending.kind,'block');
  assert.equal(assertUniversalMatch(probe,s),true);
+});
+
+test('094 looks at two cards and stays unfinished because the attack cannot rest its raid base',()=>{
+ const program=IMC_PROGRAMS_051_100['IMC-1-094'];
+ assert.equal(program.ready,false);
+ assert.equal(program.raidName,'島村 卯月');
+ assert.deepEqual(program.effects.onPlay,[{op:'takeTopHandRestOutside',count:2}]);
+ assert.equal(pack.cards['IMC-1-094'],undefined);
+ assert.throws(()=>createUniversalPack({id:'probe',version:'imc-094-attack',cards:[
+  bare('GAP','缺口',{implementation:'dsl',effects:{onAttack:[{op:'deployOwnRaidBaseRest',optional:true}]}})
+ ]}),/raid-base rest entry is a character onRetire effect/);
+ const bodies=[
+  bare('SRC','卯月',{implementation:'dsl',energy:0,effects:program.effects}),
+  bare('TOP-A','甲',{bp:1000}),
+  bare('TOP-B','乙',{bp:1000}),
+  ...Array.from({length:47},(_,i)=>bare('FILL'+i,'填充'+i,{bp:1000}))
+ ];
+ const look=createUniversalPack({id:'probe',version:'imc-094',cards:bodies});
+ const counts=Object.fromEntries(bodies.map(card=>[card.id,1]));
+ assert.deepEqual(validateUniversalDeck(look,counts),[]);
+ let s=newUniversalMatch(look,{decks:[counts,counts],seed:9400,first:0});
+ for(let i=0;i<8&&s.phase!=='main';i++)s=dispatchUniversalAction(look,s,{type:'next'});
+ s.players[0].apCards.forEach((card,i)=>{card.inPlay=i<1;card.ready=i<1;});
+ const first=game.pull(s,0,'TOP-A');
+ const second=game.pull(s,0,'TOP-B');
+ s.players[0].deck.unshift(first,second);
+ const src=game.hold(s,0,'SRC');
+ s=dispatchUniversalAction(look,s,legalUniversalActions(look,s).find(a=>
+  a.type==='play'&&a.uid===src.uid&&a.line==='front'));
+ assert.equal(s.pending.kind,'effect-top-take-one');
+ assert.deepEqual(s.pending.uids,[first.uid,second.uid]);
+ const mine=universalPrivateChoices(look,s,0);
+ assert.deepEqual(mine.options.map(option=>option.card?.cardId),['TOP-A','TOP-B']);
+ assert.equal(universalPrivateChoices(look,s,1),null);
+ const shown=JSON.stringify(universalPublicView(look,s,1));
+ assert.equal(shown.includes(first.uid),false);
+ assert.equal(shown.includes(second.uid),false);
+ assert.equal(legalUniversalActions(look,s).some(a=>a.type==='chooseTopTakeOne'&&a.uid===null),false);
+ s=dispatchUniversalAction(look,s,{type:'chooseTopTakeOne',uid:second.uid});
+ assert.ok(s.players[0].hand.some(c=>c.uid===second.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===first.uid));
+ assert.equal(s.players[0].deck.some(c=>c.uid===first.uid||c.uid===second.uid),false);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(look,s),true);
 });

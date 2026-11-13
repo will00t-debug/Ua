@@ -157,6 +157,10 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-090':Object.freeze({ready:true,implementation:'dsl',activeExtraEnergy:1}),
  'IMC-1-091':play([{op:'drawDiscard',count:1}]),
  'IMC-1-092':play([{op:'peekTopOne'}]),
+ 'IMC-1-094':Object.freeze({
+  ready:false,implementation:'dsl',raidName:'島村 卯月',
+  effects:{onPlay:[{op:'takeTopHandRestOutside',count:2}]}
+ }),
  'IMC-1-095':play([{op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]),
  'IMC-1-096':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
  'IMC-1-098':Object.freeze({

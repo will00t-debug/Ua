@@ -61,8 +61,8 @@ export const IMC_REQUESTS_051_100=[
   cardId:'IMC-1-094',
   sentence:'アタック時、手札を1枚場外に置いてもよい。そうした場合、レイド元を1枚レストで登場させる。',
   existingOps:['takeTopHandRestOutside','deployOwnRaidBaseRest'],
-  whyNotEnough:'登場時看 2 張、最多 1 張進手、其餘場外，takeTopHandRestOutside 是這句。攻擊句要可選把 1 張手牌放場外，做到才讓這張突襲元休息登場。deployOwnRaidBaseRest 只接受退場時機，而且沒有手牌進場外的費用。突襲框只有〈島村 卯月〉。',
-  proposal:'登場時沿用看 2 張入手、其餘場外。攻擊時可選手牌進場外，做到才讓突襲元休息登場。094 先不標 ready。'
+  whyNotEnough:'登場時看 2 張、選 1 張進手、另一張進場外，程式已寫 takeTopHandRestOutside，ready 仍是 false。這個查看沒有跳過，必須從窗口選 1 張。攻擊句要可選把 1 張手牌放場外，做到才讓這張突襲元休息登場。deployOwnRaidBaseRest 只接受退場時機；放在 onAttack 會丟「raid-base rest entry is a character onRetire effect」，而且沒有手牌進場外的費用。突襲框只有〈島村 卯月〉。',
+  proposal:'登場時已寫進程式，整句還沒完成，不標 ready。缺的是攻擊時可選手牌進場外，做到才讓突襲元以休息狀態登場。'
  },
  {
   cardId:'IMC-1-097',
