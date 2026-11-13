@@ -1,4 +1,5 @@
-// Round 11 A. Shared engine only. The five MHA cards stay pending.
+// Round 11 A. Shared engine only. 001, 013, 014 and 018 stay pending.
+// 051 and 054 are complete D-group programs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
@@ -131,14 +132,30 @@ function reject(card,pattern){
  ]}), pattern);
 }
 
-test('the five shapes stay out of the MHA pack and do not change IMC',()=>{
+test('001, 013, 014 and 018 stay out of the MHA pack and do not change IMC',()=>{
  const mha=createMhaV2Pack();
- assert.equal(Object.keys(mha.cards).length,57);
- for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018','MHA-1-051','MHA-1-054'])
+ assert.equal(Object.keys(mha.cards).length,59);
+ for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018'])
   assert.equal(mha.cards[id],undefined);
+ const mirio=mha.cards['MHA-1-051'];
+ assert.equal(mirio.raidName,'通形 ミリオ');
+ assert.deepEqual(mirio.blockBpRestriction,{relation:'atMost',bp:3000,condition:null});
+ assert.equal(mirio.unblockedAttack.oncePerTurn,true);
+ assert.equal(mirio.unblockedAttack.optional,false);
+ assert.deepEqual(mirio.unblockedAttack.then,[{op:'draw',count:1}]);
+ assert.equal(mirio.effects.onRetire[0].op,'deployRaidBottomActive');
+ assert.equal(mirio.effects.onRetire[0].when.minEnergy,4);
+ assert.equal(mirio.effects.onRetire[0].when.min,3);
+ const mei=mha.cards['MHA-1-054'];
+ assert.equal(mei.effects.onPlay[0].op,'searchTopOneBottomDiscard');
+ assert.equal(mei.effects.onPlay[0].count,7);
+ assert.equal(mei.effects.onPlay[0].discard,false);
+ assert.equal(mei.effects.onPlay[0].logic,'all');
  assert.equal(Object.keys(createImcV2Pack().cards).length,113);
  const optional=createImcV2Pack().cards['IMC-1-061'];
- if(optional)assert.equal(optional.unblockedAttack?.optional,true);
+ assert.equal(optional.unblockedAttack.optional,true);
+ assert.equal(optional.unblockedAttack.oncePerTurn,undefined);
+ assert.equal(createImcV2Pack().cards['IMC-1-056'].effects.onPlay[0].discard,undefined);
 });
 
 test('other characters with required energy are counted on both lines',()=>{

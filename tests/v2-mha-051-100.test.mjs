@@ -7,16 +7,17 @@ import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mj
 import {MHA_REQUESTS_051_100} from '../dist/universal-v2/mha/requests-051-100.mjs';
 import {runMha051} from '../dist/universal-v2/mha/runtime-051-100.mjs';
 import {createMhaV2Pack,MHA_OFFICIAL_MATCH_CLOSED,mhaBattleCard,mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
+import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPublicView,universalBp,universalCardEnergy,
+ assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp,universalCardEnergy,
  universalImpactNull,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-1-052','MHA-1-053','MHA-1-057','MHA-1-058','MHA-1-061','MHA-1-064','MHA-1-065',
+const READY=['MHA-1-051','MHA-1-052','MHA-1-053','MHA-1-054','MHA-1-057','MHA-1-058','MHA-1-061','MHA-1-064','MHA-1-065',
  'MHA-1-067','MHA-1-068','MHA-1-069','MHA-1-073','MHA-1-075','MHA-1-077','MHA-1-078',
  'MHA-1-079','MHA-1-080','MHA-1-082','MHA-1-083','MHA-1-086','MHA-1-088','MHA-1-092',
  'MHA-1-094','MHA-1-097','MHA-1-098'];
-const OPEN=['MHA-1-051','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059',
+const OPEN=['MHA-1-055','MHA-1-056','MHA-1-059',
  'MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072',
  'MHA-1-074','MHA-1-076','MHA-1-081','MHA-1-084','MHA-1-085','MHA-1-087','MHA-1-089',
  'MHA-1-090','MHA-1-091','MHA-1-093','MHA-1-095','MHA-1-096','MHA-1-099','MHA-1-100'];
@@ -302,8 +303,10 @@ test('MHA-1-061 draws one and does not invent a card from an empty deck',()=>{
  game.fuel(s,0,['MHA-1-057','MHA-1-057']);
  s=game.reach(s,'main');
  emptyDeck(s,0);
+ const missing=game.hold(s,0,'MHA-1-061');
  const hand=s.players[0].hand.length;
  s=game.play(s,'MHA-1-061');
+ assert.equal(s.players[0].hand.some(c=>c.uid===missing.uid),false);
  assert.equal(s.players[0].hand.length,hand-1);
  assert.equal(s.pending,null);
 });
@@ -682,4 +685,379 @@ test('MHA-1-097 retires at 3000, and 5000 only while Bakugo is on the field',()=
  s=game.reach(s,'main');
  s=game.cast(s,'MHA-1-097');
  assert.equal(s.pending,null);
+});
+
+function settle(s,tools=game){
+ let guard=0;
+ while(s.pending){
+  const legal=tools.legal(s);
+  const kind=s.pending.kind;
+  const action=kind==='life-trigger'?legal.find(a=>a.type==='chooseTrigger'&&a.mode==='skip'):
+   kind==='life-batch-order'?legal.find(a=>a.type==='chooseLifeOrder')||legal[0]:
+   kind==='attack-life-target'?legal[0]:
+   kind==='end-hand-limit'?legal[0]:null;
+  if(!action)break;
+  s=tools.act(s,action);
+  if(++guard>12)throw Error('Could not settle '+kind);
+ }
+ return s;
+}
+function passTo(s,player,phase){
+ let guard=0;
+ while(!(s.active===player&&s.phase===phase&&!s.pending)){
+  s=settle(s);
+  if(s.pending)throw Error('Pending '+s.pending.kind+' blocked '+player+' '+phase);
+  if(s.active===player&&s.phase===phase)break;
+  s=game.act(s,{type:'next'});
+  if(++guard>40)throw Error('Did not reach '+player+' '+phase);
+ }
+ return s;
+}
+function shell(card){
+ return {
+  id:card.id,name:card.name,color:card.color,type:card.type,energy:card.energy,
+  ap:card.ap,bp:card.bp,gen:card.gen||0,traits:[...(card.traits||[])],
+  trigger:card.trigger??null,implementation:card.implementation,effects:card.effects,
+  ...(card.unblockedAttack?{unblockedAttack:card.unblockedAttack}:{}),
+  ...(card.triggerEffect?{triggerEffect:card.triggerEffect}:{}),
+  ...(card.raidName?{raidName:card.raidName}:{}),
+  ...(card.blockBpRestriction?{blockBpRestriction:card.blockBpRestriction}:{})
+ };
+}
+function probeMatch(extras,seed){
+ const ready=MHA_CARDS_051_100.map(card=>{
+  const program=mhaProgramFor(card.id);
+  return program?.ready===true?mhaBattleCard(card,program):null;
+ }).filter(Boolean);
+ const bodies=[...ready,...extras];
+ const usePack=createUniversalPack({id:'mha-d11',version:'probe-'+seed,cards:bodies});
+ const counts={};
+ let total=0;
+ for(const card of extras){counts[card.id]=1;total+=1;}
+ for(const card of ready){
+  if(total>=50)break;
+  counts[card.id]=1;total+=1;
+ }
+ for(const card of [...extras,...ready]){
+  if(total>=50)break;
+  const room=4-(counts[card.id]||0);
+  const n=Math.min(room,50-total);
+  if(n>0){counts[card.id]+=n;total+=n;}
+ }
+ assert.equal(total,50);
+ assert.deepEqual(validateUniversalDeck(usePack,counts),[]);
+ let s=newUniversalMatch(usePack,{decks:[counts,counts],seed,first:0});
+ for(let i=0;i<8&&s.phase!=='main';i++){
+  if(s.pending)throw Error(s.pending.kind+' before probe main');
+  s=dispatchUniversalAction(usePack,s,{type:'next'});
+ }
+ assert.equal(s.phase,'main');
+ return {usePack,s};
+}
+
+test('MHA-1-051 blocks only above 3000, draws once when not blocked, and replays the raid bottom',()=>{
+ let s=game.fresh(5101,{'MHA-1-051':3});
+ const self=game.seat(s,0,'MHA-1-051','front',0);
+ const low=game.seat(s,1,'MHA-1-053','front',0);
+ const high=game.seat(s,1,'MHA-1-080','front',1);
+ s=game.reach(s,'attack');
+ const hand=s.players[0].hand.length;
+ const deck=s.players[0].deck.length;
+ s=game.act(s,{type:'attack',uid:self.uid});
+ assert.equal(s.pending.kind,'block');
+ assert.equal(game.legal(s).some(a=>a.type==='chooseBlock'&&a.uid===low.uid),false);
+ assert.ok(game.legal(s).some(a=>a.type==='chooseBlock'&&a.uid===high.uid));
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseBlock',uid:low.uid}),
+  /not currently legal|Invalid|Illegal/);
+ s=game.act(s,{type:'chooseBlock',uid:high.uid});
+ assert.equal(s.players[0].hand.length,hand);
+ assert.equal(s.players[0].deck.length,deck);
+ assert.equal(s.mainAbilityUsedUids.includes(self.uid+'|unblockedOnce'),false);
+ assert.ok(s.players[1].outside.some(c=>c.uid===high.uid));
+ assert.equal(s.pending,null);
+ s.players[0].front.find(c=>c.uid===self.uid).ready=true;
+ s=game.act(s,{type:'attack',uid:self.uid});
+ s=game.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.players[0].hand.length,hand+1);
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.ok(s.mainAbilityUsedUids.includes(self.uid+'|unblockedOnce'));
+ s=settle(s);
+ assert.equal(s.pending,null);
+ s.players[0].front.find(c=>c.uid===self.uid).ready=true;
+ const once=s.players[0].hand.length;
+ s=game.act(s,{type:'attack',uid:self.uid});
+ s=game.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.players[0].hand.length,once);
+ s=settle(s);
+
+ s=game.fresh(5102,{'MHA-1-051':3});
+ const quiet=game.seat(s,0,'MHA-1-051','front',0);
+ game.seat(s,1,'MHA-1-053','front',0);
+ s=game.reach(s,'attack');
+ emptyDeck(s,0);
+ const emptyHand=s.players[0].hand.length;
+ s=game.act(s,{type:'attack',uid:quiet.uid});
+ s=game.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.players[0].hand.length,emptyHand);
+ assert.equal(s.players[0].deck.length,0);
+ assert.ok(s.mainAbilityUsedUids.includes(quiet.uid+'|unblockedOnce'));
+ s=settle(s);
+ s.players[0].front.find(c=>c.uid===quiet.uid).ready=true;
+ s=game.act(s,{type:'attack',uid:quiet.uid});
+ s=game.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.players[0].hand.length,emptyHand);
+
+ s=game.fresh(5103,{'MHA-1-051':3});
+ const raider=game.seat(s,0,'MHA-1-051','front',0);
+ const base=game.pull(s,0,'MHA-1-061');
+ raider.stack=[base];
+ game.seat(s,0,'MHA-1-051','front',1);
+ game.seat(s,0,'MHA-1-051','front',2);
+ game.seat(s,0,'MHA-1-051','energy',0);
+ const hitter=game.seat(s,1,'MHA-1-051','front',0);
+ s=passTo(s,1,'attack');
+ const drawn=s.players[0].hand.length;
+ s=game.act(s,{type:'attack',uid:hitter.uid});
+ s=game.act(s,{type:'chooseBlock',uid:raider.uid});
+ assert.equal(s.pending.kind,'effect-raid-bottom-active');
+ assert.equal(s.pending.baseUid,base.uid);
+ const entries=game.legal(s).filter(a=>a.type==='chooseRaidBottomActive'&&a.uid===base.uid);
+ assert.ok(entries.length);
+ assert.equal(entries.every(a=>a.line==='front'),true);
+ assert.ok(game.legal(s).some(a=>a.type==='chooseRaidBottomActive'&&a.uid===null));
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseRaidBottomActive',uid:base.uid,line:'energy',slot:0}),
+  /not currently legal|Illegal raid-bottom/);
+ s=game.act(s,entries.find(a=>a.slot===0));
+ const entered=s.players[0].front.find(c=>c?.uid===base.uid);
+ assert.equal(entered.ready,true);
+ assert.equal(s.players[0].energy.some(c=>c?.uid===base.uid),false);
+ assert.equal(s.players[0].hand.length,drawn+1);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(5104,{'MHA-1-051':3});
+ const declining=game.seat(s,0,'MHA-1-051','front',0);
+ const kept=game.pull(s,0,'MHA-1-057');
+ declining.stack=[kept];
+ game.seat(s,0,'MHA-1-051','front',1);
+ game.seat(s,0,'MHA-1-051','front',2);
+ game.seat(s,0,'MHA-1-051','energy',0);
+ const swinger=game.seat(s,1,'MHA-1-051','front',0);
+ s=passTo(s,1,'attack');
+ s=game.act(s,{type:'attack',uid:swinger.uid});
+ s=game.act(s,{type:'chooseBlock',uid:declining.uid});
+ s=game.act(s,{type:'chooseRaidBottomActive',uid:null});
+ assert.ok(s.players[0].outside.some(c=>c.uid===kept.uid));
+ assert.equal(s.players[0].front.some(c=>c?.uid===kept.uid),false);
+ assert.equal(s.pending,null);
+
+ s=game.fresh(5105,{'MHA-1-051':3});
+ const small=game.seat(s,0,'MHA-1-051','front',0);
+ const buried=game.pull(s,0,'MHA-1-057');
+ small.stack=[buried];
+ game.seat(s,0,'MHA-1-051','front',1);
+ const hidden=game.seat(s,0,'MHA-1-051','front',2);
+ hidden.faceDown=true;
+ game.seat(s,0,'MHA-1-051','energy',0);
+ game.seat(s,0,'MHA-1-080','energy',1);
+ const hammer=game.seat(s,1,'MHA-1-051','front',0);
+ s=passTo(s,1,'attack');
+ s=game.act(s,{type:'attack',uid:hammer.uid});
+ s=game.act(s,{type:'chooseBlock',uid:small.uid});
+ assert.notEqual(s.pending?.kind,'effect-raid-bottom-active');
+ assert.ok(s.players[0].outside.some(c=>c.uid===buried.uid));
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ const filler=id=>({
+  id,name:id,color:'green',type:'character',energy:1,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}
+ });
+ assert.throws(()=>createUniversalPack({id:'bad-051',version:'bad',cards:[
+  {id:'BAD-051',name:'壞',color:'green',type:'character',energy:1,ap:1,bp:2000,gen:1,
+   traits:[],trigger:null,implementation:'dsl',effects:{},
+   unblockedAttack:{oncePerTurn:true,optional:true,then:[{op:'draw',count:1}]}},
+  ...Array.from({length:12},(_,i)=>filler('BAD-'+i))
+ ]}),/invalid optional unblocked-attack/);
+});
+
+test('MHA-1-054 publishes one cheap green field and does not discard a hand card',()=>{
+ const imc=createImcV2Pack();
+ const extras=[
+  {id:'WIN-FIELD',name:'合格場域',color:'green',type:'field',energy:2,ap:1,bp:0,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-COST',name:'太貴場域',color:'green',type:'field',energy:3,ap:1,bp:0,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-CHAR',name:'綠角色',color:'green',type:'character',energy:1,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-BLUE',name:'藍場域',color:'blue',type:'field',energy:1,ap:1,bp:0,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-EVENT',name:'綠事件',color:'green',type:'event',energy:1,ap:1,bp:0,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-BLUE-CHAR',name:'藍能源',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-GREEN-1',name:'綠能源',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-GREEN-2',name:'綠能源二',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-PAD-1',name:'填充一',color:'green',type:'character',energy:1,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-PAD-2',name:'填充二',color:'red',type:'character',energy:1,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'WIN-LIPPS',name:'特徵',color:'blue',type:'character',energy:1,ap:1,bp:1000,gen:1,
+   traits:['LiPPS'],trigger:null,implementation:'vanilla',effects:{}},
+  shell(imc.cards['IMC-1-056']),
+  shell(imc.cards['IMC-1-061'])
+ ];
+ const opened=probeMatch(extras,5401);
+ const usePack=opened.usePack;
+ const local=kit(usePack);
+ let s=opened.s;
+ const pullTop=(ids)=>{
+  const cards=ids.map(id=>local.pull(s,0,id));
+  s.players[0].deck.unshift(...cards);
+  return cards;
+ };
+ local.fuel(s,0,['WIN-GREEN-1','WIN-GREEN-2']);
+ readyAp(s,2);
+ const [ok,cost,person,blue,event]=pullTop([
+  'WIN-FIELD','WIN-COST','WIN-CHAR','WIN-BLUE','WIN-EVENT','WIN-PAD-1','WIN-PAD-2']);
+ local.hold(s,0,'MHA-1-054');
+ const before=s.players[0].hand.length;
+ s=local.play(s,'MHA-1-054');
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.equal(s.pending.discard,false);
+ assert.equal(s.pending.uids.length,7);
+ assert.deepEqual(s.pending.choices,[ok.uid]);
+ for(const card of [cost,person,blue,event])assert.ok(s.pending.uids.includes(card.uid));
+ assert.equal(s.publicReveals.some(r=>r.kind==='revealed-window'),false);
+ const mine=universalPrivateChoices(usePack,s,0);
+ assert.equal(mine.inspected.length,7);
+ assert.ok(mine.inspected.some(c=>c.cardId==='WIN-COST'));
+ assert.ok(mine.inspected.some(c=>c.cardId==='WIN-CHAR'));
+ assert.ok(mine.inspected.some(c=>c.cardId==='WIN-EVENT'));
+ assert.equal(universalPrivateChoices(usePack,s,1),null);
+ assert.throws(()=>local.act(structuredClone(s),{type:'chooseTopFiltered',uid:cost.uid}),
+  /not currently legal|Filtered top search/);
+ const declined=local.act(structuredClone(s),{type:'chooseTopFiltered',uid:null});
+ assert.equal(declined.pending.kind,'effect-top-order');
+ assert.equal(declined.pending.discardAfter,undefined);
+ assert.equal(declined.players[0].hand.length,before-1);
+ let ordered=declined;
+ let guard=0;
+ while(ordered.pending?.kind==='effect-top-order'){
+  const uid=ordered.pending.uids.find(id=>!ordered.pending.order.includes(id));
+  ordered=local.act(ordered,{type:'chooseTopOrder',uid});
+  if(++guard>8)throw Error('order');
+ }
+ assert.equal(ordered.pending,null);
+ assert.equal(ordered.players[0].hand.length,before-1);
+ assert.equal(ordered.players[0].hand.some(c=>c.uid===ok.uid),false);
+ assert.equal(ordered.publicReveals.some(r=>r.kind==='searched-to-hand'),false);
+
+ s=local.act(s,{type:'chooseTopFiltered',uid:ok.uid});
+ assert.equal(s.pending.kind,'effect-top-order');
+ assert.equal(s.pending.discardAfter,undefined);
+ assert.ok(s.players[0].hand.some(c=>c.uid===ok.uid));
+ assert.equal(s.players[0].hand.length,before);
+ assert.equal(s.publicReveals.filter(r=>r.kind==='searched-to-hand').length,1);
+ assert.equal(s.publicReveals.find(r=>r.kind==='searched-to-hand').cardId,'WIN-FIELD');
+ guard=0;
+ while(s.pending?.kind==='effect-top-order'){
+  const uid=s.pending.uids.find(id=>!s.pending.order.includes(id));
+  s=local.act(s,{type:'chooseTopOrder',uid});
+  if(++guard>8)throw Error('order');
+ }
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.length,before);
+ assert.equal(s.players[0].hand.some(c=>c.cardId==='MHA-1-054'),false);
+ assert.equal(assertUniversalMatch(usePack,s),true);
+
+ const short=probeMatch(extras,5402);
+ s=short.s;
+ const shortKit=kit(short.usePack);
+ shortKit.fuel(s,0,['WIN-GREEN-1','WIN-GREEN-2']);
+ readyAp(s,2);
+ s.players[0].outside.push(...s.players[0].deck.splice(0));
+ const window=['WIN-FIELD','WIN-COST','WIN-CHAR'].map(id=>shortKit.pull(s,0,id));
+ s.players[0].deck.unshift(...window);
+ shortKit.hold(s,0,'MHA-1-054');
+ s=shortKit.play(s,'MHA-1-054');
+ assert.equal(s.pending.uids.length,3);
+ assert.deepEqual(s.pending.choices,[window[0].uid]);
+ s=shortKit.act(s,{type:'chooseTopFiltered',uid:window[0].uid});
+ assert.equal(s.pending?.kind==='effect-discard',false);
+ assert.equal(assertUniversalMatch(short.usePack,s),true);
+
+ const contrast=probeMatch(extras,5403);
+ s=contrast.s;
+ const other=kit(contrast.usePack);
+ other.fuel(s,0,['WIN-BLUE-CHAR']);
+ readyAp(s,2);
+ const lipps=other.pull(s,0,'WIN-LIPPS');
+ s.players[0].deck.unshift(lipps,other.pull(s,0,'WIN-CHAR'),other.pull(s,0,'WIN-PAD-1'));
+ other.hold(s,0,'IMC-1-056');
+ const held=s.players[0].hand.length;
+ s=other.play(s,'IMC-1-056');
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.equal(s.pending.discard,undefined);
+ assert.deepEqual(s.pending.choices,[lipps.uid]);
+ s=other.act(s,{type:'chooseTopFiltered',uid:lipps.uid});
+ assert.equal(s.pending.discardAfter,true);
+ while(s.pending?.kind==='effect-top-order'){
+  const uid=s.pending.uids.find(id=>!s.pending.order.includes(id));
+  s=other.act(s,{type:'chooseTopOrder',uid});
+ }
+ assert.equal(s.pending.kind,'effect-discard');
+ const discarded=s.players[0].hand.find(c=>c.uid!==lipps.uid);
+ s=other.act(s,{type:'chooseDiscard',uid:discarded.uid});
+ assert.ok(s.players[0].outside.some(c=>c.uid===discarded.uid));
+ assert.equal(s.players[0].hand.length,held-1);
+ assert.equal(s.pending,null);
+
+ const side=probeMatch(extras,5404);
+ s=side.s;
+ const both=kit(side.usePack);
+ const mirio=both.seat(s,0,'MHA-1-051','front',0);
+ const shuko=both.seat(s,0,'IMC-1-061','front',1);
+ both.seat(s,1,'WIN-CHAR','front',0);
+ s=both.reach(s,'attack');
+ const mirioHand=s.players[0].hand.length;
+ s=both.act(s,{type:'attack',uid:shuko.uid});
+ s=both.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.pending.kind,'effect-may-then');
+ s=both.act(s,{type:'chooseMayThen',mode:'skip'});
+ s=settle(s,both);
+ assert.equal(s.players[0].hand.length,mirioHand);
+ s.players[0].front.find(c=>c.uid===shuko.uid).ready=true;
+ s=both.act(s,{type:'attack',uid:shuko.uid});
+ s=both.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.pending.kind,'effect-may-then');
+ s=both.act(s,{type:'chooseMayThen',mode:'skip'});
+ s=settle(s,both);
+ s.players[0].front.find(c=>c.uid===mirio.uid).ready=true;
+ const beforeMirio=s.players[0].hand.length;
+ s=both.act(s,{type:'attack',uid:mirio.uid});
+ s=both.act(s,{type:'chooseBlock',uid:null});
+ assert.notEqual(s.pending?.kind,'effect-may-then');
+ assert.equal(s.players[0].hand.length,beforeMirio+1);
+ assert.ok(s.mainAbilityUsedUids.includes(mirio.uid+'|unblockedOnce'));
+ s=settle(s,both);
+ s.players[0].front.find(c=>c.uid===mirio.uid).ready=true;
+ const stopped=s.players[0].hand.length;
+ s=both.act(s,{type:'attack',uid:mirio.uid});
+ s=both.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.players[0].hand.length,stopped);
+
+ assert.throws(()=>createUniversalPack({id:'bad-054',version:'bad',cards:[
+  {id:'BAD-054',name:'壞檢索',color:'green',type:'character',energy:1,ap:1,bp:2000,gen:1,
+   traits:[],trigger:null,implementation:'dsl',effects:{onPlay:[{
+    op:'searchTopOneBottomDiscard',count:7,discard:false,logic:'all',filters:[
+     {field:'type',value:'character'},{field:'color',value:'green'}
+    ]
+   }]}},
+  ...Array.from({length:12},(_,i)=>({
+   id:'GAP-'+i,name:'填充',color:'green',type:'character',energy:1,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}
+  }))
+ ]}),/invalid top-N filtered bottom\/discard profile/);
 });
