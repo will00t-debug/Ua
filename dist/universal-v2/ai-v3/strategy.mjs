@@ -71,6 +71,10 @@ export function normalizeFactors(asked){
  // life, and SPECIAL is an unresolved effect. Off unless asked. Named
  // variants and the other switches do not turn it on.
  if(asked.settleLife===true)factors.settleLife=true;
+ // An unfinished block window is not evidence that blocking saved life.
+ // The public battle ledger already compares BP, Impact and Impact null.
+ // Off unless asked. Named variants and the other switches do not turn it on.
+ if(asked.publicBlock===true)factors.publicBlock=true;
  return factors;
 }
 export function bindVariant(variant,fn,factors){
