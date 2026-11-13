@@ -59,7 +59,7 @@ export const UA10ST_PRODUCT={
  deckCards:50,
  apCardsInProduct:3,
  recipe:null,
- recipeStatus:'待查：商品頁只寫構築牌組 50 張與行動值卡 3 張。官方卡表沒有各卡張數，這裡不補。'
+ recipeStatus:'待查：2026-11-14 再查商品頁與 series=570010 卡表。兩者都只確認構築牌組 50 張與行動值卡 3 張，沒有各卡張數。商品頁亮點把 102 寫成爆豪勝己，卡表是オールマイト，這裡跟卡表，不補張數。'
 };
 
 export const UA10ST_CARDS=[
