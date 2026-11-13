@@ -131,10 +131,12 @@ function reject(card,pattern){
  ]}), pattern);
 }
 
-test('the five shapes stay out of the MHA pack and do not change IMC',()=>{
+test('001, 013, 014 and 018 are in the MHA pack, and IMC is unchanged',()=>{
  const mha=createMhaV2Pack();
- assert.equal(Object.keys(mha.cards).length,57);
- for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018','MHA-1-051','MHA-1-054'])
+ assert.equal(Object.keys(mha.cards).length,61);
+ for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018'])
+  assert.equal(mha.cards[id].id,id);
+ for(const id of ['MHA-1-051','MHA-1-054'])
   assert.equal(mha.cards[id],undefined);
  assert.equal(Object.keys(createImcV2Pack().cards).length,113);
  const optional=createImcV2Pack().cards['IMC-1-061'];

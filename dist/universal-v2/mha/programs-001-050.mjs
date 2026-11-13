@@ -7,6 +7,10 @@ const play=effects=>Object.freeze({
 const vanilla=Object.freeze({ready:true, implementation:'vanilla'});
 
 export const MHA_PROGRAMS_001_050=Object.freeze({
+ 'MHA-1-001':Object.freeze({
+  ready:true, implementation:'dsl', impactNull:true,
+  effects:Object.freeze({onRetire:Object.freeze([{op:'drawDiscard', count:1}])})
+ }),
  'MHA-1-008':vanilla,
  'MHA-1-012':Object.freeze({
   ready:true, implementation:'dsl',
@@ -14,11 +18,29 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
    op:'restSelfGainEnergyRetireEndMain', lines:'field', oncePerTurn:true, extraEnergy:1
   })
  }),
+ 'MHA-1-013':play(Object.freeze([{
+  op:'optionalOwnLifeToHandThenDraw',
+  then:Object.freeze([{op:'activeOwnOther', optional:true, line:'front'}])
+ }])),
+ 'MHA-1-014':Object.freeze({
+  ready:true, implementation:'dsl', raidName:'荼毘',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'optionalOwnLifeToHandThenDraw',
+   then:Object.freeze([{op:'retireOppFrontUnderBp', bp:3500, optional:true}])
+  }])})
+ }),
  'MHA-1-015':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onRetire:Object.freeze([{op:'draw', count:1}])})
  }),
  'MHA-1-016':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
+ 'MHA-1-018':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:Object.freeze([{op:'grantSelfAttackWinDrawThisTurn'}])
+  })
+ }),
  'MHA-1-019':Object.freeze({
   ready:true, implementation:'dsl',
   mainAbility:Object.freeze({

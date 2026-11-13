@@ -1,12 +1,10 @@
-// Cards in UA10BT 001-050 that are not ready. 001, 013, 014 and 018 now
-// have a shared shape; write the program and a behavior test before
-// marking them ready. The other sentences still need an engine operation.
+// Cards in UA10BT 001-050 that are not ready. 001, 013, 014 and 018 are
+// ready. The sentences below were checked against the round 11 shared
+// operations and still are not a whole printed sentence.
 // C group does not approximate a missing sentence.
 // MHA-1-044 is the same card as the UA10ST printing. Its activate is
 // restSelfGainEnergyRetireEndMain, so it is ready and is not listed here.
 export const MHA_REQUESTS_001_050=Object.freeze({
- 'MHA-1-001':gap('衝擊無效，以及退場時抽 1 張再把手牌 1 張放到場外。',
-  'onRetire 的 {op:drawDiscard, count:1} 已可與 impactNull 同時成立。抽 1 張後把 1 張手牌放到場外。count 不是 1，或另帶 discardCount，會被拒絕。這張仍未寫程式，不要標 ready。'),
  'MHA-1-002':gap('登場時可選的磨牌 3 張，以及主階段橫置並退場後從場外取死穢八斎會角色或〈“個性”消失弾〉。Q421：指名卡不必有特徵。',
   '可選磨 3 的後段目前只允許回收 1 張紫角色。這張要在接受磨牌後回收死穢八斎會角色或指名卡，主階段還要先橫置並退場才能搜尋。'),
  'MHA-1-003':gap('自己場上有 3 張以上帶【起動メイン】的角色時，這張 BP+1000。',
@@ -25,14 +23,8 @@ export const MHA_REQUESTS_001_050=Object.freeze({
   'raidName 只覆蓋突襲框。還需要自己回合戰敗改退場區，以及前排每回合一次把對手前排目前 BP 2000 以下放到退場區。removeOppFrontUnderBp 不能放進 frontOnceProgram。'),
  'MHA-1-011':gap('擋過這張的角色下一次不橫置回復；主階段每回合一次使對手本回合必須盡可能阻擋。Q427、Q428。',
   '擋過這張的角色下一次不回復還沒有操作。grantSelfMustBlockThisTurn 只接登場時；包進每回合一次的主階段會被拒絕。兩句都要有。'),
- 'MHA-1-013':gap('登場時可以把 1 張生命放入手牌；若如此，可以橫置回復自己其他前排 1 張。Q429。',
-  'optionalOwnLifeToHandThenDraw 的後段可以是 {op:activeOwnOther, optional:true, line:front}。只在生命入手後活動其他自己前排，能量列不算。拒絕入手則不做。生命變 0 要等這段結束才敗北。這張仍未寫程式，不要標 ready。'),
- 'MHA-1-014':gap('突襲〈荼毘〉。登場時可以把 1 張生命放入手牌；若如此，退場對手前排 BP3500 以下 1 張。Q430。',
-  '同一生命入手的後段可以是 {op:retireOppFrontUnderBp, bp:3500, optional:true}。突襲〈荼毘〉用 raidName。拒絕入手則不退場。這張仍未寫程式，不要標 ready。'),
  'MHA-1-017':gap('突襲〈トゥワイス〉。登場時可以把這疊突襲最下方的卡以橫置回復狀態登場。',
   'deployRaidBottomActive 只接受退場時，而且要帶其他角色必要能源的 when。017 是登場時把最下段以活動狀態登場，沒有那道張數門。寫在 onPlay 會被拒絕。'),
- 'MHA-1-018':gap('主階段每回合一次：本回合這張攻擊並戰鬥勝利時抽 1 張。',
-  'frontOnceProgram 可以 frontOnly:false、oncePerTurn:true，then 只有 {op:grantSelfAttackWinDrawThisTurn}。前排或能量列都能起動。本回合這張攻擊並戰鬥勝利才抽 1。frontOnly true、多一個鍵，或改成強制阻擋，仍被拒絕。這張仍未寫程式，不要標 ready。'),
  'MHA-1-020':gap('任何帶突襲觸發的自己角色可以突襲到這張上。登場時公開牌庫頂 1 張入手；若沒有突襲觸發，把手牌 1 張放到場外。Q431。',
   '沒有「被任意突襲觸發卡當作突襲基」以及公開頂牌的條件棄牌。'),
  'MHA-1-023':gap('前排主階段每回合一次：其他自己角色 BP+1000；若是ジェントル・クリミナル則改 +2000 並獲得狙擊。',
