@@ -153,6 +153,13 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
  'IMC-1-031':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'recoverAp',count:2}]},
   notes:'APを2枚までアクティブ。ファイナルトリガーはカード表。'},
+ 'IMC-1-032':{ready:true,implementation:'dsl',
+  effects:{onPlay:[
+   {op:'draw',count:1},
+   {op:'buffOwnField',filter:{field:'trait',value:'BEYOND THE STARLIGHT'},
+    bp:2000,optional:true,excludeSelf:true,impactIfName:'城ヶ崎 莉嘉'}
+  ]},
+  notes:'先抽 1。同一次選擇最多 1 張 BEYOND THE STARLIGHT，本回合 BP+2000。只有選中的卡名是城ヶ崎 莉嘉才再得本回合衝擊 1。跳過兩者都沒有。'},
  'IMC-1-033':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'lookTopScript',count:6,rest:'bottom',takes:[{
    to:'hand',eachName:true,publish:true,names:['本田 未央','日野 茜','高森 藍子']}]}]},

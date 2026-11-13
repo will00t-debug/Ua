@@ -22,10 +22,10 @@ const byId=Object.fromEntries(IMC_CARDS_001_050.map(c=>[c.id,c]));
 const READY=['IMC-1-001','IMC-1-002','IMC-1-003','IMC-1-004','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-009','IMC-1-010',
  'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-016','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
  'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-029','IMC-1-030','IMC-1-031',
- 'IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-043','IMC-1-044','IMC-1-045',
+ 'IMC-1-032','IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-043','IMC-1-044','IMC-1-045',
  'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050'];
 const OPEN=['IMC-1-011','IMC-1-012',
- 'IMC-1-032','IMC-1-037','IMC-1-039'];
+ 'IMC-1-037','IMC-1-039'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
  'IMC-1-002','IMC-1-035','IMC-1-040','IMC-1-038','IMC-1-034','IMC-1-047','IMC-1-018',
  'IMC-1-022','IMC-1-041','IMC-1-044'];
@@ -2672,40 +2672,79 @@ test('the old discard-hand buff does not scale when a special trigger is discard
  assert.equal(s.pending,null);
 });
 
-test('IMC-1-032 cannot add impact only to the chosen name',()=>{
- const row=openRequest('IMC-1-032');
- assert.equal(row.whyNotEnough.includes('bonusNames'),true);
- const beyond='BEYOND THE STARLIGHT';
- const rika='城ヶ崎 莉嘉';
- const cards=[
-  probeFace({id:'BONUS',name:'加攻',energy:0,effects:{onPlay:[{op:'buffOwnField',
-   filter:{field:'trait',value:beyond},bp:2000,optional:true,excludeSelf:true,
-   bonusNames:[rika],bonusBp:3000}]}}),
-  probeFace({id:'BOTH',name:'衝擊',energy:0,effects:{onPlay:[{op:'buffNameOrTraitImpact',
-   name:rika,trait:beyond,bp:2000,impact:1,duration:'turn',upTo:1,optional:true}]}}),
-  probeFace({id:'RIKA',name:rika,traits:[beyond],bp:2000}),
-  probeFace({id:'ALLY',name:'同伴',traits:[beyond],bp:2000})
- ];
- const named=probeOpen(cards,32001);
+test('IMC-1-032 draws, then one choice adds BP and impact only to 城ヶ崎 莉嘉',()=>{
+ assert.equal(pack.cards['IMC-1-032'].effects.onPlay[1].impactIfName,'城ヶ崎 莉嘉');
+ assert.equal(pack.cards['IMC-1-032'].effects.onPlay.length,2);
+ const open=seed=>{
+  let s=reach(fresh(seed,{'IMC-1-032':1,'IMC-1-001':2,'IMC-1-010':1,'IMC-1-013':1}),'main');
+  fuel(s,['IMC-1-001','IMC-1-001']);
+  const rika=seat(s,0,'IMC-1-010','front',0,true);
+  const ally=seat(s,0,'IMC-1-013','front',1,true);
+  const plain=seat(s,0,'IMC-1-021','energy',2,true);
+  return {s,rika,ally,plain};
+ };
+ const named=open(32001);
  let s=named.s;
- probeFuel(s);
- const star=probeSeat(s,0,'RIKA','front',0,true);
- const ally=probeSeat(s,0,'ALLY','front',1,true);
- [s]=probePlay(named.pack,s,'BONUS');
+ hold(s,'IMC-1-032');
+ const deck=s.players[0].deck.length;
+ [s]=cast(s,'IMC-1-032');
+ assert.equal(s.players[0].deck.length,deck-1);
  assert.equal(s.pending.kind,'effect-buff-own');
- s=dispatchUniversalAction(named.pack,s,{type:'chooseOwnBuff',uid:star.uid});
- assert.equal(universalBp(named.pack,s,s.players[0].front.find(c=>c.uid===star.uid)),5000);
- assert.equal(universalImpact(named.pack,s,s.players[0].front.find(c=>c.uid===star.uid)),0);
- assert.equal(universalBp(named.pack,s,s.players[0].front.find(c=>c.uid===ally.uid)),2000);
- const wide=probeOpen(cards,32002);
- s=wide.s;
- probeFuel(s);
- const plain=probeSeat(s,0,'ALLY','energy',0,true);
- [s]=probePlay(wide.pack,s,'BOTH');
- assert.equal(s.pending.kind,'effect-name-or-trait-impact');
- assert.equal(s.pending.choices.includes(plain.uid),true);
- s=dispatchUniversalAction(wide.pack,s,{type:'chooseNameOrTraitImpact',uid:plain.uid});
- assert.equal(universalImpact(wide.pack,s,s.players[0].energy.find(c=>c?.uid===plain.uid)),1);
+ assert.deepEqual(s.pending.choices.slice().sort(),[named.rika.uid,named.ally.uid].sort());
+ assert.equal(s.pending.choices.includes(named.plain.uid),false);
+ assert.equal(legal(s).some(a=>a.type==='chooseOwnBuff'&&a.uid===null),true);
+ assert.throws(()=>act(structuredClone(s),{type:'chooseOwnBuff',uid:named.plain.uid}),/not currently legal/);
+ s=act(s,{type:'chooseOwnBuff',uid:named.rika.uid});
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(pack,s,live(s,named.rika.uid)),3500);
+ assert.equal(universalImpact(pack,s,live(s,named.rika.uid)),1);
+ assert.equal(universalBp(pack,s,live(s,named.ally.uid)),1000);
+ assert.equal(universalImpact(pack,s,live(s,named.ally.uid)),0);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ const other=open(32002);
+ s=other.s;
+ [s]=cast(s,'IMC-1-032');
+ s=act(s,{type:'chooseOwnBuff',uid:other.ally.uid});
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(pack,s,live(s,other.ally.uid)),3000);
+ assert.equal(universalImpact(pack,s,live(s,other.ally.uid)),0);
+ assert.equal(universalBp(pack,s,live(s,other.rika.uid)),1500);
+ assert.equal(universalImpact(pack,s,live(s,other.rika.uid)),0);
+
+ const skipped=open(32003);
+ s=skipped.s;
+ hold(s,'IMC-1-032');
+ const before=s.players[0].deck.length;
+ [s]=cast(s,'IMC-1-032');
+ assert.equal(s.players[0].deck.length,before-1);
+ s=act(s,{type:'chooseOwnBuff',uid:null});
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(pack,s,live(s,skipped.rika.uid)),1500);
+ assert.equal(universalImpact(pack,s,live(s,skipped.rika.uid)),0);
+ assert.equal(universalBp(pack,s,live(s,skipped.ally.uid)),1000);
+
+ const quiet=open(32004);
+ s=quiet.s;
+ s.players[0].front[0]=null;
+ s.players[0].front[1]=null;
+ s.players[0].removed.push(quiet.rika,quiet.ally);
+ hold(s,'IMC-1-032');
+ const empty=s.players[0].deck.length;
+ [s]=cast(s,'IMC-1-032');
+ assert.equal(s.players[0].deck.length,empty-1);
+ assert.equal(s.pending,null);
+ const bare=open(32005);
+ s=bare.s;
+ hold(s,'IMC-1-032');
+ s.players[0].removed.push(...s.players[0].deck.splice(0));
+ [s]=cast(s,'IMC-1-032');
+ assert.equal(s.players[0].deck.length,0);
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.equal(s.pending.choices.includes(bare.rika.uid),true);
+ s=act(s,{type:'chooseOwnBuff',uid:bare.rika.uid});
+ assert.equal(universalImpact(pack,s,live(s,bare.rika.uid)),1);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
 
 test('IMC-1-037 draws only after a character effect; the AP impact shape is shared',()=>{
