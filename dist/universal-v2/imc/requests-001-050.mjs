@@ -3,11 +3,6 @@
 // These cards stay out of IMC_PROGRAMS_001_050. op:'imc' is not wired, and a
 // partial program must not be marked ready.
 export const IMC_REQUESTS_001_050=[
- {cardId:'IMC-1-009',
-  sentence:'このキャラはアクティブで登場させる。【登場時】カードを1枚引き、自分の手札から必要エナジーが3以下で消費APが1の特徴に「BEYOND THE STARLIGHT」を持つ黄のキャラカードを1枚まで自分の場にレストで登場させるかレイドさせる。登場かレイドさせたキャラの元々の必要エナジー1につき、このキャラはこのターン中、BP-1000。',
-  existingOps:['draw','deployOwnHandRest'],
-  whyNotEnough:'enterAlwaysActive 可以轉送。deployOwnHandRestOrRaid 沒有特徵欄，休息或突襲會放進不合特徵的黃卡。登場後依該卡原本費用每 1 點使自己 BP-1000 也沒有。',
-  proposal:'保留 enterAlwaysActive。手牌登場要同時是黃、費用≤3、AP1、BEYOND THE STARLIGHT，最多 1 張，休息或突襲，然後自己 BP 減少登場卡原本費用×1000。'},
  {cardId:'IMC-1-011',
   sentence:'【ターン1】このキャラのBPがプラスされた時、自分のターン中の場合、このキャラはこのターン中、BP+1000。',
   existingOps:['buffSelf'],
