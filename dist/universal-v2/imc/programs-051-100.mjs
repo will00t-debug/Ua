@@ -78,6 +78,14 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
    kind:'ownDistinctTraitNames',turn:'own',zone:'fieldOutside',excludeSelf:false,
    trait:'お願い！シンデレラ',min:6}}]
  }),
+ 'IMC-1-073':Object.freeze({
+  ready:true,implementation:'dsl',frontForbidden:true,
+  effects:{onPlay:[{op:'ifLiveThen',when:{
+   kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+   trait:'お願い！シンデレラ',min:9},
+   then:[{op:'takeTopHandRestOutside',count:2}],
+   else:[{op:'draw',count:1}]}]}
+ }),
  'IMC-1-076':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'Starry-Go-Round'}}]),
  'IMC-1-077':Object.freeze({
@@ -141,6 +149,17 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-090':Object.freeze({ready:true,implementation:'dsl',activeExtraEnergy:1}),
  'IMC-1-091':play([{op:'drawDiscard',count:1}]),
  'IMC-1-092':play([{op:'peekTopOne'}]),
+ 'IMC-1-093':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
+  effects:{onPlay:[{op:'ifLiveThen',when:{
+   kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+   trait:'お願い！シンデレラ',min:6},
+   then:[{op:'buffOwnField',filter:{field:'trait',value:'お願い！シンデレラ'},
+    bp:1000,optional:true,excludeSelf:false,
+    impactIf:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+     excludeSelf:false,trait:'お願い！シンデレラ',min:9}}]}]}
+ }),
  'IMC-1-095':play([{op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]),
  'IMC-1-096':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
  'IMC-1-098':Object.freeze({
