@@ -292,6 +292,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-bounce-named-cut':'可將手牌角色返回手牌',
  'effect-front-bp-cut':'可降低敵方前線 BP',
  'effect-reveal-top-place':'公開的牌留在上面，或放到牌庫底',
+ 'effect-reveal-trait-choice':'公開牌頂，符合特徵可加入手牌，否則放回頂或底',
  'effect-life-reenter-grant':'將 1 張生命加入手牌',
  'effect-sayaka-reenter':'美樹沙耶香以休息狀態再登場，或突襲',
  'effect-tuck-named':'可將角色放到牌庫底',
@@ -335,7 +336,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-printed-ap':'是否給予衝擊',
  'effect-different-field':'可從場外以休息狀態登場',
  'effect-hand-fresh-name':'可從手牌讓新名稱的角色以休息狀態登場',
- 'effect-block-floor':'是否設定阻擋下限'
+ 'effect-block-floor':'是否設定阻擋下限',
+ 'effect-block-ceiling':'是否讓角色不被高 BP 阻擋'
 });
 export function isExactLegal(action,legal){
  return Array.isArray(legal)&&legal.some(candidate=>
@@ -578,6 +580,7 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
   chooseAttackEndRest:['不在攻擊結束時休息','攻擊結束時休息這張卡'],
   chooseAttackEndSwap:['不在攻擊結束時交換','攻擊結束時與這張卡交換'],
   chooseBlockFloor:['不設定阻擋下限','給這張卡阻擋下限'],
+  chooseBlockCeiling:['不限制阻擋','這張卡不會被高 BP 角色阻擋'],
   chooseBottomRetire:['結束放到牌底','將這張場外卡放到牌底'],
   chooseBounceBp:['不返回手牌','將這張卡返回手牌並結算 BP'],
   chooseEnergyFront:['將這張卡移到前線','將這張卡移到前線'],
@@ -1232,6 +1235,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseBounceNamedCut':return action.uid===null?'不把手牌角色返回手牌':'將 '+name()+' 返回手牌';
   case 'chooseFrontBpCut':return action.uid===null?'不降低敵方 BP':'使 '+name()+' 的 BP 降低';
   case 'chooseRevealTop':return action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
+  case 'chooseRevealTrait':return action.mode==='hand'?'將公開且符合特徵的牌加入手牌':
+   action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
   case 'chooseLifeReenter':return '將 1 張生命加入手牌';
   case 'chooseSayakaReenter':return action.mode==='raid'?'以效果突襲'+suffix():'以休息狀態再登場'+suffix();
   case 'chooseTuckNamed':return action.uid===null?'不把角色放到牌庫底':'將 '+name()+' 放到牌庫底';
