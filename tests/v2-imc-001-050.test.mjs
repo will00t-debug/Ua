@@ -10,6 +10,7 @@ import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
 import {assertImcSharedRequest} from '../dist/universal-v2/imc-runtime.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {getTitle} from '../dist/title-registry.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalBp,universalImpact,
  universalImpactNull,universalAttackDamage,universalPrivateChoices,universalPublicView,
@@ -18,12 +19,12 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 
 const pack=createImcV2Pack();
 const byId=Object.fromEntries(IMC_CARDS_001_050.map(c=>[c.id,c]));
-const READY=['IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010',
+const READY=['IMC-1-001','IMC-1-002','IMC-1-003','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010',
  'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-016','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
  'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-029','IMC-1-030','IMC-1-031',
  'IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-043','IMC-1-044','IMC-1-045',
  'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050'];
-const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012',
+const OPEN=['IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012',
  'IMC-1-032','IMC-1-037','IMC-1-039'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
  'IMC-1-002','IMC-1-035','IMC-1-040','IMC-1-038','IMC-1-034','IMC-1-047','IMC-1-018',
@@ -178,7 +179,7 @@ function sourceCard(id){
  const extra={implementation:program.implementation};
  for(const key of ['effects','mainAbility','triggerEffect','impactNull','printedImpact','raidName',
   'activeExtraEnergy','ownTurnBp','emptyOwnFieldHandEnergyDiscount','readyOnBlockCount','passiveBonuses',
-  'enterAlwaysActive'])
+  'enterAlwaysActive','altMainAbility'])
   if(program[key]!==undefined)extra[key]=program[key];
  return {id:card.id,name:card.nameJa,color:card.color,type:card.type,energy:card.energy,
   ap:card.ap,bp:card.bp,gen:card.gen,traits:[...card.traits],trigger:card.trigger,...extra};
@@ -2783,34 +2784,104 @@ test('IMC-1-011 and IMC-1-012 stay unprogrammed after the BP observer exists',()
  assert.equal(s.players[0].deck.length,before-1);
 });
 
-test('IMC-1-003 can show one bonus and one activate, not both printed activates',()=>{
- const row=openRequest('IMC-1-003');
- assert.equal(row.whyNotEnough.includes('mainAbility'),true);
- probeReject({id:'SECOND',name:'第二段',mainAbility:{op:'frontOnceProgram',frontOnly:true,
-  oncePerTurn:true,minSelfBp:5000,then:[{op:'activeSelf'}]}},/unsupported main action ability/);
- const cards=[
-  probeFace({id:'SELF',name:'自己',bp:3000,implementation:'dsl',
-   passiveBonuses:[{condition:{kind:'selfOnField',turn:'opponent'},bp:1000,impactNull:true}],
-   mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{
-    kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',excludeSelf:true,minBp:5000}}}),
-  probeFace({id:'TALL',name:'高BP',bp:5000})
- ];
- const opened=probeOpen(cards,3001);
- let s=opened.s;
- const self=probeSeat(s,0,'SELF','front',0,true);
- const tall=probeSeat(s,0,'TALL','front',1,true);
- assert.equal(universalBp(opened.pack,s,self),3000);
- assert.equal(universalImpactNull(opened.pack,s,self),false);
- s=dispatchUniversalAction(opened.pack,s,legalUniversalActions(opened.pack,s)
-  .find(a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='onceBuffSelf'));
- assert.equal(universalBp(opened.pack,s,s.players[0].front.find(c=>c.uid===self.uid)),4000);
- assert.equal(universalBp(opened.pack,s,s.players[0].front.find(c=>c.uid===tall.uid)),5000);
- s=probeYield(opened.pack,s);
+test('IMC-1-003 keeps two activates apart and only nulls impact on the opponent turn',()=>{
+ const program=IMC_PROGRAMS_001_050['IMC-1-003'];
+ assert.equal(program.ready,true);
+ assert.equal(IMC_REQUESTS_001_050.some(row=>row.cardId==='IMC-1-003'),false);
+ assert.equal(pack.cards['IMC-1-003'].bp,2000);
+ assert.equal(pack.cards['IMC-1-003'].altMainAbility.minSelfBp,5000);
+ assert.equal(pack.cards['IMC-1-003'].mainAbility.when.minBp,5000);
+ assert.equal(pack.cards['IMC-1-003'].passiveBonuses[0].bp,1000);
+ assert.equal(pack.cards['IMC-1-003'].passiveBonuses[0].impactNull,true);
+ assert.equal(pack.cards['IMC-1-003'].passiveBonuses[0].condition.turn,'opponent');
+ assert.equal(byId['IMC-1-003'].trigger,'active');
+ assert.equal(byId['IMC-1-003'].effectJa.includes('インパクト無効'),true);
+ assert.equal(byId['IMC-1-003'].effectJa.includes('このキャラをアクティブにする'),true);
+ const modes=(s,card)=>legal(s).filter(a=>a.type==='activate'&&a.uid===card.uid).map(a=>a.mode).sort();
+ const lift=(card,s,bp)=>card.buffs=[{bp,untilTurn:s.turn}];
+
+ let s=reach(fresh(3001,{'IMC-1-003':1,'IMC-1-008':1}),'main');
+ const self=seat(s,0,'IMC-1-003','front',0,false);
+ const ally=seat(s,0,'IMC-1-008','front',1,true);
+ assert.equal(universalBp(pack,s,self),2000);
+ assert.equal(universalImpactNull(pack,s,self),false);
+ assert.deepEqual(modes(s,self),[]);
+ lift(ally,s,3000);
+ assert.equal(universalBp(pack,s,ally),5000);
+ assert.deepEqual(modes(s,self),['onceBuffSelf']);
+ s=take(s,a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='onceBuffSelf');
+ assert.equal(universalBp(pack,s,live(s,self.uid)),3000);
+ assert.equal(universalBp(pack,s,live(s,ally.uid)),5000);
+ assert.deepEqual(s.mainAbilityUsedUids,[self.uid]);
+ assert.deepEqual(s.altMainAbilityUsedUids,[]);
+ assert.equal(legal(s).some(a=>a.uid===self.uid&&a.type==='activate'),false);
+ assert.throws(()=>act(structuredClone(s),{type:'activate',uid:self.uid,mode:'onceBuffSelf'}),
+  /Action not currently legal/);
+ assert.throws(()=>act(structuredClone(s),{type:'activate',uid:self.uid,mode:'altFrontActive'}),
+  /Action not currently legal/);
+
+ s=reach(fresh(3002,{'IMC-1-003':1,'IMC-1-008':1}),'main');
+ const both=seat(s,0,'IMC-1-003','front',0,false);
+ const tall=seat(s,0,'IMC-1-008','front',1,true);
+ lift(both,s,3000);
+ lift(tall,s,3000);
+ assert.equal(universalBp(pack,s,both),5000);
+ assert.deepEqual(modes(s,both),['altFrontActive','onceBuffSelf']);
+ s=take(s,a=>a.mode==='altFrontActive'&&a.uid===both.uid);
+ assert.equal(live(s,both.uid).ready,true);
+ assert.deepEqual(s.mainAbilityUsedUids,[]);
+ assert.deepEqual(s.altMainAbilityUsedUids,[both.uid]);
+ assert.equal(legal(s).some(a=>a.uid===both.uid&&a.mode==='onceBuffSelf'),true);
+ assert.equal(legal(s).some(a=>a.uid===both.uid&&a.mode==='altFrontActive'),false);
+ s=take(s,a=>a.mode==='onceBuffSelf'&&a.uid===both.uid);
+ assert.equal(universalBp(pack,s,live(s,both.uid)),6000);
+ assert.equal(legal(s).some(a=>a.uid===both.uid&&a.type==='activate'),false);
+ s=reach(yieldTurn(s),'main');
  assert.equal(s.active,1);
- const later=s.players[0].front.find(c=>c.uid===self.uid);
- assert.equal(universalBp(opened.pack,s,later),4000);
- assert.equal(universalImpactNull(opened.pack,s,later),true);
- assert.equal(assertUniversalMatch(opened.pack,s),true);
+ assert.equal(universalBp(pack,s,live(s,both.uid)),3000);
+ assert.equal(universalImpactNull(pack,s,live(s,both.uid)),true);
+ s=reach(yieldTurn(s),'main');
+ assert.equal(s.active,0);
+ const returned=live(s,both.uid);
+ const mate=live(s,tall.uid);
+ lift(returned,s,3000);
+ lift(mate,s,3000);
+ assert.equal(universalBp(pack,s,returned),5000);
+ assert.equal(universalImpactNull(pack,s,returned),false);
+ assert.deepEqual(modes(s,returned),['altFrontActive','onceBuffSelf']);
+
+ s=reach(fresh(3003,{'IMC-1-003':1,'IMC-1-008':1}),'main');
+ const back=seat(s,0,'IMC-1-003','energy',0,false);
+ const gate=seat(s,0,'IMC-1-008','front',0,true);
+ lift(back,s,3000);
+ lift(gate,s,3000);
+ assert.equal(universalBp(pack,s,back),5000);
+ assert.deepEqual(modes(s,back),['onceBuffSelf']);
+ assert.throws(()=>act(s,{type:'activate',uid:back.uid,mode:'altFrontActive'}),
+  /Action not currently legal/);
+
+ s=reach(fresh(3004,{'IMC-1-003':1}),'main');
+ const lone=seat(s,0,'IMC-1-003','front',0,false);
+ s=reach(yieldTurn(s),'main');
+ assert.equal(universalBp(pack,s,live(s,lone.uid)),3000);
+ assert.equal(universalImpactNull(pack,s,live(s,lone.uid)),true);
+ s=reach(yieldTurn(s),'main');
+ assert.equal(universalBp(pack,s,live(s,lone.uid)),2000);
+ assert.equal(universalImpactNull(pack,s,live(s,lone.uid)),false);
+
+ s=reach(fresh(3005,{'IMC-1-003':1,'IMC-1-008':1}),'main');
+ const quiet=seat(s,0,'IMC-1-003','front',0,false);
+ const high=seat(s,0,'IMC-1-008','front',1,true);
+ lift(quiet,s,3000);
+ lift(high,s,3000);
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:0,
+  sourceUid:quiet.uid,targetUid:quiet.uid,sourceLinked:false,
+  until:{player:0,phase:'start',edge:'start'}});
+ assert.deepEqual(modes(s,quiet),[]);
+ s=reach(yieldTurn(s),'main');
+ assert.equal(universalBp(pack,s,live(s,quiet.uid)),2000);
+ assert.equal(universalImpactNull(pack,s,live(s,quiet.uid)),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
 
 test('IMC-1-039 cannot use an unconditional own-turn bonus or an exact trait count',()=>{

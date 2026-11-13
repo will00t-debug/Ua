@@ -21,6 +21,12 @@ export const IMC_PROGRAMS_001_050=Object.freeze({
  'IMC-1-002':{ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',energy:1}]},
   notes:'登場時、必要エナジー1以下の他の自分のキャラを1枚手札へ。無ければ自分を戻す。'},
+ 'IMC-1-003':{ready:true,implementation:'dsl',
+  passiveBonuses:[{bp:1000,impactNull:true,condition:{kind:'selfOnField',turn:'opponent'}}],
+  mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{
+   kind:'otherOwnCharacterBpAtLeast',turn:'any',zone:'field',excludeSelf:true,minBp:5000}},
+  altMainAbility:{op:'frontOnceActiveSelf',frontOnly:true,oncePerTurn:true,minSelfBp:5000},
+  notes:'對方回合，這張卡在場上 BP+1000，並得到衝擊無效。自己回合兩者都沒有。第一段每回合一次：其他自己角色目前 BP≥5000 才讓自己 BP+1000。第二段是另一句起動，只在前線、自己目前 BP≥5000、每回合一次，把自己變成活動。兩段的使用紀錄分開。活動觸發是卡表。'},
  'IMC-1-005':{ready:true,implementation:'dsl',activeExtraEnergy:1,
   notes:'活動時，這張卡的發生能量 +1（黃）。休息時不加。前線不產生能量。沒有生命觸發。'},
  'IMC-1-006':{ready:true,implementation:'dsl',emptyOwnFieldHandEnergyDiscount:2,

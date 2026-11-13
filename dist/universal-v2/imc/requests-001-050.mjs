@@ -3,11 +3,6 @@
 // These cards stay out of IMC_PROGRAMS_001_050. op:'imc' is not wired, and a
 // partial program must not be marked ready.
 export const IMC_REQUESTS_001_050=[
- {cardId:'IMC-1-003',
-  sentence:'【相手のターン中】このキャラはBP+1000と【インパクト無効】を得る。【起動メイン】【ターン1】自分の場にBP5000以上の他のキャラがある場合のみ発動できる。このキャラはこのターン中、BP+1000。【起動メイン】【フロントLにある場合】【ターン1】このキャラのBPが5000以上の場合のみ発動できる。このキャラをアクティブにする。',
-  existingOps:['buffSelf','activeSelf'],
-  whyNotEnough:'對方回合的 BP+1000 與衝擊無效可以寫成 passiveBonuses，條件是 selfOnField、turn opponent。第一段起動與 006 相同，是 onceBuffSelfWhen 配 otherOwnCharacterBpAtLeast 5000。第二段要在前線且自己目前 BP≥5000 才活動自己；frontOnceProgram 的 minSelfBp 只接 chooseOne，不接 activeSelf。一張卡只有一個 mainAbility，兩段起動不能並存。',
-  proposal:'保留對方回合的被動與第一段 BP 起動。另需要第二段前線、自己 BP≥5000、活動自己，並且同一張卡能有兩段不同起動。完成前不要標 ready。'},
  {cardId:'IMC-1-004',
   sentence:'自分の［特徴：BEYOND THE STARLIGHT］の効果でこのカードが手札から場外に置かれた時、自分の場の［特徴：BEYOND THE STARLIGHT］を1枚まで選び、このターン中、BP+1000。',
   existingOps:['buffAnyCharacter'],
