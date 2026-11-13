@@ -173,6 +173,17 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-printed-block':'選擇是否賦予防禦下限',
  'effect-move-opp-front':'選擇是否將對手前線移至能源線',
  'effect-move-opp-if-event':'可將對手前線角色移至能源線',
+ 'effect-peek-buff':'選擇 1 張其他己方角色，本回合 BP 上升',
+ 'effect-field-trait-bounce':'選擇對手前線角色，移回手牌或退場',
+ 'effect-discard-scale':'可將 1 張手牌放到場外',
+ 'effect-scale-buff':'可選擇 1 張己方角色，本回合 BP 上升',
+ 'effect-rest-impact':'選擇 1 張己方角色並賦予衝擊',
+ 'effect-hand-trait-active':'可將 1 張指定特徵手牌放到場外，使這張角色活動',
+ 'effect-pay-raid-base':'可將 1 張手牌放到場外',
+ 'effect-raid-under-rest':'選擇突襲底板以休息狀態登場的位置',
+ 'effect-attack-win-draw':'可抽 1 張牌',
+ 'effect-entered-discard':'可將 1 張手牌放到場外，使剛登場的角色活動',
+ 'effect-option-retire-own':'可退場1張其他己方角色',
  'effect-retire-own-other':'可退場1張其他己方卡片',
  'effect-retire-trigger-ceiling':'可退場觸發種類上限內的對手前線角色',
  'effect-remove-named-zones':'可將指定角色移入移除區',
@@ -1148,6 +1159,20 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'choosePeekBuff':return '本回合使 '+name()+' BP 增加';
+  case 'chooseFieldTraitBounce':return action.mode==='retire'?'使 '+name()+' 退場':
+   '將 '+name()+' 放回手牌';
+  case 'chooseDiscardScale':return '將 '+name()+' 放到場外';
+  case 'chooseScaleBuff':return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP 增加';
+  case 'chooseRestImpact':return '使 '+name()+' 獲得衝擊';
+  case 'chooseHandTraitActive':return action.uid===null?'不支付，角色維持原狀':
+   '將 '+name()+' 放到場外，並使這張角色活動';
+  case 'choosePayRaidBase':return action.uid===null?'不支付':
+   '將 '+name()+' 放到場外';
+  case 'chooseRaidUnderRest':return '使突襲底板以休息狀態登場'+suffix();
+  case 'chooseAttackWinDraw':return action.mode==='draw'?'抽 1 張':'不抽牌';
+  case 'chooseEnteredDiscard':return action.uid===null?'不棄牌，角色維持休息':
+   '將 '+name()+' 放到場外，並使剛登場的角色活動';
   case 'chooseRetireOwnOther':return action.uid===null?'不使卡片退場':'使 '+name()+' 退場';
   case 'chooseRemoveNamedZone':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區';
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';

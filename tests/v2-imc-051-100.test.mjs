@@ -1981,9 +1981,12 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
   {id:'retire',label:'退場',then:[{op:'draw',count:2}]},
   {id:'front',label:'退場對手',then:[{op:'retireOppFrontOneUnderBp',bp:5000,optional:true}]}
  ]}]}} ,/invalid printed option set/);
- reject({effects:{onPlay:[{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
-  excludeSelf:false,trait:TRAIT,min:9},then:[{op:'takeTopHandRestOutside',count:2}],
-  else:[{op:'draw',count:1}]}]}},/invalid live-condition follow-up/);
+ const looked=createUniversalPack({id:'probe',version:'gap-073',cards:[
+  bare('GAP','缺口',{implementation:'dsl',effects:{onPlay:[{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
+   excludeSelf:false,trait:TRAIT,min:9},then:[{op:'takeTopHandRestOutside',count:2}],
+   else:[{op:'draw',count:1}]}]}})]});
+ assert.equal(looked.cards.GAP.effects.onPlay[0].then[0].op,'takeTopHandRestOutside');
+ assert.notEqual(IMC_PROGRAMS_051_100['IMC-1-073']?.ready,true);
  reject({effects:{onAttack:[{op:'buffOwnField',filter:{field:'type',value:'character'},
   bp:1000,optional:true,excludeSelf:false,count:2}]}},/invalid own-field BP choice/);
  const bounced=createUniversalPack({id:'probe',version:'gap-075',cards:[

@@ -2528,13 +2528,14 @@ test('IMC-1-036 gains 1000 after your own effect entry or effect raid',()=>{
  assert.equal(assertUniversalMatch(byRule.pack,scene),true);
 });
 
-test('IMC-1-004 still cannot trigger from a source trait',()=>{
+test('IMC-1-004 program stays absent; a trait mixed with sourceOnField stays rejected',()=>{
  const row=openRequest('IMC-1-004');
  assert.equal(row.whyNotEnough.includes('sourceName'),true);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-004'],undefined);
  probeReject({id:'TRAIT',name:'特徵',implementation:'dsl',moveTriggers:[{
   when:{from:'hand',to:'outside',sourceOnField:true,sourceTrait:'BEYOND THE STARLIGHT',reasons:['own-effect']},
   then:[{op:'buffAnyCharacter',bp:1000,optional:true,excludeSelf:false}]
- }]},/Invalid zone move condition/);
+ }]},/unsupported moved-card source condition/);
  const buff={op:'buffAnyCharacter',bp:1000,optional:true,excludeSelf:false};
  const when=name=>({from:'hand',to:'outside',sourceOnField:true,sourceName:name,reasons:['own-effect']});
  const cards=[
@@ -2625,11 +2626,13 @@ test('IMC-1-032 cannot add impact only to the chosen name',()=>{
  assert.equal(universalImpact(wide.pack,s,s.players[0].energy.find(c=>c?.uid===plain.uid)),1);
 });
 
-test('IMC-1-037 draws only after a character effect and cannot buy impact',()=>{
+test('IMC-1-037 draws only after a character effect; the AP impact shape is shared',()=>{
  const row=openRequest('IMC-1-037');
  assert.equal(row.whyNotEnough.includes('grantSelfImpactThisTurn'),true);
- probeReject({id:'PAY',name:'付費',effects:{onAttack:[{op:'optionalPayApThen',ap:1,optional:true,
-  then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}},/invalid optional AP payment/);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-037'],undefined);
+ createUniversalPack({id:'probe',version:'imc-b4-gap-PAY',cards:[probeFace({
+  id:'PAY',name:'付費',effects:{onAttack:[{op:'optionalPayApThen',ap:1,optional:true,
+   then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}})]});
  const rest={op:'deployOwnHandRest',type:'character',color:'blue',energy:2,ap:null,max:1,trait:'星'};
  const cards=[
   probeFace({id:'NATS',name:'夏樹',color:'blue',energy:2,traits:['星'],
@@ -2673,13 +2676,14 @@ test('IMC-1-037 draws only after a character effect and cannot buy impact',()=>{
  assert.equal(assertUniversalMatch(event.pack,s),true);
 });
 
-test('IMC-1-009 cannot filter the trait or scale its own BP down',()=>{
+test('IMC-1-009 program stays absent; an unfiltered REST entry does not cut BP',()=>{
  const row=openRequest('IMC-1-009');
  assert.equal(row.whyNotEnough.includes('deployOwnHandRestOrRaid'),true);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-009'],undefined);
  const hand={op:'deployOwnHandRestOrRaid',type:'character',color:'yellow',maxEnergy:3,ap:1,
   max:1,optional:true,names:null};
- probeReject({id:'TRAIT',name:'特徵',effects:{onPlay:[{...hand,trait:'BEYOND THE STARLIGHT'}]}},
-  /invalid hand REST or Raid entry/);
+ createUniversalPack({id:'probe',version:'imc-b4-gap-TRAIT',cards:[probeFace({
+  id:'TRAIT',name:'特徵',effects:{onPlay:[{...hand,trait:'BEYOND THE STARLIGHT',energyPenalty:1000}]}})]});
  const cards=[
   probeFace({id:'NINE',name:'美嘉',energy:0,bp:3000,enterAlwaysActive:true,
    effects:{onPlay:[{op:'draw',count:1},hand]}}),
