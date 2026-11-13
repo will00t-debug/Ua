@@ -13,20 +13,20 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 
 const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-058','IMC-1-059',
- 'IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-066','IMC-1-067','IMC-1-069',
- 'IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
+ 'IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-064','IMC-1-066','IMC-1-067','IMC-1-068','IMC-1-069',
+ 'IMC-1-070','IMC-1-071','IMC-1-072','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087',
- 'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-095',
- 'IMC-1-096','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-065'];
+ 'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-094','IMC-1-095',
+ 'IMC-1-096','IMC-1-097','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-065'];
 const OPEN=['IMC-1-051','IMC-1-057','IMC-1-061',
- 'IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074',
- 'IMC-1-075','IMC-1-093','IMC-1-094','IMC-1-097'];
+ 'IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-093'];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
 delete counts['IMC-1-098'];
 delete counts['IMC-1-065'];
 delete counts['IMC-1-078'];
+for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])delete counts[id];
 for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-058','IMC-1-062','IMC-1-063',
  'IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-076','IMC-1-080','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
  'IMC-1-092','IMC-1-095','IMC-1-096','IMC-1-099','IMC-1-100'])counts[id]=1;
@@ -91,7 +91,7 @@ function kit(usePack,useCounts){
 }
 const game=kit(pack,counts);
 
-test('thirty-eight complete cards enter the pack and twelve stay out',()=>{
+test('complete C-range cards enter the pack and the remaining gaps stay out',()=>{
  for(const id of READY)assert.equal(pack.cards[id].id,id);
  assert.equal(IMC_CARDS_051_100.every(card=>card.battleReady===false),true);
  for(const id of READY)assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
@@ -1951,9 +1951,10 @@ test('080 is active only from the energy line when three energy-2 Starry cards a
 test('the remaining round-6 sentences stay unfinished and reject the nearest existing shape',()=>{
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0].op,'recoverOutsideFiltered');
- for(const id of ['IMC-1-057','IMC-1-061','IMC-1-064','IMC-1-068',
-  'IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-093','IMC-1-094','IMC-1-097'])
+ for(const id of ['IMC-1-057','IMC-1-061','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-093'])
   assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
+ for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])
+  assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-065'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-078'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-080'].ready,true);
@@ -1962,15 +1963,10 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
   'IMC-1-051':'restRetireSequence',
   'IMC-1-057':'敗北後一回合一次',
   'IMC-1-061':'grantAttackPhaseEndHand',
-  'IMC-1-064':'場上特徵張數',
-  'IMC-1-068':'最多 1 個',
-  'IMC-1-072':'可選把 1 張手牌特徵放到場外',
   'IMC-1-073':'取代抽 1',
   'IMC-1-074':'最多 2 張',
   'IMC-1-075':'種類數',
-  'IMC-1-093':'另外給衝擊',
-  'IMC-1-094':'只接受退場時機',
-  'IMC-1-097':'Q2250'
+  'IMC-1-093':'另外給衝擊'
  };
  for(const [id,needle] of Object.entries(needles))assert.match(text,new RegExp(id+'[\\s\\S]*'+needle));
  const reject=(extra,pattern)=>assert.throws(()=>createUniversalPack({id:'probe',version:'gap',cards:[

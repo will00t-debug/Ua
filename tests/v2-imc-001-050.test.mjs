@@ -19,12 +19,12 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 const pack=createImcV2Pack();
 const byId=Object.fromEntries(IMC_CARDS_001_050.map(c=>[c.id,c]));
 const READY=['IMC-1-001','IMC-1-002','IMC-1-005','IMC-1-006','IMC-1-007','IMC-1-008','IMC-1-010',
- 'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
- 'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-030','IMC-1-031',
- 'IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-044','IMC-1-045',
+ 'IMC-1-013','IMC-1-014','IMC-1-015','IMC-1-016','IMC-1-017','IMC-1-018','IMC-1-019','IMC-1-020','IMC-1-021',
+ 'IMC-1-022','IMC-1-023','IMC-1-024','IMC-1-025','IMC-1-026','IMC-1-027','IMC-1-028','IMC-1-029','IMC-1-030','IMC-1-031',
+ 'IMC-1-033','IMC-1-034','IMC-1-035','IMC-1-036','IMC-1-038','IMC-1-040','IMC-1-041','IMC-1-042','IMC-1-043','IMC-1-044','IMC-1-045',
  'IMC-1-046','IMC-1-047','IMC-1-048','IMC-1-049','IMC-1-050'];
-const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012','IMC-1-016',
- 'IMC-1-029','IMC-1-032','IMC-1-037','IMC-1-039','IMC-1-043'];
+const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012',
+ 'IMC-1-032','IMC-1-037','IMC-1-039'];
 const FILL=['IMC-1-007','IMC-1-025','IMC-1-001','IMC-1-010','IMC-1-013','IMC-1-021',
  'IMC-1-002','IMC-1-035','IMC-1-040','IMC-1-038','IMC-1-034','IMC-1-047','IMC-1-018',
  'IMC-1-022','IMC-1-041','IMC-1-044'];
@@ -177,7 +177,8 @@ function sourceCard(id){
  const card=byId[id],program=IMC_PROGRAMS_001_050[id];
  const extra={implementation:program.implementation};
  for(const key of ['effects','mainAbility','triggerEffect','impactNull','printedImpact','raidName',
-  'activeExtraEnergy','ownTurnBp','emptyOwnFieldHandEnergyDiscount','readyOnBlockCount','passiveBonuses'])
+  'activeExtraEnergy','ownTurnBp','emptyOwnFieldHandEnergyDiscount','readyOnBlockCount','passiveBonuses',
+  'enterAlwaysActive'])
   if(program[key]!==undefined)extra[key]=program[key];
  return {id:card.id,name:card.nameJa,color:card.color,type:card.type,energy:card.energy,
   ap:card.ap,bp:card.bp,gen:card.gen,traits:[...card.traits],trigger:card.trigger,...extra};
@@ -2565,9 +2566,7 @@ test('IMC-1-004 program stays absent; a trait mixed with sourceOnField stays rej
  assert.equal(s.pending.choices.includes(s.players[0].front.find(c=>c?.cardId==='HOOK').uid),true);
 });
 
-test('IMC-1-029 cannot switch the buff by the discarded trigger',()=>{
- const row=openRequest('IMC-1-029');
- assert.equal(row.whyNotEnough.includes('discardHandBuff'),true);
+test('the old discard-hand buff does not scale when a special trigger is discarded',()=>{
  const cards=[
   probeFace({id:'SELF',name:'自己',bp:2000,implementation:'dsl',printedMains:[
    {op:'discardHandBuff',id:'buff',discard:1,bp:1000}]}),
@@ -2710,9 +2709,7 @@ test('IMC-1-009 program stays absent; an unfiltered REST entry does not cut BP',
  assert.equal(assertUniversalMatch(opened.pack,s),true);
 });
 
-test('IMC-1-016 recovers the card it just discarded and cannot switch the buff',()=>{
- const row=openRequest('IMC-1-016');
- assert.equal(row.whyNotEnough.includes('Q2229'),true);
+test('IMC-1-016 can recover the card it just discarded, and the old front peek stays rejected',()=>{
  probeReject({id:'SWITCH',name:'切換',mainAbility:{op:'frontOnceProgram',frontOnly:true,
   oncePerTurn:true,minSelfBp:5000,then:[{op:'peekTopOne'}]}},/unsupported main action ability/);
  const cards=[
@@ -2830,8 +2827,6 @@ test('IMC-1-039 cannot use an unconditional own-turn bonus or an exact trait cou
 });
 
 test('IMC-1-043 can bottom then rest from the look, and then stops',()=>{
- const row=openRequest('IMC-1-043');
- assert.equal(row.whyNotEnough.includes('lookTopScript'),true);
  probeReject({id:'BASE',name:'底板',effects:{onRetire:[{op:'returnOwnRaidBase',optional:true}]}},
   /invalid raid-base hand return/);
  const look={op:'bottomOwnCharacterThen',optional:true,max:1,type:'character',then:[{

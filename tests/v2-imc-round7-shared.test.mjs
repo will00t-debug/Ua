@@ -1,4 +1,4 @@
-// Round 7 shared engine. Synthetic cards only. The 24 unfinished IMC cards
+// Round 7 shared engine. Synthetic cards only. Cards still without a program
 // stay out of the battle pack.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,10 +11,10 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 
 const beyond='BEYOND THE STARLIGHT';
 const wish='お願い！シンデレラ';
-const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012','IMC-1-016',
- 'IMC-1-029','IMC-1-032','IMC-1-037','IMC-1-039','IMC-1-043','IMC-1-051','IMC-1-057',
- 'IMC-1-061','IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075',
- 'IMC-1-093','IMC-1-094','IMC-1-097','IMC-1-107'];
+const OPEN=['IMC-1-003','IMC-1-004','IMC-1-009','IMC-1-011','IMC-1-012',
+ 'IMC-1-032','IMC-1-037','IMC-1-039','IMC-1-051','IMC-1-057',
+ 'IMC-1-061','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-093','IMC-1-107'];
+const DONE=['IMC-1-016','IMC-1-029','IMC-1-043','IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'];
 function face(extra){
  const effects=extra.effects||{};
  const {effects:ignored,implementation,...rest}=extra;
@@ -131,10 +131,11 @@ function live(s,uid){
   ...s.players[1].front,...s.players[1].energy].find(c=>c?.uid===uid);
 }
 
-test('the battle pack stays at 89 while the new fields exist',()=>{
+test('the battle pack is the cards that are actually ready',()=>{
  const pack=createImcV2Pack();
- assert.equal(Object.keys(pack.cards).length,89);
+ assert.equal(Object.keys(pack.cards).length,97);
  for(const id of OPEN)assert.equal(pack.cards[id],undefined);
+ for(const id of DONE)assert.equal(pack.cards[id].id,id);
 });
 
 test('two activates on one character do not lock each other',()=>{
