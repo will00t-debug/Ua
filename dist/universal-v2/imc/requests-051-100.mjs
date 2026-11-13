@@ -1,25 +1,4 @@
 // C group owns this file. One object per shared-engine gap.
 // cardId, sentence, existingOps, whyNotEnough, proposal.
-export const IMC_REQUESTS_051_100=[
- {
-  cardId:'IMC-1-051',
-  sentence:'自分の場外から必要エナジーが2以下の［特徴：LiPPS］を1枚まで手札に加える。起動はレストかつ退場，對手有 BP4500 以上才可，再從場外休息登場藍的 LiPPS。',
-  existingOps:['recoverOutsideUnderEnergy','deployOutsideFiltered'],
-  whyNotEnough:'登場時的場外回手已用 recoverOutsideFiltered：特徵 LiPPS、印刷必要能源 2 以下、最多 1 張、可以不拿。起動用 restRetireSequence：先休息再退場，對手場上目前 BP4500 以上才出現，然後 deployOutsideColorTraitRest 最多 1 張藍色 LiPPS。費用付完才選擇，可以不登場。051 的起動還沒寫進程式，ready 仍是 false。',
-  proposal:'保留現有 onPlay。mainAbility 用 restRetireSequence，gate 為 oppCharacterBpAtLeast 4500，then 為藍色 LiPPS、maxEnergy 2、ready false、optional true 的 deployOutsideColorTraitRest。程式完成前不要標 ready。'
- },
- {
-  cardId:'IMC-1-061',
-  sentence:'ブロックされなかった時、カードを1枚まで引く。APをアクティブにした場合、アタックフェイズ終了時に手札へ戻す。',
-  existingOps:['draw','recoverAp'],
-  whyNotEnough:'未被阻擋的可選抽牌沿用 unblockedAttack。Q2243 的時機維持在阻擋指定之後。登場的活動自身用 activeSelf。可選活動 1 張 AP 用 optionalReadyApThen，做到才接 grantAttackPhaseEndHand。跳過或不存在休息的 AP 都不回手。061 的程式還沒寫，不能標 ready。',
-  proposal:'unblockedAttack 的 then 為 draw count 1。onPlay 先 activeSelf，再 optionalReadyApThen，then 恰好是 grantAttackPhaseEndHand。程式完成前不要標 ready。'
- },
- {
-  cardId:'IMC-1-075',
-  sentence:'必要エナジーが1以下の自分の場の特徴を1枚手札に戻してもよい。そうした場合、手札から同じ條件をレストで登場させる。',
-  existingOps:['bounceOwnOtherUnderEnergy','deployOwnHandRest'],
-  whyNotEnough:'登場回手用 bounceOwnOtherUnderEnergy：optional、energy 1、特徵お願い！シンデレラ，then 為 deployOwnHandRest，ap 寫 null。Q2248 剛回手的那張會在更新後的手牌裡。跳過回手就不開登場。場上與場外合計 6 種的 BP 還沒有欄位，ownDistinctTraitNames 只負責計數。075 先不標 ready。',
-  proposal:'先寫登場的回手再休息登場。種類數 BP 補上之前，075 維持 ready false。'
- },
-];
+// IMC-1-051, 061 and 075 are ready programs.
+export const IMC_REQUESTS_051_100=[];
