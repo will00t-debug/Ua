@@ -14,11 +14,12 @@ import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEner
 const READY=[
  'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
  'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
- 'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
+ 'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-033','MHA-1-034',
  'MHA-1-036','MHA-1-037','MHA-1-038','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
  'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050'
 ];
 const STANDARD_TRIGGER={
+ special:'【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。',
  active:'【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。',
  get:'【ゲット】このカードを手札に加える。',
  draw:'【ドロー】カードを1枚引く。',
@@ -50,6 +51,10 @@ function probePack(){
   effects:{onPlay:[{op:'retireOppFrontOne'}]}
  });
  cards.push({
+  id:'PROBE-HEAVY', name:'高於四千', color:'red', type:'character', energy:0,
+  ap:1, bp:4500, gen:1, trigger:null, traits:[], implementation:'vanilla'
+ });
+ cards.push({
   id:'PROBE-SNIPER', name:'狙擊探針', color:'red', type:'character', energy:0,
   ap:1, bp:1000, gen:1, trigger:null, traits:[], implementation:'dsl',
   effects:{onPlay:[{op:'grantSelfSniperThisTurn'}], onRetire:[{op:'draw',count:1}]}
@@ -64,10 +69,10 @@ function deck(source, extra={}){
  const pinned=[
   'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
   'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
-  'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
+  'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-033','MHA-1-034',
   'MHA-1-036','MHA-1-037','MHA-1-038','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
   'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050',
-  'PROBE-IMPACT','PROBE-TALL','PROBE-OVER','PROBE-RETIRE','PROBE-SNIPER'
+  'PROBE-IMPACT','PROBE-TALL','PROBE-OVER','PROBE-RETIRE','PROBE-SNIPER','PROBE-HEAVY'
  ];
  for(const id of pinned)
   if(source.cards[id]&&!counts[id])counts[id]=id==='MHA-1-016'?2:id==='MHA-1-034'?3:1;
@@ -1418,4 +1423,73 @@ test('038 gains double block at two facedown cards and double attack at four',()
  assert.equal(acts(dry).some(a=>a.type==='activate'&&a.uid===empty.uid),false);
  assert.throws(()=>use(dry,{type:'activate',uid:empty.uid,mode:'onceTuck'}),/Action not currently legal/);
  assert.equal(assertUniversalMatch(packs,dry),true);
+});
+
+test('033 sends one opposing front of BP 4000 or less to removed, and Shigaraki cuts its AP',()=>{
+ let costly=open(pack,3301);
+ put(costly,0,'MHA-1-016','energy',0,true);
+ put(costly,0,'MHA-1-021','energy',1,true);
+ const held=toHand(costly,0,'MHA-1-033');
+ costly=toPhase(costly,'main');
+ assert.equal(acts(costly).some(a=>a.type==='event'&&a.uid===held.uid),false);
+ assert.throws(()=>use(costly,{type:'event',uid:held.uid}),/Action not currently legal/);
+ put(costly,0,'MHA-1-008','front',0,true);
+ assert.equal(acts(costly).some(a=>a.type==='event'&&a.uid===held.uid),true);
+
+ let aimed=open(probe,3302);
+ put(aimed,0,'MHA-1-016','energy',0,true);
+ put(aimed,0,'MHA-1-021','energy',1,true);
+ put(aimed,0,'MHA-1-008','front',0,true);
+ const edge=put(aimed,1,'MHA-1-010','front',0,true);
+ const low=put(aimed,1,'MHA-1-039','front',1,true);
+ const high=put(aimed,1,'PROBE-HEAVY','front',2,true);
+ const spell=toHand(aimed,0,'MHA-1-033');
+ aimed=toPhase(aimed,'main');
+ aimed=use(aimed,findAct(aimed,a=>a.type==='event'&&a.uid===spell.uid,'event'));
+ assert.equal(aimed.pending.kind,'effect-retire-bp');
+ assert.equal(aimed.pending.destination,'removed');
+ assert.equal(acts(aimed).some(a=>a.type==='chooseRetireBp'&&a.uid===edge.uid),true);
+ assert.equal(acts(aimed).some(a=>a.type==='chooseRetireBp'&&a.uid===low.uid),true);
+ assert.equal(acts(aimed).some(a=>a.uid===high.uid),false);
+ assert.equal(acts(aimed).some(a=>a.type==='chooseRetireBp'&&a.uid===null),false);
+ aimed.players[1].front[1]=null;
+ aimed.players[1].deck.push(low);
+ assert.throws(()=>use(aimed,{type:'chooseRetireBp',uid:low.uid}),/Action not currently legal|Illegal BP/);
+ aimed=use(aimed,{type:'chooseRetireBp',uid:edge.uid});
+ assert.equal(aimed.players[1].front[0],null);
+ assert.equal(aimed.players[1].removed.some(c=>c.uid===edge.uid),true);
+ assert.equal(aimed.players[1].outside.some(c=>c.uid===edge.uid),false);
+ assert.equal(aimed.pending,null);
+ assert.equal(assertUniversalMatch(probePacks,aimed),true);
+
+ let empty=open(pack,3303);
+ put(empty,0,'MHA-1-016','energy',0,true);
+ put(empty,0,'MHA-1-021','energy',1,true);
+ put(empty,0,'MHA-1-008','front',0,true);
+ const quiet=toHand(empty,0,'MHA-1-033');
+ empty=toPhase(empty,'main');
+ empty=use(empty,findAct(empty,a=>a.type==='event'&&a.uid===quiet.uid,'event'));
+ assert.equal(empty.pending,null);
+ assert.equal(empty.players[0].outside.some(c=>c.uid===quiet.uid),true);
+ assert.equal(assertUniversalMatch(packs,empty),true);
+
+ let life=open(pack,3304);
+ const attacker=put(life,0,'MHA-1-015','front',0,true);
+ const extra=put(life,0,'MHA-1-039','front',1,true);
+ const hidden=put(life,0,'MHA-1-008','energy',0,true);
+ topLife(life,1,'MHA-1-033');
+ life=toPhase(life,'attack');
+ life=use(life,findAct(life,a=>a.type==='attack'&&a.uid===attacker.uid,'attack'));
+ life=use(life,findAct(life,a=>a.type==='chooseBlock'&&a.uid===null,'decline'));
+ assert.equal(life.pending.kind,'life-trigger');
+ assert.equal(life.pending.trigger,'special');
+ assert.equal(acts(life).some(a=>a.type==='chooseTrigger'&&a.mode==='skip'),true);
+ assert.equal(acts(life).some(a=>a.type==='chooseTrigger'&&a.mode==='special'&&a.uid===extra.uid),true);
+ assert.equal(acts(life).some(a=>a.uid===hidden.uid),false);
+ life=use(life,findAct(life,a=>a.type==='chooseTrigger'&&a.mode==='special'&&a.uid===extra.uid,'retire'));
+ assert.equal(life.players[0].front[1],null);
+ assert.equal(life.players[0].outside.some(c=>c.uid===extra.uid),true);
+ assert.equal(life.players[0].removed.some(c=>c.uid===extra.uid),false);
+ assert.equal(live(life,0,attacker.uid)?.cardId,'MHA-1-015');
+ assert.equal(assertUniversalMatch(packs,life),true);
 });
