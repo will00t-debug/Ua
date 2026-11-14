@@ -44,7 +44,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261114impactraid1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261114compactmodal2'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -1037,7 +1037,8 @@ function onlineInspectionGallery(room){
       document.querySelector('.online-table')?.scrollIntoView({block:'start',behavior:'smooth'});}})),
   el('p',{class:'online-inspection-hint',text:
    '以下只有你能看到。符合條件的卡可選擇；不符合條件仍顯示卡圖，但不能選擇。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,100px));gap:8px;align-content:start;justify-content:start;max-height:38dvh;overflow-y:auto'});
  for(const card of shown){
   const enabled=card.actions.length>0;
   const picking=app.inspectPick===card.uid&&enabled;
@@ -1066,7 +1067,8 @@ function onlineInspectionGallery(room){
     if(card.actions.length===1){sendAction(card.actions[0].index);return;}
     app.inspectPick=picking?null:card.uid;render();
    }}:{})},
-   el('span',{class:'online-inspection-art'},img),
+   el('span',{class:'online-inspection-art',
+     style:'display:block;width:100%;max-width:96px;max-height:138px;aspect-ratio:63/88;overflow:hidden'},img),
    el('strong',{text:card.name||card.cardId}),
    el('small',{text:enabled?(entry?entryLabel:card.actions.length>1?'選擇方式／位置':
     (card.caption||'符合條件 · 點選此牌')):
@@ -1110,7 +1112,8 @@ function onlineLifeOrderGallery(room){
   el('h2',{text:'選擇 LIFE 結算順序'}),
   el('p',{class:'online-inspection-hint',
    text:'這些 LIFE 已經公開。點選卡圖，決定先結算哪張；其他效果將繼續依合法順序處理。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,100px));gap:8px;align-content:start;justify-content:start;max-height:38dvh;overflow-y:auto'});
  for(const {action,cardId} of cards){
   const img=el('img',{src:cardSrc({cardId})||'assets/mark.svg',
    alt:cardId,loading:'eager',decoding:'async'});
@@ -1121,7 +1124,8 @@ function onlineLifeOrderGallery(room){
    class:'online-inspection-card eligible',
    disabled:app.busy,'aria-label':action.label,
    onClick:()=>sendAction(action.index)},
-   el('span',{class:'online-inspection-art'},img),
+   el('span',{class:'online-inspection-art',
+     style:'display:block;width:100%;max-width:96px;max-height:138px;aspect-ratio:63/88;overflow:hidden'},img),
    el('strong',{text:cardId}),
    el('small',{text:'先結算此公開 LIFE'})));
  }
@@ -1164,7 +1168,8 @@ function onlineVisibleChoiceGallery(room,choices){
   el('h2',{text:'效果：選擇對象'}),
   el('p',{class:'online-inspection-hint',text:
    '點卡圖完成這個選擇。沒有卡圖的按鈕是放棄或結算方式。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,100px));gap:8px;align-content:start;justify-content:start;max-height:38dvh;overflow-y:auto'});
  const handled=new Set();
  for(const {card,actions} of groups.values()){
   const single=actions.length===1;
@@ -1176,7 +1181,8 @@ function onlineVisibleChoiceGallery(room,choices){
   const tile=el(single?'button':'div',{class:'online-inspection-card eligible',
    ...(single?{type:'button','aria-label':actions[0].label,disabled:app.busy,
     onClick:()=>sendAction(actions[0].index)}:{})},
-   el('span',{class:'online-inspection-art'},img),
+   el('span',{class:'online-inspection-art',
+     style:'display:block;width:100%;max-width:96px;max-height:138px;aspect-ratio:63/88;overflow:hidden'},img),
    el('strong',{text:card.name}),
    el('small',{text:single?actions[0].label:'選擇下方效果'}));
   grid.append(tile);
@@ -1211,7 +1217,8 @@ function effectEntryGallery(room){
   el('h2',{text:'效果：選擇角色'}),
   el('p',{class:'online-inspection-hint',text:
    '點卡圖選擇要登場的角色，再選合法模式及格子；若要加入手牌，按該角色下方的對應選項。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,100px));gap:8px;align-content:start;justify-content:start;max-height:38dvh;overflow-y:auto'});
  const handled=new Set();
  for(const uid of candidateUids){
   const match=visible.find(({card})=>card?.uid===uid&&card.cardId&&!card.faceDown);
@@ -1229,7 +1236,8 @@ function effectEntryGallery(room){
   const tile=el(canEnter?'button':'div',{class:'online-inspection-card eligible',
    ...(canEnter?{type:'button','aria-label':'選擇 '+name+' 登場',
     onClick:()=>{app.pick={uid,entryMode:null,options:null};app.zone=null;render();}}:{})},
-   img?el('span',{class:'online-inspection-art'},img):null,
+   img?el('span',{class:'online-inspection-art',
+     style:'display:block;width:100%;max-width:96px;max-height:138px;aspect-ratio:63/88;overflow:hidden'},img):null,
    el('strong',{text:name}),
    el('small',{text:canEnter?'選擇登場 · 再點位置':'選擇下方效果'}));
   grid.append(tile);
@@ -1398,7 +1406,8 @@ function matchView(){
       if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
      });
      return el('figure',{class:'online-public-card-result'},
-      el('span',{class:'online-inspection-art'},img),
+      el('span',{class:'online-inspection-art',
+     style:'display:block;width:100%;max-width:96px;max-height:138px;aspect-ratio:63/88;overflow:hidden'},img),
       el('figcaption',{},
        el('strong',{text:card.name||card.cardId}),
        el('small',{text:(card.owner===room.seat?'你':'對手')+' · '+card.label})));
