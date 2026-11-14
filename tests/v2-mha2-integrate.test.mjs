@@ -8,7 +8,8 @@ import {createMha2Pack} from '../dist/universal-v2/mha2-pack.mjs';
 import {MHA2_PROGRAMS_001_036} from '../dist/universal-v2/mha/programs-mha2-001-036.mjs';
 import {MHA2_PROGRAMS_037_073} from '../dist/universal-v2/mha/programs-2-037-073.mjs';
 import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073.mjs';
-import {UAPR_MHA_REQUESTS} from '../dist/universal-v2/mha/programs-uapr.mjs';
+import {UAPR_MHA_PROGRAMS} from '../dist/universal-v2/mha/programs-uapr.mjs';
+import {createMhaPointPack} from '../dist/universal-v2/mha-point-pack.mjs';
 import {UA05NC_MHA3_PRODUCT,UA05NC_MHA3_AP} from '../dist/mha/ua05nc-product.mjs';
 import {getTitle} from '../dist/title-registry.mjs';
 
@@ -48,7 +49,10 @@ test('set 2 is 73 catalog cards, 26 ready and 47 pending, and set 1 stays open',
   assert.equal(set1.cards[id],undefined);
   assert.equal(set2.cards[id],undefined);
  }
- assert.equal(UAPR_MHA_REQUESTS.every(row=>row.ready===false),true);
+ const point=createMhaPointPack();
+ assert.equal(point.version,'mha-uapr-ready-3');
+ assert.deepEqual(Object.keys(point.cards),['MHA-P-001','MHA-P-002','MHA-P-003']);
+ assert.equal(Object.values(UAPR_MHA_PROGRAMS).every(row=>row.ready===true),true);
  assert.equal(UA05NC_MHA3_PRODUCT.cards.length,0);
  assert.equal(UA05NC_MHA3_AP.registered,false);
  assert.equal(UA05NC_MHA3_AP.number,null);

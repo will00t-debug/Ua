@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {UAPR_MHA_POINT_CARDS} from '../dist/mha/uapr-point-cards.mjs';
 import {UA05NC_MHA3_PRODUCT, UA05NC_MHA3_AP, UA05NC_MHA3_UNOFFICIAL_PREVIEW} from '../dist/mha/ua05nc-product.mjs';
-import {UAPR_MHA_REQUESTS} from '../dist/universal-v2/mha/programs-uapr.mjs';
+import {UAPR_MHA_PROGRAMS} from '../dist/universal-v2/mha/programs-uapr.mjs';
+import {createMhaPointPack} from '../dist/universal-v2/mha-point-pack.mjs';
 import {mhaEditorCards, MHA_CATALOG, MHA_CATALOG_051_100, MHA_POINT_CATALOG} from '../dist/mha/catalog.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createMha2Pack} from '../dist/universal-v2/mha2-pack.mjs';
@@ -84,14 +85,19 @@ test('three point-exchange cards keep the official printing', ()=>{
  }
 });
 
-test('no printed sentence is marked ready on the existing engine', ()=>{
- assert.equal(UAPR_MHA_REQUESTS.length,3);
- assert.deepEqual(UAPR_MHA_REQUESTS.map(row=>row.cardId), ['MHA-P-001','MHA-P-002','MHA-P-003']);
- for(const row of UAPR_MHA_REQUESTS){
-  assert.equal(row.ready,false);
-  assert.equal(row.whyNotEnough.length>0,true);
+test('all three printed sentences are ready in their own pack', ()=>{
+ const ids=['MHA-P-001','MHA-P-002','MHA-P-003'];
+ assert.deepEqual(Object.keys(UAPR_MHA_PROGRAMS),ids);
+ for(const id of ids){
+  assert.equal(UAPR_MHA_PROGRAMS[id].ready,true);
+  assert.equal(UAPR_MHA_PROGRAMS[id].implementation,'dsl');
  }
- assert.equal(UAPR_MHA_REQUESTS.some(row=>row.ready),false);
+ const point=createMhaPointPack();
+ assert.equal(point.version,'mha-uapr-ready-3');
+ assert.deepEqual(Object.keys(point.cards),ids);
+ assert.equal(point.cards['MHA-P-001'].impactNull,true);
+ assert.equal(point.cards['MHA-P-002'].emptyOwnFieldHandEnergyDiscount,2);
+ assert.equal(point.cards['MHA-P-003'].impactNull,true);
 });
 
 test('point cards sit in the catalog and stay out of both battle packs', ()=>{
