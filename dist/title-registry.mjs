@@ -33,7 +33,7 @@ export const TITLES=[
  {id:'aot',label:'進擊的巨人',cards:[...AOT_CARDS,...AOT2_CARDS],presets:[],playable:false},
  {id:'kmr',label:'假面騎士',cards:[...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS],presets:[],playable:false},
  {id:'csm',label:'鏈鋸人',cards:CSM_CARDS,presets:[],playable:false},
- {id:'imc',label:'偶像大師 灰姑娘女孩',cards:imcEditorCards(),presets:[],playable:false},
+ {id:'imc',label:'偶像大師 灰姑娘女孩',cards:imcEditorCards(),presets:[],playable:true},
  {id:'mha',label:'我的英雄學院',cards:mhaEditorCards(),presets:[],playable:false}
 ];
 export function titleOfCard(card){return TITLES.some(t=>t.id===card?.title)?card.title:'bleach';}

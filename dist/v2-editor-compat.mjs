@@ -95,7 +95,7 @@ export function editorV2Status(title,counts,pack=registeredPackForEditor(title))
    }else errors.push(issue);
   }
  }
- if(title==='imc')errors.push(IMC_OFFICIAL_MATCH_CLOSED);
+ 
  if(title==='mha')errors.push(MHA_OFFICIAL_MATCH_CLOSED);
  return {supported,issues:errors,ready:errors.length===0,total,registered:supported.size,pack,counts:v2Counts};
 }

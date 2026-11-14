@@ -22,7 +22,7 @@ export function prepareSoloBattle({mine,foe,first,difficulty,recordDeckId=null,n
   if(!isPlain(entry)||!isPlain(entry.pack)||!isPlain(entry.counts))
    throw Error('第 '+(index+1)+' 副牌組未準備好。');
   const pack=officialV2Pack(entry.pack.id);
-  if(pack.id==='imc')throw Error(IMC_OFFICIAL_MATCH_CLOSED);
+  
   if(pack.id==='mha')throw Error(MHA_OFFICIAL_MATCH_CLOSED);
   if(pack.version!==entry.pack.version)
    throw Error('牌組規則版本已更新，請重新選擇。');
@@ -65,7 +65,7 @@ export function loadSoloBattle(storage,{now=Date.now()}={}){
     entry.name.length>65||!isPlain(entry.counts)||Object.keys(entry.counts).length>50)
     throw Error('Invalid stored battle deck');
    const pack=officialV2Pack(entry.title);
-   if(pack.id==='imc')throw Error(IMC_OFFICIAL_MATCH_CLOSED);
+   
   if(pack.id==='mha')throw Error(MHA_OFFICIAL_MATCH_CLOSED);
    if(pack.version!==entry.packVersion)throw Error('Rule pack changed');
    const issues=validateUniversalDeck(pack,entry.counts);

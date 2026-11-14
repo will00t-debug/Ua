@@ -545,6 +545,6 @@ test('the seven former gaps are ready programs and the starter recipe stays unpu
  assert.equal(pack.cards['IMC-1-061'].unblockedAttack.then[0].count,1);
  assert.equal(pack.cards['IMC-1-075'].effects.onPlay[0].then[0].ap,null);
  assert.equal(pack.cards['IMC-1-107'].mainAbility.then[0].max,1);
- assert.equal(getTitle('imc').playable,false);
+ assert.equal(getTitle('imc').playable,true);
  assert.equal(loadImcOfficialStarter().counts,null);
 });

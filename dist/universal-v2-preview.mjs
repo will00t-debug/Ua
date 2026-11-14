@@ -2,7 +2,7 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261112imc1';
+import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261112imc1';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
@@ -16,6 +16,7 @@ import {KMR_CARDS} from './kmr-cards.mjs';
 import {KMR2_CARDS} from './kmr-vol2-cards.mjs';
 import {KMR_POINT_CARDS} from './kmr-point-cards.mjs';
 import {KMR_PR_CARDS} from './kmr-pr-cards.mjs';
+import {imcEditorCards} from './imc/catalog.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -69,6 +70,7 @@ const kjnPractice=kjnPracticeDeck();
 const csmPractice=csmPracticeDeck();
 const aotPractice=aotPracticeDeck();
 const kmrPractice=kmrPracticeDeck();
+const imcPractice=imcPracticeDeck();
 const decks={...createAllV2PreviewRealDecks(),
  'rezero-set1':{pack:rezeroPractice.pack,counts:rezeroPractice.counts,
   label:'Re:Zero 第一彈｜黃色練習組'},
@@ -85,7 +87,9 @@ const decks={...createAllV2PreviewRealDecks(),
  'aot-red':{pack:aotPractice.pack,counts:aotPractice.counts,
   label:'進擊的巨人｜紅色練習組'},
  'kmr-yellow':{pack:kmrPractice.pack,counts:kmrPractice.counts,
-  label:'假面騎士｜黃色預組身份練習組'}};
+  label:'假面騎士｜黃色預組身份練習組'},
+ 'imc-red':{pack:imcPractice.pack,counts:imcPractice.counts,
+  label:'偶像大師 灰姑娘女孩｜紅色練習組（非官方預組）'}};
 const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
@@ -99,7 +103,8 @@ const allArt=Object.freeze({
  kjn:new Map(KJN_CARDS.map(c=>[c.id,c.image||null])),
  csm:new Map(CSM_CARDS.map(c=>[c.id,c.image||null])),
  aot:new Map([...AOT_CARDS,...AOT2_CARDS].map(c=>[c.id,c.image||null])),
- kmr:new Map([...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS,...KMR_POINT_CARDS].map(c=>[c.id,c.image||c.printings?.[0]?.image||null]))
+ kmr:new Map([...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS,...KMR_POINT_CARDS].map(c=>[c.id,c.image||c.printings?.[0]?.image||null])),
+ imc:new Map(imcEditorCards().map(c=>[c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){
@@ -123,6 +128,7 @@ const PRINTED_CATALOGUE={
  csm:printedCatalogueMap(CSM_CARDS),
  aot:printedCatalogueMap([...AOT_CARDS,...AOT2_CARDS]),
  kmr:printedCatalogueMap([...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS,...KMR_POINT_CARDS]),
+ imc:printedCatalogueMap(imcEditorCards()),
  'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID))
 };
 const el=(tag,props={},...contents)=>{
@@ -2272,6 +2278,7 @@ function selectBuiltOpponent(title){
  if(decks['csm-purple']&&title==='csm')$('ai-title').value='csm-purple';
  if(decks['aot-red']&&title==='aot')$('ai-title').value='aot-red';
  if(decks['kmr-yellow']&&title==='kmr')$('ai-title').value='kmr-yellow';
+ if(decks['imc-red']&&title==='imc')$('ai-title').value='imc-red';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
 }
 function importBuiltTitleDeck(){

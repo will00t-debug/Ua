@@ -94,7 +94,7 @@ export function v2DeckReport(title,counts){
   '。這些卡不能進入 V2 對戰，效果也不會被略過。'
  ]:[];
  const issues=[...warnings];
- if(title==='imc')issues.push(IMC_OFFICIAL_MATCH_CLOSED);
+ 
  if(title==='mha')issues.push(MHA_OFFICIAL_MATCH_CLOSED);
  // Catalogue drafts store every card at 0. A zero is not in the deck, so an
  // A zero-count catalogue id is not in the deck and must not block a legal list.
@@ -198,6 +198,12 @@ let imcBattlePack=null;
 export function createImcBattlePack(){
  if(!imcBattlePack)imcBattlePack=createImcV2Pack();
  return imcBattlePack;
+}
+
+// Nonofficial 50-card red practice list; official starter copy counts remain unknown.
+export function imcPracticeDeck(){
+ const pack=createImcBattlePack();
+ return {pack,counts:practiceDeck(pack,{color:'red'})};
 }
 
 let mhaBattlePack=null;

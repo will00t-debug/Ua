@@ -89,7 +89,7 @@ test('starter loader names 18 kinds and does not invent the 50-card list',()=>{
  assert.match(starter.reason,/50/);
 });
 
-test('ready IMC cards stay in the controlled pack and cannot open an official match',()=>{
+test('IMC certified pack permits legal match and rejects incomplete decks',()=>{
  const pack=officialV2Pack('imc');
  const built=createImcV2Pack();
  assert.equal(pack.kind,'ua-v2-pack');
@@ -131,20 +131,20 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
  const closed=v2DeckReport('imc',{'IMC-1-011':4});
  assert.equal(closed.ok,false);
  assert.deepEqual(closed.warnings,[]);
- assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
+ assert.match(closed.issues.join('\n'),/50/);
  assert.doesNotMatch(closed.issues.join('\n'),/尚未支援的效果/);
  const report=v2DeckReport('imc',{'IMC-1-001':4});
  assert.equal(report.ok,false);
- assert.match(report.issues.join('\n'),new RegExp(IMC_OFFICIAL_MATCH_CLOSED));
+ assert.match(report.issues.join('\n'),/50/);
  const status=editorV2Status('imc',{'IMC-1-001':4});
  assert.equal(status.ready,false);
  assert.equal(status.registered,113);
- assert.match(status.issues.join('\n'),/尚未開放正式對戰/);
+ assert.match(status.issues.join('\n'),/50/);
  assert.throws(()=>normalizeEditorCounts('imc',{'IMC-1-AP01':1}),/無效卡號/);
  assert.deepEqual(normalizeEditorCounts('imc',{'UA55BT/IMC-1-001':2}),{'IMC-1-001':2});
  assert.deepEqual(LEGACY_DECK_KEYS.imc,['ua-imc-draft-v1','ua-imc-saved-v1']);
  const title=TITLES.find(item=>item.id==='imc');
- assert.equal(title.playable,false);
+ assert.equal(title.playable,true);
  assert.equal(title.cards.length,113);
  assert.equal(title.cards.every(card=>card.battleReady===false&&card.playable===false),true);
  assert.equal(Object.keys(officialV2Pack('csm').cards).length,80);
@@ -153,7 +153,7 @@ test('ready IMC cards stay in the controlled pack and cannot open an official ma
   mine:{pack,counts:{'IMC-1-001':4},label:'草稿'},
   foe:{pack,counts:{'IMC-1-001':4},label:'草稿'},
   first:0,difficulty:'easy'
- }),new RegExp(IMC_OFFICIAL_MATCH_CLOSED));
+ }),/50/);
  assert.match(read('dist/universal-v2-preview.mjs'),/raw\.title==='imc'/);
  assert.doesNotMatch(read('dist/universal-v2/engine.mjs'),/op==='imc'/);
 });

@@ -211,7 +211,7 @@ test('IMC B keeps the closed-job failure and only publishes complete cards',()=>
  }
  for(const row of IMC_REQUESTS_001_050)assertImcSharedRequest(row);
  for(const card of IMC_CARDS_001_050)assert.equal(card.battleReady,false);
- assert.equal(getTitle('imc').playable,false);
+ assert.equal(getTitle('imc').playable,true);
  assert.equal(assertUniversalMatch(pack,fresh(1)),true);
 });
 

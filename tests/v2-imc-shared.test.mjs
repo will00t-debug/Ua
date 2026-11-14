@@ -1,6 +1,6 @@
 // Shared IMC helpers execute through the existing V2 reducer.
 // Every IMC-1-001 through IMC-1-113 program is ready. The series stays
-// closed to official matches.
+// certified 50-card matches are available.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -155,14 +155,15 @@ test('the integrated pack executes exactly the ready cards',()=>{
  assert.equal(pack.cards['IMC-1-023'].effects.onPlay[0].line,undefined);
  const counts=legalReadyCounts(pack);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
- assert.equal(editorV2Status('imc',counts).ready,false);
- assert.match(editorV2Status('imc',counts).issues.join('\n'),/尚未開放正式對戰/);
- assert.equal(v2DeckReport('imc',counts).ok,false);
- assert.throws(()=>prepareSoloBattle({
+ assert.equal(editorV2Status('imc',counts).ready,true);
+ assert.deepEqual(editorV2Status('imc',counts).issues,[]);
+ assert.equal(v2DeckReport('imc',counts).ok,true);
+ const prepared=prepareSoloBattle({
   mine:{pack:officialV2Pack('imc'),counts,label:'灰姑娘'},
   foe:{pack:officialV2Pack('imc'),counts,label:'灰姑娘'},
   first:0,difficulty:'easy'
- }),new RegExp(IMC_OFFICIAL_MATCH_CLOSED));
+ });
+ assert.deepEqual(prepared.decks.map(d=>d.title),['imc','imc']);
  let s=newUniversalMatch(pack,{decks:[counts,counts],seed:19,first:0});
  assert.equal(assertUniversalMatch(pack,s),true);
  s=main(pack,s);
@@ -468,7 +469,7 @@ test('a public trait reveal is visible to both players and a private look is not
  assert.equal(assertUniversalMatch(built.pack,s),true);
 });
 
-test('a legal ready IMC deck can be saved and cannot open a room',async()=>{
+test('a legal ready IMC deck can be saved and open a room',async()=>{
  const pack=createImcV2Pack();
  const counts=legalReadyCounts(pack);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
@@ -478,9 +479,9 @@ test('a legal ready IMC deck can be saved and cannot open a room',async()=>{
  try{
   const {token}=await service.register({username:'imcshare',password:'correct-horse-123'},{ip:'127.0.0.1'});
   const saved=await service.saveDeck(token,{name:'灰姑娘完成卡',title:'imc',counts});
-  assert.equal(saved.deck.playable,false);
-  await assert.rejects(()=>service.createRoom(token,{deckId:saved.deck.id,first:'me'}),
-   error=>error?.status===400);
+  assert.equal(saved.deck.playable,true);
+  const opened=await service.createRoom(token,{deckId:saved.deck.id,first:'me'});
+  assert.ok(opened);
  }finally{
   sql.close();
   await rm(dir,{recursive:true,force:true});

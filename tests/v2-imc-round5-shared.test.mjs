@@ -277,7 +277,7 @@ test('front once and name once stay separate, and 110 is unchanged',()=>{
  assert.equal(imc.cards['IMC-1-107'].mainAbility.op,'restRetireSequence');
  assert.equal(imc.cards['IMC-1-107'].mainAbility.draw,1);
  assert.equal(imc.cards['IMC-1-107'].mainAbility.then[0].ap,1);
- assert.equal(getTitle('imc').playable,false);
+ assert.equal(getTitle('imc').playable,true);
 });
 
 test('only an own-effect raid skips the chosen character once',()=>{

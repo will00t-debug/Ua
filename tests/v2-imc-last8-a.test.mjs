@@ -96,7 +96,7 @@ function live(s,uid){
 
 test('the eight cards are ready and the former gaps are now complete programs',()=>{
  assert.equal(Object.keys(pack.cards).length,113);
- assert.equal(getTitle('imc').playable,false);
+ assert.equal(getTitle('imc').playable,true);
  assert.deepEqual(validateUniversalDeck(pack,COUNTS),[]);
  for(const id of DONE){
   assert.equal(pack.cards[id].id,id);

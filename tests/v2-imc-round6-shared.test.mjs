@@ -531,7 +531,7 @@ test('the same ops work outside IMC while unfinished cards stay out of the pack'
  assert.equal(IMC_PROGRAMS_001_050['IMC-1-012'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-011'],undefined);
  assert.equal(IMC_PROGRAMS_STARTER['IMC-1-012'],undefined);
- assert.equal(getTitle('imc').playable,false);
+ assert.equal(getTitle('imc').playable,true);
  assert.equal(loadImcOfficialStarter().counts,null);
  assert.throws(()=>createUniversalPack({id:'probe',version:'bad',cards:[face({
   id:'BAD',name:'壞',effects:{onPlay:[{op:'choosePrintedOptions',max:3,optional:true,options:[]}]}
