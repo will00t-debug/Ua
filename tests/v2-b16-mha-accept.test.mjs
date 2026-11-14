@@ -1,4 +1,4 @@
-// Round 16 acceptance on the 77-card MHA pack. The three lists are unofficial
+// Round 16 acceptance rebuilt on the integrated 89-card MHA pack. The three lists are unofficial
 // test decks taken from PR #451 and rebuilt against createMhaV2Pack(). They
 // are not UA10ST_PRODUCT and they do not replace the 109-card editor catalog.
 import test from 'node:test';
@@ -26,7 +26,7 @@ const LIMITED=new Set(['special','final','color']);
 const NEW_READY=['MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-017',
  'MHA-1-048','MHA-1-056','MHA-1-059','MHA-1-071','MHA-1-074','MHA-1-087',
  'MHA-1-089','MHA-1-093'];
-const STILL_PENDING=['MHA-1-002','MHA-1-038','MHA-1-076'];
+const STILL_PENDING=['MHA-1-002','MHA-1-038'];
 const REPRINTS=['MHA-1-034','MHA-1-036','MHA-1-041','MHA-1-044','MHA-1-052',
  'MHA-1-057','MHA-1-061','MHA-1-063','MHA-1-065'];
 const NEEDED={
@@ -255,9 +255,9 @@ const decks={
  [UNOFFICIAL+'・紅']:red
 };
 
-test('the ready pool stays 77 cards and MHA stays unplayable',()=>{
- assert.equal(Object.keys(mha.cards).length,77);
- assert.equal(mha.version,'mha-ua10-ready-77');
+test('the ready pool stays 89 cards and MHA stays unplayable',()=>{
+ assert.equal(Object.keys(mha.cards).length,89);
+ assert.equal(mha.version,'mha-ua10-ready-89');
  assert.equal(editor.length,109);
  assert.equal(getTitle('mha').playable,false);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false),true);

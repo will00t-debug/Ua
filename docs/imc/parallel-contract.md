@@ -630,3 +630,7 @@ IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 77 張 ready、3
 
 基準仍是第 15 輪 `a22d510eda60f3d4736bcebf4aaddc47aa860af8`。IMC 113／113、`playable:true`。MHA 77 ready、32 pending、`playable:false`。新的共用操作在 `docs/v2-handoff/V2-MHA-shared-next.md`。004、038、085、090、099、002、003、005、011、026 都還沒寫卡牌程式。沒有合併 `main`，也沒有部署。
 
+## 89 張整合基準
+
+#454、#457、#458、#460、#461 只移植尚未進入 `main` 的提交。IMC 113／113、`playable:true`。MHA 89 ready、20 pending、`playable:false`。基準說明在 `docs/v2-handoff/V2-MHA-89-baseline.md`。最新 `main` 的線上介面留在這條分支。沒有部署。
+
