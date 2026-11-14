@@ -414,7 +414,8 @@ test('the battle catalogue shows UA10ST art and printed text for every starter c
  for(const id of RANGE_SHARED)assert.match(editorById[id].image,/UA10BT_/);
  assert.match(starterById['MHA-1-063'].image,/UA10ST_/);
  assert.match(editorById['MHA-1-063'].image,/UA10BT_/);
- assert.match(fieldEffectCopy(editorById['MHA-1-063']),/自分の場のキャラ/);
+ assert.match(fieldEffectCopy(editorById['MHA-1-063']),/選擇自己場上/);
+ assert.match(editorById['MHA-1-063'].effectJa,/自分の場のキャラ/);
 });
 
 test('the AI action on an IMC or BLEACH match is always one of the legal actions',()=>{

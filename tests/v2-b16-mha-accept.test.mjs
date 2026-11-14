@@ -322,8 +322,9 @@ test('deck cards keep official art and the full printed effect',()=>{
   }
  }
  const fat=editorById['MHA-1-056'];
- assert.match(fieldEffectCopy(fat),/裏向き/);
- assert.ok(fieldEffectCopy(fat).includes(fat.effectJa.trim()));
+ assert.match(fieldEffectCopy(fat),/裏向/);
+ assert.ok(fieldEffectCopy(fat).includes(fat.effect.trim()));
+ assert.match(fat.effectJa,/裏向き/);
  const allMight=editorById['MHA-1-102'];
  assert.match(allMight.nameJa,/オールマイト/);
  assert.match(allMight.image,/UA10ST_MHA-1-102/);
