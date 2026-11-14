@@ -13,6 +13,7 @@ const PROGRAM_KEYS=new Set([
  'blockBpRestriction','triggerEffect','enterAlwaysActive','passiveBonuses',
  'raidName','printedImpact','printedAttackDamage','ownTurnBp','unblockedAttack',
  'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains',
+ 'handEnergyWhileActivateMain','raidHostAny','playRequiresOwnName',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
  'facedownKeywordThresholds'
 ]);
@@ -22,6 +23,7 @@ const BATTLE_KEYS=[
  'blockBpRestriction','triggerEffect','enterAlwaysActive','passiveBonuses',
  'raidName','printedImpact','printedAttackDamage','ownTurnBp','unblockedAttack',
  'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains',
+ 'handEnergyWhileActivateMain','raidHostAny','playRequiresOwnName',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
  'facedownKeywordThresholds'
 ];

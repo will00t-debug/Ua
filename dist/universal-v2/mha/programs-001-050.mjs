@@ -11,6 +11,25 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   ready:true, implementation:'dsl', impactNull:true,
   effects:Object.freeze({onRetire:Object.freeze([{op:'drawDiscard', count:1}])})
  }),
+ 'MHA-1-002':Object.freeze({
+  ready:true, implementation:'dsl',
+  triggerEffect:Object.freeze({
+   op:'deployOutsideCharacter', color:'purple', maxEnergy:2, ap:1, frontOnly:true
+  }),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'millUpToThenRecover', count:3, optional:true
+  }])}),
+  mainAbility:Object.freeze({
+   op:'restRetireSequence',
+   then:Object.freeze([{
+    op:'recoverOutsideAny', zone:'outside', max:1, optional:true,
+    anyOf:Object.freeze([
+     Object.freeze({field:'trait', value:'死穢八斎會'}),
+     Object.freeze({field:'name', value:'“個性”消失弾'})
+    ])
+   }])
+  })
+ }),
  'MHA-1-003':Object.freeze({
   ready:true, implementation:'dsl',
   passiveBonuses:Object.freeze([Object.freeze({
@@ -19,6 +38,14 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
     kind:'ownActivateMainAtLeast', turn:'any', zone:'field', min:3
    })
   })])
+ }),
+ 'MHA-1-004':Object.freeze({
+  ready:true, implementation:'dsl', printedImpact:1,
+  handEnergyWhileActivateMain:Object.freeze({min:3, amount:3}),
+  mainAbility:Object.freeze({
+   op:'gainSameLineMains', oncePerTurn:true,
+   excludeNames:Object.freeze(['オール・フォー・ワン'])
+  })
  }),
  'MHA-1-005':Object.freeze({
   ready:true, implementation:'dsl', ownTurnBp:2000,
@@ -99,12 +126,40 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
    }])
   })
  }),
+ 'MHA-1-020':Object.freeze({
+  ready:true, implementation:'dsl', raidHostAny:true,
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'revealTopHandOutsideUnlessRaid'
+  }])})
+ }),
  'MHA-1-021':Object.freeze({
   ready:true, implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:Object.freeze({colors:Object.freeze(['green','red']), amount:1})
  }),
  'MHA-1-022':play(Object.freeze([{op:'bounceOwnOtherUnderEnergy', energy:1}])),
+ 'MHA-1-023':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'frontOnceNameBuff', frontOnly:true, oncePerTurn:true,
+   name:'ジェントル・クリミナル', bp:1000, namedBp:2000, sniper:true
+  })
+ }),
  'MHA-1-024':vanilla,
+ 'MHA-1-025':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'searchTopOneBottomDiscard', count:4,
+   groups:Object.freeze([
+    Object.freeze({logic:'all', filters:Object.freeze([
+     Object.freeze({field:'trait', value:'死穢八斎會'}),
+     Object.freeze({field:'type', value:'character'})
+    ])}),
+    Object.freeze({logic:'all', filters:Object.freeze([
+     Object.freeze({field:'name', value:'エリ'})
+    ])})
+   ])
+  }])})
+ }),
  'MHA-1-026':Object.freeze({
   ready:true, implementation:'dsl', raidName:'オーバーホール', printedImpact:1,
   effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
@@ -129,6 +184,14 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   })])
  }),
  'MHA-1-028':play(Object.freeze([{op:'drawDiscard', count:1}])),
+ 'MHA-1-029':Object.freeze({
+  ready:true, implementation:'dsl',
+  playRequiresOwnName:'オーバーホール',
+  triggerEffect:Object.freeze({op:'retireOppFront'}),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'restOppFrontStripLock', optional:true
+  }])})
+ }),
  'MHA-1-032':play(Object.freeze([{op:'recoverAp', count:2}])),
  'MHA-1-034':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
  'MHA-1-036':Object.freeze({ready:true, implementation:'dsl', step:true}),

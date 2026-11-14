@@ -11,10 +11,10 @@ import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEner
  universalAttackDamage, universalImpact, universalImpactNull, universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 
 const READY=[
- 'MHA-1-001','MHA-1-003','MHA-1-005','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009',
+ 'MHA-1-001','MHA-1-002','MHA-1-003','MHA-1-004','MHA-1-005','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009',
  'MHA-1-010','MHA-1-011','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016',
- 'MHA-1-017','MHA-1-018','MHA-1-019','MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-026',
- 'MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-038','MHA-1-039',
+ 'MHA-1-017','MHA-1-018','MHA-1-019','MHA-1-020','MHA-1-021','MHA-1-022','MHA-1-023','MHA-1-024','MHA-1-025','MHA-1-026',
+ 'MHA-1-027','MHA-1-028','MHA-1-029','MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-038','MHA-1-039',
  'MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046','MHA-1-047','MHA-1-048','MHA-1-049',
  'MHA-1-050'
 ];
@@ -24,7 +24,8 @@ const STANDARD_TRIGGER={
  draw:'【ドロー】カードを1枚引く。',
  final:'【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。',
  color:'【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。',
- raid:'【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。'
+ raid:'【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。',
+ special:'【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。'
 };
 const COLOR_009='【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。';
 const pack=createMhaV2Pack();
@@ -226,14 +227,14 @@ test('only a fully matched program is ready, and official play stays closed',()=
   assert.equal(battle.bp,printed.bp);
   assert.equal(battle.ap,printed.ap);
   assert.equal(battle.trigger||'',printed.trigger||'');
-  const expected=printed.id==='MHA-1-009'?COLOR_009:
+  const expected=printed.id==='MHA-1-009'||printed.id==='MHA-1-002'?COLOR_009:
    printed.trigger?STANDARD_TRIGGER[printed.trigger]:'';
   assert.equal(printed.triggerTextJa,expected);
  }
  const official=officialV2Pack('mha');
  assert.equal(official.id,'mha');
  assert.equal(official.cards['MHA-1-001'].id,'MHA-1-001');
- assert.equal(official.cards['MHA-1-002'],undefined);
+ assert.equal(official.cards['MHA-1-002'].id,'MHA-1-002');
  const closed=v2DeckReport('mha',{'MHA-1-008':4});
  assert.equal(closed.ok,false);
  assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
