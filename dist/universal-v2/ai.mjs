@@ -553,7 +553,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
   s.pending?.kind==='effect-pay-hand-move'||s.pending?.kind==='effect-pay-hand-impact'||
-  s.pending?.kind==='effect-place-hand-outside')
+  s.pending?.kind==='effect-place-hand-outside'||
+  s.pending?.kind==='effect-open-front-hand-buff')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-life-order')
   return legal.find(a=>a.uid!==null)||legal[0];

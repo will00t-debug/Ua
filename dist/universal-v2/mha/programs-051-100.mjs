@@ -173,6 +173,13 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   }]}
  }),
  'MHA-1-088':Object.freeze({ready:true,implementation:'vanilla'}),
+ 'MHA-1-091':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{
+   onAttack:[{op:'openFrontHandOutsideBuff',bp:2000,optional:true}],
+   onBlock:[{op:'openFrontHandOutsideBuff',bp:2000,optional:true}]
+  }
+ }),
  'MHA-1-092':play([{op:'buffOwnField',filter:{field:'type',value:'character'},
   bp:1000,optional:true,excludeSelf:true}]),
  'MHA-1-093':Object.freeze({

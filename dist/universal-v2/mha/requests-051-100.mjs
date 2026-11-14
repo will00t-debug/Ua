@@ -22,13 +22,6 @@ export const MHA_REQUESTS_051_100=[
   proposal:'突襲框是霍克斯。登場時可把任意張手牌蓋到自己下面。攻擊時查看那些蓋牌，最多1張加入手牌；有加入才活動最多1張其他非霍克斯。090はreadyにしない。'
  },
  {
-  cardId:'MHA-1-091',
-  sentence:'アタック時とブロック時。自分のフロントLに空きがある場合、手札1枚を場外に置いてもよい。そうしたらこのターンBP+2000。',
-  existingOps:['optionalRemoveHandThen','buffSelf','buffSelfIfFrontOpen'],
-  whyNotEnough:'buffSelfIfFrontOpen は空位そのものでBPを足す。這句要先確認前線有空位，再可把手牌放場外，做到才加BP。攻擊時與阻擋時都要。',
-  proposal:'攻擊時與阻擋時，自己前線有空位才可把手牌1張放場外，做到才本回合BP+2000。091はreadyにしない。'
- },
- {
   cardId:'MHA-1-095',
   sentence:'ステップ。このターンに移動しているなら2回アタック。起動は手札1枚を場外に置き、ターン1で別ラインへ移動。',
   existingOps:['step','grantSelfDoubleAttackThisTurn','selfMovedThisTurn'],
