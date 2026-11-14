@@ -9,7 +9,7 @@ import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
 import {matchesPrintedRequiredEnergyAtMost} from './ap-discounts.mjs';
 import {cardHasName,cardHasTrait,cardCountsAsEvent,printedFieldCard,usedOwnEventThisTurn,matchesOwnDistinctTraits,matchesV2LiveCondition,
- ownRestPrintedBpCount,countOwnPrintedTrait,countOppRestCharacters,countOwnPrintedApAtLeast,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
+ ownRestPrintedBpCount,countOwnPrintedTrait,countOppRestCharacters,countOwnPrintedApAtLeast,countOwnDistinctTraitNames,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
  countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs';
 import {bindMmm2,runMmm2Job,legalMmm2Pending,resolveMmm2Pending,
  legalMmm2Activations,activateMmm2,finishU045Look} from './mmm-exedra-runtime.mjs';
@@ -810,6 +810,17 @@ function entryBanned(pack,s,owner,definition){
  return zones.some(zone=>zone.some(c=>c&&!originalEffectsDisabled(s,c)&&
   card(pack,c).mutualPlayBan===definition.name));
 }
+// 手札から登場できない while another card of the printed trait, other than
+// the named exception, is on this controller's field. Hand activates and
+// entries from outside, removed, or deck are a different sentence.
+function otherTraitHandBanned(pack,s,owner,definition){
+ const ban=definition?.playBanOtherTrait;
+ if(!ban||!s.players[owner])return false;
+ const zones=[s.players[owner].front,s.players[owner].energy];
+ return zones.some(zone=>zone.some(c=>c&&
+  cardHasTrait(card(pack,c),ban.trait)&&
+  !cardHasName(card(pack,c),ban.exceptName,originalEffectsDisabled(s,c))));
+}
 function printedNameOrRaidBase(pack,s,c,name){
  if(cardHasName(card(pack,c),name,originalEffectsDisabled(s,c)))return true;
  const base=c.stack?.[0];
@@ -978,7 +989,11 @@ function bp(pack,s,c){
    kmr2Bp(pack,s,c,printed,suppressed,owner,card)+
    csmBp(pack,s,c,printed,suppressed,owner,card)+
    livePassives(pack,s,c).reduce((n,p)=>{
-    const delta=p.bpEach?p.bpEach*(p.condition.kind==='oppRestCharacterCount'?
+    const scaleTurn=p.condition?.turn==='own'?s.active===owner:
+     p.condition?.turn==='opponent'?s.active!==owner:true;
+    const delta=p.bpEach?p.bpEach*(p.condition.kind==='ownDistinctTraitNames'?
+    (scaleTurn?countOwnDistinctTraitNames(s,owner,c.uid,p.condition,x=>card(pack,x)):0):
+    p.condition.kind==='oppRestCharacterCount'?
     countOppRestCharacters(s,owner,p.condition,x=>card(pack,x)):
     p.condition.kind==='ownPrintedApAtLeast'?
     countOwnPrintedApAtLeast(s,owner,c.uid,p.condition,x=>card(pack,x)):
@@ -2127,6 +2142,8 @@ function effectEnter(pack,s,{owner,from,uid,line,slot,replaceUid,ready,sourceUid
  if(index<0)throw Error('Madoka vol.2 entry card left');
  const definition=card(pack,pl[from][index]);
  if(entryBanned(pack,s,owner,definition))throw Error('Madoka vol.2 entry is banned');
+ if(from==='hand'&&otherTraitHandBanned(pack,s,owner,definition))
+  throw Error('This card cannot enter from hand while another trait card is on the field');
  if(definition.raidOnlyEntry)throw Error('This character can only enter by Raid');
  if(line==='front'&&definition.frontForbidden)throw Error('Front entry banned');
  if(line==='energy'&&(definition.energyForbidden||definition.energyLineForbidden))
@@ -7435,6 +7452,8 @@ function keepTopFacedownsOnBase(top,base){
 }
 function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady=true,entryCause='paidRaid',entryFrom='hand',effectSourceUid=null,deferEffects=false}={}){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
+ if(entryFrom==='hand'&&otherTraitHandBanned(pack,s,p,top))
+  throw Error('This card cannot enter from hand while another trait card is on the field');
  if(entryBanned(pack,s,p,top))throw Error('Printed mutual name ban');
  // FAQ Q44/Q47: every actual Raid performs its printed ACTIVE before onPlay.
  // Only a separate, later card effect may REST the new character.
@@ -20366,7 +20385,7 @@ export function legalUniversalActions(pack,s){
      eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))
      out.push({type:'event',uid:c.uid});
    }
-   else if(!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!d.chainRaidOnly&&!d.raidOnlyEntry&&
+   else if(!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!otherTraitHandBanned(pack,s,p,d)&&!d.chainRaidOnly&&!d.raidOnlyEntry&&
     (d.type!=='field'||!d.playRequiresOwnName||ownFieldHasPrintedName(pack,s,p,d.playRequiresOwnName)))for(const line of ['energy','front']){
     if(line==='energy'&&d.energyLineForbidden)continue;
     if(line==='front'&&(d.type!=='character'||d.frontForbidden))continue;
@@ -20375,7 +20394,7 @@ export function legalUniversalActions(pack,s){
      out.push({type:'play',uid:c.uid,line,...choice});
    }
    }
-   if(!raidBanned&&raidPayment&&raidPayment.cost<=ap&&canRaid&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)){
+   if(!raidBanned&&raidPayment&&raidPayment.cost<=ap&&canRaid&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!otherTraitHandBanned(pack,s,p,d)){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
      if(!validRaidBase(pack,s,p,base,d))continue;
@@ -20502,11 +20521,14 @@ export function zoneRequiredEnergy(pack,s,p,d,zone){
  const pairCut=pair?Math.floor(outsideEvents/pair.per)*pair.amount:0;
  const gate=d.gatedHandDiscount;
  const gateCut=(zone==='hand'||zone==='life')&&frontCountGateOpen(pack,s,p,gate)?gate.energy:0;
+ const distinctNames=zone==='hand'&&d.distinctNameHandEnergy?
+  countOwnDistinctTraitNames(s,p,null,{zone:'fieldOutside',trait:d.distinctNameHandEnergy.trait,
+   excludeSelf:false},c=>card(pack,c))*d.distinctNameHandEnergy.per:0;
  const handCut=zone!=='hand'?0:
   (d.emptyOwnFieldHandEnergyDiscount&&field(s.players[p]).length===0?d.emptyOwnFieldHandEnergyDiscount:0)+
   (colors&&field(s.players[1-p]).some(c=>colors.colors.includes(card(pack,c).color))?colors.amount:0)+
   (outsideRule&&outsideEvents>=outsideRule.min?outsideRule.amount:0)+
-  (d.printedHandEnergyDiscount||0);
+  (d.printedHandEnergyDiscount||0)+distinctNames;
  const namedCut=zone==='hand'&&d.handEnergyWhileName&&field(s.players[p]).some(c=>
   cardHasName(card(pack,c),d.handEnergyWhileName.name,originalEffectsDisabled(s,c)))?
   d.handEnergyWhileName.amount:0;
@@ -22545,6 +22567,9 @@ if(ability.op==='characterDualMain'){
     ...(fromRemoved?{from:'removed'}:{})});
    if((action.type==='play'||action.type==='raid')&&lifeUseBanned(d,pl))
     throw Error('This card cannot be used at this life total');
+   if(!fromRemoved&&(action.type==='play'||action.type==='raid')&&
+    otherTraitHandBanned(pack,s,p,d))
+    throw Error('This card cannot enter from hand while another trait card is on the field');
    if((action.type==='play'||action.type==='event')&&aot2CannotPlay(pack,s,p,d))
     throw Error('This Attack on Titan card cannot be played');
    if(action.type==='raid'&&aot2CannotPlay(pack,s,p,d)&&d.id!=='AOT-2-067')
