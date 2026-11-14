@@ -1,5 +1,5 @@
-// Round 12 gaps, kept on round 15. The eight sentences A unlocked are programs.
-// 085, 090, 091, 095 and 096 stay requests. 099 and 100 are ready.
+// Round 12 gaps, kept on the last-three branch. The eight sentences A unlocked are programs.
+// 085 and 090 stay requests. 091, 095 and 096 are ready on this branch. 099 and 100 are ready.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
@@ -8,10 +8,10 @@ import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 
-const STILL=['MHA-1-085','MHA-1-090','MHA-1-091','MHA-1-095','MHA-1-096'];
+const STILL=['MHA-1-085','MHA-1-090'];
 const KEPT=['MHA-1-051','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059','MHA-1-060',
  'MHA-1-062','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072','MHA-1-074','MHA-1-076',
- 'MHA-1-081','MHA-1-084','MHA-1-099','MHA-1-100'];
+ 'MHA-1-081','MHA-1-084','MHA-1-091','MHA-1-095','MHA-1-096','MHA-1-099','MHA-1-100'];
 
 function face(extra){
  const effects=extra.effects||{};

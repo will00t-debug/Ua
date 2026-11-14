@@ -16,9 +16,9 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 
 const READY=['MHA-1-051','MHA-1-052','MHA-1-053','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-057','MHA-1-058','MHA-1-059','MHA-1-060','MHA-1-061','MHA-1-062','MHA-1-064','MHA-1-065',
  'MHA-1-066','MHA-1-067','MHA-1-068','MHA-1-069','MHA-1-070','MHA-1-071','MHA-1-072','MHA-1-073','MHA-1-074','MHA-1-075','MHA-1-076','MHA-1-077','MHA-1-078',
- 'MHA-1-079','MHA-1-080','MHA-1-081','MHA-1-082','MHA-1-083','MHA-1-084','MHA-1-086','MHA-1-087','MHA-1-088','MHA-1-089','MHA-1-092',
- 'MHA-1-093','MHA-1-094','MHA-1-097','MHA-1-098','MHA-1-099','MHA-1-100'];
-const OPEN=['MHA-1-085','MHA-1-090','MHA-1-091','MHA-1-095','MHA-1-096'];
+ 'MHA-1-079','MHA-1-080','MHA-1-081','MHA-1-082','MHA-1-083','MHA-1-084','MHA-1-086','MHA-1-087','MHA-1-088','MHA-1-089','MHA-1-091','MHA-1-092',
+ 'MHA-1-093','MHA-1-094','MHA-1-095','MHA-1-096','MHA-1-097','MHA-1-098','MHA-1-099','MHA-1-100'];
+const OPEN=['MHA-1-085','MHA-1-090'];
 const VIA_STARTER=['MHA-1-063'];
 const LIMITED=new Set(['MHA-1-064','MHA-1-097','MHA-1-065','MHA-1-098']);
 const pack=createMhaV2Pack();
@@ -30,7 +30,8 @@ function counts(extra={},usePack=pack){
  let total=Object.values(c).reduce((a,b)=>a+b,0);
  const reserved=new Set(Object.keys(extra));
  const shrink=['MHA-1-086',...READY.slice().reverse().filter(id=>
-  !reserved.has(id)&&!LIMITED.has(id)&&id!=='MHA-1-057'&&id!=='MHA-1-078'&&id!=='MHA-1-086')];
+  !reserved.has(id)&&!LIMITED.has(id)&&id!=='MHA-1-057'&&id!=='MHA-1-078'&&
+  id!=='MHA-1-086'&&id!=='MHA-1-092'&&id!=='MHA-1-094')];
  while(total>50){
   const id=shrink.find(key=>(c[key]||0)>(key==='MHA-1-086'?3:0));
   assert.ok(id,'deck cannot make room for '+JSON.stringify(extra));

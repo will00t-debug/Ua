@@ -14,7 +14,7 @@ const PROGRAM_KEYS=new Set([
  'raidName','printedImpact','printedAttackDamage','ownTurnBp','unblockedAttack',
  'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
- 'facedownKeywordThresholds'
+ 'facedownKeywordThresholds','doubleAttackIfSelfMoved','moveObserver'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
@@ -23,7 +23,7 @@ const BATTLE_KEYS=[
  'raidName','printedImpact','printedAttackDamage','ownTurnBp','unblockedAttack',
  'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
- 'facedownKeywordThresholds'
+ 'facedownKeywordThresholds','doubleAttackIfSelfMoved','moveObserver'
 ];
 export const MHA_OFFICIAL_MATCH_CLOSED='我的英雄學院尚未開放正式對戰。';
 

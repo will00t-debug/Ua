@@ -173,6 +173,13 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   }]}
  }),
  'MHA-1-088':Object.freeze({ready:true,implementation:'vanilla'}),
+ 'MHA-1-091':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{
+   onAttack:[{op:'openFrontHandOutsideBuff',bp:2000,optional:true}],
+   onBlock:[{op:'openFrontHandOutsideBuff',bp:2000,optional:true}]
+  }
+ }),
  'MHA-1-092':play([{op:'buffOwnField',filter:{field:'type',value:'character'},
   bp:1000,optional:true,excludeSelf:true}]),
  'MHA-1-093':Object.freeze({
@@ -181,6 +188,17 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
    subject:'other',line:'front',excludeNames:['緑谷 出久']}
  }),
  'MHA-1-094':Object.freeze({ready:true,implementation:'dsl',step:true}),
+ 'MHA-1-095':Object.freeze({
+  ready:true,implementation:'dsl',step:true,doubleAttackIfSelfMoved:true,
+  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1}
+ }),
+ 'MHA-1-096':Object.freeze({
+  ready:true,implementation:'dsl',
+  moveObserver:{
+   op:'mayRestActiveFieldDraw',once:'name',turn:'own',
+   when:{from:'hand',to:'outside',reasons:['payment','own-effect']}
+  }
+ }),
  'MHA-1-097':Object.freeze({
   ready:true,implementation:'dsl',
   triggerEffect:{op:'retireOppFront'},

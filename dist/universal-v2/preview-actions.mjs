@@ -215,7 +215,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
+ 'effect-pay-hand-self':'支付 1 張手牌，把這張角色移到另一條線',
  'effect-place-hand-outside':'將 1 張手牌放到場外',
+ 'effect-open-front-hand-buff':'前線有空位時，可將 1 張手牌放到場外',
  'effect-life-order':'查看全部生命，並以任意順序重新排列',
  'effect-pay-hand-impact':'支付 1 張手牌到場外，這張角色本回合衝擊 +1',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
@@ -263,6 +265,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-pay-deploy-self':'是否支付 AP，讓此角色以活動狀態登場',
  'effect-deploy-self-active':'選擇以活動狀態登場的位置',
+ 'effect-rest-field-draw':'是否休息這張活動場域並抽 1 張',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
  'opening-mulligan':'開局手牌調度（每人最多一次）',
@@ -985,6 +988,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRetirementOrder':return orderEffectLabel(pack,state,action,'先結算此退場效果');
   case 'chooseMoveEffectOrder':return orderEffectLabel(pack,state,action,
    String(action.key||'').startsWith('observer-')?'先處理場上角色取得的送場外反應':'先處理已取得的卡片移動能力');
+  case 'chooseRestFieldDraw':return action.mode==='rest'?
+   '休息這張場域並抽 1 張':'不發動';
   case 'chooseRestTuck':return action.mode==='rest'?
    'REST 此角色，選擇是否放置裏向底牌':'不發動 REST 放置';
   case 'chooseTuckMoved':return action.uid===null?
@@ -1088,7 +1093,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseLookUnderHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
   case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
+  case 'choosePayHandSelf':return '支付 '+name()+' 到場外';
   case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
+  case 'chooseOpenFrontHandBuff':return a.uid===null?'不放手牌':'將 '+name()+' 放到場外';
   case 'chooseReorderOwnLife':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();
   case 'chooseMoveOrSwap':return action.mode==='swap'?'交換一張前線與一張能源線角色':'把一張自己的角色移到另一列';
   case 'chooseOppLeave':return action.mode==='life'?'改為把自己 1 張生命放到場外':'不支付，照原本方式離場';

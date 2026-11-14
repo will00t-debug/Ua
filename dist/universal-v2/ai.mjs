@@ -89,7 +89,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.mode===(redraw?'redraw':'keep'))||legal[0];
  }
  if(s.pending?.kind==='effect-move-order'||s.pending?.kind==='phase-order')return legal[0];
- if(s.pending?.kind==='effect-rest-tuck')return
+ if(s.pending?.kind==='effect-rest-field-draw'||s.pending?.kind==='effect-rest-tuck')return
   legal.find(x=>x.mode===(difficulty==='easy'?'skip':'rest'))||legal[0];
  if(s.pending?.kind==='effect-tuck-moved')return
   legal.find(x=>difficulty!=='easy'&&x.uid!==null)||legal[0];
@@ -552,8 +552,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-look-under-hand')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
-  s.pending?.kind==='effect-pay-hand-move'||s.pending?.kind==='effect-pay-hand-impact'||
-  s.pending?.kind==='effect-place-hand-outside')
+  s.pending?.kind==='effect-pay-hand-move'||s.pending?.kind==='effect-pay-hand-self'||
+  s.pending?.kind==='effect-pay-hand-impact'||
+  s.pending?.kind==='effect-place-hand-outside'||
+  s.pending?.kind==='effect-open-front-hand-buff')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-life-order')
   return legal.find(a=>a.uid!==null)||legal[0];
