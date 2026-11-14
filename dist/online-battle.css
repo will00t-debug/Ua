@@ -173,3 +173,83 @@ body.v2-online-battle .online-raid-base-gallery .v2-zone-card{
 body.v2-online-battle .online-raid-base-gallery .v2-zone-card .art{
  max-height:145px;object-fit:contain
 }
+
+/* Compact phone effect panels: never let one visible card force a full-screen
+   poster. Applies to public targets, private searches, and source-card art. */
+body.v2-online-battle .online-effect-overlay .dialog.pending{
+ width:min(520px,calc(100vw - 24px));
+ max-height:min(78dvh,680px);
+ overflow:auto;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card{
+ grid-template-columns:72px minmax(0,1fr);
+ max-width:100%;
+ box-sizing:border-box;
+ max-height:190px;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-art,
+body.v2-online-battle .online-effect-overlay .online-pending-card-art img.art{
+ box-sizing:border-box;
+ width:100%;
+ max-width:72px;
+ max-height:101px;
+ height:auto;
+ object-fit:contain;
+}
+body.v2-online-battle .online-effect-overlay .online-private-inspection{
+ width:100%;
+ max-width:100%;
+ box-sizing:border-box;
+ min-width:0;
+}
+body.v2-online-battle .online-effect-overlay .online-inspection-grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(96px,112px));
+ gap:8px;
+ justify-content:start;
+ align-content:start;
+ max-height:42dvh;
+ overflow:auto;
+}
+body.v2-online-battle .online-effect-overlay .online-inspection-card{
+ width:100%;
+ max-width:112px;
+ min-width:0;
+ box-sizing:border-box;
+}
+body.v2-online-battle .online-effect-overlay .online-inspection-art{
+ display:block;
+ width:100%;
+ max-width:94px;
+ max-height:132px;
+ aspect-ratio:63/88;
+ overflow:hidden;
+}
+body.v2-online-battle .online-effect-overlay .online-inspection-art img{
+ display:block;
+ width:100%;
+ max-width:94px;
+ height:auto;
+ max-height:132px;
+ object-fit:contain;
+}
+@media(max-width:620px){
+ body.v2-online-battle .online-effect-overlay{padding:12px}
+ body.v2-online-battle .online-effect-overlay .dialog.pending{
+  width:100%;
+  max-height:min(76dvh,620px);
+  padding:12px;
+ }
+ body.v2-online-battle .online-effect-overlay .online-pending-card{
+  grid-template-columns:68px minmax(0,1fr);
+  max-height:165px;
+ }
+ body.v2-online-battle .online-effect-overlay .online-pending-card-art,
+ body.v2-online-battle .online-effect-overlay .online-pending-card-art img.art{
+  max-width:68px;max-height:96px;
+ }
+ body.v2-online-battle .online-effect-overlay .online-inspection-grid{
+  grid-template-columns:repeat(auto-fill,minmax(94px,108px));
+  gap:7px;max-height:38dvh;
+ }
+}
