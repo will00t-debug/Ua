@@ -1,0 +1,319 @@
+{
+  "sourceRun": "https://github.com/will00t-debug/Ua/actions/runs/43547359785",
+  "sourceSha": "aa5a6446236b13f312df264e20be45a6b79bc91e",
+  "sourceSettings": {
+    "nodes": 48,
+    "ms": 1000000000,
+    "seed": 1
+  },
+  "notes": "Source original 23 single-step alternative energy opportunities; replay deterministically from seed, seat, step, do not expose opponent hidden zones.",
+  "cases": [
+    {
+      "caseId": "R01",
+      "deck": "white-sword",
+      "seed": 9606,
+      "first": 0,
+      "hybridSeat": 1,
+      "step": 39,
+      "ownTurn": 3,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-2-067"
+      ]
+    },
+    {
+      "caseId": "R02",
+      "deck": "white-sword",
+      "seed": 9606,
+      "first": 1,
+      "hybridSeat": 1,
+      "step": 66,
+      "ownTurn": 4,
+      "selectedCard": "BLC-2-067",
+      "alternatives": [
+        "BLC-4-070"
+      ]
+    },
+    {
+      "caseId": "R03",
+      "deck": "white-sword",
+      "seed": 9610,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 58,
+      "ownTurn": 4,
+      "selectedCard": "BLC-4-070",
+      "alternatives": [
+        "BLC-3-008"
+      ]
+    },
+    {
+      "caseId": "R04",
+      "deck": "sword-art-online-raid",
+      "seed": 9702,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 37,
+      "ownTurn": 3,
+      "selectedCard": "SAO-1-010",
+      "alternatives": [
+        "SAO-1-024"
+      ]
+    },
+    {
+      "caseId": "R05",
+      "deck": "sword-art-online-raid",
+      "seed": 9706,
+      "first": 0,
+      "hybridSeat": 0,
+      "step": 53,
+      "ownTurn": 4,
+      "selectedCard": "SAO-1-004",
+      "alternatives": [
+        "SAO-1-019",
+        "SAO-1-001"
+      ]
+    },
+    {
+      "caseId": "R06",
+      "deck": "sword-art-online-raid",
+      "seed": 9706,
+      "first": 1,
+      "hybridSeat": 1,
+      "step": 54,
+      "ownTurn": 4,
+      "selectedCard": "SAO-2-006",
+      "alternatives": [
+        "SAO-1-019",
+        "SAO-1-020"
+      ]
+    },
+    {
+      "caseId": "R07",
+      "deck": "white-sword",
+      "seed": 9600,
+      "first": 0,
+      "hybridSeat": 0,
+      "step": 27,
+      "ownTurn": 3,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-1-072"
+      ]
+    },
+    {
+      "caseId": "R08",
+      "deck": "white-sword",
+      "seed": 9600,
+      "first": 0,
+      "hybridSeat": 1,
+      "step": 45,
+      "ownTurn": 3,
+      "selectedCard": "BLC-2-069",
+      "alternatives": [
+        "BLC-3-008"
+      ]
+    },
+    {
+      "caseId": "R09",
+      "deck": "white-sword",
+      "seed": 9600,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 59,
+      "ownTurn": 4,
+      "selectedCard": "BLC-3-009",
+      "alternatives": [
+        "BLC-3-008"
+      ]
+    },
+    {
+      "caseId": "R10",
+      "deck": "white-sword",
+      "seed": 9604,
+      "first": 0,
+      "hybridSeat": 1,
+      "step": 54,
+      "ownTurn": 4,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-1-083",
+        "BLC-2-069",
+        "BLC-4-070"
+      ]
+    },
+    {
+      "caseId": "R11",
+      "deck": "white-sword",
+      "seed": 9608,
+      "first": 1,
+      "hybridSeat": 1,
+      "step": 31,
+      "ownTurn": 3,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-3-008"
+      ]
+    },
+    {
+      "caseId": "R12",
+      "deck": "white-sword",
+      "seed": 9601,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 50,
+      "ownTurn": 3,
+      "selectedCard": "BLC-1-085",
+      "alternatives": [
+        "BLC-2-067"
+      ]
+    },
+    {
+      "caseId": "R13",
+      "deck": "white-sword",
+      "seed": 9601,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 81,
+      "ownTurn": 4,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-1-083"
+      ]
+    },
+    {
+      "caseId": "R14",
+      "deck": "white-sword",
+      "seed": 9605,
+      "first": 1,
+      "hybridSeat": 1,
+      "step": 70,
+      "ownTurn": 4,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-1-083"
+      ]
+    },
+    {
+      "caseId": "R15",
+      "deck": "white-sword",
+      "seed": 9609,
+      "first": 0,
+      "hybridSeat": 0,
+      "step": 36,
+      "ownTurn": 3,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-4-070"
+      ]
+    },
+    {
+      "caseId": "R16",
+      "deck": "sword-art-online-raid",
+      "seed": 9701,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 39,
+      "ownTurn": 3,
+      "selectedCard": "SAO-1-004",
+      "alternatives": [
+        "SAO-1-020",
+        "SAO-2-008",
+        "SAO-1-008",
+        "SAO-1-026"
+      ]
+    },
+    {
+      "caseId": "R17",
+      "deck": "sword-art-online-raid",
+      "seed": 9705,
+      "first": 0,
+      "hybridSeat": 1,
+      "step": 42,
+      "ownTurn": 3,
+      "selectedCard": "SAO-1-029",
+      "alternatives": [
+        "SAO-1-023"
+      ]
+    },
+    {
+      "caseId": "R18",
+      "deck": "sword-art-online-raid",
+      "seed": 9709,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 43,
+      "ownTurn": 3,
+      "selectedCard": "SAO-2-009",
+      "alternatives": [
+        "SAO-1-019"
+      ]
+    },
+    {
+      "caseId": "R19",
+      "deck": "white-sword",
+      "seed": 9607,
+      "first": 0,
+      "hybridSeat": 0,
+      "step": 26,
+      "ownTurn": 3,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-4-070",
+        "BLC-2-069"
+      ]
+    },
+    {
+      "caseId": "R20",
+      "deck": "white-sword",
+      "seed": 9607,
+      "first": 0,
+      "hybridSeat": 1,
+      "step": 68,
+      "ownTurn": 4,
+      "selectedCard": "BLC-4-060",
+      "alternatives": [
+        "BLC-1-083"
+      ]
+    },
+    {
+      "caseId": "R21",
+      "deck": "sword-art-online-raid",
+      "seed": 9703,
+      "first": 0,
+      "hybridSeat": 0,
+      "step": 28,
+      "ownTurn": 3,
+      "selectedCard": "SAO-1-029",
+      "alternatives": [
+        "SAO-1-023"
+      ]
+    },
+    {
+      "caseId": "R22",
+      "deck": "sword-art-online-raid",
+      "seed": 9703,
+      "first": 1,
+      "hybridSeat": 0,
+      "step": 76,
+      "ownTurn": 4,
+      "selectedCard": "SAO-1-019",
+      "alternatives": [
+        "SAO-1-023"
+      ]
+    },
+    {
+      "caseId": "R23",
+      "deck": "sword-art-online-raid",
+      "seed": 9711,
+      "first": 0,
+      "hybridSeat": 1,
+      "step": 46,
+      "ownTurn": 3,
+      "selectedCard": "SAO-1-019",
+      "alternatives": [
+        "SAO-1-023"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+name: AI T3-T4 Raid Energy Diagnosis
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/ai-raid-energy-turn34-analysis-20261114.mjs'
+      - '.github/workflows/ai-raid-energy-turn34-20261114.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Diagnose third and fourth own turns using fixed 48-node AI
+        run: node scripts/ai-raid-energy-turn34-analysis-20261114.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: raid-energy-turn34-shard-${{ matrix.shard }}
+          path: raid-energy-turn34-shard-*.json
+          if-no-files-found: warn
