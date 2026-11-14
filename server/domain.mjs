@@ -353,6 +353,45 @@ function freshCode(exists){
  throw new ApiError(503,'目前無法建立房間，請再試一次。');
 }
 function seatOf(room,userId){return room.seats.findIndex(seat=>seat?.userId===userId);}
+// The controller may see the identity of the card resolving the pending
+// effect, and the *single* deck card the engine has explicitly let them peek.
+// Never serialize the raw pending state, deck, life or opponent's private zones.
+export function onlinePendingDisplay(packs,match,seat,privateChoices){
+ const pending=match?.pending;
+ if(!pending||pending.player!==seat||![0,1].includes(seat))
+  return {effectSource:null,lookedAt:null};
+ const owner=match.players?.[seat],pack=packs?.[seat];
+ const uid=pending.sourceUid;
+ const findOwn=card=>{
+  if(!card||typeof card!=='object')return null;
+  if(card.uid===uid&&typeof card.cardId==='string')return card;
+  for(const layer of [...(card.stack||[]),...(card.under||[])]){
+   const found=findOwn(layer);
+   if(found)return found;
+  }
+  return null;
+ };
+ let source=null;
+ if(typeof uid==='string'&&uid&&owner){
+  // Own visible/playable zones only. Deck, LIFE and opponent's hidden cards
+  // are never traversed to infer an effect source.
+  for(const zone of ['front','energy','hand','outside','removed','resolvingEvents','lifeRevealed']){
+   source=(owner[zone]||[]).map(findOwn).find(Boolean)||null;
+   if(source)break;
+  }
+ }
+ const printed=source&&pack?.cards?.[source.cardId];
+ const effectSource=printed?{cardId:source.cardId,name:printed.name||source.cardId}:null;
+ const canPeekTop=pending.kind==='private-top-choice'&&
+  privateChoices?.kind===pending.kind&&privateChoices.player===seat;
+ const disclosed=canPeekTop?(privateChoices.options||[])
+  .map(option=>option?.card).find(card=>typeof card?.cardId==='string'&&card.cardId):null;
+ const top=owner?.deck?.[0];
+ const lookedAt=disclosed&&top?.cardId===disclosed.cardId?
+  {cardId:disclosed.cardId,name:disclosed.name||pack?.cards?.[disclosed.cardId]?.name||disclosed.cardId}:null;
+ return {effectSource,lookedAt};
+}
+
 function present(room,userId){
  const seat=seatOf(room,userId);
  if(seat<0)throw new ApiError(404,'找不到這個房間。');
@@ -378,8 +417,10 @@ function present(room,userId){
   const extraIds=authorizedChoiceUids(privateChoices);
   payload.choices=legal.map((action,index)=>
    publicActionChoice(action,index,room.packs,room.match,view,extraIds));
-  if(room.match.pending)
+  if(room.match.pending){
    payload.inspection=onlinePrivateGallery(privateChoices,legal,room.packs,room.match);
+   payload.pendingDisplay=onlinePendingDisplay(room.packs,room.match,seat,privateChoices);
+  }
  }
  if(room.status==='finished'&&(room.winner===0||room.winner===1))
   payload.winner={seat:room.winner,username:room.seats[room.winner]?.username||''};
