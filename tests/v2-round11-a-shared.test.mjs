@@ -134,7 +134,7 @@ function reject(card,pattern){
 
 test('001, 013, 014 and 018 stay out of the MHA pack and do not change IMC',()=>{
  const mha=createMhaV2Pack();
- assert.equal(Object.keys(mha.cards).length,59);
+ assert.equal(Object.keys(mha.cards).length,60);
  for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018'])
   assert.equal(mha.cards[id],undefined);
  const mirio=mha.cards['MHA-1-051'];

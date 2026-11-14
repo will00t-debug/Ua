@@ -56,6 +56,10 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   ready:true,implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:{colors:['purple','green'],amount:1}
  }),
+ 'MHA-1-070':Object.freeze({
+  ready:true,implementation:'dsl',
+  printedMains:[{id:'outside',op:'discardHandThenActive',discard:1}]
+ }),
  'MHA-1-073':Object.freeze({
   ready:true,implementation:'dsl',
   mainAbility:{op:'restSelfGainEnergyRetireEndMain',lines:'field',
