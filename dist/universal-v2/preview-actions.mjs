@@ -215,6 +215,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
+ 'effect-place-hand-outside':'將 1 張手牌放到場外',
+ 'effect-life-order':'查看全部生命，並以任意順序重新排列',
+ 'effect-pay-hand-impact':'支付 1 張手牌到場外，這張角色本回合衝擊 +1',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
  'effect-rest-skip-may-retire':'選擇 1 張 BP 5000 以下的對手前線，休息並跳過下次活動，或在巴麻美在場時改為退場',
  'effect-retire-named-draw':'退場 1 張自己場上的佐倉杏子',
@@ -849,6 +852,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
     action.mode==='plus2'?'起動主要：能源 8 以上時，本回合產能＋2':
     action.mode==='payHandMove'?'起動主要：支付 1 張手牌，移動或交換角色':
+    action.mode==='payHandImpact'?'起動主要：支付 1 張手牌，本回合衝擊 +1':
     action.mode==='onceTuck'?'起動主要：將牌庫頂蓋到這張角色下方':
     action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
     action.mode==='namedEnergyAp'?
@@ -1082,6 +1086,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTuckFacedown':return action.uid===null?'不蓋到角色下面':'把 '+name()+' 蓋到角色下面';
   case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
+  case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
+  case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
+  case 'chooseReorderOwnLife':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();
   case 'chooseMoveOrSwap':return action.mode==='swap'?'交換一張前線與一張能源線角色':'把一張自己的角色移到另一列';
   case 'chooseOppLeave':return action.mode==='life'?'改為把自己 1 張生命放到場外':'不支付，照原本方式離場';
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
@@ -1150,6 +1157,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAttackDiscardActive':return action.uid===null?'不棄牌，角色維持休息':
    '將 '+name()+' 放到場外，並使這張角色活動';
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
+  case 'chooseFrontVacate':return action.uid===null?'不移出前線卡':'將 '+name()+' 移出戰場';
+  case 'chooseMillOptional':return action.mode==='mill'?'再放逐一張牌庫頂端卡':'結束放逐';
+  case 'chooseRecoverAny':return action.uid===null?'不取回場外角色':'將 '+name()+' 加入手牌';
+  case 'chooseDiscardAny':return action.mode==='skip'?'不棄牌':action.mode==='stop'?'以此棄牌數結算':'棄置 '+name();
+  case 'choosePayHandActive':return action.uid===null?'不支付手牌':'支付 '+name();
   case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
   case 'chooseRemoveHandCap':return action.mode==='done'?'結束除外並退場':'將 '+name()+' 除外';
   case 'chooseNamedRequiredEnergy':return '指定需求能源 '+action.value;

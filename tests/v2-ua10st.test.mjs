@@ -232,16 +232,21 @@ test('only complete UA10ST sentences enter the battle pack',()=>{
  assert.match(validateUniversalDeck(pack,four).join('\n'),/50/);
 });
 
-test('IMC has 113 open V2 cards while MHA remains at 59 closed cards among 109',()=>{
+test('IMC has 113 open V2 cards while MHA remains at 77 closed cards among 109',()=>{
  const editor=mhaEditorCards();
  assert.equal(editor.length,109);
  assert.equal(new Set(editor.map(card=>card.id)).size,109);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
  const ready=Object.keys(pack.cards);
  assert.deepEqual(ready,editor.map(card=>card.id).filter(id=>pack.cards[id]));
- assert.equal(ready.length,59);
+ assert.equal(ready.length,77);
  const pending=editor.map(card=>card.id).filter(id=>!pack.cards[id]);
- assert.equal(pending.length,50);
+ assert.equal(pending.length,32);
+ assert.equal(pack.cards['MHA-1-001'].effects.onRetire[0].count,1);
+ assert.equal(pack.cards['MHA-1-013'].effects.onPlay[0].op,'optionalOwnLifeToHandThenDraw');
+ assert.equal(pack.cards['MHA-1-014'].effects.onPlay[0].then[0].bp,3500);
+ assert.equal(pack.cards['MHA-1-018'].mainAbility.then[0].op,'grantSelfAttackWinDrawThisTurn');
+ assert.equal(pack.cards['MHA-1-070'].printedMains[0].op,'discardHandThenActive');
  assert.equal(pack.cards['MHA-1-051'].unblockedAttack.oncePerTurn,true);
  assert.equal(pack.cards['MHA-1-051'].effects.onRetire[0].op,'deployRaidBottomActive');
  assert.equal(pack.cards['MHA-1-054'].effects.onPlay[0].discard,false);
@@ -271,7 +276,7 @@ test('IMC has 113 open V2 cards while MHA remains at 59 closed cards among 109',
   ...MHA_REQUESTS_051_100.map(row=>row.cardId),
   ...MHA_UA10ST_REQUESTS.map(row=>row.cardId)
  ]);
- assert.equal(requestIds.size,50);
+ assert.equal(requestIds.size,32);
  assert.deepEqual([...requestIds].sort(),pending.slice().sort());
  assert.equal(getTitle('mha').playable,false);
  assert.equal(getTitle('imc').playable,true);

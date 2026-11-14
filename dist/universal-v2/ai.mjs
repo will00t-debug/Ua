@@ -550,8 +550,18 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.mode==='active'&&a.line==='front'&&!a.replaceUid)||
    legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
-  s.pending?.kind==='effect-pay-hand-move')
+  s.pending?.kind==='effect-pay-hand-move'||s.pending?.kind==='effect-pay-hand-impact'||
+  s.pending?.kind==='effect-place-hand-outside')
   return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-life-order')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-mill-optional'||s.pending?.kind==='effect-discard-any')
+  return legal.find(a=>a.mode==='mill'||a.mode==='take')||legal.find(a=>a.mode==='stop')||legal[0];
+ if(s.pending?.kind==='effect-recover-any'||s.pending?.kind==='effect-pay-hand-active')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-front-vacate')
+  return legal.find(a=>a.uid!==null&&a.uid!==s.pending.sourceUid)||
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-move-or-swap')
   return legal.find(a=>a.mode==='shift')||legal[0];
  if(s.pending?.kind==='effect-opp-life-leave')

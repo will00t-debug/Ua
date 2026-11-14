@@ -1,5 +1,5 @@
 // Battle pack for My Hero Academia cards whose program says ready.
-// UA10ST and UA10BT share eight card numbers. Each number enters once.
+// UA10ST and UA10BT share nine card numbers. Each number enters once.
 // The catalog never makes a card playable. Official matches stay closed.
 import {createUniversalPack} from './pack.mjs';
 import {mhaEditorCards} from '../mha/catalog.mjs';
@@ -12,14 +12,14 @@ const PROGRAM_KEYS=new Set([
  'impactNull','opponentFieldColorsHandEnergyDiscount','printedHandEnergyDiscount',
  'blockBpRestriction','triggerEffect','enterAlwaysActive','passiveBonuses',
  'raidName','printedImpact','printedAttackDamage','ownTurnBp','unblockedAttack',
- 'battleRemoveInstead','battleLoseToHand','oppEffectLeave'
+ 'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
  'opponentFieldColorsHandEnergyDiscount','printedHandEnergyDiscount',
  'blockBpRestriction','triggerEffect','enterAlwaysActive','passiveBonuses',
  'raidName','printedImpact','printedAttackDamage','ownTurnBp','unblockedAttack',
- 'battleRemoveInstead','battleLoseToHand','oppEffectLeave'
+ 'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains'
 ];
 export const MHA_OFFICIAL_MATCH_CLOSED='我的英雄學院尚未開放正式對戰。';
 

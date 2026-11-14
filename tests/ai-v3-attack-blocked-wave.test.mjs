@@ -202,6 +202,20 @@ describe('blocked raid wave', {concurrency: false}, () => {
   assert.equal(blocked.cursor.players[0].life.length, 6);
   const legal = legalUniversalActions(packs, blocked.cursor);
   assert.deepEqual(legal.filter(action => action.type === 'attack').map(action => action.uid), [second.uid]);
+  // A finished search stops both lines on the same later phase, and the
+  // second Hitsugaya is better than passing. A 40ms slice can cut those
+  // lines on different phases. Those unfinished numbers are not a ranking:
+  // a one-node pass can sit above a deeper attack while the search still
+  // attacks, because the lines did not stop together.
+  const finished = decide(blocked.cursor, {...CLOCK, ms: 2000});
+  const finishedAttack = rows(finished.trace).find(row => row.action.uid === second.uid);
+  const finishedPass = rows(finished.trace).find(row => row.action.type === 'next');
+  assert.equal(finishedAttack?.boundary, 'returned');
+  assert.equal(finishedPass?.boundary, 'returned');
+  assert.equal(finishedAttack.phase, finishedPass.phase);
+  assert.ok(finishedAttack.search > finishedPass.search, JSON.stringify(rows(finished.trace)));
+  assert.equal(finished.action?.type, 'attack');
+  assert.equal(finished.action.uid, second.uid);
   const choice = decide(blocked.cursor);
   assert.equal(choice.route.policy, HYBRID_START_HARD_POLICY);
   assert.equal(choice.route.lane, 'battle');
@@ -212,7 +226,9 @@ describe('blocked raid wave', {concurrency: false}, () => {
   assert.ok(exact(blocked.cursor, choice.action));
   const attack = rows(choice.trace).find(row => row.action.uid === second.uid);
   const pass = rows(choice.trace).find(row => row.action.type === 'next');
-  if (attack && pass && Number.isFinite(attack.search) && Number.isFinite(pass.search)) {
+  const samePlace = attack && pass && attack.boundary === pass.boundary && attack.phase === pass.phase
+   && attack.leafTurn === pass.leafTurn && (attack.pending ?? null) === (pass.pending ?? null);
+  if (samePlace && Number.isFinite(attack.search) && Number.isFinite(pass.search)) {
    assert.ok(attack.search > pass.search, JSON.stringify(rows(choice.trace)));
   }
  });
@@ -255,7 +271,10 @@ describe('blocked raid wave', {concurrency: false}, () => {
   // The 40ms budget is a wall clock on both the worker and the live hybrid
   // route. One slow slice can return next before the better attack is scored.
   // Each route is repeated so a single slice does not fail the production
-  // suite. A search that always passes still fails.
+  // suite. A search that always passes still fails. Public lines do not
+  // carry the phase, so two yielded scores are not a ranking: a one-node
+  // pass can sit above a deeper attack while the search still attacks.
+  // Scores count only when both lines actually got home on the same boundary.
   let request = null;
   let worker = null;
   const missed = [];
@@ -266,7 +285,10 @@ describe('blocked raid wave', {concurrency: false}, () => {
    const candidate = handleAiV3Request(request);
    const workerAttack = candidate.search?.lines?.find(line => line.uid === other.uid);
    const workerPass = candidate.search?.lines?.find(line => line.type === 'next');
-   const ranked = workerAttack && workerPass && workerAttack.search > workerPass.search;
+   const finishedPair = workerAttack && workerPass
+    && workerAttack.boundary === workerPass.boundary
+    && (workerAttack.boundary === 'returned' || workerAttack.boundary === 'terminal');
+   const ranked = !finishedPair || workerAttack.search > workerPass.search;
    if (candidate.error == null && candidate.action?.type === 'attack' && candidate.action.uid === other.uid
     && candidate.search?.route?.source === 'v3' && candidate.search.ms < 55 && ranked) {
     worker = candidate;

@@ -4,6 +4,7 @@
 // DO NOT infer Japanese aliases from prose, translate strings, or split slash
 // composites. A printed name alias is an explicit card field, never a guess.
 import {originalEffectsDisabled} from './continuous-states.mjs';
+import {raidBoxListed} from './raid-box.mjs';
 // A face-down card's printed information is not referenced: name, trait,
 // color, required energy, generated energy, BP and effect text. Cards under
 // a host are already outside these field loops. The rule-manual glossary
@@ -619,6 +620,24 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    if(d.color===condition.color)kinds.add(d.name);
   }
   return kinds.size>=condition.min;
+ }
+ if(condition.kind==='oppLifeAtLeast')
+  return s.players[1-owner].life.length>=condition.min;
+ if(condition.kind==='ownActivateMainAtLeast'){
+  // 【起動メイン】 on the card itself. Q422/Q423: a keyword that exists only
+  // inside the raid frame does not count unless this card is a face-up Raid.
+  let found=0;
+  const board=s.players[owner];
+  for(const area of [board.front,board.energy])for(const c of area){
+   if(!printedFieldCard(c)||originalEffectsDisabled(s,c))continue;
+   if(condition.excludeSelf===true&&c.uid===sourceUid)continue;
+   const d=printed(c);
+   if(d.type!=='character'||!d.mainAbility)continue;
+   const raided=!!(d.raidName||d.raidTrait)&&(c.stack||[]).some(x=>x&&x.faceDown!==true);
+   if(raidBoxListed(d.id,'main')&&!raided)continue;
+   found++;
+  }
+  return found>=condition.min;
  }
  if(condition.kind==='ownOtherRequiredEnergyAtLeast'){
   // 自分の場の他のキャラで、必要エナジーがN以上のものがM枚以上.
