@@ -8,17 +8,18 @@ import {MHA_REQUESTS_051_100} from '../dist/universal-v2/mha/requests-051-100.mj
 import {runMha051} from '../dist/universal-v2/mha/runtime-051-100.mjs';
 import {createMhaV2Pack,MHA_OFFICIAL_MATCH_CLOSED,mhaBattleCard,mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
 import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
+import {createTtgV2Pack} from '../dist/universal-v2/ttg-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp,universalCardEnergy,
  universalImpactNull,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
 const READY=['MHA-1-051','MHA-1-052','MHA-1-053','MHA-1-054','MHA-1-057','MHA-1-058','MHA-1-061','MHA-1-064','MHA-1-065',
- 'MHA-1-067','MHA-1-068','MHA-1-069','MHA-1-073','MHA-1-075','MHA-1-077','MHA-1-078',
+ 'MHA-1-067','MHA-1-068','MHA-1-069','MHA-1-070','MHA-1-073','MHA-1-075','MHA-1-077','MHA-1-078',
  'MHA-1-079','MHA-1-080','MHA-1-082','MHA-1-083','MHA-1-086','MHA-1-088','MHA-1-092',
  'MHA-1-094','MHA-1-097','MHA-1-098'];
 const OPEN=['MHA-1-055','MHA-1-056','MHA-1-059',
- 'MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072',
+ 'MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-071','MHA-1-072',
  'MHA-1-074','MHA-1-076','MHA-1-081','MHA-1-084','MHA-1-085','MHA-1-087','MHA-1-089',
  'MHA-1-090','MHA-1-091','MHA-1-093','MHA-1-095','MHA-1-096','MHA-1-099','MHA-1-100'];
 const VIA_STARTER=['MHA-1-063'];
@@ -468,6 +469,71 @@ test('MHA-1-069 cuts hand energy only while the opponent has purple or green',()
  assert.equal(zoneRequiredEnergy(probe,s,0,probe.cards['MHA-1-069'],'life'),3);
 });
 
+test('MHA-1-070 pays one hand card to outside once per turn and actives itself',()=>{
+ let s=game.fresh(7001,{'MHA-1-070':3});
+ const self=game.seat(s,0,'MHA-1-070','energy',0,false);
+ const keep=game.hold(s,0,'MHA-1-078');
+ const pay=game.hold(s,0,'MHA-1-082');
+ const spare=s.players[0].hand.filter(c=>c.uid!==keep.uid&&c.uid!==pay.uid);
+ s.players[0].deck.push(...spare);
+ s.players[0].hand=s.players[0].hand.filter(c=>c.uid===keep.uid||c.uid===pay.uid);
+ s=game.reach(s,'main');
+ const modes=game.legal(s).filter(a=>a.type==='activate'&&a.uid===self.uid);
+ assert.deepEqual(modes.map(a=>a.mode),['outside']);
+ s=game.act(s,modes[0]);
+ assert.equal(s.pending.kind,'effect-mode-discard');
+ const window=game.legal(s).filter(a=>a.type==='chooseModeDiscard').map(a=>a.uid);
+ assert.deepEqual(window.slice().sort(),[keep.uid,pay.uid].sort());
+ assert.throws(()=>game.act(structuredClone(s),{type:'chooseModeDiscard',uid:self.uid}),/not currently legal/);
+ s=game.act(s,{type:'chooseModeDiscard',uid:pay.uid});
+ assert.equal(s.players[0].energy.find(c=>c?.uid===self.uid).ready,true);
+ assert.ok(s.players[0].outside.some(c=>c.uid===pay.uid));
+ assert.ok(s.players[0].hand.some(c=>c.uid===keep.uid));
+ assert.equal(game.legal(s).some(a=>a.type==='activate'&&a.uid===self.uid),false);
+ const copy=game.seat(s,0,'MHA-1-070','front',0,false);
+ assert.deepEqual(game.legal(s).filter(a=>a.type==='activate'&&a.uid===copy.uid).map(a=>a.mode),['outside']);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ s=game.fresh(7002);
+ const front=game.seat(s,0,'MHA-1-070','front',0,true);
+ const only=game.hold(s,0,'MHA-1-078');
+ s.players[0].deck.push(...s.players[0].hand.filter(c=>c.uid!==only.uid));
+ s.players[0].hand=[only];
+ s=game.reach(s,'main');
+ s=game.act(s,game.legal(s).find(a=>a.type==='activate'&&a.uid===front.uid&&a.mode==='outside'));
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.find(c=>c.uid===front.uid).ready,true);
+ assert.ok(s.players[0].outside.some(c=>c.uid===only.uid));
+ assert.equal(s.players[0].hand.length,0);
+ assert.equal(game.legal(s).some(a=>a.type==='activate'&&a.uid===front.uid),false);
+ s=game.act(s,{type:'next'});
+ s=passTo(s,0,'main');
+ const returned=s.players[0].front.find(c=>c?.uid===front.uid)||
+  s.players[0].energy.find(c=>c?.uid===front.uid);
+ assert.ok(returned);
+ game.hold(s,0,'MHA-1-082');
+ assert.ok(game.legal(s).some(a=>a.type==='activate'&&a.uid===returned.uid&&a.mode==='outside'));
+
+ s=game.fresh(7003);
+ const dry=game.seat(s,0,'MHA-1-070','front',0,false);
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s=game.reach(s,'main');
+ assert.equal(game.legal(s).some(a=>a.type==='activate'&&a.uid===dry.uid),false);
+
+ const ttg=createTtgV2Pack();
+ const opened=probeMatch([shell(ttg.cards['TTG-1-050'])],7004);
+ const local=kit(opened.usePack);
+ let mixed=opened.s;
+ const iida=local.seat(mixed,0,'MHA-1-070','front',0,false);
+ const kamina=local.seat(mixed,0,'TTG-1-050','energy',0,true);
+ local.hold(mixed,0,'MHA-1-078');
+ mixed=local.reach(mixed,'main');
+ assert.deepEqual(local.legal(mixed).filter(a=>a.type==='activate'&&a.uid===iida.uid).map(a=>a.mode),['outside']);
+ assert.deepEqual(local.legal(mixed).filter(a=>a.type==='activate'&&a.uid===kamina.uid).map(a=>a.mode).sort(),
+  ['active','bp','energy']);
+ assert.equal(assertUniversalMatch(opened.usePack,mixed),true);
+});
+
 test('MHA-1-073 rests, gains one energy, retires at end of main, and cannot repeat',()=>{
  let s=game.fresh(7301);
  const seated=game.seat(s,0,'MHA-1-073','front',0);
@@ -721,7 +787,8 @@ function shell(card){
   ...(card.unblockedAttack?{unblockedAttack:card.unblockedAttack}:{}),
   ...(card.triggerEffect?{triggerEffect:card.triggerEffect}:{}),
   ...(card.raidName?{raidName:card.raidName}:{}),
-  ...(card.blockBpRestriction?{blockBpRestriction:card.blockBpRestriction}:{})
+  ...(card.blockBpRestriction?{blockBpRestriction:card.blockBpRestriction}:{}),
+  ...(Array.isArray(card.printedMains)&&card.printedMains.length?{printedMains:card.printedMains}:{})
  };
 }
 function probeMatch(extras,seed){

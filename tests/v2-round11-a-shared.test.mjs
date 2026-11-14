@@ -132,10 +132,20 @@ function reject(card,pattern){
  ]}), pattern);
 }
 
-test('001, 013, 014 and 018 stay out of the MHA pack and do not change IMC',()=>{
+test('001, 013, 014, 018 and 070 are in the MHA pack, and IMC stays 113',()=>{
  const mha=createMhaV2Pack();
- assert.equal(Object.keys(mha.cards).length,59);
- for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018'])
+ assert.equal(Object.keys(mha.cards).length,64);
+ for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018','MHA-1-070'])
+  assert.equal(mha.cards[id].id,id);
+ assert.equal(mha.cards['MHA-1-001'].impactNull,true);
+ assert.equal(mha.cards['MHA-1-001'].effects.onRetire[0].op,'drawDiscard');
+ assert.equal(mha.cards['MHA-1-013'].effects.onPlay[0].then[0].op,'activeOwnOther');
+ assert.equal(mha.cards['MHA-1-014'].raidName,'荼毘');
+ assert.equal(mha.cards['MHA-1-018'].mainAbility.frontOnly,false);
+ assert.deepEqual(mha.cards['MHA-1-070'].printedMains,[
+  {id:'outside',op:'discardHandThenActive',discard:1}
+ ]);
+ for(const id of ['MHA-1-006','MHA-1-056','MHA-1-071'])
   assert.equal(mha.cards[id],undefined);
  const mirio=mha.cards['MHA-1-051'];
  assert.equal(mirio.raidName,'通形 ミリオ');

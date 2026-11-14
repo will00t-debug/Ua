@@ -215,6 +215,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
+ 'effect-place-hand-outside':'將 1 張手牌放到場外',
+ 'effect-life-order':'查看全部生命，並以任意順序重新排列',
+ 'effect-pay-hand-impact':'支付 1 張手牌到場外，這張角色本回合衝擊 +1',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
  'effect-rest-skip-may-retire':'選擇 1 張 BP 5000 以下的對手前線，休息並跳過下次活動，或在巴麻美在場時改為退場',
  'effect-retire-named-draw':'退場 1 張自己場上的佐倉杏子',
@@ -849,6 +852,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
     action.mode==='plus2'?'起動主要：能源 8 以上時，本回合產能＋2':
     action.mode==='payHandMove'?'起動主要：支付 1 張手牌，移動或交換角色':
+    action.mode==='payHandImpact'?'起動主要：支付 1 張手牌，本回合衝擊 +1':
     action.mode==='onceTuck'?'起動主要：將牌庫頂蓋到這張角色下方':
     action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
     action.mode==='namedEnergyAp'?
@@ -1082,6 +1086,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTuckFacedown':return action.uid===null?'不蓋到角色下面':'把 '+name()+' 蓋到角色下面';
   case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
+  case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
+  case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
+  case 'chooseLifeOrder':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();
   case 'chooseMoveOrSwap':return action.mode==='swap'?'交換一張前線與一張能源線角色':'把一張自己的角色移到另一列';
   case 'chooseOppLeave':return action.mode==='life'?'改為把自己 1 張生命放到場外':'不支付，照原本方式離場';
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();

@@ -614,3 +614,9 @@ IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 59 張 ready、5
 
 六項共用形狀已解鎖，契約在 `docs/v2-handoff/V2-R12A-shared-ops.md`。這一輪沒有寫那些卡的程式，也沒有標 ready。`getTitle('imc').playable` 與 `getTitle('mha').playable` 維持 false。IMC 官方預組 `counts` 與 `UA10ST_PRODUCT.recipe` 維持 null。沒有合併 `main`，也沒有部署。
 
+## 第 14 輪整合
+
+基準是已部署 IMC 的 `f3266f90c7c70fe3a66ac35bb896573722342b89`。沒有整支合併 #439、#440、#438，也沒有重放 #437。001、013、014、018、070 進包。跨作品測試保留，IMC 的 `playable` 維持 true，MHA 維持 false。
+
+IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 64 張 ready、45 張 pending、目錄 109 張。新的共用操作契約在 `docs/v2-handoff/V2-R14A-shared-ops.md`。009、010、017、048、056、059、071、074、076 與 006、007 仍是 pending。沒有合併 `main`，也沒有部署。
+

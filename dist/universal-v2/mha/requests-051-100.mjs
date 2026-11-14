@@ -50,17 +50,10 @@ export const MHA_REQUESTS_051_100=[
   proposal:'看頂3張，最多公開1張角色入手，其餘放牌底。再從手牌休息登場最多1張綠角色。對手前線有3張以上且該角色是歐爾麥特時改為活動。066はreadyにしない。'
  },
  {
-  cardId:'MHA-1-070',
-  sentence:'起動メイン。手札1枚を場外に置く。ターン1でこのキャラをアクティブ。',
-  existingOps:['optionalHandOutsideActiveIf','discardHandBuffSelf'],
-  whyNotEnough:'optionalHandOutsideActiveIf は效果句的條件，不是起動。discardHandBuffSelf はBPか發生能量で、活動自身ではない。',
-  proposal:'起動時必須把手牌1張放場外，一回合一次，然後把這張角色活動。070はreadyにしない。'
- },
- {
   cardId:'MHA-1-071',
   sentence:'登場時、自分の手札を1枚場外に置く。',
   existingOps:['drawDiscard','optionalRemoveHandThen'],
-  whyNotEnough:'drawDiscard は先に引く。optionalRemoveHandThen は任意で、しかも場外ではなく除外側の形がある。必須で抽牌なしの手札1枚場外がない。',
+  whyNotEnough:'登場時 {op:placeHandOutside, count:1, optional:false} は抽牌せず手札1枚を場外に置く。手札が空なら pending を作らない。optional true、count が 1 から 4 の外、退場時は拒否。071はreadyにしない。',
   proposal:'登場時必須把手牌1張放到場外，不抽牌。不能放時要沿用引擎既有的空牌處理，不可改成抽牌。071はreadyにしない。'
  },
  {
@@ -81,7 +74,7 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-076',
   sentence:'登場時、フロントLにある場合、自分のエナジーLのキャラを1枚までフロントLへ移動。',
   existingOps:['moveEnergyTraitToFront','mayStepFrontFromEnergy'],
-  whyNotEnough:'moveEnergyTraitToFront は特徵必須。這句沒有特徵，而且只有自己在前線時、最多1張。',
+  whyNotEnough:'登場時 {op:moveEnergyTraitToFront, trait:null, max:1, whenSelf:front, optional:true} は特徴なし、自分の前排にいるときだけ、最大1枚。名前つき特徴の7鍵 pending はそのまま。076はreadyにしない。',
   proposal:'登場時若這張在前線，可把最多1張自己能量區角色移到前線。076はreadyにしない。'
  },
  {

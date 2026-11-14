@@ -1,13 +1,10 @@
-// Cards in UA10BT 001-050 that are not ready. 001, 013, 014 and 018 now
-// have a shared shape; write the program and a behavior test before
-// marking them ready. 006 and 007 also have a shared shape now.
-// The other sentences still need an engine operation.
+// Cards in UA10BT 001-050 that are not ready. 001, 013, 014 and 018 are
+// ready. 006 and 007 also have a shared shape, but their programs are not
+// written. The other sentences still need an engine operation.
 // C group does not approximate a missing sentence.
 // MHA-1-044 is the same card as the UA10ST printing. Its activate is
 // restSelfGainEnergyRetireEndMain, so it is ready and is not listed here.
 export const MHA_REQUESTS_001_050=Object.freeze({
- 'MHA-1-001':gap('衝擊無效，以及退場時抽 1 張再把手牌 1 張放到場外。',
-  'onRetire 的 {op:drawDiscard, count:1} 已可與 impactNull 同時成立。抽 1 張後把 1 張手牌放到場外。count 不是 1，或另帶 discardCount，會被拒絕。這張仍未寫程式，不要標 ready。'),
  'MHA-1-002':gap('登場時可選的磨牌 3 張，以及主階段橫置並退場後從場外取死穢八斎會角色或〈“個性”消失弾〉。Q421：指名卡不必有特徵。',
   '可選磨 3 的後段目前只允許回收 1 張紫角色。這張要在接受磨牌後回收死穢八斎會角色或指名卡，主階段還要先橫置並退場才能搜尋。'),
  'MHA-1-003':gap('自己場上有 3 張以上帶【起動メイン】的角色時，這張 BP+1000。',
@@ -21,19 +18,13 @@ export const MHA_REQUESTS_001_050=Object.freeze({
  'MHA-1-007':gap('印刷衝擊 1，且自己回合中敗給這張的對手角色改回手牌。Q424。',
   'battleLoseToHand 可以是 ownTurn，只在自己回合把戰敗的對手角色改回手牌。true 仍是任一回合。printedImpact 1 要一起寫。這張仍未寫程式，不要標 ready。'),
  'MHA-1-009':gap('自己回合中敗給這張的角色改放退場區；主階段支付 1 張手牌後這張本回合衝擊 +1。Q425。',
-  'battleRemoveInstead:true 已會在自己回合把戰敗角色放到退場區，對手回合則仍到場外。支付 1 張手牌後本回合衝擊 +1 還沒有。不能只做其中一句。不要標 ready。'),
+  'battleRemoveInstead:true 已會在自己回合把戰敗角色放到退場區。主階段 {op:payHandGrantImpact, oncePerTurn:true, pay:1, amount:1} 會先支付 1 張手牌到場外，來源還在場上才給本回合衝擊 1。pay 不是 1、amount 不是 1，或少了 oncePerTurn，會被拒絕。兩句都要寫。不要標 ready。'),
  'MHA-1-010':gap('突襲〈死柄木 弔〉、戰鬥敗北改退場，以及前排每回合一次移除對手前排 BP2000 以下。Q426。',
-  '自己回合戰敗改退場區用 battleRemoveInstead:true。突襲框用 raidName。前排每回合一次的 removeOppFrontUnderBp 仍不能放進 frontOnceProgram。不要只做戰敗目的地就標 ready。'),
+  '自己回合戰敗改退場區用 battleRemoveInstead:true。突襲框用 raidName。前排 frontOnceProgram 可以 frontOnly true、oncePerTurn true，then 只有 {op:removeOppFrontUnderBp, bp:2000}。沒有合格前線時不能起動。optional 不能寫進這句。三句都要寫。不要標 ready。'),
  'MHA-1-011':gap('擋過這張的角色下一次不橫置回復；主階段每回合一次使對手本回合必須盡可能阻擋。Q427、Q428。',
   '擋過這張的角色下一次不回復還沒有操作。grantSelfMustBlockThisTurn 只接登場時；包進每回合一次的主階段會被拒絕。兩句都要有。'),
- 'MHA-1-013':gap('登場時可以把 1 張生命放入手牌；若如此，可以橫置回復自己其他前排 1 張。Q429。',
-  'optionalOwnLifeToHandThenDraw 的後段可以是 {op:activeOwnOther, optional:true, line:front}。只在生命入手後活動其他自己前排，能量列不算。拒絕入手則不做。生命變 0 要等這段結束才敗北。這張仍未寫程式，不要標 ready。'),
- 'MHA-1-014':gap('突襲〈荼毘〉。登場時可以把 1 張生命放入手牌；若如此，退場對手前排 BP3500 以下 1 張。Q430。',
-  '同一生命入手的後段可以是 {op:retireOppFrontUnderBp, bp:3500, optional:true}。突襲〈荼毘〉用 raidName。拒絕入手則不退場。這張仍未寫程式，不要標 ready。'),
  'MHA-1-017':gap('突襲〈トゥワイス〉。登場時可以把這疊突襲最下方的卡以橫置回復狀態登場。',
-  'deployRaidBottomActive 只接受退場時，而且要帶其他角色必要能源的 when。017 是登場時把最下段以活動狀態登場，沒有那道張數門。寫在 onPlay 會被拒絕。'),
- 'MHA-1-018':gap('主階段每回合一次：本回合這張攻擊並戰鬥勝利時抽 1 張。',
-  'frontOnceProgram 可以 frontOnly:false、oncePerTurn:true，then 只有 {op:grantSelfAttackWinDrawThisTurn}。前排或能量列都能起動。本回合這張攻擊並戰鬥勝利才抽 1。frontOnly true、多一個鍵，或改成強制阻擋，仍被拒絕。這張仍未寫程式，不要標 ready。'),
+  '登場時 {op:deployRaidBottomActive, optional:true} 會把還在這疊最下方的角色以活動狀態放到前線。退場時的同一操作仍必須帶 when。不要把兩種寫法混在同一句。這張仍未寫程式，不要標 ready。'),
  'MHA-1-020':gap('任何帶突襲觸發的自己角色可以突襲到這張上。登場時公開牌庫頂 1 張入手；若沒有突襲觸發，把手牌 1 張放到場外。Q431。',
   '沒有「被任意突襲觸發卡當作突襲基」以及公開頂牌的條件棄牌。'),
  'MHA-1-023':gap('前排主階段每回合一次：其他自己角色 BP+1000；若是ジェントル・クリミナル則改 +2000 並獲得狙擊。',
@@ -59,7 +50,7 @@ export const MHA_REQUESTS_001_050=Object.freeze({
  'MHA-1-045':gap('自己前排沒有角色且對手前排有 3 張以上時，手牌綠能量 -6 且 AP-1。不能進能量列。印刷衝擊 1。對手角色攻擊時，可讓橫置的這張回復，若如此本回合 BP-1000。Q443、Q509。',
   'energyLineForbidden 只覆蓋不能進能量列。其餘條件減免、衝擊與攻擊反應都沒有對應。'),
  'MHA-1-048':gap('對手回合每回合一次，若對手的角色或事件效果會讓這張離場，改為留在場上。登場時可以看自己全部生命並重排。Q444–Q448。',
-  'oppEffectLeave 可以是對手回合、oncePerTurn、instead stay、cause characterOrEvent、subject self、line any。看自己全部生命並重排還沒有。不要只做離場置換就標 ready。')
+  'oppEffectLeave 可以是對手回合、oncePerTurn、instead stay、cause characterOrEvent、subject self、line any。登場時 {op:reorderOwnLife, optional:true} 會把當時全部生命放進封閉視窗。生命少於 2 張不做。不要只做其中一句就標 ready。')
 });
 
 function gap(sentence, whyNotEnough){
