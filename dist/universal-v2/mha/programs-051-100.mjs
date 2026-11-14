@@ -189,6 +189,24 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   }
  }),
  'MHA-1-088':Object.freeze({ready:true,implementation:'vanilla'}),
+ 'MHA-1-091':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{
+   onAttack:[{op:'payHandOutsideIfFrontOpen',bp:2000}],
+   onBlock:[{op:'payHandOutsideIfFrontOpen',bp:2000}]
+  }
+ }),
+ 'MHA-1-095':Object.freeze({
+  ready:true,implementation:'dsl', step:true, doubleAttackIfMovedThisTurn:true,
+  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1}
+ }),
+ 'MHA-1-096':Object.freeze({
+  ready:true,implementation:'dsl',
+  moveObserver:{
+   op:'restActiveFieldDraw', once:'name', draw:1,
+   when:{from:'hand',to:'outside',reasons:['payment','own-effect']}
+  }
+ }),
  'MHA-1-092':play([{op:'buffOwnField',filter:{field:'type',value:'character'},
   bp:1000,optional:true,excludeSelf:true}]),
  'MHA-1-093':Object.freeze({

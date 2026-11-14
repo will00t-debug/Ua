@@ -642,3 +642,7 @@ IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 77 張 ready、3
 
 `retireOppFrontUnderBp` 的 `thenRestAll` 在強制退場成功後，才休息全部印刷 BP 以下的對手前排，並跳過它們下一次活動。指名角色只提高退場上限。儲存的 BP 視窗不提高這段休息。沒有退場對象時這張事件不能打出。此提交的清點是 MHA 92 ready、17 pending、`playable:false`。IMC 仍是 113／113、`playable:true`。沒有部署。
 
+## MHA 109 張進包
+
+#465、#463、#464 逐張併進 `cursor/v2-mha-final-integrate-65f8`。沒有使用 #462，也沒有重寫 038、099、100。030、031、035、042、045、091、095、096 用共用 DSL 進包。清點是 MHA 109 ready、0 pending、`playable:false`，版本 `mha-ua10-ready-109`。IMC 仍是 113／113、`playable:true`。契約在 `docs/v2-handoff/V2-MHA-final8-shared.md`。沒有合併 `main`，也沒有部署。
+

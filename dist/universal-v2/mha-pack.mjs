@@ -15,7 +15,9 @@ const PROGRAM_KEYS=new Set([
  'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains',
  'handEnergyWhileActivateMain','raidHostAny','playRequiresOwnName',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
- 'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown'
+ 'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
+ 'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
+ 'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
@@ -25,7 +27,9 @@ const BATTLE_KEYS=[
  'battleRemoveInstead','battleLoseToHand','oppEffectLeave','printedMains',
  'handEnergyWhileActivateMain','raidHostAny','playRequiresOwnName',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
- 'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown'
+ 'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
+ 'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
+ 'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver'
 ];
 export const MHA_OFFICIAL_MATCH_CLOSED='我的英雄學院尚未開放正式對戰。';
 

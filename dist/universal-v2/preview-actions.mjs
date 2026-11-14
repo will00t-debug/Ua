@@ -20,6 +20,11 @@ export const V2_TITLE_LABELS=Object.freeze({
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',
+ 'effect-return-active':'可讓其他活動角色回手',
+ 'effect-hand-active':'從手牌以活動狀態登場',
+ 'effect-front-open-hand':'前線有空位時可支付手牌',
+ 'effect-opp-attack-ready':'對手攻擊時可活動',
+ 'effect-field-rest-draw':'可休息場域並抽牌',
  'effect-grant-below-printed':'選擇對方角色，本回合 BP 低於原本時不能阻擋',
  'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
@@ -1087,6 +1092,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
   case 'chooseLookUnderHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
+  case 'chooseReturnActive':return action.uid===null?'不讓其他活動角色回手':'讓 '+name()+' 回手';
+  case 'chooseHandActive':return action.uid===null?'不從手牌以活動狀態登場':'以活動狀態登場 '+name()+suffix();
+  case 'chooseFrontOpenHand':return action.uid===null?'不支付手牌':'支付 '+name()+' 到場外';
+  case 'chooseOppAttackReady':return action.mode==='ready'?'活動這張角色並降低 BP':'不活動';
+  case 'chooseFieldRestDraw':return action.mode==='rest'?'休息這張場域並抽 1 張':'不休息';
   case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
   case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
   case 'chooseReorderOwnLife':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();

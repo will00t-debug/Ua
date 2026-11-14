@@ -8,7 +8,7 @@ import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 
-const STILL=['MHA-1-091','MHA-1-095','MHA-1-096'];
+const STILL=[];
 const KEPT=['MHA-1-051','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059','MHA-1-060',
  'MHA-1-062','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072','MHA-1-074','MHA-1-076',
  'MHA-1-081','MHA-1-084','MHA-1-085','MHA-1-090','MHA-1-099','MHA-1-100'];
@@ -294,9 +294,9 @@ test('084 can widen the next BP selection, and a different amount stays illegal'
 });
 test('091 cannot pay one hand card for BP on attack and on block',()=>{
  reject(face({
-  id:'GAP-091-BLOCK',
+  id:'GAP-091-BLOCK', type:'field', bp:0,
   effects:{onBlock:[{op:'buffSelf',bp:2000}]}
- }),/timing onBlock unsupported/);
+ }),/block trigger is a character effect/);
  reject(face({
   id:'GAP-091-HAND',
   effects:{onAttack:[{op:'optionalRemoveHandThen',zone:'outside',
@@ -306,8 +306,8 @@ test('091 cannot pay one hand card for BP on attack and on block',()=>{
   id:'GAP-091-OPEN',
   effects:{onAttack:[{op:'buffSelfIfFrontOpen',bp:2000}]}
  }),/open-front self buff is an own attack-start phase effect/);
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-091'],undefined);
- assert.equal(createMhaV2Pack().cards['MHA-1-091'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-091'].ready,true);
+ assert.equal(createMhaV2Pack().cards['MHA-1-091'].effects.onBlock[0].op,'payHandOutsideIfFrontOpen');
 });
 
 test('095 cannot grant double attack from its own move or pay to move only itself',()=>{
@@ -318,7 +318,7 @@ test('095 cannot grant double attack from its own move or pay to move only itsel
  }),/invalid this-turn self attack grant/);
  reject(face({
   id:'GAP-095-MAIN',
-  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1},
+  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:2},
   effects:{}
  }),/unsupported main action ability/);
  const mover=face({
@@ -402,7 +402,7 @@ test('095 cannot grant double attack from its own move or pay to move only itsel
  assert.equal(moved.players[0].removed.some(c=>c.uid===occupants[0].uid),true);
  assert.equal(moved.players[0].outside.some(c=>c.uid===occupants[0].uid),false);
  assert.equal(moved.players[0].front[0],null);
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-095'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-095'].mainAbility.op,'payHandMoveSelf');
 });
 
 test('096 cannot watch an own-effect hand discard and draw once per name',()=>{
@@ -423,7 +423,7 @@ test('096 cannot watch an own-effect hand discard and draw once per name',()=>{
   id:'GAP-096-REST',type:'field',bp:0,
   effects:{onPlay:[{op:'restActiveFieldThenDrawDiscard'}]}
  }),/field rest and active entry are event onPlay/);
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-096'],undefined);
- assert.equal(createMhaV2Pack().cards['MHA-1-096'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-096'].moveObserver.op,'restActiveFieldDraw');
+ assert.equal(createMhaV2Pack().cards['MHA-1-096'].moveObserver.once,'name');
 });
 

@@ -103,3 +103,5 @@ IMC 對戰包維持 113／113，`getTitle('imc').playable` 維持 true。MHA 以
 038 的蓋牌張數雙重阻擋與雙重攻擊、085 依蓋牌張數的 BP、090 攻擊時看蓋牌入手再活動、099 依手牌張數改退場上限，以及其他仍列在請求檔的整句，這輪都沒有解鎖。
 
 下一輪共用操作契約在 `docs/v2-handoff/V2-MHA-shared-next.md`。上面這段是第 15 輪結束時的狀態。
+
+最後八張的共用契約在 `docs/v2-handoff/V2-MHA-final8-shared.md`。上面的仍缺段落保留當時的判斷。

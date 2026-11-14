@@ -45,3 +45,5 @@ IMC 維持 113／113、`playable:true`。MHA 維持 77／109 ready、32 pending�
 ## 仍維持 pending 的鄰近卡
 
 002、003、005、011 的共用形狀在第 15 輪已經能寫，這輪核對後仍能建包，程式沒有寫。026 的可選磨 3 張後，回收可以是特徵或卡名，`excludeName` 會排除指名卡；突襲名與印刷衝擊已有，程式沒有寫。004、038、085、090、099 也維持 pending。
+
+後續八張的共用契約在 `docs/v2-handoff/V2-MHA-final8-shared.md`。上面這段是當時的 pending 狀態。

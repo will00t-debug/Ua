@@ -139,9 +139,8 @@ function probe(cards,seed){
 
 test('MHA stays closed and the unfinished sentences stay requests',()=>{
  assert.equal(getTitle('mha').playable,false);
- assert.equal(Object.keys(pack.cards).length,101);
- assert.deepEqual(MHA_REQUESTS_051_100.map(row=>row.cardId),
-  ['MHA-1-091','MHA-1-095','MHA-1-096']);
+ assert.equal(Object.keys(pack.cards).length,109);
+ assert.deepEqual(MHA_REQUESTS_051_100.map(row=>row.cardId),[]);
  for(const id of ['MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-072','MHA-1-076','MHA-1-081','MHA-1-084'])
   assert.equal(pack.cards[id].id,id);
 });

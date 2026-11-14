@@ -612,6 +612,17 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-grant-attack'||s.pending?.kind==='effect-grant-retire')return legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-line-slot')return legal[0];
+ if(s.pending?.kind==='effect-named-zone-entry'||s.pending?.kind==='effect-return-active'||
+  s.pending?.kind==='effect-hand-active'||s.pending?.kind==='effect-front-open-hand'||
+  s.pending?.kind==='effect-hand-rest-or-raid')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null&&a.line!=='energy')||legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-opp-attack-ready')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='ready')||legal[0];
+ if(s.pending?.kind==='effect-field-rest-draw')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='rest')||legal[0];
  if(s.pending?.kind==='effect-mark-opp-start')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];

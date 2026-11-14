@@ -184,6 +184,25 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   })])
  }),
  'MHA-1-028':play(Object.freeze([{op:'drawDiscard', count:1}])),
+ 'MHA-1-030':Object.freeze({
+  ready:true, implementation:'dsl',
+  playRequiresOwnName:'トゥワイス',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'deployNamedFromZones', name:'トゥワイス', zones:Object.freeze(['hand','outside']),
+   line:'any', ready:true, optional:true, any:true,
+   color:null, ap:1, maxEnergy:2
+  }])})
+ }),
+ 'MHA-1-031':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([
+   {op:'recoverOutsideAny', zone:'outside', max:1, optional:true,
+    anyOf:Object.freeze([Object.freeze({field:'trait', value:'死穢八斎會'})])},
+   {op:'deployOwnHandRestOrRaid', type:'character', color:null, maxEnergy:null,
+    ap:1, max:1, optional:true, names:null, requireAffordableEnergy:true,
+    trait:'死穢八斎會'}
+  ])})
+ }),
  'MHA-1-029':Object.freeze({
   ready:true, implementation:'dsl',
   playRequiresOwnName:'オーバーホール',
@@ -200,6 +219,13 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   effects:Object.freeze({onPlay:Object.freeze([{op:'removeOppFrontUnderBp', bp:4000}])})
  }),
  'MHA-1-034':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
+ 'MHA-1-035':Object.freeze({
+  ready:true, implementation:'dsl',
+  frontStripsOppAbilities:Object.freeze([
+   'step','sniper','doubleAttack','doubleBlock','impact','damage','impactNull'
+  ]),
+  effects:Object.freeze({onPlay:Object.freeze([{op:'restOppFrontOne', optional:true}])})
+ }),
  'MHA-1-036':Object.freeze({ready:true, implementation:'dsl', step:true}),
  'MHA-1-037':Object.freeze({
   ready:true, implementation:'dsl',
@@ -221,10 +247,23 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
  }),
  'MHA-1-040':vanilla,
  'MHA-1-041':play(Object.freeze([{op:'bounceOwnOtherUnderEnergy', energy:1}])),
+ 'MHA-1-042':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'returnOtherActiveThenHandActive', excludeName:'麗日 お茶子', optional:true,
+   color:'green', maxEnergy:3, ap:1
+  }])})
+ }),
  'MHA-1-043':play(Object.freeze([{
   op:'buffOwnField', filter:Object.freeze({field:'type', value:'character'}),
   bp:1000, optional:true, excludeSelf:true
  }])),
+ 'MHA-1-045':Object.freeze({
+  ready:true, implementation:'dsl',
+  energyLineForbidden:true, printedImpact:1,
+  gatedHandDiscount:Object.freeze({ownFrontAtMost:0, oppFrontAtLeast:3, energy:6, ap:1}),
+  oppAttackReadyBp:-1000
+ }),
  'MHA-1-046':Object.freeze({ready:true, implementation:'dsl', impactNull:true}),
  'MHA-1-047':Object.freeze({ready:true, implementation:'dsl', step:true}),
  'MHA-1-048':Object.freeze({

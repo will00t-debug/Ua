@@ -25,3 +25,5 @@ IMC 113／113，`playable:true`。MHA 89／109 ready，20 pending，`playable:fa
 038 與 099 的整句已由上面的共用操作涵蓋，之後的提交把它們進包。那一筆的清點是 91 ready、18 pending。002、004、091、095、096、100 仍待整句。
 
 100 隨後用 `thenRestAll` 把強制退場和其後的全體休息寫成同一句。那一筆的清點是 92 ready、17 pending。
+
+最後八張的共用契約在 `docs/v2-handoff/V2-MHA-final8-shared.md`。上面的 89 張 SHA 與清點沒有改寫。

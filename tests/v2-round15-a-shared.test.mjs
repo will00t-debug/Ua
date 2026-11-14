@@ -119,7 +119,7 @@ test('IMC stays open and MHA stays closed with the round 15 census',()=>{
  assert.equal(getTitle('mha').playable,false);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  const pack=createMhaV2Pack();
- assert.equal(Object.keys(pack.cards).length,101);
+ assert.equal(Object.keys(pack.cards).length,109);
  assert.equal(pack.cards['MHA-1-003'].passiveBonuses[0].condition.kind,'ownActivateMainAtLeast');
  assert.equal(pack.cards['MHA-1-005'].ownTurnBp,2000);
  assert.equal(pack.cards['MHA-1-011'].blockSkipsNextActive,true);
@@ -127,8 +127,8 @@ test('IMC stays open and MHA stays closed with the round 15 census',()=>{
  assert.equal(pack.cards['MHA-1-038'].mainAbility.op,'onceTuckFacedown');
  assert.equal(pack.cards['MHA-1-099'].effects.onPlay[0].handAtMost.bp,5000);
  assert.equal(pack.cards['MHA-1-100'].effects.onPlay[0].thenRestAll.bp,2000);
- for(const id of ['MHA-1-091','MHA-1-095','MHA-1-096'])
-  assert.equal(pack.cards[id],undefined);
+ for(const id of ['MHA-1-030','MHA-1-031','MHA-1-035','MHA-1-042','MHA-1-045','MHA-1-091','MHA-1-095','MHA-1-096'])
+  assert.equal(pack.cards[id].id,id);
  for(const id of ['MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-072',
   'MHA-1-076','MHA-1-081','MHA-1-084'])
   assert.equal(pack.cards[id].id,id);
