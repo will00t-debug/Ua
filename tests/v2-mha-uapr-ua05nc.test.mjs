@@ -108,7 +108,9 @@ test('point cards sit in the catalog and stay out of both battle packs', ()=>{
  assert.equal(MHA_CATALOG_051_100.length,50);
  assert.equal(MHA_POINT_CATALOG.length,3);
  assert.equal(editor.filter(card=>card.id.startsWith('MHA-P-')).length,3);
- assert.equal(editor.some(card=>card.number.startsWith('UA05NC/')),false);
+ assert.deepEqual(editor.filter(card=>card.number.startsWith('UA05NC/')).map(card=>card.id),[
+  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006','MHA-3-009'
+ ]);
  assert.equal(editor.some(card=>card.playable!==false||card.battleReady!==false),false);
  for(const card of MHA_POINT_CATALOG){
   assert.equal(editor.some(row=>row.id===card.id&&row.number===card.number),true);
@@ -126,9 +128,9 @@ test('point cards sit in the catalog and stay out of both battle packs', ()=>{
 
  const title=getTitle('mha');
  assert.equal(title.playable,true);
- assert.equal(title.cards.length,185);
+ assert.equal(title.cards.length,191);
  assert.equal(title.cards.some(card=>String(card.number).startsWith('UAPR/')),true);
- assert.equal(title.cards.some(card=>String(card.number).startsWith('UA05NC/')),false);
+ assert.equal(title.cards.filter(card=>String(card.number).startsWith('UA05NC/')).length,6);
 
  const untouched=[
   'dist/universal-v2/mha-pack.mjs',

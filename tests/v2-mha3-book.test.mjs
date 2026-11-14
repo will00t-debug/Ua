@@ -6,6 +6,7 @@ import {createMha3Pack} from '../dist/universal-v2/mha3-pack.mjs';
 import {mhaBattleCard} from '../dist/universal-v2/mha-pack.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createMha2Pack} from '../dist/universal-v2/mha2-pack.mjs';
+import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalImpact} from '../dist/universal-v2/engine.mjs';
@@ -111,6 +112,11 @@ test('the book pack holds the five finished cards', ()=>{
  assert.equal(book.cards['MHA-3-002'].raidName,'死柄木 弔');
  assert.equal(createMhaV2Pack().cards['MHA-3-002'],undefined);
  assert.equal(createMha2Pack().cards['MHA-3-002'],undefined);
+ const live=officialV2Pack('mha');
+ assert.equal(live.version,'mha-live-109-73-5');
+ for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'])
+  assert.equal(live.cards[id].id,id);
+ assert.equal(live.cards['MHA-3-009'],undefined);
  for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'])
   assert.equal(UA05NC_MHA3_PROGRAMS[id].ready,true);
  assert.equal(UA05NC_MHA3_PROGRAMS['MHA-3-009'].ready,false);

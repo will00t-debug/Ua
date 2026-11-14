@@ -138,7 +138,7 @@ test('IMC stays 113 and MHA stays 109 ready with 0 pending',()=>{
  assert.equal(Object.keys(imc.cards).length,113);
  const set1=editor.filter(row=>row.id.startsWith('MHA-1-'));
  assert.equal(set1.length,109);
- assert.equal(editor.length,185);
+ assert.equal(editor.length,191);
  assert.equal(Object.keys(mha.cards).length,109);
  assert.equal(set1.filter(row=>!mha.cards[row.id]).length,0);
  assert.equal(mha.cards['MHA-1-001'].impactNull,true);

@@ -17,6 +17,8 @@ import {createAotV2Pack} from './aot-pack.mjs';
 import {createKmrV2Pack,KMR_STARTER_IDS,kmrPackCard} from './kmr-pack.mjs';
 import {createImcV2Pack,IMC_OFFICIAL_MATCH_CLOSED} from './imc-pack.mjs';
 import {createMhaV2Pack} from './mha-pack.mjs';
+import {createMha2Pack} from './mha2-pack.mjs';
+import {createMha3Pack} from './mha3-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -217,7 +219,19 @@ export function imcPracticeDeck(){
 
 let mhaBattlePack=null;
 export function createMhaBattlePack(){
- if(!mhaBattlePack)mhaBattlePack=createMhaV2Pack();
+ if(mhaBattlePack)return mhaBattlePack;
+ const set1=createMhaV2Pack();
+ const set2=createMha2Pack();
+ const book=createMha3Pack();
+ const cards={...set1.cards,...set2.cards,...book.cards};
+ const ids=Object.keys(cards);
+ if(ids.length!==187)throw Error('MHA live pack drifted: '+ids.length);
+ if(ids.some(id=>id.startsWith('MHA-P-')||id==='MHA-3-009'))
+  throw Error('point card or pending book card entered the live pack');
+ mhaBattlePack=Object.freeze({
+  kind:'ua-v2-pack',id:'mha',version:'mha-live-109-73-5',
+  restrictColors:false,cards:Object.freeze(cards)
+ });
  return mhaBattlePack;
 }
 

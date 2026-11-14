@@ -238,8 +238,8 @@ test('IMC has 113 open V2 cards and MHA set 1 stays 109 open cards',()=>{
  assert.equal(set1.length,109);
  assert.equal(editor.filter(card=>card.id.startsWith('MHA-2-')).length,73);
  assert.equal(editor.filter(card=>card.id.startsWith('MHA-P-')).length,3);
- assert.equal(editor.length,185);
- assert.equal(new Set(editor.map(card=>card.id)).size,185);
+ assert.equal(editor.length,191);
+ assert.equal(new Set(editor.map(card=>card.id)).size,191);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
  const ready=Object.keys(pack.cards);
  assert.deepEqual(ready,set1.map(card=>card.id).filter(id=>pack.cards[id]));
