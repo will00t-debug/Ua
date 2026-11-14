@@ -265,6 +265,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-pay-deploy-self':'是否支付 AP，讓此角色以活動狀態登場',
  'effect-deploy-self-active':'選擇以活動狀態登場的位置',
+ 'effect-rest-field-draw':'是否休息這張活動場域並抽 1 張',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
  'opening-mulligan':'開局手牌調度（每人最多一次）',
@@ -987,6 +988,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRetirementOrder':return orderEffectLabel(pack,state,action,'先結算此退場效果');
   case 'chooseMoveEffectOrder':return orderEffectLabel(pack,state,action,
    String(action.key||'').startsWith('observer-')?'先處理場上角色取得的送場外反應':'先處理已取得的卡片移動能力');
+  case 'chooseRestFieldDraw':return action.mode==='rest'?
+   '休息這張場域並抽 1 張':'不發動';
   case 'chooseRestTuck':return action.mode==='rest'?
    'REST 此角色，選擇是否放置裏向底牌':'不發動 REST 放置';
   case 'chooseTuckMoved':return action.uid===null?

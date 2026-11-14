@@ -4819,20 +4819,34 @@ function normalize(card,packId){
  // and resolves only after the originating source program ends.
  const moveObserver=card.moveObserver??null;
  if(moveObserver!==null){
-  // Character with an explicit printed hand→outside listener.
-  if(card.type!=='character'||implemented!=='dsl'||
+  // A printed hand→outside listener. Characters name their source and tuck
+  // the moved card. A field may instead rest itself and draw, once per name,
+  // and that listener also sees a resolving event whose source has left.
+  const keys=Object.keys(moveObserver);
+  const characterTuck=moveObserver.op==='restSelfTuckMovedFaceDown';
+  const fieldDraw=moveObserver.op==='mayRestActiveFieldDraw';
+  if(!['character','field'].includes(card.type)||implemented!=='dsl'||
    !moveObserver||typeof moveObserver!=='object'||Array.isArray(moveObserver)||
-   Object.keys(moveObserver).length!==2||
-   Object.keys(moveObserver).some(x=>!['when','op'].includes(x))||
-   moveObserver.op!=='restSelfTuckMovedFaceDown')
+   (!characterTuck&&!fieldDraw))
+   throw Error(card.id+' invalid moved-card field watcher');
+  if(characterTuck&&(card.type!=='character'||keys.length!==2||
+   keys.some(x=>!['when','op'].includes(x))))
+   throw Error(card.id+' invalid moved-card field watcher');
+  if(fieldDraw&&(card.type!=='field'||keys.length!==4||
+   moveObserver.once!=='name'||moveObserver.turn!=='own'||
+   keys.some(x=>!['when','op','once','turn'].includes(x))))
    throw Error(card.id+' invalid moved-card field watcher');
   const q=validateCompletedMoveCondition(moveObserver.when);
-  if(q.from!=='hand'||q.to!=='outside'||q.sourceOnField!==true||
+  const reasonsOk=q.from==='hand'&&q.to==='outside'&&
+   Array.isArray(q.reasons)&&q.reasons.length&&
+   q.reasons.every(x=>['payment','own-effect'].includes(x));
+  if(characterTuck&&(!reasonsOk||q.sourceOnField!==true||
    typeof q.sourceName!=='string'||!q.sourceName.trim()||
    (q.sourceColor!==undefined&&(typeof q.sourceColor!=='string'||!q.sourceColor.trim()))||
-   !Array.isArray(q.reasons)||!q.reasons.length||
-   q.reasons.some(x=>!['payment','own-effect'].includes(x))||
-   Object.keys(q).some(x=>!['from','to','reasons','sourceOnField','sourceName','sourceColor'].includes(x)))
+   Object.keys(q).some(x=>!['from','to','reasons','sourceOnField','sourceName','sourceColor'].includes(x))))
+   throw Error(card.id+' invalid moved-card watcher provenance');
+  if(fieldDraw&&(!reasonsOk||q.sourceOnField!==undefined||q.sourceName!==undefined||
+   Object.keys(q).some(x=>!['from','to','reasons'].includes(x))))
    throw Error(card.id+' invalid moved-card watcher provenance');
  }
  const moveTriggers=card.moveTriggers??[];
@@ -6554,6 +6568,7 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
   readyOnBlockCount:card.readyOnBlockCount===1?1:0,
   implementation:implemented,
   moveObserver:moveObserver?Object.freeze({op:moveObserver.op,
+   ...(moveObserver.once?{once:moveObserver.once,turn:moveObserver.turn}:{}),
    when:validateCompletedMoveCondition(moveObserver.when)}):null,
   moveTriggers:Object.freeze(moveTriggers.map(x=>Object.freeze({
    when:validateCompletedMoveCondition(x.when),

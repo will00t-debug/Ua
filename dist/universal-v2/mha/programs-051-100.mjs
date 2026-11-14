@@ -192,6 +192,13 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   ready:true,implementation:'dsl',step:true,doubleAttackIfSelfMoved:true,
   mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1}
  }),
+ 'MHA-1-096':Object.freeze({
+  ready:true,implementation:'dsl',
+  moveObserver:{
+   op:'mayRestActiveFieldDraw',once:'name',turn:'own',
+   when:{from:'hand',to:'outside',reasons:['payment','own-effect']}
+  }
+ }),
  'MHA-1-097':Object.freeze({
   ready:true,implementation:'dsl',
   triggerEffect:{op:'retireOppFront'},

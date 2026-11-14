@@ -240,3 +240,110 @@ test('MHA-1-095 gains double attack only after it moves, and a full front remove
  assert.equal(stepped.players[0].front.find(c=>c?.uid===walker.uid).ready,true);
  assert.equal(assertUniversalMatch(pack,stepped),true);
 });
+
+test('MHA-1-096 optionally rests one active copy and draws when an own effect puts a hand card outside',()=>{
+ const printed=pack.cards['MHA-1-096'];
+ assert.equal(printed.mainAbility,null);
+ assert.equal(printed.moveObserver.op,'mayRestActiveFieldDraw');
+ assert.equal(printed.moveObserver.once,'name');
+ assert.equal(printed.moveObserver.turn,'own');
+ assert.deepEqual([...printed.moveObserver.when.reasons],['payment','own-effect']);
+ const body=(s,uid,owner=0)=>[...s.players[owner].front,...s.players[owner].energy].find(c=>c?.uid===uid);
+ const payMove=(s,mover,toll,slot)=>{
+  s=act(s,{type:'activate',uid:mover.uid,mode:'payHandMoveSelf'});
+  s=act(s,{type:'choosePayHandSelf',uid:toll.uid});
+  assert.equal(s.pending.kind,'effect-line-slot');
+  assert.equal(s.pending.line,'energy');
+  return act(s,{type:'chooseLineSlot',slot});
+ };
+
+ let same=open({'MHA-1-096':2,'MHA-1-095':1,'MHA-1-091':1,'MHA-1-080':1,'MHA-1-082':1},9601);
+ const taken=seat(same,0,'MHA-1-096','energy',0,true);
+ const spared=seat(same,0,'MHA-1-096','energy',1,true);
+ const striker=seat(same,0,'MHA-1-091','front',0,true);
+ const mover=seat(same,0,'MHA-1-095','front',1,true);
+ const toll=hold(same,0,'MHA-1-080');
+ const later=hold(same,0,'MHA-1-082');
+ assert.equal(legal(same).some(a=>a.type==='activate'&&(a.uid===taken.uid||a.uid===spared.uid)),false);
+ same=payMove(same,mover,toll,2);
+ assert.equal(same.pending.kind,'effect-rest-field-draw');
+ assert.equal(same.pending.player,0);
+ assert.equal(same.pending.sourceUid,taken.uid);
+ const drawn=same.players[0].hand.length;
+ const deck=same.players[0].deck.length;
+ same=act(same,{type:'chooseRestFieldDraw',mode:'rest'});
+ assert.equal(same.pending,null);
+ assert.equal(body(same,taken.uid).ready,false);
+ assert.equal(body(same,spared.uid).ready,true);
+ assert.equal(same.players[0].hand.length,drawn+1);
+ assert.equal(same.players[0].deck.length,deck-1);
+ same=reach(same,'attack');
+ same=act(same,{type:'attack',uid:striker.uid});
+ assert.equal(same.pending.kind,'effect-open-front-hand-buff');
+ same=act(same,{type:'chooseOpenFrontHandBuff',uid:later.uid});
+ assert.equal(same.pending.kind,'block');
+ assert.equal(body(same,taken.uid).ready,false);
+ assert.equal(body(same,spared.uid).ready,true);
+ same=act(same,{type:'chooseBlock',uid:null});
+ assert.equal(assertUniversalMatch(pack,same),true);
+
+ let passed=open({'MHA-1-096':2,'MHA-1-095':1,'MHA-1-080':1},9602);
+ const declined=seat(passed,0,'MHA-1-096','energy',0,true);
+ const other=seat(passed,0,'MHA-1-096','energy',1,true);
+ const walker=seat(passed,0,'MHA-1-095','front',0,true);
+ const fee=hold(passed,0,'MHA-1-080');
+ passed=payMove(passed,walker,fee,2);
+ assert.equal(passed.pending.sourceUid,declined.uid);
+ passed=act(passed,{type:'chooseRestFieldDraw',mode:'skip'});
+ assert.equal(body(passed,declined.uid).ready,true);
+ assert.equal(passed.pending.kind,'effect-rest-field-draw');
+ assert.equal(passed.pending.sourceUid,other.uid);
+ const before=passed.players[0].hand.length;
+ passed=act(passed,{type:'chooseRestFieldDraw',mode:'rest'});
+ assert.equal(passed.pending,null);
+ assert.equal(body(passed,declined.uid).ready,true);
+ assert.equal(body(passed,other.uid).ready,false);
+ assert.equal(passed.players[0].hand.length,before+1);
+
+ let tired=open({'MHA-1-096':2,'MHA-1-095':1,'MHA-1-080':1},9603);
+ const asleep=seat(tired,0,'MHA-1-096','energy',0,false);
+ const awake=seat(tired,0,'MHA-1-096','energy',1,true);
+ const shifter=seat(tired,0,'MHA-1-095','front',0,true);
+ const cost=hold(tired,0,'MHA-1-080');
+ const quiet=tired.players[0].hand.length;
+ tired=payMove(tired,shifter,cost,2);
+ assert.equal(tired.pending.sourceUid,awake.uid);
+ tired=act(tired,{type:'chooseRestFieldDraw',mode:'skip'});
+ assert.equal(tired.pending,null);
+ assert.equal(body(tired,asleep.uid).ready,false);
+ assert.equal(body(tired,awake.uid).ready,true);
+ assert.equal(tired.players[0].hand.length,quiet-1);
+
+ let foreign=open({'MHA-1-096':1,'MHA-1-095':1,'MHA-1-080':1},9604);
+ const home=seat(foreign,0,'MHA-1-096','energy',0,true);
+ const theirs=seat(foreign,1,'MHA-1-095','front',0,true);
+ const theirToll=hold(foreign,1,'MHA-1-080');
+ for(let i=0;i<12&&!(foreign.active===1&&foreign.phase==='main');i++){
+  if(foreign.pending)throw Error(foreign.pending.kind+' before the opponent main');
+  foreign=act(foreign,{type:'next'});
+ }
+ assert.equal(foreign.active,1);
+ foreign=payMove(foreign,theirs,theirToll,0);
+ assert.notEqual(foreign.pending?.kind,'effect-rest-field-draw');
+ assert.equal(body(foreign,home.uid).ready,true);
+
+ let ruled=open({'MHA-1-096':1,'MHA-1-097':1,'MHA-1-080':1,'MHA-1-082':1,'MHA-1-088':1,'MHA-1-091':1},9605);
+ const office=seat(ruled,0,'MHA-1-096','energy',0,true);
+ seat(ruled,0,'MHA-1-080','energy',1,true);
+ seat(ruled,0,'MHA-1-082','energy',2,true);
+ seat(ruled,0,'MHA-1-088','energy',3,true);
+ const victim=seat(ruled,1,'MHA-1-091','front',0,true);
+ const event=hold(ruled,0,'MHA-1-097');
+ ruled=act(ruled,a=>a.type==='event'&&a.uid===event.uid);
+ assert.equal(ruled.pending.kind,'effect-retire-bp');
+ ruled=act(ruled,{type:'chooseRetireBp',uid:victim.uid});
+ assert.notEqual(ruled.pending?.kind,'effect-rest-field-draw');
+ assert.ok(ruled.players[0].outside.some(c=>c.uid===event.uid));
+ assert.equal(body(ruled,office.uid).ready,true);
+ assert.equal(assertUniversalMatch(pack,ruled),true);
+});

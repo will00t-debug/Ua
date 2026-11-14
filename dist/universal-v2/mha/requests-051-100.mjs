@@ -21,11 +21,4 @@ export const MHA_REQUESTS_051_100=[
   whyNotEnough:'tuckFacedownUnder 可把任意張手牌蓋到自己下面。lookUnderToHandThenActive 會在攻擊時查看直接蓋牌，最多 1 張加入手牌，有加入才活動其他排除指名的角色。這輪不寫卡牌程式，所以維持 pending。',
   proposal:'突襲框是霍克斯。登場時可把任意張手牌蓋到自己下面。攻擊時查看那些蓋牌，最多1張加入手牌；有加入才活動最多1張其他非霍克斯。090はreadyにしない。'
  },
- {
-  cardId:'MHA-1-096',
-  sentence:'自分のターン中、自分の効果で手札を場外に置いた時、アクティブのこのフィールドをレストしてもよい。そうしたら1枚引く。この効果は1ターン1回。',
-  existingOps:['ownHandToOutsideThisTurn','restActiveFieldThenDrawDiscard'],
-  whyNotEnough:'restActiveFieldThenDrawDiscard は自分から起動する。這張是自己的效果把手牌放到場外的當下，可休息這張活動中的場域再抽1，而且一回合一次。',
-  proposal:'自己回合，自己的效果把手牌放到場外時，可休息這張活動中的場域並抽1。同一回合只發動一次。096はreadyにしない。'
- }
 ];
