@@ -11,7 +11,7 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-091',
   sentence:'アタック時とブロック時。自分のフロントLに空きがある場合、手札1枚を場外に置いてもよい。そうしたらこのターンBP+2000。',
   existingOps:['optionalRemoveHandThen','buffSelf','buffSelfIfFrontOpen'],
-  whyNotEnough:'buffSelfIfFrontOpen は空位そのものでBPを足す。這句要先確認前線有空位，再可把手牌放場外，做到才加BP。攻擊時與阻擋時都要。',
+  whyNotEnough:'沒有 onBlock 時機。optionalRemoveHandThen 只接受特徵過濾並放到移除區，後續加 BP 只准角色的單獨攻擊時效果，而且不看前線是否有空位。buffSelfIfFrontOpen 是自己攻擊開始時因為空位本身加 BP，不是先付手牌。攻擊時與阻擋時都要先確認空位，可放手牌，做到才本回合 BP+2000。091 維持 request。',
   proposal:'攻擊時與阻擋時，自己前線有空位才可把手牌1張放場外，做到才本回合BP+2000。091はreadyにしない。'
  },
  {

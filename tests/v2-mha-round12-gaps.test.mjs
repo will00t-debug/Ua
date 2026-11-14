@@ -292,3 +292,21 @@ test('084 can widen the next BP selection, and a different amount stays illegal'
  assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'].triggerEffect.bp,2500);
  assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'].mainAbility.then[0].amount,1000);
 });
+test('091 cannot pay one hand card for BP on attack and on block',()=>{
+ reject(face({
+  id:'GAP-091-BLOCK',
+  effects:{onBlock:[{op:'buffSelf',bp:2000}]}
+ }),/timing onBlock unsupported/);
+ reject(face({
+  id:'GAP-091-HAND',
+  effects:{onAttack:[{op:'optionalRemoveHandThen',zone:'outside',
+   then:[{op:'buffSelf',bp:2000}]}]}
+ }),/invalid optional hand removal/);
+ reject(face({
+  id:'GAP-091-OPEN',
+  effects:{onAttack:[{op:'buffSelfIfFrontOpen',bp:2000}]}
+ }),/open-front self buff is an own attack-start phase effect/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-091'],undefined);
+ assert.equal(createMhaV2Pack().cards['MHA-1-091'],undefined);
+});
+
