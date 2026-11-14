@@ -107,10 +107,22 @@ export const MHA_TRIGGER_TEXT_ZH_TW=Object.freeze({
  special:'【特殊】選擇對手前線1張角色，使其退場。',
  final:'【終結】若自己沒有生命值，將自己牌庫頂1張牌放入生命區。'
 });
+export const MHA_COLOR_TRIGGER_ZH_TW=Object.freeze({
+  "MHA-1-002": "【顏色】從自己場外選擇1張必要能源2以下、消耗AP為1的紫色角色卡，以活動狀態登場到自己前線。",
+  "MHA-1-009": "【顏色】從自己場外選擇1張必要能源2以下、消耗AP為1的紫色角色卡，以活動狀態登場到自己前線。",
+  "MHA-1-050": "【顏色】從自己手牌選擇1張必要能源2以下、消耗AP為1的綠色角色卡，以活動狀態登場到自己場上。",
+  "MHA-1-059": "【顏色】從自己手牌選擇1張必要能源2以下、消耗AP為1的綠色角色卡，以活動狀態登場到自己場上。",
+  "MHA-1-084": "【顏色】選擇對手前線1張BP2500以下的角色，使其退場。",
+  "MHA-1-089": "【顏色】選擇對手前線1張BP2500以下的角色，使其退場。",
+  "MHA-2-023": "【顏色】選擇對手前線1張角色，使其休息，並且下一次不會活動。",
+  "MHA-2-024": "【顏色】選擇對手前線1張角色，使其休息，並且下一次不會活動。",
+  "MHA-3-004": "【顏色】從自己場外選擇1張必要能源2以下、消耗AP為1的紫色角色卡，以活動狀態登場到自己前線。"
+});
 export function localizeMhaCard(card){
  const translated=MHA_EFFECTS_ZH_TW[card.id];
- const effect=translated==='－'?'-':translated??card.effect;
+ const effect=translated==='－'?'-':translated??card.effect??card.effectJa??'';
  const name=MHA_NAMES_ZH_TW[card.nameJa]||card.name||card.nameJa;
- const triggerText=card.trigger&&MHA_TRIGGER_TEXT_ZH_TW[card.trigger]||card.triggerText||'';
+ const triggerText=MHA_COLOR_TRIGGER_ZH_TW[card.id]||
+  (card.trigger&&MHA_TRIGGER_TEXT_ZH_TW[card.trigger])||card.triggerText||card.triggerTextJa||'';
  return {...card,name,effect,triggerText};
 }
