@@ -173,5 +173,66 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
    })
   })]),
   notes:'自己場外的死穢八斎會有 6 張以上時，這張角色獲得傷害 2。場上的自己不算。少於 6 張時沒有傷害 2。'
+ }),
+ 'MHA-2-046':Object.freeze({
+  ready:true, implementation:'dsl',
+  raidName:'レディ・ナガン',
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({op:'grantSelfSniperThisTurn'})
+  ])}),
+  printedMains:Object.freeze([
+   Object.freeze({op:'restSelfBpImpact', id:'restBp', bp:1000, impact:1, oncePerTurn:true}),
+   Object.freeze({op:'restSelfAttackDraw', id:'restDraw', count:1, oncePerTurn:true}),
+   Object.freeze({op:'handOutsideActive', id:'payActive', discard:1, repeat:true})
+  ]),
+  notes:'突襲〈レディ・ナガン〉並以活動狀態移到前排。登場時本回合獲得狙擊。三個起動：休息且每回合一次，BP+1000 與衝擊 1；休息且每回合一次，本回合攻擊時抽 1；付 1 張手牌到場外把這張卡活動，這一個沒有每回合一次。'
+ }),
+ 'MHA-2-051':Object.freeze({
+  ready:true, implementation:'dsl',
+  step:true,
+  frontEnergyWhen:Object.freeze({logic:'all', checks:Object.freeze([
+   Object.freeze({kind:'ownFrontCountAtLeast', turn:'any', min:2})
+  ])}),
+  mainAbility:Object.freeze({op:'restBuffOtherReturnHand', bp:1000}),
+  notes:'有移步。自己前排有其他角色時，這張卡在前排也產生能源。休息後選場上其他角色 BP+1000，再把自己回手。沒有每回合一次。只有自己在前排時，前排不產生能源。'
+ }),
+ 'MHA-2-054':Object.freeze({
+  ready:true, implementation:'dsl',
+  oppFrontHandEnergy:Object.freeze({min:3, amount:4}),
+  energyLineForbidden:true,
+  conditionalImpactBpAtLeast:6000,
+  effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
+   op:'ifLiveThen',
+   when:Object.freeze({kind:'selfEnteredByOwnEffect', turn:'any'}),
+   then:Object.freeze([Object.freeze({op:'buffSelf', bp:1000})])
+  })])}),
+  notes:'對手前排有 3 張以上角色時，手牌必要能源減 4，不減 AP，生命區不減。不能進能量列。當下 BP 6000 以上才有衝擊 1。自己的效果讓它登場時，本回合 BP+1000。付費登場不加。'
+ }),
+ 'MHA-2-056':Object.freeze({
+  ready:true, implementation:'dsl',
+  passiveBonuses:Object.freeze([Object.freeze({
+   attackDamage:2,
+   condition:Object.freeze({kind:'selfCurrentBpAtLeast', turn:'any', minBp:5000})
+  })]),
+  effects:Object.freeze({onAttack:Object.freeze([Object.freeze({
+   op:'ifLiveThen',
+   when:Object.freeze({kind:'selfCurrentBpAtLeast', turn:'any', minBp:5000}),
+   then:Object.freeze([Object.freeze({op:'grantSelfSkipNextActive'})])
+  })])}),
+  mainAbility:Object.freeze({op:'repeatHandOutsideBuff', discard:1, bp:1000}),
+  notes:'當下 BP 5000 以上時傷害 2，而且攻擊時獲得下一次不活動。Q1009：那一次包含結束階段、開始階段，以及被活動效果指定。付 1 張手牌到場外則本回合 BP+1000，沒有每回合一次。'
+ }),
+ 'MHA-2-057':Object.freeze({
+  ready:true, implementation:'dsl',
+  raidName:'通形 ミリオ',
+  blockBpRestriction:Object.freeze({relation:'atMost', bp:3000, condition:null}),
+  mainAbility:Object.freeze({
+   op:'frontOnceEnergyChoice', frontOnly:true, oncePerTurn:true,
+   minEnergy:4, bp:1000, impact:1
+  }),
+  effects:Object.freeze({onRetire:Object.freeze([
+   Object.freeze({op:'returnOwnRaidBase', optional:true, max:1})
+  ])}),
+  notes:'突襲〈通形 ミリオ〉並以活動狀態移到前排。BP 3000 以下不能阻擋。前排每回合一次，給必要能源 4 以上的其他自己角色 BP+1000 或衝擊 1。退場時最多把 1 張突襲底板回手。'
  })
 });

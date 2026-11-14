@@ -118,7 +118,7 @@ test('point cards sit in the catalog and stay out of both battle packs', ()=>{
  const vol2=createMha2Pack();
  assert.equal(pack.version,'mha-ua10-ready-109');
  assert.equal(Object.keys(pack.cards).length,109);
- assert.equal(Object.keys(vol2.cards).length,52);
+ assert.equal(Object.keys(vol2.cards).length,57);
  for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003']){
   assert.equal(pack.cards[id],undefined);
   assert.equal(vol2.cards[id],undefined);

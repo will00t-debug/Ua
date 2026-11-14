@@ -30,7 +30,7 @@ const BATTLE_KEYS=[
  'handEnergyWhileActivateMain','raidHostAny','playRequiresOwnName',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
- 'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
+ 'energyLineForbidden','frontEnergyWhen','conditionalImpactBpAtLeast','oppFrontHandEnergy','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
  'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen'
 ];

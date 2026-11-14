@@ -4143,6 +4143,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='buffSelf'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source)throw Error('buffSelf source must be on field');
+   source.buffs??=[];
    source.buffs.push({bp:job.bp,untilTurn:s.turn});
   }else if(job.op==='swapOrBuff'){
    const src=location(s,owner,job.sourceUid);
@@ -10078,7 +10079,7 @@ function resolveChoice(s,a,pack){
    throw Error('Printed main discard needs the same physical card and one hand card');
   moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
    reason:'payment',sourceUid:q.sourceUid});
-  if(mode.op==='discardHandThenActive')attemptFieldActive(s,q.player,source);
+  if(mode.op==='discardHandThenActive'||mode.op==='handOutsideActive')attemptFieldActive(s,q.player,source);
   else if(mode.op==='discardHandBuff'){
    source.buffs??=[];source.buffs.push({bp:mode.bp,untilTurn:s.turn});
   }else if(mode.op==='energyLineAttackCap'){
@@ -12868,8 +12869,8 @@ function resolveChoice(s,a,pack){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
   const source=field(p).find(c=>c.uid===q.sourceUid);
   const paid=source&&card(pack,source).mainAbility;
-  if(index<0||!source||!['discardHandBuffSelf','discardHandGainEnergy'].includes(paid?.op)||
-   s.mainAbilityUsedUids.includes(source.uid)||!q.choices.includes(a.uid))
+  if(index<0||!source||!['discardHandBuffSelf','discardHandGainEnergy','repeatHandOutsideBuff'].includes(paid?.op)||
+   (paid.op!=='repeatHandOutsideBuff'&&s.mainAbilityUsedUids.includes(source.uid))||!q.choices.includes(a.uid))
    throw Error('Main discard BP must pay one OWN hand card for a current OWN source');
   // Payment precedes the temporary BP. No AP, REST or once-use consumed
   // until an exact physical own-hand discard has actually been submitted.
@@ -12891,7 +12892,7 @@ function resolveChoice(s,a,pack){
     throw Error('Main discard BP does not match the printed gain');
    source.buffs.push({bp:paid.bp,untilTurn:s.turn});
   }else source.buffs.push({bp:q.bp,untilTurn:s.turn});
-  s.mainAbilityUsedUids.push(source.uid);
+  if(paid.op!=='repeatHandOutsideBuff')s.mainAbilityUsedUids.push(source.uid);
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='main-two-buff'){
@@ -17367,8 +17368,8 @@ function legalPending(pack,s){
    ...p.hand.filter(c=>q.choices.includes(c.uid)).flatMap(c=>{
     const d=card(pack,c);
     const lines=q.line==='front'||q.line==='energy'?[q.line]:['front','energy'];
-    return lines.filter(line=>line!=='front'||
-     (d.type==='character'&&!d.frontForbidden))
+    return lines.filter(line=>(line!=='energy'||!d.energyLineForbidden)&&
+     (line!=='front'||(d.type==='character'&&!d.frontForbidden)))
      .flatMap(line=>legalDestinations(p,line).map(dest=>({
       type:'chooseHandRest',uid:c.uid,line,...dest})));
    })
@@ -19895,10 +19896,11 @@ export function legalUniversalActions(pack,s){
    if(!silenced)for(const mode of d.printedMains||[]){
     const key=c.uid+'|'+mode.id;
     if(s.mainAbilityUsedUids.includes(key))continue;
-    if((mode.op==='discardHandThenActive'||mode.op==='discardHandBuff')&&
-     pl.hand.length>=mode.discard)
+    if((mode.op==='discardHandThenActive'||mode.op==='discardHandBuff'||
+     mode.op==='handOutsideActive')&&pl.hand.length>=mode.discard)
      out.push({type:'activate',uid:c.uid,mode:mode.id});
-    if(mode.op==='restSelfEnergy'&&c.ready)
+    if((mode.op==='restSelfEnergy'||mode.op==='restSelfBpImpact'||
+     mode.op==='restSelfAttackDraw')&&c.ready)
      out.push({type:'activate',uid:c.uid,mode:mode.id});
     if(mode.op==='frontEnergyEscalation'&&location(s,p,c.uid)?.line==='front'&&
      calcEnergy(pack,s,p)>=mode.minEnergy)
@@ -19984,6 +19986,8 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
+   if(ability?.op==='repeatHandOutsideBuff'&&pl.hand.length>0)
+    out.push({type:'activate',uid:c.uid,mode:'repeatHandBuff'});
    if(ability?.op==='restSelfDrawIfEnergy'&&c.ready&&
     !s.mainReadyOnceByName[p].includes(d.name+'|energyDraw')&&
     calcEnergy(pack,s,p)>=ability.minEnergy)
@@ -20250,6 +20254,9 @@ export function legalUniversalActions(pack,s){
     !s.mainAbilityUsedUids.includes(c.uid)&&
     field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
     out.push({type:'activate',uid:c.uid,mode:'selfRestBuffHand'});
+   if(ability?.op==='restBuffOtherReturnHand'&&c.ready&&
+    field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
+    out.push({type:'activate',uid:c.uid,mode:'restBuffReturn'});
    if(ability?.op==='restRetireRecoverNamed'&&c.ready)
     out.push({type:'activate',uid:c.uid,mode:'restRetireNamed'});
    if(ability?.op==='restBuffOwnTraitScaled'&&c.ready&&card(pack,c).type==='field')
@@ -20481,10 +20488,20 @@ export function legalUniversalActions(pack,s){
      out.push({type:'activate',uid:c.uid,mode:'selfRestBuff'});
     continue;
    }
-   if(ability.op==='restSelfBuffOtherThenHand'){
-    if(c.ready&&!s.mainAbilityUsedUids.includes(c.uid)&&
+   if(ability.op==='restSelfBuffOtherThenHand'||ability.op==='restBuffOtherReturnHand'){
+    const once=ability.op==='restSelfBuffOtherThenHand';
+    if(c.ready&&(!once||!s.mainAbilityUsedUids.includes(c.uid))&&
      field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
-     out.push({type:'activate',uid:c.uid,mode:'selfRestBuffHand'});
+     out.push({type:'activate',uid:c.uid,mode:once?'selfRestBuffHand':'restBuffReturn'});
+    continue;
+   }
+   if(ability.op==='frontOnceEnergyChoice'){
+    if(location(s,p,c.uid)?.line==='front'&&!s.mainAbilityUsedUids.includes(c.uid))
+     for(const target of field(pl))if(target.uid!==c.uid&&card(pack,target).type==='character'&&
+      card(pack,target).energy>=ability.minEnergy){
+      out.push({type:'activate',uid:c.uid,mode:'frontEnergyBp',targetUid:target.uid});
+      out.push({type:'activate',uid:c.uid,mode:'frontEnergyImpact',targetUid:target.uid});
+     }
     continue;
    }
    if(ability.op==='restRetireRecoverNamed'){
@@ -20840,6 +20857,9 @@ export function zoneRequiredEnergy(pack,s,p,d,zone){
  const distinctNames=zone==='hand'&&d.distinctNameHandEnergy?
   countOwnDistinctTraitNames(s,p,null,{zone:'fieldOutside',trait:d.distinctNameHandEnergy.trait,
    excludeSelf:false},c=>card(pack,c))*d.distinctNameHandEnergy.per:0;
+ const oppFrontCut=zone==='hand'&&d.oppFrontHandEnergy&&
+  s.players[1-p].front.filter(c=>printedFieldCard(c)&&card(pack,c).type==='character').length>=
+  d.oppFrontHandEnergy.min?d.oppFrontHandEnergy.amount:0;
  const handCut=zone!=='hand'?0:
   (d.emptyOwnFieldHandEnergyDiscount&&field(s.players[p]).length===0?d.emptyOwnFieldHandEnergyDiscount:0)+
   (colors&&field(s.players[1-p]).some(c=>colors.colors.includes(card(pack,c).color))?colors.amount:0)+
@@ -20860,7 +20880,7 @@ export function zoneRequiredEnergy(pack,s,p,d,zone){
  const vol2Cut=aot2EnergyCut(pack,s,p,d,zone);
  const riderCut=kmrEnergyCut(pack,s,p,d,zone,card);
  const rider2Cut=kmr2EnergyCut(pack,s,p,d,zone,card);
- return Math.max(0,d.energy-traitCut-handCut-pairCut-namedCut-activateCut-titanCut-keyCut-vol2Cut-riderCut-rider2Cut-gateCut);
+ return Math.max(0,d.energy-traitCut-handCut-pairCut-namedCut-activateCut-titanCut-keyCut-vol2Cut-riderCut-rider2Cut-gateCut-oppFrontCut);
 }
 function requiredEnergyBonus(s,physical){
  return (physical?.buffs||[]).reduce((n,b)=>n+(b.requiredEnergy===2&&
@@ -21216,6 +21236,31 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    if(printed){
     const key=selected.uid+'|'+printed.id;
     if(s.mainAbilityUsedUids.includes(key))throw Error('Printed main already used');
+    if(printed.op==='restSelfBpImpact'||printed.op==='restSelfAttackDraw'){
+     if(!selected.ready||!Number.isInteger(selected.fieldEntryStamp)||selected.fieldEntryStamp<1)
+      throw Error('REST printed main needs a ready stamped character');
+     s.mainAbilityUsedUids.push(key);
+     noteOwnEffectRest(s,p,selected);
+     selected.ready=false;
+     selected.buffs??=[];
+     if(printed.op==='restSelfBpImpact'){
+      selected.buffs.push({bp:printed.bp,untilTurn:s.turn});
+      selected.impactGranted={turn:s.turn,stamp:selected.fieldEntryStamp,amount:printed.impact};
+     }else selected.attackDrawGranted={turn:s.turn,stamp:selected.fieldEntryStamp};
+     break;
+    }
+    if(printed.op==='handOutsideActive'){
+     if(pl.hand.length<printed.discard)throw Error('Hand payment needs a card');
+     if(pl.hand.length===printed.discard){
+      moveOwnedLinear(pack,s,{owner:p,from:'hand',to:'outside',index:0,
+       reason:'payment',sourceUid:selected.uid});
+      attemptFieldActive(s,p,selected);
+      break;
+     }
+     s.pending={kind:'effect-mode-discard',player:p,sourceUid:selected.uid,
+      sourceStamp:selected.fieldEntryStamp,mode:printed.id};
+     break;
+    }
     s.mainAbilityUsedUids.push(key);
     if(printed.op==='restSelfEnergy'){
      if(!selected.ready)throw Error('REST main needs a ready character');
@@ -22004,6 +22049,13 @@ if(ability.op==='characterDualMain'){
      minPrintedBp:ability.minPrintedBp,impact:ability.impact};
     break;
    }
+   if(ability.op==='repeatHandOutsideBuff'){
+    if(action.mode!=='repeatHandBuff'||!pl.hand.length)
+     throw Error('Repeat hand buff needs one owned hand card');
+    s.pending={kind:'main-discard-buff',player:p,sourceUid:selected.uid,
+     bp:ability.bp,choices:pl.hand.map(c=>c.uid)};
+    break;
+   }
    if(ability.op==='discardHandBuffSelf'){
     if(action.mode!=='discardSelfBuff'||!pl.hand.length||
      s.mainAbilityUsedUids.includes(onceUid))
@@ -22153,22 +22205,41 @@ if(ability.op==='characterDualMain'){
     }
     break;
    }
-   if(ability.op==='restSelfBuffOther'||ability.op==='restSelfBuffOtherThenHand'){
-    const handReturn=ability.op==='restSelfBuffOtherThenHand';
+   if(ability.op==='restSelfBuffOther'||ability.op==='restSelfBuffOtherThenHand'||
+    ability.op==='restBuffOtherReturnHand'){
+    const handReturn=ability.op!=='restSelfBuffOther';
+    const once=ability.op==='restSelfBuffOtherThenHand';
     const choices=field(pl).filter(c=>c.uid!==selected.uid&&card(pack,c).type==='character'&&
      (handReturn||!ability.name||printedNameOrRaidBase(pack,s,c,ability.name))&&
      (handReturn||!ability.trait||cardHasTrait(card(pack,c),ability.trait))).map(c=>c.uid);
-    if(action.mode!==(handReturn?'selfRestBuffHand':'selfRestBuff')||!selected.ready||
-     !choices.length||(handReturn&&s.mainAbilityUsedUids.includes(onceUid)))
+    if(action.mode!==(ability.op==='restBuffOtherReturnHand'?'restBuffReturn':
+     handReturn?'selfRestBuffHand':'selfRestBuff')||!selected.ready||
+     !choices.length||(once&&s.mainAbilityUsedUids.includes(onceUid)))
      throw Error('REST buff requires a READY source and another own character');
     noteOwnEffectRest(s,p,selected);
     selected.ready=false;
-    if(handReturn)s.mainAbilityUsedUids.push(onceUid);
+    if(once)s.mainAbilityUsedUids.push(onceUid);
     s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,choices,
      filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true,
      ...(ability.name&&!handReturn?{requireName:ability.name}:{}),
      ...(ability.trait&&!handReturn?{requireTrait:ability.trait}:{}),
      ...(handReturn?{bounceSource:true}:{})};
+    break;
+   }
+   if(ability.op==='frontOnceEnergyChoice'){
+    const target=field(pl).find(c=>c.uid===action.targetUid);
+    const onFront=pl.front.some(c=>c?.uid===selected.uid);
+    if(!onFront||s.mainAbilityUsedUids.includes(onceUid)||!target||
+     target.uid===selected.uid||card(pack,target).type!=='character'||
+     card(pack,target).energy<ability.minEnergy||
+     !['frontEnergyBp','frontEnergyImpact'].includes(action.mode)||
+     !Number.isInteger(target.fieldEntryStamp)||target.fieldEntryStamp<1)
+     throw Error('Front energy choice needs another high-energy character');
+    s.mainAbilityUsedUids.push(onceUid);
+    target.buffs??=[];
+    if(action.mode==='frontEnergyBp')
+     target.buffs.push({bp:ability.bp,untilTurn:s.turn});
+    else target.impactGranted={turn:s.turn,stamp:target.fieldEntryStamp,amount:ability.impact};
     break;
    }
    if(ability.op==='restRetireRecoverTrait'){
@@ -23530,7 +23601,8 @@ export function assertUniversalMatch(pack,s){
    const mode=(printed?.printedMains||[]).find(m=>m.id===q.mode);
    const live=field(pl).find(c=>c.uid===q.sourceUid);
    if(!mode||mode.discard!==1||!live||live.fieldEntryStamp!==q.sourceStamp||
-    !s.mainAbilityUsedUids.includes(q.sourceUid+'|'+q.mode)||!pl.hand.length)
+    (mode.repeat!==true&&!s.mainAbilityUsedUids.includes(q.sourceUid+'|'+q.mode))||
+    !pl.hand.length)
     throw Error('Invalid printed-main discard pending');
   }
  }
@@ -24080,6 +24152,9 @@ export function assertUniversalMatch(pack,s){
     e.op==='chooseOne'&&e.options?.some(o=>o.then?.some(t=>t.op==='grantSelfAttackDrawThisTurn')));
    const shifted=card(pack,physical).lineShiftOutsideMove?.attackDraw===true&&
     physical.lineShiftUsedTurn===s.turn;
+   const printedDraw=(printedCard.printedMains||[]).some(m=>
+    m.op==='restSelfAttackDraw'&&m.oncePerTurn===true&&m.count===1&&
+    s.mainAbilityUsedUids.includes(physical.uid+'|'+m.id));
    const drawKeys=attackDraw&&typeof attackDraw==='object'&&!Array.isArray(attackDraw)?
     Object.keys(attackDraw):[];
    const plainDraw=drawKeys.length===2&&drawKeys.every(k=>k==='turn'||k==='stamp');
@@ -24099,7 +24174,7 @@ export function assertUniversalMatch(pack,s){
    const csmDenjiDraw=!!csmEvent&&!!csmSource&&csmSource.cardId==='CSM-1-062'&&
     cardHasName(printedCard,'デンジ',false)&&printedCard.id!=='CSM-1-062';
    if(!attackDraw||attackDraw.turn!==s.turn||attackDraw.stamp!==physical.fieldEntryStamp||
-    !((plainDraw&&(granted||shifted))||csmDenjiDraw))
+    !((plainDraw&&(granted||shifted||printedDraw))||csmDenjiDraw))
     throw Error('Forged this-turn attack draw');
   }
   if(physical.lineShiftUsedTurn!==undefined&&
