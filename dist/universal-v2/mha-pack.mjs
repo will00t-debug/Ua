@@ -19,7 +19,8 @@ const PROGRAM_KEYS=new Set([
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
- 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen'
+ 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen',
+ 'opponentTurnBp','attackSilencesBlockTrigger','battleRetireSkipsOnRetire','frontOwnTurnAura','colorTriggerBpWindow'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
@@ -32,7 +33,8 @@ const BATTLE_KEYS=[
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
- 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen'
+ 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen',
+ 'opponentTurnBp','attackSilencesBlockTrigger','battleRetireSkipsOnRetire','frontOwnTurnAura','colorTriggerBpWindow'
 ];
 function serial(id){
  const match=/^MHA-1-(\d{3})$/.exec(id);

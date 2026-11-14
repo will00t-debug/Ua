@@ -173,5 +173,106 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
    })
   })]),
   notes:'自己場外的死穢八斎會有 6 張以上時，這張角色獲得傷害 2。場上的自己不算。少於 6 張時沒有傷害 2。'
+ }),
+ 'MHA-2-062':Object.freeze({
+  ready:true, implementation:'dsl',
+  attackSilencesBlockTrigger:true,
+  battleRetireSkipsOnRetire:true,
+  passiveBonuses:Object.freeze([Object.freeze({
+   attackDamage:2,
+   condition:Object.freeze({kind:'ownHandCountAtMost', turn:'any', max:3})
+  })]),
+  notes:'自己手牌 3 張以下才有傷害 2。阻擋這張卡的角色不發阻擋時。因與這張卡戰鬥退場的角色不發退場時。'
+ }),
+ 'MHA-2-066':Object.freeze({
+  ready:true, implementation:'dsl',
+  raidName:'切島 鋭児郎',
+  opponentTurnBp:500,
+  oppEffectLeave:Object.freeze({
+   turn:'own', oncePerTurn:true, instead:'stay', cause:'effect',
+   subject:'self', line:'any'
+  }),
+  frontOwnTurnAura:Object.freeze({bp:500, bpWindow:500}),
+  notes:'自己回合每回合一次，對手效果要讓它離場時改為不離場。對手回合 BP+500。可突襲切島並活動進前排。自己回合在前排時，自己前排全部 BP+500，BP 範圍 +500。Q1011：兩張重疊成 +1000。'
+ }),
+ 'MHA-2-067':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'optionalPayApThen', ap:1, optional:true,
+   then:Object.freeze([{
+    op:'chooseOne', optional:false,
+    options:Object.freeze([
+     Object.freeze({id:'self', label:'活動', turn:'any', then:Object.freeze([
+      Object.freeze({op:'activeSelf'}),
+      Object.freeze({op:'buffSelf', bp:1000})
+     ])}),
+     Object.freeze({id:'rest', label:'レスト', turn:'any', then:Object.freeze([
+      Object.freeze({op:'restOppFrontUnderBp', bp:3000, optional:true, skipNextActive:true})
+     ])})
+    ])
+   }])
+  }])}),
+  notes:'登場時可付 1 AP。付了才二選一：把自己活動並本回合 BP+1000，或橫置最多 1 張 BP 3000 以下的對手前排，而且它下一次不活動。Q1012。不付就沒有後續。'
+ }),
+ 'MHA-2-068':Object.freeze({
+  ready:true, implementation:'dsl',
+  colorTriggerBpWindow:Object.freeze({
+   color:'red', turn:'opponent', line:'front', amount:1000
+  }),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'optionalPayApThen', ap:1, optional:true,
+   then:Object.freeze([Object.freeze({
+    op:'retireOppFrontOneUnderBp', bp:2500, optional:true
+   })])
+  }])}),
+  mainAbility:Object.freeze({
+   op:'oncePayProgram', oncePerTurn:true, frontOnly:false, raidOnly:false,
+   payAp:1, requiresOwnName:null,
+   then:Object.freeze([Object.freeze({op:'grantSelfImpactThisTurn', amount:1})])
+  }),
+  notes:'對手回合、在前排時，紅顏色觸發選角色的 BP 範圍 +1000。Q1013：兩張重疊成 +2000。登場時可付 1 AP，退場最多 1 張 BP 2500 以下。付 1 AP、每回合一次，本回合獲得衝擊 1。'
+ }),
+ 'MHA-2-069':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({
+   onPlay:Object.freeze([Object.freeze({op:'optionalTuckDeckTopUnder'})]),
+   onAttack:Object.freeze([Object.freeze({op:'lookUnderReorderThenOutside'})])
+  }),
+  notes:'登場時可把牌頂 1 張蓋到自己下面。攻擊時查看蓋牌，可改順序，最多拿 1 張到手牌。拿了才必須放 1 張手牌場外。Q1014：只有控制者能看。'
+ }),
+ 'MHA-2-070':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
+   when:Object.freeze({kind:'ownHandToOutsideThisTurn', turn:'any'}),
+   then:Object.freeze([Object.freeze({
+    op:'activeOwnRequiredEnergyBuff', min:5, bp:500
+   })])
+  }),
+  notes:'前排、每回合一次。這個回合自己的手牌曾經被放到場外，才能把必要能源 5 以上的自己角色活動，並本回合 BP+500。'
+ }),
+ 'MHA-2-072':Object.freeze({
+  ready:true, implementation:'dsl',
+  raidName:'ミルコ',
+  step:true,
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
+   then:Object.freeze([Object.freeze({
+    op:'discardGate', optional:false,
+    then:Object.freeze([Object.freeze({
+     op:'grantOtherImpactThisTurn', anyOther:true, amount:1,
+     optional:false, plus:true, alsoBp:1000
+    })])
+   })])
+  }),
+  effects:Object.freeze({onAttack:Object.freeze([Object.freeze({
+   op:'oncePerTurnGate', scope:'card', optional:false,
+   when:Object.freeze({kind:'ownHandCountAtMost', turn:'any', max:3}),
+   then:Object.freeze([
+    Object.freeze({op:'optionalDrawOne'}),
+    Object.freeze({op:'buffSelf', bp:1000})
+   ])
+  })])}),
+  notes:'可突襲米爾科並活動進前排，而且有移步。前排付 1 張手牌、每回合一次，給其他角色本回合 BP+1000 與衝擊 +1。攻擊時每回合一次，手牌 3 張以下可抽 1，這張卡 BP+1000。'
  })
 });
