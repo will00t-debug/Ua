@@ -18,7 +18,7 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-095',
   sentence:'ステップ。このターンに移動しているなら2回アタック。起動は手札1枚を場外に置き、ターン1で別ラインへ移動。',
   existingOps:['step','grantSelfDoubleAttackThisTurn','selfMovedThisTurn'],
-  whyNotEnough:'selfMovedThisTurn は條件としてはあるが、移動済みのこのキャラへ2回アタックを付ける op と、手札場外を払って別ラインへ動く起動が組になっていない。Q464：移動先已滿時要先把目的地的 1 張卡放進移除區。effect-front-vacate 只服務能量列移到前線，不能拿來付手牌後移動這張自己。',
+  whyNotEnough:'grantSelfDoubleAttackThisTurn 只接受裸 op 或 whenName，不接受 selfMovedThisTurn。payHandMoveOrSwap 是 006：付 1 張手牌後可移動任一角色，或交換前線與能量列。滿線時 effect-line-slot 會先把原佔用者放進移除區再移動，但沒有「只移動這張，而且這個回合移動過才得到 2 回攻擊」的組合。Q464 的移除區流程不能掛到 095。',
   proposal:'保留步驟。這個回合移動過就得到2回攻擊。起動付1張手牌到場外，一回合一次，移到另一條線。095はreadyにしない。'
  },
  {
