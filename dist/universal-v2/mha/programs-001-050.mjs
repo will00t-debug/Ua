@@ -193,6 +193,12 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   }])})
  }),
  'MHA-1-032':play(Object.freeze([{op:'recoverAp', count:2}])),
+ 'MHA-1-033':Object.freeze({
+  ready:true, implementation:'dsl',
+  handApDiscountWhileName:Object.freeze({name:'死柄木 弔', amount:1}),
+  triggerEffect:Object.freeze({op:'retireOppFront'}),
+  effects:Object.freeze({onPlay:Object.freeze([{op:'removeOppFrontUnderBp', bp:4000}])})
+ }),
  'MHA-1-034':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
  'MHA-1-036':Object.freeze({ready:true, implementation:'dsl', step:true}),
  'MHA-1-037':Object.freeze({

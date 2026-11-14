@@ -139,7 +139,7 @@ function probe(cards,seed){
 
 test('MHA stays closed and the seven unfinished sentences stay requests',()=>{
  assert.equal(getTitle('mha').playable,false);
- assert.equal(Object.keys(pack.cards).length,98);
+ assert.equal(Object.keys(pack.cards).length,99);
  assert.deepEqual(MHA_REQUESTS_051_100.map(row=>row.cardId),
   ['MHA-1-085','MHA-1-090','MHA-1-091','MHA-1-095','MHA-1-096']);
  for(const id of ['MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-072','MHA-1-076','MHA-1-081','MHA-1-084'])
