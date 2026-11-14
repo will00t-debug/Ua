@@ -44,12 +44,12 @@ function face(id){
   traits:[...(card.traits||[])],implementation:'vanilla'
  };
 }
-function open(seed,faces=[]){
+function open(seed,faces=[],extra={}){
  const cards=[...mha2ReadyBattleCards(),...faces];
  const live=faces.length?createUniversalPack({
   id:'mha',version:pack.version+'-scene',cards
  }):pack;
- const counts=deck(Object.fromEntries(faces.map(card=>[card.id,1])));
+ const counts=deck({...extra,...Object.fromEntries(faces.map(card=>[card.id,1]))});
  const issues=validateUniversalDeck(live,counts);
  if(issues.length)throw Error(issues.join('; '));
  const s=newUniversalMatch(live,{decks:[counts,counts],seed,attackerChoosesLife:true});
@@ -73,7 +73,11 @@ function pull(s,p,id){
  }
  for(const zone of ['front','energy']){
   const index=pl[zone].findIndex(card=>card?.cardId===id);
-  if(index>=0)return pl[zone][index];
+  if(index>=0){
+   const card=pl[zone][index];
+   pl[zone][index]=null;
+   return card;
+  }
  }
  throw Error('Missing '+id+' for player '+p);
 }
@@ -122,9 +126,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-46');
- assert.equal(READY.length,26);
- assert.equal(Object.keys(pack.cards).length,46);
+ assert.equal(pack.version,'mha2-ex06-ready-52');
+ assert.equal(READY.length,32);
+ assert.equal(Object.keys(pack.cards).length,52);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
@@ -166,8 +170,7 @@ test('MHA-2-001 rests for yellow energy and leaves at the end of main',()=>{
 });
 
 test('MHA-2-002 publishes one Deku or One For All card, then discards only if it took one',()=>{
- const ofa=face('MHA-2-029');
- let {pack:live,s}=open(2002,[ofa]);
+ let {pack:live,s}=open(2002);
  s=reach(live,s,0,'main');
  fuel(s,0,['MHA-2-001']);
  const hero=hold(s,0,'MHA-2-002');
@@ -197,7 +200,7 @@ test('MHA-2-002 publishes one Deku or One For All card, then discards only if it
  assert.ok(s.players[0].hand.some(card=>card.uid===named.uid));
  assert.ok(s.players[0].outside.some(card=>card.uid===spare.uid));
 
- let skipped=open(2003,[ofa]);
+ let skipped=open(2003);
  skipped.s=reach(skipped.pack,skipped.s,0,'main');
  fuel(skipped.s,0,['MHA-2-001']);
  const waiting=hold(skipped.s,0,'MHA-2-002');
@@ -688,8 +691,7 @@ test('MHA-2-034 discounts each One For All name and must retire a front characte
   id:'HIGH-BP',name:'高標',color:'red',type:'character',energy:1,ap:1,
   bp:4000,gen:0,trigger:null,traits:[],implementation:'vanilla'
  };
- const names=['MHA-2-029','MHA-2-030','MHA-2-031'].map(face);
- let scene=open(2034,[...names,low,high]);
+ let scene=open(2034,[face('MHA-2-030'),low,high]);
  scene.s=reachMainAp(scene.pack,scene.s,0,1);
  fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
  const small=seat(scene.s,1,'LOW-BP','front',0,true);
@@ -718,7 +720,7 @@ test('MHA-2-034 discounts each One For All name and must retire a front characte
  assert.equal(scene.s.players[1].front[0],null);
  assert.equal(scene.s.players[1].front[1]?.uid,tall.uid);
 
- let capped=open(2035,[...names,high]);
+ let capped=open(2035,[face('MHA-2-030'),high]);
  capped.s=reachMainAp(capped.pack,capped.s,0,1);
  fuel(capped.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
  const only=seat(capped.s,1,'HIGH-BP','front',0,true);
@@ -735,16 +737,16 @@ test('MHA-2-034 discounts each One For All name and must retire a front characte
 });
 
 test('MHA-2-003 adds one yellow at three names and draws only after the trait card leaves',()=>{
- const names=['MHA-2-029','MHA-2-030','MHA-2-031'].map(face);
  const guest={
   id:'OFA-GUEST',name:'客',color:'yellow',type:'character',energy:1,ap:1,
   bp:1000,gen:1,traits:['ワン・フォー・オール'],trigger:null,implementation:'vanilla'
  };
- let {pack,s}=open(2003,[...names,guest]);
+ let {pack,s}=open(2003,[face('MHA-2-030'),guest]);
+ const names=['MHA-2-029','MHA-2-030','MHA-2-031'];
  s=reach(pack,s,0,'main');
  const self=seat(s,0,'MHA-2-003','energy',0,false);
  assert.equal(universalEnergyByColor(pack,s,0).yellow,1);
- const fields=names.map(card=>pull(s,0,card.id));
+ const fields=names.map(id=>pull(s,0,id));
  s.players[0].outside.push(fields[0],fields[1]);
  assert.equal(universalEnergyByColor(pack,s,0).yellow,1);
  s.players[0].outside.push(fields[2]);
@@ -754,6 +756,10 @@ test('MHA-2-003 adds one yellow at three names and draws only after the trait ca
  fields[2].faceDown=false;
  assert.equal(universalEnergyByColor(pack,s,0).yellow,2);
  const plain=hold(s,0,'MHA-2-006');
+ s.players[0].deck.push(...s.players[0].hand.filter(card=>
+  card.uid!==plain.uid&&(pack.cards[card.cardId].traits||[]).includes('ワン・フォー・オール')));
+ s.players[0].hand=s.players[0].hand.filter(card=>
+  card.uid===plain.uid||!(pack.cards[card.cardId].traits||[]).includes('ワン・フォー・オール'));
  self.ready=true;
  assert.equal(legalUniversalActions(pack,s).some(action=>
   action.type==='activate'&&action.uid===self.uid),false);
@@ -776,7 +782,7 @@ test('MHA-2-003 adds one yellow at three names and draws only after the trait ca
 });
 
 test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait character onto energy',()=>{
- const names=['MHA-2-029','MHA-2-030','MHA-2-031','MHA-2-032','MHA-2-033'].map(face);
+ const names=['MHA-2-029','MHA-2-030','MHA-2-031','MHA-2-032','MHA-2-033'];
  const guest={
   id:'OFA-GUEST',name:'客',color:'yellow',type:'character',energy:1,ap:1,
   bp:1000,gen:1,traits:['ワン・フォー・オール'],trigger:null,implementation:'vanilla'
@@ -786,7 +792,7 @@ test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait c
   bp:1000,gen:0,traits:['ワン・フォー・オール'],trigger:null,
   implementation:'dsl',energyLineForbidden:true
  };
- let scene=open(2026,[...names,guest,banned]);
+ let scene=open(2026,[face('MHA-2-030'),guest,banned]);
  scene.s=reach(scene.pack,scene.s,0,'main');
  fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
  const self=hold(scene.s,0,'MHA-2-026');
@@ -796,7 +802,7 @@ test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait c
  assert.equal(printed.printedImpact,1);
  assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'hand'),8);
  assert.equal(playable(),false);
- const fields=names.map(card=>pull(scene.s,0,card.id));
+ const fields=names.map(id=>pull(scene.s,0,id));
  scene.s.players[0].outside.push(...fields);
  assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'hand'),3);
  assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'life'),8);
@@ -823,10 +829,10 @@ test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait c
  assert.equal(scene.s.players[0].hand.some(card=>card.uid===blocked.uid),true);
  assert.equal(scene.s.pending,null);
 
- let skipped=open(2027,[...names,guest]);
+ let skipped=open(2027,[face('MHA-2-030'),guest]);
  skipped.s=reach(skipped.pack,skipped.s,0,'main');
  fuel(skipped.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
- skipped.s.players[0].outside.push(...names.map(card=>pull(skipped.s,0,card.id)));
+ skipped.s.players[0].outside.push(...names.map(id=>pull(skipped.s,0,id)));
  const waiting=hold(skipped.s,0,'MHA-2-026');
  const staying=hold(skipped.s,0,'OFA-GUEST');
  skipped.s=act(skipped.pack,skipped.s,action=>action.type==='play'&&action.uid===waiting.uid&&
@@ -836,8 +842,244 @@ test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait c
  assert.equal(skipped.s.pending,null);
 });
 
+test('MHA-2-011 hides Deku from an opponent choice only while it is on the front',()=>{
+ const deku={
+  id:'DEKU-LOW',name:'緑谷 出久',color:'yellow',type:'character',energy:1,ap:1,
+  bp:2000,gen:0,trigger:null,traits:['A組'],implementation:'vanilla'
+ };
+ const other={
+  id:'OTHER-LOW',name:'別',color:'red',type:'character',energy:1,ap:1,
+  bp:2000,gen:0,trigger:null,traits:[],implementation:'vanilla'
+ };
+ const play=(seed,line)=>{
+  let scene=open(seed,[deku,other]);
+  scene.s=reachMainAp(scene.pack,scene.s,1,1);
+  seat(scene.s,0,'MHA-2-011',line,0,true);
+  const hero=seat(scene.s,0,'DEKU-LOW','front',1,true);
+  const bystander=seat(scene.s,0,'OTHER-LOW','front',2,true);
+  fuel(scene.s,1,['MHA-2-001','MHA-2-001','MHA-2-001','MHA-2-001']);
+  const hand=hold(scene.s,1,'MHA-2-025');
+  scene.s=act(scene.pack,scene.s,action=>action.type==='handActivate'&&action.uid===hand.uid);
+  const chosen=()=>legalUniversalActions(scene.pack,scene.s)
+   .filter(action=>action.type==='chooseRetireBp').map(action=>action.uid);
+  return {hero,bystander,chosen};
+ };
+ const covered=play(2011,'front');
+ assert.equal(covered.chosen().includes(covered.hero.uid),false);
+ assert.equal(covered.chosen().includes(covered.bystander.uid),true);
+ const openLine=play(2012,'energy');
+ assert.equal(openLine.chosen().includes(openLine.hero.uid),true);
+ let battle=open(2013,[deku]);
+ battle.s=reach(battle.pack,battle.s,1,'attack');
+ seat(battle.s,0,'MHA-2-011','front',0,true);
+ seat(battle.s,0,'DEKU-LOW','front',1,true);
+ const striker=seat(battle.s,1,'MHA-2-006','front',0,true);
+ striker.ready=true;
+ assert.equal(legalUniversalActions(battle.pack,battle.s).some(action=>
+  action.type==='attack'&&action.uid===striker.uid),true);
+});
+
+test('MHA-2-016 may shift one character after it leaves, and a full line removes one first',()=>{
+ const mover={
+  id:'MOVER',name:'移動',color:'yellow',type:'character',energy:1,ap:1,
+  bp:4000,gen:0,trigger:null,traits:[],implementation:'vanilla'
+ };
+ const retire=(seed,faces,fill)=>{
+  let scene=open(seed,faces);
+  scene.s=reachMainAp(scene.pack,scene.s,1,1);
+  const self=seat(scene.s,0,'MHA-2-016','front',0,true);
+  fuel(scene.s,1,['MHA-2-001','MHA-2-001','MHA-2-001','MHA-2-001']);
+  if(fill)for(let slot=0;slot<4;slot++)seat(scene.s,0,'MHA-2-001','energy',slot,false);
+  const hand=hold(scene.s,1,'MHA-2-025');
+  scene.s=act(scene.pack,scene.s,action=>action.type==='handActivate'&&action.uid===hand.uid);
+  scene.s=act(scene.pack,scene.s,{type:'chooseRetireBp',uid:self.uid});
+  return scene;
+ };
+ let alone=retire(2016,[]);
+ assert.equal(alone.s.pending,null);
+ assert.ok(alone.s.players[0].outside.some(card=>card.cardId==='MHA-2-016'));
+
+ let scene=open(2017,[mover]);
+ scene.s=reachMainAp(scene.pack,scene.s,1,1);
+ const self=seat(scene.s,0,'MHA-2-016','front',0,true);
+ const moving=seat(scene.s,0,'MOVER','front',1,true);
+ fuel(scene.s,1,['MHA-2-001','MHA-2-001','MHA-2-001','MHA-2-001']);
+ const hand=hold(scene.s,1,'MHA-2-025');
+ scene.s=act(scene.pack,scene.s,action=>action.type==='handActivate'&&action.uid===hand.uid);
+ scene.s=act(scene.pack,scene.s,{type:'chooseRetireBp',uid:self.uid});
+ assert.equal(scene.s.pending.kind,'effect-line-move');
+ assert.equal(scene.s.pending.player,0);
+ assert.deepEqual(scene.s.pending.choices,[moving.uid]);
+ assert.equal(legalUniversalActions(scene.pack,scene.s).some(action=>
+  action.type==='chooseLineMove'&&action.uid===null),true);
+ let skipped=structuredClone(scene.s);
+ skipped=act(scene.pack,skipped,{type:'chooseLineMove',uid:null});
+ assert.equal(skipped.players[0].front[1]?.uid,moving.uid);
+ scene.s=act(scene.pack,scene.s,{type:'chooseLineMove',uid:moving.uid});
+ assert.equal(scene.s.pending.kind,'effect-line-slot');
+ const slot=legalUniversalActions(scene.pack,scene.s).find(action=>action.type==='chooseLineSlot');
+ scene.s=act(scene.pack,scene.s,slot);
+ assert.equal(scene.s.players[0].energy.some(card=>card?.uid===moving.uid),true);
+ assert.equal(scene.s.players[0].front[1],null);
+
+ let full=open(2018,[mover]);
+ full.s=reachMainAp(full.pack,full.s,1,1);
+ const leaving=seat(full.s,0,'MHA-2-016','front',0,true);
+ const shifting=seat(full.s,0,'MOVER','front',1,true);
+ const occupants=[];
+ for(let slot=0;slot<4;slot++)occupants.push(seat(full.s,0,'MHA-2-001','energy',slot,false));
+ fuel(full.s,1,['MHA-2-001','MHA-2-001','MHA-2-001','MHA-2-001']);
+ const payer=hold(full.s,1,'MHA-2-025');
+ full.s=act(full.pack,full.s,action=>action.type==='handActivate'&&action.uid===payer.uid);
+ full.s=act(full.pack,full.s,{type:'chooseRetireBp',uid:leaving.uid});
+ full.s=act(full.pack,full.s,{type:'chooseLineMove',uid:shifting.uid});
+ const swap=legalUniversalActions(full.pack,full.s).find(action=>
+  action.type==='chooseLineSlot'&&action.replaceUid===occupants[0].uid);
+ full.s=act(full.pack,full.s,swap);
+ assert.equal(full.s.players[0].energy[0]?.uid,shifting.uid);
+ assert.ok(full.s.players[0].removed.some(card=>card.uid===occupants[0].uid));
+});
+
+test('MHA-2-029 through 033 rest and retire only at three names, then follow the printed sentence',()=>{
+ const deku={
+  id:'DEKU-LOW',name:'緑谷 出久',color:'yellow',type:'character',energy:1,ap:1,
+  bp:2000,gen:0,trigger:null,traits:['A組'],implementation:'vanilla'
+ };
+ const other={
+  id:'OTHER-LOW',name:'別',color:'red',type:'character',energy:1,ap:1,
+  bp:2000,gen:0,trigger:null,traits:[],implementation:'vanilla'
+ };
+ const prepare=(seed,id,outsideIds,withDeku)=>{
+  let scene=open(seed,[face('MHA-2-030'),deku,other],{'MHA-2-045':1});
+  scene.s=reach(scene.pack,scene.s,0,'main');
+  scene.s.players[0].outside.push(...outsideIds.map(card=>pull(scene.s,0,card)));
+  const self=seat(scene.s,0,id,'energy',0,true);
+  const hero=withDeku?seat(scene.s,0,'DEKU-LOW','front',0,false):null;
+  const bystander=seat(scene.s,0,'OTHER-LOW','front',1,true);
+  const offered=()=>legalUniversalActions(scene.pack,scene.s).some(action=>
+   action.type==='activate'&&action.uid===self.uid&&action.mode==='gatedRestRetire');
+  return {scene,self,hero,bystander,offered};
+ };
+ let short=prepare(2029,'MHA-2-029',['MHA-2-030'],true);
+ assert.equal(short.offered(),false);
+ let nameless=prepare(2030,'MHA-2-029',['MHA-2-030','MHA-2-031'],false);
+ assert.equal(nameless.offered(),false);
+ let scene=prepare(2031,'MHA-2-029',['MHA-2-030','MHA-2-031'],true);
+ assert.equal(scene.offered(),true);
+ const before=scene.scene.s.players[0].hand.length;
+ scene.scene.s=act(scene.scene.pack,scene.scene.s,action=>
+  action.type==='activate'&&action.uid===scene.self.uid);
+ assert.ok(scene.scene.s.players[0].outside.some(card=>card.uid===scene.self.uid));
+ assert.equal(scene.scene.s.pending.kind,'effect-named-follow');
+ assert.equal(scene.scene.s.pending.follow,'shield');
+ assert.deepEqual(legalUniversalActions(scene.scene.pack,scene.scene.s)
+  .map(action=>action.uid),[scene.hero.uid]);
+ assert.throws(()=>dispatchUniversalAction(scene.scene.pack,scene.scene.s,
+  {type:'chooseNamedFollow',uid:null}),/not currently legal|Named follow/);
+ scene.scene.s=act(scene.scene.pack,scene.scene.s,{type:'chooseNamedFollow',uid:scene.hero.uid});
+ const shielded=scene.scene.s.players[0].front.find(card=>card?.uid===scene.hero.uid);
+ assert.equal(scene.scene.s.players[0].hand.length,before+1);
+ assert.equal(shielded.sniperImmune.stamp,shielded.fieldEntryStamp);
+ assert.equal(scene.scene.s.continuousStates.some(status=>
+  status.kind==='cannotBeChosenByOppEffect'&&status.selectionScope==='character'&&
+  status.targetUid===scene.hero.uid),true);
+ scene.scene.s=reachMainAp(scene.scene.pack,scene.scene.s,1,1);
+ fuel(scene.scene.s,1,['MHA-2-001','MHA-2-001','MHA-2-001','MHA-2-001']);
+ const character=hold(scene.scene.s,1,'MHA-2-025');
+ scene.scene.s=act(scene.scene.pack,scene.scene.s,action=>
+  action.type==='handActivate'&&action.uid===character.uid);
+ const characterChoices=legalUniversalActions(scene.scene.pack,scene.scene.s)
+  .filter(action=>action.type==='chooseRetireBp').map(action=>action.uid);
+ assert.equal(characterChoices.includes(shielded.uid),false);
+ assert.equal(characterChoices.includes(scene.bystander.uid),true);
+
+ let event=prepare(2032,'MHA-2-029',['MHA-2-030','MHA-2-031'],true);
+ event.scene.s=act(event.scene.pack,event.scene.s,action=>
+  action.type==='activate'&&action.uid===event.self.uid);
+ event.scene.s=act(event.scene.pack,event.scene.s,{type:'chooseNamedFollow',uid:event.hero.uid});
+ event.scene.s=reachMainAp(event.scene.pack,event.scene.s,1,1);
+ fuel(event.scene.s,1,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ event.scene.s.players[1].outside.push(...['MHA-2-029','MHA-2-030','MHA-2-031']
+  .map(id=>pull(event.scene.s,1,id)));
+ const played=hold(event.scene.s,1,'MHA-2-034');
+ event.scene.s=act(event.scene.pack,event.scene.s,action=>
+  action.type==='event'&&action.uid===played.uid);
+ assert.equal(legalUniversalActions(event.scene.pack,event.scene.s).some(action=>
+  action.type==='chooseRetireBp'&&action.uid===event.hero.uid),true);
+
+ let sniper=prepare(2033,'MHA-2-029',['MHA-2-030','MHA-2-031'],true);
+ sniper.scene.s=act(sniper.scene.pack,sniper.scene.s,action=>
+  action.type==='activate'&&action.uid===sniper.self.uid);
+ sniper.scene.s=act(sniper.scene.pack,sniper.scene.s,{type:'chooseNamedFollow',uid:sniper.hero.uid});
+ sniper.scene.s=reach(sniper.scene.pack,sniper.scene.s,1,'main');
+ const hunter=seat(sniper.scene.s,1,'MHA-2-045','front',0,true);
+ const pay=sniper.scene.s.players[1].hand.slice(0,2);
+ sniper.scene.s=act(sniper.scene.pack,sniper.scene.s,action=>
+  action.type==='activate'&&action.uid===hunter.uid&&action.mode==='oncePay');
+ sniper.scene.s=act(sniper.scene.pack,sniper.scene.s,action=>
+  action.type==='chooseDiscardGate'&&action.uids&&
+  action.uids.includes(pay[0].uid)&&action.uids.includes(pay[1].uid));
+ sniper.scene.s=reach(sniper.scene.pack,sniper.scene.s,1,'attack');
+ hunter.ready=true;
+ const shots=legalUniversalActions(sniper.scene.pack,sniper.scene.s)
+  .filter(action=>action.type==='attack'&&action.uid===hunter.uid);
+ assert.equal(shots.some(action=>action.targetUid===sniper.hero.uid),false);
+ assert.equal(shots.some(action=>action.targetUid===sniper.bystander.uid),true);
+
+ let active=prepare(2034,'MHA-2-031',['MHA-2-029','MHA-2-030'],true);
+ assert.equal(prepare(2035,'MHA-2-031',['MHA-2-030'],true).offered(),false);
+ const held=active.scene.s.players[0].hand.length;
+ active.scene.s=act(active.scene.pack,active.scene.s,action=>
+  action.type==='activate'&&action.uid===active.self.uid);
+ assert.equal(active.scene.s.pending.kind,'effect-active-own-named');
+ assert.equal(active.scene.s.pending.optional,false);
+ assert.throws(()=>dispatchUniversalAction(active.scene.pack,active.scene.s,
+  {type:'chooseActiveOwnNamed',uid:null}),/not currently legal|Mandatory named/);
+ active.scene.s=act(active.scene.pack,active.scene.s,
+  {type:'chooseActiveOwnNamed',uid:active.hero.uid});
+ const readied=active.scene.s.players[0].front.find(card=>card?.uid===active.hero.uid);
+ assert.equal(readied.ready,true);
+ assert.equal(active.scene.s.players[0].hand.length,held);
+
+ let paid=prepare(2036,'MHA-2-032',['MHA-2-030','MHA-2-031'],true);
+ const pocket=paid.scene.s.players[0].hand.splice(0);
+ paid.scene.s.players[0].deck.push(...pocket);
+ assert.equal(paid.offered(),false);
+ const payment=paid.scene.s.players[0].deck.pop();
+ paid.scene.s.players[0].hand.push(payment);
+ assert.equal(paid.offered(),true);
+ paid.scene.s=act(paid.scene.pack,paid.scene.s,action=>
+  action.type==='activate'&&action.uid===paid.self.uid);
+ assert.equal(paid.scene.s.pending.kind,'effect-gated-hand-retire');
+ paid.scene.s=act(paid.scene.pack,paid.scene.s,
+  {type:'chooseGatedHandRetire',uid:payment.uid});
+ assert.ok(paid.scene.s.players[0].outside.some(card=>card.uid===paid.self.uid));
+ assert.ok(paid.scene.s.players[0].outside.some(card=>card.uid===payment.uid));
+ paid.scene.s=act(paid.scene.pack,paid.scene.s,
+  {type:'chooseNamedFollow',uid:paid.hero.uid});
+ const sniping=paid.scene.s.players[0].front.find(card=>card?.uid===paid.hero.uid);
+ assert.equal(sniping.sniperGranted.turn,paid.scene.s.turn);
+ sniping.ready=true;
+ const foe=seat(paid.scene.s,1,'OTHER-LOW','front',0,true);
+ paid.scene.s=reach(paid.scene.pack,paid.scene.s,0,'attack');
+ assert.equal(legalUniversalActions(paid.scene.pack,paid.scene.s).some(action=>
+  action.type==='attack'&&action.uid===sniping.uid&&action.targetUid===foe.uid),true);
+
+ let buffed=prepare(2037,'MHA-2-033',['MHA-2-030','MHA-2-031'],true);
+ assert.equal(prepare(2038,'MHA-2-033',['MHA-2-030'],true).offered(),false);
+ const drawn=buffed.scene.s.players[0].hand.length;
+ const printed=universalBp(buffed.scene.pack,buffed.scene.s,buffed.hero);
+ buffed.scene.s=act(buffed.scene.pack,buffed.scene.s,action=>
+  action.type==='activate'&&action.uid===buffed.self.uid);
+ buffed.scene.s=act(buffed.scene.pack,buffed.scene.s,
+  {type:'chooseNamedFollow',uid:buffed.hero.uid});
+ const boosted=buffed.scene.s.players[0].front.find(card=>card?.uid===buffed.hero.uid);
+ assert.equal(universalBp(buffed.scene.pack,buffed.scene.s,boosted),printed+2000);
+ assert.equal(buffed.scene.s.players[0].hand.length,drawn+1);
+});
+
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
- assert.equal(PENDING.length,10);
+ assert.equal(PENDING.length,4);
  assert.deepEqual(Object.keys(MHA2_REQUESTS_001_036).sort(),[...PENDING].sort());
  for(const id of PENDING){
   const card=byId.get(id);

@@ -95,3 +95,48 @@ passiveBonuses:[{attackDamage:2, condition:{
 ```
 
 這輪沒有把剩下的句子標成 ready。那些整句仍然對不上現有操作。
+
+## 前排保護、退場移線、三種名字後退場
+
+`whileFrontNameUnchosen` 是角色卡。`name` 是印刷名字。這張卡在前線且效果沒有失效時，對手寫有「選び」的效果不能選自己場上那個名字的角色。離開前線就結束。攻擊與阻擋不受影響。受益是 MHA-2-011。
+
+```js
+whileFrontNameUnchosen:{name:'緑谷 出久'}
+```
+
+`mayShiftOwnCharacter` 可以掛在角色的 `effects.onRetire`。退場後最多把 1 張自己的角色移到另一條線，可以不做。目的地滿格時先把 1 張放進移除區。受益是 MHA-2-016。
+
+```js
+effects:{onRetire:[{op:'mayShiftOwnCharacter'}]}
+```
+
+`gatedRestRetireThen` 是場域的 `mainAbility`。能量列、這張卡活動、`when` 成立、後續的名字在場上，才可以發動。`when` 目前是 `ownDistinctTraitNames`。先休息，沒有 `payHand` 就退場自己；`payHand:1` 時必須先把手牌 1 張放到場外，然後才退場。`then` 的第一句是下面四個其中一個，第二句只能是 `{op:'draw',count:1}`。
+
+```js
+mainAbility:{
+ op:'gatedRestRetireThen',
+ when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,trait:'ワン・フォー・オール',min:3},
+ then:[
+  {op:'grantNamedCharacterSniperShield',name:'緑谷 出久'},
+  {op:'draw',count:1}
+ ]
+}
+```
+
+`grantNamedCharacterSniperShield` 選 1 張該名字。直到自己下個回合開始，不被對手的角色效果選取，也不能被狙擊指定。對手事件的「選び」仍可選。受益是 MHA-2-029。
+
+`activeOwnNamed` 的 `optional:false` 是必須選，不能跳過。受益是 MHA-2-031。
+
+```js
+then:[{op:'activeOwnNamed',name:'緑谷 出久',max:1,optional:false}]
+```
+
+`grantNamedSniperThisTurn` 給選到的角色本回合狙擊。搭配 `payHand:1`。受益是 MHA-2-032。
+
+`buffNamedThisTurn` 的 `bp` 是 500 的倍數，最高 5000。受益是 MHA-2-033 的 2000。
+
+```js
+then:[{op:'buffNamedThisTurn',name:'緑谷 出久',bp:2000},{op:'draw',count:1}]
+```
+
+這輪標成 ready 的是 MHA-2-011、016、029、031、032、033。其餘 21 張整句仍對不上，沒有標 ready。
