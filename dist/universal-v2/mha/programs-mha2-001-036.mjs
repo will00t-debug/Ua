@@ -43,10 +43,28 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }])}),
   notes:'活動登場。自己回合場上有綠谷時 BP+1000。看牌頂 3 張，公開最多 1 張 A組 到手牌，其餘放牌底，不棄手牌。'
  }),
- 'MHA-2-009':pending('登場要同時給本回合 BP+1000 與衝擊 1，並可付一張非綠谷手牌，從場外休息登場能量 4 以下、AP 1 的黃綠谷。沒有這句支付後續。'),
+ 'MHA-2-009':ready({
+  raidName:'飯田 天哉',
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({op:'buffSelf',bp:1000}),
+   Object.freeze({op:'grantSelfImpactThisTurn',amount:1}),
+   Object.freeze({op:'optionalExceptHandOutsideRest',excludeName:'緑谷 出久',hand:1,
+    name:'緑谷 出久',color:'yellow',energy:4,ap:1})
+  ])}),
+  notes:'可突襲飯田天哉。登場時本回合 BP+1000 與衝擊 1。可把 1 張非綠谷手牌放到場外，做到才從場外把必要能量 4 以下、AP 1 的黃綠谷休息登場。有突襲名的綠谷也能選。'
+ }),
  'MHA-2-010':Object.freeze({ready:true,implementation:'vanilla',notes:'効果欄は「-」。ゲットは卡表。'}),
  'MHA-2-011':pending('在前線期間，自己的綠谷不被對手寫有「選び」的效果選取。沒有「在場期間保護指定名字」的被動。Q998 約束的是選取範圍，不是登場授予。'),
- 'MHA-2-012':pending('突襲、衝擊無效、BP 4000 以上不能阻擋，以及付 2 張非綠谷或改付 1 AP 後從場外休息登場黃綠谷。Q999 的兩種支付沒有共用句。'),
+ 'MHA-2-012':ready({
+  raidName:'麗日 お茶子',
+  impactNull:true,
+  blockBpRestriction:Object.freeze({relation:'atLeast',bp:4000,condition:null}),
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({op:'optionalExceptHandOutsideRest',excludeName:'緑谷 出久',hand:2,orAp:1,
+    name:'緑谷 出久',color:'yellow',energy:4,ap:1})
+  ])}),
+  notes:'可突襲麗日お茶子。衝擊無效。BP 4000 以上不能阻擋。登場時可付 2 張非綠谷手牌；自己回合可改付 1 AP。做到才從場外休息登場必要能量 4 以下、AP 1 的黃綠谷。Q999。'
+ }),
  'MHA-2-013':ready({impactNull:true,notes:'與這張卡戰鬥的角色，這場戰鬥失去衝擊。'}),
  'MHA-2-014':ready({ownTurnBp:1000,notes:'自己回合 BP+1000。對手回合維持印刷 BP。'}),
  'MHA-2-015':ready({
@@ -55,7 +73,13 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
  }),
  'MHA-2-016':pending('退場時最多把 1 張自己的角色移到另一條線。Q1000 的滿格先移除是既有移動規則，但移線目前只掛在事件的登場選擇裡，不能掛在退場。'),
  'MHA-2-017':Object.freeze({ready:true,implementation:'vanilla',notes:'効果欄は「-」。アクティブは生命觸發。'}),
- 'MHA-2-018':pending('可同時付 1 AP 與一張非綠谷手牌，再從場外休息登場能量 4 以下、AP 1 的黃綠谷。沒有這個雙支付。'),
+ 'MHA-2-018':ready({
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({op:'optionalExceptHandOutsideRest',excludeName:'緑谷 出久',hand:1,payAp:1,
+    name:'緑谷 出久',color:'yellow',energy:4,ap:1})
+  ])}),
+  notes:'登場時可同時付 1 AP 與 1 張非綠谷手牌。做到才從場外休息登場必要能量 4 以下、AP 1 的黃綠谷。'
+ }),
  'MHA-2-019':ready({
   passiveBonuses:Object.freeze([
    Object.freeze({bp:1000,condition:deku}),
@@ -64,12 +88,20 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   notes:'自己回合且場上有綠谷時，BP+1000 並有衝擊 1。少了綠谷或不是自己回合就都沒有。'
  }),
  'MHA-2-020':pending('登場二選一，以及前線每回合一次把 BP+1000 與衝擊 1 給綠谷後，再活動自己或一張 AP。兩句都沒有完整的共用起動。'),
- 'MHA-2-021':pending('場上有其他 A組 時不能從手牌登場，但仍要能從手牌付 1 AP 放到場外、抽棄並活動一張 AP。Q1001 的手牌起動沒有共用句，登場禁止也沒有欄位。'),
- 'MHA-2-022':pending('其他 A組 在場時不能從手牌登場。移步與三種ワン・フォー・オール名字的 BP+1000 都有單句，但登場禁止沒有共用欄位，不能把整張標成 ready。'),
- 'MHA-2-023':pending('手牌付 1 AP 放到場外後，看牌頂 4 張並取最多 2 張非綠谷。Q1002。顏色觸發的休息並跳過下次活動已有共用句，但登場禁止與手牌起動沒有。'),
- 'MHA-2-024':pending('登場時獲得本回合「ワン・フォー・オール退場可抽 1」，攻擊時三種名字可付 1 AP 獲得衝擊 1。加上其他 A組 的登場禁止。沒有整句。'),
- 'MHA-2-025':pending('手牌付 1 AP 放到場外後，退場對手前線。其他 A組 達 3 張時上限從 3000 改成 5000。Q1003。登場禁止與這個手牌起動沒有共用句。'),
- 'MHA-2-026':pending('每種場上與場外的ワン・フォー・オール名字讓手牌必要能量減 1 黃，另有衝擊 1，並可從手牌或場外把該特徵休息放到能量線。每種名字減能量沒有共用欄位。'),
+ 'MHA-2-021':pending('場上有其他 A組 時不能從手牌登場，但仍要能從手牌付 1 AP 放到場外、抽棄並活動一張 AP。Q1001。登場禁止已有 playBanOtherTrait。手牌起動沒有共用句。'),
+ 'MHA-2-022':ready({
+  playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
+  step:true,
+  passiveBonuses:Object.freeze([Object.freeze({bp:1000,condition:Object.freeze({
+   kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+   trait:'ワン・フォー・オール',min:3
+  })})]),
+  notes:'場上有其他卡名的 A組 時不能從手牌登場。有移步。場上與場外不同卡名的ワン・フォー・オール合計 3 種以上時 BP+1000，不分回合。'
+ }),
+ 'MHA-2-023':pending('手牌付 1 AP 放到場外後，看牌頂 4 張並取最多 2 張非綠谷。Q1002。顏色觸發已有共用句。登場禁止已有 playBanOtherTrait。手牌起動沒有。'),
+ 'MHA-2-024':pending('登場時獲得本回合「ワン・フォー・オール退場可抽 1」，攻擊時三種名字可付 1 AP 獲得衝擊 1。登場禁止已有 playBanOtherTrait。退場抽牌與攻擊付費沒有整句。'),
+ 'MHA-2-025':pending('手牌付 1 AP 放到場外後，退場對手前線。其他 A組 達 3 張時上限從 3000 改成 5000。Q1003。登場禁止已有 playBanOtherTrait。這個手牌起動沒有共用句。'),
+ 'MHA-2-026':pending('每種場上與場外的ワン・フォー・オール名字讓手牌必要能量減 1 黃，另有衝擊 1，並可從手牌或場外把該特徵休息放到能量線。減能量已有 distinctNameHandEnergy。缺的是休息放到能量線。'),
  'MHA-2-027':ready({
   effects:Object.freeze({onPlay:Object.freeze([{op:'bounceOwnOtherUnderEnergy',energy:1}])}),
   notes:'登場時把必要能量 1 以下的其他自己角色回手。沒有合格對象時回自己。能量線與更高必要能量不能選，也不能略過。'

@@ -12,9 +12,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  'MHA-2-040':Object.freeze({
   missing:'前排、每回合一次：選 1 張對手前排，本回合給予「BP 被減少時再 -500」以及「因 BP 0 以下退場時改放進移除區」。'
  }),
- 'MHA-2-041':Object.freeze({
-  missing:'登場時可付 1 AP。付了之後二選一：退場最多 1 張 BP 2500 以下的對手前排，或抽 2。'
- }),
  'MHA-2-042':Object.freeze({
   missing:'可突襲〈トガヒミコ〉並以活動狀態移到前排。登場時對手前排最多 1 張 BP-1000。前排起動每回合一次：對手前排 1 張 BP-1000，這張卡 BP+1000。'
  }),
@@ -23,9 +20,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  }),
  'MHA-2-044':Object.freeze({
   missing:'付 1 AP、每回合一次、只抽 1。現有的付 AP 起動還會強制增加發生能源，不能拿來代替這句。'
- }),
- 'MHA-2-045':Object.freeze({
-  missing:'付 2 張手牌、每回合一次，獲得狙擊，而且不能用狙擊指定 BP 3000 以上的角色。'
  }),
  'MHA-2-046':Object.freeze({
   missing:'突襲〈レディ・ナガン〉並活動移到前排。登場時本回合獲得狙擊。三個起動分別是休息加 BP 與衝擊 1、休息加攻擊時抽 1、付 1 張手牌把這張卡活動。'
@@ -40,18 +34,12 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  'MHA-2-051':Object.freeze({
   missing:'有移步。自己前排有其他角色時，這張卡在前排也產生能源。休息後選其他角色 BP+1000，再把自己回手。現有的前排產生能源沒有「有其他角色」這個條件。'
  }),
- 'MHA-2-052':Object.freeze({
-  missing:'看牌頂 4 張，公開最多 1 張必要能源 3 以下的角色。取到手牌就要把 1 張手牌放場外。其餘放牌底。'
- }),
  'MHA-2-053':Object.freeze({
   faq:Object.freeze(['Q1008']),
   missing:'可突襲〈麗日 お茶子〉並活動移到前排。攻擊時二選一，而且這張卡這個回合已經選過的效果不能再選：給 BP 4000 到 5000 的對手前排「不能阻擋」，或自己 BP+500。Q1008：兩張不同的這張卡可以選同一個選項。同一張卡在同一回合第二次攻擊才不能重選。'
  }),
  'MHA-2-054':Object.freeze({
   missing:'對手前排有 3 張以上時，手牌必要能源 -4 綠，不減 AP。不能放到能量列。這張卡 BP 6000 以上才有衝擊 1。自己的效果讓它登場時，本回合 BP+1000。現有的前排數量減免會連 AP 一起減，不能用。'
- }),
- 'MHA-2-055':Object.freeze({
-  missing:'看牌頂 4 張，公開最多 1 張必要能源 4 以上的角色。取到手牌就要把 1 張手牌放場外。其餘放牌底。'
  }),
  'MHA-2-056':Object.freeze({
   faq:Object.freeze(['Q1009']),
@@ -65,10 +53,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  }),
  'MHA-2-062':Object.freeze({
   missing:'自己手牌 3 張以下時才有傷害 2。阻擋這張卡攻擊的角色，阻擋時不發動。因與這張卡戰鬥而退場的角色，退場時不發動。'
- }),
- 'MHA-2-063':Object.freeze({
-  faq:Object.freeze(['Q1010']),
-  missing:'看牌頂 4 張，公開最多 1 張原本 BP 3500 以下的角色。取到手牌就要把 1 張手牌放場外。Q1010：原本 BP 是卡面左下的印刷 BP，不是當下 BP。'
  }),
  'MHA-2-066':Object.freeze({
   faq:Object.freeze(['Q1011']),

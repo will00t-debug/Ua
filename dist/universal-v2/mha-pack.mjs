@@ -19,7 +19,7 @@ const PROGRAM_KEYS=new Set([
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
- 'emptyOwnFieldHandEnergyDiscount'
+ 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
@@ -32,7 +32,7 @@ const BATTLE_KEYS=[
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
- 'emptyOwnFieldHandEnergyDiscount'
+ 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp'
 ];
 function serial(id){
  const match=/^MHA-1-(\d{3})$/.exec(id);

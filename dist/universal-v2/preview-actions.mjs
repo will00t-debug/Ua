@@ -221,6 +221,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
  'effect-place-hand-outside':'將 1 張手牌放到場外',
+ 'effect-optional-hand-outside':'可支付 1 張手牌到場外',
+ 'effect-except-hand-rest':'可支付手牌，從場外休息登場',
  'effect-life-order':'查看全部生命，並以任意順序重新排列',
  'effect-pay-hand-impact':'支付 1 張手牌到場外，這張角色本回合衝擊 +1',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
@@ -1099,6 +1101,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseFieldRestDraw':return action.mode==='rest'?'休息這張場域並抽 1 張':'不休息';
   case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
   case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
+  case 'chooseOptionalHandOutside':return action.uid===null?'不支付手牌':'將 '+name()+' 放到場外';
+  case 'chooseExceptHandRest':return action.mode==='decline'?'不支付':
+   action.mode==='ap'?'改付 1 AP':'將 '+name()+' 放到場外';
   case 'chooseReorderOwnLife':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();
   case 'chooseMoveOrSwap':return action.mode==='swap'?'交換一張前線與一張能源線角色':'把一張自己的角色移到另一列';
   case 'chooseOppLeave':return action.mode==='life'?'改為把自己 1 張生命放到場外':'不支付，照原本方式離場';
@@ -1128,7 +1133,8 @@ export function uiActionLabel(action,{pack,state}={}){
    '將 '+name()+' 放到場外，並使這張角色活動';
   case 'chooseNamedDuration':return action.uid===null?'不指定帕克':
    '選擇 '+name()+'，給予 BP+2000 與衝擊 1';
-  case 'chooseTopTakeOne':return '將 '+name()+' 加入手牌，其餘放到場外';
+  case 'chooseTopTakeOne':return action.uid===null?'不加入手牌，其餘放到場外':
+   '將 '+name()+' 加入手牌，其餘放到場外';
   case 'chooseRevealOptional':return action.uid===null?'不公開手牌':'公開 '+name()+' 並放到牌底';
   case 'chooseReferencedBp':return action.mode==='accept'?'視為 BP 增加':'維持原本 BP';
   case 'chooseOutsideReferenced':return action.mode==='hand'?'將 '+name()+' 加入手牌':
