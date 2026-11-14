@@ -1237,10 +1237,12 @@ function effectEntryGallery(room){
   const name=card?.name||card?.cardId||'可選擇角色';
   const img=card?el('img',{src:cardSrc(card)||'assets/mark.svg',
    alt:name,loading:'lazy',decoding:'async'}):null;
-  if(img)compactEffectArtwork(img);
+  if(img){
+   compactEffectArtwork(img);
    img.addEventListener('error',()=>{
-   if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
-  });
+    if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
+   });
+  }
   const tile=el(canEnter?'button':'div',{class:'online-inspection-card eligible',style:'box-sizing:border-box;max-width:112px;width:100%',
    ...(canEnter?{type:'button','aria-label':'選擇 '+name+' 登場',
     onClick:()=>{app.pick={uid,entryMode:null,options:null};app.zone=null;render();}}:{})},
