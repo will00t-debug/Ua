@@ -44,7 +44,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261114impactraid1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261114compactcards2'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -1010,6 +1010,13 @@ function choiceIsBoardEntry(room,index){
  const full=(room?.choices||[]).find(choice=>choice.index===index);
  return !!(full&&boardEntryMode(full));
 }
+// Keep controller-visible effect card art in thumbnail size on phones
+// even if dynamic CSS hasn't arrived yet.
+function compactEffectArtwork(img){
+ if(!img)return;
+ img.setAttribute('width','94');img.setAttribute('height','132');
+ img.setAttribute('style','display:block;box-sizing:border-box;width:100%;max-width:94px;max-height:132px;height:auto;object-fit:contain');
+}
 function onlineInspectionGallery(room){
  const inspection=room?.yourTurn?room.inspection:null;
  if(!inspection||!Array.isArray(inspection.cards)||!inspection.cards.length)return null;
@@ -1037,13 +1044,15 @@ function onlineInspectionGallery(room){
       document.querySelector('.online-table')?.scrollIntoView({block:'start',behavior:'smooth'});}})),
   el('p',{class:'online-inspection-hint',text:
    '以下只有你能看到。符合條件的卡可選擇；不符合條件仍顯示卡圖，但不能選擇。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,112px));gap:8px;align-content:start;max-height:42dvh;overflow:auto'});
  for(const card of shown){
   const enabled=card.actions.length>0;
   const picking=app.inspectPick===card.uid&&enabled;
   const img=el('img',{src:cardSrc(card)||'assets/mark.svg',
    alt:card.name||card.cardId,loading:'lazy',decoding:'async'});
-  img.addEventListener('error',()=>{
+  compactEffectArtwork(img);
+   img.addEventListener('error',()=>{
    if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
   });
   const entryActions=enabled?card.actions.map(action=>
@@ -1052,7 +1061,7 @@ function onlineInspectionGallery(room){
   const entrySelection=entry?boardEntrySelection(entryActions,card.uid):null;
   const entryLabel=!entry?'':entrySelection.needsMode?'選擇此角色 · 再選登場方式':
    entrySelection.raid.length?'選擇此角色 · 再點底板與登場格子':'選擇此角色 · 再點登場格子';
-  const choice=el('button',{type:'button',class:'online-inspection-card '+
+  const choice=el('button',{type:'button',style:'box-sizing:border-box;max-width:112px;width:100%',class:'online-inspection-card '+
    (enabled?'eligible':'ineligible')+(picking?' selected':''),
    disabled:!enabled,'aria-disabled':String(!enabled),
    'aria-label':(card.name||card.cardId)+(entry?'，'+entryLabel:
@@ -1110,14 +1119,16 @@ function onlineLifeOrderGallery(room){
   el('h2',{text:'選擇 LIFE 結算順序'}),
   el('p',{class:'online-inspection-hint',
    text:'這些 LIFE 已經公開。點選卡圖，決定先結算哪張；其他效果將繼續依合法順序處理。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,112px));gap:8px;align-content:start;max-height:42dvh;overflow:auto'});
  for(const {action,cardId} of cards){
   const img=el('img',{src:cardSrc({cardId})||'assets/mark.svg',
    alt:cardId,loading:'eager',decoding:'async'});
-  img.addEventListener('error',()=>{
+  compactEffectArtwork(img);
+   img.addEventListener('error',()=>{
    if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
   });
-  grid.append(el('button',{type:'button',
+  grid.append(el('button',{type:'button',style:'box-sizing:border-box;max-width:112px;width:100%',
    class:'online-inspection-card eligible',
    disabled:app.busy,'aria-label':action.label,
    onClick:()=>sendAction(action.index)},
@@ -1164,16 +1175,18 @@ function onlineVisibleChoiceGallery(room,choices){
   el('h2',{text:'效果：選擇對象'}),
   el('p',{class:'online-inspection-hint',text:
    '點卡圖完成這個選擇。沒有卡圖的按鈕是放棄或結算方式。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,112px));gap:8px;align-content:start;max-height:42dvh;overflow:auto'});
  const handled=new Set();
  for(const {card,actions} of groups.values()){
   const single=actions.length===1;
   const img=el('img',{src:cardSrc({cardId:card.cardId})||'assets/mark.svg',
    alt:card.name,loading:'lazy',decoding:'async'});
-  img.addEventListener('error',()=>{
+  compactEffectArtwork(img);
+   img.addEventListener('error',()=>{
    if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
   });
-  const tile=el(single?'button':'div',{class:'online-inspection-card eligible',
+  const tile=el(single?'button':'div',{class:'online-inspection-card eligible',style:'box-sizing:border-box;max-width:112px;width:100%',
    ...(single?{type:'button','aria-label':actions[0].label,disabled:app.busy,
     onClick:()=>sendAction(actions[0].index)}:{})},
    el('span',{class:'online-inspection-art'},img),
@@ -1211,7 +1224,8 @@ function effectEntryGallery(room){
   el('h2',{text:'效果：選擇角色'}),
   el('p',{class:'online-inspection-hint',text:
    '點卡圖選擇要登場的角色，再選合法模式及格子；若要加入手牌，按該角色下方的對應選項。'}));
- const grid=el('div',{class:'online-inspection-grid'});
+ const grid=el('div',{class:'online-inspection-grid',
+  style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,112px));gap:8px;align-content:start;max-height:42dvh;overflow:auto'});
  const handled=new Set();
  for(const uid of candidateUids){
   const match=visible.find(({card})=>card?.uid===uid&&card.cardId&&!card.faceDown);
@@ -1223,10 +1237,11 @@ function effectEntryGallery(room){
   const name=card?.name||card?.cardId||'可選擇角色';
   const img=card?el('img',{src:cardSrc(card)||'assets/mark.svg',
    alt:name,loading:'lazy',decoding:'async'}):null;
-  if(img)img.addEventListener('error',()=>{
+  if(img)compactEffectArtwork(img);
+   img.addEventListener('error',()=>{
    if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
   });
-  const tile=el(canEnter?'button':'div',{class:'online-inspection-card eligible',
+  const tile=el(canEnter?'button':'div',{class:'online-inspection-card eligible',style:'box-sizing:border-box;max-width:112px;width:100%',
    ...(canEnter?{type:'button','aria-label':'選擇 '+name+' 登場',
     onClick:()=>{app.pick={uid,entryMode:null,options:null};app.zone=null;render();}}:{})},
    img?el('span',{class:'online-inspection-art'},img):null,
