@@ -6,7 +6,7 @@ const read=path=>readFileSync(new URL('../dist/'+path,import.meta.url),'utf8');
 test('a pending effect cannot fill the phone with the source card illustration',()=>{
  const ui=read('universal-v2/online-battle-ui.mjs');
  const css=read('online-battle.css');
- assert.match(ui,/class:'online-compact-effect-dialog'/);
+ assert.match(ui,/class:'dialog pending panel online-compact-effect-dialog'/);
  assert.match(ui,/max-height:76dvh;overflow-y:auto/);
  assert.match(ui,/actions,effectSource,lookedAt/,'legal choices precede optional card preview');
  assert.match(ui,/max-width:76px;max-height:104px;object-fit:contain/);
