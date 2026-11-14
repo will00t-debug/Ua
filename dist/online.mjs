@@ -830,6 +830,7 @@ function zone(title,cards,engineSeat){
   const spoken=[card?.name||card?.cardId||'空位',place].filter(Boolean).join('，');
   if(battleUi)return battleUi.onlineBattleCard({el,card,src:cardSrc(card),classes,
    label:spoken,index,line:kind,placement:place,
+    definition:onlineCardDefinition(card?.cardId),
    attacking:!!card&&kind==='front'&&app.room.view.battle?.uid===card.uid,
    blocking:canBlock,click:clickable?()=>clickField(engineSeat,kind,index,card):null,
    inspect:card?()=>openOnlineCard(card):null,
