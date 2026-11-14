@@ -137,8 +137,8 @@ test('IMC stays 113 and MHA stays 77 ready with 32 pending',()=>{
  const editor=mhaEditorCards();
  assert.equal(Object.keys(imc.cards).length,113);
  assert.equal(editor.length,109);
- assert.equal(Object.keys(mha.cards).length,81);
- assert.equal(editor.filter(row=>!mha.cards[row.id]).length,28);
+ assert.equal(Object.keys(mha.cards).length,82);
+ assert.equal(editor.filter(row=>!mha.cards[row.id]).length,27);
  assert.equal(mha.cards['MHA-1-001'].impactNull,true);
  assert.equal(mha.cards['MHA-1-013'].effects.onPlay[0].then[0].line,'front');
  assert.equal(mha.cards['MHA-1-014'].raidName,'荼毘');

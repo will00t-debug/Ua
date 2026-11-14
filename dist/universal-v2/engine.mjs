@@ -19558,6 +19558,10 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'onceTuck'});
    if(ability?.op==='gainSameLineMains'&&!s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'gainLineMains'});
+   if(ability?.op==='frontOnceNameBuff'&&pl.front.some(x=>x?.uid===c.uid)&&
+    !originalEffectsDisabled(s,c)&&!s.mainAbilityUsedUids.includes(c.uid))
+    for(const target of field(pl))if(target.uid!==c.uid&&card(pack,target).type==='character')
+     out.push({type:'activate',uid:c.uid,mode:'nameScaledBuff',targetUid:target.uid});
    if(ability?.op==='onceOutsideBottomDamage'&&!s.mainAbilityUsedUids.includes(c.uid)&&
     pl.outside.length>=ability.count)
     out.push({type:'activate',uid:c.uid,mode:'outsideBottomDamage'});
@@ -20652,6 +20656,22 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('Same-line main copy is not legal');
     selected.gainedMains={turn:s.turn,stamp:selected.fieldEntryStamp,
      items:sameLineMainSnapshots(pack,s,p,selected,ability.excludeNames)};
+    s.mainAbilityUsedUids.push(onceUid);
+    break;
+   }
+   if(!gained&&ability.op==='frontOnceNameBuff'){
+    const target=field(pl).find(c=>c.uid===action.targetUid);
+    if(action.mode!=='nameScaledBuff'||location(s,p,selected.uid)?.line!=='front'||
+     originalEffectsDisabled(s,selected)||s.mainAbilityUsedUids.includes(onceUid)||
+     !target||target.uid===selected.uid||card(pack,target).type!=='character')
+     throw Error('Named BP grant is not legal');
+    const named=cardHasName(card(pack,target),ability.name,false);
+    target.buffs??=[];
+    target.buffs.push({bp:named?ability.namedBp:ability.bp,untilTurn:s.turn});
+    if(named){
+     target.sniperGranted={turn:s.turn,stamp:target.fieldEntryStamp};
+     s.mainAbilityUsedUids.push(onceUid+'|nameBuff|'+target.uid);
+    }
     s.mainAbilityUsedUids.push(onceUid);
     break;
    }
@@ -23104,7 +23124,15 @@ export function assertUniversalMatch(pack,s){
      field(s.players[owner]).some(c=>String(card(pack,c).name||'').includes('姫野'))&&
      (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.to==='hand'&&
       e.wasFaceDown===true&&e.sourceUid===physical.uid);
-    if(!turnOk||!(plain||capped||paidCapped||paidWinDraw||kjnSniper||kmrSniper||csmSniper))throw Error('Forged temporary physical battle grant');
+    const namedBuff=keys.length===2&&keys.every(k=>k==='turn'||k==='stamp')&&
+     [...field(s.players[owner]),...s.players[owner].outside,
+      ...(s.players[owner].removed||[])].some(src=>{
+      const ability=card(pack,src).mainAbility;
+      return ability?.op==='frontOnceNameBuff'&&ability.sniper===true&&
+       cardHasName(printed,ability.name,false)&&
+       s.mainAbilityUsedUids.includes(src.uid+'|nameBuff|'+physical.uid);
+     });
+    if(!turnOk||!(plain||capped||paidCapped||paidWinDraw||kjnSniper||kmrSniper||csmSniper||namedBuff))throw Error('Forged temporary physical battle grant');
     continue;
    }
    if(key==='attackWinDrawGranted'&&keys.length===3&&

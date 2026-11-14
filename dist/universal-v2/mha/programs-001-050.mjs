@@ -113,6 +113,13 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   opponentFieldColorsHandEnergyDiscount:Object.freeze({colors:Object.freeze(['green','red']), amount:1})
  }),
  'MHA-1-022':play(Object.freeze([{op:'bounceOwnOtherUnderEnergy', energy:1}])),
+ 'MHA-1-023':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'frontOnceNameBuff', frontOnly:true, oncePerTurn:true,
+   name:'ジェントル・クリミナル', bp:1000, namedBp:2000, sniper:true
+  })
+ }),
  'MHA-1-024':vanilla,
  'MHA-1-025':Object.freeze({
   ready:true, implementation:'dsl',
