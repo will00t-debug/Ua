@@ -1,0 +1,33 @@
+name: AI Raid Energy 23 Turn Counterfactual
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/ai-raid-energy-counterfactual-20261114.mjs'
+      - 'audit/ai-v3-raid-energy-counterfactual-manifest-20261114.json'
+      - '.github/workflows/ai-raid-energy-counterfactual-20261114.yml'
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Replay pinned decisions and alternative energy lines through next own turn
+        run: node scripts/ai-raid-energy-counterfactual-20261114.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: raid-energy-counterfactual-shard-${{ matrix.shard }}
+          path: raid-energy-counterfactual-shard-*.json
+          if-no-files-found: warn
