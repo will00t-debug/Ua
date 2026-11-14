@@ -1088,7 +1088,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
   case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
   case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
-  case 'chooseLifeOrder':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();
+  case 'chooseReorderOwnLife':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();
   case 'chooseMoveOrSwap':return action.mode==='swap'?'交換一張前線與一張能源線角色':'把一張自己的角色移到另一列';
   case 'chooseOppLeave':return action.mode==='life'?'改為把自己 1 張生命放到場外':'不支付，照原本方式離場';
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();

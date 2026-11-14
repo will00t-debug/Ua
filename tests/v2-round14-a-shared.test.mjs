@@ -6,6 +6,7 @@ import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalImpact,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
+import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 function card(extra){
  return {
@@ -172,16 +173,20 @@ test('reorderOwnLife shows every life card and can be skipped',()=>{
  const mine=universalPrivateChoices(opened.pack,opened.s,0);
  assert.deepEqual(mine.inspected.map(c=>c.uid),[first.uid,second.uid,third.uid]);
  assert.equal(universalPrivateChoices(opened.pack,opened.s,1),null);
- let skipped=act(opened.pack,structuredClone(opened.s),a=>a.type==='chooseLifeOrder'&&a.uid===null);
+ assert.equal(uiActionLabel({type:'chooseReorderOwnLife',uid:null},
+  {pack:opened.pack,state:opened.s}),'不改變生命的順序');
+ assert.equal(uiActionLabel({type:'chooseLifeOrder',uid:first.uid},
+  {pack:opened.pack,state:opened.s}).startsWith('先處理此公開 LIFE'),true);
+ let skipped=act(opened.pack,structuredClone(opened.s),a=>a.type==='chooseReorderOwnLife'&&a.uid===null);
  assert.deepEqual(skipped.players[0].life.map(c=>c.uid),[first.uid,second.uid,third.uid]);
  third.faceDown=false;
  opened.s.players[0].life=opened.s.players[0].life.filter(c=>c.uid!==third.uid);
  opened.s.players[0].outside.push(third);
  assert.equal(legal(opened.pack,opened.s).some(a=>a.uid===third.uid),false);
  assert.throws(()=>dispatchUniversalAction(opened.pack,opened.s,
-  {type:'chooseLifeOrder',uid:third.uid}),/not currently legal|Life card left/);
- opened.s=act(opened.pack,opened.s,a=>a.type==='chooseLifeOrder'&&a.uid===second.uid);
- opened.s=act(opened.pack,opened.s,a=>a.type==='chooseLifeOrder'&&a.uid===first.uid);
+  {type:'chooseReorderOwnLife',uid:third.uid}),/not currently legal|Life card left/);
+ opened.s=act(opened.pack,opened.s,a=>a.type==='chooseReorderOwnLife'&&a.uid===second.uid);
+ opened.s=act(opened.pack,opened.s,a=>a.type==='chooseReorderOwnLife'&&a.uid===first.uid);
  assert.deepEqual(opened.s.players[0].life.map(c=>c.uid),[second.uid,first.uid]);
  assert.equal(opened.s.pending,null);
  const one=open([card(lifeOrder)],{seed:143});

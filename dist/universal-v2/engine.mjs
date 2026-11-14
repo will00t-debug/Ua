@@ -11321,7 +11321,7 @@ function resolveChoice(s,a,pack){
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-life-order'){
-   if(a.type!=='chooseLifeOrder')throw Error('Illegal life order');
+   if(a.type!=='chooseReorderOwnLife')throw Error('Illegal life order');
    if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
    if(!q.uids.includes(a.uid)||q.order.includes(a.uid)||!p.life.some(c=>c.uid===a.uid))
     throw Error('Life card left before it could be ordered');
@@ -16610,8 +16610,8 @@ function legalPending(pack,s){
   if(q.kind==='effect-life-order'){
    const live=p.life.filter(c=>q.uids.includes(c.uid)&&!q.order.includes(c.uid));
    return [
-    ...(q.optional?[{type:'chooseLifeOrder',uid:null}]:[]),
-    ...live.map(c=>({type:'chooseLifeOrder',uid:c.uid}))
+    ...(q.optional?[{type:'chooseReorderOwnLife',uid:null}]:[]),
+    ...live.map(c=>({type:'chooseReorderOwnLife',uid:c.uid}))
    ];
   }
   if(q.kind==='effect-move-or-swap')return [
