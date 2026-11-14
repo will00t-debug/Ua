@@ -117,8 +117,8 @@ export function chooseHybridMainAction(pack,state,options={}){
 
 // Idle start and idle main ask hard-search-2. Move, attack, and every pending
 // stay on AI v3. Hard still chooses extraDraw or next; this router does not
-// forbid a draw. paidFront and settleLife are not applied. publicBlock is
-// forwarded only when the caller sets it.
+// forbid a draw. paidFront and settleLife are not applied. publicBlock and
+// scaleOutside are forwarded only when the caller sets them.
 export function chooseHybridStartHardAction(pack,state,options={}){
  const actor=options.actor??(state?.pending?.player??state?.active);
  const lane=hybridLane(state);
@@ -134,11 +134,13 @@ export function chooseHybridStartHardAction(pack,state,options={}){
  }else{
   resetAiV3Report();
   const forwarded={...options,actor,nodes,ms,seed,worlds:options.worlds??1};
-  // publicBlock is an explicit benchmark switch. The menu never sends it.
-  // settleLife and paidFront stay off on this route.
-  const publicBlock=options.factors?.publicBlock===true;
+  // publicBlock and scaleOutside are explicit benchmark switches. The menu
+  // never sends them. settleLife and paidFront stay off on this route.
+  const kept={};
+  if(options.factors?.publicBlock===true)kept.publicBlock=true;
+  if(options.factors?.scaleOutside===true)kept.scaleOutside=true;
   delete forwarded.factors;
-  if(publicBlock)forwarded.factors={publicBlock:true};
+  if(Object.keys(kept).length)forwarded.factors=kept;
   action=chooseAiV3Action(pack,state,forwarded);
  }
  try{noteHybridDecision(pack,state,actor,action,source==='hard'?lastHardAiTrace():lastAiV3Trace(),lane);}

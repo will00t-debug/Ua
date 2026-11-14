@@ -7,7 +7,7 @@ import {actorObservation} from './observation.mjs';
 import {beliefWorlds} from './belief.mjs';
 import {selectCandidates,scoreLine,same,rankLegal,isSafeAction} from './beam.mjs';
 import {moveDevelopment,bindProbeBudget,bindMeter,bindVariant,cachedMoveDevelopment,situationalBackup,preferEnergyGenerator,preferConfirmedChoices,confirmedChoiceTrace,evidencedChoice,frontEvidenceChoice,mainFrontEvidenceChoice,generatorEvidenceChoice,laterEnergyCandidates,searchFactors,setFrontCoverage,normalizeFactors,factorsForVariant} from './strategy.mjs';
-import {keepScore,battleWindowAction} from './eval.mjs';
+import {keepScore,battleWindowAction,scaledOutsideAction} from './eval.mjs';
 import {blendRoot,learnBonus,SEARCH_PRIOR_GAP} from './prior.mjs';
 import {chooseIsmctsAction} from './ismcts.mjs';
 
@@ -416,6 +416,15 @@ export function chooseAiV3Action(pack,state,options={}){
   const legal=legalUniversalActions(pack,state);
   if(!legal.length)return finish(null,'no-legal',{actor},started);
   if(legal.length===1){report.forced++;return finish(legal[0],'forced',{actor},started);}
+  if(options.factors?.scaleOutside===true){
+   const scaled=bindVariant(null,()=>scaledOutsideAction(pack,state,actor),options.factors);
+   if(scaled){
+    const exact=legal.find(item=>same(item,scaled));
+    if(exact)return bindVariant(null,()=>finish(exact,'scale-outside',{
+     actor,fallback:false,nodesUsed:0,scaleOutside:true
+    },started),options.factors);
+   }
+  }
   if(state.pending?.kind==='opening-mulligan'||ORDER_KINDS.has(state.pending?.kind)){
    report.deferred++;
    const deferred=chooseStrengthenedHardAction(pack,state,{ms:10000,nodes:8,seed:options.seed??1});
