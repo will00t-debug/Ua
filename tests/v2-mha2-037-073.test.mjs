@@ -12,12 +12,12 @@ import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
  import {newUniversalMatch, legalUniversalActions, dispatchUniversalAction,
  assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices,
- universalCardEnergy
+ universalCardEnergy, universalAttackDamage
 } from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-2-039','MHA-2-041','MHA-2-045','MHA-2-047','MHA-2-049','MHA-2-052','MHA-2-055',
- 'MHA-2-058','MHA-2-059','MHA-2-060','MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065',
- 'MHA-2-071','MHA-2-073'];
+const READY=['MHA-2-037','MHA-2-039','MHA-2-041','MHA-2-043','MHA-2-044','MHA-2-045','MHA-2-047',
+ 'MHA-2-048','MHA-2-049','MHA-2-052','MHA-2-055','MHA-2-058','MHA-2-059','MHA-2-060',
+ 'MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065','MHA-2-071','MHA-2-073'];
 const real=createMha2Pack();
 const set1Pack=createMhaV2Pack();
 const byId=new Map(MHA2_CARDS_037_073.map(card=>[card.id,card]));
@@ -46,7 +46,7 @@ function readyCard(id){
  }
  return card;
 }
-function shell(){
+function shell(extras=[]){
  const ready=READY.map(readyCard);
  const bodies=[
   ...ready,
@@ -64,17 +64,25 @@ function shell(){
   fixture({id:'COST5', name:'能源五', color:'green', energy:5, bp:2000}),
   fixture({id:'COST3', name:'能源三', color:'green', energy:3, bp:2000}),
   fixture({id:'IMPACT', name:'衝擊', color:'red', bp:5000, printedImpact:1, implementation:'dsl'}),
-  fixture({id:'PLAIN', name:'路人', bp:3000})
+  fixture({id:'PLAIN', name:'路人', bp:3000}),
+  ...extras
  ];
  for(let n=1;n<=24;n++)
   bodies.push(fixture({id:'FILL-'+String(n).padStart(2,'0'), name:'填'+n}));
  return createUniversalPack({id:'mha2-037', version:'mha2-037', cards:bodies});
 }
-function open(seed){
- const pack=shell();
+function open(seed, extras=[]){
+ const pack=shell(extras);
  const deck={};
  for(const id of Object.keys(pack.cards))deck[id]=1;
  for(const id of READY)deck[id]=2;
+ for(const id of ['MHA-2-037','MHA-2-043','MHA-2-044','MHA-2-048','MHA-2-064'])deck[id]=1;
+ const spare=READY.filter(id=>deck[id]===2);
+ for(const extra of extras){
+  const id=spare.pop();
+  if(id)deck[id]=1;
+  deck[extra.id]=1;
+ }
  let total=Object.values(deck).reduce((sum,n)=>sum+n,0);
  for(const id of Object.keys(deck)){
   if(total<=50)break;
@@ -657,4 +665,138 @@ test('MHA-2-060 cuts two green in hand and adds energy beside another four-cost 
  paid.s=act(paid.pack,paid.s,a=>a.type==='play'&&a.uid===copy.uid&&a.line==='front');
  assert.equal(paid.s.players[0].front.some(card=>card?.uid===copy.uid),true);
  assert.equal(assertUniversalMatch(paid.pack,paid.s),true);
+});
+
+test('MHA-2-037 takes a name or trait without discarding, then readies one AP',()=>{
+ const yel=fixture({id:'YEL', name:'黃燃料', color:'yellow', gen:2});
+ const deku=fixture({id:'DEKU', name:'緑谷 出久', color:'yellow', bp:2000});
+ const ofa=fixture({id:'OFA', name:'繼承', color:'yellow', traits:['ワン・フォー・オール']});
+ const look=[yel,deku,ofa];
+ let {pack,s}=open(2037,look);
+ clearLines(s,0);
+ seat(s,0,'YEL','energy',0,true);
+ readyAp(s);
+ const resting=s.players[0].apCards.find(card=>card.inPlay);
+ resting.ready=false;
+ const event=hold(s,'MHA-2-037');
+ const named=pull(s,0,'DEKU');
+ const trait=pull(s,0,'OFA');
+ const plain=pull(s,0,'PLAIN');
+ const other=pull(s,0,'NAGANT');
+ s.players[0].deck.unshift(other,plain,trait,named);
+ const handBefore=s.players[0].hand.map(card=>card.uid);
+ s=act(pack,s,action=>action.type==='event'&&action.uid===event.uid);
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.equal(s.pending.discard,false);
+ assert.equal(shownUids(pack,s).length,4);
+ assert.equal(s.pending.choices.includes(named.uid),true);
+ assert.equal(s.pending.choices.includes(trait.uid),true);
+ assert.equal(s.pending.choices.includes(plain.uid),false);
+ s=act(pack,s,action=>action.type==='chooseTopFiltered'&&action.uid===named.uid);
+ s=order(pack,s);
+ assert.equal(s.pending.kind,'effect-recover-ap');
+ assert.equal(s.players[0].hand.some(card=>card.uid===named.uid),true);
+ assert.equal(s.players[0].outside.some(card=>card.uid!==event.uid&&handBefore.includes(card.uid)),false);
+ s=act(pack,s,action=>action.type==='chooseApRecovery'&&action.uid===resting.uid);
+ assert.equal(s.players[0].apCards.some(card=>card.uid===resting.uid&&card.ready),true);
+ assert.equal(s.pending,null);
+
+ let skipped=open(2038,look);
+ clearLines(skipped.s,0);
+ seat(skipped.s,0,'YEL','energy',0,true);
+ readyAp(skipped.s);
+ const asleep=skipped.s.players[0].apCards.find(card=>card.inPlay);
+ asleep.ready=false;
+ const again=hold(skipped.s,'MHA-2-037');
+ const left=pull(skipped.s,0,'DEKU');
+ skipped.s.players[0].deck.unshift(pull(skipped.s,0,'PLAIN'),left);
+ skipped.s=act(skipped.pack,skipped.s,action=>action.type==='event'&&action.uid===again.uid);
+ skipped.s=act(skipped.pack,skipped.s,action=>action.type==='chooseTopFiltered'&&action.uid===null);
+ skipped.s=order(skipped.pack,skipped.s);
+ assert.equal(skipped.s.pending.kind,'effect-recover-ap');
+ assert.equal(skipped.s.players[0].hand.some(card=>card.uid===left.uid),false);
+ skipped.s=act(skipped.pack,skipped.s,action=>action.type==='chooseApRecovery'&&action.uid===null);
+ assert.equal(skipped.s.players[0].apCards.some(card=>card.uid===asleep.uid&&card.ready),false);
+});
+
+test('MHA-2-043 discards only when the look adds a card, then rests and retires to draw',()=>{
+ const afo=fixture({id:'AFO', name:'オール・フォー・ワン', color:'purple', bp:2000});
+ let {pack,s}=open(2043,[afo]);
+ clearLines(s,0);
+ seat(s,0,'PURPLE','energy',0,true);
+ const self=hold(s,'MHA-2-043');
+ const named=pull(s,0,'AFO');
+ const plain=pull(s,0,'PLAIN');
+ s.players[0].deck.unshift(plain,pull(s,0,'MID'),pull(s,0,'HIGH'),named);
+ s=act(pack,s,action=>action.type==='play'&&action.uid===self.uid&&action.line==='front');
+ assert.equal(s.pending.choices.includes(named.uid),true);
+ assert.equal(s.pending.choices.includes(plain.uid),false);
+ s=act(pack,s,action=>action.type==='chooseTopFiltered'&&action.uid===named.uid);
+ s=order(pack,s);
+ assert.equal(s.pending.kind,'effect-discard');
+ const spare=s.players[0].hand.find(card=>card.uid!==named.uid);
+ s=act(pack,s,action=>action.type==='chooseDiscard'&&action.uid===spare.uid);
+ assert.equal(s.players[0].outside.some(card=>card.uid===spare.uid),true);
+ assert.equal(s.players[0].hand.some(card=>card.uid===named.uid),true);
+ const body=s.players[0].front.find(card=>card?.uid===self.uid);
+ body.ready=true;
+ const parked=s.players[0].hand.length;
+ s=act(pack,s,action=>action.type==='activate'&&action.uid===body.uid&&
+  action.mode==='restRetireDraw');
+ assert.equal(s.players[0].outside.some(card=>card.uid===body.uid),true);
+ assert.equal(s.players[0].front.some(card=>card?.uid===body.uid),false);
+ assert.equal(s.pending.kind,'effect-discard');
+ const next=s.players[0].hand[0];
+ s=act(pack,s,action=>action.type==='chooseDiscard'&&action.uid===next.uid);
+ assert.equal(s.players[0].outside.some(card=>card.uid===next.uid),true);
+ assert.equal(s.players[0].hand.length,parked);
+ assert.equal(s.pending,null);
+
+ let passed=open(2044,[afo]);
+ clearLines(passed.s,0);
+ seat(passed.s,0,'PURPLE','energy',0,true);
+ const doctor=hold(passed.s,'MHA-2-043');
+ const hidden=pull(passed.s,0,'AFO');
+ passed.s.players[0].deck.unshift(pull(passed.s,0,'PLAIN'),hidden);
+ const outside=passed.s.players[0].outside.length;
+ passed.s=act(passed.pack,passed.s,action=>action.type==='play'&&action.uid===doctor.uid&&
+  action.line==='front');
+ passed.s=act(passed.pack,passed.s,action=>action.type==='chooseTopFiltered'&&action.uid===null);
+ passed.s=order(passed.pack,passed.s);
+ assert.equal(passed.s.pending,null);
+ assert.equal(passed.s.players[0].hand.some(card=>card.uid===hidden.uid),false);
+ assert.equal(passed.s.players[0].outside.length,outside);
+});
+
+test('MHA-2-044 pays one AP to draw and does not gain energy',()=>{
+ let {pack,s}=open(2045);
+ clearLines(s,0);
+ const self=seat(s,0,'MHA-2-044','energy',0,false);
+ readyAp(s);
+ const before=s.players[0].hand.length;
+ const energy=universalCardEnergy(pack,s,0,self);
+ s=act(pack,s,action=>action.type==='activate'&&action.uid===self.uid&&action.mode==='payApDraw');
+ const liveCard=s.players[0].energy.find(card=>card?.uid===self.uid);
+ assert.equal(s.players[0].hand.length,before+1);
+ assert.equal(s.players[0].apCards.filter(card=>card.inPlay&&card.ready).length,
+  s.players[0].apCards.filter(card=>card.inPlay).length-1);
+ assert.equal((liveCard.buffs||[]).some(buff=>buff.energy),false);
+ assert.equal(universalCardEnergy(pack,s,0,liveCard),energy);
+ assert.equal(legal(pack,s).some(action=>action.type==='activate'&&action.uid===self.uid),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('MHA-2-048 gains damage 2 only while six Shie Hassaikai cards are outside',()=>{
+ const shie=[1,2,3,4,5,6].map(n=>fixture({
+  id:'SHIE-'+n, name:'死穢'+n, color:'purple', traits:['死穢八斎會']
+ }));
+ let {pack,s}=open(2048,shie);
+ clearLines(s,0);
+ const self=seat(s,0,'MHA-2-048','front',0,true);
+ const bodies=shie.map(card=>pull(s,0,card.id));
+ s.players[0].outside.push(...bodies.slice(0,5));
+ assert.equal(universalAttackDamage(pack,s,self),1);
+ s.players[0].outside.push(bodies[5]);
+ assert.equal(universalAttackDamage(pack,s,self),2);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });

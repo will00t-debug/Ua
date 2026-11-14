@@ -122,9 +122,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-40');
- assert.equal(READY.length,24);
- assert.equal(Object.keys(pack.cards).length,40);
+ assert.equal(pack.version,'mha2-ex06-ready-46');
+ assert.equal(READY.length,26);
+ assert.equal(Object.keys(pack.cards).length,46);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
@@ -734,8 +734,110 @@ test('MHA-2-034 discounts each One For All name and must retire a front characte
  assert.deepEqual(capped.s.pending.choices,[only.uid]);
 });
 
+test('MHA-2-003 adds one yellow at three names and draws only after the trait card leaves',()=>{
+ const names=['MHA-2-029','MHA-2-030','MHA-2-031'].map(face);
+ const guest={
+  id:'OFA-GUEST',name:'客',color:'yellow',type:'character',energy:1,ap:1,
+  bp:1000,gen:1,traits:['ワン・フォー・オール'],trigger:null,implementation:'vanilla'
+ };
+ let {pack,s}=open(2003,[...names,guest]);
+ s=reach(pack,s,0,'main');
+ const self=seat(s,0,'MHA-2-003','energy',0,false);
+ assert.equal(universalEnergyByColor(pack,s,0).yellow,1);
+ const fields=names.map(card=>pull(s,0,card.id));
+ s.players[0].outside.push(fields[0],fields[1]);
+ assert.equal(universalEnergyByColor(pack,s,0).yellow,1);
+ s.players[0].outside.push(fields[2]);
+ assert.equal(universalEnergyByColor(pack,s,0).yellow,2);
+ fields[2].faceDown=true;
+ assert.equal(universalEnergyByColor(pack,s,0).yellow,1);
+ fields[2].faceDown=false;
+ assert.equal(universalEnergyByColor(pack,s,0).yellow,2);
+ const plain=hold(s,0,'MHA-2-006');
+ self.ready=true;
+ assert.equal(legalUniversalActions(pack,s).some(action=>
+  action.type==='activate'&&action.uid===self.uid),false);
+ const body=hold(s,0,'OFA-GUEST');
+ s=act(pack,s,action=>action.type==='activate'&&action.uid===self.uid&&
+  action.mode==='restTraitOutside');
+ assert.equal(s.players[0].energy.find(card=>card?.uid===self.uid).ready,false);
+ assert.equal(s.pending.kind,'effect-trait-hand-outside');
+ assert.deepEqual(s.pending.choices,[body.uid]);
+ assert.equal(universalPrivateChoices(pack,s,0).options.some(option=>
+  option.card?.cardId==='OFA-GUEST'),true);
+ assert.throws(()=>dispatchUniversalAction(pack,s,{type:'chooseTraitHandOutside',uid:plain.uid}),
+  /not currently legal|Trait hand/);
+ const before=s.players[0].hand.length;
+ s=act(pack,s,{type:'chooseTraitHandOutside',uid:body.uid});
+ assert.equal(s.players[0].outside.some(card=>card.uid===body.uid),true);
+ assert.equal(s.players[0].hand.some(card=>card.uid===plain.uid),true);
+ assert.equal(s.players[0].hand.length,before);
+ assert.equal(s.pending,null);
+});
+
+test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait character onto energy',()=>{
+ const names=['MHA-2-029','MHA-2-030','MHA-2-031','MHA-2-032','MHA-2-033'].map(face);
+ const guest={
+  id:'OFA-GUEST',name:'客',color:'yellow',type:'character',energy:1,ap:1,
+  bp:1000,gen:1,traits:['ワン・フォー・オール'],trigger:null,implementation:'vanilla'
+ };
+ const banned={
+  id:'LINE-BAN',name:'禁',color:'yellow',type:'character',energy:1,ap:1,
+  bp:1000,gen:0,traits:['ワン・フォー・オール'],trigger:null,
+  implementation:'dsl',energyLineForbidden:true
+ };
+ let scene=open(2026,[...names,guest,banned]);
+ scene.s=reach(scene.pack,scene.s,0,'main');
+ fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ const self=hold(scene.s,0,'MHA-2-026');
+ const printed=scene.pack.cards['MHA-2-026'];
+ const playable=()=>legalUniversalActions(scene.pack,scene.s).some(action=>
+  action.type==='play'&&action.uid===self.uid);
+ assert.equal(printed.printedImpact,1);
+ assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'hand'),8);
+ assert.equal(playable(),false);
+ const fields=names.map(card=>pull(scene.s,0,card.id));
+ scene.s.players[0].outside.push(...fields);
+ assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'hand'),3);
+ assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'life'),8);
+ assert.equal(playable(),true);
+ const ally=seat(scene.s,0,'MHA-2-004','front',0,true);
+ assert.equal(playable(),false);
+ scene.s.players[0].front[0]=null;
+ scene.s.players[0].removed.push(ally);
+ const body=hold(scene.s,0,'OFA-GUEST');
+ const blocked=hold(scene.s,0,'LINE-BAN');
+ scene.s=act(scene.pack,scene.s,action=>action.type==='play'&&action.uid===self.uid&&
+  action.line==='front');
+ assert.equal(scene.s.pending.kind,'effect-named-zone-entry');
+ assert.equal(scene.s.pending.trait,'ワン・フォー・オール');
+ assert.equal(scene.s.pending.handChoices.includes(body.uid),true);
+ assert.equal(scene.s.pending.handChoices.includes(blocked.uid),false);
+ assert.equal(scene.s.pending.outsideChoices.includes(fields[0].uid),false);
+ const entered=scene.s.players[0].front.find(card=>card?.uid===self.uid);
+ assert.equal(universalImpact(scene.pack,scene.s,entered),1);
+ scene.s=act(scene.pack,scene.s,action=>action.type==='chooseNamedZoneDeploy'&&
+  action.uid===body.uid&&action.line==='energy');
+ const rested=scene.s.players[0].energy.find(card=>card?.uid===body.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(scene.s.players[0].hand.some(card=>card.uid===blocked.uid),true);
+ assert.equal(scene.s.pending,null);
+
+ let skipped=open(2027,[...names,guest]);
+ skipped.s=reach(skipped.pack,skipped.s,0,'main');
+ fuel(skipped.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ skipped.s.players[0].outside.push(...names.map(card=>pull(skipped.s,0,card.id)));
+ const waiting=hold(skipped.s,0,'MHA-2-026');
+ const staying=hold(skipped.s,0,'OFA-GUEST');
+ skipped.s=act(skipped.pack,skipped.s,action=>action.type==='play'&&action.uid===waiting.uid&&
+  action.line==='front');
+ skipped.s=act(skipped.pack,skipped.s,action=>action.type==='chooseNamedZoneDeploy'&&action.uid===null);
+ assert.equal(skipped.s.players[0].hand.some(card=>card.uid===staying.uid),true);
+ assert.equal(skipped.s.pending,null);
+});
+
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
- assert.equal(PENDING.length,12);
+ assert.equal(PENDING.length,10);
  assert.deepEqual(Object.keys(MHA2_REQUESTS_001_036).sort(),[...PENDING].sort());
  for(const id of PENDING){
   const card=byId.get(id);

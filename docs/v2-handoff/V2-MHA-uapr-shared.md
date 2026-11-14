@@ -36,3 +36,62 @@ MHA-2-022 沒有新操作。登場禁止用 `playBanOtherTrait`，移步用 `ste
 `then` 只有三種：抽 1 再放 1 張手牌到場外，然後最多活動 1 張 AP；看牌頂 4 張，公開最多 2 張指定名字以外的卡，其餘放牌底；最多退場 1 張對手前排。受益是 MHA-2-021、023、025。
 
 看牌用 `searchTopExceptNameBottom`。視窗裡的每一張都留在畫面上，被排除的名字不能選。退場上限用 `retireOppFrontUnderBp` 的 `traitExceptName`：自己場上該特徵、名字不是例外的正面角色達到 `min` 張，上限改成 `bonusBp`。綠谷自己不算進這 3 張。
+
+## 第二彈這輪可直接抄的句子
+
+新操作都不看卡號。整句對得上才標 ready。下面是封閉形狀。
+
+`restTraitHandOutsideDraw` 是角色的 `mainAbility`。`trait` 是一個特徵，`draw` 只能是 1。主要階段、這張卡活動，而且手牌裡有該特徵，才可以發動。休息後必須選 1 張該特徵手牌放到場外，然後才抽 1。沒有合格手牌就不能發動。不能選的手牌不出現在選項裡。
+
+搭配既有被動 `extraEnergy`，條件 `ownDistinctTraitNames`、`min:3`、`turn:'any'`、`zone:'fieldOutside'`、`excludeSelf:false`。受益是 MHA-2-003。
+
+```js
+mainAbility:{op:'restTraitHandOutsideDraw', trait:'ワン・フォー・オール', draw:1}
+passiveBonuses:[{extraEnergy:1, condition:{
+  kind:'ownDistinctTraitNames', turn:'any', zone:'fieldOutside',
+  excludeSelf:false, trait:'ワン・フォー・オール', min:3
+}}]
+```
+
+`deployTraitFromZones` 只放在登場時。`trait`、`zones`（`hand` 與／或 `outside`）、`line`（`front`、`energy` 或 `any`）、`ready`、`optional:true`、`max:1`。最多選 1 張該特徵的角色，從指定區域休息或活動放到指定線。可以不放。不能放上那條線的角色不進選項。登場後照常發那張卡自己的登場時。受益是 MHA-2-026。026 另外用既有的 `playBanOtherTrait`、`distinctNameHandEnergy`、`printedImpact:1`。
+
+```js
+effects:{onPlay:[{
+  op:'deployTraitFromZones', trait:'ワン・フォー・オール',
+  zones:['hand','outside'], line:'energy', ready:false, optional:true, max:1
+}]}
+```
+
+`searchTopOneBottomDiscard` 可以是一個名字加一個特徵、`logic:'any'`、`discard:false`。看牌頂，公開最多 1 張符合名字或特徵的卡，其餘放牌底，不棄手牌。視窗裡的每一張都留在畫面上。後面接既有 `{op:'recoverAp', count:1}` 時，不管有沒有拿到，都最多活動 1 張 AP。受益是 MHA-2-037。
+
+```js
+effects:{onPlay:[
+  {op:'searchTopOneBottomDiscard', count:4, logic:'any', discard:false,
+   filters:[{field:'name', value:'緑谷 出久'}, {field:'trait', value:'ワン・フォー・オール'}]},
+  {op:'recoverAp', count:1}
+]}
+```
+
+兩個名字、`logic:'any'`、不寫 `discard`，仍是既有的「有拿才棄 1 張手牌」。受益是 MHA-2-043 的登場時。
+
+`restRetireThen` 是角色的 `mainAbility`。`then` 目前只有 `{op:'drawDiscard', count:1}`。主要階段、這張卡活動，而且牌庫或手牌至少有 1 張，才可以發動。先休息，退場自己，然後抽 1，再把 1 張手牌放到場外。受益是 MHA-2-043。
+
+```js
+mainAbility:{op:'restRetireThen', then:[{op:'drawDiscard', count:1}]}
+```
+
+`payApDraw` 是角色的 `mainAbility`。`oncePerTurn:true`、`draw:1`。主要階段、這張卡這個回合還沒用過、有 1 張活動 AP，才可以發動。付 1 AP 後只抽 1。不休息，也不加發生能源。前排與能量列都能發動。受益是 MHA-2-044。
+
+```js
+mainAbility:{op:'payApDraw', oncePerTurn:true, draw:1}
+```
+
+`ownOutsideTraitCountAtLeast` 是被動條件。`turn` 是 `own`、`opponent` 或 `any`，`trait`，`min`。只數自己場外有該特徵的卡，不分角色或場域。蓋在卡下的牌、手牌、移除區與對手場外不算。搭配既有 `attackDamage:2`。受益是 MHA-2-048。
+
+```js
+passiveBonuses:[{attackDamage:2, condition:{
+  kind:'ownOutsideTraitCountAtLeast', turn:'any', trait:'死穢八斎會', min:6
+}}]
+```
+
+這輪沒有把剩下的句子標成 ready。那些整句仍然對不上現有操作。

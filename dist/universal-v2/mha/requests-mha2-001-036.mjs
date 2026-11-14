@@ -4,9 +4,6 @@
 // FAQ ids are the official EX06BT list already stored on the catalog row.
 // A request is not an FAQ acceptance.
 export const MHA2_REQUESTS_001_036=Object.freeze({
- 'MHA-2-003':Object.freeze({
-  missing:'場上與場外不同卡名的ワン・フォー・オール合計 3 種以上時，這張角色發生能源 +1 黃。起動主要：休息，把 1 張該特徵手牌放到場外，做到才抽 1。現有被動能源不算不同卡名，也沒有這句休息後棄特徵再抽。'
- }),
  'MHA-2-011':Object.freeze({
   faq:Object.freeze(['Q998']),
   missing:'在前排期間，自己場上的〈緑谷 出久〉不被對手寫有「選び」的效果選取。Q998 是選取範圍，不是登場時授予到下回合。沒有「在場期間保護指定名字」的被動。'
@@ -20,9 +17,6 @@ export const MHA2_REQUESTS_001_036=Object.freeze({
  }),
  'MHA-2-024':Object.freeze({
   missing:'場上有其他 A組 時不能從手牌登場。登場時本回合獲得「每回合一次，自己的ワン・フォー・オール退場時最多抽 1」。攻擊時若不同卡名的該特徵合計 3 種以上，可付 1 AP，本回合獲得衝擊 1。顏色觸發已有共用句。登場禁止已有 playBanOtherTrait。退場抽牌與攻擊付費沒有對得上的整句。'
- }),
- 'MHA-2-026':Object.freeze({
-  missing:'場上有其他 A組 時不能從手牌登場。場上與場外每種不同卡名的ワン・フォー・オール，讓手牌必要能源 -1 黃。有衝擊 1。登場時可從手牌或場外把該特徵最多 1 張休息放到能量列。登場禁止已有 playBanOtherTrait。每種名字減手牌能源已有 distinctNameHandEnergy。缺的是從手牌或場外休息放到能量列。'
  }),
  'MHA-2-029':Object.freeze({
   faq:Object.freeze(['Q1004']),

@@ -383,6 +383,15 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    return condition.names.some(name=>cardHasName(d,name));
   }).length>=condition.min;
  }
+ if(condition.kind==='ownOutsideTraitCountAtLeast'){
+  // 自分の場外に［特徴］がN枚以上. Any card with the trait counts, including
+  // a field. The character asking is on the field, so it is not outside.
+  // Facedown under-cards and the opponent's outside are not this zone.
+  if(condition.turn==='own'&&s.active!==owner)return false;
+  if(condition.turn==='opponent'&&s.active===owner)return false;
+  return s.players[owner].outside.filter(c=>
+   cardHasTrait(printed(c),condition.trait)).length>=condition.min;
+ }
  if(condition.kind==='ownNameOrRaidBase'){
   // 〈名前〉 on an own field character, or that character's レイド元.
   // The buried layer keeps its original printed name only (Q50).
