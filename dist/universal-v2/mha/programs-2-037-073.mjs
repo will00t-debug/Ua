@@ -93,6 +93,18 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
   ready:true, implementation:'dsl', emptyOwnFieldHandEnergyDiscount:2,
   notes:'自己場上沒有卡時，手牌必要能源 -2 綠。場上有卡、或從生命打出，都不減。'
  }),
+ 'MHA-2-060':Object.freeze({
+  ready:true, implementation:'dsl',
+  printedHandEnergyDiscount:2,
+  passiveBonuses:Object.freeze([Object.freeze({
+   extraEnergy:1,
+   condition:Object.freeze({
+    kind:'ownOtherRequiredEnergyAtLeast', turn:'any', zone:'field',
+    excludeSelf:true, minEnergy:4, min:1
+   })
+  })]),
+  notes:'手牌必要能源 -2 綠。場上另有必要能源 4 以上的角色時，發生能源 +1 綠。自己不算，生命區不減。'
+ }),
  'MHA-2-061':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onPlay:Object.freeze([{

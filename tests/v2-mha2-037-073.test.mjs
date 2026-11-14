@@ -11,10 +11,12 @@ import {MHA2_PROGRAMS_037_073} from '../dist/universal-v2/mha/programs-2-037-073
 import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
  import {newUniversalMatch, legalUniversalActions, dispatchUniversalAction,
- assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices
+ assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices,
+ universalCardEnergy, universalEnergyByColor
 } from '../dist/universal-v2/engine.mjs';
 
 const READY=['MHA-2-039','MHA-2-041','MHA-2-045','MHA-2-047','MHA-2-049','MHA-2-052','MHA-2-055',
+ 'MHA-2-060',
  'MHA-2-058','MHA-2-059','MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065',
  'MHA-2-071','MHA-2-073'];
 const real=createMha2Pack();
@@ -625,4 +627,39 @@ test('MHA-2-045 pays two hand cards for sniper that cannot name BP 3000 or more'
  assert.equal(attacks.some(a=>a.targetUid===cap.uid),true);
  assert.equal(attacks.some(a=>a.targetUid===low.uid),false);
  assert.equal(assertUniversalMatch(pack,swinging),true);
+});
+
+test('MHA-2-060 cuts two hand energy and adds green energy beside required energy 4',()=>{
+ let {pack,s}=open(2060);
+ clearLines(s,0);
+ const self=seat(s,0,'MHA-2-060','energy',0,true);
+ const printed=pack.cards['MHA-2-060'];
+ assert.equal(real.cards['MHA-2-060'].printedHandEnergyDiscount,2);
+ assert.equal(zoneRequiredEnergy(pack,s,0,printed,'hand'),2);
+ assert.equal(zoneRequiredEnergy(pack,s,0,printed,'life'),4);
+ assert.equal(universalCardEnergy(pack,s,0,self),1);
+ const low=seat(s,0,'COST3','front',0,true);
+ assert.equal(universalCardEnergy(pack,s,0,self),1);
+ low.buffs=[{requiredEnergy:2,untilTurn:s.turn}];
+ assert.equal(universalCardEnergy(pack,s,0,self),2);
+ low.buffs=[];
+ const high=seat(s,0,'COST4','energy',1,true);
+ assert.equal(universalCardEnergy(pack,s,0,self),2);
+ assert.equal(universalEnergyByColor(pack,s,0).green,3);
+ s.players[0].front[0]=null;
+ s.players[0].removed.push(low);
+ s.players[0].energy[1]=null;
+ s.players[0].removed.push(high);
+ assert.equal(universalCardEnergy(pack,s,0,self),1);
+ const other=seat(s,0,'MHA-2-060','front',0,true);
+ assert.equal(universalCardEnergy(pack,s,0,self),2);
+ assert.equal(universalCardEnergy(pack,s,0,other),0);
+ clearLines(s,0);
+ seat(s,0,'PURPLE','energy',0,true);
+ readyAp(s);
+ const hand=hold(s,'MHA-2-060');
+ assert.equal(legal(pack,s).some(a=>a.type==='play'&&a.uid===hand.uid),false);
+ seat(s,0,'GREEN','energy',1,true);
+ assert.equal(legal(pack,s).some(a=>a.type==='play'&&a.uid===hand.uid&&a.line==='energy'),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
