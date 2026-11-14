@@ -1,10 +1,11 @@
 // EX06BT and the point cards share one catalog. Set 1's released pack stays 109.
-// Pending sentences do not enter either battle pack. MHA-3 numbers stay unpublished.
+// Pending sentences do not enter either battle pack. MHA-3 stays in its own pack.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mhaEditorCards} from '../dist/mha/catalog.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createMha2Pack} from '../dist/universal-v2/mha2-pack.mjs';
+import {createMha3Pack} from '../dist/universal-v2/mha3-pack.mjs';
 import {MHA2_PROGRAMS_001_036} from '../dist/universal-v2/mha/programs-mha2-001-036.mjs';
 import {MHA2_PROGRAMS_037_073} from '../dist/universal-v2/mha/programs-2-037-073.mjs';
 import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073.mjs';
@@ -49,8 +50,13 @@ test('set 2 is 73 catalog cards, 26 ready and 47 pending, and set 1 stays open',
   assert.equal(set2.cards[id],undefined);
  }
  assert.equal(UAPR_MHA_REQUESTS.every(row=>row.ready===false),true);
- assert.equal(UA05NC_MHA3_PRODUCT.cards.length,0);
+ assert.equal(UA05NC_MHA3_PRODUCT.cards.length,6);
  assert.equal(UA05NC_MHA3_AP.registered,false);
  assert.equal(UA05NC_MHA3_AP.number,null);
  assert.equal(editor.some(card=>String(card.number).startsWith('UA05NC/')),false);
+ const book=createMha3Pack();
+ assert.equal(book.id,'mha3');
+ assert.deepEqual(Object.keys(book.cards),['MHA-3-002']);
+ assert.equal(set1.cards['MHA-3-002'],undefined);
+ assert.equal(set2.cards['MHA-3-002'],undefined);
 });

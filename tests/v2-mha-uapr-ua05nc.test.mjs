@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {UAPR_MHA_POINT_CARDS} from '../dist/mha/uapr-point-cards.mjs';
-import {UA05NC_MHA3_PRODUCT, UA05NC_MHA3_AP, UA05NC_MHA3_UNOFFICIAL_PREVIEW, UA05NC_MHA3_CHECK} from '../dist/mha/ua05nc-product.mjs';
+import {UA05NC_MHA3_PRODUCT, UA05NC_MHA3_AP, UA05NC_MHA3_UNOFFICIAL_PREVIEW, UA05NC_MHA3_CHECK, UA05NC_MHA3_UNPUBLISHED} from '../dist/mha/ua05nc-product.mjs';
 import {UAPR_MHA_REQUESTS} from '../dist/universal-v2/mha/programs-uapr.mjs';
 import {mhaEditorCards, MHA_CATALOG, MHA_CATALOG_051_100, MHA_POINT_CATALOG} from '../dist/mha/catalog.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
@@ -155,7 +155,7 @@ test('the book set records the product and leaves unpublished cards out', ()=>{
  assert.equal(book.priceYen,2640);
  assert.equal(book.effectCards,11);
  assert.equal(book.actionPointCards,1);
- assert.equal(book.cards.length,0);
+ assert.equal(book.cards.length,6);
  assert.equal(book.ap,UA05NC_MHA3_AP);
  assert.equal(UA05NC_MHA3_AP.registered,false);
  assert.equal(UA05NC_MHA3_AP.type,'action-point');
@@ -170,9 +170,14 @@ test('the book set records the product and leaves unpublished cards out', ()=>{
  }
  assert.equal(book.cards.includes(UA05NC_MHA3_AP),false);
  assert.equal(book.officialCheck,UA05NC_MHA3_CHECK);
- assert.deepEqual(UA05NC_MHA3_CHECK.confirmedNumbers,[]);
- assert.equal(UA05NC_MHA3_CHECK.complete,0);
- assert.equal(UA05NC_MHA3_CHECK.ready,0);
+ assert.deepEqual(UA05NC_MHA3_CHECK.confirmedNumbers,[
+  'UA05NC/MHA-3-001','UA05NC/MHA-3-002','UA05NC/MHA-3-003',
+  'UA05NC/MHA-3-004','UA05NC/MHA-3-006','UA05NC/MHA-3-009'
+ ]);
+ assert.equal(UA05NC_MHA3_CHECK.completeNumbers.length,5);
+ assert.equal(UA05NC_MHA3_UNPUBLISHED.effectCards,5);
+ assert.equal(UA05NC_MHA3_UNPUBLISHED.numbers,null);
+ assert.equal(UA05NC_MHA3_AP.image.includes('UA05NC_MHA-3-AP01'),true);
  assert.equal(UA05NC_MHA3_CHECK.effectSlots,11);
  assert.equal(UA05NC_MHA3_CHECK.apSlots,1);
  assert.equal(UA05NC_MHA3_CHECK.faqCount,0);
