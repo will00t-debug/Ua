@@ -13,6 +13,7 @@ import {MHA_PROGRAMS_001_050} from '../dist/universal-v2/mha/programs-001-050.mj
 import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
 import {MHA_REQUESTS_001_050} from '../dist/universal-v2/mha/requests-001-050.mjs';
 import {MHA_REQUESTS_051_100} from '../dist/universal-v2/mha/requests-051-100.mjs';
+import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073.mjs';
 import {getTitle} from '../dist/title-registry.mjs';
 import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
 
@@ -232,16 +233,19 @@ test('only complete UA10ST sentences enter the battle pack',()=>{
  assert.match(validateUniversalDeck(pack,four).join('\n'),/50/);
 });
 
-test('IMC has 113 open V2 cards while MHA remains at 109 closed cards among 109',()=>{
+test('IMC has 113 open V2 cards while MHA set 1 stays 109 ready',()=>{
  const editor=mhaEditorCards();
- assert.equal(editor.length,109);
- assert.equal(new Set(editor.map(card=>card.id)).size,109);
+ const set1=editor.filter(card=>card.id.startsWith('MHA-1-'));
+ assert.equal(set1.length,109);
+ assert.equal(editor.length,146);
+ assert.equal(new Set(editor.map(card=>card.id)).size,146);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
  const ready=Object.keys(pack.cards);
  assert.deepEqual(ready,editor.map(card=>card.id).filter(id=>pack.cards[id]));
- assert.equal(ready.length,109);
+ assert.equal(ready.length,119);
  const pending=editor.map(card=>card.id).filter(id=>!pack.cards[id]);
- assert.equal(pending.length,0);
+ assert.equal(pending.length,27);
+ assert.equal(pending.every(id=>id.startsWith('MHA-2-')),true);
  assert.equal(pack.cards['MHA-1-001'].effects.onRetire[0].count,1);
  assert.equal(pack.cards['MHA-1-013'].effects.onPlay[0].op,'optionalOwnLifeToHandThenDraw');
  assert.equal(pack.cards['MHA-1-014'].effects.onPlay[0].then[0].bp,3500);
@@ -274,9 +278,13 @@ test('IMC has 113 open V2 cards while MHA remains at 109 closed cards among 109'
  const requestIds=new Set([
   ...Object.keys(MHA_REQUESTS_001_050),
   ...MHA_REQUESTS_051_100.map(row=>row.cardId),
-  ...MHA_UA10ST_REQUESTS.map(row=>row.cardId)
+  ...MHA_UA10ST_REQUESTS.map(row=>row.cardId),
+  ...Object.keys(MHA2_REQUESTS_037_073)
  ]);
- assert.equal(requestIds.size,0);
+ assert.equal(Object.keys(MHA_REQUESTS_001_050).length,0);
+ assert.equal(MHA_REQUESTS_051_100.length,0);
+ assert.equal(MHA_UA10ST_REQUESTS.length,0);
+ assert.equal(Object.keys(MHA2_REQUESTS_037_073).length,27);
  assert.deepEqual([...requestIds].sort(),pending.slice().sort());
  assert.equal(getTitle('mha').playable,false);
  assert.equal(getTitle('imc').playable,true);

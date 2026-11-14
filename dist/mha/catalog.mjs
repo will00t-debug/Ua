@@ -5,6 +5,7 @@
 import {UA10ST_AP_CARDS,UA10ST_CARDS,UA10ST_PRODUCT} from './ua10st-cards.mjs';
 import {MHA_CARDS_001_050} from './cards-001-050.mjs';
 import {MHA_CARDS_051_100} from './cards-051-100.mjs';
+import {MHA2_CARDS_037_073} from './cards-2-037-073.mjs';
 
 const COLORS=new Set(['purple','yellow','green','blue','red']);
 const DECK_TYPES=new Set(['character','event','field']);
@@ -92,8 +93,36 @@ function boosterRange(cards,start){
  return Object.freeze(rows.map(card=>Object.freeze(card)));
 }
 
+function requireSet2(card,index){
+ const expected='MHA-2-'+String(37+index).padStart(3,'0');
+ if(card.id!==expected||card.set!=='EX06BT'||card.title!=='mha')
+  throw Error(card.id+' is outside EX06BT 037-073');
+ if(card.battleReady!==false||card.auto!==false||card.deckLegal!==true||card.playable===true)
+  throw Error(card.id+' catalog row cannot claim battle support');
+ if(!card.nameJa||!card.effectJa||!COLORS.has(card.color)||!DECK_TYPES.has(card.type))
+  throw Error(card.id+' missing official identity');
+ if(!Number.isInteger(card.energy)||card.energy<0||card.energy>8)
+  throw Error(card.id+' invalid energy');
+ if(!Number.isInteger(card.ap)||card.ap<1||card.ap>2)
+  throw Error(card.id+' invalid AP');
+ if(!card.image||!card.source||!card.image.includes('EX06BT_'+card.id))
+  throw Error(card.id+' missing official image');
+ if(card.sourceTc!=='')
+  throw Error(card.id+' Traditional Chinese page was not published');
+}
+
+function set2Range(cards){
+ const rows=cards.map(card=>({...card}));
+ if(rows.length!==37)throw Error('EX06BT 037-073 must contain 37 cards');
+ const ids=rows.map(card=>card.id);
+ if(new Set(ids).size!==ids.length)throw Error('duplicate EX06BT card');
+ rows.forEach((card,index)=>requireSet2(card,index));
+ return Object.freeze(rows.map(card=>Object.freeze(card)));
+}
+
 export const MHA_CATALOG=boosterRange(MHA_CARDS_001_050,1);
 export const MHA_CATALOG_051_100=boosterRange(MHA_CARDS_051_100,51);
+export const MHA2_CATALOG_037_073=set2Range(MHA2_CARDS_037_073);
 
 export function mhaEditorCards(){
  const booster=[...MHA_CATALOG,...MHA_CATALOG_051_100];
@@ -103,8 +132,9 @@ export function mhaEditorCards(){
  if(shared.join()!==SHARED_WITH_BOOSTER.join())
   throw Error('UA10ST reprint ids drifted: '+shared.join(','));
  const starterOnly=UA10ST_CARDS.filter(card=>!boosterIds.has(card.id));
+ const set2=[...MHA2_CATALOG_037_073];
  const starterNumber=new Map(UA10ST_CARDS.map(card=>[card.id,card.number]));
- const cards=[...booster,...starterOnly].map(card=>{
+ const cards=[...booster,...starterOnly,...set2].map(card=>{
   const reprint=starterNumber.get(card.id);
   const aliases=[...(card.aliases||[])];
   if(reprint&&reprint!==card.number&&!aliases.includes(reprint))aliases.push(reprint);
@@ -112,7 +142,7 @@ export function mhaEditorCards(){
  });
  const ids=cards.map(card=>card.id);
  if(new Set(ids).size!==ids.length)throw Error('Duplicate MHA editor id');
- if(cards.length!==109)throw Error('MHA editor catalog must be 109 distinct deck cards');
+ if(cards.length!==109+set2.length)throw Error('MHA editor catalog drifted');
  if(cards.some(card=>card.playable!==false||card.battleReady!==false||card.deckLegal!==true))
   throw Error('MHA editor catalog claimed a card was playable');
  return cards;
