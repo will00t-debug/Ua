@@ -1085,6 +1085,7 @@ export function uiActionLabel(action,{pack,state}={}){
    (action.mode==='raid'?'從手牌突襲登場 ':'從手牌以活動狀態登場 ')+name()+suffix();
   case 'chooseTuckFacedown':return action.uid===null?'不蓋到角色下面':'把 '+name()+' 蓋到角色下面';
   case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
+  case 'chooseLookUnderHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
   case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
   case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
