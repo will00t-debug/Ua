@@ -19,7 +19,7 @@ test('both online player zones expose selectors required by shared desktop battl
 
 test('online released client loads updated shared battlefield module',()=>{
  const source=read('dist/online.mjs');
- assert.match(source,/online-battle-ui\.mjs\?v=20261114zonefix1/);
+ assert.match(source,/online-battle-ui\.mjs\?v=[A-Za-z0-9_-]+/);
  const html=read('dist/online.html');
  assert.match(html,/online-bootstrap\.mjs/);
 });

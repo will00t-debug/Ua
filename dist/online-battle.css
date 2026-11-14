@@ -74,3 +74,70 @@ body.v2-online-battle .online-effect-overlay .dialog.pending .headline h2 {
   padding:15px 10px;
  }
 }
+
+/* The server authorizes both the resolving card and the inspected deck top
+   for the current controller. Keep their print readable above legal actions. */
+body.v2-online-battle .online-effect-overlay .online-pending-card{
+ display:grid;
+ grid-template-columns:clamp(68px,19vw,98px) minmax(0,1fr);
+ gap:10px;
+ align-items:start;
+ padding:10px;
+ margin:8px 0;
+ background:#171d25;
+ border:1px solid #655a49;
+ border-radius:12px;
+ max-height:min(31dvh,260px);
+ overflow:auto;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-art{
+ position:sticky;
+ top:0;
+ width:100%;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-art .art{
+ display:block;
+ width:100%;
+ height:auto;
+ max-height:148px;
+ object-fit:contain;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-copy{
+ display:flex;
+ flex-direction:column;
+ gap:5px;
+ min-width:0;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-eyebrow{
+ font-size:11px;
+ font-weight:750;
+ color:#e8c483;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-name{
+ font-size:15px;
+ overflow-wrap:anywhere;
+ color:#fff7e5;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-effect{
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ line-height:1.55;
+ font-size:13px;
+ color:#e7e0d5;
+ margin:0;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-open{
+ align-self:flex-start;
+ font-size:12px;
+ padding:4px 9px;
+ min-height:32px;
+}
+@media (max-width:620px){
+ body.v2-online-battle .online-effect-overlay .online-pending-card{
+  grid-template-columns:70px minmax(0,1fr);
+  gap:8px;
+  max-height:30dvh;
+  padding:8px;
+ }
+ body.v2-online-battle .online-effect-overlay .online-pending-card-effect{font-size:12px}
+}
