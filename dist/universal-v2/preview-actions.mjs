@@ -29,7 +29,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',
  'effect-entry-rest-front':'將前線 ACTIVE 角色轉為 REST',
  'effect-retire-tuck-active':'可退場 1 張其他角色，裏向放在此角色下方並 ACTIVE','end-hand-limit':'手牌上限',
- 'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
+ 'effect-discard':'選擇棄牌','effect-move-self':'選擇移動位置','effect-discard-cost':'支付棄牌成本',
  'effect-may-draw-discard':'選擇是否抽牌並棄牌',
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
@@ -44,6 +44,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-trait-event':'查看牌頂，公開王選候補者或事件',
  'effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
  'effect-top-order':'排列牌庫頂或底',
+ 'effect-top-script':'查看牌庫頂並選擇',
+ 'effect-bottom-own':'可將 1 張自己的角色放到牌庫底',
  'effect-optional-mill':'可逐張將牌庫頂送場外（每次 1 張，可繼續或停止）',
  'effect-mill-up-to':'可將牌庫頂至多數張送場外',
  'effect-mill-recover-discard':'可棄 1 張手牌以回收剛才送出場外的卡',
@@ -171,6 +173,17 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-printed-block':'選擇是否賦予防禦下限',
  'effect-move-opp-front':'選擇是否將對手前線移至能源線',
  'effect-move-opp-if-event':'可將對手前線角色移至能源線',
+ 'effect-peek-buff':'選擇 1 張其他己方角色，本回合 BP 上升',
+ 'effect-field-trait-bounce':'選擇對手前線角色，移回手牌或退場',
+ 'effect-discard-scale':'可將 1 張手牌放到場外',
+ 'effect-scale-buff':'可選擇 1 張己方角色，本回合 BP 上升',
+ 'effect-rest-impact':'選擇 1 張己方角色並賦予衝擊',
+ 'effect-hand-trait-active':'可將 1 張指定特徵手牌放到場外，使這張角色活動',
+ 'effect-pay-raid-base':'可將 1 張手牌放到場外',
+ 'effect-raid-under-rest':'選擇突襲底板以休息狀態登場的位置',
+ 'effect-attack-win-draw':'可抽 1 張牌',
+ 'effect-entered-discard':'可將 1 張手牌放到場外，使剛登場的角色活動',
+ 'effect-option-retire-own':'可退場1張其他己方角色',
  'effect-retire-own-other':'可退場1張其他己方卡片',
  'effect-retire-trigger-ceiling':'可退場觸發種類上限內的對手前線角色',
  'effect-remove-named-zones':'可將指定角色移入移除區',
@@ -201,6 +214,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
+ 'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
  'effect-rest-skip-may-retire':'選擇 1 張 BP 5000 以下的對手前線，休息並跳過下次活動，或在巴麻美在場時改為退場',
  'effect-retire-named-draw':'退場 1 張自己場上的佐倉杏子',
@@ -292,6 +306,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-bounce-named-cut':'可將手牌角色返回手牌',
  'effect-front-bp-cut':'可降低敵方前線 BP',
  'effect-reveal-top-place':'公開的牌留在上面，或放到牌庫底',
+ 'effect-reveal-trait-choice':'公開牌頂，符合特徵可加入手牌，否則放回頂或底',
  'effect-life-reenter-grant':'將 1 張生命加入手牌',
  'effect-sayaka-reenter':'美樹沙耶香以休息狀態再登場，或突襲',
  'effect-tuck-named':'可將角色放到牌庫底',
@@ -335,7 +350,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-printed-ap':'是否給予衝擊',
  'effect-different-field':'可從場外以休息狀態登場',
  'effect-hand-fresh-name':'可從手牌讓新名稱的角色以休息狀態登場',
- 'effect-block-floor':'是否設定阻擋下限'
+ 'effect-block-floor':'是否設定阻擋下限',
+ 'effect-block-ceiling':'是否讓角色不被高 BP 阻擋'
 });
 export function isExactLegal(action,legal){
  return Array.isArray(legal)&&legal.some(candidate=>
@@ -578,6 +594,7 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
   chooseAttackEndRest:['不在攻擊結束時休息','攻擊結束時休息這張卡'],
   chooseAttackEndSwap:['不在攻擊結束時交換','攻擊結束時與這張卡交換'],
   chooseBlockFloor:['不設定阻擋下限','給這張卡阻擋下限'],
+  chooseBlockCeiling:['不限制阻擋','這張卡不會被高 BP 角色阻擋'],
   chooseBottomRetire:['結束放到牌底','將這張場外卡放到牌底'],
   chooseBounceBp:['不返回手牌','將這張卡返回手牌並結算 BP'],
   chooseEnergyFront:['將這張卡移到前線','將這張卡移到前線'],
@@ -831,6 +848,8 @@ export function uiActionLabel(action,{pack,state}={}){
     '起動主要：前線也能產生能源':
     action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
     action.mode==='plus2'?'起動主要：能源 8 以上時，本回合產能＋2':
+    action.mode==='payHandMove'?'起動主要：支付 1 張手牌，移動或交換角色':
+    action.mode==='onceTuck'?'起動主要：將牌庫頂蓋到這張角色下方':
     action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
     action.mode==='namedEnergyAp'?
     '起動主要：指定西蒙，本回合產能增加並 ACTIVE 1 張 AP':
@@ -938,6 +957,9 @@ export function uiActionLabel(action,{pack,state}={}){
     return action.uid===null?'不使突襲來源登場':
      '將 '+name()+' 以休息狀態放到'+destination()+' '+(action.slot+1);
    return action.uid===null?'不將突襲底卡以 Rest 登場':'將 '+name()+' 以 Rest 登場'+suffix();
+  case 'chooseRaidBottomActive':
+   return action.uid===null?'不將突襲最下段以活動狀態登場':
+    '將 '+name()+' 以活動狀態放到'+destination()+' '+(action.slot+1);
   case 'chooseNameOrTraitProtect':return action.uid===null?'不賦予選擇保護':'令 '+name()+' 不被對方效果選擇';
   case 'chooseNamedKeyword':return action.uid===null?'不賦予指定名稱角色':'選擇 '+name();
   case 'chooseKeywordMode':return action.mode==='impact'?'本回合 Impact +1':'本回合直接攻擊傷害 +1';
@@ -1055,11 +1077,23 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseActiveEnergyNamed':return action.uid===null?'不將能量線指定名稱卡轉為 ACTIVE':'將能量線的 '+name()+' 轉為 ACTIVE';
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
+  case 'chooseHandActiveOrRaid':return action.uid===null?'不從手牌登場':
+   (action.mode==='raid'?'從手牌突襲登場 ':'從手牌以活動狀態登場 ')+name()+suffix();
+  case 'chooseTuckFacedown':return action.uid===null?'不蓋到角色下面':'把 '+name()+' 蓋到角色下面';
+  case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
+  case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
+  case 'chooseMoveOrSwap':return action.mode==='swap'?'交換一張前線與一張能源線角色':'把一張自己的角色移到另一列';
+  case 'chooseOppLeave':return action.mode==='life'?'改為把自己 1 張生命放到場外':'不支付，照原本方式離場';
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseGrantNamed':return action.uid===null?'不給予這項能力':'給予 '+name()+' 這個回合的能力';
   case 'choosePrintedApImpact':return action.uid===null?'不給予衝擊':'給予 '+name()+' 衝擊 1';
   case 'chooseSelfFront':return action.slot===null?'不移動到前線':'移動到前線 '+(action.slot+1);
+  case 'chooseMoveSelf':{
+   const line=action.line==='energy'?'能源線':'前線';
+   const replace=action.replaceUid?'，並將原位置的卡放入移除區':'';
+   return '將這張卡移動到'+line+' '+(action.slot+1)+replace;
+  }
   case 'chooseDifferentField':return action.uid===null?'不從場外登場':'以休息狀態登場 '+name()+suffix();
   case 'chooseOwnFieldRetire':return action.uid===null?'不退場場域':'退場場域 '+name();
   case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
@@ -1138,6 +1172,20 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'choosePeekBuff':return '本回合使 '+name()+' BP 增加';
+  case 'chooseFieldTraitBounce':return action.mode==='retire'?'使 '+name()+' 退場':
+   '將 '+name()+' 放回手牌';
+  case 'chooseDiscardScale':return '將 '+name()+' 放到場外';
+  case 'chooseScaleBuff':return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP 增加';
+  case 'chooseRestImpact':return '使 '+name()+' 獲得衝擊';
+  case 'chooseHandTraitActive':return action.uid===null?'不支付，角色維持原狀':
+   '將 '+name()+' 放到場外，並使這張角色活動';
+  case 'choosePayRaidBase':return action.uid===null?'不支付':
+   '將 '+name()+' 放到場外';
+  case 'chooseRaidUnderRest':return '使突襲底板以休息狀態登場'+suffix();
+  case 'chooseAttackWinDraw':return action.mode==='draw'?'抽 1 張':'不抽牌';
+  case 'chooseEnteredDiscard':return action.uid===null?'不棄牌，角色維持休息':
+   '將 '+name()+' 放到場外，並使剛登場的角色活動';
   case 'chooseRetireOwnOther':return action.uid===null?'不使卡片退場':'使 '+name()+' 退場';
   case 'chooseRemoveNamedZone':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區';
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
@@ -1210,6 +1258,14 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseEnergyShift':return action.uid===null?'不移動能源線角色':
    '將 '+name()+' 移到前線 '+(action.slot+1);
   case 'chooseRecoverEvent':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseTopScript':
+   if(action.mode==='confirm')return '確認加入手牌，其餘之後排列';
+   if(action.mode==='skip')return '這個步驟不選';
+   if(action.mode==='pick')return '選擇 '+name();
+   if(action.mode==='raid')return '從查看的牌突襲登場：'+name()+suffix();
+   if(action.mode==='enter')return '從查看的牌休息登場：'+name()+suffix();
+   return '查看後的選擇';
+  case 'chooseBottomOwn':return action.uid===null?'不放到牌庫底，也不查看':'將 '+name()+' 放到牌庫底';
   case 'chooseOrderedSubset':{
    if(action.mode==='confirm')return '依印刷順序結算所選效果';
    const option=state?.pending?.options?.find(o=>o.id===action.id);
@@ -1232,6 +1288,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseBounceNamedCut':return action.uid===null?'不把手牌角色返回手牌':'將 '+name()+' 返回手牌';
   case 'chooseFrontBpCut':return action.uid===null?'不降低敵方 BP':'使 '+name()+' 的 BP 降低';
   case 'chooseRevealTop':return action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
+  case 'chooseRevealTrait':return action.mode==='hand'?'將公開且符合特徵的牌加入手牌':
+   action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
   case 'chooseLifeReenter':return '將 1 張生命加入手牌';
   case 'chooseSayakaReenter':return action.mode==='raid'?'以效果突襲'+suffix():'以休息狀態再登場'+suffix();
   case 'chooseTuckNamed':return action.uid===null?'不把角色放到牌庫底':'將 '+name()+' 放到牌庫底';
@@ -1759,7 +1817,7 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
   'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
-  'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
+  'chooseRaidBaseRest','chooseRaidBottomActive','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
 // kmr, kjn, mmm2 and aot2 character entry use this set too: select the physical card,
 // then 突襲進場 or 普通進場 only when the print allows both.
@@ -1769,7 +1827,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 // Epsilon, Beta, or a raidless yellow Zeke stays normal entry and does not
 // invent Raid.
 const MODE_BOARD_ENTRY=new Set([
- 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseHandActiveOrRaid','chooseTopScript',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
  'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2','aot2','csm'
 ]);
@@ -1795,7 +1853,7 @@ export function boardEntryMode(action){
  if(action.type==='kjn')return action.mode==='dest'?'normal':null;
  if(action.type==='csm')return action.mode==='deploy'?'normal':null;
  if(action.mode==='raid')return 'raid';
- if(action.mode==='enter'||action.mode==='place'||action.mode==='rest')return 'normal';
+ if(action.mode==='enter'||action.mode==='place'||action.mode==='rest'||action.mode==='active')return 'normal';
  return null;
 }
 export function boardEntrySelection(legal,uid){

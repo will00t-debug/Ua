@@ -15,6 +15,8 @@ import {createKjnV2Pack} from './kjn-pack.mjs';
 import {createCsmV2Pack} from './csm-pack.mjs';
 import {createAotV2Pack} from './aot-pack.mjs';
 import {createKmrV2Pack,KMR_STARTER_IDS,kmrPackCard} from './kmr-pack.mjs';
+import {createImcV2Pack,IMC_OFFICIAL_MATCH_CLOSED} from './imc-pack.mjs';
+import {createMhaV2Pack,MHA_OFFICIAL_MATCH_CLOSED} from './mha-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -64,6 +66,8 @@ export function officialV2Pack(title){
  if(title==='csm')return createCsmBattlePack();
  if(title==='aot')return createAotBattlePack();
  if(title==='kmr')return createKmrBattlePack();
+ if(title==='imc')return createImcBattlePack();
+ if(title==='mha')return createMhaBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -90,6 +94,8 @@ export function v2DeckReport(title,counts){
   '。這些卡不能進入 V2 對戰，效果也不會被略過。'
  ]:[];
  const issues=[...warnings];
+ 
+ if(title==='mha')issues.push(MHA_OFFICIAL_MATCH_CLOSED);
  // Catalogue drafts store every card at 0. A zero is not in the deck, so an
  // A zero-count catalogue id is not in the deck and must not block a legal list.
  const listed=Object.fromEntries(positiveCounts(counts));
@@ -186,6 +192,35 @@ export function aotPracticeDeck(){
  const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='red');
  if(other.length)throw Error('Attack on Titan red practice deck included another color');
  return {pack,counts};
+}
+
+let imcBattlePack=null;
+export function createImcBattlePack(){
+ if(!imcBattlePack)imcBattlePack=createImcV2Pack();
+ return imcBattlePack;
+}
+
+// Nonofficial red 50-card practice build with energy curve, Raid sources and triggers.
+// This is NOT the UA55ST starter: official per-card starter copy counts remain unknown.
+export function imcPracticeDeck(){
+ const pack=createImcBattlePack();
+ const counts={
+  'IMC-1-088':3,'IMC-1-091':3,'IMC-1-095':2,
+  'IMC-1-092':3,'IMC-1-096':3,'IMC-1-105':2,
+  'IMC-1-090':4,'IMC-1-093':2,'IMC-1-082':2,'IMC-1-084':2,'IMC-1-086':2,
+  'IMC-1-089':3,'IMC-1-083':2,'IMC-1-069':2,'IMC-1-074':2,'IMC-1-100':1,
+  'IMC-1-101':3,'IMC-1-103':3,'IMC-1-106':2,'IMC-1-098':2,
+  'IMC-1-094':2
+ };
+ const issues=validateUniversalDeck(pack,counts);
+ if(issues.length)throw Error('IMC red practice deck: '+issues.join('; '));
+ return {pack,counts:Object.freeze(counts)};
+}
+
+let mhaBattlePack=null;
+export function createMhaBattlePack(){
+ if(!mhaBattlePack)mhaBattlePack=createMhaV2Pack();
+ return mhaBattlePack;
 }
 
 let kmrBattlePack=null;

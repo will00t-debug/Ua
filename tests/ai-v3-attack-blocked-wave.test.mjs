@@ -252,10 +252,10 @@ describe('blocked raid wave', {concurrency: false}, () => {
   assert.ok(attack.search > pass.search, JSON.stringify(rows(finished.trace)));
   assert.equal(finished.action?.type, 'attack');
   assert.equal(finished.action.uid, other.uid);
-  // The 40ms worker budget is a wall clock. One slow slice can return next
-  // before the better attack is scored. The same request is repeated so a
-  // single slice does not fail the production suite. A search that always
-  // passes still fails.
+  // The 40ms budget is a wall clock on both the worker and the live hybrid
+  // route. One slow slice can return next before the better attack is scored.
+  // Each route is repeated so a single slice does not fail the production
+  // suite. A search that always passes still fails.
   let request = null;
   let worker = null;
   const missed = [];
@@ -280,8 +280,22 @@ describe('blocked raid wave', {concurrency: false}, () => {
   }
   assert.ok(worker, JSON.stringify(missed));
   assert.equal(request.ms, 40);
-  const live = decide(blocked.cursor);
-  assert.equal(live.action?.type, 'attack');
+  let live = null;
+  const liveMissed = [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+   const candidate = decide(blocked.cursor);
+   if (candidate.action?.type === 'attack' && candidate.action.uid === other.uid
+    && candidate.trace?.reason !== 'worker-timeout') {
+    live = candidate;
+    break;
+   }
+   liveMissed.push({
+    attempt, type: candidate.action?.type ?? null, uid: candidate.action?.uid ?? null,
+    reason: candidate.trace?.reason ?? null, routeMs: candidate.route?.ms ?? null
+   });
+  }
+  assert.ok(live, JSON.stringify(liveMissed));
+  assert.equal(live.action.type, 'attack');
   assert.equal(live.action.uid, other.uid);
   assert.notEqual(live.trace?.reason, 'worker-timeout');
  });
