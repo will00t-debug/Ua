@@ -13,6 +13,7 @@ test('a pending effect cannot fill the phone with the source card illustration',
  assert.match(ui,/grid-template-columns:76px minmax\(0,1fr\)/);
  assert.match(css,/\.online-compact-effect-dialog\{[\s\S]*?max-height:76dvh/);
  assert.match(css,/\.online-pending-card-art img\{/);
+ assert.doesNotMatch(css,/#match-view \.online-effect-overlay/,'overlay is mounted outside #match-view');
 });
 
 test('all online card choice galleries cap illustrations and allow inner scrolling',()=>{
