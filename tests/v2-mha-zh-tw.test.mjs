@@ -72,3 +72,17 @@ test('same-name Japanese identity, source and battle legality are untouched',()=
  assert.equal(catalog.filter(card=>card.id.startsWith('MHA-P-')).length,3);
  assert.equal(catalog.filter(card=>card.id.startsWith('MHA-3-')).length,6);
 });
+
+test('all already verified MHA deck, point and book card text is Chinese, except pending 009',()=>{
+ const untranslated=catalog.filter(card=>
+  card.id!=='MHA-3-009' &&
+  typeof card.effect==='string' &&
+  /[ぁ-んァ-ン]/.test(card.effect)
+ ).map(card=>card.id);
+ assert.deepEqual(untranslated,[]);
+ const points=catalog.filter(card=>card.id.startsWith('MHA-P-'));
+ assert.equal(points.length,3);
+ assert.ok(points.every(card=>typeof card.effect==='string'&&card.effect.length>0));
+ const publishedBooks=['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'];
+ assert.ok(publishedBooks.every(id=>MHA_EFFECTS_ZH_TW[id]&&byId.get(id)?.effect===MHA_EFFECTS_ZH_TW[id]));
+});
