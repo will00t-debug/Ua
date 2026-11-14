@@ -73,7 +73,7 @@ test('online modal includes source and peeked card art, print and legal-choice a
  assert.match(ui,/label:'發動效果的卡牌'/);
  assert.match(ui,/label:'目前查看的牌庫頂'/);
  assert.match(ui,/printed\.effect/);
- assert.match(ui,/effectSource,lookedAt,actions/);
+ assert.match(ui,/actions,effectSource,lookedAt/);
  assert.match(ui,/class:'online-pending-card-effect'/);
  assert.match(ui,/text:'查看完整卡圖'/);
  assert.match(css,/\.online-pending-card-effect\{/);
