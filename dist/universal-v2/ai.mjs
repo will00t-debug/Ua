@@ -546,6 +546,16 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-raid-source-rest')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-raid-bottom-active')
   return legal.find(a=>a.uid!==null&&!a.replaceUid)||legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-active-or-raid')
+  return legal.find(a=>a.mode==='active'&&a.line==='front'&&!a.replaceUid)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
+  s.pending?.kind==='effect-pay-hand-move')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-move-or-swap')
+  return legal.find(a=>a.mode==='shift')||legal[0];
+ if(s.pending?.kind==='effect-opp-life-leave')
+  return legal.find(a=>a.mode==='life')||legal[0];
  if(s.pending?.kind==='effect-rest-or-retire')return legal[0];
  if(s.pending?.kind==='effect-rest-skip-may-retire')
   return legal.find(a=>a.mode==='retire')||legal[0];

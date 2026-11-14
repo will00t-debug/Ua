@@ -8,20 +8,6 @@ export const MHA_A_GROUP_WIRING={
 
 export const MHA_REQUESTS_051_100=[
  {
-  cardId:'MHA-1-051',
-  sentence:'レイド〈通形 ミリオ〉。BP3000以下にブロックされない。ターン1、アタックしてブロックされなかった時1枚引く。退場時、必要エナジー4以上の他キャラが3枚以上なら、レイドの一番下をフロントLにアクティブで登場させてもよい。',
-  existingOps:['blockBpRestriction','raidName','grantUnblockedDrawThisTurn','unblockedAttack','replayRaidBase'],
-  whyNotEnough:'blockBpRestriction 沿用 {relation:atMost, bp:3000, condition:null}，不要重做。unblockedAttack 另有 {oncePerTurn:true, optional:false, then:[{op:draw, count:1}]}。同一張第二次未被阻擋不抽，被阻擋不消耗這次。退場用 {op:deployRaidBottomActive, optional:true, when:{kind:ownOtherRequiredEnergyAtLeast, turn:any, zone:field, excludeSelf:true, minEnergy:4, min:3}}，最下段以活動狀態上前排。三句都還要寫進程式，不要標 ready。',
-  proposal:'沿用 050 的 atMost 3000 與 raidName。另需一回合一次、攻擊未被阻擋時強制抽 1，以及退場時其他必要能源 4 以上達 3 張才可把突襲最下段活動放到前線 L。051はreadyにしない。'
- },
- {
-  cardId:'MHA-1-054',
-  sentence:'山札の上から7枚を見て、必要エナジー2以下の緑のフィールドを1枚まで公開して手札に加え、残りは望む順で下に置く。',
-  existingOps:['searchTopOneBottomDiscard','lookTopScript','inspectTopArrange'],
-  whyNotEnough:'searchTopOneBottomDiscard 可以 count:7、discard:false、logic:all，filters 為 type field 或 event、color、printedRequiredEnergyAtMost。不合格的牌留在視窗且不能選。取到的牌才公開，其餘放回底部，不棄手牌。角色複合窗的 discard:false 仍被拒絕。這張仍未寫程式，不要標 ready。',
-  proposal:'看頂7張，公開加入最多1張綠、能源2以下的場域，其餘依選擇放牌底。054はreadyにしない。'
- },
- {
   cardId:'MHA-1-055',
   sentence:'ステップ。登場時、必要エナジー4以上の他キャラが3枚以上なら、BP5000以下の相手フロントを1枚まで退場。',
   existingOps:['step','retireOppFrontUnderBp','ifLiveThen','oppFrontCountAtLeast'],
@@ -32,21 +18,21 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-056',
   sentence:'登場時、手札1枚を裏向きで〈ファットガム〉か〈天喰 環〉の下に置いてもよい。そうしたら1枚引く。アタック時、下の裏向き1枚を場外に置いてもよい。そうしたらこのターンBP+2000。',
   existingOps:['handOutsideReenterFaceDown','buffSelf'],
-  whyNotEnough:'既存の裏向きは場外へ戻すか自分の下ではない。具名角色的下に置いてから抽牌、攻撃時に1枚場外でBP+2000、という二段がない。',
+  whyNotEnough:'tuckFacedownUnder 可從手牌蓋到 host.names，optional 且 then 抽 1。stripFacedownToOutside 可在攻擊時把 1 張蓋牌放到場外，then 是 buffSelf。這張仍未寫程式，不要標 ready。',
   proposal:'可選手牌蓋到具名角色下，做到才抽1。攻擊時可把蓋牌放場外，做到才本回合BP+2000。056はreadyにしない。'
  },
  {
   cardId:'MHA-1-059',
   sentence:'登場時、手札から必要エナジー3以下・消費AP1の緑キャラを1枚までアクティブで登場させるかレイド。カラートリガーは必要エナジー2以下・消費AP1の緑を1枚アクティブで登場。',
   existingOps:['deployOwnHandRestOrRaid','deployOwnHandActiveNoRaid','deployHandCharacter'],
-  whyNotEnough:'顏色觸發與 050 相同，是 triggerEffect deployHandCharacter、綠、能源 2 以下、消耗 AP 1。登場句是最多 1 張、綠、能源 3 以下、消耗 AP 1，而且是活動登場或突襲。deployOwnHandActiveNoRaid 禁止突襲，deployOwnHandRestOrRaid 是休息或突襲。不能只寫觸發就標 ready。',
+  whyNotEnough:'deployOwnHandActiveOrRaid 已可做登場句：type character、color green、maxEnergy 3、ap 1、max 1、optional true、requireAffordableEnergy true，活動或突襲。顏色觸發仍是另一句 deployHandCharacter。不能只寫其中一句就標 ready。',
   proposal:'登場時は最多1張、綠、能源3以下、消耗AP1，活動登場或突襲。顏色觸發是必須1張、綠、能源2以下、消耗AP1、活動登場。059はreadyにしない。'
  },
  {
   cardId:'MHA-1-060',
   sentence:'レイド〈緑谷 出久〉。自分のターン中BP+500。アタック時ターン1、手札1枚を場外に置いてもよい。そうしたら他の必要エナジー3以下を1枚までアクティブ。',
   existingOps:['raidName','ownTurnBp','optionalRemoveHandThen','activeOwnOne'],
-  whyNotEnough:'ownTurnBp 與 raidName 是引擎卡欄，MHA 程式白名單目前不轉交。即便轉交，攻擊時的【ターン1】可選手牌放場外、做到才活動其他非綠谷出久且必要能源 3 以下，仍不是 optionalRemoveHandThen 或具名 activeOwnOne。不要只上 BP+500 就標 ready。',
+  whyNotEnough:'raidName 與 ownTurnBp 已能從 MHA 程式轉交，但仍不是整句。攻擊時的【ターン1】可選手牌放場外、做到才活動其他非綠谷出久且必要能源 3 以下，仍不是 optionalRemoveHandThen 或具名 activeOwnOne。不要只上突襲框與 BP+500 就標 ready。',
   proposal:'突襲框是綠谷出久。自己回合BP+500。攻擊時一回合一次，可把手牌1張放場外，做到才活動最多1張其他必要能源3以下。060はreadyにしない。'
  },
  {
@@ -81,14 +67,14 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-072',
   sentence:'ダメージ2。登場時、望む枚数を場外に置き手札が3枚になるまで引く。アタック時、望む枚数を場外に置き、その枚数×1000以下の相手フロントを1枚まで退場。',
   existingOps:['printedAttackDamage','discardToDraw','retireOppFrontHandTraitScale'],
-  whyNotEnough:'printedAttackDamage は2で合っても、登場時の「手札が3枚になるまで」と攻撃時の枚数×1000退場は別の任意枚数コスト。retireOppFrontHandTraitScale は特徵張數を足す。',
+  whyNotEnough:'drawUntilHand 只把抽牌補到指定張數，沒有先棄任意張。072 要先棄任意張再補到 3，攻擊時還要依棄牌張數退場。不要把 drawUntilHand 當成整句。不要標 ready。',
   proposal:'傷害2。登場時可把任意張手牌放場外，再抽到手上有3張。攻擊時可把任意張放場外，再最多退場1張對手前線，BP上限是張數×1000。072はreadyにしない。'
  },
  {
   cardId:'MHA-1-074',
   sentence:'自分のターン中、ターン1、相手の効果で場を離れる場合、代わりに場を離れない。',
   existingOps:['grantOwnFrontChoiceProtection','oppEffectUntargetable'],
-  whyNotEnough:'既存の保護は付与するか常時の效果對象外。這句是自己回合、一回合一次、對方效果要讓這張離場時改為不離場。',
+  whyNotEnough:'oppEffectLeave 可以是 turn own、oncePerTurn true、instead stay、cause effect、subject self、line any。這張仍未寫程式，不要標 ready。',
   proposal:'自己回合、一回合一次，對方效果使這張角色離場時改為留在場上。074はreadyにしない。'
  },
  {
@@ -116,28 +102,28 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-085',
   sentence:'レイド〈爆豪 勝己〉。下の裏向き1枚につき自分のターンBP+1000。登場時、上から2枚を裏向きで下に置く。アタック時、その1枚を場外に置いてもよい。そうしたらBP2500以下を1枚まで退場。',
   existingOps:['raidName','ownTurnBp','retireOppFrontUnderBp'],
-  whyNotEnough:'蓋牌在自己底下、依張數加BP、登場時放2張、攻擊時可送1張場外才退場，沒有同一組 op。',
+  whyNotEnough:'tuckFacedownUnder 可從牌庫頂蓋 count 2 到自己下面。stripFacedownToOutside 的 then 可以是 optional retireOppFrontUnderBp。依蓋牌張數的自己回合 BP 還沒有。不要只做蓋牌與剝離就標 ready。',
   proposal:'突襲框是爆豪勝己。自己回合，每張直接蓋在下面的牌BP+1000。登場時把牌庫頂2張蓋到自己下面。攻擊時可把1張蓋牌放場外，做到才最多退場1張對手前線BP2500以下。085はreadyにしない。'
  },
  {
   cardId:'MHA-1-087',
   sentence:'退場時、手札が2枚になるように引く。',
   existingOps:['draw','drawDiscard'],
-  whyNotEnough:'draw は固定枚數。沒有「抽到手上正好2張」的退場時 op。',
+  whyNotEnough:'onRetire 的 {op:drawUntilHand, count:2} 會抽到手上有 2 張；已經有 2 張以上則不抽，牌庫不夠就停。這張仍未寫程式，不要標 ready。',
   proposal:'退場時抽牌，直到手牌變成2張。手牌已有2張以上則不抽。087はreadyにしない。'
  },
  {
   cardId:'MHA-1-089',
   sentence:'登場時、自分の手札が3枚以下なら1枚引く。カラートリガーはBP2500以下の相手フロントを退場。',
   existingOps:['draw','ifLiveThen','retireOppFrontUnderBp','ownHandCountAtLeast'],
-  whyNotEnough:'ownHandCountAtLeast は「以上」だけ。手牌3張以下才抽1的「以下」がない。顏色觸發不能單獨把整張標ready。',
+  whyNotEnough:'ifLiveThen 的 when 可以是 {kind:ownHandCountAtMost, turn:any, max:3}，then 抽 1。判斷在抽牌前。顏色觸發仍是另一句。這張仍未寫程式，不要標 ready。',
   proposal:'登場時，自己手牌在抽牌前是3張以下才抽1。顏色觸發退場1張對手前線BP2500以下。089はreadyにしない。'
  },
  {
   cardId:'MHA-1-090',
   sentence:'レイド〈ホークス〉。登場時、手札を望む枚数裏向きで下に置く。アタック時、その裏向きを見て1枚まで手札に加え、加えたら他の〈ホークス〉以外を1枚までアクティブ。',
   existingOps:['raidName','activeOwnOther'],
-  whyNotEnough:'任意張手牌蓋到自己下面，攻擊時看那些蓋牌、最多拿1張，拿到才活動其他非霍克斯。沒有這個閉合流程。',
+  whyNotEnough:'tuckFacedownUnder 可把任意張手牌蓋到自己下面，from hand、count any、optional true、host self。攻擊時改看蓋牌並加入手牌、再活動其他非霍克斯，不是放到場外。不要只做蓋牌就標 ready。',
   proposal:'突襲框是霍克斯。登場時可把任意張手牌蓋到自己下面。攻擊時查看那些蓋牌，最多1張加入手牌；有加入才活動最多1張其他非霍克斯。090はreadyにしない。'
  },
  {
@@ -151,7 +137,7 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-093',
   sentence:'フロントL、ターン1。〈緑谷 出久〉以外が相手のキャラの効果で場を離れる場合、代わりに自分のライフ1枚を場外に置いてもよい。',
   existingOps:['grantOwnFrontChoiceProtection','ownLifeToOutside'],
-  whyNotEnough:'代替離場的對象是其他非綠谷出久，支付是把自己的1張生命放場外，而且可以不做。不是這張自己的離場保護。',
+  whyNotEnough:'oppEffectLeave 可以是 turn any、oncePerTurn、instead life、cause character、subject other、line front、excludeNames 必須是印刷名「緑谷 出久」，不能寫譯名。沒有生命就不能支付，拒絕則照原本離場。這張仍未寫程式，不要標 ready。',
   proposal:'這張在前線、一回合一次。其他非綠谷出久將因對方角色效果離場時，可以改為把自己1張生命放場外。093はreadyにしない。'
  },
  {

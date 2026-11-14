@@ -567,7 +567,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 // Epsilon, Beta, or a raidless yellow Zeke stays normal entry and does not
 // invent Raid.
 const MODE_BOARD_ENTRY=new Set([
- 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseTopScript',
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseHandActiveOrRaid','chooseTopScript',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
  'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','aot2'
 ]);
@@ -591,7 +591,7 @@ function boardEntryMode(action){
  // Do not treat any other kjn mode as Raid.
  if(action.type==='kjn')return action.mode==='dest'?'normal':null;
  if(action.mode==='raid')return 'raid';
- if(action.mode==='enter'||action.mode==='place'||action.mode==='rest')return 'normal';
+ if(action.mode==='enter'||action.mode==='place'||action.mode==='rest'||action.mode==='active')return 'normal';
  return null;
 }
 function boardEntrySelection(legal,uid){

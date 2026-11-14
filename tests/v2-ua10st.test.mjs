@@ -4,7 +4,7 @@ import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pa
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalEnergyByColor,universalPrivateChoices,
  universalPublicView} from '../dist/universal-v2/engine.mjs';
-import {mhaCatalog,mhaEditorCards} from '../dist/mha/catalog.mjs';
+import {mhaCatalog,mhaEditorCards,MHA_CATALOG,MHA_CATALOG_051_100} from '../dist/mha/catalog.mjs';
 import {UA10ST_PRODUCT} from '../dist/mha/ua10st-cards.mjs';
 import {createMhaV2Pack,mhaBattleCard,mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
 import {MHA_UA10ST_PROGRAMS} from '../dist/universal-v2/mha/programs.mjs';
@@ -114,13 +114,13 @@ function reach(built,s,player,phase){
  }
  return s;
 }
-function pay(s,pips,ap){
+function pay(s,pips,ap,p=0){
  const gen=Math.ceil(pips/2);
  for(let i=0;i<gen;i++){
-  if(s.players[0].energy[i]?.cardId==='GEN')s.players[0].energy[i].ready=true;
-  else seat(s,0,'GEN','energy',i,true);
+  if(s.players[p].energy[i]?.cardId==='GEN')s.players[p].energy[i].ready=true;
+  else seat(s,p,'GEN','energy',i,true);
  }
- s.players[0].apCards.forEach((card,index)=>{
+ s.players[p].apCards.forEach((card,index)=>{
   card.inPlay=index<ap;
   card.ready=index<ap;
  });
@@ -182,6 +182,25 @@ test('UA10ST catalog matches the official series and does not invent a deck reci
  assert.equal(catalog.deck.find(card=>card.id==='MHA-1-106').bp,3000);
  assert.equal(catalog.deck.find(card=>card.id==='MHA-1-109').type,'event');
  assert.equal(catalog.deck.find(card=>card.id==='MHA-1-108').type,'field');
+ const booster=new Map([...MHA_CATALOG,...MHA_CATALOG_051_100].map(card=>[card.id,card]));
+ const shared=[];
+ for(const card of catalog.deck){
+  assert.equal(card.image.startsWith('https://www.unionarena-tcg.com/jp/images/cardlist/card/UA10ST_'),true,card.id);
+  assert.equal(card.source.startsWith('https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA10ST%2F'),true,card.id);
+  const other=booster.get(card.id);
+  if(!other)continue;
+  shared.push(card.id);
+  assert.equal(other.nameJa,card.nameJa,card.id);
+  assert.equal(other.type,card.type,card.id);
+  assert.equal(other.energy,card.energy,card.id);
+  assert.equal(other.ap,card.ap,card.id);
+  assert.equal(other.bp,card.bp,card.id);
+  assert.equal(other.trigger,card.trigger,card.id);
+  assert.equal(other.image.includes('UA10BT_'),true,card.id);
+ }
+ assert.deepEqual(shared,['MHA-1-034','MHA-1-036','MHA-1-041','MHA-1-044','MHA-1-052',
+  'MHA-1-057','MHA-1-061','MHA-1-063','MHA-1-065']);
+ assert.equal(mhaEditorCards().filter(card=>catalog.deck.some(row=>row.id===card.id)).length,18);
  for(const card of catalog.ap){
   assert.equal(card.deckLegal,false);
   assert.equal(card.type,'action-point');
@@ -213,16 +232,19 @@ test('only complete UA10ST sentences enter the battle pack',()=>{
  assert.match(validateUniversalDeck(pack,four).join('\n'),/50/);
 });
 
-test('the closed packs are IMC 113 and MHA 57 ready cards among 109',()=>{
+test('the closed packs are IMC 113 and MHA 59 ready cards among 109',()=>{
  const editor=mhaEditorCards();
  assert.equal(editor.length,109);
  assert.equal(new Set(editor.map(card=>card.id)).size,109);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
  const ready=Object.keys(pack.cards);
  assert.deepEqual(ready,editor.map(card=>card.id).filter(id=>pack.cards[id]));
- assert.equal(ready.length,57);
+ assert.equal(ready.length,59);
  const pending=editor.map(card=>card.id).filter(id=>!pack.cards[id]);
- assert.equal(pending.length,52);
+ assert.equal(pending.length,50);
+ assert.equal(pack.cards['MHA-1-051'].unblockedAttack.oncePerTurn,true);
+ assert.equal(pack.cards['MHA-1-051'].effects.onRetire[0].op,'deployRaidBottomActive');
+ assert.equal(pack.cards['MHA-1-054'].effects.onPlay[0].discard,false);
  assert.equal(pack.cards['MHA-1-012'].mainAbility.op,'restSelfGainEnergyRetireEndMain');
  assert.equal(pack.cards['MHA-1-019'].mainAbility.then[0].minBp,1500);
  assert.equal(pack.cards['MHA-1-027'].passiveBonuses[0].condition.kind,'ownNameOrRaidBase');
@@ -249,7 +271,7 @@ test('the closed packs are IMC 113 and MHA 57 ready cards among 109',()=>{
   ...MHA_REQUESTS_051_100.map(row=>row.cardId),
   ...MHA_UA10ST_REQUESTS.map(row=>row.cardId)
  ]);
- assert.equal(requestIds.size,52);
+ assert.equal(requestIds.size,50);
  assert.deepEqual([...requestIds].sort(),pending.slice().sort());
  assert.equal(getTitle('mha').playable,false);
  assert.equal(getTitle('imc').playable,false);
@@ -863,4 +885,62 @@ test('MHA-1-109 publishes one character and draws only when that card is Midoriy
  assert.equal(s.players[0].hand.some(c=>kept.some(card=>card.uid===c.uid)),false);
  assert.equal(s.players[0].deck[0].uid,kept[5].uid);
  assert.equal(universalPublicView(skipped.pack,s,1).publicReveals.some(x=>x.cardId==='MHA-1-106'),false);
+});
+
+test('UA10ST life triggers use the printed choice, including a raid onto Midoriya',()=>{
+ const cards=[gen,battle('MHA-1-065'),battle('MHA-1-102'),battle('MHA-1-107'),
+  battle('MHA-1-109'),battle('MHA-1-106')];
+ function reveal(id,seed,prepare){
+  const opened=open(cards,{seed,phase:'attack'});
+  const attacker=seat(opened.s,0,'FILL-01','front',0,true);
+  if(prepare)prepare(opened);
+  opened.s.players[1].life.unshift(pull(opened.s,1,id));
+  let s=act(opened.pack,opened.s,{type:'attack',uid:attacker.uid});
+  if(s.pending?.kind==='block')s=act(opened.pack,s,a=>a.type==='chooseBlock'&&a.uid===null);
+  return {pack:opened.pack,s};
+ }
+ const got=reveal('MHA-1-102',5701);
+ assert.equal(got.s.pending.trigger,'get');
+ const hand=got.s.players[1].hand.length;
+ const copies=got.s.players[1].hand.filter(c=>c.cardId==='MHA-1-102').length;
+ const taken=act(got.pack,got.s,a=>a.type==='chooseTrigger'&&a.mode==='get');
+ assert.equal(taken.players[1].hand.filter(c=>c.cardId==='MHA-1-102').length,copies+1);
+ assert.equal(taken.players[1].hand.length,hand+1);
+ const drawn=reveal('MHA-1-109',5702);
+ assert.equal(drawn.s.pending.trigger,'draw');
+ const before=drawn.s.players[1].hand.length;
+ const drew=act(drawn.pack,drawn.s,a=>a.type==='chooseTrigger'&&a.mode==='draw');
+ assert.equal(drew.players[1].hand.length,before+1);
+ const skipped=act(drawn.pack,drawn.s,a=>a.type==='chooseTrigger'&&a.mode==='skip');
+ assert.equal(skipped.players[1].hand.length,before);
+ const early=reveal('MHA-1-065',5703);
+ assert.equal(early.s.players[1].life.length>0,true);
+ if(early.s.pending){
+  assert.notEqual(early.s.pending.trigger,'final');
+  assert.equal(legal(early.pack,early.s).some(a=>a.mode==='final'),false);
+ }
+ const last=reveal('MHA-1-065',5704,opened=>{
+  const extra=opened.s.players[1].life.splice(0);
+  opened.s.players[1].deck.push(...extra);
+ });
+ assert.equal(last.s.players[1].life.length,0);
+ assert.equal(legal(last.pack,last.s).some(a=>a.type==='chooseTrigger'&&a.mode==='final'),true);
+ const restored=act(last.pack,last.s,a=>a.type==='chooseTrigger'&&a.mode==='final');
+ assert.equal(restored.players[1].life.length,1);
+ const dry=reveal('MHA-1-107',5705,opened=>{
+  seat(opened.s,1,'MHA-1-106','energy',2,false);
+ });
+ assert.equal(dry.s.pending.trigger,'raid');
+ assert.equal(legal(dry.pack,dry.s).some(a=>a.mode==='get'),true);
+ assert.equal(legal(dry.pack,dry.s).some(a=>a.mode==='raid'),false);
+ const paid=reveal('MHA-1-107',5706,opened=>{
+  pay(opened.s,4,1,1);
+  seat(opened.s,1,'MHA-1-106','energy',2,false);
+ });
+ const raid=legal(paid.pack,paid.s).find(a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.line==='front');
+ assert.ok(raid);
+ const entered=act(paid.pack,paid.s,a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.line==='front'&&a.baseUid===raid.baseUid);
+ const top=entered.players[1].front.find(c=>c?.cardId==='MHA-1-107');
+ assert.equal(top.ready,true);
+ assert.equal(top.stack[0].cardId,'MHA-1-106');
 });

@@ -606,3 +606,11 @@ IMC 對戰包維持 113／113。MHA 對戰包是 57 張 ready、52 張 pending�
 
 001、013、014、018、051、054 的共用形狀已解鎖，契約在 `docs/v2-handoff/V2-R11A-shared-ops.md`。這 6 張仍未寫程式，維持 pending。`playable` 維持 false。IMC 官方預組 `counts` 與 `UA10ST_PRODUCT.recipe` 維持 null。沒有合併 `main`，也沒有部署。
 
+## 第 12 輪整合
+
+基準是 #436 的 `6c5424824c3c9716723938bb1d39668e70890b8d`。#437 的父提交就是這個基準，只納入 MHA-1-051 與 MHA-1-054 的程式、請求與行為測試。#435 的基準是第 10 輪，沒有整支合併；只保留尚未整合的預組重印身分核對，以及生命觸發依印刷選擇、並可突襲到綠谷出久的測試。
+
+IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 59 張 ready、50 張 pending、目錄 109 張。051 與 054 已進包。006、007、009、010、038、048、056、059、072、074、085、087、089、090、093 仍是 pending。
+
+六項共用形狀已解鎖，契約在 `docs/v2-handoff/V2-R12A-shared-ops.md`。這一輪沒有寫那些卡的程式，也沒有標 ready。`getTitle('imc').playable` 與 `getTitle('mha').playable` 維持 false。IMC 官方預組 `counts` 與 `UA10ST_PRODUCT.recipe` 維持 null。沒有合併 `main`，也沒有部署。
+
