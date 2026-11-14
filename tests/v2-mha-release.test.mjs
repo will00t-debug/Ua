@@ -21,7 +21,8 @@ const counts=practiceDeck(pack);
 
 test('a legal MHA deck can enter AI and online matches',async()=>{
  assert.equal(getTitle('mha').playable,true);
- assert.equal(getTitle('mha').cards.length,109);
+ assert.equal(getTitle('mha').cards.filter(card=>card.id.startsWith('MHA-1-')).length,109);
+ assert.equal(getTitle('mha').cards.length,185);
  assert.equal(getTitle('mha').cards.every(card=>card.playable===false&&card.battleReady===false),true);
  assert.equal(Object.keys(pack.cards).length,109);
  assert.equal(pack.version,'mha-ua10-ready-109');

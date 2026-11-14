@@ -258,7 +258,8 @@ const decks={
 test('the ready pool is 109 cards and MHA can enter a match',()=>{
  assert.equal(Object.keys(mha.cards).length,109);
  assert.equal(mha.version,'mha-ua10-ready-109');
- assert.equal(editor.length,109);
+ assert.equal(editor.filter(card=>card.id.startsWith('MHA-1-')).length,109);
+ assert.equal(editor.length,185);
  assert.equal(getTitle('mha').playable,true);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false),true);
  assert.equal(UA10ST_PRODUCT.recipe,null);
