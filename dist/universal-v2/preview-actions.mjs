@@ -1157,6 +1157,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAttackDiscardActive':return action.uid===null?'不棄牌，角色維持休息':
    '將 '+name()+' 放到場外，並使這張角色活動';
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
+  case 'chooseFrontVacate':return action.uid===null?'不移出前線卡':'將 '+name()+' 移出戰場';
+  case 'chooseMillOptional':return action.mode==='mill'?'再放逐一張牌庫頂端卡':'結束放逐';
+  case 'chooseRecoverAny':return action.uid===null?'不取回場外角色':'將 '+name()+' 加入手牌';
+  case 'chooseDiscardAny':return action.mode==='skip'?'不棄牌':action.mode==='stop'?'以此棄牌數結算':'棄置 '+name();
+  case 'choosePayHandActive':return action.uid===null?'不支付手牌':'支付 '+name();
   case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
   case 'chooseRemoveHandCap':return action.mode==='done'?'結束除外並退場':'將 '+name()+' 除外';
   case 'chooseNamedRequiredEnergy':return '指定需求能源 '+action.value;

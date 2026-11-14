@@ -1,18 +1,19 @@
-// Round 12 D, carried onto round 14. 051, 054 and 070 stay ready.
-// 056, 059 and 074 already have a shared shape and stay pending.
-// The other sentences are still rejected.
+// Round 12 gaps, kept on round 15. 056, 059, 071, 074, 087, 089 and 093
+// are now programs. 076 stays pending. A full front removes one front card
+// before the energy character moves.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
 import {MHA_REQUESTS_051_100} from '../dist/universal-v2/mha/requests-051-100.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 
 const STILL=[
- 'MHA-1-055','MHA-1-056','MHA-1-059','MHA-1-060','MHA-1-062','MHA-1-066',
- 'MHA-1-071','MHA-1-072','MHA-1-074','MHA-1-076','MHA-1-081','MHA-1-084'
+ 'MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066',
+ 'MHA-1-072','MHA-1-076','MHA-1-081','MHA-1-084'
 ];
-const KEPT=['MHA-1-051','MHA-1-054','MHA-1-070'];
+const KEPT=['MHA-1-051','MHA-1-054','MHA-1-056','MHA-1-059','MHA-1-070','MHA-1-071','MHA-1-074'];
 
 function face(extra){
  const effects=extra.effects||{};
@@ -69,7 +70,7 @@ test('055 cannot retire a front character from the energy-count gate',()=>{
  }),/invalid live-condition follow-up/);
 });
 
-test('056 can tuck and strip a facedown, but the card stays pending',()=>{
+test('056 uses the named tuck and the attack strip',()=>{
  reject(face({
   id:'GAP-056',
   effects:{
@@ -87,10 +88,11 @@ test('056 can tuck and strip a facedown, but the card stays pending',()=>{
     then:[{op:'buffSelf',bp:2000}]}]
   }
  }));
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-056'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-056'].effects.onPlay[0].op,'tuckFacedownUnder');
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-056'].effects.onAttack[0].then[0].bp,2000);
 });
 
-test('059 can play a cheap green character active or by raid, and stays pending',()=>{
+test('059 plays one cheap green character active or by raid',()=>{
  reject(face({
   id:'GAP-059',trigger:'color',
   triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},
@@ -103,7 +105,8 @@ test('059 can play a cheap green character active or by raid, and stays pending'
   effects:{onPlay:[{op:'deployOwnHandActiveOrRaid',type:'character',color:'green',
    trait:null,maxEnergy:3,ap:1,max:1,optional:true,requireAffordableEnergy:true}]}
  }));
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-059'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-059'].triggerEffect.maxEnergy,2);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-059'].effects.onPlay[0].maxEnergy,3);
 });
 
 test('060 cannot pay one hand card to outside and then active another character',()=>{
@@ -139,7 +142,7 @@ test('066 cannot rest-play a traitless green character after the look',()=>{
  }),/invalid hand REST entry/);
 });
 
-test('071 can put one hand card outside without drawing, and stays pending',()=>{
+test('071 puts one hand card outside and does not draw',()=>{
  accept(face({
   id:'GAP-071',
   effects:{onPlay:[{op:'placeHandOutside',count:1,optional:false}]}
@@ -152,7 +155,7 @@ test('071 can put one hand card outside without drawing, and stays pending',()=>
   id:'GAP-071C',
   effects:{onPlay:[{op:'optionalRemoveHandThen',zone:'outside',then:[{op:'draw',count:0}]}]}
  }),/invalid optional hand removal/);
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-071'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-071'].effects.onPlay[0].optional,false);
 });
 
 test('072 cannot draw until three cards or retire by the paid count',()=>{
@@ -165,7 +168,7 @@ test('072 cannot draw until three cards or retire by the paid count',()=>{
  }),/invalid discard cost\/draw/);
 });
 
-test('074 can stay instead of leaving to an opponent effect, and stays pending',()=>{
+test('074 stays on its own turn when an opponent effect would move it',()=>{
  reject(face({
   id:'GAP-074',ownTurnLeaveReplace:{oncePerTurn:true,cause:'opponentEffect'},
   effects:{}
@@ -176,10 +179,11 @@ test('074 can stay instead of leaving to an opponent effect, and stays pending',
    subject:'self',line:'any'},
   effects:{}
  }));
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-074'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-074'].oppEffectLeave.turn,'own');
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-074'].oppEffectLeave.instead,'stay');
 });
 
-test('076 can move one energy character while it is on the front, and stays pending',()=>{
+test('076 stays pending, and a full front removes one card before the move',()=>{
  accept(face({
   id:'GAP-076',
   effects:{onPlay:[{op:'moveEnergyTraitToFront',trait:null,max:1,
@@ -190,6 +194,64 @@ test('076 can move one energy character while it is on the front, and stays pend
   effects:{onPlay:[{op:'moveEnergyTraitToFront',trait:null,max:1,whenSelf:'front'}]}
  }),/invalid energy-line trait move/);
  assert.equal(MHA_PROGRAMS_051_100['MHA-1-076'],undefined);
+ const mover=face({
+  id:'GAP-076-LIVE',energy:0,
+  effects:{onPlay:[{op:'moveEnergyTraitToFront',trait:null,max:1,
+   whenSelf:'front',optional:true}]}
+ });
+ const fuel=face({id:'GAP-076-FUEL',name:'能源',implementation:'vanilla',bp:1000,effects:{}});
+ const bodies=[mover,fuel];
+ let n=1;
+ while(bodies.length*4<50){
+  bodies.push(face({id:'GAP-076-FILL-'+n,implementation:'vanilla',bp:1000,effects:{}}));
+  n++;
+ }
+ const livePack=createUniversalPack({id:'gap-076',version:'full-front',cards:bodies});
+ const counts={};
+ let remain=50;
+ for(const card of bodies){
+  if(remain<=0)break;
+  const take=Math.min(4,remain);
+  counts[card.id]=take;
+  remain-=take;
+ }
+ let s=newUniversalMatch(livePack,{decks:[counts,counts],seed:7601,first:0,openingMulligan:false});
+ for(let i=0;i<8&&s.phase!=='main';i++)s=dispatchUniversalAction(livePack,s,{type:'next'});
+ const take=id=>{
+  const pl=s.players[0];
+  for(const zone of ['hand','deck','life']){
+   const at=pl[zone].findIndex(c=>c.cardId===id);
+   if(at>=0)return pl[zone].splice(at,1)[0];
+  }
+  throw Error('missing '+id);
+ };
+ for(let slot=1;slot<s.players[0].front.length;slot++){
+  const body=take('GAP-076-FUEL');
+  body.ready=true;
+  body.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].front[slot]=body;
+ }
+ const back=take('GAP-076-FUEL');
+ back.ready=false;
+ back.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].energy[0]=back;
+ const hand=s.players[0].hand.find(c=>c.cardId==='GAP-076-LIVE')||take('GAP-076-LIVE');
+ if(!s.players[0].hand.includes(hand))s.players[0].hand.push(hand);
+ const opened=dispatchUniversalAction(livePack,s,legalUniversalActions(livePack,s).find(a=>
+  a.type==='play'&&a.uid===hand.uid&&a.line==='front'&&a.slot===0));
+ assert.equal(opened.players[0].front.every(Boolean),true);
+ assert.equal(opened.pending.kind,'effect-front-vacate');
+ assert.equal(opened.pending.choices.includes(opened.players[0].front[0].uid),true);
+ assert.equal(opened.players[0].energy[0].uid,back.uid);
+ assert.equal(opened.players[0].removed.length,0);
+ const sourceUid=opened.players[0].front[0].uid;
+ const removed=dispatchUniversalAction(livePack,opened,{type:'chooseFrontVacate',uid:sourceUid});
+ assert.equal(removed.players[0].removed.some(c=>c.uid===sourceUid),true);
+ assert.equal(removed.pending.kind,'effect-energy-trait-front');
+ assert.equal(removed.pending.vacated,true);
+ const moved=dispatchUniversalAction(livePack,removed,{type:'chooseEnergyTraitFront',uid:back.uid,slot:0});
+ assert.equal(moved.players[0].front[0].uid,back.uid);
+ assert.equal(moved.pending,null);
 });
 
 test('081 cannot choose life damage or a rest that skips the next active',()=>{
@@ -206,11 +268,17 @@ test('081 cannot choose life damage or a rest that skips the next active',()=>{
  }),/invalid choose-one option/);
 });
 
-test('084 cannot widen the next BP selection from a front activate',()=>{
- reject(face({
+test('084 can widen the next BP selection, and a different amount stays illegal',()=>{
+ accept(face({
   id:'GAP-084',trigger:'color',
   triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
   mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'grantNextBpWindow',amount:1000}]}
- }),/unsupported main action ability/);
+ }));
+ reject(face({
+  id:'GAP-084B',
+  mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'grantNextBpWindow',amount:500}]}
+ }),/unsupported main action ability|invalid BP window/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'],undefined);
 });

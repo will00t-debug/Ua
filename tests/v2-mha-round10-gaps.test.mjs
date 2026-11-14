@@ -9,10 +9,12 @@ import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {officialV2Pack, v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 
 const PRIORITY=[
- 'MHA-1-002','MHA-1-003','MHA-1-004','MHA-1-005','MHA-1-006',
- 'MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-011','MHA-1-017'
+ 'MHA-1-002','MHA-1-003','MHA-1-004','MHA-1-005','MHA-1-011'
 ];
-const ALREADY=['MHA-1-001','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-018','MHA-1-019','MHA-1-027'];
+const ALREADY=[
+ 'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-012',
+ 'MHA-1-013','MHA-1-014','MHA-1-017','MHA-1-018','MHA-1-019','MHA-1-027','MHA-1-048'
+];
 
 function face(extra){
  const effects=extra.effects||{};
@@ -85,17 +87,25 @@ test('003 cannot count characters that have an activate-main keyword',()=>{
  }),/invalid passive condition/);
 });
 
-test('005 damage grant is not a once-per-turn main ability',()=>{
- reject(face({
+test('005 can grant damage 2 from a main-phase once, and a different amount stays illegal',()=>{
+ accept(face({
   id:'GAP-005', ownTurnBp:2000,
+  battleRequiresAnyName:['オール・フォー・ワン','死柄木 弔'],
   mainAbility:{
    op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
    then:[{op:'grantSelfAttackDamageThisTurn',amount:2}]
   }
+ }));
+ reject(face({
+  id:'GAP-005B', ownTurnBp:2000,
+  mainAbility:{
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:[{op:'grantSelfAttackDamageThisTurn',amount:1}]
+  }
  }),/unsupported main action ability/);
 });
 
-test('018 accepts a main-phase battle-win draw, and 011 still cannot force a block',()=>{
+test('018 accepts a main-phase battle-win draw, and 011 accepts a main-phase block grant',()=>{
  accept(face({
   id:'GAP-018',
   mainAbility:{
@@ -110,10 +120,17 @@ test('018 accepts a main-phase battle-win draw, and 011 still cannot force a blo
    then:[{op:'grantSelfAttackWinDrawThisTurn'}]
   }
  }),/unsupported main action ability/);
- reject(face({
-  id:'GAP-011',
+ accept(face({
+  id:'GAP-011', blockSkipsNextActive:true,
   mainAbility:{
    op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:[{op:'grantSelfMustBlockThisTurn'}]
+  }
+ }));
+ reject(face({
+  id:'GAP-011B',
+  mainAbility:{
+   op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
    then:[{op:'grantSelfMustBlockThisTurn'}]
   }
  }),/unsupported main action ability/);
@@ -198,7 +215,7 @@ test('009, 010 and 017 accept the shared sentence and reject a different paramet
   id:'GAP-017B', raidName:'トゥワイス',
   effects:{onRetire:[{op:'deployRaidBottomActive',optional:true}]}
  }),/raid-bottom active entry without a gate/);
- assert.equal(createMhaV2Pack().cards['MHA-1-009'],undefined);
- assert.equal(createMhaV2Pack().cards['MHA-1-010'],undefined);
- assert.equal(createMhaV2Pack().cards['MHA-1-017'],undefined);
+ assert.equal(createMhaV2Pack().cards['MHA-1-009'].battleRemoveInstead,true);
+ assert.equal(createMhaV2Pack().cards['MHA-1-010'].raidName,'死柄木 弔');
+ assert.equal(createMhaV2Pack().cards['MHA-1-017'].raidName,'トゥワイス');
 });

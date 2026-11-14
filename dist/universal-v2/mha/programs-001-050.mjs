@@ -11,6 +11,27 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   ready:true, implementation:'dsl', impactNull:true,
   effects:Object.freeze({onRetire:Object.freeze([{op:'drawDiscard', count:1}])})
  }),
+ 'MHA-1-006':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({op:'payHandMoveOrSwap', oncePerTurn:true, pay:1})
+ }),
+ 'MHA-1-007':Object.freeze({
+  ready:true, implementation:'dsl', printedImpact:1, battleLoseToHand:'ownTurn'
+ }),
+ 'MHA-1-009':Object.freeze({
+  ready:true, implementation:'dsl', battleRemoveInstead:true,
+  mainAbility:Object.freeze({op:'payHandGrantImpact', oncePerTurn:true, pay:1, amount:1}),
+  triggerEffect:Object.freeze({
+   op:'deployOutsideCharacter', color:'purple', maxEnergy:2, ap:1, frontOnly:true
+  })
+ }),
+ 'MHA-1-010':Object.freeze({
+  ready:true, implementation:'dsl', raidName:'死柄木 弔', battleRemoveInstead:true,
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
+   then:Object.freeze([{op:'removeOppFrontUnderBp', bp:2000}])
+  })
+ }),
  'MHA-1-008':vanilla,
  'MHA-1-012':Object.freeze({
   ready:true, implementation:'dsl',
@@ -34,6 +55,10 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   effects:Object.freeze({onRetire:Object.freeze([{op:'draw', count:1}])})
  }),
  'MHA-1-016':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
+ 'MHA-1-017':Object.freeze({
+  ready:true, implementation:'dsl', raidName:'トゥワイス',
+  effects:Object.freeze({onPlay:Object.freeze([{op:'deployRaidBottomActive', optional:true}])})
+ }),
  'MHA-1-018':Object.freeze({
   ready:true, implementation:'dsl',
   mainAbility:Object.freeze({
@@ -86,6 +111,14 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
  }])),
  'MHA-1-046':Object.freeze({ready:true, implementation:'dsl', impactNull:true}),
  'MHA-1-047':Object.freeze({ready:true, implementation:'dsl', step:true}),
+ 'MHA-1-048':Object.freeze({
+  ready:true, implementation:'dsl',
+  oppEffectLeave:Object.freeze({
+   turn:'opponent', oncePerTurn:true, instead:'stay',
+   cause:'characterOrEvent', subject:'self', line:'any'
+  }),
+  effects:Object.freeze({onPlay:Object.freeze([{op:'reorderOwnLife', optional:true}])})
+ }),
  'MHA-1-049':vanilla,
  'MHA-1-050':Object.freeze({
   ready:true, implementation:'dsl', printedHandEnergyDiscount:1,

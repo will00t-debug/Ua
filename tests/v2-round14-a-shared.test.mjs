@@ -114,12 +114,13 @@ const fuel={id:'FUEL',name:'能源角色',traits:['測試'],implementation:'vani
 const low={id:'LOW',name:'低BP',bp:2000,implementation:'vanilla',effects:{}};
 const high={id:'HIGH',name:'高BP',bp:4000,implementation:'vanilla',effects:{}};
 
-test('the six MHA cards stay pending while IMC and the ready set stay put',()=>{
+test('thirteen MHA cards are ready and 076 stays pending',()=>{
  const pack=createMhaV2Pack();
- assert.equal(Object.keys(pack.cards).length,64);
- for(const id of ['MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-017',
-  'MHA-1-048','MHA-1-056','MHA-1-059','MHA-1-071','MHA-1-074','MHA-1-076'])
-  assert.equal(pack.cards[id],undefined,id);
+ assert.equal(Object.keys(pack.cards).length,77);
+ for(const id of ['MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-017','MHA-1-048',
+  'MHA-1-056','MHA-1-059','MHA-1-071','MHA-1-074','MHA-1-087','MHA-1-089','MHA-1-093'])
+  assert.equal(pack.cards[id].id,id);
+ assert.equal(pack.cards['MHA-1-076'],undefined);
 });
 
 test('placeHandOutside puts one hand card outside and does not draw',()=>{

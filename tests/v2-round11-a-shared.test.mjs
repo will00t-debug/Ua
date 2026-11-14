@@ -134,7 +134,7 @@ function reject(card,pattern){
 
 test('001, 013, 014, 018 and 070 are in the MHA pack, and IMC stays 113',()=>{
  const mha=createMhaV2Pack();
- assert.equal(Object.keys(mha.cards).length,64);
+ assert.equal(Object.keys(mha.cards).length,77);
  for(const id of ['MHA-1-001','MHA-1-013','MHA-1-014','MHA-1-018','MHA-1-070'])
   assert.equal(mha.cards[id].id,id);
  assert.equal(mha.cards['MHA-1-001'].impactNull,true);
@@ -145,8 +145,9 @@ test('001, 013, 014, 018 and 070 are in the MHA pack, and IMC stays 113',()=>{
  assert.deepEqual(mha.cards['MHA-1-070'].printedMains,[
   {id:'outside',op:'discardHandThenActive',discard:1}
  ]);
- for(const id of ['MHA-1-006','MHA-1-056','MHA-1-071'])
-  assert.equal(mha.cards[id],undefined);
+ assert.equal(mha.cards['MHA-1-006'].mainAbility.op,'payHandMoveOrSwap');
+ assert.equal(mha.cards['MHA-1-056'].effects.onAttack[0].op,'stripFacedownToOutside');
+ assert.equal(mha.cards['MHA-1-071'].effects.onPlay[0].op,'placeHandOutside');
  const mirio=mha.cards['MHA-1-051'];
  assert.equal(mirio.raidName,'通形 ミリオ');
  assert.deepEqual(mirio.blockBpRestriction,{relation:'atMost',bp:3000,condition:null});
