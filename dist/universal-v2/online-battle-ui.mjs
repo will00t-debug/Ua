@@ -1,8 +1,6 @@
 // Presentation only. Online commands keep their server-issued action index.
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
-import {getTitle} from '../title-registry.mjs';
-const MHA_PRINTED_ZH=new Map((getTitle('mha')?.cards||[]).map(card=>[card.id,card]));
 import {makeAttackLifePicker} from './attack-life-picker.mjs';
 import {mountFieldActivationButtons,openFieldActivationPicker} from './field-activation-ui.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
@@ -87,7 +85,7 @@ export function onlineBattleCard({el,card,src,classes='',label,placement='',inde
   'data-placement':placement});
  if(!card){node.append(el('span',{class:'slotIndex',text:'0'+(index+1)}));if(click)node.addEventListener('click',click);return node;}
  node.dataset.v2CardUid=card.uid;
- const name=MHA_PRINTED_ZH.get(card.cardId)?.name||card.name||definition.name||card.cardId;
+ const name=definition.name||card.name||card.cardId;
  const art=image(el,src,name);
  if(hand){
   node.append(art,el('span',{class:'handCost',text:'◆ '+(definition.energy??card.energy??'?')}),
@@ -145,11 +143,10 @@ export function showOnlineCard({el,card,definition={},src,nameOf,imageOf,effectO
  if(!card?.cardId)return;
  closeOnlineCard();
  const overlay=el('div',{class:'overlay v2-field-overlay online-card-overlay'});
- const localized=MHA_PRINTED_ZH.get(card.cardId);
- const displayName=localized?.name||card.name||definition.name||card.cardId;
+ const displayName=definition.name||card.name||card.cardId;
  const dialog=el('div',{class:'dialog panel field-sheet',role:'dialog','aria-modal':'true',
   'aria-label':displayName+' 的卡圖與效果',tabindex:'-1'});
- const effect=localized?.effect||definition.effect||definition.text||definition.description||'點選卡圖可查看印刷效果。';
+ const effect=definition.effect||definition.text||definition.description||'點選卡圖可查看印刷效果。';
  const art=image(el,src,displayName);
  const facedownSection=facedownGallery(el,facedownInspectModel(card),{nameOf,imageOf,effectOf,onInspect});
  dialog.append(el('button',{type:'button',class:'online-overlay-close',text:'關閉卡片檢視',onClick:()=>close()}),
@@ -186,9 +183,8 @@ export function showOnlineCard({el,card,definition={},src,nameOf,imageOf,effectO
 function pendingCardSheet({el,card,label,definition,imageSource,openCard}){
  if(!card?.cardId)return null;
  const printed=definition(0,card.cardId)||{};
- const localized=MHA_PRINTED_ZH.get(card.cardId);
- const name=localized?.name||printed.name||card.name||card.cardId;
- const effect=[localized?.effect,printed.effect,printed.effectJa,printed.text,printed.description]
+ const name=printed.name||card.name||card.cardId;
+ const effect=[printed.effect,printed.effectJa,printed.text,printed.description]
   .find(value=>typeof value==='string'&&value.trim()&&value.trim()!=='-')||
   '這張卡目前沒有可顯示的印刷效果。';
  const art=image(el,imageSource(0,card.cardId),name);
