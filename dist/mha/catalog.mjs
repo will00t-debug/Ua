@@ -103,7 +103,13 @@ export function mhaEditorCards(){
  if(shared.join()!==SHARED_WITH_BOOSTER.join())
   throw Error('UA10ST reprint ids drifted: '+shared.join(','));
  const starterOnly=UA10ST_CARDS.filter(card=>!boosterIds.has(card.id));
- const cards=[...booster,...starterOnly].map(card=>({...card,playable:false,battleReady:false}));
+ const starterNumber=new Map(UA10ST_CARDS.map(card=>[card.id,card.number]));
+ const cards=[...booster,...starterOnly].map(card=>{
+  const reprint=starterNumber.get(card.id);
+  const aliases=[...(card.aliases||[])];
+  if(reprint&&reprint!==card.number&&!aliases.includes(reprint))aliases.push(reprint);
+  return {...card,aliases,playable:false,battleReady:false};
+ });
  const ids=cards.map(card=>card.id);
  if(new Set(ids).size!==ids.length)throw Error('Duplicate MHA editor id');
  if(cards.length!==109)throw Error('MHA editor catalog must be 109 distinct deck cards');
