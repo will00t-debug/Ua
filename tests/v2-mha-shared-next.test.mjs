@@ -154,10 +154,10 @@ test('the shared shapes stay expressible and the MHA cards stay pending',()=>{
  assert.equal(getTitle('mha').playable,false);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  const mha=createMhaV2Pack();
- assert.equal(Object.keys(mha.cards).length,100);
- for(const id of ['MHA-1-003','MHA-1-005','MHA-1-011','MHA-1-026','MHA-1-038','MHA-1-085','MHA-1-099','MHA-1-100'])
+ assert.equal(Object.keys(mha.cards).length,101);
+ for(const id of ['MHA-1-003','MHA-1-005','MHA-1-011','MHA-1-026','MHA-1-038','MHA-1-085','MHA-1-090','MHA-1-099','MHA-1-100'])
   assert.equal(mha.cards[id].id,id);
- for(const id of ['MHA-1-090'])
+ for(const id of ['MHA-1-091','MHA-1-095','MHA-1-096'])
   assert.notEqual(mhaProgramFor(id)?.ready,true);
  shell([
   card({id:'M2',effects:{onPlay:[mill]},mainAbility:{op:'restRetireSequence',then:[

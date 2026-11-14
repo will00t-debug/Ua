@@ -8,13 +8,6 @@ export const MHA_A_GROUP_WIRING={
 
 export const MHA_REQUESTS_051_100=[
  {
-  cardId:'MHA-1-090',
-  sentence:'レイド〈ホークス〉。登場時、手札を望む枚数裏向きで下に置く。アタック時、その裏向きを見て1枚まで手札に加え、加えたら他の〈ホークス〉以外を1枚までアクティブ。',
-  existingOps:['raidName','activeOwnOther'],
-  whyNotEnough:'tuckFacedownUnder 可把任意張手牌蓋到自己下面。lookUnderToHandThenActive 會在攻擊時查看直接蓋牌，最多 1 張加入手牌，有加入才活動其他排除指名的角色。這輪不寫卡牌程式，所以維持 pending。',
-  proposal:'突襲框是霍克斯。登場時可把任意張手牌蓋到自己下面。攻擊時查看那些蓋牌，最多1張加入手牌；有加入才活動最多1張其他非霍克斯。090はreadyにしない。'
- },
- {
   cardId:'MHA-1-091',
   sentence:'アタック時とブロック時。自分のフロントLに空きがある場合、手札1枚を場外に置いてもよい。そうしたらこのターンBP+2000。',
   existingOps:['optionalRemoveHandThen','buffSelf','buffSelfIfFrontOpen'],

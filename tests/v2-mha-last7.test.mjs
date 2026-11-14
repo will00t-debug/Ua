@@ -217,3 +217,167 @@ test('MHA-1-085 tucks two cards, gains own-turn BP, and retires only after a str
  assert.equal(universalBp(pack,s,raidTop),5500);
 });
 
+function payFive(s){
+ const loud=seat(s,0,'MHA-1-086','energy',0,true);
+ const louder=seat(s,0,'MHA-1-086','energy',1,true);
+ seat(s,0,'MHA-1-067','energy',2,false);
+ return [loud,louder];
+}
+function keepHand(s,ids){
+ const hand=s.players[0].hand;
+ const kept=[];
+ for(const id of ids){
+  const at=hand.findIndex(c=>c.cardId===id&&!kept.includes(c));
+  if(at>=0)kept.push(hand.splice(at,1)[0]);
+  else kept.push(pull(s,0,id));
+ }
+ s.players[0].deck.push(...hand.splice(0));
+ hand.push(...kept);
+}
+function toAttack(s,uid){
+ for(let i=0;i<6&&s.phase!=='attack';i++)s=act(s,{type:'next'});
+ const card=s.players[0].front.find(c=>c?.uid===uid)||
+  s.players[0].energy.find(c=>c?.uid===uid);
+ card.ready=true;
+ return {s,card};
+}
+
+test('MHA-1-090 tucks any hand cards, then may add one and activate a non-Hawks',()=>{
+ let s=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1,'MHA-1-073':1,'MHA-1-088':1,'MHA-1-078':1},9001);
+ payFive(s);
+ readyAp(s,1);
+ keepHand(s,['MHA-1-090','MHA-1-073','MHA-1-078']);
+ const hawk=hold(s,0,'MHA-1-090');
+ s=act(s,a=>a.type==='play'&&a.uid===hawk.uid&&a.line==='front');
+ assert.equal(s.pending.kind,'effect-tuck-facedown');
+ assert.equal(legal(s).filter(a=>a.type==='chooseTuckFacedown'&&a.uid).length,2);
+ s=act(s,{type:'chooseTuckFacedown',uid:null});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').under.length,0);
+
+ s=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1,'MHA-1-073':1,'MHA-1-078':1},9002);
+ payFive(s);
+ readyAp(s,1);
+ keepHand(s,['MHA-1-090']);
+ const alone=hold(s,0,'MHA-1-090');
+ s=act(s,a=>a.type==='play'&&a.uid===alone.uid&&a.line==='front');
+ assert.equal(s.pending,null);
+
+ s=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1,'MHA-1-073':1,'MHA-1-078':1},9003);
+ payFive(s);
+ readyAp(s,1);
+ keepHand(s,['MHA-1-090','MHA-1-073']);
+ const payer=s.players[0].hand.find(c=>c&&c.cardId==='MHA-1-090');
+ const first=s.players[0].hand.find(c=>c.cardId==='MHA-1-073');
+ s=act(s,a=>a.type==='play'&&a.uid===payer.uid&&a.line==='front');
+ s=act(s,{type:'chooseTuckFacedown',uid:first.uid});
+ assert.equal(s.pending,null);
+ const host=s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090');
+ assert.equal(host.under.length,1);
+ assert.equal(host.under[0].faceDown,true);
+ s.players[0].deck.push(host.under.pop());
+ const gone=toAttack(s,host.uid);
+ s=gone.s;
+ s=act(s,{type:'attack',uid:gone.card.uid});
+ assert.equal(s.pending.kind,'block');
+
+ s=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1,'MHA-1-073':1,'MHA-1-088':1,'MHA-1-078':1},9004);
+ payFive(s);
+ readyAp(s,1);
+ keepHand(s,['MHA-1-090','MHA-1-073','MHA-1-078']);
+ const body=s.players[0].hand.find(c=>c&&c.cardId==='MHA-1-090');
+ const kept=s.players[0].hand.find(c=>c.cardId==='MHA-1-073');
+ const taken=s.players[0].hand.find(c=>c.cardId==='MHA-1-078');
+ s=act(s,a=>a.type==='play'&&a.uid===body.uid&&a.line==='front');
+ s=act(s,{type:'chooseTuckFacedown',uid:kept.uid});
+ s=act(s,{type:'chooseTuckFacedown',uid:taken.uid});
+ assert.equal(s.pending,null);
+ const bird=seat(s,0,'MHA-1-088','energy',3,false);
+ const woken=toAttack(s,s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').uid);
+ s=woken.s;
+ s=act(s,{type:'attack',uid:woken.card.uid});
+ assert.equal(s.pending.kind,'effect-look-under-hand');
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ const seen=universalPrivateChoices(pack,s,0);
+ assert.equal(seen.options.filter(o=>o.card).length,2);
+ assert.equal(seen.options.some(o=>o.card?.cardId==='MHA-1-073'),true);
+ assert.equal(seen.options.some(o=>o.card?.cardId==='MHA-1-078'),true);
+ s=act(s,{type:'chooseLookUnderHand',uid:null});
+ assert.equal(s.pending.kind,'block');
+ assert.equal(s.players[0].hand.some(c=>c.uid===taken.uid),false);
+
+ s=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1,'MHA-1-073':1,'MHA-1-088':1,'MHA-1-078':1},9005);
+ payFive(s);
+ readyAp(s,1);
+ keepHand(s,['MHA-1-090','MHA-1-073']);
+ const raider=s.players[0].hand.find(c=>c&&c.cardId==='MHA-1-090');
+ const layer=s.players[0].hand.find(c=>c.cardId==='MHA-1-073');
+ s=act(s,a=>a.type==='play'&&a.uid===raider.uid&&a.line==='front');
+ s=act(s,{type:'chooseTuckFacedown',uid:layer.uid});
+ assert.equal(s.pending,null);
+ const friend=seat(s,0,'MHA-1-078','front',1,false);
+ const named=seat(s,0,'MHA-1-088','front',2,false);
+ const attack=toAttack(s,s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').uid);
+ s=attack.s;
+ s=act(s,{type:'attack',uid:attack.card.uid});
+ s.players[0].deck.push(s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').under.pop());
+ assert.throws(()=>dispatchUniversalAction(pack,s,{type:'chooseLookUnderHand',uid:layer.uid}),
+  /not currently legal|Facedown layer left/);
+ s=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1,'MHA-1-073':1,'MHA-1-088':1,'MHA-1-078':1},9006);
+ payFive(s);
+ readyAp(s,1);
+ keepHand(s,['MHA-1-090','MHA-1-073']);
+ const actor=s.players[0].hand.find(c=>c&&c.cardId==='MHA-1-090');
+ const buried=s.players[0].hand.find(c=>c.cardId==='MHA-1-073');
+ s=act(s,a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front');
+ s=act(s,{type:'chooseTuckFacedown',uid:buried.uid});
+ assert.equal(s.pending,null);
+ const ally=seat(s,0,'MHA-1-078','energy',3,false);
+ const exclude=seat(s,0,'MHA-1-088','front',1,false);
+ const live=toAttack(s,s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').uid);
+ s=live.s;
+ s=act(s,{type:'attack',uid:live.card.uid});
+ s=act(s,{type:'chooseLookUnderHand',uid:buried.uid});
+ assert.equal(s.players[0].hand.some(c=>c.uid===buried.uid&&c.faceDown===false),true);
+ assert.equal(s.pending.kind,'effect-active-character');
+ assert.equal(s.pending.choices.includes(ally.uid),true);
+ assert.equal(s.pending.choices.includes(exclude.uid),false);
+ assert.equal(s.pending.choices.includes(live.card.uid),false);
+ s=act(s,{type:'chooseActiveCharacter',uid:ally.uid});
+ assert.equal(s.players[0].energy.find(c=>c?.uid===ally.uid).ready,true);
+ assert.equal(s.players[0].front.find(c=>c?.uid===exclude.uid).ready,false);
+ assert.equal(s.pending.kind,'block');
+ s=act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.players[0].front.find(c=>c?.uid===live.card.uid).ready,false);
+ assert.equal(legal(s).some(a=>a.type==='attack'&&a.uid===live.card.uid),false);
+
+ const broke=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1},9007);
+ payFive(broke);
+ broke.players[0].apCards.forEach(card=>{card.inPlay=true;card.ready=false;});
+ const unpaid=hold(broke,0,'MHA-1-090');
+ assert.equal(legal(broke).some(a=>a.uid===unpaid.uid&&(a.type==='play'||a.type==='raid')),false);
+ const green=open({'MHA-1-090':1,'MHA-1-057':4},9008);
+ fuel(green,0,['MHA-1-057','MHA-1-057','MHA-1-057','MHA-1-057']);
+ readyAp(green,1);
+ const wrong=hold(green,0,'MHA-1-090');
+ assert.equal(legal(green).some(a=>a.uid===wrong.uid&&(a.type==='play'||a.type==='raid')),false);
+
+ const raided=open({'MHA-1-090':1,'MHA-1-086':2,'MHA-1-067':1,'MHA-1-073':1,'MHA-1-088':1},9009);
+ payFive(raided);
+ readyAp(raided,1);
+ const base=seat(raided,0,'MHA-1-088','front',1,false);
+ keepHand(raided,['MHA-1-090','MHA-1-073']);
+ const topCard=raided.players[0].hand.find(c=>c&&c.cardId==='MHA-1-090');
+ const tucked=raided.players[0].hand.find(c=>c.cardId==='MHA-1-073');
+ s=act(raided,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===base.uid&&a.line!=='energy');
+ assert.equal(s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').ready,true);
+ assert.equal(s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').stack.some(c=>c.uid===base.uid),true);
+ assert.equal(s.pending.kind,'effect-tuck-facedown');
+ s=act(s,{type:'chooseTuckFacedown',uid:tucked.uid});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.find(c=>c&&c.cardId==='MHA-1-090').under[0].uid,tucked.uid);
+});
+
+function fuelFour(s){
+ fuel(s,0,['MHA-1-067','MHA-1-073','MHA-1-075','MHA-1-078']);
+}

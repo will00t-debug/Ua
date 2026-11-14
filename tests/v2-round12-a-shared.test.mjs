@@ -131,14 +131,14 @@ const activeEntry={
  maxEnergy:3,ap:1,max:1,optional:true,requireAffordableEnergy:true
 };
 
-test('IMC stays 113 and MHA stays 100 ready with 9 pending',()=>{
+test('IMC stays 113 and MHA stays 101 ready with 8 pending',()=>{
  const imc=createImcV2Pack();
  const mha=createMhaV2Pack();
  const editor=mhaEditorCards();
  assert.equal(Object.keys(imc.cards).length,113);
  assert.equal(editor.length,109);
- assert.equal(Object.keys(mha.cards).length,100);
- assert.equal(editor.filter(row=>!mha.cards[row.id]).length,9);
+ assert.equal(Object.keys(mha.cards).length,101);
+ assert.equal(editor.filter(row=>!mha.cards[row.id]).length,8);
  assert.equal(mha.cards['MHA-1-001'].impactNull,true);
  assert.equal(mha.cards['MHA-1-013'].effects.onPlay[0].then[0].line,'front');
  assert.equal(mha.cards['MHA-1-014'].raidName,'荼毘');
