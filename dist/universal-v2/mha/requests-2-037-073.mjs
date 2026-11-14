@@ -12,9 +12,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  'MHA-2-040':Object.freeze({
   missing:'前排、每回合一次：選 1 張對手前排，本回合給予「BP 被減少時再 -500」以及「因 BP 0 以下退場時改放進移除區」。'
  }),
- 'MHA-2-041':Object.freeze({
-  missing:'登場時可付 1 AP。付了之後二選一：退場最多 1 張 BP 2500 以下的對手前排，或抽 2。'
- }),
  'MHA-2-042':Object.freeze({
   missing:'可突襲〈トガヒミコ〉並以活動狀態移到前排。登場時對手前排最多 1 張 BP-1000。前排起動每回合一次：對手前排 1 張 BP-1000，這張卡 BP+1000。'
  }),
@@ -23,9 +20,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  }),
  'MHA-2-044':Object.freeze({
   missing:'付 1 AP、每回合一次、只抽 1。現有的付 AP 起動還會強制增加發生能源，不能拿來代替這句。'
- }),
- 'MHA-2-045':Object.freeze({
-  missing:'付 2 張手牌、每回合一次，獲得狙擊，而且不能用狙擊指定 BP 3000 以上的角色。'
  }),
  'MHA-2-046':Object.freeze({
   missing:'突襲〈レディ・ナガン〉並活動移到前排。登場時本回合獲得狙擊。三個起動分別是休息加 BP 與衝擊 1、休息加攻擊時抽 1、付 1 張手牌把這張卡活動。'
@@ -53,9 +47,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  }),
  'MHA-2-057':Object.freeze({
   missing:'可突襲〈通形 ミリオ〉並活動移到前排。BP 3000 以下的角色不能阻擋它。前排、每回合一次，給必要能源 4 以上的其他自己角色 BP+1000 或衝擊 1。退場時最多把 1 張突襲底板回手。'
- }),
- 'MHA-2-060':Object.freeze({
-  missing:'手牌必要能源固定 -2 綠。自己場上另有必要能源 4 以上的角色時，發生能源 +1 綠，自己不算。發生能源在計算這個條件時沒有傳入必要能源讀數，現有被動句會中斷對戰，不能標成 ready。'
  }),
  'MHA-2-062':Object.freeze({
   missing:'自己手牌 3 張以下時才有傷害 2。阻擋這張卡攻擊的角色，阻擋時不發動。因與這張卡戰鬥而退場的角色，退場時不發動。'

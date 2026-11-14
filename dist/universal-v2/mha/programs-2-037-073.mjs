@@ -37,10 +37,40 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
   }])}),
   notes:'看牌頂 4 張。公開最多 1 張印刷 BP 3500 以下的角色到手牌，其餘放牌底。有拿才棄 1 張手牌到場外。Q1010：看卡面印刷 BP，不看當下 BP。不能拿的牌留在畫面上。'
  }),
+ 'MHA-2-041':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'optionalPayApThen', ap:1, optional:true,
+   then:Object.freeze([{
+    op:'chooseOne', optional:false,
+    options:Object.freeze([
+     Object.freeze({id:'retire', label:'退場', turn:'any', then:Object.freeze([
+      Object.freeze({op:'retireOppFrontOneUnderBp', bp:2500, optional:true})
+     ])}),
+     Object.freeze({id:'draw', label:'抽2', turn:'any', then:Object.freeze([
+      Object.freeze({op:'draw', count:2})
+     ])})
+    ])
+   }])
+  }])}),
+  notes:'登場時可付 1 AP。付了才二選一：退場最多 1 張 BP 2500 以下的對手前排，或抽 2。不付就沒有後續。'
+ }),
  'MHA-2-039':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onAttack:Object.freeze([{op:'drawDiscard', count:1}])}),
   notes:'攻擊時抽 1，再把自己的 1 張手牌放到場外。沒有其他句子。'
+ }),
+ 'MHA-2-045':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'oncePayProgram', oncePerTurn:true, frontOnly:false, raidOnly:false,
+   payAp:0, requiresOwnName:null,
+   then:Object.freeze([{
+    op:'discardGate', optional:false, count:2,
+    then:Object.freeze([Object.freeze({op:'grantSelfSniperThisTurn', maxBp:3000})])
+   }])
+  }),
+  notes:'每回合一次，付 2 張手牌後本回合獲得狙擊，而且不能指定 BP 3000 以上。前排與能量列都能發動。'
  }),
  'MHA-2-047':Object.freeze({
   ready:true, implementation:'dsl',
@@ -62,6 +92,18 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
  'MHA-2-059':Object.freeze({
   ready:true, implementation:'dsl', emptyOwnFieldHandEnergyDiscount:2,
   notes:'自己場上沒有卡時，手牌必要能源 -2 綠。場上有卡、或從生命打出，都不減。'
+ }),
+ 'MHA-2-060':Object.freeze({
+  ready:true, implementation:'dsl',
+  printedHandEnergyDiscount:2,
+  passiveBonuses:Object.freeze([Object.freeze({
+   extraEnergy:1,
+   condition:Object.freeze({
+    kind:'ownOtherRequiredEnergyAtLeast', turn:'any', zone:'field',
+    excludeSelf:true, minEnergy:4, min:1
+   })
+  })]),
+  notes:'手牌必要能源 -2 綠。場上另有必要能源 4 以上的角色時，發生能源 +1 綠。自己不算，生命區不減。'
  }),
  'MHA-2-061':Object.freeze({
   ready:true, implementation:'dsl',

@@ -873,7 +873,8 @@ export function universalCardEnergy(pack,s,p,c){
    s.players[p].ownTurns<b.untilOwnTurnStart))
   .reduce((n,b)=>n+(b.energy&&(!b.color||b.color===d.color)?b.energy:0),0);
  const passiveBonus=livePassives(pack,s,c).reduce((n,p)=>n+(p.extraEnergy&&
-  matchesV2LiveCondition(s,pIndex,c.uid,p.condition,x=>card(pack,x),()=>0)?
+  matchesV2LiveCondition(s,pIndex,c.uid,p.condition,x=>card(pack,x),()=>0,
+   x=>bp(pack,s,x),requiredEnergyReader(pack,s))?
   p.extraEnergy:0),0);
  const distinctBonus=!suppressed&&profile&&(!profile.requiresActive||c.ready)&&
   matchesOwnDistinctTraits(s,p,c.uid,profile,x=>card(pack,x))?

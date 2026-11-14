@@ -11,10 +11,12 @@ import {MHA2_PROGRAMS_037_073} from '../dist/universal-v2/mha/programs-2-037-073
 import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
  import {newUniversalMatch, legalUniversalActions, dispatchUniversalAction,
- assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices
+ assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices,
+ universalCardEnergy, universalEnergyByColor
 } from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-2-039','MHA-2-047','MHA-2-049','MHA-2-052','MHA-2-055',
+const READY=['MHA-2-039','MHA-2-041','MHA-2-045','MHA-2-047','MHA-2-049','MHA-2-052','MHA-2-055',
+ 'MHA-2-060',
  'MHA-2-058','MHA-2-059','MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065',
  'MHA-2-071','MHA-2-073'];
 const real=createMha2Pack();
@@ -53,6 +55,7 @@ function shell(){
   fixture({id:'GREEN', name:'綠燃料', color:'green', gen:2}),
   fixture({id:'RED', name:'紅燃料', color:'red', gen:2}),
   fixture({id:'NAGANT', name:'レディ・ナガン', bp:1500}),
+  fixture({id:'CAP', name:'上限', bp:2500}),
   fixture({id:'LOW', name:'低', bp:3000}),
   fixture({id:'MID', name:'中', bp:3500}),
   fixture({id:'HIGH', name:'高', bp:5000}),
@@ -526,4 +529,137 @@ test('MHA-2-063 uses printed BP 3500, not the current BP',()=>{
  assert.equal(s.pending.choices.includes(low.uid),true);
  assert.equal(s.pending.choices.includes(plain.uid),true);
  assert.equal(s.pending.choices.includes(high.uid),false);
+});
+
+test('MHA-2-041 pays one AP, then retires BP 2500 or draws two',()=>{
+ const unpaid=open(2041);
+ clearLines(unpaid.s,0);
+ clearLines(unpaid.s,1);
+ const body=hold(unpaid.s,'MHA-2-041');
+ seat(unpaid.s,1,'CAP','front',0,true);
+ assert.equal(legal(unpaid.pack,unpaid.s).some(a=>a.type==='play'&&a.uid===body.uid),false);
+ seat(unpaid.s,0,'PURPLE','energy',0,true);
+ seat(unpaid.s,0,'MHA-2-047','energy',1,true);
+ unpaid.s.players[0].apCards.forEach(ap=>{ap.ready=false;});
+ assert.equal(legal(unpaid.pack,unpaid.s).some(a=>a.type==='play'&&a.uid===body.uid),false);
+
+ let {pack,s}=open(2042);
+ clearLines(s,0);
+ clearLines(s,1);
+ seat(s,0,'PURPLE','energy',0,true);
+ seat(s,0,'MHA-2-047','energy',1,true);
+ const self=hold(s,'MHA-2-041');
+ const cap=seat(s,1,'CAP','front',0,true);
+ const low=seat(s,1,'LOW','front',1,true);
+ s=act(pack,s,a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.equal(s.pending,null);
+ assert.equal(live(s,1,cap.uid).cardId,'CAP');
+
+ let paid=open(2043);
+ clearLines(paid.s,0);
+ clearLines(paid.s,1);
+ seat(paid.s,0,'PURPLE','energy',0,true);
+ seat(paid.s,0,'MHA-2-047','energy',1,true);
+ readyAp(paid.s);
+ const card=hold(paid.s,'MHA-2-041');
+ const legalCap=seat(paid.s,1,'CAP','front',0,true);
+ const illegal=seat(paid.s,1,'LOW','front',1,true);
+ const deck=paid.s.players[0].deck.length;
+ paid.s=act(paid.pack,paid.s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front');
+ assert.equal(paid.s.pending.kind,'effect-optional-pay-ap');
+ const skipped=act(paid.pack,structuredClone(paid.s),a=>a.type==='chooseOptionalPayAp'&&a.mode==='skip');
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].deck.length,deck);
+ paid.s=act(paid.pack,paid.s,a=>a.type==='chooseOptionalPayAp'&&a.mode==='pay');
+ assert.equal(paid.s.pending.kind,'effect-choice-mode');
+ assert.deepEqual(paid.s.pending.options.map(o=>o.id).sort(),['draw','retire']);
+ const drawn=act(paid.pack,structuredClone(paid.s),a=>a.type==='chooseEffectMode'&&a.mode==='draw');
+ assert.equal(drawn.players[0].deck.length,deck-2);
+ assert.equal(live(drawn,1,legalCap.uid).cardId,'CAP');
+ paid.s=act(paid.pack,paid.s,a=>a.type==='chooseEffectMode'&&a.mode==='retire');
+ assert.equal(paid.s.pending.kind,'effect-retire-bp');
+ assert.equal(paid.s.pending.choices.includes(legalCap.uid),true);
+ assert.equal(paid.s.pending.choices.includes(illegal.uid),false);
+ assert.throws(()=>dispatchUniversalAction(paid.pack,paid.s,{type:'chooseRetireBp',uid:'missing'}));
+ const passed=act(paid.pack,structuredClone(paid.s),a=>a.type==='chooseRetireBp'&&a.uid===null);
+ assert.equal(live(passed,1,legalCap.uid).cardId,'CAP');
+ const retired=act(paid.pack,paid.s,a=>a.type==='chooseRetireBp'&&a.uid===legalCap.uid);
+ assert.equal(live(retired,1,legalCap.uid),null);
+ assert.equal(live(retired,1,illegal.uid).cardId,'LOW');
+ assert.equal(assertUniversalMatch(paid.pack,retired),true);
+});
+
+test('MHA-2-045 pays two hand cards for sniper that cannot name BP 3000 or more',()=>{
+ const broke=open(2045);
+ clearLines(broke.s,0);
+ const short=seat(broke.s,0,'MHA-2-045','front',0,true);
+ seat(broke.s,0,'PURPLE','energy',0,true);
+ while(broke.s.players[0].hand.length>1)broke.s.players[0].removed.push(broke.s.players[0].hand.pop());
+ readyAp(broke.s);
+ assert.equal(legal(broke.pack,broke.s).some(a=>a.type==='activate'&&a.uid===short.uid),false);
+
+ let {pack,s}=open(2046);
+ clearLines(s,0);
+ clearLines(s,1);
+ seat(s,0,'PURPLE','energy',0,true);
+ const self=seat(s,0,'MHA-2-045','energy',1,true);
+ readyAp(s);
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='oncePay'),true);
+ const front=seat(s,0,'MHA-2-045','front',0,true);
+ const parked=s.players[0].energy[1];
+ s.players[0].energy[1]=null;
+ s.players[0].removed.push(parked);
+ const cap=seat(s,1,'CAP','front',0,true);
+ const low=seat(s,1,'LOW','front',1,true);
+ while(s.players[0].hand.length<2)s.players[0].hand.push(pull(s,0,'PLAIN'));
+ const spare=s.players[0].hand.slice(0,2);
+ s=act(pack,s,a=>a.type==='activate'&&a.uid===front.uid&&a.mode==='oncePay');
+ assert.equal(s.pending.kind,'effect-discard-gate');
+ assert.equal(s.pending.count,2);
+ s=act(pack,s,a=>a.type==='chooseDiscardGate'&&a.uids&&a.uids.includes(spare[0].uid)&&a.uids.includes(spare[1].uid));
+ assert.equal(s.pending,null);
+ assert.equal(live(s,0,front.uid).sniperGranted.maxBp,3000);
+ assert.equal(s.players[0].outside.some(c=>c.uid===spare[0].uid),true);
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===front.uid),false);
+ const swinging=reach(pack,s,'attack');
+ live(swinging,0,front.uid).ready=true;
+ const attacks=legal(pack,swinging).filter(a=>a.type==='attack'&&a.uid===front.uid);
+ assert.equal(attacks.some(a=>a.targetUid===cap.uid),true);
+ assert.equal(attacks.some(a=>a.targetUid===low.uid),false);
+ assert.equal(assertUniversalMatch(pack,swinging),true);
+});
+
+test('MHA-2-060 cuts two hand energy and adds green energy beside required energy 4',()=>{
+ let {pack,s}=open(2060);
+ clearLines(s,0);
+ const self=seat(s,0,'MHA-2-060','energy',0,true);
+ const printed=pack.cards['MHA-2-060'];
+ assert.equal(real.cards['MHA-2-060'].printedHandEnergyDiscount,2);
+ assert.equal(zoneRequiredEnergy(pack,s,0,printed,'hand'),2);
+ assert.equal(zoneRequiredEnergy(pack,s,0,printed,'life'),4);
+ assert.equal(universalCardEnergy(pack,s,0,self),1);
+ const low=seat(s,0,'COST3','front',0,true);
+ assert.equal(universalCardEnergy(pack,s,0,self),1);
+ low.buffs=[{requiredEnergy:2,untilTurn:s.turn}];
+ assert.equal(universalCardEnergy(pack,s,0,self),2);
+ low.buffs=[];
+ const high=seat(s,0,'COST4','energy',1,true);
+ assert.equal(universalCardEnergy(pack,s,0,self),2);
+ assert.equal(universalEnergyByColor(pack,s,0).green,3);
+ s.players[0].front[0]=null;
+ s.players[0].removed.push(low);
+ s.players[0].energy[1]=null;
+ s.players[0].removed.push(high);
+ assert.equal(universalCardEnergy(pack,s,0,self),1);
+ const other=seat(s,0,'MHA-2-060','front',0,true);
+ assert.equal(universalCardEnergy(pack,s,0,self),2);
+ assert.equal(universalCardEnergy(pack,s,0,other),0);
+ clearLines(s,0);
+ seat(s,0,'PURPLE','energy',0,true);
+ readyAp(s);
+ const hand=hold(s,'MHA-2-060');
+ assert.equal(legal(pack,s).some(a=>a.type==='play'&&a.uid===hand.uid),false);
+ seat(s,0,'GREEN','energy',1,true);
+ assert.equal(legal(pack,s).some(a=>a.type==='play'&&a.uid===hand.uid&&a.line==='energy'),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
