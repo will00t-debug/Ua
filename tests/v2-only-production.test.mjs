@@ -29,7 +29,7 @@ test('six-title production editor cannot load old battle engine or old app scrip
  assert.equal(TITLES.find(t=>t.id==='csm').cards.length,80);
  assert.equal(TITLES.find(t=>t.id==='csm').playable,false);
  assert.equal(TITLES.find(t=>t.id==='imc').cards.length,113);
- assert.equal(TITLES.find(t=>t.id==='imc').playable,false);
+ assert.equal(TITLES.find(t=>t.id==='imc').playable,true);
  assert.equal(TITLES.find(t=>t.id==='imc').cards.every(card=>card.battleReady===false&&card.deckLegal===true),true);
  assert.equal(TITLES.find(t=>t.id==='mha').cards.length,109);
  assert.equal(TITLES.find(t=>t.id==='mha').playable,false);
