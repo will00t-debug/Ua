@@ -56,7 +56,9 @@ test('set 2 is 73 catalog cards, 26 ready and 47 pending, and set 1 stays open',
  assert.equal(editor.some(card=>String(card.number).startsWith('UA05NC/')),false);
  const book=createMha3Pack();
  assert.equal(book.id,'mha3');
- assert.deepEqual(Object.keys(book.cards),['MHA-3-002']);
+ assert.deepEqual(Object.keys(book.cards),[
+  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'
+ ]);
  assert.equal(set1.cards['MHA-3-002'],undefined);
  assert.equal(set2.cards['MHA-3-002'],undefined);
 });

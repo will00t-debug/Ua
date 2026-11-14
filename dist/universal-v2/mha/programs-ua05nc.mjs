@@ -7,10 +7,32 @@ function pending(gap, extra={}){
 }
 
 export const UA05NC_MHA3_PROGRAMS=Object.freeze({
- 'MHA-3-001':pending(
-  '登場時抽2張已有 draw。起動メイン的二選一（其他A組本回合 BP+1000，或最多1張〈綠谷 出久〉活動）沒有現成的同一個選擇。',
-  {effects:Object.freeze({onPlay:Object.freeze([{op:'draw', count:2}])})}
- ),
+ 'MHA-3-001':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{op:'draw', count:2}])}),
+  mainAbility:Object.freeze({
+   op:'cardOnceChoose',
+   then:Object.freeze([Object.freeze({
+    op:'chooseOne', optional:false,
+    options:Object.freeze([
+     Object.freeze({
+      id:'trait', label:'其他A組 BP+1000', turn:'any',
+      then:Object.freeze([Object.freeze({
+       op:'buffOwnField', filter:Object.freeze({field:'trait', value:'A組'}),
+       bp:1000, optional:false, excludeSelf:true
+      })])
+     }),
+     Object.freeze({
+      id:'active', label:'綠谷出久活動', turn:'any',
+      then:Object.freeze([Object.freeze({
+       op:'activeOwnNamed', name:'緑谷 出久', max:1, optional:true
+      })])
+     })
+    ])
+   })])
+  })
+ }),
  'MHA-3-002':Object.freeze({
   ready:true,
   implementation:'dsl',
@@ -26,20 +48,57 @@ export const UA05NC_MHA3_PROGRAMS=Object.freeze({
    })])
   })
  }),
- 'MHA-3-003':pending(
-  'BP1500以上かつ元々のBPより低い相手前線を1枚 BP-1000，而且〈荼毘〉同名含獲得此效果的角色一回合一次，沒有現成的同一句。'
- ),
- 'MHA-3-004':pending(
-  '休息、對手有低於原BP的角色才可發動、把「攻擊時最多抽1」交給無特徵角色，而且同名含獲得此效果的角色一回合一次，沒有現成的同一句。顏色觸發是既有的場外紫2/1。',
-  {triggerEffect:Object.freeze({
+ 'MHA-3-003':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'nameSharedProgram',
+   scope:'nameIncludingGained',
+   rest:false,
+   then:Object.freeze([Object.freeze({
+    op:'enemyBpDown', bp:1000, optional:false, minBp:1500,
+    belowPrinted:true, zone:'front'
+   })])
+  })
+ }),
+ 'MHA-3-004':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  triggerEffect:Object.freeze({
    op:'deployOutsideCharacter', color:'purple', maxEnergy:2, ap:1, frontOnly:true
-  })}
- ),
- 'MHA-3-006':pending(
-  '休息、對手前線3張以上、其他角色 BP+500，若是〈綠谷 出久〉再在 BP5000以上時給衝擊1，而且該句一回合一次，沒有現成的同一句。'
- ),
+  }),
+  mainAbility:Object.freeze({
+   op:'nameSharedProgram',
+   scope:'nameIncludingGained',
+   rest:true,
+   when:Object.freeze({kind:'oppFieldCurrentBpBelowPrinted', turn:'own'}),
+   then:Object.freeze([Object.freeze({
+    op:'grantOnAttack', target:'ownCharacter', traitless:true, optional:false,
+    until:'endOfTurn', then:Object.freeze([Object.freeze({op:'draw', count:1})])
+   })])
+  })
+ }),
+ 'MHA-3-006':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'nameSharedProgram',
+   scope:'name',
+   rest:true,
+   when:Object.freeze({kind:'oppFrontCountAtLeast', turn:'any', min:3}),
+   then:Object.freeze([Object.freeze({
+    op:'buffOwnField',
+    filter:Object.freeze({field:'type', value:'character'}),
+    bp:500, optional:false, excludeSelf:true,
+    conditionalImpactName:'緑谷 出久', conditionalImpactMinBp:5000
+   })])
+  })
+ }),
  'MHA-3-009':pending(
-  '自己回合 BP+500 已有 ownTurnBp。空場減少的紅六角數字看不清。攻擊時抽1張、1張手牌放自己牌庫底、下一次不活動，沒有現成的同一句。',
-  {ownTurnBp:500}
+  '攻擊時抽1張、1張手牌放自己牌庫底、下一次不活動已寫成 drawBottomSkipNextActive。空場減少的紅六角數字在卡面上看不清，減免數值未確認前不能標 ready。',
+  {
+   ownTurnBp:500,
+   effects:Object.freeze({onAttack:Object.freeze([{op:'drawBottomSkipNextActive'}])})
+  }
  )
 });

@@ -393,6 +393,18 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='oppFieldCurrentBpBelowPrinted'){
+  // 相手の場. Front and energy both count. A field has no BP. A character
+  // sitting exactly at its printed BP does not qualify.
+  if(typeof cardBp!=='function')throw Error('Printed-BP gap needs a live BP reader');
+  const foe=s.players[1-owner];
+  for(const area of [foe.front,foe.energy])for(const c of area){
+   if(!printedFieldCard(c)||printed(c).type!=='character')continue;
+   const base=printed(c).bp;
+   if(Number.isInteger(base)&&cardBp(c)<base)return true;
+  }
+  return false;
+ }
  if(condition.kind==='oppCharacterBpAtLeast'){
   // Q749: an effect that raises current BP counts. Printed BP alone is not
   // the check. Mutual current-BP lookups stop at the card already being
