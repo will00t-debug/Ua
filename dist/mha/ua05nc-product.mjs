@@ -2,10 +2,11 @@
 // This is the book card set UA05NC / MHA-3. It is not a magazine appendix
 // and it does not reuse UA10BT/MHA-1 or EX06BT/MHA-2 numbers.
 // Fetched 2026-11-14. The official product page lists 11 new effect cards
-// and 1 action-point card. The official card list and card images had no
-// UA05NC/MHA-3 row that day, so no number, picture, or printed sentence is
-// stored as a card. A shop preview that marks four names as provisional is
-// recorded only so it is not mistaken for an official printing.
+// and 1 action-point card. The same-day card-list search, detail pages,
+// card images, news, and FAQ still had no individual UA05NC/MHA-3 row.
+// No number, picture, or printed sentence is stored as a card. A shop
+// preview that marks four names as provisional is recorded only so it is
+// not mistaken for an official printing.
 export const UA05NC_MHA3_FETCHED='2026-11-14';
 
 // Separate from battle cards. No number is invented while the card list
@@ -19,6 +20,25 @@ export const UA05NC_MHA3_AP=Object.freeze({
  name:null,
  image:null,
  reason:'2026-11-14 官方卡表與卡圖尚未公布這張 AP 的卡號。不建立假卡號，也不放進對戰或牌組。'
+});
+
+// What the official site actually published. Empty arrays are the card
+// table: a retailer SKU is not a confirmed number, and a missing field
+// stays pending.
+export const UA05NC_MHA3_CHECK=Object.freeze({
+ checked:'2026-11-14',
+ confirmedNumbers:Object.freeze([]),
+ complete:0,
+ ready:0,
+ effectSlots:11,
+ apSlots:1,
+ missing:'11張效果卡與1張AP都還沒有官方卡號、卡名、卡圖、顏色、能源、AP、BP、觸發、日文效果與FAQ。',
+ productImage:'https://www.unionarena-tcg.com/jp/images/products/other/new_card_selection/mha/img_item01.png',
+ productImageNote:'官方商品圖是 NOW DESIGNING，不是單卡卡圖。',
+ cardList:'https://www.unionarena-tcg.com/jp/cardlist/?search=true&keyword=UA05NC',
+ news:'僕のヒーローアカデミア NEW CARD SELECTION 商品情報を公開',
+ faq:'https://www.unionarena-tcg.com/jp/faq/',
+ faqCount:0
 });
 
 export const UA05NC_MHA3_PRODUCT=Object.freeze({
@@ -39,7 +59,8 @@ export const UA05NC_MHA3_PRODUCT=Object.freeze({
  source:'https://www.unionarena-tcg.com/jp/products/other/new_card_selection/mha.php',
  sourceEn:'https://www.unionarena-tcg.com/en/products/other/new_card_selection/mha.php',
  cards:Object.freeze([]),
- ap:UA05NC_MHA3_AP
+ ap:UA05NC_MHA3_AP,
+ officialCheck:UA05NC_MHA3_CHECK
 });
 
 export const UA05NC_MHA3_UNOFFICIAL_PREVIEW=Object.freeze([
