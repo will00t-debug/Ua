@@ -181,6 +181,13 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
    then:[{op:'draw',count:1}]
   }]}
  }),
+ 'MHA-1-090':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'ホークス',
+  effects:{
+   onPlay:[{op:'tuckFacedownUnder',from:'hand',host:'self',count:'any',optional:true}],
+   onAttack:[{op:'lookUnderToHandThenActive',max:1,optional:true,excludeName:'ホークス'}]
+  }
+ }),
  'MHA-1-088':Object.freeze({ready:true,implementation:'vanilla'}),
  'MHA-1-092':play([{op:'buffOwnField',filter:{field:'type',value:'character'},
   bp:1000,optional:true,excludeSelf:true}]),
