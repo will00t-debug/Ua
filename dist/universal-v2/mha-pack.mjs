@@ -1,5 +1,5 @@
 // Battle pack for My Hero Academia cards whose program says ready.
-// UA10ST and UA10BT share eight card numbers. Each number enters once.
+// UA10ST and UA10BT share nine card numbers. Each number enters once.
 // The catalog never makes a card playable. Official matches stay closed.
 import {createUniversalPack} from './pack.mjs';
 import {mhaEditorCards} from '../mha/catalog.mjs';
