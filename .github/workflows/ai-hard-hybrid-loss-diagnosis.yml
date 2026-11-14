@@ -1,0 +1,33 @@
+name: AI Hard Hybrid Loss Diagnosis
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/ai-hard-hybrid-loss-diagnostics-20261114.mjs'
+      - '.github/workflows/ai-hard-hybrid-loss-diagnosis.yml'
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Diagnose 80 mirrored same-deck replay games
+        run: node scripts/ai-hard-hybrid-loss-diagnostics-20261114.mjs
+      - name: Upload private-zone-free diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-hard-hybrid-diagnosis-shard-${{ matrix.shard }}
+          path: ai-diagnosis-shard-*.json
+          if-no-files-found: warn
