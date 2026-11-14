@@ -722,7 +722,8 @@ function verifyProgram(program,path){
   if(e.op==='deployNamedFromZones'){
    const keys=Object.keys(e);
    const hasStats=e.color!==undefined||e.ap!==undefined||e.maxEnergy!==undefined;
-   const colorOk=e.color===null||['red','yellow','green','blue','purple'].includes(e.color);
+   const colorOk=(e.any===true&&e.color===null)||
+    ['red','yellow','green','blue','purple'].includes(e.color);
    const statsOk=!hasStats||(e.color!==undefined&&e.ap!==undefined&&e.maxEnergy!==undefined&&
     colorOk&&integer(e.ap,1)&&e.ap<=3&&integer(e.maxEnergy)&&e.maxEnergy<=30);
    const grantOk=e.grantBp===undefined||(integer(e.grantBp,1)&&e.grantBp<=5000);

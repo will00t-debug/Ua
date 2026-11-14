@@ -613,8 +613,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-line-slot')return legal[0];
  if(s.pending?.kind==='effect-named-zone-entry'||s.pending?.kind==='effect-return-active'||
-  s.pending?.kind==='effect-hand-active'||s.pending?.kind==='effect-front-open-hand'||
-  s.pending?.kind==='effect-hand-rest-or-raid')
+  s.pending?.kind==='effect-hand-active'||s.pending?.kind==='effect-front-open-hand')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null&&a.line!=='energy')||legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-opp-attack-ready')
