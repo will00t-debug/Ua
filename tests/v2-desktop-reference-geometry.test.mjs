@@ -34,7 +34,7 @@ test('desktop geometry loads AFTER red card backs in solo and online matches',()
  const last=online.indexOf("'universal-v2-table-layout-v3.css'",start);
  assert.ok(start>0&&back>start&&last>back,'online CSS order also uses final layout override');
  assert.match(read('dist/online.mjs'),/online-battle-ui\.mjs\?v=20261108neonact1/);
- assert.match(read('dist/online.html'),/ua-ui-version" content="20261108neonact1"/);
+ assert.match(read('dist/online.html'),/ua-ui-version" content="20261114onlinecompact1"/);
 });
 
 test('all click behaviors and hidden card data remain in shared V2 action adapter',()=>{
