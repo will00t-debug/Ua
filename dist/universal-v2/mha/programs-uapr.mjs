@@ -1,29 +1,48 @@
-// Point-exchange promos. A card stays pending until every printed sentence
-// is an existing V2 operation. This file is not imported by mha-pack.mjs,
-// so it cannot change UA10BT/MHA-1 or EX06BT/MHA-2.
-export const UAPR_MHA_REQUESTS=Object.freeze([
- Object.freeze({
-  cardId:'MHA-P-001',
-  number:'UAPR/MHA-P-001',
-  ready:false,
-  sentence:'手札登場は〈緑谷 出久〉以外のA組が自分の場にいると不可。インパクト無効。自分のターン、場と場外の異なるワン・フォー・オール名1種につきBP+500。',
-  existingOps:['impactNull','mutualPlayBan','buffDistinctTraitNames'],
-  whyNotEnough:'mutualPlayBan 只禁止另一個指名，不是「其他 A 組」。buffDistinctTraitNames 是事件的登場時選擇，只看場上，不會在自己回合依場上加場外的不同卡名持續加在自己身上。impactNull 只覆蓋其中一句。'
+// UAPR/MHA-P-001–003. Ready only when every printed sentence is a shared
+// V2 operation. This file is not imported by the MHA-1 or MHA-2 packs.
+// The new operations are generic and are reported in
+// docs/v2-handoff/V2-MHA-uapr-shared.md. No card id is branched in the engine.
+
+export const UAPR_MHA_PROGRAMS=Object.freeze({
+ 'MHA-P-001':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  impactNull:true,
+  handPlayBannedWhileOtherTrait:Object.freeze({trait:'A組',excludeName:'緑谷 出久'}),
+  distinctNameBp:Object.freeze({
+   trait:'ワン・フォー・オール',zones:Object.freeze(['field','outside']),per:500,turn:'own'
+  }),
+  notes:'UAPR/MHA-P-001。手札登場只在自己場上有其他卡名的 A組 時被禁止。沒有突襲指定。衝擊無效。自己回合，自己場上與場外每個不同的ワン・フォー・オール卡名 BP+500。'
  }),
- Object.freeze({
-  cardId:'MHA-P-002',
-  number:'UAPR/MHA-P-002',
-  ready:false,
-  sentence:'自分の場が空なら手札の必要エナジーを［紫×2］減らす。レイドされた時に登場時を発動。登場時は手札1枚を場外に置いてもよく、置いたらBP2500以上をこのターンBP-2000。',
-  existingOps:['emptyOwnFieldHandEnergyDiscount','replayOnPlay','enemyBpDown','placeHandOutside'],
-  whyNotEnough:'空場減 2 點能量已有 emptyOwnFieldHandEnergyDiscount，而且 2 沒有超過既有上限。onRaided 不接受 replayOnPlay。enemyBpDown 的 minBp 沒有接在可选手牌放場外成功之後。'
+ 'MHA-P-002':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  emptyOwnFieldHandEnergyDiscount:2,
+  effects:Object.freeze({
+   onPlay:Object.freeze([Object.freeze({
+    op:'optionalHandOutsideThen',
+    then:Object.freeze([Object.freeze({
+     op:'enemyBpDown',bp:2000,minBp:2500,zone:'front'
+    })])
+   })]),
+   onRaided:Object.freeze([Object.freeze({op:'replayOnPlay'})])
+  }),
+  notes:'UAPR/MHA-P-002。自己場上沒有卡時，手牌的必要能量減 2，印刷能量仍是紫 2。被突襲時重放登場時，並與突襲者的登場時任選順序。支付 1 張手牌到場外後，才選對方前線目前 BP 2500 以上的 1 張，本回合 BP-2000。'
  }),
- Object.freeze({
-  cardId:'MHA-P-003',
-  number:'UAPR/MHA-P-003',
-  ready:false,
-  sentence:'インパクト無効。登場時、手札1枚を自分の場の〈ホークス〉の下に裏向きで置いてもよい。このキャラの下に置いた場合だけ、上から2枚見て1枚まで手札、残りは場外。',
-  existingOps:['impactNull','tuckFacedownUnder','takeTopHandRestOutside'],
-  whyNotEnough:'tuckFacedownUnder 的後續只允許抽 1。takeTopHandRestOutside 會看牌庫頂 2 張，但不會先要求蓋牌放到這張〈霍克斯〉下面。兩句沒有接成同一句。'
+ 'MHA-P-003':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  impactNull:true,
+  effects:Object.freeze({
+   onPlay:Object.freeze([Object.freeze({
+    op:'tuckFacedownUnder',from:'hand',
+    host:Object.freeze({names:Object.freeze(['ホークス'])}),
+    count:1,optional:true,
+    then:Object.freeze([Object.freeze({
+     op:'takeTopHandRestOutside',count:2,upTo:1,whenHost:'self'
+    })])
+   })])
+  }),
+  notes:'UAPR/MHA-P-003。衝擊無效。登場時可將 1 張手牌蓋到自己場上的〈ホークス〉下面。只有蓋到這張角色自己下面時，看自己牌庫頂 2 張，最多 1 張加入手牌，其餘放場外。Q2069 的蓋牌可見範圍沿用既有預覽。'
  })
-]);
+});
