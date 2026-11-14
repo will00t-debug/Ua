@@ -123,6 +123,28 @@ export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
 export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
  return ownFieldTraitKinds(s,owner,sourceUid,profile,printed).size>=profile.minimumDistinctTraits;
 }
+// 異なるカード名の［特徴］. fieldOutside is 場 plus 場外. Copies of one
+// printed name stay one kind. Hand, deck, removed, and Raid layers stay out.
+function traitNameStats(s,owner,sourceUid,condition,printed){
+ const pl=s.players[owner];
+ const zones=condition.zone==='front'?[pl.front]:
+  condition.zone==='energy'?[pl.energy]:
+  condition.zone==='fieldOutside'?[pl.front,pl.energy,pl.outside]:
+  [pl.front,pl.energy];
+ const names=new Set();
+ let found=0;
+ for(const zone of zones)for(const c of zone){
+  if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(!cardHasTrait(d,condition.trait))continue;
+  found++;
+  if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
+ }
+ return {names,found};
+}
+export function countOwnDistinctTraitNames(s,owner,sourceUid,condition,printed){
+ return traitNameStats(s,owner,sourceUid,condition,printed).names.size;
+}
 
 // Small immutable predicate family for PRINTED persistent bonuses.
 // Each condition is evaluated from the current match on every BP/energy read,
@@ -509,27 +531,9 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    (e.from==='life'||(e.from==='lifeRevealed'&&e.reason==='life-trigger')));
  }
  if(condition.kind==='ownCardTraitCount'||condition.kind==='ownDistinctTraitNames'){
-  // 枚 counts every own field card with the printed trait, including a
-  // field. It is not the character-only ownTraitCount predicate.
-  // カード名がN種類 counts distinct printed names among those cards.
-  const pl=s.players[owner];
-  // fieldOutside is 場 plus 場外. Distinct names still collapse copies.
-  // Hand, deck, removed, and Raid layers stay out.
-  const zones=condition.zone==='front'?[pl.front]:
-   condition.zone==='energy'?[pl.energy]:
-   condition.zone==='fieldOutside'?[pl.front,pl.energy,pl.outside]:
-   [pl.front,pl.energy];
-  const names=new Set();
-  let found=0;
-  for(const zone of zones)for(const c of zone){
-   if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
-   const d=printed(c);
-   if(!cardHasTrait(d,condition.trait))continue;
-   found++;
-   if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
-  }
-  return condition.kind==='ownDistinctTraitNames'?names.size>=condition.min:
-   found>=condition.min;
+  const stats=traitNameStats(s,owner,sourceUid,condition,printed);
+  return condition.kind==='ownDistinctTraitNames'?stats.names.size>=condition.min:
+   stats.found>=condition.min;
  }
  if(condition.kind==='ownPrintedTraitCount'){
   return countOwnPrintedTrait(s,owner,sourceUid,condition,printed)>=condition.min;
