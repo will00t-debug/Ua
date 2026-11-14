@@ -14,7 +14,7 @@ import {getTitle} from '../dist/title-registry.mjs';
 
 const IDS=Array.from({length:73},(_,i)=>'MHA-2-'+String(i+1).padStart(3,'0'));
 
-test('set 2 is 73 catalog cards, 29 ready and 44 pending, and set 1 stays open',()=>{
+test('set 2 is 73 catalog cards, 31 ready and 42 pending, and set 1 stays open',()=>{
  const editor=mhaEditorCards();
  const set1=createMhaV2Pack();
  const set2=createMha2Pack();
@@ -22,17 +22,17 @@ test('set 2 is 73 catalog cards, 29 ready and 44 pending, and set 1 stays open',
  assert.equal(getTitle('mha').playable,true);
  assert.equal(set1.version,'mha-ua10-ready-109');
  assert.equal(Object.keys(set1.cards).length,109);
- assert.equal(set2.version,'mha2-ex06-ready-29');
- assert.equal(Object.keys(set2.cards).length,29);
+ assert.equal(set2.version,'mha2-ex06-ready-31');
+ assert.equal(Object.keys(set2.cards).length,31);
  assert.deepEqual(IDS.filter(id=>!byId.has(id)),[]);
  assert.equal(editor.filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(editor.filter(card=>card.id.startsWith('MHA-2-')).length,73);
  assert.equal(editor.filter(card=>card.id.startsWith('MHA-P-')).length,3);
  const pending=IDS.filter(id=>!set2.cards[id]);
  const ready=IDS.filter(id=>set2.cards[id]);
- assert.equal(ready.length,29);
- assert.equal(pending.length,44);
- assert.equal(Object.keys(MHA2_PROGRAMS_001_036).filter(id=>MHA2_PROGRAMS_001_036[id].ready!==true).length,20);
+ assert.equal(ready.length,31);
+ assert.equal(pending.length,42);
+ assert.equal(Object.keys(MHA2_PROGRAMS_001_036).filter(id=>MHA2_PROGRAMS_001_036[id].ready!==true).length,18);
  assert.equal(Object.keys(MHA2_PROGRAMS_037_073).length,13);
  assert.equal(Object.keys(MHA2_REQUESTS_037_073).length,24);
  for(const id of pending){

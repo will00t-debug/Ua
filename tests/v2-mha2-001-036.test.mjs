@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {MHA2_CARDS_001_036} from '../dist/mha/cards-mha2-001-036.mjs';
 import {MHA2_PROGRAMS_001_036} from '../dist/universal-v2/mha/programs-mha2-001-036.mjs';
+import {MHA2_REQUESTS_001_036} from '../dist/universal-v2/mha/requests-mha2-001-036.mjs';
 import {createMha2Pack,mha2ReadyBattleCards} from '../dist/universal-v2/mha2-pack.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {mhaEditorCards} from '../dist/mha/catalog.mjs';
@@ -13,7 +14,7 @@ import {validateUniversalDeck,createUniversalPack} from '../dist/universal-v2/pa
 import {
  legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,
  newUniversalMatch,universalBp,universalEnergyByColor,universalImpact,
- universalImpactNull,universalPrivateChoices
+ universalImpactNull,universalPrivateChoices,zoneRequiredEnergy
 } from '../dist/universal-v2/engine.mjs';
 
 const pack=createMha2Pack();
@@ -121,9 +122,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-29');
- assert.equal(READY.length,16);
- assert.equal(Object.keys(pack.cards).length,29);
+ assert.equal(pack.version,'mha2-ex06-ready-31');
+ assert.equal(READY.length,18);
+ assert.equal(Object.keys(pack.cards).length,31);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
@@ -436,12 +437,146 @@ test('MHA-2-035 activates up to two rested AP cards and can stop early',()=>{
  assert.equal(early.s.players[0].apCards.filter(card=>card.inPlay&&card.ready).length,0);
 });
 
+test('MHA-2-022 cannot be hand-played beside other A-class, steps, and gains BP at three names',()=>{
+ const faces=['MHA-2-021','MHA-2-029','MHA-2-030','MHA-2-031'].map(face);
+ let {pack:live,s}=open(2022,faces);
+ s=reach(live,s,0,'main');
+ fuel(s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ const other=seat(s,0,'MHA-2-004','front',1,true);
+ const self=hold(s,0,'MHA-2-022');
+ assert.equal(legalUniversalActions(live,s).some(action=>action.type==='play'&&action.uid===self.uid),false);
+ s.players[0].front[1]=null;
+ s.players[0].outside.push(other);
+ const deku=seat(s,0,'MHA-2-021','front',1,true);
+ assert.equal(legalUniversalActions(live,s).some(action=>action.type==='play'&&action.uid===self.uid),true);
+ s=act(live,s,{type:'play',uid:self.uid,line:'front',slot:0});
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(live,s,s.players[0].front[0]),3000);
+ s.players[0].outside.push(pull(s,0,'MHA-2-029'),pull(s,0,'MHA-2-030'));
+ assert.equal(universalBp(live,s,s.players[0].front[0]),3000);
+ s.players[0].outside.push(pull(s,0,'MHA-2-031'));
+ assert.equal(universalBp(live,s,s.players[0].front[0]),4000);
+ s=reach(live,s,1,'main');
+ assert.equal(universalBp(live,s,s.players[0].front[0]),4000);
+ s.players[0].outside.pop();
+ assert.equal(universalBp(live,s,s.players[0].front[0]),3000);
+ assert.equal(deku.cardId,'MHA-2-021');
+
+ let moved=open(20221);
+ moved.s=reach(pack,moved.s,0,'move');
+ const stepper=seat(moved.s,0,'MHA-2-022','front',0,true);
+ const plain=seat(moved.s,0,'MHA-2-006','front',1,true);
+ assert.equal(legalUniversalActions(pack,moved.s).some(action=>action.type==='step'&&action.uid===stepper.uid),true);
+ assert.equal(legalUniversalActions(pack,moved.s).some(action=>action.type==='step'&&action.uid===plain.uid),false);
+ moved.s=act(pack,moved.s,action=>action.type==='step'&&action.uid===stepper.uid&&action.slot===2);
+ assert.equal(moved.s.players[0].energy[2].uid,stepper.uid);
+ moved.s=reach(pack,moved.s,0,'main');
+ moved.s.players[0].energy[2]=null;
+ stepper.ready=true;
+ moved.s.players[0].front[0]=stepper;
+ assert.equal(legalUniversalActions(pack,moved.s).some(action=>action.type==='step'&&action.uid===stepper.uid),false);
+});
+
+test('MHA-2-034 cuts hand energy by name, retires inside the Deku cap, and the special trigger retires a front character',()=>{
+ const faces=['MHA-2-021','MHA-2-026','MHA-2-029','MHA-2-030','MHA-2-031'].map(face);
+ let {pack:live,s}=open(2034,faces);
+ s=reach(live,s,0,'main');
+ const printed=live.cards['MHA-2-034'];
+ assert.equal(zoneRequiredEnergy(live,s,0,printed,'hand'),6);
+ assert.equal(zoneRequiredEnergy(live,s,0,printed,'life'),6);
+ const two=['MHA-2-029','MHA-2-030'].map(id=>pull(s,0,id));
+ s.players[0].outside.push(...two);
+ assert.equal(zoneRequiredEnergy(live,s,0,printed,'hand'),4);
+ const third=pull(s,0,'MHA-2-031');
+ s.players[0].outside.push(third);
+ assert.equal(zoneRequiredEnergy(live,s,0,printed,'hand'),3);
+ third.faceDown=true;
+ assert.equal(zoneRequiredEnergy(live,s,0,printed,'hand'),4);
+ third.faceDown=false;
+ assert.equal(zoneRequiredEnergy(live,s,0,printed,'life'),6);
+ fuel(s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ const low=seat(s,1,'MHA-2-004','front',0,true);
+ const mid=seat(s,1,'MHA-2-019','front',1,true);
+ const event=hold(s,0,'MHA-2-034');
+ s=act(live,s,action=>action.type==='event'&&action.uid===event.uid);
+ assert.equal(s.pending.kind,'effect-retire-bp');
+ assert.equal(s.pending.limit,3000);
+ assert.equal(s.pending.choices.includes(low.uid),true);
+ assert.equal(s.pending.choices.includes(mid.uid),false);
+ assert.equal(legalUniversalActions(live,s).some(action=>action.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(live,s,{type:'chooseRetireBp',uid:mid.uid}));
+ s=act(live,s,action=>action.type==='chooseRetireBp'&&action.uid===low.uid);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[1].front[0],null);
+ assert.equal(s.players[1].outside.some(card=>card.uid===low.uid),true);
+ assert.equal(s.players[1].front[1].uid,mid.uid);
+
+ const raised=open(20341,faces);
+ let t=reach(raised.pack,raised.s,0,'main');
+ fuel(t,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ t.players[0].outside.push(pull(t,0,'MHA-2-029'),pull(t,0,'MHA-2-030'),pull(t,0,'MHA-2-031'));
+ const deku=seat(t,0,'MHA-2-021','front',0,true);
+ const wide=seat(t,1,'MHA-2-019','front',0,true);
+ const cap=seat(t,1,'MHA-2-026','front',1,true);
+ const paid=hold(t,0,'MHA-2-034');
+ t=act(raised.pack,t,action=>action.type==='event'&&action.uid===paid.uid);
+ assert.equal(t.pending.limit,5000);
+ assert.equal(t.pending.choices.includes(wide.uid),true);
+ assert.equal(t.pending.choices.includes(cap.uid),true);
+ assert.equal(legalUniversalActions(raised.pack,t).some(action=>action.uid===null),false);
+ t=act(raised.pack,t,action=>action.type==='chooseRetireBp'&&action.uid===cap.uid);
+ assert.equal(t.players[1].front[1],null);
+ assert.equal(t.players[1].front[0].uid,wide.uid);
+ assert.equal(deku.cardId,'MHA-2-021');
+
+ const blocked=open(20342);
+ let u=reach(blocked.pack,blocked.s,0,'main');
+ fuel(u,0,['MHA-2-014','MHA-2-014','MHA-2-014']);
+ seat(u,1,'MHA-2-019','front',0,true);
+ const stuck=hold(u,0,'MHA-2-034');
+ assert.equal(zoneRequiredEnergy(blocked.pack,u,0,blocked.pack.cards['MHA-2-034'],'hand'),6);
+ assert.equal(legalUniversalActions(blocked.pack,u).some(action=>action.type==='event'&&action.uid===stuck.uid),false);
+ const legalLow=seat(u,1,'MHA-2-004','front',1,true);
+ assert.equal(legalUniversalActions(blocked.pack,u).some(action=>action.type==='event'&&action.uid===stuck.uid),true);
+ assert.equal(legalLow.cardId,'MHA-2-004');
+
+ const trigger=open(20343,[face('MHA-2-021')]);
+ let v=reach(trigger.pack,trigger.s,0,'attack');
+ const striker=seat(v,0,'MHA-2-019','front',0,true);
+ const extra=seat(v,0,'MHA-2-006','front',1,true);
+ seat(v,0,'MHA-2-021','energy',0,true);
+ const life=pull(v,1,'MHA-2-034');
+ v.players[1].life.unshift(life);
+ assert.equal(universalImpact(trigger.pack,v,striker),1);
+ v=act(trigger.pack,v,{type:'attack',uid:striker.uid});
+ v=act(trigger.pack,v,action=>action.type==='chooseBlock'&&action.uid===null);
+ assert.equal(v.pending.kind,'attack-life-target');
+ v=act(trigger.pack,v,action=>action.type==='chooseAttackLife'&&action.indices?.[0]===0);
+ assert.equal(v.pending.kind,'life-trigger');
+ assert.equal(v.pending.trigger,'special');
+ const modes=legalUniversalActions(trigger.pack,v).filter(action=>action.type==='chooseTrigger');
+ assert.equal(modes.some(action=>action.mode==='skip'),true);
+ assert.equal(modes.some(action=>action.mode==='special'&&action.uid===striker.uid),true);
+ assert.equal(modes.some(action=>action.mode==='special'&&action.uid===extra.uid),true);
+ const kept=act(trigger.pack,v,action=>action.type==='chooseTrigger'&&action.mode==='skip');
+ assert.equal(kept.players[0].front[1].uid,extra.uid);
+ v=act(trigger.pack,v,action=>action.type==='chooseTrigger'&&action.mode==='special'&&action.uid===extra.uid);
+ assert.equal(v.players[0].front[1],null);
+ assert.equal(v.players[0].outside.some(card=>card.uid===extra.uid),true);
+ assert.equal(v.players[0].front[0].uid,striker.uid);
+});
+
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
- assert.equal(PENDING.length,20);
+ assert.equal(PENDING.length,18);
+ assert.deepEqual(Object.keys(MHA2_REQUESTS_001_036),PENDING);
  for(const id of PENDING){
   const card=byId.get(id);
   const program=MHA2_PROGRAMS_001_036[id];
+  const request=MHA2_REQUESTS_001_036[id];
   assert.equal(program.ready,false,id);
+  assert.equal(typeof request.missing,'string',id);
+  assert.ok(request.missing.length>12,id);
+  assert.deepEqual(request.faq||[],(card.faq||[]).map(row=>row.id),id);
   assert.equal(typeof program.notes,'string');
   assert.ok(program.notes.length>12,id);
   assert.equal(pack.cards[id],undefined,id);
