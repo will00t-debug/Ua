@@ -10,7 +10,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {mhaCatalog,mhaEditorCards} from '../dist/mha/catalog.mjs';
 import {UA10ST_PRODUCT,UA10ST_CARDS} from '../dist/mha/ua10st-cards.mjs';
-import {createMhaV2Pack,mhaProgramFor,MHA_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/mha-pack.mjs';
+import {createMhaV2Pack,mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
 import {MHA_UA10ST_PROGRAMS} from '../dist/universal-v2/mha/programs.mjs';
 import {MHA_PROGRAMS_001_050} from '../dist/universal-v2/mha/programs-001-050.mjs';
 import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
@@ -370,18 +370,18 @@ test('a 50-card UA10ST test list imports and saves without becoming the official
  };
  const local=collectSavedV2LobbyDecks(storage).find(row=>row.name==='UA10ST 測試牌組');
  assert.equal(local.title,'mha');
- assert.equal(local.ready,false);
- assert.match(local.issues.join('\n'),new RegExp(MHA_OFFICIAL_MATCH_CLOSED));
- assert.equal(local.counts,null);
+ assert.equal(local.ready,true);
+ assert.deepEqual(local.issues,[]);
+ assert.deepEqual(local.counts,deck);
  assert.doesNotMatch(local.name,/官方|公式/);
  const account=accountLobbyRows([{
   id:'d0123456789abcdef',title:'mha',name:'UA10ST 測試牌組',localId:saved.id,counts:pasted
  }])[0];
- assert.equal(account.ready,false);
- assert.match(account.issues.join('\n'),new RegExp(MHA_OFFICIAL_MATCH_CLOSED));
+ assert.equal(account.ready,true);
+ assert.deepEqual(account.issues,[]);
  const status=editorV2Status('mha',normalized);
  assert.equal(status.total,50);
- assert.equal(status.ready,false);
+ assert.equal(status.ready,true);
  assert.deepEqual(status.counts,deck);
  assert.equal(UA10ST_PRODUCT.recipe,null);
 });

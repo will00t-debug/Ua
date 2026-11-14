@@ -7,7 +7,7 @@ import {readFileSync} from 'node:fs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalPublicView} from '../dist/universal-v2/engine.mjs';
-import {createMhaV2Pack,MHA_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/mha-pack.mjs';
+import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {mhaEditorCards} from '../dist/mha/catalog.mjs';
 import {UA10ST_PRODUCT,UA10ST_CARDS} from '../dist/mha/ua10st-cards.mjs';
 import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
@@ -255,11 +255,11 @@ const decks={
  [UNOFFICIAL+'・紅']:red
 };
 
-test('the ready pool is 109 cards and MHA stays unplayable',()=>{
+test('the ready pool is 109 cards and MHA can enter a match',()=>{
  assert.equal(Object.keys(mha.cards).length,109);
  assert.equal(mha.version,'mha-ua10-ready-109');
  assert.equal(editor.length,109);
- assert.equal(getTitle('mha').playable,false);
+ assert.equal(getTitle('mha').playable,true);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false),true);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  for(const id of NEW_READY)assert.equal(mha.cards[id].id,id);
@@ -357,15 +357,15 @@ test('nine UA10ST reprints import, and the three decks save and reload',()=>{
  for(const [name,counts] of Object.entries(decks)){
   const row=rows.find(item=>item.name===name);
   assert.equal(row.title,'mha');
-  assert.equal(row.ready,false);
-  assert.match(row.issues.join('\n'),new RegExp(MHA_OFFICIAL_MATCH_CLOSED));
+  assert.equal(row.ready,true);
+  assert.deepEqual(row.issues,[]);
   const status=editorV2Status('mha',counts);
   assert.equal(status.total,50);
-  assert.equal(status.ready,false);
+  assert.equal(status.ready,true);
   assert.deepEqual(status.counts,counts);
  }
  assert.match(validateUniversalDeck(mha,{...green,'MHA-1-103':5}).join('\n'),/MHA-1-103/);
- assert.equal(getTitle('mha').playable,false);
+ assert.equal(getTitle('mha').playable,true);
 });
 
 test('green raids its own Midoriya, blocks, and sends the loser outside',()=>{

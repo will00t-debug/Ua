@@ -137,7 +137,7 @@ test('IMC 113 and UA10ST 18 keep catalog stats, and both starter ratios stay nul
   if(battle.raidName)assert.equal(card.effectJa.includes(battle.raidName),true,card.id);
  }
  assert.equal(getTitle('imc').playable,true);
- assert.equal(getTitle('mha').playable,false);
+ assert.equal(getTitle('mha').playable,true);
  const starter=loadImcOfficialStarter();
  assert.equal(starter.counts,null);
  assert.equal(starter.deckCards,50);

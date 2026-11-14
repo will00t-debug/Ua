@@ -34,7 +34,7 @@ export const TITLES=[
  {id:'kmr',label:'假面騎士',cards:[...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS],presets:[],playable:false},
  {id:'csm',label:'鏈鋸人',cards:CSM_CARDS,presets:[],playable:false},
  {id:'imc',label:'偶像大師 灰姑娘女孩',cards:imcEditorCards(),presets:[],playable:true},
- {id:'mha',label:'我的英雄學院',cards:mhaEditorCards(),presets:[],playable:false}
+ {id:'mha',label:'我的英雄學院',cards:mhaEditorCards(),presets:[],playable:true}
 ];
 export function titleOfCard(card){return TITLES.some(t=>t.id===card?.title)?card.title:'bleach';}
 export function getTitle(id){return TITLES.find(t=>t.id===id)||null;}

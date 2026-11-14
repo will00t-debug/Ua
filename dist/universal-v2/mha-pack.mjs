@@ -1,6 +1,7 @@
 // Battle pack for My Hero Academia cards whose program says ready.
 // UA10ST and UA10BT share nine card numbers. Each number enters once.
-// The catalog never makes a card playable. Official matches stay closed.
+// The catalog never marks an individual card playable. A legal 50-card
+// deck can enter AI and online matches. The official starter ratio stays null.
 import {createUniversalPack} from './pack.mjs';
 import {mhaEditorCards} from '../mha/catalog.mjs';
 import {MHA_UA10ST_PROGRAMS} from './mha/programs.mjs';
@@ -31,8 +32,6 @@ const BATTLE_KEYS=[
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver'
 ];
-export const MHA_OFFICIAL_MATCH_CLOSED='我的英雄學院尚未開放正式對戰。';
-
 function serial(id){
  const match=/^MHA-1-(\d{3})$/.exec(id);
  return match?Number(match[1]):0;

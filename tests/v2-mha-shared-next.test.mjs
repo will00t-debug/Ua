@@ -151,7 +151,7 @@ function silence(s,source,target){
 test('the shared shapes stay expressible and the MHA cards stay pending',()=>{
  assert.equal(getTitle('imc').playable,true);
  assert.equal(Object.keys(createImcV2Pack().cards).length,113);
- assert.equal(getTitle('mha').playable,false);
+ assert.equal(getTitle('mha').playable,true);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  const mha=createMhaV2Pack();
  assert.equal(Object.keys(mha.cards).length,109);

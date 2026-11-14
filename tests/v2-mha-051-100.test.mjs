@@ -6,7 +6,7 @@ import {MHA_CARDS_051_100} from '../dist/mha/cards-051-100.mjs';
 import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
 import {MHA_REQUESTS_051_100} from '../dist/universal-v2/mha/requests-051-100.mjs';
 import {runMha051} from '../dist/universal-v2/mha/runtime-051-100.mjs';
-import {createMhaV2Pack,MHA_OFFICIAL_MATCH_CLOSED,mhaBattleCard,mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
+import {createMhaV2Pack,mhaBattleCard,mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
 import {createImcV2Pack} from '../dist/universal-v2/imc-pack.mjs';
 import {createTtgV2Pack} from '../dist/universal-v2/ttg-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -130,7 +130,6 @@ function emptyDeck(s,owner){
 
 test('official 051–100 exist once, and only complete programs enter the pack',()=>{
  assert.equal(MHA_CARDS_051_100.length,50);
- assert.equal(MHA_OFFICIAL_MATCH_CLOSED.includes('尚未開放'),true);
  const ids=MHA_CARDS_051_100.map(card=>card.id);
  assert.deepEqual(ids,[...ids].sort((a,b)=>a.localeCompare(b,'en',{numeric:true})));
  for(const card of MHA_CARDS_051_100){

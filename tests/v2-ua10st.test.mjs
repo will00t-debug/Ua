@@ -232,7 +232,7 @@ test('only complete UA10ST sentences enter the battle pack',()=>{
  assert.match(validateUniversalDeck(pack,four).join('\n'),/50/);
 });
 
-test('IMC has 113 open V2 cards while MHA remains at 109 closed cards among 109',()=>{
+test('IMC has 113 open V2 cards and MHA has 109 open cards',()=>{
  const editor=mhaEditorCards();
  assert.equal(editor.length,109);
  assert.equal(new Set(editor.map(card=>card.id)).size,109);
@@ -278,7 +278,7 @@ test('IMC has 113 open V2 cards while MHA remains at 109 closed cards among 109'
  ]);
  assert.equal(requestIds.size,0);
  assert.deepEqual([...requestIds].sort(),pending.slice().sort());
- assert.equal(getTitle('mha').playable,false);
+ assert.equal(getTitle('mha').playable,true);
  assert.equal(getTitle('imc').playable,true);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  assert.equal(Object.keys(createImcV2Pack().cards).length,113);

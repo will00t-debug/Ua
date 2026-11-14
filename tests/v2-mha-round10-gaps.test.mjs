@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MHA_REQUESTS_001_050} from '../dist/universal-v2/mha/requests-001-050.mjs';
-import {createMhaV2Pack, MHA_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/mha-pack.mjs';
+import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {officialV2Pack, v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 
@@ -50,10 +50,9 @@ test('round 10 priority cards stay pending and earlier ready cards stay ready',(
  for(const id of ALREADY)assert.equal(pack.cards[id].id,id);
  const official=officialV2Pack('mha');
  for(const id of PRIORITY)assert.equal(official.cards[id],undefined);
- const closed=v2DeckReport('mha',{'MHA-1-012':4});
- assert.equal(closed.ok,false);
- assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
- assert.match(MHA_OFFICIAL_MATCH_CLOSED,/尚未開放正式對戰/);
+ const short=v2DeckReport('mha',{'MHA-1-012':4});
+ assert.equal(short.ok,false);
+ assert.doesNotMatch(short.issues.join('\n'),/尚未開放正式對戰/);
 });
 
 test('001 accepts one retirement draw and one hand discard, and rejects a larger profile',()=>{

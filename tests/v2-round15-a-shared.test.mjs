@@ -113,10 +113,10 @@ const otherEnergy={kind:'ownOtherRequiredEnergyAtLeast',turn:'any',zone:'field',
  excludeSelf:true,minEnergy:4,min:3};
 const activateCount={kind:'ownActivateMainAtLeast',turn:'any',zone:'field',min:3};
 
-test('IMC stays open and MHA stays closed with the round 15 census',()=>{
+test('IMC and MHA stay open with the round 15 census',()=>{
  assert.equal(getTitle('imc').playable,true);
  assert.equal(createImcV2Pack().cards&&Object.keys(createImcV2Pack().cards).length,113);
- assert.equal(getTitle('mha').playable,false);
+ assert.equal(getTitle('mha').playable,true);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  const pack=createMhaV2Pack();
  assert.equal(Object.keys(pack.cards).length,109);

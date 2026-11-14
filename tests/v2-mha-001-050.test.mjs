@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {MHA_CATALOG} from '../dist/mha/catalog.mjs';
 import {MHA_PROGRAMS_001_050} from '../dist/universal-v2/mha/programs-001-050.mjs';
 import {MHA_REQUESTS_001_050} from '../dist/universal-v2/mha/requests-001-050.mjs';
-import {createMhaV2Pack, mhaBattleCard, mhaProgramFor, MHA_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/mha-pack.mjs';
+import {createMhaV2Pack, mhaBattleCard, mhaProgramFor} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack, validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEnergy,
@@ -206,7 +206,7 @@ test('catalog is the official UA10BT 001-050 list and nothing beyond it',()=>{
  assert.deepEqual(MHA_CATALOG.find(c=>c.id==='MHA-1-024').traits,['死穢八斎會']);
 });
 
-test('only a fully matched program is ready, and official play stays closed',()=>{
+test('only a fully matched program is ready, and a short list stays illegal',()=>{
  const ids=MHA_CATALOG.map(c=>c.id);
  assert.deepEqual(Object.keys(MHA_PROGRAMS_001_050).sort(),[...READY].sort());
  const pending=ids.filter(id=>!READY.includes(id)&&id!=='MHA-1-044');
@@ -236,10 +236,9 @@ test('only a fully matched program is ready, and official play stays closed',()=
  assert.equal(official.id,'mha');
  assert.equal(official.cards['MHA-1-001'].id,'MHA-1-001');
  assert.equal(official.cards['MHA-1-002'].id,'MHA-1-002');
- const closed=v2DeckReport('mha',{'MHA-1-008':4});
- assert.equal(closed.ok,false);
- assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
- assert.match(MHA_OFFICIAL_MATCH_CLOSED,/尚未開放正式對戰/);
+ const short=v2DeckReport('mha',{'MHA-1-008':4});
+ assert.equal(short.ok,false);
+ assert.doesNotMatch(short.issues.join('\n'),/尚未開放正式對戰/);
 });
 
 test('008 get trigger adds that life card to hand and can be declined',()=>{

@@ -4,7 +4,6 @@ import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261104kmrport1';
 import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261112imc1';
 import {IMC_OFFICIAL_MATCH_CLOSED} from './universal-v2/imc-pack.mjs';
-import {MHA_OFFICIAL_MATCH_CLOSED} from './universal-v2/mha-pack.mjs';
 
 export const LEGACY_DECK_KEYS=Object.freeze({
  bleach:['bleach-arena-deck-v1','bleach-arena-saved-decks-v1'],
@@ -95,7 +94,5 @@ export function editorV2Status(title,counts,pack=registeredPackForEditor(title))
    }else errors.push(issue);
   }
  }
- 
- if(title==='mha')errors.push(MHA_OFFICIAL_MATCH_CLOSED);
  return {supported,issues:errors,ready:errors.length===0,total,registered:supported.size,pack,counts:v2Counts};
 }
