@@ -215,6 +215,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
+ 'effect-pay-hand-self':'支付 1 張手牌，把這張角色移到另一條線',
  'effect-place-hand-outside':'將 1 張手牌放到場外',
  'effect-open-front-hand-buff':'前線有空位時，可將 1 張手牌放到場外',
  'effect-life-order':'查看全部生命，並以任意順序重新排列',
@@ -1089,6 +1090,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseLookUnderHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
   case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
+  case 'choosePayHandSelf':return '支付 '+name()+' 到場外';
   case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
   case 'chooseOpenFrontHandBuff':return a.uid===null?'不放手牌':'將 '+name()+' 放到場外';
   case 'chooseReorderOwnLife':return action.uid===null?'不改變生命的順序':'下一個生命：'+name();

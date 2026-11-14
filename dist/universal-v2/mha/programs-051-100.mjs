@@ -188,6 +188,10 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
    subject:'other',line:'front',excludeNames:['緑谷 出久']}
  }),
  'MHA-1-094':Object.freeze({ready:true,implementation:'dsl',step:true}),
+ 'MHA-1-095':Object.freeze({
+  ready:true,implementation:'dsl',step:true,doubleAttackIfSelfMoved:true,
+  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1}
+ }),
  'MHA-1-097':Object.freeze({
   ready:true,implementation:'dsl',
   triggerEffect:{op:'retireOppFront'},

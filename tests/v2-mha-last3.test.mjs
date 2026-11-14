@@ -156,3 +156,87 @@ test('MHA-1-091 pays one hand card for BP only when its front has room, on attac
  assert.ok(blocked.players[0].outside.some(c=>c.uid===toll.uid));
  assert.equal(assertUniversalMatch(pack,blocked),true);
 });
+
+test('MHA-1-095 gains double attack only after it moves, and a full front removes one card first',()=>{
+ const printed=pack.cards['MHA-1-095'];
+ assert.equal(printed.step,true);
+ assert.equal(printed.doubleAttackIfSelfMoved,true);
+ assert.deepEqual(printed.mainAbility,{op:'payHandMoveSelf',oncePerTurn:true,pay:1});
+
+ let still=open({'MHA-1-095':1},9501);
+ const parked=seat(still,0,'MHA-1-095','front',0,true);
+ still=reach(still,'attack');
+ still=act(still,{type:'attack',uid:parked.uid});
+ const rested=still.players[0].front.find(c=>c.uid===parked.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(still.attacksByUid[parked.uid],1);
+
+ let full=open({'MHA-1-095':1,'MHA-1-082':1,'MHA-1-088':1,'MHA-1-086':1,'MHA-1-094':1,'MHA-1-080':1},9502);
+ const mover=seat(full,0,'MHA-1-095','energy',0,true);
+ const occupants=[
+  seat(full,0,'MHA-1-082','front',0,true),
+  seat(full,0,'MHA-1-088','front',1,true),
+  seat(full,0,'MHA-1-086','front',2,true),
+  seat(full,0,'MHA-1-094','front',3,true)
+ ];
+ const toll=hold(full,0,'MHA-1-080');
+ assert.equal(full.phase,'main');
+ assert.equal(legal(full).some(a=>a.type==='activate'&&a.uid===mover.uid&&a.mode==='payHandMoveSelf'),true);
+ full=act(full,{type:'activate',uid:mover.uid,mode:'payHandMoveSelf'});
+ assert.equal(full.pending.kind,'effect-pay-hand-self');
+ assert.equal(legal(full).some(a=>a.uid===null),false);
+ full=act(full,{type:'choosePayHandSelf',uid:toll.uid});
+ assert.ok(full.players[0].outside.some(c=>c.uid===toll.uid));
+ assert.equal(full.pending.kind,'effect-line-slot');
+ assert.equal(full.pending.line,'front');
+ assert.equal(legal(full).length,4);
+ assert.ok(legal(full).every(a=>a.replaceUid));
+ full=act(full,{type:'chooseLineSlot',slot:0,replaceUid:occupants[0].uid});
+ assert.ok(full.players[0].removed.some(c=>c.uid===occupants[0].uid));
+ assert.equal(full.players[0].outside.some(c=>c.uid===occupants[0].uid),false);
+ assert.equal(full.players[0].front[0].uid,mover.uid);
+ assert.equal(full.players[0].energy[0],null);
+ assert.equal(legal(full).some(a=>a.type==='activate'&&a.mode==='payHandMoveSelf'),false);
+ assert.throws(()=>act(structuredClone(full),{type:'activate',uid:mover.uid,mode:'payHandMoveSelf'}),/not currently legal/);
+ full=reach(full,'attack');
+ full=act(full,{type:'attack',uid:mover.uid});
+ if(full.pending?.kind==='block')full=act(full,{type:'chooseBlock',uid:null});
+ assert.equal(full.players[0].front.find(c=>c?.uid===mover.uid).ready,true);
+ full=act(full,{type:'attack',uid:mover.uid});
+ if(full.pending?.kind==='block')full=act(full,{type:'chooseBlock',uid:null});
+ assert.equal(full.players[0].front.find(c=>c?.uid===mover.uid).ready,false);
+ assert.equal(assertUniversalMatch(pack,full),true);
+
+ let unpaid=open({'MHA-1-095':1},9503);
+ const broke=seat(unpaid,0,'MHA-1-095','front',0,true);
+ unpaid.players[0].outside.push(...unpaid.players[0].hand.splice(0));
+ assert.equal(legal(unpaid).some(a=>a.uid===broke.uid&&a.mode==='payHandMoveSelf'),false);
+
+ let stepped=open({'MHA-1-095':1,'MHA-1-082':1},9504);
+ const walker=seat(stepped,0,'MHA-1-095','front',0,true);
+ const kept=hold(stepped,0,'MHA-1-082');
+ for(let i=0;i<16&&!(stepped.active===0&&stepped.phase==='move'&&stepped.turn>0);i++){
+  if(stepped.pending?.kind==='block')stepped=act(stepped,{type:'chooseBlock',uid:null});
+  else{
+   if(stepped.pending)throw Error(stepped.pending.kind+' before the next move phase');
+   stepped=act(stepped,{type:'next'});
+  }
+ }
+ assert.equal(stepped.phase,'move');
+ stepped=act(stepped,a=>a.type==='step'&&a.uid===walker.uid&&a.replaceUid===undefined);
+ assert.equal(stepped.players[0].energy.some(c=>c?.uid===walker.uid),true);
+ stepped=reach(stepped,'main');
+ stepped=act(stepped,{type:'activate',uid:walker.uid,mode:'payHandMoveSelf'});
+ stepped=act(stepped,{type:'choosePayHandSelf',uid:kept.uid});
+ assert.equal(stepped.pending.kind,'effect-line-slot');
+ assert.equal(legal(stepped).some(a=>a.replaceUid),false);
+ stepped=act(stepped,{type:'chooseLineSlot',slot:0});
+ assert.equal(stepped.players[0].front[0].uid,walker.uid);
+ assert.equal(stepped.players[0].removed.length,0);
+ assert.ok(stepped.players[0].outside.some(c=>c.uid===kept.uid));
+ stepped=reach(stepped,'attack');
+ stepped=act(stepped,{type:'attack',uid:walker.uid});
+ if(stepped.pending?.kind==='block')stepped=act(stepped,{type:'chooseBlock',uid:null});
+ assert.equal(stepped.players[0].front.find(c=>c?.uid===walker.uid).ready,true);
+ assert.equal(assertUniversalMatch(pack,stepped),true);
+});

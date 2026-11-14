@@ -22,13 +22,6 @@ export const MHA_REQUESTS_051_100=[
   proposal:'突襲框是霍克斯。登場時可把任意張手牌蓋到自己下面。攻擊時查看那些蓋牌，最多1張加入手牌；有加入才活動最多1張其他非霍克斯。090はreadyにしない。'
  },
  {
-  cardId:'MHA-1-095',
-  sentence:'ステップ。このターンに移動しているなら2回アタック。起動は手札1枚を場外に置き、ターン1で別ラインへ移動。',
-  existingOps:['step','grantSelfDoubleAttackThisTurn','selfMovedThisTurn'],
-  whyNotEnough:'selfMovedThisTurn は條件としてはあるが、移動済みのこのキャラへ2回アタックを付ける op と、手札場外を払って別ラインへ動く起動が組になっていない。Q464：移動先已滿時要先把目的地的 1 張卡放進移除區。effect-front-vacate 只服務能量列移到前線，不能拿來付手牌後移動這張自己。',
-  proposal:'保留步驟。這個回合移動過就得到2回攻擊。起動付1張手牌到場外，一回合一次，移到另一條線。095はreadyにしない。'
- },
- {
   cardId:'MHA-1-096',
   sentence:'自分のターン中、自分の効果で手札を場外に置いた時、アクティブのこのフィールドをレストしてもよい。そうしたら1枚引く。この効果は1ターン1回。',
   existingOps:['ownHandToOutsideThisTurn','restActiveFieldThenDrawDiscard'],
