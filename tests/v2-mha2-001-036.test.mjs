@@ -121,9 +121,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-29');
- assert.equal(READY.length,16);
- assert.equal(Object.keys(pack.cards).length,29);
+ assert.equal(pack.version,'mha2-ex06-ready-30');
+ assert.equal(READY.length,17);
+ assert.equal(Object.keys(pack.cards).length,30);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
@@ -436,8 +436,48 @@ test('MHA-2-035 activates up to two rested AP cards and can stop early',()=>{
  assert.equal(early.s.players[0].apCards.filter(card=>card.inPlay&&card.ready).length,0);
 });
 
+test('MHA-2-022 cannot be hand-played beside other A-class, steps, and gains BP at three names',()=>{
+ const faces=['MHA-2-021','MHA-2-029','MHA-2-030','MHA-2-031'].map(face);
+ let {pack:live,s}=open(2022,faces);
+ s=reach(live,s,0,'main');
+ fuel(s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ const other=seat(s,0,'MHA-2-004','front',1,true);
+ const self=hold(s,0,'MHA-2-022');
+ assert.equal(legalUniversalActions(live,s).some(action=>action.type==='play'&&action.uid===self.uid),false);
+ s.players[0].front[1]=null;
+ s.players[0].outside.push(other);
+ const deku=seat(s,0,'MHA-2-021','front',1,true);
+ assert.equal(legalUniversalActions(live,s).some(action=>action.type==='play'&&action.uid===self.uid),true);
+ s=act(live,s,{type:'play',uid:self.uid,line:'front',slot:0});
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(live,s,s.players[0].front[0]),3000);
+ s.players[0].outside.push(pull(s,0,'MHA-2-029'),pull(s,0,'MHA-2-030'));
+ assert.equal(universalBp(live,s,s.players[0].front[0]),3000);
+ s.players[0].outside.push(pull(s,0,'MHA-2-031'));
+ assert.equal(universalBp(live,s,s.players[0].front[0]),4000);
+ s=reach(live,s,1,'main');
+ assert.equal(universalBp(live,s,s.players[0].front[0]),4000);
+ s.players[0].outside.pop();
+ assert.equal(universalBp(live,s,s.players[0].front[0]),3000);
+ assert.equal(deku.cardId,'MHA-2-021');
+
+ let moved=open(20221);
+ moved.s=reach(pack,moved.s,0,'move');
+ const stepper=seat(moved.s,0,'MHA-2-022','front',0,true);
+ const plain=seat(moved.s,0,'MHA-2-006','front',1,true);
+ assert.equal(legalUniversalActions(pack,moved.s).some(action=>action.type==='step'&&action.uid===stepper.uid),true);
+ assert.equal(legalUniversalActions(pack,moved.s).some(action=>action.type==='step'&&action.uid===plain.uid),false);
+ moved.s=act(pack,moved.s,action=>action.type==='step'&&action.uid===stepper.uid&&action.slot===2);
+ assert.equal(moved.s.players[0].energy[2].uid,stepper.uid);
+ moved.s=reach(pack,moved.s,0,'main');
+ moved.s.players[0].energy[2]=null;
+ stepper.ready=true;
+ moved.s.players[0].front[0]=stepper;
+ assert.equal(legalUniversalActions(pack,moved.s).some(action=>action.type==='step'&&action.uid===stepper.uid),false);
+});
+
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
- assert.equal(PENDING.length,20);
+ assert.equal(PENDING.length,19);
  for(const id of PENDING){
   const card=byId.get(id);
   const program=MHA2_PROGRAMS_001_036[id];

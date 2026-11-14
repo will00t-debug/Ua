@@ -65,7 +65,15 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
  }),
  'MHA-2-020':pending('登場二選一，以及前線每回合一次把 BP+1000 與衝擊 1 給綠谷後，再活動自己或一張 AP。兩句都沒有完整的共用起動。'),
  'MHA-2-021':pending('場上有其他 A組 時不能從手牌登場，但仍要能從手牌付 1 AP 放到場外、抽棄並活動一張 AP。Q1001 的手牌起動沒有共用句，登場禁止也沒有欄位。'),
- 'MHA-2-022':pending('其他 A組 在場時不能從手牌登場。移步與三種ワン・フォー・オール名字的 BP+1000 都有單句，但登場禁止沒有共用欄位，不能把整張標成 ready。'),
+ 'MHA-2-022':ready({
+  playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
+  step:true,
+  passiveBonuses:Object.freeze([Object.freeze({bp:1000,condition:Object.freeze({
+   kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+   trait:'ワン・フォー・オール',min:3
+  })})]),
+  notes:'場上有名字不是〈緑谷 出久〉的其他 A組 時，不能從手牌登場或手牌突襲；場外效果登場不受影響。有移步。場上或場外不同卡名的ワン・フォー・オール達 3 種時 BP+1000。印刷沒有寫自己回合，所以雙方回合都算。#482 的試例把同一門檻寫成自己回合，這裡依印刷全文。'
+ }),
  'MHA-2-023':pending('手牌付 1 AP 放到場外後，看牌頂 4 張並取最多 2 張非綠谷。Q1002。顏色觸發的休息並跳過下次活動已有共用句，但登場禁止與手牌起動沒有。'),
  'MHA-2-024':pending('登場時獲得本回合「ワン・フォー・オール退場可抽 1」，攻擊時三種名字可付 1 AP 獲得衝擊 1。加上其他 A組 的登場禁止。沒有整句。'),
  'MHA-2-025':pending('手牌付 1 AP 放到場外後，退場對手前線。其他 A組 達 3 張時上限從 3000 改成 5000。Q1003。登場禁止與這個手牌起動沒有共用句。'),
