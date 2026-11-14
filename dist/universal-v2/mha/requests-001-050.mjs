@@ -1,28 +1,20 @@
-// Cards in UA10BT 001-050 that are not ready. 006, 007, 009, 010, 017 and
-// 048 are ready. The sentences below were checked against the round 14
-// contract and still are not a whole printed sentence.
+// Cards in UA10BT 001-050 that are not ready. 003, 005, 011 and 026 are
+// ready against the round 15 contract. The sentences below still are not
+// a whole printed sentence.
 // C group does not approximate a missing sentence.
 // MHA-1-044 is the same card as the UA10ST printing. Its activate is
 // restSelfGainEnergyRetireEndMain, so it is ready and is not listed here.
 export const MHA_REQUESTS_001_050=Object.freeze({
  'MHA-1-002':gap('登場時可選的磨牌 3 張，以及主階段橫置並退場後從場外取死穢八斎會角色或〈“個性”消失弾〉。Q421：指名卡不必有特徵。',
-  'millUpToThenRecover 的可選 3 張，以及 restRetireSequence 後的 recoverOutsideAny，已經能表示這兩句。這輪不寫卡牌程式，所以維持 pending。'),
- 'MHA-1-003':gap('自己場上有 3 張以上帶【起動メイン】的角色時，這張 BP+1000。',
-  'ownActivateMainAtLeast 會數場上的起動，而且突襲框裡、目前沒有突襲的起動不算。被動 BP 已能接這個條件。這輪不寫卡牌程式，所以維持 pending。'),
+  '登場時只是可選磨 3 張，沒有回收。millUpToThenRecover 的 3 張一定附帶回收。主階段 recoverOutsideAny 只回收角色，〈“個性”消失弾〉是場地。不要只做其中一句。'),
  'MHA-1-004':gap('3 張以上【起動メイン】時手牌紫能量-3、印刷衝擊 1，以及每回合一次複製同列其他角色的【起動メイン】（其他オール・フォー・ワン除外）。',
   '手牌能量減免與起動張數已經能用，印刷衝擊也已有。複製同列其他角色的起動仍然沒有共用操作。不要提前標 ready。'),
- 'MHA-1-005':gap('場上沒有オール・フォー・ワン或死柄木 弔就不能攻擊或阻擋；自己回合 BP+2000；每回合一次賦予傷害 2。',
-  'battleRequiresAnyName、ownTurnBp，以及前線或能量列的 frontOnceProgram 賦予傷害 2，都已經能用。這輪不寫卡牌程式，所以維持 pending。'),
- 'MHA-1-011':gap('擋過這張的角色下一次不橫置回復；主階段每回合一次使對手本回合必須盡可能阻擋。Q427、Q428。',
-  'blockSkipsNextActive 會讓擋下這張的角色跳過下一次活動。frontOnceProgram 也能賦予必須阻擋。這輪不寫卡牌程式，所以維持 pending。'),
  'MHA-1-020':gap('任何帶突襲觸發的自己角色可以突襲到這張上。登場時公開牌庫頂 1 張入手；若沒有突襲觸發，把手牌 1 張放到場外。Q431。',
   '沒有「被任意突襲觸發卡當作突襲基」以及公開頂牌的條件棄牌。'),
  'MHA-1-023':gap('前排主階段每回合一次：其他自己角色 BP+1000；若是ジェントル・クリミナル則改 +2000 並獲得狙擊。',
   '沒有依指名角色改加值並附帶狙擊的起動。'),
  'MHA-1-025':gap('登場時看牌庫頂 4 張，公開並最多取 1 張死穢八斎會角色或〈エリ〉，其餘以任意順序放回底部；若有取牌，把手牌 1 張放到場外。Q432、Q433。',
   '現有頂牌檢索不是「特徵或指名卡」再棄 1 張手牌。'),
- 'MHA-1-026':gap('突襲〈オーバーホール〉、印刷衝擊 1，以及可選磨 3 張後回收場外死穢八斎會角色（オーバーホール除外）或〈エリ〉。Q434。',
-  '可選磨牌後的例外回收不是 millTop 的現有後段。不能只登衝擊與突襲名。'),
  'MHA-1-029':gap('沒有〈オーバーホール〉不能打出。登場時橫置對手前排 1 張並把它下面的卡全部放到場外；這張場地還在時，該角色失去原本效果且不橫置回復。Q435–Q438、Q474、Q974、Q2213。',
   'restOppFrontOne 只橫置，沒有下方卡、失能與持續不能回復。'),
  'MHA-1-030':gap('場上沒有〈トゥワイス〉不能打出。從手牌或場外把任意張能量 2 以下、AP1 的〈トゥワイス〉以橫置回復狀態登場。',
