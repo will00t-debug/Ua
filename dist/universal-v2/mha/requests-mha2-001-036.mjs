@@ -5,7 +5,7 @@
 // A request is not an FAQ acceptance.
 export const MHA2_REQUESTS_001_036=Object.freeze({
  'MHA-2-003':Object.freeze({
-  missing:'場上與場外不同卡名的ワン・フォー・オール合計 3 種以上時，這張角色發生能源 +1 黃。起動主要：休息，把 1 張該特徵手牌放到場外，做到才抽 1。現有被動能源不算不同卡名，也沒有這句休息後棄特徵再抽。'
+  missing:'三種不同卡名的ワン・フォー・オール發生能源 +1 黃已有被動欄位（extraEnergy、min 3、場上與場外、不分回合）。缺少整句：起動主要、休息，把 1 張該特徵手牌放到場外，做到才抽 1。'
  }),
  'MHA-2-011':Object.freeze({
   faq:Object.freeze(['Q998']),
@@ -16,7 +16,7 @@ export const MHA2_REQUESTS_001_036=Object.freeze({
   missing:'退場時最多把 1 張自己的角色移到另一條線。Q1000：目的地滿格時先把 1 張放進移除區再移動。移線目前只掛在事件的登場選擇裡，不能掛在退場。'
  }),
  'MHA-2-020':Object.freeze({
-  missing:'登場時二選一：退場最多 1 張 BP 3000 以下的對手前排，或把這張卡活動。前排、休息、每回合一次：給 1 張〈緑谷 出久〉本回合 BP+1000 與衝擊 1，做到之後最多把這張卡或 1 張 AP 活動。兩句都沒有完整的共用起動。'
+  missing:'登場時二選一已能用 chooseOne：retireOppFrontOneUnderBp（BP 3000、optional）或 activeSelf。缺少起動主要：前排、休息、每回合一次，給 1 張〈緑谷 出久〉本回合 BP+1000 與衝擊 1，做到之後最多把這張卡或 1 張 AP 活動。不能只做登場句。'
  }),
  'MHA-2-021':Object.freeze({
   faq:Object.freeze(['Q1001']),
@@ -27,7 +27,7 @@ export const MHA2_REQUESTS_001_036=Object.freeze({
   missing:'場上有其他 A組 時不能從手牌登場，但手牌起動仍可使用。起動：確認必要能源、付 1 AP、把這張卡放到場外，然後看牌頂 4 張，公開最多 2 張非〈緑谷 出久〉到手牌，其餘放牌底。Q1002。顏色觸發的休息並跳過下次活動已有共用句。登場禁止已有 playBanOtherTrait。手牌起動沒有。'
  }),
  'MHA-2-024':Object.freeze({
-  missing:'場上有其他 A組 時不能從手牌登場。登場時本回合獲得「每回合一次，自己的ワン・フォー・オール退場時最多抽 1」。攻擊時若不同卡名的該特徵合計 3 種以上，可付 1 AP，本回合獲得衝擊 1。顏色觸發已有共用句。登場禁止已有 playBanOtherTrait。退場抽牌與攻擊付費沒有對得上的整句。'
+  missing:'其他 A組 的手牌登場禁止與顏色觸發已有共用句。攻擊時三種卡名可付 1 AP 獲得衝擊 1，已能用 optionalPayApThen（when 為 ownDistinctTraitNames、min 3）接 grantSelfImpactThisTurn。缺少：登場時本回合獲得「每回合一次，自己的ワン・フォー・オール退場時最多抽 1」。不能只做攻擊句。'
  }),
  'MHA-2-025':Object.freeze({
   faq:Object.freeze(['Q1003','Q2007']),
