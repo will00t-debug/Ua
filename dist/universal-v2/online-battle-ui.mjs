@@ -186,9 +186,14 @@ function pendingCardSheet({el,card,label,definition,imageSource,openCard}){
  const effect=[printed.effect,printed.effectJa,printed.text,printed.description]
   .find(value=>typeof value==='string'&&value.trim()&&value.trim()!=='-')||
   '這張卡目前沒有可顯示的印刷效果。';
- return el('section',{class:'online-pending-card','aria-label':label+'：'+name},
-  el('div',{class:'online-pending-card-art'},image(el,imageSource(0,card.cardId),name)),
-  el('div',{class:'online-pending-card-copy'},
+ const art=image(el,imageSource(0,card.cardId),name);
+ // The last-resort inline cap prevents a full-size illustration when a mobile
+ // browser has an older/delayed themed stylesheet for an existing match.
+ art.setAttribute('style','display:block;width:100%;height:auto;max-width:76px;max-height:104px;object-fit:contain');
+ return el('section',{class:'online-pending-card','aria-label':label+'：'+name,
+  style:'display:grid;grid-template-columns:76px minmax(0,1fr);gap:9px;align-items:start;max-height:176px;overflow-y:auto;padding:8px'},
+  el('div',{class:'online-pending-card-art',style:'width:76px;max-width:100%;min-width:0;overflow:hidden'},art),
+  el('div',{class:'online-pending-card-copy',style:'min-width:0;overflow-wrap:anywhere'},
    el('span',{class:'online-pending-card-eyebrow',text:label}),
    el('strong',{class:'online-pending-card-name',text:name}),
    el('p',{class:'online-pending-card-effect',text:effect}),
@@ -360,10 +365,11 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
    definition,imageSource,openCard});
   const lookedAt=pendingCardSheet({el,card:display.lookedAt,label:'目前查看的牌庫頂',
    definition,imageSource,openCard});
-  const dialog=el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true','aria-label':'效果選擇'},
+  const dialog=el('section',{class:'dialog pending panel online-compact-effect-dialog',role:'dialog','aria-modal':'true',
+   'aria-label':'效果選擇',style:'box-sizing:border-box;width:min(540px,calc(100vw - 20px));max-width:100%;max-height:76dvh;overflow-y:auto;overflow-x:hidden'},
    el('div',{class:'headline'},el('h2',{text:view.phase==='setup'?'起手調度':'效果選擇'}),
     actions.querySelector('.online-inspection-peek')?null:el('button',{type:'button',text:'查看場面與手牌',onClick:onPause})),
-   effectSource,lookedAt,actions);
+   actions,effectSource,lookedAt);
   const overlay=el('div',{class:'overlay v2-pending-overlay online-effect-overlay'},dialog);shell.append(overlay);
  }
  return shell;
