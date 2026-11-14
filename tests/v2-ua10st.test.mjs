@@ -239,9 +239,9 @@ test('IMC has 113 open V2 cards while MHA remains at 77 closed cards among 109',
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
  const ready=Object.keys(pack.cards);
  assert.deepEqual(ready,editor.map(card=>card.id).filter(id=>pack.cards[id]));
- assert.equal(ready.length,79);
+ assert.equal(ready.length,80);
  const pending=editor.map(card=>card.id).filter(id=>!pack.cards[id]);
- assert.equal(pending.length,30);
+ assert.equal(pending.length,29);
  assert.equal(pack.cards['MHA-1-001'].effects.onRetire[0].count,1);
  assert.equal(pack.cards['MHA-1-013'].effects.onPlay[0].op,'optionalOwnLifeToHandThenDraw');
  assert.equal(pack.cards['MHA-1-014'].effects.onPlay[0].then[0].bp,3500);
@@ -276,7 +276,7 @@ test('IMC has 113 open V2 cards while MHA remains at 77 closed cards among 109',
   ...MHA_REQUESTS_051_100.map(row=>row.cardId),
   ...MHA_UA10ST_REQUESTS.map(row=>row.cardId)
  ]);
- assert.equal(requestIds.size,30);
+ assert.equal(requestIds.size,29);
  assert.deepEqual([...requestIds].sort(),pending.slice().sort());
  assert.equal(getTitle('mha').playable,false);
  assert.equal(getTitle('imc').playable,true);

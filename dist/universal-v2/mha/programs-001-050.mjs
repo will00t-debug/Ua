@@ -108,6 +108,21 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
  }),
  'MHA-1-022':play(Object.freeze([{op:'bounceOwnOtherUnderEnergy', energy:1}])),
  'MHA-1-024':vanilla,
+ 'MHA-1-025':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'searchTopOneBottomDiscard', count:4,
+   groups:Object.freeze([
+    Object.freeze({logic:'all', filters:Object.freeze([
+     Object.freeze({field:'trait', value:'死穢八斎會'}),
+     Object.freeze({field:'type', value:'character'})
+    ])}),
+    Object.freeze({logic:'all', filters:Object.freeze([
+     Object.freeze({field:'name', value:'エリ'})
+    ])})
+   ])
+  }])})
+ }),
  'MHA-1-027':Object.freeze({
   ready:true, implementation:'dsl',
   passiveBonuses:Object.freeze([Object.freeze({

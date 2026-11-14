@@ -119,7 +119,7 @@ test('IMC stays open and MHA stays closed with the round 15 census',()=>{
  assert.equal(getTitle('mha').playable,false);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  const pack=createMhaV2Pack();
- assert.equal(Object.keys(pack.cards).length,79);
+ assert.equal(Object.keys(pack.cards).length,80);
  for(const id of ['MHA-1-003','MHA-1-005','MHA-1-011',
   'MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-072','MHA-1-076',
   'MHA-1-081','MHA-1-084'])
