@@ -5,8 +5,6 @@
 // MHA-1-044 is the same card as the UA10ST printing. Its activate is
 // restSelfGainEnergyRetireEndMain, so it is ready and is not listed here.
 export const MHA_REQUESTS_001_050=Object.freeze({
- 'MHA-1-002':gap('登場時可選的磨牌 3 張，以及主階段橫置並退場後從場外取死穢八斎會角色或〈“個性”消失弾〉。Q421：指名卡不必有特徵。',
-  'millUpToThenRecover 的可選 3 張，以及 restRetireSequence 後的 recoverOutsideAny，已經能表示這兩句。這輪不寫卡牌程式，所以維持 pending。'),
  'MHA-1-003':gap('自己場上有 3 張以上帶【起動メイン】的角色時，這張 BP+1000。',
   'ownActivateMainAtLeast 會數場上的起動，而且突襲框裡、目前沒有突襲的起動不算。被動 BP 已能接這個條件。這輪不寫卡牌程式，所以維持 pending。'),
  'MHA-1-004':gap('3 張以上【起動メイン】時手牌紫能量-3、印刷衝擊 1，以及每回合一次複製同列其他角色的【起動メイン】（其他オール・フォー・ワン除外）。',

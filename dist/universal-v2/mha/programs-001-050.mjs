@@ -11,6 +11,25 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   ready:true, implementation:'dsl', impactNull:true,
   effects:Object.freeze({onRetire:Object.freeze([{op:'drawDiscard', count:1}])})
  }),
+ 'MHA-1-002':Object.freeze({
+  ready:true, implementation:'dsl',
+  triggerEffect:Object.freeze({
+   op:'deployOutsideCharacter', color:'purple', maxEnergy:2, ap:1, frontOnly:true
+  }),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'millUpToThenRecover', count:3, optional:true
+  }])}),
+  mainAbility:Object.freeze({
+   op:'restRetireSequence',
+   then:Object.freeze([{
+    op:'recoverOutsideAny', zone:'outside', max:1, optional:true,
+    anyOf:Object.freeze([
+     Object.freeze({field:'trait', value:'死穢八斎會'}),
+     Object.freeze({field:'name', value:'“個性”消失弾'})
+    ])
+   }])
+  })
+ }),
  'MHA-1-006':Object.freeze({
   ready:true, implementation:'dsl',
   mainAbility:Object.freeze({op:'payHandMoveOrSwap', oncePerTurn:true, pay:1})

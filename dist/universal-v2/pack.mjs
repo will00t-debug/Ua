@@ -1645,7 +1645,12 @@ function verifyProgram(program,path){
     Object.keys(recover).every(k=>['zone','max','optional','anyOf',...(named===undefined?[]:['excludeName'])].includes(k))&&
     Object.keys(e).length===4&&
     Object.keys(e).every(k=>['op','count','optional','recover'].includes(k));
-   if(!simple&&!optional)throw Error(path+'['+i+'] invalid mill-then-recover profile');
+   // 登場時只寫「上から3枚を場外に置いてもよい」. The recovery is a
+   // separate main action, so this profile mills and then stops.
+   const millOnly=e.count===3&&e.optional===true&&
+    Object.keys(e).length===3&&
+    Object.keys(e).every(k=>k==='op'||k==='count'||k==='optional');
+   if(!simple&&!optional&&!millOnly)throw Error(path+'['+i+'] invalid mill-then-recover profile');
   }
   if(e.op==='discardUpToThenDraw'&&(
    e.optional!==true||!integer(e.max,1)||e.max>2||Object.keys(e).length!==3||

@@ -5479,13 +5479,7 @@ function continueEffectQueue(pack,s){
    s.bpWindowPlus[owner]+=1000;
   }else if(job.op==='recoverOutsideAny'){
    const recover=job.recover||job;
-   const choices=pl.outside.filter(c=>{
-    const d=card(pack,c);
-    if(d.type!=='character')return false;
-    if(typeof recover.excludeName==='string'&&cardHasName(d,recover.excludeName,false))return false;
-    return (recover.anyOf||[]).some(clause=>clause.field==='trait'?
-     cardHasTrait(d,clause.value):cardHasName(d,clause.value,false));
-   }).map(c=>c.uid);
+   const choices=pl.outside.filter(c=>outsideRecoverMatches(card(pack,c),recover)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-any',player:owner,
     sourceUid:job.sourceUid,choices,anyOf:recover.anyOf,
     ...(recover.excludeName?{excludeName:recover.excludeName}:{}),optional:true};
@@ -14259,13 +14253,8 @@ function resolveChoice(s,a,pack){
    q.milled=milled;
   }else if(a.mode!=='stop')throw Error('Invalid mill choice');
   const recover=q.recover;
-  const choices=q.milled.length?p.outside.filter(c=>{
-   const d=card(pack,c);
-   if(d.type!=='character')return false;
-   if(typeof recover?.excludeName==='string'&&cardHasName(d,recover.excludeName,false))return false;
-   return (recover?.anyOf||[]).some(clause=>clause.field==='trait'?
-    cardHasTrait(d,clause.value):cardHasName(d,clause.value,false));
-  }).map(c=>c.uid):[];
+  const choices=q.milled.length&&recover?p.outside.filter(c=>
+   outsideRecoverMatches(card(pack,c),recover)).map(c=>c.uid):[];
   if(choices.length)s.pending={kind:'effect-recover-any',player:q.player,
    sourceUid:q.sourceUid,choices,anyOf:recover.anyOf,
    ...(recover.excludeName?{excludeName:recover.excludeName}:{}),optional:true};
@@ -14279,10 +14268,7 @@ function resolveChoice(s,a,pack){
   }
   const index=p.outside.findIndex(c=>c.uid===a.uid);
   const printed=index>=0?card(pack,p.outside[index]):null;
-  const matches=printed&&printed.type==='character'&&q.choices.includes(a.uid)&&
-   !(q.excludeName&&cardHasName(printed,q.excludeName,false))&&
-   (q.anyOf||[]).some(clause=>clause.field==='trait'?
-    cardHasTrait(printed,clause.value):cardHasName(printed,clause.value,false));
+  const matches=printed&&q.choices.includes(a.uid)&&outsideRecoverMatches(printed,q);
   if(!matches)throw Error('Illegal outside recovery');
   const physical=p.outside.splice(index,1)[0];
   p.hand.push(physical);
@@ -19085,6 +19071,15 @@ function oncePayMandatoryReady(pack,s,owner,ability,sourceUid){
     cardHasTrait(card(pack,c),step.trait));
   return true;
  });
+}
+// A trait clause is only a character. A named clause is that card even
+// when it is a field and has no trait (Q421).
+function outsideRecoverMatches(d,recover){
+ if(!d||!recover)return false;
+ if(typeof recover.excludeName==='string'&&cardHasName(d,recover.excludeName,false))return false;
+ return (recover.anyOf||[]).some(clause=>clause.field==='trait'?
+  d.type==='character'&&cardHasTrait(d,clause.value):
+  clause.field==='name'&&cardHasName(d,clause.value,false));
 }
 function restRetireSequenceLegal(pack,s,p,c,ability){
  const pl=s.players[p],d=card(pack,c);
