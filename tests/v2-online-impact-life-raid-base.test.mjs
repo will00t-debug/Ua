@@ -49,7 +49,7 @@ test('online pending life target has a centered usable choice on desktop as well
  assert.match(source,/makeAttackLifePicker\(\{el,lifeCount:view\.players\[1\]\.lifeCount/);
  assert.doesNotMatch(source,/view\.pending\?\.kind==='attack-life-target'&&room\.yourTurn&&!desktop/);
  assert.match(css,/\.online-life-target-overlay\{[\s\S]*?position:fixed;inset:0;z-index:470/);
- assert.match(read('dist/online.mjs'),/online-battle-ui\.mjs\?v=20261114impactraid1/);
+ assert.match(read('dist/online.mjs'),/online-battle-ui\.mjs\?v=20261114compactcards2/);
 });
 
 test('Raid inspection enumerates face-up bases, but never discloses hidden undercards',()=>{
