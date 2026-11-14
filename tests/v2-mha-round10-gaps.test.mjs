@@ -9,7 +9,7 @@ import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {officialV2Pack, v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 
 const PRIORITY=[
- 'MHA-1-003','MHA-1-004','MHA-1-005','MHA-1-011'
+ 'MHA-1-003','MHA-1-005','MHA-1-011'
 ];
 const ALREADY=[
  'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-012',

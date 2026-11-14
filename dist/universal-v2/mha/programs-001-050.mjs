@@ -30,6 +30,14 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
    }])
   })
  }),
+ 'MHA-1-004':Object.freeze({
+  ready:true, implementation:'dsl', printedImpact:1,
+  handEnergyWhileActivateMain:Object.freeze({min:3, amount:3}),
+  mainAbility:Object.freeze({
+   op:'gainSameLineMains', oncePerTurn:true,
+   excludeNames:Object.freeze(['オール・フォー・ワン'])
+  })
+ }),
  'MHA-1-006':Object.freeze({
   ready:true, implementation:'dsl',
   mainAbility:Object.freeze({op:'payHandMoveOrSwap', oncePerTurn:true, pay:1})
