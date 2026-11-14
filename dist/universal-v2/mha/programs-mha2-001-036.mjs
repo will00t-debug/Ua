@@ -94,7 +94,14 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
  'MHA-2-031':pending('休息並退場自己後只活動一張綠谷，而且要三種名字。場域起動的現有後續不是活動指定名字。'),
  'MHA-2-032':pending('休息、付 1 張手牌到場外並退場自己後，給一張綠谷本回合狙擊。要三種名字。沒有這句支付。'),
  'MHA-2-033':pending('休息並退場自己後，給一張綠谷本回合 BP+2000 並抽 1。要三種名字。沒有這句後續。'),
- 'MHA-2-034':pending('每種ワン・フォー・オール名字減 1 黃必要能量，然後退場對手前線。場上有綠谷時上限從 3000 改成 5000。能量減免沒有共用欄位。'),
+ 'MHA-2-034':ready({
+  distinctNameHandEnergy:Object.freeze({trait:'ワン・フォー・オール',per:1}),
+  triggerEffect:Object.freeze({op:'retireOppFront'}),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'retireOppFrontUnderBp',bp:3000,bonusName:'緑谷 出久',bonusBp:5000,mandatory:true
+  }])}),
+  notes:'手牌必要能量按自己場上與場外、正面的ワン・フォー・オール卡名種類各減 1 黃。生命區不減，蓋放不算。使用時必須退場 1 張對手前排：沒有〈緑谷 出久〉時 BP 3000 以下，自己場上有這個名字時改成 5000 以下。沒有合格對象就不能使用。特殊觸發退場對手前線 1 張。'
+ }),
  'MHA-2-035':ready({
   effects:Object.freeze({onPlay:Object.freeze([{op:'recoverAp',count:2}])}),
   notes:'最多使 2 張自己的行動值卡活動。可以少選。最終觸發是卡表。'
