@@ -1,6 +1,7 @@
 // Cards in UA10BT 001-050 that are not ready. 001, 013, 014 and 018 now
 // have a shared shape; write the program and a behavior test before
-// marking them ready. The other sentences still need an engine operation.
+// marking them ready. 006 and 007 also have a shared shape now.
+// The other sentences still need an engine operation.
 // C group does not approximate a missing sentence.
 // MHA-1-044 is the same card as the UA10ST printing. Its activate is
 // restSelfGainEnergyRetireEndMain, so it is ready and is not listed here.
@@ -16,13 +17,13 @@ export const MHA_REQUESTS_001_050=Object.freeze({
  'MHA-1-005':gap('場上沒有オール・フォー・ワン或死柄木 弔就不能攻擊或阻擋；自己回合 BP+2000；每回合一次賦予傷害 2。',
   'ownTurnBp 與登場時的 grantSelfAttackDamageThisTurn 已存在，但不能用。傷害 2 是主階段每回合一次才賦予，而且任一指名角色不在場時攻擊與阻擋都不合法。'),
  'MHA-1-006':gap('主階段支付 1 張手牌到場外，每回合一次，二選一：把自己的一張角色移到另一列，或交換一張前排與一張能量列角色。',
-  '需要支付 1 張手牌後的每回合一次二選一：移動一張自己角色到另一列，或交換一張前排與一張能量列。現有移動與交換都不是這個支付。'),
+  '主階段 {op:payHandMoveOrSwap, oncePerTurn:true, pay:1} 會先把手牌放到場外，再移動或交換。pay 不是 1、少了 oncePerTurn，或多一個鍵，會被拒絕。這張仍未寫程式，不要標 ready。'),
  'MHA-1-007':gap('印刷衝擊 1，且自己回合中敗給這張的對手角色改回手牌。Q424。',
-  'battleLoseToHand 只能是 true，沒有自己回合門。printedImpact 1 不能代替後句。需要只在自己回合把戰敗的對手角色改回手牌。'),
+  'battleLoseToHand 可以是 ownTurn，只在自己回合把戰敗的對手角色改回手牌。true 仍是任一回合。printedImpact 1 要一起寫。這張仍未寫程式，不要標 ready。'),
  'MHA-1-009':gap('自己回合中敗給這張的角色改放退場區；主階段支付 1 張手牌後這張本回合衝擊 +1。Q425。',
-  '需要自己回合的戰敗改放退場區，以及支付 1 張手牌後本回合衝擊 +1。兩句都還沒有，不能只做其中一句。'),
+  'battleRemoveInstead:true 已會在自己回合把戰敗角色放到退場區，對手回合則仍到場外。支付 1 張手牌後本回合衝擊 +1 還沒有。不能只做其中一句。不要標 ready。'),
  'MHA-1-010':gap('突襲〈死柄木 弔〉、戰鬥敗北改退場，以及前排每回合一次移除對手前排 BP2000 以下。Q426。',
-  'raidName 只覆蓋突襲框。還需要自己回合戰敗改退場區，以及前排每回合一次把對手前排目前 BP 2000 以下放到退場區。removeOppFrontUnderBp 不能放進 frontOnceProgram。'),
+  '自己回合戰敗改退場區用 battleRemoveInstead:true。突襲框用 raidName。前排每回合一次的 removeOppFrontUnderBp 仍不能放進 frontOnceProgram。不要只做戰敗目的地就標 ready。'),
  'MHA-1-011':gap('擋過這張的角色下一次不橫置回復；主階段每回合一次使對手本回合必須盡可能阻擋。Q427、Q428。',
   '擋過這張的角色下一次不回復還沒有操作。grantSelfMustBlockThisTurn 只接登場時；包進每回合一次的主階段會被拒絕。兩句都要有。'),
  'MHA-1-013':gap('登場時可以把 1 張生命放入手牌；若如此，可以橫置回復自己其他前排 1 張。Q429。',
@@ -52,13 +53,13 @@ export const MHA_REQUESTS_001_050=Object.freeze({
  'MHA-1-035':gap('在前排時，對手全部角色失去步進、狙擊、雙重攻擊、雙重阻擋、衝擊、傷害與衝擊無效。登場時可橫置對手前排 1 張。Q439–Q441。',
   '沒有一次剝除這七種能力的前排光環。只做橫置會漏掉主句。'),
  'MHA-1-038':gap('下面有 2 張以上蓋牌時獲得雙重阻擋；4 張以上時再獲得雙重攻擊。主階段每回合一次把牌庫頂蓋到這張下面。Q442、Q632。',
-  '沒有依蓋牌張數給兩種能力，也沒有把牌庫頂蓋到自己下面的起動。'),
+  '主階段 {op:onceTuckFacedown, oncePerTurn:true, from:deckTop, host:self, count:1} 已可把牌庫頂蓋到自己下面。依蓋牌張數給雙重阻擋與雙重攻擊還沒有。不要只做蓋牌就標 ready。'),
  'MHA-1-042':gap('登場時可讓其他橫置中、不是麗日 お茶子的前排角色回手；若如此，從手牌把 1 張能量 3 以下、AP1 的綠角色以橫置回復狀態登場。',
   '沒有「可選回手後才主動登場」的登場時。'),
  'MHA-1-045':gap('自己前排沒有角色且對手前排有 3 張以上時，手牌綠能量 -6 且 AP-1。不能進能量列。印刷衝擊 1。對手角色攻擊時，可讓橫置的這張回復，若如此本回合 BP-1000。Q443、Q509。',
   'energyLineForbidden 只覆蓋不能進能量列。其餘條件減免、衝擊與攻擊反應都沒有對應。'),
  'MHA-1-048':gap('對手回合每回合一次，若對手的角色或事件效果會讓這張離場，改為留在場上。登場時可以看自己全部生命並重排。Q444–Q448。',
-  '沒有這個離場置換，也沒有看自己全部生命並重排的登場時。')
+  'oppEffectLeave 可以是對手回合、oncePerTurn、instead stay、cause characterOrEvent、subject self、line any。看自己全部生命並重排還沒有。不要只做離場置換就標 ready。')
 });
 
 function gap(sentence, whyNotEnough){

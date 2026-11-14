@@ -848,6 +848,8 @@ export function uiActionLabel(action,{pack,state}={}){
     '起動主要：前線也能產生能源':
     action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
     action.mode==='plus2'?'起動主要：能源 8 以上時，本回合產能＋2':
+    action.mode==='payHandMove'?'起動主要：支付 1 張手牌，移動或交換角色':
+    action.mode==='onceTuck'?'起動主要：將牌庫頂蓋到這張角色下方':
     action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
     action.mode==='namedEnergyAp'?
     '起動主要：指定西蒙，本回合產能增加並 ACTIVE 1 張 AP':
@@ -1075,6 +1077,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseActiveEnergyNamed':return action.uid===null?'不將能量線指定名稱卡轉為 ACTIVE':'將能量線的 '+name()+' 轉為 ACTIVE';
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
+  case 'chooseHandActiveOrRaid':return action.uid===null?'不從手牌登場':
+   (action.mode==='raid'?'從手牌突襲登場 ':'從手牌以活動狀態登場 ')+name()+suffix();
+  case 'chooseTuckFacedown':return action.uid===null?'不蓋到角色下面':'把 '+name()+' 蓋到角色下面';
+  case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
+  case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
+  case 'chooseMoveOrSwap':return action.mode==='swap'?'交換一張前線與一張能源線角色':'把一張自己的角色移到另一列';
+  case 'chooseOppLeave':return action.mode==='life'?'改為把自己 1 張生命放到場外':'不支付，照原本方式離場';
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseGrantNamed':return action.uid===null?'不給予這項能力':'給予 '+name()+' 這個回合的能力';
@@ -1818,7 +1827,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 // Epsilon, Beta, or a raidless yellow Zeke stays normal entry and does not
 // invent Raid.
 const MODE_BOARD_ENTRY=new Set([
- 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseTopScript',
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseHandActiveOrRaid','chooseTopScript',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
  'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2','aot2','csm'
 ]);
@@ -1844,7 +1853,7 @@ export function boardEntryMode(action){
  if(action.type==='kjn')return action.mode==='dest'?'normal':null;
  if(action.type==='csm')return action.mode==='deploy'?'normal':null;
  if(action.mode==='raid')return 'raid';
- if(action.mode==='enter'||action.mode==='place'||action.mode==='rest')return 'normal';
+ if(action.mode==='enter'||action.mode==='place'||action.mode==='rest'||action.mode==='active')return 'normal';
  return null;
 }
 export function boardEntrySelection(legal,uid){

@@ -152,14 +152,24 @@ test('013 and 014 accept the life follow-up and reject a follow-up that is not t
  }),/invalid optional life-to-hand draw/);
 });
 
-test('006, 007, 009 and 017 do not have a whole-sentence operation',()=>{
- reject(face({
+test('006 and 007 accept the shared shape and still reject a different parameter',()=>{
+ accept(face({
   id:'GAP-006',
   mainAbility:{op:'payHandMoveOrSwap',oncePerTurn:true,pay:1}
- }),/unsupported main action ability/);
+ }));
  reject(face({
+  id:'GAP-006B',
+  mainAbility:{op:'payHandMoveOrSwap',oncePerTurn:true,pay:2}
+ }),/unsupported main action ability/);
+ accept(face({
   id:'GAP-007', printedImpact:1, battleLoseToHand:'ownTurn'
+ }));
+ reject(face({
+  id:'GAP-007B', printedImpact:1, battleLoseToHand:'both'
  }),/invalid battle-loss hand replacement/);
+});
+
+test('009 and 017 still do not have a whole-sentence operation',()=>{
  reject(face({
   id:'GAP-009',
   mainAbility:{op:'payHandGrantImpact',oncePerTurn:true,pay:1,amount:1}

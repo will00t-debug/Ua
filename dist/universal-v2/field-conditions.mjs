@@ -268,6 +268,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
   return s.players[owner].hand.length>=condition.min;
+ if(condition.kind==='ownHandCountAtMost')
+  return s.players[owner].hand.length<=condition.max;
  if(condition.kind==='oppFrontCountAtLeast'||condition.kind==='ownFrontCountAtLeast'){
   // フロントLのキャラ. Energy-line cards, fields, empty slots and face-down
   // cards are not front characters. The other player's front is a different count.
