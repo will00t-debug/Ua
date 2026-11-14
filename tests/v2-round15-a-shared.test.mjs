@@ -1,5 +1,5 @@
-// Round 15 A. Shared operations stay generic. The MHA cards that need them
-// stay pending until their own group writes the whole program.
+// Round 15 A. Shared operations stay generic. MHA-1-055, 060, 062, 066, 072,
+// 076, 081 and 084 now use these operations. The other requested sentences stay pending.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
@@ -119,14 +119,17 @@ test('IMC stays open and MHA stays closed with the round 15 census',()=>{
  assert.equal(getTitle('mha').playable,false);
  assert.equal(UA10ST_PRODUCT.recipe,null);
  const pack=createMhaV2Pack();
- assert.equal(Object.keys(pack.cards).length,81);
+ assert.equal(Object.keys(pack.cards).length,89);
  assert.equal(pack.cards['MHA-1-003'].passiveBonuses[0].condition.kind,'ownActivateMainAtLeast');
  assert.equal(pack.cards['MHA-1-005'].ownTurnBp,2000);
  assert.equal(pack.cards['MHA-1-011'].blockSkipsNextActive,true);
  assert.equal(pack.cards['MHA-1-026'].raidName,'オーバーホール');
- for(const id of ['MHA-1-002','MHA-1-004','MHA-1-055','MHA-1-060','MHA-1-062',
-  'MHA-1-066','MHA-1-072','MHA-1-076','MHA-1-081','MHA-1-084'])
+ for(const id of ['MHA-1-002','MHA-1-004','MHA-1-085','MHA-1-090','MHA-1-091',
+  'MHA-1-095','MHA-1-096','MHA-1-099','MHA-1-100'])
   assert.equal(pack.cards[id],undefined);
+ for(const id of ['MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-072',
+  'MHA-1-076','MHA-1-081','MHA-1-084'])
+  assert.equal(pack.cards[id].id,id);
 });
 
 test('a full front removes one card before the energy move, including the source',()=>{
