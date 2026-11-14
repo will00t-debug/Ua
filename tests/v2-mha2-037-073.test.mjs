@@ -10,12 +10,13 @@ import {createMha2Pack} from '../dist/universal-v2/mha2-pack.mjs';
 import {MHA2_PROGRAMS_037_073} from '../dist/universal-v2/mha/programs-2-037-073.mjs';
 import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
-import {newUniversalMatch, legalUniversalActions, dispatchUniversalAction,
- assertUniversalMatch, universalBp, zoneRequiredEnergy
+ import {newUniversalMatch, legalUniversalActions, dispatchUniversalAction,
+ assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices
 } from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-2-039','MHA-2-047','MHA-2-049','MHA-2-058','MHA-2-059',
- 'MHA-2-061','MHA-2-064','MHA-2-065','MHA-2-071','MHA-2-073'];
+const READY=['MHA-2-039','MHA-2-047','MHA-2-049','MHA-2-052','MHA-2-055',
+ 'MHA-2-058','MHA-2-059','MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065',
+ 'MHA-2-071','MHA-2-073'];
 const real=createMha2Pack();
 const set1Pack=createMhaV2Pack();
 const byId=new Map(MHA2_CARDS_037_073.map(card=>[card.id,card]));
@@ -58,6 +59,7 @@ function shell(){
   fixture({id:'OVER', name:'過', bp:5500}),
   fixture({id:'WALL', name:'牆', color:'red', bp:4000}),
   fixture({id:'COST4', name:'能源四', color:'green', energy:4, bp:2000}),
+  fixture({id:'COST5', name:'能源五', color:'green', energy:5, bp:2000}),
   fixture({id:'COST3', name:'能源三', color:'green', energy:3, bp:2000}),
   fixture({id:'IMPACT', name:'衝擊', color:'red', bp:5000, printedImpact:1, implementation:'dsl'}),
   fixture({id:'PLAIN', name:'路人', bp:3000})
@@ -423,4 +425,105 @@ test('071 steps from the front to energy only in its move phase',()=>{
  const phase=reach(plain.pack,plain.s,'move');
  assert.equal(legal(plain.pack,phase).some(a=>a.type==='step'&&a.uid===other.uid),false);
  assert.equal(assertUniversalMatch(pack,later),true);
+});
+
+function order(live,s){
+ let guard=0;
+ while(s.pending?.kind==='effect-top-order'){
+  const uid=s.pending.uids.find(id=>!s.pending.order.includes(id));
+  s=act(live,s,action=>action.type==='chooseTopOrder'&&action.uid===uid);
+  if(++guard>8)throw Error('order');
+ }
+ return s;
+}
+function shownUids(pack,s){
+ const seen=universalPrivateChoices(pack,s,0);
+ return (seen.inspected||[]).map(card=>card.uid);
+}
+
+test('MHA-2-052 shows four cards and discards a hand card only after taking energy 3 or less',()=>{
+ let {pack,s}=open(2052);
+ clearLines(s,0);
+ seat(s,0,'GREEN','energy',0,true);
+ readyAp(s);
+ const self=hold(s,'MHA-2-052');
+ const low=pull(s,0,'COST3');
+ const high=pull(s,0,'COST4');
+ const zero=pull(s,0,'MHA-2-064');
+ const plain=pull(s,0,'PLAIN');
+ s.players[0].deck.unshift(plain,zero,high,low);
+ s=act(pack,s,action=>action.type==='play'&&action.uid===self.uid&&action.line==='front');
+ const shown=shownUids(pack,s);
+ assert.equal(shown.length,4);
+ for(const body of [low,high,zero,plain])assert.equal(shown.includes(body.uid),true);
+ assert.equal(s.pending.choices.includes(low.uid),true);
+ assert.equal(s.pending.choices.includes(zero.uid),true);
+ assert.equal(s.pending.choices.includes(plain.uid),true);
+ assert.equal(s.pending.choices.includes(high.uid),false);
+ s=act(pack,s,action=>action.type==='chooseTopFiltered'&&action.uid===null);
+ s=order(pack,s);
+ assert.equal(s.pending,null);
+
+ let taken=open(2053);
+ clearLines(taken.s,0);
+ seat(taken.s,0,'GREEN','energy',0,true);
+ readyAp(taken.s);
+ const body=hold(taken.s,'MHA-2-052');
+ const pick=pull(taken.s,0,'COST3');
+ taken.s.players[0].deck.unshift(pull(taken.s,0,'PLAIN'),pull(taken.s,0,'COST4'),pull(taken.s,0,'MHA-2-064'),pick);
+ taken.s=act(taken.pack,taken.s,action=>action.type==='play'&&action.uid===body.uid);
+ taken.s=act(taken.pack,taken.s,action=>action.type==='chooseTopFiltered'&&action.uid===pick.uid);
+ taken.s=order(taken.pack,taken.s);
+ assert.equal(taken.s.pending.kind,'effect-discard');
+ const spare=taken.s.players[0].hand.find(card=>card.uid!==pick.uid);
+ taken.s=act(taken.pack,taken.s,action=>action.type==='chooseDiscard'&&action.uid===spare.uid);
+ assert.ok(taken.s.players[0].outside.some(card=>card.uid===spare.uid));
+ assert.ok(taken.s.players[0].hand.some(card=>card.uid===pick.uid));
+});
+
+test('MHA-2-055 takes only a character of printed energy 4 or more',()=>{
+ let {pack,s}=open(2055);
+ clearLines(s,0);
+ seat(s,0,'GREEN','energy',0,true);
+ readyAp(s);
+ const self=hold(s,'MHA-2-055');
+ const low=pull(s,0,'COST3');
+ const high=pull(s,0,'COST4');
+ const zero=pull(s,0,'MHA-2-064');
+ const five=pull(s,0,'COST5');
+ s.players[0].deck.unshift(five,zero,low,high);
+ s=act(pack,s,action=>action.type==='play'&&action.uid===self.uid&&action.line==='energy'&&action.slot===1);
+ const shown=shownUids(pack,s);
+ assert.equal(shown.length,4);
+ for(const body of [low,high,zero,five])assert.equal(shown.includes(body.uid),true);
+ assert.equal(s.pending.choices.includes(high.uid),true);
+ assert.equal(s.pending.choices.includes(five.uid),true);
+ assert.equal(s.pending.choices.includes(low.uid),false);
+ assert.equal(s.pending.choices.includes(zero.uid),false);
+ s=act(pack,s,action=>action.type==='chooseTopFiltered'&&action.uid===high.uid);
+ s=order(pack,s);
+ assert.equal(s.pending.kind,'effect-discard');
+});
+
+test('MHA-2-063 uses printed BP 3500, not the current BP',()=>{
+ let {pack,s}=open(2063);
+ clearLines(s,0);
+ seat(s,0,'RED','energy',0,true);
+ readyAp(s);
+ const self=hold(s,'MHA-2-063');
+ const mid=pull(s,0,'MID');
+ const high=pull(s,0,'HIGH');
+ const low=pull(s,0,'LOW');
+ const plain=pull(s,0,'PLAIN');
+ high.buffs=[{bp:-2000,untilTurn:s.turn}];
+ low.buffs=[{bp:2000,untilTurn:s.turn}];
+ s.players[0].deck.unshift(plain,low,high,mid);
+ s=act(pack,s,action=>action.type==='play'&&action.uid===self.uid&&action.line==='front');
+ const shown=shownUids(pack,s);
+ assert.equal(shown.length,4);
+ for(const body of [mid,high,low,plain])assert.equal(shown.includes(body.uid),true);
+ assert.equal(s.pending.choices.includes(mid.uid),true);
+ assert.equal(s.pending.choices.includes(low.uid),true);
+ assert.equal(s.pending.choices.includes(plain.uid),true);
+ assert.equal(s.pending.choices.includes(high.uid),false);
 });
