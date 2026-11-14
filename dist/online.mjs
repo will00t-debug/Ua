@@ -557,7 +557,7 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
   'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
-  'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
+  'chooseRaidBaseRest','chooseRaidBottomActive','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
 // kmr, kjn and aot2 character entry use this set too: select the physical card,
 // then 突襲進場 or 普通進場 only when the print allows both.

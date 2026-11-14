@@ -598,3 +598,11 @@ MHA 去重後的目錄是 109 張。對戰包 49 張 ready，pending 60 張。�
 
 `getTitle('imc').playable` 與 `getTitle('mha').playable` 維持 false。IMC 官方預組 `counts` 維持 null。`UA10ST_PRODUCT.recipe` 維持 null。這次整合沒有合併 `main`，也沒有部署。
 
+## 第 11 輪整合
+
+基準是 #431 的 `a4b3a51fa2bafdf520ce0dc011e23a26e5a75423`。#433、#430、#429 的基準是 #428。#431 已經包含 #428，也已經包含 012、019、027、053。這一輪只摘尚未整合的修改：#433 的 8 張預組程式與行為測試、#430 的缺口測試、#429 的 051–100 請求文字。063 只定義在預組程式，不留在 051–100 的請求。IMC 與 AI 修正沒有被覆蓋。
+
+IMC 對戰包維持 113／113。MHA 對戰包是 57 張 ready、52 張 pending、目錄 109 張。新進包的是 063、101、102、105、106、107、108、109。
+
+001、013、014、018、051、054 的共用形狀已解鎖，契約在 `docs/v2-handoff/V2-R11A-shared-ops.md`。這 6 張仍未寫程式，維持 pending。`playable` 維持 false。IMC 官方預組 `counts` 與 `UA10ST_PRODUCT.recipe` 維持 null。沒有合併 `main`，也沒有部署。
+

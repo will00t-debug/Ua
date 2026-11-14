@@ -214,6 +214,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
+ 'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
  'effect-rest-skip-may-retire':'選擇 1 張 BP 5000 以下的對手前線，休息並跳過下次活動，或在巴麻美在場時改為退場',
  'effect-retire-named-draw':'退場 1 張自己場上的佐倉杏子',
@@ -954,6 +955,9 @@ export function uiActionLabel(action,{pack,state}={}){
     return action.uid===null?'不使突襲來源登場':
      '將 '+name()+' 以休息狀態放到'+destination()+' '+(action.slot+1);
    return action.uid===null?'不將突襲底卡以 Rest 登場':'將 '+name()+' 以 Rest 登場'+suffix();
+  case 'chooseRaidBottomActive':
+   return action.uid===null?'不將突襲最下段以活動狀態登場':
+    '將 '+name()+' 以活動狀態放到'+destination()+' '+(action.slot+1);
   case 'chooseNameOrTraitProtect':return action.uid===null?'不賦予選擇保護':'令 '+name()+' 不被對方效果選擇';
   case 'chooseNamedKeyword':return action.uid===null?'不賦予指定名稱角色':'選擇 '+name();
   case 'chooseKeywordMode':return action.mode==='impact'?'本回合 Impact +1':'本回合直接攻擊傷害 +1';
@@ -1804,7 +1808,7 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
   'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
-  'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
+  'chooseRaidBaseRest','chooseRaidBottomActive','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
 // kmr, kjn, mmm2 and aot2 character entry use this set too: select the physical card,
 // then 突襲進場 or 普通進場 only when the print allows both.

@@ -2,7 +2,8 @@
 // https://www.unionarena-tcg.com/jp/cardlist/?search=true&series=570010
 // Color icons are stored as the alt text on that page. battleReady stays
 // false in the catalog. A program, not this file, decides the battle pack.
-// The 50-card copy list is not on the product page and is not invented here.
+// The 50-card copy list is not on the product page or the series=570010
+// card list (rechecked 2026-11-14) and is not invented here.
 const PAGE='https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=';
 const IMAGE='https://www.unionarena-tcg.com/jp/images/cardlist/card/';
 
