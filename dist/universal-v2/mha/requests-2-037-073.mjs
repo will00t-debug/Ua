@@ -21,9 +21,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  'MHA-2-044':Object.freeze({
   missing:'付 1 AP、每回合一次、只抽 1。現有的付 AP 起動還會強制增加發生能源，不能拿來代替這句。'
  }),
- 'MHA-2-045':Object.freeze({
-  missing:'付 2 張手牌、每回合一次，獲得狙擊，而且不能用狙擊指定 BP 3000 以上的角色。'
- }),
  'MHA-2-046':Object.freeze({
   missing:'突襲〈レディ・ナガン〉並活動移到前排。登場時本回合獲得狙擊。三個起動分別是休息加 BP 與衝擊 1、休息加攻擊時抽 1、付 1 張手牌把這張卡活動。'
  }),
