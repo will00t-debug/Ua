@@ -230,6 +230,7 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
    const piles=el('div',{class:'piles'});
    if(kind==='front')piles.append(el('div',{class:'pile'},'DECK',el('b',{text:p.deckCount})),el('div',{class:'pile'},'HAND',el('b',{text:p.handCount})));
    else for(const [zone,label]of [['outside','場外'],['removed','移除區']])piles.append(el('button',{type:'button',class:'pile v2-zone-pile',
+     'data-v2-zone':zone,
     'aria-label':(side===0?'我方':'對手')+label+' '+(p[zone]?.length||0)+' 張',onClick:()=>showZone(side,zone)},el('span',{text:label}),el('b',{text:p[zone]?.length||0})));
    return el('div',{class:'lineGroup'},el('span',{class:'lineLabel '+kind,text:kind==='front'?'前線 FRONT':'能源 ENERGY'}),slots,piles);
   };
