@@ -3,9 +3,6 @@
 // MHA-2-001 through 036 are not in this file.
 // FAQ text is the 2026-11-14 official EX06BT list. A request is not an FAQ acceptance.
 export const MHA2_REQUESTS_037_073=Object.freeze({
- 'MHA-2-037':Object.freeze({
-  missing:'看牌頂 4 張，公開最多 1 張〈緑谷 出久〉或特徵ワン・フォー・オール到手牌，其餘放牌底，然後最多活動 1 張 AP。現有看牌不能再接活動 AP。'
- }),
  'MHA-2-038':Object.freeze({
   missing:'可把 1 張有起動主要、沒有突襲的其他紫角色放進移除區。做到之後抽 1，並把那張卡全部的起動主要交給自己場上最多 1 張角色。'
  }),
@@ -15,17 +12,8 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  'MHA-2-042':Object.freeze({
   missing:'可突襲〈トガヒミコ〉並以活動狀態移到前排。登場時對手前排最多 1 張 BP-1000。前排起動每回合一次：對手前排 1 張 BP-1000，這張卡 BP+1000。'
  }),
- 'MHA-2-043':Object.freeze({
-  missing:'看牌頂 4 張，公開最多 1 張〈オール・フォー・ワン〉或〈死柄木 弔〉。取到手牌就要把 1 張手牌放場外。起動要先休息並退場自己，再抽 1 並放 1 張手牌場外。'
- }),
- 'MHA-2-044':Object.freeze({
-  missing:'付 1 AP、每回合一次、只抽 1。現有的付 AP 起動還會強制增加發生能源，不能拿來代替這句。'
- }),
  'MHA-2-046':Object.freeze({
   missing:'突襲〈レディ・ナガン〉並活動移到前排。登場時本回合獲得狙擊。三個起動分別是休息加 BP 與衝擊 1、休息加攻擊時抽 1、付 1 張手牌把這張卡活動。'
- }),
- 'MHA-2-048':Object.freeze({
-  missing:'自己場外的死穢八斎會有 6 張以上時才獲得傷害 2。現有特徵計數只數場上，不算場外。'
  }),
  'MHA-2-050':Object.freeze({
   faq:Object.freeze(['Q1007']),

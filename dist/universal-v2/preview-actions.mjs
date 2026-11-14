@@ -221,6 +221,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-raid-bottom-active':'可將這疊突襲最下方的卡以活動狀態登場',
  'effect-place-hand-outside':'將 1 張手牌放到場外',
+ 'effect-trait-hand-outside':'將 1 張具有指定特徵的手牌放到場外',
  'effect-optional-hand-outside':'可支付 1 張手牌到場外',
  'effect-except-hand-rest':'可支付手牌，從場外休息登場',
  'effect-life-order':'查看全部生命，並以任意順序重新排列',
@@ -1101,6 +1102,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseFieldRestDraw':return action.mode==='rest'?'休息這張場域並抽 1 張':'不休息';
   case 'choosePayHandImpact':return '支付這張手牌到場外：'+name();
   case 'choosePlaceHandOutside':return '將 '+name()+' 放到場外';
+  case 'chooseTraitHandOutside':return '將 '+name()+' 放到場外';
   case 'chooseOptionalHandOutside':return action.uid===null?'不支付手牌':'將 '+name()+' 放到場外';
   case 'chooseExceptHandRest':return action.mode==='decline'?'不支付':
    action.mode==='ap'?'改付 1 AP':'將 '+name()+' 放到場外';

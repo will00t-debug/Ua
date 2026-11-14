@@ -128,5 +128,50 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
  'MHA-2-073':Object.freeze({
   ready:true, implementation:'dsl', emptyOwnFieldHandEnergyDiscount:2,
   notes:'自己場上沒有卡時，手牌必要能源 -2 紅。場上有卡、或從生命打出，都不減。'
+ }),
+ 'MHA-2-037':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({
+    op:'searchTopOneBottomDiscard', count:4, logic:'any', discard:false,
+    filters:Object.freeze([
+     Object.freeze({field:'name', value:'緑谷 出久'}),
+     Object.freeze({field:'trait', value:'ワン・フォー・オール'})
+    ])
+   }),
+   Object.freeze({op:'recoverAp', count:1})
+  ])}),
+  notes:'看牌頂 4 張。公開最多 1 張綠谷或ワン・フォー・オール到手牌，其餘放牌底。不棄手牌。之後最多活動 1 張 AP。沒拿到也問 AP。不能拿的牌留在畫面上。'
+ }),
+ 'MHA-2-043':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
+   op:'searchTopOneBottomDiscard', count:4, logic:'any',
+   filters:Object.freeze([
+    Object.freeze({field:'name', value:'オール・フォー・ワン'}),
+    Object.freeze({field:'name', value:'死柄木 弔'})
+   ])
+  })])}),
+  mainAbility:Object.freeze({
+   op:'restRetireThen',
+   then:Object.freeze([Object.freeze({op:'drawDiscard', count:1})])
+  }),
+  notes:'看牌頂 4 張。公開最多 1 張〈オール・フォー・ワン〉或〈死柄木 弔〉到手牌，其餘放牌底。有拿才棄 1 張手牌到場外。起動：休息並退場自己，然後抽 1，再把 1 張手牌放到場外。'
+ }),
+ 'MHA-2-044':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({op:'payApDraw', oncePerTurn:true, draw:1}),
+  notes:'付 1 AP、每回合一次、只抽 1。不休息，也不加發生能源。'
+ }),
+ 'MHA-2-048':Object.freeze({
+  ready:true, implementation:'dsl',
+  passiveBonuses:Object.freeze([Object.freeze({
+   attackDamage:2,
+   condition:Object.freeze({
+    kind:'ownOutsideTraitCountAtLeast', turn:'any',
+    trait:'死穢八斎會', min:6
+   })
+  })]),
+  notes:'自己場外的死穢八斎會有 6 張以上時，這張角色獲得傷害 2。場上的自己不算。少於 6 張時沒有傷害 2。'
  })
 });

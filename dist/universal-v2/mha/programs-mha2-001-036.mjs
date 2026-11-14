@@ -23,7 +23,19 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }])}),
   notes:'看牌頂 4 張。公開最多 1 張綠谷或ワン・フォー・オール到手牌，其餘放牌底。有拿才棄 1 張手牌到場外。不能拿的牌留在畫面上。'
  }),
- 'MHA-2-003':pending('三種不同ワン・フォー・オール名字的發生能源，以及休息後把一張該特徵手牌放到場外再抽 1，沒有對得上的同一句起動。不能只做能量。'),
+ 'MHA-2-003':ready({
+  passiveBonuses:Object.freeze([Object.freeze({
+   extraEnergy:1,
+   condition:Object.freeze({
+    kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+    trait:'ワン・フォー・オール',min:3
+   })
+  })]),
+  mainAbility:Object.freeze({
+   op:'restTraitHandOutsideDraw',trait:'ワン・フォー・オール',draw:1
+  }),
+  notes:'場上與場外不同卡名的ワン・フォー・オール合計 3 種以上時，發生能源 +1 黃。休息時也加。起動：休息，必須把 1 張該特徵手牌放到場外，做到才抽 1。沒有合格手牌就不能發動。'
+ }),
  'MHA-2-004':ready({
   activeExtraEnergy:1,
   notes:'活動時發生能量 +1 黃。休息時只有印刷的 1 點。前線不產生能量。'
@@ -135,7 +147,17 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }),
   notes:'場上有其他卡名的 A組 時不能從手牌登場。手牌確認必要能量、付 1 AP、放到場外後，最多退場 1 張對手前排。上限 BP 3000，自己場上其他非綠谷 A組 達 3 張時改成 5000。特殊觸發退場 1 張對手前排。Q1003、Q2007。'
  }),
- 'MHA-2-026':pending('每種場上與場外的ワン・フォー・オール名字讓手牌必要能量減 1 黃，另有衝擊 1，並可從手牌或場外把該特徵休息放到能量線。減能量已有 distinctNameHandEnergy。缺的是休息放到能量線。'),
+ 'MHA-2-026':ready({
+  playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
+  distinctNameHandEnergy:Object.freeze({trait:'ワン・フォー・オール',per:1}),
+  printedImpact:1,
+  effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
+   op:'deployTraitFromZones',trait:'ワン・フォー・オール',
+   zones:Object.freeze(['hand','outside']),line:'energy',
+   ready:false,optional:true,max:1
+  })])}),
+  notes:'場上有其他卡名的 A組 時不能從手牌登場。手牌時，場上與場外每種ワン・フォー・オール名字減 1 點黃必要能量。有衝擊 1。登場時可從手牌或場外把該特徵最多 1 張角色休息放到能量列。可以不放。不能放上能量列的角色不能選。'
+ }),
  'MHA-2-027':ready({
   effects:Object.freeze({onPlay:Object.freeze([{op:'bounceOwnOtherUnderEnergy',energy:1}])}),
   notes:'登場時把必要能量 1 以下的其他自己角色回手。沒有合格對象時回自己。能量線與更高必要能量不能選，也不能略過。'
