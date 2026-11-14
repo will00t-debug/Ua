@@ -103,11 +103,13 @@ test('opponent-board draw and named ACTIVE reject a shape the print does not sta
  for(const effect of [
   {...restDraw,count:0},{...restDraw,zone:'front'},
   {...bpDraw,minBp:100},{...bpDraw,minBp:4001},
-  {...activeNamed,max:2},{...activeNamed,optional:false},{...activeNamed,name:' '},
+  {...activeNamed,max:2},{...activeNamed,name:' '},
   {op:'activeOwnNamed',name:'更木 剣八',max:1}
  ]){
   assert.throws(()=>createUniversalPack({id:'bad',cards:[{...base,effects:{onPlay:[effect]}}]}));
  }
+ assert.equal(createUniversalPack({id:'must',cards:[{...base,effects:{onPlay:[
+  {...activeNamed,optional:false}]}}]}).cards.BAD.effects.onPlay[0].optional,false);
  assert.throws(()=>createUniversalPack({id:'bad-timing',cards:[card('LATE',{name:'晚',
   effects:{onAttack:[restDraw]}})]}));
  assert.equal(createUniversalPack({id:'ok',cards:[card('OK',{name:'被動',passiveBonuses:[

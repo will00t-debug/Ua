@@ -6,6 +6,10 @@ const pending=notes=>Object.freeze({ready:false,notes});
 const deku=Object.freeze({
  kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'緑谷 出久'
 });
+const ofa3=Object.freeze({
+ kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,
+ trait:'ワン・フォー・オール',min:3
+});
 
 export const MHA2_PROGRAMS_001_036=Object.freeze({
  'MHA-2-001':ready({
@@ -66,7 +70,10 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   notes:'可突襲飯田天哉。登場時本回合 BP+1000 與衝擊 1。可把 1 張非綠谷手牌放到場外，做到才從場外把必要能量 4 以下、AP 1 的黃綠谷休息登場。有突襲名的綠谷也能選。'
  }),
  'MHA-2-010':Object.freeze({ready:true,implementation:'vanilla',notes:'効果欄は「-」。ゲットは卡表。'}),
- 'MHA-2-011':pending('在前線期間，自己的綠谷不被對手寫有「選び」的效果選取。沒有「在場期間保護指定名字」的被動。Q998 約束的是選取範圍，不是登場授予。'),
+ 'MHA-2-011':ready({
+  whileFrontNameUnchosen:Object.freeze({name:'緑谷 出久'}),
+  notes:'在前線期間，自己場上的〈緑谷 出久〉不被對手寫有「選び」的效果選取。Q998。離開前線或這張卡效果無效就結束。攻擊與阻擋不受影響。'
+ }),
  'MHA-2-012':ready({
   raidName:'麗日 お茶子',
   impactNull:true,
@@ -83,7 +90,10 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   effects:Object.freeze({onPlay:Object.freeze([{op:'drawDiscard',count:1}])}),
   notes:'登場時抽 1，再把 1 張手牌放到場外。'
  }),
- 'MHA-2-016':pending('退場時最多把 1 張自己的角色移到另一條線。Q1000 的滿格先移除是既有移動規則，但移線目前只掛在事件的登場選擇裡，不能掛在退場。'),
+ 'MHA-2-016':ready({
+  effects:Object.freeze({onRetire:Object.freeze([{op:'mayShiftOwnCharacter'}])}),
+  notes:'退場時最多把 1 張自己的角色移到另一條線。可以不做。Q1000：目的地滿格時先把 1 張放進移除區再移動。沒有其他角色就結束。'
+ }),
  'MHA-2-017':Object.freeze({ready:true,implementation:'vanilla',notes:'効果欄は「-」。アクティブは生命觸發。'}),
  'MHA-2-018':ready({
   effects:Object.freeze({onPlay:Object.freeze([
@@ -169,11 +179,45 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }])}),
   notes:'看牌頂 3 張。公開最多 1 張 A組 到手牌，其餘放牌底。有拿才棄 1 張手牌到場外。'
  }),
- 'MHA-2-029':pending('休息並退場自己，三種ワン・フォー・オール名字才可發動，給一張綠谷直到自己下個回合開始不被角色效果選取、也不被狙擊，然後抽 1。Q1004。沒有這句場域起動。'),
+ 'MHA-2-029':ready({
+  mainAbility:Object.freeze({
+   op:'gatedRestRetireThen',when:ofa3,
+   then:Object.freeze([
+    Object.freeze({op:'grantNamedCharacterSniperShield',name:'緑谷 出久'}),
+    Object.freeze({op:'draw',count:1})
+   ])
+  }),
+  notes:'休息並退場自己。場上與場外不同卡名的ワン・フォー・オール合計 3 種以上，而且場上有〈緑谷 出久〉，才可發動。選 1 張，直到自己下個回合開始不被對手角色效果選取，也不能被狙擊指定，然後抽 1。Q1004。對手事件的「選び」仍可選。'
+ }),
  'MHA-2-030':pending('自己回合、三種名字、而且綠谷會因對手觸發離場時，可改退這張場域並把那張綠谷休息。沒有觸發離場替代。'),
- 'MHA-2-031':pending('休息並退場自己後只活動一張綠谷，而且要三種名字。場域起動的現有後續不是活動指定名字。'),
- 'MHA-2-032':pending('休息、付 1 張手牌到場外並退場自己後，給一張綠谷本回合狙擊。要三種名字。沒有這句支付。'),
- 'MHA-2-033':pending('休息並退場自己後，給一張綠谷本回合 BP+2000 並抽 1。要三種名字。沒有這句後續。'),
+ 'MHA-2-031':ready({
+  mainAbility:Object.freeze({
+   op:'gatedRestRetireThen',when:ofa3,
+   then:Object.freeze([
+    Object.freeze({op:'activeOwnNamed',name:'緑谷 出久',max:1,optional:false})
+   ])
+  }),
+  notes:'休息並退場自己。三種名字而且場上有〈緑谷 出久〉才可發動。必須選 1 張並活動。不抽牌。'
+ }),
+ 'MHA-2-032':ready({
+  mainAbility:Object.freeze({
+   op:'gatedRestRetireThen',when:ofa3,payHand:1,
+   then:Object.freeze([
+    Object.freeze({op:'grantNamedSniperThisTurn',name:'緑谷 出久'})
+   ])
+  }),
+  notes:'休息、必須付 1 張手牌到場外，然後退場自己。三種名字、手牌至少 1 張、場上有〈緑谷 出久〉才可發動。選 1 張，本回合獲得狙擊。'
+ }),
+ 'MHA-2-033':ready({
+  mainAbility:Object.freeze({
+   op:'gatedRestRetireThen',when:ofa3,
+   then:Object.freeze([
+    Object.freeze({op:'buffNamedThisTurn',name:'緑谷 出久',bp:2000}),
+    Object.freeze({op:'draw',count:1})
+   ])
+  }),
+  notes:'休息並退場自己。三種名字而且場上有〈緑谷 出久〉才可發動。選 1 張，本回合 BP+2000，然後抽 1。'
+ }),
  'MHA-2-034':ready({
   distinctNameHandEnergy:Object.freeze({trait:'ワン・フォー・オール',per:1}),
   triggerEffect:Object.freeze({op:'retireOppFront'}),
