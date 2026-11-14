@@ -67,8 +67,10 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   Object.keys(until).length!==3))
   throw Error('FRONT energy permission requires own live target and current turn end');
  // Only the controller's next own START may expire a temporary attack ban.
- if((kind==='cannotAttack'||kind==='cannotBlock')&&(sourceLinked||until?.player!==controller||
-  until?.phase!=='start'||until?.edge!=='start'))
+ const nextOwnStart=until?.player===controller&&until?.phase==='start'&&until?.edge==='start';
+ const thisTurnBlock=kind==='cannotBlock'&&until?.player===s.active&&
+  until?.phase==='attack'&&until?.edge==='end'&&Object.keys(until||{}).length===3;
+ if((kind==='cannotAttack'||kind==='cannotBlock')&&(sourceLinked||!(nextOwnStart||thisTurnBlock)))
   throw Error('Attack ban must expire on granting controller next own start');
  if(kind==='cannotMove'&&(sourceLinked||until?.player!==controller||
   until?.phase!=='start'||until?.edge!=='start'||Object.keys(until).length!==3))
@@ -245,8 +247,10 @@ export function validateContinuousStates(s){
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
    typeof e.sourceLinked!=='boolean'||(e.sourceLinked&&(!Number.isInteger(e.sourceStamp)||e.sourceStamp<1))||
    (e.kind==='skipNextActive'&&e.until!==null)||
-   ((e.kind==='cannotAttack'||e.kind==='cannotBlock')&&(e.sourceLinked||e.until?.player!==e.controller||
-    e.until?.phase!=='start'||e.until?.edge!=='start'))||
+   ((e.kind==='cannotAttack'||e.kind==='cannotBlock')&&(e.sourceLinked||!(
+    (e.until?.player===e.controller&&e.until?.phase==='start'&&e.until?.edge==='start')||
+    (e.kind==='cannotBlock'&&[0,1].includes(e.until?.player)&&e.until?.phase==='attack'&&
+     e.until?.edge==='end'&&Object.keys(e.until).length===3))))||
    (e.kind==='cannotMove'&&(e.sourceLinked||e.until?.player!==e.controller||
     e.until?.phase!=='start'||e.until?.edge!=='start'||Object.keys(e.until||{}).length!==3))||
    (e.kind==='frontEnergyPermission'&&(e.sourceLinked||e.targetOwner!==e.controller||

@@ -27,7 +27,7 @@ export function mha2ReadyBattleCards(){
   const battle=mhaBattleCard(card,mha2ProgramFor(card.id));
   if(battle)ready.push(battle);
  }
- if(ready.length!==59)throw Error('EX06BT ready count drifted: '+ready.length);
+ if(ready.length!==66)throw Error('EX06BT ready count drifted: '+ready.length);
  return ready;
 }
 

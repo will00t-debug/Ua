@@ -125,6 +125,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-deck-named-play':'公開的卡片可加入手牌、休息登場或突襲',
  'effect-remove-hand':'可將手牌中1張具有指定特徵的卡除外',
  'effect-place-hand':'將1張手牌放到牌頂或場外',
+ 'effect-may-hand-rest':'可從手牌把符合條件的角色以休息狀態登場',
+ 'effect-opp-may-front-rest':'可從手牌把符合 AP 的角色以休息狀態放到前排',
+ 'effect-this-turn-block':'可選擇對手前排，這個回合不能阻擋',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-cap':'從手牌將符合條件的卡以 Rest 登場',
  'effect-hand-rest-or-raid':'從手牌休息登場或突襲',
@@ -1091,6 +1094,9 @@ export function uiActionLabel(action,{pack,state}={}){
    '將 '+name()+' 放到牌組上面':'將 '+name()+' 放到場外';
   case 'chooseRemoveHand':return action.uid===null?'不除外':'將 '+name()+' 除外';
   case 'chooseRetireOtherFrontName':return action.uid===null?'不退場':'使 '+name()+' 退場';
+  case 'chooseMayHandRest':return action.uid===null?'不從手牌登場':'以休息狀態登場 '+name()+suffix();
+  case 'chooseOppFrontRest':return action.uid===null?'不放到前排':'以休息狀態放到前排 '+name()+suffix();
+  case 'chooseThisTurnBlock':return action.uid===null?'不禁止阻擋':'這個回合不能阻擋：'+name();
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseHandRestCap':return action.uid===null?'不以 Rest 登場':'以 Rest 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
@@ -1862,6 +1868,7 @@ const NORMAL_BOARD_ENTRY=new Set([
  'chooseOutsideActivePair','chooseOutsideNameRest','chooseOutsideRest',
  'chooseOutsidePrintedRest','chooseOutsidePrintedActive','chooseOutsidePrinted',
  'chooseHandNamedRest','chooseHandRest','chooseHandRestCap','chooseHandGirlRest',
+ 'chooseMayHandRest','chooseOppFrontRest',
  'chooseRemovedEnter','chooseNamedZoneDeploy',
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
   'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',

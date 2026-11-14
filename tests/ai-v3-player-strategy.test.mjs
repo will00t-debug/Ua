@@ -1609,8 +1609,8 @@ function passUntilMain(packs,state,actor){
 test('a known two-play energy line keeps the action point instead of drawing',()=>{
  const {packs,state}=reachPairing('sword-art-online-raid',8401,0,0,12);
  const actor=0;
- // Every match now carries altMainAbilityUsedUids. The decisions below are unchanged.
- assert.equal(stateHash(state),'dfda9c6276b5613950247537a67910618e16d1aab21036c6ef3cf32915decac5');
+ // Every match now carries altMainAbilityUsedUids and chooseOnceByUid. The decisions below are unchanged.
+ assert.equal(stateHash(state),'53fe3240f322e0023118a434e06ffd48387d0aa70f6f2d679019a50284a902d9');
  assert.equal(state.phase,'start');
  assert.equal(state.pending,null);
  assert.deepEqual(state.players.map(player=>player.life.length),[7,7]);
@@ -1697,8 +1697,8 @@ test('a known two-play energy line keeps the action point instead of drawing',()
 test('the action-point hold still applies when the search itself draws',()=>{
  const {packs,state}=reachPairing('white-sword',8401,0,1,5);
  const actor=1;
- // Every match now carries altMainAbilityUsedUids. The decisions below are unchanged.
- assert.equal(stateHash(state).slice(0,16),'969648eaa21ee4e0');
+ // Every match now carries altMainAbilityUsedUids and chooseOnceByUid. The decisions below are unchanged.
+ assert.equal(stateHash(state).slice(0,16),'da2de62f31f24499');
  assert.equal(state.phase,'start');
  assert.deepEqual(state.players.map(player=>player.life.length),[7,7]);
  assert.equal(readyAp(state,actor),2);

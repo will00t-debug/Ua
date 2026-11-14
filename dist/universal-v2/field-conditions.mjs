@@ -352,6 +352,16 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    e.controller===owner&&e.reason==='own-effect'&&
    (e.to==='front'||e.to==='energy')&&
    printed({uid:e.uid,cardId:e.cardId})?.type==='character');
+ // 「このキャラが自分の効果で登場していた場合」. The latest entry onto a
+ // field line must be an own effect. A later move between front and energy
+ // is not a new entry. A paid play and a life trigger are not own effects.
+ if(condition.kind==='selfEnteredByOwnEffect'){
+  const events=(s.zoneMoveEvents||[]).filter(e=>e.uid===sourceUid&&e.owner===owner&&
+   e.controller===owner&&(e.to==='front'||e.to==='energy')&&
+   e.from!=='front'&&e.from!=='energy');
+  const latest=events.length?events[events.length-1]:null;
+  return latest?.reason==='own-effect';
+ }
  // Q18 and Q1806: 同じライン is the line this card is on. A front-line
  // card looks along the front line, and an energy-line card looks along
  // the energy line. The slot across from it is a different line. A card
