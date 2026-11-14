@@ -13,7 +13,7 @@ import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEner
 const READY=[
  'MHA-1-001','MHA-1-002','MHA-1-004','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
  'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
- 'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-025','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
+ 'MHA-1-020','MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-025','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
  'MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
  'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050'
 ];

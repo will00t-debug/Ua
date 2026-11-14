@@ -102,6 +102,12 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
    }])
   })
  }),
+ 'MHA-1-020':Object.freeze({
+  ready:true, implementation:'dsl', raidHostAny:true,
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'revealTopHandOutsideUnlessRaid'
+  }])})
+ }),
  'MHA-1-021':Object.freeze({
   ready:true, implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:Object.freeze({colors:Object.freeze(['green','red']), amount:1})
