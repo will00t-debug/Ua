@@ -81,7 +81,12 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   !sourceLinked||until!==null||releaseBeforeRefresh!==false||
   !s.players[controller].front.some(c=>c?.uid===sourceUid)))
   throw Error('Front-linked active lock needs its source on the front and no phase expiry');
- if(!(kind==='cannotActive'&&whileSourceFront)&&['cannotActive','cannotAttack','cannotMove','cannotBlock','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','grantedOnRetire','cannotBeChosenByOppEffect'].includes(kind)&&(!until||!player(until.player)||
+ // 「このフィールドがあるかぎり」. The lock has no phase expiry and ends
+ // when this physical source leaves the field. Another copy does not keep it.
+ const sourceFieldLock=(kind==='originalEffectsDisabled'||kind==='cannotActive')&&
+  sourceLinked&&until===null&&whileSourceFront!==true&&releaseBeforeRefresh!==true&&
+  !!source&&source.owner===controller;
+ if(!(kind==='cannotActive'&&whileSourceFront)&&!sourceFieldLock&&['cannotActive','cannotAttack','cannotMove','cannotBlock','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','grantedOnRetire','cannotBeChosenByOppEffect'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
   Object.keys(until).some(k=>!['player','phase','edge',...(kind==='selectionApTax'?['ownTurn']:[])].includes(k))))
   throw Error('Invalid status expiration phase');
@@ -272,7 +277,11 @@ export function validateContinuousStates(s){
     e.sourceLinked&&e.until===null&&e.releaseBeforeRefresh===undefined&&
     s.players[e.controller].front.some(c=>c?.uid===e.sourceUid&&c.fieldEntryStamp===e.sourceStamp)))||
    (e.releaseBeforeRefresh!==undefined&&(e.kind!=='cannotActive'||e.releaseBeforeRefresh!==true||e.sourceLinked))||
-   (!(e.kind==='cannotActive'&&e.whileSourceFront===true)&&['cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','grantedOnRetire','cannotBeChosenByOppEffect','cannotBlock'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (!(e.kind==='cannotActive'&&e.whileSourceFront===true)&&
+    !((e.kind==='originalEffectsDisabled'||e.kind==='cannotActive')&&e.sourceLinked&&
+     e.until===null&&e.whileSourceFront===undefined&&e.releaseBeforeRefresh===undefined&&
+     field(s.players[e.controller]).some(c=>c?.uid===e.sourceUid&&c.fieldEntryStamp===e.sourceStamp))&&
+    ['cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','grantedOnRetire','cannotBeChosenByOppEffect','cannotBlock'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;

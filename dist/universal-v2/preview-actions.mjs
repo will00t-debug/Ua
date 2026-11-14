@@ -1310,6 +1310,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseMamiActive':return '使 '+name()+' 活動';
   case 'chooseDiscardNamedEnergy':return '棄掉事件 '+name();
   case 'chooseRestLock':return action.uid===null?'不鎖定這次休息':'休息鎖定 '+name();
+  case 'chooseRestStrip':return action.uid===null?'不選擇角色':'使 '+name()+' 休息，並將其下方的卡放到場外';
   case 'choosePayDeploy':{
    if(action.mode!=='pay')return '不支付，留在場外';
    const ap=state?.pending?.ap;

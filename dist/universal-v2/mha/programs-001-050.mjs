@@ -136,6 +136,14 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
    ])
   }])})
  }),
+ 'MHA-1-029':Object.freeze({
+  ready:true, implementation:'dsl',
+  playRequiresOwnName:'オーバーホール',
+  triggerEffect:Object.freeze({op:'retireOppFront'}),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'restOppFrontStripLock', optional:true
+  }])})
+ }),
  'MHA-1-027':Object.freeze({
   ready:true, implementation:'dsl',
   passiveBonuses:Object.freeze([Object.freeze({
