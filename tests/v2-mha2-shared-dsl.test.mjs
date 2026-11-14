@@ -216,9 +216,9 @@ test('another A-class blocks hand play and hand raid, not an outside effect entr
  assert.equal(assertUniversalMatch(pack,entered),true);
 });
 
-test('set 1 stays 109 and the finished set 2 pack stays 29',()=>{
+test('set 1 stays 109 and the finished set 2 pack stays 35',()=>{
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
- assert.equal(Object.keys(createMha2Pack().cards).length,29);
+ assert.equal(Object.keys(createMha2Pack().cards).length,35);
  assert.equal(createMha2Pack().cards['MHA-2-052'].id,'MHA-2-052');
  assert.equal(createMha2Pack().cards['MHA-2-055'].id,'MHA-2-055');
  assert.equal(createMha2Pack().cards['MHA-2-063'].id,'MHA-2-063');

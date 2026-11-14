@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {MHA2_CARDS_001_036} from '../dist/mha/cards-mha2-001-036.mjs';
 import {MHA2_PROGRAMS_001_036} from '../dist/universal-v2/mha/programs-mha2-001-036.mjs';
+import {MHA2_REQUESTS_001_036} from '../dist/universal-v2/mha/requests-mha2-001-036.mjs';
 import {createMha2Pack,mha2ReadyBattleCards} from '../dist/universal-v2/mha2-pack.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {mhaEditorCards} from '../dist/mha/catalog.mjs';
@@ -121,9 +122,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-29');
- assert.equal(READY.length,16);
- assert.equal(Object.keys(pack.cards).length,29);
+ assert.equal(pack.version,'mha2-ex06-ready-35');
+ assert.equal(READY.length,20);
+ assert.equal(Object.keys(pack.cards).length,35);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
@@ -237,7 +238,7 @@ test('MHA-2-005 and 015 draw one and must put one hand card outside',()=>{
 
  let costly=open(2015);
  costly.s=reach(pack,costly.s,0,'main');
- fuel(costly.s,0,['MHA-2-015','MHA-2-014']);
+ fuel(costly.s,0,['MHA-2-012','MHA-2-014','MHA-2-009']);
  const jiro=hold(costly.s,0,'MHA-2-015');
  costly.s=act(pack,costly.s,action=>action.type==='play'&&action.uid===jiro.uid);
  assert.equal(costly.s.pending.kind,'effect-discard');
@@ -436,14 +437,149 @@ test('MHA-2-035 activates up to two rested AP cards and can stop early',()=>{
  assert.equal(early.s.players[0].apCards.filter(card=>card.inPlay&&card.ready).length,0);
 });
 
+test('MHA-2-022 cannot enter from hand beside another A組, steps, and gains BP at three names',()=>{
+ let banned=open(2022);
+ banned.s=reach(banned.pack,banned.s,0,'main');
+ fuel(banned.s,0,['MHA-2-014','MHA-2-001']);
+ const self=hold(banned.s,0,'MHA-2-022');
+ assert.equal(legalUniversalActions(banned.pack,banned.s).some(action=>
+  action.type==='play'&&action.uid===self.uid),false);
+ const gem={id:'GEM',name:'燃料',color:'yellow',type:'character',energy:0,ap:1,bp:1000,
+  gen:1,trigger:null,traits:[],implementation:'vanilla'};
+ const otherDeku={id:'OTHER-DEKU',name:'緑谷 出久',color:'yellow',type:'character',energy:1,ap:1,
+  bp:1000,gen:1,trigger:null,traits:['A組'],implementation:'vanilla'};
+ let named=open(2122,[gem,otherDeku]);
+ named.s=reach(named.pack,named.s,0,'main');
+ fuel(named.s,0,['MHA-2-001','MHA-2-002','GEM']);
+ const deku=hold(named.s,0,'MHA-2-022');
+ seat(named.s,0,'OTHER-DEKU','front',0,true);
+ assert.equal(legalUniversalActions(named.pack,named.s).some(action=>
+  action.type==='play'&&action.uid===deku.uid),true);
+
+ let stepped=open(3022);
+ stepped.s=reach(stepped.pack,stepped.s,0,'move');
+ const mover=seat(stepped.s,0,'MHA-2-022','front',0,true);
+ assert.equal(legalUniversalActions(stepped.pack,stepped.s).some(action=>
+  action.type==='step'&&action.uid===mover.uid),true);
+
+ const names=['オールマイト','飯田 天哉','麗日 お茶子'].map((name,i)=>({
+  id:'OFA-'+i,name,color:'yellow',type:'character',energy:1,ap:1,bp:1000,gen:1,
+  trigger:null,traits:['ワン・フォー・オール'],implementation:'vanilla'
+ }));
+ let bonus=open(4022,names);
+ const body=seat(bonus.s,0,'MHA-2-022','front',0,true);
+ assert.equal(universalBp(bonus.pack,bonus.s,body),3000);
+ for(const card of names)bonus.s.players[0].outside.push(pull(bonus.s,0,card.id));
+ assert.equal(universalBp(bonus.pack,bonus.s,body),4000);
+});
+
+test('MHA-2-009 buffs on entry and may pay one other hand card for a raiding Deku',()=>{
+ const raidDeku={
+  id:'RAID-DEKU',name:'緑谷 出久',color:'yellow',type:'character',energy:4,ap:1,
+  bp:2500,gen:1,trigger:null,traits:['A組'],raidName:'オールマイト',implementation:'vanilla'
+ };
+ const loud={
+  id:'LOUD-DEKU',name:'緑谷 出久',color:'yellow',type:'character',energy:5,ap:1,
+  bp:2500,gen:1,trigger:null,traits:['A組'],implementation:'vanilla'
+ };
+ const handDeku={
+  id:'HAND-DEKU',name:'緑谷 出久',color:'yellow',type:'character',energy:1,ap:1,
+  bp:1000,gen:1,trigger:null,traits:['A組'],implementation:'vanilla'
+ };
+ let scene=open(2009,[raidDeku,loud,handDeku]);
+ scene.s=reachMainAp(scene.pack,scene.s,0,1);
+ fuel(scene.s,0,['MHA-2-014','MHA-2-015','MHA-2-006','MHA-2-010']);
+ const base=seat(scene.s,0,'MHA-2-006','front',0,true);
+ const self=hold(scene.s,0,'MHA-2-009');
+ assert.equal(legalUniversalActions(scene.pack,scene.s).some(action=>
+  action.type==='raid'&&action.uid===self.uid&&action.baseUid===base.uid),true);
+ const other=hold(scene.s,0,'MHA-2-001');
+ const named=hold(scene.s,0,'HAND-DEKU');
+ scene.s.players[0].outside.push(pull(scene.s,0,'RAID-DEKU'),pull(scene.s,0,'LOUD-DEKU'));
+ scene.s=act(scene.pack,scene.s,action=>action.type==='play'&&action.uid===self.uid&&action.line==='energy');
+ assert.equal(scene.s.pending.kind,'effect-except-hand-rest');
+ assert.equal(scene.s.pending.choices.includes(named.uid),false);
+ assert.equal(scene.s.pending.choices.includes(other.uid),true);
+ const viewed=universalPrivateChoices(scene.pack,scene.s,0);
+ assert.equal(viewed.options.some(row=>row.action.uid===other.uid&&row.card.name==='一般女性'),true);
+ scene.s=act(scene.pack,scene.s,{type:'chooseExceptHandRest',mode:'decline'});
+ const entered=scene.s.players[0].energy.find(card=>card?.uid===self.uid);
+ assert.equal(universalBp(scene.pack,scene.s,entered),5000);
+ assert.equal(universalImpact(scene.pack,scene.s,entered),1);
+ assert.equal(scene.s.players[0].hand.some(card=>card.uid===other.uid),true);
+
+ let paid=open(2109,[raidDeku]);
+ paid.s=reachMainAp(paid.pack,paid.s,0,1);
+ fuel(paid.s,0,['MHA-2-014','MHA-2-015','MHA-2-010','MHA-2-005']);
+ const payer=hold(paid.s,0,'MHA-2-009');
+ const cost=hold(paid.s,0,'MHA-2-001');
+ const guest=pull(paid.s,0,'RAID-DEKU');
+ paid.s.players[0].outside.push(guest);
+ paid.s=act(paid.pack,paid.s,action=>action.type==='play'&&action.uid===payer.uid&&action.line==='front');
+ paid.s=act(paid.pack,paid.s,{type:'chooseExceptHandRest',mode:'hand',uid:cost.uid});
+ assert.equal(paid.s.pending.kind,'effect-outside-rest');
+ assert.deepEqual(paid.s.pending.choices,[guest.uid]);
+ paid.s=act(paid.pack,paid.s,action=>action.type==='chooseOutsideRest'&&action.uid===guest.uid&&action.line==='front');
+ assert.equal(paid.s.players[0].front.some(card=>card?.uid===guest.uid&&card.ready===false),true);
+ assert.equal(paid.s.players[0].outside.some(card=>card.uid===cost.uid),true);
+});
+
+test('MHA-2-012 and 018 pay the printed hand or AP cost before the same Deku entry',()=>{
+ const guest={
+  id:'REST-DEKU',name:'緑谷 出久',color:'yellow',type:'character',energy:3,ap:1,
+  bp:2000,gen:1,trigger:null,traits:['A組'],raidName:'オールマイト',implementation:'vanilla'
+ };
+ let ap=open(2012,[guest]);
+ ap.s=reachMainAp(ap.pack,ap.s,0,2);
+ fuel(ap.s,0,['MHA-2-014','MHA-2-015','MHA-2-006','MHA-2-010']);
+ const striker=hold(ap.s,0,'MHA-2-012');
+ ap.s.players[0].outside.push(pull(ap.s,0,'REST-DEKU'));
+ ap.s=act(ap.pack,ap.s,action=>action.type==='play'&&action.uid===striker.uid&&action.line==='front');
+ assert.equal(legalUniversalActions(ap.pack,ap.s).some(action=>action.mode==='ap'),true);
+ ap.s=act(ap.pack,ap.s,{type:'chooseExceptHandRest',mode:'ap'});
+ const home=ap.s.players[0].front.findIndex(card=>card?.uid===striker.uid);
+ const body=ap.s.players[0].front[home];
+ ap.s=act(ap.pack,ap.s,action=>action.type==='chooseOutsideRest'&&action.uid&&
+  action.line==='front'&&action.slot!==home&&!action.replaceUid);
+ assert.equal(ap.s.players[0].front.some(card=>card?.cardId==='REST-DEKU'&&card.ready===false),true);
+ assert.equal(universalImpactNull(ap.pack,ap.s,body),true);
+ const tall=seat(ap.s,1,'MHA-2-009','front',0,true);
+ const short=seat(ap.s,1,'MHA-2-014','front',1,true);
+ ap.s=reach(ap.pack,ap.s,0,'attack');
+ const attacker=ap.s.players[0].front.find(card=>card?.cardId==='MHA-2-012');
+ // 手牌登場預設休息。這裡只測 BP 4000 的阻擋門檻。
+ attacker.ready=true;
+ ap.s=act(ap.pack,ap.s,{type:'attack',uid:attacker.uid});
+ const blocks=legalUniversalActions(ap.pack,ap.s).filter(action=>action.type==='chooseBlock'&&action.uid);
+ assert.equal(blocks.some(action=>action.uid===short.uid),true);
+ assert.equal(blocks.some(action=>action.uid===tall.uid),false);
+
+ let both=open(2018,[guest]);
+ both.s=reachMainAp(both.pack,both.s,0,2);
+ fuel(both.s,0,['MHA-2-014','MHA-2-015','MHA-2-006','MHA-2-010']);
+ const cold=hold(both.s,0,'MHA-2-018');
+ const cost=hold(both.s,0,'MHA-2-001');
+ both.s.players[0].outside.push(pull(both.s,0,'REST-DEKU'));
+ both.s=act(both.pack,both.s,action=>action.type==='play'&&action.uid===cold.uid&&action.line==='front');
+ assert.equal(legalUniversalActions(both.pack,both.s).some(action=>action.mode==='ap'),false);
+ both.s=act(both.pack,both.s,{type:'chooseExceptHandRest',mode:'hand',uid:cost.uid});
+ assert.equal(both.s.pending.kind,'effect-outside-rest');
+ assert.equal(both.s.players[0].apCards.filter(card=>card.inPlay&&card.ready).length,0);
+});
+
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
- assert.equal(PENDING.length,20);
+ assert.equal(PENDING.length,16);
+ assert.deepEqual(Object.keys(MHA2_REQUESTS_001_036).sort(),[...PENDING].sort());
  for(const id of PENDING){
   const card=byId.get(id);
   const program=MHA2_PROGRAMS_001_036[id];
+  const request=MHA2_REQUESTS_001_036[id];
   assert.equal(program.ready,false,id);
   assert.equal(typeof program.notes,'string');
   assert.ok(program.notes.length>12,id);
+  assert.equal(typeof request.missing,'string');
+  assert.ok(request.missing.length>12,id);
+  assert.deepEqual(request.faq||[],card.faq.map(row=>row.id));
   assert.equal(pack.cards[id],undefined,id);
   assert.equal(card.effectJa==='-'||card.effectJa.includes('【')||card.effectJa.includes('この'),true,id);
   const counts=deck();
