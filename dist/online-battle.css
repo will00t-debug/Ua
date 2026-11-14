@@ -177,7 +177,7 @@ body.v2-online-battle .online-raid-base-gallery .v2-zone-card .art{
 /* Compact phone pending effects: actions stay visible without scrolling past
    full-size card art. Separate full-art inspection is intentionally unchanged. */
 @media (max-width:760px) {
- body.v2-online-battle #match-view .online-effect-overlay .online-compact-effect-dialog{
+ body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog{
   box-sizing:border-box;
   width:min(460px,calc(100vw - 20px));
   max-width:100%;
@@ -187,39 +187,39 @@ body.v2-online-battle .online-raid-base-gallery .v2-zone-card .art{
   overflow-x:hidden;
   overscroll-behavior:contain;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-compact-effect-dialog>.headline{
+ body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog>.headline{
   position:sticky;top:0;z-index:3;margin:0 0 8px;
   padding:4px 0 8px;display:flex;gap:8px;align-items:center;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-compact-effect-dialog>.headline h2{
+ body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog>.headline h2{
   font-size:18px;margin:0;flex:1 1 auto;min-width:0;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-compact-effect-dialog>.actions{
+ body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog>.actions{
   display:flex;flex-direction:column;gap:8px;width:100%;min-width:0;
   align-items:stretch;margin:0 0 8px;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-compact-effect-dialog>.actions>button{
+ body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog>.actions>button{
   min-height:38px;max-width:100%;font-size:13px;white-space:normal;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-pending-card{
+ body.v2-online-battle .online-effect-overlay .online-pending-card{
   display:grid;grid-template-columns:76px minmax(0,1fr);
   gap:8px;max-height:176px;overflow-y:auto;padding:8px;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-pending-card-art,
- body.v2-online-battle #match-view .online-effect-overlay .online-pending-card-art img{
+ body.v2-online-battle .online-effect-overlay .online-pending-card-art,
+ body.v2-online-battle .online-effect-overlay .online-pending-card-art img{
   box-sizing:border-box;width:76px;max-width:76px;max-height:104px;
   min-width:0;object-fit:contain;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-inspection-grid{
+ body.v2-online-battle .online-effect-overlay .online-inspection-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,100px));
   justify-content:start;align-content:start;gap:8px;
   max-height:38dvh;overflow:auto;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-inspection-card{
+ body.v2-online-battle .online-effect-overlay .online-inspection-card{
   box-sizing:border-box;width:100%;max-width:100px;min-width:0;
  }
- body.v2-online-battle #match-view .online-effect-overlay .online-inspection-art,
- body.v2-online-battle #match-view .online-effect-overlay .online-inspection-card img{
+ body.v2-online-battle .online-effect-overlay .online-inspection-art,
+ body.v2-online-battle .online-effect-overlay .online-inspection-card img{
   box-sizing:border-box;width:100%;max-width:96px;max-height:138px;
   object-fit:contain;
  }
