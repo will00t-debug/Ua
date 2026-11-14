@@ -79,5 +79,5 @@ test('online modal includes source and peeked card art, print and legal-choice a
  assert.match(css,/\.online-pending-card-effect\{/);
  assert.match(css,/white-space:pre-wrap/);
  assert.match(css,/max-height:30dvh/);
- assert.match(read('online.mjs'),/20261114impactraid1/);
+ assert.match(read('online.mjs'),/20261114compactmodal2/);
 });
