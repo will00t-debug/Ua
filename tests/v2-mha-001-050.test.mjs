@@ -8,21 +8,24 @@ import {createUniversalPack, validateUniversalDeck} from '../dist/universal-v2/p
 import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEnergy,
  legalUniversalActions, newUniversalMatch, universalBp, universalEnergyByColor,
- universalImpactNull} from '../dist/universal-v2/engine.mjs';
+ universalImpact, universalImpactNull, universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 
 const READY=[
- 'MHA-1-001','MHA-1-008','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016',
- 'MHA-1-018','MHA-1-019','MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028',
- 'MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041',
- 'MHA-1-043','MHA-1-046','MHA-1-047','MHA-1-049','MHA-1-050'
+ 'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
+ 'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
+ 'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
+ 'MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
+ 'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050'
 ];
 const STANDARD_TRIGGER={
  active:'【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。',
  get:'【ゲット】このカードを手札に加える。',
  draw:'【ドロー】カードを1枚引く。',
  final:'【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。',
- color:'【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。'
+ color:'【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。',
+ raid:'【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。'
 };
+const COLOR_009='【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。';
 const pack=createMhaV2Pack();
 const packs=[pack,pack];
 
@@ -40,6 +43,16 @@ function probePack(){
   id:'PROBE-OVER', name:'オーバーホール', color:'purple', type:'character', energy:4,
   ap:1, bp:4000, gen:1, trigger:null, traits:['死穢八斎會'], implementation:'vanilla'
  });
+ cards.push({
+  id:'PROBE-RETIRE', name:'退場探針', color:'red', type:'character', energy:0,
+  ap:1, bp:1000, gen:1, trigger:null, traits:[], implementation:'dsl',
+  effects:{onPlay:[{op:'retireOppFrontOne'}]}
+ });
+ cards.push({
+  id:'PROBE-SNIPER', name:'狙擊探針', color:'red', type:'character', energy:0,
+  ap:1, bp:1000, gen:1, trigger:null, traits:[], implementation:'dsl',
+  effects:{onPlay:[{op:'grantSelfSniperThisTurn'}], onRetire:[{op:'draw',count:1}]}
+ });
  return createUniversalPack({id:'mha-probe', cards, version:'mha-c-probe'});
 }
 const probe=probePack();
@@ -48,14 +61,15 @@ const probePacks=[probe,probe];
 function deck(source, extra={}){
  const counts={...extra};
  const pinned=[
-  'MHA-1-001','MHA-1-008','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016',
-  'MHA-1-018','MHA-1-019','MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028',
-  'MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041',
-  'MHA-1-043','MHA-1-046','MHA-1-047','MHA-1-049','MHA-1-050',
-  'PROBE-IMPACT','PROBE-TALL','PROBE-OVER'
+  'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
+  'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
+  'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
+  'MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
+  'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050',
+  'PROBE-IMPACT','PROBE-TALL','PROBE-OVER','PROBE-RETIRE','PROBE-SNIPER'
  ];
  for(const id of pinned)
-  if(source.cards[id]&&!counts[id])counts[id]=id==='MHA-1-016'?2:1;
+  if(source.cards[id]&&!counts[id])counts[id]=id==='MHA-1-016'?2:id==='MHA-1-034'?3:1;
  const limited=new Set(['special','color','final']);
  let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
  for(const card of Object.values(source.cards).sort((a,b)=>a.id<b.id?-1:1)){
@@ -111,6 +125,20 @@ function toHand(s,p,id){
  const card=take(s,p,id);
  s.players[p].hand.push(card);
  return card;
+}
+function toOutside(s,p,id){
+ const card=take(s,p,id);
+ s.players[p].outside.push(card);
+ return card;
+}
+function untilActive(s,player,phase){
+ let guard=0;
+ while(s.active!==player||s.phase!==phase){
+  if(s.pending)throw Error('Pending '+s.pending.kind);
+  s=use(s,{type:'next'});
+  if(++guard>16)throw Error('Did not reach player '+player+' '+phase);
+ }
+ return s;
 }
 function topLife(s,p,id){
  const card=take(s,p,id);
@@ -182,7 +210,9 @@ test('only a fully matched program is ready, and official play stays closed',()=
   assert.equal(battle.bp,printed.bp);
   assert.equal(battle.ap,printed.ap);
   assert.equal(battle.trigger||'',printed.trigger||'');
-  assert.equal(printed.triggerTextJa,printed.trigger?STANDARD_TRIGGER[printed.trigger]:'');
+  const expected=printed.id==='MHA-1-009'?COLOR_009:
+   printed.trigger?STANDARD_TRIGGER[printed.trigger]:'';
+  assert.equal(printed.triggerTextJa,expected);
  }
  const official=officialV2Pack('mha');
  assert.equal(official.id,'mha');
@@ -898,4 +928,405 @@ test('018 grants its own attack-win draw from either line, once per turn',()=>{
  assert.equal(s.players[0].hand.length,held+1);
  assert.equal(s.players[1].front[0],null);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('006 pays one hand card, then moves or swaps, and cannot repeat',()=>{
+ let dry=open(pack,6001);
+ const quiet=put(dry,0,'MHA-1-006','front',0,true);
+ dry.players[0].deck.push(...dry.players[0].hand);
+ dry.players[0].hand=[];
+ dry=toPhase(dry,'main');
+ assert.equal(acts(dry).some(a=>a.type==='activate'&&a.uid===quiet.uid),false);
+ assert.throws(()=>use(dry,{type:'activate',uid:quiet.uid,mode:'payHandMove'}),/Action not currently legal/);
+ assert.equal(assertUniversalMatch(packs,dry),true);
+
+ let moved=open(pack,6002);
+ const source=put(moved,0,'MHA-1-006','energy',0,true);
+ const rider=put(moved,0,'MHA-1-008','energy',1,true);
+ const front=put(moved,0,'MHA-1-015','front',0,true);
+ const paid=toHand(moved,0,'MHA-1-012');
+ moved.players[0].deck.push(...moved.players[0].hand.filter(c=>c.uid!==paid.uid));
+ moved.players[0].hand=[paid];
+ moved=toPhase(moved,'main');
+ moved=use(moved,findAct(moved,a=>a.type==='activate'&&a.uid===source.uid&&a.mode==='payHandMove','pay'));
+ assert.equal(moved.pending.kind,'effect-pay-hand-move');
+ assert.throws(()=>use(moved,{type:'choosePayHandMove',uid:'missing'}),/Action not currently legal/);
+ moved=use(moved,{type:'choosePayHandMove',uid:paid.uid});
+ assert.equal(moved.players[0].outside.some(c=>c.uid===paid.uid),true);
+ assert.equal(moved.pending.kind,'effect-move-or-swap');
+ moved=use(moved,findAct(moved,a=>a.type==='chooseMoveOrSwap'&&a.mode==='shift','shift'));
+ moved=use(moved,findAct(moved,a=>a.type==='chooseLineMove'&&a.uid===rider.uid,'move'));
+ moved=use(moved,findAct(moved,a=>a.type==='chooseLineSlot'&&a.slot===1,'slot'));
+ assert.equal(moved.players[0].front[1]?.uid,rider.uid);
+ assert.equal(acts(moved).some(a=>a.type==='activate'&&a.uid===source.uid),false);
+ assert.throws(()=>use(moved,{type:'activate',uid:source.uid,mode:'payHandMove'}),/Action not currently legal/);
+ assert.equal(live(moved,0,front.uid)?.cardId,'MHA-1-015');
+ assert.equal(assertUniversalMatch(packs,moved),true);
+
+ let swapped=open(pack,6003);
+ const fog=put(swapped,0,'MHA-1-006','front',1,true);
+ const left=put(swapped,0,'MHA-1-015','front',0,true);
+ const back=put(swapped,0,'MHA-1-008','energy',0,true);
+ const cost=toHand(swapped,0,'MHA-1-012');
+ swapped=toPhase(swapped,'main');
+ swapped=use(swapped,findAct(swapped,a=>a.type==='activate'&&a.uid===fog.uid,'pay'));
+ swapped=use(swapped,{type:'choosePayHandMove',uid:cost.uid});
+ swapped=use(swapped,findAct(swapped,a=>a.type==='chooseMoveOrSwap'&&a.mode==='swap','swap'));
+ swapped=use(swapped,findAct(swapped,a=>a.type==='chooseSwapLines'&&a.uid===left.uid,'front'));
+ swapped=use(swapped,findAct(swapped,a=>a.type==='chooseSwapLines'&&a.uid===back.uid,'energy'));
+ assert.equal(swapped.players[0].energy[0].uid,left.uid);
+ assert.equal(swapped.players[0].front[0].uid,back.uid);
+ assert.equal(assertUniversalMatch(packs,swapped),true);
+
+ let lost=open(pack,6004);
+ const lone=put(lost,0,'MHA-1-006','front',0,true);
+ const spare=toHand(lost,0,'MHA-1-012');
+ lost=toPhase(lost,'main');
+ lost=use(lost,findAct(lost,a=>a.type==='activate'&&a.uid===lone.uid,'pay'));
+ lost=use(lost,{type:'choosePayHandMove',uid:spare.uid});
+ assert.equal(lost.players[0].outside.some(c=>c.uid===spare.uid),true);
+ lost.players[0].front[0]=null;
+ lost.players[0].outside.push(lone);
+ assert.throws(()=>use(lost,{type:'chooseLineMove',uid:lone.uid}),/Action not currently legal|Illegal line-move|Line move source/);
+ assert.equal(lost.players[0].outside.some(c=>c.uid===spare.uid),true);
+});
+
+test('007 returns the loser to hand on its own turn, and Q424 skips the retire effect',()=>{
+ let s=open(pack,7001);
+ const gentle=put(s,0,'MHA-1-007','front',0,true);
+ const twice=put(s,1,'MHA-1-015','front',0,true);
+ const deck=s.players[1].deck.length;
+ const life=s.players[1].life.length;
+ s=toPhase(s,'attack');
+ s=use(s,findAct(s,a=>a.type==='attack'&&a.uid===gentle.uid,'attack'));
+ s=use(s,findAct(s,a=>a.type==='chooseBlock'&&a.uid===twice.uid,'block'));
+ assert.equal(s.players[1].hand.some(c=>c.uid===twice.uid),true);
+ assert.equal(s.players[1].outside.some(c=>c.uid===twice.uid),false);
+ assert.equal(s.players[1].deck.length,deck);
+ assert.equal(s.players[1].life.length+s.players[1].lifeRevealed.length,life-1);
+ const handAt=s.zoneMoveEvents.findIndex(e=>e.uid===twice.uid&&e.to==='hand');
+ const lifeAt=s.zoneMoveEvents.findIndex(e=>e.from==='life'&&e.owner===1);
+ assert.equal(handAt>=0&&lifeAt>handAt,true);
+ if(s.pending?.kind==='life-trigger')s=use(s,findAct(s,a=>a.type==='chooseTrigger'&&a.mode==='skip','skip'));
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let other=open(probe,7002);
+ const wall=put(other,0,'MHA-1-007','front',0,true);
+ const sniper=toHand(other,1,'PROBE-SNIPER');
+ other=untilActive(other,1,'main');
+ other=use(other,findAct(other,a=>a.type==='play'&&a.uid===sniper.uid&&a.line==='front','snipe'));
+ const shooter=live(other,1,sniper.uid);
+ shooter.ready=true;
+ other=toPhase(other,'attack');
+ const otherDeck=other.players[1].deck.length;
+ other=use(other,findAct(other,a=>a.type==='attack'&&a.uid===shooter.uid&&a.targetUid===wall.uid,'shot'));
+ assert.equal(other.players[1].outside.some(c=>c.uid===shooter.uid),true);
+ assert.equal(other.players[1].hand.some(c=>c.uid===shooter.uid),false);
+ assert.equal(other.players[1].deck.length,otherDeck-1);
+ assert.equal(live(other,0,wall.uid)?.cardId,'MHA-1-007');
+ assert.equal(assertUniversalMatch(probePacks,other),true);
+});
+
+test('009 removes a battle loser on its turn, grants impact after payment, and deploys from outside',()=>{
+ let plain=open(pack,9001);
+ const tomura=put(plain,0,'MHA-1-009','front',0,true);
+ const twice=put(plain,1,'MHA-1-015','front',0,true);
+ const deck=plain.players[1].deck.length;
+ const life=plain.players[1].life.length;
+ plain=toPhase(plain,'attack');
+ plain=use(plain,findAct(plain,a=>a.type==='attack'&&a.uid===tomura.uid,'attack'));
+ plain=use(plain,findAct(plain,a=>a.type==='chooseBlock'&&a.uid===twice.uid,'block'));
+ assert.equal(plain.players[1].removed.some(c=>c.uid===twice.uid),true);
+ assert.equal(plain.players[1].outside.some(c=>c.uid===twice.uid),false);
+ assert.equal(plain.players[1].deck.length,deck);
+ assert.equal(plain.players[1].life.length,life);
+ assert.equal(assertUniversalMatch(packs,plain),true);
+
+ let paid=open(pack,9002);
+ const source=put(paid,0,'MHA-1-009','front',0,true);
+ const cost=toHand(paid,0,'MHA-1-012');
+ paid.players[0].deck.push(...paid.players[0].hand.filter(c=>c.uid!==cost.uid));
+ paid.players[0].hand=[cost];
+ paid=toPhase(paid,'main');
+ paid=use(paid,findAct(paid,a=>a.type==='activate'&&a.uid===source.uid&&a.mode==='payHandImpact','pay'));
+ assert.equal(paid.pending.kind,'effect-pay-hand-impact');
+ assert.throws(()=>use(paid,{type:'choosePayHandImpact',uid:'missing'}),/Action not currently legal/);
+ paid=use(paid,{type:'choosePayHandImpact',uid:cost.uid});
+ assert.equal(live(paid,0,source.uid).impactGranted.amount,1);
+ assert.equal(universalImpact(pack,paid,live(paid,0,source.uid)),1);
+ assert.equal(acts(paid).some(a=>a.type==='activate'&&a.uid===source.uid),false);
+ const loser=put(paid,1,'MHA-1-008','front',0,true);
+ const before=paid.players[1].life.length;
+ paid=toPhase(paid,'attack');
+ paid=use(paid,findAct(paid,a=>a.type==='attack'&&a.uid===source.uid,'attack'));
+ paid=use(paid,findAct(paid,a=>a.type==='chooseBlock'&&a.uid===loser.uid,'block'));
+ assert.equal(paid.players[1].removed.some(c=>c.uid===loser.uid),true);
+ assert.equal(paid.players[1].life.length+paid.players[1].lifeRevealed.length,before-1);
+ if(paid.pending?.kind==='life-trigger')paid=use(paid,findAct(paid,a=>a.type==='chooseTrigger'&&a.mode==='skip','skip'));
+ assert.equal(assertUniversalMatch(packs,paid),true);
+
+ let dry=open(pack,9003);
+ const quiet=put(dry,0,'MHA-1-009','front',0,true);
+ dry.players[0].deck.push(...dry.players[0].hand);
+ dry.players[0].hand=[];
+ dry=toPhase(dry,'main');
+ assert.equal(acts(dry).some(a=>a.type==='activate'&&a.uid===quiet.uid),false);
+ assert.throws(()=>use(dry,{type:'activate',uid:quiet.uid,mode:'payHandImpact'}),/Action not currently legal/);
+ let rear=open(pack,9005);
+ const back=put(rear,0,'MHA-1-009','energy',0,true);
+ toHand(rear,0,'MHA-1-012');
+ rear=toPhase(rear,'main');
+ assert.equal(acts(rear).some(a=>a.type==='activate'&&a.uid===back.uid&&a.mode==='payHandImpact'),true);
+
+ let color=open(probe,9004);
+ put(color,0,'PROBE-IMPACT','front',0,true);
+ const revealed=topLife(color,1,'MHA-1-009');
+ const legal=toOutside(color,1,'MHA-1-016');
+ const expensive=toOutside(color,1,'MHA-1-021');
+ const green=toOutside(color,1,'MHA-1-034');
+ const held=toHand(color,1,'MHA-1-008');
+ color=toPhase(color,'attack');
+ color=attackUnblocked(color);
+ assert.equal(color.pending.trigger,'color');
+ assert.equal(acts(color).some(a=>a.uid===legal.uid&&a.mode==='colorOutside'&&a.line==='front'),true);
+ assert.equal(acts(color).some(a=>a.uid===legal.uid&&a.line==='energy'),false);
+ assert.equal(acts(color).some(a=>a.uid===expensive.uid),false);
+ assert.equal(acts(color).some(a=>a.uid===green.uid),false);
+ assert.equal(acts(color).some(a=>a.uid===held.uid),false);
+ color=use(color,findAct(color,a=>a.type==='chooseTrigger'&&a.mode==='colorOutside'&&a.uid===legal.uid&&a.line==='front','color'));
+ assert.equal(live(color,1,legal.uid).ready,true);
+ assert.equal(color.players[1].outside.some(c=>c.uid===revealed.uid),true);
+ assert.equal(assertUniversalMatch(probePacks,color),true);
+
+ let left=open(pack,9006);
+ const gone=put(left,0,'MHA-1-009','front',0,true);
+ const fee=toHand(left,0,'MHA-1-012');
+ left=toPhase(left,'main');
+ left=use(left,findAct(left,a=>a.type==='activate'&&a.uid===gone.uid,'pay'));
+ left.players[0].front[0]=null;
+ left.players[0].outside.push(gone);
+ left=use(left,{type:'choosePayHandImpact',uid:fee.uid});
+ assert.equal(gone.impactGranted,undefined);
+ assert.equal(left.players[0].outside.some(c=>c.uid===fee.uid),true);
+ assert.equal(left.mainAbilityUsedUids.includes(gone.uid),true);
+
+ let other=open(probe,9007);
+ const body=put(other,0,'MHA-1-009','front',0,true);
+ const sniper=toHand(other,1,'PROBE-SNIPER');
+ other=untilActive(other,1,'main');
+ other=use(other,findAct(other,a=>a.type==='play'&&a.uid===sniper.uid&&a.line==='front','snipe'));
+ const shooter=live(other,1,sniper.uid);
+ shooter.ready=true;
+ other=toPhase(other,'attack');
+ const otherDeck=other.players[1].deck.length;
+ other=use(other,findAct(other,a=>a.type==='attack'&&a.uid===shooter.uid&&a.targetUid===body.uid,'shot'));
+ assert.equal(other.players[1].outside.some(c=>c.uid===shooter.uid),true);
+ assert.equal(other.players[1].removed.some(c=>c.uid===shooter.uid),false);
+ assert.equal(other.players[1].deck.length,otherDeck-1);
+ assert.equal(live(other,0,body.uid)?.cardId,'MHA-1-009');
+ assert.equal(assertUniversalMatch(probePacks,other),true);
+});
+
+test('010 raids Shigaraki, removes one front of BP 2000 or less, and Q426 skips retirement',()=>{
+ assert.equal(pack.cards['MHA-1-010'].raidName,'死柄木 弔');
+ let energy=open(pack,10001);
+ const back=put(energy,0,'MHA-1-010','energy',0,true);
+ put(energy,1,'MHA-1-015','front',0,true);
+ energy=toPhase(energy,'main');
+ assert.equal(acts(energy).some(a=>a.type==='activate'&&a.uid===back.uid),false);
+ assert.throws(()=>use(energy,{type:'activate',uid:back.uid,mode:'frontOnce'}),/Action not currently legal/);
+
+ let none=open(pack,10002);
+ const waiting=put(none,0,'MHA-1-010','front',0,true);
+ put(none,1,'MHA-1-016','front',0,true);
+ none=toPhase(none,'main');
+ assert.equal(acts(none).some(a=>a.type==='activate'&&a.uid===waiting.uid),false);
+ assert.equal(none.mainAbilityUsedUids.includes(waiting.uid),false);
+
+ let s=open(pack,10003);
+ const actor=put(s,0,'MHA-1-010','front',0,true);
+ const low=put(s,1,'MHA-1-018','front',0,true);
+ const high=put(s,1,'MHA-1-016','front',1,true);
+ const rear=put(s,1,'MHA-1-015','energy',0,true);
+ s=toPhase(s,'main');
+ s=use(s,findAct(s,a=>a.type==='activate'&&a.uid===actor.uid,'remove'));
+ assert.equal(s.pending.kind,'effect-retire-bp');
+ assert.equal(s.pending.destination,'removed');
+ assert.equal(acts(s).some(a=>a.type==='chooseRetireBp'&&a.uid===low.uid),true);
+ assert.equal(acts(s).some(a=>a.uid===high.uid),false);
+ assert.equal(acts(s).some(a=>a.uid===rear.uid),false);
+ assert.equal(acts(s).some(a=>a.type==='chooseRetireBp'&&a.uid===null),false);
+ assert.throws(()=>use(s,{type:'chooseRetireBp',uid:high.uid}),/Action not currently legal/);
+ s=use(s,{type:'chooseRetireBp',uid:low.uid});
+ assert.equal(s.players[1].removed.some(c=>c.uid===low.uid),true);
+ assert.equal(s.players[1].outside.some(c=>c.uid===low.uid),false);
+ assert.equal(acts(s).some(a=>a.type==='activate'&&a.uid===actor.uid),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let battle=open(pack,10004);
+ const winner=put(battle,0,'MHA-1-010','front',0,true);
+ const twice=put(battle,1,'MHA-1-015','front',0,true);
+ const deck=battle.players[1].deck.length;
+ battle=toPhase(battle,'attack');
+ battle=use(battle,findAct(battle,a=>a.type==='attack'&&a.uid===winner.uid,'attack'));
+ battle=use(battle,findAct(battle,a=>a.type==='chooseBlock'&&a.uid===twice.uid,'block'));
+ assert.equal(battle.players[1].removed.some(c=>c.uid===twice.uid),true);
+ assert.equal(battle.players[1].deck.length,deck);
+ assert.equal(assertUniversalMatch(packs,battle),true);
+
+ let other=open(probe,10006);
+ const body=put(other,0,'MHA-1-010','front',0,true);
+ const sniper=toHand(other,1,'PROBE-SNIPER');
+ other=untilActive(other,1,'main');
+ other=use(other,findAct(other,a=>a.type==='play'&&a.uid===sniper.uid&&a.line==='front','snipe'));
+ const shooter=live(other,1,sniper.uid);
+ shooter.ready=true;
+ other=toPhase(other,'attack');
+ const otherDeck=other.players[1].deck.length;
+ other=use(other,findAct(other,a=>a.type==='attack'&&a.uid===shooter.uid&&a.targetUid===body.uid,'shot'));
+ assert.equal(other.players[1].outside.some(c=>c.uid===shooter.uid),true);
+ assert.equal(other.players[1].removed.some(c=>c.uid===shooter.uid),false);
+ assert.equal(other.players[1].deck.length,otherDeck-1);
+ assert.equal(live(other,0,body.uid)?.cardId,'MHA-1-010');
+ assert.equal(assertUniversalMatch(probePacks,other),true);
+
+ let raid=open(pack,10005);
+ put(raid,0,'MHA-1-016','energy',0,true);
+ put(raid,0,'MHA-1-021','energy',1,true);
+ put(raid,0,'MHA-1-027','energy',2,true);
+ const base=put(raid,0,'MHA-1-008','front',0,false);
+ const wrong=put(raid,0,'MHA-1-015','energy',3,false);
+ const raider=toHand(raid,0,'MHA-1-010');
+ raid=toPhase(raid,'main');
+ const raids=acts(raid).filter(a=>a.type==='raid'&&a.uid===raider.uid);
+ assert.equal(raids.some(a=>a.baseUid===base.uid&&a.line!=='energy'),true);
+ assert.equal(raids.some(a=>a.baseUid===wrong.uid),false);
+ raid=use(raid,findAct(raid,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid&&a.line!=='energy','raid'));
+ const top=raid.players[0].front.find(c=>c?.cardId==='MHA-1-010');
+ assert.equal(top.ready,true);
+ assert.equal(top.stack[0].cardId,'MHA-1-008');
+ assert.equal(assertUniversalMatch(packs,raid),true);
+});
+
+test('017 deploys the bottom of its Twice raid active, and a missing bottom can only be skipped',()=>{
+ let bare=open(pack,1701);
+ put(bare,0,'MHA-1-016','energy',0,true);
+ put(bare,0,'MHA-1-021','energy',1,true);
+ const played=toHand(bare,0,'MHA-1-017');
+ bare=toPhase(bare,'main');
+ bare=use(bare,findAct(bare,a=>a.type==='play'&&a.uid===played.uid,'play'));
+ assert.equal(bare.pending,null);
+ assert.equal(live(bare,0,played.uid)?.cardId,'MHA-1-017');
+ assert.equal(assertUniversalMatch(packs,bare),true);
+
+ let raid=open(pack,1702);
+ put(raid,0,'MHA-1-016','energy',0,true);
+ put(raid,0,'MHA-1-021','energy',1,true);
+ const base=put(raid,0,'MHA-1-015','energy',2,false);
+ const wrong=put(raid,0,'MHA-1-008','energy',3,false);
+ const raider=toHand(raid,0,'MHA-1-017');
+ const deck=raid.players[0].deck.length;
+ raid=toPhase(raid,'main');
+ const raids=acts(raid).filter(a=>a.type==='raid'&&a.uid===raider.uid);
+ assert.equal(raids.some(a=>a.baseUid===base.uid),true);
+ assert.equal(raids.some(a=>a.baseUid===wrong.uid),false);
+ raid=use(raid,findAct(raid,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid&&a.line!=='energy','raid'));
+ assert.equal(raid.pending.kind,'effect-raid-bottom-active');
+ assert.equal(raid.pending.origin,'stack');
+ raid=use(raid,{type:'chooseRaidBottomActive',uid:null});
+ assert.equal(raid.pending,null);
+ assert.equal(raid.players[0].front.find(c=>c?.cardId==='MHA-1-017').stack[0].uid,base.uid);
+ assert.equal(raid.players[0].deck.length,deck);
+ assert.equal(assertUniversalMatch(packs,raid),true);
+
+ let entered=open(pack,1703);
+ put(entered,0,'MHA-1-016','energy',0,true);
+ put(entered,0,'MHA-1-021','energy',1,true);
+ const under=put(entered,0,'MHA-1-015','energy',2,false);
+ const topCard=toHand(entered,0,'MHA-1-017');
+ entered=toPhase(entered,'main');
+ entered=use(entered,findAct(entered,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===under.uid&&a.line!=='energy','raid'));
+ const host=entered.players[0].front.find(c=>c?.cardId==='MHA-1-017');
+ host.stack.shift();
+ entered.players[0].outside.push(under);
+ assert.equal(acts(entered).every(a=>a.uid===null),true);
+ assert.throws(()=>use(entered,{type:'chooseRaidBottomActive',uid:under.uid,line:'front',slot:1}),/Action not currently legal/);
+ entered=use(entered,{type:'chooseRaidBottomActive',uid:null});
+ assert.equal(entered.pending,null);
+
+ let liveBottom=open(pack,1704);
+ put(liveBottom,0,'MHA-1-016','energy',0,true);
+ put(liveBottom,0,'MHA-1-021','energy',1,true);
+ const bottom=put(liveBottom,0,'MHA-1-015','energy',2,false);
+ const incoming=toHand(liveBottom,0,'MHA-1-017');
+ liveBottom=toPhase(liveBottom,'main');
+ liveBottom=use(liveBottom,findAct(liveBottom,a=>a.type==='raid'&&a.uid===incoming.uid&&a.baseUid===bottom.uid&&a.line!=='energy','raid'));
+ liveBottom=use(liveBottom,findAct(liveBottom,a=>a.type==='chooseRaidBottomActive'&&a.uid===bottom.uid&&a.line==='front','deploy'));
+ assert.equal(live(liveBottom,0,bottom.uid).ready,true);
+ assert.equal(liveBottom.players[0].front.find(c=>c?.cardId==='MHA-1-017').stack.length,0);
+ assert.equal(liveBottom.pending,null);
+ assert.equal(assertUniversalMatch(packs,liveBottom),true);
+});
+
+test('048 reorders its life and stays once against an opposing effect. Q446 still retires',()=>{
+ let short=open(pack,4801);
+ put(short,0,'MHA-1-034','energy',0,true);
+ put(short,0,'MHA-1-034','energy',1,true);
+ put(short,0,'MHA-1-034','energy',2,true);
+ const one=toHand(short,0,'MHA-1-048');
+ short.players[0].deck.push(...short.players[0].life.slice(1));
+ short.players[0].life=short.players[0].life.slice(0,1);
+ short=toPhase(short,'main');
+ short=use(short,findAct(short,a=>a.type==='play'&&a.uid===one.uid,'play'));
+ assert.equal(short.pending,null);
+ assert.equal(short.players[0].life.length,1);
+ assert.equal(assertUniversalMatch(packs,short),true);
+
+ let ordered=open(pack,4802);
+ put(ordered,0,'MHA-1-034','energy',0,true);
+ put(ordered,0,'MHA-1-034','energy',1,true);
+ put(ordered,0,'MHA-1-034','energy',2,true);
+ const nighteye=toHand(ordered,0,'MHA-1-048');
+ const kept=ordered.players[0].life.slice(0,3);
+ ordered.players[0].deck.push(...ordered.players[0].life.slice(3));
+ ordered.players[0].life=kept;
+ ordered=toPhase(ordered,'main');
+ ordered=use(ordered,findAct(ordered,a=>a.type==='play'&&a.uid===nighteye.uid,'play'));
+ assert.equal(ordered.pending.kind,'effect-life-order');
+ assert.deepEqual(ordered.pending.uids,kept.map(c=>c.uid));
+ assert.deepEqual(universalPrivateChoices(pack,ordered,0).inspected.map(c=>c.uid),kept.map(c=>c.uid));
+ assert.equal(universalPrivateChoices(pack,ordered,1),null);
+ const skipped=use(ordered,{type:'chooseReorderOwnLife',uid:null});
+ assert.deepEqual(skipped.players[0].life.map(c=>c.uid),kept.map(c=>c.uid));
+ const left=kept[2];
+ ordered.players[0].life=ordered.players[0].life.filter(c=>c.uid!==left.uid);
+ ordered.players[0].outside.push(left);
+ assert.throws(()=>use(ordered,{type:'chooseReorderOwnLife',uid:left.uid}),/Action not currently legal/);
+ ordered=use(ordered,{type:'chooseReorderOwnLife',uid:kept[1].uid});
+ ordered=use(ordered,{type:'chooseReorderOwnLife',uid:kept[0].uid});
+ assert.deepEqual(ordered.players[0].life.map(c=>c.uid),[kept[1].uid,kept[0].uid]);
+ assert.equal(ordered.pending,null);
+ assert.equal(assertUniversalMatch(packs,ordered),true);
+
+ let stay=open(probe,4803);
+ const body=put(stay,0,'MHA-1-048','front',0,true);
+ const hit=toHand(stay,1,'PROBE-RETIRE');
+ stay=untilActive(stay,1,'main');
+ stay=use(stay,findAct(stay,a=>a.type==='play'&&a.uid===hit.uid,'retire'));
+ assert.equal(stay.pending.kind,'effect-retire-bp');
+ stay=use(stay,{type:'chooseRetireBp',uid:body.uid});
+ assert.equal(live(stay,0,body.uid)?.cardId,'MHA-1-048');
+ assert.equal(stay.players[0].outside.some(c=>c.uid===body.uid),false);
+ assert.equal(stay.mainAbilityUsedUids.includes(body.uid+'|oppLeave'),true);
+ assert.equal(assertUniversalMatch(probePacks,stay),true);
+
+ let lost=open(probe,4804);
+ const defender=put(lost,0,'MHA-1-048','front',0,true);
+ const attacker=put(lost,1,'PROBE-IMPACT','front',0,true);
+ lost=untilActive(lost,1,'attack');
+ lost=use(lost,findAct(lost,a=>a.type==='attack'&&a.uid===attacker.uid,'attack'));
+ lost=use(lost,findAct(lost,a=>a.type==='chooseBlock'&&a.uid===defender.uid,'block'));
+ assert.equal(lost.players[0].front[0],null);
+ assert.equal(lost.players[0].outside.some(c=>c.uid===defender.uid),true);
+ assert.equal(assertUniversalMatch(probePacks,lost),true);
 });
