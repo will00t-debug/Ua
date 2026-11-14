@@ -12,12 +12,13 @@ import {MHA2_REQUESTS_037_073} from '../dist/universal-v2/mha/requests-2-037-073
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
  import {newUniversalMatch, legalUniversalActions, dispatchUniversalAction,
  assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices,
- universalCardEnergy, universalAttackDamage
+ universalCardEnergy, universalAttackDamage, universalImpact
 } from '../dist/universal-v2/engine.mjs';
 
 const READY=['MHA-2-037','MHA-2-038','MHA-2-039','MHA-2-040','MHA-2-041','MHA-2-042','MHA-2-043','MHA-2-044','MHA-2-045','MHA-2-046','MHA-2-047',
  'MHA-2-048','MHA-2-049','MHA-2-050','MHA-2-051','MHA-2-052','MHA-2-053','MHA-2-054','MHA-2-055','MHA-2-056','MHA-2-057','MHA-2-058','MHA-2-059','MHA-2-060',
- 'MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065','MHA-2-071','MHA-2-073'];
+ 'MHA-2-061','MHA-2-062','MHA-2-063','MHA-2-064','MHA-2-065','MHA-2-066','MHA-2-067','MHA-2-068','MHA-2-069','MHA-2-070',
+ 'MHA-2-071','MHA-2-072','MHA-2-073'];
 const real=createMha2Pack();
 const set1Pack=createMhaV2Pack();
 const byId=new Map(MHA2_CARDS_037_073.map(card=>[card.id,card]));
@@ -76,7 +77,8 @@ function open(seed, extras=[]){
  const deck={};
  for(const id of Object.keys(pack.cards))deck[id]=1;
  for(const id of READY)deck[id]=2;
- for(const id of ['MHA-2-037','MHA-2-038','MHA-2-039','MHA-2-040','MHA-2-042','MHA-2-043','MHA-2-044','MHA-2-048','MHA-2-055','MHA-2-058','MHA-2-064'])deck[id]=1;
+ for(const id of ['MHA-2-037','MHA-2-038','MHA-2-039','MHA-2-040','MHA-2-042','MHA-2-043','MHA-2-044','MHA-2-048','MHA-2-055','MHA-2-058','MHA-2-064',
+  'MHA-2-062','MHA-2-067','MHA-2-069','MHA-2-070','MHA-2-072'])deck[id]=1;
  for(const id of ['MHA-2-046','MHA-2-050','MHA-2-051','MHA-2-053','MHA-2-054','MHA-2-056','MHA-2-057'])delete deck[id];
  const spare=READY.filter(id=>deck[id]===2);
  for(const extra of extras){
@@ -92,6 +94,28 @@ function open(seed, extras=[]){
   deck[id]-=cut;
   total-=cut;
   if(deck[id]===0)delete deck[id];
+ }
+ const keepPair=new Set(['MHA-2-045','MHA-2-049','MHA-2-060','MHA-2-066','MHA-2-068']);
+ while(total>50){
+  const cut=Object.keys(deck).find(id=>deck[id]>1&&!keepPair.has(id))||
+   Object.keys(deck).find(id=>id.startsWith('FILL-')&&deck[id]>0);
+  if(!cut)break;
+  deck[cut]-=1;
+  total-=1;
+  if(deck[cut]===0)delete deck[cut];
+ }
+ if(total>50&&deck.GREEN){
+  deck.GREEN-=1;
+  total-=1;
+  if(deck.GREEN===0)delete deck.GREEN;
+ }
+ const spareReady=['MHA-2-038','MHA-2-040','MHA-2-042'];
+ while(total>50){
+  const cut=spareReady.find(id=>deck[id]>0);
+  if(!cut)break;
+  deck[cut]-=1;
+  total-=1;
+  if(deck[cut]===0)delete deck[cut];
  }
  let s=newUniversalMatch(pack,{decks:[deck,deck], seed, first:0, openingMulligan:false});
  for(let i=0;i<8&&(s.phase!=='main'||s.active!==0);i++)
@@ -142,9 +166,27 @@ function clearLines(s,p){
 }
 function legal(pack,s){return legalUniversalActions(pack,s);}
 function act(pack,s,pred){
- const choice=legal(pack,s).find(pred);
+ const choice=typeof pred==='function'?legal(pack,s).find(pred):
+  legal(pack,s).find(action=>JSON.stringify(action)===JSON.stringify(pred));
  if(!choice)throw Error('missing action '+(s.pending?.kind||s.phase)+' '+JSON.stringify(legal(pack,s).slice(0,6)));
  return dispatchUniversalAction(pack,s,choice);
+}
+function placeSpare(s,p,id,line,slot,ready=true){
+ const pl=s.players[p];
+ let body=null;
+ for(const zone of ['removed','deck','hand','outside','life']){
+  const index=pl[zone].findIndex(card=>card?.cardId===id);
+  if(index<0)continue;
+  body=pl[zone].splice(index,1)[0];
+  break;
+ }
+ if(!body)throw Error('missing spare '+id);
+ const occupant=pl[line][slot];
+ if(occupant){pl[line][slot]=null;pl.removed.push(occupant);}
+ body.ready=ready;
+ body.fieldEntryStamp=s.nextFieldEntryStamp++;
+ pl[line][slot]=body;
+ return body;
 }
 function readyAp(s){
  s.players[s.active].apCards.forEach(ap=>{ap.inPlay=true;ap.ready=true;});
@@ -800,4 +842,442 @@ test('MHA-2-048 gains damage 2 only while six Shie Hassaikai cards are outside',
  s.players[0].outside.push(bodies[5]);
  assert.equal(universalAttackDamage(pack,s,self),2);
  assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+const redFuel=fixture({id:'RFUEL', name:'紅燃料四', color:'red', gen:4, bp:1000});
+const shoutBlocker=fixture({
+ id:'SHOUT', name:'喊', bp:2000, implementation:'dsl',
+ effects:{onBlock:[{op:'draw', count:1}], onRetire:[{op:'draw', count:1}]}
+});
+function trimHand(s,p,count){
+ const pl=s.players[p];
+ while(pl.hand.length>count)pl.deck.push(pl.hand.pop());
+}
+function blankLife(s,p){
+ const pl=s.players[p];
+ const quietIds=new Set(['PLAIN','CAP','LOW','MID','HIGH','WALL','OVER','NAGANT','COST3','COST4','COST5']);
+ const quiet=[];
+ for(const zone of ['deck','hand','outside','removed']){
+  for(let i=pl[zone].length-1;i>=0&&quiet.length<4;i--){
+   if(!quietIds.has(pl[zone][i]?.cardId))continue;
+   quiet.push(pl[zone].splice(i,1)[0]);
+  }
+ }
+ pl.removed.push(...pl.life.splice(0));
+ pl.life.push(...quiet);
+}
+function colorLife(extra){
+ return fixture({
+  id:extra.id, name:extra.name||extra.id, color:extra.color||'red', bp:1000,
+  trigger:'color', triggerEffect:{op:'retireOppFrontUnderBp', bp:extra.bp}
+ });
+}
+
+test('MHA-2-062 gains damage 2 at three hand cards and silences block and battle leave',()=>{
+ let {pack,s}=open(2062,[shoutBlocker]);
+ clearLines(s,0);
+ clearLines(s,1);
+ const self=seat(s,0,'MHA-2-062','front',0,true);
+ trimHand(s,0,4);
+ assert.equal(universalAttackDamage(pack,s,self),1);
+ trimHand(s,0,3);
+ assert.equal(universalAttackDamage(pack,s,self),2);
+ const blocker=seat(s,1,'SHOUT','front',0,true);
+ const deck=s.players[1].deck.length;
+ s=reach(pack,s,'attack');
+ s=act(pack,s,action=>action.type==='attack'&&action.uid===self.uid);
+ s=act(pack,s,action=>action.type==='chooseBlock'&&action.uid===blocker.uid);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[1].deck.length,deck);
+ assert.equal(s.players[1].outside.some(card=>card.uid===blocker.uid),true);
+ assert.equal(live(s,1,blocker.uid),null);
+ assert.equal(assertUniversalMatch(pack,s),true);
+
+ let plain=open(20620,[shoutBlocker]);
+ clearLines(plain.s,0);
+ clearLines(plain.s,1);
+ const attacker=seat(plain.s,0,'PLAIN','front',0,true);
+ const wall=seat(plain.s,1,'SHOUT','front',0,true);
+ const before=plain.s.players[1].deck.length;
+ plain.s=reach(plain.pack,plain.s,'attack');
+ plain.s=act(plain.pack,plain.s,action=>action.type==='attack'&&action.uid===attacker.uid);
+ plain.s=act(plain.pack,plain.s,action=>action.type==='chooseBlock'&&action.uid===wall.uid);
+ assert.equal(plain.s.players[1].deck.length,before-2);
+ assert.equal(plain.s.players[1].outside.some(card=>card.uid===wall.uid),true);
+});
+
+test('MHA-2-066 stays once, raises front BP and the BP window, and raids Kirishima',()=>{
+ let {pack,s}=open(2066);
+ clearLines(s,0);
+ clearLines(s,1);
+ const self=seat(s,0,'MHA-2-066','energy',0,true);
+ const ally=seat(s,0,'PLAIN','front',0,true);
+ assert.equal(universalBp(pack,s,self),3500);
+ assert.equal(universalBp(pack,s,ally),3000);
+ s.active=1;
+ assert.equal(universalBp(pack,s,self),4000);
+ assert.equal(universalBp(pack,s,ally),3000);
+ s.active=0;
+ const front=seat(s,0,'MHA-2-066','front',1,true);
+ assert.equal(universalBp(pack,s,ally),3500);
+ assert.equal(universalBp(pack,s,front),4000);
+ s.players[0].energy[0]=null;
+ s.players[0].front[2]=self;
+ const second=self;
+ assert.equal(universalBp(pack,s,ally),4000);
+ assert.equal(universalBp(pack,s,front),4500);
+ assert.equal(universalBp(pack,s,second),4500);
+ s.players[0].front[2]=null;
+ s.players[0].removed.push(second);
+ seat(s,0,'PURPLE','energy',1,true);
+ readyAp(s);
+ const mid=seat(s,1,'MID','front',0,true);
+ const wall=seat(s,1,'WALL','front',1,true);
+ const over=seat(s,1,'OVER','front',2,true);
+ const event=hold(s,'MHA-2-049');
+ s=act(pack,s,action=>action.type==='event'&&action.uid===event.uid);
+ assert.equal(s.pending.choices.includes(mid.uid),true);
+ assert.equal(s.pending.choices.includes(wall.uid),false);
+ assert.equal(s.pending.choices.includes(over.uid),false);
+ s=act(pack,s,action=>action.type==='chooseRetireBp'&&action.uid===mid.uid);
+ const copy=placeSpare(s,0,'MHA-2-066','front',2,true);
+ readyAp(s);
+ const again=hold(s,'MHA-2-049');
+ s=act(pack,s,action=>action.type==='event'&&action.uid===again.uid);
+ assert.equal(s.pending.choices.includes(wall.uid),true);
+ assert.equal(s.pending.choices.includes(over.uid),false);
+ s=act(pack,s,action=>action.type==='chooseRetireBp'&&action.uid===wall.uid);
+ assert.equal(copy.uid.length>0,true);
+
+ const lifeA=colorLife({id:'STAY-A', bp:5000});
+ const lifeB=colorLife({id:'STAY-B', bp:5000});
+ let stay=open(20661,[lifeA,lifeB]);
+ clearLines(stay.s,0);
+ clearLines(stay.s,1);
+ const home=seat(stay.s,0,'MHA-2-066','front',0,true);
+ const striker=seat(stay.s,0,'PLAIN','front',1,true);
+ const first=pull(stay.s,1,'STAY-A');
+ const next=pull(stay.s,1,'STAY-B');
+ stay.s.players[1].life.unshift(next,first);
+ stay.s=reach(stay.pack,stay.s,'attack');
+ stay.s=act(stay.pack,stay.s,action=>action.type==='attack'&&action.uid===striker.uid);
+ stay.s=act(stay.pack,stay.s,action=>action.type==='chooseBlock'&&action.uid===null);
+ if(stay.s.pending?.kind==='attack-life-target')
+  stay.s=act(stay.pack,stay.s,action=>action.type==='chooseAttackLife');
+ assert.equal(stay.s.pending.kind,'life-trigger');
+ stay.s=act(stay.pack,stay.s,action=>action.type==='chooseTrigger'&&action.uid===home.uid);
+ assert.equal(live(stay.s,0,home.uid)?.cardId,'MHA-2-066');
+ live(stay.s,0,striker.uid).ready=true;
+ stay.s=act(stay.pack,stay.s,action=>action.type==='attack'&&action.uid===striker.uid);
+ stay.s=act(stay.pack,stay.s,action=>action.type==='chooseBlock'&&action.uid===null);
+ if(stay.s.pending?.kind==='attack-life-target')
+  stay.s=act(stay.pack,stay.s,action=>action.type==='chooseAttackLife');
+ stay.s=act(stay.pack,stay.s,action=>action.type==='chooseTrigger'&&action.uid===home.uid);
+ assert.equal(stay.s.players[0].outside.some(card=>card.uid===home.uid),true);
+
+ let raid=open(20662,[redFuel,fixture({id:'KIRI', name:'切島 鋭児郎', color:'red', bp:2000})]);
+ clearLines(raid.s,0);
+ seat(raid.s,0,'RFUEL','energy',0,true);
+ readyAp(raid.s);
+ const base=seat(raid.s,0,'KIRI','energy',1,false);
+ const raider=hold(raid.s,'MHA-2-066');
+ raid.s=act(raid.pack,raid.s,action=>action.type==='raid'&&action.uid===raider.uid&&
+  action.baseUid===base.uid&&action.slot===0&&action.line!=='energy');
+ const arrived=raid.s.players[0].front.find(card=>card?.uid===raider.uid);
+ assert.equal(arrived.ready,true);
+ assert.equal(arrived.stack.some(card=>card.uid===base.uid),true);
+ assert.equal(assertUniversalMatch(raid.pack,raid.s),true);
+});
+
+test('MHA-2-067 pays one AP and then activates itself or rests a BP 3000 front',()=>{
+ let skipped=open(2067,[redFuel]);
+ clearLines(skipped.s,0);
+ clearLines(skipped.s,1);
+ seat(skipped.s,0,'RFUEL','energy',0,true);
+ readyAp(skipped.s);
+ const quiet=hold(skipped.s,'MHA-2-067');
+ const tall=seat(skipped.s,1,'MID','front',0,true);
+ skipped.s=act(skipped.pack,skipped.s,action=>action.type==='play'&&action.uid===quiet.uid&&
+  action.line==='front');
+ skipped.s=act(skipped.pack,skipped.s,{type:'chooseOptionalPayAp',mode:'skip'});
+ assert.equal(skipped.s.pending,null);
+ assert.equal(live(skipped.s,0,quiet.uid).ready,false);
+ assert.equal(live(skipped.s,1,tall.uid).ready,true);
+
+ let {pack,s}=open(20671,[redFuel]);
+ clearLines(s,0);
+ clearLines(s,1);
+ seat(s,0,'RFUEL','energy',0,true);
+ readyAp(s);
+ const self=hold(s,'MHA-2-067');
+ const low=seat(s,1,'LOW','front',0,true);
+ const mid=seat(s,1,'MID','front',1,true);
+ s=act(pack,s,action=>action.type==='play'&&action.uid===self.uid&&action.line==='front');
+ s=act(pack,s,{type:'chooseOptionalPayAp',mode:'pay'});
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ s=act(pack,s,action=>action.type==='chooseEffectMode'&&action.mode==='rest');
+ assert.equal(s.pending.choices.includes(low.uid),true);
+ assert.equal(s.pending.choices.includes(mid.uid),false);
+ s=act(pack,s,action=>action.type==='chooseRestBp'&&action.uid===low.uid);
+ assert.equal(live(s,1,low.uid).ready,false);
+ assert.equal(s.continuousStates.some(state=>state.kind==='skipNextActive'&&
+  state.targetUid===low.uid&&state.consumed!==true),true);
+ s=reach(pack,s,'start',1);
+ assert.equal(live(s,1,low.uid).ready,false);
+ assert.equal(s.continuousStates.some(state=>state.kind==='skipNextActive'&&
+  state.targetUid===low.uid&&!state.consumed),false);
+
+ let ready=open(20672,[redFuel]);
+ clearLines(ready.s,0);
+ seat(ready.s,0,'RFUEL','energy',0,true);
+ readyAp(ready.s);
+ const body=hold(ready.s,'MHA-2-067');
+ ready.s=act(ready.pack,ready.s,action=>action.type==='play'&&action.uid===body.uid&&
+  action.line==='front');
+ ready.s=act(ready.pack,ready.s,{type:'chooseOptionalPayAp',mode:'pay'});
+ ready.s=act(ready.pack,ready.s,action=>action.type==='chooseEffectMode'&&action.mode==='self');
+ const stood=live(ready.s,0,body.uid);
+ assert.equal(stood.ready,true);
+ assert.equal(universalBp(ready.pack,ready.s,stood),4000);
+ assert.equal(assertUniversalMatch(ready.pack,ready.s),true);
+});
+
+test('MHA-2-068 widens only a red color trigger on the opponent turn and pays for impact',()=>{
+ const red=colorLife({id:'RED-COLOR', bp:2500});
+ const blue=colorLife({id:'BLUE-COLOR', color:'blue', bp:2500});
+ let {pack,s}=open(2068,[red,blue]);
+ clearLines(s,0);
+ clearLines(s,1);
+ const self=seat(s,0,'MHA-2-068','front',0,true);
+ const mid=seat(s,1,'MID','front',0,true);
+ const wall=seat(s,1,'WALL','front',1,true);
+ const revealed=pull(s,0,'RED-COLOR');
+ s.players[0].life.unshift(revealed);
+ s=reach(pack,s,'attack',1);
+ const striker=seat(s,1,'PLAIN','front',2,true);
+ s=act(pack,s,action=>action.type==='attack'&&action.uid===striker.uid);
+ s=act(pack,s,action=>action.type==='chooseBlock'&&action.uid===null);
+ if(s.pending?.kind==='attack-life-target')
+  s=act(pack,s,action=>action.type==='chooseAttackLife');
+ assert.equal(s.pending.kind,'life-trigger');
+ assert.equal(legal(pack,s).some(action=>action.uid===mid.uid),true);
+ assert.equal(legal(pack,s).some(action=>action.uid===wall.uid),false);
+ s.active=0;
+ assert.equal(legal(pack,s).some(action=>action.uid===mid.uid),false);
+ s.active=1;
+ s=act(pack,s,action=>action.type==='chooseTrigger'&&action.mode==='colorRetire'&&
+  action.uid===mid.uid);
+ assert.equal(s.players[1].outside.some(card=>card.uid===mid.uid),true);
+
+ let pair=open(20680,[red]);
+ clearLines(pair.s,0);
+ clearLines(pair.s,1);
+ seat(pair.s,0,'MHA-2-068','front',0,true);
+ placeSpare(pair.s,0,'MHA-2-068','front',1,true);
+ const high=seat(pair.s,1,'WALL','front',0,true);
+ const over=seat(pair.s,1,'HIGH','front',1,true);
+ const top=pull(pair.s,0,'RED-COLOR');
+ pair.s.players[0].life.unshift(top);
+ pair.s=reach(pair.pack,pair.s,'attack',1);
+ const hitter=seat(pair.s,1,'PLAIN','front',2,true);
+ pair.s=act(pair.pack,pair.s,action=>action.type==='attack'&&action.uid===hitter.uid);
+ pair.s=act(pair.pack,pair.s,action=>action.type==='chooseBlock'&&action.uid===null);
+ if(pair.s.pending?.kind==='attack-life-target')
+  pair.s=act(pair.pack,pair.s,action=>action.type==='chooseAttackLife');
+ assert.equal(legal(pair.pack,pair.s).some(action=>action.uid===high.uid),true);
+ assert.equal(legal(pair.pack,pair.s).some(action=>action.uid===over.uid),false);
+ pair.s=act(pair.pack,pair.s,action=>action.type==='chooseTrigger'&&action.mode==='skip');
+
+ let other=open(20681,[blue]);
+ clearLines(other.s,0);
+ clearLines(other.s,1);
+ seat(other.s,0,'MHA-2-068','front',0,true);
+ const missed=seat(other.s,1,'MID','front',0,true);
+ const blueTop=pull(other.s,0,'BLUE-COLOR');
+ other.s.players[0].life.unshift(blueTop);
+ other.s=reach(other.pack,other.s,'attack',1);
+ const blueHitter=seat(other.s,1,'PLAIN','front',1,true);
+ other.s=act(other.pack,other.s,action=>action.type==='attack'&&action.uid===blueHitter.uid);
+ other.s=act(other.pack,other.s,action=>action.type==='chooseBlock'&&action.uid===null);
+ if(other.s.pending?.kind==='attack-life-target')
+  other.s=act(other.pack,other.s,action=>action.type==='chooseAttackLife');
+ assert.equal(legal(other.pack,other.s).some(action=>action.uid===missed.uid),false);
+
+ let paid=open(20682,[redFuel]);
+ clearLines(paid.s,0);
+ clearLines(paid.s,1);
+ seat(paid.s,0,'RFUEL','energy',0,true);
+ readyAp(paid.s);
+ const body=hold(paid.s,'MHA-2-068');
+ const small=seat(paid.s,1,'CAP','front',0,true);
+ const large=seat(paid.s,1,'LOW','front',1,true);
+ paid.s=act(paid.pack,paid.s,action=>action.type==='play'&&action.uid===body.uid&&
+  action.line==='front');
+ paid.s=act(paid.pack,paid.s,{type:'chooseOptionalPayAp',mode:'pay'});
+ assert.equal(paid.s.pending.choices.includes(small.uid),true);
+ assert.equal(paid.s.pending.choices.includes(large.uid),false);
+ paid.s=act(paid.pack,paid.s,action=>action.type==='chooseRetireBp'&&action.uid===small.uid);
+ const stood=live(paid.s,0,body.uid);
+ assert.equal(legal(paid.pack,paid.s).some(action=>action.type==='activate'&&
+  action.uid===stood.uid&&action.mode==='oncePay'),true);
+ paid.s.players[0].apCards.forEach(ap=>{ap.ready=false;});
+ assert.equal(legal(paid.pack,paid.s).some(action=>action.uid===stood.uid&&
+  action.mode==='oncePay'),false);
+ readyAp(paid.s);
+ paid.s=act(paid.pack,paid.s,action=>action.type==='activate'&&action.uid===stood.uid&&
+  action.mode==='oncePay');
+ const impacted=live(paid.s,0,stood.uid);
+ assert.equal(universalImpact(paid.pack,paid.s,impacted),1);
+ assert.equal(legal(paid.pack,paid.s).some(action=>action.uid===stood.uid&&
+  action.mode==='oncePay'),false);
+ assert.equal(assertUniversalMatch(paid.pack,paid.s),true);
+});
+
+test('MHA-2-069 tucks a deck top facedown and looks at it on attack',()=>{
+ let {pack,s}=open(2069);
+ clearLines(s,0);
+ seat(s,0,'RED','energy',0,true);
+ const self=hold(s,'MHA-2-069');
+ const hidden=pull(s,0,'PLAIN');
+ s.players[0].deck.unshift(hidden);
+ s=act(pack,s,action=>action.type==='play'&&action.uid===self.uid&&action.line==='front');
+ assert.equal(s.pending.kind,'effect-optional-tuck-under');
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ s=act(pack,s,{type:'chooseOptionalTuck',mode:'tuck'});
+ const entered=live(s,0,self.uid);
+ assert.equal(entered.under.some(card=>card.uid===hidden.uid&&card.faceDown===true),true);
+ const spare=pull(s,0,'CAP');
+ spare.faceDown=true;
+ entered.under.push(spare);
+ entered.ready=true;
+ s=reach(pack,s,'attack');
+ s=act(pack,s,action=>action.type==='attack'&&action.uid===entered.uid);
+ assert.equal(s.pending.kind,'effect-look-under-order');
+ const viewed=universalPrivateChoices(pack,s,0);
+ assert.equal(viewed.options.some(row=>row.action.uid===hidden.uid&&row.card.name==='路人'),true);
+ assert.equal(viewed.options.some(row=>row.action.uid===spare.uid&&row.card.cardId==='CAP'),true);
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ s=act(pack,s,action=>action.type==='chooseLookUnderOrder'&&action.uid===hidden.uid&&
+  action.order.length===1&&action.order[0]===spare.uid);
+ const host=live(s,0,self.uid);
+ assert.equal(s.players[0].hand.some(card=>card.uid===hidden.uid&&card.faceDown!==true),true);
+ assert.deepEqual(host.under.filter(card=>card.faceDown).map(card=>card.uid),[spare.uid]);
+ const pay=s.players[0].hand.find(card=>card.uid!==hidden.uid);
+ s=act(pack,s,action=>action.type==='choosePlaceHandOutside'&&action.uid===pay.uid);
+ assert.equal(s.players[0].outside.some(card=>card.uid===pay.uid),true);
+ if(s.pending?.kind==='block')s=act(pack,s,action=>action.uid===null);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('MHA-2-070 activates a required-energy 5 character after a hand card left',()=>{
+ let {pack,s}=open(2070);
+ clearLines(s,0);
+ const self=seat(s,0,'MHA-2-070','front',0,true);
+ const high=seat(s,0,'COST5','energy',0,false);
+ const low=seat(s,0,'COST4','energy',1,false);
+ assert.equal(legal(pack,s).some(action=>action.type==='activate'&&action.uid===self.uid),false);
+ const payer=seat(s,0,'MHA-2-072','front',1,true);
+ const cost=hold(s,'PLAIN');
+ s=act(pack,s,action=>action.type==='activate'&&action.uid===payer.uid&&action.mode==='frontOnce');
+ s=act(pack,s,action=>action.type==='chooseDiscardGate'&&action.uid===cost.uid);
+ s=act(pack,s,action=>action.type==='chooseImpactGrant'&&action.uid===high.uid);
+ assert.equal(legal(pack,s).some(action=>action.type==='activate'&&action.uid===self.uid&&
+  action.mode==='frontOnce'),true);
+ s=act(pack,s,action=>action.type==='activate'&&action.uid===self.uid&&action.mode==='frontOnce');
+ assert.equal(s.pending.kind,'effect-active-energy-buff');
+ assert.equal(s.pending.choices.includes(high.uid),true);
+ assert.equal(s.pending.choices.includes(self.uid),false);
+ assert.equal(s.pending.choices.includes(low.uid),false);
+ assert.equal(legal(pack,s).some(action=>action.uid===null),false);
+ s=act(pack,s,action=>action.type==='chooseActiveEnergyBuff'&&action.uid===high.uid);
+ assert.equal(live(s,0,high.uid).ready,true);
+ assert.equal(universalBp(pack,s,live(s,0,high.uid)),3500);
+ assert.equal(legal(pack,s).some(action=>action.uid===self.uid&&action.mode==='frontOnce'),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('MHA-2-072 raids, steps, grants impact plus one, and draws only on the first short-hand attack',()=>{
+ let {pack,s}=open(2072,[redFuel,fixture({id:'MIRKO', name:'ミルコ', color:'red', bp:2000})]);
+ clearLines(s,0);
+ seat(s,0,'RFUEL','energy',0,true);
+ readyAp(s);
+ const base=seat(s,0,'MIRKO','energy',1,false);
+ const raider=hold(s,'MHA-2-072');
+ s=act(pack,s,action=>action.type==='raid'&&action.uid===raider.uid&&
+  action.baseUid===base.uid&&action.slot===0&&action.line!=='energy');
+ const self=live(s,0,raider.uid);
+ assert.equal(self.ready,true);
+ assert.equal(self.stack.some(card=>card.uid===base.uid),true);
+ s=reach(pack,s,'move');
+ assert.equal(legal(pack,s).some(action=>action.type==='step'&&action.uid===self.uid),true);
+ s=act(pack,s,action=>action.type==='step'&&action.uid===self.uid);
+ assert.equal(s.players[0].energy.some(card=>card?.uid===self.uid),true);
+
+ let main=open(20721);
+ clearLines(main.s,0);
+ const source=seat(main.s,0,'MHA-2-072','energy',0,true);
+ const other=seat(main.s,0,'IMPACT','front',0,true);
+ hold(main.s,'PLAIN');
+ assert.equal(legal(main.pack,main.s).some(action=>action.uid===source.uid&&
+  action.mode==='frontOnce'),false);
+ const front=seat(main.s,0,'MHA-2-072','front',1,true);
+ const pay=hold(main.s,'CAP');
+ main.s=act(main.pack,main.s,action=>action.type==='activate'&&action.uid===front.uid&&
+  action.mode==='frontOnce');
+ main.s=act(main.pack,main.s,action=>action.type==='chooseDiscardGate'&&action.uid===pay.uid);
+ assert.equal(main.s.pending.choices.includes(front.uid),false);
+ assert.equal(main.s.pending.choices.includes(other.uid),true);
+ main.s=act(main.pack,main.s,action=>action.type==='chooseImpactGrant'&&action.uid===other.uid);
+ const granted=live(main.s,0,other.uid);
+ assert.equal(universalImpact(main.pack,main.s,granted),2);
+ assert.equal(universalBp(main.pack,main.s,granted),6000);
+ assert.equal(main.s.players[0].outside.some(card=>card.uid===pay.uid),true);
+ assert.equal(legal(main.pack,main.s).some(action=>action.uid===front.uid&&
+  action.mode==='frontOnce'),false);
+
+ let swing=open(20722);
+ clearLines(swing.s,0);
+ const attacker=seat(swing.s,0,'MHA-2-072','front',0,true);
+ trimHand(swing.s,0,4);
+ swing.s=reach(swing.pack,swing.s,'attack');
+ blankLife(swing.s,1);
+ const full=swing.s.players[0].deck.length;
+ swing.s=act(swing.pack,swing.s,action=>action.type==='attack'&&action.uid===attacker.uid);
+ if(swing.s.pending?.kind==='block')
+  swing.s=act(swing.pack,swing.s,action=>action.uid===null);
+ assert.equal(swing.s.pending,null);
+ assert.equal(universalBp(swing.pack,swing.s,live(swing.s,0,attacker.uid)),3000);
+ assert.equal(swing.s.players[0].deck.length,full);
+ trimHand(swing.s,0,3);
+ live(swing.s,0,attacker.uid).ready=true;
+ const before=swing.s.players[0].deck.length;
+ swing.s=act(swing.pack,swing.s,action=>action.type==='attack'&&action.uid===attacker.uid);
+ if(swing.s.pending?.kind==='block')
+  swing.s=act(swing.pack,swing.s,action=>action.uid===null);
+ assert.equal(swing.s.pending.kind,'effect-may-draw');
+ swing.s=act(swing.pack,swing.s,{type:'chooseMayDraw',mode:'skip'});
+ if(swing.s.pending?.kind==='block')
+  swing.s=act(swing.pack,swing.s,action=>action.type==='chooseBlock'&&action.uid===null);
+ assert.equal(universalBp(swing.pack,swing.s,live(swing.s,0,attacker.uid)),4000);
+ assert.equal(swing.s.players[0].deck.length,before);
+ live(swing.s,0,attacker.uid).ready=true;
+ swing.s=act(swing.pack,swing.s,action=>action.type==='attack'&&action.uid===attacker.uid);
+ if(swing.s.pending?.kind==='block')
+  swing.s=act(swing.pack,swing.s,action=>action.uid===null);
+ assert.equal(swing.s.pending,null);
+ assert.equal(universalBp(swing.pack,swing.s,live(swing.s,0,attacker.uid)),4000);
+
+ let empty=open(20723);
+ clearLines(empty.s,0);
+ const last=seat(empty.s,0,'MHA-2-072','front',0,true);
+ trimHand(empty.s,0,3);
+ empty.s.players[0].removed.push(...empty.s.players[0].deck.splice(0));
+ empty.s=reach(empty.pack,empty.s,'attack');
+ empty.s=act(empty.pack,empty.s,action=>action.type==='attack'&&action.uid===last.uid);
+ if(empty.s.pending?.kind==='block')
+  empty.s=act(empty.pack,empty.s,action=>action.uid===null);
+ assert.equal(empty.s.pending.kind,'effect-may-draw');
+ empty.s=act(empty.pack,empty.s,{type:'chooseMayDraw',mode:'skip'});
+ assert.equal(universalBp(empty.pack,empty.s,live(empty.s,0,last.uid)),4000);
+ assert.equal(assertUniversalMatch(empty.pack,empty.s),true);
 });

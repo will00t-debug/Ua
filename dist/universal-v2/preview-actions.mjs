@@ -1108,6 +1108,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTuckFacedown':return action.uid===null?'不蓋到角色下面':'把 '+name()+' 蓋到角色下面';
   case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
   case 'chooseLookUnderHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseLookUnderOrder':return action.uid===null?'不加入手牌，按這個順序放回':'將 '+name()+' 加入手牌';
+  case 'chooseActiveEnergyBuff':return '活動 '+name()+'，這個回合 BP+'+((state?.pending?.bp)||'');
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
   case 'chooseReturnActive':return action.uid===null?'不讓其他活動角色回手':'讓 '+name()+' 回手';
   case 'chooseHandActive':return action.uid===null?'不從手牌以活動狀態登場':'以活動狀態登場 '+name()+suffix();

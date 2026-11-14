@@ -555,7 +555,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-hand-active-or-raid')
   return legal.find(a=>a.mode==='active'&&a.line==='front'&&!a.replaceUid)||
    legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-look-under-hand')
+ if(s.pending?.kind==='effect-look-under-hand'||s.pending?.kind==='effect-look-under-order'||
+  s.pending?.kind==='effect-active-energy-buff')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
   s.pending?.kind==='effect-pay-hand-move'||s.pending?.kind==='effect-pay-hand-impact'||
