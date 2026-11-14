@@ -553,6 +553,7 @@ const NORMAL_BOARD_ENTRY=new Set([
  'chooseOutsideActivePair','chooseOutsideNameRest','chooseOutsideRest',
  'chooseOutsidePrintedRest','chooseOutsidePrintedActive','chooseOutsidePrinted',
  'chooseHandNamedRest','chooseHandRest','chooseHandRestCap','chooseHandGirlRest',
+ 'chooseMayHandRest','chooseOppFrontRest',
  'chooseRemovedEnter','chooseNamedZoneDeploy',
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
   'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',
