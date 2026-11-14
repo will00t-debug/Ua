@@ -93,11 +93,27 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
  }),
  'MHA-1-028':play(Object.freeze([{op:'drawDiscard', count:1}])),
  'MHA-1-032':play(Object.freeze([{op:'recoverAp', count:2}])),
+ 'MHA-1-033':Object.freeze({
+  ready:true, implementation:'dsl',
+  handApDiscountWhileName:Object.freeze({name:'死柄木 弔', amount:1}),
+  triggerEffect:Object.freeze({op:'retireOppFront'}),
+  effects:Object.freeze({onPlay:Object.freeze([{op:'removeOppFrontUnderBp', bp:4000}])})
+ }),
  'MHA-1-034':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
  'MHA-1-036':Object.freeze({ready:true, implementation:'dsl', step:true}),
  'MHA-1-037':Object.freeze({
   ready:true, implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:Object.freeze({colors:Object.freeze(['purple','red']), amount:1})
+ }),
+ 'MHA-1-038':Object.freeze({
+  ready:true, implementation:'dsl',
+  facedownKeywordThresholds:Object.freeze([
+   Object.freeze({atLeast:2, keyword:'doubleBlock'}),
+   Object.freeze({atLeast:4, keyword:'doubleAttack'})
+  ]),
+  mainAbility:Object.freeze({
+   op:'onceTuckFacedown', oncePerTurn:true, from:'deckTop', host:'self', count:1
+  })
  }),
  'MHA-1-039':Object.freeze({
   ready:true, implementation:'dsl',
