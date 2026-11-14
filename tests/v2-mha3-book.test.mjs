@@ -113,7 +113,9 @@ test('the book pack holds the five finished cards', ()=>{
  assert.equal(createMhaV2Pack().cards['MHA-3-002'],undefined);
  assert.equal(createMha2Pack().cards['MHA-3-002'],undefined);
  const live=officialV2Pack('mha');
- assert.equal(live.version,'mha-live-109-73-5');
+ assert.equal(live.version,'mha-live-109-73-3-5');
+ for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003'])
+  assert.equal(live.cards[id].id,id);
  for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'])
   assert.equal(live.cards[id].id,id);
  assert.equal(live.cards['MHA-3-009'],undefined);
