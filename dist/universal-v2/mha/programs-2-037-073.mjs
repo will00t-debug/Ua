@@ -60,6 +60,18 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
   effects:Object.freeze({onAttack:Object.freeze([{op:'drawDiscard', count:1}])}),
   notes:'攻擊時抽 1，再把自己的 1 張手牌放到場外。沒有其他句子。'
  }),
+ 'MHA-2-045':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'oncePayProgram', oncePerTurn:true, frontOnly:false, raidOnly:false,
+   payAp:0, requiresOwnName:null,
+   then:Object.freeze([{
+    op:'discardGate', optional:false, count:2,
+    then:Object.freeze([Object.freeze({op:'grantSelfSniperThisTurn', maxBp:3000})])
+   }])
+  }),
+  notes:'每回合一次，付 2 張手牌後本回合獲得狙擊，而且不能指定 BP 3000 以上。前排與能量列都能發動。'
+ }),
  'MHA-2-047':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onRetire:Object.freeze([{op:'draw', count:1}])}),
