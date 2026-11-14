@@ -12,9 +12,6 @@ export const MHA2_REQUESTS_037_073=Object.freeze({
  'MHA-2-040':Object.freeze({
   missing:'前排、每回合一次：選 1 張對手前排，本回合給予「BP 被減少時再 -500」以及「因 BP 0 以下退場時改放進移除區」。'
  }),
- 'MHA-2-041':Object.freeze({
-  missing:'登場時可付 1 AP。付了之後二選一：退場最多 1 張 BP 2500 以下的對手前排，或抽 2。'
- }),
  'MHA-2-042':Object.freeze({
   missing:'可突襲〈トガヒミコ〉並以活動狀態移到前排。登場時對手前排最多 1 張 BP-1000。前排起動每回合一次：對手前排 1 張 BP-1000，這張卡 BP+1000。'
  }),

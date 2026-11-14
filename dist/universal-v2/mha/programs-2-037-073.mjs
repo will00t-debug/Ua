@@ -37,6 +37,24 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
   }])}),
   notes:'看牌頂 4 張。公開最多 1 張印刷 BP 3500 以下的角色到手牌，其餘放牌底。有拿才棄 1 張手牌到場外。Q1010：看卡面印刷 BP，不看當下 BP。不能拿的牌留在畫面上。'
  }),
+ 'MHA-2-041':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'optionalPayApThen', ap:1, optional:true,
+   then:Object.freeze([{
+    op:'chooseOne', optional:false,
+    options:Object.freeze([
+     Object.freeze({id:'retire', label:'退場', turn:'any', then:Object.freeze([
+      Object.freeze({op:'retireOppFrontOneUnderBp', bp:2500, optional:true})
+     ])}),
+     Object.freeze({id:'draw', label:'抽2', turn:'any', then:Object.freeze([
+      Object.freeze({op:'draw', count:2})
+     ])})
+    ])
+   }])
+  }])}),
+  notes:'登場時可付 1 AP。付了才二選一：退場最多 1 張 BP 2500 以下的對手前排，或抽 2。不付就沒有後續。'
+ }),
  'MHA-2-039':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onAttack:Object.freeze([{op:'drawDiscard', count:1}])}),

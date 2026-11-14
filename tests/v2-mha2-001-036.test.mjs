@@ -121,9 +121,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-29');
+ assert.equal(pack.version,'mha2-ex06-ready-30');
  assert.equal(READY.length,16);
- assert.equal(Object.keys(pack.cards).length,29);
+ assert.equal(Object.keys(pack.cards).length,30);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
