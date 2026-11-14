@@ -25,7 +25,7 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-096',
   sentence:'自分のターン中、自分の効果で手札を場外に置いた時、アクティブのこのフィールドをレストしてもよい。そうしたら1枚引く。この効果は1ターン1回。',
   existingOps:['ownHandToOutsideThisTurn','restActiveFieldThenDrawDiscard'],
-  whyNotEnough:'restActiveFieldThenDrawDiscard は自分から起動する。這張是自己的效果把手牌放到場外的當下，可休息這張活動中的場域再抽1，而且一回合一次。',
+  whyNotEnough:'moveObserver 只准角色，而且必須指定來源名稱並把移出的那張蓋到下面。moveTriggers 掛在被移動的卡上，來源必須是名稱或特徵。restActiveFieldThenDrawDiscard 是事件的登場效果。沒有場域監聽「自己的效果把手牌放場外」，也沒有依名稱一回合一次、兩張只能發動一張的監聽。Q465、Q466。',
   proposal:'自己回合，自己的效果把手牌放到場外時，可休息這張活動中的場域並抽1。同一回合只發動一次。096はreadyにしない。'
  }
 ];

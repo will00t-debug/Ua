@@ -405,3 +405,25 @@ test('095 cannot grant double attack from its own move or pay to move only itsel
  assert.equal(MHA_PROGRAMS_051_100['MHA-1-095'],undefined);
 });
 
+test('096 cannot watch an own-effect hand discard and draw once per name',()=>{
+ reject(face({
+  id:'GAP-096-WATCH',type:'field',bp:0,
+  moveObserver:{op:'restSelfTuckMovedFaceDown',when:{
+   from:'hand',to:'outside',sourceOnField:true,sourceName:'エンデヴァー事務所',
+   reasons:['own-effect']}},
+  effects:{}
+ }),/invalid moved-card field watcher/);
+ reject(face({
+  id:'GAP-096-ANY',type:'field',bp:0,
+  moveTriggers:[{when:{from:'hand',to:'outside',reasons:['own-effect']},
+   then:[{op:'draw',count:1}]}],
+  effects:{}
+ }),/unsupported moved-card source condition/);
+ reject(face({
+  id:'GAP-096-REST',type:'field',bp:0,
+  effects:{onPlay:[{op:'restActiveFieldThenDrawDiscard'}]}
+ }),/field rest and active entry are event onPlay/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-096'],undefined);
+ assert.equal(createMhaV2Pack().cards['MHA-1-096'],undefined);
+});
+
