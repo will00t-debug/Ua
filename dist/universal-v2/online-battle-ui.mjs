@@ -186,9 +186,15 @@ function pendingCardSheet({el,card,label,definition,imageSource,openCard}){
  const effect=[printed.effect,printed.effectJa,printed.text,printed.description]
   .find(value=>typeof value==='string'&&value.trim()&&value.trim()!=='-')||
   '這張卡目前沒有可顯示的印刷效果。';
- return el('section',{class:'online-pending-card','aria-label':label+'：'+name},
-  el('div',{class:'online-pending-card-art'},image(el,imageSource(0,card.cardId),name)),
-  el('div',{class:'online-pending-card-copy'},
+ // Keep the artwork a true thumbnail even before deferred CSS has loaded.
+ // The full card can still be opened separately by the user.
+ const thumbnail=image(el,imageSource(0,card.cardId),name);
+ thumbnail.setAttribute('width','72');thumbnail.setAttribute('height','101');
+ thumbnail.setAttribute('style','display:block;box-sizing:border-box;width:100%;max-width:72px;max-height:101px;height:auto;object-fit:contain');
+ return el('section',{class:'online-pending-card','aria-label':label+'：'+name,
+  style:'display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;align-items:start;box-sizing:border-box;max-width:100%;max-height:190px;overflow:auto'},
+  el('div',{class:'online-pending-card-art',style:'width:72px;max-width:72px;min-width:0'},thumbnail),
+  el('div',{class:'online-pending-card-copy',style:'min-width:0'},
    el('span',{class:'online-pending-card-eyebrow',text:label}),
    el('strong',{class:'online-pending-card-name',text:name}),
    el('p',{class:'online-pending-card-effect',text:effect}),
