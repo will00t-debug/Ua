@@ -116,10 +116,12 @@ const high={id:'HIGH',name:'高BP',bp:4000,implementation:'vanilla',effects:{}};
 
 test('the six MHA cards stay pending while IMC and the ready set stay put',()=>{
  const pack=createMhaV2Pack();
- assert.equal(Object.keys(pack.cards).length,64);
+ assert.equal(Object.keys(pack.cards).length,71);
  for(const id of ['MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-017',
-  'MHA-1-048','MHA-1-056','MHA-1-059','MHA-1-071','MHA-1-074','MHA-1-076'])
+  'MHA-1-048','MHA-1-076'])
   assert.equal(pack.cards[id],undefined,id);
+ for(const id of ['MHA-1-056','MHA-1-059','MHA-1-071','MHA-1-074'])
+  assert.equal(pack.cards[id].id,id);
 });
 
 test('placeHandOutside puts one hand card outside and does not draw',()=>{
