@@ -26,7 +26,7 @@ export const MHA_REQUESTS_001_050=Object.freeze({
  'MHA-1-042':gap('登場時可讓其他橫置中、不是麗日 お茶子的前排角色回手；若如此，從手牌把 1 張能量 3 以下、AP1 的綠角色以橫置回復狀態登場。',
   '沒有「可選回手其他橫置回復中、不是〈麗日 お茶子〉的前排角色，只有回手成功才從手牌把能量 3 以下、AP1 的綠角色以橫置回復狀態登場」。'),
  'MHA-1-045':gap('自己前排沒有角色且對手前排有 3 張以上時，手牌綠能量 -6 且 AP-1。不能進能量列。印刷衝擊 1。對手角色攻擊時，可讓橫置的這張回復，若如此本回合 BP-1000。Q443、Q509。',
-  'energyLineForbidden 只覆蓋不能進能量列。其餘條件減免、衝擊與攻擊反應都沒有對應。')
+  'energyLineForbidden 與 printedImpact 已有。emptyOwnFieldHandEnergyDiscount 最高只減 5，也不看對手前排是否有 3 張，更不減 AP。對手攻擊時可選把橫置的這張變成橫置回復、成功才 BP-1000 的反應沒有；Q509 要求那次活動被「下一次不活動」擋下時不能減 BP。')
 });
 
 function gap(sentence, whyNotEnough){
