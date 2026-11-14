@@ -14,7 +14,7 @@ import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
  assertUniversalMatch, universalBp, zoneRequiredEnergy, universalPrivateChoices
 } from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-2-039','MHA-2-047','MHA-2-049','MHA-2-052','MHA-2-055',
+const READY=['MHA-2-039','MHA-2-041','MHA-2-047','MHA-2-049','MHA-2-052','MHA-2-055',
  'MHA-2-058','MHA-2-059','MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065',
  'MHA-2-071','MHA-2-073'];
 const real=createMha2Pack();
@@ -53,6 +53,7 @@ function shell(){
   fixture({id:'GREEN', name:'綠燃料', color:'green', gen:2}),
   fixture({id:'RED', name:'紅燃料', color:'red', gen:2}),
   fixture({id:'NAGANT', name:'レディ・ナガン', bp:1500}),
+  fixture({id:'CAP', name:'上限', bp:2500}),
   fixture({id:'LOW', name:'低', bp:3000}),
   fixture({id:'MID', name:'中', bp:3500}),
   fixture({id:'HIGH', name:'高', bp:5000}),
@@ -526,4 +527,62 @@ test('MHA-2-063 uses printed BP 3500, not the current BP',()=>{
  assert.equal(s.pending.choices.includes(low.uid),true);
  assert.equal(s.pending.choices.includes(plain.uid),true);
  assert.equal(s.pending.choices.includes(high.uid),false);
+});
+
+test('MHA-2-041 pays one AP, then retires BP 2500 or draws two',()=>{
+ const unpaid=open(2041);
+ clearLines(unpaid.s,0);
+ clearLines(unpaid.s,1);
+ const body=hold(unpaid.s,'MHA-2-041');
+ seat(unpaid.s,1,'CAP','front',0,true);
+ assert.equal(legal(unpaid.pack,unpaid.s).some(a=>a.type==='play'&&a.uid===body.uid),false);
+ seat(unpaid.s,0,'PURPLE','energy',0,true);
+ seat(unpaid.s,0,'MHA-2-047','energy',1,true);
+ unpaid.s.players[0].apCards.forEach(ap=>{ap.ready=false;});
+ assert.equal(legal(unpaid.pack,unpaid.s).some(a=>a.type==='play'&&a.uid===body.uid),false);
+
+ let {pack,s}=open(2042);
+ clearLines(s,0);
+ clearLines(s,1);
+ seat(s,0,'PURPLE','energy',0,true);
+ seat(s,0,'MHA-2-047','energy',1,true);
+ const self=hold(s,'MHA-2-041');
+ const cap=seat(s,1,'CAP','front',0,true);
+ const low=seat(s,1,'LOW','front',1,true);
+ s=act(pack,s,a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.equal(s.pending,null);
+ assert.equal(live(s,1,cap.uid).cardId,'CAP');
+
+ let paid=open(2043);
+ clearLines(paid.s,0);
+ clearLines(paid.s,1);
+ seat(paid.s,0,'PURPLE','energy',0,true);
+ seat(paid.s,0,'MHA-2-047','energy',1,true);
+ readyAp(paid.s);
+ const card=hold(paid.s,'MHA-2-041');
+ const legalCap=seat(paid.s,1,'CAP','front',0,true);
+ const illegal=seat(paid.s,1,'LOW','front',1,true);
+ const deck=paid.s.players[0].deck.length;
+ paid.s=act(paid.pack,paid.s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front');
+ assert.equal(paid.s.pending.kind,'effect-optional-pay-ap');
+ const skipped=act(paid.pack,structuredClone(paid.s),a=>a.type==='chooseOptionalPayAp'&&a.mode==='skip');
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].deck.length,deck);
+ paid.s=act(paid.pack,paid.s,a=>a.type==='chooseOptionalPayAp'&&a.mode==='pay');
+ assert.equal(paid.s.pending.kind,'effect-choice-mode');
+ assert.deepEqual(paid.s.pending.options.map(o=>o.id).sort(),['draw','retire']);
+ const drawn=act(paid.pack,structuredClone(paid.s),a=>a.type==='chooseEffectMode'&&a.mode==='draw');
+ assert.equal(drawn.players[0].deck.length,deck-2);
+ assert.equal(live(drawn,1,legalCap.uid).cardId,'CAP');
+ paid.s=act(paid.pack,paid.s,a=>a.type==='chooseEffectMode'&&a.mode==='retire');
+ assert.equal(paid.s.pending.kind,'effect-retire-bp');
+ assert.equal(paid.s.pending.choices.includes(legalCap.uid),true);
+ assert.equal(paid.s.pending.choices.includes(illegal.uid),false);
+ assert.throws(()=>dispatchUniversalAction(paid.pack,paid.s,{type:'chooseRetireBp',uid:'missing'}));
+ const passed=act(paid.pack,structuredClone(paid.s),a=>a.type==='chooseRetireBp'&&a.uid===null);
+ assert.equal(live(passed,1,legalCap.uid).cardId,'CAP');
+ const retired=act(paid.pack,paid.s,a=>a.type==='chooseRetireBp'&&a.uid===legalCap.uid);
+ assert.equal(live(retired,1,legalCap.uid),null);
+ assert.equal(live(retired,1,illegal.uid).cardId,'LOW');
+ assert.equal(assertUniversalMatch(paid.pack,retired),true);
 });
