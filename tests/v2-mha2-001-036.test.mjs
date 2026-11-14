@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {MHA2_CARDS_001_036} from '../dist/mha/cards-mha2-001-036.mjs';
 import {MHA2_PROGRAMS_001_036} from '../dist/universal-v2/mha/programs-mha2-001-036.mjs';
+import {MHA2_REQUESTS_001_036} from '../dist/universal-v2/mha/requests-mha2-001-036.mjs';
 import {createMha2Pack,mha2ReadyBattleCards} from '../dist/universal-v2/mha2-pack.mjs';
 import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {mhaEditorCards} from '../dist/mha/catalog.mjs';
@@ -438,12 +439,17 @@ test('MHA-2-035 activates up to two rested AP cards and can stop early',()=>{
 
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
  assert.equal(PENDING.length,20);
+ assert.deepEqual(Object.keys(MHA2_REQUESTS_001_036).sort(),[...PENDING].sort());
  for(const id of PENDING){
   const card=byId.get(id);
   const program=MHA2_PROGRAMS_001_036[id];
+  const request=MHA2_REQUESTS_001_036[id];
   assert.equal(program.ready,false,id);
   assert.equal(typeof program.notes,'string');
   assert.ok(program.notes.length>12,id);
+  assert.equal(typeof request.missing,'string');
+  assert.ok(request.missing.length>12,id);
+  assert.deepEqual(request.faq||[],card.faq.map(row=>row.id));
   assert.equal(pack.cards[id],undefined,id);
   assert.equal(card.effectJa==='-'||card.effectJa.includes('【')||card.effectJa.includes('この'),true,id);
   const counts=deck();
