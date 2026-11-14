@@ -746,6 +746,14 @@ test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
   assert.ok(program.notes.length>12,id);
   assert.equal(typeof request.missing,'string');
   assert.ok(request.missing.length>12,id);
+  assert.equal(typeof request.proposed,'string');
+  assert.ok(Array.isArray(request.cases)&&request.cases.length>=1,id);
+  for(const scene of request.cases){
+   assert.equal(typeof scene.setup,'string',id);
+   assert.equal(typeof scene.action,'string',id);
+   assert.equal(typeof scene.expect,'string',id);
+   assert.ok(scene.setup.length>=8&&scene.expect.length>=8,id);
+  }
   assert.deepEqual(request.faq||[],card.faq.map(row=>row.id));
   assert.equal(pack.cards[id],undefined,id);
   assert.equal(card.effectJa==='-'||card.effectJa.includes('【')||card.effectJa.includes('この'),true,id);

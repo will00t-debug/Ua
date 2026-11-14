@@ -23,7 +23,7 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }])}),
   notes:'看牌頂 4 張。公開最多 1 張綠谷或ワン・フォー・オール到手牌，其餘放牌底。有拿才棄 1 張手牌到場外。不能拿的牌留在畫面上。'
  }),
- 'MHA-2-003':pending('三種不同ワン・フォー・オール名字的發生能源，以及休息後把一張該特徵手牌放到場外再抽 1，沒有對得上的同一句起動。不能只做能量。'),
+ 'MHA-2-003':pending('三種不同卡名的發生能源 +1 黃已有被動。缺少：起動主要、休息，把 1 張ワン・フォー・オール手牌放到場外，做到才抽 1。不能只做能量。'),
  'MHA-2-004':ready({
   activeExtraEnergy:1,
   notes:'活動時發生能量 +1 黃。休息時只有印刷的 1 點。前線不產生能量。'
@@ -87,7 +87,7 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   ]),
   notes:'自己回合且場上有綠谷時，BP+1000 並有衝擊 1。少了綠谷或不是自己回合就都沒有。'
  }),
- 'MHA-2-020':pending('登場二選一，以及前線每回合一次把 BP+1000 與衝擊 1 給綠谷後，再活動自己或一張 AP。兩句都沒有完整的共用起動。'),
+ 'MHA-2-020':pending('登場二選一已能用 chooseOne。缺少前排、休息、每回合一次：給 1 張綠谷本回合 BP+1000 與衝擊 1，再最多活動這張卡或 1 張 AP。不能只做登場句。'),
  'MHA-2-021':ready({
   playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
   mainAbility:Object.freeze({
@@ -120,7 +120,7 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }),
   notes:'場上有其他卡名的 A組 時不能從手牌登場。手牌確認必要能量、付 1 AP、放到場外後，看牌頂 4 張，公開最多 2 張非綠谷到手牌，其餘放牌底。顏色觸發休息並跳過下次活動。Q1002。'
  }),
- 'MHA-2-024':pending('登場時獲得本回合「ワン・フォー・オール退場可抽 1」，攻擊時三種名字可付 1 AP 獲得衝擊 1。登場禁止已有 playBanOtherTrait。退場抽牌與攻擊付費沒有整句。'),
+ 'MHA-2-024':pending('登場禁止與顏色觸發已有。攻擊付 1 AP 獲得衝擊已能用 optionalPayApThen。缺少登場時本回合獲得「每回合一次，ワン・フォー・オール退場最多抽 1」。不能只做攻擊句。'),
  'MHA-2-025':ready({
   playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
   triggerEffect:Object.freeze({op:'retireOppFront'}),
