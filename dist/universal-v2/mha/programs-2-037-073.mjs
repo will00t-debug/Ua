@@ -234,5 +234,28 @@ export const MHA2_PROGRAMS_037_073=Object.freeze({
    Object.freeze({op:'returnOwnRaidBase', optional:true, max:1})
   ])}),
   notes:'突襲〈通形 ミリオ〉並以活動狀態移到前排。BP 3000 以下不能阻擋。前排每回合一次，給必要能源 4 以上的其他自己角色 BP+1000 或衝擊 1。退場時最多把 1 張突襲底板回手。'
+ }),
+ 'MHA-2-050':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
+   op:'mayHandRestThenOppFrontRest', type:'character', color:'green',
+   energy:3, ap:1, oppAp:1, skipOnPlay:true
+  })])}),
+  notes:'對手前排有空位時，可從手牌把必要能源 3 以下、AP 1 的綠角色橫置登場到自己場上。做到之後，對手可從手牌把 AP 1 角色橫置放到自己前排，也可以不放。兩邊這次登場的登場時都不發動。Q1007：對手手牌有合法角色時仍可拒絕。'
+ }),
+ 'MHA-2-053':Object.freeze({
+  ready:true, implementation:'dsl',
+  raidName:'麗日 お茶子',
+  effects:Object.freeze({onAttack:Object.freeze([Object.freeze({
+   op:'chooseOne', optional:false, cardLock:true,
+   options:Object.freeze([
+    Object.freeze({id:'block', label:'對手前排 4000 到 5000 本回合不能阻擋', turn:'any',
+     then:Object.freeze([Object.freeze({op:'grantOppFrontCannotBlockThisTurn',
+      minBp:4000, maxBp:5000, max:1, optional:true})])}),
+    Object.freeze({id:'bp', label:'自己本回合 BP+500', turn:'any',
+     then:Object.freeze([Object.freeze({op:'buffSelf', bp:500})])})
+   ])
+  })])}),
+  notes:'可突襲〈麗日 お茶子〉並活動移到前排。攻擊時二選一，這張實體卡這個回合選過的選項不能再選。另一張同名卡可以選同一個選項。選項是給當下 BP 4000 到 5000 的對手前排最多 1 張這個回合不能阻擋，或自己 BP+500。Q1008。'
  })
 });

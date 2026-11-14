@@ -1,6 +1,4 @@
-// MHA-2-046, 051, 054, 056, 057. Official effectJa and the stored FAQ.
-// 050 and 053 stay pending: the opponent may decline the follow-up entry,
-// and a this-turn block ban plus a per-card option lock are not closed ops.
+// MHA-2-046, 050, 051, 053, 054, 056, 057. Official effectJa and the stored FAQ.
 // Passing these scenes is not an FAQ acceptance.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -42,10 +40,12 @@ function readyCard(id){
 }
 function shell(){
  const bodies=[
-  readyCard('MHA-2-046'), readyCard('MHA-2-051'), readyCard('MHA-2-054'),
+  readyCard('MHA-2-046'), readyCard('MHA-2-050'), readyCard('MHA-2-051'),
+  readyCard('MHA-2-053'), readyCard('MHA-2-054'),
   readyCard('MHA-2-056'), readyCard('MHA-2-057'),
   fixture({id:'PURPLE', name:'紫燃料', color:'purple', gen:6}),
   fixture({id:'GREEN', name:'綠燃料', gen:2}),
+  fixture({id:'FUEL', name:'綠燃料六', gen:6}),
   fixture({id:'NAGANT', name:'レディ・ナガン', color:'purple', bp:1500}),
   fixture({id:'MIRIO', name:'通形 ミリオ', bp:2000}),
   fixture({id:'PLAIN', name:'路人', bp:3000}),
@@ -56,7 +56,17 @@ function shell(){
   fixture({id:'COST3', name:'能源三', energy:3, bp:2000}),
   fixture({id:'BRING', name:'帶出場', energy:0, bp:1000, implementation:'dsl',
    effects:{onPlay:[{op:'deployOwnHandRest', type:'character', color:'green',
-    energy:6, ap:1, max:1}]}})
+    energy:6, ap:1, max:1}]}}),
+  fixture({id:'OCHAKO', name:'麗日 お茶子', bp:1500}),
+  fixture({id:'ENTER', name:'綠三', energy:3, ap:1, bp:2000, implementation:'dsl',
+   effects:{onPlay:[{op:'buffSelf', bp:1000}]}}),
+  fixture({id:'BIG', name:'綠四', energy:4, ap:1, bp:2000}),
+  fixture({id:'REDAP', name:'紅一', color:'red', energy:1, ap:1, bp:2000}),
+  fixture({id:'YES', name:'對手一', color:'purple', energy:1, ap:1, bp:2500, implementation:'dsl',
+   effects:{onPlay:[{op:'buffSelf', bp:1000}]}}),
+  fixture({id:'TWO', name:'兩費', ap:2, bp:2000}),
+  fixture({id:'BAND', name:'四千', bp:4000}),
+  fixture({id:'OVER', name:'五千五', bp:5500})
  ];
  for(let n=1;n<=40;n++)
   bodies.push(fixture({id:'FILL-'+String(n).padStart(2,'0'), name:'填'+n}));
@@ -66,6 +76,8 @@ function open(seed){
  const pack=shell();
  const deck={};
  for(const id of Object.keys(pack.cards))deck[id]=1;
+ deck['MHA-2-050']=2;
+ deck['MHA-2-053']=2;
  let total=Object.values(deck).reduce((sum,n)=>sum+n,0);
  for(const id of Object.keys(deck)){
   if(total<=50)break;
@@ -142,12 +154,20 @@ function live(s,p,uid){
 function skipLive(s,uid){
  return s.continuousStates.some(e=>e.kind==='skipNextActive'&&!e.consumed&&e.targetUid===uid);
 }
+function vanillaLife(s){
+ for(const pl of s.players){
+  const n=pl.life.length;
+  pl.deck.push(...pl.life.splice(0));
+  for(let i=0;i<n;i++){
+   const at=pl.deck.findIndex(c=>c.cardId.startsWith('FILL-'));
+   pl.life.push(pl.deck.splice(at,1)[0]);
+  }
+ }
+}
 
-test('the five finished cards are in the pack and 050, 053 stay out',()=>{
- for(const id of ['MHA-2-046','MHA-2-051','MHA-2-054','MHA-2-056','MHA-2-057'])
+test('the seven finished cards are in the pack',()=>{
+ for(const id of ['MHA-2-046','MHA-2-050','MHA-2-051','MHA-2-053','MHA-2-054','MHA-2-056','MHA-2-057'])
   assert.equal(packReady.cards[id].id,id);
- assert.equal(packReady.cards['MHA-2-050'],undefined);
- assert.equal(packReady.cards['MHA-2-053'],undefined);
  const nagant=packReady.cards['MHA-2-046'];
  assert.equal(nagant.raidName,'レディ・ナガン');
  assert.equal(nagant.printedMains.length,3);
@@ -166,6 +186,12 @@ test('the five finished cards are in the pack and 050, 053 stay out',()=>{
  assert.equal(mirio.raidName,'通形 ミリオ');
  assert.deepEqual(mirio.blockBpRestriction,{relation:'atMost',bp:3000,condition:null});
  assert.equal(mirio.effects.onRetire[0].op,'returnOwnRaidBase');
+ const aoyama=packReady.cards['MHA-2-050'];
+ assert.equal(aoyama.effects.onPlay[0].op,'mayHandRestThenOppFrontRest');
+ assert.equal(aoyama.effects.onPlay[0].skipOnPlay,true);
+ const ochako=packReady.cards['MHA-2-053'];
+ assert.equal(ochako.raidName,'麗日 お茶子');
+ assert.equal(ochako.effects.onAttack[0].cardLock,true);
 });
 
 test('046 raids Lady Nagant active onto the front, then uses each main',()=>{
@@ -377,4 +403,116 @@ test('057 is not blocked at BP 3000, chooses one front grant, and may return its
  assert.equal(lost.players[0].hand.some(c=>c.uid===base.uid),true);
  assert.equal(lost.players[0].front.some(c=>c?.uid===top.uid),false);
  assert.equal(assertUniversalMatch(raid.pack,lost),true);
+});
+
+test('050 rests a cheap green character only while the opponent front is open, and the opponent may decline',()=>{
+ const full=open(5001);
+ for(const [slot,id] of [[0,'PLAIN'],[1,'LOW'],[2,'MID'],[3,'HIGH']])
+  seat(full.s,1,id,'front',slot);
+ seat(full.s,0,'GREEN','energy',0);
+ const blocked=hold(full.s,'MHA-2-050');
+ readyAp(full.s);
+ let shut=act(full.pack,full.s,a=>a.type==='play'&&a.uid===blocked.uid&&a.line==='front');
+ assert.equal(shut.pending,null);
+ assert.equal(live(shut,0,blocked.uid).ready,false);
+
+ const {pack,s}=open(5002);
+ seat(s,0,'GREEN','energy',0);
+ const first=hold(s,'MHA-2-050');
+ const pl=s.players[0];
+ let second=null;
+ for(const zone of ['deck','hand','life','outside','removed']){
+  const index=pl[zone].findIndex(c=>c?.cardId==='MHA-2-050'&&c.uid!==first.uid);
+  if(index>=0){second=pl[zone].splice(index,1)[0];break;}
+ }
+ if(!second)throw Error('needed a second 050');
+ pl.hand.push(second);
+ const enter=hold(s,'ENTER');
+ const big=hold(s,'BIG');
+ const red=hold(s,'REDAP');
+ const yes=hold(s,'YES',1);
+ const two=hold(s,'TWO',1);
+ readyAp(s);
+ let now=act(pack,s,a=>a.type==='play'&&a.uid===first.uid&&a.line==='front');
+ assert.equal(now.pending.kind,'effect-may-hand-rest');
+ const own=legal(pack,now).filter(a=>a.type==='chooseMayHandRest');
+ assert.equal(own.some(a=>a.uid===null),true);
+ assert.equal(own.some(a=>a.uid===enter.uid),true);
+ assert.equal(own.some(a=>a.uid===big.uid),false);
+ assert.equal(own.some(a=>a.uid===red.uid),false);
+ now=act(pack,now,a=>a.uid===null);
+ assert.equal(now.pending,null);
+ assert.equal(s.players[0].hand.some(c=>c.uid===enter.uid)||now.players[0].hand.some(c=>c.uid===enter.uid),true);
+
+ readyAp(now);
+ now=act(pack,now,a=>a.type==='play'&&a.uid===second.uid&&a.line==='front');
+ now=act(pack,now,a=>a.type==='chooseMayHandRest'&&a.uid===enter.uid&&a.line==='energy');
+ const entered=live(now,0,enter.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(universalBp(pack,now,entered),2000);
+ assert.equal(now.pending.kind,'effect-opp-may-front-rest');
+ assert.equal(now.pending.player,1);
+ const opp=legal(pack,now).filter(a=>a.type==='chooseOppFrontRest');
+ assert.equal(opp.some(a=>a.uid===null),true);
+ assert.equal(opp.some(a=>a.uid===yes.uid&&a.line==='front'),true);
+ assert.equal(opp.some(a=>a.uid===two.uid),false);
+ now=act(pack,now,a=>a.uid===yes.uid&&a.line==='front');
+ const guest=live(now,1,yes.uid);
+ assert.equal(guest.ready,false);
+ assert.equal(universalBp(pack,now,guest),2500);
+ assert.equal(assertUniversalMatch(pack,now),true);
+});
+
+test('053 raids Ochaco, locks a choice on that card, and bans block only this turn',()=>{
+ const {pack,s}=open(5301);
+ seat(s,0,'FUEL','energy',0);
+ const base=seat(s,0,'OCHAKO','front',0);
+ const card=hold(s,'MHA-2-053');
+ readyAp(s);
+ let now=act(pack,s,a=>a.type==='raid'&&a.uid===card.uid&&a.baseUid===base.uid);
+ const top=now.players[0].front.find(c=>c?.cardId==='MHA-2-053');
+ assert.equal(top.ready,true);
+ assert.equal(top.stack[0].uid,base.uid);
+ const other=seat(now,0,'MHA-2-053','front',1);
+ const low=seat(now,1,'MID','front',0);
+ low.buffs=[{bp:1000,untilTurn:now.turn}];
+ low.ready=true;
+ const edge=seat(now,1,'BAND','front',1);
+ edge.ready=true;
+ const over=seat(now,1,'OVER','front',2);
+ over.ready=true;
+ const out=seat(now,1,'LOW','front',3);
+ out.ready=true;
+ vanillaLife(now);
+ now=reach(pack,now,'attack');
+ now=act(pack,now,a=>a.type==='attack'&&a.uid===top.uid&&a.targetUid===undefined);
+ assert.equal(now.pending.kind,'effect-choice-mode');
+ assert.deepEqual(legal(pack,now).filter(a=>a.type==='chooseEffectMode').map(a=>a.mode).sort(),['block','bp']);
+ now=act(pack,now,a=>a.type==='chooseEffectMode'&&a.mode==='block');
+ assert.equal(now.pending.kind,'effect-this-turn-block');
+ const bans=legal(pack,now).filter(a=>a.type==='chooseThisTurnBlock');
+ assert.equal(bans.some(a=>a.uid===null),true);
+ assert.equal(bans.some(a=>a.uid===low.uid),true);
+ assert.equal(bans.some(a=>a.uid===edge.uid),true);
+ assert.equal(bans.some(a=>a.uid===over.uid),false);
+ assert.equal(bans.some(a=>a.uid===out.uid),false);
+ now=act(pack,now,a=>a.type==='chooseThisTurnBlock'&&a.uid===low.uid);
+ assert.equal(now.pending.kind,'block');
+ assert.equal(legal(pack,now).some(a=>a.uid===low.uid),false);
+ assert.equal(legal(pack,now).some(a=>a.uid===edge.uid),true);
+ now=act(pack,now,a=>a.type==='chooseBlock'&&a.uid===null);
+ live(now,0,top.uid).ready=true;
+ now=act(pack,now,a=>a.type==='attack'&&a.uid===top.uid&&a.targetUid===undefined);
+ assert.deepEqual(legal(pack,now).filter(a=>a.type==='chooseEffectMode').map(a=>a.mode),['bp']);
+ now=act(pack,now,a=>a.type==='chooseEffectMode'&&a.mode==='bp');
+ assert.equal(universalBp(pack,now,live(now,0,top.uid)),4000);
+ if(now.pending?.kind==='block')now=act(pack,now,a=>a.type==='chooseBlock'&&a.uid===null);
+ now=act(pack,now,a=>a.type==='attack'&&a.uid===other.uid&&a.targetUid===undefined);
+ assert.deepEqual(legal(pack,now).filter(a=>a.type==='chooseEffectMode').map(a=>a.mode).sort(),['block','bp']);
+ now=act(pack,now,a=>a.type==='chooseEffectMode'&&a.mode==='bp');
+ assert.equal(universalBp(pack,now,live(now,0,other.uid)),4000);
+ if(now.pending?.kind==='block')now=act(pack,now,a=>a.type==='chooseBlock'&&a.uid===null);
+ now=dispatchUniversalAction(pack,now,{type:'next'});
+ assert.equal(now.continuousStates.some(e=>e.kind==='cannotBlock'&&!e.consumed&&e.targetUid===low.uid),false);
+ assert.equal(assertUniversalMatch(pack,now),true);
 });
