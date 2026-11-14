@@ -310,3 +310,98 @@ test('091 cannot pay one hand card for BP on attack and on block',()=>{
  assert.equal(createMhaV2Pack().cards['MHA-1-091'],undefined);
 });
 
+test('095 cannot grant double attack from its own move or pay to move only itself',()=>{
+ reject(face({
+  id:'GAP-095-DOUBLE',step:true,
+  effects:{onPlay:[{op:'grantSelfDoubleAttackThisTurn',
+   when:{kind:'selfMovedThisTurn',turn:'any'}}]}
+ }),/invalid this-turn self attack grant/);
+ reject(face({
+  id:'GAP-095-MAIN',
+  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1},
+  effects:{}
+ }),/unsupported main action ability/);
+ const mover=face({
+  id:'GAP-095-LIVE',energy:0,bp:3500,
+  mainAbility:{op:'payHandMoveOrSwap',oncePerTurn:true,pay:1},
+  effects:{}
+ });
+ const bodies=[mover];
+ let n=1;
+ while(bodies.length*4<50){
+  bodies.push(face({id:'GAP-095-FILL-'+n,implementation:'vanilla',energy:0,bp:1000,effects:{}}));
+  n++;
+ }
+ const livePack=createUniversalPack({id:'gap-095',version:'full-line',cards:bodies});
+ const counts={};
+ let remain=50;
+ for(const card of bodies){
+  if(remain<=0)break;
+  const take=Math.min(4,remain);
+  counts[card.id]=take;
+  remain-=take;
+ }
+ let s=newUniversalMatch(livePack,{decks:[counts,counts],seed:9501,first:0,openingMulligan:false});
+ for(let i=0;i<8&&s.phase!=='main';i++)s=dispatchUniversalAction(livePack,s,{type:'next'});
+ assert.equal(s.phase,'main');
+ const pull=()=>{
+  const pl=s.players[0];
+  for(const zone of ['deck','life','hand']){
+   const at=pl[zone].findIndex(c=>c.cardId!=='GAP-095-LIVE');
+   if(at>=0)return pl[zone].splice(at,1)[0];
+  }
+  throw Error('missing body');
+ };
+ let live=s.players[0].hand.find(c=>c.cardId==='GAP-095-LIVE');
+ if(!live){
+  for(const zone of ['deck','life']){
+   const at=s.players[0][zone].findIndex(c=>c.cardId==='GAP-095-LIVE');
+   if(at<0)continue;
+   live=s.players[0][zone].splice(at,1)[0];
+   break;
+  }
+ }
+ assert.ok(live);
+ if(!s.players[0].hand.includes(live))s.players[0].hand.push(live);
+ s=dispatchUniversalAction(livePack,s,legalUniversalActions(livePack,s).find(a=>
+  a.type==='play'&&a.uid===live.uid&&a.line==='front'&&a.slot===0));
+ const self=s.players[0].front[0];
+ assert.equal(self.cardId,'GAP-095-LIVE');
+ for(let slot=1;slot<4;slot++){
+  const occ=pull();
+  occ.ready=true;
+  occ.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].front[slot]=occ;
+ }
+ const occupants=[];
+ for(let slot=0;slot<4;slot++){
+  const occ=pull();
+  occ.ready=true;
+  occ.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].energy[slot]=occ;
+  occupants.push(occ);
+ }
+ const payment=pull();
+ s.players[0].hand.push(payment);
+ const activated=dispatchUniversalAction(livePack,s,legalUniversalActions(livePack,s).find(a=>
+  a.type==='activate'&&a.uid===self.uid&&a.mode==='payHandMove'));
+ assert.equal(activated.pending.kind,'effect-pay-hand-move');
+ const paid=dispatchUniversalAction(livePack,activated,{type:'choosePayHandMove',uid:payment.uid});
+ assert.equal(paid.pending.kind,'effect-move-or-swap');
+ assert.deepEqual(legalUniversalActions(livePack,paid)
+  .filter(a=>a.type==='chooseMoveOrSwap').map(a=>a.mode).sort(),['shift','swap']);
+ const shifting=dispatchUniversalAction(livePack,paid,{type:'chooseMoveOrSwap',mode:'shift'});
+ assert.equal(shifting.pending.kind,'effect-line-move');
+ assert.equal(shifting.pending.choices.includes(self.uid),true);
+ const slotting=dispatchUniversalAction(livePack,shifting,{type:'chooseLineMove',uid:self.uid});
+ assert.equal(slotting.pending.kind,'effect-line-slot');
+ assert.equal(slotting.pending.line,'energy');
+ const moved=dispatchUniversalAction(livePack,slotting,{
+  type:'chooseLineSlot',slot:0,replaceUid:occupants[0].uid});
+ assert.equal(moved.players[0].energy[0].uid,self.uid);
+ assert.equal(moved.players[0].removed.some(c=>c.uid===occupants[0].uid),true);
+ assert.equal(moved.players[0].outside.some(c=>c.uid===occupants[0].uid),false);
+ assert.equal(moved.players[0].front[0],null);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-095'],undefined);
+});
+
