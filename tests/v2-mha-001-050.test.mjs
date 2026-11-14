@@ -6,6 +6,7 @@ import {MHA_REQUESTS_001_050} from '../dist/universal-v2/mha/requests-001-050.mj
 import {createMhaV2Pack, mhaBattleCard, mhaProgramFor, MHA_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack, validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEnergy,
  legalUniversalActions, newUniversalMatch, universalBp, universalEnergyByColor,
  universalImpact, universalImpactNull, universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
@@ -14,7 +15,7 @@ const READY=[
  'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
  'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
  'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
- 'MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
+ 'MHA-1-036','MHA-1-037','MHA-1-038','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
  'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050'
 ];
 const STANDARD_TRIGGER={
@@ -64,7 +65,7 @@ function deck(source, extra={}){
   'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
   'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
   'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
-  'MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
+  'MHA-1-036','MHA-1-037','MHA-1-038','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
   'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050',
   'PROBE-IMPACT','PROBE-TALL','PROBE-OVER','PROBE-RETIRE','PROBE-SNIPER'
  ];
@@ -1329,4 +1330,92 @@ test('048 reorders its life and stays once against an opposing effect. Q446 stil
  assert.equal(lost.players[0].front[0],null);
  assert.equal(lost.players[0].outside.some(c=>c.uid===defender.uid),true);
  assert.equal(assertUniversalMatch(probePacks,lost),true);
+});
+
+function bury(s,p,host,id){
+ const card=take(s,p,id);
+ card.faceDown=true;
+ host.under=[...(host.under||[]),card];
+ return card;
+}
+
+test('038 gains double block at two facedown cards and double attack at four',()=>{
+ const layers=['MHA-1-008','MHA-1-040','MHA-1-049','MHA-1-036'];
+ function attackReady(seed,count){
+  let s=open(pack,seed);
+  const host=put(s,0,'MHA-1-038','front',0,true);
+  put(s,1,'MHA-1-015','front',0,true);
+  s=toPhase(s,'attack');
+  const body=live(s,0,host.uid);
+  for(const id of layers.slice(0,count))bury(s,0,body,id);
+  s=use(s,findAct(s,a=>a.type==='attack'&&a.uid===host.uid,'attack'));
+  assert.equal(s.pending.kind,'block');
+  return live(s,0,host.uid).ready;
+ }
+ assert.equal(attackReady(3801,4),true);
+ assert.equal(attackReady(3802,3),false);
+ assert.equal(attackReady(3803,1),false);
+
+ let thin=open(pack,3804);
+ const thinner=put(thin,0,'MHA-1-038','front',0,true);
+ put(thin,1,'MHA-1-015','front',0,true);
+ thin=toPhase(thin,'attack');
+ const stacked=live(thin,0,thinner.uid);
+ for(const id of layers)bury(thin,0,stacked,id);
+ thin.players[0].outside.push(stacked.under.pop());
+ assert.equal(stacked.under.length,3);
+ thin=use(thin,findAct(thin,a=>a.type==='attack'&&a.uid===thinner.uid,'attack'));
+ assert.equal(live(thin,0,thinner.uid).ready,false);
+
+ let quiet=open(pack,3805);
+ const muted=put(quiet,0,'MHA-1-038','front',0,true);
+ put(quiet,1,'MHA-1-015','front',0,true);
+ quiet=toPhase(quiet,'attack');
+ const silenced=live(quiet,0,muted.uid);
+ for(const id of layers)bury(quiet,0,silenced,id);
+ grantContinuousState(quiet,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:silenced.uid,targetUid:silenced.uid,sourceLinked:false,
+  until:{player:0,phase:'start',edge:'start'}});
+ quiet=use(quiet,findAct(quiet,a=>a.type==='attack'&&a.uid===muted.uid,'attack'));
+ assert.equal(live(quiet,0,muted.uid).ready,false);
+
+ function blockReady(seed,count){
+  let s=open(pack,seed);
+  put(s,0,'MHA-1-015','front',0,true);
+  const wall=put(s,1,'MHA-1-038','front',0,true);
+  s=toPhase(s,'attack');
+  const body=live(s,1,wall.uid);
+  for(const id of layers.slice(0,count))bury(s,1,body,id);
+  s=use(s,findAct(s,a=>a.type==='attack','attack'));
+  s=use(s,findAct(s,a=>a.type==='chooseBlock'&&a.uid===wall.uid,'block'));
+  const stayed=live(s,1,wall.uid);
+  assert.ok(stayed);
+  return stayed.ready;
+ }
+ assert.equal(blockReady(3806,2),true);
+ assert.equal(blockReady(3807,4),true);
+ assert.equal(blockReady(3808,1),false);
+
+ let tucked=open(pack,3809);
+ const host=put(tucked,0,'MHA-1-038','energy',0,true);
+ const before=tucked.players[0].deck.length;
+ const topCard=tucked.players[0].deck[0];
+ tucked=toPhase(tucked,'main');
+ tucked=use(tucked,findAct(tucked,a=>a.type==='activate'&&a.uid===host.uid&&a.mode==='onceTuck','tuck'));
+ const under=live(tucked,0,host.uid).under;
+ assert.equal(under.length,1);
+ assert.equal(under[0].uid,topCard.uid);
+ assert.equal(under[0].faceDown,true);
+ assert.equal(tucked.players[0].deck.length,before-1);
+ assert.throws(()=>use(tucked,{type:'activate',uid:host.uid,mode:'onceTuck'}),/Action not currently legal/);
+ assert.equal(assertUniversalMatch(packs,tucked),true);
+
+ let dry=open(pack,3810);
+ const empty=put(dry,0,'MHA-1-038','front',0,true);
+ dry.players[0].outside.push(...dry.players[0].deck);
+ dry.players[0].deck=[];
+ dry=toPhase(dry,'main');
+ assert.equal(acts(dry).some(a=>a.type==='activate'&&a.uid===empty.uid),false);
+ assert.throws(()=>use(dry,{type:'activate',uid:empty.uid,mode:'onceTuck'}),/Action not currently legal/);
+ assert.equal(assertUniversalMatch(packs,dry),true);
 });

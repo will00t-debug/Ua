@@ -99,6 +99,16 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   ready:true, implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:Object.freeze({colors:Object.freeze(['purple','red']), amount:1})
  }),
+ 'MHA-1-038':Object.freeze({
+  ready:true, implementation:'dsl',
+  facedownKeywordThresholds:Object.freeze([
+   Object.freeze({atLeast:2, keyword:'doubleBlock'}),
+   Object.freeze({atLeast:4, keyword:'doubleAttack'})
+  ]),
+  mainAbility:Object.freeze({
+   op:'onceTuckFacedown', oncePerTurn:true, from:'deckTop', host:'self', count:1
+  })
+ }),
  'MHA-1-039':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onAttack:Object.freeze([{op:'buffSelf', bp:1000}])})
