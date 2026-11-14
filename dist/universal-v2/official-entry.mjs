@@ -200,10 +200,21 @@ export function createImcBattlePack(){
  return imcBattlePack;
 }
 
-// Nonofficial 50-card red practice list; official starter copy counts remain unknown.
+// Nonofficial red 50-card practice build with energy curve, Raid sources and triggers.
+// This is NOT the UA55ST starter: official per-card starter copy counts remain unknown.
 export function imcPracticeDeck(){
  const pack=createImcBattlePack();
- return {pack,counts:practiceDeck(pack,{color:'red'})};
+ const counts={
+  'IMC-1-088':3,'IMC-1-091':3,'IMC-1-095':2,
+  'IMC-1-092':3,'IMC-1-096':3,'IMC-1-105':2,
+  'IMC-1-090':4,'IMC-1-093':2,'IMC-1-082':2,'IMC-1-084':2,'IMC-1-086':2,
+  'IMC-1-089':3,'IMC-1-083':2,'IMC-1-069':2,'IMC-1-074':2,'IMC-1-100':1,
+  'IMC-1-101':3,'IMC-1-103':3,'IMC-1-106':2,'IMC-1-098':2,
+  'IMC-1-094':2
+ };
+ const issues=validateUniversalDeck(pack,counts);
+ if(issues.length)throw Error('IMC red practice deck: '+issues.join('; '));
+ return {pack,counts:Object.freeze(counts)};
 }
 
 let mhaBattlePack=null;
