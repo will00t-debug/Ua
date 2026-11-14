@@ -11,6 +11,23 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   ready:true, implementation:'dsl', impactNull:true,
   effects:Object.freeze({onRetire:Object.freeze([{op:'drawDiscard', count:1}])})
  }),
+ 'MHA-1-003':Object.freeze({
+  ready:true, implementation:'dsl',
+  passiveBonuses:Object.freeze([Object.freeze({
+   bp:1000,
+   condition:Object.freeze({
+    kind:'ownActivateMainAtLeast', turn:'any', zone:'field', min:3
+   })
+  })])
+ }),
+ 'MHA-1-005':Object.freeze({
+  ready:true, implementation:'dsl', ownTurnBp:2000,
+  battleRequiresAnyName:Object.freeze(['オール・フォー・ワン','死柄木 弔']),
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:Object.freeze([Object.freeze({op:'grantSelfAttackDamageThisTurn', amount:2})])
+  })
+ }),
  'MHA-1-006':Object.freeze({
   ready:true, implementation:'dsl',
   mainAbility:Object.freeze({op:'payHandMoveOrSwap', oncePerTurn:true, pay:1})
@@ -30,6 +47,13 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   mainAbility:Object.freeze({
    op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
    then:Object.freeze([{op:'removeOppFrontUnderBp', bp:2000}])
+  })
+ }),
+ 'MHA-1-011':Object.freeze({
+  ready:true, implementation:'dsl', blockSkipsNextActive:true,
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:Object.freeze([Object.freeze({op:'grantSelfMustBlockThisTurn'})])
   })
  }),
  'MHA-1-008':vanilla,
@@ -81,6 +105,19 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
  }),
  'MHA-1-022':play(Object.freeze([{op:'bounceOwnOtherUnderEnergy', energy:1}])),
  'MHA-1-024':vanilla,
+ 'MHA-1-026':Object.freeze({
+  ready:true, implementation:'dsl', raidName:'オーバーホール', printedImpact:1,
+  effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
+   op:'millUpToThenRecover', count:3, optional:true,
+   recover:Object.freeze({
+    zone:'outside', max:1, optional:true, excludeName:'オーバーホール',
+    anyOf:Object.freeze([
+     Object.freeze({field:'trait', value:'死穢八斎會'}),
+     Object.freeze({field:'name', value:'エリ'})
+    ])
+   })
+  })])})
+ }),
  'MHA-1-027':Object.freeze({
   ready:true, implementation:'dsl',
   passiveBonuses:Object.freeze([Object.freeze({
