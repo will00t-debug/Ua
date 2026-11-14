@@ -14,13 +14,11 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp,universalCardEnergy,
  universalImpactNull,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-1-051','MHA-1-052','MHA-1-053','MHA-1-054','MHA-1-056','MHA-1-057','MHA-1-058','MHA-1-059','MHA-1-061','MHA-1-064','MHA-1-065',
- 'MHA-1-067','MHA-1-068','MHA-1-069','MHA-1-070','MHA-1-071','MHA-1-073','MHA-1-074','MHA-1-075','MHA-1-077','MHA-1-078',
- 'MHA-1-079','MHA-1-080','MHA-1-082','MHA-1-083','MHA-1-086','MHA-1-087','MHA-1-088','MHA-1-089','MHA-1-092',
- 'MHA-1-093','MHA-1-094','MHA-1-097','MHA-1-098'];
-const OPEN=['MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066','MHA-1-072',
- 'MHA-1-076','MHA-1-081','MHA-1-084','MHA-1-085',
- 'MHA-1-090','MHA-1-091','MHA-1-095','MHA-1-096','MHA-1-099','MHA-1-100'];
+const READY=['MHA-1-051','MHA-1-052','MHA-1-053','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-057','MHA-1-058','MHA-1-059','MHA-1-060','MHA-1-061','MHA-1-062','MHA-1-064','MHA-1-065',
+ 'MHA-1-066','MHA-1-067','MHA-1-068','MHA-1-069','MHA-1-070','MHA-1-071','MHA-1-072','MHA-1-073','MHA-1-074','MHA-1-075','MHA-1-076','MHA-1-077','MHA-1-078',
+ 'MHA-1-079','MHA-1-080','MHA-1-081','MHA-1-082','MHA-1-083','MHA-1-084','MHA-1-086','MHA-1-087','MHA-1-088','MHA-1-089','MHA-1-092',
+ 'MHA-1-093','MHA-1-094','MHA-1-097','MHA-1-098','MHA-1-099','MHA-1-100'];
+const OPEN=['MHA-1-085','MHA-1-090','MHA-1-091','MHA-1-095','MHA-1-096'];
 const VIA_STARTER=['MHA-1-063'];
 const LIMITED=new Set(['MHA-1-064','MHA-1-097','MHA-1-065','MHA-1-098']);
 const pack=createMhaV2Pack();
@@ -30,10 +28,20 @@ function counts(extra={},usePack=pack){
  for(const id of READY)c[id]=id==='MHA-1-057'||id==='MHA-1-078'?4:id==='MHA-1-086'?3:1;
  for(const [id,n] of Object.entries(extra))c[id]=(c[id]||0)+n;
  let total=Object.values(c).reduce((a,b)=>a+b,0);
+ const reserved=new Set(Object.keys(extra));
+ const shrink=['MHA-1-086',...READY.slice().reverse().filter(id=>
+  !reserved.has(id)&&!LIMITED.has(id)&&id!=='MHA-1-057'&&id!=='MHA-1-078'&&id!=='MHA-1-086')];
+ while(total>50){
+  const id=shrink.find(key=>(c[key]||0)>(key==='MHA-1-086'?3:0));
+  assert.ok(id,'deck cannot make room for '+JSON.stringify(extra));
+  c[id]-=1;
+  total-=1;
+  if(c[id]===0)delete c[id];
+ }
  for(const id of READY){
   if(LIMITED.has(id))continue;
   const add=Math.min(4-(c[id]||0),50-total);
-  if(add>0){c[id]+=add;total+=add;}
+  if(add>0){c[id]=(c[id]||0)+add;total+=add;}
   if(total===50)break;
  }
  assert.equal(total,50);
@@ -798,18 +806,23 @@ function probeMatch(extras,seed){
  const bodies=[...ready,...extras];
  const usePack=createUniversalPack({id:'mha-d11',version:'probe-'+seed,cards:bodies});
  const counts={};
+ const used={special:0,final:0,color:0};
  let total=0;
- for(const card of extras){counts[card.id]=1;total+=1;}
- for(const card of ready){
-  if(total>=50)break;
-  counts[card.id]=1;total+=1;
- }
- for(const card of [...extras,...ready]){
-  if(total>=50)break;
-  const room=4-(counts[card.id]||0);
-  const n=Math.min(room,50-total);
-  if(n>0){counts[card.id]+=n;total+=n;}
- }
+ const room=card=>{
+  let n=4-(counts[card.id]||0);
+  if(Object.hasOwn(used,card.trigger))n=Math.min(n,4-used[card.trigger]);
+  return Math.max(0,Math.min(n,50-total));
+ };
+ const take=(card,want)=>{
+  const add=Math.min(want,room(card));
+  if(add<=0)return;
+  counts[card.id]=(counts[card.id]||0)+add;
+  total+=add;
+  if(Object.hasOwn(used,card.trigger))used[card.trigger]+=add;
+ };
+ for(const card of extras)take(card,1);
+ for(const card of ready)take(card,1);
+ for(const card of [...extras,...ready])take(card,4);
  assert.equal(total,50);
  assert.deepEqual(validateUniversalDeck(usePack,counts),[]);
  let s=newUniversalMatch(usePack,{decks:[counts,counts],seed,first:0});

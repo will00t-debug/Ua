@@ -30,12 +30,29 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
    }])
   })
  }),
+ 'MHA-1-003':Object.freeze({
+  ready:true, implementation:'dsl',
+  passiveBonuses:Object.freeze([Object.freeze({
+   bp:1000,
+   condition:Object.freeze({
+    kind:'ownActivateMainAtLeast', turn:'any', zone:'field', min:3
+   })
+  })])
+ }),
  'MHA-1-004':Object.freeze({
   ready:true, implementation:'dsl', printedImpact:1,
   handEnergyWhileActivateMain:Object.freeze({min:3, amount:3}),
   mainAbility:Object.freeze({
    op:'gainSameLineMains', oncePerTurn:true,
    excludeNames:Object.freeze(['オール・フォー・ワン'])
+  })
+ }),
+ 'MHA-1-005':Object.freeze({
+  ready:true, implementation:'dsl', ownTurnBp:2000,
+  battleRequiresAnyName:Object.freeze(['オール・フォー・ワン','死柄木 弔']),
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:Object.freeze([Object.freeze({op:'grantSelfAttackDamageThisTurn', amount:2})])
   })
  }),
  'MHA-1-006':Object.freeze({
@@ -57,6 +74,13 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   mainAbility:Object.freeze({
    op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
    then:Object.freeze([{op:'removeOppFrontUnderBp', bp:2000}])
+  })
+ }),
+ 'MHA-1-011':Object.freeze({
+  ready:true, implementation:'dsl', blockSkipsNextActive:true,
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:Object.freeze([Object.freeze({op:'grantSelfMustBlockThisTurn'})])
   })
  }),
  'MHA-1-008':vanilla,
@@ -136,13 +160,18 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
    ])
   }])})
  }),
- 'MHA-1-029':Object.freeze({
-  ready:true, implementation:'dsl',
-  playRequiresOwnName:'オーバーホール',
-  triggerEffect:Object.freeze({op:'retireOppFront'}),
-  effects:Object.freeze({onPlay:Object.freeze([{
-   op:'restOppFrontStripLock', optional:true
-  }])})
+ 'MHA-1-026':Object.freeze({
+  ready:true, implementation:'dsl', raidName:'オーバーホール', printedImpact:1,
+  effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
+   op:'millUpToThenRecover', count:3, optional:true,
+   recover:Object.freeze({
+    zone:'outside', max:1, optional:true, excludeName:'オーバーホール',
+    anyOf:Object.freeze([
+     Object.freeze({field:'trait', value:'死穢八斎會'}),
+     Object.freeze({field:'name', value:'エリ'})
+    ])
+   })
+  })])})
  }),
  'MHA-1-027':Object.freeze({
   ready:true, implementation:'dsl',
@@ -155,12 +184,30 @@ export const MHA_PROGRAMS_001_050=Object.freeze({
   })])
  }),
  'MHA-1-028':play(Object.freeze([{op:'drawDiscard', count:1}])),
+ 'MHA-1-029':Object.freeze({
+  ready:true, implementation:'dsl',
+  playRequiresOwnName:'オーバーホール',
+  triggerEffect:Object.freeze({op:'retireOppFront'}),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'restOppFrontStripLock', optional:true
+  }])})
+ }),
  'MHA-1-032':play(Object.freeze([{op:'recoverAp', count:2}])),
  'MHA-1-034':Object.freeze({ready:true, implementation:'dsl', activeExtraEnergy:1}),
  'MHA-1-036':Object.freeze({ready:true, implementation:'dsl', step:true}),
  'MHA-1-037':Object.freeze({
   ready:true, implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:Object.freeze({colors:Object.freeze(['purple','red']), amount:1})
+ }),
+ 'MHA-1-038':Object.freeze({
+  ready:true, implementation:'dsl',
+  facedownKeywordThresholds:Object.freeze([
+   Object.freeze({atLeast:2, keyword:'doubleBlock'}),
+   Object.freeze({atLeast:4, keyword:'doubleAttack'})
+  ]),
+  mainAbility:Object.freeze({
+   op:'onceTuckFacedown', oncePerTurn:true, from:'deckTop', host:'self', count:1
+  })
  }),
  'MHA-1-039':Object.freeze({
   ready:true, implementation:'dsl',

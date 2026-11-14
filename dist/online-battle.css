@@ -40,3 +40,136 @@ body.v2-online-battle .online-public-dialog .art{width:100%;height:auto}
  body.v2-online-battle .online-inspection-heading h2{flex:0 0 auto}
  body.v2-online-battle #match-view .v2-compact-actions button{font-size:10px;min-height:27px;padding:3px 7px}
 }
+
+/* Standard online pending/trigger choices match the compact AI trigger sheet.
+   Wider private-card inspection keeps its full workspace. */
+body.v2-online-battle .online-effect-overlay {
+ padding:clamp(10px,3vw,24px);
+ overscroll-behavior:contain;
+}
+body.v2-online-battle .online-effect-overlay .dialog.pending {
+ box-sizing:border-box;
+ width:min(540px,100%);
+ max-width:100%;
+ max-height:calc(100dvh - 30px);
+ margin:auto;
+ padding:clamp(14px,3vw,22px);
+ border-radius:17px;
+ overflow:auto;
+}
+body.v2-online-battle .online-effect-overlay .dialog.pending:has(.online-private-inspection) {
+ width:min(920px,100%);
+}
+body.v2-online-battle .online-effect-overlay .dialog.pending .headline {
+ gap:8px;
+ margin-bottom:10px;
+}
+body.v2-online-battle .online-effect-overlay .dialog.pending .headline h2 {
+ font-size:clamp(17px,4vw,22px);
+}
+@media (max-width:620px) {
+ body.v2-online-battle .online-effect-overlay {padding:10px}
+ body.v2-online-battle .online-effect-overlay .dialog.pending {
+  max-height:calc(100dvh - 20px);
+  padding:15px 10px;
+ }
+}
+
+/* The server authorizes both the resolving card and the inspected deck top
+   for the current controller. Keep their print readable above legal actions. */
+body.v2-online-battle .online-effect-overlay .online-pending-card{
+ display:grid;
+ grid-template-columns:clamp(68px,19vw,98px) minmax(0,1fr);
+ gap:10px;
+ align-items:start;
+ padding:10px;
+ margin:8px 0;
+ background:#171d25;
+ border:1px solid #655a49;
+ border-radius:12px;
+ max-height:min(31dvh,260px);
+ overflow:auto;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-art{
+ position:sticky;
+ top:0;
+ width:100%;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-art .art{
+ display:block;
+ width:100%;
+ height:auto;
+ max-height:148px;
+ object-fit:contain;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-copy{
+ display:flex;
+ flex-direction:column;
+ gap:5px;
+ min-width:0;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-eyebrow{
+ font-size:11px;
+ font-weight:750;
+ color:#e8c483;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-name{
+ font-size:15px;
+ overflow-wrap:anywhere;
+ color:#fff7e5;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-effect{
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ line-height:1.55;
+ font-size:13px;
+ color:#e7e0d5;
+ margin:0;
+}
+body.v2-online-battle .online-effect-overlay .online-pending-card-open{
+ align-self:flex-start;
+ font-size:12px;
+ padding:4px 9px;
+ min-height:32px;
+}
+@media (max-width:620px){
+ body.v2-online-battle .online-effect-overlay .online-pending-card{
+  grid-template-columns:70px minmax(0,1fr);
+  gap:8px;
+  max-height:30dvh;
+  padding:8px;
+ }
+ body.v2-online-battle .online-effect-overlay .online-pending-card-effect{font-size:12px}
+}
+
+/* Online IMPACT / direct LIFE choices must remain operable on desktops as well
+   as handsets. Only published, numbered LIFE positions are selectable. */
+body.v2-online-battle .online-life-target-overlay{
+ position:fixed;inset:0;z-index:470;display:grid;place-items:center;
+ padding:12px;overflow:auto;background:#070b12e6;overscroll-behavior:contain
+}
+body.v2-online-battle .online-life-target-overlay .dialog.pending{
+ box-sizing:border-box;width:min(540px,96vw);max-height:calc(100dvh - 24px);
+ overflow:auto;margin:auto;padding:clamp(14px,2.5vw,22px);
+ background:#142338;color:#eef6ff;border:1px solid #5a8fc2;border-radius:15px;
+ box-shadow:0 18px 55px #000b
+}
+body.v2-online-battle .online-life-target-overlay .v2-life-picker-slot{
+ cursor:pointer;touch-action:manipulation
+}
+/* Long-pressing a public Raid top shows its face-up bases and printed effects. */
+body.v2-online-battle .online-raid-base-section{
+ margin-top:12px;padding-top:12px;border-top:1px solid #557894
+}
+body.v2-online-battle .online-raid-base-section h3{
+ margin:0 0 9px;font-size:15px;color:#eff7ff
+}
+body.v2-online-battle .online-raid-base-gallery{
+ max-height:37dvh;overflow-y:auto
+}
+body.v2-online-battle .online-raid-base-gallery .v2-zone-card{
+ min-width:0
+}
+body.v2-online-battle .online-raid-base-gallery .v2-zone-card .art{
+ max-height:145px;object-fit:contain
+}

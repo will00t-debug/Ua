@@ -122,6 +122,23 @@ export function showOnlineFacedown({el,parent,card,nameOf,imageOf,effectOf,onIns
 }
 
 export function closeOnlineCard(){globalThis.document?.querySelector('.online-card-overlay')?.remove();}
+// Only face-up Raid bases already present in the public view are inspectable.
+// Never derive a card identity from a hidden face-down marker.
+export function visibleRaidBaseCards(card){
+ const result=[],seen=new Set();
+ const visit=layer=>{
+  if(!layer||layer.faceDown===true||typeof layer.cardId!=='string'||!layer.cardId)return;
+  for(const below of (Array.isArray(layer.stack)?layer.stack:
+   Array.isArray(layer.raidLayers)?layer.raidLayers:[]))visit(below);
+  const key=typeof layer.uid==='string'&&layer.uid?layer.uid:layer.cardId;
+  if(seen.has(key))return;
+  seen.add(key);result.push({cardId:layer.cardId,...(layer.uid?{uid:layer.uid}:{})});
+ };
+ for(const layer of (Array.isArray(card?.raidLayers)?card.raidLayers:
+  Array.isArray(card?.stack)?card.stack:[]))visit(layer);
+ return result;
+}
+
 export function showOnlineCard({el,card,definition={},src,nameOf,imageOf,effectOf,onInspect}){
  if(!card?.cardId)return;
  closeOnlineCard();
@@ -136,12 +153,47 @@ export function showOnlineCard({el,card,definition={},src,nameOf,imageOf,effectO
   el('h2',{text:card.name||definition.name||card.cardId}),el('p',{class:'note',text:card.cardId}))),
   el('p',{class:'field-effect',text:typeof effect==='string'?effect:'請查看印刷卡面。'}));
  if(facedownSection)dialog.append(facedownSection);
+ const raidBases=visibleRaidBaseCards(card);
+ if(raidBases.length){
+  const gallery=el('div',{class:'v2-zone-gallery online-raid-base-gallery'});
+  for(const base of raidBases){
+   const name=nameOf?.(base.cardId)||base.cardId;
+   const effect=effectOf?.(base.cardId)||'';
+   const button=el('button',{type:'button',class:'v2-zone-open',
+    'aria-label':'查看底板 '+name,onClick:()=>onInspect?.(base)},
+    image(el,imageOf?.(base.cardId),name),
+    el('span',{class:'v2-zone-card-name',text:name}));
+   const tile=el('article',{class:'v2-zone-card'},button);
+   if(typeof effect==='string'&&effect.trim())
+    tile.append(el('p',{class:'v2-facedown-effect',text:effect.trim()}));
+   gallery.append(tile);
+  }
+  dialog.append(el('section',{class:'online-raid-base-section',
+   'aria-label':'突襲底板'},el('h3',{text:'突襲底板 · '+raidBases.length+' 張'}),gallery));
+ }
  overlay.append(dialog);
  const opener=document.activeElement;
  const close=()=>{overlay.remove();if(opener?.isConnected)opener.focus({preventScroll:true});};
  overlay.addEventListener('click',event=>{if(event.target===overlay)close();});
  overlay.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
  (document.querySelector('.online-battle-shell')||document.body).append(overlay);dialog.focus({preventScroll:true});
+}
+
+function pendingCardSheet({el,card,label,definition,imageSource,openCard}){
+ if(!card?.cardId)return null;
+ const printed=definition(0,card.cardId)||{};
+ const name=printed.name||card.name||card.cardId;
+ const effect=[printed.effect,printed.effectJa,printed.text,printed.description]
+  .find(value=>typeof value==='string'&&value.trim()&&value.trim()!=='-')||
+  '這張卡目前沒有可顯示的印刷效果。';
+ return el('section',{class:'online-pending-card','aria-label':label+'：'+name},
+  el('div',{class:'online-pending-card-art'},image(el,imageSource(0,card.cardId),name)),
+  el('div',{class:'online-pending-card-copy'},
+   el('span',{class:'online-pending-card-eyebrow',text:label}),
+   el('strong',{class:'online-pending-card-name',text:name}),
+   el('p',{class:'online-pending-card-effect',text:effect}),
+   el('button',{type:'button',class:'online-pending-card-open',text:'查看完整卡圖',
+    onClick:()=>openCard(0,'pending',{cardId:card.cardId,name})})));
 }
 
 export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,actions,
@@ -230,6 +282,7 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
    const piles=el('div',{class:'piles'});
    if(kind==='front')piles.append(el('div',{class:'pile'},'DECK',el('b',{text:p.deckCount})),el('div',{class:'pile'},'HAND',el('b',{text:p.handCount})));
    else for(const [zone,label]of [['outside','場外'],['removed','移除區']])piles.append(el('button',{type:'button',class:'pile v2-zone-pile',
+     'data-v2-zone':zone,
     'aria-label':(side===0?'我方':'對手')+label+' '+(p[zone]?.length||0)+' 張',onClick:()=>showZone(side,zone)},el('span',{text:label}),el('b',{text:p[zone]?.length||0})));
    return el('div',{class:'lineGroup'},el('span',{class:'lineLabel '+kind,text:kind==='front'?'前線 FRONT':'能源 ENERGY'}),slots,piles);
   };
@@ -293,8 +346,8 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
    }});
  }
  if(paused)middle.append(el('button',{type:'button',class:'v2-inspection-return',text:'返回效果選擇',onClick:onResume}));
- else if(view.pending?.kind==='attack-life-target'&&room.yourTurn&&!desktop){
-  const overlay=el('div',{class:'overlay v2-attack-life-overlay'},
+ else if(view.pending?.kind==='attack-life-target'&&room.yourTurn&&view.pending.player===0){
+  const overlay=el('div',{class:'overlay v2-attack-life-overlay online-life-target-overlay'},
    el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true',
     'aria-label':'進攻方選擇對手血區'},
     makeAttackLifePicker({el,lifeCount:view.players[1].lifeCount,
@@ -302,9 +355,15 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
   shell.append(overlay);
  }
  else if(view.pending&&view.pending.kind!=='attack-life-target'&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
+  const display=room.pendingDisplay||{};
+  const effectSource=pendingCardSheet({el,card:display.effectSource,label:'發動效果的卡牌',
+   definition,imageSource,openCard});
+  const lookedAt=pendingCardSheet({el,card:display.lookedAt,label:'目前查看的牌庫頂',
+   definition,imageSource,openCard});
   const dialog=el('section',{class:'dialog pending panel',role:'dialog','aria-modal':'true','aria-label':'效果選擇'},
    el('div',{class:'headline'},el('h2',{text:view.phase==='setup'?'起手調度':'效果選擇'}),
-    actions.querySelector('.online-inspection-peek')?null:el('button',{type:'button',text:'查看場面與手牌',onClick:onPause})),actions);
+    actions.querySelector('.online-inspection-peek')?null:el('button',{type:'button',text:'查看場面與手牌',onClick:onPause})),
+   effectSource,lookedAt,actions);
   const overlay=el('div',{class:'overlay v2-pending-overlay online-effect-overlay'},dialog);shell.append(overlay);
  }
  return shell;

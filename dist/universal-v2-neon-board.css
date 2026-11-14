@@ -350,3 +350,144 @@
   width:clamp(37px,6.5dvh,58px)
  }
 }
+
+/* Desktop zone visibility: keep both players' outside and removed piles in
+   reserved, clickable spaces even at laptop zoom/short viewport heights.
+   Visual-only: original zone buttons and their listeners are not replaced. */
+@media (min-width:761px) and (min-height:460px) {
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group {
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  align-items:stretch;
+  gap:2px;
+  padding:4px 5px;
+  overflow:hidden;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .lifeRow {
+  display:grid;
+  grid-template-rows:minmax(15px,auto);
+  grid-auto-rows:minmax(0,1fr);
+  flex:1 1 0;
+  align-items:stretch;
+  justify-items:stretch;
+  justify-content:stretch;
+  gap:0;
+  width:100%;
+  height:auto;
+  min-height:0;
+  max-height:none;
+  overflow:hidden;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .lifeRow .v2-life-caption {
+  display:block;
+  min-height:0;
+  margin:0;
+  padding:0 2px 1px;
+  font-size:clamp(9px,.9vw,12px);
+  line-height:14px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .lifeRow .lifeCard,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .lifeRow .lifeCard:last-of-type {
+  box-sizing:border-box;
+  flex:none;
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-height:none;
+  margin:0;
+  padding:0 4px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .v2-removed-zone {
+  display:block;
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  margin:0;
+  position:relative;
+  z-index:2;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .v2-removed-zone > .v2-zone-pile {
+  box-sizing:border-box;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+  height:24px;
+  min-height:24px;
+  max-height:none;
+  margin:0;
+  padding:2px 5px;
+  font-size:11px;
+  white-space:nowrap;
+  cursor:pointer;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:repeat(2,minmax(0,1fr));
+  justify-content:stretch;
+  align-content:stretch;
+  align-items:stretch;
+  gap:4px;
+  min-height:0;
+  padding:5px 6px;
+  overflow:hidden;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group > .v2-pile-deck,
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group > .v2-zone-pile {
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:repeat(2,minmax(0,1fr));
+  align-items:center;
+  justify-items:stretch;
+  width:100%;
+  max-width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:1px 3px;
+  overflow:hidden;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group :is(.v2-deck-stack,.v2-outside-preview,.v2-outside-placeholder) {
+  grid-column:1;
+  grid-row:1 / span 2;
+  justify-self:center;
+  box-sizing:border-box;
+  width:min(5.5dvh,44px);
+  height:auto;
+  max-height:100%;
+  aspect-ratio:63/88;
+  object-fit:cover;
+  min-width:0;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group :is(.v2-pile-label,.v2-zone-pile > span:not(.v2-outside-placeholder)) {
+  min-width:0;
+  font-size:clamp(10px,.9vw,13px);
+  white-space:nowrap;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group :is(.v2-pile-count,.v2-zone-pile > b) {
+  min-width:0;
+  font-size:clamp(12px,1.1vw,17px);
+ }
+}
+@media (min-width:761px) and (min-height:460px) and (max-height:570px) {
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group {
+  padding:2px 3px;
+  gap:1px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-life-group > .v2-removed-zone > .v2-zone-pile {
+  height:20px;
+  min-height:20px;
+  font-size:10px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group {
+  padding:3px;
+  gap:2px;
+ }
+ body.v2-battle-page.v2-playing #match-view .v2-reference-table .v2-pile-group :is(.v2-deck-stack,.v2-outside-preview,.v2-outside-placeholder) {
+  width:min(4.8dvh,36px);
+ }
+}

@@ -8,14 +8,15 @@ import {createUniversalPack, validateUniversalDeck} from '../dist/universal-v2/p
 import {officialV2Pack,v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, effectiveHandRequiredEnergy,
  legalUniversalActions, newUniversalMatch, universalBp, universalEnergyByColor,
- universalImpact, universalImpactNull, universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+ universalAttackDamage, universalImpact, universalImpactNull, universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 
 const READY=[
- 'MHA-1-001','MHA-1-002','MHA-1-004','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
- 'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
- 'MHA-1-020','MHA-1-021','MHA-1-022','MHA-1-023','MHA-1-024','MHA-1-025','MHA-1-027','MHA-1-028','MHA-1-029','MHA-1-032','MHA-1-034',
- 'MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
- 'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050'
+ 'MHA-1-001','MHA-1-002','MHA-1-003','MHA-1-004','MHA-1-005','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009',
+ 'MHA-1-010','MHA-1-011','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016',
+ 'MHA-1-017','MHA-1-018','MHA-1-019','MHA-1-020','MHA-1-021','MHA-1-022','MHA-1-023','MHA-1-024','MHA-1-025','MHA-1-026',
+ 'MHA-1-027','MHA-1-028','MHA-1-029','MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-038','MHA-1-039',
+ 'MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046','MHA-1-047','MHA-1-048','MHA-1-049',
+ 'MHA-1-050'
 ];
 const STANDARD_TRIGGER={
  active:'【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。',
@@ -54,6 +55,19 @@ function probePack(){
   ap:1, bp:1000, gen:1, trigger:null, traits:[], implementation:'dsl',
   effects:{onPlay:[{op:'grantSelfSniperThisTurn'}], onRetire:[{op:'draw',count:1}]}
  });
+ cards.push({
+  id:'PROBE-WALL', name:'高牆探針', color:'red', type:'character', energy:0,
+  ap:1, bp:5000, gen:1, trigger:null, traits:[], implementation:'vanilla'
+ });
+ cards.push({
+  id:'PROBE-DOUBLE', name:'雙擋探針', color:'red', type:'character', energy:0,
+  ap:1, bp:5000, gen:1, trigger:null, traits:[], implementation:'dsl',
+  readyOnBlockCount:1
+ });
+ cards.push({
+  id:'PROBE-ERI', name:'エリ', color:'purple', type:'character', energy:2,
+  ap:1, bp:1000, gen:1, trigger:null, traits:[], implementation:'vanilla'
+ });
  return createUniversalPack({id:'mha-probe', cards, version:'mha-c-probe'});
 }
 const probe=probePack();
@@ -62,15 +76,17 @@ const probePacks=[probe,probe];
 function deck(source, extra={}){
  const counts={...extra};
  const pinned=[
-  'MHA-1-001','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-012',
-  'MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016','MHA-1-017','MHA-1-018','MHA-1-019',
-  'MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034',
-  'MHA-1-036','MHA-1-037','MHA-1-039','MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046',
-  'MHA-1-047','MHA-1-048','MHA-1-049','MHA-1-050',
-  'PROBE-IMPACT','PROBE-TALL','PROBE-OVER','PROBE-RETIRE','PROBE-SNIPER'
+  'MHA-1-001','MHA-1-003','MHA-1-005','MHA-1-006','MHA-1-007','MHA-1-008','MHA-1-009',
+  'MHA-1-010','MHA-1-011','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-015','MHA-1-016',
+  'MHA-1-017','MHA-1-018','MHA-1-019','MHA-1-021','MHA-1-022','MHA-1-024','MHA-1-026',
+  'MHA-1-027','MHA-1-028','MHA-1-032','MHA-1-034','MHA-1-036','MHA-1-037','MHA-1-039',
+  'MHA-1-040','MHA-1-041','MHA-1-043','MHA-1-046','MHA-1-047','MHA-1-048','MHA-1-049',
+  'MHA-1-050',
+  'PROBE-IMPACT','PROBE-TALL','PROBE-OVER','PROBE-RETIRE','PROBE-SNIPER',
+  'PROBE-WALL','PROBE-DOUBLE','PROBE-ERI'
  ];
  for(const id of pinned)
-  if(source.cards[id]&&!counts[id])counts[id]=id==='MHA-1-016'?2:id==='MHA-1-034'?3:1;
+  if(source.cards[id]&&!counts[id])counts[id]=id==='MHA-1-016'||id==='MHA-1-005'||id==='MHA-1-011'?2:id==='MHA-1-034'?3:1;
  const limited=new Set(['special','color','final']);
  let total=Object.values(counts).reduce((sum,n)=>sum+n,0);
  for(const card of Object.values(source.cards).sort((a,b)=>a.id<b.id?-1:1)){
@@ -1330,4 +1346,181 @@ test('048 reorders its life and stays once against an opposing effect. Q446 stil
  assert.equal(lost.players[0].front[0],null);
  assert.equal(lost.players[0].outside.some(c=>c.uid===defender.uid),true);
  assert.equal(assertUniversalMatch(probePacks,lost),true);
+});
+
+test('003 gains 1000 BP only while three own activate-main characters are on the field',()=>{
+ let s=open(pack,3001);
+ const afo=put(s,0,'MHA-1-003','front',0,true);
+ put(s,0,'MHA-1-006','front',1,true);
+ put(s,0,'MHA-1-012','energy',0,true);
+ const foe=put(s,1,'MHA-1-018','front',0,true);
+ s=toPhase(s,'main');
+ assert.equal(universalBp(pack,s,live(s,0,afo.uid)),3000);
+ put(s,0,'MHA-1-010','energy',1,true);
+ assert.equal(universalBp(pack,s,live(s,0,afo.uid)),4000);
+ assert.equal(universalBp(pack,s,live(s,1,foe.uid)),2000);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('005 cannot battle without the printed names, and its main grants damage 2',()=>{
+ let dry=open(pack,5001);
+ const giant=put(dry,0,'MHA-1-005','front',0,true);
+ put(dry,1,'MHA-1-008','front',0,true);
+ dry=toPhase(dry,'attack');
+ assert.equal(universalBp(pack,dry,live(dry,0,giant.uid)),6000);
+ assert.equal(acts(dry).some(a=>a.type==='attack'&&a.uid===giant.uid),false);
+ assert.throws(()=>use(dry,{type:'attack',uid:giant.uid}),/Action not currently legal/);
+ let blocked=open(pack,5002);
+ put(blocked,0,'MHA-1-008','front',0,true);
+ const wall=put(blocked,1,'MHA-1-005','front',0,true);
+ blocked=toPhase(blocked,'attack');
+ blocked=use(blocked,findAct(blocked,a=>a.type==='attack','attack'));
+ assert.equal(acts(blocked).some(a=>a.type==='chooseBlock'&&a.uid===wall.uid),false);
+ assert.equal(universalBp(pack,blocked,live(blocked,1,wall.uid)),4000);
+
+ let named=open(pack,5003);
+ const actor=put(named,0,'MHA-1-005','front',1,true);
+ const rear=put(named,0,'MHA-1-005','energy',0,true);
+ put(named,0,'MHA-1-008','front',0,true);
+ put(named,1,'MHA-1-015','front',0,true);
+ named=toPhase(named,'main');
+ assert.equal(acts(named).some(a=>a.type==='activate'&&a.uid===rear.uid&&a.mode==='frontOnce'),true);
+ named=use(named,findAct(named,a=>a.type==='activate'&&a.uid===actor.uid&&a.mode==='frontOnce','damage'));
+ assert.equal(universalAttackDamage(pack,named,live(named,0,actor.uid)),2);
+ assert.throws(()=>use(named,{type:'activate',uid:actor.uid,mode:'frontOnce'}),/Action not currently legal/);
+ named=toPhase(named,'attack');
+ assert.equal(universalAttackDamage(pack,named,live(named,0,actor.uid)),2);
+ const life=named.players[1].life.length;
+ named=use(named,findAct(named,a=>a.type==='attack'&&a.uid===actor.uid,'granted attack'));
+ if(named.pending?.kind==='block')
+  named=use(named,findAct(named,a=>a.type==='chooseBlock'&&a.uid===null,'decline'));
+ let guard=0;
+ while(named.pending&&guard++<6){
+  if(named.pending.kind==='life-batch-order')
+   named=use(named,findAct(named,a=>a.type==='chooseLifeOrder','life order'));
+  else if(named.pending.kind==='life-trigger')
+   named=use(named,findAct(named,a=>a.type==='chooseTrigger'&&a.mode==='skip','skip'));
+  else break;
+ }
+ assert.equal(named.players[1].life.length,life-2);
+ assert.equal(named.players[1].lifeRevealed.length,0);
+ assert.equal(assertUniversalMatch(packs,named),true);
+
+ let cost=open(pack,5004);
+ const held=toHand(cost,0,'MHA-1-005');
+ cost=toPhase(cost,'main');
+ assert.equal(acts(cost).some(a=>a.type==='play'&&a.uid===held.uid),false);
+ put(cost,0,'MHA-1-016','energy',0,true);
+ put(cost,0,'MHA-1-021','energy',1,true);
+ put(cost,0,'MHA-1-027','energy',2,true);
+ assert.equal(acts(cost).some(a=>a.type==='play'&&a.uid===held.uid&&a.line==='front'),true);
+});
+
+test('011 skips the blocker next active, and its main makes a legal block mandatory',()=>{
+ let s=open(probe,1101);
+ const stain=put(s,0,'MHA-1-011','front',0,true);
+ const wall=put(s,1,'PROBE-WALL','front',0,true);
+ s=toPhase(s,'attack');
+ s=use(s,findAct(s,a=>a.type==='attack'&&a.uid===stain.uid,'attack'));
+ s=use(s,findAct(s,a=>a.type==='chooseBlock'&&a.uid===wall.uid,'block'));
+ assert.equal(live(s,1,wall.uid).ready,false);
+ assert.equal(s.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===wall.uid&&!e.consumed),true);
+ s=untilActive(s,1,'main');
+ assert.equal(live(s,1,wall.uid).ready,false);
+ assert.equal(s.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===wall.uid&&!e.consumed),false);
+ s=untilActive(s,0,'main');
+ assert.equal(live(s,1,wall.uid).ready,true);
+
+ let doubled=open(probe,1102);
+ const attacker=put(doubled,0,'MHA-1-011','front',0,true);
+ const twice=put(doubled,1,'PROBE-DOUBLE','front',0,true);
+ doubled=toPhase(doubled,'attack');
+ doubled=use(doubled,findAct(doubled,a=>a.type==='attack'&&a.uid===attacker.uid,'attack'));
+ doubled=use(doubled,findAct(doubled,a=>a.type==='chooseBlock'&&a.uid===twice.uid,'block'));
+ assert.equal(live(doubled,1,twice.uid).ready,false);
+ assert.equal(doubled.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===twice.uid&&!e.consumed),false);
+ doubled=untilActive(doubled,1,'main');
+ assert.equal(live(doubled,1,twice.uid).ready,true);
+
+ let forced=open(pack,1103);
+ const source=put(forced,0,'MHA-1-011','front',0,true);
+ const rear=put(forced,0,'MHA-1-011','energy',0,true);
+ const blocker=put(forced,1,'MHA-1-010','front',0,true);
+ forced=toPhase(forced,'main');
+ assert.equal(acts(forced).some(a=>a.type==='activate'&&a.uid===rear.uid),true);
+ forced=use(forced,findAct(forced,a=>a.type==='activate'&&a.uid===source.uid,'force'));
+ assert.throws(()=>use(forced,{type:'activate',uid:source.uid,mode:'frontOnce'}),/Action not currently legal/);
+ forced=toPhase(forced,'attack');
+ forced=use(forced,findAct(forced,a=>a.type==='attack'&&a.uid===source.uid,'attack'));
+ assert.equal(forced.pending.kind,'block');
+ assert.equal(acts(forced).some(a=>a.type==='chooseBlock'&&a.uid===null),false);
+ assert.equal(acts(forced).some(a=>a.type==='chooseBlock'&&a.uid===blocker.uid),true);
+ assert.throws(()=>use(forced,{type:'chooseBlock',uid:null}),/Action not currently legal/);
+ assert.equal(assertUniversalMatch(packs,forced),true);
+
+ let costly=open(pack,1104);
+ const held=toHand(costly,0,'MHA-1-011');
+ costly=toPhase(costly,'main');
+ assert.equal(acts(costly).some(a=>a.type==='play'&&a.uid===held.uid),false);
+ assert.throws(()=>use(costly,{type:'play',uid:held.uid,line:'front',slot:0}),/Action not currently legal/);
+});
+
+test('026 raids Overhaul, mills up to three, and recovers Eri or another Shie Hassaikai character',()=>{
+ let skipped=open(pack,2601);
+ put(skipped,0,'MHA-1-016','energy',0,true);
+ put(skipped,0,'MHA-1-021','energy',1,true);
+ const base=put(skipped,0,'MHA-1-024','front',0,false);
+ const wrong=put(skipped,0,'MHA-1-008','front',1,false);
+ const raider=toHand(skipped,0,'MHA-1-026');
+ skipped=toPhase(skipped,'main');
+ const raids=acts(skipped).filter(a=>a.type==='raid'&&a.uid===raider.uid);
+ assert.equal(raids.some(a=>a.baseUid===base.uid&&a.line!=='energy'),true);
+ assert.equal(raids.some(a=>a.baseUid===wrong.uid),false);
+ skipped=use(skipped,findAct(skipped,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid&&a.line!=='energy','raid'));
+ assert.equal(skipped.pending.kind,'effect-mill-optional');
+ const outside=skipped.players[0].outside.length;
+ skipped=use(skipped,{type:'chooseMillOptional',mode:'stop'});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].outside.length,outside);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+
+ let taken=open(probe,2602);
+ put(taken,0,'MHA-1-016','energy',0,true);
+ put(taken,0,'MHA-1-021','energy',1,true);
+ const under=put(taken,0,'MHA-1-024','front',0,false);
+ const trait=toOutside(taken,0,'MHA-1-027');
+ const eri=toOutside(taken,0,'PROBE-ERI');
+ const excluded=toOutside(taken,0,'PROBE-OVER');
+ const plain=toOutside(taken,0,'MHA-1-015');
+ const topCard=toHand(taken,0,'MHA-1-026');
+ taken.players[0].deck.unshift(take(taken,0,'MHA-1-008'));
+ taken=toPhase(taken,'main');
+ taken=use(taken,findAct(taken,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===under.uid&&a.line!=='energy','raid'));
+ taken=use(taken,{type:'chooseMillOptional',mode:'mill'});
+ taken=use(taken,{type:'chooseMillOptional',mode:'stop'});
+ assert.equal(taken.pending.kind,'effect-recover-any');
+ assert.equal(acts(taken).some(a=>a.type==='chooseRecoverAny'&&a.uid===trait.uid),true);
+ assert.equal(acts(taken).some(a=>a.type==='chooseRecoverAny'&&a.uid===eri.uid),true);
+ assert.equal(acts(taken).some(a=>a.uid===excluded.uid),false);
+ assert.equal(acts(taken).some(a=>a.uid===plain.uid),false);
+ assert.equal(acts(taken).some(a=>a.type==='chooseRecoverAny'&&a.uid===null),true);
+ const left=trait;
+ taken.players[0].outside=taken.players[0].outside.filter(c=>c.uid!==left.uid);
+ taken.players[0].deck.push(left);
+ assert.throws(()=>use(taken,{type:'chooseRecoverAny',uid:left.uid}),/Action not currently legal|Illegal outside recovery/);
+ taken=use(taken,{type:'chooseRecoverAny',uid:eri.uid});
+ assert.equal(taken.players[0].hand.some(c=>c.uid===eri.uid),true);
+ assert.equal(taken.pending,null);
+
+ let impact=open(pack,2603);
+ const winner=put(impact,0,'MHA-1-026','front',0,true);
+ put(impact,1,'MHA-1-015','front',0,true);
+ const life=impact.players[1].life.length;
+ impact=toPhase(impact,'attack');
+ impact=use(impact,findAct(impact,a=>a.type==='attack'&&a.uid===winner.uid,'attack'));
+ impact=use(impact,findAct(impact,a=>a.type==='chooseBlock'&&a.uid!==null,'block'));
+ assert.equal(impact.players[1].life.length+impact.players[1].lifeRevealed.length,life-1);
+ if(impact.pending?.kind==='life-trigger')
+  impact=use(impact,findAct(impact,a=>a.type==='chooseTrigger'&&a.mode==='skip','skip'));
+ assert.equal(assertUniversalMatch(packs,impact),true);
 });

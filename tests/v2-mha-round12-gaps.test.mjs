@@ -1,6 +1,5 @@
-// Round 12 gaps, kept on round 15. 056, 059, 071, 074, 087, 089 and 093
-// are now programs. 076 stays pending. A full front removes one front card
-// before the energy character moves.
+// Round 12 gaps, kept on round 15. The eight sentences A unlocked are programs.
+// 085, 090, 091, 095 and 096 stay requests. 099 and 100 are ready.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
@@ -9,11 +8,10 @@ import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 
-const STILL=[
- 'MHA-1-055','MHA-1-060','MHA-1-062','MHA-1-066',
- 'MHA-1-072','MHA-1-076','MHA-1-081','MHA-1-084'
-];
-const KEPT=['MHA-1-051','MHA-1-054','MHA-1-056','MHA-1-059','MHA-1-070','MHA-1-071','MHA-1-074'];
+const STILL=['MHA-1-085','MHA-1-090','MHA-1-091','MHA-1-095','MHA-1-096'];
+const KEPT=['MHA-1-051','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059','MHA-1-060',
+ 'MHA-1-062','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072','MHA-1-074','MHA-1-076',
+ 'MHA-1-081','MHA-1-084','MHA-1-099','MHA-1-100'];
 
 function face(extra){
  const effects=extra.effects||{};
@@ -58,7 +56,7 @@ test('round 12 priority cards stay pending except the completed payment',()=>{
  ]);
 });
 
-test('055 cannot retire a front character from the energy-count gate',()=>{
+test('055 retires only when the energy gate and the optional follow-up are both present',()=>{
  reject(face({
   id:'GAP-055',step:true,
   effects:{onPlay:[{
@@ -68,6 +66,8 @@ test('055 cannot retire a front character from the energy-count gate',()=>{
    then:[{op:'retireOppFrontUnderBp',bp:5000}]
   }]}
  }),/invalid live-condition follow-up/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-055'].step,true);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-055'].effects.onPlay[0].then[0].bp,5000);
 });
 
 test('056 uses the named tuck and the attack strip',()=>{
@@ -118,6 +118,8 @@ test('060 cannot pay one hand card to outside and then active another character'
     then:[{op:'activeOwnOne',optional:true,maxEnergy:3,excludeName:'緑谷 出久'}]}]
   }]}
  }),/invalid once-per-turn gate/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-060'].effects.onAttack[0].then[0].op,'payHandThenActive');
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-060'].ownTurnBp,500);
 });
 
 test('062 cannot enter active only while Mei is present, then buff everyone',()=>{
@@ -128,6 +130,8 @@ test('062 cannot enter active only while Mei is present, then buff everyone',()=
   mainAbility:{op:'fieldRestRetireThen',then:[{op:'buffOwnField',
    filter:{field:'type',value:'character'},bp:500,optional:false}]}
  }),/unsupported main action ability/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-062'].enterActiveIfName,'発目 明');
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-062'].mainAbility.then[0].all,true);
 });
 
 test('066 cannot rest-play a traitless green character after the look',()=>{
@@ -140,6 +144,7 @@ test('066 cannot rest-play a traitless green character after the look',()=>{
     ap:null,max:1,trait:null}
   ]}
  }),/invalid hand REST entry/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-066'].effects.onPlay[1].thenActiveIf.name,'オールマイト');
 });
 
 test('071 puts one hand card outside and does not draw',()=>{
@@ -166,6 +171,8 @@ test('072 cannot draw until three cards or retire by the paid count',()=>{
    onAttack:[{op:'retireOppFrontUnderBp',handScale:1000,optional:true}]
   }
  }),/invalid discard cost\/draw/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-072'].printedAttackDamage,2);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-072'].effects.onAttack[0].op,'discardThenRetireScaled');
 });
 
 test('074 stays on its own turn when an opponent effect would move it',()=>{
@@ -183,7 +190,7 @@ test('074 stays on its own turn when an opponent effect would move it',()=>{
  assert.equal(MHA_PROGRAMS_051_100['MHA-1-074'].oppEffectLeave.instead,'stay');
 });
 
-test('076 stays pending, and a full front removes one card before the move',()=>{
+test('076 moves through a full front, including removing itself',()=>{
  accept(face({
   id:'GAP-076',
   effects:{onPlay:[{op:'moveEnergyTraitToFront',trait:null,max:1,
@@ -193,7 +200,7 @@ test('076 stays pending, and a full front removes one card before the move',()=>
   id:'GAP-076B',
   effects:{onPlay:[{op:'moveEnergyTraitToFront',trait:null,max:1,whenSelf:'front'}]}
  }),/invalid energy-line trait move/);
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-076'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-076'].effects.onPlay[0].whenSelf,'front');
  const mover=face({
   id:'GAP-076-LIVE',energy:0,
   effects:{onPlay:[{op:'moveEnergyTraitToFront',trait:null,max:1,
@@ -266,6 +273,8 @@ test('081 cannot choose life damage or a rest that skips the next active',()=>{
    ]
   }]}
  }),/invalid choose-one option/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-081'].raidName,'轟 焦凍');
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-081'].effects.onPlay[0].ownTurnOnly,true);
 });
 
 test('084 can widen the next BP selection, and a different amount stays illegal',()=>{
@@ -280,5 +289,6 @@ test('084 can widen the next BP selection, and a different amount stays illegal'
   mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'grantNextBpWindow',amount:500}]}
  }),/unsupported main action ability|invalid BP window/);
- assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'],undefined);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'].triggerEffect.bp,2500);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'].mainAbility.then[0].amount,1000);
 });
