@@ -626,3 +626,7 @@ IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 64 張 ready、4
 
 IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 77 張 ready、32 張 pending、目錄 109 張。006、007、009、010、017、048、056、059、071、074、087、089、093 進包。076 與第 15 輪解鎖的其餘句子維持 pending。契約在 `docs/v2-handoff/V2-R15A-shared-ops.md`。沒有合併 `main`，也沒有部署。
 
+## MHA 下一輪共用引擎
+
+基準仍是第 15 輪 `a22d510eda60f3d4736bcebf4aaddc47aa860af8`。IMC 113／113、`playable:true`。MHA 77 ready、32 pending、`playable:false`。新的共用操作在 `docs/v2-handoff/V2-MHA-shared-next.md`。004、038、085、090、099、002、003、005、011、026 都還沒寫卡牌程式。沒有合併 `main`，也沒有部署。
+
