@@ -864,6 +864,7 @@ function verifyProgram(program,path){
      f.field==='printedRequiredEnergyAtMost'?integer(f.value)&&f.value<=30:
      f.field==='triggerNot'?f.value==='final':
      f.field==='printedBp'?integer(f.value,0)&&f.value<=50000&&f.value%500===0:
+     f.field==='printedBpAtMost'?integer(f.value,0)&&f.value<=50000&&f.value%500===0:
      f.field==='colorAndType'?colorAndType.test(f.value):
      ['name','trait','color','type'].includes(f.field)&&
      typeof f.value==='string'&&!!f.value.trim()&&
