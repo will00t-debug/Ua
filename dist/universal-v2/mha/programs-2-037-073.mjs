@@ -4,6 +4,35 @@
 // Pending cards stay in requests-2-037-073.mjs and out of this object.
 
 export const MHA2_PROGRAMS_037_073=Object.freeze({
+ 'MHA-2-038':Object.freeze({
+  ready:true, implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'optionalRemoveHandGrantMains',
+   excludeName:'オール・フォー・ワン', color:'purple',
+   requireMain:true, noRaid:true, draw:1, optional:true
+  }])}),
+  notes:'可把 1 張有起動主要、沒有突襲、而且不是〈オール・フォー・ワン〉的紫角色放進移除區。做到才抽 1，並把那張卡的起動主要交給自己場上最多 1 張角色，直到這個回合結束。可以不放。'
+ }),
+ 'MHA-2-040':Object.freeze({
+  ready:true, implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'frontOnceGrantBpRules', frontOnly:true, oncePerTurn:true,
+   echoBp:500, zeroToRemoved:true
+  }),
+  notes:'前排、每回合一次，不休息：必須選 1 張對手前排。這個回合，那張卡受到 BP 減少時再 -500 一次，而且因 BP 0 以下退場時改放進移除區。活動觸發是卡表。'
+ }),
+ 'MHA-2-042':Object.freeze({
+  ready:true, implementation:'dsl',
+  raidName:'トガヒミコ',
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({op:'enemyBpDown', bp:1000, optional:true, zone:'front'})
+  ])}),
+  mainAbility:Object.freeze({
+   op:'frontOnceOppDownSelfUp', frontOnly:true, oncePerTurn:true,
+   bp:1000, selfBp:1000
+  }),
+  notes:'可突襲〈トガヒミコ〉，活動進場並可把能量列的底板移到前排。登場時對手前排最多 1 張 BP-1000。前排、每回合一次，不休息：必須選 1 張對手前排 BP-1000，這張卡同時 BP+1000。'
+ }),
  'MHA-2-052':Object.freeze({
   ready:true, implementation:'dsl',
   effects:Object.freeze({onPlay:Object.freeze([{

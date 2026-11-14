@@ -109,7 +109,24 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   ]),
   notes:'自己回合且場上有綠谷時，BP+1000 並有衝擊 1。少了綠谷或不是自己回合就都沒有。'
  }),
- 'MHA-2-020':pending('登場二選一，以及前線每回合一次把 BP+1000 與衝擊 1 給綠谷後，再活動自己或一張 AP。兩句都沒有完整的共用起動。'),
+ 'MHA-2-020':ready({
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'chooseOne',optional:false,
+   options:Object.freeze([
+    Object.freeze({id:'retire',label:'退場 BP3000 以下的對手前排',turn:'any',then:Object.freeze([
+     Object.freeze({op:'retireOppFrontOneUnderBp',bp:3000,optional:true})
+    ])}),
+    Object.freeze({id:'active',label:'把這張卡活動',turn:'any',then:Object.freeze([
+     Object.freeze({op:'activeSelf'})
+    ])})
+   ])
+  }])}),
+  mainAbility:Object.freeze({
+   op:'frontOnceNamedKit',frontOnly:true,oncePerTurn:true,
+   name:'緑谷 出久',bp:1000,impact:1,thenActive:'selfOrAp'
+  }),
+  notes:'登場時二選一，不能略過：退場最多 1 張 BP 3000 以下的對手前排，或把這張卡活動。前排、休息、每回合一次：必須選 1 張〈緑谷 出久〉，本回合 BP+1000 與衝擊 1。做到之後最多把這張卡或 1 張 AP 活動。沒有綠谷就不能發動。'
+ }),
  'MHA-2-021':ready({
   playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
   mainAbility:Object.freeze({
@@ -142,7 +159,20 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }),
   notes:'場上有其他卡名的 A組 時不能從手牌登場。手牌確認必要能量、付 1 AP、放到場外後，看牌頂 4 張，公開最多 2 張非綠谷到手牌，其餘放牌底。顏色觸發休息並跳過下次活動。Q1002。'
  }),
- 'MHA-2-024':pending('登場時獲得本回合「ワン・フォー・オール退場可抽 1」，攻擊時三種名字可付 1 AP 獲得衝擊 1。登場禁止已有 playBanOtherTrait。退場抽牌與攻擊付費沒有整句。'),
+ 'MHA-2-024':ready({
+  playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
+  triggerEffect:Object.freeze({op:'restOppFrontSkipNextActive'}),
+  effects:Object.freeze({
+   onPlay:Object.freeze([{
+    op:'grantTraitLeaveDraw',trait:'ワン・フォー・オール',oncePerTurn:true,count:1,optional:true
+   }]),
+   onAttack:Object.freeze([{
+    op:'optionalPayApThen',ap:1,optional:true,when:ofa3,
+    then:Object.freeze([{op:'grantSelfImpactThisTurn',amount:1}])
+   }])
+  }),
+  notes:'場上有其他卡名的 A組 時不能從手牌登場。登場時，這個回合每回合一次，自己場上的ワン・フォー・オール退場時最多抽 1。攻擊時三種名字以上可付 1 AP，做到才本回合獲得衝擊 1。顏色觸發是卡表。'
+ }),
  'MHA-2-025':ready({
   playBanOtherTrait:Object.freeze({trait:'A組',exceptName:'緑谷 出久'}),
   triggerEffect:Object.freeze({op:'retireOppFront'}),
@@ -189,7 +219,12 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   }),
   notes:'休息並退場自己。場上與場外不同卡名的ワン・フォー・オール合計 3 種以上，而且場上有〈緑谷 出久〉，才可發動。選 1 張，直到自己下個回合開始不被對手角色效果選取，也不能被狙擊指定，然後抽 1。Q1004。對手事件的「選び」仍可選。'
  }),
- 'MHA-2-030':pending('自己回合、三種名字、而且綠谷會因對手觸發離場時，可改退這張場域並把那張綠谷休息。沒有觸發離場替代。'),
+ 'MHA-2-030':ready({
+  triggerLeaveRest:Object.freeze({
+   turn:'own',cause:'trigger',name:'緑谷 出久',rest:true,when:ofa3
+  }),
+  notes:'自己回合、場上與場外不同卡名的ワン・フォー・オール合計 3 種以上，而且〈緑谷 出久〉會因對手觸發離場時，可改退這張場域並把那張綠谷休息。可以不改。對手角色或事件、以及對手的回合都不算。'
+ }),
  'MHA-2-031':ready({
   mainAbility:Object.freeze({
    op:'gatedRestRetireThen',when:ofa3,
@@ -231,5 +266,28 @@ export const MHA2_PROGRAMS_001_036=Object.freeze({
   effects:Object.freeze({onPlay:Object.freeze([{op:'recoverAp',count:2}])}),
   notes:'最多使 2 張自己的行動值卡活動。可以少選。最終觸發是卡表。'
  }),
- 'MHA-2-036':pending('場上要有 3 張其他 A組 才能使用。最多選兩個不同句子，依印刷順序結算，不能選同一句兩次。Q1005、Q1006。現有二選項形狀對不上這三句。')
+ 'MHA-2-036':ready({
+  playRequiresOtherTrait:Object.freeze({trait:'A組',excludeName:'緑谷 出久',min:3}),
+  effects:Object.freeze({onPlay:Object.freeze([{
+   op:'choosePrintedOptions',max:2,optional:true,
+   options:Object.freeze([
+    Object.freeze({id:'rest',label:'休息最多 1 張對手前排',then:Object.freeze([
+     Object.freeze({op:'restOppFrontOne',optional:true})
+    ])}),
+    Object.freeze({id:'enter',label:'黃 A組 活動登場或突襲',then:Object.freeze([
+     Object.freeze({
+      op:'deployOwnHandActiveOrRaid',type:'character',color:'yellow',trait:'A組',
+      maxEnergy:null,ap:1,max:1,optional:true,requireAffordableEnergy:true
+     })
+    ])}),
+    Object.freeze({id:'buff',label:'自己角色 BP+1000',then:Object.freeze([
+     Object.freeze({
+      op:'buffOwnField',filter:Object.freeze({field:'type',value:'character'}),
+      bp:1000,optional:false,excludeSelf:false,all:true
+     })
+    ])})
+   ])
+  }])}),
+  notes:'場上要有 3 張〈緑谷 出久〉以外的 A組 才能使用。最多選兩個不同句子，依印刷順序結算，不能選同一句兩次。Q1005、Q1006。可以一個都不選。'
+ })
 });

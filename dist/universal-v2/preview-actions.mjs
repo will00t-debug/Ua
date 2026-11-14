@@ -224,6 +224,12 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-trait-hand-outside':'將 1 張具有指定特徵的手牌放到場外',
  'effect-gated-hand-retire':'將 1 張手牌放到場外',
  'effect-named-follow':'選擇 1 張指定角色',
+ 'effect-named-kit':'選擇指定角色並給予 BP 與衝擊',
+ 'effect-active-self-or-ap':'可活動這張卡或 1 張 AP',
+ 'effect-remove-hand-main':'可把 1 張有起動主要的手牌放進移除區',
+ 'effect-copy-main':'可把移除的起動主要交給 1 張角色',
+ 'effect-trigger-leave-rest':'可改退這張場域並把指定角色休息',
+ 'effect-trait-leave-draw':'可抽 1 張牌',
  'effect-optional-hand-outside':'可支付 1 張手牌到場外',
  'effect-except-hand-rest':'可支付手牌，從場外休息登場',
  'effect-life-order':'查看全部生命，並以任意順序重新排列',
@@ -1107,6 +1113,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTraitHandOutside':return '將 '+name()+' 放到場外';
   case 'chooseGatedHandRetire':return '將 '+name()+' 放到場外';
   case 'chooseNamedFollow':return '選擇 '+name();
+  case 'chooseNamedKit':return '給予 '+name()+' BP 與衝擊';
+  case 'chooseSelfOrAp':return action.uid===null?'不活動':
+   String(action.uid||'').startsWith('AP')?'活動 1 張 AP':'活動這張卡';
+  case 'chooseRemoveHandMain':return action.uid===null?'不放進移除區':'把 '+name()+' 放進移除區';
+  case 'chooseCopyMain':return action.uid===null?'不給予起動主要':'把起動主要交給 '+name();
+  case 'chooseTriggerLeave':return action.uid===null?'不改退場域':'改退這張場域並把指定角色休息';
+  case 'chooseTraitLeaveDraw':return action.mode==='draw'?'抽 1 張牌':'不抽牌';
   case 'chooseOptionalHandOutside':return action.uid===null?'不支付手牌':'將 '+name()+' 放到場外';
   case 'chooseExceptHandRest':return action.mode==='decline'?'不支付':
    action.mode==='ap'?'改付 1 AP':'將 '+name()+' 放到場外';

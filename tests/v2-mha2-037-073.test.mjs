@@ -15,7 +15,7 @@ import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
  universalCardEnergy, universalAttackDamage
 } from '../dist/universal-v2/engine.mjs';
 
-const READY=['MHA-2-037','MHA-2-039','MHA-2-041','MHA-2-043','MHA-2-044','MHA-2-045','MHA-2-047',
+const READY=['MHA-2-037','MHA-2-038','MHA-2-039','MHA-2-040','MHA-2-041','MHA-2-042','MHA-2-043','MHA-2-044','MHA-2-045','MHA-2-047',
  'MHA-2-048','MHA-2-049','MHA-2-052','MHA-2-055','MHA-2-058','MHA-2-059','MHA-2-060',
  'MHA-2-061','MHA-2-063','MHA-2-064','MHA-2-065','MHA-2-071','MHA-2-073'];
 const real=createMha2Pack();
@@ -76,7 +76,7 @@ function open(seed, extras=[]){
  const deck={};
  for(const id of Object.keys(pack.cards))deck[id]=1;
  for(const id of READY)deck[id]=2;
- for(const id of ['MHA-2-037','MHA-2-043','MHA-2-044','MHA-2-048','MHA-2-064'])deck[id]=1;
+ for(const id of ['MHA-2-037','MHA-2-038','MHA-2-039','MHA-2-040','MHA-2-042','MHA-2-043','MHA-2-044','MHA-2-048','MHA-2-055','MHA-2-058','MHA-2-064'])deck[id]=1;
  const spare=READY.filter(id=>deck[id]===2);
  for(const extra of extras){
   const id=spare.pop();

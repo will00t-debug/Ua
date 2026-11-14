@@ -3,15 +3,6 @@
 // MHA-2-001 through 036 are not in this file.
 // FAQ text is the 2026-11-14 official EX06BT list. A request is not an FAQ acceptance.
 export const MHA2_REQUESTS_037_073=Object.freeze({
- 'MHA-2-038':Object.freeze({
-  missing:'可把 1 張有起動主要、沒有突襲的其他紫角色放進移除區。做到之後抽 1，並把那張卡全部的起動主要交給自己場上最多 1 張角色。'
- }),
- 'MHA-2-040':Object.freeze({
-  missing:'前排、每回合一次：選 1 張對手前排，本回合給予「BP 被減少時再 -500」以及「因 BP 0 以下退場時改放進移除區」。'
- }),
- 'MHA-2-042':Object.freeze({
-  missing:'可突襲〈トガヒミコ〉並以活動狀態移到前排。登場時對手前排最多 1 張 BP-1000。前排起動每回合一次：對手前排 1 張 BP-1000，這張卡 BP+1000。'
- }),
  'MHA-2-046':Object.freeze({
   missing:'突襲〈レディ・ナガン〉並活動移到前排。登場時本回合獲得狙擊。三個起動分別是休息加 BP 與衝擊 1、休息加攻擊時抽 1、付 1 張手牌把這張卡活動。'
  }),

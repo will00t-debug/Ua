@@ -140,3 +140,49 @@ then:[{op:'buffNamedThisTurn',name:'緑谷 出久',bp:2000},{op:'draw',count:1}]
 ```
 
 這輪標成 ready 的是 MHA-2-011、016、029、031、032、033。其餘 21 張整句仍對不上，沒有標 ready。
+
+## 指名加成、特徵退場抽牌、觸發改退場、印刷三選、手牌起動、BP 規則
+
+`frontOnceNamedKit` 是角色的 `mainAbility`。前排、休息、每回合一次。場上要有指定名字才能發動。先休息，再必須選那張角色，本回合 BP 增加並且衝擊 1。做到之後，最多把這張卡或 1 張休息中的 AP 活動，可以不做。沒有依卡號分支。受益是 MHA-2-020。
+
+```js
+mainAbility:{
+ op:'frontOnceNamedKit',frontOnly:true,oncePerTurn:true,
+ name:'緑谷 出久',bp:1000,impact:1,thenActive:'selfOrAp'
+}
+```
+
+`grantTraitLeaveDraw` 掛在角色的 `effects.onPlay`。這個回合，自己場上其他持有該特徵的卡退場時，最多抽 1，每回合一次。拒絕抽牌不消耗次數。受益是 MHA-2-024。
+
+```js
+effects:{onPlay:[{op:'grantTraitLeaveDraw',trait:'ワン・フォー・オール',oncePerTurn:true,count:1,optional:true}]}
+```
+
+`triggerLeaveRest` 是場域自己的規則，不是 `effects`。自己回合、對手的觸發會讓指定名字離場，而且 `when` 成立時，可以改退這張場域，並把那張角色休息。可以不改。角色效果、事件、對手的回合、BP 0 的規則退場都不算。受益是 MHA-2-030。
+
+```js
+triggerLeaveRest:{
+ turn:'own',cause:'trigger',name:'緑谷 出久',rest:true,
+ when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',excludeSelf:false,trait:'ワン・フォー・オール',min:3}
+}
+```
+
+`choosePrintedOptions` 多了一組三句的封閉形狀，沒有改動原來的兩句。最多選 2 個不同句子，依印刷順序結算，同一句再點一次會取消。可以一個都不選。三句依序是休息最多 1 張對手前排、從手牌把必要能量已滿足且消費 AP 為 1 的角色活動登場或突襲、自己場上全部角色本回合 BP+1000。受益是 MHA-2-036。Q1005、Q1006 只記在測試，不是整包 FAQ 驗收。
+
+`playRequiresOtherTrait` 是事件的使用條件。自己場上要有指定數量、持有該特徵、而且不是排除名字的角色。受益是 MHA-2-036 的 3 張〈緑谷 出久〉以外的 A組。
+
+`optionalRemoveHandGrantMains` 掛在角色的 `effects.onPlay`。可把 1 張有起動主要、沒有突襲、顏色相符、而且不是排除名字的手牌角色放進移除區。做到才抽 1，並把那張卡的起動主要交給自己場上最多 1 張角色，直到這個回合結束。可以不放。受益是 MHA-2-038。
+
+`frontOnceGrantBpRules` 是角色的 `mainAbility`。前排、每回合一次，不休息。必須選 1 張對手前排。這個回合，那張卡第一次受到 BP 減少時再減 500，而且因 BP 0 以下的規則退場時改放進移除區。其他原因的退場仍到場外。受益是 MHA-2-040。
+
+```js
+mainAbility:{op:'frontOnceGrantBpRules',frontOnly:true,oncePerTurn:true,echoBp:500,zeroToRemoved:true}
+```
+
+`frontOnceOppDownSelfUp` 是角色的 `mainAbility`。前排、每回合一次，不休息。必須選 1 張對手前排，同一結算裡那張卡 BP 減少，這張卡 BP 增加。受益是 MHA-2-042。
+
+```js
+mainAbility:{op:'frontOnceOppDownSelfUp',frontOnly:true,oncePerTurn:true,bp:1000,selfBp:1000}
+```
+
+這輪標成 ready 的是 MHA-2-020、024、030、036、038、040、042。第二彈目前 59 張 ready。仍未 ready 的是 MHA-2-046、050、051、053、054、056、057、062、066、067、068、069、070、072。
