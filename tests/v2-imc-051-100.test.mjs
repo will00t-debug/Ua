@@ -13,19 +13,22 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
 
-const READY=['IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-057','IMC-1-058','IMC-1-059',
- 'IMC-1-060','IMC-1-062','IMC-1-063','IMC-1-064','IMC-1-066','IMC-1-067','IMC-1-068','IMC-1-069',
- 'IMC-1-070','IMC-1-071','IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
+const READY=['IMC-1-051','IMC-1-052','IMC-1-053','IMC-1-054','IMC-1-055','IMC-1-056','IMC-1-057','IMC-1-058','IMC-1-059',
+ 'IMC-1-060','IMC-1-061','IMC-1-062','IMC-1-063','IMC-1-064','IMC-1-066','IMC-1-067','IMC-1-068','IMC-1-069',
+ 'IMC-1-070','IMC-1-071','IMC-1-072','IMC-1-073','IMC-1-074','IMC-1-075','IMC-1-076','IMC-1-077','IMC-1-078','IMC-1-079','IMC-1-080','IMC-1-081',
  'IMC-1-082','IMC-1-083','IMC-1-084','IMC-1-085','IMC-1-086','IMC-1-087',
  'IMC-1-088','IMC-1-089','IMC-1-090','IMC-1-091','IMC-1-092','IMC-1-093','IMC-1-094','IMC-1-095',
  'IMC-1-096','IMC-1-097','IMC-1-098','IMC-1-099','IMC-1-100','IMC-1-065'];
-const OPEN=['IMC-1-051','IMC-1-061','IMC-1-075'];
+const OPEN=[];
 const TRAIT='お願い！シンデレラ';
 const pack=createImcV2Pack();
 const counts=Object.fromEntries(READY.map(id=>[id,2]));
 delete counts['IMC-1-098'];
 delete counts['IMC-1-065'];
 delete counts['IMC-1-078'];
+delete counts['IMC-1-051'];
+delete counts['IMC-1-061'];
+delete counts['IMC-1-075'];
 for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])delete counts[id];
 for(const id of ['IMC-1-052','IMC-1-053','IMC-1-056','IMC-1-057','IMC-1-058','IMC-1-062','IMC-1-063',
  'IMC-1-060','IMC-1-066','IMC-1-070','IMC-1-071','IMC-1-073','IMC-1-074','IMC-1-076','IMC-1-080','IMC-1-081','IMC-1-083','IMC-1-085','IMC-1-087','IMC-1-090','IMC-1-091',
@@ -1377,9 +1380,9 @@ test('084 steps and gains 1500 only on its turn at three printed energy-2 Starry
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
-test('051 recovers one LiPPS at printed energy 2 or less and stays unfinished',()=>{
- assert.equal(pack.cards['IMC-1-051'],undefined);
- assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
+test('051 recovers one LiPPS at printed energy 2 or less',()=>{
+ assert.equal(pack.cards['IMC-1-051'].triggerEffect.bp,3500);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,true);
  const effect=IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0];
  assert.deepEqual(effect,{op:'recoverOutsideFiltered',optional:true,max:1,
   trait:'LiPPS',energyAtMost:2});
@@ -1948,23 +1951,19 @@ test('080 is active only from the energy line when three energy-2 Starry cards a
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
-test('the remaining round-6 sentences stay unfinished and reject the nearest existing shape',()=>{
- assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,false);
+test('the former round-6 gaps are programmed and nearby illegal shapes stay rejected',()=>{
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].effects.onPlay[0].op,'recoverOutsideFiltered');
  for(const id of ['IMC-1-061','IMC-1-075'])
-  assert.notEqual(IMC_PROGRAMS_051_100[id]?.ready,true,id);
+  assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
  for(const id of ['IMC-1-064','IMC-1-068','IMC-1-072','IMC-1-094','IMC-1-097'])
   assert.equal(IMC_PROGRAMS_051_100[id].ready,true,id);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-065'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-078'].ready,true);
  assert.equal(IMC_PROGRAMS_051_100['IMC-1-080'].ready,true);
- const text=JSON.stringify(IMC_REQUESTS_051_100);
- const needles={
-  'IMC-1-051':'restRetireSequence',
-  'IMC-1-061':'grantAttackPhaseEndHand',
-  'IMC-1-075':'種類數'
- };
- for(const [id,needle] of Object.entries(needles))assert.match(text,new RegExp(id+'[\\s\\S]*'+needle));
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-051'].mainAbility.op,'restRetireSequence');
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-061'].effects.onPlay[1].then[0].op,'grantAttackPhaseEndHand');
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-075'].passiveBonuses[0].condition.min,6);
  const reject=(extra,pattern)=>assert.throws(()=>createUniversalPack({id:'probe',version:'gap',cards:[
   bare('GAP','缺口',{implementation:'dsl',...extra})]}),pattern);
  reject({effects:{onPlay:[{op:'conditionalBounceOrRetireByOwnOutsideNames',bp:5000,min:3,trait:'LiPPS'}]}},
@@ -1984,7 +1983,7 @@ test('the remaining round-6 sentences stay unfinished and reject the nearest exi
    then:[{op:'deployOwnHandRest',type:'character',color:'red',energy:1,ap:null,max:1,trait:TRAIT}]
   }]}})]});
  assert.equal(bounced.cards.GAP.effects.onPlay[0].then[0].op,'deployOwnHandRest');
- assert.equal(IMC_PROGRAMS_051_100['IMC-1-075']?.ready,undefined);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-075'].ready,true);
  reject({effects:{onPlay:[{op:'ifLiveThen',when:{kind:'ownDistinctTraitNames',turn:'any',zone:'fieldOutside',
   excludeSelf:false,trait:TRAIT,min:9},then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}},
   /invalid live-condition follow-up/);
@@ -2498,4 +2497,211 @@ test('074 keeps impact null and buffs two different characters only at nine wish
  assert.equal(universalBp(probe,s,findCard(s,0,skipped.plain.uid)),2000);
  assert.equal(s.pending.kind,'block');
  assert.equal(assertUniversalMatch(probe,s),true);
+});
+
+function deckPlus(extra){
+ const local={...counts};
+ for(const id of Object.keys(extra))delete local[id];
+ const extraTotal=Object.values(extra).reduce((sum,n)=>sum+n,0);
+ let have=Object.values(local).reduce((sum,n)=>sum+n,0);
+ for(const [id,n] of Object.entries(local)){
+  if(have+extraTotal<=50)break;
+  const cut=Math.min(n,have+extraTotal-50);
+  local[id]=n-cut;
+  have-=cut;
+  if(!local[id])delete local[id];
+ }
+ return {...local,...extra};
+}
+
+test('IMC-1-051 bounces at 3500, then rests and retires only at BP 4500',()=>{
+ const local=kit(pack,deckPlus({'IMC-1-051':1,'IMC-1-035':4,'IMC-1-052':1}));
+ let s=local.fresh(5101);
+ const color=local.pull(s,0,'IMC-1-051');
+ s.players[0].outside.push(color);
+ const low=local.seat(s,1,'IMC-1-052','front',0);
+ low.buffs=[{bp:2000,untilTurn:s.turn}];
+ const high=local.seat(s,1,'IMC-1-035','front',1);
+ high.buffs=[{bp:2000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,low),3500);
+ assert.equal(universalBp(pack,s,high),4000);
+ s.pending={kind:'life-trigger',player:0,uid:color.uid,trigger:'color'};
+ const bounce=local.legal(s).filter(a=>a.mode==='colorBounce').map(a=>a.uid);
+ assert.deepEqual(bounce,[low.uid]);
+ s=local.act(s,{type:'chooseTrigger',mode:'colorBounce',uid:low.uid});
+ assert.ok(s.players[1].hand.some(c=>c.uid===low.uid));
+ assert.ok(s.players[1].front.some(c=>c?.uid===high.uid));
+
+ s=local.fresh(5102);
+ for(let slot=0;slot<3;slot++)local.seat(s,0,'IMC-1-035','energy',slot);
+ s=local.reach(s,'main');
+ const self=local.hold(s,0,'IMC-1-051');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'));
+ const guest=local.pull(s,0,'IMC-1-052');
+ s.players[0].outside.push(guest);
+ const played=s.players[0].front.find(c=>c.uid===self.uid);
+ played.ready=true;
+ const short=local.seat(s,1,'IMC-1-052','front',0);
+ short.buffs=[{bp:2500,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,short),4000);
+ assert.equal(local.legal(s).some(a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='restRetireSequence'),false);
+ short.buffs=[{bp:3000,untilTurn:s.turn}];
+ assert.equal(universalBp(pack,s,short),4500);
+ s=local.act(s,{type:'activate',uid:self.uid,mode:'restRetireSequence'});
+ assert.equal(s.players[0].front.some(c=>c?.uid===self.uid),false);
+ assert.ok(s.players[0].outside.some(c=>c.uid===self.uid));
+ assert.equal(s.pending.kind,'effect-outside-color-rest');
+ assert.equal(s.pending.choices.includes(guest.uid),true);
+ assert.equal(s.pending.choices.includes(self.uid),false);
+ s=local.act(s,{type:'chooseOutsideColorRest',uid:null});
+ assert.ok(s.players[0].outside.some(c=>c.uid===guest.uid));
+ assert.equal(s.players[0].front.some(c=>c?.uid===self.uid),false);
+
+ s=local.fresh(5103);
+ for(let slot=0;slot<3;slot++)local.seat(s,0,'IMC-1-035','energy',slot);
+ s=local.reach(s,'main');
+ const again=local.hold(s,0,'IMC-1-051');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===again.uid&&a.line==='front'));
+ const replay=local.pull(s,0,'IMC-1-052');
+ s.players[0].outside.push(replay);
+ s.players[0].front.find(c=>c.uid===again.uid).ready=true;
+ const wall=local.seat(s,1,'IMC-1-052','front',0);
+ wall.buffs=[{bp:3000,untilTurn:s.turn}];
+ s=local.act(s,{type:'activate',uid:again.uid,mode:'restRetireSequence'});
+ s=local.act(s,local.legal(s).find(a=>a.type==='chooseOutsideColorRest'&&a.uid===replay.uid&&a.line==='front'));
+ const entered=s.players[0].front.find(c=>c?.uid===replay.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(s.players[0].outside.some(c=>c.uid===again.uid),true);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('IMC-1-061 returns to hand only after readying an AP, and draws only when unblocked',()=>{
+ const local=kit(pack,deckPlus({'IMC-1-061':1,'IMC-1-035':4}));
+ let s=local.fresh(6101);
+ for(let slot=0;slot<4;slot++)local.seat(s,0,'IMC-1-035','energy',slot);
+ s=local.reach(s,'main');
+ s=passTurn(local,s);
+ s=passTurn(local,s);
+ s=local.reach(s,'main');
+ const self=local.hold(s,0,'IMC-1-061');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'));
+ const played=()=>s.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(played().ready,true);
+ assert.equal(s.pending.kind,'effect-recover-ap');
+ s=local.act(s,{type:'chooseApRecovery',uid:null});
+ assert.equal(played().attackPhaseEndHand,undefined);
+ while(s.phase!=='end'&&s.pending?.kind!=='end-hand-limit'){
+  if(s.pending)throw Error(s.pending.kind);
+  s=local.act(s,{type:'next'});
+ }
+ assert.ok(s.players[0].front.some(c=>c?.uid===self.uid));
+
+ s=local.fresh(6102);
+ for(let slot=0;slot<4;slot++)local.seat(s,0,'IMC-1-035','energy',slot);
+ s=local.reach(s,'main');
+ s=passTurn(local,s);
+ s=passTurn(local,s);
+ s=local.reach(s,'main');
+ const back=local.hold(s,0,'IMC-1-061');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===back.uid&&a.line==='front'));
+ const rested=s.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+ s=local.act(s,{type:'chooseApRecovery',uid:rested.uid});
+ assert.equal(s.players[0].apCards.find(c=>c.uid===rested.uid).ready,true);
+ assert.equal(s.players[0].front.find(c=>c.uid===back.uid).attackPhaseEndHand.turn,s.turn);
+ while(s.phase!=='end'&&s.pending?.kind!=='end-hand-limit'){
+  if(s.pending)throw Error(s.pending.kind);
+  s=local.act(s,{type:'next'});
+ }
+ assert.ok(s.players[0].hand.some(c=>c.uid===back.uid));
+ assert.equal(s.players[0].front.some(c=>c?.uid===back.uid),false);
+
+ s=local.fresh(6103);
+ for(let slot=0;slot<4;slot++)local.seat(s,0,'IMC-1-035','energy',slot);
+ s=local.reach(s,'main');
+ s=passTurn(local,s);
+ s=passTurn(local,s);
+ s=local.reach(s,'main');
+ const striker=local.hold(s,0,'IMC-1-061');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===striker.uid&&a.line==='front'));
+ s=local.act(s,{type:'chooseApRecovery',uid:null});
+ s=local.reach(s,'attack');
+ const before=s.players[0].deck.length;
+ const blocker=local.seat(s,1,'IMC-1-035','front',0);
+ s=local.act(s,{type:'attack',uid:striker.uid});
+ s=local.act(s,{type:'chooseBlock',uid:blocker.uid});
+ assert.notEqual(s.pending?.kind,'effect-may-then');
+ assert.equal(s.players[0].deck.length,before);
+ s=local.fresh(6104);
+ for(let slot=0;slot<4;slot++)local.seat(s,0,'IMC-1-035','energy',slot);
+ s=local.reach(s,'main');
+ s=passTurn(local,s);
+ s=passTurn(local,s);
+ s=local.reach(s,'main');
+ const open=local.hold(s,0,'IMC-1-061');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===open.uid&&a.line==='front'));
+ s=local.act(s,{type:'chooseApRecovery',uid:null});
+ s=local.reach(s,'attack');
+ const deck=s.players[0].deck.length;
+ s=local.act(s,{type:'attack',uid:open.uid});
+ s=local.act(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.pending.kind,'effect-may-then');
+ s=local.act(s,{type:'chooseMayThen',mode:'skip'});
+ assert.equal(s.players[0].deck.length,deck);
+ s=local.fresh(6105);
+ for(let slot=0;slot<4;slot++)local.seat(s,0,'IMC-1-035','energy',slot);
+ s=local.reach(s,'main');
+ s=passTurn(local,s);
+ s=passTurn(local,s);
+ s=local.reach(s,'main');
+ const drawn=local.hold(s,0,'IMC-1-061');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===drawn.uid&&a.line==='front'));
+ s=local.act(s,{type:'chooseApRecovery',uid:null});
+ s=local.reach(s,'attack');
+ const sized=s.players[0].deck.length;
+ s=local.act(s,{type:'attack',uid:drawn.uid});
+ s=local.act(s,{type:'chooseBlock',uid:null});
+ s=local.act(s,{type:'chooseMayThen',mode:'do'});
+ assert.equal(s.players[0].deck.length,sized-1);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('IMC-1-075 adds 1000 for six names, then replays the bounced card rested',()=>{
+ const local=kit(pack,deckPlus({'IMC-1-075':1,'IMC-1-071':4,'IMC-1-069':1,'IMC-1-070':1,'IMC-1-072':1,'IMC-1-073':1}));
+ let s=local.fresh(7501);
+ for(let slot=0;slot<4;slot++)local.seat(s,0,'IMC-1-071','energy',slot);
+ const names=['IMC-1-069','IMC-1-070','IMC-1-072','IMC-1-073'];
+ for(const id of names)s.players[0].outside.push(local.pull(s,0,id));
+ s=local.reach(s,'main');
+ const self=local.hold(s,0,'IMC-1-075');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'));
+ const me=()=>s.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(universalBp(pack,s,me()),5000);
+ assert.equal(s.pending.kind,'effect-bounce-own');
+ assert.equal(s.pending.choices.includes(self.uid),false);
+ const target=s.players[0].energy.find(c=>c?.cardId==='IMC-1-071');
+ assert.equal(s.pending.choices.includes(target.uid),true);
+ const fifth=s.players[0].outside.pop();
+ assert.equal(universalBp(pack,s,me()),4000);
+ s.players[0].outside.push(fifth);
+ assert.equal(universalBp(pack,s,me()),5000);
+ s=local.act(s,{type:'chooseOwnBounce',uid:null});
+ assert.equal(s.pending,null);
+ assert.ok(s.players[0].energy.some(c=>c?.uid===target.uid));
+
+ s=local.fresh(7502);
+ for(let slot=0;slot<4;slot++)local.seat(s,0,'IMC-1-071','energy',slot);
+ s=local.reach(s,'main');
+ const replay=local.hold(s,0,'IMC-1-075');
+ s=local.act(s,local.legal(s).find(a=>a.type==='play'&&a.uid===replay.uid&&a.line==='front'));
+ const bounced=s.players[0].energy.find(c=>s.pending.choices.includes(c.uid));
+ s=local.act(s,{type:'chooseOwnBounce',uid:bounced.uid});
+ assert.ok(s.players[0].hand.some(c=>c.uid===bounced.uid));
+ assert.equal(s.pending.kind,'effect-hand-rest');
+ assert.equal(s.pending.choices.includes(bounced.uid),true);
+ s=local.act(s,local.legal(s).find(a=>a.type==='chooseHandRest'&&a.uid===bounced.uid&&a.line==='front'));
+ assert.equal(s.players[0].front.find(c=>c.uid===bounced.uid).ready,false);
+ s=passTurn(local,s);
+ const quiet=s.players[0].front.find(c=>c?.uid===replay.uid);
+ assert.equal(universalBp(pack,s,quiet),4000);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });

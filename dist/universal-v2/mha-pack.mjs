@@ -10,12 +10,12 @@ import {MHA_PROGRAMS_051_100} from './mha/programs-051-100.mjs';
 const PROGRAM_KEYS=new Set([
  'ready','implementation','effects','mainAbility','notes','activeExtraEnergy','step',
  'impactNull','opponentFieldColorsHandEnergyDiscount','printedHandEnergyDiscount',
- 'blockBpRestriction','triggerEffect','enterAlwaysActive'
+ 'blockBpRestriction','triggerEffect','enterAlwaysActive','passiveBonuses'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
  'opponentFieldColorsHandEnergyDiscount','printedHandEnergyDiscount',
- 'blockBpRestriction','triggerEffect','enterAlwaysActive'
+ 'blockBpRestriction','triggerEffect','enterAlwaysActive','passiveBonuses'
 ];
 export const MHA_OFFICIAL_MATCH_CLOSED='我的英雄學院尚未開放正式對戰。';
 

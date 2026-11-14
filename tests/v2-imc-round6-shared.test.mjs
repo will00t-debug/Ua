@@ -1,5 +1,5 @@
 // Round 6 shared rules. Synthetic cards exercise the new combinations.
-// Unfinished IMC cards stay out of the battle pack.
+// The former unfinished IMC cards are now ready programs in the pack.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -521,15 +521,16 @@ test('the same ops work outside IMC while unfinished cards stay out of the pack'
  assert.equal(s.pending,null);
  assert.equal(s.players[0].front.some(c=>c?.uid===named.uid),true);
  const imc=createImcV2Pack();
- assert.equal(Object.keys(imc.cards).length,106);
+ assert.equal(Object.keys(imc.cards).length,113);
  assert.deepEqual(['IMC-1-028','IMC-1-033','IMC-1-036','IMC-1-065','IMC-1-078','IMC-1-080','IMC-1-112']
   .every(id=>imc.cards[id]?.id===id),true);
- for(const id of ['IMC-1-011','IMC-1-012']){
-  assert.equal(imc.cards[id],undefined,id);
-  assert.equal(IMC_PROGRAMS_001_050[id]?.ready,undefined,id);
-  assert.equal(IMC_PROGRAMS_051_100[id]?.ready,undefined,id);
-  assert.equal(IMC_PROGRAMS_STARTER[id]?.ready,undefined,id);
- }
+ assert.equal(imc.cards['IMC-1-011'].bpGainFollow.bp,1000);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-011'].ready,true);
+ assert.equal(imc.cards['IMC-1-012'].raidName,'城ヶ崎 莉嘉');
+ assert.equal(imc.cards['IMC-1-012'].effects.onAttack[0].count,1);
+ assert.equal(IMC_PROGRAMS_001_050['IMC-1-012'].ready,true);
+ assert.equal(IMC_PROGRAMS_051_100['IMC-1-011'],undefined);
+ assert.equal(IMC_PROGRAMS_STARTER['IMC-1-012'],undefined);
  assert.equal(getTitle('imc').playable,false);
  assert.equal(loadImcOfficialStarter().counts,null);
  assert.throws(()=>createUniversalPack({id:'probe',version:'bad',cards:[face({

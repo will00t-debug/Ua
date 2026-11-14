@@ -268,6 +268,15 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
   return s.players[owner].hand.length>=condition.min;
+ if(condition.kind==='oppFrontCountAtLeast'||condition.kind==='ownFrontCountAtLeast'){
+  // フロントLのキャラ. Energy-line cards, fields, empty slots and face-down
+  // cards are not front characters. The other player's front is a different count.
+  const who=condition.kind==='ownFrontCountAtLeast'?owner:1-owner;
+  let found=0;
+  for(const c of s.players[who].front)
+   if(printedFieldCard(c)&&printed(c).type==='character')found++;
+  return found>=condition.min;
+ }
  if(condition.kind==='ownNameAndDeckAtMost'){
   // Printed deck size is the current OWN deck, not hand, life, or outside.
   // The name is an own field character, including this card when excludeSelf

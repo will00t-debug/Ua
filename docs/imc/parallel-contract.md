@@ -580,3 +580,21 @@ phaseEffects:[{phase:'attack',edge:'start',turn:'own',then:[{
 
 仍未標 ready 的 7 張是 011、012、039、051、061、075、107。075 的回手與休息登場還沒寫完，不因為被動 BP 欄位已存在就標 ready。`playable` 維持 false。官方預組 `counts` 維持 null。這次整合沒有合併 `main`，也沒有部署。
 
+## 第 9 輪 A 組
+
+共用操作契約在 `docs/v2-handoff/V2-R9A-shared-ops.md`。011、012、039、051、061、075、107 的句子在這條整合基準上已經表現得了，這一輪沒有重寫，也沒有標 ready。
+
+PR #410 只把 IMC-1-107 標成 ready，基準比 #424 舊，而且沒有引擎改動。不要把那個提交摘進來。D 組寫 107 時複製契約裡的 `restRetireSequence`，用目前引擎重跑之後才標 ready。
+
+075 的 6 種卡名 BP 仍用第七輪的 `passiveBonuses`。回手句寫完之前維持 ready false。
+
+## 第 10 輪整合
+
+基準是 #424 的 `499cce592e`。依序摘入 #428、#427、#426、#425。四個提交的父提交都是這個基準，檔案沒有重疊，已完成的效果沒有被覆蓋。`origin/main` 的 AI、攻擊與衝擊修正仍是這條分支的祖先。
+
+IMC 對戰包現在是 `IMC-1-001` 到 `IMC-1-113`，113 張都 `ready:true`。011 是 `bpGainFollow` 1000。012 是突襲城ヶ崎 莉嘉、`bpGainFollow` 500、登場 `grantConditionalSniperThisTurn` 7000、攻擊 `drawIfSelfBpAtLeast` 5000。039 是 `ownEffectPresenceBp` 1000，起動 `discardExactFrontMove`，特徵ガールズ・イン・ザ・フロンティア，正好 3 張。051 是觸發 `bounceOppFrontUnderBp` 3500、登場 `recoverOutsideFiltered`、起動 `restRetireSequence` 且門檻是對手角色 BP 4500。061 是可跳過的 `unblockedAttack` 後抽 1，登場先 `activeSelf` 再 `optionalReadyApThen`。075 是 6 種卡名的 `passiveBonuses`，登場 `bounceOwnOtherUnderEnergy` 後 `deployOwnHandRest`。107 是 `restRetireSequence` 抽 1，再休息登場紅、能源 3、AP 1。三份 request 都是空陣列。
+
+MHA 去重後的目錄是 109 張。對戰包 49 張 ready，pending 60 張。新進包的是 012 `restSelfGainEnergyRetireEndMain`、019 `frontOnceProgram` 後 `enemyBpDown`、027 前線 `ownNameOrRaidBase` オーバーホール、053 攻擊時 `chooseOne` 的 BP+1000 或衝擊 1。063 同時留在補充包與預組的 request，算 1 張。預組 063、101、102、105、106、107、108、109 仍不在對戰包。
+
+`getTitle('imc').playable` 與 `getTitle('mha').playable` 維持 false。IMC 官方預組 `counts` 維持 null。`UA10ST_PRODUCT.recipe` 維持 null。這次整合沒有合併 `main`，也沒有部署。
+

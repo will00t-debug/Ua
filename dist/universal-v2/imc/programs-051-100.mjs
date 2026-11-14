@@ -5,9 +5,14 @@ const play=effects=>({ready:true,implementation:'dsl',effects:{onPlay:effects}})
 
 export const IMC_PROGRAMS_051_100=Object.freeze({
  'IMC-1-051':Object.freeze({
-  ready:false,implementation:'dsl',
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
   effects:{onPlay:[{op:'recoverOutsideFiltered',optional:true,max:1,
-   trait:'LiPPS',energyAtMost:2}]}
+   trait:'LiPPS',energyAtMost:2}]},
+  mainAbility:{op:'restRetireSequence',
+   gate:{kind:'oppCharacterBpAtLeast',bp:4500},
+   then:[{op:'deployOutsideColorTraitRest',color:'blue',trait:'LiPPS',
+    maxEnergy:2,ready:false,optional:true}]}
  }),
  'IMC-1-052':Object.freeze({
   ready:true,implementation:'dsl',
@@ -44,6 +49,15 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
   ready:true,implementation:'dsl',impactNull:true,
   mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:2000,
    when:{kind:'oppCharacterBpAtLeast',turn:'any',zone:'field',minBp:4500}}
+ }),
+ 'IMC-1-061':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
+  unblockedAttack:{optional:true,then:[{op:'draw',count:1}]},
+  effects:{onPlay:[
+   {op:'activeSelf'},
+   {op:'optionalReadyApThen',then:[{op:'grantAttackPhaseEndHand'}]}
+  ]}
  }),
  'IMC-1-062':Object.freeze({
   ready:true,implementation:'dsl',
@@ -127,6 +141,15 @@ export const IMC_PROGRAMS_051_100=Object.freeze({
     trait:'お願い！シンデレラ',min:9},
    then:[{op:'buffOwnField',filter:{field:'type',value:'character'},
     bp:1000,optional:true,excludeSelf:false,max:2}]}]}
+ }),
+ 'IMC-1-075':Object.freeze({
+  ready:true,implementation:'dsl',
+  passiveBonuses:[{bp:1000,condition:{
+   kind:'ownDistinctTraitNames',turn:'own',zone:'fieldOutside',excludeSelf:false,
+   trait:'お願い！シンデレラ',min:6}}],
+  effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',optional:true,energy:1,
+   trait:'お願い！シンデレラ',then:[{op:'deployOwnHandRest',type:'character',
+    color:'red',energy:1,ap:null,max:1,trait:'お願い！シンデレラ'}]}]}
  }),
  'IMC-1-076':play([{op:'searchTopOneBottomDiscard',count:3,
   filter:{field:'trait',value:'Starry-Go-Round'}}]),

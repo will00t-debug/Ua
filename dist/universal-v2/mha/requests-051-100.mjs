@@ -10,22 +10,15 @@ export const MHA_REQUESTS_051_100=[
  {
   cardId:'MHA-1-051',
   sentence:'レイド〈通形 ミリオ〉。BP3000以下にブロックされない。ターン1、アタックしてブロックされなかった時1枚引く。退場時、必要エナジー4以上の他キャラが3枚以上なら、レイドの一番下をフロントLにアクティブで登場させてもよい。',
-  existingOps:['blockBpRestriction','unblockedAttack','draw','raidName'],
-  whyNotEnough:'blockBpRestriction は「BP以上でないとブロックできない」か条件付きで、この「BP3000以下にはブロックされない」とは向きが違う。unblockedAttack は任意の1効果だけで、ターン1と退場時のレイド下段登場を同時に持たない。',
-  proposal:'BP3000以下のブロック拒否、ターン1の非ブロック抽牌、退場時に他の必要エナジー4以上が3枚以上ならレイド最下段をフロントLへアクティブ登場。051はreadyにしない。'
- },
- {
-  cardId:'MHA-1-053',
-  sentence:'アタック時、このターンのBP+1000かインパクト1のどちらか1つを選ぶ。',
-  existingOps:['chooseOne','buffSelf','grantSelfImpactThisTurn'],
-  whyNotEnough:'chooseOne の既存形は活動か抽牌などの決まった続きで、自分へのBP+1000と衝撃1の二択にはなっていない。',
-  proposal:'攻撃時に自分へ本回合 BP+1000、または本回合衝擊1をちょうど1つ選ぶ。053はreadyにしない。'
+  existingOps:['blockBpRestriction','raidName','grantUnblockedDrawThisTurn','replayRaidBase'],
+  whyNotEnough:'MHA-1-050 已經用 blockBpRestriction {relation:atMost, bp:3000} 表示「BP3000以下にはブロックされない」。raidName 也有。還缺的是【ターン1】攻擊未被阻擋才抽1，以及退場時在其他必要能源4以上達3張時，把突襲最下段活動放到前線L。grantUnblockedDrawThisTurn 只能從 onPlay 發一次，replayRaidBase 不是把最下段放到前線L。不要只上前半句就標 ready。',
+  proposal:'沿用 050 的 atMost 3000 阻擋限制與 raidName。另需一回合一次的未被阻擋抽1，以及退場時的條件式突襲最下段活動進前線L。051はreadyにしない。'
  },
  {
   cardId:'MHA-1-054',
   sentence:'山札の上から7枚を見て、必要エナジー2以下の緑のフィールドを1枚まで公開して手札に加え、残りは望む順で下に置く。',
   existingOps:['searchTopOneBottomDiscard','lookTopScript','inspectTopArrange'],
-  whyNotEnough:'既存の看牌は特徵、卡名或任意卡。沒有「綠、場域、必要能源2以下、看7張、最多1張公開入手、其餘任意順序放牌底」。活動觸發是卡表，不能代替這句。',
+  whyNotEnough:'searchTopOneBottomDiscard 的複合篩選可以是綠場域且必要能源2以下、看7張。但複合窗不能設 discard:false，預設會再棄1張手牌。054 公開最多1張後不棄手牌，其餘要任意順序放牌底。discard:false 只開放給單一篩選或卡名 any。活動觸發不能代替這句。',
   proposal:'看頂7張，公開加入最多1張綠、能源2以下的場域，其餘依選擇放牌底。054はreadyにしない。'
  },
  {
@@ -74,7 +67,7 @@ export const MHA_REQUESTS_051_100=[
   cardId:'MHA-1-066',
   sentence:'上から3枚見てキャラ1枚まで公開して手札、残りは下。手札の緑キャラ1枚までレストで登場。相手フロントが3枚以上で、そのキャラがオールマイトならアクティブ。',
   existingOps:['lookTopScript','deployOwnHandRest','activeSelfIf'],
-  whyNotEnough:'看3張拿角色、再休息登場綠角色、而且只有對手前線3張以上且登場的是歐爾麥特才改成活動。這三句沒有同一個現成 op。',
+  whyNotEnough:'看頂 3 張、公開最多 1 張角色入手，以及對手前線張數，都已有現成形。綠角色休息登場，和「對手前線 3 張以上且該角色是歐爾麥特才改活動」，仍沒有。整句維持 pending。',
   proposal:'看頂3張，最多公開1張角色入手，其餘放牌底。再從手牌休息登場最多1張綠角色。對手前線有3張以上且該角色是歐爾麥特時改為活動。066はreadyにしない。'
  },
  {
