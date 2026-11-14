@@ -1,5 +1,5 @@
 // Round 12 gaps, kept on round 15. The eight sentences A unlocked are programs.
-// 085, 090, 091, 095 and 096 stay requests. 099 and 100 are ready.
+// 091, 095 and 096 stay requests. 085, 090, 099 and 100 are ready.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MHA_PROGRAMS_051_100} from '../dist/universal-v2/mha/programs-051-100.mjs';
@@ -8,10 +8,10 @@ import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 
-const STILL=['MHA-1-085','MHA-1-090','MHA-1-091','MHA-1-095','MHA-1-096'];
+const STILL=['MHA-1-091','MHA-1-095','MHA-1-096'];
 const KEPT=['MHA-1-051','MHA-1-054','MHA-1-055','MHA-1-056','MHA-1-059','MHA-1-060',
  'MHA-1-062','MHA-1-066','MHA-1-070','MHA-1-071','MHA-1-072','MHA-1-074','MHA-1-076',
- 'MHA-1-081','MHA-1-084','MHA-1-099','MHA-1-100'];
+ 'MHA-1-081','MHA-1-084','MHA-1-085','MHA-1-090','MHA-1-099','MHA-1-100'];
 
 function face(extra){
  const effects=extra.effects||{};
@@ -292,3 +292,138 @@ test('084 can widen the next BP selection, and a different amount stays illegal'
  assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'].triggerEffect.bp,2500);
  assert.equal(MHA_PROGRAMS_051_100['MHA-1-084'].mainAbility.then[0].amount,1000);
 });
+test('091 cannot pay one hand card for BP on attack and on block',()=>{
+ reject(face({
+  id:'GAP-091-BLOCK',
+  effects:{onBlock:[{op:'buffSelf',bp:2000}]}
+ }),/timing onBlock unsupported/);
+ reject(face({
+  id:'GAP-091-HAND',
+  effects:{onAttack:[{op:'optionalRemoveHandThen',zone:'outside',
+   then:[{op:'buffSelf',bp:2000}]}]}
+ }),/invalid optional hand removal/);
+ reject(face({
+  id:'GAP-091-OPEN',
+  effects:{onAttack:[{op:'buffSelfIfFrontOpen',bp:2000}]}
+ }),/open-front self buff is an own attack-start phase effect/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-091'],undefined);
+ assert.equal(createMhaV2Pack().cards['MHA-1-091'],undefined);
+});
+
+test('095 cannot grant double attack from its own move or pay to move only itself',()=>{
+ reject(face({
+  id:'GAP-095-DOUBLE',step:true,
+  effects:{onPlay:[{op:'grantSelfDoubleAttackThisTurn',
+   when:{kind:'selfMovedThisTurn',turn:'any'}}]}
+ }),/invalid this-turn self attack grant/);
+ reject(face({
+  id:'GAP-095-MAIN',
+  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1},
+  effects:{}
+ }),/unsupported main action ability/);
+ const mover=face({
+  id:'GAP-095-LIVE',energy:0,bp:3500,
+  mainAbility:{op:'payHandMoveOrSwap',oncePerTurn:true,pay:1},
+  effects:{}
+ });
+ const bodies=[mover];
+ let n=1;
+ while(bodies.length*4<50){
+  bodies.push(face({id:'GAP-095-FILL-'+n,implementation:'vanilla',energy:0,bp:1000,effects:{}}));
+  n++;
+ }
+ const livePack=createUniversalPack({id:'gap-095',version:'full-line',cards:bodies});
+ const counts={};
+ let remain=50;
+ for(const card of bodies){
+  if(remain<=0)break;
+  const take=Math.min(4,remain);
+  counts[card.id]=take;
+  remain-=take;
+ }
+ let s=newUniversalMatch(livePack,{decks:[counts,counts],seed:9501,first:0,openingMulligan:false});
+ for(let i=0;i<8&&s.phase!=='main';i++)s=dispatchUniversalAction(livePack,s,{type:'next'});
+ assert.equal(s.phase,'main');
+ const pull=()=>{
+  const pl=s.players[0];
+  for(const zone of ['deck','life','hand']){
+   const at=pl[zone].findIndex(c=>c.cardId!=='GAP-095-LIVE');
+   if(at>=0)return pl[zone].splice(at,1)[0];
+  }
+  throw Error('missing body');
+ };
+ let live=s.players[0].hand.find(c=>c.cardId==='GAP-095-LIVE');
+ if(!live){
+  for(const zone of ['deck','life']){
+   const at=s.players[0][zone].findIndex(c=>c.cardId==='GAP-095-LIVE');
+   if(at<0)continue;
+   live=s.players[0][zone].splice(at,1)[0];
+   break;
+  }
+ }
+ assert.ok(live);
+ if(!s.players[0].hand.includes(live))s.players[0].hand.push(live);
+ s=dispatchUniversalAction(livePack,s,legalUniversalActions(livePack,s).find(a=>
+  a.type==='play'&&a.uid===live.uid&&a.line==='front'&&a.slot===0));
+ const self=s.players[0].front[0];
+ assert.equal(self.cardId,'GAP-095-LIVE');
+ for(let slot=1;slot<4;slot++){
+  const occ=pull();
+  occ.ready=true;
+  occ.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].front[slot]=occ;
+ }
+ const occupants=[];
+ for(let slot=0;slot<4;slot++){
+  const occ=pull();
+  occ.ready=true;
+  occ.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].energy[slot]=occ;
+  occupants.push(occ);
+ }
+ const payment=pull();
+ s.players[0].hand.push(payment);
+ const activated=dispatchUniversalAction(livePack,s,legalUniversalActions(livePack,s).find(a=>
+  a.type==='activate'&&a.uid===self.uid&&a.mode==='payHandMove'));
+ assert.equal(activated.pending.kind,'effect-pay-hand-move');
+ const paid=dispatchUniversalAction(livePack,activated,{type:'choosePayHandMove',uid:payment.uid});
+ assert.equal(paid.pending.kind,'effect-move-or-swap');
+ assert.deepEqual(legalUniversalActions(livePack,paid)
+  .filter(a=>a.type==='chooseMoveOrSwap').map(a=>a.mode).sort(),['shift','swap']);
+ const shifting=dispatchUniversalAction(livePack,paid,{type:'chooseMoveOrSwap',mode:'shift'});
+ assert.equal(shifting.pending.kind,'effect-line-move');
+ assert.equal(shifting.pending.choices.includes(self.uid),true);
+ const slotting=dispatchUniversalAction(livePack,shifting,{type:'chooseLineMove',uid:self.uid});
+ assert.equal(slotting.pending.kind,'effect-line-slot');
+ assert.equal(slotting.pending.line,'energy');
+ const moved=dispatchUniversalAction(livePack,slotting,{
+  type:'chooseLineSlot',slot:0,replaceUid:occupants[0].uid});
+ assert.equal(moved.players[0].energy[0].uid,self.uid);
+ assert.equal(moved.players[0].removed.some(c=>c.uid===occupants[0].uid),true);
+ assert.equal(moved.players[0].outside.some(c=>c.uid===occupants[0].uid),false);
+ assert.equal(moved.players[0].front[0],null);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-095'],undefined);
+});
+
+test('096 cannot watch an own-effect hand discard and draw once per name',()=>{
+ reject(face({
+  id:'GAP-096-WATCH',type:'field',bp:0,
+  moveObserver:{op:'restSelfTuckMovedFaceDown',when:{
+   from:'hand',to:'outside',sourceOnField:true,sourceName:'エンデヴァー事務所',
+   reasons:['own-effect']}},
+  effects:{}
+ }),/invalid moved-card field watcher/);
+ reject(face({
+  id:'GAP-096-ANY',type:'field',bp:0,
+  moveTriggers:[{when:{from:'hand',to:'outside',reasons:['own-effect']},
+   then:[{op:'draw',count:1}]}],
+  effects:{}
+ }),/unsupported moved-card source condition/);
+ reject(face({
+  id:'GAP-096-REST',type:'field',bp:0,
+  effects:{onPlay:[{op:'restActiveFieldThenDrawDiscard'}]}
+ }),/field rest and active entry are event onPlay/);
+ assert.equal(MHA_PROGRAMS_051_100['MHA-1-096'],undefined);
+ assert.equal(createMhaV2Pack().cards['MHA-1-096'],undefined);
+});
+
