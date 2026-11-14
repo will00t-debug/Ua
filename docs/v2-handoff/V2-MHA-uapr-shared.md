@@ -28,3 +28,11 @@ UA05NC/MHA-3 還沒有完整官方個人卡號。沒有登錄對戰卡，也沒�
 只有三種形狀：`hand:1`；`hand:1` 且 `payAp:1`（兩樣都要付）；`hand:2` 且 `orAp:1`（自己回合、AP 還能付時才可以改付 1 AP）。受益是 MHA-2-009、012、018。
 
 MHA-2-022 沒有新操作。登場禁止用 `playBanOtherTrait`，移步用 `step`，三種以上不同卡名的 BP 用既有被動（`ownDistinctTraitNames`、`min:3`、`turn:'any'`、場上與場外）。
+
+## 手牌付 AP 放到場外
+
+`handPayApOutsideThen` 是角色的 `mainAbility`。`payAp` 只能是 1。主要階段、手牌、有活動 AP，而且手牌區的必要能量已經夠，才可以發動。登場禁止不擋這句。確認能量、付 1 AP、把這張卡從手牌放到場外，然後才跑 `then`。Q1001、Q1002、Q1003。放到場外之後的效果仍是角色效果。Q2007。
+
+`then` 只有三種：抽 1 再放 1 張手牌到場外，然後最多活動 1 張 AP；看牌頂 4 張，公開最多 2 張指定名字以外的卡，其餘放牌底；最多退場 1 張對手前排。受益是 MHA-2-021、023、025。
+
+看牌用 `searchTopExceptNameBottom`。視窗裡的每一張都留在畫面上，被排除的名字不能選。退場上限用 `retireOppFrontUnderBp` 的 `traitExceptName`：自己場上該特徵、名字不是例外的正面角色達到 `min` 張，上限改成 `bonusBp`。綠谷自己不算進這 3 張。

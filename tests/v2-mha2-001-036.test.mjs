@@ -14,7 +14,7 @@ import {validateUniversalDeck,createUniversalPack} from '../dist/universal-v2/pa
 import {
  legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,
  newUniversalMatch,universalBp,universalEnergyByColor,universalImpact,
- universalImpactNull,universalPrivateChoices
+ universalImpactNull,universalPrivateChoices,zoneRequiredEnergy
 } from '../dist/universal-v2/engine.mjs';
 
 const pack=createMha2Pack();
@@ -122,9 +122,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-35');
- assert.equal(READY.length,20);
- assert.equal(Object.keys(pack.cards).length,35);
+ assert.equal(pack.version,'mha2-ex06-ready-40');
+ assert.equal(READY.length,24);
+ assert.equal(Object.keys(pack.cards).length,40);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
@@ -166,9 +166,8 @@ test('MHA-2-001 rests for yellow energy and leaves at the end of main',()=>{
 });
 
 test('MHA-2-002 publishes one Deku or One For All card, then discards only if it took one',()=>{
- const deku=face('MHA-2-021');
  const ofa=face('MHA-2-029');
- let {pack:live,s}=open(2002,[deku,ofa]);
+ let {pack:live,s}=open(2002,[ofa]);
  s=reach(live,s,0,'main');
  fuel(s,0,['MHA-2-001']);
  const hero=hold(s,0,'MHA-2-002');
@@ -198,7 +197,7 @@ test('MHA-2-002 publishes one Deku or One For All card, then discards only if it
  assert.ok(s.players[0].hand.some(card=>card.uid===named.uid));
  assert.ok(s.players[0].outside.some(card=>card.uid===spare.uid));
 
- let skipped=open(2003,[deku,ofa]);
+ let skipped=open(2003,[ofa]);
  skipped.s=reach(skipped.pack,skipped.s,0,'main');
  fuel(skipped.s,0,['MHA-2-001']);
  const waiting=hold(skipped.s,0,'MHA-2-002');
@@ -280,8 +279,7 @@ test('MHA-2-007 steps from the front during the move phase only',()=>{
 });
 
 test('MHA-2-008 enters active, looks at three A-class cards, and gains BP beside Deku',()=>{
- const deku=face('MHA-2-021');
- let {pack:live,s}=open(2008,[deku]);
+ let {pack:live,s}=open(2008);
  s=reachMainAp(live,s,0,2);
  fuel(s,0,['MHA-2-014','MHA-2-004','MHA-2-001']);
  const self=hold(s,0,'MHA-2-008');
@@ -308,8 +306,7 @@ test('MHA-2-008 enters active, looks at three A-class cards, and gains BP beside
 });
 
 test('MHA-2-013 removes impact from the character it battles',()=>{
- const deku=face('MHA-2-021');
- let {pack:live,s}=open(2013,[deku]);
+ let {pack:live,s}=open(2013);
  s=reach(live,s,0,'attack');
  const striker=seat(s,0,'MHA-2-019','front',0,true);
  seat(s,0,'MHA-2-021','front',1,true);
@@ -333,8 +330,7 @@ test('MHA-2-014 gains 1000 BP only on its controller turn',()=>{
 });
 
 test('MHA-2-019 gains BP and impact only on its turn beside Deku',()=>{
- const deku=face('MHA-2-021');
- let {pack:live,s}=open(2019,[deku]);
+ let {pack:live,s}=open(2019);
  const self=seat(s,0,'MHA-2-019','front',0,true);
  assert.equal(universalBp(live,s,self),4000);
  assert.equal(universalImpact(live,s,self),0);
@@ -567,8 +563,179 @@ test('MHA-2-012 and 018 pay the printed hand or AP cost before the same Deku ent
  assert.equal(both.s.players[0].apCards.filter(card=>card.inPlay&&card.ready).length,0);
 });
 
+test('MHA-2-021 pays one AP from hand, moves outside, then draws and readies an AP',()=>{
+ let scene=open(2021);
+ scene.s=reachMainAp(scene.pack,scene.s,0,1);
+ seat(scene.s,0,'MHA-2-004','front',0,true);
+ const self=hold(scene.s,0,'MHA-2-021');
+ const plays=()=>legalUniversalActions(scene.pack,scene.s).some(action=>
+  action.type==='play'&&action.uid===self.uid);
+ const activates=()=>legalUniversalActions(scene.pack,scene.s).some(action=>
+  action.type==='handActivate'&&action.mode==='handPayApOutside'&&action.uid===self.uid);
+ assert.equal(plays(),false);
+ assert.equal(activates(),false);
+ fuel(scene.s,0,['MHA-2-001','MHA-2-001']);
+ assert.equal(plays(),false);
+ assert.equal(activates(),true);
+ scene.s=act(scene.pack,scene.s,action=>action.type==='handActivate'&&action.uid===self.uid);
+ assert.equal(scene.s.players[0].hand.some(card=>card.uid===self.uid),false);
+ assert.equal(scene.s.players[0].outside.some(card=>card.uid===self.uid),true);
+ assert.equal(scene.s.players[0].apCards.filter(card=>card.inPlay&&card.ready).length,0);
+ assert.equal(scene.s.pending.kind,'effect-discard');
+ const dumped=scene.s.players[0].hand[0];
+ scene.s=act(scene.pack,scene.s,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(scene.s.players[0].outside.some(card=>card.uid===dumped.uid),true);
+ assert.equal(scene.s.pending.kind,'effect-recover-ap');
+ const rested=scene.s.players[0].apCards.find(card=>card.inPlay&&!card.ready);
+ scene.s=act(scene.pack,scene.s,{type:'chooseApRecovery',uid:rested.uid});
+ assert.equal(scene.s.players[0].apCards.some(card=>card.uid===rested.uid&&card.ready),true);
+ assert.equal(scene.s.pending,null);
+});
+
+test('MHA-2-023 shows four cards and adds at most two that are not Deku',()=>{
+ let scene=open(2023);
+ scene.s=reachMainAp(scene.pack,scene.s,0,1);
+ fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ seat(scene.s,0,'MHA-2-004','front',0,true);
+ const self=hold(scene.s,0,'MHA-2-023');
+ const window=['MHA-2-021','MHA-2-014','MHA-2-009','MHA-2-006'].map(id=>pull(scene.s,0,id));
+ scene.s.players[0].deck.unshift(...window);
+ assert.equal(legalUniversalActions(scene.pack,scene.s).some(action=>
+  action.type==='play'&&action.uid===self.uid),false);
+ scene.s=act(scene.pack,scene.s,action=>action.type==='handActivate'&&action.uid===self.uid);
+ assert.equal(scene.s.players[0].outside.some(card=>card.uid===self.uid),true);
+ assert.equal(scene.s.pending.kind,'effect-top-filter-many-choice');
+ assert.deepEqual(scene.s.pending.uids,window.map(card=>card.uid));
+ assert.equal(scene.s.pending.choices.includes(window[0].uid),false);
+ assert.equal(scene.s.pending.choices.length,3);
+ const looked=universalPrivateChoices(scene.pack,scene.s,0);
+ assert.equal(looked.inspected.length,4);
+ assert.equal(looked.inspected.some(card=>card.cardId==='MHA-2-021'),true);
+ assert.equal(looked.options.some(option=>option.action.uid===window[0].uid),false);
+ scene.s=act(scene.pack,scene.s,{type:'chooseTopFilteredMany',uid:window[1].uid});
+ scene.s=act(scene.pack,scene.s,{type:'chooseTopFilteredMany',uid:null});
+ assert.equal(scene.s.pending.kind,'effect-top-order');
+ scene.s=order(scene.pack,scene.s);
+ assert.equal(scene.s.players[0].hand.some(card=>card.uid===window[1].uid),true);
+ assert.equal(scene.s.players[0].hand.some(card=>card.uid===window[0].uid),false);
+ const bottom=scene.s.players[0].deck.slice(-3).map(card=>card.uid);
+ assert.deepEqual(bottom.slice().sort(),[window[0].uid,window[2].uid,window[3].uid].sort());
+});
+
+test('MHA-2-025 retires a front character, and three other A組 raise the cap',()=>{
+ const ally=n=>({
+  id:'ALLY-'+n,name:'仲間'+n,color:'yellow',type:'character',energy:1,ap:1,
+  bp:1500,gen:0,trigger:null,traits:['A組'],implementation:'vanilla'
+ });
+ const low={
+  id:'LOW-BP',name:'低標',color:'red',type:'character',energy:1,ap:1,
+  bp:2000,gen:0,trigger:null,traits:[],implementation:'vanilla'
+ };
+ const mid={
+  id:'MID-BP',name:'中標',color:'red',type:'character',energy:1,ap:1,
+  bp:4000,gen:0,trigger:null,traits:[],implementation:'vanilla'
+ };
+ const deku={
+  id:'FIELD-DEKU',name:'緑谷 出久',color:'yellow',type:'character',energy:1,ap:1,
+  bp:3000,gen:0,trigger:null,traits:['A組'],implementation:'vanilla'
+ };
+ const prepare=(seed,faces,allies)=>{
+  let scene=open(seed,[low,mid,...faces]);
+  scene.s=reachMainAp(scene.pack,scene.s,0,1);
+  fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001','MHA-2-001']);
+  allies.forEach((id,slot)=>seat(scene.s,0,id,'front',slot,true));
+  const small=seat(scene.s,1,'LOW-BP','front',0,true);
+  const tall=seat(scene.s,1,'MID-BP','front',1,true);
+  const self=hold(scene.s,0,'MHA-2-025');
+  return {scene,self,small,tall};
+ };
+ let plain=prepare(2025,[],[ ]);
+ assert.equal(legalUniversalActions(plain.scene.pack,plain.scene.s).some(action=>
+  action.type==='handActivate'&&action.uid===plain.self.uid),true);
+ plain.scene.s=act(plain.scene.pack,plain.scene.s,action=>
+  action.type==='handActivate'&&action.uid===plain.self.uid);
+ assert.equal(plain.scene.s.pending.kind,'effect-retire-bp');
+ assert.equal(plain.scene.s.pending.limit,3000);
+ assert.equal(plain.scene.s.pending.optional,true);
+ assert.deepEqual(plain.scene.s.pending.choices,[plain.small.uid]);
+ plain.scene.s=act(plain.scene.pack,plain.scene.s,{type:'chooseRetireBp',uid:null});
+ assert.equal(plain.scene.s.players[1].front[0]?.uid,plain.small.uid);
+
+ let raised=prepare(2026,[ally(1),ally(2),ally(3)],['ALLY-1','ALLY-2','ALLY-3']);
+ assert.equal(legalUniversalActions(raised.scene.pack,raised.scene.s).some(action=>
+  action.type==='play'&&action.uid===raised.self.uid),false);
+ raised.scene.s=act(raised.scene.pack,raised.scene.s,action=>
+  action.type==='handActivate'&&action.uid===raised.self.uid);
+ assert.equal(raised.scene.s.pending.limit,5000);
+ assert.equal(raised.scene.s.pending.choices.includes(raised.tall.uid),true);
+ raised.scene.s=act(raised.scene.pack,raised.scene.s,{type:'chooseRetireBp',uid:raised.tall.uid});
+ assert.equal(raised.scene.s.players[1].front[1],null);
+
+ let named=prepare(2027,[ally(1),ally(2),deku],['ALLY-1','ALLY-2','FIELD-DEKU']);
+ named.scene.s=act(named.scene.pack,named.scene.s,action=>
+  action.type==='handActivate'&&action.uid===named.self.uid);
+ assert.equal(named.scene.s.pending.limit,3000);
+ assert.equal(named.scene.s.pending.choices.includes(named.tall.uid),false);
+ assert.equal(named.scene.s.pending.choices.includes(named.small.uid),true);
+});
+
+test('MHA-2-034 discounts each One For All name and must retire a front character',()=>{
+ const low={
+  id:'LOW-BP',name:'低標',color:'red',type:'character',energy:1,ap:1,
+  bp:2000,gen:0,trigger:null,traits:[],implementation:'vanilla'
+ };
+ const high={
+  id:'HIGH-BP',name:'高標',color:'red',type:'character',energy:1,ap:1,
+  bp:4000,gen:0,trigger:null,traits:[],implementation:'vanilla'
+ };
+ const names=['MHA-2-029','MHA-2-030','MHA-2-031'].map(face);
+ let scene=open(2034,[...names,low,high]);
+ scene.s=reachMainAp(scene.pack,scene.s,0,1);
+ fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ const small=seat(scene.s,1,'LOW-BP','front',0,true);
+ const tall=seat(scene.s,1,'HIGH-BP','front',1,true);
+ const event=hold(scene.s,0,'MHA-2-034');
+ const printed=scene.pack.cards['MHA-2-034'];
+ const playable=()=>legalUniversalActions(scene.pack,scene.s).some(action=>
+  action.type==='event'&&action.uid===event.uid);
+ assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'hand'),6);
+ assert.equal(playable(),false);
+ const fields=['MHA-2-029','MHA-2-030','MHA-2-031'].map(id=>pull(scene.s,0,id));
+ scene.s.players[0].outside.push(...fields);
+ assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'hand'),3);
+ assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'life'),6);
+ assert.equal(playable(),true);
+ fields[0].faceDown=true;
+ assert.equal(zoneRequiredEnergy(scene.pack,scene.s,0,printed,'hand'),4);
+ assert.equal(playable(),false);
+ fields[0].faceDown=false;
+ scene.s=act(scene.pack,scene.s,action=>action.type==='event'&&action.uid===event.uid);
+ assert.equal(scene.s.pending.kind,'effect-retire-bp');
+ assert.equal(scene.s.pending.limit,3000);
+ assert.equal(scene.s.pending.optional,undefined);
+ assert.deepEqual(scene.s.pending.choices,[small.uid]);
+ scene.s=act(scene.pack,scene.s,{type:'chooseRetireBp',uid:small.uid});
+ assert.equal(scene.s.players[1].front[0],null);
+ assert.equal(scene.s.players[1].front[1]?.uid,tall.uid);
+
+ let capped=open(2035,[...names,high]);
+ capped.s=reachMainAp(capped.pack,capped.s,0,1);
+ fuel(capped.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
+ const only=seat(capped.s,1,'HIGH-BP','front',0,true);
+ const again=hold(capped.s,0,'MHA-2-034');
+ capped.s.players[0].outside.push(...['MHA-2-029','MHA-2-030','MHA-2-031'].map(id=>pull(capped.s,0,id)));
+ assert.equal(legalUniversalActions(capped.pack,capped.s).some(action=>
+  action.type==='event'&&action.uid===again.uid),false);
+ seat(capped.s,0,'MHA-2-021','front',0,true);
+ assert.equal(legalUniversalActions(capped.pack,capped.s).some(action=>
+  action.type==='event'&&action.uid===again.uid),true);
+ capped.s=act(capped.pack,capped.s,action=>action.type==='event'&&action.uid===again.uid);
+ assert.equal(capped.s.pending.limit,5000);
+ assert.deepEqual(capped.s.pending.choices,[only.uid]);
+});
+
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
- assert.equal(PENDING.length,16);
+ assert.equal(PENDING.length,12);
  assert.deepEqual(Object.keys(MHA2_REQUESTS_001_036).sort(),[...PENDING].sort());
  for(const id of PENDING){
   const card=byId.get(id);
