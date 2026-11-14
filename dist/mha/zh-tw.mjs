@@ -124,5 +124,5 @@ export function localizeMhaCard(card){
  const name=MHA_NAMES_ZH_TW[card.nameJa]||card.name||card.nameJa;
  const triggerText=MHA_COLOR_TRIGGER_ZH_TW[card.id]||
   (card.trigger&&MHA_TRIGGER_TEXT_ZH_TW[card.trigger])||card.triggerText||card.triggerTextJa||'';
- return {...card,name,effect,triggerText};
+ return {...card,name,effect:card.id==='MHA-P-001'?effect.replaceAll('ワン・フォー・オール','ONE FOR ALL'):effect,triggerText};
 }
