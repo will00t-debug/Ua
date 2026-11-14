@@ -255,9 +255,9 @@ const decks={
  [UNOFFICIAL+'・紅']:red
 };
 
-test('the ready pool stays 99 cards and MHA stays unplayable',()=>{
- assert.equal(Object.keys(mha.cards).length,99);
- assert.equal(mha.version,'mha-ua10-ready-99');
+test('the ready pool stays 100 cards and MHA stays unplayable',()=>{
+ assert.equal(Object.keys(mha.cards).length,100);
+ assert.equal(mha.version,'mha-ua10-ready-100');
  assert.equal(editor.length,109);
  assert.equal(getTitle('mha').playable,false);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false),true);
@@ -294,8 +294,10 @@ test('green, purple and red unofficial decks are legal 50-card lists',()=>{
  assert.ok(purple['MHA-1-010']>=2&&purple['MHA-1-008']>=2);
  assert.equal(mha.cards['MHA-1-014'].raidName,mha.cards['MHA-1-013'].name);
  assert.equal(mha.cards['MHA-1-010'].raidName,mha.cards['MHA-1-008'].name);
- assert.deepEqual(colorCards('red').filter(card=>card.raidName).map(card=>card.id),['MHA-1-081']);
+ assert.deepEqual(colorCards('red').filter(card=>card.raidName).map(card=>card.id),
+  ['MHA-1-081','MHA-1-085']);
  assert.equal(mha.cards['MHA-1-081'].raidName,'轟 焦凍');
+ assert.equal(mha.cards['MHA-1-085'].raidName,'爆豪 勝己');
  assert.ok(red['MHA-1-087']>=2&&red['MHA-1-093']>=2);
  assert.equal(mha.cards['MHA-1-087'].energy,4);
  assert.equal(mha.cards['MHA-1-093'].name,mha.cards['MHA-1-107'].raidName);

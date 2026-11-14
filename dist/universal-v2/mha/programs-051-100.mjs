@@ -158,6 +158,15 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'grantNextBpWindow',amount:1000}]}
  }),
+ 'MHA-1-085':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'爆豪 勝己',
+  bpPerDirectFacedown:{amount:1000,turn:'own'},
+  effects:{
+   onPlay:[{op:'tuckFacedownUnder',from:'deckTop',host:'self',count:2,optional:false}],
+   onAttack:[{op:'stripFacedownToOutside',optional:true,max:1,host:'self',to:'outside',
+    then:[{op:'retireOppFrontUnderBp',bp:2500,optional:true}]}]
+  }
+ }),
  'MHA-1-086':Object.freeze({ready:true,implementation:'dsl',activeExtraEnergy:1}),
  'MHA-1-087':Object.freeze({
   ready:true,implementation:'dsl',
