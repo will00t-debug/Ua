@@ -255,9 +255,9 @@ const decks={
  [UNOFFICIAL+'・紅']:red
 };
 
-test('the ready pool stays 91 cards and MHA stays unplayable',()=>{
- assert.equal(Object.keys(mha.cards).length,91);
- assert.equal(mha.version,'mha-ua10-ready-91');
+test('the ready pool stays 92 cards and MHA stays unplayable',()=>{
+ assert.equal(Object.keys(mha.cards).length,92);
+ assert.equal(mha.version,'mha-ua10-ready-92');
  assert.equal(editor.length,109);
  assert.equal(getTitle('mha').playable,false);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false),true);

@@ -638,3 +638,7 @@ IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 77 張 ready、3
 
 038 的蓋牌關鍵字與 099 的手牌數量退場上限都沿用 #460，沒有另寫引擎。特殊觸發沿用 `retireOppFront`。此提交的清點是 MHA 91 ready、18 pending、`playable:false`。IMC 仍是 113／113、`playable:true`。89 張基準的 SHA 沒有改寫。002、004、091、095、096、100 仍 pending。沒有部署。
 
+## 100 的退場後全體休息
+
+`retireOppFrontUnderBp` 的 `thenRestAll` 在強制退場成功後，才休息全部印刷 BP 以下的對手前排，並跳過它們下一次活動。指名角色只提高退場上限。儲存的 BP 視窗不提高這段休息。沒有退場對象時這張事件不能打出。此提交的清點是 MHA 92 ready、17 pending、`playable:false`。IMC 仍是 113／113、`playable:true`。沒有部署。
+

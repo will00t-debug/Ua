@@ -2696,13 +2696,18 @@ function verifyProgram(program,path){
     headRetireOk=true;
    }else{
     const mandatory=e.mandatory===true;
+    const follow=e.thenRestAll;
+    const followOk=follow===undefined||(follow&&typeof follow==='object'&&!Array.isArray(follow)&&
+     integer(follow.bp,500)&&follow.bp<e.bp&&follow.bp<=20000&&follow.bp%500===0&&
+     follow.skipNextActive===true&&Object.keys(follow).length===2&&
+     Object.keys(follow).every(k=>['bp','skipNextActive'].includes(k)));
     headRetireOk=integer(e.bp,1)&&e.bp<=50000&&typeof e.bonusName==='string'&&
      !!e.bonusName.trim()&&integer(e.bonusBp,e.bp)&&e.bonusBp<=50000&&
      (e.bonusOutsideName===undefined||(typeof e.bonusOutsideName==='string'&&
       !!e.bonusOutsideName.trim()&&e.bonusOutsideName.length<=80))&&
-     (e.mandatory===undefined||mandatory)&&
+     (e.mandatory===undefined||mandatory)&&followOk&&
      Object.keys(e).every(k=>['op','bp','bonusName','bonusBp','bonusOutsideName',
-      ...(mandatory?['mandatory']:[])].includes(k));
+      ...(mandatory?['mandatory']:[]),...(follow?['thenRestAll']:[])].includes(k));
    }
    if(e.op==='removeOppFrontUnderBp'&&!headRetireOk)
     throw Error(path+'['+i+'] unsupported printed BP retirement profile');

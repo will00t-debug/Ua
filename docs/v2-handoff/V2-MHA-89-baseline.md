@@ -23,3 +23,5 @@ IMC 113／113，`playable:true`。MHA 89／109 ready，20 pending，`playable:fa
 這個 SHA 的清點是 89 ready、20 pending。後面的提交若把已能寫完整句的卡進包，以該提交的程式清點為準，不回改這一段。
 
 038 與 099 的整句已由上面的共用操作涵蓋，之後的提交把它們進包。那一筆的清點是 91 ready、18 pending。002、004、091、095、096、100 仍待整句。
+
+100 隨後用 `thenRestAll` 把強制退場和其後的全體休息寫成同一句。那一筆的清點是 92 ready、17 pending。

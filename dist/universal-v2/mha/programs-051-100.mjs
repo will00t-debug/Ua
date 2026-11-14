@@ -197,5 +197,13 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
    op:'retireOppFrontUnderBp',bp:3000,
    handAtMost:{atMost:3,bp:5000,other:true}
   }]}
+ }),
+ 'MHA-1-100':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFront'},
+  effects:{onPlay:[{
+   op:'retireOppFrontUnderBp',bp:3000,bonusName:'轟 焦凍',bonusBp:5000,
+   mandatory:true,thenRestAll:{bp:2000,skipNextActive:true}
+  }]}
  })
 });
