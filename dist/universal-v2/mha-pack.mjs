@@ -6,6 +6,7 @@ import {mhaEditorCards} from '../mha/catalog.mjs';
 import {MHA_UA10ST_PROGRAMS} from './mha/programs.mjs';
 import {MHA_PROGRAMS_001_050} from './mha/programs-001-050.mjs';
 import {MHA_PROGRAMS_051_100} from './mha/programs-051-100.mjs';
+import {MHA2_PROGRAMS_037_073} from './mha/programs-2-037-073.mjs';
 
 const PROGRAM_KEYS=new Set([
  'ready','implementation','effects','mainAbility','notes','activeExtraEnergy','step',
@@ -17,7 +18,8 @@ const PROGRAM_KEYS=new Set([
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
- 'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver'
+ 'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
+ 'emptyOwnFieldHandEnergyDiscount'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
@@ -29,7 +31,8 @@ const BATTLE_KEYS=[
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
- 'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver'
+ 'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
+ 'emptyOwnFieldHandEnergyDiscount'
 ];
 export const MHA_OFFICIAL_MATCH_CLOSED='我的英雄學院尚未開放正式對戰。';
 
@@ -37,14 +40,22 @@ function serial(id){
  const match=/^MHA-1-(\d{3})$/.exec(id);
  return match?Number(match[1]):0;
 }
+function serial2(id){
+ const match=/^MHA-2-(\d{3})$/.exec(id);
+ return match?Number(match[1]):0;
+}
 
 export function mhaProgramFor(id){
- const n=serial(id);
+ const set2=serial2(id);
  let program=null;
- if(n>=1&&n<=50)program=MHA_PROGRAMS_001_050[id]||null;
- else if(n>=51&&n<=100)program=MHA_PROGRAMS_051_100[id]||null;
- else if(n>=101&&n<=109)program=MHA_UA10ST_PROGRAMS[id]||null;
- if(!program&&MHA_UA10ST_PROGRAMS[id]?.ready===true)program=MHA_UA10ST_PROGRAMS[id];
+ if(set2>=37&&set2<=73)program=MHA2_PROGRAMS_037_073[id]||null;
+ else{
+  const n=serial(id);
+  if(n>=1&&n<=50)program=MHA_PROGRAMS_001_050[id]||null;
+  else if(n>=51&&n<=100)program=MHA_PROGRAMS_051_100[id]||null;
+  else if(n>=101&&n<=109)program=MHA_UA10ST_PROGRAMS[id]||null;
+  if(!program&&MHA_UA10ST_PROGRAMS[id]?.ready===true)program=MHA_UA10ST_PROGRAMS[id];
+ }
  if(!program)return null;
  for(const key of Object.keys(program)){
   if(!PROGRAM_KEYS.has(key))

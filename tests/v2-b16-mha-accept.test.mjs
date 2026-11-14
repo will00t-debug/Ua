@@ -1,6 +1,6 @@
 // Round 16 acceptance rebuilt on the integrated 89-card MHA pack. The three lists are unofficial
 // test decks taken from PR #451 and rebuilt against createMhaV2Pack(). They
-// are not UA10ST_PRODUCT and they do not replace the 109-card editor catalog.
+// are not UA10ST_PRODUCT and they do not replace the editor catalog.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -255,10 +255,10 @@ const decks={
  [UNOFFICIAL+'・紅']:red
 };
 
-test('the ready pool is 109 cards and MHA stays unplayable',()=>{
- assert.equal(Object.keys(mha.cards).length,109);
- assert.equal(mha.version,'mha-ua10-ready-109');
- assert.equal(editor.length,109);
+test('the ready pool keeps set 1 and MHA stays unplayable',()=>{
+ assert.equal(Object.keys(mha.cards).length,119);
+ assert.equal(mha.version,'mha-ua10-ready-119');
+ assert.equal(editor.length,146);
  assert.equal(getTitle('mha').playable,false);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false),true);
  assert.equal(UA10ST_PRODUCT.recipe,null);
@@ -311,7 +311,7 @@ test('deck cards keep official art and the full printed effect',()=>{
  for(const counts of Object.values(decks)){
   for(const id of Object.keys(counts)){
    const row=editorById[id];
-   assert.match(row.image,/https:\/\/www\.unionarena-tcg\.com\/.+UA10(BT|ST)_MHA-1-/);
+   assert.match(row.image,/https:\/\/www\.unionarena-tcg\.com\/.+(?:UA10(?:BT|ST)_MHA-1-|EX06BT_MHA-2-)/);
    assert.equal(deckCardImage(row),row.image);
    assert.equal(row.nameJa.length>0,true);
    const copy=fieldEffectCopy(row);
