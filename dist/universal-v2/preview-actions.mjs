@@ -125,6 +125,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-deck-named-play':'公開的卡片可加入手牌、休息登場或突襲',
  'effect-remove-hand':'可將手牌中1張具有指定特徵的卡除外',
  'effect-place-hand':'將1張手牌放到牌頂或場外',
+ 'effect-may-hand-rest':'可從手牌把符合條件的角色以休息狀態登場',
+ 'effect-opp-may-front-rest':'可從手牌把符合 AP 的角色以休息狀態放到前排',
+ 'effect-this-turn-block':'可選擇對手前排，這個回合不能阻擋',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-cap':'從手牌將符合條件的卡以 Rest 登場',
  'effect-hand-rest-or-raid':'從手牌休息登場或突襲',
@@ -224,6 +227,12 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-trait-hand-outside':'將 1 張具有指定特徵的手牌放到場外',
  'effect-gated-hand-retire':'將 1 張手牌放到場外',
  'effect-named-follow':'選擇 1 張指定角色',
+ 'effect-named-kit':'選擇指定角色並給予 BP 與衝擊',
+ 'effect-active-self-or-ap':'可活動這張卡或 1 張 AP',
+ 'effect-remove-hand-main':'可把 1 張有起動主要的手牌放進移除區',
+ 'effect-copy-main':'可把移除的起動主要交給 1 張角色',
+ 'effect-trigger-leave-rest':'可改退這張場域並把指定角色休息',
+ 'effect-trait-leave-draw':'可抽 1 張牌',
  'effect-optional-hand-outside':'可支付 1 張手牌到場外',
  'effect-except-hand-rest':'可支付手牌，從場外休息登場',
  'effect-life-order':'查看全部生命，並以任意順序重新排列',
@@ -1085,6 +1094,9 @@ export function uiActionLabel(action,{pack,state}={}){
    '將 '+name()+' 放到牌組上面':'將 '+name()+' 放到場外';
   case 'chooseRemoveHand':return action.uid===null?'不除外':'將 '+name()+' 除外';
   case 'chooseRetireOtherFrontName':return action.uid===null?'不退場':'使 '+name()+' 退場';
+  case 'chooseMayHandRest':return action.uid===null?'不從手牌登場':'以休息狀態登場 '+name()+suffix();
+  case 'chooseOppFrontRest':return action.uid===null?'不放到前排':'以休息狀態放到前排 '+name()+suffix();
+  case 'chooseThisTurnBlock':return action.uid===null?'不禁止阻擋':'這個回合不能阻擋：'+name();
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseHandRestCap':return action.uid===null?'不以 Rest 登場':'以 Rest 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
@@ -1096,6 +1108,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTuckFacedown':return action.uid===null?'不蓋到角色下面':'把 '+name()+' 蓋到角色下面';
   case 'chooseStripFacedown':return action.uid===null?'不把蓋牌放到場外':'把 '+name()+' 放到場外';
   case 'chooseLookUnderHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseLookUnderOrder':return action.uid===null?'不加入手牌，按這個順序放回':'將 '+name()+' 加入手牌';
+  case 'chooseActiveEnergyBuff':return '活動 '+name()+'，這個回合 BP+'+((state?.pending?.bp)||'');
   case 'choosePayHandMove':return '支付這張手牌到場外：'+name();
   case 'chooseReturnActive':return action.uid===null?'不讓其他活動角色回手':'讓 '+name()+' 回手';
   case 'chooseHandActive':return action.uid===null?'不從手牌以活動狀態登場':'以活動狀態登場 '+name()+suffix();
@@ -1107,6 +1121,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTraitHandOutside':return '將 '+name()+' 放到場外';
   case 'chooseGatedHandRetire':return '將 '+name()+' 放到場外';
   case 'chooseNamedFollow':return '選擇 '+name();
+  case 'chooseNamedKit':return '給予 '+name()+' BP 與衝擊';
+  case 'chooseSelfOrAp':return action.uid===null?'不活動':
+   String(action.uid||'').startsWith('AP')?'活動 1 張 AP':'活動這張卡';
+  case 'chooseRemoveHandMain':return action.uid===null?'不放進移除區':'把 '+name()+' 放進移除區';
+  case 'chooseCopyMain':return action.uid===null?'不給予起動主要':'把起動主要交給 '+name();
+  case 'chooseTriggerLeave':return action.uid===null?'不改退場域':'改退這張場域並把指定角色休息';
+  case 'chooseTraitLeaveDraw':return action.mode==='draw'?'抽 1 張牌':'不抽牌';
   case 'chooseOptionalHandOutside':return action.uid===null?'不支付手牌':'將 '+name()+' 放到場外';
   case 'chooseExceptHandRest':return action.mode==='decline'?'不支付':
    action.mode==='ap'?'改付 1 AP':'將 '+name()+' 放到場外';
@@ -1849,6 +1870,7 @@ const NORMAL_BOARD_ENTRY=new Set([
  'chooseOutsideActivePair','chooseOutsideNameRest','chooseOutsideRest',
  'chooseOutsidePrintedRest','chooseOutsidePrintedActive','chooseOutsidePrinted',
  'chooseHandNamedRest','chooseHandRest','chooseHandRestCap','chooseHandGirlRest',
+ 'chooseMayHandRest','chooseOppFrontRest',
  'chooseRemovedEnter','chooseNamedZoneDeploy',
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
   'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',

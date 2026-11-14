@@ -19,7 +19,7 @@ const PROGRAM_KEYS=new Set([
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
  'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
- 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen'
+ 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','playRequiresOtherTrait','triggerLeaveRest','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen','opponentTurnBp','attackSilencesBlockTrigger','battleRetireSkipsOnRetire','frontOwnTurnAura','colorTriggerBpWindow'
 ]);
 const BATTLE_KEYS=[
  'effects','mainAbility','activeExtraEnergy','step','impactNull',
@@ -30,9 +30,9 @@ const BATTLE_KEYS=[
  'handEnergyWhileActivateMain','raidHostAny','playRequiresOwnName',
  'battleRequiresAnyName','blockSkipsNextActive','enterActiveIfName',
  'facedownKeywordThresholds','handApDiscountWhileName','bpPerDirectFacedown',
- 'energyLineForbidden','frontStripsOppAbilities','gatedHandDiscount',
+ 'energyLineForbidden','frontEnergyWhen','conditionalImpactBpAtLeast','oppFrontHandEnergy','frontStripsOppAbilities','gatedHandDiscount',
  'oppAttackReadyBp','doubleAttackIfMovedThisTurn','moveObserver',
- 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen'
+ 'emptyOwnFieldHandEnergyDiscount','playBanOtherTrait','playRequiresOtherTrait','triggerLeaveRest','distinctNameHandEnergy','handPlayBannedWhileOtherTrait','distinctNameBp','whileFrontNameUnchosen','opponentTurnBp','attackSilencesBlockTrigger','battleRetireSkipsOnRetire','frontOwnTurnAura','colorTriggerBpWindow'
 ];
 function serial(id){
  const match=/^MHA-1-(\d{3})$/.exec(id);

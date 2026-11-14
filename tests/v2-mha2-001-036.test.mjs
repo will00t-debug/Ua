@@ -126,9 +126,9 @@ function reach(live,s,player,phase){
 test('001-036 keep official identity and the 109-card set stays closed',()=>{
  assert.equal(MHA2_CARDS_001_036.length,36);
  assert.equal(READY.length+PENDING.length,36);
- assert.equal(pack.version,'mha2-ex06-ready-52');
- assert.equal(READY.length,32);
- assert.equal(Object.keys(pack.cards).length,52);
+ assert.equal(pack.version,'mha2-ex06-ready-73');
+ assert.equal(READY.length,36);
+ assert.equal(Object.keys(pack.cards).length,73);
  assert.equal(Object.keys(createMhaV2Pack().cards).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(mhaEditorCards().filter(card=>card.id.startsWith('MHA-2-')).length,73);
@@ -691,7 +691,7 @@ test('MHA-2-034 discounts each One For All name and must retire a front characte
   id:'HIGH-BP',name:'高標',color:'red',type:'character',energy:1,ap:1,
   bp:4000,gen:0,trigger:null,traits:[],implementation:'vanilla'
  };
- let scene=open(2034,[face('MHA-2-030'),low,high]);
+ let scene=open(2034,[low,high]);
  scene.s=reachMainAp(scene.pack,scene.s,0,1);
  fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
  const small=seat(scene.s,1,'LOW-BP','front',0,true);
@@ -720,7 +720,7 @@ test('MHA-2-034 discounts each One For All name and must retire a front characte
  assert.equal(scene.s.players[1].front[0],null);
  assert.equal(scene.s.players[1].front[1]?.uid,tall.uid);
 
- let capped=open(2035,[face('MHA-2-030'),high]);
+ let capped=open(2035,[high]);
  capped.s=reachMainAp(capped.pack,capped.s,0,1);
  fuel(capped.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
  const only=seat(capped.s,1,'HIGH-BP','front',0,true);
@@ -741,7 +741,7 @@ test('MHA-2-003 adds one yellow at three names and draws only after the trait ca
   id:'OFA-GUEST',name:'客',color:'yellow',type:'character',energy:1,ap:1,
   bp:1000,gen:1,traits:['ワン・フォー・オール'],trigger:null,implementation:'vanilla'
  };
- let {pack,s}=open(2003,[face('MHA-2-030'),guest]);
+ let {pack,s}=open(2003,[guest]);
  const names=['MHA-2-029','MHA-2-030','MHA-2-031'];
  s=reach(pack,s,0,'main');
  const self=seat(s,0,'MHA-2-003','energy',0,false);
@@ -792,7 +792,7 @@ test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait c
   bp:1000,gen:0,traits:['ワン・フォー・オール'],trigger:null,
   implementation:'dsl',energyLineForbidden:true
  };
- let scene=open(2026,[face('MHA-2-030'),guest,banned]);
+ let scene=open(2026,[guest,banned]);
  scene.s=reach(scene.pack,scene.s,0,'main');
  fuel(scene.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
  const self=hold(scene.s,0,'MHA-2-026');
@@ -829,7 +829,7 @@ test('MHA-2-026 bans other Class 1-A, discounts each name, and rests one trait c
  assert.equal(scene.s.players[0].hand.some(card=>card.uid===blocked.uid),true);
  assert.equal(scene.s.pending,null);
 
- let skipped=open(2027,[face('MHA-2-030'),guest]);
+ let skipped=open(2027,[guest]);
  skipped.s=reach(skipped.pack,skipped.s,0,'main');
  fuel(skipped.s,0,['MHA-2-001','MHA-2-001','MHA-2-001']);
  skipped.s.players[0].outside.push(...names.map(id=>pull(skipped.s,0,id)));
@@ -950,7 +950,7 @@ test('MHA-2-029 through 033 rest and retire only at three names, then follow the
   bp:2000,gen:0,trigger:null,traits:[],implementation:'vanilla'
  };
  const prepare=(seed,id,outsideIds,withDeku)=>{
-  let scene=open(seed,[face('MHA-2-030'),deku,other],{'MHA-2-045':1});
+  let scene=open(seed,[deku,other],{'MHA-2-045':1});
   scene.s=reach(scene.pack,scene.s,0,'main');
   scene.s.players[0].outside.push(...outsideIds.map(card=>pull(scene.s,0,card)));
   const self=seat(scene.s,0,id,'energy',0,true);
@@ -1079,7 +1079,7 @@ test('MHA-2-029 through 033 rest and retire only at three names, then follow the
 });
 
 test('pending 001-036 cards stay out of the vol.2 battle pack',()=>{
- assert.equal(PENDING.length,4);
+ assert.equal(PENDING.length,0);
  assert.deepEqual(Object.keys(MHA2_REQUESTS_001_036).sort(),[...PENDING].sort());
  for(const id of PENDING){
   const card=byId.get(id);
