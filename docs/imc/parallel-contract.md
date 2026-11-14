@@ -614,3 +614,35 @@ IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 59 張 ready、5
 
 六項共用形狀已解鎖，契約在 `docs/v2-handoff/V2-R12A-shared-ops.md`。這一輪沒有寫那些卡的程式，也沒有標 ready。`getTitle('imc').playable` 與 `getTitle('mha').playable` 維持 false。IMC 官方預組 `counts` 與 `UA10ST_PRODUCT.recipe` 維持 null。沒有合併 `main`，也沒有部署。
 
+## 第 14 輪整合
+
+基準是已部署 IMC 的 `f3266f90c7c70fe3a66ac35bb896573722342b89`。沒有整支合併 #439、#440、#438，也沒有重放 #437。001、013、014、018、070 進包。跨作品測試保留，IMC 的 `playable` 維持 true，MHA 維持 false。
+
+IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 64 張 ready、45 張 pending、目錄 109 張。新的共用操作契約在 `docs/v2-handoff/V2-R14A-shared-ops.md`。009、010、017、048、056、059、071、074、076 與 006、007 仍是 pending。沒有合併 `main`，也沒有部署。
+
+## 第 15 輪整合
+
+基準是第 14 輪 `8195a7a2c680a62ddb0516db83a9287772a3bcc9`。沒有整支合併 #447、#448、#445。IMC 的 `playable` 維持 true，MHA 維持 false。
+
+IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 77 張 ready、32 張 pending、目錄 109 張。006、007、009、010、017、048、056、059、071、074、087、089、093 進包。076 與第 15 輪解鎖的其餘句子維持 pending。契約在 `docs/v2-handoff/V2-R15A-shared-ops.md`。沒有合併 `main`，也沒有部署。
+
+## MHA 下一輪共用引擎
+
+基準仍是第 15 輪 `a22d510eda60f3d4736bcebf4aaddc47aa860af8`。IMC 113／113、`playable:true`。MHA 77 ready、32 pending、`playable:false`。新的共用操作在 `docs/v2-handoff/V2-MHA-shared-next.md`。004、038、085、090、099、002、003、005、011、026 都還沒寫卡牌程式。沒有合併 `main`，也沒有部署。
+
+## 89 張整合基準
+
+#454、#457、#458、#460、#461 只移植尚未進入 `main` 的提交。IMC 113／113、`playable:true`。MHA 89 ready、20 pending、`playable:false`。基準說明在 `docs/v2-handoff/V2-MHA-89-baseline.md`。最新 `main` 的線上介面留在這條分支。沒有部署。
+
+## 038 與 099 進包
+
+038 的蓋牌關鍵字與 099 的手牌數量退場上限都沿用 #460，沒有另寫引擎。特殊觸發沿用 `retireOppFront`。此提交的清點是 MHA 91 ready、18 pending、`playable:false`。IMC 仍是 113／113、`playable:true`。89 張基準的 SHA 沒有改寫。002、004、091、095、096、100 仍 pending。沒有部署。
+
+## 100 的退場後全體休息
+
+`retireOppFrontUnderBp` 的 `thenRestAll` 在強制退場成功後，才休息全部印刷 BP 以下的對手前排，並跳過它們下一次活動。指名角色只提高退場上限。儲存的 BP 視窗不提高這段休息。沒有退場對象時這張事件不能打出。此提交的清點是 MHA 92 ready、17 pending、`playable:false`。IMC 仍是 113／113、`playable:true`。沒有部署。
+
+## MHA 109 張進包
+
+#465、#463、#464 逐張併進 `cursor/v2-mha-final-integrate-65f8`。沒有使用 #462，也沒有重寫 038、099、100。030、031、035、042、045、091、095、096 用共用 DSL 進包。清點是 MHA 109 ready、0 pending、`playable:false`，版本 `mha-ua10-ready-109`。IMC 仍是 113／113、`playable:true`。契約在 `docs/v2-handoff/V2-MHA-final8-shared.md`。沒有合併 `main`，也沒有部署。
+

@@ -35,13 +35,61 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
    {field:'printedRequiredEnergyAtMost',value:2}
   ]
  }]),
+ 'MHA-1-055':Object.freeze({
+  ready:true,implementation:'dsl',step:true,
+  effects:{onPlay:[{
+   op:'ifLiveThen',
+   when:{kind:'ownOtherRequiredEnergyAtLeast',turn:'any',zone:'field',
+    excludeSelf:true,minEnergy:4,min:3},
+   then:[{op:'retireOppFrontUnderBp',bp:5000,optional:true}]
+  }]}
+ }),
+ 'MHA-1-056':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{
+   onPlay:[{op:'tuckFacedownUnder',from:'hand',host:{names:['ファットガム','天喰 環']},
+    count:1,optional:true,then:[{op:'draw',count:1}]}],
+   onAttack:[{op:'stripFacedownToOutside',optional:true,max:1,host:'self',to:'outside',
+    then:[{op:'buffSelf',bp:2000}]}]
+  }
+ }),
+ 'MHA-1-059':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},
+  effects:{onPlay:[{op:'deployOwnHandActiveOrRaid',type:'character',color:'green',
+   trait:null,maxEnergy:3,ap:1,max:1,optional:true,requireAffordableEnergy:true}]}
+ }),
+ 'MHA-1-060':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'緑谷 出久',ownTurnBp:500,
+  effects:{onAttack:[{
+   op:'oncePerTurnGate',scope:'card',optional:true,
+   then:[{op:'payHandThenActive',optional:true,maxEnergy:3,excludeName:'緑谷 出久'}]
+  }]}
+ }),
  'MHA-1-057':Object.freeze({ready:true,implementation:'vanilla'}),
  'MHA-1-058':play([{op:'drawDiscard',count:1}]),
  'MHA-1-061':play([{op:'draw',count:1}]),
+ 'MHA-1-062':Object.freeze({
+  ready:true,implementation:'dsl',enterActiveIfName:'発目 明',
+  effects:{onPlay:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+   bp:1000,optional:true,excludeSelf:false}]},
+  mainAbility:{op:'fieldRestRetireThen',then:[{op:'buffOwnField',
+   filter:{field:'type',value:'character'},bp:500,optional:false,
+   excludeSelf:false,all:true}]}
+ }),
  'MHA-1-064':Object.freeze({
   ready:true,implementation:'dsl',
   triggerEffect:{op:'retireOppFront'},
   effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,bonusName:'通形 ミリオ',bonusBp:5000}]}
+ }),
+ 'MHA-1-066':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{onPlay:[
+   {op:'lookTopScript',count:3,rest:'bottom',takes:[
+    {to:'hand',max:1,publish:true,type:'character'}]},
+   {op:'deployOwnHandRest',type:'character',color:'green',trait:null,max:1,
+    optional:true,thenActiveIf:{name:'オールマイト',oppFrontAtLeast:3}}
+  ]}
  }),
  'MHA-1-065':Object.freeze({
   ready:true,implementation:'dsl',
@@ -56,12 +104,31 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   ready:true,implementation:'dsl',
   opponentFieldColorsHandEnergyDiscount:{colors:['purple','green'],amount:1}
  }),
+ 'MHA-1-070':Object.freeze({
+  ready:true,implementation:'dsl',
+  printedMains:[{id:'outside',op:'discardHandThenActive',discard:1}]
+ }),
+ 'MHA-1-071':play([{op:'placeHandOutside',count:1,optional:false}]),
+ 'MHA-1-072':Object.freeze({
+  ready:true,implementation:'dsl',printedAttackDamage:2,
+  effects:{
+   onPlay:[{op:'discardUntilHand',until:3,optional:true}],
+   onAttack:[{op:'discardThenRetireScaled',per:1000,optional:true}]
+  }
+ }),
+ 'MHA-1-074':Object.freeze({
+  ready:true,implementation:'dsl',
+  oppEffectLeave:{turn:'own',oncePerTurn:true,instead:'stay',cause:'effect',
+   subject:'self',line:'any'}
+ }),
  'MHA-1-073':Object.freeze({
   ready:true,implementation:'dsl',
   mainAbility:{op:'restSelfGainEnergyRetireEndMain',lines:'field',
    oncePerTurn:true,extraEnergy:1}
  }),
  'MHA-1-075':play([{op:'peekTopOrBottom'}]),
+ 'MHA-1-076':play([{op:'moveEnergyTraitToFront',trait:null,max:1,
+  whenSelf:'front',optional:true}]),
  'MHA-1-077':play([{op:'bounceOwnOtherUnderEnergy',energy:1}]),
  'MHA-1-078':Object.freeze({ready:true,implementation:'vanilla'}),
  'MHA-1-079':Object.freeze({
@@ -69,16 +136,84 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
   effects:{onAttack:[{op:'buffOwnField',filter:{field:'type',value:'character'},
    bp:500,optional:true,excludeSelf:true}]}
  }),
+ 'MHA-1-081':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'轟 焦凍',
+  effects:{onPlay:[{op:'chooseOne',optional:false,ownTurnOnly:true,options:[
+   {id:'hurt',label:'1ダメージ',turn:'any',
+    when:{kind:'oppLifeAtLeast',turn:'any',min:5},
+    then:[{op:'damagePlayer',amount:1}]},
+   {id:'rest',label:'レスト',turn:'any',
+    then:[{op:'restOppFrontOne',optional:true,skipNextActive:true}]}
+  ]}]}
+ }),
  'MHA-1-080':Object.freeze({
   ready:true,implementation:'dsl',enterAlwaysActive:true,
   effects:{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]}
  }),
  'MHA-1-082':Object.freeze({ready:true,implementation:'vanilla'}),
  'MHA-1-083':Object.freeze({ready:true,implementation:'dsl',step:true}),
+ 'MHA-1-084':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
+  mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'grantNextBpWindow',amount:1000}]}
+ }),
+ 'MHA-1-085':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'爆豪 勝己',
+  bpPerDirectFacedown:{amount:1000,turn:'own'},
+  effects:{
+   onPlay:[{op:'tuckFacedownUnder',from:'deckTop',host:'self',count:2,optional:false}],
+   onAttack:[{op:'stripFacedownToOutside',optional:true,max:1,host:'self',to:'outside',
+    then:[{op:'retireOppFrontUnderBp',bp:2500,optional:true}]}]
+  }
+ }),
  'MHA-1-086':Object.freeze({ready:true,implementation:'dsl',activeExtraEnergy:1}),
+ 'MHA-1-087':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{onRetire:[{op:'drawUntilHand',count:2}]}
+ }),
+ 'MHA-1-089':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
+  effects:{onPlay:[{
+   op:'ifLiveThen',
+   when:{kind:'ownHandCountAtMost',turn:'any',max:3},
+   then:[{op:'draw',count:1}]
+  }]}
+ }),
+ 'MHA-1-090':Object.freeze({
+  ready:true,implementation:'dsl',raidName:'ホークス',
+  effects:{
+   onPlay:[{op:'tuckFacedownUnder',from:'hand',host:'self',count:'any',optional:true}],
+   onAttack:[{op:'lookUnderToHandThenActive',max:1,optional:true,excludeName:'ホークス'}]
+  }
+ }),
  'MHA-1-088':Object.freeze({ready:true,implementation:'vanilla'}),
+ 'MHA-1-091':Object.freeze({
+  ready:true,implementation:'dsl',
+  effects:{
+   onAttack:[{op:'payHandOutsideIfFrontOpen',bp:2000}],
+   onBlock:[{op:'payHandOutsideIfFrontOpen',bp:2000}]
+  }
+ }),
+ 'MHA-1-095':Object.freeze({
+  ready:true,implementation:'dsl', step:true, doubleAttackIfMovedThisTurn:true,
+  mainAbility:{op:'payHandMoveSelf',oncePerTurn:true,pay:1}
+ }),
+ 'MHA-1-096':Object.freeze({
+  ready:true,implementation:'dsl',
+  moveObserver:{
+   op:'restActiveFieldDraw', once:'name', draw:1,
+   when:{from:'hand',to:'outside',reasons:['payment','own-effect']}
+  }
+ }),
  'MHA-1-092':play([{op:'buffOwnField',filter:{field:'type',value:'character'},
   bp:1000,optional:true,excludeSelf:true}]),
+ 'MHA-1-093':Object.freeze({
+  ready:true,implementation:'dsl',
+  oppEffectLeave:{turn:'any',oncePerTurn:true,instead:'life',cause:'character',
+   subject:'other',line:'front',excludeNames:['緑谷 出久']}
+ }),
  'MHA-1-094':Object.freeze({ready:true,implementation:'dsl',step:true}),
  'MHA-1-097':Object.freeze({
   ready:true,implementation:'dsl',
@@ -88,5 +223,21 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
  'MHA-1-098':Object.freeze({
   ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'recoverAp',count:2}]}
+ }),
+ 'MHA-1-099':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFront'},
+  effects:{onPlay:[{
+   op:'retireOppFrontUnderBp',bp:3000,
+   handAtMost:{atMost:3,bp:5000,other:true}
+  }]}
+ }),
+ 'MHA-1-100':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFront'},
+  effects:{onPlay:[{
+   op:'retireOppFrontUnderBp',bp:3000,bonusName:'轟 焦凍',bonusBp:5000,
+   mandatory:true,thenRestAll:{bp:2000,skipNextActive:true}
+  }]}
  })
 });

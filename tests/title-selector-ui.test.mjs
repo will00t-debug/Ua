@@ -19,7 +19,7 @@ test('registered titles and verified card inventory are available in deck builde
  assert.equal(SOLO_LEVELING_CARDS.length,80);
  assert.equal(MST_CARDS.length,80);
  assert.equal(REZERO_VOL2_CARDS.length,73);
- assert.deepEqual(TITLES.map(t=>t.playable),TITLES.map(t=>t.id==='bleach'||t.id==='imc'));
+ assert.deepEqual(TITLES.map(t=>t.playable),TITLES.map(t=>t.id==='bleach'||t.id==='imc'||t.id==='mha'));
 });
 test('four new editors and source-link inspection exist while BLEACH Raid is preserved',()=>{
  assert.match(app,/data-title=/);

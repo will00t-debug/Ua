@@ -490,6 +490,12 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='main-rest-front-energy')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-equal-bp-pair')return legal[0];
+ if(s.pending?.kind==='effect-rest-strip-lock'){
+  const foe=s.players[1-s.pending.player].front;
+  if(difficulty==='easy')return legal.find(a=>a.uid===null)||legal[0];
+  return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ }
  if(s.pending?.kind==='effect-rest-bp'){
   // RESTed characters remain legal targets (official Q91), but choosing one
   // wastes the effect whenever a READY opponent is also available.
@@ -549,9 +555,21 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-hand-active-or-raid')
   return legal.find(a=>a.mode==='active'&&a.line==='front'&&!a.replaceUid)||
    legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
-  s.pending?.kind==='effect-pay-hand-move')
+ if(s.pending?.kind==='effect-look-under-hand')
   return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
+  s.pending?.kind==='effect-pay-hand-move'||s.pending?.kind==='effect-pay-hand-impact'||
+  s.pending?.kind==='effect-place-hand-outside')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-life-order')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-mill-optional'||s.pending?.kind==='effect-discard-any')
+  return legal.find(a=>a.mode==='mill'||a.mode==='take')||legal.find(a=>a.mode==='stop')||legal[0];
+ if(s.pending?.kind==='effect-recover-any'||s.pending?.kind==='effect-pay-hand-active')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-front-vacate')
+  return legal.find(a=>a.uid!==null&&a.uid!==s.pending.sourceUid)||
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-move-or-swap')
   return legal.find(a=>a.mode==='shift')||legal[0];
  if(s.pending?.kind==='effect-opp-life-leave')
@@ -594,6 +612,16 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-grant-attack'||s.pending?.kind==='effect-grant-retire')return legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-line-slot')return legal[0];
+ if(s.pending?.kind==='effect-named-zone-entry'||s.pending?.kind==='effect-return-active'||
+  s.pending?.kind==='effect-hand-active'||s.pending?.kind==='effect-front-open-hand')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null&&a.line!=='energy')||legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-opp-attack-ready')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='ready')||legal[0];
+ if(s.pending?.kind==='effect-field-rest-draw')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='rest')||legal[0];
  if(s.pending?.kind==='effect-mark-opp-start')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];

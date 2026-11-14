@@ -1,20 +1,20 @@
-// Round 10 C, updated in round 11 A. 001, 013, 014 and 018 now have a
-// shared shape. The cards stay out of the battle pack until their group
-// writes the program. Shapes that are still not a printed sentence stay
+// Round 10 C. 001, 013, 014 and 018 are ready. 006, 007, 009, 010 and 017
+// have a shared shape and stay out of the pack. The other sentences stay
 // rejected.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MHA_REQUESTS_001_050} from '../dist/universal-v2/mha/requests-001-050.mjs';
-import {createMhaV2Pack, MHA_OFFICIAL_MATCH_CLOSED} from '../dist/universal-v2/mha-pack.mjs';
+import {createMhaV2Pack} from '../dist/universal-v2/mha-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {officialV2Pack, v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 
 const PRIORITY=[
- 'MHA-1-001','MHA-1-002','MHA-1-003','MHA-1-004','MHA-1-005','MHA-1-006',
- 'MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-011','MHA-1-013','MHA-1-014',
- 'MHA-1-017','MHA-1-018'
 ];
-const ALREADY=['MHA-1-012','MHA-1-019','MHA-1-027'];
+const ALREADY=[
+ 'MHA-1-001','MHA-1-003','MHA-1-005','MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010',
+ 'MHA-1-011','MHA-1-012','MHA-1-013','MHA-1-014','MHA-1-017','MHA-1-018','MHA-1-019',
+ 'MHA-1-026','MHA-1-027','MHA-1-048'
+];
 
 function face(extra){
  const effects=extra.effects||{};
@@ -50,10 +50,9 @@ test('round 10 priority cards stay pending and earlier ready cards stay ready',(
  for(const id of ALREADY)assert.equal(pack.cards[id].id,id);
  const official=officialV2Pack('mha');
  for(const id of PRIORITY)assert.equal(official.cards[id],undefined);
- const closed=v2DeckReport('mha',{'MHA-1-012':4});
- assert.equal(closed.ok,false);
- assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
- assert.match(MHA_OFFICIAL_MATCH_CLOSED,/尚未開放正式對戰/);
+ const short=v2DeckReport('mha',{'MHA-1-012':4});
+ assert.equal(short.ok,false);
+ assert.doesNotMatch(short.issues.join('\n'),/尚未開放正式對戰/);
 });
 
 test('001 accepts one retirement draw and one hand discard, and rejects a larger profile',()=>{
@@ -87,17 +86,25 @@ test('003 cannot count characters that have an activate-main keyword',()=>{
  }),/invalid passive condition/);
 });
 
-test('005 damage grant is not a once-per-turn main ability',()=>{
- reject(face({
+test('005 can grant damage 2 from a main-phase once, and a different amount stays illegal',()=>{
+ accept(face({
   id:'GAP-005', ownTurnBp:2000,
+  battleRequiresAnyName:['オール・フォー・ワン','死柄木 弔'],
   mainAbility:{
    op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
    then:[{op:'grantSelfAttackDamageThisTurn',amount:2}]
   }
+ }));
+ reject(face({
+  id:'GAP-005B', ownTurnBp:2000,
+  mainAbility:{
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:[{op:'grantSelfAttackDamageThisTurn',amount:1}]
+  }
  }),/unsupported main action ability/);
 });
 
-test('018 accepts a main-phase battle-win draw, and 011 still cannot force a block',()=>{
+test('018 accepts a main-phase battle-win draw, and 011 accepts a main-phase block grant',()=>{
  accept(face({
   id:'GAP-018',
   mainAbility:{
@@ -112,10 +119,17 @@ test('018 accepts a main-phase battle-win draw, and 011 still cannot force a blo
    then:[{op:'grantSelfAttackWinDrawThisTurn'}]
   }
  }),/unsupported main action ability/);
- reject(face({
-  id:'GAP-011',
+ accept(face({
+  id:'GAP-011', blockSkipsNextActive:true,
   mainAbility:{
    op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:[{op:'grantSelfMustBlockThisTurn'}]
+  }
+ }));
+ reject(face({
+  id:'GAP-011B',
+  mainAbility:{
+   op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
    then:[{op:'grantSelfMustBlockThisTurn'}]
   }
  }),/unsupported main action ability/);
@@ -169,23 +183,38 @@ test('006 and 007 accept the shared shape and still reject a different parameter
  }),/invalid battle-loss hand replacement/);
 });
 
-test('009 and 017 still do not have a whole-sentence operation',()=>{
- reject(face({
+test('009, 010 and 017 accept the shared sentence and reject a different parameter',()=>{
+ accept(face({
   id:'GAP-009',
   mainAbility:{op:'payHandGrantImpact',oncePerTurn:true,pay:1,amount:1}
+ }));
+ reject(face({
+  id:'GAP-009B',
+  mainAbility:{op:'payHandGrantImpact',oncePerTurn:true,pay:2,amount:1}
  }),/unsupported main action ability/);
- reject(face({
-  id:'GAP-017', raidName:'トゥワイス',
-  effects:{onPlay:[{op:'deployRaidBottomActive',optional:true}]}
- }),/invalid raid-bottom active entry/);
-});
-
-test('010 cannot remove a low-BP front character from a front-only main',()=>{
- reject(face({
+ accept(face({
   id:'GAP-010', raidName:'死柄木 弔',
+  mainAbility:{
+   op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
+   then:[{op:'removeOppFrontUnderBp',bp:2000}]
+  }
+ }));
+ reject(face({
+  id:'GAP-010B', raidName:'死柄木 弔',
   mainAbility:{
    op:'frontOnceProgram', frontOnly:true, oncePerTurn:true,
    then:[{op:'removeOppFrontUnderBp',bp:2000,optional:false}]
   }
  }),/unsupported main action ability/);
+ accept(face({
+  id:'GAP-017', raidName:'トゥワイス',
+  effects:{onPlay:[{op:'deployRaidBottomActive',optional:true}]}
+ }));
+ reject(face({
+  id:'GAP-017B', raidName:'トゥワイス',
+  effects:{onRetire:[{op:'deployRaidBottomActive',optional:true}]}
+ }),/raid-bottom active entry without a gate/);
+ assert.equal(createMhaV2Pack().cards['MHA-1-009'].battleRemoveInstead,true);
+ assert.equal(createMhaV2Pack().cards['MHA-1-010'].raidName,'死柄木 弔');
+ assert.equal(createMhaV2Pack().cards['MHA-1-017'].raidName,'トゥワイス');
 });

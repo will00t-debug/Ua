@@ -131,18 +131,25 @@ const activeEntry={
  maxEnergy:3,ap:1,max:1,optional:true,requireAffordableEnergy:true
 };
 
-test('IMC stays 113 and MHA stays 59 ready with 50 pending',()=>{
+test('IMC stays 113 and MHA stays 109 ready with 0 pending',()=>{
  const imc=createImcV2Pack();
  const mha=createMhaV2Pack();
  const editor=mhaEditorCards();
  assert.equal(Object.keys(imc.cards).length,113);
  assert.equal(editor.length,109);
- assert.equal(Object.keys(mha.cards).length,59);
- assert.equal(editor.filter(row=>!mha.cards[row.id]).length,50);
+ assert.equal(Object.keys(mha.cards).length,109);
+ assert.equal(editor.filter(row=>!mha.cards[row.id]).length,0);
+ assert.equal(mha.cards['MHA-1-001'].impactNull,true);
+ assert.equal(mha.cards['MHA-1-013'].effects.onPlay[0].then[0].line,'front');
+ assert.equal(mha.cards['MHA-1-014'].raidName,'荼毘');
+ assert.equal(mha.cards['MHA-1-018'].mainAbility.frontOnly,false);
  assert.equal(mha.cards['MHA-1-051'].unblockedAttack.oncePerTurn,true);
  assert.equal(mha.cards['MHA-1-054'].effects.onPlay[0].op,'searchTopOneBottomDiscard');
- assert.equal(mha.cards['MHA-1-006'],undefined);
- assert.equal(mha.cards['MHA-1-089'],undefined);
+ assert.equal(mha.cards['MHA-1-070'].printedMains[0].op,'discardHandThenActive');
+ assert.equal(mha.cards['MHA-1-006'].mainAbility.op,'payHandMoveOrSwap');
+ assert.equal(mha.cards['MHA-1-089'].effects.onPlay[0].op,'ifLiveThen');
+ assert.equal(mha.cards['MHA-1-087'].effects.onRetire[0].op,'drawUntilHand');
+ assert.equal(mha.cards['MHA-1-093'].oppEffectLeave.excludeNames[0],'緑谷 出久');
 });
 
 test('the six shared shapes reject an illegal parameter',()=>{
