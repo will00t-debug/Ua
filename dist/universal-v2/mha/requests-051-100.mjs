@@ -43,13 +43,6 @@ export const MHA_REQUESTS_051_100=[
   proposal:'自己回合，自己的效果把手牌放到場外時，可休息這張活動中的場域並抽1。同一回合只發動一次。096はreadyにしない。'
  },
  {
-  cardId:'MHA-1-099',
-  sentence:'BP3000以下の相手フロントを退場。他の手札が3枚以下ならBP5000以下に代わる。',
-  existingOps:['retireOppFrontUnderBp'],
-  whyNotEnough:'handAtMost 會在選擇當下依其他手牌張數，把退場上限從基本 BP 改成較高的 BP。bonusName 仍是場上卡名。這輪不寫卡牌程式，所以維持 pending。',
-  proposal:'必須退場1張對手前線。其他手牌超過3張時上限BP3000，3張以下時改為BP5000。099はreadyにしない。'
- },
- {
   cardId:'MHA-1-100',
   sentence:'BP3000以下を退場。BP2000以下の相手フロント全てをレストし、次の1回アクティブにしない。〈轟 焦凍〉がいれば退場側はBP5000以下。',
   existingOps:['retireOppFrontUnderBp','restOppFrontUnderBp','skipNextActiveOppRest'],

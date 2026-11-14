@@ -26,12 +26,12 @@ const LIMITED=new Set(['special','final','color']);
 const NEW_READY=['MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-017',
  'MHA-1-048','MHA-1-056','MHA-1-059','MHA-1-071','MHA-1-074','MHA-1-087',
  'MHA-1-089','MHA-1-093'];
-const STILL_PENDING=['MHA-1-002','MHA-1-038'];
+const STILL_PENDING=['MHA-1-002'];
 const REPRINTS=['MHA-1-034','MHA-1-036','MHA-1-041','MHA-1-044','MHA-1-052',
  'MHA-1-057','MHA-1-061','MHA-1-063','MHA-1-065'];
 const NEEDED={
  green:['MHA-1-036','MHA-1-043','MHA-1-044','MHA-1-049','MHA-1-051',
-  'MHA-1-056','MHA-1-061','MHA-1-102','MHA-1-103','MHA-1-106','MHA-1-107'],
+  'MHA-1-056','MHA-1-061','MHA-1-102','MHA-1-103','MHA-1-105','MHA-1-106','MHA-1-107'],
  purple:['MHA-1-001','MHA-1-008','MHA-1-009','MHA-1-010','MHA-1-013',
   'MHA-1-014','MHA-1-021'],
  red:['MHA-1-067','MHA-1-073','MHA-1-080','MHA-1-087','MHA-1-093']
@@ -74,7 +74,6 @@ function unofficialDeck(color){
   if(card.type!=='character'||!raids.some(raid=>raid.raidName===card.name&&raid.id!==card.id))continue;
   take(card,2);
  }
- for(const card of pool)if(card.type==='character'&&card.energy>=4)take(card,2);
  let mids=0;
  for(const card of pool){
   if(mids>=12||card.energy<1||card.energy>2)continue;
@@ -85,6 +84,7 @@ function unofficialDeck(color){
   if(zeros>=12||card.energy!==0||card.type!=='character')continue;
   zeros+=take(card,2);
  }
+ for(const card of pool)if(card.type==='character'&&card.energy>=4)take(card,2);
  for(const card of pool){
   if(total>=46||card.energy!==3)continue;
   take(card,2);
@@ -255,9 +255,9 @@ const decks={
  [UNOFFICIAL+'・紅']:red
 };
 
-test('the ready pool stays 89 cards and MHA stays unplayable',()=>{
- assert.equal(Object.keys(mha.cards).length,89);
- assert.equal(mha.version,'mha-ua10-ready-89');
+test('the ready pool stays 91 cards and MHA stays unplayable',()=>{
+ assert.equal(Object.keys(mha.cards).length,91);
+ assert.equal(mha.version,'mha-ua10-ready-91');
  assert.equal(editor.length,109);
  assert.equal(getTitle('mha').playable,false);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false),true);
@@ -294,7 +294,8 @@ test('green, purple and red unofficial decks are legal 50-card lists',()=>{
  assert.ok(purple['MHA-1-010']>=2&&purple['MHA-1-008']>=2);
  assert.equal(mha.cards['MHA-1-014'].raidName,mha.cards['MHA-1-013'].name);
  assert.equal(mha.cards['MHA-1-010'].raidName,mha.cards['MHA-1-008'].name);
- assert.equal(colorCards('red').some(card=>card.raidName),false);
+ assert.deepEqual(colorCards('red').filter(card=>card.raidName).map(card=>card.id),['MHA-1-081']);
+ assert.equal(mha.cards['MHA-1-081'].raidName,'轟 焦凍');
  assert.ok(red['MHA-1-087']>=2&&red['MHA-1-093']>=2);
  assert.equal(mha.cards['MHA-1-087'].energy,4);
  assert.equal(mha.cards['MHA-1-093'].name,mha.cards['MHA-1-107'].raidName);

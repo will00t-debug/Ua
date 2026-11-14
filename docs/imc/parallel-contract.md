@@ -634,3 +634,7 @@ IMC 對戰包維持 113／113。MHA 對戰包以程式清點是 77 張 ready、3
 
 #454、#457、#458、#460、#461 只移植尚未進入 `main` 的提交。IMC 113／113、`playable:true`。MHA 89 ready、20 pending、`playable:false`。基準說明在 `docs/v2-handoff/V2-MHA-89-baseline.md`。最新 `main` 的線上介面留在這條分支。沒有部署。
 
+## 038 與 099 進包
+
+038 的蓋牌關鍵字與 099 的手牌數量退場上限都沿用 #460，沒有另寫引擎。特殊觸發沿用 `retireOppFront`。此提交的清點是 MHA 91 ready、18 pending、`playable:false`。IMC 仍是 113／113、`playable:true`。89 張基準的 SHA 沒有改寫。002、004、091、095、096、100 仍 pending。沒有部署。
+

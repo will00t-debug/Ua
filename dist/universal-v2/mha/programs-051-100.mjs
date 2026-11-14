@@ -189,5 +189,13 @@ export const MHA_PROGRAMS_051_100=Object.freeze({
  'MHA-1-098':Object.freeze({
   ready:true,implementation:'dsl',
   effects:{onPlay:[{op:'recoverAp',count:2}]}
+ }),
+ 'MHA-1-099':Object.freeze({
+  ready:true,implementation:'dsl',
+  triggerEffect:{op:'retireOppFront'},
+  effects:{onPlay:[{
+   op:'retireOppFrontUnderBp',bp:3000,
+   handAtMost:{atMost:3,bp:5000,other:true}
+  }]}
  })
 });

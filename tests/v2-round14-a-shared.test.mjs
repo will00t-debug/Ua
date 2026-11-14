@@ -116,7 +116,7 @@ const high={id:'HIGH',name:'高BP',bp:4000,implementation:'vanilla',effects:{}};
 
 test('the round 14 cards stay ready and 076 now uses the full-front move',()=>{
  const pack=createMhaV2Pack();
- assert.equal(Object.keys(pack.cards).length,89);
+ assert.equal(Object.keys(pack.cards).length,91);
  for(const id of ['MHA-1-006','MHA-1-007','MHA-1-009','MHA-1-010','MHA-1-017','MHA-1-048',
   'MHA-1-056','MHA-1-059','MHA-1-071','MHA-1-074','MHA-1-076','MHA-1-087','MHA-1-089','MHA-1-093'])
   assert.equal(pack.cards[id].id,id);
