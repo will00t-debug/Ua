@@ -232,15 +232,19 @@ test('only complete UA10ST sentences enter the battle pack',()=>{
  assert.match(validateUniversalDeck(pack,four).join('\n'),/50/);
 });
 
-test('IMC has 113 open V2 cards and MHA has 109 open cards',()=>{
+test('IMC has 113 open V2 cards and MHA set 1 stays 109 open cards',()=>{
  const editor=mhaEditorCards();
- assert.equal(editor.length,109);
- assert.equal(new Set(editor.map(card=>card.id)).size,109);
+ const set1=editor.filter(card=>card.id.startsWith('MHA-1-'));
+ assert.equal(set1.length,109);
+ assert.equal(editor.filter(card=>card.id.startsWith('MHA-2-')).length,73);
+ assert.equal(editor.filter(card=>card.id.startsWith('MHA-P-')).length,3);
+ assert.equal(editor.length,185);
+ assert.equal(new Set(editor.map(card=>card.id)).size,185);
  assert.equal(editor.every(card=>card.playable===false&&card.battleReady===false&&card.deckLegal===true),true);
  const ready=Object.keys(pack.cards);
- assert.deepEqual(ready,editor.map(card=>card.id).filter(id=>pack.cards[id]));
+ assert.deepEqual(ready,set1.map(card=>card.id).filter(id=>pack.cards[id]));
  assert.equal(ready.length,109);
- const pending=editor.map(card=>card.id).filter(id=>!pack.cards[id]);
+ const pending=set1.map(card=>card.id).filter(id=>!pack.cards[id]);
  assert.equal(pending.length,0);
  assert.equal(pack.cards['MHA-1-001'].effects.onRetire[0].count,1);
  assert.equal(pack.cards['MHA-1-013'].effects.onPlay[0].op,'optionalOwnLifeToHandThenDraw');
