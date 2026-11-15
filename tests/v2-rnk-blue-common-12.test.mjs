@@ -9,15 +9,15 @@ import {cardHasTrait} from '../dist/universal-v2/field-conditions.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
 const ids=['001','002','003','004','006','009','012','014','015','016','020','021','022','023','025','027'].map(n=>'RNK-1-'+n);
-const activeIds=ids.filter(id=>id!=='RNK-1-016');
+const activeIds=ids;
 const source=Object.fromEntries(RNK_TC_CATALOG.map(c=>[c.id,c]));
 const pack=createRnkBcdBatchStagingPack();
 const card=n=>pack.cards['RNK-1-'+n];
 
-test('fifteen runnable plus one held-out Japanese blue evidence record share the regular 46-card Universal V2 compiler',()=>{
+test('all sixteen Japanese blue evidence records compile in the growing universal V2 pack',()=>{
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,49);
+ assert.equal(Object.keys(pack.cards).length,51);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_BLUE_COMMON).sort(),ids);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_BLUE_COMMON).sort(),ids);
@@ -29,11 +29,6 @@ test('fifteen runnable plus one held-out Japanese blue evidence record share the
    assert.equal(tc.cardDataVerified,false,id);
    assert.equal(tc.battleReady,false,id);
    assert.ok(jp.effectJa&&jp.triggerJa&&jp.sourceJa.startsWith('https://www.merucarduniari.jp/'),id);
-   if(id==='RNK-1-016'){
-     assert.equal(v2,undefined,'unsafe own-effect entry must not be executable');
-     assert.equal(RNK_PROGRAMS_BLUE_COMMON[id].ready,false);
-     continue;
-   }
    assert.ok(v2,id+' staged card missing');
    assert.equal(v2.implementation,'dsl',id);
    assert.equal(v2.name,jp.nameJa,id);
@@ -128,7 +123,6 @@ test('022,023,027 reuse plain impact null, active energy +1 and FINAL AP recover
 test('blue staging never changes TC display or enables production gameplay',()=>{
  for(const id of ids)assert.equal(source[id].battleReady,false);
  for(const id of activeIds)assert.ok(pack.cards[id],id);
- assert.equal(pack.cards['RNK-1-016'],undefined);
  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
 });
 
@@ -140,14 +134,20 @@ test('002 also counts as Kenshin across all zones via canonical V2 printed alias
  assert.equal(v.trigger,'active');
  assert.equal(source['RNK-1-002'].nameZhTw,'心太');
 });
-test('016 requires an exact CHARACTER/EVENT source predicate; generic any-own-effect must fail closed',()=>{
- assert.equal(card('016'),undefined);
- const p=RNK_PROGRAMS_BLUE_COMMON['RNK-1-016'];
- assert.equal(p.ready,false);
- assert.match(p.reason,/CHARACTER or EVENT/);
- assert.match(p.reason,/broader/);
- assert.equal(source['RNK-1-016'].trigger,'color');
- assert.equal(source['RNK-1-016'].bp,2500);
+test('016 draws only on an OWN CHARACTER/EVENT source-effect entry, never arbitrary FIELD effect',()=>{
+ const c=card('016'),p=RNK_PROGRAMS_BLUE_COMMON['RNK-1-016'];
+ assert.equal(p.ready,true);
+ assert.equal(c.name,'四乃森 蒼紫');
+ assert.equal(c.bp,2500);
+ assert.equal(c.energy,2);
+ assert.equal(c.trigger,'color');
+ assert.deepEqual(c.traits,['御庭番衆']);
+ assert.deepEqual(c.effects.onPlay,[{
+  op:'ifLiveThen',
+  when:{kind:'selfEnteredByOwnEffect',turn:'any',sourceTypes:['character','event']},
+  then:[{op:'draw',count:1}]
+ }]);
+ assert.equal(source['RNK-1-016'].battleReady,false);
 });
 test('025 preserves empty-field hand -2 energy and private top-three optional outside-one choice',()=>{
  const v=card('025');
