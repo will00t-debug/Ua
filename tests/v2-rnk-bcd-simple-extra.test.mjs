@@ -22,7 +22,7 @@ test('Japanese 046 and 064 source numbers, printed effects and triggers are pinn
 });
 test('046 main hand discard is exactly a shared V2 once-per-turn self BP buff',()=>{
  const pack=createRnkBcdBatchStagingPack();
- assert.equal(Object.keys(pack.cards).length,31);
+ assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  const c=pack.cards['RNK-1-046'];
  assert.equal(c.name,'緋村 剣心');
