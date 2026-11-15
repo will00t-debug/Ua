@@ -9,6 +9,7 @@ const record=(num,nameJa,effectJa,triggerJa,productNo)=>Object.freeze({
   sourceType:'JP effect and trigger transcription; official EN/TC print for stats'
 });
 export const RNK_JP_EVIDENCE_BLUE_COMMON=Object.freeze({
+ 'RNK-1-001':record("001","新井 青空","登場時：山札上7枚から逆刃刀・真打を1枚まで手札に加え、残りを好きな順で山札の下に置く。","ドロー",12879),
  'RNK-1-002':record("002","心太","このカードを緋村 剣心としても扱う。","アクティブ",12880),
  'RNK-1-016':record("016","四乃森 蒼紫","登場時：自分のキャラ・イベントカードの効果で登場していた場合、カードを1枚引く。","カラー",12894),
  'RNK-1-025':record("025","巻町 操","自分の場にカードが無ければ手札で必要エナジー青2減。登場時：山札上3枚から1枚まで場外に置き、残りを好きな順で山札上に戻す。","ドロー",12903),
