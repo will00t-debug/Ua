@@ -47,9 +47,9 @@ test('B group preserves key multi-step effects and printed types',()=>{
   assert.ok(card('050').traits.includes('十本刀'));
   assert.match(card('056').effectZhTw,/休息狀態/);
 });
-test('B complete and A+B inventory is 56 TC cards, zero battle-ready',()=>{
-  assert.equal(RNK_TC_CATALOG.length,56);
-  assert.deepEqual(RNK_TC_CATALOG.map(c=>c.id),RNK_BOOSTER_IDS.slice(0,56));
-  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,56);
+test('B group remains in complete 114-card inventory with no battle-ready cards',()=>{
+  assert.equal(RNK_TC_CATALOG.length,113);
+  assert.deepEqual(RNK_TC_CATALOG.slice(0,56).map(c=>c.id),RNK_BOOSTER_IDS.slice(0,56));
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,112);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.battleReady).length,0);
 });
