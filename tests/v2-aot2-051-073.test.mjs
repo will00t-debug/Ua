@@ -1209,3 +1209,39 @@ test('the seafood event draws the count of the chosen mode and may buff zero',()
  assert.equal(universalBp(packs,many,field(many,0,third.uid)),3000);
  finish(many);
 });
+
+
+test('AOT-1-077 range bonus lets AOT-2-072 retire 4000 BP exactly once',()=>{
+ const counts=countsFor(['AOT-1-077','AOT-2-071','AOT-2-072',
+  'AOT-1-069','AOT-1-070','AOT-2-062']);
+ function setup(seed){
+  let s=toPhase(fresh(counts,seed),'main');
+  fuel(s,['AOT-1-069','AOT-1-070','AOT-2-062','AOT-1-069']);
+  const host=put(s,0,'AOT-2-071','front',0,true);
+  const foe=put(s,1,'AOT-2-072','front',0,true);
+  assert.equal(universalBp(packs,s,foe),4000);
+  readyAp(s);
+  s=play(s,toHand(s,0,'AOT-1-077').uid);
+  assert.equal(s.pending?.id,'AOT-1-077');
+  s=pick(s,a=>a.mode==='range');
+  assert.equal(s.aotBpRange[0],1000);
+  s=raidOnto(s,toHand(s,0,'AOT-2-072').uid,host.uid);
+  s=pick(s,a=>a.mode==='low');
+  assert.equal(acts(s).some(a=>a.uid===foe.uid),true,
+   'the 3000 BP limit must include the pending 1000 BP range bonus');
+  return {s,foe};
+ }
+ let {s,foe}=setup(772);
+ s=pick(s,a=>a.uid===foe.uid);
+ assert.equal(s.players[1].front.some(c=>c?.uid===foe.uid),false);
+ assert.equal(s.players[1].outside.some(c=>c.uid===foe.uid),true);
+ assert.equal(s.aotBpRange[0],0,'successful BP-limited selection consumes the bonus');
+ finish(s);
+
+ ({s,foe}=setup(773));
+ s=pick(s,a=>a.mode==='done');
+ assert.equal(s.players[1].front.some(c=>c?.uid===foe.uid),true);
+ assert.equal(s.aotBpRange[0],1000,
+  'declining the optional retirement must not consume the bonus');
+ finish(s);
+});
