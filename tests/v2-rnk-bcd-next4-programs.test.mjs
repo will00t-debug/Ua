@@ -10,8 +10,8 @@ const catalog=Object.fromEntries(RNK_TC_CATALOG.map(x=>[x.id,x]));
 const ids=['RNK-1-049','RNK-1-057','RNK-1-083','RNK-1-108'];
 const pack=createRnkBcdBatchStagingPack();
 
-test('31 cards compile as a shared V2 pack, and four newly audited Japanese prints match numbers',()=>{
- assert.equal(Object.keys(pack.cards).length,31);
+test('audited cards compile as one shared V2 pack, and four newly audited Japanese prints match numbers',()=>{
+ assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_BCD_NEXT4).sort(),ids);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_BCD_NEXT4).sort(),ids);
