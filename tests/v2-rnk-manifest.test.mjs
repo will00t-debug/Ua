@@ -4,7 +4,7 @@ import {
   RNK_TITLE, RNK_PRODUCT, RNK_BOOSTER_IDS, RNK_STARTER_SHARED_IDS,
   RNK_STARTER_ONLY, RNK_STARTER_IDS, RNK_DECK_IDS, RNK_ALL_DECK_IDS,
   RNK_PROMO_REPRINT_IDS, RNK_PROMO_ONLY, RNK_AP_PRINTS,
-  RNK_IDENTITY_INVENTORY, rnkPrintsFor
+  RNK_TC_CATALOG, RNK_IDENTITY_INVENTORY, rnkPrintsFor
 } from '../dist/rnk/manifest.mjs';
 
 test('UA41 has exactly 100 booster card ids and 13 starter-only ids', () => {
@@ -57,7 +57,7 @@ test('identity placeholders cannot be mistaken for verified playable cards', () 
     assert.equal(card.effectImplemented, false);
     assert.equal(card.battleReady, false);
     assert.equal(card.effectJa, null);
-    if (/^RNK-1-00[1-7]$/.test(card.id)) {
+    if (RNK_TC_CATALOG.some(known => known.id === card.id)) {
       assert.equal(card.confirmedTc, true);
       assert.ok(card.nameZhTw);
       assert.ok(card.effectZhTw);
