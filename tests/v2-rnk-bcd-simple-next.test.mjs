@@ -27,7 +27,7 @@ test('092 and 104 use actual Japanese-print abilities, not translated guesses',(
 });
 test('092 empty-own-field red energy discount + printed STEP compile in common V2',()=>{
  const p=createRnkBcdBatchStagingPack(),c=p.cards['RNK-1-092'];
- assert.equal(Object.keys(p.cards).length,31);
+ assert.equal(Object.keys(p.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.deepEqual(Object.keys(p.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.equal(c.name,'明神 弥彦');
  assert.equal(c.type,'character');
@@ -57,7 +57,7 @@ test('starter-only 104 shows top card and puts it on top or bottom using shared 
 });
 test('common pack remains strict about known operations and production exclusion',()=>{
  const p=createRnkBcdBatchStagingPack();
- assert.equal(Object.keys(p.cards).length,31);
+ assert.equal(Object.keys(p.cards).length,RNK_BATCH_STAGING_IDS.length);
  const bad=rnkSharedCard(catalog['RNK-1-104'],{
   ...RNK_PROGRAMS_SIMPLE_NEXT['RNK-1-104'],
   effects:{onPlay:[{op:'rnkPrivateLook'}]}
