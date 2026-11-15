@@ -11,12 +11,12 @@ const SOURCE=Object.fromEntries(RNK_TC_CATALOG.map(x=>[x.id,x]));
 const NAMES=Object.keys(RNK_JP_EVIDENCE_FAST_BCD).sort();
 const EXPECTED=['RNK-1-041','RNK-1-047','RNK-1-068','RNK-1-069',
  'RNK-1-074','RNK-1-078','RNK-1-080','RNK-1-081','RNK-1-091'];
-test('nine new effects are individually source-grounded and compiled in 19-card shared pack',()=>{
+test('nine specific effects are individually source-grounded and compiled in the expanding shared V2 pack',()=>{
  assert.deepEqual(NAMES,EXPECTED);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_FAST_BCD).sort(),EXPECTED);
  const pack=createRnkBcdBatchStagingPack();
  assert.equal(pack.kind,'ua-v2-pack');
- assert.equal(Object.keys(pack.cards).length,31);
+ assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  for(const id of EXPECTED){
    const printed=SOURCE[id],ja=RNK_JP_EVIDENCE_FAST_BCD[id],program=RNK_PROGRAMS_FAST_BCD[id];
