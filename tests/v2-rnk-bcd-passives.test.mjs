@@ -8,9 +8,9 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
 const PRINT=Object.fromEntries(RNK_TC_CATALOG.map(c=>[c.id,c]));
 const IDS=['RNK-1-051','RNK-1-061','RNK-1-079','RNK-1-107'];
-test('four Japanese print-backed passives compile in the same 23-card universal staging pack',()=>{
+test('four Japanese print-backed passives remain compiled in the growing shared V2 staging pack',()=>{
  const pack=createRnkBcdBatchStagingPack();
- assert.equal(Object.keys(pack.cards).length,27);
+ assert.equal(Object.keys(pack.cards).length,31);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_PASSIVE_BCD).sort(),IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_PASSIVE_BCD).sort(),IDS);
  for(const id of IDS){
