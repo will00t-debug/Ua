@@ -61,6 +61,13 @@ function assertLiveCondition(q,label,allowRequiredEnergy=false){
   throw Error(label+' own-effect character entry is an own-turn bonus');
  if(q.kind==='selfOwnEffectRaid'&&q.turn!=='any')
   throw Error(label+' own-effect raid is not a turn gate');
+ // Optional precise cause type. Omitting the field preserves all older
+ // own-effect entry cards. A FIELD-source effect never passes this filter.
+ if(q.kind==='selfEnteredByOwnEffect'&&q.sourceTypes!==undefined&&(
+  !Array.isArray(q.sourceTypes)||q.sourceTypes.length!==2||
+  !q.sourceTypes.includes('character')||!q.sourceTypes.includes('event')||
+  new Set(q.sourceTypes).size!==2))
+  throw Error(label+' invalid own-effect entry source kinds');
  // 場上同時符合顏色、特徵與突襲關鍵字。缺一項就不成立。
  if(q.kind==='ownRaidColorTrait'&&(q.turn!=='any'||
   !['field','front','energy'].includes(q.zone)||
@@ -209,7 +216,7 @@ function assertLiveCondition(q,label,allowRequiredEnergy=false){
   Object.keys(q).length!==(2+(count?1:0)+(frontCount?1:0)+(belowCount?1:0)+(namedOutside?2:0)+(atMost?1:0)+(handCeiling?1:0)+(retired?1:0)+(retirementCount?3:0)+(retirementExclude?1:0)+(field?2:0)+(exclusive?2:0)+(nameDeck?4:0)+(nameAndEvents?2:0)+(sameLine?1:0)+(printedTrait?1:0)+
    (otherEnergy?4:0)+(q.kind==='ownActivateMainAtLeast'?(2+(q.excludeSelf!==undefined?1:0)):0)+(q.kind==='oppLifeAtLeast'?1:0)+
    (['ownNameExists','ownNameAbsent','ownNameOrRaidBase','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownOutsideTraitCountAtLeast','ownDistinctTraitNames','ownDistinctTraitEntriesThisTurn','ownRestPrintedBpAtMost','ownRestPrintedBpCount','ownRemovedDistinctTrait','ownNamedAttackedThisTurn','ownPrintedTraitCount'].includes(q.kind)?1:0)+
-   ((restEach||lowRest)?1:0)+(oppBp?2:0)+(selfBp?1:0)+(otherOwnBp?3:0)+(oppBpCount?3:0)+(oppRest?1:0)+(printedAp?3:0)+(paidColor?1:0)+(q.kind==='ownTraitUsedThisTurn'?1:0)+(nameOrKinds?4:0)+(distinctKinds?3:0)+(anyNames?1:0)+(printedChar?5:0)+(q.kind==='ownRaidColorTrait'?4:0))||
+   ((restEach||lowRest)?1:0)+(oppBp?2:0)+(selfBp?1:0)+(otherOwnBp?3:0)+(oppBpCount?3:0)+(oppRest?1:0)+(printedAp?3:0)+(paidColor?1:0)+(q.kind==='ownTraitUsedThisTurn'?1:0)+(nameOrKinds?4:0)+(distinctKinds?3:0)+(anyNames?1:0)+(printedChar?5:0)+(q.kind==='ownRaidColorTrait'?4:0)+(q.kind==='selfEnteredByOwnEffect'&&q.sourceTypes!==undefined?1:0))||
   Object.keys(q).some(k=>!['kind','turn',
    ...(count?['min']:[]),...(frontCount?['min']:[]),...(belowCount?['min']:[]),...(namedOutside?['min','names']:[]),...(atMost?['max']:[]),...(handCeiling?['max']:[]),...(retired?['cardType']:[]),...(retirementCount?['controller','cardType','min']:[]),...(retirementExclude?['excludeSelf']:[]),...(field?['zone','excludeSelf']:[]),...(exclusive?['zone','trait']:[]),
    ...(q.kind==='ownNameExists'||q.kind==='ownNameAbsent'||q.kind==='ownNameOrRaidBase'||q.kind==='ownNamedAttackedThisTurn'?['name']:[]),
@@ -235,7 +242,8 @@ function assertLiveCondition(q,label,allowRequiredEnergy=false){
    ...(sameLine?['name']:[]),
    ...(otherEnergy?['zone','excludeSelf','minEnergy','min']:[]),
    ...(q.kind==='ownActivateMainAtLeast'?['zone','min',...(q.excludeSelf!==undefined?['excludeSelf']:[])]:[]),
-   ...(q.kind==='oppLifeAtLeast'?['min']:[])].includes(k)))
+   ...(q.kind==='oppLifeAtLeast'?['min']:[]),
+   ...(q.kind==='selfEnteredByOwnEffect'&&q.sourceTypes!==undefined?['sourceTypes']:[])].includes(k)))
   throw Error(label+' invalid or cyclic passive condition');
 }
 function verifyProgram(program,path){

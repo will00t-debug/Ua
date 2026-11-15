@@ -1,0 +1,107 @@
+// Official Traditional Chinese card-source facts, RNK 043-049.
+// Concise rule summaries are not executable effects. Source pages are authoritative.
+import {tcRows} from './tc-source-helper.mjs';
+export const RNK_CARDS_043_049=tcRows([
+  {
+    "id": "RNK-1-043",
+    "name": "志志雄真實",
+    "rarity": "R",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "當本卡BP達5000以上即有衝擊1；前線啟動主要每回合一次，將牌庫頂一張送場外，依該卡能源需求×500提高自身BP。",
+    "traits": [],
+    "bpMark": "+"
+  },
+  {
+    "id": "RNK-1-044",
+    "name": "志志雄真實",
+    "rarity": "SR",
+    "color": "purple",
+    "energy": 4,
+    "ap": 2,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "effectZhTw": "使用時可棄一張志志雄真實、駒形由美或十本刀角色以活動登場；登場將牌庫頂一張送場外，可令對手前線一張BP不高於該卡能源需求×1000的角色退場。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-045",
+    "name": "緋村劍心",
+    "rarity": "C",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "登場看牌庫頂2張，可將其中一張沒有特徵的紫色卡送場外，其他卡任意順序放回牌庫頂。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-046",
+    "name": "緋村劍心",
+    "rarity": "C",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "active",
+    "effectZhTw": "啟動主要每回合一次：棄一張手牌，使自身本回合BP+1000。",
+    "traits": [],
+    "bpMark": "+"
+  },
+  {
+    "id": "RNK-1-047",
+    "name": "緋村劍心",
+    "rarity": "U",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "本角色活動時發生能源額外+紫1。",
+    "traits": [],
+    "genMark": "紫+"
+  },
+  {
+    "id": "RNK-1-048",
+    "name": "緋村劍心",
+    "rarity": "R",
+    "color": "purple",
+    "energy": 4,
+    "ap": 2,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "effectZhTw": "本角色以活動登場；登場後，本回合接下來從手牌使用能源需求3以下齋藤一的AP消耗-1。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-049",
+    "name": "三島榮次",
+    "rarity": "C",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "啟動主要：休息自身，每回合一次，本回合能源再+紫1，主要階段結束時自身退場。",
+    "traits": [],
+    "genMark": "紫+"
+  }
+]);

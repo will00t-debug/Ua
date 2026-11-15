@@ -1,0 +1,106 @@
+// Official Traditional Chinese RNK 071-077: verified facts and concise ability descriptions.
+// Full printed Japanese text and V2 DSL must be separately verified; all remain non-ready.
+import {tcRows} from './tc-source-helper.mjs';
+export const RNK_CARDS_071_077=tcRows([
+  {
+    "id": "RNK-1-071",
+    "name": "神谷薰",
+    "rarity": "SR",
+    "color": "red",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "effectZhTw": "我方前線有緋村劍心時自身發生能源額外+紅1；僅登場的回合可啟動一次，使我方前線緋村劍心直到下個我方回合開始前，對手效果要選他須額外棄1張手牌。",
+    "traits": [],
+    "genMark": "紅+"
+  },
+  {
+    "id": "RNK-1-072",
+    "name": "齋藤一",
+    "rarity": "C",
+    "color": "red",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "effectZhTw": "登場可讓我方最多一張緋村劍心本回合失去「我方回合中」能力。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-073",
+    "name": "相樂左之助",
+    "rarity": "C",
+    "color": "red",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "effectZhTw": "-",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-074",
+    "name": "相樂左之助",
+    "rarity": "C",
+    "color": "red",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "effectZhTw": "-",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-075",
+    "name": "相樂左之助",
+    "rarity": "U",
+    "color": "red",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "此角色攻擊且未被防禦時抽1張。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-076",
+    "name": "相樂左之助",
+    "rarity": "R",
+    "color": "red",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "我方回合BP+1000；在能源線時每回合一次，在我方角色攻擊結束後可棄1，與我方前線一張此回合尚未攻擊的角色交換位置。",
+    "traits": [],
+    "bpMark": "+"
+  },
+  {
+    "id": "RNK-1-077",
+    "name": "相樂左之助",
+    "rarity": "SR",
+    "color": "red",
+    "energy": 5,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "effectZhTw": "突襲相樂左之助；傷害2、衝擊無效；此角色攻擊被防禦時，可休息我方前線另一張活動的相樂左之助，若如此本回合BP+1000及衝擊1；登場抽1。",
+    "traits": [],
+    "bpMark": "+"
+  }
+]);

@@ -360,7 +360,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    e.controller===owner&&(e.to==='front'||e.to==='energy')&&
    e.from!=='front'&&e.from!=='energy');
   const latest=events.length?events[events.length-1]:null;
-  return latest?.reason==='own-effect';
+  if(latest?.reason!=='own-effect')return false;
+  if(condition.sourceTypes===undefined)return true;
+  // The completed move records the causing printed source's card ID.
+  // An unknown cause must fail closed rather than count as a CHARACTER.
+  if(typeof latest.sourceCardId!=='string'||!latest.sourceCardId)return false;
+  const sourceDef=printed({cardId:latest.sourceCardId,
+    uid:latest.sourceUid??null});
+  return !!sourceDef&&condition.sourceTypes.includes(sourceDef.type);
  }
  // Q18 and Q1806: 同じライン is the line this card is on. A front-line
  // card looks along the front line, and an energy-line card looks along
