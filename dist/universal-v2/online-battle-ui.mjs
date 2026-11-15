@@ -366,11 +366,24 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
    definition,imageSource,openCard});
   const lookedAt=pendingCardSheet({el,card:display.lookedAt,label:'目前查看的牌庫頂',
    definition,imageSource,openCard});
+  // Keep the existing, server-issued choice buttons and their callbacks.
+  // Only move at most two simple top-level decisions to a persistent footer;
+  // larger choice lists and private card galleries remain scrollable.
+  const decisionButtons=[...actions.children].filter(node=>node.tagName==='BUTTON');
+  const decisionFooter=el('div',{class:'online-effect-decision-actions'});
+  if(decisionButtons.length>0&&decisionButtons.length<=2)
+   decisionFooter.append(...decisionButtons);
   const dialog=el('section',{class:'dialog pending panel online-compact-effect-dialog',role:'dialog','aria-modal':'true',
-   'aria-label':'效果選擇',style:'box-sizing:border-box;width:min(540px,calc(100vw - 20px));max-width:100%;max-height:76dvh;overflow-y:auto;overflow-x:hidden'},
-   el('div',{class:'headline'},el('h2',{text:view.phase==='setup'?'起手調度':'效果選擇'}),
-    actions.querySelector('.online-inspection-peek')?null:el('button',{type:'button',text:'查看場面與手牌',onClick:onPause})),
-   actions,effectSource,lookedAt);
+   'aria-label':'效果選擇',tabindex:'-1'},
+   el('header',{class:'headline online-effect-heading'},
+    el('h2',{text:'效果選擇'}),
+    // This does not dismiss a mandatory choice; it opens the existing board-inspection mode.
+    el('button',{type:'button',class:'online-effect-close','aria-label':'暫時查看場面與手牌',
+     text:'×',onClick:onPause})),
+   el('div',{class:'online-effect-scroll'},actions,effectSource,lookedAt),
+   el('div',{class:'online-effect-bottom'},
+    el('button',{type:'button',class:'online-effect-peek',text:'◉ 查看場面與手牌',onClick:onPause}),
+    decisionFooter.childElementCount?decisionFooter:null));
   const overlay=el('div',{class:'overlay v2-pending-overlay online-effect-overlay'},dialog);shell.append(overlay);
  }
  return shell;
