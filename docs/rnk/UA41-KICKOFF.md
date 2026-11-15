@@ -198,3 +198,21 @@ Original Japanese `UA41BT/RNK-1-048` 緋村 剣心, https://www.merucarduniari.j
 - Uses the existing Universal V2 `nextEligibleHandPlayApDiscount` with `{cardType:'character',name:'斎藤 一',printedRequiredEnergyAtMost:3}`, and the existing shared `enterAlwaysActive`; no new RNK engine branch, no Chinese UI modification.
 - Files: `dist/rnk/jp-evidence-048.mjs`, `dist/universal-v2/rnk/programs-048.mjs`, `tests/v2-rnk-048-discount.test.mjs`. Tests positive same-name energy ≤3, reject energy 4 / wrong name / event.
 - Source-count milestone **34/114 Japanese-backed V2 staging programs, 0/114 full game-effect acceptance**. The new HEAD's full CI must complete before considering it CI-green. Only one cross-group census test stores the fixed 34 expected count; other test suites derive size from `RNK_BATCH_STAGING_IDS.length`. Do not wire RNK into officialV2Pack yet.
+
+## 2026-11-16: blue-language source normalization + 49 staged / 16 reviewed B001-027
+
+The 34-program baseline passed full GitHub Actions (`43755980010`). An additional **15 Japanese-verified, runnable shared V2 profiles** are staged in `dist/universal-v2/rnk/programs-blue-common.mjs` alongside the prior 34 (total **49**). The source file `dist/rnk/jp-evidence-blue-common.mjs` contains **16** reviewed prints: 15 executable and one held out. Executable IDs:
+
+`RNK-1-001,002,003,004,006,009,012,014,015,020,021,022,023,025,027`.
+
+They use only existing shared DSL operations: `searchTopOneBottomDiscard` (including top-7 with no discard), `nameAliases` (printed alias 002 as 〈緋村 剣心〉), `restSelfGainEnergyRetireEndMain`, `bounceOwnOtherUnderEnergy`, `buffOwnField`, `impactNull`, `inspectTopArrange`, `opponentFieldColorsHandEnergyDiscount`, `drawDiscard`, `ownTurnBp`, `drawIfOwnName` on retirement, `activeExtraEnergy`, `inspectTopAnyOutside` (top 3, move up to one to outside), `emptyOwnFieldHandEnergyDiscount`, and `recoverAp`. All cards remain source-only and nonproduction.
+
+### Data and name identity safeguards
+
+- Cross-language trait: source Traditional Chinese `御庭番眾` is explicitly mapped at **runtime only** to Japanese `御庭番衆` in `rnk-shared-adapter.mjs`. This matters for RNK-1-021's top-three `高荷 恵` OR `御庭番衆` search. The old Chinese display is unmodified; do not replace source translations.
+- The Japanese merchandise listing `RNK-1-003` incorrectly states printed BP **2000**, while the official `UA41BT/RNK-1-003` Japanese/English local print and the existing TC source correctly show **1000**. The compiled V2 card retains the official **1000**; the vendor BP is not rules authority. Official: https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA41BT%2FRNK-1-003
+- Merchant listing `RNK-1-027` incorrectly labels a `御庭番衆` trait; the official original print has **no trait**. The compiled event has `traits:[]`. Official: https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA41BT%2FRNK-1-027
+- Note: `RNK-1-016` was **audited but not staged**: printed effect grants a draw only when the card is entered by **own CHARACTER or EVENT CARD effect**, whereas the existing generic `selfEnteredByOwnEffect` query accepts every own-effect cause, including a FIELD's effect. It would overdraw, so `RNK_PROGRAMS_BLUE_COMMON['RNK-1-016'].ready=false` until the common engine can check the **source card type**. Never count it as playable or silently generalize.
+- Other unresolved complex cards (e.g., 026 hand-discard threshold, 028 Aoshi-count-dependent BP retirement) are not staged.
+
+Regression test: `tests/v2-rnk-blue-common-12.test.mjs` (historical filename retained) checks all 16 Japanese records, 15 exact runnable programs, 016 exclusion, Japanese names/traits, printed numeric stats, and complete effect shape; `tests/v2-rnk-bcd-batch-programs.test.mjs` asserts the **single global 49-card census**. Existing legal 50-card V2 staging match smoke remains in the suite. HEAD CI for the 49-stage milestone is pending. **0/114 fully battle-accepted, no merge or deployment, PR stays Draft.**
