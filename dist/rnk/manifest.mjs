@@ -2,6 +2,7 @@
 import {RNK_CARDS_001_007} from './cards-001-007.mjs';
 import {RNK_CARDS_008_014} from './cards-008-014.mjs';
 import {RNK_CARDS_015_021} from './cards-015-021.mjs';
+import {RNK_CARDS_022_028} from './cards-022-028.mjs';
 // Card names/printed stats/effects must be verified separately before entering V2.
 // Keep reprinted starter cards under their original RNK-1 id.
 const freeze = value => Object.freeze(value);
@@ -78,7 +79,12 @@ export function rnkPrintsFor(idValue) {
 
 // Identity-only inventory. Do NOT add to officialV2Pack / editor until each
 // card has verified properties and independently accepted V2 effect programs.
-export const RNK_TC_CATALOG = freeze([...RNK_CARDS_001_007, ...RNK_CARDS_008_014, ...RNK_CARDS_015_021]);
+export const RNK_TC_CATALOG = freeze([
+  ...RNK_CARDS_001_007,
+  ...RNK_CARDS_008_014,
+  ...RNK_CARDS_015_021,
+  ...RNK_CARDS_022_028
+]);
 export const RNK_IDENTITY_INVENTORY = freeze(RNK_ALL_DECK_IDS.map(cardId => {
   const starter = RNK_STARTER_ONLY.find(card => card.id === cardId);
   const confirmedTc = RNK_TC_CATALOG.find(card => card.id === cardId);
