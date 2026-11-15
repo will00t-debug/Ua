@@ -6,7 +6,7 @@
 - UA41ST: numbered cards 068, 070, 074, 078, 080, 081, 085, 096, 100 (reprints) plus 101–113 (13 new deck cards); one AP print. Its 27 listed products include parallel versions and MUST NOT be treated as 27 unique playable effects.
 - Target: 113 unique BT/ST numbered deck cards, plus separate UAPR/RNK-P-001 event (114 tracked deck identities total). 8 verified AP print IDs including UAPR/RNK-AP01. Count artwork variants separately, never as new engine effects.
 - UAPR/RNK-1-014, -057, -086, -090 are additional promo prints of existing BT IDs; do not create duplicate effects. More promo products, if verified later, must be added to the inventory explicitly.
-- This draft PR establishes identity and print mapping, plus official Traditional Chinese printed card text and numeric stats for all 28 cards RNK-1-001–028 (Group A). No card is playable yet: Japanese copy, independent V2 effect acceptance, live-registry entries, and deployment are pending. No fake vanillas or guessed effects.
+- **Source data complete at 114/114 identities, not V2 gameplay complete**: Group A 001–028 has transcribed Traditional Chinese printed rules, while Groups B/C/D 029–113 plus the standalone promo have confirmed identity/printed stats, source links and concise human-readable Traditional Chinese ability synopses. These synopses are not verbatim printed copy and not executable DSL. Japanese printed effects, card-by-card rules review, V2 programs, editor and live-registry entries, and deployment remain pending. All 114 rows intentionally have `battleReady:false` and `effectImplemented:false`.
 - Sources:
   - Official booster: https://www.unionarena-tcg.com/jp/products/boosters/rnk-1.php
   - Official starter filter: https://www.unionarena-tcg.com/jp/cardlist/?search=true&series=570041
@@ -38,10 +38,16 @@
 5. No duplicate IDs from UA41ST reprints and no AP in the 50-card deck.
 
 ## Foundation files
-- `dist/rnk/manifest.mjs`: stable IDs, reprint mappings, starter-only card names, AP prints, and explicitly non-ready inventory (the first seven rows include verified TC copy).
+- `dist/rnk/manifest.mjs`: stable IDs, print/reprint mappings, starter-only card names, AP prints, and all 114 expressly non-ready source rows in `RNK_SOURCE_CATALOG`; `RNK_TC_CATALOG` tracks 113 numbered BT/ST cards.
 - `dist/rnk/cards-001-007.mjs`, `cards-008-014.mjs`, `cards-015-021.mjs`, `cards-022-028.mjs`: full Group A official Traditional Chinese 001–028 identity, cost, effect, trigger and source links; Japanese effects and runtime acceptance are not yet verified.
 - `tests/v2-rnk-cards-001-007.test.mjs`, `v2-rnk-cards-008-014.test.mjs`, `v2-rnk-cards-015-021.test.mjs`, `v2-rnk-cards-022-028.test.mjs`: four independent seven-card acceptance-data guards.
 - `tests/v2-rnk-manifest.test.mjs`: guards 113 numbered + one UAPR event identity, reprints, AP exclusion and false-ready flags.
+- `dist/rnk/tc-source-helper.mjs`: normalized source URLs / image names, printed stats, card types, synopses, flags, and strict non-ready defaults.
+- Group B: `dist/rnk/cards-029-035.mjs`, `cards-036-042.mjs`, `cards-043-049.mjs`, `cards-050-056.mjs` = 28 numbered source rows.
+- Group C: `dist/rnk/cards-057-063.mjs`, `cards-064-070.mjs`, `cards-071-077.mjs`, `cards-078-084.mjs` = 28 numbered source rows.
+- Group D: `dist/rnk/cards-085-091.mjs`, `cards-092-098.mjs`, `cards-099-105.mjs`, `cards-106-113.mjs` = 29 numbered source rows; `dist/rnk/promo-card.mjs` = independent UAPR event.
+- `tests/v2-rnk-b-catalog.test.mjs`, `tests/v2-rnk-c-catalog.test.mjs`, `tests/v2-rnk-d-catalog.test.mjs`: coverage of ownership, counts, key effects, cards, print exceptions, and non-ready gates.
+
 
 ## Effect-engine follow-up / printed wording edge case
 - The Traditional Chinese UA41BT/RNK-1-011 text names the event 〈生存的意志〉, while UA41BT/RNK-1-027's own Traditional Chinese printed title is 〈求生意志〉. The Japanese title of RNK-1-027 is 〈生きようとする意志〉. Confirm canonical name mapping when implementing 011's once-per-turn main ability. Do not treat the two TC renderings as two different event cards.
@@ -49,3 +55,31 @@
 - RNK-1-018 requires safe deployment of the raid-bottom card from underneath the host, with temporary cannot-attack and end-of-attack retirement; verify card conservation and zone capacity.
 - RNK-1-026 is a field and RNK-1-027/028 are events, not characters; keep their BP/gen/trigger semantics distinct from character entries.
 - Catalog uses `confirmedTc:true` for audited TC data while `cardDataVerified:false`, `effectJa:null`, `battleReady:false` stay false until independent JP and V2 acceptance; this is intentional.
+
+## B/C/D source-data milestone — 2026-11-16
+
+| Owner | Deck IDs | Count | Source recording | V2-ready |
+| --- | --- | ---: | --- | ---: |
+| A | RNK-1-001–028 | 28 | Official Traditional Chinese printed effect transcriptions | 0 |
+| B | RNK-1-029–056 | 28 | Official TC identity, stats, source image/page, summarized effects | 0 |
+| C | RNK-1-057–084 | 28 | Official TC identity, stats, source image/page, summarized effects | 0 |
+| D | RNK-1-085–113 + RNK-P-001 | 30 | 29 numbered printed rows and one JP promo, source/summary | 0 |
+| **Total** | **114 unique identities** | **114** | **Source catalog milestone complete** | **0** |
+
+**Acceptance gap:** A/B/C/D source files do not implement card effects; `effectJa:null`, `effectImplemented:false`, `cardDataVerified:false`, and `battleReady:false` are deliberate. The concise B/C/D effect synopses require full official JP/TC printed-text confirmation, FAQ/rules interpretation, DSL implementation, positive+negative functional tests, image checks, UI/editor, AI and online battle before production use. A catalog test checks data contracts, **not** an effect-correctness test.
+
+### Known source conflicts and print-specific review
+
+1. `UA41ST/RNK-1-106`: the official Traditional Chinese detail page unexpectedly displays an effect belonging to another card; the official English card detail confirms the red Kenshin Raid + Impact (1) + move opposing character to Energy line. Save official EN source in `sourceEn`, set `confirmedTc:false` and `needsManualReview:true`. Do not substitute erroneous TC text.
+2. `UA41ST/RNK-1-112` and `113`: purple-character energy generation shows a blue symbol on the TC detail page. Mark `needsManualReview:true`; inspect Japanese or physical printing before confirming engine `genColor`. Their fields are not marked battle-ready.
+3. `UAPR/RNK-1-086` is a booster-reprint ID with a **different printed trigger**. `RNK_PRINT_RULE_EXCEPTIONS` records the exception; identical engine ID does not imply the printed variants resolve an identical trigger. Introduce print-specific battle identity/rules design before enabling this promo print; do not conflate with base booster.
+4. `UAPR/RNK-P-001`: standalone five-color event, cost 4 AP 1 with Final trigger, Japanese official page verified; TC official page unavailable, so `confirmedJa:true` and `confirmedTc:false`. Its color `multicolor` needs explicit V2 matching semantics.
+5. `RNK-1-011` references the event using a Chinese variant `生存的意志` while `RNK-1-027` prints `求生意志`. Map to one canonical event ID when implementing 011 and 027.
+
+### Suggested effect implementation order after source milestone
+
+- B: red/purple energy discounts, target selection, attacks, battle-state moves, conditional enter/raid, and `onPlay`/ `onRetire` sequencing.
+- C: mill-to-field triggered effects for `RNK-1-056/059`, conditional AP pay, active/rest swaps and opponent move/retire effects; test identity and no duplication.
+- D: `RNK-1-085`–`090` battle-loss-to-energy replacement and overflow behavior; `RNK-1-103` must-block, `RNK-1-106` Raid/move and malformed TC source, multicolor `RNK-P-001`, and promo print-specific trigger.
+
+**Release rule:** do not wire `rnk` into `officialV2Pack`, announce ready play, merge the draft or deploy before those rules and integration tests are completed.
