@@ -7,6 +7,15 @@ import {RNK_CARDS_029_035} from './cards-029-035.mjs';
 import {RNK_CARDS_036_042} from './cards-036-042.mjs';
 import {RNK_CARDS_043_049} from './cards-043-049.mjs';
 import {RNK_CARDS_050_056} from './cards-050-056.mjs';
+import {RNK_CARDS_057_063} from './cards-057-063.mjs';
+import {RNK_CARDS_064_070} from './cards-064-070.mjs';
+import {RNK_CARDS_071_077} from './cards-071-077.mjs';
+import {RNK_CARDS_078_084} from './cards-078-084.mjs';
+import {RNK_CARDS_085_091} from './cards-085-091.mjs';
+import {RNK_CARDS_092_098} from './cards-092-098.mjs';
+import {RNK_CARDS_099_105} from './cards-099-105.mjs';
+import {RNK_CARDS_106_113} from './cards-106-113.mjs';
+import {RNK_PROMO_CARD} from './promo-card.mjs';
 // Card names/printed stats/effects must be verified separately before entering V2.
 // Keep reprinted starter cards under their original RNK-1 id.
 const freeze = value => Object.freeze(value);
@@ -55,6 +64,18 @@ export const RNK_DECK_IDS = freeze([
 export const RNK_PROMO_REPRINT_IDS = freeze(
   [14, 57, 86, 90].map(id)
 );
+// UAPR RNK-1-086 has a different printed trigger from UA41BT RNK-1-086.
+// Card-body ability otherwise corresponds to the base identity.
+// Do not assume all reprints share trigger behavior when selecting card art.
+export const RNK_PRINT_RULE_EXCEPTIONS=freeze({
+  'UAPR/RNK-1-086':freeze({
+    baseId:'RNK-1-086',
+    triggerMark:'active',
+    triggerEffect:'If no life remains, move top deck card into own life area',
+    source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UAPR%2FRNK-1-086',
+    needsPrintSpecificRulesReview:true
+  })
+});
 export const RNK_PROMO_ONLY = freeze({
   id: 'RNK-P-001',
   nameJa: 'るろうに剣心 －明治剣客浪漫譚－',
@@ -91,21 +112,40 @@ export const RNK_TC_CATALOG = freeze([
   ...RNK_CARDS_029_035,
   ...RNK_CARDS_036_042,
   ...RNK_CARDS_043_049,
-  ...RNK_CARDS_050_056
+  ...RNK_CARDS_050_056,
+  ...RNK_CARDS_057_063,
+  ...RNK_CARDS_064_070,
+  ...RNK_CARDS_071_077,
+  ...RNK_CARDS_078_084,
+  ...RNK_CARDS_085_091,
+  ...RNK_CARDS_092_098,
+  ...RNK_CARDS_099_105,
+  ...RNK_CARDS_106_113
 ]);
+export const RNK_SOURCE_CATALOG=freeze([...RNK_TC_CATALOG,RNK_PROMO_CARD]);
 export const RNK_IDENTITY_INVENTORY = freeze(RNK_ALL_DECK_IDS.map(cardId => {
   const starter = RNK_STARTER_ONLY.find(card => card.id === cardId);
-  const confirmedTc = RNK_TC_CATALOG.find(card => card.id === cardId);
+  const sourceRow = RNK_SOURCE_CATALOG.find(card => card.id === cardId);
   return freeze({
     id: cardId,
     title: RNK_TITLE,
-    nameJa: confirmedTc?.nameJa ?? (cardId === RNK_PROMO_ONLY.id ? RNK_PROMO_ONLY.nameJa : (starter?.nameJa ?? null)),
-    nameZhTw: confirmedTc?.nameZhTw ?? null,
+    nameJa: sourceRow?.nameJa ?? (cardId === RNK_PROMO_ONLY.id ? RNK_PROMO_ONLY.nameJa : (starter?.nameJa ?? null)),
+    nameZhTw: sourceRow?.nameZhTw ?? null,
     prints: rnkPrintsFor(cardId),
+    color: sourceRow?.color ?? null,
+    energy: sourceRow?.energy ?? null,
+    ap: sourceRow?.ap ?? null,
+    bp: sourceRow?.bp ?? null,
+    gen: sourceRow?.gen ?? null,
+    type: sourceRow?.type ?? null,
+    trigger: sourceRow?.trigger ?? null,
     effectJa: null,
-    effectZhTw: confirmedTc?.effectZhTw ?? null,
-    image: confirmedTc?.image ?? null,
-    confirmedTc: Boolean(confirmedTc),
+    effectZhTw: sourceRow?.effectZhTw ?? null,
+    source: sourceRow?.source ?? null,
+    image: sourceRow?.image ?? null,
+    confirmedTc: Boolean(sourceRow?.confirmedTc),
+    confirmedJa: Boolean(sourceRow?.confirmedJa),
+    needsManualReview: Boolean(sourceRow?.needsManualReview),
     cardDataVerified: false,
     effectImplemented: false,
     battleReady: false
