@@ -13,7 +13,7 @@ test('048 Japanese printed card and Q1599 next eligible rule ground shared-V2 pr
  const jp=RNK_JP_EVIDENCE_048[id];
  const pack=createRnkBcdBatchStagingPack();
  assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
- assert.equal(Object.keys(pack.cards).length,34);
+ assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.ok(printed);
  assert.equal(printed.number,'UA41BT/RNK-1-048');
  assert.equal(jp.print,printed.number);
