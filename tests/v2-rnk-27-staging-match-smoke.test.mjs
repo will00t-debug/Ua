@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRnkBcdBatchStagingPack} from '../dist/universal-v2/rnk-bcd-batch-pack.mjs';
+import {createRnkBcdBatchStagingPack,RNK_BATCH_STAGING_IDS} from '../dist/universal-v2/rnk-bcd-batch-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,assertUniversalMatch,legalUniversalActions,dispatchUniversalAction} from '../dist/universal-v2/engine.mjs';
 
@@ -26,8 +26,8 @@ function legal50(){
   assert.equal(count,50,'common V2 staging could not build legal 50-card test deck');
   return counts;
 }
-test('31 Japanese-backed shared V2 programs build a legal 50-card staging deck',()=>{
-  assert.equal(Object.keys(pack.cards).length,31);
+test('Japanese-backed shared V2 programs build a legal 50-card staging deck',()=>{
+  assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
   const counts=legal50();
   assert.deepEqual(validateUniversalDeck(pack,counts),[]);
   assert.equal(Object.values(counts).reduce((s,n)=>s+n,0),50);
