@@ -16,7 +16,7 @@ test('nine new effects are individually source-grounded and compiled in 19-card 
  assert.deepEqual(Object.keys(RNK_PROGRAMS_FAST_BCD).sort(),EXPECTED);
  const pack=createRnkBcdBatchStagingPack();
  assert.equal(pack.kind,'ua-v2-pack');
- assert.equal(Object.keys(pack.cards).length,25);
+ assert.equal(Object.keys(pack.cards).length,27);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  for(const id of EXPECTED){
    const printed=SOURCE[id],ja=RNK_JP_EVIDENCE_FAST_BCD[id],program=RNK_PROGRAMS_FAST_BCD[id];
