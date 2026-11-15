@@ -10,11 +10,11 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 const AP=['RNK-1-031','RNK-1-063','RNK-1-065','RNK-1-096','RNK-1-097'];
 const VANILLA=['RNK-1-035','RNK-1-055','RNK-1-073'];
 
-test('batch has forty-nine independent Japanese-checked cards spanning B,C,D, one shared schema',()=>{
+test('batch has forty-eight independent Japanese-checked cards spanning B,C,D, one shared schema',()=>{
  const pack=createRnkBcdBatchStagingPack();
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,49);
+ assert.equal(Object.keys(pack.cards).length,48);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.ok(pack.cards['RNK-1-036']);
  for(const id of [...AP,...VANILLA]){
