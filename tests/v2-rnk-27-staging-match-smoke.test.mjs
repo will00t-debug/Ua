@@ -26,8 +26,8 @@ function legal50(){
   assert.equal(count,50,'common V2 staging could not build legal 50-card test deck');
   return counts;
 }
-test('27 Japanese-backed shared V2 programs build a legal 50-card staging deck',()=>{
-  assert.equal(Object.keys(pack.cards).length,27);
+test('31 Japanese-backed shared V2 programs build a legal 50-card staging deck',()=>{
+  assert.equal(Object.keys(pack.cards).length,31);
   const counts=legal50();
   assert.deepEqual(validateUniversalDeck(pack,counts),[]);
   assert.equal(Object.values(counts).reduce((s,n)=>s+n,0),50);
