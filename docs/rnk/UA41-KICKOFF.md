@@ -177,3 +177,15 @@ Japanese official FAQ **Q1607** and the original English official print reveal t
 - Do not implement it with generic `buffOwnField` or a 1000-BP buff; that would be a rules bug.
 - `dist/rnk/jp-rule-holdouts.mjs` and `tests/v2-rnk-jp-faq-holdouts.test.mjs` enforce an explicit block until all clauses and source timings are supported and exercised in common-engine match tests.
 - **As requested, existing Traditional Chinese display has not been altered.** This lock is about English/Japanese evidence and future rule implementation, not a user-visible translation overhaul.
+
+## Japanese blue events 030/032 → 33 common-V2 programs (2026-11-16)
+
+B-group blue event `RNK-1-030` 九頭龍閃 and `RNK-1-032` 逆刃刀・真打 were independently cross-checked with full Japanese printed card text (Japanese seller prints: https://www.merucarduniari.jp/product/12908 and https://www.merucarduniari.jp/product/12910). These are effect- and trigger-complete **staging** programs, not live acceptance.
+
+- `030`: `retireOppFrontUnderBp({bp:3000,bonusName:'比古 清十郎',bonusBp:5000})` then an `ifLiveThen(ownNameExists 比古 清十郎)` gate for **optional** +1000 BP to up to one own `緋村 剣心`. The optional +1000 exists **only** if Hiko is in the controller's field. SPECIAL is preserved. Not unconditional.
+- `032`: **mandatory** `buffOwnField` +2000 to exactly one own `緋村 剣心` (`optional:false`), followed by `recoverAp({count:1})`, optionally ready at most one own AP. Printed Japanese `1枚選び` vs `1枚まで選び` is deliberately distinguished. DRAW trigger preserved. **Important**: common schema compilation does not itself prove that a play is rejected when mandatory Kenshin target absent; add a real in-match legality test before release.
+- Sources: `dist/rnk/jp-evidence-blue-events.mjs`, `dist/universal-v2/rnk/programs-blue-events.mjs`, `tests/v2-rnk-blue-events.test.mjs`. Updated shared staging pack aggregate and 33-card census test. No changes to existing Traditional Chinese UI texts or official battle registry.
+
+**Rules holdout:** `RNK-1-075` 相楽 左之助 must draw one **every time it attacks and is not blocked**, immediately after blocker declaration and before damage or trigger. Japanese official **Q1610** (https://www.unionarena-tcg.com/jp/faq/list.php?series=UA41BT). Existing generic `unblockedAttack` schema supports mandatory `oncePerTurn:true` or optional no-once; neither faithfully represents this printed mandatory no-once ability. `dist/rnk/jp-rule-holdouts.mjs` and `tests/v2-rnk-jp-faq-holdouts.test.mjs` explicitly bar 075 from staging until a reusable V2 engine extension and end-to-end tests exist.
+
+**Count**: 33/114 staged shared-engine programs; 0/114 end-to-end battle-accepted. The 31-card GitHub workflow `43753592693` passed; test maintenance refactor workflow `43754405544` also passed. The HEAD containing 33 cards and FAQ holdout needs its own green CI check. PR stays Draft/unmerged/unreleased.
