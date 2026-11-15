@@ -7,12 +7,14 @@ import {RNK_JP_EVIDENCE_COMMON_BCD} from '../rnk/jp-evidence-common-bcd.mjs';
 import {RNK_JP_EVIDENCE_FAST_BCD} from '../rnk/jp-evidence-fast-bcd.mjs';
 import {RNK_JP_EVIDENCE_PASSIVE_BCD} from '../rnk/jp-evidence-passive-bcd.mjs';
 import {RNK_JP_EVIDENCE_SIMPLE_NEXT} from '../rnk/jp-evidence-simple-next.mjs';
+import {RNK_JP_EVIDENCE_BCD_NEXT4} from '../rnk/jp-evidence-bcd-next4.mjs';
 import {RNK_PROGRAMS_029_035} from './rnk/programs-029-035.mjs';
 import {RNK_PROGRAMS_036_042} from './rnk/programs-036-042.mjs';
 import {RNK_PROGRAMS_COMMON_BCD} from './rnk/programs-common-bcd.mjs';
 import {RNK_PROGRAMS_FAST_BCD} from './rnk/programs-fast-bcd.mjs';
 import {RNK_PROGRAMS_PASSIVE_BCD} from './rnk/programs-passive-bcd.mjs';
 import {RNK_PROGRAMS_SIMPLE_NEXT} from './rnk/programs-simple-next.mjs';
+import {RNK_PROGRAMS_BCD_NEXT4} from './rnk/programs-bcd-next4.mjs';
 import {createRnkSharedStagingPack} from './rnk-shared-adapter.mjs';
 
 const evidence=Object.freeze({
@@ -21,7 +23,8 @@ const evidence=Object.freeze({
  ...RNK_JP_EVIDENCE_COMMON_BCD,
  ...RNK_JP_EVIDENCE_FAST_BCD,
  ...RNK_JP_EVIDENCE_PASSIVE_BCD,
- ...RNK_JP_EVIDENCE_SIMPLE_NEXT
+ ...RNK_JP_EVIDENCE_SIMPLE_NEXT,
+ ...RNK_JP_EVIDENCE_BCD_NEXT4
 });
 const programs=Object.freeze({
  ...RNK_PROGRAMS_029_035,
@@ -29,7 +32,8 @@ const programs=Object.freeze({
  ...RNK_PROGRAMS_COMMON_BCD,
  ...RNK_PROGRAMS_FAST_BCD,
  ...RNK_PROGRAMS_PASSIVE_BCD,
- ...RNK_PROGRAMS_SIMPLE_NEXT
+ ...RNK_PROGRAMS_SIMPLE_NEXT,
+ ...RNK_PROGRAMS_BCD_NEXT4
 });
 export const RNK_BATCH_STAGING_IDS=Object.freeze(Object.entries(programs)
  .filter(([,p])=>p?.ready===true).map(([id])=>id).sort());
