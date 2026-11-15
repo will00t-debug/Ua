@@ -17,6 +17,14 @@ const SHARED_KEYS=new Set([
   'oppEffectLeave','moveTriggers','moveObserver'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
+// Audited cross-language print token. Japanese gameplay filters must not
+// compare against translated zh-TW source traits. The display catalog is never edited.
+export const RNK_JP_TRAIT_TOKENS=Object.freeze({'御庭番眾':'御庭番衆'});
+export function rnkJapaneseTraits(traits=[]){
+  if(!Array.isArray(traits))throw Error('RNK printed traits must be a list');
+  return traits.map(trait=>RNK_JP_TRAIT_TOKENS[trait]||trait);
+}
+
 
 export function rnkSharedCard(card,program,japaneseEvidence){
   if(program?.ready!==true)return null;
@@ -46,7 +54,7 @@ export function rnkSharedCard(card,program,japaneseEvidence){
     id:card.id,name:japaneseEvidence.nameJa,
     color:card.color,type:card.type,energy:card.energy,ap:card.ap,
     bp:card.bp,gen:card.gen,trigger:card.trigger,
-    traits:card.traits||[],implementation,effects:{},...shared
+    traits:rnkJapaneseTraits(card.traits||[]),implementation,effects:{},...shared
   });
 }
 
