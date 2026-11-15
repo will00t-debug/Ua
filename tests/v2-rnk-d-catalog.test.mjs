@@ -52,6 +52,8 @@ test('Starter and promo details protect against wrong TC site, color, and reprin
   assert.deepEqual(get('110').traits,['御庭番眾']);
   assert.equal(get('112').color,'purple');
   assert.equal(get('113').color,'purple');
+  assert.equal(get('112').needsManualReview,true);
+  assert.equal(get('113').needsManualReview,true);
   assert.equal(RNK_PROMO_CARD.energy,4);
   assert.equal(RNK_PROMO_CARD.color,'multicolor');
   assert.deepEqual(RNK_PROMO_CARD.colors,['red','blue','yellow','green','purple']);
