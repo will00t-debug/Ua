@@ -21,7 +21,7 @@ export function rnkSharedCard(card,program,japaneseEvidence){
   if(program?.ready!==true)return null;
   if(!card||card.title!=='rnk'||card.deckLegal!==true||
      card.battleReady!==false||card.cardDataVerified!==false)
-    throw Error((card?.id||'unknown')+' cannot bypass the RNK source gate');
+    throw Error((card?.id||'unknown')+' source catalog must not claim battle readiness');
   if(!PRINT_TYPES.has(card.type)||!['blue','purple','red','green','yellow'].includes(card.color))
     throw Error(card.id+' invalid source type or color');
   if(!japaneseEvidence||
