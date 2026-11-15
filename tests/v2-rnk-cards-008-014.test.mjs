@@ -57,10 +57,10 @@ test('RNK 008-014 effect details remain complete as text, not falsely DSL-ready'
   assert.match(RNK_CARDS_008_014[6].effectZhTw,/置於場外/);
 });
 
-test('RNK manifest exposes exactly 14 TC-verified cards but no playable ones',()=>{
-  assert.equal(RNK_TC_CATALOG.length,14);
-  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,14);
-  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,14);
+test('RNK manifest exposes all three first TC-verified groups but no playable ones',()=>{
+  assert.equal(RNK_TC_CATALOG.length,21);
+  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,21);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,21);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.battleReady).length,0);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.effectImplemented).length,0);
 });
