@@ -57,8 +57,16 @@ test('identity placeholders cannot be mistaken for verified playable cards', () 
     assert.equal(card.effectImplemented, false);
     assert.equal(card.battleReady, false);
     assert.equal(card.effectJa, null);
-    assert.equal(card.effectZhTw, null);
-    assert.equal(card.image, null);
+    if (/^RNK-1-00[1-7]$/.test(card.id)) {
+      assert.equal(card.confirmedTc, true);
+      assert.ok(card.nameZhTw);
+      assert.ok(card.effectZhTw);
+      assert.ok(card.image);
+    } else {
+      assert.equal(card.confirmedTc, false);
+      assert.equal(card.effectZhTw, null);
+      assert.equal(card.image, null);
+    }
     assert.deepEqual(card.prints, rnkPrintsFor(card.id));
   }
   assert.equal(RNK_IDENTITY_INVENTORY.find(card => card.id === 'RNK-1-113').nameJa, '斎藤 一');
