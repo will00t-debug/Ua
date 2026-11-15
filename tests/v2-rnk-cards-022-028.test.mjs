@@ -49,9 +49,9 @@ test('RNK 022-028 retains special effects and 28-card A group census',()=>{
   assert.match(RNK_CARDS_022_028[4].effectZhTw,/比古清十郎/);
   assert.match(RNK_CARDS_022_028[5].effectZhTw,/最多2張自己的AP卡/);
   assert.match(RNK_CARDS_022_028[6].effectZhTw,/BP範圍\+1000/);
-  assert.equal(RNK_TC_CATALOG.length,56);
-  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,56);
+  assert.equal(RNK_TC_CATALOG.length,113);
+  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,113);
   assert.deepEqual(RNK_TC_CATALOG.slice(0,28).map(c=>c.id),RNK_BOOSTER_IDS.slice(0,28));
-  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,56);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,112);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.battleReady).length,0);
 });
