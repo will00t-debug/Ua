@@ -31,7 +31,7 @@ test('starter 109 Japanese evidence, official English agreement, and original Tr
 
 test('50-card staging pack compiles 109 through existing Universal V2 grantOnAttack',()=>{
  assert.equal(pack.kind,'ua-v2-pack');
- assert.equal(Object.keys(pack.cards).length,50);
+ assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  const c=pack.cards[id],program=RNK_PROGRAMS_ST_109[id];
  assert.equal(c.name,'逆刃刀');
