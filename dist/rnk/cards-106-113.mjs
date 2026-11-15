@@ -1,6 +1,7 @@
 // Card facts cross-checked against official TC and supplementary JP/EN sources.
 // Effects are paraphrased source descriptions, NOT executable DSL. V2-ready=false.
-// NOTE: RNK-1-106's official TC page has erroneous effect; verified EN/JP alternative retained.\nimport {tcCard} from './tc-source-helper.mjs';
+// NOTE: RNK-1-106's official TC page has erroneous effect; verified EN/JP alternative retained.
+import {tcCard} from './tc-source-helper.mjs';
 const EN_106='https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA41ST%2FRNK-1-106';
 export const RNK_CARDS_106_113=Object.freeze([
   {
