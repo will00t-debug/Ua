@@ -189,3 +189,12 @@ B-group blue event `RNK-1-030` 九頭龍閃 and `RNK-1-032` 逆刃刀・真打 w
 **Rules holdout:** `RNK-1-075` 相楽 左之助 must draw one **every time it attacks and is not blocked**, immediately after blocker declaration and before damage or trigger. Japanese official **Q1610** (https://www.unionarena-tcg.com/jp/faq/list.php?series=UA41BT). Existing generic `unblockedAttack` schema supports mandatory `oncePerTurn:true` or optional no-once; neither faithfully represents this printed mandatory no-once ability. `dist/rnk/jp-rule-holdouts.mjs` and `tests/v2-rnk-jp-faq-holdouts.test.mjs` explicitly bar 075 from staging until a reusable V2 engine extension and end-to-end tests exist.
 
 **Count**: 33/114 staged shared-engine programs; 0/114 end-to-end battle-accepted. The 31-card GitHub workflow `43753592693` passed; test maintenance refactor workflow `43754405544` also passed. The HEAD containing 33 cards and FAQ holdout needs its own green CI check. PR stays Draft/unmerged/unreleased.
+
+## Shared V2 next-eligible AP discount: RNK-1-048 (34 staged programs)
+
+Original Japanese `UA41BT/RNK-1-048` 緋村 剣心, https://www.merucarduniari.jp/product/12926:
+- Enters ACTIVE unconditionally (`enterAlwaysActive:true`).
+- On play: **the next hand use this turn of a CHARACTER named 〈斎藤 一〉 with printed required energy at most 3** costs 1 less AP. An earlier nonmatching hand use does **not** consume it. Japanese official Q1599: https://www.unionarena-tcg.com/jp/faq/list.php?series=UA41BT
+- Uses the existing Universal V2 `nextEligibleHandPlayApDiscount` with `{cardType:'character',name:'斎藤 一',printedRequiredEnergyAtMost:3}`, and the existing shared `enterAlwaysActive`; no new RNK engine branch, no Chinese UI modification.
+- Files: `dist/rnk/jp-evidence-048.mjs`, `dist/universal-v2/rnk/programs-048.mjs`, `tests/v2-rnk-048-discount.test.mjs`. Tests positive same-name energy ≤3, reject energy 4 / wrong name / event.
+- Source-count milestone **34/114 Japanese-backed V2 staging programs, 0/114 full game-effect acceptance**. The new HEAD's full CI must complete before considering it CI-green. Only one cross-group census test stores the fixed 34 expected count; other test suites derive size from `RNK_BATCH_STAGING_IDS.length`. Do not wire RNK into officialV2Pack yet.
