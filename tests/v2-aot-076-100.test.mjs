@@ -1346,19 +1346,36 @@ test('099 draws two, then plays up to two legal corps that return at the end of 
 
  let full=toPhase(fresh(ids,76201),'main');
  fuel(full,['AOT-1-095','AOT-1-090']);
- put(full,0,'AOT-1-078','front',0,true);
- put(full,0,'AOT-1-078','front',1,true);
- put(full,0,'AOT-1-078','front',2,true);
- put(full,0,'AOT-1-078','front',3,true);
+ const occupants=[0,1,2,3].map(slot=>put(full,0,'AOT-1-078','front',slot,true));
  readyAp(full,0,1);
  park(full,0,[]);
  const recruit=toHand(full,0,'AOT-1-090');
- const blocked=toHand(full,0,'AOT-1-099');
+ const secondRecruit=toHand(full,0,'AOT-1-091');
+ const eventOnFull=toHand(full,0,'AOT-1-099');
  const deck=full.players[0].deck.length;
- full=cast(full,blocked.uid);
- assert.equal(live(full,0,recruit.uid),undefined);
- assert.equal(full.players[0].deck.length,deck-2);
+ full=cast(full,eventOnFull.uid);
+ assert.equal(full.players[0].deck.length,deck-2,'still draws two on a full front');
+ assert.equal(full.pending?.step,'corps','a full row must not suppress the deploy choice');
+ const firstReplace=legalUniversalActions(packs,full).find(a=>
+  a.uid===recruit.uid&&a.line==='front'&&a.replaceUid===occupants[1].uid);
+ assert.ok(firstReplace,'the first replacement target must be selectable');
+ full=dispatchUniversalAction(packs,full,firstReplace);
+ assert.equal(live(full,0,recruit.uid)?.ready,true);
+ assert.equal(full.players[0].removed.some(c=>c.uid===occupants[1].uid),true);
+ assert.equal(full.pending?.step,'corps','must still offer the second entry with a full row');
+ const secondReplace=legalUniversalActions(packs,full).find(a=>
+  a.uid===secondRecruit.uid&&a.line==='front'&&a.replaceUid===occupants[2].uid);
+ assert.ok(secondReplace,'the second replacement target must be selectable');
+ full=dispatchUniversalAction(packs,full,secondReplace);
+ assert.equal(live(full,0,secondRecruit.uid)?.ready,true);
+ assert.equal(full.players[0].removed.some(c=>c.uid===occupants[2].uid),true);
  assert.equal(full.pending,null);
+ const fullTurn=full.turn;
+ full=advance(full,x=>x.turn>fullTurn,'after replacements attack');
+ assert.equal(full.players[0].hand.some(c=>c.uid===recruit.uid),true);
+ assert.equal(full.players[0].hand.some(c=>c.uid===secondRecruit.uid),true);
+ assert.equal(full.players[0].front.filter(Boolean).length,2,
+  'the replaced cards stay removed when summoned units bounce to hand');
  finish(full);
 
  let s=toPhase(fresh(ids,76202),'main');
