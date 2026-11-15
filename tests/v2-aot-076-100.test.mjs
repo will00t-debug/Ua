@@ -1346,19 +1346,36 @@ test('099 draws two, then plays up to two legal corps that return at the end of 
 
  let full=toPhase(fresh(ids,76201),'main');
  fuel(full,['AOT-1-095','AOT-1-090']);
- put(full,0,'AOT-1-078','front',0,true);
- put(full,0,'AOT-1-078','front',1,true);
- put(full,0,'AOT-1-078','front',2,true);
- put(full,0,'AOT-1-078','front',3,true);
+ const occupants=[0,1,2,3].map(slot=>put(full,0,'AOT-1-078','front',slot,true));
  readyAp(full,0,1);
  park(full,0,[]);
  const recruit=toHand(full,0,'AOT-1-090');
- const blocked=toHand(full,0,'AOT-1-099');
+ const secondRecruit=toHand(full,0,'AOT-1-091');
+ const eventOnFull=toHand(full,0,'AOT-1-099');
  const deck=full.players[0].deck.length;
- full=cast(full,blocked.uid);
- assert.equal(live(full,0,recruit.uid),undefined);
- assert.equal(full.players[0].deck.length,deck-2);
+ full=cast(full,eventOnFull.uid);
+ assert.equal(full.players[0].deck.length,deck-2,'still draws two on a full front');
+ assert.equal(full.pending?.step,'corps','a full row must not suppress the deploy choice');
+ const firstReplace=legalUniversalActions(packs,full).find(a=>
+  a.uid===recruit.uid&&a.line==='front'&&a.replaceUid===occupants[1].uid);
+ assert.ok(firstReplace,'the first replacement target must be selectable');
+ full=dispatchUniversalAction(packs,full,firstReplace);
+ assert.equal(live(full,0,recruit.uid)?.ready,true);
+ assert.equal(full.players[0].removed.some(c=>c.uid===occupants[1].uid),true);
+ assert.equal(full.pending?.step,'corps','must still offer the second entry with a full row');
+ const secondReplace=legalUniversalActions(packs,full).find(a=>
+  a.uid===secondRecruit.uid&&a.line==='front'&&a.replaceUid===occupants[2].uid);
+ assert.ok(secondReplace,'the second replacement target must be selectable');
+ full=dispatchUniversalAction(packs,full,secondReplace);
+ assert.equal(live(full,0,secondRecruit.uid)?.ready,true);
+ assert.equal(full.players[0].removed.some(c=>c.uid===occupants[2].uid),true);
  assert.equal(full.pending,null);
+ const fullTurn=full.turn;
+ full=advance(full,x=>x.turn>fullTurn,'after replacements attack');
+ assert.equal(full.players[0].hand.some(c=>c.uid===recruit.uid),true);
+ assert.equal(full.players[0].hand.some(c=>c.uid===secondRecruit.uid),true);
+ assert.equal(full.players[0].front.filter(Boolean).length,2,
+  'the replaced cards stay removed when summoned units bounce to hand');
  finish(full);
 
  let s=toPhase(fresh(ids,76202),'main');
@@ -1410,6 +1427,31 @@ test('099 draws two, then plays up to two legal corps that return at the end of 
  life=pick(life,a=>a.mode==='special'&&a.uid===victim.uid);
  assert.equal(life.players[0].outside.some(c=>c.uid===victim.uid),true);
  finish(life);
+});
+
+test('104 deploy mode can replace a full front, unlike the empty-slot-only 092',()=>{
+ const ids=['AOT-1-104','AOT-1-095','AOT-1-090','AOT-1-078','AOT-1-100'];
+ let s=toPhase(fresh(ids,76205),'main');
+ fuel(s,['AOT-1-095','AOT-1-090','AOT-1-090']);
+ const original=[0,1,2,3].map(slot=>put(s,0,'AOT-1-078','front',slot,true));
+ readyAp(s,0,1);
+ park(s,0,[]);
+ const recruit=toHand(s,0,'AOT-1-090');
+ s=play(s,toHand(s,0,'AOT-1-104').uid,'energy');
+ assert.equal(s.pending?.step,'mode104');
+ s=pick(s,a=>a.key==='deploy');
+ assert.equal(s.pending?.step,'corps');
+ const replace=legalUniversalActions(packs,s).find(a=>
+  a.uid===recruit.uid&&a.line==='front'&&a.replaceUid===original[3].uid);
+ assert.ok(replace,'104 can select a replacement slot without empty front space');
+ s=dispatchUniversalAction(packs,s,replace);
+ assert.equal(s.pending,null);
+ assert.equal(live(s,0,recruit.uid)?.ready,true);
+ assert.equal(s.players[0].removed.some(c=>c.uid===original[3].uid),true);
+ const turn=s.turn;
+ s=advance(s,x=>x.turn>turn,'104 replacement return after attack');
+ assert.equal(s.players[0].hand.some(c=>c.uid===recruit.uid),true);
+ finish(s);
 });
 
 test('100 puts up to three hand cards on the bottom in the chosen order, draws that many, then may ready an AP',()=>{
