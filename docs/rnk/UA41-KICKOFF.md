@@ -4,13 +4,15 @@
 - Title key `rnk`, engine IDs `RNK-1-001` through `RNK-1-113`.
 - UA41BT: numbered cards 001–100 (100 unique deck cards); six AP card designs.
 - UA41ST: numbered cards 068, 070, 074, 078, 080, 081, 085, 096, 100 (reprints) plus 101–113 (13 new deck cards); one AP print. Its 27 listed products include parallel versions and MUST NOT be treated as 27 unique playable effects.
-- Target: 113 unique numbered deck cards, 7 AP prints. Count artwork variants separately, never as new engine effects.
+- Target: 113 unique BT/ST numbered deck cards, plus separate UAPR/RNK-P-001 event (114 tracked deck identities total). 8 verified AP print IDs including UAPR/RNK-AP01. Count artwork variants separately, never as new engine effects.
+- UAPR/RNK-1-014, -057, -086, -090 are additional promo prints of existing BT IDs; do not create duplicate effects. More promo products, if verified later, must be added to the inventory explicitly.
 - This PR establishes identity and print mapping **only**. Nothing is playable yet; no fake vanillas, guessed effects, live-registry entries, or deploy.
 - Sources:
   - Official booster: https://www.unionarena-tcg.com/jp/products/boosters/rnk-1.php
   - Official starter filter: https://www.unionarena-tcg.com/jp/cardlist/?search=true&series=570041
   - Cross-check full list: https://cardframescanner.com/ja/games/union-arena/sets/ua41bt
   - Cross-check starter: https://cardframescanner.com/ja/games/union-arena/sets/ua41st
+  - Official promo event: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UAPR%2FRNK-P-001
 
 ## Four independent owners (7-card sub-batches preferred)
 | Group | Exclusive numbered ID ownership | Sub-batches |
@@ -18,7 +20,7 @@
 | A | RNK-1-001–028 | 001–007, 008–014, 015–021, 022–028 |
 | B | RNK-1-029–056 | 029–035, 036–042, 043–049, 050–056 |
 | C | RNK-1-057–084 | 057–063, 064–070, 071–077, 078–084 |
-| D | RNK-1-085–113 | 085–091, 092–098, 099–105, 106–113 |
+| D | RNK-1-085–113 and RNK-P-001 | 085–091, 092–098, 099–105, 106–113, promo event |
 
 - Shared starter reprint numbers stay owned by their numeric group (C or D). The print alias must not create a second card effect.
 - A/B/C/D own separate `dist/rnk/cards-<range>.mjs`, `dist/universal-v2/rnk/programs-<range>.mjs`, and matching `tests/v2-rnk-<range>.test.mjs` files. Do not concurrently edit common registry, engine, shared catalog, or other group's files.
@@ -36,4 +38,4 @@
 
 ## Foundation files
 - `dist/rnk/manifest.mjs`: stable IDs, reprint mappings, starter-only card names, AP prints, all placeholders explicitly marked unverified.
-- `tests/v2-rnk-manifest.test.mjs`: guards 113 unique identities, reprints, AP exclusion and false-ready flags.
+- `tests/v2-rnk-manifest.test.mjs`: guards 113 numbered + one UAPR event identity, reprints, AP exclusion and false-ready flags.
