@@ -108,3 +108,15 @@ Evidence: https://www.torekaoh.shop-pro.jp/?pid=187659257 (031), https://www.tor
 **以既有共通能力優先**：`draw`、`drawDiscard`、`recoverAp`、`retireOppFrontUnderBp`、`buffOwnField`、`raidName`、`impactNull`、`step`、`activeExtraEnergy` 等，都在共通驗證與 runtime 既有支援範圍內，但必須依照完整日文印刷文本進行正確組合及遊戲驗收。特殊時點如攻擊結束、結算 Trigger 後、對戰敗北改移能源線、滿格替換、印刷版本差異，不得用近似 DSL 冒充；必要時先做**非作品專用**的通用時序／選擇／移區機制並增加所有作品共用的回歸測試。
 
 介面仍顯示原有繁中翻譯，不改 `dist/rnk/cards-*.mjs` 的顯示文案。日文卡文和 FAQ 負責**裁定**；共通引擎負責**執行**；逐卡程式負責**組合**。初期 031、035 是共通引擎**開發測試包**，不代表已完成完整對局驗收，`battleReady` 仍維持 false，正式 PR 保持 Draft，不得部署。
+
+## B group 036–042: further shared V2 work, Japanese as authority
+
+- `RNK-1-036` (斎藤 一): verified original Japanese effect and DRAW Trigger against `https://www.torekaoh.shop-pro.jp/?pid=187659263` and the official TC card list. Uses the same shared V2 `searchTopOneBottomDiscard` implementation already used by CSM: inspect top 3, choose up to one of 〈緋村 剣心〉 / 〈斎藤 一〉 / 〈相楽 左之助〉, put remainder on bottom in chosen order; discard one own hand card only if a named card was taken. Implemented as a tested staging program without changing the Traditional Chinese display.
+- `dist/rnk/jp-evidence-036-042.mjs`: verified Japanese printed text for 036 only.
+- `dist/universal-v2/rnk/programs-036-042.mjs`: ready DSL for 036; explicit non-ready reasons for 037–042.
+- `dist/universal-v2/rnk-b036-staging-pack.mjs`: separate common-engine staging adapter, imports no production registry.
+- `tests/v2-rnk-b-programs-036-042.test.mjs`: positive source/DSL/schema checks, negative unknown opcode, no 50-card deck and official registry exclusion.
+- `RNK-1-037`: Japanese original is available at `https://www.torekaoh.shop-pro.jp/?pid=187659264`. Existing `mayShiftOwnCharacter` is unrestricted and must **not** be used for a printed three-name-only line move. Add a reusable name-restricted common movement operation only after cross-title tests.
+- `RNK-1-041`: the existing common `bounceOwnOtherUnderEnergy(1)` appears to fit the Taiwan text and MHA precedent, but Japanese printed text still needs confirmation before enabling it.
+- `RNK-1-042`: existing `optionalPayApThen` does not permit the opposing-field-retirement branch as-is; do not silently compose unsupported effects.
+- B stage program count is now 3 (031, 035, 036), **not** 3 in-match gameplay acceptances. Full 114-card public match readiness remains 0 until end-to-end rule and UI tests.
