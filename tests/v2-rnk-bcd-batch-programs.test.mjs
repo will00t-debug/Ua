@@ -10,11 +10,11 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 const AP=['RNK-1-031','RNK-1-063','RNK-1-065','RNK-1-096','RNK-1-097'];
 const VANILLA=['RNK-1-035','RNK-1-055','RNK-1-073'];
 
-test('batch has nine independent Japanese-checked cards spanning B,C,D, one shared schema',()=>{
+test('batch has ten independent Japanese-checked cards spanning B,C,D, one shared schema',()=>{
  const pack=createRnkBcdBatchStagingPack();
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,9);
+ assert.equal(Object.keys(pack.cards).length,10);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.ok(pack.cards['RNK-1-036']);
  for(const id of [...AP,...VANILLA]){
@@ -50,11 +50,11 @@ test('all three genuine vanillas are effectless; trigger persists',()=>{
 });
 
 test('new B,C,D records have trustworthy Japanese evidence not inferred from Chinese text',()=>{
- assert.equal(Object.keys(RNK_JP_EVIDENCE_COMMON_BCD).length,6);
+ assert.equal(Object.keys(RNK_JP_EVIDENCE_COMMON_BCD).length,7);
  for(const [id,ja] of Object.entries(RNK_JP_EVIDENCE_COMMON_BCD)){
    assert.equal(ja.print,'UA41BT/'+id);
    assert.ok(ja.nameJa&&ja.effectJa&&ja.triggerJa);
-   assert.ok(ja.sourceJa.startsWith('https://www.torekaoh.shop-pro.jp/'));
+   assert.ok(ja.sourceJa.startsWith('https://www.torekaoh.shop-pro.jp/')||ja.sourceJa.startsWith('https://www.merucarduniari.jp/'));
    assert.ok(RNK_PROGRAMS_COMMON_BCD[id].ready);
  }
  assert.deepEqual(Object.keys(RNK_PROGRAMS_COMMON_BCD).sort(),
@@ -68,4 +68,15 @@ test('batch cannot create a complete 50-card deck or enter official production p
  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
  assert.equal(RNK_IDENTITY_INVENTORY.filter(row=>row.battleReady).length,0);
  assert.equal(RNK_IDENTITY_INVENTORY.filter(row=>row.effectImplemented).length,0);
+});
+
+test('B053 draws and then discards exactly one through common V2',()=>{
+ const pack=createRnkBcdBatchStagingPack();
+ const card=pack.cards['RNK-1-053'];
+ assert.ok(card);
+ assert.equal(card.name,'沢下条 張');
+ assert.equal(card.type,'character');
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.energy,0);
+ assert.deepEqual(card.effects.onPlay,[{op:'drawDiscard',count:1}]);
 });
