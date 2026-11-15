@@ -154,3 +154,16 @@ Data modules: `dist/rnk/jp-evidence-simple-next.mjs`, `dist/universal-v2/rnk/pro
 Tests: `tests/v2-rnk-bcd-simple-next.test.mjs`, `tests/v2-rnk-bcd-simple-extra.test.mjs`. Full legal 50-card *staging match initialization* smoke test: `tests/v2-rnk-27-staging-match-smoke.test.mjs`. This is cross-title engine integration coverage, **not** card-by-card battle-effect acceptance, not `officialV2Pack('rnk')` registration, and does not authorize production deployment.
 
 Known blocked card examples: `RNK-1-075` mandatory unblocked draw has official FAQ Q1610 timing and cannot be silently made optional; `RNK-1-083` main REST+temporary generated energy+retire requires valid any-line semantics; `RNK-1-108` FIELD REST draws then discards and must preserve operation order. All remain unready.
+
+## B/C/D 31-card Universal V2 staging (2026-11-16)
+
+The previous 27-card CI (`43752524509`) ran **5,617 tests with 5,616 passing and one failing**. The failure was an invalid negative-test fixture in `tests/v2-rnk-bcd-simple-next.test.mjs`: it passed a *normalized output* back into the compiler and hit `invalid alternative Raid bases` before the intended unknown-op guard. Fixed in commit `0107908b` by compiling the deliberately bad authored card *once* via `rnkSharedCard`. No observed failure of an actual RNK gameplay assertion.
+
+Four additional Japanese-transcribed cards are newly staged, bringing the compiled shared-V2 count to **31** (but still **0/114 accepted in production**):
+
+- `RNK-1-049`, purple 三島 栄次: `mainAbility: {op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,extraEnergy:1}` (source https://www.merucarduniari.jp/product/12927).
+- `RNK-1-057`, purple 瀬田 宗次郎: one shared `searchTopOneBottomDiscard` effect using Japanese exact names 〈志々雄 真実〉、〈駒形 由美〉 or ［十本刀］, with conditional discard after adding to hand (source https://www.merucarduniari.jp/product/12935).
+- `RNK-1-083`, red 塚山 由太郎: same `restSelfGainEnergyRetireEndMain` common ability (source https://www.merucarduniari.jp/product/12961).
+- `RNK-1-108`, red UA41ST field 神谷道場: `mainAbility:{op:'fieldRestDiscardDraw'}`, REST then draw1/discard1, GET trigger (source https://www.merucarduniari.jp/product/13000).
+
+The reusable implementation is `dist/universal-v2/rnk/programs-bcd-next4.mjs`; original JP proof is `dist/rnk/jp-evidence-bcd-next4.mjs`. The integration pack `dist/universal-v2/rnk-bcd-batch-pack.mjs` now computes 31 staged IDs, and `tests/v2-rnk-bcd-next4-programs.test.mjs` verifies exact printed names/stats, field trigger and common opcode semantics, while the full 50-card match smoke test was updated for 31. No change to Chinese display or production route. Current new CI run `43753592693` must finish before any statement that 31 are CI green; PR remains Draft/unmerged/unreleased.
