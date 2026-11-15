@@ -144,6 +144,7 @@ export const RNK_IDENTITY_INVENTORY = freeze(RNK_ALL_DECK_IDS.map(cardId => {
     source: sourceRow?.source ?? null,
     image: sourceRow?.image ?? null,
     confirmedTc: Boolean(sourceRow?.confirmedTc),
+    confirmedEn: Boolean(sourceRow?.confirmedEn),
     confirmedJa: Boolean(sourceRow?.confirmedJa),
     needsManualReview: Boolean(sourceRow?.needsManualReview),
     cardDataVerified: false,
