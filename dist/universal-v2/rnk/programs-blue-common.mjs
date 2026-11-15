@@ -14,9 +14,12 @@ export const RNK_PROGRAMS_BLUE_COMMON=Object.freeze({
  'RNK-1-001':dsl(onPlay({op:'searchTopOneBottomDiscard',count:7,
     filter:Object.freeze({field:'name',value:'逆刃刀・真打'}),discard:false})),
  'RNK-1-002':dsl({}, {nameAliases:Object.freeze(['緋村 剣心'])}),
- 'RNK-1-016':Object.freeze({ready:false,
-  reason:'Printed own CHARACTER or EVENT effect entry only. Generic selfEnteredByOwnEffect accepts any own effect (including FIELD), which is broader; requires reusable source-card-kind predicate before release.'
- }),
+ 'RNK-1-016':dsl(onPlay({
+  op:'ifLiveThen',when:Object.freeze({
+   kind:'selfEnteredByOwnEffect',turn:'any',
+   sourceTypes:Object.freeze(['character','event'])
+  }),then:Object.freeze([Object.freeze({op:'draw',count:1})])
+ })),
  'RNK-1-025':dsl(onPlay({op:'inspectTopAnyOutside',count:3,rest:'top',maxOutside:1}),
    {emptyOwnFieldHandEnergyDiscount:2}),
  'RNK-1-003':dsl({}, {mainAbility:temporaryEnergy}),
