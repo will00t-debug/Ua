@@ -23,3 +23,20 @@ test('Japanese FAQ Q1607 locks RNK-1-062 until all printed clauses work together
  assert.equal(row.nameZhTw,'大型甲鐵艦煉獄');
  assert.equal(row.battleReady,false);
 });
+
+test('Japanese Q1610 blocks 075 until mandatory non-once unblocked draw fires after blocker choice',()=>{
+ const id='RNK-1-075',row=RNK_TC_CATALOG.find(c=>c.id===id),h=RNK_JP_RULE_HOLDOUTS[id];
+ assert.ok(row&&h);
+ assert.equal(h.print,row.number);
+ assert.equal(h.nameJa,'相楽 左之助');
+ assert.equal(h.status,'MANDATORY_UNBLOCKED_DRAW_TIMING');
+ assert.equal(h.officialFaq,'Q1610');
+ assert.match(h.effectJa,/ブロックされなかった時/);
+ assert.equal(h.needsUniversalSupport.length,3);
+ assert.ok(h.japaneseCardUrl.startsWith('https://'));
+ assert.equal(row.trigger,null);
+ assert.equal(row.battleReady,false);
+ assert.equal(h.battleReady,false);
+ assert.equal(createRnkBcdBatchStagingPack().cards[id],undefined);
+ assert.equal(row.nameZhTw,'相樂左之助');
+});
