@@ -42,29 +42,45 @@ export const RNK_DECK_IDS = freeze([
   ...RNK_STARTER_ONLY.map(card => card.id)
 ]);
 
+// UAPR/RNK-1-xxx are reprints. The separate UAPR/RNK-P-001 event
+// is an additional playable card outside the 113 numbered BT/ST identities.
+export const RNK_PROMO_REPRINT_IDS = freeze(
+  [14, 57, 86, 90].map(id)
+);
+export const RNK_PROMO_ONLY = freeze({
+  id: 'RNK-P-001',
+  nameJa: 'るろうに剣心 －明治剣客浪漫譚－',
+  print: 'UAPR/RNK-P-001',
+  source: 'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UAPR%2FRNK-P-001'
+});
+export const RNK_ALL_DECK_IDS = freeze([...RNK_DECK_IDS, RNK_PROMO_ONLY.id]);
+
 // AP cards are physical Action Point prints, never 50-card deck entries.
 export const RNK_AP_PRINTS = freeze([
   ...Array.from({length: 6}, (_, index) =>
     'UA41BT/RNK-1-AP' + String(index + 1).padStart(2, '0')),
-  'UA41ST/RNK-1-AP01'
+  'UA41ST/RNK-1-AP01',
+  'UAPR/RNK-AP01'
 ]);
 
 export function rnkPrintsFor(idValue) {
+  if (idValue === RNK_PROMO_ONLY.id) return freeze([RNK_PROMO_ONLY.print]);
   if (!RNK_DECK_IDS.includes(idValue)) return freeze([]);
   const prints = [];
   if (RNK_BOOSTER_IDS.includes(idValue)) prints.push('UA41BT/' + idValue);
   if (RNK_STARTER_IDS.includes(idValue)) prints.push('UA41ST/' + idValue);
+  if (RNK_PROMO_REPRINT_IDS.includes(idValue)) prints.push('UAPR/' + idValue);
   return freeze(prints);
 }
 
 // Identity-only inventory. Do NOT add to officialV2Pack / editor until each
 // card has verified properties and independently accepted V2 effect programs.
-export const RNK_IDENTITY_INVENTORY = freeze(RNK_DECK_IDS.map(cardId => {
+export const RNK_IDENTITY_INVENTORY = freeze(RNK_ALL_DECK_IDS.map(cardId => {
   const starter = RNK_STARTER_ONLY.find(card => card.id === cardId);
   return freeze({
     id: cardId,
     title: RNK_TITLE,
-    nameJa: starter?.nameJa ?? null,
+    nameJa: cardId === RNK_PROMO_ONLY.id ? RNK_PROMO_ONLY.nameJa : (starter?.nameJa ?? null),
     prints: rnkPrintsFor(cardId),
     effectJa: null,
     effectZhTw: null,
