@@ -3,6 +3,23 @@
 // Some TC synopsis rows were source-captured before all Japanese clauses
 // were available; never compile V2 programs from such shorthand.
 export const RNK_JP_RULE_HOLDOUTS=Object.freeze({
+ 'RNK-1-075':Object.freeze({
+  print:'UA41BT/RNK-1-075',
+  nameJa:'相楽 左之助',
+  status:'MANDATORY_UNBLOCKED_DRAW_TIMING',
+  sourceSummaryMismatch:false,
+  effectJa:'このキャラがアタックしてブロックされなかった時、カードを1枚引く。',
+  officialFaq:'Q1610',
+  officialFaqTiming:'After blocker-selection decision, before damage or trigger checking',
+  officialFaqUrl:'https://www.unionarena-tcg.com/jp/faq/list.php?series=UA41BT',
+  japaneseCardUrl:'https://www.torekaoh.shop-pro.jp/?pid=187659305',
+  needsUniversalSupport:Object.freeze([
+    'mandatory draw one for every unblocked attack, not optional',
+    'no invented once-per-turn limit',
+    'resolve at block declaration timing, independent of damage trigger'
+  ]),
+  battleReady:false
+ }),
  'RNK-1-062':Object.freeze({
   print:'UA41BT/RNK-1-062',
   nameJa:'大型甲鉄艦 煉獄',
