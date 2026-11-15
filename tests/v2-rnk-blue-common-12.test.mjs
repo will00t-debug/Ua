@@ -8,15 +8,15 @@ import {RNK_BATCH_STAGING_IDS,createRnkBcdBatchStagingPack} from '../dist/univer
 import {cardHasTrait} from '../dist/universal-v2/field-conditions.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
-const ids=['003','004','006','009','012','014','015','020','021','022','023','027'].map(n=>'RNK-1-'+n);
+const ids=['002','003','004','006','009','012','014','015','016','020','021','022','023','025','027'].map(n=>'RNK-1-'+n);
 const source=Object.fromEntries(RNK_TC_CATALOG.map(c=>[c.id,c]));
 const pack=createRnkBcdBatchStagingPack();
 const card=n=>pack.cards['RNK-1-'+n];
 
-test('twelve source-verified blue programs share the regular 46-card Universal V2 compiler',()=>{
+test('fifteen source-verified blue programs share the regular 46-card Universal V2 compiler',()=>{
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,46);
+ assert.equal(Object.keys(pack.cards).length,49);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_BLUE_COMMON).sort(),ids);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_BLUE_COMMON).sort(),ids);
@@ -124,4 +124,35 @@ test('blue staging never changes TC display or enables production gameplay',()=>
   assert.ok(pack.cards[id]);
  }
  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+});
+
+test('002 also counts as Kenshin across all zones via canonical V2 printed alias',()=>{
+ const v=card('002');
+ assert.equal(v.name,'心太');
+ assert.deepEqual(v.nameAliases,['緋村 剣心']);
+ assert.equal(v.energy,0);
+ assert.equal(v.trigger,'active');
+ assert.equal(source['RNK-1-002'].nameZhTw,'心太');
+});
+test('016 only draws if entered from an own character or event card effect',()=>{
+ const v=card('016');
+ assert.equal(v.energy,2);
+ assert.equal(v.bp,2500);
+ assert.equal(v.trigger,'color');
+ assert.deepEqual(v.effects.onPlay,[{
+  op:'ifLiveThen',when:{kind:'selfEnteredByOwnEffect',turn:'any'},
+  then:[{op:'draw',count:1}]
+ }]);
+ assert.deepEqual(v.traits,['御庭番衆']);
+});
+test('025 preserves empty-field hand -2 energy and private top-three optional outside-one choice',()=>{
+ const v=card('025');
+ assert.equal(v.energy,2);
+ assert.equal(v.bp,2000);
+ assert.equal(v.trigger,'draw');
+ assert.equal(v.emptyOwnFieldHandEnergyDiscount,2);
+ assert.deepEqual(v.effects.onPlay,[{
+  op:'inspectTopAnyOutside',count:3,rest:'top',maxOutside:1
+ }]);
+ assert.deepEqual(v.traits,['御庭番衆']);
 });
