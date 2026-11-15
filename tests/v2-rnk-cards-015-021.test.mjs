@@ -49,8 +49,8 @@ test('RNK 015-021 preserve exceptional card-effect clauses',()=>{
   assert.match(RNK_CARDS_015_021[4].effectZhTw,/退場時/);
   assert.match(RNK_CARDS_015_021[5].effectZhTw,/四乃森蒼紫/);
   assert.match(RNK_CARDS_015_021[6].effectZhTw,/高荷惠/);
-  assert.equal(RNK_TC_CATALOG.length,21);
-  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,21);
-  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,21);
+  assert.equal(RNK_TC_CATALOG.length,28);
+  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,28);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,28);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.battleReady).length,0);
 });
