@@ -10,6 +10,9 @@ const record=(id,nameJa,effectJa,triggerJa,sourceJa)=>Object.freeze({
   sourceType:'Japanese printed-card transcription'
 });
 export const RNK_JP_EVIDENCE_COMMON_BCD=Object.freeze({
+ 'RNK-1-053':record('RNK-1-053','沢下条 張',
+   '登場時カードを1枚引き、自分の手札を1枚場外に置く。',
+   'ドローカードを1枚引く。','https://www.merucarduniari.jp/product/12931'),
  'RNK-1-055':record('RNK-1-055','瀬田 宗次郎','-',GET,
    'https://www.torekaoh.shop-pro.jp/?pid=187659283'),
  'RNK-1-063':record('RNK-1-063','悪・即・斬',AP_EFFECT,FINAL,
