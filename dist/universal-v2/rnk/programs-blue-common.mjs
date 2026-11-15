@@ -1,4 +1,4 @@
-// Twelve independently JP-verified blue cards implemented using existing V2 ops.
+// Fifteen independently JP-verified blue cards implemented using existing V2 ops.
 // Canonical printed JP names/traits are runtime data, never title-private opcodes.
 const dsl=(effects={},other={})=>Object.freeze({
  ready:true,implementation:'dsl',effects:Object.freeze(effects),...other
@@ -11,6 +11,12 @@ const buffKenshin=Object.freeze({op:'buffOwnField',
 const temporaryEnergy=Object.freeze({op:'restSelfGainEnergyRetireEndMain',
  lines:'field',oncePerTurn:true,extraEnergy:1});
 export const RNK_PROGRAMS_BLUE_COMMON=Object.freeze({
+ 'RNK-1-002':dsl({}, {nameAliases:Object.freeze(['緋村 剣心'])}),
+ 'RNK-1-016':dsl(onPlay({op:'ifLiveThen',when:Object.freeze({
+   kind:'selfEnteredByOwnEffect',turn:'any'
+ }),then:Object.freeze([Object.freeze({op:'draw',count:1})])})),
+ 'RNK-1-025':dsl(onPlay({op:'inspectTopAnyOutside',count:3,rest:'top',maxOutside:1}),
+   {emptyOwnFieldHandEnergyDiscount:2}),
  'RNK-1-003':dsl({}, {mainAbility:temporaryEnergy}),
  'RNK-1-004':dsl(onPlay({op:'bounceOwnOtherUnderEnergy',energy:1})),
  'RNK-1-006':dsl(onPlay(buffKenshin)),
