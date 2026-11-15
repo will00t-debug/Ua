@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {RNK_TC_CATALOG} from '../dist/rnk/manifest.mjs';
 import {RNK_JP_EVIDENCE_PASSIVE_BCD} from '../dist/rnk/jp-evidence-passive-bcd.mjs';
 import {RNK_PROGRAMS_PASSIVE_BCD} from '../dist/universal-v2/rnk/programs-passive-bcd.mjs';
-import {createRnkBcdBatchStagingPack} from '../dist/universal-v2/rnk-bcd-batch-pack.mjs';
+import {createRnkBcdBatchStagingPack,RNK_BATCH_STAGING_IDS} from '../dist/universal-v2/rnk-bcd-batch-pack.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
 const PRINT=Object.fromEntries(RNK_TC_CATALOG.map(c=>[c.id,c]));
 const IDS=['RNK-1-051','RNK-1-061','RNK-1-079','RNK-1-107'];
 test('four Japanese print-backed passives remain compiled in the growing shared V2 staging pack',()=>{
  const pack=createRnkBcdBatchStagingPack();
- assert.equal(Object.keys(pack.cards).length,31);
+ assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_PASSIVE_BCD).sort(),IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_PASSIVE_BCD).sort(),IDS);
  for(const id of IDS){
