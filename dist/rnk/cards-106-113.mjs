@@ -1,6 +1,7 @@
 // Card facts cross-checked against official TC and supplementary JP/EN sources.
 // Effects are paraphrased source descriptions, NOT executable DSL. V2-ready=false.
 // NOTE: RNK-1-106's official TC page has erroneous effect; verified EN/JP alternative retained.\nimport {tcCard} from './tc-source-helper.mjs';
+const EN_106='https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA41ST%2FRNK-1-106';
 export const RNK_CARDS_106_113=Object.freeze([
   {
     "id": "RNK-1-106",
@@ -118,4 +119,13 @@ export const RNK_CARDS_106_113=Object.freeze([
     "effectZhTw": "攻擊時可抽1張；若抽，下一次不能成為活動。",
     "traits": []
   }
-].map(row=>tcCard(row, Number(row.id.slice(-3))>=101?'UA41ST':'UA41BT')));
+].map(row=>{
+  const card=tcCard(row, 'UA41ST');
+  // TC official detail accidentally shows the text of another event card;
+  // the independent official EN card page confirms raid/impact/move text.
+  if(row.id==='RNK-1-106')return Object.freeze({
+    ...card,source:EN_106,sourceEn:EN_106,
+    confirmedTc:false,confirmedEn:true,needsManualReview:true
+  });
+  return card;
+}));
