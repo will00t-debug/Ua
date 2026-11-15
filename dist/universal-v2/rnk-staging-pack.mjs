@@ -19,7 +19,8 @@ export function rnkStagedCard(card){
     throw Error(card.id+' unexpected color');
   if(card.battleReady!==false||card.cardDataVerified!==false)
     throw Error(card.id+' source catalog must not claim battle readiness');
-  if((card.type==='event'&&card.id==='RNK-1-031')!==Boolean(card.id==='RNK-1-031'))
+  if((card.id==='RNK-1-031'&&card.type!=='event')||
+     (card.id==='RNK-1-035'&&card.type!=='character'))
     throw Error(card.id+' kind changed');
   const {reason,ready,implementation,...programData}=program;
   return Object.freeze({
