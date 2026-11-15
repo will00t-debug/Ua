@@ -6,13 +6,14 @@
 - UA41ST: numbered cards 068, 070, 074, 078, 080, 081, 085, 096, 100 (reprints) plus 101–113 (13 new deck cards); one AP print. Its 27 listed products include parallel versions and MUST NOT be treated as 27 unique playable effects.
 - Target: 113 unique BT/ST numbered deck cards, plus separate UAPR/RNK-P-001 event (114 tracked deck identities total). 8 verified AP print IDs including UAPR/RNK-AP01. Count artwork variants separately, never as new engine effects.
 - UAPR/RNK-1-014, -057, -086, -090 are additional promo prints of existing BT IDs; do not create duplicate effects. More promo products, if verified later, must be added to the inventory explicitly.
-- This PR establishes identity and print mapping **only**. Nothing is playable yet; no fake vanillas, guessed effects, live-registry entries, or deploy.
+- This draft PR establishes identity and print mapping, plus official Taiwan-language card text and numeric stats for RNK-1-001–007. No card is playable yet: Japanese copy, independent V2 effect acceptance, live-registry entries, and deployment are pending. No fake vanillas or guessed effects.
 - Sources:
   - Official booster: https://www.unionarena-tcg.com/jp/products/boosters/rnk-1.php
   - Official starter filter: https://www.unionarena-tcg.com/jp/cardlist/?search=true&series=570041
   - Cross-check full list: https://cardframescanner.com/ja/games/union-arena/sets/ua41bt
   - Cross-check starter: https://cardframescanner.com/ja/games/union-arena/sets/ua41st
   - Official promo event: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UAPR%2FRNK-P-001
+  - Official Traditional Chinese card detail pattern (001–007 checked individually): https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA41BT%2FRNK-1-001
 
 ## Four independent owners (7-card sub-batches preferred)
 | Group | Exclusive numbered ID ownership | Sub-batches |
@@ -37,5 +38,7 @@
 5. No duplicate IDs from UA41ST reprints and no AP in the 50-card deck.
 
 ## Foundation files
-- `dist/rnk/manifest.mjs`: stable IDs, reprint mappings, starter-only card names, AP prints, all placeholders explicitly marked unverified.
+- `dist/rnk/manifest.mjs`: stable IDs, reprint mappings, starter-only card names, AP prints, and explicitly non-ready inventory (the first seven rows include verified TC copy).
+- `dist/rnk/cards-001-007.mjs`: official Traditional Chinese 001–007 stats, card text, trigger text and source links; Japanese effects and runtime acceptance are not yet verified.
+- `tests/v2-rnk-cards-001-007.test.mjs`: cross-field guards for those first seven rows.
 - `tests/v2-rnk-manifest.test.mjs`: guards 113 numbered + one UAPR event identity, reprints, AP exclusion and false-ready flags.
