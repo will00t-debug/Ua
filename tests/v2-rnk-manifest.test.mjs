@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   RNK_TITLE, RNK_PRODUCT, RNK_BOOSTER_IDS, RNK_STARTER_SHARED_IDS,
-  RNK_STARTER_ONLY, RNK_STARTER_IDS, RNK_DECK_IDS, RNK_AP_PRINTS,
+  RNK_STARTER_ONLY, RNK_STARTER_IDS, RNK_DECK_IDS, RNK_ALL_DECK_IDS,
+  RNK_PROMO_REPRINT_IDS, RNK_PROMO_ONLY, RNK_AP_PRINTS,
   RNK_IDENTITY_INVENTORY, rnkPrintsFor
 } from '../dist/rnk/manifest.mjs';
 
@@ -20,6 +21,8 @@ test('UA41 has exactly 100 booster card ids and 13 starter-only ids', () => {
   assert.equal(RNK_STARTER_IDS.length, 22);
   assert.equal(RNK_DECK_IDS.length, 113);
   assert.equal(new Set(RNK_DECK_IDS).size, 113);
+  assert.equal(RNK_ALL_DECK_IDS.length, 114);
+  assert.equal(new Set(RNK_ALL_DECK_IDS).size, 114);
 });
 
 test('all nine UA41ST reprints map to one engine id per printed number', () => {
@@ -37,9 +40,9 @@ test('all nine UA41ST reprints map to one engine id per printed number', () => {
 });
 
 test('AP prints cannot enter a 50-card deck inventory', () => {
-  assert.equal(RNK_AP_PRINTS.length, 7);
-  assert.equal(new Set(RNK_AP_PRINTS).size, 7);
-  assert.equal(RNK_AP_PRINTS.at(-1), 'UA41ST/RNK-1-AP01');
+  assert.equal(RNK_AP_PRINTS.length, 8);
+  assert.equal(new Set(RNK_AP_PRINTS).size, 8);
+  assert.equal(RNK_AP_PRINTS.at(-1), 'UAPR/RNK-AP01');
   for (const number of RNK_AP_PRINTS) {
     assert.equal(RNK_DECK_IDS.includes(number.split('/')[1]), false);
     assert.deepEqual(rnkPrintsFor(number.split('/')[1]), []);
@@ -47,7 +50,7 @@ test('AP prints cannot enter a 50-card deck inventory', () => {
 });
 
 test('identity placeholders cannot be mistaken for verified playable cards', () => {
-  assert.equal(RNK_IDENTITY_INVENTORY.length, 113);
+  assert.equal(RNK_IDENTITY_INVENTORY.length, 114);
   for (const card of RNK_IDENTITY_INVENTORY) {
     assert.equal(card.title, 'rnk');
     assert.equal(card.cardDataVerified, false);
@@ -59,4 +62,16 @@ test('identity placeholders cannot be mistaken for verified playable cards', () 
     assert.deepEqual(card.prints, rnkPrintsFor(card.id));
   }
   assert.equal(RNK_IDENTITY_INVENTORY.find(card => card.id === 'RNK-1-113').nameJa, '斎藤 一');
+});
+
+test('UAPR reprints share booster ids; RNK-P-001 is a separately numbered event', () => {
+  assert.deepEqual(RNK_PROMO_REPRINT_IDS, [
+    'RNK-1-014', 'RNK-1-057', 'RNK-1-086', 'RNK-1-090'
+  ]);
+  for (const id of RNK_PROMO_REPRINT_IDS) {
+    assert.deepEqual(rnkPrintsFor(id), ['UA41BT/' + id, 'UAPR/' + id]);
+  }
+  assert.equal(RNK_PROMO_ONLY.id, 'RNK-P-001');
+  assert.deepEqual(rnkPrintsFor(RNK_PROMO_ONLY.id), ['UAPR/RNK-P-001']);
+  assert.equal(RNK_IDENTITY_INVENTORY.find(card => card.id === RNK_PROMO_ONLY.id).battleReady, false);
 });
