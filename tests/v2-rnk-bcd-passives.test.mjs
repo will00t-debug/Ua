@@ -10,7 +10,7 @@ const PRINT=Object.fromEntries(RNK_TC_CATALOG.map(c=>[c.id,c]));
 const IDS=['RNK-1-051','RNK-1-061','RNK-1-079','RNK-1-107'];
 test('four Japanese print-backed passives compile in the same 23-card universal staging pack',()=>{
  const pack=createRnkBcdBatchStagingPack();
- assert.equal(Object.keys(pack.cards).length,25);
+ assert.equal(Object.keys(pack.cards).length,27);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_PASSIVE_BCD).sort(),IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_PASSIVE_BCD).sort(),IDS);
  for(const id of IDS){
