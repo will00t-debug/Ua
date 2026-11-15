@@ -20,14 +20,15 @@ export function tcCard(row, set='UA41BT'){
     name:row.name, nameZhTw:row.name, nameJa:row.nameJa??null,
     rarity:row.rarity, color:row.color, energy:row.energy,
     ap:row.ap, bp:row.bp??0, bpMark:row.bpMark??'',
-    gen:row.gen??0, genMark:row.genMark??'',
+    gen:row.gen??0, genMark:row.genMark??'', genColor:row.genColor??row.color,
     type:row.type??'character', traits:Object.freeze(row.traits??[]),
     trigger:row.trigger??null, triggerText:TRIGGER[row.trigger]??'',
     triggerTextJa:null, effect:row.effectZhTw,
     effectZhTw:row.effectZhTw, effectJa:null,
     source, sourceTc:source, image,
     printings:Object.freeze([{number,set,rarity:row.rarity,source,image}]),
-    confirmedTc:true, cardDataVerified:false, auto:false,
+    confirmedTc:true, needsManualReview:Boolean(row.needsManualReview), sourceNote:row.sourceNote??null,
+    cardDataVerified:false, auto:false,
     battleReady:false, effectImplemented:false, deckLegal:true, faq:[]
   });
 }
