@@ -5,6 +5,7 @@ import {RNK_JP_EVIDENCE_SIMPLE_NEXT} from '../dist/rnk/jp-evidence-simple-next.m
 import {RNK_PROGRAMS_SIMPLE_NEXT} from '../dist/universal-v2/rnk/programs-simple-next.mjs';
 import {RNK_BATCH_STAGING_IDS,createRnkBcdBatchStagingPack} from '../dist/universal-v2/rnk-bcd-batch-pack.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
+import {rnkSharedCard} from '../dist/universal-v2/rnk-shared-adapter.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
 const catalog=Object.fromEntries(RNK_TC_CATALOG.map(c=>[c.id,c]));
@@ -57,7 +58,10 @@ test('starter-only 104 shows top card and puts it on top or bottom using shared 
 test('common pack remains strict about known operations and production exclusion',()=>{
  const p=createRnkBcdBatchStagingPack();
  assert.equal(Object.keys(p.cards).length,27);
- const bad={...p.cards['RNK-1-104'],effects:{onPlay:[{op:'rnkPrivateLook'}]}};
+ const bad=rnkSharedCard(catalog['RNK-1-104'],{
+  ...RNK_PROGRAMS_SIMPLE_NEXT['RNK-1-104'],
+  effects:{onPlay:[{op:'rnkPrivateLook'}]}
+ },RNK_JP_EVIDENCE_SIMPLE_NEXT['RNK-1-104']);
  assert.throws(()=>createUniversalPack({id:'rnk',cards:[bad]}),/effect op unsupported/);
  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
 });
