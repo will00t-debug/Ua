@@ -62,7 +62,10 @@ function sniper(s,c){
  if(c)c.aot2Sniper={turn:s.turn,stamp:c.fieldEntryStamp};
 }
 function names(pack,s,owner){return aot2YellowNames(pack,s,owner);}
-function extra(pack,s,owner){return aot2StandingBp(pack,s,owner);}
+function extra(pack,s,owner){
+ // AOT-1-077 adds to the next BP-limited character selection, even from vol.2.
+ return aot2StandingBp(pack,s,owner)+(s.aotBpRange?.[owner]||0);
+}
 function trait(pack,c,name){return cardHasTrait(def(pack,c),name);}
 function exact(pack,c,name,s){return cardHasName(def(pack,c),name,originalEffectsDisabled(s,c));}
 function contains(pack,c,token,s){
@@ -490,7 +493,10 @@ export function runAot2Job(pack,s,job){
  if(id==='AOT-2-034'){
   const pl=plOf(s,owner);
   while(pl.hand.length)moveUid(pack,s,owner,'hand',pl.hand[0].uid,'outside',job.sourceUid);
-  rumbleRemain(pack,s,spec,oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,5000)).map(c=>c.uid));
+  // AOT-2-034 retires ALL matching characters without selecting one.
+  // AOT-1-077 only extends effects that select a character.
+  rumbleRemain(pack,s,spec,oppFront(s,owner,t=>
+   A.bp(pack,s,t)<=5000+aot2StandingBp(pack,s,owner)).map(c=>c.uid));
   return;
  }
  if(id==='AOT-2-036'){
@@ -911,6 +917,10 @@ export function resolveAot2Pending(pack,s,a){
   const who=own?owner:1-owner;
   const loc=A.location(s,who,hit.uid);
   if(!loc)throw Error('Retirement target left');
+  // Spend AOT-1-077's next-selection bonus only when an opponent character
+  // is actually chosen. A skipped optional retirement keeps the bonus.
+  // Retiring our own Zeke for AOT-2-032 has no BP selection range.
+  if(!own&&s.aotBpRange?.[owner])s.aotBpRange[owner]=0;
   if(q.data?.then==='032'){
    retireThen(s,who,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-032',slot:'afterOwn',
     owner,sourceUid:q.sourceUid,sacrificedUid:hit.uid}]);
