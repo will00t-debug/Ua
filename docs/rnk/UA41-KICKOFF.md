@@ -216,3 +216,15 @@ They use only existing shared DSL operations: `searchTopOneBottomDiscard` (inclu
 - Other unresolved complex cards (e.g., 026 hand-discard threshold, 028 Aoshi-count-dependent BP retirement) are not staged.
 
 Regression test: `tests/v2-rnk-blue-common-12.test.mjs` (historical filename retained) checks all 16 Japanese records, 15 exact runnable programs, 016 exclusion, Japanese names/traits, printed numeric stats, and complete effect shape; `tests/v2-rnk-bcd-batch-programs.test.mjs` asserts the **single global 49-card census**. Existing legal 50-card V2 staging match smoke remains in the suite. HEAD CI for the 49-stage milestone is pending. **0/114 fully battle-accepted, no merge or deployment, PR stays Draft.**
+
+## 2026-11-16: UA41ST/RNK-1-109 — 50th Japanese-backed shared V2 program
+
+The **49-card** staging CI `43757496844` completed **success**. The next milestone adds exactly **one** newly audited starter card `RNK-1-109` (逆刃刀) while the remaining difficult cards await reusable engine capabilities.
+
+- Original Japanese print transcribed from https://www.merucarduniari.jp/product/13001 and cross-checked with official English and Traditional Chinese: https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA41ST%2FRNK-1-109.
+- Event on use: first **mandatory draw 1**, then **optional up to one** own 〈緋村 剣心〉 gains a `when attacking -> draw 1` effect through **end of turn**.
+- Reuses existing Universal V2 `draw` and `grantOnAttack({target:'ownCharacter',name:'緋村 剣心',optional:true,until:'endOfTurn',then:[draw(1)]})`; keeps printed DRAW trigger.
+- Files: `dist/rnk/jp-evidence-st-109.mjs`, `dist/universal-v2/rnk/programs-st-109.mjs`, `tests/v2-rnk-st-109-grant-attack-draw.test.mjs`. Staging aggregator and sole fixed total census updated from 49 to **50**.
+- No source Traditional Chinese fields changed. `RNK-1-109` is **UA41ST**; the print is not mislabeled UA41BT. This milestone remains program/schema only, **not** end-to-end effects or UI/AI acceptance.
+- Several next candidates are not safe shorthand conversions: `RNK-1-058` requires front-line main activation with top one -> top or OUTSIDE, not bottom; `RNK-1-060` has name/name/trait **one-target OR** selection; `RNK-1-112` places a card from hand on top of deck **without first drawing**; `RNK-1-113` optionally draws then skips **exactly the next one** ACTIVE attempt, per official Japanese Q1623. None can be treated as ready using approximate shared operations.
+- **50/114 staged programs; 0/114 fully battle-accepted.** Latest 50-card CI is pending. PR remains Draft/unmerged/unreleased.
