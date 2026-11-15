@@ -540,8 +540,11 @@ function on099(pack,s,job){
 function offerCorps(s,spec,max){
  const cards=handWhere(s,spec.player,c=>redCorps(A.pack,c));
  const actions=[];
+ // AOT-1-092 explicitly requires an empty front slot. 099 and 104 do not:
+ // an effect-deployed character can replace an occupied slot when front is full.
  for(const c of cards)for(const dest of dests(s,spec.player,['front']))
-  if(!dest.replaceUid)actions.push({...dest,uid:c.uid,ready:true,from:'hand'});
+  if(spec.id!=='AOT-1-092'||!dest.replaceUid)
+   actions.push({...dest,uid:c.uid,ready:true,from:'hand'});
  if(!actions.length)return false;
  hold(s,{...spec,step:'corps',data:{left:max,entered:[]}},[{type:'aot',mode:'done'},...actions]);
  return true;
@@ -1143,7 +1146,8 @@ export function resolveAotPending(pack,s,action){
    const cards=handWhere(s,q.player,c=>redCorps(pack,c));
    const actions=[];
    for(const c of cards)for(const dest of dests(s,q.player,['front']))
-    if(!dest.replaceUid)actions.push({...dest,uid:c.uid,ready:true,from:'hand'});
+    if(q.id!=='AOT-1-092'||!dest.replaceUid)
+     actions.push({...dest,uid:c.uid,ready:true,from:'hand'});
    if(actions.length){
     hold(s,{...spec,step:'corps',data:{left:q.data.left-1,jobs}},
      [{type:'aot',mode:'done'},...actions]);
@@ -1311,7 +1315,7 @@ export function resolveAotPending(pack,s,action){
   const cards=handWhere(s,q.player,c=>redCorps(pack,c));
   const actions=[];
   for(const c of cards)for(const dest of dests(s,q.player,['front']))
-   if(!dest.replaceUid)actions.push({...dest,uid:c.uid,ready:true,from:'hand'});
+   actions.push({...dest,uid:c.uid,ready:true,from:'hand'});
   if(actions.length)hold(s,{...spec,step:'corps',data:{left:1}},[{type:'aot',mode:'done'},...actions]);
   else go(pack,s);
   return;
