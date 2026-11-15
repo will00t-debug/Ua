@@ -13,7 +13,7 @@ const pack=createRnkBcdBatchStagingPack();
 test('B030/B032 are Japanese-print backed shared programs, not partial card text approximations',()=>{
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,33);
+ assert.equal(Object.keys(pack.cards).length,RNK_BATCH_STAGING_IDS.length);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_BLUE_EVENTS).sort(),ids);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_BLUE_EVENTS).sort(),ids);
