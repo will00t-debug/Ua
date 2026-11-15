@@ -127,5 +127,10 @@ export const RNK_CARDS_106_113=Object.freeze([
     ...card,source:EN_106,sourceEn:EN_106,
     confirmedTc:false,confirmedEn:true,needsManualReview:true
   });
+  if(row.id==='RNK-1-112'||row.id==='RNK-1-113')return Object.freeze({
+    ...card,
+    needsManualReview:true,
+    sourceNote:'Official TC page shows a blue generation symbol although the card color is purple. Compare the physical/Japanese card before accepting generation color.'
+  });
   return card;
 }));
