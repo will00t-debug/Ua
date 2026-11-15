@@ -1,4 +1,5 @@
 // Rurouni Kenshin (UA41) inventory contract, not a playable card catalog.
+import {RNK_CARDS_001_007} from './cards-001-007.mjs';
 // Card names/printed stats/effects must be verified separately before entering V2.
 // Keep reprinted starter cards under their original RNK-1 id.
 const freeze = value => Object.freeze(value);
@@ -77,14 +78,17 @@ export function rnkPrintsFor(idValue) {
 // card has verified properties and independently accepted V2 effect programs.
 export const RNK_IDENTITY_INVENTORY = freeze(RNK_ALL_DECK_IDS.map(cardId => {
   const starter = RNK_STARTER_ONLY.find(card => card.id === cardId);
+  const confirmedTc = RNK_CARDS_001_007.find(card => card.id === cardId);
   return freeze({
     id: cardId,
     title: RNK_TITLE,
-    nameJa: cardId === RNK_PROMO_ONLY.id ? RNK_PROMO_ONLY.nameJa : (starter?.nameJa ?? null),
+    nameJa: confirmedTc?.nameJa ?? (cardId === RNK_PROMO_ONLY.id ? RNK_PROMO_ONLY.nameJa : (starter?.nameJa ?? null)),
+    nameZhTw: confirmedTc?.nameZhTw ?? null,
     prints: rnkPrintsFor(cardId),
     effectJa: null,
-    effectZhTw: null,
-    image: null,
+    effectZhTw: confirmedTc?.effectZhTw ?? null,
+    image: confirmedTc?.image ?? null,
+    confirmedTc: Boolean(confirmedTc),
     cardDataVerified: false,
     effectImplemented: false,
     battleReady: false
