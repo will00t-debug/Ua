@@ -9,6 +9,9 @@ const record=(num,nameJa,effectJa,triggerJa,productNo)=>Object.freeze({
   sourceType:'JP effect and trigger transcription; official EN/TC print for stats'
 });
 export const RNK_JP_EVIDENCE_BLUE_COMMON=Object.freeze({
+ 'RNK-1-002':record("002","心太","このカードを緋村 剣心としても扱う。","アクティブ",12880),
+ 'RNK-1-016':record("016","四乃森 蒼紫","登場時：自分のキャラ・イベントカードの効果で登場していた場合、カードを1枚引く。","カラー",12894),
+ 'RNK-1-025':record("025","巻町 操","自分の場にカードが無ければ手札で必要エナジー青2減。登場時：山札上3枚から1枚まで場外に置き、残りを好きな順で山札上に戻す。","ドロー",12903),
  'RNK-1-003':record("003","高荷 恵","起動メイン：このキャラをレストにし、このターン中発生エナジーを青1増やす。メインフェイズ終了時に自身が退場する。","-",12881),
  'RNK-1-004':record("004","高荷 恵","登場時：必要エナジー1以下の他の自分の場のキャラを1枚手札に戻す。戻せなければ自身を戻す。","-",12882),
  'RNK-1-006':record("006","比古 清十郎","登場時：自分の場の緋村 剣心を1枚まで選び、ターン中BP+1000。","ドロー",12884),
