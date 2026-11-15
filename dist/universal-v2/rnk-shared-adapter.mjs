@@ -10,6 +10,7 @@ const SHARED_KEYS=new Set([
   'raidName','printedImpact','printedAttackDamage','raidImpact','raidAttackDamage',
   'impactNull','raidImpactNull','step','activeExtraEnergy','passiveBonuses',
   'enterAlwaysActive','ownTurnBp','opponentTurnBp','blockBpRestriction',
+  'emptyOwnFieldHandEnergyDiscount',
   'opponentFieldColorsHandEnergyDiscount','printedHandEnergyDiscount',
   'unblockedAttack','attackWinDraw','nameAliases','phaseEffects',
   'printedMains','cannotAttack','battleRemoveInstead','battleLoseToHand',
