@@ -120,3 +120,14 @@ Evidence: https://www.torekaoh.shop-pro.jp/?pid=187659257 (031), https://www.tor
 - `RNK-1-041`: the existing common `bounceOwnOtherUnderEnergy(1)` appears to fit the Taiwan text and MHA precedent, but Japanese printed text still needs confirmation before enabling it.
 - `RNK-1-042`: existing `optionalPayApThen` does not permit the opposing-field-retirement branch as-is; do not silently compose unsupported effects.
 - B stage program count is now 3 (031, 035, 036), **not** 3 in-match gameplay acceptances. Full 114-card public match readiness remains 0 until end-to-end rule and UI tests.
+
+## Fast-track reusable DSL batch — 2026-11-16
+
+Following the user's request to reduce one-card-at-a-time overhead, the B/C/D workflow now groups identical fully checked Japanese card text into **one reusable program profile and one shared regression suite**, leaving exceptions non-ready.
+
+- `dist/rnk/jp-evidence-common-bcd.mjs` holds seven Japanese print-source records with canonical names, printed effect/trigger and references.
+- `dist/universal-v2/rnk/programs-common-bcd.mjs` reuses only existing common V2 ops `recoverAp(count:2)`, `drawDiscard(count:1)`, or genuine `vanilla`; no title-private op or RNK runtime.
+- `dist/universal-v2/rnk-bcd-batch-pack.mjs` merges earlier verified 031, 035, 036 and seven newly verified 053, 055, 063, 065, 073, 096, 097, yielding **10 Japanese-evidence-backed programs in a staging-only V2 pack**.
+- `tests/v2-rnk-bcd-batch-programs.test.mjs` checks each AP effect, vanilla trigger, the 053 draw/discard path, unique inventory, and production exclusion. This is **10 staged effect programs, still 0 fully battle-accepted**.
+- `UA41ST/RNK-1-096` source card is a printed reprint of the shared `RNK-1-096` identity and has the same AP-recovery profile as the UA41BT print. Keep the source URL of the audited print in the evidence, rather than manufacturing another engine ID.
+- CI failure on a previous commit (`43749361995`) traced to a literal `\\nimport` on the comment line in `dist/rnk/cards-106-113.mjs`, hiding the `tcCard` import. The import was fixed at `a6499328`. All nine failed RNK files shared this root module-load error; the corrected follow-on run still needs a green completion check.
