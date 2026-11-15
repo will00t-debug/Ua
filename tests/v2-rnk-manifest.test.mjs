@@ -4,7 +4,8 @@ import {
   RNK_TITLE, RNK_PRODUCT, RNK_BOOSTER_IDS, RNK_STARTER_SHARED_IDS,
   RNK_STARTER_ONLY, RNK_STARTER_IDS, RNK_DECK_IDS, RNK_ALL_DECK_IDS,
   RNK_PROMO_REPRINT_IDS, RNK_PROMO_ONLY, RNK_AP_PRINTS,
-  RNK_TC_CATALOG, RNK_IDENTITY_INVENTORY, rnkPrintsFor
+  RNK_TC_CATALOG, RNK_SOURCE_CATALOG, RNK_PRINT_RULE_EXCEPTIONS,
+  RNK_IDENTITY_INVENTORY, rnkPrintsFor
 } from '../dist/rnk/manifest.mjs';
 
 test('UA41 has exactly 100 booster card ids and 13 starter-only ids', () => {
@@ -57,11 +58,18 @@ test('identity placeholders cannot be mistaken for verified playable cards', () 
     assert.equal(card.effectImplemented, false);
     assert.equal(card.battleReady, false);
     assert.equal(card.effectJa, null);
-    if (RNK_TC_CATALOG.some(known => known.id === card.id)) {
+    if (card.id === 'RNK-1-106') {
+      assert.equal(card.confirmedTc, false);
+      assert.equal(card.confirmedEn, true);
+      assert.equal(card.needsManualReview, true);
+      assert.ok(card.nameZhTw && card.effectZhTw && card.image);
+    } else if (card.id === 'RNK-P-001') {
+      assert.equal(card.confirmedTc, false);
+      assert.equal(card.confirmedJa, true);
+      assert.ok(card.nameZhTw && card.effectZhTw && card.image);
+    } else if (RNK_TC_CATALOG.some(known => known.id === card.id)) {
       assert.equal(card.confirmedTc, true);
-      assert.ok(card.nameZhTw);
-      assert.ok(card.effectZhTw);
-      assert.ok(card.image);
+      assert.ok(card.nameZhTw && card.effectZhTw && card.image);
     } else {
       assert.equal(card.confirmedTc, false);
       assert.equal(card.effectZhTw, null);
@@ -82,4 +90,15 @@ test('UAPR reprints share booster ids; RNK-P-001 is a separately numbered event'
   assert.equal(RNK_PROMO_ONLY.id, 'RNK-P-001');
   assert.deepEqual(rnkPrintsFor(RNK_PROMO_ONLY.id), ['UAPR/RNK-P-001']);
   assert.equal(RNK_IDENTITY_INVENTORY.find(card => card.id === RNK_PROMO_ONLY.id).battleReady, false);
+});
+
+test('full RNK source census has only source-confirmed cards and a print exception', () => {
+  assert.equal(RNK_TC_CATALOG.length,113);
+  assert.equal(RNK_SOURCE_CATALOG.length,114);
+  assert.equal(new Set(RNK_SOURCE_CATALOG.map(card=>card.id)).size,114);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(card=>card.confirmedTc).length,112);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(card=>card.confirmedEn).length,1);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(card=>card.confirmedJa).length,1);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(card=>card.battleReady).length,0);
+  assert.equal(RNK_PRINT_RULE_EXCEPTIONS['UAPR/RNK-1-086'].triggerMark,'active');
 });
