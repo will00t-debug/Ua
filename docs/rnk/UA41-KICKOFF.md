@@ -167,3 +167,13 @@ Four additional Japanese-transcribed cards are newly staged, bringing the compil
 - `RNK-1-108`, red UA41ST field 神谷道場: `mainAbility:{op:'fieldRestDiscardDraw'}`, REST then draw1/discard1, GET trigger (source https://www.merucarduniari.jp/product/13000).
 
 The reusable implementation is `dist/universal-v2/rnk/programs-bcd-next4.mjs`; original JP proof is `dist/rnk/jp-evidence-bcd-next4.mjs`. The integration pack `dist/universal-v2/rnk-bcd-batch-pack.mjs` now computes 31 staged IDs, and `tests/v2-rnk-bcd-next4-programs.test.mjs` verifies exact printed names/stats, field trigger and common opcode semantics, while the full 50-card match smoke test was updated for 31. No change to Chinese display or production route. Current new CI run `43753592693` must finish before any statement that 31 are CI green; PR remains Draft/unmerged/unreleased.
+
+## Printed rule mismatch found: RNK-1-062 (do NOT auto-port the Chinese synopsis)
+
+Japanese official FAQ **Q1607** and the original English official print reveal that `RNK-1-062` 大型甲鉄艦 煉獄 has a fundamentally different effect from the initial source-only synopsis. The Japanese-faithful behavior has **three** interdependent clauses: (1) on play, one own 〈志々雄 真実〉 may gain an unblocked-attack optional draw until end of turn, (2) main ability REST+retire this FIELD, (3) on retirement draw two cards. The granted unblocked effect resolves immediately after blocker declaration, not after damage/trigger, per Q1607.
+
+- Grounded official English print: https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA41BT%2FRNK-1-062
+- Official Japanese FAQ: https://www.unionarena-tcg.com/jp/faq/list.php?series=UA41BT
+- Do not implement it with generic `buffOwnField` or a 1000-BP buff; that would be a rules bug.
+- `dist/rnk/jp-rule-holdouts.mjs` and `tests/v2-rnk-jp-faq-holdouts.test.mjs` enforce an explicit block until all clauses and source timings are supported and exercised in common-engine match tests.
+- **As requested, existing Traditional Chinese display has not been altered.** This lock is about English/Japanese evidence and future rule implementation, not a user-visible translation overhaul.
