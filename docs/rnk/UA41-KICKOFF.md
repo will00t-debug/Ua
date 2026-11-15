@@ -95,3 +95,16 @@
 - This stage is a **program / schema acceptance milestone only**. Do not count it as a completed AI/online gameplay acceptance, and do not change the official `0/114` live tally before in-match AP payment and trigger regression tests pass.
 
 Evidence: https://www.torekaoh.shop-pro.jp/?pid=187659257 (031), https://www.torekaoh.shop-pro.jp/?pid=187659262 (035), https://www.unionarena-tcg.com/jp/faq/list.php?series=UA41BT and https://www.unionarena-tcg.com/jp/faq/list.php?type=0.
+
+## 共通引擎架構決議（Universal V2）
+
+**決議：浪客劍心不建造獨立的 RNK 牌局引擎。** 作品代碼 `rnk` 僅用於卡表、印刷版本與設定資料，卡牌效果由 `dist/universal-v2/pack.mjs` 驗證的共通 DSL 表示，實際對局沿用現有 Universal V2 引擎。
+
+- `dist/universal-v2/rnk-shared-adapter.mjs`：通用來源卡 → V2 卡牌資料轉接層，強制檢查日文原文依據、效果完整性、共通 V2 程式欄位及非 ready 原始卡表。
+- `dist/universal-v2/rnk/programs-029-035.mjs`：每張卡的資料驅動 DSL，沒有 `rnkSpecial` 或任何作品專屬 opcode。
+- `dist/universal-v2/rnk-staging-pack.mjs`：僅測試使用的輕量相容入口，由共通轉接層產生套牌，尚未註冊至正式遊戲。
+- `tests/v2-rnk-common-engine-contract.test.mjs`：同一張卡可經共通 adapter 編譯為同一套 V2 pack；作品私有欄位及未知 opcode 必須被拒絕；未完成、重複編號、錯誤日文原文不得進包。
+
+**以既有共通能力優先**：`draw`、`drawDiscard`、`recoverAp`、`retireOppFrontUnderBp`、`buffOwnField`、`raidName`、`impactNull`、`step`、`activeExtraEnergy` 等，都在共通驗證與 runtime 既有支援範圍內，但必須依照完整日文印刷文本進行正確組合及遊戲驗收。特殊時點如攻擊結束、結算 Trigger 後、對戰敗北改移能源線、滿格替換、印刷版本差異，不得用近似 DSL 冒充；必要時先做**非作品專用**的通用時序／選擇／移區機制並增加所有作品共用的回歸測試。
+
+介面仍顯示原有繁中翻譯，不改 `dist/rnk/cards-*.mjs` 的顯示文案。日文卡文和 FAQ 負責**裁定**；共通引擎負責**執行**；逐卡程式負責**組合**。初期 031、035 是共通引擎**開發測試包**，不代表已完成完整對局驗收，`battleReady` 仍維持 false，正式 PR 保持 Draft，不得部署。
