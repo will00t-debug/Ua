@@ -26,7 +26,7 @@ test('092 and 104 use actual Japanese-print abilities, not translated guesses',(
 });
 test('092 empty-own-field red energy discount + printed STEP compile in common V2',()=>{
  const p=createRnkBcdBatchStagingPack(),c=p.cards['RNK-1-092'];
- assert.equal(Object.keys(p.cards).length,25);
+ assert.equal(Object.keys(p.cards).length,27);
  assert.deepEqual(Object.keys(p.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.equal(c.name,'明神 弥彦');
  assert.equal(c.type,'character');
@@ -56,7 +56,7 @@ test('starter-only 104 shows top card and puts it on top or bottom using shared 
 });
 test('common pack remains strict about known operations and production exclusion',()=>{
  const p=createRnkBcdBatchStagingPack();
- assert.equal(Object.keys(p.cards).length,25);
+ assert.equal(Object.keys(p.cards).length,27);
  const bad={...p.cards['RNK-1-104'],effects:{onPlay:[{op:'rnkPrivateLook'}]}};
  assert.throws(()=>createUniversalPack({id:'rnk',cards:[bad]}),/effect op unsupported/);
  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
