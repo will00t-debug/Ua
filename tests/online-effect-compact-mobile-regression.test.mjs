@@ -23,14 +23,30 @@ test('all online card choice galleries cap illustrations and allow inner scrolli
  const online=read('online.mjs');
  assert.equal((online.match(/grid-template-columns:repeat\(auto-fill,minmax\(86px,100px\)\)/g)||[]).length,4);
  assert.equal((online.match(/max-height:138px;aspect-ratio:63\/88/g)||[]).length,5);
- assert.match(online,/online-battle-ui\.mjs\?v=20261116mobiletriggersheet1/);
+ assert.match(online,/online-battle-ui\.mjs\?v=20261116triggerthumb2/);
 });
 
 test('online.html directly preloads the scoped battle sheet and updates the version',()=>{
  const html=read('online.html');
  const ui=read('universal-v2/online-battle-ui.mjs');
- assert.match(html,/ua-ui-version" content="20261116mobiletriggersheet1"/);
+ assert.match(html,/ua-ui-version" content="20261116triggerthumb2"/);
  assert.match(html,/data-online-battle-style="online-battle\.css"/);
- assert.match(html,/online-battle\.css\?v=20261116mobiletriggersheet1" media="not all"/);
+ assert.match(html,/online-battle\.css\?v=20261116triggerthumb2" media="not all"/);
  assert.match(ui,/link\[data-online-battle-style=/);
+});
+
+test('public LIFE trigger images use dedicated, bounded thumbnail rows inside the compact dialog',()=>{
+ const online=read('online.mjs');
+ const css=read('online-battle.css');
+ const start=online.indexOf("const triggers=el('div',{class:'trigger-public'});");
+ const end=online.indexOf("if(view.battle)",start);
+ assert.ok(start>=0&&end>start,'public trigger rendering found');
+ const triggerSource=online.slice(start,end);
+ assert.doesNotMatch(triggerSource,/cardBox\(card\)/,
+  'field-size card art must not be reused in the mobile effect overlay');
+ assert.match(triggerSource,/class:'online-trigger-thumbnail'/);
+ assert.match(triggerSource,/class:'online-trigger-preview-copy'/);
+ assert.match(triggerSource,/cardSrc\(card\)/,'only the published trigger card is shown');
+ assert.match(css,/\.online-trigger-preview-art\{[\s\S]*?width:56px/);
+ assert.match(css,/\.online-trigger-preview-art>img\.online-trigger-thumbnail\{[\s\S]*?max-width:100%;max-height:100%;object-fit:contain/);
 });

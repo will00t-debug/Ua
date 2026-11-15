@@ -44,7 +44,7 @@ if(battleUi)watchBattleViewport(battleUi);
 function loadBattleUi(retry=false){
  if(battleUi||battleUiLoading||battleUiError&&!retry)return;
  battleUiLoading=true;battleUiError=false;
- const url='./universal-v2/online-battle-ui.mjs?v=20261116mobiletriggersheet1'+(retry?'&retry='+Date.now():'');
+ const url='./universal-v2/online-battle-ui.mjs?v=20261116triggerthumb2'+(retry?'&retry='+Date.now():'');
  import(url).then(module=>{
   battleUi=module;battleUiLoading=false;
   watchBattleViewport(module);
@@ -1336,9 +1336,20 @@ function matchView(){
  for(const card of view.openTriggers||[]){
   const word=card.trigger?String(card.trigger).toUpperCase():'無觸發';
   const who=card.owner===seat?'你':'對手';
-  const shown=cardBox(card);
-  shown.append(el('small',{class:'art-meta',text:who+' · '+word+(card.checking?' · 確認中':'')}));
-  triggers.append(shown);
+  // Public trigger images belong in a small information row, not the
+  // field's full-size .slot. That element has no intrinsic art cap inside
+  // the online effect overlay and used to overflow the mobile dialog.
+  const title=card.name||card.cardId||'公開卡片';
+  const art=el('img',{class:'online-trigger-thumbnail',src:cardSrc(card)||'assets/mark.svg',
+   alt:title,decoding:'async'});
+  art.addEventListener('error',()=>{
+   if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
+  });
+  triggers.append(el('div',{class:'online-trigger-preview','aria-label':title+' · '+word},
+   el('span',{class:'online-trigger-preview-art'},art),
+   el('span',{class:'online-trigger-preview-copy'},
+    el('strong',{text:title}),
+    el('small',{text:who+' · '+word+(card.checking?' · 確認中':'')}))));
  }
  if(view.battle){
   const who=view.battle.owner===seat?'你的':'對手的';
