@@ -139,3 +139,18 @@ The combined `dist/universal-v2/rnk-bcd-batch-pack.mjs` now stages **23** indepe
 Japanese print source records: `dist/rnk/jp-evidence-fast-bcd.mjs`, `dist/rnk/jp-evidence-passive-bcd.mjs`. Batch tests: `tests/v2-rnk-bcd-fast-nine.test.mjs` and `tests/v2-rnk-bcd-passives.test.mjs`, and updated 23-card census in `tests/v2-rnk-bcd-batch-programs.test.mjs`. Merchant Japanese print transcriptions were individually cross-checked. New source signatures are **not** a substitute for full board-action and gameplay tests; 23 staged programs, **0/114 live-approved cards**. `RNK-1-107` belongs to `UA41ST` and must not be fabricated as a booster printing. The complete 114-identity Traditional Chinese catalog is unchanged.
 
 Full GitHub CI run `43750274533` passed before this 13-card expansion. The current 23-card commit requires new CI verification and must remain Draft/unmerged/unreleased.
+
+## Next shared-DSL batch (2026-11-16): 27 staging cards and legal-deck smoke test
+
+After all **23/23 previous staged cards passed the GitHub CI suite** (`43751567412`), four more card programs were Japanese-transcript verified and added to the SAME common-engine staging pack:
+
+- `RNK-1-092` 明神 弥彦 (UA41BT): `step:true` and `emptyOwnFieldHandEnergyDiscount:2`. Discount applies only if own field has no cards; it does not change printed energy or printed generation. Japanese proof: `https://www.torekaoh.shop-pro.jp/?pid=187659326`.
+- `RNK-1-104` 関原 妙＆三条 燕 (UA41ST): `onPlay [{op:'peekTopOrBottom'}]`; preserve ACTIVE trigger. Japanese proof: `https://www.torekaoh.shop-pro.jp/?pid=187659349`.
+- `RNK-1-046` 緋村 剣心: common `mainAbility:{op:'discardHandBuffSelf',oncePerTurn:true,discardCount:1,bp:1000}`. Japanese proof: `https://www.torekaoh.shop-pro.jp/?pid=187659273`.
+- `RNK-1-064` 牙突: common `retireOppFrontUnderBp`, printed baseline BP3000, BP5000 in presence of own 〈斎藤 一〉, plus explicit `special` trigger retirement. Japanese proof: `https://www.torekaoh.shop-pro.jp/?pid=187659293`.
+
+Data modules: `dist/rnk/jp-evidence-simple-next.mjs`, `dist/universal-v2/rnk/programs-simple-next.mjs`; all Traditional Chinese display data unchanged. The existing reusable `rnk-shared-adapter.mjs` now allows the existing common `emptyOwnFieldHandEnergyDiscount` schema field.
+
+Tests: `tests/v2-rnk-bcd-simple-next.test.mjs`, `tests/v2-rnk-bcd-simple-extra.test.mjs`. Full legal 50-card *staging match initialization* smoke test: `tests/v2-rnk-27-staging-match-smoke.test.mjs`. This is cross-title engine integration coverage, **not** card-by-card battle-effect acceptance, not `officialV2Pack('rnk')` registration, and does not authorize production deployment.
+
+Known blocked card examples: `RNK-1-075` mandatory unblocked draw has official FAQ Q1610 timing and cannot be silently made optional; `RNK-1-083` main REST+temporary generated energy+retire requires valid any-line semantics; `RNK-1-108` FIELD REST draws then discards and must preserve operation order. All remain unready.
