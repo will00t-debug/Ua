@@ -224,3 +224,102 @@ body.v2-online-battle .online-raid-base-gallery .v2-zone-card .art{
   object-fit:contain;
  }
 }
+
+
+/* Mobile trigger / effect sheet: compact in the existing portrait board.
+   The header and legal decisions stay reachable; only the middle content
+   scrolls. Never change the game board or generate synthetic actions. */
+body.v2-online-battle .online-effect-overlay{
+ background:rgba(7,13,24,.58);
+ backdrop-filter:blur(1px);
+}
+body.v2-online-battle .online-effect-overlay .dialog.pending.online-compact-effect-dialog{
+ display:flex;flex-direction:column;gap:0;
+ padding:0;overflow:hidden;
+ background:#142238;color:#eff6ff;border:1px solid #6087b2;
+ border-radius:14px;box-shadow:0 18px 48px #000a;
+}
+body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog>.online-effect-heading{
+ flex:0 0 auto;position:relative;top:auto;z-index:2;
+ display:flex;align-items:center;flex-wrap:nowrap;gap:8px;
+ margin:0;padding:9px 12px;
+ background:#101b2e;border-bottom:1px solid #476282;
+}
+body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog>.online-effect-heading h2{
+ flex:1;min-width:0;margin:0;color:#f2f7ff;font-size:17px;line-height:1.35;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-close{
+ flex:0 0 auto;display:grid;place-items:center;width:34px;height:34px;
+ min-height:34px;padding:0;border:1px solid #557798;border-radius:7px;
+ background:#1d334c;color:#fff;font-size:22px;line-height:1;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-scroll{
+ flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+ overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;padding:10px 12px;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-scroll>.actions{
+ display:flex;flex-direction:column;gap:7px;
+ max-height:none;overflow:visible;padding:0;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-scroll>.actions>button{
+ flex:0 0 auto;min-height:38px;padding:8px 10px;
+ text-align:left;white-space:normal;line-height:1.4;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-scroll .online-inspection-peek{
+ display:none; /* quick inspection is always available in the fixed footer */
+}
+body.v2-online-battle .online-effect-overlay .online-effect-scroll .online-pending-card{
+ margin:8px 0;max-height:176px;overflow-y:auto;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-bottom{
+ flex:0 0 auto;display:flex;flex-direction:column;gap:7px;
+ padding:9px 12px calc(9px + env(safe-area-inset-bottom,0px));
+ background:#101b2e;border-top:1px solid #476282;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-peek{
+ display:flex;justify-content:center;align-items:center;width:100%;
+ min-height:35px;padding:6px 9px;
+ background:#1b304c;border:1px solid #5b83ac;color:#e9f4ff;
+ border-radius:8px;font-size:12px;font-weight:700;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-decision-actions{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-decision-actions>button{
+ width:100%;min-width:0;min-height:40px;justify-content:center;
+ padding:7px 8px;font-size:14px;white-space:normal;text-align:center;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-decision-actions>button:only-child{
+ grid-column:1/-1;
+}
+body.v2-online-battle .online-effect-overlay .online-effect-decision-actions>button.primary{
+ background:#1679d0;border-color:#368fdf;color:#fff;
+}
+body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog button:focus-visible{
+ outline:2px solid #8bc8ff;outline-offset:2px;
+}
+@media(max-width:760px) and (orientation:portrait){
+ body.v2-online-battle .online-effect-overlay{
+  padding:env(safe-area-inset-top,10px) 3vw env(safe-area-inset-bottom,10px);
+ }
+ body.v2-online-battle .online-effect-overlay .dialog.pending.online-compact-effect-dialog{
+  box-sizing:border-box;width:min(460px,94vw);max-width:94vw;
+  height:min(56dvh,500px);max-height:calc(100dvh - 24px);
+  min-height:0;overflow:hidden;padding:0;
+ }
+ body.v2-online-battle .online-effect-overlay .online-effect-scroll{
+  padding:8px 10px;
+ }
+ body.v2-online-battle .online-effect-overlay .online-effect-scroll>.actions>button{
+  font-size:13px;min-height:36px;
+ }
+ body.v2-online-battle .online-effect-overlay .online-effect-bottom{
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));
+ }
+}
+@media(max-width:760px) and (orientation:landscape){
+ body.v2-online-battle .online-effect-overlay .dialog.pending.online-compact-effect-dialog{
+  height:auto;max-height:85dvh;
+ }
+}

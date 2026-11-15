@@ -7,11 +7,14 @@ test('a pending effect cannot fill the phone with the source card illustration',
  const ui=read('universal-v2/online-battle-ui.mjs');
  const css=read('online-battle.css');
  assert.match(ui,/class:'dialog pending panel online-compact-effect-dialog'/);
- assert.match(ui,/max-height:76dvh;overflow-y:auto/);
- assert.match(ui,/actions,effectSource,lookedAt/,'legal choices precede optional card preview');
+ assert.match(ui,/class:'online-effect-scroll'},actions,effectSource,lookedAt/);
+ assert.match(ui,/decisionButtons.length>0&&decisionButtons.length<=2/,'only simple legal choices move to the footer');
  assert.match(ui,/max-width:76px;max-height:104px;object-fit:contain/);
  assert.match(ui,/grid-template-columns:76px minmax\(0,1fr\)/);
- assert.match(css,/\.online-compact-effect-dialog\{[\s\S]*?max-height:76dvh/);
+ assert.match(css,/height:min\(56dvh,500px\)/,'mobile portrait panel uses a compact fixed-height sheet');
+ assert.match(css,/\.online-effect-scroll\{[\s\S]*?overflow-y:auto/);
+ assert.match(css,/\.online-effect-bottom\{/);
+ assert.match(ui,/class:'online-effect-close'[\s\S]*?onClick:onPause/,'close icon enters board inspection without dropping the legal choice');
  assert.match(css,/\.online-pending-card-art img\{/);
  assert.doesNotMatch(css,/#match-view \.online-effect-overlay/,'overlay is mounted outside #match-view');
 });
@@ -20,14 +23,14 @@ test('all online card choice galleries cap illustrations and allow inner scrolli
  const online=read('online.mjs');
  assert.equal((online.match(/grid-template-columns:repeat\(auto-fill,minmax\(86px,100px\)\)/g)||[]).length,4);
  assert.equal((online.match(/max-height:138px;aspect-ratio:63\/88/g)||[]).length,5);
- assert.match(online,/online-battle-ui\.mjs\?v=20261114compactmodal2/);
+ assert.match(online,/online-battle-ui\.mjs\?v=20261116mobiletriggersheet1/);
 });
 
 test('online.html directly preloads the scoped battle sheet and updates the version',()=>{
  const html=read('online.html');
  const ui=read('universal-v2/online-battle-ui.mjs');
- assert.match(html,/ua-ui-version" content="20261114compactmodal2"/);
+ assert.match(html,/ua-ui-version" content="20261116mobiletriggersheet1"/);
  assert.match(html,/data-online-battle-style="online-battle\.css"/);
- assert.match(html,/online-battle\.css\?v=20261114compactmodal2" media="not all"/);
+ assert.match(html,/online-battle\.css\?v=20261116mobiletriggersheet1" media="not all"/);
  assert.match(ui,/link\[data-online-battle-style=/);
 });
