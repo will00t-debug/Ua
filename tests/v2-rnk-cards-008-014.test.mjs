@@ -58,9 +58,9 @@ test('RNK 008-014 effect details remain complete as text, not falsely DSL-ready'
 });
 
 test('RNK manifest exposes all three first TC-verified groups but no playable ones',()=>{
-  assert.equal(RNK_TC_CATALOG.length,56);
-  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,56);
-  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,56);
+  assert.equal(RNK_TC_CATALOG.length,113);
+  assert.equal(new Set(RNK_TC_CATALOG.map(c=>c.id)).size,113);
+  assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.confirmedTc).length,112);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.battleReady).length,0);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(c=>c.effectImplemented).length,0);
 });
