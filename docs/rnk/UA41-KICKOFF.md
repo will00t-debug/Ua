@@ -83,3 +83,15 @@
 - D: `RNK-1-085`–`090` battle-loss-to-energy replacement and overflow behavior; `RNK-1-103` must-block, `RNK-1-106` Raid/move and malformed TC source, multicolor `RNK-P-001`, and promo print-specific trigger.
 
 **Release rule:** do not wire `rnk` into `officialV2Pack`, announce ready play, merge the draft or deploy before those rules and integration tests are completed.
+
+## First V2 program implementation (B group): Japanese-authority sandbox
+
+- `dist/rnk/jp-evidence-029-035.mjs`: Japanese-printed name, original effect, trigger text, and a Japanese transcription source for RNK-1-031 / 035. Do not change the existing Traditional Chinese display copy.
+- `dist/universal-v2/rnk/programs-029-035.mjs`: verified DSL `recoverAp(2)` for RNK-1-031; true no-ability `vanilla` for RNK-1-035. RNK-1-029, 030, 032, 033, 034 remain explicitly unready with individualized blockers.
+- `dist/universal-v2/rnk-staging-pack.mjs`: an isolated V2 validation pack of exactly those two cards. It is **not** imported by `officialV2Pack('rnk')`, editor, AI or production online battle.
+- `tests/v2-rnk-b-programs-029-035.test.mjs`: Japanese evidence, engine schema normalization, exact AP 2 recovery shape, GET-only vanilla, unsafe-source/unknown-ID fail-closed checks, and production-registration exclusion.
+- For RNK-1-029, Japanese official `Q1596` defines attack end as **after battle**, or **after trigger check** for damage to the player. Do not create a simplified instant-ready effect that misses this.
+- General Japanese rule `Q81/Q83/Q84` distinguishes compulsory `1枚選び` from optional `1枚まで選び`. Keep this distinction when implementing RNK-1-032.
+- This stage is a **program / schema acceptance milestone only**. Do not count it as a completed AI/online gameplay acceptance, and do not change the official `0/114` live tally before in-match AP payment and trigger regression tests pass.
+
+Evidence: https://www.torekaoh.shop-pro.jp/?pid=187659257 (031), https://www.torekaoh.shop-pro.jp/?pid=187659262 (035), https://www.unionarena-tcg.com/jp/faq/list.php?series=UA41BT and https://www.unionarena-tcg.com/jp/faq/list.php?type=0.
