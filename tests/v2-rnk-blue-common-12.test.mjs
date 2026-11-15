@@ -8,16 +8,16 @@ import {RNK_BATCH_STAGING_IDS,createRnkBcdBatchStagingPack} from '../dist/univer
 import {cardHasTrait} from '../dist/universal-v2/field-conditions.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
-const ids=['002','003','004','006','009','012','014','015','016','020','021','022','023','025','027'].map(n=>'RNK-1-'+n);
+const ids=['001','002','003','004','006','009','012','014','015','016','020','021','022','023','025','027'].map(n=>'RNK-1-'+n);
 const activeIds=ids.filter(id=>id!=='RNK-1-016');
 const source=Object.fromEntries(RNK_TC_CATALOG.map(c=>[c.id,c]));
 const pack=createRnkBcdBatchStagingPack();
 const card=n=>pack.cards['RNK-1-'+n];
 
-test('fourteen runnable plus one held-out Japanese blue evidence record share the regular 46-card Universal V2 compiler',()=>{
+test('fifteen runnable plus one held-out Japanese blue evidence record share the regular 46-card Universal V2 compiler',()=>{
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,48);
+ assert.equal(Object.keys(pack.cards).length,49);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_BLUE_COMMON).sort(),ids);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_BLUE_COMMON).sort(),ids);
@@ -159,4 +159,17 @@ test('025 preserves empty-field hand -2 energy and private top-three optional ou
   op:'inspectTopAnyOutside',count:3,rest:'top',maxOutside:1
  }]);
  assert.deepEqual(v.traits,['御庭番衆']);
+});
+
+test('001 uses named top-seven one-or-none without a hand discard',()=>{
+ const c=card('001');
+ assert.equal(c.name,'新井 青空');
+ assert.equal(c.energy,2);
+ assert.equal(c.ap,1);
+ assert.equal(c.bp,2000);
+ assert.equal(c.trigger,'draw');
+ assert.deepEqual(c.effects.onPlay,[{
+   op:'searchTopOneBottomDiscard',count:7,
+   filter:{field:'name',value:'逆刃刀・真打'},discard:false
+ }]);
 });
