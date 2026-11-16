@@ -255,6 +255,33 @@ test('050 shows every facedown card and can tuck after blocking',()=>{
  aiOk(block);
 });
 
+test('050 tucks the next deck card after the retired card draws',()=>{
+ const local={...counts,'RNK-1-020':1,'RNK-1-035':3};
+ assert.deepEqual(validateUniversalDeck(pack,local),[]);
+ let s=toMain(newUniversalMatch(pack,{decks:[local,local],seed:402,first:0,openingMulligan:false}));
+ const host=seat(s,0,'RNK-1-050','front',0,true);
+ seat(s,0,'RNK-1-014','energy',0,true);
+ const victim=seat(s,0,'RNK-1-020','front',1,true);
+ const first=take(s,0,'RNK-1-004'),second=take(s,0,'RNK-1-004'),third=take(s,0,'RNK-1-004');
+ s.players[0].deck.unshift(third,second,first);
+ const attacker=seat(s,1,'RNK-1-035','front',0,true);
+ s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='next'));
+ s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='next'));
+ while(s.active!==1||s.phase!=='attack'){
+  if(s.pending)s=act(s,a=>a.uid===null||a.mode==='skip');
+  else s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='next'));
+ }
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid});
+ s=act(s,a=>a.type==='chooseBlock'&&a.uid===host.uid);
+ s=act(s,a=>a.type==='chooseBlockTuck'&&a.uid===victim.uid);
+ const under=findUid(s,'RNK-1-050').under.map(c=>c.uid);
+ assert.deepEqual(under,[second.uid]);
+ assert.ok(s.players[0].hand.some(c=>c.uid===third.uid));
+ assert.equal(s.players[0].hand.some(c=>c.uid===second.uid),false);
+ assert.equal(s.players[0].deck[0].uid,first.uid);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
 test('054 reveals a union card, then moves generated energy of 1 or less',()=>{
  let s=fresh(41);
  fuel(s,'RNK-1-037',2);
@@ -303,6 +330,21 @@ test('059 can raid from outside and the front main puts the raid top on the deck
  assert.equal(s.players[0].front[1].cardId,'RNK-1-056');
 });
 
+test('059 keeps facedown cards on the raid base',()=>{
+ let s=fresh(431);
+ const base=seat(s,0,'RNK-1-056','front',1,true);
+ const top=seat(s,0,'RNK-1-059','front',2,true);
+ const hidden=take(s,0,'RNK-1-035');
+ hidden.faceDown=true;top.under=[hidden];top.stack=[base];top.raidBaseUid=base.uid;
+ s.players[0].front[1]=null;s.players[0].front[2]=top;
+ s=act(s,a=>a.mode==='restRaidTop'&&a.uid===top.uid);
+ assert.equal(s.players[0].deck[0].cardId,'RNK-1-059');
+ assert.equal(s.players[0].deck[0].under.length,0);
+ assert.equal(s.players[0].front[2].cardId,'RNK-1-056');
+ assert.ok(s.players[0].front[2].under.some(c=>c.uid===hidden.uid&&c.faceDown===true));
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
 test('071 grants the opponent a hand tax until your next turn',()=>{
  let s=fresh(44);
  fuel(s,'RNK-1-076',1);
@@ -311,7 +353,37 @@ test('071 grants the opponent a hand tax until your next turn',()=>{
  s=act(s,a=>a.mode==='restSelectTax');
  s=act(s,a=>a.type==='chooseSelectTax'&&a.uid===ken.uid);
  assert.equal(findUid(s,'RNK-1-010').selectHandTaxUntil.count,1);
- assert.equal(assertUniversalMatch(packs,s),true);
+ seat(s,1,'RNK-1-076','energy',0,true);
+ s.players[1].outside.push(...s.players[1].hand.splice(0));
+ const pay=take(s,1,'RNK-1-035');s.players[1].hand.push(pay);
+ const event=take(s,1,'RNK-1-098');s.players[1].hand.push(event);
+ while(s.active!==1||s.phase!=='main'){
+  if(s.pending)s=act(s,a=>a.uid===null||a.mode==='skip');
+  else s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='next'));
+ }
+ s=dispatchUniversalAction(packs,s,{type:'event',uid:event.uid});
+ s=act(s,a=>a.type==='chooseRestBp'&&a.uid===ken.uid);
+ assert.equal(s.pending.kind,'effect-selection-hand-payment');
+ assert.equal(findUid(s,'RNK-1-010').ready,true);
+ s=act(s,a=>a.type==='chooseSelectionTaxDiscard'&&a.uid===pay.uid);
+ assert.equal(findUid(s,'RNK-1-010').ready,false);
+ assert.ok(s.players[1].outside.some(c=>c.uid===pay.uid));
+
+ let blocked=fresh(441);
+ fuel(blocked,'RNK-1-076',1);
+ const taxed=seat(blocked,0,'RNK-1-010','front',0,true);
+ blocked=play(blocked,'RNK-1-071','energy',3);
+ blocked=act(blocked,a=>a.mode==='restSelectTax');
+ blocked=act(blocked,a=>a.type==='chooseSelectTax'&&a.uid===taxed.uid);
+ seat(blocked,1,'RNK-1-076','energy',0,true);
+ while(blocked.active!==1||blocked.phase!=='main'){
+  if(blocked.pending)blocked=act(blocked,a=>a.uid===null||a.mode==='skip');
+  else blocked=dispatchUniversalAction(packs,blocked,legalUniversalActions(packs,blocked).find(a=>a.type==='next'));
+ }
+ blocked.players[1].outside.push(...blocked.players[1].hand.splice(0));
+ const only=take(blocked,1,'RNK-1-098');blocked.players[1].hand.push(only);
+ assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='event'&&a.uid===only.uid),false);
+ assert.equal(assertUniversalMatch(packs,blocked),true);
 });
 
 test('076 may discard at attack end and then swap with an unattacked character',()=>{
@@ -385,6 +457,18 @@ test('099 retires, or removes when a Sanosuke rests',()=>{
  retired=play(retired,'RNK-1-099');
  retired=act(retired,a=>a.type==='chooseRetireRemove'&&a.mode==='retire');
  assert.ok(retired.players[1].outside.some(c=>c.uid===other.uid));
+
+ let raid=fresh(482);
+ fuel(raid,'RNK-1-076',2);
+ const payer=seat(raid,0,'RNK-1-076','front',1,true);
+ const stacked=seat(raid,1,'RNK-1-011','front',0,true);
+ const buried=take(raid,1,'RNK-1-010');
+ stacked.stack=[buried];stacked.raidBaseUid=buried.uid;
+ raid=play(raid,'RNK-1-099');
+ raid=act(raid,a=>a.type==='chooseRetireRemove'&&a.mode==='remove'&&a.restUid===payer.uid);
+ assert.ok(raid.players[1].removed.some(c=>c.uid===stacked.uid));
+ assert.ok(raid.players[1].outside.some(c=>c.uid===buried.uid));
+ assert.equal(assertUniversalMatch(packs,raid),true);
 });
 
 test('103 wakes from an effect rest and stays rested after an attack',()=>{

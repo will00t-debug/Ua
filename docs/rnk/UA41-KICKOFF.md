@@ -338,3 +338,13 @@ The last eighteen numbered prints and the promo `RNK-P-001` compile on the share
 - Files: `dist/rnk/jp-evidence-shared-rest.mjs`, `dist/universal-v2/rnk/programs-shared-rest.mjs`, `tests/v2-rnk-shared-rest.test.mjs`. Staging census is **114**. The batch pack spreads this batch last and includes `RNK_PROMO_CARD`. The earlier pending copies stay `ready:false`.
 - Starter `RNK-1-112` and `RNK-1-113` keep `needsManualReview` for the printed generation symbol.
 - **114/114 staged shared-V2 programs; 0/114 fully battle-accepted.** No merge and no deployment.
+
+## 2026-11-16 — checks on the last nineteen
+
+Three staged resolutions did not match the printed sentences. The programs stay staged, and none of these cards are battle-accepted.
+
+- `RNK-1-059`: putting the raid top onto the deck left facedown cards under that top off every zone. Those cards stay under the raid base, the same way another raid-top strip keeps them.
+- `RNK-1-099`: removing a raided character threw. The visible character now goes to the remove area and its raid layers go outside, through the shared removal. A shielded character is not offered the remove mode.
+- `RNK-1-050`: the deck-top tuck happened before the retired character's on-retire draw, so that draw took the next card. The tuck now waits until the retirement, including its draw, has finished. If the character stays, nothing is tucked.
+- `RNK-1-071`: the extra hand card is charged when the opponent chooses that character with an effect, including the new retire-or-remove, mill-scale, and generated-energy move choices. An empty hand cannot make that choice. The owner's own effect does not pay it.
+- Still approximate: `RNK-1-044` becomes active after it has already entered rested, and `RNK-1-040` / `RNK-1-054` / `RNK-1-056` still use the first empty slot when several are open. **0/114** battle-accepted. No merge and no deployment.
