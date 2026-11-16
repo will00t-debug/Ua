@@ -4,7 +4,7 @@
 
 範圍：2026-10-14 通用引擎起，到 2026-11-16 `main` `c081efe9`（含比古突襲與 RNK-1-009）。共 256 筆。新卡移植、名冊張數斷言、只改測試夾具的提交不在這裡。通過這些修正不是逐張官方 FAQ 全部認證。
 
-代理必讀的短清單在 `AGENTS.md` 的 Fixed V2 errors。引擎、線上介面、困難 AI 的檔頭也指向本檔。
+代理必讀的短清單在 `AGENTS.md` 的 Fixed V2 errors。引擎與線上介面的檔頭也指向本檔。`dist/universal-v2/hard-ai.mjs` 的內容被 `audit/ai-v3-baseline-pin.json` 的雜湊釘住，標記不寫進那個檔。
 
 ## 最容易再犯
 
