@@ -4785,9 +4785,16 @@ function normalize(card,packId){
  const restChoice=restFollow==='chooseFrontOrOwnTrait'||restFollow==='raidOwnHandNamed';
  const mainRestProgram=mainAbility?.op==='restSelfThen'&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length===1&&
-  ((mainAbility.frontOnly===true&&mainAbility.oncePerTurn===undefined&&
-    Object.keys(mainAbility).length===3&&mainAbility.then[0]?.op==='millTop'&&
-    Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k)))||
+ ((mainAbility.frontOnly===true&&mainAbility.oncePerTurn===undefined&&
+   Object.keys(mainAbility).length===3&&mainAbility.then[0]?.op==='millTop'&&
+   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k)))||
+  // No フロント and no ターン1: REST from either line, then mill 1 or draw 1 discard 1.
+  (mainAbility.frontOnly===false&&mainAbility.oncePerTurn===undefined&&
+   Object.keys(mainAbility).length===3&&
+   ((mainAbility.then[0]?.op==='millTop'&&mainAbility.then[0].count===1&&
+     Object.keys(mainAbility.then[0]).length===2)||
+    (mainAbility.then[0]?.op==='drawDiscard'&&mainAbility.then[0].count===1&&
+     Object.keys(mainAbility.then[0]).length===2)))||
    (mainAbility.frontOnly===false&&mainAbility.oncePerTurn===true&&
     Object.keys(mainAbility).length===4&&
     mainAbility.then[0]?.op==='buffSelfUntilNextOwnStart')||
@@ -6266,8 +6273,9 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
  if(program.some(e=>e.op==='searchTopConditionalDiscard')&&
   (name!=='onPlay'||card.type!=='field'||program.length!==1))
   throw Error(card.id+' conditional top discard is a lone field onPlay effect');
- if(program.some(e=>e.op==='peekTopOrOutside'))
-  throw Error(card.id+' top or outside look is only a front once-per-turn main');
+ if(program.some(e=>e.op==='peekTopOrOutside')&&
+  (name!=='onPlay'||card.type!=='character'||program.length!==1))
+  throw Error(card.id+' top or outside look is a lone character onPlay or a front once-per-turn main');
  if(program.some(e=>['optionalRetireOwnTraitThen','activeNamedRestingFront','optionalRestNamedFrontThen','retireOppFieldUpTo'].includes(e.op)))
   throw Error(card.id+' branch effect is only nested under its printed choice');
  if(program.some(e=>['retireOppFrontPerName','retireOppFrontCategoryScale','moveOppFrontBpOrBottom','outsideUnionToDeckTopThenActiveAp'].includes(e.op))&&
