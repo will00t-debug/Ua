@@ -70,7 +70,7 @@ function act(s,pred){
  return dispatchUniversalAction(packs,s,a);
 }
 test('third official Japanese batch stages twenty shared programs',()=>{
- assert.equal(RNK_BATCH_STAGING_IDS.length,95);
+ assert.equal(RNK_BATCH_STAGING_IDS.length,114);
  assert.equal(IDS.length,20);
  for(const id of IDS){
   const jp=RNK_JP_EVIDENCE_SHARED_THIRD[id],tc=source[id],v2=pack.cards[id];

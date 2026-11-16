@@ -15,7 +15,9 @@ const SHARED_KEYS=new Set([
   'unblockedAttack','attackWinDraw','nameAliases','phaseEffects','unionEnergy',
   'printedMains','cannotAttack','battleRemoveInstead','battleEnergyInstead',
   'battleLoseToHand','oppEffectLeave','substituteOppRetire',
-  'conditionalImpactBpAtLeast','moveTriggers','moveObserver'
+  'conditionalImpactBpAtLeast','moveTriggers','moveObserver',
+  'playRequiresOwnName','frontForbidden','ownEffectMoveOnly','allColors',
+  'doubleAttackBpAtLeast','energyAttackEndDiscardSwap','effectRestWake'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
 // Audited cross-language print token. Japanese gameplay filters must not
@@ -32,7 +34,9 @@ export function rnkSharedCard(card,program,japaneseEvidence){
   if(!card||card.title!=='rnk'||card.deckLegal!==true||
      card.battleReady!==false||card.cardDataVerified!==false)
     throw Error((card?.id||'unknown')+' source catalog must not claim battle readiness');
-  if(!PRINT_TYPES.has(card.type)||!['blue','purple','red','green','yellow'].includes(card.color))
+  const allColors=program?.allColors===true&&card.color==='multicolor';
+  if(!PRINT_TYPES.has(card.type)||
+     !(allColors||['blue','purple','red','green','yellow'].includes(card.color)))
     throw Error(card.id+' invalid source type or color');
   if(!japaneseEvidence||
      japaneseEvidence.print!==card.number||

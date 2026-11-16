@@ -1057,6 +1057,26 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDeckSearch':case 'chooseDeckSearchMulti':
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
+  case 'chooseDiscardSwap':return action.uid===null?'不放場外':'將 '+name()+' 放場外';
+  case 'chooseUnionDiscard':return action.uid===null?'不以活動狀態登場':'將 '+name()+' 放場外並以活動狀態登場';
+  case 'chooseMillScale':return action.uid===null?'不退場':'使 '+name()+' 退場';
+  case 'chooseFacedownHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseRetireTuck':return action.uid===null?'不退場':'使 '+name()+' 退場並將牌庫頂裏向置於下方';
+  case 'chooseRevealUnion':return action.uid===null?'不公開':'公開 '+name()+' 並放到牌庫頂';
+  case 'chooseHandRestSelf':return action.uid===null?'不支付手牌':'將 '+name()+' 放場外並以休息狀態登場';
+  case 'chooseOutsideRaid':return action.uid===null?'不突襲':'從場外突襲';
+  case 'chooseRestBattle':return action.uid===null?'不休息':'休息 '+name();
+  case 'chooseLockedEntry':return action.uid===null?'不登場':'以活動狀態登場 '+name();
+  case 'chooseBounceUnion':return action.uid===null?'不回手':'將 '+name()+' 返回手牌';
+  case 'chooseRetireRemove':return action.mode==='remove'?'休息並移入移除區':'使 '+name()+' 退場';
+  case 'chooseSwapFresh':return action.uid===null?'不交換位置':'與 '+name()+' 交換位置';
+  case 'chooseMoveGen':return action.uid===null?'不移動':'將產生能源 1 以下的角色移到前線';
+  case 'chooseOutsideBottom':return '將 '+name()+' 放到牌庫底並移到前線';
+  case 'chooseSelectTax':return '給 '+name()+' 追加手牌費用';
+  case 'chooseRemoveAura':return '將 '+name()+' 移入移除區';
+  case 'choosePayMove':return '將 '+name()+' 放場外';
+  case 'chooseMoveLine':return '移動到另一條線';
+  case 'chooseRaidSource':return '使突襲來源以活動狀態登場';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
   case 'chooseAcquiredAttackDraw':return action.mode==='draw'?'已獲得的攻擊時抽 1 張':'不抽牌';
