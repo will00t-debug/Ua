@@ -323,3 +323,36 @@ body.v2-online-battle .online-effect-overlay .online-compact-effect-dialog butto
   height:auto;max-height:85dvh;
  }
 }
+
+
+/* Public life/trigger cards must never reuse an uncapped full-field .slot
+   inside the choice dialog. Render the confirmed public card as a small
+   labeled preview; all legal action buttons remain unchanged. */
+body.v2-online-battle .trigger-public{
+ display:flex;flex-direction:column;align-items:stretch;gap:7px;
+ width:100%;max-width:100%;min-width:0;margin:0;
+}
+body.v2-online-battle .trigger-public .online-trigger-preview{
+ box-sizing:border-box;display:grid;grid-template-columns:56px minmax(0,1fr);
+ align-items:center;gap:10px;width:100%;max-width:100%;min-width:0;
+ padding:7px 9px;border:1px solid #4c6a88;border-radius:9px;
+ background:#1a2940;color:#eaf3ff;overflow:hidden;
+}
+body.v2-online-battle .online-trigger-preview-art{
+ box-sizing:border-box;display:block;width:56px;max-width:56px;
+ height:78px;max-height:78px;min-width:0;overflow:hidden;
+ border:1px solid #527b9f;border-radius:5px;background:#0b182c;
+}
+body.v2-online-battle .online-trigger-preview-art>img.online-trigger-thumbnail{
+ box-sizing:border-box;display:block;width:100%;height:100%;
+ max-width:100%;max-height:100%;object-fit:contain;
+}
+body.v2-online-battle .online-trigger-preview-copy{
+ display:grid;gap:4px;min-width:0;overflow-wrap:anywhere;
+}
+body.v2-online-battle .online-trigger-preview-copy strong{
+ display:block;font-size:13px;font-weight:800;line-height:1.4;
+}
+body.v2-online-battle .online-trigger-preview-copy small{
+ display:block;font-size:11px;color:#bbd8f0;line-height:1.4;
+}
