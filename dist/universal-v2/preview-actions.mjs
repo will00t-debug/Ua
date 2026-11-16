@@ -51,7 +51,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡',
  'effect-top-trait-event':'查看牌頂，公開王選候補者或事件',
  'effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
- 'effect-top-order':'依效果排列剩餘牌',
+ 'effect-top-order':'排列牌庫頂或底',
  'effect-top-script':'查看牌庫頂並選擇',
  'effect-bottom-own':'可將 1 張自己的角色放到牌庫底',
  'effect-optional-mill':'可逐張將牌庫頂送場外（每次 1 張，可繼續或停止）',
