@@ -1657,7 +1657,7 @@ async function leaveListed(room){
  if(app.error)showRoomAlert();
 }
 async function copyCode(code){
- try{await navigator.clipboard.writeText(code);app.notice='已複製房間代碼。';}
+ try{await navigator.clipboard.writeText(code);app.notice='';}
  catch{app.notice='房間代碼：'+code;}
  render();
 }
