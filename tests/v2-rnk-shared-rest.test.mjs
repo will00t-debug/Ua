@@ -101,7 +101,7 @@ test('010 puts the named outside card under the deck, then moves to the front',(
  const self=seat(s,0,'RNK-1-010','energy',0,true);
  const will=take(s,0,'RNK-1-027');s.players[0].outside.push(will);
  s=act(s,a=>a.type==='activate'&&a.mode==='restBottom'&&a.uid===self.uid);
- s=act(s,a=>a.type==='chooseOutsideBottom'&&a.uid===will.uid);
+ s=act(s,a=>a.type==='chooseNamedBottom'&&a.uid===will.uid);
  const moved=s.players[0].front.find(c=>c?.uid===self.uid);
  assert.ok(moved);
  assert.equal(s.players[0].deck.at(-1).cardId,'RNK-1-027');
@@ -248,7 +248,7 @@ test('050 shows every facedown card and can tuck after blocking',()=>{
  }
  block=dispatchUniversalAction(packs,block,{type:'attack',uid:attacker.uid});
  block=act(block,a=>a.type==='chooseBlock'&&a.uid===host.uid);
- block=act(block,a=>a.type==='chooseRetireTuck'&&a.uid===victim.uid);
+ block=act(block,a=>a.type==='chooseBlockTuck'&&a.uid===victim.uid);
  assert.ok(findUid(block,'RNK-1-050').under.some(c=>c.faceDown===true));
  assert.equal(universalBp(packs,block,findUid(block,'RNK-1-050')),4500);
  assert.equal(assertUniversalMatch(packs,block),true);
@@ -292,7 +292,7 @@ test('059 can raid from outside and the front main puts the raid top on the deck
  s=play(s,'RNK-1-044','front',0);
  if(s.pending?.kind==='effect-union-discard')s=act(s,a=>a.uid===null);
  if(s.pending?.kind==='effect-mill-scale')s=act(s,a=>a.uid===null);
- s=act(s,a=>a.type==='chooseOutsideRaid'&&a.uid===base.uid);
+ s=act(s,a=>a.type==='chooseEnergyRaid'&&a.uid===base.uid);
  const top=findUid(s,'RNK-1-059');
  assert.equal(top.ready,true);
  assert.equal(universalImpact(packs,s,top),1);
