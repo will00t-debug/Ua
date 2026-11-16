@@ -1,0 +1,105 @@
+// Official Traditional Chinese RNK 078-084: verified facts and concise ability descriptions.
+// Full printed Japanese text and V2 DSL must be separately verified; all remain non-ready.
+import {tcRows} from './tc-source-helper.mjs';
+export const RNK_CARDS_078_084=tcRows([
+  {
+    "id": "RNK-1-078",
+    "name": "三條燕",
+    "rarity": "U",
+    "color": "red",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "登場將我方場上一張其他能源需求1以下角色回手，無法回收時返回自身。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-079",
+    "name": "關原妙",
+    "rarity": "C",
+    "color": "red",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "對手場上有藍或紫卡時，手牌此卡能源需求-紅1。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-080",
+    "name": "高荷惠",
+    "rarity": "C",
+    "color": "red",
+    "energy": 0,
+    "ap": 1,
+    "bp": 500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "effectZhTw": "登場使我方其他一張角色本回合BP+1000。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-081",
+    "name": "高荷惠",
+    "rarity": "U",
+    "color": "red",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "此角色活動時發生能源額外+紅1。",
+    "traits": [],
+    "genMark": "紅+"
+  },
+  {
+    "id": "RNK-1-082",
+    "name": "高荷惠",
+    "rarity": "R",
+    "color": "red",
+    "energy": 3,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "active",
+    "effectZhTw": "登場選一項：從我方場外回收能源需求1以下一張角色；或使我方其他一張角色本回合BP+1500。",
+    "traits": []
+  },
+  {
+    "id": "RNK-1-083",
+    "name": "塚山由太郎",
+    "rarity": "C",
+    "color": "red",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "effectZhTw": "啟動主要休息自身每回合一次，本回合發生能源+紅1，主要階段結束退場。",
+    "traits": [],
+    "genMark": "紅+"
+  },
+  {
+    "id": "RNK-1-084",
+    "name": "月岡津南",
+    "rarity": "U",
+    "color": "red",
+    "energy": 3,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "draw",
+    "effectZhTw": "登場選一項：將前線休息的相樂左之助活動；或休息前線活動的相樂左之助，若如此休息對手前線一張角色。",
+    "traits": []
+  }
+]);

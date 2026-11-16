@@ -130,7 +130,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='life-trigger')
   return legal.find(a=>['final','raid','special','colorRetire','colorRestSkip','colorField','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-hand-top')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-top'||s.pending?.kind==='effect-place-hand-top')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-grant-lose-ready')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-trait-ban-move')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-tuck-active')return legal.find(a=>a.uid!==null)||legal[0];
@@ -452,7 +453,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-rest-front-ap')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-discard-active')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-attack-discard-active')return legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-hand-top'){
+ if(s.pending?.kind==='effect-place-hand-top'||s.pending?.kind==='effect-hand-top'){
   const catalog=packsOf(pack)[s.pending.player].cards;
   const hand=s.players[s.pending.player].hand;
   return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-

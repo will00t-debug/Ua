@@ -28,8 +28,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-below-printed':'選擇對方角色，本回合 BP 低於原本時不能阻擋',
  'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
- 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇',csm:'鏈鋸人效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
- 'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂',
+ 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇',csm:'鏈鋸人效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底','private-top-or-outside':'查看牌頂，放回牌頂或場外','effect-rest-opp-if-name':'可休息 1 個對手前排角色','effect-retire-opp-field':'可將對方 1 張場域退場','effect-grant-unblocked-draw':'可給指定角色本回合未被阻擋時抽牌','effect-suppress-own-turn':'可讓指定角色失去自己回合中效果','effect-move-opp-cap':'可選擇 BP 以下的對手前排角色','effect-move-opp-dest':'移到能量線或牌庫底','effect-outside-union-top':'將場外的指定卡放到牌庫頂','effect-rest-other-trait':'可休息其他御庭番眾，然後使這張角色活動','effect-optional-own-trait-retire':'可退場自己的御庭番眾','effect-active-resting-front':'可使休息中的指定角色活動','effect-rest-named-then':'可休息指定角色',
+ 'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂','effect-place-hand-top':'將 1 張手牌放到牌庫頂',
  'effect-grant-lose-ready':'給能源 0 的指定角色本回合落敗時 ACTIVE',
  'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',
  'effect-entry-rest-front':'將前線 ACTIVE 角色轉為 REST',
@@ -144,7 +144,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-pay-named':'可棄 1 張手牌或休息 1 張前線，以回收場外的指定卡',
  'effect-add-named':'將場外的指定卡加入手牌',
  'effect-reveal-bottom':'公開 1 張手牌並放到牌底',
- 'effect-hand-top':'將 1 張手牌放到牌組上面',
+ 'effect-hand-top':'將 1 張手牌放到牌組上面','effect-place-hand-top':'將 1 張手牌放到牌組上面',
  'effect-rest-front-ap':'可休息 1 張前線活動角色，之後恢復 AP',
  'effect-discard-active':'可將 1 張手牌放到場外，使這張場域活動',
  'effect-attack-discard-active':'可將 1 張手牌放到場外，使這張角色活動',
@@ -1000,6 +1000,23 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseLeaveReplacement':
    return action.mode==='leave'?'讓角色退場':'消耗裏向底卡保護角色'+(action.uid?'（'+name()+'）':'');
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':action.mode==='bottom'?'放回牌庫底':'送至場外';
+  case 'chooseRestOpp':return action.uid===null?'不休息對手前排':'使 '+name()+' 休息';
+  case 'chooseDiscardHandActive':return action.uid===null?'不將手牌放到場外':'將 '+name()+' 放到場外並活動';
+  case 'chooseRestOwnImpact':return action.uid===null?'不休息我方前排':'休息 '+name()+' 並獲得衝擊';
+  case 'chooseDiscardActiveUnattacked':return action.uid===null?'不將手牌放到場外':'將 '+name()+' 放到場外';
+  case 'chooseActiveUnattacked':return action.uid===null?'不活動角色':'活動 '+name();
+  case 'chooseRecoverType':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseHandThenDeploy':return action.uid===null?'不將手牌放到場外':'將 '+name()+' 放到場外';
+  case 'chooseRestDeploy':return action.uid===null?'不登場':'以休息狀態登場 '+name();
+  case 'chooseGrantAttackEnd':return '賦予 '+name();
+  case 'chooseAttackEndReactivate':return action.uid===null?'不休息':'休息 '+name()+' 並活動攻擊者';
+  case 'chooseQuietRestDraw':return action.mode==='rest'?'休息並抽1張':'不休息';
+  case 'chooseOppEnergyMove':return action.uid===null?'不移動':'將 '+name()+' 移到能源線';
+  case 'chooseBattleEnergySlot':return '移到能源線空位 '+(action.slot+1);
+  case 'chooseBattleEnergyRemove':return '將 '+name()+' 放到移除區後移動';
+  case 'chooseRetireField':return action.uid===null?'不使場域退場':'使 '+name()+' 退場';
+  case 'chooseMoveOppDest':return action.place==='bottom'?'改放到對方牌庫底':'移到對方能量線'+(Number.isInteger(action.slot)?' '+(action.slot+1):'');
+  case 'chooseOutsideTop':return '將 '+name()+' 放到牌庫頂';
   case 'chooseRaidOrder':return action.mode==='baseFirst'?'先結算突襲底板效果':'先結算突襲登場效果';
   case 'chooseRetirementOrder':return orderEffectLabel(pack,state,action,'先結算此退場效果');
   case 'chooseMoveEffectOrder':return orderEffectLabel(pack,state,action,
@@ -1040,6 +1057,26 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDeckSearch':case 'chooseDeckSearchMulti':
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
+  case 'chooseDiscardSwap':return action.uid===null?'不放場外':'將 '+name()+' 放場外';
+  case 'chooseUnionDiscard':return action.uid===null?'不以活動狀態登場':'將 '+name()+' 放場外並以活動狀態登場';
+  case 'chooseMillScale':return action.uid===null?'不退場':'使 '+name()+' 退場';
+  case 'chooseFacedownHand':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseBlockTuck':return action.uid===null?'不退場':'使 '+name()+' 退場並將牌庫頂裏向置於下方';
+  case 'chooseRevealUnion':return action.uid===null?'不公開':'公開 '+name()+' 並放到牌庫頂';
+  case 'chooseHandRestSelf':return action.uid===null?'不支付手牌':'將 '+name()+' 放場外並以休息狀態登場';
+  case 'chooseEnergyRaid':return action.uid===null?'不突襲':'從場外突襲';
+  case 'chooseRestBattle':return action.uid===null?'不休息':'休息 '+name();
+  case 'chooseLockedEntry':return action.uid===null?'不登場':'以活動狀態登場 '+name();
+  case 'chooseBounceUnion':return action.uid===null?'不回手':'將 '+name()+' 返回手牌';
+  case 'chooseRetireRemove':return action.mode==='remove'?'休息並移入移除區':'使 '+name()+' 退場';
+  case 'chooseSwapFresh':return action.uid===null?'不交換位置':'與 '+name()+' 交換位置';
+  case 'chooseMoveGen':return action.uid===null?'不移動':'將產生能源 1 以下的角色移到前線';
+  case 'chooseNamedBottom':return '將 '+name()+' 放到牌庫底並移到前線';
+  case 'chooseSelectTax':return '給 '+name()+' 追加手牌費用';
+  case 'chooseRemoveAura':return '將 '+name()+' 移入移除區';
+  case 'choosePayMove':return '將 '+name()+' 放場外';
+  case 'chooseMoveLine':return '移動到另一條線';
+  case 'chooseRaidSource':return '使突襲來源以活動狀態登場';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
   case 'chooseAcquiredAttackDraw':return action.mode==='draw'?'已獲得的攻擊時抽 1 張':'不抽牌';
@@ -1216,6 +1253,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRemovedEnter':return action.uid===null?'不從移除區登場':'讓 '+name()+' 從移除區休息登場';
   case 'chooseMainBuff':return '指定 '+name()+'，本回合 BP＋1000';
   case 'chooseOwnBuff':{
+   const kind=state?.pending?.kind;
+   if(kind==='effect-rest-other-trait')return action.uid===null?'不休息其他角色':'休息 '+name()+'，然後使這張角色活動';
+   if(kind==='effect-grant-unblocked-draw')return action.uid===null?'不給予抽牌能力':'使 '+name()+' 在未被阻擋時可以抽 1 張';
+   if(kind==='effect-suppress-own-turn')return action.uid===null?'不移除自己回合中效果':'使 '+name()+' 失去自己回合中效果';
+   if(kind==='effect-optional-own-trait-retire')return action.uid===null?'不退場':'使 '+name()+' 退場';
+   if(kind==='effect-active-resting-front')return action.uid===null?'不使角色活動':'使 '+name()+' 活動';
+   if(kind==='effect-rest-named-then')return action.uid===null?'不休息':'休息 '+name();
    const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
    return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP＋'+amount;
   }
@@ -1227,7 +1271,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandNamedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
-  case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'chooseMoveOppFront':
+   if(state?.pending?.kind==='effect-move-opp-cap')return action.uid===null?'不移動':'選擇 '+name();
+   return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
   case 'choosePeekBuff':return '本回合使 '+name()+' BP 增加';
   case 'chooseFieldTraitBounce':return action.mode==='retire'?'使 '+name()+' 退場':
    '將 '+name()+' 放回手牌';
