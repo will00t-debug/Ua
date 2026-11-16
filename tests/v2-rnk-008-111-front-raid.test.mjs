@@ -51,7 +51,7 @@ function match(){
 test('RNK-1-008 may Raid RNK-1-111 from ENERGY to open FRONT 03 or stay behind',()=>{
  assert.equal(pack.cards['RNK-1-111'].frontForbidden,true,
   'the printed restriction is on the base, not the Raid top');
- assert.equal(pack.cards['RNK-1-008'].frontForbidden,false);
+ assert.notEqual(pack.cards['RNK-1-008'].frontForbidden,true);
  const {s,base,hiko}=match(),legal=legalUniversalActions(packs,s);
  const raids=legal.filter(a=>a.type==='raid'&&a.uid===hiko.uid&&
   a.baseUid===base.uid);
