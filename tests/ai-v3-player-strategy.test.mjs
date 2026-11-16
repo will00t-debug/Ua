@@ -1609,8 +1609,8 @@ function passUntilMain(packs,state,actor){
 test('a known two-play energy line keeps the action point instead of drawing',()=>{
  const {packs,state}=reachPairing('sword-art-online-raid',8401,0,0,12);
  const actor=0;
- // Every match now carries altMainAbilityUsedUids, chooseOnceByUid, and the effect-rest wake ledgers. The decisions below are unchanged.
- assert.equal(stateHash(state),'5c232a59df2146eeab69c3e17622e7c4f7bea77b72734a90471d46f626aba28c');
+ // Every match now carries altMainAbilityUsedUids, chooseOnceByUid, the effect-rest wake ledgers, and nextNameOrIncludesCut. The decisions below are unchanged.
+ assert.equal(stateHash(state),'1543eceafb52b8a6652c8afb792a1e80fb11f5b5da7a9599f1b52d256fa04ceb');
  assert.equal(state.phase,'start');
  assert.equal(state.pending,null);
  assert.deepEqual(state.players.map(player=>player.life.length),[7,7]);
@@ -1697,8 +1697,8 @@ test('a known two-play energy line keeps the action point instead of drawing',()
 test('the action-point hold still applies when the search itself draws',()=>{
  const {packs,state}=reachPairing('white-sword',8401,0,1,5);
  const actor=1;
- // Every match now carries altMainAbilityUsedUids, chooseOnceByUid, and the effect-rest wake ledgers. The decisions below are unchanged.
- assert.equal(stateHash(state).slice(0,16),'907a31fe645c51bc');
+ // Every match now carries altMainAbilityUsedUids, chooseOnceByUid, the effect-rest wake ledgers, and nextNameOrIncludesCut. The decisions below are unchanged.
+ assert.equal(stateHash(state).slice(0,16),'e8d1bfe3a943c993');
  assert.equal(state.phase,'start');
  assert.deepEqual(state.players.map(player=>player.life.length),[7,7]);
  assert.equal(readyAp(state,actor),2);

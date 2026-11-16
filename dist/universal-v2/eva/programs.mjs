@@ -14,6 +14,7 @@ const SPECIAL_TRIGGER=norm('【スペシャル】相手のフロントLのキャ
 const SPECIAL_EFFECT={op:'retireOppFront'};
 const COLOR_REST=norm('【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。');
 const COLOR_RETIRE=norm('【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。');
+const COLOR_OUTSIDE=norm('【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。');
 const DISCOUNT=Object.freeze({
  yellow:Object.freeze({
   text:'相手の場に紫か赤のカードがある場合、手札にあるこのカードの必要エナジーを【黄×1】減らす。',
@@ -45,7 +46,8 @@ function plays(ops){
 function triggerAllowed(card){
  const triggerText=norm(card.triggerTextJa);
  if(card.trigger==='special')return triggerText===SPECIAL_TRIGGER;
- if(card.trigger==='color')return triggerText===COLOR_REST||triggerText===COLOR_RETIRE;
+ if(card.trigger==='color')return triggerText===COLOR_REST||triggerText===COLOR_RETIRE||
+  triggerText===COLOR_OUTSIDE;
  if(card.trigger==='raid')return triggerText===norm(
   '【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。');
  return Object.prototype.hasOwnProperty.call(STANDARD,triggerText)&&
@@ -400,5 +402,74 @@ export function evaSharedProgram(card){
     {op:'enemyBpDown',bp:1000,optional:true}
    ]}
   ]}]}});
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【相手のターン中】このキャラは移動せず、手札に戻らず、BPをマイナスする効果を受けない。'))
+  return dsl({impactNull:true,oppTurnWard:true});
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '自分のターン開始時、このキャラの下に裏向きのカードが3枚以上ある場合、このキャラを退場させる。\n【自分のターン中】このキャラの下の裏向きのカード1枚につき、このキャラはBP+500。\n【アタック時】自分の山札の上から1枚を裏向きでこのキャラの下に置く。'))
+  return dsl({
+   bpPerDirectFacedown:{amount:500,turn:'own'},
+   phaseEffects:[{phase:'start',edge:'start',turn:'own',then:[
+    {op:'retireSelfIfFacedownAtLeast',min:3}
+   ]}],
+   effects:{onAttack:[{op:'tuckFacedownUnder',from:'deckTop',host:'self',count:1,optional:false}]}
+  });
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【登場時】自分の場のカードの下の裏向きのカードを1枚まで場外に置く。\n【起動メイン】【エナジーLにある場合】このキャラをフロントLに移動させる。'))
+  return dsl({impactNull:true,effects:{onPlay:[{op:'stripAnyOwnFacedown',optional:true}]},
+   mainAbility:{op:'moveSelfEnergyToFront'}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈碇 シンジ〉/〈渚 カヲル〉アクティブにし、フロントLに移動できる\n【自分のターン中】自分の場外にあるカードの枚数により、このキャラは以下の効果を全て得る。\n・13枚以上：BP+1000と【ダメージ（2）】\n・26枚以上：BP+1000と【インパクト（4）】\n【起動メイン】【フロントLにある場合】 【ターン1】自分の場のカードの下の裏向きのカードを1枚場外に置く。そうした場合、カードを1枚引く。'))
+  return dsl({raidName:'碇 シンジ',raidBaseNames:['碇 シンジ','渚 カヲル'],
+   outsideCountGrants:[
+    {min:13,turn:'own',bp:1000,attackDamage:2},
+    {min:26,turn:'own',bp:1000,impact:4}
+   ],
+   mainAbility:{op:'stripFacedownThenDraw',oncePerTurn:true,frontOnly:true}});
+ if(card.type==='character'&&card.trigger==='color'&&norm(card.triggerTextJa)===COLOR_OUTSIDE&&effect===norm(
+  '【起動メイン】【レストにする】自分の場の他のキャラを1枚選び、このターン中、BP+500。\n【起動メイン】【エナジーLにある場合】自分のエナジーLのレストの〈碇 シンジ〉を1枚選び、アクティブにする。そうした場合、このキャラをアクティブにする。〈渚 カヲル〉のこの効果は1ターンに1回のみ発動できる。'))
+  return dsl({triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true},
+   mainAbility:{op:'restSelfBuffOther',bp:500},
+   energyWakeNamed:{name:'碇 シンジ',once:'name'}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈真希波・マリ・イラストリアス〉アクティブにし、フロントLに移動できる\nこのキャラの下の裏向きのカード1枚につき、このキャラはBP+500。\n【登場時】カードを2枚引き、自分の手札を1枚場外に置く。\n【起動メイン】【フロントLにある場合】 【ターン1】相手のフロントLのキャラを1枚選び、このターン中、BP-1000。この効果で相手のキャラのBPが0以下になった場合、自分の山札の上から1枚まで裏向きでこのキャラの下に置く。'))
+  return dsl({raidName:'真希波・マリ・イラストリアス',
+   bpPerDirectFacedown:{amount:500,turn:'any'},
+   effects:{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]},
+   mainAbility:{op:'frontBpDownThenTuck',bp:1000,oncePerTurn:true,frontOnly:true}});
+ if(card.type==='character'&&card.trigger==='color'&&norm(card.triggerTextJa)===COLOR_OUTSIDE&&effect===norm(
+  '【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。自分の場の［特徴：WILLE］を1枚選び、このターン中、「このキャラがアタックしてブロックされなかった時、カードを1枚まで引く。」を与える。'))
+  return dsl({triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true},
+   mainAbility:{op:'entryTurnGrantUnblockedDraw',trait:'WILLE',oncePerTurn:true}});
+ if(card.type==='field'&&card.trigger==='get'&&effect===norm(
+  '【登場時】自分の山札の上から2枚を裏向きでこのフィールドの下に置く。\n【起動メイン】【レストにする】このフィールドの下に裏向きのカードがない場合のみ発動できる。このフィールドを退場させる。\n【退場時】自分の場外からキャラカードを1枚まで手札に加える。自分のターン中の場合、自分の手札を1枚場外に置いてもよい。そうした場合、自分のAPカードを1枚まで選び、アクティブにする。'))
+  return dsl({effects:{
+   onPlay:[{op:'tuckFacedownUnder',from:'deckTop',host:'self',count:2,optional:false}],
+   onRetire:[
+    {op:'recoverOutsideAny',zone:'outside',max:1,optional:true,anyOf:[{field:'type',value:'character'}]},
+    {op:'ownTurnHandOutsideActiveAp'}
+   ]
+  },mainAbility:{op:'restRetireIfClearUnder'}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈綾波 レイ〉アクティブにし、フロントLに移動できる\n【起動メイン】【フロントLにある場合】 【このカードを退場させる】相手のフロントLのキャラを1枚まで選び、退場させる。このターン中、次に手札から使用する〈碇 シンジ〉かカード名に「初号機」を含むキャラカードの必要エナジーを【赤×1】減らし、消費APを-1する。\n【退場時】カードを2枚引く。'))
+  return dsl({raidName:'綾波 レイ',
+   mainAbility:{op:'retireSelfGrantNextPlay',frontOnly:true,name:'碇 シンジ',includes:'初号機',
+    color:'red',energy:1,ap:1},
+   effects:{onRetire:[{op:'draw',count:2}]}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈真希波・マリ・イラストリアス〉アクティブにし、フロントLに移動できる\n【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）\n【ターン1】このキャラのアタック終了時、相手のフロントLにキャラがある場合、自分の手札の【トリガー】を持たないカードを2枚場外に置いてもよい。そうした場合、このキャラをアクティブにし、このターン中、BP+3000。'))
+  return dsl({raidName:'真希波・マリ・イラストリアス',printedAttackDamage:2,
+   phaseEffects:[{phase:'attack',edge:'end',turn:'own',then:[
+    {op:'optionalTriggerlessHandActive',count:2,bp:3000}
+   ]}]});
+ if(card.type==='event'&&card.trigger==='special'&&effect===norm(
+  'このカードは自分の場に〈碇 シンジ〉かカード名に「初号機」を含むキャラがある場合のみ使用できる。\nBP5000以下の相手のフロントLのキャラを1枚選び、退場させる。自分の場外の〈綾波 レイ〉を1枚まで、裏向きのカードが下にない自分の場の〈碇 シンジ〉の下に裏向きで置く。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,
+   playRequiresNameOrIncludes:{name:'碇 シンジ',includes:'初号機'},
+   effects:{onPlay:[
+    {op:'retireOppFrontUnderBp',bp:5000},
+    {op:'tuckOutsideUnderNamedHost',name:'綾波 レイ',host:'碇 シンジ',optional:true,
+     hostNeedsEmptyUnder:true}
+   ]}});
  return pending();
 }

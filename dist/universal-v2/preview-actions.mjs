@@ -1065,6 +1065,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDiscardCost':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
   case 'chooseHandLimit':return '超過上限，移除 '+name();
   case 'chooseDiscard':return '棄 '+name();
+  case 'chooseGrantTraitDraw':return action.uid===null?'不給予未阻擋抽牌':'給予 '+name()+' 未阻擋時抽 1 張';
+  case 'chooseTriggerlessPair':return action.uid===null?'不將無觸發手牌放場外':'將無觸發的 '+name()+' 放場外';
+  case 'chooseMayHandAp':return action.uid===null?'不將手牌放場外':'將 '+name()+' 放場外';
+  case 'chooseTuckOutsideHost':return action.uid===null?'不將場外卡放到角色下':'將 '+name()+' 放到指定角色下';
+  case 'chooseRetireOneFront':return action.uid===null?'不退場敵方前線':'退場 '+name();
   case 'chooseMainDiscard':return '支付起動成本：將 '+name()+' 送至場外';
   case 'chooseOutsideRecovery':return action.uid===null?'不回收／完成':'回收 '+name()+' 至手牌';
   case 'chooseRecoveredEntry':
