@@ -189,6 +189,8 @@ function applyRoom(next,{label=true}={}){
   app.lifeRaidActivated=false;app.lifeRaidBoard=false;}
  void decisions().settle(next);
  app.room=next;app.busy=false;
+ // A lobby/waiting-room success message must not remain above an active match.
+ if(next?.status==='playing'&&previous?.status!=='playing')app.notice='';
  if(finished){
   noteOnlineResult(next);
   if(label){
@@ -1627,6 +1629,7 @@ async function joinRoom(event){
  app.busy=true;app.error='';render();
  try{
   app.room=await api('/api/rooms/'+code+'/join',{method:'POST',body:{deckId:data.get('deckId')}});
+  app.notice='';
   history.replaceState(null,'','online.html#'+code);
   startPoll();
  }catch(error){app.error=error.message;}
@@ -1638,6 +1641,7 @@ async function enterListed(code){
  app.busy=true;app.error='';render();
  try{
   app.room=await api('/api/rooms/'+code);
+  app.notice='';
   history.replaceState(null,'','online.html#'+code);
   startPoll();
  }catch(error){app.error=error.message;}
@@ -1657,7 +1661,7 @@ async function leaveListed(room){
  if(app.error)showRoomAlert();
 }
 async function copyCode(code){
- try{await navigator.clipboard.writeText(code);app.notice='已複製房間代碼。';}
+ try{await navigator.clipboard.writeText(code);app.notice='';}
  catch{app.notice='房間代碼：'+code;}
  render();
 }
