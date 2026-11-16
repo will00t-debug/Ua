@@ -61,6 +61,6 @@ test('B037-042 are blocked, and bad evidence/opcodes fail closed',()=>{
     effects:{onPlay:[{op:'customRnkNamedSearch'}]}
   }]}),/effect op unsupported/);
   assert.ok(validateUniversalDeck(pack,{'RNK-1-036':4}).some(e=>e.includes('50')));
-  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+  assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
   assert.equal(source['RNK-1-036'].battleReady,false);
 });

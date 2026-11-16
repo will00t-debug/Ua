@@ -1,6 +1,6 @@
 // RNK -> Universal V2 adapter. Shared ability DSL only.
 // This is deliberately title data conversion, not a second effects engine.
-// The official title registry and production pack are not wired in this milestone.
+// Source rows stay unverified. The production pack is the staged shared DSL.
 import {createUniversalPack} from './pack.mjs';
 
 // Program keys must represent shared V2 schema fields, never RNK-specific jobs.

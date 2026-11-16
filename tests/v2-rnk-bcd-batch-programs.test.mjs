@@ -65,7 +65,7 @@ test('batch cannot create a complete 50-card deck or enter official production p
  const pack=createRnkBcdBatchStagingPack();
  assert.ok(validateUniversalDeck(pack,{'RNK-1-063':4}).some(e=>e.includes('50')));
  assert.ok(validateUniversalDeck(pack,{'RNK-1-999':1}).some(e=>e.includes('Unregistered')));
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
  assert.equal(RNK_IDENTITY_INVENTORY.filter(row=>row.battleReady).length,0);
  assert.equal(RNK_IDENTITY_INVENTORY.filter(row=>row.effectImplemented).length,0);
 });

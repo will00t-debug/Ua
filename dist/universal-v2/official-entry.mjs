@@ -20,6 +20,7 @@ import {createMhaV2Pack} from './mha-pack.mjs';
 import {createMha2Pack} from './mha2-pack.mjs';
 import {createMhaPointPack} from './mha-point-pack.mjs';
 import {createMha3Pack} from './mha3-pack.mjs';
+import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -71,6 +72,7 @@ export function officialV2Pack(title){
  if(title==='kmr')return createKmrBattlePack();
  if(title==='imc')return createImcBattlePack();
  if(title==='mha')return createMhaBattlePack();
+ if(title==='rnk')return createRnkBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -216,6 +218,23 @@ export function imcPracticeDeck(){
  const issues=validateUniversalDeck(pack,counts);
  if(issues.length)throw Error('IMC red practice deck: '+issues.join('; '));
  return {pack,counts:Object.freeze(counts)};
+}
+
+let rnkBattlePack=null;
+export function createRnkBattlePack(){
+ if(rnkBattlePack)return rnkBattlePack;
+ const pack=createRnkBcdBatchStagingPack();
+ if(Object.keys(pack.cards).length!==114)throw Error('RNK live pack drifted: '+Object.keys(pack.cards).length);
+ rnkBattlePack=pack;
+ return rnkBattlePack;
+}
+
+export function rnkPracticeDeck(){
+ const pack=createRnkBattlePack();
+ const counts=practiceDeck(pack,{color:'blue'});
+ const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='blue');
+ if(other.length)throw Error('Rurouni Kenshin blue practice deck included another color');
+ return {pack,counts};
 }
 
 let mhaBattlePack=null;

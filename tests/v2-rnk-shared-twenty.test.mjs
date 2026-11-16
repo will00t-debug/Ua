@@ -86,7 +86,7 @@ test('twenty official Japanese prints stage on the shared pack and stay out of b
  }
  assert.equal(source['RNK-1-062'].nameZhTw,'大型甲鐵艦煉獄');
  assert.equal(source['RNK-1-075'].nameZhTw,'相樂左之助');
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });
 
 test('named-card use is a successful event play, and 007 gains Impact only then',()=>{

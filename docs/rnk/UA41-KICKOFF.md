@@ -348,3 +348,7 @@ Three staged resolutions did not match the printed sentences. The programs stay 
 - `RNK-1-050`: the deck-top tuck happened before the retired character's on-retire draw, so that draw took the next card. The tuck now waits until the retirement, including its draw, has finished. If the character stays, nothing is tucked.
 - `RNK-1-071`: the extra hand card is charged when the opponent chooses that character with an effect, including the new retire-or-remove, mill-scale, and generated-energy move choices. An empty hand cannot make that choice. The owner's own effect does not pay it.
 - Still approximate: `RNK-1-044` becomes active after it has already entered rested, and `RNK-1-040` / `RNK-1-054` / `RNK-1-056` still use the first empty slot when several are open. **0/114** battle-accepted. No merge and no deployment.
+
+## 2026-11-16 — official battles use the staged pack
+
+The picture deck builder and the V2 match entry now load the 114-card staged pack. A legal 50-card list can start a solo match, including against the blue practice list, and a saved legal list can enter an online room. Source rows stay `battleReady:false`, `effectImplemented:false`, and `cardDataVerified:false`. This opens play. It does not mark any card as officially FAQ-accepted. The approximations above remain.

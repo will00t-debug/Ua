@@ -85,7 +85,7 @@ test('third official Japanese batch stages twenty shared programs',()=>{
  }
  assert.equal(source['RNK-1-101'].set,'UA41ST');
  assert.equal(source['RNK-1-008'].name,'比古清十郎');
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });
 
 test('a battle loser moves to energy instead of leaving, and a higher blocker stays',()=>{

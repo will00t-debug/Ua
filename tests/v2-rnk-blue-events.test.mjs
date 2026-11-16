@@ -71,5 +71,5 @@ test('032: mandatory exactly-one Kenshin buff, optional up-to-one AP ready, DRAW
 test('new source checks do not enable RNK official battle pool',()=>{
  assert.equal(source['RNK-1-030'].battleReady,false);
  assert.equal(source['RNK-1-032'].battleReady,false);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });

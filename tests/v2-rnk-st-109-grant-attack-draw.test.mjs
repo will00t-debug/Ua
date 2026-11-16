@@ -60,5 +60,5 @@ test('109 does not allow missing optional Kenshin to prevent its mandatory first
  assert.equal(c.effects.onPlay[1].name,'緋村 剣心');
  assert.notEqual(c.effects.onPlay[1].name,'緋村劍心');
  assert.ok(validateUniversalDeck(pack,{[id]:4}).some(s=>s.includes('50')));
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });

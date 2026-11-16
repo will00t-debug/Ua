@@ -3,7 +3,8 @@ const TITLES=[
  ['solo-leveling','我獨自升級'],['mushoku-tensei','無職轉生'],['rezero','Re:Zero'],
  ['steins-gate','命運石之門'],['madoka','魔法少女小圓'],
  ['inuyasha','犬夜叉'],['kjn','我想成為影之強者！'],
- ['aot','進擊的巨人']
+ ['aot','進擊的巨人'],
+ ['rnk','浪客劍心']
 ];
 const SAVED=[
  ['bleach','bleach-arena-saved-decks-v1'],['gurren-lagann','ua-ttg-saved-v1'],
@@ -11,7 +12,8 @@ const SAVED=[
  ['mushoku-tensei','ua-mst-saved-v1'],['rezero','ua-rez-saved-v1'],
  ['steins-gate','ua-stg-saved-v1'],['madoka','ua-mmm-saved-v1'],
  ['inuyasha','ua-iys-saved-v1'],['kjn','ua-kjn-saved-v1'],
- ['aot','ua-aot-saved-v1']
+ ['aot','ua-aot-saved-v1'],
+ ['rnk','ua-rnk-saved-v1']
 ];
 const DRAFTS=[
  ['bleach','bleach-arena-deck-v1'],['gurren-lagann','ua-ttg-draft-v1'],
@@ -19,7 +21,8 @@ const DRAFTS=[
  ['mushoku-tensei','ua-mst-draft-v1'],['rezero','ua-rez-draft-v1'],
  ['steins-gate','ua-stg-draft-v1'],['madoka','ua-mmm-draft-v1'],
  ['inuyasha','ua-iys-draft-v1'],['kjn','ua-kjn-draft-v1'],
- ['aot','ua-aot-draft-v1']
+ ['aot','ua-aot-draft-v1'],
+ ['rnk','ua-rnk-draft-v1']
 ];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
@@ -265,7 +268,7 @@ function loadCovers(){
  // Loaded only after login. The account script itself stays a classic script so
  // the login screen can boot even when the card catalogue is unavailable.
  try{
-  Promise.all([import('./title-registry.mjs?v=20261116rnk'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
+  Promise.all([import('./title-registry.mjs?v=20261116rnkbattle'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
    coverCatalogue={titles:titles.TITLES,summarize:gallery.summarizeDeck};
    if(app.user)render();
   }).catch(()=>{});

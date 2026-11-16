@@ -123,7 +123,7 @@ test('022,023,027 reuse plain impact null, active energy +1 and FINAL AP recover
 test('blue staging never changes TC display or enables production gameplay',()=>{
  for(const id of ids)assert.equal(source[id].battleReady,false);
  for(const id of activeIds)assert.ok(pack.cards[id],id);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });
 
 test('002 also counts as Kenshin across all zones via canonical V2 printed alias',()=>{
