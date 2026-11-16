@@ -13,8 +13,9 @@ const SHARED_KEYS=new Set([
   'emptyOwnFieldHandEnergyDiscount',
   'opponentFieldColorsHandEnergyDiscount','printedHandEnergyDiscount',
   'unblockedAttack','attackWinDraw','nameAliases','phaseEffects','unionEnergy',
-  'printedMains','cannotAttack','battleRemoveInstead','battleLoseToHand',
-  'oppEffectLeave','moveTriggers','moveObserver'
+  'printedMains','cannotAttack','battleRemoveInstead','battleEnergyInstead',
+  'battleLoseToHand','oppEffectLeave','substituteOppRetire',
+  'conditionalImpactBpAtLeast','moveTriggers','moveObserver'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
 // Audited cross-language print token. Japanese gameplay filters must not
