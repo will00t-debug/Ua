@@ -109,6 +109,14 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:My-hero-academia-jpn.svg',
   credit:'堀越耕平',
   license:'Public domain'
+ }),
+ // Commons has the 2023 anime wordmark as a PNG. There is no SVG upload.
+ rnk:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/4/42/Rurouni_Kenshin_2023_Anime_Logo.png',
+  label:'浪客劍心',
+  source:'https://commons.wikimedia.org/wiki/File:Rurouni_Kenshin_2023_Anime_Logo.png',
+  credit:'和月伸宏／集英社',
+  license:'Public domain'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;

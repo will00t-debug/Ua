@@ -102,8 +102,8 @@ export function rnkPrintsFor(idValue) {
   return freeze(prints);
 }
 
-// Identity-only inventory. Do NOT add to officialV2Pack / editor until each
-// card has verified properties and independently accepted V2 effect programs.
+// Identity inventory shown in the picture deck builder. Do NOT add these
+// cards to officialV2Pack until each effect is independently battle-accepted.
 export const RNK_TC_CATALOG = freeze([
   ...RNK_CARDS_001_007,
   ...RNK_CARDS_008_014,

@@ -11,7 +11,7 @@ import {MST_CARDS} from '../dist/mst-builder.mjs';
 import {REZERO_VOL2_CARDS} from '../dist/rezero-vol2.mjs';
 const app=readFileSync(new URL('../dist/app.mjs',import.meta.url),'utf8');
 test('registered titles and verified card inventory are available in deck builders',()=>{
- assert.deepEqual(TITLES.map(t=>t.id),['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr','csm','imc','mha']);
+ assert.deepEqual(TITLES.map(t=>t.id),['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr','csm','imc','mha','rnk']);
  assert.equal(CARDS.length,276);
  assert.equal(TTG_CARDS.length,81);
  assert.equal(TTG_PENDING_CARDS.length,0);

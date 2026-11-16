@@ -22,12 +22,15 @@ test('every registered work displays its actual Wikimedia series wordmark, not a
  for(const title of TITLES){
   const logo=titleLogo(title.id);
   assert.ok(logo,'logo missing for '+title.id);
-  const wordmark=title.id==='imc'
+  const wordmark=title.id==='imc'||title.id==='rnk'
    ?/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[a-f0-9]\/[a-f0-9]{2}\/.+\.png$/
    :/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[a-f0-9]\/[a-f0-9]{2}\/.+\.svg$/;
   assert.match(logo.image,wordmark,title.id);
   if(title.id==='imc'){
    assert.equal(logo.image,'https://upload.wikimedia.org/wikipedia/commons/b/b4/THE_IDOLM%40STER_CINDERELLA_GIRLS_Logo.png');
+  }
+  if(title.id==='rnk'){
+   assert.equal(logo.image,'https://upload.wikimedia.org/wikipedia/commons/4/42/Rurouni_Kenshin_2023_Anime_Logo.png');
   }
   assert.match(logo.source,/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
   assert.ok(markup.includes('data-title="'+title.id+'"'));

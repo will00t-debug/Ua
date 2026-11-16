@@ -1,5 +1,5 @@
 // Production-only V2 deck compatibility: never use legacy auto, rules or match reducers.
-import {TITLES} from './title-registry.mjs?v=20261114mha3';
+import {TITLES} from './title-registry.mjs?v=20261116rnk';
 import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261104kmrport1';
 import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261114mha3';
@@ -20,7 +20,8 @@ export const LEGACY_DECK_KEYS=Object.freeze({
  kmr:['ua-kmr-draft-v1','ua-kmr-saved-v1'],
  csm:['ua-csm-draft-v1','ua-csm-saved-v1'],
  imc:['ua-imc-draft-v1','ua-imc-saved-v1'],
- mha:['ua-mha-draft-v1','ua-mha-saved-v1']
+ mha:['ua-mha-draft-v1','ua-mha-saved-v1'],
+ rnk:['ua-rnk-draft-v1','ua-rnk-saved-v1']
 });
 export const V2_EDITOR_TRANSFER_KEY='ua-v2-editor-deck-v1';
 export const titleCatalogue=id=>TITLES.find(t=>t.id===id)||null;
@@ -28,6 +29,7 @@ export function registeredPackForEditor(title){
  if(!titleCatalogue(title))return null;
  // Re:Zero stays outside the five-title census. All 73 regular EX17BT
  // cards share the set-1 battle pack. AP cards are not deck cards.
+ if(title==='rnk')return null;
  if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha')return officialV2Pack(title);
  return registeredV2TitlePack(title);
 }
