@@ -1,4 +1,5 @@
 // Strengthened Hard policy for the live V2 reducer.
+// Fixed AI mistakes must not return. See docs/v2-handoff/V2-do-not-regress.md.
 // The frozen heuristic remains chooseLegacyHardAiAction in ai.mjs.
 // Every action dispatched here is taken from legalUniversalActions.
 // Scoring and search see only universalPublicView plus the controller's
