@@ -9,7 +9,7 @@ import {publicCardResults} from './public-card-results.mjs';
 export const UNIVERSAL_PREVIEW_REPLAY_VERSION=1;
 const privateActions=new Set([
  'chooseDeckSearch','chooseDeckSearchMulti','chooseInspectedOutside',
- 'chooseTopOrder','chooseTopScript','chooseTopCard','chooseTopTriggerless','chooseDiscardCost','chooseDiscardGate',
+ 'chooseTopOrder','chooseTopScript','chooseTopCard','chooseTopTriggerless','chooseDiscardCost','chooseDiscardGate','chooseOrDeploy','chooseHandScaled','chooseDiscardReenter','chooseOutsidePay','chooseDiscardOne',
  'chooseDiscard','chooseHandLimit','chooseLeaveReplacement'
 ]);
 const numeric=v=>Number.isSafeInteger(v)&&v>=0;

@@ -46,6 +46,8 @@ function triggerAllowed(card){
  const triggerText=norm(card.triggerTextJa);
  if(card.trigger==='special')return triggerText===SPECIAL_TRIGGER;
  if(card.trigger==='color')return triggerText===COLOR_REST||triggerText===COLOR_RETIRE;
+ if(card.trigger==='raid')return triggerText===norm(
+  '【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。');
  return Object.prototype.hasOwnProperty.call(STANDARD,triggerText)&&
   STANDARD[triggerText]===card.trigger;
 }
@@ -276,5 +278,127 @@ export function evaSharedProgram(card){
     kind:'ownOtherCardEnergyAtLeast',turn:'own',minEnergy:5,min:1,zone:'field',excludeSelf:true
    },bp:1000}]
   });
+ const MISATO='葛\u{E0100}城 ミサト';
+ if(card.type==='event'&&effect===norm(
+  '自分の場のキャラを1枚選び、アクティブにする。選んだキャラが〈綾波 レイ〉の場合、自分のAPカードを1枚まで選び、アクティブにする。自分の場に黄以外の〈碇 シンジ〉がある場合、カードを1枚引く。'))
+  return onPlay({op:'activeOwnThenFollow',ifName:'綾波 レイ',thenAp:1,
+   drawIf:{name:'碇 シンジ',colorExcept:'yellow'}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の手札か場外から必要エナジーが2以下の紫の〔〈アヤナミレイ（仮称）〉か〈渚 カヲル〉かフィールドカード〕を1枚まで自分の場にレストで登場させる。場外から登場させた場合、自分の手札を1枚場外に置く。'))
+  return onPlay({op:'deployOrFilterRest',color:'purple',maxEnergy:2,optional:true,
+   names:['アヤナミレイ（仮称）','渚 カヲル'],orType:'field',
+   zones:['hand','outside'],outsideDiscard:true});
+ if(card.type==='character'&&card.trigger==='get'&&effect===norm(
+  '【レイド】〈渚 カヲル〉アクティブにし、フロントLに移動できる\n【登場時】カードを1枚引く。自分か相手の場のカードを1枚まで選び、そのカードの下にあるカードを全て場外に置く。'))
+  return dsl({raidName:'渚 カヲル',effects:{onPlay:[
+   {op:'draw',count:1},{op:'stripAllUnder',optional:true}
+  ]}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈アヤナミレイ（仮称）〉アクティブにし、フロントLに移動できる\n【自分のターン中】このキャラはBP+500。\n【登場時】カードを2枚引き、自分の手札を2枚場外に置く。\n【退場時】自分の手札を1枚場外に置いてもよい。そうした場合、このカードを自分の場にレストで登場させる。'))
+  return dsl({raidName:'アヤナミレイ（仮称）',ownTurnBp:500,effects:{
+   onPlay:[{op:'drawDiscard',count:2,discardCount:2}],
+   onRetire:[{op:'optionalDiscardReenterRest'}]
+  }});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】 【このカードを退場させる】自分の場の必要エナジーが5以上の紫のキャラを1枚まで選び、このターン中、【インパクト（1）】か【ダメージ（2）】を与える。'))
+  return dsl({mainAbility:{op:'restRetireThen',then:[{
+   op:'grantImpactOrDamage',optional:true,color:'purple',minEnergy:5,impact:1,damage:2
+  }]}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈葛城 ミサト〉アクティブにし、フロントLに移動できる\n【登場時】このキャラはこのターン中、「相手はこのキャラのアタックを可能ならブロックしなければならない。」を得る。\n【退場時】自分の山札の上から5枚見る。その中から必要エナジーが5以上のカードを2枚まで公開し手札に加える。残りを望む順で山札の下に置く。'))
+  return dsl({raidName:MISATO,effects:{
+   onPlay:[{op:'grantSelfMustBlockThisTurn'}],
+   onRetire:[{op:'searchTopUpToTwoBottom',count:5,max:2,rest:'bottom',logic:'all',filters:[
+    {field:'printedRequiredEnergyAtLeast',value:5}
+   ]}]
+  }});
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '【アタック時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが3以下で消費APが1の紫の〈碇 シンジ〉を1枚まで自分の場にレストで登場させる。'))
+  return dsl({effects:{onAttack:[{op:'discardGate',optional:true,then:[{
+   op:'deployOutsideNameRest',name:'碇 シンジ',color:'purple',maxEnergy:3,ap:1,
+   includeRaid:true,optional:true
+  }]}]}});
+ if(card.type==='event'&&card.trigger==='special'&&effect===norm(
+  '『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。カードを1枚引き、自分の手札を1枚場外に置く。自分の場に〈碇 シンジ〉か〈エヴァンゲリオン初号機（ガイウスの槍）〉がある場合、『BP5000以下』に代わる。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,effects:{onPlay:[
+   {op:'retireOppFrontUnderBp',bp:3000,bonusBp:5000,
+    bonusNames:['碇 シンジ','エヴァンゲリオン初号機（ガイウスの槍）']},
+   {op:'drawDiscard',count:1}
+  ]}});
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【起動メイン】【ターン1】自分の場外に必要エナジーが異なる赤の〈綾波 レイ〉が2種類以上ある場合のみ発動できる。このキャラは次の自分のターン開始時まで、発生エナジー+【赤】。'))
+  return dsl({impactNull:true,mainAbility:{
+   op:'distinctNameEnergyPlus',oncePerTurn:true,name:'綾波 レイ',color:'red',minKinds:2,amount:1
+  }});
+ if(card.type==='character'&&norm(card.triggerTextJa)===COLOR_RETIRE&&effect===norm(
+  '【起動メイン】【場外にある場合】 【手札を2枚場外に置く】 【APを1支払う】このカードの必要エナジーを満たしている場合のみ発動できる。場外のこのカードを自分の場にレストで登場させる。\n【登場時】このキャラと別のラインにある自分のキャラを1枚選び、このキャラと位置を入れ替えてもよい。'))
+  return dsl({
+   triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
+   outsideActivate:{hand:2,ap:1,ready:false},
+   effects:{onPlay:[{op:'maySwapOwnFrontEnergy',optional:true,withSelf:true}]}
+  });
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '【レイド】〈真希波・マリ・イラストリアス〉アクティブにし、フロントLに移動できる\n【登場時】自分の場に【トリガー】を持たないカードが4枚以上ある場合、カードを1枚引く。\n【退場時】相手のフロントLのキャラを1枚まで選び、レストにする。'))
+  return dsl({raidName:'真希波・マリ・イラストリアス',effects:{
+   onPlay:[{op:'drawIfOwnTriggerlessAtLeast',min:4,count:1}],
+   onRetire:[{op:'restOppFrontOne',optional:true}]
+  }});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈式波・アスカ・ラングレー〉アクティブにし、フロントLに移動できる\n【登場時】自分の手札から必要エナジーが『0』以下の【トリガー】を持たない赤のキャラカードを1枚まで自分の場にレストで登場させる。自分の場の【トリガー】を持たないカード1枚につき、この効果で登場させるキャラの必要エナジーの範囲+1。自分の場に【トリガー】を持たないカードが4枚以上ある場合、カードを2枚引き、自分の手札を1枚場外に置く。'))
+  return dsl({raidName:'式波・アスカ・ラングレー',effects:{onPlay:[
+   {op:'deployHandRestScaled',color:'red',type:'character',noTrigger:true,
+    baseEnergy:0,perTriggerless:1,optional:true},
+   {op:'drawDiscard',count:2,discardCount:1,when:{
+    kind:'ownTriggerlessAtLeast',turn:'any',min:4,zone:'field'}}
+  ]}});
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '【相手のターン中】自分のライフエリアから【トリガー】を持たないカードが場外に置かれた時、このキャラをこのターン中、BP+2000してもよい。〈式波・アスカ・ラングレー〉のこの効果は1ターンに1回のみ発動できる。'))
+  return dsl({lifeLeave:{turn:'opponent',noTrigger:true,once:'name',mayBp:2000}});
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  '【相手のターン中】自分のライフエリアから【トリガー】を持たないカードが場外に置かれた時、自分の場に【トリガー】を持たないカードが4枚以上ある場合、アクティブのこのキャラをレストにしてもよい。そうした場合、場外に置かれたそのカードを1枚まで手札に加える。〈真希波・マリ・イラストリアス〉のこの効果は1ターンに1回のみ発動できる。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。'))
+  return dsl({
+   lifeLeave:{turn:'opponent',noTrigger:true,once:'name',minTriggerless:4,
+    restSelf:true,recoverLeft:true},
+   effects:{onPlay:[{op:'drawDiscard',count:1}]}
+  });
+ if(card.type==='event'&&effect===norm(
+  '自分の場の【レイド】を持ち、レイド状態でないキャラを1枚選び、アクティブにし、このターン中、BP+1000と【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、指定した場合、相手はブロックできない）を与える。'))
+  return onPlay({op:'activeUnraidedRaidGrant',bp:1000,sniper:true});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈碇 シンジ〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n【アタック時】自分のエナジーLのアクティブのカードを望む枚数レストにする。この効果でレストにしたカードの必要エナジーの合計により、このキャラはこのターン中、以下の効果を全て得る。\n・4以上：BP+3000。\n・8以上：【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）'))
+  return dsl({raidName:'碇 シンジ',printedImpact:1,effects:{onAttack:[{
+   op:'restEnergySumGrant',thresholds:[
+    {min:4,bp:3000},{min:8,damage:2}
+   ]
+  }]}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm(
+  '【レイド】〈綾波 レイ〉アクティブにし、フロントLに移動できる\n【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）\n【退場時】カードを2枚引く。その後、自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが1以下で赤の〈綾波 レイ〉を1枚まで自分の場にレストで登場させる。'))
+  return dsl({raidName:'綾波 レイ',readyOnBlockCount:1,effects:{onRetire:[
+   {op:'draw',count:2},
+   {op:'discardGate',optional:true,then:[{
+    op:'deployOutsideNameRest',name:'綾波 レイ',color:'red',maxEnergy:1,
+    includeRaid:true,optional:true
+   }]}
+  ]}});
+ if(card.type==='event'&&effect===norm(
+  '自分の場の〈碇 シンジ〉かカード名に「初号機」を含むキャラを1枚まで選び、次の自分のターン開始時まで、BP+3000。自分の場のアクティブの〈綾波 レイ〉を1枚レストにしてもよい。そうした場合、カードを1枚引く。'))
+  return plays([
+   {op:'buffNameOrIncludesUntilNext',optional:true,name:'碇 シンジ',includes:'初号機',bp:3000},
+   {op:'optionalRestNamedActiveDraw',name:'綾波 レイ'}
+  ]);
+ if(card.type==='character'&&effect===norm(
+  '自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【紫×2】減らす。\n【起動メイン】【レストにする】このカードを裏向きで自分の場の〈エヴァンゲリオン第13号機〉の下に置く。そうした場合、カードを2枚引き、自分の手札を1枚場外に置く。'))
+  return dsl({emptyOwnFieldHandEnergyDiscount:2,mainAbility:{
+   op:'restTuckUnderName',name:'エヴァンゲリオン第13号機',
+   then:[{op:'drawDiscard',count:2,discardCount:1}]
+  }});
+ if(card.type==='character'&&card.trigger==null&&effect===norm(
+  'このキャラがレイドされた時、以下から1つ選ぶ。（レイドしたキャラの【登場時】とこの効果は望む順で処理する）\n・カードを1枚引く。\n・相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000。'))
+  return dsl({effects:{onRaided:[{op:'chooseOne',optional:false,options:[
+   {id:'draw',label:'カードを1枚引く',turn:'any',then:[{op:'draw',count:1}]},
+   {id:'down',label:'相手の前排BP-1000',turn:'any',then:[
+    {op:'enemyBpDown',bp:1000,optional:true}
+   ]}
+  ]}]}});
  return pending();
 }
