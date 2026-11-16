@@ -220,7 +220,9 @@ test('009 allows 0, 1, or 2 inspected cards to go outside while the rest returns
   assert.equal(window.length,2);
   s=pick(s,a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy'&&a.slot===1);
   assert.equal(s.pending?.kind,'effect-top-inspect-many');
-  assert.deepEqual(universalPrivateChoices(packs,s,0).inspected.map(c=>c.uid),window);
+  assert.deepEqual(legalUniversalActions(packs,s)
+   .filter(a=>a.type==='chooseInspectedOutside'&&a.uid!==null)
+   .map(a=>a.uid).sort(),window.slice().sort());
   assert.equal(universalPrivateChoices(packs,s,1),null);
   for(const uid of window.slice(0,n)){
    s=pick(s,a=>a.type==='chooseInspectedOutside'&&a.uid===uid);
