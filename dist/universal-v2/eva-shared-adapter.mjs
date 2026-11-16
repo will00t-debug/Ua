@@ -5,7 +5,8 @@ import {evaSharedProgram} from './eva/programs.mjs';
 
 const SHARED_KEYS=new Set([
  'ready','implementation','effects','mainAbility','activeExtraEnergy','impactNull',
- 'step','opponentFieldColorsHandEnergyDiscount','ownTurnBp','triggerEffect'
+ 'step','opponentFieldColorsHandEnergyDiscount','ownTurnBp','triggerEffect',
+ 'emptyOwnFieldHandEnergyDiscount'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
 const COLORS=new Set(['blue','purple','red','green','yellow']);

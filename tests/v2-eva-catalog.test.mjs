@@ -18,7 +18,8 @@ const READY=[
  'EVA-1-047','EVA-1-048',
  'EVA-1-049','EVA-1-050','EVA-1-051','EVA-1-054','EVA-1-055','EVA-1-059','EVA-1-060',
  'EVA-1-061','EVA-1-064','EVA-1-066','EVA-1-067','EVA-1-068','EVA-1-069','EVA-1-070',
- 'EVA-1-072','EVA-1-073','EVA-1-076','EVA-1-083','EVA-1-084','EVA-1-086','EVA-1-089',
+ 'EVA-1-072','EVA-1-073','EVA-1-074','EVA-1-076','EVA-1-083','EVA-1-084','EVA-1-085',
+ 'EVA-1-086','EVA-1-089',
  'EVA-1-097','EVA-1-100','EVA-1-101','EVA-1-102','EVA-1-103','EVA-1-107','EVA-1-110',
  'EVA-1-111'
 ];
@@ -39,7 +40,7 @@ test('UA44 EVA catalog keeps one identity per deck card and leaves AP out',()=>{
  assert.equal(catalog.ap.every(card=>card.deckLegal===false),true);
  assert.equal(registeredPackForEditor('eva'),null);
  const closed=editorV2Status('eva',{'EVA-1-001':4,'EVA-1-068':46});
- assert.equal(closed.registered,52);
+ assert.equal(closed.registered,54);
  assert.equal(closed.ready,false);
  assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
  assert.throws(()=>officialV2Pack('eva'),/正式 V2/);
@@ -82,10 +83,12 @@ test('only full Japanese prints that already exist in the shared engine are stag
  assert.equal(pack.cards['EVA-1-028'].mainAbility.frontOnly,false);
  assert.equal(pack.cards['EVA-1-028'].mainAbility.then[0].op,'millTop');
  assert.equal(pack.cards['EVA-1-072'].mainAbility.then[0].op,'drawDiscard');
- assert.equal(evaSharedProgram(catalog.byId.get('EVA-1-085')).ready,false);
+ assert.equal(pack.cards['EVA-1-074'].emptyOwnFieldHandEnergyDiscount,2);
+ assert.equal(pack.cards['EVA-1-074'].effects.onPlay[0].op,'peekTopOrOutside');
+ assert.equal(pack.cards['EVA-1-085'].effects.onPlay[0].options[1].then[0].op,'mayShiftOwnCharacter');
  assert.equal(pack.cards['EVA-1-102'].effects.onPlay[0].count,2);
  assert.equal(pack.cards['EVA-1-111'].mainAbility.op,'restSelfBuffOther');
- for(const id of ['EVA-1-002','EVA-1-003','EVA-1-074','EVA-1-085','EVA-1-099'])
+ for(const id of ['EVA-1-002','EVA-1-003','EVA-1-062','EVA-1-088','EVA-1-099'])
   assert.equal(evaSharedProgram(catalog.byId.get(id)).ready,false,id);
  assert.equal(evaSharedProgram(catalog.byId.get('EVA-1-002')).blocker,EVA_SHARED_BLOCKER);
  assert.equal(evaSharedCard(catalog.byId.get('EVA-1-033')),null);

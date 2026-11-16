@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalPrivateChoices,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
 function face(extra){
  return {
@@ -126,4 +126,76 @@ test('a character onPlay shows the top card and places it on top or outside',()=
  assert.throws(()=>createUniversalPack({id:'probe',version:'bad',cards:[
   face({id:'LATE',effects:{onRetire:[{op:'peekTopOrOutside'}]}})
  ]}),/top or outside look/);
+});
+
+const shiftChoice={
+ op:'chooseOne',optional:false,options:[
+  {id:'buff',label:'其他角色BP',turn:'any',then:[{
+   op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
+   optional:true,excludeSelf:true
+  }]},
+  {id:'shift',label:'換到另一條線',turn:'any',then:[{op:'mayShiftOwnCharacter'}]}
+ ]
+};
+function localMatch(cards,seed){
+ const bodies=[...cards,...Array.from({length:12},(_,i)=>face({
+  id:'PAD-'+String(i+1).padStart(2,'0'),implementation:'vanilla',bp:1000
+ }))];
+ const built=createUniversalPack({id:'probe',version:'shift-'+seed,cards:bodies});
+ const spec={};
+ let left=50;
+ for(const card of bodies){
+  const n=Math.min(card.id.startsWith('PAD-')?4:2,left);
+  if(n<=0)break;
+  spec[card.id]=n;left-=n;
+ }
+ assert.equal(left,0);
+ let s=newUniversalMatch(built,{decks:[spec,spec],first:0,seed});
+ for(let i=0;i<4&&s.phase!=='main';i++)s=dispatchUniversalAction(built,s,{type:'next'});
+ assert.equal(s.phase,'main');
+ return {built,s};
+}
+
+test('an empty own field reduces only the hand energy, and the onPlay still shows the top card',()=>{
+ let {built,s}=localMatch([
+  face({id:'EMPTY',energy:2,emptyOwnFieldHandEnergyDiscount:2,
+   effects:{onPlay:[{op:'peekTopOrOutside'}]}})
+ ],74);
+ assert.equal(zoneRequiredEnergy(built,s,0,built.cards.EMPTY,'hand'),0);
+ assert.equal(zoneRequiredEnergy(built,s,0,built.cards.EMPTY,'life'),2);
+ const played=pull(s,'EMPTY');
+ s.players[0].hand.push(played);
+ const top=s.players[0].deck[0];
+ s=dispatchUniversalAction(built,s,{type:'play',uid:played.uid,line:'front',slot:0});
+ assert.equal(s.pending.kind,'private-top-or-outside');
+ assert.equal(s.pending.uid,top.uid);
+ const occupied=structuredClone(s);
+ const filler=occupied.players[0].deck.pop();
+ filler.ready=true;filler.fieldEntryStamp=occupied.nextFieldEntryStamp++;
+ occupied.players[0].front[1]=filler;
+ assert.equal(zoneRequiredEnergy(built,occupied,0,built.cards.EMPTY,'hand'),2);
+});
+
+test('a character onPlay choice can move one own character to the other line',()=>{
+ let {built,s}=localMatch([face({id:'SHIFT',effects:{onPlay:[shiftChoice]}})],85);
+ const played=pull(s,'SHIFT');
+ s.players[0].hand.push(played);
+ s=dispatchUniversalAction(built,s,{type:'play',uid:played.uid,line:'front',slot:0});
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ assert.deepEqual(s.pending.options.map(option=>option.id),['buff','shift']);
+ s=dispatchUniversalAction(built,s,{type:'chooseEffectMode',mode:'shift'});
+ assert.equal(s.pending.kind,'effect-line-move');
+ assert.ok(s.pending.choices.includes(played.uid));
+ s=dispatchUniversalAction(built,s,{type:'chooseLineMove',uid:played.uid});
+ assert.equal(s.pending.line,'energy');
+ s=dispatchUniversalAction(built,s,{type:'chooseLineSlot',slot:0});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front[0],null);
+ assert.equal(s.players[0].energy[0].uid,played.uid);
+ assert.ok(createUniversalPack({id:'probe',version:'event-shift',cards:[
+  face({id:'EVENT',type:'event',energy:0,bp:0,effects:{onPlay:[shiftChoice]}})
+ ]}).cards.EVENT);
+ assert.throws(()=>createUniversalPack({id:'probe',version:'bare-shift',cards:[
+  face({id:'BARE',effects:{onPlay:[{op:'mayShiftOwnCharacter'}]}})
+ ]}),/own line shift/);
 });

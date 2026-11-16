@@ -139,6 +139,20 @@ export function evaSharedProgram(card){
   return dsl({mainAbility:{op:'restSelfThen',frontOnly:false,then:[{op:'millTop',count:1}]}});
  if(card.type==='character'&&effect==='【起動メイン】【レストにする】カードを1枚引き、自分の手札を1枚場外に置く。')
   return dsl({mainAbility:{op:'restSelfThen',frontOnly:false,then:[{op:'drawDiscard',count:1}]}});
+ if(card.type==='character'&&card.color==='red'&&effect===norm(
+  '自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。\n【登場時】自分の山札の上から1枚見る。そのカードを山札の上か場外に置く。'))
+  return dsl({emptyOwnFieldHandEnergyDiscount:2,effects:{onPlay:[{op:'peekTopOrOutside'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】以下から1つ選ぶ。\n・自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。\n・自分の場のキャラを1枚まで選び、別のラインに移動させる。'))
+  return onPlay({
+   op:'chooseOne',optional:false,options:[
+    {id:'buff',label:'他のキャラをBP+1000',turn:'any',then:[{
+     op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
+     optional:true,excludeSelf:true
+    }]},
+    {id:'shift',label:'キャラを別のラインへ',turn:'any',then:[{op:'mayShiftOwnCharacter'}]}
+   ]
+  });
  if(card.type==='character'&&effect===norm(
   '【登場時】カードを1枚引き、自分の手札を1枚場外に置く。\n【起動メイン】【レストにする】自分の場の他のキャラを1枚選び、このターン中、BP+1000。'))
   return dsl({

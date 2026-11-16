@@ -6547,8 +6547,8 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
    throw Error(card.id+' own line shift must be nested in an event choice or hang on a character leave');
   if(namedShift&&!(card.type==='character'&&name==='onPlay'&&program.length===1))
    throw Error(card.id+' named line shift is a lone character onPlay effect');
-  if(nestedShift&&(card.type!=='event'||name!=='onPlay'))
-   throw Error(card.id+' own line shift is an event onPlay choice');
+  if(nestedShift&&!(name==='onPlay'&&(card.type==='event'||card.type==='character')))
+   throw Error(card.id+' own line shift is an onPlay choice');
   if(program.some(e=>e.op==='grantOwnFieldAttackKit')&&
    (card.type!=='event'||name!=='onPlay'))
    throw Error(card.id+' attack kit is an event onPlay effect');
