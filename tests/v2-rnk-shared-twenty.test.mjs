@@ -72,7 +72,7 @@ function act(s,pred){
 const topWindow=s=>universalPrivateChoices(packs,s,0).inspected.map(c=>c.uid);
 
 test('twenty official Japanese prints stage on the shared pack and stay out of battle',()=>{
- assert.equal(RNK_BATCH_STAGING_IDS.length,95);
+ assert.equal(RNK_BATCH_STAGING_IDS.length,114);
  assert.equal(IDS.length,20);
  for(const id of IDS){
   const jp=RNK_JP_EVIDENCE_SHARED_TWENTY[id],tc=source[id],v2=pack.cards[id];
