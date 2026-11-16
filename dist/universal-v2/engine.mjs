@@ -2,8 +2,8 @@ import {DISCOUNT_KIND,grantHandDiscount,grantHandDiscountFromUsedEvent,handPlayA
 // UNIVERSAL RULES V2 EXPERIMENT. No production title uses this reducer yet.
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
-// Fixed mistakes must not return. Read docs/v2-handoff/V2-do-not-regress.md
-// before changing rules in this reducer.
+// New cards must not repeat a fixed mistake. Read
+// docs/v2-handoff/V2-do-not-regress.md before adding a card here.
 import {validateUniversalDeck} from './pack.mjs';
 import {assignPointCards,assertPointCardIdentities} from './point-cards.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';

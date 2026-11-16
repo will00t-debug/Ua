@@ -1,5 +1,5 @@
 // Presentation only. Online commands keep their server-issued action index.
-// Fixed UI mistakes must not return. See docs/v2-handoff/V2-do-not-regress.md.
+// New cards must not repeat a fixed UI mistake. See docs/v2-handoff/V2-do-not-regress.md.
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
 import {makeAttackLifePicker} from './attack-life-picker.mjs';

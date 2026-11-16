@@ -4,10 +4,10 @@
 The user has explicitly returned development to ChatGPT/Codex. Historical
 2026-10-15 Cursor-only / stop-development handoffs remain provenance, not a
 current stop instruction. Read `docs/v2-handoff/GPT-resume.md` first for the
-resumed integration status. Read `docs/v2-handoff/V2-do-not-regress.md`
-before any Universal V2 rule, Raid, LIFE, energy, pending-choice, privacy,
-AI, online, or deck-builder change. Every entry there is a shipped mistake
-that was later corrected. Do not reintroduce it. Work on the new integration
+resumed integration status. Before adding any new card, read `docs/v2-handoff/V2-do-not-regress.md`.
+Every entry there is a shipped mistake that was later corrected. A new card
+that prints the same mechanic must reuse the corrected shared behavior and
+must not open a private path that repeats the mistake. Work on the new integration
 branch; preserve the original workstream branches, main, and production.
 Do not count registration or passing tests as full official FAQ acceptance.
 
@@ -24,10 +24,12 @@ App version baseline: v9.1.1 (2026-10-12). This repository is meant for GitHub +
 - Deployment: `vercel.json` serves `dist/` directly, no compile/build step needed.
 - Cloudflare Workers (accounts / online matches / unified host): existing Worker `ua-arena` via `.github/workflows/cloudflare-unified-deploy.yml`. **GPT-direct deploy:** merge a green PR into `main` (deploy paths) and Actions deploys production automatically; Secrets stay in GitHub. Read `docs/ops/cloudflare-github-actions-deploy.md`. Never paste Cloudflare tokens into chat, code, or logs; never delete or rename Durable Object classes/data.
 
-## Fixed V2 errors — do not reintroduce
-`docs/v2-handoff/V2-do-not-regress.md` is the closed ledger (2026-10-14 through
-2026-11-16, 256 entries, including RNK-1-009 and the Hiko Raid). New cards reuse the corrected behavior.
-Do not simplify a fix back into the old bug. Do not bring these back:
+## Fixed V2 errors — check them before adding a card
+`docs/v2-handoff/V2-do-not-regress.md` is the gate for every new card
+(2026-10-14 through 2026-11-16, 256 corrected mistakes, including RNK-1-009
+and the Hiko Raid). Match the printed text to the traps below and to every
+ledger row that uses the same mechanic. Reuse the corrected shared behavior.
+Do not bring these back on a new card:
 
 1. An inspected window shows every card, including cards that cannot be chosen. Unchosen cards stay private.
 2. Raid-frame text runs only in a face-up Raid. Paid Raid is base, then destination. An effect that prints both modes is card, then mode, then cell. Do not invent the missing mode, and do not put one execute button on every cell.
@@ -47,7 +49,7 @@ Do not simplify a fix back into the old bug. Do not bring these back:
 
 ## Modification protocol
 1. Check `README.md`, `MIGRATION_GITHUB_VERCEL.md`, `docs/v2-handoff/V2-do-not-regress.md`, `docs/ops/cloudflare-github-actions-deploy.md` (for Worker deploys) and the latest GitHub history before changes.
-2. When adding cards or rule effects, implement actual state transitions, legal choices, paid costs and trigger timing. **Never only flip an auto-supported flag.**
+2. When adding a card, first check `docs/v2-handoff/V2-do-not-regress.md` for that card's printed mechanics and keep the corrected behavior. Then implement actual state transitions, legal choices, paid costs and trigger timing. **Never only flip an auto-supported flag.**
    Deck search, looking at the top, and milling must show every card the controller inspected, including cards that cannot be chosen. Ineligible cards stay on screen with their art and cannot be selected. Closed titles store the full window on `pending.data.uids` or `pending.data.window` (order steps use `data.left`, an entry window uses `data.windowUids`). Do not publish only the matching targets and expect the UI to invent the rest. A new closed title is added once to the pending-kind allowlist and the private-choice reader; individual new cards inherit the window.
 2a. Effects that put a character onto the field use the shared board gesture: select the physical card, then 突襲進場 or 普通進場 only when the printed effect allows both, then tap the destination cell. Do not list one execute button per destination. Raid-only and REST-only prints do not invent the other mode. Paid hand play stays an empty cell or a Raid base, with no mode buttons. Kamen Rider entry goes through `offerFieldEntry` in `dist/universal-v2/kmr-runtime.mjs`.
 3. Cite official card numbers and FAQ decisions in issue, PR or tests when relevant. Where sources conflict or are not verified, flag the uncertainty.
