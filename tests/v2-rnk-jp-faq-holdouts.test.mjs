@@ -18,8 +18,10 @@ test('Japanese FAQ Q1607 locks RNK-1-062 until all printed clauses work together
  assert.equal(hold.needsUniversalSupport.length,3);
  assert.equal(hold.battleReady,false);
  assert.ok(hold.officialFaqUrl.includes('/jp/faq/'));
- assert.equal(createRnkBcdBatchStagingPack().cards[id],undefined);
- // Keep the user's existing Traditional Chinese display in this milestone.
+ const staged=createRnkBcdBatchStagingPack().cards[id];
+ assert.deepEqual(staged.effects.onPlay,[{op:'grantNamedUnblockedOptionalDraw',name:'志々雄 真実'}]);
+ assert.deepEqual(staged.mainAbility,{op:'fieldRestRetire'});
+ assert.deepEqual(staged.effects.onRetire,[{op:'draw',count:2}]);
  assert.equal(row.nameZhTw,'大型甲鐵艦煉獄');
  assert.equal(row.battleReady,false);
 });
@@ -37,6 +39,8 @@ test('Japanese Q1610 blocks 075 until mandatory non-once unblocked draw fires af
  assert.equal(row.trigger,null);
  assert.equal(row.battleReady,false);
  assert.equal(h.battleReady,false);
- assert.equal(createRnkBcdBatchStagingPack().cards[id],undefined);
+ assert.deepEqual(createRnkBcdBatchStagingPack().cards[id].unblockedAttack,{
+  optional:false,then:[{op:'draw',count:1}]
+ });
  assert.equal(row.nameZhTw,'相樂左之助');
 });

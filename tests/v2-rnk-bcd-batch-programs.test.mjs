@@ -10,11 +10,11 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 const AP=['RNK-1-031','RNK-1-063','RNK-1-065','RNK-1-096','RNK-1-097'];
 const VANILLA=['RNK-1-035','RNK-1-055','RNK-1-073'];
 
-test('batch has fifty-five independent Japanese-checked cards spanning B,C,D, one shared schema',()=>{
+test('batch has seventy-five independent Japanese-checked cards spanning B,C,D, one shared schema',()=>{
  const pack=createRnkBcdBatchStagingPack();
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,55);
+ assert.equal(Object.keys(pack.cards).length,75);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.ok(pack.cards['RNK-1-036']);
  for(const id of [...AP,...VANILLA]){
@@ -64,7 +64,7 @@ test('new B,C,D records have trustworthy Japanese evidence not inferred from Chi
 test('batch cannot create a complete 50-card deck or enter official production pack yet',()=>{
  const pack=createRnkBcdBatchStagingPack();
  assert.ok(validateUniversalDeck(pack,{'RNK-1-063':4}).some(e=>e.includes('50')));
- assert.ok(validateUniversalDeck(pack,{'RNK-1-062':1}).some(e=>e.includes('Unregistered')));
+ assert.ok(validateUniversalDeck(pack,{'RNK-1-008':1}).some(e=>e.includes('Unregistered')));
  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
  assert.equal(RNK_IDENTITY_INVENTORY.filter(row=>row.battleReady).length,0);
  assert.equal(RNK_IDENTITY_INVENTORY.filter(row=>row.effectImplemented).length,0);

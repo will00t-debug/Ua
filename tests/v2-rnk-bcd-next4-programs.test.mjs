@@ -82,7 +82,8 @@ test('starter-only 108 uses existing shared FIELD REST / DRAW / DISCARD main job
 
 test('batch stays staging-only and cannot make partially mapped card programs battle ready',()=>{
  for(const id of ids)assert.equal(RNK_PROGRAMS_BCD_NEXT4[id].ready,true);
- assert.equal(pack.cards['RNK-1-075'],undefined,'unblocked-draw timing is not silently treated as ready');
+ assert.deepEqual(pack.cards['RNK-1-075'].unblockedAttack,{optional:false,then:[{op:'draw',count:1}]});
+ assert.equal(catalog['RNK-1-075'].battleReady,false);
  assert.deepEqual(pack.cards['RNK-1-113'].effects.onAttack,[{op:'optionalDrawSkipNextActive'}]);
  assert.equal(catalog['RNK-1-113'].battleReady,false);
  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);

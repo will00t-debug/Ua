@@ -67,8 +67,8 @@ function aiOk(s){
 }
 
 test('037, 095, 112 and 113 keep Japanese evidence distinct from Traditional Chinese display',()=>{
- assert.equal(RNK_BATCH_STAGING_IDS.length,55);
- assert.equal(Object.keys(pack.cards).length,55);
+ assert.equal(RNK_BATCH_STAGING_IDS.length,75);
+ assert.equal(Object.keys(pack.cards).length,75);
  for(const id of IDS){
   const jp=RNK_JP_EVIDENCE_SHARED_NEXT[id],tc=source[id],v2=pack.cards[id];
   assert.equal(jp.print,tc.number);
