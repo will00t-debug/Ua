@@ -19,7 +19,7 @@ export const RNK_PROGRAMS_BLUE_COMMON=Object.freeze({
    kind:'selfEnteredByOwnEffect',turn:'any',
    sourceTypes:Object.freeze(['character','event'])
   }),then:Object.freeze([Object.freeze({op:'draw',count:1})])
- })),
+ }),{triggerEffect:Object.freeze({op:'bounceOppFrontUnderBp',bp:3500})}),
  'RNK-1-025':dsl(onPlay({op:'inspectTopAnyOutside',count:3,rest:'top',maxOutside:1}),
    {emptyOwnFieldHandEnergyDiscount:2}),
  'RNK-1-003':dsl({}, {mainAbility:temporaryEnergy}),
