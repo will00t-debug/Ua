@@ -471,5 +471,45 @@ export function evaSharedProgram(card){
     {op:'tuckOutsideUnderNamedHost',name:'綾波 レイ',host:'碇 シンジ',optional:true,
      hostNeedsEmptyUnder:true}
    ]}});
+ if(card.type==='character'&&card.trigger==='get'&&effect===norm("自分か相手の効果やバトルによってこのキャラが場を離れた時、自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが2以下の黄の〈綾波 レイ〉を1枚まで自分の場にアクティブで登場させる。"))
+  return dsl({fieldLeaveThenDeploy:{color:'yellow',name:'綾波 レイ',maxEnergy:2,ready:true}});
+ if(card.type==='character'&&card.trigger==='get'&&effect===norm("【相手のターン中】自分が必要エナジーを満たしているキャラカードの【ゲット】を発動する場合、代わりにそのカードを自分の場にレストで登場させてもよい。そうした場合、自分の手札を1枚場外に置く。〈葛󠄀城 ミサト〉のこの効果は1ターンに1回のみ発動できる。"))
+  return dsl({getInsteadRestDeploy:{once:'name'}});
+ if(card.type==='character'&&card.trigger==='get'&&effect===norm("【登場時】このキャラをアクティブにし、以下から1つ選ぶ。\n・相手のフロントLのキャラを1枚まで選び、レストにする。\n・自分のターン中の場合、自分の場のキャラを1枚退場させてもよい。そうした場合、BP5000以下の相手のフロントLのキャラを1枚まで選び、退場させ、このターン中、次に手札から使用する必要エナジーが2以下の黄のキャラカードの消費APを-1する。\n【起動メイン】【手札を2枚場外に置く】 【ターン1】このキャラはこのターン中、BP+1000と【インパクト（1）】を得る。"))
+  return dsl({effects:{onPlay:[
+   {op:'activeSelf'},
+   {op:'chooseOne',optional:false,options:[
+    {id:'rest',label:'使對方前線最多 1 張角色休息',turn:'any',then:[{op:'restOppFrontOne',optional:true}]},
+    {id:'retire',label:'退場自己 1 張，再退場對方並減少下次費用',turn:'own',then:[{op:'optionalOwnRetireFrontDiscount',then:[
+     {op:'retireOppFrontOneUnderBp',bp:5000,optional:true},
+     {op:'nextEligibleHandPlayApDiscount',filter:{cardType:'character',color:'yellow',printedRequiredEnergyAtMost:2}}
+    ]}]}
+   ]}
+  ]},mainAbility:{op:'payHandSelfKit',hand:2,oncePerTurn:true,bp:1000,impact:1}});
+ if(card.type==='character'&&card.trigger==='get'&&effect===norm("【相手のターン中】【フロントLにある場合】自分の【ドロートリガー】か【アクティブ】を発動する場合、代わりに【ゲット】にしてもよい。\n【アタック時】APを1支払ってもよい。そうした場合、カードを1枚引き、〈真希波・マリ・イラストリアス〉以外の自分の場のキャラを1枚まで選び、アクティブにする。"))
+  return dsl({triggerSwapToGet:{turn:'opp',line:'front',from:['draw','active']},
+   effects:{onAttack:[{op:'optionalPayApThen',ap:1,optional:true,then:[
+    {op:'draw',count:1},
+    {op:'activeOwnExceptName',name:'真希波・マリ・イラストリアス',optional:true,max:1}
+   ]}]}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm("【レイド】〈碇 シンジ〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n【登場時】カードを1枚引き、自分の手札から消費APが1で【レイド】を持たない紫のキャラカードを1枚まで自分の場にアクティブで登場させる。\n【起動メイン】【フロントLにある場合】 【ターン1】自分のフロントLの他のキャラを1枚退場させる。そうした場合、このキャラの【登場時】を発動する。"))
+  return dsl({raidName:'碇 シンジ',printedImpact:1,effects:{onPlay:[
+   {op:'draw',count:1},
+   {op:'deployOwnHandActiveNoRaid',type:'character',color:'purple',ap:1,optional:true}
+  ]},mainAbility:{op:'retireOtherFrontReplay',oncePerTurn:true,frontOnly:true}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm("【レイド】〈式波・アスカ・ラングレー〉アクティブにし、フロントLに移動できる\nこのキャラが退場する場合、代わりにレイド状態の上のこのカードを場外に置いてもよい。\n【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000。"))
+  return dsl({raidName:'式波・アスカ・ラングレー',raidTopRetireInstead:true,
+   effects:{onPlay:[{op:'enemyBpDown',bp:1000,optional:true}]}});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm("【レイド】〈式波・アスカ・ラングレー〉アクティブにし、フロントLに移動できる\nこのキャラのアタック終了時、自分の場外の［特徴：WILLE］を4枚リムーブエリアに置いてもよい。そうした場合、このキャラをアクティブにし、このキャラはこのターン中、BP+3000と「このキャラはBP3000以下のキャラにブロックされない。」を得て、このキャラのレイド元のカードを場外に置く。\n【登場時】相手のフロントLに元々のBPよりBPが低いキャラが2枚以上ある場合、このキャラはこのターン中、【2回アタック】を得る。"))
+  return dsl({raidName:'式波・アスカ・ラングレー',effects:{onPlay:[
+   {op:'grantDoubleAttackIfOppBelowPrinted',min:2}
+  ]},phaseEffects:[{phase:'attack',edge:'end',turn:'own',then:[
+   {op:'optionalRemoveTraitKit',trait:'WILLE',count:4,bp:3000,blockAtMost:3000,sendBase:true}
+  ]}]});
+ if(card.type==='character'&&card.trigger==='raid'&&effect===norm("【レイド】〈碇 シンジ〉アクティブにし、フロントLに移動できる\nこのキャラの下の裏向きのカードの枚数により、このキャラは以下の効果を得る。\n・0枚：【自分のターン中】このキャラはBP+5000と【インパクト（3）】\n・4枚以上：このキャラは、相手のトリガーの効果で選ばれない。\nこのキャラのアタック終了時、このキャラの下の裏向きのカードを見て、2枚まで公開し手札に加える。2枚手札に加えた場合、このキャラをアクティブにする。\n【登場時】自分の場外から赤の〈綾波 レイ〉を各必要エナジーにつき1枚までこのキャラの下に裏向きで置く。"))
+  return dsl({raidName:'碇 シンジ',facedownCountGrants:[{count:0,turn:'own',bp:5000,impact:3}],
+   facedownTriggerImmuneAt:4,phaseEffects:[{phase:'attack',edge:'end',turn:'own',then:[
+    {op:'revealFacedownUpTo',count:2,activateIf:2}
+   ]}],effects:{onPlay:[{op:'tuckOutsideNamedPerEnergy',color:'red',name:'綾波 レイ'}]}});
  return pending();
 }

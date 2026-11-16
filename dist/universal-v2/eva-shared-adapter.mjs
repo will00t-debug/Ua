@@ -10,7 +10,8 @@ const SHARED_KEYS=new Set([
  'handApDiscountWhileAnyNames','raidName','readyOnBlockCount','printedImpact',
  'lifeLeave','outsideActivate','oppTurnWard','outsideCountGrants','energyWakeNamed',
  'playRequiresNameOrIncludes','phaseEffects','bpPerDirectFacedown','raidBaseNames',
- 'printedAttackDamage'
+ 'printedAttackDamage','fieldLeaveThenDeploy','getInsteadRestDeploy','triggerSwapToGet',
+ 'raidTopRetireInstead','facedownCountGrants','facedownTriggerImmuneAt'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
 const COLORS=new Set(['blue','purple','red','green','yellow']);

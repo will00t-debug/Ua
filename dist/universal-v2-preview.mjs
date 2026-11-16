@@ -2,7 +2,7 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,rnkPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261116rnkbattle';
+import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,rnkPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261116evabattle';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
@@ -23,7 +23,7 @@ import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
-import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs?v=20261116rnkbattle';
+import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs?v=20261116evabattle';
 import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
@@ -48,7 +48,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261116rnkbattle';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261116evabattle';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
 import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
@@ -2323,8 +2323,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- if(raw.title==='eva'){reject('新世紀福音戰士新劇場版尚未開放正式對戰');return;}
- const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'||raw.title==='eva'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}

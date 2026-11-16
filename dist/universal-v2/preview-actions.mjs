@@ -29,6 +29,15 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-opp-attack-ready':'對手攻擊時可活動',
  'effect-field-rest-draw':'可休息場域並抽牌',
  'effect-grant-below-printed':'選擇對方角色，本回合 BP 低於原本時不能阻擋',
+ 'effect-field-leave-deploy':'離場後可棄 1 張手牌，再讓指定角色活動登場',
+ 'effect-own-retire-front':'可退場自己 1 張角色',
+ 'effect-active-name-except':'可使名稱不同的角色活動',
+ 'effect-facedown-up-to':'查看下方裏向卡，最多公開 2 張加入手牌',
+ 'effect-remove-trait-kit':'可將 4 張特徵卡移入移除區',
+ 'effect-tuck-per-energy':'可依必要能量各放 1 張角色到此卡下',
+ 'effect-raid-top-instead':'退場時可改將突襲最上層放到場外',
+ 'effect-pay-hand-kit':'將 2 張手牌放到場外',
+ 'effect-retire-replay':'退場其他前線角色後再發動登場效果',
  'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
  'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇',csm:'鏈鋸人效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底','private-top-or-outside':'查看牌頂，放回牌頂或場外','effect-rest-opp-if-name':'可休息 1 個對手前排角色','effect-retire-opp-field':'可將對方 1 張場域退場','effect-grant-unblocked-draw':'可給指定角色本回合未被阻擋時抽牌','effect-suppress-own-turn':'可讓指定角色失去自己回合中效果','effect-move-opp-cap':'可選擇 BP 以下的對手前排角色','effect-move-opp-dest':'移到能量線或牌庫底','effect-outside-union-top':'將場外的指定卡放到牌庫頂','effect-rest-other-trait':'可休息其他御庭番眾，然後使這張角色活動','effect-optional-own-trait-retire':'可退場自己的御庭番眾','effect-active-resting-front':'可使休息中的指定角色活動','effect-rest-named-then':'可休息指定角色',
@@ -1430,6 +1439,18 @@ export function uiActionLabel(action,{pack,state}={}){
    return '支付 '+cost+'，以活動狀態登場';
   }
   case 'chooseDeploySelfActive':return '以活動狀態放到'+destination()+' '+(action.slot+1);
+  case 'chooseFieldLeave':
+   if(action.mode==='skip')return '不進行後續';
+   if(action.mode==='discard')return '將手牌 '+name()+' 放到場外';
+   return '讓 '+name()+' 以活動狀態登場'+suffix();
+  case 'chooseOwnRetireFront':return action.uid===null?'不退場自己的角色':'退場 '+name();
+  case 'chooseActiveNameExcept':return action.uid===null?'不使其他角色活動':'使 '+name()+' 活動';
+  case 'chooseFacedownUpTo':return action.mode==='done'?'結束查看並公開已選的卡':'公開 '+name()+' 並加入手牌';
+  case 'chooseRemoveTrait':return action.mode==='skip'?'不將特徵卡移入移除區':'將 '+name()+' 移入移除區';
+  case 'chooseTuckEnergy':return action.mode==='stop'?'結束放置場外角色':'將 '+name()+' 裏向放到此角色下';
+  case 'chooseRaidTopInstead':return action.mode==='strip'?'改將突襲最上層放到場外':'仍照原本方式退場';
+  case 'choosePayHandKit':return '支付起動成本：將 '+name()+' 放到場外';
+  case 'chooseRetireReplay':return '退場 '+name()+'，再發動這張卡的登場效果';
   case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':case 'csm':
    return closedTitleChoiceLabel(action,{pack,state});
   default:return unlabeledChoiceLabel(action,{pack,state})||'完成這個選擇';

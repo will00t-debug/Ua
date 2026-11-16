@@ -12,15 +12,15 @@ import {newUniversalMatch,universalCardEnergy} from '../dist/universal-v2/engine
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 
 const READY=[
- 'EVA-1-001','EVA-1-002','EVA-1-003','EVA-1-004','EVA-1-006','EVA-1-007','EVA-1-009','EVA-1-010',
- 'EVA-1-011','EVA-1-012','EVA-1-014','EVA-1-015','EVA-1-016','EVA-1-017','EVA-1-019',
+ 'EVA-1-001','EVA-1-002','EVA-1-003','EVA-1-004','EVA-1-005','EVA-1-006','EVA-1-007','EVA-1-008','EVA-1-009','EVA-1-010',
+ 'EVA-1-011','EVA-1-012','EVA-1-013','EVA-1-014','EVA-1-015','EVA-1-016','EVA-1-017','EVA-1-018','EVA-1-019',
  'EVA-1-020','EVA-1-021','EVA-1-022','EVA-1-023','EVA-1-024','EVA-1-025','EVA-1-026','EVA-1-027',
- 'EVA-1-028','EVA-1-029','EVA-1-030','EVA-1-031','EVA-1-032','EVA-1-034','EVA-1-035','EVA-1-036','EVA-1-037',
- 'EVA-1-038','EVA-1-039','EVA-1-040','EVA-1-042','EVA-1-044','EVA-1-045','EVA-1-046','EVA-1-047','EVA-1-048',
+ 'EVA-1-028','EVA-1-029','EVA-1-030','EVA-1-031','EVA-1-032','EVA-1-033','EVA-1-034','EVA-1-035','EVA-1-036','EVA-1-037',
+ 'EVA-1-038','EVA-1-039','EVA-1-040','EVA-1-041','EVA-1-042','EVA-1-043','EVA-1-044','EVA-1-045','EVA-1-046','EVA-1-047','EVA-1-048',
  'EVA-1-049','EVA-1-050','EVA-1-051','EVA-1-052','EVA-1-053','EVA-1-054','EVA-1-055',
  'EVA-1-056','EVA-1-057','EVA-1-058','EVA-1-059','EVA-1-060','EVA-1-061','EVA-1-062','EVA-1-063','EVA-1-064',
  'EVA-1-065','EVA-1-066','EVA-1-067','EVA-1-068','EVA-1-069','EVA-1-070','EVA-1-071',
- 'EVA-1-072','EVA-1-073','EVA-1-074','EVA-1-075','EVA-1-076','EVA-1-077','EVA-1-078',
+ 'EVA-1-072','EVA-1-073','EVA-1-074','EVA-1-075','EVA-1-076','EVA-1-077','EVA-1-078','EVA-1-079',
  'EVA-1-080','EVA-1-081','EVA-1-082','EVA-1-083','EVA-1-084','EVA-1-085','EVA-1-086','EVA-1-087','EVA-1-088',
  'EVA-1-089','EVA-1-090','EVA-1-091','EVA-1-092','EVA-1-093','EVA-1-094','EVA-1-095','EVA-1-096',
  'EVA-1-097','EVA-1-098','EVA-1-099','EVA-1-100','EVA-1-101','EVA-1-102','EVA-1-103',
@@ -38,16 +38,21 @@ test('UA44 EVA catalog keeps one identity per deck card and leaves AP out',()=>{
   'EVA-1-083','EVA-1-085','EVA-1-095','EVA-1-100'
  ]);
  assert.equal(catalog.byId.get('EVA-1-085').officialFaqIds.join(','),'Q1748,Q1752');
- assert.equal(getTitle('eva').playable,false);
+ assert.equal(getTitle('eva').playable,true);
  assert.equal(getTitle('eva').cards.length,113);
  assert.equal(getTitle('eva').cards.every(card=>card.battleReady===false&&card.playable===false),true);
  assert.equal(catalog.ap.every(card=>card.deckLegal===false),true);
- assert.equal(registeredPackForEditor('eva'),null);
- const closed=editorV2Status('eva',{'EVA-1-001':4,'EVA-1-068':46});
- assert.equal(closed.registered,105);
- assert.equal(closed.ready,false);
- assert.match(closed.issues.join('\n'),/尚未開放正式對戰/);
- assert.throws(()=>officialV2Pack('eva'),/正式 V2/);
+ const battle=officialV2Pack('eva');
+ assert.equal(Object.keys(battle.cards).length,113);
+ assert.equal(registeredPackForEditor('eva'),battle);
+ const opened=editorV2Status('eva',{
+  'EVA-1-068':4,'EVA-1-069':4,'EVA-1-070':4,'EVA-1-071':4,'EVA-1-072':4,
+  'EVA-1-073':4,'EVA-1-074':4,'EVA-1-076':4,'EVA-1-077':4,'EVA-1-078':4,
+  'EVA-1-079':4,'EVA-1-080':4,'EVA-1-081':2
+ });
+ assert.equal(opened.registered,113);
+ assert.equal(opened.ready,true);
+ assert.equal(opened.issues.length,0);
 });
 
 test('only full Japanese prints that already exist in the shared engine are staged',()=>{
@@ -92,8 +97,14 @@ test('only full Japanese prints that already exist in the shared engine are stag
  assert.equal(pack.cards['EVA-1-085'].effects.onPlay[0].options[1].then[0].op,'mayShiftOwnCharacter');
  assert.equal(pack.cards['EVA-1-102'].effects.onPlay[0].count,2);
  assert.equal(pack.cards['EVA-1-111'].mainAbility.op,'restSelfBuffOther');
- for(const id of ['EVA-1-005','EVA-1-008','EVA-1-013','EVA-1-018','EVA-1-033'])
-  assert.equal(evaSharedProgram(catalog.byId.get(id)).ready,false,id);
+ assert.equal(pack.cards['EVA-1-005'].fieldLeaveThenDeploy.name,'綾波 レイ');
+ assert.equal(pack.cards['EVA-1-008'].getInsteadRestDeploy.once,'name');
+ assert.equal(pack.cards['EVA-1-013'].mainAbility.op,'payHandSelfKit');
+ assert.equal(pack.cards['EVA-1-018'].triggerSwapToGet.line,'front');
+ assert.equal(pack.cards['EVA-1-033'].printedImpact,1);
+ assert.equal(pack.cards['EVA-1-041'].raidTopRetireInstead,true);
+ assert.equal(pack.cards['EVA-1-043'].effects.onPlay[0].op,'grantDoubleAttackIfOppBelowPrinted');
+ assert.equal(pack.cards['EVA-1-079'].facedownTriggerImmuneAt,4);
  assert.equal(pack.cards['EVA-1-003'].passiveBonuses[0].condition.trigger,'get');
  assert.equal(pack.cards['EVA-1-017'].triggerEffect.op,'restOppFrontSkipNextActive');
  assert.equal(pack.cards['EVA-1-031'].handOutsideEnergyDiscount,2);
@@ -114,7 +125,7 @@ test('only full Japanese prints that already exist in the shared engine are stag
  assert.equal(pack.cards['EVA-1-002'].oppTurnWard,true);
  assert.equal(pack.cards['EVA-1-034'].raidBaseNames.join(','),'碇 シンジ,渚 カヲル');
  assert.equal(pack.cards['EVA-1-082'].printedAttackDamage,2);
- assert.equal(evaSharedCard(catalog.byId.get('EVA-1-033')),null);
+ assert.equal(evaSharedCard(catalog.byId.get('EVA-1-033')).printedImpact,1);
  const original=catalog.byId.get('EVA-1-001');
  assert.throws(()=>evaSharedCard(original,{
   ...evaSharedProgram(original),evaPrivate:true

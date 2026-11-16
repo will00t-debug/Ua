@@ -38,7 +38,7 @@ export const TITLES=[
  {id:'imc',label:'偶像大師 灰姑娘女孩',cards:imcEditorCards(),presets:[],playable:true},
  {id:'mha',label:'我的英雄學院',cards:mhaEditorCards(),presets:[],playable:true},
  {id:'rnk',label:'浪客劍心',cards:rnkEditorCards(),presets:[],playable:true},
- {id:'eva',label:'新世紀福音戰士新劇場版',cards:evaEditorCards(),presets:[],playable:false}
+ {id:'eva',label:'新世紀福音戰士新劇場版',cards:evaEditorCards(),presets:[],playable:true}
 ];
 export function titleOfCard(card){return TITLES.some(t=>t.id===card?.title)?card.title:'bleach';}
 export function getTitle(id){return TITLES.find(t=>t.id===id)||null;}

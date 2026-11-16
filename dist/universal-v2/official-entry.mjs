@@ -21,6 +21,7 @@ import {createMha2Pack} from './mha2-pack.mjs';
 import {createMhaPointPack} from './mha-point-pack.mjs';
 import {createMha3Pack} from './mha3-pack.mjs';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
+import {createEvaStagingPack} from './eva-staging-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -73,6 +74,7 @@ export function officialV2Pack(title){
  if(title==='imc')return createImcBattlePack();
  if(title==='mha')return createMhaBattlePack();
  if(title==='rnk')return createRnkBattlePack();
+ if(title==='eva')return createEvaBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -221,6 +223,15 @@ export function imcPracticeDeck(){
 }
 
 let rnkBattlePack=null;
+let evaBattlePack=null;
+export function createEvaBattlePack(){
+ if(evaBattlePack)return evaBattlePack;
+ const pack=createEvaStagingPack();
+ if(Object.keys(pack.cards).length!==113)throw Error('EVA live pack drifted: '+Object.keys(pack.cards).length);
+ evaBattlePack=pack;
+ return evaBattlePack;
+}
+
 export function createRnkBattlePack(){
  if(rnkBattlePack)return rnkBattlePack;
  const pack=createRnkBcdBatchStagingPack();

@@ -1,11 +1,9 @@
 // Production-only V2 deck compatibility: never use legacy auto, rules or match reducers.
-import {TITLES} from './title-registry.mjs?v=20261116rnkbattle';
+import {TITLES} from './title-registry.mjs?v=20261116evabattle';
 import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261104kmrport1';
-import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261116rnkbattle';
+import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261116evabattle';
 import {IMC_OFFICIAL_MATCH_CLOSED} from './universal-v2/imc-pack.mjs';
-import {createEvaStagingPack} from './universal-v2/eva-staging-pack.mjs';
-
 export const LEGACY_DECK_KEYS=Object.freeze({
  bleach:['bleach-arena-deck-v1','bleach-arena-saved-decks-v1'],
  'gurren-lagann':['ua-ttg-draft-v1','ua-ttg-saved-v1'],
@@ -31,8 +29,7 @@ export function registeredPackForEditor(title){
  if(!titleCatalogue(title))return null;
  // Re:Zero stays outside the five-title census. All 73 regular EX17BT
  // cards share the set-1 battle pack. AP cards are not deck cards.
- if(title==='eva')return null;
- if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha'||title==='rnk')return officialV2Pack(title);
+ if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha'||title==='rnk'||title==='eva')return officialV2Pack(title);
  return registeredV2TitlePack(title);
 }
 export function normalizeEditorCounts(title,input){
@@ -73,9 +70,7 @@ export function editorV2Status(title,counts,pack=registeredPackForEditor(title))
  const catalog=titleCatalogue(title);
  if(!catalog)return {supported:new Set(),issues:['未知的作品'],ready:false,total:0,registered:0,pack:null,counts:{}};
  const cards=catalog.cards,byId=new Map(cards.map(c=>[c.id,c]));
- const evaStaging=title==='eva'?createEvaStagingPack():null;
- const supportPack=evaStaging||pack;
- const supported=new Set(cards.filter(c=>supportPack?.cards[c.identity||c.id]).map(c=>c.id));
+ const supported=new Set(cards.filter(c=>pack?.cards[c.identity||c.id]).map(c=>c.id));
  const selected=Object.entries(counts).filter(([,n])=>n>0);
  const total=selected.reduce((n,[,v])=>n+v,0);
  const errors=[];
@@ -85,8 +80,7 @@ export function editorV2Status(title,counts,pack=registeredPackForEditor(title))
  }
  const missing=selected.filter(([id])=>!supported.has(id)).map(([id])=>id);
  if(missing.length)errors.push('有 '+missing.length+' 種卡尚未完整移植 V2：'+missing.slice(0,6).join('、')+(missing.length>6?'…':''));
- if(evaStaging)errors.push('新世紀福音戰士新劇場版尚未開放正式對戰。共通引擎已登錄的卡片可以組進牌表。');
- else if(!pack)errors.push('此作品尚未接入正式 V2 對戰登錄表；目前可收藏與組卡。');
+ if(!pack)errors.push('此作品尚未接入正式 V2 對戰登錄表；目前可收藏與組卡。');
  let v2Counts={};
  if(!errors.length){
   v2Counts=toV2Counts(title,counts);
