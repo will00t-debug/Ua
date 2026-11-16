@@ -117,6 +117,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:Rurouni_Kenshin_2023_Anime_Logo.png',
   credit:'和月伸宏／集英社',
   license:'Public domain'
+ }),
+ eva:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/a/a0/Evangelion_3.0%2B1.0_logo.svg',
+  label:'新世紀福音戰士新劇場版',
+  source:'https://commons.wikimedia.org/wiki/File:Evangelion_3.0%2B1.0_logo.svg',
+  credit:'khara',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;
