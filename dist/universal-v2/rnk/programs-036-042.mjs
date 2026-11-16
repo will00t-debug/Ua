@@ -13,7 +13,7 @@ export const RNK_PROGRAMS_036_042=Object.freeze({
       ])
     })])})
   }),
-  'RNK-1-037':pending('Existing mayShiftOwnCharacter does not filter the three Japanese names; must not allow arbitrary own-character movement.'),
+  'RNK-1-037':pending('Unrestricted mayShiftOwnCharacter stays rejected here. The named onPlay shift is compiled from programs-shared-next.mjs.'),
   'RNK-1-038':pending('Requires exact hand discount, conditional named front bounce on attack and +1500 BP in the same payment chain.'),
   'RNK-1-039':pending('Raid, Impact null, BP<=2000 blocking restriction and top-five named search all required.'),
   'RNK-1-040':pending('Raid, Impact, no-trait gate and energy-line attack+move+sniper all required.'),

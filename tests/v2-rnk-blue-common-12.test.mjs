@@ -17,7 +17,7 @@ const card=n=>pack.cards['RNK-1-'+n];
 test('all sixteen Japanese blue evidence records compile in the growing universal V2 pack',()=>{
  assert.equal(pack.kind,'ua-v2-pack');
  assert.equal(pack.id,'rnk');
- assert.equal(Object.keys(pack.cards).length,51);
+ assert.equal(Object.keys(pack.cards).length,55);
  assert.deepEqual(Object.keys(pack.cards).sort(),RNK_BATCH_STAGING_IDS);
  assert.deepEqual(Object.keys(RNK_JP_EVIDENCE_BLUE_COMMON).sort(),ids);
  assert.deepEqual(Object.keys(RNK_PROGRAMS_BLUE_COMMON).sort(),ids);
@@ -141,6 +141,7 @@ test('016 draws only on an OWN CHARACTER/EVENT source-effect entry, never arbitr
  assert.equal(c.bp,2500);
  assert.equal(c.energy,2);
  assert.equal(c.trigger,'color');
+ assert.deepEqual(c.triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
  assert.deepEqual(c.traits,['御庭番衆']);
  assert.deepEqual(c.effects.onPlay,[{
   op:'ifLiveThen',

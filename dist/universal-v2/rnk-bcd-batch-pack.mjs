@@ -12,6 +12,7 @@ import {RNK_JP_EVIDENCE_BLUE_EVENTS} from '../rnk/jp-evidence-blue-events.mjs';
 import {RNK_JP_EVIDENCE_048} from '../rnk/jp-evidence-048.mjs';
 import {RNK_JP_EVIDENCE_BLUE_COMMON} from '../rnk/jp-evidence-blue-common.mjs';
 import {RNK_JP_EVIDENCE_ST_109} from '../rnk/jp-evidence-st-109.mjs';
+import {RNK_JP_EVIDENCE_SHARED_NEXT} from '../rnk/jp-evidence-shared-next.mjs';
 import {RNK_PROGRAMS_029_035} from './rnk/programs-029-035.mjs';
 import {RNK_PROGRAMS_036_042} from './rnk/programs-036-042.mjs';
 import {RNK_PROGRAMS_COMMON_BCD} from './rnk/programs-common-bcd.mjs';
@@ -23,6 +24,7 @@ import {RNK_PROGRAMS_BLUE_EVENTS} from './rnk/programs-blue-events.mjs';
 import {RNK_PROGRAMS_048} from './rnk/programs-048.mjs';
 import {RNK_PROGRAMS_BLUE_COMMON} from './rnk/programs-blue-common.mjs';
 import {RNK_PROGRAMS_ST_109} from './rnk/programs-st-109.mjs';
+import {RNK_PROGRAMS_SHARED_NEXT} from './rnk/programs-shared-next.mjs';
 import {createRnkSharedStagingPack} from './rnk-shared-adapter.mjs';
 
 const evidence=Object.freeze({
@@ -36,7 +38,8 @@ const evidence=Object.freeze({
  ...RNK_JP_EVIDENCE_BLUE_EVENTS,
  ...RNK_JP_EVIDENCE_048,
  ...RNK_JP_EVIDENCE_BLUE_COMMON,
- ...RNK_JP_EVIDENCE_ST_109
+ ...RNK_JP_EVIDENCE_ST_109,
+ ...RNK_JP_EVIDENCE_SHARED_NEXT
 });
 const programs=Object.freeze({
  ...RNK_PROGRAMS_029_035,
@@ -49,7 +52,8 @@ const programs=Object.freeze({
  ...RNK_PROGRAMS_BLUE_EVENTS,
  ...RNK_PROGRAMS_048,
  ...RNK_PROGRAMS_BLUE_COMMON,
- ...RNK_PROGRAMS_ST_109
+ ...RNK_PROGRAMS_ST_109,
+ ...RNK_PROGRAMS_SHARED_NEXT
 });
 export const RNK_BATCH_STAGING_IDS=Object.freeze(Object.entries(programs)
  .filter(([,p])=>p?.ready===true).map(([id])=>id).sort());
