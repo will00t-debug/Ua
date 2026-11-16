@@ -68,7 +68,7 @@ test('009 preserves impact null AND two-card reorder with arbitrary deck-top and
  assert.equal(v.bp,2000);
  assert.equal(v.trigger,null);
  assert.deepEqual(v.effects.onPlay,[{
-  op:'inspectTopArrange',count:2,toOutside:true,rest:'top'
+  op:'inspectTopAnyOutside',count:2,rest:'top'
  }]);
 });
 
@@ -173,4 +173,69 @@ test('001 uses named top-seven one-or-none without a hand discard',()=>{
    op:'searchTopOneBottomDiscard',count:7,
    filter:{field:'name',value:'逆刃刀・真打'},discard:false
  }]);
+});
+
+
+test('009 allows 0, 1, or 2 inspected cards to go outside while the rest returns to deck top',async()=>{
+ const {rnkPracticeDeck}=await import('../dist/universal-v2/official-entry.mjs');
+ const {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
+  universalPrivateChoices,assertUniversalMatch}=await import('../dist/universal-v2/engine.mjs');
+ const {validateUniversalDeck}=await import('../dist/universal-v2/pack.mjs');
+ const {counts:starter}=rnkPracticeDeck();
+ const counts={...starter};
+ if(!counts['RNK-1-009']){
+  const donor=Object.keys(counts).find(id=>id!=='RNK-1-009'&&
+   !['special','color','final'].includes(pack.cards[id]?.trigger));
+  assert.ok(donor);
+  if(--counts[donor]===0)delete counts[donor];
+  counts['RNK-1-009']=1;
+ }
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ const packs=[pack,pack];
+ const pick=(s,pred)=>{
+  const action=legalUniversalActions(packs,s).find(pred);
+  assert.ok(action,'expected legal choice missing: '+JSON.stringify(legalUniversalActions(packs,s).slice(0,5)));
+  return dispatchUniversalAction(packs,s,action);
+ };
+ const take=(s,id)=>{
+  for(const zone of ['deck','hand','life','outside','removed']){
+   const cards=s.players[0][zone],i=cards.findIndex(c=>c.cardId===id);
+   if(i!==-1)return cards.splice(i,1)[0];
+  }
+  throw Error('missing physical '+id);
+ };
+ for(const n of [0,1,2]){
+  let s=newUniversalMatch(pack,{decks:[counts,counts],first:0,seed:901+n,openingMulligan:false});
+  for(let i=0;i<6&&s.phase!=='main';i++)s=pick(s,a=>a.type==='next');
+  assert.equal(s.phase,'main');
+  const source=take(s,'RNK-1-009');
+  const producerId=Object.keys(counts).find(id=>id!=='RNK-1-009'&&
+   pack.cards[id]?.color==='blue'&&pack.cards[id]?.gen>=1);
+  assert.ok(producerId);
+  const producer=take(s,producerId);
+  producer.ready=true;producer.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].energy[0]=producer;
+  s.players[0].hand.push(source);
+  const window=s.players[0].deck.slice(0,2).map(c=>c.uid);
+  assert.equal(window.length,2);
+  s=pick(s,a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy'&&a.slot===1);
+  assert.equal(s.pending?.kind,'effect-top-inspect-many');
+  assert.deepEqual(universalPrivateChoices(packs,s,0).inspected.map(c=>c.uid),window);
+  assert.equal(universalPrivateChoices(packs,s,1),null);
+  for(const uid of window.slice(0,n)){
+   s=pick(s,a=>a.type==='chooseInspectedOutside'&&a.uid===uid);
+  }
+  if(s.pending?.kind==='effect-top-inspect-many')
+   s=pick(s,a=>a.type==='chooseInspectedOutside'&&a.uid===null);
+  while(s.pending?.kind==='effect-top-order')
+   s=pick(s,a=>a.type==='chooseTopOrder'&&window.slice(n).includes(a.uid));
+  assert.equal(s.pending,null);
+  for(const uid of window.slice(0,n))
+   assert.ok(s.players[0].outside.some(c=>c.uid===uid),'selected card must enter outside');
+  for(const uid of window.slice(n))
+   assert.ok(s.players[0].deck.some(c=>c.uid===uid),'kept card must remain in deck');
+  assert.deepEqual(s.players[0].deck.filter(c=>window.includes(c.uid))
+   .map(c=>c.uid).sort(),window.slice(n).sort());
+  assert.equal(assertUniversalMatch(packs,s),true);
+ }
 });
