@@ -517,7 +517,7 @@ function namedRaidHasBase(pack,s,owner,physical){
  if(d.type!=='character'||d.frontForbidden||!d.raidName)return false;
  for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
   const base=pl[line][slot];
-  if(base&&validRaidBase(pack,s,owner,base,d)&&!card(pack,base).frontForbidden)return true;
+  if(base&&validRaidBase(pack,s,owner,base,d))return true;
  }
  return false;
 }
@@ -2812,7 +2812,7 @@ function lookCanRaid(pack,s,owner,physical){
  if(d.type!=='character'||d.frontForbidden||!d.raidName)return false;
  const pl=s.players[owner];
  for(const line of ['front','energy'])for(const base of pl[line])
-  if(base&&validRaidBase(pack,s,owner,base,d)&&!card(pack,base).frontForbidden)return true;
+  if(base&&validRaidBase(pack,s,owner,base,d))return true;
  return false;
 }
 function lookChoiceUids(pack,s,owner,take,window,used,usedNames,selectedNames){
@@ -2840,7 +2840,7 @@ function lookEntryActions(pack,s,owner,physical,take){
  if(take.to==='restOrRaid'&&d.type==='character'&&d.raidName&&!d.frontForbidden)
   for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
    const base=pl[line][slot];
-   if(!base||!validRaidBase(pack,s,owner,base,d)||card(pack,base).frontForbidden)continue;
+   if(!base||!validRaidBase(pack,s,owner,base,d))continue;
    const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
    for(const dest of dests)out.push({type:'chooseTopScript',mode:'raid',
     uid:physical.uid,baseUid:base.uid,line:'front',...dest});
@@ -8723,9 +8723,11 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  const baseOriginalSilenced=base?originalEffectsDisabled(s,base.c):false;
  if(!base||!validRaidBase(pack,s,p,base.c,top))throw Error('Illegal Raid base');
  if(line!=='front'&&line!=='energy')throw Error('Illegal Raid destination');
- if(line==='front'&&(top.frontForbidden||card(pack,base.c).frontForbidden))
+ // Raid replaces the visible character. The former base is now buried;
+ // its own placement restriction does not constrain the new Raid top.
+ if(line==='front'&&top.frontForbidden)
   throw Error('Printed front-line restriction forbids Raid movement');
- if(line==='energy'&&(top.energyLineForbidden||card(pack,base.c).energyLineForbidden))
+ if(line==='energy'&&top.energyLineForbidden)
   throw Error('Printed energy-line restriction forbids Raid movement');
  if(base.line==='front'&&(line!=='front'||slot!==base.slot))
   throw Error('Cannot move a front-line Raid base');
@@ -19219,8 +19221,7 @@ function legalPending(pack,s){
     }
     if(d.raidName&&!d.frontForbidden)
      for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
-      const base=p[line][slot];if(!base||!validRaidBase(pack,s,q.player,base,d)||
-       card(pack,base).frontForbidden)continue;
+      const base=p[line][slot];if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
       const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
       for(const dest of dests)out.push({type:'chooseOutsideTraitlessRest',
        mode:'raid',uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -19370,8 +19371,7 @@ function legalPending(pack,s){
    if(d.raidName&&d.type==='character'&&!d.frontForbidden)
     for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
      const base=p[line][slot];
-     if(!base||!validRaidBase(pack,s,q.player,base,d)||
-      card(pack,base).frontForbidden)continue;
+     if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
      const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
      for(const dest of dests)out.push({type:'chooseDeckNamedPlay',mode:'raid',
       uid:top.uid,baseUid:base.uid,line:'front',...dest});
@@ -19394,8 +19394,7 @@ function legalPending(pack,s){
      if(!d.raidName||d.type!=='character'||d.frontForbidden)continue;
      for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
       const base=p[line][slot];
-      if(!base||!validRaidBase(pack,s,q.player,base,d)||
-       card(pack,base).frontForbidden)continue;
+      if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
       const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
       for(const dest of dests)out.push({type:'chooseHandRestOrRaid',mode:'raid',
        uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -19417,8 +19416,7 @@ function legalPending(pack,s){
     if(d.raidName&&d.type==='character'&&!d.frontForbidden)
      for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
       const base=p[line][slot];
-      if(!base||!validRaidBase(pack,s,q.player,base,d)||
-       card(pack,base).frontForbidden)continue;
+      if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
       const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
       for(const dest of dests)out.push({type:'chooseHandRestOrRaid',mode:'raid',
        uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -19442,8 +19440,7 @@ function legalPending(pack,s){
     if(d.raidName&&d.type==='character'&&!d.frontForbidden)
      for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
       const base=p[line][slot];
-      if(!base||!validRaidBase(pack,s,q.player,base,d)||
-       card(pack,base).frontForbidden)continue;
+      if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
       const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
       for(const dest of dests)out.push({type:'chooseHandActiveOrRaid',mode:'raid',
        uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -20427,7 +20424,7 @@ function legalPending(pack,s){
     for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
      const base=p[line][slot];
      if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
-     if(line==='energy'&&(d.energyLineForbidden||card(pack,base).energyLineForbidden))continue;
+     if(line==='energy'&&(d.energyLineForbidden))continue;
      const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
      for(const dest of dests)out.push({type:'chooseNamedOutside',mode:'raid',
       uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -20601,7 +20598,7 @@ function legalPending(pack,s){
    if(d.raidName&&!d.frontForbidden)
     for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
      const base=p[line][slot];
-     if(!base||!validRaidBase(pack,s,q.player,base,d)||card(pack,base).frontForbidden)continue;
+     if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
      const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
      for(const dest of dests)out.push({type:'choosePrintedRestRaid',mode:'raid',
       uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -20618,7 +20615,7 @@ function legalPending(pack,s){
    if(!d.raidName)continue;
    for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
     const base=p[line][slot];
-    if(!base||!validRaidBase(pack,s,q.player,base,d)||card(pack,base).frontForbidden)continue;
+    if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
     const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
     for(const dest of dests)out.push({type:'chooseRemovedOkabeRaid',mode:'raid',
      uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -20658,7 +20655,7 @@ function legalPending(pack,s){
    if(d.raidName&&!d.frontForbidden)
     for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
      const base=p[line][slot];
-     if(!base||!validRaidBase(pack,s,q.player,base,d)||card(pack,base).frontForbidden)continue;
+     if(!base||!validRaidBase(pack,s,q.player,base,d))continue;
      const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
      for(const dest of dests)out.push({type:'chooseOutsideRestOrRaid',mode:'raid',
       uid:c.uid,baseUid:base.uid,line:'front',...dest});
@@ -22807,13 +22804,13 @@ export function legalUniversalActions(pack,s){
      // Preserve the historical FRONT-first ordering used by existing Raid
      // defaults and AI/tests; the ENERGY stay-put choice is offered *after*
      // the original FRONT destinations. Both remain independently legal.
-     if(!d.frontForbidden&&!card(pack,base).frontForbidden){
+     if(!d.frontForbidden){
       const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
       for(const choice of dests)
        out.push({type:'raid',uid:c.uid,baseUid:base.uid,...choice});
      }
      // Q400: A Raid on an ENERGY base may stay in the same ENERGY slot.
-     if(line==='energy'&&!d.energyLineForbidden&&!card(pack,base).energyLineForbidden)
+     if(line==='energy'&&!d.energyLineForbidden)
       out.push({type:'raid',uid:c.uid,baseUid:base.uid,line:'energy',slot});
     }
    }
@@ -22855,12 +22852,12 @@ export function legalUniversalActions(pack,s){
      if(!validRaidBase(pack,s,p,base,d))continue;
      const raidCut=aotRaidCut(pack,s,p,d)+aot2RaidCut(pack,s,p,d,base);
      if(!energyCovers(produced,d,Math.max(0,requiredEnergy-raidCut)))continue;
-     if(!d.frontForbidden&&!card(pack,base).frontForbidden){
+     if(!d.frontForbidden){
       const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
       for(const choice of dests)
        out.push({type:'raid',uid:c.uid,from:'removed',baseUid:base.uid,...choice});
      }
-     if(line==='energy'&&!d.energyLineForbidden&&!card(pack,base).energyLineForbidden)
+     if(line==='energy'&&!d.energyLineForbidden)
       out.push({type:'raid',uid:c.uid,from:'removed',baseUid:base.uid,line:'energy',slot});
     }
    }
