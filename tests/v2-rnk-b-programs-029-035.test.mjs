@@ -67,7 +67,7 @@ test('refuse invented full-deck eligibility, partial programs and source drift',
 });
 
 test('staging never changes production registration or Chinese display',()=>{
-  assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+  assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(card=>card.battleReady).length,0);
   assert.equal(RNK_IDENTITY_INVENTORY.filter(card=>card.effectImplemented).length,0);
   assert.equal(source.get('RNK-1-031').nameZhTw,'最強的證明');

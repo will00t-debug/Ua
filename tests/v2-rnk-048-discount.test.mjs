@@ -58,5 +58,5 @@ test('048 remains staging only; no production registry nor Chinese display chang
  const card=createRnkBcdBatchStagingPack().cards[id];
  assert.equal(card.implementation,'dsl');
  assert.equal(card.effects.onPlay.length,1);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });

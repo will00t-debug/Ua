@@ -86,5 +86,5 @@ test('batch stays staging-only and cannot make partially mapped card programs ba
  assert.equal(catalog['RNK-1-075'].battleReady,false);
  assert.deepEqual(pack.cards['RNK-1-113'].effects.onAttack,[{op:'optionalDrawSkipNextActive'}]);
  assert.equal(catalog['RNK-1-113'].battleReady,false);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });

@@ -53,5 +53,5 @@ test('064 target cap is 3000, or 5000 if own Saito present; printed SPECIAL stay
 test('both staged programs are excluded from production until actual match verification',()=>{
  const pack=createRnkBcdBatchStagingPack();
  for(const id of ['RNK-1-046','RNK-1-064'])assert.ok(pack.cards[id]);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });

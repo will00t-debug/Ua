@@ -102,8 +102,8 @@ export function rnkPrintsFor(idValue) {
   return freeze(prints);
 }
 
-// Identity inventory shown in the picture deck builder. Do NOT add these
-// cards to officialV2Pack until each effect is independently battle-accepted.
+// Identity inventory shown in the picture deck builder. The live battle pack
+// uses the staged programs; these rows stay battleReady and effectImplemented false.
 export const RNK_TC_CATALOG = freeze([
   ...RNK_CARDS_001_007,
   ...RNK_CARDS_008_014,

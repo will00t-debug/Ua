@@ -92,5 +92,5 @@ test('no RNK-specific effect opcode, no premature production integration',()=>{
    for(const x of effects)assert.ok(V2_EFFECT_OPS.includes(x.op),'unexpected non-shared op '+x.op);
   }
  }
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });

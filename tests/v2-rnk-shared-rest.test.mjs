@@ -93,7 +93,7 @@ test('the last nineteen identities stage on the shared engine',()=>{
  assert.equal(pack.cards['RNK-P-001'].allColors,true);
  assert.equal(source['RNK-1-103'].set,'UA41ST');
  assert.equal(source['RNK-1-111'].set,'UA41ST');
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });
 
 test('010 puts the named outside card under the deck, then moves to the front',()=>{

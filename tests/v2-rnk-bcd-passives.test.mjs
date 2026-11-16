@@ -55,6 +55,6 @@ test('C061 / starter D107 keep exact IMPACT null keyword and their distinct trig
  assert.equal(PRINT['RNK-1-107'].set,'UA41ST');
 });
 test('passive batch does not silently add production legal cards',()=>{
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
  for(const id of IDS)assert.equal(PRINT[id].battleReady,false);
 });

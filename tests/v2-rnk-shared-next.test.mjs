@@ -92,7 +92,7 @@ test('037, 095, 112 and 113 keep Japanese evidence distinct from Traditional Chi
  assert.equal(source['RNK-1-112'].needsManualReview,true);
  assert.equal(source['RNK-1-113'].needsManualReview,true);
  assert.equal(RNK_PROGRAMS_036_042['RNK-1-037'].ready,false);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });
 
 test('shared programs use only existing V2 ops and reject approximate shapes',()=>{

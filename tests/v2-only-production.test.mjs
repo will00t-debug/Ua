@@ -5,7 +5,7 @@ import {TITLES} from '../dist/title-registry.mjs';
 import {BLEACH_GREEN_V2_COUNTS} from '../dist/universal-v2/preview-real-decks.mjs';
 import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,toV2Counts,editorV2Status,registeredPackForEditor}
  from '../dist/v2-editor-compat.mjs';
-import {officialV2Pack,practiceDeck,rezeroSet1PracticeDeck,steinsGatePracticeDeck} from '../dist/universal-v2/official-entry.mjs';
+import {officialV2Pack,practiceDeck,rezeroSet1PracticeDeck,steinsGatePracticeDeck,rnkPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {renderVisualDeckBuilder} from '../dist/visual-deck-builder.mjs';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 test('six-title production editor cannot load old battle engine or old app script',()=>{
@@ -39,7 +39,7 @@ test('six-title production editor cannot load old battle engine or old app scrip
  assert.equal(new Set(TITLES.find(t=>t.id==='mha').cards.map(card=>card.id)).size,191);
  const rnk=TITLES.find(t=>t.id==='rnk');
  assert.equal(rnk.label,'浪客劍心');
- assert.equal(rnk.playable,false);
+ assert.equal(rnk.playable,true);
  assert.equal(rnk.cards.length,114);
  assert.equal(new Set(rnk.cards.map(card=>card.id)).size,114);
  assert.equal(rnk.cards.filter(card=>card.id.startsWith('RNK-1-')).length,113);
@@ -158,15 +158,22 @@ test('standalone browser editor boots without legacy runtime and preserves TTG d
   delete globalThis.document;delete globalThis.localStorage;delete globalThis.sessionStorage;delete globalThis.window;
  }
 });
-test('Rurouni Kenshin is listed in the picture deck builder and stays out of official battles',()=>{
+test('Rurouni Kenshin is listed in the picture deck builder and can start an official match',()=>{
  const title=TITLES.find(t=>t.id==='rnk');
- assert.equal(registeredPackForEditor('rnk'),null);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ const pack=registeredPackForEditor('rnk');
+ assert.equal(pack.id,'rnk');
+ assert.equal(Object.keys(pack.cards).length,114);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
  const four=normalizeEditorCounts('rnk',{'RNK-1-010':4,'RNK-P-001':1});
  assert.equal(four['RNK-1-010'],4);
  const status=editorV2Status('rnk',four);
+ assert.equal(status.registered,114);
  assert.equal(status.ready,false);
- assert.ok(status.issues.some(issue=>issue.includes('可收藏與組卡')));
+ assert.ok(status.issues.some(issue=>issue.includes('5/50')));
+ const practice=rnkPracticeDeck();
+ const ready=editorV2Status('rnk',practice.counts);
+ assert.equal(ready.ready,true,ready.issues.join('；'));
+ assert.equal(ready.total,50);
  const picker=renderVisualDeckBuilder({
   titles:TITLES.map(item=>({id:item.id,label:item.label,cards:item.id==='rnk'?item.cards:item.cards.slice(0,1)})),
   titleId:'rnk',ready:false
@@ -185,4 +192,10 @@ test('Rurouni Kenshin is listed in the picture deck builder and stays out of off
  assert.match(editor,new RegExp(kenshin.image.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
  assert.match(editor,/多色/);
  assert.ok(promo.image.includes('UAPR_RNK-P-001'));
+ const battle=renderVisualDeckBuilder({
+  titles:[title],titleId:'rnk',ready:true,tab:'overview',counts:practice.counts,
+  v2SupportedIds:ready.supported,v2Ready:ready.ready,issues:ready.issues
+ });
+ assert.match(battle,/data-action="v2Play"\s+class="arena-battle">測試對戰/);
+ assert.doesNotMatch(battle,/data-action="v2Play" disabled/);
 });

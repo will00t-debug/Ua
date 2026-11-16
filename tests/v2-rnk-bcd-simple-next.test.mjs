@@ -63,5 +63,5 @@ test('common pack remains strict about known operations and production exclusion
   effects:{onPlay:[{op:'rnkPrivateLook'}]}
  },RNK_JP_EVIDENCE_SIMPLE_NEXT['RNK-1-104']);
  assert.throws(()=>createUniversalPack({id:'rnk',cards:[bad]}),/effect op unsupported/);
- assert.throws(()=>officialV2Pack('rnk'),/尚未提供正式 V2 牌組/);
+ assert.equal(Object.keys(officialV2Pack('rnk').cards).length,114);
 });

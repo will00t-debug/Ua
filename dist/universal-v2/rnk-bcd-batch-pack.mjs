@@ -1,5 +1,5 @@
 // Batch V2 staging for Japanese-confirmed RNK effects; all common V2 DSL.
-// Unchecked records are excluded. This is not an official/production battle pack.
+// Unchecked records are excluded. Production battles use this staged pack.
 import {RNK_TC_CATALOG} from '../rnk/manifest.mjs';
 import {RNK_PROMO_CARD} from '../rnk/promo-card.mjs';
 import {RNK_JP_EVIDENCE_029_035} from '../rnk/jp-evidence-029-035.mjs';

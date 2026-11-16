@@ -16,7 +16,10 @@ export const V2_TITLE_LABELS=Object.freeze({
  kjn:'我想成為影之強者！',
  aot:'進擊的巨人',
  kmr:'假面騎士',
- csm:'鏈鋸人'
+ csm:'鏈鋸人',
+ imc:'偶像大師 灰姑娘女孩',
+ mha:'我的英雄學院',
+ rnk:'浪客劍心'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',

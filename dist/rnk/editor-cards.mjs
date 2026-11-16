@@ -1,5 +1,5 @@
-// Deck-builder catalogue only. Official battles stay closed: this does not
-// register rnk with officialV2Pack, and every row stays battleReady false.
+// Picture-editor rows. The live battle pack is built from the staged programs.
+// These catalogue rows stay battleReady false; the adapter requires that.
 import {RNK_SOURCE_CATALOG} from './manifest.mjs';
 
 export function rnkEditorCards(){
