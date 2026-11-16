@@ -693,6 +693,38 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return found>=condition.min;
  }
+ if(condition.kind==='ownTriggerEnteredThisTurn'){
+  // 登場 is arrival on front or energy from somewhere else. Moving between
+  // the two lines is not an entry. The character does not have to remain.
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   (e.to==='front'||e.to==='energy')&&e.from!=='front'&&e.from!=='energy'&&
+   printed({uid:e.uid,cardId:e.cardId})?.type==='character'&&
+   printed({uid:e.uid,cardId:e.cardId})?.trigger===condition.trigger);
+ }
+ if(condition.kind==='ownTriggerlessAtLeast'){
+  // 【トリガー】を持たない is a missing life-trigger icon, on either line,
+  // including fields. A printed trait is unrelated.
+  const board=s.players[owner];
+  let found=0;
+  for(const area of [board.front,board.energy])for(const c of area){
+   if(!printedFieldCard(c))continue;
+   const trigger=printed(c).trigger;
+   if(trigger==null||trigger==='')found++;
+  }
+  return found>=condition.min;
+ }
+ if(condition.kind==='ownOtherCardEnergyAtLeast'){
+  // 他のカード counts every other face-up card, including a field. The
+  // number is the printed required energy.
+  const board=s.players[owner];
+  let found=0;
+  for(const area of [board.front,board.energy])for(const c of area){
+   if(!printedFieldCard(c)||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   const energy=printed(c).energy;
+   if(Number.isInteger(energy)&&energy>=condition.minEnergy)found++;
+  }
+  return found>=condition.min;
+ }
  if(condition.kind==='ownOtherRequiredEnergyAtLeast'){
   // 自分の場の他のキャラで、必要エナジーがN以上のものがM枚以上.
   // The retiring card is already outside when a leave effect asks. A

@@ -1003,6 +1003,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseLeaveReplacement':
    return action.mode==='leave'?'讓角色退場':'消耗裏向底卡保護角色'+(action.uid?'（'+name()+'）':'');
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':action.mode==='bottom'?'放回牌庫底':'送至場外';
+  case 'chooseTopTriggerless':return action.mode==='hand'?'公開並加入手牌':'放回牌庫頂';
   case 'chooseRestOpp':return action.uid===null?'不休息對手前排':'使 '+name()+' 休息';
   case 'chooseDiscardHandActive':return action.uid===null?'不將手牌放到場外':'將 '+name()+' 放到場外並活動';
   case 'chooseRestOwnImpact':return action.uid===null?'不休息我方前排':'休息 '+name()+' 並獲得衝擊';
