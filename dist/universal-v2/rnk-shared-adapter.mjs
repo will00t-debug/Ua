@@ -12,7 +12,7 @@ const SHARED_KEYS=new Set([
   'enterAlwaysActive','ownTurnBp','opponentTurnBp','blockBpRestriction',
   'emptyOwnFieldHandEnergyDiscount',
   'opponentFieldColorsHandEnergyDiscount','printedHandEnergyDiscount',
-  'unblockedAttack','attackWinDraw','nameAliases','phaseEffects',
+  'unblockedAttack','attackWinDraw','nameAliases','phaseEffects','unionEnergy',
   'printedMains','cannotAttack','battleRemoveInstead','battleLoseToHand',
   'oppEffectLeave','moveTriggers','moveObserver'
 ]);

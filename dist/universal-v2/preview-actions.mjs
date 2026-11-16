@@ -28,7 +28,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-below-printed':'選擇對方角色，本回合 BP 低於原本時不能阻擋',
  'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
- 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇',csm:'鏈鋸人效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
+ 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇',csm:'鏈鋸人效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底','private-top-or-outside':'查看牌頂，放回牌頂或場外','effect-rest-opp-if-name':'可休息 1 個對手前排角色','effect-retire-opp-field':'可將對方 1 張場域退場','effect-grant-unblocked-draw':'可給指定角色本回合未被阻擋時抽牌','effect-suppress-own-turn':'可讓指定角色失去自己回合中效果','effect-move-opp-cap':'可選擇 BP 以下的對手前排角色','effect-move-opp-dest':'移到能量線或牌庫底','effect-outside-union-top':'將場外的指定卡放到牌庫頂',
  'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂','effect-place-hand-top':'將 1 張手牌放到牌庫頂',
  'effect-grant-lose-ready':'給能源 0 的指定角色本回合落敗時 ACTIVE',
  'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',

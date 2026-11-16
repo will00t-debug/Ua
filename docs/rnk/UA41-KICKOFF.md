@@ -251,3 +251,32 @@ Four more Japanese-checked prints compile on the shared Universal V2 engine. Sou
 - Files: `dist/rnk/jp-evidence-shared-next.mjs`, `dist/universal-v2/rnk/programs-shared-next.mjs`, `tests/v2-rnk-shared-next.test.mjs`. Fixed census is **55** in `tests/v2-rnk-bcd-batch-programs.test.mjs` and `tests/v2-rnk-blue-common-12.test.mjs`.
 - Still unstaged: `RNK-1-058` (top or outside, not bottom), `RNK-1-060` (name/name/other-trait one target), `RNK-1-075` (mandatory unblocked draw, Q1610), `RNK-1-062` (three-clause FAQ Q1607). Starter `RNK-1-112` and `RNK-1-113` keep `needsManualReview` for the printed generation symbol.
 - **55/114 staged shared-V2 programs; 0/114 fully battle-accepted.** No merge and no deployment.
+
+## 2026-11-16 — twenty shared effects (75 staged)
+
+Twenty more Japanese-checked prints compile on the shared Universal V2 engine. Where an existing opcode did not match the printed sentence, the new effect is a shared op, not a title-private opcode and not a nearby approximation. Source catalog stays **114/114**. Traditional Chinese display is unchanged. **0/114** are battle, UI, or AI accepted. `officialV2Pack('rnk')` stays closed. `battleReady`, `effectImplemented`, and `cardDataVerified` stay false. This is a draft continuation of PR #508. Official Japanese pages are the rules authority: `https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA41BT%2FRNK-1-NNN`.
+
+- `RNK-1-005` 武田 観柳: choose one. Up to one opponent front character with BP 2000 or less, or optionally sideline one of your 御庭番衆 and, if you do, draw 1 and sideline up to one opponent front character with BP 4000 or less.
+- `RNK-1-007` 比古 清十郎: during your turn, Impact (1) only after a successful hand play of 〈九頭龍閃〉 or 〈生きようとする意志〉. Payment discards do not count. New live condition `ownNamedCardsUsedThisTurn`.
+- `RNK-1-017` 四乃森 蒼紫: may rest one other active front 御庭番衆. If you do, this character becomes active.
+- `RNK-1-026` 修行: look at the top 3, add up to one 〈比古 清十郎〉 or 〈緋村 剣心〉, rest to the bottom. A hand discard happens only when the added card's required energy is 4 or more. 心太 matches through the printed alias.
+- `RNK-1-028` 回天剣舞: mandatory retire of one opponent front character with BP 3000 or less, plus 1000 for each of your 〈四乃森 蒼紫〉. Special trigger retires one opponent front character.
+- `RNK-1-034` 駒形 由美: on play, draw 1 then place one hand card outside. On leave, if 〈志々雄 真実〉 is on your front, you may rest one opponent front character. Energy-line 志々雄 does not count.
+- `RNK-1-042` 相楽 左之助: may pay 1 AP. If you do, sideline up to one opponent field.
+- `RNK-1-045` 緋村 剣心: look at the top 2. Up to one purple card with no traits, of any type, goes outside. The rest returns to the top. Both inspected cards stay visible, including the one that cannot be chosen.
+- `RNK-1-052` 佐渡島 方治: purple energy generation +1 while the combined unique count of 〈志々雄 真実〉, 〈駒形 由美〉, or other 十本刀 on your field is 3 or more. `か` plus `他の` excludes this card from the trait count. This is not an on-play effect.
+- `RNK-1-058` 瀬田 宗次郎: front, once per turn, look at the top card and place it on top or outside. The color trigger plays one purple character of required energy 2 or less and AP 1 from outside, active, onto the front.
+- `RNK-1-060` 本条 鎌足: up to one 〈志々雄 真実〉, 〈駒形 由美〉, or other 十本刀 gets +1000 BP this turn. This card cannot choose itself through the trait.
+- `RNK-1-062` 大型甲鉄艦 煉獄: up to one 〈志々雄 真実〉 gains "when this character attacks and is not blocked, you may draw 1" until end of turn (Q1607, after the block decision and before damage). The grant stays if this field later leaves. Activate by resting this energy-line field to sideline it. On leave, draw 2. The Traditional Chinese synopsis is not implemented. Holdout status `JAPANESE_PRINT_CONFLICT` stays on the holdout record.
+- `RNK-1-066` 十本刀集結: mandatory retire of one opponent front character with BP at most 1000 times the sum of 〈志々雄 真実〉 and 〈駒形 由美〉 and 十本刀. A card that is both a printed name and the trait counts twice. This is not the unique-or count used by 052 and 060.
+- `RNK-1-067` 幕末の亡霊: place one 〈志々雄 真実〉, 〈駒形 由美〉, or 十本刀 from outside onto the deck top, unrevealed. Then you may active one of your AP. The AP sentence is not gated by the place. With no matching outside card, the place does not happen and the AP choice still opens.
+- `RNK-1-072` 斎藤 一: up to one 〈緋村 剣心〉, including the 心太 alias, loses its during-your-turn text until end of turn. Attack and on-play text without that icon stay. Opponent-turn BP stays.
+- `RNK-1-075` 相楽 左之助: when this character attacks and is not blocked, draw 1. Mandatory, every attack, no once-per-turn gate (Q1610). The compiled program keeps `optional:false`. Holdout status `MANDATORY_UNBLOCKED_DRAW_TIMING` stays on the holdout record.
+- `RNK-1-082` 高荷 恵: choose one. Up to one character with required energy 1 or less from outside to hand, or up to one other character on your field gets +1500 BP this turn.
+- `RNK-1-084` 月岡 津南: choose one. Up to one resting front 〈相楽 左之助〉 becomes active, or you may rest one active front 〈相楽 左之助〉 and, if you do, rest up to one opponent front character.
+- `RNK-1-094` 赤べこ: look at the top 3, add up to one character, rest to the bottom. If the added card is not 〈相楽 左之助〉, place one hand card outside.
+- `RNK-1-100` 龍槌閃: up to one opponent front character with BP 5000 or less moves to that player's energy line. If 〈緋村 剣心〉 is on your field, you may put that character on the bottom of their deck instead. Energy is the default.
+- New shared ops include `retireOppFrontPerName`, `retireOppFrontCategoryScale`, `searchTopConditionalDiscard`, `peekTopOrOutside`, `grantNamedUnblockedOptionalDraw`, `fieldRestRetire`, `loseOwnTurnText`, `moveOppFrontBpOrBottom`, `outsideUnionToDeckTopThenActiveAp`, `optionalRetireOwnTraitThen`, `optionalRestNamedFrontThen`, `optionalRestOtherFrontTraitThenActive`, `buffOwnUnion`, and `unionEnergy`. Closed looks still store the full window.
+- Files: `dist/rnk/jp-evidence-shared-twenty.mjs`, `dist/universal-v2/rnk/programs-shared-twenty.mjs`, `tests/v2-rnk-shared-twenty.test.mjs`. Staging census is **75**.
+- Starter `RNK-1-112` and `RNK-1-113` keep `needsManualReview` for the printed generation symbol. The earlier pending copies of 034 and 042 stay `ready:false` in their old modules. The batch pack spreads this batch last.
+- **75/114 staged shared-V2 programs; 0/114 fully battle-accepted.** No merge and no deployment.
