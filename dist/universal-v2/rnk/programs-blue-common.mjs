@@ -25,7 +25,7 @@ export const RNK_PROGRAMS_BLUE_COMMON=Object.freeze({
  'RNK-1-003':dsl({}, {mainAbility:temporaryEnergy}),
  'RNK-1-004':dsl(onPlay({op:'bounceOwnOtherUnderEnergy',energy:1})),
  'RNK-1-006':dsl(onPlay(buffKenshin)),
- 'RNK-1-009':dsl(onPlay({op:'inspectTopArrange',count:2,toOutside:true,rest:'top'}),{impactNull:true}),
+ 'RNK-1-009':dsl(onPlay({op:'inspectTopAnyOutside',count:2,rest:'top'}),{impactNull:true}),
  'RNK-1-012':dsl({}, {opponentFieldColorsHandEnergyDiscount:Object.freeze({
    colors:Object.freeze(['purple','red']),amount:1
  })}),
