@@ -201,6 +201,12 @@ export function effectChoiceProtected(s,selector,targetUid,sourceType){
  const turnImmune=target.card.oppChoiceImmuneGranted;
  if(turnImmune&&selector!==target.owner&&turnImmune.turn===s.turn&&
   turnImmune.stamp===target.card.fieldEntryStamp)return true;
+ // 「相手の効果で選ばれない」 on the gained stay ward. Own effects can still
+ // choose this card. Battle never calls this helper. Silence turns it off.
+ const stay=target.card.stayWard;
+ if(stay&&selector!==target.owner&&!originalEffectsDisabled(s,target.card)&&
+  stay.stamp===target.card.fieldEntryStamp&&Number.isInteger(stay.untilOwnTurnStart)&&
+  s.players[target.owner].ownTurns<stay.untilOwnTurnStart)return true;
  if(target.owner===selector)return false;
  const earnedUnchosen=target.card.unchosenGranted;
  if(earnedUnchosen&&earnedUnchosen.turn===s.turn&&

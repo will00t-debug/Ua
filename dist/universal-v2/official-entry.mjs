@@ -257,13 +257,11 @@ export function createMhaBattlePack(){
  const book=createMha3Pack();
  const cards={...set1.cards,...set2.cards,...points.cards,...book.cards};
  const ids=Object.keys(cards);
- if(ids.length!==190)throw Error('MHA live pack drifted: '+ids.length);
+ if(ids.length!==193)throw Error('MHA live pack drifted: '+ids.length);
  for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003'])
   if(!cards[id])throw Error('MHA ready point card missing: '+id);
- if(ids.includes('MHA-3-009'))
-  throw Error('pending MHA-3-009 entered the live pack');
  mhaBattlePack=Object.freeze({
-  kind:'ua-v2-pack',id:'mha',version:'mha-live-109-73-3-5',
+  kind:'ua-v2-pack',id:'mha',version:'mha-live-109-73-3-8',
   restrictColors:false,cards:Object.freeze(cards)
  });
  return mhaBattlePack;

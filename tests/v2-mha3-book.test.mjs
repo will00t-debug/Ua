@@ -9,7 +9,8 @@ import {createMha2Pack} from '../dist/universal-v2/mha2-pack.mjs';
 import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
- newUniversalMatch, universalBp, universalImpact} from '../dist/universal-v2/engine.mjs';
+ newUniversalMatch, universalBp, universalImpact, universalImpactNull,
+ zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
 const book=createMha3Pack();
 const shigaraki=UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-002');
@@ -18,8 +19,8 @@ function filler(id, extra={}){
  return {id, name:id, color:'purple', type:'character', energy:0, ap:1, bp:1000,
   gen:1, trigger:null, traits:[], implementation:'vanilla', ...extra};
 }
-function labPack(card){
- const cards=[card];
+function labPack(card, extras=[]){
+ const cards=[card, ...extras];
  cards.push(filler('LAB-BASE',{name:'死柄木 弔', bp:2000}));
  cards.push(filler('LAB-1500',{bp:1500}));
  cards.push(filler('LAB-2000',{bp:2000}));
@@ -91,10 +92,11 @@ function live(s, p, uid){
  return [...s.players[p].front, ...s.players[p].energy].find(c=>c?.uid===uid)||null;
 }
 
-test('the book pack holds the five finished cards', ()=>{
+test('the book pack holds the eight finished cards', ()=>{
  assert.deepEqual(UA05NC_MHA3_CARDS.map(card=>card.number),[
   'UA05NC/MHA-3-001','UA05NC/MHA-3-002','UA05NC/MHA-3-003',
-  'UA05NC/MHA-3-004','UA05NC/MHA-3-006','UA05NC/MHA-3-009'
+  'UA05NC/MHA-3-004','UA05NC/MHA-3-005','UA05NC/MHA-3-006',
+  'UA05NC/MHA-3-007','UA05NC/MHA-3-009'
  ]);
  assert.equal(shigaraki.color,'purple');
  assert.equal(shigaraki.energy,4);
@@ -102,10 +104,11 @@ test('the book pack holds the five finished cards', ()=>{
  assert.equal(shigaraki.bp,4000);
  assert.equal(shigaraki.gen,1);
  assert.equal(shigaraki.trigger,'raid');
- assert.equal(UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009').energyDiscount,null);
- assert.equal(book.version,'mha3-ua05nc-ready-5');
+ assert.equal(UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009').energyDiscount,1);
+ assert.equal(book.version,'mha3-ua05nc-ready-8');
  assert.deepEqual(Object.keys(book.cards),[
-  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'
+  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005',
+  'MHA-3-006','MHA-3-007','MHA-3-009'
  ]);
  assert.equal(book.cards['MHA-3-002'].battleRemoveInstead,true);
  assert.equal(book.cards['MHA-3-002'].printedImpact,1);
@@ -113,17 +116,16 @@ test('the book pack holds the five finished cards', ()=>{
  assert.equal(createMhaV2Pack().cards['MHA-3-002'],undefined);
  assert.equal(createMha2Pack().cards['MHA-3-002'],undefined);
  const live=officialV2Pack('mha');
- assert.equal(live.version,'mha-live-109-73-3-5');
+ assert.equal(live.version,'mha-live-109-73-3-8');
  for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003'])
   assert.equal(live.cards[id].id,id);
- for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'])
+ for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-009'])
   assert.equal(live.cards[id].id,id);
- assert.equal(live.cards['MHA-3-009'],undefined);
- for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-006'])
+ for(const id of Object.keys(UA05NC_MHA3_PROGRAMS))
   assert.equal(UA05NC_MHA3_PROGRAMS[id].ready,true);
- assert.equal(UA05NC_MHA3_PROGRAMS['MHA-3-009'].ready,false);
  assert.equal(UA05NC_MHA3_PROGRAMS['MHA-3-009'].effects.onAttack[0].op,
   'drawBottomSkipNextActive');
+ assert.equal(live.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,1);
 });
 
 test('002 lowers up to two fronts of BP 1500 or more, once, and only from the front', ()=>{
@@ -242,24 +244,19 @@ test('001 draws two when it enters', ()=>{
  assert.equal(book.cards['MHA-3-001'].mainAbility.op,'cardOnceChoose');
 });
 
-test('009 gains 500 BP on its own turn only', ()=>{
+test('009 gains 500 BP on its own turn only and costs 1 from an empty field', ()=>{
  const printed=UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009');
- const card={
-  id:printed.id, name:printed.nameJa, color:printed.color, type:'character',
-  energy:printed.energy, ap:printed.ap, bp:printed.bp, gen:printed.gen,
-  trigger:printed.trigger, traits:[], implementation:'dsl',
-  ownTurnBp:UA05NC_MHA3_PROGRAMS['MHA-3-009'].ownTurnBp,
-  effects:UA05NC_MHA3_PROGRAMS['MHA-3-009'].effects
- };
- const pack=labPack(card);
+ const pack=labPack(battle('MHA-3-009'));
  let s=match(pack,'MHA-3-009',9);
+ assert.equal(zoneRequiredEnergy(pack,s,0,pack.cards['MHA-3-009'],'hand'),1);
  const body=put(s,0,'MHA-3-009','front',0,true);
+ assert.equal(zoneRequiredEnergy(pack,s,0,pack.cards['MHA-3-009'],'hand'),2);
  s=toPhase(pack,s,'main');
  assert.equal(universalBp(pack,s,live(s,0,body.uid)),3500);
  s=untilActive(pack,s,1,'main');
  assert.equal(universalBp(pack,s,live(s,0,body.uid)),3000);
- assert.equal(book.cards['MHA-3-009'],undefined);
- assert.equal(printed.energyDiscount,null);
+ assert.equal(book.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,1);
+ assert.equal(printed.energyDiscount,1);
 });
 
 function battle(id){
@@ -421,15 +418,7 @@ test('006 rests when the opponent front has three characters, buffs another, and
 });
 
 test('009 draws, puts one hand card on the bottom, and skips the next active', ()=>{
- const printed=UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009');
- const card={
-  id:printed.id, name:printed.nameJa, color:printed.color, type:'character',
-  energy:printed.energy, ap:printed.ap, bp:printed.bp, gen:printed.gen,
-  trigger:printed.trigger, traits:[], implementation:'dsl',
-  ownTurnBp:UA05NC_MHA3_PROGRAMS['MHA-3-009'].ownTurnBp,
-  effects:UA05NC_MHA3_PROGRAMS['MHA-3-009'].effects
- };
- const pack=labPack(card);
+ const pack=labPack(battle('MHA-3-009'));
  let s=match(pack,'MHA-3-009',20);
  const body=put(s,0,'MHA-3-009','front',0,true);
  const buried=take(s,0,'LAB-F0');
@@ -464,4 +453,169 @@ test('009 draws, puts one hand card on the bottom, and skips the next active', (
  const left=live(s,0,body.uid);
  assert.equal(left.ready,false);
  assert.equal(s.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===body.uid&&!e.consumed),false);
+});
+
+function withCounts(baseId, extras){
+ const counts=deck(baseId);
+ let need=0;
+ for(const [id,n] of Object.entries(extras)){
+  counts[id]=(counts[id]||0)+n;
+  need+=n;
+ }
+ for(let i=0;i<5&&need>0;i++){
+  const key='LAB-F'+i;
+  const takeN=Math.min(counts[key]||0, need);
+  counts[key]-=takeN;
+  need-=takeN;
+  if(!counts[key])delete counts[key];
+ }
+ if(need)throw Error('Deck would exceed 50');
+ return counts;
+}
+function playMatch(pack, counts, seed){
+ return newUniversalMatch([pack,pack],{decks:[counts,counts], seed, first:0, openingMulligan:false});
+}
+function readyAp(s, p, n){
+ s.players[p].apCards.forEach((card,index)=>{
+  card.inPlay=index<n;
+  card.ready=index<n;
+ });
+}
+
+test('005 cuts hand AP after a character returns, voids that cut on a zero-AP copy, then draws and gains 500', ()=>{
+ const back=filler('LAB-BACK',{name:'戻る', color:'green', gen:1, energy:0, ap:1,
+  implementation:'dsl', effects:{onPlay:[{op:'returnSourceToHand'}]}});
+ const pack=labPack(battle('MHA-3-005'), [back]);
+ const counts=withCounts('MHA-3-005', {'LAB-BACK':4, 'MHA-3-005':1});
+ let closed=playMatch(pack, counts, 21);
+ for(let slot=0;slot<3;slot++)put(closed,0,'LAB-BACK','energy',slot,true);
+ const early=take(closed,0,'MHA-3-005');
+ closed.players[0].hand.push(early);
+ readyAp(closed,0,0);
+ closed=toPhase(pack, closed, 'main');
+ assert.equal(legal(pack,closed).some(a=>a.type==='play'&&a.uid===early.uid), false);
+
+ let quiet=match(pack,'MHA-3-005',23);
+ const waiting=put(quiet,0,'MHA-3-005','front',0,true);
+ quiet=toPhase(pack, quiet, 'attack');
+ const quietHand=quiet.players[0].hand.length;
+ const quietDeck=quiet.players[0].deck.length;
+ quiet=act(pack, quiet, legal(pack,quiet).find(a=>a.type==='attack'&&a.uid===waiting.uid));
+ assert.equal(quiet.players[0].hand.length, quietHand);
+ assert.equal(quiet.players[0].deck.length, quietDeck);
+ assert.equal(universalBp(pack, quiet, live(quiet,0,waiting.uid)), 3500);
+
+ let s=playMatch(pack, counts, 22);
+ for(let slot=0;slot<3;slot++)put(s,0,'LAB-BACK','energy',slot,true);
+ const body=put(s,0,'MHA-3-005','front',0,true);
+ const hand=take(s,0,'MHA-3-005');
+ const second=take(s,0,'MHA-3-005');
+ s.players[0].hand.push(hand, second);
+ const bouncer=take(s,0,'LAB-BACK');
+ s.players[0].hand.push(bouncer);
+ readyAp(s,0,1);
+ s=toPhase(pack,s,'main');
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===bouncer.uid&&a.line==='energy'));
+ assert.equal(s.players[0].hand.some(c=>c.uid===bouncer.uid), true);
+ assert.equal(legal(pack,s).some(a=>a.type==='play'&&a.uid===hand.uid), true);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===hand.uid&&a.line==='front'));
+ assert.equal(s.players[0].front.some(c=>c?.uid===hand.uid), true);
+ assert.equal(legal(pack,s).some(a=>a.type==='play'&&a.uid===second.uid), false);
+ s=toPhase(pack,s,'attack');
+ const drawn=s.players[0].hand.length;
+ const deck=s.players[0].deck.length;
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='attack'&&a.uid===body.uid));
+ assert.equal(s.players[0].hand.length, drawn+1);
+ assert.equal(s.players[0].deck.length, deck-1);
+ assert.equal(universalBp(pack,s,live(s,0,body.uid)), 4000);
+});
+
+test('007 enters active, grants this-turn front BP, and wards while Bakugo is on the field', ()=>{
+ const red=filler('LAB-RED',{color:'red', gen:1, energy:0, ap:1, bp:1000});
+ const down=filler('LAB-DOWN',{color:'red', energy:0, ap:1, bp:1000, implementation:'dsl',
+  effects:{onPlay:[{op:'enemyBpDown', bp:1000, optional:true}]}});
+ const retireCard=filler('LAB-RETIRE',{color:'red', energy:0, ap:1, bp:1000, implementation:'dsl',
+  effects:{onPlay:[{op:'retireOppFrontUnderBp', bp:5000}]}});
+ const hitter=filler('LAB-HIT',{color:'red', energy:0, ap:1, bp:5000, printedImpact:1,
+  implementation:'dsl', effects:{}});
+ const pack=labPack(battle('MHA-3-007'), [battle('MHA-3-009'), red, down, retireCard, hitter]);
+ const counts=withCounts('MHA-3-007', {
+  'MHA-3-009':1, 'LAB-RED':3, 'LAB-DOWN':1, 'LAB-RETIRE':2
+ });
+ let s=playMatch(pack, counts, 31);
+ for(let slot=0;slot<3;slot++)put(s,0,'LAB-RED','energy',slot,true);
+ put(s,0,'MHA-3-009','energy',3,true);
+ const witness=put(s,0,'LAB-1000','front',0,true);
+ const hand=take(s,0,'MHA-3-007');
+ s.players[0].hand.push(hand);
+ readyAp(s,0,2);
+ s=toPhase(pack,s,'main');
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===hand.uid&&a.line==='front'));
+ const self=live(s,0,hand.uid);
+ assert.equal(self.ready, true);
+ assert.equal(self.frontAuraGranted.bp, 500);
+ assert.equal(self.stayWard.stamp, self.fieldEntryStamp);
+ assert.equal(universalBp(pack,s,self), 4000);
+ assert.equal(universalBp(pack,s,live(s,0,witness.uid)), 1500);
+ assert.equal(universalBp(pack,s,s.players[0].energy[0]), 1000);
+ assert.equal(universalImpactNull(pack,s,self), true);
+
+ s=untilActive(pack,s,1,'main');
+ assert.equal(live(s,0,hand.uid).frontAuraGranted, undefined);
+ assert.ok(live(s,0,hand.uid).stayWard);
+ assert.equal(universalBp(pack,s,live(s,0,hand.uid)), 3500);
+ assert.equal(universalBp(pack,s,live(s,0,witness.uid)), 1000);
+ live(s,0,hand.uid).buffs.push({bp:-1000, untilTurn:s.turn});
+ assert.equal(universalBp(pack,s,live(s,0,hand.uid)), 3500);
+ live(s,0,hand.uid).buffs.pop();
+
+ const cutter=take(s,1,'LAB-DOWN');
+ s.players[1].hand.push(cutter);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===cutter.uid&&a.line==='front'));
+ assert.equal(s.pending.kind, 'effect-target');
+ assert.equal(s.pending.choices.includes(hand.uid), false);
+ assert.equal(s.pending.choices.includes(witness.uid), true);
+ s=act(pack,s,legal(pack,s).find(a=>a.uid===null));
+
+ const remover=take(s,1,'LAB-RETIRE');
+ s.players[1].hand.push(remover);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===remover.uid&&a.line==='front'));
+ assert.equal(s.pending.choices.includes(hand.uid), false);
+ assert.equal(s.pending.choices.includes(witness.uid), true);
+ s=act(pack,s,{type:'chooseRetireBp', uid:witness.uid});
+ assert.equal(live(s,0,hand.uid)!==null, true);
+ assert.equal(live(s,0,witness.uid), null);
+
+ s=untilActive(pack,s,0,'main');
+ assert.equal(live(s,0,hand.uid).stayWard, undefined);
+ assert.equal(live(s,0,hand.uid).frontAuraGranted, undefined);
+ s=untilActive(pack,s,1,'main');
+ const remover2=take(s,1,'LAB-RETIRE');
+ s.players[1].hand.push(remover2);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===remover2.uid&&a.line==='energy'));
+ assert.equal(s.pending.choices.includes(hand.uid), true);
+});
+
+test('007 still loses a battle and still stops impact', ()=>{
+ const hitter=filler('LAB-HIT',{color:'red', energy:0, ap:1, bp:5000, printedImpact:1,
+  implementation:'dsl', effects:{}});
+ const red=filler('LAB-RED',{color:'red', gen:1, energy:0, ap:1, bp:1000});
+ const pack=labPack(battle('MHA-3-007'), [battle('MHA-3-009'), red, hitter]);
+ const counts=withCounts('MHA-3-007', {'MHA-3-009':1, 'LAB-RED':3, 'LAB-HIT':1});
+ let s=playMatch(pack, counts, 32);
+ for(let slot=0;slot<3;slot++)put(s,0,'LAB-RED','energy',slot,true);
+ put(s,0,'MHA-3-009','energy',3,true);
+ const hand=take(s,0,'MHA-3-007');
+ s.players[0].hand.push(hand);
+ readyAp(s,0,2);
+ s=toPhase(pack,s,'main');
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===hand.uid&&a.line==='front'));
+ const attacker=put(s,1,'LAB-HIT','front',0,true);
+ const life=s.players[0].life.length;
+ s=untilActive(pack,s,1,'attack');
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='attack'&&a.uid===attacker.uid));
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='chooseBlock'&&a.uid===hand.uid));
+ assert.equal(s.players[0].life.length, life);
+ assert.equal(s.players[0].outside.some(c=>c.uid===hand.uid), true);
+ assert.equal(live(s,0,hand.uid), null);
 });

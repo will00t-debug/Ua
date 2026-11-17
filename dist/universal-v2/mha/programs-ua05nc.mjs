@@ -78,6 +78,14 @@ export const UA05NC_MHA3_PROGRAMS=Object.freeze({
    })])
   })
  }),
+ 'MHA-3-005':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  fieldReturnHandApDiscount:Object.freeze({amount:1, voidIfZeroApSameName:true}),
+  effects:Object.freeze({onAttack:Object.freeze([
+   Object.freeze({op:'drawBpIfOwnFieldReturned', bp:500})
+  ])})
+ }),
  'MHA-3-006':Object.freeze({
   ready:true,
   implementation:'dsl',
@@ -94,11 +102,21 @@ export const UA05NC_MHA3_PROGRAMS=Object.freeze({
    })])
   })
  }),
- 'MHA-3-009':pending(
-  '攻擊時抽1張、1張手牌放自己牌庫底、下一次不活動已寫成 drawBottomSkipNextActive。空場減少的紅六角數字在卡面上看不清，減免數值未確認前不能標 ready。',
-  {
-   ownTurnBp:500,
-   effects:Object.freeze({onAttack:Object.freeze([{op:'drawBottomSkipNextActive'}])})
-  }
- )
+ 'MHA-3-007':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  enterAlwaysActive:true,
+  impactNull:true,
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({op:'grantOwnFrontAuraThisTurn', bp:500}),
+   Object.freeze({op:'grantSelfStayWardUntilNextOwnStart', whenName:'爆豪 勝己'})
+  ])})
+ }),
+ 'MHA-3-009':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  emptyOwnFieldHandEnergyDiscount:1,
+  ownTurnBp:500,
+  effects:Object.freeze({onAttack:Object.freeze([{op:'drawBottomSkipNextActive'}])})
+ })
 });
