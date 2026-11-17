@@ -166,8 +166,8 @@ export const UA05NC_MHA3_CARDS=Object.freeze([
   traits:Object.freeze([]),
   trigger:'active',
   triggerTextJa:'【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。',
-  effectJa:'自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを1減らす。\n【自分のターン中】このキャラはBP+500。\n【アタック時】カードを1枚引き、自分の手札を1枚自分の山札の下に置く。このキャラは次の1回アクティブにならない。',
-  energyDiscount:1,
+  effectJa:'自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを2減らす。\n【自分のターン中】このキャラはBP+500。\n【アタック時】カードを1枚引き、自分の手札を1枚自分の山札の下に置く。このキャラは次の1回アクティブにならない。',
+  energyDiscount:2,
   image:FACE('MHA-3-009'),
   source:PAGE('MHA-3-009')
  })

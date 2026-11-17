@@ -26,7 +26,7 @@ test('all three point-exchange cards enter shared live MHA V2 pack without affec
   assert.equal(set1.cards[id],undefined);
   assert.equal(set2.cards[id],undefined);
  }
- assert.equal(live.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,1);
+ assert.equal(live.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,2);
 });
 
 test('editor marks all point cards as registered V2 cards and counts accept official UAPR numbers',()=>{

@@ -104,7 +104,7 @@ test('the book pack holds the eight finished cards', ()=>{
  assert.equal(shigaraki.bp,4000);
  assert.equal(shigaraki.gen,1);
  assert.equal(shigaraki.trigger,'raid');
- assert.equal(UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009').energyDiscount,1);
+ assert.equal(UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009').energyDiscount,2);
  assert.equal(book.version,'mha3-ua05nc-ready-8');
  assert.deepEqual(Object.keys(book.cards),[
   'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005',
@@ -125,7 +125,7 @@ test('the book pack holds the eight finished cards', ()=>{
   assert.equal(UA05NC_MHA3_PROGRAMS[id].ready,true);
  assert.equal(UA05NC_MHA3_PROGRAMS['MHA-3-009'].effects.onAttack[0].op,
   'drawBottomSkipNextActive');
- assert.equal(live.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,1);
+ assert.equal(live.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,2);
 });
 
 test('002 lowers up to two fronts of BP 1500 or more, once, and only from the front', ()=>{
@@ -244,19 +244,19 @@ test('001 draws two when it enters', ()=>{
  assert.equal(book.cards['MHA-3-001'].mainAbility.op,'cardOnceChoose');
 });
 
-test('009 gains 500 BP on its own turn only and costs 1 from an empty field', ()=>{
+test('009 gains 500 BP on its own turn only and costs 0 from an empty field', ()=>{
  const printed=UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009');
  const pack=labPack(battle('MHA-3-009'));
  let s=match(pack,'MHA-3-009',9);
- assert.equal(zoneRequiredEnergy(pack,s,0,pack.cards['MHA-3-009'],'hand'),1);
+ assert.equal(zoneRequiredEnergy(pack,s,0,pack.cards['MHA-3-009'],'hand'),0);
  const body=put(s,0,'MHA-3-009','front',0,true);
  assert.equal(zoneRequiredEnergy(pack,s,0,pack.cards['MHA-3-009'],'hand'),2);
  s=toPhase(pack,s,'main');
  assert.equal(universalBp(pack,s,live(s,0,body.uid)),3500);
  s=untilActive(pack,s,1,'main');
  assert.equal(universalBp(pack,s,live(s,0,body.uid)),3000);
- assert.equal(book.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,1);
- assert.equal(printed.energyDiscount,1);
+ assert.equal(book.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,2);
+ assert.equal(printed.energyDiscount,2);
 });
 
 function battle(id){

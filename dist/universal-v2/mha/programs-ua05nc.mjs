@@ -115,7 +115,7 @@ export const UA05NC_MHA3_PROGRAMS=Object.freeze({
  'MHA-3-009':Object.freeze({
   ready:true,
   implementation:'dsl',
-  emptyOwnFieldHandEnergyDiscount:1,
+  emptyOwnFieldHandEnergyDiscount:2,
   ownTurnBp:500,
   effects:Object.freeze({onAttack:Object.freeze([{op:'drawBottomSkipNextActive'}])})
  })
