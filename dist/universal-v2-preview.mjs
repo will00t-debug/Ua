@@ -19,6 +19,7 @@ import {KMR_PR_CARDS} from './kmr-pr-cards.mjs';
 import {imcEditorCards} from './imc/catalog.mjs';
 import {mhaEditorCards} from './mha/catalog.mjs';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
+import {evaEditorCards} from './eva/catalog.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -111,7 +112,8 @@ const allArt=Object.freeze({
  kmr:new Map([...KMR_CARDS,...KMR2_CARDS,...KMR_PR_CARDS,...KMR_POINT_CARDS].map(c=>[c.id,c.image||c.printings?.[0]?.image||null])),
  imc:new Map(imcEditorCards().map(c=>[c.id,c.image||null])),
  mha:new Map(mhaEditorCards().map(c=>[c.identity||c.id,c.image||c.printings?.[0]?.image||null])),
- rnk:new Map(rnkEditorCards().map(c=>[c.identity||c.id,c.image||null]))
+ rnk:new Map(rnkEditorCards().map(c=>[c.identity||c.id,c.image||null])),
+ eva:new Map(evaEditorCards().map(c=>[c.identity||c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){
@@ -138,7 +140,8 @@ const PRINTED_CATALOGUE={
  imc:printedCatalogueMap(imcEditorCards()),
  'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID)),
  mha:printedCatalogueMap(mhaEditorCards()),
- rnk:printedCatalogueMap(rnkEditorCards())
+ rnk:printedCatalogueMap(rnkEditorCards()),
+ eva:printedCatalogueMap(evaEditorCards())
 };
 const el=(tag,props={},...contents)=>{
  const n=document.createElement(tag);
