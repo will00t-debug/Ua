@@ -4,7 +4,7 @@
 // Traditional Chinese transcription. A symbol that is not readable stays
 // null. These rows are not magazine appendix cards and do not reuse
 // UA10BT or EX06BT numbers.
-export const UA05NC_MHA3_FETCHED_CARDS='2026-11-14';
+export const UA05NC_MHA3_FETCHED_CARDS='2026-11-17';
 export const UA05NC_MHA3_FACE='https://rugiacreation.com/ua/cardlist/';
 const FACE=id=>'https://rugiacreation.com/ua/cardlist/UA05NC_'+id+'.png?v=20261110';
 const PAGE=id=>'https://rugiacreation.com/ua/search?Name=TW&Find1='+id;
@@ -100,6 +100,24 @@ export const UA05NC_MHA3_CARDS=Object.freeze([
   source:PAGE('MHA-3-004')
  }),
  row({
+  id:'MHA-3-005',
+  number:'UA05NC/MHA-3-005',
+  name:'蛙吹 梅雨',
+  nameJa:'蛙吹 梅雨',
+  color:'green',
+  energy:3,
+  ap:1,
+  bp:3500,
+  bpMark:'+',
+  gen:1,
+  traits:Object.freeze([]),
+  trigger:'get',
+  triggerTextJa:'【ゲット】このカードを手札に加える。',
+  effectJa:'このターン中に、自分のキャラが場から手札に戻っており、消費APが0の〈蛙吹 梅雨〉を手札から使用していない場合、手札にあるこのカードの消費APを-1する。\n【アタック時】このターン中に自分のキャラが場から手札に戻っている場合、カードを1枚引き、このキャラはこのターン中、BP+500。',
+  image:FACE('MHA-3-005'),
+  source:PAGE('MHA-3-005')
+ }),
+ row({
   id:'MHA-3-006',
   number:'UA05NC/MHA-3-006',
   name:'綠谷 出久',
@@ -117,6 +135,24 @@ export const UA05NC_MHA3_CARDS=Object.freeze([
   source:PAGE('MHA-3-006')
  }),
  row({
+  id:'MHA-3-007',
+  number:'UA05NC/MHA-3-007',
+  name:'切島 鋭児郎',
+  nameJa:'切島 鋭児郎',
+  color:'red',
+  energy:4,
+  ap:2,
+  bp:3500,
+  bpMark:'+',
+  gen:1,
+  traits:Object.freeze([]),
+  trigger:'get',
+  triggerTextJa:'【ゲット】このカードを手札に加える。',
+  effectJa:'このキャラはアクティブで登場させる。\n【インパクト無効】\n【登場時】このキャラはこのターン中、「自分のフロントLのキャラ全ては、BP+500。」を得る。自分の場に〈爆豪 勝己〉がある場合、このキャラは次の自分のターン開始時まで、「このキャラは退場せず、BPをマイナスする効果を受けず、相手の効果で選ばれない。」を得る。',
+  image:FACE('MHA-3-007'),
+  source:PAGE('MHA-3-007')
+ }),
+ row({
   id:'MHA-3-009',
   number:'UA05NC/MHA-3-009',
   name:'爆豪 勝己',
@@ -130,9 +166,8 @@ export const UA05NC_MHA3_CARDS=Object.freeze([
   traits:Object.freeze([]),
   trigger:'active',
   triggerTextJa:'【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。',
-  effectJa:'【自分のターン中】このキャラはBP+500。\n【アタック時】カードを1枚引き、自分の手札を1枚自分の山札の下に置く。このキャラは次の1回アクティブにならない。',
-  energyDiscount:null,
-  energyDiscountNote:'空場時減少的紅六角數字在卡面上看不清。中文站標成紅2，不寫進效果。',
+  effectJa:'自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを2減らす。\n【自分のターン中】このキャラはBP+500。\n【アタック時】カードを1枚引き、自分の手札を1枚自分の山札の下に置く。このキャラは次の1回アクティブにならない。',
+  energyDiscount:2,
   image:FACE('MHA-3-009'),
   source:PAGE('MHA-3-009')
  })

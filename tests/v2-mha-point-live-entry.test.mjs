@@ -13,12 +13,12 @@ const live=officialV2Pack('mha');
 
 test('all three point-exchange cards enter shared live MHA V2 pack without affecting other sets',()=>{
  const set1=createMhaV2Pack(),set2=createMha2Pack(),points=createMhaPointPack(),book=createMha3Pack();
- assert.equal(live.version,'mha-live-109-73-3-5');
+ assert.equal(live.version,'mha-live-109-73-3-8');
  assert.equal(Object.keys(set1.cards).length,109);
  assert.equal(Object.keys(set2.cards).length,73);
  assert.equal(Object.keys(points.cards).length,3);
- assert.equal(Object.keys(book.cards).length,5);
- assert.equal(Object.keys(live.cards).length,190);
+ assert.equal(Object.keys(book.cards).length,8);
+ assert.equal(Object.keys(live.cards).length,193);
  for(const id of IDS){
   assert.ok(live.cards[id],id+' absent in production V2 pack');
   assert.equal(live.cards[id].id,id);
@@ -26,14 +26,14 @@ test('all three point-exchange cards enter shared live MHA V2 pack without affec
   assert.equal(set1.cards[id],undefined);
   assert.equal(set2.cards[id],undefined);
  }
- assert.equal(live.cards['MHA-3-009'],undefined,'pending book must stay out');
+ assert.equal(live.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,2);
 });
 
 test('editor marks all point cards as registered V2 cards and counts accept official UAPR numbers',()=>{
  const editor=mhaEditorCards();
- assert.equal(editor.length,191);
+ assert.equal(editor.length,193);
  const status=editorV2Status('mha',{});
- assert.equal(status.registered,190);
+ assert.equal(status.registered,193);
  for(const id of IDS){
   const printed=editor.find(card=>card.id===id);
   assert.ok(printed);
@@ -43,7 +43,7 @@ test('editor marks all point cards as registered V2 cards and counts accept offi
   assert.deepEqual(normalizeEditorCounts('mha',{['UAPR/'+id]:1}),{[id]:1});
   assert.deepEqual(v2UnsupportedIds('mha',{[id]:1}),[]);
  }
- assert.equal(status.supported.has('MHA-3-009'),false);
+ assert.equal(status.supported.has('MHA-3-009'),true);
 });
 
 test('no duplicate card IDs and current play profiles are preserved',()=>{
