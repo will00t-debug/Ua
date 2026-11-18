@@ -17,7 +17,7 @@ import {KMR2_CARDS} from './kmr-vol2-cards.mjs';
 import {KMR_PR_CARDS} from './kmr-pr-cards.mjs';
 import {CSM_CARDS} from './csm-cards.mjs';
 import {imcEditorCards} from './imc/catalog.mjs';
-import {mhaEditorCards} from './mha/catalog.mjs';
+import {mhaEditorCards} from './mha/catalog.mjs?v=20261118mha008';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs';
 // Isolated catalogue/deck editing; unfinished series are not match-playable.

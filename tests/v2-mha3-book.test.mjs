@@ -92,11 +92,11 @@ function live(s, p, uid){
  return [...s.players[p].front, ...s.players[p].energy].find(c=>c?.uid===uid)||null;
 }
 
-test('the book pack holds the eight finished cards', ()=>{
+test('the book pack holds the nine finished cards', ()=>{
  assert.deepEqual(UA05NC_MHA3_CARDS.map(card=>card.number),[
   'UA05NC/MHA-3-001','UA05NC/MHA-3-002','UA05NC/MHA-3-003',
   'UA05NC/MHA-3-004','UA05NC/MHA-3-005','UA05NC/MHA-3-006',
-  'UA05NC/MHA-3-007','UA05NC/MHA-3-009'
+  'UA05NC/MHA-3-007','UA05NC/MHA-3-008','UA05NC/MHA-3-009'
  ]);
  assert.equal(shigaraki.color,'purple');
  assert.equal(shigaraki.energy,4);
@@ -105,10 +105,10 @@ test('the book pack holds the eight finished cards', ()=>{
  assert.equal(shigaraki.gen,1);
  assert.equal(shigaraki.trigger,'raid');
  assert.equal(UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009').energyDiscount,2);
- assert.equal(book.version,'mha3-ua05nc-ready-8');
+ assert.equal(book.version,'mha3-ua05nc-ready-9');
  assert.deepEqual(Object.keys(book.cards),[
   'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005',
-  'MHA-3-006','MHA-3-007','MHA-3-009'
+  'MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'
  ]);
  assert.equal(book.cards['MHA-3-002'].battleRemoveInstead,true);
  assert.equal(book.cards['MHA-3-002'].printedImpact,1);
@@ -116,10 +116,10 @@ test('the book pack holds the eight finished cards', ()=>{
  assert.equal(createMhaV2Pack().cards['MHA-3-002'],undefined);
  assert.equal(createMha2Pack().cards['MHA-3-002'],undefined);
  const live=officialV2Pack('mha');
- assert.equal(live.version,'mha-live-109-73-3-8');
+ assert.equal(live.version,'mha-live-109-73-3-9');
  for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003'])
   assert.equal(live.cards[id].id,id);
- for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-009'])
+ for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'])
   assert.equal(live.cards[id].id,id);
  for(const id of Object.keys(UA05NC_MHA3_PROGRAMS))
   assert.equal(UA05NC_MHA3_PROGRAMS[id].ready,true);
@@ -618,4 +618,63 @@ test('007 still loses a battle and still stops impact', ()=>{
  assert.equal(s.players[0].life.length, life);
  assert.equal(s.players[0].outside.some(c=>c.uid===hand.uid), true);
  assert.equal(live(s,0,hand.uid), null);
+});
+
+test('008 widens the next BP window or blocks the first attack, and the same choice cannot be repeated', ()=>{
+ const range=filler('LAB-RANGE',{color:'red', energy:1, ap:1, bp:1000, implementation:'dsl',
+  effects:{onPlay:[{op:'retireOppFrontUnderBp', bp:3000, optional:true}]}});
+ const mid=filler('LAB-3500',{bp:3500});
+ const high=filler('LAB-4000',{bp:4000});
+ const pack=labPack(battle('MHA-3-008'), [range, mid, high]);
+ const counts=withCounts('MHA-3-008', {'LAB-RANGE':2, 'LAB-3500':2, 'LAB-4000':2});
+ let s=playMatch(pack, counts, 40);
+ const rear=put(s,0,'MHA-3-008','energy',0,true);
+ s=toPhase(pack,s,'main');
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===rear.uid), false);
+ const actor=put(s,0,'MHA-3-008','front',0,true);
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===actor.uid&&a.mode==='frontOnce'), true);
+ s=act(pack,s,{type:'activate', uid:actor.uid, mode:'frontOnce'});
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ assert.deepEqual(s.pending.options.map(o=>o.id), ['window','block']);
+ s=act(pack,s,{type:'chooseEffectMode', mode:'window'});
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.equal(s.bpWindowPlus, undefined);
+ s=act(pack,s,{type:'chooseOwnBuff', uid:actor.uid});
+ assert.equal(universalBp(pack,s,live(s,0,actor.uid)), 3000);
+ assert.deepEqual(s.bpWindowPlus, [500,0]);
+ const wide=put(s,1,'LAB-3500','front',0,true);
+ const tall=put(s,1,'LAB-4000','front',1,true);
+ const hand=take(s,0,'LAB-RANGE');
+ s.players[0].hand.push(hand);
+ readyAp(s,0,1);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===hand.uid&&a.line==='front'));
+ assert.equal(s.pending.kind,'effect-retire-bp');
+ assert.equal(s.pending.choices.includes(wide.uid), true);
+ assert.equal(s.pending.choices.includes(tall.uid), false);
+ assert.equal(s.bpWindowPlus[0], 0);
+ s=act(pack,s,{type:'chooseRetireBp', uid:null});
+ const slot=s.players[0].front.findIndex(c=>!c);
+ const from=s.players[0].energy.findIndex(c=>c?.uid===rear.uid);
+ s.players[0].energy[from]=null;
+ s.players[0].front[slot]=rear;
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===rear.uid&&a.mode==='frontOnce'), true);
+ s=act(pack,s,{type:'activate', uid:rear.uid, mode:'frontOnce'});
+ assert.deepEqual(s.pending.options.map(o=>o.id), ['block']);
+ s=act(pack,s,{type:'chooseEffectMode', mode:'block'});
+ assert.equal(live(s,0,rear.uid).firstAttackBlockAtLeast.bp, 4000);
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===rear.uid), false);
+ s=toPhase(pack,s,'attack');
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='attack'&&a.uid===rear.uid));
+ assert.equal(s.pending.kind,'block');
+ const blocks=legal(pack,s).filter(a=>a.type==='chooseBlock');
+ assert.equal(blocks.some(a=>a.uid===tall.uid), false);
+ assert.equal(blocks.some(a=>a.uid===wide.uid), true);
+ assert.equal(blocks.some(a=>a.uid===null), true);
+ s=act(pack,s,{type:'chooseBlock', uid:null});
+ while(s.pending)s=act(pack,s,legal(pack,s)[0]);
+ const again=live(s,0,rear.uid);
+ again.ready=true;
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='attack'&&a.uid===again.uid));
+ const second=legal(pack,s).filter(a=>a.type==='chooseBlock');
+ assert.equal(second.some(a=>a.uid===tall.uid), true);
 });

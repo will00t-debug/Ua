@@ -22,13 +22,13 @@ const counts=practiceDeck(pack);
 test('a legal MHA deck can enter AI and online matches',async()=>{
  assert.equal(getTitle('mha').playable,true);
  assert.equal(getTitle('mha').cards.filter(card=>card.id.startsWith('MHA-1-')).length,109);
- assert.equal(getTitle('mha').cards.length,193);
+ assert.equal(getTitle('mha').cards.length,194);
  assert.equal(getTitle('mha').cards.every(card=>card.playable===false&&card.battleReady===false),true);
- assert.equal(Object.keys(pack.cards).length,193);
- assert.equal(pack.version,'mha-live-109-73-3-8');
+ assert.equal(Object.keys(pack.cards).length,194);
+ assert.equal(pack.version,'mha-live-109-73-3-9');
  for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003'])
   assert.equal(pack.cards[id].id,id);
- for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-009'])
+ for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'])
   assert.equal(pack.cards[id].id,id);
  assert.equal(pack.cards['MHA-2-001'].id,'MHA-2-001');
  assert.equal(UA10ST_PRODUCT.recipe,null);

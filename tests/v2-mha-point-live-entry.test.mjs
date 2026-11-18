@@ -13,12 +13,12 @@ const live=officialV2Pack('mha');
 
 test('all three point-exchange cards enter shared live MHA V2 pack without affecting other sets',()=>{
  const set1=createMhaV2Pack(),set2=createMha2Pack(),points=createMhaPointPack(),book=createMha3Pack();
- assert.equal(live.version,'mha-live-109-73-3-8');
+ assert.equal(live.version,'mha-live-109-73-3-9');
  assert.equal(Object.keys(set1.cards).length,109);
  assert.equal(Object.keys(set2.cards).length,73);
  assert.equal(Object.keys(points.cards).length,3);
- assert.equal(Object.keys(book.cards).length,8);
- assert.equal(Object.keys(live.cards).length,193);
+ assert.equal(Object.keys(book.cards).length,9);
+ assert.equal(Object.keys(live.cards).length,194);
  for(const id of IDS){
   assert.ok(live.cards[id],id+' absent in production V2 pack');
   assert.equal(live.cards[id].id,id);
@@ -31,9 +31,9 @@ test('all three point-exchange cards enter shared live MHA V2 pack without affec
 
 test('editor marks all point cards as registered V2 cards and counts accept official UAPR numbers',()=>{
  const editor=mhaEditorCards();
- assert.equal(editor.length,193);
+ assert.equal(editor.length,194);
  const status=editorV2Status('mha',{});
- assert.equal(status.registered,193);
+ assert.equal(status.registered,194);
  for(const id of IDS){
   const printed=editor.find(card=>card.id===id);
   assert.ok(printed);
