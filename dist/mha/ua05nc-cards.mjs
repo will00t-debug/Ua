@@ -153,6 +153,24 @@ export const UA05NC_MHA3_CARDS=Object.freeze([
   source:PAGE('MHA-3-007')
  }),
  row({
+  id:'MHA-3-008',
+  number:'UA05NC/MHA-3-008',
+  name:'轟 焦凍',
+  nameJa:'轟 焦凍',
+  color:'red',
+  energy:3,
+  ap:1,
+  bp:2500,
+  bpMark:'+',
+  gen:1,
+  traits:Object.freeze([]),
+  trigger:'draw',
+  triggerTextJa:'【ドロー】カードを1枚引く。',
+  effectJa:'【起動メイン】【フロントLにある場合】【ターン1】以下から1つ選ぶ。このターン中に〈轟 焦凍〉が既に選んだ効果は選べない。\n・自分の場のキャラを1枚選び、このターン中、BP+500。このターン中、次に自分が「BPの範囲に指定がある効果」でキャラを選ぶ際、指定できるBPの範囲+500。\n・このキャラはこのターン中、「このキャラの1回目のアタック中、このキャラはBP4000以上のキャラにブロックされない。」を得る。',
+  image:FACE('MHA-3-008'),
+  source:PAGE('MHA-3-008')
+ }),
+ row({
   id:'MHA-3-009',
   number:'UA05NC/MHA-3-009',
   name:'爆豪 勝己',

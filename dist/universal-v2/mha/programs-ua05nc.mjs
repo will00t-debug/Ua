@@ -112,6 +112,34 @@ export const UA05NC_MHA3_PROGRAMS=Object.freeze({
    Object.freeze({op:'grantSelfStayWardUntilNextOwnStart', whenName:'爆豪 勝己'})
   ])})
  }),
+ 'MHA-3-008':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram',
+   frontOnly:true,
+   oncePerTurn:true,
+   then:Object.freeze([Object.freeze({
+    op:'chooseOne', optional:false, nameLock:'轟 焦凍',
+    options:Object.freeze([
+     Object.freeze({
+      id:'window', label:'場上角色BP+500並擴大下次BP範圍', turn:'any',
+      then:Object.freeze([
+       Object.freeze({
+        op:'buffOwnField', filter:Object.freeze({field:'type', value:'character'}),
+        bp:500, optional:false, excludeSelf:false
+       }),
+       Object.freeze({op:'grantNextBpWindow', amount:500})
+      ])
+     }),
+     Object.freeze({
+      id:'block', label:'第一次攻擊不被BP4000以上阻擋', turn:'any',
+      then:Object.freeze([Object.freeze({op:'grantSelfFirstAttackBlockAtLeast', bp:4000})])
+     })
+    ])
+   })])
+  })
+ }),
  'MHA-3-009':Object.freeze({
   ready:true,
   implementation:'dsl',

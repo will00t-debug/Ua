@@ -2260,7 +2260,7 @@ function startTurn(pack,s){
   for(const child of [...(unit.stack||[]),...(unit.under||[])])clearRetireHand(child);
  };
  for(const side of s.players)for(const unit of field(side)){
-  delete unit.blockFloorGranted;delete unit.blockAtLeastGranted;delete unit.oppChoiceImmuneGranted;delete unit.readyOnAttackGranted;
+  delete unit.blockFloorGranted;delete unit.blockAtLeastGranted;delete unit.firstAttackBlockAtLeast;delete unit.oppChoiceImmuneGranted;delete unit.readyOnAttackGranted;
   delete unit.unblockedDrawGranted;
   delete unit.energyAttackGranted;
   delete unit.aot2Sniper;delete unit.aot2SniperLost;delete unit.aot2EnergyAttack;
@@ -2387,6 +2387,7 @@ function clearTurnBattleGrants(unit){
  delete unit.mustBlockGranted;
  delete unit.attackWinDrawGranted;
  delete unit.blockAtLeastGranted;
+ delete unit.firstAttackBlockAtLeast;
  delete unit.readyOnAttackGranted;
  // 「このターン中」 selection and battle flags. The next turn's startTurn
  // walks every field card through here. A leftover whose turn no longer
@@ -7101,11 +7102,36 @@ function continueEffectQueue(pack,s){
    const earned=printed?.mainAbility?.op==='frontOnceProgram'&&
     printed.mainAbility.frontOnly===true&&printed.mainAbility.oncePerTurn===true&&
     printed.mainAbility.then?.some(e=>e.op==='grantNextBpWindow'&&e.amount===1000);
-   if(!source||!earned||job.amount!==1000||!Number.isInteger(source.fieldEntryStamp)||
+   const choice=printed?.mainAbility?.op==='frontOnceProgram'&&
+    printed.mainAbility.frontOnly===true&&printed.mainAbility.oncePerTurn===true&&
+    printed.mainAbility.then?.[0]?.op==='chooseOne'&&
+    typeof printed.mainAbility.then[0].nameLock==='string'&&
+    printed.mainAbility.then[0].options?.some(o=>
+     (o.then||[]).some(e=>e.op==='grantNextBpWindow'&&e.amount===500)&&
+     (o.then||[]).some(e=>e.op==='buffOwnField'&&e.bp===500)&&
+     s.mainReadyOnceByName[owner].includes(printed.mainAbility.then[0].nameLock+'|'+o.id));
+   const amount=earned&&job.amount===1000?1000:choice&&job.amount===500?500:0;
+   if(!source||!amount||!Number.isInteger(source.fieldEntryStamp)||
     originalEffectsDisabled(s,source))
     throw Error('Unproven BP window');
    if(!Array.isArray(s.bpWindowPlus))s.bpWindowPlus=[0,0];
-   s.bpWindowPlus[owner]+=1000;
+   s.bpWindowPlus[owner]+=amount;
+  }else if(job.op==='grantSelfFirstAttackBlockAtLeast'){
+   const source=field(pl).find(c=>c.uid===job.sourceUid);
+   const printed=source&&card(pack,source);
+   const choice=printed?.mainAbility?.then?.[0];
+   const earned=printed?.mainAbility?.op==='frontOnceProgram'&&
+    printed.mainAbility.frontOnly===true&&printed.mainAbility.oncePerTurn===true&&
+    choice?.op==='chooseOne'&&typeof choice.nameLock==='string'&&
+    (choice.options||[]).some(o=>(o.then||[]).length===1&&
+     o.then[0].op==='grantSelfFirstAttackBlockAtLeast'&&o.then[0].bp===job.bp&&
+     s.mainReadyOnceByName[owner].includes(choice.nameLock+'|'+o.id))&&
+    location(s,owner,source.uid)?.line==='front';
+   if(!source||!earned||job.bp!==4000||!Number.isInteger(source.fieldEntryStamp)||
+    originalEffectsDisabled(s,source))
+    throw Error('Unproven first-attack block floor');
+   source.firstAttackBlockAtLeast={turn:s.turn,stamp:source.fieldEntryStamp,
+    bp:4000,sourceUid:source.uid};
   }else if(job.op==='recoverOutsideAny'){
    const recover=job.recover||job;
    const choices=pl.outside.filter(c=>outsideRecoverMatches(card(pack,c),recover)).map(c=>c.uid);
@@ -19885,6 +19911,10 @@ function legalPending(pack,s){
    Number.isInteger(lowBlock.bp))
    floors.push({relation:'atMost',bp:lowBlock.bp});
   if(ceilingLive)floors.push({relation:'atLeast',bp:ceiling.bp});
+  const firstCeiling=attacker.firstAttackBlockAtLeast;
+  const firstCeilingLive=!!firstCeiling&&firstCeiling.turn===s.turn&&
+   firstCeiling.stamp===attacker.fieldEntryStamp&&(s.attacksByUid[attacker.uid]||0)===1;
+  if(firstCeilingLive)floors.push({relation:'atLeast',bp:firstCeiling.bp});
   const lasting=attacker.blockAtLeastUntil;
   const lastingLive=!!lasting&&lasting.stamp===attacker.fieldEntryStamp&&
    s.players[s.active].ownTurns<lasting.untilOwnTurnStart;
@@ -22670,7 +22700,7 @@ function clearLeavingFieldMemory(c){
  delete c.unchosenGranted;delete c.impactNullThisTurn;delete c.eventReadyOnAttack;
  delete c.eventSniperGranted;delete c.energyAttackGranted;delete c.impactPlus;
  delete c.bounceInsteadGranted;delete c.sniperGranted;delete c.raidBaseUid;
- delete c.blockAtLeastGranted;delete c.readyOnAttackGranted;
+ delete c.blockAtLeastGranted;delete c.firstAttackBlockAtLeast;delete c.readyOnAttackGranted;
  delete c.aotThirdSniper;delete c.aotTriggerUnchosen;delete c.aotChoiceShield;
  delete c.aotReturnHandAtAttackEnd;delete c.aotSpecialReplace;
  clearTurnBattleGrants(c);
@@ -23986,6 +24016,12 @@ export function legalUniversalActions(pack,s){
     if(step.op==='peekTopOrOutside'){
      if(pl.front.some(x=>x?.uid===c.uid)&&pl.deck.length)
       out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
+    if(step.op==='chooseOne'&&typeof step.nameLock==='string'){
+     const open=pl.front.some(x=>x?.uid===c.uid)&&step.options.some(o=>
+      !s.mainReadyOnceByName[p].includes(step.nameLock+'|'+o.id));
+     if(open)out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
      continue;
     }
     if(step.op==='chooseOne'&&Number.isInteger(ability.minSelfBp)){
@@ -28025,6 +28061,23 @@ export function assertUniversalMatch(pack,s){
    if(!floor||floor.turn!==s.turn||floor.stamp!==physical.fieldEntryStamp||
     !Number.isInteger(floor.bp)||typeof floor.sourceUid!=='string'||!(proved||onPlayGrant))
     throw Error('Forged caused blocker floor');
+  }
+  const firstBlock=physical.firstAttackBlockAtLeast;
+  if(firstBlock!==undefined){
+   const ability=card(pack,physical).mainAbility;
+   const choice=ability?.then?.[0];
+   const proved=ability?.op==='frontOnceProgram'&&ability.frontOnly===true&&
+    ability.oncePerTurn===true&&choice?.op==='chooseOne'&&
+    typeof choice.nameLock==='string'&&
+    (choice.options||[]).some(o=>(o.then||[]).length===1&&
+     o.then[0].op==='grantSelfFirstAttackBlockAtLeast'&&o.then[0].bp===firstBlock.bp&&
+     (s.mainReadyOnceByName[owner]||[]).includes(choice.nameLock+'|'+o.id))&&
+    (s.mainAbilityUsedUids||[]).includes(physical.uid);
+   if(!firstBlock||firstBlock.turn!==s.turn||firstBlock.stamp!==physical.fieldEntryStamp||
+    firstBlock.bp!==4000||firstBlock.sourceUid!==physical.uid||
+    Object.keys(firstBlock).length!==4||
+    Object.keys(firstBlock).some(k=>!['turn','stamp','bp','sourceUid'].includes(k))||!proved)
+    throw Error('Forged first-attack block floor');
   }
   const ceiling=physical.blockAtLeastGranted;
   if(ceiling!==undefined){
