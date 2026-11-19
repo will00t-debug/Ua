@@ -20,7 +20,7 @@ import {imcEditorCards} from './imc/catalog.mjs';
 import {mhaEditorCards} from './mha/catalog.mjs?v=20261118mha008';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs';
-import {TORIKO_CARDS} from './toriko-cards.mjs';
+import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261119trk2';
 // Isolated catalogue/deck editing; unfinished series are not match-playable.
 export const TITLES=[
  {id:'bleach',label:'BLEACH 千年血戰篇',cards:CARDS,presets:PRESETS,playable:true},

@@ -382,7 +382,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-008",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "revealFourKings",
   "faq": []
  },
  {
@@ -688,7 +688,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-014",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "attackBuff500",
   "faq": []
  },
  {
@@ -732,7 +732,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-015",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "attackFourKingsDraw",
   "faq": []
  },
  {
@@ -936,7 +936,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-019",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "search",
   "faq": []
  },
  {
@@ -1168,7 +1168,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-024",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "search",
   "faq": []
  },
  {
@@ -1659,7 +1659,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-035",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "alsoPeek",
   "faq": [
    {
     "id": "Q805",
@@ -2277,7 +2277,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-048",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "alsoTopKeep",
   "faq": [
    {
     "id": "Q808",
@@ -2333,7 +2333,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-049",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "gatedRestToriko",
   "faq": []
  },
  {
@@ -2693,7 +2693,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-056",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "search",
   "faq": []
  },
  {
@@ -3191,7 +3191,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-066",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "namedBuffAp",
   "faq": []
  },
  {
@@ -3374,7 +3374,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-070",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lockMove",
   "faq": [
    {
     "id": "Q812",
@@ -3571,7 +3571,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-074",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restReturn",
   "faq": []
  },
  {
@@ -4097,7 +4097,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-085",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mainDiscardBuff",
   "faq": []
  },
  {
@@ -4192,7 +4192,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-087",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "search",
   "faq": []
  },
  {
@@ -4294,7 +4294,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-089",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "parasiteOutside",
   "faq": []
  },
  {
@@ -4593,7 +4593,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-095",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "search",
   "faq": []
  },
  {
@@ -4637,7 +4637,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-096",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "optionalOppDiscard",
   "faq": []
  },
  {
@@ -4975,7 +4975,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17ST%2FTRK-1-104",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideBlueIngredient",
   "faq": []
  },
  {
@@ -5019,7 +5019,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17ST%2FTRK-1-105",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "search",
   "faq": []
  },
  {
@@ -5193,7 +5193,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17ST%2FTRK-1-109",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "draw4",
   "faq": []
  }
 ]

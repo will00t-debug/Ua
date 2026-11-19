@@ -3,8 +3,23 @@
 import {cardHasTrait,cardHasName} from './field-conditions.mjs';
 import {csmCardCountsAsEvent} from './csm-continuous.mjs';
 // Card-face required energy (necessary cost), never the card's generated energy.
+// 「全ての場所で必要エナジーを【色×N】としても扱う」adds N as a second legal
+// reading for effect comparisons. Paying the card still uses the printed cost.
+export function requiredEnergyValues(definition){
+ const values=[];
+ if(Number.isInteger(definition?.energy))values.push(definition.energy);
+ const also=definition?.alsoRequiredEnergy;
+ if(Number.isInteger(also)&&also>=0&&also<=30&&also!==definition?.energy)values.push(also);
+ return values;
+}
 export function matchesPrintedRequiredEnergyAtMost(definition,max){
- return Number.isInteger(max)&&max>=0&&max<=30&&Number.isInteger(definition?.energy)&&definition.energy<=max;
+ return Number.isInteger(max)&&max>=0&&max<=30&&requiredEnergyValues(definition).some(n=>n<=max);
+}
+export function matchesPrintedRequiredEnergyAtLeast(definition,min){
+ return Number.isInteger(min)&&min>=0&&min<=30&&requiredEnergyValues(definition).some(n=>n>=min);
+}
+export function matchesPrintedRequiredEnergyExact(definition,value){
+ return Number.isInteger(value)&&value>=0&&value<=30&&requiredEnergyValues(definition).some(n=>n===value);
 }
 export const DISCOUNT_KIND='nextEligibleHandPlayApDiscount';
 export function validatePrintedPlayFilter(f){

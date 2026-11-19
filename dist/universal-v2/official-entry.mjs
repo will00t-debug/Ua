@@ -4,7 +4,7 @@
 // AP cards are not deck cards and stay out of this pack.
 // This module does not add Re:Zero to the five-title census.
 import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
-import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261118mha008';
+import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261119trk2';
 import {REZERO_CARDS} from '../rezero-cards.mjs';
 import {createRezeroV2Pack,rezeroPackCard} from './rezero-pack.mjs';
 import {rezV2RawCards} from './rez-pack.mjs';
@@ -20,7 +20,7 @@ import {createMhaV2Pack} from './mha-pack.mjs';
 import {createMha2Pack} from './mha2-pack.mjs';
 import {createMhaPointPack} from './mha-point-pack.mjs';
 import {createMha3Pack} from './mha3-pack.mjs';
-import {createTrkV2Pack} from './trk-pack.mjs';
+import {createTrkV2Pack} from './trk-pack.mjs?v=20261119trk2';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {createEvaStagingPack} from './eva-staging-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';

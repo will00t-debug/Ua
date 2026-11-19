@@ -497,6 +497,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
    legal.find(a=>a.uid!==null)||legal[0];
  }
+ if(s.pending?.kind==='effect-lock-move')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-bp'){
   // RESTed characters remain legal targets (official Q91), but choosing one
   // wastes the effect whenever a READY opponent is also available.
