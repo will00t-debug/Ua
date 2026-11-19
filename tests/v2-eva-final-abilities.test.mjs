@@ -50,7 +50,8 @@ const probes=[
   {op:'draw',count:1},
   {op:'deployOwnHandActiveNoRaid',type:'character',color:'purple',ap:1,optional:true}
  ]},mainAbility:{op:'retireOtherFrontReplay',oncePerTurn:true,frontOnly:true}}),
- face({id:'NORAID',color:'purple',ap:1,energy:4}),
+ face({id:'NORAID',color:'purple',ap:1,energy:4,traits:['WILLE'],
+  mainAbility:{op:'entryTurnGrantUnblockedDraw',trait:'WILLE',oncePerTurn:true}}),
  face({id:'RAIDTOP',raidName:'式波・アスカ・ラングレー',raidTopRetireInstead:true,
   effects:{onPlay:[{op:'enemyBpDown',bp:1000,optional:true}]}}),
  face({id:'BASE',name:'式波・アスカ・ラングレー'}),
@@ -407,4 +408,23 @@ test('zero facedown cards grant own-turn BP and impact, and four hide the charac
  assert.equal(played.players[0].hand.filter(c=>looked.some(x=>x.uid===c.uid)).length,2);
  assert.equal(live(played,zero.uid).ready,true);
  assert.equal(assertUniversalMatch(pack,played),true);
+});
+
+// EVA-1-033 -> EVA-1-056: effect entry is still an entry this turn.
+for(const line of ['front','energy'])test('active no-raid entry enables entry-turn main on '+line,()=>{
+ let s=main(8);
+ const shinji=seat(s,'SHINJI','front',1);
+ fuel(s);
+ const spear=pull(s,'SPEAR');
+ const mari=pull(s,'NORAID');
+ s.players[0].hand.push(spear,mari);
+ s=act(s,a=>a.type==='raid'&&a.uid===spear.uid&&a.baseUid===shinji.uid);
+ assert.equal(s.pending?.kind,'effect-hand-active-noraid');
+ s=act(s,a=>a.type==='chooseHandActiveNoRaid'&&a.uid===mari.uid&&a.line===line);
+ assert.equal(live(s,mari.uid).entryTurn,s.turn);
+ s=act(s,a=>a.type==='activate'&&a.uid===mari.uid&&a.mode==='entryDraw');
+ s=act(s,a=>a.uid===mari.uid);
+ assert.equal(s.mainAbilityUsedUids.includes(mari.uid),true);
+ assert.equal(legalUniversalActions(pack,s).some(a=>a.type==='activate'&&a.uid===mari.uid&&a.mode==='entryDraw'),false);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
