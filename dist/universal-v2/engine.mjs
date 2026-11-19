@@ -604,7 +604,7 @@ function choiceBlocked(pack,s,selector,uid,sourceType,purpose=null){
  const c=[...s.players[owner].front,...s.players[owner].energy].find(x=>x?.uid===uid);
  if(c&&sourceType==='trigger'&&!originalEffectsDisabled(s,c)){
   const at=card(pack,c).facedownTriggerImmuneAt;
-  if(Number.isInteger(at)&&directFacedowns(c).length>=at)return true;
+  if(raidBoxTextLive(pack,c,'facedownTriggerImmuneAt')&&Number.isInteger(at)&&directFacedowns(c).length>=at)return true;
  }
  if(!c||originalEffectsDisabled(s,c))return false;
  // EX10BT/AOT-2-028: while both founders are on the field, an opponent
@@ -803,7 +803,7 @@ function facedownOrders(ids){
 }
 function directFacedownBp(pack,s,c,printed,suppressed,owner){
  const rule=printed?.bpPerDirectFacedown;
- if(suppressed||!rule)return 0;
+ if(suppressed||!rule||!raidBoxTextLive(pack,c,'bpPerDirectFacedown'))return 0;
  if(rule.turn==='own'&&s.active!==owner)return 0;
  if(rule.turn==='opponent'&&s.active===owner)return 0;
  return directFacedowns(c).length*rule.amount;
@@ -815,7 +815,7 @@ function oppTurnWardLive(pack,s,c){
 }
 function emptyFacedownOwnTurnGrant(pack,s,c,printed,suppressed){
  const none={bp:0,impact:0};
- if(suppressed||!Array.isArray(printed?.facedownCountGrants)||directFacedowns(c).length!==0)return none;
+ if(suppressed||!raidBoxTextLive(pack,c,'facedownCountGrants')||!Array.isArray(printed?.facedownCountGrants)||directFacedowns(c).length!==0)return none;
  const owner=Number(String(c.uid).split('-')[0]);
  if(s.active!==owner)return none;
  const hit=printed.facedownCountGrants.find(g=>g.count===0&&g.turn==='own');
@@ -823,7 +823,7 @@ function emptyFacedownOwnTurnGrant(pack,s,c,printed,suppressed){
 }
 function outsideCountGrant(pack,s,c,printed,suppressed){
  const none={bp:0,damage:1,impact:0};
- if(suppressed||!Array.isArray(printed?.outsideCountGrants))return none;
+ if(suppressed||!raidBoxTextLive(pack,c,'outsideCountGrants')||!Array.isArray(printed?.outsideCountGrants))return none;
  const owner=Number(String(c.uid).split('-')[0]);
  if(s.active!==owner)return none;
  const n=s.players[owner].outside.length;
@@ -1197,7 +1197,7 @@ function bp(pack,s,c){
  const owner=Number(String(c.uid).split('-')[0]);
  const ownOff=ownTurnTextOff(pack,s,c)&&s.active===owner;
  const turnBp=suppressed?0:s.active===owner?
-  (ownOff?0:(printed.ownTurnBp||0)+(faceUpRaid(pack,c)?printed.raidOwnTurnBp||0:0)):
+  (ownOff?0:(raidBoxTextLive(pack,c,'ownTurnBp')?printed.ownTurnBp||0:0)+(faceUpRaid(pack,c)?printed.raidOwnTurnBp||0:0)):
   (printed.opponentTurnBp||0);
  const auraBp=frontLineAuraBp(pack,s,c)+grantedFrontAuraBp(pack,s,c);
  const madokaPair=()=>{
@@ -1295,7 +1295,7 @@ export function universalAttackDamage(pack,s,c){
  const raidDmg=faceUpRaid(pack,c)?(d.raidAttackDamage||0):0;
  const raidExtra=faceUpRaid(pack,c)&&s.active===owner?(d.raidExtraDamage||0):0;
  const outsideDamage=outsideCountGrant(pack,s,c,d,originalEffectsDisabled(s,c)).damage;
- const base=Math.max(d.printedAttackDamage||1,raidDmg,earned,revealDamage,outsideDamage,
+ const base=Math.max(raidBoxTextLive(pack,c,'printedAttackDamage')?d.printedAttackDamage||1:1,raidDmg,earned,revealDamage,outsideDamage,
   gained&&gained.turn===s.turn&&
    gained.stamp===c.fieldEntryStamp?2:1,passiveKeyword);
  const aotDamage=d.id==='AOT-1-038'&&s.active===owner&&faceUpRaid(pack,c)&&
@@ -1562,7 +1562,7 @@ function impactOnBattleWin(pack,s,c){
  const conditional=d.conditionalImpactBpAtLeast!==null&&
   raidBoxTextLive(pack,c,'conditionalImpact')&&
   bp(pack,s,c)>=d.conditionalImpactBpAtLeast;
- const printedOrRaid=d.printedImpact||raidBox;
+ const printedOrRaid=(raidBoxTextLive(pack,c,'printedImpact')?d.printedImpact:0)||raidBox;
  const base=printedOrRaid||(conditional?1:0)||under||passive;
  const result=plusFlag?base+earnedAll:
   printedOrRaid?Math.max(printedOrRaid,earnedAll):
@@ -13148,7 +13148,7 @@ function resolveChoice(s,a,pack){
   const passiveDouble=livePassives(pack,s,blocker).some(p=>p.doubleBlock===true&&
   matchesV2LiveCondition(s,q.player,blocker.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,q.player),x=>bp(pack,s,x)));
- const blockKeyword=Math.max(card(pack,blocker).readyOnBlockCount||0,
+ const blockKeyword=Math.max(raidBoxTextLive(pack,blocker,'readyOnBlockCount')?card(pack,blocker).readyOnBlockCount||0:0,
    liveUntilNextOwnStart(s,blocker,'doubleBlockUntil')?1:0,
    passiveDouble?1:0,
    aot2Warhammer(pack,s,blocker)?1:0);
