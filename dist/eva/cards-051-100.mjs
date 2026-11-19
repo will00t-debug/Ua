@@ -74,7 +74,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "purple",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 500,
   "bpMark": "",
@@ -176,7 +176,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "purple",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 2000,
   "bpMark": "",
