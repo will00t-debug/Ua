@@ -146,5 +146,28 @@ export const UA05NC_MHA3_PROGRAMS=Object.freeze({
   emptyOwnFieldHandEnergyDiscount:2,
   ownTurnBp:500,
   effects:Object.freeze({onAttack:Object.freeze([{op:'drawBottomSkipNextActive'}])})
+ }),
+ 'MHA-3-010':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  effects:Object.freeze({onPlay:Object.freeze([Object.freeze({
+   op:'tuckFacedownUnder', from:'hand',
+   host:Object.freeze({names:Object.freeze(['ホークス'])}),
+   count:1, optional:true
+  })])}),
+  mainAbility:Object.freeze({
+   op:'frontOnceProgram', frontOnly:false, oncePerTurn:true,
+   then:Object.freeze([Object.freeze({
+    op:'stripNamedFacedownPairBuff', name:'ホークス', bp:1000
+   })])
+  })
+ }),
+ 'MHA-3-011':Object.freeze({
+  ready:true,
+  implementation:'dsl',
+  emptyOwnFieldHandEnergyDiscount:2,
+  effects:Object.freeze({onPlay:Object.freeze([
+   Object.freeze({op:'inspectTopCharacterOutside', count:2})
+  ])})
  })
 });

@@ -1,9 +1,9 @@
 // UA05NC / MHA-3 battle pack. Set 1, set 2, and the point cards stay
 // in their own packs. A program that is not ready does not enter.
-import {createUniversalPack} from './pack.mjs?v=20261118mha008';
+import {createUniversalPack} from './pack.mjs?v=20261120mha011';
 import {mhaBattleCard} from './mha-pack.mjs';
-import {UA05NC_MHA3_CARDS} from '../mha/ua05nc-cards.mjs?v=20261118mha008';
-import {UA05NC_MHA3_PROGRAMS} from './mha/programs-ua05nc.mjs?v=20261118mha008';
+import {UA05NC_MHA3_CARDS} from '../mha/ua05nc-cards.mjs?v=20261120mha011';
+import {UA05NC_MHA3_PROGRAMS} from './mha/programs-ua05nc.mjs?v=20261120mha011';
 
 export function mha3ProgramFor(id){
  return UA05NC_MHA3_PROGRAMS[id]||null;

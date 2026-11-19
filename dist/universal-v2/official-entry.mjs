@@ -4,7 +4,7 @@
 // AP cards are not deck cards and stay out of this pack.
 // This module does not add Re:Zero to the five-title census.
 import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
-import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261119trk6';
+import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261120mha011';
 import {REZERO_CARDS} from '../rezero-cards.mjs';
 import {createRezeroV2Pack,rezeroPackCard} from './rezero-pack.mjs';
 import {rezV2RawCards} from './rez-pack.mjs';
@@ -20,7 +20,7 @@ import {createMhaV2Pack} from './mha-pack.mjs';
 import {createMha2Pack} from './mha2-pack.mjs';
 import {createMhaPointPack} from './mha-point-pack.mjs';
 import {createMha3Pack} from './mha3-pack.mjs';
-import {createTrkV2Pack} from './trk-pack.mjs?v=20261119trk6';
+import {createTrkV2Pack} from './trk-pack.mjs?v=20261120mha011';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {createEvaStagingPack} from './eva-staging-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
@@ -273,11 +273,11 @@ export function createMhaBattlePack(){
  const book=createMha3Pack();
  const cards={...set1.cards,...set2.cards,...points.cards,...book.cards};
  const ids=Object.keys(cards);
- if(ids.length!==194)throw Error('MHA live pack drifted: '+ids.length);
+ if(ids.length!==196)throw Error('MHA live pack drifted: '+ids.length);
  for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003'])
   if(!cards[id])throw Error('MHA ready point card missing: '+id);
  mhaBattlePack=Object.freeze({
-  kind:'ua-v2-pack',id:'mha',version:'mha-live-109-73-3-9',
+  kind:'ua-v2-pack',id:'mha',version:'mha-live-109-73-3-11',
   restrictColors:false,cards:Object.freeze(cards)
  });
  return mhaBattlePack;

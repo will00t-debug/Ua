@@ -39,8 +39,8 @@ test('all 173 MHA booster cards have card-specific Traditional Chinese effect te
 test('the deck editor title and offline catalog are consistently translated',()=>{
  const title=getTitle('mha');
  assert.ok(title);
- assert.equal(title.cards.length,194);
- assert.equal(catalog.length,194);
+ assert.equal(title.cards.length,196);
+ assert.equal(catalog.length,196);
  for(const card of title.cards){
   assert.equal(card.name,byId.get(card.id)?.name);
   assert.equal(card.effect,byId.get(card.id)?.effect);
@@ -54,6 +54,12 @@ test('the deck editor title and offline catalog are consistently translated',()=
  assert.equal(byId.get('MHA-3-008').name,'轟焦凍');
  assert.equal(byId.get('MHA-3-008').effect,MHA_EFFECTS_ZH_TW['MHA-3-008']);
  assert.equal(byId.get('MHA-3-009').effect,MHA_EFFECTS_ZH_TW['MHA-3-009']);
+ assert.equal(byId.get('MHA-3-010').name,'霍克斯');
+ assert.equal(byId.get('MHA-3-010').nameJa,'ホークス');
+ assert.equal(byId.get('MHA-3-010').effect,MHA_EFFECTS_ZH_TW['MHA-3-010']);
+ assert.equal(byId.get('MHA-3-011').name,'米爾科');
+ assert.equal(byId.get('MHA-3-011').nameJa,'ミルコ');
+ assert.equal(byId.get('MHA-3-011').effect,MHA_EFFECTS_ZH_TW['MHA-3-011']);
  for(const type of ['draw','get','active','raid']){
   const hits=booster.filter(card=>card.trigger===type);
   assert.ok(hits.length>0);
@@ -73,7 +79,7 @@ test('same-name Japanese identity, source and battle legality are untouched',()=
  assert.equal(catalog.filter(card=>card.id.startsWith('MHA-1-')).length,109);
  assert.equal(catalog.filter(card=>card.id.startsWith('MHA-2-')).length,73);
  assert.equal(catalog.filter(card=>card.id.startsWith('MHA-P-')).length,3);
- assert.equal(catalog.filter(card=>card.id.startsWith('MHA-3-')).length,9);
+ assert.equal(catalog.filter(card=>card.id.startsWith('MHA-3-')).length,11);
 });
 
 test('all already verified MHA deck, point and book card text is Chinese',()=>{
@@ -85,6 +91,6 @@ test('all already verified MHA deck, point and book card text is Chinese',()=>{
  const points=catalog.filter(card=>card.id.startsWith('MHA-P-'));
  assert.equal(points.length,3);
  assert.ok(points.every(card=>typeof card.effect==='string'&&card.effect.length>0));
- const publishedBooks=['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'];
+ const publishedBooks=['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009','MHA-3-010','MHA-3-011'];
  assert.ok(publishedBooks.every(id=>MHA_EFFECTS_ZH_TW[id]&&byId.get(id)?.effect===MHA_EFFECTS_ZH_TW[id]));
 });
