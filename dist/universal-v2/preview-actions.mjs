@@ -19,7 +19,8 @@ export const V2_TITLE_LABELS=Object.freeze({
  csm:'鏈鋸人',
  imc:'偶像大師 灰姑娘女孩',
  mha:'我的英雄學院',
- rnk:'浪客劍心'
+ rnk:'浪客劍心',
+ toriko:'美食獵人'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',
