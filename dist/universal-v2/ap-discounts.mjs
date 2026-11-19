@@ -3,8 +3,23 @@
 import {cardHasTrait,cardHasName} from './field-conditions.mjs';
 import {csmCardCountsAsEvent} from './csm-continuous.mjs';
 // Card-face required energy (necessary cost), never the card's generated energy.
+// 「全ての場所で必要エナジーを【色×N】としても扱う」adds N as a second legal
+// reading for effect comparisons. Paying the card still uses the printed cost.
+export function requiredEnergyValues(definition){
+ const values=[];
+ if(Number.isInteger(definition?.energy))values.push(definition.energy);
+ const also=definition?.alsoRequiredEnergy;
+ if(Number.isInteger(also)&&also>=0&&also<=30&&also!==definition?.energy)values.push(also);
+ return values;
+}
 export function matchesPrintedRequiredEnergyAtMost(definition,max){
- return Number.isInteger(max)&&max>=0&&max<=30&&Number.isInteger(definition?.energy)&&definition.energy<=max;
+ return Number.isInteger(max)&&max>=0&&max<=30&&requiredEnergyValues(definition).some(n=>n<=max);
+}
+export function matchesPrintedRequiredEnergyAtLeast(definition,min){
+ return Number.isInteger(min)&&min>=0&&min<=30&&requiredEnergyValues(definition).some(n=>n>=min);
+}
+export function matchesPrintedRequiredEnergyExact(definition,value){
+ return Number.isInteger(value)&&value>=0&&value<=30&&requiredEnergyValues(definition).some(n=>n===value);
 }
 export const DISCOUNT_KIND='nextEligibleHandPlayApDiscount';
 export function validatePrintedPlayFilter(f){
@@ -70,7 +85,7 @@ export function grantHandDiscountFromUsedEvent(s,owner,source,filter){
  s.nextContinuousStateId++;validateHandDiscount(s,e);s.continuousStates.push(e);
 }
 // A payment plan only; spendAp remains the single AP payment implementation.
-export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false}={}){
+export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false,frontNameOnField=false}={}){
  // A Makima aura makes other purple characters events as well as characters.
  // Test both identities without changing their printed card type.
  const alsoEvent=d.type==='character'&&csmCardCountsAsEvent(s,owner,d,
@@ -94,13 +109,19 @@ export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false}
  // A printed name on the controller's own field reduces only this card,
  // once, while that name is present. It is not a stored next-use grant.
  const namedCut=nameOnField&&d.handApDiscountWhileName?.amount===1?1:0;
- return {cost:Math.max(0,d.ap-ids.length-raidCut-nameCut-namedCut),ids};
+ const frontCut=frontNameOnField&&d.handApDiscountWhileFrontName?.amount===1?1:0;
+ return {cost:Math.max(0,d.ap-ids.length-raidCut-nameCut-namedCut-frontCut),ids};
 }
 export function definitionGrantsDiscount(value,filter){
  if(!value||typeof value!=='object')return false;
  if(value.op===DISCOUNT_KIND&&value.filter&&
   Object.keys(value.filter).length===Object.keys(filter).length&&
   Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
+ // REST, discard one, then the next matching trait play costs 1 less AP.
+ // The discount is the printed follow-up of that main, so the card proves it.
+ if(value.op==='restDiscardNextTraitAp'&&value.amount===1&&
+  typeof value.trait==='string'&&Object.keys(filter).length===1&&
+  filter.trait===value.trait)return true;
  return Object.values(value).some(v=>v&&typeof v==='object'&&definitionGrantsDiscount(v,filter));
 }
 // Stamp 0 belongs only to an event that has already left the field.

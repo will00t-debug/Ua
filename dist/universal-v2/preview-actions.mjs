@@ -19,7 +19,8 @@ export const V2_TITLE_LABELS=Object.freeze({
  csm:'鏈鋸人',
  imc:'偶像大師 灰姑娘女孩',
  mha:'我的英雄學院',
- rnk:'浪客劍心'
+ rnk:'浪客劍心',
+ toriko:'美食獵人'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',
@@ -261,7 +262,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-trait-hand':'查看牌頂，符合特徵可加入手牌，否則放回牌頂或場外',
  'effect-active-any':'可將 1 張己方場上卡改為 ACTIVE',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
- 'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色','effect-printed-lock':'可選 1 個對方前線角色，到自己下次回合開始前失去原有效果且不能攻擊或阻擋','effect-name-hand-remove':'將 1 張手牌除外',
+ 'effect-rest-bp':'選擇敵方 REST','effect-lock-move':'指定 1 張對手場上角色，到自己下次回合開始前不能移動','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色','effect-printed-lock':'可選 1 個對方前線角色，到自己下次回合開始前失去原有效果且不能攻擊或阻擋','effect-name-hand-remove':'將 1 張手牌除外',
  'effect-required-energy':'選自己場上另1個角色，本回合其所需能量增加2',
  'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
@@ -626,6 +627,11 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
   chooseAnyBuff:['不提高 BP','本回合使這張卡 BP 增加'],
   chooseAttackEndNamed:['不指定攻擊結束的對象','攻擊結束時指定這張卡'],
   chooseAttackEndRest:['不在攻擊結束時休息','攻擊結束時休息這張卡'],
+  chooseAttackWinPay:['不把手牌放到場外','將這張手牌放到場外'],
+  chooseTopDistinct:['其餘放到牌組下面','將這張卡加入手牌'],
+  chooseDrawCounted:['不再抽卡','再抽1張'],
+  chooseAttackWinRest:['不休息角色','休息這張卡'],
+  chooseOppRetireInstead:['不替換，照原本方式退場','改為讓這張卡退場'],
   chooseAttackEndSwap:['不在攻擊結束時交換','攻擊結束時與這張卡交換'],
   chooseBlockFloor:['不設定阻擋下限','給這張卡阻擋下限'],
   chooseBlockCeiling:['不限制阻擋','這張卡不會被高 BP 角色阻擋'],
@@ -1295,6 +1301,7 @@ export function uiActionLabel(action,{pack,state}={}){
    const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
    return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP＋'+amount;
   }
+  case 'chooseLockMove':return action.uid===null?'不限制移動':'到自己下次回合開始前，'+name()+' 不能移動';
   case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';

@@ -6,6 +6,8 @@ import {TITLE_LOGOS,titleLogo} from '../dist/title-logos.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+// Commons has no Toriko wordmark. The tile uses catalogue art instead of an invented logo.
+const NO_WORDMARK=new Set(['toriko']);
 const build=()=>renderVisualDeckBuilder({
  titles:TITLES.map(title=>({id:title.id,label:title.label,cards:[
   {id:title.id+'-sample',image:'assets/cards/example-card.png',name:'代表卡',type:'character',energy:0}
@@ -13,13 +15,18 @@ const build=()=>renderVisualDeckBuilder({
 });
 
 test('every registered work displays its actual Wikimedia series wordmark, not a card thumbnail',()=>{
- assert.equal(Object.keys(TITLE_LOGOS).length,TITLES.length);
- assert.deepEqual(new Set(Object.keys(TITLE_LOGOS)),new Set(TITLES.map(t=>t.id)));
+ assert.equal(Object.keys(TITLE_LOGOS).length,TITLES.length-NO_WORDMARK.size);
+ assert.deepEqual(new Set(Object.keys(TITLE_LOGOS)),new Set(TITLES.map(t=>t.id).filter(id=>!NO_WORDMARK.has(id))));
  const markup=build();
  assert.equal((markup.match(/class="vdb-title-tile/g)||[]).length,TITLES.length);
- assert.equal((markup.match(/class="vdb-title-logo"/g)||[]).length,TITLES.length);
- assert.doesNotMatch(markup,/src="assets\/cards\/example-card\.png"/);
+ assert.equal((markup.match(/class="vdb-title-logo"/g)||[]).length,TITLES.length-NO_WORDMARK.size);
+ assert.equal((markup.match(/src="assets\/cards\/example-card\.png"/g)||[]).length,NO_WORDMARK.size);
  for(const title of TITLES){
+  if(NO_WORDMARK.has(title.id)){
+   assert.equal(titleLogo(title.id),null);
+   assert.ok(markup.includes('data-title="'+title.id+'"'));
+   continue;
+  }
   const logo=titleLogo(title.id);
   assert.ok(logo,'logo missing for '+title.id);
   const wordmark=title.id==='imc'||title.id==='rnk'
@@ -41,8 +48,8 @@ test('every registered work displays its actual Wikimedia series wordmark, not a
 
 test('logo errors show text fallback and attribution is accessible',()=>{
  const html=build();
- assert.equal((html.match(/this\.nextElementSibling\.hidden=false/g)||[]).length,TITLES.length);
- assert.equal((html.match(/class="vdb-title-logo-fallback" hidden/g)||[]).length,TITLES.length);
+ assert.equal((html.match(/this\.nextElementSibling\.hidden=false/g)||[]).length,TITLES.length-NO_WORDMARK.size);
+ assert.equal((html.match(/class="vdb-title-logo-fallback" hidden/g)||[]).length,TITLES.length-NO_WORDMARK.size);
  assert.match(html,/referrerpolicy="no-referrer"/);
  assert.match(html,/loading="lazy" decoding="async"/);
  assert.match(html,/<summary>作品 Logo 來源與授權<\/summary>/);

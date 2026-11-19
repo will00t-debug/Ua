@@ -412,6 +412,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    return condition.names.some(name=>cardHasName(d,name));
   }).length>=condition.min;
  }
+ if(condition.kind==='ownTraitOutsideRemovedAtLeast'){
+  // 自分のリムーブエリアと場外エリアの［特徴］の合計. The asking character is
+  // on the field, so it is not part of either pile. Facedown under-cards
+  // and the opponent's piles are not these zones.
+  const area=s.players[owner];
+  return [...area.outside,...area.removed].filter(c=>
+   cardHasTrait(printed(c),condition.trait)).length>=condition.min;
+ }
  if(condition.kind==='ownOutsideTraitCountAtLeast'){
   // 自分の場外に［特徴］がN枚以上. Any card with the trait counts, including
   // a field. The character asking is on the field, so it is not outside.
@@ -441,6 +449,23 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
+ // 自分の場のキャラの必要エナジーの合計. Each character contributes its
+ // highest legal required-energy reading. 「としても扱う」is a second reading.
+ // Face-down cards, fields, and buried Raid layers are not on the field.
+ if(condition.kind==='ownRequiredEnergySumAtLeast'){
+  let sum=0;
+  const pl=s.players[owner];
+  for(const zone of [pl.front,pl.energy])for(const c of zone){
+   if(!printedFieldCard(c))continue;
+   const d=printed(c);
+   if(d.type!=='character'||!Number.isInteger(d.energy))continue;
+   let best=d.energy;
+   if(Number.isInteger(d.alsoRequiredEnergy)&&d.alsoRequiredEnergy!==d.energy)
+    best=Math.max(best,d.alsoRequiredEnergy);
+   sum+=best;
+  }
+  return sum>=condition.min;
+ }
  if(condition.kind==='oppFrontCurrentBpBelowPrinted'){
   // 元々のBPよりBPが低い: that front character's current BP is below its
   // own printed BP. Energy, hand, and the measuring card's own front do
@@ -485,6 +510,29 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const physical=[s.players[owner].front,s.players[owner].energy]
    .flat().find(c=>c?.uid===sourceUid);
   return !!physical&&printedFieldCard(physical)&&cardBp(physical)>=condition.minBp;
+ }
+ if(condition.kind==='raidUnderPrintedBpAtLeast'){
+  // このキャラの下. The printed number on a buried card, not its current BP.
+  const physical=[s.players[owner].front,s.players[owner].energy]
+   .flat().find(c=>c?.uid===sourceUid);
+  if(!physical)return false;
+  const layers=[];
+  const walk=node=>{
+   for(const child of [...(node.stack||[]),...(node.under||[])]){
+    layers.push(child);walk(child);
+   }
+  };
+  walk(physical);
+  return layers.some(layer=>{
+   const printedBp=printed(layer)?.bp;
+   return Number.isInteger(printedBp)&&printedBp>=condition.minBp;
+  });
+ }
+ if(condition.kind==='ownEffectHandToOutside'){
+  // 自分の効果で自分の手札を場外に置いている. Payment and an opponent's
+  // discard are different reasons and do not satisfy this sentence.
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.from==='hand'&&e.to==='outside'&&e.reason==='own-effect');
  }
  if(condition.kind==='otherOwnCharacterBpAtLeast'){
   // 他のキャラ. The card being measured never satisfies its own gate.

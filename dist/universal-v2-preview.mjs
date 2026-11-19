@@ -2,7 +2,7 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,rnkPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261118mha008';
+import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,rnkPracticeDeck,torikoPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261119trk6';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
@@ -20,19 +20,21 @@ import {imcEditorCards} from './imc/catalog.mjs';
 import {mhaEditorCards} from './mha/catalog.mjs?v=20261118mha008';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs';
+import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261119trk6';
+import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261119trk6';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
-import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261118mha008';
+import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261119trk6';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
-import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs?v=20261118mha008';
+import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs?v=20261119trk6';
 import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261118mha008';
-import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261119trk6';
+import {chooseUniversalAiAction} from './universal-v2/ai.mjs?v=20261119trk6';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {policyDifficulty} from './universal-v2/ai-policy-label.mjs';
 import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
@@ -49,7 +51,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261118mha008';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261119trk6';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
 import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
@@ -75,6 +77,7 @@ const aotPractice=aotPracticeDeck();
 const kmrPractice=kmrPracticeDeck();
 const imcPractice=imcPracticeDeck();
 const rnkPractice=rnkPracticeDeck();
+const torikoPractice=torikoPracticeDeck();
 const decks={...createAllV2PreviewRealDecks(),
  'rezero-set1':{pack:rezeroPractice.pack,counts:rezeroPractice.counts,
   label:'Re:Zero 第一彈｜黃色練習組'},
@@ -95,7 +98,9 @@ const decks={...createAllV2PreviewRealDecks(),
  'imc-red':{pack:imcPractice.pack,counts:imcPractice.counts,
   label:'偶像大師 灰姑娘女孩｜紅色練習組（非官方預組）'},
  'rnk-blue':{pack:rnkPractice.pack,counts:rnkPractice.counts,
-  label:'浪客劍心｜藍色練習組'}};
+  label:'浪客劍心｜藍色練習組'},
+ 'toriko-blue':{pack:torikoPractice.pack,counts:torikoPractice.counts,
+  label:'美食獵人｜已支援藍色練習組'}};
 const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
@@ -113,7 +118,8 @@ const allArt=Object.freeze({
  imc:new Map(imcEditorCards().map(c=>[c.id,c.image||null])),
  mha:new Map(mhaEditorCards().map(c=>[c.identity||c.id,c.image||c.printings?.[0]?.image||null])),
  rnk:new Map(rnkEditorCards().map(c=>[c.identity||c.id,c.image||null])),
- eva:new Map(evaEditorCards().map(c=>[c.identity||c.id,c.image||null]))
+ eva:new Map(evaEditorCards().map(c=>[c.identity||c.id,c.image||null])),
+ toriko:new Map([...TORIKO_CARDS,...TORIKO_PR_CARDS].map(c=>[c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){
@@ -141,7 +147,8 @@ const PRINTED_CATALOGUE={
  'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID)),
  mha:printedCatalogueMap(mhaEditorCards()),
  rnk:printedCatalogueMap(rnkEditorCards()),
- eva:printedCatalogueMap(evaEditorCards())
+ eva:printedCatalogueMap(evaEditorCards()),
+ toriko:printedCatalogueMap([...TORIKO_CARDS,...TORIKO_PR_CARDS])
 };
 const el=(tag,props={},...contents)=>{
  const n=document.createElement(tag);
@@ -2293,6 +2300,7 @@ function selectBuiltOpponent(title){
  if(decks['kmr-yellow']&&title==='kmr')$('ai-title').value='kmr-yellow';
  if(decks['imc-red']&&title==='imc')$('ai-title').value='imc-red';
  if(decks['rnk-blue']&&title==='rnk')$('ai-title').value='rnk-blue';
+ if(decks['toriko-blue']&&title==='toriko')$('ai-title').value='toriko-blue';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
 }
 function importBuiltTitleDeck(){
@@ -2326,7 +2334,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'||raw.title==='eva'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'||raw.title==='eva'||raw.title==='toriko'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}

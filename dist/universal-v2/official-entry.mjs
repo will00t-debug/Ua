@@ -4,7 +4,7 @@
 // AP cards are not deck cards and stay out of this pack.
 // This module does not add Re:Zero to the five-title census.
 import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
-import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261118mha008';
+import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261119trk6';
 import {REZERO_CARDS} from '../rezero-cards.mjs';
 import {createRezeroV2Pack,rezeroPackCard} from './rezero-pack.mjs';
 import {rezV2RawCards} from './rez-pack.mjs';
@@ -20,6 +20,7 @@ import {createMhaV2Pack} from './mha-pack.mjs';
 import {createMha2Pack} from './mha2-pack.mjs';
 import {createMhaPointPack} from './mha-point-pack.mjs';
 import {createMha3Pack} from './mha3-pack.mjs';
+import {createTrkV2Pack} from './trk-pack.mjs?v=20261119trk6';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {createEvaStagingPack} from './eva-staging-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
@@ -75,6 +76,7 @@ export function officialV2Pack(title){
  if(title==='mha')return createMhaBattlePack();
  if(title==='rnk')return createRnkBattlePack();
  if(title==='eva')return createEvaBattlePack();
+ if(title==='toriko')return createTorikoBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -145,6 +147,20 @@ export function madokaPracticeDeck(){
  const counts=practiceDeck(pack,{color:'red'});
  const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='red');
  if(other.length)throw Error('Madoka red practice deck included another color');
+ return {pack,counts};
+}
+
+let torikoBattlePack=null;
+export function createTorikoBattlePack(){
+ if(!torikoBattlePack)torikoBattlePack=createTrkV2Pack();
+ return torikoBattlePack;
+}
+
+export function torikoPracticeDeck(){
+ const pack=createTorikoBattlePack();
+ const counts=practiceDeck(pack,{color:'blue'});
+ const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='blue');
+ if(other.length)throw Error('Toriko blue practice deck included another color');
  return {pack,counts};
 }
 
