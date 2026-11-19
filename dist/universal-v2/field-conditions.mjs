@@ -412,6 +412,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    return condition.names.some(name=>cardHasName(d,name));
   }).length>=condition.min;
  }
+ if(condition.kind==='ownTraitOutsideRemovedAtLeast'){
+  // 自分のリムーブエリアと場外エリアの［特徴］の合計. The asking character is
+  // on the field, so it is not part of either pile. Facedown under-cards
+  // and the opponent's piles are not these zones.
+  const area=s.players[owner];
+  return [...area.outside,...area.removed].filter(c=>
+   cardHasTrait(printed(c),condition.trait)).length>=condition.min;
+ }
  if(condition.kind==='ownOutsideTraitCountAtLeast'){
   // 自分の場外に［特徴］がN枚以上. Any card with the trait counts, including
   // a field. The character asking is on the field, so it is not outside.

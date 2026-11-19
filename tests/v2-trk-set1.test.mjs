@@ -11,7 +11,7 @@ import {officialV2Pack,torikoPracticeDeck} from '../dist/universal-v2/official-e
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {matchesPrintedRequiredEnergyAtLeast,matchesPrintedRequiredEnergyAtMost} from '../dist/universal-v2/ap-discounts.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,universalAttackDamage,universalBp,universalImpact,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
+import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,universalAttackDamage,universalBp,universalCardEnergy,universalImpact,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
 const pack=createTrkV2Pack();
 const packs=[pack,pack];
@@ -126,7 +126,7 @@ test('UA17 Toriko catalogue is one identity per number and keeps the printed ene
  assert.equal(iron.energy,0);
  assert.equal(iron.color,'yellow');
  assert.deepEqual(iron.traits,['再生屋']);
- assert.equal(iron.engineKind,null);
+ assert.equal(iron.engineKind,'printedEnergyRetire');
  assert.equal(iron.auto,false);
  assert.match(iron.effectJa,/このターン中、このキャラの発生エナジー\+【黄】。メインフェイズ終了時、このキャラを退場させる。/);
  assert.doesNotMatch(iron.effectJa,/を得る/);
@@ -145,19 +145,22 @@ test('UA17 Toriko catalogue is one identity per number and keeps the printed ene
  assert.equal(TORIKO_CARDS.every(card=>card.auto===false&&!card.traitComponents),true);
  const sunny=byId.get('TRK-1-002');
  assert.equal(sunny.faq.some(entry=>entry.id==='Q796'),true);
- assert.equal(sunny.engineKind,null);
+ assert.equal(sunny.engineKind,'queenTax');
 });
 
 test('only a whole Japanese print joins the shared pack',()=>{
  for(const card of TORIKO_CARDS)assert.equal(card.engineKind,trkEngineKind(card));
  assert.deepEqual(TORIKO_ENGINE_IDS,TORIKO_CARDS.filter(card=>card.engineKind).map(card=>card.id));
- assert.equal(TORIKO_ENGINE_IDS.length,74);
+ assert.equal(TORIKO_ENGINE_IDS.length,104);
  assert.deepEqual(Object.keys(pack.cards).sort(),[...TORIKO_ENGINE_IDS].sort());
- assert.equal(pack.cards['TRK-1-005'],undefined);
- assert.equal(pack.cards['TRK-1-047'],undefined);
- assert.equal(pack.cards['TRK-1-082'],undefined);
+ for(const id of ['TRK-1-013','TRK-1-017','TRK-1-054','TRK-1-072','TRK-1-091']){
+  assert.equal(pack.cards[id],undefined);
+  assert.equal(byId.get(id).engineKind,null);
+ }
  assert.equal(byId.get('TRK-1-048').engineKind,'alsoTopKeep');
- assert.equal(byId.get('TRK-1-005').engineKind,null);
+ assert.equal(pack.cards['TRK-1-005'].mainAbility.op,'restSelfGeneratedEnergyRetireEndMain');
+ assert.equal(pack.cards['TRK-1-047'].mainAbility.op,'restSelfGeneratedEnergyRetireEndMain');
+ assert.equal(pack.cards['TRK-1-082'].mainAbility.op,'restSelfGeneratedEnergyRetireEndMain');
  const source=readFileSync(new URL('../dist/universal-v2/trk-pack.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(source,/op:\s*['"]trk['"]/);
  assert.doesNotMatch(source,/restSelfGainEnergyRetireEndMain/);
@@ -177,14 +180,14 @@ test('only a whole Japanese print joins the shared pack',()=>{
  assert.deepEqual(Object.keys(officialV2Pack('toriko').cards).sort(),Object.keys(pack.cards).sort());
  const ready=editorV2Status('toriko',practice.counts,pack);
  assert.equal(ready.ready,true,ready.issues.join('；'));
- assert.equal(ready.registered,74);
+ assert.equal(ready.registered,104);
  const blocked={...practice.counts};
  const donor=Object.keys(blocked).find(id=>blocked[id]>=1);
  blocked[donor]-=1;
- blocked['TRK-1-005']=1;
+ blocked['TRK-1-013']=1;
  assert.equal(editorV2Status('toriko',blocked,pack).ready,false);
- assert.ok(validateUniversalDeck(pack,blocked).some(issue=>issue.includes('TRK-1-005')));
- assert.throws(()=>fresh(blocked),/TRK-1-005/);
+ assert.ok(validateUniversalDeck(pack,blocked).some(issue=>issue.includes('TRK-1-013')));
+ assert.throws(()=>fresh(blocked),/TRK-1-013/);
 });
 
 test('a vanilla character, a draw-and-discard, a hand discount and a full top window resolve on the shared engine',()=>{
@@ -880,6 +883,422 @@ test('twenty more Toriko prints resolve as shared state changes',()=>{
  small.players[0].hand=[guild2,...few];
  small=playEvent(small,guild2.uid);
  assert.equal(small.pending.choices.includes(high4.uid),true);
+});
+
+function act(s,uid,mode){
+ return choose(s,item=>item.type==='activate'&&item.uid===uid&&(mode===undefined||item.mode===mode));
+}
+
+test('the next thirty Toriko prints change shared state',()=>{
+ const left=['TRK-1-013','TRK-1-017','TRK-1-054','TRK-1-072','TRK-1-091'];
+ assert.equal(left.every(id=>pack.cards[id]===undefined),true);
+ assert.equal(pack.cards['TRK-1-057'].triggerEffect.op,'bounceOppFrontUnderBp');
+ assert.equal(pack.cards['TRK-1-059'].triggerEffect.bp,3500);
+ assert.equal(pack.cards['TRK-1-009'].staticBp,500);
+ assert.equal(pack.cards['TRK-1-009'].raidName,'ココ');
+ assert.equal(pack.cards['TRK-1-009'].bpDownImmune,true);
+ assert.equal(pack.cards['TRK-1-080'].printedAttackDamage,2);
+ assert.equal(pack.cards['TRK-1-094'].printedAttackDamage,2);
+ assert.equal(pack.cards['TRK-1-051'].alsoRequiredEnergy,5);
+ assert.equal(pack.cards['TRK-1-067'].retireToRemoved,true);
+ assert.equal(pack.cards['TRK-1-064'].effects.onPlay.filter(e=>e.op==='deployOwnHandRestOrRaid').length,2);
+ assert.deepEqual(pack.cards['TRK-1-026'].effects.onPlay[0].bonusNames,['トリコ','ココ','サニー','ゼブラ']);
+ assert.equal(pack.cards['TRK-1-026'].effects.onPlay[0].bonusAll,true);
+
+ let energy=toPhase(fresh(fillDeck({'TRK-1-005':1,'TRK-1-047':1,'TRK-1-082':1}),30005),'main');
+ const iron=put(energy,0,'TRK-1-005','energy',0,true);
+ const before=universalCardEnergy(pack,energy,0,iron);
+ energy=act(energy,iron.uid,'selfRestEnergyRetire');
+ const rested=energy.players[0].energy.find(c=>c?.uid===iron.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(universalCardEnergy(pack,energy,0,rested),before+1);
+ assert.equal(energy.delayedEffects.some(e=>e.op==='retireAtMainEnd'&&e.sourceUid===iron.uid),true);
+ energy=dispatchUniversalAction(packs,energy,{type:'next'});
+ assert.equal(energy.players[0].energy[0],null);
+ assert.equal(energy.players[0].outside.some(c=>c.uid===iron.uid),true);
+
+ let kiss=toPhase(fresh(fillDeck({'TRK-1-001':1,'TRK-1-006':1,'TRK-1-004':1}),30001),'main');
+ const kissCard=put(kiss,0,'TRK-1-001','front',0,true);
+ put(kiss,0,'TRK-1-006','front',1,true);
+ const victim=put(kiss,1,'TRK-1-004','front',0,true);
+ const victimBp=universalBp(pack,kiss,victim);
+ kiss=act(kiss,kissCard.uid,'frontOnce');
+ kiss=choose(kiss,item=>item.uid===victim.uid);
+ const cut=kiss.players[1].front.find(c=>c?.uid===victim.uid);
+ assert.equal(universalBp(pack,kiss,cut),victimBp-1000);
+ kiss=toPhase(fresh(fillDeck({'TRK-1-001':1}),30011),'main');
+ const bare=put(kiss,0,'TRK-1-001','front',0,true);
+ assert.equal(legalUniversalActions(packs,kiss).some(item=>item.type==='activate'&&item.uid===bare.uid),false);
+
+ let tax=toPhase(fresh(fillDeck({'TRK-1-002':2,'TRK-1-010':1,'TRK-1-005':4}),30002),'main');
+ readyAp(tax,0,6);
+ for(let slot=0;slot<4;slot++)put(tax,0,'TRK-1-005','energy',slot,true);
+ const sunny=put(tax,0,'TRK-1-010','front',0,true);
+ const queen=take(tax,0,'TRK-1-002');
+ tax.players[0].hand.push(queen);
+ tax=playFront(tax,queen.uid);
+ tax=choose(tax,item=>item.uid===sunny.uid);
+ const taxed=tax.players[0].front.find(c=>c?.uid===sunny.uid);
+ assert.equal(taxed.selectHandTaxUntil.count,1);
+ const queen2=take(tax,0,'TRK-1-002');
+ tax.players[0].hand.push(queen2);
+ tax=playFront(tax,queen2.uid);
+ tax=choose(tax,item=>item.uid===sunny.uid);
+ assert.equal(tax.players[0].front.find(c=>c?.uid===sunny.uid).selectHandTaxUntil.count,2);
+
+ let coco=toPhase(fresh(fillDeck({'TRK-1-009':1}),30009),'main');
+ const cocoCard=put(coco,0,'TRK-1-009','front',0,true);
+ assert.equal(universalBp(pack,coco,coco.players[0].front[0]),pack.cards['TRK-1-009'].bp+500);
+
+ let kings=toPhase(fresh(fillDeck({'TRK-1-021':1,'TRK-1-006':1,'TRK-1-010':1,'TRK-1-014':1}),30021),'main');
+ put(kings,0,'TRK-1-006','front',0,true);
+ put(kings,0,'TRK-1-010','front',1,true);
+ put(kings,0,'TRK-1-014','front',2,true);
+ put(kings,0,'TRK-1-021','front',3,true);
+ assert.equal(universalImpact(pack,kings,kings.players[0].front[3]),1);
+
+ let wake=toPhase(fresh(fillDeck({'TRK-1-036':1,'TRK-1-042':1,'TRK-1-080':1,'TRK-1-009':1,'TRK-1-021':1,'TRK-1-059':1}),30036),'main');
+ put(wake,0,'TRK-1-042','front',0,true);
+ put(wake,0,'TRK-1-080','energy',0,true);
+ put(wake,0,'TRK-1-009','energy',1,true);
+ put(wake,0,'TRK-1-021','energy',2,true);
+ const ichiryu=take(wake,0,'TRK-1-036');
+ wake.players[0].hand.push(ichiryu);
+ assert.equal(zoneRequiredEnergy(pack,wake,0,pack.cards['TRK-1-036'],'hand'),5);
+ const setsuno=take(wake,0,'TRK-1-059');
+ wake.players[0].hand.push(setsuno);
+ assert.equal(zoneRequiredEnergy(pack,wake,0,pack.cards['TRK-1-059'],'hand'),5);
+ const dragon=put(wake,0,'TRK-1-036','front',1,true);
+ assert.equal(dragon.ready,true);
+ assert.equal(pack.cards['TRK-1-036'].enterAlwaysActive,true);
+
+ let sole=toPhase(fresh(fillDeck({'TRK-1-094':1}),30094),'main');
+ const mitora=take(sole,0,'TRK-1-094');
+ sole.players[0].deck.push(...sole.players[0].hand);
+ sole.players[0].hand=[mitora];
+ assert.equal(zoneRequiredEnergy(pack,sole,0,pack.cards['TRK-1-094'],'hand'),5);
+ sole.players[0].hand.push(sole.players[0].deck.pop());
+ assert.equal(zoneRequiredEnergy(pack,sole,0,pack.cards['TRK-1-094'],'hand'),12);
+
+ let parasite=toPhase(fresh(fillDeck({'TRK-1-068':2,'TRK-1-067':2}),30068),'main');
+ const giant=put(parasite,0,'TRK-1-068','front',0,true);
+ assert.equal(universalBp(pack,parasite,parasite.players[0].front[0]),pack.cards['TRK-1-068'].bp);
+ parasite.players[0].outside.push(take(parasite,0,'TRK-1-067'),take(parasite,0,'TRK-1-067'));
+ parasite.players[0].removed.push(take(parasite,0,'TRK-1-068'));
+ assert.equal(universalBp(pack,parasite,parasite.players[0].front[0]),pack.cards['TRK-1-068'].bp+500);
+
+ let removed=toPhase(fresh(fillDeck({'TRK-1-067':1,'TRK-1-026':1,'TRK-1-005':4}),30067),'main');
+ readyAp(removed,0,3);
+ for(let slot=0;slot<4;slot++)put(removed,0,'TRK-1-005','energy',slot,true);
+ const mite=put(removed,1,'TRK-1-067','front',0,true);
+ const feast=take(removed,0,'TRK-1-026');
+ removed.players[0].hand.push(feast);
+ removed=playEvent(removed,feast.uid);
+ assert.equal(removed.pending.kind,'effect-retire-bp');
+ assert.equal(removed.pending.choices.includes(mite.uid),true);
+ removed=choose(removed,item=>item.uid===mite.uid);
+ assert.equal(removed.players[1].removed.some(c=>c.uid===mite.uid),true);
+ assert.equal(removed.players[1].outside.some(c=>c.uid===mite.uid),false);
+
+ let punch=toPhase(fresh(fillDeck({'TRK-1-028':1,'TRK-1-014':1,'TRK-1-004':1,'TRK-1-005':4}),30028),'main');
+ readyAp(punch,0,3);
+ for(let slot=0;slot<4;slot++)put(punch,0,'TRK-1-005','energy',slot,true);
+ const zebra=put(punch,0,'TRK-1-014','front',0,true);
+ put(punch,1,'TRK-1-004','front',0,true);
+ const zebraBp=universalBp(pack,punch,zebra);
+ const beat=take(punch,0,'TRK-1-028');
+ punch.players[0].hand.push(beat);
+ const handBefore=punch.players[0].hand.length;
+ punch=playEvent(punch,beat.uid);
+ punch=choose(punch,item=>item.uid===zebra.uid);
+ assert.equal(universalBp(pack,punch,punch.players[0].front.find(c=>c?.uid===zebra.uid)),zebraBp+2000);
+ assert.equal(punch.pending.kind,'effect-must-block-grant');
+ punch=choose(punch,item=>item.uid===null);
+ assert.equal(punch.players[1].front[0].forcedBlockThisTurn,undefined);
+ assert.equal(punch.players[0].hand.length,handBefore);
+
+ let look=toPhase(fresh(fillDeck({'TRK-1-106':1,'TRK-1-037':4,'TRK-1-109':1,'TRK-1-052':4}),30106),'main');
+ readyAp(look,0,2);
+ for(let slot=0;slot<4;slot++)put(look,0,'TRK-1-037','energy',slot,true);
+ const ingredient=take(look,0,'TRK-1-109');
+ const filler=[];
+ const zones=['deck','hand','life','outside'];
+ while(filler.length<6){
+  let found=null;
+  for(const zone of zones){
+   const pile=look.players[0][zone];
+   const index=pile.findIndex(c=>pack.cards[c.cardId]&&c.cardId!=='TRK-1-109'&&c.cardId!=='TRK-1-106'&&!(pack.cards[c.cardId].traits||[]).includes('食材'));
+   if(index>=0){found=pile.splice(index,1)[0];break;}
+  }
+  if(!found)throw Error('Need six non-ingredient cards for the look window');
+  filler.push(found);
+ }
+ const window=[filler[0],ingredient,...filler.slice(1)];
+ look.players[0].deck.unshift(...window);
+ const starter=take(look,0,'TRK-1-106');
+ look.players[0].hand.push(starter);
+ look=playFront(look,starter.uid);
+ assert.equal(look.pending.kind,'effect-top-trait-outside');
+ assert.equal(look.pending.uids.length,7);
+ assert.equal(look.pending.choices.length,1);
+ assert.equal(look.pending.to,'hand');
+ look=choose(look,item=>item.uid===ingredient.uid);
+ assert.equal(look.players[0].hand.some(c=>c.uid===ingredient.uid),true);
+ assert.equal(look.pending.kind,'effect-top-order');
+ assert.equal(look.pending.uids.length,6);
+});
+
+test('the remaining Toriko prints pay, ban, recover, wake and look',()=>{
+ for(const id of ['TRK-1-005','TRK-1-047','TRK-1-082'])
+  assert.equal(pack.cards[id].mainAbility.op,'restSelfGeneratedEnergyRetireEndMain');
+
+ let tax=toPhase(fresh(fillDeck({'TRK-1-034':1,'TRK-1-037':2,'TRK-1-052':1}),30234),'main');
+ readyAp(tax,0,2);
+ put(tax,0,'TRK-1-037','energy',0,true);
+ const ally=put(tax,0,'TRK-1-052','front',0,false);
+ const aimaru=take(tax,0,'TRK-1-034');
+ tax.players[0].hand.push(aimaru);
+ tax=playFront(tax,aimaru.uid);
+ assert.equal(tax.pending.kind,'effect-other-ap-tax');
+ assert.equal(tax.pending.choices.some(c=>c.uid===aimaru.uid),false);
+ tax=choose(tax,item=>item.uid===ally.uid);
+ assert.equal(tax.continuousStates.some(e=>e.kind==='selectionApTax'&&e.targetUid===ally.uid),true);
+
+ let ban=toPhase(fresh(fillDeck({'TRK-1-042':1,'TRK-1-036':1,'TRK-1-080':1,'TRK-1-037':4,'TRK-1-014':1,'TRK-1-052':1}),30242),'main');
+ readyAp(ban,0,2);
+ for(let slot=0;slot<4;slot++)put(ban,0,'TRK-1-037','energy',slot,true);
+ put(ban,0,'TRK-1-036','front',0,true);
+ put(ban,0,'TRK-1-080','front',1,true);
+ const victim=put(ban,1,'TRK-1-014','front',0,true);
+ const spare=take(ban,0,'TRK-1-052');
+ const jiro=take(ban,0,'TRK-1-042');
+ ban.players[0].hand.push(spare,jiro);
+ assert.equal(zoneRequiredEnergy(pack,ban,0,pack.cards['TRK-1-042'],'hand'),5);
+ ban=playFront(ban,jiro.uid);
+ assert.equal(ban.pending.kind,'effect-discard-gate');
+ ban=choose(ban,item=>item.uid===spare.uid);
+ assert.equal(ban.pending.kind,'effect-front-ban');
+ ban=choose(ban,item=>item.uid===victim.uid);
+ assert.equal(ban.continuousStates.some(e=>e.kind==='cannotAttack'&&e.targetUid===victim.uid),true);
+ assert.equal(ban.continuousStates.some(e=>e.kind==='cannotBlock'&&e.targetUid===victim.uid),true);
+
+ let recover=toPhase(fresh(fillDeck({'TRK-1-051':1,'TRK-1-036':1,'TRK-1-037':4,'TRK-1-080':1,'TRK-1-052':1}),30251),'main');
+ readyAp(recover,0,2);
+ for(let slot=0;slot<4;slot++)put(recover,0,'TRK-1-037','energy',slot,true);
+ put(recover,0,'TRK-1-036','front',0,true);
+ const buried=take(recover,0,'TRK-1-080');
+ recover.players[0].outside.push(buried);
+ const payment=take(recover,0,'TRK-1-052');
+ const yosaku=take(recover,0,'TRK-1-051');
+ recover.players[0].hand.push(payment,yosaku);
+ recover=playFront(recover,yosaku.uid);
+ assert.equal(recover.pending.kind,'effect-sum-recover');
+ recover=choose(recover,item=>item.uid===payment.uid);
+ assert.equal(recover.pending.step,'recover');
+ recover=choose(recover,item=>item.uid===buried.uid);
+ assert.equal(recover.players[0].hand.some(c=>c.uid===buried.uid),true);
+
+ let wake=toPhase(fresh(fillDeck({'TRK-1-057':1,'TRK-1-005':2,'TRK-1-033':1}),30257),'main');
+ readyAp(wake,0,2);
+ const cook=put(wake,0,'TRK-1-057','energy',0,true);
+ put(wake,0,'TRK-1-005','energy',1,true);
+ put(wake,0,'TRK-1-005','energy',2,true);
+ assert.equal(legalUniversalActions(packs,wake).some(a=>a.mode==='energyWake'),false);
+ const meat=take(wake,0,'TRK-1-033');
+ wake.players[0].hand.push(meat);
+ wake=playEvent(wake,meat.uid);
+ if(wake.pending)wake=choose(wake,item=>item.uid===null);
+ assert.equal(wake.pending,null);
+ wake=act(wake,cook.uid,'energyWake');
+ const woke=wake.players[0].energy.find(c=>c?.uid===cook.uid);
+ assert.equal(woke.ready,true);
+ assert.equal(wake.mainAbilityUsedUids.includes(cook.uid+'|energyWake'),true);
+
+ let spice=toPhase(fresh(fillDeck({'TRK-1-060':1,'TRK-1-037':2,'TRK-1-052':1}),30260),'main');
+ readyAp(spice,0,2);
+ put(spice,0,'TRK-1-037','energy',0,true);
+ const spicePay=take(spice,0,'TRK-1-052');
+ const spices=take(spice,0,'TRK-1-060');
+ spice.players[0].hand.push(spicePay,spices);
+ spice=playEnergy(spice,spices.uid);
+ assert.equal(spice.players[0].energy.some(c=>c?.uid===spices.uid&&c.ready),true);
+ spice=act(spice,spices.uid,'restTraitAp');
+ assert.equal(spice.pending.kind,'effect-discard-gate');
+ spice=choose(spice,item=>item.uid===spicePay.uid);
+ assert.equal(spice.continuousStates.some(e=>e.kind==='nextEligibleHandPlayApDiscount'&&e.filter.trait==='食材'),true);
+ assert.equal(legalUniversalActions(packs,spice).some(a=>a.mode==='restTraitAp'),false);
+
+ let knock=toPhase(fresh(fillDeck({'TRK-1-063':1,'TRK-1-037':4,'TRK-1-041':1,'TRK-1-014':1}),30263),'main');
+ readyAp(knock,0,2);
+ for(let slot=0;slot<4;slot++)put(knock,0,'TRK-1-037','energy',slot,true);
+ put(knock,0,'TRK-1-041','front',0,true);
+ const blocked=put(knock,1,'TRK-1-014','front',0,true);
+ const knocking=take(knock,0,'TRK-1-063');
+ knock.players[0].hand.push(knocking);
+ const knockHand=knock.players[0].hand.length;
+ knock=playEvent(knock,knocking.uid);
+ assert.equal(knock.pending.kind,'effect-front-ban');
+ knock=choose(knock,item=>item.uid===blocked.uid);
+ assert.equal(knock.continuousStates.some(e=>e.kind==='cannotAttack'&&e.targetUid===blocked.uid),true);
+ assert.equal(knock.players[0].hand.length,knockHand);
+
+ let ozone=toPhase(fresh(fillDeck({'TRK-1-064':1,'TRK-1-037':4,'TRK-1-052':1,'TRK-1-055':1}),30264),'main');
+ readyAp(ozone,0,3);
+ for(let slot=0;slot<4;slot++)put(ozone,0,'TRK-1-037','energy',slot,true);
+ const toriko=take(ozone,0,'TRK-1-052');
+ const komatsu=take(ozone,0,'TRK-1-055');
+ const grass=take(ozone,0,'TRK-1-064');
+ ozone.players[0].hand.push(toriko,komatsu,grass);
+ const deckBefore=ozone.players[0].deck.length;
+ ozone=playEvent(ozone,grass.uid);
+ assert.equal(ozone.players[0].deck.length,deckBefore-2);
+ assert.equal(ozone.pending.kind,'effect-hand-rest-or-raid');
+ assert.equal(ozone.pending.choices.includes(toriko.uid),true);
+ ozone=choose(ozone,item=>item.uid===null);
+ assert.equal(ozone.pending.kind,'effect-hand-rest-or-raid');
+ assert.equal(ozone.pending.choices.includes(komatsu.uid),true);
+
+ let emperor=toPhase(fresh(fillDeck({'TRK-1-069':1,'TRK-1-067':2,'TRK-1-068':1,'TRK-1-078':2,'TRK-1-014':1}),30269),'main');
+ readyAp(emperor,0,2);
+ put(emperor,0,'TRK-1-078','energy',0,true);
+ put(emperor,0,'TRK-1-078','energy',1,true);
+ put(emperor,1,'TRK-1-014','front',0,true);
+ emperor.players[0].removed.push(take(emperor,0,'TRK-1-067'),take(emperor,0,'TRK-1-067'),take(emperor,0,'TRK-1-068'));
+ const bug=take(emperor,0,'TRK-1-069');
+ emperor.players[0].hand.push(bug);
+ emperor=playFront(emperor,bug.uid);
+ assert.equal(emperor.pending,null);
+ assert.equal(emperor.players[0].front.some(c=>c?.uid===bug.uid),true);
+
+ let purple=toPhase(fresh(fillDeck({'TRK-1-080':1,'TRK-1-085':1,'TRK-1-094':1,'TRK-1-093':4}),30280),'main');
+ readyAp(purple,0,2);
+ for(let slot=0;slot<4;slot++)put(purple,0,'TRK-1-093','energy',slot,true);
+ const retiring=put(purple,1,'TRK-1-080','front',0,true);
+ const recruit=take(purple,1,'TRK-1-085');
+ purple.players[1].outside.push(recruit);
+ const mitora=take(purple,0,'TRK-1-094');
+ purple.players[0].deck.push(...purple.players[0].hand);
+ purple.players[0].hand=[mitora];
+ assert.equal(zoneRequiredEnergy(pack,purple,0,pack.cards['TRK-1-094'],'hand'),5);
+ purple=playFront(purple,mitora.uid);
+ assert.equal(purple.pending.kind,'effect-retire-bp');
+ purple=choose(purple,item=>item.uid===retiring.uid);
+ assert.equal(purple.players[1].outside.some(c=>c.uid===retiring.uid),true);
+ assert.equal(purple.pending.kind,'effect-deploy-active-front');
+ assert.equal(purple.pending.player,1);
+ purple=choose(purple,item=>item.uid===recruit.uid&&item.slot===1);
+ assert.equal(purple.players[1].front[1]?.uid,recruit.uid);
+ assert.equal(purple.players[1].front[1].ready,true);
+
+ let raid=toPhase(fresh(fillDeck({'TRK-1-081':1,'TRK-1-078':1,'TRK-1-093':4}),30281),'main');
+ readyAp(raid,0,2);
+ for(let slot=0;slot<4;slot++)put(raid,0,'TRK-1-093','energy',slot,true);
+ const sleeper=put(raid,0,'TRK-1-078','front',0,false);
+ const raider=take(raid,0,'TRK-1-081');
+ raid.players[0].hand.push(raider);
+ raid=playFront(raid,raider.uid);
+ assert.equal(raid.pending.kind,'effect-active-character');
+ assert.equal(raid.pending.choices.includes(raider.uid),false);
+ raid=choose(raid,item=>item.uid===sleeper.uid);
+ assert.equal(raid.players[0].front.find(c=>c?.uid===sleeper.uid).ready,true);
+
+ let grin=toPhase(fresh(fillDeck({'TRK-1-084':1,'TRK-1-078':1,'TRK-1-093':4,'TRK-1-052':4}),30284),'main');
+ readyAp(grin,0,2);
+ for(let slot=0;slot<4;slot++)put(grin,0,'TRK-1-093','energy',slot,true);
+ const low=put(grin,1,'TRK-1-078','energy',0,true);
+ for(let slot=1;slot<4;slot++)put(grin,1,'TRK-1-052','front',slot,true);
+ const grinPay=take(grin,0,'TRK-1-052');
+ const grinCard=take(grin,0,'TRK-1-084');
+ grin.players[0].hand.push(grinPay,grinCard);
+ grin=playFront(grin,grinCard.uid);
+ assert.equal(grin.pending.kind,'effect-low-gen-front');
+ grin=choose(grin,item=>item.uid===grinPay.uid);
+ if(grin.pending?.step==='pick')grin=choose(grin,item=>item.uid===low.uid);
+ assert.equal(grin.players[1].front[0]?.uid,low.uid);
+ assert.equal(grin.players[1].energy[0],null);
+
+ let star=toPhase(fresh(fillDeck({'TRK-1-088':1,'TRK-1-093':4,'TRK-1-014':1,'TRK-1-052':1}),30288),'main');
+ readyAp(star,0,2);
+ for(let slot=0;slot<4;slot++)put(star,0,'TRK-1-093','energy',slot,true);
+ const small=put(star,1,'TRK-1-014','front',0,true);
+ const starPay=take(star,0,'TRK-1-052');
+ const starjun=take(star,0,'TRK-1-088');
+ star.players[0].hand.push(starPay,starjun);
+ star=playFront(star,starjun.uid);
+ assert.equal(star.pending.kind,'effect-discard-gate');
+ star=choose(star,item=>item.uid===starPay.uid);
+ assert.equal(star.pending.kind,'effect-retire-bp');
+ star=choose(star,item=>item.uid===small.uid);
+ assert.equal(star.players[1].outside.some(c=>c.uid===small.uid),true);
+
+ let hq=toPhase(fresh(fillDeck({'TRK-1-097':1,'TRK-1-074':1,'TRK-1-078':2,'TRK-1-052':2}),30297),'main');
+ readyAp(hq,0,2);
+ put(hq,0,'TRK-1-078','energy',0,true);
+ put(hq,0,'TRK-1-078','energy',1,true);
+ const guild=put(hq,0,'TRK-1-074','front',0,true);
+ const payA=take(hq,0,'TRK-1-052');
+ const payB=take(hq,0,'TRK-1-052');
+ const hall=take(hq,0,'TRK-1-097');
+ hq.players[0].hand.push(payA,payB,hall);
+ hq=playEnergy(hq,hall.uid);
+ hq=act(hq,hall.uid,'restAttackDraw');
+ hq=choose(hq,item=>item.uid===payA.uid);
+ hq=choose(hq,item=>item.uid===guild.uid);
+ assert.equal(hq.players[0].front[0].attackDrawStack.count,1);
+ hq.players[0].energy.find(c=>c?.uid===hall.uid).ready=true;
+ hq=act(hq,hall.uid,'restAttackDraw');
+ hq=choose(hq,item=>item.uid===payB.uid);
+ hq=choose(hq,item=>item.uid===guild.uid);
+ assert.equal(hq.players[0].front[0].attackDrawStack.count,2);
+
+ let starter=toPhase(fresh(fillDeck({'TRK-1-107':1,'TRK-1-052':1,'TRK-1-037':2,'TRK-1-065':1}),30307),'main');
+ readyAp(starter,0,2);
+ put(starter,0,'TRK-1-037','energy',0,true);
+ put(starter,0,'TRK-1-037','energy',1,true);
+ put(starter,0,'TRK-1-052','front',0,true);
+ const starterCook=take(starter,0,'TRK-1-107');
+ const fruit=take(starter,0,'TRK-1-065');
+ starter.players[0].hand.push(starterCook,fruit);
+ starter=playFront(starter,starterCook.uid);
+ assert.equal(starter.continuousStates.some(e=>e.kind==='nextEligibleHandPlayApDiscount'&&e.filter.trait==='食材'),true);
+ readyAp(starter,0,0);
+ assert.equal(legalUniversalActions(packs,starter).some(a=>a.type==='event'&&a.uid===fruit.uid),true);
+ starter=playEvent(starter,fruit.uid);
+ if(starter.pending)starter=choose(starter,item=>item.uid===null);
+ assert.equal(starter.pending,null);
+ starter.players[0].front.find(c=>c?.uid===starterCook.uid).ready=true;
+ starter=act(starter,starterCook.uid,'restTraitDraw');
+ assert.equal(starter.players[0].front.find(c=>c?.uid===starterCook.uid).ready,false);
+ assert.equal(starter.pending.kind,'effect-discard');
+
+ let window=toPhase(fresh(fillDeck({'TRK-1-108':1,'TRK-1-037':2,'TRK-1-109':1,'TRK-1-052':4}),30308),'main');
+ readyAp(window,0,2);
+ put(window,0,'TRK-1-037','energy',0,true);
+ put(window,0,'TRK-1-037','energy',1,true);
+ const soup=take(window,0,'TRK-1-109');
+ const filler=[];
+ while(filler.length<6){
+  let found=null;
+  for(const zone of ['deck','hand','life','outside']){
+   const pile=window.players[0][zone];
+   const index=pile.findIndex(c=>pack.cards[c.cardId]&&c.cardId!=='TRK-1-109'&&c.cardId!=='TRK-1-108'&&c.cardId!=='TRK-1-037');
+   if(index>=0){found=pile.splice(index,1)[0];break;}
+  }
+  if(!found)throw Error('Need six filler cards for the showcase window');
+  filler.push(found);
+ }
+ window.players[0].deck.unshift(filler[0],soup,...filler.slice(1));
+ const showcase=take(window,0,'TRK-1-108');
+ window.players[0].hand.push(showcase);
+ window=playEnergy(window,showcase.uid);
+ assert.equal(window.pending.kind,'effect-top-trait-outside');
+ assert.equal(window.pending.uids.length,7);
+ assert.equal(window.pending.choices.length,1);
+ assert.equal(window.pending.to==='hand',false);
+ window=choose(window,item=>item.uid===soup.uid);
+ assert.equal(window.players[0].outside.some(c=>c.uid===soup.uid),true);
+ assert.equal(window.pending.kind,'effect-top-order');
+ assert.equal(window.pending.uids.length,6);
 });
 
 function matchesPrintedRequiredEnergyExactOrPrinted(card){

@@ -53,7 +53,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-001",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kissFront",
   "faq": []
  },
  {
@@ -95,7 +95,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-002",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "queenTax",
   "faq": [
    {
     "id": "Q796",
@@ -243,7 +243,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-005",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "printedEnergyRetire",
   "faq": []
  },
  {
@@ -433,7 +433,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-009",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "cocoRaid",
   "faq": [
    {
     "id": "Q797",
@@ -1038,7 +1038,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-021",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kingsDeploy",
   "faq": []
  },
  {
@@ -1252,7 +1252,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-026",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "feast",
   "faq": []
  },
  {
@@ -1343,7 +1343,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-028",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "beatPunch",
   "faq": [
    {
     "id": "Q803",
@@ -1610,7 +1610,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-034",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "aimaruTax",
   "faq": [
    {
     "id": "Q804",
@@ -1715,7 +1715,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-036",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ichiryu",
   "faq": []
  },
  {
@@ -2003,7 +2003,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-042",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "jiro",
   "faq": []
  },
  {
@@ -2235,7 +2235,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-047",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "printedEnergyRetire",
   "faq": []
  },
  {
@@ -2429,7 +2429,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-051",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "yosaku",
   "faq": [
    {
     "id": "Q809",
@@ -2744,7 +2744,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-057",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "komatsuAct",
   "faq": []
  },
  {
@@ -2847,7 +2847,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-059",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "setsuno",
   "faq": []
  },
  {
@@ -2889,7 +2889,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-060",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "spices",
   "faq": [
    {
     "id": "Q811",
@@ -3038,7 +3038,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-063",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "knocking",
   "faq": []
  },
  {
@@ -3082,7 +3082,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-064",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ozone",
   "faq": [
    {
     "id": "Q819",
@@ -3235,7 +3235,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-067",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mite",
   "faq": []
  },
  {
@@ -3279,7 +3279,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-068",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "giantParasite",
   "faq": []
  },
  {
@@ -3323,7 +3323,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-069",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "emperor",
   "faq": []
  },
  {
@@ -3863,7 +3863,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-080",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "purpleToriko",
   "faq": []
  },
  {
@@ -3914,7 +3914,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-081",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidToriko",
   "faq": []
  },
  {
@@ -3958,7 +3958,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-082",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "printedEnergyRetire",
   "faq": []
  },
  {
@@ -4046,7 +4046,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-084",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "grin",
   "faq": [
    {
     "id": "Q814",
@@ -4243,7 +4243,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-088",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "starjunRaid",
   "faq": [
    {
     "id": "Q815",
@@ -4542,7 +4542,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-094",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mitora",
   "faq": [
    {
     "id": "Q817",
@@ -4679,7 +4679,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-097",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "hq",
   "faq": []
  },
  {
@@ -5063,7 +5063,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17ST%2FTRK-1-106",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "starterToriko",
   "faq": []
  },
  {
@@ -5107,7 +5107,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17ST%2FTRK-1-107",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "starterKomatsu",
   "faq": []
  },
  {
@@ -5149,7 +5149,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17ST%2FTRK-1-108",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "showcase",
   "faq": []
  },
  {

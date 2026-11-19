@@ -117,6 +117,11 @@ export function definitionGrantsDiscount(value,filter){
  if(value.op===DISCOUNT_KIND&&value.filter&&
   Object.keys(value.filter).length===Object.keys(filter).length&&
   Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
+ // REST, discard one, then the next matching trait play costs 1 less AP.
+ // The discount is the printed follow-up of that main, so the card proves it.
+ if(value.op==='restDiscardNextTraitAp'&&value.amount===1&&
+  typeof value.trait==='string'&&Object.keys(filter).length===1&&
+  filter.trait===value.trait)return true;
  return Object.values(value).some(v=>v&&typeof v==='object'&&definitionGrantsDiscount(v,filter));
 }
 // Stamp 0 belongs only to an event that has already left the field.
