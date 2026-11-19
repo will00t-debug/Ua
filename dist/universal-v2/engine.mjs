@@ -13034,6 +13034,7 @@ function resolveChoice(s,a,pack){
   p.hand.splice(index,1);
   physical.ready=true;
   physical.fieldEntryStamp=s.nextFieldEntryStamp++;
+   physical.entryTurn=s.turn;
   p[a.line][a.slot]=physical;
   recordCompletedMove(pack,s,{physical,owner:q.player,from:'hand',to:a.line,
    reason:'own-effect',sourceUid:q.sourceUid});
