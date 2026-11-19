@@ -6456,7 +6456,7 @@ function continueEffectQueue(pack,s){
      const d=card(pack,c);
      return d.type==='character'&&(job.includeRaid===true||!d.raidName)&&
       (!job.color||d.color===job.color)&&
-      (job.maxEnergy===undefined||d.energy<=job.maxEnergy)&&
+      (job.maxEnergy===undefined||zoneRequiredEnergy(pack,s,owner,d,'outside')<=job.maxEnergy)&&
       (job.ap===undefined||d.ap===job.ap)&&
       cardHasName(d,job.name,originalEffectsDisabled(s,c));
     }).map(c=>c.uid);
@@ -8838,7 +8838,7 @@ function continueEffectQueue(pack,s){
    const choices=pl.outside.filter(c=>{
     const d=card(pack,c);
     return d.type==='character'&&!d.raidName&&d.color===job.color&&
-     d.energy<=job.maxEnergy&&cardHasName(d,job.name);
+     zoneRequiredEnergy(pack,s,owner,d,'outside')<=job.maxEnergy&&cardHasName(d,job.name);
    }).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-outside-name-rest',player:owner,
     sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
@@ -14268,7 +14268,7 @@ function resolveChoice(s,a,pack){
    const d=card(pack,c);
    return d.type==='character'&&!d.raidName&&
     cardHasName(d,q.name,originalEffectsDisabled(s,c))&&
-    d.energy<=(produced[d.color]||0);
+    zoneRequiredEnergy(pack,s,q.player,d,'outside')<=(produced[d.color]||0);
   }).map(c=>c.uid);
   if(choices.length)s.pending={kind:'effect-outside-name-rest',player:q.player,
    sourceUid:q.sourceUid,choices,name:q.name,energyLimited:true};
@@ -14455,9 +14455,9 @@ function resolveChoice(s,a,pack){
     (q.color&&d.color!==q.color)||
     (q.ap!==undefined&&d.ap!==q.ap)||
     (q.line&&a.line!==q.line)||
-    (q.maxEnergy!==undefined&&(d.color!==q.color||d.energy>q.maxEnergy))||
+    (q.maxEnergy!==undefined&&zoneRequiredEnergy(pack,s,q.player,d,'outside')>q.maxEnergy)||
     (a.line==='front'&&d.frontForbidden)||
-    (produced&&d.energy>(produced[d.color]||0)))
+    (produced&&zoneRequiredEnergy(pack,s,q.player,d,'outside')>(produced[d.color]||0)))
     throw Error('Name REST printed filters changed');
    commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
    p.outside.splice(i,1);physical.ready=false;
@@ -21079,7 +21079,8 @@ function legalPending(pack,s){
     const d=card(pack,c);
     const lines=(q.line?[q.line]:['front','energy']).filter(line=>
      !(line==='front'&&d.frontForbidden)&&
-     (q.maxEnergy===undefined||(d.color===q.color&&d.energy<=q.maxEnergy))&&
+     (!q.color||d.color===q.color)&&
+     (q.maxEnergy===undefined||zoneRequiredEnergy(pack,s,q.player,d,'outside')<=q.maxEnergy)&&
      (q.ap===undefined||d.ap===q.ap));
     return lines.flatMap(line=>legalDestinations(p,line).map(dest=>({
       type:'chooseOutsideNameRest',uid:c.uid,line,...dest
