@@ -628,6 +628,8 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
   chooseAttackEndNamed:['不指定攻擊結束的對象','攻擊結束時指定這張卡'],
   chooseAttackEndRest:['不在攻擊結束時休息','攻擊結束時休息這張卡'],
   chooseAttackWinPay:['不把手牌放到場外','將這張手牌放到場外'],
+  chooseTopDistinct:['其餘放到牌組下面','將這張卡加入手牌'],
+  chooseDrawCounted:['不再抽卡','再抽1張'],
   chooseAttackWinRest:['不休息角色','休息這張卡'],
   chooseOppRetireInstead:['不替換，照原本方式退場','改為讓這張卡退場'],
   chooseAttackEndSwap:['不在攻擊結束時交換','攻擊結束時與這張卡交換'],

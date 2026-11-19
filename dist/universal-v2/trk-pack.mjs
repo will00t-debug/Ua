@@ -1,9 +1,10 @@
 // UA17 Toriko on the shared V2 engine. The catalogue holds every playable
 // identity. This pack registers only prints whose entire Japanese text is a
 // tested shared program. There is no Toriko opcode and no private runtime.
-import {createUniversalPack} from './pack.mjs?v=20261119trk5';
-import {TORIKO_CARDS} from '../toriko-cards.mjs?v=20261119trk5';
-import {trkEngineKind,trkProfile} from './trk-classify.mjs?v=20261119trk5';
+import {createUniversalPack} from './pack.mjs?v=20261119trk6';
+import {TORIKO_CARDS} from '../toriko-cards.mjs?v=20261119trk6';
+import {TORIKO_PR_CARDS} from '../toriko-pr-cards.mjs?v=20261119trk6';
+import {trkEngineKind,trkProfile} from './trk-classify.mjs?v=20261119trk6';
 
 export function trkPackCard(card){
  const profile=trkProfile(card);
@@ -114,10 +115,16 @@ export function trkPackCard(card){
   kind==='raidToriko'?[{op:'activeOwnOne',optional:true,excludeSelf:true}]:
   kind==='gtRobot'?[{op:'ifLiveThen',when:{kind:'ownEffectHandToOutside',turn:'any'},
    then:[{op:'draw',count:1}]}]:
+  kind==='cocoKings'?[{op:'buffOwnField',filter:{field:'trait',value:'美食四天王'},bp:1000,
+   optional:true,excludeSelf:false,activeIfFrontHasAllNames:['トリコ','サニー','ゼブラ']}]:
+  kind==='promoLook'?[{op:'optionalPayApThen',ap:1,optional:true,then:[
+   {op:'inspectTopDistinctTraitAndName',count:7,color:'blue',trait:'食材',name:'小松',rest:'bottom'}]}]:
+  kind==='midoraPile'?[{op:'tuckFacedownUnder',from:'deckTop',host:'self',count:1,optional:false}]:
   null;
  const onRetire=kind==='purpleToriko'?[{op:'deployOutsideActiveFront',color:'purple',maxEnergy:3,ap:1,
   names:['スタージュン','ココ','サニー','ゼブラ'],optional:true}]:
-  kind==='gtRobot'?[{op:'returnRaidBottomToHand'}]:null;
+  kind==='gtRobot'?[{op:'returnRaidBottomToHand'}]:
+  kind==='midoraPile'?[{op:'drawUpToFacedownUnder'}]:null;
  const onBlock=kind==='cocoRaid'?[{op:'ifLiveThen',when:{kind:'ownNameExists',turn:'any',zone:'front',
   excludeSelf:false,name:'キッス'},then:[{op:'enemyBpDown',bp:500,minBp:1000,optional:true,zone:'front'}]}]:null;
  const onAttack=kind==='attackBuff500'?[{op:'buffOwnField',filter:{field:'type',value:'character'},
@@ -131,6 +138,8 @@ export function trkPackCard(card){
   kind==='raidToriko'?[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
    optional:true,excludeSelf:false,impactPlusIfNames:['スタージュン','ココ','サニー','ゼブラ']}]:
   kind==='halfBounce'?[{op:'bounceOppFrontHalfSelfBp'}]:
+  kind==='promoLook'?[{op:'ifLiveThen',when:{kind:'ownTraitUsedThisTurn',turn:'any',trait:'食材'},
+   then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:2000,optional:true,excludeSelf:false}]}]:
   null;
  const namesOn=(zone,names)=>({kind:'ownFieldHasAllNames',turn:'any',zone,excludeSelf:false,names});
  const passive=kind==='threeNamesBlock'?[
@@ -151,6 +160,7 @@ export function trkPackCard(card){
    {kind:'ownTraitUsedThisTurn',turn:'own',trait:'食材'},
    {kind:'selfCurrentBpAtLeast',turn:'any',minBp:8000}]},attackDamage:2}]:
   kind==='gtRobot'?[{condition:{kind:'raidUnderPrintedBpAtLeast',turn:'own',minBp:3000},bp:500}]:
+  kind==='midoraPile'?[{condition:{kind:'ownHandCountAtMost',turn:'any',max:0},impact:1}]:
   null;
  const mainAbility=kind==='mainDiscardBuff'?{op:'discardHandBuffSelf',oncePerTurn:true,
   discardCount:1,bp:1000}:
@@ -168,6 +178,7 @@ export function trkPackCard(card){
   kind==='showcase'?{op:'restRetireRecoverOutside',optional:true,filter:{field:'name',value:'センチュリースープ'}}:
   kind==='zebraWin'?{op:'onceBuffFieldCharacter',bp:1000,oncePerTurn:true}:
   kind==='tommyrod'?{op:'discardDeployOutsideRest',trait:'寄生昆虫',oncePerTurn:true,max:1}:
+  kind==='midoraPile'?{op:'onceTuckHandUnder',oncePerTurn:true}:
   null;
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
@@ -214,12 +225,14 @@ export function trkPackCard(card){
  };
 }
 
+const TORIKO_PACK_CARDS=[...TORIKO_CARDS,...TORIKO_PR_CARDS];
+
 export const TORIKO_ENGINE_IDS=Object.freeze(
- TORIKO_CARDS.filter(card=>trkEngineKind(card)).map(card=>card.id));
+ TORIKO_PACK_CARDS.filter(card=>trkEngineKind(card)).map(card=>card.id));
 
 export function createTrkV2Pack(){
- const cards=TORIKO_CARDS.filter(card=>card.engineKind).map(trkPackCard);
+ const cards=TORIKO_PACK_CARDS.filter(card=>card.engineKind).map(trkPackCard);
  if(cards.length!==TORIKO_ENGINE_IDS.length)
   throw Error('Toriko registered count drifted');
- return createUniversalPack({id:'toriko',version:'trk-ua17-shared-20261119e',cards});
+ return createUniversalPack({id:'toriko',version:'trk-ua17-shared-20261119f',cards});
 }

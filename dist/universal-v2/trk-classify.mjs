@@ -223,6 +223,12 @@ export function trkProfile(card){
   return accept(card,{kind:'gtRobot'});
  if(effect===RAID('トミーロッド')+'【相手のターン中】【ターン1】このキャラが相手の効果で退場する場合、代わりに自分のフロントLの［特徴：寄生昆虫］を1枚退場させてもよい。【起動メイン】【手札を1枚場外に置く】【ターン1】自分の場外から［特徴：寄生昆虫］を1枚まで自分の場にレストで登場させる。')
   return accept(card,{kind:'tommyrod'});
+ if(effect==='【登場時】自分の場の［特徴：美食四天王］を1枚まで選び、このターン中、BP+1000。自分のフロントLに〈トリコ〉と〈サニー〉と〈ゼブラ〉がある場合、さらに選んだキャラをアクティブにする。')
+  return accept(card,{kind:'cocoKings'});
+ if(effect==='【登場時】APを1支払ってもよい。そうした場合、自分の山札の上から7枚見る。その中から異なるカード名の青の［特徴：食材］をそれぞれ1枚までと〈小松〉を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。【アタック時】このターン中に自分が手札から［特徴：食材］を使用している場合、自分の場のキャラを1枚まで選び、このターン中、BP+2000。')
+  return accept(card,{kind:'promoLook'});
+ if(effect==='自分の手札が0枚の場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。【登場時】自分の山札の上から1枚を裏向きでこのキャラの下に置く。【起動メイン】【ターン1】自分の手札を望む枚数裏向きでこのキャラの下に置く。【退場時】このキャラの下の裏向きカードの枚数分までカードを引く。')
+  return accept(card,{kind:'midoraPile'});
  if(effect===IMPACT)return accept(card,{kind:'impactNull'});
  if(effect===DRAW_DISCARD)return accept(card,{kind:'drawDiscard'});
  if(effect===BUFF_OTHER)return accept(card,{kind:'buffOther'});
