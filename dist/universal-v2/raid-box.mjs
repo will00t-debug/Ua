@@ -7,6 +7,17 @@
 // TTG-1-071 has no frame, so its text stays live on an ordinary play.
 // Rugia TW span.raidBorder is the split. This is not a full FAQ certification.
 const RAID_BOX_FEATURES=Object.freeze({
+ // UA17 Toriko: use the same face-up Raid gate as the other titles.
+ // Coco's printed BP-down immunity is above the Raid border.
+ 'TRK-1-009':["onPlay","onBlock","staticBp"],
+ 'TRK-1-013':["readyOnBlockCount","attackWinDraw","frontMustAttackIfName"],
+ 'TRK-1-017':["printedAttackDamage","attackWinHandRest","main"],
+ 'TRK-1-054':["passive","onAttack"],
+ 'TRK-1-072':["passive","onPlay","onRetire"],
+ 'TRK-1-081':["onPlay","onAttack"],
+ 'TRK-1-088':["unblockedAttack","onPlay"],
+ 'TRK-1-091':["oppEffectRetireInstead","main"],
+ 'TRK-1-106':["passive","onPlay"],
  // UA44 EVA: framed Raid text is gated by the physical face-up Raid state.
  'EVA-1-104':["printedImpact","onAttack"],
  'EVA-1-105':["readyOnBlockCount","onRetire"],
