@@ -108,3 +108,32 @@ for(const row of [
  }
  assert.equal(assertUniversalMatch(pack,s),true);
 });
+
+// The printed Raid retirement opens TOP-N from the defender's outside zone.
+test('EVA-1-053 can block, retire in battle and finish its five-card search',()=>{
+ let s=main('purple',['053','044','033']);
+ const attacker=put(s,0,'053','front',0);
+ const defender=put(s,1,'053','front',0);
+ defender.stack=[take(s,1,'044')];
+ const high=take(s,1,'033');
+ s.players[1].deck.unshift(high);
+ s.phase='attack';
+ const attack=legalUniversalActions(pack,s).find(a=>a.type==='attack'&&a.uid===attacker.uid);
+ assert.ok(attack);
+ s=dispatchUniversalAction(pack,s,attack);
+ const block=legalUniversalActions(pack,s).find(a=>a.type==='chooseBlock'&&a.uid===defender.uid);
+ assert.ok(block,'ready Raid character is a legal blocker');
+ s=dispatchUniversalAction(pack,s,block);
+ assert.ok(s.players[1].outside.some(c=>c.uid===defender.uid));
+ assert.equal(s.pending?.kind,'effect-top-filter-many-choice');
+ assert.equal(s.pending.player,1);
+ assert.equal(s.pending.uids.length,5);
+ assert.equal(assertUniversalMatch(pack,s),true);
+ const pick=legalUniversalActions(pack,s).find(a=>a.type==='chooseTopFilteredMany'&&a.uid===high.uid);
+ assert.ok(pick);
+ s=dispatchUniversalAction(pack,s,pick);
+ assert.ok(s.players[1].hand.some(c=>c.uid===high.uid));
+ if(s.pending?.kind==='effect-top-filter-many-choice')s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s).find(a=>a.uid===null));
+ while(s.pending?.kind==='effect-top-order')s=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s)[0]);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});

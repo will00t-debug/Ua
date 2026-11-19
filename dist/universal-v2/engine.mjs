@@ -30538,7 +30538,11 @@ export function assertUniversalMatch(pack,s){
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
   const source=[...pl.outside,...field(pl)].find(c=>c.uid===q.sourceUid);
   const printedCard=source&&card(pack,source);
-  const programs=[...(printedCard?.effects?.onPlay||[]),...(printedCard?.effects?.onAttack||[])];
+  // A true retirement can open the same shared TOP-N choice (EVA-1-053).
+   const retired=pl.outside.some(x=>x.uid===q.sourceUid)&&
+    (s.turnRetireEvents||[]).some(e=>e.turn===s.turn&&e.controller===q.player&&e.uid===q.sourceUid);
+   const programs=[...(printedCard?.effects?.onPlay||[]),...(printedCard?.effects?.onAttack||[]),
+    ...(retired?printedCard?.effects?.onRetire||[]:[])];
   const fromPlay=programs
    .flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):
     e.op==='optionalRetireThenProgram'?e.after:[e]);
