@@ -1967,6 +1967,7 @@ const NORMAL_BOARD_ENTRY=new Set([
  'chooseOutsideActivePair','chooseOutsideNameRest','chooseOutsideRest',
  'chooseOutsidePrintedRest','chooseOutsidePrintedActive','chooseOutsidePrinted',
  'chooseHandNamedRest','chooseHandRest','chooseHandRestCap','chooseHandGirlRest',
+ 'chooseHandActiveNoRaid',
  'chooseMayHandRest','chooseOppFrontRest',
  'chooseRemovedEnter','chooseNamedZoneDeploy',
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
