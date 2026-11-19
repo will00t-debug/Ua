@@ -7,6 +7,22 @@
 // TTG-1-071 has no frame, so its text stays live on an ordinary play.
 // Rugia TW span.raidBorder is the split. This is not a full FAQ certification.
 const RAID_BOX_FEATURES=Object.freeze({
+ // UA44 EVA: framed Raid text is gated by the physical face-up Raid state.
+ 'EVA-1-104':["printedImpact","onAttack"],
+ 'EVA-1-105':["readyOnBlockCount","onRetire"],
+ 'EVA-1-033':["printedImpact","onPlay","main"],
+ 'EVA-1-034':["outsideCountGrants","main"],
+ 'EVA-1-035':["onPlay"],
+ 'EVA-1-036':["ownTurnBp","onPlay","onRetire"],
+ 'EVA-1-041':["onPlay"],
+ 'EVA-1-042':["bpPerDirectFacedown","onPlay","main"],
+ 'EVA-1-043':["phase","onPlay"],
+ 'EVA-1-053':["onPlay","onRetire"],
+ 'EVA-1-077':["onPlay","onRetire"],
+ 'EVA-1-079':["facedownCountGrants","facedownTriggerImmuneAt","phase","onPlay"],
+ 'EVA-1-080':["main","onRetire"],
+ 'EVA-1-081':["onPlay"],
+ 'EVA-1-082':["printedAttackDamage","phase"],
  'BLC-1-004':["main"],
  'BLC-1-014':["onPlay"],
  'BLC-1-020':["onPlay","phase"],
