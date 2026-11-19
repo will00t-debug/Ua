@@ -85,7 +85,7 @@ export function grantHandDiscountFromUsedEvent(s,owner,source,filter){
  s.nextContinuousStateId++;validateHandDiscount(s,e);s.continuousStates.push(e);
 }
 // A payment plan only; spendAp remains the single AP payment implementation.
-export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false}={}){
+export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false,frontNameOnField=false}={}){
  // A Makima aura makes other purple characters events as well as characters.
  // Test both identities without changing their printed card type.
  const alsoEvent=d.type==='character'&&csmCardCountsAsEvent(s,owner,d,
@@ -109,7 +109,8 @@ export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false}
  // A printed name on the controller's own field reduces only this card,
  // once, while that name is present. It is not a stored next-use grant.
  const namedCut=nameOnField&&d.handApDiscountWhileName?.amount===1?1:0;
- return {cost:Math.max(0,d.ap-ids.length-raidCut-nameCut-namedCut),ids};
+ const frontCut=frontNameOnField&&d.handApDiscountWhileFrontName?.amount===1?1:0;
+ return {cost:Math.max(0,d.ap-ids.length-raidCut-nameCut-namedCut-frontCut),ids};
 }
 export function definitionGrantsDiscount(value,filter){
  if(!value||typeof value!=='object')return false;

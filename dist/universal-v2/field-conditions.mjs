@@ -441,6 +441,23 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
+ // 自分の場のキャラの必要エナジーの合計. Each character contributes its
+ // highest legal required-energy reading. 「としても扱う」is a second reading.
+ // Face-down cards, fields, and buried Raid layers are not on the field.
+ if(condition.kind==='ownRequiredEnergySumAtLeast'){
+  let sum=0;
+  const pl=s.players[owner];
+  for(const zone of [pl.front,pl.energy])for(const c of zone){
+   if(!printedFieldCard(c))continue;
+   const d=printed(c);
+   if(d.type!=='character'||!Number.isInteger(d.energy))continue;
+   let best=d.energy;
+   if(Number.isInteger(d.alsoRequiredEnergy)&&d.alsoRequiredEnergy!==d.energy)
+    best=Math.max(best,d.alsoRequiredEnergy);
+   sum+=best;
+  }
+  return sum>=condition.min;
+ }
  if(condition.kind==='oppFrontCurrentBpBelowPrinted'){
   // 元々のBPよりBPが低い: that front character's current BP is below its
   // own printed BP. Energy, hand, and the measuring card's own front do

@@ -27,6 +27,7 @@ const IMPACT_ONE='【インパクト（1）】（アタックしてバトルに�
 const HAND=/^相手の場に([黄青紫緑赤])か([黄青紫緑赤])のカードがある場合、手札にあるこのカードの必要エナジーを【([黄青紫緑赤])×1】減らす。$/;
 const COLOR_REST='【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。';
 const COLOR_DEPLOY='【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。';
+const SPECIAL_RETIRE='【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。';
 const ATTACK_BUFF='【アタック時】自分の場の他のキャラを1枚まで選び、このターン中、BP+500。';
 const DRAW_FOUR='カードを4枚引き、自分の手札を1枚場外に置く。';
 const MAIN_DISCARD='【起動メイン】【手札を1枚場外に置く】【ターン1】このキャラはこのターン中、BP+1000。';
@@ -52,6 +53,8 @@ function knownTrigger(card){
   return {triggerEffect:{op:'restOppFrontSkipNextActive'}};
  if(card.trigger==='color'&&card.triggerTextJa===COLOR_DEPLOY)
   return {triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}};
+ if(card.trigger==='special'&&card.triggerTextJa===SPECIAL_RETIRE)
+  return {triggerEffect:{op:'retireOppFront'}};
  return null;
 }
 
@@ -60,7 +63,9 @@ function accept(card,profile){
  if(!gate||!profile)return null;
  if(profile.colorTrigger==='rest'&&gate.triggerEffect?.op!=='restOppFrontSkipNextActive')return null;
  if(profile.colorTrigger==='deploy'&&gate.triggerEffect?.op!=='deployOutsideCharacter')return null;
- if(!profile.colorTrigger&&gate.triggerEffect)return null;
+ const special=gate.triggerEffect?.op==='retireOppFront';
+ if(!profile.colorTrigger&&gate.triggerEffect&&!special)return null;
+ if(profile.colorTrigger&&special)return null;
  const {colorTrigger,...body}=profile;
  return gate.triggerEffect?{...body,triggerEffect:gate.triggerEffect}:body;
 }
@@ -79,6 +84,10 @@ export function trkProfile(card){
   const rest=effect.slice(also.length);
   if(rest===PEEK_ONE)return accept(card,{kind:'alsoPeek'});
   if(rest===TOP_KEEP)return accept(card,{kind:'alsoTopKeep'});
+  if(rest==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【自分のターン中】自分の場のキャラの必要エナジーの合計が15以上ある場合、このキャラはBP+1000。')
+   return accept(card,{kind:'alsoEnergySumBp'});
+  if(rest==='【アタック時】自分の場のキャラの必要エナジーの合計が20以上ある場合、カードを1枚引く。')
+   return accept(card,{kind:'alsoEnergySumDraw'});
   return null;
  }
  if(effect===searchText(4,'［特徴：美食四天王］'))
@@ -107,6 +116,42 @@ export function trkProfile(card){
  if(effect===OPTIONAL_DISCARD)return accept(card,{kind:'optionalOppDiscard'});
  if(effect===ATTACK_DRAW)return accept(card,{kind:'attackFourKingsDraw'});
  if(effect===NAMED_AP)return accept(card,{kind:'namedBuffAp'});
+ if(effect==='自分のフロントLに〈トリコ〉がある場合、手札にあるこのカードの消費APを-1する。【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）')
+  return accept(card,{kind:'frontApImpact'});
+ if(effect==='自分の場に〈トリコ〉と〈ココ〉と〈ゼブラ〉がある場合、このキャラはBP+500。自分のフロントLに〈トリコ〉と〈ココ〉と〈ゼブラ〉があるなら、さらにこのキャラは【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）を得る。')
+  return accept(card,{kind:'threeNamesBlock'});
+ if(effect==='【自分のターン中】自分の場に〈トリコ〉と〈ココ〉と〈サニー〉がある場合、このキャラはBP+1000。自分のフロントLに〈トリコ〉と〈ココ〉と〈サニー〉があるなら、さらにこのキャラは【ダメージ（2）】を得る。')
+  return accept(card,{kind:'threeNamesDamage'});
+ if(effect==='【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）自分のフロントLに〈テリークロス〉がある場合、このキャラはBP+1000。')
+  return accept(card,{kind:'stepNamedBp'});
+ if(effect==='相手のフロントLのキャラを1枚選び、『レストにする』。自分の場に〈サニー〉がある場合、『レストにする。それは次の1回アクティブにならない。カードを1枚引く』に代わる。')
+  return accept(card,{kind:'sunnyRest'});
+ if(effect==='BP3000以下の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ココ〉がある場合、自分のAPカードを1枚まで選び、アクティブにする。')
+  return accept(card,{kind:'cocoRetireAp'});
+ if(effect==='自分の場のキャラを1枚選び、『このターン中』、BP+1000。カードを1枚引く。選んだキャラが〈サニー〉の場合、『次の自分のターン開始時まで』に代わる。')
+  return accept(card,{kind:'sunnyDuration'});
+ if(effect==='自分の場のキャラを1枚選び、このターン中、BP+2000。カードを1枚引く。選んだキャラが〈ココ〉の場合、さらにこのターン中、【ダメージ（+1）】（このキャラがアタックで直接ダメージを与える時、追加で1ダメージ）を与える。')
+  return accept(card,{kind:'cocoDamage'});
+ if(effect==='自分の場のキャラを1枚選び、このターン中、BP+2000。カードを1枚引く。選んだキャラが〈ゼブラ〉の場合、さらにカードを1枚引く。')
+  return accept(card,{kind:'zebraDraw'});
+ if(effect==='カードを1枚引く。自分の場のキャラ全ては、次の自分のターン開始時まで、「このキャラはBPをマイナスする効果を受けない。」を得る。')
+  return accept(card,{kind:'immuneAura'});
+ if(effect==='【登場時】自分の場の他のキャラを1枚まで選び、このターン中、『BP+1000』。自分の場に〈小松〉がある場合、『BP+2000』に代わる。')
+  return accept(card,{kind:'komatsuBuff'});
+ if(effect==='【自分のターン中】このターン中に自分が手札から［特徴：食材］を使用している場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。')
+  return accept(card,{kind:'ingredientImpact'});
+ if(effect==='BP5000以下の相手のフロントLのキャラを1枚選び、『手札に戻す』。自分の場に〈トリコ〉がある場合、『退場させる』に代わる。')
+  return accept(card,{kind:'torikoBounce'});
+ if(effect==='自分のフロントLのキャラを1枚まで選び、このターン中、BP+1000と【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与える。自分の場に〈小松〉がある場合、カードを1枚引く。')
+  return accept(card,{kind:'rainbowFruit'});
+ if(effect==='【起動メイン】【フロントLにある場合】【手札を1枚場外に置く】【ターン1】相手のフロントLのキャラを1枚選び、このターン中、BP-1000。')
+  return accept(card,{kind:'frontDiscardDown'});
+ if(effect==='【登場時】自分の場の［特徴：寄生昆虫］か〈トミーロッド〉を1枚まで選び、このターン中、【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与える。')
+  return accept(card,{kind:'parasiteImpact'});
+ if(effect==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈スタージュン〉がある場合、『BP5000以下』に代わる。')
+  return accept(card,{kind:'starjunRetire'});
+ if(effect==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の他の手札が3枚以下の場合、『BP5000以下』に代わる。')
+  return accept(card,{kind:'handRetire'});
  if(effect===IMPACT)return accept(card,{kind:'impactNull'});
  if(effect===DRAW_DISCARD)return accept(card,{kind:'drawDiscard'});
  if(effect===BUFF_OTHER)return accept(card,{kind:'buffOther'});

@@ -1,4 +1,4 @@
-import {DISCOUNT_KIND,grantHandDiscount,grantHandDiscountFromUsedEvent,handPlayApPlan,definitionGrantsDiscount,definitionGrantsUsedEventDiscount} from './ap-discounts.mjs?v=20261119trk2';
+import {DISCOUNT_KIND,grantHandDiscount,grantHandDiscountFromUsedEvent,handPlayApPlan,definitionGrantsDiscount,definitionGrantsUsedEventDiscount} from './ap-discounts.mjs?v=20261119trk3';
 // UNIVERSAL RULES V2 EXPERIMENT. No production title uses this reducer yet.
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
@@ -7,7 +7,7 @@ import {assignPointCards,assertPointCardIdentities} from './point-cards.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
-import {matchesPrintedRequiredEnergyAtLeast,matchesPrintedRequiredEnergyAtMost,matchesPrintedRequiredEnergyExact} from './ap-discounts.mjs?v=20261119trk2';
+import {matchesPrintedRequiredEnergyAtLeast,matchesPrintedRequiredEnergyAtMost,matchesPrintedRequiredEnergyExact} from './ap-discounts.mjs?v=20261119trk3';
 import {cardHasName,cardHasTrait,cardCountsAsEvent,printedFieldCard,usedOwnEventThisTurn,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,countOwnPrintedTrait,countOppRestCharacters,countOwnPrintedApAtLeast,countOwnDistinctTraitNames,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
  countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs';
@@ -1189,7 +1189,10 @@ function bp(pack,s,c){
  const facedown=!suppressed&&hasFacedownUnder(c)?
   ((raidBoxTextLive(pack,c,'conditionalUnder')?(printed.conditionalUnderFaceDown?.bp||0):0)+
    (printed.facedownUnderStanding?.bp||0)):0;
- const immune=!suppressed&&(printed.bpDownImmune===true&&raidBoxTextLive(pack,c,'bpDownImmune')||
+ const immuneUntil=c.bpDownImmuneUntil;
+ const immuneGranted=!!immuneUntil&&immuneUntil.stamp===c.fieldEntryStamp&&
+  s.players[owner].ownTurns<immuneUntil.untilOwnTurnStart;
+ const immune=immuneGranted||!suppressed&&(printed.bpDownImmune===true&&raidBoxTextLive(pack,c,'bpDownImmune')||
   oppTurnWardLive(pack,s,c)||
   stayWardLive(s,c)||
   kmrBpImmune(printed,c,suppressed));
@@ -2286,7 +2289,7 @@ function startTurn(pack,s){
    delete unit.impactNullGranted;
   delete unit.frontAuraGranted;
   if(unit.stayWard&&ownerTurns>=unit.stayWard.untilOwnTurnStart)delete unit.stayWard;
-  for(const key of ['energyPlusUntil','frontEnergyUntil','doubleBlockGranted','doubleBlockUntil','blockAtLeastUntil','impactNullUntil'])
+  for(const key of ['energyPlusUntil','frontEnergyUntil','doubleBlockGranted','doubleBlockUntil','blockAtLeastUntil','impactNullUntil','bpDownImmuneUntil'])
    if(unit[key]&&ownerTurns>=unit[key].untilOwnTurnStart)delete unit[key];
   if(unit.retireAtOppAttackEnd&&ownerTurns>=unit.retireAtOppAttackEnd.untilOwnTurnStart)
    delete unit.retireAtOppAttackEnd;
@@ -2408,7 +2411,7 @@ function clearFieldBody(c){
   delete next.frontAuraGranted;delete next.stayWard;
  delete next.unblockedDrawGranted;delete next.energyPlusUntil;
  delete next.frontEnergyUntil;delete next.doubleBlockGranted;
- delete next.doubleBlockUntil;delete next.impactNullUntil;delete next.blockAtLeastUntil;
+ delete next.doubleBlockUntil;delete next.impactNullUntil;delete next.blockAtLeastUntil;delete next.bpDownImmuneUntil;
  delete next.loseBattleReady;delete next.attackBanned;delete next.attackDrawGranted;
  delete next.eventAttackDrawGranted;delete next.unchosenGranted;
  delete next.eventReadyOnAttack;delete next.eventSniperGranted;
@@ -6438,12 +6441,15 @@ function continueEffectQueue(pack,s){
     const d=card(pack,c);
     if(d.type!=='character'||!Number.isInteger(c.fieldEntryStamp))return false;
     if(job.anyOther===true)return true;
-    return job.minPrintedAp!==undefined?d.ap>=job.minPrintedAp:cardHasTrait(d,job.trait);
+    if(job.minPrintedAp!==undefined)return d.ap>=job.minPrintedAp;
+    return cardHasTrait(d,job.trait)||
+     (typeof job.orName==='string'&&cardHasName(d,job.orName,originalEffectsDisabled(s,c)));
    };
    const choices=field(pl).filter(c=>(job.includeSelf===true||c.uid!==job.sourceUid)&&matches(c)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-grant-impact',player:owner,
     sourceUid:job.sourceUid,choices,
     ...(job.trait!==undefined?{trait:job.trait}:{}),
+    ...(typeof job.orName==='string'?{orName:job.orName}:{}),
     ...(job.minPrintedAp!==undefined?{minPrintedAp:job.minPrintedAp}:{}),
     ...(job.anyOther===true?{anyOther:true}:{}),
     amount:job.amount,optional:job.optional===true,
@@ -6752,6 +6758,18 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
      sourceUid:job.sourceUid,sourceName:job.sourceName,choices,
      optional:true,onlyRest:true};
+   }
+  }else if(job.op==='bounceOrRetireFrontByName'){
+   const named=ownFieldHasPrintedName(pack,s,owner,job.name);
+   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
+   if(choices.length)s.pending=named?
+    {kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit:job.bp}:
+    {kind:'effect-bounce-bp',player:owner,sourceUid:job.sourceUid,choices,limit:job.bp,optional:false};
+  }else if(job.op==='grantOwnFieldBpDownImmuneUntilNextOwnStart'){
+   for(const c of field(pl)){
+    if(card(pack,c).type!=='character'||!Number.isInteger(c.fieldEntryStamp)||c.fieldEntryStamp<1)continue;
+    c.bpDownImmuneUntil={stamp:c.fieldEntryStamp,untilOwnTurnStart:pl.ownTurns+1,sourceUid:job.sourceUid};
    }
   }else if(job.op==='bounceOppFrontOneUnderBp'){
    const events=pl.outside.filter(c=>cardCountsAsEvent(card(pack,c))).length;
@@ -7179,6 +7197,10 @@ function continueEffectQueue(pack,s){
     bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf,
     ...(job.untilName?{untilName:job.untilName}:{}),
     ...(job.bonusNames?{bonusNames:job.bonusNames,bonusBp:job.bonusBp}:{}),
+    ...(job.fieldBonusName?{fieldBonusName:job.fieldBonusName,fieldBonusBp:job.fieldBonusBp}:{}),
+    ...(job.drawIfName?{drawIfName:job.drawIfName}:{}),
+    ...(job.damagePlusIfName?{damagePlusIfName:job.damagePlusIfName}:{}),
+    ...(job.impactPlus===1?{impactPlus:1}:{}),
     ...(job.attackEndRetire===true?{attackEndRetire:true}:{}),
     ...(job.moveIfEnergy?{moveIfEnergy:true}:{}),
     ...(typeof job.impactIfName==='string'?{impactIfName:job.impactIfName}:{}),
@@ -9399,7 +9421,7 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid,{reason='own-effect',controller
   delete next.frontAuraGranted;delete next.stayWard;
   delete next.unblockedDrawGranted;delete next.energyPlusUntil;
   delete next.frontEnergyUntil;delete next.doubleBlockGranted;
- delete next.doubleBlockUntil;delete next.impactNullUntil;delete next.blockAtLeastUntil;
+ delete next.doubleBlockUntil;delete next.impactNullUntil;delete next.blockAtLeastUntil;delete next.bpDownImmuneUntil;
   delete next.loseBattleReady;delete next.attackBanned;delete next.blockBannedUntil;delete next.raidLockedTurn;delete next.attackDrawGranted;delete next.belowPrintedBlock;delete next.eventAttackDrawGranted;
   delete next.unchosenGranted;delete next.impactNullThisTurn;delete next.eventReadyOnAttack;delete next.eventSniperGranted;
   delete next.energyAttackGranted;delete next.impactPlus;
@@ -9524,7 +9546,7 @@ function vacate(pack,s,p,line,slot,destination='outside'){
   delete next.frontAuraGranted;delete next.stayWard;
   delete next.unblockedDrawGranted;delete next.energyPlusUntil;
   delete next.frontEnergyUntil;delete next.doubleBlockGranted;
- delete next.doubleBlockUntil;delete next.impactNullUntil;delete next.blockAtLeastUntil;
+ delete next.doubleBlockUntil;delete next.impactNullUntil;delete next.blockAtLeastUntil;delete next.bpDownImmuneUntil;
   delete next.loseBattleReady;delete next.attackBanned;delete next.blockBannedUntil;delete next.raidLockedTurn;delete next.attackDrawGranted;delete next.belowPrintedBlock;delete next.eventAttackDrawGranted;
   delete next.unchosenGranted;delete next.impactNullThisTurn;delete next.eventReadyOnAttack;delete next.eventSniperGranted;
   delete next.energyAttackGranted;delete next.impactPlus;
@@ -9563,7 +9585,7 @@ function removeFrontPile(pack,s,p,slot,sourceUid){
   delete c.frontAuraGranted;delete c.stayWard;
   delete c.unblockedDrawGranted;delete c.energyPlusUntil;
   delete c.frontEnergyUntil;delete c.doubleBlockGranted;
-  delete c.doubleBlockUntil;delete c.impactNullUntil;delete c.blockAtLeastUntil;
+  delete c.doubleBlockUntil;delete c.impactNullUntil;delete c.blockAtLeastUntil;delete c.bpDownImmuneUntil;
   delete c.loseBattleReady;delete c.attackBanned;delete c.attackDrawGranted;delete c.belowPrintedBlock;delete c.eventAttackDrawGranted;
   delete c.unchosenGranted;delete c.impactNullThisTurn;delete c.eventReadyOnAttack;delete c.eventSniperGranted;
   delete c.energyAttackGranted;
@@ -11119,7 +11141,7 @@ function stripRaidTopInPlace(pack,s,owner,line,slot,sourceUid){
  delete departed.attackDamageGranted;delete departed.attackDamagePlus;delete departed.ownEffectFront;
  delete departed.impactNullGranted;delete departed.frontAuraGranted;delete departed.stayWard;delete departed.energyPlusUntil;
  delete departed.frontEnergyUntil;delete departed.doubleBlockGranted;
- delete departed.doubleBlockUntil;delete departed.impactNullUntil;delete departed.blockAtLeastUntil;
+ delete departed.doubleBlockUntil;delete departed.impactNullUntil;delete departed.blockAtLeastUntil;delete departed.bpDownImmuneUntil;
  delete departed.loseBattleReady;delete departed.attackBanned;delete departed.attackDrawGranted;delete departed.belowPrintedBlock;
  delete departed.unchosenGranted;delete departed.impactNullThisTurn;delete departed.eventReadyOnAttack;delete departed.eventSniperGranted;
  clearTurnBattleGrants(departed);
@@ -12635,8 +12657,12 @@ function resolveChoice(s,a,pack){
   // while ACTIVE. This count is per physical UID and is not the attack count.
   const blocked=(s.blocksByUid[blocker.uid]||0)+1;
   s.blocksByUid[blocker.uid]=blocked;
-  const blockKeyword=Math.max(card(pack,blocker).readyOnBlockCount||0,
+  const passiveDouble=livePassives(pack,s,blocker).some(p=>p.doubleBlock===true&&
+  matchesV2LiveCondition(s,q.player,blocker.uid,p.condition,x=>card(pack,x),
+   ()=>calcEnergy(pack,s,q.player),x=>bp(pack,s,x)));
+ const blockKeyword=Math.max(card(pack,blocker).readyOnBlockCount||0,
    liveUntilNextOwnStart(s,blocker,'doubleBlockUntil')?1:0,
+   passiveDouble?1:0,
    aot2Warhammer(pack,s,blocker)?1:0);
   const blockGrant=blocker.doubleBlockGranted;
   const earnedDouble=!!blockGrant&&blockGrant.stamp===blocker.fieldEntryStamp&&
@@ -12703,7 +12729,7 @@ function resolveChoice(s,a,pack){
    if(!consumed)throw Error('Facedown card no longer available');
    for(const moved of [entry,...buriedMoves(consumed)]){
     const physical={...moved.physical,faceDown:false,ready:false,stack:[],under:[],buffs:[],fieldEntryStamp:null};
-    delete physical.doubleBlockUntil;delete physical.impactNullUntil;delete physical.blockAtLeastUntil;
+    delete physical.doubleBlockUntil;delete physical.impactNullUntil;delete physical.blockAtLeastUntil;delete physical.bpDownImmuneUntil;
     delete physical.loseBattleReady;delete physical.attackBanned;delete physical.attackDrawGranted;delete physical.belowPrintedBlock;delete physical.eventAttackDrawGranted;
     delete physical.unchosenGranted;delete physical.impactNullThisTurn;delete physical.eventReadyOnAttack;delete physical.eventSniperGranted;
     clearTurnBattleGrants(physical);
@@ -16095,6 +16121,14 @@ function resolveChoice(s,a,pack){
   const untilNamed=q.untilName&&cardHasName(card(pack,target),q.untilName,originalEffectsDisabled(s,target));
   const bonusNamed=Array.isArray(q.bonusNames)&&q.bonusNames.some(n=>
    cardHasName(card(pack,target),n,originalEffectsDisabled(s,target)));
+  const fieldBonus=typeof q.fieldBonusName==='string'&&
+   ownFieldHasPrintedName(pack,s,q.player,q.fieldBonusName);
+  if(fieldBonus&&!ownedBodies(s.players[q.player]).some(body=>{
+   const printed=card(pack,body);
+   return [...(printed.effects?.onPlay||[]),...(printed.effects?.onAttack||[])].some(e=>
+    e.op==='buffOwnField'&&e.bp===q.bp&&e.fieldBonusBp===q.fieldBonusBp&&
+    e.fieldBonusName===q.fieldBonusName);
+  }))throw Error('Unproven field-name BP bonus');
   if(bonusNamed){
    const source=location(s,q.player,q.sourceUid);
    const effect=(source?card(pack,source.c).effects.onPlay||[]:[]).find(e=>
@@ -16103,8 +16137,23 @@ function resolveChoice(s,a,pack){
    if(!effect)throw Error('Unproven named BP bonus');
   }
   target.buffs??=[];
+  const buffAmount=fieldBonus?q.fieldBonusBp:(bonusNamed?q.bonusBp:amount);
   target.buffs.push(untilNamed?{bp:amount,untilOwnTurnStart:s.players[q.player].ownTurns+1}:
-   {bp:bonusNamed?q.bonusBp:amount,untilTurn:s.turn});
+   {bp:buffAmount,untilTurn:s.turn});
+  if(typeof q.drawIfName==='string'&&
+   cardHasName(card(pack,target),q.drawIfName,originalEffectsDisabled(s,target)))
+   draw(pack,s,q.player,1,{reason:'own-effect',sourceUid:q.sourceUid});
+  if(typeof q.damagePlusIfName==='string'&&
+   cardHasName(card(pack,target),q.damagePlusIfName,originalEffectsDisabled(s,target))){
+   if(!Number.isInteger(target.fieldEntryStamp)||target.fieldEntryStamp<1)
+    throw Error('Damage plus needs a stamped character');
+   target.attackDamagePlus={turn:s.turn,stamp:target.fieldEntryStamp,amount:1,sourceUid:q.sourceUid};
+  }
+  if(q.impactPlus===1&&q.impactPlusIfName===undefined){
+   if(!Number.isInteger(target.fieldEntryStamp)||target.fieldEntryStamp<1)
+    throw Error('Impact plus needs a stamped character');
+   target.impactPlus={turn:s.turn,stamp:target.fieldEntryStamp,amount:1};
+  }
   if(q.impactPlus===1&&typeof q.impactPlusIfName==='string'&&
    field(p).some(c=>cardHasName(card(pack,c),q.impactPlusIfName,originalEffectsDisabled(s,c)))){
    if(!Number.isInteger(target.fieldEntryStamp)||target.fieldEntryStamp<1)
@@ -16321,7 +16370,8 @@ function resolveChoice(s,a,pack){
   const target=field(p).find(c=>c.uid===a.uid);
   const impactPrinted=target&&card(pack,target);
   const impactMatch=q.anyOther===true||(q.minPrintedAp!==undefined?
-   impactPrinted.ap>=q.minPrintedAp:!!q.trait&&cardHasTrait(impactPrinted,q.trait));
+   impactPrinted.ap>=q.minPrintedAp:(!!q.trait&&cardHasTrait(impactPrinted,q.trait)||
+    (typeof q.orName==='string'&&target&&cardHasName(impactPrinted,q.orName,originalEffectsDisabled(s,target)))));
   if(!target||!q.choices.includes(a.uid)||
    (target.uid===q.sourceUid&&q.includeSelf!==true)||
    !Number.isInteger(target.fieldEntryStamp)||!impactMatch)
@@ -16925,7 +16975,8 @@ function resolveChoice(s,a,pack){
   const target=field(p).find(c=>c.uid===a.uid);
   const impactPrinted=target&&card(pack,target);
   const impactMatch=q.anyOther===true||(q.minPrintedAp!==undefined?
-   impactPrinted.ap>=q.minPrintedAp:!!q.trait&&cardHasTrait(impactPrinted,q.trait));
+   impactPrinted.ap>=q.minPrintedAp:(!!q.trait&&cardHasTrait(impactPrinted,q.trait)||
+    (typeof q.orName==='string'&&target&&cardHasName(impactPrinted,q.orName,originalEffectsDisabled(s,target)))));
   if(!target||!q.choices.includes(a.uid)||
    (target.uid===q.sourceUid&&q.includeSelf!==true)||
    card(pack,target).type!=='character'||!impactMatch||
@@ -21195,7 +21246,8 @@ function legalPending(pack,s){
    if(c.uid!==uid||(q.includeSelf!==true&&c.uid===q.sourceUid))return false;
    if(q.anyOther===true)return true;
    if(q.minPrintedAp!==undefined)return card(pack,c).ap>=q.minPrintedAp;
-   return !!q.trait&&cardHasTrait(card(pack,c),q.trait);
+   return !!q.trait&&(cardHasTrait(card(pack,c),q.trait)||
+    (typeof q.orName==='string'&&cardHasName(card(pack,c),q.orName,originalEffectsDisabled(s,c))));
   }));
   const skip=q.optional===false?[]:[
    {type:'chooseGrantImpact',uid:null},{type:'chooseImpactGrant',uid:null}];
@@ -21454,7 +21506,7 @@ function legalPending(pack,s){
   .filter(uid=>p.hand.some(c=>c.uid===uid&&cardHasTrait(card(pack,c),q.trait)))
   .map(uid=>({type:'chooseOutsideCostHand',uid}));
   if(q.kind==='effect-bounce-bp')return [
-   {type:'chooseBounceBp',uid:null},
+   ...(q.optional!==false?[{type:'chooseBounceBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseBounceBp',uid}))
   ];
  if(q.kind==='effect-grant-attack')return q.choices.map(uid=>({type:'chooseGrantAttack',uid}));
@@ -22634,6 +22686,10 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
   if(job.op==='recoverOutsideFiltered'&&job.optional===false)
    return s.players[owner].outside.some(c=>
     matchesOutsidePrintedFilter(pack,c,outsidePrintedFilterOf(job)));
+  if(job.op==='bounceOrRetireFrontByName')
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
+    !choiceBlocked(pack,s,owner,c.uid,'event')&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   if(job.optional!==false)return true;
   if(job.op==='retireOppFrontUnderBp'){
    const limit=retireOppFrontLimit(pack,s,owner,job);
@@ -22643,7 +22699,8 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
   }
   if(job.op==='oppFrontRestBranch'){
    if(job.optional===true)return true;
-   return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
+   const cap=Number.isInteger(job.bp)?job.bp:null;
+   return enemy.front.some(c=>c&&(cap===null||bp(pack,s,c)<=cap)&&
     !effectChoiceProtected(s,owner,c.uid,'event')&&
     cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   }
@@ -22739,7 +22796,7 @@ function clearLeavingFieldMemory(c){
   delete c.frontAuraGranted;delete c.stayWard;
  delete c.unblockedDrawGranted;delete c.energyPlusUntil;
  delete c.frontEnergyUntil;delete c.doubleBlockGranted;
- delete c.doubleBlockUntil;delete c.impactNullUntil;delete c.blockAtLeastUntil;
+ delete c.doubleBlockUntil;delete c.impactNullUntil;delete c.blockAtLeastUntil;delete c.bpDownImmuneUntil;
  delete c.loseBattleReady;delete c.attackBanned;delete c.attackDrawGranted;
  delete c.belowPrintedBlock;delete c.eventAttackDrawGranted;
  delete c.unchosenGranted;delete c.impactNullThisTurn;delete c.eventReadyOnAttack;
@@ -23012,10 +23069,16 @@ function zeroApSameNameUsed(s,owner,d){
  return (s.handZeroApUses||[]).some(e=>
   e&&e.turn===s.turn&&e.owner===owner&&cardHasName(d,e.name,false));
 }
+function ownFrontHasPrintedName(pack,s,owner,name){
+ return s.players[owner].front.some(c=>c&&c.faceDown!==true&&
+  cardHasName(card(pack,c),name,originalEffectsDisabled(s,c)));
+}
 function handApPlan(pack,s,owner,d,opts={}){
  const rule=d.handApDiscountWhileName;
+ const frontRule=d.handApDiscountWhileFrontName;
  const nameOnField=!!rule&&ownFieldHasPrintedName(pack,s,owner,rule.name);
- const base=handPlayApPlan(s,owner,d,{...opts,nameOnField});
+ const frontNameOnField=!!frontRule&&ownFrontHasPrintedName(pack,s,owner,frontRule.name);
+ const base=handPlayApPlan(s,owner,d,{...opts,nameOnField,frontNameOnField});
  let extra=0;
  const pl=s.players[owner];
  if(opts.from==='removed'){
@@ -24025,6 +24088,7 @@ export function legalUniversalActions(pack,s){
    }
    if(ability.op==='frontOnceProgram'){
     if(s.mainAbilityUsedUids.includes(c.uid))continue;
+    if(ability.frontOnly!==false&&!pl.front.some(x=>x?.uid===c.uid))continue;
     if(ability.when?.kind==='ownHandToOutsideThisTurn'&&
      !matchesV2LiveCondition(s,p,c.uid,ability.when,x=>card(pack,x),
       ()=>calcEnergy(pack,s,p),x=>bp(pack,s,x)))continue;
@@ -31630,6 +31694,7 @@ export function assertUniversalMatch(pack,s){
   ];
   const printed=grants.find(e=>e.amount===1&&e.plus===q.plus&&e.includeSelf===q.includeSelf&&
    (e.alsoBp??null)===(q.alsoBp??null)&&
+   (e.orName??null)===(q.orName??null)&&
    (e.optional===true)===(q.optional===true)&&
    (anyOther?e.anyOther===true&&e.trait===undefined&&e.minPrintedAp===undefined:
     apOk?e.minPrintedAp===q.minPrintedAp&&e.anyOther!==true:
@@ -32539,6 +32604,21 @@ export function assertUniversalMatch(pack,s){
      Object.keys(g).length!==3)
      throw Error('Invalid earned attack damage');
    }
+   if(c.bpDownImmuneUntil!==undefined){
+    const g=c.bpDownImmuneUntil,live=field(pl).includes(c);
+    const source=items.find(x=>x.uid===g?.sourceUid);
+    const printed=source&&card(pack,source);
+    const fromPlay=printed?.type==='event'&&(printed.effects?.onPlay||[]).some(e=>
+     e.op==='grantOwnFieldBpDownImmuneUntilNextOwnStart');
+    if(!live||!g||typeof g!=='object'||Array.isArray(g)||
+     g.stamp!==c.fieldEntryStamp||!Number.isInteger(g.stamp)||g.stamp<1||
+     g.untilOwnTurnStart!==pl.ownTurns+1||
+     typeof g.sourceUid!=='string'||!g.sourceUid.startsWith(p+'-')||
+     !fromPlay||
+     Object.keys(g).length!==3||
+     Object.keys(g).some(k=>!['stamp','untilOwnTurnStart','sourceUid'].includes(k)))
+     throw Error('Forged BP-down immunity');
+   }
    if(c.impactNullGranted!==undefined){
     const g=c.impactNullGranted,live=field(pl).includes(c);
     const source=items.find(x=>x.uid===g?.sourceUid);
@@ -32598,7 +32678,9 @@ export function assertUniversalMatch(pack,s){
      if(front&&played(ev)&&(c.buffs||[]).some(b=>b.bp===front.bp&&b.untilTurn===s.turn))
       return true;
      const trait=effects.find(e=>e.op==='grantFrontTraitImpactPlus'&&e.amount===1);
-     return !!(trait&&played(ev)&&cardHasTrait(card(pack,c),trait.trait));
+     if(trait&&played(ev)&&cardHasTrait(card(pack,c),trait.trait))return true;
+     const fieldPlus=effects.find(e=>e.op==='buffOwnField'&&e.impactPlus===1);
+     return !!(fieldPlus&&played(ev)&&(c.buffs||[]).some(b=>b.bp===fieldPlus.bp&&b.untilTurn===s.turn));
     });
     if(!g||g.turn!==s.turn||g.amount!==1||g.stamp!==c.fieldEntryStamp||
      !Number.isInteger(g.stamp)||g.stamp<1||g.stamp>=s.nextFieldEntryStamp||
@@ -32627,9 +32709,14 @@ export function assertUniversalMatch(pack,s){
    if(c.attackDamagePlus!==undefined){
     const g=c.attackDamagePlus,live=field(pl).find(x=>x===c);
     const giver=pl.outside.find(x=>x.uid===g?.sourceUid)||
-     pl.removed.find(x=>x.uid===g?.sourceUid);
+     pl.removed.find(x=>x.uid===g?.sourceUid)||
+     (pl.resolvingEvents||[]).find(x=>x.uid===g?.sourceUid);
+    const eventGrant=!!giver&&card(pack,giver).type==='event'&&
+     (card(pack,giver).effects?.onPlay||[]).some(e=>e.op==='buffOwnField'&&
+      typeof e.damagePlusIfName==='string'&&
+      cardHasName(card(pack,c),e.damagePlusIfName,originalEffectsDisabled(s,c)));
     if(!live||g?.amount!==1||g.turn!==s.turn||g.stamp!==c.fieldEntryStamp||
-     !giver||card(pack,giver).mainAbility?.op!=='restRetireNamedGrant'||
+     !giver||!(card(pack,giver).mainAbility?.op==='restRetireNamedGrant'||eventGrant)||
      Object.keys(g).length!==4||
      Object.keys(g).some(k=>!['turn','stamp','amount','sourceUid'].includes(k)))
      throw Error('Invalid earned attack damage plus');
@@ -32683,7 +32770,8 @@ export function assertUniversalMatch(pack,s){
        (e.to==='front'||e.to==='energy'));
       const d=card(pack,c);
       return entered&&(effect.minPrintedAp!==undefined?d.ap>=effect.minPrintedAp:
-       !!effect.trait&&cardHasTrait(d,effect.trait));
+       !!effect.trait&&(cardHasTrait(d,effect.trait)||
+        (typeof effect.orName==='string'&&cardHasName(d,effect.orName,originalEffectsDisabled(s,c)))));
      })||
      field(pl).some(src=>{
       if(src.uid===c.uid||!s.mainAbilityUsedUids.includes(src.uid))return false;
