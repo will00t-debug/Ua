@@ -1231,7 +1231,7 @@ function bp(pack,s,c){
  const nameBp=distinctTraitNameBp(pack,s,c,printed,suppressed,owner);
  const outsideBp=outsideCountGrant(pack,s,c,printed,suppressed).bp;
  const emptyFacedownBp=emptyFacedownOwnTurnGrant(pack,s,c,printed,suppressed).bp;
- const printedStatic=suppressed||!raidBoxTextLive(pack,c,'staticBp')?0:(printed.staticBp||0);
+ const printedStatic=suppressed||!printed.staticBp||!raidBoxTextLive(pack,c,'staticBp')?0:printed.staticBp;
  if(bpVisit.has(c.uid))return (printed?.bp||0)+turnBp+nameBp+raidBoxBp+facedown+layerBp+buffs+presence+outsideBp+emptyFacedownBp+printedStatic+madokaPair()+
   aotPrintedBp(pack,s,c,printed,suppressed,owner)+
   aot2Bp(pack,s,c,printed,suppressed,owner)+
