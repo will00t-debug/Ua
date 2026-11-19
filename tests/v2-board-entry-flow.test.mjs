@@ -48,6 +48,20 @@ test('ordinary paid hand entry uses direct normal cell or base then Raid destina
   slotUid:'energy-full',legal}).actions,[legal[1]]);
 });
 
+test('EVA Gaius active hand deployment uses normal board cells and retains optional skip',()=>{
+ const front={type:'chooseHandActiveNoRaid',uid:'eva-hand',line:'front',slot:2};
+ const energy={type:'chooseHandActiveNoRaid',uid:'eva-hand',line:'energy',slot:1};
+ const replace={type:'chooseHandActiveNoRaid',uid:'eva-hand',line:'front',slot:0,replaceUid:'occupied'};
+ const skip={type:'chooseHandActiveNoRaid',uid:null};
+ const legal=[front,energy,replace,skip];
+ assert.equal(boardEntryMode(skip),null);
+ assert.deepEqual(boardEntrySelection(legal,'eva-hand'),{normal:[front,energy,replace],raid:[],needsMode:false});
+ for(const action of [front,energy,replace]){
+  assert.deepEqual(entryClickPlan({selectedUid:'eva-hand',entryMode:null,line:action.line,
+   slot:action.slot,slotUid:action.replaceUid??null,legal}),{type:'entry',mode:'normal',actions:[action]});
+ }
+});
+
 test('effect Raid selects the base before the destination, and paid Raid keeps that order',()=>{
  const effect=[
   {type:'chooseOutsideRestOrRaid',uid:'effect-uid',mode:'enter',line:'front',slot:3},
