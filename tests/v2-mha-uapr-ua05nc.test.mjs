@@ -109,7 +109,7 @@ test('point cards sit in the catalog and stay out of both battle packs', ()=>{
  assert.equal(MHA_POINT_CATALOG.length,3);
  assert.equal(editor.filter(card=>card.id.startsWith('MHA-P-')).length,3);
  assert.deepEqual(editor.filter(card=>card.number.startsWith('UA05NC/')).map(card=>card.id),[
-  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'
+  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009','MHA-3-010','MHA-3-011'
  ]);
  assert.equal(editor.some(card=>card.playable!==false||card.battleReady!==false),false);
  for(const card of MHA_POINT_CATALOG){
@@ -128,9 +128,9 @@ test('point cards sit in the catalog and stay out of both battle packs', ()=>{
 
  const title=getTitle('mha');
  assert.equal(title.playable,true);
- assert.equal(title.cards.length,194);
+ assert.equal(title.cards.length,196);
  assert.equal(title.cards.some(card=>String(card.number).startsWith('UAPR/')),true);
- assert.equal(title.cards.filter(card=>String(card.number).startsWith('UA05NC/')).length,9);
+ assert.equal(title.cards.filter(card=>String(card.number).startsWith('UA05NC/')).length,11);
 
  const untouched=[
   'dist/universal-v2/mha-pack.mjs',
@@ -163,7 +163,7 @@ test('the book set records the product and leaves unpublished cards out', ()=>{
  assert.equal(book.priceYen,2640);
  assert.equal(book.effectCards,11);
  assert.equal(book.actionPointCards,1);
- assert.equal(book.cards.length,9);
+ assert.equal(book.cards.length,11);
  assert.equal(book.ap,UA05NC_MHA3_AP);
  assert.equal(UA05NC_MHA3_AP.registered,false);
  assert.equal(UA05NC_MHA3_AP.type,'action-point');
@@ -176,10 +176,11 @@ test('the book set records the product and leaves unpublished cards out', ()=>{
  assert.deepEqual(UA05NC_MHA3_CHECK.confirmedNumbers,[
   'UA05NC/MHA-3-001','UA05NC/MHA-3-002','UA05NC/MHA-3-003',
   'UA05NC/MHA-3-004','UA05NC/MHA-3-005','UA05NC/MHA-3-006',
-  'UA05NC/MHA-3-007','UA05NC/MHA-3-008','UA05NC/MHA-3-009'
+  'UA05NC/MHA-3-007','UA05NC/MHA-3-008','UA05NC/MHA-3-009',
+  'UA05NC/MHA-3-010','UA05NC/MHA-3-011'
  ]);
- assert.equal(UA05NC_MHA3_CHECK.completeNumbers.length,9);
- assert.equal(UA05NC_MHA3_UNPUBLISHED.effectCards,2);
+ assert.equal(UA05NC_MHA3_CHECK.completeNumbers.length,11);
+ assert.equal(UA05NC_MHA3_UNPUBLISHED.effectCards,0);
  assert.equal(UA05NC_MHA3_UNPUBLISHED.numbers,null);
  assert.equal(UA05NC_MHA3_AP.image.includes('UA05NC_MHA-3-AP01'),true);
  assert.equal(UA05NC_MHA3_CHECK.effectSlots,11);

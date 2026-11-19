@@ -54,17 +54,17 @@ test('set 2 is 73 catalog cards, 73 ready and 0 pending, and set 1 stays open',(
  assert.equal(point.version,'mha-uapr-ready-3');
  assert.deepEqual(Object.keys(point.cards),['MHA-P-001','MHA-P-002','MHA-P-003']);
  assert.equal(Object.values(UAPR_MHA_PROGRAMS).every(row=>row.ready===true),true);
- assert.equal(UA05NC_MHA3_PRODUCT.cards.length,9);
+ assert.equal(UA05NC_MHA3_PRODUCT.cards.length,11);
  assert.equal(UA05NC_MHA3_AP.registered,false);
  assert.equal(UA05NC_MHA3_AP.number,null);
  assert.deepEqual(editor.filter(card=>String(card.number).startsWith('UA05NC/')).map(card=>card.id),[
-  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'
+  'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009','MHA-3-010','MHA-3-011'
  ]);
  const book=createMha3Pack();
  assert.equal(book.id,'mha3');
  assert.deepEqual(Object.keys(book.cards),[
   'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005',
-  'MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'
+  'MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009','MHA-3-010','MHA-3-011'
  ]);
  assert.equal(set1.cards['MHA-3-002'],undefined);
  assert.equal(set2.cards['MHA-3-002'],undefined);

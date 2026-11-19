@@ -4,7 +4,7 @@
 // Traditional Chinese transcription. A symbol that is not readable stays
 // null. These rows are not magazine appendix cards and do not reuse
 // UA10BT or EX06BT numbers.
-export const UA05NC_MHA3_FETCHED_CARDS='2026-11-17';
+export const UA05NC_MHA3_FETCHED_CARDS='2026-11-19';
 export const UA05NC_MHA3_FACE='https://rugiacreation.com/ua/cardlist/';
 const FACE=id=>'https://rugiacreation.com/ua/cardlist/UA05NC_'+id+'.png?v=20261110';
 const PAGE=id=>'https://rugiacreation.com/ua/search?Name=TW&Find1='+id;
@@ -188,5 +188,41 @@ export const UA05NC_MHA3_CARDS=Object.freeze([
   energyDiscount:2,
   image:FACE('MHA-3-009'),
   source:PAGE('MHA-3-009')
+ }),
+ row({
+  id:'MHA-3-010',
+  number:'UA05NC/MHA-3-010',
+  name:'ホークス',
+  nameJa:'ホークス',
+  color:'red',
+  energy:3,
+  ap:1,
+  bp:3000,
+  bpMark:'+',
+  gen:1,
+  traits:Object.freeze([]),
+  trigger:'draw',
+  triggerTextJa:'【ドロー】カードを1枚引く。',
+  effectJa:'【登場時】自分の手札を1枚裏向きで自分の場の〈ホークス〉の下に置いてもよい。\n【起動メイン】【ターン1】自分の場の〈ホークス〉の下に置かれた裏向きのカードを1枚場外に置く。そうした場合、自分の場の他のキャラを1枚まで選び、そのキャラとこのキャラはこのターン中、BP+1000。',
+  image:FACE('MHA-3-010'),
+  source:PAGE('MHA-3-010')
+ }),
+ row({
+  id:'MHA-3-011',
+  number:'UA05NC/MHA-3-011',
+  name:'ミルコ',
+  nameJa:'ミルコ',
+  color:'red',
+  energy:2,
+  ap:1,
+  bp:2000,
+  gen:1,
+  traits:Object.freeze([]),
+  trigger:'active',
+  triggerTextJa:'【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。',
+  effectJa:'自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを2減らす。\n【登場時】自分の山札の上から2枚見て、キャラカードを1枚まで場外に置く。残りを望む順で山札の上に置く。',
+  energyDiscount:2,
+  image:FACE('MHA-3-011'),
+  source:PAGE('MHA-3-011')
  })
 ]);

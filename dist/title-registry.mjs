@@ -17,11 +17,11 @@ import {KMR2_CARDS} from './kmr-vol2-cards.mjs';
 import {KMR_PR_CARDS} from './kmr-pr-cards.mjs';
 import {CSM_CARDS} from './csm-cards.mjs';
 import {imcEditorCards} from './imc/catalog.mjs';
-import {mhaEditorCards} from './mha/catalog.mjs?v=20261118mha008';
+import {mhaEditorCards} from './mha/catalog.mjs?v=20261120mha011';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs';
-import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261119trk6';
-import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261119trk6';
+import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261120mha011';
+import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261120mha011';
 // Isolated catalogue/deck editing; unfinished series are not match-playable.
 export const TITLES=[
  {id:'bleach',label:'BLEACH 千年血戰篇',cards:CARDS,presets:PRESETS,playable:true},

@@ -10,7 +10,7 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalImpact, universalImpactNull,
- zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
+ universalPrivateChoices, zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 
 const book=createMha3Pack();
 const shigaraki=UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-002');
@@ -92,11 +92,12 @@ function live(s, p, uid){
  return [...s.players[p].front, ...s.players[p].energy].find(c=>c?.uid===uid)||null;
 }
 
-test('the book pack holds the nine finished cards', ()=>{
+test('the book pack holds the eleven finished cards', ()=>{
  assert.deepEqual(UA05NC_MHA3_CARDS.map(card=>card.number),[
   'UA05NC/MHA-3-001','UA05NC/MHA-3-002','UA05NC/MHA-3-003',
   'UA05NC/MHA-3-004','UA05NC/MHA-3-005','UA05NC/MHA-3-006',
-  'UA05NC/MHA-3-007','UA05NC/MHA-3-008','UA05NC/MHA-3-009'
+  'UA05NC/MHA-3-007','UA05NC/MHA-3-008','UA05NC/MHA-3-009',
+  'UA05NC/MHA-3-010','UA05NC/MHA-3-011'
  ]);
  assert.equal(shigaraki.color,'purple');
  assert.equal(shigaraki.energy,4);
@@ -105,10 +106,10 @@ test('the book pack holds the nine finished cards', ()=>{
  assert.equal(shigaraki.gen,1);
  assert.equal(shigaraki.trigger,'raid');
  assert.equal(UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-009').energyDiscount,2);
- assert.equal(book.version,'mha3-ua05nc-ready-9');
+ assert.equal(book.version,'mha3-ua05nc-ready-11');
  assert.deepEqual(Object.keys(book.cards),[
   'MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005',
-  'MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'
+  'MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009','MHA-3-010','MHA-3-011'
  ]);
  assert.equal(book.cards['MHA-3-002'].battleRemoveInstead,true);
  assert.equal(book.cards['MHA-3-002'].printedImpact,1);
@@ -116,16 +117,30 @@ test('the book pack holds the nine finished cards', ()=>{
  assert.equal(createMhaV2Pack().cards['MHA-3-002'],undefined);
  assert.equal(createMha2Pack().cards['MHA-3-002'],undefined);
  const live=officialV2Pack('mha');
- assert.equal(live.version,'mha-live-109-73-3-9');
+ assert.equal(live.version,'mha-live-109-73-3-11');
  for(const id of ['MHA-P-001','MHA-P-002','MHA-P-003'])
   assert.equal(live.cards[id].id,id);
- for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'])
+ for(const id of ['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009','MHA-3-010','MHA-3-011'])
   assert.equal(live.cards[id].id,id);
  for(const id of Object.keys(UA05NC_MHA3_PROGRAMS))
   assert.equal(UA05NC_MHA3_PROGRAMS[id].ready,true);
  assert.equal(UA05NC_MHA3_PROGRAMS['MHA-3-009'].effects.onAttack[0].op,
   'drawBottomSkipNextActive');
  assert.equal(live.cards['MHA-3-009'].emptyOwnFieldHandEnergyDiscount,2);
+ assert.equal(live.cards['MHA-3-010'].mainAbility.then[0].op,'stripNamedFacedownPairBuff');
+ assert.equal(live.cards['MHA-3-010'].mainAbility.frontOnly,false);
+ assert.equal(live.cards['MHA-3-011'].emptyOwnFieldHandEnergyDiscount,2);
+ assert.equal(live.cards['MHA-3-011'].effects.onPlay[0].count,2);
+ const hawks=UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-010');
+ const mirko=UA05NC_MHA3_CARDS.find(card=>card.id==='MHA-3-011');
+ assert.equal(hawks.bpMark,'+');
+ assert.equal(hawks.trigger,'draw');
+ assert.equal(mirko.bpMark,'');
+ assert.equal(mirko.trigger,'active');
+ assert.deepEqual(hawks.traits,[]);
+ assert.deepEqual(mirko.traits,[]);
+ assert.equal(hawks.gen,1);
+ assert.equal(mirko.gen,1);
 });
 
 test('002 lowers up to two fronts of BP 1500 or more, once, and only from the front', ()=>{
@@ -677,4 +692,174 @@ test('008 widens the next BP window or blocks the first attack, and the same cho
  s=act(pack,s,legal(pack,s).find(a=>a.type==='attack'&&a.uid===again.uid));
  const second=legal(pack,s).filter(a=>a.type==='chooseBlock');
  assert.equal(second.some(a=>a.uid===tall.uid), true);
+});
+
+function lift(s, p, ids){
+ const picked=ids.map(id=>take(s,p,id));
+ s.players[p].deck.unshift(...picked);
+ return picked;
+}
+function hawksMatch(seed){
+ const red=filler('LAB-RED',{color:'red', gen:1, energy:0, bp:1500, name:'赤'});
+ const pack=labPack(battle('MHA-3-010'), [red]);
+ const counts=withCounts('MHA-3-010', {'LAB-RED':4});
+ let s=playMatch(pack, counts, seed);
+ s=toPhase(pack, s, 'main');
+ for(let slot=0;slot<3;slot++)put(s,0,'LAB-RED','energy',slot,true);
+ const hawks=take(s,0,'MHA-3-010');
+ const cover=take(s,0,'LAB-OTHER');
+ s.players[0].hand.push(hawks, cover);
+ readyAp(s,0,1);
+ return {pack, s, hawks, cover};
+}
+
+test('010 may decline the tuck and cannot strip without a facedown', ()=>{
+ const {pack, s:opened, hawks, cover}=hawksMatch(10);
+ let s=opened;
+ const play=legal(pack,s).find(a=>a.type==='play'&&a.uid===hawks.uid&&a.line==='energy');
+ assert.ok(play);
+ s=act(pack,s,play);
+ assert.equal(s.pending.kind,'effect-tuck-facedown');
+ assert.equal(s.pending.optional,true);
+ s=act(pack,s,{type:'chooseTuckFacedown', uid:null});
+ assert.equal(s.pending,null);
+ assert.equal((live(s,0,hawks.uid).under||[]).length,0);
+ assert.equal(s.players[0].hand.some(c=>c.uid===cover.uid),true);
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===hawks.uid),false);
+});
+
+test('010 tucks under Hawks, strips that facedown from either line, and buffs this card plus one other', ()=>{
+ const {pack, s:opened, hawks, cover}=hawksMatch(11);
+ let s=opened;
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===hawks.uid&&a.line==='energy'));
+ s=act(pack,s,{type:'chooseTuckFacedown', uid:cover.uid});
+ const host=live(s,0,hawks.uid);
+ assert.equal(host.under[0].uid,cover.uid);
+ assert.equal(host.under[0].faceDown,true);
+ const other=put(s,0,'MHA-3-010','front',0,true);
+ const stray=take(s,0,'LAB-1500');
+ stray.faceDown=true;
+ stray.ready=false;
+ stray.stack=[];
+ s.players[0].energy[0].under=[stray];
+ const raid=take(s,0,'LAB-1000');
+ raid.faceDown=false;
+ host.stack=[raid];
+ const offered=legal(pack,s).filter(a=>a.type==='activate'&&a.mode==='frontOnce');
+ assert.equal(offered.some(a=>a.uid===hawks.uid),true);
+ assert.equal(offered.some(a=>a.uid===other.uid),true);
+ s=act(pack,s,{type:'activate', uid:other.uid, mode:'frontOnce'});
+ assert.equal(s.pending.kind,'effect-named-facedown-strip');
+ assert.deepEqual(s.pending.choices,[cover.uid]);
+ const seen=universalPrivateChoices(pack,s,0);
+ assert.equal(seen.options.some(o=>o.card&&o.card.cardId==='LAB-OTHER'),true);
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ s=act(pack,s,{type:'chooseNamedFacedownStrip', uid:cover.uid});
+ assert.equal(s.players[0].outside.some(c=>c.uid===cover.uid&&c.faceDown===false),true);
+ assert.equal(s.players[0].energy[0].under.some(c=>c.uid===stray.uid),true);
+ assert.equal(universalBp(pack,s,live(s,0,other.uid)),4000);
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.equal(s.pending.optional,true);
+ assert.equal(s.pending.choices.includes(other.uid),false);
+ assert.equal(s.pending.choices.includes(hawks.uid),true);
+ s=act(pack,s,{type:'chooseOwnBuff', uid:hawks.uid});
+ assert.equal(universalBp(pack,s,live(s,0,hawks.uid)),4000);
+ assert.equal(universalBp(pack,s,live(s,0,other.uid)),4000);
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===other.uid),false);
+ assert.equal(legal(pack,s).some(a=>a.type==='activate'&&a.uid===hawks.uid),false);
+});
+
+test('011 costs 0 on an empty field, shows the whole top two, and returns the rest on top', ()=>{
+ const event=filler('LAB-EV',{name:'事件', type:'event', color:'red', energy:0, ap:1, bp:0, gen:0});
+ const red=filler('LAB-RED',{color:'red', gen:1, energy:0, bp:1500, name:'赤'});
+ const pack=labPack(battle('MHA-3-011'), [event, red]);
+ const counts=withCounts('MHA-3-011', {'LAB-EV':2, 'LAB-RED':3});
+ let s=playMatch(pack, counts, 12);
+ assert.equal(zoneRequiredEnergy(pack,s,0,pack.cards['MHA-3-011'],'hand'),0);
+ put(s,0,'LAB-RED','energy',0,true);
+ assert.equal(zoneRequiredEnergy(pack,s,0,pack.cards['MHA-3-011'],'hand'),2);
+ put(s,0,'LAB-RED','energy',1,true);
+ s=toPhase(pack,s,'main');
+ const mirko=take(s,0,'MHA-3-011');
+ s.players[0].hand.push(mirko);
+ readyAp(s,0,1);
+ const [character, topEvent]=lift(s,0,['LAB-1500','LAB-EV']);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===mirko.uid&&a.line==='front'));
+ assert.equal(s.pending.kind,'effect-top-character-outside');
+ assert.deepEqual(s.pending.uids,[character.uid, topEvent.uid]);
+ assert.deepEqual(s.pending.choices,[character.uid]);
+ const seen=universalPrivateChoices(pack,s,0);
+ assert.deepEqual(seen.inspected.map(c=>c.cardId),['LAB-1500','LAB-EV']);
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ assert.equal(legal(pack,s).some(a=>a.uid===topEvent.uid),false);
+ s=act(pack,s,{type:'chooseTopCharacterOutside', uid:character.uid});
+ assert.equal(s.players[0].outside.some(c=>c.uid===character.uid),true);
+ assert.equal(s.pending.kind,'effect-top-order');
+ assert.deepEqual(s.pending.uids,[topEvent.uid]);
+ s=act(pack,s,{type:'chooseTopOrder', uid:topEvent.uid});
+ assert.equal(s.players[0].deck[0].uid,topEvent.uid);
+ assert.equal(s.pending,null);
+});
+
+test('011 can send no character outside and orders every remaining card', ()=>{
+ const event=filler('LAB-EV',{name:'事件', type:'event', color:'red', energy:0, ap:1, bp:0, gen:0});
+ const red=filler('LAB-RED',{color:'red', gen:1, energy:0, bp:1500, name:'赤'});
+ const pack=labPack(battle('MHA-3-011'), [event, red]);
+ const counts=withCounts('MHA-3-011', {'LAB-EV':2, 'LAB-RED':3});
+ let s=playMatch(pack, counts, 13);
+ put(s,0,'LAB-RED','energy',0,true);
+ put(s,0,'LAB-RED','energy',1,true);
+ s=toPhase(pack,s,'main');
+ const mirko=take(s,0,'MHA-3-011');
+ s.players[0].hand.push(mirko);
+ readyAp(s,0,1);
+ const [character, topEvent]=lift(s,0,['LAB-1500','LAB-EV']);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===mirko.uid&&a.line==='front'));
+ s=act(pack,s,{type:'chooseTopCharacterOutside', uid:null});
+ assert.equal(s.players[0].outside.some(c=>c.uid===character.uid||c.uid===topEvent.uid),false);
+ assert.deepEqual(s.pending.uids,[character.uid, topEvent.uid]);
+ s=act(pack,s,{type:'chooseTopOrder', uid:topEvent.uid});
+ s=act(pack,s,{type:'chooseTopOrder', uid:character.uid});
+ assert.equal(s.players[0].deck[0].uid,topEvent.uid);
+ assert.equal(s.players[0].deck[1].uid,character.uid);
+});
+
+test('011 with no character in the window only orders those cards, and an empty deck looks at nothing', ()=>{
+ const event=filler('LAB-EV',{name:'事件', type:'event', color:'red', energy:0, ap:1, bp:0, gen:0});
+ const red=filler('LAB-RED',{color:'red', gen:1, energy:0, bp:1500, name:'赤'});
+ const pack=labPack(battle('MHA-3-011'), [event, red]);
+ const counts=withCounts('MHA-3-011', {'LAB-EV':2, 'LAB-RED':3});
+ let s=playMatch(pack, counts, 14);
+ put(s,0,'LAB-RED','energy',0,true);
+ put(s,0,'LAB-RED','energy',1,true);
+ s=toPhase(pack,s,'main');
+ const mirko=take(s,0,'MHA-3-011');
+ s.players[0].hand.push(mirko);
+ readyAp(s,0,1);
+ const [first, second]=lift(s,0,['LAB-EV','LAB-EV']);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===mirko.uid&&a.line==='front'));
+ assert.equal(s.pending.kind,'effect-top-order');
+ assert.deepEqual(s.pending.uids,[first.uid, second.uid]);
+ s=act(pack,s,{type:'chooseTopOrder', uid:second.uid});
+ s=act(pack,s,{type:'chooseTopOrder', uid:first.uid});
+ assert.equal(s.players[0].deck[0].uid,second.uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===first.uid||c.uid===second.uid),false);
+});
+
+test('011 looks at nothing when its deck is empty', ()=>{
+ const event=filler('LAB-EV',{name:'事件', type:'event', color:'red', energy:0, ap:1, bp:0, gen:0});
+ const red=filler('LAB-RED',{color:'red', gen:1, energy:0, bp:1500, name:'赤'});
+ const pack=labPack(battle('MHA-3-011'), [event, red]);
+ const counts=withCounts('MHA-3-011', {'LAB-EV':2, 'LAB-RED':3});
+ let s=playMatch(pack, counts, 15);
+ put(s,0,'LAB-RED','energy',0,true);
+ put(s,0,'LAB-RED','energy',1,true);
+ s=toPhase(pack,s,'main');
+ const mirko=take(s,0,'MHA-3-011');
+ s.players[0].hand.push(mirko);
+ s.players[0].outside.push(...s.players[0].deck.splice(0));
+ readyAp(s,0,1);
+ s=act(pack,s,legal(pack,s).find(a=>a.type==='play'&&a.uid===mirko.uid&&a.line==='front'));
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,0);
 });

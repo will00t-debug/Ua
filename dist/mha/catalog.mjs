@@ -8,8 +8,8 @@ import {MHA_CARDS_051_100} from './cards-051-100.mjs';
 import {MHA2_CARDS_001_036} from './cards-mha2-001-036.mjs';
 import {MHA2_CARDS_037_073} from './cards-2-037-073.mjs';
 import {UAPR_MHA_POINT_CARDS} from './uapr-point-cards.mjs';
-import {UA05NC_MHA3_CARDS} from './ua05nc-cards.mjs?v=20261118mha008';
-import {localizeMhaCard} from './zh-tw.mjs?v=20261118mha008';
+import {UA05NC_MHA3_CARDS} from './ua05nc-cards.mjs?v=20261120mha011';
+import {localizeMhaCard} from './zh-tw.mjs?v=20261120mha011';
 
 const COLORS=new Set(['purple','yellow','green','blue','red']);
 const DECK_TYPES=new Set(['character','event','field']);
@@ -146,7 +146,7 @@ export const MHA_POINT_CATALOG=Object.freeze(UAPR_MHA_POINT_CARDS.map((card,inde
  return Object.freeze({...card});
 }));
 
-const BOOK_IDS=['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009'];
+const BOOK_IDS=['MHA-3-001','MHA-3-002','MHA-3-003','MHA-3-004','MHA-3-005','MHA-3-006','MHA-3-007','MHA-3-008','MHA-3-009','MHA-3-010','MHA-3-011'];
 function requireBook(card){
  if(!BOOK_IDS.includes(card.id)||card.set!=='UA05NC'||card.title!=='mha')
   throw Error(card.id+' is outside the published UA05NC faces');
@@ -178,7 +178,7 @@ export function mhaEditorCards(){
  const book=[...MHA3_CATALOG];
  if(set2.length!==73)throw Error('EX06BT must contain 73 cards');
  if(points.length!==3)throw Error('point-exchange catalog must contain 3 cards');
- if(book.length!==9)throw Error('UA05NC editor must contain the nine published faces');
+ if(book.length!==11)throw Error('UA05NC editor must contain the eleven published faces');
  const starterNumber=new Map(UA10ST_CARDS.map(card=>[card.id,card.number]));
  const cards=[...booster,...starterOnly,...set2,...points,...book].map(card=>{
   const reprint=starterNumber.get(card.id);
@@ -190,7 +190,7 @@ export function mhaEditorCards(){
  if(new Set(ids).size!==ids.length)throw Error('Duplicate MHA editor id');
  if(cards.filter(card=>card.id.startsWith('MHA-1-')).length!==109)
   throw Error('MHA set 1 editor catalog must stay 109 distinct deck cards');
- if(cards.length!==194)throw Error('MHA editor catalog drifted from 109+73+3+9');
+ if(cards.length!==196)throw Error('MHA editor catalog drifted from 109+73+3+11');
  if(cards.some(card=>card.playable!==false||card.battleReady!==false||card.deckLegal!==true))
   throw Error('MHA editor catalog claimed a card was playable');
  return cards;

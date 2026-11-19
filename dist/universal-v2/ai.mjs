@@ -563,6 +563,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   s.pending?.kind==='effect-active-energy-buff')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-tuck-facedown'||s.pending?.kind==='effect-strip-facedown'||
+  s.pending?.kind==='effect-named-facedown-strip'||
   s.pending?.kind==='effect-pay-hand-move'||s.pending?.kind==='effect-pay-hand-impact'||
   s.pending?.kind==='effect-place-hand-outside')
   return legal.find(a=>a.uid!==null)||legal[0];

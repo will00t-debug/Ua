@@ -1,10 +1,10 @@
 // UA17 Toriko on the shared V2 engine. The catalogue holds every playable
 // identity. This pack registers only prints whose entire Japanese text is a
 // tested shared program. There is no Toriko opcode and no private runtime.
-import {createUniversalPack} from './pack.mjs?v=20261119trk6';
-import {TORIKO_CARDS} from '../toriko-cards.mjs?v=20261119trk6';
-import {TORIKO_PR_CARDS} from '../toriko-pr-cards.mjs?v=20261119trk6';
-import {trkEngineKind,trkProfile} from './trk-classify.mjs?v=20261119trk6';
+import {createUniversalPack} from './pack.mjs?v=20261120mha011';
+import {TORIKO_CARDS} from '../toriko-cards.mjs?v=20261120mha011';
+import {TORIKO_PR_CARDS} from '../toriko-pr-cards.mjs?v=20261120mha011';
+import {trkEngineKind,trkProfile} from './trk-classify.mjs?v=20261120mha011';
 
 export function trkPackCard(card){
  const profile=trkProfile(card);
