@@ -637,7 +637,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-013",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "sunnyMust",
   "faq": [
    {
     "id": "Q799",
@@ -841,7 +841,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-017",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "zebraWin",
   "faq": [
    {
     "id": "Q801",
@@ -2590,7 +2590,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-054",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "halfBounce",
   "faq": [
    {
     "id": "Q810",
@@ -3469,7 +3469,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-072",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "gtRobot",
   "faq": [
    {
     "id": "Q813",
@@ -4389,7 +4389,7 @@ export const TORIKO_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA17BT%2FTRK-1-091",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tommyrod",
   "faq": [
    {
     "id": "Q816",

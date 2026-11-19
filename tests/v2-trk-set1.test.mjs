@@ -151,12 +151,13 @@ test('UA17 Toriko catalogue is one identity per number and keeps the printed ene
 test('only a whole Japanese print joins the shared pack',()=>{
  for(const card of TORIKO_CARDS)assert.equal(card.engineKind,trkEngineKind(card));
  assert.deepEqual(TORIKO_ENGINE_IDS,TORIKO_CARDS.filter(card=>card.engineKind).map(card=>card.id));
- assert.equal(TORIKO_ENGINE_IDS.length,104);
+ assert.equal(TORIKO_ENGINE_IDS.length,109);
  assert.deepEqual(Object.keys(pack.cards).sort(),[...TORIKO_ENGINE_IDS].sort());
- for(const id of ['TRK-1-013','TRK-1-017','TRK-1-054','TRK-1-072','TRK-1-091']){
-  assert.equal(pack.cards[id],undefined);
-  assert.equal(byId.get(id).engineKind,null);
- }
+ assert.equal(pack.cards['TRK-1-013'].frontMustAttackIfName.name,'クイン');
+ assert.equal(pack.cards['TRK-1-017'].attackWinHandRest.minBp,5000);
+ assert.equal(pack.cards['TRK-1-054'].effects.onAttack[0].op,'bounceOppFrontHalfSelfBp');
+ assert.equal(pack.cards['TRK-1-072'].raidTrait,'美食會');
+ assert.equal(pack.cards['TRK-1-091'].oppEffectRetireInstead.trait,'寄生昆虫');
  assert.equal(byId.get('TRK-1-048').engineKind,'alsoTopKeep');
  assert.equal(pack.cards['TRK-1-005'].mainAbility.op,'restSelfGeneratedEnergyRetireEndMain');
  assert.equal(pack.cards['TRK-1-047'].mainAbility.op,'restSelfGeneratedEnergyRetireEndMain');
@@ -180,14 +181,16 @@ test('only a whole Japanese print joins the shared pack',()=>{
  assert.deepEqual(Object.keys(officialV2Pack('toriko').cards).sort(),Object.keys(pack.cards).sort());
  const ready=editorV2Status('toriko',practice.counts,pack);
  assert.equal(ready.ready,true,ready.issues.join('；'));
- assert.equal(ready.registered,104);
- const blocked={...practice.counts};
- const donor=Object.keys(blocked).find(id=>blocked[id]>=1);
- blocked[donor]-=1;
- blocked['TRK-1-013']=1;
- assert.equal(editorV2Status('toriko',blocked,pack).ready,false);
- assert.ok(validateUniversalDeck(pack,blocked).some(issue=>issue.includes('TRK-1-013')));
- assert.throws(()=>fresh(blocked),/TRK-1-013/);
+ assert.equal(ready.registered,109);
+ const mixed={...practice.counts};
+ const donor=Object.keys(mixed).find(id=>mixed[id]>=1);
+ mixed[donor]-=1;
+ mixed['TRK-1-013']=1;
+ assert.equal(editorV2Status('toriko',mixed,pack).ready,true);
+ const crowded={...practice.counts};
+ const extra=Object.keys(crowded)[0];
+ crowded[extra]=5;
+ assert.equal(editorV2Status('toriko',crowded,pack).ready,false);
 });
 
 test('a vanilla character, a draw-and-discard, a hand discount and a full top window resolve on the shared engine',()=>{
@@ -890,8 +893,6 @@ function act(s,uid,mode){
 }
 
 test('the next thirty Toriko prints change shared state',()=>{
- const left=['TRK-1-013','TRK-1-017','TRK-1-054','TRK-1-072','TRK-1-091'];
- assert.equal(left.every(id=>pack.cards[id]===undefined),true);
  assert.equal(pack.cards['TRK-1-057'].triggerEffect.op,'bounceOppFrontUnderBp');
  assert.equal(pack.cards['TRK-1-059'].triggerEffect.bp,3500);
  assert.equal(pack.cards['TRK-1-009'].staticBp,500);
@@ -1299,6 +1300,131 @@ test('the remaining Toriko prints pay, ban, recover, wake and look',()=>{
  assert.equal(window.players[0].outside.some(c=>c.uid===soup.uid),true);
  assert.equal(window.pending.kind,'effect-top-order');
  assert.equal(window.pending.uids.length,6);
+});
+
+test('the last five Toriko prints change shared state',()=>{
+ const deck=fillDeck({'TRK-1-002':1,'TRK-1-006':1,'TRK-1-013':1,'TRK-1-014':2,'TRK-1-017':1,
+  'TRK-1-020':1,'TRK-1-033':1,'TRK-1-054':1,'TRK-1-068':1,'TRK-1-072':1,'TRK-1-090':4,'TRK-1-091':1,'TRK-1-094':1});
+ let sunny=toPhase(fresh(deck,19013),'main');
+ const sunnyCard=seat(sunny,0,'TRK-1-013','front',0,true);
+ seat(sunny,0,'TRK-1-002','front',1,true);
+ const small=seat(sunny,1,'TRK-1-014','front',0,true);
+ sunny=toPhase(sunny,'attack');
+ const beforeDraw=sunny.players[0].hand.length;
+ sunny=dispatchUniversalAction(packs,sunny,{type:'attack',uid:sunnyCard.uid},{actor:0});
+ assert.equal(sunny.pending.kind,'block');
+ sunny=choose(sunny,action=>action.type==='chooseBlock'&&action.uid===small.uid);
+ assert.equal(sunny.players[0].hand.length,beforeDraw+1);
+ assert.equal(sunny.players[1].front.some(card=>card&&card.uid===small.uid),false);
+ sunny=pass(sunny,1,'attack');
+ const hunter=seat(sunny,1,'TRK-1-014','front',0,true);
+ assert.equal(legalUniversalActions(packs,sunny).some(action=>action.type==='next'),false);
+ hunter.ready=false;
+ assert.equal(legalUniversalActions(packs,sunny).some(action=>action.type==='next'),true);
+
+ let zebra=toPhase(fresh(deck,19017),'main');
+ const zebraCard=seat(zebra,0,'TRK-1-017','front',0,true);
+ assert.equal(universalAttackDamage(pack,zebra,zebraCard),2);
+ zebra=act(zebra,zebraCard.uid,'onceBuffField');
+ assert.equal(zebra.pending.kind,'effect-buff-own');
+ assert.equal(zebra.pending.choices.includes(zebraCard.uid),true);
+ zebra=choose(zebra,action=>action.uid===zebraCard.uid);
+ assert.equal(universalBp(pack,zebra,live(zebra,zebraCard)),5000);
+ const blocker=seat(zebra,1,'TRK-1-014','front',0,true);
+ const restTarget=seat(zebra,1,'TRK-1-014','front',1,true);
+ const spare=take(zebra,0,'TRK-1-006');
+ zebra.players[0].hand.push(spare);
+ zebra=toPhase(zebra,'attack');
+ zebra=dispatchUniversalAction(packs,zebra,{type:'attack',uid:zebraCard.uid},{actor:0});
+ zebra=choose(zebra,action=>action.type==='chooseBlock'&&action.uid===blocker.uid);
+ assert.equal(zebra.pending.kind,'effect-attack-win-pay');
+ zebra=choose(zebra,action=>action.uid===spare.uid);
+ assert.equal(zebra.players[0].outside.some(card=>card.uid===spare.uid),true);
+ assert.equal(zebra.pending.kind,'effect-attack-win-rest');
+ zebra=choose(zebra,action=>action.uid===restTarget.uid);
+ assert.equal(live(zebra,restTarget).ready,false);
+
+ let half=toPhase(fresh(deck,19054),'main');
+ readyAp(half);
+ seat(half,0,'TRK-1-020','energy',0,true);
+ const ingredient=take(half,0,'TRK-1-033');
+ half.players[0].hand.push(ingredient);
+ half=playEvent(half,ingredient.uid);
+ const toriko=seat(half,0,'TRK-1-054','front',0,true);
+ toriko.buffs=[{bp:4000,untilTurn:half.turn}];
+ assert.equal(universalAttackDamage(pack,half,toriko),2);
+ toriko.buffs=[];
+ assert.equal(universalAttackDamage(pack,half,toriko),1);
+ toriko.buffs=[{bp:4000,untilTurn:half.turn}];
+ const low=seat(half,1,'TRK-1-014','front',0,true);
+ const high=seat(half,1,'TRK-1-094','front',1,true);
+ half=toPhase(half,'attack');
+ half=dispatchUniversalAction(packs,half,{type:'attack',uid:toriko.uid},{actor:0});
+ assert.equal(half.pending.kind,'effect-bounce-bp');
+ assert.equal(half.pending.choices.includes(low.uid),true);
+ assert.equal(half.pending.choices.includes(high.uid),false);
+ half=choose(half,action=>action.uid===null);
+
+ let robot=toPhase(fresh(deck,19072),'main');
+ readyAp(robot);
+ seat(robot,0,'TRK-1-090','energy',0,true);
+ seat(robot,0,'TRK-1-090','energy',1,true);
+ const opener=take(robot,0,'TRK-1-006');
+ robot.players[0].hand.push(opener);
+ robot=playFront(robot,opener.uid);
+ assert.equal(robot.pending.kind,'effect-discard');
+ const paid=robot.players[0].hand.find(card=>card.uid!==opener.uid);
+ robot=choose(robot,action=>action.uid===paid.uid);
+ assert.equal(robot.zoneMoveEvents.some(event=>event.turn===robot.turn&&event.reason==='own-effect'&&
+  event.from==='hand'&&event.to==='outside'&&event.uid===paid.uid),true);
+ const body=take(robot,0,'TRK-1-072');
+ robot.players[0].hand.push(body);
+ const beforeRobot=robot.players[0].hand.length;
+ robot=playFront(robot,body.uid);
+ const entered=robot.players[0].front.find(card=>card&&card.uid===body.uid);
+ assert.equal(robot.players[0].hand.length,beforeRobot);
+ assert.equal(universalBp(pack,robot,entered),3500);
+ const buried=take(robot,0,'TRK-1-091');
+ entered.stack=[buried];
+ assert.equal(universalBp(pack,robot,entered),4000);
+ entered.ready=true;
+ robot=pass(robot,1,'main');
+ assert.equal(universalBp(pack,robot,live(robot,entered)),3500);
+ const striker=seat(robot,1,'TRK-1-017','front',0,true);
+ robot=toPhase(robot,'attack');
+ robot=dispatchUniversalAction(packs,robot,{type:'attack',uid:striker.uid},{actor:1});
+ robot=choose(robot,action=>action.type==='chooseBlock'&&action.uid===entered.uid);
+ assert.equal(robot.players[0].hand.some(card=>card.uid===buried.uid),true);
+ assert.equal(robot.players[0].front.every(card=>!card||card.uid!==entered.uid),true);
+
+ let rod=toPhase(fresh(deck,19091),'main');
+ const tommy=seat(rod,0,'TRK-1-091','front',0,true);
+ const bug=seat(rod,0,'TRK-1-068','front',1,true);
+ rod=pass(rod,1,'main');
+ readyAp(rod,1,2);
+ for(let slot=0;slot<3;slot++)seat(rod,1,'TRK-1-090','energy',slot,true);
+ const mitora=take(rod,1,'TRK-1-094');
+ rod.players[1].deck.push(...rod.players[1].hand);
+ rod.players[1].hand=[mitora];
+ const mitoraPlay=legalUniversalActions(packs,rod).find(action=>action.type==='play'&&
+  action.uid===mitora.uid&&action.line==='front');
+ if(!mitoraPlay)throw Error('No front play for '+mitora.uid);
+ rod=dispatchUniversalAction(packs,rod,mitoraPlay,{actor:1});
+ assert.equal(rod.pending.choices.includes(tommy.uid),true);
+ rod=choose(rod,action=>action.uid===tommy.uid);
+ assert.equal(rod.pending.kind,'effect-opp-retire-instead');
+ rod=choose(rod,action=>action.uid===bug.uid);
+ assert.equal(live(rod,tommy).uid,tommy.uid);
+ assert.equal(rod.players[0].front.some(card=>card&&card.uid===bug.uid),false);
+ let battle=toPhase(fresh(deck,19092),'main');
+ const victim=seat(battle,0,'TRK-1-091','front',0,true);
+ seat(battle,0,'TRK-1-068','front',1,true);
+ const attacker=seat(battle,1,'TRK-1-017','front',0,true);
+ battle=pass(battle,1,'attack');
+ battle=dispatchUniversalAction(packs,battle,{type:'attack',uid:attacker.uid},{actor:1});
+ battle=choose(battle,action=>action.type==='chooseBlock'&&action.uid===victim.uid);
+ assert.equal(battle.pending===null||battle.pending.kind!=='effect-opp-retire-instead',true);
+ assert.equal(battle.players[0].front.some(card=>card&&card.uid===victim.uid),false);
 });
 
 function matchesPrintedRequiredEnergyExactOrPrinted(card){

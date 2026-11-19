@@ -213,6 +213,16 @@ export function trkProfile(card){
   return accept(card,{kind:'starterKomatsu'});
  if(effect==='【登場時】自分の山札の上から7枚見る。その中から〈センチュリースープ〉を1枚まで場外に置く。残りを望む順で自分の山札の下に置く。【起動メイン】【レストにする】【このカードを退場させる】自分の場外から〈センチュリースープ〉を1枚まで手札に加える。')
   return accept(card,{kind:'showcase'});
+ if(effect===RAID('サニー')+'【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）このキャラがバトルに勝利した時、カードを1枚引く。【フロントLにある場合】自分のフロントLに〈クイン〉がある場合、相手の場のキャラは可能ならアタックしなければならない。')
+  return accept(card,{kind:'sunnyMust'});
+ if(effect===RAID('ゼブラ')+'【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）このキャラがアタックしてバトルに勝利した時、このキャラのBPが5000以上の場合、自分の手札を1枚場外に置いてもよい。そうした場合、BP3000以下の相手のフロントLのキャラを1枚まで選び、レストにする。【起動メイン】【ターン1】自分の場のキャラを1枚選び、このターン中、BP+1000。')
+  return accept(card,{kind:'zebraWin'});
+ if(effect===RAID('トリコ')+'【自分のターン中】このターン中に自分が手札から［特徴：食材］を使用していて、このキャラのBPが8000以上の場合、このキャラは【ダメージ（2）】を得る。【アタック時】BPがこのキャラのBPの半分以下の相手のフロントLのキャラを1枚まで選び、手札に戻す。')
+  return accept(card,{kind:'halfBounce'});
+ if(effect==='【レイド】［特徴：美食會］アクティブにし、フロントLに移動できる【自分のターン中】このキャラの下に元々のBPが3000以上のカードがある場合、このキャラはBP+500。【登場時】このターン中に自分の効果で自分の手札を場外に置いている場合、カードを1枚引く。【退場時】レイド状態のこのキャラの一番下のカードを手札に戻す。')
+  return accept(card,{kind:'gtRobot'});
+ if(effect===RAID('トミーロッド')+'【相手のターン中】【ターン1】このキャラが相手の効果で退場する場合、代わりに自分のフロントLの［特徴：寄生昆虫］を1枚退場させてもよい。【起動メイン】【手札を1枚場外に置く】【ターン1】自分の場外から［特徴：寄生昆虫］を1枚まで自分の場にレストで登場させる。')
+  return accept(card,{kind:'tommyrod'});
  if(effect===IMPACT)return accept(card,{kind:'impactNull'});
  if(effect===DRAW_DISCARD)return accept(card,{kind:'drawDiscard'});
  if(effect===BUFF_OTHER)return accept(card,{kind:'buffOther'});

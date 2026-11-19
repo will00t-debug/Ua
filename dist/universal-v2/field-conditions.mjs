@@ -511,6 +511,29 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    .flat().find(c=>c?.uid===sourceUid);
   return !!physical&&printedFieldCard(physical)&&cardBp(physical)>=condition.minBp;
  }
+ if(condition.kind==='raidUnderPrintedBpAtLeast'){
+  // このキャラの下. The printed number on a buried card, not its current BP.
+  const physical=[s.players[owner].front,s.players[owner].energy]
+   .flat().find(c=>c?.uid===sourceUid);
+  if(!physical)return false;
+  const layers=[];
+  const walk=node=>{
+   for(const child of [...(node.stack||[]),...(node.under||[])]){
+    layers.push(child);walk(child);
+   }
+  };
+  walk(physical);
+  return layers.some(layer=>{
+   const printedBp=printed(layer)?.bp;
+   return Number.isInteger(printedBp)&&printedBp>=condition.minBp;
+  });
+ }
+ if(condition.kind==='ownEffectHandToOutside'){
+  // 自分の効果で自分の手札を場外に置いている. Payment and an opponent's
+  // discard are different reasons and do not satisfy this sentence.
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.from==='hand'&&e.to==='outside'&&e.reason==='own-effect');
+ }
  if(condition.kind==='otherOwnCharacterBpAtLeast'){
   // 他のキャラ. The card being measured never satisfies its own gate.
   if(typeof cardBp!=='function')throw Error('Current BP condition needs a live BP reader');
