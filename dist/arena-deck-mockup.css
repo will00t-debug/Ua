@@ -445,3 +445,14 @@ body.arena-site .arena-editor .arena-pool-scroll{display:contents}
  }
  body.arena-site .arena-mobile-pick .vdb-pool-head{margin:4px 0}
 }
+
+/* Shared translated rules timing labels, independent of card art and engine. */
+body.arena-site .ua-effect-keyword{
+ display:inline-block;vertical-align:baseline;white-space:nowrap;
+ padding:0 .35em;margin:0 .12em;line-height:1.25;
+ border-radius:.22em;border:1px solid #6883a1;
+ background:#354b62;color:#fff;font-weight:800;
+}
+body.arena-site .ua-effect-keyword.ua-effect-main{
+ background:#0861ad;border-color:#3e9be7;color:#fff;
+}
