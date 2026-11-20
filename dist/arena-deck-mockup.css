@@ -344,3 +344,86 @@ body.arena-site .arena-card-detail-hint{
  body.arena-site .arena-card-detail-hint{font-size:11px;margin-top:8px}
  body.arena-site .arena-editor .vdb-card-name{font-size:12px}
 }
+
+
+/* Mobile deck-building workspace: fixed preview and independently scrolling pool. */
+body.arena-site .arena-editor .arena-pool-count{display:none}
+body.arena-site .arena-editor .arena-mobile-total{display:none}
+body.arena-site .arena-editor .arena-mobile-filters>summary{cursor:pointer;color:#c6d9ef;font-size:12px;padding:8px 0}
+body.arena-site .arena-editor .arena-mobile-filters>summary span{color:#87a8cc;font-size:11px;margin-left:8px}
+
+@media(max-width:680px){
+ body.arena-site .arena-mobile-pick{
+  position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;
+  width:100%;height:100dvh;max-width:none;padding:0;box-sizing:border-box;
+ }
+ body.arena-site .arena-mobile-pick>.ua-site-header,
+ body.arena-site .arena-mobile-pick>.v2e-footer,
+ body.arena-site .arena-mobile-pick .v2e-heading,
+ body.arena-site .arena-mobile-pick .v2e-coverage{display:none}
+ body.arena-site .arena-mobile-pick>.v2e-main{
+  display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:hidden;
+  width:100%;max-width:none;padding:6px 8px max(8px,env(safe-area-inset-bottom));margin:0;box-sizing:border-box;
+ }
+ body.arena-site .arena-mobile-pick .deck-library-editor-nav{flex:none;margin:0 0 5px;padding:0}
+ body.arena-site .arena-mobile-pick .deck-library-editor-nav span{display:none}
+ body.arena-site .arena-mobile-pick .arena-editor{
+  display:flex;flex:1 1 0;flex-direction:column;min-height:0;overflow:hidden;padding:0;gap:5px
+ }
+ body.arena-site .arena-mobile-pick .arena-builder-hero{
+  flex:none;gap:5px;padding:7px;margin:0;border-radius:11px;box-shadow:none
+ }
+ body.arena-site .arena-mobile-pick .arena-hero-overview{
+  grid-template-columns:38px minmax(0,1fr) auto;gap:7px;align-items:center
+ }
+ body.arena-site .arena-mobile-pick .arena-hero-cover{width:38px;grid-row:auto;align-self:center}
+ body.arena-site .arena-mobile-pick .arena-cover-edit{font-size:8px;padding:0;left:0;right:0;bottom:0}
+ body.arena-site .arena-mobile-pick .arena-cover-empty{font-size:16px}
+ body.arena-site .arena-mobile-pick .arena-cover-empty small{display:none}
+ body.arena-site .arena-mobile-pick .arena-hero-description h2{font-size:14px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body.arena-site .arena-mobile-pick .arena-hero-description p{font-size:11px;margin:3px 0 0;line-height:1.2}
+ body.arena-site .arena-mobile-pick .arena-hero-description small{display:none}
+ body.arena-site .arena-mobile-pick .arena-mobile-total{display:inline;color:#81c0ff;white-space:nowrap}
+ body.arena-site .arena-mobile-pick .arena-hero-actions{grid-column:3;display:flex;flex-direction:column;gap:3px;align-items:stretch}
+ body.arena-site .arena-mobile-pick .arena-preview-toggle{font-size:10px;padding:0;justify-content:center}
+ body.arena-site .arena-mobile-pick .arena-hero-save{font-size:12px;padding:5px 9px;min-height:30px}
+ body.arena-site .arena-mobile-pick .arena-count-tabs{display:flex;flex-wrap:nowrap;gap:4px}
+ body.arena-site .arena-mobile-pick .arena-count-tabs button{flex:1;padding:4px 5px;min-height:27px;font-size:11px}
+ body.arena-site .arena-mobile-pick .arena-hero-gallery{height:78px;min-height:78px;box-sizing:border-box;padding:4px;gap:5px;overflow-x:auto;overflow-y:hidden}
+ body.arena-site .arena-mobile-pick .arena-hero-thumb{flex:0 0 47px;width:47px}
+ body.arena-site .arena-mobile-pick .arena-editor-grid{display:flex;flex:1 1 0;min-height:0;overflow:hidden;width:100%;gap:0}
+ body.arena-site .arena-mobile-pick .arena-deck,
+ body.arena-site .arena-mobile-pick .arena-editor>.arena-info,
+ body.arena-site .arena-mobile-pick .arena-editor>.vdb-footnote{display:none}
+ body.arena-site .arena-mobile-pick .arena-pool{
+  display:flex;flex-direction:column;flex:1 1 0;min-height:0;overflow:hidden;min-width:0;
+  padding:6px;border-radius:11px;gap:3px
+ }
+ body.arena-site .arena-mobile-pick .vdb-search{margin:0;flex:none}
+ body.arena-site .arena-mobile-pick .vdb-search label{display:none}
+ body.arena-site .arena-mobile-pick .arena-search-line input{font-size:16px;min-height:36px;padding:5px 9px}
+ body.arena-site .arena-mobile-pick .arena-search-line button{min-height:36px;padding:5px 10px}
+ body.arena-site .arena-mobile-pick .arena-mobile-filters{flex:none;max-height:32dvh;overflow-y:auto;overscroll-behavior:contain}
+ body.arena-site .arena-mobile-pick .arena-mobile-filters>summary{padding:4px 0;min-height:22px}
+ body.arena-site .arena-mobile-pick .arena-filter-more{margin:4px 0}
+ body.arena-site .arena-mobile-pick .vdb-pool-head{flex:none;margin:0;padding:2px 0;gap:3px}
+ body.arena-site .arena-mobile-pick .vdb-pool-head strong{font-size:12px}
+ body.arena-site .arena-mobile-pick .arena-list-tools a{display:none}
+ body.arena-site .arena-mobile-pick .vdb-pool-grid{
+  flex:1 1 0;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior-y:contain;touch-action:pan-y;scrollbar-width:thin;gap:3px
+ }
+ body.arena-site .arena-mobile-pick .vdb-pool-card{
+  flex:none;min-height:86px;box-sizing:border-box;padding:4px 6px;gap:7px;border-radius:7px
+ }
+ body.arena-site .arena-mobile-pick .vdb-card-photo{position:relative;width:54px;min-width:54px}
+ body.arena-site .arena-mobile-pick .arena-pool-count:not([hidden]){
+  position:absolute;display:block;bottom:3px;right:2px;border-radius:4px;
+  background:#071020e8;color:#fff;padding:1px 4px;font-size:12px;font-weight:800
+ }
+ body.arena-site .arena-mobile-pick .vdb-card-text small.vdb-supported{display:none}
+ body.arena-site .arena-mobile-pick .vdb-card-tags span:nth-child(3){display:inline}
+ body.arena-site .arena-mobile-pick .vdb-quantity{display:flex;flex-direction:column;gap:0;align-items:center;flex:none}
+ body.arena-site .arena-mobile-pick .vdb-quantity button{width:44px;min-width:44px;height:34px;min-height:34px;touch-action:manipulation}
+ body.arena-site .arena-mobile-pick .vdb-quantity b{font-size:12px;line-height:15px}
+}
