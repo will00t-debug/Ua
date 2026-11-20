@@ -26,13 +26,13 @@ App version baseline: v9.1.1 (2026-10-12). This repository is meant for GitHub +
 
 ## Fixed V2 errors — check them before adding a card
 `docs/v2-handoff/V2-do-not-regress.md` is the gate for every new card
-(2026-10-14 through 2026-11-16, 256 corrected mistakes, including RNK-1-009
-and the Hiko Raid). Match the printed text to the traps below and to every
+(2026-10-14 through 2026-11-20, 267 corrected mistakes, including RNK-1-009,
+the Hiko Raid, Eva and Toriko raid frames, and Bakugo's empty-field discount). Match the printed text to the traps below and to every
 ledger row that uses the same mechanic. Reuse the corrected shared behavior.
 Do not bring these back on a new card:
 
 1. An inspected window shows every card, including cards that cannot be chosen. Unchosen cards stay private.
-2. Raid-frame text runs only in a face-up Raid. Paid Raid is base, then destination. An effect that prints both modes is card, then mode, then cell. Do not invent the missing mode, and do not put one execute button on every cell.
+2. Raid-frame text runs only in a face-up Raid, including Eva and Toriko. Text outside the frame, such as Toriko 009's BP-down immunity, still applies on an ordinary play. A card with no printed static BP does not run a raid-frame lookup while BP is calculated. Paid Raid is base, then destination. An effect that prints both modes is card, then mode, then cell. Do not invent the missing mode, and do not put one execute button on every cell.
 3. Generated energy is the physical card on the field now. Printed pips are the icons, not a filename, a dash, or an ability plus.
 4. A facedown card does not supply its printed name or trait.
 5. BP at 0 or below leaves the field. A higher-BP blocker does not retire the attacker (Q34). Equal BP retires the blocker.
@@ -46,6 +46,8 @@ Do not bring these back on a new card:
 13. The opening hand is one official 7-card mulligan. An occupied-slot check needs an explicit replace UID.
 14. Life trigger type comes from the immutable pack. "Cannot become ACTIVE until the opponent's attack ends" survives the phase refresh (Q2205).
 15. A buried Raid base does not pass its own front restriction to the top. An energy-only base can still Raid onto the front.
+16. Printed energy 0 stays 0 and can be played. An empty-field hand discount uses the printed amount: Bakugo reduces by 2, so an empty field makes the hand cost 0.
+17. An effect that puts a hand card onto the field stamps the entry turn and uses a shared board cell. A named REST deploy from outside pays that card's own energy and does not charge another AP.
 
 ## Modification protocol
 1. Check `README.md`, `MIGRATION_GITHUB_VERCEL.md`, `docs/v2-handoff/V2-do-not-regress.md`, `docs/ops/cloudflare-github-actions-deploy.md` (for Worker deploys) and the latest GitHub history before changes.
