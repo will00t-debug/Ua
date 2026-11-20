@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cleanCardEffectText,renderCardEffectText} from '../dist/card-effect-display.mjs';
+import {cleanCardEffectText,renderCardEffectText,cardEffectDisplayText} from '../dist/card-effect-display.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
 import {readFileSync} from 'node:fs';
 
@@ -37,8 +37,8 @@ test('actual DGM-1-069 card and all registered title imports use the shared text
  }
  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
  assert.match(read('dist/v2-deck-editor.mjs'),/renderCardEffectText\(translation\)/);
- assert.match(read('dist/visual-deck-builder.mjs'),/renderCardEffectText\(focusCard\.effect/);
- assert.match(read('dist/arena-deck-mockup.css'),/\.ua-effect-keyword\.ua-effect-main\{[^}]*background:#0861ad/);
+ assert.match(read('dist/visual-deck-builder.mjs'),/renderCardEffectText\(cardEffectDisplayText\(focusCard\)/);
+ assert.match(read('dist/arena-deck-mockup.css'),/\.ua-effect-keyword\.ua-effect-main\{[^}]*background:#009bcd/);
 });
 
 test('impact and damage labels support catalogue aliases and keep numeric modifiers distinct',()=>{
@@ -56,6 +56,34 @@ test('impact and damage labels support catalogue aliases and keep numeric modifi
  assert.ok(actual);
  assert.match(renderCardEffectText(actual.effect),/ua-effect-damage">傷害二<\/span>/);
  const css=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
- assert.match(css,/\.ua-effect-keyword\.ua-effect-impact\{/);
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-impact,/);
  assert.match(css,/\.ua-effect-keyword\.ua-effect-damage\{/);
+});
+
+test('Hiko summary has verified display-only timing labels and hand cost',()=>{
+ const card=TITLES.find(t=>t.id==='rnk').cards.find(c=>c.id==='RNK-1-111');
+ const original=card.effect;
+ const html=renderCardEffectText(cardEffectDisplayText(card));
+ assert.match(html,/ua-effect-keyword">登場時<\/span>/);
+ assert.match(html,/ua-effect-main">主啟動<\/span>/);
+ assert.match(html,/ua-effect-keyword">每回合一次<\/span>/);
+ assert.match(html,/2張手牌/);
+ assert.equal(card.effect,original);
+ assert.match(renderCardEffectText('〖啟動主要〗〖每回合1〗'),/ua-effect-main">主啟動<\/span>.*每回合一次/);
+ const sample=cardEffectDisplayText({title:'rnk',effect:'不能在前線登場；登場看牌庫頂2張；衝擊1；啟動主要：休息。'});
+ assert.match(sample,/不能在前線登場；【登場時】看牌庫頂2張；【衝擊1】；【啟動主要】/);
+ assert.equal(cardEffectDisplayText({title:'rnk',effect:'主階段開始時，抽卡。'}),'主階段開始時，抽卡。');
+});
+
+test('Emilia printed-card keywords use yellow impact, blue timing and red raid',()=>{
+ const card=TITLES.find(t=>t.id==='rezero').cards.find(c=>c.id==='REZ-1-106');
+ assert.ok(card);
+ const html=renderCardEffectText(cardEffectDisplayText(card));
+ assert.match(html,/ua-effect-raid">突襲<\/span>/);
+ assert.match(html,/ua-effect-impact">貫通（1）<\/span>/);
+ assert.match(html,/ua-effect-keyword">攻擊時<\/span>/);
+ const css=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
+ assert.match(css,/\.ua-effect-keyword\{[^}]*color-scheme:only light;[^}]*background:#009bcd/);
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-damage\{[^}]*background:#ffe500;[^}]*color:#111/);
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-raid\{[^}]*background:#e60012/);
 });

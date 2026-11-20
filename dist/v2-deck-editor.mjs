@@ -2,7 +2,7 @@
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
 import {TITLES} from './title-registry.mjs?v=20261120dgm2';
 import {PRESETS} from './cards.mjs';
-import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120dgm3effect1combat2';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120dgm3effect1combat2summary3palette4';
 import {validDeckCoverId} from './deck-cover-selection.mjs';
 import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
@@ -11,7 +11,7 @@ import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,editorV2St
  from './v2-editor-compat.mjs?v=20261120dgm2';
 import {readDeckRecord,renderDeckRecord} from './deck-records.mjs';
 
-import {cleanCardEffectText,renderCardEffectText} from './card-effect-display.mjs?v=20261121effect2';
+import {cleanCardEffectText,renderCardEffectText,cardEffectDisplayText} from './card-effect-display.mjs?v=20261121effect4';
 
 const $=s=>document.querySelector(s);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -305,7 +305,7 @@ function showDetail(id){
  const name=card.nameZh||card.name||card.nameJa||card.id;
  // Only cover the printed rules box with an available translation.
  // Cards without a distinct translation always show their untouched original.
- const effect=typeof card.effect==='string'?card.effect.trim():'';
+ const effect=cardEffectDisplayText(card).trim();
  const effectJa=typeof card.effectJa==='string'?card.effectJa.trim():'';
  const translation=effect&&effect!==effectJa?effect:'';
  const showOriginal=state.showOriginal||!translation;
