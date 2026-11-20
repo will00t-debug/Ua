@@ -2,7 +2,7 @@
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
 import {TITLES} from './title-registry.mjs?v=20261120dgm2';
 import {PRESETS} from './cards.mjs';
-import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120dgm3';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120dgm3effect1';
 import {validDeckCoverId} from './deck-cover-selection.mjs';
 import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
@@ -10,6 +10,8 @@ import {BUILTIN_BLEACH_V2_DECKS,builtinBleachDeck} from './v2-bleach-builtins.mj
 import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,editorV2Status}
  from './v2-editor-compat.mjs?v=20261120dgm2';
 import {readDeckRecord,renderDeckRecord} from './deck-records.mjs';
+
+import {cleanCardEffectText,renderCardEffectText} from './card-effect-display.mjs?v=20261121effect1';
 
 const $=s=>document.querySelector(s);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -307,13 +309,14 @@ function showDetail(id){
  const effectJa=typeof card.effectJa==='string'?card.effectJa.trim():'';
  const translation=effect&&effect!==effectJa?effect:'';
  const showOriginal=state.showOriginal||!translation;
- const density=translation.length>260?' is-very-dense':translation.length>130?' is-dense':'';
+ const length=cleanCardEffectText(translation).length;
+ const density=length>260?' is-very-dense':length>130?' is-dense':'';
  return `<div class="v2e-modal-backdrop arena-card-detail-backdrop" data-dismiss="1">
   <section role="dialog" aria-modal="true" aria-label="${escapeHtml(name)} 放大卡圖" class="v2e-modal arena-card-detail-modal">
    <button type="button" class="arena-card-detail-flip${showOriginal?' show-original':''}" data-action="toggleCardOriginal"
     aria-label="${escapeHtml(name)}：${showOriginal?'點擊查看中文效果':'點擊查看日文原文'}" aria-pressed="${showOriginal}">
     <img src="${escapeHtml(img)}" alt="${escapeHtml(name)} 日文卡圖" onerror="this.onerror=null;this.src='assets/mark.svg'">
-    ${translation?`<span class="arena-card-effect-overlay${density}"><span>${escapeHtml(translation)}</span></span>`:''}
+    ${translation?`<span class="arena-card-effect-overlay${density}"><span>${renderCardEffectText(translation)}</span></span>`:''}
    </button>
    <p class="arena-card-detail-hint">${translation?(showOriginal?'點卡圖顯示中文效果':'點卡圖顯示日文原文'):'目前顯示卡片原圖'} · 點卡圖外關閉</p>
   </section>
