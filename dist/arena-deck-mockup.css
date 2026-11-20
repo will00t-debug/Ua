@@ -456,3 +456,11 @@ body.arena-site .ua-effect-keyword{
 body.arena-site .ua-effect-keyword.ua-effect-main{
  background:#0861ad;border-color:#3e9be7;color:#fff;
 }
+
+/* Combat keywords are visually distinct from timing labels. */
+body.arena-site .ua-effect-keyword.ua-effect-impact{
+ background:#ffe047;border-color:#b99b20;color:#181818;
+}
+body.arena-site .ua-effect-keyword.ua-effect-damage{
+ background:#ffe047;border-color:#b99b20;color:#181818;
+}

@@ -1,4 +1,4 @@
-import {renderCardEffectText} from './card-effect-display.mjs?v=20261121effect1';
+import {renderCardEffectText} from './card-effect-display.mjs?v=20261121effect2';
 import {renderDeckRecord} from './deck-records.mjs';
 import {titleLogo} from './title-logos.mjs?v=20261116rnk';
 import {coverChoices,displayCoverCard,validDeckCoverId} from './deck-cover-selection.mjs';

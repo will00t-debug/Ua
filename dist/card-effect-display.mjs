@@ -17,19 +17,31 @@ export function cleanCardEffectText(value){
  }
  return text.replace(/<br\s*\/?>/gi,'\n').replace(/\r\n?/g,'\n').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
 }
-// Only recognize timing headers, never ordinary mentions inside effect prose.
+// Recognize explicit printed keyword labels without changing ordinary rule prose.
 const timing='主[啟起]動|登場時|攻擊時|退場時|自己回合中|對手回合中';
-const explicit=new RegExp('【('+timing+')】|\\[('+timing+')\\]|［('+timing+')］','g');
-const prefix=new RegExp('^('+timing+')(?=\\s|[:：]|$)');
-const badge=keyword=>'<span class="ua-effect-keyword'+(/^主[啟起]動$/.test(keyword)?' ua-effect-main':'')+'">'+escapeHtml(keyword.replace(/^主起動$/,'主啟動'))+'</span>';
+const numeral='[+＋]?[0-9０-９一二三四五六七八九十]+';
+const value='(?:[（(]\\s*'+numeral+'\\s*[）)]|\\s*'+numeral+')';
+const impact='(?:貫通|衝擊)(?:無效|'+value+')?';
+const damage='傷害'+value;
+const keyword=timing+'|'+impact+'|'+damage;
+const explicit=new RegExp('【('+keyword+')】|\\[('+keyword+')\\]|［('+keyword+')］','g');
+const prefix=new RegExp('^('+keyword+')');
+const badge=word=>{
+ let label=word.replace(/^主起動$/,'主啟動');
+ let style='';
+ if(/^主[啟起]動$/.test(word))style=' ua-effect-main';
+ else if(/^(貫通|衝擊)/.test(word)){style=' ua-effect-impact';label=label.replace(/^衝擊/,'貫通');}
+ else if(/^傷害/.test(word)){style=' ua-effect-damage';if(/^傷害\s*(?:[（(]\s*[2２二]\s*[）)]|[2２二])$/.test(word))label='傷害二';}
+ return '<span class="ua-effect-keyword'+style+'">'+escapeHtml(label)+'</span>';
+};
 export function renderCardEffectText(value){
  // Imported HTML used non-breaking spaces as timing-label delimiters.
- const marked=String(value??'').replace(new RegExp('(?:&(?:amp;)*nbsp;?|\\u00a0)\\s*('+timing+')\\s*(?:&(?:amp;)*nbsp;?|\\u00a0)','g'),'【$1】');
+ const marked=String(value??'').replace(new RegExp('(?:&(?:amp;)*nbsp;?|\\u00a0)\\s*('+keyword+')\\s*(?:&(?:amp;)*nbsp;?|\\u00a0)','g'),'【$1】');
  const text=cleanCardEffectText(marked);
  return text.split('\n').map(line=>{
   let result='',end=0;
   const first=line.match(prefix);
-  if(first){result=badge(first[1]);end=first[0].length;}
+  if(first&&/^(?:\s|[:：]|[(（]|$)/.test(line.slice(first[0].length))){result=badge(first[1]);end=first[0].length;}
   explicit.lastIndex=end;
   for(const m of line.matchAll(explicit)){
    result+=escapeHtml(line.slice(end,m.index))+badge(m[1]||m[2]||m[3]);

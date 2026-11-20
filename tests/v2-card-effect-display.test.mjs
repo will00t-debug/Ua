@@ -40,3 +40,22 @@ test('actual DGM-1-069 card and all registered title imports use the shared text
  assert.match(read('dist/visual-deck-builder.mjs'),/renderCardEffectText\(focusCard\.effect/);
  assert.match(read('dist/arena-deck-mockup.css'),/\.ua-effect-keyword\.ua-effect-main\{[^}]*background:#0861ad/);
 });
+
+test('impact and damage labels support catalogue aliases and keep numeric modifiers distinct',()=>{
+ const html=renderCardEffectText('【貫通】【傷害二】\n【衝擊（1）】【傷害（2）】【傷害（3）】【傷害（+1）】');
+ assert.match(html,/ua-effect-impact">貫通<\/span>/);
+ assert.match(html,/ua-effect-impact">貫通（1）<\/span>/);
+ assert.equal((html.match(/ua-effect-damage">傷害二<\/span>/g)||[]).length,2);
+ assert.match(html,/ua-effect-damage">傷害（3）<\/span>/);
+ assert.match(html,/ua-effect-damage">傷害（\+1）<\/span>/);
+ assert.match(renderCardEffectText('&nbsp貫通&nbsp &nbsp傷害２&nbsp'),/ua-effect-impact">貫通<\/span>.*ua-effect-damage">傷害二<\/span>/);
+ assert.match(renderCardEffectText('貫通（1）（攻擊勝利時）'),/ua-effect-impact">貫通（1）<\/span>/);
+ assert.equal(renderCardEffectText('傷害2點時抽卡。'),'傷害2點時抽卡。');
+ assert.equal(renderCardEffectText('此角色造成傷害二次後抽卡。'),'此角色造成傷害二次後抽卡。');
+ const actual=TITLES.find(t=>t.id==='aot').cards.find(c=>typeof c.effect==='string'&&c.effect.includes('【傷害（2）】'));
+ assert.ok(actual);
+ assert.match(renderCardEffectText(actual.effect),/ua-effect-damage">傷害二<\/span>/);
+ const css=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-impact\{/);
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-damage\{/);
+});
