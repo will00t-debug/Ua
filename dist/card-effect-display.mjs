@@ -23,7 +23,9 @@ const explicit=new RegExp('【('+timing+')】|\\[('+timing+')\\]|［('+timing+')
 const prefix=new RegExp('^('+timing+')(?=\\s|[:：]|$)');
 const badge=keyword=>'<span class="ua-effect-keyword'+(/^主[啟起]動$/.test(keyword)?' ua-effect-main':'')+'">'+escapeHtml(keyword.replace(/^主起動$/,'主啟動'))+'</span>';
 export function renderCardEffectText(value){
- const text=cleanCardEffectText(value);
+ // Imported HTML used non-breaking spaces as timing-label delimiters.
+ const marked=String(value??'').replace(new RegExp('(?:&(?:amp;)*nbsp;?|\\u00a0)\\s*('+timing+')\\s*(?:&(?:amp;)*nbsp;?|\\u00a0)','g'),'【$1】');
+ const text=cleanCardEffectText(marked);
  return text.split('\n').map(line=>{
   let result='',end=0;
   const first=line.match(prefix);
