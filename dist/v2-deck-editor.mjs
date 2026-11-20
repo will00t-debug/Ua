@@ -347,7 +347,7 @@ function rulesScreen(){
 // Update counts without replacing the scrolling pool or its card images.
 function refreshCountPanels(next,t){
  const root=$('.arena-editor');
- if(!root?.querySelector('.vdb-pool-grid'))return false;
+ if(!root?.querySelector?.('.vdb-pool-grid'))return false;
  const parse=html=>{const temp=document.createElement('template');temp.innerHTML=html;return temp.content.firstElementChild;};
  const hero=root.querySelector('.arena-builder-hero'),newHero=parse(next.hero);
  const gallery=hero.querySelector('.arena-hero-gallery'),newGallery=newHero.querySelector('.arena-hero-gallery');
@@ -393,10 +393,10 @@ function render(countOnly=false){
  const oldDeck=$('.arena-deck-board');
  const oldGalleryLeft=$('.arena-hero-gallery')?.scrollLeft||0;
  const oldFilters=$('.arena-mobile-filters');
- const oldFilterScroll=[...document.querySelectorAll('.arena-editor .vdb-filter-line')].map(el=>el.scrollLeft);
+ const oldFilterScroll=[...(document.querySelectorAll?.('.arena-editor .vdb-filter-line')||[])].map(el=>el.scrollLeft);
  const oldSortOpen=$('.arena-filter-more')?.open||false;
  const oldDeckOpen=$('.arena-deck-fold')?.open??true;
- const mobile=window.matchMedia('(max-width: 680px)').matches;
+ const mobile=window.matchMedia?.('(max-width: 680px)')?.matches??false;
  const oldPoolTop=oldPool?.scrollTop??null,oldPoolLeft=oldPool?.scrollLeft??0;
  const oldDeckTop=oldDeck?.scrollTop??null;
  const previousPageY=window.scrollY,previousPageX=window.scrollX;
@@ -426,7 +426,7 @@ function render(countOnly=false){
  }):(state.screen==='chooseTitle'?renderVisualDeckBuilder({
   ...editorOptions,ready:false,savedOptions:[],saveAction:'saveDeck',newAction:'newDeck',issues:[],v2SupportedIds:null,v2Ready:false
  }):'');
- if(countOnly===true&&typeof editor==='object'&&refreshCountPanels(editor,t))return;
+ if(countOnly===true&&typeof editor==='object'){if(refreshCountPanels(editor,t))return;return render();}
  const recordAside=state.screen==='detail'?`<aside class="arena-manage-side">${manageTools()}${renderDeckRecord({record:readDeckRecord(localStorage,activeDeckRecordId()),view:state.recordView})}</aside>`:'';
  const stage=state.screen==='library'?renderLibrary():browsing?(state.screen==='detail'&&state.listOrigin==='library'?`<div class="deck-library-detail">${renderDetail()}<details class="deck-library-advanced"><summary>進階牌組操作與戰績</summary>${manageTools()}${renderDeckRecord({record:readDeckRecord(localStorage,activeDeckRecordId()),view:state.recordView})}</details></div>`:state.screen==='detail'?`<div class="arena-manage"><aside class="arena-manage-list">${renderGallery()}</aside><div class="arena-manage-main">${renderDetail()}</div>${recordAside}</div>`:renderGallery()):state.screen==='records'?recordsScreen():state.screen==='rules'?rulesScreen():'';
  const libraryNavigation=state.screen==='editor'?'<div class="deck-library-editor-nav"><button type="button" data-action="backLibrary">‹ 返回我的牌組</button><span>調整後請按「儲存牌組」保留變更</span></div>':state.screen==='chooseTitle'?'<div class="deck-library-editor-nav"><button type="button" data-action="backLibrary">‹ 返回我的牌組</button></div>':'';
@@ -441,7 +441,7 @@ function render(countOnly=false){
  if(oldPoolTop!==null&&newPool){
   newPool.scrollTop=oldPoolTop;newPool.scrollLeft=oldPoolLeft;
   const gallery=$('.arena-hero-gallery');if(gallery)gallery.scrollLeft=oldGalleryLeft;
-  document.querySelectorAll('.arena-editor .vdb-filter-line').forEach((node,i)=>{node.scrollLeft=oldFilterScroll[i]||0;});
+  (document.querySelectorAll?.('.arena-editor .vdb-filter-line')||[]).forEach((node,i)=>{node.scrollLeft=oldFilterScroll[i]||0;});
   const sort=$('.arena-filter-more');if(sort)sort.open=oldSortOpen;
   const fold=$('.arena-deck-fold');if(fold)fold.open=state.tab==='overview'||oldDeckOpen;
  }
