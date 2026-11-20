@@ -25,7 +25,7 @@ const impact='(?:貫通|衝擊)(?:無效|'+value+')?';
 const damage='傷害'+value;
 const keyword=timing+'|'+impact+'|'+damage;
 const explicit=new RegExp('【('+keyword+')】|\\[('+keyword+')\\]|［('+keyword+')］','g');
-const prefix=new RegExp('^('+keyword+')(?=\\s|[:：]|[（(]|$)');
+const prefix=new RegExp('^('+keyword+')');
 const badge=word=>{
  let label=word.replace(/^主起動$/,'主啟動');
  let style='';
@@ -41,7 +41,7 @@ export function renderCardEffectText(value){
  return text.split('\n').map(line=>{
   let result='',end=0;
   const first=line.match(prefix);
-  if(first){result=badge(first[1]);end=first[0].length;}
+  if(first&&/^(?:\s|[:：]|[(（]|$)/.test(line.slice(first[0].length))){result=badge(first[1]);end=first[0].length;}
   explicit.lastIndex=end;
   for(const m of line.matchAll(explicit)){
    result+=escapeHtml(line.slice(end,m.index))+badge(m[1]||m[2]||m[3]);
