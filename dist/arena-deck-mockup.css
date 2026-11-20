@@ -427,3 +427,21 @@ body.arena-site .arena-editor .arena-mobile-filters>summary span{color:#87a8cc;f
  body.arena-site .arena-mobile-pick .vdb-quantity button{width:44px;min-width:44px;height:34px;min-height:34px;touch-action:manipulation}
  body.arena-site .arena-mobile-pick .vdb-quantity b{font-size:12px;line-height:15px}
 }
+
+/* Pool swipe: search stays pinned; filters and cards scroll together. */
+body.arena-site .arena-editor .arena-pool-scroll{display:contents}
+@media(max-width:680px){
+ body.arena-site .arena-mobile-pick .arena-pool-scroll{
+  display:block;flex:1 1 0;min-height:0;min-width:0;
+  overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;
+  touch-action:pan-y;scrollbar-width:thin
+ }
+ body.arena-site .arena-mobile-pick .arena-mobile-filters{
+  max-height:none;overflow:visible;overscroll-behavior:auto
+ }
+ body.arena-site .arena-mobile-pick .vdb-pool-grid{
+  flex:none;min-height:0;max-height:none;overflow:visible;
+  overscroll-behavior:auto;touch-action:auto
+ }
+ body.arena-site .arena-mobile-pick .vdb-pool-head{margin:4px 0}
+}

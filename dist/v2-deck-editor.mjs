@@ -2,7 +2,7 @@
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
 import {TITLES} from './title-registry.mjs?v=20261120mha011';
 import {PRESETS} from './cards.mjs';
-import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120mobileflow1';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120mobileflow2';
 import {validDeckCoverId} from './deck-cover-selection.mjs';
 import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
@@ -393,10 +393,10 @@ function render(countOnly=false){
  const oldDeck=$('.arena-deck-board');
  const oldGalleryLeft=$('.arena-hero-gallery')?.scrollLeft||0;
  const oldFilters=$('.arena-mobile-filters');
+ const oldPoolScroll=$('.arena-pool-scroll')?.scrollTop??0;
  const oldFilterScroll=[...(document.querySelectorAll?.('.arena-editor .vdb-filter-line')||[])].map(el=>el.scrollLeft);
  const oldSortOpen=$('.arena-filter-more')?.open||false;
  const oldDeckOpen=$('.arena-deck-fold')?.open??true;
- const mobile=window.matchMedia?.('(max-width: 680px)')?.matches??false;
  const oldPoolTop=oldPool?.scrollTop??null,oldPoolLeft=oldPool?.scrollLeft??0;
  const oldDeckTop=oldDeck?.scrollTop??null;
  const previousPageY=window.scrollY,previousPageX=window.scrollX;
@@ -419,7 +419,7 @@ function render(countOnly=false){
   allowDelete:Boolean(state.selectedSaved[state.title]||state.cloudOrigin)
  };
  const editor=state.ready&&state.screen==='editor'?renderVisualDeckBuilder({
-  ...editorOptions,ready:true,countOnly:countOnly===true&&Boolean(oldPool),filtersOpen:oldFilters?.open??!mobile,
+  ...editorOptions,ready:true,countOnly:countOnly===true&&Boolean(oldPool),filtersOpen:oldFilters?.open??true,
   savedOptions:[...(state.title==='bleach'?BUILTIN_BLEACH_V2_DECKS.map(d=>({value:'builtin:'+d.id,label:'指定牌組｜'+d.displayName+'（50 張）'})):[]),...savedData[state.title].map((d,i)=>({value:String(i),label:d.name}))],
   saveAction:'saveDeck',newAction:'newDeck',issues:info.issues,
   v2SupportedIds:info.supported,v2Ready:info.ready,reselectLabel:'‹ 返回牌組列表'
@@ -440,6 +440,7 @@ function render(countOnly=false){
  const newDeck=$('.arena-deck-board');
  if(oldPoolTop!==null&&newPool){
   newPool.scrollTop=oldPoolTop;newPool.scrollLeft=oldPoolLeft;
+  const swipePool=$('.arena-pool-scroll');if(swipePool)swipePool.scrollTop=oldPoolScroll;
   const gallery=$('.arena-hero-gallery');if(gallery)gallery.scrollLeft=oldGalleryLeft;
   (document.querySelectorAll?.('.arena-editor .vdb-filter-line')||[]).forEach((node,i)=>{node.scrollLeft=oldFilterScroll[i]||0;});
   const sort=$('.arena-filter-more');if(sort)sort.open=oldSortOpen;
