@@ -18,7 +18,7 @@ export function cleanCardEffectText(value){
  return text.replace(/<br\s*\/?>/gi,'\n').replace(/\r\n?/g,'\n').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
 }
 // Recognize explicit printed keyword labels without changing ordinary rule prose.
-const timing='主[啟起]動|[啟起]動主要|登場時|攻擊時|退場時|自己回合中|對手回合中|每回合[1１一次]+';
+const timing='主[啟起]動|[啟起]動主要|登場時|攻擊時|退場時|自己回合中|對手回合中|每回合(?:[1１]次?|一次)';
 const numeral='[+＋]?[0-9０-９一二三四五六七八九十]+';
 const value='(?:[（(]\\s*'+numeral+'\\s*[）)]|\\s*'+numeral+')';
 const impact='(?:貫通|衝擊)(?:無效|'+value+')?';
@@ -60,6 +60,7 @@ export function cardEffectDisplayText(card){
  // RNK catalogue summaries use semicolon-separated clauses rather than printed labels.
  // Only mark unambiguous clause starts; never replace words inside a sentence.
  if(card?.title!=='rnk')return raw;
- return raw.replace(/(^|[；;\n])(\s*)(登場時?|攻擊時|退場時|主階段|主[啟起]動|[啟起]動主要)(?=[:：\s]|[^時])/g,(_all,sep,space,word)=>sep+space+'【'+(word==='登場'?'登場時':word==='主階段'?'主啟動':word)+'】')
+ return raw.replace(/(^|[；;\n])(\s*)(登場時?|攻擊時|退場時|主階段(?=每回合一次)|主[啟起]動|[啟起]動主要)(?!時)/g,(_all,sep,space,word)=>sep+space+'【'+(word==='登場'?'登場時':word==='主階段'?'主啟動':word)+'】')
+  .replace(/【主啟動】每回合一次/g,'【主啟動】【每回合一次】')
   .replace(/(^|[；;\n])(\s*)((?:貫通|衝擊)(?:無效|[0-9０-９一二三]+)|傷害[0-9０-９一二三]+)(?=[；;：:\n。]|$)/g,'$1$2【$3】');
 }
