@@ -38,3 +38,16 @@ test('battle rerenders preserve the desktop viewport while selecting moves',()=>
  assert.match(render,/target\.replaceChildren\(\)/);
  assert.match(render,/if\(IS_BATTLE_PAGE&&preserveScroll\)window\.scrollTo\(window\.scrollX,oldScroll\)/);
 });
+
+test('mobile scroll includes filters and cards, with the search outside the scroll region',()=>{
+ const source=read('dist/visual-deck-builder.mjs');
+ const css=read('dist/arena-deck-mockup.css');
+ const editor=read('dist/v2-deck-editor.mjs');
+ const start=source.indexOf('class="arena-pool-scroll"');
+ assert.ok(source.indexOf('class="arena-search-line"')<start);
+ assert.ok(start<source.indexOf('class="arena-mobile-filters"'));
+ assert.ok(start<source.indexOf('class="vdb-pool-grid"'));
+ assert.match(css,/\.arena-mobile-pick \.arena-pool-scroll\{[^}]*overflow-y:auto/);
+ assert.match(css,/\.arena-mobile-pick \.vdb-pool-grid\{[^}]*overflow:visible/);
+ assert.match(editor,/swipePool\.scrollTop=oldPoolScroll/);
+});
