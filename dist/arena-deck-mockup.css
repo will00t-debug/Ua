@@ -351,11 +351,7 @@ body.arena-site .arena-editor .arena-pool-count{display:none}
 body.arena-site .arena-editor .arena-mobile-total{display:none}
 body.arena-site .arena-editor .arena-mobile-filters>summary{cursor:pointer;color:#c6d9ef;font-size:12px;padding:8px 0}
 body.arena-site .arena-editor .arena-mobile-filters>summary span{color:#87a8cc;font-size:11px;margin-left:8px}
-@media(min-width:681px){
- body.arena-site .arena-editor .arena-mobile-filters>summary{display:none}
- body.arena-site .arena-editor .arena-mobile-filters:not([open])> :not(summary){display:block}
- body.arena-site .arena-editor .arena-mobile-filters:not([open])>.vdb-filter-line{display:flex}
-}
+
 @media(max-width:680px){
  body.arena-site .arena-mobile-pick{
   position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;
