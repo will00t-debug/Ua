@@ -48,6 +48,10 @@ import {bindFinishApi,finishJob,legalFinishPending,resolveFinishChoice,
 import {raidBoxListed} from './raid-box.mjs';
 import {runSharedPrintJob,legalSharedPrintPending,resolveSharedPrintPending,
  legalSharedPrintActivations,activateSharedPrint,sharedPrintLookView} from './shared-print.mjs';
+import {runSharedPrintMoreJob,legalSharedPrintMorePending,resolveSharedPrintMorePending,
+ legalSharedPrintMoreActivations,activateSharedPrintMore,offerNamedFrontLeave,frontWardBlocks,
+ unionOutsideCut,raidTraitBanned,printMoreSniperProved,printMoreLowProved,printMoreCeilingProved,
+ queuePrintMoreAttackEnd,queuePrintMorePhaseEnd} from './shared-print-more.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 
 function hasPrintedTrait(definition){
@@ -148,6 +152,7 @@ function queueOwnAttackEnd(pack,s,attacker){
   s.effectQueue.push({op:'kmr2',id:printed.id,slot:'attackEnd',owner,sourceUid:attacker.uid});
  ensureCsm();
  if(raidBoxTextLive(pack,attacker,'attackEnd'))csmOnAttackEnd(pack,s,attacker);
+ queuePrintMoreAttackEnd(printApi(),pack,s,attacker);
  for(const ally of pl.energy.filter(Boolean)){
   if(originalEffectsDisabled(s,ally)||!pl.front.some(slot=>!slot))continue;
   const copied=Array.isArray(ally.kmr2Copied?.ids)?ally.kmr2Copied.ids:[];
@@ -592,6 +597,7 @@ function draw(pack,s,p,count=1,{reason='rule',sourceUid=null}={}){
 // legal, but three green icons do not pay a purple energy-3 requirement.
 function choiceBlocked(pack,s,selector,uid,sourceType,purpose=null){
  if(effectChoiceProtected(s,selector,uid,sourceType))return true;
+ if(frontWardBlocks(printApi(),pack,s,selector,uid,sourceType))return true;
  if(typeof uid==='string'&&(uid[0]==='0'||uid[0]==='1')){
   const immuneOwner=Number(uid[0]);
   const immune=[...s.players[immuneOwner].front,...s.players[immuneOwner].energy].find(x=>x?.uid===uid);
@@ -1303,9 +1309,10 @@ export function universalAttackDamage(pack,s,c){
  const revealDamage=!originalEffectsDisabled(s,c)&&d.id==='MMM-2-056'&&
   s.players[owner]?.deckRevealEnergy5===s.turn?2:1;
  const raidDmg=faceUpRaid(pack,c)?(d.raidAttackDamage||0):0;
+ const unraidedDmg=!faceUpRaid(pack,c)&&!originalEffectsDisabled(s,c)?(d.unraidedAttackDamage||0):0;
  const raidExtra=faceUpRaid(pack,c)&&s.active===owner?(d.raidExtraDamage||0):0;
  const outsideDamage=outsideCountGrant(pack,s,c,d,originalEffectsDisabled(s,c)).damage;
- const base=Math.max(raidBoxTextLive(pack,c,'printedAttackDamage')?d.printedAttackDamage||1:1,raidDmg,earned,revealDamage,outsideDamage,
+ const base=Math.max(raidBoxTextLive(pack,c,'printedAttackDamage')?d.printedAttackDamage||1:1,raidDmg,unraidedDmg,earned,revealDamage,outsideDamage,
   gained&&gained.turn===s.turn&&
    gained.stamp===c.fieldEntryStamp?2:1,passiveKeyword);
  const aotDamage=d.id==='AOT-1-038'&&s.active===owner&&faceUpRaid(pack,c)&&
@@ -2128,6 +2135,7 @@ function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
   if(entries.length)s.effectQueue.push({op:'phaseOrder',owner,entries});
  }
  if(phase==='attack'&&edge==='end'){
+  queuePrintMorePhaseEnd(printApi(),pack,s,turnPlayer);
   const owner=1-turnPlayer;
   const jobs=[];
   for(const c of [...s.players[owner].front,...s.players[owner].energy].filter(Boolean)){
@@ -4387,10 +4395,18 @@ function printApi(){
   energyReady(pack,s,player,printed){
    return zoneRequiredEnergy(pack,s,player,printed,'outside')<=
     (universalEnergyByColor(pack,s,player)[printed.color]||0);
+  },
+  fieldToDeckBottom,fieldToDeckTop,peelRaidBase,
+  recordMove(pack,s,move){recordCompletedMove(pack,s,move);},
+  stripRaidTop(pack,s,owner,top){
+   const pos=location(s,owner,top?.uid);
+   if(!pos||!top?.stack?.length)return null;
+   return revealChainOrigin(pack,s,owner,top).origin;
   }};
 }
 function runSharedPrintedJob(pack,s,job){
  if(runSharedPrintJob(printApi(),pack,s,job))return true;
+ if(runSharedPrintMoreJob(printApi(),pack,s,job))return true;
  const owner=job.owner,pl=s.players[owner];
  if(job.op==='grantNamedSelectHandTax'){
   const choices=field(pl).filter(c=>cardHasName(card(pack,c),job.name,
@@ -9567,6 +9583,10 @@ function unblockedBeforeDamage(pack,s,attacker){
    sourceStamp:attacker.fieldEntryStamp,then});
   else jobs.push(...then);
  }
+ const namedDraw=card(pack,attacker).unblockedIfName;
+ if(namedDraw&&!originalEffectsDisabled(s,attacker)&&
+  ownFieldHasPrintedName(pack,s,s.active,namedDraw))
+  jobs.push({op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
  if(card(pack,attacker).id==='MMM-2-038'&&!originalEffectsDisabled(s,attacker))
   attacker.mmm2SkipEndActive=s.turn;
  if(card(pack,attacker).id==='IYS-1-046'&&!originalEffectsDisabled(s,attacker)&&
@@ -9897,6 +9917,9 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid,{reason='own-effect',controller
  if((reason==='opponent-effect'||by==='opponent')&&!originalEffectsDisabled(s,found.c)&&
   raidBoxTextLive(pack,found.c,'opponentBounceImmune')&&
   card(pack,found.c).opponentBounceImmune===true)return false;
+ const bounceWard=found.c.printWard;
+ if((reason==='opponent-effect'||by==='opponent')&&bounceWard&&bounceWard.turn===s.turn&&
+  bounceWard.stamp===found.c.fieldEntryStamp&&bounceWard.noBounce)return false;
  if(!skipReplacement&&caused&&raidLeaveOffer(pack,s,p,found.c)){
   s.pending={kind:'effect-raid-leave',player:p,uid,line:found.line,slot:found.slot,
    mode:'bounce',reason,controller,sourceUid,by:by||'opponent',postImpact:false};
@@ -10939,7 +10962,15 @@ function retire(pack,s,p,line,slot,opts={}){
  s.csmRetireCause=cause;
  s.kmrRetireBy=by;
  try{
-  if(kmrSubstitute025(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause,
+  if(!skipReplacement&&offerNamedFrontLeave(printApi(),pack,s,p,c,line,slot,{
+  ...opts,by,cause,postImpact,skipReplacement}))return true;
+ const leaveWard=c.printWard;
+ if(!skipReplacement&&by==='opponent'&&leaveWard&&leaveWard.turn===s.turn&&
+  leaveWard.stamp===c.fieldEntryStamp&&leaveWard.leaveInstead&&!c.grantedAttackEndRetire){
+  c.grantedAttackEndRetire={turn:s.turn,stamp:c.fieldEntryStamp};
+  return false;
+ }
+ if(kmrSubstitute025(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause,
    declined025:opts.declined025===true}))return true;
   if(kmrSpend051(pack,s,p,c,line,slot,{postImpact,by,skipReplacement,cause}))return true;
   if(!skipReplacement&&raidBoxTextLive(pack,c,'leaveReplace')){
@@ -11636,6 +11667,12 @@ function revealChainOrigin(pack,s,owner,source){
  return {origin,line:pos.line,slot:pos.slot};
 }
 function resistOpponentRest(pack,s,target){
+ const ward=target?.printWard;
+ if(ward&&ward.turn===s.turn&&ward.stamp===target.fieldEntryStamp&&ward.noRest&&s.active!==undefined){
+  let owner=null;
+  for(const p of [0,1])if(field(s.players[p]).some(c=>c.uid===target.uid))owner=p;
+  if(owner!==null&&s.active!==owner)return true;
+ }
  return !!target&&!originalEffectsDisabled(s,target)&&
   raidBoxTextLive(pack,target,'opponentRestImmune')&&
   card(pack,target).opponentRestImmune===true;
@@ -11794,6 +11831,7 @@ function namedFieldImpactChoices(pack,s,owner,sourceUid,names){
 function resolveChoice(s,a,pack){
  if(resolveSharedRestPending(pack,s,a))return;
  if(resolveSharedPrintPending(printApi(),pack,s,a))return;
+ if(resolveSharedPrintMorePending(printApi(),pack,s,a))return;
  const q=s.pending,p=s.players[q.player];
  if(q.kind==='attack-life-target'){
   const life=s.players[q.defender].life;
@@ -13199,12 +13237,18 @@ function resolveChoice(s,a,pack){
   // Official Q79/Q80 (2023-03-17): 【2回ブロック】 designates the blocker,
   // rests it, then sets it ACTIVE before battle. A loss therefore leaves
   // while ACTIVE. This count is per physical UID and is not the attack count.
-  const blocked=(s.blocksByUid[blocker.uid]||0)+1;
+  if(!originalEffectsDisabled(s,attacker)&&raidBoxTextLive(pack,attacker,'onAttackBlocked')&&
+  (card(pack,attacker).effects?.onAttackBlocked||[]).some(e=>e.op==='lockBlockerUntilLeaveFront')&&
+  s.players[s.active].front.some(x=>x?.uid===attacker.uid))
+  grantContinuousState(s,{kind:'cannotActive',controller:s.active,sourceUid:attacker.uid,
+   targetUid:blocker.uid,sourceLinked:true,whileSourceFront:true,until:null,releaseBeforeRefresh:false});
+ const blocked=(s.blocksByUid[blocker.uid]||0)+1;
   s.blocksByUid[blocker.uid]=blocked;
   const passiveDouble=livePassives(pack,s,blocker).some(p=>p.doubleBlock===true&&
   matchesV2LiveCondition(s,q.player,blocker.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,q.player),x=>bp(pack,s,x)));
  const blockKeyword=Math.max(raidBoxTextLive(pack,blocker,'readyOnBlockCount')?card(pack,blocker).readyOnBlockCount||0:0,
+   !faceUpRaid(pack,blocker)&&!originalEffectsDisabled(s,blocker)?card(pack,blocker).unraidedReadyOnBlock||0:0,
    liveUntilNextOwnStart(s,blocker,'doubleBlockUntil')?1:0,
    passiveDouble?1:0,
    aot2Warhammer(pack,s,blocker)?1:0);
@@ -20421,6 +20465,8 @@ function legalPending(pack,s){
  if(sharedRest?.length)return sharedRest;
  const sharedPrint=legalSharedPrintPending(printApi(),pack,s);
  if(sharedPrint)return sharedPrint;
+ const sharedMore=legalSharedPrintMorePending(printApi(),pack,s);
+ if(sharedMore)return sharedMore;
  if(q.kind==='opening-mulligan')return [{type:'openingMulligan',mode:'keep'},{type:'openingMulligan',mode:'redraw'}];
  ensureFinish();
  const finishLegal=legalFinishPending(pack,s);
@@ -23844,7 +23890,10 @@ function handApPlan(pack,s,owner,d,opts={}){
  const base=handPlayApPlan(s,owner,d,{...opts,nameOnField,frontNameOnField});
  let extra=0;
  const pl=s.players[owner];
- if(opts.from==='removed'){
+ if(opts.from==='outside'){
+  const rule=unionOutsideCut(printApi(),pack,s,owner,d);
+  if(rule)extra+=rule.apCut;
+ }else if(opts.from==='removed'){
   const cut=pl?.nextRemovedApCut;
   if(cut&&cut.turn===s.turn)extra+=cut.amount;
  }else{
@@ -25079,7 +25128,7 @@ export function legalUniversalActions(pack,s){
      out.push({type:'play',uid:c.uid,line,...choice});
    }
    }
-   if(!raidBanned&&raidPayment&&raidPayment.cost<=ap&&canRaid&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!otherTraitHandBanned(pack,s,p,d)){
+   if(!raidBanned&&raidPayment&&raidPayment.cost<=ap&&canRaid&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!otherTraitHandBanned(pack,s,p,d)&&!raidTraitBanned(printApi(),pack,s,p,d)){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
      if(!validRaidBase(pack,s,p,base,d))continue;
@@ -25097,6 +25146,20 @@ export function legalUniversalActions(pack,s){
      if(line==='energy'&&!d.energyLineForbidden)
       out.push({type:'raid',uid:c.uid,baseUid:base.uid,line:'energy',slot});
     }
+   }
+  }
+  for(const c of pl.outside){
+   const d=card(pack,c);
+   const cut=unionOutsideCut(printApi(),pack,s,p,d);
+   if(!cut||s.phase!=='main')continue;
+   const need=Math.max(0,d.energy-cut.energyCut);
+   const payment=handApPlan(pack,s,p,d,{from:'outside',uid:c.uid});
+   if(!energyCovers(produced,d,need)||payment.cost>ap)continue;
+   for(const line of ['energy','front']){
+    if(line==='front'&&d.type!=='character')continue;
+    if(line==='energy'&&d.type==='field')continue;
+    for(const choice of legalDestinations(pl,line))
+     out.push({type:'play',uid:c.uid,from:'outside',line,...choice});
    }
   }
   for(const c of pl.removed){
@@ -25131,7 +25194,7 @@ export function legalUniversalActions(pack,s){
    }
    // Using a card includes Raid. The same removed-area permission that
    // allows a play allows a printed Raid, paying that card's energy and AP.
-   if(!raidBanned&&raidPayment&&raidPayment.cost<=ap&&canRaid&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)){
+   if(!raidBanned&&raidPayment&&raidPayment.cost<=ap&&canRaid&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!raidTraitBanned(printApi(),pack,s,p,d)){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
      if(!validRaidBase(pack,s,p,base,d))continue;
@@ -25204,7 +25267,10 @@ export function legalUniversalActions(pack,s){
   });
   if(forced&&out.some(a=>a.type==='attack'))return out.filter(a=>a.type!=='next');
  }
- if(s.phase==='main')out.push(...legalSharedPrintActivations(printApi(),pack,s,s.active));
+ if(s.phase==='main'){
+  out.push(...legalSharedPrintActivations(printApi(),pack,s,s.active));
+  out.push(...legalSharedPrintMoreActivations(printApi(),pack,s,s.active));
+ }
  return out;
 }
 // Life RAID asks whether the revealed card's required energy is met.
@@ -25257,6 +25323,7 @@ export function zoneRequiredEnergy(pack,s,p,d,zone){
   d.handEnergyWhileActivateMain.amount:0;
  const zoneCut=(zone==='hand'||zone==='outside')&&d.handOutsideEnergyDiscount?
   d.handOutsideEnergyDiscount:0;
+ const unionCut=zone==='outside'?unionOutsideCut(printApi(),pack,s,p,d)?.energyCut||0:0;
  const titanCut=d.id==='AOT-1-048'&&zone!=='field'?
   field(s.players[p]).filter(c=>cardHasTrait(card(pack,c),'無垢の巨人')).length:0;
  const keyCut=zone==='hand'&&d.id==='AOT-1-095'&&
@@ -25264,7 +25331,7 @@ export function zoneRequiredEnergy(pack,s,p,d,zone){
  const vol2Cut=aot2EnergyCut(pack,s,p,d,zone);
  const riderCut=kmrEnergyCut(pack,s,p,d,zone,card);
  const rider2Cut=kmr2EnergyCut(pack,s,p,d,zone,card);
- return Math.max(0,d.energy-traitCut-handCut-pairCut-namedCut-sumCut-anyCut-soleCut-activateCut-titanCut-keyCut-vol2Cut-riderCut-rider2Cut-gateCut-oppFrontCut-zoneCut);
+ return Math.max(0,d.energy-traitCut-handCut-pairCut-namedCut-sumCut-anyCut-soleCut-activateCut-titanCut-keyCut-vol2Cut-riderCut-rider2Cut-gateCut-oppFrontCut-zoneCut-unionCut);
 }
 function requiredEnergyBonus(s,physical){
  return (physical?.buffs||[]).reduce((n,b)=>n+(b.requiredEnergy===2&&
@@ -25584,6 +25651,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     ensureKmr();activateKmr(pack,s,action);break;
    }
    if(activateSharedPrint(printApi(),pack,s,action))break;
+   if(activateSharedPrintMore(printApi(),pack,s,action))break;
    if(activateSharedRest(pack,s,action,p,pl))break;
    if(action.mode==='outsideRaidReturn'){
     const selected=pl.outside.find(c=>c.uid===action.uid);
@@ -27725,16 +27793,23 @@ if(ability.op==='characterDualMain'){
   }
   case 'play':case 'event':case 'raid':{
    const fromRemoved=action.from==='removed';
+   const fromOutside=action.from==='outside';
    const removedCard=fromRemoved?pl.removed.find(c=>c.uid===action.uid):null;
    if(fromRemoved&&(s.phase!=='main'||!removedCard||
     !removedUseMatches(pack,s,p,removedCard)))
     throw Error('Removed use is not legal');
-   const zone=fromRemoved?pl.removed:pl.hand;
+   const zone=fromRemoved?pl.removed:fromOutside?pl.outside:pl.hand;
    const index=zone.findIndex(c=>c.uid===action.uid);
-   if(index<0)throw Error(fromRemoved?'Card not in removed':'Card not in hand');
+   if(index<0)throw Error(fromRemoved?'Card not in removed':fromOutside?'Card not outside':'Card not in hand');
    const current=zone[index],d=card(pack,current);
    const payment=handApPlan(pack,s,p,d,{raid:action.type==='raid',uid:current.uid,
-    ...(fromRemoved?{from:'removed'}:{})});
+    ...(fromRemoved?{from:'removed'}:fromOutside?{from:'outside'}:{})});
+   if(fromOutside){
+    const rule=d.outsideUnionPlay;
+    const cut=unionOutsideCut(printApi(),pack,s,p,d);
+    if(!rule||!cut||!energyCovers(universalEnergyByColor(pack,s,p),d,Math.max(0,d.energy-cut.energyCut)))
+     throw Error('Outside play discount is not open');
+   }
    if((action.type==='play'||action.type==='raid')&&lifeUseBanned(d,pl))
     throw Error('This card cannot be used at this life total');
    if(!fromRemoved&&(action.type==='play'||action.type==='raid')&&
@@ -27842,7 +27917,7 @@ if(ability.op==='characterDualMain'){
     current.fieldEntryStamp=s.nextFieldEntryStamp++;
     current.entryTurn=s.turn;
     pl[action.line][action.slot]=current;
-    recordCompletedMove(pack,s,{physical:current,owner:p,from:fromRemoved?'removed':'hand',
+    recordCompletedMove(pack,s,{physical:current,owner:p,from:fromRemoved?'removed':fromOutside?'outside':'hand',
      to:action.line,reason:'rule'});
     applyEffects(pack,s,current,'onPlay',p,fromRemoved?'removedUse':'paidPlay');
    }
@@ -28768,7 +28843,8 @@ export function assertUniversalMatch(pack,s){
      [...s.players[owner].outside,...(s.players[owner].resolvingEvents||[])].some(ev=>
       (card(pack,ev).effects?.onPlay||[]).some(e=>
        e.op==='activeUnraidedRaidGrant'&&e.sniper===true&&e.bp===1000));
-    if(!turnOk||!(plain||capped||paidCapped||paidWinDraw||kjnSniper||kmrSniper||csmSniper||namedBuff||namedSniper||energyMoveSniper||unraidedGrant))throw Error('Forged temporary physical battle grant');
+    if(!turnOk||!(plain||capped||paidCapped||paidWinDraw||kjnSniper||kmrSniper||csmSniper||namedBuff||namedSniper||energyMoveSniper||unraidedGrant||
+    printMoreSniperProved(card,pack,s,owner,physical)))throw Error('Forged temporary physical battle grant');
     continue;
    }
    if(key==='attackWinDrawGranted'&&keys.length===3&&
@@ -29016,7 +29092,7 @@ export function assertUniversalMatch(pack,s){
     x.edge==='end'&&(x.then||[]).some(op=>op.op==='optionalRemoveTraitKit'&&
      op.blockAtMost===lowBlock.bp));
    if(!lowBlock||lowBlock.turn!==s.turn||lowBlock.stamp!==physical.fieldEntryStamp||
-    !Number.isInteger(lowBlock.bp)||!proved)
+    !Number.isInteger(lowBlock.bp)||!(proved||printMoreLowProved(card,pack,s,physical,lowBlock)))
     throw Error('Forged low-BP unblockable');
   }
   const floor=physical.blockFloorGranted;
@@ -29153,7 +29229,7 @@ export function assertUniversalMatch(pack,s){
     !Number.isInteger(ceiling.bp)||Object.keys(ceiling).length!==3||
     Object.keys(ceiling).some(k=>!['turn','stamp','bp'].includes(k))||
     !(named||self||printedBlock||departedBlock||handBlock||aided||oppGrant||eventNamed||ruka||iysBlock||
-     csm046||csm055||
+     csm046||csm055||printMoreCeilingProved(card,pack,s,physical,ceiling)||
      (card(pack,physical).id==='KMR-1-036'&&ceiling.bp===4000&&
       s.mainAbilityUsedUids.includes(physical.uid+'|KMR-1-036')))))
     throw Error('Forged blocker ceiling');
@@ -33888,6 +33964,14 @@ export function universalPrivateChoices(pack,s,viewer){
    const c=action.uid?pile.find(x=>x?.uid===action.uid):null;
    const printed=c&&card(pack,c);
    return {action:{...action},card:printed?{cardId:c.cardId,name:printed.name,color:printed.color||''}:null};
+  })};
+ }
+ if(q?.kind==='effect-print'&&q.step==='under-card'&&q.player===viewer){
+  const host=location(s,viewer,q.sourceUid);
+  return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{
+   const physical=action.uid?(host?.c.under||[]).find(c=>c.uid===action.uid):null;
+   const printed=physical&&card(pack,physical);
+   return {action:{...action},card:printed?{cardId:physical.cardId,name:printed.name,color:printed.color||''}:null};
   })};
  }
  if(q?.kind==='effect-print-look'&&q.player===viewer){

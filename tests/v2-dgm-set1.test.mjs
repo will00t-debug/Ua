@@ -9,22 +9,13 @@ import {TITLES} from '../dist/title-registry.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {dgmPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,universalBp,universalCardEnergy,universalEnergyByColor,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,universalBp,universalCardEnergy,universalEnergyByColor,universalPrivateChoices,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
+import {raidBoxListed} from '../dist/universal-v2/raid-box.mjs';
 
 const pack=createDgmV2Pack();
 const packs=[pack,pack];
 const byId=new Map(DGM_CARDS.map(card=>[card.id,card]));
-const REGISTERED=[
- 'DGM-1-001','DGM-1-002','DGM-1-004','DGM-1-006','DGM-1-007','DGM-1-012',
- 'DGM-1-016','DGM-1-017','DGM-1-018','DGM-1-019','DGM-1-020','DGM-1-021',
- 'DGM-1-023','DGM-1-025','DGM-1-026','DGM-1-027','DGM-1-028','DGM-1-029',
- 'DGM-1-030','DGM-1-031','DGM-1-033','DGM-1-034','DGM-1-035','DGM-1-036',
- 'DGM-1-038','DGM-1-041','DGM-1-042','DGM-1-043','DGM-1-044','DGM-1-045',
- 'DGM-1-046','DGM-1-048','DGM-1-049','DGM-1-051','DGM-1-052','DGM-1-053',
- 'DGM-1-054','DGM-1-055','DGM-1-057','DGM-1-058','DGM-1-059','DGM-1-060',
- 'DGM-1-062','DGM-1-063','DGM-1-069','DGM-1-070','DGM-1-071','DGM-1-072',
- 'DGM-1-074','DGM-1-076','DGM-1-077','DGM-1-078','DGM-1-079','DGM-1-080'
-];
+const REGISTERED=Array.from({length:80},(_,i)=>'DGM-1-'+String(i+1).padStart(3,'0'));
 const RAID_FRAMES=['DGM-1-009','DGM-1-013','DGM-1-015','DGM-1-032','DGM-1-047','DGM-1-065','DGM-1-067','DGM-1-068','DGM-1-073'];
 
 function take(s,p,id){
@@ -136,14 +127,18 @@ test('UA58BT is one identity per number, and only a whole Japanese print enters 
   'UA58BT/DGM-1-009','UA58BT/DGM-1-009_p1','UA58BT/DGM-1-009_p2',
   'UAPR/DGM-1-009','UAPR/DGM-1-009_2'
  ]);
- assert.equal(allen.engineKind,null);
+ assert.equal(allen.engineKind,'raidFrontWard');
+ assert.equal(raidBoxListed('DGM-1-009','frontWard'),true);
+ assert.equal(raidBoxListed('DGM-1-009','onPlay'),true);
+ assert.equal(raidBoxListed('DGM-1-067','onAttack'),false);
+ assert.equal(raidBoxListed('DGM-1-067','phase'),true);
+ assert.equal(raidBoxListed('DGM-1-047','onPlay'),true);
+ assert.equal(raidBoxListed('DGM-1-032','attackEnd'),true);
  for(const id of RAID_FRAMES){
   const card=byId.get(id);
   assert.ok(card.raidFrame&&card.raidFrame.inside);
-  assert.equal(card.engineKind,null);
-  assert.equal(pack.cards[id],undefined);
+  assert.equal(pack.cards[id].type,'character');
  }
- assert.doesNotMatch(readFileSync(new URL('../dist/universal-v2/raid-box.mjs',import.meta.url),'utf8'),/DGM-1-/);
 
  assert.equal(byId.get('DGM-1-017').gen,2);
  assert.deepEqual(parseGen('<img alt="青青" src="ico_resource_energy_blue3.png">'),{
@@ -163,26 +158,27 @@ test('UA58BT is one identity per number, and only a whole Japanese print enters 
 
  const faqIds=DGM_CARDS.filter(card=>card.faq.length).map(card=>card.id);
  const faqInPack=faqIds.filter(id=>pack.cards[id]);
- assert.deepEqual(faqInPack,['DGM-1-016','DGM-1-058','DGM-1-080']);
- assert.equal(pack.cards['DGM-1-003'],undefined);
+ for(const id of ['DGM-1-003','DGM-1-016','DGM-1-058','DGM-1-080'])assert.equal(faqInPack.includes(id),true);
+ assert.equal(pack.cards['DGM-1-003'].mainAbility.op,'printReadyGate');
  assert.equal(byId.get('DGM-1-003').faq.some(entry=>entry.id==='Q2436'),true);
 });
 
-test('the mixed supported practice deck is a legal 50, and a catalogue-only card stays out of a match',()=>{
+test('the mixed supported practice deck is a legal 50, and a fifth copy stays out',()=>{
  const practice=dgmPracticeDeck();
  assert.equal(Object.values(practice.counts).reduce((sum,n)=>sum+n,0),50);
  const colors=new Set(Object.keys(practice.counts).map(id=>pack.cards[id].color));
  assert.deepEqual([...colors].sort(),['blue','purple']);
  const ready=editorV2Status('dgm',practice.counts,pack);
  assert.equal(ready.ready,true,ready.issues.join('；'));
- assert.equal(ready.registered,54);
+ assert.equal(ready.registered,80);
  const mixed={...practice.counts};
- const donor=Object.keys(mixed).find(id=>mixed[id]>1);
+ const four=Object.keys(mixed).find(id=>mixed[id]===4);
+ const donor=Object.keys(mixed).find(id=>id!==four&&mixed[id]>0);
+ mixed[four]+=1;
  mixed[donor]-=1;
- mixed['DGM-1-009']=1;
  const blocked=editorV2Status('dgm',mixed,pack);
  assert.equal(blocked.ready,false);
- assert.match(blocked.issues.join('\n'),/DGM-1-009/);
+ assert.match(blocked.issues.join('\n'),new RegExp(four));
 });
 
 test('energy 0 can be played, a private search keeps the whole window, and generated energy retires at the end of main',()=>{
@@ -587,4 +583,82 @@ test('effect entry chooses the card and then the shared cell',()=>{
  const entered=[...s.players[0].front,...s.players[0].energy].find(card=>card?.uid===guest.uid);
  assert.equal(entered.ready,true);
  assert.equal(entered.entryTurn,s.turn);
+});
+
+test('the last 26 prints keep the shared gates',()=>{
+ const gate={
+  ...RICH,'DGM-1-012':1,'DGM-1-019':2,
+  'DGM-1-009':1,'DGM-1-003':2,'DGM-1-056':1,'DGM-1-067':1
+ };
+ const eight=pack.cards['DGM-1-008'];
+ const empty=newUniversalMatch(packs,{decks:[RICH,RICH],seed:58140,first:0});
+ assert.equal(zoneRequiredEnergy(pack,empty,0,eight,'hand'),0);
+ sit(empty,0,'DGM-1-002','energy');
+ assert.equal(zoneRequiredEnergy(pack,empty,0,eight,'hand'),2);
+ assert.equal(eight.effects.onRaided[0].op,'raidedOptionalBpDown');
+
+ let s=toPhase(fresh(gate,58141),'main');
+ readyAp(s,4);
+ sit(s,0,'DGM-1-004','energy');
+ sit(s,0,'DGM-1-029','energy');
+ sit(s,0,'DGM-1-016','energy');
+ sit(s,0,'DGM-1-018','front');
+ sit(s,1,'DGM-1-002','front');
+ const allen=take(s,0,'DGM-1-009');
+ s.players[0].hand.push(allen);
+ s=playLine(s,allen.uid,'front');
+ assert.equal(s.pending,null);
+ let raided=toPhase(fresh(gate,58145),'main');
+ readyAp(raided,4);
+ sit(raided,0,'DGM-1-004','energy');
+ sit(raided,0,'DGM-1-029','energy');
+ sit(raided,0,'DGM-1-016','energy');
+ sit(raided,0,'DGM-1-018','energy');
+ const target=sit(raided,1,'DGM-1-002','front');
+ const base=sit(raided,0,'DGM-1-043','front');
+ const rider=take(raided,0,'DGM-1-009');
+ raided.players[0].hand.push(rider);
+ const baseSlot=raided.players[0].front.findIndex(card=>card?.uid===base.uid);
+ raided=dispatchUniversalAction(packs,raided,{type:'raid',uid:rider.uid,baseUid:base.uid,slot:baseSlot},{actor:0});
+ assert.equal(raided.pending?.step,'bottom-37');
+ assert.equal(raided.pending.choices.includes(target.uid),true);
+
+ let named=toPhase(fresh(gate,58144),'main');
+ const rested=sit(named,0,'DGM-1-003','front',{ready:false,entryTurn:named.turn});
+ const other=sit(named,0,'DGM-1-003','energy',{ready:false,entryTurn:named.turn});
+ sit(named,0,'DGM-1-012','energy');
+ while(named.players[0].deck.length>20)named.players[0].removed.push(named.players[0].deck.pop());
+ const first=legalUniversalActions(packs,named).filter(action=>action.mode==='printReadyGate');
+ assert.equal(first.length,2);
+ named=use(named,action=>action.mode==='printReadyGate'&&action.uid===rested.uid);
+ const second=legalUniversalActions(packs,named).filter(action=>action.mode==='printReadyGate');
+ assert.equal(second.length,0);
+ assert.equal([...named.players[0].front,...named.players[0].energy].find(card=>card?.uid===rested.uid).ready,true);
+ assert.equal([...named.players[0].front,...named.players[0].energy].find(card=>card?.uid===other.uid).ready,false);
+
+ let look=toPhase(fresh(gate,58142),'main');
+ readyAp(look,2);
+ fuel(look,0,'purple',2);
+ const linali=take(look,0,'DGM-1-056');
+ const window=look.players[0].deck.slice(0,5);
+ look.players[0].hand.push(linali);
+ look=playLine(look,linali.uid,'front');
+ assert.equal(look.pending.kind,'effect-print-look');
+ assert.equal(look.pending.uids.length,5);
+ assert.deepEqual(look.pending.uids,window.map(card=>card.uid));
+ const allenInWindow=window.filter(card=>pack.cards[card.cardId].name==='アレン・ウォーカー').map(card=>card.uid);
+ assert.deepEqual([...look.pending.choices].sort(),[...allenInWindow].sort());
+ const seen=universalPrivateChoices(packs,look,0);
+ assert.equal(seen.inspected.length,5);
+
+ const nea=pack.cards['DGM-1-067'];
+ assert.equal(nea.raidOnlyEntry,true);
+ assert.equal(nea.effects.onAttack[0].op,'drawDiscard');
+ assert.equal(raidBoxListed('DGM-1-067','onAttack'),false);
+ let raid=toPhase(fresh(gate,58143),'main');
+ readyAp(raid,4);
+ fuel(raid,0,'purple',4);
+ const body=take(raid,0,'DGM-1-067');
+ raid.players[0].hand.push(body);
+ assert.equal(legalUniversalActions(packs,raid).some(action=>action.type==='play'&&action.uid===body.uid),false);
 });

@@ -1,10 +1,9 @@
-// UA58BT D.Gray-man on the shared V2 engine. The catalogue holds every
-// playable identity. This pack registers only prints whose entire Japanese
-// text is a tested shared program. There is no D.Gray-man opcode and no
-// private runtime.
-import {createUniversalPack} from './pack.mjs?v=20261120dgm1';
-import {DGM_CARDS} from '../dgm-cards.mjs?v=20261120dgm1';
-import {dgmEngineKind,dgmProfile} from './dgm-classify.mjs?v=20261120dgm1';
+// UA58BT D.Gray-man on the shared V2 engine. Every catalogue identity is a
+// whole Japanese print on a shared program. There is no D.Gray-man opcode
+// and no private runtime. Registration is not FAQ certification.
+import {createUniversalPack} from './pack.mjs?v=20261120dgm2';
+import {DGM_CARDS} from '../dgm-cards.mjs?v=20261120dgm2';
+import {dgmEngineKind,dgmProfile} from './dgm-classify.mjs?v=20261120dgm2';
 
 export function dgmPackCard(card){
  const profile=dgmProfile(card);
@@ -22,7 +21,22 @@ export function dgmPackCard(card){
    ...(profile.triggerEffect?{triggerEffect:profile.triggerEffect}:{}),
    ...(program.impactNull?{impactNull:true}:{}),
    ...(program.enterAlwaysActive?{enterAlwaysActive:true}:{}),
-   ...(program.playRequiresOwnName?{playRequiresOwnName:program.playRequiresOwnName}:{})
+   ...(program.playRequiresOwnName?{playRequiresOwnName:program.playRequiresOwnName}:{}),
+   ...(program.raidName?{raidName:program.raidName}:{}),
+   ...(program.raidOnlyEntry?{raidOnlyEntry:true}:{}),
+   ...(program.emptyOwnFieldHandEnergyDiscount?{emptyOwnFieldHandEnergyDiscount:program.emptyOwnFieldHandEnergyDiscount}:{}),
+   ...(program.ownTurnBp?{ownTurnBp:program.ownTurnBp}:{}),
+   ...(program.unblockedAttack?{unblockedAttack:program.unblockedAttack}:{}),
+   ...(program.frontPrintedWard?{frontPrintedWard:program.frontPrintedWard}:{}),
+   ...(program.frontNamedLeaveInstead?{frontNamedLeaveInstead:program.frontNamedLeaveInstead}:{}),
+   ...(program.outsideUnionPlay?{outsideUnionPlay:program.outsideUnionPlay}:{}),
+   ...(program.unraidedReadyOnBlock?{unraidedReadyOnBlock:program.unraidedReadyOnBlock}:{}),
+   ...(program.unraidedAttackDamage?{unraidedAttackDamage:program.unraidedAttackDamage}:{}),
+   ...(program.raidBanOtherTrait?{raidBanOtherTrait:program.raidBanOtherTrait}:{}),
+   ...(program.attackEndProgram?{attackEndProgram:program.attackEndProgram}:{}),
+   ...(program.outsideChainRaid?{outsideChainRaid:program.outsideChainRaid}:{}),
+   ...(program.unblockedIfName?{unblockedIfName:program.unblockedIfName}:{}),
+   ...(program.phaseEffects?{phaseEffects:program.phaseEffects}:{})
   };
  }
  if(kind==='handDiscount'){

@@ -368,7 +368,7 @@ export function legalSharedPrintPending(api,pack,s){
    return pos?[{type:'choosePrintRaid',baseUid:card.uid,line:pos.line,slot:pos.slot}]:[];
   });
  }
- return [];
+  return null;
 }
 
 function placeOutside(api,pack,s,owner,uids,sourceUid){
@@ -488,7 +488,7 @@ export function resolveSharedPrintPending(api,pack,s,action){
   const entered=api.location(s,q.player,q.uid);
   if(q.skipNext&&entered)api.grantContinuousState(s,{kind:'skipNextActive',controller:q.player,
    sourceUid:q.sourceUid,targetUid:entered.c.uid});
-  if(entered)api.applyEffects(pack,s,entered.c,'onPlay',q.player,
+  if(entered&&q.skipOnPlay!==true)api.applyEffects(pack,s,entered.c,'onPlay',q.player,
    q.from==='hand'?'handEffect':'outsideEffect',q.sourceUid);
   else api.continueQueue(pack,s);
   return true;
@@ -601,7 +601,7 @@ export function resolveSharedPrintPending(api,pack,s,action){
    {entryReady:true,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
   return true;
  }
- throw Error('Unknown shared print choice');
+ return false;
 }
 
 function readySource(api,pack,s,player,card){

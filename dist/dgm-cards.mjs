@@ -155,7 +155,7 @@ export const DGM_CARDS=
   "effectHk": "BP500或以上的此角色退場的情況下，可改為將自己前線１張BP4000或以上的〈神田 由〉退場。&nbsp主起動&nbsp 只有在自己場上擁有〈神田 由〉，並且自己牌庫是20張卡或以下的情況下才可以發動。此角色被激活。〈阿爾瑪．卡爾瑪〉的此效果１回合只能發動１次。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "namedLeaveReady",
   "faq": [
    {
     "id": "Q2436",
@@ -263,7 +263,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp主起動&nbsp 在前線的情況 只有在自己場上的［特徵：黑色教團］的卡名有４種或以上，並且對手前線擁有BP4000或以上的角色的情況下才可以發動。選擇對手前線１張BP4000或以上的角色，本回合中，BP-500。此角色在本回合中，BP+500。自己其他〈阿雷斯塔．克勞利三世〉的此效果沒有在本回合中發動過的情況下，此角色被激活。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "crowdFrontDown",
   "faq": []
  },
  {
@@ -426,7 +426,7 @@ export const DGM_CARDS=
   "effectHk": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少。此角色被突襲時，自己場上的［特徵：黑色教團］的卡名有４種或以上的情況下，選擇對手前線最多１張BP4000或以上的角色，本回合中，BP-500。(以任意順序處理突襲角色的&nbsp登場時&nbsp 效果及此效果)",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "emptyFieldRaidedDown",
   "faq": []
  },
  {
@@ -507,7 +507,7 @@ export const DGM_CARDS=
    "wholeInside": true
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidFrontWard",
   "faq": [
    {
     "id": "Q2437",
@@ -575,7 +575,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 可將自己１張手牌放置到場外。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，然後抽１張卡。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "optionalPeekDraw",
   "faq": []
  },
  {
@@ -629,7 +629,7 @@ export const DGM_CARDS=
   "effectHk": "(與此角色戰鬥的角色，在本次戰鬥中失去衝擊)&nbsp主起動&nbsp 在場外的情況 只有在自己牌庫是１張卡或以下，並且自己場外擁有１張或以上能源需求０的〈阿爾瑪．卡爾瑪〉的情況下才可以發動。將自己場外１張能源需求０的〈阿爾瑪．卡爾瑪〉及此卡，以任意順序放置到自己牌庫下面。〈神田 由〉的此效果１回合只能發動１次。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideBottomPair",
   "faq": [
    {
     "id": "Q2439",
@@ -749,7 +749,7 @@ export const DGM_CARDS=
    "wholeInside": true
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidKandaAttack",
   "faq": [
    {
     "id": "Q2440",
@@ -810,7 +810,7 @@ export const DGM_CARDS=
   "effectHk": "(與此角色戰鬥的角色，在本次戰鬥中失去衝擊)&nbsp登場時&nbsp 抽１張卡。&nbsp攻擊時&nbsp 將自己『２張手牌及牌庫上面２張卡』放置到場外。此角色在本回合中，BP+1000。自己在本回合中有使用過［特徵：六幻］，或自己場上的［特徵：黑色教團］的卡名有４種或以上的情況下，改為『１張手牌及牌庫上面１張卡』。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "impactAttackPut",
   "faq": [
    {
     "id": "Q2441",
@@ -883,7 +883,7 @@ export const DGM_CARDS=
    "wholeInside": true
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidSixPlay",
   "faq": [
    {
     "id": "Q2442",
@@ -1226,7 +1226,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tuckUnderMain",
   "faq": [
    {
     "id": "Q2444",
@@ -1334,7 +1334,7 @@ export const DGM_CARDS=
   "effectHk": "自己場上的［特徵：黑色教團］的卡名有４種或以上的情況下，此角色的生產能源+。&nbsp主起動&nbsp 只有在此角色登場的回合才可以發動。選擇自己場上１張角色，本回合中，給予以下效果。．此角色不會因對手的效果而休息或返回手牌，並且因對手的效果而退場的情況下，改為此角色在本回合中，獲得「攻擊階段結束時，將此角色退場。」。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "entryTurnWard",
   "faq": [
    {
     "id": "Q2445",
@@ -1784,7 +1784,7 @@ export const DGM_CARDS=
    "wholeInside": true
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidLinaliEnd",
   "faq": [
    {
     "id": "Q2447",
@@ -2024,7 +2024,7 @@ export const DGM_CARDS=
   "effectHk": "從以下選擇１項。．自己場上擁有〈艾倫．獲加〉的情況下，選擇對手前線１張BP5000或以下的角色，放置到對手牌庫下面。有放置到牌庫下面的情況下，對手抽最多１張卡。．從自己場外選擇１張能源需求４或以下及AP消耗１的藍色〈亞連．沃克〉，以休息狀態在自己場上登場或進行突襲。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "allenMode",
   "faq": []
  },
  {
@@ -2118,7 +2118,7 @@ export const DGM_CARDS=
   "effectHk": "此卡只有在自己場上擁有〈神田 由〉的情況下才可以使用。選擇對手前線最多１張BP4000或以下的角色，移動到能源線。此卡是透過〈神田 由〉的效果來使用的情況下，本回合中，可給予該〈神田 由〉「此角色不會被對手的效果選擇。」。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kandaEnergyMove",
   "faq": [
    {
     "id": "Q2449",
@@ -2178,7 +2178,7 @@ export const DGM_CARDS=
   "effectHk": "此卡只有在自己場上擁有〈神田 由〉的情況下才可以使用。選擇對手前線最多１張『BP3000或以下』的角色退場。自己場上擁有〈阿爾瑪．卡爾瑪〉的情況下，改為『BP5000或以下』。此卡是透過〈神田 由〉的效果來使用的情況下，本回合中，可給予該〈神田 由〉。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kandaRetireGrant",
   "faq": []
  },
  {
@@ -2552,7 +2552,7 @@ export const DGM_CARDS=
    "wholeInside": false
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "allenChainRaid",
   "faq": [
    {
     "id": "Q2451",
@@ -2737,7 +2737,7 @@ export const DGM_CARDS=
   "effectHk": "此角色以激活狀態登場。此角色進行攻擊而沒有被阻擋時，自己場上擁有〈雷亞．D．坎貝爾〉的情況下，抽１張卡。&nbsp登場時&nbsp 自己場上擁有〈艾倫．獲加〉的情況下，此角色在本回合中，獲得 (可指定對手前線的角色進行攻擊，該情況下不能被阻擋)。&nbsp主起動&nbsp 只有在此角色登場的回合才可以發動。選擇自己場上１張角色，本回合中，給予「此角色不會被對手的效果選擇。」。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "crossActive",
   "faq": [
    {
     "id": "Q2457",
@@ -3060,7 +3060,7 @@ export const DGM_CARDS=
   "effectHk": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少。&nbsp登場時&nbsp 在前線的情況 從自己牌庫上面查看５張卡，將最多１張〈艾倫．獲加〉公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。&nbsp攻擊時&nbsp 此角色在本回合中有移動過的情況下，發動此卡的&nbsp登場時&nbsp 效果。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "emptyFieldLookReplay",
   "faq": []
  },
  {
@@ -3309,7 +3309,7 @@ export const DGM_CARDS=
   "effectHk": "在場外的情況 自己場上的［［特徵：挪亞一族］及〈挪亞方舟〉］的卡名有６種或以上的情況下，此卡的能源需求減少，並且AP消耗-1。此角色以激活狀態登場。&nbsp登場時&nbsp 自己下回合開始為止，此角色獲得「對手攻擊階段結束時，將此角色退場。」。選擇對手前線最多１張BP少於或等於『自己場上的［［特徵：挪亞一族］及〈挪亞方舟〉］的卡名種類數量x1000』的角色退場。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "noahOutsideEarl",
   "faq": []
  },
  {
@@ -3457,7 +3457,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tikiActiveChoice",
   "faq": [
    {
     "id": "Q2460",
@@ -3523,7 +3523,7 @@ export const DGM_CARDS=
    "wholeInside": true
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidTikiChoice",
   "faq": []
  },
  {
@@ -3570,7 +3570,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp主起動&nbsp 只有在此角色是激活狀態的情況下才可以發動。選擇自己場上１張激活狀態的〈加斯德羅〉，將該角色及此角色返回手牌。如這樣做，從自己場外選擇最多１張紫色的〈加斯戴比〉，以激活狀態在自己場上登場。用此效果登場的〈加斯戴比〉不會發動&nbsp登場時&nbsp 效果。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "jasderoPair",
   "faq": []
  },
  {
@@ -3629,7 +3629,7 @@ export const DGM_CARDS=
    "wholeInside": false
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "neaDoubleBlock",
   "faq": []
  },
  {
@@ -3688,7 +3688,7 @@ export const DGM_CARDS=
    "wholeInside": false
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "neaDamageTwo",
   "faq": []
  },
  {
@@ -3949,7 +3949,7 @@ export const DGM_CARDS=
    "wholeInside": true
   },
   "auto": false,
-  "engineKind": null,
+  "engineKind": "camelotLock",
   "faq": [
    {
     "id": "Q2463",
@@ -4048,7 +4048,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp主起動&nbsp 在場外的情況 將１張手牌放置到場外 支付➊AP 只有在自己場上擁有〈艾倫．獲加〉或〈雷亞．D．坎貝爾〉或〈羅德．嘉美〉或〈千年伯爵〉，並且自己的紫色能源有３或以上的情況下才可以發動。將此卡以休息狀態在自己能源線登場。&nbsp登場時&nbsp 可將自己場上１張角色退場。如這樣做，從自己場外選擇最多１張能源需求３或以下及AP消耗１的紫色角色卡，以休息狀態在自己場上登場。用此效果登場的角色不會發動&nbsp登場時&nbsp 效果。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "arkField",
   "faq": []
  },
  {

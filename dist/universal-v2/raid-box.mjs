@@ -232,7 +232,16 @@ const RAID_BOX_FEATURES=Object.freeze({
  'MST-1-032':["onPlay"],
  'MST-1-054':["onPlay"],
  'MST-1-067':["onPlay","onRetire"],
- 'MST-1-068':["onPlay","passive"]
+ 'MST-1-068':["onPlay","passive"],
+ 'DGM-1-009':["frontWard","onPlay"],
+ 'DGM-1-013':["onAttack","onRetire"],
+ 'DGM-1-015':["onPlay","onRetire"],
+ 'DGM-1-032':["ownTurnBp","unblockedAttack","attackEnd"],
+ 'DGM-1-047':["onPlay","onRetire"],
+ 'DGM-1-065':["onAttack"],
+ 'DGM-1-067':["phase"],
+ 'DGM-1-068':["phase"],
+ 'DGM-1-073':["onAttackBlocked","onPlay"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

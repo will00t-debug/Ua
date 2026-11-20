@@ -37,7 +37,9 @@ const OPTIONAL_DISCARD='【登場時】自分の手札を1枚場外に置いて�
 const LOCK_MOVE='【登場時】相手の場のキャラを1枚まで選び、次の自分のターン開始時まで、「このキャラは移動できない。」を与える。';
 const DRAW_FOUR='カードを4枚引き、自分の手札を1枚場外に置く。';
 const HAND=/^相手の場に([黄青紫緑赤])か([黄青紫緑赤])のカードがある場合、手札にあるこのカードの必要エナジーを【([黄青紫緑赤])×1】減らす。$/;
+import {dgmRestProfile} from './dgm-rest-prints.mjs';
 const RAID_ONLY=/^【レイド】(?:〈([^〉]+)〉|［特徴：([^］]+)］)アクティブにし、フロントLに移動できる$/;
+const COLOR_BOUNCE='【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。';
 const SEARCH=/^【登場時】自分の山札の上から(\d+)枚見る。その中から(.+)を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。$/;
 
 function standardTrigger(card){
@@ -54,6 +56,8 @@ function knownTrigger(card){
   return {triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}};
  if(card.trigger==='special'&&card.triggerTextJa==='【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。')
   return {triggerEffect:{op:'retireOppFront'},special:'retireFront'};
+ if(card.trigger==='color'&&card.triggerTextJa===COLOR_BOUNCE)
+  return {triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},special:'bounce3500'};
  return null;
 }
 
@@ -96,6 +100,8 @@ export function dgmProfile(card){
  const effect=String(card?.effectJa||'');
  const pip=PIP[card?.color];
  if(!pip||!knownTrigger(card))return null;
+ const rest=dgmRestProfile(effect);
+ if(rest)return accept(card,rest);
  if(effect.includes('レイド')&&!effect.includes('『レイドさせる』に代えてもよい')){
   const raid=effect.match(RAID_ONLY);
   if(!raid||raid[0]!==effect||framedBody(card))return null;
