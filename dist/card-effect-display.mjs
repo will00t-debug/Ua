@@ -18,7 +18,7 @@ export function cleanCardEffectText(value){
  return text.replace(/<br\s*\/?>/gi,'\n').replace(/\r\n?/g,'\n').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
 }
 // Recognize explicit printed keyword labels without changing ordinary rule prose.
-const timing='主[啟起]動|[啟起]動主要|登場時|攻擊時|退場時|自己回合中|對手回合中|每回合(?:[1１]次?|一次)';
+const timing='主[啟起]動|[啟起]動主要|登場時|攻擊時|退場時|自己回合中|對手回合中|每回合(?:[1１]次?|一次)|突襲';
 const numeral='[+＋]?[0-9０-９一二三四五六七八九十]+';
 const value='(?:[（(]\\s*'+numeral+'\\s*[）)]|\\s*'+numeral+')';
 const impact='(?:貫通|衝擊)(?:無效|'+value+')?';
@@ -30,6 +30,7 @@ const badge=word=>{
  let label=word.replace(/^(?:主[啟起]動|[啟起]動主要)$/,'主啟動').replace(/^每回合[1１]$/,'每回合一次');
  let style='';
  if(/^(?:主[啟起]動|[啟起]動主要)$/.test(word))style=' ua-effect-main';
+ else if(word==='突襲')style=' ua-effect-raid';
  else if(/^(貫通|衝擊)/.test(word)){style=' ua-effect-impact';label=label.replace(/^衝擊/,'貫通');}
  else if(/^傷害/.test(word)){style=' ua-effect-damage';if(/^傷害\s*(?:[（(]\s*[2２二]\s*[）)]|[2２二])$/.test(word))label='傷害二';}
  return '<span class="ua-effect-keyword'+style+'">'+escapeHtml(label)+'</span>';
