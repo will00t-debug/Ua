@@ -6,15 +6,19 @@
 // stays live on an ordinary play, and only the enclosed timings are listed.
 // TTG-1-071 has no frame, so its text stays live on an ordinary play.
 // Rugia TW span.raidBorder is the split. This is not a full FAQ certification.
+// A raid print is unfinished until every keyword inside that span is listed
+// here. An unlisted frame resolves on an ordinary play.
 const RAID_BOX_FEATURES=Object.freeze({
- // UA44 EVA: framed Raid text is gated by the physical face-up Raid state.
+ // UA44BT EVA. Rugia HK span.raidBorder on 2026-11-19 encloses the whole
+ // print of these fifteen. 041's top-card retirement replacement is inside
+ // that frame with the on-play BP cut.
  'EVA-1-104':["printedImpact","onAttack"],
  'EVA-1-105':["readyOnBlockCount","onRetire"],
  'EVA-1-033':["printedImpact","onPlay","main"],
  'EVA-1-034':["outsideCountGrants","main"],
  'EVA-1-035':["onPlay"],
  'EVA-1-036':["ownTurnBp","onPlay","onRetire"],
- 'EVA-1-041':["onPlay"],
+ 'EVA-1-041':["onPlay","raidTopRetireInstead"],
  'EVA-1-042':["bpPerDirectFacedown","onPlay","main"],
  'EVA-1-043':["phase","onPlay"],
  'EVA-1-053':["onPlay","onRetire"],
@@ -23,6 +27,18 @@ const RAID_BOX_FEATURES=Object.freeze({
  'EVA-1-080':["main","onRetire"],
  'EVA-1-081':["onPlay"],
  'EVA-1-082':["printedAttackDamage","phase"],
+ // UA17BT Toriko. Rugia HK span.raidBorder on 2026-11-19.
+ // 009 prints BP-down immunity outside the frame. The +500, the on-play rest
+ // and the on-block cut stay inside. The other eight enclose the whole print.
+ 'TRK-1-009':["staticBp","onPlay","onBlock"],
+ 'TRK-1-013':["readyOnBlockCount","attackWinDraw","frontMustAttackIfName"],
+ 'TRK-1-017':["printedAttackDamage","attackWinHandRest","main"],
+ 'TRK-1-054':["passive","onAttack"],
+ 'TRK-1-072':["passive","onPlay","onRetire"],
+ 'TRK-1-081':["onPlay","onAttack"],
+ 'TRK-1-088':["unblockedAttack","onPlay"],
+ 'TRK-1-091':["oppEffectRetireInstead","main"],
+ 'TRK-1-106':["passive","onPlay"],
  'BLC-1-004':["main"],
  'BLC-1-014':["onPlay"],
  'BLC-1-020':["onPlay","phase"],

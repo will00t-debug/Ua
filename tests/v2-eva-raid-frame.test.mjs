@@ -10,7 +10,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 const pack=officialV2Pack('eva');
 const frames={
  '033':['printedImpact','onPlay','main'],'034':['outsideCountGrants','main'],
- '035':['onPlay'],'036':['ownTurnBp','onPlay','onRetire'],'041':['onPlay'],
+ '035':['onPlay'],'036':['ownTurnBp','onPlay','onRetire'],'041':['onPlay','raidTopRetireInstead'],
  '042':['bpPerDirectFacedown','onPlay','main'],'043':['phase','onPlay'],
  '053':['onPlay','onRetire'],'077':['onPlay','onRetire'],
  '079':['facedownCountGrants','facedownTriggerImmuneAt','phase','onPlay'],

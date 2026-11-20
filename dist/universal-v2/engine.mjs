@@ -159,7 +159,7 @@ function queueAttackWinDraw(pack,s,owner,unit,role='attacker'){
   !originalEffectsDisabled(s,unit)&&s.phase==='attack'&&s.active===owner&&s.attacksByUid[unit.uid]>=1)
   s.effectQueue.splice(retirementJobsInserted,0,{op:'draw',owner,count:1,sourceUid:unit.uid});
  const rule=card(pack,unit).attackWinDraw;
- if(!rule||originalEffectsDisabled(s,unit))return;
+ if(!rule||originalEffectsDisabled(s,unit)||!raidBoxTextLive(pack,unit,'attackWinDraw'))return;
  if(s.phase!=='attack'||!Number.isInteger(unit.fieldEntryStamp)||unit.fieldEntryStamp<1)return;
  if(role==='defender'){
   if(rule.sides!=='either'||s.active===owner)return;
@@ -178,7 +178,7 @@ function queueAttackWinDraw(pack,s,owner,unit,role='attacker'){
 }
 function queueAttackWinHandRest(pack,s,owner,unit){
  const rule=card(pack,unit).attackWinHandRest;
- if(!rule||originalEffectsDisabled(s,unit))return;
+ if(!rule||originalEffectsDisabled(s,unit)||!raidBoxTextLive(pack,unit,'attackWinHandRest'))return;
  if(s.phase!=='attack'||s.active!==owner||!(s.attacksByUid[unit.uid]>=1))return;
  if(bp(pack,s,unit)<rule.minBp||!s.players[owner].hand.length)return;
  s.effectQueue.splice(retirementJobsInserted,0,{op:'attackWinHandRest',owner,
@@ -1239,7 +1239,7 @@ function bp(pack,s,c){
  const nameBp=distinctTraitNameBp(pack,s,c,printed,suppressed,owner);
  const outsideBp=outsideCountGrant(pack,s,c,printed,suppressed).bp;
  const emptyFacedownBp=emptyFacedownOwnTurnGrant(pack,s,c,printed,suppressed).bp;
- const printedStatic=suppressed?0:(printed.staticBp||0);
+ const printedStatic=suppressed||!printed.staticBp||!raidBoxTextLive(pack,c,'staticBp')?0:printed.staticBp;
  if(bpVisit.has(c.uid))return (printed?.bp||0)+turnBp+nameBp+raidBoxBp+facedown+layerBp+buffs+presence+outsideBp+emptyFacedownBp+printedStatic+madokaPair()+
   aotPrintedBp(pack,s,c,printed,suppressed,owner)+
   aot2Bp(pack,s,c,printed,suppressed,owner)+
@@ -9524,7 +9524,7 @@ function unblockedBeforeDamage(pack,s,attacker){
    ?{op:'optionalDrawOne',owner:s.active,sourceUid:attacker.uid}
    :{op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
  const printed=card(pack,attacker).unblockedAttack;
- if(printed&&!originalEffectsDisabled(s,attacker)){
+ if(printed&&!originalEffectsDisabled(s,attacker)&&raidBoxTextLive(pack,attacker,'unblockedAttack')){
   const then=printed.then.map(e=>({...e,owner:s.active,sourceUid:attacker.uid,
    sourceName:card(pack,attacker).name}));
   const onceKey=attacker.uid+'|unblockedOnce';
@@ -10925,7 +10925,8 @@ function retire(pack,s,p,line,slot,opts={}){
   // The leaving card may send one of its own front parasites away instead.
   // The once-per-turn mark is spent only when that replacement is accepted.
   // Battle is not an opponent's effect, so it never opens this choice.
-  if(!skipReplacement&&by==='opponent'&&s.active!==p&&!originalEffectsDisabled(s,c)){
+  if(!skipReplacement&&by==='opponent'&&s.active!==p&&!originalEffectsDisabled(s,c)&&
+   raidBoxTextLive(pack,c,'oppEffectRetireInstead')){
    const rule=card(pack,c).oppEffectRetireInstead;
    const key=c.uid+'|oppRetireInstead';
    if(rule?.line==='front'&&rule.turn==='opponent'&&rule.oncePerTurn===true&&
@@ -10993,7 +10994,8 @@ function retire(pack,s,p,line,slot,opts={}){
     sourceUid:cause.sourceUid,postImpact}))return true;
   }
   if(!skipReplacement&&!originalEffectsDisabled(s,c)&&
-   card(pack,c).raidTopRetireInstead===true&&raidTopStripWithUnder(pack,c)){
+   card(pack,c).raidTopRetireInstead===true&&
+   raidBoxTextLive(pack,c,'raidTopRetireInstead')&&raidTopStripWithUnder(pack,c)){
    s.pending={kind:'effect-raid-top-instead',player:p,uid:c.uid,line,slot,
     postImpact:impactFlag(postImpact),by:by??null,retireCause:cause};
    return true;
@@ -25139,7 +25141,8 @@ export function legalUniversalActions(pack,s){
   const forced=host.front.some(c=>{
    if(!c||originalEffectsDisabled(s,c))return false;
    const rule=card(pack,c).frontMustAttackIfName;
-   return !!rule&&host.front.some(q=>q&&card(pack,q).name===rule.name);
+   return !!rule&&raidBoxTextLive(pack,c,'frontMustAttackIfName')&&
+    host.front.some(q=>q&&card(pack,q).name===rule.name);
   });
   if(forced&&out.some(a=>a.type==='attack'))return out.filter(a=>a.type!=='next');
  }

@@ -68,6 +68,18 @@ function playFront(s,uid){
  return dispatchUniversalAction(packs,s,action,{actor:0});
 }
 
+function raidOnto(s,uid,baseUid){
+ const action=legalUniversalActions(packs,s).find(item=>item.type==='raid'&&item.uid===uid&&item.baseUid===baseUid&&item.line!=='energy');
+ if(!action)throw Error('No raid for '+uid+' onto '+baseUid);
+ return dispatchUniversalAction(packs,s,action,{actor:0});
+}
+
+function layUnder(top,base){
+ base.faceDown=false;
+ top.stack=[base];
+ return top;
+}
+
 function playEnergy(s,uid){
  const action=legalUniversalActions(packs,s).find(item=>item.type==='play'&&item.uid===uid&&item.line==='energy');
  if(!action)throw Error('No energy play for '+uid);
@@ -953,9 +965,13 @@ test('the next thirty Toriko prints change shared state',()=>{
  tax=choose(tax,item=>item.uid===sunny.uid);
  assert.equal(tax.players[0].front.find(c=>c?.uid===sunny.uid).selectHandTaxUntil.count,2);
 
- let coco=toPhase(fresh(fillDeck({'TRK-1-009':1}),30009),'main');
+ let coco=toPhase(fresh(fillDeck({'TRK-1-009':1,'TRK-1-010':1}),30009),'main');
  const cocoCard=put(coco,0,'TRK-1-009','front',0,true);
- assert.equal(universalBp(pack,coco,coco.players[0].front[0]),pack.cards['TRK-1-009'].bp+500);
+ assert.equal(universalBp(pack,coco,cocoCard),pack.cards['TRK-1-009'].bp);
+ cocoCard.buffs=[{bp:-1000,untilTurn:coco.turn}];
+ assert.equal(universalBp(pack,coco,cocoCard),pack.cards['TRK-1-009'].bp);
+ layUnder(cocoCard,take(coco,0,'TRK-1-010'));
+ assert.equal(universalBp(pack,coco,cocoCard),pack.cards['TRK-1-009'].bp+500);
 
  let kings=toPhase(fresh(fillDeck({'TRK-1-021':1,'TRK-1-006':1,'TRK-1-010':1,'TRK-1-014':1}),30021),'main');
  put(kings,0,'TRK-1-006','front',0,true);
@@ -1024,9 +1040,10 @@ test('the next thirty Toriko prints change shared state',()=>{
  assert.equal(punch.players[1].front[0].forcedBlockThisTurn,undefined);
  assert.equal(punch.players[0].hand.length,handBefore);
 
- let look=toPhase(fresh(fillDeck({'TRK-1-106':1,'TRK-1-037':4,'TRK-1-109':1,'TRK-1-052':4}),30106),'main');
+ let look=toPhase(fresh(fillDeck({'TRK-1-106':2,'TRK-1-037':4,'TRK-1-109':1,'TRK-1-052':4}),30106),'main');
  readyAp(look,0,2);
  for(let slot=0;slot<4;slot++)put(look,0,'TRK-1-037','energy',slot,true);
+ const torikoBase=put(look,0,'TRK-1-052','front',0,true);
  const ingredient=take(look,0,'TRK-1-109');
  const filler=[];
  const zones=['deck','hand','life','outside'];
@@ -1042,9 +1059,13 @@ test('the next thirty Toriko prints change shared state',()=>{
  }
  const window=[filler[0],ingredient,...filler.slice(1)];
  look.players[0].deck.unshift(...window);
+ const plain=take(look,0,'TRK-1-106');
+ look.players[0].hand.push(plain);
+ look=playFront(look,plain.uid);
+ assert.equal(look.pending,null);
  const starter=take(look,0,'TRK-1-106');
  look.players[0].hand.push(starter);
- look=playFront(look,starter.uid);
+ look=raidOnto(look,starter.uid,torikoBase.uid);
  assert.equal(look.pending.kind,'effect-top-trait-outside');
  assert.equal(look.pending.uids.length,7);
  assert.equal(look.pending.choices.length,1);
@@ -1197,17 +1218,22 @@ test('the remaining Toriko prints pay, ban, recover, wake and look',()=>{
  assert.equal(purple.players[1].front[1]?.uid,recruit.uid);
  assert.equal(purple.players[1].front[1].ready,true);
 
- let raid=toPhase(fresh(fillDeck({'TRK-1-081':1,'TRK-1-078':1,'TRK-1-093':4}),30281),'main');
+ let raid=toPhase(fresh(fillDeck({'TRK-1-081':2,'TRK-1-078':1,'TRK-1-093':4}),30281),'main');
  readyAp(raid,0,2);
- for(let slot=0;slot<4;slot++)put(raid,0,'TRK-1-093','energy',slot,true);
+ for(let slot=0;slot<3;slot++)put(raid,0,'TRK-1-093','energy',slot,true);
+ const raidAlly=put(raid,0,'TRK-1-093','front',1,false);
  const sleeper=put(raid,0,'TRK-1-078','front',0,false);
+ const plainRaider=take(raid,0,'TRK-1-081');
+ raid.players[0].hand.push(plainRaider);
+ raid=playFront(raid,plainRaider.uid);
+ assert.equal(raid.pending,null);
  const raider=take(raid,0,'TRK-1-081');
  raid.players[0].hand.push(raider);
- raid=playFront(raid,raider.uid);
+ raid=raidOnto(raid,raider.uid,sleeper.uid);
  assert.equal(raid.pending.kind,'effect-active-character');
  assert.equal(raid.pending.choices.includes(raider.uid),false);
- raid=choose(raid,item=>item.uid===sleeper.uid);
- assert.equal(raid.players[0].front.find(c=>c?.uid===sleeper.uid).ready,true);
+ raid=choose(raid,item=>item.uid===raidAlly.uid);
+ assert.equal(raid.players[0].front.find(c=>c?.uid===raidAlly.uid).ready,true);
 
  let grin=toPhase(fresh(fillDeck({'TRK-1-084':1,'TRK-1-078':1,'TRK-1-093':4,'TRK-1-052':4}),30284),'main');
  readyAp(grin,0,2);
@@ -1224,14 +1250,19 @@ test('the remaining Toriko prints pay, ban, recover, wake and look',()=>{
  assert.equal(grin.players[1].front[0]?.uid,low.uid);
  assert.equal(grin.players[1].energy[0],null);
 
- let star=toPhase(fresh(fillDeck({'TRK-1-088':1,'TRK-1-093':4,'TRK-1-014':1,'TRK-1-052':1}),30288),'main');
+ let star=toPhase(fresh(fillDeck({'TRK-1-088':2,'TRK-1-085':1,'TRK-1-093':4,'TRK-1-014':1,'TRK-1-052':1}),30288),'main');
  readyAp(star,0,2);
  for(let slot=0;slot<4;slot++)put(star,0,'TRK-1-093','energy',slot,true);
+ const starBase=put(star,0,'TRK-1-085','front',0,true);
  const small=put(star,1,'TRK-1-014','front',0,true);
  const starPay=take(star,0,'TRK-1-052');
+ const plainStar=take(star,0,'TRK-1-088');
+ star.players[0].hand.push(starPay,plainStar);
+ star=playFront(star,plainStar.uid);
+ assert.equal(star.pending,null);
  const starjun=take(star,0,'TRK-1-088');
- star.players[0].hand.push(starPay,starjun);
- star=playFront(star,starjun.uid);
+ star.players[0].hand.push(starjun);
+ star=raidOnto(star,starjun.uid,starBase.uid);
  assert.equal(star.pending.kind,'effect-discard-gate');
  star=choose(star,item=>item.uid===starPay.uid);
  assert.equal(star.pending.kind,'effect-retire-bp');
@@ -1313,6 +1344,7 @@ test('the last five Toriko prints change shared state',()=>{
   'TRK-1-020':1,'TRK-1-033':1,'TRK-1-054':1,'TRK-1-068':1,'TRK-1-072':1,'TRK-1-090':4,'TRK-1-091':1,'TRK-1-094':1});
  let sunny=toPhase(fresh(deck,19013),'main');
  const sunnyCard=seat(sunny,0,'TRK-1-013','front',0,true);
+ layUnder(sunnyCard,take(sunny,0,'TRK-1-006'));
  seat(sunny,0,'TRK-1-002','front',1,true);
  const small=seat(sunny,1,'TRK-1-014','front',0,true);
  sunny=toPhase(sunny,'attack');
@@ -1330,6 +1362,8 @@ test('the last five Toriko prints change shared state',()=>{
 
  let zebra=toPhase(fresh(deck,19017),'main');
  const zebraCard=seat(zebra,0,'TRK-1-017','front',0,true);
+ assert.equal(universalAttackDamage(pack,zebra,zebraCard),1);
+ layUnder(zebraCard,take(zebra,0,'TRK-1-090'));
  assert.equal(universalAttackDamage(pack,zebra,zebraCard),2);
  zebra=act(zebra,zebraCard.uid,'onceBuffField');
  assert.equal(zebra.pending.kind,'effect-buff-own');
@@ -1358,6 +1392,8 @@ test('the last five Toriko prints change shared state',()=>{
  half=playEvent(half,ingredient.uid);
  const toriko=seat(half,0,'TRK-1-054','front',0,true);
  toriko.buffs=[{bp:4000,untilTurn:half.turn}];
+ assert.equal(universalAttackDamage(pack,half,toriko),1);
+ layUnder(toriko,take(half,0,'TRK-1-006'));
  assert.equal(universalAttackDamage(pack,half,toriko),2);
  toriko.buffs=[];
  assert.equal(universalAttackDamage(pack,half,toriko),1);
@@ -1388,7 +1424,7 @@ test('the last five Toriko prints change shared state',()=>{
  const beforeRobot=robot.players[0].hand.length;
  robot=playFront(robot,body.uid);
  const entered=robot.players[0].front.find(card=>card&&card.uid===body.uid);
- assert.equal(robot.players[0].hand.length,beforeRobot);
+ assert.equal(robot.players[0].hand.length,beforeRobot-1);
  assert.equal(universalBp(pack,robot,entered),3500);
  const buried=take(robot,0,'TRK-1-091');
  entered.stack=[buried];
@@ -1405,6 +1441,7 @@ test('the last five Toriko prints change shared state',()=>{
 
  let rod=toPhase(fresh(deck,19091),'main');
  const tommy=seat(rod,0,'TRK-1-091','front',0,true);
+ layUnder(tommy,take(rod,0,'TRK-1-006'));
  const bug=seat(rod,0,'TRK-1-068','front',1,true);
  rod=pass(rod,1,'main');
  readyAp(rod,1,2);
