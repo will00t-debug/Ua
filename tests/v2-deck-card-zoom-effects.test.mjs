@@ -85,6 +85,6 @@ test('overlay is isolated from quantity, deck cover and official card art',()=>{
  assert.match(css,/top:58\.8%;bottom:10\.6%/);
  assert.match(css,/@media\(max-width:680px\)/);
  const page=read('dist/index.html');
- assert.match(page,/arena-deck-mockup\.css\?v=20261120mobileflow1/);
- assert.match(page,/v2-deck-editor\.mjs\?v=20261120mobileflow1/);
+ assert.match(page,/arena-deck-mockup\.css\?v=20261120mobileflow2/);
+ assert.match(page,/v2-deck-editor\.mjs\?v=20261120mobileflow2/);
 });
