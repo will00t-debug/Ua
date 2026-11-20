@@ -633,6 +633,24 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return condition.kind==='ownDistinctTraitNames'?stats.names.size>=condition.min:
    stats.found>=condition.min;
  }
+ if(condition.kind==='ownDistinctUnionNames'){
+  // 〔［特徴］と〈名前〉〕 is one set of printed names. A card counts when it
+  // has the trait or that printed name. Copies of one name stay one kind.
+  // A facedown card supplies neither. Hand, deck, and outside stay out.
+  if(condition.turn==='own'&&s.active!==owner)return false;
+  if(condition.turn==='opponent'&&s.active===owner)return false;
+  const board=s.players[owner];
+  const areas=condition.zone==='front'?[board.front]:
+   condition.zone==='energy'?[board.energy]:[board.front,board.energy];
+  const names=new Set();
+  for(const area of areas)for(const physical of area){
+   if(!printedFieldCard(physical)||(condition.excludeSelf&&physical.uid===sourceUid))continue;
+   const definition=printed(physical);
+   if(!cardHasTrait(definition,condition.trait)&&!cardHasName(definition,condition.name,false))continue;
+   if(typeof definition.name==='string'&&definition.name.trim())names.add(definition.name);
+  }
+  return names.size>=condition.min;
+ }
  if(condition.kind==='ownPrintedTraitCount'){
   return countOwnPrintedTrait(s,owner,sourceUid,condition,printed)>=condition.min;
  }

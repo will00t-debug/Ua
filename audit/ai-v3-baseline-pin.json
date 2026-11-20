@@ -25,5 +25,6 @@
     "rawGap": 0,
     "note": "Not deployed. Removing RAW_GAP is not treated as a strength result."
   },
-  "hardAiSha256": "f202dc4fcc07b9f7d794cc6fa3c486836cb8bf9d3ab8be69c16ebe733d40b262"
+  "hardAiSha256": "6479e5d424ff526949ca7656a461c64637763823d6e0508dc77645bee5595434",
+  "hardAiNote": "2026-11-20：effect-print-look 與既有的私人查看一樣，不讓 hard-search-2 讀到視窗裡的牌序。"
 }

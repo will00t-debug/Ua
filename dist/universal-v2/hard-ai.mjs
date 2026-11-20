@@ -534,7 +534,7 @@ function actionUsesHidden(action,visible){
  for(const uid of ids)if(!visible.has(uid))return true;
  return false;
 }
-const BLIND_KINDS=new Set(['private-top-place','private-top-choice']);
+const BLIND_KINDS=new Set(['private-top-place','private-top-choice','effect-print-look']);
 function futureLook(after,visible){
  if(!after.pending)return false;
  // A simulated look at deck order is not information the current decision has.

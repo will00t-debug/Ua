@@ -11,6 +11,20 @@ export function dgmPackCard(card){
  const kind=profile?.kind||null;
  if(kind!==card.engineKind)throw Error(card.id+' engine kind drifted from the Japanese print');
  if(!kind)throw Error(card.id+' is catalogue-only');
+ if(profile.program){
+  const program=profile.program;
+  return {
+   id:card.id,name:card.nameJa,color:card.color,type:card.type,
+   energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,trigger:card.trigger,
+   traits:card.traits,implementation:'dsl',effects:program.effects||{},
+   ...(program.mainAbility?{mainAbility:program.mainAbility}:{}),
+   ...(program.passiveBonuses?{passiveBonuses:program.passiveBonuses}:{}),
+   ...(profile.triggerEffect?{triggerEffect:profile.triggerEffect}:{}),
+   ...(program.impactNull?{impactNull:true}:{}),
+   ...(program.enterAlwaysActive?{enterAlwaysActive:true}:{}),
+   ...(program.playRequiresOwnName?{playRequiresOwnName:program.playRequiresOwnName}:{})
+  };
+ }
  if(kind==='handDiscount'){
   const printed=profile.handDiscount;
   if(JSON.stringify(printed)!==JSON.stringify(card.handDiscount))

@@ -46,6 +46,8 @@ import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
 import {bindFinishApi,finishJob,legalFinishPending,resolveFinishChoice,
  collectRaidWitnesses} from './ttg-finish-runtime.mjs';
 import {raidBoxListed} from './raid-box.mjs';
+import {runSharedPrintJob,legalSharedPrintPending,resolveSharedPrintPending,
+ legalSharedPrintActivations,activateSharedPrint,sharedPrintLookView} from './shared-print.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 
 function hasPrintedTrait(definition){
@@ -4370,7 +4372,25 @@ function traitOutsideRemovedCount(pack,s,owner,trait){
  const area=s.players[owner];
  return [...area.outside,...area.removed].filter(c=>cardHasTrait(card(pack,c),trait)).length;
 }
+function printApi(){
+ return {card,field,location,printedFieldCard,cardHasName,cardHasTrait,
+  originalEffectsDisabled,matches:matchesV2LiveCondition,bp,
+  effectEnter,applyEffects,effectMoveTo,legalDestinations,retire,bounceToHand,draw,
+  moveOwnedLinear,grantContinuousState,attemptFieldActive,noteOwnEffectRest,
+  performRaid,validRaidBase,spendAp,raidBoxTextLive,continueQueue:continueEffectQueue,
+  publishAdded(pack,s,owner,physical){
+   notePublicDeckReveal(pack,s,owner,physical);
+   s.publicReveals.push({kind:'searched-to-hand',owner,title:titleOf(pack,owner),
+    cardId:physical.cardId,uid:physical.uid,trigger:null,turn:s.turn});
+   if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
+  },
+  energyReady(pack,s,player,printed){
+   return zoneRequiredEnergy(pack,s,player,printed,'outside')<=
+    (universalEnergyByColor(pack,s,player)[printed.color]||0);
+  }};
+}
 function runSharedPrintedJob(pack,s,job){
+ if(runSharedPrintJob(printApi(),pack,s,job))return true;
  const owner=job.owner,pl=s.players[owner];
  if(job.op==='grantNamedSelectHandTax'){
   const choices=field(pl).filter(c=>cardHasName(card(pack,c),job.name,
@@ -5073,7 +5093,9 @@ function continueEffectQueue(pack,s){
   else if(job.op==='drawIfOwnName'){
    // Evaluate after the character actually entered OWN front/energy field.
    const names=job.names||[job.name];
-   const named=field(pl).some(c=>names.some(n=>cardHasName(card(pack,c),n,originalEffectsDisabled(s,c))));
+   const named=job.min?
+    field(pl).filter(c=>printedFieldCard(c)&&names.some(n=>cardHasName(card(pack,c),n,false))).length>=job.min:
+    field(pl).some(c=>names.some(n=>cardHasName(card(pack,c),n,originalEffectsDisabled(s,c))));
    let selfOk=job.minSelfBp===undefined;
    if(!selfOk){
     const loc=location(s,owner,job.sourceUid);
@@ -6119,6 +6141,10 @@ function continueEffectQueue(pack,s){
      player:owner,sourceUid:job.sourceUid,uids,rest:job.rest,
      ...(job.toOutside?{}:{order:[]})};
   }else if(job.op==='inspectTopAnyOutside'){
+    const named=typeof job.whenName!=='string'||field(pl).some(c=>printedFieldCard(c)&&
+     cardHasName(card(pack,c),job.whenName,originalEffectsDisabled(s,c)));
+    if(!named){/* the printed name is absent, so the window stays closed */}
+    else{
     let count=job.count;
     if(job.whenEnteredByCharacter&&enteredByOwnCharacter(pack,s,owner,job.sourceUid))
      count=job.whenEnteredByCharacter.count;
@@ -6127,6 +6153,7 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid,uids,selected:[],rest:job.rest,
      ...(job.maxOutside===1?{maxOutside:1}:{}),
      ...(job.drawIfOutsideEnergyAtLeast?{drawIfOutsideEnergyAtLeast:job.drawIfOutsideEnergyAtLeast}:{})};
+    }
    }else if(job.op==='revealTopHandOutsideUnlessRaid'){
     // 公開し手札に加える. The life-trigger icon and a printed Raid keyword
     // are both 【レイド】. Only a card without either one puts a hand card
@@ -7192,11 +7219,14 @@ function continueEffectQueue(pack,s){
     player:owner,sourceUid:job.sourceUid,choices,bp:job.bp,
     min:job.min,names:[...job.names]};
   }else if(job.op==='retireOppFrontOneUnderBp'){
-   const limit=frontNameLadderLimit(pack,s,owner,job);
+   let limit=frontNameLadderLimit(pack,s,owner,job);
+   if(job.fieldRaise&&field(pl).some(c=>printedFieldCard(c)&&
+    cardHasName(card(pack,c),job.fieldRaise.name,originalEffectsDisabled(s,c))))
+    limit=job.fieldRaise.bp;
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit&&
      cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
-    sourceUid:job.sourceUid,choices,limit,optional:true};
+    sourceUid:job.sourceUid,choices,limit,optional:job.optional!==false};
   }else if(job.op==='retireOppFrontRest'){
    if(!(job.ownTurnOnly===true&&s.active!==owner)){
     const choices=s.players[1-owner].front.filter(c=>c&&c.ready===false&&
@@ -11763,6 +11793,7 @@ function namedFieldImpactChoices(pack,s,owner,sourceUid,names){
 }
 function resolveChoice(s,a,pack){
  if(resolveSharedRestPending(pack,s,a))return;
+ if(resolveSharedPrintPending(printApi(),pack,s,a))return;
  const q=s.pending,p=s.players[q.player];
  if(q.kind==='attack-life-target'){
   const life=s.players[q.defender].life;
@@ -14396,8 +14427,10 @@ function resolveChoice(s,a,pack){
    if(q.thenDraw)draw(pack,s,q.player,1,{reason:'own-effect',sourceUid:q.sourceUid});
    if(q.skipSelfIfAdded&&q.added)grantSkipNextActive(s,q.player,q.sourceUid);
    if(q.discardAfter){
-    if(!p.hand.length)throw Error('Mandatory contingent discard has no hand card');
-    s.pending={kind:'effect-discard',player:q.player,sourceUid:q.sourceUid};
+    const matching=q.handFilter?p.hand.filter(c=>printedHandOr(card(pack,c),q.handFilter)):p.hand;
+    if(!matching.length)throw Error('Mandatory contingent discard has no hand card');
+    s.pending={kind:'effect-discard',player:q.player,sourceUid:q.sourceUid,
+     ...(q.handFilter?{handFilter:q.handFilter}:{})};
    }else if(q.recoverApAfter){
     if(p.apCards.some(c=>c.inPlay&&!c.ready))
      s.pending={kind:'effect-recover-ap',player:q.player,sourceUid:q.sourceUid,remaining:1,
@@ -16027,7 +16060,8 @@ function resolveChoice(s,a,pack){
  }
  if(q.kind==='effect-discard'){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
-  if(index<0)throw Error('Discard requires an owned hand card');
+  if(index<0||(q.handFilter&&!printedHandOr(card(pack,p.hand[index]),q.handFilter)))
+   throw Error('Discard requires an owned hand card');
   moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
    controller:q.kind==='effect-discard'&&/^[01]-/.test(q.sourceUid||'')
     ?Number(q.sourceUid[0]):q.player,
@@ -16069,6 +16103,21 @@ function resolveChoice(s,a,pack){
      throw Error('Unproven discard then move');
     s.effectQueue.unshift({op:'moveSelfToLine',owner:q.player,sourceUid:q.sourceUid,
      line:q.thenMove});
+   }
+   if(q.thenEnemyDown){
+    s.pending=null;
+    s.effectQueue.unshift({op:'enemyBpDown',owner:q.player,sourceUid:q.sourceUid,
+     bp:q.thenEnemyDown.bp,optional:true,minBp:q.thenEnemyDown.minBp,zone:'front'});
+    continueEffectQueue(pack,s);return;
+   }
+   if(q.thenRetire){
+    const choices=field(p).filter(c=>printedFieldCard(c)&&card(pack,c).type==='character'&&
+     cardHasName(card(pack,c),q.thenRetire.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
+    if(choices.length){
+     s.pending={kind:'effect-print',player:q.player,sourceUid:q.sourceUid,step:'retire-named',
+      name:q.thenRetire.name,draw:q.thenRetire.draw,choices,optional:true};
+     return;
+    }
    }
    s.pending=null;continueEffectQueue(pack,s);
   }
@@ -20370,6 +20419,8 @@ function legalPending(pack,s){
  const q=s.pending,p=s.players[q.player];
  const sharedRest=legalSharedRestPending(pack,s);
  if(sharedRest?.length)return sharedRest;
+ const sharedPrint=legalSharedPrintPending(printApi(),pack,s);
+ if(sharedPrint)return sharedPrint;
  if(q.kind==='opening-mulligan')return [{type:'openingMulligan',mode:'keep'},{type:'openingMulligan',mode:'redraw'}];
  ensureFinish();
  const finishLegal=legalFinishPending(pack,s);
@@ -20905,7 +20956,8 @@ function legalPending(pack,s){
    ...p.apCards.filter(c=>c.inPlay&&!c.ready).map(c=>({type:'chooseApRecovery',uid:c.uid}))
   ];
  if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
- if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
+ if(q.kind==='effect-discard')return p.hand.filter(c=>!q.handFilter||printedHandOr(card(pack,c),q.handFilter))
+  .map(c=>({type:'chooseDiscard',uid:c.uid}));
  if(q.kind==='effect-remove-hand')return [
   {type:'chooseRemoveHand',uid:null},
   ...p.hand.filter(c=>q.choices.includes(c.uid)&&matchesFilter(pack,s,c,q.filter))
@@ -23246,10 +23298,16 @@ function outsideRecoveryCap(pack,s,owner,job){
  }
  return cap;
 }
+function printedHandOr(printed,filter){
+ const named=Array.isArray(filter?.names)&&filter.names.some(name=>cardHasName(printed,name,false));
+ return named||(Number.isInteger(filter?.energyAtMost)&&printed.energy<=filter.energyAtMost);
+}
 function restThenOpen(pack,s,owner,source,ability){
  const step=ability?.then?.[0];
  if(step?.op==='chooseFrontOrOwnTrait'&&step.optional===false)
   return sideTraitChoices(pack,s,owner,step,source.uid).length>0;
+ if(step?.op==='buffOwnField'&&step.optional===false)
+  return field(s.players[owner]).some(c=>matchesBuffTarget(pack,s,c,step));
  return true;
 }
 function sideTraitChoices(pack,s,owner,job,sourceUid,reservedAp=0,sourceType=null,reservedHandUid=null){
@@ -25146,6 +25204,7 @@ export function legalUniversalActions(pack,s){
   });
   if(forced&&out.some(a=>a.type==='attack'))return out.filter(a=>a.type!=='next');
  }
+ if(s.phase==='main')out.push(...legalSharedPrintActivations(printApi(),pack,s,s.active));
  return out;
 }
 // Life RAID asks whether the revealed card's required energy is met.
@@ -25524,6 +25583,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    if(typeof action.mode==='string'&&action.mode.startsWith('kmr:')){
     ensureKmr();activateKmr(pack,s,action);break;
    }
+   if(activateSharedPrint(printApi(),pack,s,action))break;
    if(activateSharedRest(pack,s,action,p,pl))break;
    if(action.mode==='outsideRaidReturn'){
     const selected=pl.outside.find(c=>c.uid===action.uid);
@@ -28099,7 +28159,7 @@ export function assertUniversalMatch(pack,s){
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
  refreshAbsentFieldNames(pack,s);
- if(s.pending&&(!playerIndex(s.pending.player)||!['opening-mulligan','effect-draw-counted','effect-top-distinct-take','effect-draw-up-to','effect-named-bottom','effect-discard-swap','effect-union-discard','effect-mill-scale','effect-facedown-hand','effect-retire-tuck','effect-reveal-union','effect-hand-rest-self','effect-outside-raid','effect-rest-battle','effect-locked-entry','effect-bounce-union','effect-retire-remove','effect-swap-fresh','effect-move-gen','effect-outside-bottom','effect-select-tax','effect-remove-aura','effect-pay-move','effect-move-line','effect-raid-source','effect-tuck-facedown','effect-strip-facedown','effect-named-facedown-strip','effect-look-under-hand','effect-look-under-order','effect-active-energy-buff','effect-pay-hand-move','effect-return-active','effect-hand-active','effect-front-open-hand','effect-opp-attack-ready','effect-field-rest-draw','effect-pay-hand-impact','effect-place-hand-outside','effect-trait-hand-outside','effect-gated-hand-retire','effect-named-follow','effect-named-kit','effect-active-self-or-ap','effect-remove-hand-main','effect-copy-main','effect-trigger-leave-rest','effect-trait-leave-draw','effect-optional-hand-outside','effect-except-hand-rest','effect-front-vacate','effect-mill-optional','effect-recover-any','effect-discard-any','effect-pay-hand-active','effect-life-order','effect-move-or-swap','effect-hand-active-or-raid','effect-opp-life-leave','effect-may-hand-rest','effect-opp-may-front-rest','effect-this-turn-block','phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-facedown-front','effect-entry-protect','block','attack-life-target','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-acquired-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-peek-buff','effect-field-trait-bounce','effect-discard-scale','effect-scale-buff','effect-rest-impact','effect-hand-trait-active','effect-pay-raid-base','effect-raid-under-rest','effect-option-retire-own','effect-retire-own-other','effect-attack-win-draw','effect-entered-discard','effect-battle-energy-slot','effect-battle-energy-full','effect-opp-energy-move','effect-discard-hand-active','effect-rest-own-impact','effect-discard-active-unattacked','effect-active-unattacked','effect-recover-type','effect-hand-then-rest-deploy','effect-rest-deploy','effect-grant-attack-end','effect-attack-end-reactivate','effect-quiet-rest-draw','private-top-place','effect-retire-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-lock-move','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-rest-strip-lock','effect-grant-block-at-least','effect-may-draw-discard','effect-mill-up-to','effect-mill-recover-discard','effect-mill-recover','effect-grant-impact-null','effect-discard-up-to','effect-top-add-one','effect-distinct-trait-buff','effect-energy-mode','effect-may-then','effect-max-bp-impact','effect-outside-or-rest','effect-replay-base','effect-return-raid-base','effect-removed-self-grant','effect-buff-name-or-trait','effect-top-deploy-rest','effect-named-energy','effect-active-one-ap','effect-mode-discard','effect-outside-deck-top','effect-outside-names','effect-active-character','effect-raid-witness-order','effect-raid-attach','effect-raid-witness-move','effect-look-take','effect-discard-mode','effect-facedown-scale','effect-spend-facedown','effect-absorb-front','effect-simon-low','effect-replay-entry','effect-attack-end-raid','effect-retire-capture','effect-retire-at-least','effect-retire-at-most','effect-retire-scaled','effect-hand-bp-may','effect-hand-deploy-may','effect-hand-outside-active','effect-named-duration','effect-top-take-one','effect-reveal-optional','effect-referenced-bp','effect-outside-referenced','effect-reveal-retire','effect-retire-referenced','effect-hand-block','effect-hand-rest-entry','effect-active-other','effect-rest-own-front-draw','effect-raid-base-rest','effect-raid-source-rest','effect-raid-bottom-active','effect-rest-or-retire','effect-rest-skip-may-retire','effect-retire-named-draw','effect-rest-outside-events','effect-rested-retire-impact','effect-hand-named-rest','effect-grant-named-impact','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-place-hand-top','private-top-or-outside','private-top-triggerless-hand','effect-rest-opp-if-name','effect-retire-opp-field','effect-rest-other-trait','effect-grant-unblocked-draw','effect-suppress-own-turn','effect-optional-own-trait-retire','effect-active-resting-front','effect-rest-named-then','effect-move-opp-cap','effect-move-opp-dest','effect-outside-union-top','effect-rest-front-ap','effect-discard-active','effect-outside-printed-rest','effect-grant-printed-block','effect-move-opp-front','effect-unblocked-rest','effect-energy-swap','effect-deck-named-play','effect-place-hand','effect-substitute-retire','effect-outside-printed-active','effect-bounce-include-self','effect-outside-rest-or-raid','effect-grant-bounce-instead','effect-remove-opp-field','effect-hand-reenter-under','effect-grant-impact','effect-entry-other-impact','effect-front-grant','effect-removed-enter','effect-grant-opp-block','effect-deploy-outside','effect-energy-skip-swap','effect-outside-cost-hand','effect-attack-aid','effect-attack-aid-grant','effect-tuck-damage','effect-active-own-trait','effect-tuck-hand-under','effect-chain-raid-facedown','effect-chain-raid-hand','effect-chain-discard','effect-outside-named-raid','effect-energy-trait-swap','effect-active-lines','effect-active-skip-pair','effect-pay-hand-outside','effect-play-outside-event','effect-release-facedown','effect-hand-trigger-card','effect-active-own-other','effect-grant-field-energy','effect-attack-end-rest','effect-named-energy-bounce','effect-trait-ban-move','effect-entry-rest-front','effect-grant-lose-ready','effect-outside-printed','effect-outside-except','effect-active-either','effect-rest-own','main-active-named','effect-buff-any','effect-retire-tuck-active','effect-grant-named','effect-hand-fresh-name','effect-energy-trait-front','effect-entry-sacrifice','effect-named-double','effect-field-sacrifice-replay','effect-swap-or-buff','effect-swap-pair','effect-mark-opp-start','effect-remove-hand','effect-remove-hand-scale','effect-remove-hand-cap','effect-name-energy-reveal','effect-revealed-energy-hand','effect-mandatory-hand-remove','effect-draw-instead','effect-reveal-opp-top','effect-choose-printed-energy','effect-top-trait-hand','effect-bounce-bp','effect-optional-tuck-under','effect-facedown-outside','effect-may-draw','effect-return-retired','effect-retire-other-front-name','effect-retire-missing-trait','effect-outside-color-trait-active','effect-retire-own-trait','effect-active-any','effect-equal-bp-pair','effect-printed-lock','effect-name-hand-remove','effect-named-field-protect','effect-required-energy','effect-active-energy-named','effect-top-hand-outside','effect-outside-exact-rest','effect-outside-trait-ap-rest','effect-outside-color-ap-rest','effect-outside-active-pair','effect-hand-rest-cap','effect-removed-name-outside','effect-hand-front-active','energy-line-attack-end-swap','effect-name-or-trait-impact','effect-first-attack-kit','effect-named-rest-ready','effect-named-keyword','effect-keyword-mode','effect-name-or-trait-ready','effect-name-or-trait-protect','effect-sacrifice-named','effect-rest-ap-lock','effect-life-to-hand','effect-own-life-outside','effect-life-active-self','effect-retire-life-or-hand','effect-hidden-life-hand','effect-rest-reenter','effect-hand-two-outside','effect-front-retire-look','effect-top-hand-one','effect-remove-own-other','effect-buff-other-trait','effect-active-traitless','effect-active-other-trait','effect-shift-slot','effect-energy-shift','effect-recover-event','effect-ordered-subset','effect-top-script','effect-bottom-own','effect-rest-own-field','effect-hand-active-noraid','effect-retire-trigger-ceiling','effect-retire-own-other','effect-move-opp-if-event','effect-remove-named-zones','effect-self-to-front','effect-move-self','effect-grant-printed-ap','effect-different-field','effect-field-leave-remove','effect-suzuha-attack-end','effect-mayuri-fork','effect-printed-rest-raid','effect-zone-rest-raid','effect-removed-okabe-raid','effect-grant-retire','granted-retire-draw','effect-protect-gen','effect-raid-base-choice','effect-named-ap-outside','effect-attack-discard-active','effect-name-draw','effect-remove-outside-up-to','effect-removed-rest-pair','effect-top-character-outside','effect-peek-top-place','effect-remove-front-self','effect-bounce-named-cut','effect-front-bp-cut','effect-reveal-top-place','effect-reveal-trait-choice','effect-life-reenter-grant','effect-sayaka-reenter','effect-tuck-named','effect-hand-girl-rest','effect-mami-active','effect-discard-named-energy','effect-grant-below-printed','effect-block-floor','effect-block-ceiling','effect-swap-lines','effect-armed-draw','effect-life-mandatory','effect-trait-kit','effect-life-until','effect-named-fronts','effect-own-attack-kit','effect-active-except','effect-top-deploy','effect-top-take-ready','effect-outside-color-rest','effect-ingot-double','effect-grant-double','effect-attack-end-named','effect-return-then','effect-active-trait-buff','effect-return-trait','effect-rest-gen','effect-retire-field-gen','effect-raid-life','effect-wyrm-look','effect-bottom-retire','effect-outside-bottom','effect-life-leave','effect-grant-trait-draw','effect-triggerless-pair','effect-may-hand-ap','effect-tuck-outside-host','effect-retire-one-front','effect-grant-keyword','effect-buff-until','effect-rest-named-draw','effect-or-deploy','effect-hand-scaled','effect-rest-energy-sum','effect-discard-reenter','effect-reenter-rest','effect-strip-under','effect-tuck-host','effect-outside-pay','effect-outside-entry','effect-discard-one','effect-grant-survivor-damage','mmm2','iys','kjn','aot','aot2','kmr','kmr2','csm','effect-field-leave-deploy','effect-own-retire-front','effect-active-name-except','effect-facedown-up-to','effect-remove-trait-kit','effect-tuck-per-energy','effect-raid-top-instead','effect-pay-hand-kit','effect-retire-replay','effect-named-hand-tax','effect-discard-active-buff','effect-other-ap-tax','effect-front-ban','effect-sum-recover','effect-low-gen-front','effect-deploy-active-front','effect-active-name','effect-must-block-grant','effect-attack-draw-pay','effect-attack-draw-target','effect-attack-win-pay','effect-attack-win-rest','effect-opp-retire-instead'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['opening-mulligan','effect-draw-counted','effect-top-distinct-take','effect-draw-up-to','effect-named-bottom','effect-discard-swap','effect-union-discard','effect-mill-scale','effect-facedown-hand','effect-retire-tuck','effect-reveal-union','effect-hand-rest-self','effect-outside-raid','effect-rest-battle','effect-locked-entry','effect-bounce-union','effect-retire-remove','effect-swap-fresh','effect-move-gen','effect-outside-bottom','effect-select-tax','effect-remove-aura','effect-pay-move','effect-move-line','effect-raid-source','effect-tuck-facedown','effect-strip-facedown','effect-named-facedown-strip','effect-look-under-hand','effect-look-under-order','effect-active-energy-buff','effect-pay-hand-move','effect-return-active','effect-hand-active','effect-front-open-hand','effect-opp-attack-ready','effect-field-rest-draw','effect-pay-hand-impact','effect-place-hand-outside','effect-trait-hand-outside','effect-gated-hand-retire','effect-named-follow','effect-named-kit','effect-active-self-or-ap','effect-remove-hand-main','effect-copy-main','effect-trigger-leave-rest','effect-trait-leave-draw','effect-optional-hand-outside','effect-except-hand-rest','effect-front-vacate','effect-mill-optional','effect-recover-any','effect-discard-any','effect-pay-hand-active','effect-life-order','effect-move-or-swap','effect-hand-active-or-raid','effect-opp-life-leave','effect-may-hand-rest','effect-opp-may-front-rest','effect-this-turn-block','phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-facedown-front','effect-entry-protect','block','attack-life-target','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-acquired-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-peek-buff','effect-field-trait-bounce','effect-discard-scale','effect-scale-buff','effect-rest-impact','effect-hand-trait-active','effect-pay-raid-base','effect-raid-under-rest','effect-option-retire-own','effect-retire-own-other','effect-attack-win-draw','effect-entered-discard','effect-battle-energy-slot','effect-battle-energy-full','effect-opp-energy-move','effect-discard-hand-active','effect-rest-own-impact','effect-discard-active-unattacked','effect-active-unattacked','effect-recover-type','effect-hand-then-rest-deploy','effect-rest-deploy','effect-grant-attack-end','effect-attack-end-reactivate','effect-quiet-rest-draw','private-top-place','effect-retire-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-lock-move','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-rest-strip-lock','effect-grant-block-at-least','effect-may-draw-discard','effect-mill-up-to','effect-mill-recover-discard','effect-mill-recover','effect-grant-impact-null','effect-discard-up-to','effect-top-add-one','effect-distinct-trait-buff','effect-energy-mode','effect-may-then','effect-max-bp-impact','effect-outside-or-rest','effect-replay-base','effect-return-raid-base','effect-removed-self-grant','effect-buff-name-or-trait','effect-top-deploy-rest','effect-named-energy','effect-active-one-ap','effect-mode-discard','effect-outside-deck-top','effect-outside-names','effect-active-character','effect-raid-witness-order','effect-raid-attach','effect-raid-witness-move','effect-look-take','effect-discard-mode','effect-facedown-scale','effect-spend-facedown','effect-absorb-front','effect-simon-low','effect-replay-entry','effect-attack-end-raid','effect-retire-capture','effect-retire-at-least','effect-retire-at-most','effect-retire-scaled','effect-hand-bp-may','effect-hand-deploy-may','effect-hand-outside-active','effect-named-duration','effect-top-take-one','effect-reveal-optional','effect-referenced-bp','effect-outside-referenced','effect-reveal-retire','effect-retire-referenced','effect-hand-block','effect-hand-rest-entry','effect-active-other','effect-rest-own-front-draw','effect-raid-base-rest','effect-raid-source-rest','effect-raid-bottom-active','effect-rest-or-retire','effect-rest-skip-may-retire','effect-retire-named-draw','effect-rest-outside-events','effect-rested-retire-impact','effect-hand-named-rest','effect-grant-named-impact','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-place-hand-top','private-top-or-outside','private-top-triggerless-hand','effect-rest-opp-if-name','effect-retire-opp-field','effect-rest-other-trait','effect-grant-unblocked-draw','effect-suppress-own-turn','effect-optional-own-trait-retire','effect-active-resting-front','effect-rest-named-then','effect-move-opp-cap','effect-move-opp-dest','effect-outside-union-top','effect-rest-front-ap','effect-discard-active','effect-outside-printed-rest','effect-grant-printed-block','effect-move-opp-front','effect-unblocked-rest','effect-energy-swap','effect-deck-named-play','effect-place-hand','effect-substitute-retire','effect-outside-printed-active','effect-bounce-include-self','effect-outside-rest-or-raid','effect-grant-bounce-instead','effect-remove-opp-field','effect-hand-reenter-under','effect-grant-impact','effect-entry-other-impact','effect-front-grant','effect-removed-enter','effect-grant-opp-block','effect-deploy-outside','effect-energy-skip-swap','effect-outside-cost-hand','effect-attack-aid','effect-attack-aid-grant','effect-tuck-damage','effect-active-own-trait','effect-tuck-hand-under','effect-chain-raid-facedown','effect-chain-raid-hand','effect-chain-discard','effect-outside-named-raid','effect-energy-trait-swap','effect-active-lines','effect-active-skip-pair','effect-pay-hand-outside','effect-play-outside-event','effect-release-facedown','effect-hand-trigger-card','effect-active-own-other','effect-grant-field-energy','effect-attack-end-rest','effect-named-energy-bounce','effect-trait-ban-move','effect-entry-rest-front','effect-grant-lose-ready','effect-outside-printed','effect-outside-except','effect-active-either','effect-rest-own','main-active-named','effect-buff-any','effect-retire-tuck-active','effect-grant-named','effect-hand-fresh-name','effect-energy-trait-front','effect-entry-sacrifice','effect-named-double','effect-field-sacrifice-replay','effect-swap-or-buff','effect-swap-pair','effect-mark-opp-start','effect-remove-hand','effect-remove-hand-scale','effect-remove-hand-cap','effect-name-energy-reveal','effect-revealed-energy-hand','effect-mandatory-hand-remove','effect-draw-instead','effect-reveal-opp-top','effect-choose-printed-energy','effect-top-trait-hand','effect-bounce-bp','effect-optional-tuck-under','effect-facedown-outside','effect-may-draw','effect-return-retired','effect-retire-other-front-name','effect-retire-missing-trait','effect-outside-color-trait-active','effect-retire-own-trait','effect-active-any','effect-equal-bp-pair','effect-printed-lock','effect-name-hand-remove','effect-named-field-protect','effect-required-energy','effect-active-energy-named','effect-top-hand-outside','effect-outside-exact-rest','effect-outside-trait-ap-rest','effect-outside-color-ap-rest','effect-outside-active-pair','effect-hand-rest-cap','effect-removed-name-outside','effect-hand-front-active','energy-line-attack-end-swap','effect-name-or-trait-impact','effect-first-attack-kit','effect-named-rest-ready','effect-named-keyword','effect-keyword-mode','effect-name-or-trait-ready','effect-name-or-trait-protect','effect-sacrifice-named','effect-rest-ap-lock','effect-life-to-hand','effect-own-life-outside','effect-life-active-self','effect-retire-life-or-hand','effect-hidden-life-hand','effect-rest-reenter','effect-hand-two-outside','effect-front-retire-look','effect-top-hand-one','effect-remove-own-other','effect-buff-other-trait','effect-active-traitless','effect-active-other-trait','effect-shift-slot','effect-energy-shift','effect-recover-event','effect-ordered-subset','effect-top-script','effect-bottom-own','effect-rest-own-field','effect-hand-active-noraid','effect-retire-trigger-ceiling','effect-retire-own-other','effect-move-opp-if-event','effect-remove-named-zones','effect-self-to-front','effect-move-self','effect-grant-printed-ap','effect-different-field','effect-field-leave-remove','effect-suzuha-attack-end','effect-mayuri-fork','effect-printed-rest-raid','effect-zone-rest-raid','effect-removed-okabe-raid','effect-grant-retire','granted-retire-draw','effect-protect-gen','effect-raid-base-choice','effect-named-ap-outside','effect-attack-discard-active','effect-name-draw','effect-remove-outside-up-to','effect-removed-rest-pair','effect-top-character-outside','effect-peek-top-place','effect-remove-front-self','effect-bounce-named-cut','effect-front-bp-cut','effect-reveal-top-place','effect-reveal-trait-choice','effect-life-reenter-grant','effect-sayaka-reenter','effect-tuck-named','effect-hand-girl-rest','effect-mami-active','effect-discard-named-energy','effect-grant-below-printed','effect-block-floor','effect-block-ceiling','effect-swap-lines','effect-armed-draw','effect-life-mandatory','effect-trait-kit','effect-life-until','effect-named-fronts','effect-own-attack-kit','effect-active-except','effect-top-deploy','effect-top-take-ready','effect-outside-color-rest','effect-ingot-double','effect-grant-double','effect-attack-end-named','effect-return-then','effect-active-trait-buff','effect-return-trait','effect-rest-gen','effect-retire-field-gen','effect-raid-life','effect-wyrm-look','effect-bottom-retire','effect-outside-bottom','effect-life-leave','effect-grant-trait-draw','effect-triggerless-pair','effect-may-hand-ap','effect-tuck-outside-host','effect-retire-one-front','effect-grant-keyword','effect-buff-until','effect-rest-named-draw','effect-or-deploy','effect-hand-scaled','effect-rest-energy-sum','effect-discard-reenter','effect-reenter-rest','effect-strip-under','effect-tuck-host','effect-outside-pay','effect-outside-entry','effect-discard-one','effect-grant-survivor-damage','mmm2','iys','kjn','aot','aot2','kmr','kmr2','csm','effect-field-leave-deploy','effect-own-retire-front','effect-active-name-except','effect-facedown-up-to','effect-remove-trait-kit','effect-tuck-per-energy','effect-raid-top-instead','effect-pay-hand-kit','effect-retire-replay','effect-named-hand-tax','effect-discard-active-buff','effect-other-ap-tax','effect-front-ban','effect-sum-recover','effect-low-gen-front','effect-deploy-active-front','effect-active-name','effect-must-block-grant','effect-attack-draw-pay','effect-attack-draw-target','effect-attack-win-pay','effect-attack-win-rest','effect-opp-retire-instead','effect-print','effect-print-look'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(['effect-mill-optional','effect-recover-any','effect-discard-any','effect-pay-hand-active'].includes(s.pending?.kind)){
   const q=s.pending,pl=s.players[q.player];
@@ -28742,6 +28802,20 @@ export function assertUniversalMatch(pack,s){
      !shape||!event||!witnessDenji)
      throw Error('Forged temporary physical battle grant');
     continue;
+   }
+   if(key==='mustBlockGranted'&&keys.includes('sourceUid')){
+    const piles=[...s.players[owner].outside,...(s.players[owner].resolvingEvents||[]),
+     ...(s.players[owner].removed||[])];
+    const src=piles.find(item=>item.uid===g.sourceUid);
+    const printed=!!src&&(card(pack,src).effects?.onPlay||[]).some(effect=>
+     effect.op==='grantNamedMustBlock'&&effect.bp===2500&&
+     cardHasName(card(pack,physical),effect.name,originalEffectsDisabled(s,physical)));
+    const resolving=(s.players[owner].resolvingEvents||[]).some(item=>item.uid===g.sourceUid);
+    const played=(s.zoneMoveEvents||[]).some(event=>event.turn===s.turn&&event.owner===owner&&
+     event.uid===g.sourceUid&&event.to==='outside');
+    if(printed&&(resolving||played)&&turnOk&&g.turn===s.turn&&
+     g.stamp===physical.fieldEntryStamp&&keys.length===3&&
+     keys.every(k=>k==='turn'||k==='stamp'||k==='sourceUid'))continue;
    }
    const frontOnceGrant=card(pack,physical).mainAbility?.op==='frontOnceProgram'&&
     card(pack,physical).mainAbility.frontOnly===false&&
@@ -33814,6 +33888,15 @@ export function universalPrivateChoices(pack,s,viewer){
    const c=action.uid?pile.find(x=>x?.uid===action.uid):null;
    const printed=c&&card(pack,c);
    return {action:{...action},card:printed?{cardId:c.cardId,name:printed.name,color:printed.color||''}:null};
+  })};
+ }
+ if(q?.kind==='effect-print-look'&&q.player===viewer){
+  const view=sharedPrintLookView(printApi(),pack,s,viewer);
+  return {...view,options:legalPending(pack,s).map(action=>{
+   const physical=action.uid===null?null:s.players[viewer].deck.find(card=>card.uid===action.uid);
+   const printed=physical&&card(pack,physical);
+   return {action:{...action},card:printed?{cardId:physical.cardId,name:printed.name,
+    color:printed.color||''}:null};
   })};
  }
  if(!q||q.player!==viewer||

@@ -58,7 +58,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp自己回合中&nbsp 自己場上擁有〈神田 由〉的情況下，此角色的BP+1000。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kandaBp",
   "faq": []
  },
  {
@@ -209,7 +209,7 @@ export const DGM_CARDS=
   "effectHk": "自己場上的［特徵：黑色教團］的卡名有４種或以上的情況下，此角色的BP+1000。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "traitNamesBp",
   "faq": []
  },
  {
@@ -690,7 +690,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將最多１張卡公開並加入手牌，將餘下的卡放置到場外。有加入手牌的情況下，將自己１張手牌放置到場外。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lookTopAddOneOutside",
   "faq": []
  },
  {
@@ -937,7 +937,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。&nbsp主起動&nbsp 選擇自己前線１張〈李利鳴〉，移動到能源線。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "moveNamedFront",
   "faq": [
    {
     "id": "Q2443",
@@ -1038,7 +1038,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "drawNamesMin",
   "faq": []
  },
  {
@@ -1085,7 +1085,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "optionalDiscardRecoverMode",
   "faq": []
  },
  {
@@ -1132,7 +1132,7 @@ export const DGM_CARDS=
   "effectHk": "自己場上擁有〈白燦〉的情況下，此角色獲得 (此角色在本回合初次進行阻擋時會被激活)。&nbsp自己回合中&nbsp 自己場上擁有〈白燦〉的情況下，此角色的BP+1000。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "nameDoubleBp",
   "faq": []
  },
  {
@@ -1179,7 +1179,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lookTopReturn",
   "faq": []
  },
  {
@@ -1455,7 +1455,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 自己場上的［特徵：黑色教團］的卡名有４種或以上的情況下，從以下選擇最多１項。．選擇對手前線１張BP4000或以上的角色，本回合中，BP-500。．支付１AP。如這樣做，選擇對手前線最多１張BP2500或以下的角色退場。&nbsp攻擊時&nbsp 從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "distinctFrontChoice",
   "faq": []
  },
  {
@@ -1516,7 +1516,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求２或以下及AP消耗１的藍色［特徵：黑色教團］，以激活狀態在自己場上登場。沒有登場的情況下，此角色被激活。&nbsp攻擊時&nbsp 自己場上的［特徵：黑色教團］的卡名有４種或以上的情況下，此角色在本回合中，BP+500，並且從自己牌庫上面公開１張卡。該卡是［特徵：黑色教團］的情況下，可加入手牌。沒有加入手牌的情況下，放置到牌庫上面或下面。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "handDeployOrActiveSelf",
   "faq": []
  },
  {
@@ -1844,7 +1844,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "activeFieldBuff",
   "faq": []
  },
  {
@@ -1934,7 +1934,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "retireRaise",
   "faq": []
  },
  {
@@ -2071,7 +2071,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "bounceFrontCapDrawIfOwn",
   "faq": []
  },
  {
@@ -2223,7 +2223,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restRetireDeploy",
   "faq": []
  },
  {
@@ -2377,7 +2377,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看３張卡，將最多１張卡放置到場外，將餘下的卡以任意順序放置到牌庫上面。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "inspectThree",
   "faq": []
  },
  {
@@ -2486,7 +2486,7 @@ export const DGM_CARDS=
   "effectHk": "(與此角色戰鬥的角色，在本次戰鬥中失去衝擊)&nbsp自己回合中&nbsp 自己場外擁有６張或以上〈艾倫．獲加〉的情況下，此角色的BP+1000。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideNamedBp",
   "faq": []
  },
  {
@@ -2683,7 +2683,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "discardMayRetireNamedDraw",
   "faq": []
  },
  {
@@ -2905,7 +2905,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看１張卡，然後放置到牌庫上面或場外。&nbsp主起動&nbsp 將１張手牌放置到場外 選擇對手前線最多１張BP1500或以上的角色，本回合中，BP-1000。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "discardThenEnemyDown",
   "faq": []
  },
  {
@@ -3006,7 +3006,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 自己場上擁有〈艾倫．獲加〉的情況下，從自己牌庫上面查看２張卡，將任意張數以任意順序放置到牌庫上面，將餘下的卡放置到場外。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "namedWindow",
   "faq": []
  },
  {
@@ -3107,7 +3107,7 @@ export const DGM_CARDS=
   "effectHk": "自己場上的［［特徵：挪亞一族］及〈挪亞方舟〉］的卡名有４種或以上的情況下，此角色的生產能源+。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "unionEnergy",
   "faq": []
  },
  {
@@ -3154,7 +3154,7 @@ export const DGM_CARDS=
   "effectHk": "(與此角色戰鬥的角色，在本次戰鬥中失去衝擊)&nbsp登場時&nbsp 將自己場上１張其他角色退場。&nbsp退場時&nbsp 從自己手牌選擇最多１張紫色［〈加斯德羅〉或〈戴比特〉］，以休息狀態在自己場上登場。用此效果登場的角色，下一次不會被激活。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "deployHandNamesRestSkip",
   "faq": [
    {
     "id": "Q2459",
@@ -3208,7 +3208,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看７張卡，將最多１張〈加斯戴比〉或〈戴比特〉公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。有加入手牌的情況下，將自己手牌１張〈加斯戴比〉或〈戴比特〉，或能源需求１或以下的卡放置到場外。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lookTopNamesFilteredDiscard",
   "faq": []
  },
  {
@@ -3255,7 +3255,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 將自己１張手牌放置到場外。&nbsp攻擊時&nbsp 自己場上的［［特徵：挪亞一族］及〈挪亞方舟〉］的卡名有４種或以上的情況下，此角色在本回合中，BP+500。有６種或以上的情況下，抽１張卡，然後將自己１張手牌放置到場外。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "unionAttackScale",
   "faq": []
  },
  {
@@ -3356,7 +3356,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 可將自己１張手牌放置到場外。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，然後抽１張卡。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "optionalPeekDraw",
   "faq": []
  },
  {
@@ -3403,7 +3403,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp登場時&nbsp 可將自己１張手牌放置到場外。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，然後抽１張卡。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "optionalPeekDraw",
   "faq": []
  },
  {
@@ -3735,7 +3735,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp主起動&nbsp 休息 此卡退場 只有在自己場上的［［特徵：挪亞一族］及〈挪亞方舟〉］的卡名有４種或以上的情況下才可以發動。從自己場外選擇最多１張〈路露．比魯〉以外，能源需求０的紫色角色卡，以休息狀態在自己場上登場。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restRetireUnion",
   "faq": []
  },
  {
@@ -4003,7 +4003,7 @@ export const DGM_CARDS=
   "effectHk": "&nbsp主起動&nbsp 休息 只有在自己場上的［［特徵：挪亞一族］及〈挪亞方舟〉］的卡名有４種或以上的情況下才可以發動。從自己牌庫上面查看１張卡，然後放置到牌庫上面或場外。",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restUnionPeek",
   "faq": []
  },
  {
@@ -4138,7 +4138,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideNamedHandOrRaid",
   "faq": []
  },
  {
@@ -4183,7 +4183,7 @@ export const DGM_CARDS=
   "effectHk": null,
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "retireRaiseAllen",
   "faq": []
  },
  {
@@ -4273,7 +4273,7 @@ export const DGM_CARDS=
   "effectHk": "抽１張卡。選擇自己場上最多１張〈鐵奇．米古〉，本回合中，BP+2500並給予「可能的話，對手必需要阻擋此角色的攻擊。」",
   "raidFrame": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "grantNamedMustBlock",
   "faq": [
    {
     "id": "Q2464",
