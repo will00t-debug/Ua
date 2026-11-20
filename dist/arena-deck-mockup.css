@@ -446,21 +446,26 @@ body.arena-site .arena-editor .arena-pool-scroll{display:contents}
  body.arena-site .arena-mobile-pick .vdb-pool-head{margin:4px 0}
 }
 
-/* Shared translated rules timing labels, independent of card art and engine. */
+/* Printed-card keyword colors; keep the badge palette independent of browser dark mode. */
 body.arena-site .ua-effect-keyword{
  display:inline-block;vertical-align:baseline;white-space:nowrap;
- padding:0 .35em;margin:0 .12em;line-height:1.25;
- border-radius:.22em;border:1px solid #6883a1;
- background:#354b62;color:#fff;font-weight:800;
+ padding:0 .35em;margin:0 .12em;line-height:1.22;
+ border-radius:.18em;border:0;
+ color-scheme:only light;
+ background:#009bcd;background-image:linear-gradient(#009bcd,#009bcd);
+ color:#fff;font-weight:800;
 }
 body.arena-site .ua-effect-keyword.ua-effect-main{
- background:#0861ad;border-color:#3e9be7;color:#fff;
+ background:#009bcd;background-image:linear-gradient(#009bcd,#009bcd);color:#fff;
 }
-
-/* Combat keywords are visually distinct from timing labels. */
-body.arena-site .ua-effect-keyword.ua-effect-impact{
- background:#ffe047;border-color:#b99b20;color:#181818;
-}
+body.arena-site .ua-effect-keyword.ua-effect-impact,
 body.arena-site .ua-effect-keyword.ua-effect-damage{
- background:#ffe047;border-color:#b99b20;color:#181818;
+ background:#ffe500;background-image:linear-gradient(#ffe500,#ffe500);color:#111;
+ border-radius:.08em;
+}
+body.arena-site .ua-effect-keyword.ua-effect-raid{
+ background:#e60012;background-image:linear-gradient(#e60012,#e60012);color:#fff;
+}
+body.arena-site .arena-trigger .ua-effect-keyword.ua-effect-raid{
+ background:#353535;background-image:linear-gradient(#353535,#353535);color:#fff;
 }
