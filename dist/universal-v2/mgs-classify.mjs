@@ -39,6 +39,9 @@ function standardTrigger(card){
  return STANDARD[card.trigger]===card.triggerTextJa;
 }
 
+export function mgsKnownTrigger(card){
+ return knownTrigger(card);
+}
 function knownTrigger(card){
  if(standardTrigger(card))return {};
  if(card.trigger==='color'&&card.triggerTextJa===COLOR_DEPLOY)
@@ -74,6 +77,10 @@ function searchProfile(middle){
  if(middle==='イベントカードかフィールドカード'||middle==='フィールドカードかイベントカード')
   return {logic:'any',filters:[{field:'type',value:'event'},{field:'type',value:'field'}]};
  if(middle==='キャラカード')return {filter:{field:'type',value:'character'}};
+ const energyCharacter=middle.match(/^必要エナジーが(\d+)以下のキャラカード$/);
+ if(energyCharacter)return {logic:'all',filters:[
+  {field:'type',value:'character'},
+  {field:'printedRequiredEnergyAtMost',value:Number(energyCharacter[1])}]};
  const printedName=middle.match(/^BPが(\d+)の〈([^〉]+)〉$/);
  if(printedName)return {logic:'all',filters:[
   {field:'printedBp',value:Number(printedName[1])},{field:'name',value:printedName[2]}]};

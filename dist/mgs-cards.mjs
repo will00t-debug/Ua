@@ -1330,7 +1330,8 @@ export const MGS_CARDS=
   "title": "mgs",
   "set": "UA42BT",
   "sets": [
-   "UA42BT"
+   "UA42BT",
+   "EX18BT"
   ],
   "printings": [
    {
@@ -1339,6 +1340,13 @@ export const MGS_CARDS=
     "rarity": "U",
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-028",
     "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA42BT_MGS-1-028.png"
+   },
+   {
+    "number": "EX18BT/MGS-1-028_p1",
+    "set": "EX18BT",
+    "rarity": "U★",
+    "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-1-028_p1",
+    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/comingsoon.png"
    }
   ],
   "color": "yellow",
@@ -3160,7 +3168,8 @@ export const MGS_CARDS=
   "set": "UA42BT",
   "sets": [
    "UA42BT",
-   "UA42ST"
+   "UA42ST",
+   "EX18BT"
   ],
   "printings": [
    {
@@ -3176,6 +3185,13 @@ export const MGS_CARDS=
     "rarity": "U",
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-064",
     "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA42ST_MGS-1-064.png"
+   },
+   {
+    "number": "EX18BT/MGS-1-064_p2",
+    "set": "EX18BT",
+    "rarity": "U★",
+    "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-1-064_p2",
+    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/comingsoon.png"
    }
   ],
   "color": "purple",

@@ -108,7 +108,7 @@ function parseTrigger(chunk){
  return {trigger:key?TRIGGERS[key]:null,triggerText:compactText};
 }
 
-function parseFace(html){
+export function parseFace(html){
  const nameBlock=(html.match(/cardNameCol">([\s\S]*?)<\/h2>/)||[])[1]||'';
  const name=nameBlock.replace(/<span[\s\S]*$/,'').replace(/<[^>]+>/g,'').trim();
  const effect=imgsToText(dd(html,'effectData'));
@@ -117,7 +117,7 @@ function parseFace(html){
  return {name,effect,triggerText:trig.triggerText};
 }
 
-function parseCard(html){
+export function parseCard(html){
  const number=(html.match(/cardNumData">([^<]+)/)||[])[1]?.trim();
  const rarity=(html.match(/rareData">([^<]+)/)||[])[1]?.trim()||'';
  const nameBlock=(html.match(/cardNameCol">([\s\S]*?)<\/h2>/)||[])[1]||'';
@@ -145,11 +145,11 @@ function parseCard(html){
  };
 }
 
-function placeholder(html){
+export function placeholder(html){
  return !html.includes('cardNumData')||html.includes('comingsoon.png')&&!html.includes('cardDataCol effectData');
 }
 
-function spanByClass(html,className){
+export function spanByClass(html,className){
  const token=`<span class="${className}`;
  const start=html.indexOf(token);
  if(start<0)return null;
@@ -168,7 +168,7 @@ function spanByClass(html,className){
  return null;
 }
 
-function visible(html){
+export function visible(html){
  return html
   .replace(/<br\s*\/?>/gi,'')
   .replace(/<img[^>]*>/gi,'')
