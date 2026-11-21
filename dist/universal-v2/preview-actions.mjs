@@ -21,7 +21,8 @@ export const V2_TITLE_LABELS=Object.freeze({
  mha:'我的英雄學院',
  rnk:'浪客劍心',
  toriko:'美食獵人',
- dgm:'驅魔少年'
+ dgm:'驅魔少年',
+ mgs:'〈物語〉系列'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',

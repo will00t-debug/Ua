@@ -7,7 +7,7 @@ import {TITLES} from '../dist/title-registry.mjs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 // Commons has no Toriko wordmark. The tile uses catalogue art instead of an invented logo.
-const NO_WORDMARK=new Set(['toriko','dgm']);
+const NO_WORDMARK=new Set(['toriko','dgm','mgs']);
 const build=()=>renderVisualDeckBuilder({
  titles:TITLES.map(title=>({id:title.id,label:title.label,cards:[
   {id:title.id+'-sample',image:'assets/cards/example-card.png',name:'代表卡',type:'character',energy:0}

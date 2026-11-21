@@ -1,8 +1,8 @@
 // Production-only V2 deck compatibility: never use legacy auto, rules or match reducers.
-import {TITLES} from './title-registry.mjs?v=20261120dgm2';
+import {TITLES} from './title-registry.mjs?v=20261121mgs1';
 import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261120mha011';
-import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261120dgm2';
+import {officialV2Pack} from './universal-v2/official-entry.mjs?v=20261121mgs1';
 import {IMC_OFFICIAL_MATCH_CLOSED} from './universal-v2/imc-pack.mjs';
 export const LEGACY_DECK_KEYS=Object.freeze({
  bleach:['bleach-arena-deck-v1','bleach-arena-saved-decks-v1'],
@@ -23,7 +23,8 @@ export const LEGACY_DECK_KEYS=Object.freeze({
  rnk:['ua-rnk-draft-v1','ua-rnk-saved-v1'],
  eva:['ua-eva-draft-v1','ua-eva-saved-v1'],
  toriko:['ua-trk-draft-v1','ua-trk-saved-v1'],
- dgm:['ua-dgm-draft-v1','ua-dgm-saved-v1']
+ dgm:['ua-dgm-draft-v1','ua-dgm-saved-v1'],
+ mgs:['ua-mgs-draft-v1','ua-mgs-saved-v1']
 });
 export const V2_EDITOR_TRANSFER_KEY='ua-v2-editor-deck-v1';
 export const titleCatalogue=id=>TITLES.find(t=>t.id===id)||null;
@@ -31,7 +32,7 @@ export function registeredPackForEditor(title){
  if(!titleCatalogue(title))return null;
  // Re:Zero stays outside the five-title census. All 73 regular EX17BT
  // cards share the set-1 battle pack. AP cards are not deck cards.
- if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha'||title==='rnk'||title==='eva'||title==='toriko'||title==='dgm')return officialV2Pack(title);
+ if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha'||title==='rnk'||title==='eva'||title==='toriko'||title==='dgm'||title==='mgs')return officialV2Pack(title);
  return registeredV2TitlePack(title);
 }
 export function normalizeEditorCounts(title,input){

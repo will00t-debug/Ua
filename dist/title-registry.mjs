@@ -23,6 +23,7 @@ import {evaEditorCards} from './eva/catalog.mjs';
 import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261120mha011';
 import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261120mha011';
 import {DGM_CARDS} from './dgm-cards.mjs?v=20261120dgm2';
+import {MGS_CARDS} from './mgs-cards.mjs?v=20261121mgs1';
 // Isolated catalogue/deck editing; unfinished series are not match-playable.
 export const TITLES=[
  {id:'bleach',label:'BLEACH 千年血戰篇',cards:CARDS,presets:PRESETS,playable:true},
@@ -43,7 +44,8 @@ export const TITLES=[
  {id:'rnk',label:'浪客劍心',cards:rnkEditorCards(),presets:[],playable:true},
  {id:'eva',label:'新世紀福音戰士新劇場版',cards:evaEditorCards(),presets:[],playable:true},
  {id:'toriko',label:'美食獵人',cards:[...TORIKO_CARDS,...TORIKO_PR_CARDS],presets:[],playable:false},
- {id:'dgm',label:'驅魔少年',cards:DGM_CARDS,presets:[],playable:false}
+ {id:'dgm',label:'驅魔少年',cards:DGM_CARDS,presets:[],playable:false},
+ {id:'mgs',label:'〈物語〉系列',cards:MGS_CARDS,presets:[],playable:false}
 ];
 export function titleOfCard(card){return TITLES.some(t=>t.id===card?.title)?card.title:'bleach';}
 export function getTitle(id){return TITLES.find(t=>t.id===id)||null;}

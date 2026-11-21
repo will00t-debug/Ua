@@ -104,7 +104,7 @@ test('phone dark mode cannot recolor combat keyword pixels via CSS background',(
  assert.match(css,/background:none!important/);
  const index=readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
  assert.match(index,/arena-deck-mockup\.css\?v=20261120mobileflow2effect1combat2palette5pngonce1/);
- assert.match(index,/v2-deck-editor\.mjs\?v=20261120dgm3effect1combat2summary3palette5pngonce1/);
+ assert.match(index,/v2-deck-editor\.mjs\?v=20261120dgm3effect1combat2summary3palette5pngonce1mgs1/);
 });
 
 test('once per turn uses white-backed black text while other badge colors stay unchanged',()=>{
