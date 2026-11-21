@@ -1,3 +1,4 @@
+import {cleanCardEffectText} from '../card-effect-display.mjs';
 // Presentation-only adapters for the isolated V2 preview.
 import {universalAttackDamage,universalImpact} from './engine.mjs';
 // NEVER generate or accept an action outside legalUniversalActions().
@@ -917,7 +918,7 @@ function sharedPrintChoiceLabel(action,{pack,state}={}){
   case 'choosePrintPay':return skip?'不棄牌，不回收':'將 '+name()+' 放到場外，支付回收成本';
   case 'choosePrintMode':{
    const rule=q.modes?.find(x=>x.name===action.id);
-   const display={'アレン・ウォーカー':'艾倫・獲加','ネア・D・キャンベル':'雷亞・D・坎貝爾'};
+   const display={'アレン・ウォーカー':'艾倫・獲加','ネア・D・キャンベル':'雷亞・D・坎貝爾','フォー':'芙','リナリー・リー':'利娜莉・李'};
    return '回收 '+(display[action.id]||action.id)+(rule?.energy!==undefined?'（能源 '+rule.energy+'）':'')+'，最多 '+(rule?.max??1)+' 張';
   }
   case 'choosePrintTake':return skip?'結束回收':'將 '+name()+' 加入手牌';
@@ -2009,11 +2010,23 @@ export const FIELD_HOLD_MS=1000;
 // Printed catalogue text only. This never reads the rules program or a hidden card.
 export function fieldEffectCopy(card){
  if(!card||typeof card!=='object')return '這張卡沒有可顯示的效果。';
- const text=value=>typeof value==='string'?value.trim():'';
+ const text=value=>typeof value==='string'?cleanCardEffectText(value):'';
  const effect=text(card.effect);
  const japanese=text(card.effectJa);
  const body=effect&&effect!=='-'?effect:(japanese&&japanese!=='-'?japanese:'');
- const trigger=text(card.triggerText)||text(card.triggerTextJa)||text(card.triggerEffect);
+ const printedTrigger=text(card.triggerText)||text(card.triggerTextJa)||text(card.triggerEffect);
+ // Exact printed Japanese trigger texts: preserve nonstandard/custom COLORs.
+ const standardTriggers={
+  '【ゲット】このカードを手札に加える。':'【獲得】將此卡加入手牌。',
+  '【ドロー】カードを1枚引く。':'【抽牌】抽 1 張牌。',
+  '【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。':'【突襲】將此卡加入手牌，或在滿足必要能源時突襲登場。',
+  '【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。':'【活動】選擇自己的 1 張角色使其活動，本回合 BP＋3000。',
+  '【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。':'【特殊】選擇對手前線的 1 張角色使其退場。',
+  '【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。':'【最終】若自己沒有生命，將牌庫頂 1 張放到自己的生命區。',
+  '【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。':'【顏色】選擇對手前線 BP3500 以下的 1 張角色返回手牌。',
+  '【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。':'【顏色】從自己場外選擇必要能源 2 以下、AP1 的紫色角色 1 張，以活動狀態登場至前線。'
+ };
+ const trigger=standardTriggers[printedTrigger]||printedTrigger;
  const skip=new Set(['','-','無 Trigger。','無觸發。']);
  const kana=(body.match(/[ぁ-んァ-ン]/g)||[]).length;
  const official=japanese&&japanese!=='-'&&japanese!==body&&kana>=8?('官方原文：\n'+japanese):'';
