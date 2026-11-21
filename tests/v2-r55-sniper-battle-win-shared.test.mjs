@@ -7,6 +7,7 @@ import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 const basic=(id,bp=1000)=>({id,name:id,type:'character',color:'red',
  energy:0,ap:1,bp,gen:1,traits:[],trigger:null,implementation:'vanilla',effects:{}});
 const shooter={...basic('shooter',3500),implementation:'dsl',enterAlwaysActive:true,
+ unblockedIfName:'other1',
  effects:{onPlay:[{op:'grantSelfSniperThisTurn'},{op:'grantSelfAttackWinDrawThisTurn'}]}};
 const cards=[shooter,basic('weak',3000),basic('equal',3500),basic('strong',4000),
  ...Array.from({length:9},(_,i)=>basic('other'+i))];
@@ -106,4 +107,34 @@ test('R55 Q2295 ordinary BLOCK at equal BP earns self battle victory draw once',
  assert.ok(s.players[1].outside.some(x=>x.uid===target.uid));
  assert.equal(s.blocksByUid[target.uid],1);
  assert.equal(assertUniversalMatch(both,s),true);
+});
+
+function addNamedCondition(s){
+ const ally=take(s,0,'other1');
+ ally.ready=true;ally.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].energy[1]=ally;
+ return ally;
+}
+test('named unblocked draw occurs on sniper win or loss, separately from battle-win draw',()=>{
+ for(const [id,draws] of [['equal',2],['strong',1]]){
+  let {s,target}=scene(id);
+  addNamedCondition(s);
+  const before=s.players[0].hand.length;
+  const a=legalUniversalActions(both,s).find(x=>x.type==='attack'&&x.targetUid===target.uid);
+  s=use(s,a);
+  assert.equal(s.players[0].hand.length,before+draws,id);
+  assert.equal(s.blocksByUid[target.uid],undefined);
+  assert.equal(assertUniversalMatch(both,s),true);
+ }
+});
+test('named unblocked draw still occurs on direct attack, never genuine block',()=>{
+ for(const block of [false,true]){
+  let {s,attacker,target}=scene('strong');
+  addNamedCondition(s);
+  const before=s.players[0].hand.length;
+  s=use(s,{type:'attack',uid:attacker.uid});
+  s=use(s,{type:'chooseBlock',uid:block?target.uid:null});
+  assert.equal(s.players[0].hand.length,before+(block?0:1));
+  assert.equal(assertUniversalMatch(both,s),true);
+ }
 });
