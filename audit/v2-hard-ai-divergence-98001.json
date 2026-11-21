@@ -1,0 +1,655 @@
+{
+  "summary": {
+    "source": "audit/v2-hard-ai-round3-98001.json",
+    "continuation": "hard-search-2",
+    "pairing": "same pre-fork state, both branches then use frozen hard-search-2",
+    "games": [
+      {
+        "decks": "white-sword/white-sword",
+        "seed": 98001,
+        "first": 0,
+        "played": "loss",
+        "divergences": 5,
+        "decisiveKind": "next/search",
+        "decisiveStep": 10
+      },
+      {
+        "decks": "reject-blue/renruki",
+        "seed": 98001,
+        "first": 0,
+        "played": "loss",
+        "divergences": 4,
+        "decisiveKind": null,
+        "decisiveStep": null
+      }
+    ]
+  },
+  "results": [
+    {
+      "newDeck": "white-sword",
+      "oldDeck": "white-sword",
+      "first": 0,
+      "seed": 98001,
+      "played": {
+        "outcome": "loss",
+        "endReason": "life-zero",
+        "winner": 1,
+        "steps": 173
+      },
+      "divergences": 5,
+      "classes": {
+        "next/search": 3,
+        "chooseTopFilteredMany/chooseTopFilteredMany": 1,
+        "next/resource": 1
+      },
+      "forks": [
+        {
+          "step": 0,
+          "kind": "next/search",
+          "view": {
+            "turn": 1,
+            "phase": "start",
+            "active": 0,
+            "actor": 0,
+            "pending": null,
+            "life": [
+              7,
+              7
+            ],
+            "energy": [
+              [],
+              []
+            ],
+            "front": [
+              [],
+              []
+            ],
+            "hand": [
+              "BLC-4-060",
+              "BLC-2-073",
+              "BLC-1-070",
+              "BLC-2-073",
+              "BLC-4-060",
+              "BLC-4-080",
+              "BLC-3-009"
+            ],
+            "deck": [
+              36,
+              36
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "next",
+              "mode": null,
+              "line": null
+            },
+            "class": "next",
+            "outcome": "win",
+            "endReason": "life-zero",
+            "winner": 0,
+            "steps": 165,
+            "stateSteps": 165
+          },
+          "frozen": {
+            "action": {
+              "type": "extraDraw",
+              "mode": null,
+              "line": null
+            },
+            "class": "search",
+            "outcome": "win",
+            "endReason": "life-zero",
+            "winner": 0,
+            "steps": 195,
+            "stateSteps": 195
+          },
+          "decisive": false
+        },
+        {
+          "step": 10,
+          "kind": "next/search",
+          "view": {
+            "turn": 3,
+            "phase": "start",
+            "active": 0,
+            "actor": 0,
+            "pending": null,
+            "life": [
+              7,
+              7
+            ],
+            "energy": [
+              [],
+              []
+            ],
+            "front": [
+              [],
+              []
+            ],
+            "hand": [
+              "BLC-4-060",
+              "BLC-2-073",
+              "BLC-1-070",
+              "BLC-2-073",
+              "BLC-4-060",
+              "BLC-4-080",
+              "BLC-3-009",
+              "BLC-1-070"
+            ],
+            "deck": [
+              35,
+              34
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "next",
+              "mode": null,
+              "line": null
+            },
+            "class": "next",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 151,
+            "stateSteps": 151
+          },
+          "frozen": {
+            "action": {
+              "type": "extraDraw",
+              "mode": null,
+              "line": null
+            },
+            "class": "search",
+            "outcome": "win",
+            "endReason": "life-zero",
+            "winner": 0,
+            "steps": 155,
+            "stateSteps": 155
+          },
+          "decisive": true
+        },
+        {
+          "step": 21,
+          "kind": "next/search",
+          "view": {
+            "turn": 5,
+            "phase": "start",
+            "active": 0,
+            "actor": 0,
+            "pending": null,
+            "life": [
+              7,
+              7
+            ],
+            "energy": [
+              [],
+              []
+            ],
+            "front": [
+              [],
+              []
+            ],
+            "hand": [
+              "BLC-4-060",
+              "BLC-2-073",
+              "BLC-1-070",
+              "BLC-2-073",
+              "BLC-4-060",
+              "BLC-4-080",
+              "BLC-3-009",
+              "BLC-1-070",
+              "BLC-1-085"
+            ],
+            "deck": [
+              34,
+              32
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "next",
+              "mode": null,
+              "line": null
+            },
+            "class": "next",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 128,
+            "stateSteps": 128
+          },
+          "frozen": {
+            "action": {
+              "type": "extraDraw",
+              "mode": null,
+              "line": null
+            },
+            "class": "search",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 131,
+            "stateSteps": 131
+          },
+          "decisive": false
+        },
+        {
+          "step": 97,
+          "kind": "chooseTopFilteredMany/chooseTopFilteredMany",
+          "view": {
+            "turn": 11,
+            "phase": "main",
+            "active": 0,
+            "actor": 0,
+            "pending": "effect-top-filter-many-choice",
+            "life": [
+              3,
+              6
+            ],
+            "energy": [
+              [
+                "BLC-4-060",
+                "BLC-4-060"
+              ],
+              [
+                "BLC-3-009",
+                "BLC-4-060",
+                "BLC-4-060"
+              ]
+            ],
+            "front": [
+              [
+                "BLC-1-070",
+                "BLC-1-085",
+                "BLC-4-066"
+              ],
+              [
+                "BLC-4-070",
+                "BLC-1-072",
+                "BLC-1-085"
+              ]
+            ],
+            "hand": [
+              "BLC-4-080",
+              "BLC-3-009",
+              "BLC-1-070",
+              "BLC-1-085",
+              "BLC-4-080",
+              "BLC-4-080",
+              "BLC-2-067",
+              "BLC-3-009"
+            ],
+            "deck": [
+              28,
+              24
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "chooseTopFilteredMany",
+              "mode": null,
+              "line": null,
+              "uid": "0-23"
+            },
+            "class": "chooseTopFilteredMany",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 97,
+            "stateSteps": 97
+          },
+          "frozen": {
+            "action": {
+              "type": "chooseTopFilteredMany",
+              "mode": null,
+              "line": null,
+              "uid": "0-13"
+            },
+            "class": "chooseTopFilteredMany",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 52,
+            "stateSteps": 52
+          },
+          "decisive": false
+        }
+      ],
+      "decisiveStep": 10,
+      "decisiveKind": "next/search"
+    },
+    {
+      "newDeck": "reject-blue",
+      "oldDeck": "renruki",
+      "first": 0,
+      "seed": 98001,
+      "played": {
+        "outcome": "loss",
+        "endReason": "life-zero",
+        "winner": 1,
+        "steps": 242
+      },
+      "divergences": 4,
+      "classes": {
+        "next/payment": 1,
+        "next/resource": 1,
+        "attack/attack": 1,
+        "resource/resource": 1
+      },
+      "forks": [
+        {
+          "step": 43,
+          "kind": "next/payment",
+          "view": {
+            "turn": 5,
+            "phase": "main",
+            "active": 0,
+            "actor": 0,
+            "pending": null,
+            "life": [
+              6,
+              7
+            ],
+            "energy": [
+              [
+                "BLC-2-016",
+                "BLC-4-034",
+                "BLC-2-021",
+                "BLC-4-027"
+              ],
+              [
+                "BLC-1-039",
+                "BLC-1-039",
+                "BLC-4-054"
+              ]
+            ],
+            "front": [
+              [
+                "BLC-4-034"
+              ],
+              [
+                "BLC-1-053"
+              ]
+            ],
+            "hand": [
+              "BLC-2-046",
+              "BLC-2-049",
+              "BLC-4-027",
+              "BLC-4-036",
+              "BLC-2-019",
+              "BLC-2-015"
+            ],
+            "deck": [
+              31,
+              31
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "next",
+              "mode": null,
+              "line": null
+            },
+            "class": "next",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 126,
+            "stateSteps": 126
+          },
+          "frozen": {
+            "action": {
+              "type": "activate",
+              "mode": "frontOnce",
+              "line": null,
+              "uid": "0-24"
+            },
+            "class": "payment",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 97,
+            "stateSteps": 97
+          },
+          "decisive": false
+        },
+        {
+          "step": 69,
+          "kind": "next/resource",
+          "view": {
+            "turn": 7,
+            "phase": "main",
+            "active": 0,
+            "actor": 0,
+            "pending": null,
+            "life": [
+              5,
+              7
+            ],
+            "energy": [
+              [
+                "BLC-2-021",
+                "BLC-4-027"
+              ],
+              [
+                "BLC-4-048",
+                "BLC-4-050"
+              ]
+            ],
+            "front": [
+              [
+                "BLC-4-034",
+                "BLC-2-019",
+                "BLC-4-034",
+                "BLC-2-019"
+              ],
+              [
+                "BLC-1-053",
+                "BLC-1-039",
+                "BLC-1-039",
+                "BLC-1-053"
+              ]
+            ],
+            "hand": [
+              "BLC-2-046",
+              "BLC-2-049",
+              "BLC-4-036",
+              "BLC-2-015",
+              "BLC-2-049"
+            ],
+            "deck": [
+              30,
+              27
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "next",
+              "mode": null,
+              "line": null
+            },
+            "class": "next",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 155,
+            "stateSteps": 155
+          },
+          "frozen": {
+            "action": {
+              "type": "play",
+              "mode": null,
+              "line": "energy",
+              "uid": "0-17"
+            },
+            "class": "resource",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 100,
+            "stateSteps": 100
+          },
+          "decisive": false
+        },
+        {
+          "step": 139,
+          "kind": "attack/attack",
+          "view": {
+            "turn": 10,
+            "phase": "attack",
+            "active": 1,
+            "actor": 0,
+            "pending": "block",
+            "life": [
+              5,
+              4
+            ],
+            "energy": [
+              [
+                "BLC-2-015",
+                "BLC-4-027"
+              ],
+              [
+                "BLC-4-048",
+                "BLC-1-053",
+                "BLC-4-082"
+              ]
+            ],
+            "front": [
+              [
+                "BLC-2-021",
+                "BLC-2-019",
+                "BLC-2-019"
+              ],
+              [
+                "BLC-1-053",
+                "BLC-1-047",
+                "BLC-4-050",
+                "BLC-1-053"
+              ]
+            ],
+            "hand": [
+              "BLC-2-049",
+              "BLC-2-049",
+              "BLC-2-049",
+              "BLC-3-001"
+            ],
+            "deck": [
+              28,
+              18
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "chooseBlock",
+              "mode": null,
+              "line": null,
+              "uid": "0-29"
+            },
+            "class": "attack",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 83,
+            "stateSteps": 83
+          },
+          "frozen": {
+            "action": {
+              "type": "chooseBlock",
+              "mode": null,
+              "line": null,
+              "uid": "0-30"
+            },
+            "class": "attack",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 85,
+            "stateSteps": 85
+          },
+          "decisive": false
+        },
+        {
+          "step": 154,
+          "kind": "resource/resource",
+          "view": {
+            "turn": 11,
+            "phase": "main",
+            "active": 0,
+            "actor": 0,
+            "pending": null,
+            "life": [
+              3,
+              4
+            ],
+            "energy": [
+              [
+                "BLC-2-015",
+                "BLC-4-026",
+                "BLC-4-027"
+              ],
+              [
+                "BLC-4-048",
+                "BLC-1-053",
+                "BLC-4-082"
+              ]
+            ],
+            "front": [
+              [
+                "BLC-4-022",
+                "BLC-2-019"
+              ],
+              [
+                "BLC-1-047",
+                "BLC-4-050",
+                "BLC-1-053"
+              ]
+            ],
+            "hand": [
+              "BLC-2-049",
+              "BLC-3-001",
+              "BLC-4-026"
+            ],
+            "deck": [
+              26,
+              18
+            ]
+          },
+          "candidate": {
+            "action": {
+              "type": "play",
+              "mode": null,
+              "line": "energy",
+              "uid": "0-13"
+            },
+            "class": "resource",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 87,
+            "stateSteps": 87
+          },
+          "frozen": {
+            "action": {
+              "type": "play",
+              "mode": null,
+              "line": "front",
+              "uid": "0-23"
+            },
+            "class": "resource",
+            "outcome": "loss",
+            "endReason": "life-zero",
+            "winner": 1,
+            "steps": 68,
+            "stateSteps": 68
+          },
+          "decisive": false
+        }
+      ],
+      "decisiveStep": null,
+      "decisiveKind": null
+    }
+  ]
+}
