@@ -57,7 +57,7 @@ test('impact and damage labels support catalogue aliases and keep numeric modifi
  assert.match(renderCardEffectText(actual.effect),/ua-effect-damage" role="img" aria-label="傷害二">/);
  const css=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
  assert.match(css,/\.ua-effect-keyword\.ua-effect-impact,/);
- assert.match(css,/\.ua-effect-keyword\.ua-effect-damage\{/);
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-damage,/,'yellow combat labels share a grouped CSS selector');
 });
 
 test('Hiko summary has verified display-only timing labels and hand cost',()=>{
@@ -84,7 +84,8 @@ test('Emilia printed-card keywords use yellow impact, blue timing and red raid',
  assert.match(html,/ua-effect-keyword" role="img" aria-label="攻擊時">/);
  const css=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
  assert.match(css,/\.ua-effect-keyword\{[^}]*color-scheme:only light;[^}]*background:#009bcd/);
- assert.match(css,/\.ua-effect-keyword\.ua-effect-damage\{[^}]*background:#ffe500;[^}]*color:#111/);
+ assert.match(html,/%23ffe500/,'yellow is rendered into image badge rather than a CSS-only background');
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-damage,/);
  assert.match(css,/\.ua-effect-keyword\.ua-effect-raid\{[^}]*background:#e60012/);
 });
 
