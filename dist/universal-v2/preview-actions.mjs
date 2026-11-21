@@ -859,6 +859,32 @@ function mmm2ChoiceLabel(action,{pack,state}={}){
  const text=MMM2_TARGET[step];
  return text?card(text):card('選擇這張卡');
 }
+function vol2ChoiceLabel(action,cardName,lineName,pending){
+ const mode=action.mode;
+ if(mode==='energy')return '宣言能量 '+action.energy;
+ if(mode==='discount')return '下一張能量 8 以上的黃〈千石撫子〉，手牌能量 -3';
+ if(mode==='sniper')return '給能量 8 以上的〈千石撫子〉狙擊';
+ if(mode==='buff'&&pending==='energyMenu')return '選擇 1 張角色，本回合 BP+1000';
+ if(mode==='buff'&&pending==='windowMenu')return '本回合 BP+1000';
+ if(mode==='buff')return '本回合 BP+2000 並獲得衝擊 1';
+ if(mode==='move')return '移動〈斧乃木余接〉';
+ if(mode==='skip')return '不選擇';
+ if(mode==='done')return '結束查看';
+ if(mode==='take')return '選擇 '+cardName;
+ if(mode==='enter')return '以休息狀態放到'+lineName+' '+(Number.isInteger(action.slot)?action.slot+1:'');
+ if(mode==='outside')return '將 '+cardName+' 放到場外';
+ if(mode==='under')return '將 '+cardName+' 正面朝下放到角色下面';
+ if(mode==='window')return '讓下一次 BP 範圍 +1000';
+ if(mode==='draw')return '抽 1 張';
+ if(mode==='ward')return '直到自己下個回合開始，不能被對手效果選擇';
+ if(mode==='floor')return 'BP 3000 以下的角色不能阻擋';
+ if(mode==='down')return '對手前線本回合 BP-1000';
+ if(mode==='recover')return '回收場外的〈阿良々木暦〉';
+ if(mode==='empty')return '移到'+lineName+'空位 '+(Number.isInteger(action.slot)?action.slot+1:'');
+ if(mode==='swap')return '與 '+cardName+' 交換位置';
+ if(mode==='pick')return '選擇 '+cardName;
+ return '選擇 '+cardName;
+}
 export function uiActionLabel(action,{pack,state}={}){
  if(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:'))
   return mmm2ActivateLabel(action,{pack,state});
@@ -977,6 +1003,15 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='outsideActive'?'起動主要：棄 1 張手牌，使其他角色活動':
     action.mode==='frontDiscardBuff'?'起動主要：棄 1 張手牌，指定名稱與特徵 BP+1000':
     action.mode==='discardEventEnergy'?'起動主要：棄 1 張事件，本回合指定角色必要能源 -1':
+    action.mode==='vol2:fieldImpact'?'起動主要：退場 1 張場域並獲得衝擊 1':
+    action.mode==='vol2:restGen'?'起動主要：休息此角色，本回合產生 1 點能量':
+    action.mode==='vol2:bottom'?'起動主要：把移除區 1 到 2 張角色放到牌組下方':
+    action.mode==='vol2:window'?'起動主要：把 1 張手牌移到移除區，然後抽牌、加 BP 或擴大 BP 範圍':
+    action.mode==='vol2:menu'?'起動主要：從登場時的選單中選擇':
+    action.mode==='vol2:tuck'?'起動主要：支付 1 張手牌，把場外的綠〈阿良々木暦〉正面放到這張卡下面':
+    action.mode==='vol2:readyGrant'?'起動主要：將此角色轉為活動':
+    action.mode==='vol2:outsideEnter'?'從場外退場 BP 4000 以上的〈阿良々木暦〉，此角色休息登場':
+    action.mode==='vol2:blackHand'?'從場外把另 1 張〈ブラック羽川〉移到移除區，此活動加入手牌':
     action.mode==='buff'?'主要能力：指定符合條件的角色 BP＋1000':'主要能力：先 ACTIVE 自己，再指定符合條件的角色 BP＋1000';
   case 'chooseAttackLife':return '攻擊對手血區第 '+(action.indices||[]).map(i=>i+1).join('、')+' 格';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
@@ -1117,6 +1152,15 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseNamedBottom':return '將 '+name()+' 放到牌庫底並移到前線';
   case 'chooseSelectTax':return '給 '+name()+' 追加手牌費用';
   case 'chooseRemoveAura':return '將 '+name()+' 移入移除區';
+  case 'chooseRemoveFinal':return '將場外的最終觸發 '+name()+' 移到移除區';
+  case 'chooseHandRaise':{
+   const raised=state?.pending;
+   const bonus=raised?.bp??500;
+   if(action.mode==='skip')return '不提升 BP';
+   if(action.mode==='plain')return '最多選擇 '+(raised?.max??1)+' 張，本回合 BP+'+bonus;
+   return '將 '+name()+' 放到場外，改為最多 '+(raised?.paidMax??3)+' 張';
+  }
+  case 'chooseVol2':return vol2ChoiceLabel(action,name(),destination(),state?.pending?.mode);
   case 'choosePayMove':return '將 '+name()+' 放場外';
   case 'chooseMoveLine':return '移動到另一條線';
   case 'chooseRaidSource':return '使突襲來源以活動狀態登場';
