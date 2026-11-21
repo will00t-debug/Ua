@@ -176,7 +176,7 @@ test('all nine catalogues with translated double-block text show canonical 二�
  for(const titleId of titleIds){
   const title=TITLES.find(t=>t.id===titleId);
   assert.ok(title, 'registered title '+titleId);
-  const cards=title.cards.filter(c=>typeof c.effect==='string'&&c.effect.includes('二回阻擋'));
+  const cards=title.cards.filter(c=>typeof c.effect==='string'&&/(?:二回阻擋|兩次阻擋|雙重防禦|2次阻擋)/.test(c.effect));
   assert.ok(cards.length>0,'localized double-block copy found in '+titleId);
   for(const card of cards){
    const html=renderCardEffectText(card.effect);
