@@ -1,4 +1,4 @@
-import {EXPANSION_CARDS} from './expansion-cards.mjs?v=6doubleblock1';
+import {EXPANSION_CARDS} from './expansion-cards.mjs?v=6';
 import {CARD_RULES} from './card-rules.mjs?v=6';
 import {EXTRA_RULES} from './extra-rules.mjs?v=9.1.0';
 import {V9_RULES} from './v9-rules.mjs?v=9.1.0';
