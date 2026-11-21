@@ -18,7 +18,7 @@ export function cleanCardEffectText(value){
  return text.replace(/<br\s*\/?>/gi,'\n').replace(/\r\n?/g,'\n').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
 }
 // Recognize explicit printed keyword labels without changing ordinary rule prose.
-const timing='主[啟起]動|[啟起]動主要|登場時|攻擊時|退場時|自己回合中|對手回合中|每回合(?:[1１]次?|一次)|突襲';
+const timing='主[啟起]動|[啟起]動主要|登場時|攻擊時|退場時|自己(?:的)?回合中|對手回合中|每回合(?:[1１]次?|一次)|突襲';
 const numeral='[+＋]?[0-9０-９一二三四五六七八九十]+';
 const value='(?:[（(]\\s*'+numeral+'\\s*[）)]|\\s*'+numeral+')';
 const impact='(?:貫通|衝擊)(?:無效|'+value+')?';
@@ -67,7 +67,7 @@ function badgeImage(label,fill,ink){
  return html;
 }
 const badge=word=>{
- let label=word.replace(/^(?:主[啟起]動|[啟起]動主要)$/,'主啟動').replace(/^每回合(?:[1１]次?|一次)$/,'每回合一次');
+ let label=word.replace(/^(?:主[啟起]動|[啟起]動主要)$/,'主啟動').replace(/^每回合(?:[1１]次?|一次)$/,'每回合一次').replace(/^自己的回合中$/,'自己回合中');
  let style='',fill='#009bcd',ink='#fff';
  if(/^(?:主[啟起]動|[啟起]動主要)$/.test(word))style=' ua-effect-main';
  else if(/^每回合(?:[1１]次?|一次)$/.test(word)){style=' ua-effect-limit';fill='#fff';ink='#111';}
@@ -77,10 +77,23 @@ const badge=word=>{
  else if(/^傷害/.test(word)){style=' ua-effect-damage';if(/^傷害\s*(?:[（(]\s*[2２二]\s*[）)]|[2２二])$/.test(word))label='傷害二';fill='#ffe500';ink='#111';}
  return '<span class="ua-effect-keyword'+style+'" role="img" aria-label="'+escapeHtml(label)+'">'+badgeImage(label,fill,ink)+'</span>';
 };
+// Shorthand translated cards sometimes omit printed keyword brackets even
+// though the Japanese source records named abilities. Only expand clearly
+// bounded acquisitions / turn-limit clauses; keep source and engine data intact.
+function expandInlineEffectKeywordLabels(text){
+ const digits=value=>value.replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10));
+ return text
+  .replace(/(^|\n)([ \t]*)Raid(?=\s*〈)/gi,'$1$2【突襲】')
+  .replace(/(【(?:主[啟起]動|[啟起]動主要)】)\s*每回合\s*[1１]\s*次(?=\s*[:：])/g,'$1【每回合一次】')
+  .replace(/(獲得\s*)(?:傷害|Damage)\s*([0-9０-９]+)(?=\s*(?:[；;。、，]|$))/gi,
+   (_match,prefix,n)=>prefix+'【傷害（'+digits(n)+'）】')
+  .replace(/((?:獲得|獲)\s*)(?:Impact|貫通|衝擊)\s*([0-9０-９]+)(?=\s*(?:[；;。、，]|$))/gi,
+   (_match,prefix,n)=>prefix+'【貫通（'+digits(n)+'）】');
+}
 export function renderCardEffectText(value){
  // Imported HTML used non-breaking spaces as timing-label delimiters.
  const marked=String(value??'').replace(new RegExp('(?:&(?:amp;)*nbsp;?|\\u00a0)\\s*('+keyword+')\\s*(?:&(?:amp;)*nbsp;?|\\u00a0)','g'),'【$1】');
- const text=cleanCardEffectText(marked);
+ const text=expandInlineEffectKeywordLabels(cleanCardEffectText(marked));
  return text.split('\n').map(line=>{
   let result='',end=0;
   const first=line.match(prefix);
