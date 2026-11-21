@@ -688,3 +688,71 @@ test('TTG-074 raids only with Nia, chains from Lagann, and ladders draws with th
  assert.equal(universalBp(ttg,ladder,entered),8000);
  assertUniversalMatch(ttg,ladder);
 });
+
+function opponentLifeRaidWitnessScene(seed){
+ let s=fresh(seed,1);
+ s=endTurn(s);
+ assert.equal(s.active,0);
+ fuel(s,1,3,40);
+ const field=place(s,1,'TTG-1-033','energy',3);
+ const viral=place(s,1,'TTG-1-004','front',1);
+ const base=take(s,1,'TTG-1-009');
+ const mid=nest(take(s,1,'TTG-1-029'),base);
+ mid.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[1].front[0]=mid;
+ const extra=hold(s,1,'TTG-1-002');
+ const attacker=place(s,0,'TTG-1-053','front',0);
+ const pl=s.players[1],before=pl.life.length;
+ const arc=take(s,1,'TTG-1-027');
+ if(pl.life.length===before)pl.deck.push(pl.life.shift());
+ pl.life.unshift(arc);
+ s=toPhase(s,'attack');
+ s=go(s,act(s,a=>a.type==='attack'&&a.uid===attacker.uid));
+ s=go(s,act(s,a=>a.type==='chooseBlock'&&a.uid===null));
+ if(s.pending?.kind==='attack-life-target')
+  s=go(s,act(s,a=>a.type==='chooseAttackLife'&&a.indices[0]===0));
+ assert.equal(s.pending.kind,'life-trigger');
+ assert.equal(s.pending.uid,arc.uid);
+ assert.equal(s.pending.player,1);
+ assert.equal(s.lifeRevealBatch,null,'single life hit, not simultaneous damage 2');
+ s=go(s,act(s,a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.baseUid===mid.uid));
+ assert.equal(s.pending.kind,'effect-raid-witness-order');
+ assert.equal(s.pending.player,1);
+ return {s,field,viral,arc,extra};
+}
+test('opponent-turn single LIFE Raid earns BOTH TTG-004 and TTG-033 witnesses before entry',()=>{
+ let {s,field,viral,arc,extra}=opponentLifeRaidWitnessScene(19027);
+ const before=s.players[1].deck.length;
+ for(let i=0;i<2;i++)s=go(s,act(s,a=>a.type==='chooseRaidWitness'&&a.when==='now'));
+ assert.equal(s.pending.kind,'effect-raid-attach');
+ assert.equal(s.pending.sourceUid,viral.uid);
+ s=go(s,act(s,a=>a.type==='chooseRaidAttach'&&a.uid===extra.uid));
+ assert.equal(s.pending.kind,'effect-raid-witness-move');
+ assert.equal(s.pending.sourceUid,field.uid);
+ s=go(s,act(s,a=>a.type==='chooseRaidWitnessMove'&&a.mode==='move'));
+ assert.equal(s.pending.kind,'effect-facedown-scale');
+ assert.equal(s.players[1].deck.length,before-3);
+ assert.equal(live(s,1,arc.uid).under.filter(c=>c.faceDown).length,2);
+ assert.equal(live(s,1,field.uid),undefined);
+ assert.ok(s.onceEffectUses[1].includes('ヴィラル|raidAttach'));
+ assert.ok(s.onceEffectUses[1].includes('アークグレン|raidWitness'));
+ s=go(s,act(s,a=>a.type==='chooseFacedownScale'&&a.retireUid===null&&a.activeAp===false));
+ assert.equal(s.pending,null);
+ assertUniversalMatch(ttg,s);
+});
+test('opponent-turn single LIFE Raid can defer a witness until after entry or decline it',()=>{
+ let {s,field,viral,arc,extra}=opponentLifeRaidWitnessScene(19028);
+ const before=s.players[1].deck.length;
+ s=go(s,act(s,a=>a.type==='chooseRaidWitness'&&a.uid===viral.uid&&a.when==='skip'));
+ s=go(s,act(s,a=>a.type==='chooseRaidWitness'&&a.uid===field.uid&&a.when==='later'));
+ assert.equal(s.pending.kind,'effect-facedown-scale');
+ s=go(s,act(s,a=>a.type==='chooseFacedownScale'&&a.retireUid===null&&a.activeAp===false));
+ assert.equal(s.pending.kind,'effect-raid-witness-move');
+ s=go(s,act(s,a=>a.type==='chooseRaidWitnessMove'&&a.mode==='move'));
+ assert.equal(s.players[1].deck.length,before-2);
+ assert.ok(s.players[1].hand.some(c=>c.uid===extra.uid));
+ assert.ok(live(s,1,arc.uid).under.some(c=>c.uid===field.uid&&c.faceDown));
+ assert.equal(s.onceEffectUses[1].includes('ヴィラル|raidAttach'),false);
+ assert.equal(s.pending,null);
+ assertUniversalMatch(ttg,s);
+});
