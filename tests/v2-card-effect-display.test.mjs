@@ -162,7 +162,8 @@ test('full DGM audit repairs three further missing named abilities without chang
   assert.ok(card.effectJa.includes(japanese),id+' Japanese print');
   assert.ok(card.effect.includes(traditional),id+' Chinese text');
   assert.ok(card.effectHk.includes(traditional),id+' HK source text');
-  assert.ok(renderCardEffectText(card.effect).includes('ua-effect-'+(id==='DGM-1-020'?'keyword':'impact')),id+' rendered label');
+  if(id==='DGM-1-020')assert.match(renderCardEffectText(card.effect),/【2次阻擋】/,'preserve named ability in text');
+  else assert.match(renderCardEffectText(card.effect),/ua-effect-impact/,'render yellow impact label');
   assert.equal(card.auto,false,'do not change rules engine state');
  }
  assert.match(title.cards.find(c=>c.id==='DGM-1-047').raidFrame.inside,/【貫通（1）】/);
