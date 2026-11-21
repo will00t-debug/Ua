@@ -30,3 +30,12 @@ test('holding a field card opens its effect and does not take the short click',(
  assert.match(preview,/PRINTED_CATALOGUE/);
  assert.doesNotMatch(slot,/dispatchUniversalAction/);
 });
+
+test('battle card inspector strips imported HTML entities and localizes exact trigger text',()=>{
+ const text=fieldEffectCopy({effect:'此角色活動登場。&nbsp登場時&nbsp 抽 1 張。',triggerTextJa:'【ゲット】このカードを手札に加える。'});
+ assert.doesNotMatch(text,/&nbsp/);
+ assert.match(text,/登場時/);
+ assert.match(text,/觸發效果：【獲得】將此卡加入手牌。/);
+ const custom='【カラー】独自の効果。';
+ assert.ok(fieldEffectCopy({effect:'-',triggerTextJa:custom}).includes(custom));
+});

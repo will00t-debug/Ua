@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
+import {legalSharedPrintMorePending} from '../dist/universal-v2/shared-print-more.mjs';
 
 function context(){
  const cards={'0-1':{name:'黑崎一護'},'0-2':{name:'葛力姆喬・賈卡傑克'}};
@@ -108,4 +109,83 @@ test('every pending choice type has a label instead of the generic button',()=>{
   assert.equal(/黑崎一護|葛力姆喬/.test(label),true,label);
  }
  assert.equal(uiActionLabel({type:'chooseGrantCause',mode:'skip'},ctx),'不給予阻擋下限');
+});
+
+test('actual shared-print Nea phase-end actions distinguish draw and skip',()=>{
+ const ctx=context();
+ ctx.state.phase='attack';
+ ctx.state.pending={kind:'effect-print',step:'end-draw',player:0,sourceUid:'0-67',draw:2,after:'base',optional:true};
+ ctx.state.players[0].front=[{uid:'0-67',cardId:'DGM-1-067'}];
+ const actions=legalSharedPrintMorePending({},ctx.pack,ctx.state);
+ assert.equal(actions.length,2);
+ const draw=uiActionLabel(actions.find(a=>a.mode==='yes'),ctx);
+ const skip=uiActionLabel(actions.find(a=>a.mode==='skip'),ctx);
+ assert.match(draw,/抽 2 張.*1 張手牌.*1 張突襲底板/);
+ assert.match(skip,/不發動.*保留突襲底板/);
+ assert.notEqual(draw,skip);
+});
+test('all shared-print legal action types and more steps have explicit presentation code',()=>{
+ const preview=readFileSync(new URL('../dist/universal-v2/preview-actions.mjs',import.meta.url),'utf8');
+ for(const file of ['shared-print.mjs','shared-print-more.mjs']){
+  const source=readFileSync(new URL('../dist/universal-v2/'+file,import.meta.url),'utf8');
+  const types=[...new Set([...source.matchAll(/type:'(choosePrint[A-Za-z]*)'/g)].map(m=>m[1]))];
+  assert.ok(types.length);
+  for(const type of types)assert.ok(preview.includes("case '"+type+"'"),type);
+ }
+ const ctx=context();
+ for(const [step,data] of [
+  ['end-draw',{draw:1,opp:true}],['draw-discard',{}],['mill-deploy',{mill:2}],
+  ['chain',{}],['under-mode',{deploy:true}],['block-pick',{selected:[],floors:[2000],ceilings:[4000],both:false}],
+  ['mode-37',{bottom:['1-a'],deploy:['0-1']}],['raid-37',{bases:['0-1']}]
+ ]){
+  ctx.state.pending={kind:'effect-print',player:0,step,...data};
+  const actions=legalSharedPrintMorePending({},ctx.pack,ctx.state);
+  const labels=actions.map(a=>uiActionLabel(a,ctx));
+  assert.ok(labels.length>=2,step);
+  assert.equal(new Set(labels).size,labels.length,step);
+  assert.ok(labels.every(l=>!l.includes('完成這個選擇')),step);
+ }
+});
+test('all titles sharing optional unblocked choices show the actual draw or search action',()=>{
+ const ctx=context();
+ for(const [op,count,expected] of [['draw',1,/抽 1 張牌/],['searchTopOneBottomDiscard',7,/查看牌庫頂 7 張/]]){
+  ctx.state.pending.then=[{op,count}];
+  const accept=uiActionLabel({type:'chooseMayThen',mode:'do'},ctx);
+  const decline=uiActionLabel({type:'chooseMayThen',mode:'skip'},ctx);
+  assert.match(accept,expected);assert.notEqual(accept,decline);
+  if(op==='draw')assert.equal(decline,'不抽牌');
+ }
+});
+test('hidden life choices distinguish positions without revealing the card identity',()=>{
+ const ctx=context();
+ ctx.state.pending.player=0;
+ ctx.state.players[0].life=[{uid:'0-a',cardId:'secretA'},{uid:'0-b',cardId:'secretB'}];
+ for(const type of ['chooseHiddenLifeHand','chooseLifeReenter']){
+  const labels=ctx.state.players[0].life.map(c=>uiActionLabel({type,uid:c.uid},ctx));
+  assert.match(labels[0],/第 1 張/);assert.match(labels[1],/第 2 張/);
+  assert.equal(new Set(labels).size,2);
+  assert.ok(labels.every(l=>!l.includes('secret')));
+ }
+});
+test('Chainsaw Man printed binary branches do not use generic labels',()=>{
+ const ctx=context();ctx.state.pending.step='choose';
+ for(const [id,modes,patterns] of [
+  ['CSM-1-017',['debuff','reze'],[/1000/,/5000/]],
+  ['CSM-1-031',['debuff','ap'],[/1000/,/AP/]],
+  ['CSM-1-037',['aura','draw'],[/1000/,/抽 2 張/]],
+  ['CSM-1-047',['draw','reenter'],[/抽 2 張/,/重新登場/]]
+ ]){
+  ctx.state.pending.id=id;
+  const labels=modes.map(mode=>uiActionLabel({type:'csm',mode},ctx));
+  labels.forEach((l,i)=>assert.match(l,patterns[i]));
+  assert.equal(new Set(labels).size,2);
+ }
+});
+test('closed-title AP choices display physical AP number instead of the same generic action',()=>{
+ const ctx=context();ctx.state.pending.step='readyAp';
+ assert.notEqual(uiActionLabel({type:'kmr2',mode:'readyAp',uid:'AP0-1'},ctx),
+  uiActionLabel({type:'kmr2',mode:'readyAp',uid:'AP0-2'},ctx));
+ ctx.state.pending.step='ap';
+ assert.notEqual(uiActionLabel({type:'csm',mode:'ap',index:0},ctx),
+  uiActionLabel({type:'csm',mode:'ap',index:1},ctx));
 });

@@ -1,3 +1,4 @@
+import {cleanCardEffectText} from '../card-effect-display.mjs';
 // Presentation-only adapters for the isolated V2 preview.
 import {universalAttackDamage,universalImpact} from './engine.mjs';
 // NEVER generate or accept an action outside legalUniversalActions().
@@ -492,6 +493,49 @@ function kmr2ModeLine(id,key){
 function closedTitleChoiceLabel(action,{pack,state}={}){
  const mode=action?.mode;
  const step=state?.pending?.step;
+ // Branch labels must describe the actual printed outcome, not its internal mode.
+ const id=state?.pending?.id;
+ const csmBranches={
+  'CSM-1-006':{draw:'抽 1 張牌',look:'查看牌庫頂 4 張，可將蕾潔或淀治加入手牌'},
+  'CSM-1-017':{debuff:'對手前線最多 1 張角色 BP－1000',reze:'可退場自己的其他角色 1 張，再使對手前線最多 1 張角色 BP－5000'},
+  'CSM-1-024':{draw:'抽 1 張牌',buff:'使自己其他最多 1 張角色 BP＋2000'},
+  'CSM-1-031':{debuff:'對手前線最多 1 張角色 BP－1000',ap:'將自己的 1 張 AP 轉為活動'},
+  'CSM-1-037':{aura:'角色 BP＋1000，紫色角色兼具事件身分，恢復 1 AP',draw:'抽 2 張、棄 1 張手牌；若使用過其他事件，恢復 1 AP'},
+  'CSM-1-047':{draw:'抽 2 張牌',reenter:'將此角色以活動狀態重新登場至前線'},
+  'CSM-1-076':{look:'查看牌庫頂 2 張並排列或送場外，再可使淀治登場',tuck:'將此卡裏向置於淀治下方；若非突襲狀態，恢復 1 AP'}
+ };
+ if(action.type==='csm'&&step==='choose'&&csmBranches[id]?.[mode])return csmBranches[id][mode];
+ if(action.type==='csm'&&step==='afterRetireChoose'&&id==='CSM-1-030'){
+  if(mode==='one')return '抽 1 張牌，自己其他最多 1 張角色 BP＋2000';
+  if(mode==='two')return '抽 2 張牌';
+ }
+ if(action.type==='iys'&&step==='drawCount'){
+  if(mode==='one')return '抽 1 張，再將 1 張手牌放到場外';
+  if(mode==='two')return '抽 2 張，再將 1 張手牌放到場外';
+ }
+ if(action.type==='iys'&&step==='replaceKit'){
+  if(mode==='kit')return '本回合 BP＋1000 並獲得貫通（1）';
+  if(mode==='double')return '本回合獲得二回攻擊';
+ }
+ if(mode==='first'&&step==='entryOrder')return withClosedCard(pack,state,action,'先結算這張卡的登場效果');
+ if(mode==='readyAp'||(mode==='ap'&&Number.isInteger(action.index))){
+  const index=Number.isInteger(action.index)?action.index:Number(String(action.uid||'').split('-')[1])-1;
+  return Number.isInteger(index)&&index>=0?'將 AP '+(index+1)+' 轉為活動':'將指定 AP 轉為活動';
+ }
+ if(action.type==='csm'){
+  if(step==='payReturn'&&mode==='event')return withClosedCard(pack,state,action,'將這張事件卡放到場外，回收此角色');
+  if(step==='payReturn'&&mode==='char')return withClosedCard(pack,state,action,'將這張角色牌放到場外（共需 2 張），回收此角色');
+  if(step==='himenoSwap'&&mode==='front')return withClosedCard(pack,state,action,'選擇交換位置的前線角色');
+  if(step==='moveFront'&&mode==='move')return '移至前線 '+(action.slot+1);
+  if(mode==='peel'){
+   const side=state?.players?.[state?.pending?.player];
+   const host=[...(side?.front||[]),...(side?.energy||[])].find(c=>c?.uid===action.hostUid);
+   const layers=(host?.under||[]).filter(c=>c?.faceDown===true);
+   const index=layers.findIndex(c=>c.uid===action.uid);
+   return '選擇'+(host?uiCardLabel(pack,state,host.uid)+'下方的':'')+
+    (index>=0?'第 '+(index+1)+' 張':'指定')+'蓋牌（背面）';
+  }
+ }
  // Hidden LIFE is not a looked-at card: showing artwork/text exposes its trigger.
  if(state?.pending?.kind==='aot2'&&step==='life'&&mode==='life'){
   const index=state.players?.[0]?.life?.findIndex(c=>c?.uid===action.uid)??-1;
@@ -572,6 +616,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
  const text=table[mode];
  if(!text)return '選擇這個效果';
  return withClosedCard(pack,state,action,text);
+}
+function hiddenLifeHandLabel(state,action){
+ const life=state?.players?.[state?.pending?.player]?.life;
+ const index=Array.isArray(life)?life.findIndex(c=>c?.uid===action.uid):-1;
+ return index>=0?'將生命區第 '+(index+1)+' 張（背面）加入手牌':'將 1 張生命加入手牌';
 }
 function orderEffectLabel(pack,state,action,base){
  const entry=state?.pending?.entries?.find(item=>item.key===action.key);
@@ -844,7 +893,7 @@ function mmm2ChoiceLabel(action,{pack,state}={}){
   return MMM2_FORK[id]?.[mode]||(mode==='a'?'選擇第一項':'選擇第二項');
  }
  if(mode==='top'||mode==='bottom'||mode==='outside'){
-  if(action.uid)return card(mode==='outside'?'將這張手牌放到場外':'將這張手牌放到牌組上面');
+  if(action.uid)return card(mode==='outside'?'將這張手牌放到場外':mode==='bottom'?'將這張手牌放到牌組底':'將這張手牌放到牌組上面');
   if(mode==='bottom')return '放到牌組底';
   if(mode==='outside')return '放到場外';
   return step==='placeOne'?'放到牌組上面':'留在牌組上面';
@@ -855,6 +904,83 @@ function mmm2ChoiceLabel(action,{pack,state}={}){
  }
  const text=MMM2_TARGET[step];
  return text?card(text):card('選擇這張卡');
+}
+// Shared-print modules emit their legal actions outside engine. These actions
+// must be labelled by exact pending step, not by a title-specific guess.
+function sharedPrintChoiceLabel(action,{pack,state}={}){
+ const q=state?.pending||{},step=q.step,mode=action.mode;
+ const name=()=>uiCardLabel(pack,state,action.uid)||'指定牌';
+ const target=()=>name()+(action.uid?.startsWith('0-')?'（我方）':action.uid?.startsWith('1-')?'（對手）':'');
+ const skip=action.uid===null||mode==='skip';
+ const seat=()=> (action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
+ switch(action.type){
+  case 'choosePrintLook':return skip?'不加入手牌，處理其餘卡':'公開 '+name()+' 並加入手牌';
+  case 'choosePrintPay':return skip?'不棄牌，不回收':'將 '+name()+' 放到場外，支付回收成本';
+  case 'choosePrintMode':{
+   const rule=q.modes?.find(x=>x.name===action.id);
+   const display={'アレン・ウォーカー':'艾倫・獲加','ネア・D・キャンベル':'雷亞・D・坎貝爾','フォー':'芙','リナリー・リー':'利娜莉・李'};
+   return '回收 '+(display[action.id]||action.id)+(rule?.energy!==undefined?'（能源 '+rule.energy+'）':'')+'，最多 '+(rule?.max??1)+' 張';
+  }
+  case 'choosePrintTake':return skip?'結束回收':'將 '+name()+' 加入手牌';
+  case 'choosePrintCard':return skip?(q.activeSelf?'不登場，改使此角色活動':'不從指定區域登場'):'選擇 '+name()+'，再選登場位置';
+  case 'choosePrintCell':return (q.ready?'以活動':'以休息')+'狀態登場至'+seat();
+  case 'choosePrintMove':return '選擇 '+name()+' 移至能源線';
+  case 'choosePrintMoveCell':return '移至能源線 '+(action.slot+1);
+  case 'choosePrintGrant':return skip?'不給予必須阻擋與 BP 效果':'使 '+name()+' 本回合 BP＋'+q.bp+' 並獲得必須阻擋';
+  case 'choosePrintBounce':return skip?'不返回手牌':'將 '+target()+' 返回手牌'+(action.uid?.startsWith(q.player+'-')?'，可抽 1 張':'');
+  case 'choosePrintDraw':return mode==='draw'?'抽 1 張牌':'不抽牌';
+  case 'choosePrintFork':
+   if(mode==='down')return '使對手前線 BP '+q.down?.minBp+' 以上角色降低 '+Math.abs(q.down?.bp??0)+' BP';
+   if(mode==='retire')return '支付 '+q.retire?.ap+' AP，可退場 BP '+q.retire?.maxBp+' 以下對手前線角色';
+   return '不發動後續效果';
+  case 'choosePrintRetireOwn':return skip?'不使自己的角色退場':'使 '+name()+' 退場';
+  case 'choosePrintNea':return (mode==='raid'?'從場外突襲登場：':'從場外加入手牌：')+name();
+  case 'choosePrintRaid':return '選擇突襲底板：'+uiCardLabel(pack,state,action.baseUid)+' · '+seat();
+  case 'choosePrintMoreCell':return (step==='raid-cell'?'在此突襲登場：':'將對手角色移至')+seat();
+  case 'choosePrintMore':{
+   const n=()=>name();
+   switch(step){
+    case 'end-draw':return q.after==='base'?
+     (skip?'不發動：不抽牌，保留突襲底板':'發動：抽 '+q.draw+' 張，將 1 張手牌及 1 張突襲底板放到場外'):
+     (skip?'不抽牌':'抽 '+q.draw+' 張牌');
+    case 'draw-discard':return skip?'不抽牌、不棄牌':'抽 1 張，再將 1 張手牌放到場外';
+    case 'mill-deploy':return skip?'不送場外、不登場':'將牌庫頂 '+q.mill+' 張送場外，再可從場外休息登場';
+    case 'chain':return skip?'不進行連鎖突襲':'將攻擊角色最上層放到場外，再從場外突襲至原底板';
+    case 'named-leave':return skip?'照原本方式退場':'改由 '+n()+' 代替退場';
+    case 'bp-down':return skip?'不降低 BP':'使 '+n()+' BP－'+Math.abs(q.amount??0);
+    case 'end-lock':return skip?'不限制攻擊，保留底板':'使 '+n()+' 下次自己回合開始前不能攻擊，將 1 張突襲底板送場外';
+    case 'end-rest':return skip?'不休息其他角色':'休息 '+n()+'，使此角色活動並獲得阻擋限制';
+    case 'retire-opp':case 'retire-grant':return skip?'不退場對手角色':'使 '+n()+' 退場';
+    case 'retire-deploy':return skip?'不退場、不登場':'退場 '+n()+'，再可從場外休息登場';
+    case 'ward':return skip?'不給予保護':'使 '+n()+' 獲得休息、回手與離場保護';
+    case 'unchosen':return skip?'不給予保護':'使 '+n()+' 不會被對手效果選擇';
+    case 'under-card':{
+     if(skip)return '不選擇蓋牌';
+     const side=state?.players?.[q.player];
+     const host=[...(side?.front||[]),...(side?.energy||[])].find(c=>c?.uid===q.sourceUid);
+     const layers=(host?.under||[]).filter(c=>c.faceDown===true);
+     const i=layers.findIndex(c=>c.uid===action.uid);
+     return i>=0?'選擇下方第 '+(i+1)+' 張蓋牌（背面）':'選擇指定蓋牌（背面）';
+    }
+    case 'put-hand':return '將 '+n()+' 放到場外（需 '+q.need+' 張）';
+    case 'six-discard':return skip?'不支付手牌':'將手牌 '+n()+' 放到場外'+(q.after==='base'?'，再將 1 張突襲底板送場外':'');
+    case 'block-discard':return skip?'不棄牌，不獲得阻擋限制':'將 '+n()+' 放到場外，取得阻擋限制';
+    case 'field-discard':return '將 '+n()+' 放到場外並支付 1 AP，讓場域在能源線休息登場';
+    case 'six-card':return skip?'不使用場外卡':'使用 '+n()+'，將等同必要能源數的牌庫頂卡送場外';
+    case 'tuck':return skip?'完成放置蓋牌':'將 '+n()+' 裏向置於此角色下方';
+    case 'under-mode':return mode==='hand'?'將選擇的蓋牌加入手牌':'將 1 張手牌送場外，再讓選擇的蓋牌休息登場';
+    case 'block-pick':return mode==='floor'?'本回合不被 BP '+q.floors?.[0]+' 以下角色阻擋':mode==='ceiling'?'本回合不被 BP '+q.ceilings?.[0]+' 以上角色阻擋':'不選擇阻擋限制';
+    case 'mode-37':return mode==='bottom'?'將對手前線角色放到牌庫底，對手可抽 1 張':'讓場外指定角色登場';
+    case 'bottom-37':return skip?'不放到牌庫底':'將 '+n()+' 放到牌庫底，對手可抽 1 張';
+    case 'deploy-37':return '選擇 '+n()+' 登場';
+    case 'raid-37':return mode==='raid'?'突襲登場':'普通休息登場';
+    case 'move-energy':return skip?'不移動對手角色':'將 '+n()+' 移至對手能源線';
+    case 'order-pair':return '先將 '+n()+' 放到牌庫底';
+   }
+   return '';
+  }
+ }
+ return '';
 }
 export function uiActionLabel(action,{pack,state}={}){
  if(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:'))
@@ -1132,7 +1258,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandFrontActive':return '以 Active 登場於前線 '+(action.slot+1);
   case 'chooseRetireLifeOrHand':return action.mode==='skip'?'不選任何退場項目':
    action.mode==='life'?'將1張生命加入手牌':'將2張手牌送至場外';
-  case 'chooseHiddenLifeHand':return '將1張生命加入手牌';
+  case 'chooseHiddenLifeHand':return hiddenLifeHandLabel(state,action);
   case 'chooseRestReenter':return '以 Rest 登場於'+(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
   case 'chooseHandTwoOutside':return '將 '+name()+' 送至場外';
   case 'chooseOwnLifeOutside':return '將 '+name()+' 放到場外';
@@ -1145,7 +1271,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopAddOne':return '將 '+name()+' 加入手牌，其餘送場外';
   case 'chooseDistinctTrait':return action.uid===null?'結束選擇並結算 BP':'選擇 '+name();
   case 'chooseEnergyMode':return action.mode==='plus'?'產生能源 +1':'前線也能產生能源';
-  case 'chooseMayThen':return action.mode==='do'?'查看牌庫頂':'不查看';
+  case 'chooseMayThen':{
+   const step=state?.pending?.then?.[0],count=step?.count;
+   if(step?.op==='draw')return action.mode==='do'?'抽 '+count+' 張牌':'不抽牌';
+   if(step?.op==='searchTopOneBottomDiscard')return action.mode==='do'?
+    '查看牌庫頂 '+count+' 張，可將符合條件的 1 張加入手牌':'不查看牌庫頂';
+   return action.mode==='do'?'發動未被阻擋時的效果':'不發動未被阻擋時的效果';
+  }
   case 'chooseMaxBpImpact':return '讓 '+name()+' 加上場上最高 BP 並獲得 IMPACT';
   case 'chooseOutsideDeckTop':return action.uid===null?'不放回牌庫頂':'放到牌庫頂：'+name();
   case 'chooseOutsideName':return action.uid===null?'不加入手牌':'加入手牌：'+name();
@@ -1434,7 +1566,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRevealTop':return action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
   case 'chooseRevealTrait':return action.mode==='hand'?'將公開且符合特徵的牌加入手牌':
    action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
-  case 'chooseLifeReenter':return '將 1 張生命加入手牌';
+  case 'chooseLifeReenter':return hiddenLifeHandLabel(state,action);
   case 'chooseSayakaReenter':return action.mode==='raid'?'以效果突襲'+suffix():'以休息狀態再登場'+suffix();
   case 'chooseTuckNamed':return action.uid===null?'不把角色放到牌庫底':'將 '+name()+' 放到牌庫底';
   case 'chooseHandGirlRest':return action.uid===null?'不從手牌休息登場':'讓 '+name()+' 以休息狀態登場'+suffix();
@@ -1463,7 +1595,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRetireReplay':return '退場 '+name()+'，再發動這張卡的登場效果';
   case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':case 'csm':
    return closedTitleChoiceLabel(action,{pack,state});
-  default:return unlabeledChoiceLabel(action,{pack,state})||'完成這個選擇';
+  default:return sharedPrintChoiceLabel(action,{pack,state})||unlabeledChoiceLabel(action,{pack,state})||'完成這個選擇';
  }
 }
 export function visibleActionsForCard(legal,uid){
@@ -1878,11 +2010,23 @@ export const FIELD_HOLD_MS=1000;
 // Printed catalogue text only. This never reads the rules program or a hidden card.
 export function fieldEffectCopy(card){
  if(!card||typeof card!=='object')return '這張卡沒有可顯示的效果。';
- const text=value=>typeof value==='string'?value.trim():'';
+ const text=value=>typeof value==='string'?cleanCardEffectText(value):'';
  const effect=text(card.effect);
  const japanese=text(card.effectJa);
  const body=effect&&effect!=='-'?effect:(japanese&&japanese!=='-'?japanese:'');
- const trigger=text(card.triggerText)||text(card.triggerTextJa)||text(card.triggerEffect);
+ const printedTrigger=text(card.triggerText)||text(card.triggerTextJa)||text(card.triggerEffect);
+ // Exact printed Japanese trigger texts: preserve nonstandard/custom COLORs.
+ const standardTriggers={
+  '【ゲット】このカードを手札に加える。':'【獲得】將此卡加入手牌。',
+  '【ドロー】カードを1枚引く。':'【抽牌】抽 1 張牌。',
+  '【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。':'【突襲】將此卡加入手牌，或在滿足必要能源時突襲登場。',
+  '【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。':'【活動】選擇自己的 1 張角色使其活動，本回合 BP＋3000。',
+  '【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。':'【特殊】選擇對手前線的 1 張角色使其退場。',
+  '【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。':'【最終】若自己沒有生命，將牌庫頂 1 張放到自己的生命區。',
+  '【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。':'【顏色】選擇對手前線 BP3500 以下的 1 張角色返回手牌。',
+  '【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。':'【顏色】從自己場外選擇必要能源 2 以下、AP1 的紫色角色 1 張，以活動狀態登場至前線。'
+ };
+ const trigger=standardTriggers[printedTrigger]||printedTrigger;
  const skip=new Set(['','-','無 Trigger。','無觸發。']);
  const kana=(body.match(/[ぁ-んァ-ン]/g)||[]).length;
  const official=japanese&&japanese!=='-'&&japanese!==body&&kana>=8?('官方原文：\n'+japanese):'';
