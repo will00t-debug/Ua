@@ -8,7 +8,7 @@
 - 身份是 `MGS-2-001` 到 `MGS-2-073`，共 73 張。產品頁的 SR12+R12+U26+C25=75 不是身份數。
 - 11 張 AP 不是構築卡，沒有放進目錄。
 - `EX18BT/MGS-1-028_p1` 與 `EX18BT/MGS-1-064_p2` 是第一彈同一身份的平行卡，記在 `MGS-1-028` 與 `MGS-1-064` 的 printings，不是新卡。官方圖檔仍是 coming soon。
-- 繁中系列 `590218` 尚未公開。`name` 與 `effect` 重複官方日文印刷，`effectJa` 是去掉空白後的日文，引擎只比對這段。Rugia HK 只用來切 `span.raidBorder`，不當作官方繁中。
+- 繁中系列 `590218` 尚未公開。顯示用的 `name`、`effect`、`triggerText` 來自路基亞 HK，並留在 `nameHk`、`effectHk`、`triggerTextHk`。`effectJa` 仍是去掉空白後的官方日文，引擎只比對這段。路基亞不是官方繁中。
 
 目錄在 `dist/mgs-vol2.mjs`。抓取腳本是 `scripts/fetch-mgs-ex18.mjs`。分類器是 `dist/universal-v2/mgs2-classify.mjs`。共通包 `createMgsV2Pack` 同時收第一彈已登錄卡與本彈 `engineKind` 非空的卡。沒有 `"op":"mgs"`，`mgs` 不在 `V2_TITLE_IDS`，`title.playable` 維持 false。
 

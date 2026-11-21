@@ -1,15 +1,17 @@
 // Official EX18BT 〈物語〉シリーズ Vol.2 / 〈物語〉系列 Vol.2.
 // Fetched 2026-11-21. Japanese list is series 570218. The Traditional Chinese
-// card list does not publish series 590218 yet, so name and effect repeat the
-// official Japanese print. effectJa is the compact Japanese print and is what
-// the engine matches. Parallel art is another printing. AP cards are not deck
-// cards. Packed UA42 parallels stay on the Vol.1 identity. BP+ is a design
-// mark. Generated energy is the pip count in the 発生エナジー alt text. A
-// trailing + is genMark and is not added to gen. The icon filename number is
-// a sprite id. A required-energy dash is 0 and still keeps the color
-// character. A slash trait stays one printed token. Raid frames are Rugia HK
-// span.raidBorder. engineKind is set only when mgs2-classify accepts the
-// whole Japanese print. Registration is not an official FAQ certification.
+// card list does not publish series 590218 yet. Display name, effect and
+// trigger text are Rugia HK, kept on nameHk, effectHk and triggerTextHk.
+// effectJa is the compact Japanese print and is what the engine matches.
+// Parallel art is another printing. AP cards are not deck cards. Packed UA42
+// parallels stay on the Vol.1 identity. BP+ is a design mark. Generated
+// energy is the pip count in the 発生エナジー alt text. A trailing + is
+// genMark and is not added to gen. The icon filename number is a sprite id.
+// A required-energy dash is 0 and still keeps the color character. A slash
+// trait stays one printed token. Raid frames are Rugia HK span.raidBorder.
+// engineKind is set only when mgs2-classify accepts the whole Japanese print.
+// Registration is not an official FAQ certification. Rugia HK is not the
+// official Traditional Chinese printing.
 export const MGS2_FETCHED='2026-11-21';
 export const MGS2_SET='EX18BT';
 export const MGS2_VOL1_PARALLELS=[
@@ -60,9 +62,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【登場時】自分の場のレイド状態の〈千石 撫子〉の一番上のカードを場外に置いてもよい。そうした場合、カードを1枚引き、相手のフロントLのキャラを1枚まで選び、レストにし、自分の場の【レイド】を持たない〈千石 撫子〉を1枚まで選び、そのキャラの【登場時】を発動する。",
+  "effect": "&nbsp登場時&nbsp 可將自己場上突襲狀態的〈千石 撫子〉最上面的卡放置到場外。如這樣做，抽１張卡、選擇對手前線最多１張角色休息，並且選擇自己場上最多１張沒有【突襲】的〈千石 撫子〉，發動該角色的&nbsp登場時&nbsp 效果。",
   "effectJa": "【登場時】自分の場のレイド状態の〈千石撫子〉の一番上のカードを場外に置いてもよい。そうした場合、カードを1枚引き、相手のフロントLのキャラを1枚まで選び、レストにし、自分の場の【レイド】を持たない〈千石撫子〉を1枚まで選び、そのキャラの【登場時】を発動する。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-001.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-001",
@@ -95,7 +97,11 @@ export const MGS2_CARDS=
     "q": "レイド状態の〈千石 撫子〉の一番上のカードを場外に置きました。その場合、場に残ったレイド元のカードはレイド状態の時に受けていた効果を受けたままですか？",
     "a": "いいえ、レイド状態のカードが受けていた効果は無効になります。"
    }
-  ]
+  ],
+  "nameHk": "貝木 泥舟",
+  "effectHk": "&nbsp登場時&nbsp 可將自己場上突襲狀態的〈千石 撫子〉最上面的卡放置到場外。如這樣做，抽１張卡、選擇對手前線最多１張角色休息，並且選擇自己場上最多１張沒有【突襲】的〈千石 撫子〉，發動該角色的&nbsp登場時&nbsp 效果。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-001"
  },
  {
   "id": "MGS-2-002",
@@ -131,7 +137,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【登場時】自分の場に〈千石 撫子〉がある場合、カードを1枚引く。",
+  "effect": "&nbsp登場時&nbsp 自己場上擁有〈千石 撫子〉的情況下，抽１張卡。",
   "effectJa": "【登場時】自分の場に〈千石撫子〉がある場合、カードを1枚引く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-002.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-002",
@@ -139,7 +145,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "drawIfNadeko",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "神原 駿河",
+  "effectHk": "&nbsp登場時&nbsp 自己場上擁有〈千石 撫子〉的情況下，抽１張卡。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-002"
  },
  {
   "id": "MGS-2-003",
@@ -175,7 +185,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【自分のターン中】自分の場か場外に〈ご神体〉がある場合、このキャラはBP+1000。",
+  "effect": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp自己回合中&nbsp 自己場上或場外擁有〈御神體〉的情況下，此角色的BP+1000。",
   "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【自分のターン中】自分の場か場外に〈ご神体〉がある場合、このキャラはBP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-003.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-003",
@@ -183,7 +193,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "goshintaiBp",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "千石 撫子",
+  "effectHk": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp自己回合中&nbsp 自己場上或場外擁有〈御神體〉的情況下，此角色的BP+1000。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-003"
  },
  {
   "id": "MGS-2-004",
@@ -226,7 +240,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【自分のターン中】このターン中に自分の〈蛇切縄〉が退場している場合、このキャラはBP+1000。",
+  "effect": "【階梯】 (在自己的移動階段可從前線移動到能源線)\n&nbsp自己回合中&nbsp 本回合中，自己有〈蛇切繩〉退場的情況下，此角色的BP+1000。",
   "effectJa": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）【自分のターン中】このターン中に自分の〈蛇切縄〉が退場している場合、このキャラはBP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-004.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-004",
@@ -234,7 +248,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "snakeLeftBp",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "千石 撫子",
+  "effectHk": "【階梯】 (在自己的移動階段可從前線移動到能源線)\n&nbsp自己回合中&nbsp 本回合中，自己有〈蛇切繩〉退場的情況下，此角色的BP+1000。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-004"
  },
  {
   "id": "MGS-2-005",
@@ -275,9 +293,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "raid",
-  "triggerText": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+  "triggerText": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
   "triggerTextJa": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-  "effect": "【レイド】〈千石 撫子〉アクティブにし、フロントLに移動できる\nこのキャラが場を離れた時、自分の場外から必要エナジーが2以下の黄の〈千石 撫子〉を1枚まで自分の場にレストで登場させる。\n【登場時】カードを1枚引く。自分の場外から黄のフィールドカードを1枚まで自分のエナジーLにレストで登場させる。\n【起動メイン】【フロントLにある場合】 【ターン1】自分の場のフィールドを1枚退場させる。そうした場合、このキャラはこのターン中、【インパクト（1）】を得る。",
+  "effect": "【突襲】〈千石 撫子〉\n此角色離開場上時，從自己場外選擇最多１張能源需求２或以下的黃色〈千石 撫子〉，以休息狀態在自己場上登場。\n&nbsp登場時&nbsp 抽１張卡。從自己場外選擇最多１張黃色場域卡，以休息狀態在自己能源線登場。\n&nbsp主起動&nbsp 在前線的情況 【每回合1】將自己場上１張場域退場。如這樣做，此角色在本回合中，獲得【衝擊（1）】。",
   "effectJa": "【レイド】〈千石撫子〉アクティブにし、フロントLに移動できるこのキャラが場を離れた時、自分の場外から必要エナジーが2以下の黄の〈千石撫子〉を1枚まで自分の場にレストで登場させる。【登場時】カードを1枚引く。自分の場外から黄のフィールドカードを1枚まで自分のエナジーLにレストで登場させる。【起動メイン】【フロントLにある場合】【ターン1】自分の場のフィールドを1枚退場させる。そうした場合、このキャラはこのターン中、【インパクト（1）】を得る。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-005.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-005",
@@ -286,17 +304,21 @@ export const MGS2_CARDS=
   "engineKind": "nadekoRaid",
   "raidFrame": {
    "source": "rugia-hk",
-   "inside": "〈千石 撫子〉此角色離開場上時，從自己場外選擇最多１張能源需求２或以下的黃色〈千石 撫子〉，以休息狀態在自己場上登場。&nbsp登場時&nbsp 抽１張卡。從自己場外選擇最多１張黃色場域卡，以休息狀態在自己能源線登場。&nbsp主起動&nbsp 在前線的情況 將自己場上１張場域退場。如這樣做，此角色在本回合中，獲得。",
+   "inside": "【突襲】〈千石 撫子〉\n此角色離開場上時，從自己場外選擇最多１張能源需求２或以下的黃色〈千石 撫子〉，以休息狀態在自己場上登場。\n&nbsp登場時&nbsp 抽１張卡。從自己場外選擇最多１張黃色場域卡，以休息狀態在自己能源線登場。\n&nbsp主起動&nbsp 在前線的情況 【每回合1】將自己場上１張場域退場。如這樣做，此角色在本回合中，獲得【衝擊（1）】。",
    "outside": "",
    "wholeInside": true
   },
-  "faq": []
+  "faq": [],
+  "nameHk": "千石 撫子",
+  "effectHk": "【突襲】〈千石 撫子〉\n此角色離開場上時，從自己場外選擇最多１張能源需求２或以下的黃色〈千石 撫子〉，以休息狀態在自己場上登場。\n&nbsp登場時&nbsp 抽１張卡。從自己場外選擇最多１張黃色場域卡，以休息狀態在自己能源線登場。\n&nbsp主起動&nbsp 在前線的情況 【每回合1】將自己場上１張場域退場。如這樣做，此角色在本回合中，獲得【衝擊（1）】。",
+  "triggerTextHk": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-005"
  },
  {
   "id": "MGS-2-006",
   "identity": "MGS-2-006",
   "number": "EX18BT/MGS-2-006",
-  "name": "阿良々木 火憐",
+  "name": "阿良良木 火憐",
   "nameJa": "阿良々木 火憐",
   "ruby": "あららぎ かれん",
   "title": "mgs",
@@ -326,9 +348,9 @@ export const MGS2_CARDS=
   ],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "自分のキャラがアタックしてバトルに敗北したアタック終了時、アクティブのこのキャラをレストにしてもよい。そうした場合、自分の場の他の［特徴：ファイヤーシスターズ］を1枚まで選び、このターン中、BP+1000。",
+  "effect": "自己角色於戰鬥中戰敗的攻擊結束時，可將激活狀態的此角色休息。如這樣做，選擇自己場上最多１張其他［特徵：火焰姐妹］，本回合中，BP+1000。",
   "effectJa": "自分のキャラがアタックしてバトルに敗北したアタック終了時、アクティブのこのキャラをレストにしてもよい。そうした場合、自分の場の他の［特徴：ファイヤーシスターズ］を1枚まで選び、このターン中、BP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-006.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-006",
@@ -343,13 +365,17 @@ export const MGS2_CARDS=
     "q": "「自分のキャラがアタックしてバトルに敗北したアタック終了時」が発動するタイミングはいつですか？",
     "a": "このキャラがバトルに敗北したという条件がありますが、他のアタック終了時と同じタイミングです。ただし、アタックをした先が相手プレイヤーの場合は条件を満たしません。バトルを行ったアタックの終了後のみ発動します。"
    }
-  ]
+  ],
+  "nameHk": "阿良良木 火憐",
+  "effectHk": "自己角色於戰鬥中戰敗的攻擊結束時，可將激活狀態的此角色休息。如這樣做，選擇自己場上最多１張其他［特徵：火焰姐妹］，本回合中，BP+1000。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-006"
  },
  {
   "id": "MGS-2-007",
   "identity": "MGS-2-007",
   "number": "EX18BT/MGS-2-007",
-  "name": "阿良々木 火憐",
+  "name": "阿良良木 火憐",
   "nameJa": "阿良々木 火憐",
   "ruby": "あららぎ かれん",
   "title": "mgs",
@@ -386,9 +412,9 @@ export const MGS2_CARDS=
   ],
   "rarity": "U",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、カードを1枚引く。",
+  "effect": "&nbsp登場時&nbsp 可將自己１張手牌放置到場外。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，然後抽１張卡。",
   "effectJa": "【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、カードを1枚引く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-007.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-007",
@@ -396,13 +422,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "handPeekDraw",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "阿良良木 火憐",
+  "effectHk": "&nbsp登場時&nbsp 可將自己１張手牌放置到場外。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，然後抽１張卡。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-007"
  },
  {
   "id": "MGS-2-008",
   "identity": "MGS-2-008",
   "number": "EX18BT/MGS-2-008",
-  "name": "阿良々木 火憐",
+  "name": "阿良良木 火憐",
   "nameJa": "阿良々木 火憐",
   "ruby": "あららぎ かれん",
   "title": "mgs",
@@ -439,9 +469,9 @@ export const MGS2_CARDS=
   ],
   "rarity": "SR",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【アタック時】自分の場の他の［特徴：ファイヤーシスターズ］を1枚まで選び、このターン中、BP+1000。このターン中に自分の場の他のキャラがバトルに敗北している場合、このキャラはこのターン中、BP+1000。",
+  "effect": "&nbsp攻擊時&nbsp 選擇自己場上最多１張其他［特徵：火焰姐妹］，本回合中，BP+1000。本回合中，自己場上有其他角色戰敗的情況下，此角色在本回合中，BP+1000。",
   "effectJa": "【アタック時】自分の場の他の［特徴：ファイヤーシスターズ］を1枚まで選び、このターン中、BP+1000。このターン中に自分の場の他のキャラがバトルに敗北している場合、このキャラはこのターン中、BP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-008.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-008",
@@ -449,13 +479,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "sisterAttack",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "阿良良木 火憐",
+  "effectHk": "&nbsp攻擊時&nbsp 選擇自己場上最多１張其他［特徵：火焰姐妹］，本回合中，BP+1000。本回合中，自己場上有其他角色戰敗的情況下，此角色在本回合中，BP+1000。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-008"
  },
  {
   "id": "MGS-2-009",
   "identity": "MGS-2-009",
   "number": "EX18BT/MGS-2-009",
-  "name": "阿良々木 月火",
+  "name": "阿良良木 月火",
   "nameJa": "阿良々木 月火",
   "ruby": "あららぎ つきひ",
   "title": "mgs",
@@ -485,9 +519,9 @@ export const MGS2_CARDS=
   ],
   "rarity": "C",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【退場時】カードを1枚引く。",
+  "effect": "&nbsp退場時&nbsp 抽１張卡。",
   "effectJa": "【退場時】カードを1枚引く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-009.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-009",
@@ -495,13 +529,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "retireDraw",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "阿良良木 月火",
+  "effectHk": "&nbsp退場時&nbsp 抽１張卡。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-009"
  },
  {
   "id": "MGS-2-010",
   "identity": "MGS-2-010",
   "number": "EX18BT/MGS-2-010",
-  "name": "阿良々木 月火",
+  "name": "阿良良木 月火",
   "nameJa": "阿良々木 月火",
   "ruby": "あららぎ つきひ",
   "title": "mgs",
@@ -540,7 +578,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【エナジーLにある場合】自分のアタックフェイズ終了時、このキャラをフロントLに移動させてもよい。",
+  "effect": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n在能源線的情況下 自己攻擊階段結束時，可將此角色移動到前線。",
   "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【エナジーLにある場合】自分のアタックフェイズ終了時、このキャラをフロントLに移動させてもよい。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-010.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-010",
@@ -555,13 +593,17 @@ export const MGS2_CARDS=
     "q": "移動させる時にそのラインに空きがない場合どうなりますか？",
     "a": "移動させる時にそのラインに空きがない場合、カードを1枚選んでリムーブエリアに置いてから移動させます。"
    }
-  ]
+  ],
+  "nameHk": "阿良良木 月火",
+  "effectHk": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n在能源線的情況下 自己攻擊階段結束時，可將此角色移動到前線。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-010"
  },
  {
   "id": "MGS-2-011",
   "identity": "MGS-2-011",
   "number": "EX18BT/MGS-2-011",
-  "name": "阿良々木 月火",
+  "name": "阿良良木 月火",
   "nameJa": "阿良々木 月火",
   "ruby": "あららぎ つきひ",
   "title": "mgs",
@@ -598,9 +640,9 @@ export const MGS2_CARDS=
   ],
   "rarity": "SR",
   "trigger": "raid",
-  "triggerText": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+  "triggerText": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
   "triggerTextJa": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-  "effect": "このキャラのアタックがブロックされた時、カードを1枚引く。\n【レイド】〈阿良々木 月火〉アクティブにし、フロントLに移動できる\nこのキャラのアタックがブロックされなかった時、相手のフロントLのキャラを1枚まで選び、レストにする。\n【退場時】このカードを自分の場にレストで登場させる。",
+  "effect": "此角色進行攻擊而被阻擋時，抽１張卡。【突襲】〈阿良良木 月火〉\n此角色進行攻擊而沒有被阻擋時，選擇對手前線最多１張角色休息。\n&nbsp退場時&nbsp 將此卡以休息狀態在自己場上登場。",
   "effectJa": "このキャラのアタックがブロックされた時、カードを1枚引く。【レイド】〈阿良々木月火〉アクティブにし、フロントLに移動できるこのキャラのアタックがブロックされなかった時、相手のフロントLのキャラを1枚まで選び、レストにする。【退場時】このカードを自分の場にレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-011.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-011",
@@ -609,7 +651,7 @@ export const MGS2_CARDS=
   "engineKind": "tsukihiRaid",
   "raidFrame": {
    "source": "rugia-hk",
-   "inside": "〈阿良良木 月火〉此角色進行攻擊而沒有被阻擋時，選擇對手前線最多１張角色休息。&nbsp退場時&nbsp 將此卡以休息狀態在自己場上登場。",
+   "inside": "【突襲】〈阿良良木 月火〉\n此角色進行攻擊而沒有被阻擋時，選擇對手前線最多１張角色休息。\n&nbsp退場時&nbsp 將此卡以休息狀態在自己場上登場。",
    "outside": "此角色進行攻擊而被阻擋時，抽１張卡。",
    "wholeInside": false
   },
@@ -620,13 +662,17 @@ export const MGS2_CARDS=
     "q": "「このキャラのアタックがブロックされなかった時」が条件の効果が発動するタイミングはいつですか？",
     "a": "相手の【ブロック時】が発動する時と同じ、「ブロックキャラクター指定タイミング」でブロックするか選択した後になります。"
    }
-  ]
+  ],
+  "nameHk": "阿良良木 月火",
+  "effectHk": "此角色進行攻擊而被阻擋時，抽１張卡。【突襲】〈阿良良木 月火〉\n此角色進行攻擊而沒有被阻擋時，選擇對手前線最多１張角色休息。\n&nbsp退場時&nbsp 將此卡以休息狀態在自己場上登場。",
+  "triggerTextHk": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-011"
  },
  {
   "id": "MGS-2-012",
   "identity": "MGS-2-012",
   "number": "EX18BT/MGS-2-012",
-  "name": "ご神体",
+  "name": "御神體",
   "nameJa": "ご神体",
   "ruby": "ごしんたい",
   "title": "mgs",
@@ -654,9 +700,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。\n【退場時】自分のターン中の場合、以下から1つ選ぶ。\n・このターン中、次に手札から使用する元々の必要エナジーが8以上の〈千石 撫子〉の必要エナジーを【黄×3】減らす。\n・必要エナジーが8以上の〈千石 撫子〉を1枚まで選び、このターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、その場合ブロックされない）を与える。",
+  "effect": "&nbsp登場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。\n&nbsp退場時&nbsp 自己回合中的情況下，從以下選擇１項。\n．本回合中，下次從手牌使用原能源需求８或以上的〈千石 撫子〉的能源需求滅少【黃×3】。\n．選擇最多１張能源需求８或以上的〈千石 撫子〉，本回合中，給予【狙擊】 (可指定對手前線的角色進行攻擊，該情況下不能被阻擋)。",
   "effectJa": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。【退場時】自分のターン中の場合、以下から1つ選ぶ。・このターン中、次に手札から使用する元々の必要エナジーが8以上の〈千石撫子〉の必要エナジーを【黄×3】減らす。・必要エナジーが8以上の〈千石撫子〉を1枚まで選び、このターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、その場合ブロックされない）を与える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-012.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-012",
@@ -671,13 +717,17 @@ export const MGS2_CARDS=
     "q": "「元々の必要エナジー」とは何ですか？",
     "a": "カード左上に記載されている必要エナジーを指します。"
    }
-  ]
+  ],
+  "nameHk": "御神體",
+  "effectHk": "&nbsp登場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。\n&nbsp退場時&nbsp 自己回合中的情況下，從以下選擇１項。\n．本回合中，下次從手牌使用原能源需求８或以上的〈千石 撫子〉的能源需求滅少【黃×3】。\n．選擇最多１張能源需求８或以上的〈千石 撫子〉，本回合中，給予【狙擊】 (可指定對手前線的角色進行攻擊，該情況下不能被阻擋)。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-012"
  },
  {
   "id": "MGS-2-013",
   "identity": "MGS-2-013",
   "number": "EX18BT/MGS-2-013",
-  "name": "阿良々木 暦",
+  "name": "阿良良木 曆",
   "nameJa": "阿良々木 暦",
   "ruby": "あららぎ こよみ",
   "title": "mgs",
@@ -705,9 +755,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【退場時】カードを1枚引き、自分の手札を1枚場外に置く。自分のターン中の場合、自分の手札から必要エナジーが0の紫の〈阿良々木 暦〉を1枚まで自分のフロントLにレストで登場させる。",
+  "effect": "&nbsp退場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。自己回合中的情況下，從自己手牌選擇最多１張能源需求０的紫色〈阿良良木 曆〉，以休息狀態在自己前線登場。",
   "effectJa": "【退場時】カードを1枚引き、自分の手札を1枚場外に置く。自分のターン中の場合、自分の手札から必要エナジーが0の紫の〈阿良々木暦〉を1枚まで自分のフロントLにレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-013.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-013",
@@ -715,13 +765,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "retireKoyomi",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "阿良良木 曆",
+  "effectHk": "&nbsp退場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。自己回合中的情況下，從自己手牌選擇最多１張能源需求０的紫色〈阿良良木 曆〉，以休息狀態在自己前線登場。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-013"
  },
  {
   "id": "MGS-2-014",
   "identity": "MGS-2-014",
   "number": "EX18BT/MGS-2-014",
-  "name": "阿良々木 暦",
+  "name": "阿良良木 曆",
   "nameJa": "阿良々木 暦",
   "ruby": "あららぎ こよみ",
   "title": "mgs",
@@ -751,7 +805,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【登場時】自分の場に〈キスショット・アセロラオリオン・ハートアンダーブレード〉がある場合、カードを1枚引く。",
+  "effect": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp登場時&nbsp 自己場上擁有〈姬絲秀忒．雅賽蘿拉莉昂．刃下心〉的情況下，抽１張卡。",
   "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【登場時】自分の場に〈キスショット・アセロラオリオン・ハートアンダーブレード〉がある場合、カードを1枚引く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-014.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-014",
@@ -759,7 +813,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "impactDrawKiss",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "阿良良木 曆",
+  "effectHk": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp登場時&nbsp 自己場上擁有〈姬絲秀忒．雅賽蘿拉莉昂．刃下心〉的情況下，抽１張卡。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-014"
  },
  {
   "id": "MGS-2-015",
@@ -807,9 +865,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【起動メイン】【ターン1】自分のフロントLに〔〈キスショット・アセロラオリオン・ハートアンダーブレード〉、〈忍野 忍〉、〈阿良々木 暦〉〕以外のキャラがなく、このキャラが登場したターン中のみ発動できる。以下から『1つ』まで選ぶ。自分の手札を1枚場外に置いてもよい。そうした場合、『2つ』に代わる。\n・自分の場外から〈阿良々木 暦〉を1枚手札に加え、自分の手札を2枚場外に置く。\n・自分の場の〈阿良々木 暦〉を1枚選び、このターン中、「このキャラはBP3000以下のキャラにブロックされない。」を与える。\n・BP1500以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。",
+  "effect": "&nbsp主起動&nbsp 【每回合1】只有在自己前線沒有［〈姬絲秀忒．雅賽蘿拉莉昂．刃下心〉、〈忍野 忍〉、〈阿良良木 曆〉］以外的角色，並且在此角色登場的回合才可以發動。從以下選擇最多『１項』。可將自己１張手牌放置到場外，如這樣做，改為『２項』。\n．從自己場外選擇１張〈阿良良木 曆〉加入手牌，然後將自己２張手牌放置到場外。\n．選擇自己場上１張〈阿良良木 曆〉，本回合中，給予「此角色不會被BP3000或以下的角色阻擋。」。\n．選擇對手前線１張BP1500或以上的角色，本回合中，BP-1000。",
   "effectJa": "【起動メイン】【ターン1】自分のフロントLに〔〈キスショット・アセロラオリオン・ハートアンダーブレード〉、〈忍野忍〉、〈阿良々木暦〉〕以外のキャラがなく、このキャラが登場したターン中のみ発動できる。以下から『1つ』まで選ぶ。自分の手札を1枚場外に置いてもよい。そうした場合、『2つ』に代わる。・自分の場外から〈阿良々木暦〉を1枚手札に加え、自分の手札を2枚場外に置く。・自分の場の〈阿良々木暦〉を1枚選び、このターン中、「このキャラはBP3000以下のキャラにブロックされない。」を与える。・BP1500以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-015.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-015",
@@ -830,13 +888,17 @@ export const MGS2_CARDS=
     "q": "2つ選んだ場合、望む順で処理を行うことができますか？",
     "a": "いいえ、できません。上にある効果から処理を行います。"
    }
-  ]
+  ],
+  "nameHk": "忍野 忍",
+  "effectHk": "&nbsp主起動&nbsp 【每回合1】只有在自己前線沒有［〈姬絲秀忒．雅賽蘿拉莉昂．刃下心〉、〈忍野 忍〉、〈阿良良木 曆〉］以外的角色，並且在此角色登場的回合才可以發動。從以下選擇最多『１項』。可將自己１張手牌放置到場外，如這樣做，改為『２項』。\n．從自己場外選擇１張〈阿良良木 曆〉加入手牌，然後將自己２張手牌放置到場外。\n．選擇自己場上１張〈阿良良木 曆〉，本回合中，給予「此角色不會被BP3000或以下的角色阻擋。」。\n．選擇對手前線１張BP1500或以上的角色，本回合中，BP-1000。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-015"
  },
  {
   "id": "MGS-2-016",
   "identity": "MGS-2-016",
   "number": "EX18BT/MGS-2-016",
-  "name": "忍野 メメ",
+  "name": "忍野 咩咩",
   "nameJa": "忍野 メメ",
   "ruby": "おしの めめ",
   "title": "mgs",
@@ -864,9 +926,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【登場時】【エナジーLにある場合】このキャラをアクティブにする。\n【起動メイン】【レストにする】BP5000以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。",
+  "effect": "&nbsp登場時&nbsp 在能源線的情況 此角色被激活。\n&nbsp主起動&nbsp 休息 選擇對手前線１張BP5000或以上的角色，本回合中，BP-1000。",
   "effectJa": "【登場時】【エナジーLにある場合】このキャラをアクティブにする。【起動メイン】【レストにする】BP5000以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-016.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-016",
@@ -874,13 +936,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "energyDown",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 咩咩",
+  "effectHk": "&nbsp登場時&nbsp 在能源線的情況 此角色被激活。\n&nbsp主起動&nbsp 休息 選擇對手前線１張BP5000或以上的角色，本回合中，BP-1000。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-016"
  },
  {
   "id": "MGS-2-017",
   "identity": "MGS-2-017",
   "number": "EX18BT/MGS-2-017",
-  "name": "キスショット・アセロラオリオン・ハートアンダーブレード",
+  "name": "姬絲秀忒．雅賽蘿拉莉昂．刃下心",
   "nameJa": "キスショット・アセロラオリオン・ハートアンダーブレード",
   "ruby": "きすしょっと あせろらおりおん はーとあんだーぶれーど",
   "title": "mgs",
@@ -908,9 +974,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "このキャラがブロックしてバトルに勝利した時、このキャラを退場させ、自分の場外から必要エナジーが1以下の〈忍野 忍〉を1枚まで手札に加える。\n【起動メイン】【場外にある場合】BP4000以上の自分の場の〈阿良々木 暦〉を1枚退場させる。そうした場合、このカードを自分の場にレストで登場させる。",
+  "effect": "此角色進行阻擋並戰鬥勝利時，將此角色退場，並且從自己場外選擇最多１張能源需求１或以下的〈忍野 忍〉加入手牌。\n&nbsp主起動&nbsp 在場外的情況下 將自己場上１張BP4000或以上的〈阿良良木 曆〉退場。如這樣做，將此卡以休息狀態在自己場上登場。",
   "effectJa": "このキャラがブロックしてバトルに勝利した時、このキャラを退場させ、自分の場外から必要エナジーが1以下の〈忍野忍〉を1枚まで手札に加える。【起動メイン】【場外にある場合】BP4000以上の自分の場の〈阿良々木暦〉を1枚退場させる。そうした場合、このカードを自分の場にレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-017.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-017",
@@ -918,7 +984,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "blockWinShinobu",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "姬絲秀忒．雅賽蘿拉莉昂．刃下心",
+  "effectHk": "此角色進行阻擋並戰鬥勝利時，將此角色退場，並且從自己場外選擇最多１張能源需求１或以下的〈忍野 忍〉加入手牌。\n&nbsp主起動&nbsp 在場外的情況下 將自己場上１張BP4000或以上的〈阿良良木 曆〉退場。如這樣做，將此卡以休息狀態在自己場上登場。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-017"
  },
  {
   "id": "MGS-2-018",
@@ -952,9 +1022,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【登場時】自分の場に〈キスショット・アセロラオリオン・ハートアンダーブレード〉か〈忍野 忍〉がある場合、このキャラをアクティブにする。\n【退場時】自分の場外から〈妖刀心渡〉を1枚まで手札に加える。",
+  "effect": "&nbsp登場時&nbsp 自己場上擁有〈姬絲秀忒．雅賽蘿拉莉昂．刃下心〉或〈忍野 忍〉的情況下，此角色被激活。\n&nbsp退場時&nbsp 從自己場外選擇最多１張〈妖刀心渡〉卡加入手牌。",
   "effectJa": "【登場時】自分の場に〈キスショット・アセロラオリオン・ハートアンダーブレード〉か〈忍野忍〉がある場合、このキャラをアクティブにする。【退場時】自分の場外から〈妖刀心渡〉を1枚まで手札に加える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-018.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-018",
@@ -962,13 +1032,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "kissActive",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "死屍累 生死郎",
+  "effectHk": "&nbsp登場時&nbsp 自己場上擁有〈姬絲秀忒．雅賽蘿拉莉昂．刃下心〉或〈忍野 忍〉的情況下，此角色被激活。\n&nbsp退場時&nbsp 從自己場外選擇最多１張〈妖刀心渡〉卡加入手牌。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-018"
  },
  {
   "id": "MGS-2-019",
   "identity": "MGS-2-019",
   "number": "EX18BT/MGS-2-019",
-  "name": "戦場ヶ原 ひたぎ",
+  "name": "戰場原 黑儀",
   "nameJa": "戦場ヶ原 ひたぎ",
   "ruby": "せんじょうがはら ひたぎ",
   "title": "mgs",
@@ -996,9 +1070,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【登場時】『カードを1枚引き、自分の手札を1枚場外に置く』。このターン中に自分の〈羽川 翼〉の効果で自分の山札のカードを手札に加えている場合、『カードを1枚引く』に代わる。",
+  "effect": "&nbsp登場時&nbsp 『抽１張卡，然後將自己１張手牌放置到場外』。本回合中，自己有用〈羽川 翼〉的效果將自己牌庫的卡加入手牌的情況下，改為『抽１張卡』。",
   "effectJa": "【登場時】『カードを1枚引き、自分の手札を1枚場外に置く』。このターン中に自分の〈羽川翼〉の効果で自分の山札のカードを手札に加えている場合、『カードを1枚引く』に代わる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-019.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-019",
@@ -1006,13 +1080,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "tsubasaDraw",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "戰場原 黑儀",
+  "effectHk": "&nbsp登場時&nbsp 『抽１張卡，然後將自己１張手牌放置到場外』。本回合中，自己有用〈羽川 翼〉的效果將自己牌庫的卡加入手牌的情況下，改為『抽１張卡』。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-019"
  },
  {
   "id": "MGS-2-020",
   "identity": "MGS-2-020",
   "number": "EX18BT/MGS-2-020",
-  "name": "戦場ヶ原 ひたぎ",
+  "name": "戰場原 黑儀",
   "nameJa": "戦場ヶ原 ひたぎ",
   "ruby": "せんじょうがはら ひたぎ",
   "title": "mgs",
@@ -1040,9 +1118,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【起動メイン】【エナジーLにある場合】 【レストにする】このキャラを自分の山札の上に置き、自分の場外から必要エナジーが0の紫の〈羽川 翼〉を1枚まで自分の場にレストで登場させる。",
+  "effect": "&nbsp主起動&nbsp 在能源線的情況 休息 將此角色放置到自己牌庫上面，並且從自己場外選擇最多１張能源需求０的紫色〈羽川 翼〉，以休息狀態在自己場上登場。",
   "effectJa": "【起動メイン】【エナジーLにある場合】【レストにする】このキャラを自分の山札の上に置き、自分の場外から必要エナジーが0の紫の〈羽川翼〉を1枚まで自分の場にレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-020.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-020",
@@ -1050,7 +1128,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "deckTsubasa",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "戰場原 黑儀",
+  "effectHk": "&nbsp主起動&nbsp 在能源線的情況 休息 將此角色放置到自己牌庫上面，並且從自己場外選擇最多１張能源需求０的紫色〈羽川 翼〉，以休息狀態在自己場上登場。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-020"
  },
  {
   "id": "MGS-2-021",
@@ -1091,9 +1173,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【登場時】自分の山札の上から『1枚』見て、1枚まで山札の上に置き、残りを望む順で下に置く。自分の場の〈羽川 翼〉2枚につき、この効果で見る山札の枚数+1。",
+  "effect": "&nbsp登場時&nbsp 從自己牌庫上面查看『１張』卡，將最多１張卡放置到牌庫上面，將餘下的卡以任意順序放置到下面。自己場上每有２張〈羽川 翼〉，此效果查看牌庫的張數+1。",
   "effectJa": "【登場時】自分の山札の上から『1枚』見て、1枚まで山札の上に置き、残りを望む順で下に置く。自分の場の〈羽川翼〉2枚につき、この効果で見る山札の枚数+1。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-021.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-021",
@@ -1101,7 +1183,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "tsubasaLook",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "羽川 翼",
+  "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看『１張』卡，將最多１張卡放置到牌庫上面，將餘下的卡以任意順序放置到下面。自己場上每有２張〈羽川 翼〉，此效果查看牌庫的張數+1。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-021"
  },
  {
   "id": "MGS-2-022",
@@ -1142,9 +1228,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "このキャラがレイドされた時、必要エナジーの数を1つ指定する。自分の山札の上から1枚を公開する。公開したカードの必要エナジーの数がこの効果で指定した数と同じだった場合、そのカードを手札に加える。手札に加えなかった場合、公開したカードを山札の上に置く。（レイドしたキャラの【登場時】とこの効果は望む順で処理する）",
+  "effect": "此角色被突襲時，指定１個能源需求數目。從自己牌庫上面公開１張卡。被公開的卡的能源需求數目，與此效果指定的數目相同的情況下，將該卡加入手牌。沒有加入手牌的情況下，將被公開的卡放置到牌庫上面。(以任意順序處理突襲角色的&nbsp登場時&nbsp 效果及此效果)",
   "effectJa": "このキャラがレイドされた時、必要エナジーの数を1つ指定する。自分の山札の上から1枚を公開する。公開したカードの必要エナジーの数がこの効果で指定した数と同じだった場合、そのカードを手札に加える。手札に加えなかった場合、公開したカードを山札の上に置く。（レイドしたキャラの【登場時】とこの効果は望む順で処理する）",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-022.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-022",
@@ -1152,13 +1238,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "raidedEnergy",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "羽川 翼",
+  "effectHk": "此角色被突襲時，指定１個能源需求數目。從自己牌庫上面公開１張卡。被公開的卡的能源需求數目，與此效果指定的數目相同的情況下，將該卡加入手牌。沒有加入手牌的情況下，將被公開的卡放置到牌庫上面。(以任意順序處理突襲角色的&nbsp登場時&nbsp 效果及此效果)",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-022"
  },
  {
   "id": "MGS-2-023",
   "identity": "MGS-2-023",
   "number": "EX18BT/MGS-2-023",
-  "name": "ブラック羽川",
+  "name": "黑羽川",
   "nameJa": "ブラック羽川",
   "ruby": "ぶらっくはねかわ",
   "title": "mgs",
@@ -1193,9 +1283,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "R",
   "trigger": "raid",
-  "triggerText": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+  "triggerText": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
   "triggerTextJa": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-  "effect": "このカードは〈羽川 翼〉としても扱う。\n【レイド】〈羽川 翼〉アクティブにし、フロントLに移動できる\nこのキャラのアタック終了時、自分の手札を1枚場外に置いてもよい。そうした場合、このターン中にアタックしておらず、【レイド】を持たない自分のフロントLの〈羽川 翼〉1枚に、このキャラの一番上のカードをレイドさせてもよい。〈ブラック羽川〉のこの効果は1ターンに1回のみ発動できる。\n【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000。",
+  "effect": "此卡也被視為〈羽川 翼〉。\n【突襲】〈羽川 翼〉\n此角色攻擊結束時，可將自己１張手牌放置到場外。如這樣做，可將此角色最上面的卡，疊在自己前線１張在本回合中沒有攻擊過，並且沒有【突襲】的〈羽川 翼〉上面進行突襲。〈黑羽川〉的此效果１回合只能發動１次。\n&nbsp登場時&nbsp 選擇對手前線最多１張角色，本回合中，BP-1000。",
   "effectJa": "このカードは〈羽川翼〉としても扱う。【レイド】〈羽川翼〉アクティブにし、フロントLに移動できるこのキャラのアタック終了時、自分の手札を1枚場外に置いてもよい。そうした場合、このターン中にアタックしておらず、【レイド】を持たない自分のフロントLの〈羽川翼〉1枚に、このキャラの一番上のカードをレイドさせてもよい。〈ブラック羽川〉のこの効果は1ターンに1回のみ発動できる。【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-023.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-023",
@@ -1204,7 +1294,7 @@ export const MGS2_CARDS=
   "engineKind": "blackRaid",
   "raidFrame": {
    "source": "rugia-hk",
-   "inside": "〈羽川 翼〉此角色攻擊結束時，可將自己１張手牌放置到場外。如這樣做，可將此角色最上面的卡，疊在自己前線１張在本回合中沒有攻擊過，並且沒有的〈羽川 翼〉上面進行突襲。〈黑羽川〉的此效果１回合只能發動１次。&nbsp登場時&nbsp 選擇對手前線最多１張角色，本回合中，BP-1000。",
+   "inside": "【突襲】〈羽川 翼〉\n此角色攻擊結束時，可將自己１張手牌放置到場外。如這樣做，可將此角色最上面的卡，疊在自己前線１張在本回合中沒有攻擊過，並且沒有【突襲】的〈羽川 翼〉上面進行突襲。〈黑羽川〉的此效果１回合只能發動１次。\n&nbsp登場時&nbsp 選擇對手前線最多１張角色，本回合中，BP-1000。",
    "outside": "此卡也被視為〈羽川 翼〉。",
    "wholeInside": false
   },
@@ -1245,13 +1335,17 @@ export const MGS2_CARDS=
     "q": "「このキャラのアタック終了時、自分の手札を1枚場外に置いてもよい。そうした場合、このターン中にアタックしておらず、■レイド■を持たない自分のフロントLの〈羽川 翼〉1枚に、このキャラの一番上のカードをレイドさせてもよい。」を一度発動させた後、同じターンに〈ブラック羽川〉がアタックした場合、アタック終了時にもう一度この効果を発動できますか？",
     "a": "いいえ、発動できません。"
    }
-  ]
+  ],
+  "nameHk": "黑羽川",
+  "effectHk": "此卡也被視為〈羽川 翼〉。\n【突襲】〈羽川 翼〉\n此角色攻擊結束時，可將自己１張手牌放置到場外。如這樣做，可將此角色最上面的卡，疊在自己前線１張在本回合中沒有攻擊過，並且沒有【突襲】的〈羽川 翼〉上面進行突襲。〈黑羽川〉的此效果１回合只能發動１次。\n&nbsp登場時&nbsp 選擇對手前線最多１張角色，本回合中，BP-1000。",
+  "triggerTextHk": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-023"
  },
  {
   "id": "MGS-2-024",
   "identity": "MGS-2-024",
   "number": "EX18BT/MGS-2-024",
-  "name": "ご主人に最後のご奉仕にゃん",
+  "name": "給主人的最後一次服侍喵",
   "nameJa": "ご主人に最後のご奉仕にゃん",
   "ruby": "ごしゅじんにさいごのごほうしにゃん",
   "title": "mgs",
@@ -1279,9 +1373,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "カードを3枚引く。このターン中、自分のAPカードは効果によってアクティブにならない。\n【起動メイン】【場外にある場合】自分のフロントLに〈羽川 翼〉以外のキャラがなく、自分のリムーブエリアに〈ブラック羽川〉がない場合のみ発動できる。自分の場外の〈ブラック羽川〉を1枚リムーブエリアに置く。そうした場合、このカードを手札に加える。",
+  "effect": "抽３張卡。本回合中，自己的AP卡不會因效果而被激活。\n&nbsp主起動&nbsp 在場外的情況 只有在自己前線沒有〈羽川 翼〉以外的角色，並且自己移除區沒有〈黑羽川〉的情況下才可以發動。將自己場外１張〈黑羽川〉放置到移除區。如這樣做，將此卡加入手牌。",
   "effectJa": "カードを3枚引く。このターン中、自分のAPカードは効果によってアクティブにならない。【起動メイン】【場外にある場合】自分のフロントLに〈羽川翼〉以外のキャラがなく、自分のリムーブエリアに〈ブラック羽川〉がない場合のみ発動できる。自分の場外の〈ブラック羽川〉を1枚リムーブエリアに置く。そうした場合、このカードを手札に加える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-024.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-024",
@@ -1289,13 +1383,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "lockAp",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "給主人的最後一次服侍喵",
+  "effectHk": "抽３張卡。本回合中，自己的AP卡不會因效果而被激活。\n&nbsp主起動&nbsp 在場外的情況 只有在自己前線沒有〈羽川 翼〉以外的角色，並且自己移除區沒有〈黑羽川〉的情況下才可以發動。將自己場外１張〈黑羽川〉放置到移除區。如這樣做，將此卡加入手牌。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-024"
  },
  {
   "id": "MGS-2-025",
   "identity": "MGS-2-025",
   "number": "EX18BT/MGS-2-025",
-  "name": "阿良々木 暦",
+  "name": "阿良良木 曆",
   "nameJa": "阿良々木 暦",
   "ruby": "あららぎ こよみ",
   "title": "mgs",
@@ -1323,9 +1421,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【自分のターン中】自分の場に〈老倉 育〉がある場合、このキャラはBP+1000。",
+  "effect": "&nbsp自己回合中&nbsp 自己場上擁有〈老倉 育〉的情況下，此角色的BP+1000。",
   "effectJa": "【自分のターン中】自分の場に〈老倉育〉がある場合、このキャラはBP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-025.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-025",
@@ -1333,13 +1431,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "nameBp",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "阿良良木 曆",
+  "effectHk": "&nbsp自己回合中&nbsp 自己場上擁有〈老倉 育〉的情況下，此角色的BP+1000。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-025"
  },
  {
   "id": "MGS-2-026",
   "identity": "MGS-2-026",
   "number": "EX18BT/MGS-2-026",
-  "name": "阿良々木 暦",
+  "name": "阿良良木 曆",
   "nameJa": "阿良々木 暦",
   "ruby": "あららぎ こよみ",
   "title": "mgs",
@@ -1367,9 +1469,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【起動メイン】【手札を1枚場外に置く】 【ターン1】このキャラがレイド状態でない場合のみ発動できる。自分の場外の【レイド】を持たない緑の〈阿良々木 暦〉を1枚、このキャラの下に表向きで置く。このキャラが登場したターン中でレイド状態の場合、カードを1枚引く。\n【レイド】〈阿良々木 暦〉アクティブにし、フロントLに移動できる\n【起動メイン】【レストにする】このキャラはこのターン中、発生エナジー+【緑】。",
+  "effect": "&nbsp主起動&nbsp 將１張手牌放置到場外 【每回合1】只有在此角色不是突襲狀態的情況下才可以發動。將自己場外１張沒有【突襲】的綠色〈阿良良木 曆〉，以正面向上放置到此角色下面。是在此角色登場的回合，並且是突襲狀態的情況下，抽１張卡。【突襲】〈阿良良木 曆〉\n&nbsp主起動&nbsp 休息 此角色在本回合中，生產能源+【綠】。",
   "effectJa": "【起動メイン】【手札を1枚場外に置く】【ターン1】このキャラがレイド状態でない場合のみ発動できる。自分の場外の【レイド】を持たない緑の〈阿良々木暦〉を1枚、このキャラの下に表向きで置く。このキャラが登場したターン中でレイド状態の場合、カードを1枚引く。【レイド】〈阿良々木暦〉アクティブにし、フロントLに移動できる【起動メイン】【レストにする】このキャラはこのターン中、発生エナジー+【緑】。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-026.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-026",
@@ -1378,8 +1480,8 @@ export const MGS2_CARDS=
   "engineKind": "koyomiRaid",
   "raidFrame": {
    "source": "rugia-hk",
-   "inside": "〈阿良良木 曆〉&nbsp主起動&nbsp 休息 此角色在本回合中，生產能源+。",
-   "outside": "&nbsp主起動&nbsp 將１張手牌放置到場外 只有在此角色不是突襲狀態的情況下才可以發動。將自己場外１張沒有的綠色〈阿良良木 曆〉，以正面向上放置到此角色下面。是在此角色登場的回合，並且是突襲狀態的情況下，抽１張卡。",
+   "inside": "【突襲】〈阿良良木 曆〉\n&nbsp主起動&nbsp 休息 此角色在本回合中，生產能源+【綠】。",
+   "outside": "&nbsp主起動&nbsp 將１張手牌放置到場外 【每回合1】只有在此角色不是突襲狀態的情況下才可以發動。將自己場外１張沒有【突襲】的綠色〈阿良良木 曆〉，以正面向上放置到此角色下面。是在此角色登場的回合，並且是突襲狀態的情況下，抽１張卡。",
    "wholeInside": false
   },
   "faq": [
@@ -1395,13 +1497,17 @@ export const MGS2_CARDS=
     "q": "このターン中に登場したこのキャラクターが、レイド状態でない場合のみ発動できる方の【起動メイン】の効果で「自分の場外の■レイド■を持たない緑の〈阿良々木 暦〉」を1枚、このキャラの下に表向きで置いた場合、「アクティブにし、フロントLに移動できる」をすることはできますか？",
     "a": "いいえ、できません。"
    }
-  ]
+  ],
+  "nameHk": "阿良良木 曆",
+  "effectHk": "&nbsp主起動&nbsp 將１張手牌放置到場外 【每回合1】只有在此角色不是突襲狀態的情況下才可以發動。將自己場外１張沒有【突襲】的綠色〈阿良良木 曆〉，以正面向上放置到此角色下面。是在此角色登場的回合，並且是突襲狀態的情況下，抽１張卡。【突襲】〈阿良良木 曆〉\n&nbsp主起動&nbsp 休息 此角色在本回合中，生產能源+【綠】。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-026"
  },
  {
   "id": "MGS-2-027",
   "identity": "MGS-2-027",
   "number": "EX18BT/MGS-2-027",
-  "name": "阿良々木 暦",
+  "name": "阿良良木 曆",
   "nameJa": "阿良々木 暦",
   "ruby": "あららぎ こよみ",
   "title": "mgs",
@@ -1436,9 +1542,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "R",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【起動メイン】【ターン1】自分のリムーブエリアのキャラカードを1～2枚望む順で自分の山札の下に置く。山札の下に置いたカードのカード名により、このキャラは次の自分のターン開始時まで以下の効果を全て得る。\n・老倉 育：【インパクト無効】\n・忍野 扇：【起動メイン】このキャラをアクティブにする。〈阿良々木 暦〉のこの効果は1ターンに1回のみ発動できる。",
+  "effect": "&nbsp主起動&nbsp 【每回合1】將自己移除區１～２張角色卡以任意順序放置到自己牌庫下面。根據放置到自己牌庫下面的卡的卡名，此角色在自己下回合開始為止，獲得以下全部效果。\n．〈老倉 育〉：【衝擊無效】\n．〈忍野 扇〉：&nbsp主起動&nbsp 此角色被激活。〈阿良良木 曆〉的此效果１回合只能發動１次。",
   "effectJa": "【起動メイン】【ターン1】自分のリムーブエリアのキャラカードを1～2枚望む順で自分の山札の下に置く。山札の下に置いたカードのカード名により、このキャラは次の自分のターン開始時まで以下の効果を全て得る。・老倉育：【インパクト無効】・忍野扇：【起動メイン】このキャラをアクティブにする。〈阿良々木暦〉のこの効果は1ターンに1回のみ発動できる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-027.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-027",
@@ -1453,7 +1559,11 @@ export const MGS2_CARDS=
     "q": "このカードが自分の場に2枚あり、それぞれの【起動メイン】でリムーブエリアから「忍野 扇」を山札の下に置いた場合、得た「【起動メイン】このキャラをアクティブにする。」は同じターンにそれぞれ1回ずつ発動できますか？",
     "a": "いいえ、どちらか片方しか発動できません。"
    }
-  ]
+  ],
+  "nameHk": "阿良良木 曆",
+  "effectHk": "&nbsp主起動&nbsp 【每回合1】將自己移除區１～２張角色卡以任意順序放置到自己牌庫下面。根據放置到自己牌庫下面的卡的卡名，此角色在自己下回合開始為止，獲得以下全部效果。\n．〈老倉 育〉：【衝擊無效】\n．〈忍野 扇〉：&nbsp主起動&nbsp 此角色被激活。〈阿良良木 曆〉的此效果１回合只能發動１次。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-027"
  },
  {
   "id": "MGS-2-028",
@@ -1487,7 +1597,7 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
   "effect": "-",
   "effectJa": "-",
@@ -1497,7 +1607,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "plain",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "老倉 育",
+  "effectHk": "-",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-028"
  },
  {
   "id": "MGS-2-029",
@@ -1531,9 +1645,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【自分のターン中】自分の場に【レイド】を持ちレイド状態でないキャラがある場合、このキャラはBP+500と【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）を得る。",
+  "effect": "&nbsp自己回合中&nbsp 自己場上擁有「擁有【突襲】但不是突襲狀態的角色」的情況下，此角色的BP+500並獲得【階梯】 (在自己的移動階段可從前線移動到能源線)。",
   "effectJa": "【自分のターン中】自分の場に【レイド】を持ちレイド状態でないキャラがある場合、このキャラはBP+500と【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）を得る。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-029.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-029",
@@ -1541,7 +1655,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "unraidedStep",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "老倉 育",
+  "effectHk": "&nbsp自己回合中&nbsp 自己場上擁有「擁有【突襲】但不是突襲狀態的角色」的情況下，此角色的BP+500並獲得【階梯】 (在自己的移動階段可從前線移動到能源線)。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-029"
  },
  {
   "id": "MGS-2-030",
@@ -1582,9 +1700,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。",
+  "effect": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少【綠×2】。",
   "effectJa": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-030.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-030",
@@ -1592,7 +1710,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "emptyGreen",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "老倉 育",
+  "effectHk": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少【綠×2】。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-030"
  },
  {
   "id": "MGS-2-031",
@@ -1635,7 +1757,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【登場時】自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。自分の場のレイド状態のキャラのレイド元を1枚リムーブエリアに置いてもよい。そうした場合、カードを1枚引き、自分の手札を1枚場外に置く。",
+  "effect": "&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將任意張數以任意順序放置到牌庫上面，將餘下的卡放置到場外。可將自己場上１張突襲狀態的角色的突襲源放置到移除區。如這樣做，抽１張卡，然後將自己１張手牌放置到場外。",
   "effectJa": "【登場時】自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。自分の場のレイド状態のキャラのレイド元を1枚リムーブエリアに置いてもよい。そうした場合、カードを1枚引き、自分の手札を1枚場外に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-031.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-031",
@@ -1643,7 +1765,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "lookOrigin",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "老倉 育",
+  "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將任意張數以任意順序放置到牌庫上面，將餘下的卡放置到場外。可將自己場上１張突襲狀態的角色的突襲源放置到移除區。如這樣做，抽１張卡，然後將自己１張手牌放置到場外。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-031"
  },
  {
   "id": "MGS-2-032",
@@ -1684,9 +1810,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "raid",
-  "triggerText": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+  "triggerText": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
   "triggerTextJa": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-  "effect": "【レイド】〈老倉 育〉アクティブにし、フロントLに移動できる\n自分の場に【レイド】を持ちレイド状態でないキャラがある場合、このキャラは【インパクト（1）】を得る。\n【登場時】「自分の手札を1枚場外に置く。自分の場の他のレイド状態のキャラのレイド元を1枚リムーブエリアに置く。」をしてもよい。そうした場合、置いたレイド元のカードの元々の発生エナジーの数+1枚カードを引く。置いたレイド元のカードの元々の発生エナジーが0の場合、このキャラはこのターン中、BP+1000と【狙い撃ち】を得る。",
+  "effect": "【突襲】〈老倉 育〉\n自己場上擁有「擁有【突襲】但不是突襲狀態的角色」的情況下，此角色獲得【衝擊（1）】。\n&nbsp登場時&nbsp 可「將自己１張手牌放置到場外。將自己場上１張突襲狀態的其他角色的突襲源放置到移除區。」。如這樣做，抽取與被放置到移除區的突襲源的卡的原生產能源數目+1張卡。被放置到移除區的突襲源的卡的原生產能源是０的情況下，此角色在本回合中，BP+1000並獲得【狙擊】。",
   "effectJa": "【レイド】〈老倉育〉アクティブにし、フロントLに移動できる自分の場に【レイド】を持ちレイド状態でないキャラがある場合、このキャラは【インパクト（1）】を得る。【登場時】「自分の手札を1枚場外に置く。自分の場の他のレイド状態のキャラのレイド元を1枚リムーブエリアに置く。」をしてもよい。そうした場合、置いたレイド元のカードの元々の発生エナジーの数+1枚カードを引く。置いたレイド元のカードの元々の発生エナジーが0の場合、このキャラはこのターン中、BP+1000と【狙い撃ち】を得る。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-032.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-032",
@@ -1695,7 +1821,7 @@ export const MGS2_CARDS=
   "engineKind": "oguraRaid",
   "raidFrame": {
    "source": "rugia-hk",
-   "inside": "〈老倉 育〉自己場上擁有「擁有但不是突襲狀態的角色」的情況下，此角色獲得。&nbsp登場時&nbsp 可「將自己１張手牌放置到場外。將自己場上１張突襲狀態的其他角色的突襲源放置到移除區。」。如這樣做，抽取與被放置到移除區的突襲源的卡的原生產能源數目+1張卡。被放置到移除區的突襲源的卡的原生產能源是０的情況下，此角色在本回合中，BP+1000並獲得。",
+   "inside": "【突襲】〈老倉 育〉\n自己場上擁有「擁有【突襲】但不是突襲狀態的角色」的情況下，此角色獲得【衝擊（1）】。\n&nbsp登場時&nbsp 可「將自己１張手牌放置到場外。將自己場上１張突襲狀態的其他角色的突襲源放置到移除區。」。如這樣做，抽取與被放置到移除區的突襲源的卡的原生產能源數目+1張卡。被放置到移除區的突襲源的卡的原生產能源是０的情況下，此角色在本回合中，BP+1000並獲得【狙擊】。",
    "outside": "",
    "wholeInside": true
   },
@@ -1706,7 +1832,11 @@ export const MGS2_CARDS=
     "q": "「元々の発生エナジー」とは何ですか？",
     "a": "キャラクターカード右下に記載されている発生エナジーを指します。"
    }
-  ]
+  ],
+  "nameHk": "老倉 育",
+  "effectHk": "【突襲】〈老倉 育〉\n自己場上擁有「擁有【突襲】但不是突襲狀態的角色」的情況下，此角色獲得【衝擊（1）】。\n&nbsp登場時&nbsp 可「將自己１張手牌放置到場外。將自己場上１張突襲狀態的其他角色的突襲源放置到移除區。」。如這樣做，抽取與被放置到移除區的突襲源的卡的原生產能源數目+1張卡。被放置到移除區的突襲源的卡的原生產能源是０的情況下，此角色在本回合中，BP+1000並獲得【狙擊】。",
+  "triggerTextHk": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-032"
  },
  {
   "id": "MGS-2-033",
@@ -1740,9 +1870,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【登場時】自分の山札の上から2枚見て、1枚までリムーブエリアに置く。残りを望む順で山札の上に置く。",
+  "effect": "&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將最多１張卡放置到移除區，將餘下的卡以任意順序放置到牌庫上面。",
   "effectJa": "【登場時】自分の山札の上から2枚見て、1枚までリムーブエリアに置く。残りを望む順で山札の上に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-033.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-033",
@@ -1750,7 +1880,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "lookRemove",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 扇",
+  "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將最多１張卡放置到移除區，將餘下的卡以任意順序放置到牌庫上面。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-033"
  },
  {
   "id": "MGS-2-034",
@@ -1786,7 +1920,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【登場時】自分の山札の上から1枚見て、山札の上かリムーブエリアに置く。\n【起動メイン】【レストにする】自分の場外の【ファイナルトリガー】を持つカードを1枚リムーブエリアに置く。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、相手は自身の山札の上から1枚見て、山札の上か下に置く。",
+  "effect": "&nbsp登場時&nbsp 從自己牌庫上面查看１張卡，然後放置到牌庫上面或移除區。\n&nbsp主起動&nbsp 休息 將自己場外１張擁有【最終】效果的卡放置到移除區。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，並且對手從他自身牌庫上面查看１張卡，然後放置到牌庫上面或下面。",
   "effectJa": "【登場時】自分の山札の上から1枚見て、山札の上かリムーブエリアに置く。【起動メイン】【レストにする】自分の場外の【ファイナルトリガー】を持つカードを1枚リムーブエリアに置く。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、相手は自身の山札の上から1枚見て、山札の上か下に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-034.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-034",
@@ -1794,7 +1928,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "finalPeek",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 扇",
+  "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看１張卡，然後放置到牌庫上面或移除區。\n&nbsp主起動&nbsp 休息 將自己場外１張擁有【最終】效果的卡放置到移除區。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，並且對手從他自身牌庫上面查看１張卡，然後放置到牌庫上面或下面。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-034"
  },
  {
   "id": "MGS-2-035",
@@ -1835,9 +1973,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "color",
-  "triggerText": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
+  "triggerText": "【顏色】 從自己手牌選擇１張能源需求２或以下及AP消耗１的綠色角色卡，以激活狀態在自己場上登場。",
   "triggerTextJa": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
-  "effect": "【登場時】【エナジーLにある場合】このキャラをアクティブにする。\n【起動メイン】【レストにする】自分の場外の【ファイナルトリガー】を持つカードを1枚リムーブエリアに置く。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、相手は自身の山札の上から1枚見て、山札の上か下に置き、このキャラが登場したターンの場合、自分はカードを1枚引く。",
+  "effect": "&nbsp登場時&nbsp 在能源線的情況 此角色被激活。\n&nbsp主起動&nbsp 休息 將自己場外１張擁有【最終】效果的卡放置到移除區。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，並且對手從他自身牌庫上面查看１張卡，然後放置到牌庫上面或下面，並且是在此角色登場的回合的情況下，自己抽１張卡。",
   "effectJa": "【登場時】【エナジーLにある場合】このキャラをアクティブにする。【起動メイン】【レストにする】自分の場外の【ファイナルトリガー】を持つカードを1枚リムーブエリアに置く。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、相手は自身の山札の上から1枚見て、山札の上か下に置き、このキャラが登場したターンの場合、自分はカードを1枚引く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-035.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-035",
@@ -1845,7 +1983,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "finalPeekDraw",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 扇",
+  "effectHk": "&nbsp登場時&nbsp 在能源線的情況 此角色被激活。\n&nbsp主起動&nbsp 休息 將自己場外１張擁有【最終】效果的卡放置到移除區。如這樣做，從自己牌庫上面查看１張卡，然後放置到牌庫上面或下面，並且對手從他自身牌庫上面查看１張卡，然後放置到牌庫上面或下面，並且是在此角色登場的回合的情況下，自己抽１張卡。",
+  "triggerTextHk": "【顏色】 從自己手牌選擇１張能源需求２或以下及AP消耗１的綠色角色卡，以激活狀態在自己場上登場。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-035"
  },
  {
   "id": "MGS-2-036",
@@ -1886,9 +2028,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "R",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【登場時】自分の山札の上から2枚見て、2枚まで手札に加え、残りをリムーブエリアに置く。1枚以上リムーブエリアに置いた場合、自分のAPカードを1枚アクティブにする。2枚以上リムーブエリアに置いた場合、自分のリムーブエリアから【ファイナルトリガー】を持つカードを1枚まで手札に加える。",
+  "effect": "&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將最多２張卡加入手牌，將餘下的卡放置到移除區。將１張或以上放置到移除區的情況下，自己１張AP卡被激活。將２張或以上放置到移除區的情況下，從自己移除區選擇最多１張擁有【最終】效果的卡加入手牌。",
   "effectJa": "【登場時】自分の山札の上から2枚見て、2枚まで手札に加え、残りをリムーブエリアに置く。1枚以上リムーブエリアに置いた場合、自分のAPカードを1枚アクティブにする。2枚以上リムーブエリアに置いた場合、自分のリムーブエリアから【ファイナルトリガー】を持つカードを1枚まで手札に加える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-036.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-036",
@@ -1896,7 +2038,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "lookHandAp",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 扇",
+  "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將最多２張卡加入手牌，將餘下的卡放置到移除區。將１張或以上放置到移除區的情況下，自己１張AP卡被激活。將２張或以上放置到移除區的情況下，從自己移除區選擇最多１張擁有【最終】效果的卡加入手牌。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-036"
  },
  {
   "id": "MGS-2-037",
@@ -1937,9 +2083,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "raid",
-  "triggerText": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+  "triggerText": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
   "triggerTextJa": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-  "effect": "【レイド】〈忍野 扇〉アクティブにし、フロントLに移動できる\n【登場時】カードを1枚引く。自分の手札を1枚リムーブエリアに置いてもよい。そうした場合、自分のリムーブエリアから【ファイナルトリガー】を持つカードを1枚まで手札に加える。リムーブエリアに置いたカードが〈忍野 扇〉なら〈阿良々木 暦〉、〈阿良々木 暦〉なら〈忍野 扇〉を自分のリムーブエリアからさらに1枚まで手札に加える。",
+  "effect": "【突襲】〈忍野 扇〉\n&nbsp登場時&nbsp 抽１張卡。可將自己１張手牌放置到移除區。如這樣做，從自己移除區選擇最多１張擁有【最終】效果的卡加入手牌。如果被放置到移除區的卡是〈忍野 扇〉，另外再從自己移除區選擇最多１張〈阿良良木 曆〉加入手牌。如果被放置到移除區的卡是〈阿良良木 曆〉，另外再從自己移除區選擇最多１張〈忍野 扇〉加入手牌。",
   "effectJa": "【レイド】〈忍野扇〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。自分の手札を1枚リムーブエリアに置いてもよい。そうした場合、自分のリムーブエリアから【ファイナルトリガー】を持つカードを1枚まで手札に加える。リムーブエリアに置いたカードが〈忍野扇〉なら〈阿良々木暦〉、〈阿良々木暦〉なら〈忍野扇〉を自分のリムーブエリアからさらに1枚まで手札に加える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-037.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-037",
@@ -1948,11 +2094,15 @@ export const MGS2_CARDS=
   "engineKind": "ougiRaid",
   "raidFrame": {
    "source": "rugia-hk",
-   "inside": "〈忍野 扇〉&nbsp登場時&nbsp 抽１張卡。可將自己１張手牌放置到移除區。如這樣做，從自己移除區選擇最多１張擁有效果的卡加入手牌。如果被放置到移除區的卡是〈忍野 扇〉，另外再從自己移除區選擇最多１張〈阿良良木 曆〉加入手牌。如果被放置到移除區的卡是〈阿良良木 曆〉，另外再從自己移除區選擇最多１張〈忍野 扇〉加入手牌。",
+   "inside": "【突襲】〈忍野 扇〉\n&nbsp登場時&nbsp 抽１張卡。可將自己１張手牌放置到移除區。如這樣做，從自己移除區選擇最多１張擁有【最終】效果的卡加入手牌。如果被放置到移除區的卡是〈忍野 扇〉，另外再從自己移除區選擇最多１張〈阿良良木 曆〉加入手牌。如果被放置到移除區的卡是〈阿良良木 曆〉，另外再從自己移除區選擇最多１張〈忍野 扇〉加入手牌。",
    "outside": "",
    "wholeInside": true
   },
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 扇",
+  "effectHk": "【突襲】〈忍野 扇〉\n&nbsp登場時&nbsp 抽１張卡。可將自己１張手牌放置到移除區。如這樣做，從自己移除區選擇最多１張擁有【最終】效果的卡加入手牌。如果被放置到移除區的卡是〈忍野 扇〉，另外再從自己移除區選擇最多１張〈阿良良木 曆〉加入手牌。如果被放置到移除區的卡是〈阿良良木 曆〉，另外再從自己移除區選擇最多１張〈忍野 扇〉加入手牌。",
+  "triggerTextHk": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-037"
  },
  {
   "id": "MGS-2-038",
@@ -1986,9 +2136,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【退場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+  "effect": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp退場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。",
   "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【退場時】カードを1枚引き、自分の手札を1枚場外に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-038.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-038",
@@ -1996,7 +2146,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "impactRetireDraw",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 忍",
+  "effectHk": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp退場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-038"
  },
  {
   "id": "MGS-2-039",
@@ -2032,7 +2186,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
+  "effect": "&nbsp登場時&nbsp 將自己場上１張能源需求１或以下的其他角色返回手牌。沒有返回的情況下，將此角色返回手牌。",
   "effectJa": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-039.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-039",
@@ -2040,7 +2194,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "bounce",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 忍",
+  "effectHk": "&nbsp登場時&nbsp 將自己場上１張能源需求１或以下的其他角色返回手牌。沒有返回的情況下，將此角色返回手牌。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-039"
  },
  {
   "id": "MGS-2-040",
@@ -2081,9 +2239,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【退場時】自分の場のキャラを1枚まで選び、このターン中、BP+1000。",
+  "effect": "&nbsp退場時&nbsp 選擇自己場上最多１張角色，本回合中，BP+1000。",
   "effectJa": "【退場時】自分の場のキャラを1枚まで選び、このターン中、BP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-040.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-040",
@@ -2091,7 +2249,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "retireBuff",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 忍",
+  "effectHk": "&nbsp退場時&nbsp 選擇自己場上最多１張角色，本回合中，BP+1000。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-040"
  },
  {
   "id": "MGS-2-041",
@@ -2132,9 +2294,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "R",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "自分のフロントLに必要エナジーが2のキャラと3のキャラがある場合、このキャラはBP+1000。",
+  "effect": "自己前線擁有能源需求２的角色及能源需求３的角色的情況下，此角色的BP+1000。",
   "effectJa": "自分のフロントLに必要エナジーが2のキャラと3のキャラがある場合、このキャラはBP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-041.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-041",
@@ -2142,7 +2304,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "frontPairBp",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 忍",
+  "effectHk": "自己前線擁有能源需求２的角色及能源需求３的角色的情況下，此角色的BP+1000。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-041"
  },
  {
   "id": "MGS-2-042",
@@ -2185,7 +2351,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "自分のフロントLに必要エナジーが2のキャラと3のキャラがある場合、このキャラはBP4000以上のキャラにブロックされない。\n【アタック時】カードを1枚引き、自分の手札を1枚場外に置く。",
+  "effect": "自己前線擁有能源需求２的角色及能源需求３的角色的情況下，此角色不會被BP4000或以上的角色阻擋。\n&nbsp攻擊時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。",
   "effectJa": "自分のフロントLに必要エナジーが2のキャラと3のキャラがある場合、このキャラはBP4000以上のキャラにブロックされない。【アタック時】カードを1枚引き、自分の手札を1枚場外に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-042.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-042",
@@ -2193,7 +2359,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "frontPairBlock",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "忍野 忍",
+  "effectHk": "自己前線擁有能源需求２的角色及能源需求３的角色的情況下，此角色不會被BP4000或以上的角色阻擋。\n&nbsp攻擊時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-042"
  },
  {
   "id": "MGS-2-043",
@@ -2227,9 +2397,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【登場時】自分の場の必要エナジーが3以下のキャラを3枚まで選び、このターン中、BP+500。自分のフロントLに必要エナジーが1のキャラと3のキャラがある場合、自分の場の必要エナジーが3以下のキャラを1枚まで選び、このターン中、【インパクト（1）】（アタックしてバトルに勝利した時、相手に1ダメージ）を与える。",
+  "effect": "&nbsp登場時&nbsp 選擇自己場上最多３張能源需求３或以下的角色，本回合中，BP+500。自己前線擁有能源需求１的角色及能源需求３的角色的情況下，選擇自己場上最多１張能源需求３或以下的角色，本回合中，給予【衝擊（1）】 (進行攻擊並戰鬥勝利時，對手玩家受到１點傷害)。",
   "effectJa": "【登場時】自分の場の必要エナジーが3以下のキャラを3枚まで選び、このターン中、BP+500。自分のフロントLに必要エナジーが1のキャラと3のキャラがある場合、自分の場の必要エナジーが3以下のキャラを1枚まで選び、このターン中、【インパクト（1）】（アタックしてバトルに勝利した時、相手に1ダメージ）を与える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-043.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-043",
@@ -2237,7 +2407,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "energyBuffImpact",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "斧乃木 余接",
+  "effectHk": "&nbsp登場時&nbsp 選擇自己場上最多３張能源需求３或以下的角色，本回合中，BP+500。自己前線擁有能源需求１的角色及能源需求３的角色的情況下，選擇自己場上最多１張能源需求３或以下的角色，本回合中，給予【衝擊（1）】 (進行攻擊並戰鬥勝利時，對手玩家受到１點傷害)。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-043"
  },
  {
   "id": "MGS-2-044",
@@ -2278,9 +2452,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。",
+  "effect": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少【綠×2】。",
   "effectJa": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-044.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-044",
@@ -2288,7 +2462,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "emptyGreen",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "斧乃木 余接",
+  "effectHk": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少【綠×2】。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-044"
  },
  {
   "id": "MGS-2-045",
@@ -2331,7 +2509,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "このキャラがアクティブの場合、このキャラの発生エナジー+【緑】。",
+  "effect": "此角色是激活狀態的情況下，此角色的生產能源+【綠】。",
   "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【緑】。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-045.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-045",
@@ -2339,7 +2517,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "activeEnergy",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "斧乃木 余接",
+  "effectHk": "此角色是激活狀態的情況下，此角色的生產能源+【綠】。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-045"
  },
  {
   "id": "MGS-2-046",
@@ -2382,7 +2564,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【起動メイン】【エナジーLにある場合】 【ターン1】自分のフロントLに必要エナジーが1のキャラと3のキャラがある場合のみ発動できる。このキャラをフロントLに移動させ、このキャラはこのターン中、BP+1000。",
+  "effect": "【階梯】 (在自己的移動階段可從前線移動到能源線)\n【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp主起動&nbsp 在能源線的情況 【每回合1】只有在自己前線擁有能源需求１的角色及能源需求３的角色的情況下才可以發動。將此角色移動到前線，並且此角色在本回合中，BP+1000。",
   "effectJa": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【起動メイン】【エナジーLにある場合】【ターン1】自分のフロントLに必要エナジーが1のキャラと3のキャラがある場合のみ発動できる。このキャラをフロントLに移動させ、このキャラはこのターン中、BP+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-046.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-046",
@@ -2397,7 +2579,11 @@ export const MGS2_CARDS=
     "q": "移動させる時にそのラインに空きがない場合どうなりますか？",
     "a": "移動させる時にそのラインに空きがない場合、カードを1枚選んでリムーブエリアに置いてから移動させます。"
    }
-  ]
+  ],
+  "nameHk": "斧乃木 余接",
+  "effectHk": "【階梯】 (在自己的移動階段可從前線移動到能源線)\n【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)\n&nbsp主起動&nbsp 在能源線的情況 【每回合1】只有在自己前線擁有能源需求１的角色及能源需求３的角色的情況下才可以發動。將此角色移動到前線，並且此角色在本回合中，BP+1000。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-046"
  },
  {
   "id": "MGS-2-047",
@@ -2438,9 +2624,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "color",
-  "triggerText": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
+  "triggerText": "【顏色】 從自己手牌選擇１張能源需求２或以下及AP消耗１的綠色角色卡，以激活狀態在自己場上登場。",
   "triggerTextJa": "【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。",
-  "effect": "【自分のターン中】自分のフロントLに必要エナジーが1のキャラと3のキャラがある場合、このキャラはBP+1000。\n【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。",
+  "effect": "&nbsp自己回合中&nbsp 自己前線擁有能源需求１的角色及能源需求３的角色的情況下，此角色的BP+1000。\n&nbsp登場時&nbsp 此角色是用自己的效果登場的情況下，抽１張卡。",
   "effectJa": "【自分のターン中】自分のフロントLに必要エナジーが1のキャラと3のキャラがある場合、このキャラはBP+1000。【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-047.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-047",
@@ -2448,7 +2634,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "enteredDraw",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "斧乃木 余接",
+  "effectHk": "&nbsp自己回合中&nbsp 自己前線擁有能源需求１的角色及能源需求３的角色的情況下，此角色的BP+1000。\n&nbsp登場時&nbsp 此角色是用自己的效果登場的情況下，抽１張卡。",
+  "triggerTextHk": "【顏色】 從自己手牌選擇１張能源需求２或以下及AP消耗１的綠色角色卡，以激活狀態在自己場上登場。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-047"
  },
  {
   "id": "MGS-2-048",
@@ -2482,9 +2672,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "R",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【登場時】自分の場の〈阿良々木 暦〉を1枚退場させてもよい。そうした場合、そのカードを自分の場にアクティブで登場させる。この効果でレイド状態の〈阿良々木 暦〉を退場させた場合、そのキャラのレイド元を1枚まで手札に加える。",
+  "effect": "&nbsp登場時&nbsp 可將自己場上１張〈阿良良木 曆〉退場。如這樣做，將該卡以激活狀態在自己場上登場。用此效果將突襲狀態的〈阿良良木 曆〉退場的情況下，將該角色最多１張突襲源加入手牌。",
   "effectJa": "【登場時】自分の場の〈阿良々木暦〉を1枚退場させてもよい。そうした場合、そのカードを自分の場にアクティブで登場させる。この効果でレイド状態の〈阿良々木暦〉を退場させた場合、そのキャラのレイド元を1枚まで手札に加える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-048.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-048",
@@ -2492,7 +2682,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "koyomiReenter",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "臥煙 伊豆湖",
+  "effectHk": "&nbsp登場時&nbsp 可將自己場上１張〈阿良良木 曆〉退場。如這樣做，將該卡以激活狀態在自己場上登場。用此效果將突襲狀態的〈阿良良木 曆〉退場的情況下，將該角色最多１張突襲源加入手牌。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-048"
  },
  {
   "id": "MGS-2-049",
@@ -2526,9 +2720,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "このカードは〈斧乃木 余接〉があるラインにのみ登場できる。\nこのキャラは移動できない。\n【登場時】自分の手札から必要エナジーが2以下の緑の〈斧乃木 余接〉を1枚まで自分の場にレストで登場させる。自分の場に〈斧乃木 余接〉がある場合、このキャラをアクティブにし、このキャラはこのターン中、BP+3000。",
+  "effect": "此卡只能在擁有〈斧乃木 余接〉的戰線登場。\n此角色不能移動。\n&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求２或以下的綠色〈斧乃木 余接〉，以休息狀態在自己場上登場。自己場上擁有〈斧乃木 余接〉的情況下，此角色被激活，並且此角色在本回合中，BP+3000。",
   "effectJa": "このカードは〈斧乃木余接〉があるラインにのみ登場できる。このキャラは移動できない。【登場時】自分の手札から必要エナジーが2以下の緑の〈斧乃木余接〉を1枚まで自分の場にレストで登場させる。自分の場に〈斧乃木余接〉がある場合、このキャラをアクティブにし、このキャラはこのターン中、BP+3000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-049.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-049",
@@ -2543,7 +2737,11 @@ export const MGS2_CARDS=
     "q": "〈斧乃木 余接〉が1枚と別のカード名のキャラクターが3枚あるラインにこのカードを登場させる際、上限超過の処理で〈斧乃木 余接〉をリムーブエリアに置くカードとして指定できますか？",
     "a": "はい、できます。"
    }
-  ]
+  ],
+  "nameHk": "影縫 余弦",
+  "effectHk": "此卡只能在擁有〈斧乃木 余接〉的戰線登場。\n此角色不能移動。\n&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求２或以下的綠色〈斧乃木 余接〉，以休息狀態在自己場上登場。自己場上擁有〈斧乃木 余接〉的情況下，此角色被激活，並且此角色在本回合中，BP+3000。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-049"
  },
  {
   "id": "MGS-2-050",
@@ -2584,9 +2782,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
+  "effect": "&nbsp登場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。",
   "effectJa": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-050.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-050",
@@ -2594,7 +2792,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "drawDiscard",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "&nbsp登場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-050"
  },
  {
   "id": "MGS-2-051",
@@ -2630,7 +2832,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【登場時】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚まで自分の場にレストで登場させる。",
+  "effect": "&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求２或以下及AP消耗１的綠色角色卡，以休息狀態在自己場上登場。",
   "effectJa": "【登場時】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚まで自分の場にレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-051.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-051",
@@ -2638,7 +2840,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "greenRest",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求２或以下及AP消耗１的綠色角色卡，以休息狀態在自己場上登場。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-051"
  },
  {
   "id": "MGS-2-052",
@@ -2672,9 +2878,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【登場時】自分の山札の上から3枚見て、必要エナジーが3以下のキャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
+  "effect": "&nbsp登場時&nbsp 從自己牌庫上面查看３張卡，將最多１張能源需求３或以下的角色卡公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。有加入手牌的情況下，將自己１張手牌放置到場外。",
   "effectJa": "【登場時】自分の山札の上から3枚見て、必要エナジーが3以下のキャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-052.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-052",
@@ -2682,7 +2888,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "search",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "&nbsp登場時&nbsp 從自己牌庫上面查看３張卡，將最多１張能源需求３或以下的角色卡公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。有加入手牌的情況下，將自己１張手牌放置到場外。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-052"
  },
  {
   "id": "MGS-2-053",
@@ -2723,9 +2933,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "R",
   "trigger": "raid",
-  "triggerText": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
+  "triggerText": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
   "triggerTextJa": "【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。",
-  "effect": "【レイド】〈八九寺 真宵〉アクティブにし、フロントLに移動できる\n【自分のターン中】自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、このキャラはBP+500。\n【登場時】自分の手札から必要エナジーが3以下で消費APが1の緑のキャラカードを1枚まで自分の場にレストで登場させる。",
+  "effect": "【突襲】〈八九寺 真宵〉\n&nbsp自己回合中&nbsp 自己前線擁有能源需求１的角色及能源需求２的角色的情況下，此角色的BP+500。\n&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求３或以下及AP消耗１的綠色角色卡，以休息狀態在自己場上登場。",
   "effectJa": "【レイド】〈八九寺真宵〉アクティブにし、フロントLに移動できる【自分のターン中】自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、このキャラはBP+500。【登場時】自分の手札から必要エナジーが3以下で消費APが1の緑のキャラカードを1枚まで自分の場にレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-053.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-053",
@@ -2734,11 +2944,15 @@ export const MGS2_CARDS=
   "engineKind": "mayoiRaid",
   "raidFrame": {
    "source": "rugia-hk",
-   "inside": "〈八九寺 真宵〉&nbsp自己回合中&nbsp 自己前線擁有能源需求１的角色及能源需求２的角色的情況下，此角色的BP+500。&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求３或以下及AP消耗１的綠色角色卡，以休息狀態在自己場上登場。",
+   "inside": "【突襲】〈八九寺 真宵〉\n&nbsp自己回合中&nbsp 自己前線擁有能源需求１的角色及能源需求２的角色的情況下，此角色的BP+500。\n&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求３或以下及AP消耗１的綠色角色卡，以休息狀態在自己場上登場。",
    "outside": "",
    "wholeInside": true
   },
-  "faq": []
+  "faq": [],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "【突襲】〈八九寺 真宵〉\n&nbsp自己回合中&nbsp 自己前線擁有能源需求１的角色及能源需求２的角色的情況下，此角色的BP+500。\n&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求３或以下及AP消耗１的綠色角色卡，以休息狀態在自己場上登場。",
+  "triggerTextHk": "【突襲】 將此卡加入手牌，或在滿足能源需求的情況下進行突襲。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-053"
  },
  {
   "id": "MGS-2-054",
@@ -2779,9 +2993,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【登場時】自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、このキャラをアクティブにする。〈八九寺 真宵〉のこの効果は1ターンに1回のみ発動する。\n【アタック時】必要エナジーが3以下の自分の場のキャラを『1枚』まで選び、このターン中、BP+500。自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、自分の手札を1枚場外に置いてもよい。そうした場合、『3枚』に代わる。",
+  "effect": "&nbsp登場時&nbsp 自己前線擁有能源需求１的角色及能源需求２的角色的情況下，此角色被激活。〈八九寺 真宵〉的此效果１回合只能發動１次。\n&nbsp攻擊時&nbsp 選擇自己場上最多『１張』能源需求３或以下的角色，本回合中，BP+500。自己前線擁有能源需求１的角色及能源需求２的角色的情況下，可將自己１張手牌放置到場外。如這樣做，改為『３張』。",
   "effectJa": "【登場時】自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、このキャラをアクティブにする。〈八九寺真宵〉のこの効果は1ターンに1回のみ発動する。【アタック時】必要エナジーが3以下の自分の場のキャラを『1枚』まで選び、このターン中、BP+500。自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、自分の手札を1枚場外に置いてもよい。そうした場合、『3枚』に代わる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-054.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-054",
@@ -2796,13 +3010,17 @@ export const MGS2_CARDS=
     "q": "このカードの【登場時】を発動させた後、同じターンに2枚目のこのカードを登場させた場合、2枚目のこのカードは【登場時】を発動しますか？",
     "a": "いいえ、後から登場したこのカードの【登場時】は発動しません。"
    }
-  ]
+  ],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "&nbsp登場時&nbsp 自己前線擁有能源需求１的角色及能源需求２的角色的情況下，此角色被激活。〈八九寺 真宵〉的此效果１回合只能發動１次。\n&nbsp攻擊時&nbsp 選擇自己場上最多『１張』能源需求３或以下的角色，本回合中，BP+500。自己前線擁有能源需求１的角色及能源需求２的角色的情況下，可將自己１張手牌放置到場外。如這樣做，改為『３張』。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-054"
  },
  {
   "id": "MGS-2-055",
   "identity": "MGS-2-055",
   "number": "EX18BT/MGS-2-055",
-  "name": "クレーンゲーム",
+  "name": "夾公仔機",
   "nameJa": "クレーンゲーム",
   "ruby": "くれーんげーむ",
   "title": "mgs",
@@ -2830,9 +3048,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【起動メイン】【レストにする】 【このカードを退場させる】自分の場外から必要エナジーが2の緑の〈斧乃木 余接〉を1枚まで自分のエナジーLにアクティブで登場させる。",
+  "effect": "&nbsp主起動&nbsp 休息 此卡退場 從自己場外選擇最多１張能源需求２的綠色〈斧乃木 余接〉，以激活狀態在自己能源線登場。",
   "effectJa": "【起動メイン】【レストにする】【このカードを退場させる】自分の場外から必要エナジーが2の緑の〈斧乃木余接〉を1枚まで自分のエナジーLにアクティブで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-055.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-055",
@@ -2840,13 +3058,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "craneDeploy",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "夾公仔機",
+  "effectHk": "&nbsp主起動&nbsp 休息 此卡退場 從自己場外選擇最多１張能源需求２的綠色〈斧乃木 余接〉，以激活狀態在自己能源線登場。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-055"
  },
  {
   "id": "MGS-2-056",
   "identity": "MGS-2-056",
   "number": "EX18BT/MGS-2-056",
-  "name": "例外のほうが多い規則",
+  "name": "例外還比較多的規則",
   "nameJa": "例外のほうが多い規則",
   "ruby": "あんりみてっど るーるぶっく",
   "title": "mgs",
@@ -2874,9 +3096,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "以下から1つ選ぶ。\n・自分の場の〈斧乃木 余接〉を1枚選び、このターン中、BP+2000と【インパクト（1）】を与える。\n・自分の場の〈斧乃木 余接〉1枚とそれと同じラインのキャラを1枚まで選び、それぞれ別のラインに移動させるか別のラインのキャラ1枚と位置を入れ替える。自分のAPカードを1枚アクティブにする。（移動は同時に行われる）",
+  "effect": "從以下選擇１項。\n．選擇自己場上１張〈斧乃木 余接〉，本回合中，BP+2000並給予【衝擊（1）】。\n．選擇自己場上１張〈斧乃木 余接〉，及１張與該角色在同一戰線的角色，分別移動到別的戰線，或與１張在別的戰線的角色調換位置。自己１張AP卡被激活。(移動同時進行)",
   "effectJa": "以下から1つ選ぶ。・自分の場の〈斧乃木余接〉を1枚選び、このターン中、BP+2000と【インパクト（1）】を与える。・自分の場の〈斧乃木余接〉1枚とそれと同じラインのキャラを1枚まで選び、それぞれ別のラインに移動させるか別のラインのキャラ1枚と位置を入れ替える。自分のAPカードを1枚アクティブにする。（移動は同時に行われる）",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-056.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-056",
@@ -2891,13 +3113,17 @@ export const MGS2_CARDS=
     "q": "「自分の場の〈斧乃木 余接〉1枚とそれと同じラインのキャラを1枚まで選び、それぞれ別のラインに移動させるか別のラインのキャラ1枚と位置を入れ替える。」は、1枚を移動させ、もう1枚を入れ替えさせることはできますか？",
     "a": "はい、できます。2枚とも移動、1枚移動でもう1枚入れ替え、2枚とも入れ替えができます。"
    }
-  ]
+  ],
+  "nameHk": "例外還比較多的規則",
+  "effectHk": "從以下選擇１項。\n．選擇自己場上１張〈斧乃木 余接〉，本回合中，BP+2000並給予【衝擊（1）】。\n．選擇自己場上１張〈斧乃木 余接〉，及１張與該角色在同一戰線的角色，分別移動到別的戰線，或與１張在別的戰線的角色調換位置。自己１張AP卡被激活。(移動同時進行)",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-056"
  },
  {
   "id": "MGS-2-057",
   "identity": "MGS-2-057",
   "number": "EX18BT/MGS-2-057",
-  "name": "私はお前が嫌いだ",
+  "name": "我討厭你",
   "nameJa": "私はお前が嫌いだ",
   "ruby": "わたしはおまえがきらいだ",
   "title": "mgs",
@@ -2925,9 +3151,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "special",
-  "triggerText": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+  "triggerText": "【特殊】 選擇對手前線１張角色退場。",
   "triggerTextJa": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-  "effect": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈老倉 育〉がある場合、『BP5000以下』に代わる。",
+  "effect": "選擇對手前線１張『BP3000或以下』的角色退場。自己場上擁有〈老倉 育〉的情況下，改為『BP5000或以下』。",
   "effectJa": "『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈老倉育〉がある場合、『BP5000以下』に代わる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-057.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-057",
@@ -2935,13 +3161,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "oguraRetire",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "我討厭你",
+  "effectHk": "選擇對手前線１張『BP3000或以下』的角色退場。自己場上擁有〈老倉 育〉的情況下，改為『BP5000或以下』。",
+  "triggerTextHk": "【特殊】 選擇對手前線１張角色退場。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-057"
  },
  {
   "id": "MGS-2-058",
   "identity": "MGS-2-058",
   "number": "EX18BT/MGS-2-058",
-  "name": "じゃぱないの！",
+  "name": "才不是呢！",
   "nameJa": "じゃぱないの！",
   "ruby": "じゃぱないの",
   "title": "mgs",
@@ -2976,9 +3206,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "final",
-  "triggerText": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+  "triggerText": "【最終】 自己沒有生命值的情況下，將自己牌庫上面１張卡放置到自己的生命值區。",
   "triggerTextJa": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-  "effect": "自分のAPカードを2枚まで選び、アクティブにする。",
+  "effect": "選擇自己最多２張AP卡被激活。",
   "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-058.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-058",
@@ -2986,13 +3216,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "recoverAp2",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "才不是呢！",
+  "effectHk": "選擇自己最多２張AP卡被激活。",
+  "triggerTextHk": "【最終】 自己沒有生命值的情況下，將自己牌庫上面１張卡放置到自己的生命值區。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-058"
  },
  {
   "id": "MGS-2-059",
   "identity": "MGS-2-059",
   "number": "EX18BT/MGS-2-059",
-  "name": "少女と幼女と童女",
+  "name": "少女與幼女與童女",
   "nameJa": "少女と幼女と童女",
   "ruby": "しょうじょとようじょとどうじょ",
   "title": "mgs",
@@ -3027,9 +3261,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "special",
-  "triggerText": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
+  "triggerText": "【特殊】 選擇對手前線１張角色退場。",
   "triggerTextJa": "【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。",
-  "effect": "『BP2000』以下の相手のフロントLのキャラを1枚まで選び、退場させる。自分のフロントLの必要エナジーが1～3のキャラ1枚につき、この効果で選べるキャラのBPの範囲+1000。自分のフロントLに必要エナジーが1のキャラと2のキャラと3のキャラがある場合、自分の場の必要エナジーが3以下のキャラを3枚まで選び、このターン中、BP+500。",
+  "effect": "選擇對手前線最多１張『BP2000』或以下的角色退場。自己前線每有１張能源需求１～３的角色，此效果可選擇的角色的BP範圍+1000。自己前線擁有能源需求１的角色及能源需求２的角色及能源需求３的角色的情況下，選擇自己場上最多３張能源需求３或以下的角色，本回合中，BP+500。",
   "effectJa": "『BP2000』以下の相手のフロントLのキャラを1枚まで選び、退場させる。自分のフロントLの必要エナジーが1～3のキャラ1枚につき、この効果で選べるキャラのBPの範囲+1000。自分のフロントLに必要エナジーが1のキャラと2のキャラと3のキャラがある場合、自分の場の必要エナジーが3以下のキャラを3枚まで選び、このターン中、BP+500。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-059.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-059",
@@ -3044,13 +3278,17 @@ export const MGS2_CARDS=
     "q": "自分のフロントLにあるキャラクターの必要エナジーが「1」が2枚、「2」が1枚、「3」が1枚の合計4枚ある場合、選べるキャラのBPの範囲が+4000され、このカードはBP6000以下の相手のフロントLのキャラが選べますか？",
     "a": "はい、選べます。"
    }
-  ]
+  ],
+  "nameHk": "少女與幼女與童女",
+  "effectHk": "選擇對手前線最多１張『BP2000』或以下的角色退場。自己前線每有１張能源需求１～３的角色，此效果可選擇的角色的BP範圍+1000。自己前線擁有能源需求１的角色及能源需求２的角色及能源需求３的角色的情況下，選擇自己場上最多３張能源需求３或以下的角色，本回合中，BP+500。",
+  "triggerTextHk": "【特殊】 選擇對手前線１張角色退場。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-059"
  },
  {
   "id": "MGS-2-060",
   "identity": "MGS-2-060",
   "number": "EX18BT/MGS-2-060",
-  "name": "大好きでしたよ、阿良々木さん",
+  "name": "我非常喜歡你哦，阿良良木",
   "nameJa": "大好きでしたよ、阿良々木さん",
   "ruby": "だいすきでしたよ あららぎさん",
   "title": "mgs",
@@ -3078,9 +3316,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "自分の場の必要エナジーが3の〈八九寺 真宵〉を1枚退場させる。そうした場合、自分の場外から消費APが1で必要エナジーが1と2の緑のキャラカードをそれぞれ1枚まで自分の場にレストで登場させる。この効果で〈阿良々木 暦〉を登場させた場合、この効果で退場させた〈八九寺 真宵〉を自分の場にレストで登場させる。",
+  "effect": "將自己場上１張能源需求３的〈八九寺 真宵〉退場。如這樣做，從自己場外選擇最多１張AP消耗１及能源需求１的綠色角色卡，及最多１張AP消耗１及能源需求２的綠色角色卡，以休息狀態在自己場上登場。用此效果將〈阿良良木 曆〉登場的情況下，將被此效果退場的〈八九寺 真宵〉，以休息狀態在自己場上登場。",
   "effectJa": "自分の場の必要エナジーが3の〈八九寺真宵〉を1枚退場させる。そうした場合、自分の場外から消費APが1で必要エナジーが1と2の緑のキャラカードをそれぞれ1枚まで自分の場にレストで登場させる。この効果で〈阿良々木暦〉を登場させた場合、この効果で退場させた〈八九寺真宵〉を自分の場にレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-060.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-060",
@@ -3088,13 +3326,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "mayoiEvent",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "我非常喜歡你哦，阿良良木",
+  "effectHk": "將自己場上１張能源需求３的〈八九寺 真宵〉退場。如這樣做，從自己場外選擇最多１張AP消耗１及能源需求１的綠色角色卡，及最多１張AP消耗１及能源需求２的綠色角色卡，以休息狀態在自己場上登場。用此效果將〈阿良良木 曆〉登場的情況下，將被此效果退場的〈八九寺 真宵〉，以休息狀態在自己場上登場。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-060"
  },
  {
   "id": "MGS-2-061",
   "identity": "MGS-2-061",
   "number": "EX18BT/MGS-2-061",
-  "name": "私は何も知りませんよ。あなたが知っているんです",
+  "name": "我什麼也不知道唷。知道的是你",
   "nameJa": "私は何も知りませんよ。あなたが知っているんです",
   "ruby": "わたしはなにもしりませんよ あなたがしっているんです",
   "title": "mgs",
@@ -3129,9 +3371,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "final",
-  "triggerText": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+  "triggerText": "【最終】 自己沒有生命值的情況下，將自己牌庫上面１張卡放置到自己的生命值區。",
   "triggerTextJa": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-  "effect": "自分のAPカードを2枚まで選び、アクティブにする。",
+  "effect": "選擇自己最多２張AP卡被激活。",
   "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-061.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-061",
@@ -3139,7 +3381,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "recoverAp2",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "我什麼也不知道唷。知道的是你",
+  "effectHk": "選擇自己最多２張AP卡被激活。",
+  "triggerTextHk": "【最終】 自己沒有生命值的情況下，將自己牌庫上面１張卡放置到自己的生命值區。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-061"
  },
  {
   "id": "MGS-2-062",
@@ -3180,9 +3426,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "このキャラがレイドされた時、自分の山札の上から1枚を裏向きでレイドしたキャラの下に置いてもよい。そうした場合、カードを1枚引き、自分の手札を1枚場外に置く。（レイドしたキャラの【登場時】とこの効果は望む順で処理する）\n【登場時】自分の山札の上から2枚見て、〈神原 駿河〉を1枚まで場外に置く。残りを望む順で山札の上に置く。",
+  "effect": "此角色被突襲時，可將自己牌庫上面１張卡以背面向上放置到突襲後的角色下面。如這樣做，抽１張卡，然後將自己１張手牌放置到場外。(以任意順序處理突襲角色的&nbsp登場時&nbsp 效果及此效果)\n&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將最多１張〈神原 駿河〉放置到場外，將餘下的卡以任意順序放置到牌庫上面。",
   "effectJa": "このキャラがレイドされた時、自分の山札の上から1枚を裏向きでレイドしたキャラの下に置いてもよい。そうした場合、カードを1枚引き、自分の手札を1枚場外に置く。（レイドしたキャラの【登場時】とこの効果は望む順で処理する）【登場時】自分の山札の上から2枚見て、〈神原駿河〉を1枚まで場外に置く。残りを望む順で山札の上に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-062.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-062",
@@ -3197,7 +3443,11 @@ export const MGS2_CARDS=
     "q": "自分の場のカードの下に置かれた「裏向きのカード」は、何が置かれているか確認できますか？",
     "a": "はい、できます。自分の場のカードの下に置かれた「裏向きのカード」は確認できます。相手の場のカードの下に置かれた「裏向きのカード」は確認できません。<br>"
    }
-  ]
+  ],
+  "nameHk": "神原 駿河",
+  "effectHk": "此角色被突襲時，可將自己牌庫上面１張卡以背面向上放置到突襲後的角色下面。如這樣做，抽１張卡，然後將自己１張手牌放置到場外。(以任意順序處理突襲角色的&nbsp登場時&nbsp 效果及此效果)\n&nbsp登場時&nbsp 從自己牌庫上面查看２張卡，將最多１張〈神原 駿河〉放置到場外，將餘下的卡以任意順序放置到牌庫上面。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-062"
  },
  {
   "id": "MGS-2-063",
@@ -3231,9 +3481,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
+  "effect": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)",
   "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-063.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-063",
@@ -3241,7 +3491,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "impactNull",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "神原 駿河",
+  "effectHk": "【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-063"
  },
  {
   "id": "MGS-2-064",
@@ -3282,9 +3536,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "get",
-  "triggerText": "【ゲット】このカードを手札に加える。",
+  "triggerText": "【獲得】 將此卡加入手牌。",
   "triggerTextJa": "【ゲット】このカードを手札に加える。",
-  "effect": "【登場時】カードを1枚引き、自分の手札を1枚場外か、裏向きで自分の場の〈沼地 蠟花〉1枚の下に置く。\n【アタック時】【ターン1】自分の場のカードの下にある裏向きのカードの合計枚数を満たすものを、以下から1つまで選ぶ。このターン中に〈神原 駿河〉が既に選んだ効果は選べない。\n・1枚以上：カードを1枚引く。\n・3枚以上：自分のフロントLのキャラの下の裏向きのカードを1枚このキャラの下に移動させてもよい。そうした場合、このキャラをアクティブにする。",
+  "effect": "&nbsp登場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外，或以背面向上放置到自己場上１張〈沼地 蠟花〉下面。\n&nbsp攻擊時&nbsp 【每回合1】根據自己場上的卡下面，背面向上的卡的合計張數，從以下選擇最多１項滿足條件的效果。不能選擇已經在本回合中被〈神原 駿河〉選擇過的效果。\n．１張或以上：抽１張卡。\n．３張或以上：可將自己前線角色下面１張背面向上的卡移動到此角色下面。如這樣做，此角色被激活。",
   "effectJa": "【登場時】カードを1枚引き、自分の手札を1枚場外か、裏向きで自分の場の〈沼地蠟花〉1枚の下に置く。【アタック時】【ターン1】自分の場のカードの下にある裏向きのカードの合計枚数を満たすものを、以下から1つまで選ぶ。このターン中に〈神原駿河〉が既に選んだ効果は選べない。・1枚以上：カードを1枚引く。・3枚以上：自分のフロントLのキャラの下の裏向きのカードを1枚このキャラの下に移動させてもよい。そうした場合、このキャラをアクティブにする。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-064.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-064",
@@ -3305,13 +3559,17 @@ export const MGS2_CARDS=
     "q": "自分の場のカードの下に置かれた「裏向きのカード」は、何が置かれているか確認できますか？",
     "a": "はい、できます。自分の場のカードの下に置かれた「裏向きのカード」は確認できます。相手の場のカードの下に置かれた「裏向きのカード」は確認できません。<br>"
    }
-  ]
+  ],
+  "nameHk": "神原 駿河",
+  "effectHk": "&nbsp登場時&nbsp 抽１張卡，然後將自己１張手牌放置到場外，或以背面向上放置到自己場上１張〈沼地 蠟花〉下面。\n&nbsp攻擊時&nbsp 【每回合1】根據自己場上的卡下面，背面向上的卡的合計張數，從以下選擇最多１項滿足條件的效果。不能選擇已經在本回合中被〈神原 駿河〉選擇過的效果。\n．１張或以上：抽１張卡。\n．３張或以上：可將自己前線角色下面１張背面向上的卡移動到此角色下面。如這樣做，此角色被激活。",
+  "triggerTextHk": "【獲得】 將此卡加入手牌。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-064"
  },
  {
   "id": "MGS-2-065",
   "identity": "MGS-2-065",
   "number": "EX18BT/MGS-2-065",
-  "name": "戦場ヶ原 ひたぎ",
+  "name": "戰場原 黑儀",
   "nameJa": "戦場ヶ原 ひたぎ",
   "ruby": "せんじょうがはら ひたぎ",
   "title": "mgs",
@@ -3339,9 +3597,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "自分の場外にあるカードが9枚以下の場合、自分の場とレイド元のこのカードの必要エナジーを【赤×1】減らす。\n自分の場外にあるカードが9枚以下の場合、このキャラはBP-1000。\nこのキャラの必要エナジーが1以上の場合、このキャラは【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）を得る。",
+  "effect": "自己場外擁有９張卡或以下的情況下，自己場上及突襲源的此卡的能源需求減少【紅】。\n自己場外擁有９張卡或以下的情況下，此角色的BP-1000。\n此角色是能源需求１或以上的情況下，此角色獲得【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)。",
   "effectJa": "自分の場外にあるカードが9枚以下の場合、自分の場とレイド元のこのカードの必要エナジーを【赤×1】減らす。自分の場外にあるカードが9枚以下の場合、このキャラはBP-1000。このキャラの必要エナジーが1以上の場合、このキャラは【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）を得る。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-065.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-065",
@@ -3349,13 +3607,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "redCutNull",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "戰場原 黑儀",
+  "effectHk": "自己場外擁有９張卡或以下的情況下，自己場上及突襲源的此卡的能源需求減少【紅】。\n自己場外擁有９張卡或以下的情況下，此角色的BP-1000。\n此角色是能源需求１或以上的情況下，此角色獲得【衝擊無效】 (與此角色戰鬥的角色，在本次戰鬥中失去衝擊)。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-065"
  },
  {
   "id": "MGS-2-066",
   "identity": "MGS-2-066",
   "number": "EX18BT/MGS-2-066",
-  "name": "戦場ヶ原 ひたぎ",
+  "name": "戰場原 黑儀",
   "nameJa": "戦場ヶ原 ひたぎ",
   "ruby": "せんじょうがはら ひたぎ",
   "title": "mgs",
@@ -3392,7 +3654,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "自分の場外にあるカードが9枚以下の場合、自分の場とレイド元のこのカードの必要エナジーを【赤×3】減らす。\n自分の場外にあるカードが9枚以下の場合、このキャラはBP-500。\n【登場時】このキャラの必要エナジーが1以上の場合、自分の場外から〈阿良々木 暦〉を1枚まで手札に加える。",
+  "effect": "自己場外擁有９張卡或以下的情況下，自己場上及突襲源的此卡的能源需求減少【紅×3】。\n自己場外擁有９張卡或以下的情況下，此角色的BP-500。\n&nbsp登場時&nbsp 此角色的能源需求是１或以上的情況下，從自己場外選擇最多１張〈阿良良木 曆〉加入手牌。",
   "effectJa": "自分の場外にあるカードが9枚以下の場合、自分の場とレイド元のこのカードの必要エナジーを【赤×3】減らす。自分の場外にあるカードが9枚以下の場合、このキャラはBP-500。【登場時】このキャラの必要エナジーが1以上の場合、自分の場外から〈阿良々木暦〉を1枚まで手札に加える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-066.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-066",
@@ -3400,13 +3662,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "redCutRecover",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "戰場原 黑儀",
+  "effectHk": "自己場外擁有９張卡或以下的情況下，自己場上及突襲源的此卡的能源需求減少【紅×3】。\n自己場外擁有９張卡或以下的情況下，此角色的BP-500。\n&nbsp登場時&nbsp 此角色的能源需求是１或以上的情況下，從自己場外選擇最多１張〈阿良良木 曆〉加入手牌。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-066"
  },
  {
   "id": "MGS-2-067",
   "identity": "MGS-2-067",
   "number": "EX18BT/MGS-2-067",
-  "name": "戦場ヶ原 ひたぎ",
+  "name": "戰場原 黑儀",
   "nameJa": "戦場ヶ原 ひたぎ",
   "ruby": "せんじょうがはら ひたぎ",
   "title": "mgs",
@@ -3441,9 +3707,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "SR",
   "trigger": "draw",
-  "triggerText": "【ドロー】カードを1枚引く。",
+  "triggerText": "【抽卡】 抽１張卡。",
   "triggerTextJa": "【ドロー】カードを1枚引く。",
-  "effect": "自分の場外にあるカードが9枚以下の場合、自分の場とレイド元のこのカードの必要エナジーを【赤×3】減らす。\n【登場時】自分の山札の上から3枚見て、キャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。このキャラの必要エナジーが1以上の場合、以下から1つまで選ぶ。\n・自分の場のキャラを1枚選び、このターン中、BP+1000。\n・〈戦場ヶ原 ひたぎ〉以外の自分の場のキャラを1枚選び、次の自分のターン開始時まで、「このキャラは相手の効果で選ばれない。」を与える。",
+  "effect": "自己場外擁有９張卡或以下的情況下，自己場上及突襲源的此卡的能源需求減少【紅×3】。\n&nbsp登場時&nbsp 從自己牌庫上面查看３張卡，將最多１張角色卡公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。有加入手牌的情況下，將自己１張手牌放置到場外。此卡的能源需求是１或以上的情況下，從以下選擇最多１項。\n．選擇自己場上１張角色，本回合中，BP+1000。\n．選擇自己場上１張〈戰場原 黑儀〉以外的角色，自己下回合開始為止，給予「此角色不會被對手的效果選擇。」。",
   "effectJa": "自分の場外にあるカードが9枚以下の場合、自分の場とレイド元のこのカードの必要エナジーを【赤×3】減らす。【登場時】自分の山札の上から3枚見て、キャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。このキャラの必要エナジーが1以上の場合、以下から1つまで選ぶ。・自分の場のキャラを1枚選び、このターン中、BP+1000。・〈戦場ヶ原ひたぎ〉以外の自分の場のキャラを1枚選び、次の自分のターン開始時まで、「このキャラは相手の効果で選ばれない。」を与える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-067.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-067",
@@ -3458,7 +3724,11 @@ export const MGS2_CARDS=
     "q": "「相手の効果で選ばれない。」の「効果で選ばれない。」とはどういうことですか？",
     "a": "「相手のフロントLのキャラクターを1枚選び、退場させる。」のような、「選び」と書かれている効果で選ぶことができないということです。"
    }
-  ]
+  ],
+  "nameHk": "戰場原 黑儀",
+  "effectHk": "自己場外擁有９張卡或以下的情況下，自己場上及突襲源的此卡的能源需求減少【紅×3】。\n&nbsp登場時&nbsp 從自己牌庫上面查看３張卡，將最多１張角色卡公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。有加入手牌的情況下，將自己１張手牌放置到場外。此卡的能源需求是１或以上的情況下，從以下選擇最多１項。\n．選擇自己場上１張角色，本回合中，BP+1000。\n．選擇自己場上１張〈戰場原 黑儀〉以外的角色，自己下回合開始為止，給予「此角色不會被對手的效果選擇。」。",
+  "triggerTextHk": "【抽卡】 抽１張卡。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-067"
  },
  {
   "id": "MGS-2-068",
@@ -3494,7 +3764,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【自分のターン中】このキャラの下の裏向きのカード1枚につき、このキャラはBP+500。\n自分のアタックフェイズ終了時、自分の場のレイド状態の〈神原 駿河〉を1枚まで選ぶ。選んだキャラの下の裏向きのカード全てをこのキャラの下に裏向きで置き、選んだキャラのレイド元を場外に置く。",
+  "effect": "&nbsp自己回合中&nbsp 此角色下面每有１張背面向上的卡，此角色的BP+500。\n自己攻擊階段結束時，選擇自己場上最多１張突襲狀態的〈神原 駿河〉。將被選擇的角色下面全部背面向上的卡，以背面向上放置到此角色下面，然後將被選擇的角色的突襲源放置到場外。",
   "effectJa": "【自分のターン中】このキャラの下の裏向きのカード1枚につき、このキャラはBP+500。自分のアタックフェイズ終了時、自分の場のレイド状態の〈神原駿河〉を1枚まで選ぶ。選んだキャラの下の裏向きのカード全てをこのキャラの下に裏向きで置き、選んだキャラのレイド元を場外に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-068.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-068",
@@ -3509,7 +3779,11 @@ export const MGS2_CARDS=
     "q": "自分の場のカードの下に置かれた「裏向きのカード」は、何が置かれているか確認できますか？",
     "a": "はい、できます。自分の場のカードの下に置かれた「裏向きのカード」は確認できます。相手の場のカードの下に置かれた「裏向きのカード」は確認できません。<br>"
    }
-  ]
+  ],
+  "nameHk": "沼地 蠟花",
+  "effectHk": "&nbsp自己回合中&nbsp 此角色下面每有１張背面向上的卡，此角色的BP+500。\n自己攻擊階段結束時，選擇自己場上最多１張突襲狀態的〈神原 駿河〉。將被選擇的角色下面全部背面向上的卡，以背面向上放置到此角色下面，然後將被選擇的角色的突襲源放置到場外。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-068"
  },
  {
   "id": "MGS-2-069",
@@ -3543,9 +3817,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "active",
-  "triggerText": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
+  "triggerText": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。\n【登場時】自分の山札の上から1枚見て、山札の上かリムーブエリアに置く。",
+  "effect": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少【紅×2】。\n&nbsp登場時&nbsp 從自己牌庫上面查看１張卡，然後放置到牌庫上面或移除區。",
   "effectJa": "自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。【登場時】自分の山札の上から1枚見て、山札の上かリムーブエリアに置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-069.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-069",
@@ -3553,7 +3827,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "emptyRedPeek",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "自己場上１張卡也沒有的情況下，手牌上的此卡的能源需求減少【紅×2】。\n&nbsp登場時&nbsp 從自己牌庫上面查看１張卡，然後放置到牌庫上面或移除區。",
+  "triggerTextHk": "【活動】 選擇自己場上１張角色被激活，並且本回合中，BP+3000。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-069"
  },
  {
   "id": "MGS-2-070",
@@ -3589,7 +3867,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "このカードが自分の効果でリムーブエリアに置かれた時、自分の場外から必要エナジーが2以下の〈八九寺 真宵〉を1枚まで手札に加える。",
+  "effect": "此卡因自己的效果而被放置到移除區時，從自己場外選擇最多１張能源需求２或以下的〈八九寺 真宵〉加入手牌。",
   "effectJa": "このカードが自分の効果でリムーブエリアに置かれた時、自分の場外から必要エナジーが2以下の〈八九寺真宵〉を1枚まで手札に加える。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-070.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-070",
@@ -3597,7 +3875,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "removedMayoi",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "此卡因自己的效果而被放置到移除區時，從自己場外選擇最多１張能源需求２或以下的〈八九寺 真宵〉加入手牌。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-070"
  },
  {
   "id": "MGS-2-071",
@@ -3640,7 +3922,7 @@ export const MGS2_CARDS=
   "trigger": null,
   "triggerText": "-",
   "triggerTextJa": "-",
-  "effect": "【起動メイン】【フロントLにある場合】 【ターン1】このキャラがアクティブの場合のみ発動できる。自分の手札を1枚リムーブエリアに置く。そうした場合、以下から1つ選ぶ。\n・カードを1枚引く。\n・このキャラはこのターン中、BP+1000。\n・このターン中、次に自分が「BPの範囲に指定がある効果」で相手の場のキャラを選ぶ際、指定できるBPの範囲+1000。",
+  "effect": "&nbsp主起動&nbsp 在前線的情況 【每回合1】只有在此角色是激活狀態的情況下才可以發動。將自己１張手牌放置到移除區。如這樣做，從以下選擇１項。\n．抽１張卡。\n．此角色在本回合中，BP+1000。\n．本回合中，下次自己以「指定BP範圍的效果」選擇對手場上角色的時候，可指定的BP範圍+1000。",
   "effectJa": "【起動メイン】【フロントLにある場合】【ターン1】このキャラがアクティブの場合のみ発動できる。自分の手札を1枚リムーブエリアに置く。そうした場合、以下から1つ選ぶ。・カードを1枚引く。・このキャラはこのターン中、BP+1000。・このターン中、次に自分が「BPの範囲に指定がある効果」で相手の場のキャラを選ぶ際、指定できるBPの範囲+1000。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-071.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-071",
@@ -3661,13 +3943,17 @@ export const MGS2_CARDS=
     "q": "指定できるBPの範囲が増える効果は重複しますか？",
     "a": "はい、重複します。2回発動した場合、選べるBPの範囲が+2000されます。"
    }
-  ]
+  ],
+  "nameHk": "八九寺 真宵",
+  "effectHk": "&nbsp主起動&nbsp 在前線的情況 【每回合1】只有在此角色是激活狀態的情況下才可以發動。將自己１張手牌放置到移除區。如這樣做，從以下選擇１項。\n．抽１張卡。\n．此角色在本回合中，BP+1000。\n．本回合中，下次自己以「指定BP範圍的效果」選擇對手場上角色的時候，可指定的BP範圍+1000。",
+  "triggerTextHk": "-",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-071"
  },
  {
   "id": "MGS-2-072",
   "identity": "MGS-2-072",
   "number": "EX18BT/MGS-2-072",
-  "name": "だけど――一番いいのは、やって後悔しないことだ",
+  "name": "但是、最棒的是，做了之後不會後悔",
   "nameJa": "だけど――一番いいのは、やって後悔しないことだ",
   "ruby": "だけど いちばんいいのは やってこうかいしないことだ",
   "title": "mgs",
@@ -3695,9 +3981,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "C",
   "trigger": "color",
-  "triggerText": "【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。",
+  "triggerText": "【顏色】 選擇對手前線１張BP2500或以下的角色退場。",
   "triggerTextJa": "【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。",
-  "effect": "自分の山札の上から5枚見て、必要エナジーが2以下の〔〈神原 駿河〉か〈沼地 蠟花〉かイベントカード〕を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。自分の手札から必要エナジーが1以下の赤の〈神原 駿河〉を1枚まで自分の場にレストで登場させる。",
+  "effect": "從自己牌庫上面查看５張卡，將最多１張能源需求２或以下的［〈神原 駿河〉或〈沼地 蠟花〉或事件卡］公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。從自己手牌選擇最多１張能源需求１或以下的紅色〈神原 駿河〉，以休息狀態在自己場上登場。",
   "effectJa": "自分の山札の上から5枚見て、必要エナジーが2以下の〔〈神原駿河〉か〈沼地蠟花〉かイベントカード〕を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。自分の手札から必要エナジーが1以下の赤の〈神原駿河〉を1枚まで自分の場にレストで登場させる。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-072.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-072",
@@ -3705,13 +3991,17 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "surugaSearch",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "但是、最棒的是，做了之後不會後悔",
+  "effectHk": "從自己牌庫上面查看５張卡，將最多１張能源需求２或以下的［〈神原 駿河〉或〈沼地 蠟花〉或事件卡］公開並加入手牌，將餘下的卡以任意順序放置到牌庫下面。從自己手牌選擇最多１張能源需求１或以下的紅色〈神原 駿河〉，以休息狀態在自己場上登場。",
+  "triggerTextHk": "【顏色】 選擇對手前線１張BP2500或以下的角色退場。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-072"
  },
  {
   "id": "MGS-2-073",
   "identity": "MGS-2-073",
   "number": "EX18BT/MGS-2-073",
-  "name": "デートをします",
+  "name": "我們去約會",
   "nameJa": "デートをします",
   "ruby": "でーとをします",
   "title": "mgs",
@@ -3746,9 +4036,9 @@ export const MGS2_CARDS=
   "traits": [],
   "rarity": "U",
   "trigger": "final",
-  "triggerText": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
+  "triggerText": "【最終】 自己沒有生命值的情況下，將自己牌庫上面１張卡放置到自己的生命值區。",
   "triggerTextJa": "【ファイナル】自分のライフが無い場合、自分の山札の上から1枚を自分のライフエリアに置く。",
-  "effect": "自分のAPカードを2枚まで選び、アクティブにする。",
+  "effect": "選擇自己最多２張AP卡被激活。",
   "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX18BT_MGS-2-073.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-073",
@@ -3756,7 +4046,11 @@ export const MGS2_CARDS=
   "auto": false,
   "engineKind": "recoverAp2",
   "raidFrame": null,
-  "faq": []
+  "faq": [],
+  "nameHk": "我們去約會",
+  "effectHk": "選擇自己最多２張AP卡被激活。",
+  "triggerTextHk": "【最終】 自己沒有生命值的情況下，將自己牌庫上面１張卡放置到自己的生命值區。",
+  "sourceHk": "https://rugiacreation.com/ua/search?Name=HK&Find1=MGS-2-073"
  }
 ]
 ;
