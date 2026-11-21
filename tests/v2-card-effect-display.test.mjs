@@ -149,3 +149,22 @@ test('Nea D Campbell 067 and 068 preserve distinct printed non-raid abilities',(
  assert.equal(damage.engineKind,'neaDamageTwo','battle behavior unchanged');
  assert.equal(block.engineKind,'neaDoubleBlock','double block behavior unchanged');
 });
+
+test('full DGM audit repairs three further missing named abilities without changing rule code',()=>{
+ const title=TITLES.find(t=>t.id==='dgm');
+ for(const [id,japanese,traditional,expectedCopies] of [
+  ['DGM-1-020','【2回ブロック】','【2次阻擋】',2],
+  ['DGM-1-040','【インパクト（1）】','【貫通（1）】',2],
+  ['DGM-1-047','【インパクト（1）】','【貫通（1）】',3]
+ ]){
+  const card=title.cards.find(c=>c.id===id);
+  assert.ok(card,'missing '+id);
+  assert.ok(card.effectJa.includes(japanese),id+' Japanese print');
+  assert.ok(card.effect.includes(traditional),id+' Chinese text');
+  assert.ok(card.effectHk.includes(traditional),id+' HK source text');
+  assert.ok(renderCardEffectText(card.effect).includes('ua-effect-'+(id==='DGM-1-020'?'keyword':'impact')),id+' rendered label');
+  assert.equal(card.auto,false,'do not change rules engine state');
+ }
+ assert.match(title.cards.find(c=>c.id==='DGM-1-047').raidFrame.inside,/【貫通（1）】/);
+ assert.equal(title.cards.find(c=>c.id==='DGM-1-040').type,'event');
+});
