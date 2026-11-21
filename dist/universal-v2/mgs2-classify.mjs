@@ -5,6 +5,7 @@
 // is listed in raid-box.mjs. This file does not import the engine. There is
 // no monogatari opcode.
 import {mgsKnownTrigger,mgsProfile} from './mgs-classify.mjs';
+import {raidBoxListed} from './raid-box.mjs';
 
 const KISS='キスショット・アセロラオリオン・ハートアンダーブレード';
 const IMPACT_PLAIN='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）';
@@ -126,17 +127,39 @@ function program(card,effect){
     {logic:'all',filters:[{field:'printedRequiredEnergyAtMost',value:2},{field:'name',value:'沼地蠟花'}]},
     {logic:'all',filters:[{field:'printedRequiredEnergyAtMost',value:2},{field:'type',value:'event'}]}]},
    {op:'deployOwnHandRest',type:'character',color:'red',energy:1,ap:null,max:1,name:'神原駿河'}]}}};
+ if(effect==='【起動メイン】【エナジーLにある場合】【レストにする】このキャラを自分の山札の上に置き、自分の場外から必要エナジーが0の紫の〈羽川翼〉を1枚まで自分の場にレストで登場させる。')
+  return {kind:'deckTsubasa',...open,program:{effects:{},mainAbility:{op:'energyRestDeckDeploy',name:'羽川翼',color:'purple',energy:0}}};
+ if(effect==='【登場時】自分の山札の上から1枚見て、山札の上かリムーブエリアに置く。【起動メイン】【レストにする】自分の場外の【ファイナルトリガー】を持つカードを1枚リムーブエリアに置く。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、相手は自身の山札の上から1枚見て、山札の上か下に置く。')
+  return {kind:'finalPeek',...open,program:{effects:{onPlay:[{op:'peekTopOrRemoved'}]},mainAbility:{op:'restFinalPeek'}}};
+ if(effect==='【登場時】【エナジーLにある場合】このキャラをアクティブにする。【起動メイン】【レストにする】自分の場外の【ファイナルトリガー】を持つカードを1枚リムーブエリアに置く。そうした場合、自分の山札の上から1枚見て、山札の上か下に置き、相手は自身の山札の上から1枚見て、山札の上か下に置き、このキャラが登場したターンの場合、自分はカードを1枚引く。')
+  return {kind:'finalPeekDraw',...open,program:{effects:{onPlay:[{op:'activeSelfIf',line:'energy'}]},
+   mainAbility:{op:'restFinalPeek',drawIfEntry:true}}};
+ if(effect===STEP+IMPACT_PLAIN+'【起動メイン】【エナジーLにある場合】【ターン1】自分のフロントLに必要エナジーが1のキャラと3のキャラがある場合のみ発動できる。このキャラをフロントLに移動させ、このキャラはこのターン中、BP+1000。')
+  return {kind:'pairMove',...open,program:{effects:{},step:true,impactNull:true,mainAbility:{op:'energyPairMoveFront',oncePerTurn:true,energies:[1,3],bp:1000}}};
+ if(effect==='【レイド】〈八九寺真宵〉アクティブにし、フロントLに移動できる【自分のターン中】自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、このキャラはBP+500。【登場時】自分の手札から必要エナジーが3以下で消費APが1の緑のキャラカードを1枚まで自分の場にレストで登場させる。')
+  return {kind:'mayoiRaid',...open,program:{effects:{onPlay:[{op:'deployOwnHandRest',type:'character',color:'green',energy:3,ap:1,max:1}]},
+   passiveBonuses:[{bp:500,condition:pair([1,2],'own')}],raidName:'八九寺真宵',raidFeatures:['passive','onPlay']}};
+ if(effect==='【登場時】自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、このキャラをアクティブにする。〈八九寺真宵〉のこの効果は1ターンに1回のみ発動する。【アタック時】必要エナジーが3以下の自分の場のキャラを『1枚』まで選び、このターン中、BP+500。自分のフロントLに必要エナジーが1のキャラと2のキャラがある場合、自分の手札を1枚場外に置いてもよい。そうした場合、『3枚』に代わる。')
+  return {kind:'mayoiOnce',...open,program:{effects:{
+   onPlay:[{op:'activeSelfIf',when:pair([1,2]),onceName:'八九寺真宵'}],
+   onAttack:[{op:'pairHandBuff',bp:500,max:1,paidMax:3,energy:3,when:pair([1,2])}]}}};
+ if(effect==='【起動メイン】【レストにする】【このカードを退場させる】自分の場外から必要エナジーが2の緑の〈斧乃木余接〉を1枚まで自分のエナジーLにアクティブで登場させる。')
+  return {kind:'craneDeploy',...open,program:{effects:{},mainAbility:{op:'fieldRestRetireDeploy',name:YOTSUGI,color:'green',energy:2,line:'energy',ready:true}}};
  return null;
 }
 
 export function mgs2Profile(card){
  const shared=mgsProfile(card);
  if(shared)return shared;
- if(card?.raidFrame)return null;
  const gate=mgsKnownTrigger(card);
  if(!gate)return null;
  const found=extra(card,String(card?.effectJa||''));
  if(!found)return null;
+ if(card?.raidFrame){
+  const features=found.program?.raidFeatures;
+  if(!Array.isArray(features)||!features.length||features.some(feature=>!raidBoxListed(card.id,feature)))
+   return null;
+ }
  if(gate.triggerEffect&&found.allowTrigger!==true)return null;
  const {allowTrigger,...body}=found;
  return gate.triggerEffect?{...body,triggerEffect:gate.triggerEffect}:body;

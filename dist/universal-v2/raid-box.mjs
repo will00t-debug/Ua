@@ -256,7 +256,11 @@ const RAID_BOX_FEATURES=Object.freeze({
  'DGM-1-065':["onAttack"],
  'DGM-1-067':["phase"],
  'DGM-1-068':["phase"],
- 'DGM-1-073':["onAttackBlocked","onPlay"]
+ 'DGM-1-073':["onAttackBlocked","onPlay"],
+ // EX18BT MGS-2-053. Rugia HK span.raidBorder encloses the own-turn pair
+ // BP and the on-play green hand rest. The Raid permission line is outside
+ // that list. The other Vol.2 frames stay unlisted until their split is mapped.
+ 'MGS-2-053':["passive","onPlay"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

@@ -1048,7 +1048,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-020",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "deckTsubasa",
   "raidFrame": null,
   "faq": []
  },
@@ -1792,7 +1792,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-034",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "finalPeek",
   "raidFrame": null,
   "faq": []
  },
@@ -1843,7 +1843,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-035",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "finalPeekDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -2388,7 +2388,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-046",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "pairMove",
   "raidFrame": null,
   "faq": [
    {
@@ -2731,7 +2731,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-053",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayoiRaid",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈八九寺 真宵〉&nbsp自己回合中&nbsp 自己前線擁有能源需求１的角色及能源需求２的角色的情況下，此角色的BP+500。&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求３或以下及AP消耗１的綠色角色卡，以休息狀態在自己場上登場。",
@@ -2787,7 +2787,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-054",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayoiOnce",
   "raidFrame": null,
   "faq": [
    {
@@ -2838,7 +2838,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-055",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "craneDeploy",
   "raidFrame": null,
   "faq": []
  },
