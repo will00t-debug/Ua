@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {MGS_CARDS} from '../dist/mgs-cards.mjs';
-import {createMgsV2Pack,MGS_ENGINE_IDS} from '../dist/universal-v2/mgs-pack.mjs';
+import {createMgsV2Pack,MGS_ENGINE_IDS,MGS2_ENGINE_IDS} from '../dist/universal-v2/mgs-pack.mjs';
+import {MGS2_CARDS} from '../dist/mgs-vol2.mjs';
 import {mgsEngineKind} from '../dist/universal-v2/mgs-classify.mjs';
 import {parseGen} from '../scripts/fetch-mgs-ua42.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
@@ -79,14 +80,14 @@ test('UA42BT and UA42ST are one identity per number on the shared engine',()=>{
  assert.equal(MGS_CARDS.every(card=>card.engineKind===mgsEngineKind(card)),true);
  assert.deepEqual([...MGS_ENGINE_IDS],MGS_CARDS.filter(card=>card.engineKind).map(card=>card.id));
  assert.equal(MGS_ENGINE_IDS.length,113);
- assert.deepEqual(Object.keys(pack.cards),[...MGS_ENGINE_IDS]);
+ assert.deepEqual(Object.keys(pack.cards),[...MGS_ENGINE_IDS,...MGS2_ENGINE_IDS]);
  assert.equal(JSON.stringify(pack).includes('"op":"mgs"'),false);
  assert.doesNotMatch(readFileSync(new URL('../dist/universal-v2/mgs-pack.mjs',import.meta.url),'utf8'),/from ['"][^'"]*engine\.mjs/);
  assert.equal(V2_TITLE_IDS.includes('mgs'),false);
  const title=TITLES.find(row=>row.id==='mgs');
  assert.equal(title.label,'〈物語〉系列');
  assert.equal(title.playable,false);
- assert.equal(title.cards.length,113);
+ assert.equal(title.cards.length,MGS_CARDS.length+MGS2_CARDS.length);
  assert.equal(titleLogo('mgs'),null);
 
  const reprint=byId.get('MGS-1-035');
@@ -140,7 +141,7 @@ test('the supported practice deck is a legal 50, and a fifth copy stays out',()=
  assert.equal(Object.values(practice.counts).reduce((sum,n)=>sum+n,0),50);
  const ready=editorV2Status('mgs',practice.counts,pack);
  assert.equal(ready.ready,true,ready.issues.join('；'));
- assert.equal(ready.registered,113);
+ assert.equal(ready.registered,MGS_ENGINE_IDS.length+MGS2_ENGINE_IDS.length);
  const mixed={...practice.counts};
  const four=Object.keys(mixed).find(id=>mixed[id]===4);
  const donor=Object.keys(mixed).find(id=>id!==four&&mixed[id]>0);

@@ -4,13 +4,15 @@
 // keeps its space. The effect text omits that space, so the compact form is
 // an explicit alias, the same way 早川 アキ keeps 早川アキ. Registration is
 // not FAQ certification.
-import {createUniversalPack} from './pack.mjs?v=20261121mgs1';
-import {MGS_CARDS} from '../mgs-cards.mjs?v=20261121mgs1';
-import {mgsEngineKind,mgsProfile} from './mgs-classify.mjs?v=20261121mgs1';
+import {createUniversalPack} from './pack.mjs?v=20261121mgs2';
+import {MGS_CARDS} from '../mgs-cards.mjs?v=20261121mgs2';
+import {MGS2_CARDS} from '../mgs-vol2.mjs?v=20261121mgs2';
+import {mgsEngineKind} from './mgs-classify.mjs?v=20261121mgs2';
+import {mgs2Profile} from './mgs2-classify.mjs?v=20261121mgs2';
 
 const EFFECT_NAMES=new Set([
- '八九寺真宵','千石撫子','忍野忍','戦場ヶ原ひたぎ','神原駿河','羽川翼',
- '阿良々木暦','阿良々木月火','阿良々木火憐'
+ '八九寺真宵','千石撫子','忍野忍','忍野扇','戦場ヶ原ひたぎ','斧乃木余接','沼地蠟花','神原駿河','羽川翼',
+ '老倉育','阿良々木暦','阿良々木月火','阿良々木火憐'
 ]);
 
 function printedAliases(card){
@@ -29,7 +31,7 @@ function withAliases(row,card){
 }
 
 export function mgsPackCard(card){
- const profile=mgsProfile(card);
+ const profile=mgs2Profile(card);
  const kind=profile?.kind||null;
  if(kind!==card.engineKind)throw Error(card.id+' engine kind drifted from the Japanese print');
  if(!kind)throw Error(card.id+' is catalogue-only');
@@ -44,6 +46,11 @@ export function mgsPackCard(card){
    ...(profile.triggerEffect?{triggerEffect:profile.triggerEffect}:{}),
    ...(program.impactNull?{impactNull:true}:{}),
    ...(program.step?{step:true}:{}),
+   ...(program.phaseEffects?{phaseEffects:program.phaseEffects}:{}),
+   ...(program.blockBpRestriction?{blockBpRestriction:program.blockBpRestriction}:{}),
+   ...(program.battleLossRestBuff?{battleLossRestBuff:program.battleLossRestBuff}:{}),
+   ...(program.cannotMove?{cannotMove:true}:{}),
+   ...(program.playOnNamedLine?{playOnNamedLine:program.playOnNamedLine}:{}),
    ...(program.emptyOwnFieldHandEnergyDiscount?{emptyOwnFieldHandEnergyDiscount:program.emptyOwnFieldHandEnergyDiscount}:{}),
    ...(program.outsideAtMost?{outsideAtMost:program.outsideAtMost}:{}),
    ...(program.removedByOwnEffect?{removedByOwnEffect:program.removedByOwnEffect}:{}),
@@ -62,7 +69,12 @@ export function mgsPackCard(card){
    ...(program.attackWinDiscardIfEnergy?{attackWinDiscardIfEnergy:program.attackWinDiscardIfEnergy}:{}),
    ...(program.raidImpact?{raidImpact:program.raidImpact}:{}),
    ...(program.printedImpact?{printedImpact:program.printedImpact}:{}),
-   ...(program.bpPerDirectFacedown?{bpPerDirectFacedown:program.bpPerDirectFacedown}:{})
+   ...(program.bpPerDirectFacedown?{bpPerDirectFacedown:program.bpPerDirectFacedown}:{}),
+   ...(program.unblockedAttack?{unblockedAttack:program.unblockedAttack}:{}),
+   ...(program.fieldLeaveRestNamed?{fieldLeaveRestNamed:program.fieldLeaveRestNamed}:{}),
+   ...(program.blockWinRetireRecover?{blockWinRetireRecover:program.blockWinRetireRecover}:{}),
+   ...(program.outsideMain?{outsideMain:program.outsideMain}:{}),
+   ...(program.unraidedMain?{unraidedMain:program.unraidedMain}:{})
   },card);
  }
  if(kind==='handDiscount'){
@@ -106,11 +118,13 @@ export function mgsPackCard(card){
 
 export const MGS_ENGINE_IDS=Object.freeze(
  MGS_CARDS.filter(card=>mgsEngineKind(card)).map(card=>card.id));
+export const MGS2_ENGINE_IDS=Object.freeze(
+ MGS2_CARDS.filter(card=>card.engineKind).map(card=>card.id));
 
 export function createMgsV2Pack(){
- const cards=MGS_CARDS.filter(card=>card.engineKind).map(mgsPackCard);
- if(cards.length!==MGS_ENGINE_IDS.length)
+ const cards=[...MGS_CARDS,...MGS2_CARDS].filter(card=>card.engineKind).map(mgsPackCard);
+ if(cards.length!==MGS_ENGINE_IDS.length+MGS2_ENGINE_IDS.length)
   throw Error('Monogatari registered count drifted');
  if(!cards.length)throw Error('Monogatari shared pack is empty');
- return createUniversalPack({id:'mgs',version:'mgs-ua42-shared-20261121',cards});
+ return createUniversalPack({id:'mgs',version:'mgs-ua42-ex18-shared-20261121',cards});
 }

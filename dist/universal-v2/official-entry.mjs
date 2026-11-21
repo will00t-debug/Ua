@@ -22,7 +22,7 @@ import {createMhaPointPack} from './mha-point-pack.mjs';
 import {createMha3Pack} from './mha3-pack.mjs';
 import {createTrkV2Pack} from './trk-pack.mjs?v=20261120mha011';
 import {createDgmV2Pack} from './dgm-pack.mjs?v=20261120dgm2';
-import {createMgsV2Pack} from './mgs-pack.mjs?v=20261121mgs1';
+import {createMgsV2Pack} from './mgs-pack.mjs?v=20261121mgs2';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {createEvaStagingPack} from './eva-staging-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';

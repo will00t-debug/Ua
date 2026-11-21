@@ -808,6 +808,56 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return found>=condition.min;
  }
+ if(condition.kind==='ownOtherLostBattleThisTurn'){
+  const losses=s.battleLosses?.[owner]||[];
+  return losses.some(e=>e.turn===s.turn&&e.uid!==sourceUid);
+ }
+ if(condition.kind==='ownUnraidedRaidCharacter'){
+  const board=s.players[owner];
+  for(const area of [board.front,board.energy])for(const c of area){
+   if(!printedFieldCard(c)||printed(c).type!=='character')continue;
+   const d=printed(c);
+   if(!(d.raidName||d.raidTrait))continue;
+   if(!(c.stack||[]).length)return true;
+  }
+  return false;
+ }
+ if(condition.kind==='ownFrontPrintedEnergies'){
+  const present=new Set();
+  for(const c of s.players[owner].front){
+   if(!printedFieldCard(c)||printed(c).type!=='character')continue;
+   present.add(printed(c).energy);
+  }
+  return condition.energies.every(n=>present.has(n));
+ }
+ if(condition.kind==='selfLiveEnergyAtLeast'){
+  if(typeof requiredEnergyOf!=='function')
+   throw Error('Required-energy condition needs a reader');
+  const board=s.players[owner];
+  const physical=[...board.front,...board.energy].find(c=>c?.uid===sourceUid);
+  if(!physical||printed(physical).type!=='character')return false;
+  return requiredEnergyOf(physical)>=condition.min;
+ }
+ if(condition.kind==='ownNameInFieldOrOutside'||condition.kind==='ownNameLeftThisTurn'||
+  condition.kind==='ownEffectDeckToHandByName'){
+  const named=body=>{
+   const d=printed(body);
+   return !!d&&cardHasName(d,condition.name,false);
+  };
+  if(condition.kind==='ownNameInFieldOrOutside'){
+   const board=s.players[owner];
+   for(const area of [board.front,board.energy])for(const c of area)
+    if(printedFieldCard(c)&&named(c))return true;
+   return s.players[owner].outside.some(named);
+  }
+  if(condition.kind==='ownNameLeftThisTurn')
+   return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+    e.reason==='retirement'&&(e.to==='outside'||e.to==='removed')&&
+    named({uid:e.uid,cardId:e.cardId}));
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.controller===owner&&e.from==='deck'&&e.to==='hand'&&e.reason==='own-effect'&&
+   named({uid:e.sourceUid,cardId:e.sourceCardId}));
+ }
  if(condition.kind==='ownNameAbsent'&&condition.zone==='outside'){
   // 自分の場外に〈名前〉がない. Hand, deck, removed, the field, and the
   // opponent's outside are not this zone. Raid under-cards are not outside.
