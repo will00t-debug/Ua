@@ -26,14 +26,52 @@ const damage='傷害'+value;
 const keyword=timing+'|'+impact+'|'+damage;
 const explicit=new RegExp('【('+keyword+')】|\\[('+keyword+')\\]|［('+keyword+')］|〖('+keyword+')〗','g');
 const prefix=new RegExp('^('+keyword+')');
+// Samsung Internet's forced-dark mode recolors CSS backgrounds and text, even
+// with color-scheme: only light. Render each badge as a self-contained image:
+// canvas PNG on real browsers, SVG image fallback for tests/no canvas.
+const badgeArtCache=new Map();
+function badgeImage(label,fill,ink){
+ const key=label+'|'+fill+'|'+ink;
+ if(badgeArtCache.has(key))return badgeArtCache.get(key);
+ const height=28,fontSize=18,pad=7;
+ let src='',width=0;
+ if(typeof document!=='undefined'&&typeof document.createElement==='function'){
+  try{
+   const canvas=document.createElement('canvas');
+   const ctx=canvas?.getContext?.('2d');
+   if(ctx&&typeof canvas.toDataURL==='function'){
+    ctx.font='800 '+fontSize+'px system-ui, sans-serif';
+    width=Math.ceil(ctx.measureText(label).width)+pad*2;
+    const ratio=3;
+    canvas.width=width*ratio;canvas.height=height*ratio;
+    ctx.scale(ratio,ratio);
+    ctx.fillStyle=fill;ctx.fillRect(0,0,width,height);
+    ctx.fillStyle=ink;ctx.font='800 '+fontSize+'px system-ui, sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,width/2,height/2+0.6);
+    src=canvas.toDataURL('image/png');
+   }
+  }catch{src='';}
+ }
+ if(!src){
+  const charWidth=ch=>/[\u3400-\u9fff\u3000-\u303f\uff00-\uffef]/u.test(ch)?18:/[A-Za-z0-9]/.test(ch)?11:10;
+  width=pad*2+[...label].reduce((sum,ch)=>sum+charWidth(ch),0);
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'" viewBox="0 0 '+width+' '+height+'"><rect width="'+width+'" height="'+height+'" fill="'+fill+'"/><text x="'+(width/2)+'" y="14" font-family="sans-serif" font-size="'+fontSize+'" font-weight="800" text-anchor="middle" dominant-baseline="central" fill="'+ink+'">'+escapeHtml(label)+'</text></svg>';
+  src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+ }
+ const html='<img class="ua-effect-keyword-art" src="'+escapeHtml(src)+'" width="'+width+'" height="'+height+'" alt="" aria-hidden="true" draggable="false">';
+ if(badgeArtCache.size>128)badgeArtCache.clear();
+ badgeArtCache.set(key,html);
+ return html;
+}
 const badge=word=>{
  let label=word.replace(/^(?:主[啟起]動|[啟起]動主要)$/,'主啟動').replace(/^每回合[1１]$/,'每回合一次');
- let style='';
+ let style='',fill='#009bcd',ink='#fff';
  if(/^(?:主[啟起]動|[啟起]動主要)$/.test(word))style=' ua-effect-main';
- else if(word==='突襲')style=' ua-effect-raid';
- else if(/^(貫通|衝擊)/.test(word)){style=' ua-effect-impact';label=label.replace(/^衝擊/,'貫通');}
- else if(/^傷害/.test(word)){style=' ua-effect-damage';if(/^傷害\s*(?:[（(]\s*[2２二]\s*[）)]|[2２二])$/.test(word))label='傷害二';}
- return '<span class="ua-effect-keyword'+style+'">'+escapeHtml(label)+'</span>';
+ else if(word==='突襲'){style=' ua-effect-raid';fill='#e60012';}
+ else if(/^(貫通|衝擊)/.test(word)){style=' ua-effect-impact';label=label.replace(/^衝擊/,'貫通');fill='#ffe500';ink='#111';}
+ else if(/^傷害/.test(word)){style=' ua-effect-damage';if(/^傷害\s*(?:[（(]\s*[2２二]\s*[）)]|[2２二])$/.test(word))label='傷害二';fill='#ffe500';ink='#111';}
+ return '<span class="ua-effect-keyword'+style+'" role="img" aria-label="'+escapeHtml(label)+'">'+badgeImage(label,fill,ink)+'</span>';
 };
 export function renderCardEffectText(value){
  // Imported HTML used non-breaking spaces as timing-label delimiters.
