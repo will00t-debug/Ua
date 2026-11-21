@@ -23,7 +23,9 @@ const numeral='[+＋]?[0-9０-９一二三四五六七八九十]+';
 const value='(?:[（(]\\s*'+numeral+'\\s*[）)]|\\s*'+numeral+')';
 const impact='(?:貫通|衝擊)(?:無效|'+value+')?';
 const damage='傷害'+value;
-const keyword=timing+'|'+impact+'|'+damage;
+const block='(?:二回阻擋|2次阻擋|兩次阻擋|二次阻擋|雙重阻擋|雙重防[禦御]|2回ブロック)';
+const isDoubleBlock=/^(?:二回阻擋|2次阻擋|兩次阻擋|二次阻擋|雙重阻擋|雙重防[禦御]|2回ブロック)$/;
+const keyword=timing+'|'+impact+'|'+damage+'|'+block;
 const explicit=new RegExp('【('+keyword+')】|\\[('+keyword+')\\]|［('+keyword+')］|〖('+keyword+')〗','g');
 const prefix=new RegExp('^('+keyword+')');
 // Samsung Internet's forced-dark mode recolors CSS backgrounds and text, even
@@ -69,6 +71,7 @@ const badge=word=>{
  let style='',fill='#009bcd',ink='#fff';
  if(/^(?:主[啟起]動|[啟起]動主要)$/.test(word))style=' ua-effect-main';
  else if(/^每回合(?:[1１]次?|一次)$/.test(word)){style=' ua-effect-limit';fill='#fff';ink='#111';}
+ else if(isDoubleBlock.test(word)){style=' ua-effect-block';label='二回阻擋';fill='#ffe500';ink='#111';}
  else if(word==='突襲'){style=' ua-effect-raid';fill='#e60012';}
  else if(/^(貫通|衝擊)/.test(word)){style=' ua-effect-impact';label=label.replace(/^衝擊/,'貫通');fill='#ffe500';ink='#111';}
  else if(/^傷害/.test(word)){style=' ua-effect-damage';if(/^傷害\s*(?:[（(]\s*[2２二]\s*[）)]|[2２二])$/.test(word))label='傷害二';fill='#ffe500';ink='#111';}
