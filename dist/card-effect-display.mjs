@@ -65,9 +65,10 @@ function badgeImage(label,fill,ink){
  return html;
 }
 const badge=word=>{
- let label=word.replace(/^(?:主[啟起]動|[啟起]動主要)$/,'主啟動').replace(/^每回合[1１]$/,'每回合一次');
+ let label=word.replace(/^(?:主[啟起]動|[啟起]動主要)$/,'主啟動').replace(/^每回合(?:[1１]次?|一次)$/,'每回合一次');
  let style='',fill='#009bcd',ink='#fff';
  if(/^(?:主[啟起]動|[啟起]動主要)$/.test(word))style=' ua-effect-main';
+ else if(/^每回合(?:[1１]次?|一次)$/.test(word)){style=' ua-effect-limit';fill='#fff';ink='#111';}
  else if(word==='突襲'){style=' ua-effect-raid';fill='#e60012';}
  else if(/^(貫通|衝擊)/.test(word)){style=' ua-effect-impact';label=label.replace(/^衝擊/,'貫通');fill='#ffe500';ink='#111';}
  else if(/^傷害/.test(word)){style=' ua-effect-damage';if(/^傷害\s*(?:[（(]\s*[2２二]\s*[）)]|[2２二])$/.test(word))label='傷害二';fill='#ffe500';ink='#111';}
