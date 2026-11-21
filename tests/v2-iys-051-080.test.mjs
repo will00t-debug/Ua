@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {createIysV2Pack} from '../dist/universal-v2/iys-pack.mjs';
-import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
+import {boardEntryMode,boardEntrySelection,inspectedPendingChoiceCards,
+ pendingChoiceCaption,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalCardEnergy, universalEnergyByColor,
  universalImpact, universalPrivateChoices, universalPublicView, zoneRequiredEnergy}
@@ -353,6 +354,11 @@ test('IYS-1-056 shows both looked cards, sends one red event outside, and keeps 
  s.players[0].hand.push(actor);
  s=play(s,actor.uid);
  assert.equal(s.pending.step,'lookPick');
+ const outsideChoice=legalUniversalActions(packs,s).find(a=>a.type==='iys'&&a.mode==='take');
+ const outsideLabel=uiActionLabel(outsideChoice,{pack:packs,state:s});
+ assert.equal(outsideLabel,'將這張符合條件的卡放到場外');
+ assert.equal(pendingChoiceCaption(outsideLabel,['生き方を選べるということだ']),outsideLabel);
+ assert.equal(outsideLabel.includes('加入手牌'),false);
  const shown=looked(s);
  assert.deepEqual(shown.map(c=>c.uid),window.map(c=>c.uid));
  assert.equal(shown[0].action.uid,window[0].uid);
@@ -662,6 +668,15 @@ test('IYS-1-061 discounts an empty field, peeks privately, then retires itself t
  assert.equal(legal(go,a=>a.mode==='skip'),true);
  assert.equal(legal(go,a=>a.mode==='deploy'&&a.uid===kagome.uid&&a.line==='front'),true);
  assert.equal(legal(go,a=>a.mode==='deploy'&&a.uid===kagome.uid&&a.line==='energy'),true);
+ const recruitActions=legalUniversalActions(packs,go).filter(a=>a.type==='iys'&&a.mode==='deploy');
+ assert.ok(recruitActions.length>0);
+ assert.equal(recruitActions.some(a=>a.uid===small.uid),false,'other Shippo cannot be recruited');
+ assert.equal(recruitActions.every(a=>boardEntryMode(a)==='normal'),true);
+ const recruitSelection=boardEntrySelection(recruitActions,kagome.uid);
+ assert.equal(recruitSelection.normal.some(a=>a.line==='front'),true);
+ assert.equal(recruitSelection.normal.some(a=>a.line==='energy'),true);
+ assert.equal(recruitSelection.raid.length,0);
+ assert.match(uiActionLabel(recruitSelection.normal[0],{pack:packs,state:go}),/從場外以休息狀態登場/);
  go=choose(go,a=>a.mode==='deploy'&&a.uid===kagome.uid&&a.line==='energy');
  const entered=find(go,0,kagome.uid);
  assert.equal(entered.ready,false);
@@ -670,6 +685,22 @@ test('IYS-1-061 discounts an empty field, peeks privately, then retires itself t
  go=choose(go,a=>a.type==='chooseDiscard');
  assert.equal(go.pending,null);
  assertUniversalMatch(packs,go);
+});
+
+test('IYS looked card labels distinguish outside disposal, hand recovery, and ordering',()=>{
+ const state={pending:{kind:'iys',id:'IYS-1-058',step:'lookPick',data:{dest:'outside',rest:'bottom'}}};
+ const take={type:'iys',mode:'take',uid:'0-look'};
+ assert.equal(uiActionLabel(take,{state}),'將這張符合條件的卡放到場外');
+ assert.equal(uiActionLabel({type:'iys',mode:'skip'},{state}),
+  '不送場外，排列其餘卡');
+ state.pending.step='lookOrder';
+ assert.equal(uiActionLabel({type:'iys',mode:'next',uid:'0-look'},{state}),
+  '下一張放回牌組底');
+ state.pending.id='IYS-1-014';
+ state.pending.step='lookPick';
+ state.pending.data={dest:'hand',rest:'bottom'};
+ assert.equal(uiActionLabel(take,{state}),'公開這張卡並加入手牌');
+ assert.equal(boardEntryMode({type:'iys',mode:'take',uid:'0-look',line:'front',slot:0}),null);
 });
 
 test('IYS-1-062 may add one red event from outside and ignores other cards',()=>{
