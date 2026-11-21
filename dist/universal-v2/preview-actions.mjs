@@ -1100,7 +1100,10 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='outsideActive'?'起動主要：棄 1 張手牌，使其他角色活動':
     action.mode==='frontDiscardBuff'?'起動主要：棄 1 張手牌，指定名稱與特徵 BP+1000':
     action.mode==='discardEventEnergy'?'起動主要：棄 1 張事件，本回合指定角色必要能源 -1':
-    action.mode==='buff'?'主要能力：指定符合條件的角色 BP＋1000':'主要能力：先 ACTIVE 自己，再指定符合條件的角色 BP＋1000';
+    action.mode==='abovePrinted'?'主啟動（每回合一次）：依自己場上 BP 高於原本 BP 的角色數，本回合 3 張以上獲得傷害二，5 張以上再獲得貫通（1）':
+    action.mode==='buff'?'主要能力：指定符合條件的角色 BP＋1000':
+    action.mode==='readyAndBuff'?'主要能力：先 ACTIVE 自己，再指定符合條件的角色 BP＋1000':
+    '主啟動：發動 '+name()+' 的主要能力（請參考卡面效果）';
   case 'chooseAttackLife':return '攻擊對手血區第 '+(action.indices||[]).map(i=>i+1).join('、')+' 格';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':

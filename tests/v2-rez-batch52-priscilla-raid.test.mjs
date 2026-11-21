@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 import {REZERO_VOL2_BY_ID} from '../dist/rezero-vol2.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  universalAttackDamage,universalBp,universalImpact} from '../dist/universal-v2/engine.mjs';
@@ -67,6 +68,15 @@ test('Q2425 stacks Damage 2 at three above-printed characters and Impact 1 at fi
  for(const uid of [a.uid,b.uid])live(few,uid).buffs=[{bp:500,untilTurn:few.turn}];
  const act=legalUniversalActions(rezPacks,few).find(x=>x.type==='activate'&&x.uid===pris.uid);
  assert.equal(act.mode,'abovePrinted');
+ const label=uiActionLabel(act,{pack:rezPacks,state:few});
+ assert.match(label,/3 張以上獲得傷害二/);
+ assert.match(label,/5 張以上再獲得貫通（1）/);
+ assert.match(label,/BP 高於原本 BP/);
+ assert.doesNotMatch(label,/ACTIVE 自己|BP＋1000/);
+ const fallback=uiActionLabel({...act,mode:'unmappedActivation'},{pack:rezPacks,state:few});
+ assert.doesNotMatch(fallback,/ACTIVE 自己|BP＋1000/);
+ assert.match(fallback,/請參考卡面效果/);
+ assert.match(uiActionLabel({...act,mode:'readyAndBuff'},{pack:rezPacks,state:few}),/先 ACTIVE 自己/);
  few=dispatchUniversalAction(rezPacks,few,act,{actor:0});
  const granted=live(few,pris.uid);
  assert.equal(universalAttackDamage(rez,few,granted),2);
