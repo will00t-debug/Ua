@@ -133,7 +133,11 @@ export function validateSharedPrintNextCard(card){
    Object.keys(removed[0]).length===2;
   const draw=removed.length===1&&removed[0]?.op==='mayDrawUpTo'&&removed[0].count===1&&
    Object.keys(removed[0]).length===2;
-  if(card.implementation!=='dsl'||!(mill||buff||draw))
+  const recover=removed.length===1&&removed[0]?.op==='recoverOutsideNamedEnergy'&&
+   removed[0].optional===true&&typeof removed[0].name==='string'&&!!removed[0].name.trim()&&
+   Number.isInteger(removed[0].maxEnergy)&&removed[0].maxEnergy>=0&&removed[0].maxEnergy<=30&&
+   Object.keys(removed[0]).length===4;
+  if(card.implementation!=='dsl'||!(mill||buff||draw||recover))
    throw Error(card.id+' invalid removed-area trigger');
  }
 }
@@ -361,7 +365,10 @@ export function legalSharedPrintNextPending(api,pack,s){
  if(q.mode==='retireFront'||q.mode==='grantDraw')
   return q.choices.map(uid=>({type:'nextPrint',mode:'pick',uid}));
  if(q.mode==='cell'||q.mode==='enter')return q.cells.map(cell=>({type:'nextPrint',mode:'cell',...cell}));
- if(q.mode==='clear')return q.choices.map(uid=>({type:'nextPrint',mode:'clear',uid}));
+ if(q.mode==='clear')return [
+  ...(q.optional?[{type:'nextPrint',mode:'skip'}]:[]),
+  ...q.choices.map(uid=>({type:'nextPrint',mode:'clear',uid}))
+ ];
  return null;
 }
 
@@ -434,6 +441,7 @@ export function resolveSharedPrintNextPending(api,pack,s,action){
   return true;
  }
  if(q.mode==='clear'){
+  if(action.mode==='skip'&&q.optional){finish(s,pack);return true;}
   const loc=api.location(s,owner,action.uid);
   const mover=api.location(s,owner,q.moveUid);
   if(action.mode!=='clear'||!loc||loc.line!==q.line||!q.choices.includes(action.uid)||!mover)

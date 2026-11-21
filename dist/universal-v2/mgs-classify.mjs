@@ -26,6 +26,7 @@ const DOWN_FRONT='【登場時】相手のフロントLのキャラを1枚まで
 const PEEK_ONE='【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。';
 const PEEK_SEE='【登場時】自分の山札の上から1枚見て、山札の上か下に置く。';
 const COLOR_DEPLOY='【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。';
+const COLOR_HAND_GREEN='【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。';
 const COLOR_RETIRE='【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。';
 const COLOR_REST='【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。';
 const SEARCH=/^【登場時】自分の山札の上から(\d+)枚見る。その中から(.+)を1枚まで公開し手札に加える。残りを望む順で(?:自分の)?山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。$/;
@@ -46,6 +47,8 @@ function knownTrigger(card){
  if(standardTrigger(card))return {};
  if(card.trigger==='color'&&card.triggerTextJa===COLOR_DEPLOY)
   return {triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true},kind:'deploy'};
+ if(card.trigger==='color'&&card.triggerTextJa===COLOR_HAND_GREEN)
+  return {triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},kind:'handGreen'};
  if(card.trigger==='color'&&card.triggerTextJa===COLOR_RETIRE)
   return {triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},kind:'retireColor'};
  if(card.trigger==='color'&&card.triggerTextJa===COLOR_REST)

@@ -181,7 +181,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-003",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "goshintaiBp",
   "raidFrame": null,
   "faq": []
  },
@@ -232,7 +232,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-004",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "snakeLeftBp",
   "raidFrame": null,
   "faq": []
  },
@@ -334,7 +334,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-006",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "battleLossRest",
   "raidFrame": null,
   "faq": [
    {
@@ -394,7 +394,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-007",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "handPeekDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -447,7 +447,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-008",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "sisterAttack",
   "raidFrame": null,
   "faq": []
  },
@@ -546,7 +546,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-010",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "energyFront",
   "raidFrame": null,
   "faq": [
    {
@@ -713,7 +713,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-013",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "retireKoyomi",
   "raidFrame": null,
   "faq": []
  },
@@ -872,7 +872,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-016",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "energyDown",
   "raidFrame": null,
   "faq": []
  },
@@ -960,7 +960,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-018",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kissActive",
   "raidFrame": null,
   "faq": []
  },
@@ -1004,7 +1004,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-019",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tsubasaDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -1099,7 +1099,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-021",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tsubasaLook",
   "raidFrame": null,
   "faq": []
  },
@@ -1539,7 +1539,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-029",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "unraidedStep",
   "raidFrame": null,
   "faq": []
  },
@@ -1748,7 +1748,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-033",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lookRemove",
   "raidFrame": null,
   "faq": []
  },
@@ -2140,7 +2140,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-041",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "frontPairBp",
   "raidFrame": null,
   "faq": []
  },
@@ -2191,7 +2191,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-042",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "frontPairBlock",
   "raidFrame": null,
   "faq": []
  },
@@ -2235,7 +2235,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-043",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "energyBuffImpact",
   "raidFrame": null,
   "faq": []
  },
@@ -2446,7 +2446,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-047",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "enteredDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -2534,7 +2534,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-049",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "yotsugiLine",
   "raidFrame": null,
   "faq": [
    {
@@ -2933,7 +2933,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-057",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "oguraRetire",
   "raidFrame": null,
   "faq": []
  },
@@ -3035,7 +3035,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-059",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "energyScaleRetire",
   "raidFrame": null,
   "faq": [
    {
@@ -3347,7 +3347,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-065",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "redCutNull",
   "raidFrame": null,
   "faq": []
  },
@@ -3398,7 +3398,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-066",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "redCutRecover",
   "raidFrame": null,
   "faq": []
  },
@@ -3551,7 +3551,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-069",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "emptyRedPeek",
   "raidFrame": null,
   "faq": []
  },
@@ -3595,7 +3595,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-070",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "removedMayoi",
   "raidFrame": null,
   "faq": []
  },
@@ -3703,7 +3703,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-072",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "surugaSearch",
   "raidFrame": null,
   "faq": []
  },
