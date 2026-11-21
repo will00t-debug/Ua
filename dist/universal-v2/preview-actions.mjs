@@ -521,6 +521,20 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   if(mode==='kit')return '本回合 BP＋1000 並獲得貫通（1）';
   if(mode==='double')return '本回合獲得二回攻擊';
  }
+ // IYS deck-look actions reuse 'take', but some prints send the card to
+ // OUTSIDE, not hand. Use the resolved destination to describe the move.
+ if(action.type==='iys'&&step==='lookPick'){
+  const outside=state?.pending?.data?.dest==='outside'||
+   ['IYS-1-005','IYS-1-056','IYS-1-058'].includes(id);
+  if(mode==='take')return outside?'將這張符合條件的卡放到場外':'公開這張卡並加入手牌';
+  if(mode==='skip')return outside?'不送場外，排列其餘卡':'不加入手牌，排列其餘卡';
+ }
+ if(action.type==='iys'&&step==='lookOrder'&&mode==='next')
+  return state?.pending?.data?.rest==='bottom'?'下一張放回牌組底':'下一張放回牌組頂';
+ if(action.type==='iys'&&step==='deploy'&&mode==='deploy'){
+  const place=action.line==='energy'?'能源線':'前線';
+  return '從場外以休息狀態登場 · '+place+' '+(Number(action.slot)+1);
+ }
  if(mode==='first'&&step==='entryOrder')return withClosedCard(pack,state,action,'先結算這張卡的登場效果');
  if(mode==='readyAp'||(mode==='ap'&&Number.isInteger(action.index))){
   const index=Number.isInteger(action.index)?action.index:Number(String(action.uid||'').split('-')[1])-1;
@@ -2187,7 +2201,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid','chooseHandActiveOrRaid','chooseTopScript',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2','aot2','csm'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2','aot2','csm','iys'
 ]);
 export function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
@@ -2209,6 +2223,7 @@ export function boardEntryMode(action){
  // Epsilon and Beta print REST entry only. mode dest is that cell.
  // Do not treat any other kjn mode as Raid.
  if(action.type==='kjn')return action.mode==='dest'?'normal':null;
+ if(action.type==='iys')return action.mode==='deploy'?'normal':null;
  if(action.type==='csm')return action.mode==='deploy'?'normal':null;
  if(action.mode==='raid')return 'raid';
  if(action.mode==='enter'||action.mode==='place'||action.mode==='rest'||action.mode==='active')return 'normal';
