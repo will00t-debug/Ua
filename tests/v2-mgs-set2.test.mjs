@@ -98,7 +98,9 @@ test('EX18BT catalogues 73 identities and registers only whole shared prints',()
  assert.deepEqual(MGS2_CARDS.map(card=>card.id),Array.from({length:73},(_,i)=>'MGS-2-'+String(i+1).padStart(3,'0')));
  assert.equal(MGS2_CARDS.some(card=>card.id.includes('_p')||card.rarity==='AP'),false);
  assert.equal(MGS2_CARDS.every(card=>card.auto===false&&card.title==='mgs'&&card.set==='EX18BT'),true);
- assert.equal(MGS2_CARDS.every(card=>card.name===card.nameJa&&card.effect.replace(/\s/g,'')===card.effectJa&&card.sourceTc===null),true);
+ assert.equal(MGS2_CARDS.every(card=>card.nameJa&&card.effectJa&&card.nameHk&&card.effectHk&&card.triggerTextHk&&card.sourceHk&&card.sourceTc===null),true);
+ assert.equal(MGS2_CARDS.every(card=>card.name===card.nameHk&&card.effect===card.effectHk&&card.triggerText===card.triggerTextHk),true);
+ assert.equal(MGS2_CARDS.some(card=>/[\u3040-\u30ff]/.test(card.effect)||/[\u3040-\u30ff]/.test(card.name)),false);
  assert.equal(MGS2_CARDS.every(card=>card.engineKind===mgs2EngineKind(card)),true);
  assert.deepEqual([...MGS2_ENGINE_IDS],[...MGS2_CARDS.filter(card=>card.engineKind).map(card=>card.id)]);
  assert.equal(MGS2_ENGINE_IDS.length,73);

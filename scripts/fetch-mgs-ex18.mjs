@@ -6,14 +6,14 @@
 // Parallel art is another printing of the same identity. AP cards are skipped.
 // Packed Vol.1 parallels stay on the Vol.1 identity and are not new cards.
 // Official Traditional Chinese pages are not published for series 590218 yet.
-// name and effect therefore repeat the official Japanese print. effectJa is
-// the compact Japanese print and is what the engine matches. engineKind is
+// Display name, effect and trigger text come from Rugia HK. effectJa is the
+// compact Japanese print and is what the engine matches. engineKind is
 // set only when the classifier accepts the whole print.
 import {writeFileSync,mkdirSync,readFileSync} from 'node:fs';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {mgs2Profile} from '../dist/universal-v2/mgs2-classify.mjs';
-import {parseCard,placeholder,spanByClass,visible} from './fetch-mgs-ua42.mjs';
+import {parseCard,placeholder,spanByClass} from './fetch-mgs-ua42.mjs';
 
 const ROOT=join(dirname(fileURLToPath(import.meta.url)),'..');
 const CACHE=join('/tmp','mgs-fetch','ex18');
@@ -78,22 +78,72 @@ function listNumbers(html){
   .sort((a,b)=>Number(/_p\d+$/.test(a))-Number(/_p\d+$/.test(b))||a.localeCompare(b,'en',{numeric:true}));
 }
 
-function rugiaFrames(html){
- const frames=new Map();
+const RUGIA_ENERGY={green:'綠',red:'紅',yellow:'黃',purple:'紫',blue:'藍'};
+const RUGIA_KEYWORDS=[
+ [/keyword_impact_nullify/,'【衝擊無效】'],
+ [/keyword_impact1/,'【衝擊（1）】'],
+ [/keyword_snipe/,'【狙擊】'],
+ [/keyword_step/,'【階梯】'],
+ [/ico_turn1/,'【每回合1】'],
+ [/ico_raid\.png/,'【突襲】'],
+ [/ico_trigger_final/,'【最終】'],
+ [/ico_trigger_get/,'【獲得】'],
+ [/ico_trigger_draw/,'【抽卡】'],
+ [/ico_trigger_active/,'【活動】'],
+ [/ico_trigger_color/,'【顏色】'],
+ [/ico_trigger_raid/,'【突襲】'],
+ [/ico_trigger_special/,'【特殊】']
+];
+
+export function rugiaText(html){
+ let text=String(html||'').replace(/<img\b[^>]*>/gi,tag=>{
+  const src=((tag.match(/\bsrc=["']([^"']+)["']/i)||[])[1]||'').split('?')[0];
+  const energy=src.match(/ico_(?:circle|hexa)_([a-z]+)(\d*)\.png$/);
+  if(energy){
+   const label=RUGIA_ENERGY[energy[1]];
+   const count=energy[2]?Number(energy[2]):1;
+   return label?(count>1?`【${label}×${count}】`:`【${label}】`):'';
+  }
+  const keyword=RUGIA_KEYWORDS.find(([pattern])=>pattern.test(src));
+  return keyword?keyword[1]:'';
+ });
+ return text
+  .replace(/<br\s*\/?>/gi,'\n')
+  .replace(/<[^>]+>/g,'')
+  .replace(/\u00a0/g,' ')
+  .replace(/[ \t]+/g,' ')
+  .replace(/ *\n */g,'\n')
+  .replace(/\n{2,}/g,'\n')
+  .trim();
+}
+
+export function rugiaFaces(html){
+ const faces=new Map();
  const parts=html.split("<span class='cardHolder'");
  for(const part of parts){
   const id=(part.match(/^ id='EX18BT_(MGS-2-\d+)'/)||[])[1];
-  if(!id)continue;
-  const effect=(part.match(/<div class='effect[^']*'>([\s\S]*?)<\/div>/)||[])[1]||'';
-  const frame=spanByClass(effect,'raidBorder');
-  frames.set(id,frame?{
-   source:'rugia-hk',
-   inside:visible(frame.inner),
-   outside:visible(effect.slice(0,frame.start)+effect.slice(frame.end)),
-   wholeInside:visible(effect.slice(0,frame.start)+effect.slice(frame.end))===''
-  }:null);
+  if(!id||faces.has(id))continue;
+  const info=part.slice(part.indexOf("<div class='infoBox'>"),part.indexOf("<div class='effect'"));
+  const shortName=(info.match(/class='fontsize2'>([^<]+)/)||[])[1];
+  const longName=(info.match(/Find2=[^']+'[^>]*>([^<]+)/)||[])[1];
+  const name=(shortName||longName||'').trim();
+  const effectHtml=(part.match(/<div class='effect[^']*'>([\s\S]*?)<\/div>/)||[])[1]||'';
+  const triggerHtml=(part.match(/<div class='trigger'>([\s\S]*?)<\/div>/)||[])[1]||'';
+  const frame=spanByClass(effectHtml,'raidBorder');
+  const outside=frame?rugiaText(effectHtml.slice(0,frame.start)+effectHtml.slice(frame.end)):'';
+  faces.set(id,{
+   name,
+   effect:rugiaText(effectHtml)||'-',
+   triggerText:rugiaText(triggerHtml)||'-',
+   raidFrame:frame?{
+    source:'rugia-hk',
+    inside:rugiaText(frame.inner),
+    outside,
+    wholeInside:outside===''
+   }:null
+  });
  }
- return frames;
+ return faces;
 }
 
 async function main(){
@@ -172,10 +222,18 @@ async function main(){
    row.image=card.image;
   }
  }
- const rugia=rugiaFrames(await get('https://rugiacreation.com/ua/search?Name=HK&Find1=EX18BT','rugia-ex18.html'));
- for(const [id,frame] of rugia){
+ const rugia=rugiaFaces(await get('https://rugiacreation.com/ua/search?Name=HK&Find1=EX18BT','rugia-ex18.html'));
+ for(const [id,face] of rugia){
   const row=identities.get(id);
-  if(row)row.raidFrame=frame;
+  if(!row||!face.name)continue;
+  row.nameHk=face.name;
+  row.effectHk=face.effect;
+  row.triggerTextHk=face.triggerText;
+  row.name=face.name;
+  row.effect=face.effect;
+  row.triggerText=face.triggerText;
+  row.raidFrame=face.raidFrame;
+  row.sourceHk='https://rugiacreation.com/ua/search?Name=HK&Find1='+id;
  }
  const cards=[...identities.values()].sort((a,b)=>a.id.localeCompare(b.id,'en',{numeric:true}));
  if(cards.length!==73)throw Error('EX18BT identities '+cards.length);
@@ -194,16 +252,18 @@ async function main(){
  const fetched=new Date().toISOString().slice(0,10);
  const header=`// Official EX18BT 〈物語〉シリーズ Vol.2 / 〈物語〉系列 Vol.2.
 // Fetched ${fetched}. Japanese list is series 570218. The Traditional Chinese
-// card list does not publish series 590218 yet, so name and effect repeat the
-// official Japanese print. effectJa is the compact Japanese print and is what
-// the engine matches. Parallel art is another printing. AP cards are not deck
-// cards. Packed UA42 parallels stay on the Vol.1 identity. BP+ is a design
-// mark. Generated energy is the pip count in the 発生エナジー alt text. A
-// trailing + is genMark and is not added to gen. The icon filename number is
-// a sprite id. A required-energy dash is 0 and still keeps the color
-// character. A slash trait stays one printed token. Raid frames are Rugia HK
-// span.raidBorder. engineKind is set only when mgs2-classify accepts the
-// whole Japanese print. Registration is not an official FAQ certification.
+// card list does not publish series 590218 yet. Display name, effect and
+// trigger text are Rugia HK, kept on nameHk, effectHk and triggerTextHk.
+// effectJa is the compact Japanese print and is what the engine matches.
+// Parallel art is another printing. AP cards are not deck cards. Packed UA42
+// parallels stay on the Vol.1 identity. BP+ is a design mark. Generated
+// energy is the pip count in the 発生エナジー alt text. A trailing + is
+// genMark and is not added to gen. The icon filename number is a sprite id.
+// A required-energy dash is 0 and still keeps the color character. A slash
+// trait stays one printed token. Raid frames are Rugia HK span.raidBorder.
+// engineKind is set only when mgs2-classify accepts the whole Japanese print.
+// Registration is not an official FAQ certification. Rugia HK is not the
+// official Traditional Chinese printing.
 export const MGS2_FETCHED='${fetched}';
 export const MGS2_SET='EX18BT';
 export const MGS2_VOL1_PARALLELS=${JSON.stringify(vol1Printings.filter(card=>card&&!card.placeholder).map(card=>({
@@ -224,7 +284,7 @@ export const MGS2_CARDS=
   registered:cards.filter(card=>card.engineKind).length,
   filenameDisagreements:disagreements,
   raidFrames:cards.filter(card=>card.raidFrame).map(card=>card.id),
-  missingRugia:cards.filter(card=>!rugia.has(card.id)).map(card=>card.id),
+  missingRugia:cards.filter(card=>!card.nameHk).map(card=>card.id),
   officialTc:cards.filter(card=>card.sourceTc).map(card=>card.id),
   faq:cards.reduce((n,card)=>n+card.faq.length,0),
   vol1:vol1Printings.map(card=>card.full||card.number),
