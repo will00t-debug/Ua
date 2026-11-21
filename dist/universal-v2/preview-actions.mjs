@@ -533,7 +533,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   return state?.pending?.data?.rest==='bottom'?'下一張放回牌組底':'下一張放回牌組頂';
  if(action.type==='iys'&&step==='deploy'&&mode==='deploy'){
   const place=action.line==='energy'?'能源線':'前線';
-  return '從場外以休息狀態登場 · '+place+' '+(Number(action.slot)+1);
+  const name=closedChoiceName(pack,state,action.uid);
+  // Shippo 061 specifies REST; other effects may grant active entry
+  // (for example IYS-1-044), so never over-promise REST generically.
+  return '從場外'+(id==='IYS-1-061'?'以休息狀態':'')+'登場'+
+   (name?' '+name:'這張角色')+' · '+place+' '+(Number(action.slot)+1);
  }
  if(mode==='first'&&step==='entryOrder')return withClosedCard(pack,state,action,'先結算這張卡的登場效果');
  if(mode==='readyAp'||(mode==='ap'&&Number.isInteger(action.index))){
