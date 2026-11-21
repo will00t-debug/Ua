@@ -857,7 +857,7 @@ export const AOT_CARDS=
   "trigger": "active",
   "triggerText": "[活動]選擇1張自己場上的角色卡，置為活動，在這個回合中，BP+3000。",
   "triggerTextJa": "【アクティブ】自分の場のキャラを1枚選び、アクティブにし、このターン中、BP+3000。",
-  "effect": "【2次阻擋】（這張角色卡在這個回合第一次阻擋時，置為活動）",
+  "effect": "【二回阻擋】（這張角色卡在這個回合第一次阻擋時，置為活動）",
   "effectJa": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA23BT_AOT-1-018.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA23BT%2FAOT-1-018",

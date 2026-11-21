@@ -2,7 +2,7 @@
 // whole Japanese print on a shared program. There is no D.Gray-man opcode
 // and no private runtime. Registration is not FAQ certification.
 import {createUniversalPack} from './pack.mjs?v=20261120dgm2';
-import {DGM_CARDS} from '../dgm-cards.mjs?v=20261120dgm2';
+import {DGM_CARDS} from '../dgm-cards.mjs?v=20261121nea067068fix1zhcomplete1';
 import {dgmEngineKind,dgmProfile} from './dgm-classify.mjs?v=20261120dgm2';
 
 export function dgmPackCard(card){

@@ -11,6 +11,7 @@
 import {writeFileSync,mkdirSync,readFileSync} from 'node:fs';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {DGM_ZH_FALLBACKS} from '../dist/dgm-zh-fallbacks.mjs';
 import {dgmProfile} from '../dist/universal-v2/dgm-classify.mjs';
 
 const ROOT=join(dirname(fileURLToPath(import.meta.url)),'..');
@@ -321,6 +322,11 @@ async function main(){
  for(const card of cards){
   const expected=Number(card.id.slice(6));
   if(!Number.isInteger(expected)||expected<1||expected>80)throw Error('unexpected id '+card.id);
+  const fallback=DGM_ZH_FALLBACKS[card.id];
+  if(fallback){
+   if(!card.nameHk)card.name=fallback[0];
+   if(!card.effectHk)card.effect=fallback[1];
+  }
   const profile=dgmProfile(card);
   card.engineKind=profile?.kind||null;
   if(profile?.handDiscount)card.handDiscount=profile.handDiscount;
@@ -334,7 +340,8 @@ async function main(){
  const header=`// Official UA58BT D.Gray-man catalogue, fetched ${new Date().toISOString().slice(0,10)}.
 // Japanese card list: series 570158. Official Traditional Chinese card pages
 // do not list this product (the TC series menu stops at UA57BT). Display
-// name and effect are the Rugia HK printing, not an official TC page.
+// name and effect use Rugia HK where available; missing entries are manually
+// translated from the Japanese print. nameHk/effectHk retain source provenance.
 // effectJa is the Japanese official print and is what the engine matches.
 // The deck-builder title is 驅魔少年. One identity per card number. Parallel
 // art is another printing. AP cards are not deck cards. BP+ is a design mark.

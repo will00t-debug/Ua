@@ -459,7 +459,8 @@ body.arena-site .ua-effect-keyword.ua-effect-main{
  background:#009bcd;background-image:linear-gradient(#009bcd,#009bcd);color:#fff;
 }
 body.arena-site .ua-effect-keyword.ua-effect-impact,
-body.arena-site .ua-effect-keyword.ua-effect-damage{
+body.arena-site .ua-effect-keyword.ua-effect-damage,
+body.arena-site .ua-effect-keyword.ua-effect-block{
  background:#ffe500;background-image:linear-gradient(#ffe500,#ffe500);color:#111;
  border-radius:.08em;
 }
@@ -476,6 +477,7 @@ body.arena-site .ua-effect-keyword,
 body.arena-site .ua-effect-keyword.ua-effect-main,
 body.arena-site .ua-effect-keyword.ua-effect-impact,
 body.arena-site .ua-effect-keyword.ua-effect-damage,
+body.arena-site .ua-effect-keyword.ua-effect-block,
 body.arena-site .ua-effect-keyword.ua-effect-limit,
 body.arena-site .ua-effect-keyword.ua-effect-raid{
  display:inline-flex;align-items:center;vertical-align:-.15em;

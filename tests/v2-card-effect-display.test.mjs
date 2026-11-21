@@ -57,7 +57,7 @@ test('impact and damage labels support catalogue aliases and keep numeric modifi
  assert.match(renderCardEffectText(actual.effect),/ua-effect-damage" role="img" aria-label="傷害二">/);
  const css=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
  assert.match(css,/\.ua-effect-keyword\.ua-effect-impact,/);
- assert.match(css,/\.ua-effect-keyword\.ua-effect-damage\{/);
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-damage,/,'yellow combat labels share a grouped CSS selector');
 });
 
 test('Hiko summary has verified display-only timing labels and hand cost',()=>{
@@ -84,7 +84,8 @@ test('Emilia printed-card keywords use yellow impact, blue timing and red raid',
  assert.match(html,/ua-effect-keyword" role="img" aria-label="攻擊時">/);
  const css=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
  assert.match(css,/\.ua-effect-keyword\{[^}]*color-scheme:only light;[^}]*background:#009bcd/);
- assert.match(css,/\.ua-effect-keyword\.ua-effect-damage\{[^}]*background:#ffe500;[^}]*color:#111/);
+ assert.match(html,/%23ffe500/,'yellow is rendered into image badge rather than a CSS-only background');
+ assert.match(css,/\.ua-effect-keyword\.ua-effect-damage,/);
  assert.match(css,/\.ua-effect-keyword\.ua-effect-raid\{[^}]*background:#e60012/);
 });
 
@@ -104,7 +105,7 @@ test('phone dark mode cannot recolor combat keyword pixels via CSS background',(
  assert.match(css,/background:none!important/);
  const index=readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
  assert.match(index,/arena-deck-mockup\.css\?v=20261120mobileflow2effect1combat2palette5pngonce1/);
- assert.match(index,/v2-deck-editor\.mjs\?v=20261120dgm3effect1combat2summary3palette5pngonce1mgs1/);
+assert.match(index,/v2-deck-editor\.mjs\?v=20261120dgm3effect1combat2summary3palette5pngonce1mgs1nea067068fix1doubleblock1abilitylabels2rez065badges1/);
 });
 
 test('once per turn uses white-backed black text while other badge colors stay unchanged',()=>{
@@ -126,4 +127,70 @@ test('once per turn uses white-backed black text while other badge colors stay u
  assert.match(combat,/%23009bcd/,'blue timing badge unchanged');
  const style=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
  assert.match(style,/\.ua-effect-keyword\.ua-effect-limit,/);
+});
+
+test('Nea D Campbell 067 and 068 preserve distinct printed non-raid abilities',()=>{
+ const dgm=TITLES.find(t=>t.id==='dgm');
+ const block=dgm.cards.find(c=>c.id==='DGM-1-067');
+ const damage=dgm.cards.find(c=>c.id==='DGM-1-068');
+ assert.ok(block&&damage);
+ assert.match(block.effectJa,/【2回ブロック】/);
+ assert.match(damage.effectJa,/【ダメージ（2）】/);
+ for(const field of ['effect','effectHk']){
+  assert.match(block[field],/不是突襲狀態的此角色獲得【二回阻擋】。/,field+' 067');
+  assert.match(damage[field],/不是突襲狀態的此角色獲得【傷害（2）】。/,field+' 068');
+  assert.doesNotMatch(block[field],/獲得【傷害（2）】/,field+' no wrong damage 2');
+  assert.doesNotMatch(damage[field],/獲得。/,field+' no missing keyword');
+ }
+ assert.match(block.raidFrame.outside,/獲得【二回阻擋】。/);
+ assert.match(damage.raidFrame.outside,/獲得【傷害（2）】。/);
+ const rendered=renderCardEffectText(cardEffectDisplayText(damage));
+ assert.match(rendered,/ua-effect-damage" role="img" aria-label="傷害二"/);
+ assert.match(rendered,/%23ffe500/,'Damage two is drawn as yellow image badge');
+ assert.equal(damage.engineKind,'neaDamageTwo','battle behavior unchanged');
+ assert.equal(block.engineKind,'neaDoubleBlock','double block behavior unchanged');
+});
+
+test('full DGM audit repairs three further missing named abilities without changing rule code',()=>{
+ const title=TITLES.find(t=>t.id==='dgm');
+ for(const [id,japanese,traditional,expectedCopies] of [
+  ['DGM-1-020','【2回ブロック】','【二回阻擋】',2],
+  ['DGM-1-040','【インパクト（1）】','【貫通（1）】',2],
+  ['DGM-1-047','【インパクト（1）】','【貫通（1）】',3]
+ ]){
+  const card=title.cards.find(c=>c.id===id);
+  assert.ok(card,'missing '+id);
+  assert.ok(card.effectJa.includes(japanese),id+' Japanese print');
+  assert.ok(card.effect.includes(traditional),id+' Chinese text');
+  assert.ok(card.effectHk.includes(traditional),id+' HK source text');
+  if(id==='DGM-1-020')assert.match(renderCardEffectText(card.effect),/ua-effect-block" role="img" aria-label="二回阻擋"/,'render localized keyword label');
+  else assert.match(renderCardEffectText(card.effect),/ua-effect-impact/,'render yellow impact label');
+  assert.equal(card.auto,false,'do not change rules engine state');
+ }
+ assert.match(title.cards.find(c=>c.id==='DGM-1-047').raidFrame.inside,/【貫通（1）】/);
+ assert.equal(title.cards.find(c=>c.id==='DGM-1-040').type,'event');
+});
+
+
+test('all nine catalogues with translated double-block text show canonical 二回阻擋',()=>{
+ const titleIds=['bleach','solo-leveling','rezero','steins-gate','madoka','aot','imc','eva','dgm'];
+ for(const titleId of titleIds){
+  const title=TITLES.find(t=>t.id===titleId);
+  assert.ok(title, 'registered title '+titleId);
+  const cards=title.cards.filter(c=>typeof c.effect==='string'&&/(?:二回阻擋|兩次阻擋|雙重防禦|2次阻擋)/.test(c.effect));
+  assert.ok(cards.length>0,'localized double-block copy found in '+titleId);
+  for(const card of cards){
+   const html=renderCardEffectText(card.effect);
+   assert.match(html,/ua-effect-block" role="img" aria-label="二回阻擋">/,titleId+':'+card.id);
+   assert.match(html,/%23ffe500/,titleId+':'+card.id+' uses yellow combat badge');
+  }
+ }
+ for(const alias of ['二回阻擋','2次阻擋','兩次阻擋','二次阻擋','雙重阻擋','雙重防禦','2回ブロック']){
+  const html=renderCardEffectText('【'+alias+'】');
+  assert.match(html,/ua-effect-block" role="img" aria-label="二回阻擋">/,'alias '+alias);
+ }
+ assert.equal(renderCardEffectText('普通效果：每回合可以阻擋兩次攻擊。'),'普通效果：每回合可以阻擋兩次攻擊。');
+ const page=readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
+ assert.match(page,/v2-deck-editor\.mjs\?v=20261120dgm3/,'retains version prefix required by older clients');
+ assert.match(page,/doubleblock1/,'new module version is cache busted');
 });

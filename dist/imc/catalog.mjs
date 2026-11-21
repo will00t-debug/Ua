@@ -1,7 +1,7 @@
 // Merges the three card ranges, starter-only cards, AP cards, and UA55ST
 // reprint printings. A catalog row is official print data. It is not a
 // battle card and it is not an audit pass.
-import {IMC_CARDS_001_050} from './cards-001-050.mjs';
+import {IMC_CARDS_001_050} from './cards-001-050.mjs?v=20261121doubleblock1';
 import {IMC_CARDS_051_100} from './cards-051-100.mjs';
 import {IMC_CARDS_STARTER} from './cards-starter.mjs';
 import {IMC_AP_CARDS} from './cards-ap.mjs';
