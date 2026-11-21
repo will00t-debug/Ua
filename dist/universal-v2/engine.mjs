@@ -10071,7 +10071,10 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
   sourceUid:w.uid,raidUid:cardOnTop.uid}));
  for(const witness of witnessJobs)assignEffectScope(s,[witness]);
  if(deferEffects)return {uid:cardOnTop.uid,jobs:[...witnessJobs,...baseWithBoundary,...entryJobs,...raidWithBoundary]};
- if(witnesses.length&&entryCause!=='lifeRaid'){
+ // A single LIFE check (including an Impact hit) has no reveal batch.
+ // It still earns the same witnesses and ordering as a paid Raid.
+ // Only simultaneous LIFE reveals defer the individual earned programs.
+ if(witnesses.length&&(entryCause!=='lifeRaid'||s.lifeRevealBatch?.owner!==p)){
   s.pending={kind:'effect-raid-witness-order',player:p,witnesses,decided:[],
    baseUid:effectiveBase.uid,raidUid:cardOnTop.uid,baseJobs:baseWithBoundary,
    entryJobs,raidJobs:raidWithBoundary};
