@@ -504,6 +504,18 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   'CSM-1-076':{look:'查看牌庫頂 2 張並排列或送場外，再可使淀治登場',tuck:'將此卡裏向置於淀治下方；若非突襲狀態，恢復 1 AP'}
  };
  if(action.type==='csm'&&step==='choose'&&csmBranches[id]?.[mode])return csmBranches[id][mode];
+ if(action.type==='csm'&&step==='afterRetireChoose'&&id==='CSM-1-030'){
+  if(mode==='one')return '抽 1 張牌，自己其他最多 1 張角色 BP＋2000';
+  if(mode==='two')return '抽 2 張牌';
+ }
+ if(action.type==='iys'&&step==='drawCount'){
+  if(mode==='one')return '抽 1 張，再將 1 張手牌放到場外';
+  if(mode==='two')return '抽 2 張，再將 1 張手牌放到場外';
+ }
+ if(action.type==='iys'&&step==='replaceKit'){
+  if(mode==='kit')return '本回合 BP＋1000 並獲得貫通（1）';
+  if(mode==='double')return '本回合獲得二回攻擊';
+ }
  if(mode==='first'&&step==='entryOrder')return withClosedCard(pack,state,action,'先結算這張卡的登場效果');
  if(mode==='readyAp'||(mode==='ap'&&Number.isInteger(action.index))){
   const index=Number.isInteger(action.index)?action.index:Number(String(action.uid||'').split('-')[1])-1;
