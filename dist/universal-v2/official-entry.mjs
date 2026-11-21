@@ -22,6 +22,7 @@ import {createMhaPointPack} from './mha-point-pack.mjs';
 import {createMha3Pack} from './mha3-pack.mjs';
 import {createTrkV2Pack} from './trk-pack.mjs?v=20261120mha011';
 import {createDgmV2Pack} from './dgm-pack.mjs?v=20261120dgm2';
+import {createMgsV2Pack} from './mgs-pack.mjs?v=20261121mgs1';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {createEvaStagingPack} from './eva-staging-pack.mjs';
 import {KMR_CARDS} from '../kmr-cards.mjs';
@@ -79,6 +80,7 @@ export function officialV2Pack(title){
  if(title==='eva')return createEvaBattlePack();
  if(title==='toriko')return createTorikoBattlePack();
  if(title==='dgm')return createDgmBattlePack();
+ if(title==='mgs')return createMgsBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -175,6 +177,18 @@ export function createDgmBattlePack(){
 export function dgmPracticeDeck(){
  const pack=createDgmBattlePack();
  // Twelve supported identities of one color cannot fill 50 cards at four copies.
+ const counts=practiceDeck(pack);
+ return {pack,counts};
+}
+
+let mgsBattlePack=null;
+export function createMgsBattlePack(){
+ if(!mgsBattlePack)mgsBattlePack=createMgsV2Pack();
+ return mgsBattlePack;
+}
+
+export function mgsPracticeDeck(){
+ const pack=createMgsBattlePack();
  const counts=practiceDeck(pack);
  return {pack,counts};
 }
