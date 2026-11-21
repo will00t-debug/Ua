@@ -39,6 +39,21 @@ const RAID_BOX_FEATURES=Object.freeze({
  'TRK-1-088':["unblockedAttack","onPlay"],
  'TRK-1-091':["oppEffectRetireInstead","main"],
  'TRK-1-106':["passive","onPlay"],
+ // UA42BT / UA42ST 〈物語〉. Rugia HK span.raidBorder. The raid permission
+ // line is not a framed keyword. 060 and 061 print the 羽川翼 alias outside
+ // the frame. 075 prints impact-null outside the frame. 076's impact is
+ // inside and is raidImpact, which is already live only as a face-up Raid.
+ 'MGS-1-015':["blockFloor","onPlay"],
+ 'MGS-1-021':["step","energyLossSwap","onPlay"],
+ 'MGS-1-047':["onPlay","main"],
+ 'MGS-1-060':["onPlay","main"],
+ 'MGS-1-061':["attackWin","onPlay"],
+ 'MGS-1-075':["onAttack","onRetire"],
+ 'MGS-1-076':["onAttack","onRetire"],
+ 'MGS-1-083':["onPlay"],
+ 'MGS-1-088':["main","onRetire"],
+ 'MGS-1-101':["onPlay","onRetire"],
+ 'MGS-1-113':["ownTurnBp","onPlay"],
  'BLC-1-004':["main"],
  'BLC-1-014':["onPlay"],
  'BLC-1-020':["onPlay","phase"],

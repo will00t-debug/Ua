@@ -51,7 +51,18 @@ export function mgsPackCard(card){
    ...(program.enterAlwaysActive?{enterAlwaysActive:true}:{}),
    ...(program.ownTurnBp?{ownTurnBp:program.ownTurnBp}:{}),
    ...(program.raidName?{raidName:program.raidName}:{}),
-   ...(program.raidTrait?{raidTrait:program.raidTrait}:{})
+   ...(program.raidTrait?{raidTrait:program.raidTrait}:{}),
+   ...(program.pairedMain?{pairedMain:program.pairedMain}:{}),
+   ...(program.blockFloorIfNameLeft?{blockFloorIfNameLeft:program.blockFloorIfNameLeft}:{}),
+   ...(program.energyLossSwap?{energyLossSwap:program.energyLossSwap}:{}),
+   ...(program.attackEndRestStrip?{attackEndRestStrip:program.attackEndRestStrip}:{}),
+   ...(program.allyBattleWin?{allyBattleWin:program.allyBattleWin}:{}),
+   ...(program.handApWhileName?{handApWhileName:program.handApWhileName}:{}),
+   ...(program.removedPayRetire?{removedPayRetire:program.removedPayRetire}:{}),
+   ...(program.attackWinDiscardIfEnergy?{attackWinDiscardIfEnergy:program.attackWinDiscardIfEnergy}:{}),
+   ...(program.raidImpact?{raidImpact:program.raidImpact}:{}),
+   ...(program.printedImpact?{printedImpact:program.printedImpact}:{}),
+   ...(program.bpPerDirectFacedown?{bpPerDirectFacedown:program.bpPerDirectFacedown}:{})
   },card);
  }
  if(kind==='handDiscount'){

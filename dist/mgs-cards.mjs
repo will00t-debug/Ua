@@ -99,7 +99,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-002",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-002",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "searchWake",
   "raidFrame": null,
   "faq": []
  },
@@ -655,7 +655,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-014",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-014",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "floorReplay",
   "raidFrame": null,
   "faq": []
  },
@@ -706,7 +706,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-015",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-015",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "snakeFork",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈千石 撫子〉&nbsp自己回合中&nbsp 本回合中，自己有〈蛇切繩〉退場的情況下，此角色獲得「此角色不會被BP3000或以下的角色阻擋。」。&nbsp登場時&nbsp 從以下選擇１項。．從自己牌庫上面查看７張卡，從中選擇最多１張〈蛇切繩〉，以休息狀態在自己能源線登場，將餘下的卡以任意順序放置到牌庫下面。．從自己手牌或場外選擇最多１張〈蛇切繩〉，以休息狀態在自己能源線登場。",
@@ -1011,7 +1011,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-021",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-021",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "sisterSwap",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈阿良良木 火憐〉 (在自己的移動階段可從前線移動到能源線)&nbsp自己回合中&nbsp 在能源線的情況 自己的角色於戰鬥中戰敗的攻擊結束時，可選擇自己前線１張［特徵：火焰姐妹］，與此角色調換位置。&nbsp登場時&nbsp 從自己手牌選擇最多１張能源需求３或以下及AP消耗１的［特徵：火焰姐妹］，以休息狀態在自己場上登場。",
@@ -1228,7 +1228,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-025",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-025",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "sisterReturn",
   "raidFrame": null,
   "faq": []
  },
@@ -1404,7 +1404,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-029",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-029",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "fieldAp",
   "raidFrame": null,
   "faq": [
    {
@@ -2243,7 +2243,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-046",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-046",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "bounceRetire",
   "raidFrame": null,
   "faq": [
    {
@@ -2323,7 +2323,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-047",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-047",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "shinobuRest",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈忍野 忍〉&nbsp登場時&nbsp 從自己場外選擇最多１張能源需求２或以下的紫色〈阿良良木 曆〉，以休息狀態在自己場上登場。&nbsp主起動&nbsp 在前線的情況 將自己前線１張激活狀態的〈阿良良木 曆〉休息。如這樣做，此角色在本回合中，獲得。",
@@ -2873,7 +2873,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-058",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-058",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "energyDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -2931,7 +2931,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-059",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-059",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "energyMain",
   "raidFrame": null,
   "faq": [
    {
@@ -2989,7 +2989,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-060",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-060",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "wingPair",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈羽川 翼〉&nbsp登場時&nbsp 對手將他自身１張手牌放置到場外。&nbsp主起動&nbsp 在前線的情況 選擇對手前線最多１張BP1500或以上的角色，本回合中，BP-1000。&nbsp主起動&nbsp 將自己手牌１張〈羽川 翼〉放置到場外。如這樣做，此角色在本回合中，獲得。",
@@ -3045,7 +3045,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-061",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-061",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "wingWin",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈羽川 翼〉此角色進行攻擊並戰鬥勝利時，自己能源線擁有〈阿良良木 曆〉或〈戰場原 黑儀〉的情況下，對手將他自身１張手牌放置到場外。&nbsp登場時&nbsp 選擇對手前線最多１張角色，本回合中，BP-2000。將自己任意張數的手牌放置到場外。每用此效果將１張卡放置到場外，被選擇的角色在本回合中，另外再BP-1500。",
@@ -3703,7 +3703,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-075",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-075",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "surugaDraw",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈神原 駿河〉&nbsp攻擊時&nbsp 此角色下面有２張或以下背面向上的卡的情況下，可將自己牌庫上面１張卡以背面向上放置到此角色下面。如這樣做，抽１張卡。&nbsp退場時&nbsp 將自己『與此角色下面背面向上的卡相同張數』的手牌放置到場外。",
@@ -3766,7 +3766,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-076",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-076",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "surugaDamage",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈神原 駿河〉 (進行攻擊並戰鬥勝利時，對手玩家受到１點傷害)&nbsp攻擊時&nbsp 此角色下面有２張或以下背面向上的卡的情況下，可將自己牌庫上面１張卡以背面向上放置到此角色下面。如這樣做，此角色在本回合中，BP+1000並獲得。&nbsp退場時&nbsp 將自己『與此角色下面背面向上的卡相同張數』的手牌放置到場外。",
@@ -3917,7 +3917,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-079",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-079",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideStrip",
   "raidFrame": null,
   "faq": [
    {
@@ -4151,7 +4151,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-083",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-083",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "hitagiOrigin",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈戰場原 黑儀〉&nbsp登場時&nbsp 從以下選擇１項。．選擇對手前線最多１張BP3000或以下的角色退場。．此角色的突襲源是能源需求１或以上的情況下，抽１張卡，並且從自己手牌選擇最多１張能源需求３或以下及AP消耗１的紅色角色卡，以激活狀態在自己場上登場。",
@@ -4360,7 +4360,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-087",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-087",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "redWindow",
   "raidFrame": null,
   "faq": [
    {
@@ -4418,7 +4418,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-088",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-088",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayoiReturn",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈八九寺 真宵〉&nbsp主起動&nbsp 在前線的情況 可將自己１張手牌放置到移除區。如這樣做，抽１張卡，並且選擇自己場上最多１張其他角色，被選擇的角色及此角色在本回合中，BP+1000。&nbsp退場時&nbsp 將自己移除區任意張數的卡放置到場外。用此效果放置３張或以上的情況下，此卡以休息狀態在自己場上登場。",
@@ -4650,7 +4650,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-093",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-093",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidUnder",
   "raidFrame": null,
   "faq": [
    {
@@ -4701,7 +4701,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-094",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-094",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "pairImpact",
   "raidFrame": null,
   "faq": []
  },
@@ -4928,7 +4928,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-099",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-099",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "surugaGrant",
   "raidFrame": null,
   "faq": [
    {
@@ -4979,7 +4979,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-100",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-100",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "removedRetire",
   "raidFrame": null,
   "faq": [
    {
@@ -5030,7 +5030,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-101",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-101",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mustBlock",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈阿良良木 曆〉&nbsp登場時&nbsp 此角色在本回合中，BP+1000並獲得「可能的話，對手必需要阻擋此角色的攻擊。」。&nbsp退場時&nbsp 自己場上擁有〈姬絲秀忒．雅賽蘿拉莉昂．刃下心〉的情況下，可將此角色最多１張突襲源的卡，以休息狀態在自己場上登場。",
@@ -5218,7 +5218,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-105",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-105",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "facedownBp",
   "raidFrame": null,
   "faq": [
    {
@@ -5556,7 +5556,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-112",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-112",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tuckGrant",
   "raidFrame": null,
   "faq": [
    {
@@ -5620,7 +5620,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-113",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-113",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "doubleOrDraw",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈戰場原 黑儀〉&nbsp自己回合中&nbsp 此角色的BP+500。&nbsp登場時&nbsp 從以下選擇１項。．抽最多１張卡。．此角色的突襲源是能源需求１或以上的情況下，此角色在本回合中，獲得 (此角色在本回合初次進行攻擊時會被激活)。",

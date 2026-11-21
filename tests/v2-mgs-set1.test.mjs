@@ -78,7 +78,7 @@ test('UA42BT and UA42ST are one identity per number on the shared engine',()=>{
  assert.equal(MGS_CARDS.every(card=>card.sourceTc&&card.effectJa&&card.nameJa),true);
  assert.equal(MGS_CARDS.every(card=>card.engineKind===mgsEngineKind(card)),true);
  assert.deepEqual([...MGS_ENGINE_IDS],MGS_CARDS.filter(card=>card.engineKind).map(card=>card.id));
- assert.equal(MGS_ENGINE_IDS.length,87);
+ assert.equal(MGS_ENGINE_IDS.length,113);
  assert.deepEqual(Object.keys(pack.cards),[...MGS_ENGINE_IDS]);
  assert.equal(JSON.stringify(pack).includes('"op":"mgs"'),false);
  assert.doesNotMatch(readFileSync(new URL('../dist/universal-v2/mgs-pack.mjs',import.meta.url),'utf8'),/from ['"][^'"]*engine\.mjs/);
@@ -104,12 +104,29 @@ test('UA42BT and UA42ST are one identity per number on the shared engine',()=>{
  assert.equal(marked.genMark,'+');
  assert.equal(MGS_CARDS.some(card=>card.traits.some(trait=>trait.includes('/')||trait.includes('／'))),false);
 
+ const FRAME_FEATURES={
+  'MGS-1-015':['blockFloor','onPlay'],
+  'MGS-1-021':['step','energyLossSwap','onPlay'],
+  'MGS-1-047':['onPlay','main'],
+  'MGS-1-060':['onPlay','main'],
+  'MGS-1-061':['attackWin','onPlay'],
+  'MGS-1-075':['onAttack','onRetire'],
+  'MGS-1-076':['onAttack','onRetire'],
+  'MGS-1-083':['onPlay'],
+  'MGS-1-088':['main','onRetire'],
+  'MGS-1-101':['onPlay','onRetire'],
+  'MGS-1-113':['ownTurnBp','onPlay']
+ };
  for(const id of RAID_FRAMES){
   const card=byId.get(id);
   assert.ok(card.raidFrame&&card.raidFrame.inside,id);
-  assert.equal(pack.cards[id],undefined);
-  assert.equal(raidBoxListed(id,'onPlay'),false);
+  assert.ok(pack.cards[id],id);
+  for(const feature of FRAME_FEATURES[id])assert.equal(raidBoxListed(id,feature),true,id+' '+feature);
  }
+ assert.equal(raidBoxListed('MGS-1-075','onPlay'),false);
+ assert.equal(raidBoxListed('MGS-1-060','nameAlias'),false);
+ assert.equal(pack.cards['MGS-1-075'].impactNull,true);
+ assert.equal(pack.cards['MGS-1-060'].nameAliases.includes('羽川翼'),true);
  assert.equal(MGS_CARDS.filter(card=>card.raidFrame).map(card=>card.id).join(','),RAID_FRAMES.join(','));
  assert.equal(pack.cards['MGS-1-009'].nameAliases.includes('千石撫子'),true);
  assert.equal(pack.cards['MGS-1-009'].name,'千石 撫子');
@@ -123,7 +140,7 @@ test('the supported practice deck is a legal 50, and a fifth copy stays out',()=
  assert.equal(Object.values(practice.counts).reduce((sum,n)=>sum+n,0),50);
  const ready=editorV2Status('mgs',practice.counts,pack);
  assert.equal(ready.ready,true,ready.issues.join('；'));
- assert.equal(ready.registered,87);
+ assert.equal(ready.registered,113);
  const mixed={...practice.counts};
  const four=Object.keys(mixed).find(id=>mixed[id]===4);
  const donor=Object.keys(mixed).find(id=>id!==four&&mixed[id]>0);
@@ -281,4 +298,92 @@ function act(s,action){
  assert.equal(effectiveRequiredEnergy(pack,cost,cut),3);
  assert.equal(universalBp(pack,cost,cut),4000);
  assert.equal(effectiveHandRequiredEnergy(pack,cost,0,pack.cards['MGS-1-078'],hand),1);
+});
+
+test('the last prints keep a private window, a raid frame, and a name-wide once',()=>{
+ const deck=deckWith(['MGS-1-002','MGS-1-058','MGS-1-059','MGS-1-060','MGS-1-075','MGS-1-079','MGS-1-105']);
+ deck['MGS-1-054']-=3;
+ deck['MGS-1-050']-=1;
+ deck['MGS-1-059']+=1;
+ deck['MGS-1-079']+=1;
+ deck['MGS-1-009']=1;
+ assert.equal(Object.values(deck).reduce((sum,n)=>sum+n,0),50);
+ let looked=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42002,first:0}),'main');
+ readyAp(looked,2);
+ for(let i=0;i<4;i++)sit(looked,0,'MGS-1-004','energy');
+ const nadeko=take(looked,0,'MGS-1-009');
+ const suruga=take(looked,0,'MGS-1-075');
+ const plain=take(looked,0,'MGS-1-018');
+ const other=take(looked,0,'MGS-1-020');
+ const last=take(looked,0,'MGS-1-035');
+ looked.players[0].deck.unshift(nadeko,suruga,plain,other,last);
+ const seeker=take(looked,0,'MGS-1-002');
+ looked.players[0].hand.push(seeker);
+ looked=playLine(looked,seeker.uid,'front');
+ assert.equal(looked.pending.kind,'effect-next');
+ assert.equal(looked.pending.mode,'look');
+ assert.deepEqual(looked.pending.uids,[nadeko.uid,suruga.uid,plain.uid,other.uid,last.uid]);
+ assert.deepEqual(looked.pending.choices,[nadeko.uid,suruga.uid]);
+ assert.deepEqual(universalPrivateChoices(packs,looked,0).inspected.map(card=>card.uid),looked.pending.uids);
+ assert.equal(universalPrivateChoices(packs,looked,1),null);
+ looked=act(looked,{type:'nextPrint',mode:'take',uid:nadeko.uid});
+ looked=act(looked,{type:'nextPrint',mode:'take',uid:suruga.uid});
+ while(looked.pending?.mode==='order'){
+  const uid=looked.pending.uids[0];
+  looked=act(looked,{type:'nextPrint',mode:'bottom',uid});
+ }
+ assert.equal(looked.players[0].hand.some(card=>card.uid===nadeko.uid),true);
+ assert.equal(looked.players[0].hand.some(card=>card.uid===suruga.uid),true);
+ assert.equal(looked.publicReveals.some(row=>row.uid===nadeko.uid&&row.kind==='searched-to-hand'),true);
+ assert.equal(looked.publicReveals.some(row=>row.uid===plain.uid),false);
+ assert.equal(looked.players[0].front.find(card=>card?.uid===seeker.uid).entryTurn,looked.turn);
+
+ let reveal=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42058,first:0}),'main');
+ readyAp(reveal,2);
+ for(let i=0;i<4;i++)sit(reveal,0,'MGS-1-041','energy');
+ const top=take(reveal,0,'MGS-1-003');
+ reveal.players[0].deck.unshift(top);
+ const named=take(reveal,0,'MGS-1-058');
+ reveal.players[0].hand.push(named);
+ reveal=playLine(reveal,named.uid,'front');
+ assert.equal(reveal.pending.mode,'number');
+ const wrong=reveal.pending.numbers.find(number=>number!==pack.cards['MGS-1-003'].energy);
+ reveal=act(reveal,{type:'lastPrint',mode:'number',number:wrong});
+ assert.equal(reveal.players[0].deck[0].uid,top.uid);
+ assert.equal(reveal.publicReveals.some(row=>row.uid===top.uid&&row.kind==='revealed-window'),true);
+
+ let once=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42059,first:0}),'main');
+ const first=sit(once,0,'MGS-1-059','front');
+ const second=sit(once,0,'MGS-1-059','front');
+ const wing=sit(once,0,'MGS-1-060','front',{ready:true});
+ wing.stack=[take(once,0,'MGS-1-003')];
+ once.players[0].deck.unshift(take(once,0,'MGS-1-006'));
+ once=act(once,legalUniversalActions(packs,once).find(action=>action.uid===first.uid&&action.mode==='main'));
+ assert.equal(once.pending.mode,'number');
+ once=act(once,{type:'lastPrint',mode:'number',number:0});
+ assert.equal(legalUniversalActions(packs,once).some(action=>action.uid===second.uid&&action.mode==='main'),false);
+ assert.equal(legalUniversalActions(packs,once).some(action=>action.uid===wing.uid&&action.mode==='main'),true);
+
+ let ordinary=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42075,first:0}),'main');
+ const loose=sit(ordinary,0,'MGS-1-075','front');
+ ordinary=toPhase(ordinary,'attack');
+ ordinary=act(ordinary,{type:'attack',uid:loose.uid});
+ assert.notEqual(ordinary.pending?.mode,'tuck');
+ let raided=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42076,first:0}),'main');
+ const tight=sit(raided,0,'MGS-1-075','front');
+ tight.stack=[take(raided,0,'MGS-1-003')];
+ raided.players[0].deck.unshift(take(raided,0,'MGS-1-006'));
+ raided=toPhase(raided,'attack');
+ raided=act(raided,{type:'attack',uid:tight.uid});
+ assert.equal(raided.pending.mode,'tuck');
+
+ let cut=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42079,first:0}),'main');
+ const body=sit(cut,0,'MGS-1-079','front');
+ assert.equal(effectiveRequiredEnergy(pack,cut,body),0);
+ const held=take(cut,0,'MGS-1-079');
+ cut.players[0].hand.push(held);
+ assert.equal(effectiveHandRequiredEnergy(pack,cut,0,pack.cards['MGS-1-079'],held),3);
+ const piled=sit(cut,0,'MGS-1-105','front');
+ piled.under=[Object.assign(take(cut,0,'MGS-1-003'),{faceDown:true}),Object.assign(take(cut,0,'MGS-1-006'),{faceDown:true})];
+ assert.equal(universalBp(pack,cut,piled),3000);
 });
