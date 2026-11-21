@@ -10,7 +10,14 @@ const shooter={...basic('shooter',3500),implementation:'dsl',enterAlwaysActive:t
  unblockedIfName:'other1',
  effects:{onPlay:[{op:'grantSelfSniperThisTurn'},{op:'grantSelfAttackWinDrawThisTurn'}]}};
 const cards=[shooter,basic('weak',3000),basic('equal',3500),basic('strong',4000),
- ...Array.from({length:9},(_,i)=>basic('other'+i))];
+ ...Array.from({length:5},(_,i)=>basic('other'+i)),
+ ...[
+  ['mandatory',{unblockedAttack:{optional:false,then:[{op:'draw',count:1}]}}],
+  ['once',{unblockedAttack:{oncePerTurn:true,optional:false,then:[{op:'draw',count:1}]}}],
+  ['optional',{unblockedAttack:{optional:true,then:[{op:'draw',count:1}]}}],
+  ['rest',{unblockedRestFront:true}]
+ ].map(([id,rule])=>({...basic(id,3500),implementation:'dsl',enterAlwaysActive:true,
+  ...rule,effects:{onPlay:[{op:'grantSelfSniperThisTurn'}]}}))];
 const pack=createUniversalPack({id:'r55-sniper-shared',cards}),both=[pack,pack];
 const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===12?2:4]));
 assert.deepEqual(validateUniversalDeck(pack,deck),[]);
@@ -22,9 +29,9 @@ const take=(s,p,id)=>{
  throw Error('No physical '+id);
 };
 const use=(s,a)=>dispatchUniversalAction(both,s,a);
-function scene(defenderId='equal'){
+function scene(defenderId='equal',shooterId='shooter'){
  let s=newUniversalMatch(both,{decks:[deck,deck],first:0,seed:55122});
- const shooterCard=take(s,0,'shooter');
+ const shooterCard=take(s,0,shooterId);
  shooterCard.fieldEntryStamp=s.nextFieldEntryStamp++;shooterCard.ready=true;
  s.players[0].front[0]=shooterCard;
  // Genuine onPlay effect resolution, not just an invented action payload.
@@ -137,4 +144,49 @@ test('named unblocked draw still occurs on direct attack, never genuine block',(
   assert.equal(s.players[0].hand.length,before+(block?0:1));
   assert.equal(assertUniversalMatch(both,s),true);
  }
+});
+
+test('every printed unblocked draw profile is shared by direct and targeted battle',()=>{
+ for(const id of ['mandatory','once','optional']){
+  for(const method of ['sniper','pass','block']){
+   let {s,attacker,target}=scene('equal',id);
+   const hand=s.players[0].hand.length;
+   const attack=legalUniversalActions(both,s).find(a=>a.type==='attack'&&a.uid===attacker.uid&&
+    (method==='sniper'?a.targetUid===target.uid:!a.targetUid));
+   s=use(s,attack);
+   if(method!=='sniper')s=use(s,{type:'chooseBlock',uid:method==='block'?target.uid:null});
+   if(id==='optional'&&method!=='block'){
+    assert.equal(s.pending?.kind,'effect-may-then');
+    if(method==='sniper')assert.ok(s.players[1].front.some(x=>x?.uid===target.uid),'choice before battle');
+    assert.equal(assertUniversalMatch(both,JSON.parse(JSON.stringify(s))),true);
+    s=use(s,{type:'chooseMayThen',mode:'do'});
+   }
+   assert.equal(s.players[0].hand.length,hand+(method==='block'?0:1),id+' '+method);
+   if(method==='sniper'){
+    assert.equal(s.blocksByUid[target.uid],undefined);
+    assert.ok(s.players[1].outside.some(x=>x.uid===target.uid));
+   }
+   assert.equal(assertUniversalMatch(both,s),true);
+  }
+ }
+});
+test('optional unblocked draw can be skipped without losing or duplicating sniper battle',()=>{
+ let {s,target}=scene('equal','optional');
+ const hand=s.players[0].hand.length;
+ s=use(s,legalUniversalActions(both,s).find(a=>a.type==='attack'&&a.targetUid===target.uid));
+ s=use(s,{type:'chooseMayThen',mode:'skip'});
+ assert.equal(s.players[0].hand.length,hand);
+ assert.ok(s.players[1].outside.some(x=>x.uid===target.uid));
+ assert.equal(s.pending,null);
+});
+test('unblocked rest resolves before targeted battle, without a block or direct LIFE hit',()=>{
+ let {s,target}=scene('strong','rest');
+ s=use(s,legalUniversalActions(both,s).find(a=>a.type==='attack'&&a.targetUid===target.uid));
+ assert.equal(s.pending?.kind,'effect-unblocked-rest');
+ assert.equal(assertUniversalMatch(both,JSON.parse(JSON.stringify(s))),true);
+ const rest=legalUniversalActions(both,s).find(a=>a.type==='chooseUnblockedRest'&&a.uid===target.uid);
+ assert.ok(rest);s=use(s,rest);
+ assert.equal(s.players[1].front.find(x=>x?.uid===target.uid)?.ready,false);
+ assert.equal(s.blocksByUid[target.uid],undefined);
+ assert.equal(s.players[1].life.length,7);
 });
