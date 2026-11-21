@@ -8332,6 +8332,9 @@ function continueEffectQueue(pack,s){
     (attacker.sniperGranted?.maxBp!==undefined&&
      bp(pack,s,defender)>=attacker.sniperGranted.maxBp))
     throw Error('Unproven physical SNIPER battle');
+   // A designated sniper battle is unblocked even if the attacker loses.
+   if(namedUnblockedDrawLive(pack,s,attacker))
+    draw(pack,s,owner,1,{reason:'own-effect',sourceUid:attacker.uid});
    queueEnergyLineAttackEndSwaps(pack,s,owner,attacker.uid);
    if(bp(pack,s,attacker)>=bp(pack,s,defender)){
     grantBattleWinToOtherOwn(pack,s,owner,attacker,'attacker');
@@ -9555,6 +9558,11 @@ function maxBpImpactTarget(pack,s,c,contains,name){
  const silenced=originalEffectsDisabled(s,c);
  return nameContainsToken(d,contains,silenced)||cardHasName(d,name,silenced);
 }
+function namedUnblockedDrawLive(pack,s,attacker){
+ const name=card(pack,attacker).unblockedIfName;
+ return !!name&&!originalEffectsDisabled(s,attacker)&&
+  ownFieldHasPrintedName(pack,s,s.active,name);
+}
 function unblockedBeforeDamage(pack,s,attacker){
  const jobs=[];
  const printedDraw=card(pack,attacker).girlNameUnblockedDraw;
@@ -9583,9 +9591,7 @@ function unblockedBeforeDamage(pack,s,attacker){
    sourceStamp:attacker.fieldEntryStamp,then});
   else jobs.push(...then);
  }
- const namedDraw=card(pack,attacker).unblockedIfName;
- if(namedDraw&&!originalEffectsDisabled(s,attacker)&&
-  ownFieldHasPrintedName(pack,s,s.active,namedDraw))
+ if(namedUnblockedDrawLive(pack,s,attacker))
   jobs.push({op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
  if(card(pack,attacker).id==='MMM-2-038'&&!originalEffectsDisabled(s,attacker))
   attacker.mmm2SkipEndActive=s.turn;
