@@ -104,7 +104,7 @@ test('phone dark mode cannot recolor combat keyword pixels via CSS background',(
  assert.match(css,/background:none!important/);
  const index=readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
  assert.match(index,/arena-deck-mockup\.css\?v=20261120mobileflow2effect1combat2palette5pngonce1/);
- assert.match(index,/v2-deck-editor\.mjs\?v=20261120dgm3effect1combat2summary3palette5pngonce1/);
+ assert.match(index,/v2-deck-editor\.mjs\?v=20261121nea067068fix1/);
 });
 
 test('once per turn uses white-backed black text while other badge colors stay unchanged',()=>{
@@ -126,4 +126,26 @@ test('once per turn uses white-backed black text while other badge colors stay u
  assert.match(combat,/%23009bcd/,'blue timing badge unchanged');
  const style=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
  assert.match(style,/\.ua-effect-keyword\.ua-effect-limit,/);
+});
+
+test('Nea D Campbell 067 and 068 preserve distinct printed non-raid abilities',()=>{
+ const dgm=TITLES.find(t=>t.id==='dgm');
+ const block=dgm.cards.find(c=>c.id==='DGM-1-067');
+ const damage=dgm.cards.find(c=>c.id==='DGM-1-068');
+ assert.ok(block&&damage);
+ assert.match(block.effectJa,/【2回ブロック】/);
+ assert.match(damage.effectJa,/【ダメージ（2）】/);
+ for(const field of ['effect','effectHk']){
+  assert.match(block[field],/不是突襲狀態的此角色獲得【2次阻擋】。/,field+' 067');
+  assert.match(damage[field],/不是突襲狀態的此角色獲得【傷害（2）】。/,field+' 068');
+  assert.doesNotMatch(block[field],/獲得【傷害（2）】/,field+' no wrong damage 2');
+  assert.doesNotMatch(damage[field],/獲得。/,field+' no missing keyword');
+ }
+ assert.match(block.raidFrame.outside,/獲得【2次阻擋】。/);
+ assert.match(damage.raidFrame.outside,/獲得【傷害（2）】。/);
+ const rendered=renderCardEffectText(cardEffectDisplayText(damage));
+ assert.match(rendered,/ua-effect-damage" role="img" aria-label="傷害二"/);
+ assert.match(rendered,/%23ffe500/,'Damage two is drawn as yellow image badge');
+ assert.equal(damage.engineKind,'neaDamageTwo','battle behavior unchanged');
+ assert.equal(block.engineKind,'neaDoubleBlock','double block behavior unchanged');
 });
