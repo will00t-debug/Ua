@@ -81,7 +81,7 @@ test('TTG-046 printed 4/1 Kamina has front-only own-Raid-conditioned main and re
  const ready=legal(s,a=>a.type==='activate'&&a.uid===kamina.uid&&a.mode==='ready');
  const both=legal(s,a=>a.type==='activate'&&a.uid===kamina.uid&&a.mode==='readyAndBuff');
  const buff=legal(s,a=>a.type==='activate'&&a.uid===kamina.uid&&a.mode==='buff');
- for(const action of [ready,both,buff])assert.match(uiActionLabel(action,{pack:packs,state:s}),/主要能力/);
+ for(const action of [ready,both,buff])assert.match(uiActionLabel(action,{pack:packs,state:s}),/主啟動/);
  s=next(s,both);
  assert.equal(s.players[0].front[0].ready,true,'4/1 Kamina must stand when chosen');
  assert.equal(s.pending?.kind,'main-two-buff');

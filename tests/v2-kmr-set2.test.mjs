@@ -172,7 +172,7 @@ test('口嚼獸 draws only when no character is on the field, and draws again wh
  ready(state);
  const activate=legalUniversalActions(packs,state).find(a=>a.type==='activate'&&a.uid===actor.uid&&a.mode==='kmr2:KMR-2-002:a');
  assert.ok(activate);
- assert.equal(uiActionLabel(activate,{pack,state}).includes('起動主要'),true);
+ assert.equal(uiActionLabel(activate,{pack,state}).includes('主啟動'),true);
  assert.equal(/kmr/i.test(uiActionLabel(activate,{pack,state})),false);
  state=dispatchUniversalAction(packs,state,activate);
  const retire=state.pending.actions.find(a=>a.uid===field.uid);

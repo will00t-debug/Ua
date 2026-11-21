@@ -221,7 +221,7 @@ test('MST-1-021 may play nothing, then ACTIVES itself once while both names are 
  assert.equal(s.players[0].hand.some(c=>c.uid===recruit.uid),true);
  const action={type:'activate',uid:actor.uid,mode:'namesActive'};
  assert.ok(legalUniversalActions(packs,s).some(a=>JSON.stringify(a)===JSON.stringify(action)));
- assert.match(uiActionLabel(action,{pack:mst,state:s}),/ACTIVE/);
+ assert.match(uiActionLabel(action,{pack:mst,state:s}),/活動/);
  const missing=structuredClone(s);
  missing.players[0].energy[1]=null;
  missing.players[0].outside.push(eris);

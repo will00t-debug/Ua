@@ -23,15 +23,15 @@ test('all online card choice galleries cap illustrations and allow inner scrolli
  const online=read('online.mjs');
  assert.equal((online.match(/grid-template-columns:repeat\(auto-fill,minmax\(86px,100px\)\)/g)||[]).length,4);
  assert.equal((online.match(/max-height:138px;aspect-ratio:63\/88/g)||[]).length,5);
- assert.match(online,/online-battle-ui\.mjs\?v=20261116triggerthumb2/);
+ assert.match(online,/online-battle-ui\.mjs\?v=20261121mainlabels1/);
 });
 
 test('online.html directly preloads the scoped battle sheet and updates the version',()=>{
  const html=read('online.html');
  const ui=read('universal-v2/online-battle-ui.mjs');
- assert.match(html,/ua-ui-version" content="20261116triggerthumb2"/);
+ assert.match(html,/ua-ui-version" content="20261121mainlabels1"/);
  assert.match(html,/data-online-battle-style="online-battle\.css"/);
- assert.match(html,/online-battle\.css\?v=20261116triggerthumb2" media="not all"/);
+ assert.match(html,/online-battle\.css\?v=20261121mainlabels1" media="not all"/);
  assert.match(ui,/link\[data-online-battle-style=/);
 });
 

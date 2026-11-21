@@ -76,8 +76,8 @@ test('two main abilities on one Madoka card are not the same button',()=>{
    {type:'activate',uid,mode:'mmm2:0'},
    {type:'activate',uid,mode:'mmm2:1'}
   ],null,{front:[{uid,cardId:id}]});
-  assert.match(text[0],/起動主要/);
-  assert.match(text[1],/起動主要/);
+  assert.match(text[0],/主啟動/);
+  assert.match(text[1],/主啟動/);
  }
 });
 
@@ -146,7 +146,7 @@ test('a live Homura card offers two different main buttons',()=>{
  assert.equal(acts.length,2);
  const text=acts.map(action=>uiActionLabel(action,{pack:packs,state:s}));
  assert.equal(new Set(text).size,2,text.join(' | '));
- assert.equal(text.some(label=>label.includes('返回手牌')),true);
- assert.equal(text.some(label=>label.includes('牌組底')),true);
+ assert.equal(text.some(label=>label.includes('放回手牌')),true,text.join(' | '));
+ assert.equal(text.some(label=>/卡組下面|牌組底/.test(label)),true,text.join(' | '));
  assertUniversalMatch(packs,s);
 });

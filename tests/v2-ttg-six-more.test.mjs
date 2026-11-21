@@ -200,7 +200,7 @@ test('TTG-003 grants front energy at 6, the whole front at 8, and one ACTIVE at 
   .reduce((n,c)=>n+universalCardEnergy(ttg,high,0,c),0);
  assert.equal(produced,24);
  const ready=act(high,a=>a.type==='activate'&&a.uid===source.uid&&a.mode==='ready20');
- assert.match(uiActionLabel(ready,{pack:ttg,state:high}),/ACTIVE/);
+ assert.match(uiActionLabel(ready,{pack:ttg,state:high}),/活動/);
  high=go(high,ready);
  assert.equal(high.pending.kind,'effect-active-character');
  assert.ok(high.pending.choices.length>1);
@@ -279,7 +279,7 @@ test('TTG-017 looks at four cards or the outside, then activates +2 energy at 8'
  assert.equal((landed.buffs||[]).some(b=>b.energy===2),false);
  assert.equal(universalCardEnergy(ttg,fueled,0,landed),2);
  const plus=act(fueled,a=>a.type==='activate'&&a.uid===landed.uid&&a.mode==='plus2');
- assert.match(uiActionLabel(plus,{pack:ttg,state:fueled}),/起動主要.*產能/);
+ assert.match(uiActionLabel(plus,{pack:ttg,state:fueled}),/主啟動[\s\S]*產能/);
  fueled=go(fueled,plus);
  assert.equal(live(fueled,0,landed.uid).buffs.some(b=>b.energy===2&&b.untilTurn===fueled.turn),true);
  assert.equal(universalCardEnergy(ttg,fueled,0,landed),4);

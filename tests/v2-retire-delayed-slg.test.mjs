@@ -99,7 +99,7 @@ test('013 MAIN source REST gives current +1 energy and retires exactly once at p
  assert.equal(before,1);
  const a={type:'activate',uid:source.uid,mode:'selfRestEnergyRetire'};
  assert.ok(legalUniversalActions(packs,s).some(x=>JSON.stringify(x)===JSON.stringify(a)));
- assert.equal(uiActionLabel(a,{pack,state:s}).includes('主要階段結束退場'),true);
+ assert.equal(uiActionLabel(a,{pack,state:s}).includes('主要階段結束時退場'),true);
  assert.throws(()=>dispatchUniversalAction(packs,s,a,{actor:1}),/Wrong player/);
  const orig=structuredClone(s);
  s=dispatchUniversalAction(packs,s,a);

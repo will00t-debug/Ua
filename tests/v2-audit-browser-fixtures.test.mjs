@@ -139,7 +139,8 @@ test('CSM-1-055 audit board names both branches, pays once, and does not activat
  assert.equal(act.uid,aki.uid);
  assert.equal(legal.some(action=>action.type==='activate'&&action.uid===decoy.uid),false);
  const confirm=uiActionLabel(act,{pack:packs,state});
- assert.match(confirm,/起動主要：早川/);
+ assert.match(confirm,/主啟動/);
+ assert.match(confirm,/早川/);
  assert.doesNotMatch(confirm,/BP＋1000|先 ACTIVE/);
  let next=dispatchUniversalAction(packs,state,act,{actor:0});
  assert.equal(next.pending?.step,'discardThenChoose');

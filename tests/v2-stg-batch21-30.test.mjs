@@ -700,7 +700,8 @@ test('STG-1-055 generates front energy until the next own turn after an event',(
  s=go(s,{type:'chooseTopFiltered',uid:null});
  s=order(s,looked.map(c=>c.uid));
  const activate=find(stgPacks,s,a=>a.type==='activate'&&a.uid===moe.uid&&a.mode==='frontOnce');
- assert.equal(uiActionLabel(activate,{pack:stg,state:s}),'起動主要：直到下次我方回合開始，前線也能產生能源');
+ assert.match(uiActionLabel(activate,{pack:stg,state:s}),/主啟動/);
+ assert.match(uiActionLabel(activate,{pack:stg,state:s}),/前線時也可產生能源/);
  s=go(s,activate);
  assert.equal(universalEnergyByColor(stg,s,0).green,5);
  assert.equal(legalUniversalActions(stgPacks,s).some(a=>a.type==='activate'&&a.uid===moe.uid),false);

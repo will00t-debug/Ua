@@ -106,7 +106,8 @@ function publicActionText(username,action,hadPending,packs,before,after){
 function labelFor(packs,match,action){
  try{
   const text=uiActionLabel(action,{pack:packs,state:match});
-  if(typeof text==='string'&&text.trim()&&chars(text)<=180)return text;
+  const cap=action?.type==='activate'?480:180;
+  if(typeof text==='string'&&text.trim()&&chars(text)<=cap)return text;
  }catch{/* The button still works with a generic label. */}
  return '執行操作';
 }

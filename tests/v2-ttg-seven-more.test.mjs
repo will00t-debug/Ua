@@ -196,7 +196,7 @@ test('TTG-1-059 rests itself and buffs only Simon or a Simon raid base',()=>{
  host.stack=[base];
  s=toPhase(s,'main');
  assert.equal(legalUniversalActions(ttg,s).some(a=>a.type==='activate'&&a.mode==='selfRestBuff'&&a.uid===nia.uid),true);
- assert.match(uiActionLabel(act(s,a=>a.mode==='selfRestBuff'&&a.uid===nia.uid),{pack:ttg,state:s}),/REST/);
+ assert.match(uiActionLabel(act(s,a=>a.mode==='selfRestBuff'&&a.uid===nia.uid),{pack:ttg,state:s}),/休息/);
  s=go(s,act(s,a=>a.mode==='selfRestBuff'&&a.uid===nia.uid));
  assert.equal(s.pending.kind,'effect-buff-own');
  assert.ok(s.pending.choices.includes(simon.uid));

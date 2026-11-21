@@ -66,15 +66,15 @@ test('opening UI never silently traps either choice behind a stale AI busy state
  assert.match(action,/assertUniversalMatch\(app\.packs,nextState\)/);
  assert.match(action,/const nextReplay=appendUniversalReplay/);
  const versions={
-  'dist/universal-v2-battle.html':'universal-v2-preview.mjs?v=20261121mgs2',
-  'dist/universal-v2-preview.html':'universal-v2-preview.mjs?v=20261121mgs2'
+  'dist/universal-v2-battle.html':'universal-v2-preview.mjs?v=20261121mainlabels1',
+  'dist/universal-v2-preview.html':'universal-v2-preview.mjs?v=20261121mainlabels1'
  };
  for(const [file,query] of Object.entries(versions)){
   const html=readFileSync(new URL('../'+file,import.meta.url),'utf8');
   assert.match(html,new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
  }
  const battle=readFileSync(new URL('../dist/universal-v2-battle.html',import.meta.url),'utf8');
- assert.match(battle,/universal-v2-neon-board\.css\?v=20261114zones1/);
+ assert.match(battle,/universal-v2-neon-board\.css\?v=20261121mainlabels1/);
  const lobby=readFileSync(new URL('../dist/universal-v2-preview.html',import.meta.url),'utf8');
  assert.match(lobby,/id="ai-policy-live"/);
  assert.match(lobby,/id="use-ai-v3"/);

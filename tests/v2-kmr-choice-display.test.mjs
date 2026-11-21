@@ -132,7 +132,7 @@ test('looking at your own deck top stays private and still shows the controller 
  assert.equal(uiActionLabel({type:'kmr',mode:'top'},{pack:packs,state:looked}),'留在上面');
  const button=uiActionLabel(action,{pack:packs,state:s});
  assert.equal(button.includes('kmr'),false);
- assert.match(button,/起動主要/);
+ assert.match(button,/主啟動/);
 });
 
 test('a published opponent top is shown without opening the rest of that deck',()=>{

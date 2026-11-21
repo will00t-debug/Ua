@@ -314,7 +314,16 @@
  border-color:#ffce7a;box-shadow:inset 0 0 9px #078ced55
 }
 #match-view .v2-activation-option strong{color:#ffcf81;font-size:14px}
-#match-view .v2-activation-option span{line-height:1.6;font-size:13px}
+#match-view .v2-activation-option span{
+ line-height:1.65;font-size:13px;display:block;white-space:normal;
+ overflow-wrap:anywhere;word-break:break-word;
+}
+#match-view .v2-activation-option .ua-effect-keyword{
+ display:inline-block;vertical-align:middle;margin:0 2px 2px 0;max-width:100%;
+}
+#match-view .v2-activation-option .ua-effect-keyword-art{
+ height:22px;width:auto;max-width:100%;vertical-align:middle;
+}
 #match-view .v2-activation-close,
 #match-view .v2-activation-cancel{
  color:#e9f7ff;border:1px solid #578fbb;border-radius:7px;
