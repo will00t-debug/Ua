@@ -492,6 +492,37 @@ function kmr2ModeLine(id,key){
 function closedTitleChoiceLabel(action,{pack,state}={}){
  const mode=action?.mode;
  const step=state?.pending?.step;
+ // Branch labels must describe the actual printed outcome, not its internal mode.
+ const id=state?.pending?.id;
+ const csmBranches={
+  'CSM-1-006':{draw:'抽 1 張牌',look:'查看牌庫頂 4 張，可將蕾潔或淀治加入手牌'},
+  'CSM-1-017':{debuff:'對手前線最多 1 張角色 BP－1000',reze:'可退場自己的其他角色 1 張，再使對手前線最多 1 張角色 BP－5000'},
+  'CSM-1-024':{draw:'抽 1 張牌',buff:'使自己其他最多 1 張角色 BP＋2000'},
+  'CSM-1-031':{debuff:'對手前線最多 1 張角色 BP－1000',ap:'將自己的 1 張 AP 轉為活動'},
+  'CSM-1-037':{aura:'角色 BP＋1000，紫色角色兼具事件身分，恢復 1 AP',draw:'抽 2 張、棄 1 張手牌；若使用過其他事件，恢復 1 AP'},
+  'CSM-1-047':{draw:'抽 2 張牌',reenter:'將此角色以活動狀態重新登場至前線'},
+  'CSM-1-076':{look:'查看牌庫頂 2 張並排列或送場外，再可使淀治登場',tuck:'將此卡裏向置於淀治下方；若非突襲狀態，恢復 1 AP'}
+ };
+ if(action.type==='csm'&&step==='choose'&&csmBranches[id]?.[mode])return csmBranches[id][mode];
+ if(mode==='first'&&step==='entryOrder')return withClosedCard(pack,state,action,'先結算這張卡的登場效果');
+ if(mode==='readyAp'||(mode==='ap'&&Number.isInteger(action.index))){
+  const index=Number.isInteger(action.index)?action.index:Number(String(action.uid||'').split('-')[1])-1;
+  return Number.isInteger(index)&&index>=0?'將 AP '+(index+1)+' 轉為活動':'將指定 AP 轉為活動';
+ }
+ if(action.type==='csm'){
+  if(step==='payReturn'&&mode==='event')return withClosedCard(pack,state,action,'將這張事件卡放到場外，回收此角色');
+  if(step==='payReturn'&&mode==='char')return withClosedCard(pack,state,action,'將這張角色牌放到場外（共需 2 張），回收此角色');
+  if(step==='himenoSwap'&&mode==='front')return withClosedCard(pack,state,action,'選擇交換位置的前線角色');
+  if(step==='moveFront'&&mode==='move')return '移至前線 '+(action.slot+1);
+  if(mode==='peel'){
+   const side=state?.players?.[state?.pending?.player];
+   const host=[...(side?.front||[]),...(side?.energy||[])].find(c=>c?.uid===action.hostUid);
+   const layers=(host?.under||[]).filter(c=>c?.faceDown===true);
+   const index=layers.findIndex(c=>c.uid===action.uid);
+   return '選擇'+(host?uiCardLabel(pack,state,host.uid)+'下方的':'')+
+    (index>=0?'第 '+(index+1)+' 張':'指定')+'蓋牌（背面）';
+  }
+ }
  // Hidden LIFE is not a looked-at card: showing artwork/text exposes its trigger.
  if(state?.pending?.kind==='aot2'&&step==='life'&&mode==='life'){
   const index=state.players?.[0]?.life?.findIndex(c=>c?.uid===action.uid)??-1;
