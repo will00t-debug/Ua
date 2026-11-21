@@ -13,9 +13,9 @@ test('malformed official entity spacing and double encoding are cleaned without 
 });
 test('main timing is blue-class label; other explicit headers are rendered inline without altering prose',()=>{
  const html=renderCardEffectText('&nbsp主起動&nbsp 休息 此卡退場。&nbsp攻擊時&nbsp 抽１張卡。\n【登場時】抽１張卡。');
- assert.match(html,/class="ua-effect-keyword ua-effect-main" role="img" aria-label="主啟動"> 休息 此卡退場/);
- assert.match(html,/class="ua-effect-keyword" role="img" aria-label="攻擊時"> 抽１張卡/);
- assert.match(html,/class="ua-effect-keyword" role="img" aria-label="登場時">抽１張卡/);
+ assert.match(html,/class="ua-effect-keyword ua-effect-main" role="img" aria-label="主啟動"><img[^>]+><\/span> 休息 此卡退場/);
+ assert.match(html,/class="ua-effect-keyword" role="img" aria-label="攻擊時"><img[^>]+><\/span> 抽１張卡/);
+ assert.match(html,/class="ua-effect-keyword" role="img" aria-label="登場時"><img[^>]+><\/span>抽１張卡/);
  assert.doesNotMatch(html,/&(?:amp;)*nbsp/i);
  assert.equal(renderCardEffectText('選擇具有主啟動效果的角色。'),'選擇具有主啟動效果的角色。');
  assert.match(renderCardEffectText('主啟動：抽一張卡'),/ua-effect-main/);
