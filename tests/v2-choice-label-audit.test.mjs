@@ -109,3 +109,16 @@ test('every pending choice type has a label instead of the generic button',()=>{
  }
  assert.equal(uiActionLabel({type:'chooseGrantCause',mode:'skip'},ctx),'不給予阻擋下限');
 });
+
+test('Nea 067 optional untargeted phase-end choice describes draw and skip rather than identical generic buttons',()=>{
+ const ctx=context();
+ ctx.state.phase='attack';
+ ctx.state.pending.player=0;ctx.state.pending.sourceUid='0-67';
+ ctx.state.players[0].front=[{uid:'0-67',cardId:'DGM-1-067'}];
+ const draw=uiActionLabel({type:'chooseAttackEndDrawBase',mode:'draw'},ctx);
+ const skip=uiActionLabel({type:'chooseAttackEndDrawBase',mode:'skip'},ctx);
+ assert.match(draw,/抽 2 張.*1 張手牌.*1 張突襲底板/);
+ assert.match(skip,/不發動.*保留突襲底板/);
+ assert.notEqual(draw,skip);
+ assert.equal(uiActionLabel({type:'chooseAttackEndDrawBase',mode:'draw',uid:'0-1'},ctx),'完成這個選擇');
+});
