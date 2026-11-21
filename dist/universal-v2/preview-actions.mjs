@@ -573,6 +573,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
  if(!text)return '選擇這個效果';
  return withClosedCard(pack,state,action,text);
 }
+function hiddenLifeHandLabel(state,action){
+ const life=state?.players?.[state?.pending?.player]?.life;
+ const index=Array.isArray(life)?life.findIndex(c=>c?.uid===action.uid):-1;
+ return index>=0?'將生命區第 '+(index+1)+' 張（背面）加入手牌':'將 1 張生命加入手牌';
+}
 function orderEffectLabel(pack,state,action,base){
  const entry=state?.pending?.entries?.find(item=>item.key===action.key);
  const uid=entry?.sourceUid||entry?.jobs?.[0]?.sourceUid;
@@ -844,7 +849,7 @@ function mmm2ChoiceLabel(action,{pack,state}={}){
   return MMM2_FORK[id]?.[mode]||(mode==='a'?'選擇第一項':'選擇第二項');
  }
  if(mode==='top'||mode==='bottom'||mode==='outside'){
-  if(action.uid)return card(mode==='outside'?'將這張手牌放到場外':'將這張手牌放到牌組上面');
+  if(action.uid)return card(mode==='outside'?'將這張手牌放到場外':mode==='bottom'?'將這張手牌放到牌組底':'將這張手牌放到牌組上面');
   if(mode==='bottom')return '放到牌組底';
   if(mode==='outside')return '放到場外';
   return step==='placeOne'?'放到牌組上面':'留在牌組上面';
@@ -1147,7 +1152,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandFrontActive':return '以 Active 登場於前線 '+(action.slot+1);
   case 'chooseRetireLifeOrHand':return action.mode==='skip'?'不選任何退場項目':
    action.mode==='life'?'將1張生命加入手牌':'將2張手牌送至場外';
-  case 'chooseHiddenLifeHand':return '將1張生命加入手牌';
+  case 'chooseHiddenLifeHand':return hiddenLifeHandLabel(state,action);
   case 'chooseRestReenter':return '以 Rest 登場於'+(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
   case 'chooseHandTwoOutside':return '將 '+name()+' 送至場外';
   case 'chooseOwnLifeOutside':return '將 '+name()+' 放到場外';
@@ -1160,7 +1165,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopAddOne':return '將 '+name()+' 加入手牌，其餘送場外';
   case 'chooseDistinctTrait':return action.uid===null?'結束選擇並結算 BP':'選擇 '+name();
   case 'chooseEnergyMode':return action.mode==='plus'?'產生能源 +1':'前線也能產生能源';
-  case 'chooseMayThen':return action.mode==='do'?'查看牌庫頂':'不查看';
+  case 'chooseMayThen':{
+   const step=state?.pending?.then?.[0],count=step?.count;
+   if(step?.op==='draw')return action.mode==='do'?'抽 '+count+' 張牌':'不抽牌';
+   if(step?.op==='searchTopOneBottomDiscard')return action.mode==='do'?
+    '查看牌庫頂 '+count+' 張，可將符合條件的 1 張加入手牌':'不查看牌庫頂';
+   return action.mode==='do'?'發動未被阻擋時的效果':'不發動未被阻擋時的效果';
+  }
   case 'chooseMaxBpImpact':return '讓 '+name()+' 加上場上最高 BP 並獲得 IMPACT';
   case 'chooseOutsideDeckTop':return action.uid===null?'不放回牌庫頂':'放到牌庫頂：'+name();
   case 'chooseOutsideName':return action.uid===null?'不加入手牌':'加入手牌：'+name();
@@ -1449,7 +1460,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRevealTop':return action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
   case 'chooseRevealTrait':return action.mode==='hand'?'將公開且符合特徵的牌加入手牌':
    action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
-  case 'chooseLifeReenter':return '將 1 張生命加入手牌';
+  case 'chooseLifeReenter':return hiddenLifeHandLabel(state,action);
   case 'chooseSayakaReenter':return action.mode==='raid'?'以效果突襲'+suffix():'以休息狀態再登場'+suffix();
   case 'chooseTuckNamed':return action.uid===null?'不把角色放到牌庫底':'將 '+name()+' 放到牌庫底';
   case 'chooseHandGirlRest':return action.uid===null?'不從手牌休息登場':'讓 '+name()+' 以休息狀態登場'+suffix();
