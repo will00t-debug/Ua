@@ -3,7 +3,7 @@
 // battleReady stays false. A shared V2 program, not this file, decides the pack.
 import {EVA_CARDS_001_050} from './cards-001-050.mjs';
 import {EVA_CARDS_051_100} from './cards-051-100.mjs';
-import {EVA_CARDS_STARTER} from './cards-starter.mjs';
+import {EVA_CARDS_STARTER} from './cards-starter.mjs?v=20261121doubleblock1';
 import {EVA_AP_CARDS} from './cards-ap.mjs';
 
 const COLORS=new Set(['purple','yellow','green','blue','red']);

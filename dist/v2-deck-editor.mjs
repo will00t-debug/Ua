@@ -1,6 +1,6 @@
 // Production deck editor: catalogue, drafts and Universal V2 bridge only.
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
-import {TITLES} from './title-registry.mjs?v=20261121nea067068fix1';
+import {TITLES} from './title-registry.mjs?v=20261121nea067068fix1doubleblock1abilitylabels2';
 import {PRESETS} from './cards.mjs';
 import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120dgm3effect1combat2summary3palette5png';
 import {validDeckCoverId} from './deck-cover-selection.mjs';
@@ -11,7 +11,7 @@ import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,editorV2St
  from './v2-editor-compat.mjs?v=20261120dgm2';
 import {readDeckRecord,renderDeckRecord} from './deck-records.mjs';
 
-import {cleanCardEffectText,renderCardEffectText,cardEffectDisplayText} from './card-effect-display.mjs?v=20261121effect5pngonce1';
+import {cleanCardEffectText,renderCardEffectText,cardEffectDisplayText} from './card-effect-display.mjs?v=20261121effect5pngonce1doubleblock1';
 
 const $=s=>document.querySelector(s);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

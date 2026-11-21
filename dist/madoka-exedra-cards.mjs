@@ -3034,7 +3034,7 @@ export const EXEDRA_CARDS=
    "trigger": null,
    "triggerText": "-",
    "triggerTextJa": "-",
-   "effect": "【雙重防禦】（這張角色卡在這個回合的第一次防禦時置為活動） 【登場時】若自己在這個回合中已將生命區的卡片加入手牌時，抽1張卡片。",
+   "effect": "【二回阻擋】（這張角色卡在這個回合的第一次防禦時置為活動） 【登場時】若自己在這個回合中已將生命區的卡片加入手牌時，抽1張卡片。",
    "effectJa": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）【登場時】このターン中に自分がライフエリアにあるカードを手札に加えている場合、カードを1枚引く。",
    "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/EX16BT_MMM-2-065.png",
    "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX16BT%2FMMM-2-065",
