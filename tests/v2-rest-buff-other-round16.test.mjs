@@ -86,8 +86,11 @@ test('SAO-1-007 and MST-1-041 share REST-self then BP+1000, with no once-per-tur
  assert.deepEqual(saoCard.effects,{});
  assert.ok(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-1-007'));
  assert.ok(EXPECTED_V2_IDS['mushoku-tensei'].includes('MST-1-041'));
+ const once=createUniversalPack({id:'turn-once',cards:[{...base,
+  mainAbility:{op:'restSelfBuffOther',bp:1000,oncePerTurn:true}}]});
+ assert.equal(once.cards.LAB.mainAbility.oncePerTurn,true);
  assert.throws(()=>createUniversalPack({id:'bad-turn',cards:[{...base,
-  mainAbility:{op:'restSelfBuffOther',bp:1000,oncePerTurn:true}}]}),/unsupported main action/);
+  mainAbility:{op:'restSelfBuffOther',bp:1000,oncePerTurn:false}}]}),/unsupported main action/);
  assert.throws(()=>createUniversalPack({id:'bad-bp',cards:[{...base,
   mainAbility:{op:'restSelfBuffOther',bp:0}}]}),/unsupported main action/);
 });

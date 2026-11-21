@@ -39,6 +39,21 @@ const RAID_BOX_FEATURES=Object.freeze({
  'TRK-1-088':["unblockedAttack","onPlay"],
  'TRK-1-091':["oppEffectRetireInstead","main"],
  'TRK-1-106':["passive","onPlay"],
+ // UA42BT / UA42ST 〈物語〉. Rugia HK span.raidBorder. The raid permission
+ // line is not a framed keyword. 060 and 061 print the 羽川翼 alias outside
+ // the frame. 075 prints impact-null outside the frame. 076's impact is
+ // inside and is raidImpact, which is already live only as a face-up Raid.
+ 'MGS-1-015':["blockFloor","onPlay"],
+ 'MGS-1-021':["step","energyLossSwap","onPlay"],
+ 'MGS-1-047':["onPlay","main"],
+ 'MGS-1-060':["onPlay","main"],
+ 'MGS-1-061':["attackWin","onPlay"],
+ 'MGS-1-075':["onAttack","onRetire"],
+ 'MGS-1-076':["onAttack","onRetire"],
+ 'MGS-1-083':["onPlay"],
+ 'MGS-1-088':["main","onRetire"],
+ 'MGS-1-101':["onPlay","onRetire"],
+ 'MGS-1-113':["ownTurnBp","onPlay"],
  'BLC-1-004':["main"],
  'BLC-1-014':["onPlay"],
  'BLC-1-020':["onPlay","phase"],
@@ -241,7 +256,21 @@ const RAID_BOX_FEATURES=Object.freeze({
  'DGM-1-065':["onAttack"],
  'DGM-1-067':["phase"],
  'DGM-1-068':["phase"],
- 'DGM-1-073':["onAttackBlocked","onPlay"]
+ 'DGM-1-073':["onAttackBlocked","onPlay"],
+ // EX18BT MGS-2-053. Rugia HK span.raidBorder encloses the own-turn pair
+ // BP and the on-play green hand rest. The Raid permission line is outside
+ // that list.
+ 'MGS-2-053':["passive","onPlay"],
+ // EX18BT frames whose Rugia HK span.raidBorder split is mapped. The Raid
+ // permission line is not a framed keyword. 011's blocked-attack draw and
+ // 023's name alias stay outside the frame. 026's hand payment and the
+ // entry-turn draw stay outside; only the rest energy main is inside.
+ 'MGS-2-005':["fieldLeave","onPlay","main"],
+ 'MGS-2-011':["unblockedAttack","onRetire"],
+ 'MGS-2-023':["phase","onPlay"],
+ 'MGS-2-026':["main"],
+ 'MGS-2-032':["passive","onPlay"],
+ 'MGS-2-037':["onPlay"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){
