@@ -856,6 +856,21 @@ function mmm2ChoiceLabel(action,{pack,state}={}){
  const text=MMM2_TARGET[step];
  return text?card(text):card('選擇這張卡');
 }
+// Nea 067 has a mandatory attack-time draw/discard and a separate, optional
+// attack-phase-end draw. Label only the binary, untargeted activation offer;
+// later hand/base selections must retain their own card-specific labels.
+function namedPhaseEndChoiceLabel(action,state){
+ const q=state?.pending,side=state?.players?.[q?.player];
+ const source=[...(side?.front||[]),...(side?.energy||[])].find(c=>c?.uid===q?.sourceUid);
+ if(source?.cardId!=='DGM-1-067'||state?.phase!=='attack'||
+  (action.uid!=null&&action.uid!==source.uid)||action.line!==undefined||action.slot!==undefined)
+  return '';
+ if(['draw','do','yes','activate','accept','use'].includes(action.mode))
+  return '發動：抽 2 張，將 1 張手牌及 1 張突襲底板放到場外';
+ if(['skip','decline','no','pass'].includes(action.mode)||action.uid===null)
+  return '不發動：不抽牌，保留突襲底板';
+ return '';
+}
 export function uiActionLabel(action,{pack,state}={}){
  if(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:'))
   return mmm2ActivateLabel(action,{pack,state});
@@ -1463,7 +1478,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRetireReplay':return '退場 '+name()+'，再發動這張卡的登場效果';
   case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':case 'csm':
    return closedTitleChoiceLabel(action,{pack,state});
-  default:return unlabeledChoiceLabel(action,{pack,state})||'完成這個選擇';
+  default:return unlabeledChoiceLabel(action,{pack,state})||namedPhaseEndChoiceLabel(action,state)||'完成這個選擇';
  }
 }
 export function visibleActionsForCard(legal,uid){
