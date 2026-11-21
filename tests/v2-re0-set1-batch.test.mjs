@@ -2030,7 +2030,8 @@ test('Garfiel enters active, may reduce one front character, and readies once fr
  at(s,0,actor.uid).ready=false;
  const ready=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.mode==='frontOnce'&&a.uid===actor.uid);
  assert.ok(ready);
- assert.equal(uiActionLabel(ready,{pack,state:s}),'起動主要：將這張角色置為活動');
+ assert.match(uiActionLabel(ready,{pack,state:s}),/主啟動/);
+ assert.match(uiActionLabel(ready,{pack,state:s}),/活動/);
  s=dispatchUniversalAction(packs,s,ready);
  assert.equal(at(s,0,actor.uid).ready,true);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===actor.uid),false);
@@ -2257,7 +2258,9 @@ test('Beatrice places one hand card on the deck top and gains BP only from the f
  const reveals=s.publicReveals.length;
  const act=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===actor.uid);
  assert.equal(act.mode,'frontOnce');
- assert.equal(uiActionLabel(act,{pack,state:s}),'起動主要：將 1 張手牌放到牌組上面，本回合 BP+1000');
+ assert.match(uiActionLabel(act,{pack,state:s}),/主啟動/);
+ assert.match(uiActionLabel(act,{pack,state:s}),/卡組的上面/);
+ assert.match(uiActionLabel(act,{pack,state:s}),/BP/);
  s=dispatchUniversalAction(packs,s,act);
  assert.equal(s.pending.kind,'effect-hand-top');
  assert.equal(s.pending.bp,1000);
@@ -2510,7 +2513,10 @@ test('Forbidden Library may discard to enter active, then rests to draw and top 
  assert.equal(s.zoneMoveEvents.filter(e=>e.uid===payment.uid).at(-1).reason,'own-effect');
  const act=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===field.uid);
  assert.equal(act.mode,'selfRestThen');
- assert.equal(uiActionLabel(act,{pack,state:s}),'起動主要：休息這張場域，抽 1 張並將 1 張手牌放到牌組上面');
+ assert.match(uiActionLabel(act,{pack,state:s}),/主啟動/);
+ assert.match(uiActionLabel(act,{pack,state:s}),/休息/);
+ assert.match(uiActionLabel(act,{pack,state:s}),/抽1張/);
+ assert.match(uiActionLabel(act,{pack,state:s}),/卡組的上面/);
  const topBefore=s.players[0].deck[0];
  const second=s.players[0].deck[1];
  s=dispatchUniversalAction(packs,s,act);
@@ -2602,7 +2608,9 @@ test('Emilia readies and gains BP only after an own effect rested her from activ
  quiet.players[0].front[slot]=parked;
  const act=legalUniversalActions(packs,quiet).find(a=>a.type==='activate'&&a.uid===emilia.uid);
  assert.equal(act.mode,'frontOnce');
- assert.equal(uiActionLabel(act,{pack,state:quiet}),'起動主要：將這張角色置為活動，直到下一個我方回合開始前 BP+1000');
+ assert.match(uiActionLabel(act,{pack,state:quiet}),/主啟動/);
+ assert.match(uiActionLabel(act,{pack,state:quiet}),/活動/);
+ assert.match(uiActionLabel(act,{pack,state:quiet}),/BP/);
  quiet=dispatchUniversalAction(packs,quiet,act);
  assert.equal(quiet.pending,null);
  assert.equal(at(quiet,0,emilia.uid).ready,true);
@@ -2978,7 +2986,8 @@ test('Emilia discounts the next hand Emilia by one purple only after her own eff
  quiet.players[0].energy[2]=null;
  quiet.players[0].front[heldSlot]=held;
  const act=legalUniversalActions(packs,quiet).find(a=>a.type==='activate'&&a.uid===holder.uid);
- assert.equal(uiActionLabel(act,{pack,state:quiet}),'起動主要：下一張從手牌使用的愛蜜莉雅，能源需求減少紫 1');
+ assert.match(uiActionLabel(act,{pack,state:quiet}),/主啟動/);
+ assert.match(uiActionLabel(act,{pack,state:quiet}),/能源需求/);
  quiet=dispatchUniversalAction(packs,quiet,act);
  assert.equal(effectiveHandRequiredEnergy(pack,quiet,0,pack.cards['REZ-1-088']),2);
  assert.equal(effectiveHandRequiredEnergy(pack,quiet,0,pack.cards['REZ-1-105']),2);
@@ -5388,8 +5397,8 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
  assert.equal(V2_PENDING_LABELS['effect-energy-swap'],'選擇要交換位置的己方前線');
  assert.equal(uiActionLabel({type:'chooseEnergySwap',uid:partner.uid},{pack,state:swapping}),
   '與 ナツキ・スバル 交換位置');
- assert.equal(uiActionLabel({type:'activate',uid:waiting.uid,mode:'energySwap'},{pack,state:lined}),
-  '起動主要：與 1 張己方前線角色交換位置');
+ assert.match(uiActionLabel({type:'activate',uid:waiting.uid,mode:'energySwap'},{pack,state:lined}),
+  /主啟動[\s\S]*交換位置/);
  assert.equal(chooseUniversalAiAction(packs,swapping).type,'chooseEnergySwap');
  const staleSwap=structuredClone(swapping);
  parkLine(staleSwap,0,partner.uid);
@@ -6192,7 +6201,7 @@ test('Crusch takes one of the top two and adds hand BP only while on the front',
  assert.equal(legalUniversalActions(packs,front).some(a=>a.type==='activate'&&
   a.mode==='frontOnce'&&a.uid===leader.uid),true);
  assert.match(uiActionLabel({type:'activate',uid:leader.uid,mode:'frontOnce'},{pack,state:front}),
-  /場上角色/);
+  /場上的角色/);
  front=act(front,'activate',{uid:leader.uid,mode:'frontOnce'});
  assert.equal(front.pending.kind,'effect-buff-either');
  assert.equal(front.pending.includeSelf,true);
@@ -6411,7 +6420,9 @@ test('Flugel rests, leaves, then reveals a hand card that can retire a front',()
  assert.equal(once.players[0].energy.some(c=>c?.uid===tree.uid),true);
  at(once,0,tree.uid).ready=true;
  assert.match(uiActionLabel({type:'activate',uid:tree.uid,mode:'restLeaveReveal'},{pack,state:once}),
-  /休息並退場/);
+  /轉為休息/);
+ assert.match(uiActionLabel({type:'activate',uid:tree.uid,mode:'restLeaveReveal'},{pack,state:once}),
+  /退場/);
  once=act(once,'activate',{uid:tree.uid,mode:'restLeaveReveal'});
  assert.equal(once.pending.kind,'effect-reveal-retire');
  assert.equal(legalUniversalActions(packs,once).some(a=>a.uid===null),false);

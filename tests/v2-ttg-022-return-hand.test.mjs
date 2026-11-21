@@ -118,7 +118,7 @@ test('energy activation adds green immediately and returns the same UID to hand'
  assert.equal(universalEnergyByColor(packs,s,0).green,1);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===payer.uid),false);
  const action=activate(source.uid);
- assert.match(uiActionLabel(action,{pack:ttg,state:s}),/主要階段結束回手/);
+ assert.match(uiActionLabel(action,{pack:ttg,state:s}),/主要階段結束時返回手牌/);
  const deckBefore=s.players[0].deck.length;
  s=dispatchUniversalAction(packs,s,action);
  assert.equal(s.players[0].energy[0].ready,false);

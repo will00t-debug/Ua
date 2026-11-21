@@ -24,5 +24,5 @@ test('desktop player zones use reserved rows and stay available at short laptop 
  assert.match(css,/\.v2-life-group > \.v2-removed-zone > \.v2-zone-pile \{/);
  assert.match(css,/\.v2-pile-group \{\s*display:grid;\s*grid-template-columns:minmax\(0,1fr\);\s*grid-template-rows:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(css,/max-height:570px/);
- assert.match(html,/universal-v2-neon-board\.css\?v=20261114zones1/);
+ assert.match(html,/universal-v2-neon-board\.css\?v=20261121mainlabels1/);
 });

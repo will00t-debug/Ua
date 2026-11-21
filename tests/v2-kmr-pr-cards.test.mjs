@@ -341,7 +341,7 @@ test('Ryuki main draws for a Knight name and can raid Ryuki Survive onto itself'
  ready(s);
  const activate=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===rider.uid);
  assert.equal(activate?.mode,'kmr2:KMR-P-005');
- assert.match(uiActionLabel(activate,{pack,state:s}),/起動主要/);
+ assert.match(uiActionLabel(activate,{pack,state:s}),/主啟動/);
  assert.equal(/kmr/i.test(uiActionLabel(activate,{pack,state:s})),false);
  let state=dispatchUniversalAction(packs,s,activate);
  assert.equal(state.players[0].hand.some(c=>c.uid===marker.uid),true);

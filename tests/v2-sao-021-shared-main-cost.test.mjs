@@ -73,7 +73,7 @@ test('SAO FIRST vs SLG: REST KIRITO may activate, exact own hand card pays befor
  assert.equal(p,0);
  const a=activate(packs,before,unit.uid),hand=before.players[p].hand.length,
   ap=before.players[p].apCards.filter(c=>c.ready).length;
- assert.ok(a);assert.match(uiActionLabel(a,{pack:packs,state:before}),/棄一張手牌/);
+ assert.ok(a);assert.match(uiActionLabel(a,{pack:packs,state:before}),/放到場外/);
  const copy=structuredClone(before),pending=dispatchUniversalAction(packs,before,a,{actor:p});
  assert.deepEqual(before,copy,'pure reducer does not mutate match input');
  assert.equal(pending.pending.kind,'main-discard-buff');

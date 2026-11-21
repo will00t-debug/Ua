@@ -2,7 +2,7 @@
 // Reuse the solo table's styles and desktop composition without importing a reducer.
 import {isDesktopBattlefield,mountDesktopBattlefield} from './desktop-battle-ui.mjs';
 import {makeAttackLifePicker} from './attack-life-picker.mjs';
-import {mountFieldActivationButtons,openFieldActivationPicker} from './field-activation-ui.mjs';
+import {mountFieldActivationButtons,openFieldActivationPicker} from './field-activation-ui.mjs?v=20261121mainlabels1';
 import {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
 export {legalRemovedMainAction,removedMainActionText} from './removed-main-ui.mjs';
 import {facedownInspectModel,createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,

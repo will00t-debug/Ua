@@ -49,7 +49,7 @@ test('REST own FRONT character can activate without further AP, selecting an OWN
  let {s,unit}=entered();
  const pre=structuredClone(s),ap=s.players[0].apCards.filter(c=>c.ready).length;
  assert.ok(ability(s,unit.uid),'source does not require ACTIVE, REST or further AP');
- assert.match(uiActionLabel(ability(s,unit.uid),{pack:packs,state:s}),/棄一張手牌/);
+ assert.match(uiActionLabel(ability(s,unit.uid),{pack:packs,state:s}),/手牌送場外/);
  s=dispatchUniversalAction(packs,s,ability(s,unit.uid));
  assert.equal(s.pending.kind,'main-discard-buff');
  assert.ok(s.players[0].front[0]&&!s.players[0].front[0].ready);

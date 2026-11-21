@@ -99,7 +99,7 @@ test('MAIN cost does not require available AP and empty deck mills nothing witho
  const {s,act}=setup();
  const q=structuredClone(s);for(const a of q.players[0].apCards)a.ready=false;
  assert.ok(legalUniversalActions(packs,q).some(a=>a.type==='activate'&&a.mode==='selfRestThen'));
- assert.equal(uiActionLabel(act,{pack:packs,state:q}).includes('REST'),true);
+ assert.equal(uiActionLabel(act,{pack:packs,state:q}).includes('休息'),true);
  const done=dispatchUniversalAction(packs,q,act);
  assert.equal(assertUniversalMatch(packs,done),true);
  assert.equal(done.players[0].apCards.filter(c=>c.ready).length,0);

@@ -1,3 +1,5 @@
+import {renderCardEffectText} from '../card-effect-display.mjs';
+
 // One UI for AI and online field MAIN activations.
 // The authoritative source is the reducer's / server's current legal actions.
 // Never infer that an ability can be used from printed card text alone.
@@ -55,12 +57,14 @@ export function openFieldActivationPicker({el,root,cardName,actions,onChoose,lab
  const entries=el('div',{class:'v2-activation-options'});
  actions.forEach((action,index)=>{
   const text=typeof labelOf==='function'?labelOf(action):action.label;
-  const description=String(text||action.mode||'起動主要能力');
+  const description=String(text||'起動主要能力');
+  const body=el('span',{text:description});
+  if(body?.nodeType===1)body.innerHTML=renderCardEffectText(description);
   entries.append(el('button',{type:'button',class:'v2-activation-option',
    'aria-label':'發動能力 '+(index+1)+'：'+description,
    onClick:()=>{close();onChoose(action);}},
    el('strong',{text:actions.length===1?'確認發動':'能力 '+(index+1)}),
-   el('span',{text:description})));
+   body));
  });
  dialog.append(entries,el('button',{type:'button',
   class:'v2-activation-cancel',text:'取消',onClick:close}));
