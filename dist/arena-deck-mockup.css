@@ -476,6 +476,7 @@ body.arena-site .ua-effect-keyword,
 body.arena-site .ua-effect-keyword.ua-effect-main,
 body.arena-site .ua-effect-keyword.ua-effect-impact,
 body.arena-site .ua-effect-keyword.ua-effect-damage,
+body.arena-site .ua-effect-keyword.ua-effect-limit,
 body.arena-site .ua-effect-keyword.ua-effect-raid{
  display:inline-flex;align-items:center;vertical-align:-.15em;
  padding:0!important;border:0!important;border-radius:0!important;
