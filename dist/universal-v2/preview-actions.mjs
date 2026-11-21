@@ -904,19 +904,81 @@ function mmm2ChoiceLabel(action,{pack,state}={}){
  const text=MMM2_TARGET[step];
  return text?card(text):card('選擇這張卡');
 }
-// Nea 067 has a mandatory attack-time draw/discard and a separate, optional
-// attack-phase-end draw. Label only the binary, untargeted activation offer;
-// later hand/base selections must retain their own card-specific labels.
-function namedPhaseEndChoiceLabel(action,state){
- const q=state?.pending,side=state?.players?.[q?.player];
- const source=[...(side?.front||[]),...(side?.energy||[])].find(c=>c?.uid===q?.sourceUid);
- if(source?.cardId!=='DGM-1-067'||state?.phase!=='attack'||
-  (action.uid!=null&&action.uid!==source.uid)||action.line!==undefined||action.slot!==undefined)
-  return '';
- if(['draw','do','yes','activate','accept','use'].includes(action.mode))
-  return '發動：抽 2 張，將 1 張手牌及 1 張突襲底板放到場外';
- if(['skip','decline','no','pass'].includes(action.mode)||action.uid===null)
-  return '不發動：不抽牌，保留突襲底板';
+// Shared-print modules emit their legal actions outside engine. These actions
+// must be labelled by exact pending step, not by a title-specific guess.
+function sharedPrintChoiceLabel(action,{pack,state}={}){
+ const q=state?.pending||{},step=q.step,mode=action.mode;
+ const name=()=>uiCardLabel(pack,state,action.uid)||'指定牌';
+ const target=()=>name()+(action.uid?.startsWith('0-')?'（我方）':action.uid?.startsWith('1-')?'（對手）':'');
+ const skip=action.uid===null||mode==='skip';
+ const seat=()=> (action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
+ switch(action.type){
+  case 'choosePrintLook':return skip?'不加入手牌，處理其餘卡':'公開 '+name()+' 並加入手牌';
+  case 'choosePrintPay':return skip?'不棄牌，不回收':'將 '+name()+' 放到場外，支付回收成本';
+  case 'choosePrintMode':{
+   const rule=q.modes?.find(x=>x.name===action.id);
+   const display={'アレン・ウォーカー':'艾倫・獲加','ネア・D・キャンベル':'雷亞・D・坎貝爾'};
+   return '回收 '+(display[action.id]||action.id)+(rule?.energy!==undefined?'（能源 '+rule.energy+'）':'')+'，最多 '+(rule?.max??1)+' 張';
+  }
+  case 'choosePrintTake':return skip?'結束回收':'將 '+name()+' 加入手牌';
+  case 'choosePrintCard':return skip?(q.activeSelf?'不登場，改使此角色活動':'不從指定區域登場'):'選擇 '+name()+'，再選登場位置';
+  case 'choosePrintCell':return (q.ready?'以活動':'以休息')+'狀態登場至'+seat();
+  case 'choosePrintMove':return '選擇 '+name()+' 移至能源線';
+  case 'choosePrintMoveCell':return '移至能源線 '+(action.slot+1);
+  case 'choosePrintGrant':return skip?'不給予必須阻擋與 BP 效果':'使 '+name()+' 本回合 BP＋'+q.bp+' 並獲得必須阻擋';
+  case 'choosePrintBounce':return skip?'不返回手牌':'將 '+target()+' 返回手牌'+(action.uid?.startsWith(q.player+'-')?'，可抽 1 張':'');
+  case 'choosePrintDraw':return mode==='draw'?'抽 1 張牌':'不抽牌';
+  case 'choosePrintFork':
+   if(mode==='down')return '使對手前線 BP '+q.down?.minBp+' 以上角色降低 '+Math.abs(q.down?.bp??0)+' BP';
+   if(mode==='retire')return '支付 '+q.retire?.ap+' AP，可退場 BP '+q.retire?.maxBp+' 以下對手前線角色';
+   return '不發動後續效果';
+  case 'choosePrintRetireOwn':return skip?'不使自己的角色退場':'使 '+name()+' 退場';
+  case 'choosePrintNea':return (mode==='raid'?'從場外突襲登場：':'從場外加入手牌：')+name();
+  case 'choosePrintRaid':return '選擇突襲底板：'+uiCardLabel(pack,state,action.baseUid)+' · '+seat();
+  case 'choosePrintMoreCell':return (step==='raid-cell'?'在此突襲登場：':'將對手角色移至')+seat();
+  case 'choosePrintMore':{
+   const n=()=>name();
+   switch(step){
+    case 'end-draw':return q.after==='base'?
+     (skip?'不發動：不抽牌，保留突襲底板':'發動：抽 '+q.draw+' 張，將 1 張手牌及 1 張突襲底板放到場外'):
+     (skip?'不抽牌':'抽 '+q.draw+' 張牌');
+    case 'draw-discard':return skip?'不抽牌、不棄牌':'抽 1 張，再將 1 張手牌放到場外';
+    case 'mill-deploy':return skip?'不送場外、不登場':'將牌庫頂 '+q.mill+' 張送場外，再可從場外休息登場';
+    case 'chain':return skip?'不進行連鎖突襲':'將攻擊角色最上層放到場外，再從場外突襲至原底板';
+    case 'named-leave':return skip?'照原本方式退場':'改由 '+n()+' 代替退場';
+    case 'bp-down':return skip?'不降低 BP':'使 '+n()+' BP－'+Math.abs(q.amount??0);
+    case 'end-lock':return skip?'不限制攻擊，保留底板':'使 '+n()+' 下次自己回合開始前不能攻擊，將 1 張突襲底板送場外';
+    case 'end-rest':return skip?'不休息其他角色':'休息 '+n()+'，使此角色活動並獲得阻擋限制';
+    case 'retire-opp':case 'retire-grant':return skip?'不退場對手角色':'使 '+n()+' 退場';
+    case 'retire-deploy':return skip?'不退場、不登場':'退場 '+n()+'，再可從場外休息登場';
+    case 'ward':return skip?'不給予保護':'使 '+n()+' 獲得休息、回手與離場保護';
+    case 'unchosen':return skip?'不給予保護':'使 '+n()+' 不會被對手效果選擇';
+    case 'under-card':{
+     if(skip)return '不選擇蓋牌';
+     const side=state?.players?.[q.player];
+     const host=[...(side?.front||[]),...(side?.energy||[])].find(c=>c?.uid===q.sourceUid);
+     const layers=(host?.under||[]).filter(c=>c.faceDown===true);
+     const i=layers.findIndex(c=>c.uid===action.uid);
+     return i>=0?'選擇下方第 '+(i+1)+' 張蓋牌（背面）':'選擇指定蓋牌（背面）';
+    }
+    case 'put-hand':return '將 '+n()+' 放到場外（需 '+q.need+' 張）';
+    case 'six-discard':return skip?'不支付手牌':'將手牌 '+n()+' 放到場外'+(q.after==='base'?'，再將 1 張突襲底板送場外':'');
+    case 'block-discard':return skip?'不棄牌，不獲得阻擋限制':'將 '+n()+' 放到場外，取得阻擋限制';
+    case 'field-discard':return '將 '+n()+' 放到場外並支付 1 AP，讓場域在能源線休息登場';
+    case 'six-card':return skip?'不使用場外卡':'使用 '+n()+'，將等同必要能源數的牌庫頂卡送場外';
+    case 'tuck':return skip?'完成放置蓋牌':'將 '+n()+' 裏向置於此角色下方';
+    case 'under-mode':return mode==='hand'?'將選擇的蓋牌加入手牌':'將 1 張手牌送場外，再讓選擇的蓋牌休息登場';
+    case 'block-pick':return mode==='floor'?'本回合不被 BP '+q.floors?.[0]+' 以下角色阻擋':mode==='ceiling'?'本回合不被 BP '+q.ceilings?.[0]+' 以上角色阻擋':'不選擇阻擋限制';
+    case 'mode-37':return mode==='bottom'?'將對手前線角色放到牌庫底，對手可抽 1 張':'讓場外指定角色登場';
+    case 'bottom-37':return skip?'不放到牌庫底':'將 '+n()+' 放到牌庫底，對手可抽 1 張';
+    case 'deploy-37':return '選擇 '+n()+' 登場';
+    case 'raid-37':return mode==='raid'?'突襲登場':'普通休息登場';
+    case 'move-energy':return skip?'不移動對手角色':'將 '+n()+' 移至對手能源線';
+    case 'order-pair':return '先將 '+n()+' 放到牌庫底';
+   }
+   return '';
+  }
+ }
  return '';
 }
 export function uiActionLabel(action,{pack,state}={}){
@@ -1532,7 +1594,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRetireReplay':return '退場 '+name()+'，再發動這張卡的登場效果';
   case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':case 'csm':
    return closedTitleChoiceLabel(action,{pack,state});
-  default:return unlabeledChoiceLabel(action,{pack,state})||namedPhaseEndChoiceLabel(action,state)||'完成這個選擇';
+  default:return sharedPrintChoiceLabel(action,{pack,state})||unlabeledChoiceLabel(action,{pack,state})||'完成這個選擇';
  }
 }
 export function visibleActionsForCard(legal,uid){
