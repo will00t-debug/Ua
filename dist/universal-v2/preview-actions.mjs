@@ -26,6 +26,8 @@ export const V2_TITLE_LABELS=Object.freeze({
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',
+ 'effect-vol2':'完成這個效果的選擇',
+ 'effect-vol2-look':'查看牌庫頂。不符合條件的卡會留在畫面上，但不能選。',
  'effect-return-active':'可讓其他活動角色回手',
  'effect-hand-active':'從手牌以活動狀態登場',
  'effect-front-open-hand':'前線有空位時可支付手牌',

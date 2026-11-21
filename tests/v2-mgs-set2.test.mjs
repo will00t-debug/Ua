@@ -8,12 +8,12 @@ import {mgs2EngineKind} from '../dist/universal-v2/mgs2-classify.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {raidBoxListed} from '../dist/universal-v2/raid-box.mjs';
-import {dispatchUniversalAction,effectiveHandRequiredEnergy,legalUniversalActions,newUniversalMatch,universalBp,universalImpactNull,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+import {dispatchUniversalAction,effectiveHandRequiredEnergy,effectiveRequiredEnergy,legalUniversalActions,newUniversalMatch,universalBp,universalImpact,universalImpactNull,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 
 const pack=createMgsV2Pack();
 const packs=[pack,pack];
 const byId=new Map(MGS2_CARDS.map(card=>[card.id,card]));
-const RAID=['MGS-2-005','MGS-2-011','MGS-2-023','MGS-2-026','MGS-2-032','MGS-2-037'];
+const RAID=[];
 const engine=readFileSync(new URL('../dist/universal-v2/engine.mjs',import.meta.url),'utf8');
 const packSource=readFileSync(new URL('../dist/universal-v2/mgs-pack.mjs',import.meta.url),'utf8');
 
@@ -101,10 +101,16 @@ test('EX18BT catalogues 73 identities and registers only whole shared prints',()
  assert.equal(MGS2_CARDS.every(card=>card.name===card.nameJa&&card.effect.replace(/\s/g,'')===card.effectJa&&card.sourceTc===null),true);
  assert.equal(MGS2_CARDS.every(card=>card.engineKind===mgs2EngineKind(card)),true);
  assert.deepEqual([...MGS2_ENGINE_IDS],[...MGS2_CARDS.filter(card=>card.engineKind).map(card=>card.id)]);
- assert.equal(MGS2_ENGINE_IDS.length,50);
+ assert.equal(MGS2_ENGINE_IDS.length,73);
  assert.equal(raidBoxListed('MGS-2-053','passive'),true);
  assert.equal(raidBoxListed('MGS-2-053','onPlay'),true);
  assert.equal(raidBoxListed('MGS-2-053','main'),false);
+ assert.equal(raidBoxListed('MGS-2-005','fieldLeave'),true);
+ assert.equal(raidBoxListed('MGS-2-011','onAttackBlocked'),false);
+ assert.equal(raidBoxListed('MGS-2-023','phase'),true);
+ assert.equal(raidBoxListed('MGS-2-026','main'),true);
+ assert.equal(raidBoxListed('MGS-2-032','onPlay'),true);
+ assert.equal(raidBoxListed('MGS-2-037','onPlay'),true);
  for(const card of MGS2_CARDS)
   assert.equal(Boolean(pack.cards[card.id]),Boolean(card.engineKind));
  assert.equal(RAID.every(id=>byId.get(id).raidFrame&&byId.get(id).engineKind===null&&!raidBoxListed(byId.get(id))),true);
@@ -949,4 +955,282 @@ test('MGS-2-053 keeps its framed text quiet until it is a face-up raid',()=>{
  s=act(s,rest);
  assert.equal(live(s,summoned.uid).ready,false);
  assert.equal(live(s,summoned.uid).entryTurn,s.turn);
+});
+
+function choose(s,mode,extra={}){
+ return act(s,{type:'chooseVol2',mode,...extra});
+}
+
+test('MGS-2-001 may put a raiding nadeko top outside, then replay another nadeko',()=>{
+ let s=open(218001,{'MGS-2-001':1});
+ const host=sit(s,0,'MGS-1-009','front');
+ const top=take(s,0,'MGS-1-001');
+ top.faceDown=false;
+ host.stack=[top];
+ pay(s,{'MGS-1-001':2});
+ const card=hand(s,'MGS-2-001');
+ s=playLine(s,card.uid,'front');
+ assert.equal(s.pending.kind,'effect-vol2');
+ assert.equal(s.pending.choices.includes(host.uid),true);
+ s=choose(s,'pick',{uid:host.uid});
+ assert.equal(s.players[0].outside.some(item=>item.uid===host.uid),true);
+ assert.equal(live(s,top.uid).cardId,'MGS-1-001');
+ assert.equal(s.pending.mode,'restFront');
+ s=choose(s,'skip',{uid:null});
+ assert.equal(s.pending,null);
+});
+
+test('MGS-2-005 keeps the raid frame quiet until it is raiding',()=>{
+ let quiet=open(218005,{'MGS-2-005':1});
+ pay(quiet,{'MGS-1-001':4});
+ const ordinary=hand(quiet,'MGS-2-005');
+ const before=quiet.players[0].hand.length;
+ quiet=playLine(quiet,ordinary.uid,'front');
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].hand.length,before-1);
+ let s=open(218105,{'MGS-2-005':1});
+ const base=sit(s,0,'MGS-1-009','front');
+ pay(s,{'MGS-1-001':4});
+ const raider=hand(s,'MGS-2-005');
+ const raid=legalUniversalActions(packs,s).find(action=>action.type==='raid'&&action.uid===raider.uid&&action.baseUid===base.uid);
+ if(!raid)throw Error('No raid onto 千石撫子');
+ const handBefore=s.players[0].hand.length;
+ s=act(s,raid);
+ assert.equal(s.players[0].hand.length,handBefore);
+ assert.equal(live(s,raider.uid).stack.some(card=>card.uid===base.uid),true);
+ assert.equal(s.pending,null);
+});
+
+test('MGS-2-011 draws when an ordinary attack is blocked and returns only while raiding',()=>{
+ let s=open(218011,{'MGS-2-011':1});
+ const attacker=sit(s,0,'MGS-2-011','front');
+ const blocker=sit(s,1,'MGS-1-001','front',{ready:true});
+ s=reach(s,'attack');
+ const drawn=s.players[0].hand.length;
+ s=act(s,{type:'attack',uid:attacker.uid});
+ s=act(s,{type:'chooseBlock',uid:blocker.uid},1);
+ assert.equal(s.players[0].hand.length,drawn+1);
+ assert.equal(s.players[0].outside.some(card=>card.uid===attacker.uid),false);
+});
+
+test('MGS-2-012 chooses a high-energy nadeko discount when it leaves on its turn',()=>{
+ let s=open(218012,{'MGS-2-012':1,'MGS-2-005':1});
+ const base=sit(s,0,'MGS-1-009','front');
+ pay(s,{'MGS-1-001':4});
+ const raider=hand(s,'MGS-2-005');
+ const raid=legalUniversalActions(packs,s).find(action=>action.type==='raid'&&action.uid===raider.uid&&action.baseUid===base.uid);
+ s=act(s,raid);
+ if(s.pending)s=choose(s,'skip',{uid:null});
+ const freed=s.players[0].energy.find(Boolean);
+ s.players[0].energy[s.players[0].energy.indexOf(freed)]=null;
+ s.players[0].outside.push(freed);
+ const field=sit(s,0,'MGS-2-012','energy');
+ const activate=legalUniversalActions(packs,s).find(action=>action.mode==='vol2:fieldImpact');
+ s=act(s,activate);
+ s=choose(s,'pick',{uid:field.uid});
+ assert.equal(s.pending.mode,'nadekoChoice');
+ s=choose(s,'discount',{uid:null});
+ assert.equal(s.players[0].nextNamedHandEnergy.some(entry=>entry.name==='千石撫子'&&entry.amount===3&&entry.minEnergy===8),true);
+});
+
+test('MGS-2-017 can enter from outside by retiring a 4000 BP koyomi',()=>{
+ let s=open(218017,{'MGS-2-017':1});
+ sit(s,0,'MGS-2-014','front');
+ const outside=take(s,0,'MGS-2-017');
+ s.players[0].outside.push(outside);
+ const activate=legalUniversalActions(packs,s).find(action=>action.mode==='vol2:outsideEnter'&&action.uid===outside.uid);
+ if(!activate)throw Error('Outside entry was not offered');
+ s=act(s,activate);
+ s=choose(s,'pick',{uid:s.players[0].front.find(card=>card?.cardId==='MGS-2-014').uid});
+ assert.equal(s.pending.mode,'reenter');
+ const dest=s.pending.slots[0];
+ s=choose(s,'enter',{uid:outside.uid,line:dest.line,slot:dest.slot});
+ assert.equal(live(s,outside.uid).ready,false);
+ assert.equal(live(s,outside.uid).entryTurn,s.turn);
+});
+
+test('MGS-2-022 names an energy when it is raided, in an order the player chooses',()=>{
+ let s=open(218022,{'MGS-2-022':1,'MGS-2-023':1});
+ const base=sit(s,0,'MGS-2-022','front');
+ pay(s,{'MGS-1-052':4});
+ const raider=hand(s,'MGS-2-023');
+ const raid=legalUniversalActions(packs,s).find(action=>action.type==='raid'&&action.uid===raider.uid&&action.baseUid===base.uid);
+ if(!raid)throw Error('No raid onto 羽川翼');
+ s=act(s,raid);
+ assert.equal(s.pending.kind,'raid-effect-order');
+ s=act(s,{type:'chooseRaidOrder',mode:'baseFirst'});
+ assert.equal(s.pending.mode,'energyNumber');
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ const top=s.players[0].deck[0];
+ const energy=pack.cards[top.cardId].energy;
+ s=choose(s,'energy',{energy});
+ assert.equal(s.players[0].hand.some(card=>card.uid===top.uid),true);
+});
+
+test('MGS-2-024 draws three and stops effects from readying AP',()=>{
+ let s=open(218024,{'MGS-2-024':1});
+ pay(s,{'MGS-1-052':4});
+ const event=hand(s,'MGS-2-024');
+ const before=s.players[0].hand.length;
+ s=playEvent(s,event.uid);
+ assert.equal(s.players[0].hand.length,before-1+3);
+ assert.equal(s.players[0].apEffectReadyBanTurn,s.turn);
+});
+
+test('MGS-2-026 tucks a face-up koyomi only while it is not raiding',()=>{
+ let s=open(218026,{'MGS-2-026':1,'MGS-2-025':1});
+ const body=sit(s,0,'MGS-2-026','energy');
+ const under=take(s,0,'MGS-2-025');
+ s.players[0].outside.push(under);
+ hand(s,'MGS-2-038');
+ const activate=legalUniversalActions(packs,s).find(action=>action.mode==='vol2:tuck');
+ if(!activate)throw Error('Unraided tuck was not offered');
+ s=act(s,activate);
+ s=choose(s,'pick',{uid:under.uid});
+ assert.equal(live(s,body.uid).under.some(card=>card.uid===under.uid&&card.faceDown===false),true);
+ live(s,body.uid).stack=[take(s,0,'MGS-1-001')];
+ assert.equal(legalUniversalActions(packs,s).some(action=>action.mode==='vol2:restGen'),true);
+});
+
+test('MGS-2-031 shows both looked cards and can send the rest outside',()=>{
+ let s=open(218031,{'MGS-2-031':1});
+ const looked=top(s,['MGS-2-038','MGS-2-040']);
+ pay(s,{'MGS-2-045':1});
+ const card=hand(s,'MGS-2-031');
+ s=playLine(s,card.uid,'front');
+ assert.equal(s.pending.kind,'effect-vol2-look');
+ assert.deepEqual(s.pending.uids,looked.map(item=>item.uid));
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ const view=universalPrivateChoices(packs,s,0);
+ assert.equal(view.inspected.length,2);
+ s=choose(s,'done',{uid:null});
+ assert.equal(s.players[0].outside.some(item=>item.uid===looked[0].uid),true);
+ assert.equal(s.players[0].outside.some(item=>item.uid===looked[1].uid),true);
+});
+
+test('MGS-2-064 puts the drawn hand card outside and counts facedown cards on attack',()=>{
+ let s=open(218064,{'MGS-2-064':1,'MGS-2-068':1,'MGS-1-072':4});
+ pay(s,{'MGS-1-072':4});
+ const card=hand(s,'MGS-2-064');
+ const paid=hand(s,'MGS-2-038');
+ s=playLine(s,card.uid,'front');
+ assert.equal(s.pending.mode,'handFlower');
+ s=choose(s,'outside',{uid:paid.uid});
+ assert.equal(s.players[0].outside.some(item=>item.uid===paid.uid),true);
+ live(s,card.uid).ready=true;
+ const flower=sit(s,0,'MGS-2-068','front');
+ const hidden=take(s,0,'MGS-1-006');
+ hidden.faceDown=true;
+ flower.under=[hidden];
+ s=reach(s,'attack');
+ s=act(s,{type:'attack',uid:card.uid});
+ assert.equal(s.pending.mode,'facedownMenu');
+ assert.deepEqual(s.pending.options,['draw']);
+});
+
+test('MGS-2-067 keeps its hand cost and cuts required energy only on the field',()=>{
+ let s=open(218067,{'MGS-2-067':1,'MGS-1-072':3});
+ const card=hand(s,'MGS-2-067');
+ assert.equal(effectiveHandRequiredEnergy(pack,s,0,pack.cards['MGS-2-067'],card),3);
+ pay(s,{'MGS-1-072':3});
+ s=playLine(s,card.uid,'energy');
+ assert.equal(s.pending.kind,'effect-vol2-look');
+ assert.equal(s.pending.uids.length,3);
+ assert.equal(effectiveRequiredEnergy(pack,s,live(s,card.uid))<=0,true);
+ s=choose(s,'done',{uid:null});
+});
+
+test('MGS-2-068 gains 500 BP for each facedown card under it',()=>{
+ let s=open(218068,{'MGS-2-068':1});
+ const card=sit(s,0,'MGS-2-068','front');
+ assert.equal(universalBp(pack,s,card),3000);
+ const hidden=take(s,0,'MGS-1-006');
+ hidden.faceDown=true;
+ card.under=[hidden];
+ assert.equal(universalBp(pack,s,card),3500);
+});
+
+test('MGS-2-071 spends one hand card to widen the next BP range',()=>{
+ let s=open(218071,{'MGS-2-071':1});
+ const card=sit(s,0,'MGS-2-071','front');
+ const paid=hand(s,'MGS-2-038');
+ const activate=legalUniversalActions(packs,s).find(action=>action.mode==='vol2:window');
+ s=act(s,activate);
+ s=choose(s,'pick',{uid:paid.uid});
+ assert.equal(s.players[0].removed.some(item=>item.uid===paid.uid),true);
+ s=choose(s,'window',{uid:null});
+ assert.equal(s.bpWindowPlus[0],1000);
+ assert.equal(legalUniversalActions(packs,s).some(action=>action.mode==='vol2:window'),false);
+});
+
+test('MGS-2-015 offers its entry menu only on the turn it entered',()=>{
+ let s=open(218015,{'MGS-2-015':1});
+ const card=sit(s,0,'MGS-2-015','front',{entryTurn:s.turn});
+ sit(s,1,'MGS-1-001','front');
+ const activate=legalUniversalActions(packs,s).find(action=>action.mode==='vol2:menu');
+ if(!activate)throw Error('Entry menu was not offered');
+ s=act(s,activate);
+ assert.equal(s.pending.mode,'entryPay');
+ let later=open(218115,{'MGS-2-015':1});
+ sit(later,0,'MGS-2-015','front');
+ sit(later,1,'MGS-1-001','front');
+ assert.equal(legalUniversalActions(packs,later).some(action=>action.mode==='vol2:menu'),false);
+});
+
+test('MGS-2-023 keeps the raid frame quiet on an ordinary play',()=>{
+ let s=open(218023,{'MGS-2-023':1});
+ const wall=sit(s,1,'MGS-1-001','front');
+ pay(s,{'MGS-1-052':4});
+ const card=hand(s,'MGS-2-023');
+ s=playLine(s,card.uid,'front');
+ assert.equal(s.pending,null);
+ assert.equal(universalBp(pack,s,s.players[1].front.find(card=>card?.uid===wall.uid)),3000);
+});
+
+test('MGS-2-048 may retire one koyomi and put that card back active',()=>{
+ let s=open(218048,{'MGS-2-048':1,'MGS-2-025':1});
+ const koyomi=sit(s,0,'MGS-2-025','front');
+ pay(s,{'MGS-2-045':3});
+ const card=hand(s,'MGS-2-048');
+ s=playLine(s,card.uid,'front');
+ assert.equal(s.pending.mode,'koyomiReenter');
+ s=choose(s,'skip',{uid:null});
+ assert.equal(s.players[0].front.some(card=>card?.uid===koyomi.uid),true);
+});
+
+test('MGS-2-056 gives a field yotsugi 2000 BP and impact 1',()=>{
+ let s=open(218056,{'MGS-2-056':1});
+ const yotsugi=sit(s,0,'MGS-2-045','front');
+ pay(s,{'MGS-2-045':2});
+ const event=hand(s,'MGS-2-056');
+ s=playEvent(s,event.uid);
+ assert.equal(s.pending.mode,'yotsugiBranch');
+ const before=universalBp(pack,s,live(s,yotsugi.uid));
+ s=choose(s,'buff',{uid:null});
+ s=choose(s,'pick',{uid:yotsugi.uid});
+ assert.equal(universalBp(pack,s,live(s,yotsugi.uid)),before+2000);
+ assert.equal(universalImpact(pack,s,live(s,yotsugi.uid)),1);
+});
+
+test('MGS-2-060 retires an energy-3 mayoi before the optional entries',()=>{
+ let s=open(218060,{'MGS-2-060':1,'MGS-2-053':1});
+ const mayoi=sit(s,0,'MGS-2-053','front');
+ pay(s,{'MGS-2-045':3});
+ const event=hand(s,'MGS-2-060');
+ s=playEvent(s,event.uid);
+ assert.equal(s.pending.mode,'mayoiRetire');
+ s=choose(s,'pick',{uid:mayoi.uid});
+ assert.equal(s.players[0].outside.some(card=>card.uid===mayoi.uid),true);
+ assert.equal(s.pending.mode,'mayoiDeploy');
+});
+
+test('MGS-2-062 shows the top two cards and only a suruga can leave',()=>{
+ let s=open(218062,{'MGS-2-062':1});
+ const looked=top(s,['MGS-1-006','MGS-2-045']);
+ const card=hand(s,'MGS-2-062');
+ s=playLine(s,card.uid,'front');
+ assert.equal(s.pending.kind,'effect-vol2-look');
+ assert.deepEqual(s.pending.choices,[looked[0].uid]);
+ assert.equal(universalPrivateChoices(packs,s,0).inspected.length,2);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
 });

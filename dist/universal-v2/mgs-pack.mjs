@@ -69,7 +69,12 @@ export function mgsPackCard(card){
    ...(program.attackWinDiscardIfEnergy?{attackWinDiscardIfEnergy:program.attackWinDiscardIfEnergy}:{}),
    ...(program.raidImpact?{raidImpact:program.raidImpact}:{}),
    ...(program.printedImpact?{printedImpact:program.printedImpact}:{}),
-   ...(program.bpPerDirectFacedown?{bpPerDirectFacedown:program.bpPerDirectFacedown}:{})
+   ...(program.bpPerDirectFacedown?{bpPerDirectFacedown:program.bpPerDirectFacedown}:{}),
+   ...(program.unblockedAttack?{unblockedAttack:program.unblockedAttack}:{}),
+   ...(program.fieldLeaveRestNamed?{fieldLeaveRestNamed:program.fieldLeaveRestNamed}:{}),
+   ...(program.blockWinRetireRecover?{blockWinRetireRecover:program.blockWinRetireRecover}:{}),
+   ...(program.outsideMain?{outsideMain:program.outsideMain}:{}),
+   ...(program.unraidedMain?{unraidedMain:program.unraidedMain}:{})
   },card);
  }
  if(kind==='handDiscount'){

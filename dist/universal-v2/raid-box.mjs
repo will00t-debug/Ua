@@ -259,8 +259,18 @@ const RAID_BOX_FEATURES=Object.freeze({
  'DGM-1-073':["onAttackBlocked","onPlay"],
  // EX18BT MGS-2-053. Rugia HK span.raidBorder encloses the own-turn pair
  // BP and the on-play green hand rest. The Raid permission line is outside
- // that list. The other Vol.2 frames stay unlisted until their split is mapped.
- 'MGS-2-053':["passive","onPlay"]
+ // that list.
+ 'MGS-2-053':["passive","onPlay"],
+ // EX18BT frames whose Rugia HK span.raidBorder split is mapped. The Raid
+ // permission line is not a framed keyword. 011's blocked-attack draw and
+ // 023's name alias stay outside the frame. 026's hand payment and the
+ // entry-turn draw stay outside; only the rest energy main is inside.
+ 'MGS-2-005':["fieldLeave","onPlay","main"],
+ 'MGS-2-011':["unblockedAttack","onRetire"],
+ 'MGS-2-023':["phase","onPlay"],
+ 'MGS-2-026':["main"],
+ 'MGS-2-032':["passive","onPlay"],
+ 'MGS-2-037':["onPlay"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

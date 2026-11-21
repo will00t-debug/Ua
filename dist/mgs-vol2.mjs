@@ -68,7 +68,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-001",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidTopNadeko",
   "raidFrame": null,
   "faq": [
    {
@@ -283,7 +283,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-005",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "nadekoRaid",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈千石 撫子〉此角色離開場上時，從自己場外選擇最多１張能源需求２或以下的黃色〈千石 撫子〉，以休息狀態在自己場上登場。&nbsp登場時&nbsp 抽１張卡。從自己場外選擇最多１張黃色場域卡，以休息狀態在自己能源線登場。&nbsp主起動&nbsp 在前線的情況 將自己場上１張場域退場。如這樣做，此角色在本回合中，獲得。",
@@ -606,7 +606,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-011",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tsukihiRaid",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈阿良良木 月火〉此角色進行攻擊而沒有被阻擋時，選擇對手前線最多１張角色休息。&nbsp退場時&nbsp 將此卡以休息狀態在自己場上登場。",
@@ -662,7 +662,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-012",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "highNadeko",
   "raidFrame": null,
   "faq": [
    {
@@ -815,7 +815,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-015",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kissMenu",
   "raidFrame": null,
   "faq": [
    {
@@ -916,7 +916,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-017",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "blockWinShinobu",
   "raidFrame": null,
   "faq": []
  },
@@ -1150,7 +1150,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-022",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidedEnergy",
   "raidFrame": null,
   "faq": []
  },
@@ -1201,7 +1201,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-023",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "blackRaid",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈羽川 翼〉此角色攻擊結束時，可將自己１張手牌放置到場外。如這樣做，可將此角色最上面的卡，疊在自己前線１張在本回合中沒有攻擊過，並且沒有的〈羽川 翼〉上面進行突襲。〈黑羽川〉的此效果１回合只能發動１次。&nbsp登場時&nbsp 選擇對手前線最多１張角色，本回合中，BP-1000。",
@@ -1287,7 +1287,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-024",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lockAp",
   "raidFrame": null,
   "faq": []
  },
@@ -1375,7 +1375,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-026",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "koyomiRaid",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈阿良良木 曆〉&nbsp主起動&nbsp 休息 此角色在本回合中，生產能源+。",
@@ -1444,7 +1444,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-027",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "bottomNames",
   "raidFrame": null,
   "faq": [
    {
@@ -1641,7 +1641,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-031",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lookOrigin",
   "raidFrame": null,
   "faq": []
  },
@@ -1692,7 +1692,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-032",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "oguraRaid",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈老倉 育〉自己場上擁有「擁有但不是突襲狀態的角色」的情況下，此角色獲得。&nbsp登場時&nbsp 可「將自己１張手牌放置到場外。將自己場上１張突襲狀態的其他角色的突襲源放置到移除區。」。如這樣做，抽取與被放置到移除區的突襲源的卡的原生產能源數目+1張卡。被放置到移除區的突襲源的卡的原生產能源是０的情況下，此角色在本回合中，BP+1000並獲得。",
@@ -1894,7 +1894,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-036",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lookHandAp",
   "raidFrame": null,
   "faq": []
  },
@@ -1945,7 +1945,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-037",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ougiRaid",
   "raidFrame": {
    "source": "rugia-hk",
    "inside": "〈忍野 扇〉&nbsp登場時&nbsp 抽１張卡。可將自己１張手牌放置到移除區。如這樣做，從自己移除區選擇最多１張擁有效果的卡加入手牌。如果被放置到移除區的卡是〈忍野 扇〉，另外再從自己移除區選擇最多１張〈阿良良木 曆〉加入手牌。如果被放置到移除區的卡是〈阿良良木 曆〉，另外再從自己移除區選擇最多１張〈忍野 扇〉加入手牌。",
@@ -2490,7 +2490,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-048",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "koyomiReenter",
   "raidFrame": null,
   "faq": []
  },
@@ -2882,7 +2882,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-056",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "yotsugiEvent",
   "raidFrame": null,
   "faq": [
    {
@@ -3086,7 +3086,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-060",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayoiEvent",
   "raidFrame": null,
   "faq": []
  },
@@ -3188,7 +3188,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-062",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidedSuruga",
   "raidFrame": null,
   "faq": [
    {
@@ -3290,7 +3290,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-064",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "flowerUnder",
   "raidFrame": null,
   "faq": [
    {
@@ -3449,7 +3449,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-067",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "hitagiLook",
   "raidFrame": null,
   "faq": [
    {
@@ -3500,7 +3500,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-068",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "flowerEnd",
   "raidFrame": null,
   "faq": [
    {
@@ -3646,7 +3646,7 @@ export const MGS2_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX18BT%2FMGS-2-071",
   "sourceTc": null,
   "auto": false,
-  "engineKind": null,
+  "engineKind": "windowMain",
   "raidFrame": null,
   "faq": [
    {
