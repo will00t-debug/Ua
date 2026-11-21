@@ -11,7 +11,9 @@ const rules=[
  {id:'damage-plus-one',jp:/【ダメージ\(\+1\)】/g,zh:/傷害(?:\(?\+1\)?|增加1)|ダメージ\(?\+1\)?/},
  {id:'impact-immunity',jp:/【インパクト無効】/g,zh:/貫通無效|衝擊無效|衝擊無効|インパクト無効|失去貫通|失去衝擊/},
  {id:'double-block',jp:/【2回ブロック】/g,zh:/2次阻擋|兩次阻擋|二次阻擋|阻擋2次|雙重阻擋|雙重防禦|雙重防御|2回ブロック/},
- {id:'double-attack',jp:/【2回アタック】/g,zh:/2次攻擊|兩次攻擊|二次攻擊|雙重攻擊|攻擊2次|2回アタック/}
+ {id:'double-attack',jp:/【2回アタック】/g,zh:/2次攻擊|兩次攻擊|二次攻擊|雙重攻擊|攻擊2次|2回アタック/},
+ {id:'snipe',jp:/【狙い撃ち】/g,zh:/狙擊|狙い撃ち|狙い打ち|Snipe/i},
+ {id:'step',jp:/【ステップ】/g,zh:/步|ステップ|Step|移動/i}
 ];
 const distinct=entries=>[...new Map(entries.map(x=>[x.id+'|'+x.ability,x])).values()];
 export function auditCardTranslations(titles=TITLES){
@@ -47,6 +49,34 @@ export function auditCardTranslations(titles=TITLES){
   statistics.push({title:title.id,total,compared,japaneseOnly,noJapanese,emptyTranslated,marked});
  }
  return {statistics,issues:distinct(issues)};
+}
+
+/** High-signal audit: detect orphaned 獲得/給予 clauses when a printed JP
+ * ability label is missing in the translated copy. A review candidate is
+ * never automatically edited; engine data remains the authority.
+ */
+export function auditOrphanedAcquisitionText(titles=TITLES){
+ const results=[];
+ for(const title of titles){
+  for(const card of title.cards??[]){
+   const original=String(card.effectJa??'').trim();
+   const localized=String(card.effect??card.effectZhTw??'').trim();
+   if(!original||!localized||original===localized)continue;
+   const markers=[...localized.matchAll(/(?:獲得|取得|得到|給予|賦予)\s*(?:[。．]|[（(]\s*[^）)]{4,40}[）)])/g)];
+   for(const m of markers){
+    const before=localized.slice(Math.max(0,m.index-110),m.index);
+    const taggedBefore=/【[^】]+】|〖[^〗]+〗|［[^］]+］/.test(before);
+    if(!/【(?:インパクト|ダメージ|2回ブロック|2回アタック|狙い撃ち|ステップ)/.test(original))continue;
+    results.push({
+     title:title.id,id:card.id,
+     priority:taggedBefore?'review':'high',
+     excerpt:localized.slice(Math.max(0,m.index-65),m.index+50),
+     source:card.source??null
+    });
+   }
+  }
+ }
+ return results;
 }
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
  const report=auditCardTranslations();
