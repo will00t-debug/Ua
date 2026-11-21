@@ -78,7 +78,28 @@ export function auditOrphanedAcquisitionText(titles=TITLES){
  }
  return results;
 }
+/** Review candidates across registered titles. Dash-only cards are vanilla. */
+export function auditMissingChinese(titles=TITLES){
+ const issues=[],statistics=[];
+ const kana=/[\u3041-\u3096\u30a1-\u30fa]/u;
+ const dash=/^[-—－–]$/u;
+ for(const title of titles){
+  let names=0,effects=0;
+  for(const card of title.cards??[]){
+   const name=String(card.nameZh||card.name||'').trim();
+   const original=String(card.effectJa??'').trim();
+   const effect=String(card.effect??card.effectZhTw??'').trim();
+   const missingName=!name||kana.test(name);
+   const missingEffect=kana.test(effect)||(!effect&&!!original&&!dash.test(original));
+   if(missingName)names++;
+   if(missingEffect)effects++;
+   if(missingName||missingEffect)issues.push({title:title.id,id:card.id,name,missingName,missingEffect,excerpt:effect.slice(0,180)});
+  }
+  statistics.push({title:title.id,total:title.cards?.length??0,names,effects});
+ }
+ return {statistics,issues};
+}
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
- const report=auditCardTranslations();
+ const report={...auditCardTranslations(),missingChinese:auditMissingChinese()};
  console.log(JSON.stringify(report,null,2));
 }

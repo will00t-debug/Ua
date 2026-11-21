@@ -662,3 +662,22 @@ test('the last 26 prints keep the shared gates',()=>{
  raid.players[0].hand.push(body);
  assert.equal(legalUniversalActions(packs,raid).some(action=>action.type==='play'&&action.uid===body.uid),false);
 });
+
+// All catalogue identities have localized display text, independently of the engine print.
+test('DGM catalogue has complete Traditional Chinese names and effects',()=>{
+ const kana=/[\u3041-\u3096\u30a1-\u30fa]/u;
+ for(const card of DGM_CARDS){
+  assert.ok(card.name?.trim(),card.id+' missing display name');
+  assert.ok(card.effect?.trim(),card.id+' missing display effect');
+  assert.doesNotMatch(card.name,kana,card.id+' Japanese display name');
+  assert.doesNotMatch(card.effect,kana,card.id+' Japanese display effect');
+  assert.ok(card.effectJa?.trim(),card.id+' missing Japanese source');
+ }
+ const c=byId.get('DGM-1-038');
+ assert.match(c.effect,/〈神田 由〉/);
+ assert.match(c.effect,/自己或對手前線最多1張BP3000或以下/);
+ assert.match(c.effect,/抽最多1張卡/);
+ assert.match(c.effectJa,/手札に戻す/);
+ assert.equal(c.effectHk,null);
+ assert.equal(c.nameHk,null);
+});
