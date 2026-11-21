@@ -66,7 +66,7 @@ test('Hiko summary has verified display-only timing labels and hand cost',()=>{
  const html=renderCardEffectText(cardEffectDisplayText(card));
  assert.match(html,/ua-effect-keyword" role="img" aria-label="登場時">/);
  assert.match(html,/ua-effect-main" role="img" aria-label="主啟動">/);
- assert.match(html,/ua-effect-keyword" role="img" aria-label="每回合一次">/);
+ assert.match(html,/ua-effect-limit" role="img" aria-label="每回合一次">/);
  assert.match(html,/2張手牌/);
  assert.equal(card.effect,original);
  assert.match(renderCardEffectText('〖啟動主要〗〖每回合1〗'),/ua-effect-main" role="img" aria-label="主啟動">.*每回合一次/);
@@ -105,4 +105,25 @@ test('phone dark mode cannot recolor combat keyword pixels via CSS background',(
  const index=readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
  assert.match(index,/arena-deck-mockup\.css\?v=20261120mobileflow2effect1combat2palette5png/);
  assert.match(index,/v2-deck-editor\.mjs\?v=20261120dgm3effect1combat2summary3palette5png/);
+});
+
+test('once per turn uses white-backed black text while other badge colors stay unchanged',()=>{
+ const samples=[
+  '【每回合一次】','【每回合1】','【每回合1次】','〖每回合１〗','［每回合１次］'
+ ];
+ for(const input of samples){
+  const html=renderCardEffectText(input);
+  assert.match(html,/ua-effect-limit" role="img" aria-label="每回合一次">/);
+  assert.match(html,/%23fff/,'white background image for '+input);
+  assert.match(html,/%23111/,'dark lettering for '+input);
+  assert.doesNotMatch(html,/ua-effect-main/);
+ }
+ const dual=renderCardEffectText('【主啟動】【每回合一次】選擇１張角色卡。');
+ assert.match(dual,/ua-effect-main" role="img" aria-label="主啟動">.*ua-effect-limit" role="img" aria-label="每回合一次">/);
+ const combat=renderCardEffectText('【貫通（1）】【傷害二】【突襲】【登場時】');
+ assert.match(combat,/%23ffe500/,'yellow combat badge unchanged');
+ assert.match(combat,/%23e60012/,'red raid badge unchanged');
+ assert.match(combat,/%23009bcd/,'blue timing badge unchanged');
+ const style=readFileSync(new URL('../dist/arena-deck-mockup.css',import.meta.url),'utf8');
+ assert.match(style,/\.ua-effect-keyword\.ua-effect-limit,/);
 });
