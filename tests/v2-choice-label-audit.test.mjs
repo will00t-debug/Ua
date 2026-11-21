@@ -122,3 +122,47 @@ test('Nea 067 optional untargeted phase-end choice describes draw and skip rathe
  assert.notEqual(draw,skip);
  assert.equal(uiActionLabel({type:'chooseAttackEndDrawBase',mode:'draw',uid:'0-1'},ctx),'完成這個選擇');
 });
+
+test('all titles sharing optional unblocked choices show the actual draw or search action',()=>{
+ const ctx=context();
+ for(const [op,count,expected] of [['draw',1,/抽 1 張牌/],['searchTopOneBottomDiscard',7,/查看牌庫頂 7 張/]]){
+  ctx.state.pending.then=[{op,count}];
+  const accept=uiActionLabel({type:'chooseMayThen',mode:'do'},ctx);
+  const decline=uiActionLabel({type:'chooseMayThen',mode:'skip'},ctx);
+  assert.match(accept,expected);assert.notEqual(accept,decline);
+  if(op==='draw')assert.equal(decline,'不抽牌');
+ }
+});
+test('hidden life choices distinguish positions without revealing the card identity',()=>{
+ const ctx=context();
+ ctx.state.pending.player=0;
+ ctx.state.players[0].life=[{uid:'0-a',cardId:'secretA'},{uid:'0-b',cardId:'secretB'}];
+ for(const type of ['chooseHiddenLifeHand','chooseLifeReenter']){
+  const labels=ctx.state.players[0].life.map(c=>uiActionLabel({type,uid:c.uid},ctx));
+  assert.match(labels[0],/第 1 張/);assert.match(labels[1],/第 2 張/);
+  assert.equal(new Set(labels).size,2);
+  assert.ok(labels.every(l=>!l.includes('secret')));
+ }
+});
+test('Chainsaw Man printed binary branches do not use generic labels',()=>{
+ const ctx=context();ctx.state.pending.step='choose';
+ for(const [id,modes,patterns] of [
+  ['CSM-1-017',['debuff','reze'],[/1000/,/5000/]],
+  ['CSM-1-031',['debuff','ap'],[/1000/,/AP/]],
+  ['CSM-1-037',['aura','draw'],[/1000/,/抽 2 張/]],
+  ['CSM-1-047',['draw','reenter'],[/抽 2 張/,/重新登場/]]
+ ]){
+  ctx.state.pending.id=id;
+  const labels=modes.map(mode=>uiActionLabel({type:'csm',mode},ctx));
+  labels.forEach((l,i)=>assert.match(l,patterns[i]));
+  assert.equal(new Set(labels).size,2);
+ }
+});
+test('closed-title AP choices display physical AP number instead of the same generic action',()=>{
+ const ctx=context();ctx.state.pending.step='readyAp';
+ assert.notEqual(uiActionLabel({type:'kmr2',mode:'readyAp',uid:'AP0-1'},ctx),
+  uiActionLabel({type:'kmr2',mode:'readyAp',uid:'AP0-2'},ctx));
+ ctx.state.pending.step='ap';
+ assert.notEqual(uiActionLabel({type:'csm',mode:'ap',index:0},ctx),
+  uiActionLabel({type:'csm',mode:'ap',index:1},ctx));
+});
