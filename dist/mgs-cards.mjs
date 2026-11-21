@@ -55,7 +55,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-001",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-001",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "printedFork",
   "raidFrame": null,
   "faq": []
  },
@@ -370,7 +370,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-008",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-008",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "recoverOr",
   "raidFrame": null,
   "faq": []
  },
@@ -458,7 +458,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-010",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-010",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -799,7 +799,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-017",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-017",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restEntry",
   "raidFrame": null,
   "faq": []
  },
@@ -898,7 +898,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-019",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-019",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "moveTrait",
   "raidFrame": null,
   "faq": [
    {
@@ -1175,7 +1175,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-024",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-024",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "attackDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -1272,7 +1272,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-026",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-026",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "millRecoverMain",
   "raidFrame": null,
   "faq": []
  },
@@ -1316,7 +1316,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-027",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-027",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "handThenRetire",
   "raidFrame": null,
   "faq": []
  },
@@ -1455,7 +1455,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-030",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-030",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ladderRetire",
   "raidFrame": null,
   "faq": []
  },
@@ -1499,7 +1499,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-031",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-031",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restDrawThree",
   "raidFrame": null,
   "faq": []
  },
@@ -1543,7 +1543,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-032",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-032",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "activeEntry",
   "raidFrame": null,
   "faq": []
  },
@@ -1736,7 +1736,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-036",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-036",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "emptySearch",
   "raidFrame": null,
   "faq": []
  },
@@ -1831,7 +1831,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-038",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-038",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "retireSearch",
   "raidFrame": null,
   "faq": []
  },
@@ -1883,7 +1883,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-039",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-039",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "eitherBp",
   "raidFrame": null,
   "faq": []
  },
@@ -2039,7 +2039,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-042",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-042",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restOnce",
   "raidFrame": null,
   "faq": []
  },
@@ -2372,7 +2372,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-048",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-048",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "highDown",
   "raidFrame": null,
   "faq": []
  },
@@ -2512,7 +2512,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-051",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-051",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "topBuff",
   "raidFrame": null,
   "faq": []
  },
@@ -2556,7 +2556,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-052",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-052",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "blockedDraw",
   "raidFrame": null,
   "faq": [
    {
@@ -2607,7 +2607,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-053",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-053",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "recoverEnergy",
   "raidFrame": null,
   "faq": []
  },
@@ -3101,7 +3101,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-062",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-062",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "unlessDiscard",
   "raidFrame": null,
   "faq": []
  },
@@ -3145,7 +3145,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-063",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-063",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "perNameRetire",
   "raidFrame": null,
   "faq": []
  },
@@ -3241,7 +3241,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-065",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-065",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "frontSearch",
   "raidFrame": null,
   "faq": []
  },
@@ -3337,7 +3337,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-067",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-067",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "orRetire",
   "raidFrame": null,
   "faq": []
  },
@@ -3425,7 +3425,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-069",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-069",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "turnKit",
   "raidFrame": null,
   "faq": []
  },
@@ -3873,7 +3873,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-078",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-078",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsidePeek",
   "raidFrame": null,
   "faq": []
  },
@@ -3976,7 +3976,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-080",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-080",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideBp",
   "raidFrame": null,
   "faq": []
  },
@@ -4027,7 +4027,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-081",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-081",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideReplay",
   "raidFrame": null,
   "faq": []
  },
@@ -4078,7 +4078,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-082",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-082",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "outsideImpact",
   "raidFrame": null,
   "faq": []
  },
@@ -4200,7 +4200,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-084",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-084",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "removedMill",
   "raidFrame": null,
   "faq": [
    {
@@ -4251,7 +4251,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-085",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-085",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "removedBuff",
   "raidFrame": null,
   "faq": [
    {
@@ -4309,7 +4309,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-086",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-086",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "energyRemove",
   "raidFrame": null,
   "faq": []
  },
@@ -4562,7 +4562,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-091",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-091",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "activeField",
   "raidFrame": null,
   "faq": []
  },
@@ -4606,7 +4606,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-092",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-092",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "millRecover",
   "raidFrame": null,
   "faq": []
  },
@@ -4745,7 +4745,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-095",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-095",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "removedDraw",
   "raidFrame": null,
   "faq": [
    {
@@ -4840,7 +4840,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-097",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-097",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raisedRetire",
   "raidFrame": null,
   "faq": []
  },
@@ -4884,7 +4884,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-098",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42BT%2FMGS-1-098",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "grantDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -5130,7 +5130,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-103",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-103",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "retireDraw",
   "raidFrame": null,
   "faq": []
  },
@@ -5174,7 +5174,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-104",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-104",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "impactRecover",
   "raidFrame": null,
   "faq": []
  },
@@ -5357,7 +5357,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-108",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-108",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ownPeek",
   "raidFrame": null,
   "faq": []
  },
@@ -5401,7 +5401,7 @@ export const MGS_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-109",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA42ST%2FMGS-1-109",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "millThree",
   "raidFrame": null,
   "faq": []
  },

@@ -45,6 +45,11 @@ export function mgsPackCard(card){
    ...(program.impactNull?{impactNull:true}:{}),
    ...(program.step?{step:true}:{}),
    ...(program.emptyOwnFieldHandEnergyDiscount?{emptyOwnFieldHandEnergyDiscount:program.emptyOwnFieldHandEnergyDiscount}:{}),
+   ...(program.outsideAtMost?{outsideAtMost:program.outsideAtMost}:{}),
+   ...(program.removedByOwnEffect?{removedByOwnEffect:program.removedByOwnEffect}:{}),
+   ...(program.handEnergyPerFrontName?{handEnergyPerFrontName:program.handEnergyPerFrontName}:{}),
+   ...(program.enterAlwaysActive?{enterAlwaysActive:true}:{}),
+   ...(program.ownTurnBp?{ownTurnBp:program.ownTurnBp}:{}),
    ...(program.raidName?{raidName:program.raidName}:{}),
    ...(program.raidTrait?{raidTrait:program.raidTrait}:{})
   },card);

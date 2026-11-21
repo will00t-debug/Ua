@@ -11,7 +11,7 @@ import {titleLogo} from '../dist/title-logos.mjs';
 import {mgsPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {raidBoxListed} from '../dist/universal-v2/raid-box.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,universalBp,universalCardEnergy,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+import {dispatchUniversalAction,effectiveHandRequiredEnergy,effectiveRequiredEnergy,legalUniversalActions,newUniversalMatch,universalBp,universalCardEnergy,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 
 const pack=createMgsV2Pack();
 const packs=[pack,pack];
@@ -78,7 +78,7 @@ test('UA42BT and UA42ST are one identity per number on the shared engine',()=>{
  assert.equal(MGS_CARDS.every(card=>card.sourceTc&&card.effectJa&&card.nameJa),true);
  assert.equal(MGS_CARDS.every(card=>card.engineKind===mgsEngineKind(card)),true);
  assert.deepEqual([...MGS_ENGINE_IDS],MGS_CARDS.filter(card=>card.engineKind).map(card=>card.id));
- assert.equal(MGS_ENGINE_IDS.length,47);
+ assert.equal(MGS_ENGINE_IDS.length,87);
  assert.deepEqual(Object.keys(pack.cards),[...MGS_ENGINE_IDS]);
  assert.equal(JSON.stringify(pack).includes('"op":"mgs"'),false);
  assert.doesNotMatch(readFileSync(new URL('../dist/universal-v2/mgs-pack.mjs',import.meta.url),'utf8'),/from ['"][^'"]*engine\.mjs/);
@@ -123,7 +123,7 @@ test('the supported practice deck is a legal 50, and a fifth copy stays out',()=
  assert.equal(Object.values(practice.counts).reduce((sum,n)=>sum+n,0),50);
  const ready=editorV2Status('mgs',practice.counts,pack);
  assert.equal(ready.ready,true,ready.issues.join('；'));
- assert.equal(ready.registered,47);
+ assert.equal(ready.registered,87);
  const mixed={...practice.counts};
  const four=Object.keys(mixed).find(id=>mixed[id]===4);
  const donor=Object.keys(mixed).find(id=>id!==four&&mixed[id]>0);
@@ -194,4 +194,91 @@ test('energy 0 records the entry turn, a closed search keeps every inspected car
  assert.deepEqual(sister.pending.choices,[hitagi.uid]);
  assert.equal(sister.pending.choices.includes(otherYellow.uid),false);
  assert.equal(sister.pending.choices.includes(tsukihi.uid),false);
+});
+
+function deckWith(ids){
+ const counts={'MGS-1-003':4,'MGS-1-004':4,'MGS-1-006':4,'MGS-1-007':4,'MGS-1-012':4,
+  'MGS-1-018':4,'MGS-1-020':4,'MGS-1-035':4,'MGS-1-041':4};
+ for(const id of ids)counts[id]=(counts[id]||0)+1;
+ counts['MGS-1-050']=4;
+ counts['MGS-1-054']=4;
+ return counts;
+}
+function act(s,action){
+ return dispatchUniversalAction(packs,s,action,{actor:s.pending?s.pending.player:0});
+}
+
+ test('new shared prints keep the window, the hand cost, and the once-per-turn limit',()=>{
+ const deck=deckWith(['MGS-1-024','MGS-1-042','MGS-1-062','MGS-1-078','MGS-1-080','MGS-1-109']);
+ deck['MGS-1-054']-=1;
+ deck['MGS-1-080']+=1;
+ assert.equal(Object.values(deck).reduce((sum,n)=>sum+n,0),50);
+ let milled=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42109,first:0}),'main');
+ readyAp(milled,2);
+ const shown=[take(milled,0,'MGS-1-003'),take(milled,0,'MGS-1-006'),take(milled,0,'MGS-1-007')];
+ milled.players[0].deck.unshift(...shown);
+ const field=take(milled,0,'MGS-1-109');
+ milled.players[0].hand.push(field);
+ milled=playLine(milled,field.uid,'energy');
+ assert.equal(milled.pending,null);
+ const played=milled.players[0].energy.find(card=>card?.uid===field.uid);
+ assert.equal(played.entryTurn,milled.turn);
+ assert.deepEqual(milled.players[0].outside.slice(-3).map(card=>card.uid),shown.map(card=>card.uid));
+ assert.equal(shown.every(card=>milled.publicReveals.some(row=>row.uid===card.uid&&row.kind==='revealed-window')),true);
+
+ let looked=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42062,first:0}),'main');
+ readyAp(looked,2);
+ sit(looked,0,'MGS-1-042','energy');
+ const match=take(looked,0,'MGS-1-003');
+ const plain=take(looked,0,'MGS-1-109');
+ const other=take(looked,0,'MGS-1-006');
+ looked.players[0].deck.unshift(match,plain,other);
+ const seeker=take(looked,0,'MGS-1-062');
+ looked.players[0].hand.push(seeker);
+ looked=playLine(looked,seeker.uid,'energy');
+ assert.equal(looked.pending.kind,'effect-top-filter-choice');
+ assert.deepEqual(looked.pending.uids,[match.uid,plain.uid,other.uid]);
+ assert.deepEqual(looked.pending.choices,[match.uid,other.uid]);
+ assert.deepEqual(universalPrivateChoices(packs,looked,0).inspected.map(card=>card.uid),looked.pending.uids);
+ assert.equal(universalPrivateChoices(packs,looked,1),null);
+ assert.equal(looked.publicReveals.some(row=>[match.uid,plain.uid,other.uid].includes(row.uid)),false);
+
+ let attack=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42024,first:0}),'main');
+ const karen=sit(attack,0,'MGS-1-024','front');
+ attack=toPhase(attack,'attack');
+ attack=act(attack,{type:'attack',uid:karen.uid});
+ assert.equal(attack.pending.kind,'effect-next');
+ assert.equal(attack.pending.mode,'draw');
+ assert.equal(attack.pending.count,1);
+ attack=act(attack,{type:'nextPrint',mode:'done'});
+ assert.equal((attack.continuousStates||[]).some(row=>row.kind==='skipNextActive'&&row.targetUid===karen.uid),false);
+
+ let once=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42042,first:0}),'main');
+ const source=sit(once,0,'MGS-1-042','front');
+ const ally=sit(once,0,'MGS-1-003','front');
+ once=act(once,legalUniversalActions(packs,once).find(action=>action.uid===source.uid&&action.mode==='selfRestBuff'));
+ assert.equal(once.pending.kind,'effect-buff-own');
+ once=act(once,{type:'chooseOwnBuff',uid:ally.uid});
+ const liveAlly=once.players[0].front.flat().find(card=>card?.uid===ally.uid);
+ assert.equal(universalBp(pack,once,liveAlly),pack.cards['MGS-1-003'].bp+1000);
+ once.players[0].front.flat().find(card=>card?.uid===source.uid).ready=true;
+ assert.equal(legalUniversalActions(packs,once).some(action=>action.uid===source.uid&&action.mode==='selfRestBuff'),false);
+
+ let cost=toPhase(newUniversalMatch(packs,{decks:[deck,deck],seed:42080,first:0}),'main');
+ const cut=sit(cost,0,'MGS-1-080','front');
+ assert.equal(effectiveRequiredEnergy(pack,cost,cut),0);
+ assert.equal(universalBp(pack,cost,cut),3000);
+ const hand=take(cost,0,'MGS-1-078');
+ cost.players[0].hand.push(hand);
+ assert.equal(effectiveHandRequiredEnergy(pack,cost,0,pack.cards['MGS-1-078'],hand),1);
+ const host=sit(cost,0,'MGS-1-003','energy');
+ const origin=take(cost,0,'MGS-1-080');
+ host.stack=[origin];
+ assert.equal(effectiveRequiredEnergy(pack,cost,origin),0);
+ assert.equal(universalBp(pack,cost,host),pack.cards['MGS-1-003'].bp);
+ assert.equal(universalBp(pack,cost,origin),4000);
+ while(cost.players[0].outside.length<10)cost.players[0].outside.push(cost.players[0].deck.shift());
+ assert.equal(effectiveRequiredEnergy(pack,cost,cut),3);
+ assert.equal(universalBp(pack,cost,cut),4000);
+ assert.equal(effectiveHandRequiredEnergy(pack,cost,0,pack.cards['MGS-1-078'],hand),1);
 });
