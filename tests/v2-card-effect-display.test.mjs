@@ -136,12 +136,12 @@ test('Nea D Campbell 067 and 068 preserve distinct printed non-raid abilities',(
  assert.match(block.effectJa,/【2回ブロック】/);
  assert.match(damage.effectJa,/【ダメージ（2）】/);
  for(const field of ['effect','effectHk']){
-  assert.match(block[field],/不是突襲狀態的此角色獲得【2次阻擋】。/,field+' 067');
+  assert.match(block[field],/不是突襲狀態的此角色獲得【二回阻擋】。/,field+' 067');
   assert.match(damage[field],/不是突襲狀態的此角色獲得【傷害（2）】。/,field+' 068');
   assert.doesNotMatch(block[field],/獲得【傷害（2）】/,field+' no wrong damage 2');
   assert.doesNotMatch(damage[field],/獲得。/,field+' no missing keyword');
  }
- assert.match(block.raidFrame.outside,/獲得【2次阻擋】。/);
+ assert.match(block.raidFrame.outside,/獲得【二回阻擋】。/);
  assert.match(damage.raidFrame.outside,/獲得【傷害（2）】。/);
  const rendered=renderCardEffectText(cardEffectDisplayText(damage));
  assert.match(rendered,/ua-effect-damage" role="img" aria-label="傷害二"/);
@@ -153,7 +153,7 @@ test('Nea D Campbell 067 and 068 preserve distinct printed non-raid abilities',(
 test('full DGM audit repairs three further missing named abilities without changing rule code',()=>{
  const title=TITLES.find(t=>t.id==='dgm');
  for(const [id,japanese,traditional,expectedCopies] of [
-  ['DGM-1-020','【2回ブロック】','【2次阻擋】',2],
+  ['DGM-1-020','【2回ブロック】','【二回阻擋】',2],
   ['DGM-1-040','【インパクト（1）】','【貫通（1）】',2],
   ['DGM-1-047','【インパクト（1）】','【貫通（1）】',3]
  ]){
@@ -162,10 +162,34 @@ test('full DGM audit repairs three further missing named abilities without chang
   assert.ok(card.effectJa.includes(japanese),id+' Japanese print');
   assert.ok(card.effect.includes(traditional),id+' Chinese text');
   assert.ok(card.effectHk.includes(traditional),id+' HK source text');
-  if(id==='DGM-1-020')assert.match(renderCardEffectText(card.effect),/【2次阻擋】/,'preserve named ability in text');
+  if(id==='DGM-1-020')assert.match(renderCardEffectText(card.effect),/ua-effect-block" role="img" aria-label="二回阻擋"/,'render localized keyword label');
   else assert.match(renderCardEffectText(card.effect),/ua-effect-impact/,'render yellow impact label');
   assert.equal(card.auto,false,'do not change rules engine state');
  }
  assert.match(title.cards.find(c=>c.id==='DGM-1-047').raidFrame.inside,/【貫通（1）】/);
  assert.equal(title.cards.find(c=>c.id==='DGM-1-040').type,'event');
+});
+
+
+test('all nine catalogues with translated double-block text show canonical 二回阻擋',()=>{
+ const titleIds=['bleach','solo-leveling','rezero','steins-gate','madoka','aot','imc','eva','dgm'];
+ for(const titleId of titleIds){
+  const title=TITLES.find(t=>t.id===titleId);
+  assert.ok(title, 'registered title '+titleId);
+  const cards=title.cards.filter(c=>typeof c.effect==='string'&&c.effect.includes('二回阻擋'));
+  assert.ok(cards.length>0,'localized double-block copy found in '+titleId);
+  for(const card of cards){
+   const html=renderCardEffectText(card.effect);
+   assert.match(html,/ua-effect-block" role="img" aria-label="二回阻擋">/,titleId+':'+card.id);
+   assert.match(html,/%23ffe500/,titleId+':'+card.id+' uses yellow combat badge');
+  }
+ }
+ for(const alias of ['二回阻擋','2次阻擋','兩次阻擋','二次阻擋','雙重阻擋','雙重防禦','2回ブロック']){
+  const html=renderCardEffectText('【'+alias+'】');
+  assert.match(html,/ua-effect-block" role="img" aria-label="二回阻擋">/,'alias '+alias);
+ }
+ assert.equal(renderCardEffectText('普通效果：每回合可以阻擋兩次攻擊。'),'普通效果：每回合可以阻擋兩次攻擊。');
+ const page=readFileSync(new URL('../dist/index.html',import.meta.url),'utf8');
+ assert.match(page,/v2-deck-editor\.mjs\?v=20261120dgm3/,'retains version prefix required by older clients');
+ assert.match(page,/doubleblock1/,'new module version is cache busted');
 });
