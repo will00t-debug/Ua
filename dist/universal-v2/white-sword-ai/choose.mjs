@@ -72,6 +72,7 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   for(const row of scored)row.score=dot(model.policy,row.features);
   let picked;
   let cappedCandidates=null;
+  let diagnostic=null;
   let source='model';
   if(mode==='blend'){
    const hardCap=Number.isFinite(options.hardCap)?options.hardCap:null;
@@ -79,6 +80,16 @@ export function chooseWhiteSwordAction(pack,state,options={}){
    if(!blended)throw Error('blend produced no legal action');
    picked=blended.picked;
    cappedCandidates=blended.candidates;
+   if(options.diagnose===true){
+    const sorted=[...cappedCandidates].sort((a,b)=>b.score-a.score);
+    diagnostic={
+     total:blended.total,eligible:cappedCandidates.length,
+     overriddenHard:!same(picked.action,blended.hardAction),
+     topGap:sorted.length>1?sorted[0].score-sorted[1].score:null,
+     hardGap:Math.max(...cappedCandidates.map(row=>row.hardScore))-
+      Math.min(...cappedCandidates.map(row=>row.hardScore))
+    };
+   }
    // Training-only exploration stays inside the Hard Search 2 safety band.
    // With explore=0, the deployed v2 behavior remains bit-for-bit identical.
    const explore=Number(options.explore)||0;
@@ -113,7 +124,8 @@ export function chooseWhiteSwordAction(pack,state,options={}){
    .slice(0,NEGATIVES).map(row=>row.features);
   return finish(exact,{
    source,reason:null,version:model.version||null,
-   chosen:picked.features,negatives,value
+   chosen:picked.features,negatives,value,
+   ...(diagnostic?{diagnostic}:{} )
   },started);
  }catch(error){
   return finish(referenceAction(pack,state,legal,seed),{
@@ -146,5 +158,5 @@ function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs,hard
  for(const row of trace?.candidates||[])add(row.action,row.score);
  add(hard,trace?.score);
  const pool=withinHardCap(rows,hard,hardCap);
- return pool.length?{picked:selectScored(pool),candidates:pool}:null;
+ return pool.length?{picked:selectScored(pool),candidates:pool,total:rows.length,hardAction:hard}:null;
 }
