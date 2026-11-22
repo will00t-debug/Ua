@@ -54,8 +54,9 @@ export function positionKey(state){
  const pending=state.pending;
  const queue=state.effectQueue||[];
  const parts=[state.turn,state.phase,pending?.kind||'',state.active,queue.length,queue[0]?.op||'',queue[0]?.sourceUid||''];
- if(pending)parts.push(markList(pending.uids),markList(pending.order),markList(pending.choices),
-  markList(pending.entries),pending.sourceUid||'');
+ // A pending selection can stage cards without moving them across zones;
+ // the complete pending payload captures progress and prevents a false loop.
+ if(pending)parts.push(JSON.stringify(pending));
  for(const player of state.players){
   parts.push(player.life.length,player.hand.length,player.deck.length,player.outside.length,
    (player.removed||[]).length,(player.lifeRevealed||[]).length,
@@ -205,7 +206,9 @@ function playGameInner(spec){
   if(spec.keepSamples&&actor===spec.recordSeat&&legal.length>1&&picked.chosen&&picked.negatives?.length){
    if(spec.recordTeacher&&picked.source==='hard-search-2'){
     game.samples.push({kind:'teacher',chosen:picked.chosen,negatives:picked.negatives,value:picked.value,reward:null});
-   }else if(picked.source==='model'){
+   }else if(picked.source==='model'||(picked.source==='blend'&&spec.recordBlendOutcome===true)){
+    // Opt-in v3 only: a capped search/blend decision produces an outcome
+    // gradient against its *eligible* alternatives, never illegal actions.
     game.samples.push({kind:'outcome',seat:actor,chosen:picked.chosen,negatives:picked.negatives,value:picked.value});
    }
   }
