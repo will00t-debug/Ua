@@ -25,6 +25,9 @@ export const LOOP_LIMIT=12;
 export const POLICY_TIMEOUT_MS=1000;
 export const BLEND_TIMEOUT_MS=3000;
 export const BLEND_SCALE=6;
+// Hard's own root margin. v2 refuses a policy override that gives up more
+// search value than this. v1 left the band unlimited.
+export const BLEND_HARD_CAP=7;
 export const EXPLORE=0.08;
 export const NEGATIVES=4;
 // Ordering windows stay on the existing hard reference. They are not
@@ -45,7 +48,9 @@ export function splitForSeed(seed){
  if(n>=12000&&n<12100)return 'full';
  if(n>=19000&&n<22000)return 'train';
  if(n>=30000&&n<31000)return 'validation';
+ if(n>=41000&&n<42000)return 'validation';
  if(n>=50000&&n<51000)return 'final';
+ if(n>=80000&&n<81000)return 'final-v2';
  return 'unassigned';
 }
 export function assertTrainableSeed(seed){

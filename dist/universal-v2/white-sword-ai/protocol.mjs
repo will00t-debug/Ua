@@ -17,6 +17,10 @@ export const SELECTION_DECKS=Object.freeze(['white-sword','reject-blue']);
 export const HISTORY_SEEDS=Object.freeze([30100,30101,30102,30103,30104,30105]);
 export const EPOCH_SEEDS=Object.freeze([30200,30201]);
 export const FINAL_SEEDS=Object.freeze(Array.from({length:17},(_,index)=>50000+index));
+// v2 confirmation seeds. They are not a training source and they do not
+// overlap the v1 final range.
+export const VAL_V2_SEEDS=Object.freeze([41000,41001,41002,41003]);
+export const FINAL_V2_SEEDS=Object.freeze(Array.from({length:17},(_,index)=>80000+index));
 export const FINAL_DECKS=Object.freeze(['white-sword','reject-blue','renruki']);
 export const TRAIN={
  teacherEpochs:8,
@@ -98,5 +102,19 @@ export function finalSpecs(){
   seeds:FINAL_SEEDS,
   opponents:FINAL_DECKS.map(deckId=>({deckId,policy:'hard-search-2'})),
   label:'final'
+ });
+}
+export function validationV2Specs(){
+ return specsFrom({
+  seeds:VAL_V2_SEEDS,
+  opponents:FINAL_DECKS.map(deckId=>({deckId,policy:'hard-search-2'})),
+  label:'validation'
+ });
+}
+export function finalV2Specs(){
+ return specsFrom({
+  seeds:FINAL_V2_SEEDS,
+  opponents:FINAL_DECKS.map(deckId=>({deckId,policy:'hard-search-2'})),
+  label:'final-v2'
  });
 }

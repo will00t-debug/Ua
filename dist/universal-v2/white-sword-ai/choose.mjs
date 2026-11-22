@@ -73,7 +73,8 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   let picked;
   let source='model';
   if(mode==='blend'){
-   const blended=blendRows(pack,state,seat,legal,model,options.scale??BLEND_SCALE,seed,observation,packs);
+   const hardCap=Number.isFinite(options.hardCap)?options.hardCap:null;
+   const blended=blendRows(pack,state,seat,legal,model,options.scale??BLEND_SCALE,seed,observation,packs,hardCap);
    if(!blended)throw Error('blend produced no legal action');
    picked=blended;
    source='blend';
@@ -105,7 +106,14 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   },started);
  }
 }
-function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs){
+export function withinHardCap(rows,hardAction,cap){
+ if(!Number.isFinite(cap))return rows;
+ const anchor=rows.find(row=>same(row.action,hardAction));
+ const base=anchor?anchor.hardScore:Math.max(...rows.map(row=>row.hardScore));
+ const allowed=rows.filter(row=>row.hardScore>=base-cap-1e-9);
+ return allowed.length?allowed:rows;
+}
+function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs,hardCap){
  const hard=chooseStrengthenedHardAction(pack,state,{...HARD_OPTIONS,seed});
  const trace=lastHardAiTrace();
  const rows=[];
@@ -117,9 +125,11 @@ function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs){
   if(seen.has(key))return;
   seen.add(key);
   const features=policyVector({observation,seat,action:exact,legal,catalogs:packs});
-  rows.push({action:exact,features,score:(Number(hardScore)||0)+scale*dot(model.policy,features)});
+  const search=Number(hardScore)||0;
+  rows.push({action:exact,features,hardScore:search,score:search+scale*dot(model.policy,features)});
  };
  for(const row of trace?.candidates||[])add(row.action,row.score);
  add(hard,trace?.score);
- return rows.length?selectScored(rows):null;
+ const pool=withinHardCap(rows,hard,hardCap);
+ return pool.length?selectScored(pool):null;
 }

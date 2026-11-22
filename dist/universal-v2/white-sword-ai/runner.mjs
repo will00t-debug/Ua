@@ -93,7 +93,8 @@ function chooseFor(pack,state,actor,seat,spec,step){
  if(seat.policy==='white-sword'){
   return chooseWhiteSwordAction(pack,state,{
    actor,model:seat.model,mode:seat.mode||'policy',explore:seat.explore||0,
-   step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale
+   step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
+   hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
  }
  throw Error('Unknown policy '+(seat.policy||''));

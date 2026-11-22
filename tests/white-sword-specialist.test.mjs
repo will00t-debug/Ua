@@ -9,9 +9,11 @@ import {
 } from '../dist/universal-v2/white-sword-ai/features.mjs';
 import {chooseWhiteSwordAction} from '../dist/universal-v2/white-sword-ai/choose.mjs';
 import {createModel,dot,updateModel} from '../dist/universal-v2/white-sword-ai/model.mjs';
-import {finalSpecs,fullSpecs,selfPlaySpecs,smokeSpecs,teacherSpecs} from '../dist/universal-v2/white-sword-ai/protocol.mjs';
-import {playGame,positionKey,replayMatches} from '../dist/universal-v2/white-sword-ai/runner.mjs';
-import {splitForSeed} from '../dist/universal-v2/white-sword-ai/constants.mjs';
+import {finalSpecs,finalV2Specs,fullSpecs,selfPlaySpecs,smokeSpecs,teacherSpecs,validationV2Specs} from '../dist/universal-v2/white-sword-ai/protocol.mjs';
+import {withinHardCap} from '../dist/universal-v2/white-sword-ai/choose.mjs';
+import {decisionTags,primaryLabel} from '../dist/universal-v2/white-sword-ai/diagnose.mjs';
+import {playGame,positionKey,replayMatches,trainingLabel} from '../dist/universal-v2/white-sword-ai/runner.mjs';
+import {assertTrainableSeed,splitForSeed} from '../dist/universal-v2/white-sword-ai/constants.mjs';
 import {collectSamples} from '../dist/universal-v2/white-sword-ai/train.mjs';
 import {assertObservationSafe} from '../dist/universal-v2/white-sword-ai/observe.mjs';
 
@@ -285,6 +287,13 @@ test('final seeds and failed games never become training losses',()=>{
  assert.equal(finalSpecs().length,204);
  assert.equal(new Set(finalSpecs().map(row=>row.opponentDeck)).size,3);
  for(const row of finalSpecs())assert.equal(splitForSeed(row.seed),'final');
+ assert.equal(validationV2Specs().length,48);
+ assert.equal(finalV2Specs().length,204);
+ assert.equal(splitForSeed(80000),'final-v2');
+ for(const row of finalV2Specs())assert.equal(splitForSeed(row.seed),'final-v2');
+ assert.throws(()=>assertTrainableSeed(80000),/cannot be used for training/);
+ assert.throws(()=>assertTrainableSeed(41000),/cannot be used for training/);
+ assert.throws(()=>assertTrainableSeed(50000),/cannot be used for training/);
  for(const row of selfPlaySpecs())assert.equal(splitForSeed(row.seed),'train');
 });
 test('opponent hidden zones do not change the specialist action',()=>{
@@ -324,6 +333,40 @@ test('model failure falls back to a legal hard action',()=>{
  assert.equal(picked.source,'fallback');
  const legal=legalUniversalActions(packs,state);
  assert.ok(legal.some(action=>JSON.stringify(action)===JSON.stringify(picked.action)));
+});
+test('a policy override cannot give up more than the hard-search margin',()=>{
+ const hard={type:'next'};
+ const raid={type:'raid',uid:'0-1'};
+ const rows=[
+  {action:hard,hardScore:80,score:80},
+  {action:raid,hardScore:-10,score:40}
+ ];
+ const capped=withinHardCap(rows,hard,7);
+ assert.deepEqual(capped.map(row=>row.action),[hard]);
+ assert.equal(withinHardCap(rows,hard,null).length,2);
+});
+test('a low-base Kenpachi raid is tagged separately from a block',()=>{
+ const state={
+  turn:4,phase:'main',pending:null,
+  players:[
+   {hand:[{uid:'0-1',cardId:'BLC-2-067'}],front:[{uid:'0-9',cardId:'BLC-4-070',stack:[]}],energy:[],life:[1,1,1],apCards:[{ready:true}],outside:[]},
+   {hand:[],front:[],energy:[],life:[1,1,1],apCards:[],outside:[]}
+  ]
+ };
+ const chosen={type:'raid',uid:'0-1',baseUid:'0-9',line:'front',slot:0};
+ const hard={type:'attack',uid:'0-9'};
+ const tags=decisionTags({state,actor:0,legal:[chosen,hard],chosen,hard,pack:[{cards:catalog},{cards:catalog}]});
+ assert.equal(tags.includes('raid-067-low-base'),true);
+ assert.equal(tags.includes('raid'),true);
+ assert.equal(primaryLabel(tags),'raid');
+});
+test('an opponent fallback is not stored as a training loss',()=>{
+ const label=trainingLabel({
+  seed:19001,status:'finished',winner:0,
+  anomalies:{illegal:0,timeout:0,fallback:0,deadLoop:0,engineError:0,leak:0,opponentFallback:2}
+ });
+ assert.equal(label.usable,false);
+ assert.equal(label.reason,'opponent-fallback');
 });
 test('an order window is not the same position on every pick',()=>{
  const board={life:[1],hand:[1],deck:[1,2,3],outside:[],removed:[],lifeRevealed:[],apCards:[],

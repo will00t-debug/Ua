@@ -26,8 +26,9 @@
 | smoke | 11000–11004 | 20 場系統煙霧測試 |
 | full | 12000–12004 | 100 場合法性測試 |
 | train | 19000–19007、20000–20249 | 教師示範與 1000 場自我對戰 |
-| validation | 30000–30201、30100–30105 | 模式選擇、學習曲線、與舊權重比較 |
-| final | 50000–50016 | 204 場冠軍驗收，禁止進入訓練 |
+| validation | 30000–30201、30100–30105、41000–41999 | v1 模式選擇；41000 起是 v2 確認，禁止進入訓練 |
+| final | 50000–50016 | v1 的 204 場驗收，禁止進入訓練或調參 |
+| final-v2 | 80000–80999 | v2 的新最終測試，禁止進入訓練或調參 |
 
 最終測試的種子不會進 `collectSamples`。
 
@@ -63,3 +64,13 @@ node scripts/white-sword-selfplay.mjs all
 - 沒有非法行動、隱藏資訊洩漏、死循環、引擎錯誤、fallback 或逾時
 
 沒有達到時，正式基準仍是 `hard-search-2`。報告會留下實測數字與未晉升原因，不會把權重寫進正式預設。
+
+## v2 評分上限
+
+v1 權重保留在 `candidate.json`。v2 不重新訓練，只在 blend 時拒絕比 Hard 選擇低超過 7 分的候選。7 是 `hard-ai.mjs` 的 `ROOT_MARGIN`，不是看過測試後調的門檻。權重在 `training/white-sword-ai/weights/v2-capped.json`，`deployed` 是 false。
+
+```bash
+node scripts/white-sword-v2-eval.mjs
+```
+
+診斷與 20 個局面在 `docs/white-sword-ai/DIAGNOSIS.md`。新種子的結果在 `docs/white-sword-ai/REPORT-V2.md`。這條指令不會改對戰選單，也不會部署。
