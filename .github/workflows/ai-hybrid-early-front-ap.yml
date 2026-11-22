@@ -1,0 +1,33 @@
+name: AI Early AP 4000 causal AB
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/ai-hybrid-early-front-ap-ab-20261114.mjs'
+      - 'dist/universal-v2/ai-v3/early-front-ap-guard.mjs'
+      - '.github/workflows/ai-hybrid-early-front-ap.yml'
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Matched early AP intervention with 48-node clock-free hard and hybrid
+        run: node scripts/ai-hybrid-early-front-ap-ab-20261114.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-early-front-ab-shard-${{ matrix.shard }}
+          path: early-front-ab-shard-*.json
+          if-no-files-found: warn
