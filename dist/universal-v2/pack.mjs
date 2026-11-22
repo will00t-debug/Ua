@@ -5415,8 +5415,10 @@ function normalize(card,packId){
  const mainNamedEnergy=mainAbility?.op==='buffNamedEnergyActiveAp'&&
   mainAbility.minEnergy===6&&typeof mainAbility.name==='string'&&!!mainAbility.name.trim()&&
   mainAbility.name.length<=80&&integer(mainAbility.extraEnergy,1)&&mainAbility.extraEnergy<=3&&
-  mainAbility.activeAp===1&&Object.keys(mainAbility).length===5&&
-  Object.keys(mainAbility).every(k=>['op','minEnergy','name','extraEnergy','activeAp'].includes(k));
+  mainAbility.activeAp===1&&mainAbility.frontOnly===true&&
+  mainAbility.restSelf===true&&mainAbility.retireSelf===true&&
+  Object.keys(mainAbility).length===8&&
+  Object.keys(mainAbility).every(k=>['op','minEnergy','name','extraEnergy','activeAp','frontOnly','restSelf','retireSelf'].includes(k));
  const printedMains=card.printedMains??null;
  if(printedMains!==null){
   if(card.type!=='character'||mainAbility||!Array.isArray(printedMains)||

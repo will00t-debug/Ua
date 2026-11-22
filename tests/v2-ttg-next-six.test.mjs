@@ -90,7 +90,7 @@ test('next six TTG cards keep official prints and a legal 50-card deck',()=>{
   assert.ok(src.effect.includes(match[id]));
   assert.deepEqual([card.name,card.color,card.energy,card.ap,card.bp,card.gen,card.trigger,card.type],printed);
  }
- assert.equal(ttg.cards['TTG-1-011'].passiveBonuses[0].condition.turn,'any');
+ assert.equal(ttg.cards['TTG-1-011'].passiveBonuses[0].condition.turn,'own');
  assert.equal(ttg.cards['TTG-1-011'].passiveBonuses[0].bp,1500);
  assert.equal(ttg.cards['TTG-1-011'].mainAbility.op,'chooseEnergyModeUntilNextOwnStart');
  assert.deepEqual(ttg.cards['TTG-1-035'].triggerEffect,{op:'retireOppFront'});
@@ -99,13 +99,13 @@ test('next six TTG cards keep official prints and a legal 50-card deck',()=>{
  assert.equal(ttg.cards['TTG-1-048'].effects.onAttack[0].bp,500);
  assert.equal(ttg.cards['TTG-1-076'].raidName,'シモン');
  assert.equal(ttg.cards['TTG-1-076'].enterAlwaysActive,false);
- assert.equal(ttg.cards['TTG-1-076'].mainAbility,null);
+ assert.equal(ttg.cards['TTG-1-076'].mainAbility.op,'restDrawDiscard');
  assert.deepEqual(ttg.cards['TTG-1-076'].traits,TTG_BY_ID['TTG-1-076'].traits);
  assert.deepEqual(ttg.cards['TTG-1-076'].effects.onPlay.map(e=>e.op),
-  ['searchTopAddOneMillRest','drawDiscard']);
+  ['searchTopAddOneMillRest']);
 });
 
-test('TTG-011 energy 8 raises BP on either turn, and the main chooses one energy mode until the next own start',()=>{
+test('TTG-011 energy 8 raises BP on the controller turn, and the main chooses one energy mode until the next own start',()=>{
  const packs=ttg;
  let low=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:11011});
  const quiet=place(low,0,'TTG-1-011','front',0);
@@ -117,6 +117,9 @@ test('TTG-011 energy 8 raises BP on either turn, and the main chooses one energy
  assert.equal(universalBp(packs,high,boosted),4000);
  high=endTurn(packs,high);
  assert.equal(high.active,1);
+ assert.equal(universalBp(packs,high,high.players[0].front.find(c=>c?.uid===boosted.uid)),2500);
+ high=endTurn(packs,high);
+ assert.equal(high.active,0);
  assert.equal(universalBp(packs,high,high.players[0].front.find(c=>c?.uid===boosted.uid)),4000);
 
  let mode=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:11013});
@@ -420,7 +423,7 @@ test('TTG-048 grants BP, impact null and double block only on the first own atta
  assert.equal(assertUniversalMatch(packs,expire),true);
 });
 
-test('TTG-076 raids Simon, adds one of the top two, then draws and discards',()=>{
+test('TTG-076 raids Simon and adds one of the top two; the REST main draws and discards',()=>{
  const packs=ttg;
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:76076});
  for(let i=0;i<2;i++)place(s,0,'TTG-1-063','energy',i);
@@ -444,11 +447,21 @@ test('TTG-076 raids Simon, adds one of the top two, then draws and discards',()=
  assert.ok(s.players[0].hand.some(c=>c.uid===chosen.uid));
  const rest=seen.map(c=>c.uid).find(uid=>uid!==chosen.uid);
  assert.ok(s.players[0].outside.some(c=>c.uid===rest));
+ assert.equal(s.pending,null);
+ const before=s.players[0].hand.length;
+ const deckBefore=s.players[0].deck.length;
+ const main=act(packs,s,a=>a.type==='activate'&&a.uid===raider.uid&&a.mode==='restDrawDiscard');
+ assert.match(uiActionLabel(main,{pack:packs,state:s}),/休息|抽/);
+ s=go(packs,s,main);
+ assert.equal(live(s,0,raider.uid).ready,false);
+ assert.equal(s.players[0].hand.length,before+1);
+ assert.equal(s.players[0].deck.length,deckBefore-1);
  assert.equal(s.pending.kind,'effect-discard');
  const discard=s.players[0].hand[0];
  s=go(packs,s,{type:'chooseDiscard',uid:discard.uid});
  assert.equal(s.pending,null);
  assert.ok(s.players[0].outside.some(c=>c.uid===discard.uid));
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===raider.uid),false);
  assert.equal(assertUniversalMatch(packs,s),true);
 
  let one=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:76077});
@@ -459,9 +472,11 @@ test('TTG-076 raids Simon, adds one of the top two, then draws and discards',()=
  while(one.players[0].deck.length>1)one.players[0].outside.push(one.players[0].deck.pop());
  one=toPhase(packs,one,'main');
  one=go(packs,one,act(packs,one,a=>a.type==='raid'&&a.uid===raidOne.uid&&a.baseUid===baseOne.uid));
- assert.equal(one.pending?.kind,'effect-discard');
+ assert.equal(one.pending,null);
  assert.ok(one.players[0].hand.some(c=>c.uid===only.uid));
  assert.equal(one.status,'playing');
+ one=go(packs,one,act(packs,one,a=>a.type==='activate'&&a.uid===raidOne.uid&&a.mode==='restDrawDiscard'));
+ assert.equal(one.pending.kind,'effect-discard');
  one=go(packs,one,{type:'chooseDiscard',uid:one.players[0].hand[0].uid});
  assert.equal(assertUniversalMatch(packs,one),true);
 
@@ -477,5 +492,20 @@ test('TTG-076 raids Simon, adds one of the top two, then draws and discards',()=
  assert.equal(empty.pending,null);
  assert.equal(empty.players[0].deck.length,0);
  assert.equal(empty.status,'playing');
+ empty=go(packs,empty,act(packs,empty,a=>a.type==='activate'&&a.uid===raidEmpty.uid&&a.mode==='restDrawDiscard'));
+ assert.equal(empty.pending,null);
+ assert.equal(live(empty,0,raidEmpty.uid).ready,false);
+ assert.equal(empty.status,'playing');
  assert.equal(assertUniversalMatch(packs,empty),true);
+
+ let ordinary=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:76079});
+ for(let i=0;i<2;i++)place(ordinary,0,'TTG-1-063','energy',i);
+ const played=hold(ordinary,0,'TTG-1-076');
+ ordinary=toPhase(packs,ordinary,'main');
+ const hand=ordinary.players[0].hand.length;
+ ordinary=go(packs,ordinary,act(packs,ordinary,a=>a.type==='play'&&a.uid===played.uid&&a.line==='front'));
+ assert.equal(ordinary.pending,null);
+ assert.equal(ordinary.players[0].hand.length,hand-1);
+ assert.equal(legalUniversalActions(packs,ordinary).some(a=>a.type==='activate'&&a.uid===played.uid),false);
+ assert.equal(assertUniversalMatch(packs,ordinary),true);
 });

@@ -181,7 +181,8 @@ const RAID_BOX_FEATURES=Object.freeze({
  'TTG-1-072':["onPlay"],
  'TTG-1-073':["onPlay","conditionalUnder"],
  'TTG-1-074':["onPlay"],
- 'TTG-1-076':["onPlay"],
+ // Rugia HK span.raidBorder on 2026-11-22 encloses 076's look and its REST main.
+ 'TTG-1-076':["onPlay","main"],
  'AOT-1-011':["attackEnd","onPlay"],
  'AOT-1-014':["onAttack"],
  'AOT-1-022':["onAttack","main"],
