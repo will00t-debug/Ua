@@ -3,7 +3,7 @@
 import {CELLS,assertTrainableSeed,splitForSeed} from './constants.mjs';
 
 export const V3_TRAIN_SEEDS=Object.freeze(Array.from({length:8},(_,i)=>21050+i));
-export const V3_VALIDATION_SEEDS=Object.freeze([45000,45001,45002]);
+export const V3_VALIDATION_SEEDS=Object.freeze([45000,45001,45002,45003,45004]);
 export const V3_FINAL_SEEDS=Object.freeze(Array.from({length:17},(_,i)=>94000+i));
 export const V3_DECKS=Object.freeze(['white-sword','reject-blue','renruki']);
 export const V3_OPPONENT_POOL=Object.freeze([
@@ -19,7 +19,7 @@ export const V3_CONFIG=Object.freeze({
 });
 
 const TRAIN_START=21050,TRAIN_END=21058;
-const VAL_START=45000,VAL_END=45003;
+const VAL_START=45000,VAL_END=45005;
 const HOLDOUT_START=94000,HOLDOUT_END=94017;
 export function v3SeedRole(seed){
  if(!Number.isSafeInteger(seed))throw Error('V3 seed must be an integer');
