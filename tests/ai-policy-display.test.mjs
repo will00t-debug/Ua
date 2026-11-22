@@ -32,7 +32,7 @@ test('the policy line reads the lobby select only when no match is running', () 
  assert.match(body, /lobbyDifficulty:lobby/);
  assert.doesNotMatch(body, /app\.aiDifficulty\|\|\$\('ai-level'\)/);
  assert.match(page, /\$\('ai-level'\)\.value=difficulty;\n\s*syncMatchLobby\(\);markLobbyChanged\(\);rememberMatchLobby\(\);\n\s*paintAiPolicy\(\);/);
- assert.match(page, /if\(id==='ai-level'\)paintAiPolicy\(\)/);
+ assert.match(page, /if\(id==='ai-level'\|\|id==='ai-title'\)paintAiPolicy\(\)/);
  assert.match(page, /chooseProgressSafeAiAction\(app\.packs,app\.state,\s*\{difficulty:app\.aiDifficulty/);
  assert.equal(MATCH_LIMITS.nodes, 48);
  assert.equal(MATCH_LIMITS.ms, 40);
