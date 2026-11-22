@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: white-sword-paired-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   paired-comparison:
     runs-on: ubuntu-latest
@@ -26,6 +30,8 @@ jobs:
           node --check scripts/white-sword-paired-worker.mjs
       - name: Specialist baseline tests
         run: node --test tests/white-sword-specialist.test.mjs
+      - name: Replay previously failing seed 92002
+        run: node --test tests/white-sword-paired-92002.test.mjs
       - name: Smoke paired comparisons (12 pairs)
         env:
           WS_WORKERS: '3'
