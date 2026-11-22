@@ -768,3 +768,84 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
   }catch{return finish(null,{reason:'exception'});}
  }
 }
+
+// v3.3 OFFLINE-ONLY teacher: estimate next-turn offense and counterattack
+// from the same hidden-scrubbed hypothetical that Hard Search 2 already uses.
+// This deliberately does NOT peek at the actual next LIFE/hand/deck order,
+// replay unknown triggers, or claim to solve the full opponent turn. Only
+// projected visible threat is returned, not internal/hypothetical card data.
+function nextTurnThreat(pack,model,side,visible){
+ const own=model.players[side],foe=model.players[1-side];
+ const foefront=foe.front.filter(c=>seen(c,visible));
+ const ownfront=own.front.filter(c=>seen(c,visible));
+ let offense=0,defense=0;
+ for(const card of ownfront){
+  const bp=safeNum(()=>universalBp(pack,model,card),0);
+  const damage=Math.min(2.5,Math.max(0,safeNum(
+   ()=>universalAttackDamage(pack,model,card),1)));
+  const impact=Math.min(2,Math.max(0,safeNum(
+   ()=>universalImpact(pack,model,card),0)));
+  // A rested, surviving character is projected READY at its NEXT turn.
+  // Other board and opponent-life uncertainties are left unresolved.
+  const canTrade=foefront.filter(c=>safeNum(
+   ()=>universalBp(pack,model,c),0)<=bp).length;
+  const mustBlockRisk=Math.min(1,foefront.length/Math.max(1,ownfront.length));
+  const openChance=foefront.length===0?1:
+   Math.max(0.27,1-0.54*mustBlockRisk);
+  offense+=(damage*13+impact*7)*openChance+Math.min(2,canTrade)*2;
+  defense+=Math.min(2.5,bp/4000)*3;
+ }
+ // Raid feasibility is an actor-owned *known-hand* prospect, not a guess
+ // about the other player's hand. Use color energy from visible field only.
+ let raid=0;
+ const visibleOwn=own.hand.filter(c=>seen(c,visible));
+ if(visibleOwn.length){
+  const energy=universalEnergyByColor(pack,model,side);
+  const names=new Set([...ownfront,...own.energy.filter(c=>seen(c,visible))]
+   .map(c=>squash(printed(pack,side,c)?.name)).filter(Boolean));
+  for(const physical of visibleOwn){
+   const d=printed(pack,side,physical);
+   if(!d?.raidName||!names.has(squash(d.raidName)))continue;
+   if((energy[d.color]||0)<(d.energy||0))continue;
+   raid=Math.max(raid,7+Math.min(3,(d.bp||0)/2000));
+  }
+ }
+ return {offense,defense,raid};
+}
+function nextTurnAdvantage(pack,model,actor,visible){
+ const mine=nextTurnThreat(pack,model,actor,visible);
+ const enemy=nextTurnThreat(pack,model,1-actor,visible);
+ // Both player future turns matter: a strong line that loses to opponent
+ // counterpressure cannot receive the full attack forecast.
+ return mine.offense+mine.defense+mine.raid-
+  (enemy.offense*0.82+enemy.defense*0.7);
+}
+export function projectVisibleNextTurn(pack,state,actor,actions,{maxActions=10}={}){
+ if(!state||state.status!=='playing'||state.pending||
+   !['main','attack'].includes(state.phase)||![0,1].includes(actor))
+  return [];
+ if(!Array.isArray(actions)||actions.length===0||actions.length>maxActions)
+  return [];
+ const legal=legalUniversalActions(pack,state);
+ const visible=visibleUidSet(pack,state,actor);
+ const model=hypothetical(pack,state,visible);
+ if(!model)return [];
+ const baseline=nextTurnAdvantage(pack,model,actor,visible);
+ const out=[];
+ for(const action of actions){
+  if(!legal.some(item=>same(item,action))||actionUsesHidden(action,visible))continue;
+  try{
+   // Each branch starts from a newly cloned *sanitized* root, never from
+   // the real match or another branch's mutated state.
+   const next=dispatchUniversalAction(pack,structuredClone(model),action,{actor});
+   if(next.status!=='playing'&&next.status!=='finished')continue;
+   // Once an effect needs a private draw/reveal we do not use its contents.
+   // Only the originally visible cards and their public board positions
+   // enter the projected score.
+   const delta=nextTurnAdvantage(pack,next,actor,visible)-baseline;
+   if(!Number.isFinite(delta))continue;
+   out.push({action,delta:Math.max(-14,Math.min(14,delta))});
+  }catch{/* no teacher for an unsupported simulated branch */}
+ }
+ return out;
+}

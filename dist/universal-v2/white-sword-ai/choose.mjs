@@ -3,7 +3,7 @@
 // Performance is a global API in browsers and Node 22; no node:* imports in worker graph.
 import {legalUniversalActions} from '../engine.mjs';
 import {chooseUniversalAiAction} from '../ai.mjs';
-import {chooseStrengthenedHardAction,lastHardAiTrace} from '../hard-ai.mjs';
+import {chooseStrengthenedHardAction,lastHardAiTrace,projectVisibleNextTurn} from '../hard-ai.mjs';
 import {
  BLEND_SCALE,BLEND_TIMEOUT_MS,HARD_OPTIONS,NEGATIVES,ORDER_KINDS,POLICY_TIMEOUT_MS
 } from './constants.mjs';
@@ -87,8 +87,20 @@ export function chooseWhiteSwordAction(pack,state,options={}){
    // unsearched candidate scores, and never hidden opponent/LIFE identities.
    if(options.collectQ===true&&(
     options.qScope!=='voluntary'||(!state.pending&&
-     (state.phase==='main'||state.phase==='attack'))))
-    qPairs=qPairsFromRoot(cappedCandidates);
+     (state.phase==='main'||state.phase==='attack')))){
+    if(options.qStrategy==='next-turn'){
+     // The forecast is an OFFLINE training label only; it never affects
+     // actual in-game selection or the Hard cap of the action pool.
+     const measured=cappedCandidates.filter(row=>row.measured);
+     const forecast=projectVisibleNextTurn(pack,state,seat,measured.map(row=>row.action));
+     const scoreOf=new Map(forecast.map(row=>[JSON.stringify(row.action),row.delta]));
+     const adjusted=measured.filter(row=>scoreOf.has(JSON.stringify(row.action))).map(row=>({
+      ...row,
+      hardScore:row.hardScore+0.6*scoreOf.get(JSON.stringify(row.action))
+     }));
+     qPairs=qPairsFromRoot(adjusted);
+    }else qPairs=qPairsFromRoot(cappedCandidates);
+   }
    if(options.diagnose===true){
     const sorted=[...cappedCandidates].sort((a,b)=>b.score-a.score);
     diagnostic={
