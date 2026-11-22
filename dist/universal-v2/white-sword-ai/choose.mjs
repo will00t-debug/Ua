@@ -10,6 +10,7 @@ import {
 import {catalogsOf} from './browser-catalogs.mjs';
 import {policyVector,valueVector} from './features.mjs';
 import {createModel,dot} from './browser-model.mjs';
+import {gainProbe} from './gain-probe.mjs';
 import {observeActor} from './observe.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -87,7 +88,11 @@ export function chooseWhiteSwordAction(pack,state,options={}){
      overriddenHard:!same(picked.action,blended.hardAction),
      topGap:sorted.length>1?sorted[0].score-sorted[1].score:null,
      hardGap:Math.max(...cappedCandidates.map(row=>row.hardScore))-
-      Math.min(...cappedCandidates.map(row=>row.hardScore))
+      Math.min(...cappedCandidates.map(row=>row.hardScore)),
+     ...(Array.isArray(options.diagnosticCandidatePolicy)?{
+      counterfactual:gainProbe(cappedCandidates,model.policy,
+       options.diagnosticCandidatePolicy,options.scale??BLEND_SCALE,blended.hardAction)
+     }:{})
     };
    }
    // Training-only exploration stays inside the Hard Search 2 safety band.
