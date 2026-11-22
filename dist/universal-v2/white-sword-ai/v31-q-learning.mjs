@@ -4,6 +4,8 @@
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 export const Q_MIN_GAP=1.5;
 export const Q_MAX_GAP=7;
+// Q scores are floating point: producer and consumer use the same tolerance.
+export const Q_SCORE_EPS=1e-9;
 export function qPairsFromRoot(pool,{minGap=Q_MIN_GAP,maxGap=Q_MAX_GAP,maxPairs=2}={}){
  if(!Array.isArray(pool)||pool.length<2)return [];
  if(!(minGap>0&&maxGap>=minGap&&maxPairs>=1))throw Error('invalid Q pair configuration');
@@ -15,7 +17,7 @@ export function qPairsFromRoot(pool,{minGap=Q_MIN_GAP,maxGap=Q_MAX_GAP,maxPairs=
  const best=scored[0],out=[];
  for(const other of scored.slice(1)){
   const gap=best.hardScore-other.hardScore;
-  if(gap+1e-9<minGap||gap>maxGap+1e-9||same(best.action,other.action))continue;
+  if(gap+Q_SCORE_EPS<minGap||gap>maxGap+Q_SCORE_EPS||same(best.action,other.action))continue;
   out.push({
    kind:'q-preference',chosen:best.features,negative:other.features,
    gap,weight:Math.min(1,Math.max(0.2,(gap-minGap+1)/(maxGap-minGap+1))),
@@ -38,10 +40,14 @@ export function learnFromQPreferences(model,samples,anchor,{
  let updates=0,correctBefore=0,correctAfter=0;
  const positive=(w,s)=>s.chosen.reduce((v,x,i)=>v+(x-s.negative[i])*w[i],0);
  const valid=samples.filter(s=>s.kind==='q-preference');
- for(const s of valid){
-  if(s.chosen?.length!==model.policy.length||s.negative?.length!==model.policy.length||
-   !(s.gap>=Q_MIN_GAP&&s.gap<=Q_MAX_GAP)||!(s.weight>0&&s.weight<=1))
-   throw Error('invalid measured Q preference');
+ for(const [index,s] of valid.entries()){
+  const badWidth=s.chosen?.length!==model.policy.length||s.negative?.length!==model.policy.length;
+  const badGap=!Number.isFinite(s.gap)||s.gap+Q_SCORE_EPS<Q_MIN_GAP||s.gap>Q_MAX_GAP+Q_SCORE_EPS;
+  const badWeight=!Number.isFinite(s.weight)||s.weight<=0||s.weight>1;
+  if(badWidth||badGap||badWeight)throw Error(
+   'invalid measured Q preference at '+index+
+   ' (width='+String(s.chosen?.length)+'/'+String(s.negative?.length)+
+   ', gap='+String(s.gap)+', weight='+String(s.weight)+')');
   if(positive(model.policy,s)>0)correctBefore++;
  }
  const limit=v=>Math.max(-6,Math.min(6,v));
