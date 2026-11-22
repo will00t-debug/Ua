@@ -376,6 +376,19 @@ test('an order window is not the same position on every pick',()=>{
  const later={...state,pending:{...state.pending,uids:state.pending.uids.slice(1),order:['0-1']}};
  assert.notEqual(positionKey(state),positionKey(later));
 });
+test('staged outside selections must advance the repeat-position key',()=>{
+ const board={life:[1],hand:[1],deck:[1,2,3],outside:[1,2,3],removed:[],lifeRevealed:[],apCards:[],
+  front:[null,null,null,null],energy:[null,null,null,null]};
+ const initial={turn:10,phase:'attack',active:0,effectQueue:[{op:'raid-trigger'}],players:[board,board],
+  pending:{kind:'effect-remove-outside',player:1,choices:['1-45','1-46','1-17'],
+   sourceUid:'1-37',selected:['1-45'],remaining:2}};
+ const later={...initial,pending:{...initial.pending,selected:['1-45','1-46'],remaining:1}};
+ assert.notEqual(positionKey(initial),positionKey(later),
+  'pending selection progress must not be mistaken for an unchanged loop');
+ assert.equal(positionKey(initial),positionKey({...initial,pending:{...initial.pending}}),
+  'same position must retain the same loop-detection signature');
+});
+
 test('a seeded specialist game replays the same actions',()=>{
  const deck=getDeck('white-sword');
  const spec={
