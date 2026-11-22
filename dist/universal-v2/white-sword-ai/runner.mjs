@@ -100,6 +100,7 @@ function chooseFor(pack,state,actor,seat,spec,step){
    captureDecisions:spec.captureDecisions===true,
    collectQ:spec.keepSamples===true&&spec.recordQPreferences===true&&actor===spec.recordSeat,
    qScope:spec.recordQScope||null,
+   qStrategy:spec.recordQStrategy||null,
    diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
