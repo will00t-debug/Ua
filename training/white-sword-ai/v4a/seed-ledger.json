@@ -1,0 +1,26 @@
+{
+  "format": "ua-white-sword-v4a-ledger",
+  "uses": [
+    {
+      "seed": 101900,
+      "purpose": "probe",
+      "round": 0,
+      "profile": "smoke",
+      "at": "2026-11-22T19:15:27.543Z"
+    },
+    {
+      "seed": 101910,
+      "purpose": "stage-a",
+      "round": 0,
+      "profile": "smoke",
+      "at": "2026-11-22T19:15:27.543Z"
+    },
+    {
+      "seed": 101920,
+      "purpose": "stage-b",
+      "round": 0,
+      "profile": "smoke",
+      "at": "2026-11-22T19:15:27.543Z"
+    }
+  ]
+}
