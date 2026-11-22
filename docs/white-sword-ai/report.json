@@ -1,0 +1,726 @@
+{
+  "sourceCommit": "0acf3554e458c068ddee09195c9fdbd4fe9fc6d0",
+  "createdAt": "2026-11-22T01:38:37.164Z",
+  "deck": {
+    "ok": true,
+    "playable": true,
+    "copies": 50,
+    "kinds": 13,
+    "registeredKinds": 13,
+    "missing": [],
+    "issues": [],
+    "entries": [
+      {
+        "copies": 4,
+        "source": "UA04NC/BLC-3-009",
+        "cardId": "BLC-3-009",
+        "name": "日番谷冬獅郎",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "EX15BT/BLC-4-060",
+        "cardId": "BLC-4-060",
+        "name": "藍染惣右介",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "EX15BT/BLC-4-066",
+        "cardId": "BLC-4-066",
+        "name": "卯之花烈",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "EX07BT/BLC-2-067",
+        "cardId": "BLC-2-067",
+        "name": "更木劍八",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "EX07BT/BLC-2-069",
+        "cardId": "BLC-2-069",
+        "name": "日番谷冬獅郎",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "EX15BT/BLC-4-070",
+        "cardId": "BLC-4-070",
+        "name": "更木劍八",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "UA08BT/BLC-1-070",
+        "cardId": "BLC-1-070",
+        "name": "卯之花八千流",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "UA08BT/BLC-1-072",
+        "cardId": "BLC-1-072",
+        "name": "卯之花烈",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "UA08BT/BLC-1-083",
+        "cardId": "BLC-1-083",
+        "name": "日番谷冬獅郎",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "UA08BT/BLC-1-085",
+        "cardId": "BLC-1-085",
+        "name": "日番谷冬獅郎",
+        "registered": true
+      },
+      {
+        "copies": 2,
+        "source": "UA04NC/BLC-3-008",
+        "cardId": "BLC-3-008",
+        "name": "更木劍八",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "EX07BT/BLC-2-073",
+        "cardId": "BLC-2-073",
+        "name": "野晒",
+        "registered": true
+      },
+      {
+        "copies": 4,
+        "source": "EX15BT/BLC-4-080",
+        "cardId": "BLC-4-080",
+        "name": "卍解",
+        "registered": true
+      }
+    ]
+  },
+  "protocol": {
+    "hard": "hard-search-2",
+    "nodes": 48,
+    "clock": "free when nodes are pinned",
+    "finalSeeds": [
+      50000,
+      50016
+    ],
+    "finalDecks": [
+      "white-sword",
+      "reject-blue",
+      "renruki"
+    ],
+    "selectionDecks": [
+      "white-sword",
+      "reject-blue"
+    ],
+    "epochSeeds": [
+      30200,
+      30201
+    ],
+    "train": {
+      "teacherEpochs": 8,
+      "teacherLr": 0.2,
+      "selfEpochs": 4,
+      "selfLr": 0.08,
+      "valueLr": 0.08,
+      "explore": 0.08
+    }
+  },
+  "smoke": {
+    "overall": {
+      "wins": 0,
+      "n": 20,
+      "p": 0,
+      "low": -1.3877787807814457e-17,
+      "high": 0.16113012549493322,
+      "games": 20,
+      "finished": 20,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 0,
+      "n": 10,
+      "p": 0,
+      "low": -2.7755575615628914e-17,
+      "high": 0.2775401687666166,
+      "games": 10,
+      "finished": 10,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 0,
+      "n": 10,
+      "p": 0,
+      "low": -2.7755575615628914e-17,
+      "high": 0.2775401687666166,
+      "games": 10,
+      "finished": 10,
+      "unfinished": 0
+    },
+    "byDeck": {
+      "white-sword": {
+        "wins": 0,
+        "n": 20,
+        "p": 0,
+        "low": -1.3877787807814457e-17,
+        "high": 0.16113012549493322,
+        "games": 20,
+        "finished": 20,
+        "unfinished": 0
+      }
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    },
+    "ms": 4482.912199999998,
+    "games": 20,
+    "wallMs": 2853.944109
+  },
+  "full": {
+    "overall": {
+      "wins": 0,
+      "n": 100,
+      "p": 0,
+      "low": 0,
+      "high": 0.03699480747600191,
+      "games": 100,
+      "finished": 100,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 0,
+      "n": 50,
+      "p": 0,
+      "low": 0,
+      "high": 0.07135003417431873,
+      "games": 50,
+      "finished": 50,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 0,
+      "n": 50,
+      "p": 0,
+      "low": 0,
+      "high": 0.07135003417431873,
+      "games": 50,
+      "finished": 50,
+      "unfinished": 0
+    },
+    "byDeck": {
+      "white-sword": {
+        "wins": 0,
+        "n": 40,
+        "p": 0,
+        "low": -6.938893903907228e-18,
+        "high": 0.08762453925039232,
+        "games": 40,
+        "finished": 40,
+        "unfinished": 0
+      },
+      "reject-blue": {
+        "wins": 0,
+        "n": 20,
+        "p": 0,
+        "low": -1.3877787807814457e-17,
+        "high": 0.16113012549493322,
+        "games": 20,
+        "finished": 20,
+        "unfinished": 0
+      },
+      "renruki": {
+        "wins": 0,
+        "n": 20,
+        "p": 0,
+        "low": -1.3877787807814457e-17,
+        "high": 0.16113012549493322,
+        "games": 20,
+        "finished": 20,
+        "unfinished": 0
+      },
+      "sword-art-online": {
+        "wins": 0,
+        "n": 20,
+        "p": 0,
+        "low": -1.3877787807814457e-17,
+        "high": 0.16113012549493322,
+        "games": 20,
+        "finished": 20,
+        "unfinished": 0
+      }
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    },
+    "ms": 126224.53838699996,
+    "games": 100,
+    "wallMs": 44462.288339
+  },
+  "training": {
+    "teacherGames": 32,
+    "selfPlayGames": 1000,
+    "kept": 43000,
+    "rejected": 114,
+    "curve": [
+      {
+        "epoch": 0,
+        "games": 250,
+        "kept": 12832,
+        "rejected": 32,
+        "policyL2": 16.305618432421067,
+        "valueL2": 6.227348155270334,
+        "val": {
+          "wins": 1,
+          "n": 8,
+          "p": 0.125,
+          "low": 0.02241690886329617,
+          "high": 0.4708948057698615,
+          "games": 8,
+          "finished": 8,
+          "unfinished": 0
+        }
+      },
+      {
+        "epoch": 1,
+        "games": 250,
+        "kept": 8745,
+        "rejected": 34,
+        "policyL2": 17.014182507045806,
+        "valueL2": 5.7991450503259525,
+        "val": {
+          "wins": 1,
+          "n": 8,
+          "p": 0.125,
+          "low": 0.02241690886329617,
+          "high": 0.4708948057698615,
+          "games": 8,
+          "finished": 8,
+          "unfinished": 0
+        }
+      },
+      {
+        "epoch": 2,
+        "games": 250,
+        "kept": 10334,
+        "rejected": 19,
+        "policyL2": 17.3549579704845,
+        "valueL2": 6.539467795009573,
+        "val": {
+          "wins": 1,
+          "n": 8,
+          "p": 0.125,
+          "low": 0.02241690886329617,
+          "high": 0.4708948057698615,
+          "games": 8,
+          "finished": 8,
+          "unfinished": 0
+        }
+      },
+      {
+        "epoch": 3,
+        "games": 250,
+        "kept": 9163,
+        "rejected": 29,
+        "policyL2": 18.544750001137277,
+        "valueL2": 7.630796706736385,
+        "val": {
+          "wins": 1,
+          "n": 8,
+          "p": 0.125,
+          "low": 0.02241690886329617,
+          "high": 0.4708948057698615,
+          "games": 8,
+          "finished": 8,
+          "unfinished": 0
+        }
+      }
+    ],
+    "teacherSamples": 1926,
+    "weightDelta": 15.723628118246355
+  },
+  "selection": [
+    {
+      "mode": "policy",
+      "scale": 0,
+      "wins": 0,
+      "overall": {
+        "wins": 0,
+        "n": 16,
+        "p": 0,
+        "low": 0,
+        "high": 0.19361341827271994,
+        "games": 16,
+        "finished": 16,
+        "unfinished": 0
+      }
+    },
+    {
+      "mode": "blend",
+      "scale": 6,
+      "wins": 6,
+      "overall": {
+        "wins": 6,
+        "n": 16,
+        "p": 0.375,
+        "low": 0.18480982554752806,
+        "high": 0.613593529020652,
+        "games": 16,
+        "finished": 16,
+        "unfinished": 0
+      }
+    },
+    {
+      "mode": "hard",
+      "scale": 0,
+      "wins": 8,
+      "overall": {
+        "wins": 8,
+        "n": 16,
+        "p": 0.5,
+        "low": 0.2799923761135083,
+        "high": 0.7200076238864916,
+        "games": 16,
+        "finished": 16,
+        "unfinished": 0
+      }
+    }
+  ],
+  "history": {
+    "wins": 21,
+    "n": 24,
+    "p": 0.875,
+    "low": 0.6899571185214243,
+    "high": 0.9565574496068442,
+    "games": 24,
+    "finished": 24,
+    "unfinished": 0
+  },
+  "finalTest": {
+    "overall": {
+      "wins": 98,
+      "n": 204,
+      "p": 0.4803921568627451,
+      "low": 0.41282923514435305,
+      "high": 0.5486799141308641,
+      "games": 204,
+      "finished": 204,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 51,
+      "n": 102,
+      "p": 0.5,
+      "low": 0.40474278556489024,
+      "high": 0.5952572144351097,
+      "games": 102,
+      "finished": 102,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 47,
+      "n": 102,
+      "p": 0.46078431372549017,
+      "low": 0.3672332339199432,
+      "high": 0.5571821188336056,
+      "games": 102,
+      "finished": 102,
+      "unfinished": 0
+    },
+    "byDeck": {
+      "white-sword": {
+        "wins": 24,
+        "n": 68,
+        "p": 0.35294117647058826,
+        "low": 0.2500181058015448,
+        "high": 0.4715916579008227,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      },
+      "reject-blue": {
+        "wins": 34,
+        "n": 68,
+        "p": 0.5,
+        "low": 0.3843786388809909,
+        "high": 0.6156213611190091,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      },
+      "renruki": {
+        "wins": 40,
+        "n": 68,
+        "p": 0.5882352941176471,
+        "low": 0.4696125189030847,
+        "high": 0.6974216228754949,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      }
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    },
+    "ms": 978772.4069639989,
+    "games": 204,
+    "wallMs": 330192.834861,
+    "nonMirror": {
+      "wins": 74,
+      "n": 136,
+      "p": 0.5441176470588235,
+      "low": 0.46034800812412696,
+      "high": 0.6254633670317638,
+      "games": 136,
+      "finished": 136,
+      "unfinished": 0
+    },
+    "opponentDecks": [
+      "white-sword",
+      "reject-blue",
+      "renruki"
+    ]
+  },
+  "promotion": {
+    "promoted": false,
+    "reasons": [
+      "總勝率未達 60%",
+      "95% 勝率信賴區間下限未高於 50%",
+      "非鏡像對局的 95% 信賴區間下限未高於 50%，不能只靠白劍鏡像"
+    ]
+  },
+  "collapse": {
+    "mass": {
+      "raid": 0.08377522488446108,
+      "draw": 0.03323950462480781,
+      "life": 0
+    },
+    "singleMetricRisk": false
+  },
+  "topWeights": [
+    {
+      "name": "attack_edge",
+      "weight": 5.969050844333887
+    },
+    {
+      "name": "pass_despite_attack",
+      "weight": -5.3291160506765385
+    },
+    {
+      "name": "type_raid",
+      "weight": 5.254268793867767
+    },
+    {
+      "name": "attack_open",
+      "weight": -4.513752825102308
+    },
+    {
+      "name": "h085_gotei",
+      "weight": -4.349051388121613
+    },
+    {
+      "name": "type_attack",
+      "weight": 4.038726916357343
+    },
+    {
+      "name": "affordable",
+      "weight": 3.777676905657542
+    },
+    {
+      "name": "card_BLC-4-066",
+      "weight": -3.558065366146699
+    },
+    {
+      "name": "type_next",
+      "weight": -3.3593660359716835
+    },
+    {
+      "name": "mulligan_redraw_thin",
+      "weight": 3.2102236385246963
+    },
+    {
+      "name": "line_front",
+      "weight": 3.111747446210022
+    },
+    {
+      "name": "u070_raid",
+      "weight": 2.748270981641661
+    },
+    {
+      "name": "nos_choice_high",
+      "weight": 2.74226637467294
+    },
+    {
+      "name": "line_energy",
+      "weight": 2.6640525838570013
+    },
+    {
+      "name": "h4",
+      "weight": -2.6502198790250167
+    }
+  ],
+  "failures": [
+    {
+      "matchId": "ws/50000/1/0/white-sword:white-sword|reject-blue:hard-search-2",
+      "seed": 50000,
+      "first": 1,
+      "specialistSeat": 0,
+      "opponentDeck": "reject-blue",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 19,
+      "steps": 218
+    },
+    {
+      "matchId": "ws/50000/1/1/white-sword:hard-search-2|white-sword:white-sword",
+      "seed": 50000,
+      "first": 1,
+      "specialistSeat": 1,
+      "opponentDeck": "white-sword",
+      "winner": 0,
+      "endReason": "life-zero",
+      "turn": 14,
+      "steps": 176
+    },
+    {
+      "matchId": "ws/50001/0/0/white-sword:white-sword|reject-blue:hard-search-2",
+      "seed": 50001,
+      "first": 0,
+      "specialistSeat": 0,
+      "opponentDeck": "reject-blue",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 14,
+      "steps": 169
+    },
+    {
+      "matchId": "ws/50001/1/0/white-sword:white-sword|reject-blue:hard-search-2",
+      "seed": 50001,
+      "first": 1,
+      "specialistSeat": 0,
+      "opponentDeck": "reject-blue",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 19,
+      "steps": 189
+    },
+    {
+      "matchId": "ws/50001/1/1/white-sword:hard-search-2|white-sword:white-sword",
+      "seed": 50001,
+      "first": 1,
+      "specialistSeat": 1,
+      "opponentDeck": "white-sword",
+      "winner": 0,
+      "endReason": "life-zero",
+      "turn": 12,
+      "steps": 142
+    },
+    {
+      "matchId": "ws/50001/1/1/reject-blue:hard-search-2|white-sword:white-sword",
+      "seed": 50001,
+      "first": 1,
+      "specialistSeat": 1,
+      "opponentDeck": "reject-blue",
+      "winner": 0,
+      "endReason": "life-zero",
+      "turn": 12,
+      "steps": 150
+    },
+    {
+      "matchId": "ws/50002/1/0/white-sword:white-sword|white-sword:hard-search-2",
+      "seed": 50002,
+      "first": 1,
+      "specialistSeat": 0,
+      "opponentDeck": "white-sword",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 17,
+      "steps": 177
+    },
+    {
+      "matchId": "ws/50002/1/0/white-sword:white-sword|reject-blue:hard-search-2",
+      "seed": 50002,
+      "first": 1,
+      "specialistSeat": 0,
+      "opponentDeck": "reject-blue",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 13,
+      "steps": 136
+    },
+    {
+      "matchId": "ws/50002/1/0/white-sword:white-sword|renruki:hard-search-2",
+      "seed": 50002,
+      "first": 1,
+      "specialistSeat": 0,
+      "opponentDeck": "renruki",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 9,
+      "steps": 102
+    },
+    {
+      "matchId": "ws/50002/1/1/renruki:hard-search-2|white-sword:white-sword",
+      "seed": 50002,
+      "first": 1,
+      "specialistSeat": 1,
+      "opponentDeck": "renruki",
+      "winner": 0,
+      "endReason": "life-zero",
+      "turn": 12,
+      "steps": 148
+    },
+    {
+      "matchId": "ws/50003/0/0/white-sword:white-sword|white-sword:hard-search-2",
+      "seed": 50003,
+      "first": 0,
+      "specialistSeat": 0,
+      "opponentDeck": "white-sword",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 16,
+      "steps": 162
+    },
+    {
+      "matchId": "ws/50003/0/0/white-sword:white-sword|reject-blue:hard-search-2",
+      "seed": 50003,
+      "first": 0,
+      "specialistSeat": 0,
+      "opponentDeck": "reject-blue",
+      "winner": 1,
+      "endReason": "life-zero",
+      "turn": 16,
+      "steps": 164
+    }
+  ],
+  "elapsedMs": 754101.959746,
+  "selected": {
+    "mode": "blend",
+    "scale": 6,
+    "wins": 6
+  }
+}

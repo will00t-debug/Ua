@@ -5,6 +5,7 @@ import {execSync} from 'node:child_process';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {availableParallelism} from 'node:os';
 import {performance} from 'node:perf_hooks';
+import {pathToFileURL} from 'node:url';
 import {Worker} from 'node:worker_threads';
 import {POLICY_INDEX} from '../dist/universal-v2/white-sword-ai/features.mjs';
 import {cloneModel,createModel,saveModel,topWeights} from '../dist/universal-v2/white-sword-ai/model.mjs';
@@ -138,7 +139,7 @@ function collapse(model){
   mass[name]=keys.reduce((sum,key)=>sum+Math.abs(model.policy[POLICY_INDEX[key]]||0),0)/total;
  return {mass,singleMetricRisk:Object.values(mass).some(value=>value>0.45)};
 }
-function markdown(report){
+export function markdown(report){
  const lines=[
   '# 白劍專屬 AI v1 報告',
   '',
@@ -146,16 +147,17 @@ function markdown(report){
   '',
   '- 來源 commit：`'+(report.sourceCommit||'unknown')+'`',
   '- 牌組：白劍 50 張、'+report.deck.kinds+' 種，引擎檢查 '+(report.deck.ok?'通過':'失敗'),
-  '- 煙霧測試：'+report.smoke.games+' 場，'+report.smoke.ms.toFixed(0)+' ms',
-  '- 完整合法性測試：'+report.full.games+' 場，'+report.full.ms.toFixed(0)+' ms',
+  '- 煙霧測試：'+report.smoke.games+' 場，牆鐘 '+((report.smoke.wallMs||report.smoke.ms)/1000).toFixed(1)+' 秒',
+  '- 完整合法性測試：'+report.full.games+' 場，牆鐘 '+((report.full.wallMs||report.full.ms)/1000).toFixed(1)+' 秒',
   '- 教師對局：'+report.training.teacherGames+'，自我對戰：'+report.training.selfPlayGames,
   '- 訓練保留樣本：'+report.training.kept+'，拒收對局：'+report.training.rejected,
   '- 基準對局：'+report.finalTest.games+'，牆鐘 '+(report.finalTest.wallMs/1000).toFixed(1)+' 秒',
+  '- 全流程牆鐘：'+((report.elapsedMs||0)/1000).toFixed(1)+' 秒',
   '',
   '## 冠軍驗收',
   '',
   '- 晉升：'+(report.promotion.promoted?'達到門檻':'未達到，保留 hard-search-2'),
-  '- 採用模式：`'+report.selected.mode+'`',
+  '- 採用模式：`'+(report.selected?.mode||'unknown')+'`',
   '- 總勝率：'+pct(report.finalTest.overall),
   '- 先手：'+pct(report.finalTest.first),
   '- 後手：'+pct(report.finalTest.second),
@@ -167,6 +169,9 @@ function markdown(report){
   lines.push('','未晉升原因：');
   for(const reason of report.promotion.reasons)lines.push('- '+reason);
  }
+ lines.push('','## 驗證集模式','');
+ for(const row of report.selection||[])
+  lines.push('- '+row.mode+'：'+pct(row.overall));
  lines.push('','## 學習曲線','');
  for(const row of report.training.curve)
   lines.push('- epoch '+row.epoch+'：validation '+row.val.wins+'/'+row.val.finished+'，policy L2 '+row.policyL2.toFixed(3)+'，拒收 '+row.rejected);
@@ -174,7 +179,9 @@ function markdown(report){
   '- v1 對 v0：'+pct(report.history),
   '','## 單一指標檢查','',
   '- '+JSON.stringify(report.collapse),
-  '','驗證集模式比較寫在 `report.json` 的 `selection`。權重沒有接到正式對戰預設。');
+  '','驗證集的 `hard` 是兩邊都用 hard-search-2 的座位平衡檢查，不是模型勝率。',
+  '114 場自我對戰在更新權重前被拒收，沒有被當成敗局。拒收原因包含對手沒有回傳合法動作、未完成、死循環或模型回退。',
+  '權重沒有接到正式對戰預設，這次也沒有部署。');
  return lines.join('\n')+'\n';
 }
 async function main(){
@@ -294,6 +301,7 @@ async function main(){
    best.selectedMode=selected.mode;
    best.blendScale=selected.scale;
    saveModel(best,WEIGHTS+'/candidate.json');
+   report.selected={mode:selected.mode,scale:selected.scale,wins:selected.wins};
    report.selection=selection.map(row=>({mode:row.mode,scale:row.scale,wins:row.wins,overall:row.overall}));
    report.history=rateBy(historyGames,()=>true);
    report.finalTest=finalTest;
@@ -320,7 +328,9 @@ async function main(){
  }
  console.log('done',((performance.now()-started)/1000).toFixed(1)+'s');
 }
-main().catch(error=>{
- console.error(error);
- process.exit(1);
-});
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+ main().catch(error=>{
+  console.error(error);
+  process.exit(1);
+ });
+}
