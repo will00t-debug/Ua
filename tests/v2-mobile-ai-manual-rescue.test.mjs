@@ -26,7 +26,7 @@ test('manual AI rescue uses one native legal reducer action without an AI choose
  assert.match(source,/btn\('暫停 AI'/);
  assert.match(source,/CLIENT_RELEASE='AI 修復 R2/);
  assert.match(source,/app.aiCompletedSteps\+\+/);
- assert.match(source,/app\.aiTimer=setTimeout\(chunk,16\)/);
+ assert.match(source,/app\.aiTimer=setTimeout\(chunk,aiPlaybackDelayMs\(fastAiPlayback\)\)/);
  const parse=spawnSync(process.execPath,['--check','dist/universal-v2-preview.mjs'],{encoding:'utf8'});
  assert.equal(parse.status,0,parse.stderr);
 });
