@@ -10,7 +10,7 @@ import {
 import {chooseWhiteSwordAction} from '../dist/universal-v2/white-sword-ai/choose.mjs';
 import {createModel,dot,updateModel} from '../dist/universal-v2/white-sword-ai/model.mjs';
 import {finalSpecs,fullSpecs,selfPlaySpecs,smokeSpecs,teacherSpecs} from '../dist/universal-v2/white-sword-ai/protocol.mjs';
-import {playGame,replayMatches} from '../dist/universal-v2/white-sword-ai/runner.mjs';
+import {playGame,positionKey,replayMatches} from '../dist/universal-v2/white-sword-ai/runner.mjs';
 import {splitForSeed} from '../dist/universal-v2/white-sword-ai/constants.mjs';
 import {collectSamples} from '../dist/universal-v2/white-sword-ai/train.mjs';
 import {assertObservationSafe} from '../dist/universal-v2/white-sword-ai/observe.mjs';
@@ -324,6 +324,14 @@ test('model failure falls back to a legal hard action',()=>{
  assert.equal(picked.source,'fallback');
  const legal=legalUniversalActions(packs,state);
  assert.ok(legal.some(action=>JSON.stringify(action)===JSON.stringify(picked.action)));
+});
+test('an order window is not the same position on every pick',()=>{
+ const board={life:[1],hand:[1],deck:[1,2,3],outside:[],removed:[],lifeRevealed:[],apCards:[],
+  front:[null,null,null,null],energy:[null,null,null,null]};
+ const state={turn:4,phase:'main',active:0,effectQueue:[],players:[board,board],
+  pending:{kind:'effect-top-order',player:0,uids:['0-1','0-2','0-3','0-4','0-5','0-6','0-7','0-8','0-9','0-10','0-11','0-12'],order:[]}};
+ const later={...state,pending:{...state.pending,uids:state.pending.uids.slice(1),order:['0-1']}};
+ assert.notEqual(positionKey(state),positionKey(later));
 });
 test('a seeded specialist game replays the same actions',()=>{
  const deck=getDeck('white-sword');

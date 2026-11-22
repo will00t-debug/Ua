@@ -39,13 +39,28 @@ export function actionKey(actor,action){
   slot:Number.isInteger(action?.slot)?action.slot:null
  };
 }
-function progressKey(state){
- const parts=[state.turn,state.phase,state.pending?.kind||'',state.active];
+function markList(value){
+ if(!Array.isArray(value))return '';
+ return value.map(item=>{
+  if(item==null)return '-';
+  if(typeof item==='string'||typeof item==='number')return String(item);
+  if(item.uid)return item.uid;
+  if(item.op)return item.op;
+  return '';
+ }).join(',');
+}
+export function positionKey(state){
+ const pending=state.pending;
+ const queue=state.effectQueue||[];
+ const parts=[state.turn,state.phase,pending?.kind||'',state.active,queue.length,queue[0]?.op||'',queue[0]?.sourceUid||''];
+ if(pending)parts.push(markList(pending.uids),markList(pending.order),markList(pending.choices),
+  markList(pending.entries),pending.sourceUid||'');
  for(const player of state.players){
   parts.push(player.life.length,player.hand.length,player.deck.length,player.outside.length,
+   (player.removed||[]).length,(player.lifeRevealed||[]).length,
    player.apCards.filter(card=>card?.ready).length);
   for(const line of ['front','energy'])
-   parts.push(player[line].map(card=>card?card.uid+(card.ready?'r':'t'):'-').join(','));
+   parts.push(player[line].map(card=>card?card.uid+(card.ready?'r':'t')+':'+(card.bp??''):'-').join(','));
  }
  return parts.join('|');
 }
@@ -123,6 +138,7 @@ function playGameInner(spec){
  const started=performance.now();
  let lastKey='';
  let repeats=0;
+ const recent=[];
  while(state.status==='playing'&&game.steps<MAX_STEPS){
   const actor=state.pending?.player??state.active;
   let legal;
@@ -134,10 +150,10 @@ function playGameInner(spec){
   }
   if(!legal.length){game.anomalies.illegal++;game.error='no legal action';break;}
   const beforeAp=state.players[actor].apCards.filter(card=>card?.ready).length;
-  const key=progressKey(state);
+  const key=positionKey(state);
   repeats=key===lastKey?repeats+1:0;
   lastKey=key;
-  if(repeats>=LOOP_LIMIT){game.anomalies.deadLoop++;game.error='repeated position';break;}
+  if(repeats>=LOOP_LIMIT){game.anomalies.deadLoop++;game.error='repeated position';game.recentActions=recent.slice();break;}
   const seat=spec.seats[actor];
   const t0=performance.now();
   let picked;
@@ -160,7 +176,10 @@ function playGameInner(spec){
   if(picked.source==='fallback')game.anomalies.fallback++;
   else if(picked.source==='reference')game.referenceDecisions++;
   else if(actor===spec.specialistSeat&&(picked.source==='model'||picked.source==='blend'))game.modelDecisions++;
-  if(spec.keepActions)game.actions.push(actionKey(actor,action));
+  const keyAction=actionKey(actor,action);
+  if(spec.keepActions)game.actions.push(keyAction);
+  recent.push(keyAction);
+  if(recent.length>16)recent.shift();
   if(actor===spec.specialistSeat)noteSpecialist(game,state,actor,action);
   if(spec.keepSamples&&actor===spec.recordSeat&&legal.length>1&&picked.chosen&&picked.negatives?.length){
    if(spec.recordTeacher&&picked.source==='hard-search-2'){
@@ -236,7 +255,8 @@ export function summarizeGame(game){
   anomalies:{...game.anomalies},training:game.training,counts:game.counts,
   modelDecisions:game.modelDecisions,referenceDecisions:game.referenceDecisions,
   seats:game.seats,timing:timingOf(decisionMs),
-  samples:game.samples?.length||0
+  samples:game.samples?.length||0,
+  recentActions:game.recentActions||null
  };
 }
 export function replayMatches(spec){

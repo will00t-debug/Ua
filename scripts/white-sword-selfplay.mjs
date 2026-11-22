@@ -98,7 +98,8 @@ function assertClean(games,label){
  const bad=badGames(games,['illegal','leak','engineError','deadLoop','fallback','timeout','unfinished']);
  if(!bad.length)return;
  console.error(label,bad.slice(0,3).map(game=>({
-  matchId:game.matchId,status:game.status,endReason:game.endReason,error:game.error,anomalies:game.anomalies
+  matchId:game.matchId,status:game.status,endReason:game.endReason,error:game.error,
+  anomalies:game.anomalies,recent:game.recentActions||null
  })));
  throw Error(label+' has '+bad.length+' unhealthy games');
 }
@@ -106,7 +107,8 @@ function assertNoCorruption(games,label){
  const bad=badGames(games,['illegal','leak','engineError']);
  if(!bad.length)return;
  console.error(label,bad.slice(0,3).map(game=>({
-  matchId:game.matchId,status:game.status,endReason:game.endReason,error:game.error,anomalies:game.anomalies
+  matchId:game.matchId,status:game.status,endReason:game.endReason,error:game.error,
+  anomalies:game.anomalies,recent:game.recentActions||null
  })));
  throw Error(label+' has '+bad.length+' corrupted games');
 }
