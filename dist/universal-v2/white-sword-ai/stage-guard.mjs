@@ -5,8 +5,14 @@
 export function isVoluntaryMainDecision(state){
  return !!state&&state.status==='playing'&&state.phase==='main'&&!state.pending;
 }
+export function isVoluntaryDecision(state){
+ return !!state&&state.status==='playing'&&!state.pending&&
+  (state.phase==='main'||state.phase==='attack');
+}
 export function stageGuardModel(seat,state){
  if(!seat?.stageGuard)return seat?.model;
  if(!seat.model||!seat.baselineModel)throw Error('Stage guarded candidate requires both explicit models');
- return isVoluntaryMainDecision(state)?seat.model:seat.baselineModel;
+ const permitted=seat.stageGuardScope==='voluntary'?
+  isVoluntaryDecision(state):isVoluntaryMainDecision(state);
+ return permitted?seat.model:seat.baselineModel;
 }

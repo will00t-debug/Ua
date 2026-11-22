@@ -1,0 +1,149 @@
+name: White Sword v3.2 decision-quality learning + 840-game blind validation
+
+on:
+  push:
+    branches: [experiment/white-sword-v32-decision-scope-20261122]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: white-sword-v32-voluntary
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate v3.2 files and action-scope safety tests
+        run: |
+          node --check scripts/white-sword-v32-train.mjs
+          node --check scripts/white-sword-v32-eval-shard.mjs
+          node --check scripts/white-sword-v32-eval-aggregate.mjs
+          node --test tests/white-sword-v32-decision-scope.test.mjs tests/white-sword-v31-q-learning.test.mjs tests/white-sword-v3-stage-guard.test.mjs
+      - name: Real four-game Q-teacher smoke, no winner labels
+        env:
+          WS_WORKERS: '2'
+        run: node scripts/white-sword-v32-train.mjs smoke
+      - name: Archive v3.2 smoke
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v32-smoke
+          path: |
+            docs/white-sword-ai/v32/SMOKE.json
+            training/white-sword-ai/weights/v32-smoke-provisional.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  train:
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Train on 96 matched-seed games, voluntary decisions only
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v32-train.mjs train
+      - name: Archive frozen experimental v3.2 weights
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v32-trained
+          path: training/white-sword-ai/weights/v32-q-distilled-provisional.json
+          retention-days: 30
+      - name: Archive Q training statistics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v32-train-report
+          path: docs/white-sword-ai/v32/TRAIN.json
+          retention-days: 30
+
+  pilot:
+    needs: train
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Get frozen weights without changing learner
+        uses: actions/download-artifact@v4
+        with:
+          name: white-sword-v32-trained
+          path: training/white-sword-ai/weights
+      - name: Pilot on 4 new seeds (96 paired games + 16 v2 mirrors)
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v32-eval-shard.mjs pilot
+      - name: Archive 112-game pilot
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v32-pilot
+          path: docs/white-sword-ai/v32/pilot.json
+          retention-days: 30
+
+  evaluation:
+    needs: pilot
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Read same frozen trained weights, no retraining on test seeds
+        uses: actions/download-artifact@v4
+        with:
+          name: white-sword-v32-trained
+          path: training/white-sword-ai/weights
+      - name: Run 280 independent games (240 hard + 40 direct) on 10 unseen seeds
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v32-eval-shard.mjs ${{ matrix.shard }}
+      - name: Archive games and public LIFE reveal metrics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v32-shard-${{ matrix.shard }}
+          path: docs/white-sword-ai/v32/shard-${{ matrix.shard }}.json
+          retention-days: 30
+
+  aggregate:
+    needs: evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Retrieve all three same-seed independent validation shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: white-sword-v32-shard-*
+          merge-multiple: true
+          path: docs/white-sword-ai/v32/shards
+      - name: Compute cluster-robust paired CIs and trigger audit
+        run: node scripts/white-sword-v32-eval-aggregate.mjs
+      - name: Archive final 840-game report for manual review only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v32-840-evaluation
+          path: |
+            docs/white-sword-ai/v32/EVALUATION-840.json
+            docs/white-sword-ai/v32/EVALUATION-840.md
+          retention-days: 30
