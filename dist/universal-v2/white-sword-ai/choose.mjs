@@ -8,7 +8,7 @@ import {
  BLEND_SCALE,BLEND_TIMEOUT_MS,HARD_OPTIONS,NEGATIVES,ORDER_KINDS,POLICY_TIMEOUT_MS
 } from './constants.mjs';
 import {catalogsOf} from './browser-catalogs.mjs';
-import {policyVector,valueVector} from './features.mjs';
+import {POLICY_NAMES,policyVector,valueVector} from './features.mjs';
 import {createModel,dot} from './browser-model.mjs';
 import {gainProbe} from './gain-probe.mjs';
 import {qPairsFromRoot} from './v31-q-learning.mjs';
@@ -88,7 +88,10 @@ export function chooseWhiteSwordAction(pack,state,options={}){
     enabled:options.tacticalTempo===true,observation,seat,legal,catalogs:packs
    });
    picked=options.tacticalTempo===true?selectScored(cappedCandidates):blended.picked;
-   if(options.marginAudit===true)marginAudit=inspectTempoMargins(cappedCandidates);
+   if(options.marginAudit===true)marginAudit=inspectTempoMargins(cappedCandidates,{
+    weights:model.policy,featureNames:POLICY_NAMES,scale:options.scale??BLEND_SCALE,
+    observation,seat
+   });
    // Offline training: prefer measured root rollouts, never fabricated or
    // unsearched candidate scores, and never hidden opponent/LIFE identities.
    if(options.collectQ===true&&(
