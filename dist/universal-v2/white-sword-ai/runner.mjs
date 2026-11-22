@@ -8,6 +8,7 @@ import {chooseHybridMainAction,HYBRID_MAIN_POLICY} from '../ai-v3/hybrid-main.mj
 import {newComparedMatch,matchRules} from '../ai-v3/opening.mjs';
 import {HARD_OPTIONS,HYBRID_OPTIONS,LOOP_LIMIT,MAX_STEPS,NEGATIVES,WHITE_SWORD_DECK} from './constants.mjs';
 import {chooseWhiteSwordAction} from './choose.mjs';
+import {stageGuardModel} from './stage-guard.mjs';
 import {catalogsOf,getDeck} from './deck.mjs';
 import {policyVector,valueVector} from './features.mjs';
 import {observeActor} from './observe.mjs';
@@ -93,7 +94,7 @@ function chooseFor(pack,state,actor,seat,spec,step){
  }
  if(seat.policy==='white-sword'){
   return chooseWhiteSwordAction(pack,state,{
-   actor,model:seat.model,mode:seat.mode||'policy',explore:seat.explore||0,
+   actor,model:stageGuardModel(seat,state),mode:seat.mode||'policy',explore:seat.explore||0,
    step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
    diagnose:spec.diagnose===true,
    captureDecisions:spec.captureDecisions===true,
