@@ -1,0 +1,112 @@
+name: AI hard versus hybrid mirror (2026-11-14)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/ai-hard-hybrid-compare-20261114.yml'
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 80 same-deck mirrored games using the current battle page policies
+        run: |
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          import {battleDecks} from './dist/universal-v2/ai-v3/decks.mjs';
+          import {applySharedOpening,newComparedMatch} from './dist/universal-v2/ai-v3/opening.mjs';
+          import {buildAiV3Request,handleAiV3Request,acceptAiV3Result} from './dist/universal-v2/ai-v3/worker-entry.mjs';
+          import {HYBRID_START_HARD_POLICY} from './dist/universal-v2/ai-v3/hybrid-main.mjs';
+          import {MATCH_LIMITS} from './dist/universal-v2/ai-v3/search.mjs';
+          import {chooseProgressSafeAiAction} from './dist/universal-v2/ai-driver-safety.mjs';
+          import {legalUniversalActions,dispatchUniversalAction} from './dist/universal-v2/engine.mjs';
+
+          const deck=battleDecks().find(x=>x.id==='white-sword');
+          if(!deck)throw Error('white-sword designated deck not found');
+          const shard=Number(process.env.SHARD);
+          const limit=1200;
+          const rows=[];
+          const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+          for(let i=0;i<20;i++){
+            if(i%4!==shard)continue;
+            const seed=9200+i;
+            for(const hybridSeat of [0,1])for(const first of [0,1]){
+              const packs=[deck.pack,deck.pack];
+              let s=applySharedOpening(packs,newComparedMatch(packs,[deck.counts,deck.counts],seed,first)).state;
+              let steps=0,errors=0,fallbacks=0;
+              const phaseKeys=['',''],phaseCounts=[0,0];
+              while(s.status==='playing'&&steps<limit){
+                const actor=s.pending?.player??s.active;
+                const legal=legalUniversalActions(packs,s);
+                const phaseKey=String(s.turn)+'|'+s.active+'|'+s.phase;
+                if(phaseKeys[actor]!==phaseKey){phaseKeys[actor]=phaseKey;phaseCounts[actor]=0;}
+                let action;
+                if(actor===hybridSeat){
+                  const requestId=steps+1,stateVersion=steps+1;
+                  const request=buildAiV3Request(packs,s,actor,{
+                    requestId,stateVersion,seed:1,nodes:MATCH_LIMITS.nodes,
+                    ms:MATCH_LIMITS.ms,policy:HYBRID_START_HARD_POLICY
+                  });
+                  const result=request?handleAiV3Request(request):null;
+                  const accepted=acceptAiV3Result({requestId,stateVersion,actor,legal},result);
+                  if(accepted.ok)action=accepted.action;
+                  else{
+                    fallbacks++;
+                    action=chooseProgressSafeAiAction(packs,s,{
+                      difficulty:'hard',actionsInPhase:phaseCounts[actor]
+                    }).action;
+                  }
+                }else{
+                  action=chooseProgressSafeAiAction(packs,s,{
+                    difficulty:'hard',actionsInPhase:phaseCounts[actor]
+                  }).action;
+                }
+                const exact=legal.find(a=>same(a,action));
+                if(!exact){errors++;break;}
+                try{s=dispatchUniversalAction(packs,s,exact,{actor});}
+                catch(e){console.error('DISPATCH_ERROR',e.message);errors++;break;}
+                phaseCounts[actor]++;
+                steps++;
+              }
+              const finished=s.status==='finished'&&errors===0;
+              const row={
+                deck:deck.id,seed,first,hybridSeat,hybridIsFirst:first===hybridSeat,
+                finished,winner:finished?s.winner:null,
+                hybridWon:finished&&s.winner===hybridSeat,
+                hardWon:finished&&s.winner===1-hybridSeat,
+                errors,fallbacks,steps,
+                endReason:s.endReason||null
+              };
+              rows.push(row);
+              console.log('GAME',JSON.stringify(row));
+            }
+          }
+          const result={head:process.env.GITHUB_SHA,shard,gameCount:rows.length,
+            hybridWins:rows.filter(r=>r.hybridWon).length,
+            hardWins:rows.filter(r=>r.hardWon).length,
+            unfinished:rows.filter(r=>!r.finished).length,
+            errors:rows.reduce((n,r)=>n+r.errors,0),
+            fallbacks:rows.reduce((n,r)=>n+r.fallbacks,0),
+            games:rows};
+          writeFileSync('ai-benchmark-shard-'+shard+'.json',JSON.stringify(result,null,2));
+          console.log('RESULTS_JSON='+JSON.stringify(result));
+          if(result.errors)process.exitCode=1;
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-hard-hybrid-shard-${{ matrix.shard }}
+          path: ai-benchmark-shard-*.json
+          if-no-files-found: warn

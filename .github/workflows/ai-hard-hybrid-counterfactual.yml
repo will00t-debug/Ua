@@ -1,0 +1,32 @@
+name: AI Last Life Block Counterfactual
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/ai-hard-hybrid-counterfactual-20261114.mjs'
+      - '.github/workflows/ai-hard-hybrid-counterfactual.yml'
+permissions:
+  contents: read
+jobs:
+  counterfactual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare pass vs legal block at actual pending block
+        run: node scripts/ai-hard-hybrid-counterfactual-20261114.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-counterfactual-shard-${{ matrix.shard }}
+          path: ai-counterfactual-shard-*.json
+          if-no-files-found: warn
