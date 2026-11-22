@@ -4,6 +4,8 @@ import {CELLS,assertTrainableSeed,splitForSeed} from './constants.mjs';
 
 export const V3_TRAIN_SEEDS=Object.freeze(Array.from({length:8},(_,i)=>21050+i));
 export const V3_VALIDATION_SEEDS=Object.freeze([45000,45001,45002,45003,45004]);
+// Reserved AFTER gain screening; never used by training or gain selection.
+export const V3_SECONDARY_VALIDATION_SEEDS=Object.freeze([45005,45006,45007,45008]);
 export const V3_FINAL_SEEDS=Object.freeze(Array.from({length:17},(_,i)=>94000+i));
 export const V3_DECKS=Object.freeze(['white-sword','reject-blue','renruki']);
 export const V3_OPPONENT_POOL=Object.freeze([
@@ -19,7 +21,7 @@ export const V3_CONFIG=Object.freeze({
 });
 
 const TRAIN_START=21050,TRAIN_END=21058;
-const VAL_START=45000,VAL_END=45005;
+const VAL_START=45000,VAL_END=45009;
 const HOLDOUT_START=94000,HOLDOUT_END=94017;
 export function v3SeedRole(seed){
  if(!Number.isSafeInteger(seed))throw Error('V3 seed must be an integer');
@@ -38,10 +40,10 @@ export function assertV3Seed(seed,role){
  }
 }
 export function assertV3Disjoint(){
- const sets=[V3_TRAIN_SEEDS,V3_VALIDATION_SEEDS,V3_FINAL_SEEDS];
+ const sets=[V3_TRAIN_SEEDS,V3_VALIDATION_SEEDS,V3_SECONDARY_VALIDATION_SEEDS,V3_FINAL_SEEDS];
  const all=new Set();
  for(let i=0;i<sets.length;i++)for(const seed of sets[i]){
-  assertV3Seed(seed,['train','validation','final'][i]);
+  assertV3Seed(seed,['train','validation','validation','final'][i]);
   if(all.has(seed))throw Error('V3 seeds overlap');
   all.add(seed);
  }
