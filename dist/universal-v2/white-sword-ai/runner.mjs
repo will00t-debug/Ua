@@ -98,6 +98,7 @@ function chooseFor(pack,state,actor,seat,spec,step){
    step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
    diagnose:spec.diagnose===true,
    captureDecisions:spec.captureDecisions===true,
+   collectQ:spec.keepSamples===true&&spec.recordQPreferences===true&&actor===spec.recordSeat,
    diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
@@ -266,6 +267,9 @@ function playGameInner(spec){
   recent.push(keyAction);
   if(recent.length>16)recent.shift();
   if(actor===spec.specialistSeat)noteSpecialist(game,state,actor,action);
+  if(spec.keepSamples&&spec.recordQPreferences===true&&actor===spec.recordSeat&&
+   picked.source==='blend'&&Array.isArray(picked.qPairs))
+   game.samples.push(...picked.qPairs);
   if(spec.keepSamples&&actor===spec.recordSeat&&legal.length>1&&picked.chosen&&picked.negatives?.length){
    if(spec.recordTeacher&&picked.source==='hard-search-2'){
     game.samples.push({kind:'teacher',chosen:picked.chosen,negatives:picked.negatives,value:picked.value,reward:null});
