@@ -1,0 +1,50 @@
+name: White Sword v3 policy-change diagnosis
+
+on:
+  # Legacy 12-game diagnosis was already completed. Manual reruns only.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: white-sword-v3-diagnosis
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Retrieve completed v3 training result without retraining
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44985700424
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: white-sword-v3-provisional
+          path: .
+      - name: Verify diagnostic invariance and script syntax
+        run: |
+          node --check scripts/white-sword-v3-diagnose.mjs
+          node --check dist/universal-v2/white-sword-ai/choose.mjs
+          node --check dist/universal-v2/white-sword-ai/runner.mjs
+          node --test tests/white-sword-v3-diagnostic.test.mjs tests/white-sword-v3-learning.test.mjs
+      - name: Compare v2 and trained v3 moves and candidate pools
+        env:
+          WS_WORKERS: '2'
+        run: node scripts/white-sword-v3-diagnose.mjs
+      - name: Publish diagnosis
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v3-diagnosis
+          path: |
+            docs/white-sword-ai/v3/DIAGNOSIS.json
+            docs/white-sword-ai/v3/DIAGNOSIS.md
+          if-no-files-found: warn
+          retention-days: 30

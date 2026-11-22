@@ -1,0 +1,56 @@
+name: White Sword v3 four-regression forensic audit
+
+on:
+  push:
+    branches: [experiment/white-sword-v3-learning-core-20261122]
+    paths:
+      - 'scripts/white-sword-v3-regression-audit.mjs'
+      - 'dist/universal-v2/white-sword-ai/runner.mjs'
+      - 'dist/universal-v2/white-sword-ai/choose.mjs'
+      - '.github/workflows/white-sword-v3-regression-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: white-sword-v3-regression-forensics
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Retrieve frozen 16x candidate and secondary result
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44990300950
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: white-sword-v3-secondary-paired
+          path: .
+      - name: Verify script and non-invasive forensic capture
+        run: |
+          node --check scripts/white-sword-v3-regression-audit.mjs
+          node --check dist/universal-v2/white-sword-ai/runner.mjs
+          node --check dist/universal-v2/white-sword-ai/choose.mjs
+          node --test tests/white-sword-v3-diagnostic.test.mjs
+      - name: Reproduce all 48 outcomes then investigate 4 regressions
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v3-regression-audit.mjs
+      - name: Publish per-decision forensic report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v3-four-regressions
+          path: |
+            docs/white-sword-ai/v3/REGRESSION-AUDIT.json
+            docs/white-sword-ai/v3/REGRESSION-AUDIT.md
+          if-no-files-found: warn
+          retention-days: 30

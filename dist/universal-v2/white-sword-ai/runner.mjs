@@ -8,6 +8,7 @@ import {chooseHybridMainAction,HYBRID_MAIN_POLICY} from '../ai-v3/hybrid-main.mj
 import {newComparedMatch,matchRules} from '../ai-v3/opening.mjs';
 import {HARD_OPTIONS,HYBRID_OPTIONS,LOOP_LIMIT,MAX_STEPS,NEGATIVES,WHITE_SWORD_DECK} from './constants.mjs';
 import {chooseWhiteSwordAction} from './choose.mjs';
+import {stageGuardModel} from './stage-guard.mjs';
 import {catalogsOf,getDeck} from './deck.mjs';
 import {policyVector,valueVector} from './features.mjs';
 import {observeActor} from './observe.mjs';
@@ -54,8 +55,9 @@ export function positionKey(state){
  const pending=state.pending;
  const queue=state.effectQueue||[];
  const parts=[state.turn,state.phase,pending?.kind||'',state.active,queue.length,queue[0]?.op||'',queue[0]?.sourceUid||''];
- if(pending)parts.push(markList(pending.uids),markList(pending.order),markList(pending.choices),
-  markList(pending.entries),pending.sourceUid||'');
+ // A pending selection can stage cards without moving them across zones;
+ // the complete pending payload captures progress and prevents a false loop.
+ if(pending)parts.push(JSON.stringify(pending));
  for(const player of state.players){
   parts.push(player.life.length,player.hand.length,player.deck.length,player.outside.length,
    (player.removed||[]).length,(player.lifeRevealed||[]).length,
@@ -92,8 +94,11 @@ function chooseFor(pack,state,actor,seat,spec,step){
  }
  if(seat.policy==='white-sword'){
   return chooseWhiteSwordAction(pack,state,{
-   actor,model:seat.model,mode:seat.mode||'policy',explore:seat.explore||0,
+   actor,model:stageGuardModel(seat,state),mode:seat.mode||'policy',explore:seat.explore||0,
    step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
+   diagnose:spec.diagnose===true,
+   captureDecisions:spec.captureDecisions===true,
+   diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
  }
@@ -149,6 +154,11 @@ function playGameInner(spec){
   steps:0,turn:state.turn,ms:0,
   specialistSeat:spec.specialistSeat,specialistIsFirst:spec.specialistSeat===spec.first
  });
+ if(spec.diagnose===true)game.diagnostics={
+  blendDecisions:0,singleEligible:0,multiEligible:0,hardOverrides:0,
+  eligibleSum:0,candidatesSum:0,positiveScoreGaps:0,scoreGapSum:0,
+  maxScoreGap:0,hardGapSum:0,policyGains:{},probeExamples:[]
+ };
  const started=performance.now();
  let lastKey='';
  let repeats=0;
@@ -194,18 +204,74 @@ function playGameInner(spec){
    game.anomalies.opponentFallback++;
    picked={action,source:'opponent-fallback',reason:picked?.reason||'opponent returned no legal action'};
   }
+  if(game.diagnostics&&actor===spec.specialistSeat&&picked.diagnostic){
+   const row=picked.diagnostic,d=game.diagnostics;
+   d.blendDecisions++;
+   d.eligibleSum+=row.eligible;
+   d.candidatesSum+=row.total;
+   if(row.eligible<=1)d.singleEligible++;
+   else d.multiEligible++;
+   if(row.overriddenHard)d.hardOverrides++;
+   if(Number.isFinite(row.topGap)){
+    d.positiveScoreGaps++;
+    d.scoreGapSum+=row.topGap;
+    d.maxScoreGap=Math.max(d.maxScoreGap,row.topGap);
+   }
+   d.hardGapSum+=row.hardGap;
+   for(const [gain,probe] of Object.entries(row.counterfactual?.gains||{})){
+    const agg=d.policyGains[gain]||(d.policyGains[gain]={
+     evaluated:0,switched:0,totalHardAnchorLoss:0,maxHardAnchorLoss:0
+    });
+    agg.evaluated++;
+    if(probe.switched){
+     agg.switched++;
+     const hardLoss=Number(probe.hardAnchorLoss)||0;
+     agg.totalHardAnchorLoss+=hardLoss;
+     agg.maxHardAnchorLoss=Math.max(agg.maxHardAnchorLoss,hardLoss);
+     if(d.probeExamples.length<18)d.probeExamples.push({
+      step:game.steps,turn:state.turn,phase:state.phase,gain,
+      hardLoss,baseline:row.counterfactual.reference,chosen:probe.action
+     });
+    }
+   }
+  }
   if(picked.source==='fallback')game.anomalies.fallback++;
   else if(picked.source==='reference')game.referenceDecisions++;
   else if(actor===spec.specialistSeat&&(picked.source==='model'||picked.source==='blend'))game.modelDecisions++;
   const keyAction=actionKey(actor,action);
-  if(spec.keepActions)game.actions.push(keyAction);
+  if(spec.keepActions)game.actions.push(spec.captureDecisions===true?
+   {...keyAction,fullAction:action,
+    context:{
+     step:game.steps,turn:state.turn,phase:state.phase,pending:state.pending?.kind||null,
+     cardId:ownCardId(state,actor,action),
+     self:{
+      life:state.players[actor].life.length,hand:state.players[actor].hand.length,
+      ap:state.players[actor].apCards.filter(item=>item?.ready).length,
+      front:state.players[actor].front.map(item=>item?{
+       cardId:item.cardId,bp:item.bp,ready:item.ready
+      }:null),energy:state.players[actor].energy.filter(Boolean).length,
+      outside:state.players[actor].outside.length
+     },
+     opponent:{
+      life:state.players[1-actor].life.length,
+      ap:state.players[1-actor].apCards.filter(item=>item?.ready).length,
+      hand:state.players[1-actor].hand.length,
+      front:state.players[1-actor].front.map(item=>item?{
+       cardId:item.cardId,bp:item.bp,ready:item.ready
+      }:null)
+     }
+    },
+    ...(picked.diagnostic?{choiceDiagnostic:picked.diagnostic}:{})
+   }:(spec.diagnose===true?{...keyAction,fullAction:action}:keyAction));
   recent.push(keyAction);
   if(recent.length>16)recent.shift();
   if(actor===spec.specialistSeat)noteSpecialist(game,state,actor,action);
   if(spec.keepSamples&&actor===spec.recordSeat&&legal.length>1&&picked.chosen&&picked.negatives?.length){
    if(spec.recordTeacher&&picked.source==='hard-search-2'){
     game.samples.push({kind:'teacher',chosen:picked.chosen,negatives:picked.negatives,value:picked.value,reward:null});
-   }else if(picked.source==='model'){
+   }else if(picked.source==='model'||(picked.source==='blend'&&spec.recordBlendOutcome===true)){
+    // Opt-in v3 only: a capped search/blend decision produces an outcome
+    // gradient against its *eligible* alternatives, never illegal actions.
     game.samples.push({kind:'outcome',seat:actor,chosen:picked.chosen,negatives:picked.negatives,value:picked.value});
    }
   }
@@ -277,7 +343,9 @@ export function summarizeGame(game){
   modelDecisions:game.modelDecisions,referenceDecisions:game.referenceDecisions,
   seats:game.seats,timing:timingOf(decisionMs),
   samples:game.samples?.length||0,
-  recentActions:game.recentActions||null
+  recentActions:game.recentActions||null,
+  ...(game.diagnostics?{diagnostics:game.diagnostics}:{}),
+  ...(game.actions?.length?{actions:game.actions}:{} )
  };
 }
 export function replayMatches(spec){

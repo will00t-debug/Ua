@@ -1,0 +1,68 @@
+name: White Sword v3 isolated learning experiment
+
+on:
+  # Training is expensive. After the first successful run, only rerun manually.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: white-sword-v3-learning
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Syntax and learning safety regressions
+        run: |
+          node --check scripts/white-sword-v3-train.mjs
+          node --check dist/universal-v2/white-sword-ai/choose.mjs
+          node --test tests/white-sword-v3-learning.test.mjs
+      - name: Tiny actual self-play and paired-v2 smoke
+        env:
+          WS_WORKERS: '2'
+        run: node scripts/white-sword-v3-train.mjs smoke
+      - name: Publish smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v3-smoke
+          path: |
+            docs/white-sword-ai/v3/SMOKE.json
+            docs/white-sword-ai/v3/SMOKE.md
+            training/white-sword-ai/weights/v3-experiment.json
+          if-no-files-found: warn
+          retention-days: 21
+
+  train:
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Two-epoch isolated learning and paired v2 validation
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v3-train.mjs train
+      - name: Upload provisional weights and validation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v3-provisional
+          path: |
+            docs/white-sword-ai/v3/TRAIN.json
+            docs/white-sword-ai/v3/TRAIN.md
+            training/white-sword-ai/weights/v3-experiment.json
+            training/white-sword-ai/weights/v3-validation-selected.json
+          if-no-files-found: warn
+          retention-days: 30

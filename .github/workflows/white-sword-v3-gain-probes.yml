@@ -1,0 +1,53 @@
+name: White Sword v3 safe policy-gain probes
+
+on:
+  push:
+    branches: [experiment/white-sword-v3-learning-core-20261122]
+    paths:
+      - 'dist/universal-v2/white-sword-ai/gain-probe.mjs'
+      - 'scripts/white-sword-v3-gain-probes.mjs'
+      - 'tests/white-sword-v3-gain-probes.test.mjs'
+      - '.github/workflows/white-sword-v3-gain-probes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: white-sword-v3-gain-probes
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Retrieve prior trained provisional weights, not final holdout
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44985700424
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: white-sword-v3-provisional
+          path: .
+      - name: Confirm safe gain probes and baseline policy determinism
+        run: |
+          node --check scripts/white-sword-v3-gain-probes.mjs
+          node --check dist/universal-v2/white-sword-ai/gain-probe.mjs
+          node --test tests/white-sword-v3-gain-probes.test.mjs tests/white-sword-v3-diagnostic.test.mjs
+      - name: Run validation-state safe gain sweep
+        run: node scripts/white-sword-v3-gain-probes.mjs
+      - name: Upload decision-switch audit
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v3-gain-probes
+          path: |
+            docs/white-sword-ai/v3/GAIN-PROBES.json
+            docs/white-sword-ai/v3/GAIN-PROBES.md
+          if-no-files-found: warn
+          retention-days: 30

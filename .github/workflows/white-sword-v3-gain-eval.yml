@@ -1,0 +1,59 @@
+name: White Sword v3 secondary paired evaluation
+
+on:
+  push:
+    branches: [experiment/white-sword-v3-learning-core-20261122]
+    paths:
+      - 'scripts/white-sword-v3-gain-eval.mjs'
+      - '.github/workflows/white-sword-v3-gain-eval.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: white-sword-v3-gain-eval
+  cancel-in-progress: true
+
+jobs:
+  secondary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Retrieve frozen trained weights and independent screening result
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44985700424
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: white-sword-v3-provisional
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 44990145033
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: white-sword-v3-gain-probes
+          path: docs/white-sword-ai/v3
+      - name: Syntax and safety tests
+        run: |
+          node --check scripts/white-sword-v3-gain-eval.mjs
+          node --test tests/white-sword-v3-learning.test.mjs tests/white-sword-v3-gain-probes.test.mjs
+      - name: Independent 45005-45008 paired validation
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v3-gain-eval.mjs
+      - name: Store provisional evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v3-secondary-paired
+          path: |
+            docs/white-sword-ai/v3/GAIN-EVALUATION.json
+            docs/white-sword-ai/v3/GAIN-EVALUATION.md
+            training/white-sword-ai/weights/v3-safe-residual-provisional.json
+          if-no-files-found: warn
+          retention-days: 30
