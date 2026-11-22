@@ -66,7 +66,7 @@ function requireHealthy(games,label){
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function plainAction(step){
  if(!step)return null;
- const {context,choiceDiagnostic,...rest}=step;
+ const {context,choiceDiagnostic,fullAction,...rest}=step;
  return rest;
 }
 function diff(a,b){
