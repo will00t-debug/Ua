@@ -89,6 +89,14 @@ export function chooseWhiteSwordAction(pack,state,options={}){
      topGap:sorted.length>1?sorted[0].score-sorted[1].score:null,
      hardGap:Math.max(...cappedCandidates.map(row=>row.hardScore))-
       Math.min(...cappedCandidates.map(row=>row.hardScore)),
+     ...(options.captureDecisions===true?{
+      selectedAction:picked.action,referenceAction:blended.hardAction,
+      ranked:sorted.slice(0,5).map(row=>({
+       action:row.action,hardScore:row.hardScore,
+       policyScore:dot(model.policy,row.features),
+       blendedScore:row.score
+      }))
+     }:{}),
      ...(Array.isArray(options.diagnosticCandidatePolicy)?{
       counterfactual:gainProbe(cappedCandidates,model.policy,
        options.diagnosticCandidatePolicy,options.scale??BLEND_SCALE,blended.hardAction)
