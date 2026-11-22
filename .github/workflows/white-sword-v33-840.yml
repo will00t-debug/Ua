@@ -2,7 +2,7 @@ name: White Sword v3.3 future-threat Q learning + 840-game evaluation
 
 on:
   push:
-    branches: [experiment/white-sword-v33-decision-scope-20261122]
+    branches: [experiment/white-sword-v33-next-turn-threat-20261122]
   workflow_dispatch:
 
 permissions:
