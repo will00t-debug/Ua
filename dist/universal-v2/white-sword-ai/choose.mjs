@@ -85,7 +85,10 @@ export function chooseWhiteSwordAction(pack,state,options={}){
    cappedCandidates=blended.candidates;
    // Offline training: prefer measured root rollouts, never fabricated or
    // unsearched candidate scores, and never hidden opponent/LIFE identities.
-   if(options.collectQ===true)qPairs=qPairsFromRoot(cappedCandidates);
+   if(options.collectQ===true&&(
+    options.qScope!=='voluntary'||(!state.pending&&
+     (state.phase==='main'||state.phase==='attack'))))
+    qPairs=qPairsFromRoot(cappedCandidates);
    if(options.diagnose===true){
     const sorted=[...cappedCandidates].sort((a,b)=>b.score-a.score);
     diagnostic={
