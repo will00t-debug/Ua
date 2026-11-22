@@ -39,6 +39,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261120dgm2';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs?v=20261120mha011';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
+import {AI_PLAYBACK_FAST_KEY,aiPlaybackDelayMs,shouldRenderAiStep} from './universal-v2/ai-playback-speed.mjs';
 import {policyDifficulty} from './universal-v2/ai-policy-label.mjs';
 import {chooseAiV3Action,lastAiV3Trace,AI_V3_POLICY,MATCH_LIMITS} from './universal-v2/ai-v3/search.mjs';
 import {HYBRID_MAIN_POLICY,HYBRID_START_HARD_POLICY} from './universal-v2/ai-v3/hybrid-main.mjs';
@@ -192,6 +193,14 @@ let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],publicMoves:[],dismissedPublicMoveIds:new Set(),busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,inspectionPaused:false,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
+// Default faster playback; persisted per browser. Search depth is unchanged.
+let fastAiPlayback=true;
+try{fastAiPlayback=localStorage.getItem(AI_PLAYBACK_FAST_KEY)!=='0';}catch{}
+function toggleAiPlaybackSpeed(){
+ fastAiPlayback=!fastAiPlayback;
+ try{localStorage.setItem(AI_PLAYBACK_FAST_KEY,fastAiPlayback?'1':'0');}catch{}
+ render();
+}
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
@@ -1650,6 +1659,7 @@ function render(){
    btn('重開對局',()=>startGame(),'btn small'),
    btn('復原一步',()=>undoMove(),'btn small'),
    btn('下載紀錄',downloadHistory,'btn small'),
+   btn('AI 出牌：'+(fastAiPlayback?'快速':'標準'),toggleAiPlaybackSpeed,'btn small'),
    btn('除錯重播',downloadReplay,'btn small'),
    s.status==='playing'&&uiActor(s)===1?
     btn('AI 沒反應？重新繼續',()=>{resetAi();app.error='';driveAi();},'btn small'):null,
@@ -1959,7 +1969,7 @@ function driveAi(){
     // Render between chunks so a user can see progress and tap retry even
     // when a mobile browser throttles timers.
     render();
-    app.aiTimer=setTimeout(chunk,16);
+    app.aiTimer=setTimeout(chunk,aiPlaybackDelayMs(fastAiPlayback));
    }else{
     app.busy=false;app.aiTimer=null;app.error='';
     render();
@@ -1974,7 +1984,7 @@ function driveAi(){
    }
   }
  }
- app.aiTimer=setTimeout(chunk,16);render();
+ app.aiTimer=setTimeout(chunk,aiPlaybackDelayMs(fastAiPlayback));render();
 }
 const WHITE_SWORD_V2_POLICY='white-sword-specialist-v2-capped';
 const SEARCH_PREVIEW_KEY='ua-ai-v3-preview';
@@ -2195,8 +2205,10 @@ function driveSearchPreview(sequence,policy=null){
     maybeFinishCoach();
     saveBattleProgress();
     if(app.state.status==='playing'&&uiActor(app.state)===1){
-     render();
-     app.aiTimer=setTimeout(step,16);
+     // Don't redraw for every staged AI pick in fast mode. Completed turns,
+     // phase changes and the player's return always redraw immediately.
+     if(shouldRenderAiStep({fast:fastAiPlayback,count:app.autoMoves,before:decision,after:app.state}))render();
+     app.aiTimer=setTimeout(step,aiPlaybackDelayMs(fastAiPlayback));
     }else{
      // Draw the player's controls only after the thinking flag is cleared.
      // Rendering first hides 下一階段 and the match looks frozen.
@@ -2256,7 +2268,7 @@ function driveSearchPreview(sequence,policy=null){
    }catch{finish(null,'worker-post');}
   }
  };
- app.aiTimer=setTimeout(step,16);
+ app.aiTimer=setTimeout(step,aiPlaybackDelayMs(fastAiPlayback));
  render();
 }
 function resetAi(){
