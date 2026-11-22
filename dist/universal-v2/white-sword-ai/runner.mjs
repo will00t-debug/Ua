@@ -96,6 +96,7 @@ function chooseFor(pack,state,actor,seat,spec,step){
    actor,model:seat.model,mode:seat.mode||'policy',explore:seat.explore||0,
    step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
    diagnose:spec.diagnose===true,
+   diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
  }
@@ -154,7 +155,7 @@ function playGameInner(spec){
  if(spec.diagnose===true)game.diagnostics={
   blendDecisions:0,singleEligible:0,multiEligible:0,hardOverrides:0,
   eligibleSum:0,candidatesSum:0,positiveScoreGaps:0,scoreGapSum:0,
-  maxScoreGap:0,hardGapSum:0
+  maxScoreGap:0,hardGapSum:0,policyGains:{},probeExamples:[]
  };
  const started=performance.now();
  let lastKey='';
@@ -215,6 +216,22 @@ function playGameInner(spec){
     d.maxScoreGap=Math.max(d.maxScoreGap,row.topGap);
    }
    d.hardGapSum+=row.hardGap;
+   for(const [gain,probe] of Object.entries(row.counterfactual?.gains||{})){
+    const agg=d.policyGains[gain]||(d.policyGains[gain]={
+     evaluated:0,switched:0,totalHardAnchorLoss:0,maxHardAnchorLoss:0
+    });
+    agg.evaluated++;
+    if(probe.switched){
+     agg.switched++;
+     const hardLoss=Number(probe.hardAnchorLoss)||0;
+     agg.totalHardAnchorLoss+=hardLoss;
+     agg.maxHardAnchorLoss=Math.max(agg.maxHardAnchorLoss,hardLoss);
+     if(d.probeExamples.length<18)d.probeExamples.push({
+      step:game.steps,turn:state.turn,phase:state.phase,gain,
+      hardLoss,baseline:row.counterfactual.reference,chosen:probe.action
+     });
+    }
+   }
   }
   if(picked.source==='fallback')game.anomalies.fallback++;
   else if(picked.source==='reference')game.referenceDecisions++;
