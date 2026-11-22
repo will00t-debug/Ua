@@ -1,8 +1,7 @@
 name: White Sword v3 isolated learning experiment
 
 on:
-  push:
-    branches: [experiment/white-sword-v3-learning-core-20261122]
+  # Training is expensive. After the first successful run, only rerun manually.
   workflow_dispatch:
 
 permissions:
