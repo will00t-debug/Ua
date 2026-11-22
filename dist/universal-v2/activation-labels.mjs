@@ -407,6 +407,7 @@ function effectWords(ability,action){
  if(op==='restDiscardNextTraitAp'||mode==='restTraitAp')
   return `下一張從手牌使用的特徵「${ability?.trait||''}」，消費 AP－1`;
  if(op==='restIfTraitUsedDrawDiscard'||mode==='restTraitDraw')return '抽 1 張，再將 1 張手牌放到場外';
+ if(op==='restDrawDiscard'||mode==='restDrawDiscard')return '休息，抽 1 張，然後將 1 張手牌放到場外';
  if(mode==='energyWake')return '在能源線將此角色轉為活動';
  if(op==='energyBottomNamedFront'||mode==='restBottom')
   return `將場外的${named(ability?.name)}放到牌庫底，並將此角色移到前線，本回合 BP＋${bp??1000}`;

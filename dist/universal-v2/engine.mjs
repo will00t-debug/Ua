@@ -12737,7 +12737,7 @@ function resolveChoice(s,a,pack){
  }
  if(q.kind==='effect-named-energy'){
   const target=field(p).find(c=>c.uid===a.uid);
-  const source=field(p).find(c=>c.uid===q.sourceUid);
+  const source=field(p).find(c=>c.uid===q.sourceUid)||p.outside.find(c=>c.uid===q.sourceUid);
   const ability=source&&card(pack,source).mainAbility;
   if(!target||!source||!q.choices.includes(a.uid)||ability?.op!=='buffNamedEnergyActiveAp'||
    !cardHasName(card(pack,target),ability.name,originalEffectsDisabled(s,target)))
@@ -24592,6 +24592,8 @@ export function legalUniversalActions(pack,s){
      out.push({type:'activate',uid:c.uid,mode:mode.id});
    }
    if(ability?.op==='buffNamedEnergyActiveAp'&&!s.mainAbilityUsedUids.includes(c.uid)&&
+    (!ability.frontOnly||location(s,p,c.uid)?.line==='front')&&
+    (!ability.restSelf||c.ready)&&
     calcEnergy(pack,s,p)>=ability.minEnergy&&
     field(pl).some(x=>cardHasName(card(pack,x),ability.name,originalEffectsDisabled(s,x))))
     out.push({type:'activate',uid:c.uid,mode:'namedEnergyAp'});
@@ -26608,13 +26610,24 @@ if(ability.op==='characterDualMain'){
     throw Error('Unknown paired MAIN mode');
    }
    if(ability.op==='buffNamedEnergyActiveAp'){
+    const pos=location(s,p,selected.uid);
     if(action.mode!=='namedEnergyAp'||s.mainAbilityUsedUids.includes(onceUid)||
-     calcEnergy(pack,s,p)<ability.minEnergy)
+     calcEnergy(pack,s,p)<ability.minEnergy||
+     (ability.frontOnly&&pos?.line!=='front')||
+     (ability.restSelf&&!selected.ready))
      throw Error('Named energy main is not legal');
     const choices=field(pl).filter(c=>cardHasName(card(pack,c),ability.name,
      originalEffectsDisabled(s,c))).map(c=>c.uid);
     if(!choices.length)throw Error('Named energy main has no printed character');
     s.mainAbilityUsedUids.push(onceUid);
+    if(ability.restSelf){
+     noteOwnEffectRest(s,p,selected);
+     selected.ready=false;
+    }
+    if(ability.retireSelf){
+     if(!pos)throw Error('Named energy main left the front');
+     if(retire(pack,s,p,pos.line,pos.slot))break;
+    }
     if(choices.length===1){
      const target=field(pl).find(c=>c.uid===choices[0]);
      target.buffs??=[];target.buffs.push({energy:ability.extraEnergy,untilTurn:s.turn});

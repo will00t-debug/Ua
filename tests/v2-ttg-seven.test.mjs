@@ -104,7 +104,7 @@ test('seven TTG cards keep official prints and a legal 50-card deck',()=>{
  assert.equal(impact.effects.onPlay[0].op,'buffMaxOwnBpImpact');
  const kamina=ttg.cards['TTG-1-044'];
  assert.equal(kamina.passiveBonuses[0].condition.kind,'ownNameOrRaidBase');
- assert.equal(kamina.passiveBonuses[0].condition.turn,'any');
+ assert.equal(kamina.passiveBonuses[0].condition.turn,'own');
  assert.equal(kamina.passiveBonuses[0].bp,500);
  assert.equal(kamina.unblockedAttack.optional,true);
  const trio=ttg.cards['TTG-1-050'];
@@ -227,8 +227,13 @@ test('TTG-025 gates attack, block, and the Simon energy main on six energy',()=>
  paid=toPhase(paid,'main');
  paid=go(paid,act(paid,a=>a.type==='play'&&a.uid===body.uid&&a.line==='front'));
  const source=live(paid,1,body.uid);
+ assert.equal(source.ready,false);
+ assert.equal(legalUniversalActions(ttg,paid).some(a=>a.type==='activate'&&a.uid===source.uid),false);
+ source.ready=true;
  assert.equal(universalCardEnergy(ttg,paid,1,live(paid,1,simon.uid)),1);
  paid=go(paid,act(paid,a=>a.type==='activate'&&a.uid===source.uid&&a.mode==='namedEnergyAp'));
+ assert.ok(paid.players[1].outside.some(c=>c.uid===source.uid));
+ assert.equal(paid.players[1].front.some(c=>c?.uid===source.uid),false);
  assert.equal(paid.pending?.kind,'effect-active-one-ap');
  const label=uiActionLabel(paid.pending?legalUniversalActions(ttg,paid)[0]:{type:'activate',uid:source.uid,mode:'namedEnergyAp'},{pack:ttg,state:paid});
  assert.equal(typeof label,'string');
@@ -245,9 +250,12 @@ test('TTG-025 gates attack, block, and the Simon energy main on six energy',()=>
  const spell=hold(front,0,'TTG-1-025');
  front=toPhase(front,'main');
  front=go(front,act(front,a=>a.type==='play'&&a.uid===spell.uid&&a.line==='energy'));
- front=go(front,act(front,a=>a.type==='activate'&&a.mode==='namedEnergyAp'));
+ assert.equal(legalUniversalActions(ttg,front).some(a=>a.type==='activate'&&a.mode==='namedEnergyAp'),false);
  assert.equal(universalCardEnergy(ttg,front,0,live(front,0,frontSimon.uid)),0);
- assert.ok(live(front,0,frontSimon.uid).buffs.some(b=>b.energy===3));
+ assert.equal((live(front,0,frontSimon.uid).buffs||[]).some(b=>b.energy===3),false);
+ const rested=place(front,0,'TTG-1-025','front',2);
+ rested.ready=false;
+ assert.equal(legalUniversalActions(ttg,front).some(a=>a.type==='activate'&&a.uid===rested.uid),false);
  assertUniversalMatch(ttg,front);
 });
 
@@ -389,7 +397,7 @@ test('TTG-039 adds the snapshotted maximum BP and grants impact to one Lagann or
  assertUniversalMatch(ttg,life);
 });
 
-test('TTG-044 gains BP from Simon on either turn and may look at the top 7 only when unblocked',()=>{
+test('TTG-044 gains BP from Simon on the controller turn and may look at the top 7 only when unblocked',()=>{
  let plain=fresh(8044);
  const kamina=place(plain,0,'TTG-1-044','front',0);
  assert.equal(universalBp(ttg,plain,kamina),3500);
@@ -397,6 +405,9 @@ test('TTG-044 gains BP from Simon on either turn and may look at the top 7 only 
  assert.equal(universalBp(ttg,plain,live(plain,0,kamina.uid)),4000);
  plain=endTurn(plain);
  assert.equal(plain.active,1);
+ assert.equal(universalBp(ttg,plain,plain.players[0].front.find(c=>c?.uid===kamina.uid)),3500);
+ plain=endTurn(plain);
+ assert.equal(plain.active,0);
  assert.equal(universalBp(ttg,plain,plain.players[0].front.find(c=>c?.uid===kamina.uid)),4000);
 
  let buried=fresh(8045);
