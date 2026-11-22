@@ -32,3 +32,20 @@ test('single-choice and negative bonus require no fabricated candidate',()=>{
  assert.equal(single.mostReachable,null);
  assert.equal(single.topScoreGap,null);
 });
+
+test('decomposition names the model feature responsible for overturning a better Hard option',()=>{
+ const rows=[
+  {action:{type:'play',uid:'0-2',line:'front'},features:[1],
+   hardScore:10,score:16.11,tempo:{bonus:.11,reasons:[]}},
+  {action:{type:'play',uid:'0-2',line:'energy'},features:[0],
+   hardScore:12,score:12.59,tempo:{bonus:.59,reasons:[]}}
+ ];
+ const result=inspectTempoMargins(rows,{weights:[1],featureNames:['line_front'],scale:6});
+ assert.equal(result.hardDisagrees,true);
+ assert.equal(result.mostReachable.attribution.hardGap,-2);
+ assert.equal(result.mostReachable.attribution.policyGap,6);
+ assert.equal(result.mostReachable.attribution.totalGap,4);
+ assert.deepEqual(result.mostReachable.attribution.featureDrivers,
+  [{name:'line_front',delta:6}]);
+ assert.equal(result.mostReachable.requiredMultiplier,(4+1e-9)/.48);
+});
