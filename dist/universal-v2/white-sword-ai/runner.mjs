@@ -160,6 +160,9 @@ function playGameInner(spec){
   eligibleSum:0,candidatesSum:0,positiveScoreGaps:0,scoreGapSum:0,
   maxScoreGap:0,hardGapSum:0,policyGains:{},probeExamples:[]
  };
+ if(spec.trackLife===true)game.lifeStats={
+  lifeReveals:[0,0],triggerBearing:[0,0],types:{}
+ };
  const started=performance.now();
  let lastKey='';
  let repeats=0;
@@ -292,6 +295,25 @@ function playGameInner(spec){
    game.error=error.message;
    break;
   }
+  if(game.lifeStats){
+   // Post-action public/provenance events only. These revealed identities are
+   // never passed to the decision policy or its training features.
+   const earlier=state.zoneMoveEvents||[];
+   const fresh=next.turn===state.turn?
+    (next.zoneMoveEvents||[]).slice(earlier.length):(next.zoneMoveEvents||[]);
+   for(const event of fresh){
+    if(event.from!=='life'||event.reason!=='rule'||(event.owner!==0&&event.owner!==1))continue;
+    const side=event.owner;
+    game.lifeStats.lifeReveals[side]++;
+    const printed=(Array.isArray(packs)?packs[side]:packs)?.cards?.[event.cardId]||
+     (Array.isArray(packs)?packs[side]:packs)?.[event.cardId];
+    const trigger=printed?.trigger;
+    if(trigger){
+     game.lifeStats.triggerBearing[side]++;
+     game.lifeStats.types[trigger]=(game.lifeStats.types[trigger]||0)+1;
+    }
+   }
+  }
   const afterAp=next.players[actor].apCards.filter(card=>card?.ready).length;
   if(actor===spec.specialistSeat&&afterAp<beforeAp)game.counts.apSpent+=beforeAp-afterAp;
   state=next;
@@ -349,6 +371,7 @@ export function summarizeGame(game){
   samples:game.samples?.length||0,
   recentActions:game.recentActions||null,
   ...(game.diagnostics?{diagnostics:game.diagnostics}:{}),
+  ...(game.lifeStats?{lifeStats:game.lifeStats}:{}),
   ...(game.actions?.length?{actions:game.actions}:{} )
  };
 }
