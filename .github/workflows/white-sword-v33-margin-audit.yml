@@ -1,0 +1,44 @@
+name: White Sword v3.3 forensic score margin replay
+
+on:
+  push:
+    branches: [experiment/white-sword-v33-margin-audit-20261123]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: white-sword-v33-margin-audit
+  cancel-in-progress: true
+
+jobs:
+  forensic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate read-only diagnostic script and action invariants
+        run: |
+          node --check scripts/white-sword-v33-margin-audit.mjs
+          node --check dist/universal-v2/white-sword-ai/v33-margin-audit.mjs
+          node --check dist/universal-v2/white-sword-ai/runner.mjs
+          node --check dist/universal-v2/white-sword-ai/choose.mjs
+          node --test tests/white-sword-v33-margin-audit.test.mjs tests/white-sword-v33-tempo.test.mjs
+      - name: Replay original 48 pilot games and measure candidate margins
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v33-margin-audit.mjs
+      - name: Preserve per-decision score-gap report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v33-margin-audit
+          path: |
+            docs/white-sword-ai/v33/MARGIN-AUDIT.json
+            docs/white-sword-ai/v33/MARGIN-AUDIT.md
+          if-no-files-found: warn
+          retention-days: 30
