@@ -96,6 +96,7 @@ function chooseFor(pack,state,actor,seat,spec,step){
    actor,model:seat.model,mode:seat.mode||'policy',explore:seat.explore||0,
    step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
    diagnose:spec.diagnose===true,
+   captureDecisions:spec.captureDecisions===true,
    diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
@@ -237,8 +238,30 @@ function playGameInner(spec){
   else if(picked.source==='reference')game.referenceDecisions++;
   else if(actor===spec.specialistSeat&&(picked.source==='model'||picked.source==='blend'))game.modelDecisions++;
   const keyAction=actionKey(actor,action);
-  if(spec.keepActions)game.actions.push(spec.diagnose===true?
-   {...keyAction,fullAction:action}:keyAction);
+  if(spec.keepActions)game.actions.push(spec.captureDecisions===true?
+   {...keyAction,fullAction:action,
+    context:{
+     step:game.steps,turn:state.turn,phase:state.phase,pending:state.pending?.kind||null,
+     cardId:ownCardId(state,actor,action),
+     self:{
+      life:state.players[actor].life.length,hand:state.players[actor].hand.length,
+      ap:state.players[actor].apCards.filter(item=>item?.ready).length,
+      front:state.players[actor].front.map(item=>item?{
+       cardId:item.cardId,bp:item.bp,ready:item.ready
+      }:null),energy:state.players[actor].energy.filter(Boolean).length,
+      outside:state.players[actor].outside.length
+     },
+     opponent:{
+      life:state.players[1-actor].life.length,
+      ap:state.players[1-actor].apCards.filter(item=>item?.ready).length,
+      hand:state.players[1-actor].hand.length,
+      front:state.players[1-actor].front.map(item=>item?{
+       cardId:item.cardId,bp:item.bp,ready:item.ready
+      }:null)
+     }
+    },
+    ...(picked.diagnostic?{choiceDiagnostic:picked.diagnostic}:{})
+   }:(spec.diagnose===true?{...keyAction,fullAction:action}:keyAction));
   recent.push(keyAction);
   if(recent.length>16)recent.shift();
   if(actor===spec.specialistSeat)noteSpecialist(game,state,actor,action);
