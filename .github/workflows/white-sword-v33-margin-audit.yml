@@ -24,6 +24,7 @@ jobs:
       - name: Validate read-only diagnostic script and action invariants
         run: |
           node --check scripts/white-sword-v33-margin-audit.mjs
+          node --check scripts/white-sword-v33-counterfactual-pilot.mjs
           node --check dist/universal-v2/white-sword-ai/v33-margin-audit.mjs
           node --check dist/universal-v2/white-sword-ai/runner.mjs
           node --check dist/universal-v2/white-sword-ai/choose.mjs
@@ -32,6 +33,20 @@ jobs:
         env:
           WS_WORKERS: '3'
         run: node scripts/white-sword-v33-margin-audit.mjs
+      - name: One-choice legal counterfactual replay on same old pilot openings
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v33-counterfactual-pilot.mjs
+      - name: Preserve causal-limitations and single-action replay report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v33-counterfactual-pilot
+          path: |
+            docs/white-sword-ai/v33/COUNTERFACTUAL-PILOT.json
+            docs/white-sword-ai/v33/COUNTERFACTUAL-PILOT.md
+          if-no-files-found: warn
+          retention-days: 30
       - name: Preserve per-decision score-gap report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
