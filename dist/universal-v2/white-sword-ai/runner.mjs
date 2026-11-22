@@ -98,6 +98,7 @@ function chooseFor(pack,state,actor,seat,spec,step){
    step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
    diagnose:spec.diagnose===true,
    captureDecisions:spec.captureDecisions===true,
+   collectQ:spec.keepSamples===true&&spec.recordQPreferences===true&&actor===spec.recordSeat,
    diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
@@ -158,6 +159,9 @@ function playGameInner(spec){
   blendDecisions:0,singleEligible:0,multiEligible:0,hardOverrides:0,
   eligibleSum:0,candidatesSum:0,positiveScoreGaps:0,scoreGapSum:0,
   maxScoreGap:0,hardGapSum:0,policyGains:{},probeExamples:[]
+ };
+ if(spec.trackLife===true)game.lifeStats={
+  lifeReveals:[0,0],triggerBearing:[0,0],types:{}
  };
  const started=performance.now();
  let lastKey='';
@@ -266,6 +270,9 @@ function playGameInner(spec){
   recent.push(keyAction);
   if(recent.length>16)recent.shift();
   if(actor===spec.specialistSeat)noteSpecialist(game,state,actor,action);
+  if(spec.keepSamples&&spec.recordQPreferences===true&&actor===spec.recordSeat&&
+   picked.source==='blend'&&Array.isArray(picked.qPairs))
+   game.samples.push(...picked.qPairs);
   if(spec.keepSamples&&actor===spec.recordSeat&&legal.length>1&&picked.chosen&&picked.negatives?.length){
    if(spec.recordTeacher&&picked.source==='hard-search-2'){
     game.samples.push({kind:'teacher',chosen:picked.chosen,negatives:picked.negatives,value:picked.value,reward:null});
@@ -287,6 +294,25 @@ function playGameInner(spec){
    game.anomalies.engineError++;
    game.error=error.message;
    break;
+  }
+  if(game.lifeStats){
+   // Post-action public/provenance events only. These revealed identities are
+   // never passed to the decision policy or its training features.
+   const earlier=state.zoneMoveEvents||[];
+   const fresh=next.turn===state.turn?
+    (next.zoneMoveEvents||[]).slice(earlier.length):(next.zoneMoveEvents||[]);
+   for(const event of fresh){
+    if(event.from!=='life'||event.reason!=='rule'||(event.owner!==0&&event.owner!==1))continue;
+    const side=event.owner;
+    game.lifeStats.lifeReveals[side]++;
+    const printed=(Array.isArray(packs)?packs[side]:packs)?.cards?.[event.cardId]||
+     (Array.isArray(packs)?packs[side]:packs)?.[event.cardId];
+    const trigger=printed?.trigger;
+    if(trigger){
+     game.lifeStats.triggerBearing[side]++;
+     game.lifeStats.types[trigger]=(game.lifeStats.types[trigger]||0)+1;
+    }
+   }
   }
   const afterAp=next.players[actor].apCards.filter(card=>card?.ready).length;
   if(actor===spec.specialistSeat&&afterAp<beforeAp)game.counts.apSpent+=beforeAp-afterAp;
@@ -345,6 +371,7 @@ export function summarizeGame(game){
   samples:game.samples?.length||0,
   recentActions:game.recentActions||null,
   ...(game.diagnostics?{diagnostics:game.diagnostics}:{}),
+  ...(game.lifeStats?{lifeStats:game.lifeStats}:{}),
   ...(game.actions?.length?{actions:game.actions}:{} )
  };
 }
