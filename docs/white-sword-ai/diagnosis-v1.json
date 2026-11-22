@@ -1,0 +1,4530 @@
+{
+  "source": "v1 candidate blend",
+  "games": 68,
+  "wins": 24,
+  "losses": 44,
+  "unfinished": 0,
+  "anomalies": {
+    "illegal": 0,
+    "timeout": 0,
+    "fallback": 0,
+    "deadLoop": 0,
+    "engineError": 0,
+    "leak": 0,
+    "opponentFallback": 0
+  },
+  "lossTags": {
+    "decisions": 925,
+    "primary": {
+      "energy": 243,
+      "effect": 72,
+      "attack": 162,
+      "block": 140,
+      "other": 180,
+      "ap": 125,
+      "raid": 3
+    },
+    "tags": {
+      "energy": 244,
+      "energy-early-front": 160,
+      "model": 537,
+      "effect": 72,
+      "attack": 162,
+      "block": 140,
+      "wasted-block": 138,
+      "raid-067": 51,
+      "raid-085": 25,
+      "ap": 145,
+      "bankai": 77,
+      "aizen": 57,
+      "noshaba": 74,
+      "raid-070": 8,
+      "raid": 3,
+      "energy-hoard": 1
+    }
+  },
+  "winTags": {
+    "decisions": 505,
+    "primary": {
+      "energy": 183,
+      "effect": 53,
+      "raid": 7,
+      "block": 69,
+      "other": 62,
+      "attack": 120,
+      "ap": 11
+    },
+    "tags": {
+      "energy": 186,
+      "effect": 53,
+      "model": 304,
+      "aizen": 19,
+      "raid": 7,
+      "raid-085": 25,
+      "raid-070": 3,
+      "energy-hoard": 5,
+      "block": 69,
+      "wasted-block": 66,
+      "energy-early-front": 99,
+      "attack": 120,
+      "ap": 32,
+      "raid-067": 8,
+      "noshaba": 20,
+      "bankai": 18
+    }
+  },
+  "examples": [
+    {
+      "seed": 50005,
+      "first": 1,
+      "specialistSeat": 0,
+      "step": 86,
+      "turn": 8,
+      "primary": "energy",
+      "tags": [
+        "energy",
+        "energy-early-front",
+        "model"
+      ],
+      "sacrifice": 90.22363636363639,
+      "hardScore": 76.85000000000002,
+      "chosenScore": -13.373636363636365,
+      "position": {
+        "turn": 8,
+        "phase": "move",
+        "pending": null,
+        "ap": 2,
+        "myLife": 7,
+        "oppLife": 2,
+        "energy": 1,
+        "myHand": [
+          "BLC-4-080",
+          "BLC-1-085",
+          "BLC-4-060",
+          "BLC-2-067",
+          "BLC-4-060",
+          "BLC-4-080",
+          "BLC-2-067",
+          "BLC-2-069"
+        ],
+        "myFront": [
+          "-",
+          "BLC-1-083",
+          "-",
+          "BLC-4-066"
+        ],
+        "myEnergy": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-083",
+          "BLC-2-067",
+          "BLC-1-072",
+          "BLC-1-072"
+        ],
+        "oppEnergy": [
+          "BLC-4-060",
+          "-",
+          "-",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "move",
+        "mode": null,
+        "line": null,
+        "slot": 0,
+        "cardId": "BLC-1-083",
+        "baseId": null,
+        "uid": "0-35"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 0,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "0-35"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "0-35"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 31
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 78
+      },
+      "originalLoss": true,
+      "swappedWin": true,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手後，其餘決策不變，這場由敗轉勝"
+    },
+    {
+      "seed": 50005,
+      "first": 0,
+      "specialistSeat": 1,
+      "step": 99,
+      "turn": 10,
+      "primary": "energy",
+      "tags": [
+        "energy",
+        "energy-early-front",
+        "model"
+      ],
+      "sacrifice": 90.15363636363637,
+      "hardScore": -159.81227272727276,
+      "chosenScore": -249.96590909090912,
+      "position": {
+        "turn": 10,
+        "phase": "move",
+        "pending": null,
+        "ap": 3,
+        "myLife": 6,
+        "oppLife": 4,
+        "energy": 1,
+        "myHand": [
+          "BLC-2-067",
+          "BLC-1-085",
+          "BLC-3-008",
+          "BLC-2-067",
+          "BLC-4-060",
+          "BLC-2-073",
+          "BLC-2-073",
+          "BLC-2-067",
+          "BLC-2-069"
+        ],
+        "myFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-085",
+          "BLC-1-070",
+          "BLC-1-085",
+          "BLC-4-070"
+        ],
+        "oppEnergy": [
+          "BLC-2-067",
+          "BLC-1-083",
+          "BLC-2-067",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "move",
+        "mode": null,
+        "line": null,
+        "slot": 0,
+        "cardId": "BLC-1-083",
+        "baseId": null,
+        "uid": "1-33"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 0,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "1-33"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 1,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "1-33"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "1-33"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "1-33"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 70
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 77
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50005,
+      "first": 0,
+      "specialistSeat": 1,
+      "step": 123,
+      "turn": 12,
+      "primary": "energy",
+      "tags": [
+        "energy",
+        "energy-early-front",
+        "model"
+      ],
+      "sacrifice": 86.78863636363633,
+      "hardScore": -212.46409090909094,
+      "chosenScore": -299.25272727272727,
+      "position": {
+        "turn": 12,
+        "phase": "move",
+        "pending": null,
+        "ap": 3,
+        "myLife": 4,
+        "oppLife": 4,
+        "energy": 1,
+        "myHand": [
+          "BLC-2-067",
+          "BLC-1-085",
+          "BLC-3-008",
+          "BLC-4-060",
+          "BLC-2-073",
+          "BLC-2-073",
+          "BLC-2-067",
+          "BLC-2-069"
+        ],
+        "myFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-2-069",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-085",
+          "BLC-1-070",
+          "BLC-1-085",
+          "BLC-4-070"
+        ],
+        "oppEnergy": [
+          "BLC-2-067",
+          "BLC-4-066",
+          "BLC-2-067",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "move",
+        "mode": null,
+        "line": null,
+        "slot": 0,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "1-17"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 0,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-17"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 1,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-17"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-17"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-17"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 23
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 23
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50011,
+      "first": 1,
+      "specialistSeat": 0,
+      "step": 73,
+      "turn": 8,
+      "primary": "attack",
+      "tags": [
+        "attack",
+        "model"
+      ],
+      "sacrifice": 85.73363636363632,
+      "hardScore": -179.23818181818183,
+      "chosenScore": -264.97181818181815,
+      "position": {
+        "turn": 8,
+        "phase": "attack",
+        "pending": null,
+        "ap": 2,
+        "myLife": 6,
+        "oppLife": 4,
+        "energy": 0,
+        "myHand": [
+          "BLC-4-060",
+          "BLC-4-080",
+          "BLC-1-085",
+          "BLC-2-073",
+          "BLC-1-070",
+          "BLC-4-080",
+          "BLC-4-080",
+          "BLC-1-085",
+          "BLC-1-072",
+          "BLC-2-067"
+        ],
+        "myFront": [
+          "BLC-1-072*",
+          "BLC-1-083",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-072",
+          "BLC-3-009",
+          "BLC-1-085",
+          "BLC-2-067"
+        ],
+        "oppEnergy": [
+          "BLC-4-066",
+          "BLC-1-083",
+          "-",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "attack",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-1-083",
+        "baseId": null,
+        "uid": "0-35"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "attack",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "0-35"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 69
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 66
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50016,
+      "first": 0,
+      "specialistSeat": 0,
+      "step": 33,
+      "turn": 5,
+      "primary": "energy",
+      "tags": [
+        "energy",
+        "energy-early-front",
+        "model"
+      ],
+      "sacrifice": 85.22363636363639,
+      "hardScore": 1.6345454545454743,
+      "chosenScore": -83.58909090909091,
+      "position": {
+        "turn": 5,
+        "phase": "move",
+        "pending": null,
+        "ap": 2,
+        "myLife": 7,
+        "oppLife": 6,
+        "energy": 1,
+        "myHand": [
+          "BLC-3-009",
+          "BLC-3-009",
+          "BLC-4-060",
+          "BLC-4-060",
+          "BLC-1-085",
+          "BLC-4-080",
+          "BLC-2-073",
+          "BLC-2-069"
+        ],
+        "myFront": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-3-008",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppEnergy": [
+          "BLC-1-083",
+          "BLC-4-066",
+          "BLC-2-069",
+          "-"
+        ]
+      },
+      "chosen": {
+        "type": "move",
+        "mode": null,
+        "line": null,
+        "slot": 1,
+        "cardId": "BLC-1-083",
+        "baseId": null,
+        "uid": "0-33"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 1,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "0-33"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "0-33"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "0-33"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 97
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 76
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50013,
+      "first": 0,
+      "specialistSeat": 0,
+      "step": 35,
+      "turn": 5,
+      "primary": "energy",
+      "tags": [
+        "energy",
+        "energy-early-front",
+        "model"
+      ],
+      "sacrifice": 84.13158508158513,
+      "hardScore": 158.3615850815851,
+      "chosenScore": 74.22999999999998,
+      "position": {
+        "turn": 5,
+        "phase": "move",
+        "pending": null,
+        "ap": 3,
+        "myLife": 7,
+        "oppLife": 6,
+        "energy": 2,
+        "myHand": [
+          "BLC-1-070",
+          "BLC-1-072",
+          "BLC-3-008",
+          "BLC-2-067",
+          "BLC-1-085",
+          "BLC-1-085"
+        ],
+        "myFront": [
+          "BLC-4-066",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-4-066",
+          "BLC-2-069",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppEnergy": [
+          "BLC-1-083",
+          "BLC-2-069",
+          "BLC-4-070",
+          "-"
+        ]
+      },
+      "chosen": {
+        "type": "move",
+        "mode": null,
+        "line": null,
+        "slot": 1,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "0-17"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 1,
+          "cardId": "BLC-4-066",
+          "baseId": null,
+          "uid": "0-9"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-4-066",
+          "baseId": null,
+          "uid": "0-9"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-4-066",
+          "baseId": null,
+          "uid": "0-9"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 1,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "0-17"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "0-17"
+        },
+        {
+          "type": "move",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "0-17"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 123
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 81
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": true,
+      "verdict": "只改這一手仍敗；從這裡改由 Hard 下完則勝，後面還有一連串決策"
+    },
+    {
+      "seed": 50003,
+      "first": 1,
+      "specialistSeat": 1,
+      "step": 61,
+      "turn": 7,
+      "primary": "attack",
+      "tags": [
+        "attack",
+        "model"
+      ],
+      "sacrifice": 76.7336363636363,
+      "hardScore": -98.7527272727273,
+      "chosenScore": -175.4863636363636,
+      "position": {
+        "turn": 7,
+        "phase": "attack",
+        "pending": null,
+        "ap": 2,
+        "myLife": 7,
+        "oppLife": 5,
+        "energy": 0,
+        "myHand": [
+          "BLC-2-067",
+          "BLC-1-085",
+          "BLC-2-073",
+          "BLC-2-073",
+          "BLC-3-009",
+          "BLC-4-080",
+          "BLC-1-070",
+          "BLC-3-008",
+          "BLC-1-070",
+          "BLC-4-080"
+        ],
+        "myFront": [
+          "BLC-1-072*",
+          "BLC-2-069",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-072",
+          "BLC-1-085",
+          "BLC-1-083",
+          "-"
+        ],
+        "oppEnergy": [
+          "-",
+          "BLC-4-066",
+          "BLC-1-072",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "attack",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "1-16"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "attack",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-16"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 94
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 83
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50014,
+      "first": 0,
+      "specialistSeat": 0,
+      "step": 130,
+      "turn": 13,
+      "primary": "attack",
+      "tags": [
+        "attack",
+        "model"
+      ],
+      "sacrifice": 63.7681818181818,
+      "hardScore": -278.0109090909091,
+      "chosenScore": -341.7790909090909,
+      "position": {
+        "turn": 13,
+        "phase": "attack",
+        "pending": null,
+        "ap": 2,
+        "myLife": 4,
+        "oppLife": 4,
+        "energy": 0,
+        "myHand": [
+          "BLC-3-009",
+          "BLC-1-085",
+          "BLC-3-009",
+          "BLC-1-070",
+          "BLC-4-060",
+          "BLC-2-073",
+          "BLC-2-073",
+          "BLC-2-073",
+          "BLC-1-072",
+          "BLC-1-085"
+        ],
+        "myFront": [
+          "BLC-4-066",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-3-009",
+          "BLC-1-072",
+          "BLC-2-067",
+          "BLC-1-083"
+        ],
+        "oppEnergy": [
+          "BLC-3-008",
+          "BLC-4-066",
+          "-",
+          "BLC-3-009"
+        ]
+      },
+      "chosen": {
+        "type": "attack",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-4-066",
+        "baseId": null,
+        "uid": "0-8"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "attack",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-066",
+          "baseId": null,
+          "uid": "0-8"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 22
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 22
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50014,
+      "first": 1,
+      "specialistSeat": 0,
+      "step": 12,
+      "turn": 2,
+      "primary": "effect",
+      "tags": [
+        "effect",
+        "model"
+      ],
+      "sacrifice": 58.54545454545455,
+      "hardScore": 47.64901515151515,
+      "chosenScore": -10.896439393939392,
+      "position": {
+        "turn": 2,
+        "phase": "main",
+        "pending": "effect-discard-gate",
+        "ap": 1,
+        "myLife": 7,
+        "oppLife": 7,
+        "energy": 1,
+        "myHand": [
+          "BLC-2-067",
+          "BLC-4-066",
+          "BLC-3-009",
+          "BLC-1-085",
+          "BLC-3-009",
+          "BLC-1-072",
+          "BLC-2-069"
+        ],
+        "myFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-4-066*",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppEnergy": [
+          "BLC-4-066",
+          "-",
+          "-",
+          "-"
+        ]
+      },
+      "chosen": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "0-17"
+      },
+      "hard": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "0-13"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-066",
+          "baseId": null,
+          "uid": "0-9"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-3-009",
+          "baseId": null,
+          "uid": "0-1"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "0-38"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-3-009",
+          "baseId": null,
+          "uid": "0-3"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "0-28"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "0-17"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 211
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 136
+      },
+      "originalLoss": true,
+      "swappedWin": true,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手後，其餘決策不變，這場由敗轉勝"
+    },
+    {
+      "seed": 50013,
+      "first": 0,
+      "specialistSeat": 1,
+      "step": 174,
+      "turn": 15,
+      "primary": "block",
+      "tags": [
+        "block",
+        "wasted-block",
+        "model"
+      ],
+      "sacrifice": 56,
+      "hardScore": -61.47454545454546,
+      "chosenScore": -117.47454545454546,
+      "position": {
+        "turn": 15,
+        "phase": "attack",
+        "pending": "block",
+        "ap": 0,
+        "myLife": 2,
+        "oppLife": 2,
+        "energy": 2,
+        "myHand": [
+          "BLC-1-070",
+          "BLC-3-009",
+          "BLC-1-070",
+          "BLC-1-085",
+          "BLC-3-009",
+          "BLC-2-067",
+          "BLC-4-080",
+          "BLC-2-067"
+        ],
+        "myFront": [
+          "BLC-1-083",
+          "BLC-2-069",
+          "BLC-1-072",
+          "BLC-4-066"
+        ],
+        "myEnergy": [
+          "BLC-1-083",
+          "BLC-4-066",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-072",
+          "BLC-3-008",
+          "BLC-1-070*",
+          "BLC-1-085"
+        ],
+        "oppEnergy": [
+          "BLC-4-070*",
+          "BLC-1-083*",
+          "-",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "1-17"
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-083",
+          "baseId": null,
+          "uid": "1-33"
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-17"
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-31"
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-066",
+          "baseId": null,
+          "uid": "1-10"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 6
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 6
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50014,
+      "first": 1,
+      "specialistSeat": 1,
+      "step": 20,
+      "turn": 3,
+      "primary": "effect",
+      "tags": [
+        "effect",
+        "model"
+      ],
+      "sacrifice": 55.80098484848485,
+      "hardScore": 40.44,
+      "chosenScore": -15.360984848484852,
+      "position": {
+        "turn": 3,
+        "phase": "main",
+        "pending": "effect-discard-gate",
+        "ap": 1,
+        "myLife": 7,
+        "oppLife": 7,
+        "energy": 1,
+        "myHand": [
+          "BLC-1-072",
+          "BLC-2-073",
+          "BLC-3-008",
+          "BLC-3-009",
+          "BLC-2-067",
+          "BLC-4-070"
+        ],
+        "myFront": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-4-066*",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppEnergy": [
+          "BLC-4-066",
+          "BLC-4-066",
+          "-",
+          "-"
+        ]
+      },
+      "chosen": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-4-070",
+        "baseId": null,
+        "uid": "1-20"
+      },
+      "hard": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-31"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-073",
+          "baseId": null,
+          "uid": "1-43"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-3-008",
+          "baseId": null,
+          "uid": "1-41"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-3-009",
+          "baseId": null,
+          "uid": "1-2"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-14"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-070",
+          "baseId": null,
+          "uid": "1-20"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 118
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 172
+      },
+      "originalLoss": true,
+      "swappedWin": true,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手後，其餘決策不變，這場由敗轉勝"
+    },
+    {
+      "seed": 50011,
+      "first": 0,
+      "specialistSeat": 0,
+      "step": 183,
+      "turn": 16,
+      "primary": "block",
+      "tags": [
+        "block",
+        "raid-085",
+        "wasted-block",
+        "model"
+      ],
+      "sacrifice": 55.5,
+      "hardScore": -10.803636363636368,
+      "chosenScore": -66.30363636363637,
+      "position": {
+        "turn": 16,
+        "phase": "attack",
+        "pending": "block",
+        "ap": 0,
+        "myLife": 1,
+        "oppLife": 1,
+        "energy": 3,
+        "myHand": [
+          "BLC-1-070",
+          "BLC-1-070",
+          "BLC-2-067",
+          "BLC-4-066",
+          "BLC-1-070",
+          "BLC-3-009",
+          "BLC-2-067",
+          "BLC-1-083"
+        ],
+        "myFront": [
+          "BLC-4-060",
+          "BLC-4-060",
+          "BLC-1-085",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-1-072",
+          "BLC-3-009",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-072",
+          "BLC-2-067*",
+          "BLC-1-085",
+          "BLC-3-008"
+        ],
+        "oppEnergy": [
+          "BLC-2-069",
+          "BLC-4-070",
+          "-",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-1-085",
+        "baseId": null,
+        "uid": "0-37"
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-060",
+          "baseId": null,
+          "uid": "0-4"
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-060",
+          "baseId": null,
+          "uid": "0-6"
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "0-37"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 2
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 2
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50015,
+      "first": 1,
+      "specialistSeat": 1,
+      "step": 18,
+      "turn": 3,
+      "primary": "effect",
+      "tags": [
+        "effect",
+        "model"
+      ],
+      "sacrifice": 55.135909090909095,
+      "hardScore": 41.28181818181819,
+      "chosenScore": -13.854090909090909,
+      "position": {
+        "turn": 3,
+        "phase": "main",
+        "pending": "effect-discard-gate",
+        "ap": 1,
+        "myLife": 7,
+        "oppLife": 7,
+        "energy": 1,
+        "myHand": [
+          "BLC-1-070",
+          "BLC-1-072",
+          "BLC-2-069",
+          "BLC-4-070",
+          "BLC-1-072",
+          "BLC-2-073"
+        ],
+        "myFront": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-4-066*",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppEnergy": [
+          "BLC-4-066",
+          "BLC-4-070",
+          "-",
+          "-"
+        ]
+      },
+      "chosen": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-4-070",
+        "baseId": null,
+        "uid": "1-23"
+      },
+      "hard": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-070",
+          "baseId": null,
+          "uid": "1-26"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-30"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-18"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-070",
+          "baseId": null,
+          "uid": "1-23"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-31"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-073",
+          "baseId": null,
+          "uid": "1-43"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 137
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 146
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50015,
+      "first": 0,
+      "specialistSeat": 1,
+      "step": 24,
+      "turn": 4,
+      "primary": "effect",
+      "tags": [
+        "effect",
+        "model"
+      ],
+      "sacrifice": 55.08713968957871,
+      "hardScore": 93.92181818181818,
+      "chosenScore": 38.83467849223947,
+      "position": {
+        "turn": 4,
+        "phase": "main",
+        "pending": "effect-discard-gate",
+        "ap": 1,
+        "myLife": 7,
+        "oppLife": 7,
+        "energy": 1,
+        "myHand": [
+          "BLC-1-070",
+          "BLC-1-072",
+          "BLC-2-069",
+          "BLC-1-072",
+          "BLC-2-073",
+          "BLC-4-070"
+        ],
+        "myFront": [
+          "BLC-4-070",
+          "BLC-1-083",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-4-066*",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppEnergy": [
+          "BLC-4-066",
+          "BLC-4-070",
+          "-",
+          "-"
+        ]
+      },
+      "chosen": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-4-070",
+        "baseId": null,
+        "uid": "1-21"
+      },
+      "hard": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-070",
+          "baseId": null,
+          "uid": "1-26"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-30"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-18"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-31"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-073",
+          "baseId": null,
+          "uid": "1-43"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-070",
+          "baseId": null,
+          "uid": "1-21"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 170
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 141
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50014,
+      "first": 0,
+      "specialistSeat": 1,
+      "step": 27,
+      "turn": 4,
+      "primary": "effect",
+      "tags": [
+        "effect",
+        "model"
+      ],
+      "sacrifice": 54.822139689578705,
+      "hardScore": 80.44999999999999,
+      "chosenScore": 25.62786031042128,
+      "position": {
+        "turn": 4,
+        "phase": "main",
+        "pending": "effect-discard-gate",
+        "ap": 1,
+        "myLife": 7,
+        "oppLife": 7,
+        "energy": 1,
+        "myHand": [
+          "BLC-1-072",
+          "BLC-2-073",
+          "BLC-3-008",
+          "BLC-3-009",
+          "BLC-2-067",
+          "BLC-4-070"
+        ],
+        "myFront": [
+          "BLC-4-070",
+          "BLC-1-083",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-4-066*",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppEnergy": [
+          "BLC-4-066",
+          "BLC-2-069",
+          "BLC-4-066",
+          "-"
+        ]
+      },
+      "chosen": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-4-070",
+        "baseId": null,
+        "uid": "1-22"
+      },
+      "hard": {
+        "type": "chooseDiscardGate",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-31"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-073",
+          "baseId": null,
+          "uid": "1-43"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-3-008",
+          "baseId": null,
+          "uid": "1-41"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-3-009",
+          "baseId": null,
+          "uid": "1-2"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-14"
+        },
+        {
+          "type": "chooseDiscardGate",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-070",
+          "baseId": null,
+          "uid": "1-22"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 130
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 140
+      },
+      "originalLoss": true,
+      "swappedWin": true,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手後，其餘決策不變，這場由敗轉勝"
+    },
+    {
+      "seed": 50014,
+      "first": 0,
+      "specialistSeat": 0,
+      "step": 96,
+      "turn": 10,
+      "primary": "block",
+      "tags": [
+        "block",
+        "wasted-block",
+        "model"
+      ],
+      "sacrifice": 52,
+      "hardScore": -129.84181818181816,
+      "chosenScore": -181.84181818181816,
+      "position": {
+        "turn": 10,
+        "phase": "attack",
+        "pending": "block",
+        "ap": 2,
+        "myLife": 6,
+        "oppLife": 5,
+        "energy": 1,
+        "myHand": [
+          "BLC-2-067",
+          "BLC-3-009",
+          "BLC-1-085",
+          "BLC-3-009",
+          "BLC-1-070",
+          "BLC-4-060",
+          "BLC-2-073",
+          "BLC-2-073"
+        ],
+        "myFront": [
+          "-",
+          "BLC-2-069",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-3-009",
+          "BLC-1-072",
+          "BLC-2-067*",
+          "BLC-1-083"
+        ],
+        "oppEnergy": [
+          "BLC-3-008",
+          "BLC-4-066",
+          "-",
+          "BLC-3-009"
+        ]
+      },
+      "chosen": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "0-16"
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "0-16"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 65
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 74
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": true,
+      "verdict": "只改這一手仍敗；從這裡改由 Hard 下完則勝，後面還有一連串決策"
+    },
+    {
+      "seed": 50000,
+      "first": 1,
+      "specialistSeat": 1,
+      "step": 143,
+      "turn": 12,
+      "primary": "block",
+      "tags": [
+        "block",
+        "wasted-block",
+        "model"
+      ],
+      "sacrifice": 44,
+      "hardScore": -146.97636363636366,
+      "chosenScore": -190.97636363636366,
+      "position": {
+        "turn": 12,
+        "phase": "attack",
+        "pending": "block",
+        "ap": 1,
+        "myLife": 4,
+        "oppLife": 3,
+        "energy": 1,
+        "myHand": [
+          "BLC-3-009",
+          "BLC-1-070",
+          "BLC-2-073",
+          "BLC-2-067",
+          "BLC-2-067",
+          "BLC-2-067",
+          "BLC-3-008"
+        ],
+        "myFront": [
+          "BLC-2-069",
+          "BLC-1-072",
+          "BLC-4-066",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-1-083",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-2-067*",
+          "BLC-4-070",
+          "BLC-3-009",
+          "BLC-1-072"
+        ],
+        "oppEnergy": [
+          "BLC-4-060*",
+          "-",
+          "BLC-4-060",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "1-18"
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-18"
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-1-072",
+          "baseId": null,
+          "uid": "1-30"
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-4-066",
+          "baseId": null,
+          "uid": "1-9"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 33
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 25
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50009,
+      "first": 1,
+      "specialistSeat": 0,
+      "step": 131,
+      "turn": 13,
+      "primary": "block",
+      "tags": [
+        "block",
+        "wasted-block",
+        "model"
+      ],
+      "sacrifice": 41.76079545454547,
+      "hardScore": -196.2854545454545,
+      "chosenScore": -238.04625,
+      "position": {
+        "turn": 13,
+        "phase": "attack",
+        "pending": "block",
+        "ap": 2,
+        "myLife": 6,
+        "oppLife": 4,
+        "energy": 0,
+        "myHand": [
+          "BLC-1-070",
+          "BLC-1-070",
+          "BLC-2-067",
+          "BLC-4-060",
+          "BLC-2-067",
+          "BLC-3-008",
+          "BLC-4-060",
+          "BLC-1-085"
+        ],
+        "myFront": [
+          "BLC-2-069",
+          "-",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-4-070*",
+          "BLC-1-085*",
+          "BLC-1-083",
+          "BLC-2-069"
+        ],
+        "oppEnergy": [
+          "BLC-4-066",
+          "BLC-4-060",
+          "BLC-4-066",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "0-17"
+      },
+      "hard": {
+        "type": "chooseBlock",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "chooseBlock",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "0-17"
+        }
+      ],
+      "originalWinner": 1,
+      "swapped": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 41
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "steps": 59
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50013,
+      "first": 1,
+      "specialistSeat": 1,
+      "step": 133,
+      "turn": 13,
+      "primary": "raid",
+      "tags": [
+        "raid",
+        "energy",
+        "raid-085",
+        "model"
+      ],
+      "sacrifice": 34.980865800865814,
+      "hardScore": -135.4800432900433,
+      "chosenScore": -170.46090909090913,
+      "position": {
+        "turn": 13,
+        "phase": "main",
+        "pending": null,
+        "ap": 1,
+        "myLife": 1,
+        "oppLife": 6,
+        "energy": 5,
+        "myHand": [
+          "BLC-1-070",
+          "BLC-1-070",
+          "BLC-3-009",
+          "BLC-2-073",
+          "BLC-2-067",
+          "BLC-1-085",
+          "BLC-2-067",
+          "BLC-1-085"
+        ],
+        "myFront": [
+          "BLC-1-072",
+          "BLC-1-083",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "BLC-4-066*",
+          "BLC-3-009",
+          "BLC-3-009*",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-3-009",
+          "-",
+          "BLC-4-066",
+          "BLC-2-067"
+        ],
+        "oppEnergy": [
+          "-",
+          "-",
+          "BLC-4-060",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "raid",
+        "mode": null,
+        "line": null,
+        "slot": 1,
+        "cardId": "BLC-1-085",
+        "baseId": "BLC-1-083",
+        "uid": "1-38"
+      },
+      "hard": {
+        "type": "play",
+        "mode": null,
+        "line": "energy",
+        "slot": 3,
+        "cardId": "BLC-3-009",
+        "baseId": null,
+        "uid": "1-3"
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "energy",
+          "slot": 3,
+          "cardId": "BLC-3-009",
+          "baseId": null,
+          "uid": "1-3"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 2,
+          "cardId": "BLC-3-009",
+          "baseId": null,
+          "uid": "1-3"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 3,
+          "cardId": "BLC-3-009",
+          "baseId": null,
+          "uid": "1-3"
+        },
+        {
+          "type": "event",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-073",
+          "baseId": null,
+          "uid": "1-44"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "energy",
+          "slot": 3,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-15"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 2,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-15"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 3,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-15"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "energy",
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "1-39"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "1-39"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "1-39"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-39"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-39"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": "energy",
+          "slot": 1,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-39"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-39"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-39"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": "energy",
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-39"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 1,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-1-083",
+          "uid": "1-39"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "energy",
+          "slot": 3,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-13"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 2,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-13"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 3,
+          "cardId": "BLC-2-067",
+          "baseId": null,
+          "uid": "1-13"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "energy",
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "1-38"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "1-38"
+        },
+        {
+          "type": "play",
+          "mode": null,
+          "line": "front",
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": null,
+          "uid": "1-38"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-38"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-38"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": "energy",
+          "slot": 1,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-38"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-38"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 3,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-38"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": "energy",
+          "slot": 2,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-3-009",
+          "uid": "1-38"
+        },
+        {
+          "type": "raid",
+          "mode": null,
+          "line": null,
+          "slot": 1,
+          "cardId": "BLC-1-085",
+          "baseId": "BLC-1-083",
+          "uid": "1-38"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 48
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 45
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    },
+    {
+      "seed": 50003,
+      "first": 1,
+      "specialistSeat": 1,
+      "step": 91,
+      "turn": 9,
+      "primary": "attack",
+      "tags": [
+        "attack",
+        "model"
+      ],
+      "sacrifice": 32.548181818181774,
+      "hardScore": -238.86636363636364,
+      "chosenScore": -271.4145454545454,
+      "position": {
+        "turn": 9,
+        "phase": "attack",
+        "pending": null,
+        "ap": 2,
+        "myLife": 7,
+        "oppLife": 4,
+        "energy": 0,
+        "myHand": [
+          "BLC-1-085",
+          "BLC-2-073",
+          "BLC-2-073",
+          "BLC-3-009",
+          "BLC-4-080",
+          "BLC-1-070",
+          "BLC-1-070",
+          "BLC-4-080",
+          "BLC-4-070",
+          "BLC-4-080"
+        ],
+        "myFront": [
+          "-",
+          "BLC-2-069",
+          "-",
+          "-"
+        ],
+        "myEnergy": [
+          "-",
+          "-",
+          "-",
+          "-"
+        ],
+        "oppFront": [
+          "BLC-1-072",
+          "BLC-1-085",
+          "BLC-1-070",
+          "BLC-1-072"
+        ],
+        "oppEnergy": [
+          "BLC-4-060",
+          "BLC-4-060",
+          "BLC-1-083",
+          "BLC-4-060"
+        ]
+      },
+      "chosen": {
+        "type": "attack",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": "BLC-2-069",
+        "baseId": null,
+        "uid": "1-16"
+      },
+      "hard": {
+        "type": "next",
+        "mode": null,
+        "line": null,
+        "slot": null,
+        "cardId": null,
+        "baseId": null,
+        "uid": null
+      },
+      "legal": [
+        {
+          "type": "next",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": null,
+          "baseId": null,
+          "uid": null
+        },
+        {
+          "type": "attack",
+          "mode": null,
+          "line": null,
+          "slot": null,
+          "cardId": "BLC-2-069",
+          "baseId": null,
+          "uid": "1-16"
+        }
+      ],
+      "originalWinner": 0,
+      "swapped": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 68
+      },
+      "takeover": {
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "steps": 67
+      },
+      "originalLoss": true,
+      "swappedWin": false,
+      "takeoverWin": false,
+      "verdict": "改成 Hard 的這一手，或從這裡整段改由 Hard 下完，這場仍然落敗"
+    }
+  ],
+  "gamesBrief": [
+    {
+      "seed": 50000,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 199,
+      "turn": 15,
+      "overrides": 36,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50000,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 159,
+      "turn": 14,
+      "overrides": 24,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50000,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 176,
+      "turn": 14,
+      "overrides": 29,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50000,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 138,
+      "turn": 10,
+      "overrides": 19,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50001,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 128,
+      "turn": 11,
+      "overrides": 23,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50001,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 129,
+      "turn": 12,
+      "overrides": 22,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50001,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 142,
+      "turn": 12,
+      "overrides": 16,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50001,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 122,
+      "turn": 10,
+      "overrides": 15,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50002,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 169,
+      "turn": 13,
+      "overrides": 30,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50002,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 177,
+      "turn": 17,
+      "overrides": 27,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50002,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 136,
+      "turn": 11,
+      "overrides": 23,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50002,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 132,
+      "turn": 12,
+      "overrides": 20,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50003,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 162,
+      "turn": 16,
+      "overrides": 21,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50003,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 166,
+      "turn": 15,
+      "overrides": 24,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50003,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 149,
+      "turn": 12,
+      "overrides": 18,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50003,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 192,
+      "turn": 16,
+      "overrides": 33,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50004,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 142,
+      "turn": 12,
+      "overrides": 20,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50004,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 140,
+      "turn": 11,
+      "overrides": 21,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50004,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 195,
+      "turn": 16,
+      "overrides": 31,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50004,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 105,
+      "turn": 10,
+      "overrides": 18,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50005,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 135,
+      "turn": 12,
+      "overrides": 19,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50005,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 188,
+      "turn": 17,
+      "overrides": 27,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50005,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 120,
+      "turn": 12,
+      "overrides": 13,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50005,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 165,
+      "turn": 15,
+      "overrides": 26,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50006,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 133,
+      "turn": 11,
+      "overrides": 20,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50006,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 169,
+      "turn": 17,
+      "overrides": 23,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50006,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 133,
+      "turn": 12,
+      "overrides": 17,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50006,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 151,
+      "turn": 13,
+      "overrides": 24,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50007,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 110,
+      "turn": 12,
+      "overrides": 12,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50007,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 103,
+      "turn": 11,
+      "overrides": 11,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50007,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 73,
+      "turn": 7,
+      "overrides": 8,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50007,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 87,
+      "turn": 8,
+      "overrides": 11,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50008,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 165,
+      "turn": 14,
+      "overrides": 25,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50008,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 144,
+      "turn": 12,
+      "overrides": 21,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50008,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 196,
+      "turn": 15,
+      "overrides": 28,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50008,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 109,
+      "turn": 10,
+      "overrides": 17,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50009,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 153,
+      "turn": 12,
+      "overrides": 18,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50009,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 183,
+      "turn": 17,
+      "overrides": 28,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50009,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 182,
+      "turn": 14,
+      "overrides": 27,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50009,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 196,
+      "turn": 17,
+      "overrides": 33,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50010,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 171,
+      "turn": 16,
+      "overrides": 23,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50010,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 118,
+      "turn": 11,
+      "overrides": 16,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50010,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 146,
+      "turn": 13,
+      "overrides": 20,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50010,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 119,
+      "turn": 10,
+      "overrides": 13,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50011,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 185,
+      "turn": 16,
+      "overrides": 26,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50011,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 146,
+      "turn": 13,
+      "overrides": 13,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50011,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 152,
+      "turn": 13,
+      "overrides": 20,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50011,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 202,
+      "turn": 17,
+      "overrides": 27,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50012,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 215,
+      "turn": 15,
+      "overrides": 23,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50012,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 119,
+      "turn": 11,
+      "overrides": 14,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50012,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 142,
+      "turn": 12,
+      "overrides": 17,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50012,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 145,
+      "turn": 13,
+      "overrides": 19,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50013,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 142,
+      "turn": 12,
+      "overrides": 15,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50013,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 211,
+      "turn": 19,
+      "overrides": 24,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50013,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 159,
+      "turn": 14,
+      "overrides": 22,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50013,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 186,
+      "turn": 15,
+      "overrides": 23,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50014,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 156,
+      "turn": 14,
+      "overrides": 26,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50014,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 165,
+      "turn": 17,
+      "overrides": 27,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50014,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 157,
+      "turn": 12,
+      "overrides": 18,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50014,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 154,
+      "turn": 13,
+      "overrides": 20,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50015,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 180,
+      "turn": 13,
+      "overrides": 28,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50015,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 135,
+      "turn": 11,
+      "overrides": 17,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50015,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 145,
+      "turn": 12,
+      "overrides": 20,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50015,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 0,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 149,
+      "turn": 13,
+      "overrides": 21,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50016,
+      "first": 0,
+      "specialistSeat": 0,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 124,
+      "turn": 12,
+      "overrides": 16,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50016,
+      "first": 1,
+      "specialistSeat": 0,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 124,
+      "turn": 11,
+      "overrides": 11,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50016,
+      "first": 1,
+      "specialistSeat": 1,
+      "specialistIsFirst": true,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 100,
+      "turn": 9,
+      "overrides": 16,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    },
+    {
+      "seed": 50016,
+      "first": 0,
+      "specialistSeat": 1,
+      "specialistIsFirst": false,
+      "winner": 1,
+      "status": "finished",
+      "endReason": "life-zero",
+      "steps": 131,
+      "turn": 12,
+      "overrides": 17,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0
+      },
+      "error": null
+    }
+  ]
+}

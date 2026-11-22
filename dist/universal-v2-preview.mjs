@@ -1885,6 +1885,14 @@ function manualAiStep(){
  }
 }
 function driveAi(){
+ if(whiteSwordOn()){
+  if(document.body)document.body.dataset.aiPolicy=WHITE_SWORD_V2_POLICY;
+  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
+  app.busy=true;app.autoMoves=0;app.sequence++;
+  app.aiPhaseKey=null;app.aiPhaseCount=0;
+  driveSearchPreview(app.sequence,WHITE_SWORD_V2_POLICY);
+  return;
+ }
  if(hybridStartOn()){
   if(document.body)document.body.dataset.aiPolicy=HYBRID_START_HARD_POLICY;
   if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
@@ -1968,10 +1976,27 @@ function driveAi(){
  }
  app.aiTimer=setTimeout(chunk,16);render();
 }
+const WHITE_SWORD_V2_POLICY='white-sword-specialist-v2-capped';
 const SEARCH_PREVIEW_KEY='ua-ai-v3-preview';
 const HYBRID_MAIN_KEY='ua-hybrid-main-v1';
 const HYBRID_START_KEY='ua-hybrid-start-hard-v1';
 const ATTACK_DIAGNOSTIC_KEY='ua-attack-diagnostic';
+function whiteSwordOn(){
+ // A per-match setting, not an account-wide model replacement.
+ if(IS_BATTLE_PAGE)return app.launch?.config?.whiteSwordV2===true;
+ return !!$('white-sword-ai-v2')?.checked&&$('ai-title')?.value==='white-sword';
+}
+function refreshWhiteSwordChoice(){
+ const box=$('white-sword-ai-v2');
+ if(!box)return;
+ const allowed=$('ai-title')?.value==='white-sword';
+ if(!allowed)box.checked=false;
+ box.disabled=!allowed;
+ const note=$('white-sword-ai-v2-note');
+ if(note)note.textContent=allowed
+  ?'手動勾選後，這場電腦使用指定 50 張白劍牌組與專屬 v2 模型。預設仍是原本 AI，其他玩家不受影響。'
+  :'先把電腦牌組選為綠色「白劍」50 張指定牌組，才能啟用專屬 AI。';
+}
 function attackDiagnoseOn(){
  try{return localStorage.getItem(ATTACK_DIAGNOSTIC_KEY)==='1';}catch{return false;}
 }
@@ -2003,6 +2028,7 @@ function setSearchPreview(on){
  paintAiPolicy();
 }
 function currentAiPolicy(){
+ if(whiteSwordOn())return WHITE_SWORD_V2_POLICY;
  if(hybridStartOn())return HYBRID_START_HARD_POLICY;
  if(hybridMainOn())return HYBRID_MAIN_POLICY;
  if(searchPreviewOn())return AI_V3_POLICY;
@@ -2066,6 +2092,14 @@ function useDifficultyAi(){
  setSearchPreview(false);
 }
 let searchWorker=null;
+let whiteSwordWorker=null;
+function whiteSwordWorkerHandle(){
+ if(whiteSwordWorker)return whiteSwordWorker;
+ try{
+  whiteSwordWorker=new Worker(new URL('./universal-v2/white-sword-ai/browser-worker.mjs',import.meta.url),{type:'module'});
+  return whiteSwordWorker;
+ }catch{return null;}
+}
 let searchRequest=0;
 function searchWorkerHandle(){
  if(searchWorker)return searchWorker;
@@ -2100,11 +2134,14 @@ function commitAiAction(choice,reason){
  app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
 }
 function driveSearchPreview(sequence,policy=null){
+ const specialist=policy===WHITE_SWORD_V2_POLICY;
  const hybrid=policy===HYBRID_MAIN_POLICY||policy===HYBRID_START_HARD_POLICY;
- if(document.body)document.body.dataset.aiPolicy=hybrid?policy:AI_V3_POLICY;
+ if(document.body)document.body.dataset.aiPolicy=specialist||hybrid?policy:AI_V3_POLICY;
  const step=()=>{
   if(sequence!==app.sequence)return;
-  const still=policy===HYBRID_START_HARD_POLICY?hybridStartOn():policy===HYBRID_MAIN_POLICY?hybridMainOn():searchPreviewOn();
+  const still=specialist?whiteSwordOn()
+   :policy===HYBRID_START_HARD_POLICY?hybridStartOn()
+   :policy===HYBRID_MAIN_POLICY?hybridMainOn():searchPreviewOn();
   if(!still){app.busy=false;driveAi();return;}
   if(!app.state||app.state.status!=='playing'||uiActor(app.state)!==1){
    app.busy=false;app.aiTimer=null;app.error='';render();return;
@@ -2172,8 +2209,9 @@ function driveSearchPreview(sequence,policy=null){
     try{render();}catch{}
    }
   };
-  const worker=request?searchWorkerHandle():null;
+  const worker=request?(specialist?whiteSwordWorkerHandle():searchWorkerHandle()):null;
   if(!worker||!request){
+   if(specialist){finish(null,'white-sword-worker-unavailable');return;}
    try{
     if(hybrid){
      const local=request?handleAiV3Request(request):null;
@@ -2189,12 +2227,12 @@ function driveSearchPreview(sequence,policy=null){
   }
   const timer=setTimeout(()=>{
    worker.removeEventListener('message',onMessage);
-   if(hybrid){finish(null,'worker-timeout');return;}
+   if(hybrid||specialist){finish(null,'worker-timeout');return;}
    try{
     const action=chooseAiV3Action(app.packs,app.state,{actor,seed:stateVersion,...MATCH_LIMITS});
     finish(action,'worker-timeout',finishedSearch(lastAiV3Trace()));
    }catch{finish(null,'worker-timeout');}
-  },700);
+  },specialist?4500:700);
   const onMessage=event=>{
    const data=event.data||{};
    if(data.requestId!==requestId)return;
@@ -2210,6 +2248,7 @@ function driveSearchPreview(sequence,policy=null){
   catch{
    clearTimeout(timer);
    worker.removeEventListener('message',onMessage);
+   if(specialist){finish(null,'white-sword-worker-post-failed');return;}
    try{
     const local=handleAiV3Request(request);
     rememberAiRoute(local);
@@ -2471,6 +2510,7 @@ async function launchBattle(){
    :(typeof mine.recordDeckId==='string'?mine.recordDeckId:null);
   const config=prepareSoloBattle({
    mine,foe,first,difficulty:app.aiDifficulty,recordDeckId,
+   whiteSwordV2:whiteSwordOn(),
    nonce:generateMatchSeed()
   });
   saveSoloBattle(sessionStorage,config);
@@ -2531,6 +2571,7 @@ function downloadReplay(){
 // The original selects remain the authoritative match settings. The three
 // BLEACH quick picks and difficulty buttons are only controls for those selects.
 function syncMatchLobby(){
+ refreshWhiteSwordChoice();
  for(const button of document.querySelectorAll('[data-deck-side]')){
   const select=$(button.dataset.deckSide),value=button.dataset.deckKey;
   const option=[...select.options].find(o=>o.value===value);
@@ -2601,7 +2642,7 @@ if(!IS_BATTLE_PAGE){
    const select=$(button.dataset.deckSide),key=button.dataset.deckKey;
    if(button.disabled||![...select.options].some(o=>o.value===key&&!o.disabled))return;
    select.value=key;
-   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();paintAiPolicy();
   });
  }
  for(const button of document.querySelectorAll('[data-ai-difficulty]')){
@@ -2616,9 +2657,16 @@ if(!IS_BATTLE_PAGE){
  for(const id of ['my-title','ai-title','ai-level','first-player']){
   $(id).addEventListener('change',()=>{
    syncMatchLobby();markLobbyChanged();rememberMatchLobby();
-   if(id==='ai-level')paintAiPolicy();
+   if(id==='ai-level'||id==='ai-title')paintAiPolicy();
   });
  }
+ const whiteSwordToggle=$('white-sword-ai-v2');
+ if(whiteSwordToggle)whiteSwordToggle.addEventListener('change',()=>{
+  if(whiteSwordToggle.checked){
+   setHybridStart(false);setHybridMain(false);setSearchPreview(false);
+  }
+  paintAiPolicy();markLobbyChanged();
+ });
  $('start-game').addEventListener('click',()=>{
   rememberMatchLobby();
   launchBattle();
@@ -2632,7 +2680,7 @@ if(!IS_BATTLE_PAGE){
  if(searchPreview){
   searchPreview.checked=searchPreviewOn();
   searchPreview.addEventListener('change',()=>{
-   if(searchPreview.checked)setHybridStart(false);
+   if(searchPreview.checked){setHybridStart(false);if(whiteSwordToggle)whiteSwordToggle.checked=false;}
    setSearchPreview(searchPreview.checked);
   });
  }
@@ -2640,7 +2688,7 @@ if(!IS_BATTLE_PAGE){
  if(hybridMain){
   hybridMain.checked=hybridMainOn();
   hybridMain.addEventListener('change',()=>{
-   if(hybridMain.checked)setHybridStart(false);
+   if(hybridMain.checked){setHybridStart(false);if(whiteSwordToggle)whiteSwordToggle.checked=false;}
    setHybridMain(hybridMain.checked);
   });
  }
@@ -2648,7 +2696,7 @@ if(!IS_BATTLE_PAGE){
  if(hybridStart){
   hybridStart.checked=hybridStartOn();
   hybridStart.addEventListener('change',()=>{
-   if(hybridStart.checked){setHybridMain(false);setSearchPreview(false);}
+   if(hybridStart.checked){setHybridMain(false);setSearchPreview(false);if(whiteSwordToggle)whiteSwordToggle.checked=false;}
    setHybridStart(hybridStart.checked);
   });
  }

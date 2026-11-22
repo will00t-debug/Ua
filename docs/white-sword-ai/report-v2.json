@@ -1,0 +1,246 @@
+{
+  "createdAt": "2026-11-22T02:35:14.747Z",
+  "weights": "training/white-sword-ai/weights/v2-capped.json",
+  "hardCap": 7,
+  "elapsedMs": 546683.1859990001,
+  "v1": {
+    "overall": {
+      "wins": 98,
+      "n": 204,
+      "p": 0.4803921568627451,
+      "low": 0.41282923514435305,
+      "high": 0.5486799141308641,
+      "games": 204,
+      "finished": 204,
+      "unfinished": 0
+    },
+    "byDeck": {
+      "white-sword": {
+        "wins": 24,
+        "n": 68,
+        "p": 0.35294117647058826,
+        "low": 0.2500181058015448,
+        "high": 0.4715916579008227,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      },
+      "reject-blue": {
+        "wins": 34,
+        "n": 68,
+        "p": 0.5,
+        "low": 0.3843786388809909,
+        "high": 0.6156213611190091,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      },
+      "renruki": {
+        "wins": 40,
+        "n": 68,
+        "p": 0.5882352941176471,
+        "low": 0.4696125189030847,
+        "high": 0.6974216228754949,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      }
+    },
+    "nonMirror": {
+      "wins": 74,
+      "n": 136,
+      "p": 0.5441176470588235,
+      "low": 0.46034800812412696,
+      "high": 0.6254633670317638,
+      "games": 136,
+      "finished": 136,
+      "unfinished": 0
+    }
+  },
+  "validation": {
+    "name": "validation-v2",
+    "games": 48,
+    "wallMs": 118856.58935400001,
+    "overall": {
+      "wins": 35,
+      "n": 48,
+      "p": 0.7291666666666666,
+      "low": 0.5900276538379887,
+      "high": 0.8343419643836709,
+      "games": 48,
+      "finished": 48,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 19,
+      "n": 24,
+      "p": 0.7916666666666666,
+      "low": 0.5952915551476452,
+      "high": 0.9075531089521192,
+      "games": 24,
+      "finished": 24,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 16,
+      "n": 24,
+      "p": 0.6666666666666666,
+      "low": 0.4670595949408046,
+      "high": 0.8202802131162036,
+      "games": 24,
+      "finished": 24,
+      "unfinished": 0
+    },
+    "byDeck": {
+      "white-sword": {
+        "wins": 12,
+        "n": 16,
+        "p": 0.75,
+        "low": 0.5050123107060135,
+        "high": 0.8981809801576265,
+        "games": 16,
+        "finished": 16,
+        "unfinished": 0
+      },
+      "reject-blue": {
+        "wins": 13,
+        "n": 16,
+        "p": 0.8125,
+        "low": 0.5699064013154177,
+        "high": 0.9340852122641324,
+        "games": 16,
+        "finished": 16,
+        "unfinished": 0
+      },
+      "renruki": {
+        "wins": 10,
+        "n": 16,
+        "p": 0.625,
+        "low": 0.3864064709793481,
+        "high": 0.815190174452472,
+        "games": 16,
+        "finished": 16,
+        "unfinished": 0
+      }
+    },
+    "nonMirror": {
+      "wins": 23,
+      "n": 32,
+      "p": 0.71875,
+      "low": 0.546251630618882,
+      "high": 0.8443559315435214,
+      "games": 32,
+      "finished": 32,
+      "unfinished": 0
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    },
+    "opponentDecks": [
+      "white-sword",
+      "reject-blue",
+      "renruki"
+    ]
+  },
+  "finalTest": {
+    "name": "final-v2",
+    "games": 204,
+    "wallMs": 427820.745645,
+    "overall": {
+      "wins": 127,
+      "n": 204,
+      "p": 0.6225490196078431,
+      "low": 0.5543417352565831,
+      "high": 0.6862260817733088,
+      "games": 204,
+      "finished": 204,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 61,
+      "n": 102,
+      "p": 0.5980392156862745,
+      "low": 0.5010049524706779,
+      "high": 0.6879566656454503,
+      "games": 102,
+      "finished": 102,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 66,
+      "n": 102,
+      "p": 0.6470588235294118,
+      "low": 0.5505209704774588,
+      "high": 0.7329214566967336,
+      "games": 102,
+      "finished": 102,
+      "unfinished": 0
+    },
+    "byDeck": {
+      "white-sword": {
+        "wins": 38,
+        "n": 68,
+        "p": 0.5588235294117647,
+        "low": 0.44081654438286205,
+        "high": 0.670539550136191,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      },
+      "reject-blue": {
+        "wins": 49,
+        "n": 68,
+        "p": 0.7205882352941176,
+        "low": 0.6043634045165331,
+        "high": 0.8132219499299158,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      },
+      "renruki": {
+        "wins": 40,
+        "n": 68,
+        "p": 0.5882352941176471,
+        "low": 0.4696125189030847,
+        "high": 0.6974216228754949,
+        "games": 68,
+        "finished": 68,
+        "unfinished": 0
+      }
+    },
+    "nonMirror": {
+      "wins": 89,
+      "n": 136,
+      "p": 0.6544117647058824,
+      "low": 0.5712346739279279,
+      "high": 0.7291051391176895,
+      "games": 136,
+      "finished": 136,
+      "unfinished": 0
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    },
+    "opponentDecks": [
+      "white-sword",
+      "reject-blue",
+      "renruki"
+    ]
+  },
+  "promotion": {
+    "promoted": true,
+    "reasons": []
+  }
+}

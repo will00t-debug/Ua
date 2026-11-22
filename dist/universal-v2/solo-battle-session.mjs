@@ -4,6 +4,7 @@
 import {officialV2Pack} from './official-entry.mjs';
 import {IMC_OFFICIAL_MATCH_CLOSED} from './imc-pack.mjs';
 import {validateUniversalDeck} from './pack.mjs';
+import {DESIGNATED_BLEACH_DECKS} from './bleach-designated-decks.mjs';
 
 export const SOLO_BATTLE_ENTRY_KEY='ua-v2-solo-battle-entry-v1';
 export const SOLO_BATTLE_PROGRESS_KEY='ua-v2-solo-battle-progress-v1';
@@ -13,10 +14,19 @@ const MAX_AGE=24*60*60*1000;
 const isPlain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const validFirst=x=>x===0||x===1;
 const validDifficulty=x=>['easy','normal','hard','learned'].includes(x);
+const WS=DESIGNATED_BLEACH_DECKS.find(item=>item.key==='white-sword');
+const WS_COUNTS=Object.freeze(Object.fromEntries((WS?.entries||[]).map(item=>[item.cardId,item.copies])));
+export function isDesignatedWhiteSword(packId,counts){
+ if(packId!=='bleach'||!isPlain(counts)||Object.keys(WS_COUNTS).length!==13)return false;
+ const entries=Object.entries(counts).filter(([,copies])=>Number(copies)>0);
+ return entries.length===13&&entries.every(([id,copies])=>WS_COUNTS[id]===copies);
+}
 
-export function prepareSoloBattle({mine,foe,first,difficulty,recordDeckId=null,now=Date.now(),nonce=0}){
+export function prepareSoloBattle({mine,foe,first,difficulty,recordDeckId=null,whiteSwordV2=false,now=Date.now(),nonce=0}){
  if(!validFirst(first)||!validDifficulty(difficulty)||!Number.isSafeInteger(now)||now<1)
   throw Error('請重新選擇對戰設定。');
+ if(whiteSwordV2===true&&!isDesignatedWhiteSword(foe?.pack?.id,foe?.counts))
+  throw Error('白劍專屬 AI 僅適用電腦使用指定 50 張白劍牌組。');
  const items=[mine,foe].map((entry,index)=>{
   if(!isPlain(entry)||!isPlain(entry.pack)||!isPlain(entry.counts))
    throw Error('第 '+(index+1)+' 副牌組未準備好。');
@@ -32,6 +42,7 @@ export function prepareSoloBattle({mine,foe,first,difficulty,recordDeckId=null,n
  const id=String(now)+'-'+String(nonce);
  return {version:1,id,createdAt:now,first,difficulty,
   recordDeckId:typeof recordDeckId==='string'&&recordDeckId.length<=80?recordDeckId:null,
+  ...(whiteSwordV2===true?{whiteSwordV2:true}:{}),
   decks:items};
 }
 
@@ -53,7 +64,8 @@ export function loadSoloBattle(storage,{now=Date.now()}={}){
   !Number.isSafeInteger(data.createdAt)||data.createdAt>now+60000||
   now-data.createdAt>MAX_AGE||!validFirst(data.first)||
   !validDifficulty(data.difficulty)||!Array.isArray(data.decks)||data.decks.length!==2||
-  !(data.recordDeckId===null||typeof data.recordDeckId==='string'&&data.recordDeckId.length<=80))
+  !(data.recordDeckId===null||typeof data.recordDeckId==='string'&&data.recordDeckId.length<=80)||
+  !(data.whiteSwordV2===undefined||typeof data.whiteSwordV2==='boolean'))
   return null;
  try{
   const decks=data.decks.map(entry=>{
@@ -67,6 +79,8 @@ export function loadSoloBattle(storage,{now=Date.now()}={}){
    if(issues.length)throw Error('Stored deck no longer playable');
    return {pack,counts:{...entry.counts},label:entry.name};
   });
+  if(data.whiteSwordV2===true&&!isDesignatedWhiteSword(decks[1].pack.id,decks[1].counts))
+   throw Error('Stored opponent is not the designated white-sword deck');
   return {config:data,decks,packs:decks.map(d=>d.pack)};
  }catch{return null;}
 }

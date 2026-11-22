@@ -15,6 +15,7 @@
     "worker:preflight": "node scripts/cloudflare-deploy-preflight.mjs",
     "worker:dev": "node scripts/build-worker.mjs && npx --yes wrangler dev",
     "worker:deploy": "node scripts/build-worker.mjs && npx --yes wrangler deploy",
-    "benchmark:ai": "node scripts/benchmark-ai.mjs"
+    "benchmark:ai": "node scripts/benchmark-ai.mjs",
+    "white-sword:selfplay": "node scripts/white-sword-selfplay.mjs"
   }
 }
