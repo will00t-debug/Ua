@@ -31272,7 +31272,10 @@ export function assertUniversalMatch(pack,s){
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
   const source=[...pl.outside,...field(pl)].find(c=>c.uid===q.sourceUid);
   const printedCard=source&&card(pack,source);
-  const programs=[...(printedCard?.effects?.onPlay||[]),...(printedCard?.effects?.onAttack||[])];
+  // EVA-1-053 prints this window on 【退場時】. The source is already outside
+  // when the look opens, so on-play and on-attack are not the only proofs.
+  const programs=[...(printedCard?.effects?.onPlay||[]),
+   ...(printedCard?.effects?.onAttack||[]),...(printedCard?.effects?.onRetire||[])];
   const fromPlay=programs
    .flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):
     e.op==='optionalRetireThenProgram'?e.after:[e]);

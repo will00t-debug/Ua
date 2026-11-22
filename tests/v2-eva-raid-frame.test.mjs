@@ -90,6 +90,45 @@ test('EVA-1-041 ordinary play skips framed BP reduction; true Raid offers it',()
  assert.equal(assertUniversalMatch(pack,s),true);
 });
 
+test('EVA-1-033 main retires raided EVA-1-053 and keeps its energy-5 search',()=>{
+ const s=main('purple',['033','053','027','006']);
+ const shinji=put(s,0,'027','front',0);
+ const misato=put(s,0,'006','front',1);
+ const wunder=take(s,0,'053');
+ wunder.ready=true;wunder.fieldEntryStamp=s.nextFieldEntryStamp++;wunder.entryTurn=s.turn;
+ wunder.stack=[misato];
+ s.players[0].front[1]=wunder;
+ const spear=take(s,0,'033');
+ spear.ready=true;spear.fieldEntryStamp=s.nextFieldEntryStamp++;spear.entryTurn=s.turn;
+ spear.stack=[shinji];
+ s.players[0].front[0]=spear;
+ const prize=take(s,0,'033');
+ s.players[0].deck.unshift(prize);
+ const deck=s.players[0].deck.length;
+ let played=dispatchUniversalAction(pack,s,legalUniversalActions(pack,s)
+  .find(a=>a.type==='activate'&&a.mode==='retireReplay'&&a.uid===spear.uid));
+ assert.equal(played.pending.kind,'effect-retire-replay');
+ assert.equal(played.pending.choices.includes(wunder.uid),true);
+ played=dispatchUniversalAction(pack,played,legalUniversalActions(pack,played)
+  .find(a=>a.type==='chooseRetireReplay'&&a.uid===wunder.uid));
+ assert.equal(played.players[0].front[1],null);
+ assert.equal(played.players[0].outside.some(c=>c.uid===wunder.uid),true);
+ assert.equal(played.pending.kind,'effect-top-filter-many-choice');
+ assert.equal(played.pending.choices.includes(prize.uid),true);
+ assert.equal(played.pending.uids.length,Math.min(5,deck));
+ played=dispatchUniversalAction(pack,played,{type:'chooseTopFilteredMany',uid:prize.uid});
+ assert.equal(played.players[0].hand.some(c=>c.uid===prize.uid),true);
+ if(played.pending?.kind==='effect-top-filter-many-choice')
+  played=dispatchUniversalAction(pack,played,{type:'chooseTopFilteredMany',uid:null});
+ while(played.pending?.kind==='effect-top-order'){
+  const next=legalUniversalActions(pack,played).find(a=>a.uid);
+  played=dispatchUniversalAction(pack,played,next);
+ }
+ assert.equal(played.pending?.kind==='effect-top-filter-many-choice',false);
+ assert.equal(played.players[0].deck.length,deck-2);
+ assert.equal(assertUniversalMatch(pack,played),true);
+});
+
 for(const row of [
  {color:'purple',n:'033',base:'027',impact:[0,1]},
  {color:'purple',n:'036',base:'024',bp:[3500,4000]},
