@@ -24,7 +24,7 @@ import {createTrkV2Pack} from './trk-pack.mjs?v=20261120mha011';
 import {createDgmV2Pack} from './dgm-pack.mjs?v=20261120dgm2';
 import {createMgsV2Pack} from './mgs-pack.mjs?v=20261121mgs2';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
-import {createEvaStagingPack} from './eva-staging-pack.mjs';
+import {createEvaStagingPack} from './eva-staging-pack.mjs?v=20261122evaYellow0';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';

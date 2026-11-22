@@ -1,6 +1,6 @@
 // Staging pack for EVA cards whose full Japanese print is an existing shared
 // V2 profile. The official battle entry does not import this pack.
-import {evaCatalog} from '../eva/catalog.mjs';
+import {evaCatalog} from '../eva/catalog.mjs?v=20261122evaYellow0';
 import {evaSharedProgram} from './eva/programs.mjs';
 import {createEvaSharedStagingPack} from './eva-shared-adapter.mjs';
 

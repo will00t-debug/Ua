@@ -15,7 +15,7 @@ test('EVA V2 deck cards have official image URLs',()=>{
 });
 
 test('EVA battle uses its printed catalogue in hand, field and inspect art lookup',()=>{
- assert.match(preview,/import \{evaEditorCards\} from '\.\/eva\/catalog\.mjs';/);
+ assert.match(preview,/import \{evaEditorCards\} from '\.\/eva\/catalog\.mjs\?v=20261122evaYellow0';/);
  assert.match(preview,/eva:new Map\(evaEditorCards\(\)\.map\(c=>\[c\.identity\|\|c\.id,c\.image\|\|null\]\)\)/);
  assert.match(preview,/eva:printedCatalogueMap\(evaEditorCards\(\)\)/);
 });
@@ -23,6 +23,6 @@ test('EVA battle uses its printed catalogue in hand, field and inspect art looku
 test('both V2 battle pages load the artwork-fixed module version',()=>{
  for(const name of ['universal-v2-battle.html','universal-v2-preview.html']){
   const html=readFileSync(new URL('../dist/'+name,import.meta.url),'utf8');
-  assert.match(html,/universal-v2-preview\.mjs\?v=20261122aiFast1/);
+  assert.match(html,/universal-v2-preview\.mjs\?v=20261122aiFast1evaYellow0/);
  }
 });

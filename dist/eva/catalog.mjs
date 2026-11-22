@@ -1,9 +1,9 @@
 // Evangelion: New Theatrical Edition catalog. Official print data only.
 // UA44ST reprints that use a UA44BT card number stay one id.
 // battleReady stays false. A shared V2 program, not this file, decides the pack.
-import {EVA_CARDS_001_050} from './cards-001-050.mjs';
-import {EVA_CARDS_051_100} from './cards-051-100.mjs';
-import {EVA_CARDS_STARTER} from './cards-starter.mjs?v=20261121doubleblock1';
+import {EVA_CARDS_001_050} from './cards-001-050.mjs?v=20261122evaYellow0';
+import {EVA_CARDS_051_100} from './cards-051-100.mjs?v=20261122evaYellow0';
+import {EVA_CARDS_STARTER} from './cards-starter.mjs?v=20261122evaYellow0';
 import {EVA_AP_CARDS} from './cards-ap.mjs';
 
 const COLORS=new Set(['purple','yellow','green','blue','red']);

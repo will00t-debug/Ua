@@ -924,7 +924,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "red",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
@@ -1132,7 +1132,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "red",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 1500,
   "bpMark": "",
@@ -1685,7 +1685,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "red",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 1500,
   "bpMark": "",
@@ -1792,7 +1792,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "red",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 2000,
   "bpMark": "",
@@ -1938,7 +1938,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "red",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
@@ -1986,7 +1986,7 @@ export const EVA_CARDS_051_100=
    }
   ],
   "color": "red",
-  "energy": 1,
+  "energy": 0,
   "ap": 1,
   "bp": 2000,
   "bpMark": "",

@@ -19,7 +19,7 @@ import {CSM_CARDS} from './csm-cards.mjs';
 import {imcEditorCards} from './imc/catalog.mjs?v=20261121doubleblock1';
 import {mhaEditorCards} from './mha/catalog.mjs?v=20261120mha011';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
-import {evaEditorCards} from './eva/catalog.mjs?v=20261121doubleblock1';
+import {evaEditorCards} from './eva/catalog.mjs?v=20261122evaYellow0';
 import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261120mha011';
 import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261120mha011';
 import {DGM_CARDS} from './dgm-cards.mjs?v=20261121nea067068fix1doubleblock1abilitylabels2zhcomplete1';
