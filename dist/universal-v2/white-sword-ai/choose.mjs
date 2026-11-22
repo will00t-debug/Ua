@@ -71,12 +71,21 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   }));
   for(const row of scored)row.score=dot(model.policy,row.features);
   let picked;
+  let cappedCandidates=null;
   let source='model';
   if(mode==='blend'){
    const hardCap=Number.isFinite(options.hardCap)?options.hardCap:null;
    const blended=blendRows(pack,state,seat,legal,model,options.scale??BLEND_SCALE,seed,observation,packs,hardCap);
    if(!blended)throw Error('blend produced no legal action');
-   picked=blended;
+   picked=blended.picked;
+   cappedCandidates=blended.candidates;
+   // Training-only exploration stays inside the Hard Search 2 safety band.
+   // With explore=0, the deployed v2 behavior remains bit-for-bit identical.
+   const explore=Number(options.explore)||0;
+   if(explore>0&&cappedCandidates.length>1){
+    const rng=mulberry32((seed+((options.step||0)*17)+(seat*97))>>>0);
+    if(rng()<explore)picked=cappedCandidates[Math.floor(rng()*cappedCandidates.length)]||picked;
+   }
    source='blend';
   }else{
    const ranked=[...scored].sort((a,b)=>b.score-a.score||(JSON.stringify(a.action)<JSON.stringify(b.action)?-1:1));
@@ -95,7 +104,13 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   }
   const exact=legal.find(item=>item===picked.action||same(item,picked.action));
   if(!exact)throw Error('model action is not legal');
-  const negatives=scored.filter(row=>row.action!==exact).slice(0,NEGATIVES).map(row=>row.features);
+  // A policy that is only permitted to choose within Hard's root cap should
+  // learn exclusively from actions inside that same admissible set. Training
+  // against arbitrary (forbidden) legal moves creates misleading gradients.
+  const negatives=(cappedCandidates||scored)
+   .filter(row=>row.action!==exact&&!same(row.action,exact))
+   .sort((a,b)=>b.score-a.score)
+   .slice(0,NEGATIVES).map(row=>row.features);
   return finish(exact,{
    source,reason:null,version:model.version||null,
    chosen:picked.features,negatives,value
@@ -131,5 +146,5 @@ function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs,hard
  for(const row of trace?.candidates||[])add(row.action,row.score);
  add(hard,trace?.score);
  const pool=withinHardCap(rows,hard,hardCap);
- return pool.length?selectScored(pool):null;
+ return pool.length?{picked:selectScored(pool),candidates:pool}:null;
 }
