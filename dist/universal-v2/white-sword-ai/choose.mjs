@@ -1,6 +1,6 @@
 // Scores legal engine actions. Hidden information never reaches the weights.
 // An illegal, throwing, or overdue model returns the existing hard action.
-import {performance} from 'node:perf_hooks';
+// Performance is a global API in browsers and Node 22; no node:* imports in worker graph.
 import {legalUniversalActions} from '../engine.mjs';
 import {chooseUniversalAiAction} from '../ai.mjs';
 import {chooseStrengthenedHardAction,lastHardAiTrace} from '../hard-ai.mjs';
