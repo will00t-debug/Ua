@@ -8,11 +8,12 @@ import {
  BLEND_SCALE,BLEND_TIMEOUT_MS,HARD_OPTIONS,NEGATIVES,ORDER_KINDS,POLICY_TIMEOUT_MS
 } from './constants.mjs';
 import {catalogsOf} from './browser-catalogs.mjs';
-import {policyVector,valueVector} from './features.mjs';
+import {POLICY_NAMES,policyVector,valueVector} from './features.mjs';
 import {createModel,dot} from './browser-model.mjs';
 import {gainProbe} from './gain-probe.mjs';
 import {qPairsFromRoot} from './v31-q-learning.mjs';
 import {applyTempoToCappedRows} from './v33-tempo.mjs';
+import {inspectTempoMargins} from './v33-margin-audit.mjs';
 import {observeActor} from './observe.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -77,6 +78,7 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   let cappedCandidates=null;
   let qPairs=null;
   let diagnostic=null;
+  let marginAudit=null;
   let source='model';
   if(mode==='blend'){
    const hardCap=Number.isFinite(options.hardCap)?options.hardCap:null;
@@ -86,6 +88,10 @@ export function chooseWhiteSwordAction(pack,state,options={}){
     enabled:options.tacticalTempo===true,observation,seat,legal,catalogs:packs
    });
    picked=options.tacticalTempo===true?selectScored(cappedCandidates):blended.picked;
+   if(options.marginAudit===true)marginAudit=inspectTempoMargins(cappedCandidates,{
+    weights:model.policy,featureNames:POLICY_NAMES,scale:options.scale??BLEND_SCALE,
+    observation,seat
+   });
    // Offline training: prefer measured root rollouts, never fabricated or
    // unsearched candidate scores, and never hidden opponent/LIFE identities.
    if(options.collectQ===true&&(
@@ -151,6 +157,7 @@ export function chooseWhiteSwordAction(pack,state,options={}){
    source,reason:null,version:model.version||null,
    chosen:picked.features,negatives,value,
    ...(qPairs?{qPairs}:{}),
+   ...(marginAudit?{marginAudit}:{}),
    ...(diagnostic?{diagnostic}:{} )
   },started);
  }catch(error){

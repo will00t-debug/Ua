@@ -102,7 +102,8 @@ function chooseFor(pack,state,actor,seat,spec,step){
    qScope:spec.recordQScope||null,
    diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null,
-   tacticalTempo:seat.tacticalTempo===true
+   tacticalTempo:seat.tacticalTempo===true,
+   marginAudit:spec.marginAudit===true&&actor===spec.specialistSeat
   });
  }
  throw Error('Unknown policy '+(seat.policy||''));
@@ -162,6 +163,7 @@ function playGameInner(spec){
   eligibleSum:0,candidatesSum:0,positiveScoreGaps:0,scoreGapSum:0,
   maxScoreGap:0,hardGapSum:0,policyGains:{},probeExamples:[]
  };
+ if(spec.marginAudit===true)game.marginAudits=[];
  if(spec.trackLife===true)game.lifeStats={
   lifeReveals:[0,0],triggerBearing:[0,0],types:{}
  };
@@ -191,6 +193,22 @@ function playGameInner(spec){
   catch(error){
    try{picked={action:legal.find(item=>item.type==='next')||legal[0],source:'fallback',reason:error.message};}
    catch(inner){game.anomalies.engineError++;game.error=inner.message;break;}
+  }
+  // Only the *explicit forensic runner* may force a pre-recorded, legal,
+  // actor-visible candidate once. Normal matches are bit-for-bit unaffected.
+  if(spec.forcedDecision?.step===game.steps){
+   const forced=spec.forcedDecision;
+   if(game.forcedAudit||actor!==spec.specialistSeat||actor!==forced.seat||
+    state.pending||!['main','attack'].includes(state.phase))
+    throw Error('Forensic decision step/phase does not match');
+   if(!same(picked?.action,forced.originalAction))
+    throw Error('Forensic replay differs from recorded original choice');
+   const alternate=matchLegal(legal,forced.alternativeAction);
+   if(!alternate||same(alternate,picked.action))
+    throw Error('Forensic alternative is not a distinct legal action');
+   game.forcedAudit={step:game.steps,turn:state.turn,phase:state.phase,
+    originalAction:picked.action,alternativeAction:alternate};
+   picked={...picked,action:alternate,source:'forced-forensic'};
   }
   const ms=performance.now()-t0;
   game.decisionMs.push(ms);
@@ -240,6 +258,16 @@ function playGameInner(spec){
      });
     }
    }
+  }
+  if(game.marginAudits&&actor===spec.specialistSeat&&picked.marginAudit){
+   const d=picked.marginAudit;
+   game.marginAudits.push({
+    step:game.steps,turn:state.turn,phase:state.phase,
+    apReady:state.players[actor].apCards.filter(card=>card?.ready).length,
+    myLife:state.players[actor].life.length,
+    oppLife:state.players[1-actor].life.length,
+    ...d
+   });
   }
   if(picked.source==='fallback')game.anomalies.fallback++;
   else if(picked.source==='reference')game.referenceDecisions++;
@@ -321,6 +349,8 @@ function playGameInner(spec){
   state=next;
   game.steps++;
  }
+ if(spec.forcedDecision&&!game.forcedAudit)
+  throw Error('Forensic replay never reached requested decision');
  game.status=state.status;
  game.winner=state.winner;
  game.endReason=state.endReason;
@@ -374,6 +404,8 @@ export function summarizeGame(game){
   recentActions:game.recentActions||null,
   ...(game.diagnostics?{diagnostics:game.diagnostics}:{}),
   ...(game.lifeStats?{lifeStats:game.lifeStats}:{}),
+  ...(game.marginAudits?{marginAudits:game.marginAudits}:{}),
+  ...(game.forcedAudit?{forcedAudit:game.forcedAudit}:{}),
   ...(game.actions?.length?{actions:game.actions}:{} )
  };
 }
