@@ -40,7 +40,8 @@ if(!Number.isInteger(gain)||![2,4,8,16].includes(gain)){
   finalHoldoutUsed:false,worthFurtherTest:false};
  emit(report);console.log('STAGE_GUARD_EVAL_SKIP',JSON.stringify(report));process.exit(0);
 }
-const clipped=0; // Reuse the frozen candidate, no new weight tuning.\nfunction spec(seed,cell,deckId,model,{direct=false}={}){
+const clipped=0; // Reuse the frozen candidate, no new weight tuning.
+function spec(seed,cell,deckId,model,{direct=false}={}){
  const seats=[];
  seats[cell.specialistSeat]={deckId:'white-sword',policy:'white-sword',
   model,stageGuard:model===candidate,baselineModel:base,
