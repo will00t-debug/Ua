@@ -12,6 +12,7 @@ import {policyVector,valueVector} from './features.mjs';
 import {createModel,dot} from './browser-model.mjs';
 import {gainProbe} from './gain-probe.mjs';
 import {qPairsFromRoot} from './v31-q-learning.mjs';
+import {applyTempoToCappedRows} from './v33-tempo.mjs';
 import {observeActor} from './observe.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -81,8 +82,10 @@ export function chooseWhiteSwordAction(pack,state,options={}){
    const hardCap=Number.isFinite(options.hardCap)?options.hardCap:null;
    const blended=blendRows(pack,state,seat,legal,model,options.scale??BLEND_SCALE,seed,observation,packs,hardCap);
    if(!blended)throw Error('blend produced no legal action');
-   picked=blended.picked;
-   cappedCandidates=blended.candidates;
+   cappedCandidates=applyTempoToCappedRows(blended.candidates,{
+    enabled:options.tacticalTempo===true,observation,seat,legal,catalogs:packs
+   });
+   picked=options.tacticalTempo===true?selectScored(cappedCandidates):blended.picked;
    // Offline training: prefer measured root rollouts, never fabricated or
    // unsearched candidate scores, and never hidden opponent/LIFE identities.
    if(options.collectQ===true&&(
@@ -102,7 +105,8 @@ export function chooseWhiteSwordAction(pack,state,options={}){
       ranked:sorted.slice(0,5).map(row=>({
        action:row.action,hardScore:row.hardScore,
        policyScore:dot(model.policy,row.features),
-       blendedScore:row.score
+       blendedScore:row.score,
+       ...(options.tacticalTempo===true?{tempo:row.tempo}:{} )
       }))
      }:{}),
      ...(Array.isArray(options.diagnosticCandidatePolicy)?{
