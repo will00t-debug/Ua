@@ -2642,7 +2642,7 @@ if(!IS_BATTLE_PAGE){
    const select=$(button.dataset.deckSide),key=button.dataset.deckKey;
    if(button.disabled||![...select.options].some(o=>o.value===key&&!o.disabled))return;
    select.value=key;
-   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();paintAiPolicy();
   });
  }
  for(const button of document.querySelectorAll('[data-ai-difficulty]')){
@@ -2657,7 +2657,7 @@ if(!IS_BATTLE_PAGE){
  for(const id of ['my-title','ai-title','ai-level','first-player']){
   $(id).addEventListener('change',()=>{
    syncMatchLobby();markLobbyChanged();rememberMatchLobby();
-   if(id==='ai-level')paintAiPolicy();
+   if(id==='ai-level'||id==='ai-title')paintAiPolicy();
   });
  }
  const whiteSwordToggle=$('white-sword-ai-v2');
