@@ -11,6 +11,7 @@ import {catalogsOf} from './browser-catalogs.mjs';
 import {policyVector,valueVector} from './features.mjs';
 import {createModel,dot} from './browser-model.mjs';
 import {gainProbe} from './gain-probe.mjs';
+import {qPairsFromRoot} from './v31-q-learning.mjs';
 import {observeActor} from './observe.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -73,6 +74,7 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   for(const row of scored)row.score=dot(model.policy,row.features);
   let picked;
   let cappedCandidates=null;
+  let qPairs=null;
   let diagnostic=null;
   let source='model';
   if(mode==='blend'){
@@ -81,6 +83,9 @@ export function chooseWhiteSwordAction(pack,state,options={}){
    if(!blended)throw Error('blend produced no legal action');
    picked=blended.picked;
    cappedCandidates=blended.candidates;
+   // Offline training: prefer measured root rollouts, never fabricated or
+   // unsearched candidate scores, and never hidden opponent/LIFE identities.
+   if(options.collectQ===true)qPairs=qPairsFromRoot(cappedCandidates);
    if(options.diagnose===true){
     const sorted=[...cappedCandidates].sort((a,b)=>b.score-a.score);
     diagnostic={
@@ -138,6 +143,7 @@ export function chooseWhiteSwordAction(pack,state,options={}){
   return finish(exact,{
    source,reason:null,version:model.version||null,
    chosen:picked.features,negatives,value,
+   ...(qPairs?{qPairs}:{}),
    ...(diagnostic?{diagnostic}:{} )
   },started);
  }catch(error){
@@ -158,7 +164,7 @@ function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs,hard
  const trace=lastHardAiTrace();
  const rows=[];
  const seen=new Set();
- const add=(action,hardScore)=>{
+ const add=(action,hardScore,measured=true)=>{
   const exact=legal.find(item=>same(item,action));
   if(!exact)return;
   const key=JSON.stringify(exact);
@@ -166,10 +172,10 @@ function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs,hard
   seen.add(key);
   const features=policyVector({observation,seat,action:exact,legal,catalogs:packs});
   const search=Number(hardScore)||0;
-  rows.push({action:exact,features,hardScore:search,score:search+scale*dot(model.policy,features)});
+  rows.push({action:exact,features,hardScore:search,score:search+scale*dot(model.policy,features),measured});
  };
  for(const row of trace?.candidates||[])add(row.action,row.score);
- add(hard,trace?.score);
+ add(hard,trace?.score,false);
  const pool=withinHardCap(rows,hard,hardCap);
  return pool.length?{picked:selectScored(pool),candidates:pool,total:rows.length,hardAction:hard}:null;
 }
