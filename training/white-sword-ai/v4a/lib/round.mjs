@@ -294,6 +294,7 @@ function baseReport(partial,manifest,played){
    regenerated:!!probe.regenerated,examples:probe.examples||[],fallbackIds:probe.fallbackIds||[]
   },
   seeds:manifest.seeds,historicalNote:manifest.historicalNote,replay:manifest.replay||null,
+  harnessNote:manifest.harnessNote||null,
   stageAGames:0,stageBGames:0,stageCGames:0,
   officialV2:manifest.officialV2,production:false,deployed:false,
   startedAt:new Date(manifest.startedAt).toISOString(),
@@ -349,10 +350,10 @@ function finishRound(context,outcome){
   report.experimentalChampion=challenger.id;
  }
  if(v2Hash()!==context.official)throw Error('Official v2 changed during the round');
- report.status=stageC.dirt.bad?'stopped':'complete';
- report.nextDirection=report.status==='stopped'
-  ?'先看停止原因。不會自動開下一輪。'
-  :report.promoted?'自動產生。實驗冠軍已更新，正式版不變。':'自動產生';
+ // A finished schedule that fails the gate stays complete, so the next round
+ // can start. stopped is only for aborting before the scheduled games exist.
+ report.status='complete';
+ report.nextDirection=report.promoted?'自動產生。實驗冠軍已更新，正式版不變。':'自動產生';
  const history=readJson(join(context.root,'history.json'),{rounds:[]});
  report.cumulativeGames=history.rounds.reduce((sum,row)=>sum+(row.games||0),0)+report.games;
  report.diagnosis=diagnosisOf(history.rounds,report);

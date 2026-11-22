@@ -54,8 +54,10 @@ export function positionKey(state){
  const pending=state.pending;
  const queue=state.effectQueue||[];
  const parts=[state.turn,state.phase,pending?.kind||'',state.active,queue.length,queue[0]?.op||'',queue[0]?.sourceUid||''];
+ // selected is the progress of a multi-pick such as effect-remove-outside.
+ // Leaving it out makes every legal pick look like the same position.
  if(pending)parts.push(markList(pending.uids),markList(pending.order),markList(pending.choices),
-  markList(pending.entries),pending.sourceUid||'');
+  markList(pending.entries),markList(pending.selected),pending.sourceUid||'',pending.placed||'');
  for(const player of state.players){
   parts.push(player.life.length,player.hand.length,player.deck.length,player.outside.length,
    (player.removed||[]).length,(player.lifeRevealed||[]).length,

@@ -13,6 +13,26 @@
       "championLabel": "v2",
       "status": "complete",
       "challengerId": "v4a-r0000-c1-6ce517024dca"
+    },
+    {
+      "profile": "round",
+      "round": 1,
+      "games": 1320,
+      "cumulativeGames": 1338,
+      "probe": {
+        "rate": 0.08333333333333333
+      },
+      "paired": {
+        "delta": 0.002777777777777778,
+        "ci": {
+          "low": -0.03333333333333333,
+          "high": 0.041666666666666664
+        }
+      },
+      "promoted": false,
+      "championLabel": "v2",
+      "status": "complete",
+      "challengerId": "v4a-r0001-c2-4240a419cc27"
     }
   ]
 }

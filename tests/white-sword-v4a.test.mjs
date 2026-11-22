@@ -5,6 +5,7 @@ import {mkdtempSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {loadModel} from '../dist/universal-v2/white-sword-ai/model.mjs';
+import {positionKey} from '../dist/universal-v2/white-sword-ai/runner.mjs';
 import {policyHash,proposeEvolution} from '../training/white-sword-ai/v4a/lib/evolve.mjs';
 import {buildStageCSpecs,buildStageSpecs} from '../training/white-sword-ai/v4a/lib/matches.mjs';
 import {propose,registerProposer} from '../training/white-sword-ai/v4a/lib/rl-hook.mjs';
@@ -68,6 +69,20 @@ async function evolve(profile,round,behavior,probe){
  });
  return {...dir,report,calls:running.calls};
 }
+
+test('outside-removal progress is part of the loop key',()=>{
+ const player=()=>({
+  life:[1],hand:[1],deck:[1],outside:[],removed:[],lifeRevealed:[],apCards:[],
+  front:[null,null,null,null],energy:[null,null,null,null]
+ });
+ const state=selected=>({
+  turn:15,phase:'main',active:0,effectQueue:[],
+  pending:{kind:'effect-remove-outside',choices:['0-9','0-18'],selected},
+  players:[player(),player()]
+ });
+ assert.notEqual(positionKey(state([])),positionKey(state(['0-9'])));
+ assert.equal(positionKey(state(['0-9'])),positionKey(state(['0-9'])));
+});
 
 test('eight candidates differ inside the step cap and do not touch v2',()=>{
  const before=hashes();

@@ -100,6 +100,7 @@ export function renderRound(result){
  }
  lines.push('- 牆鐘：'+fixed((result.wallMs||0)/1000)+' 秒');
  if(result.replay)lines.push('- 同一規格重放兩次：'+(result.replay.same&&result.replay.finished?'行動一致':'不一致，這一輪已停止'));
+ if(result.harnessNote)lines.push('- '+result.harnessNote);
  lines.push('', '## 晉級檢定');
  lines.push('');
  lines.push('事先登記的條件：配對勝率差至少 +'+points(PROMOTION.pairedDelta)+' 個百分點，95% 信賴區間下限大於 0，直接鏡像至少 '
