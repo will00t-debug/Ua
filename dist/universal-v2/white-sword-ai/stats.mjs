@@ -30,7 +30,7 @@ export function rateBy(games,pred,{win}={}){
  return {...wilson(wins,done.length),games:rows.length,finished:done.length,unfinished:rows.length-done.length};
 }
 export function addAnomalies(games){
- const total={illegal:0,timeout:0,fallback:0,deadLoop:0,engineError:0,leak:0};
+ const total={illegal:0,timeout:0,fallback:0,deadLoop:0,engineError:0,leak:0,opponentFallback:0};
  for(const game of games){
   for(const key of Object.keys(total))total[key]+=game.anomalies?.[key]||0;
  }
@@ -50,6 +50,7 @@ export function judgeChampion(summary){
  if(anomalies.deadLoop)reasons.push('出現死循環');
  if(anomalies.engineError)reasons.push('出現引擎異常');
  if(anomalies.fallback||anomalies.timeout)reasons.push('模型發生回退或逾時，這些對局不能當成模型棋力');
+ if(anomalies.opponentFallback)reasons.push('對手沒有回傳合法動作，基準對局不是純對戰');
  if(!(summary.nonMirror?.low>0.5))reasons.push('非鏡像對局的 95% 信賴區間下限未高於 50%，不能只靠白劍鏡像');
  if(summary.selectedMode==='hard')reasons.push('驗證集沒有選到可學習的模型模式');
  return {promoted:reasons.length===0,reasons};

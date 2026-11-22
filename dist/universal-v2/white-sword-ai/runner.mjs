@@ -17,7 +17,7 @@ const RULES=matchRules('official');
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 
 export function emptyAnomalies(){
- return {illegal:0,timeout:0,fallback:0,deadLoop:0,engineError:0,leak:0};
+ return {illegal:0,timeout:0,fallback:0,deadLoop:0,engineError:0,leak:0,opponentFallback:0};
 }
 export function emptyCounts(){
  return {play:0,raid:0,attack:0,block:0,blockPass:0,event:0,activate:0,next:0,extraDraw:0,apSpent:0,byCard:{}};
@@ -29,6 +29,7 @@ export function trainingLabel(game){
  if(anomalies.deadLoop)return {usable:false,reason:'dead-loop'};
  if(anomalies.engineError)return {usable:false,reason:'engine'};
  if(anomalies.fallback||anomalies.timeout)return {usable:false,reason:'fallback'};
+ if(anomalies.opponentFallback)return {usable:false,reason:'opponent-fallback'};
  if(game?.status!=='finished'||(game.winner!==0&&game.winner!==1))return {usable:false,reason:'unfinished'};
  return {usable:true,reason:null};
 }
@@ -63,6 +64,18 @@ export function positionKey(state){
    parts.push(player[line].map(card=>card?card.uid+(card.ready?'r':'t')+':'+(card.bp??''):'-').join(','));
  }
  return parts.join('|');
+}
+function matchLegal(legal,action){
+ if(!action||typeof action!=='object')return null;
+ return legal.find(item=>item===action||same(item,action))||null;
+}
+function substituteAction(pack,state,legal,seed){
+ try{
+  const hard=chooseStrengthenedHardAction(pack,state,{...HARD_OPTIONS,seed});
+  const exact=matchLegal(legal,hard);
+  if(exact)return exact;
+ }catch{/* the engine list itself is still legal */}
+ return legal.find(item=>item.type==='next')||legal[0];
 }
 function chooseFor(pack,state,actor,seat,spec,step){
  if(seat.policy==='hard-search-2'){
@@ -166,12 +179,19 @@ function playGameInner(spec){
   game.decisionMs.push(ms);
   if(picked?.reason==='timeout'||picked?.source==='fallback'&&picked?.reason==='timeout')game.anomalies.timeout++;
   if(String(picked?.reason||'').includes('leaked'))game.anomalies.leak++;
-  const action=legal.find(item=>item===picked?.action||same(item,picked?.action));
+  let action=matchLegal(legal,picked?.action);
   if(!action){
-   game.anomalies.illegal++;
-   game.anomalies.fallback++;
-   game.error=picked?.reason||'illegal action';
-   break;
+   if(actor===spec.specialistSeat){
+    game.anomalies.illegal++;
+    game.anomalies.fallback++;
+    game.error=picked?.reason||'illegal action';
+    game.recentActions=recent.slice();
+    game.rejectedAction={actor,source:picked?.source||null,reason:picked?.reason||null,action:picked?.action||null};
+    break;
+   }
+   action=substituteAction(packs,state,legal,spec.seed);
+   game.anomalies.opponentFallback++;
+   picked={action,source:'opponent-fallback',reason:picked?.reason||'opponent returned no legal action'};
   }
   if(picked.source==='fallback')game.anomalies.fallback++;
   else if(picked.source==='reference')game.referenceDecisions++;
