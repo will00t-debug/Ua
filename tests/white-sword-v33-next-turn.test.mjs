@@ -23,7 +23,18 @@ function boot(){
   assert.ok(action);
   s=dispatchUniversalAction(packs,s,action);
  }
- assert.equal(s.phase,'main');return s;
+ assert.equal(s.phase,'main');
+ // A vanilla seed can have only NEXT legal at the opening. Make a real
+ // legal 0-energy deployment available, without changing card multiplicities.
+ const hand=s.players[s.active].hand,deckpile=s.players[s.active].deck;
+ const idx=deckpile.findIndex(card=>{
+  const printed=pack.cards[card.cardId];
+  return printed?.type==='character'&&Number(printed.energy)===0&&
+   (Number(printed.ap)||0)<=s.players[s.active].apCards.filter(a=>a?.ready).length;
+ });
+ assert.ok(idx>=0,'deck must contain an affordable zero-energy character');
+ hand.push(deckpile.splice(idx,1)[0]);
+ return s;
 }
 test('v3.3 fixed 96 train / 112 pilot / 840 final splits never overlap',()=>{
  assert.equal(assertV33Disjoint(),true);
