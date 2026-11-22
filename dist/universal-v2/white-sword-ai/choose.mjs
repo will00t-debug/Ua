@@ -9,7 +9,7 @@ import {
 } from './constants.mjs';
 import {catalogsOf} from './deck.mjs';
 import {policyVector,valueVector} from './features.mjs';
-import {createModel,dot} from './model.mjs';
+import {createModel,dot} from './browser-model.mjs';
 import {observeActor} from './observe.mjs';
 
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
