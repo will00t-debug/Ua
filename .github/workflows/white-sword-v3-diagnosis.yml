@@ -1,8 +1,7 @@
 name: White Sword v3 policy-change diagnosis
 
 on:
-  push:
-    branches: [experiment/white-sword-v3-learning-core-20261122]
+  # Legacy 12-game diagnosis was already completed. Manual reruns only.
   workflow_dispatch:
 
 permissions:
