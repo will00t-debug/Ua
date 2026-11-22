@@ -194,6 +194,22 @@ function playGameInner(spec){
    try{picked={action:legal.find(item=>item.type==='next')||legal[0],source:'fallback',reason:error.message};}
    catch(inner){game.anomalies.engineError++;game.error=inner.message;break;}
   }
+  // Only the *explicit forensic runner* may force a pre-recorded, legal,
+  // actor-visible candidate once. Normal matches are bit-for-bit unaffected.
+  if(spec.forcedDecision?.step===game.steps){
+   const forced=spec.forcedDecision;
+   if(game.forcedAudit||actor!==spec.specialistSeat||actor!==forced.seat||
+    state.pending||!['main','attack'].includes(state.phase))
+    throw Error('Forensic decision step/phase does not match');
+   if(!same(picked?.action,forced.originalAction))
+    throw Error('Forensic replay differs from recorded original choice');
+   const alternate=matchLegal(legal,forced.alternativeAction);
+   if(!alternate||same(alternate,picked.action))
+    throw Error('Forensic alternative is not a distinct legal action');
+   game.forcedAudit={step:game.steps,turn:state.turn,phase:state.phase,
+    originalAction:picked.action,alternativeAction:alternate};
+   picked={...picked,action:alternate,source:'forced-forensic'};
+  }
   const ms=performance.now()-t0;
   game.decisionMs.push(ms);
   if(picked?.reason==='timeout'||picked?.source==='fallback'&&picked?.reason==='timeout')game.anomalies.timeout++;
@@ -333,6 +349,8 @@ function playGameInner(spec){
   state=next;
   game.steps++;
  }
+ if(spec.forcedDecision&&!game.forcedAudit)
+  throw Error('Forensic replay never reached requested decision');
  game.status=state.status;
  game.winner=state.winner;
  game.endReason=state.endReason;
@@ -387,6 +405,7 @@ export function summarizeGame(game){
   ...(game.diagnostics?{diagnostics:game.diagnostics}:{}),
   ...(game.lifeStats?{lifeStats:game.lifeStats}:{}),
   ...(game.marginAudits?{marginAudits:game.marginAudits}:{}),
+  ...(game.forcedAudit?{forcedAudit:game.forcedAudit}:{}),
   ...(game.actions?.length?{actions:game.actions}:{} )
  };
 }
