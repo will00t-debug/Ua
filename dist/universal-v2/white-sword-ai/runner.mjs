@@ -95,6 +95,7 @@ function chooseFor(pack,state,actor,seat,spec,step){
   return chooseWhiteSwordAction(pack,state,{
    actor,model:seat.model,mode:seat.mode||'policy',explore:seat.explore||0,
    step,seed:spec.seed,timeoutMs:seat.timeoutMs,scale:seat.scale,
+   diagnose:spec.diagnose===true,
    hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
   });
  }
@@ -150,6 +151,11 @@ function playGameInner(spec){
   steps:0,turn:state.turn,ms:0,
   specialistSeat:spec.specialistSeat,specialistIsFirst:spec.specialistSeat===spec.first
  });
+ if(spec.diagnose===true)game.diagnostics={
+  blendDecisions:0,singleEligible:0,multiEligible:0,hardOverrides:0,
+  eligibleSum:0,candidatesSum:0,positiveScoreGaps:0,scoreGapSum:0,
+  maxScoreGap:0,hardGapSum:0
+ };
  const started=performance.now();
  let lastKey='';
  let repeats=0;
@@ -195,11 +201,27 @@ function playGameInner(spec){
    game.anomalies.opponentFallback++;
    picked={action,source:'opponent-fallback',reason:picked?.reason||'opponent returned no legal action'};
   }
+  if(game.diagnostics&&actor===spec.specialistSeat&&picked.diagnostic){
+   const row=picked.diagnostic,d=game.diagnostics;
+   d.blendDecisions++;
+   d.eligibleSum+=row.eligible;
+   d.candidatesSum+=row.total;
+   if(row.eligible<=1)d.singleEligible++;
+   else d.multiEligible++;
+   if(row.overriddenHard)d.hardOverrides++;
+   if(Number.isFinite(row.topGap)){
+    d.positiveScoreGaps++;
+    d.scoreGapSum+=row.topGap;
+    d.maxScoreGap=Math.max(d.maxScoreGap,row.topGap);
+   }
+   d.hardGapSum+=row.hardGap;
+  }
   if(picked.source==='fallback')game.anomalies.fallback++;
   else if(picked.source==='reference')game.referenceDecisions++;
   else if(actor===spec.specialistSeat&&(picked.source==='model'||picked.source==='blend'))game.modelDecisions++;
   const keyAction=actionKey(actor,action);
-  if(spec.keepActions)game.actions.push(keyAction);
+  if(spec.keepActions)game.actions.push(spec.diagnose===true?
+   {...keyAction,fullAction:action}:keyAction);
   recent.push(keyAction);
   if(recent.length>16)recent.shift();
   if(actor===spec.specialistSeat)noteSpecialist(game,state,actor,action);
@@ -280,7 +302,9 @@ export function summarizeGame(game){
   modelDecisions:game.modelDecisions,referenceDecisions:game.referenceDecisions,
   seats:game.seats,timing:timingOf(decisionMs),
   samples:game.samples?.length||0,
-  recentActions:game.recentActions||null
+  recentActions:game.recentActions||null,
+  ...(game.diagnostics?{diagnostics:game.diagnostics}:{}),
+  ...(game.actions?.length?{actions:game.actions}:{} )
  };
 }
 export function replayMatches(spec){
