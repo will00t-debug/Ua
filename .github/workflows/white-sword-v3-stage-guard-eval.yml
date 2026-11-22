@@ -1,0 +1,53 @@
+name: White Sword v3 stage-guard unseen evaluation
+
+on:
+  push:
+    branches: [experiment/white-sword-v3-learning-core-20261122]
+    paths:
+      - 'scripts/white-sword-v3-stage-guard-eval.mjs'
+      - '.github/workflows/white-sword-v3-stage-guard-eval.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: white-sword-v3-stage-guard-eval
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Read frozen candidate, never train with validation data
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44990300950
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: white-sword-v3-secondary-paired
+          path: .
+      - name: Syntax and stage invariance regressions
+        run: |
+          node --check scripts/white-sword-v3-stage-guard-eval.mjs
+          node --check dist/universal-v2/white-sword-ai/stage-guard.mjs
+          node --test tests/white-sword-v3-stage-guard.test.mjs tests/white-sword-v3-diagnostic.test.mjs
+      - name: Test 48 fresh matched pairs and 16 direct v2 mirrors
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v3-stage-guard-eval.mjs
+      - name: Publish guarded-candidate independent evaluation
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v3-stage-guard-evaluation
+          path: |
+            docs/white-sword-ai/v3/STAGE-GUARD-EVALUATION.json
+            docs/white-sword-ai/v3/STAGE-GUARD-EVALUATION.md
+          if-no-files-found: warn
+          retention-days: 30
