@@ -63,16 +63,26 @@ const entries=games.flatMap((g,i)=>(g.marginAudits||[]).map(d=>({
 })));
 const byPhase={},reasonCounts={};
 let withNonzero=0,withDifferential=0,opportunities=0,over8=0;
+let hardOverrides=0,hardPrefersAlternative=0;
+const namedPolicyDrivers={};
 const promising=[];
 const buckets={'<=0.5':0,'<=1':0,'<=2':0,'<=4':0,'<=8':0,'>8':0,'none':0};
 for(const row of entries){
- const phase=byPhase[row.phase]||(byPhase[row.phase]={total:0,multi:0,withNonzero:0,challengers:0,canSwitchAt2:0,canSwitchAt4:0});
+ const phase=byPhase[row.phase]||(byPhase[row.phase]={total:0,multi:0,withNonzero:0,challengers:0,hardOverrides:0,canSwitchAt2:0,canSwitchAt4:0});
  phase.total++;
+ if(row.hardDisagrees){hardOverrides++;phase.hardOverrides++;}
  if(row.eligible>1)phase.multi++;
  if(row.anyNonzeroTempo){withNonzero++;phase.withNonzero++;}
  if(row.hasBonusDifference)withDifferential++;
  if(row.eligible>1&&row.mostReachable){
   opportunities++;phase.challengers++;
+  const a=row.mostReachable.attribution;
+  if(a?.hardGap<0)hardPrefersAlternative++;
+  for(const driver of a?.featureDrivers||[]){
+   const old=namedPolicyDrivers[driver.name]||{count:0,absoluteDelta:0};
+   old.count++;old.absoluteDelta+=Math.abs(driver.delta);
+   namedPolicyDrivers[driver.name]=old;
+  }
   const k=row.mostReachable.requiredMultiplier;
   if(k<=.5)buckets['<=0.5']++;
   else if(k<=1)buckets['<=1']++;
@@ -92,8 +102,9 @@ promising.sort((a,b)=>a.mostReachable.requiredMultiplier-b.mostReachable.require
 const display=r=>({
  seed:r.seed,opponent:r.opponent,first:r.first,seat:r.seat,step:r.step,
  turn:r.turn,phase:r.phase,apReady:r.apReady,myLife:r.myLife,oppLife:r.oppLife,
- eligible:r.eligible,baseTop:r.baseTop,mostReachable:r.mostReachable,
- topScoreGap:r.topScoreGap,probe:r.probe
+ eligible:r.eligible,baseTop:r.baseTop,hardBest:r.hardBest,
+ hardDisagrees:r.hardDisagrees,nearestBase:r.nearestBase,
+ mostReachable:r.mostReachable,topScoreGap:r.topScoreGap,probe:r.probe
 });
 const byOpponent=Object.fromEntries(['white-sword','reject-blue','renruki'].map(o=>{
  const filtered=entries.filter(e=>e.opponent===o);
@@ -110,8 +121,14 @@ const report={
  pilotSeeds:V33_PILOT_SEEDS,previousWinCountReproduced:wins,
  finalHoldoutUsed:false,untouched840SeedsUsed:false,
  result:{blendDecisionCount:entries.length,withNonzero,withDifferential,
-  opportunities,over8,byPhase,byOpponent,buckets,reasonCounts,
+  opportunities,over8,hardOverrides,hardPrefersAlternative,
+  namedPolicyDrivers,byPhase,byOpponent,buckets,reasonCounts,
   multiplierProbes:Object.fromEntries([1,2,4,8].map(k=>[String(k),entries.filter(e=>e.probe?.[k]?.switched).length]))},
+ gameResults:games.map((g,i)=>({
+  seed:rows[i].seed,first:rows[i].first,seat:rows[i].specialistSeat,
+  opponent:rows[i].opponentDeck,winner:g.winner,turn:g.turn,
+  specialistWon:g.winner===rows[i].specialistSeat
+ })),
  examples:promising.slice(0,35).map(display),
  allDecisions:entries.map(display),
  caveats:[
@@ -130,6 +147,9 @@ const lines=['# 白劍 v3.3-T：不改出牌的候選分數差鑑識','',
  '- 含戰術加分的決策：'+withNonzero+'/'+entries.length,
  '- 加分相對原選擇有差別：'+withDifferential,
  '- 至少有一個加分優勢候選：'+opportunities,
+ '- Hard 與白劍最終選擇衝突的決策：'+hardOverrides,
+ '- 加分優勢的 26 個候選中 Hard 原本更看好替代者：'+hardPrefersAlternative,
+ '- 注意：Hard 評分也只是有限搜尋估計，並非正確答案',
  ...[1,2,4,8].map(k=>'- **純離線假設** '+k+' 倍戰術分數可能改變 '+report.result.multiplierProbes[k]+' 個決策'),
  '',
  '## 依照決策階段','',
@@ -151,8 +171,8 @@ const lines=['# 白劍 v3.3-T：不改出牌的候選分數差鑑識','',
 writeFileSync(root+'.md',lines.join('\n'));
 console.log('V33_MARGIN_AUDIT_RESULT',JSON.stringify({
  games:games.length,wins,decisions:entries.length,
- withNonzero,withDifferential,opportunities,
- byPhase,byOpponent,buckets,probe:report.result.multiplierProbes,
+ withNonzero,withDifferential,opportunities,hardOverrides,hardPrefersAlternative,
+ byPhase,byOpponent,buckets,topDrivers:Object.entries(namedPolicyDrivers).sort((a,b)=>b[1].absoluteDelta-a[1].absoluteDelta).slice(0,12),probe:report.result.multiplierProbes,
  topExamples:promising.slice(0,8).map(x=>({
  seed:x.seed,opponent:x.opponent,phase:x.phase,
  k:x.mostReachable.requiredMultiplier,
