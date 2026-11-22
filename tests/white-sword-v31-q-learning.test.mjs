@@ -43,6 +43,20 @@ test('flat or low confidence root scores produce no learning labels',()=>{
   {action:{type:'b'},measured:false,hardScore:2,features:f(1)}
  ]),[]);
 });
+test('floating point Q boundary scores are accepted consistently',()=>{
+ const rows=qPairsFromRoot([
+  {action:{type:'play',uid:'hi'},measured:true,hardScore:100,features:f(0)},
+  {action:{type:'play',uid:'low'},measured:true,hardScore:98.5+2e-12,features:f(1)}
+ ]);
+ assert.equal(rows.length,1);
+ assert.ok(rows[0].gap<1.5&&rows[0].gap>1.5-1e-9);
+ const base={policy:Array(POLICY_DIM).fill(0)},model={policy:[...base.policy]};
+ const result=learnFromQPreferences(model,rows,base);
+ assert.equal(result.samples,1);
+ assert.ok(result.updates>0);
+ assert.throws(()=>learnFromQPreferences(model,[{...rows[0],gap:1.4}],base),
+  /invalid measured Q preference/);
+});
 test('Q trainer improves measured preference while preserving the anchor and trust region',()=>{
  const anchor={policy:Array(POLICY_DIM).fill(0)};
  anchor.policy[0]=-0.5;anchor.policy[1]=0.5;
