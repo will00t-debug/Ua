@@ -1,0 +1,46 @@
+name: White Sword paired v1 vs v2 (unseen seeds)
+
+on:
+  push:
+    branches:
+      - experiment/white-sword-paired-20261122
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paired-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout experiment branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Use Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Syntax verification
+        run: |
+          node --check scripts/white-sword-paired-compare.mjs
+          node --check scripts/white-sword-paired-worker.mjs
+      - name: Specialist baseline tests
+        run: node --test tests/white-sword-specialist.test.mjs
+      - name: Smoke paired comparisons (12 pairs)
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-paired-compare.mjs --smoke
+      - name: Full unseen paired comparisons (204 pairs, 408 games)
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-paired-compare.mjs
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-paired-92000
+          path: |
+            docs/white-sword-ai/paired-*.json
+            docs/white-sword-ai/PAIRED-*.md
+          if-no-files-found: warn
+          retention-days: 30
