@@ -7,7 +7,7 @@ import {chooseStrengthenedHardAction,lastHardAiTrace} from '../hard-ai.mjs';
 import {
  BLEND_SCALE,BLEND_TIMEOUT_MS,HARD_OPTIONS,NEGATIVES,ORDER_KINDS,POLICY_TIMEOUT_MS
 } from './constants.mjs';
-import {catalogsOf} from './deck.mjs';
+import {catalogsOf} from './browser-catalogs.mjs';
 import {policyVector,valueVector} from './features.mjs';
 import {createModel,dot} from './browser-model.mjs';
 import {observeActor} from './observe.mjs';
