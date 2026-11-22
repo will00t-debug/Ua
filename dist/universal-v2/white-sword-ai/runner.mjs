@@ -101,7 +101,8 @@ function chooseFor(pack,state,actor,seat,spec,step){
    collectQ:spec.keepSamples===true&&spec.recordQPreferences===true&&actor===spec.recordSeat,
    qScope:spec.recordQScope||null,
    diagnosticCandidatePolicy:spec.diagnose===true?spec.diagnosticCandidatePolicy:null,
-   hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null
+   hardCap:Number.isFinite(seat.hardCap)?seat.hardCap:null,
+   tacticalTempo:seat.tacticalTempo===true
   });
  }
  throw Error('Unknown policy '+(seat.policy||''));

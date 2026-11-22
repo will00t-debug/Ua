@@ -1,0 +1,104 @@
+name: White Sword v3.3 tactical tempo experiment — 840-game validation
+
+on:
+  push:
+    branches: [experiment/white-sword-v33-tempo-20261123]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: white-sword-v33-tempo
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate all scripts and browser-safe tactics
+        run: |
+          node --check dist/universal-v2/white-sword-ai/choose.mjs
+          node --check dist/universal-v2/white-sword-ai/v33-tempo.mjs
+          node --check dist/universal-v2/white-sword-ai/runner.mjs
+          node --check scripts/white-sword-v33-eval-shard.mjs
+          node --check scripts/white-sword-v33-eval-aggregate.mjs
+          node --check scripts/white-sword-v33-pilot-gate.mjs
+          node --test tests/white-sword-v33-tempo.test.mjs tests/white-sword-v32-decision-scope.test.mjs tests/white-sword-v3-learning.test.mjs
+
+  pilot:
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Four-seed 112-game tactical vs v2 pilot
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v33-eval-shard.mjs pilot
+      - name: Preserve 112-game pilot even if viability gate fails
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v33-pilot
+          path: docs/white-sword-ai/v33/pilot.json
+          retention-days: 30
+      - name: Preregistered gross-harm / inactive-model early-stop gate
+        run: node scripts/white-sword-v33-pilot-gate.mjs
+
+  evaluation:
+    needs: pilot
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: 280 games = 120 v2 + 120 tactical + 40 direct mirrors
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v33-eval-shard.mjs ${{ matrix.shard }}
+      - name: Preserve games and post-reveal LIFE trigger metrics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v33-shard-${{ matrix.shard }}
+          path: docs/white-sword-ai/v33/shard-${{ matrix.shard }}.json
+          retention-days: 30
+
+  aggregate:
+    needs: evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Gather independent seed shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: white-sword-v33-shard-*
+          merge-multiple: true
+          path: docs/white-sword-ai/v33/shards
+      - name: Compute 840-game clustered CI and LIFE trigger audit
+        run: node scripts/white-sword-v33-eval-aggregate.mjs
+      - name: Upload report; never deploy
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v33-840-evaluation
+          path: |
+            docs/white-sword-ai/v33/EVALUATION-840.json
+            docs/white-sword-ai/v33/EVALUATION-840.md
+          retention-days: 30
