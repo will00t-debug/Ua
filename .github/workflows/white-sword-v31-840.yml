@@ -1,0 +1,125 @@
+name: White Sword v3.1 Q-learning and 840-game blind evaluation
+
+on:
+  push:
+    branches: [experiment/white-sword-v31-counterfactual-20261122]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: white-sword-v31-counterfactual
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Check scripts, visibility and protocol
+        run: |
+          node --check scripts/white-sword-v31-train.mjs
+          node --check scripts/white-sword-v31-eval-shard.mjs
+          node --check scripts/white-sword-v31-eval-aggregate.mjs
+          node --check dist/universal-v2/white-sword-ai/v31-q-learning.mjs
+          node --test tests/white-sword-v31-q-learning.test.mjs tests/white-sword-v3-learning.test.mjs
+      - name: Real four-game counterfactual learning smoke
+        env:
+          WS_WORKERS: '2'
+        run: node scripts/white-sword-v31-train.mjs smoke
+      - name: Publish smoke records
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v31-smoke
+          path: |
+            docs/white-sword-ai/v31/SMOKE.json
+            training/white-sword-ai/weights/v31-smoke-provisional.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  train:
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Independent 96-game visible-Q training only
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v31-train.mjs train
+      - name: Store experimental model and learning audit
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v31-trained
+          path: training/white-sword-ai/weights/v31-q-distilled-provisional.json
+          retention-days: 30
+      - name: Store Q learning statistics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v31-training-report
+          path: docs/white-sword-ai/v31/TRAIN.json
+          retention-days: 30
+
+  evaluation:
+    needs: train
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Fetch frozen learned weights from this workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: white-sword-v31-trained
+          path: training/white-sword-ai/weights
+      - name: Run 240 Hard-opponent games and 40 v2 mirror games
+        env:
+          WS_WORKERS: '3'
+        run: node scripts/white-sword-v31-eval-shard.mjs ${{ matrix.shard }}
+      - name: Upload per-seed paired results and LIFE trigger observations
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v31-shard-${{ matrix.shard }}
+          path: docs/white-sword-ai/v31/shard-${{ matrix.shard }}.json
+          retention-days: 30
+
+  aggregate:
+    needs: evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Collect all three disjoint game shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: white-sword-v31-shard-*
+          merge-multiple: true
+          path: docs/white-sword-ai/v31/shards
+      - name: Aggregate, run clustered confidence intervals, decide no-auto-promotion
+        run: node scripts/white-sword-v31-eval-aggregate.mjs
+      - name: Publish 840-game complete report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: white-sword-v31-840-evaluation
+          path: |
+            docs/white-sword-ai/v31/EVALUATION-840.json
+            docs/white-sword-ai/v31/EVALUATION-840.md
+          retention-days: 30
