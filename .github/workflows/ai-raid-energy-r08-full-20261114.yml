@@ -1,0 +1,26 @@
+name: AI R08 Full Match and Search Scores
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/ai-raid-energy-r08-full-match-20261114.mjs'
+      - '.github/workflows/ai-raid-energy-r08-full-20261114.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reproduce R08 then run root score audit and both full games
+        run: node scripts/ai-raid-energy-r08-full-match-20261114.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-r08-full-replay
+          path: raid-energy-r08-full-match.json
+          if-no-files-found: warn
