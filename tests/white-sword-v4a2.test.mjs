@@ -106,7 +106,10 @@ test('the pre-registered stage A rule fails a weak mutation and passes a wide on
    cross:family(0.04,1,0.01)
   }
  };
- const passed=stageADecision(measure(family(0.16,4,0.05),family(0.05,2,0.01)),holdout);
+ const wide=measure(family(0.16,4,0.05),family(0.05,2,0.01));
+ const passed=stageADecision(wide,holdout);
+ const wrapped={rows:wide,illegal:0,positions:wide.length,byFamily:wide.byFamily};
+ assert.equal(stageADecision(wrapped,holdout).passed,true);
  const failed=stageADecision(measure(family(0.05,1,0),family(0.05,1,0)),holdout);
  assert.equal(passed.passed,true);
  assert.equal(failed.passed,false);

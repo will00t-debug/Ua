@@ -114,7 +114,7 @@ export function runStageA({root,log=()=>{}}={}){
  const trainMeasure=measurePolicies(trainMine.positions,parent.policy,proposed.candidates);
  const holdoutMeasure=measurePolicies(holdoutMine.positions,parent.policy,proposed.candidates);
  const rankMs=(performance.now()-started)/Math.max(1,(trainMeasure.positions+holdoutMeasure.positions)*proposed.candidates.length);
- const decision=stageADecision(trainMeasure,holdoutMeasure);
+ const decision=stageADecision({...trainMeasure,rows:trainMine.positions},holdoutMeasure);
  if(trainMine.mismatches||holdoutMine.mismatches){
   decision.passed=false;
   decision.reasons.push('解析分數和實際 blend 不一致');

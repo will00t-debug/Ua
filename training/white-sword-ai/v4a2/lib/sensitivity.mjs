@@ -256,7 +256,7 @@ export function bucketCoverage(positions){
 export function stageADecision(train,holdout){
  const reasons=[];
  const gate=STAGE_A_GATE;
- const coverage=bucketCoverage(train);
+ const coverage=bucketCoverage(Array.isArray(train)?train:train.rows);
  if(coverage.band<gate.minBandPositions)reasons.push('訓練帶內局面只有 '+coverage.band+'，少於 '+gate.minBandPositions);
  if(holdout.positions<gate.minHoldoutBand)reasons.push('保留帶內局面只有 '+holdout.positions+'，少於 '+gate.minHoldoutBand);
  if(coverage.ready<gate.minBuckets)reasons.push('達到最少樣本的局面類型只有 '+coverage.ready+' 類');

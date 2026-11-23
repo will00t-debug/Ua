@@ -19,12 +19,13 @@ function environment(){
   return JSON.parse(readFileSync(join(process.cwd(),'training/white-sword-ai/v4a2/environment.json'),'utf8'));
  }catch{return null;}
 }
+const BUCKET_NAME={
+ 'early-energy':'前期能源',ap:'AP','line-move':'前線移動','mid-entry':'角色登場',
+ raid:'Raid','attack-defense':'攻擊與格擋','late-pressure':'中後期生命壓力'
+};
+const DECK_NAME={'white-sword':'白劍','reject-blue':'我拒絕',renruki:'戀露'};
 function phaseRows(buckets){
- const names={
-  'early-energy':'前期能源','ap':'AP','line-move':'前線移動','mid-entry':'角色登場',
-  raid:'Raid','attack-defense':'攻擊與格擋','late-pressure':'中後期生命壓力'
- };
- return Object.entries(buckets||{}).map(([bucket,count])=>'| '+(names[bucket]||bucket)+' | '+count+' |');
+ return Object.entries(buckets||{}).map(([bucket,count])=>'| '+(BUCKET_NAME[bucket]||bucket)+' | '+count+' |');
 }
 export function renderReport(report){
  const stageA=report.stageA||{};
@@ -99,7 +100,13 @@ export function renderReport(report){
    '| --- | ---: |',
    ...phaseRows(sensitive.buckets),
    '',
-   '找到的可翻轉方向：'+(stageA.flips??'沒有資料')+'。單一局面的解析排名平均 '+num(stageA.rankMs,3)+' 毫秒。合法選擇失敗次數：'+(stageA.trainMeasure?.illegal??'沒有資料')+'。',
+   '各候選在訓練局面和冠軍不同的比例：',
+ '',
+ '| 候選 | 方法 | 分歧率 |',
+ '| --- | --- | ---: |',
+ ...Object.values(stageA.trainMeasure?.byMethod||{}).map(row=>'| '+row.family+' | '+row.method+' | '+pct(row.rate)+' |'),
+ '',
+ '找到的可翻轉方向：'+(stageA.flips??'沒有資料')+'。單一局面的解析排名平均 '+num(stageA.rankMs,3)+' 毫秒。合法選擇失敗次數：'+(stageA.trainMeasure?.illegal??'沒有資料')+'。',
    '',
    'Stage A：'+(decision.passed?'通過':'沒有通過')+'。',
    ...(decision.reasons||[]).map(reason=>'- '+reason)
@@ -118,20 +125,24 @@ export function renderReport(report){
    '| 穩定結果和 Hard Search 2 一致 | '+pct(teacher.agreement)+' |',
    '| 穩定建議落在容許帶內 | '+pct(teacher.insideCap)+' |',
    '| 穩定建議被容許帶排除 | '+pct(teacher.excludedByCap)+' |',
-   '| 48 節點沒有比較到 | '+pct(teacher.notCompared)+' |',
-   '',
-   '被容許帶排除的穩定建議，按類型：',
-   '',
-   '| 類型 | 穩定 | 帶內 | 被排除 | 沒比較到 |',
-   '| --- | ---: | ---: | ---: | ---: |',
-   ...Object.entries(teacher.byBucket||{}).map(([bucket,row])=>'| '+bucket+' | '+row.stable+' | '+row.inside+' | '+row.excluded+' | '+row.notCompared+' |')
-  ]),
+ '| 48 節點沒有比較到 | '+pct(teacher.notCompared)+' |',
+ '| 保留局面完成率 | '+pct(stageA.holdoutTeacher?.completionRate)+' |',
+ '| 保留局面和 Hard Search 2 一致 | '+pct(stageA.holdoutTeacher?.agreement)+' |',
+ '| 保留局面被容許帶排除 | '+pct(stageA.holdoutTeacher?.excludedByCap)+' |',
+ '',
+ '被容許帶排除的穩定建議，按類型。這只是診斷，容許帶沒有放寬：',
+ '',
+ '| 類型 | 穩定 | 帶內 | 被排除 | 沒比較到 |',
+ '| --- | ---: | ---: | ---: | ---: |',
+ ...Object.entries(teacher.byBucket||{}).map(([bucket,row])=>'| '+(BUCKET_NAME[bucket]||bucket)+' | '+row.stable+' | '+row.inside+' | '+row.excluded+' | '+row.notCompared+' |')
+ ]),
   lines('對戰與晉級',[
    'Stage B：'+(stageB.status==='skipped'?'沒有執行':(stageB.passed?'通過':'沒有通過'))+'。對局數 '+(stageB.games??0)+'。',
    ...(stageB.decision?.reasons||[]).map(reason=>'- '+reason),
-   stageB.decision?'敏感型勝率 '+pct(stageB.decision.sensitive?.p)+'，高斯對照 '+pct(stageB.decision.gaussian?.p)+'，差距 '+pct(stageB.decision.drop)+'。':'',
-   'Stage C：'+(stageC.status==='skipped'?'沒有執行':(stageC.promoted?'晉級':'沒有晉級'))+'。對局數 '+(stageC.games??0)+'。',
-   stageC.paired?'配對勝率差 '+pct(stageC.paired.delta)+'，95% 區間 '+pct(stageC.paired.ci?.low)+' 到 '+pct(stageC.paired.ci?.high)+'。':'',
+ stageB.decision?'敏感型勝率 '+pct(stageB.decision.sensitive?.p)+'，高斯對照 '+pct(stageB.decision.gaussian?.p)+'。敏感型相對高斯對照 '+(Number.isFinite(stageB.decision.drop)?((stageB.decision.drop<=0?'高 ':'低 ')+pct(Math.abs(stageB.decision.drop))):'沒有資料')+'。送進冠軍挑戰的是小規模篩選勝率較高的 '+((stageB.decision.ranked||[]).find(row=>row.id===stageB.decision.challengerId)?.method||stageC.challengerId||'沒有')+'。':'',
+ 'Stage C：'+(stageC.status==='skipped'?'沒有執行':(stageC.promoted?'晉級':'沒有晉級'))+'。對局數 '+(stageC.games??0)+'。挑戰者 '+(stageC.challengerId||'沒有')+'。',
+ stageC.paired?'配對勝率差 '+pct(stageC.paired.delta)+'，95% 區間 '+pct(stageC.paired.ci?.low)+' 到 '+pct(stageC.paired.ci?.high)+'。完整配對 '+stageC.paired.n+'，不完整 '+stageC.paired.incomplete+'。':'',
+ ...(stageC.decks||[]).map(deck=>'對'+(DECK_NAME[deck.id]||deck.id)+'的配對差 '+pct(deck.delta)+'（'+deck.n+' 組）。'),
    stageC.mirror?'直接鏡像 '+((stageC.mirror.wins??0)+'/'+(stageC.mirror.n??0))+'，勝率 '+pct(stageC.mirror.p)+'，Wilson 下限 '+pct(stageC.mirror.low)+'。':'',
    ...(stageC.judgment?.reasons||[]).map(reason=>'- '+reason)
   ]),
