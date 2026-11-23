@@ -8,7 +8,7 @@ import {runV4B2} from '../training/white-sword-ai/v4b2/lib/run.mjs';
 const WORKERS=Math.max(1,Math.min(Number(process.env.WS_WORKERS||4),MAX_WORKERS));
 const ROOT=process.env.WS_V4B2_ROOT||'training/white-sword-ai/v4b2';
 
-function runPool(items,workerUrl){
+function runPool(items,workerUrl,take){
  return new Promise((resolve,reject)=>{
   if(!items.length){resolve([]);return;}
   const results=new Array(items.length);
@@ -26,7 +26,10 @@ function runPool(items,workerUrl){
    const onMessage=message=>{
     worker.off('message',onMessage);
     if(!message?.ok)return fail(message?.error||'worker failed');
-    results[index]=message.row;
+    let row;
+    try{row=take?take(message):message.row;}
+    catch(error){return fail(error);}
+    results[index]=row;
     finished++;
     if(finished%5===0||finished===items.length)console.log('完成',finished+'/'+items.length);
     if(cursor<items.length)assign(worker,cursor++);
@@ -56,8 +59,11 @@ async function main(){
  console.log('v4-B.2 workers',WORKERS);
  const report=await runV4B2({
   root:ROOT,
-  mineMany:specs=>runPool(specs,'./white-sword-v4b2-mine-worker.mjs'),
-  rolloutMany:jobs=>runPool(jobs,'./white-sword-v4b-rollout-worker.mjs'),
+  mineMany:specs=>runPool(specs,'./white-sword-v4b2-mine-worker.mjs',message=>message.row),
+  rolloutMany:(jobs,{onGame}={})=>runPool(jobs,'./white-sword-v4b-rollout-worker.mjs',message=>{
+   onGame?.(message.row);
+   return message.row;
+  }),
   log:console.log
  });
  console.log('停止點',report.stopped);
