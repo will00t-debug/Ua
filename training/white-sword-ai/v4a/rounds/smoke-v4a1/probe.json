@@ -1,0 +1,77 @@
+{
+  "positions": 6,
+  "disagreed": 0,
+  "rate": 0,
+  "bandPositions": 0,
+  "bandDisagreed": 0,
+  "bandRate": 0,
+  "versusChampion": 0,
+  "pairwise": 0,
+  "byPhase": {
+    "early-energy": {
+      "positions": 3,
+      "disagreed": 0,
+      "rate": 0
+    },
+    "mid-entry": {
+      "positions": 2,
+      "disagreed": 0,
+      "rate": 0
+    },
+    "line-move": {
+      "positions": 1,
+      "disagreed": 0,
+      "rate": 0
+    }
+  },
+  "byCandidate": {
+    "v4a-r0000-c0-c7972e811361": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0000-c1-6ce517024dca": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0000-c2-83f4eee7ea01": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0000-c3-3d439beb144e": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0000-c4-31a232174b5b": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0000-c5-42c36d324dbf": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0000-c6-b5e743dccef8": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0000-c7-3f47c0e2413f": {
+      "compared": 6,
+      "differed": 0,
+      "rate": 0
+    }
+  },
+  "examples": [],
+  "walked": 1,
+  "steps": 18,
+  "fallbackIds": [],
+  "seeds": [
+    101900
+  ],
+  "regenerated": false
+}

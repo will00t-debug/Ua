@@ -8,6 +8,8 @@ import {DEFAULT_DOCS,DEFAULT_ROOT} from '../training/white-sword-ai/v4a/lib/stor
 
 const STATE_BRANCH=process.env.WS_STATE_BRANCH||'cursor/white-sword-v4a-state-c159';
 const WORKERS=Math.max(1,Math.min(Number(process.env.WS_WORKERS||3),MAX_WORKERS));
+const ROOT=process.env.WS_ROOT||DEFAULT_ROOT;
+const DOCS=process.env.WS_DOCS||(process.env.WS_ROOT?null:DEFAULT_DOCS);
 
 let checkpointGames=0;
 function playMany(specs,{onGame}={}){
@@ -70,14 +72,14 @@ function printReport(report){
 function loadState(){
  if(process.env.WS_STATE_LOAD==='0')return;
  const loaded=loadPublishedState({
-  repo:process.cwd(),root:DEFAULT_ROOT,branch:STATE_BRANCH
+  repo:process.cwd(),root:ROOT,branch:STATE_BRANCH
  });
  console.log(loaded.loaded?'已讀取上一輪實驗狀態 '+loaded.files+' 個檔案':'沒有可接續的實驗狀態，從目前檔案開始');
 }
 function saveState(){
  if(process.env.WS_STATE_PUBLISH==='0')return;
  const published=publishState({
-  repo:process.cwd(),root:DEFAULT_ROOT,branch:STATE_BRANCH
+  repo:process.cwd(),root:ROOT,branch:STATE_BRANCH
  });
  console.log(published.pushed?'已保存實驗狀態':'實驗狀態沒有新的變更');
 }
@@ -94,22 +96,22 @@ async function main(){
   loadState();
   if(command==='smoke'){
    const report=await runRound({
-    profile:'smoke',round:0,playMany,root:DEFAULT_ROOT,docsRoot:DEFAULT_DOCS,log:console.log
+    profile:'smoke',round:0,playMany,root:ROOT,docsRoot:DOCS,log:console.log
    });
    printReport(report);
    if(report.status==='stopped')process.exitCode=2;
   }else if(command==='round'||count===1){
-   const round=nextRoundNumber(DEFAULT_ROOT);
+   const round=nextRoundNumber(ROOT);
    console.log(round.resume?'恢復第 '+round.round+' 輪':'開始第 '+round.round+' 輪','workers',WORKERS);
    const report=await runRound({
-    profile:'round',round:round.round,playMany,root:DEFAULT_ROOT,docsRoot:DEFAULT_DOCS,log:console.log
+    profile:'round',round:round.round,playMany,root:ROOT,docsRoot:DOCS,log:console.log
    });
    printReport(report);
    if(report.status==='stopped'||safetyFault(report))process.exitCode=2;
   }else{
    console.log('連續',count,'輪','workers',WORKERS);
    const sequence=await runSequence({
-    count,playMany,root:DEFAULT_ROOT,docsRoot:DEFAULT_DOCS,log:console.log,startedAt:started
+    count,playMany,root:ROOT,docsRoot:DOCS,log:console.log,startedAt:started
    });
    for(const report of sequence.reports)printReport(report);
    const last=sequence.reports.at(-1);

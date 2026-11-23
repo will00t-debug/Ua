@@ -1,0 +1,53 @@
+{
+  "status": "complete",
+  "codeVersion": "v4a1-1",
+  "profile": "smoke",
+  "round": 0,
+  "startedAt": 1795392686963,
+  "seeds": {
+    "round": 0,
+    "profile": "smoke",
+    "codeVersion": "v4a1-1",
+    "probe": [
+      101900
+    ],
+    "stageA": [
+      101910
+    ],
+    "stageB": [
+      101920
+    ],
+    "stageCPaired": [],
+    "stageCMirror": []
+  },
+  "sigmaScale": 1,
+  "bumped": false,
+  "candidateIds": [
+    "v4a-r0000-c0-c7972e811361",
+    "v4a-r0000-c1-6ce517024dca",
+    "v4a-r0000-c2-83f4eee7ea01",
+    "v4a-r0000-c3-3d439beb144e",
+    "v4a-r0000-c4-31a232174b5b",
+    "v4a-r0000-c5-42c36d324dbf",
+    "v4a-r0000-c6-b5e743dccef8",
+    "v4a-r0000-c7-3f47c0e2413f"
+  ],
+  "championId": "v2",
+  "championPolicy": "685ef4b4b808",
+  "historicalNote": "歷代實驗冠軍尚未出現，或與現任權重相同。這組對戰併入冠軍對戰，不另計成新對手。",
+  "historicalSame": true,
+  "officialV2": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "replay": {
+    "same": true,
+    "finished": true,
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    }
+  }
+}
