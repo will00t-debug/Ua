@@ -1,0 +1,30 @@
+{
+  "positions": 6,
+  "disagreed": 1,
+  "rate": 0.16666666666666666,
+  "examples": [
+    {
+      "seed": 101900,
+      "step": 35,
+      "band": 3,
+      "choices": {
+        "champion": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c0-c7972e811361": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c1-6ce517024dca": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c2-83f4eee7ea01": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-41\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c3-3d439beb144e": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c4-31a232174b5b": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c5-42c36d324dbf": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c6-5c983babe5b7": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "v4a-r0000-c7-3f47c0e2413f": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-0\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}"
+      }
+    }
+  ],
+  "walked": 1,
+  "steps": 59,
+  "fallbackIds": [],
+  "seeds": [
+    101900
+  ],
+  "regenerated": false
+}
