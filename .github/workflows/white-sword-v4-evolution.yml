@@ -14,13 +14,21 @@ on:
           - round
           - smoke
         default: round
+      rounds:
+        description: 連續輪數。只接受 1、3、5。時間或安全問題會停。
+        type: choice
+        options:
+          - '1'
+          - '3'
+          - '5'
+        default: '1'
       workers:
-        description: 平行對戰 worker 上限
+        description: 平行對戰 worker 上限，最多 4
         type: string
         default: '3'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: white-sword-v4a
@@ -29,7 +37,7 @@ concurrency:
 jobs:
   evolve:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,11 +45,20 @@ jobs:
           node-version: '22'
       - name: v4-A unit tests
         run: node --test tests/white-sword-v4a.test.mjs
-      - name: Evolve one round
+      - name: Evolve
         env:
           PROFILE: ${{ inputs.profile }}
+          ROUNDS: ${{ inputs.rounds }}
           WS_WORKERS: ${{ inputs.workers }}
-        run: node scripts/white-sword-v4a.mjs "$PROFILE"
+          WS_STATE_BRANCH: cursor/white-sword-v4a-state-c159
+        run: |
+          if [ "$PROFILE" = "smoke" ]; then
+            node scripts/white-sword-v4a.mjs smoke
+          elif [ "$ROUNDS" = "1" ]; then
+            node scripts/white-sword-v4a.mjs round
+          else
+            node scripts/white-sword-v4a.mjs rounds "$ROUNDS"
+          fi
       - name: Upload evolution evidence
         if: always()
         uses: actions/upload-artifact@v4

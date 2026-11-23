@@ -20,7 +20,11 @@
       "games": 1320,
       "cumulativeGames": 1338,
       "probe": {
-        "rate": 0.08333333333333333
+        "rate": 0.08333333333333333,
+        "positions": 12,
+        "disagreed": 1,
+        "bandPositions": 12,
+        "bandRate": 0.08333333333333333
       },
       "paired": {
         "delta": 0.002777777777777778,

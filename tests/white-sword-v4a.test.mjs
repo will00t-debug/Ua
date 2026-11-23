@@ -1,25 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {mkdtempSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
+import {mkdirSync,mkdtempSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {loadModel} from '../dist/universal-v2/white-sword-ai/model.mjs';
 import {positionKey} from '../dist/universal-v2/white-sword-ai/runner.mjs';
-import {policyHash,proposeEvolution} from '../training/white-sword-ai/v4a/lib/evolve.mjs';
+import {nextSigma,policyHash,proposeEvolution} from '../training/white-sword-ai/v4a/lib/evolve.mjs';
 import {buildStageCSpecs,buildStageSpecs} from '../training/white-sword-ai/v4a/lib/matches.mjs';
 import {propose,registerProposer} from '../training/white-sword-ai/v4a/lib/rl-hook.mjs';
 import {renderHistory,renderRound} from '../training/white-sword-ai/v4a/lib/report.mjs';
-import {nextRoundNumber,runRound} from '../training/white-sword-ai/v4a/lib/round.mjs';
+import {nextRoundNumber,runRound,runSequence} from '../training/white-sword-ai/v4a/lib/round.mjs';
 import {assertPlanLegal,emptyLedger,recordPlan} from '../training/white-sword-ai/v4a/lib/seeds.mjs';
 import {summarizeDisagreement} from '../training/white-sword-ai/v4a/lib/diverge.mjs';
+import {importState,loadPublishedState,publishState} from '../training/white-sword-ai/v4a/lib/persist.mjs';
 import {
- clusterBootstrap,judgeExperimental,rankCandidates,screenCandidates
+ clusterBootstrap,judgeExperimental,pairGames,rankCandidates,screenCandidates
 } from '../training/white-sword-ai/v4a/lib/stats.mjs';
-import {assertWritable,v2Hash,V0_FILE,V1_FILE,V2_FILE} from '../training/white-sword-ai/v4a/lib/store.mjs';
+import {acquireLock,assertWritable,v2Hash,V0_FILE,V1_FILE,V2_FILE} from '../training/white-sword-ai/v4a/lib/store.mjs';
 import {
- CANDIDATE_COUNT,CODE_VERSION,expectedCounts,isReserved,planSeeds,PROMOTION,STEP_CAP
+ CANDIDATE_COUNT,CODE_VERSION,expectedCounts,isReserved,planSeeds,PROFILES,PROMOTION,STEP_CAP
 } from '../training/white-sword-ai/v4a/lib/protocol.mjs';
+import {execFileSync} from 'node:child_process';
 
 const hashes=()=>({
  v2:createHash('sha256').update(readFileSync(V2_FILE)).digest('hex'),
@@ -64,7 +66,9 @@ async function evolve(profile,round,behavior,probe){
  const running=play(behavior);
  const report=await runRound({
   profile,round,root:dir.root,docsRoot:dir.docs,playMany:running.playMany,
-  probe:probe||fakeProbe({positions:4,disagreed:2,rate:0.5,examples:[],fallbackIds:[]}),
+  probe:probe||fakeProbe({
+   positions:200,disagreed:20,rate:0.1,bandPositions:40,bandRate:0.5,examples:[],fallbackIds:[]
+  }),
   replayMatches:replayOk,log(){}
  });
  return {...dir,report,calls:running.calls};
@@ -137,7 +141,9 @@ test('seed blocks stay disjoint from old evidence and the holdout',()=>{
  assert.equal(expectedCounts('round').stageC,840);
  assert.equal(expectedCounts('smoke').stageA,16);
  assert.equal(expectedCounts('smoke').stageC,0);
- assert.equal(CODE_VERSION,'v4a-1');
+ assert.equal(CODE_VERSION,'v4a1-1');
+ assert.equal(PROFILES.round.probe.minPositions,200);
+ assert.equal(PROFILES.round.probe.games,8);
  assert.equal(PROMOTION.pairedDelta,0.05);
 });
 function seedList(plan){
@@ -218,7 +224,7 @@ test('reports require measured games and production weights stay read-only',()=>
   challengerId:'v4a-r0005-c0',championLabel:'v2',paired:{delta:0.05,ci:{low:0.01,high:0.09}},
   promoted:false,nextDirection:'自動產生',candidates:[],probe:{positions:4,disagreed:2,rate:0.5,examples:[]},
   stageAGames:192,stageBGames:288,stageCGames:840,seeds:{probe:[1],stageA:[2],stageB:[3],stageCPaired:[],stageCMirror:[]},
-  judgment:{reasons:['配對勝率差未達 +5 個百分點']},codeVersion:'v4a-1',historicalNote:'歷代實驗冠軍尚未出現'
+  judgment:{reasons:['配對勝率差未達 +5 個百分點']},codeVersion:'v4a1-1',historicalNote:'歷代實驗冠軍尚未出現'
  });
  assert.match(text,/第 5 輪/);
  assert.match(text,/8,400|8400/);
@@ -301,23 +307,24 @@ test('illegal play stops the round before later stages',async()=>{
  rmSync(run.root,{recursive:true,force:true});
 });
 
-test('zero disagreement triggers one bounded regeneration',async()=>{
+test('low band disagreement raises the next round only',async()=>{
  let probes=0;
  const dir=workspace();
  const running=play();
  const report=await runRound({
-  profile:'smoke',round:0,root:dir.root,docsRoot:dir.docs,playMany:running.playMany,replayMatches:replayOk,log(){},
+  profile:'round',round:1,root:dir.root,docsRoot:dir.docs,playMany:running.playMany,replayMatches:replayOk,log(){},
   probe:async()=>{
    probes++;
-   return probes===1
-    ?{positions:3,disagreed:0,rate:0,examples:[],fallbackIds:[]}
-    :{positions:3,disagreed:1,rate:1/3,examples:[],fallbackIds:[]};
+   return {positions:200,disagreed:0,rate:0,bandPositions:20,bandRate:0,examples:[],fallbackIds:[]};
   }
  });
- assert.equal(probes,2);
- assert.equal(report.probe.regenerated,true);
- assert.equal(report.probe.rate,1/3);
+ assert.equal(probes,1);
+ assert.equal(report.probe.regenerated,false);
  assert.equal(report.promoted,false);
+ const explore=JSON.parse(readFileSync(join(dir.root,'explore-state.json'),'utf8'));
+ assert.equal(explore.sigmaScale,1.25);
+ assert.equal(nextSigma(1,{bandPositions:40,bandRate:0.08},false),1);
+ assert.equal(nextSigma(1.25,{bandRate:0},true),1.25);
  rmSync(dir.root,{recursive:true,force:true});
 });
 
@@ -327,4 +334,165 @@ test('workflow file is manual and does not schedule or deploy',()=>{
  assert.equal(text.includes('schedule:'),false);
  assert.equal(text.includes('cloudflare'),false);
  assert.match(text,/white-sword-v4a/);
+ assert.match(text,/'1'/);
+ assert.match(text,/'3'/);
+ assert.match(text,/'5'/);
+});
+
+test('incomplete pairs are excluded from the win rate',()=>{
+ const challenger={seed:7,first:1,specialistSeat:1,opponentDeck:'renruki',status:'error',winner:null,error:'Forged blocker ceiling',anomalies:{...clean,engineError:1}};
+ const baseline={...challenger,status:'error',error:'Forged blocker ceiling'};
+ const paired=pairGames([challenger],[baseline]);
+ assert.equal(paired.pairs.length,0);
+ assert.equal(paired.incomplete.length,1);
+ assert.equal('challengerWin' in paired.incomplete[0],false);
+ const gate=judgeExperimental({
+  profile:'round',paired:{n:359,delta:0.08,ci:{low:0.01,high:0.1},incomplete:1,missing:0},
+  mirror:{n:120,p:0.64,low:0.55},decks:[],anomalies:{engineError:2,unfinished:2}
+ });
+ assert.equal(gate.promoted,false);
+ assert.match(gate.reasons.join('\n'),/不完整配對/);
+});
+
+test('too few divergence positions stops before any battle',async()=>{
+ const dir=workspace();
+ const running=play();
+ const report=await runRound({
+  profile:'round',round:1,root:dir.root,docsRoot:dir.docs,playMany:running.playMany,replayMatches:replayOk,log(){},
+  probe:async()=>({positions:12,disagreed:1,rate:1/12,bandPositions:12,bandRate:1/12,examples:[],fallbackIds:[]})
+ });
+ assert.equal(report.status,'stopped');
+ assert.deepEqual(running.calls,[]);
+ assert.throws(()=>nextRoundNumber(dir.root),/安全停止/);
+ rmSync(dir.root,{recursive:true,force:true});
+});
+
+test('an interrupted stage resumes only the missing games',async()=>{
+ const dir=workspace();
+ const firstKeys=[];
+ let failed=false;
+ const playMany=async(specs,{onGame}={})=>{
+  if(!failed){
+   failed=true;
+   const games=specs.slice(0,3).map(spec=>({
+    specKey:spec.key,status:'finished',winner:spec.specialistSeat,anomalies:{...clean},
+    timing:{n:1,mean:2,p50:2,p95:2,max:2},tally:{energy:1,front:1,move:0,raid:1,attack:1,apSpent:1}
+   }));
+   for(const game of games){
+    firstKeys.push(game.specKey);
+    onGame(game);
+   }
+   throw Error('runner stopped');
+  }
+  return specs.map(spec=>({
+   specKey:spec.key,status:'finished',winner:spec.specialistSeat,anomalies:{...clean},
+   timing:{n:1,mean:2,p50:2,p95:2,max:2},tally:{energy:1,front:1,move:0,raid:1,attack:1,apSpent:1}
+  }));
+ };
+ await assert.rejects(()=>runRound({
+  profile:'smoke',round:0,root:dir.root,docsRoot:dir.docs,playMany,replayMatches:replayOk,log(){},
+  probe:fakeProbe({positions:4,disagreed:1,rate:0.25,examples:[],fallbackIds:[]})
+ }),/runner stopped/);
+ const seen=[];
+ const report=await runRound({
+  profile:'smoke',round:0,root:dir.root,docsRoot:dir.docs,replayMatches:replayOk,log(){},
+  probe(){throw Error('probe should stay on disk');},
+  playMany:async(specs,{onGame}={})=>{
+   for(const spec of specs)seen.push(spec.key);
+   const games=specs.map(spec=>({
+    specKey:spec.key,status:'finished',winner:spec.specialistSeat,anomalies:{...clean},
+    timing:{n:1,mean:2,p50:2,p95:2,max:2},tally:{energy:1,front:1,move:0,raid:1,attack:1,apSpent:1}
+   }));
+   for(const game of games)onGame?.(game);
+   return games;
+  }
+ });
+ assert.equal(report.status,'complete');
+ assert.equal(report.games,18);
+ for(const key of firstKeys)assert.equal(seen.includes(key),false);
+ assert.equal(seen.length,15);
+ rmSync(dir.root,{recursive:true,force:true});
+});
+
+test('an engine fault halts the sequence and does not start the next round',async()=>{
+ const dir=workspace();
+ const sequence=await runSequence({
+  count:3,root:dir.root,docsRoot:dir.docs,log(){},
+  playMany:play(spec=>spec.stage==='stage-c'
+   ?{status:'error',winner:null,error:'Forged blocker ceiling',anomalies:{...clean,engineError:1}}
+   :{}).playMany
+ });
+ assert.equal(sequence.reports.length,1);
+ assert.equal(sequence.reports[0].promoted,false);
+ assert.ok(sequence.reports[0].anomalies.engineError>0);
+ assert.throws(()=>nextRoundNumber(dir.root),/安全停止/);
+ rmSync(dir.root,{recursive:true,force:true});
+});
+
+test('a fresh lock from another host blocks a champion update',()=>{
+ const dir=workspace();
+ writeFileSync(join(dir.root,'champion.lock'),JSON.stringify({
+  pid:1,host:'other-runner',at:new Date().toISOString()
+ }));
+ assert.throws(()=>acquireLock(dir.root),/實驗冠軍/);
+ rmSync(dir.root,{recursive:true,force:true});
+});
+
+test('experimental state round-trips and a rejected push leaves the previous state',()=>{
+ const repo=mkdtempSync(join(tmpdir(),'v4a-repo-'));
+ const bare=mkdtempSync(join(tmpdir(),'v4a-bare-'));
+ const git=(args,cwd)=>execFileSync('git',args,{cwd,encoding:'utf8'});
+ git(['init','--bare',bare],repo);
+ git(['init'],repo);
+ git(['config','user.email','v4a@local'],repo);
+ git(['config','user.name','v4a'],repo);
+ writeFileSync(join(repo,'README'),'state test\n');
+ git(['add','README'],repo);
+ git(['commit','-m','init'],repo);
+ git(['remote','add','origin',bare],repo);
+ git(['push','-u','origin','HEAD:refs/heads/main'],repo);
+ const root=join(repo,'experimental');
+ mkdirSync(join(root,'champion'),{recursive:true});
+ writeFileSync(join(root,'history.json'),'{"rounds":[{"round":1}]}\n');
+ writeFileSync(join(root,'champion','current.json'),'{"version":"v2","production":false}\n');
+ const branch='cursor/white-sword-v4a-state-c159';
+ assert.equal(publishState({repo,root,branch,remote:'origin'}).pushed,true);
+ const restored=join(repo,'restored');
+ const loaded=loadPublishedState({repo,root:restored,branch,remote:'origin'});
+ assert.equal(loaded.loaded,true);
+ assert.match(readFileSync(join(restored,'history.json'),'utf8'),/round":1/);
+ assert.throws(()=>publishState({repo,root,branch:'main',remote:'origin'}),/拒絕/);
+ const bundle=mkdtempSync(join(tmpdir(),'v4a-bundle-'));
+ mkdirSync(join(bundle,'rounds','0002'),{recursive:true});
+ const running=JSON.stringify({status:'running',codeVersion:'v4a-1'});
+ writeFileSync(join(bundle,'rounds','0002','manifest.json'),running);
+ const hash=createHash('sha256').update(running).digest('hex');
+ writeFileSync(join(bundle,'state-manifest.json'),JSON.stringify({
+  format:'ua-white-sword-v4a-state',codeVersion:'v4a1-1',running:true,
+  files:[{file:'rounds/0002/manifest.json',sha256:hash}]
+ }));
+ assert.throws(()=>importState(bundle,join(repo,'incompatible')),/不相容/);
+ writeFileSync(join(bare,'hooks','pre-receive'),'#!/bin/sh\nexit 1\n');
+ execFileSync('chmod',['+x',join(bare,'hooks','pre-receive')]);
+ writeFileSync(join(root,'history.json'),'{"rounds":[{"round":2}]}\n');
+ assert.throws(()=>publishState({repo,root,branch,remote:'origin'}));
+ const tip=git(['rev-parse',branch],bare).trim();
+ const shown=git(['show',tip+':history.json'],bare);
+ assert.match(shown,/round":1/);
+ rmSync(repo,{recursive:true,force:true});
+ rmSync(bare,{recursive:true,force:true});
+ rmSync(bundle,{recursive:true,force:true});
+});
+
+test('history separates a finished pipeline from a stronger model',()=>{
+ const text=renderHistory([
+  {profile:'round',round:1,games:1320,challengerId:'v4a-r0001-c2-4240a419cc27',probe:{rate:0.08333333333333333,positions:12},paired:{delta:0.002777777777777778},promoted:false}
+ ]);
+ assert.match(text,/系統|分歧率/);
+ assert.match(text,/R1/);
+ assert.match(text,/1320/);
+ assert.match(text,/C2/);
+ assert.match(text,/\+0\.28%/);
+ assert.match(text,/8\.3%（12 局面）/);
+ assert.match(text,/否/);
 });

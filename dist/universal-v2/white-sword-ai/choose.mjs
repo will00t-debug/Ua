@@ -113,9 +113,22 @@ export function withinHardCap(rows,hardAction,cap){
  const allowed=rows.filter(row=>row.hardScore>=base-cap-1e-9);
  return allowed.length?allowed:rows;
 }
-function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs,hardCap){
+export function searchOnce(pack,state,seed){
  const hard=chooseStrengthenedHardAction(pack,state,{...HARD_OPTIONS,seed});
- const trace=lastHardAiTrace();
+ return {hard,trace:lastHardAiTrace()};
+}
+export function scoreBlend(pack,state,legal,model,seed,seat,searched,{scale=BLEND_SCALE,hardCap=null}={}){
+ const observation=observeActor(pack,state,seat);
+ const catalogs=catalogsOf(pack);
+ const picked=blendRows(pack,state,seat,legal,model,scale,seed,observation,catalogs,hardCap,searched);
+ if(!picked?.action)return {action:null,source:'fallback',reason:'blend produced no legal action'};
+ const exact=legal.find(item=>item===picked.action||same(item,picked.action));
+ if(!exact)return {action:null,source:'fallback',reason:'model action is not legal'};
+ return {action:exact,source:'blend',reason:null};
+}
+function blendRows(pack,state,seat,legal,model,scale,seed,observation,packs,hardCap,searched){
+ const hard=searched?searched.hard:chooseStrengthenedHardAction(pack,state,{...HARD_OPTIONS,seed});
+ const trace=searched?searched.trace:lastHardAiTrace();
  const rows=[];
  const seen=new Set();
  const add=(action,hardScore)=>{

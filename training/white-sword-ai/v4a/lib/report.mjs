@@ -41,6 +41,22 @@ export function renderRound(result){
   '- 是否通過晉級：'+passed,
   '- 下一輪訓練方向：'+result.nextDirection,
   '',
+  '## 系統流程',
+  '',
+  '- 候選生成：'+(result.candidateCount?'已產生 '+result.candidateCount+' 個':'沒有產生'),
+  '- 對戰：'+(result.status==='complete'?'已完成排定對局':result.status==='stopped'?'已安全停止':'進行中'),
+  '- 資料保存：實驗目錄已寫入。正式版 v2 沒有被改。',
+  '- 這一段只說明流程有沒有跑完，不代表棋力提升。',
+  '',
+  '## 棋力',
+  '',
+  '- 獨立配對勝率差：'+signedPercent(result.paired?.delta),
+  '- 95% 信賴區間：'+interval(result.paired?.ci),
+  '- 完整配對：'+(Number.isInteger(result.paired?.n)?result.paired.n+' 對':'沒有獨立驗證'),
+  '- 不完整配對：'+(result.paired?.incomplete??0)+' 對。不完整配對不計勝、負或平手。',
+  '- 直接鏡像：'+countLine(result.mirror),
+  '- 是否晉級為實驗冠軍：'+passed,
+  '',
   '初選與複選只負責淘汰和決定誰進入獨立驗證。這份報告不把小樣本勝率當成變強。',
   '晉級只會寫進實驗冠軍。正式版 v2、對戰選單和正式站都不會被改。',
   ''
@@ -57,8 +73,18 @@ export function renderRound(result){
  const probe=result.probe||{};
  lines.push('- 可比較的可見局面：'+(probe.positions??'尚無資料'));
  lines.push('- 候選做出不同合法行動的局面：'+(probe.disagreed??'尚無資料'));
- lines.push('- 分歧率：'+percent(probe.rate));
- if(probe.regenerated)lines.push('- 第一代在上限內沒有分歧，已依事先登記把探索強度乘上 1.25 後再測一次。單項權重變化仍不超過 1.5。');
+ lines.push('- 分歧率：'+percent(probe.rate)+(Number.isInteger(probe.positions)?'（'+probe.positions+' 局面）':''));
+ if(Number.isInteger(probe.bandPositions)){
+  lines.push('- 硬搜尋容許帶裡有兩個以上行動的局面：'+probe.bandPositions);
+  lines.push('- 帶內分歧率：'+percent(probe.bandRate));
+ }
+ if(Number.isFinite(probe.versusChampion))lines.push('- 候選與冠軍不同的比率：'+percent(probe.versusChampion));
+ if(Number.isFinite(probe.pairwise))lines.push('- 候選彼此不同的比率：'+percent(probe.pairwise));
+ const phases=Object.entries(probe.byPhase||{});
+ if(phases.length){
+  lines.push('- 各階段分歧：');
+  for(const [bucket,row] of phases)lines.push('  - '+bucketLabel(bucket)+'：'+percent(row.rate)+'（'+row.disagreed+'/'+row.positions+'）');
+ }
  if(probe.examples?.length){
   lines.push('- 分歧例子只記錄行動種類，不記錄手牌、血區或牌庫。');
   for(const example of probe.examples){
@@ -101,6 +127,13 @@ export function renderRound(result){
  lines.push('- 牆鐘：'+fixed((result.wallMs||0)/1000)+' 秒');
  if(result.replay)lines.push('- 同一規格重放兩次：'+(result.replay.same&&result.replay.finished?'行動一致':'不一致，這一輪已停止'));
  if(result.harnessNote)lines.push('- '+result.harnessNote);
+ if(result.faults?.length){
+  lines.push('- 異常對局不計入勝敗或平手：');
+  for(const fault of result.faults){
+   lines.push('  - 種子 '+(fault.seed??'不明')+'，階段 '+(fault.stage||'不明')+'，狀態 '+(fault.status||'不明')
+    +'，原因 '+(fault.error||fault.role||'未完成'));
+  }
+ }
  lines.push('', '## 晉級檢定');
  lines.push('');
  lines.push('事先登記的條件：配對勝率差至少 +'+points(PROMOTION.pairedDelta)+' 個百分點，95% 信賴區間下限大於 0，直接鏡像至少 '
@@ -155,20 +188,39 @@ export function renderHistory(rows){
  const lines=[
   '# 白劍 AI v4-A 累積紀錄',
   '',
-  '| 輪次 | 對戰 | 累積 | 分歧率 | 相對勝率差 | 95% 下限 | 晉級 | 冠軍 |',
-  '| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |'
+  '分歧率是實際觀察到的不同合法行動，不是權重不同。流程跑完不代表棋力提升。',
+  '',
+  '| 輪次 | 對局數 | 最強候選 | 勝率差 | 出牌分歧率 | 是否晉級 |',
+  '| --- | ---: | --- | ---: | ---: | --- |'
  ];
  for(const row of rows){
-  lines.push('| '+(row.profile==='smoke'?'smoke':row.round)
+  const probe=row.probe||{};
+  const sample=Number.isInteger(probe.positions)?probe.positions:null;
+  lines.push('| '+(row.profile==='smoke'?'smoke':'R'+row.round)
    +' | '+row.games
-   +' | '+row.cumulativeGames
-   +' | '+percent(row.probe?.rate)
-   +' | '+signedPercent(row.paired?.delta)
-   +' | '+signedPercent(row.paired?.ci?.low)
-   +' | '+(row.promoted?'是':'否')
-   +' | '+row.championLabel+' |');
+   +' | '+candidateLabel(row.challengerId)
+   +' | '+historyDelta(row.paired?.delta)
+   +' | '+percent(probe.rate)+(sample!==null?'（'+sample+' 局面）':'')
+   +' | '+(row.promoted?'是':'否')+' |');
  }
- if(!rows.length)lines.push('| 尚無完成的輪次 |  |  |  |  |  |  |  |');
+ if(!rows.length)lines.push('| 尚無完成的輪次 |  |  |  |  |  |');
  lines.push('');
  return lines.join('\n');
+}
+function historyDelta(value){
+ if(!Number.isFinite(value))return '沒有獨立驗證';
+ const points=value*100;
+ const sign=points>0?'+':'';
+ return sign+points.toFixed(2)+'%';
+}
+function candidateLabel(id){
+ if(!id)return '沒有';
+ const match=String(id).match(/-c(\d+)-/);
+ return match?'C'+match[1]:id;
+}
+function bucketLabel(bucket){
+ return {
+  'early-energy':'前期能源','mid-entry':'中期登場',raid:'Raid 時機',ap:'AP 使用',
+  'line-move':'前線移動','attack-defense':'攻擊與防守','late-pressure':'中後期生命壓力',unlabeled:'未分類'
+ }[bucket]||bucket;
 }

@@ -2,7 +2,7 @@
 import {join} from 'node:path';
 import {replayMatches as replayRealMatches} from '../../../../dist/universal-v2/white-sword-ai/runner.mjs';
 import {probeDivergence} from './diverge.mjs';
-import {policyHash} from './evolve.mjs';
+import {policyHash,nextSigma} from './evolve.mjs';
 import {buildStageCSpecs,buildStageSpecs} from './matches.mjs';
 import {propose} from './rl-hook.mjs';
 import {renderHistory,renderRound} from './report.mjs';
@@ -11,9 +11,9 @@ import {
  anomalyReport,byOpponent,bySeat,clusterBootstrap,judgeExperimental,meanTally,pairGames,rankCandidates,rateOf,screenCandidates
 } from './stats.mjs';
 import {
- acquireLock,appendJsonl,ensureChampion,ledgerFile,loadParents,readJson,readJsonl,roundDir,roundNumbers,v2Hash,writeExperimentalChampion,writeJson,writeText
+ acquireLock,appendJsonl,ensureChampion,ledgerFile,loadParents,readHalt,readJson,readJsonl,roundDir,roundNumbers,v2Hash,writeExperimentalChampion,writeHalt,writeJson,writeText
 } from './store.mjs';
-import {CODE_VERSION,PROFILES,SIGMA_BUMP,SIGMA_SCALE_MAX,planSeeds,expectedCounts} from './protocol.mjs';
+import {CODE_VERSION,PROFILES,ROUND_GAME_CAP,SEQUENCE_COUNTS,SEQUENCE_WALL_MS,planSeeds,expectedCounts} from './protocol.mjs';
 
 function slim(candidate){
  return {
@@ -95,18 +95,32 @@ function diagnosisOf(history,current){
  let streak=0;
  for(let i=rows.length-1;i>=0;i--){
   if(rows[i].promoted)break;
-  if((rows[i].probe?.rate||0)<0.02)streak++;
+  const rate=rows[i].probe?.bandRate??rows[i].probe?.rate??0;
+  if(rate<0.02)streak++;
   else break;
  }
+ const band=current.probe?.bandPositions??0;
+ const bandRate=current.probe?.bandRate??current.probe?.rate??0;
  if(streak>=2){
-  return '連續 '+streak+' 輪沒有晉級，而且出牌分歧率低於 2%。系統會在下一輪沿用較高的探索強度。單項權重變化仍不超過 1.5，晉級門檻也不會放寬。';
+  return '連續 '+streak+' 輪沒有晉級，而且硬搜尋容許帶裡的出牌分歧率低於 2%。下一輪會沿用較高的探索強度。單項權重變化仍不超過 1.5，晉級門檻也不會放寬。';
  }
- if((current.probe?.rate||0)<0.02){
-  return '這一輪在硬搜尋容許帶裡的出牌分歧率低於 2%。探索沒有超過事先登記的上限。晉級門檻維持原訂數值。';
+ if(bandRate<0.02){
+  return '這一輪在 '+current.probe.positions+' 個有效局面裡，硬搜尋容許帶有 '+band+' 個，帶內分歧率低於 2%。探索強度留給下一輪，這一輪的候選不會事後改寫。晉級門檻維持原訂數值。';
  }
  return '這一輪的部分候選在相同可見局面選擇了不同的合法行動。晉級門檻維持原訂數值。';
 }
+export function safetyFault(report){
+ const dirt=report?.anomalies||{};
+ return report?.status==='stopped'||!!(dirt.illegal||dirt.leak||dirt.fallback||dirt.timeout||
+  dirt.deadLoop||dirt.engineError||dirt.unfinished||dirt.opponentFallback);
+}
 export function nextRoundNumber(root){
+ const halt=readHalt(root);
+ if(halt){
+  const error=Error('實驗已安全停止：'+(halt.reason||'上一輪出現安全問題'));
+  error.code='V4A_HALT';
+  throw error;
+ }
  const numbers=roundNumbers(root);
  if(!numbers.length)return {round:1,resume:false};
  const round=numbers[numbers.length-1];
@@ -149,9 +163,10 @@ export async function runRound({
    const ledger=loadLedger(ledgerFile(root));
    recordPlan(ledger,plan);
    saveLedger(ledgerFile(root),ledger);
-   const explore=profileName==='round'?readJson(join(root,'explore-state.json'),{sigmaScale:1}):{sigmaScale:1};
+   const explore=profileName==='round'?readJson(join(root,'explore-state.json'),{sigmaScale:1,elites:[]}):{sigmaScale:1,elites:[]};
    const proposed=propose({
-    kind:'evolution',round:roundNumber,parent:championModel,historical:loadedParents,sigmaScale:explore.sigmaScale||1
+    kind:'evolution',round:roundNumber,parent:championModel,historical:loadedParents,
+    sigmaScale:explore.sigmaScale||1,elites:explore.elites||[]
    });
    manifest={
     status:'running',codeVersion:CODE_VERSION,profile:profileName,round:roundNumber,
@@ -178,30 +193,9 @@ export async function runRound({
    champion,historical,official,playMany,log
   });
   if(probeReport.fallbackIds?.length)return finishStop(contextBase(),'探測階段出現 fallback 或逾時');
-  if(!manifest.bumped&&probeReport.positions>0&&probeReport.rate===0){
-   const scale=Math.min(SIGMA_SCALE_MAX,manifest.sigmaScale*SIGMA_BUMP);
-   const again=propose({
-    kind:'evolution',round:roundNumber,parent:championModel,historical:loadedParents,
-    sigmaScale:scale,salt:17
-   });
-   saveCandidates(dir,again.candidates);
-   manifest.bumped=true;
-   manifest.sigmaScale=scale;
-   manifest.candidateIds=again.candidates.map(row=>row.id);
-   writeJson(join(dir,'manifest.json'),manifest);
-   candidates=again.candidates;
-   probeReport={regenerated:false,positions:probeReport.positions,rate:0,previousRate:0};
-  }
-  if(manifest.bumped&&!probeReport.regenerated){
-   const second=await probe({
-    candidates,champion:championModel,seeds:manifest.seeds.probe,
-    maxSteps:profile.probe.maxSteps,maxPositions:profile.probe.maxPositions,log
-   });
-   second.regenerated=true;
-   second.previousRate=0;
-   writeJson(join(dir,'probe.json'),second);
-   probeReport=second;
-   if(probeReport.fallbackIds?.length)return finishStop(contextBase(),'加強探索後出現 fallback 或逾時');
+  const minimum=profile.probe.minPositions||0;
+  if((probeReport.positions||0)<minimum){
+   return finishStop(contextBase(),'有效分歧局面 '+(probeReport.positions||0)+' 少於事先登記的 '+minimum);
   }
   const context={
    manifest,dir,docsRoot,root,profile,profileName,roundNumber,counts,candidates,probe:probeReport,
@@ -291,7 +285,10 @@ function baseReport(partial,manifest,played){
   paired:null,mirror:null,decks:[],seat:null,tally:null,championTally:null,
   probe:{
    positions:probe.positions||0,disagreed:probe.disagreed||0,rate:probe.rate||0,
-   regenerated:!!probe.regenerated,examples:probe.examples||[],fallbackIds:probe.fallbackIds||[]
+   bandPositions:probe.bandPositions??null,bandRate:probe.bandRate??null,
+   versusChampion:probe.versusChampion??null,pairwise:probe.pairwise??null,
+   byPhase:probe.byPhase||{},byCandidate:probe.byCandidate||{},
+   regenerated:false,examples:probe.examples||[],fallbackIds:probe.fallbackIds||[]
   },
   seeds:manifest.seeds,historicalNote:manifest.historicalNote,replay:manifest.replay||null,
   harnessNote:manifest.harnessNote||null,
@@ -300,6 +297,13 @@ function baseReport(partial,manifest,played){
   startedAt:new Date(manifest.startedAt).toISOString(),
   wallMs:Date.now()-manifest.startedAt
  };
+}
+function eliteSnapshot(candidates,ranking,skipId){
+ return (ranking||[]).filter(row=>row.id!==skipId).slice(0,2).map(row=>{
+  const found=(candidates||[]).find(candidate=>candidate.id===row.id);
+  if(!found?.model?.policy)return null;
+  return {id:found.id,method:found.method,policy:found.model.policy.slice()};
+ }).filter(Boolean);
 }
 function finishRound(context,outcome){
  const {stageA,stageB,stageC,advancing,challenger,screened}=outcome;
@@ -324,13 +328,18 @@ function finishRound(context,outcome){
    return {id,n:rows.length,delta};
   });
   const dirt=anomalyReport(stageC.games);
-  report.paired={n:boot.n,delta:boot.delta,ci:boot.ci,missing:paired.missing.length,clusters:boot.clusters};
+  report.paired={
+   n:boot.n,attempted:challengerGames.length,incomplete:paired.incomplete.length,
+   missing:paired.missing.length,incompleteRows:paired.incomplete.slice(0,20),
+   delta:boot.delta,ci:boot.ci,clusters:boot.clusters
+  };
   report.mirror=mirror;
   report.decks=decks;
   report.seat=bySeat(challengerGames);
   report.tally=meanTally(challengerGames);
   report.championTally=meanTally(baselineGames);
   report.anomalies={...dirt.totals,unfinished:dirt.unfinished};
+  report.faults=dirt.faults;
   report.judgment=judgeExperimental({
    profile:context.profileName,paired:report.paired,mirror,decks,anomalies:report.anomalies
   });
@@ -357,14 +366,25 @@ function finishRound(context,outcome){
  const history=readJson(join(context.root,'history.json'),{rounds:[]});
  report.cumulativeGames=history.rounds.reduce((sum,row)=>sum+(row.games||0),0)+report.games;
  report.diagnosis=diagnosisOf(history.rounds,report);
- if((report.probe.rate||0)<0.02&&!report.promoted&&context.profileName==='round'){
-  report.nextDirection='自動產生。探索強度維持 '+context.manifest.sigmaScale+'，單項權重仍不超過 1.5。';
+ const scale=context.profileName==='round'
+  ?nextSigma(context.manifest.sigmaScale||1,report.probe,report.promoted)
+  :context.manifest.sigmaScale||1;
+ if(context.profileName==='round'&&!report.promoted&&scale!==(context.manifest.sigmaScale||1)){
+  report.nextDirection='自動產生。下一輪探索強度為 '+scale+'，單項權重仍不超過 1.5。這一輪的候選與驗證種子都不會回頭改。';
  }
  writeOutputs(context.root,context.docsRoot,context.dir,context.manifest,report);
  if(context.profileName==='round'&&report.status==='complete'){
+  const previous=readJson(join(context.root,'explore-state.json'),{elites:[]});
+  const elites=eliteSnapshot(context.candidates,outcome.rankedB,report.promoted?report.experimentalChampion:null);
   writeJson(join(context.root,'explore-state.json'),{
-   sigmaScale:context.manifest.sigmaScale,updatedRound:context.roundNumber,disagreement:report.probe.rate
+   sigmaScale:scale,updatedRound:context.roundNumber,
+   disagreement:report.probe.bandRate??report.probe.rate,
+   positions:report.probe.positions,bandPositions:report.probe.bandPositions??null,
+   elites:elites.length?elites:(previous.elites||[])
   });
+ }
+ if(context.profileName==='round'&&safetyFault(report)){
+  writeHalt(context.root,report.judgment?.reasons?.join('；')||'這一輪出現安全問題',context.roundNumber);
  }
  context.manifest.status=report.status;
  writeJson(join(context.dir,'manifest.json'),context.manifest);
@@ -388,10 +408,44 @@ function writeOutputs(root,docsRoot,dir,manifest,report){
  }
 }
 function publicHistory(report){
+ const probe=report.probe||{};
  return {
   profile:report.profile,round:report.round,games:report.games,cumulativeGames:report.cumulativeGames,
-  probe:{rate:report.probe?.rate||0},paired:report.paired?{delta:report.paired.delta,ci:report.paired.ci}:null,
+  probe:{
+   rate:probe.rate||0,positions:probe.positions??null,
+   bandRate:probe.bandRate??null,bandPositions:probe.bandPositions??null
+  },
+  paired:report.paired?{delta:report.paired.delta,ci:report.paired.ci,n:report.paired.n,incomplete:report.paired.incomplete||0}:null,
   promoted:report.promoted,championLabel:report.championLabel,status:report.status,
   challengerId:report.challengerId
  };
+}
+export async function runSequence({
+ count=1,playMany,root,docsRoot,parents,log=()=>{},maxWallMs,startedAt=Date.now()
+}={}){
+ if(!SEQUENCE_COUNTS.includes(count))throw Error('連續輪數只接受 1、3 或 5');
+ const limit=Number.isFinite(maxWallMs)?maxWallMs:SEQUENCE_WALL_MS[count];
+ const reports=[];
+ let games=0;
+ for(let index=0;index<count;index++){
+  if(Date.now()-startedAt>=limit){
+   log('已達連續訓練時間上限，不再開始下一輪');
+   break;
+  }
+  if(games+ROUND_GAME_CAP>ROUND_GAME_CAP*count)break;
+  let next;
+  try{next=nextRoundNumber(root);}
+  catch(error){
+   if(error?.code==='V4A_HALT'||error?.code==='V4A_STOPPED'){
+    log(error.message);
+    break;
+   }
+   throw error;
+  }
+  const report=await runRound({profile:'round',round:next.round,playMany,root,docsRoot,parents,log});
+  reports.push(report);
+  games+=report.games||0;
+  if(report.status!=='complete'||safetyFault(report))break;
+ }
+ return {reports,games};
 }
