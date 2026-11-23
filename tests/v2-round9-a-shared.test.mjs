@@ -396,9 +396,15 @@ test('one chosen character gains BP and a battle-win draw, and sniper only for a
  assert.equal(universalBp(miss.pack,s,s.players[0].front[0]),4500);
  const empty=open([spell],108);
  fuel(empty.s);
- [s]=playEvent(empty.pack,empty.s,'SMASH');
- assert.equal(s.pending,null);
- assert.equal(s.players[0].outside.some(c=>c.cardId==='SMASH'),true);
+ const emptyCard=hold(empty.s,'SMASH');
+ const emptyBefore=structuredClone(empty.s);
+ // Q1119: mandatory own-field choose-one with no stamped character is unplayable.
+ assert.equal(legalUniversalActions(empty.pack,empty.s)
+  .some(a=>a.type==='event'&&a.uid===emptyCard.uid),false);
+ assert.throws(()=>dispatchUniversalAction(empty.pack,empty.s,
+  {type:'event',uid:emptyCard.uid},{actor:0}),/Action not currently legal/);
+ assert.deepEqual(empty.s,emptyBefore);
+ assert.ok(empty.s.players[0].hand.some(c=>c.uid===emptyCard.uid));
 });
 
 test('looking at the top publishes at most one character and draws only for the named card',()=>{

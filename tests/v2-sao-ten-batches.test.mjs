@@ -268,6 +268,20 @@ test('SAO-1-064 retires by hand plus ALO, and Q762 is 4 hand + 3 ALO = 4500',()=
  assert.equal(small.pending.limit,1000);
  assert.deepEqual(small.pending.choices,[exact.uid]);
  assert.equal(small.pending.choices.includes(above.uid),false);
+
+ // Q1119: no opponent FRONT at or under the scaled BP — event stays in hand, no AP spent.
+ let none=fresh(['SAO-1-064','SAO-1-036','SAO-1-087'],8066);
+ for(let i=0;i<3;i++)place(none,0,'SAO-1-036','energy',i,false);
+ place(none,1,'SAO-1-087','front',0);
+ none=until(none,0,'main');
+ const [alone]=setHand(none,0,['SAO-1-064']);
+ // Post-play hand would be 0 and no ALO on field → ceiling BP1000; 5000 BP Kirito is illegal.
+ const noneBefore=structuredClone(none);
+ assert.equal(legalUniversalActions(packs,none).some(a=>a.type==='event'&&a.uid===alone.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,none,{type:'event',uid:alone.uid},{actor:0}),
+  /Action not currently legal/);
+ assert.deepEqual(none,noneBefore);
+ assert.ok(none.players[0].hand.some(c=>c.uid===alone.uid));
 });
 
 test('SAO-1-099 gives a front character BP +2000 and impact plus only while Kirito is on the field',()=>{
@@ -303,8 +317,12 @@ test('SAO-1-099 gives a front character BP +2000 and impact plus only while Kiri
  place(empty,0,'SAO-1-092','energy',0,false);
  empty=until(empty,0,'main');
  const none=hold(empty,0,'SAO-1-099');
- empty=act(empty,a=>a.type==='event'&&a.uid===none.uid);
- assert.equal(empty.pending,null);
+ const emptyBefore=structuredClone(empty);
+ // Q1119: printed「フロントLのキャラを1枚選び」— no FRONT character, unplayable.
+ assert.equal(legalUniversalActions(packs,empty).some(a=>a.type==='event'&&a.uid===none.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,empty,{type:'event',uid:none.uid},{actor:0}),
+  /Action not currently legal/);
+ assert.deepEqual(empty,emptyBefore);
  assert.equal(spot(s,kirito.uid).cardId,'SAO-1-085');
 });
 
@@ -358,16 +376,15 @@ test('SAO-2-012 buffs every Integrity Knight, gives one front knight impact plus
   place(back,0,'SAO-2-008','energy',2,false),
   place(back,0,'SAO-2-006','energy',3,false)
  ];
- const beforeBp=energyKnights.map(c=>universalBp(packs,back,c));
  back=until(back,0,'main');
  const art=hold(back,0,'SAO-2-012');
- const backDeck=back.players[0].deck.length;
- back=act(back,a=>a.type==='event'&&a.uid===art.uid);
- assert.equal(back.pending,null);
- energyKnights.forEach((c,i)=>assert.equal(universalBp(packs,back,spot(back,c.uid)),beforeBp[i]+1000));
- assert.equal(energyKnights.every(c=>spot(back,c.uid).impactPlus===undefined),true);
- assert.equal(back.players[0].deck.length,backDeck-1);
- assert.equal(assertUniversalMatch(packs,back),true);
+ const backBefore=structuredClone(back);
+ // Q1119: printed「フロントLの［特徴：整合騎士］を1枚選び」— energy-line only, unplayable.
+ assert.equal(legalUniversalActions(packs,back).some(a=>a.type==='event'&&a.uid===art.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,back,{type:'event',uid:art.uid},{actor:0}),
+  /Action not currently legal/);
+ assert.deepEqual(back,backBefore);
+ assert.equal(energyKnights.every(c=>spot(back,c.uid).cardId.startsWith('SAO')),true);
 });
 
 test('SAO-2-062 draws two, discards two, and may ready one AP only while Yuna is on the field',()=>{

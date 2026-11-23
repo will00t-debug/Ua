@@ -446,9 +446,14 @@ test('SAO-1-097 gives a battle-win draw, and sniper only when the chosen charact
  assert.equal(beaten.players[1].front.some(c=>c?.uid===wall.uid),true);
  const empty=cast(2100);
  for(const card of empty.s.players[0].energy)if(card)delete card.fieldEntryStamp;
- const quiet=playEvent(empty.packs,empty.s,empty.event.uid);
- assert.equal(quiet.pending,null);
- assert.equal(quiet.players[0].outside.some(c=>c.uid===empty.event.uid),true);
+ const emptyBefore=structuredClone(empty.s);
+ // Q1119: printed「自分の場のキャラを1枚選び」— no stamped field character, unplayable.
+ assert.equal(legalUniversalActions(empty.packs,empty.s)
+  .some(a=>a.type==='event'&&a.uid===empty.event.uid),false);
+ assert.throws(()=>dispatchUniversalAction(empty.packs,empty.s,
+  {type:'event',uid:empty.event.uid},{actor:0}),/Action not currently legal/);
+ assert.deepEqual(empty.s,emptyBefore);
+ assert.ok(empty.s.players[0].hand.some(c=>c.uid===empty.event.uid));
  conserved(s);
 });
 

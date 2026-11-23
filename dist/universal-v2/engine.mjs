@@ -7321,18 +7321,21 @@ function continueEffectQueue(pack,s){
    const limit=job.base+job.step*(hand+traits);
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit&&
     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
-   if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
-    sourceUid:job.sourceUid,choices,limit};
+   // Q1119: mandatory「1枚選び」is gated before play; do not silently fizzle.
+   if(!choices.length)throw Error('Hand/trait scaled retirement lost its mandatory target');
+   s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
   }else if(job.op==='buffOwnFrontImpactIfName'){
    const choices=pl.front.filter(c=>c&&card(pack,c).type==='character').map(c=>c.uid);
-   if(choices.length)s.pending={kind:'effect-buff-own',player:owner,sourceUid:job.sourceUid,
+   if(!choices.length)throw Error('Own-front BP/impact grant lost its mandatory target');
+   s.pending={kind:'effect-buff-own',player:owner,sourceUid:job.sourceUid,
     choices,filter:{field:'type',value:'character'},bp:job.bp,optional:false,
     impactPlusIfName:job.name,impactPlus:job.impactPlus};
   }else if(job.op==='grantFrontTraitImpactPlus'){
    const choices=pl.front.filter(c=>c&&card(pack,c).type==='character'&&
     cardHasTrait(card(pack,c),job.trait)&&Number.isInteger(c.fieldEntryStamp)&&
     c.fieldEntryStamp>0).map(c=>c.uid);
-   if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,
+   if(!choices.length)throw Error('Front trait impact plus lost its mandatory target');
+   s.pending={kind:'effect-buff-trait',player:owner,
     sourceUid:job.sourceUid,choices,trait:job.trait,impactPlus:job.amount};
   }else if(job.op==='drawDiscardIfEveryOwnCharacterNamed'){
    const named=field(pl).filter(c=>card(pack,c).type==='character');
@@ -9290,14 +9293,15 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='grantOwnFieldAttackKit'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     Number.isInteger(c.fieldEntryStamp)).map(c=>c.uid);
-   if(choices.length)s.pending={kind:'effect-own-attack-kit',player:owner,
+   if(!choices.length){
+    // Q1119: mandatory own-field choose-one is gated before play; do not fizzle.
+    if(job.optional===true){/* optional kits may have no target */}
+    else throw Error('Own-field attack kit lost its mandatory target');
+   }else s.pending={kind:'effect-own-attack-kit',player:owner,
     sourceUid:job.sourceUid,bp:job.bp,
     ...(Array.isArray(job.sniperNames)?{sniperNames:[...job.sniperNames]}:
      {sniperName:job.sniperName}),
     choices,optional:false};
-   else if(job.optional!==true){
-    // An empty field does not make the event illegal; the printed choice has no target.
-   }
   }else if(job.op==='activeOwnTraitExceptName'){
    const below=s.players[1-owner].front.some(c=>c&&bp(pack,s,c)<card(pack,c).bp);
    const choices=!below?[]:field(pl).filter(c=>{
@@ -23818,6 +23822,24 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
   // shared op omits optional:false. Check it before the optional early return.
   if(job.op==='buffMaxOwnBpImpact')
    return field(s.players[owner]).some(c=>maxBpImpactTarget(pack,s,c,job.contains,job.name));
+  // Q1119 / SAO shared ops: printed「1枚選び」without「まで」. Gate even when
+  // the pack entry omits optional:false (schema forbids the flag for these).
+  if(job.op==='retireOppFrontHandTraitScale'){
+   const hand=s.players[owner].hand.filter(c=>c.uid!==reservedHandUid).length;
+   const traits=field(s.players[owner]).filter(c=>cardHasTrait(card(pack,c),job.trait)).length;
+   const limit=job.base+job.step*(hand+traits);
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=limit&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  }
+  if(job.op==='buffOwnFrontImpactIfName')
+   return s.players[owner].front.some(c=>c&&card(pack,c).type==='character');
+  if(job.op==='grantFrontTraitImpactPlus')
+   return s.players[owner].front.some(c=>c&&card(pack,c).type==='character'&&
+    cardHasTrait(card(pack,c),job.trait)&&Number.isInteger(c.fieldEntryStamp)&&
+    c.fieldEntryStamp>0);
+  if(job.op==='grantOwnFieldAttackKit')
+   return field(s.players[owner]).some(c=>card(pack,c).type==='character'&&
+    Number.isInteger(c.fieldEntryStamp));
   if(job.op==='removeFrontWithSelf')
    return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
     !effectRemoveShielded(pack,s,c)&&
