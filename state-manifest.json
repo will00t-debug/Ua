@@ -189,15 +189,23 @@
     },
     {
       "file": "rounds/0003/manifest.json",
-      "sha256": "ef7f1cb2640ee5ed4f66f800fc55db8ac7e1bf0bbd7240bcc127ac546596782e"
+      "sha256": "8a866d07301e57dd4d4f68d46e33cb24c5ac084844b6d399ec139c5dff2db91b"
     },
     {
       "file": "rounds/0003/probe.json",
       "sha256": "07a560e9000753608acad352718f63816c5dd3b85519efcb308428918ccaa336"
     },
     {
+      "file": "rounds/0003/stage-a.json",
+      "sha256": "a81c38cf47c8bb435ebff5da9832c9e4143f8f3d3321387ff6b3aa0baeed8de5"
+    },
+    {
       "file": "rounds/0003/stage-a.jsonl",
       "sha256": "e333d9f2f322a4baca39a1c8849904c59df64e0b64c6ece9d5d913b7b6366e96"
+    },
+    {
+      "file": "rounds/0003/stage-b.jsonl",
+      "sha256": "f4afff316019ec73602a56c83d18c073bca2036046544c5a24cc7cc5cf7649da"
     },
     {
       "file": "rounds/smoke-v4a1/candidates/v4a-r0000-c0-c7972e811361.json",
