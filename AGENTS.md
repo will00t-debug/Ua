@@ -26,9 +26,10 @@ App version baseline: v9.1.1 (2026-10-12). This repository is meant for GitHub +
 
 ## Fixed V2 errors — check them before adding a card
 `docs/v2-handoff/V2-do-not-regress.md` is the gate for every new card
-(2026-10-14 through 2026-11-22, 291 corrected mistakes, including RNK-1-009,
+(2026-10-14 through 2026-11-23, 292 corrected mistakes, including RNK-1-009,
 the Hiko Raid, Eva and Toriko raid frames, Bakugo's empty-field discount,
-yellow and red zero energy, and the EVA-1-053 retire window). Match the printed text to the traps below and to every
+yellow and red zero energy, the EVA-1-053 retire window, and the four SAO
+mandatory event chooses). Match the printed text to the traps below and to every
 ledger row that uses the same mechanic. Reuse the corrected shared behavior.
 Do not bring these back on a new card:
 
@@ -40,7 +41,7 @@ Do not bring these back on a new card:
 6. Damage 2 reveals life together (Q73). The last life trigger does not force an order (Q12). Impact life damage uses the attacker's life selection.
 7. Once-per-turn on a field ability is keyed by the physical source UID (Q770), not the printed name.
 8. A new pending kind gets its own allowlist entry. Saved pending rejects a forged source.
-9. A mandatory choose-1 cannot be played with no legal target, and then it does not charge AP (Q1119). An already REST character can still be chosen to REST (Q91).
+9. A mandatory choose-1 cannot be played with no legal target, and then it does not charge AP (Q1119). A printed choose-one without 「まで」 must not resolve as a silent fizzle. SAO-1-064, SAO-1-097, SAO-1-099, SAO-2-012, and the shared own-field attack kit (including MHA-1-063) are blocked before play. An already REST character can still be chosen to REST (Q91).
 10. Hard AI does not read hidden cards, does not REST an already REST target, and treats an equal-BP blocker as leaving.
 11. A full line is removal, not a move. A front Raid base does not teleport between cells. Stripping a Raid sends the base outside as a rule move (Q60–Q61), and the base does not keep the top's buffs.
 12. An earned ability survives its printed text being sealed, and stops when that physical card leaves. Silence does not delete an already earned draw (Q974).
