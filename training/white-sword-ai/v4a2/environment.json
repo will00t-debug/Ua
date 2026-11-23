@@ -1,0 +1,14 @@
+{
+  "load": "0.00 0.01 0.17",
+  "runs": 5,
+  "main": {"sha": "a951974a", "passed": 5},
+  "pr572": {"sha": "5be927c7", "passed": 5},
+  "pr573": {"sha": "ec02bff5", "passed": 5},
+  "ci": {
+    "run": 45087042229,
+    "boundary": "yielded",
+    "attack": 67.1,
+    "pass": 74.1
+  },
+  "fix": {"sha": "8e8a9bc4", "nodes": 48, "ms": 40, "merged": false}
+}

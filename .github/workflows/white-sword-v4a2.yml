@@ -1,0 +1,52 @@
+# Manual White Sword v4-A.2 exploration.
+# GitHub runs a scheduled workflow only from the default branch. This file
+# has no schedule. It does not deploy and it does not change production weights.
+name: White Sword v4-A.2 exploration
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: test 只跑單元測試。all 才會接續離線探索。
+        type: choice
+        options:
+          - test
+          - all
+        default: test
+      workers:
+        description: 平行對戰 worker 上限，最多 4
+        type: string
+        default: '3'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: white-sword-v4a2
+  cancel-in-progress: false
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: v4-A.2 unit tests
+        run: node --test tests/white-sword-v4a2.test.mjs
+      - name: Explore
+        if: inputs.command == 'all'
+        env:
+          WS_WORKERS: ${{ inputs.workers }}
+        run: node scripts/white-sword-v4a2.mjs all
+      - name: Upload exploration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: white-sword-v4a2-${{ github.run_id }}
+          path: |
+            training/white-sword-ai/v4a2
+            docs/white-sword-ai/v4a2
+          if-no-files-found: warn
