@@ -497,16 +497,19 @@ test('MHA-1-063 grants BP and a battle-win draw, and sniper only to the two name
  seat(s,0,'ZONE','energy',0,true);
  seat(s,0,'ZONE','energy',1,true);
  s.players[0].apCards.forEach((card,index)=>{card.inPlay=index<2;card.ready=index<2;});
- const emptyHand=s.players[0].hand.length;
- let [played]=eventPlay(opened.pack,s,'MHA-1-063');
- assert.equal(played.pending,null);
- assert.equal(played.players[0].outside.some(c=>c.cardId==='MHA-1-063'),true);
- assert.equal(played.players[0].hand.length,emptyHand-1);
+ // Q1119: energy/fields alone are not stamped characters for the mandatory kit choose.
+ const emptyCard=s.players[0].hand.find(c=>c.cardId==='MHA-1-063');
+ const emptyBefore=structuredClone(s);
+ assert.equal(legal(opened.pack,s).some(a=>a.type==='event'&&a.uid===emptyCard.uid),false);
+ assert.throws(()=>dispatchUniversalAction(opened.pack,s,{type:'event',uid:emptyCard.uid},{actor:0}),
+  /Action not currently legal/);
+ assert.deepEqual(s,emptyBefore);
+ assert.ok(s.players[0].hand.some(c=>c.uid===emptyCard.uid));
  const hero=seat(s,0,'MHA-1-102','front',0,true);
  const other=seat(s,0,'MHA-1-105','front',1,true);
  const foe=seat(s,1,'MHA-1-106','front',0,false);
  const back=seat(s,1,'FILL-01','energy',0,true);
- [played]=eventPlay(opened.pack,s,'MHA-1-063');
+ let [played]=eventPlay(opened.pack,s,'MHA-1-063');
  assert.equal(played.pending.kind,'effect-own-attack-kit');
  assert.equal(played.pending.optional,false);
  assert.deepEqual(played.pending.sniperNames,['オールマイト','緑谷 出久']);
