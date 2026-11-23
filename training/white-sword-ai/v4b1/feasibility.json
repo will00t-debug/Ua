@@ -1,0 +1,560 @@
+{
+  "codeVersion": "v4b1-1",
+  "games": 0,
+  "rows": [
+    {
+      "id": "6717e5fccd75a090",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 24,
+      "mean": -0.20833333333333334,
+      "preferredKey": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "verdict": {
+        "class": 3,
+        "label": "限制無法學會",
+        "reason": "單步 1.5 的可調整幅度小於目前分差，這一步無法改選",
+        "inHardCap": true,
+        "featureL2": 3.334020762449515,
+        "pair": {
+          "swing": 114.45,
+          "gap": 120.23826280472275,
+          "coords": 16,
+          "clears": false
+        },
+        "oneFlips": false,
+        "wideFlips": true,
+        "current": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "oneChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "wideChoice": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "oneMargin": -5.7882628047227485,
+        "gapToRival": 120.23826280472275,
+        "swingToRival": 114.45,
+        "hardGap": 3.6299999999999955,
+        "differing": 16
+      },
+      "methods": [
+        {
+          "name": "原本的單筆 logistic",
+          "targetChanged": false,
+          "targetChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "collateralSelected": 3,
+          "collateralSelectedN": 39,
+          "collateralPool": 0,
+          "collateralPoolN": 42,
+          "hashMoved": 2,
+          "largestHash": 0.43749999909824533,
+          "collateralSelectedRows": [
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-48\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-4-080"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-44\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-2-073"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-1-083"
+            }
+          ],
+          "collateralPoolRows": [],
+          "changedWeights": 16,
+          "l2": 1.4586340805651936,
+          "need": 0.9999999979388463
+        },
+        {
+          "name": "凍結 h0–h7 的 logistic",
+          "targetChanged": false,
+          "targetChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "collateralSelected": 3,
+          "collateralSelectedN": 39,
+          "collateralPool": 0,
+          "collateralPoolN": 42,
+          "hashMoved": 0,
+          "largestHash": 0,
+          "collateralSelectedRows": [
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-48\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-4-080"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-44\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-2-073"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-1-083"
+            }
+          ],
+          "collateralPoolRows": [],
+          "changedWeights": 14,
+          "l2": 1.320909112151301,
+          "need": 0.9999999979388463
+        }
+      ],
+      "alone": {
+        "gap": 120.23826280472275,
+        "swing": 9,
+        "diff": 1,
+        "clears": false
+      },
+      "interaction": {
+        "aloneChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "jointChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "jointMargin": -14.788262804722748,
+        "hashStays": true,
+        "openChoice": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "openHash": 1.5
+      },
+      "card": null,
+      "live": {
+        "v2": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v2Card": "BLC-4-060",
+        "stored": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "agree": true,
+        "maximal": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "maximalCard": "BLC-4-060",
+        "wide": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "wideCard": null,
+        "wideIsPreferred": true,
+        "original": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "named": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "maximalIsPreferred": false,
+        "originalIsPreferred": false,
+        "namedIsPreferred": false
+      }
+    },
+    {
+      "id": "dadcdc80f133e959",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": -0.5,
+      "preferredKey": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "verdict": {
+        "class": 3,
+        "label": "限制無法學會",
+        "reason": "單步 1.5 的可調整幅度小於目前分差，這一步無法改選",
+        "inHardCap": true,
+        "featureL2": 3.3527144889543523,
+        "pair": {
+          "swing": 114.45,
+          "gap": 116.7301098643357,
+          "coords": 16,
+          "clears": false
+        },
+        "oneFlips": false,
+        "wideFlips": true,
+        "current": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "oneChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "wideChoice": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "oneMargin": -2.2801098643356994,
+        "gapToRival": 116.7301098643357,
+        "swingToRival": 114.45,
+        "hardGap": 2.25,
+        "differing": 16
+      },
+      "methods": [
+        {
+          "name": "原本的單筆 logistic",
+          "targetChanged": false,
+          "targetChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "collateralSelected": 4,
+          "collateralSelectedN": 39,
+          "collateralPool": 1,
+          "collateralPoolN": 42,
+          "hashMoved": 2,
+          "largestHash": 1.0499999978357886,
+          "collateralSelectedRows": [
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-48\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-4-080"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-44\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-2-073"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-1-083"
+            },
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-32\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "after": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "beforeCard": "BLC-1-083",
+              "afterCard": "BLC-2-069"
+            }
+          ],
+          "collateralPoolRows": [
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-4-070"
+            }
+          ],
+          "changedWeights": 16,
+          "l2": 3.5203502061460874,
+          "need": 0.9999999979388463
+        },
+        {
+          "name": "凍結 h0–h7 的 logistic",
+          "targetChanged": false,
+          "targetChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "collateralSelected": 4,
+          "collateralSelectedN": 39,
+          "collateralPool": 1,
+          "collateralPoolN": 42,
+          "hashMoved": 0,
+          "largestHash": 0,
+          "collateralSelectedRows": [
+            {
+              "id": "bb4fb08231ad674e",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "after": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-35\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "beforeCard": "BLC-2-069",
+              "afterCard": "BLC-1-083"
+            },
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-48\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-4-080"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-44\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-2-073"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-1-083"
+            }
+          ],
+          "collateralPoolRows": [
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "beforeCard": "BLC-4-060",
+              "afterCard": "BLC-4-070"
+            }
+          ],
+          "changedWeights": 14,
+          "l2": 3.1918436025285586,
+          "need": 0.9999999979388463
+        }
+      ],
+      "alone": {
+        "gap": 116.7301098643357,
+        "swing": 9,
+        "diff": 1,
+        "clears": false
+      },
+      "interaction": {
+        "aloneChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "jointChoice": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "jointMargin": -11.2801098643357,
+        "hashStays": true,
+        "openChoice": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "openHash": 1.5
+      },
+      "card": null,
+      "live": {
+        "v2": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v2Card": "BLC-4-060",
+        "stored": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "agree": true,
+        "maximal": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "maximalCard": "BLC-4-060",
+        "wide": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "wideCard": null,
+        "wideIsPreferred": true,
+        "original": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "named": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "maximalIsPreferred": false,
+        "originalIsPreferred": false,
+        "namedIsPreferred": false
+      }
+    },
+    {
+      "id": "675759e42cddd095",
+      "bucket": "line-move",
+      "opponent": "white-sword",
+      "n": 24,
+      "mean": -0.2916666666666667,
+      "preferredKey": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+      "verdict": {
+        "class": 1,
+        "label": "可以學會",
+        "reason": "現有特徵在單步上限內可以把選牌改成這個偏好",
+        "inHardCap": true,
+        "featureL2": 3.7024297577551843,
+        "pair": {
+          "swing": 38.025,
+          "gap": 6.947538603560382,
+          "coords": 6,
+          "clears": true
+        },
+        "oneFlips": true,
+        "wideFlips": true,
+        "current": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-31\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "oneChoice": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "wideChoice": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "oneMargin": 19.876011440878102,
+        "gapToRival": 6.947538603560382,
+        "swingToRival": 38.025,
+        "hardGap": 0.5999999999999872,
+        "differing": 6
+      },
+      "methods": [
+        {
+          "name": "原本的單筆 logistic",
+          "targetChanged": true,
+          "targetChoice": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "collateralSelected": 1,
+          "collateralSelectedN": 39,
+          "collateralPool": 0,
+          "collateralPoolN": 42,
+          "hashMoved": 2,
+          "largestHash": 0.6119119540555521,
+          "collateralSelectedRows": [
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-32\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "after": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "beforeCard": "BLC-1-083",
+              "afterCard": "BLC-2-069"
+            }
+          ],
+          "collateralPoolRows": [],
+          "changedWeights": 6,
+          "l2": 1.2277377108739211,
+          "need": 0.9990399249886566
+        },
+        {
+          "name": "凍結 h0–h7 的 logistic",
+          "targetChanged": true,
+          "targetChoice": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "collateralSelected": 1,
+          "collateralSelectedN": 39,
+          "collateralPool": 0,
+          "collateralPoolN": 42,
+          "hashMoved": 0,
+          "largestHash": 0,
+          "collateralSelectedRows": [
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "before": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-32\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "after": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+              "beforeCard": "BLC-1-083",
+              "afterCard": "BLC-2-069"
+            }
+          ],
+          "collateralPoolRows": [],
+          "changedWeights": 4,
+          "l2": 0.8709003431333391,
+          "need": 0.9990399249886566
+        }
+      ],
+      "alone": {
+        "gap": 6.947538603560382,
+        "swing": 0,
+        "diff": 0,
+        "clears": false
+      },
+      "interaction": {
+        "aloneChoice": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-31\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "jointChoice": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "jointMargin": 10.876011440878102,
+        "hashStays": true,
+        "openChoice": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "openHash": 1.5
+      },
+      "card": "BLC-2-069",
+      "live": {
+        "v2": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-31\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "v2Card": "BLC-1-072",
+        "stored": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-31\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "agree": true,
+        "maximal": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "maximalCard": "BLC-2-069",
+        "wide": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "wideCard": "BLC-2-069",
+        "wideIsPreferred": true,
+        "original": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "named": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "maximalIsPreferred": true,
+        "originalIsPreferred": true,
+        "namedIsPreferred": true
+      }
+    },
+    {
+      "id": "ec7c5e704ca0b7d5",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": 0.375,
+      "preferredKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+      "verdict": {
+        "class": 1,
+        "label": "已符合",
+        "reason": "更新前的選牌已經是這個偏好",
+        "inHardCap": true,
+        "featureL2": 3.1649227654258976,
+        "pair": {
+          "swing": 91.85030369594077,
+          "gap": -164.10960004878575,
+          "coords": 13,
+          "clears": true
+        },
+        "oneFlips": true,
+        "wideFlips": true,
+        "current": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "oneChoice": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "wideChoice": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "gapToRival": -164.10960004878575,
+        "swingToRival": 91.85030369594077,
+        "hardGap": 0
+      },
+      "methods": [
+        {
+          "name": "原本的單筆 logistic",
+          "targetChanged": true,
+          "targetChoice": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "collateralSelected": 0,
+          "collateralSelectedN": 39,
+          "collateralPool": 0,
+          "collateralPoolN": 42,
+          "hashMoved": 0,
+          "largestHash": 0,
+          "collateralSelectedRows": [],
+          "collateralPoolRows": [],
+          "changedWeights": 0,
+          "l2": 0,
+          "need": 2.0611536181902037e-9
+        },
+        {
+          "name": "凍結 h0–h7 的 logistic",
+          "targetChanged": true,
+          "targetChoice": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "collateralSelected": 0,
+          "collateralSelectedN": 39,
+          "collateralPool": 0,
+          "collateralPoolN": 42,
+          "hashMoved": 0,
+          "largestHash": 0,
+          "collateralSelectedRows": [],
+          "collateralPoolRows": [],
+          "changedWeights": 0,
+          "l2": 0,
+          "need": 2.0611536181902037e-9
+        }
+      ],
+      "alone": {
+        "gap": -164.10960004878575,
+        "swing": 0,
+        "diff": 0,
+        "clears": false
+      },
+      "interaction": {
+        "aloneChoice": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "jointChoice": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "jointMargin": 237.95990374472652,
+        "hashStays": true,
+        "openChoice": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "openHash": 1.5
+      },
+      "card": "BLC-4-070",
+      "live": {
+        "v2": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "v2Card": "BLC-4-070",
+        "stored": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "agree": true,
+        "maximal": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "maximalCard": "BLC-4-070",
+        "wide": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "wideCard": "BLC-4-070",
+        "wideIsPreferred": true,
+        "original": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "named": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "maximalIsPreferred": true,
+        "originalIsPreferred": true,
+        "namedIsPreferred": true
+      }
+    }
+  ],
+  "selected": 40,
+  "pool": 82
+}
