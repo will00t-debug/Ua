@@ -1,8 +1,8 @@
 // Experimental state moves between runs as files with hashes.
 // Nothing here writes production weights or the main branch.
 import {createHash} from 'node:crypto';
-import {execFileSync} from 'node:child_process';
-import {cpSync,existsSync,mkdirSync,readdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+import {execFileSync,spawnSync} from 'node:child_process';
+import {closeSync,cpSync,existsSync,mkdirSync,openSync,readdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {join,relative} from 'node:path';
 import {CODE_VERSION} from './protocol.mjs';
 
@@ -131,9 +131,17 @@ export function loadPublishedState({repo,root,branch,remote='origin'}){
  rmSync(dest,{recursive:true,force:true});
  mkdirSync(dest,{recursive:true});
  try{
-  const archive=execFileSync('git',['archive','FETCH_HEAD'],{cwd:repo});
-  writeFileSync(join(dest,'archive.tar'),archive);
-  execFileSync('tar',['-xf',join(dest,'archive.tar'),'-C',dest]);
+  const archivePath=join(dest,'archive.tar');
+  const fd=openSync(archivePath,'w');
+  let archived;
+  try{archived=spawnSync('git',['archive','FETCH_HEAD'],{cwd:repo,stdio:['ignore',fd,'pipe']});}
+  finally{closeSync(fd);}
+  if(archived.status!==0){
+   const failed=Error('讀取實驗狀態失敗：'+(archived.stderr?.toString()||'git archive'));
+   failed.code='V4A_STATE';
+   throw failed;
+  }
+  execFileSync('tar',['-xf',archivePath,'-C',dest]);
   const manifest=importState(dest,root);
   return {loaded:true,files:manifest.files.length,running:manifest.running};
  }finally{

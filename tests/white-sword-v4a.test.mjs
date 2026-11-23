@@ -454,6 +454,8 @@ test('experimental state round-trips and a rejected push leaves the previous sta
  const root=join(repo,'experimental');
  mkdirSync(join(root,'champion'),{recursive:true});
  writeFileSync(join(root,'history.json'),'{"rounds":[{"round":1}]}\n');
+ mkdirSync(join(root,'rounds'),{recursive:true});
+ writeFileSync(join(root,'rounds','large.jsonl'),'x'.repeat(1_200_000));
  writeFileSync(join(root,'champion','current.json'),'{"version":"v2","production":false}\n');
  const branch='cursor/white-sword-v4a-state-c159';
  assert.equal(publishState({repo,root,branch,remote:'origin'}).pushed,true);
@@ -461,6 +463,7 @@ test('experimental state round-trips and a rejected push leaves the previous sta
  const loaded=loadPublishedState({repo,root:restored,branch,remote:'origin'});
  assert.equal(loaded.loaded,true);
  assert.match(readFileSync(join(restored,'history.json'),'utf8'),/round":1/);
+ assert.equal(readFileSync(join(restored,'rounds','large.jsonl')).length,1_200_000);
  assert.throws(()=>publishState({repo,root,branch:'main',remote:'origin'}),/拒絕/);
  const bundle=mkdtempSync(join(tmpdir(),'v4a-bundle-'));
  mkdirSync(join(bundle,'rounds','0002'),{recursive:true});
