@@ -272,8 +272,16 @@
       "sha256": "443b327174cc9f2f19fde208708f749494b8fdb8e084e0e44ffcbbc964ed3f86"
     },
     {
+      "file": "rounds/0004/stage-b.json",
+      "sha256": "38cc4f456d9580775f0fc38adf817bf3e6ad3690946f0627563bc74bd42c184d"
+    },
+    {
       "file": "rounds/0004/stage-b.jsonl",
       "sha256": "b4a867cfcfa556dc2dc1c92e0a08d24f8fb9654eaf0b7aaf670ed63c5a45e0cb"
+    },
+    {
+      "file": "rounds/0004/stage-c.jsonl",
+      "sha256": "ca71293a46044ff9172b32a1da58d9b9232046b127910a541f06a8ff94832b2d"
     },
     {
       "file": "rounds/smoke-v4a1/candidates/v4a-r0000-c0-c7972e811361.json",
