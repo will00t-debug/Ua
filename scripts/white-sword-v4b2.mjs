@@ -3,7 +3,7 @@
 // Does not deploy and does not edit v2.
 import {Worker} from 'node:worker_threads';
 import {MAX_WORKERS} from '../training/white-sword-ai/v4a/lib/protocol.mjs';
-import {runV4B2} from '../training/white-sword-ai/v4b2/lib/run.mjs';
+import {rewriteSaved,runV4B2} from '../training/white-sword-ai/v4b2/lib/run.mjs';
 
 const WORKERS=Math.max(1,Math.min(Number(process.env.WS_WORKERS||4),MAX_WORKERS));
 const ROOT=process.env.WS_V4B2_ROOT||'training/white-sword-ai/v4b2';
@@ -50,6 +50,12 @@ function runPool(items,workerUrl,take){
  });
 }
 async function main(){
+ if(process.argv[2]==='report'){
+  const report=rewriteSaved(ROOT);
+  console.log('停止點',report.stopped);
+  console.log('採用',report.adopted?.id||'沒有');
+  return;
+ }
  if(process.argv[2]!=='all'){
   console.error('用法：node scripts/white-sword-v4b2.mjs all');
   process.exitCode=1;

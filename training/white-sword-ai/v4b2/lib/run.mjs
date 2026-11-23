@@ -238,6 +238,37 @@ export async function runV4B2({root,mineMany,rolloutMany,log=()=>{}}={}){
  report.promoted=false;
  return finish(root,report,official);
 }
+export function rewriteSaved(root){
+ const official=v2Hash();
+ const report=readJson(join(root,'report.json'));
+ if(report.official!==official)throw Error('正式 v2 權重與這份報告記錄的不同');
+ const parentModel=loadModel('training/white-sword-ai/weights/v2-capped.json');
+ const pool=readJson(join(root,'pool.json'));
+ const selected=readJson(join(root,'selected.json'));
+ const judged=readJson(join(root,'judgments.json'));
+ const holdout=pool.positions.filter(position=>!selected.positions.some(row=>row.id===position.id));
+ const priorPositions=tagged(readJson(PRIOR_SELECTED,{positions:[]}).positions,'prior').filter(position=>position.band);
+ const priorJudgments=readJson(PRIOR_JUDGMENTS,[]).map(row=>({...row,source:'prior'}));
+ const usable=judged.filter(row=>row.usable);
+ const decision=chooseUpdate(parentModel.policy,usable,{
+  positions:[...tagged(selected.positions,'round'),...tagged(holdout,'round'),...priorPositions],
+  judgments:[...judged,...priorJudgments],
+  selectedIds:selected.positions.map(position=>position.id),
+  holdoutIds:holdout.map(position=>position.id)
+ });
+ report.updates=decision.evaluated.map(publicUpdate);
+ report.preferences=usable.map(preferenceView);
+ report.adopted=decision.adopted?{
+  id:decision.adopted.id,deltas:decision.adopted.deltas,
+  maxAbs:decision.adopted.maxAbs,hashMoved:decision.adopted.hashMoved
+ }:null;
+ if(!decision.adopted){
+  report.stopped=usable.length?'kept':'evidence';
+  report.stopReasons=usable.length?['沒有偏好同時改選目標並通過信任域']:['沒有區間排除 0 的偏好'];
+ }
+ writeJson(join(root,'update.json'),{evaluated:report.updates,adopted:decision.adopted?.id||null});
+ return finish(root,report,official);
+}
 function finish(root,report,official){
  if(v2Hash()!==official)throw Error('正式 v2 權重被改動');
  const opponents=new Set((report.selected?.opponents&&Object.keys(report.selected.opponents))||[]);

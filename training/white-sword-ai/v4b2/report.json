@@ -1,0 +1,565 @@
+{
+  "codeVersion": "v4b2-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "limits": {
+    "nodes": 48,
+    "hardCap": 7,
+    "clip": 6,
+    "stepCap": 1.5,
+    "scale": 6
+  },
+  "preliminaryStrength": false,
+  "promoted": false,
+  "budgetCap": 5000,
+  "stopped": "kept",
+  "mined": {
+    "games": 30,
+    "decisions": 1665,
+    "stored": 81,
+    "seedsPerOpponent": 10,
+    "firstSeed": 173100,
+    "table": {
+      "early-energy": {
+        "white-sword": 4,
+        "reject-blue": 4,
+        "renruki": 4
+      },
+      "ap": {
+        "white-sword": 4,
+        "reject-blue": 3,
+        "renruki": 2
+      },
+      "line-move": {
+        "white-sword": 4,
+        "reject-blue": 4,
+        "renruki": 4
+      },
+      "mid-entry": {
+        "white-sword": 4,
+        "reject-blue": 4,
+        "renruki": 4
+      },
+      "raid": {
+        "white-sword": 4,
+        "reject-blue": 4,
+        "renruki": 4
+      },
+      "attack-defense": {
+        "white-sword": 4,
+        "reject-blue": 4,
+        "renruki": 4
+      },
+      "late-pressure": {
+        "white-sword": 4,
+        "reject-blue": 4,
+        "renruki": 4
+      }
+    }
+  },
+  "selected": {
+    "n": 42,
+    "buckets": 7,
+    "counts": {
+      "early-energy": 6,
+      "ap": 6,
+      "line-move": 6,
+      "mid-entry": 6,
+      "raid": 6,
+      "attack-defense": 6,
+      "late-pressure": 6
+    },
+    "opponents": {
+      "white-sword": 14,
+      "reject-blue": 14,
+      "renruki": 14
+    },
+    "table": {
+      "early-energy": {
+        "white-sword": 2,
+        "reject-blue": 2,
+        "renruki": 2
+      },
+      "ap": {
+        "white-sword": 2,
+        "reject-blue": 2,
+        "renruki": 2
+      },
+      "line-move": {
+        "white-sword": 2,
+        "reject-blue": 2,
+        "renruki": 2
+      },
+      "mid-entry": {
+        "white-sword": 2,
+        "reject-blue": 2,
+        "renruki": 2
+      },
+      "raid": {
+        "white-sword": 2,
+        "reject-blue": 2,
+        "renruki": 2
+      },
+      "attack-defense": {
+        "white-sword": 2,
+        "reject-blue": 2,
+        "renruki": 2
+      },
+      "late-pressure": {
+        "white-sword": 2,
+        "reject-blue": 2,
+        "renruki": 2
+      }
+    }
+  },
+  "replayable": {
+    "n": 42,
+    "dropped": 0
+  },
+  "rolloutFirst": {
+    "pairs": 336,
+    "finished": 336,
+    "rate": 1
+  },
+  "rollouts": {
+    "games": 1200,
+    "positions": 42,
+    "usable": 7,
+    "insufficient": 35,
+    "finishedRate": 0.9983333333333333
+  },
+  "preferences": [
+    {
+      "id": "bbf1dcd50c31584c",
+      "bucket": "early-energy",
+      "opponent": "white-sword",
+      "n": 16,
+      "mean": 0.25,
+      "low": 0.03086533820502063,
+      "high": 0.46913466179497937,
+      "preferred": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-49\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-4-080",
+      "otherCard": "BLC-4-060"
+    },
+    {
+      "id": "3ce72b14b8a4eac0",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 16,
+      "mean": 0.3125,
+      "low": 0.07793035859969716,
+      "high": 0.5470696414003029,
+      "preferred": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+      "other": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-29\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+      "preferredCard": "BLC-2-069",
+      "otherCard": "BLC-1-072"
+    },
+    {
+      "id": "a925bcd5f9d70ebe",
+      "bucket": "line-move",
+      "opponent": "reject-blue",
+      "n": 8,
+      "mean": -0.375,
+      "low": -0.7336432768085859,
+      "high": -0.01635672319141407,
+      "preferred": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+      "other": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+      "preferredCard": "BLC-1-083",
+      "otherCard": "BLC-4-070"
+    },
+    {
+      "id": "4b6338ce9e141a68",
+      "bucket": "mid-entry",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": -0.375,
+      "low": -0.7336432768085859,
+      "high": -0.01635672319141407,
+      "preferred": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-43\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-48\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-2-073",
+      "otherCard": "BLC-4-080"
+    },
+    {
+      "id": "0406f018a8676e5c",
+      "bucket": "attack-defense",
+      "opponent": "white-sword",
+      "n": 8,
+      "mean": -0.375,
+      "low": -0.7336432768085859,
+      "high": -0.01635672319141407,
+      "preferred": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-32\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": null,
+      "otherCard": "BLC-1-083"
+    },
+    {
+      "id": "9338d25de46f485f",
+      "bucket": "late-pressure",
+      "opponent": "reject-blue",
+      "n": 8,
+      "mean": 0.375,
+      "low": 0.01635672319141407,
+      "high": 0.7336432768085859,
+      "preferred": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-13\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-2-067",
+      "otherCard": null
+    },
+    {
+      "id": "525ea92d59077ba6",
+      "bucket": "late-pressure",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": 0.875,
+      "low": 0.63,
+      "high": 1.12,
+      "preferred": "{\"type\":\"chooseBlock\",\"mode\":null,\"line\":null,\"uid\":\"0-3\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"chooseBlock\",\"mode\":null,\"line\":null,\"uid\":\"0-8\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-3-009",
+      "otherCard": "BLC-4-066"
+    }
+  ],
+  "updates": [
+    {
+      "pair": "chooseBlock|chooseBlock#BLC-3-009,BLC-4-066",
+      "role": "candidate",
+      "id": "525ea92d59077ba6",
+      "bucket": "late-pressure",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": 0.875,
+      "low": 0.63,
+      "high": 1.12,
+      "preferred": "{\"type\":\"chooseBlock\",\"mode\":null,\"line\":null,\"uid\":\"0-3\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"chooseBlock\",\"mode\":null,\"line\":null,\"uid\":\"0-8\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-3-009",
+      "otherCard": "BLC-4-066",
+      "confirmations": [],
+      "alpha": 0,
+      "stepStatus": "already",
+      "maxAbs": 0,
+      "hashMoved": 0,
+      "adopt": false,
+      "status": "already",
+      "reasons": [
+        "更新前的選牌已經是這個偏好，這一輪不改權重"
+      ]
+    },
+    {
+      "pair": "move|move#BLC-1-083,BLC-4-070",
+      "role": "candidate",
+      "id": "a925bcd5f9d70ebe",
+      "bucket": "line-move",
+      "opponent": "reject-blue",
+      "n": 8,
+      "mean": -0.375,
+      "low": -0.7336432768085859,
+      "high": -0.01635672319141407,
+      "preferred": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+      "other": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+      "preferredCard": "BLC-1-083",
+      "otherCard": "BLC-4-070",
+      "confirmations": [],
+      "alpha": 0.38899742889952904,
+      "stepStatus": "flipped",
+      "maxAbs": 0.5834961433492936,
+      "hashMoved": 0,
+      "adopt": false,
+      "status": "trust",
+      "reasons": [
+        "有 1 個不相關局面改變"
+      ],
+      "chosen": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+      "contradiction": 0,
+      "unrelated": 1,
+      "similar": 1,
+      "changes": [
+        {
+          "id": "ff11698b1c6e8735",
+          "bucket": "line-move",
+          "opponent": "reject-blue",
+          "source": "round",
+          "before": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "after": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "relation": "similar",
+          "evidence": "unchecked",
+          "changed": true,
+          "beforeCard": "BLC-4-070",
+          "afterCard": "BLC-1-083"
+        },
+        {
+          "id": "bb4fb08231ad674e",
+          "bucket": "line-move",
+          "opponent": "white-sword",
+          "source": "prior",
+          "before": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-19\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "after": "{\"type\":\"move\",\"mode\":null,\"line\":null,\"uid\":\"0-35\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "relation": "unrelated",
+          "evidence": "unchecked",
+          "changed": true,
+          "beforeCard": "BLC-2-069",
+          "afterCard": "BLC-1-083"
+        }
+      ],
+      "legacy": {
+        "selectedChanges": 1,
+        "holdoutChanges": 0,
+        "pass": true
+      },
+      "deltas": [
+        {
+          "name": "card_BLC-4-070",
+          "index": 51,
+          "before": 2.44719750143742,
+          "after": 1.8637013580881265,
+          "delta": -0.5834961433492936
+        },
+        {
+          "name": "card_BLC-1-083",
+          "index": 54,
+          "before": -0.17017822497218535,
+          "after": 0.4133179183771082,
+          "delta": 0.5834961433492936
+        },
+        {
+          "name": "card_bp",
+          "index": 32,
+          "before": 1.7245656598196877,
+          "after": 1.432817588145041,
+          "delta": -0.2917480716746468
+        },
+        {
+          "name": "card_energy",
+          "index": 31,
+          "before": 2.1124937727442896,
+          "after": 2.039556754825628,
+          "delta": -0.0729370179186617
+        }
+      ]
+    },
+    {
+      "pair": "chooseDiscardGate|chooseDiscardGate#BLC-2-073,BLC-4-080",
+      "role": "candidate",
+      "id": "4b6338ce9e141a68",
+      "bucket": "mid-entry",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": -0.375,
+      "low": -0.7336432768085859,
+      "high": -0.01635672319141407,
+      "preferred": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-43\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-48\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-2-073",
+      "otherCard": "BLC-4-080",
+      "confirmations": [],
+      "alpha": 0.5214934584710136,
+      "stepStatus": "flipped",
+      "maxAbs": 0.7822401877065206,
+      "hashMoved": 0,
+      "adopt": false,
+      "status": "trust",
+      "reasons": [
+        "有 3 個不相關局面改變"
+      ],
+      "chosen": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-43\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "contradiction": 0,
+      "unrelated": 3,
+      "similar": 0,
+      "changes": [
+        {
+          "id": "ddbb2667df3caac4",
+          "bucket": "early-energy",
+          "opponent": "renruki",
+          "source": "round",
+          "before": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-31\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "after": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-45\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "relation": "unrelated",
+          "evidence": "unchecked",
+          "changed": true,
+          "beforeCard": "BLC-1-072",
+          "afterCard": "BLC-2-073"
+        },
+        {
+          "id": "f0e5855d9ef66cbc",
+          "bucket": "attack-defense",
+          "opponent": "white-sword",
+          "source": "prior",
+          "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-42\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "relation": "unrelated",
+          "evidence": "unchecked",
+          "changed": true,
+          "beforeCard": "BLC-4-060",
+          "afterCard": "BLC-2-073"
+        },
+        {
+          "id": "eced4ebab3ffc050",
+          "bucket": "attack-defense",
+          "opponent": "white-sword",
+          "source": "prior",
+          "before": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "after": "{\"type\":\"chooseHandLimit\",\"mode\":null,\"line\":null,\"uid\":\"0-44\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "relation": "unrelated",
+          "evidence": "unchecked",
+          "changed": true,
+          "beforeCard": "BLC-4-060",
+          "afterCard": "BLC-2-073"
+        }
+      ],
+      "legacy": {
+        "selectedChanges": 0,
+        "holdoutChanges": 1,
+        "pass": false
+      },
+      "deltas": [
+        {
+          "name": "card_BLC-2-073",
+          "index": 57,
+          "before": 1.3569726980969266,
+          "after": 2.139212885803447,
+          "delta": 0.7822401877065206
+        },
+        {
+          "name": "affordable",
+          "index": 35,
+          "before": 3.777676905657542,
+          "after": 2.9954367179510215,
+          "delta": -0.7822401877065204
+        },
+        {
+          "name": "card_BLC-4-080",
+          "index": 58,
+          "before": 1.8596255525101502,
+          "after": 1.0773853648036298,
+          "delta": -0.7822401877065204
+        },
+        {
+          "name": "card_energy",
+          "index": 31,
+          "before": 2.1124937727442896,
+          "after": 2.2102737962076047,
+          "delta": 0.09778002346331505
+        }
+      ]
+    },
+    {
+      "pair": "attack|next#BLC-1-083",
+      "role": "candidate",
+      "id": "0406f018a8676e5c",
+      "bucket": "attack-defense",
+      "opponent": "white-sword",
+      "n": 8,
+      "mean": -0.375,
+      "low": -0.7336432768085859,
+      "high": -0.01635672319141407,
+      "preferred": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-32\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": null,
+      "otherCard": "BLC-1-083",
+      "confirmations": [],
+      "alpha": 1,
+      "stepStatus": "short",
+      "maxAbs": 1.4862471748976924,
+      "hashMoved": 0,
+      "adopt": false,
+      "status": "short",
+      "reasons": [
+        "沿具名特徵的單步沒有改選，本輪保留"
+      ]
+    },
+    {
+      "pair": "attack|next#BLC-2-067",
+      "role": "candidate",
+      "id": "9338d25de46f485f",
+      "bucket": "late-pressure",
+      "opponent": "reject-blue",
+      "n": 8,
+      "mean": 0.375,
+      "low": 0.01635672319141407,
+      "high": 0.7336432768085859,
+      "preferred": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-13\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"next\",\"mode\":null,\"line\":null,\"uid\":null,\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-2-067",
+      "otherCard": null,
+      "confirmations": [],
+      "alpha": 0,
+      "stepStatus": "already",
+      "maxAbs": 0,
+      "hashMoved": 0,
+      "adopt": false,
+      "status": "already",
+      "reasons": [
+        "更新前的選牌已經是這個偏好，這一輪不改權重"
+      ]
+    },
+    {
+      "pair": "play|play#BLC-1-072,BLC-2-069",
+      "role": "candidate",
+      "id": "3ce72b14b8a4eac0",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 16,
+      "mean": 0.3125,
+      "low": 0.07793035859969716,
+      "high": 0.5470696414003029,
+      "preferred": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+      "other": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-29\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+      "preferredCard": "BLC-2-069",
+      "otherCard": "BLC-1-072",
+      "confirmations": [],
+      "alpha": 0,
+      "stepStatus": "already",
+      "maxAbs": 0,
+      "hashMoved": 0,
+      "adopt": false,
+      "status": "already",
+      "reasons": [
+        "更新前的選牌已經是這個偏好，這一輪不改權重"
+      ]
+    },
+    {
+      "pair": "chooseDiscardGate|chooseDiscardGate#BLC-4-060,BLC-4-080",
+      "role": "candidate",
+      "id": "bbf1dcd50c31584c",
+      "bucket": "early-energy",
+      "opponent": "white-sword",
+      "n": 16,
+      "mean": 0.25,
+      "low": 0.03086533820502063,
+      "high": 0.46913466179497937,
+      "preferred": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-49\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "other": "{\"type\":\"chooseDiscardGate\",\"mode\":null,\"line\":null,\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "preferredCard": "BLC-4-080",
+      "otherCard": "BLC-4-060",
+      "confirmations": [],
+      "alpha": 0,
+      "stepStatus": "already",
+      "maxAbs": 0,
+      "hashMoved": 0,
+      "adopt": false,
+      "status": "already",
+      "reasons": [
+        "更新前的選牌已經是這個偏好，這一輪不改權重"
+      ]
+    }
+  ],
+  "stopReasons": [
+    "沒有偏好同時改選目標並通過信任域"
+  ],
+  "adopted": null,
+  "balance": {
+    "opponents": [
+      "white-sword",
+      "reject-blue",
+      "renruki"
+    ],
+    "expected": [
+      "white-sword",
+      "reject-blue",
+      "renruki"
+    ]
+  },
+  "budgetSpent": 1230,
+  "experimentalChampion": null
+}

@@ -80,10 +80,12 @@ export function renderReport(report){
   if(row.alpha!=null)lines.push('- 沿具名特徵的比例：'+row.alpha.toFixed(4)+'，最大座標改變 '+(row.maxAbs||0).toFixed(4)+'，雜湊桶移動 '+(row.hashMoved||0));
   if(row.contradiction!=null)lines.push('- 連帶：相似 '+row.similar+'、不相關 '+row.unrelated+'、推翻已確認 '+row.contradiction);
   if(row.legacy)lines.push('- 舊基準（選中除了目標最多 1、未選入 0）：選中 '+row.legacy.selectedChanges+'、未選入 '+row.legacy.holdoutChanges+'，'+(row.legacy.pass?'通過對照':'對照未過'));
+  if(row.deltas?.length)lines.push('- 會動到的權重：'+row.deltas.slice(0,4).map(delta=>delta.name+' '+(delta.delta>0?'+':'')+delta.delta.toFixed(3)).join('、'));
   if(row.reasons?.length)lines.push('- '+row.reasons.join('；'));
   const shown=(row.changes||[]).slice(0,8);
   for(const change of shown){
-   lines.push('  - '+change.relation+'／'+change.evidence+'：'+bucket(change.bucket)+'／'+deck(change.opponent)+' '+change.id.slice(0,8)+' '+describe(change.before)+' → '+describe(change.after));
+   const where=change.source==='prior'?'上一輪':'這一輪';
+   lines.push('  - '+change.relation+'／'+change.evidence+'／'+where+'：'+bucket(change.bucket)+'／'+deck(change.opponent)+' '+change.id.slice(0,8)+' '+describe(change.before,change.beforeCard)+' → '+describe(change.after,change.afterCard));
   }
   if((row.changes||[]).length>shown.length)lines.push('  - 其餘 '+(row.changes.length-shown.length)+' 筆記在 update.json');
  }

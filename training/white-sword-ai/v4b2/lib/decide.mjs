@@ -76,6 +76,9 @@ export function evaluateGroup(parent,group,context){
   confirmations:group.rows.slice(1).map(item=>item.id),
   alpha:step.alpha,stepStatus:step.status,maxAbs:step.maxAbs||0,hashMoved:step.hashMoved||0
  };
+ if(step.status==='already'){
+  return {...base,adopt:false,status:'already',reasons:['更新前的選牌已經是這個偏好，這一輪不改權重']};
+ }
  if(!step.flipped||step.status!=='flipped'){
   return {...base,adopt:false,status:step.status,reasons:['沿具名特徵的單步沒有改選，本輪保留']};
  }

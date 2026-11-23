@@ -64,9 +64,13 @@ export function classifyUpdate(parent,next,targetId,contrast,positions,judgments
   else if(relation==='unrelated')unrelated++;
   else similar++;
   const evidence=judgment?.usable===true?(relation==='contradiction'?'reversed':'confirmed'):'unchecked';
+  const beforeRow=bandRow(position,before);
+  const afterRow=bandRow(position,after);
   changes.push({
    id:position.id,bucket:position.bucket,opponent:position.opponent,source:position.source||'round',
-   before,after,relation,evidence,changed:before!==after
+   before,after,relation,evidence,changed:before!==after,
+   beforeCard:cardsOf(beforeRow?.features).join(',')||null,
+   afterCard:cardsOf(afterRow?.features).join(',')||null
   });
  }
  return {contradiction,unrelated,similar,changes};
