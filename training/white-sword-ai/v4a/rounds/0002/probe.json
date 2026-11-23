@@ -1,0 +1,190 @@
+{
+  "positions": 200,
+  "disagreed": 11,
+  "rate": 0.055,
+  "bandPositions": 96,
+  "bandDisagreed": 11,
+  "bandRate": 0.11458333333333333,
+  "versusChampion": 0.055,
+  "pairwise": 0.017142857142857144,
+  "byPhase": {
+    "early-energy": {
+      "positions": 20,
+      "disagreed": 0,
+      "rate": 0
+    },
+    "mid-entry": {
+      "positions": 80,
+      "disagreed": 8,
+      "rate": 0.1
+    },
+    "line-move": {
+      "positions": 26,
+      "disagreed": 0,
+      "rate": 0
+    },
+    "attack-defense": {
+      "positions": 19,
+      "disagreed": 1,
+      "rate": 0.05263157894736842
+    },
+    "late-pressure": {
+      "positions": 44,
+      "disagreed": 1,
+      "rate": 0.022727272727272728
+    },
+    "raid": {
+      "positions": 8,
+      "disagreed": 1,
+      "rate": 0.125
+    },
+    "ap": {
+      "positions": 3,
+      "disagreed": 0,
+      "rate": 0
+    }
+  },
+  "byCandidate": {
+    "v4a-r0002-c0-52409b78903f": {
+      "compared": 200,
+      "differed": 2,
+      "rate": 0.01
+    },
+    "v4a-r0002-c1-a40a30fde6de": {
+      "compared": 200,
+      "differed": 3,
+      "rate": 0.015
+    },
+    "v4a-r0002-c2-88e30f588ac1": {
+      "compared": 200,
+      "differed": 6,
+      "rate": 0.03
+    },
+    "v4a-r0002-c3-a93655879958": {
+      "compared": 200,
+      "differed": 3,
+      "rate": 0.015
+    },
+    "v4a-r0002-c4-578f298469a3": {
+      "compared": 200,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0002-c5-62d7231df3e0": {
+      "compared": 200,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0002-c6-8b39912f4fc0": {
+      "compared": 200,
+      "differed": 2,
+      "rate": 0.01
+    },
+    "v4a-r0002-c7-831b6a308713": {
+      "compared": 200,
+      "differed": 0,
+      "rate": 0
+    }
+  },
+  "examples": [
+    {
+      "seed": 101000,
+      "step": 18,
+      "band": 3,
+      "bucket": "mid-entry",
+      "choices": {
+        "champion": "play:energy",
+        "v4a-r0002-c0-52409b78903f": "play:energy",
+        "v4a-r0002-c1-a40a30fde6de": "play:energy",
+        "v4a-r0002-c2-88e30f588ac1": "play:energy",
+        "v4a-r0002-c3-a93655879958": "play:energy",
+        "v4a-r0002-c4-578f298469a3": "play:energy",
+        "v4a-r0002-c5-62d7231df3e0": "play:energy",
+        "v4a-r0002-c6-8b39912f4fc0": "play:energy",
+        "v4a-r0002-c7-831b6a308713": "play:energy"
+      }
+    },
+    {
+      "seed": 101000,
+      "step": 141,
+      "band": 4,
+      "bucket": "mid-entry",
+      "choices": {
+        "champion": "chooseRestLock",
+        "v4a-r0002-c0-52409b78903f": "chooseRestLock",
+        "v4a-r0002-c1-a40a30fde6de": "chooseRestLock",
+        "v4a-r0002-c2-88e30f588ac1": "chooseRestLock",
+        "v4a-r0002-c3-a93655879958": "chooseRestLock",
+        "v4a-r0002-c4-578f298469a3": "chooseRestLock",
+        "v4a-r0002-c5-62d7231df3e0": "chooseRestLock",
+        "v4a-r0002-c6-8b39912f4fc0": "chooseRestLock",
+        "v4a-r0002-c7-831b6a308713": "chooseRestLock"
+      }
+    },
+    {
+      "seed": 101000,
+      "step": 174,
+      "band": 4,
+      "bucket": "mid-entry",
+      "choices": {
+        "champion": "chooseRestLock",
+        "v4a-r0002-c0-52409b78903f": "chooseRestLock",
+        "v4a-r0002-c1-a40a30fde6de": "chooseRestLock",
+        "v4a-r0002-c2-88e30f588ac1": "chooseRestLock",
+        "v4a-r0002-c3-a93655879958": "chooseRestLock",
+        "v4a-r0002-c4-578f298469a3": "chooseRestLock",
+        "v4a-r0002-c5-62d7231df3e0": "chooseRestLock",
+        "v4a-r0002-c6-8b39912f4fc0": "chooseRestLock",
+        "v4a-r0002-c7-831b6a308713": "chooseRestLock"
+      }
+    },
+    {
+      "seed": 101001,
+      "step": 32,
+      "band": 2,
+      "bucket": "mid-entry",
+      "choices": {
+        "champion": "play:energy",
+        "v4a-r0002-c0-52409b78903f": "play:front",
+        "v4a-r0002-c1-a40a30fde6de": "play:energy",
+        "v4a-r0002-c2-88e30f588ac1": "play:front",
+        "v4a-r0002-c3-a93655879958": "play:energy",
+        "v4a-r0002-c4-578f298469a3": "play:energy",
+        "v4a-r0002-c5-62d7231df3e0": "play:energy",
+        "v4a-r0002-c6-8b39912f4fc0": "play:energy",
+        "v4a-r0002-c7-831b6a308713": "play:energy"
+      }
+    },
+    {
+      "seed": 101001,
+      "step": 69,
+      "band": 3,
+      "bucket": "attack-defense",
+      "choices": {
+        "champion": "attack",
+        "v4a-r0002-c0-52409b78903f": "attack",
+        "v4a-r0002-c1-a40a30fde6de": "attack",
+        "v4a-r0002-c2-88e30f588ac1": "attack",
+        "v4a-r0002-c3-a93655879958": "attack",
+        "v4a-r0002-c4-578f298469a3": "attack",
+        "v4a-r0002-c5-62d7231df3e0": "attack",
+        "v4a-r0002-c6-8b39912f4fc0": "attack",
+        "v4a-r0002-c7-831b6a308713": "attack"
+      }
+    }
+  ],
+  "walked": 4,
+  "steps": 477,
+  "fallbackIds": [],
+  "seeds": [
+    101000,
+    101001,
+    101002,
+    101003,
+    101004,
+    101005,
+    101006,
+    101007
+  ],
+  "regenerated": false
+}
