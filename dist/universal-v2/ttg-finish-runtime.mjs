@@ -85,28 +85,37 @@ function pairs(ids){
  for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)out.push([ids[i],ids[j]]);
  return out;
 }
+function nameLockBusy(s,owner,onceKey,queued){
+ return !!onceKey&&(s.onceEffectUses[owner].includes(onceKey)||queued.has(onceKey));
+}
 export function collectRaidWitnesses(pack,s,owner,raider,baseCard){
  const rd=card(pack,raider),baseName=card(pack,baseCard).name,out=[];
+ // 「同名卡每回合合共1次」is one use for the printed name. A second copy
+ // on the same raid does not get its own window.
+ const queued=new Set();
  for(const c of api.field(s.players[owner])){
   if(c.uid===raider.uid||originalEffectsDisabled(s,c))continue;
   const d=card(pack,c);
   if(d.raidAttach){
    const spec=d.raidAttach;
    const loc=api.location(s,owner,c.uid);
-   const onceKey=d.name+'|raidAttach';
+   const onceKey=spec.once==='name'?d.name+'|raidAttach':null;
    if(loc?.line===spec.line&&rd.name.includes(spec.nameContains)&&
-    spec.baseNames.includes(baseName)&&!s.onceEffectUses[owner].includes(onceKey)){
+    spec.baseNames.includes(baseName)&&!nameLockBusy(s,owner,onceKey,queued)){
     const want=baseName==='シモン'?'ヴィラル':baseName==='ヴィラル'?'シモン':null;
     const zones=[...s.players[owner].hand,...s.players[owner].outside];
-    if(want&&zones.some(x=>card(pack,x).name===want))
+    if(want&&zones.some(x=>card(pack,x).name===want)){
+     if(onceKey)queued.add(onceKey);
      out.push({kind:'attach',uid:c.uid,onceKey,want,drawIfHand:spec.drawIfHand||0});
+    }
    }
   }
   if(d.raidWitness&&rd.name===d.raidWitness.name){
    const onceKey=d.raidWitness.once==='name'?d.name+'|raidWitness':null;
-   if(!onceKey||!s.onceEffectUses[owner].includes(onceKey))
-    out.push({kind:'moveSelf',uid:c.uid,onceKey,draw:d.raidWitness.draw||0,
-     returnUnder:d.raidWitness.returnUnderToHand===true});
+   if(nameLockBusy(s,owner,onceKey,queued))continue;
+   if(onceKey)queued.add(onceKey);
+   out.push({kind:'moveSelf',uid:c.uid,onceKey,draw:d.raidWitness.draw||0,
+    returnUnder:d.raidWitness.returnUnderToHand===true});
   }
  }
  return out;
@@ -120,20 +129,51 @@ function queueRaidFollowup(s,owner,pending,nowJobs,laterJobs){
  else s.effectQueue.unshift(...pending.baseJobs,...pending.entryJobs,...pending.raidJobs);
  s.effectQueue.unshift(...nowJobs);
 }
-function openWitness(pack,s,owner,witness,raidUid){
- const pl=s.players[owner];
- const watcher=api.location(s,owner,witness.uid)?.c;
+function witnessStillLive(pack,s,owner,witness,raidUid){
  const raider=api.location(s,owner,raidUid)?.c;
- if(!watcher||!raider||originalEffectsDisabled(s,watcher)){
+ if(!raider)return null;
+ const fits=c=>{
+  if(!c||c.uid===raidUid||originalEffectsDisabled(s,c))return false;
+  const d=card(pack,c);
+  const loc=api.location(s,owner,c.uid);
+  if(!loc)return false;
+  if(witness.kind==='attach'){
+   const spec=d.raidAttach;
+   return !!spec&&loc.line===spec.line&&card(pack,raider).name.includes(spec.nameContains)&&
+    (!witness.onceKey||d.name+'|raidAttach'===witness.onceKey);
+  }
+  if(witness.kind==='moveSelf'){
+   if(!d.raidWitness||card(pack,raider).name!==d.raidWitness.name)return false;
+   if(!witness.onceKey)return c.uid===witness.uid;
+   return d.raidWitness.once==='name'&&d.name+'|raidWitness'===witness.onceKey;
+  }
+  return false;
+ };
+ const preferred=api.location(s,owner,witness.uid)?.c;
+ if(fits(preferred))return preferred;
+ if(!witness.onceKey)return null;
+ for(const c of api.field(s.players[owner]))if(c.uid!==preferred?.uid&&fits(c))return c;
+ return null;
+}
+function openWitness(pack,s,owner,witness,raidUid){
+ if(witness.onceKey&&s.onceEffectUses[owner].includes(witness.onceKey)){
   api.continueEffectQueue(pack,s);return;
  }
- if(witness.kind==='attach'){
-  const choices=[...pl.hand,...pl.outside].filter(c=>card(pack,c).name===witness.want).map(c=>c.uid);
-  s.pending={kind:'effect-raid-attach',player:owner,sourceUid:witness.uid,
-   witness,choices,raidUid};
+ const pl=s.players[owner];
+ const watcher=witnessStillLive(pack,s,owner,witness,raidUid);
+ const raider=api.location(s,owner,raidUid)?.c;
+ if(!watcher||!raider){
+  api.continueEffectQueue(pack,s);return;
+ }
+ const current=watcher.uid===witness.uid?witness:{...witness,uid:watcher.uid};
+ if(current.kind==='attach'){
+  const choices=[...pl.hand,...pl.outside].filter(c=>card(pack,c).name===current.want).map(c=>c.uid);
+  s.pending={kind:'effect-raid-attach',player:owner,sourceUid:watcher.uid,
+   witness:current,choices,raidUid};
   return;
  }
- s.pending={kind:'effect-raid-witness-move',player:owner,sourceUid:witness.uid,witness,raidUid};
+ s.pending={kind:'effect-raid-witness-move',player:owner,sourceUid:watcher.uid,
+  witness:current,raidUid};
 }
 export function finishJob(pack,s,job){
  const owner=job.owner,pl=s.players[owner];
@@ -398,6 +438,8 @@ export function resolveFinishChoice(pack,s,a){
  if(q.kind==='effect-raid-attach'){
   s.pending=null;
   if(a.uid){
+   if(q.witness.onceKey&&s.onceEffectUses[q.player].includes(q.witness.onceKey))
+    throw Error('Same-name raid attach was already used');
    const hand=p.hand.findIndex(c=>c.uid===a.uid);
    const outside=hand<0?p.outside.findIndex(c=>c.uid===a.uid):-1;
    const from=hand>=0?'hand':'outside';
@@ -417,6 +459,8 @@ export function resolveFinishChoice(pack,s,a){
  if(q.kind==='effect-raid-witness-move'){
   s.pending=null;
   if(a.mode==='move'){
+   if(q.witness.onceKey&&s.onceEffectUses[q.player].includes(q.witness.onceKey))
+    throw Error('Same-name raid witness was already used');
    const loc=api.location(s,q.player,q.witness.uid);
    const host=api.location(s,q.player,q.raidUid)?.c;
    if(!loc||!host||host.uid===loc.c.uid)throw Error('Raid witness source left the field');

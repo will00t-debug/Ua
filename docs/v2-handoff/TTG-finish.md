@@ -4,7 +4,7 @@ Registration plus scenario tests in `tests/v2-ttg-finish.test.mjs`. This continu
 
 | Card | Shared ability |
 | --- | --- |
-| TTG-1-004 ヴィラル | Front witness. A raid whose name contains グレンラガン onto シモン or ヴィラル may tuck the counterpart from hand or outside. A hand placement draws 1. Once per printed name. The controller chooses now, later, or decline. |
+| TTG-1-004 ヴィラル | Front witness. A raid whose name contains グレンラガン onto シモン or ヴィラル may tuck the counterpart from hand or outside. A hand placement draws 1. Once per printed name: two copies on the field still open one window. The controller chooses now, later, or decline. |
 | TTG-1-012 シモン | Enters ACTIVE and cannot use the energy line. Looks at the top 6, takes up to one ニア or energy 8+, orders the rest, then discards at least 1. May active 1 AP, or retire one front when the discarded energy sum is 15 or more. Doubles generated energy only after the entry turn. |
 | TTG-1-027 アークグレンラガン | Chain-raids exact グレンラガン, or raids シモン / ヴィラル directly. Raid-box BP+1000 and IMPACT 1 (Q51/Q552). Facedown entry scale and a 2-facedown attack for damage 2. |
 | TTG-1-031 超銀河グレンラガン | Chain-raids exact アークグレンラガン. Raid-box BP+1000 and Damage (2) (Q51/Q552, Q2274). 登場時 once per name: BP+5000 and unchoosable until the next own start, plus the energy 20 and energy 50 gates. |

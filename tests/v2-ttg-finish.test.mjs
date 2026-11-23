@@ -247,6 +247,80 @@ test('TTG-004 attaches the counterpart from hand or outside and can resolve befo
  assertUniversalMatch(ttg,later);
 });
 
+test('TTG-004 same printed name activates once when two copies are on the front',()=>{
+ let s=fresh(9006);
+ s=endTurn(s);
+ fuel(s,1,2,40);
+ const simon=place(s,1,'TTG-1-009','front',0);
+ const first=place(s,1,'TTG-1-004','front',1);
+ const second=place(s,1,'TTG-1-004','front',2);
+ const extra=aside(s,1,'TTG-1-002');
+ const handViral=hold(s,1,'TTG-1-002');
+ const raider=hold(s,1,'TTG-1-029');
+ s=toPhase(s,'main');
+ const handBefore=s.players[1].hand.length;
+ s=go(s,act(s,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===simon.uid));
+ assert.equal(s.pending.kind,'effect-raid-witness-order');
+ assert.equal(s.pending.witnesses.length,1);
+ assert.equal(s.pending.witnesses[0].uid,first.uid);
+ s=go(s,act(s,a=>a.type==='chooseRaidWitness'&&a.when==='now'));
+ assert.equal(s.pending.kind,'effect-raid-attach');
+ assert.equal(s.pending.sourceUid,first.uid);
+ s=go(s,act(s,a=>a.type==='chooseRaidAttach'&&a.uid===handViral.uid));
+ assert.notEqual(s.pending?.kind,'effect-raid-attach');
+ assert.notEqual(s.pending?.kind,'effect-raid-witness-order');
+ assert.equal(s.players[1].hand.length,handBefore-1);
+ assert.equal(s.onceEffectUses[1].filter(k=>k==='ヴィラル|raidAttach').length,1);
+ assert.equal(live(s,1,raider.uid).under.some(c=>c.uid===handViral.uid&&c.faceDown),true);
+ assert.equal(live(s,1,raider.uid).under.some(c=>c.uid===extra.uid),false);
+ if(s.pending?.kind==='effect-outside-or-rest')
+  s=go(s,act(s,a=>a.type==='chooseOutsideOrRest'&&a.mode==='skip'));
+ assert.ok(s.players[1].outside.some(c=>c.uid===extra.uid));
+ const bare=place(s,1,'TTG-1-009','front',3);
+ const again=hold(s,1,'TTG-1-029');
+ s=go(s,act(s,a=>a.type==='raid'&&a.uid===again.uid&&a.baseUid===bare.uid));
+ assert.notEqual(s.pending?.kind,'effect-raid-witness-order');
+ assert.equal(s.onceEffectUses[1].filter(k=>k==='ヴィラル|raidAttach').length,1);
+ assertUniversalMatch(ttg,s);
+
+ let skipped=fresh(9007);
+ skipped=endTurn(skipped);
+ fuel(skipped,1,3,40);
+ place(skipped,1,'TTG-1-009','front',0);
+ const kept=place(skipped,1,'TTG-1-004','front',1);
+ place(skipped,1,'TTG-1-004','front',2);
+ const tucked=hold(skipped,1,'TTG-1-002');
+ const firstRaid=hold(skipped,1,'TTG-1-029');
+ skipped=toPhase(skipped,'main');
+ skipped=go(skipped,act(skipped,a=>a.type==='raid'&&a.uid===firstRaid.uid&&a.baseUid===skipped.players[1].front[0].uid));
+ assert.equal(skipped.pending.witnesses.length,1);
+ skipped=go(skipped,act(skipped,a=>a.type==='chooseRaidWitness'&&a.when==='skip'));
+ assert.equal(skipped.onceEffectUses[1].includes('ヴィラル|raidAttach'),false);
+ assert.ok(skipped.players[1].hand.some(c=>c.uid===tucked.uid));
+ const nextBase=place(skipped,1,'TTG-1-009','front',3);
+ const nextRaid=hold(skipped,1,'TTG-1-029');
+ skipped=go(skipped,act(skipped,a=>a.type==='raid'&&a.uid===nextRaid.uid&&a.baseUid===nextBase.uid));
+ assert.equal(skipped.pending.kind,'effect-raid-witness-order');
+ assert.equal(skipped.pending.witnesses.length,1);
+ assert.equal(skipped.pending.witnesses[0].uid,kept.uid);
+ assertUniversalMatch(ttg,skipped);
+
+ let quiet=fresh(9008);
+ quiet=endTurn(quiet);
+ fuel(quiet,1,3,40);
+ place(quiet,1,'TTG-1-009','front',0);
+ const sealed=place(quiet,1,'TTG-1-004','front',1);
+ const open=place(quiet,1,'TTG-1-004','front',2);
+ hold(quiet,1,'TTG-1-002');
+ const sealedRaid=hold(quiet,1,'TTG-1-029');
+ silence(quiet,sealed.uid,1);
+ quiet=toPhase(quiet,'main');
+ quiet=go(quiet,act(quiet,a=>a.type==='raid'&&a.uid===sealedRaid.uid&&a.baseUid===quiet.players[1].front[0].uid));
+ assert.equal(quiet.pending.witnesses.length,1);
+ assert.equal(quiet.pending.witnesses[0].uid,open.uid);
+ assertUniversalMatch(ttg,quiet);
+});
+
 test('TTG-012 looks, discards, and doubles generated energy only after the entry turn',()=>{
  let s=fresh(9012);
  s=endTurn(s);
@@ -475,6 +549,31 @@ test('TTG-033 adds active energy and can tuck itself under an Arc Gurren Lagann 
  s=go(s,act(s,a=>a.retireUid===null));
  assert.ok(s.onceEffectUses[1].includes('アークグレン|raidWitness'));
  assertUniversalMatch(ttg,s);
+
+ let pair=fresh(9037);
+ pair=endTurn(pair);
+ const left=place(pair,1,'TTG-1-033','energy',0);
+ const right=place(pair,1,'TTG-1-033','energy',1);
+ for(const slot of [2,3]){
+  const c=place(pair,1,'TTG-1-002','energy',slot);
+  c.buffs=[{energy:40,untilTurn:pair.turn}];
+ }
+ const simonBase=place(pair,1,'TTG-1-009','front',0);
+ const arc=hold(pair,1,'TTG-1-027');
+ pair=toPhase(pair,'main');
+ const deckBefore=pair.players[1].deck.length;
+ pair=go(pair,act(pair,a=>a.type==='raid'&&a.uid===arc.uid&&a.baseUid===simonBase.uid));
+ assert.equal(pair.pending.kind,'effect-raid-witness-order');
+ assert.equal(pair.pending.witnesses.length,1);
+ assert.equal(pair.pending.witnesses[0].uid,left.uid);
+ pair=go(pair,act(pair,a=>a.when==='now'));
+ pair=go(pair,act(pair,a=>a.mode==='move'));
+ assert.equal(pair.pending.kind,'effect-facedown-scale');
+ assert.equal(pair.players[1].deck.length,deckBefore-2);
+ assert.equal(pair.onceEffectUses[1].filter(k=>k==='アークグレン|raidWitness').length,1);
+ assert.equal(live(pair,1,right.uid)?.cardId,'TTG-1-033');
+ assert.equal(live(pair,1,arc.uid).under.some(c=>c.uid===left.uid),true);
+ assertUniversalMatch(ttg,pair);
 });
 
 test('TTG-034 discounts a missing field, counts direct facedowns, captures a retirement, and returns buried cards',()=>{
