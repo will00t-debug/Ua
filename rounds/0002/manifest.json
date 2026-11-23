@@ -108,5 +108,18 @@
   "championPolicy": "685ef4b4b808",
   "historicalNote": "歷代實驗冠軍尚未出現，或與現任權重相同。這組對戰併入冠軍對戰，不另計成新對手。",
   "historicalSame": true,
-  "officialV2": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa"
+  "officialV2": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "replay": {
+    "same": true,
+    "finished": true,
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    }
+  }
 }
