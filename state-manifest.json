@@ -1,7 +1,7 @@
 {
   "format": "ua-white-sword-v4a-state",
   "codeVersion": "v4a1-1",
-  "running": false,
+  "running": true,
   "files": [
     {
       "file": "champion/current.json",
@@ -156,6 +156,50 @@
       "sha256": "eb014d9251f1503ee05ebdd319a98874b03bba633edadef81c140034bca078a5"
     },
     {
+      "file": "rounds/0003/candidates/v4a-r0003-c0-8526fc0036a2.json",
+      "sha256": "d6ae4428bfa00e5df57b5cb1a7bbd788a46ebd781d56e1e7ad5e1484d1b40c4a"
+    },
+    {
+      "file": "rounds/0003/candidates/v4a-r0003-c1-1c5dfd8d2354.json",
+      "sha256": "9c7d3f9d73fb4c639282502b62547285c4266d83e09e43e43ac444b1768d86b1"
+    },
+    {
+      "file": "rounds/0003/candidates/v4a-r0003-c2-bce3cbb01e69.json",
+      "sha256": "6b9fbf2f7cdabd908b78a350dcd22b954e98589b3517144819116aa2b97385aa"
+    },
+    {
+      "file": "rounds/0003/candidates/v4a-r0003-c3-55a3f0bf5f74.json",
+      "sha256": "ddd1f25d9e31eda6081b9253be7266fac900d203070d2a2bcae1a292f1d4c991"
+    },
+    {
+      "file": "rounds/0003/candidates/v4a-r0003-c4-5a3c669d4321.json",
+      "sha256": "5f2829526f674a21d72921c8cac5ec4088f92be7a278b0d84929a0e63ab637d6"
+    },
+    {
+      "file": "rounds/0003/candidates/v4a-r0003-c5-d2605be43e16.json",
+      "sha256": "4ff0ebe411de02e24aaa8e9a5fa54a50850c819b08d0615dcc0ab1342a5aa05f"
+    },
+    {
+      "file": "rounds/0003/candidates/v4a-r0003-c6-d737402cdb9b.json",
+      "sha256": "dfac49c2773acc1414b7a918c91b0f42544f5f15386a72d2fcdac9f44086f526"
+    },
+    {
+      "file": "rounds/0003/candidates/v4a-r0003-c7-03d6828a33d0.json",
+      "sha256": "2b3a60b293ae88ada3960f715311393372f2e81f2997b0fa1dbaacc7ac033801"
+    },
+    {
+      "file": "rounds/0003/manifest.json",
+      "sha256": "ef7f1cb2640ee5ed4f66f800fc55db8ac7e1bf0bbd7240bcc127ac546596782e"
+    },
+    {
+      "file": "rounds/0003/probe.json",
+      "sha256": "07a560e9000753608acad352718f63816c5dd3b85519efcb308428918ccaa336"
+    },
+    {
+      "file": "rounds/0003/stage-a.jsonl",
+      "sha256": "9c09d3336a2ec1d8666e88429d216aba6954188ca8695559f1fd71e541e640b7"
+    },
+    {
       "file": "rounds/smoke-v4a1/candidates/v4a-r0000-c0-c7972e811361.json",
       "sha256": "a601b3579055fbe6b6deb83e0c577d3d41decdfff85531dbdfc4b43f2fe8098c"
     },
@@ -285,7 +329,7 @@
     },
     {
       "file": "seed-ledger.json",
-      "sha256": "695a223956bc5df3fa3f16a52c2f168024e189d3d89f475094eb3d3d74d31dc2"
+      "sha256": "705c9cd3fb20e882d440e1d6069c75c1fdf1275192e3f0ab3711ff42f66dec81"
     }
   ]
 }

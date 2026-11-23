@@ -1008,6 +1008,517 @@
       "round": 2,
       "profile": "round",
       "at": "2026-11-23T00:13:50.993Z"
+    },
+    {
+      "seed": 102000,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102001,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102002,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102003,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102004,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102005,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102006,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102007,
+      "purpose": "probe",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102100,
+      "purpose": "stage-a",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102200,
+      "purpose": "stage-b",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102201,
+      "purpose": "stage-b",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102202,
+      "purpose": "stage-b",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102203,
+      "purpose": "stage-b",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102400,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102401,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102402,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102403,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102404,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102405,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102406,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102407,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102408,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102409,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102410,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102411,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102412,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102413,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102414,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102415,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102416,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102417,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102418,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102419,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102420,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102421,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102422,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102423,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102424,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102425,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102426,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102427,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102428,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102429,
+      "purpose": "stage-c-paired",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102500,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102501,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102502,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102503,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102504,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102505,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102506,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102507,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102508,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102509,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102510,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102511,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102512,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102513,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102514,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102515,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102516,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102517,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102518,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102519,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102520,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102521,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102522,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102523,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102524,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102525,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102526,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102527,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102528,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
+    },
+    {
+      "seed": 102529,
+      "purpose": "stage-c-mirror",
+      "round": 3,
+      "profile": "round",
+      "at": "2026-11-23T01:12:14.092Z"
     }
   ]
 }
