@@ -66,6 +66,49 @@ function hardAction(pack,state,legal,seed){
  const action=chooseStrengthenedHardAction(pack,state,{...HARD_OPTIONS,seed});
  return legal.find(item=>same(item,action))||legal.find(item=>item.type==='next')||legal[0];
 }
+export function mineGame({parent,opponent,seed,maxSteps=200}={}){
+ const white=getDeck('white-sword');
+ const other=getDeck(opponent);
+ const packs=[white.pack,other.pack];
+ const countsPair=[white.counts,other.counts];
+ const first=seed%2;
+ let state=newComparedMatch(packs,countsPair,seed,first,RULES);
+ let last='';
+ let repeats=0;
+ let decisions=0;
+ const positions=[];
+ for(let step=0;step<maxSteps&&state.status==='playing';step++){
+  const actor=state.pending?.player??state.active;
+  const legal=legalUniversalActions(packs,state);
+  if(!legal.length)throw Error('挖掘走到沒有合法動作的局面');
+  const loop=positionKey(state);
+  repeats=loop===last?repeats+1:0;
+  last=loop;
+  if(repeats>=LOOP_LIMIT)break;
+  const ordered=ORDER_KINDS.has(state.pending?.kind);
+  let action;
+  if(actor===0&&legal.length>1&&!ordered){
+   decisions++;
+   const viewed=bandOf(packs,state,legal,seed,actor);
+   const bucket=positionBucket(state,actor,legal);
+   if(viewed.band.length>=2){
+    const pair=pairOf(viewed.band,parent.policy);
+    positions.push({
+     id:digest(opponent+':'+seed+':'+step),
+     seed,first,step,actor,turn:state.turn,phase:state.phase,bucket,
+     opponent,decks:['white-sword',opponent],
+     legalCount:legal.length,bandCount:viewed.band.length,gap:pair.gap,
+     actionA:publicAction(pair.actionA),
+     actionB:publicAction(pair.actionB),
+     band:viewed.band.map(row=>({key:row.key,hard:row.hard,features:row.features}))
+    });
+   }
+   action=viewed.play;
+  }else action=hardAction(packs,state,legal,seed);
+  state=dispatchUniversalAction(packs,state,action,{actor});
+ }
+ return {opponent,seed,decisions,positions};
+}
 export function minePool({parent,maxSteps=200,perBucket=12,seeds=null,log=()=>{}}={}){
  const plan=seeds||MINE_SEEDS;
  const flat=Object.values(plan).flat();
@@ -74,48 +117,17 @@ export function minePool({parent,maxSteps=200,perBucket=12,seeds=null,log=()=>{}
  const counts={};
  let games=0;
  let decisions=0;
+ const filled=()=>Object.values(counts).every(count=>count>=perBucket)&&Object.keys(counts).length>=7;
  for(const [opponent,list] of Object.entries(plan)){
-  const white=getDeck('white-sword');
-  const other=getDeck(opponent);
-  const packs=[white.pack,other.pack];
-  const countsPair=[white.counts,other.counts];
   for(const seed of list){
-   if(Object.values(counts).every(count=>count>=perBucket)&&Object.keys(counts).length>=7)break;
+   if(filled())break;
    games++;
-   const first=seed%2;
-   let state=newComparedMatch(packs,countsPair,seed,first,RULES);
-   let last='';
-   let repeats=0;
-   for(let step=0;step<maxSteps&&state.status==='playing';step++){
-    const actor=state.pending?.player??state.active;
-    const legal=legalUniversalActions(packs,state);
-    if(!legal.length)throw Error('挖掘走到沒有合法動作的局面');
-    const loop=positionKey(state);
-    repeats=loop===last?repeats+1:0;
-    last=loop;
-    if(repeats>=LOOP_LIMIT)break;
-    const ordered=ORDER_KINDS.has(state.pending?.kind);
-    let action;
-    if(actor===0&&legal.length>1&&!ordered){
-     decisions++;
-     const viewed=bandOf(packs,state,legal,seed,actor);
-     const bucket=positionBucket(state,actor,legal);
-     if(viewed.band.length>=2&&(counts[bucket]||0)<perBucket){
-      const pair=pairOf(viewed.band,parent.policy);
-      positions.push({
-       id:digest(opponent+':'+seed+':'+step),
-       seed,first,step,actor,turn:state.turn,phase:state.phase,bucket,
-       opponent,decks:['white-sword',opponent],
-       legalCount:legal.length,bandCount:viewed.band.length,gap:pair.gap,
-       actionA:publicAction(pair.actionA),
-       actionB:publicAction(pair.actionB),
-       band:viewed.band.map(row=>({key:row.key,hard:row.hard,features:row.features}))
-      });
-      counts[bucket]=(counts[bucket]||0)+1;
-     }
-     action=viewed.play;
-    }else action=hardAction(packs,state,legal,seed);
-    state=dispatchUniversalAction(packs,state,action,{actor});
+   const game=mineGame({parent,opponent,seed,maxSteps});
+   decisions+=game.decisions;
+   for(const position of game.positions){
+    if((counts[position.bucket]||0)>=perBucket)continue;
+    positions.push(position);
+    counts[position.bucket]=(counts[position.bucket]||0)+1;
    }
    log('挖掘 '+opponent+' '+seed+' 局面 '+positions.length);
   }
