@@ -1,0 +1,1922 @@
+{
+  "census": {
+    "n": 40,
+    "median": 8.681,
+    "max": 164.11,
+    "atLeast7": 20,
+    "atLeast20": 15,
+    "atLeast50": 10,
+    "atLeast100": 8,
+    "widest": [
+      {
+        "id": "ec7c5e704ca0b7d5",
+        "bucket": "ap",
+        "gap": 164.11
+      },
+      {
+        "id": "cab327eaf1cdd106",
+        "bucket": "raid",
+        "gap": 159.632
+      },
+      {
+        "id": "6717e5fccd75a090",
+        "bucket": "ap",
+        "gap": 120.238
+      },
+      {
+        "id": "4077c392e879d6ae",
+        "bucket": "ap",
+        "gap": 118.705
+      },
+      {
+        "id": "dadcdc80f133e959",
+        "bucket": "ap",
+        "gap": 116.73
+      },
+      {
+        "id": "cfce7dbf6463ac19",
+        "bucket": "line-move",
+        "gap": 103.151
+      },
+      {
+        "id": "2ccb1a6f061b7a07",
+        "bucket": "line-move",
+        "gap": 101.801
+      },
+      {
+        "id": "1a26796441242d3c",
+        "bucket": "attack-defense",
+        "gap": 100.267
+      }
+    ]
+  },
+  "dependence": {
+    "pairs": 109,
+    "identical": 30,
+    "hashOnly": 1,
+    "oneStepNeedsHash": 14,
+    "boxWithoutHash": 13
+  },
+  "rows": [
+    {
+      "id": "6717e5fccd75a090",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 24,
+      "mean": -0.20833333333333334,
+      "margin": {
+        "total": 120.238,
+        "hard": 3.63,
+        "policy": 116.608,
+        "groups": {
+          "hash": 18.245,
+          "type": 14.621,
+          "card": 0.601,
+          "aizen": -6.225,
+          "economy": 89.367,
+          "other": 0
+        },
+        "top": [
+          {
+            "name": "pass_despite_attack",
+            "group": "economy",
+            "weight": -5.329,
+            "diff": -1,
+            "contribution": 31.975
+          },
+          {
+            "name": "affordable",
+            "group": "economy",
+            "weight": 3.778,
+            "diff": 1,
+            "contribution": 22.666
+          },
+          {
+            "name": "type_next",
+            "group": "type",
+            "weight": -3.359,
+            "diff": -1,
+            "contribution": 20.156
+          },
+          {
+            "name": "h4",
+            "group": "hash",
+            "weight": -2.65,
+            "diff": -1,
+            "contribution": 15.901
+          },
+          {
+            "name": "spends_ap",
+            "group": "economy",
+            "weight": 2.535,
+            "diff": 1,
+            "contribution": 15.21
+          },
+          {
+            "name": "card_bp",
+            "group": "economy",
+            "weight": 1.725,
+            "diff": 0.8,
+            "contribution": 8.278
+          },
+          {
+            "name": "card_ap",
+            "group": "economy",
+            "weight": 2.139,
+            "diff": 0.5,
+            "contribution": 6.416
+          },
+          {
+            "name": "type_activate",
+            "group": "type",
+            "weight": -0.923,
+            "diff": 1,
+            "contribution": -5.536
+          }
+        ]
+      },
+      "ceilings": {
+        "all": {
+          "one": 114.45,
+          "box": 574.408,
+          "gap": 120.238
+        },
+        "named": {
+          "one": 96.45,
+          "box": 484.164,
+          "gap": 120.238
+        },
+        "noType": {
+          "one": 78.45,
+          "box": 397.543,
+          "gap": 120.238
+        },
+        "noShared": {
+          "one": 30.375,
+          "box": 115.876,
+          "gap": 120.238
+        },
+        "cardOnly": {
+          "one": 9,
+          "box": 36.601,
+          "gap": 120.238
+        }
+      },
+      "walks": [
+        {
+          "kind": "logistic",
+          "freezeHash": false,
+          "steps": 5,
+          "flipped": true,
+          "gap": -24.819,
+          "collateralSelected": 7,
+          "collateralPool": 5,
+          "similar": 8,
+          "unrelated": 4,
+          "l2": 7.251,
+          "maxAbs": 2.175,
+          "clip": 0,
+          "largestHash": 2.175,
+          "groups": {
+            "type": {
+              "coords": 2,
+              "maxAbs": 2.1749648660819645,
+              "l2": 3.0758648112980964
+            },
+            "economy": {
+              "coords": 7,
+              "maxAbs": 2.1749648660819645,
+              "l2": 4.600998963258268
+            },
+            "card": {
+              "coords": 1,
+              "maxAbs": 2.1749648660819645,
+              "l2": 2.1749648660819645
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 2.1749648660819645,
+              "l2": 2.7858447375542252
+            },
+            "hash": {
+              "coords": 2,
+              "maxAbs": 2.1749648660819645,
+              "l2": 3.0758648112980964
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 91.06,
+              "flipped": false,
+              "selected": 3,
+              "pool": 0,
+              "similar": 3,
+              "unrelated": 0,
+              "maxAbs": 0.437
+            },
+            {
+              "step": 2,
+              "gap": 61.881,
+              "flipped": false,
+              "selected": 4,
+              "pool": 0,
+              "similar": 3,
+              "unrelated": 1,
+              "maxAbs": 0.875
+            },
+            {
+              "step": 3,
+              "gap": 32.702,
+              "flipped": false,
+              "selected": 5,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 2,
+              "maxAbs": 1.312
+            },
+            {
+              "step": 4,
+              "gap": 3.523,
+              "flipped": false,
+              "selected": 5,
+              "pool": 3,
+              "similar": 5,
+              "unrelated": 3,
+              "maxAbs": 1.75
+            },
+            {
+              "step": 5,
+              "gap": -24.819,
+              "flipped": true,
+              "selected": 7,
+              "pool": 5,
+              "similar": 8,
+              "unrelated": 4,
+              "maxAbs": 2.175
+            }
+          ],
+          "changes": [
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "dadcdc80f133e959",
+              "bucket": "ap",
+              "opponent": "renruki",
+              "relation": "similar"
+            },
+            {
+              "id": "675759e42cddd095",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "4eaa52f9009684c5",
+              "bucket": "early-energy",
+              "opponent": "reject-blue",
+              "relation": "unrelated"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "ba8ba4185b6bf1a8",
+              "bucket": "late-pressure",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "7511dfbaae2a13c1",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "e6c923ea6a42004e",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            }
+          ]
+        },
+        {
+          "kind": "logistic",
+          "freezeHash": true,
+          "steps": 6,
+          "flipped": true,
+          "gap": -14.826,
+          "collateralSelected": 6,
+          "collateralPool": 4,
+          "similar": 8,
+          "unrelated": 2,
+          "l2": 7.456,
+          "maxAbs": 2.469,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {
+            "type": {
+              "coords": 2,
+              "maxAbs": 2.4694510922817834,
+              "l2": 3.492331226321951
+            },
+            "economy": {
+              "coords": 7,
+              "maxAbs": 2.4694510922817834,
+              "l2": 5.223965725880053
+            },
+            "card": {
+              "coords": 1,
+              "maxAbs": 2.469451092281783,
+              "l2": 2.469451092281783
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 2.469451092281783,
+              "l2": 3.163042970194573
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 96.31,
+              "flipped": false,
+              "selected": 3,
+              "pool": 0,
+              "similar": 3,
+              "unrelated": 0,
+              "maxAbs": 0.437
+            },
+            {
+              "step": 2,
+              "gap": 72.381,
+              "flipped": false,
+              "selected": 3,
+              "pool": 0,
+              "similar": 3,
+              "unrelated": 0,
+              "maxAbs": 0.875
+            },
+            {
+              "step": 3,
+              "gap": 48.452,
+              "flipped": false,
+              "selected": 4,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 1,
+              "maxAbs": 1.312
+            },
+            {
+              "step": 4,
+              "gap": 24.523,
+              "flipped": false,
+              "selected": 4,
+              "pool": 2,
+              "similar": 5,
+              "unrelated": 1,
+              "maxAbs": 1.75
+            },
+            {
+              "step": 5,
+              "gap": 0.595,
+              "flipped": false,
+              "selected": 6,
+              "pool": 3,
+              "similar": 7,
+              "unrelated": 2,
+              "maxAbs": 2.187
+            },
+            {
+              "step": 6,
+              "gap": -14.826,
+              "flipped": true,
+              "selected": 6,
+              "pool": 4,
+              "similar": 8,
+              "unrelated": 2,
+              "maxAbs": 2.469
+            }
+          ],
+          "changes": [
+            {
+              "id": "bb4fb08231ad674e",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "dadcdc80f133e959",
+              "bucket": "ap",
+              "opponent": "renruki",
+              "relation": "similar"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "4eaa52f9009684c5",
+              "bucket": "early-energy",
+              "opponent": "reject-blue",
+              "relation": "unrelated"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "ba8ba4185b6bf1a8",
+              "bucket": "late-pressure",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "e6c923ea6a42004e",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            }
+          ]
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 2,
+          "flipped": true,
+          "gap": -72.662,
+          "collateralSelected": 6,
+          "collateralPool": 7,
+          "similar": 10,
+          "unrelated": 3,
+          "l2": 11.225,
+          "maxAbs": 3,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {
+            "type": {
+              "coords": 2,
+              "maxAbs": 3,
+              "l2": 4.242640687119285
+            },
+            "economy": {
+              "coords": 7,
+              "maxAbs": 3,
+              "l2": 7.937253933193772
+            },
+            "card": {
+              "coords": 1,
+              "maxAbs": 3,
+              "l2": 3
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 3,
+              "l2": 6
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 23.788,
+              "flipped": false,
+              "selected": 4,
+              "pool": 2,
+              "similar": 5,
+              "unrelated": 1,
+              "maxAbs": 1.5
+            },
+            {
+              "step": 2,
+              "gap": -72.662,
+              "flipped": true,
+              "selected": 6,
+              "pool": 7,
+              "similar": 10,
+              "unrelated": 3,
+              "maxAbs": 3
+            }
+          ],
+          "changes": [
+            {
+              "id": "bb4fb08231ad674e",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "dadcdc80f133e959",
+              "bucket": "ap",
+              "opponent": "renruki",
+              "relation": "similar"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "4eaa52f9009684c5",
+              "bucket": "early-energy",
+              "opponent": "reject-blue",
+              "relation": "unrelated"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "ba8ba4185b6bf1a8",
+              "bucket": "late-pressure",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "99964c82b60bc07e",
+              "bucket": "raid",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "f9011a783841bece",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "e6c923ea6a42004e",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "2f12ffb35f21124b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            }
+          ]
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 5,
+          "flipped": false,
+          "gap": 4.362,
+          "collateralSelected": 3,
+          "collateralPool": 2,
+          "similar": 5,
+          "unrelated": 0,
+          "l2": 13.008,
+          "maxAbs": 6.6,
+          "clip": 5,
+          "largestHash": 0,
+          "groups": {
+            "card": {
+              "coords": 1,
+              "maxAbs": 6.100146463683481,
+              "l2": 6.100146463683481
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 6.600430455801829,
+              "l2": 11.489421139315045
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 89.863,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 1.5
+            },
+            {
+              "step": 2,
+              "gap": 59.488,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 3
+            },
+            {
+              "step": 3,
+              "gap": 29.113,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 4.5
+            },
+            {
+              "step": 4,
+              "gap": 6.764,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 6
+            },
+            {
+              "step": 5,
+              "gap": 4.362,
+              "flipped": false,
+              "selected": 3,
+              "pool": 2,
+              "similar": 5,
+              "unrelated": 0,
+              "maxAbs": 6.6
+            }
+          ],
+          "changes": [
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            }
+          ]
+        }
+      ],
+      "safe": {
+        "flipped": false,
+        "stalled": true,
+        "steps": 13,
+        "blocked": 183,
+        "gap": 6.238,
+        "selected": 1,
+        "pool": 0,
+        "moved": [
+          "type_activate",
+          "type_activate",
+          "type_activate",
+          "type_next",
+          "type_next",
+          "type_next",
+          "affordable",
+          "affordable",
+          "affordable",
+          "spends_ap",
+          "spends_ap",
+          "spends_ap",
+          "spends_ap"
+        ]
+      }
+    },
+    {
+      "id": "dadcdc80f133e959",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": -0.5,
+      "margin": {
+        "total": 116.73,
+        "hard": 2.25,
+        "policy": 114.48,
+        "groups": {
+          "hash": 18.245,
+          "type": 14.621,
+          "card": 0.601,
+          "aizen": -8.353,
+          "economy": 89.367,
+          "other": 0
+        },
+        "top": [
+          {
+            "name": "pass_despite_attack",
+            "group": "economy",
+            "weight": -5.329,
+            "diff": -1,
+            "contribution": 31.975
+          },
+          {
+            "name": "affordable",
+            "group": "economy",
+            "weight": 3.778,
+            "diff": 1,
+            "contribution": 22.666
+          },
+          {
+            "name": "type_next",
+            "group": "type",
+            "weight": -3.359,
+            "diff": -1,
+            "contribution": 20.156
+          },
+          {
+            "name": "h4",
+            "group": "hash",
+            "weight": -2.65,
+            "diff": -1,
+            "contribution": 15.901
+          },
+          {
+            "name": "spends_ap",
+            "group": "economy",
+            "weight": 2.535,
+            "diff": 1,
+            "contribution": 15.21
+          },
+          {
+            "name": "card_bp",
+            "group": "economy",
+            "weight": 1.725,
+            "diff": 0.8,
+            "contribution": 8.278
+          },
+          {
+            "name": "card_ap",
+            "group": "economy",
+            "weight": 2.139,
+            "diff": 0.5,
+            "contribution": 6.416
+          },
+          {
+            "name": "type_activate",
+            "group": "type",
+            "weight": -0.923,
+            "diff": 1,
+            "contribution": -5.536
+          }
+        ]
+      },
+      "ceilings": {
+        "all": {
+          "one": 114.45,
+          "box": 572.28,
+          "gap": 116.73
+        },
+        "named": {
+          "one": 96.45,
+          "box": 482.036,
+          "gap": 116.73
+        },
+        "noType": {
+          "one": 78.45,
+          "box": 395.415,
+          "gap": 116.73
+        },
+        "noShared": {
+          "one": 30.375,
+          "box": 113.748,
+          "gap": 116.73
+        },
+        "cardOnly": {
+          "one": 9,
+          "box": 36.601,
+          "gap": 116.73
+        }
+      },
+      "walks": [
+        {
+          "kind": "logistic",
+          "freezeHash": false,
+          "steps": 2,
+          "flipped": true,
+          "gap": -24.903,
+          "collateralSelected": 7,
+          "collateralPool": 4,
+          "similar": 7,
+          "unrelated": 4,
+          "l2": 7.041,
+          "maxAbs": 2.1,
+          "clip": 0,
+          "largestHash": 2.1,
+          "groups": {
+            "type": {
+              "coords": 2,
+              "maxAbs": 2.099999995671577,
+              "l2": 2.969848474862185
+            },
+            "economy": {
+              "coords": 7,
+              "maxAbs": 2.0999999956715776,
+              "l2": 4.442415578111309
+            },
+            "card": {
+              "coords": 1,
+              "maxAbs": 2.099999995671577,
+              "l2": 2.099999995671577
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 2.099999995671577,
+              "l2": 2.7904132700913746
+            },
+            "hash": {
+              "coords": 2,
+              "maxAbs": 2.099999995671577,
+              "l2": 2.9698484748621854
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 45.914,
+              "flipped": false,
+              "selected": 4,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 1,
+              "maxAbs": 1.05
+            },
+            {
+              "step": 2,
+              "gap": -24.903,
+              "flipped": true,
+              "selected": 7,
+              "pool": 4,
+              "similar": 7,
+              "unrelated": 4,
+              "maxAbs": 2.1
+            }
+          ],
+          "changes": [
+            {
+              "id": "6717e5fccd75a090",
+              "bucket": "ap",
+              "opponent": "renruki",
+              "relation": "similar"
+            },
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "675759e42cddd095",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "4eaa52f9009684c5",
+              "bucket": "early-energy",
+              "opponent": "reject-blue",
+              "relation": "unrelated"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "7511dfbaae2a13c1",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "e6c923ea6a42004e",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            }
+          ]
+        },
+        {
+          "kind": "logistic",
+          "freezeHash": true,
+          "steps": 3,
+          "flipped": true,
+          "gap": -33.107,
+          "collateralSelected": 6,
+          "collateralPool": 4,
+          "similar": 8,
+          "unrelated": 2,
+          "l2": 8.215,
+          "maxAbs": 2.702,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {
+            "type": {
+              "coords": 2,
+              "maxAbs": 2.7024868938641213,
+              "l2": 3.8218936174381795
+            },
+            "economy": {
+              "coords": 7,
+              "maxAbs": 2.7024868938641218,
+              "l2": 5.716938048423305
+            },
+            "card": {
+              "coords": 1,
+              "maxAbs": 2.7024868938641213,
+              "l2": 2.7024868938641213
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 2.7024868938641213,
+              "l2": 3.590978717347495
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 58.514,
+              "flipped": false,
+              "selected": 4,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 1,
+              "maxAbs": 1.05
+            },
+            {
+              "step": 2,
+              "gap": 0.297,
+              "flipped": false,
+              "selected": 5,
+              "pool": 3,
+              "similar": 6,
+              "unrelated": 2,
+              "maxAbs": 2.1
+            },
+            {
+              "step": 3,
+              "gap": -33.107,
+              "flipped": true,
+              "selected": 6,
+              "pool": 4,
+              "similar": 8,
+              "unrelated": 2,
+              "maxAbs": 2.702
+            }
+          ],
+          "changes": [
+            {
+              "id": "6717e5fccd75a090",
+              "bucket": "ap",
+              "opponent": "renruki",
+              "relation": "similar"
+            },
+            {
+              "id": "bb4fb08231ad674e",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "4eaa52f9009684c5",
+              "bucket": "early-energy",
+              "opponent": "reject-blue",
+              "relation": "unrelated"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "ba8ba4185b6bf1a8",
+              "bucket": "late-pressure",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "e6c923ea6a42004e",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            }
+          ]
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 2,
+          "flipped": true,
+          "gap": -76.17,
+          "collateralSelected": 6,
+          "collateralPool": 7,
+          "similar": 10,
+          "unrelated": 3,
+          "l2": 11.225,
+          "maxAbs": 3,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {
+            "type": {
+              "coords": 2,
+              "maxAbs": 3,
+              "l2": 4.242640687119285
+            },
+            "economy": {
+              "coords": 7,
+              "maxAbs": 3,
+              "l2": 7.937253933193772
+            },
+            "card": {
+              "coords": 1,
+              "maxAbs": 3,
+              "l2": 3
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 3,
+              "l2": 6
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 20.28,
+              "flipped": false,
+              "selected": 4,
+              "pool": 2,
+              "similar": 5,
+              "unrelated": 1,
+              "maxAbs": 1.5
+            },
+            {
+              "step": 2,
+              "gap": -76.17,
+              "flipped": true,
+              "selected": 6,
+              "pool": 7,
+              "similar": 10,
+              "unrelated": 3,
+              "maxAbs": 3
+            }
+          ],
+          "changes": [
+            {
+              "id": "6717e5fccd75a090",
+              "bucket": "ap",
+              "opponent": "renruki",
+              "relation": "similar"
+            },
+            {
+              "id": "bb4fb08231ad674e",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "4eaa52f9009684c5",
+              "bucket": "early-energy",
+              "opponent": "reject-blue",
+              "relation": "unrelated"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "ba8ba4185b6bf1a8",
+              "bucket": "late-pressure",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "99964c82b60bc07e",
+              "bucket": "raid",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "f9011a783841bece",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "e6c923ea6a42004e",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "2f12ffb35f21124b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            }
+          ]
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 5,
+          "flipped": false,
+          "gap": 2.982,
+          "collateralSelected": 3,
+          "collateralPool": 2,
+          "similar": 5,
+          "unrelated": 0,
+          "l2": 13.008,
+          "maxAbs": 6.6,
+          "clip": 5,
+          "largestHash": 0,
+          "groups": {
+            "card": {
+              "coords": 1,
+              "maxAbs": 6.100146463683481,
+              "l2": 6.100146463683481
+            },
+            "aizen": {
+              "coords": 4,
+              "maxAbs": 6.600430455801829,
+              "l2": 11.489421139315045
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": 86.355,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 1.5
+            },
+            {
+              "step": 2,
+              "gap": 55.98,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 3
+            },
+            {
+              "step": 3,
+              "gap": 25.605,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 4.5
+            },
+            {
+              "step": 4,
+              "gap": 4.484,
+              "flipped": false,
+              "selected": 3,
+              "pool": 1,
+              "similar": 4,
+              "unrelated": 0,
+              "maxAbs": 6
+            },
+            {
+              "step": 5,
+              "gap": 2.982,
+              "flipped": false,
+              "selected": 3,
+              "pool": 2,
+              "similar": 5,
+              "unrelated": 0,
+              "maxAbs": 6.6
+            }
+          ],
+          "changes": [
+            {
+              "id": "f0e5855d9ef66cbc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "eced4ebab3ffc050",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "2be593b5ae7b41c1",
+              "bucket": "ap",
+              "opponent": "reject-blue",
+              "relation": "similar"
+            },
+            {
+              "id": "9251d66bfd41c2b3",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "similar"
+            },
+            {
+              "id": "065132e02170dc72",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            }
+          ]
+        }
+      ],
+      "safe": {
+        "flipped": false,
+        "stalled": true,
+        "steps": 13,
+        "blocked": 183,
+        "gap": 2.73,
+        "selected": 1,
+        "pool": 0,
+        "moved": [
+          "type_activate",
+          "type_activate",
+          "type_activate",
+          "type_next",
+          "type_next",
+          "type_next",
+          "affordable",
+          "affordable",
+          "affordable",
+          "spends_ap",
+          "spends_ap",
+          "spends_ap",
+          "spends_ap"
+        ]
+      }
+    },
+    {
+      "id": "675759e42cddd095",
+      "bucket": "line-move",
+      "opponent": "white-sword",
+      "n": 24,
+      "mean": -0.2916666666666667,
+      "margin": {
+        "total": 6.948,
+        "hard": -1.5,
+        "policy": 8.448,
+        "groups": {
+          "hash": 17.027,
+          "type": 0,
+          "card": -9.129,
+          "aizen": 0,
+          "economy": 0.55,
+          "other": 0
+        },
+        "top": [
+          {
+            "name": "h4",
+            "group": "hash",
+            "weight": -2.65,
+            "diff": -1,
+            "contribution": 15.901
+          },
+          {
+            "name": "card_BLC-2-069",
+            "group": "card",
+            "weight": 1.993,
+            "diff": -1,
+            "contribution": -11.957
+          },
+          {
+            "name": "card_BLC-1-072",
+            "group": "card",
+            "weight": 0.471,
+            "diff": 1,
+            "contribution": 2.828
+          },
+          {
+            "name": "card_energy",
+            "group": "economy",
+            "weight": 2.112,
+            "diff": 0.125,
+            "contribution": 1.584
+          },
+          {
+            "name": "h5",
+            "group": "hash",
+            "weight": 0.188,
+            "diff": 1,
+            "contribution": 1.125
+          },
+          {
+            "name": "card_bp",
+            "group": "economy",
+            "weight": 1.725,
+            "diff": -0.1,
+            "contribution": -1.035
+          }
+        ]
+      },
+      "ceilings": {
+        "all": {
+          "one": 38.025,
+          "box": 160.548,
+          "gap": 6.948
+        },
+        "named": {
+          "one": 20.025,
+          "box": 71.521,
+          "gap": 6.948
+        },
+        "noType": {
+          "one": 20.025,
+          "box": 71.521,
+          "gap": 6.948
+        },
+        "noShared": {
+          "one": 18,
+          "box": 62.871,
+          "gap": 6.948
+        },
+        "cardOnly": {
+          "one": 0,
+          "box": 0,
+          "gap": 6.948
+        }
+      },
+      "walks": [
+        {
+          "kind": "logistic",
+          "freezeHash": false,
+          "steps": 1,
+          "flipped": true,
+          "gap": -7.832,
+          "collateralSelected": 1,
+          "collateralPool": 0,
+          "similar": 0,
+          "unrelated": 1,
+          "l2": 1.228,
+          "maxAbs": 0.612,
+          "clip": 0,
+          "largestHash": 0.612,
+          "groups": {
+            "economy": {
+              "coords": 2,
+              "maxAbs": 0.07648899425694422,
+              "l2": 0.09795370660470025
+            },
+            "card": {
+              "coords": 2,
+              "maxAbs": 0.6119119540555521,
+              "l2": 0.8653741844035839
+            },
+            "hash": {
+              "coords": 2,
+              "maxAbs": 0.6119119540555521,
+              "l2": 0.8653741844035839
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": -7.832,
+              "flipped": true,
+              "selected": 1,
+              "pool": 0,
+              "similar": 0,
+              "unrelated": 1,
+              "maxAbs": 0.612
+            }
+          ],
+          "changes": [
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            }
+          ]
+        },
+        {
+          "kind": "logistic",
+          "freezeHash": true,
+          "steps": 1,
+          "flipped": true,
+          "gap": -0.489,
+          "collateralSelected": 1,
+          "collateralPool": 0,
+          "similar": 0,
+          "unrelated": 1,
+          "l2": 0.871,
+          "maxAbs": 0.612,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {
+            "economy": {
+              "coords": 2,
+              "maxAbs": 0.07648899425694422,
+              "l2": 0.09795370660470025
+            },
+            "card": {
+              "coords": 2,
+              "maxAbs": 0.6119119540555521,
+              "l2": 0.8653741844035839
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": -0.489,
+              "flipped": true,
+              "selected": 1,
+              "pool": 0,
+              "similar": 0,
+              "unrelated": 1,
+              "maxAbs": 0.612
+            }
+          ],
+          "changes": [
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            }
+          ]
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 1,
+          "flipped": true,
+          "gap": -13.077,
+          "collateralSelected": 1,
+          "collateralPool": 2,
+          "similar": 1,
+          "unrelated": 2,
+          "l2": 3,
+          "maxAbs": 1.5,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {
+            "economy": {
+              "coords": 2,
+              "maxAbs": 1.5000000000000002,
+              "l2": 2.121320343559643
+            },
+            "card": {
+              "coords": 2,
+              "maxAbs": 1.5,
+              "l2": 2.1213203435596424
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": -13.077,
+              "flipped": true,
+              "selected": 1,
+              "pool": 2,
+              "similar": 1,
+              "unrelated": 2,
+              "maxAbs": 1.5
+            }
+          ],
+          "changes": [
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "44b3b18094e9d1fc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "1750e75e4ee8c089",
+              "bucket": "ap",
+              "opponent": "white-sword",
+              "relation": "similar"
+            }
+          ]
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 1,
+          "flipped": true,
+          "gap": -11.052,
+          "collateralSelected": 2,
+          "collateralPool": 1,
+          "similar": 0,
+          "unrelated": 3,
+          "l2": 2.121,
+          "maxAbs": 1.5,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {
+            "card": {
+              "coords": 2,
+              "maxAbs": 1.5,
+              "l2": 2.1213203435596424
+            }
+          },
+          "path": [
+            {
+              "step": 1,
+              "gap": -11.052,
+              "flipped": true,
+              "selected": 2,
+              "pool": 1,
+              "similar": 0,
+              "unrelated": 3,
+              "maxAbs": 1.5
+            }
+          ],
+          "changes": [
+            {
+              "id": "6f470072574536c1",
+              "bucket": "mid-entry",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "e74d9a9846a5211b",
+              "bucket": "line-move",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            },
+            {
+              "id": "44b3b18094e9d1fc",
+              "bucket": "attack-defense",
+              "opponent": "white-sword",
+              "relation": "unrelated"
+            }
+          ]
+        }
+      ],
+      "safe": {
+        "flipped": true,
+        "stalled": false,
+        "steps": 1,
+        "blocked": 3,
+        "gap": -2.052,
+        "selected": 0,
+        "pool": 0,
+        "moved": [
+          "card_BLC-1-072"
+        ]
+      }
+    },
+    {
+      "id": "ec7c5e704ca0b7d5",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "n": 8,
+      "mean": 0.375,
+      "margin": {
+        "total": -164.11,
+        "hard": -3.332,
+        "policy": -160.778,
+        "groups": {
+          "hash": -30.939,
+          "type": -10.322,
+          "card": -14.683,
+          "aizen": 0,
+          "economy": -86.164,
+          "other": -18.67
+        },
+        "top": [
+          {
+            "name": "pass_despite_attack",
+            "group": "economy",
+            "weight": -5.329,
+            "diff": 1,
+            "contribution": -31.975
+          },
+          {
+            "name": "affordable",
+            "group": "economy",
+            "weight": 3.778,
+            "diff": -1,
+            "contribution": -22.666
+          },
+          {
+            "name": "type_next",
+            "group": "type",
+            "weight": -3.359,
+            "diff": 1,
+            "contribution": -20.156
+          },
+          {
+            "name": "line_front",
+            "group": "other",
+            "weight": 3.112,
+            "diff": -1,
+            "contribution": -18.67
+          },
+          {
+            "name": "h4",
+            "group": "hash",
+            "weight": -2.65,
+            "diff": 1,
+            "contribution": -15.901
+          },
+          {
+            "name": "spends_ap",
+            "group": "economy",
+            "weight": 2.535,
+            "diff": -1,
+            "contribution": -15.21
+          },
+          {
+            "name": "h2",
+            "group": "hash",
+            "weight": 2.506,
+            "diff": -1,
+            "contribution": -15.037
+          },
+          {
+            "name": "card_BLC-4-070",
+            "group": "card",
+            "weight": 2.447,
+            "diff": -1,
+            "contribution": -14.683
+          }
+        ]
+      },
+      "ceilings": {
+        "all": {
+          "one": 91.85,
+          "box": 226.522,
+          "gap": -164.11
+        },
+        "named": {
+          "one": 73.85,
+          "box": 185.461,
+          "gap": -164.11
+        },
+        "noType": {
+          "one": 55.85,
+          "box": 123.783,
+          "gap": -164.11
+        },
+        "noShared": {
+          "one": 18,
+          "box": 38.646,
+          "gap": -164.11
+        },
+        "cardOnly": {
+          "one": 0,
+          "box": 0,
+          "gap": -164.11
+        }
+      },
+      "walks": [
+        {
+          "kind": "logistic",
+          "freezeHash": false,
+          "steps": 0,
+          "flipped": true,
+          "gap": null,
+          "collateralSelected": 0,
+          "collateralPool": 0,
+          "similar": 0,
+          "unrelated": 0,
+          "l2": 0,
+          "maxAbs": 0,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {},
+          "path": [],
+          "changes": []
+        },
+        {
+          "kind": "logistic",
+          "freezeHash": true,
+          "steps": 0,
+          "flipped": true,
+          "gap": null,
+          "collateralSelected": 0,
+          "collateralPool": 0,
+          "similar": 0,
+          "unrelated": 0,
+          "l2": 0,
+          "maxAbs": 0,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {},
+          "path": [],
+          "changes": []
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 0,
+          "flipped": true,
+          "gap": null,
+          "collateralSelected": 0,
+          "collateralPool": 0,
+          "similar": 0,
+          "unrelated": 0,
+          "l2": 0,
+          "maxAbs": 0,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {},
+          "path": [],
+          "changes": []
+        },
+        {
+          "kind": "vertex",
+          "freezeHash": true,
+          "steps": 0,
+          "flipped": true,
+          "gap": null,
+          "collateralSelected": 0,
+          "collateralPool": 0,
+          "similar": 0,
+          "unrelated": 0,
+          "l2": 0,
+          "maxAbs": 0,
+          "clip": 0,
+          "largestHash": 0,
+          "groups": {},
+          "path": [],
+          "changes": []
+        }
+      ],
+      "safe": {
+        "flipped": true,
+        "stalled": false,
+        "steps": 0,
+        "blocked": 0,
+        "gap": -164.11,
+        "selected": 0,
+        "pool": 0,
+        "moved": []
+      }
+    }
+  ]
+}
