@@ -9,6 +9,7 @@ import {buildStageCSpecs} from '../../v4a/lib/matches.mjs';
 import {anomalyReport,clusterBootstrap,judgeExperimental,pairGames,rateOf} from '../../v4a/lib/stats.mjs';
 import {appendJsonl,readJson,readJsonl,v2Hash,writeExperimentalChampion,writeJson} from '../../v4a/lib/store.mjs';
 import {chooseKey} from '../../v4a2/lib/sensitivity.mjs';
+import {annotateReport} from './annotate.mjs';
 import {jobsFor,summarizePosition} from './evaluate.mjs';
 import {agreementRate,controlBeats,matchedGaussian,modelFromPolicy,updateFromPreferences} from './learn.mjs';
 import {finishFromAction,minePool,replayState} from './play.mjs';
@@ -323,6 +324,7 @@ function countBy(rows,key){
 }
 function finish(root,report,official){
  if(v2Hash()!==official)throw Error('正式 v2 權重被改動');
+ annotateReport(report,root);
  report.experimentalChampion=report.experimentalChampion||null;
  report.budgetCap=5000;
  report.budgetSpent=(report.pilot?.games||0)+(report.rollouts?.games||0)+(report.dev?.games||0)+(report.challenge?.games||0);

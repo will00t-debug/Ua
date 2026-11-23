@@ -1,0 +1,194 @@
+{
+  "seeds": [
+    {
+      "seed": 170000,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170001,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170002,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170003,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170004,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170005,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170006,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170007,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170008,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170009,
+      "stage": "pilot",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170100,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170101,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170102,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170103,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170104,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170105,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170106,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170107,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170110,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170111,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170112,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170113,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170114,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170115,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170116,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170117,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170120,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170121,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170122,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170123,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170124,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170125,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170126,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 170127,
+      "stage": "mine",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 171000,
+      "stage": "dev",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 171001,
+      "stage": "dev",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 171002,
+      "stage": "dev",
+      "codeVersion": "v4b-1"
+    },
+    {
+      "seed": 171003,
+      "stage": "dev",
+      "codeVersion": "v4b-1"
+    }
+  ]
+}

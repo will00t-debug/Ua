@@ -14,14 +14,40 @@ function interval(ci){
  if(!ci||!Number.isFinite(ci.low)||!Number.isFinite(ci.high))return '沒有區間';
  return points(ci.low)+' 到 '+points(ci.high);
 }
-function line(items){
- return Object.entries(items||{}).map(([key,count])=>DECK[key]||key+' '+count).join('、')||'沒有';
+const BUCKET={
+ 'early-energy':'前期能量',ap:'AP','line-move':'移動','mid-entry':'中盤進場',
+ raid:'Raid','attack-defense':'攻防','late-pressure':'殘局'
+};
+function labelKey(key){
+ if(DECK[key])return DECK[key];
+ if(BUCKET[key])return BUCKET[key];
+ if(typeof key==='string'&&key.includes('/')){
+  const [kind,deck]=key.split('/');
+  const left=DECK[kind]||BUCKET[kind]||kind;
+  const right=DECK[deck]||deck;
+  return left.endsWith(right)?left:left+'／'+right;
+ }
+ return key;
 }
-function short(key){
+function line(items){
+ return Object.entries(items||{}).map(([key,count])=>labelKey(key)+' '+count).join('、')||'沒有';
+}
+const TYPE={
+ next:'通過',activate:'啟動',move:'移動',play:'打出',chooseHandLimit:'選擇手牌',
+ attack:'攻擊',raid:'突襲',chooseBlock:'阻擋',event:'事件',extraDraw:'額外抽牌'
+};
+const LINE={front:'前線',energy:'能量區'};
+function describe(key,card){
  try{
   const parsed=JSON.parse(key);
-  return [parsed.type,parsed.mode,parsed.line,parsed.slot].filter(value=>value!==null&&value!==undefined&&value!=='').join(':');
- }catch{return key;}
+  const parts=[TYPE[parsed.type]||parsed.type];
+  if(parsed.mode)parts.push(parsed.mode);
+  if(parsed.line)parts.push(LINE[parsed.line]||parsed.line);
+  if(Number.isInteger(parsed.slot))parts.push('格 '+parsed.slot);
+  if(card)parts.push(card);
+  else if(parsed.uid)parts.push(parsed.uid);
+  return parts.join(' ');
+ }catch{return card||key;}
 }
 export function renderReport(report){
  const lines=[];
@@ -48,23 +74,37 @@ export function renderReport(report){
  else{
   lines.push('以下每個偏好都來自同一組隱藏資訊下的配對延續。第一步之後，兩邊的抽牌、觸發和局面各自演變。區間含 0 的比較留在證據不足，沒有拿來更新。');
   for(const row of report.preferences){
-   lines.push('- '+(DECK[row.bucket]||row.bucket)+' / '+(DECK[row.opponent]||row.opponent)+'：偏好 '+short(row.preferred)+'，另一邊 '+short(row.other)+'，平均差 '+row.mean.toFixed(2)+'，區間 '+row.low.toFixed(2)+' 到 '+row.high.toFixed(2)+'，完成 '+row.n+' 次');
+   lines.push('- '+labelKey(row.bucket)+' / '+labelKey(row.opponent)+'：偏好 '+describe(row.preferred,row.preferredCard)+'，另一邊 '+describe(row.other,row.otherCard)+'，平均差 '+row.mean.toFixed(2)+'，區間 '+row.low.toFixed(2)+' 到 '+row.high.toFixed(2)+'，完成 '+row.n+' 次');
   }
+  const focus={};
+  for(const row of report.preferences){
+   const key=labelKey(row.bucket)+'／'+labelKey(row.opponent);
+   focus[key]=(focus[key]||0)+1;
+  }
+  lines.push('- 進入更新的分布：'+line(focus)+'。證據不足的 '+(report.rollouts?.insufficient??0)+' 個局面沒有被拿來更新。');
  }
  lines.push('');
  lines.push('## 權重與出牌差異');
  if(!report.learning)lines.push('沒有產生新權重。');
  else{
   const labeled=report.learning.labeled;
-  lines.push('- 有用樣本：'+report.learning.usable+'。變動的權重座標：'+report.learning.changedWeights+'。L2：'+(report.learning.l2||0).toFixed(3));
-  lines.push('- 這些樣本在更新前符合標籤 '+pct(labeled.before?.rate)+'，更新後 '+pct(labeled.after?.rate)+'。8 個等長隨機對照的中位數是 '+pct(labeled.gaussian?.median));
+  const meaningful=(report.learning.deltas||[]).filter(row=>Math.abs(row.delta)>1e-4).length;
+  lines.push('- 有用樣本：'+report.learning.usable+'。權重座標有差 '+report.learning.changedWeights+' 個，其中 '+meaningful+' 個超過 0.001。L2：'+(report.learning.l2||0).toFixed(3));
+  const controls=labeled.gaussian?.rates||[];
+  const controlText=controls.length&&controls.every(value=>value===controls[0])
+   ?'8 個等長隨機對照都是 '+pct(controls[0])
+   :'8 個等長隨機對照的中位數是 '+pct(labeled.gaussian?.median);
+  lines.push('- 這些樣本在更新前符合標籤 '+pct(labeled.before?.rate)+'，更新後 '+pct(labeled.after?.rate)+'。'+controlText);
   lines.push('- 選中局面的出牌改變：'+report.learning.selectedChoices.changed+' / '+report.learning.selectedChoices.n);
   lines.push('- 沒有拿來訓練的其餘局面，出牌改變：'+report.learning.untouchedChoices.changed+' / '+report.learning.untouchedChoices.n);
   const deltas=(report.learning.deltas||[]).slice(0,8);
   if(!deltas.length)lines.push('- 權重數值沒有變動。');
   else for(const row of deltas)lines.push('- 權重 '+row.name+'：'+row.before.toFixed(3)+' → '+row.after.toFixed(3));
   for(const row of report.learning.selectedChoices.rows||[]){
-   lines.push('- 局面 '+row.id+'（'+row.bucket+' / '+row.opponent+'）由 '+short(row.before)+' 改為 '+short(row.after));
+   lines.push('- 局面 '+row.id+'（'+labelKey(row.bucket)+' / '+labelKey(row.opponent)+'）由 '+describe(row.before,row.beforeCard)+' 改為 '+describe(row.after,row.afterCard));
+  }
+  for(const row of report.learning.untouchedChoices?.rows||[]){
+   lines.push('- 未參與這次更新的局面 '+row.id+'（'+labelKey(row.bucket)+' / '+labelKey(row.opponent)+'）由 '+describe(row.before,row.beforeCard)+' 改為 '+describe(row.after,row.afterCard));
   }
  }
  lines.push('');

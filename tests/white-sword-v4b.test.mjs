@@ -137,9 +137,22 @@ test('hard search 2 and the official v2 file stay unchanged',()=>{
  const text=readFileSync('.github/workflows/white-sword-v4b.yml','utf8');
  assert.match(text,/workflow_dispatch/);
  assert.equal(text.includes('schedule:'),false);
- const report=renderReport({stopped:'evidence',stopReasons:['可用的動作偏好只有 1 個'],pilot:{games:200,unfinishedRate:0,meanMs:10},budgetSpent:200,budgetCap:5000});
+ const report=renderReport({
+  stopped:'evidence',stopReasons:['可用的動作偏好只有 1 個'],
+  pilot:{games:200,unfinishedRate:0,meanMs:10,mix:{'v2/white-sword':40}},
+  selected:{n:2,buckets:2,counts:{ap:1,raid:1},opponents:{'white-sword':1,renruki:1}},
+  budgetSpent:200,budgetCap:5000,
+  preferences:[{
+   bucket:'ap',opponent:'renruki',mean:-0.2,low:-0.4,high:-0.1,n:8,
+   preferred:'{"type":"next","mode":null,"line":null,"uid":null,"slot":null}',
+   other:'{"type":"activate","mode":"restTwoMove","line":null,"uid":"0-6","slot":null}',
+   otherCard:'BLC-1-083'
+  }]
+ });
  assert.match(report,/沒有足夠證據/);
  assert.match(report,/沒有合併 main/);
+ assert.match(report,/白劍 1/);
+ assert.match(report,/BLC-1-083/);
 });
 
 test('a hidden sample keeps the public decision and the paired branches share it',{timeout:120000},()=>{
