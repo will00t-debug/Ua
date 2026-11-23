@@ -1,0 +1,599 @@
+{
+  "format": "ua-white-sword-v4a-report",
+  "codeVersion": "v4a1-1",
+  "profile": "round",
+  "round": 4,
+  "status": "complete",
+  "games": 1320,
+  "candidateCount": 8,
+  "candidates": [
+    {
+      "id": "v4a-r0004-c0-6b3a98e1edb8",
+      "index": 0,
+      "method": "gaussian-small",
+      "label": "小幅高斯變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "6b3a98e1edb8",
+      "maxAbsDelta": 0.3276289436877473,
+      "changedWeights": 115,
+      "deltaL2": 1.2379040068873535,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.12,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0004-c1-52655f27a426",
+      "index": 1,
+      "method": "gaussian-mid",
+      "label": "中幅高斯變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "52655f27a426",
+      "maxAbsDelta": 1.081964069090203,
+      "changedWeights": 115,
+      "deltaL2": 3.891759429068599,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.35,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0004-c2-b8df9a47277a",
+      "index": 2,
+      "method": "gaussian-wide",
+      "label": "較寬高斯變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "b8df9a47277a",
+      "maxAbsDelta": 1.5,
+      "changedWeights": 115,
+      "deltaL2": 7.190738044017989,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.7,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0004-c3-2743d5d42229",
+      "index": 3,
+      "method": "sparse",
+      "label": "稀疏變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "2743d5d42229",
+      "maxAbsDelta": 1.5,
+      "changedWeights": 35,
+      "deltaL2": 5.59609662796443,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.9,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0004-c4-33a0acc49d52",
+      "index": 4,
+      "method": "top-magnitude",
+      "label": "較大權重變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "33a0acc49d52",
+      "maxAbsDelta": 1.4784924900950798,
+      "changedWeights": 16,
+      "deltaL2": 2.408399600106112,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.5,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0004-c5-bc339f87254b",
+      "index": 5,
+      "method": "mix-v1",
+      "label": "與 v1 策略混合",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "bc339f87254b",
+      "maxAbsDelta": 0.14671558511378013,
+      "changedWeights": 115,
+      "deltaL2": 0.5766610023372324,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.05,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0004-c6-3740d208fbb2",
+      "index": 6,
+      "method": "cross-elite",
+      "label": "與未晉級優秀候選交叉",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "3740d208fbb2",
+      "maxAbsDelta": 0.5137282497743798,
+      "changedWeights": 115,
+      "deltaL2": 2.124253024595489,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.2,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0004-c7-f039b8b948c8",
+      "index": 7,
+      "method": "group",
+      "label": "攻防與能量特徵變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "f039b8b948c8",
+      "maxAbsDelta": 1.5,
+      "changedWeights": 17,
+      "deltaL2": 3.0755368980411366,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.8,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    }
+  ],
+  "screenKept": 3,
+  "challengerId": "v4a-r0004-c0-6b3a98e1edb8",
+  "championLabel": "v2",
+  "paired": {
+    "n": 360,
+    "attempted": 360,
+    "incomplete": 0,
+    "missing": 0,
+    "incompleteRows": [],
+    "delta": 0.002777777777777778,
+    "ci": {
+      "low": -0.013888888888888888,
+      "high": 0.019444444444444445
+    },
+    "clusters": 30
+  },
+  "mirror": {
+    "wins": 58,
+    "n": 120,
+    "p": 0.48333333333333334,
+    "low": 0.3958348942305447,
+    "high": 0.5718657814713197,
+    "games": 120,
+    "excluded": 0
+  },
+  "decks": [
+    {
+      "id": "white-sword",
+      "n": 120,
+      "delta": -0.016666666666666666
+    },
+    {
+      "id": "reject-blue",
+      "n": 120,
+      "delta": 0.025
+    },
+    {
+      "id": "renruki",
+      "n": 120,
+      "delta": 0
+    }
+  ],
+  "seat": {
+    "first": {
+      "wins": 113,
+      "n": 180,
+      "p": 0.6277777777777778,
+      "low": 0.5551790568016651,
+      "high": 0.6950363460233756,
+      "games": 180,
+      "excluded": 0
+    },
+    "second": {
+      "wins": 125,
+      "n": 180,
+      "p": 0.6944444444444444,
+      "low": 0.6236691202563739,
+      "high": 0.7570934492599924,
+      "games": 180,
+      "excluded": 0
+    }
+  },
+  "tally": {
+    "energy": 7.861111111111111,
+    "front": 1.5472222222222223,
+    "move": 2.261111111111111,
+    "raid": 1.9833333333333334,
+    "attack": 7.413888888888889,
+    "apSpent": 14.341666666666667,
+    "decisionMs": 36.68935196861038
+  },
+  "championTally": {
+    "energy": 7.8277777777777775,
+    "front": 1.5805555555555555,
+    "move": 2.227777777777778,
+    "raid": 1.95,
+    "attack": 7.397222222222222,
+    "apSpent": 14.363888888888889,
+    "decisionMs": 36.673452277969695
+  },
+  "probe": {
+    "positions": 200,
+    "disagreed": 12,
+    "rate": 0.06,
+    "bandPositions": 106,
+    "bandRate": 0.11320754716981132,
+    "versusChampion": 0.06,
+    "pairwise": 0.016785714285714286,
+    "byPhase": {
+      "early-energy": {
+        "positions": 11,
+        "disagreed": 1,
+        "rate": 0.09090909090909091
+      },
+      "mid-entry": {
+        "positions": 75,
+        "disagreed": 6,
+        "rate": 0.08
+      },
+      "line-move": {
+        "positions": 27,
+        "disagreed": 0,
+        "rate": 0
+      },
+      "attack-defense": {
+        "positions": 17,
+        "disagreed": 1,
+        "rate": 0.058823529411764705
+      },
+      "late-pressure": {
+        "positions": 60,
+        "disagreed": 3,
+        "rate": 0.05
+      },
+      "raid": {
+        "positions": 5,
+        "disagreed": 0,
+        "rate": 0
+      },
+      "ap": {
+        "positions": 5,
+        "disagreed": 1,
+        "rate": 0.2
+      }
+    },
+    "byCandidate": {
+      "v4a-r0004-c0-6b3a98e1edb8": {
+        "compared": 200,
+        "differed": 0,
+        "rate": 0
+      },
+      "v4a-r0004-c1-52655f27a426": {
+        "compared": 200,
+        "differed": 3,
+        "rate": 0.015
+      },
+      "v4a-r0004-c2-b8df9a47277a": {
+        "compared": 200,
+        "differed": 7,
+        "rate": 0.035
+      },
+      "v4a-r0004-c3-2743d5d42229": {
+        "compared": 200,
+        "differed": 2,
+        "rate": 0.01
+      },
+      "v4a-r0004-c4-33a0acc49d52": {
+        "compared": 200,
+        "differed": 1,
+        "rate": 0.005
+      },
+      "v4a-r0004-c5-bc339f87254b": {
+        "compared": 200,
+        "differed": 0,
+        "rate": 0
+      },
+      "v4a-r0004-c6-3740d208fbb2": {
+        "compared": 200,
+        "differed": 1,
+        "rate": 0.005
+      },
+      "v4a-r0004-c7-f039b8b948c8": {
+        "compared": 200,
+        "differed": 0,
+        "rate": 0
+      }
+    },
+    "regenerated": false,
+    "examples": [
+      {
+        "seed": 103000,
+        "step": 35,
+        "band": 3,
+        "bucket": "mid-entry",
+        "choices": {
+          "champion": "play:energy",
+          "v4a-r0004-c0-6b3a98e1edb8": "play:energy",
+          "v4a-r0004-c1-52655f27a426": "play:energy",
+          "v4a-r0004-c2-b8df9a47277a": "play:energy",
+          "v4a-r0004-c3-2743d5d42229": "play:energy",
+          "v4a-r0004-c4-33a0acc49d52": "play:energy",
+          "v4a-r0004-c5-bc339f87254b": "play:energy",
+          "v4a-r0004-c6-3740d208fbb2": "play:energy",
+          "v4a-r0004-c7-f039b8b948c8": "play:energy"
+        }
+      },
+      {
+        "seed": 103000,
+        "step": 60,
+        "band": 2,
+        "bucket": "mid-entry",
+        "choices": {
+          "champion": "chooseTopCard:bottom",
+          "v4a-r0004-c0-6b3a98e1edb8": "chooseTopCard:bottom",
+          "v4a-r0004-c1-52655f27a426": "chooseTopCard:bottom",
+          "v4a-r0004-c2-b8df9a47277a": "chooseTopCard:top",
+          "v4a-r0004-c3-2743d5d42229": "chooseTopCard:bottom",
+          "v4a-r0004-c4-33a0acc49d52": "chooseTopCard:bottom",
+          "v4a-r0004-c5-bc339f87254b": "chooseTopCard:bottom",
+          "v4a-r0004-c6-3740d208fbb2": "chooseTopCard:bottom",
+          "v4a-r0004-c7-f039b8b948c8": "chooseTopCard:bottom"
+        }
+      },
+      {
+        "seed": 103000,
+        "step": 62,
+        "band": 3,
+        "bucket": "attack-defense",
+        "choices": {
+          "champion": "attack",
+          "v4a-r0004-c0-6b3a98e1edb8": "attack",
+          "v4a-r0004-c1-52655f27a426": "attack",
+          "v4a-r0004-c2-b8df9a47277a": "attack",
+          "v4a-r0004-c3-2743d5d42229": "attack",
+          "v4a-r0004-c4-33a0acc49d52": "attack",
+          "v4a-r0004-c5-bc339f87254b": "attack",
+          "v4a-r0004-c6-3740d208fbb2": "attack",
+          "v4a-r0004-c7-f039b8b948c8": "attack"
+        }
+      },
+      {
+        "seed": 103000,
+        "step": 90,
+        "band": 2,
+        "bucket": "mid-entry",
+        "choices": {
+          "champion": "chooseTopCard:bottom",
+          "v4a-r0004-c0-6b3a98e1edb8": "chooseTopCard:bottom",
+          "v4a-r0004-c1-52655f27a426": "chooseTopCard:bottom",
+          "v4a-r0004-c2-b8df9a47277a": "chooseTopCard:top",
+          "v4a-r0004-c3-2743d5d42229": "chooseTopCard:bottom",
+          "v4a-r0004-c4-33a0acc49d52": "chooseTopCard:bottom",
+          "v4a-r0004-c5-bc339f87254b": "chooseTopCard:bottom",
+          "v4a-r0004-c6-3740d208fbb2": "chooseTopCard:bottom",
+          "v4a-r0004-c7-f039b8b948c8": "chooseTopCard:bottom"
+        }
+      },
+      {
+        "seed": 103000,
+        "step": 98,
+        "band": 2,
+        "bucket": "late-pressure",
+        "choices": {
+          "champion": "attack",
+          "v4a-r0004-c0-6b3a98e1edb8": "attack",
+          "v4a-r0004-c1-52655f27a426": "attack",
+          "v4a-r0004-c2-b8df9a47277a": "attack",
+          "v4a-r0004-c3-2743d5d42229": "attack",
+          "v4a-r0004-c4-33a0acc49d52": "attack",
+          "v4a-r0004-c5-bc339f87254b": "attack",
+          "v4a-r0004-c6-3740d208fbb2": "attack",
+          "v4a-r0004-c7-f039b8b948c8": "attack"
+        }
+      }
+    ],
+    "fallbackIds": []
+  },
+  "seeds": {
+    "round": 4,
+    "profile": "round",
+    "codeVersion": "v4a1-1",
+    "probe": [
+      103000,
+      103001,
+      103002,
+      103003,
+      103004,
+      103005,
+      103006,
+      103007
+    ],
+    "stageA": [
+      103100
+    ],
+    "stageB": [
+      103200,
+      103201,
+      103202,
+      103203
+    ],
+    "stageCPaired": [
+      103400,
+      103401,
+      103402,
+      103403,
+      103404,
+      103405,
+      103406,
+      103407,
+      103408,
+      103409,
+      103410,
+      103411,
+      103412,
+      103413,
+      103414,
+      103415,
+      103416,
+      103417,
+      103418,
+      103419,
+      103420,
+      103421,
+      103422,
+      103423,
+      103424,
+      103425,
+      103426,
+      103427,
+      103428,
+      103429
+    ],
+    "stageCMirror": [
+      103500,
+      103501,
+      103502,
+      103503,
+      103504,
+      103505,
+      103506,
+      103507,
+      103508,
+      103509,
+      103510,
+      103511,
+      103512,
+      103513,
+      103514,
+      103515,
+      103516,
+      103517,
+      103518,
+      103519,
+      103520,
+      103521,
+      103522,
+      103523,
+      103524,
+      103525,
+      103526,
+      103527,
+      103528,
+      103529
+    ]
+  },
+  "historicalNote": "歷代實驗冠軍尚未出現，或與現任權重相同。這組對戰併入冠軍對戰，不另計成新對手。",
+  "replay": {
+    "same": true,
+    "finished": true,
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    }
+  },
+  "harnessNote": null,
+  "stageAGames": 192,
+  "stageBGames": 288,
+  "stageCGames": 840,
+  "officialV2": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "production": false,
+  "deployed": false,
+  "startedAt": "2026-11-23T01:58:45.969Z",
+  "wallMs": 2651041,
+  "eliminated": [],
+  "byOpponent": {
+    "champion": {
+      "wins": 22,
+      "n": 48,
+      "p": 0.4583333333333333,
+      "low": 0.3257502185455351,
+      "high": 0.5970916690505266,
+      "games": 48,
+      "excluded": 0
+    },
+    "historical": {
+      "wins": 22,
+      "n": 48,
+      "p": 0.4583333333333333,
+      "low": 0.3257502185455351,
+      "high": 0.5970916690505266,
+      "games": 48,
+      "excluded": 0
+    },
+    "hard-white": {
+      "wins": 27,
+      "n": 48,
+      "p": 0.5625,
+      "low": 0.4227477150100165,
+      "high": 0.6929894535958907,
+      "games": 48,
+      "excluded": 0
+    },
+    "hard-reject": {
+      "wins": 29,
+      "n": 48,
+      "p": 0.6041666666666666,
+      "low": 0.4631015459693511,
+      "high": 0.7297937350404942,
+      "games": 48,
+      "excluded": 0
+    },
+    "hard-renruki": {
+      "wins": 29,
+      "n": 48,
+      "p": 0.6041666666666666,
+      "low": 0.4631015459693511,
+      "high": 0.7297937350404942,
+      "games": 48,
+      "excluded": 0
+    },
+    "peer": {
+      "wins": 24,
+      "n": 48,
+      "p": 0.5,
+      "low": 0.36389098932037767,
+      "high": 0.6361090106796223,
+      "games": 48,
+      "excluded": 0
+    }
+  },
+  "anomalies": {
+    "illegal": 0,
+    "timeout": 0,
+    "fallback": 0,
+    "deadLoop": 0,
+    "engineError": 0,
+    "leak": 0,
+    "opponentFallback": 0,
+    "unfinished": 0
+  },
+  "faults": [],
+  "judgment": {
+    "promoted": false,
+    "experimentalOnly": true,
+    "production": false,
+    "deployed": false,
+    "reasons": [
+      "配對勝率差未達 +5 個百分點",
+      "配對勝率差的 95% 信賴區間下限沒有大於 0",
+      "直接鏡像勝率未達 55%",
+      "直接鏡像沒有統計上可信的優勢"
+    ]
+  },
+  "promoted": false,
+  "nextDirection": "自動產生",
+  "cumulativeGames": 5298,
+  "diagnosis": "這一輪的部分候選在相同可見局面選擇了不同的合法行動。晉級門檻維持原訂數值。"
+}

@@ -1,0 +1,33 @@
+{
+  "games": 288,
+  "ranking": [
+    {
+      "id": "v4a-r0004-c0-6b3a98e1edb8",
+      "index": 0,
+      "hardWins": 31,
+      "championWins": 16,
+      "peerWins": 8,
+      "wins": 55,
+      "games": 96
+    },
+    {
+      "id": "v4a-r0004-c1-52655f27a426",
+      "index": 1,
+      "hardWins": 27,
+      "championWins": 16,
+      "peerWins": 10,
+      "wins": 53,
+      "games": 96
+    },
+    {
+      "id": "v4a-r0004-c2-b8df9a47277a",
+      "index": 2,
+      "hardWins": 27,
+      "championWins": 12,
+      "peerWins": 6,
+      "wins": 45,
+      "games": 96
+    }
+  ],
+  "challenger": "v4a-r0004-c0-6b3a98e1edb8"
+}
