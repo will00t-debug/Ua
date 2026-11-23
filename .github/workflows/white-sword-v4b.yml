@@ -1,0 +1,52 @@
+# Manual White Sword v4-B action-value round.
+# GitHub runs a scheduled workflow only from the default branch. This file
+# does not declare one. It does not deploy and it does not change production weights.
+name: White Sword v4-B action values
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: test 只跑單元測試。all 才會接續這一輪 pilot 與一次更新。
+        type: choice
+        options:
+          - test
+          - all
+        default: test
+      workers:
+        description: 平行對戰 worker 上限，最多 4
+        type: string
+        default: '3'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: white-sword-v4b
+  cancel-in-progress: false
+
+jobs:
+  learn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: v4-B unit tests
+        run: node --test tests/white-sword-v4b.test.mjs
+      - name: Round 1
+        if: inputs.command == 'all'
+        env:
+          WS_WORKERS: ${{ inputs.workers }}
+        run: node scripts/white-sword-v4b.mjs all
+      - name: Upload v4-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: white-sword-v4b-${{ github.run_id }}
+          path: |
+            training/white-sword-ai/v4b
+            docs/white-sword-ai/v4b
+          if-no-files-found: warn
