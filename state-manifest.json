@@ -9,11 +9,11 @@
     },
     {
       "file": "explore-state.json",
-      "sha256": "83c3891770a979cecd788e581445b024c85b1938130441397aa4f7f48d42d032"
+      "sha256": "147752dae7f1cfd8faf76cc8b1cda9f8339038b0af0f2c420b85312dd89e6478"
     },
     {
       "file": "history.json",
-      "sha256": "cc371317352cbe9141bee4bbebaec98217c1464ed9872e7708997892309a7489"
+      "sha256": "fe4ea7ebeb2cf28e2e1849840503a478365ccfa5c117ddb2d605530384b82193"
     },
     {
       "file": "rounds/0001/candidates/v4a-r0001-c0-40a819870388.json",
@@ -189,11 +189,19 @@
     },
     {
       "file": "rounds/0003/manifest.json",
-      "sha256": "8a866d07301e57dd4d4f68d46e33cb24c5ac084844b6d399ec139c5dff2db91b"
+      "sha256": "6dc65a88a7f656a2afc8c43c6d3f29420934f5fa01e04fbc027a0de71a9cbb3e"
     },
     {
       "file": "rounds/0003/probe.json",
       "sha256": "07a560e9000753608acad352718f63816c5dd3b85519efcb308428918ccaa336"
+    },
+    {
+      "file": "rounds/0003/report.json",
+      "sha256": "1c4cfd808ef8f7f71daa85c03338d0a12f85cd19020f06c606aff4bd4e7aca83"
+    },
+    {
+      "file": "rounds/0003/report.md",
+      "sha256": "c4312410fed4fa411163f081b5a60b7ba969358e2988f5c377843ace5b2cbdf1"
     },
     {
       "file": "rounds/0003/stage-a.json",
@@ -214,6 +222,50 @@
     {
       "file": "rounds/0003/stage-c.jsonl",
       "sha256": "edbc7b57e6a369037fd9900354d672d4b8122ba913a58ab37445c4c050051a0d"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c0-6b3a98e1edb8.json",
+      "sha256": "a10f8c863f5ac34bf0b358452d49622342b51a5aaad0e8493db0662e7fbe649f"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c1-52655f27a426.json",
+      "sha256": "0d62e457abfa676581dc4858a8a622d74ed46e39d1cfb6bd8ff2f6d9ca804801"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c2-b8df9a47277a.json",
+      "sha256": "960f1e4f9c760364948b90692628881f49ca097573be96c68a0d6839ef0e49ad"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c3-2743d5d42229.json",
+      "sha256": "d301a1f080509696f5c63f39136399013e551a6fd52d145fcdd207186a88da9b"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c4-33a0acc49d52.json",
+      "sha256": "ddd70b21edb1472d1b1532bc16a391dfae1d70b0ce8278e3b7723b63ecbce84a"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c5-bc339f87254b.json",
+      "sha256": "b411e8a05dda9616a864fc7cb63f5c10b5c89eb07816636cf5aeb68ebd71ce3b"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c6-3740d208fbb2.json",
+      "sha256": "f7a4399fa6ea1fe851e0093a4d1e4ddcef8b34e1713ae0d1091e451c3ae85538"
+    },
+    {
+      "file": "rounds/0004/candidates/v4a-r0004-c7-f039b8b948c8.json",
+      "sha256": "7971563cc0c96c411eee3d9bd613780b238d3611f1641b8e0c353e39eaa54525"
+    },
+    {
+      "file": "rounds/0004/manifest.json",
+      "sha256": "42814cec557202f207168eaee0735e8be2592085e01e09786aebb3cbb595a63b"
+    },
+    {
+      "file": "rounds/0004/probe.json",
+      "sha256": "87fc7cc6055d763eb7866c71c77c381ae089d60bdd2f62d508c3db681b8e54e1"
+    },
+    {
+      "file": "rounds/0004/stage-a.jsonl",
+      "sha256": "92e6d295ca9a429087a5ba946da46e410e9b0ab4a3d1ed1d53774f86ef327c57"
     },
     {
       "file": "rounds/smoke-v4a1/candidates/v4a-r0000-c0-c7972e811361.json",
@@ -345,7 +397,7 @@
     },
     {
       "file": "seed-ledger.json",
-      "sha256": "705c9cd3fb20e882d440e1d6069c75c1fdf1275192e3f0ab3711ff42f66dec81"
+      "sha256": "a5ccf5dfd204518e9d7bfd535061a52e86868811eed8c6dfd06578c9eff5350d"
     }
   ]
 }
