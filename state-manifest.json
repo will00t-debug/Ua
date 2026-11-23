@@ -1,7 +1,7 @@
 {
   "format": "ua-white-sword-v4a-state",
   "codeVersion": "v4a1-1",
-  "running": true,
+  "running": false,
   "files": [
     {
       "file": "champion/current.json",
@@ -9,11 +9,11 @@
     },
     {
       "file": "explore-state.json",
-      "sha256": "4737a4461209a4f0806e96c32383412d67142e491e8306036c59b53e0445cfda"
+      "sha256": "83c3891770a979cecd788e581445b024c85b1938130441397aa4f7f48d42d032"
     },
     {
       "file": "history.json",
-      "sha256": "a806e0d8c18defb98a3371a1bd7fb5cef79fd52a2a8848674f923e0be5a3dc35"
+      "sha256": "cc371317352cbe9141bee4bbebaec98217c1464ed9872e7708997892309a7489"
     },
     {
       "file": "rounds/0001/candidates/v4a-r0001-c0-40a819870388.json",
@@ -121,11 +121,19 @@
     },
     {
       "file": "rounds/0002/manifest.json",
-      "sha256": "b52ba6a290240448668581e3faff3aabcbe2a598e90f1c10f2d22bbde6113ef0"
+      "sha256": "7473057d7e7811291dd7fa337bd04b8b4612673312b949f30ac9ad6f0786dded"
     },
     {
       "file": "rounds/0002/probe.json",
       "sha256": "8e83191f1a4a6a2d0356c74dbd979320821c92e386791abef14e16ef524de39a"
+    },
+    {
+      "file": "rounds/0002/report.json",
+      "sha256": "54144a0f6b5fb8d8984ffa3b8c6c2297da74e82d08934513b4768628b6a9be04"
+    },
+    {
+      "file": "rounds/0002/report.md",
+      "sha256": "c80c7b00c5c528e9a2eb82a46cee76a70312cd4774592bb91c020be2fe4cb510"
     },
     {
       "file": "rounds/0002/stage-a.json",
