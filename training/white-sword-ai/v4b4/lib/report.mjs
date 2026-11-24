@@ -11,6 +11,7 @@ export function renderReport(study){
  const lines=[];
  lines.push('# 白劍 AI v4-B.4 同樣預算下的偏好確認','');
  lines.push('權重搜尋已經能找到比射線更少連帶改動的解。160 場新種子沒有重現那三個原偏好。這一輪改看同一千兩百場左右的分支預算要怎麼抽，才比較會得到可重現、而且 v2 還沒選到的動作。沒有新的對局，沒有改權重，也沒有改 Hard Search 2。');
+ lines.push('本頁結論裡的 86%，以及「固定約 66 組、Benjamini-Hochberg、區間整個為負」，是常態近似、組數隨候選數改變、而且沒有放入方盒的模擬。那不是現在要執行的規則。執行規則見 confirm.md。');
  lines.push('');
  lines.push('## 結論');
  lines.push('現在的停止規則把篩選和確認寫在同一批樣本上。配對裡大約八成勝負相同，所以 8 次裡只要跑出 3 次有方向的勝負、其餘平手，區間就會排除 0。在完全沒有差距的模擬裡，42 個局面一輪仍平均出現約 '+num(study.nullCurrent.nominalUpdate)+' 個「v2 沒選到」的這種結果。v4-B.2 實際多抽的 '+saved.extension+' 組配對，沒有再增加任何這類結果。');
@@ -38,7 +39,8 @@ export function renderReport(study){
  lines.push('- 三個真實差距 -0.38，確認上限 4：真確認每輪 '+num(study.three.trueConfirmed,2)+' 個，誤確認 '+num(study.three.falseConfirmed,2)+' 個');
  lines.push('現行規則在有一個 -0.38 的差距時，每輪名義上約 '+num(study.moderateCurrent.nominalUpdate)+' 個顯著結果，其中真的約 '+num(study.moderateCurrent.trueConfirmed)+' 個，其餘約 '+num(study.moderateCurrent.falseConfirmed)+' 個沒有差距。校正後每輪留下的真結果約 '+num(study.moderateCurrent.bhTrue)+' 個。確認規則在同樣預算下每輪留下約 '+num(study.moderate.trueConfirmed)+' 個真結果，誤確認約 '+num(study.moderate.falseConfirmed,2)+' 個。');
  lines.push('');
- lines.push('## 下一輪怎麼抽');
+ lines.push('## 當時的抽法，後來已改');
+ lines.push('下面五點是這份比較剛寫完時的建議，保留下來是為了對得上本頁的模擬。現在要執行的檢定、固定組數和方盒過濾在 confirm.md。');
  lines.push('總分支預算維持約 1,200 場，也就是 600 組配對。三種對手和七種類型仍各留篩選局面。');
  lines.push('1. 每個篩選局面固定 8 組。這 8 組不下結論，也不再因為看起來顯著或平均差超過 0.125 而加抽。');
  lines.push('2. 只有平均差小於或等於 -0.25 的局面可以進確認。正的平均差表示 v2 已經選到較好的一邊，記下來即可。');
