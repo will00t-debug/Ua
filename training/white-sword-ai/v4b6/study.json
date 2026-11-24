@@ -1,0 +1,592 @@
+{
+  "codeVersion": "v4b6-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "adopted": false,
+  "weightsWritten": false,
+  "total": 677,
+  "matched": 677,
+  "unmatched": 0,
+  "slots": {
+    "front": "4",
+    "energy": "4"
+  },
+  "audit": {
+    "pairs": 48,
+    "onlyLines": 48,
+    "names": [
+      {
+        "name": "line_energy",
+        "count": 48
+      },
+      {
+        "name": "line_front",
+        "count": 48
+      }
+    ],
+    "targetChanges": [
+      "line_front -1.000",
+      "line_energy 1.000"
+    ],
+    "targetConstant": [
+      {
+        "name": "my_energy",
+        "value": 0.125
+      },
+      {
+        "name": "opp_energy",
+        "value": 0.25
+      },
+      {
+        "name": "my_ap",
+        "value": 0.6666666666666666
+      },
+      {
+        "name": "opp_ap",
+        "value": 0
+      },
+      {
+        "name": "my_hand",
+        "value": 0.875
+      },
+      {
+        "name": "opp_hand",
+        "value": 0.75
+      },
+      {
+        "name": "my_front",
+        "value": 0
+      },
+      {
+        "name": "opp_front",
+        "value": 0
+      },
+      {
+        "name": "opp_bp_max",
+        "value": 0
+      },
+      {
+        "name": "my_life",
+        "value": 1
+      },
+      {
+        "name": "opp_life",
+        "value": 1
+      },
+      {
+        "name": "life_diff",
+        "value": 0
+      },
+      {
+        "name": "turn",
+        "value": 0.25
+      },
+      {
+        "name": "phase_main",
+        "value": 1
+      },
+      {
+        "name": "pending",
+        "value": 0
+      },
+      {
+        "name": "card_energy",
+        "value": 0.125
+      },
+      {
+        "name": "card_bp",
+        "value": 0.8
+      },
+      {
+        "name": "card_gen",
+        "value": 0.3333333333333333
+      },
+      {
+        "name": "card_ap",
+        "value": 0.5
+      },
+      {
+        "name": "affordable",
+        "value": 1
+      },
+      {
+        "name": "spends_ap",
+        "value": 1
+      }
+    ]
+  },
+  "scalars": [
+    {
+      "name": "unmet",
+      "label": "手牌還缺的色能源 / 8",
+      "all": {
+        "n": 677,
+        "min": 0,
+        "p25": 0,
+        "median": 0.25,
+        "p75": 0.75,
+        "max": 4.375,
+        "mean": 0.5219719350073855
+      },
+      "saved": {
+        "n": 121,
+        "min": 0,
+        "p25": 0,
+        "median": 0.25,
+        "p75": 0.875,
+        "max": 3,
+        "mean": 0.5878099173553719
+      },
+      "fresh": {
+        "n": 556,
+        "min": 0,
+        "p25": 0,
+        "median": 0.25,
+        "p75": 0.625,
+        "max": 4.375,
+        "mean": 0.5076438848920863
+      },
+      "target": 2.25,
+      "percentile": 0.9615952732644018
+    },
+    {
+      "name": "board",
+      "label": "對方前線 BP 減我方 / 20000",
+      "all": {
+        "n": 677,
+        "min": -0.55,
+        "p25": -0.1,
+        "median": 0,
+        "p75": 0.25,
+        "max": 0.8,
+        "mean": 0.05926883308714908
+      },
+      "saved": {
+        "n": 121,
+        "min": -0.525,
+        "p25": 0,
+        "median": 0,
+        "p75": 0.2,
+        "max": 0.5,
+        "mean": 0.054338842975206615
+      },
+      "fresh": {
+        "n": 556,
+        "min": -0.55,
+        "p25": -0.1,
+        "median": 0,
+        "p75": 0.25,
+        "max": 0.8,
+        "mean": 0.060341726618705
+      },
+      "target": 0,
+      "percentile": 0.5066469719350074
+    },
+    {
+      "name": "frontEmpty",
+      "label": "前線空格比例",
+      "all": {
+        "n": 677,
+        "min": 0,
+        "p25": 0.25,
+        "median": 0.5,
+        "p75": 0.75,
+        "max": 1,
+        "mean": 0.49039881831610044
+      },
+      "saved": {
+        "n": 121,
+        "min": 0,
+        "p25": 0.25,
+        "median": 0.75,
+        "p75": 1,
+        "max": 1,
+        "mean": 0.5991735537190083
+      },
+      "fresh": {
+        "n": 556,
+        "min": 0,
+        "p25": 0,
+        "median": 0.5,
+        "p75": 0.75,
+        "max": 1,
+        "mean": 0.46672661870503596
+      },
+      "target": 1,
+      "percentile": 1
+    },
+    {
+      "name": "energyEmpty",
+      "label": "能量線空格比例",
+      "all": {
+        "n": 677,
+        "min": 0,
+        "p25": 0,
+        "median": 0.25,
+        "p75": 0.5,
+        "max": 1,
+        "mean": 0.276218611521418
+      },
+      "saved": {
+        "n": 121,
+        "min": 0,
+        "p25": 0.25,
+        "median": 0.25,
+        "p75": 0.5,
+        "max": 1,
+        "mean": 0.3367768595041322
+      },
+      "fresh": {
+        "n": 556,
+        "min": 0,
+        "p25": 0,
+        "median": 0.25,
+        "p75": 0.5,
+        "max": 1,
+        "mean": 0.2630395683453237
+      },
+      "target": 0.75,
+      "percentile": 0.9675036927621861
+    },
+    {
+      "name": "ap",
+      "label": "剩餘 AP / 3",
+      "all": {
+        "n": 677,
+        "min": 0,
+        "p25": 0,
+        "median": 0.3333333333333333,
+        "p75": 0.6666666666666666,
+        "max": 1,
+        "mean": 0.3958641063515507
+      },
+      "saved": {
+        "n": 121,
+        "min": 0,
+        "p25": 0,
+        "median": 0.3333333333333333,
+        "p75": 0.6666666666666666,
+        "max": 1,
+        "mean": 0.38567493112947654
+      },
+      "fresh": {
+        "n": 556,
+        "min": 0,
+        "p25": 0,
+        "median": 0.3333333333333333,
+        "p75": 0.6666666666666666,
+        "max": 1,
+        "mean": 0.3980815347721825
+      },
+      "target": 0.6666666666666666,
+      "percentile": 0.8183161004431314
+    }
+  ],
+  "features": [
+    {
+      "name": "hand_short",
+      "kind": "position-action",
+      "pass": false,
+      "reason": "留在前線的局面有相近的差值，分不開這一筆偏好",
+      "targetDiff": 2.25,
+      "median": 1.125,
+      "p75": 1.40625,
+      "varies": true,
+      "protect": 20,
+      "spread": 0.6047014019009654,
+      "saved": {
+        "n": 7,
+        "min": 0.25,
+        "p25": 0.8125,
+        "median": 1.125,
+        "p75": 1.1875,
+        "max": 2.25,
+        "mean": 1.0892857142857142
+      },
+      "fresh": {
+        "n": 41,
+        "min": 0,
+        "p25": 0.625,
+        "median": 0.875,
+        "p75": 1.125,
+        "max": 2.875,
+        "mean": 0.9054878048780488
+      },
+      "protect070": {
+        "n": 14,
+        "min": 0,
+        "p25": 0.90625,
+        "median": 1.125,
+        "p75": 1.25,
+        "max": 1.625,
+        "mean": 1.0714285714285714
+      }
+    },
+    {
+      "name": "pay_relief",
+      "kind": "position-action",
+      "pass": false,
+      "reason": "留在前線的局面有相近的差值，分不開這一筆偏好",
+      "targetDiff": 0.75,
+      "median": 0.5,
+      "p75": 0.625,
+      "varies": true,
+      "protect": 20,
+      "spread": 0.22991094483123567,
+      "saved": {
+        "n": 7,
+        "min": 0.25,
+        "p25": 0.3125,
+        "median": 0.5,
+        "p75": 0.5625,
+        "max": 0.75,
+        "mean": 0.4642857142857143
+      },
+      "fresh": {
+        "n": 41,
+        "min": 0,
+        "p25": 0.375,
+        "median": 0.5,
+        "p75": 0.625,
+        "max": 0.875,
+        "mean": 0.4695121951219512
+      },
+      "protect070": {
+        "n": 14,
+        "min": 0,
+        "p25": 0.5,
+        "median": 0.5,
+        "p75": 0.625,
+        "max": 0.625,
+        "mean": 0.49107142857142855
+      }
+    },
+    {
+      "name": "board_pressure",
+      "kind": "position-action",
+      "pass": false,
+      "reason": "目標上的能量線減前線沒有明顯差距",
+      "targetDiff": 0,
+      "median": 0,
+      "p75": 0.00625,
+      "varies": true,
+      "protect": 20,
+      "spread": 0.16437812640286517,
+      "saved": {
+        "n": 7,
+        "min": -0.15,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "max": 0.25,
+        "mean": 0.014285714285714287
+      },
+      "fresh": {
+        "n": 41,
+        "min": -0.35,
+        "p25": 0,
+        "median": 0,
+        "p75": 0.05,
+        "max": 0.525,
+        "mean": -0.0012195121951219488
+      },
+      "protect070": {
+        "n": 14,
+        "min": -0.325,
+        "p25": 0,
+        "median": 0,
+        "p75": 0,
+        "max": 0.2,
+        "mean": -0.03571428571428571
+      }
+    },
+    {
+      "name": "open_energy",
+      "kind": "position-action",
+      "pass": false,
+      "reason": "留在前線的局面有相近的差值，分不開這一筆偏好",
+      "targetDiff": 0.75,
+      "median": 0.5,
+      "p75": 0.75,
+      "varies": true,
+      "protect": 20,
+      "spread": 0.1774024554668671,
+      "saved": {
+        "n": 7,
+        "min": 0.5,
+        "p25": 0.5,
+        "median": 0.5,
+        "p75": 0.75,
+        "max": 0.75,
+        "mean": 0.6071428571428571
+      },
+      "fresh": {
+        "n": 41,
+        "min": 0.25,
+        "p25": 0.25,
+        "median": 0.5,
+        "p75": 0.5,
+        "max": 0.75,
+        "mean": 0.4573170731707317
+      },
+      "protect070": {
+        "n": 14,
+        "min": 0.25,
+        "p25": 0.5,
+        "median": 0.5,
+        "p75": 0.75,
+        "max": 0.75,
+        "mean": 0.5714285714285714
+      }
+    },
+    {
+      "name": "open_front",
+      "kind": "position-action",
+      "pass": false,
+      "reason": "目標上的能量線減前線沒有明顯差距",
+      "targetDiff": -1,
+      "median": -1,
+      "p75": -0.5,
+      "varies": true,
+      "protect": 20,
+      "spread": 0.27771866983418325,
+      "saved": {
+        "n": 7,
+        "min": -1,
+        "p25": -1,
+        "median": -1,
+        "p75": -0.75,
+        "max": -0.25,
+        "mean": -0.8214285714285714
+      },
+      "fresh": {
+        "n": 41,
+        "min": -1,
+        "p25": -1,
+        "median": -0.75,
+        "p75": -0.5,
+        "max": -0.25,
+        "mean": -0.7378048780487805
+      },
+      "protect070": {
+        "n": 14,
+        "min": -1,
+        "p25": -1,
+        "median": -1,
+        "p75": -0.75,
+        "max": -0.25,
+        "mean": -0.8214285714285714
+      }
+    },
+    {
+      "name": "realize_gen",
+      "kind": "card-line",
+      "pass": false,
+      "reason": "這是卡牌自己的數值乘上路線，不是局面交互",
+      "targetDiff": 0.3333333333333333,
+      "median": 0.3333333333333333,
+      "p75": 0.3333333333333333,
+      "varies": true,
+      "protect": 20,
+      "spread": 0.14158146513126466,
+      "saved": {
+        "n": 7,
+        "min": 0.3333333333333333,
+        "p25": 0.3333333333333333,
+        "median": 0.3333333333333333,
+        "p75": 0.3333333333333333,
+        "max": 0.6666666666666666,
+        "mean": 0.38095238095238093
+      },
+      "fresh": {
+        "n": 41,
+        "min": 0.3333333333333333,
+        "p25": 0.3333333333333333,
+        "median": 0.3333333333333333,
+        "p75": 0.3333333333333333,
+        "max": 0.6666666666666666,
+        "mean": 0.4146341463414635
+      },
+      "protect070": {
+        "n": 14,
+        "min": 0.3333333333333333,
+        "p25": 0.3333333333333333,
+        "median": 0.3333333333333333,
+        "p75": 0.3333333333333333,
+        "max": 0.3333333333333333,
+        "mean": 0.3333333333333333
+      }
+    },
+    {
+      "name": "realize_bp",
+      "kind": "card-line",
+      "pass": false,
+      "reason": "這是卡牌自己的數值乘上路線，不是局面交互",
+      "targetDiff": -0.8,
+      "median": -0.8,
+      "p75": -0.5,
+      "varies": true,
+      "protect": 20,
+      "spread": 0.18333736294733344,
+      "saved": {
+        "n": 7,
+        "min": -0.8,
+        "p25": -0.8,
+        "median": -0.8,
+        "p75": -0.4,
+        "max": -0.3,
+        "mean": -0.6142857142857142
+      },
+      "fresh": {
+        "n": 41,
+        "min": -0.8,
+        "p25": -0.8,
+        "median": -0.5,
+        "p75": -0.4,
+        "max": -0.4,
+        "mean": -0.5414634146341464
+      },
+      "protect070": {
+        "n": 14,
+        "min": -0.8,
+        "p25": -0.8,
+        "median": -0.8,
+        "p75": -0.8,
+        "max": -0.8,
+        "mean": -0.8
+      }
+    }
+  ],
+  "raid": [
+    {
+      "name": "hand_short",
+      "diff": 0.5
+    },
+    {
+      "name": "pay_relief",
+      "diff": 0.5
+    },
+    {
+      "name": "board_pressure",
+      "diff": 0
+    },
+    {
+      "name": "open_energy",
+      "diff": 0.5
+    },
+    {
+      "name": "open_front",
+      "diff": 0
+    },
+    {
+      "name": "realize_gen",
+      "diff": 0.6666666666666666
+    },
+    {
+      "name": "realize_bp",
+      "diff": 0
+    }
+  ],
+  "box": null,
+  "previous": 2.8628763609706915,
+  "verdictText": "不值得為這一筆 070 偏好擴充模型。局面資訊大多已經在向量裡，缺的是它和打出位置的交互；把交互補上之後，已確認局面和現有策略留在前線的局面仍然分不開。資料保留，等更多經獨立確認的偏好。"
+}
