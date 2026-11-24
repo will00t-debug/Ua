@@ -1,0 +1,29 @@
+{
+  "codeVersion": "v4b8-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "adopted": false,
+  "recommended": false,
+  "promoted": false,
+  "rule": "v4b8-joint-1",
+  "representation": "position-action",
+  "status": "collateral",
+  "objective": 2.1345430276373545,
+  "weights": [
+    {
+      "name": "hand_short",
+      "before": 0,
+      "after": 1.5,
+      "delta": 1.5
+    },
+    {
+      "name": "line_front",
+      "before": 3.111747446210022,
+      "after": 2.4772044185726676,
+      "delta": -0.6345430276373546
+    }
+  ],
+  "changed": [
+    "1fbdc61d55fa7f09"
+  ],
+  "releasedRaid": true
+}

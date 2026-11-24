@@ -1,0 +1,49 @@
+{
+  "codeVersion": "v4b8-1",
+  "floor": -0.25,
+  "screenPairs": 8,
+  "each": 66,
+  "screenSalt": 810000,
+  "confirmSalt": 920000,
+  "candidates": [
+    {
+      "index": 11,
+      "id": "ee6cdd154ceeb4ce",
+      "role": "reserved",
+      "screenMean": -0.5,
+      "bucket": "ap",
+      "opponent": "renruki",
+      "learnable": false,
+      "cardA": "BLC-4-060",
+      "cardB": null,
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動"
+    },
+    {
+      "index": 1,
+      "id": "01c85e5ddb31e7fa",
+      "role": "learnable",
+      "screenMean": -0.25,
+      "bucket": "early-energy",
+      "opponent": "renruki",
+      "learnable": true,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線"
+    },
+    {
+      "index": 3,
+      "id": "449bdd2e224676c9",
+      "role": "learnable",
+      "screenMean": -0.25,
+      "bucket": "mid-entry",
+      "opponent": "reject-blue",
+      "learnable": true,
+      "cardA": "BLC-1-072",
+      "cardB": "BLC-1-072",
+      "labelA": "把 BLC-1-072 打出到能量線",
+      "labelB": "把 BLC-1-072 打出到前線"
+    }
+  ]
+}

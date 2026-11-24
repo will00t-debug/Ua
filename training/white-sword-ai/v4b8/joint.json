@@ -1,0 +1,452 @@
+{
+  "complete": true,
+  "codeVersion": "v4b8-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "rule": "v4b8-joint-1",
+  "adopted": false,
+  "representation": "position-action",
+  "candidate": {
+    "ok": true,
+    "status": "collateral",
+    "adopted": false,
+    "recommended": false,
+    "promoted": false,
+    "objective": 2.1345430276373545,
+    "weights": [
+      {
+        "name": "hand_short",
+        "before": 0,
+        "after": 1.5,
+        "delta": 1.5
+      },
+      {
+        "name": "line_front",
+        "before": 3.111747446210022,
+        "after": 2.4772044185726676,
+        "delta": -0.6345430276373546
+      }
+    ],
+    "changed": [
+      "1fbdc61d55fa7f09"
+    ],
+    "necessary": [
+      "1fbdc61d55fa7f09"
+    ],
+    "releasedRaid": true,
+    "names": [
+      "hand_short",
+      "pay_relief",
+      "board_pressure",
+      "open_energy",
+      "open_front"
+    ]
+  },
+  "stages": {
+    "existing": {
+      "ok": false,
+      "status": "target-infeasible",
+      "adopted": false,
+      "recommended": false,
+      "promoted": false,
+      "objective": null,
+      "weights": [],
+      "changed": [],
+      "necessary": [],
+      "releasedRaid": false,
+      "names": []
+    },
+    "position": {
+      "ok": true,
+      "status": "collateral",
+      "adopted": false,
+      "recommended": false,
+      "promoted": false,
+      "objective": 2.1345430276373545,
+      "weights": [
+        {
+          "name": "hand_short",
+          "before": 0,
+          "after": 1.5,
+          "delta": 1.5
+        },
+        {
+          "name": "line_front",
+          "before": 3.111747446210022,
+          "after": 2.4772044185726676,
+          "delta": -0.6345430276373546
+        }
+      ],
+      "changed": [
+        "1fbdc61d55fa7f09"
+      ],
+      "necessary": [
+        "1fbdc61d55fa7f09"
+      ],
+      "releasedRaid": true,
+      "names": [
+        "hand_short",
+        "pay_relief",
+        "board_pressure",
+        "open_energy",
+        "open_front"
+      ]
+    }
+  },
+  "comparison": [
+    {
+      "id": "d12a2d6f5ced1d88",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "facts": {
+        "energyTotal": 1,
+        "apReady": 2,
+        "handCount": 7,
+        "unmet": 18,
+        "myBp": 0,
+        "oppBp": 0,
+        "frontEmpty": 4,
+        "frontSlots": 4,
+        "energyEmpty": 3,
+        "energySlots": 4
+      },
+      "energy": {
+        "hand_short": 2.25,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": 0,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": 0
+      },
+      "front": {
+        "hand_short": 0,
+        "pay_relief": 0,
+        "board_pressure": 0,
+        "open_energy": 0,
+        "open_front": 1,
+        "realize_gen": 0,
+        "realize_bp": 0.8
+      },
+      "diffs": {
+        "hand_short": 2.25,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": -1,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": -0.8
+      },
+      "gap": {
+        "ok": true,
+        "id": "d12a2d6f5ced1d88",
+        "keepKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "currentKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "sameChoice": false,
+        "hard": -6.279999999999994,
+        "policy": 23.45725716582414,
+        "blend": 17.177257165824145,
+        "swing": 18,
+        "gap": 17.177257165824145,
+        "coords": 4,
+        "clears": true,
+        "shortfall": 0,
+        "fit": true,
+        "fitStatus": "kept",
+        "bandSize": 2,
+        "diffs": [
+          {
+            "name": "line_front",
+            "index": 14,
+            "diff": -1,
+            "hash": false
+          },
+          {
+            "name": "line_energy",
+            "index": 15,
+            "diff": 1,
+            "hash": false
+          },
+          {
+            "name": "h2",
+            "index": 109,
+            "diff": -1,
+            "hash": true
+          },
+          {
+            "name": "h7",
+            "index": 114,
+            "diff": 1,
+            "hash": true
+          }
+        ],
+        "parts": [
+          {
+            "name": "line_front",
+            "weight": 3.111747446210022,
+            "diff": 1,
+            "part": 18.670484677260134
+          },
+          {
+            "name": "line_energy",
+            "weight": 2.6640525838570013,
+            "diff": -1,
+            "part": -15.984315503142007
+          },
+          {
+            "name": "h2",
+            "weight": 2.506231914235914,
+            "diff": 1,
+            "part": 15.037391485415485
+          },
+          {
+            "name": "h7",
+            "weight": -0.9556160843817549,
+            "diff": -1,
+            "part": 5.73369650629053
+          }
+        ]
+      }
+    },
+    {
+      "id": "b122fb89d72eec7e",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "facts": {
+        "energyTotal": 1,
+        "apReady": 2,
+        "handCount": 7,
+        "unmet": 14,
+        "myBp": 0,
+        "oppBp": 0,
+        "frontEmpty": 4,
+        "frontSlots": 4,
+        "energyEmpty": 3,
+        "energySlots": 4
+      },
+      "energy": {
+        "hand_short": 1.75,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": 0,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": 0
+      },
+      "front": {
+        "hand_short": 0,
+        "pay_relief": 0,
+        "board_pressure": 0,
+        "open_energy": 0,
+        "open_front": 1,
+        "realize_gen": 0,
+        "realize_bp": 0.8
+      },
+      "diffs": {
+        "hand_short": 1.75,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": -1,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": -0.8
+      },
+      "gap": {
+        "ok": true,
+        "id": "b122fb89d72eec7e",
+        "keepKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "currentKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "sameChoice": false,
+        "hard": -3.900000000000013,
+        "policy": 23.45725716582414,
+        "blend": 19.55725716582412,
+        "swing": 18,
+        "gap": 19.55725716582412,
+        "coords": 4,
+        "clears": false,
+        "shortfall": 1.5572571658241188,
+        "fit": false,
+        "fitStatus": "infeasible",
+        "bandSize": 2,
+        "diffs": [
+          {
+            "name": "line_front",
+            "index": 14,
+            "diff": -1,
+            "hash": false
+          },
+          {
+            "name": "line_energy",
+            "index": 15,
+            "diff": 1,
+            "hash": false
+          },
+          {
+            "name": "h2",
+            "index": 109,
+            "diff": -1,
+            "hash": true
+          },
+          {
+            "name": "h7",
+            "index": 114,
+            "diff": 1,
+            "hash": true
+          }
+        ],
+        "parts": [
+          {
+            "name": "line_front",
+            "weight": 3.111747446210022,
+            "diff": 1,
+            "part": 18.670484677260134
+          },
+          {
+            "name": "line_energy",
+            "weight": 2.6640525838570013,
+            "diff": -1,
+            "part": -15.984315503142007
+          },
+          {
+            "name": "h2",
+            "weight": 2.506231914235914,
+            "diff": 1,
+            "part": 15.037391485415485
+          },
+          {
+            "name": "h7",
+            "weight": -0.9556160843817549,
+            "diff": -1,
+            "part": 5.73369650629053
+          }
+        ]
+      }
+    }
+  ],
+  "effects": {
+    "names": [
+      "hand_short",
+      "pay_relief",
+      "board_pressure",
+      "open_energy",
+      "open_front"
+    ],
+    "saved": {
+      "covered": 121,
+      "changed": [
+        {
+          "id": "1fbdc61d55fa7f09",
+          "before": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "bucket": "raid",
+          "opponent": "renruki",
+          "beforeLabel": "突襲 BLC-2-067",
+          "afterLabel": "把 BLC-4-060 打出到能量線"
+        }
+      ]
+    },
+    "mine": {
+      "covered": 556,
+      "changed": 10,
+      "examples": [
+        {
+          "id": "d89ae98238222c52",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "bucket": "mid-entry",
+          "opponent": "white-sword",
+          "beforeLabel": "把 BLC-2-069 打出到前線",
+          "afterLabel": "把 BLC-2-069 打出到能量線"
+        },
+        {
+          "id": "17a4058c5b62d2e6",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-17\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-17\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+          "bucket": "mid-entry",
+          "opponent": "white-sword",
+          "beforeLabel": "把 BLC-2-069 打出到前線",
+          "afterLabel": "把 BLC-2-069 打出到能量線"
+        },
+        {
+          "id": "16f3b988f49037d5",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+          "bucket": "mid-entry",
+          "opponent": "white-sword",
+          "beforeLabel": "把 BLC-2-069 打出到前線",
+          "afterLabel": "把 BLC-2-069 打出到能量線"
+        },
+        {
+          "id": "0df4c8c07704b697",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-29\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-3\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "bucket": "ap",
+          "opponent": "white-sword",
+          "beforeLabel": "把 BLC-1-072 打出到前線",
+          "afterLabel": "把 BLC-3-009 打出到能量線"
+        },
+        {
+          "id": "d8594c628a59fb92",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-17\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "bucket": "ap",
+          "opponent": "white-sword",
+          "beforeLabel": "把 BLC-2-069 打出到前線",
+          "afterLabel": "把 BLC-1-083 打出到能量線"
+        },
+        {
+          "id": "904a146535fb37f8",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "bucket": "mid-entry",
+          "opponent": "white-sword",
+          "beforeLabel": "把 BLC-4-070 打出到前線",
+          "afterLabel": "把 BLC-4-070 打出到能量線"
+        },
+        {
+          "id": "336470b19277f823",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-31\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+          "bucket": "mid-entry",
+          "opponent": "reject-blue",
+          "beforeLabel": "把 BLC-2-069 打出到前線",
+          "afterLabel": "把 BLC-1-072 打出到能量線"
+        },
+        {
+          "id": "59cb26b58a886510",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+          "bucket": "mid-entry",
+          "opponent": "reject-blue",
+          "beforeLabel": "把 BLC-2-069 打出到前線",
+          "afterLabel": "把 BLC-4-060 打出到能量線"
+        },
+        {
+          "id": "1f8f400f785e4781",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-20\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+          "bucket": "mid-entry",
+          "opponent": "renruki",
+          "beforeLabel": "把 BLC-4-070 打出到前線",
+          "afterLabel": "把 BLC-4-060 打出到能量線"
+        },
+        {
+          "id": "0d035ea8a0b2be16",
+          "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+          "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-1\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "bucket": "ap",
+          "opponent": "renruki",
+          "beforeLabel": "把 BLC-1-085 打出到前線",
+          "afterLabel": "把 BLC-3-009 打出到能量線"
+        }
+      ]
+    }
+  }
+}
