@@ -1,0 +1,977 @@
+{
+  "codeVersion": "v4b9-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "adopted": false,
+  "weightsWritten": false,
+  "hash": {
+    "checked": 5721,
+    "mismatched": 236,
+    "structural": 0,
+    "line": {
+      "front": "play|BLC-4-070||front",
+      "energy": "play|BLC-4-070||energy",
+      "frontBin": 2,
+      "energyBin": 7,
+      "frontPoints": 15.037391485415485,
+      "energyPoints": -5.73369650629053,
+      "frontWeight": 2.506231914235914,
+      "energyWeight": -0.9556160843817549
+    },
+    "bins": [
+      {
+        "name": "h0",
+        "weight": 0.3905451784838105,
+        "points": 2.343271070902863,
+        "observed": 25,
+        "space": 8,
+        "examples": [
+          {
+            "text": "attack|BLC-1-072||",
+            "count": 103
+          },
+          {
+            "text": "event|BLC-4-080||",
+            "count": 95
+          },
+          {
+            "text": "attack|BLC-1-083||",
+            "count": 74
+          },
+          {
+            "text": "chooseHandLimit|BLC-2-069||",
+            "count": 49
+          },
+          {
+            "text": "chooseTopCard||top|",
+            "count": 38
+          },
+          {
+            "text": "chooseDiscardGate|BLC-4-060||",
+            "count": 37
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRetireBp（向量沒有可還原的卡號）",
+            "count": 7
+          },
+          {
+            "text": "chooseTrigger（向量沒有可還原的卡號）",
+            "count": 5
+          },
+          {
+            "text": "chooseRestLock（向量沒有可還原的卡號）",
+            "count": 4
+          }
+        ],
+        "signatures": [
+          "raid|BLC-3-009||",
+          "attack|BLC-4-060||",
+          "activate|BLC-2-069||",
+          "activate|BLC-4-070||",
+          "attack|BLC-1-072||",
+          "attack|BLC-1-083||",
+          "play|BLC-2-073||energy",
+          "play|BLC-4-080||energy"
+        ]
+      },
+      {
+        "name": "h1",
+        "weight": 0.4215169491148886,
+        "points": 2.5291016946893317,
+        "observed": 24,
+        "space": 10,
+        "examples": [
+          {
+            "text": "chooseHandLimit|BLC-4-060||",
+            "count": 89
+          },
+          {
+            "text": "move|BLC-1-083||",
+            "count": 80
+          },
+          {
+            "text": "attack|BLC-2-069||",
+            "count": 70
+          },
+          {
+            "text": "extraDraw|||",
+            "count": 65
+          },
+          {
+            "text": "attack|BLC-4-070||",
+            "count": 63
+          },
+          {
+            "text": "play|BLC-3-009||front",
+            "count": 57
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRestLock（向量沒有可還原的卡號）",
+            "count": 32
+          },
+          {
+            "text": "chooseRetireBp（向量沒有可還原的卡號）",
+            "count": 2
+          }
+        ],
+        "signatures": [
+          "play|BLC-3-009||front",
+          "activate|BLC-3-009||",
+          "activate|BLC-4-060||",
+          "play|BLC-2-067||energy",
+          "attack|BLC-2-069||",
+          "attack|BLC-4-070||",
+          "play|BLC-1-072||front",
+          "activate|BLC-1-072||",
+          "move|BLC-1-083||",
+          "play|BLC-3-008||energy"
+        ]
+      },
+      {
+        "name": "h2",
+        "weight": 2.506231914235914,
+        "points": 15.037391485415485,
+        "observed": 26,
+        "space": 10,
+        "examples": [
+          {
+            "text": "attack|BLC-1-085||",
+            "count": 243
+          },
+          {
+            "text": "play|BLC-1-083||energy",
+            "count": 159
+          },
+          {
+            "text": "chooseApRecovery|||",
+            "count": 121
+          },
+          {
+            "text": "play|BLC-4-060||energy",
+            "count": 121
+          },
+          {
+            "text": "raid|BLC-1-070||",
+            "count": 106
+          },
+          {
+            "text": "play|BLC-4-070||front",
+            "count": 86
+          },
+          {
+            "text": "attack|BLC-4-066||",
+            "count": 66
+          },
+          {
+            "text": "chooseTopCard||bottom|",
+            "count": 38
+          },
+          {
+            "text": "chooseDiscardGate|BLC-2-073||",
+            "count": 28
+          },
+          {
+            "text": "chooseTrigger|BLC-2-069|active|",
+            "count": 18
+          },
+          {
+            "text": "chooseHandLimit|BLC-2-067||",
+            "count": 16
+          },
+          {
+            "text": "chooseBlock|BLC-1-070||",
+            "count": 13
+          },
+          {
+            "text": "chooseLineMove|BLC-1-072||",
+            "count": 13
+          },
+          {
+            "text": "chooseLineMove|BLC-3-009||",
+            "count": 10
+          },
+          {
+            "text": "chooseRestLock|BLC-1-070||",
+            "count": 10
+          },
+          {
+            "text": "chooseDiscardGate|BLC-4-066||",
+            "count": 9
+          },
+          {
+            "text": "chooseTrigger|BLC-1-072|color|energy",
+            "count": 8
+          },
+          {
+            "text": "raid|BLC-1-070||energy",
+            "count": 8
+          },
+          {
+            "text": "chooseDiscardGate|BLC-1-085||",
+            "count": 5
+          },
+          {
+            "text": "chooseRetireBp|BLC-1-085||",
+            "count": 4
+          },
+          {
+            "text": "chooseTopFilteredMany|BLC-1-083||",
+            "count": 4
+          },
+          {
+            "text": "move|BLC-3-008||",
+            "count": 4
+          },
+          {
+            "text": "chooseRaidLeave|BLC-4-080|pay|",
+            "count": 2
+          },
+          {
+            "text": "chooseTrigger|BLC-1-072|special|",
+            "count": 2
+          },
+          {
+            "text": "chooseTrigger|BLC-4-070|active|",
+            "count": 2
+          },
+          {
+            "text": "chooseRestTwo|BLC-3-008||",
+            "count": 1
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRestLock（向量沒有可還原的卡號）",
+            "count": 39
+          },
+          {
+            "text": "chooseTrigger（向量沒有可還原的卡號）",
+            "count": 2
+          },
+          {
+            "text": "chooseRetireBp（向量沒有可還原的卡號）",
+            "count": 2
+          }
+        ],
+        "signatures": [
+          "play|BLC-4-060||energy",
+          "attack|BLC-4-066||",
+          "activate|BLC-2-067||",
+          "play|BLC-4-070||front",
+          "raid|BLC-1-070||",
+          "play|BLC-1-083||energy",
+          "attack|BLC-1-085||",
+          "move|BLC-3-008||",
+          "attack|BLC-2-073||",
+          "raid|BLC-4-080||"
+        ]
+      },
+      {
+        "name": "h3",
+        "weight": -1.398911607761616,
+        "points": -8.393469646569695,
+        "observed": 21,
+        "space": 10,
+        "examples": [
+          {
+            "text": "play|BLC-2-069||energy",
+            "count": 95
+          },
+          {
+            "text": "move|BLC-4-066||",
+            "count": 84
+          },
+          {
+            "text": "raid|BLC-2-067||",
+            "count": 74
+          },
+          {
+            "text": "chooseHandLimit|BLC-1-070||",
+            "count": 19
+          },
+          {
+            "text": "chooseDiscardGate|||",
+            "count": 18
+          },
+          {
+            "text": "chooseBlock|BLC-2-067||",
+            "count": 16
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRestLock（向量沒有可還原的卡號）",
+            "count": 13
+          },
+          {
+            "text": "chooseTrigger（向量沒有可還原的卡號）",
+            "count": 10
+          }
+        ],
+        "signatures": [
+          "move|BLC-4-066||",
+          "raid|BLC-2-067||",
+          "play|BLC-2-069||energy",
+          "activate|BLC-1-070||",
+          "activate|BLC-1-085||",
+          "raid|BLC-3-008||",
+          "play|BLC-2-073||front",
+          "move|BLC-2-073||",
+          "play|BLC-4-080||front",
+          "move|BLC-4-080||"
+        ]
+      },
+      {
+        "name": "h4",
+        "weight": -2.6502198790250167,
+        "points": -15.9013192741501,
+        "observed": 25,
+        "space": 11,
+        "examples": [
+          {
+            "text": "next|||",
+            "count": 398
+          },
+          {
+            "text": "play|BLC-4-066||energy",
+            "count": 103
+          },
+          {
+            "text": "attack|BLC-3-009||",
+            "count": 75
+          },
+          {
+            "text": "chooseTrigger||get|",
+            "count": 55
+          },
+          {
+            "text": "move|BLC-2-069||",
+            "count": 43
+          },
+          {
+            "text": "chooseBlock|BLC-1-083||",
+            "count": 28
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRestLock（向量沒有可還原的卡號）",
+            "count": 23
+          },
+          {
+            "text": "chooseTrigger（向量沒有可還原的卡號）",
+            "count": 19
+          }
+        ],
+        "signatures": [
+          "attack|BLC-3-009||",
+          "raid|BLC-4-060||",
+          "play|BLC-4-066||energy",
+          "play|BLC-2-067||front",
+          "move|BLC-2-069||",
+          "move|BLC-4-070||",
+          "play|BLC-1-070||energy",
+          "raid|BLC-1-072||",
+          "raid|BLC-1-083||",
+          "play|BLC-1-085||energy",
+          "play|BLC-3-008||front"
+        ]
+      },
+      {
+        "name": "h5",
+        "weight": 0.18754658752419953,
+        "points": 1.1252795251451972,
+        "observed": 19,
+        "space": 8,
+        "examples": [
+          {
+            "text": "chooseTrigger||skip|",
+            "count": 81
+          },
+          {
+            "text": "move|BLC-1-072||",
+            "count": 51
+          },
+          {
+            "text": "move|BLC-3-009||",
+            "count": 33
+          },
+          {
+            "text": "chooseBlock|BLC-2-069||",
+            "count": 21
+          },
+          {
+            "text": "chooseTrigger|BLC-1-085|active|",
+            "count": 17
+          },
+          {
+            "text": "play|BLC-1-083||front",
+            "count": 16
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRestLock（向量沒有可還原的卡號）",
+            "count": 24
+          },
+          {
+            "text": "chooseRetireBp（向量沒有可還原的卡號）",
+            "count": 10
+          },
+          {
+            "text": "chooseTrigger（向量沒有可還原的卡號）",
+            "count": 7
+          }
+        ],
+        "signatures": [
+          "move|BLC-3-009||",
+          "play|BLC-4-060||front",
+          "move|BLC-4-060||",
+          "raid|BLC-2-069||",
+          "raid|BLC-4-070||",
+          "move|BLC-1-072||",
+          "play|BLC-1-083||front",
+          "activate|BLC-1-083||"
+        ]
+      },
+      {
+        "name": "h6",
+        "weight": 1.498906941809557,
+        "points": 8.993441650857342,
+        "observed": 24,
+        "space": 10,
+        "examples": [
+          {
+            "text": "raid|BLC-1-085||",
+            "count": 219
+          },
+          {
+            "text": "chooseLineSlot|||",
+            "count": 159
+          },
+          {
+            "text": "play|BLC-3-009||energy",
+            "count": 83
+          },
+          {
+            "text": "attack|BLC-1-070||",
+            "count": 72
+          },
+          {
+            "text": "play|BLC-1-072||energy",
+            "count": 71
+          },
+          {
+            "text": "chooseBlock|BLC-1-085||",
+            "count": 37
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRestLock（向量沒有可還原的卡號）",
+            "count": 18
+          },
+          {
+            "text": "chooseTrigger（向量沒有可還原的卡號）",
+            "count": 7
+          },
+          {
+            "text": "chooseRetireBp（向量沒有可還原的卡號）",
+            "count": 5
+          }
+        ],
+        "signatures": [
+          "play|BLC-3-009||energy",
+          "raid|BLC-4-066||",
+          "move|BLC-2-067||",
+          "play|BLC-2-069||front",
+          "attack|BLC-1-070||",
+          "play|BLC-1-072||energy",
+          "raid|BLC-1-085||",
+          "activate|BLC-3-008||",
+          "raid|BLC-2-073||",
+          "attack|BLC-4-080||"
+        ]
+      },
+      {
+        "name": "h7",
+        "weight": -0.9556160843817549,
+        "points": -5.73369650629053,
+        "observed": 22,
+        "space": 11,
+        "examples": [
+          {
+            "text": "chooseTrigger||raid|front",
+            "count": 101
+          },
+          {
+            "text": "play|BLC-4-070||energy",
+            "count": 95
+          },
+          {
+            "text": "chooseBlock|||",
+            "count": 80
+          },
+          {
+            "text": "attack|BLC-2-067||",
+            "count": 52
+          },
+          {
+            "text": "chooseHandLimit|BLC-4-080||",
+            "count": 51
+          },
+          {
+            "text": "chooseRestLock|||",
+            "count": 48
+          },
+          {
+            "text": "chooseHandLimit|BLC-2-073||",
+            "count": 41
+          },
+          {
+            "text": "attack|BLC-3-008||",
+            "count": 32
+          },
+          {
+            "text": "chooseTrigger|BLC-1-083|active|",
+            "count": 14
+          },
+          {
+            "text": "chooseDiscardGate|BLC-3-008||",
+            "count": 10
+          },
+          {
+            "text": "chooseDiscardGate|BLC-2-067||",
+            "count": 9
+          },
+          {
+            "text": "chooseHandLimit|BLC-4-066||",
+            "count": 9
+          },
+          {
+            "text": "chooseLineMove|BLC-4-070||",
+            "count": 9
+          },
+          {
+            "text": "chooseRestTwo|BLC-1-085||",
+            "count": 9
+          },
+          {
+            "text": "play|BLC-1-085||front",
+            "count": 8
+          },
+          {
+            "text": "play|BLC-4-066||front",
+            "count": 7
+          },
+          {
+            "text": "chooseRestTwo|BLC-1-070||",
+            "count": 5
+          },
+          {
+            "text": "chooseTopFilteredMany|BLC-2-069||",
+            "count": 4
+          },
+          {
+            "text": "chooseRetireBp|BLC-2-067||",
+            "count": 2
+          },
+          {
+            "text": "chooseTrigger|BLC-3-008|special|",
+            "count": 2
+          },
+          {
+            "text": "play|BLC-1-070||front",
+            "count": 2
+          },
+          {
+            "text": "raid|BLC-2-067||energy",
+            "count": 2
+          }
+        ],
+        "unresolved": [
+          {
+            "text": "chooseRetireBp（向量沒有可還原的卡號）",
+            "count": 5
+          },
+          {
+            "text": "chooseTrigger（向量沒有可還原的卡號）",
+            "count": 2
+          }
+        ],
+        "signatures": [
+          "play|BLC-4-066||front",
+          "activate|BLC-4-066||",
+          "attack|BLC-2-067||",
+          "play|BLC-4-070||energy",
+          "play|BLC-1-070||front",
+          "move|BLC-1-070||",
+          "play|BLC-1-085||front",
+          "move|BLC-1-085||",
+          "attack|BLC-3-008||",
+          "activate|BLC-2-073||",
+          "activate|BLC-4-080||"
+        ]
+      }
+    ]
+  },
+  "confirm": [
+    {
+      "id": "d8a4e2b6f8d32818",
+      "screenMean": 0.25,
+      "direction": "positive",
+      "source": "v4b8",
+      "text": "070 前線偏好",
+      "mean": -0.07575757575757576,
+      "plus": 11,
+      "minus": 16,
+      "tie": 39,
+      "decisive": 27,
+      "p": 0.8761057183146478,
+      "aligned": false,
+      "holm": false,
+      "confirmed": false,
+      "status": "inconclusive",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線"
+    },
+    {
+      "id": "a8ea32166942bc90",
+      "screenMean": -0.25,
+      "direction": "negative",
+      "source": "v4b7",
+      "text": "060 結束行動偏好",
+      "mean": -0.045454545454545456,
+      "plus": 8,
+      "minus": 11,
+      "tie": 47,
+      "decisive": 19,
+      "p": 0.3238029479980469,
+      "aligned": true,
+      "holm": false,
+      "confirmed": false,
+      "status": "inconclusive",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動"
+    },
+    {
+      "id": "5f868c674f2e1fee",
+      "screenMean": 0.25,
+      "direction": "positive",
+      "source": "v4b7",
+      "text": "060 起動偏好",
+      "mean": 0.07575757575757576,
+      "plus": 14,
+      "minus": 9,
+      "tie": 43,
+      "decisive": 23,
+      "p": 0.20243644714355485,
+      "aligned": true,
+      "holm": false,
+      "confirmed": false,
+      "status": "inconclusive",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動"
+    }
+  ],
+  "frontConfirmed": false,
+  "representations": {
+    "existing": {
+      "targetsOk": false,
+      "frontOk": false,
+      "raidOk": false,
+      "raidRequired": false,
+      "keepsRaid": false,
+      "ok": false,
+      "status": "target-infeasible",
+      "objective": null,
+      "weights": [],
+      "changed": []
+    },
+    "position": {
+      "targetsOk": true,
+      "frontOk": true,
+      "raidOk": false,
+      "raidRequired": true,
+      "keepsRaid": false,
+      "ok": true,
+      "status": "safe",
+      "objective": 2.8881144562087853,
+      "weights": [
+        {
+          "name": "line_front",
+          "before": 3.111747446210022,
+          "after": 1.611747446210022,
+          "delta": -1.5
+        },
+        {
+          "name": "line_energy",
+          "before": 2.6640525838570013,
+          "after": 3.5569289448276944,
+          "delta": 0.8928763609706929
+        },
+        {
+          "name": "hand_short",
+          "before": 0,
+          "after": 0.4952380952380927,
+          "delta": 0.4952380952380927
+        }
+      ],
+      "changed": []
+    }
+  },
+  "previous": {
+    "keepsTargets": false,
+    "keepsFront": true,
+    "keepsRaid": false,
+    "rows": [
+      {
+        "id": "d12a2d6f5ced1d88",
+        "label": "energy",
+        "kept": true
+      },
+      {
+        "id": "b122fb89d72eec7e",
+        "label": "energy",
+        "kept": true
+      },
+      {
+        "id": "01c85e5ddb31e7fa",
+        "label": "energy",
+        "kept": false
+      },
+      {
+        "id": "525ea92d59077ba6",
+        "label": "anchor",
+        "kept": true
+      },
+      {
+        "id": "1fbdc61d55fa7f09",
+        "label": "raid",
+        "kept": false
+      }
+    ]
+  },
+  "candidate": {
+    "kind": "position-action",
+    "keepsRaid": false,
+    "raidRequired": true,
+    "status": "safe",
+    "objective": 2.8881144562087853,
+    "weights": [
+      {
+        "name": "line_front",
+        "before": 3.111747446210022,
+        "after": 1.611747446210022,
+        "delta": -1.5
+      },
+      {
+        "name": "line_energy",
+        "before": 2.6640525838570013,
+        "after": 3.5569289448276944,
+        "delta": 0.8928763609706929
+      },
+      {
+        "name": "hand_short",
+        "before": 0,
+        "after": 0.4952380952380927,
+        "delta": 0.4952380952380927
+      }
+    ],
+    "changed": [],
+    "adopted": false
+  },
+  "validation": {
+    "ran": true,
+    "games": 660,
+    "selected": [
+      {
+        "id": "1fbdc61d55fa7f09",
+        "changed": true,
+        "role": "raid",
+        "bucket": "raid",
+        "opponent": "renruki",
+        "beforeLabel": "突襲 BLC-2-067",
+        "afterLabel": "把 BLC-4-060 打出到能量線",
+        "beforeKey": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}"
+      },
+      {
+        "id": "08a737f7e8bf5cb6",
+        "changed": true,
+        "role": "other-energy",
+        "bucket": "mid-entry",
+        "opponent": "renruki",
+        "beforeLabel": "把 BLC-2-069 打出到前線",
+        "afterLabel": "把 BLC-3-009 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-3\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}"
+      },
+      {
+        "id": "0d035ea8a0b2be16",
+        "changed": true,
+        "role": "other-energy",
+        "bucket": "ap",
+        "opponent": "renruki",
+        "beforeLabel": "把 BLC-1-085 打出到前線",
+        "afterLabel": "把 BLC-3-009 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-1\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}"
+      },
+      {
+        "id": "b5f246501f6d51d5",
+        "changed": true,
+        "role": "fresh",
+        "bucket": "mid-entry",
+        "opponent": "reject-blue",
+        "beforeLabel": "把 BLC-4-070 打出到前線",
+        "afterLabel": "把 BLC-1-072 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-30\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}"
+      },
+      {
+        "id": "904a146535fb37f8",
+        "changed": true,
+        "role": "keep-front",
+        "bucket": "mid-entry",
+        "opponent": "white-sword",
+        "beforeLabel": "把 BLC-4-070 打出到前線",
+        "afterLabel": "把 BLC-4-070 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}"
+      }
+    ],
+    "rows": [
+      {
+        "id": "1fbdc61d55fa7f09",
+        "changed": true,
+        "role": "raid",
+        "bucket": "raid",
+        "opponent": "renruki",
+        "beforeLabel": "突襲 BLC-2-067",
+        "afterLabel": "把 BLC-4-060 打出到能量線",
+        "beforeKey": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "direction": "positive",
+        "mean": 0.030303030303030304,
+        "plus": 5,
+        "minus": 3,
+        "tie": 58,
+        "decisive": 8,
+        "p": 0.3632812500000001,
+        "aligned": true,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive"
+      },
+      {
+        "id": "08a737f7e8bf5cb6",
+        "changed": true,
+        "role": "other-energy",
+        "bucket": "mid-entry",
+        "opponent": "renruki",
+        "beforeLabel": "把 BLC-2-069 打出到前線",
+        "afterLabel": "把 BLC-3-009 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-3\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "direction": "positive",
+        "mean": -0.15151515151515152,
+        "plus": 13,
+        "minus": 23,
+        "tie": 30,
+        "decisive": 36,
+        "p": 0.9673773323884239,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive"
+      },
+      {
+        "id": "0d035ea8a0b2be16",
+        "changed": true,
+        "role": "other-energy",
+        "bucket": "ap",
+        "opponent": "renruki",
+        "beforeLabel": "把 BLC-1-085 打出到前線",
+        "afterLabel": "把 BLC-3-009 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-1\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "direction": "positive",
+        "mean": 0.2727272727272727,
+        "plus": 20,
+        "minus": 2,
+        "tie": 44,
+        "decisive": 22,
+        "p": 0.00006055831909179687,
+        "aligned": true,
+        "holm": true,
+        "confirmed": true,
+        "status": "confirmed"
+      },
+      {
+        "id": "b5f246501f6d51d5",
+        "changed": true,
+        "role": "fresh",
+        "bucket": "mid-entry",
+        "opponent": "reject-blue",
+        "beforeLabel": "把 BLC-4-070 打出到前線",
+        "afterLabel": "把 BLC-1-072 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-30\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+        "direction": "positive",
+        "mean": -0.09090909090909091,
+        "plus": 12,
+        "minus": 18,
+        "tie": 36,
+        "decisive": 30,
+        "p": 0.8997557889670137,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive"
+      },
+      {
+        "id": "904a146535fb37f8",
+        "changed": true,
+        "role": "keep-front",
+        "bucket": "mid-entry",
+        "opponent": "white-sword",
+        "beforeLabel": "把 BLC-4-070 打出到前線",
+        "afterLabel": "把 BLC-4-070 打出到能量線",
+        "beforeKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "afterKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "direction": "positive",
+        "mean": -0.10606060606060606,
+        "plus": 4,
+        "minus": 11,
+        "tie": 51,
+        "decisive": 15,
+        "p": 0.982421875000001,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive"
+      }
+    ]
+  },
+  "mined": {
+    "games": 6,
+    "found": 148
+  },
+  "effects": {
+    "covered": 679,
+    "known": 18,
+    "fresh": 1,
+    "roles": {
+      "keep-front": 5,
+      "raid": 1,
+      "other-energy": 12,
+      "fresh": 1
+    }
+  },
+  "games": 1056,
+  "verdict": "三筆事先登記的方向都沒有通過 Holm。沒有通過的結果是證據不足，不是兩個動作相同。能保住共同偏好的實驗步仍然放開 067 突襲。不顯著的驗證也不表示這個連帶是安全的。集中驗證裡有局面顯示原選擇顯著較好。v2 沒有改，棋力沒有因此提升。"
+}
