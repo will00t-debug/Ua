@@ -1,0 +1,111 @@
+{
+  "rounds": 1000,
+  "saved": {
+    "positions": 42,
+    "pairs": 599,
+    "ties": 481,
+    "plus": 56,
+    "minus": 62,
+    "tieRate": 0.8030050083472454,
+    "extension": 263,
+    "flatAtScreen": 15,
+    "updateAtScreen": 3,
+    "supportAtScreen": 2,
+    "updateAfterExtension": 0,
+    "screenUpdates": [
+      "a925bcd5f9d70ebe",
+      "4b6338ce9e141a68",
+      "0406f018a8676e5c"
+    ]
+  },
+  "fragile": {
+    "mean": -0.375,
+    "low": -0.7336432768085859,
+    "high": -0.01635672319141407
+  },
+  "sizes": {
+    "boundary": 7.157166600112828,
+    "power": 14.606462449209856
+  },
+  "replication": {
+    "each": 66
+  },
+  "nullCurrent": {
+    "rounds": 1000,
+    "pairs": 630.272,
+    "nominalUpdateRounds": 0.86,
+    "nominalUpdate": 1.912,
+    "adjustedUpdateRounds": 0.014,
+    "confirmedRounds": 0.86,
+    "confirmed": 1.912,
+    "trueConfirmed": 0,
+    "falseConfirmed": 1.912,
+    "bhTrue": 0,
+    "bhFalse": 0.014
+  },
+  "nullRep": {
+    "rounds": 1000,
+    "pairs": 597.096,
+    "nominalUpdateRounds": 0,
+    "nominalUpdate": 0,
+    "adjustedUpdateRounds": 0,
+    "confirmedRounds": 0.025,
+    "confirmed": 0.027,
+    "trueConfirmed": 0,
+    "falseConfirmed": 0.027,
+    "bhTrue": 0,
+    "bhFalse": 0
+  },
+  "moderateCurrent": {
+    "rounds": 1000,
+    "pairs": 627.408,
+    "nominalUpdateRounds": 0.991,
+    "nominalUpdate": 2.809,
+    "adjustedUpdateRounds": 0.195,
+    "confirmedRounds": 0.991,
+    "confirmed": 2.809,
+    "trueConfirmed": 0.948,
+    "falseConfirmed": 1.861,
+    "bhTrue": 0.185,
+    "bhFalse": 0.015
+  },
+  "moderate": {
+    "rounds": 1000,
+    "pairs": 599.472,
+    "nominalUpdateRounds": 0,
+    "nominalUpdate": 0,
+    "adjustedUpdateRounds": 0,
+    "confirmedRounds": 0.861,
+    "confirmed": 0.888,
+    "trueConfirmed": 0.856,
+    "falseConfirmed": 0.032,
+    "bhTrue": 0,
+    "bhFalse": 0
+  },
+  "strong": {
+    "rounds": 1000,
+    "pairs": 599.736,
+    "nominalUpdateRounds": 0,
+    "nominalUpdate": 0,
+    "adjustedUpdateRounds": 0,
+    "confirmedRounds": 0.959,
+    "confirmed": 0.989,
+    "trueConfirmed": 0.956,
+    "falseConfirmed": 0.033,
+    "bhTrue": 0,
+    "bhFalse": 0
+  },
+  "three": {
+    "rounds": 1000,
+    "pairs": 600,
+    "nominalUpdateRounds": 0,
+    "nominalUpdate": 0,
+    "adjustedUpdateRounds": 0,
+    "confirmedRounds": 0.998,
+    "confirmed": 2.507,
+    "trueConfirmed": 2.475,
+    "falseConfirmed": 0.032,
+    "bhTrue": 0,
+    "bhFalse": 0
+  }
+}
