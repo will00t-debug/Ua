@@ -135,7 +135,9 @@ export function freezeCandidates(positions,screenDiffs,learnableFlags){
    learnable:learnableFlags[index]===true,
    qualified:summaries[index].mean<=SCREEN_FLOOR,
    cardA:cardsOf(position.actionA?.features).join(',')||null,
-   cardB:cardsOf(position.actionB?.features).join(',')||null
+   cardB:cardsOf(position.actionB?.features).join(',')||null,
+   labelA:actionLabel(position.actionA?.key,cardsOf(position.actionA?.features).join(',')||null),
+   labelB:actionLabel(position.actionB?.key,cardsOf(position.actionB?.features).join(',')||null)
   })),
   candidates:chosen.map(row=>({
    index:row.index,
@@ -144,7 +146,9 @@ export function freezeCandidates(positions,screenDiffs,learnableFlags){
    bucket:positions[row.index].bucket,
    opponent:positions[row.index].opponent,
    cardA:cardsOf(positions[row.index].actionA?.features).join(',')||null,
-   cardB:cardsOf(positions[row.index].actionB?.features).join(',')||null
+   cardB:cardsOf(positions[row.index].actionB?.features).join(',')||null,
+   labelA:actionLabel(positions[row.index].actionA?.key,cardsOf(positions[row.index].actionA?.features).join(',')||null),
+   labelB:actionLabel(positions[row.index].actionB?.key,cardsOf(positions[row.index].actionB?.features).join(',')||null)
   }))
  };
 }
@@ -172,6 +176,7 @@ export function decideConfirmation(candidates,records,actorOf){
   return {
    id:candidate.id,index:candidate.index,screenMean:candidate.screenMean,
    bucket:candidate.bucket,opponent:candidate.opponent,cardA:candidate.cardA,cardB:candidate.cardB,
+   labelA:candidate.labelA,labelB:candidate.labelB,
    attempts:packed.attempts,unfinished:packed.unfinished,
    n:judged.n,mean:judged.mean,
    plus:judged.exact.plus,minus:judged.exact.minus,tie:judged.exact.tie,decisive:judged.exact.decisive,
@@ -187,11 +192,28 @@ export function decideConfirmation(candidates,records,actorOf){
   confirmed:kept.has(index)&&row.mean<0
  }));
 }
+function candidateKey(row){
+ return {id:row.id,index:row.index,screenMean:row.screenMean};
+}
 export function sameFreeze(left,right){
  if(!left||!right)return false;
  return left.codeVersion===right.codeVersion
   &&left.each===right.each
+  &&left.mode===right.mode
   &&left.screenSalt===right.screenSalt
   &&left.confirmSalt===right.confirmSalt
-  &&JSON.stringify(left.candidates)===JSON.stringify(right.candidates);
+  &&JSON.stringify((left.candidates||[]).map(candidateKey))===JSON.stringify((right.candidates||[]).map(candidateKey));
+}
+const LINE={front:'前線',energy:'能量線'};
+const KIND={play:'打出',move:'移動',attack:'攻擊',chooseDiscardGate:'棄掉',next:'結束行動'};
+export function actionLabel(key,card){
+ let parsed={};
+ try{parsed=JSON.parse(key||'{}');}catch{parsed={};}
+ if(parsed.type==='next')return '結束行動';
+ const kind=KIND[parsed.type]||parsed.type||'動作';
+ const name=card?card:'';
+ const place=LINE[parsed.line];
+ if(place&&name)return '把 '+name+' '+kind+'到'+place;
+ if(name)return kind+' '+name;
+ return kind;
 }

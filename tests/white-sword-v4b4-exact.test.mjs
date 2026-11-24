@@ -12,7 +12,7 @@ import {
  binomialUpper,clopperPearson,conditionalMeanInterval,holm,signTest
 } from '../training/white-sword-ai/v4b4/lib/exact.mjs';
 import {
- assertPlanSeeds,decideConfirmation,freezeCandidates,jobSalt,learnable
+ assertPlanSeeds,decideConfirmation,freezeCandidates,jobSalt,learnable,sameFreeze,actionLabel
 } from '../training/white-sword-ai/v4b4/lib/round.mjs';
 
 const FRAGILE=[-1,-1,-1,0,0,0,0,0];
@@ -99,7 +99,10 @@ test('the frozen list skips an unlearnable screen hit and stays at 66',()=>{
  const again=freezeCandidates(positions,[
   [-1,-1,-1,-1],[-1,-1,0,0],[-1,-1,-1,0],[0,0,0,0]
  ],[false,true,true,true]);
- assert.deepEqual(again.candidates,frozen.candidates);
+ assert.equal(actionLabel(JSON.stringify({type:'play',line:'energy'}), 'BLC-4-070'), '把 BLC-4-070 打出到能量線');
+ assert.equal(actionLabel(JSON.stringify({type:'play',line:'front'}), 'BLC-4-070'), '把 BLC-4-070 打出到前線');
+ const labeled={...frozen,candidates:frozen.candidates.map(row=>({...row,labelA:'前線',labelB:'能量線'}))};
+ assert.equal(sameFreeze(frozen,labeled),true);
 });
 
 test('three runner-up wins do not confirm, and a fresh 66-pair sweep does',()=>{

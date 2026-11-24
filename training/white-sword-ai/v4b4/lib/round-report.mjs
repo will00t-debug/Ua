@@ -2,6 +2,12 @@ function num(value,digits=3){
  if(value==null||Number.isNaN(Number(value)))return '—';
  return Number(value).toFixed(digits);
 }
+function preference(row){
+ const left=row.labelB;
+ const right=row.labelA;
+ if(left&&right)return left+(left===right?' 的另一個走法':'')+'，而不是'+right;
+ return (row.cardB||row.id.slice(0,8))+' 對 '+(row.cardA||'v2 目前的動作');
+}
 export function renderRound(study){
  const lines=[];
  const frozen=study.frozen;
@@ -13,10 +19,11 @@ export function renderRound(study){
  lines.push('## 結果');
  lines.push('篩選 '+study.screenGames+' 場，完成配對 '+study.screenFinished+' 組，未完成 '+study.screenUnfinished+' 組。確認 '+study.confirmGames+' 場，完成配對 '+study.confirmFinished+' 組，未完成 '+study.confirmUnfinished+' 組。合計 '+study.games+' 場。');
  lines.push('達標 '+study.qualified+' 個，方盒學不會而跳過 '+study.unlearnable+' 個，名額不夠 '+study.capped+' 個，進入確認 '+frozen.candidates.length+' 個。Holm 留下 '+study.confirmed.length+' 個。權重沒有寫入。');
+ if(study.confirmed.length)lines.push('留下的是確認樣本上的動作偏好。這一輪沒有把偏好送進權重搜尋，也沒有寫入 v2。');
  lines.push('');
  if(!study.rows.length)lines.push('沒有局面進入確認。');
  for(const row of study.rows){
-  const label=(row.cardB||row.id.slice(0,8))+' 對 '+(row.cardA||'v2 目前的動作');
+  const label=preference(row);
   lines.push('- '+label+'（'+row.bucket+' / '+row.opponent+'）：篩選平均差 '+num(row.screenMean,2)+'。確認 '+row.n+' 組，B 勝 '+row.minus+'、A 勝 '+row.plus+'、平手 '+row.tie+'。單尾 p='+num(row.pOne)+'，雙尾 p='+num(row.pTwo)+'。條件平均差區間 '+num(row.low,2)+' 到 '+num(row.high,2)+'。'+(row.confirmed?'Holm 留下。':'沒有留下。'));
  }
  lines.push('');
@@ -24,7 +31,9 @@ export function renderRound(study){
   lines.push('## 達標但沒有進入確認');
   for(const row of study.skipped){
    const why=row.learnable?'名額已經滿了':'單步方盒學不會';
-   lines.push('- '+(row.cardB||row.id.slice(0,8))+'，篩選平均差 '+num(row.mean,2)+'，'+why+'。');
+   const name=row.labelA&&row.labelB?preference(row):(row.labelB||row.cardB||row.id.slice(0,8));
+   const where=row.bucket?'（'+row.bucket+' / '+row.opponent+'）':'';
+   lines.push('- '+name+where+'，篩選平均差 '+num(row.mean,2)+'，'+why+'。');
   }
   lines.push('');
  }
