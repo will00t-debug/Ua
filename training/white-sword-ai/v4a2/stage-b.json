@@ -1,0 +1,169 @@
+{
+  "codeVersion": "v4a2-1",
+  "status": "complete",
+  "passed": true,
+  "decision": {
+    "passed": true,
+    "reasons": [],
+    "sensitive": {
+      "wins": 29,
+      "n": 64,
+      "p": 0.453125,
+      "low": 0.3372925148603437,
+      "high": 0.5742661747932022,
+      "games": 64,
+      "excluded": 0
+    },
+    "gaussian": {
+      "wins": 20,
+      "n": 48,
+      "p": 0.4166666666666667,
+      "low": 0.28849459734577015,
+      "high": 0.5571891778463536,
+      "games": 48,
+      "excluded": 0
+    },
+    "drop": -0.036458333333333315,
+    "challengerId": "v4a2-r0001-c1-a066cb4bea2e",
+    "ranked": [
+      {
+        "id": "v4a2-r0001-c1-a066cb4bea2e",
+        "method": "margin-leverage",
+        "rate": {
+          "wins": 9,
+          "n": 16,
+          "p": 0.5625,
+          "low": 0.33178195606776517,
+          "high": 0.7690163666481448,
+          "games": 16,
+          "excluded": 0
+        },
+        "seat": {
+          "first": {
+            "wins": 4,
+            "n": 8,
+            "p": 0.5,
+            "low": 0.21521252682444186,
+            "high": 0.7847874731755582,
+            "games": 8,
+            "excluded": 0
+          },
+          "second": {
+            "wins": 5,
+            "n": 8,
+            "p": 0.625,
+            "low": 0.30573785458380187,
+            "high": 0.863158240538479,
+            "games": 8,
+            "excluded": 0
+          }
+        },
+        "balanced": true
+      },
+      {
+        "id": "v4a2-r0001-c3-241b3aab9f9f",
+        "method": "move-raid-attack",
+        "rate": {
+          "wins": 8,
+          "n": 16,
+          "p": 0.5,
+          "low": 0.2799923761135083,
+          "high": 0.7200076238864916,
+          "games": 16,
+          "excluded": 0
+        },
+        "seat": {
+          "first": {
+            "wins": 4,
+            "n": 8,
+            "p": 0.5,
+            "low": 0.21521252682444186,
+            "high": 0.7847874731755582,
+            "games": 8,
+            "excluded": 0
+          },
+          "second": {
+            "wins": 4,
+            "n": 8,
+            "p": 0.5,
+            "low": 0.21521252682444186,
+            "high": 0.7847874731755582,
+            "games": 8,
+            "excluded": 0
+          }
+        },
+        "balanced": true
+      },
+      {
+        "id": "v4a2-r0001-c2-f48fde1de391",
+        "method": "energy-ap",
+        "rate": {
+          "wins": 7,
+          "n": 16,
+          "p": 0.4375,
+          "low": 0.2309836333518552,
+          "high": 0.6682180439322347,
+          "games": 16,
+          "excluded": 0
+        },
+        "seat": {
+          "first": {
+            "wins": 4,
+            "n": 8,
+            "p": 0.5,
+            "low": 0.21521252682444186,
+            "high": 0.7847874731755582,
+            "games": 8,
+            "excluded": 0
+          },
+          "second": {
+            "wins": 3,
+            "n": 8,
+            "p": 0.375,
+            "low": 0.13684175946152105,
+            "high": 0.6942621454161981,
+            "games": 8,
+            "excluded": 0
+          }
+        },
+        "balanced": true
+      },
+      {
+        "id": "v4a2-r0001-c0-7e308ba8cdf7",
+        "method": "sensitive-flip",
+        "rate": {
+          "wins": 5,
+          "n": 16,
+          "p": 0.3125,
+          "low": 0.14164435051961052,
+          "high": 0.5559606813326594,
+          "games": 16,
+          "excluded": 0
+        },
+        "seat": {
+          "first": {
+            "wins": 3,
+            "n": 8,
+            "p": 0.375,
+            "low": 0.13684175946152105,
+            "high": 0.6942621454161981,
+            "games": 8,
+            "excluded": 0
+          },
+          "second": {
+            "wins": 2,
+            "n": 8,
+            "p": 0.25,
+            "low": 0.07147768885802763,
+            "high": 0.5907301208974108,
+            "games": 8,
+            "excluded": 0
+          }
+        },
+        "balanced": true
+      }
+    ]
+  },
+  "games": 128,
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa"
+}

@@ -1,0 +1,88 @@
+{
+  "codeVersion": "v4a2-1",
+  "status": "complete",
+  "games": 840,
+  "challengerId": "v4a2-r0001-c1-a066cb4bea2e",
+  "paired": {
+    "n": 360,
+    "incomplete": 0,
+    "missing": 0,
+    "delta": -0.011111111111111112,
+    "ci": {
+      "low": -0.05277777777777778,
+      "high": 0.030555555555555555
+    },
+    "clusters": 30
+  },
+  "mirror": {
+    "wins": 59,
+    "n": 120,
+    "p": 0.49166666666666664,
+    "low": 0.4038741586989492,
+    "high": 0.5799761791519831,
+    "games": 120,
+    "excluded": 0
+  },
+  "decks": [
+    {
+      "id": "white-sword",
+      "n": 120,
+      "delta": -0.008333333333333333
+    },
+    {
+      "id": "reject-blue",
+      "n": 120,
+      "delta": 0.08333333333333333
+    },
+    {
+      "id": "renruki",
+      "n": 120,
+      "delta": -0.10833333333333334
+    }
+  ],
+  "anomalies": {
+    "illegal": 0,
+    "timeout": 0,
+    "fallback": 0,
+    "deadLoop": 0,
+    "engineError": 0,
+    "leak": 0,
+    "opponentFallback": 0,
+    "unfinished": 0
+  },
+  "faults": [],
+  "judgment": {
+    "promoted": false,
+    "experimentalOnly": true,
+    "production": false,
+    "deployed": false,
+    "reasons": [
+      "配對勝率差未達 +5 個百分點",
+      "配對勝率差的 95% 信賴區間下限沒有大於 0",
+      "直接鏡像勝率未達 55%",
+      "直接鏡像沒有統計上可信的優勢",
+      "對戀露明顯退步"
+    ]
+  },
+  "promoted": false,
+  "seat": {
+    "first": {
+      "wins": 108,
+      "n": 180,
+      "p": 0.6,
+      "low": 0.5270621817586989,
+      "high": 0.6687585682782895,
+      "games": 180,
+      "excluded": 0
+    },
+    "second": {
+      "wins": 114,
+      "n": 180,
+      "p": 0.6333333333333333,
+      "low": 0.560831054545563,
+      "high": 0.7002632788370882,
+      "games": 180,
+      "excluded": 0
+    }
+  }
+}
