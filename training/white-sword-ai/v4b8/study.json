@@ -1,0 +1,1720 @@
+{
+  "codeVersion": "v4b8-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "rule": "v4b8-joint-1",
+  "oppositeRule": "v4b8-opposite-1",
+  "adopted": false,
+  "weightsWritten": false,
+  "comparison": [
+    {
+      "id": "d12a2d6f5ced1d88",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "facts": {
+        "energyTotal": 1,
+        "apReady": 2,
+        "handCount": 7,
+        "unmet": 18,
+        "myBp": 0,
+        "oppBp": 0,
+        "frontEmpty": 4,
+        "frontSlots": 4,
+        "energyEmpty": 3,
+        "energySlots": 4
+      },
+      "energy": {
+        "hand_short": 2.25,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": 0,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": 0
+      },
+      "front": {
+        "hand_short": 0,
+        "pay_relief": 0,
+        "board_pressure": 0,
+        "open_energy": 0,
+        "open_front": 1,
+        "realize_gen": 0,
+        "realize_bp": 0.8
+      },
+      "diffs": {
+        "hand_short": 2.25,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": -1,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": -0.8
+      },
+      "gap": {
+        "ok": true,
+        "id": "d12a2d6f5ced1d88",
+        "keepKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "currentKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "sameChoice": false,
+        "hard": -6.279999999999994,
+        "policy": 23.45725716582414,
+        "blend": 17.177257165824145,
+        "swing": 18,
+        "gap": 17.177257165824145,
+        "coords": 4,
+        "clears": true,
+        "shortfall": 0,
+        "fit": true,
+        "fitStatus": "kept",
+        "bandSize": 2,
+        "diffs": [
+          {
+            "name": "line_front",
+            "index": 14,
+            "diff": -1,
+            "hash": false
+          },
+          {
+            "name": "line_energy",
+            "index": 15,
+            "diff": 1,
+            "hash": false
+          },
+          {
+            "name": "h2",
+            "index": 109,
+            "diff": -1,
+            "hash": true
+          },
+          {
+            "name": "h7",
+            "index": 114,
+            "diff": 1,
+            "hash": true
+          }
+        ],
+        "parts": [
+          {
+            "name": "line_front",
+            "weight": 3.111747446210022,
+            "diff": 1,
+            "part": 18.670484677260134
+          },
+          {
+            "name": "line_energy",
+            "weight": 2.6640525838570013,
+            "diff": -1,
+            "part": -15.984315503142007
+          },
+          {
+            "name": "h2",
+            "weight": 2.506231914235914,
+            "diff": 1,
+            "part": 15.037391485415485
+          },
+          {
+            "name": "h7",
+            "weight": -0.9556160843817549,
+            "diff": -1,
+            "part": 5.73369650629053
+          }
+        ]
+      }
+    },
+    {
+      "id": "b122fb89d72eec7e",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "facts": {
+        "energyTotal": 1,
+        "apReady": 2,
+        "handCount": 7,
+        "unmet": 14,
+        "myBp": 0,
+        "oppBp": 0,
+        "frontEmpty": 4,
+        "frontSlots": 4,
+        "energyEmpty": 3,
+        "energySlots": 4
+      },
+      "energy": {
+        "hand_short": 1.75,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": 0,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": 0
+      },
+      "front": {
+        "hand_short": 0,
+        "pay_relief": 0,
+        "board_pressure": 0,
+        "open_energy": 0,
+        "open_front": 1,
+        "realize_gen": 0,
+        "realize_bp": 0.8
+      },
+      "diffs": {
+        "hand_short": 1.75,
+        "pay_relief": 0.75,
+        "board_pressure": 0,
+        "open_energy": 0.75,
+        "open_front": -1,
+        "realize_gen": 0.3333333333333333,
+        "realize_bp": -0.8
+      },
+      "gap": {
+        "ok": true,
+        "id": "b122fb89d72eec7e",
+        "keepKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "currentKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "sameChoice": false,
+        "hard": -3.900000000000013,
+        "policy": 23.45725716582414,
+        "blend": 19.55725716582412,
+        "swing": 18,
+        "gap": 19.55725716582412,
+        "coords": 4,
+        "clears": false,
+        "shortfall": 1.5572571658241188,
+        "fit": false,
+        "fitStatus": "infeasible",
+        "bandSize": 2,
+        "diffs": [
+          {
+            "name": "line_front",
+            "index": 14,
+            "diff": -1,
+            "hash": false
+          },
+          {
+            "name": "line_energy",
+            "index": 15,
+            "diff": 1,
+            "hash": false
+          },
+          {
+            "name": "h2",
+            "index": 109,
+            "diff": -1,
+            "hash": true
+          },
+          {
+            "name": "h7",
+            "index": 114,
+            "diff": 1,
+            "hash": true
+          }
+        ],
+        "parts": [
+          {
+            "name": "line_front",
+            "weight": 3.111747446210022,
+            "diff": 1,
+            "part": 18.670484677260134
+          },
+          {
+            "name": "line_energy",
+            "weight": 2.6640525838570013,
+            "diff": -1,
+            "part": -15.984315503142007
+          },
+          {
+            "name": "h2",
+            "weight": 2.506231914235914,
+            "diff": 1,
+            "part": 15.037391485415485
+          },
+          {
+            "name": "h7",
+            "weight": -0.9556160843817549,
+            "diff": -1,
+            "part": 5.73369650629053
+          }
+        ]
+      }
+    }
+  ],
+  "joint": {
+    "complete": true,
+    "codeVersion": "v4b8-1",
+    "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+    "rule": "v4b8-joint-1",
+    "adopted": false,
+    "representation": "position-action",
+    "candidate": {
+      "ok": true,
+      "status": "collateral",
+      "adopted": false,
+      "recommended": false,
+      "promoted": false,
+      "objective": 2.1345430276373545,
+      "weights": [
+        {
+          "name": "hand_short",
+          "before": 0,
+          "after": 1.5,
+          "delta": 1.5
+        },
+        {
+          "name": "line_front",
+          "before": 3.111747446210022,
+          "after": 2.4772044185726676,
+          "delta": -0.6345430276373546
+        }
+      ],
+      "changed": [
+        "1fbdc61d55fa7f09"
+      ],
+      "necessary": [
+        "1fbdc61d55fa7f09"
+      ],
+      "releasedRaid": true,
+      "names": [
+        "hand_short",
+        "pay_relief",
+        "board_pressure",
+        "open_energy",
+        "open_front"
+      ]
+    },
+    "stages": {
+      "existing": {
+        "ok": false,
+        "status": "target-infeasible",
+        "adopted": false,
+        "recommended": false,
+        "promoted": false,
+        "objective": null,
+        "weights": [],
+        "changed": [],
+        "necessary": [],
+        "releasedRaid": false,
+        "names": []
+      },
+      "position": {
+        "ok": true,
+        "status": "collateral",
+        "adopted": false,
+        "recommended": false,
+        "promoted": false,
+        "objective": 2.1345430276373545,
+        "weights": [
+          {
+            "name": "hand_short",
+            "before": 0,
+            "after": 1.5,
+            "delta": 1.5
+          },
+          {
+            "name": "line_front",
+            "before": 3.111747446210022,
+            "after": 2.4772044185726676,
+            "delta": -0.6345430276373546
+          }
+        ],
+        "changed": [
+          "1fbdc61d55fa7f09"
+        ],
+        "necessary": [
+          "1fbdc61d55fa7f09"
+        ],
+        "releasedRaid": true,
+        "names": [
+          "hand_short",
+          "pay_relief",
+          "board_pressure",
+          "open_energy",
+          "open_front"
+        ]
+      }
+    },
+    "comparison": [
+      {
+        "id": "d12a2d6f5ced1d88",
+        "bucket": "mid-entry",
+        "opponent": "white-sword",
+        "cardA": "BLC-4-070",
+        "cardB": "BLC-4-070",
+        "labelA": "把 BLC-4-070 打出到前線",
+        "labelB": "把 BLC-4-070 打出到能量線",
+        "facts": {
+          "energyTotal": 1,
+          "apReady": 2,
+          "handCount": 7,
+          "unmet": 18,
+          "myBp": 0,
+          "oppBp": 0,
+          "frontEmpty": 4,
+          "frontSlots": 4,
+          "energyEmpty": 3,
+          "energySlots": 4
+        },
+        "energy": {
+          "hand_short": 2.25,
+          "pay_relief": 0.75,
+          "board_pressure": 0,
+          "open_energy": 0.75,
+          "open_front": 0,
+          "realize_gen": 0.3333333333333333,
+          "realize_bp": 0
+        },
+        "front": {
+          "hand_short": 0,
+          "pay_relief": 0,
+          "board_pressure": 0,
+          "open_energy": 0,
+          "open_front": 1,
+          "realize_gen": 0,
+          "realize_bp": 0.8
+        },
+        "diffs": {
+          "hand_short": 2.25,
+          "pay_relief": 0.75,
+          "board_pressure": 0,
+          "open_energy": 0.75,
+          "open_front": -1,
+          "realize_gen": 0.3333333333333333,
+          "realize_bp": -0.8
+        },
+        "gap": {
+          "ok": true,
+          "id": "d12a2d6f5ced1d88",
+          "keepKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "currentKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "sameChoice": false,
+          "hard": -6.279999999999994,
+          "policy": 23.45725716582414,
+          "blend": 17.177257165824145,
+          "swing": 18,
+          "gap": 17.177257165824145,
+          "coords": 4,
+          "clears": true,
+          "shortfall": 0,
+          "fit": true,
+          "fitStatus": "kept",
+          "bandSize": 2,
+          "diffs": [
+            {
+              "name": "line_front",
+              "index": 14,
+              "diff": -1,
+              "hash": false
+            },
+            {
+              "name": "line_energy",
+              "index": 15,
+              "diff": 1,
+              "hash": false
+            },
+            {
+              "name": "h2",
+              "index": 109,
+              "diff": -1,
+              "hash": true
+            },
+            {
+              "name": "h7",
+              "index": 114,
+              "diff": 1,
+              "hash": true
+            }
+          ],
+          "parts": [
+            {
+              "name": "line_front",
+              "weight": 3.111747446210022,
+              "diff": 1,
+              "part": 18.670484677260134
+            },
+            {
+              "name": "line_energy",
+              "weight": 2.6640525838570013,
+              "diff": -1,
+              "part": -15.984315503142007
+            },
+            {
+              "name": "h2",
+              "weight": 2.506231914235914,
+              "diff": 1,
+              "part": 15.037391485415485
+            },
+            {
+              "name": "h7",
+              "weight": -0.9556160843817549,
+              "diff": -1,
+              "part": 5.73369650629053
+            }
+          ]
+        }
+      },
+      {
+        "id": "b122fb89d72eec7e",
+        "bucket": "mid-entry",
+        "opponent": "white-sword",
+        "cardA": "BLC-4-070",
+        "cardB": "BLC-4-070",
+        "labelA": "把 BLC-4-070 打出到前線",
+        "labelB": "把 BLC-4-070 打出到能量線",
+        "facts": {
+          "energyTotal": 1,
+          "apReady": 2,
+          "handCount": 7,
+          "unmet": 14,
+          "myBp": 0,
+          "oppBp": 0,
+          "frontEmpty": 4,
+          "frontSlots": 4,
+          "energyEmpty": 3,
+          "energySlots": 4
+        },
+        "energy": {
+          "hand_short": 1.75,
+          "pay_relief": 0.75,
+          "board_pressure": 0,
+          "open_energy": 0.75,
+          "open_front": 0,
+          "realize_gen": 0.3333333333333333,
+          "realize_bp": 0
+        },
+        "front": {
+          "hand_short": 0,
+          "pay_relief": 0,
+          "board_pressure": 0,
+          "open_energy": 0,
+          "open_front": 1,
+          "realize_gen": 0,
+          "realize_bp": 0.8
+        },
+        "diffs": {
+          "hand_short": 1.75,
+          "pay_relief": 0.75,
+          "board_pressure": 0,
+          "open_energy": 0.75,
+          "open_front": -1,
+          "realize_gen": 0.3333333333333333,
+          "realize_bp": -0.8
+        },
+        "gap": {
+          "ok": true,
+          "id": "b122fb89d72eec7e",
+          "keepKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "currentKey": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "sameChoice": false,
+          "hard": -3.900000000000013,
+          "policy": 23.45725716582414,
+          "blend": 19.55725716582412,
+          "swing": 18,
+          "gap": 19.55725716582412,
+          "coords": 4,
+          "clears": false,
+          "shortfall": 1.5572571658241188,
+          "fit": false,
+          "fitStatus": "infeasible",
+          "bandSize": 2,
+          "diffs": [
+            {
+              "name": "line_front",
+              "index": 14,
+              "diff": -1,
+              "hash": false
+            },
+            {
+              "name": "line_energy",
+              "index": 15,
+              "diff": 1,
+              "hash": false
+            },
+            {
+              "name": "h2",
+              "index": 109,
+              "diff": -1,
+              "hash": true
+            },
+            {
+              "name": "h7",
+              "index": 114,
+              "diff": 1,
+              "hash": true
+            }
+          ],
+          "parts": [
+            {
+              "name": "line_front",
+              "weight": 3.111747446210022,
+              "diff": 1,
+              "part": 18.670484677260134
+            },
+            {
+              "name": "line_energy",
+              "weight": 2.6640525838570013,
+              "diff": -1,
+              "part": -15.984315503142007
+            },
+            {
+              "name": "h2",
+              "weight": 2.506231914235914,
+              "diff": 1,
+              "part": 15.037391485415485
+            },
+            {
+              "name": "h7",
+              "weight": -0.9556160843817549,
+              "diff": -1,
+              "part": 5.73369650629053
+            }
+          ]
+        }
+      }
+    ],
+    "effects": {
+      "names": [
+        "hand_short",
+        "pay_relief",
+        "board_pressure",
+        "open_energy",
+        "open_front"
+      ],
+      "saved": {
+        "covered": 121,
+        "changed": [
+          {
+            "id": "1fbdc61d55fa7f09",
+            "before": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+            "bucket": "raid",
+            "opponent": "renruki",
+            "beforeLabel": "突襲 BLC-2-067",
+            "afterLabel": "把 BLC-4-060 打出到能量線"
+          }
+        ]
+      },
+      "mine": {
+        "covered": 556,
+        "changed": 10,
+        "examples": [
+          {
+            "id": "d89ae98238222c52",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "bucket": "mid-entry",
+            "opponent": "white-sword",
+            "beforeLabel": "把 BLC-2-069 打出到前線",
+            "afterLabel": "把 BLC-2-069 打出到能量線"
+          },
+          {
+            "id": "17a4058c5b62d2e6",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-17\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-17\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+            "bucket": "mid-entry",
+            "opponent": "white-sword",
+            "beforeLabel": "把 BLC-2-069 打出到前線",
+            "afterLabel": "把 BLC-2-069 打出到能量線"
+          },
+          {
+            "id": "16f3b988f49037d5",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-18\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+            "bucket": "mid-entry",
+            "opponent": "white-sword",
+            "beforeLabel": "把 BLC-2-069 打出到前線",
+            "afterLabel": "把 BLC-2-069 打出到能量線"
+          },
+          {
+            "id": "0df4c8c07704b697",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-29\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-3\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "bucket": "ap",
+            "opponent": "white-sword",
+            "beforeLabel": "把 BLC-1-072 打出到前線",
+            "afterLabel": "把 BLC-3-009 打出到能量線"
+          },
+          {
+            "id": "d8594c628a59fb92",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-17\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-33\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "bucket": "ap",
+            "opponent": "white-sword",
+            "beforeLabel": "把 BLC-2-069 打出到前線",
+            "afterLabel": "把 BLC-1-083 打出到能量線"
+          },
+          {
+            "id": "904a146535fb37f8",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-23\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "bucket": "mid-entry",
+            "opponent": "white-sword",
+            "beforeLabel": "把 BLC-4-070 打出到前線",
+            "afterLabel": "把 BLC-4-070 打出到能量線"
+          },
+          {
+            "id": "336470b19277f823",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-31\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+            "bucket": "mid-entry",
+            "opponent": "reject-blue",
+            "beforeLabel": "把 BLC-2-069 打出到前線",
+            "afterLabel": "把 BLC-1-072 打出到能量線"
+          },
+          {
+            "id": "59cb26b58a886510",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-16\",\"baseUid\":null,\"targetUid\":null,\"slot\":2}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-7\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+            "bucket": "mid-entry",
+            "opponent": "reject-blue",
+            "beforeLabel": "把 BLC-2-069 打出到前線",
+            "afterLabel": "把 BLC-4-060 打出到能量線"
+          },
+          {
+            "id": "1f8f400f785e4781",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-20\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-6\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+            "bucket": "mid-entry",
+            "opponent": "renruki",
+            "beforeLabel": "把 BLC-4-070 打出到前線",
+            "afterLabel": "把 BLC-4-060 打出到能量線"
+          },
+          {
+            "id": "0d035ea8a0b2be16",
+            "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+            "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-1\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+            "bucket": "ap",
+            "opponent": "renruki",
+            "beforeLabel": "把 BLC-1-085 打出到前線",
+            "afterLabel": "把 BLC-3-009 打出到能量線"
+          }
+        ]
+      }
+    }
+  },
+  "candidate": {
+    "ok": true,
+    "status": "collateral",
+    "adopted": false,
+    "recommended": false,
+    "promoted": false,
+    "objective": 2.1345430276373545,
+    "weights": [
+      {
+        "name": "hand_short",
+        "before": 0,
+        "after": 1.5,
+        "delta": 1.5
+      },
+      {
+        "name": "line_front",
+        "before": 3.111747446210022,
+        "after": 2.4772044185726676,
+        "delta": -0.6345430276373546
+      }
+    ],
+    "changed": [
+      "1fbdc61d55fa7f09"
+    ],
+    "necessary": [
+      "1fbdc61d55fa7f09"
+    ],
+    "releasedRaid": true,
+    "names": [
+      "hand_short",
+      "pay_relief",
+      "board_pressure",
+      "open_energy",
+      "open_front"
+    ]
+  },
+  "mined": {
+    "games": 30,
+    "decisions": 1637,
+    "found": 693,
+    "fresh": 693
+  },
+  "screened": 42,
+  "lines": {
+    "available": {
+      "front-kept": 14,
+      "energy-kept": 16
+    },
+    "taken": {
+      "front-kept": 3,
+      "energy-kept": 3
+    }
+  },
+  "table": {
+    "early-energy": {
+      "white-sword": 2,
+      "reject-blue": 3,
+      "renruki": 3
+    },
+    "ap": {
+      "white-sword": 2,
+      "reject-blue": 2,
+      "renruki": 2
+    },
+    "line-move": {
+      "white-sword": 2,
+      "reject-blue": 2,
+      "renruki": 2
+    },
+    "mid-entry": {
+      "white-sword": 4,
+      "reject-blue": 3,
+      "renruki": 3
+    },
+    "raid": {
+      "white-sword": 2,
+      "reject-blue": 2,
+      "renruki": 2
+    },
+    "attack-defense": {
+      "white-sword": 1,
+      "reject-blue": 1,
+      "renruki": 1
+    },
+    "late-pressure": {
+      "white-sword": 1,
+      "reject-blue": 1,
+      "renruki": 1
+    }
+  },
+  "qualified": 5,
+  "candidates": 3,
+  "roles": {
+    "learnable": 2,
+    "reserved": 1
+  },
+  "confirmed": 2,
+  "games": 1068,
+  "planned": 1068,
+  "screenSalt": 810000,
+  "confirmSalt": 920000,
+  "learnableCandidates": [
+    {
+      "id": "01c85e5ddb31e7fa",
+      "bucket": "early-energy",
+      "opponent": "renruki",
+      "screenMean": -0.25,
+      "learnable": true,
+      "qualified": true,
+      "role": "learnable",
+      "confirmed": true,
+      "conflict": true,
+      "pOne": 0.003768920898437499,
+      "confirmMean": -0.18181818181818182,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "class": "opposite",
+      "label": "同類決策在不同局面出現相反方向"
+    },
+    {
+      "id": "449bdd2e224676c9",
+      "bucket": "mid-entry",
+      "opponent": "reject-blue",
+      "screenMean": -0.25,
+      "learnable": true,
+      "qualified": true,
+      "role": "learnable",
+      "confirmed": false,
+      "conflict": false,
+      "pOne": 0.38720703125000044,
+      "confirmMean": -0.030303030303030304,
+      "cardA": "BLC-1-072",
+      "cardB": "BLC-1-072",
+      "labelA": "把 BLC-1-072 打出到能量線",
+      "labelB": "把 BLC-1-072 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    }
+  ],
+  "reservedCandidates": [
+    {
+      "id": "ee6cdd154ceeb4ce",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "screenMean": -0.5,
+      "learnable": false,
+      "qualified": true,
+      "role": "reserved",
+      "confirmed": true,
+      "conflict": false,
+      "pOne": 0.00026752636767923875,
+      "confirmMean": -0.30303030303030304,
+      "cardA": "BLC-4-060",
+      "cardB": null,
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "class": "unlearnable",
+      "label": "經獨立確認，但現有單步方盒無解"
+    }
+  ],
+  "confirmedRows": [
+    {
+      "id": "01c85e5ddb31e7fa",
+      "bucket": "early-energy",
+      "opponent": "renruki",
+      "screenMean": -0.25,
+      "learnable": true,
+      "qualified": true,
+      "role": "learnable",
+      "confirmed": true,
+      "conflict": true,
+      "pOne": 0.003768920898437499,
+      "confirmMean": -0.18181818181818182,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "class": "opposite",
+      "label": "同類決策在不同局面出現相反方向"
+    },
+    {
+      "id": "ee6cdd154ceeb4ce",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "screenMean": -0.5,
+      "learnable": false,
+      "qualified": true,
+      "role": "reserved",
+      "confirmed": true,
+      "conflict": false,
+      "pOne": 0.00026752636767923875,
+      "confirmMean": -0.30303030303030304,
+      "cardA": "BLC-4-060",
+      "cardB": null,
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "class": "unlearnable",
+      "label": "經獨立確認，但現有單步方盒無解"
+    }
+  ],
+  "catalog": [
+    {
+      "id": "afca68fe68cbcc0d",
+      "bucket": "early-energy",
+      "opponent": "reject-blue",
+      "screenMean": 0.125,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "01c85e5ddb31e7fa",
+      "bucket": "early-energy",
+      "opponent": "renruki",
+      "screenMean": -0.25,
+      "learnable": true,
+      "qualified": true,
+      "role": "learnable",
+      "confirmed": true,
+      "conflict": true,
+      "pOne": 0.003768920898437499,
+      "confirmMean": -0.18181818181818182,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "class": "opposite",
+      "label": "同類決策在不同局面出現相反方向"
+    },
+    {
+      "id": "d8a4e2b6f8d32818",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "screenMean": 0.25,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": true,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "class": "opposite",
+      "label": "同類決策在不同局面出現相反方向"
+    },
+    {
+      "id": "449bdd2e224676c9",
+      "bucket": "mid-entry",
+      "opponent": "reject-blue",
+      "screenMean": -0.25,
+      "learnable": true,
+      "qualified": true,
+      "role": "learnable",
+      "confirmed": false,
+      "conflict": false,
+      "pOne": 0.38720703125000044,
+      "confirmMean": -0.030303030303030304,
+      "cardA": "BLC-1-072",
+      "cardB": "BLC-1-072",
+      "labelA": "把 BLC-1-072 打出到能量線",
+      "labelB": "把 BLC-1-072 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "fdffb1ea2cc7d134",
+      "bucket": "mid-entry",
+      "opponent": "renruki",
+      "screenMean": -0.125,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-1-083",
+      "labelA": "把 BLC-1-083 打出到能量線",
+      "labelB": "把 BLC-1-083 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "cd096199291ed9b0",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "screenMean": 0.25,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-1-083",
+      "labelA": "把 BLC-1-083 打出到能量線",
+      "labelB": "把 BLC-1-083 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "c007c218593a14e8",
+      "bucket": "early-energy",
+      "opponent": "white-sword",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-1-072",
+      "labelA": "棄掉 BLC-4-070",
+      "labelB": "棄掉 BLC-1-072",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "0bbd65545ab4731b",
+      "bucket": "early-energy",
+      "opponent": "reject-blue",
+      "screenMean": 0.375,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-1-083",
+      "labelA": "把 BLC-1-083 打出到能量線",
+      "labelB": "把 BLC-1-083 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "4b8307dae0b32470",
+      "bucket": "early-energy",
+      "opponent": "renruki",
+      "screenMean": 0.25,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-1-083",
+      "labelA": "把 BLC-1-083 打出到能量線",
+      "labelB": "把 BLC-1-083 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "9f69ba21feb40196",
+      "bucket": "ap",
+      "opponent": "white-sword",
+      "screenMean": 0,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-060",
+      "cardB": "BLC-4-060",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "起動 BLC-4-060",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "b1ddbc43ae590b10",
+      "bucket": "ap",
+      "opponent": "reject-blue",
+      "screenMean": -0.125,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-066",
+      "cardB": "BLC-4-066",
+      "labelA": "把 BLC-4-066 打出到前線",
+      "labelB": "把 BLC-4-066 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "ee6cdd154ceeb4ce",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "screenMean": -0.5,
+      "learnable": false,
+      "qualified": true,
+      "role": "reserved",
+      "confirmed": true,
+      "conflict": false,
+      "pOne": 0.00026752636767923875,
+      "confirmMean": -0.30303030303030304,
+      "cardA": "BLC-4-060",
+      "cardB": null,
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "class": "unlearnable",
+      "label": "經獨立確認，但現有單步方盒無解"
+    },
+    {
+      "id": "914bcca966205acd",
+      "bucket": "line-move",
+      "opponent": "white-sword",
+      "screenMean": 0,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-072",
+      "cardB": "BLC-1-083",
+      "labelA": "移動 BLC-1-072",
+      "labelB": "移動 BLC-1-083",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "ed1f9e176fac8d36",
+      "bucket": "line-move",
+      "opponent": "reject-blue",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-1-083",
+      "labelA": "移動 BLC-1-083",
+      "labelB": "移動 BLC-1-083",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "8ae2c814679fd31b",
+      "bucket": "line-move",
+      "opponent": "renruki",
+      "screenMean": 0.125,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-2-069",
+      "cardB": "BLC-1-083",
+      "labelA": "移動 BLC-2-069",
+      "labelB": "移動 BLC-1-083",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "cf7fdb9f3d5b2fa4",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "screenMean": -0.25,
+      "learnable": false,
+      "qualified": true,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-2-069",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-2-069 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "6438356e1d262b10",
+      "bucket": "mid-entry",
+      "opponent": "reject-blue",
+      "screenMean": 0.25,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-2-069",
+      "cardB": "BLC-1-083",
+      "labelA": "把 BLC-2-069 打出到前線",
+      "labelB": "把 BLC-1-083 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "191782744f0eb802",
+      "bucket": "mid-entry",
+      "opponent": "renruki",
+      "screenMean": 0,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "2ac9f8d6e7e02468",
+      "bucket": "raid",
+      "opponent": "white-sword",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-085",
+      "cardB": "BLC-1-085",
+      "labelA": "突襲 BLC-1-085",
+      "labelB": "突襲 BLC-1-085",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "42cd58c9428327d2",
+      "bucket": "raid",
+      "opponent": "reject-blue",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-085",
+      "cardB": "BLC-1-085",
+      "labelA": "突襲 BLC-1-085",
+      "labelB": "突襲 BLC-1-085",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "696e66d33dac751b",
+      "bucket": "raid",
+      "opponent": "renruki",
+      "screenMean": -0.125,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-085",
+      "cardB": "BLC-1-085",
+      "labelA": "突襲 BLC-1-085",
+      "labelB": "突襲 BLC-1-085",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "fd79c4751742bead",
+      "bucket": "attack-defense",
+      "opponent": "white-sword",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-2-069",
+      "cardB": "BLC-2-069",
+      "labelA": "移除 BLC-2-069",
+      "labelB": "移除 BLC-2-069",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "a8b13f59e6599ef8",
+      "bucket": "attack-defense",
+      "opponent": "reject-blue",
+      "screenMean": -0.125,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-060",
+      "cardB": "BLC-4-060",
+      "labelA": "移除 BLC-4-060",
+      "labelB": "移除 BLC-4-060",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "0f8de5fc5b18ef65",
+      "bucket": "attack-defense",
+      "opponent": "renruki",
+      "screenMean": -0.125,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-060",
+      "cardB": "BLC-1-072",
+      "labelA": "移除 BLC-4-060",
+      "labelB": "移除 BLC-1-072",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "e24069ddd5d07cfa",
+      "bucket": "late-pressure",
+      "opponent": "white-sword",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-2-067",
+      "cardB": "BLC-2-067",
+      "labelA": "攻擊 BLC-2-067",
+      "labelB": "攻擊 BLC-2-067",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "f6dd1b69d31c6b28",
+      "bucket": "late-pressure",
+      "opponent": "reject-blue",
+      "screenMean": 0,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-085",
+      "cardB": "BLC-4-070",
+      "labelA": "攻擊 BLC-1-085",
+      "labelB": "攻擊 BLC-4-070",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "5e597f1bde925b07",
+      "bucket": "late-pressure",
+      "opponent": "renruki",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-085",
+      "cardB": "BLC-1-072",
+      "labelA": "攻擊 BLC-1-085",
+      "labelB": "攻擊 BLC-1-072",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "ac5c077b7a56e50b",
+      "bucket": "early-energy",
+      "opponent": "white-sword",
+      "screenMean": -0.125,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-060",
+      "cardB": "BLC-4-060",
+      "labelA": "棄掉 BLC-4-060",
+      "labelB": "棄掉 BLC-4-060",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "ee8db35ddbbd3fde",
+      "bucket": "early-energy",
+      "opponent": "reject-blue",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-3-009",
+      "cardB": "BLC-3-009",
+      "labelA": "棄掉 BLC-3-009",
+      "labelB": "棄掉 BLC-3-009",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "7cbd7e5949785adf",
+      "bucket": "early-energy",
+      "opponent": "renruki",
+      "screenMean": 0.25,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-1-083",
+      "labelA": "把 BLC-1-083 打出到能量線",
+      "labelB": "把 BLC-1-083 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "423d0a889aeeed69",
+      "bucket": "ap",
+      "opponent": "white-sword",
+      "screenMean": -0.375,
+      "learnable": false,
+      "qualified": true,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-060",
+      "cardB": null,
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "23cdc812dbb4bc7f",
+      "bucket": "ap",
+      "opponent": "reject-blue",
+      "screenMean": 0.25,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-080",
+      "cardB": "BLC-4-066",
+      "labelA": "打出 BLC-4-080",
+      "labelB": "把 BLC-4-066 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "6b2f2a23bdd3dc7b",
+      "bucket": "ap",
+      "opponent": "renruki",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-3-009",
+      "cardB": "BLC-2-069",
+      "labelA": "把 BLC-3-009 打出到能量線",
+      "labelB": "把 BLC-2-069 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "434a379615c8f04f",
+      "bucket": "line-move",
+      "opponent": "white-sword",
+      "screenMean": 0.375,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": null,
+      "labelA": "移動 BLC-1-083",
+      "labelB": "結束行動",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "2b799d9d57ebe87b",
+      "bucket": "line-move",
+      "opponent": "reject-blue",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-4-066",
+      "labelA": "移動 BLC-1-083",
+      "labelB": "移動 BLC-4-066",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "0c292b4b2750f8d5",
+      "bucket": "line-move",
+      "opponent": "renruki",
+      "screenMean": -0.125,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-072",
+      "cardB": "BLC-1-083",
+      "labelA": "移動 BLC-1-072",
+      "labelB": "移動 BLC-1-083",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "1f74b024a400ab89",
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "screenMean": 0.125,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-2-069",
+      "labelA": "把 BLC-1-083 打出到能量線",
+      "labelB": "把 BLC-2-069 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "a57c7f78ceaf47b4",
+      "bucket": "mid-entry",
+      "opponent": "reject-blue",
+      "screenMean": 0,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-083",
+      "cardB": "BLC-2-069",
+      "labelA": "把 BLC-1-083 打出到能量線",
+      "labelB": "把 BLC-2-069 打出到能量線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "57582991dfce7bb6",
+      "bucket": "mid-entry",
+      "opponent": "renruki",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-2-069",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-2-069 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "2c9d133b95757feb",
+      "bucket": "raid",
+      "opponent": "white-sword",
+      "screenMean": 0,
+      "learnable": true,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-085",
+      "cardB": "BLC-2-067",
+      "labelA": "突襲 BLC-1-085",
+      "labelB": "突襲 BLC-2-067",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "790c0129d23e9c56",
+      "bucket": "raid",
+      "opponent": "reject-blue",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-3-008",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-3-008 打出到前線",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    },
+    {
+      "id": "5e3927a17e3d88a0",
+      "bucket": "raid",
+      "opponent": "renruki",
+      "screenMean": 0,
+      "learnable": false,
+      "qualified": false,
+      "role": null,
+      "confirmed": false,
+      "conflict": false,
+      "pOne": null,
+      "confirmMean": null,
+      "cardA": "BLC-1-085",
+      "cardB": "BLC-1-085",
+      "labelA": "突襲 BLC-1-085",
+      "labelB": "突襲 BLC-1-085",
+      "class": "insufficient",
+      "label": "尚未重現或證據不足"
+    }
+  ],
+  "opposite": {
+    "ran": false,
+    "leftover": 132,
+    "games": 0,
+    "both": false,
+    "rows": [
+      {
+        "id": "a8ea32166942bc90",
+        "screenMean": -0.25,
+        "label": "起動 BLC-4-060 → 結束行動"
+      },
+      {
+        "id": "5f868c674f2e1fee",
+        "screenMean": 0.25,
+        "label": "結束行動 → 起動 BLC-4-060"
+      }
+    ]
+  },
+  "newCandidate": null,
+  "verdict": "既有 115 維的單步方盒放不進第二筆。事先登記的局面交互有一組合法權重，只留下實驗候選，沒有採用。這不是棋力提升。 BLC-4-060 的兩個相反方向仍只是篩選資料。 新局面有 2 筆 Holm 確認。兩筆舊偏好加上這些新結果，仍不代表棋力提升。"
+}
