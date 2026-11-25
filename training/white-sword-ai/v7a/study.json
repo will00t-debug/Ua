@@ -1,0 +1,160 @@
+{
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "candidate": false,
+  "adopted": false,
+  "promoted": false,
+  "confirmed": 243,
+  "trainPositions": 184,
+  "devPositions": 59,
+  "skipped": 0,
+  "outside": 6,
+  "lambda": 10000,
+  "lambdaMse": 0.0162825687115254,
+  "threshold": null,
+  "thresholdSearch": [
+    {
+      "threshold": 0.02,
+      "eligible": false,
+      "utility": 0.0007495577830188679,
+      "unknownFolds": 4,
+      "illegalFolds": 5
+    },
+    {
+      "threshold": 0.05,
+      "eligible": false,
+      "utility": 0.0011995659112701686,
+      "unknownFolds": 3,
+      "illegalFolds": 5
+    },
+    {
+      "threshold": 0.08,
+      "eligible": false,
+      "utility": 0,
+      "unknownFolds": 3,
+      "illegalFolds": 0
+    },
+    {
+      "threshold": 0.12,
+      "eligible": true,
+      "utility": 0,
+      "unknownFolds": 0,
+      "illegalFolds": 0
+    },
+    {
+      "threshold": 0.2,
+      "eligible": true,
+      "utility": 0,
+      "unknownFolds": 0,
+      "illegalFolds": 0
+    },
+    {
+      "threshold": 0.35,
+      "eligible": true,
+      "utility": 0,
+      "unknownFolds": 0,
+      "illegalFolds": 0
+    },
+    {
+      "threshold": null,
+      "eligible": true,
+      "utility": 0,
+      "unknownFolds": 0,
+      "illegalFolds": 0
+    }
+  ],
+  "devLoss": {
+    "mse": 0.015340412758637578,
+    "correlation": 0.06858550103532916,
+    "positions": 59
+  },
+  "zeroLoss": {
+    "mse": 0.014943306328441465,
+    "correlation": 0,
+    "positions": 59
+  },
+  "devSummary": {
+    "stay": 59,
+    "verified": 0,
+    "unknown": 0,
+    "effective": 0,
+    "reverse": 0,
+    "positions": 59,
+    "coverage": 0,
+    "verifiedCoverage": 0,
+    "unknownGames": 0,
+    "identifiedGames": 41,
+    "gain": {
+      "n": 41,
+      "mean": 0,
+      "low": 0,
+      "high": 0
+    }
+  },
+  "trainSummary": {
+    "stay": 184,
+    "verified": 0,
+    "unknown": 0,
+    "effective": 0,
+    "reverse": 0,
+    "positions": 184,
+    "coverage": 0,
+    "verifiedCoverage": 0,
+    "unknownGames": 0,
+    "identifiedGames": 89,
+    "gain": {
+      "n": 89,
+      "mean": 0,
+      "low": 0,
+      "high": 0
+    }
+  },
+  "safety": {
+    "ok": true,
+    "results": [
+      {
+        "id": "d12a2d6f5ced1d88",
+        "ok": true,
+        "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "missing": false
+      },
+      {
+        "id": "b122fb89d72eec7e",
+        "ok": true,
+        "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+        "missing": false
+      },
+      {
+        "id": "01c85e5ddb31e7fa",
+        "ok": true,
+        "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+        "missing": false
+      },
+      {
+        "id": "ee6cdd154ceeb4ce",
+        "ok": true,
+        "before": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "after": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "missing": false
+      },
+      {
+        "id": "0d035ea8a0b2be16",
+        "ok": true,
+        "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+        "missing": false
+      },
+      {
+        "id": "1fbdc61d55fa7f09",
+        "ok": true,
+        "before": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}",
+        "after": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}",
+        "missing": false
+      }
+    ]
+  },
+  "signal": false,
+  "decision": "建議停止。既有來源可確認的資料沒有讓這個比較架構學到值得驗證的改選。不要再把同一批配對平均拿去擬合另一組相似的權重。"
+}
