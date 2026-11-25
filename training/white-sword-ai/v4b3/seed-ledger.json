@@ -1,0 +1,31 @@
+{
+  "salt": 120000,
+  "pairs": 16,
+  "seeds": [
+    {
+      "checkId": "target:4b6338ce9e141a68",
+      "positionSeed": 173140,
+      "first": 293140
+    },
+    {
+      "checkId": "target:a925bcd5f9d70ebe",
+      "positionSeed": 173123,
+      "first": 293123
+    },
+    {
+      "checkId": "release:a925bcd5f9d70ebe:ff11698b1c6e8735",
+      "positionSeed": 173123,
+      "first": 293123
+    },
+    {
+      "checkId": "target:675759e42cddd095",
+      "positionSeed": 170101,
+      "first": 290101
+    },
+    {
+      "checkId": "release:675759e42cddd095:e74d9a9846a5211b",
+      "positionSeed": 170104,
+      "first": 290104
+    }
+  ]
+}
