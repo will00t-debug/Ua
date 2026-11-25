@@ -971,8 +971,8 @@ test('KJN-1-043 is also Rose, mills up to two when it leaves, and actives',()=>{
  s=cast(s,event.uid);
  s=choose(s,a=>a.mode==='retire'&&a.uid===rose.uid);
  assert.equal(s.pending.kind,'effect-optional-mill');
- s=choose(s,a=>a.mode==='mill');
- s=choose(s,a=>a.mode==='mill');
+ s=choose(s,a=>a.mode==='mill'&&a.count===2);
+ s=choose(s,a=>a.mode==='ack');
  assert.equal(s.players[1].outside.some(c=>c.uid===marker[0].uid),true);
  assert.equal(s.players[1].outside.some(c=>c.uid===marker[1].uid),true);
  assertUniversalMatch(packs,s);

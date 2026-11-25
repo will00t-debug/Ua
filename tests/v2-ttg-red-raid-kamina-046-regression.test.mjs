@@ -81,7 +81,15 @@ test('TTG-046 printed 4/1 Kamina has front-only own-Raid-conditioned main and re
  const ready=legal(s,a=>a.type==='activate'&&a.uid===kamina.uid&&a.mode==='ready');
  const both=legal(s,a=>a.type==='activate'&&a.uid===kamina.uid&&a.mode==='readyAndBuff');
  const buff=legal(s,a=>a.type==='activate'&&a.uid===kamina.uid&&a.mode==='buff');
- for(const action of [ready,both,buff])assert.match(uiActionLabel(action,{pack:packs,state:s}),/主啟動/);
+ const labels=[ready,both,buff].map(action=>uiActionLabel(action,{pack:packs,state:s}));
+ assert.equal(new Set(labels).size,3,'each Kamina result needs its own label');
+ assert.match(labels[0],/^只活動自身。/);
+ assert.match(labels[0],/同名活動選項每回合一次/);
+ assert.match(labels[1],/^活動自身並 BP＋1000。/);
+ assert.match(labels[1],/並選擇 1 張己方特徵「大グレン団」/);
+ assert.match(labels[2],/^只給「大グレン団」BP＋1000。/);
+ assert.doesNotMatch(labels[2],/轉為活動/);
+ for(const label of labels)assert.match(label,/主啟動/);
  s=next(s,both);
  assert.equal(s.players[0].front[0].ready,true,'4/1 Kamina must stand when chosen');
  assert.equal(s.pending?.kind,'main-two-buff');

@@ -322,7 +322,11 @@ function continuationAction(pack,state,actor,legal){
  const kind=state.pending?.kind;
  if(!CONTINUATION.has(kind))return null;
  if((state.pending.player??state.active)!==actor)return null;
- if(kind==='effect-optional-mill')return legal.find(action=>action.mode==='mill')||legal[0];
+ if(kind==='effect-optional-mill'){
+  if(state.pending?.phase==='shown')return legal.find(action=>action.mode==='ack')||legal[0];
+  const mills=legal.filter(action=>action.mode==='mill');
+  if(mills.length)return mills.sort((a,b)=>(b.count||0)-(a.count||0))[0];
+ }
  const cards=[];
  const zone=kind==='effect-recover-outside'?'outside':'hand';
  for(const action of legal){

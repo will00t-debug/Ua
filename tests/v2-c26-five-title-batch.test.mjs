@@ -296,9 +296,10 @@ test('SAO-2-037 mills up to two on retire and a skip stops the rest',()=>{
  const stopped=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'skip'});
  assert.equal(stopped.pending,null);
  assert.equal(stopped.players[1].deck[0].uid,top[0].uid);
- s=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'mill'});
- assert.equal(s.pending.remaining,1);
- s=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'mill'});
+ s=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'mill',count:2});
+ assert.equal(s.pending.phase,'shown');
+ assert.equal(s.pending.milled.length,2);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'ack'});
  assert.equal(s.pending,null);
  assert.ok(s.players[1].outside.some(c=>c.uid===top[0].uid));
  assert.ok(s.players[1].outside.some(c=>c.uid===top[1].uid));
