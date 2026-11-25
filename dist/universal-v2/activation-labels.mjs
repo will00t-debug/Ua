@@ -2,8 +2,8 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs?v=20261125mcr10';
-import {cardHasName} from './field-conditions.mjs?v=20261125mcr10';
+import {universalBp} from './engine.mjs?v=20261125mcr11';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr11';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -282,6 +282,20 @@ function effectWords(ability,action){
   return '休息並把 1 張手牌放到場外，對手前線全部 BP－1000';
  if(op==='restNameOnceChoose'||mode==='restNameOnce')
   return '休息後選擇抽 1 棄 1，或生命牌入手後抽 2 棄 1';
+ if(op==='frontHandLifeMenu'||mode==='frontHandLife')
+  return '把 1 張手牌放到場外後，選擇表向生命或禁止攻擊';
+ if(op==='restNamedOption'||mode==='restNamedOption')
+  return '休息後選擇 BP＋1000，或在真中在場時給予阻擋上限';
+ if(op==='frontChooseImpact'||mode==='frontChooseImpact')
+  return '選擇名稱含疾風的角色，抽 1 張並給予本回合貫通（1）';
+ if(op==='frontUidChoice'||mode==='frontUidChoice')
+  return '休息後選擇紫角色休息登場、BP＋2000 或對手 BP－1500';
+ if(op==='readyBpChoice'||mode==='readyBpChoice')
+  return 'BP 5000 以上時轉為活動，然後抽 1 張或其他角色 BP＋1000';
+ if(op==='restPrintedGrantBottom'||mode==='restPrintedGrant')
+  return '給予原本 BP 3500 以下的角色貫通或阻擋上限，自己置於牌庫底';
+ if(op==='sniperIfImpact'||mode==='sniperIfImpact')
+  return '持有貫通時，此角色本回合獲得狙擊';
  if(op==='entryTurnLifeChoice'||mode==='entryLife')
   return '本回合登場時，生命牌入手後抽 2 棄 1，或已入手過時抽 1';
  if(op==='readyFrontProgram'||mode==='readyFront')
