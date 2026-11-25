@@ -82,7 +82,7 @@ export const PPO_RULE=[
  '每筆資料保存行動者可見的狀態、當時全部合法動作、選中動作、行為策略實際選中的 log probability、凍結 Critic 的 value，以及行為版本。更新使用留下的舊機率，不用事後重算的新策略機率冒充。',
  '不把模仿回放或上一輪自我對戰樣本混進這一批，也不把那種混合稱為 on-policy PPO。',
  '優勢是回報減去凍結舊 Critic 的 value，並在該批更新前固定。若做優勢正規化，只用這一訓練批次的樣本標準差。樣本少於 2 或變異為 0 時，正規化後的優勢為 0。',
- 'Actor 最大化標準 PPO-Clip。Critic 另以回報做回歸。clip '+PPO_CLIP+'，Actor 學習率 '+PPO_ACTOR_LR+'，Critic 學習率 '+PPO_CRITIC_LR+'，每批最多 '+PPO_EPOCHS+' 次更新，熵係數 '+PPO_ENTROPY+'。一批的平均 KL 超過 '+PPO_KL_LIMIT+' 就不再做該批後續更新。這些數字在看勝率之前固定，不因開發勝率改動。',
+ 'Actor 最大化標準 PPO-Clip。Critic 另以回報做回歸。clip '+PPO_CLIP+'，Actor 學習率 '+PPO_ACTOR_LR+'，Critic 學習率 '+PPO_CRITIC_LR+'，每批最多 '+PPO_EPOCHS+' 次更新，熵係數 '+PPO_ENTROPY+'。某一輪更新的樣本平均 KL 超過 '+PPO_KL_LIMIT+' 就不再做該批後續更新。這些數字在看勝率之前固定，不因開發勝率改動。',
  '對手沿用自己、落後至少一批的歷史快照，以及正式 v2。一批之內對手版本不變。快照或 v2 不能用時，該批改為自己對自己。',
  '回報沿用既有定義。折扣係數 '+GAMMA+'。終局結果以行動者視角為 +1 或 -1，沒有中途獎勵。時間單位是該決策之後的剩餘決策數，不是回合數。這一輪不改獎勵。'
 ].join('\n');
