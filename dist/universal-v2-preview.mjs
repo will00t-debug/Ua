@@ -36,8 +36,8 @@ import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261125mill1';
-import {chooseUniversalAiAction} from './universal-v2/ai.mjs?v=20261125mill1';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261125mill2';
+import {chooseUniversalAiAction} from './universal-v2/ai.mjs?v=20261125mill2';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {AI_PLAYBACK_FAST_KEY,aiPlaybackDelayMs,shouldRenderAiStep} from './universal-v2/ai-playback-speed.mjs';
 import {policyDifficulty} from './universal-v2/ai-policy-label.mjs';
@@ -55,7 +55,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,milledOutsideCards,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261125mill1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261125mill2';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
 import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
@@ -678,10 +678,16 @@ function pendingDialog(legal,view){
   controllerChoiceArt(app.packs,s,row.action).some(card=>card.uid!==focusUid));
  const payAp=s.pending.kind==='effect-pay-deploy-self'&&Number.isInteger(s.pending.ap)&&s.pending.ap>0?
   s.pending.ap:null;
- const title=s.pending.kind==='effect-mill-up-to'&&s.pending.phase==='shown'?
+ const millShown=(s.pending.kind==='effect-mill-up-to'||s.pending.kind==='effect-optional-mill'||
+  s.pending.kind==='effect-mill-optional')&&s.pending.phase==='shown';
+ const millMax=s.pending.kind==='effect-mill-up-to'||s.pending.kind==='effect-mill-optional'?s.pending.max:
+  s.pending.kind==='effect-optional-mill'&&!Number.isInteger(s.pending.batch)?s.pending.remaining:null;
+ const title=millShown?
   '剛才從牌庫頂送出場外的卡':
-  s.pending.kind==='effect-mill-up-to'?
-  '可將牌庫頂至多 '+(s.pending.max??'')+' 張送場外':
+  Number.isInteger(millMax)?
+  '可將牌庫頂至多 '+millMax+' 張送場外':
+  s.pending.kind==='effect-optional-mill'&&Number.isInteger(s.pending.batch)?
+  '可將牌庫頂 '+s.pending.batch+' 張送場外':
   s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
   '依序放回牌庫底':payAp!==null?
   '是否支付 '+payAp+' AP，讓此角色以活動狀態登場':
@@ -717,12 +723,14 @@ function pendingDialog(legal,view){
    btn('查看場面與手牌',()=>{app.inspectionPaused=true;render();},
     'btn v2-inspection-peek-btn'),
    el('span',{text:'可暫時查看場面與手牌，不會取消這次選牌。'})));
- dialog.append(el('p',{class:'note',text:s.pending.kind==='effect-mill-up-to'&&s.pending.phase==='shown'?
+ dialog.append(el('p',{class:'note',text:millShown?
    '以下是剛才從牌庫頂送出場外的卡。確認後才繼續。':
-   s.pending.kind==='effect-mill-up-to'?
-   (s.pending.max>1?
-    '先選擇將牌庫頂 1 張，或是最多 '+s.pending.max+' 張，送出場外。':
+   Number.isInteger(millMax)?
+   (millMax>1?
+    '先選擇將牌庫頂 1 張，或是最多 '+millMax+' 張，送出場外。':
     '先選擇是否將牌庫頂 1 張送出場外。'):
+   s.pending.kind==='effect-optional-mill'&&Number.isInteger(s.pending.batch)?
+   '可一次將牌庫頂 '+s.pending.batch+' 張送出場外。送出後會顯示這些卡。':
    s.pending.kind==='effect-mill-recover-discard'?
    '可棄 1 張手牌。棄了之後，才能從剛才送出場外的卡回收 1 張。':
    raidStage?.phase==='activate'?

@@ -396,7 +396,8 @@ export function onlinePendingDisplay(packs,match,seat,privateChoices){
 // Outside is already public. Show only the cards this pending step names,
 // and only after they have left the deck. Deck order stays closed.
 function publicMilledCards(owner,pack,pending){
- const show=(pending.kind==='effect-mill-up-to'&&pending.phase==='shown')||
+ const show=((pending.kind==='effect-mill-up-to'||pending.kind==='effect-optional-mill'||
+  pending.kind==='effect-mill-optional')&&pending.phase==='shown')||
   pending.kind==='effect-mill-recover-discard'||pending.kind==='effect-mill-recover';
  const uids=pending.kind==='effect-mill-recover'?pending.choices:pending.milled;
  if(!show||!Array.isArray(uids)||!uids.length)return [];

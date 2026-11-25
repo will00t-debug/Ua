@@ -5338,8 +5338,9 @@ function continueEffectQueue(pack,s){
     sourceName:job.sourceName,name:job.name,follow,choices,...(follow==='buff'?{bp:job.bp}:{})};
   }
   else if(job.op==='millTop'){
-   // Optional is one or two blind choices. The top card stays hidden until
-   // the controller accepts, and a skip stops the rest. Mandatory mills
+   // Optional count is chosen once. The top stays hidden until the
+   // controller accepts. After the cards leave, that same pending shows
+   // them. A printed batch of three is all or nothing. Mandatory mills
    // keep the previous loop.
    if(job.optional===true){
     if(job.then){
@@ -7075,7 +7076,8 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='millUpToThenRecover'){
    if(job.optional===true){
     if(pl.deck.length)s.pending={kind:'effect-mill-optional',player:owner,
-     sourceUid:job.sourceUid,max:job.count,milled:[],recover:job.recover,optional:true};
+     sourceUid:job.sourceUid,max:job.count,milled:[],
+     ...(job.recover?{recover:job.recover}:{}),optional:true};
    }else if(pl.deck.length)s.pending={kind:'effect-mill-up-to',player:owner,
     sourceUid:job.sourceUid,max:job.count,milled:[]};
   }else if(job.op==='removeOppFrontUnderBp'){
@@ -14628,28 +14630,37 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-optional-mill'){
+  const queueThen=()=>{
+   if(Array.isArray(q.then)&&q.milled?.length)s.effectQueue.unshift(...q.then.map(e=>({...e,
+    owner:q.player,sourceUid:q.sourceUid,sourceName:q.sourceName})));
+  };
+  if(q.phase==='shown'){
+   if(a.mode!=='ack')throw Error('Invalid optional mill');
+   queueThen();
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   if(Number.isInteger(q.batch)){
    if(a.mode==='mill'){
-    if(!p.deck.length)throw Error('Optional mill has no deck card');
-    const moved=Math.min(q.batch,p.deck.length);
-    for(let n=0;n<moved;n++)moveOwnedLinear(pack,s,{owner:q.player,from:'deck',
-     to:'outside',index:0,reason:'own-effect',sourceUid:q.sourceUid});
-    if(moved>0&&Array.isArray(q.then))s.effectQueue.unshift(...q.then.map(e=>({...e,
-     owner:q.player,sourceUid:q.sourceUid,sourceName:q.sourceName})));
+    if(a.count!==q.batch||!p.deck.length)throw Error('Optional mill has no deck card');
+    const moved=Math.min(q.batch,p.deck.length),milled=[];
+    for(let n=0;n<moved;n++)milled.push(moveOwnedLinear(pack,s,{owner:q.player,from:'deck',
+     to:'outside',index:0,reason:'own-effect',sourceUid:q.sourceUid}).uid);
+    if(milled.length){s.pending={...q,phase:'shown',milled};return;}
    }else if(a.mode!=='skip')throw Error('Invalid optional mill');
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   if(a.mode==='mill'){
-   if(!p.deck.length)throw Error('Optional mill has no deck card');
-   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
-    reason:'own-effect',sourceUid:q.sourceUid});
-   const left=(q.remaining??1)-1;
-   if(left>0&&p.deck.length){
-    s.pending={kind:'effect-optional-mill',player:q.player,
-     sourceUid:q.sourceUid,remaining:left};
-    return;
-   }
-  }else if(a.mode!=='skip')throw Error('Invalid optional mill');
+   const max=q.remaining??1,count=a.count;
+   if(!Number.isInteger(count)||count<1||count>max||count>p.deck.length)
+    throw Error('Optional mill has no deck card');
+   const milled=[];
+   for(let n=0;n<count;n++)milled.push(moveOwnedLinear(pack,s,{owner:q.player,from:'deck',
+    to:'outside',index:0,reason:'own-effect',sourceUid:q.sourceUid}).uid);
+   s.pending={kind:'effect-optional-mill',player:q.player,sourceUid:q.sourceUid,
+    phase:'shown',milled,max};
+   return;
+  }
+  if(a.mode!=='skip')throw Error('Invalid optional mill');
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-pay-ap-deploy'){
@@ -18678,16 +18689,7 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-mill-optional'){
-  if(a.mode==='mill'){
-   if(!p.deck.length||q.milled.length>=q.max)throw Error('Illegal mill step');
-   const physical=moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
-    reason:'own-effect',sourceUid:q.sourceUid});
-   const milled=[...q.milled,physical.uid];
-   if(milled.length<q.max&&p.deck.length){
-    s.pending={...q,milled};return;
-   }
-   q.milled=milled;
-  }else if(a.mode!=='stop')throw Error('Invalid mill choice');
+  const finishMill=()=>{
   const recover=q.recover;
   const choices=q.milled.length&&recover?p.outside.filter(c=>
    outsideRecoverMatches(card(pack,c),recover)).map(c=>c.uid):[];
@@ -18695,7 +18697,23 @@ function resolveChoice(s,a,pack){
    sourceUid:q.sourceUid,choices,anyOf:recover.anyOf,
    ...(recover.excludeName?{excludeName:recover.excludeName}:{}),optional:true};
   else{s.pending=null;continueEffectQueue(pack,s);}
-  return;
+  };
+  if(q.phase==='shown'){
+   if(a.mode!=='ack')throw Error('Invalid mill choice');
+   finishMill();return;
+  }
+  if(a.mode==='mill'){
+   const count=a.count;
+   if(!Number.isInteger(count)||count<1||q.milled.length+count>q.max||count>p.deck.length)
+    throw Error('Illegal mill step');
+   const milled=[...q.milled];
+   for(let n=0;n<count;n++)milled.push(moveOwnedLinear(pack,s,{owner:q.player,from:'deck',
+    to:'outside',index:0,reason:'own-effect',sourceUid:q.sourceUid}).uid);
+   s.pending={...q,milled,phase:'shown'};
+   return;
+  }
+  if(a.mode!=='stop')throw Error('Invalid mill choice');
+  finishMill();return;
  }
  if(q.kind==='effect-recover-any'){
   if(a.uid===null){
@@ -21509,10 +21527,16 @@ function legalPending(pack,s){
   ...(p.deck.length&&field(p).some(c=>cardHasName(card(pack,c),q.name,
    originalEffectsDisabled(s,c)))?[{type:'chooseNameDraw',mode:'draw',name:q.name}]:[])
  ];
- if(q.kind==='effect-optional-mill')return [
-  {type:'chooseOptionalMill',mode:'skip'},
-  {type:'chooseOptionalMill',mode:'mill'}
- ];
+ if(q.kind==='effect-optional-mill'){
+  if(q.phase==='shown')return [{type:'chooseOptionalMill',mode:'ack'}];
+  if(Number.isInteger(q.batch))return [
+   {type:'chooseOptionalMill',mode:'skip'},
+   ...(p.deck.length?[{type:'chooseOptionalMill',mode:'mill',count:q.batch}]:[])
+  ];
+  const room=Math.min(q.remaining??1,p.deck.length),mills=[];
+  for(let count=1;count<=room;count++)mills.push({type:'chooseOptionalMill',mode:'mill',count});
+  return [...mills,{type:'chooseOptionalMill',mode:'skip'}];
+ }
  if(q.kind==='effect-pay-ap-deploy')return [
   {type:'choosePayApDeploy',mode:'skip'},
   {type:'choosePayApDeploy',mode:'pay'}
@@ -22871,10 +22895,12 @@ function legalPending(pack,s){
   ...q.choices.map(uid=>({type:'chooseRestLock',uid})),
   {type:'chooseRestLock',uid:null}
  ];
- if(q.kind==='effect-mill-optional')return [
-  {type:'chooseMillOptional',mode:'stop'},
-  ...(p.deck.length&&q.milled.length<q.max?[{type:'chooseMillOptional',mode:'mill'}]:[])
- ];
+ if(q.kind==='effect-mill-optional'){
+  if(q.phase==='shown')return [{type:'chooseMillOptional',mode:'ack'}];
+  const room=Math.min(q.max-(q.milled?.length||0),p.deck.length),mills=[];
+  for(let count=1;count<=room;count++)mills.push({type:'chooseMillOptional',mode:'mill',count});
+  return [...mills,{type:'chooseMillOptional',mode:'stop'}];
+ }
  if(q.kind==='effect-recover-any')return [
   ...(q.optional?[{type:'chooseRecoverAny',uid:null}]:[]),
   ...q.choices.filter(uid=>p.outside.some(c=>c.uid===uid)).map(uid=>({type:'chooseRecoverAny',uid}))
@@ -28801,9 +28827,15 @@ export function assertUniversalMatch(pack,s){
    [e,...(e.then||[]),e.recover].filter(Boolean):[e]);
   const keys=Object.keys(q);
   if(!src||!q.sourceUid.startsWith(q.player+'-'))throw Error('Invalid shared pending');
+  const millShown=q.phase==='shown';
+  const millKeys=['kind','player','sourceUid','max','milled','optional',
+   ...(q.recover!==undefined?['recover']:[]),...(millShown?['phase']:[])];
   if(q.kind==='effect-mill-optional'&&(q.max!==3||q.optional!==true||!Array.isArray(q.milled)||
-   q.milled.length>q.max||q.milled.some(uid=>!pl.outside.some(c=>c.uid===uid))||
-   !nest.some(e=>e.op==='millUpToThenRecover'&&e.optional===true)||keys.length!==7))
+   q.milled.length>q.max||(millShown&&!q.milled.length)||
+   (q.phase!==undefined&&!millShown)||
+   q.milled.some(uid=>!pl.outside.some(c=>c.uid===uid))||
+   !nest.some(e=>e.op==='millUpToThenRecover'&&e.optional===true)||
+   keys.length!==millKeys.length||keys.some(k=>!millKeys.includes(k))))
    throw Error('Invalid optional mill');
   const ownedUid=uid=>[...pl.outside,...pl.deck,...pl.hand,...pl.removed,...field(pl)]
    .some(c=>c.uid===uid);
@@ -31040,10 +31072,16 @@ export function assertUniversalMatch(pack,s){
   const printed=src&&card(pack,src);
   const earned=printed?.effects?.onPlay?.find(e=>e.op==='millTop'&&e.optional===true&&
    e.count===3&&e.count===q.batch&&Array.isArray(e.then)&&same(e.then,q.then));
+  const shown=q.phase==='shown';
+  const milledOk=!shown||(Array.isArray(q.milled)&&q.milled.length>=1&&q.milled.length<=q.batch&&
+   new Set(q.milled).size===q.milled.length&&q.milled.every(uid=>pl.outside.some(c=>c.uid===uid)));
   if(!earned||q.sourceName!==printed.name||!q.sourceUid.startsWith(q.player+'-')||
-   q.batch!==3||pl.deck.length<1||!Array.isArray(q.then)||q.then.length!==1||
-   Object.keys(q).length!==6||
-   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','batch','then'].includes(k)))
+   q.batch!==3||(!shown&&pl.deck.length<1)||!milledOk||
+   (q.phase!==undefined&&!shown)||
+   !Array.isArray(q.then)||q.then.length!==1||
+   Object.keys(q).length!==(shown?8:6)||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','batch','then',
+    ...(shown?['phase','milled']:[])].includes(k)))
    throw Error('Forged optional three-card mill');
  }
  if(s.pending?.kind==='effect-choose-printed-energy'){

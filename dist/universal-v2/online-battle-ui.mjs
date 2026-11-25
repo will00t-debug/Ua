@@ -370,7 +370,9 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
    definition,imageSource,openCard});
   const milledSheets=milledCards.map(card=>pendingCardSheet({el,card,label:'剛才送出場外',
    definition,imageSource,openCard})).filter(Boolean);
-  const heading=view.pending.kind==='effect-mill-up-to'?
+  const millKind=view.pending.kind==='effect-mill-up-to'||view.pending.kind==='effect-optional-mill'||
+   view.pending.kind==='effect-mill-optional';
+  const heading=millKind?
    (milledCards.length?'剛才從牌庫頂送出場外的卡':'選擇要將牌庫頂幾張送場外'):
    view.pending.kind==='effect-mill-recover-discard'?'可棄 1 張手牌，回收剛才送出場外的卡':
    '效果選擇';

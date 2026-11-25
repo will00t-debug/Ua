@@ -198,9 +198,12 @@ test('TTG-054 own-turn BP follows Nia and a deck of at most 20, and the mill is 
  assert.equal(s.pending.kind,'effect-optional-mill');
  const skipped=go(packs,s,{type:'chooseOptionalMill',mode:'skip'});
  assert.equal(skipped.players[0].deck.length,deckBefore);
- const milled=go(packs,s,{type:'chooseOptionalMill',mode:'mill'});
- assert.equal(milled.players[0].deck.length,deckBefore-1);
- assert.equal(milled.players[0].outside.at(-1).uid,s.players[0].deck[0].uid);
+ const milled=go(packs,s,{type:'chooseOptionalMill',mode:'mill',count:1});
+ assert.equal(milled.pending.phase,'shown');
+ assert.equal(milled.pending.milled.length,1);
+ const seen=go(packs,milled,{type:'chooseOptionalMill',mode:'ack'});
+ assert.equal(seen.players[0].deck.length,deckBefore-1);
+ assert.equal(seen.players[0].outside.at(-1).uid,s.players[0].deck[0].uid);
  let live=skipped;
  while(live.players[0].deck.length>20)live.players[0].outside.push(live.players[0].deck.pop());
  const simon=live.players[0].energy.find(c=>c?.uid===source.uid);

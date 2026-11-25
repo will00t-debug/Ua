@@ -426,6 +426,7 @@ test('KJN-1-073 optional top-two mill may send zero, exactly one, or two cards o
   s=play(s,beta.uid,'play','front');
   assert.equal(s.pending.kind,'effect-optional-mill');
   assert.equal(s.pending.remaining,2);
+  assert.deepEqual(legalUniversalActions(packs,s).filter(a=>a.mode==='mill').map(a=>a.count),[1,2]);
   return {s,before};
  }
  let {s:zero,before:zeroBefore}=setup(7300);
@@ -433,16 +434,17 @@ test('KJN-1-073 optional top-two mill may send zero, exactly one, or two cards o
  assert.equal(zero.players[0].outside.length,zeroBefore);
  assertUniversalMatch(packs,zero);
  let {s:one,before:oneBefore}=setup(7301);
- one=choose(one,a=>a.type==='chooseOptionalMill'&&a.mode==='mill');
- assert.equal(one.pending.kind,'effect-optional-mill');
- assert.equal(one.pending.remaining,1);
- one=choose(one,a=>a.type==='chooseOptionalMill'&&a.mode==='skip');
+ one=choose(one,a=>a.type==='chooseOptionalMill'&&a.count===1);
+ assert.equal(one.pending.phase,'shown');
+ assert.equal(one.pending.milled.length,1);
+ one=choose(one,a=>a.type==='chooseOptionalMill'&&a.mode==='ack');
  assert.equal(one.players[0].outside.length,oneBefore+1);
  assertUniversalMatch(packs,one);
  let {s:two,before:twoBefore}=setup(7302);
- two=choose(two,a=>a.type==='chooseOptionalMill'&&a.mode==='mill');
- assert.equal(two.pending.remaining,1);
- two=choose(two,a=>a.type==='chooseOptionalMill'&&a.mode==='mill');
+ two=choose(two,a=>a.type==='chooseOptionalMill'&&a.count===2);
+ assert.equal(two.pending.phase,'shown');
+ assert.equal(two.pending.milled.length,2);
+ two=choose(two,a=>a.type==='chooseOptionalMill'&&a.mode==='ack');
  assert.equal(two.players[0].outside.length,twoBefore+2);
  assertUniversalMatch(packs,two);
 });

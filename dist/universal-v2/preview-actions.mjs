@@ -71,7 +71,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-print-look':'查看並選擇卡牌','effect-print':'選擇卡牌與落點',
  'effect-top-script':'查看牌庫頂並選擇',
  'effect-bottom-own':'可將 1 張自己的角色放到牌庫底',
- 'effect-optional-mill':'可逐張將牌庫頂送場外（每次 1 張，可繼續或停止）',
+ 'effect-optional-mill':'可將牌庫頂至多指定張數送場外',
+ 'effect-mill-optional':'可將牌庫頂至多指定張數送場外',
  'effect-mill-up-to':'可將牌庫頂至多指定張數送場外',
  'effect-mill-recover-discard':'可棄 1 張手牌以回收剛才送出場外的卡',
  'effect-mill-recover':'從剛才送出場外的卡回收至多 1 張',
@@ -447,7 +448,7 @@ const CLOSED_CHOICE_TYPES=new Set(['kmr','kmr2','iys','kjn','aot','aot2','mmm2',
 export function pendingTextChoiceClass(action){
  const closed=CLOSED_CHOICE_TYPES.has(action?.type);
  const quiet=action?.mode==='skip'||action?.mode==='done'||(!closed&&action?.uid===null);
- if(quiet||(action?.type==='chooseMillUpTo'&&action.mode==='stop'))return 'quiet';
+ if(quiet||((action?.type==='chooseMillUpTo'||action?.type==='chooseMillOptional')&&action.mode==='stop'))return 'quiet';
  if(action?.type==='chooseEffectMode'&&action.mode!=='raid')return '';
  return 'recommended';
 }
@@ -1335,7 +1336,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestReenter':return '以 Rest 登場於'+(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
   case 'chooseHandTwoOutside':return '將 '+name()+' 送至場外';
   case 'chooseOwnLifeOutside':return '將 '+name()+' 放到場外';
-  case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
+  case 'chooseOptionalMill':
+   if(action.mode==='ack')return '知道了，繼續';
+   if(action.mode==='mill')return '將牌庫頂 '+(Number.isInteger(action.count)?action.count:1)+' 張送場外';
+   return '不送場外';
   case 'chooseMillUpTo':
    if(action.mode==='ack')return '知道了，繼續';
    if(action.mode==='mill')return '將牌庫頂 '+(Number.isInteger(action.count)?action.count:1)+' 張送場外';
@@ -1488,7 +1492,10 @@ export function uiActionLabel(action,{pack,state}={}){
    '將 '+name()+' 放到場外，並使這張角色活動';
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
   case 'chooseFrontVacate':return action.uid===null?'不移出前線卡':'將 '+name()+' 移出戰場';
-  case 'chooseMillOptional':return action.mode==='mill'?'再放逐一張牌庫頂端卡':'結束放逐';
+  case 'chooseMillOptional':
+   if(action.mode==='ack')return '知道了，繼續';
+   if(action.mode==='mill')return '將牌庫頂 '+(Number.isInteger(action.count)?action.count:1)+' 張送場外';
+   return '不送場外';
   case 'chooseRecoverAny':return action.uid===null?'不取回場外角色':'將 '+name()+' 加入手牌';
   case 'chooseDiscardAny':return action.mode==='skip'?'不棄牌':action.mode==='stop'?'以此棄牌數結算':'棄置 '+name();
   case 'choosePayHandActive':return action.uid===null?'不支付手牌':'支付 '+name();
@@ -1815,7 +1822,8 @@ const SOURCE_ART_SKIP=new Set(['life-trigger','block','opening-mulligan']);
 export function milledOutsideCards(pack,state){
  const q=state?.pending;
  if(!q||q.player!==0)return [];
- const reveal=q.kind==='effect-mill-up-to'&&q.phase==='shown';
+ const reveal=(q.kind==='effect-mill-up-to'||q.kind==='effect-optional-mill'||
+  q.kind==='effect-mill-optional')&&q.phase==='shown';
  const remembering=q.kind==='effect-mill-recover-discard';
  if(!reveal&&!remembering)return [];
  if(!Array.isArray(q.milled)||!q.milled.length)return [];

@@ -99,7 +99,11 @@ function reliableChoice(pack,state,actor,legal,hardExact,ordered){
   const picks=legal.filter(action=>action.uid);
   if(picks.length)return ranked(picks)[picks.length-1];
  }
- if(kind==='effect-optional-mill')return legal.find(action=>action.mode==='mill')||hardExact||legal[0];
+ if(kind==='effect-optional-mill'||kind==='effect-mill-optional'||kind==='effect-mill-up-to'){
+  if(state.pending?.phase==='shown')return legal.find(action=>action.mode==='ack')||hardExact||legal[0];
+  const mills=legal.filter(action=>action.mode==='mill');
+  if(mills.length)return mills.sort((a,b)=>(b.count||0)-(a.count||0))[0];
+ }
  const picked=hardExact||ordered[0]||legal[0];
  if(hardExact)return hardExact;
  return situationalBackup(pack,state,actor,legal,picked)||picked;
