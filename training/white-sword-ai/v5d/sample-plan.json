@@ -1,0 +1,16 @@
+{
+  "codeVersion": "v5d-1",
+  "stopped": "ready",
+  "ids": [
+    "08d1971adf3b980f",
+    "314cc286104d244f",
+    "494713018ea1b86c",
+    "8c4ecf318a7c8d33"
+  ],
+  "roles": {
+    "08d1971adf3b980f": "train",
+    "314cc286104d244f": "validation",
+    "494713018ea1b86c": "train",
+    "8c4ecf318a7c8d33": "validation"
+  }
+}
