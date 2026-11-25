@@ -205,7 +205,7 @@ export function sameFreeze(left,right){
   &&JSON.stringify((left.candidates||[]).map(candidateKey))===JSON.stringify((right.candidates||[]).map(candidateKey));
 }
 const LINE={front:'前線',energy:'能量線'};
-const KIND={play:'打出',move:'移動',attack:'攻擊',chooseDiscardGate:'棄掉',next:'結束行動'};
+const KIND={play:'打出',move:'移動',attack:'攻擊',chooseDiscardGate:'棄掉',next:'結束行動',event:'打出',raid:'突襲'};
 export function actionLabel(key,card){
  let parsed={};
  try{parsed=JSON.parse(key||'{}');}catch{parsed={};}
