@@ -1,4 +1,4 @@
-import {DISCOUNT_KIND,grantHandDiscount,grantHandDiscountFromUsedEvent,handPlayApPlan,definitionGrantsDiscount,definitionGrantsUsedEventDiscount} from './ap-discounts.mjs?v=20261125mcr11';
+import {DISCOUNT_KIND,grantHandDiscount,grantHandDiscountFromUsedEvent,handPlayApPlan,definitionGrantsDiscount,definitionGrantsUsedEventDiscount} from './ap-discounts.mjs?v=20261125mcr12';
 // UNIVERSAL RULES V2 EXPERIMENT. No production title uses this reducer yet.
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
@@ -9,10 +9,10 @@ import {assignPointCards,assertPointCardIdentities} from './point-cards.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
-import {matchesPrintedRequiredEnergyAtLeast,matchesPrintedRequiredEnergyAtMost,matchesPrintedRequiredEnergyExact} from './ap-discounts.mjs?v=20261125mcr11';
+import {matchesPrintedRequiredEnergyAtLeast,matchesPrintedRequiredEnergyAtMost,matchesPrintedRequiredEnergyExact} from './ap-discounts.mjs?v=20261125mcr12';
 import {cardHasName,cardHasTrait,cardCountsAsEvent,printedFieldCard,usedOwnEventThisTurn,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,countOwnPrintedTrait,countOppRestCharacters,countOwnPrintedApAtLeast,countOwnDistinctTraitNames,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
- countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs?v=20261125mcr11';
+ countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs?v=20261125mcr12';
 import {bindMmm2,runMmm2Job,legalMmm2Pending,resolveMmm2Pending,
  legalMmm2Activations,activateMmm2,finishU045Look} from './mmm-exedra-runtime.mjs';
 import {bindIys,runIysJob,legalIysPending,resolveIysPending,
@@ -63,7 +63,7 @@ import {runSharedPrintLastJob,legalSharedPrintLastPending,resolveSharedPrintLast
 import {runSharedPrintVol2Job,legalSharedPrintVol2Pending,resolveSharedPrintVol2Pending,
  legalSharedPrintVol2Activations,activateSharedPrintVol2} from './shared-print-vol2.mjs';
 import {runMcrFinishJob,legalMcrFinishPending,resolveMcrFinishPending,
- legalMcrFinishActivations,activateMcrFinish,queueMcrFinishLeave} from './mcr-finish.mjs?v=20261125mcr11';
+ legalMcrFinishActivations,activateMcrFinish,queueMcrFinishLeave} from './mcr-finish.mjs?v=20261125mcr12';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 
 function hasPrintedTrait(definition){
@@ -24767,6 +24767,10 @@ function handApPlan(pack,s,owner,d,opts={}){
  if(bothNames?.amount===1&&Array.isArray(bothNames.names)&&bothNames.names.length===2&&
   bothNames.names.every(name=>ownFieldHasPrintedName(pack,s,owner,name)))
   extra+=1;
+ const eventBoth=d.type==='event'?d.eventHandApWhileAllNames:null;
+ if(eventBoth?.amount===2&&Array.isArray(eventBoth.names)&&eventBoth.names.length===2&&
+  eventBoth.names.every(name=>ownFieldHasPrintedName(pack,s,owner,name)))
+  extra+=2;
  const includesCut=d.handApDiscountWhileNameIncludes;
  if(includesCut?.amount===1&&field(pl).some(c=>card(pack,c).type==='character'&&
   String(card(pack,c).name||'').includes(includesCut.includes)))extra+=1;
