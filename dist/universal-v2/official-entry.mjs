@@ -4,7 +4,7 @@
 // AP cards are not deck cards and stay out of this pack.
 // This module does not add Re:Zero to the five-title census.
 import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
-import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261120mha011';
+import {createUniversalPack,validateUniversalDeck} from './pack.mjs?v=20261125mcr4';
 import {REZERO_CARDS} from '../rezero-cards.mjs';
 import {createRezeroV2Pack,rezeroPackCard} from './rezero-pack.mjs';
 import {rezV2RawCards} from './rez-pack.mjs';
@@ -25,6 +25,7 @@ import {createDgmV2Pack} from './dgm-pack.mjs?v=20261120dgm2';
 import {createMgsV2Pack} from './mgs-pack.mjs?v=20261121mgs2';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {createEvaStagingPack} from './eva-staging-pack.mjs?v=20261122evaYellow0';
+import {createMcrStagingPack} from './mcr-staging-pack.mjs?v=20261125mcr4';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -78,6 +79,7 @@ export function officialV2Pack(title){
  if(title==='mha')return createMhaBattlePack();
  if(title==='rnk')return createRnkBattlePack();
  if(title==='eva')return createEvaBattlePack();
+ if(title==='mcr')return createMcrBattlePack();
  if(title==='toriko')return createTorikoBattlePack();
  if(title==='dgm')return createDgmBattlePack();
  if(title==='mgs')return createMgsBattlePack();
@@ -269,12 +271,33 @@ export function imcPracticeDeck(){
 
 let rnkBattlePack=null;
 let evaBattlePack=null;
+let mcrBattlePack=null;
 export function createEvaBattlePack(){
  if(evaBattlePack)return evaBattlePack;
  const pack=createEvaStagingPack();
  if(Object.keys(pack.cards).length!==113)throw Error('EVA live pack drifted: '+Object.keys(pack.cards).length);
  evaBattlePack=pack;
  return evaBattlePack;
+}
+
+// Landed Macross subset only. Catalog cards outside this pack stay unplayable.
+// The count is the shared-program subset, not the 113-card set.
+export function createMcrBattlePack(){
+ if(mcrBattlePack)return mcrBattlePack;
+ mcrBattlePack=createMcrStagingPack();
+ return mcrBattlePack;
+}
+
+export function mcrPracticeDeck(){
+ const pack=createMcrBattlePack();
+ const counts={
+  'MCR-1-001':4,'MCR-1-002':4,'MCR-1-003':4,'MCR-1-005':4,'MCR-1-006':4,
+  'MCR-1-007':4,'MCR-1-013':4,'MCR-1-016':4,'MCR-1-017':4,'MCR-1-018':4,
+  'MCR-1-025':4,'MCR-1-027':4,'MCR-1-110':2
+ };
+ const issues=validateUniversalDeck(pack,counts);
+ if(issues.length)throw Error('Macross yellow practice deck: '+issues.join('; '));
+ return {pack,counts:Object.freeze(counts)};
 }
 
 export function createRnkBattlePack(){

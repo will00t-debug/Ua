@@ -1,8 +1,8 @@
 import {cardHasName} from './field-conditions.mjs?v=20261120mha011';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 // Presentation-only adapters for the isolated V2 preview.
-import {universalAttackDamage,universalImpact} from './engine.mjs';
-import {describeActivation} from './activation-labels.mjs';
+import {universalAttackDamage,universalImpact} from './engine.mjs?v=20261125mcr5';
+import {describeActivation} from './activation-labels.mjs?v=20261125mcr5';
 // NEVER generate or accept an action outside legalUniversalActions().
 export const V2_PHASE_LABELS=Object.freeze({
  start:'開始／額外抽牌',move:'移動階段',main:'主要階段',attack:'攻擊階段'
@@ -1248,6 +1248,8 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='vol2:outsideEnter'?'從場外退場 BP 4000 以上的〈阿良々木暦〉，此角色休息登場':
     action.mode==='vol2:blackHand'?'從場外把另 1 張〈ブラック羽川〉移到移除區，此活動加入手牌':
     action.mode==='abovePrinted'?'【主啟動】【每回合一次】依自己場上 BP 高於原本 BP 的角色數量，此角色本回合獲得全部符合的效果：3 張以上獲得【傷害（2）】；5 張以上再獲得【貫通（1）】':
+    action.mode==='restRetireThen'?'起動主要：REST 並退場，然後指定後續效果':
+    action.mode==='restSelfChoose'?'起動主要：REST 自身，然後必須選擇一項後續效果':
     action.mode==='buff'?'主要能力：指定符合條件的角色 BP＋1000':
     action.mode==='readyAndBuff'?'主要能力：先 ACTIVE 自己，再指定符合條件的角色 BP＋1000':
     '【主啟動】此起動沒有可顯示的效果說明';

@@ -162,6 +162,53 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  }
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // エナジーLにある場合. Front generation does not satisfy an energy-line clause.
+ if(condition.kind==='selfOnEnergy')
+  return s.players[owner].energy.some(c=>c?.uid===sourceUid);
+ // このターン中に相手がカードを引いている. Only draw() increments the counter.
+ if(condition.kind==='opponentDrewThisTurn')
+  return Array.isArray(s.drawnThisTurn)&&(s.drawnThisTurn[1-owner]||0)>=1;
+ // このターン中に自分がカードをN枚以上引いている. Only draw() counts.
+ if(condition.kind==='drawnThisTurnAtLeast')
+  return Array.isArray(s.drawnThisTurn)&&(s.drawnThisTurn[owner]||0)>=condition.min;
+ // 【レイド】を持つ〈名前〉 in this player's outside. Life-trigger Raid and
+ // a printed Raid keyword both count. Copies count separately.
+ if(condition.kind==='ownOutsideRaidNameAtLeast')
+  return s.players[owner].outside.filter(c=>{
+   const d=printed(c);
+   return cardHasName(d,condition.name)&&
+    (d.trigger==='raid'||(typeof d.raidName==='string'&&!!d.raidName.trim())||
+     (typeof d.raidTrait==='string'&&!!d.raidTrait.trim()));
+  }).length>=condition.min;
+ // Distinct printed names in this player's outside. Copies are one kind.
+ // Color and trait are both required. The opponent's outside does not count.
+ if(condition.kind==='ownOutsideDistinctColorTraitNames'){
+  const names=new Set();
+  for(const c of s.players[owner].outside){
+   const d=printed(c);
+   if(d.color!==condition.color||!cardHasTrait(d,condition.trait))continue;
+   if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
+  }
+  return names.size>=condition.min;
+ }
+ // カード名に「…」を含む. Printed characters only, substring, not an alias.
+ // ownNameIncludesAll is 「と」: every listed fragment must be present.
+ if(condition.kind==='ownNameIncludes'||condition.kind==='ownNameIncludesAll'){
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  const seen=new Set();
+  for(const zone of zones)for(const c of zone){
+   if(!printedFieldCard(c))continue;
+   const d=printed(c);
+   if(d.type!=='character'||typeof d.name!=='string')continue;
+   if(condition.kind==='ownNameIncludesAll'){
+    for(const n of condition.names)if(d.name.includes(n))seen.add(n);
+   }else if(condition.names.some(n=>d.name.includes(n)))return true;
+  }
+  if(condition.kind==='ownNameIncludesAll')return condition.names.every(n=>seen.has(n));
+  return false;
+ }
  // The on-play job carries the entry cause. A later check does not invent one.
  if(condition.kind==='selfOwnEffectRaid')return ownEffectRaidCause(entryCause);
  // 自分の場に、指定顏色、特徵，而且持有突襲關鍵字的角色。三項要同時成立。
@@ -385,14 +432,27 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // card looks along the front line, and an energy-line card looks along
  // the energy line. The slot across from it is a different line. A card
  // buried under a Raid is not on the line.
- if(condition.kind==='sameLineName'){
+ if(condition.kind==='sameLineName'||condition.kind==='sameLineNameIncludes'){
   const pl=s.players[owner];
   for(const line of ['front','energy']){
    if(!pl[line].some(c=>c?.uid===sourceUid))continue;
-   return pl[line].some(c=>printedFieldCard(c)&&c.uid!==sourceUid&&
-    cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c)));
+   return pl[line].some(c=>{
+    if(!printedFieldCard(c)||c.uid===sourceUid)return false;
+    if(condition.kind==='sameLineNameIncludes')
+     return String(printed(c).name||'').includes(condition.includes);
+    return cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c));
+   });
   }
   return false;
+ }
+ if(condition.kind==='ownNameIncludesInFieldOrOutside'){
+  const piece=condition.names[0];
+  const board=s.players[owner];
+  for(const area of [board.front,board.energy])for(const c of area)
+   if(printedFieldCard(c)&&printed(c).type==='character'&&
+    String(printed(c).name||'').includes(piece))return true;
+  return board.outside.some(c=>printed(c)?.type==='character'&&
+   String(printed(c).name||'').includes(piece));
  }
  // 「このキャラはBP+…」while the physical card is a visible own field card.
  // Hand, outside, and a buried Raid layer do not receive the bonus.

@@ -119,6 +119,9 @@ export function definitionGrantsDiscount(value,filter){
   Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
  // REST, discard one, then the next matching trait play costs 1 less AP.
  // The discount is the printed follow-up of that main, so the card proves it.
+ if(value.op==='frontNameOnceApDiscount'&&value.filter&&
+  Object.keys(value.filter).length===Object.keys(filter).length&&
+  Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
  if(value.op==='restDiscardNextTraitAp'&&value.amount===1&&
   typeof value.trait==='string'&&Object.keys(filter).length===1&&
   filter.trait===value.trait)return true;

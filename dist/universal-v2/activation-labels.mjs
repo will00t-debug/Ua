@@ -2,7 +2,7 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs';
+import {universalBp} from './engine.mjs?v=20261125mcr5';
 import {cardHasName} from './field-conditions.mjs';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
@@ -143,7 +143,8 @@ function qualifyingAbovePrinted(pack,state,uid){
 }
 const STEP={
  draw:s=>`抽 ${s.count||1} 張`,
- drawDiscard:s=>`抽 ${s.count||1} 張，再將 1 張手牌放到場外`,
+ buffOwnCurrentBp:s=>`${s.optional?'可以選擇':'選擇'}其他目前 BP ${s.minBp||0} 以上的角色，本回合 BP＋${s.bp}`,
+ bounceOppFrontOneUnderBp:s=>s.scale?`可以將場外指定顏色與特徵的不同卡名數量乘以 ${s.scale.per} 以下 BP 的對手前線角色返回手牌`:`可以將 BP ${s.bp} 以下的對手前線角色返回手牌`,
  drawHandTop:()=>'抽 1 張，並將 1 張手牌放到牌組上面',
  millTop:s=>`將牌庫頂 ${s.count||1} 張放到場外`,
  peekTopOrBottom:()=>'查看牌庫頂 1 張，放回牌庫上面或下面',
@@ -152,7 +153,8 @@ const STEP={
  activeOwnOther:()=>'將其他最多 1 張角色轉為活動',
  buffSelf:s=>`此角色本回合 BP＋${s.bp}`,
  buffSelfUntilNextOwnStart:s=>`直到下一個自己的回合開始，BP＋${s.bp}`,
- buffOwnField:s=>`${s.excludeSelf?'選擇其他角色':'選擇角色'}，本回合 BP＋${s.bp}`,
+ buffOwnField:s=>s.all?`自己場上其他所有角色，本回合 BP＋${s.bp}`:`${s.excludeSelf?'選擇其他角色':'選擇角色'}，本回合 BP＋${s.bp}`,
+ drawDiscard:s=>`抽 ${s.count||1} 張，再將 ${s.discardCount||1} 張手牌放到場外`,
  buffAnyCharacter:s=>`${s.excludeSelf?'選擇其他 1 張角色':'選擇 1 張角色'}，本回合 BP＋${s.bp}`,
  buffEitherField:s=>`選擇最多 1 張場上角色，本回合 BP＋${s.bp||1000}`,
  enemyBpDown:s=>`選擇對手${s.zone==='front'?'前線':''} BP ${s.minBp||0} 以上的角色，本回合 BP－${s.bp}`,
@@ -249,6 +251,7 @@ function gateWords(ability){
  if(Number.isInteger(ability?.minBp))words.push(`此角色 BP 在 ${ability.minBp} 以上才能發動`);
  if(Number.isInteger(ability?.minEnergy))words.push(`產生能源在 ${ability.minEnergy} 以上才能發動`);
  if(ability?.when?.kind==='ownEventUsedThisTurn')words.push('只有本回合已使用事件才能發動');
+ if(ability?.when?.kind==='ownHandCountAtLeast')words.push(`只有手牌 ${ability.when.min} 張以上才能發動`);
  if(ability?.when?.kind==='ownTraitUsedThisTurn')words.push(`只有本回合已使用過特徵「${ability.when.trait}」才能發動`);
  return words;
 }
@@ -392,6 +395,8 @@ function effectWords(ability,action){
  if(op==='fieldRestSacrificeReplay'||mode==='fieldRestSacrificeReplay')return '休息此場域，使 1 張己方角色退場並重新發動其登場時';
  if(op==='fieldRestRetire'||mode==='fieldRestRetire')return '休息此場域並使此卡退場';
  if(op==='fieldRestRetireThen'||mode==='fieldRestTrueRetireDeploy'||mode==='fieldRestRetireDraw')
+  return '休息並退場。'+renderSequence(ability?.then);
+ if(op==='restRetireThen'||mode==='restRetireThen')
   return '休息並退場。'+renderSequence(ability?.then);
  if(op==='outsideDiscardTraitToHand'||mode==='outsideTraitHand')
   return `在場外，將 1 張特徵「${ability?.trait||''}」的手牌放到場外，並將此卡加入手牌`;
