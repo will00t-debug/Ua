@@ -5604,9 +5604,12 @@ function normalize(card,packId){
     (mainAbility.then[0]?.op==='drawDiscard'&&mainAbility.then[0].count===1&&
      Object.keys(mainAbility.then[0]).length===2)||
     (mainAbility.then[0]?.op==='buffOwnField'&&mainAbility.then[0].optional===false&&
-     mainAbility.then[0].bp===1000&&mainAbility.then[0].excludeSelf===false&&
+     mainAbility.then[0].bp===1000&&
+     (mainAbility.then[0].excludeSelf===false||mainAbility.then[0].excludeSelf===true)&&
      mainAbility.then[0].filter?.field==='type'&&
-     mainAbility.then[0].filter?.value==='character')||
+     mainAbility.then[0].filter?.value==='character'&&
+     Object.keys(mainAbility.then[0]).every(k=>
+      ['op','optional','bp','excludeSelf','filter'].includes(k)))||
     (mainAbility.then[0]?.op==='enemyBpDown'&&mainAbility.then[0].bp===1000&&
      mainAbility.then[0].minBp===5000&&mainAbility.then[0].zone==='front'&&
      mainAbility.then[0].optional===false&&Object.keys(mainAbility.then[0]).length===5)))||

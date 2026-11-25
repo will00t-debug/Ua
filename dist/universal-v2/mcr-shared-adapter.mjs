@@ -1,7 +1,7 @@
 // Macross -> Universal V2 adapter. Shared ability DSL only.
 // Title data is converted here. There is no second Macross effects engine.
-import {createUniversalPack} from './pack.mjs?v=20261125mcr4';
-import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr4';
+import {createUniversalPack} from './pack.mjs?v=20261125mcr6';
+import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr6';
 
 const SHARED_KEYS=new Set([
  'ready','implementation','effects','mainAbility','activeExtraEnergy','impactNull',
@@ -13,7 +13,7 @@ const SHARED_KEYS=new Set([
  'handApDiscountWhileFrontNameIncludes','substituteOppRetire','outsideNameLeaveToHand'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
-const COLORS=new Set(['yellow','blue','red']);
+const COLORS=new Set(['yellow','blue','red','purple']);
 // Audited slash traits. The printed string stays one token. Components are
 // the affinities the official feature text names separately.
 const TRAIT_COMPONENTS=Object.freeze({

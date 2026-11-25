@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mcrCatalog} from '../dist/mcr/catalog.mjs';
-import {MCR_RAID_FRAME_NUMBERS} from '../dist/mcr/catalog.mjs';
+import {MCR_RAID_FRAME_NUMBERS,MCR2_RAID_FRAME_NUMBERS,MCR2_BOOSTER_RARITIES} from '../dist/mcr/catalog.mjs';
 import {mcrSharedProgram} from '../dist/universal-v2/mcr/programs.mjs';
 import {mcrSharedCard} from '../dist/universal-v2/mcr-shared-adapter.mjs';
 import {MCR_STAGING_IDS,createMcrStagingPack} from '../dist/universal-v2/mcr-staging-pack.mjs';
@@ -25,6 +25,9 @@ const READY=[
  '095','097','098','099','100','101','102','103','104','105','106','107','108','109','110','111',
  '112','113'
 ].map(n=>'MCR-1-'+n);
+const VOL2_READY=[
+ '001','005','006','020','023','024','026','027','028','032','033','037','046','047','056','063','070','077'
+].map(n=>'MCR-2-'+n);
 
 const pack=createMcrStagingPack();
 const packs=pack;
@@ -86,10 +89,13 @@ function act(s,pred){
 
 test('Macross catalog keeps official counts and does not claim battle support',()=>{
  const catalog=mcrCatalog();
- assert.equal(catalog.deck.length,113);
+ assert.equal(catalog.deck.length,190);
+ assert.equal(catalog.vol2.length,77);
  assert.equal(catalog.booster.length,100);
  assert.equal(catalog.starterOnly.length,13);
- assert.equal(catalog.ap.length,6);
+ assert.equal(catalog.ap.length,13);
+ assert.equal(catalog.ap.filter(card=>card.set==='UA36ST'||card.id.startsWith('MCR-1-')).length,6);
+ assert.equal(catalog.ap.filter(card=>card.id.startsWith('MCR-2-')).length,7);
  assert.equal(catalog.reprints.length,9);
  const sheryl=catalog.byId.get(id('001'));
  assert.equal(sheryl.energy,0);
@@ -99,21 +105,45 @@ test('Macross catalog keeps official counts and does not claim battle support',(
  const skull=catalog.byId.get(id('055'));
  assert.deepEqual(skull.traits,['S.M.S／スカル小隊']);
  assert.equal(skull.sets.includes('UA36ST'),true);
+ const rarity={};
+ for(const card of catalog.vol2)rarity[card.rarity]=(rarity[card.rarity]||0)+1;
+ assert.deepEqual(rarity,MCR2_BOOSTER_RARITIES);
+ const colors={};
+ for(const card of catalog.vol2)colors[card.color]=(colors[card.color]||0)+1;
+ assert.deepEqual(colors,{yellow:10,blue:8,purple:43,red:16});
+ const sheryl2=catalog.byId.get('MCR-2-001');
+ assert.equal(sheryl2.energy,0);
+ assert.equal(sheryl2.gen,1);
+ assert.equal(sheryl2.genMark,'');
+ assert.equal(sheryl2.effectJa,'-');
+ const bird=catalog.byId.get('MCR-2-071');
+ assert.equal(bird.effectJa.includes('〈サラ・ノーム〉を1枚'),true);
+ assert.equal(bird.errata,'https://www.unionarena-tcg.com/en/news/034.php');
  for(const card of catalog.cards){
   assert.equal(card.battleReady,false);
   assert.equal(card.playable,false);
   assert.equal(card.effectImplemented,false);
   assert.equal(card.cardDataVerified,false);
-  assert.equal(card.confirmedTc,false);
   assert.equal(card.auto,false);
+  const vol2=card.set==='EX14BT';
+  assert.equal(card.confirmedTc,vol2);
+  if(vol2){
+   assert.equal(card.displaySource,
+    'https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no='+
+    encodeURIComponent(card.set+'/'+card.id));
+  }
  }
- const frames=catalog.deck.filter(card=>card.raidFrame).map(card=>Number(card.id.slice(-3)));
+ const set1=catalog.deck.filter(card=>card.set!=='EX14BT');
+ const frames=set1.filter(card=>card.raidFrame).map(card=>Number(card.id.slice(-3)));
  assert.deepEqual(frames,MCR_RAID_FRAME_NUMBERS);
+ const frames2=catalog.vol2.filter(card=>card.raidFrame).map(card=>Number(card.id.slice(-3)));
+ assert.deepEqual(frames2,[...MCR2_RAID_FRAME_NUMBERS]);
 });
 
 test('only the exact shared profiles enter the battle pack',()=>{
- assert.deepEqual([...MCR_STAGING_IDS].sort(),[...READY].sort());
- assert.deepEqual(Object.keys(officialV2Pack('mcr').cards).sort(),[...READY].sort());
+ const admitted=[...READY,...VOL2_READY].sort();
+ assert.deepEqual([...MCR_STAGING_IDS].sort(),admitted);
+ assert.deepEqual(Object.keys(officialV2Pack('mcr').cards).sort(),admitted);
  assert.equal(createMcrBattlePack(),officialV2Pack('mcr'));
  const practice=mcrPracticeDeck();
  assert.deepEqual(validateUniversalDeck(practice.pack,practice.counts),[]);
@@ -1144,4 +1174,93 @@ test('099 lets the opponent choose the deck side unless Basara is on the field',
  self=act(self,a=>a.place==='bottom');
  assert.equal(self.players[1].deck.at(-1).uid,marked.uid);
  assert.equal(assertUniversalMatch(packs,self),true);
+});
+
+test('Vol.2 exact prints enter and raid frames stay out',()=>{
+ for(const cardId of VOL2_READY)
+  assert.equal(mcrSharedProgram(mcrCatalog().byId.get(cardId)).ready,true);
+ for(const cardId of ['MCR-2-004','MCR-2-008','MCR-2-016','MCR-2-036','MCR-2-045','MCR-2-052','MCR-2-053','MCR-2-054','MCR-2-069']){
+  assert.equal(mcrSharedProgram(mcrCatalog().byId.get(cardId)).ready,false);
+  assert.equal(pack.cards[cardId],undefined);
+ }
+ const purple=pack.cards['MCR-2-024'];
+ assert.equal(purple.color,'purple');
+ assert.equal(purple.gen,1);
+ assert.equal(purple.activeExtraEnergy,1);
+ assert.deepEqual(purple.traits,['ケイオス／Δ小隊']);
+ assert.equal(purple.traitComponents,undefined);
+ assert.equal(pack.cards['MCR-2-027'].impactNull,true);
+ assert.equal(pack.cards['MCR-2-037'].impactNull,true);
+});
+
+test('005 looks at the top card privately and can place it outside',()=>{
+ const counts=deckOf({'MCR-2-005':4,'MCR-2-001':4});
+ let s=reach(counts,25);
+ const played=take(s,0,'MCR-2-005');
+ s.players[0].hand.push(played);
+ const secret=take(s,0,'MCR-2-001');
+ s.players[0].deck.unshift(secret);
+ s=act(s,a=>a.type==='play'&&a.uid===played.uid);
+ assert.equal(s.pending?.kind,'private-top-or-outside');
+ assert.equal(s.pending.uid,secret.uid);
+ const own=universalPrivateChoices(packs,s,0);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assert.equal(own.options[0].card.cardId,'MCR-2-001');
+ assert.equal(JSON.stringify(universalPublicView(packs,s,1)).includes(JSON.stringify(secret.uid)),false);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopCard',mode:'outside'});
+ assert.equal(s.players[0].outside.some(card=>card.uid===secret.uid),true);
+ assert.equal(s.players[0].deck[0]?.uid===secret.uid,false);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('063 looks at the top card privately and can place it on the bottom',()=>{
+ const counts=deckOf({'MCR-2-063':4,'MCR-2-001':4});
+ let s=reach(counts,26);
+ const played=take(s,0,'MCR-2-063');
+ s.players[0].hand.push(played);
+ const secret=take(s,0,'MCR-2-001');
+ s.players[0].deck.unshift(secret);
+ s=act(s,a=>a.type==='play'&&a.uid===played.uid);
+ assert.equal(s.pending?.kind,'private-top-place');
+ assert.equal(universalPrivateChoices(packs,s,0).options[0].card.cardId,'MCR-2-001');
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopCard',mode:'bottom'});
+ assert.equal(s.players[0].deck.at(-1).uid,secret.uid);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('024 generates one extra purple pip only while active',()=>{
+ const counts=deckOf({'MCR-2-024':4,'MCR-2-027':4,'MCR-2-001':4});
+ let s=reach(counts,27);
+ const battery=seat(s,0,'MCR-2-024','energy',0);
+ assert.equal(universalCardEnergy(packs,s,0,battery),2);
+ battery.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,battery),1);
+ const wall=seat(s,0,'MCR-2-027','front',0);
+ assert.equal(universalImpactNull(packs,s,wall),true);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('077 rests and must buff another character',()=>{
+ const counts=deckOf({'MCR-2-077':4,'MCR-2-001':4});
+ let s=reach(counts,28);
+ const actor=seat(s,0,'MCR-2-077','front',0);
+ const ally=seat(s,0,'MCR-2-001','front',1);
+ s=act(s,a=>a.type==='activate'&&a.uid===actor.uid&&a.mode==='selfRestThen');
+ assert.equal(s.players[0].front.find(card=>card?.uid===actor.uid).ready,false);
+ assert.equal(s.pending?.kind,'effect-buff-own');
+ assert.deepEqual(s.pending.choices,[ally.uid]);
+ assert.equal(s.pending.optional,false);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOwnBuff',uid:ally.uid});
+ assert.equal(universalBp(packs,s,s.players[0].front[1]),
+  pack.cards['MCR-2-001'].bp+1000);
+ assert.equal(s.pending,null);
+ const alone=reach(counts,29);
+ const solo=seat(alone,0,'MCR-2-077','front',0);
+ assert.equal(legalUniversalActions(packs,alone).some(a=>a.type==='activate'&&a.uid===solo.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,alone,
+  {type:'activate',uid:solo.uid,mode:'selfRestThen'}));
+ assert.equal(alone.players[0].front[0].ready,true);
+ assert.equal(assertUniversalMatch(packs,alone),true);
 });

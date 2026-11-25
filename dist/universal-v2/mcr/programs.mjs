@@ -3,7 +3,7 @@
 // stays out until every framed keyword is listed in the raid box.
 const norm=text=>String(text??'').replace(/\s+/g,'');
 const EMPTY=new Set(['','-']);
-const INK={yellow:'黄',blue:'青',red:'赤'};
+const INK={yellow:'黄',blue:'青',red:'赤',purple:'紫'};
 const STANDARD=Object.freeze({
  '':null,
  '-':null,
@@ -288,7 +288,8 @@ export function mcrSharedProgram(card){
   return onPlay({op:'draw',count:1});
  if(card.type==='character'&&effect==='【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。')
   return onPlay({op:'bounceOwnOtherUnderEnergy',energy:1});
- if(card.type==='character'&&effect==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）')
+ if(card.type==='character'&&(effect==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）'||
+  effect==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）'))
   return dsl({impactNull:true});
  const discount=DISCOUNT[card.color];
  if(card.type==='character'&&discount&&effect===norm(discount.text))
@@ -331,8 +332,20 @@ export function mcrSharedProgram(card){
   '【起動メイン】【レストにする】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。'))
   return dsl({mainAbility:{op:'restSelfThen',frontOnly:false,then:[{op:'peekTopOrBottom'}]}});
  if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】自分の場の他のキャラを1枚選び、このターン中、BP+1000。'))
+  return dsl({mainAbility:{op:'restSelfThen',frontOnly:false,then:[{
+   op:'buffOwnField',optional:false,bp:1000,excludeSelf:true,
+   filter:{field:'type',value:'character'}
+  }]}});
+ if(card.type==='character'&&effect===norm(
   '【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。'))
   return onPlay({op:'peekTopOrBottom'});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から1枚見て、山札の上か下に置く。'))
+  return onPlay({op:'peekTopOrBottom'});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から1枚見て、山札の上か場外に置く。'))
+  return onPlay({op:'peekTopOrOutside'});
  if(card.type==='character'&&effect===norm(
   `【起動メイン】【レストにする】【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+【${ink}】。`))
   return dsl({mainAbility:{op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1}});

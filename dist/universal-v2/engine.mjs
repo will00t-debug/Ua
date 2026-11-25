@@ -23965,7 +23965,8 @@ function restThenOpen(pack,s,owner,source,ability){
  if(step?.op==='chooseFrontOrOwnTrait'&&step.optional===false)
   return sideTraitChoices(pack,s,owner,step,source.uid).length>0;
  if(step?.op==='buffOwnField'&&step.optional===false)
-  return field(s.players[owner]).some(c=>matchesBuffTarget(pack,s,c,step));
+  return field(s.players[owner]).some(c=>
+   (!step.excludeSelf||c.uid!==source.uid)&&matchesBuffTarget(pack,s,c,step));
  if(step?.op==='enemyBpDown'&&step.optional===false)
   return s.players[1-owner].front.some(c=>c&&bp(pack,s,c)>=(step.minBp||0)&&
    cardEffectTargetPayable(pack,s,owner,c.uid,0,source.uid));
