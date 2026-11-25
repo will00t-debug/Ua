@@ -26,6 +26,7 @@ import {
  MINE_BATCHES,PREFERENCE_IDS,RAID_ID,SCALE,batchPlan,earlierSeeds
 } from '../training/white-sword-ai/v5d1/lib/protocol.mjs';
 import {renderReport} from '../training/white-sword-ai/v5d1/lib/report.mjs';
+import {isActivate060Pair} from '../training/white-sword-ai/v5d/lib/select.mjs';
 import {gameCoverage,selectBalancedGames,splitByOpponent} from '../training/white-sword-ai/v5d1/lib/select.mjs';
 
 const WORKERS=Math.max(1,Math.min(Number(process.env.WS_WORKERS||4),MAX_WORKERS));
@@ -209,7 +210,7 @@ async function main(){
  const base={
   codeVersion:CODE_VERSION,official,frozenWeight:FROZEN_WEIGHT,adopted:false,promoted:false,
   singletonOpponents:plan.singletonOpponents||[],
-  mined:{games:mined.games,decisions:mined.decisions,positions:fresh.length,gamesDistinct:coverage.games,selected:picked.length,stopped:mined.stopped},
+  mined:{games:mined.games,decisions:mined.decisions,positions:fresh.filter(isActivate060Pair).length,gamesDistinct:coverage.games,selected:picked.length,stopped:mined.stopped},
   rows:[],leads:[],games:0,installed:false,
   reason:plan.stopped==='too-few'?'不同原始對局不到 8 個，不做 1056 場分支':null,
   matches:null,kinds:{}

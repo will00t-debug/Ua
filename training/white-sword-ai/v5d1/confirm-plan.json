@@ -1,0 +1,54 @@
+{
+  "codeVersion": "v5d1-1",
+  "each": 66,
+  "candidates": [
+    {
+      "id": "21f01b844156dcfe",
+      "role": "train",
+      "seed": 182325,
+      "opponent": "reject-blue"
+    },
+    {
+      "id": "4ccf9f1aed0a9872",
+      "role": "train",
+      "seed": 182300,
+      "opponent": "reject-blue"
+    },
+    {
+      "id": "580d34bf24afd8a5",
+      "role": "train",
+      "seed": 182220,
+      "opponent": "white-sword"
+    },
+    {
+      "id": "817c9156aa465c68",
+      "role": "train",
+      "seed": 182204,
+      "opponent": "white-sword"
+    },
+    {
+      "id": "a091e2f3175ba958",
+      "role": "train",
+      "seed": 182416,
+      "opponent": "renruki"
+    },
+    {
+      "id": "c4c6992a7b3ce65d",
+      "role": "validation",
+      "seed": 182211,
+      "opponent": "white-sword"
+    },
+    {
+      "id": "f0552dfcfd6937ee",
+      "role": "validation",
+      "seed": 182430,
+      "opponent": "renruki"
+    },
+    {
+      "id": "f949c5cb1314aa74",
+      "role": "validation",
+      "seed": 182302,
+      "opponent": "reject-blue"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "codeVersion": "v5d1-1",
+  "stopped": "ready",
+  "ids": [
+    "21f01b844156dcfe",
+    "4ccf9f1aed0a9872",
+    "580d34bf24afd8a5",
+    "817c9156aa465c68",
+    "a091e2f3175ba958",
+    "c4c6992a7b3ce65d",
+    "f0552dfcfd6937ee",
+    "f949c5cb1314aa74"
+  ],
+  "roles": {
+    "21f01b844156dcfe": "train",
+    "4ccf9f1aed0a9872": "train",
+    "580d34bf24afd8a5": "train",
+    "817c9156aa465c68": "train",
+    "a091e2f3175ba958": "train",
+    "c4c6992a7b3ce65d": "validation",
+    "f0552dfcfd6937ee": "validation",
+    "f949c5cb1314aa74": "validation"
+  },
+  "games": [
+    "reject-blue|182325",
+    "reject-blue|182300",
+    "white-sword|182220",
+    "white-sword|182204",
+    "renruki|182416",
+    "white-sword|182211",
+    "renruki|182430",
+    "reject-blue|182302"
+  ],
+  "singletonOpponents": []
+}

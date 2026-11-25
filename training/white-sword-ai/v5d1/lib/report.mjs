@@ -75,7 +75,7 @@ export function renderReport(study){
   '訓練組已確認 '+count(study.trainConfirmed)+' 個，其中支持結束行動 '+count(study.trainEnd)+' 個、支持起動 '+count(study.trainActivate)+' 個。驗證組已確認 '+count(study.validationConfirmed)+' 個，其中支持結束行動 '+count(study.validationEnd)+' 個、支持起動 '+count(study.validationActivate)+' 個。未確認只表示證據不足，不表示兩個動作等價。',
   '## 泛化',
   gameText,
-  '驗證組平均差為負 '+count(study.validationNegative)+' 個，為正 '+count(study.validationPositive)+' 個，為 0 '+count(study.validationTie)+' 個。',
+  '驗證組裡，平均差為負的有 '+count(study.validationNegative)+' 個，為正的有 '+count(study.validationPositive)+' 個，為 0 的有 '+count(study.validationTie)+' 個。',
   contrast(study.contrast),
   ruleText,
   '## 和殘差的比較',
