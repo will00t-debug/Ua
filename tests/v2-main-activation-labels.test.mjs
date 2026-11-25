@@ -54,7 +54,9 @@ function modesOf(card){
  const op=card.mainAbility?.op;
  const fixed={
   onceAbovePrintedKeywords:'abovePrinted',readyFrontProgram:'readyFront',
-  entryTurnLifeChoice:'entryLife',kurisuFrontDual:'discount',
+  entryTurnLifeChoice:'entryLife',frontOnceLifeThen:'frontLife',
+  restDiscardNameDown:'restDiscardDown',restNameOnceChoose:'restNameOnce',
+  kurisuFrontDual:'discount',
   retireOwnFieldThen:'retireFieldThen',crowdFrontDown:'printCrowd',
   printReadyGate:'printReadyGate',gainSameLineMains:'gainLineMains',
   frontDrawOrHandTrigger:'frontDraw',characterDualMain:'kindsActive',

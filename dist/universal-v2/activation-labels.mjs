@@ -2,8 +2,8 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs?v=20261125mcr9';
-import {cardHasName} from './field-conditions.mjs?v=20261125mcr9';
+import {universalBp} from './engine.mjs?v=20261125mcr10';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr10';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -276,6 +276,12 @@ function effectWords(ability,action){
   return `本回合 BP＋${bp??500}`;
  if(op==='lifeToHandOnce'||mode==='lifeToHand')
   return '將自己 1 張生命牌加入手牌';
+ if(op==='frontOnceLifeThen'||mode==='frontLife')
+  return '將 1 張生命牌加入手牌，然後抽 1 張並讓下一張歌（雪兒）減 1 AP';
+ if(op==='restDiscardNameDown'||mode==='restDiscardDown')
+  return '休息並把 1 張手牌放到場外，對手前線全部 BP－1000';
+ if(op==='restNameOnceChoose'||mode==='restNameOnce')
+  return '休息後選擇抽 1 棄 1，或生命牌入手後抽 2 棄 1';
  if(op==='entryTurnLifeChoice'||mode==='entryLife')
   return '本回合登場時，生命牌入手後抽 2 棄 1，或已入手過時抽 1';
  if(op==='readyFrontProgram'||mode==='readyFront')

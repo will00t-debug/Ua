@@ -1,4 +1,4 @@
-import {DISCOUNT_KIND,grantHandDiscount,grantHandDiscountFromUsedEvent,handPlayApPlan,definitionGrantsDiscount,definitionGrantsUsedEventDiscount} from './ap-discounts.mjs?v=20261125mcr9';
+import {DISCOUNT_KIND,grantHandDiscount,grantHandDiscountFromUsedEvent,handPlayApPlan,definitionGrantsDiscount,definitionGrantsUsedEventDiscount} from './ap-discounts.mjs?v=20261125mcr10';
 // UNIVERSAL RULES V2 EXPERIMENT. No production title uses this reducer yet.
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
@@ -9,10 +9,10 @@ import {assignPointCards,assertPointCardIdentities} from './point-cards.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
-import {matchesPrintedRequiredEnergyAtLeast,matchesPrintedRequiredEnergyAtMost,matchesPrintedRequiredEnergyExact} from './ap-discounts.mjs?v=20261125mcr9';
+import {matchesPrintedRequiredEnergyAtLeast,matchesPrintedRequiredEnergyAtMost,matchesPrintedRequiredEnergyExact} from './ap-discounts.mjs?v=20261125mcr10';
 import {cardHasName,cardHasTrait,cardCountsAsEvent,printedFieldCard,usedOwnEventThisTurn,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,countOwnPrintedTrait,countOppRestCharacters,countOwnPrintedApAtLeast,countOwnDistinctTraitNames,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
- countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs?v=20261125mcr9';
+ countOwnOutsidePhysicalGroups,countOwnOutsideEventTriggerKinds,mamiOutsideEventBonus} from './field-conditions.mjs?v=20261125mcr10';
 import {bindMmm2,runMmm2Job,legalMmm2Pending,resolveMmm2Pending,
  legalMmm2Activations,activateMmm2,finishU045Look} from './mmm-exedra-runtime.mjs';
 import {bindIys,runIysJob,legalIysPending,resolveIysPending,
@@ -672,6 +672,16 @@ function draw(pack,s,p,count=1,{reason='rule',sourceUid=null}={}){
  if(moved){
   if(!Array.isArray(s.drawnThisTurn))s.drawnThisTurn=[0,0];
   s.drawnThisTurn[p]+=moved;
+  // 自分の効果でカードを引いた時. A rule draw and a search are not this.
+  // The wake is immediate, and a listed raid frame stays quiet until face-up.
+  if(reason==='own-effect'&&s.phase==='main'&&s.active===p){
+   for(const c of s.players[p].front.filter(Boolean)){
+    const rule=card(pack,c).effectDrawActive;
+    if(!rule||originalEffectsDisabled(s,c)||!raidBoxTextLive(pack,c,'effectDraw'))continue;
+    if(rule.notEntryTurn===true&&c.entryTurn===s.turn)continue;
+    attemptFieldActive(s,p,c);
+   }
+  }
  }
 }
 function outsideDistinctColorTraitCount(pack,s,owner,scale){
@@ -7260,12 +7270,15 @@ function continueEffectQueue(pack,s){
    // chosen card enters hand. No life card means the take cannot start, and
    // the contingent draw does not happen. optional:false is a printed must.
    if(pl.life.length){
-    const step=job.then[0];
-    const follow=step.op==='draw'?null:step;
+    const steps=job.then;
+    const follows=steps.length===2?steps.map(step=>({...step})):null;
+    const step=steps[0];
+    const follow=!follows&&step.op!=='draw'?step:null;
     s.pending={kind:'effect-life-to-hand',player:owner,
      sourceUid:job.sourceUid,choices:pl.life.map(c=>c.uid),
      optional:job.optional!==false,
-     ...(follow?{follow:{...follow},sourceName:job.sourceName}:{drawCount:step.count})};
+     ...(follows?{follows,sourceName:job.sourceName}:
+      follow?{follow:{...follow},sourceName:job.sourceName}:{drawCount:step.count})};
    }
   }else if(job.op==='grantOtherImpactThisTurn'){
    const matches=c=>{
@@ -14798,7 +14811,10 @@ function resolveChoice(s,a,pack){
     reason:'own-effect',sourceUid:q.sourceUid});
    // Q750 / Q429: the contingent draw, active, or retirement finishes
    // before a life-zero loss is declared. Declining takes nothing.
-   if(q.follow)s.effectQueue.unshift({...q.follow,owner:q.player,
+   if(Array.isArray(q.follows)&&q.follows.length)
+    s.effectQueue.unshift(...q.follows.map(step=>({...step,owner:q.player,
+     sourceUid:q.sourceUid,sourceName:q.sourceName})));
+   else if(q.follow)s.effectQueue.unshift({...q.follow,owner:q.player,
     sourceUid:q.sourceUid,sourceName:q.sourceName});
    else if((q.drawCount??1)>0)draw(pack,s,q.player,q.drawCount??1,{reason:'own-effect',sourceUid:q.sourceUid});
   }
@@ -25330,6 +25346,18 @@ export function legalUniversalActions(pack,s){
    if(printedMain?.op==='entryTurnLifeChoice'&&
     entryLifeChoiceOpen(pack,s,p,c,printedMain))
     out.push({type:'activate',uid:c.uid,mode:'entryLife'});
+   if(printedMain?.op==='frontOnceLifeThen'&&pl.front.some(x=>x?.uid===c.uid)&&
+    !s.mainAbilityUsedUids.includes(c.uid)&&pl.life.length&&
+    ownFrontHasPrintedName(pack,s,p,printedMain.requiresName))
+    out.push({type:'activate',uid:c.uid,mode:'frontLife'});
+   if(printedMain?.op==='restDiscardNameDown'&&c.ready&&pl.hand.length&&
+    !s.mainReadyOnceByName[p].includes(card(pack,c).name+'|restDiscardDown')&&
+    pl.front.some(x=>x&&cardHasTrait(card(pack,x),printedMain.trait)))
+    out.push({type:'activate',uid:c.uid,mode:'restDiscardDown'});
+   if(printedMain?.op==='restNameOnceChoose'&&c.ready&&
+    !s.mainReadyOnceByName[p].includes(card(pack,c).name+'|restNameOnce')&&
+    pl.front.some(x=>x&&String(card(pack,x).name||'').includes(printedMain.requiresIncludes)))
+    out.push({type:'activate',uid:c.uid,mode:'restNameOnce'});
    if(printedMain?.op==='payApDraw'&&!s.mainAbilityUsedUids.includes(c.uid)&&
     pl.apCards.some(x=>x.ready))
     out.push({type:'activate',uid:c.uid,mode:'payApDraw'});
@@ -28081,6 +28109,42 @@ if(ability.op==='characterDualMain'){
      sourceUid:selected.uid,sourceName:d.name});
     s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,choices,
      filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true};
+    break;
+   }
+   if(ability.op==='frontOnceLifeThen'){
+    const named=ownFrontHasPrintedName(pack,s,p,ability.requiresName);
+    if(action.mode!=='frontLife'||!pl.front.some(x=>x?.uid===selected.uid)||
+     s.mainAbilityUsedUids.includes(onceUid)||!pl.life.length||!named)
+     throw Error('Front life follow-up is not legal');
+    s.mainAbilityUsedUids.push(onceUid);
+    s.effectQueue.push({...ability.then[0],owner:p,sourceUid:selected.uid,sourceName:d.name});
+    continueEffectQueue(pack,s);
+    break;
+   }
+   if(ability.op==='restDiscardNameDown'){
+    const key=d.name+'|restDiscardDown';
+    const knight=pl.front.some(x=>x&&cardHasTrait(card(pack,x),ability.trait));
+    if(action.mode!=='restDiscardDown'||!selected.ready||!pl.hand.length||!knight||
+     s.mainReadyOnceByName[p].includes(key))
+     throw Error('Named front reduction is not legal');
+    noteOwnEffectRest(s,p,selected);
+    selected.ready=false;
+    s.mainReadyOnceByName[p].push(key);
+    s.effectQueue.push({...ability.then[0],owner:p,sourceUid:selected.uid,sourceName:d.name});
+    s.pending={kind:'effect-discard',player:p,sourceUid:selected.uid};
+    break;
+   }
+   if(ability.op==='restNameOnceChoose'){
+    const key=d.name+'|restNameOnce';
+    const named=pl.front.some(x=>x&&String(card(pack,x).name||'').includes(ability.requiresIncludes));
+    if(action.mode!=='restNameOnce'||!selected.ready||!named||
+     s.mainReadyOnceByName[p].includes(key))
+     throw Error('Named once choice is not legal');
+    noteOwnEffectRest(s,p,selected);
+    selected.ready=false;
+    s.mainReadyOnceByName[p].push(key);
+    s.effectQueue.push({...ability.choice,owner:p,sourceUid:selected.uid,sourceName:d.name});
+    continueEffectQueue(pack,s);
     break;
    }
    if(ability.op==='entryTurnLifeChoice'){

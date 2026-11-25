@@ -296,6 +296,7 @@ const RAID_BOX_FEATURES=Object.freeze({
  'MCR-1-093':["printedImpact","passive","attackWinDraw","battleLoseToHand","onPlay"],
  // EX14BT. The Raid permission line is not a framed keyword. 036's hand-raid
  // AP reduction sits above the frame and stays live on an ordinary raid.
+ 'MCR-2-004':["passive","main"],
  'MCR-2-036':["onAttack"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));

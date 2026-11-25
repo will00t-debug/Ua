@@ -300,6 +300,15 @@ export function mcrSharedProgram(card){
    op:'buffOwnField',all:true,bp:1000,optional:false,excludeSelf:false,
    filter:{field:'type',value:'character'}
   }]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈シェリル・ノーム〉アクティブにし、フロントLに移動できる\n自分のフロントLに〈ランカ・リー〉がある場合、このキャラは以下の効果を全て得る。\n・【インパクト（1）】\n・【起動メイン】【フロントLにある場合】 【ターン1】自分のライフを1枚手札に加える。そうした場合、カードを1枚引き、このターン中、次に手札から使用する［特徴：歌（シェリル）］の消費APを-1する。'))
+  return raid('シェリル・ノーム',{passiveBonuses:[{
+   condition:exactField('ランカ・リー','front'),impact:1
+  }],mainAbility:{op:'frontOnceLifeThen',oncePerTurn:true,frontOnly:true,
+   requiresName:'ランカ・リー',then:[{op:'optionalOwnLifeToHandThenDraw',optional:false,then:[
+    {op:'draw',count:1},
+    {op:'nextEligibleHandPlayApDiscount',filter:{trait:'歌（シェリル）'}}
+   ]}]}});
  if(effect.includes('【レイド】')||effect.includes('レイド以外'))return pending();
  if(EMPTY.has(effect)){
   if(card.type!=='character')return pending();
@@ -792,5 +801,26 @@ export function mcrSharedProgram(card){
     {id:'again',turn:'any',label:'本回合已將生命牌加入手牌時，抽 1 張',
      when:{kind:'ownLifeToHandThisTurn',turn:'own'},then:[{op:'draw',count:1}]}
    ]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】 【手札を1枚場外に置く】自分のフロントLに［特徴：空中騎士団］がある場合のみ発動できる。相手のフロントLのキャラ全ては、このターン中、BP-1000。〈ハインツ・ネーリッヒ・ウィンダミア〉のこの効果は1ターンに1回のみ発動できる。'))
+  return dsl({mainAbility:{op:'restDiscardNameDown',once:'name',payHand:1,zone:'front',
+   trait:'空中騎士団',then:[{op:'enemyFrontAllBpDown',bp:1000}]}});
+ if(card.type==='character'&&effect===norm(
+  '【フロントLにある場合】このキャラが登場したターン以外の自分のメインフェイズ中に、自分の効果でカードを引いた時、このキャラをアクティブにする。\n【起動メイン】【フロントLにある場合】 【レストにする】このキャラはこのターン中、BP+1000。\n【アタック時】このキャラのBPが5000以上の場合、自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。'))
+  return dsl({triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true},
+   effectDrawActive:{line:'front',phase:'main',notEntryTurn:true},
+   mainAbility:{op:'restSelfThen',frontOnly:true,then:[{op:'buffSelf',bp:1000}]},
+   effects:{onAttack:[{op:'ifLiveThen',when:{kind:'selfCurrentBpAtLeast',turn:'any',minBp:5000},
+    then:[{op:'inspectTopAnyOutside',count:2,rest:'top'}]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】自分のフロントLにカード名に「ハヤテ」を含むキャラがある場合のみ発動できる。以下から1つ選ぶ。〈フレイア・ヴィオン〉のこの効果は1ターンに1回のみ発動できる。\n・カードを1枚引き、自分の手札を1枚場外に置く。\n・自分のライフを1枚手札に加える。そうした場合、カードを2枚引き、自分の手札を1枚場外に置く。'))
+  return dsl({mainAbility:{op:'restNameOnceChoose',once:'name',zone:'front',requiresIncludes:'ハヤテ',
+   choice:{op:'chooseOne',optional:false,options:[
+    {id:'draw',turn:'any',label:'抽 1 張，並把 1 張手牌放到場外',
+     then:[{op:'drawDiscard',count:1}]},
+    {id:'life',turn:'any',label:'將 1 張生命牌加入手牌，然後抽 2 張並把 1 張手牌放到場外',
+     then:[{op:'optionalOwnLifeToHandThenDraw',optional:false,then:[
+      {op:'drawDiscard',count:2,discardCount:1}]}]}
+   ]}}});
  return pending();
 }

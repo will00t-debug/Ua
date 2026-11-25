@@ -2695,11 +2695,17 @@ function verifyProgram(program,path){
     integer(step.bp,500)&&step.bp<=50000&&step.bp%500===0&&
     Object.keys(step).length===3&&
     Object.keys(step).every(k=>['op','optional','bp'].includes(k));
-   if(!Array.isArray(e.then)||e.then.length!==1||!(draw||active||retire||discard)||
+   const pair=e.optional===false&&Array.isArray(e.then)&&e.then.length===2&&draw&&
+    e.then[1]?.op==='nextEligibleHandPlayApDiscount'&&e.then[1].filter&&
+    Object.keys(e.then[1]).length===2&&
+    Object.keys(e.then[1]).every(k=>k==='op'||k==='filter');
+   const one=Array.isArray(e.then)&&e.then.length===1&&(draw||active||retire||discard);
+   if(!(one||pair)||
     (e.optional!==undefined&&e.optional!==false)||
     Object.keys(e).length!==2+Number(e.optional===false)||
     Object.keys(e).some(k=>!['op','then','optional'].includes(k)))
     throw Error(path+'['+i+'] invalid optional life-to-hand draw');
+   if(pair)verifyProgram(e.then,path+'['+i+'].then');
   }
   if(e.op==='outsideTriggerDrawBranch'&&(
    e.color!=='blue'||e.maxEnergy!==3||e.atMost!==3||Object.keys(e).length!==4||
@@ -5690,6 +5696,8 @@ function normalize(card,packId){
     Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k)))||
    (mainAbility.then[0]?.op==='draw'&&mainAbility.then[0].count===1&&
     Object.keys(mainAbility.then[0]).length===2)||
+   (mainAbility.then[0]?.op==='buffSelf'&&mainAbility.then[0].bp===1000&&
+    Object.keys(mainAbility.then[0]).length===2)||
    (mainAbility.then[0]?.op==='skipNextActiveOppRest'&&
     mainAbility.then[0].optional===false&&mainAbility.then[0].frontOnly===true&&
     Object.keys(mainAbility.then[0]).length===3)))||
@@ -6482,6 +6490,26 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===5&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','requireReady','then'].includes(k));
  if(mainReadyFront)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const lifeThen=mainAbility?.then;
+ const mainFrontLife=mainAbility?.op==='frontOnceLifeThen'&&card.type==='character'&&
+  mainAbility.oncePerTurn===true&&mainAbility.frontOnly===true&&
+  typeof mainAbility.requiresName==='string'&&!!mainAbility.requiresName.trim()&&
+  mainAbility.requiresName.length<=80&&
+  Array.isArray(lifeThen)&&lifeThen.length===1&&
+  lifeThen[0]?.op==='optionalOwnLifeToHandThenDraw'&&lifeThen[0].optional===false&&
+  Object.keys(mainAbility).length===5&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','requiresName','then'].includes(k));
+ if(mainFrontLife)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const downThen=mainAbility?.then;
+ const mainRestDown=mainAbility?.op==='restDiscardNameDown'&&card.type==='character'&&
+  mainAbility.once==='name'&&mainAbility.payHand===1&&mainAbility.zone==='front'&&
+  typeof mainAbility.trait==='string'&&!!mainAbility.trait.trim()&&mainAbility.trait.length<=80&&
+  Array.isArray(downThen)&&downThen.length===1&&
+  downThen[0]?.op==='enemyFrontAllBpDown'&&downThen[0].bp===1000&&
+  Object.keys(downThen[0]).length===2&&
+  Object.keys(mainAbility).length===6&&
+  Object.keys(mainAbility).every(k=>['op','once','payHand','zone','trait','then'].includes(k));
+ if(mainRestDown)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  const entryChoice=mainAbility?.then?.[0];
  const mainEntryLife=mainAbility?.op==='entryTurnLifeChoice'&&card.type==='character'&&
   mainAbility.oncePerTurn===true&&mainAbility.entryTurnOnly===true&&
@@ -6491,11 +6519,19 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','entryTurnOnly','then'].includes(k));
  if(mainEntryLife)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const mainRestNameOnce=mainAbility?.op==='restNameOnceChoose'&&card.type==='character'&&
+  mainAbility.once==='name'&&mainAbility.zone==='front'&&
+  typeof mainAbility.requiresIncludes==='string'&&!!mainAbility.requiresIncludes.trim()&&
+  mainAbility.requiresIncludes.length<=80&&
+  mainAbility.choice?.op==='chooseOne'&&mainAbility.choice.optional===false&&
+  Object.keys(mainAbility).length===5&&
+  Object.keys(mainAbility).every(k=>['op','once','zone','requiresIncludes','choice'].includes(k));
+ if(mainRestNameOnce)verifyProgram([mainAbility.choice],card.id+'.mainAbility.choice');
  const mainLifeToHand=mainAbility?.op==='lifeToHandOnce'&&card.type==='character'&&
   mainAbility.oncePerTurn===true&&Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(sharedPrintMain(card,mainAbility)||sharedPrintMoreMain(card,mainAbility)||sharedPrintNextMain(card,mainAbility)||sharedPrintLastMain(card,mainAbility)||sharedPrintVol2Main(card,mainAbility)||mainRestBatch||fieldDualMain||fieldRestRetireThen||fieldRestRetire||mainRestRetireRecover||mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainPayApDraw||mainPayApDrawBuff||mainRestTraitOutside||mainRestRetireThen||mainActiveEnergy||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainPrintedEnergyRetire||mainRestDiscardTraitAp||mainRestDiscardAttackDraw||mainRestIfTraitDraw||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFrontBpChoice||mainFieldOnceBuff||mainOnceBuffField||mainDiscardDeploy||mainHandUnderOnce||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainEnergyDraw||mainEnergyMode||mainNamedEnergy||mainRestRetireTrait||mainGunmenModes||mainDoubleEnergy||mainRestDiscard||fieldPeek||fieldRestDrawTop||mainRestLeaveReveal||mainHandBlock||mainSniperBase||mainNameDrawDiscard||mainOwnEffectRest||mainRevealBottom||mainRevealImpact||mainHandPayReveal||mainHandPayOutside||mainRestActiveFrontDraw||mainRestedRetireImpact||mainNamedImpact||mainEnergySwap||mainFrontActiveBuff||mainEmiliaHandDiscount||mainRestBuffHand||mainRestReturn||mainRepeatHand||mainFrontEnergyChoice||mainDiscardEnergy||mainActiveNamed||mainOnceActive||mainRestRetireEvent||mainOnceChoose||mainEnergyRestRetire||mainRestChoose||mainGrantBlock||mainOwnRestActive||mainEnteredDiscard||mainAbovePrinted||mainEntryRest||mainHandTop||mainDrawTrigger||mainFrontChoose||mainDualCharacter||mainRestRetireNamed||mainOutsideTrait||mainRestTrait||fieldMillEvent||fieldTuckRelease||mainTuck||fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainCurrentBpOnce||mainLifeToHand||mainEntryLife||mainReadyFront||mainPayAp||mainPayApDraw||mainPayApDrawBuff||mainRestTraitOutside||mainRestRetireThen||mainActiveEnergy||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainPrintedEnergyRetire||mainRestDiscardTraitAp||mainRestDiscardAttackDraw||mainRestIfTraitDraw||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFrontBpChoice||mainFieldOnceBuff||mainOnceBuffField||mainDiscardDeploy||mainHandUnderOnce||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRepeatDiscard||nameOnceActive||nameOnceEvent||mainCardOnce||handNameOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed||mainFrontRetireLook||mainFacedownEnergy)||mainEventUntil||mainEventFrontEnergy||mainReadyRested||mainRestNamedChoose||mainActiveOnceKey||mainKurisuDual||mainRukaGrant||mainOkabeRemoveRaid||mainNamesActive||mainTraitBuff||mainEventRestChoice||mainEnergySuite||mainEntryOtherImpact||mainBpActive||mainFieldDiscardDraw||mainFieldRestBuff||mainLifeActive||mainRestPeek||mainDiscardEventEnergy||mainLifeReenter||mainOutsideActive||mainFrontDiscardBuff||mainSongRestBuff||mainFrontReturn||mainRestReturnEither||mainOnceSwap||mainOutsideDamage||mainNameLifeTrait||mainPeekBuff||mainFieldDiscard||mainNamedBpDraw||mainMmm2||mainIys||mainKjn||mainCsm||mainAot||mainAot2||mainKmr||mainKmr2||restRetireSequence||discardExactFrontMove||mainPayHandMove||mainPayHandMoveSelf||mainPayHandImpact||mainOnceTuck||mainGainLine||mainNameBuff||gatedRestRetireThen||mainNamedKit||mainBpRules||mainOppDown||mainFrontEnergyActive||mainPrintedChoice||mainNameShared||mainDistinctEnergy||mainRestTuck||mainMoveFront||mainEntryDraw||mainFrontDown||mainStripDraw||mainClearUnder||mainRetireGrant||mainPayKit||mainRetireReplay||mainEnergyPair||mainEnergyDeck||mainFieldDeploy||mainFinalPeek||mainFrontDiscount||mainMcr)))
+  (!['character','field'].includes(card.type)||!(sharedPrintMain(card,mainAbility)||sharedPrintMoreMain(card,mainAbility)||sharedPrintNextMain(card,mainAbility)||sharedPrintLastMain(card,mainAbility)||sharedPrintVol2Main(card,mainAbility)||mainRestBatch||fieldDualMain||fieldRestRetireThen||fieldRestRetire||mainRestRetireRecover||mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainPayApDraw||mainPayApDrawBuff||mainRestTraitOutside||mainRestRetireThen||mainActiveEnergy||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainPrintedEnergyRetire||mainRestDiscardTraitAp||mainRestDiscardAttackDraw||mainRestIfTraitDraw||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFrontBpChoice||mainFieldOnceBuff||mainOnceBuffField||mainDiscardDeploy||mainHandUnderOnce||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainEnergyDraw||mainEnergyMode||mainNamedEnergy||mainRestRetireTrait||mainGunmenModes||mainDoubleEnergy||mainRestDiscard||fieldPeek||fieldRestDrawTop||mainRestLeaveReveal||mainHandBlock||mainSniperBase||mainNameDrawDiscard||mainOwnEffectRest||mainRevealBottom||mainRevealImpact||mainHandPayReveal||mainHandPayOutside||mainRestActiveFrontDraw||mainRestedRetireImpact||mainNamedImpact||mainEnergySwap||mainFrontActiveBuff||mainEmiliaHandDiscount||mainRestBuffHand||mainRestReturn||mainRepeatHand||mainFrontEnergyChoice||mainDiscardEnergy||mainActiveNamed||mainOnceActive||mainRestRetireEvent||mainOnceChoose||mainEnergyRestRetire||mainRestChoose||mainGrantBlock||mainOwnRestActive||mainEnteredDiscard||mainAbovePrinted||mainEntryRest||mainHandTop||mainDrawTrigger||mainFrontChoose||mainDualCharacter||mainRestRetireNamed||mainOutsideTrait||mainRestTrait||fieldMillEvent||fieldTuckRelease||mainTuck||fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainCurrentBpOnce||mainLifeToHand||mainEntryLife||mainFrontLife||mainRestDown||mainRestNameOnce||mainReadyFront||mainPayAp||mainPayApDraw||mainPayApDrawBuff||mainRestTraitOutside||mainRestRetireThen||mainActiveEnergy||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainPrintedEnergyRetire||mainRestDiscardTraitAp||mainRestDiscardAttackDraw||mainRestIfTraitDraw||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFrontBpChoice||mainFieldOnceBuff||mainOnceBuffField||mainDiscardDeploy||mainHandUnderOnce||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRepeatDiscard||nameOnceActive||nameOnceEvent||mainCardOnce||handNameOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed||mainFrontRetireLook||mainFacedownEnergy)||mainEventUntil||mainEventFrontEnergy||mainReadyRested||mainRestNamedChoose||mainActiveOnceKey||mainKurisuDual||mainRukaGrant||mainOkabeRemoveRaid||mainNamesActive||mainTraitBuff||mainEventRestChoice||mainEnergySuite||mainEntryOtherImpact||mainBpActive||mainFieldDiscardDraw||mainFieldRestBuff||mainLifeActive||mainRestPeek||mainDiscardEventEnergy||mainLifeReenter||mainOutsideActive||mainFrontDiscardBuff||mainSongRestBuff||mainFrontReturn||mainRestReturnEither||mainOnceSwap||mainOutsideDamage||mainNameLifeTrait||mainPeekBuff||mainFieldDiscard||mainNamedBpDraw||mainMmm2||mainIys||mainKjn||mainCsm||mainAot||mainAot2||mainKmr||mainKmr2||restRetireSequence||discardExactFrontMove||mainPayHandMove||mainPayHandMoveSelf||mainPayHandImpact||mainOnceTuck||mainGainLine||mainNameBuff||gatedRestRetireThen||mainNamedKit||mainBpRules||mainOppDown||mainFrontEnergyActive||mainPrintedChoice||mainNameShared||mainDistinctEnergy||mainRestTuck||mainMoveFront||mainEntryDraw||mainFrontDown||mainStripDraw||mainClearUnder||mainRetireGrant||mainPayKit||mainRetireReplay||mainEnergyPair||mainEnergyDeck||mainFieldDeploy||mainFinalPeek||mainFrontDiscount||mainMcr)))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
@@ -8468,6 +8504,13 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
   card.type!=='character'||card.effectRestWake?.line!=='front'||
   card.effectRestWake?.oncePerTurn!==true||Object.keys(card.effectRestWake).length!==2))
   throw Error(card.id+' invalid effect-rest wake');
+ const effectDrawActive=card.effectDrawActive??null;
+ if(effectDrawActive!==null&&(
+  card.type!=='character'||effectDrawActive.line!=='front'||effectDrawActive.phase!=='main'||
+  (effectDrawActive.notEntryTurn!==undefined&&effectDrawActive.notEntryTurn!==true)||
+  Object.keys(effectDrawActive).length!==2+Number(effectDrawActive.notEntryTurn===true)||
+  Object.keys(effectDrawActive).some(k=>!['line','phase','notEntryTurn'].includes(k))))
+  throw Error(card.id+' invalid effect-draw activation');
  if(card.allColors!==undefined&&(
   card.allColors!==true||card.type!=='event'||card.color!=='multicolor'))
   throw Error(card.id+' invalid all-color card');
@@ -8849,6 +8892,7 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
   ...(Number.isInteger(card.doubleAttackBpAtLeast)?{doubleAttackBpAtLeast:card.doubleAttackBpAtLeast}:{}),
   ...(card.energyAttackEndDiscardSwap===true?{energyAttackEndDiscardSwap:true}:{}),
   ...(card.effectRestWake?{effectRestWake:Object.freeze({line:'front',oncePerTurn:true})}:{}),
+  ...(effectDrawActive?{effectDrawActive:Object.freeze({...effectDrawActive})}:{}),
   ...(card.allColors===true?{allColors:true}:{}),
   energyLineAttackEndSwap:card.energyLineAttackEndSwap===true,
   ...(typeof card.frontAttackEndNamedSwap==='string'?{frontAttackEndNamedSwap:card.frontAttackEndNamedSwap}:{}),
