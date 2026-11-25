@@ -158,11 +158,13 @@ async function main(){
  }
  const model={beta:frozen.beta,scale:frozen.scale,interactions:frozen.interactions,clip:frozen.clip};
  const depthRows=[];
+ const deepTrain=train.filter(row=>row.diffs.length>=32);
+ const deepDev=dev.filter(row=>row.diffs.length>=32);
  for(const pairs of DEPTHS){
-  const fitRows=designed(train.map(row=>prefix(row,pairs)).filter(Boolean),model.interactions);
-  const held=designed(dev.filter(row=>row.diffs.length>=pairs),model.interactions);
-  if(fitRows.length<20||held.length<5)continue;
-  depthRows.push({pairs,...lossOf(held,fitRidge(fitRows,frozen.lambda))});
+  const fitRows=designed(deepTrain.map(row=>prefix(row,pairs)).filter(Boolean),model.interactions);
+  const held=designed(deepDev,model.interactions);
+  if(fitRows.length<8||held.length<4)continue;
+  depthRows.push({pairs,positions:held.length,...lossOf(held,fitRidge(fitRows,frozen.lambda))});
  }
  const deep=train.filter(row=>row.diffs.length>=32);
  const broad=[];
@@ -202,7 +204,7 @@ async function main(){
  if(picked.length!==plan.ids.length)throw Error('名單裡的局面不在挖掘結果');
  const base={
   codeVersion:CODE_VERSION,official,frozenWeight:FROZEN_WEIGHT,adopted:false,promoted:false,
-  historical:summary,fit:{class:frozen.class,lambda:frozen.lambda,dev:frozen.dev,zero:frozen.zero,devPass:frozen.devPass},
+  historical:summary,fit:{class:frozen.class,lambda:frozen.lambda,dev:frozen.dev,zero:frozen.zero,devPass:frozen.devPass,alternatives:frozen.alternatives},
   depths:depthRows,breadth,mined:{games:mine.games,selected:picked.length},games:0,candidate:false,matches:null
  };
  if(plan.stopped!=='ready'){

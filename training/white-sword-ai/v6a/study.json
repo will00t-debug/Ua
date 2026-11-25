@@ -1,0 +1,308 @@
+{
+  "codeVersion": "v6a-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "frozenWeight": 3.25954286097052,
+  "adopted": false,
+  "promoted": false,
+  "historical": {
+    "positions": 226,
+    "games": 113,
+    "pairs": 3979,
+    "trainGames": 90,
+    "devGames": 23,
+    "medianPairs": 8,
+    "deep": 30
+  },
+  "fit": {
+    "class": "linear",
+    "lambda": 100,
+    "dev": {
+      "mse": 0.02202798160867347,
+      "correlation": 0.03780903283838757,
+      "games": 23
+    },
+    "zero": {
+      "mse": 0.020458788163056456,
+      "correlation": 0,
+      "games": 23
+    },
+    "devPass": false,
+    "alternatives": [
+      {
+        "id": "linear",
+        "lambda": 100,
+        "mse": 0.02202798160867347,
+        "correlation": 0.03780903283838757
+      },
+      {
+        "id": "interaction",
+        "lambda": 1000,
+        "mse": 0.02375099548630353,
+        "correlation": -0.09409431688352564
+      }
+    ]
+  },
+  "depths": [
+    {
+      "pairs": 8,
+      "positions": 5,
+      "mse": 0.02313860313681327,
+      "correlation": 0.04019771911195017,
+      "games": 5
+    },
+    {
+      "pairs": 16,
+      "positions": 5,
+      "mse": 0.02464000184171117,
+      "correlation": 0.2149314711640443,
+      "games": 5
+    },
+    {
+      "pairs": 32,
+      "positions": 5,
+      "mse": 0.021187959954732764,
+      "correlation": 0.02177187304934754,
+      "games": 5
+    }
+  ],
+  "breadth": {
+    "deep": 0.232541313791411,
+    "broad": 0.059897883779088584
+  },
+  "mined": {
+    "games": 24,
+    "selected": 18
+  },
+  "games": 1152,
+  "candidate": false,
+  "matches": null,
+  "independentPass": false,
+  "independent": {
+    "mse": 0.00458354639273013,
+    "correlation": 0.29960143078401646,
+    "games": 18,
+    "p": 0.12143928035982009,
+    "zero": 0.0030381944444444445
+  },
+  "gap": {
+    "gamesNeeded": 43
+  },
+  "stability": {
+    "agree8": 4,
+    "agree16": 5,
+    "compared8": 5,
+    "compared16": 5,
+    "width8": 0.20036874135336066,
+    "width32": 0.17754135369279148
+  },
+  "positions": [
+    {
+      "id": "21863e28349aa008",
+      "opponent": "white-sword",
+      "bucket": "early-energy",
+      "seed": 183202,
+      "mean8": -0.125,
+      "mean16": -0.0625,
+      "mean32": -0.03125
+    },
+    {
+      "id": "0a65765b865fa871",
+      "opponent": "reject-blue",
+      "bucket": "early-energy",
+      "seed": 183301,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "00271d28b71a2c05",
+      "opponent": "renruki",
+      "bucket": "early-energy",
+      "seed": 183401,
+      "mean8": 0.125,
+      "mean16": 0.25,
+      "mean32": 0.09375
+    },
+    {
+      "id": "6573b8ce58186ce7",
+      "opponent": "white-sword",
+      "bucket": "ap",
+      "seed": 183206,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": -0.0625
+    },
+    {
+      "id": "004b6d86cf107c27",
+      "opponent": "reject-blue",
+      "bucket": "ap",
+      "seed": 183306,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "54f2ab85ec82cb64",
+      "opponent": "renruki",
+      "bucket": "ap",
+      "seed": 183407,
+      "mean8": -0.125,
+      "mean16": 0,
+      "mean32": 0.0625
+    },
+    {
+      "id": "1cd86dc2f39f2e66",
+      "opponent": "white-sword",
+      "bucket": "line-move",
+      "seed": 183205,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": -0.03125
+    },
+    {
+      "id": "03f02888b07ee0ed",
+      "opponent": "reject-blue",
+      "bucket": "line-move",
+      "seed": 183307,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "0b1b232363562f58",
+      "opponent": "renruki",
+      "bucket": "line-move",
+      "seed": 183400,
+      "mean8": 0.125,
+      "mean16": 0.0625,
+      "mean32": 0.03125
+    },
+    {
+      "id": "5aac0db7194ff375",
+      "opponent": "white-sword",
+      "bucket": "mid-entry",
+      "seed": 183207,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "1f59e420f82dfd8a",
+      "opponent": "reject-blue",
+      "bucket": "mid-entry",
+      "seed": 183305,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": -0.0625
+    },
+    {
+      "id": "41c38d969cd7021b",
+      "opponent": "renruki",
+      "bucket": "mid-entry",
+      "seed": 183404,
+      "mean8": 0.25,
+      "mean16": 0.125,
+      "mean32": 0.125
+    },
+    {
+      "id": "0e431f9ff02d904f",
+      "opponent": "white-sword",
+      "bucket": "raid",
+      "seed": 183203,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "2f42c3722b42a329",
+      "opponent": "reject-blue",
+      "bucket": "raid",
+      "seed": 183302,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "981de5eef3ee56a1",
+      "opponent": "renruki",
+      "bucket": "raid",
+      "seed": 183403,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "b59d364366a0361c",
+      "opponent": "white-sword",
+      "bucket": "attack-defense",
+      "seed": 183200,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    },
+    {
+      "id": "09b7350faeab4c78",
+      "opponent": "reject-blue",
+      "bucket": "attack-defense",
+      "seed": 183304,
+      "mean8": 0,
+      "mean16": 0.0625,
+      "mean32": 0.125
+    },
+    {
+      "id": "37cdeb8e9987d4f1",
+      "opponent": "renruki",
+      "bucket": "attack-defense",
+      "seed": 183402,
+      "mean8": 0,
+      "mean16": 0,
+      "mean32": 0
+    }
+  ],
+  "safety": [
+    {
+      "id": "d12a2d6f5ced1d88",
+      "ok": true,
+      "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+      "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}"
+    },
+    {
+      "id": "b122fb89d72eec7e",
+      "ok": true,
+      "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+      "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}"
+    },
+    {
+      "id": "01c85e5ddb31e7fa",
+      "ok": true,
+      "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+      "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}"
+    },
+    {
+      "id": "ee6cdd154ceeb4ce",
+      "ok": true,
+      "before": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+      "after": "{\"type\":\"activate\",\"mode\":\"restTwoMove\",\"line\":null,\"uid\":\"0-5\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}"
+    },
+    {
+      "id": "0d035ea8a0b2be16",
+      "ok": true,
+      "before": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}",
+      "after": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-36\",\"baseUid\":null,\"targetUid\":null,\"slot\":3}"
+    },
+    {
+      "id": "1fbdc61d55fa7f09",
+      "ok": true,
+      "before": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}",
+      "after": "{\"type\":\"raid\",\"mode\":null,\"line\":null,\"uid\":\"0-12\",\"baseUid\":\"0-40\",\"targetUid\":null,\"slot\":0}"
+    }
+  ],
+  "kinds": {},
+  "interval": {
+    "n": 18,
+    "df": 17,
+    "mean": 0.013888888888888888,
+    "low": -0.01340613935931324,
+    "high": 0.04118391713709102
+  }
+}

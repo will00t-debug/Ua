@@ -15,7 +15,7 @@ export function renderReport(study){
  const zero=fit.zero||{};
  const independent=study.independent||{};
  const lines=(study.positions||[]).map(row=>'- '+row.id+'（'+row.opponent+'，'+(row.bucket||'—')+'，對局 '+row.seed+'）：32 組平均差 '+num(row.mean32)+'，16 組 '+num(row.mean16)+'，8 組 '+num(row.mean8)+'。');
- const depths=(study.depths||[]).map(row=>'歷史訓練只用前 '+row.pairs+' 組時，開發相關 '+num(row.correlation)+'，開發誤差 '+num(row.mse)+'。').join('\n');
+ const depths=(study.depths||[]).map(row=>'在已經有 32 組的歷史局面上，訓練只用前 '+row.pairs+' 組，同一批開發對局的相關 '+num(row.correlation)+'，誤差 '+num(row.mse)+'，開發對局 '+count(row.games)+'。').join('\n');
  return [
   '# 白劍 AI v6-A：批次動作價值學習',
   '正式 v2 的 115 個權重維持凍結，雜湊 '+study.official+'。070 權重維持 '+study.frozenWeight+'，沒有單獨再調。新的模型是額外的動作價值殘差，初始為 0，只在 Hard cap 7 裡面改排序。單一動作的殘差夾在 ±18，所以兩個動作的殘差差最多 36，和以前一個殘差欄位的上限一樣。',
