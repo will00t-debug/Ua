@@ -1,0 +1,253 @@
+{
+  "codeVersion": "v5b1-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "weight": 3.25954286097052,
+  "feature": "play|BLC-4-070||energy",
+  "rule": {
+    "id": "v5b1-fair-1",
+    "text": "鏡像用四個座位與先後攻的組合。其他對手的每個種子用同一個座位，讓 v2 和殘差各先攻、各後攻一次。配對差先在種子內平均，再對種子平均做雙尾 95% t 區間。區間含 0 只表示這一批看不出穩定差距。這批對局不拿來改權重，也不套用冠軍晉級。"
+  },
+  "identity": {
+    "games": 12,
+    "decisions": 1263,
+    "mismatches": 0,
+    "openings": 16,
+    "openingMismatches": 0,
+    "orders": 19,
+    "orderMismatches": 0,
+    "ties": 186,
+    "tieMismatches": 0,
+    "fallbacks": 0,
+    "fallbackMismatches": 0,
+    "samples": [],
+    "stopped": 0,
+    "ok": true
+  },
+  "matches": {
+    "games": 192,
+    "finished": 192,
+    "illegal": 0,
+    "v2Changes": 0,
+    "decks": {
+      "white-sword": {
+        "kind": "mirror",
+        "residualFirst": {
+          "games": 32,
+          "wins": 12,
+          "rate": 0.375
+        },
+        "residualSecond": {
+          "games": 32,
+          "wins": 21,
+          "rate": 0.65625
+        },
+        "v2First": {
+          "games": 32,
+          "wins": 11,
+          "rate": 0.34375
+        },
+        "v2Second": {
+          "games": 32,
+          "wins": 20,
+          "rate": 0.625
+        },
+        "residual": {
+          "games": 64,
+          "wins": 33,
+          "rate": 0.515625
+        },
+        "delta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0.03125,
+          "low": -0.08665395644943658,
+          "high": 0.14915395644943658
+        },
+        "firstDelta": {
+          "n": 16,
+          "df": 15,
+          "mean": -0.25,
+          "low": -0.5576482428641516,
+          "high": 0.057648242864151655
+        },
+        "secondDelta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0.3125,
+          "low": -0.008325641828116015,
+          "high": 0.633325641828116
+        },
+        "dropped": 0,
+        "effects": {
+          "games": 64,
+          "changes": 12,
+          "indicated": 59,
+          "gamesWithChange": 12,
+          "gamesIndicated": 44,
+          "changedWin": 7,
+          "changedLoss": 5,
+          "unchangedWin": 26,
+          "unchangedLoss": 26,
+          "unfinished": 0
+        }
+      },
+      "reject-blue": {
+        "kind": "paired",
+        "residualFirst": {
+          "games": 16,
+          "wins": 14,
+          "rate": 0.875
+        },
+        "residualSecond": {
+          "games": 16,
+          "wins": 14,
+          "rate": 0.875
+        },
+        "v2First": {
+          "games": 16,
+          "wins": 14,
+          "rate": 0.875
+        },
+        "v2Second": {
+          "games": 16,
+          "wins": 14,
+          "rate": 0.875
+        },
+        "residual": {
+          "games": 32,
+          "wins": 28,
+          "rate": 0.875
+        },
+        "v2": {
+          "games": 32,
+          "wins": 28,
+          "rate": 0.875
+        },
+        "delta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "firstDelta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "secondDelta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "pairs": 32,
+        "sameOutcome": 32,
+        "changedPairs": 3,
+        "changedSame": 3,
+        "dropped": 0,
+        "effects": {
+          "games": 32,
+          "changes": 3,
+          "indicated": 26,
+          "gamesWithChange": 3,
+          "gamesIndicated": 19,
+          "changedWin": 3,
+          "changedLoss": 0,
+          "unchangedWin": 25,
+          "unchangedLoss": 4,
+          "unfinished": 0
+        }
+      },
+      "renruki": {
+        "kind": "paired",
+        "residualFirst": {
+          "games": 16,
+          "wins": 8,
+          "rate": 0.5
+        },
+        "residualSecond": {
+          "games": 16,
+          "wins": 8,
+          "rate": 0.5
+        },
+        "v2First": {
+          "games": 16,
+          "wins": 8,
+          "rate": 0.5
+        },
+        "v2Second": {
+          "games": 16,
+          "wins": 8,
+          "rate": 0.5
+        },
+        "residual": {
+          "games": 32,
+          "wins": 16,
+          "rate": 0.5
+        },
+        "v2": {
+          "games": 32,
+          "wins": 16,
+          "rate": 0.5
+        },
+        "delta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "firstDelta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "secondDelta": {
+          "n": 16,
+          "df": 15,
+          "mean": 0,
+          "low": 0,
+          "high": 0
+        },
+        "pairs": 32,
+        "sameOutcome": 32,
+        "changedPairs": 6,
+        "changedSame": 6,
+        "dropped": 0,
+        "effects": {
+          "games": 32,
+          "changes": 6,
+          "indicated": 31,
+          "gamesWithChange": 6,
+          "gamesIndicated": 21,
+          "changedWin": 4,
+          "changedLoss": 2,
+          "unchangedWin": 12,
+          "unchangedLoss": 14,
+          "unfinished": 0
+        }
+      }
+    },
+    "effects": {
+      "games": 128,
+      "changes": 21,
+      "indicated": 116,
+      "gamesWithChange": 21,
+      "gamesIndicated": 84,
+      "changedWin": 14,
+      "changedLoss": 7,
+      "unchangedWin": 63,
+      "unchangedLoss": 44,
+      "unfinished": 0
+    }
+  },
+  "adopted": false,
+  "promoted": false,
+  "refit": false
+}

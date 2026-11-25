@@ -61,6 +61,7 @@ export function playResidualMatch(spec){
  };
 }
 export function matchSpecs({seeds,opponents,model,weight,feature}){
+ // These two cells both give the residual the first move. v5-B.1 does not use them for strength.
  const cells=[{specialistSeat:0,first:0},{specialistSeat:1,first:1}];
  const specs=[];
  for(const opponent of opponents){
