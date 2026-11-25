@@ -18,7 +18,7 @@ import {fairSpecs as frozenFair} from '../training/white-sword-ai/v5b1/lib/fair.
 import {AUDIT_SEEDS,FAIR_SEEDS} from '../training/white-sword-ai/v5b1/lib/protocol.mjs';
 import {MATCH_SEEDS as OLD_MATCH,MINE_SEEDS as OLD_MINE} from '../training/white-sword-ai/v5b/lib/protocol.mjs';
 import {MINE_SEEDS as V4B7_MINE} from '../training/white-sword-ai/v4b7/lib/protocol.mjs';
-import {columnFromRow,columnFromSides,roundColumns} from '../training/white-sword-ai/v5c/lib/columns.mjs';
+import {accumulateColumns,columnFromRow,columnFromSides,roundColumns} from '../training/white-sword-ai/v5c/lib/columns.mjs';
 import {choiceColumns,combine,diagnosticModel,fitColumns,minimumMagnitude} from '../training/white-sword-ai/v5c/lib/fit.mjs';
 import {
  BRANCH_BUDGET,FROZEN_WEIGHT,HISTORICAL_060,MATCH_SEEDS,MINE_SEEDS,SCREEN_CAP,assertBudget,branchGames,signedSteps
@@ -73,6 +73,12 @@ test('a named preference becomes a signed column and the old 060 row stays out',
  const opposite=roundColumns([first,learned]);
  assert.equal(opposite.length,2);
  assert.deepEqual(opposite.map(row=>row.sign).sort(),[-1,1]);
+ const cleaned=accumulateColumns(opposite);
+ assert.equal(cleaned.kept.length,0);
+ assert.match(cleaned.rejected[0].reason,/相反/);
+ const duplicated=accumulateColumns([merged[0],{...merged[0],targets:[{id:'a3',key:merged[0].preferKey}]}]);
+ assert.equal(duplicated.kept.length,1);
+ assert.equal(duplicated.kept[0].targets.length,3);
 });
 
 test('screening prefers other cards and confirmation does not stack one action',()=>{
@@ -157,7 +163,8 @@ test('each residual is fit alone, then the sum is checked again',()=>{
  assert.equal(minimumMagnitude([far],[],{...positive,targets:[{id:'far',key:front.key}]},[{id:'far',key:front.key}],[]),null);
  assert.equal(choiceColumns([{key:front.key,hard:1,features:front.features,sort:'a'}],[],[{...positive,line:'energy',weight:6}]),front.key);
  const both=fitColumns([target,negative,pref],[],[positive,penalty],[]);
- assert.equal(both.accepted.length,2);
+ assert.equal(both.accepted.length,0);
+ assert.match(both.rejected.map(row=>row.reason).join('\n'),/相反/);
  const control={
   column:{sign:1,type:'play',card:'BLC-4-070',line:'energy',signature:'+|play|BLC-4-070|energy'},
   weight:FROZEN_WEIGHT,wants:[{id:'pref',key:energy.key}],holds:[]

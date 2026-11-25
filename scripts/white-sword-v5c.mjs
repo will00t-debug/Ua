@@ -11,7 +11,7 @@ import {screenSummary} from '../training/white-sword-ai/v4b4/lib/confirm.mjs';
 import {actionLabel,decideConfirmation,diffsOf,nextJobs,preparePositions,seedsFor} from '../training/white-sword-ai/v4b4/lib/round.mjs';
 import {sideKey} from '../training/white-sword-ai/v5a/lib/pressure.mjs';
 import {loadPositions} from '../training/white-sword-ai/v5a/lib/analyze.mjs';
-import {columnFromRow,roundColumns} from '../training/white-sword-ai/v5c/lib/columns.mjs';
+import {accumulateColumns,columnFromRow,roundColumns} from '../training/white-sword-ai/v5c/lib/columns.mjs';
 import {choiceColumns,combine,diagnosticModel,fitColumns} from '../training/white-sword-ai/v5c/lib/fit.mjs';
 import {
  CODE_VERSION,CONFIRM_PAIRS,CONFIRM_SALT,FROZEN_WEIGHT,MINE_SEEDS,MATCH_SEEDS,PREFERENCE_IDS,PRESERVE_IDS,
@@ -227,14 +227,18 @@ async function main(){
   const position=picked.find(item=>item.id===row.id);
   return {...row,source:'v5c',confirmed:true,prefer:'B',actionA:position.actionA,actionB:position.actionB};
  });
- const columns=roundColumns(confirmedRows);
+ const rounded=roundColumns(confirmedRows);
+ const accumulated=accumulateColumns([
+  {sign:1,type:'play',card:'BLC-4-070',line:'energy',targets:[]},
+  ...rounded
+ ]);
+ const columns=accumulated.kept.filter(column=>!(column.type==='play'&&column.card==='BLC-4-070'&&column.line==='energy'));
  const unnamed=confirmedRows.filter(row=>!columnFromRow(row)).map(row=>({id:row.id,reason:'確認了，但兩邊都不是可命名的單一動作'}));
  const byId=new Map(saved.map(position=>[position.id,position]));
  for(const position of picked)byId.set(position.id,position);
  const positions=[...byId.values()];
- const freshColumns=columns.filter(column=>column.signature!=='+|play|BLC-4-070|energy');
- const deferred=columns.filter(column=>column.signature==='+|play|BLC-4-070|energy').map(column=>column.signature);
- const fitted=fitColumns(positions,parent,freshColumns,[...PREFERENCE_IDS,...PRESERVE_IDS]);
+ const deferred=rounded.filter(column=>column.signature==='+|play|BLC-4-070|energy').map(column=>column.signature);
+ const fitted=fitColumns(positions,parent,columns,[...PREFERENCE_IDS,...PRESERVE_IDS]);
  const controlWants=PREFERENCE_IDS.map(id=>({id,key:sideKey(byId.get(id),'energy')}));
  const combination=combine(positions,parent,fitted.accepted,{
   column:{sign:1,type:'play',card:'BLC-4-070',line:'energy',signature:'+|play|BLC-4-070|energy'},
@@ -278,7 +282,7 @@ async function main(){
   confirmCount:locked.candidates.length,games:playedGames,planned,
   confirmed:confirmedRows.map(row=>({id:row.id,labelA:row.labelA,labelB:row.labelB,confirmMean:row.mean,pOne:row.pOne})),
   accepted:fitted.accepted.map(row=>({signature:row.signature,weight:row.weight,collateral:row.collateral})),
-  rejected:[...unnamed,...fitted.rejected],deferred,combination:{ok:combination.ok},
+  rejected:[...unnamed,...accumulated.rejected,...fitted.rejected],deferred,combination:{ok:combination.ok},
   diagnostic:diagnostic?{id:diagnostic.id,includes070:diagnostic.includes070}:null,
   baselineLabel:diagnostic?(diagnostic.includes070?'凍結的 070 殘差':'正式 v2'):'沒有對戰',
   matches,kinds:matches?.kinds||{}

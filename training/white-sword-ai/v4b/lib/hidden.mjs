@@ -16,8 +16,11 @@ function hiddenSlot(card,zone){
  if(zone==='hand')return true;
  return card.faceDown!==false;
 }
-// An open top window has already shown those cards. Shuffling them out of
-// order makes the resumed choice illegal, so they stay while the rest moves.
+// An open top window has already shown those cards to the acting player.
+// Shuffling them out of order makes the resumed choice illegal, so they stay
+// face-down on that player's deck while the rest moves. The public view still
+// omits deck identities. The private-choice reader sends the window only when
+// the viewer is the pending player, so the other seat does not receive it.
 function windowPin(state){
  const pending=state?.pending;
  if(pending?.kind!=='effect-top-filter-many-choice')return null;

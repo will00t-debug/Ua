@@ -11,6 +11,7 @@ import {dot} from '../../../../dist/universal-v2/white-sword-ai/model.mjs';
 import {observeActor} from '../../../../dist/universal-v2/white-sword-ai/observe.mjs';
 import {blendScore,chooseKey} from '../../v4a2/lib/sensitivity.mjs';
 import {isPlay} from '../../v5a/lib/pressure.mjs';
+import {matchingRule,sameSignature} from '../../v5d/lib/compare.mjs';
 import {HARD_CAP,SCALE} from './protocol.mjs';
 
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
@@ -63,6 +64,25 @@ export function sameAsV2(band,weights,feature){
 }
 export function hardPool(rows,hardAction){
  return withinHardCap(rows,hardAction,HARD_CAP);
+}
+export function liveSignature(state,actor,action){
+ if(!action?.type)return null;
+ if(action.type==='next')return {type:'next',card:null,line:null};
+ const card=ownCardId(state,actor,action);
+ if(!card)return null;
+ return {type:action.type,card,line:action.line||null};
+}
+export function applyPairRules(rows,state,actor,rules){
+ if(!Array.isArray(rules)||!rules.length||!rows?.length)return {row:null,applied:false};
+ const base=selectScored(rows.map(row=>({action:row.action,score:row.baseScore})));
+ const baseRow=rows.find(row=>row.action===base.action);
+ const pool=rows.map(row=>liveSignature(state,actor,row.action));
+ const rule=matchingRule(liveSignature(state,actor,baseRow?.action),pool,rules);
+ if(!rule)return {row:null,applied:false};
+ const winners=rows.filter(row=>sameSignature(liveSignature(state,actor,row.action),rule.winner));
+ if(!winners.length)return {row:null,applied:false};
+ const picked=selectScored(winners.map(row=>({action:row.action,score:row.baseScore})));
+ return {row:winners.find(row=>row.action===picked.action)||winners[0],applied:true};
 }
 function referenceAction(pack,state,legal,seed){
  try{
@@ -123,7 +143,13 @@ export function decideResidual(pack,state,actor,model,seed,weight,feature,option
    row.score=row.baseScore+row.residual;
   }
   const base=selectScored(pool.map(row=>({action:row.action,score:row.baseScore})));
-  const picked=selectScored(pool);
+  let picked=selectScored(pool);
+  let source='blend';
+  const ruled=applyPairRules(pool,state,actor,options.rules);
+  if(ruled.applied&&JSON.stringify(ruled.row.action)!==JSON.stringify(picked.action)){
+   picked=ruled.row;
+   source='compare';
+  }
   const baseline=selectScored(pool.map(row=>({
    action:row.action,
    score:row.baseScore+SCALE*columnBonus(state,actor,row.action,options.baselineColumns||[])
@@ -133,7 +159,7 @@ export function decideResidual(pack,state,actor,model,seed,weight,feature,option
    return quiet(referenceAction(pack,state,legal,seed),{source:'fallback',reason:'timeout',pool:pool.length});
   }
   return {
-   action:picked.action,source:'blend',reason:null,pool:pool.length,hard:searched.hard,
+   action:picked.action,source,reason:null,pool:pool.length,hard:searched.hard,
    changed:JSON.stringify(picked.action)!==JSON.stringify(base.action),
    changedFromBaseline:JSON.stringify(picked.action)!==JSON.stringify(baseline.action),
    tie,indicated

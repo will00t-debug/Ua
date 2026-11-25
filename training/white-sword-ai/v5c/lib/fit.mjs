@@ -1,6 +1,7 @@
 // Each new column is fit alone. The sum is checked again and is not assumed to add.
 import {blendScore,chooseKey} from '../../v4a2/lib/sensitivity.mjs';
 import {cardsOf} from '../../v4b2/lib/trust.mjs';
+import {accumulateColumns} from './columns.mjs';
 import {HARD_CAP,SCALE,WEIGHT_CLIP,signedSteps} from './protocol.mjs';
 
 function parsed(key){
@@ -63,16 +64,27 @@ export function evaluate(positions,weights,columns,wants,holds){
 export function minimumMagnitude(positions,weights,column,wants,holds){
  const at=magnitude=>evaluate(positions,weights,[{...column,weight:column.sign*magnitude}],wants,holds).ok;
  if(at(0))return null;
- if(!at(WEIGHT_CLIP))return null;
- let low=0;
- let high=WEIGHT_CLIP;
- for(let step=0;step<60;step++){
+ // A protected position can make the largest weight illegal while a smaller one
+ // still flips the target. Search for the smallest feasible magnitude.
+ const slices=32;
+ let previous=0;
+ let hit=null;
+ for(let index=1;index<=slices;index++){
+  const magnitude=WEIGHT_CLIP*index/slices;
+  if(at(magnitude)){hit=magnitude;break;}
+  previous=magnitude;
+ }
+ if(hit==null)return null;
+ let low=previous;
+ let high=hit;
+ for(let step=0;step<50;step++){
   const mid=(low+high)/2;
   if(at(mid))high=mid;
   else low=mid;
  }
  const weight=column.sign*high;
  const result=evaluate(positions,weights,[{...column,weight}],wants,holds);
+ if(!result.ok)return null;
  return {...result,weight,steps:signedSteps(weight)};
 }
 function scoreLead(position,weights,key){
@@ -93,9 +105,10 @@ function reasonFor(positions,weights,result){
  return '權重到邊界仍無法讓偏好成為首選';
 }
 export function fitColumns(positions,weights,columns,holdIds){
+ const cleaned=accumulateColumns(columns);
  const accepted=[];
- const rejected=[];
- for(const column of columns||[]){
+ const rejected=cleaned.rejected.map(row=>({signature:row.id,reason:row.reason}));
+ for(const column of cleaned.kept){
   const wants=(column.targets||[]).map(target=>({id:target.id,key:target.key}));
   const found=minimumMagnitude(positions,weights,column,wants,holdIds);
   if(!found?.ok){

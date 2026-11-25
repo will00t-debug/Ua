@@ -34,6 +34,31 @@ export function columnFromRow(row){
  const preferred=row.prefer==='A'?row.actionA:row.actionB;
  return {...made,signature:signatureOf(made),id:row.id,preferKey:preferred.key};
 }
+export function actionIdentity(column){
+ return column.type+'|'+column.card+'|'+(column.line||'');
+}
+export function accumulateColumns(columns){
+ const grouped=new Map();
+ for(const column of columns||[]){
+  const id=actionIdentity(column);
+  const rows=grouped.get(id)||[];
+  rows.push(column);
+  grouped.set(id,rows);
+ }
+ const kept=[];
+ const rejected=[];
+ for(const [id,rows] of grouped){
+  const signs=new Set(rows.map(row=>row.sign));
+  if(signs.size>1){
+   rejected.push({id,reason:'同一動作欄位有相反方向，不累積'});
+   continue;
+  }
+  const first=rows[0];
+  const targets=rows.flatMap(row=>row.targets||[]);
+  kept.push({...first,targets:targets.length?targets:first.targets||[]});
+ }
+ return {kept,rejected};
+}
 export function roundColumns(rows){
  const grouped=new Map();
  for(const row of rows||[]){
