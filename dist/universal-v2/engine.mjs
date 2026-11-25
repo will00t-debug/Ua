@@ -29701,12 +29701,25 @@ export function assertUniversalMatch(pack,s){
      e.uid===ceiling.sourceUid&&e.from==='hand'&&
      (e.to==='front'||e.to==='energy')&&e.reason==='rule');
    const layers=c=>[c,...(c.stack||[]),...(c.under||[])];
-   const named=field(s.players[owner]).some(c=>layers(c).some(layer=>{
+   const raidNameGrant=layer=>{
     const printed=card(pack,layer);
     return (printed.effects?.onRaided||[]).some(e=>e.op==='chooseOne'&&
      e.options.some(o=>(o.then||[]).some(t=>t.op==='grantOwnNameBlockAtLeast'&&
       t.bp===ceiling.bp&&cardHasName(card(pack,physical),t.name,false))));
-   }));
+   };
+   const named=field(s.players[owner]).some(c=>layers(c).some(raidNameGrant));
+   // UA01DC/BLC-4-083 「このキャラがレイドされた時」 can give one named character
+   // 「BP4000以上のキャラにブロックされない」 for the rest of this turn. SPECIAL
+   // retirement sends the Raid top outside and the buried base with it.
+   // The on-field witness is gone, but the ceiling stays. The same physical
+   // must have moved from a field line to raid-under this turn; a copy that
+   // was never raided does not prove the grant. This is the same text witness
+   // the on-field check uses, not a higher step ceiling.
+   const departedRaidNamed=['hand','deck','life','lifeRevealed','outside','removed','resolvingEvents']
+    .some(zone=>(s.players[owner][zone]||[]).some(c=>layers(c).some(layer=>
+     raidNameGrant(layer)&&(s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
+      e.owner===owner&&e.uid===layer.uid&&e.to==='raid-under'&&
+      (e.from==='front'||e.from==='energy')))));
    const selfPrinted=card(pack,physical);
    const selfGate=selfPrinted.mainAbility?.op==='oncePayProgram'&&
     (selfPrinted.mainAbility.then||[]).find(step=>step.op==='discardGate');
@@ -29785,7 +29798,7 @@ export function assertUniversalMatch(pack,s){
    if(!traitGrant&&(!ceiling||ceiling.turn!==s.turn||ceiling.stamp!==physical.fieldEntryStamp||
     !Number.isInteger(ceiling.bp)||Object.keys(ceiling).length!==3||
     Object.keys(ceiling).some(k=>!['turn','stamp','bp'].includes(k))||
-    !(named||self||printedBlock||departedBlock||handBlock||aided||oppGrant||eventNamed||ruka||iysBlock||
+    !(named||departedRaidNamed||self||printedBlock||departedBlock||handBlock||aided||oppGrant||eventNamed||ruka||iysBlock||
      csm046||csm055||printMoreCeilingProved(card,pack,s,physical,ceiling)||
      (card(pack,physical).id==='KMR-1-036'&&ceiling.bp===4000&&
       s.mainAbilityUsedUids.includes(physical.uid+'|KMR-1-036')))))
