@@ -432,14 +432,27 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // card looks along the front line, and an energy-line card looks along
  // the energy line. The slot across from it is a different line. A card
  // buried under a Raid is not on the line.
- if(condition.kind==='sameLineName'){
+ if(condition.kind==='sameLineName'||condition.kind==='sameLineNameIncludes'){
   const pl=s.players[owner];
   for(const line of ['front','energy']){
    if(!pl[line].some(c=>c?.uid===sourceUid))continue;
-   return pl[line].some(c=>printedFieldCard(c)&&c.uid!==sourceUid&&
-    cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c)));
+   return pl[line].some(c=>{
+    if(!printedFieldCard(c)||c.uid===sourceUid)return false;
+    if(condition.kind==='sameLineNameIncludes')
+     return String(printed(c).name||'').includes(condition.includes);
+    return cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c));
+   });
   }
   return false;
+ }
+ if(condition.kind==='ownNameIncludesInFieldOrOutside'){
+  const piece=condition.names[0];
+  const board=s.players[owner];
+  for(const area of [board.front,board.energy])for(const c of area)
+   if(printedFieldCard(c)&&printed(c).type==='character'&&
+    String(printed(c).name||'').includes(piece))return true;
+  return board.outside.some(c=>printed(c)?.type==='character'&&
+   String(printed(c).name||'').includes(piece));
  }
  // 「このキャラはBP+…」while the physical card is a visible own field card.
  // Hand, outside, and a buried Raid layer do not receive the bonus.

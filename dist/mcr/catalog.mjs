@@ -2,11 +2,11 @@
 // UA36ST reprints that keep a UA36BT number stay one identity.
 // Rugia HK is display text only. confirmedTc stays false.
 // battleReady stays false. A shared V2 program, not this file, admits a card.
-import {MCR_CARDS_001_050} from './cards-001-050.mjs?v=20261125mcr3';
-import {MCR_CARDS_051_100} from './cards-051-100.mjs?v=20261125mcr3';
-import {MCR_CARDS_STARTER} from './cards-starter.mjs?v=20261125mcr3';
-import {MCR_AP_CARDS} from './cards-ap.mjs?v=20261125mcr3';
-import {MCR_REPRINT_IDS,MCR_REPRINT_NUMBERS} from './reprint-ids.mjs?v=20261125mcr3';
+import {MCR_CARDS_001_050} from './cards-001-050.mjs?v=20261125mcr4';
+import {MCR_CARDS_051_100} from './cards-051-100.mjs?v=20261125mcr4';
+import {MCR_CARDS_STARTER} from './cards-starter.mjs?v=20261125mcr4';
+import {MCR_AP_CARDS} from './cards-ap.mjs?v=20261125mcr4';
+import {MCR_REPRINT_IDS,MCR_REPRINT_NUMBERS} from './reprint-ids.mjs?v=20261125mcr4';
 
 const COLORS=new Set(['yellow','blue','red']);
 const DECK_TYPES=new Set(['character','event','field']);

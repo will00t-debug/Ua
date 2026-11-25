@@ -2,7 +2,7 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs?v=20261125mcr3';
+import {universalBp} from './engine.mjs?v=20261125mcr4';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 

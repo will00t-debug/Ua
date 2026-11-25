@@ -238,6 +238,40 @@ export function mcrSharedProgram(card){
     then:[{op:'drawDiscard',count:2,discardCount:1}]}],
    onAttack:[{op:'grantOwnBlockAtMost',optional:true,bp:3000,nameIncludes:'バサラ'}]
   }});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈ガルド・ゴア・ボーマン〉アクティブにし、フロントLに移動できる\nこのキャラのアタック終了時、このキャラを退場させてもよい。そうした場合、相手のフロントLのキャラを1枚まで選び、退場させる。\n【退場時】自分の手札から必要エナジーを満たしカード名に「イサム」を含むカードを1枚まで自分の場に『レストで登場させる』。自分のターン中の場合、『レイドさせる』に代えてもよい。'))
+  return raid('ガルド・ゴア・ボーマン',{attackEndRetireSelfThen:{optional:true,then:{op:'retireOppFrontOne',optional:true}},
+   effects:{onRetire:[{op:'handIncludesRestOrRaid',optional:true,includes:'イサム',requireAffordableEnergy:true,raidOnOwnTurn:true}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈イサム・ダイソン〉アクティブにし、フロントLに移動できる\n自分の場か場外にカード名に「ガルド」を含むキャラがある場合、このキャラは以下の効果を全て得る。\n・【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n・【登場時】BP3500以下の相手のフロントLのキャラを1枚まで選び、『手札に戻す』。自分のアタックフェイズ中の場合、『退場させる』に代えてもよい。'))
+  return raid('イサム・ダイソン',{passiveBonuses:[{impact:1,condition:{kind:'ownNameIncludesInFieldOrOutside',turn:'any',names:['ガルド']}}],
+   effects:{onPlay:[{op:'bounceOrRetireDuringAttack',optional:true,bp:3500,when:{kind:'ownNameIncludesInFieldOrOutside',turn:'any',names:['ガルド']}}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈オズマ・リー〉アクティブにし、フロントLに移動できる\n自分の場に〈ランカ・リー〉がある場合、このキャラは【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）を得る。\n【起動メイン】【手札を2枚場外に置く】 【ターン1】このキャラはこのターン中、「BP2000以下のキャラにブロックされない。」を得る。\n【ブロック時】アタックしている相手のキャラがレイド状態の場合、このキャラはこのターン中、BP+500。'))
+  return raid('オズマ・リー',{passiveBonuses:[{extraDamage:2,condition:exactField('ランカ・リー')}],
+   mainAbility:{op:'discardGrantBlockFloor',count:2,oncePerTurn:true,bp:2000,relation:'atMost'},
+   effects:{onBlock:[{op:'buffSelfIfAttackerRaid',bp:500}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈早乙女 アルト〉アクティブにし、フロントLに移動できる\n【登場時】以下から『1つ』まで選ぶ。APを1支払ってもよい。そうした場合、『2つ』に代わる。\n・自分の場に〈シェリル・ノーム〉がある場合、このキャラはこのターン中、【2回アタック】（このキャラがこのターン初めてアタックした時、アクティブにする）を得る。\n・自分の場に〈ランカ・リー〉がある場合、BP3000以下の相手のフロントLのキャラを1枚まで選び、退場させる。'))
+  return raid('早乙女 アルト',{effects:{onPlay:[{op:'chooseUpToPayTwo',payAp:1,options:[
+   {id:'double',when:exactField('シェリル・ノーム'),then:[{op:'grantSelfDoubleAttackThisTurn'}]},
+   {id:'retire',when:exactField('ランカ・リー'),then:[{op:'retireOppFrontUnderBp',optional:true,bp:3000}]}
+  ]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈ミリア・ファリーナ・ジーナス〉アクティブにし、フロントLに移動できる\n【登場時】自分の山札の上から5枚見る。その中からカード名に「ジーナス」を含む赤のキャラカードを1枚まで公開し『手札に加える』。残りを望む順で自分の山札の下に置く。自分の場にカード名に「マクシミリアン・ジーナス」を含むキャラがあり、公開したカードの必要エナジーが2以下の場合、『自分の場にレストで登場させる』に代えてもよい。'))
+  return raid('ミリア・ファリーナ・ジーナス',{effects:{onPlay:[{op:'searchTopDeployInstead',count:5,max:1,rest:'bottom',
+   filter:{color:'red',type:'character',nameIncludes:'ジーナス'},
+   instead:{includes:'マクシミリアン・ジーナス',energyAtMost:2,enter:'rest'}}]}});
+ if(card.type==='character'&&effect===norm(
+  'このキャラはレイド以外で登場できない。\n【レイド】〈熱気 バサラ〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n自分の手札が5枚以上の場合、このキャラは【ダメージ（2）】を得る。\nこのキャラがアタックしてバトルに勝利した時、カードを1枚引き、このバトルで敗北した相手のキャラは退場する代わりに、手札に戻る。\n【登場時】自分と相手はカードを1枚引く。その後、『BP3000以下』の相手のフロントLのキャラを1枚まで選び、相手の山札の下に置く。自分の手札が5枚以上の場合、『BP4000以下』に代わる。'))
+  return raid('熱気 バサラ',{raidOnlyEntry:true,printedImpact:1,
+   passiveBonuses:[{extraDamage:2,condition:{kind:'ownHandCountAtLeast',turn:'any',min:5}}],
+   attackWinDraw:{count:1},battleLoseToHand:true,
+   effects:{onPlay:[
+    {op:'drawEach',count:1},
+    {op:'placeOppFrontOnTheirDeck',optional:true,bp:3000,bonusBp:4000,place:'bottom',
+     bonusWhen:{kind:'ownHandCountAtLeast',turn:'any',min:5}}
+   ]}});
  if(effect.includes('【レイド】')||effect.includes('レイド以外'))return pending();
  if(EMPTY.has(effect)){
   if(card.type!=='character')return pending();
@@ -458,5 +492,64 @@ export function mcrSharedProgram(card){
    passiveBonuses:[{bp:500,impactNull:true,condition:{kind:'ownHandCountAtLeast',turn:'any',min:5}}],
    attackWinDraw:{count:1},battleLoseToHand:true
   });
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の場のレイド状態の〈シェリル・ノーム〉を1枚選び、レイド状態の上のカードを場外に置いてもよい。そうした場合、カードを1枚引き、自分の手札から必要エナジーを満たしこの効果で場外に置いたカードとカードナンバーが異なる〈シェリル・ノーム〉を1枚まで、選んだキャラのレイド元のカードにレイドさせる。\n【起動メイン】【レストにする】 【APを1支払う】 【ターン1】このキャラの【登場時】を発動する。'))
+  return dsl({triggerEffect:{op:'restOppFrontSkipNextActive'},
+   mainAbility:{op:'restPayReplayOnPlay',ap:1,oncePerTurn:true},
+   effects:{onPlay:[{op:'stripOwnRaidThenReraid',optional:true,hostName:'シェリル・ノーム',different:'number',replacementName:'シェリル・ノーム',draw:1}]}});
+ if(card.type==='event'&&effect===norm(
+  '自分の山札の上から5枚見る。その中から〈シェリル・ノーム〉を2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。その後、自分の場のレイド状態の〈シェリル・ノーム〉を1枚選び、レイド状態の上のカードを場外に置いてもよい。そうした場合、カードを1枚引き、自分の手札から必要エナジーを満たしこの効果で場外に置いたカードとカードナンバーが異なる〈シェリル・ノーム〉を1枚まで、選んだキャラのレイド元のカードにレイドさせる。'))
+  return dsl({effects:{onPlay:[
+   {op:'searchTopUpToTwoBottom',count:5,max:2,rest:'bottom',logic:'any',filters:[{field:'name',value:'シェリル・ノーム'}]},
+   {op:'stripOwnRaidThenReraid',optional:true,hostName:'シェリル・ノーム',different:'number',replacementName:'シェリル・ノーム',draw:1}
+  ]}});
+ if(card.type==='character'&&effect===norm(
+  '【ターン1】このキャラがアクティブの場合、カード名に「イサム」か「ガルド」を含む自分の場のレイド状態のキャラのアタック終了時、そのキャラのレイド状態の上のカードを場外に置いてもよい。そうした場合、このキャラをレストにし、カードを1枚引き、自分の手札から必要エナジーを満たしこの効果で場外に置いたカードと必要エナジーが異なるカードを1枚まで、そのキャラのレイド元のカードにレイドさせる。'))
+  return dsl({triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
+   allyRaidAttackEnd:{once:'uid',requireActive:true,includes:['イサム','ガルド'],different:'energy',draw:1,restSelf:true}});
+ if(card.type==='field'&&effect===norm(
+  'このフィールドはアクティブで場に登場させる。\n【ターン1】このフィールドがアクティブの場合、カード名に「イサム」か「ガルド」を含む自分の場のレイド状態のキャラのアタック終了時、そのキャラのレイド状態の上のカードを場外に置いてもよい。そうした場合、このフィールドをレストにし、カードを1枚引き、自分の手札から必要エナジーを満たしこの効果で場外に置いたカードと必要エナジーが異なるカードを1枚まで、そのキャラのレイド元のカードにレイドさせる。'))
+  return dsl({enterAlwaysActive:true,
+   allyRaidAttackEnd:{once:'uid',requireActive:true,includes:['イサム','ガルド'],different:'energy',draw:1,restSelf:true}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】 【ターン1】以下から1つ選ぶ。このターン中に自分の他の〈シェリル・ノーム〉が既に選んだ効果は選べない。\n・自分のフロントLのカード名に「アルト」を含むキャラを1枚選び、このターン中、BP+1000。\n・自分のフロントLのカード名に「アルト」を含むキャラを1枚選び、このターン中、「このキャラがアタックしてブロックされなかった時、カードを1枚まで引く。」を与える。'))
+  return dsl({mainAbility:{op:'restNameLockChoose',oncePerTurn:true,choice:{op:'chooseOne',optional:false,nameLock:'シェリル・ノーム',options:[
+   {id:'altoBp',turn:'any',label:'指定前線名稱含「阿爾特」的角色，本回合 BP＋1000',then:[{op:'buffOwnField',optional:false,bp:1000,excludeSelf:false,zone:'front',filter:{field:'nameIncludes',value:'アルト'}}]},
+   {id:'altoDraw',turn:'any',label:'指定前線名稱含「阿爾特」的角色，未被阻擋時可抽 1 張',then:[{op:'grantNamedUnblockedOptionalDraw',nameIncludes:'アルト',line:'front',optional:false}]}
+  ]}}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】 【ターン1】以下から1つ選ぶ。このターン中に自分の他の〈ランカ・リー〉が既に選んだ効果は選べない。\n・自分のフロントLにカード名に「アルト」を含むキャラがある場合、BP1500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000。\n・自分のフロントLのカード名に「アルト」を含むキャラを1枚選び、このターン中、「このキャラがアタックしてバトルに勝利した時、カードを1枚まで引く。」を与える。'))
+  return dsl({mainAbility:{op:'restNameLockChoose',oncePerTurn:true,choice:{op:'chooseOne',optional:false,nameLock:'ランカ・リー',options:[
+   {id:'altoDown',turn:'any',label:'前線有名稱含「阿爾特」的角色時，指定對手 BP1500 以上的角色 BP－1000',when:nameHas('front',['アルト']),then:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,zone:'front'}]},
+   {id:'altoWin',turn:'any',label:'指定前線名稱含「阿爾特」的角色，戰鬥勝利時可抽 1 張',then:[{op:'grantFrontIncludesWinDraw',includes:'アルト',optional:false,upTo:1}]}
+  ]}}});
+ if(card.type==='field'&&effect===norm(
+  'このフィールドはアクティブで場に登場させる。\n【起動メイン】【レストにする】 【ターン1】カードを1枚引き、自分の手札を1枚場外に置く。\n【起動メイン】【レストにする】 【手札を2枚場外に置く】 【APを1支払う】 【ターン1】相手のフロントLのキャラを1枚選び、退場させる。'))
+  return dsl({enterAlwaysActive:true,mainAbility:{op:'fieldPairMains',
+   first:{once:'uid',rest:true,then:{op:'drawDiscard',count:1}},
+   second:{once:'uid',rest:true,ap:1,then:{op:'retireOppFrontOne',optional:false}}}});
+ if(card.type==='event'&&effect===norm(
+  '自分の場にカード名に「アルト」を含むキャラがある場合、手札にあるこのカードの消費APを-1する。\n『BP4000以下』の相手のフロントLのキャラを1枚選び、退場させる。以下から1つ選ぶ。\n・自分の場に〈シェリル・ノーム〉がある場合、『BP5000以下』に代わる。\n・自分の場に〈ランカ・リー〉がある場合、自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,handApDiscountWhileNameIncludes:{includes:'アルト',amount:1},
+   effects:{onPlay:[{op:'chooseRetireCapOrPeek',mandatory:true,baseBp:4000,options:[
+    {id:'sheryl',name:'シェリル・ノーム',bp:5000},
+    {id:'ranka',name:'ランカ・リー',bp:4000,peek:true}
+   ]}]}});
+ if(card.type==='character'&&effect===norm(
+  '自分のフロントLにカード名に「バサラ」を含むキャラがある場合、手札にあるこのカードの消費APを-1する。\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【登場時】自分の場のカード名に「バサラ」を含むキャラを1枚まで選び、このターン中、「相手はこのキャラのアタックを可能ならブロックしなければならない。」を与える。'))
+  return dsl({impactNull:true,handApDiscountWhileFrontNameIncludes:{includes:'バサラ',amount:1},
+   effects:{onPlay:[{op:'grantFieldNameIncludesMustBlock',optional:true,includes:'バサラ',zone:'field'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【フロントLにある場合】自分の場の〈シビル〉が相手の効果によって退場する場合、代わりにこのキャラを退場させてもよい。\n【自分のターン中】同じラインにカード名に「バサラ」を含むキャラがある場合、このキャラはBP+1000。'))
+  return dsl({substituteOppRetire:{name:'シビル',turn:'any',line:'front'},
+   passiveBonuses:[{bp:1000,condition:{kind:'sameLineNameIncludes',turn:'own',includes:'バサラ'}}]});
+ if(card.type==='event'&&effect===norm(
+  'BP5000以下の相手のフロントLのキャラを1枚選び、相手の山札の上か下の『相手が選んだ方』に置く。自分の場にカード名に「バサラ」を含むキャラがある場合、『自分が選んだ方』に代わる。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,effects:{onPlay:[{op:'placeOppFrontDeckSide',mandatory:true,bp:5000,witness:'バサラ'}]}});
+ if(card.type==='field'&&effect===norm(
+  '【場外にある場合】自分の場のカード名に「ミハエル」を含むキャラが退場した時、場外のこのカードを手札に加えてもよい。〈スナイパーライフル〉のこの効果は1ターンに1回のみ発動できる。\n【登場時】自分の場にカード名に「ミハエル」を含むキャラがある場合、このフィールドをアクティブにする。\n【起動メイン】【レストにする】 【このカードを退場させる】自分の場の［特徴：S.M.S］を1枚まで選び、このターン中、【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与える。'))
+  return dsl({outsideNameLeaveToHand:{includes:'ミハエル',once:'name',optional:true,name:'スナイパーライフル'},
+   mainAbility:{op:'restRetireGrantImpact',trait:'S.M.S',amount:1,optional:true},
+   effects:{onPlay:[{op:'activeSelfIfNameIncludes',includes:'ミハエル',zone:'field'}]}});
  return pending();
 }

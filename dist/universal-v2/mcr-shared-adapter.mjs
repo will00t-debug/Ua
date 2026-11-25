@@ -1,14 +1,16 @@
 // Macross -> Universal V2 adapter. Shared ability DSL only.
 // Title data is converted here. There is no second Macross effects engine.
-import {createUniversalPack} from './pack.mjs?v=20261125mcr3';
-import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr3';
+import {createUniversalPack} from './pack.mjs?v=20261125mcr4';
+import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr4';
 
 const SHARED_KEYS=new Set([
  'ready','implementation','effects','mainAbility','activeExtraEnergy','impactNull',
  'opponentFieldColorsHandEnergyDiscount','ownTurnBp','triggerEffect',
  'battleLoseToHand','attackWinDraw','passiveBonuses','step','enterAlwaysActive',
  'emptyOwnFieldHandEnergyDiscount','playRequiresFrontName','raidName',
- 'unblockedAttack','playRequiresNameIncludes'
+ 'unblockedAttack','playRequiresNameIncludes','raidOnlyEntry','printedImpact',
+ 'allyRaidAttackEnd','attackEndRetireSelfThen','handApDiscountWhileNameIncludes',
+ 'handApDiscountWhileFrontNameIncludes','substituteOppRetire','outsideNameLeaveToHand'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
 const COLORS=new Set(['yellow','blue','red']);

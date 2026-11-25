@@ -287,7 +287,13 @@ const RAID_BOX_FEATURES=Object.freeze({
  'MCR-1-092':["onPlay","main","onAttack"],
  'MCR-1-107':["passive","onPlay"],
  'MCR-1-060':["ownTurnBp","unblockedAttack","onPlay"],
- 'MCR-1-095':["onPlay","onAttack"]
+ 'MCR-1-095':["onPlay","onAttack"],
+ 'MCR-1-044':["attackEnd","onRetire"],
+ 'MCR-1-045':["passive","onPlay"],
+ 'MCR-1-062':["passive","main","onBlock"],
+ 'MCR-1-063':["onPlay"],
+ 'MCR-1-079':["onPlay"],
+ 'MCR-1-093':["printedImpact","passive","attackWinDraw","battleLoseToHand","onPlay"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){
