@@ -16,6 +16,8 @@ const SPECIAL_TRIGGER=norm('【スペシャル】相手のフロントLのキャ
 const SPECIAL_EFFECT={op:'retireOppFront'};
 const COLOR_RETIRE=norm('【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。');
 const COLOR_BOUNCE=norm('【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。');
+const COLOR_REST=norm('【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。');
+const IMPACT='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）';
 const DISCOUNT=Object.freeze({
  yellow:Object.freeze({
   text:'相手の場に青か赤のカードがある場合、手札にあるこのカードの必要エナジーを【黄×1】減らす。',
@@ -46,7 +48,7 @@ function triggerAllowed(card){
  const triggerText=norm(card.triggerTextJa);
  if(card.trigger==='raid')return false;
  if(card.trigger==='special')return triggerText===SPECIAL_TRIGGER;
- if(card.trigger==='color')return triggerText===COLOR_RETIRE||triggerText===COLOR_BOUNCE;
+ if(card.trigger==='color')return triggerText===COLOR_RETIRE||triggerText===COLOR_BOUNCE||triggerText===COLOR_REST;
  return Object.prototype.hasOwnProperty.call(STANDARD,triggerText)&&
   STANDARD[triggerText]===card.trigger;
 }
@@ -56,6 +58,15 @@ function nameSearch(count,name){
 function groups(count,items){
  return {op:'searchTopOneBottomDiscard',count,groups:items};
 }
+function songNames(turn='any',min=3){
+ return {kind:'ownOutsideDistinctColorTraitNames',turn,color:'yellow',trait:'歌（ランカ）',min};
+}
+function nameHas(zone,names,turn='any'){
+ return {kind:'ownNameIncludes',turn,zone,names};
+}
+function exactField(name,zone='field'){
+ return {kind:'ownNameExists',turn:'any',name,zone,excludeSelf:false};
+}
 
 export function mcrSharedProgram(card){
  if(!card||card.title!=='mcr'||card.deckLegal!==true||card.type==='action-point')return pending();
@@ -64,6 +75,12 @@ export function mcrSharedProgram(card){
  const effect=norm(card.effectJa);
  const ink=INK[card.color];
  if(!ink&&card.type!=='action-point')return pending();
+ if(card.type==='event'&&effect===norm(
+  '自分の場外から【レイド】を持つキャラカードを1枚手札に加える。自分のフロントLのアクティブの〈シェリル・ノーム〉を1枚レストにしてもよい。そうした場合、自分のAPカードを1枚まで選び、アクティブにする。'))
+  return dsl({effects:{onPlay:[
+   {op:'recoverOutsideFiltered',optional:false,max:1,type:'character',raidKeyword:true},
+   {op:'optionalRestNamedFrontThen',name:'シェリル・ノーム',then:[{op:'recoverAp',count:1}]}
+  ]}});
  if(effect.includes('【レイド】')||effect.includes('レイド以外'))return pending();
  if(EMPTY.has(effect)){
   if(card.type!=='character')return pending();
@@ -136,6 +153,153 @@ export function mcrSharedProgram(card){
   return dsl({
    ownTurnBp:1000,attackWinDraw:{count:1},battleLoseToHand:true,
    triggerEffect:{op:'retireOppFrontUnderBp',bp:2500}
+  });
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から2枚見る。その中から〈シェリル・ノーム〉を望む枚数場外に置く。残りを望む順で自分の山札の上に置く。'))
+  return onPlay({op:'inspectTopAnyOutside',count:2,rest:'top',filter:{field:'name',value:'シェリル・ノーム'}});
+ if(card.type==='character'&&effect===norm(
+  '自分の場外に黄の［特徴：歌（ランカ）］のカード名が3種類以上ある場合、このキャラはBP+1500。'))
+  return dsl({passiveBonuses:[{condition:songNames(),bp:1500}]});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から2枚見る。その中からイベントカードを1枚まで場外に置く。残りを望む順で自分の山札の上に置く。'))
+  return onPlay({op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1,filter:{field:'type',value:'event'}});
+ if(card.type==='character'&&norm(card.triggerTextJa)===COLOR_REST&&effect===norm(
+  '【登場時】自分の山札の上から4枚見る。その中から黄の〔［特徴：歌（ランカ）］かフィールドカード〕を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'))
+  return dsl({triggerEffect:{op:'restOppFrontSkipNextActive'},effects:{onPlay:[groups(4,[
+   {logic:'all',filters:[{field:'color',value:'yellow'},{field:'trait',value:'歌（ランカ）'}]},
+   {logic:'all',filters:[{field:'color',value:'yellow'},{field:'type',value:'field'}]}
+  ])]}});
+ if(card.type==='character'&&effect===norm(
+  `${IMPACT}\n【自分のターン中】自分の場外に黄の［特徴：歌（ランカ）］のカード名が3種類以上ある場合、このキャラはBP+500。`))
+  return dsl({impactNull:true,passiveBonuses:[{condition:songNames('own'),bp:500}]});
+ if(card.type==='character'&&effect===norm(
+  'このキャラはアクティブで場に登場させる。\n【登場時】以下から1つ選ぶ。\n・カードを2枚引き、自分の手札を2枚場外に置く。\n・自分の場外の黄の［特徴：歌（ランカ）］のカード名の種類数×1000以下のBPの相手のフロントLのキャラを1枚まで選び、手札に戻す。'))
+  return dsl({enterAlwaysActive:true,effects:{onPlay:[{op:'chooseOne',optional:false,options:[
+   {id:'draw',turn:'any',label:'抽兩張並將兩張手牌放到場外',then:[{op:'drawDiscard',count:2,discardCount:2}]},
+   {id:'bounce',turn:'any',label:'可以將符合種類數上限的對手前線角色返回手牌',then:[{
+    op:'bounceOppFrontOneUnderBp',optional:true,scale:{color:'yellow',trait:'歌（ランカ）',per:1000}
+   }]}
+  ]}]}});
+ if(card.type==='field'&&effect===norm(
+  '【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、カードを2枚引く。\n【起動メイン】【レストにする】【このカードを退場させる】自分の場のキャラを1枚選び、このターン中、BP+500。'))
+  return dsl({
+   effects:{onPlay:[{op:'discardToDraw',count:2,optional:true}]},
+   mainAbility:{op:'restRetireThen',then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:500,optional:false,excludeSelf:true}]}
+  });
+ if(card.type==='event'&&effect===norm(
+  'このカードは自分のフロントLに〈ランカ・リー〉がある場合のみ使用できる。\n以下から1つ選ぶ。\n・相手のフロントLのキャラを1枚まで選び、レストにする。それは次の1回アクティブにならない。\n・自分の山札の上から5枚見る。その中からキャラカードを2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。'))
+  return dsl({playRequiresFrontName:'ランカ・リー',effects:{onPlay:[{op:'chooseOne',optional:false,options:[
+   {id:'rest',turn:'any',label:'可以讓對手前線角色休息且下次不能活動',then:[{op:'restOppFrontOne',optional:true,skipNextActive:true}]},
+   {id:'look',turn:'any',label:'查看牌庫頂五張並最多將兩張角色加入手牌',then:[{
+    op:'searchTopUpToTwoBottom',count:5,max:2,rest:'bottom',logic:'all',filters:[{field:'type',value:'character'}]
+   }]}
+  ]}]}});
+ if(card.type==='event'&&effect===norm(
+  '自分の場のキャラを1枚まで選び、このターン中、BP+1000。カードを1枚引く。自分の場外に黄の［特徴：歌（ランカ）］のカード名が3種類以上ある場合、自分のAPカードを1枚まで選び、アクティブにする。'))
+  return dsl({effects:{onPlay:[
+   {op:'buffOwnField',optional:true,excludeSelf:false,filter:{field:'type',value:'character'},bp:1000},
+   {op:'draw',count:1},
+   {op:'ifLiveThen',when:songNames(),then:[{op:'recoverAp',count:1}]}
+  ]}});
+ if(card.type==='event'&&effect===norm(
+  'カードを1枚引き、自分の手札を1枚場外に置く。その後、自分の場外から必要エナジーが2以下の黄のキャラカードを1枚まで自分の場にレストで登場させる。'))
+  return dsl({effects:{onPlay:[
+   {op:'drawDiscard',count:1},
+   {op:'deployOutsideColorTraitRest',color:'yellow',maxEnergy:2,ready:false,optional:true}
+  ]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の場にカード名に「イサム」を含むキャラがある場合、自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを望む順で下に置く。'))
+  return onPlay({op:'ifLiveThen',when:nameHas('field',['イサム']),then:[{op:'inspectTopArrange',count:2,split:true}]});
+ if(card.type==='character'&&effect===norm(
+  '【エナジーLにある場合】自分のフロントLにカード名に「イサム」を含むキャラがある場合、このキャラの発生エナジー+【青】。'))
+  return dsl({passiveBonuses:[{extraEnergy:1,condition:{logic:'all',turn:'any',checks:[
+   {kind:'selfOnEnergy',turn:'any'},
+   nameHas('front',['イサム'])
+  ]}}]});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の場にカード名に「ガルド」を含むキャラがある場合、BP1500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000。'))
+  return onPlay({op:'ifLiveThen',when:nameHas('field',['ガルド']),then:[{
+   op:'enemyBpDown',optional:true,bp:1000,minBp:1500,zone:'front'
+  }]});
+ if(card.type==='character'&&effect===norm(
+  'このキャラはアクティブで場に登場させる。\n【登場時】自分の場に〈ランカ・リー〉がある場合、自分の手札を1枚場外に置いてもよい。そうした場合、BP3500以下の相手のフロントLのキャラを1枚まで選び、手札に戻す。'))
+  return dsl({enterAlwaysActive:true,effects:{onPlay:[{
+   op:'discardGate',optional:true,when:exactField('ランカ・リー'),
+   then:[{op:'bounceOppFrontOneUnderBp',bp:3500,optional:true}]
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【起動メイン】【フロントLにある場合】【ターン1】自分の場の他のキャラ全ては、このターン中、BP+1000。'))
+  return dsl({step:true,mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{
+   op:'buffOwnField',all:true,optional:false,excludeSelf:true,bp:1000,filter:{field:'type',value:'character'}
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】【ターン1】以下から1つ選ぶ。\n・BP4000以上の自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。\n・手札を1枚場外に置く。そうした場合、自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。'))
+  return dsl({mainAbility:{op:'restSelfChoose',oncePerTurn:true,then:[{op:'chooseOne',optional:false,options:[
+   {id:'high',turn:'any',label:'可以選擇其他目前 BP 4000 以上的角色並提高 BP',then:[{
+    op:'buffOwnCurrentBp',minBp:4000,bp:1000,optional:true,excludeSelf:true
+   }]},
+   {id:'discard',turn:'any',label:'將一張手牌放到場外後可以提高其他角色 BP',then:[{
+    op:'discardGate',optional:true,then:[{
+     op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true
+    }]
+   }]}
+  ]}]}});
+ if(card.type==='character'&&effect===norm(
+  `${IMPACT}\n【自分のターン中】自分の場にカード名に「マクシミリアン・ジーナス」か「ミレーヌ・フレア・ジーナス」を含むキャラがある場合、このキャラはBP+1000。`))
+  return dsl({impactNull:true,passiveBonuses:[{bp:1000,condition:nameHas('field',['マクシミリアン・ジーナス','ミレーヌ・フレア・ジーナス'],'own')}]});
+ if(card.type==='character'&&norm(card.triggerTextJa)===COLOR_RETIRE&&effect===norm(
+  '【自分のターン中】自分の場にカード名に「ミリア・ファリーナ・ジーナス」か「ミレーヌ・フレア・ジーナス」を含むキャラがある場合、このキャラはBP+1000。'))
+  return dsl({triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},passiveBonuses:[{
+   bp:1000,condition:nameHas('field',['ミリア・ファリーナ・ジーナス','ミレーヌ・フレア・ジーナス'],'own')
+  }]});
+ if(card.type==='character'&&effect===norm('自分の手札が5枚以上の場合、このキャラはBP+1500。'))
+  return dsl({passiveBonuses:[{condition:{kind:'ownHandCountAtLeast',turn:'any',min:5},bp:1500}]});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】このターン中に相手がカードを引いている場合、自分はカードを1枚まで引く。'))
+  return onPlay({op:'ifLiveThen',when:{kind:'opponentDrewThisTurn',turn:'any'},then:[{op:'optionalDrawOne'}]});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】自分の手札が5枚以上の場合のみ発動できる。自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。'))
+  return dsl({mainAbility:{op:'restSelfThen',frontOnly:false,when:{kind:'ownHandCountAtLeast',turn:'any',min:5},then:[{op:'peekTopOrBottom'}]}});
+ if(card.type==='character'&&effect===norm(
+  `【相手のターン中】自分の場にカード名に「ミレーヌ・フレア・ジーナス」を含むキャラがある場合、このキャラはBP+1000と${IMPACT}を得る。`))
+  return dsl({passiveBonuses:[{bp:1000,impactNull:true,condition:nameHas('field',['ミレーヌ・フレア・ジーナス'],'opponent')}]});
+ if(card.type==='field'&&effect===norm(
+  '【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを望む順で下に置く。\n【起動メイン】【レストにする】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。'))
+  return dsl({
+   effects:{onPlay:[{op:'inspectTopArrange',count:2,split:true}]},
+   mainAbility:{op:'restSelfThen',frontOnly:false,then:[{op:'peekTopOrBottom'}]}
+  });
+ if(card.type==='event'&&card.trigger==='special'&&effect===norm(
+  '『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場にカード名に「マクシミリアン・ジーナス」を含むキャラがある場合、『BP5000以下』に代わる。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,effects:{onPlay:[{
+   op:'retireOppFrontUnderBp',bp:3000,bonusBp:5000,bonusNameIncludes:'マクシミリアン・ジーナス',mandatory:true
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【青×2】減らす。\n【登場時】自分のフロントLにカード名に「アルト」を含むキャラがある場合、自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを望む順で下に置く。'))
+  return dsl({emptyOwnFieldHandEnergyDiscount:2,effects:{onPlay:[{
+   op:'ifLiveThen',when:nameHas('front',['アルト']),then:[{op:'inspectTopArrange',count:2,split:true}]
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【青×2】減らす。\n【登場時】自分のフロントLにカード名に「アルト」を含むキャラがある場合、BP2500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-2000。'))
+  return dsl({emptyOwnFieldHandEnergyDiscount:2,effects:{onPlay:[{
+   op:'ifLiveThen',when:nameHas('front',['アルト']),then:[{
+    op:'enemyBpDown',optional:true,bp:2000,minBp:2500,zone:'front'
+   }]
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  `自分の場に〈シェリル・ノーム〉がある場合、このキャラは${IMPACT}を得る。\n【登場時】自分の場に〈ランカ・リー〉がある場合、カードを1枚引き、自分の手札を1枚場外に置く。`))
+  return dsl({
+   passiveBonuses:[{impactNull:true,condition:exactField('シェリル・ノーム')}],
+   effects:{onPlay:[{op:'ifLiveThen',when:exactField('ランカ・リー'),then:[{op:'drawDiscard',count:1}]}]}
+  });
+ if(card.type==='character'&&effect===norm(
+  '自分の場外に黄の［特徴：歌（ランカ）］のカード名が3種類以上ある場合、このキャラはBP+1000。'))
+  return dsl({passiveBonuses:[{condition:songNames(),bp:1000}]});
+ if(card.type==='character'&&effect===norm(
+  `自分の手札が5枚以上の場合、このキャラはBP+500と${IMPACT}を得る。\n${'このキャラがアタックしてバトルに勝利した時、カードを1枚引き、このバトルで敗北した相手のキャラは退場する代わりに、手札に戻る。'}`))
+  return dsl({
+   passiveBonuses:[{bp:500,impactNull:true,condition:{kind:'ownHandCountAtLeast',turn:'any',min:5}}],
+   attackWinDraw:{count:1},battleLoseToHand:true
   });
  return pending();
 }

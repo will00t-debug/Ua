@@ -162,6 +162,36 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  }
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // エナジーLにある場合. Front generation does not satisfy an energy-line clause.
+ if(condition.kind==='selfOnEnergy')
+  return s.players[owner].energy.some(c=>c?.uid===sourceUid);
+ // このターン中に相手がカードを引いている. Only draw() increments the counter.
+ if(condition.kind==='opponentDrewThisTurn')
+  return Array.isArray(s.drawnThisTurn)&&(s.drawnThisTurn[1-owner]||0)>=1;
+ // Distinct printed names in this player's outside. Copies are one kind.
+ // Color and trait are both required. The opponent's outside does not count.
+ if(condition.kind==='ownOutsideDistinctColorTraitNames'){
+  const names=new Set();
+  for(const c of s.players[owner].outside){
+   const d=printed(c);
+   if(d.color!==condition.color||!cardHasTrait(d,condition.trait))continue;
+   if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
+  }
+  return names.size>=condition.min;
+ }
+ // カード名に「…」を含む. Printed characters only, substring, not an alias.
+ if(condition.kind==='ownNameIncludes'){
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  for(const zone of zones)for(const c of zone){
+   if(!printedFieldCard(c))continue;
+   const d=printed(c);
+   if(d.type!=='character'||typeof d.name!=='string')continue;
+   if(condition.names.some(n=>d.name.includes(n)))return true;
+  }
+  return false;
+ }
  // The on-play job carries the entry cause. A later check does not invent one.
  if(condition.kind==='selfOwnEffectRaid')return ownEffectRaidCause(entryCause);
  // 自分の場に、指定顏色、特徵，而且持有突襲關鍵字的角色。三項要同時成立。
