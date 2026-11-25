@@ -1,0 +1,49 @@
+{
+  "codeVersion": "v4b7-1",
+  "floor": -0.25,
+  "screenPairs": 8,
+  "each": 66,
+  "screenSalt": 610000,
+  "confirmSalt": 720000,
+  "candidates": [
+    {
+      "index": 9,
+      "id": "b122fb89d72eec7e",
+      "role": "reserved",
+      "screenMean": -0.5,
+      "bucket": "mid-entry",
+      "opponent": "white-sword",
+      "learnable": false,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-4-070",
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線"
+    },
+    {
+      "index": 21,
+      "id": "85e95278a339ca79",
+      "role": "learnable",
+      "screenMean": -0.5,
+      "bucket": "early-energy",
+      "opponent": "white-sword",
+      "learnable": true,
+      "cardA": "BLC-4-070",
+      "cardB": "BLC-2-073",
+      "labelA": "棄掉 BLC-4-070",
+      "labelB": "棄掉 BLC-2-073"
+    },
+    {
+      "index": 35,
+      "id": "7ea78f79be88d584",
+      "role": "learnable",
+      "screenMean": -0.5,
+      "bucket": "attack-defense",
+      "opponent": "white-sword",
+      "learnable": true,
+      "cardA": "BLC-3-008",
+      "cardB": "BLC-4-060",
+      "labelA": "移除 BLC-3-008",
+      "labelB": "移除 BLC-4-060"
+    }
+  ]
+}
