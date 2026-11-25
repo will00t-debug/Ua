@@ -2,8 +2,8 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs?v=20261125mcr7';
-import {cardHasName} from './field-conditions.mjs?v=20261125mcr7';
+import {universalBp} from './engine.mjs?v=20261125mcr8';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr8';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -274,6 +274,8 @@ function effectWords(ability,action){
  const named=name=>name?`〈${nameZh(name)}〉`:'';
  if(op==='onceBuffSelfWhen'||mode==='onceBuffSelf')
   return `本回合 BP＋${bp??500}`;
+ if(op==='lifeToHandOnce'||mode==='lifeToHand')
+  return '將自己 1 張生命牌加入手牌';
  if(op==='onceAbovePrintedKeywords'||mode==='abovePrinted')
   return `依自己場上 BP 高於原本 BP 的角色數量，此角色本回合獲得全部符合的效果：${ability?.damageAt??3} 張以上獲得【傷害（${ability?.damage??2}）】；${ability?.impactAt??5} 張以上再獲得【貫通（${ability?.impact??1}）】`;
  if(op==='restSelfBuffOther'||(mode==='selfRestBuff'&&bp!=null))

@@ -1,7 +1,7 @@
 // Macross -> Universal V2 adapter. Shared ability DSL only.
 // Title data is converted here. There is no second Macross effects engine.
-import {createUniversalPack} from './pack.mjs?v=20261125mcr7';
-import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr7';
+import {createUniversalPack} from './pack.mjs?v=20261125mcr8';
+import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr8';
 
 const SHARED_KEYS=new Set([
  'ready','implementation','effects','mainAbility','activeExtraEnergy','impactNull',

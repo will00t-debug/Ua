@@ -9,9 +9,9 @@ import {MCR_CARDS_051_100} from './cards-051-100.mjs?v=20261125mcr4';
 import {MCR_CARDS_STARTER} from './cards-starter.mjs?v=20261125mcr4';
 import {MCR_AP_CARDS} from './cards-ap.mjs?v=20261125mcr4';
 import {MCR_REPRINT_IDS,MCR_REPRINT_NUMBERS} from './reprint-ids.mjs?v=20261125mcr4';
-import {MCR2_CARDS_001_040} from './cards-ex14-001-040.mjs?v=20261125mcr7';
-import {MCR2_CARDS_041_077} from './cards-ex14-041-077.mjs?v=20261125mcr7';
-import {MCR2_AP_CARDS} from './cards-ex14-ap.mjs?v=20261125mcr7';
+import {MCR2_CARDS_001_040} from './cards-ex14-001-040.mjs?v=20261125mcr8';
+import {MCR2_CARDS_041_077} from './cards-ex14-041-077.mjs?v=20261125mcr8';
+import {MCR2_AP_CARDS} from './cards-ex14-ap.mjs?v=20261125mcr8';
 
 const COLORS=new Set(['yellow','blue','red']);
 const VOL2_COLORS=new Set(['yellow','blue','red','purple']);

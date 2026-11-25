@@ -27,9 +27,9 @@ const READY=[
  '112','113'
 ].map(n=>'MCR-1-'+n);
 const VOL2_READY=[
- '001','005','006','010','012','013','014','015','020','021','023','024','025','026','027','028','029','030',
- '031','032','033','034','037','038','039','040','041','043','044','046','047','050','051','055','056','057',
- '058','059','060','062','063','064','065','067','070','072','076','077'
+ '001','003','005','006','010','012','013','014','015','020','021','023','024','025','026','027','028','029','030',
+ '031','032','033','034','037','038','039','040','041','043','044','046','047','048','050','051','055','056','057',
+ '058','059','060','061','062','063','064','065','067','070','072','076','077'
 ].map(n=>'MCR-2-'+n);
 
 const pack=createMcrStagingPack();
@@ -1572,4 +1572,143 @@ test('060 raises the retirement cap by distinct Walkure names, not copies',()=>{
  assert.equal(high.pending.choices.includes(a.uid),true);
  assert.equal(high.pending.choices.includes(b.uid),true);
  assert.equal(assertUniversalMatch(packs,high),true);
+});
+
+test('003 takes one life privately, draws nothing, and the bonus waits for that take',()=>{
+ const counts=deckOf({[vol2('003')]:4,[vol2('001')]:4});
+ let s=reach(counts,71);
+ for(let i=0;i<2;i++)seat(s,0,vol2('001'),'energy',i);
+ const self=seat(s,0,vol2('003'),'front',0);
+ assert.equal(universalBp(packs,s,self),3000);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===self.uid),true);
+ const hidden=s.players[0].life[0];
+ const hand=s.players[0].hand.length;
+ s=act(s,a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='lifeToHand');
+ assert.equal(s.pending.kind,'effect-life-to-hand');
+ assert.equal(s.pending.drawCount,0);
+ assert.equal(s.pending.optional,false);
+ const own=universalPrivateChoices(packs,s,0);
+ assert.equal(own.options.every(option=>option.card===null),true);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assert.equal(JSON.stringify(universalPublicView(packs,s,1)).includes(hidden.uid),false);
+ s=dispatchUniversalAction(packs,s,{type:'chooseLifeToHand',uid:hidden.uid});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.some(card=>card.uid===hidden.uid),true);
+ assert.equal(s.players[0].hand.length,hand+1);
+ assert.equal(s.players[0].lifeRevealed.length,0);
+ assert.equal(s.players[0].life.some(card=>card.uid===hidden.uid),false);
+ assert.equal(JSON.stringify(universalPublicView(packs,s,1)).includes(hidden.uid),false);
+ assert.equal(universalBp(packs,s,self),4000);
+ s.active=1;
+ assert.equal(universalBp(packs,s,self),3000);
+ s.active=0;
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===self.uid),false);
+ const empty=reach(counts,72);
+ for(let i=0;i<2;i++)seat(empty,0,vol2('001'),'energy',i);
+ const quiet=seat(empty,0,vol2('003'),'front',0);
+ empty.players[0].deck.push(...empty.players[0].life.splice(0));
+ assert.equal(legalUniversalActions(packs,empty).some(a=>a.uid===quiet.uid&&a.type==='activate'),false);
+ assert.throws(()=>dispatchUniversalAction(packs,empty,{type:'activate',uid:quiet.uid,mode:'lifeToHand'}));
+ assert.equal(empty.mainAbilityUsedUids.includes(quiet.uid),false);
+ const last=reach(counts,73);
+ for(let i=0;i<2;i++)seat(last,0,vol2('001'),'energy',i);
+ const closer=seat(last,0,vol2('003'),'front',0);
+ const only=last.players[0].life[0];
+ last.players[0].deck.push(...last.players[0].life.splice(1));
+ let lost=dispatchUniversalAction(packs,last,{type:'activate',uid:closer.uid,mode:'lifeToHand'});
+ lost=dispatchUniversalAction(packs,lost,{type:'chooseLifeToHand',uid:only.uid});
+ assert.equal(lost.players[0].hand.some(card=>card.uid===only.uid),true);
+ assert.equal(lost.players[0].life.length,0);
+ assert.equal(lost.status,'finished');
+ assert.equal(lost.winner,1);
+ assert.equal(lost.endReason,'life-zero');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('048 puts the chosen Walkure on top of the deck and discards nothing',()=>{
+ const counts=deckOf({[vol2('048')]:4,[vol2('050')]:4,[vol2('034')]:4,[vol2('001')]:4});
+ let s=reach(counts,74);
+ for(let i=0;i<3;i++)seat(s,0,vol2('050'),'energy',i);
+ const walkure=take(s,0,vol2('034'));
+ const plain=take(s,0,vol2('001'));
+ const extra=take(s,0,vol2('001'));
+ s.players[0].deck.unshift(walkure,plain,extra);
+ const fromHand=s.players[0].hand.some(card=>card.cardId===vol2('048'));
+ const before=s.players[0].hand.length-(fromHand?1:0);
+ s=play(s,vol2('048'));
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.equal(s.pending.place,'top');
+ assert.deepEqual(s.pending.choices,[walkure.uid]);
+ const own=universalPrivateChoices(packs,s,0);
+ assert.equal(own.inspected.length,3);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assert.equal(JSON.stringify(universalPublicView(packs,s,1)).includes(plain.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:plain.uid}));
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:walkure.uid});
+ assert.equal(s.pending.kind,'effect-top-order');
+ assert.equal(s.pending.promoteTop,walkure.uid);
+ assert.equal(s.players[0].hand.some(card=>card.uid===walkure.uid),false);
+ s=finishOrder(s);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck[0].uid,walkure.uid);
+ assert.equal(s.players[0].deck.at(-1).uid===plain.uid||s.players[0].deck.at(-2).uid===plain.uid,true);
+ assert.equal(s.players[0].hand.length,before);
+ assert.equal(s.publicReveals.some(entry=>entry.uid===walkure.uid&&entry.cardId===walkure.cardId),true);
+ assert.equal(JSON.stringify(universalPublicView(packs,s,1)).includes(plain.uid),false);
+ let missed=reach(counts,75);
+ for(let i=0;i<3;i++)seat(missed,0,vol2('050'),'energy',i);
+ const a=take(missed,0,vol2('001'));
+ const b=take(missed,0,vol2('001'));
+ const c=take(missed,0,vol2('050'));
+ missed.players[0].deck.unshift(a,b,c);
+ missed=play(missed,vol2('048'));
+ assert.equal(missed.pending.kind,'effect-top-order');
+ assert.equal(missed.pending.promoteTop,undefined);
+ missed=finishOrder(missed);
+ assert.equal(missed.players[0].deck.slice(-3).map(card=>card.uid).sort().join(','),
+  [a.uid,b.uid,c.uid].sort().join(','));
+ assert.equal(missed.publicReveals.some(entry=>[a.uid,b.uid,c.uid].includes(entry.uid)),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.equal(assertUniversalMatch(packs,missed),true);
+});
+
+test('061 draws, then either bans an attack or strips a raid without entry or retirement',()=>{
+ const counts=deckOf({[vol2('061')]:4,[vol2('050')]:4,[id('092')]:2,[id('016')]:2,[vol2('001')]:4});
+ let strip=reach(counts,76);
+ for(let i=0;i<3;i++)seat(strip,0,vol2('050'),'energy',i);
+ const top=seat(strip,1,id('092'),'front',0);
+ const base=take(strip,1,id('016'));
+ base.faceDown=false;base.ready=true;base.buffs=[{bp:1000,untilTurn:9}];
+ base.stack=[];base.under=[];
+ top.ready=false;top.buffs=[{bp:500,untilTurn:9}];top.stack=[base];top.under=[];
+ const foeHand=strip.players[1].hand.length;
+ const deck=strip.players[0].deck.length;
+ const fromHand=strip.players[0].hand.some(card=>card.cardId===vol2('061'));
+ const ownHand=strip.players[0].hand.length-(fromHand?1:0);
+ strip=play(strip,vol2('061'));
+ assert.equal(strip.players[0].deck.length,deck-1);
+ assert.equal(strip.players[0].hand.length,ownHand+1);
+ assert.equal(strip.pending.kind,'effect-choice-mode');
+ strip=dispatchUniversalAction(packs,strip,{type:'chooseEffectMode',mode:'strip'});
+ assert.equal(strip.pending.kind,'effect-strip-raid-top');
+ assert.equal(strip.pending.choices.includes(top.uid),true);
+ strip=dispatchUniversalAction(packs,strip,{type:'chooseRaidTopStrip',uid:top.uid});
+ assert.equal(strip.pending,null);
+ assert.equal(strip.players[1].front[0].uid,base.uid);
+ assert.equal(strip.players[1].front[0].ready,false);
+ assert.deepEqual(strip.players[1].front[0].buffs,[]);
+ assert.equal(strip.players[1].outside.some(card=>card.uid===top.uid),true);
+ assert.equal(strip.players[1].hand.length,foeHand);
+ let ban=reach(counts,77);
+ for(let i=0;i<3;i++)seat(ban,0,vol2('050'),'energy',i);
+ const victim=seat(ban,1,vol2('001'),'front',0);
+ ban=play(ban,vol2('061'));
+ ban=dispatchUniversalAction(packs,ban,{type:'chooseEffectMode',mode:'ban'});
+ assert.equal(ban.pending.kind,'effect-attack-ban');
+ ban=dispatchUniversalAction(packs,ban,{type:'chooseAttackBan',uid:victim.uid});
+ assert.equal(ban.pending,null);
+ assert.equal(ban.continuousStates.some(state=>state.kind==='cannotAttack'&&
+  state.targetUid===victim.uid&&state.until?.phase==='start'),true);
+ assert.equal(assertUniversalMatch(packs,strip),true);
+ assert.equal(assertUniversalMatch(packs,ban),true);
 });

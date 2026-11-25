@@ -1,9 +1,9 @@
 // Staging pack for Macross cards whose full Japanese print is an existing
 // shared V2 profile. Raid-frame cards stay in the catalog until every framed
 // keyword is gated. This is not full-set certification.
-import {mcrCatalog} from '../mcr/catalog.mjs?v=20261125mcr7';
-import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr7';
-import {createMcrSharedStagingPack} from './mcr-shared-adapter.mjs?v=20261125mcr7';
+import {mcrCatalog} from '../mcr/catalog.mjs?v=20261125mcr8';
+import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr8';
+import {createMcrSharedStagingPack} from './mcr-shared-adapter.mjs?v=20261125mcr8';
 
 export const MCR_STAGING_IDS=Object.freeze(mcrCatalog().deck
  .filter(card=>mcrSharedProgram(card).ready===true)

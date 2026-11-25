@@ -744,5 +744,24 @@ export function mcrSharedProgram(card){
    op:'deployOutsideFiltered',trait:'ワルキューレ',count:1,ready:false,optional:true,
    maxEnergy:2,color:'purple'
   }]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【自分のターン中】このターン中に自分がライフを手札に加えている場合、このキャラはBP+1000。\n【起動メイン】【ターン1】自分のライフを1枚手札に加える。'))
+  return dsl({impactNull:true,passiveBonuses:[{
+   condition:{kind:'ownLifeToHandThisTurn',turn:'own'},bp:1000
+  }],mainAbility:{op:'lifeToHandOnce',oncePerTurn:true}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から3枚見て、［特徴：ワルキューレ］を1枚まで公開し山札の上に置く。残りを望む順で山札の下に置く。'))
+  return onPlay({op:'searchTopPlaceTop',count:3,filter:{field:'trait',value:'ワルキューレ'}});
+ if(card.type==='event'&&effect===norm(
+  'カードを1枚引く。その後、以下から1つ選ぶ。\n・相手のフロントLのキャラを1枚まで選び、次の自分のターン開始時まで、「このキャラはアタックできない。」を与える。\n・相手のフロントLのレイド状態のキャラを1枚まで選び、レイド状態の上のカードを1枚場外に置く。'))
+  return dsl({effects:{onPlay:[
+   {op:'draw',count:1},
+   {op:'chooseOne',optional:false,options:[
+    {id:'ban',turn:'any',label:'可以選擇對手前線 1 張角色，自己下回合開始前不能攻擊',
+     then:[{op:'forbidAttackOppFrontOne',optional:true,ownTurnOnly:true,until:'nextOwnTurnStart'}]},
+    {id:'strip',turn:'any',label:'可以選擇對手前線 1 張突襲狀態角色，將最上面的卡放到場外',
+     then:[{op:'stripOppRaidTop',optional:true}]}
+   ]}
+  ]}});
  return pending();
 }
