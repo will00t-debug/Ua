@@ -8495,10 +8495,17 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='unblockedLifeDamage'){
    // Q1579: this damage is queued after the unblocked-rest choice and
    // before the attack-end swap, so a life trigger cannot precede the rest.
-   const attacker=s.players[s.active].front.find(c=>c?.uid===job.attackerUid);
+   // Q2296: an energy-line attack stays on that line. TTG-1-068 and every
+   // other physical with a live energy-line attack still deals this damage.
+   // A front attacker who has already left, or an energy character without
+   // that permission, stays unproven.
+   const attacker=liveAttacker(s,job.attackerUid);
+   const attackedFrom=attacker?location(s,s.active,attacker.uid):null;
+   const energyAttack=attackedFrom?.line==='energy';
    if(owner!==1-s.active||s.phase!=='attack'||!attacker||
     attacker.fieldEntryStamp!==job.attackerStamp||
-    !(s.attacksByUid[attacker.uid]>=1)||Object.keys(job).length!==4)
+    !(s.attacksByUid[attacker.uid]>=1)||Object.keys(job).length!==4||
+    (energyAttack?!energyLineAttackLive(s,attacker):attackedFrom?.line!=='front'))
     throw Error('Unproven unblocked life damage');
    const count=universalAttackDamage(pack,s,attacker);
    const suppressActive=card(pack,attacker).id==='AOT-1-025'&&!originalEffectsDisabled(s,attacker);
@@ -13501,7 +13508,8 @@ function resolveChoice(s,a,pack){
      sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp});
    if(before.length)s.effectQueue.push(...before);
    // Q1579 / Q2314: life damage is checked before attack-end swaps and
-   // the granted attack-end retirement, while the attacker is still in front.
+   // the granted attack-end retirement, while the attacker is still on the
+   // line it attacked from. An energy-line attacker stays on energy.
    s.effectQueue.push({op:'unblockedLifeDamage',owner:q.player,
     attackerUid:attacker.uid,attackerStamp:attacker.fieldEntryStamp});
    queueAttackEndFollowups();
