@@ -1,0 +1,3023 @@
+{
+  "createdAt": "2026-11-25T08:04:55.463Z",
+  "gamma": 0.995,
+  "imitateLr": 0.001,
+  "monteLr": 0.0005,
+  "smooth": 0.05,
+  "explore": 0.12,
+  "parameters": 40257,
+  "bench": {
+    "nnGame": {
+      "seed": 188000,
+      "first": 0,
+      "mode": "eval",
+      "learnerSeat": null,
+      "seats": [
+        {
+          "deckId": "white-sword",
+          "kind": "nn"
+        },
+        {
+          "deckId": "white-sword",
+          "kind": "nn"
+        }
+      ],
+      "status": "finished",
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "error": null,
+      "steps": 363,
+      "decisions": 363,
+      "ms": 1527.985312,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0,
+        "unfinished": 0
+      },
+      "collisions": 277,
+      "explored": 0,
+      "imitate": 0,
+      "monte": 0,
+      "legalMean": 3.975206611570248,
+      "timing": {
+        "n": 363,
+        "mean": 0.6199441873278235,
+        "p50": 0.5528719999999794,
+        "p95": 1.0778329999998277,
+        "max": 5.167574000000059
+      }
+    },
+    "v2Game": {
+      "seed": 188001,
+      "first": 0,
+      "mode": "eval",
+      "learnerSeat": null,
+      "seats": [
+        {
+          "deckId": "white-sword",
+          "kind": "v2"
+        },
+        {
+          "deckId": "white-sword",
+          "kind": "v2"
+        }
+      ],
+      "status": "finished",
+      "winner": 0,
+      "endReason": "life-zero",
+      "error": null,
+      "steps": 145,
+      "decisions": 145,
+      "ms": 4506.957472,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0,
+        "unfinished": 0
+      },
+      "collisions": 0,
+      "explored": 0,
+      "imitate": 0,
+      "monte": 0,
+      "legalMean": null,
+      "timing": {
+        "n": 145,
+        "mean": 29.496336317241365,
+        "p50": 19.55631799999992,
+        "p95": 74.76359400000001,
+        "max": 93.36900500000002
+      }
+    },
+    "v2Finished": true,
+    "forward": {
+      "calls": 3200,
+      "ms": 42.358514000000014,
+      "perSecond": 75546
+    },
+    "train": {
+      "calls": 200,
+      "ms": 89.16060899999997,
+      "perSecond": 2243
+    },
+    "rssMb": 378,
+    "workers": 2
+  },
+  "plan": {
+    "imitate": 8,
+    "self": 24,
+    "dev": 16,
+    "test": 8,
+    "workers": 2,
+    "wallMs": 720000,
+    "estimatedMs": 89419.64800000002,
+    "nnMs": 1527.985312,
+    "v2Ms": 4506.957472,
+    "v2Finished": true,
+    "selfCost": 1937.593984,
+    "testCost": 3166.42
+  },
+  "elapsedMs": 75778.338889,
+  "actual": {
+    "imitate": 8,
+    "self": 24,
+    "dev": 16,
+    "test": 8
+  },
+  "initialization": "v2-imitation",
+  "imitationSamples": 996,
+  "monteSamples": 2083,
+  "imitationCurve": [
+    {
+      "epoch": 0,
+      "loss": 1.402456616455827,
+      "used": 996
+    },
+    {
+      "epoch": 1,
+      "loss": 1.2969440743986593,
+      "used": 996
+    },
+    {
+      "epoch": 2,
+      "loss": 1.2392173707901002,
+      "used": 996
+    }
+  ],
+  "monteCurve": [
+    {
+      "index": 0,
+      "opponentKind": "self",
+      "games": 1,
+      "mse": 60.752041718483035,
+      "used": 109
+    },
+    {
+      "index": 1,
+      "opponentKind": "self",
+      "games": 2,
+      "mse": 8.848724250060686,
+      "used": 202
+    },
+    {
+      "index": 2,
+      "opponentKind": "v2",
+      "games": 3,
+      "mse": 2.0156111788430944,
+      "used": 244
+    },
+    {
+      "index": 3,
+      "opponentKind": "self",
+      "games": 4,
+      "mse": 2.237993326233484,
+      "used": 314
+    },
+    {
+      "index": 4,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 1.0271981862885453,
+      "used": 425
+    },
+    {
+      "index": 5,
+      "opponentKind": "snapshot",
+      "games": 5,
+      "mse": 0.42429647123231085,
+      "used": 361
+    },
+    {
+      "index": 6,
+      "opponentKind": "v2",
+      "games": 5,
+      "mse": 0.25489643008332497,
+      "used": 339
+    },
+    {
+      "index": 7,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.15550664729317715,
+      "used": 505
+    },
+    {
+      "index": 8,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.08347523654341885,
+      "used": 501
+    },
+    {
+      "index": 9,
+      "opponentKind": "snapshot",
+      "games": 5,
+      "mse": 0.05878216438681846,
+      "used": 413
+    },
+    {
+      "index": 10,
+      "opponentKind": "v2",
+      "games": 5,
+      "mse": 0.06001447416211428,
+      "used": 420
+    },
+    {
+      "index": 11,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.04387034806762503,
+      "used": 493
+    },
+    {
+      "index": 12,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.07902113089233719,
+      "used": 609
+    },
+    {
+      "index": 13,
+      "opponentKind": "snapshot",
+      "games": 5,
+      "mse": 0.03284567760612406,
+      "used": 574
+    },
+    {
+      "index": 14,
+      "opponentKind": "v2",
+      "games": 5,
+      "mse": 0.023406974958948053,
+      "used": 572
+    },
+    {
+      "index": 15,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.05631067982973369,
+      "used": 604
+    },
+    {
+      "index": 16,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.07341909351513601,
+      "used": 546
+    },
+    {
+      "index": 17,
+      "opponentKind": "snapshot",
+      "games": 5,
+      "mse": 0.09906724964662417,
+      "used": 252
+    },
+    {
+      "index": 18,
+      "opponentKind": "v2",
+      "games": 5,
+      "mse": 0.14365446885912664,
+      "used": 263
+    },
+    {
+      "index": 19,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.07517895447844371,
+      "used": 364
+    },
+    {
+      "index": 20,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.11611712958654986,
+      "used": 392
+    },
+    {
+      "index": 21,
+      "opponentKind": "snapshot",
+      "games": 5,
+      "mse": 0.05386938027614063,
+      "used": 358
+    },
+    {
+      "index": 22,
+      "opponentKind": "v2",
+      "games": 5,
+      "mse": 0.029657915246633623,
+      "used": 391
+    },
+    {
+      "index": 23,
+      "opponentKind": "self",
+      "games": 5,
+      "mse": 0.04654838004166819,
+      "used": 431
+    }
+  ],
+  "distance": {
+    "initToA": 10.249776659815803,
+    "aToB": 6.358170601655803
+  },
+  "resourceGap": "",
+  "dev": {
+    "overall": {
+      "wins": 8,
+      "n": 16,
+      "p": 0.5,
+      "low": 0.2799923761135083,
+      "high": 0.7200076238864916,
+      "games": 16,
+      "finished": 16,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 2,
+      "n": 8,
+      "p": 0.25,
+      "low": 0.07147768885802763,
+      "high": 0.5907301208974108,
+      "games": 8,
+      "finished": 8,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 6,
+      "n": 8,
+      "p": 0.75,
+      "low": 0.40926987910258916,
+      "high": 0.9285223111419724,
+      "games": 8,
+      "finished": 8,
+      "unfinished": 0
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    }
+  },
+  "testB": {
+    "overall": {
+      "wins": 0,
+      "n": 4,
+      "p": 0,
+      "low": 0,
+      "high": 0.48990002040399916,
+      "games": 4,
+      "finished": 4,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 0,
+      "n": 2,
+      "p": 0,
+      "low": 0,
+      "high": 0.6576280471103807,
+      "games": 2,
+      "finished": 2,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 0,
+      "n": 2,
+      "p": 0,
+      "low": 0,
+      "high": 0.6576280471103807,
+      "games": 2,
+      "finished": 2,
+      "unfinished": 0
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    }
+  },
+  "testA": {
+    "overall": {
+      "wins": 0,
+      "n": 4,
+      "p": 0,
+      "low": 0,
+      "high": 0.48990002040399916,
+      "games": 4,
+      "finished": 4,
+      "unfinished": 0
+    },
+    "first": {
+      "wins": 0,
+      "n": 2,
+      "p": 0,
+      "low": 0,
+      "high": 0.6576280471103807,
+      "games": 2,
+      "finished": 2,
+      "unfinished": 0
+    },
+    "second": {
+      "wins": 0,
+      "n": 2,
+      "p": 0,
+      "low": 0,
+      "high": 0.6576280471103807,
+      "games": 2,
+      "finished": 2,
+      "unfinished": 0
+    },
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    }
+  },
+  "learning": {
+    "established": false,
+    "reason": "95% 信賴區間下限沒有高於 50%"
+  },
+  "promotion": {
+    "promoted": false,
+    "reasons": [
+      "已完成的基準對局少於 200",
+      "總勝率未達 60%",
+      "95% 勝率信賴區間下限未高於 50%",
+      "對手牌型少於 3 種",
+      "非鏡像對局的 95% 信賴區間下限未高於 50%，不能只靠白劍鏡像"
+    ]
+  },
+  "anomalies": {
+    "illegal": 0,
+    "timeout": 0,
+    "fallback": 0,
+    "deadLoop": 0,
+    "engineError": 0,
+    "leak": 0,
+    "opponentFallback": 0
+  },
+  "collisions": 5174,
+  "explored": 245,
+  "decisionTiming": {
+    "n": 8237,
+    "mean": 10.450684277649625,
+    "p50": 0.5401389999969979,
+    "p95": 68.40322899999956,
+    "max": 119.15546300000278
+  },
+  "frozen": true,
+  "played": true,
+  "games": {
+    "imitate": [
+      {
+        "seed": 188100,
+        "first": 0,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 109,
+        "decisions": 109,
+        "ms": 3529.4478689999996,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 58,
+        "explored": 0,
+        "imitate": 66,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 109,
+          "mean": 23.058385532110083,
+          "p50": 11.430666000000201,
+          "p95": 73.95524599999953,
+          "max": 81.16617599999881
+        }
+      },
+      {
+        "seed": 188101,
+        "first": 1,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 199,
+        "decisions": 199,
+        "ms": 9532.814425999999,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 149,
+        "explored": 0,
+        "imitate": 156,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 199,
+          "mean": 41.69140119597981,
+          "p50": 45.05468500000097,
+          "p95": 87.13112399999955,
+          "max": 91.36708999999973
+        }
+      },
+      {
+        "seed": 188102,
+        "first": 0,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 186,
+        "decisions": 186,
+        "ms": 7454.898582,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 116,
+        "explored": 0,
+        "imitate": 146,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 186,
+          "mean": 38.48056059139778,
+          "p50": 38.063114000000496,
+          "p95": 84.99742500000139,
+          "max": 98.6783660000001
+        }
+      },
+      {
+        "seed": 188103,
+        "first": 1,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 191,
+        "decisions": 191,
+        "ms": 7480.718828999998,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 135,
+        "explored": 0,
+        "imitate": 154,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 191,
+          "mean": 37.53227528272232,
+          "p50": 36.845337999999174,
+          "p95": 84.99473600000056,
+          "max": 97.12710399999924
+        }
+      },
+      {
+        "seed": 188104,
+        "first": 0,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 192,
+        "decisions": 192,
+        "ms": 8615.977243999998,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 192,
+        "explored": 0,
+        "imitate": 152,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 192,
+          "mean": 43.1432337239583,
+          "p50": 44.862592000001314,
+          "p95": 99.47841200000039,
+          "max": 109.66315000000031
+        }
+      },
+      {
+        "seed": 188105,
+        "first": 1,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 165,
+        "decisions": 165,
+        "ms": 6878.475287000001,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 69,
+        "explored": 0,
+        "imitate": 131,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 165,
+          "mean": 40.077224430302905,
+          "p50": 42.152540999999474,
+          "p95": 83.59082499999931,
+          "max": 93.06129400000282
+        }
+      },
+      {
+        "seed": 188106,
+        "first": 0,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 132,
+        "decisions": 132,
+        "ms": 4606.163795,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 71,
+        "explored": 0,
+        "imitate": 101,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 132,
+          "mean": 33.33336631060587,
+          "p50": 31.669316999999864,
+          "p95": 83.79363500000181,
+          "max": 92.21171500000128
+        }
+      },
+      {
+        "seed": 188107,
+        "first": 1,
+        "mode": "imitate",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 118,
+        "decisions": 118,
+        "ms": 3793.4432910000032,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 95,
+        "explored": 0,
+        "imitate": 90,
+        "monte": 0,
+        "legalMean": null,
+        "timing": {
+          "n": 118,
+          "mean": 30.71538645762691,
+          "p50": 26.143918999998277,
+          "p95": 67.44386599999416,
+          "max": 90.46522099999856
+        }
+      }
+    ],
+    "self": [
+      {
+        "seed": 188200,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 141,
+        "decisions": 141,
+        "ms": 321.32665099999576,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 152,
+        "explored": 10,
+        "imitate": 0,
+        "monte": 109,
+        "legalMean": 6.560283687943262,
+        "timing": {
+          "n": 141,
+          "mean": 0.6585734822699207,
+          "p50": 0.6284079999968526,
+          "p95": 1.0979559999977937,
+          "max": 1.669659999999567
+        }
+      },
+      {
+        "seed": 188201,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 139,
+        "decisions": 139,
+        "ms": 268.8736340000032,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 110,
+        "explored": 12,
+        "imitate": 0,
+        "monte": 93,
+        "legalMean": 5.172661870503597,
+        "timing": {
+          "n": 139,
+          "mean": 0.5407421582738791,
+          "p50": 0.5081160000045202,
+          "p95": 0.9525710000016261,
+          "max": 1.137656999999308
+        }
+      },
+      {
+        "seed": 188202,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 148,
+        "decisions": 148,
+        "ms": 3653.1705699999948,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 1,
+        "explored": 3,
+        "imitate": 0,
+        "monte": 42,
+        "legalMean": 4.491525423728813,
+        "timing": {
+          "n": 148,
+          "mean": 23.08974423648667,
+          "p50": 0.8678450000006706,
+          "p95": 76.5770610000036,
+          "max": 89.13317700000334
+        }
+      },
+      {
+        "seed": 188203,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 98,
+        "decisions": 98,
+        "ms": 194.31801200000336,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 48,
+        "explored": 9,
+        "imitate": 0,
+        "monte": 70,
+        "legalMean": 5.561224489795919,
+        "timing": {
+          "n": 98,
+          "mean": 0.5508241122445223,
+          "p50": 0.509169999997539,
+          "p95": 0.9432210000013583,
+          "max": 1.5409719999952358
+        }
+      },
+      {
+        "seed": 188204,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 149,
+        "decisions": 149,
+        "ms": 289.15665500000614,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 93,
+        "explored": 17,
+        "imitate": 0,
+        "monte": 111,
+        "legalMean": 4.993288590604027,
+        "timing": {
+          "n": 149,
+          "mean": 0.5347731208051074,
+          "p50": 0.5026230000003125,
+          "p95": 0.8841519999987213,
+          "max": 1.2600040000033914
+        }
+      },
+      {
+        "seed": 188205,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 116,
+        "decisions": 116,
+        "ms": 216.64568799999688,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 87,
+        "explored": 7,
+        "imitate": 0,
+        "monte": 45,
+        "legalMean": 4.913793103448276,
+        "timing": {
+          "n": 116,
+          "mean": 0.5079192327582484,
+          "p50": 0.46627299999818206,
+          "p95": 0.7503820000056294,
+          "max": 1.7697470000057365
+        }
+      },
+      {
+        "seed": 188206,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 178,
+        "decisions": 178,
+        "ms": 3937.180806000004,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 120,
+        "explored": 7,
+        "imitate": 0,
+        "monte": 71,
+        "legalMean": 7.267441860465116,
+        "timing": {
+          "n": 178,
+          "mean": 20.526515348315,
+          "p50": 0.768395999999484,
+          "p95": 84.35183600000164,
+          "max": 101.7074300000022
+        }
+      },
+      {
+        "seed": 188207,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 246,
+        "decisions": 246,
+        "ms": 560.2602669999978,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 341,
+        "explored": 21,
+        "imitate": 0,
+        "monte": 208,
+        "legalMean": 7.723577235772358,
+        "timing": {
+          "n": 246,
+          "mean": 0.6596196585368437,
+          "p50": 0.5777359999992768,
+          "p95": 1.173503999998502,
+          "max": 1.624748999995063
+        }
+      },
+      {
+        "seed": 188208,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 100,
+        "decisions": 100,
+        "ms": 189.14091600000393,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 78,
+        "explored": 9,
+        "imitate": 0,
+        "monte": 66,
+        "legalMean": 5.31,
+        "timing": {
+          "n": 100,
+          "mean": 0.5503337400004966,
+          "p50": 0.5130460000000312,
+          "p95": 1.0001420000044163,
+          "max": 1.3793650000006892
+        }
+      },
+      {
+        "seed": 188209,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 111,
+        "decisions": 111,
+        "ms": 195.9808750000011,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 68,
+        "explored": 5,
+        "imitate": 0,
+        "monte": 23,
+        "legalMean": 4.468468468468468,
+        "timing": {
+          "n": 111,
+          "mean": 0.4982916666666095,
+          "p50": 0.4641669999982696,
+          "p95": 0.8608010000025388,
+          "max": 1.0116540000017267
+        }
+      },
+      {
+        "seed": 188210,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 129,
+        "decisions": 129,
+        "ms": 2326.8015499999965,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 31,
+        "explored": 8,
+        "imitate": 0,
+        "monte": 52,
+        "legalMean": 4.140625,
+        "timing": {
+          "n": 129,
+          "mean": 16.487233232558165,
+          "p50": 0.791138000000501,
+          "p95": 65.18313299999863,
+          "max": 94.37956300000224
+        }
+      },
+      {
+        "seed": 188211,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 192,
+        "decisions": 192,
+        "ms": 415.95527199999924,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 99,
+        "explored": 13,
+        "imitate": 0,
+        "monte": 144,
+        "legalMean": 6.21875,
+        "timing": {
+          "n": 192,
+          "mean": 0.6172034062495868,
+          "p50": 0.516074999999546,
+          "p95": 1.2754789999962668,
+          "max": 2.9185819999984233
+        }
+      },
+      {
+        "seed": 188212,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "required-draw-empty",
+        "error": null,
+        "steps": 389,
+        "decisions": 389,
+        "ms": 943.5503650000028,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 205,
+        "explored": 47,
+        "imitate": 0,
+        "monte": 324,
+        "legalMean": 6.552699228791774,
+        "timing": {
+          "n": 389,
+          "mean": 0.6806939074548419,
+          "p50": 0.6233030000003055,
+          "p95": 1.1705819999988307,
+          "max": 2.1727410000021337
+        }
+      },
+      {
+        "seed": 188213,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 109,
+        "decisions": 109,
+        "ms": 206.9438650000011,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 87,
+        "explored": 2,
+        "imitate": 0,
+        "monte": 31,
+        "legalMean": 6.3119266055045875,
+        "timing": {
+          "n": 109,
+          "mean": 0.5542769449544187,
+          "p50": 0.5011000000013155,
+          "p95": 0.9550260000032722,
+          "max": 1.161856999999145
+        }
+      },
+      {
+        "seed": 188214,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 97,
+        "decisions": 97,
+        "ms": 1640.4333289999995,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 26,
+        "explored": 4,
+        "imitate": 0,
+        "monte": 21,
+        "legalMean": 3.2325581395348837,
+        "timing": {
+          "n": 97,
+          "mean": 15.576794422680024,
+          "p50": 0.6860890000025393,
+          "p95": 57.921487999999954,
+          "max": 73.86521299999731
+        }
+      },
+      {
+        "seed": 188215,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 161,
+        "decisions": 161,
+        "ms": 227.71323300000222,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 111,
+        "explored": 15,
+        "imitate": 0,
+        "monte": 84,
+        "legalMean": 3.1490683229813663,
+        "timing": {
+          "n": 161,
+          "mean": 0.37984404968934227,
+          "p50": 0.3638500000015483,
+          "p95": 0.519174999993993,
+          "max": 0.921409999995376
+        }
+      },
+      {
+        "seed": 188216,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 143,
+        "decisions": 143,
+        "ms": 203.45768400000088,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 31,
+        "explored": 9,
+        "imitate": 0,
+        "monte": 86,
+        "legalMean": 2.825174825174825,
+        "timing": {
+          "n": 143,
+          "mean": 0.380019314685418,
+          "p50": 0.3499329999976908,
+          "p95": 0.5616610000070068,
+          "max": 0.8774290000001201
+        }
+      },
+      {
+        "seed": 188217,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 81,
+        "decisions": 81,
+        "ms": 124.65108899999905,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 23,
+        "explored": 4,
+        "imitate": 0,
+        "monte": 30,
+        "legalMean": 2.8641975308641974,
+        "timing": {
+          "n": 81,
+          "mean": 0.4192896172839769,
+          "p50": 0.3875980000011623,
+          "p95": 0.6936300000015763,
+          "max": 0.9538489999977173
+        }
+      },
+      {
+        "seed": 188218,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 124,
+        "decisions": 124,
+        "ms": 2338.470720999998,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 53,
+        "explored": 4,
+        "imitate": 0,
+        "monte": 42,
+        "legalMean": 4,
+        "timing": {
+          "n": 124,
+          "mean": 17.50665460483933,
+          "p50": 0.6140220000015688,
+          "p95": 63.08013499999652,
+          "max": 85.51981499999965
+        }
+      },
+      {
+        "seed": 188219,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 213,
+        "decisions": 213,
+        "ms": 323.0880939999988,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 121,
+        "explored": 13,
+        "imitate": 0,
+        "monte": 122,
+        "legalMean": 3.356807511737089,
+        "timing": {
+          "n": 213,
+          "mean": 0.43475849295762325,
+          "p50": 0.38033200000063516,
+          "p95": 0.7753149999989546,
+          "max": 2.17710100000113
+        }
+      },
+      {
+        "seed": 188220,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 204,
+        "decisions": 204,
+        "ms": 279.0977849999981,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 121,
+        "explored": 10,
+        "imitate": 0,
+        "monte": 112,
+        "legalMean": 3.377450980392157,
+        "timing": {
+          "n": 204,
+          "mean": 0.37128268627448585,
+          "p50": 0.34803099999408005,
+          "p95": 0.5128679999979795,
+          "max": 1.0578299999979208
+        }
+      },
+      {
+        "seed": 188221,
+        "first": 0,
+        "mode": "train",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 161,
+        "decisions": 161,
+        "ms": 255.5131360000014,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 95,
+        "explored": 7,
+        "imitate": 0,
+        "monte": 52,
+        "legalMean": 3.6149068322981366,
+        "timing": {
+          "n": 161,
+          "mean": 0.42709421118004076,
+          "p50": 0.41720100000384264,
+          "p95": 0.6231879999977536,
+          "max": 1.0559969999958412
+        }
+      },
+      {
+        "seed": 188222,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 191,
+        "decisions": 191,
+        "ms": 3339.1235400000005,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 52,
+        "explored": 5,
+        "imitate": 0,
+        "monte": 63,
+        "legalMean": 3.336842105263158,
+        "timing": {
+          "n": 191,
+          "mean": 16.162745581151995,
+          "p50": 0.5594039999996312,
+          "p95": 70.68926300000021,
+          "max": 101.13579000000027
+        }
+      },
+      {
+        "seed": 188223,
+        "first": 1,
+        "mode": "train",
+        "learnerSeat": null,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 127,
+        "decisions": 127,
+        "ms": 212.81958600000507,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 65,
+        "explored": 4,
+        "imitate": 0,
+        "monte": 82,
+        "legalMean": 3.3858267716535435,
+        "timing": {
+          "n": 127,
+          "mean": 0.4421212440944991,
+          "p50": 0.42813299999397714,
+          "p95": 0.6353649999946356,
+          "max": 0.8418489999967278
+        }
+      }
+    ],
+    "dev": [
+      {
+        "seed": 188300,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 126,
+        "decisions": 126,
+        "ms": 1261.776294999996,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 70,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 3.8095238095238093,
+        "timing": {
+          "n": 126,
+          "mean": 0.6857377857143995,
+          "p50": 0.5557879999978468,
+          "p95": 1.1408290000108536,
+          "max": 4.609289999993052
+        }
+      },
+      {
+        "seed": 188300,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 167,
+        "decisions": 167,
+        "ms": 1324.0273460000026,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 87,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.544910179640719,
+        "timing": {
+          "n": 167,
+          "mean": 0.7216685508981885,
+          "p50": 0.6429990000033285,
+          "p95": 1.1952520000049844,
+          "max": 3.5113120000023628
+        }
+      },
+      {
+        "seed": 188301,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 136,
+        "decisions": 136,
+        "ms": 332.4265799999994,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 184,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 6.654411764705882,
+        "timing": {
+          "n": 136,
+          "mean": 0.6623758529398508,
+          "p50": 0.5947309999901336,
+          "p95": 1.1863850000081584,
+          "max": 2.287555999995675
+        }
+      },
+      {
+        "seed": 188301,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 109,
+        "decisions": 109,
+        "ms": 305.15379300000495,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 51,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.513761467889908,
+        "timing": {
+          "n": 109,
+          "mean": 0.7205316238528504,
+          "p50": 0.6246280000050319,
+          "p95": 1.3248020000028191,
+          "max": 4.500817999985884
+        }
+      },
+      {
+        "seed": 188302,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 128,
+        "decisions": 128,
+        "ms": 265.76520899999014,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 86,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.0703125,
+        "timing": {
+          "n": 128,
+          "mean": 0.5435480703118856,
+          "p50": 0.5208509999938542,
+          "p95": 0.9161070000118343,
+          "max": 1.6816749999998137
+        }
+      },
+      {
+        "seed": 188302,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 143,
+        "decisions": 143,
+        "ms": 284.80395699999644,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 82,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.048951048951049,
+        "timing": {
+          "n": 143,
+          "mean": 0.53120119580594,
+          "p50": 0.5089640000078361,
+          "p95": 0.7464990000007674,
+          "max": 2.62660999999207
+        }
+      },
+      {
+        "seed": 188303,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 135,
+        "decisions": 135,
+        "ms": 253.05765400000382,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 232,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 5.674074074074074,
+        "timing": {
+          "n": 135,
+          "mean": 0.5020695925920908,
+          "p50": 0.45332800000323914,
+          "p95": 0.8163110000023153,
+          "max": 3.405718000009074
+        }
+      },
+      {
+        "seed": 188303,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 84,
+        "decisions": 84,
+        "ms": 135.38821099999768,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 49,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 3.4761904761904763,
+        "timing": {
+          "n": 84,
+          "mean": 0.43129157142798896,
+          "p50": 0.4012910000019474,
+          "p95": 0.570914999989327,
+          "max": 2.702185999994981
+        }
+      },
+      {
+        "seed": 188304,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 159,
+        "decisions": 159,
+        "ms": 303.88223799999105,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 230,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 6.327044025157233,
+        "timing": {
+          "n": 159,
+          "mean": 0.5107066918238807,
+          "p50": 0.4645050000108313,
+          "p95": 0.892137000002549,
+          "max": 2.7677379999950062
+        }
+      },
+      {
+        "seed": 188304,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 90,
+        "decisions": 90,
+        "ms": 150.66830400000617,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 40,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 3.3444444444444446,
+        "timing": {
+          "n": 90,
+          "mean": 0.46235791111216207,
+          "p50": 0.4194649999990361,
+          "p95": 0.745628000004217,
+          "max": 2.7635250000021188
+        }
+      },
+      {
+        "seed": 188305,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 125,
+        "decisions": 125,
+        "ms": 236.80015599999751,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 69,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 5.896,
+        "timing": {
+          "n": 125,
+          "mean": 0.5062993039999856,
+          "p50": 0.4551740000024438,
+          "p95": 0.8667660000064643,
+          "max": 1.3582380000007106
+        }
+      },
+      {
+        "seed": 188305,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 185,
+        "decisions": 185,
+        "ms": 308.488446000003,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 168,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.562162162162162,
+        "timing": {
+          "n": 185,
+          "mean": 0.4423154972971109,
+          "p50": 0.4114550000085728,
+          "p95": 0.6739110000053188,
+          "max": 2.5882499999861466
+        }
+      },
+      {
+        "seed": 188306,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 112,
+        "decisions": 112,
+        "ms": 172.2064079999982,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 31,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 3.2142857142857144,
+        "timing": {
+          "n": 112,
+          "mean": 0.4055816785715121,
+          "p50": 0.3570400000025984,
+          "p95": 0.5643490000074962,
+          "max": 2.299921000012546
+        }
+      },
+      {
+        "seed": 188306,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 129,
+        "decisions": 129,
+        "ms": 241.51453899999615,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 55,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.782945736434108,
+        "timing": {
+          "n": 129,
+          "mean": 0.518415333333271,
+          "p50": 0.4694690000033006,
+          "p95": 0.9118560000060825,
+          "max": 2.976256000009016
+        }
+      },
+      {
+        "seed": 188307,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 159,
+        "decisions": 159,
+        "ms": 318.14719499999774,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 200,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 6.2075471698113205,
+        "timing": {
+          "n": 159,
+          "mean": 0.5359241572326217,
+          "p50": 0.48382299998775125,
+          "p95": 1.0260269999998854,
+          "max": 2.516075000006822
+        }
+      },
+      {
+        "seed": 188307,
+        "first": 0,
+        "mode": "dev",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 133,
+        "decisions": 133,
+        "ms": 274.60834999999497,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 132,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 5.81203007518797,
+        "timing": {
+          "n": 133,
+          "mean": 0.5497789924828199,
+          "p50": 0.5039249999972526,
+          "p95": 1.022819999998319,
+          "max": 1.9118089999974472
+        }
+      }
+    ],
+    "testB": [
+      {
+        "seed": 188400,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 207,
+        "decisions": 207,
+        "ms": 5522.499243000013,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 75,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.1415094339622645,
+        "timing": {
+          "n": 207,
+          "mean": 20.88022494685994,
+          "p50": 0.7166319999960251,
+          "p95": 92.03913600000669,
+          "max": 119.15546300000278
+        }
+      },
+      {
+        "seed": 188400,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 129,
+        "decisions": 129,
+        "ms": 3456.128046999991,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 35,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 3.7777777777777777,
+        "timing": {
+          "n": 129,
+          "mean": 18.917955465116307,
+          "p50": 0.7187129999947501,
+          "p95": 81.46994700000505,
+          "max": 100.13861699998961
+        }
+      },
+      {
+        "seed": 188401,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 102,
+        "decisions": 102,
+        "ms": 1788.8357560000004,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 16,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 3.4791666666666665,
+        "timing": {
+          "n": 102,
+          "mean": 16.16817080392117,
+          "p50": 0.6718890000047395,
+          "p95": 66.3055139999924,
+          "max": 79.4651220000087
+        }
+      },
+      {
+        "seed": 188401,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 121,
+        "decisions": 121,
+        "ms": 1891.8655390000058,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 21,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 3.4285714285714284,
+        "timing": {
+          "n": 121,
+          "mean": 14.295628966942328,
+          "p50": 0.5650270000041928,
+          "p95": 62.38329400001385,
+          "max": 88.0877760000003
+        }
+      }
+    ],
+    "testA": [
+      {
+        "seed": 188400,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 157,
+        "decisions": 157,
+        "ms": 3988.7445179999922,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 98,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 6.1866666666666665,
+        "timing": {
+          "n": 157,
+          "mean": 18.309124751592456,
+          "p50": 0.8034549999865703,
+          "p95": 83.57258199999342,
+          "max": 98.57633100000385
+        }
+      },
+      {
+        "seed": 188400,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 99,
+        "decisions": 99,
+        "ms": 2611.9226049999997,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 10,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 2.9523809523809526,
+        "timing": {
+          "n": 99,
+          "mean": 16.96601873737477,
+          "p50": 0.8287030000064988,
+          "p95": 63.08006500000192,
+          "max": 82.59278700000141
+        }
+      },
+      {
+        "seed": 188401,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 0,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          }
+        ],
+        "status": "finished",
+        "winner": 1,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 132,
+        "decisions": 132,
+        "ms": 2575.875104999999,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 17,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 4.428571428571429,
+        "timing": {
+          "n": 132,
+          "mean": 17.984651818180723,
+          "p50": 0.7296949999872595,
+          "p95": 77.83742299998994,
+          "max": 87.28512699999555
+        }
+      },
+      {
+        "seed": 188401,
+        "first": 0,
+        "mode": "test",
+        "learnerSeat": 1,
+        "seats": [
+          {
+            "deckId": "white-sword",
+            "kind": "v2"
+          },
+          {
+            "deckId": "white-sword",
+            "kind": "nn"
+          }
+        ],
+        "status": "finished",
+        "winner": 0,
+        "endReason": "life-zero",
+        "error": null,
+        "steps": 131,
+        "decisions": 131,
+        "ms": 2505.248124000005,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 0,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "collisions": 33,
+        "explored": 0,
+        "imitate": 0,
+        "monte": 0,
+        "legalMean": 5.645161290322581,
+        "timing": {
+          "n": 131,
+          "mean": 17.602514587786516,
+          "p50": 0.6716729999898234,
+          "p95": 70.58174699998926,
+          "max": 76.17399200001091
+        }
+      }
+    ]
+  },
+  "prototype": {
+    "running": true,
+    "reasons": []
+  }
+}
