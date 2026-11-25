@@ -9,25 +9,46 @@ function softmax(scores){
  const sum=exps.reduce((total,value)=>total+value,0);
  return exps.map(value=>value/sum);
 }
+function crossEntropy(scores,chosen,smooth){
+ const width=scores.length;
+ const probs=softmax(scores);
+ const share=smooth/width;
+ let loss=0;
+ const signals=[];
+ for(let index=0;index<width;index++){
+  const target=(index===chosen?1-smooth:0)+share;
+  loss-=target*Math.log(Math.max(1e-8,probs[index]));
+  signals.push(probs[index]-target);
+ }
+ return {loss,signals};
+}
+function usable(sample){
+ const width=sample?.rows?.length||0;
+ return width>=2&&Number.isInteger(sample.chosen)&&sample.chosen>=0&&sample.chosen<width;
+}
+export function imitationLoss(net,samples,{smooth=LABEL_SMOOTH}={}){
+ let loss=0,used=0;
+ for(const sample of samples){
+  if(!usable(sample))continue;
+  const scores=sample.rows.map(row=>forwardTrain(net,row).q);
+  loss+=crossEntropy(scores,sample.chosen,smooth).loss;
+  used++;
+ }
+ return {loss:used?loss/used:null,used};
+}
 export function imitationPass(net,opt,samples,{smooth=LABEL_SMOOTH}={}){
  let loss=0,used=0;
  for(const sample of samples){
-  const width=sample.rows.length;
-  if(width<2||!Number.isInteger(sample.chosen)||sample.chosen<0||sample.chosen>=width)continue;
+  if(!usable(sample))continue;
   const caches=sample.rows.map(row=>forwardTrain(net,row));
-  const probs=softmax(caches.map(cache=>cache.q));
-  const share=smooth/width;
-  let cross=0;
+  const scored=crossEntropy(caches.map(cache=>cache.q),sample.chosen,smooth);
   const grad=zeroGrad(net);
-  for(let i=0;i<width;i++){
-   const target=(i===sample.chosen?1-smooth:0)+share;
-   cross-=target*Math.log(Math.max(1e-8,probs[i]));
-   const signal=probs[i]-target;
-   if(signal)backward(net,caches[i],signal,grad);
-  }
+  scored.signals.forEach((signal,index)=>{
+   if(signal)backward(net,caches[index],signal,grad);
+  });
   clipGrad(grad,GRAD_CLIP);
   adamStep(net,opt,grad);
-  loss+=cross;
+  loss+=scored.loss;
   used++;
  }
  return {loss:used?loss/used:null,used};

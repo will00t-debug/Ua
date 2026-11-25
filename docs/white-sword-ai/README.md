@@ -83,4 +83,6 @@ node scripts/white-sword-v2-eval.mjs
 node scripts/white-sword-nn.mjs trial
 ```
 
-測速和試訓寫在 `docs/white-sword-ai/NN-PROTOTYPE.md`。原型跑通和自主學習是否變強，在報告裡分開寫。
+第一輪的測速和試訓寫在 `docs/white-sword-ai/NN-PROTOTYPE.md`。原型有跑起來，學習沒有被證明。
+
+第二輪修正公開歷史在模仿和對戰之間的不一致，重新凍結 A，並用種子分組的開發曲線做固定預算試訓。結果寫在 `docs/white-sword-ai/NN-ROUND2.md`。正式預設、晉級門檻和網站都沒有改。

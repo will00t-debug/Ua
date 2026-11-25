@@ -14,9 +14,15 @@ export const MONTE_LR=5e-4;
 export const WEIGHT_DECAY=1e-5;
 export const IMITATE_EPOCHS=3;
 export const LABEL_SMOOTH=0.05;
-export const INIT_SEED=188010;
+// Round 2 rebuilds A from a new initialization. Round 1's seed stays unused.
+export const INIT_SEED=188510;
 export const GRAD_CLIP=1;
-export const WALL_MS=12*60*1000;
+// Round 1's 12 minute wall was not the limit; its 8/24/16/8 caps were.
+// This wall is fixed before the round-2 games. The planner may stop inside it.
+export const WALL_MS=20*60*1000;
+export const CHECKPOINTS=4;
+export const PLAN_SAFETY=1.4;
+export const TRAIN_RESERVE_MS=3*60*1000;
 export const BENCH_V2_MS=150000;
 export const MEMORY_WORKER_RSS=1.5*1024*1024*1024;
 export const WORKER_CAP=2;

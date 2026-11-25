@@ -51,6 +51,27 @@ test('hidden card identities do not change the actor vector',()=>{
  assert.equal('life' in seen.visible.players[1],false);
 });
 
+test('imitation and evaluation keep the same public history',{timeout:180000},()=>{
+ const net=createNet(INIT_SEED);
+ const spec=mode=>({
+  seed:188490,first:0,mode,maxSteps:18,keepActions:true,progress:false,
+  seats:[
+   {deckId:'white-sword',kind:'nn',explore:0},
+   {deckId:'white-sword',kind:'nn',explore:0}
+  ],
+  nets:[cloneNet(net),cloneNet(net)],recordSeats:[],teacherSeats:[]
+ });
+ const imitate=playMatch(spec('imitate'));
+ const evaluated=playMatch(spec('eval'));
+ assert.ok(imitate.publicHistory.length>0);
+ assert.deepEqual(imitate.publicHistory,evaluated.publicHistory);
+ assert.deepEqual(imitate.actions,evaluated.actions);
+ for(const step of imitate.publicHistory){
+  assert.equal(/^[01]-\d+$/.test(step.cardId||''),false);
+  assert.equal(Object.keys(step).some(key=>/uid/i.test(key)),false);
+ }
+});
+
 test('greedy network play is legal, capped, and repeatable',{timeout:180000},()=>{
  const net=createNet(INIT_SEED);
  const first=playMatch(nnSpec(net,12));
