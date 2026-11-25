@@ -5357,11 +5357,14 @@ function normalize(card,packId){
  ((mainAbility.frontOnly===true&&mainAbility.oncePerTurn===undefined&&
    Object.keys(mainAbility).length===3&&mainAbility.then[0]?.op==='millTop'&&
    Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k)))||
-  // No フロント and no ターン1: REST from either line, then mill 1 or draw 1 discard 1.
+  // No フロント and no ターン1: REST from either line, then mill 1,
+  // look at the top card and place it, or draw 1 discard 1.
   (mainAbility.frontOnly===false&&mainAbility.oncePerTurn===undefined&&
    Object.keys(mainAbility).length===3&&
    ((mainAbility.then[0]?.op==='millTop'&&mainAbility.then[0].count===1&&
      Object.keys(mainAbility.then[0]).length===2)||
+    (mainAbility.then[0]?.op==='peekTopOrBottom'&&
+     Object.keys(mainAbility.then[0]).length===1)||
     (mainAbility.then[0]?.op==='drawDiscard'&&mainAbility.then[0].count===1&&
      Object.keys(mainAbility.then[0]).length===2)||
     (mainAbility.then[0]?.op==='buffOwnField'&&mainAbility.then[0].optional===false&&

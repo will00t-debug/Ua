@@ -2,7 +2,7 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,rnkPracticeDeck,torikoPracticeDeck,dgmPracticeDeck,mgsPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261122evaYellow0';
+import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,rnkPracticeDeck,torikoPracticeDeck,dgmPracticeDeck,mgsPracticeDeck,mcrPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261125mcr1';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
@@ -20,16 +20,17 @@ import {imcEditorCards} from './imc/catalog.mjs';
 import {mhaEditorCards} from './mha/catalog.mjs?v=20261120mha011';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs?v=20261122evaYellow0';
+import {mcrEditorCards} from './mcr/catalog.mjs?v=20261125mcr1';
 import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261120mha011';
 import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261120mha011';
 import {DGM_CARDS} from './dgm-cards.mjs?v=20261120dgm2';
 import {MGS_CARDS} from './mgs-cards.mjs?v=20261121mgs2';
 import {MGS2_CARDS} from './mgs-vol2.mjs?v=20261121mgs2';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
-import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261120mha011';
+import {validateUniversalDeck} from './universal-v2/pack.mjs?v=20261125mcr1';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
-import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs?v=20261121mgs2';
+import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs?v=20261125mcr1';
 import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
@@ -84,6 +85,7 @@ const rnkPractice=rnkPracticeDeck();
 const torikoPractice=torikoPracticeDeck();
 const dgmPractice=dgmPracticeDeck();
 const mgsPractice=mgsPracticeDeck();
+const mcrPractice=mcrPracticeDeck();
 const decks={...createAllV2PreviewRealDecks(),
  'rezero-set1':{pack:rezeroPractice.pack,counts:rezeroPractice.counts,
   label:'Re:Zero 第一彈｜黃色練習組'},
@@ -110,7 +112,9 @@ const decks={...createAllV2PreviewRealDecks(),
  'dgm-supported':{pack:dgmPractice.pack,counts:dgmPractice.counts,
   label:'驅魔少年｜已支援卡練習組'},
  'mgs-supported':{pack:mgsPractice.pack,counts:mgsPractice.counts,
-  label:'〈物語〉系列｜已支援卡練習組'}};
+  label:'〈物語〉系列｜已支援卡練習組'},
+ 'mcr-yellow':{pack:mcrPractice.pack,counts:mcrPractice.counts,
+  label:'超時空要塞｜已支援黃色練習組'}};
 const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
@@ -129,6 +133,7 @@ const allArt=Object.freeze({
  mha:new Map(mhaEditorCards().map(c=>[c.identity||c.id,c.image||c.printings?.[0]?.image||null])),
  rnk:new Map(rnkEditorCards().map(c=>[c.identity||c.id,c.image||null])),
  eva:new Map(evaEditorCards().map(c=>[c.identity||c.id,c.image||null])),
+ mcr:new Map(mcrEditorCards().map(c=>[c.identity||c.id,c.image||null])),
  toriko:new Map([...TORIKO_CARDS,...TORIKO_PR_CARDS].map(c=>[c.id,c.image||null])),
  dgm:new Map(DGM_CARDS.map(c=>[c.id,c.image||null])),
  mgs:new Map([...MGS_CARDS,...MGS2_CARDS].map(c=>[c.id,c.image||null]))
@@ -160,6 +165,7 @@ const PRINTED_CATALOGUE={
  mha:printedCatalogueMap(mhaEditorCards()),
  rnk:printedCatalogueMap(rnkEditorCards()),
  eva:printedCatalogueMap(evaEditorCards()),
+ mcr:printedCatalogueMap(mcrEditorCards()),
  toriko:printedCatalogueMap([...TORIKO_CARDS,...TORIKO_PR_CARDS]),
  dgm:printedCatalogueMap(DGM_CARDS),
  mgs:printedCatalogueMap([...MGS_CARDS,...MGS2_CARDS])
@@ -2367,6 +2373,7 @@ function selectBuiltOpponent(title){
  if(decks['toriko-blue']&&title==='toriko')$('ai-title').value='toriko-blue';
  if(decks['dgm-supported']&&title==='dgm')$('ai-title').value='dgm-supported';
  if(decks['mgs-supported']&&title==='mgs')$('ai-title').value='mgs-supported';
+ if(decks['mcr-yellow']&&title==='mcr')$('ai-title').value='mcr-yellow';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
 }
 function importBuiltTitleDeck(){
@@ -2400,7 +2407,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'||raw.title==='eva'||raw.title==='toriko'||raw.title==='dgm'||raw.title==='mgs'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'||raw.title==='eva'||raw.title==='mcr'||raw.title==='toriko'||raw.title==='dgm'||raw.title==='mgs'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}
