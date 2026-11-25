@@ -195,8 +195,10 @@ async function main(){
   if(!position)throw Error('名單裡的局面不在這次挖掘：'+id);
   return {...position,role:plan.roles[id]};
  });
+ const sides=fresh.map(orientation);
  const baseStudy={
   codeVersion:CODE_VERSION,official,frozenWeight:FROZEN_WEIGHT,adopted:false,promoted:false,
+  familyEnd:sides.filter(row=>row.preferEnd).length,familyActivate:sides.filter(row=>row.preferActivate).length,
   mined:{games:mined.games,decisions:mined.decisions,family:fresh.length,selected:picked.length,stopped:mined.stopped},
   rows:[],leads:[],forActivate:0,againstActivate:0,collateral:0,heldMoves:[],ee6cMoved:false,ee6cToNext:false,
   games:0,installed:false,reason:plan.stopped==='too-few'?'新的起動對結束局面不到 4 個，不做分支抽樣':null,
@@ -220,7 +222,8 @@ async function main(){
  const packed=picked.map(position=>diffsOf(screenRecords,position.id,position.actor));
  if(packed.some(row=>row.attempts!==SCREEN_PAIRS||row.unfinished))throw Error('篩選沒有到固定的 8 組');
  const screenRows=picked.map((position,index)=>({
-  id:position.id,role:position.role,screenMean:screenSummary(packed[index].diffs).mean,
+  id:position.id,role:position.role,bucket:position.bucket,opponent:position.opponent,
+  screenMean:screenSummary(packed[index].diffs).mean,
   ...orientation(position),...describe(position)
  }));
  const chosen=screenRows.filter(row=>row.screenMean<=SCREEN_FLOOR).sort((left,right)=>left.id<right.id?-1:1);
@@ -239,7 +242,13 @@ async function main(){
  const rows=screenRows.map(row=>{
   const judgedRow=byJudged.get(row.id);
   const position=picked.find(item=>item.id===row.id);
-  return {...row,...judgedRow,actionA:position.actionA,actionB:position.actionB,confirmed:judgedRow?.confirmed===true};
+  return {
+   ...row,
+   confirmMean:Number.isFinite(judgedRow?.mean)?judgedRow.mean:null,
+   pOne:Number.isFinite(judgedRow?.pOne)?judgedRow.pOne:null,
+   confirmed:judgedRow?.confirmed===true,
+   actionA:position.actionA,actionB:position.actionB
+  };
  });
  const confirmed=rows.filter(row=>row.confirmed);
  const learned=learnRules(confirmed.filter(row=>row.role==='train'),confirmed.filter(row=>row.role==='validation'));
@@ -308,6 +317,7 @@ async function main(){
  if(playedGames!==planned)throw Error('分支紀錄 '+playedGames+' 和計劃 '+planned+' 不一致');
  const study={
   ...baseStudy,rows,leads,reason,installed,collateral,heldMoves,ee6cMoved,ee6cToNext,games:playedGames,
+  confirmCount:locked.candidates.length,
   forActivate:confirmed.filter(row=>row.preferActivate).length,
   againstActivate:confirmed.filter(row=>row.preferEnd).length,
   matches,kinds:matches?kindTotals(done):{},
