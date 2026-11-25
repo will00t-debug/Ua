@@ -114,8 +114,8 @@ async function main(){
   throw Error('candidate is not the line-2 endpoint');
  }
  const codeCommit=git(['rev-parse','HEAD']);
- const frozen=loadNet(JSON.parse(readFileSync(FROZEN_FILE,'utf8')));
- const candidate=loadNet(JSON.parse(readFileSync(CANDIDATE_FILE,'utf8')));
+ const frozen=loadNet(FROZEN_FILE);
+ const candidate=loadNet(CANDIDATE_FILE);
  const workers=workersNow();
  const retries={fallbacks:0,fallbackErrors:[],workerChanges:[]};
  const benchStarted=performance.now();
