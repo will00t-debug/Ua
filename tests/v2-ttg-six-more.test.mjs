@@ -6,6 +6,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalCardEnergy,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {chooseStrengthenedHardAction} from '../dist/universal-v2/hard-ai.mjs';
 
 // UA56BT/TTG-1-003, 017, 040, 068, 070, 080. Registration plus the
 // scenarios below. This is not a full official FAQ certification.
@@ -427,6 +428,63 @@ test('TTG-068 gains BP per own raid and attacks from the energy line at most fou
  assert.equal(live(s,0,yoko.uid).energyAttackGranted,undefined);
  assert.equal(universalBp(ttg,s,live(s,0,yoko.uid)),2000);
  assertUniversalMatch(ttg,s);
+});
+
+test('TTG-068 energy-line attack deals life when the defender does not block',()=>{
+ function swing(seed,withBlocker){
+  let s=fresh(seed);
+  const yoko=place(s,0,'TTG-1-068','energy',0);
+  for(let i=0;i<3;i++)place(s,0,'TTG-1-063','energy',i+1);
+  const wall=withBlocker?place(s,1,'TTG-1-063','front',0):null;
+  s.players[0].deck.push(...s.players[0].hand.splice(0));
+  s=toPhase(s,'main');
+  const fodder=s.players[0].deck.pop();
+  s.players[0].hand.push(fodder);
+  s=go(s,act(s,a=>a.type==='activate'&&a.uid===yoko.uid&&a.mode==='line'));
+  assert.equal(s.pending,null);
+  assert.equal(live(s,0,yoko.uid).energyAttackGranted.turn,s.turn);
+  nullLife(s,1,'TTG-1-019');
+  s=toPhase(s,'attack');
+  const life=s.players[1].life.length;
+  const energySlot=s.players[0].energy.findIndex(c=>c?.uid===yoko.uid);
+  s=go(s,act(s,a=>a.type==='attack'&&a.uid===yoko.uid));
+  assert.equal(s.pending.kind,'block');
+  assert.equal(s.pending.player,1);
+  const blocks=legalUniversalActions(ttg,s).filter(a=>a.type==='chooseBlock'&&a.uid!==null);
+  if(wall)assert.ok(blocks.some(a=>a.uid===wall.uid));
+  else assert.equal(blocks.length,0);
+  s=go(s,act(s,a=>a.type==='chooseBlock'&&a.uid===null));
+  assert.equal(s.pending,null);
+  assert.equal(s.players[1].life.length,life-1);
+  assert.equal(s.players[0].energy[energySlot]?.uid,yoko.uid);
+  assert.equal(s.players[0].front.some(c=>c?.uid===yoko.uid),false);
+  assert.equal(live(s,0,yoko.uid).ready,false);
+  assert.equal(s.status,'playing');
+  s=endTurn(s);
+  assert.equal(s.active,1);
+  assertUniversalMatch(ttg,s);
+ }
+ swing(8168,true);
+ swing(8169,false);
+
+ let asked=fresh(8170);
+ const yoko=place(asked,0,'TTG-1-068','energy',0);
+ for(let i=0;i<3;i++)place(asked,0,'TTG-1-063','energy',i+1);
+ place(asked,1,'TTG-1-063','front',0);
+ asked.players[0].deck.push(...asked.players[0].hand.splice(0));
+ asked=toPhase(asked,'main');
+ const fodder=asked.players[0].deck.pop();
+ asked.players[0].hand.push(fodder);
+ asked=go(asked,act(asked,a=>a.type==='activate'&&a.uid===yoko.uid&&a.mode==='line'));
+ nullLife(asked,1,'TTG-1-019');
+ asked=toPhase(asked,'attack');
+ asked=go(asked,act(asked,a=>a.type==='attack'&&a.uid===yoko.uid));
+ const choice=chooseStrengthenedHardAction(ttg,asked,{difficulty:'hard'});
+ assert.equal(choice?.type,'chooseBlock');
+ asked=go(asked,choice);
+ assert.equal(asked.status,'playing');
+ assert.equal(asked.players[0].energy.some(c=>c?.uid===yoko.uid),true);
+ assertUniversalMatch(ttg,asked);
 });
 
 test('TTG-070 hosts Gurren Lagann only while Kamina is absent, and chain raid stays closed',()=>{

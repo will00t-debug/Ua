@@ -2891,7 +2891,10 @@ test('BLC-1-038 may mill three cards at once, then recover one purple character'
  assert.deepEqual(skipped.players[0].deck.slice(0,3).map(c=>c.uid),window.map(c=>c.uid));
  assert.equal(skipped.players[0].outside.some(c=>c.uid===waiting.uid),true);
  assert.equal(skipped.players[0].hand.some(c=>c.uid===waiting.uid),false);
- const milled=dispatchUniversalAction(first.packs,played,{type:'chooseOptionalMill',mode:'mill'});
+ const shown=dispatchUniversalAction(first.packs,played,{type:'chooseOptionalMill',mode:'mill',count:3});
+ assert.equal(shown.pending.phase,'shown');
+ assert.equal(shown.pending.milled.length,3);
+ const milled=dispatchUniversalAction(first.packs,shown,{type:'chooseOptionalMill',mode:'ack'});
  assert.equal(milled.pending.kind,'effect-recover-outside');
  assert.deepEqual(milled.players[0].outside.slice(-3).map(c=>c.uid),window.map(c=>c.uid));
  assert.equal(milled.players[0].deck.some(c=>window.some(x=>x.uid===c.uid)),false);
@@ -2917,7 +2920,9 @@ test('BLC-1-038 may mill three cards at once, then recover one purple character'
  short.s.players[0].hand.push(shortSelf);
  const shortPlay=dispatchUniversalAction(short.packs,short.s,legalUniversalActions(short.packs,short.s).find(a=>a.type==='play'&&a.uid===shortSelf.uid&&a.line==='front'));
  assert.equal(shortPlay.pending.batch,3);
- const shortMill=dispatchUniversalAction(short.packs,shortPlay,{type:'chooseOptionalMill',mode:'mill'});
+ const shortShown=dispatchUniversalAction(short.packs,shortPlay,{type:'chooseOptionalMill',mode:'mill',count:3});
+ assert.equal(shortShown.pending.phase,'shown');
+ const shortMill=dispatchUniversalAction(short.packs,shortShown,{type:'chooseOptionalMill',mode:'ack'});
  assert.equal(shortMill.pending.kind,'effect-recover-outside');
  assert.equal(shortMill.players[0].deck.length,0);
  assert.equal(shortMill.players[0].outside.some(c=>c.uid===only[0].uid),true);

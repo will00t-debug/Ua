@@ -917,10 +917,10 @@ test('KJN-1-073 gains energy only for a front Sid and mills up to two hidden car
  mill=play(mill,toHand(mill,0,'KJN-1-073').uid);
  assert.equal(mill.pending.kind,'effect-optional-mill');
  assert.equal(hiddenFrom(mill,1,window.map(c=>c.uid)),true);
- mill=choose(mill,a=>a.mode==='mill');
+ mill=choose(mill,a=>a.mode==='mill'&&a.count===1);
  assert.equal(mill.players[0].outside.some(c=>c.uid===window[0].uid),true);
- assert.equal(mill.pending.kind,'effect-optional-mill');
- mill=choose(mill,a=>a.mode==='skip');
+ assert.equal(mill.pending.phase,'shown');
+ mill=choose(mill,a=>a.mode==='ack');
  assert.equal(mill.players[0].deck[0].uid,window[1].uid);
  assert.equal(mill.pending,null);
  assertUniversalMatch(packs,mill);

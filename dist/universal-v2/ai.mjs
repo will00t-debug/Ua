@@ -257,12 +257,16 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='tuck')||legal[0];
  if(s.pending?.kind==='effect-facedown-outside')return legal[0];
- if(s.pending?.kind==='effect-optional-mill')
-  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
-   legal.find(a=>a.mode==='mill')||legal[0];
- if(s.pending?.kind==='effect-mill-up-to')
-  return difficulty==='easy'?legal.find(a=>a.mode==='stop')||legal[0]:
-   legal.find(a=>a.mode==='mill')||legal[0];
+ if(s.pending?.kind==='effect-optional-mill'){
+  if(s.pending.phase==='shown')return legal.find(a=>a.mode==='ack')||legal[0];
+  if(difficulty==='easy')return legal.find(a=>a.mode==='skip')||legal[0];
+  return legal.filter(a=>a.mode==='mill').sort((a,b)=>(b.count||0)-(a.count||0))[0]||legal[0];
+ }
+ if(s.pending?.kind==='effect-mill-up-to'){
+  if(s.pending.phase==='shown')return legal.find(a=>a.mode==='ack')||legal[0];
+  if(difficulty==='easy')return legal.find(a=>a.mode==='stop')||legal[0];
+  return legal.filter(a=>a.mode==='mill').sort((a,b)=>(b.count||0)-(a.count||0))[0]||legal[0];
+ }
  if(s.pending?.kind==='effect-mill-recover-discard')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
@@ -569,8 +573,13 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-life-order')
   return legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-mill-optional'||s.pending?.kind==='effect-discard-any')
-  return legal.find(a=>a.mode==='mill'||a.mode==='take')||legal.find(a=>a.mode==='stop')||legal[0];
+ if(s.pending?.kind==='effect-mill-optional'){
+  if(s.pending.phase==='shown')return legal.find(a=>a.mode==='ack')||legal[0];
+  return legal.filter(a=>a.mode==='mill').sort((a,b)=>(b.count||0)-(a.count||0))[0]||
+   legal.find(a=>a.mode==='stop')||legal[0];
+ }
+ if(s.pending?.kind==='effect-discard-any')
+  return legal.find(a=>a.mode==='take')||legal.find(a=>a.mode==='stop')||legal[0];
  if(s.pending?.kind==='effect-recover-any'||s.pending?.kind==='effect-pay-hand-active')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-front-vacate')
