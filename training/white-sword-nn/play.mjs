@@ -7,7 +7,8 @@ import {fileURLToPath} from 'node:url';
 import {parentPort} from 'node:worker_threads';
 import {dispatchUniversalAction,legalUniversalActions} from '../../dist/universal-v2/engine.mjs';
 import {matchRules,newComparedMatch} from '../../dist/universal-v2/ai-v3/opening.mjs';
-import {BLEND_HARD_CAP,BLEND_SCALE} from '../../dist/universal-v2/white-sword-ai/constants.mjs';
+import {chooseStrengthenedHardAction,HARD_AI_POLICY} from '../../dist/universal-v2/hard-ai.mjs';
+import {BLEND_HARD_CAP,BLEND_SCALE,HARD_OPTIONS} from '../../dist/universal-v2/white-sword-ai/constants.mjs';
 import {getDeck} from '../../dist/universal-v2/white-sword-ai/deck.mjs';
 import {POLICY_DIM} from '../../dist/universal-v2/white-sword-ai/features.mjs';
 import {observeActor} from '../../dist/universal-v2/white-sword-ai/observe.mjs';
@@ -107,6 +108,17 @@ function chooseV2(pack,state,actor,legal,spec,step){
  const action=legal.find(item=>same(item,picked?.action))||null;
  return {...picked,action};
 }
+export function officialHardOptions(seed){
+ return {...HARD_OPTIONS,seed};
+}
+function chooseHard(pack,state,legal,spec){
+ const action=chooseStrengthenedHardAction(pack,state,officialHardOptions(spec.seed));
+ const exact=legal.find(item=>same(item,action))||null;
+ return {
+  action:exact,source:HARD_AI_POLICY,policy:HARD_AI_POLICY,
+  reason:exact?null:'no-legal'
+ };
+}
 export function trainable(game){
  const anomalies=game?.anomalies||{};
  if(game?.status!=='finished'||(game.winner!==0&&game.winner!==1))return false;
@@ -117,11 +129,13 @@ export function playMatch(spec){
  const started=performance.now();
  const game={
   seed:spec.seed,first:spec.first,mode:spec.mode||'eval',
+  comparison:spec.comparison||null,model:spec.model||null,opponent:spec.opponent||null,deck:spec.deck||null,
   learnerSeat:Number.isInteger(spec.learnerSeat)?spec.learnerSeat:null,
   seats:spec.seats.map(seat=>({deckId:seat.deckId,kind:seat.kind})),
   status:'error',winner:null,endReason:null,error:null,steps:0,decisions:0,
   ms:0,anomalies:emptyAnomalies(),collisions:0,explored:0,scored:0,
-  legalTotal:0,decisionMs:[],imitate:[],monte:[],ppo:[],actions:[],publicHistory:[]
+  legalTotal:0,decisionMs:[],imitate:[],monte:[],ppo:[],actions:[],publicHistory:[],
+  policies:{}
  };
  try{
   if(!Array.isArray(spec.seats)||spec.seats.length!==2)throw Error('A match needs two seats');
@@ -177,6 +191,8 @@ export function playMatch(spec){
      );
     }else if(seat.kind==='v2'){
      picked=chooseV2(packs,state,actor,legal,spec,game.steps);
+    }else if(seat.kind==='hard'){
+     picked=chooseHard(packs,state,legal,spec);
     }else throw Error('Unknown seat kind '+seat.kind);
    }catch(error){
     const message=String(error?.message||error);
@@ -187,7 +203,10 @@ export function playMatch(spec){
     break;
    }
    game.decisionMs.push(performance.now()-t0);
-   const ownFailure=seat.kind==='nn'||teachers.has(actor);
+   const source=picked.source||seat.kind;
+   game.policies[source]=(game.policies[source]||0)+1;
+   const ownFailure=seat.kind==='nn'||teachers.has(actor)||actor===spec.learnerSeat;
+   if(picked.reason==='timeout')game.anomalies.timeout++;
    if(picked.source==='fallback'||picked.reason==='timeout'){
     if(ownFailure)game.anomalies.fallback++;
     else game.anomalies.opponentFallback++;
@@ -304,7 +323,7 @@ export function compactGame(game){
   seed:game.seed,first:game.first,mode:game.mode,learnerSeat:game.learnerSeat,
   seats:game.seats,status:game.status,winner:game.winner,endReason:game.endReason,
   error:game.error,steps:game.steps,decisions:game.decisions,ms:game.ms,
-  anomalies:{...game.anomalies},collisions:game.collisions,explored:game.explored,
+  anomalies:{...game.anomalies},policies:{...game.policies},collisions:game.collisions,explored:game.explored,
   imitate:game.imitate.length,monte:game.monte.length,ppo:(game.ppo||[]).length,
   legalMean:game.scored?game.legalTotal/game.scored:null,
   timing:{n:times.length,mean:times.length?times.reduce((sum,value)=>sum+value,0)/times.length:null,p50:at(0.5),p95:at(0.95),max:sorted.length?sorted[sorted.length-1]:null}
