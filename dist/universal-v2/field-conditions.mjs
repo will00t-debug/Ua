@@ -168,6 +168,18 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // このターン中に相手がカードを引いている. Only draw() increments the counter.
  if(condition.kind==='opponentDrewThisTurn')
   return Array.isArray(s.drawnThisTurn)&&(s.drawnThisTurn[1-owner]||0)>=1;
+ // このターン中に自分がカードをN枚以上引いている. Only draw() counts.
+ if(condition.kind==='drawnThisTurnAtLeast')
+  return Array.isArray(s.drawnThisTurn)&&(s.drawnThisTurn[owner]||0)>=condition.min;
+ // 【レイド】を持つ〈名前〉 in this player's outside. Life-trigger Raid and
+ // a printed Raid keyword both count. Copies count separately.
+ if(condition.kind==='ownOutsideRaidNameAtLeast')
+  return s.players[owner].outside.filter(c=>{
+   const d=printed(c);
+   return cardHasName(d,condition.name)&&
+    (d.trigger==='raid'||(typeof d.raidName==='string'&&!!d.raidName.trim())||
+     (typeof d.raidTrait==='string'&&!!d.raidTrait.trim()));
+  }).length>=condition.min;
  // Distinct printed names in this player's outside. Copies are one kind.
  // Color and trait are both required. The opponent's outside does not count.
  if(condition.kind==='ownOutsideDistinctColorTraitNames'){
@@ -180,16 +192,21 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return names.size>=condition.min;
  }
  // カード名に「…」を含む. Printed characters only, substring, not an alias.
- if(condition.kind==='ownNameIncludes'){
+ // ownNameIncludesAll is 「と」: every listed fragment must be present.
+ if(condition.kind==='ownNameIncludes'||condition.kind==='ownNameIncludesAll'){
   const pl=s.players[owner];
   const zones=condition.zone==='front'?[pl.front]:
    condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  const seen=new Set();
   for(const zone of zones)for(const c of zone){
    if(!printedFieldCard(c))continue;
    const d=printed(c);
    if(d.type!=='character'||typeof d.name!=='string')continue;
-   if(condition.names.some(n=>d.name.includes(n)))return true;
+   if(condition.kind==='ownNameIncludesAll'){
+    for(const n of condition.names)if(d.name.includes(n))seen.add(n);
+   }else if(condition.names.some(n=>d.name.includes(n)))return true;
   }
+  if(condition.kind==='ownNameIncludesAll')return condition.names.every(n=>seen.has(n));
   return false;
  }
  // The on-play job carries the entry cause. A later check does not invent one.

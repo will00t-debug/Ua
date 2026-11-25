@@ -140,11 +140,13 @@ test('strict generic verifier rejects invisible no-effect REST abilities, extra 
  assert.ok(createUniversalPack({id:'either-line',cards:[{...c,id:'B',mainAbility:{
   op:'restSelfThen',frontOnly:false,then:[{op:'millTop',count:1}]
  }}]}).cards.B);
+ assert.ok(createUniversalPack({id:'front-draw',cards:[{...c,id:'C',mainAbility:{
+  op:'restSelfThen',frontOnly:true,then:[{op:'draw',count:1}]
+ }}]}).cards.C);
  for(const bad of [
   {op:'restSelfThen',frontOnly:false,then:[{op:'millTop',count:2}]},
   {op:'restSelfThen',frontOnly:true,apCost:1,then:[{op:'millTop',count:1}]},
   {op:'restSelfThen',frontOnly:true,then:[]},
-  {op:'restSelfThen',frontOnly:true,then:[{op:'draw',count:1}]},
   {op:'restSelfThen',frontOnly:true,then:[{op:'millTop',count:1},{op:'draw',count:1}]},
   {op:'restSelfThen',frontOnly:true,then:[{op:'millTop',count:0}]},
   {op:'restSelfThen',frontOnly:true,then:[{op:'millTop',count:1,when:'unknown'}]}
