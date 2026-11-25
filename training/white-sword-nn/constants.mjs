@@ -50,3 +50,8 @@ export const PPO_MAX_BATCHES=12;
 export const ROUND4_WALL_MS=20*60*1000;
 export const ROUND4_DEV_CAP=12;
 export const ROUND4_CONFIRM_CAP=12;
+// Round 5 locks the candidate and the new dev block before any of its games.
+export const ROUND5_DEV_START=191600;
+export const ROUND5_DEV_COUNT=64;
+export const ROUND5_CANDIDATE_GAMES=80;
+export const KL_QUANTILES=Object.freeze([0.5,0.9,0.95]);

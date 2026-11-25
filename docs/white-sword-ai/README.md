@@ -98,3 +98,9 @@ node scripts/white-sword-nn-round3.mjs trial
 ```bash
 node scripts/white-sword-nn-round4.mjs trial
 ```
+
+第五輪不重訓。它把固定 Actor 的整批 KL 和更新過程的混合平均分開，並用第四輪凍結的 80 場 Actor 對一批新的開發種子再評估。結果寫在 `docs/white-sword-ai/NN-ROUND5.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round5.mjs trial
+```
