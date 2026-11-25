@@ -215,6 +215,88 @@ test('REZ-2-065 shows and resolves every above-printed threshold',()=>{
  }
 });
 
+function quietPlayer(){
+ return {front:[],energy:[],hand:[],outside:[],removed:[],deck:[],life:[],lifeRevealed:[]};
+}
+function placeAim(player,line,uid,cardId){
+ player[line].push({uid,cardId,ready:true,fieldEntryStamp:1});
+}
+test('multi-result mains name the card and the result that button resolves',()=>{
+ const mha=officialV2Pack('mha');
+ const stg=officialV2Pack('steins-gate');
+ const ttg=requireRegisteredV2TitlePack('gurren-lagann');
+ const cases=[
+  {pack:mha,source:'MHA-2-057',line:'front',actions:[
+   {mode:'frontEnergyBp',target:'0-high',lead:/前線2〈.+〉 BP＋1000。/,body:/BP＋1000/,forbid:/貫通/},
+   {mode:'frontEnergyImpact',target:'0-high',lead:/前線2〈.+〉 貫通 1。/,body:/貫通（1）/,forbid:/BP＋1000。$/}
+  ],board:(p,q)=>{
+   placeAim(p,'front','0-src','MHA-2-057');
+   placeAim(p,'front','0-high','MHA-2-057');
+  }},
+  {pack:mha,source:'MHA-1-023',line:'front',actions:[
+   {mode:'nameScaledBuff',target:'0-plain',lead:/前線2〈.+〉 BP＋1000。/,body:/BP＋1000/,forbid:/狙擊/},
+   {mode:'nameScaledBuff',target:'0-gent',lead:/前線3〈ジェントル・クリミナル〉 BP＋2000 並狙擊。/,body:/狙擊/,forbid:/BP＋1000/}
+  ],board:(p)=>{
+   placeAim(p,'front','0-src','MHA-1-023');
+   placeAim(p,'front','0-plain','MHA-1-023');
+   placeAim(p,'front','0-gent','MHA-1-007');
+  }},
+  {pack:mha,source:'MHA-2-040',line:'front',actions:[
+   {mode:'grantBpRules',target:'1-a',lead:/前線1〈.+〉 受減再降。/,body:/BP－500/},
+   {mode:'grantBpRules',target:'1-b',lead:/前線2〈.+〉 受減再降。/,body:/移除區/}
+  ],board:(p,q)=>{
+   placeAim(p,'front','0-src','MHA-2-040');
+   placeAim(q,'front','1-a','MHA-1-023');
+   placeAim(q,'front','1-b','MHA-1-007');
+  }},
+  {pack:mha,source:'MHA-2-042',line:'front',actions:[
+   {mode:'oppDownSelfUp',target:'1-a',lead:/前線1〈.+〉 BP－1000。/,body:/BP－1000/},
+   {mode:'oppDownSelfUp',target:'1-b',lead:/前線2〈.+〉 BP－1000。/,body:/BP＋1000/}
+  ],board:(p,q)=>{
+   placeAim(p,'front','0-src','MHA-2-042');
+   placeAim(q,'front','1-a','MHA-1-023');
+   placeAim(q,'front','1-b','MHA-1-007');
+  }},
+  {pack:stg,source:'STG-1-050',line:'front',actions:[
+   {mode:'rukaGrant',grant:'block',target:'0-a',lead:/前線2〈.+〉 不被高 BP 阻擋。/,body:/BP 4000/},
+   {mode:'rukaGrant',grant:'eventImpact',target:'0-a',lead:/前線2〈.+〉 BP＋1000。/,body:/貫通（1）/},
+   {mode:'rukaGrant',grant:'block',target:'0-b',lead:/能源1〈.+〉 不被高 BP 阻擋。/,body:/BP 4000/}
+  ],board:(p)=>{
+   placeAim(p,'front','0-src','STG-1-050');
+   placeAim(p,'front','0-a','STG-1-050');
+   placeAim(p,'energy','0-b','STG-1-050');
+  }},
+  {pack:ttg,source:'TTG-1-062',line:'front',actions:[
+   {mode:'restBuffDiscard',target:'0-simon',lead:/前線2〈シモン〉 只加 BP。/,body:/可以不棄牌/,forbid:/轉為活動/},
+   {mode:'restBuffDiscard',target:'0-simon',discard:'0-hand',lead:/支付手牌〈.+〉。/,body:/轉為活動/}
+  ],board:(p)=>{
+   placeAim(p,'front','0-src','TTG-1-062');
+   placeAim(p,'front','0-simon','TTG-1-056');
+   placeAim(p,'hand','0-hand','TTG-1-042');
+  }}
+ ];
+ const seen=[];
+ for(const row of cases){
+  const packs=[row.pack,row.pack];
+  const own=quietPlayer(),opp=quietPlayer();
+  row.board(own,opp);
+  const state={players:[own,opp]};
+  const labels=[];
+  for(const action of row.actions){
+   const label=uiActionLabel({type:'activate',uid:'0-src',mode:action.mode,grant:action.grant,
+    targetUid:action.target,discardUid:action.discard},{pack:packs,state});
+   assert.match(label,action.lead,row.source+' '+action.mode+' '+label);
+   assert.match(label,action.body,row.source+' '+label);
+   if(action.forbid)assert.doesNotMatch(label,action.forbid,row.source+' '+label);
+   assert.equal(activationLabelBanned(label),'',label);
+   labels.push(label);
+  }
+  assert.equal(new Set(labels).size,labels.length,row.source+' buttons still share a label');
+  seen.push(...labels);
+ }
+ assert.equal(new Set(seen).size,seen.length);
+});
+
 test('online action labels use the same activation text and a wider cap',()=>{
  const domain=readFileSync(new URL('../server/domain.mjs',import.meta.url),'utf8');
  assert.match(domain,/action\?\.type==='activate'\?480:180/);

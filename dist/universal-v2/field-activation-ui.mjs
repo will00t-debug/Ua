@@ -43,7 +43,7 @@ export function mountFieldActivationButtons({arena,el,actions,selectedUid,onOpen
 function choiceHeading(description){
  const text=String(description||'');
  const cut=text.indexOf('。');
- if(cut<1||cut>24)return null;
+ if(cut<1||cut>40)return null;
  const title=text.slice(0,cut).trim();
  const body=text.slice(cut+1).trim();
  if(!title||!body||title.includes('【')||title.includes('主啟動'))return null;
