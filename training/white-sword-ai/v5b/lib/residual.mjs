@@ -12,6 +12,7 @@ import {observeActor} from '../../../../dist/universal-v2/white-sword-ai/observe
 import {blendScore,chooseKey} from '../../v4a2/lib/sensitivity.mjs';
 import {isPlay} from '../../v5a/lib/pressure.mjs';
 import {matchingRule,sameSignature} from '../../v5d/lib/compare.mjs';
+import {actionResidual} from '../../v6a/lib/model.mjs';
 import {HARD_CAP,SCALE} from './protocol.mjs';
 
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
@@ -141,6 +142,13 @@ export function decideResidual(pack,state,actor,model,seed,weight,feature,option
    if(bonus)indicated=true;
    row.baseScore=row.hardScore+policy;
    row.score=row.baseScore+row.residual;
+  }
+  if(options.valueModel){
+   for(const row of pool){
+    row.residual=actionResidual(row.features,options.valueModel);
+    row.score=row.baseScore+row.residual;
+    if(row.residual)indicated=true;
+   }
   }
   const base=selectScored(pool.map(row=>({action:row.action,score:row.baseScore})));
   let picked=selectScored(pool);
