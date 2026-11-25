@@ -510,7 +510,8 @@ function aimPlace(pack,state,uid){
  return null;
 }
 // One printed MAIN can offer several different results. The button names the
-// result; the sentence after the first period keeps the printed condition.
+// physical card and the result; the sentence after the first period keeps the
+// printed condition.
 function aimedChoiceLabel(ability,action,pack,state){
  const op=ability?.op||'';
  const mode=action?.mode||'';
