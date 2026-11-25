@@ -1,0 +1,26 @@
+{
+  "adopted": false,
+  "promoted": false,
+  "candidate": false,
+  "oracle": {
+    "calls": 24,
+    "kept": 3,
+    "eligible": 27,
+    "ids": [
+      "8b4f94c40e82e412",
+      "fdffb1ea2cc7d134",
+      "675759e42cddd095"
+    ],
+    "moved": 19,
+    "third": 6,
+    "status": "found",
+    "statuses": {
+      "found": 3,
+      "infeasible": 8,
+      "undecided": 0,
+      "rejected": 13
+    },
+    "disclosed": "傷害局面與突襲局面被要求維持原選擇，所以它們是求解約束，不是獨立測試。搜尋只用訓練對局的配對方向，沒有用開發資料挑權重。配對平均沒有顯著，方向一致不是正確決策的證明。"
+  },
+  "lambda": 100
+}
