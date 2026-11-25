@@ -157,6 +157,96 @@ test('hand and deck prompts show private card art and leave the legal action unc
  assert.equal(pendingChoiceCaption('棄 指定卡片 支付成本',['更木 劍八']),'棄 指定卡片 支付成本');
 });
 
+test('a trait BP bonus is labeled as that bonus, and a REST choice is not labeled as leaving',()=>{
+ const s=fresh();
+ const self=s.players[0].hand[0];
+ const name=mine.pack.cards[self.cardId].name;
+ const buffState={...s,pending:{kind:'effect-buff-trait',bp:1000,player:0}};
+ const buff=uiActionLabel({type:'chooseTraitBuff',uid:self.uid},{pack:packs,state:buffState});
+ assert.equal(buff,'本回合使 '+name+' BP＋1000');
+ assert.equal(pendingChoiceCaption(buff,[name]),'本回合使 BP＋1000');
+ assert.equal(uiActionLabel({type:'chooseTraitBuff',uid:null},{pack:packs,state:buffState}),'不增加 BP');
+ const impact={...s,pending:{kind:'effect-buff-trait',impactPlus:1,player:0}};
+ assert.equal(uiActionLabel({type:'chooseTraitBuff',uid:self.uid},{pack:packs,state:impact}),
+  '本回合使 '+name+' 衝擊＋1');
+ const rest={...s,pending:{kind:'effect-rest-bp',player:0}};
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:self.uid},{pack:packs,state:rest}),
+  '使 '+name+' 休息');
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:null},{pack:packs,state:rest}),'不使角色休息');
+ const skipNext={...s,pending:{kind:'effect-rest-bp',restTarget:false,player:0}};
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:self.uid},{pack:packs,state:skipNext}),
+  '使 '+name+' 跳過下次活動');
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:null},{pack:packs,state:skipNext}),'不跳過下次活動');
+ assert.equal(uiActionLabel({type:'chooseRetireAtMost',uid:self.uid},{pack:packs,state:s}),
+  '使 '+name+' 退場');
+});
+
+test('choice labels name the result the resolver actually applies',()=>{
+ const s=fresh();
+ const self=s.players[0].hand[0];
+ const name=mine.pack.cards[self.cardId].name;
+ const ctx=pending=> ({pack:packs,state:{...s,pending}});
+ assert.equal(uiActionLabel({type:'chooseTrigger',mode:'colorRetire',uid:self.uid},ctx({})),
+  'COLOR：使 '+name+' 退場');
+ assert.equal(pendingChoiceCaption('COLOR：使 '+name+' 退場',[name]),'COLOR：使 退場');
+ assert.equal(uiActionLabel({type:'chooseTrigger',mode:'colorBounce',uid:self.uid},ctx({})),
+  'COLOR：將 '+name+' 返回手牌');
+ assert.equal(uiActionLabel({type:'chooseTrigger',mode:'getDeploy',line:'front',slot:0},ctx({})),
+  '改以休息狀態登場 · 前線 1');
+ assert.equal(uiActionLabel({type:'chooseTrigger',mode:'swapGet'},ctx({})),'改為加入手牌');
+ assert.equal(uiActionLabel({type:'chooseTrigger',mode:'active',uid:self.uid},ctx({})),
+  '使 '+name+' 活動，本回合 BP＋3000');
+ const retire=ctx({kind:'effect-retire-bp',player:0});
+ assert.equal(uiActionLabel({type:'chooseRetireBp',uid:self.uid},retire),'使 '+name+' 退場');
+ assert.equal(uiActionLabel({type:'chooseRetireBp',uid:null},retire),'不使角色退場');
+ const removed=ctx({kind:'effect-retire-bp',destination:'removed',player:0});
+ assert.equal(uiActionLabel({type:'chooseRetireBp',uid:self.uid},removed),'將 '+name+' 移入移除區');
+ assert.equal(uiActionLabel({type:'chooseRetireBp',uid:null},removed),'不移入移除區');
+ const many=ctx({kind:'effect-target-many',bp:2000,player:0});
+ assert.equal(uiActionLabel({type:'chooseTargetMany',uid:self.uid},many),'本回合使 '+name+' BP－2000');
+ assert.equal(uiActionLabel({type:'chooseTargetMany',uid:null},many),'完成目標選擇');
+ assert.equal(uiActionLabel({type:'chooseEitherBuff',uid:self.uid},ctx({bp:2000})),
+  '選擇 '+name+'，本回合 BP＋2000');
+ assert.equal(uiActionLabel({type:'chooseMainBuff',uid:self.uid},ctx({bp:1000})),
+  '指定 '+name+'，本回合 BP＋1000');
+ assert.equal(uiActionLabel({type:'chooseNameOrTraitBuff',uid:self.uid},ctx({bp:1000})),
+  '本回合使 '+name+' BP＋1000');
+ assert.equal(uiActionLabel({type:'choosePeekBuff',uid:self.uid},ctx({bp:1500})),
+  '本回合使 '+name+' BP＋1500');
+ assert.equal(uiActionLabel({type:'chooseScaleBuff',uid:self.uid},ctx({bp:500})),
+  '本回合使 '+name+' BP＋500');
+ assert.equal(uiActionLabel({type:'chooseRemovedSelfGrant',uid:self.uid},ctx({bp:2000,impact:2})),
+  '將 '+name+' 放到場外，並獲得 BP＋2000 與衝擊 2');
+ const scaled=ctx({kind:'effect-buff-own',bp:1000,scaleName:name,scaledBp:3000,player:0});
+ assert.equal(uiActionLabel({type:'chooseOwnBuff',uid:self.uid},scaled),
+  '本回合使 '+name+' BP＋3000');
+ const lasting=ctx({kind:'effect-buff-own',bp:1000,untilName:name,player:0});
+ assert.equal(uiActionLabel({type:'chooseOwnBuff',uid:self.uid},lasting),
+  '直到下一次自己的回合開始使 '+name+' BP＋1000');
+ const impactOnly=ctx({kind:'effect-buff-own',impactOnly:1,player:0});
+ assert.equal(uiActionLabel({type:'chooseOwnBuff',uid:self.uid},impactOnly),'使 '+name+' 獲得衝擊');
+ assert.equal(uiActionLabel({type:'chooseOwnBuff',uid:null},impactOnly),'不給予衝擊');
+ const rested=ctx({kind:'effect-rest-bp',skipNextActive:true,thenDraw:1,player:0});
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:self.uid},rested),
+  '使 '+name+' 休息，下一次不活動，並抽 1 張');
+ assert.equal(uiActionLabel({type:'chooseMoveOppFront',uid:self.uid},
+  ctx({kind:'effect-move-opp-cap',player:0})),'移動 '+name);
+ assert.equal(uiActionLabel({type:'chooseTarget',uid:self.uid},ctx({bp:3000})),
+  '本回合使 '+name+' BP－3000');
+ assert.equal(uiActionLabel({type:'chooseAnyBuff',uid:self.uid},ctx({bp:1000})),
+  '本回合使 '+name+' BP＋1000');
+ assert.equal(uiActionLabel({type:'chooseOtherTraitBuff',uid:null},ctx({bp:1000})),'不提高 BP');
+ assert.equal(uiActionLabel({type:'chooseActiveTraitBuff',uid:self.uid},ctx({bp:1000})),
+  '使 '+name+' 活動，本回合 BP＋1000');
+ const bounce=ctx({player:0,min:1,names:['不存在的名字']});
+ assert.equal(uiActionLabel({type:'chooseNamedOutsideBounceRetire',uid:self.uid},bounce),
+  '將 '+name+' 返回手牌');
+ const outside={...s,players:s.players.map((p,i)=>i?p:{...p,outside:[{uid:'0-out',cardId:self.cardId}]})};
+ const retireNow={pack:packs,state:{...outside,pending:{player:0,min:1,names:[name]}}};
+ assert.equal(uiActionLabel({type:'chooseNamedOutsideBounceRetire',uid:self.uid},retireNow),
+  '使 '+name+' 退場');
+});
+
 test('inspected nonmatching cards are visible but disabled',()=>{
  const window={kind:'effect-top-filter-choice',inspected:[
   {uid:'top-a',cardId:'BLC-1-001',name:'甲'},

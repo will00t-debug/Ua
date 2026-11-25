@@ -26,7 +26,7 @@ App version baseline: v9.1.1 (2026-10-12). This repository is meant for GitHub +
 
 ## Fixed V2 errors — check them before adding a card
 `docs/v2-handoff/V2-do-not-regress.md` is the gate for every new card
-(2026-10-14 through 2026-11-22, 291 corrected mistakes, including RNK-1-009,
+(2026-10-14 through 2026-11-25, 296 corrected mistakes, including RNK-1-009,
 the Hiko Raid, Eva and Toriko raid frames, Bakugo's empty-field discount,
 yellow and red zero energy, and the EVA-1-053 retire window). Match the printed text to the traps below and to every
 ledger row that uses the same mechanic. Reuse the corrected shared behavior.
@@ -37,7 +37,7 @@ Do not bring these back on a new card:
 3. Generated energy is the physical card on the field now. Printed pips are the icons, not a filename, a dash, or an ability plus.
 4. A facedown card does not supply its printed name or trait.
 5. BP at 0 or below leaves the field. A higher-BP blocker does not retire the attacker (Q34). Equal BP retires the blocker.
-6. Damage 2 reveals life together (Q73). The last life trigger does not force an order (Q12). Impact life damage uses the attacker's life selection.
+6. Damage 2 reveals life together (Q73). The last life trigger does not force an order (Q12). Impact life damage uses the attacker's life selection. An unblocked energy-line attack still deals life damage, and the attacker stays on the energy line (Q2296).
 7. Once-per-turn on a field ability is keyed by the physical source UID (Q770), not the printed name.
 8. A new pending kind gets its own allowlist entry. Saved pending rejects a forged source.
 9. A mandatory choose-1 cannot be played with no legal target, and then it does not charge AP (Q1119). An already REST character can still be chosen to REST (Q91).

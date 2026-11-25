@@ -507,8 +507,8 @@ test('milling can recover a trait or a named card and skip the excluded name',()
  opened.s=act(opened.pack,opened.s,a=>a.type==='play'&&a.uid&&
   opened.s.players[0].hand.some(c=>c.uid===a.uid));
  assert.equal(opened.s.pending.kind,'effect-mill-optional');
- opened.s=act(opened.pack,opened.s,{type:'chooseMillOptional',mode:'mill'});
- opened.s=act(opened.pack,opened.s,{type:'chooseMillOptional',mode:'stop'});
+ opened.s=act(opened.pack,opened.s,{type:'chooseMillOptional',mode:'mill',count:1});
+ opened.s=act(opened.pack,opened.s,{type:'chooseMillOptional',mode:'ack'});
  assert.equal(opened.s.pending.kind,'effect-recover-any');
  assert.equal(opened.s.pending.choices.includes(wanted.uid),true);
  assert.equal(opened.s.pending.choices.includes(eri.uid),true);

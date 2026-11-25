@@ -89,13 +89,17 @@ test('skip leaves the top card, and accepting moves exactly that card outside',(
  assert.equal(skipped.players[0].deck[0].uid,top.uid);
  assert.equal(skipped.players[0].deck.length,before);
  assert.equal(skipped.players[0].outside.some(c=>c.uid===top.uid),false);
- const milled=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'mill'});
- assert.equal(milled.pending.kind,'block');
- assert.equal(milled.players[0].outside.at(-1).uid,top.uid);
- assert.equal(milled.players[0].deck.length,before-1);
- assert.equal(milled.players[0].deck[0]?.uid===top.uid,false);
- assert.equal(universalCardEnergy(packs,milled,0,milled.players[0].front[0]),0);
- assert.equal(assertUniversalMatch(packs,milled),true);
+ const milled=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'mill',count:1});
+ assert.equal(milled.pending.phase,'shown');
+ assert.deepEqual(milled.pending.milled,[top.uid]);
+ assert.deepEqual(universalPublicView(packs,milled,1).pending,{kind:'effect-optional-mill',player:0});
+ const seen=dispatchUniversalAction(packs,milled,{type:'chooseOptionalMill',mode:'ack'});
+ assert.equal(seen.pending.kind,'block');
+ assert.equal(seen.players[0].outside.at(-1).uid,top.uid);
+ assert.equal(seen.players[0].deck.length,before-1);
+ assert.equal(seen.players[0].deck[0]?.uid===top.uid,false);
+ assert.equal(universalCardEnergy(packs,seen,0,seen.players[0].front[0]),0);
+ assert.equal(assertUniversalMatch(packs,seen),true);
 });
 
 test('silence and an empty deck do not open the mill choice',()=>{

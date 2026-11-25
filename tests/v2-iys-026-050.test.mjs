@@ -596,9 +596,9 @@ test('IYS-1-031 mills up to two cards when retired, and a removal does not',()=>
  retired=choose(retired,a=>a.uid===victim.uid);
  assert.equal(retired.pending.kind,'effect-optional-mill');
  assert.equal(legal(retired,a=>a.mode==='skip'),true);
- retired=choose(retired,a=>a.mode==='mill');
- assert.equal(retired.pending.kind,'effect-optional-mill');
- retired=choose(retired,a=>a.mode==='skip');
+ retired=choose(retired,a=>a.mode==='mill'&&a.count===1);
+ assert.equal(retired.pending.phase,'shown');
+ retired=choose(retired,a=>a.mode==='ack');
  assert.equal(retired.players[0].deck.length,before-1);
  assert.equal(retired.players[0].outside.some(c=>c.uid===victim.uid),true);
  assertUniversalMatch(packs,retired);

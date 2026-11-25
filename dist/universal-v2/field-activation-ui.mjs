@@ -39,6 +39,16 @@ export function mountFieldActivationButtons({arena,el,actions,selectedUid,onOpen
  return count;
 }
 
+// A short first sentence is the choice itself. The rest is the printed condition.
+function choiceHeading(description){
+ const text=String(description||'');
+ const cut=text.indexOf('。');
+ if(cut<1||cut>40)return null;
+ const title=text.slice(0,cut).trim();
+ const body=text.slice(cut+1).trim();
+ if(!title||!body||title.includes('【')||title.includes('主啟動'))return null;
+ return {title,body};
+}
 export function openFieldActivationPicker({el,root,cardName,actions,onChoose,labelOf}){
  if(typeof el!=='function'||!root||!Array.isArray(actions)||!actions.length||
   typeof onChoose!=='function')return null;
@@ -58,12 +68,15 @@ export function openFieldActivationPicker({el,root,cardName,actions,onChoose,lab
  actions.forEach((action,index)=>{
   const text=typeof labelOf==='function'?labelOf(action):action.label;
   const description=String(text||'起動主要能力');
-  const body=el('span',{text:description});
-  if(body?.nodeType===1)body.innerHTML=renderCardEffectText(description);
+  const heading=choiceHeading(description);
+  const title=heading?.title||(actions.length===1?'確認發動':'能力 '+(index+1));
+  const bodyText=heading?.body||description;
+  const body=el('span',{text:bodyText});
+  if(body?.nodeType===1)body.innerHTML=renderCardEffectText(bodyText);
   entries.append(el('button',{type:'button',class:'v2-activation-option',
-   'aria-label':'發動能力 '+(index+1)+'：'+description,
+   'aria-label':(heading?title+'：':'發動能力 '+(index+1)+'：')+bodyText,
    onClick:()=>{close();onChoose(action);}},
-   el('strong',{text:actions.length===1?'確認發動':'能力 '+(index+1)}),
+   el('strong',{text:title}),
    body));
  });
  dialog.append(entries,el('button',{type:'button',

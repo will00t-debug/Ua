@@ -172,7 +172,7 @@ test('on play the mill is optional and never opens a recovery',()=>{
  assert.equal(s.pending.optional,true);
  assert.equal(universalPrivateChoices(pack,s,1),null);
  assert.equal(legal(pack,s).some(a=>a.type==='chooseMillOptional'&&a.mode==='stop'),true);
- assert.equal(legal(pack,s).some(a=>a.type==='chooseMillOptional'&&a.mode==='mill'),true);
+ assert.deepEqual(legal(pack,s).filter(a=>a.mode==='mill').map(a=>a.count),[1,2,3]);
  s=act(pack,s,{type:'chooseMillOptional', mode:'stop'});
  assert.equal(s.pending,null);
  assert.equal(s.players[0].outside.length,outsideBefore);
@@ -197,11 +197,11 @@ test('on play the mill is optional and never opens a recovery',()=>{
  const milled=top(one.s,'PLAIN');
  keepHand(one.s,['MHA-1-002']);
  ({s:one.s}=playEri(one.pack, one.s));
- one.s=act(one.pack, one.s, {type:'chooseMillOptional', mode:'mill'});
+ one.s=act(one.pack, one.s, {type:'chooseMillOptional', mode:'mill', count:1});
  assert.equal(one.s.players[0].outside.some(c=>c.uid===milled.uid),true);
- assert.equal(one.s.pending.kind,'effect-mill-optional');
+ assert.equal(one.s.pending.phase,'shown');
  assert.equal(one.s.pending.milled.length,1);
- one.s=act(one.pack, one.s, {type:'chooseMillOptional', mode:'stop'});
+ one.s=act(one.pack, one.s, {type:'chooseMillOptional', mode:'ack'});
  assert.equal(one.s.pending,null);
  assert.equal(one.s.players[0].outside.filter(c=>c.uid===milled.uid).length,1);
 
@@ -212,7 +212,9 @@ test('on play the mill is optional and never opens a recovery',()=>{
  const only=pull(short.s,0,'PLAIN');
  short.s.players[0].deck.unshift(only);
  ({s:short.s}=playEri(short.pack, short.s));
- short.s=act(short.pack, short.s, {type:'chooseMillOptional', mode:'mill'});
+ short.s=act(short.pack, short.s, {type:'chooseMillOptional', mode:'mill', count:1});
+ assert.equal(short.s.pending.phase,'shown');
+ short.s=act(short.pack, short.s, {type:'chooseMillOptional', mode:'ack'});
  assert.equal(short.s.pending,null);
  assert.equal(short.s.players[0].deck.length,0);
  assert.equal(short.s.players[0].outside.some(c=>c.uid===only.uid),true);
