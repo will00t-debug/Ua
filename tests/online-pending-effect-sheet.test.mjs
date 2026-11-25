@@ -53,6 +53,20 @@ test('non-controller, missing private grant or changed top reveals no hidden car
  s.players[0].deck[0]=card('0-changed','SECRET');
  assert.equal(onlinePendingDisplay(packs,s,0,privateChoices).lookedAt,null);
 });
+test('a finished mill shows the outside cards and not the remaining deck',()=>{
+ const s=state();
+ s.pending={kind:'effect-mill-up-to',player:0,phase:'shown',sourceUid:'0-emilia',
+  milled:['0-out']};
+ s.players[0].outside=[card('0-out','REZ-1-007')];
+ s.players[0].deck=[card('0-secret','SECRET')];
+ const shown=onlinePendingDisplay(packs,s,0,null);
+ assert.deepEqual(shown.milled,[{cardId:'REZ-1-007',name:'牌庫頂卡'}]);
+ assert.equal(JSON.stringify(shown).includes('SECRET'),false);
+ assert.equal(JSON.stringify(shown).includes('0-out'),false);
+ s.pending.phase=undefined;
+ s.pending.milled=[];
+ assert.equal(onlinePendingDisplay(packs,s,0,null).milled,undefined);
+});
 test('cannot infer source from the deck, life or opponent private zones',()=>{
  const s=state();
  s.pending.sourceUid='0-secret';
@@ -79,5 +93,5 @@ test('online modal includes source and peeked card art, print and legal-choice a
  assert.match(css,/\.online-pending-card-effect\{/);
  assert.match(css,/white-space:pre-wrap/);
  assert.match(css,/max-height:30dvh/);
- assert.match(read('online.mjs'),/20261121mainlabels1/);
+ assert.match(read('online.mjs'),/20261125mill1/);
 });

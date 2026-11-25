@@ -390,7 +390,25 @@ export function onlinePendingDisplay(packs,match,seat,privateChoices){
  const top=owner?.deck?.[0];
  const lookedAt=disclosed&&top?.cardId===disclosed.cardId?
   {cardId:disclosed.cardId,name:disclosed.name||pack?.cards?.[disclosed.cardId]?.name||disclosed.cardId}:null;
- return {effectSource,lookedAt};
+ const milled=publicMilledCards(owner,pack,pending);
+ return milled.length?{effectSource,lookedAt,milled}:{effectSource,lookedAt};
+}
+// Outside is already public. Show only the cards this pending step names,
+// and only after they have left the deck. Deck order stays closed.
+function publicMilledCards(owner,pack,pending){
+ const show=(pending.kind==='effect-mill-up-to'&&pending.phase==='shown')||
+  pending.kind==='effect-mill-recover-discard'||pending.kind==='effect-mill-recover';
+ const uids=pending.kind==='effect-mill-recover'?pending.choices:pending.milled;
+ if(!show||!Array.isArray(uids)||!uids.length)return [];
+ const outside=Array.isArray(owner?.outside)?owner.outside:[];
+ const cards=[];
+ for(const uid of uids){
+  const physical=outside.find(card=>card?.uid===uid&&typeof card.cardId==='string');
+  if(!physical)continue;
+  const printed=pack?.cards?.[physical.cardId];
+  cards.push({cardId:physical.cardId,name:printed?.name||physical.cardId});
+ }
+ return cards;
 }
 
 function present(room,userId){

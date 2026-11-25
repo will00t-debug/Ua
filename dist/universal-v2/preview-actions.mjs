@@ -72,7 +72,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-script':'查看牌庫頂並選擇',
  'effect-bottom-own':'可將 1 張自己的角色放到牌庫底',
  'effect-optional-mill':'可逐張將牌庫頂送場外（每次 1 張，可繼續或停止）',
- 'effect-mill-up-to':'可將牌庫頂至多數張送場外',
+ 'effect-mill-up-to':'可將牌庫頂至多指定張數送場外',
  'effect-mill-recover-discard':'可棄 1 張手牌以回收剛才送出場外的卡',
  'effect-mill-recover':'從剛才送出場外的卡回收至多 1 張',
  'effect-grant-impact-null':'選擇至多 1 張其他己方角色，給予 IMPACT 無效',
@@ -447,7 +447,7 @@ const CLOSED_CHOICE_TYPES=new Set(['kmr','kmr2','iys','kjn','aot','aot2','mmm2',
 export function pendingTextChoiceClass(action){
  const closed=CLOSED_CHOICE_TYPES.has(action?.type);
  const quiet=action?.mode==='skip'||action?.mode==='done'||(!closed&&action?.uid===null);
- if(quiet)return 'quiet';
+ if(quiet||(action?.type==='chooseMillUpTo'&&action.mode==='stop'))return 'quiet';
  if(action?.type==='chooseEffectMode'&&action.mode!=='raid')return '';
  return 'recommended';
 }
@@ -1336,7 +1336,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandTwoOutside':return '將 '+name()+' 送至場外';
   case 'chooseOwnLifeOutside':return '將 '+name()+' 放到場外';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
-  case 'chooseMillUpTo':return action.mode==='mill'?'再將牌庫頂 1 張送場外':'停止送場外';
+  case 'chooseMillUpTo':
+   if(action.mode==='ack')return '知道了，繼續';
+   if(action.mode==='mill')return '將牌庫頂 '+(Number.isInteger(action.count)?action.count:1)+' 張送場外';
+   return '不送場外';
   case 'chooseMillDiscard':return action.uid===null?'不棄手牌，不回收':'棄掉 '+name()+'，接著回收';
   case 'chooseMillRecover':return action.uid===null?'不回收':'回收 '+name()+' 到手牌';
   case 'chooseImpactNullGrant':return action.uid===null?'不給予 IMPACT 無效':'給予 '+name()+' IMPACT 無效';
@@ -1807,6 +1810,22 @@ export function pendingFocusCard(pack,state){
 const SOURCE_ART_SKIP=new Set(['life-trigger','block','opening-mulligan']);
 // The character, or other card, whose effect opened this choice. Own deck and
 // unrevealed life stay closed. An opponent card is shown only while face up.
+// Cards this mill already sent outside. Only the controller's own outside
+// pile is read, and only while the pending step names those exact UIDs.
+export function milledOutsideCards(pack,state){
+ const q=state?.pending;
+ if(!q||q.player!==0)return [];
+ const reveal=q.kind==='effect-mill-up-to'&&q.phase==='shown';
+ const remembering=q.kind==='effect-mill-recover-discard';
+ if(!reveal&&!remembering)return [];
+ if(!Array.isArray(q.milled)||!q.milled.length)return [];
+ const outside=state.players?.[0]?.outside;
+ if(!Array.isArray(outside))return [];
+ return q.milled.flatMap(uid=>{
+  const physical=outside.find(card=>card?.uid===uid&&typeof card.cardId==='string');
+  return physical?[printedChoice(pack,0,physical)]:[];
+ });
+}
 export function pendingEffectSourceCard(pack,state){
  const q=state?.pending;
  if(!q||q.player!==0||SOURCE_ART_SKIP.has(q.kind))return null;

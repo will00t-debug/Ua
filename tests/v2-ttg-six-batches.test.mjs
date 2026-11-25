@@ -7,7 +7,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
-import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {uiActionLabel,milledOutsideCards} from '../dist/universal-v2/preview-actions.mjs';
 
 // UA56BT/TTG-1-057, 071, 054, 055, 026, 081. Registration plus the scenarios
 // below. This is not a full official FAQ certification.
@@ -230,19 +230,38 @@ test('TTG-055 mills up to two, then discards to recover only those cards',()=>{
  }
  let stop=open(57055);
  assert.equal(stop.pending.kind,'effect-mill-up-to');
+ assert.equal(stop.pending.phase,undefined);
+ assert.deepEqual(legalUniversalActions(packs,stop).filter(a=>a.type==='chooseMillUpTo'),[
+  {type:'chooseMillUpTo',mode:'mill',count:1},
+  {type:'chooseMillUpTo',mode:'mill',count:2},
+  {type:'chooseMillUpTo',mode:'stop'}
+ ]);
  assert.equal(chooseUniversalAiAction(packs,stop,{difficulty:'easy'}).mode,'stop');
- assert.equal(chooseUniversalAiAction(packs,stop,{difficulty:'normal'}).mode,'mill');
+ assert.deepEqual(chooseUniversalAiAction(packs,stop,{difficulty:'normal'}),
+  {type:'chooseMillUpTo',mode:'mill',count:2});
  const deckSize=stop.players[0].deck.length;
  stop=go(packs,stop,{type:'chooseMillUpTo',mode:'stop'});
  assert.equal(stop.pending,null);
  assert.equal(stop.players[0].deck.length,deckSize);
- uiActionLabel({type:'chooseMillUpTo',mode:'stop'},{pack:packs,state:open(57056)});
+ assert.equal(uiActionLabel({type:'chooseMillUpTo',mode:'stop'},{pack:packs,state:open(57056)}),'不送場外');
+ assert.equal(uiActionLabel({type:'chooseMillUpTo',mode:'mill',count:1}),'將牌庫頂 1 張送場外');
+ assert.equal(uiActionLabel({type:'chooseMillUpTo',mode:'mill',count:2}),'將牌庫頂 2 張送場外');
+ assert.throws(()=>dispatchUniversalAction(packs,open(57056),{type:'chooseMillUpTo',mode:'mill'}));
+ assert.throws(()=>dispatchUniversalAction(packs,open(57056),{type:'chooseMillUpTo',mode:'mill',count:3}));
 
  let one=open(57061);
  const first=one.players[0].deck[0].uid;
- one=go(packs,one,{type:'chooseMillUpTo',mode:'mill'});
- one=go(packs,one,{type:'chooseMillUpTo',mode:'stop'});
+ const firstId=one.players[0].deck[0].cardId;
+ one=go(packs,one,{type:'chooseMillUpTo',mode:'mill',count:1});
+ assert.equal(one.pending.kind,'effect-mill-up-to');
+ assert.equal(one.pending.phase,'shown');
+ assert.deepEqual(one.pending.milled,[first]);
+ assert.deepEqual(milledOutsideCards(packs,one).map(card=>card.cardId),[firstId]);
+ assert.deepEqual(legalUniversalActions(packs,one).filter(a=>a.type==='chooseMillUpTo'),
+  [{type:'chooseMillUpTo',mode:'ack'}]);
+ one=go(packs,one,{type:'chooseMillUpTo',mode:'ack'});
  assert.equal(one.pending.kind,'effect-mill-recover-discard');
+ assert.deepEqual(milledOutsideCards(packs,one).map(card=>card.uid),[first]);
  one=go(packs,one,{type:'chooseMillDiscard',uid:null});
  assert.equal(one.pending,null);
  assert.ok(one.players[0].outside.some(c=>c.uid===first));
@@ -250,8 +269,13 @@ test('TTG-055 mills up to two, then discards to recover only those cards',()=>{
 
  let two=open(57062);
  const milled=[two.players[0].deck[0].uid,two.players[0].deck[1].uid];
- two=go(packs,two,{type:'chooseMillUpTo',mode:'mill'});
- two=go(packs,two,{type:'chooseMillUpTo',mode:'mill'});
+ const milledIds=[two.players[0].deck[0].cardId,two.players[0].deck[1].cardId];
+ two=go(packs,two,{type:'chooseMillUpTo',mode:'mill',count:2});
+ assert.equal(two.pending.phase,'shown');
+ assert.deepEqual(two.pending.milled,milled);
+ assert.deepEqual(milledOutsideCards(packs,two).map(card=>card.cardId),milledIds);
+ assert.equal(two.players[0].deck[0]?.uid===milled[0],false);
+ two=go(packs,two,{type:'chooseMillUpTo',mode:'ack'});
  assert.equal(two.pending.kind,'effect-mill-recover-discard');
  const discard=two.players[0].hand[0].uid;
  two=go(packs,two,{type:'chooseMillDiscard',uid:discard});

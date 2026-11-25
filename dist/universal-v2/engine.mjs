@@ -18759,24 +18759,37 @@ function resolveChoice(s,a,pack){
   return;
  }
  if(q.kind==='effect-mill-up-to'){
-  let milled=q.milled;
-  if(a.mode==='mill'){
-   if(!p.deck.length||milled.length>=q.max)throw Error('Illegal mill step');
-   const physical=moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
-    reason:'own-effect',sourceUid:q.sourceUid});
-   milled=[...milled,physical.uid];
-   if(milled.length<q.max&&p.deck.length){
-    s.pending={kind:'effect-mill-up-to',player:q.player,sourceUid:q.sourceUid,max:q.max,milled};
+  const finish=milled=>{
+   const still=milled.filter(uid=>p.outside.some(c=>c.uid===uid));
+   if(still.length&&p.hand.length){
+    s.pending={kind:'effect-mill-recover-discard',player:q.player,
+     sourceUid:q.sourceUid,milled:still};
     return;
    }
-  }else if(a.mode!=='stop')throw Error('Invalid mill choice');
-  const still=milled.filter(uid=>p.outside.some(c=>c.uid===uid));
-  if(still.length&&p.hand.length){
-   s.pending={kind:'effect-mill-recover-discard',player:q.player,
-    sourceUid:q.sourceUid,milled:still};
+   s.pending=null;continueEffectQueue(pack,s);
+  };
+  // The count is chosen once. After the cards leave the deck, show them
+  // before the discard-to-recover step so the controller sees the result.
+  if(q.phase==='shown'){
+   if(a.mode!=='ack')throw Error('Invalid mill choice');
+   finish(q.milled);return;
+  }
+  if(a.mode==='mill'){
+   const count=a.count,already=q.milled.length;
+   if(!Number.isInteger(count)||count<1||already+count>q.max||count>p.deck.length)
+    throw Error('Illegal mill step');
+   const milled=[...q.milled];
+   for(let i=0;i<count;i++){
+    const physical=moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
+     reason:'own-effect',sourceUid:q.sourceUid});
+    milled.push(physical.uid);
+   }
+   s.pending={kind:'effect-mill-up-to',player:q.player,sourceUid:q.sourceUid,
+    max:q.max,milled,phase:'shown'};
    return;
   }
-  s.pending=null;continueEffectQueue(pack,s);return;
+  if(a.mode!=='stop')throw Error('Invalid mill choice');
+  finish(q.milled);return;
  }
  if(q.kind==='effect-mill-recover-discard'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
@@ -22875,10 +22888,13 @@ function legalPending(pack,s){
   ...(q.optional?[{type:'choosePayHandActive',uid:null}]:[]),
   ...p.hand.map(c=>({type:'choosePayHandActive',uid:c.uid}))
  ];
- if(q.kind==='effect-mill-up-to')return [
-  {type:'chooseMillUpTo',mode:'stop'},
-  ...(p.deck.length&&q.milled.length<q.max?[{type:'chooseMillUpTo',mode:'mill'}]:[])
- ];
+ if(q.kind==='effect-mill-up-to'){
+  if(q.phase==='shown')return [{type:'chooseMillUpTo',mode:'ack'}];
+  const room=Math.min(q.max-q.milled.length,p.deck.length);
+  const mills=[];
+  for(let count=1;count<=room;count++)mills.push({type:'chooseMillUpTo',mode:'mill',count});
+  return [...mills,{type:'chooseMillUpTo',mode:'stop'}];
+ }
  if(q.kind==='effect-mill-recover-discard')return [
   {type:'chooseMillDiscard',uid:null},
   ...p.hand.map(c=>({type:'chooseMillDiscard',uid:c.uid}))
@@ -28851,7 +28867,9 @@ export function assertUniversalMatch(pack,s){
    throw Error('Invalid mill or impact-null pending');
   if(q.kind==='effect-mill-up-to'&&(!mill||![1,2].includes(q.max)||!Array.isArray(q.milled)||
    q.milled.length>q.max||new Set(q.milled).size!==q.milled.length||
-   q.milled.some(uid=>!pl.outside.some(c=>c.uid===uid))))
+   q.milled.some(uid=>!pl.outside.some(c=>c.uid===uid))||
+   (q.phase!==undefined&&q.phase!=='shown')||
+   (q.phase==='shown'&&!q.milled.length)))
    throw Error('Invalid mill-up-to pending');
   if(q.kind==='effect-mill-recover-discard'&&(!mill||!Array.isArray(q.milled)||!q.milled.length||
    q.milled.some(uid=>!pl.outside.some(c=>c.uid===uid))))

@@ -36,8 +36,8 @@ import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261120dgm2';
-import {chooseUniversalAiAction} from './universal-v2/ai.mjs?v=20261120mha011';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261125mill1';
+import {chooseUniversalAiAction} from './universal-v2/ai.mjs?v=20261125mill1';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {AI_PLAYBACK_FAST_KEY,aiPlaybackDelayMs,shouldRenderAiStep} from './universal-v2/ai-playback-speed.mjs';
 import {policyDifficulty} from './universal-v2/ai-policy-label.mjs';
@@ -54,8 +54,8 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261121mainlabels1';
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,milledOutsideCards,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261125mill1';
 import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {legalRemovedMainAction,removedMainActionText} from './universal-v2/removed-main-ui.mjs';
 import {makeAttackLifePicker} from './universal-v2/attack-life-picker.mjs?v=20261105life1';
@@ -678,7 +678,11 @@ function pendingDialog(legal,view){
   controllerChoiceArt(app.packs,s,row.action).some(card=>card.uid!==focusUid));
  const payAp=s.pending.kind==='effect-pay-deploy-self'&&Number.isInteger(s.pending.ap)&&s.pending.ap>0?
   s.pending.ap:null;
- const title=s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
+ const title=s.pending.kind==='effect-mill-up-to'&&s.pending.phase==='shown'?
+  '剛才從牌庫頂送出場外的卡':
+  s.pending.kind==='effect-mill-up-to'?
+  '可將牌庫頂至多 '+(s.pending.max??'')+' 張送場外':
+  s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
   '依序放回牌庫底':payAp!==null?
   '是否支付 '+payAp+' AP，讓此角色以活動狀態登場':
   s.pending.kind==='effect-life-to-hand'&&s.pending.optional===false?
@@ -713,7 +717,15 @@ function pendingDialog(legal,view){
    btn('查看場面與手牌',()=>{app.inspectionPaused=true;render();},
     'btn v2-inspection-peek-btn'),
    el('span',{text:'可暫時查看場面與手牌，不會取消這次選牌。'})));
- dialog.append(el('p',{class:'note',text:raidStage?.phase==='activate'?
+ dialog.append(el('p',{class:'note',text:s.pending.kind==='effect-mill-up-to'&&s.pending.phase==='shown'?
+   '以下是剛才從牌庫頂送出場外的卡。確認後才繼續。':
+   s.pending.kind==='effect-mill-up-to'?
+   (s.pending.max>1?
+    '先選擇將牌庫頂 1 張，或是最多 '+s.pending.max+' 張，送出場外。':
+    '先選擇是否將牌庫頂 1 張送出場外。'):
+   s.pending.kind==='effect-mill-recover-discard'?
+   '可棄 1 張手牌。棄了之後，才能從剛才送出場外的卡回收 1 張。':
+   raidStage?.phase==='activate'?
    '要發動這個突襲觸發嗎？':
    raidStage?.phase==='mode'?'選擇突襲登場，或是加入手牌。':
    triggerChoice?
@@ -725,6 +737,8 @@ function pendingDialog(legal,view){
    s.pending.kind==='effect-deploy-self-active'?'點下面的角色，再點亮起的前線或能源格。它會以活動狀態登場。':
    placement.length?'先點卡圖選擇效果對象。若印刷允許兩種登場，再選普通進場或突襲進場。普通進場直接點格子；突襲進場先點底板，再點登場格子。':
    '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
+ const milledShown=milledOutsideCards(app.packs,s);
+ for(const card of milledShown)dialog.append(revealFocusSheet({...card,zone:'送出場外'}));
  if(source&&source.uid!==focusUid)dialog.append(revealFocusSheet(source));
  if(focus)dialog.append(revealFocusSheet(focus));
  if(blocking)dialog.append(attackShowcase(view.battle));
