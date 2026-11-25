@@ -6,7 +6,7 @@ import {HARD_OPTIONS,LOOP_LIMIT,MAX_STEPS} from '../../../../dist/universal-v2/w
 import {chooseWhiteSwordAction} from '../../../../dist/universal-v2/white-sword-ai/choose.mjs';
 import {getDeck} from '../../../../dist/universal-v2/white-sword-ai/deck.mjs';
 import {positionKey} from '../../../../dist/universal-v2/white-sword-ai/runner.mjs';
-import {decideResidual} from '../../v5b/lib/residual.mjs';
+import {decideResidual,ownCardId} from '../../v5b/lib/residual.mjs';
 import {HARD_CAP,SCALE} from '../../v5b/lib/protocol.mjs';
 
 const RULES=matchRules('official');
@@ -23,7 +23,11 @@ function pick(packs,state,actor,seat,spec,model){
   const action=chooseStrengthenedHardAction(packs,state,{...HARD_OPTIONS,seed:spec.seed});
   return {action:legal.find(item=>same(item,action))||null,source:'hard-search-2',changed:false,indicated:false,tie:false};
  }
- if(seat.residual)return decideResidual(packs,state,actor,model,spec.seed,seat.weight,seat.feature);
+ if(seat.residual){
+  return decideResidual(packs,state,actor,model,spec.seed,seat.weight||0,seat.feature||null,{
+   columns:seat.columns,baselineColumns:seat.baselineColumns
+  });
+ }
  return officialBlend(packs,state,actor,model,spec.seed);
 }
 export function playFairMatch(spec,model){
@@ -37,6 +41,7 @@ export function playFairMatch(spec,model){
  let illegal=0;
  let error=null;
  let changes=0;
+ const changeKinds={};
  let indicated=0;
  let ties=0;
  let orders=0;
@@ -55,9 +60,16 @@ export function playFairMatch(spec,model){
   let picked;
   try{picked=pick(packs,state,actor,spec.seats[actor],spec,model);}
   catch(failure){error=failure.message;illegal++;break;}
-  if(spec.seats[actor].residual){
+  const seat=spec.seats[actor];
+  if(seat.residual&&actor===spec.specialistSeat){
    decisions++;
-   if(picked.changed)changes++;
+   const moved=seat.baselineColumns?.length?picked.changedFromBaseline:picked.changed;
+   if(moved){
+    changes++;
+    const card=ownCardId(state,actor,picked.action);
+    const kind=[picked.action?.type||'',card||'',picked.action?.line||''].join('|');
+    changeKinds[kind]=(changeKinds[kind]||0)+1;
+   }
    if(picked.indicated)indicated++;
    if(picked.tie)ties++;
    if(picked.source==='reference')orders++;
@@ -74,7 +86,7 @@ export function playFairMatch(spec,model){
   seed:spec.seed,opponent:spec.opponent,arm:spec.arm,specialistSeat:spec.specialistSeat,first:spec.first,
   goingFirst:spec.specialistSeat===spec.first,weight:spec.arm==='v2'?0:spec.weight,
   status:state.status,winner:finished?state.winner:null,steps,finished,illegal,error,
-  changes,indicated,ties,orders,fallbacks,decisions
+  changes,changeKinds,indicated,ties,orders,fallbacks,decisions
  };
 }
 function auditSeats(opponent,specialistSeat){

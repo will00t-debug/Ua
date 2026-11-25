@@ -1,0 +1,17 @@
+{
+  "codeVersion": "v5c-1",
+  "each": 66,
+  "candidates": [
+    {
+      "id": "35816c698fab8755",
+      "screenMean": -0.375,
+      "bucket": "ap",
+      "opponent": "white-sword",
+      "index": 3,
+      "cardA": "BLC-4-060",
+      "cardB": null,
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動"
+    }
+  ]
+}
