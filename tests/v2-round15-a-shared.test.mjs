@@ -533,8 +533,8 @@ test('milling up to three can recover a trait or a named card from outside',()=>
  const wanted=top(taken.s,'TRAIT');
  keepHand(taken.s,['MILL']);
  taken.s=play(taken.pack,taken.s,'MILL');
- taken.s=act(taken.pack,taken.s,{type:'chooseMillOptional',mode:'mill'});
- taken.s=act(taken.pack,taken.s,{type:'chooseMillOptional',mode:'stop'});
+ taken.s=act(taken.pack,taken.s,{type:'chooseMillOptional',mode:'mill',count:1});
+ taken.s=act(taken.pack,taken.s,{type:'chooseMillOptional',mode:'ack'});
  assert.equal(taken.s.pending.kind,'effect-recover-any');
  assert.equal(taken.s.pending.choices.includes(wanted.uid),true);
  assert.equal(universalPrivateChoices(taken.pack,taken.s,1),null);

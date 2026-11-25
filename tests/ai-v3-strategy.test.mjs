@@ -415,7 +415,9 @@ test('strategy: the recovered raid card is raided onto its base',()=>{
  const play=legalUniversalActions(packs,state).find(action=>action.type==='play'&&action.uid===self.uid&&action.line==='front');
  let pending=dispatchUniversalAction(packs,state,play,{actor:0});
  assert.equal(pending.pending.kind,'effect-optional-mill');
- pending=dispatchUniversalAction(packs,pending,{type:'chooseOptionalMill',mode:'mill'},{actor:0});
+ pending=dispatchUniversalAction(packs,pending,{type:'chooseOptionalMill',mode:'mill',count:3},{actor:0});
+ assert.equal(pending.pending.phase,'shown');
+ pending=dispatchUniversalAction(packs,pending,{type:'chooseOptionalMill',mode:'ack'},{actor:0});
  assert.equal(pending.pending.kind,'effect-recover-outside');
  assert.equal(assertUniversalMatch(packs,pending),true);
  const action=ask(packs,pending);

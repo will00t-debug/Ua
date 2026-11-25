@@ -1496,8 +1496,8 @@ test('026 raids Overhaul, mills up to three, and recovers Eri or another Shie Ha
  taken.players[0].deck.unshift(take(taken,0,'MHA-1-008'));
  taken=toPhase(taken,'main');
  taken=use(taken,findAct(taken,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===under.uid&&a.line!=='energy','raid'));
- taken=use(taken,{type:'chooseMillOptional',mode:'mill'});
- taken=use(taken,{type:'chooseMillOptional',mode:'stop'});
+ taken=use(taken,{type:'chooseMillOptional',mode:'mill',count:1});
+ taken=use(taken,{type:'chooseMillOptional',mode:'ack'});
  assert.equal(taken.pending.kind,'effect-recover-any');
  assert.equal(acts(taken).some(a=>a.type==='chooseRecoverAny'&&a.uid===trait.uid),true);
  assert.equal(acts(taken).some(a=>a.type==='chooseRecoverAny'&&a.uid===eri.uid),true);

@@ -363,10 +363,19 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
  }
  else if(view.pending&&view.pending.kind!=='attack-life-target'&&view.phase!=='setup'&&room.yourTurn&&!blocking&&!placing){
   const display=room.pendingDisplay||{};
+  const milledCards=Array.isArray(display.milled)?display.milled:[];
   const effectSource=pendingCardSheet({el,card:display.effectSource,label:'發動效果的卡牌',
    definition,imageSource,openCard});
   const lookedAt=pendingCardSheet({el,card:display.lookedAt,label:'目前查看的牌庫頂',
    definition,imageSource,openCard});
+  const milledSheets=milledCards.map(card=>pendingCardSheet({el,card,label:'剛才送出場外',
+   definition,imageSource,openCard})).filter(Boolean);
+  const millKind=view.pending.kind==='effect-mill-up-to'||view.pending.kind==='effect-optional-mill'||
+   view.pending.kind==='effect-mill-optional';
+  const heading=millKind?
+   (milledCards.length?'剛才從牌庫頂送出場外的卡':'選擇要將牌庫頂幾張送場外'):
+   view.pending.kind==='effect-mill-recover-discard'?'可棄 1 張手牌，回收剛才送出場外的卡':
+   '效果選擇';
   // Keep the existing, server-issued choice buttons and their callbacks.
   // Only move at most two simple top-level decisions to a persistent footer;
   // larger choice lists and private card galleries remain scrollable.
@@ -377,11 +386,11 @@ export function renderOnlineBattle({room,el,siteHeader,notices,renderLine,hand,a
   const dialog=el('section',{class:'dialog pending panel online-compact-effect-dialog',role:'dialog','aria-modal':'true',
    'aria-label':'效果選擇',tabindex:'-1'},
    el('header',{class:'headline online-effect-heading'},
-    el('h2',{text:'效果選擇'}),
+    el('h2',{text:heading}),
     // This does not dismiss a mandatory choice; it opens the existing board-inspection mode.
     el('button',{type:'button',class:'online-effect-close','aria-label':'暫時查看場面與手牌',
      text:'×',onClick:onPause})),
-   el('div',{class:'online-effect-scroll'},actions,effectSource,lookedAt),
+   el('div',{class:'online-effect-scroll'},actions,effectSource,lookedAt,...milledSheets),
    el('div',{class:'online-effect-bottom'},
     el('button',{type:'button',class:'online-effect-peek',text:'◉ 查看場面與手牌',onClick:onPause}),
     decisionFooter.childElementCount?decisionFooter:null));
