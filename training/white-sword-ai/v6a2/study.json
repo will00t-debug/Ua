@@ -1,0 +1,407 @@
+{
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "kept": 243,
+  "dropped": {
+    "incomplete": 1,
+    "conflict": 0,
+    "duplicate": 0,
+    "unconfirmedPairs": 280,
+    "confirmedPairs": 4835
+  },
+  "counts": {
+    "ids": 8796,
+    "consistent": 8068,
+    "keyConflict": 0,
+    "featureConflict": 0,
+    "actorConflict": 0,
+    "swapped": 0,
+    "noFeatures": 728
+  },
+  "quarantined": 728,
+  "train": 184,
+  "dev": 59,
+  "features": {
+    "linear": {
+      "width": 46,
+      "zero": [
+        "bias",
+        "type_extra_draw",
+        "type_choice",
+        "type_keep",
+        "type_redraw",
+        "phase_main",
+        "phase_attack",
+        "phase_other",
+        "pending",
+        "life_diff",
+        "my_life",
+        "opp_life",
+        "my_energy",
+        "opp_energy",
+        "my_ap",
+        "opp_ap",
+        "my_hand",
+        "opp_hand",
+        "my_front",
+        "opp_front",
+        "block_win",
+        "turn",
+        "gotei",
+        "opp_bp_max",
+        "mulligan_redraw_thin"
+      ],
+      "almost": [],
+      "collinear": [
+        "type_block ~ type_block_pass",
+        "type_block ~ block_lose",
+        "type_block_pass ~ block_lose",
+        "card_ap ~ pass_despite_attack"
+      ],
+      "qr": {
+        "rank": 14,
+        "diagonals": [
+          6.6332495807108,
+          4.335372480589706,
+          3.5358365723010685,
+          3.2214435913720374,
+          2.4860665056436977,
+          2.454836105089568,
+          2.1828292244162393,
+          1.8783516181857947,
+          1.8238575282578868,
+          1.4901909249590612,
+          1.3403559961887488,
+          1.3368263962685325,
+          1.282131906853635,
+          0.808617611596026,
+          7.673909199435665e-15,
+          5.13493559634757e-15,
+          2.7123941543760717e-15,
+          2.336684443752731e-15,
+          6.106999383936489e-16,
+          1.714123053830478e-30,
+          4.848143622978059e-46,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "tolerance": 1.220517922850787e-7,
+        "largest": 6.6332495807108
+      },
+      "svd": {
+        "rank": 14,
+        "tolerance": 5.441795960338091e-13,
+        "largest": 13.319386010437444,
+        "smallest": 0
+      }
+    },
+    "interaction": {
+      "width": 54,
+      "zero": [
+        "bias",
+        "type_extra_draw",
+        "type_choice",
+        "type_keep",
+        "type_redraw",
+        "phase_main",
+        "phase_attack",
+        "phase_other",
+        "pending",
+        "life_diff",
+        "my_life",
+        "opp_life",
+        "my_energy",
+        "opp_energy",
+        "my_ap",
+        "opp_ap",
+        "my_hand",
+        "opp_hand",
+        "my_front",
+        "opp_front",
+        "block_win",
+        "turn",
+        "gotei",
+        "opp_bp_max",
+        "mulligan_redraw_thin"
+      ],
+      "almost": [],
+      "collinear": [
+        "type_block ~ type_block_pass",
+        "type_block ~ block_lose",
+        "type_block_pass ~ block_lose",
+        "line_front ~ type_play×line_front",
+        "line_energy ~ type_play×line_energy",
+        "card_ap ~ pass_despite_attack",
+        "attack_edge ~ type_attack×attack_edge"
+      ],
+      "qr": {
+        "rank": 19,
+        "diagonals": [
+          6.6332495807108,
+          4.335372480589706,
+          3.5358365723010685,
+          3.2214435913720374,
+          2.4860665056436977,
+          2.454836105089568,
+          2.1828292244162393,
+          1.8783516181857947,
+          1.8238575282578868,
+          1.4901909249590612,
+          1.3403559961887488,
+          1.3368263962685325,
+          1.282131906853635,
+          1.1567490343279314,
+          0.9127844763206222,
+          0.8845510514571373,
+          0.8049726303580851,
+          0.6200503968386977,
+          0.2259325488910503,
+          7.520771868198678e-15,
+          5.126692581825132e-15,
+          2.705330189651958e-15,
+          2.622811372837158e-15,
+          2.327653097205121e-15,
+          6.066717830217732e-16,
+          3.201663612899132e-16,
+          6.174185686502874e-30,
+          1.505415067376293e-31,
+          1.5695369254948973e-46,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "tolerance": 1.220517922850787e-7,
+        "largest": 6.6332495807108
+      },
+      "svd": {
+        "rank": 19,
+        "tolerance": 5.971905934349622e-13,
+        "largest": 14.616887685124246,
+        "smallest": 0
+      }
+    }
+  },
+  "looseYes": 178,
+  "looseNo": 65,
+  "preference": [
+    {
+      "id": "d12a2d6f5ced1d88",
+      "role": "preference",
+      "loose": true,
+      "hasBand": true,
+      "desired": true,
+      "targetReachable": true
+    },
+    {
+      "id": "b122fb89d72eec7e",
+      "role": "preference",
+      "loose": true,
+      "hasBand": true,
+      "desired": true,
+      "targetReachable": true
+    },
+    {
+      "id": "01c85e5ddb31e7fa",
+      "role": "preference",
+      "loose": true,
+      "hasBand": true,
+      "desired": true,
+      "targetReachable": true
+    },
+    {
+      "id": "ee6cdd154ceeb4ce",
+      "role": "preserve",
+      "loose": false,
+      "hasBand": true,
+      "desired": true,
+      "targetReachable": false
+    },
+    {
+      "id": "0d035ea8a0b2be16",
+      "role": "preserve",
+      "loose": true,
+      "hasBand": true,
+      "desired": false,
+      "targetReachable": false
+    },
+    {
+      "id": "1fbdc61d55fa7f09",
+      "role": "preserve",
+      "loose": true,
+      "hasBand": true,
+      "desired": false,
+      "targetReachable": false
+    }
+  ],
+  "oracle": {
+    "calls": 24,
+    "kept": 3,
+    "eligible": 27,
+    "ids": [
+      "8b4f94c40e82e412",
+      "fdffb1ea2cc7d134",
+      "675759e42cddd095"
+    ],
+    "moved": 19,
+    "third": 6,
+    "status": "found",
+    "statuses": {
+      "found": 3,
+      "infeasible": 8,
+      "undecided": 0,
+      "rejected": 13
+    },
+    "disclosed": "傷害局面與突襲局面被要求維持原選擇，所以它們是求解約束，不是獨立測試。搜尋只用訓練對局的配對方向，沒有用開發資料挑權重。配對平均沒有顯著，方向一致不是正確決策的證明。"
+  },
+  "oracleInteraction": {
+    "calls": 24,
+    "kept": 4,
+    "eligible": 27,
+    "ids": [
+      "8b4f94c40e82e412",
+      "fdffb1ea2cc7d134",
+      "0c292b4b2750f8d5",
+      "449bdd2e224676c9"
+    ],
+    "moved": 22,
+    "third": 7,
+    "status": "found",
+    "statuses": {
+      "found": 4,
+      "infeasible": 7,
+      "undecided": 0,
+      "rejected": 13
+    },
+    "disclosed": "傷害局面與突襲局面被要求維持原選擇，所以它們是求解約束，不是獨立測試。搜尋只用訓練對局的配對方向，沒有用開發資料挑權重。配對平均沒有顯著，方向一致不是正確決策的證明。"
+  },
+  "lambda": 100,
+  "devRidge": {
+    "position": {
+      "mse": 0.017807926103318977,
+      "correlation": 0.106013034261316,
+      "positions": 59
+    },
+    "game": {
+      "mse": 0.01780792610331897,
+      "cancelledMse": 0.014305177669272383,
+      "correlation": 0.1569228979603076,
+      "games": 41
+    },
+    "zero": {
+      "mse": 0.014943306328441465,
+      "correlation": 0,
+      "positions": 59
+    }
+  },
+  "devHinge": {
+    "position": {
+      "mse": 0.08184299442388103,
+      "correlation": 0.17605383118817633,
+      "positions": 59
+    },
+    "game": {
+      "mse": 0.08184299442388104,
+      "cancelledMse": 0.07504652495855182,
+      "correlation": 0.22066006619353679,
+      "games": 41
+    },
+    "zero": {
+      "mse": 0.014943306328441465,
+      "correlation": 0,
+      "positions": 59
+    }
+  },
+  "devZero": {
+    "position": {
+      "mse": 0.014943306328441465,
+      "correlation": 0,
+      "positions": 59
+    },
+    "game": {
+      "mse": 0.014943306328441465,
+      "cancelledMse": 0.01235236582514007,
+      "correlation": 0,
+      "games": 41
+    },
+    "zero": {
+      "mse": 0.014943306328441465,
+      "correlation": 0,
+      "positions": 59
+    }
+  },
+  "gains": {
+    "changed": 0,
+    "unknown": 0,
+    "games": 0,
+    "mean": null
+  },
+  "ridgeGains": {
+    "changed": 0,
+    "unknown": 0,
+    "games": 0,
+    "mean": null
+  },
+  "trainHinge": {
+    "changed": 0,
+    "unknown": 0,
+    "games": 0,
+    "mean": null
+  },
+  "trainRidge": {
+    "changed": 0,
+    "unknown": 0,
+    "games": 0,
+    "mean": null
+  },
+  "positive": false,
+  "decision": "停止目前路線：不再追加同類對局，也不再投入這個加法殘差接法。逐動作殘差仍可能改到一部分已觀測局面，所以這不是「所有殘差架構都無解」。事先固定的訓練方法沒有做出可驗證的正向開發改選。",
+  "plans": {
+    "files": 10,
+    "withActionKeys": 0
+  },
+  "hingeLambda": 0.1
+}
