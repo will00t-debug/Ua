@@ -1,0 +1,25 @@
+{
+  "codeVersion": "v5b-1",
+  "rule": "v5b-validate-1",
+  "weight": 3.25954286097052,
+  "ids": [
+    "191782744f0eb802",
+    "904a146535fb37f8",
+    "ba70c431561842ab",
+    "1ec9b5aa2e669cae",
+    "0313a360cfb933b0",
+    "16f091f145e70ecf",
+    "0396799cc5bf2cb2",
+    "38481221f0b7bfad"
+  ],
+  "roles": [
+    "keep-front",
+    "keep-front",
+    "fresh",
+    "other",
+    "other",
+    "other",
+    "other",
+    "other"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "codeVersion": "v5b-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "feature": "play|BLC-4-070||energy",
+  "id": "minimum",
+  "weight": 3.25954286097052,
+  "points": 19.55725716582312,
+  "eligible": true,
+  "adopted": false,
+  "recommended": false,
+  "promoted": false
+}

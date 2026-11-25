@@ -1,0 +1,609 @@
+{
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "codeVersion": "v5b-1",
+  "feature": "play|BLC-4-070||energy",
+  "checked": 2156,
+  "minimum": 3.25954286097052,
+  "picked": "minimum",
+  "rows": [
+    {
+      "id": "points-9",
+      "weight": 1.5,
+      "points": 9,
+      "steps": [
+        1.5
+      ],
+      "targets": [
+        {
+          "id": "d12a2d6f5ced1d88",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "ok": false,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "b122fb89d72eec7e",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "ok": false,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "01c85e5ddb31e7fa",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "ok": false,
+          "missing": false,
+          "hardGap": 5.529621212121214
+        }
+      ],
+      "changes": 7,
+      "collateral": 7,
+      "unverified": 7,
+      "preserves": [
+        {
+          "id": "ee6cdd154ceeb4ce",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "0d035ea8a0b2be16",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "1fbdc61d55fa7f09",
+          "same": true,
+          "missing": false,
+          "learned": false
+        }
+      ],
+      "eligible": false,
+      "ee6c": {
+        "id": "ee6cdd154ceeb4ce",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "harm": {
+        "id": "0d035ea8a0b2be16",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "raid": {
+        "id": "1fbdc61d55fa7f09",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "flipIds": [
+        "3d8dad8f8324a86d",
+        "38481221f0b7bfad",
+        "959c51a4d3439c4d",
+        "c8dc3749c3d43daf",
+        "1ec9b5aa2e669cae",
+        "ef1b3d4c7121aaf1",
+        "16f091f145e70ecf"
+      ]
+    },
+    {
+      "id": "points-18",
+      "weight": 3,
+      "points": 18,
+      "steps": [
+        1.5,
+        1.5
+      ],
+      "targets": [
+        {
+          "id": "d12a2d6f5ced1d88",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "b122fb89d72eec7e",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"front\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":0}",
+          "ok": false,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "01c85e5ddb31e7fa",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 5.529621212121214
+        }
+      ],
+      "changes": 16,
+      "collateral": 14,
+      "unverified": 14,
+      "preserves": [
+        {
+          "id": "ee6cdd154ceeb4ce",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "0d035ea8a0b2be16",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "1fbdc61d55fa7f09",
+          "same": true,
+          "missing": false,
+          "learned": false
+        }
+      ],
+      "eligible": false,
+      "ee6c": {
+        "id": "ee6cdd154ceeb4ce",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "harm": {
+        "id": "0d035ea8a0b2be16",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "raid": {
+        "id": "1fbdc61d55fa7f09",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "flipIds": [
+        "3d8dad8f8324a86d",
+        "c90ae128a15a1a7a",
+        "38481221f0b7bfad",
+        "0313a360cfb933b0",
+        "959c51a4d3439c4d",
+        "c8dc3749c3d43daf",
+        "9d390a705682958c",
+        "b9fde3b3cc16c804",
+        "1ec9b5aa2e669cae",
+        "191782744f0eb802",
+        "ef1b3d4c7121aaf1",
+        "0396799cc5bf2cb2",
+        "16f091f145e70ecf",
+        "afca68fe68cbcc0d"
+      ]
+    },
+    {
+      "id": "points-27",
+      "weight": 4.5,
+      "points": 27,
+      "steps": [
+        1.5,
+        1.5,
+        1.5
+      ],
+      "targets": [
+        {
+          "id": "d12a2d6f5ced1d88",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "b122fb89d72eec7e",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "01c85e5ddb31e7fa",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 5.529621212121214
+        }
+      ],
+      "changes": 40,
+      "collateral": 37,
+      "unverified": 37,
+      "preserves": [
+        {
+          "id": "ee6cdd154ceeb4ce",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "0d035ea8a0b2be16",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "1fbdc61d55fa7f09",
+          "same": true,
+          "missing": false,
+          "learned": false
+        }
+      ],
+      "eligible": true,
+      "ee6c": {
+        "id": "ee6cdd154ceeb4ce",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "harm": {
+        "id": "0d035ea8a0b2be16",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "raid": {
+        "id": "1fbdc61d55fa7f09",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "flipIds": [
+        "f0569c968f026302",
+        "2681cf0412e88a73",
+        "904a146535fb37f8",
+        "3d8dad8f8324a86d",
+        "c90ae128a15a1a7a",
+        "38481221f0b7bfad",
+        "431b1f718972d039",
+        "4f887eb8394f1552",
+        "a7ba0201050dd325",
+        "6a409477a5a12d23",
+        "d567ce6f674db828",
+        "026176066a58bf25",
+        "0313a360cfb933b0",
+        "a4ba2d451a9288e8",
+        "959c51a4d3439c4d",
+        "c8dc3749c3d43daf",
+        "ac9af5e00496f0e6",
+        "9d390a705682958c",
+        "3530583e1fa5bbf9",
+        "4fd691ad81a38c20",
+        "ac12a8edc055c4a5",
+        "2f39b1902c276c75",
+        "b9fde3b3cc16c804",
+        "59fd30f10171e849",
+        "1ec9b5aa2e669cae",
+        "191782744f0eb802",
+        "4c58a7225b20f528",
+        "ef1b3d4c7121aaf1",
+        "dd0d1967f610e382",
+        "3bd9576160d60545",
+        "989238c5e6967b95",
+        "0396799cc5bf2cb2",
+        "46898db8a110a634",
+        "6c13a4d980591984",
+        "45c3cc416fd0ca98",
+        "16f091f145e70ecf",
+        "afca68fe68cbcc0d"
+      ]
+    },
+    {
+      "id": "minimum",
+      "weight": 3.25954286097052,
+      "points": 19.55725716582312,
+      "steps": [
+        1.5,
+        1.5,
+        0.25954286097051993
+      ],
+      "targets": [
+        {
+          "id": "d12a2d6f5ced1d88",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-21\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "b122fb89d72eec7e",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 0
+        },
+        {
+          "id": "01c85e5ddb31e7fa",
+          "want": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "chosen": "{\"type\":\"play\",\"mode\":null,\"line\":\"energy\",\"uid\":\"0-22\",\"baseUid\":null,\"targetUid\":null,\"slot\":1}",
+          "ok": true,
+          "missing": false,
+          "hardGap": 5.529621212121214
+        }
+      ],
+      "changes": 21,
+      "collateral": 18,
+      "unverified": 18,
+      "preserves": [
+        {
+          "id": "ee6cdd154ceeb4ce",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "0d035ea8a0b2be16",
+          "same": true,
+          "missing": false,
+          "learned": false
+        },
+        {
+          "id": "1fbdc61d55fa7f09",
+          "same": true,
+          "missing": false,
+          "learned": false
+        }
+      ],
+      "eligible": true,
+      "ee6c": {
+        "id": "ee6cdd154ceeb4ce",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "harm": {
+        "id": "0d035ea8a0b2be16",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "raid": {
+        "id": "1fbdc61d55fa7f09",
+        "same": true,
+        "missing": false,
+        "learned": false
+      },
+      "flipIds": [
+        "f0569c968f026302",
+        "904a146535fb37f8",
+        "3d8dad8f8324a86d",
+        "c90ae128a15a1a7a",
+        "38481221f0b7bfad",
+        "0313a360cfb933b0",
+        "a4ba2d451a9288e8",
+        "959c51a4d3439c4d",
+        "c8dc3749c3d43daf",
+        "ac9af5e00496f0e6",
+        "9d390a705682958c",
+        "b9fde3b3cc16c804",
+        "1ec9b5aa2e669cae",
+        "191782744f0eb802",
+        "ef1b3d4c7121aaf1",
+        "0396799cc5bf2cb2",
+        "16f091f145e70ecf",
+        "afca68fe68cbcc0d"
+      ]
+    }
+  ],
+  "mined": {
+    "games": 6,
+    "positions": 149,
+    "fresh": 149,
+    "flips": 1
+  },
+  "validation": {
+    "ran": true,
+    "positions": 8,
+    "games": 1056,
+    "rows": [
+      {
+        "id": "191782744f0eb802",
+        "direction": "positive",
+        "mean": 0,
+        "plus": 0,
+        "minus": 0,
+        "tie": 66,
+        "decisive": 0,
+        "p": 1,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "keep-front",
+        "opponent": "renruki",
+        "bucket": "mid-entry",
+        "stage": "early",
+        "labelA": "把 BLC-4-070 打出到前線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      },
+      {
+        "id": "904a146535fb37f8",
+        "direction": "positive",
+        "mean": -0.06060606060606061,
+        "plus": 8,
+        "minus": 12,
+        "tie": 46,
+        "decisive": 20,
+        "p": 0.868412017822265,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "keep-front",
+        "opponent": "white-sword",
+        "bucket": "mid-entry",
+        "stage": "early",
+        "labelA": "把 BLC-4-070 打出到前線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      },
+      {
+        "id": "ba70c431561842ab",
+        "direction": "positive",
+        "mean": -0.12121212121212122,
+        "plus": 10,
+        "minus": 18,
+        "tie": 38,
+        "decisive": 28,
+        "p": 0.9564207233488562,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "fresh",
+        "opponent": "white-sword",
+        "bucket": "mid-entry",
+        "stage": "early",
+        "labelA": "把 BLC-1-083 打出到能量線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      },
+      {
+        "id": "1ec9b5aa2e669cae",
+        "direction": "positive",
+        "mean": 0,
+        "plus": 0,
+        "minus": 0,
+        "tie": 66,
+        "decisive": 0,
+        "p": 1,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "other",
+        "opponent": "reject-blue",
+        "bucket": "raid",
+        "stage": "late",
+        "labelA": "把 BLC-1-083 打出到能量線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      },
+      {
+        "id": "0313a360cfb933b0",
+        "direction": "positive",
+        "mean": 0,
+        "plus": 0,
+        "minus": 0,
+        "tie": 66,
+        "decisive": 0,
+        "p": 1,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "other",
+        "opponent": "reject-blue",
+        "bucket": "mid-entry",
+        "stage": "mid",
+        "labelA": "把 BLC-4-060 打出到能量線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      },
+      {
+        "id": "16f091f145e70ecf",
+        "direction": "positive",
+        "mean": -0.09090909090909091,
+        "plus": 7,
+        "minus": 13,
+        "tie": 46,
+        "decisive": 20,
+        "p": 0.9423408508300775,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "other",
+        "opponent": "white-sword",
+        "bucket": "early-energy",
+        "stage": "early",
+        "labelA": "把 BLC-1-083 打出到能量線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      },
+      {
+        "id": "0396799cc5bf2cb2",
+        "direction": "positive",
+        "mean": 0,
+        "plus": 0,
+        "minus": 0,
+        "tie": 66,
+        "decisive": 0,
+        "p": 1,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "other",
+        "opponent": "reject-blue",
+        "bucket": "mid-entry",
+        "stage": "mid",
+        "labelA": "把 BLC-4-060 打出到能量線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      },
+      {
+        "id": "38481221f0b7bfad",
+        "direction": "positive",
+        "mean": 0,
+        "plus": 0,
+        "minus": 0,
+        "tie": 66,
+        "decisive": 0,
+        "p": 1,
+        "aligned": false,
+        "holm": false,
+        "confirmed": false,
+        "status": "inconclusive",
+        "role": "other",
+        "opponent": "white-sword",
+        "bucket": "raid",
+        "stage": "mid",
+        "labelA": "把 BLC-1-083 打出到能量線",
+        "labelB": "把 BLC-4-070 打出到能量線"
+      }
+    ]
+  },
+  "gate": {
+    "harms": 0,
+    "fresh": 1,
+    "positive": true,
+    "open": true
+  },
+  "matches": {
+    "games": 96,
+    "finished": 96,
+    "wins": 56,
+    "winRate": 0.5833333333333334,
+    "delta": 0.16666666666666666,
+    "illegal": 0,
+    "decks": {
+      "white-sword": {
+        "games": 32,
+        "wins": 15,
+        "winRate": 0.46875
+      },
+      "reject-blue": {
+        "games": 32,
+        "wins": 24,
+        "winRate": 0.75
+      },
+      "renruki": {
+        "games": 32,
+        "wins": 17,
+        "winRate": 0.53125
+      }
+    },
+    "adopted": false,
+    "promoted": false
+  }
+}
