@@ -117,6 +117,13 @@ test('a rule is installed only when held-out confirmation agrees',()=>{
  assert.equal(learnRules([against({id:'a'}),favor({id:'b'})],[against({id:'v'})]).reason,'訓練同時確認了相反方向');
  assert.equal(learnRules([against({id:'train'})],[favor({id:'v'})]).reason,'驗證確認了相反方向');
  assert.equal(learnRules([],[]).ok,false);
+ const attack=side('attack','BLC-4-066','k');
+ const other=row=>({...row,actionA:attack,actionB:next});
+ const partial=learnRules([against({id:'keep'}),other({id:'drop'})],[against({id:'held'})]);
+ assert.equal(partial.ok,true);
+ assert.equal(partial.rules.length,1);
+ assert.equal(partial.rules[0].loser.card,'BLC-4-060');
+ assert.deepEqual(partial.missed,['attack|BLC-4-066|=>next||']);
 });
 
 test('family sampling separates training from validation without reading outcomes',()=>{
