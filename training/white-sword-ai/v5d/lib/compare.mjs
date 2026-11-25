@@ -67,32 +67,36 @@ function grouped(rows){
 }
 export function learnRules(trainRows,validationRows){
  const train=grouped(trainRows);
+ const validation=grouped(validationRows);
  const conflicts=[];
- const rules=[];
+ const candidates=[];
  for(const info of train.values()){
   const reverse=signatureKey(info.winner)+'=>'+signatureKey(info.loser);
   if(train.has(reverse)){conflicts.push(info.key);continue;}
-  rules.push(info);
+  candidates.push(info);
  }
- const support=[];
+ const supported=[];
+ const missed=[];
  const opposite=[];
- for(const row of validationRows||[]){
-  const pair=pairDirection(row);
-  if(!pair)continue;
-  if(rules.some(rule=>sameSignature(rule.loser,pair.loser)&&sameSignature(rule.winner,pair.winner)))support.push(row.id);
-  if(rules.some(rule=>sameSignature(rule.loser,pair.winner)&&sameSignature(rule.winner,pair.loser)))opposite.push(row.id);
+ for(const rule of candidates){
+  const reverse=signatureKey(rule.winner)+'=>'+signatureKey(rule.loser);
+  const agrees=validation.get(rule.key);
+  const against=validation.get(reverse);
+  if(against)opposite.push(...against.ids);
+  if(agrees&&!against)supported.push({...rule,validationIds:[...agrees.ids]});
+  else missed.push(rule.key);
  }
  let reason=null;
  if(!train.size)reason='訓練沒有已確認的方向';
- else if(conflicts.length)reason='訓練同時確認了相反方向';
- else if(opposite.length)reason='驗證確認了相反方向';
- else if(!support.length)reason='驗證沒有獨立確認同一方向';
- const learned=reason?[]:rules.map(rule=>({
+ else if(!candidates.length)reason='訓練同時確認了相反方向';
+ else if(!supported.length&&opposite.length)reason='驗證確認了相反方向';
+ else if(!supported.length)reason='驗證沒有獨立確認同一方向';
+ const learned=reason?[]:supported.map(rule=>({
   loser:{type:rule.loser.type,card:rule.loser.card,line:rule.loser.line},
   winner:{type:rule.winner.type,card:rule.winner.card,line:rule.winner.line},
-  trainIds:[...rule.ids]
+  trainIds:[...rule.ids],validationIds:[...rule.validationIds]
  }));
- return {ok:!reason,rules:learned,conflicts,support,opposite,reason};
+ return {ok:!reason,rules:learned,conflicts,support:learned.flatMap(rule=>rule.validationIds),opposite,missed,reason};
 }
 export function residualLead(position,weights){
  const left=position?.band?.find(row=>row.key===position.actionA?.key);

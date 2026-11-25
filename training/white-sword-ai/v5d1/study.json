@@ -1,0 +1,469 @@
+{
+  "codeVersion": "v5d1-1",
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "frozenWeight": 3.25954286097052,
+  "adopted": false,
+  "promoted": false,
+  "singletonOpponents": [],
+  "mined": {
+    "games": 120,
+    "decisions": 7162,
+    "positions": 9,
+    "gamesDistinct": 9,
+    "selected": 8,
+    "stopped": "enough"
+  },
+  "rows": [
+    {
+      "id": "21f01b844156dcfe",
+      "role": "train",
+      "seed": 182325,
+      "opponent": "reject-blue",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": 0.030303030303030304,
+      "low": -0.020720370726762485,
+      "high": 0.030303030303030304,
+      "pTwo": 0.5,
+      "plus": 2,
+      "minus": 0,
+      "tie": 64,
+      "favor": "A",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 6,
+        "apReady": 0,
+        "hand": 7,
+        "handCards": [
+          "BLC-1-070",
+          "BLC-1-072",
+          "BLC-1-085",
+          "BLC-2-069",
+          "BLC-4-066",
+          "BLC-4-070",
+          "BLC-4-080"
+        ],
+        "front": [
+          "BLC-1-083",
+          "BLC-3-008"
+        ],
+        "oppFront": 1,
+        "life": 2,
+        "oppLife": 6
+      }
+    },
+    {
+      "id": "4ccf9f1aed0a9872",
+      "role": "train",
+      "seed": 182300,
+      "opponent": "reject-blue",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": 0.09090909090909091,
+      "low": -0.049131688269777575,
+      "high": 0.19994868954211445,
+      "pTwo": 0.23788452148437528,
+      "plus": 12,
+      "minus": 6,
+      "tie": 48,
+      "favor": "A",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 5,
+        "apReady": 0,
+        "hand": 3,
+        "handCards": [
+          "BLC-1-070",
+          "BLC-1-070",
+          "BLC-1-072"
+        ],
+        "front": [
+          "BLC-1-085",
+          "BLC-2-069",
+          "BLC-3-008"
+        ],
+        "oppFront": 3,
+        "life": 7,
+        "oppLife": 6
+      }
+    },
+    {
+      "id": "580d34bf24afd8a5",
+      "role": "train",
+      "seed": 182220,
+      "opponent": "white-sword",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": -0.07575757575757576,
+      "low": -0.21874635873852874,
+      "high": 0.08586856344178798,
+      "pTwo": 0.42435622215271024,
+      "plus": 10,
+      "minus": 15,
+      "tie": 41,
+      "favor": "B",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 4,
+        "apReady": 2,
+        "hand": 1,
+        "handCards": [
+          "BLC-1-070"
+        ],
+        "front": [
+          "BLC-1-072",
+          "BLC-1-085",
+          "BLC-2-069"
+        ],
+        "oppFront": 3,
+        "life": 7,
+        "oppLife": 7
+      }
+    },
+    {
+      "id": "817c9156aa465c68",
+      "role": "train",
+      "seed": 182204,
+      "opponent": "white-sword",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": -0.07575757575757576,
+      "low": -0.1940960130016093,
+      "high": 0.06703089263716064,
+      "pTwo": 0.3592834472656254,
+      "plus": 7,
+      "minus": 12,
+      "tie": 47,
+      "favor": "B",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 4,
+        "apReady": 0,
+        "hand": 6,
+        "handCards": [
+          "BLC-2-067",
+          "BLC-2-069",
+          "BLC-4-060",
+          "BLC-4-060",
+          "BLC-4-066",
+          "BLC-4-070"
+        ],
+        "front": [
+          "BLC-1-070",
+          "BLC-1-085",
+          "BLC-2-067"
+        ],
+        "oppFront": 4,
+        "life": 3,
+        "oppLife": 5
+      }
+    },
+    {
+      "id": "a091e2f3175ba958",
+      "role": "train",
+      "seed": 182416,
+      "opponent": "renruki",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": 0.06060606060606061,
+      "low": -0.05495436130224942,
+      "high": 0.1457286941274243,
+      "pTwo": 0.3876953125000004,
+      "plus": 8,
+      "minus": 4,
+      "tie": 54,
+      "favor": "A",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 4,
+        "apReady": 3,
+        "hand": 4,
+        "handCards": [
+          "BLC-1-070",
+          "BLC-1-070",
+          "BLC-4-066",
+          "BLC-4-080"
+        ],
+        "front": [
+          "BLC-2-067",
+          "BLC-2-069",
+          "BLC-4-066"
+        ],
+        "oppFront": 3,
+        "life": 6,
+        "oppLife": 4
+      }
+    },
+    {
+      "id": "c4c6992a7b3ce65d",
+      "role": "validation",
+      "seed": 182211,
+      "opponent": "white-sword",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": 0.12121212121212122,
+      "low": -0.018982890318030687,
+      "high": 0.21984588407696767,
+      "pTwo": 0.09625244140625007,
+      "plus": 13,
+      "minus": 5,
+      "tie": 48,
+      "favor": "A",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 6,
+        "apReady": 0,
+        "hand": 4,
+        "handCards": [
+          "BLC-1-070",
+          "BLC-2-067",
+          "BLC-2-073",
+          "BLC-4-066"
+        ],
+        "front": [
+          "BLC-1-085",
+          "BLC-3-008",
+          "BLC-4-066"
+        ],
+        "oppFront": 3,
+        "life": 7,
+        "oppLife": 6
+      }
+    },
+    {
+      "id": "f0552dfcfd6937ee",
+      "role": "validation",
+      "seed": 182430,
+      "opponent": "renruki",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": 0.06060606060606061,
+      "low": -0.09096869218017907,
+      "high": 0.19527125133523393,
+      "pTwo": 0.5234670639038087,
+      "plus": 13,
+      "minus": 9,
+      "tie": 44,
+      "favor": "A",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 7,
+        "apReady": 0,
+        "hand": 4,
+        "handCards": [
+          "BLC-2-073",
+          "BLC-3-008",
+          "BLC-4-080",
+          "BLC-4-080"
+        ],
+        "front": [
+          "BLC-1-070",
+          "BLC-1-085",
+          "BLC-2-069"
+        ],
+        "oppFront": 3,
+        "life": 6,
+        "oppLife": 6
+      }
+    },
+    {
+      "id": "f949c5cb1314aa74",
+      "role": "validation",
+      "seed": 182302,
+      "opponent": "reject-blue",
+      "bucket": "ap",
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "mean": -0.07575757575757576,
+      "low": -0.20295442011079887,
+      "high": 0.07359266066813447,
+      "pTwo": 0.3833103179931643,
+      "plus": 8,
+      "minus": 13,
+      "tie": 45,
+      "favor": "B",
+      "holm": false,
+      "confirmed": false,
+      "context": {
+        "energy": 4,
+        "apReady": 0,
+        "hand": 4,
+        "handCards": [
+          "BLC-2-069",
+          "BLC-4-060",
+          "BLC-4-066",
+          "BLC-4-080"
+        ],
+        "front": [
+          "BLC-1-070",
+          "BLC-1-083",
+          "BLC-1-085"
+        ],
+        "oppFront": 1,
+        "life": 7,
+        "oppLife": 7
+      }
+    }
+  ],
+  "leads": [
+    {
+      "id": "21f01b844156dcfe",
+      "lead": 127.16746292365627,
+      "canFlip": false,
+      "controlSame": true
+    },
+    {
+      "id": "4ccf9f1aed0a9872",
+      "lead": 128.96395113997977,
+      "canFlip": false,
+      "controlSame": true
+    },
+    {
+      "id": "580d34bf24afd8a5",
+      "lead": 128.6056416653856,
+      "canFlip": false,
+      "controlSame": true
+    },
+    {
+      "id": "817c9156aa465c68",
+      "lead": 132.85564166538563,
+      "canFlip": false,
+      "controlSame": true
+    },
+    {
+      "id": "a091e2f3175ba958",
+      "lead": 119.6056416653856,
+      "canFlip": false,
+      "controlSame": true
+    },
+    {
+      "id": "c4c6992a7b3ce65d",
+      "lead": 132.58203725599645,
+      "canFlip": false,
+      "controlSame": true
+    },
+    {
+      "id": "f0552dfcfd6937ee",
+      "lead": 119.32023505130192,
+      "canFlip": false,
+      "controlSame": true
+    },
+    {
+      "id": "f949c5cb1314aa74",
+      "lead": 116.74191206903026,
+      "canFlip": false,
+      "controlSame": true
+    }
+  ],
+  "games": 1056,
+  "installed": false,
+  "reason": "訓練沒有已確認的方向",
+  "matches": null,
+  "kinds": {},
+  "rules": [],
+  "trainConfirmed": 0,
+  "validationConfirmed": 0,
+  "trainEnd": 0,
+  "trainActivate": 0,
+  "validationEnd": 0,
+  "validationActivate": 0,
+  "validationNegative": 1,
+  "validationPositive": 2,
+  "validationTie": 0,
+  "gameInterval": {
+    "n": 3,
+    "df": 2,
+    "mean": 0.03535353535353535,
+    "low": -0.2152556158174555,
+    "high": 0.2859626865245262
+  },
+  "contrast": {
+    "end": 3,
+    "activate": 5,
+    "table": {
+      "energy": {
+        "end": 4,
+        "activate": 5.6
+      },
+      "apReady": {
+        "end": 0.6666666666666666,
+        "activate": 0.6
+      },
+      "hand": {
+        "end": 3.6666666666666665,
+        "activate": 4.4
+      },
+      "life": {
+        "end": 5.666666666666667,
+        "activate": 5.6
+      },
+      "oppLife": {
+        "end": 6.333333333333333,
+        "activate": 5.6
+      },
+      "oppFront": {
+        "end": 2.6666666666666665,
+        "activate": 2.6
+      },
+      "frontEnd": [
+        [
+          "BLC-1-072",
+          "BLC-1-085",
+          "BLC-2-069"
+        ],
+        [
+          "BLC-1-070",
+          "BLC-1-085",
+          "BLC-2-067"
+        ],
+        [
+          "BLC-1-070",
+          "BLC-1-083",
+          "BLC-1-085"
+        ]
+      ],
+      "frontActivate": [
+        [
+          "BLC-1-083",
+          "BLC-3-008"
+        ],
+        [
+          "BLC-1-085",
+          "BLC-2-069",
+          "BLC-3-008"
+        ],
+        [
+          "BLC-2-067",
+          "BLC-2-069",
+          "BLC-4-066"
+        ],
+        [
+          "BLC-1-085",
+          "BLC-3-008",
+          "BLC-4-066"
+        ],
+        [
+          "BLC-1-070",
+          "BLC-1-085",
+          "BLC-2-069"
+        ]
+      ]
+    }
+  },
+  "finished": 0,
+  "illegal": 0
+}
