@@ -16,7 +16,21 @@ function hiddenSlot(card,zone){
  if(zone==='hand')return true;
  return card.faceDown!==false;
 }
-function redeal(player,zones,rng){
+// An open top window has already shown those cards. Shuffling them out of
+// order makes the resumed choice illegal, so they stay while the rest moves.
+function windowPin(state){
+ const pending=state?.pending;
+ if(pending?.kind!=='effect-top-filter-many-choice')return null;
+ const selected=new Set(pending.selected||[]);
+ return {
+  player:pending.player,
+  deck:(pending.uids||[]).filter(uid=>!selected.has(uid)),
+  hand:pending.selected||[]
+ };
+}
+function redeal(player,zones,rng,pin){
+ const deckPin=new Set(pin?.deck||[]);
+ const handPin=new Set(pin?.hand||[]);
  const slots=[];
  const pool=[];
  for(const zone of zones){
@@ -25,6 +39,8 @@ function redeal(player,zones,rng){
   for(let index=0;index<cards.length;index++){
    const card=cards[index];
    if(!hiddenSlot(card,zone))continue;
+   if(zone==='deck'&&deckPin.has(card?.uid))continue;
+   if(zone==='hand'&&handPin.has(card?.uid))continue;
    slots.push({zone,index,faceDown:card?.faceDown??true});
    pool.push(card);
   }
@@ -40,8 +56,9 @@ export function sampleHidden(state,actor,seed){
  if(actor!==0&&actor!==1)throw Error('hidden sample needs the acting seat');
  const next=cloneMatch(state);
  const rng=mulberry32(seed>>>0);
- redeal(next.players[actor],['deck','life'],rng);
- redeal(next.players[1-actor],['hand','deck','life'],rng);
+ const pin=windowPin(next);
+ redeal(next.players[actor],['deck','life'],rng,pin?.player===actor?pin:null);
+ redeal(next.players[1-actor],['hand','deck','life'],rng,pin?.player===1-actor?pin:null);
  return next;
 }
 export function publicBoard(state){

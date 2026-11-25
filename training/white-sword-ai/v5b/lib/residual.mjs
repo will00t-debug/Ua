@@ -28,9 +28,17 @@ export function ownCardId(state,actor,action){
  }
  return null;
 }
+function lineOf(value){
+ return value||null;
+}
 export function indicatesLive(state,actor,action,feature){
- if(action?.type!==feature.type||action?.line!==feature.line)return 0;
+ if(!feature||action?.type!==feature.type||lineOf(action?.line)!==lineOf(feature.line))return 0;
  return ownCardId(state,actor,action)===feature.card?1:0;
+}
+export function columnBonus(state,actor,action,columns){
+ let bonus=0;
+ for(const column of columns||[])bonus+=(column.weight||0)*indicatesLive(state,actor,action,column);
+ return bonus;
 }
 export function residualScore(row,weights,weight,feature){
  return blendScore(row.hard,weights,row.features,SCALE)+SCALE*weight*indicates(row,feature);
@@ -70,7 +78,7 @@ function referenceAction(pack,state,legal,seed){
  return legal.find(item=>item.type==='next')||legal[0];
 }
 function quiet(action,extra){
- return {action,changed:false,tie:false,indicated:false,...extra};
+ return {action,changed:false,changedFromBaseline:false,tie:false,indicated:false,...extra};
 }
 export function decideResidual(pack,state,actor,model,seed,weight,feature,options={}){
  const started=performance.now();
@@ -101,24 +109,34 @@ export function decideResidual(pack,state,actor,model,seed,weight,feature,option
   add(searched.hard,searched.trace?.score);
   const pool=hardPool(rows,searched.hard);
   if(!pool.length)throw Error('blend produced no legal action');
+  const columns=Array.isArray(options.columns)
+   ?options.columns
+   :(feature?[{type:feature.type,card:feature.card,line:feature.line??null,weight}]:[]);
   let indicated=false;
   for(const row of pool){
    const policy=SCALE*dot(model.policy,row.features);
    row.policy=policy;
-   row.residual=SCALE*weight*indicatesLive(state,actor,row.action,feature);
-   if(row.residual)indicated=true;
+   const bonus=columnBonus(state,actor,row.action,columns);
+   row.residual=SCALE*bonus;
+   if(bonus)indicated=true;
    row.baseScore=row.hardScore+policy;
    row.score=row.baseScore+row.residual;
   }
   const base=selectScored(pool.map(row=>({action:row.action,score:row.baseScore})));
   const picked=selectScored(pool);
+  const baseline=selectScored(pool.map(row=>({
+   action:row.action,
+   score:row.baseScore+SCALE*columnBonus(state,actor,row.action,options.baselineColumns||[])
+  })));
   const tie=pool.filter(row=>Math.abs(row.baseScore-base.score)<=1e-12).length>1;
   if(performance.now()-started>timeout){
    return quiet(referenceAction(pack,state,legal,seed),{source:'fallback',reason:'timeout',pool:pool.length});
   }
   return {
    action:picked.action,source:'blend',reason:null,pool:pool.length,hard:searched.hard,
-   changed:JSON.stringify(picked.action)!==JSON.stringify(base.action),tie,indicated
+   changed:JSON.stringify(picked.action)!==JSON.stringify(base.action),
+   changedFromBaseline:JSON.stringify(picked.action)!==JSON.stringify(baseline.action),
+   tie,indicated
   };
  }catch(error){
   return quiet(referenceAction(pack,state,legal,seed),{
