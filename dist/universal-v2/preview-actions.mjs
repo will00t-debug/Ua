@@ -1,3 +1,4 @@
+import {cardHasName} from './field-conditions.mjs?v=20261120mha011';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 // Presentation-only adapters for the isolated V2 preview.
 import {universalAttackDamage,universalImpact} from './engine.mjs';
@@ -441,6 +442,77 @@ export function uiCardLabel(pack,state,uid){
  const printed=sourcePack.cards[physical.cardId];
  return printed?.name||physical.cardId;
 }
+function ownedPhysical(state,uid){
+ if(!uid||!state?.players)return null;
+ const owner=Number(String(uid).split('-')[0]);
+ const side=state.players?.[owner];
+ if(!side)return null;
+ const locate=entry=>{
+  if(!entry)return null;
+  if(entry.uid===uid)return entry;
+  for(const layer of [...(entry.stack||[]),...(entry.under||[])]){
+   const hit=locate(layer);if(hit)return hit;
+  }
+  return null;
+ };
+ const zones=[side.hand,side.front,side.energy,side.outside,side.removed,
+  side.deck,side.life,side.lifeRevealed];
+ for(const cards of zones){
+  if(!Array.isArray(cards))continue;
+  for(const card of cards){
+   const hit=locate(card);
+   if(hit)return {owner,physical:hit};
+  }
+ }
+ return null;
+}
+function printedNameOf(pack,owner,physical){
+ if(!physical)return '';
+ const source=Array.isArray(pack)?pack[owner]:pack;
+ return source?.cards?.[physical.cardId]?.name||'';
+}
+function bodyNames(pack,owner,physical){
+ const names=[];
+ const top=printedNameOf(pack,owner,physical);
+ if(top)names.push(top);
+ const base=printedNameOf(pack,owner,physical?.stack?.[0]);
+ if(base)names.push(base);
+ return names;
+}
+function chosenHasName(pack,state,uid,wanted){
+ if(typeof wanted!=='string'||!wanted)return false;
+ const found=ownedPhysical(state,uid);
+ return !!found&&bodyNames(pack,found.owner,found.physical).includes(wanted);
+}
+function ownFieldHasPrintedName(pack,state,player,wanted){
+ const side=state?.players?.[player];
+ if(!side||typeof wanted!=='string')return false;
+ return [...(side.front||[]),...(side.energy||[])].filter(Boolean)
+  .some(body=>bodyNames(pack,player,body).includes(wanted));
+}
+function ownBuffAmount(pack,state,uid){
+ const q=state?.pending;
+ const base=Number.isInteger(q?.bp)?q.bp:0;
+ if(!q)return base;
+ if(q.scaleName&&chosenHasName(pack,state,uid,q.scaleName)&&Number.isInteger(q.scaledBp))
+  return q.scaledBp;
+ if(Array.isArray(q.bonusNames)&&q.bonusNames.some(name=>chosenHasName(pack,state,uid,name))&&
+  Number.isInteger(q.bonusBp))return q.bonusBp;
+ if(typeof q.fieldBonusName==='string'&&Number.isInteger(q.fieldBonusBp)&&
+  ownFieldHasPrintedName(pack,state,q.player,q.fieldBonusName))return q.fieldBonusBp;
+ return base;
+}
+function ownBuffImpactNote(pack,state,uid){
+ const q=state?.pending;
+ if(!q)return '';
+ const plus=q.impactPlus===1&&(q.impactPlusIfName===undefined||
+  (typeof q.impactPlusIfName==='string'&&
+   ownFieldHasPrintedName(pack,state,q.player,q.impactPlusIfName)));
+ const named=Array.isArray(q.impactPlusIfNames)&&
+  q.impactPlusIfNames.some(name=>chosenHasName(pack,state,uid,name));
+ const selected=typeof q.impactIfName==='string'&&chosenHasName(pack,state,uid,q.impactIfName);
+ return plus||named||selected?'，並獲得衝擊 1':'';
+}
 // `recommended` is the raid-red outline. An on-play or activate branch is
 // not a raid, even when the card itself has a raid keyword. Only a choice
 // whose mode is raid keeps that frame.
@@ -691,14 +763,29 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
   if(action.mode==='done')return '結束除外並結算';
   if(action.mode==='pick')return card('除外這張卡');
  }
+ if(type==='chooseAnyBuff'||type==='chooseOtherTraitBuff'||type==='chooseActiveTraitBuff'){
+  const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+  if(action.uid==null)return type==='chooseActiveTraitBuff'?'不活動也不加 BP':'不提高 BP';
+  const verb=type==='chooseActiveTraitBuff'?
+   '使 這張卡 活動，本回合 BP＋':'本回合使 這張卡 BP＋';
+  return card(verb+amount)+place;
+ }
+ if(type==='chooseNamedOutsideBounceRetire'){
+  const q=state?.pending,owner=q?.player,names=Array.isArray(q?.names)?q.names:[];
+  const source=Array.isArray(pack)?pack[owner]:pack;
+  const count=(state?.players?.[owner]?.outside||[]).filter(physical=>{
+   const printed=source?.cards?.[physical?.cardId];
+   return !!printed&&names.some(name=>cardHasName(printed,name));
+  }).length;
+  const retire=Number.isInteger(q?.min)&&count>=q.min;
+  return card(retire?'使 這張卡 退場':'將 這張卡 返回手牌');
+ }
  const picks={
   chooseActiveAny:['不使角色活動','使這張卡活動'],
   chooseActiveEither:['使這張卡活動','使這張卡活動'],
   chooseActiveExcept:['不使其他角色活動','使這張卡活動'],
   chooseActiveNamed:['使這張卡活動','使這張卡活動'],
   chooseActiveOwnOther:['不使其他己方角色活動','使這張卡活動'],
-  chooseActiveTraitBuff:['不活動也不加 BP','使這張卡活動並提高 BP'],
-  chooseAnyBuff:['不提高 BP','本回合使這張卡 BP 增加'],
   chooseAttackEndNamed:['不指定攻擊結束的對象','攻擊結束時指定這張卡'],
   chooseAttackEndRest:['不在攻擊結束時休息','攻擊結束時休息這張卡'],
   chooseAttackWinPay:['不把手牌放到場外','將這張手牌放到場外'],
@@ -744,9 +831,7 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
   chooseNamedFieldProtect:['不保護場上角色','保護這張卡不被選擇'],
   chooseNamedFronts:['不指定前線','指定這張前線卡'],
   chooseNamedOutside:['不從場外登場','讓這張卡登場'],
-  chooseNamedOutsideBounceRetire:['選擇這張卡','選擇這張卡'],
   chooseNamedZoneDeploy:['不從指定區域登場','讓這張卡登場'],
-  chooseOtherTraitBuff:['不提高 BP','本回合使這張卡 BP 增加'],
   chooseOutsideActivePair:['不以活動狀態登場','讓這張卡以活動狀態登場'],
   chooseOutsideBottom:['將這張場外卡放到牌底','將這張場外卡放到牌底'],
   chooseOutsideColorApRest:['支付 AP，讓這張卡以休息狀態登場','支付 AP，讓這張卡以休息狀態登場'],
@@ -1179,8 +1264,12 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='colorMayField')return 'COLOR：改以綠場域登場 '+name()+suffix();
    if(action.mode==='colorField')return 'COLOR：以場域代替角色登場 '+name()+suffix();
    if(action.mode==='color')return 'COLOR 登場 '+name()+suffix();
-   if(action.mode==='active')return '使 '+name()+' ACTIVE';
-   if(action.mode==='special')return '使 '+name()+' 退場';
+   if(action.mode==='active')return '使 '+name()+' 活動，本回合 BP＋3000';
+   if(action.mode==='special')return action.uid?('使 '+name()+' 退場'):'使用這張特殊觸發';
+   if(action.mode==='colorRetire')return 'COLOR：使 '+name()+' 退場';
+   if(action.mode==='colorBounce')return 'COLOR：將 '+name()+' 返回手牌';
+   if(action.mode==='getDeploy')return '改以休息狀態登場'+suffix();
+   if(action.mode==='swapGet')return '改為加入手牌';
    return '生命觸發：'+action.mode;
   case 'chooseSacrificeNamed':return action.uid===null?'不退場指定名稱角色':'退場 '+name();
   case 'chooseNameOrTraitReady':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
@@ -1444,8 +1533,12 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseFacedownFront':return action.mode==='skip'?'不從能源線移到前線':
    '從能源線移到前線 '+(action.slot+1)+(action.replaceUid?'，並將原前線卡除外':'')+'，本回合 BP＋1000';
-  case 'chooseEitherBuff':return action.uid===null?
-   (state?.pending?.includeSelf?'不指定角色':'不指定其他角色'):'選擇 '+name()+'，本回合 BP+1000';
+  case 'chooseEitherBuff':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:1000;
+   return action.uid===null?
+    (state?.pending?.includeSelf?'不指定角色':'不指定其他角色'):
+    '選擇 '+name()+'，本回合 BP＋'+amount;
+  }
   case 'chooseHandOutsideActive':return action.uid===null?'不將手牌放到場外':
    '將 '+name()+' 放到場外，並使這張角色活動';
   case 'chooseNamedDuration':return action.uid===null?'不指定帕克':
@@ -1507,7 +1600,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRequiredEnergy':return '本回合所需能量 +2：'+name();
   case 'chooseFrontGrant':return '本回合賦予 '+name()+' BP 與印刷的追加能力';
   case 'chooseRemovedEnter':return action.uid===null?'不從移除區登場':'讓 '+name()+' 從移除區休息登場';
-  case 'chooseMainBuff':return '指定 '+name()+'，本回合 BP＋1000';
+  case 'chooseMainBuff':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:1000;
+   return '指定 '+name()+'，本回合 BP＋'+amount;
+  }
   case 'chooseOwnBuff':{
    const kind=state?.pending?.kind;
    if(kind==='effect-rest-other-trait')return action.uid===null?'不休息其他角色':'休息 '+name()+'，然後使這張角色活動';
@@ -1516,11 +1612,38 @@ export function uiActionLabel(action,{pack,state}={}){
    if(kind==='effect-optional-own-trait-retire')return action.uid===null?'不退場':'使 '+name()+' 退場';
    if(kind==='effect-active-resting-front')return action.uid===null?'不使角色活動':'使 '+name()+' 活動';
    if(kind==='effect-rest-named-then')return action.uid===null?'不休息':'休息 '+name();
-   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
-   return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP＋'+amount;
+   if(state?.pending?.impactOnly===1)
+    return action.uid===null?'不給予衝擊':'使 '+name()+' 獲得衝擊';
+   const amount=ownBuffAmount(pack,state,action.uid);
+   const when=chosenHasName(pack,state,action.uid,state?.pending?.untilName)?
+    '直到下一次自己的回合開始':'本回合';
+   return action.uid===null?'不增加 BP':
+    when+'使 '+name()+' BP＋'+amount+ownBuffImpactNote(pack,state,action.uid);
   }
   case 'chooseLockMove':return action.uid===null?'不限制移動':'到自己下次回合開始前，'+name()+' 不能移動';
-  case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseTraitBuff':{
+   if(action.uid===null)return '不增加 BP';
+   if(state?.pending?.impactPlus===1)return '本回合使 '+name()+' 衝擊＋1';
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return '本回合使 '+name()+' BP＋'+amount;
+  }
+  case 'chooseRestBp':{
+   if(state?.pending?.restTarget===false)
+    return action.uid===null?'不跳過下次活動':'使 '+name()+' 跳過下次活動';
+   const follow=(state?.pending?.skipNextActive?'，下一次不活動':'')+
+    (state?.pending?.thenDraw===1?'，並抽 1 張':'');
+   return action.uid===null?'不使角色休息':'使 '+name()+' 休息'+follow;
+  }
+  case 'chooseRetireBp':{
+   const removed=state?.pending?.destination==='removed';
+   if(action.uid===null)return removed?'不移入移除區':'不使角色退場';
+   return removed?'將 '+name()+' 移入移除區':'使 '+name()+' 退場';
+  }
+  case 'chooseTargetMany':{
+   if(action.uid===null)return '完成目標選擇';
+   const down=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return '本回合使 '+name()+' BP－'+down;
+  }
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseRestOutsideEvents':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
@@ -1529,13 +1652,19 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':
-   if(state?.pending?.kind==='effect-move-opp-cap')return action.uid===null?'不移動':'選擇 '+name();
+   if(state?.pending?.kind==='effect-move-opp-cap')return action.uid===null?'不移動':'移動 '+name();
    return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
-  case 'choosePeekBuff':return '本回合使 '+name()+' BP 增加';
+  case 'choosePeekBuff':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return '本回合使 '+name()+' BP＋'+amount;
+  }
   case 'chooseFieldTraitBounce':return action.mode==='retire'?'使 '+name()+' 退場':
    '將 '+name()+' 放回手牌';
   case 'chooseDiscardScale':return '將 '+name()+' 放到場外';
-  case 'chooseScaleBuff':return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP 增加';
+  case 'chooseScaleBuff':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP＋'+amount;
+  }
   case 'chooseRestImpact':return '使 '+name()+' 獲得衝擊';
   case 'chooseHandTraitActive':return action.uid===null?'不支付，角色維持原狀':
    '將 '+name()+' 放到場外，並使這張角色活動';
@@ -1550,8 +1679,16 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
   case 'chooseRemoveOppField':return '將 '+name()+' 放入移除區';
   case 'chooseEnergySwap':return '與 '+name()+' 交換位置';
-  case 'chooseRemovedSelfGrant':return action.uid===null?'不把移除區的卡放到場外':'將 '+name()+' 放到場外，並獲得 BP+1000 與衝擊 1';
-  case 'chooseNameOrTraitBuff':return '本回合使 '+name()+' BP+1000';
+  case 'chooseRemovedSelfGrant':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:1000;
+   const impact=Number.isInteger(state?.pending?.impact)?state.pending.impact:1;
+   return action.uid===null?'不把移除區的卡放到場外':
+    '將 '+name()+' 放到場外，並獲得 BP＋'+amount+' 與衝擊 '+impact;
+  }
+  case 'chooseNameOrTraitBuff':{
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:1000;
+   return '本回合使 '+name()+' BP＋'+amount;
+  }
   case 'chooseGrantNamedImpact':return action.uid===null?'不賦予衝擊':'使 '+name()+' 獲得衝擊 1';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
   case 'handActivate':return '支付 1 AP，公開這張手牌';
@@ -1562,7 +1699,6 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestOrRetire':return state?.pending?.mode==='retire'?'使 '+name()+' 退場':'使 '+name()+' 休息';
   case 'chooseRestSkipMayRetire':return action.mode==='retire'?'改為使 '+name()+' 退場':'使 '+name()+' 休息，下一次不活動';
   case 'chooseNamedRetireDraw':return '使 '+name()+' 退場';
-  case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
    '不指定暫時 FRONT 產能對象':'讓 '+name()+' 本回合在前線也能產生能源';
   case 'chooseApTaxGrant':return action.uid===null?
@@ -1593,8 +1729,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseChainDiscard':return '將 '+name()+' 送場外';
   case 'chooseOutsideRaid':return action.uid===null?'不從場外 Raid':'從場外 Raid '+name()+suffix();
   case 'chooseGrantedDraw':return action.mode==='draw'?'使用獲得的攻擊時抽 1 張':'不抽牌';
-  case 'chooseTarget':
-   return action.uid===null?'不指定／完成':'指定 '+name();
+  case 'chooseTarget':{
+   if(action.uid===null)return '不指定／完成';
+   const down=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return '本回合使 '+name()+' BP－'+down;
+  }
   case 'chooseRaidWitness':return action.when==='now'?'先結算突襲見證':
    action.when==='later'?'稍後結算突襲見證':'不使用突襲見證';
   case 'chooseRaidAttach':return action.uid===null?'不放入突襲角色下':'將 '+name()+' 裏向放在突襲角色下';
