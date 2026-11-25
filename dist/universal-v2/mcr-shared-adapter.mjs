@@ -1,7 +1,7 @@
 // Macross -> Universal V2 adapter. Shared ability DSL only.
 // Title data is converted here. There is no second Macross effects engine.
-import {createUniversalPack} from './pack.mjs?v=20261125mcr6';
-import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr6';
+import {createUniversalPack} from './pack.mjs?v=20261125mcr7';
+import {mcrSharedProgram} from './mcr/programs.mjs?v=20261125mcr7';
 
 const SHARED_KEYS=new Set([
  'ready','implementation','effects','mainAbility','activeExtraEnergy','impactNull',
@@ -19,6 +19,15 @@ const COLORS=new Set(['yellow','blue','red','purple']);
 const TRAIT_COMPONENTS=Object.freeze({
  'S.M.S／スカル小隊':Object.freeze(['S.M.S','スカル小隊']),
  'S.M.S／ピクシー小隊':Object.freeze(['S.M.S','ピクシー小隊']),
+ 'S.M.S／F形態':Object.freeze(['S.M.S','F形態']),
+ 'S.M.S／スカル小隊／B形態':Object.freeze(['S.M.S','スカル小隊','B形態']),
+ 'S.M.S／スカル小隊／F形態':Object.freeze(['S.M.S','スカル小隊','F形態']),
+ 'ウィンダミア王国／空中騎士団／B形態':Object.freeze(['ウィンダミア王国','空中騎士団','B形態']),
+ 'ウィンダミア王国／空中騎士団／G形態':Object.freeze(['ウィンダミア王国','空中騎士団','G形態']),
+ 'ケイオス／Δ小隊':Object.freeze(['ケイオス','Δ小隊']),
+ 'ケイオス／Δ小隊／B形態':Object.freeze(['ケイオス','Δ小隊','B形態']),
+ 'ケイオス／Δ小隊／F形態':Object.freeze(['ケイオス','Δ小隊','F形態']),
+ 'ケイオス／ワルキューレ':Object.freeze(['ケイオス','ワルキューレ']),
  '歌（シェリル）／歌（ランカ）':Object.freeze(['歌（シェリル）','歌（ランカ）']),
  '新統合軍／ダイアモンドフォース':Object.freeze(['新統合軍','ダイアモンドフォース'])
 });

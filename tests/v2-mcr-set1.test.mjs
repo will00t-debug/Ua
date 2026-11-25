@@ -14,6 +14,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPrivateChoices,universalPublicView,
  universalCardEnergy,universalBp,universalImpactNull,universalImpact} from '../dist/universal-v2/engine.mjs';
 import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {appendCompletedMove} from '../dist/universal-v2/zone-move-events.mjs';
 
 const READY=[
  '001','002','003','004','005','006','007','008','009','010','011','012','013','014',
@@ -26,7 +27,9 @@ const READY=[
  '112','113'
 ].map(n=>'MCR-1-'+n);
 const VOL2_READY=[
- '001','005','006','020','023','024','026','027','028','032','033','037','046','047','056','063','070','077'
+ '001','005','006','010','012','013','014','015','020','021','023','024','025','026','027','028','029','030',
+ '031','032','033','034','037','038','039','040','041','043','044','046','047','050','051','055','056','057',
+ '058','059','060','062','063','064','065','067','070','072','076','077'
 ].map(n=>'MCR-2-'+n);
 
 const pack=createMcrStagingPack();
@@ -1188,7 +1191,9 @@ test('Vol.2 exact prints enter and raid frames stay out',()=>{
  assert.equal(purple.gen,1);
  assert.equal(purple.activeExtraEnergy,1);
  assert.deepEqual(purple.traits,['ケイオス／Δ小隊']);
- assert.equal(purple.traitComponents,undefined);
+ assert.deepEqual(purple.traitComponents,['ケイオス','Δ小隊']);
+ assert.deepEqual(mcrCatalog().byId.get('MCR-2-024').traits,['ケイオス／Δ小隊']);
+ assert.equal(mcrCatalog().byId.get('MCR-2-024').traits.length,1);
  assert.equal(pack.cards['MCR-2-027'].impactNull,true);
  assert.equal(pack.cards['MCR-2-037'].impactNull,true);
 });
@@ -1263,4 +1268,308 @@ test('077 rests and must buff another character',()=>{
   {type:'activate',uid:solo.uid,mode:'selfRestThen'}));
  assert.equal(alone.players[0].front[0].ready,true);
  assert.equal(assertUniversalMatch(packs,alone),true);
+});
+
+function vol2(n){return 'MCR-2-'+n;}
+function named(name){
+ return Object.values(pack.cards).find(card=>card.name===name);
+}
+
+test('Vol.2 slash traits stay one catalog token and only pinned pieces match',()=>{
+ const catalog=mcrCatalog().byId;
+ for(const id of ['MCR-2-030','MCR-2-050','MCR-2-021','MCR-2-076']){
+  assert.equal(catalog.get(id).traits.length,1);
+  assert.equal(catalog.get(id).traits[0].includes('／')||id==='MCR-2-076',true);
+ }
+ assert.deepEqual(pack.cards['MCR-2-030'].traitComponents,['ケイオス','ワルキューレ']);
+ assert.deepEqual(pack.cards['MCR-2-050'].traitComponents,['ウィンダミア王国','空中騎士団','G形態']);
+ assert.deepEqual(pack.cards['MCR-2-021'].traitComponents,['ケイオス','Δ小隊']);
+ assert.equal(pack.cards['MCR-2-076'].traitComponents,undefined);
+ assert.ok(!pack.cards['MCR-2-040'].activeExtraEnergy);
+ assert.equal(pack.cards['MCR-2-040'].gen,1);
+});
+
+test('030 shows every inspected card and only a Walkure can be taken',()=>{
+ const counts=deckOf({[vol2('030')]:4,[vol2('001')]:4,[vol2('034')]:4});
+ let s=reach(counts,31);
+ seat(s,0,vol2('034'),'energy',0);
+ const played=take(s,0,vol2('030'));
+ s.players[0].hand.push(played);
+ const extra=take(s,0,vol2('001'));
+ const plain=take(s,0,vol2('001'));
+ const walkure=take(s,0,vol2('034'));
+ s.players[0].deck.unshift(walkure,plain,extra);
+ s=act(s,a=>a.type==='play'&&a.uid===played.uid);
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.deepEqual([...s.pending.uids].sort(),[extra.uid,plain.uid,walkure.uid].sort());
+ assert.deepEqual(s.pending.choices,[walkure.uid]);
+ const own=universalPrivateChoices(packs,s,0);
+ assert.equal(own.inspected.length,3);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assert.equal(JSON.stringify(universalPublicView(packs,s,1)).includes(plain.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:plain.uid}));
+ const hand=s.players[0].hand.length;
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:walkure.uid});
+ assert.equal(s.players[0].hand.some(card=>card.uid===walkure.uid),true);
+ assert.equal(s.players[0].hand.length,hand+1);
+ s=finishOrder(s);
+ assert.equal(s.pending.kind,'effect-discard');
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscard',uid:s.players[0].hand.find(card=>card.uid!==walkure.uid).uid});
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('034 counts distinct Walkure names only on your turn and 044 does not',()=>{
+ const counts=deckOf({[vol2('034')]:4,[vol2('030')]:4,[vol2('039')]:4,[vol2('044')]:4});
+ let s=reach(counts,32);
+ const self=seat(s,0,vol2('034'),'front',0);
+ seat(s,0,vol2('030'),'front',1);
+ seat(s,0,vol2('039'),'energy',0);
+ assert.equal(universalBp(packs,s,self),pack.cards[vol2('034')].bp+1000);
+ s.active=1;
+ assert.equal(universalBp(packs,s,self),pack.cards[vol2('034')].bp);
+ const any=seat(s,0,vol2('044'),'front',2);
+ assert.equal(universalBp(packs,s,any),pack.cards[vol2('044')].bp+1000);
+ s.active=0;
+ const copies=reach(counts,33);
+ const one=seat(copies,0,vol2('034'),'front',0);
+ seat(copies,0,vol2('034'),'front',1);
+ seat(copies,0,vol2('034'),'energy',0);
+ assert.equal(universalBp(packs,copies,one),pack.cards[vol2('034')].bp);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('040 adds one purple pip only while two Walkure are on the front',()=>{
+ const counts=deckOf({[vol2('040')]:4,[vol2('030')]:4,[vol2('034')]:4,[vol2('001')]:4});
+ let s=reach(counts,34);
+ const battery=seat(s,0,vol2('040'),'energy',0);
+ assert.equal(universalCardEnergy(packs,s,0,battery),1);
+ battery.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,battery),1);
+ battery.ready=true;
+ seat(s,0,vol2('030'),'front',0);
+ assert.equal(universalCardEnergy(packs,s,0,battery),1);
+ seat(s,0,vol2('034'),'front',1);
+ assert.equal(universalCardEnergy(packs,s,0,battery),2);
+ const played=take(s,0,vol2('040'));
+ s.players[0].hand.push(played);
+ s.players[0].deck.unshift(take(s,0,vol2('001')),take(s,0,vol2('001')));
+ s=act(s,a=>a.type==='play'&&a.uid===played.uid);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('025 does not draw for a Delta character that is not a face-up Raid',()=>{
+ const counts=deckOf({[vol2('025')]:4,[vol2('021')]:4,[vol2('024')]:4});
+ let s=reach(counts,35);
+ seat(s,0,vol2('024'),'energy',0);
+ seat(s,0,vol2('021'),'front',0);
+ const before=s.players[0].hand.length;
+ s=play(s,vol2('025'),'front');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.length,before);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('050 recovers only a character without the Raid keyword',()=>{
+ const counts=deckOf({[vol2('050')]:4,[vol2('024')]:4,[vol2('001')]:4,[id('009')]:2});
+ let s=reach(counts,36);
+ for(let i=0;i<2;i++)seat(s,0,vol2('024'),'energy',i);
+ const raid=outside(s,0,id('009'));
+ const plain=outside(s,0,vol2('001'));
+ const hand=take(s,0,vol2('001'));
+ s.players[0].hand.push(hand);
+ s=play(s,vol2('050'),'front');
+ assert.equal(s.pending.kind,'effect-discard-gate');
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:null});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].outside.some(card=>card.uid===plain.uid),true);
+ let paid=reach(counts,37);
+ for(let i=0;i<2;i++)seat(paid,0,vol2('024'),'energy',i);
+ const raid2=outside(paid,0,id('009'));
+ const plain2=outside(paid,0,vol2('001'));
+ const pay=take(paid,0,vol2('001'));
+ paid.players[0].hand.push(pay);
+ paid=play(paid,vol2('050'),'front');
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseDiscardGate',uid:pay.uid});
+ assert.equal(paid.pending.choices.includes(plain2.uid),true);
+ assert.equal(paid.pending.choices.includes(raid2.uid),false);
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseOutsideRecovery',uid:plain2.uid});
+ assert.equal(paid.players[0].hand.some(card=>card.uid===plain2.uid),true);
+ assert.equal(assertUniversalMatch(packs,paid),true);
+});
+
+test('067 cannot buff at printed BP and spends nothing if forced',()=>{
+ const counts=deckOf({[vol2('067')]:4,[vol2('001')]:4});
+ let blocked=reach(counts,38);
+ const actor=seat(blocked,0,vol2('067'),'front',0);
+ assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='activate'&&a.uid===actor.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,blocked,{type:'activate',uid:actor.uid,mode:'onceBuffSelf'}));
+ assert.equal(blocked.mainAbilityUsedUids.includes(actor.uid),false);
+ actor.buffs=[{bp:500,untilTurn:blocked.turn}];
+ blocked=act(blocked,a=>a.type==='activate'&&a.uid===actor.uid&&a.mode==='onceBuffSelf');
+ assert.equal(universalBp(packs,blocked,blocked.players[0].front[0]),pack.cards[vol2('067')].bp+1000);
+ assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='activate'&&a.uid===actor.uid),false);
+ let empty=reach(counts,39);
+ const card=take(empty,0,vol2('067'));
+ empty.players[0].hand.push(card);
+ const legal=legalUniversalActions(packs,empty).filter(a=>a.type==='play'&&a.uid===card.uid);
+ assert.ok(legal.length);
+ empty=dispatchUniversalAction(packs,empty,legal.find(a=>a.line==='front'&&empty.players[0].front[a.slot]==null));
+ assert.equal(empty.pending,null);
+ assert.equal(assertUniversalMatch(packs,blocked),true);
+});
+
+test('012 and 013 do not offer the REST main before the named event is used',()=>{
+ const counts=deckOf({[vol2('012')]:4,[vol2('013')]:4,[vol2('001')]:4});
+ let s=reach(counts,40);
+ const alto=seat(s,0,vol2('012'),'energy',0);
+ const look=seat(s,0,vol2('013'),'front',0);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&
+  (a.uid===alto.uid||a.uid===look.uid)),false);
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'activate',uid:alto.uid,mode:'selfRestThen'}));
+ assert.equal(s.players[0].energy[0].ready,true);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('062 stays active, puts one hand card on the bottom, then draws',()=>{
+ const counts=deckOf({[vol2('062')]:4,[vol2('001')]:4});
+ let empty=reach(counts,41);
+ const quiet=seat(empty,0,vol2('062'),'front',0);
+ empty.players[0].deck.push(...empty.players[0].hand.splice(0));
+ assert.equal(legalUniversalActions(packs,empty).some(a=>a.uid===quiet.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,empty,{type:'activate',uid:quiet.uid,mode:'frontOnce'}));
+ assert.equal(empty.mainAbilityUsedUids.includes(quiet.uid),false);
+ quiet.ready=false;
+ empty.players[0].hand.push(take(empty,0,vol2('001')));
+ assert.equal(legalUniversalActions(packs,empty).some(a=>a.uid===quiet.uid),false);
+ let s=reach(counts,42);
+ const actor=seat(s,0,vol2('062'),'front',0);
+ const buried=take(s,0,vol2('001'));
+ s.players[0].hand.push(buried);
+ const top=s.players[0].deck[0];
+ const handBefore=s.players[0].hand.length;
+ s=act(s,a=>a.type==='activate'&&a.uid===actor.uid&&a.mode==='frontOnce');
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.equal(s.pending.kind,'effect-hand-bottom');
+ assert.equal(s.pending.mandatory,true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseHandBottom',uid:buried.uid});
+ assert.equal(s.players[0].deck.at(-1).uid===buried.uid||s.players[0].hand.some(card=>card.uid===top.uid),true);
+ assert.equal(s.players[0].hand.length,handBefore);
+ assert.equal(s.players[0].front[0].readyOnAttackGranted,undefined);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('065 uses printed BP and hides the active choice unless this card entered by an effect',()=>{
+ const counts=deckOf({[vol2('065')]:4,[vol2('067')]:4,[vol2('001')]:4,[vol2('051')]:2});
+ let s=reach(counts,43);
+ for(let i=0;i<3;i++)seat(s,0,vol2('067'),'energy',i);
+ const low=seat(s,0,vol2('001'),'front',1);
+ const high=seat(s,0,vol2('051'),'front',2);
+ high.buffs=[{bp:-2000,untilTurn:s.turn}];
+ s=play(s,vol2('065'),'front');
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ assert.deepEqual(s.pending.options.map(option=>option.id),['buff']);
+ s=dispatchUniversalAction(packs,s,{type:'chooseEffectMode',mode:'buff'});
+ assert.equal(s.pending.choices.includes(low.uid),true);
+ assert.equal(s.pending.choices.includes(high.uid),true);
+ let caused=reach(counts,44);
+ for(let i=0;i<3;i++)seat(caused,0,vol2('067'),'energy',i);
+ const small=seat(caused,0,vol2('001'),'front',1);
+ const tall=seat(caused,0,vol2('051'),'front',2);
+ const coming=seat(caused,0,vol2('065'),'front',3);
+ appendCompletedMove(caused,{uid:coming.uid,cardId:coming.cardId,owner:0,controller:0,
+  from:'outside',to:'front',reason:'own-effect'});
+ caused.fieldEntryNames[0].push(pack.cards[vol2('065')].name);
+ small.buffs=[{bp:3000,untilTurn:caused.turn}];
+ tall.buffs=[{bp:-2000,untilTurn:caused.turn}];
+ const printed=pack.cards[vol2('065')];
+ caused.effectQueue.push({...printed.effects.onPlay[0],owner:0,
+  sourceUid:coming.uid,sourceName:printed.name});
+ caused=dispatchUniversalAction(packs,caused,{type:'next'});
+ assert.deepEqual(caused.pending.options.map(option=>option.id),['buff','active']);
+ caused=dispatchUniversalAction(packs,caused,{type:'chooseEffectMode',mode:'active'});
+ assert.equal(caused.pending.choices.includes(small.uid),true);
+ assert.equal(caused.pending.choices.includes(tall.uid),false);
+ assert.equal(universalBp(packs,caused,small),pack.cards[vol2('001')].bp+3000);
+ assert.equal(universalBp(packs,caused,tall),pack.cards[vol2('051')].bp-2000);
+ assert.equal(assertUniversalMatch(packs,caused),true);
+});
+
+test('059 does not spend its Walkure discount on an ineligible hand play',()=>{
+ const counts=deckOf({[vol2('059')]:2,[vol2('024')]:4,[vol2('001')]:4,[vol2('041')]:4});
+ let s=reach(counts,45);
+ for(let i=0;i<2;i++)seat(s,0,vol2('024'),'energy',i);
+ s.players[0].deck.unshift(take(s,0,vol2('001')),take(s,0,vol2('001')),take(s,0,vol2('001')));
+ s=play(s,vol2('059'));
+ s=finishOrder(s);
+ const grant=s.continuousStates.find(e=>e.kind==='nextEligibleHandPlayApDiscount'&&!e.consumed);
+ assert.ok(grant);
+ const ready=()=>s.players[0].apCards.filter(c=>c.ready).length;
+ const before=ready();
+ s=play(s,vol2('001'),'front');
+ assert.equal(ready(),before-1);
+ assert.equal(s.continuousStates.some(e=>e.id===grant.id&&e.consumed),false);
+ const after=ready();
+ s=play(s,vol2('041'),'front');
+ assert.equal(ready(),after);
+ assert.equal(s.continuousStates.some(e=>e.id===grant.id),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('058 cannot start without a legal character or a rested AP',()=>{
+ const counts=deckOf({[vol2('058')]:2,[vol2('050')]:4,[vol2('021')]:2});
+ let none=reach(counts,46);
+ for(let i=0;i<2;i++)seat(none,0,vol2('050'),'energy',i);
+ const event=take(none,0,vol2('058'));
+ none.players[0].hand.push(event);
+ const ap=none.players[0].apCards.filter(c=>c.ready).length;
+ assert.equal(legalUniversalActions(packs,none).some(a=>a.type==='event'&&a.uid===event.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,none,{type:'event',uid:event.uid}));
+ assert.equal(none.players[0].apCards.filter(c=>c.ready).length,ap);
+ let rested=reach(counts,47);
+ for(let i=0;i<2;i++)seat(rested,0,vol2('050'),'energy',i);
+ const delta=seat(rested,0,vol2('021'),'front',0);
+ const card=take(rested,0,vol2('058'));
+ rested.players[0].hand.push(card);
+ assert.equal(legalUniversalActions(packs,rested).some(a=>a.type==='event'&&a.uid===card.uid),false);
+ rested.players[0].apCards.find(c=>c.ready).ready=false;
+ rested=act(rested,a=>a.type==='event'&&a.uid===card.uid);
+ assert.equal(rested.pending.kind,'effect-buff-own');
+ assert.equal(rested.pending.optional,false);
+ assert.equal(rested.pending.choices.includes(delta.uid),true);
+ assert.equal(legalUniversalActions(packs,rested).some(a=>a.type==='chooseOwnBuff'&&a.uid===null),false);
+ rested=dispatchUniversalAction(packs,rested,{type:'chooseOwnBuff',uid:delta.uid});
+ assert.equal(rested.pending.kind,'effect-recover-ap');
+ assert.equal(legalUniversalActions(packs,rested).some(a=>a.uid===null),false);
+ assert.equal(assertUniversalMatch(packs,rested),true);
+});
+
+test('060 raises the retirement cap by distinct Walkure names, not copies',()=>{
+ const counts=deckOf({[vol2('060')]:2,[vol2('024')]:4,[vol2('030')]:4,[vol2('034')]:4,
+  [vol2('041')]:4,[vol2('001')]:4,[vol2('051')]:2});
+ let low=reach(counts,48);
+ for(let i=0;i<2;i++)seat(low,0,vol2('024'),'energy',i);
+ seat(low,0,vol2('030'),'front',0);
+ seat(low,0,vol2('030'),'front',1);
+ seat(low,0,vol2('030'),'front',2);
+ const small=seat(low,1,vol2('001'),'front',0);
+ const tall=seat(low,1,vol2('051'),'front',1);
+ low=play(low,vol2('060'));
+ assert.equal(low.pending.limit,3000);
+ assert.equal(low.pending.choices.includes(small.uid),true);
+ assert.equal(low.pending.choices.includes(tall.uid),false);
+ let high=reach(counts,49);
+ for(let i=0;i<2;i++)seat(high,0,vol2('024'),'energy',i);
+ seat(high,0,vol2('030'),'front',0);
+ seat(high,0,vol2('034'),'front',1);
+ seat(high,0,vol2('041'),'front',2);
+ const a=seat(high,1,vol2('001'),'front',0);
+ const b=seat(high,1,vol2('051'),'front',1);
+ high=play(high,vol2('060'));
+ assert.equal(high.pending.limit,5000);
+ assert.equal(high.pending.choices.includes(a.uid),true);
+ assert.equal(high.pending.choices.includes(b.uid),true);
+ assert.equal(assertUniversalMatch(packs,high),true);
 });

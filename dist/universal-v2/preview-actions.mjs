@@ -1,8 +1,8 @@
-import {cardHasName} from './field-conditions.mjs?v=20261120mha011';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr7';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 // Presentation-only adapters for the isolated V2 preview.
-import {universalAttackDamage,universalImpact} from './engine.mjs?v=20261125mcr6';
-import {describeActivation} from './activation-labels.mjs?v=20261125mcr6';
+import {universalAttackDamage,universalImpact} from './engine.mjs?v=20261125mcr7';
+import {describeActivation} from './activation-labels.mjs?v=20261125mcr7';
 // NEVER generate or accept an action outside legalUniversalActions().
 export const V2_PHASE_LABELS=Object.freeze({
  start:'開始／額外抽牌',move:'移動階段',main:'主要階段',attack:'攻擊階段'

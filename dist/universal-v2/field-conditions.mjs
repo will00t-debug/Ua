@@ -571,6 +571,26 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    .flat().find(c=>c?.uid===sourceUid);
   return !!physical&&printedFieldCard(physical)&&cardBp(physical)>=condition.minBp;
  }
+ if(condition.kind==='selfLiveBpAbovePrinted'){
+  // 元々のBP is the printed number. Equal does not qualify.
+  if(typeof cardBp!=='function')throw Error('Printed BP comparison needs a live BP reader');
+  const physical=[s.players[owner].front,s.players[owner].energy]
+   .flat().find(c=>c?.uid===sourceUid);
+  if(!physical||!printedFieldCard(physical))return false;
+  const base=printed(physical).bp;
+  return Number.isInteger(base)&&cardBp(physical)>base;
+ }
+ if(condition.kind==='ownFrontRaidedTraitExceptName'){
+  // レイド状態 is a face-up Raid: the top is the field card and a face-up
+  // card sits under it. The visible name is the top card's name.
+  return s.players[owner].front.some(c=>{
+   if(!printedFieldCard(c))return false;
+   const d=printed(c);
+   const raided=!!(d.raidName||d.raidTrait)&&(c.stack||[]).some(x=>x&&x.faceDown!==true);
+   if(!raided||!cardHasTrait(d,condition.trait))return false;
+   return !(typeof d.name==='string'&&d.name.includes(condition.nameExcludes));
+  });
+ }
  if(condition.kind==='raidUnderPrintedBpAtLeast'){
   // このキャラの下. The printed number on a buried card, not its current BP.
   const physical=[s.players[owner].front,s.players[owner].energy]

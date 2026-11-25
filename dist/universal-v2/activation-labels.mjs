@@ -2,8 +2,8 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs?v=20261125mcr6';
-import {cardHasName} from './field-conditions.mjs';
+import {universalBp} from './engine.mjs?v=20261125mcr7';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr7';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -148,6 +148,11 @@ const STEP={
  drawHandTop:()=>'抽 1 張，並將 1 張手牌放到牌組上面',
  millTop:s=>`將牌庫頂 ${s.count||1} 張放到場外`,
  peekTopOrBottom:()=>'查看牌庫頂 1 張，放回牌庫上面或下面',
+ inspectTopArrange:s=>s.toOutside===false&&s.rest==='top'
+  ?`查看牌庫頂 ${s.count} 張，依任意順序放回牌庫上面`
+  :`查看牌庫頂 ${s.count} 張並安排順序`,
+ handBottomThenDraw:()=>'將 1 張手牌放到牌庫底，然後抽 1 張',
+ deployOwnHandRest:s=>`可以從手牌將最多 1 張需求能源 ${s.energy} 以下、消費 AP ${s.ap} 的角色以休息狀態登場`,
  activeSelf:()=>'將此角色轉為活動',
  activeOwnOne:()=>'將 1 張己方角色轉為活動',
  activeOwnOther:()=>'將其他最多 1 張角色轉為活動',
@@ -252,6 +257,12 @@ function gateWords(ability){
  if(Number.isInteger(ability?.minEnergy))words.push(`產生能源在 ${ability.minEnergy} 以上才能發動`);
  if(ability?.when?.kind==='ownEventUsedThisTurn')words.push('只有本回合已使用事件才能發動');
  if(ability?.when?.kind==='ownHandCountAtLeast')words.push(`只有手牌 ${ability.when.min} 張以上才能發動`);
+ if(ability?.when?.kind==='ownNamedCardsUsedThisTurn')
+  words.push(`只有本回合已使用〈${nameZh(ability.when.names?.[0]||'')}〉才能發動`);
+ if(ability?.when?.kind==='ownNameExists')
+  words.push(`只有自己場上有〈${nameZh(ability.when.name||'')}〉才能發動`);
+ if(ability?.when?.kind==='selfLiveBpAbovePrinted')
+  words.push('只有此角色目前 BP 高於原本 BP 才能發動');
  if(ability?.when?.kind==='ownTraitUsedThisTurn')words.push(`只有本回合已使用過特徵「${ability.when.trait}」才能發動`);
  return words;
 }
@@ -261,6 +272,8 @@ function effectWords(ability,action){
  const bp=Number.isInteger(ability?.bp)?ability.bp:null;
  const energy=ability?.extraEnergy;
  const named=name=>name?`〈${nameZh(name)}〉`:'';
+ if(op==='onceBuffSelfWhen'||mode==='onceBuffSelf')
+  return `本回合 BP＋${bp??500}`;
  if(op==='onceAbovePrintedKeywords'||mode==='abovePrinted')
   return `依自己場上 BP 高於原本 BP 的角色數量，此角色本回合獲得全部符合的效果：${ability?.damageAt??3} 張以上獲得【傷害（${ability?.damage??2}）】；${ability?.impactAt??5} 張以上再獲得【貫通（${ability?.impact??1}）】`;
  if(op==='restSelfBuffOther'||(mode==='selfRestBuff'&&bp!=null))
