@@ -1,0 +1,185 @@
+{
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "data": {
+    "ids": 8796,
+    "consistent": 8068,
+    "keyConflict": 0,
+    "featureConflict": 0,
+    "actorConflict": 0,
+    "swapped": 0,
+    "noFeatures": 728,
+    "noSeed": 0,
+    "conflict": 0,
+    "incomplete": 1,
+    "duplicate": 0,
+    "kept": 244,
+    "multiSource": 57,
+    "extraPairs": 560
+  },
+  "scale": {
+    "positions": 41,
+    "blendGap": {
+      "median": 9.59108299756602,
+      "p90": 115.74921353924444,
+      "max": 130.4438394606911
+    },
+    "prediction": {
+      "median": 0.01844328493762098,
+      "p90": 0.10644569736449683,
+      "max": 0.2634630145734342
+    },
+    "residual": {
+      "median": 0.018443284937620985,
+      "p90": 0.1064456973644968,
+      "max": 0.26346301457343424
+    },
+    "gapAbove36": 11,
+    "residualBeatsGap": 0
+  },
+  "multiplier": 1,
+  "features": {
+    "linear": {
+      "width": 46,
+      "rank": 21,
+      "zero": [
+        "bias",
+        "type_extra_draw",
+        "type_choice",
+        "type_keep",
+        "type_redraw",
+        "phase_main",
+        "phase_attack",
+        "phase_other",
+        "pending",
+        "life_diff",
+        "my_life",
+        "opp_life",
+        "my_energy",
+        "opp_energy",
+        "my_ap",
+        "opp_ap",
+        "my_hand",
+        "opp_hand",
+        "my_front",
+        "opp_front",
+        "block_win",
+        "turn",
+        "gotei",
+        "opp_bp_max",
+        "mulligan_redraw_thin"
+      ]
+    },
+    "interaction": {
+      "width": 54,
+      "rank": 28
+    }
+  },
+  "before": {
+    "position": {
+      "mse": 0.028344413714732907,
+      "correlation": -0.021106544870407452,
+      "positions": 41
+    },
+    "game": {
+      "mse": 0.028344413714732907,
+      "cancelledMse": 0.02202798160867347,
+      "correlation": 0.03780903283838757,
+      "games": 23
+    },
+    "zero": {
+      "mse": 0.02535839160839161,
+      "correlation": 0,
+      "positions": 41
+    }
+  },
+  "sameModel": {
+    "position": {
+      "mse": 0.027437799931321696,
+      "correlation": -0.008716020457767657,
+      "positions": 41
+    },
+    "game": {
+      "mse": 0.027437799931321696,
+      "cancelledMse": 0.021286005997804423,
+      "correlation": 0.05357982257951511,
+      "games": 23
+    },
+    "zero": {
+      "mse": 0.02499806357944188,
+      "correlation": 0,
+      "positions": 41
+    }
+  },
+  "refit": {
+    "position": {
+      "mse": 0.027947791186588456,
+      "correlation": -0.026733645213041436,
+      "positions": 41
+    },
+    "game": {
+      "mse": 0.02794779118658845,
+      "cancelledMse": 0.02163515975890035,
+      "correlation": 0.03182477813339059,
+      "games": 23
+    },
+    "zero": {
+      "mse": 0.02499806357944188,
+      "correlation": 0,
+      "positions": 41
+    }
+  },
+  "scaled": {
+    "position": {
+      "mse": 0.027947791186588456,
+      "correlation": -0.026733645213041436,
+      "positions": 41
+    },
+    "game": {
+      "mse": 0.02794779118658845,
+      "cancelledMse": 0.02163515975890035,
+      "correlation": 0.03182477813339059,
+      "games": 23
+    },
+    "zero": {
+      "mse": 0.02499806357944188,
+      "correlation": 0,
+      "positions": 41
+    }
+  },
+  "decisions": {
+    "kept": 244,
+    "changed": 0,
+    "toward": 0,
+    "against": 0,
+    "unknown": 0,
+    "protectedChanged": 0
+  },
+  "scaledChanged": 0,
+  "needed": {
+    "total": 51,
+    "extra": 33
+  },
+  "recheck": {
+    "positions": 18,
+    "position": {
+      "mse": 0.005106912931932229,
+      "correlation": 0.27515295441873955,
+      "positions": 18
+    },
+    "game": {
+      "mse": 0.005106912931932229,
+      "cancelledMse": 0.005106912931932229,
+      "correlation": 0.27515295441873955,
+      "games": 18
+    },
+    "zero": {
+      "mse": 0.0030381944444444445,
+      "correlation": 0,
+      "positions": 18
+    }
+  },
+  "trust": "已核對的副本裡，A/B 動作鍵、特徵和行動者沒有衝突。同一來源內的配對可以重建。跨檔案的嘗試編號不是同一次抽樣，不能當成重複樣本合併。評估若先把同一對局的局面平均，會把方向相反的誤差抵掉，所以局面誤差必須分開看。",
+  "learned": "沒有。修正後的開發局面誤差沒有同時打敗零預測並產生可驗證的改選。",
+  "next": "值得做的下一個最小驗證，不是再堆同一種配對。這次擬合出的殘差遠小於混合分差，訓練交叉驗證把倍數留在 1。把同一組係數乘上 8 會改選 1 個，其中方向與平均差相同 0 個、相反 1 個，而且不在開發對局。要跨過中位數混合分差，倍數要大一個數量級，而且會先碰到 ±18 的夾限。那已經超出這輪允許的調整。下一個問題是：在訓練對局裡、不放寬夾限、不新增特徵，有沒有任何殘差能改變開發局面，而且方向和配對平均差一致、保護局面不動。若沒有，再收集同一種資料不會讓這個接法開始改選。",
+  "quarantine": 728
+}
