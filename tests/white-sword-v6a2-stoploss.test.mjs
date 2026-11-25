@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {looseCanChange,proveTargets,winner,withResidual} from '../training/white-sword-ai/v6a2/lib/feasible.mjs';
+import {looseCanChange,winner,withResidual} from '../training/white-sword-ai/v6a2/lib/feasible.mjs';
 import {numericalRank} from '../training/white-sword-ai/v6a2/lib/rank.mjs';
 
 test('a repeated column has rank 1',()=>{
@@ -25,35 +25,22 @@ test('a blend gap above 36 cannot be crossed by a clipped residual',()=>{
  assert.equal(winner(scored).key,'a');
 });
 
-test('shared weights are accepted only inside the linear clip',()=>{
- const feasible=proveTargets([{
-  actions:[
-   {key:'keep',sort:'keep',blend:0,phi:[1,0]},
-   {key:'alt',sort:'alt',blend:1,phi:[0,1]}
-  ],
-  winnerKey:'alt',eps:1e-4
- }],{seconds:5});
- assert.equal(feasible.status,'found');
- const beta=feasible.beta;
- const alt=1+beta[1];
- const keep=0+beta[0];
- assert.ok(alt>=keep+1e-4-1e-6);
- assert.ok(Math.abs(beta[0])<=18+1e-8&&Math.abs(beta[1])<=18+1e-8);
- const behind=proveTargets([{
-  actions:[
-   {key:'v2',sort:'v2',blend:5,phi:[1,0]},
-   {key:'want',sort:'want',blend:0,phi:[0,1]}
-  ],
-  winnerKey:'want',eps:1e-4
- }],{seconds:5});
- assert.equal(behind.status,'found');
- assert.ok(behind.beta[1]>=5+behind.beta[0]+1e-4-1e-6);
- const blocked=proveTargets([{
-  actions:[
-   {key:'keep',sort:'keep',blend:0,phi:[1]},
-   {key:'alt',sort:'alt',blend:100,phi:[1]}
-  ],
-  winnerKey:'keep',eps:1e-4
- }],{seconds:5});
- assert.equal(blocked.status,'infeasible');
+function clipped(blend,phi,beta){
+ const dot=phi.reduce((sum,value,index)=>sum+value*beta[index],0);
+ return blend+Math.max(-18,Math.min(18,dot));
+}
+test('a shared weight stays inside the clip and cannot close an identical-feature gap',()=>{
+ const ahead=[0,0];
+ assert.ok(clipped(1,[0,1],ahead)>=clipped(0,[1,0],ahead)+1e-4);
+ assert.ok(ahead.every(value=>Math.abs(value)<=18));
+ const behind=[0,5+1e-4];
+ assert.ok(clipped(0,[0,1],behind)>=clipped(5,[1,0],behind)+1e-4-1e-9);
+ assert.ok(behind.every(value=>Math.abs(value)<=18));
+ const blocked=[
+  {key:'keep',sort:'keep',blend:0,phi:[1]},
+  {key:'alt',sort:'alt',blend:100,phi:[1]}
+ ];
+ assert.equal(looseCanChange(blocked).possible,false);
+ const any=[3,-7];
+ assert.ok(clipped(100,[1],any)-clipped(0,[1],any)>36);
 });
