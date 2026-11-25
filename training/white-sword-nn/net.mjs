@@ -51,6 +51,11 @@ export function cloneNet(net){
 export function parameterCount(net){
  return net.theta.length;
 }
+export function sameWeights(left,right){
+ if(!left||!right||left.theta.length!==right.theta.length)return false;
+ for(let i=0;i<left.theta.length;i++)if(!Object.is(left.theta[i],right.theta[i]))return false;
+ return true;
+}
 export function netDistance(left,right){
  let sum=0;
  for(let i=0;i<left.theta.length;i++){

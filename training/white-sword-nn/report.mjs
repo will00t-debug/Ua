@@ -1,4 +1,9 @@
-import {FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PROMOTION_RULE,SELECTION_RULE,TREND_RULE} from './protocol.mjs';
+import {pairedDelta} from './cluster.mjs';
+import {AGREEMENT_DROP,SURPASS_SEEDS} from './constants.mjs';
+import {
+ ARM_RULE,COPY_RULE,EARLY_RULE,FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PROMOTION_RULE,
+ READ_RULE,SCALE_RULE,SELECTION_RULE,TREND_RULE
+} from './protocol.mjs';
 
 function pct(rate){
  if(!rate||rate.p==null)return '沒有已完成對局';
@@ -235,6 +240,184 @@ export function renderRound2(summary){
   answerFollowUp(summary),
   '',
   '正式預設仍是 hard-search-2。這次權重沒有部署。',
+  ''
+ ];
+ return rows.join('\n');
+}
+export function judgeScaleGap(profile){
+ const gap=profile?.absGap?.p50;
+ const target=profile?.target;
+ if(gap==null||target?.min==null||target?.max==null)return {error:false,reason:'沒有固定診斷樣本'};
+ if(gap>1&&target.max<=1&&target.min>=-1){
+  return {error:true,reason:'網路輸出和 [-1,1] 的終局回報不在同一尺度，絕對差中位數大於 1'};
+ }
+ return {error:false,reason:'輸出和回報的絕對差中位數沒有大於 1'};
+}
+export function judgeEarlyRegression({agreementDrop,deltaHigh}={}){
+ const reasons=[];
+ if(Number.isFinite(agreementDrop)&&agreementDrop>=AGREEMENT_DROP)reasons.push('保留示範的完全一致率下降至少 '+(AGREEMENT_DROP*100)+' 個百分點');
+ if(deltaHigh!=null&&deltaHigh<0)reasons.push('對 A 的配對差區間整段低於 0');
+ return {regressed:reasons.length>0,reasons};
+}
+export function judgeSurpass(endpoint,zeroRows){
+ const delta=pairedDelta(zeroRows||[],endpoint?.summary?.rows||[]);
+ const mean=endpoint?.summary?.mean;
+ const seeds=endpoint?.summary?.seeds||0;
+ const ok=seeds>=SURPASS_SEEDS&&mean>0.5&&delta.low>0;
+ return {
+  ok,mean,seeds,delta,
+  reason:ok?null:'終點沒有同時具備至少 '+SURPASS_SEEDS+' 個種子、種子平均高於 50%，以及相對 0 次更新的配對差下限高於 0'
+ };
+}
+export function judgeMitigation(original,retain){
+ const delta=pairedDelta(original?.rows||[],retain?.rows||[]);
+ const mean=retain?.mean;
+ if(mean==null||delta.low==null)return {mitigated:false,inconclusive:true,worse:false,mean,delta};
+ if(mean>0.5)return {mitigated:false,inconclusive:false,worse:false,mean,delta};
+ const mitigated=delta.low>0;
+ const worse=delta.high!=null&&delta.high<0;
+ return {mitigated,inconclusive:!mitigated&&!worse,worse,mean,delta};
+}
+export function answerConnection(summary){
+ const scale=summary?.scale;
+ if(!scale?.before?.output)return '沒有固定診斷樣本，所以不能判斷退步是不是來自更新接法。';
+ const early=summary.early||{regressed:false,reasons:[]};
+ const earlyText=early.checked
+  ?(early.regressed
+   ?'最早的更新就出現事先登記的退步：'+(early.reasons||[]).join('、')+'。'
+   :'在已跑到的第 1 場和第 4 場檢查點，事先登記的退步條件沒有成立。這只覆蓋這兩個點，不代表更後面的場次沒有退步。')
+  :'第 1 場和第 4 場的線上檢查點沒有齊，最早退步還不能下結論。';
+ const fix=scale.separated
+  ?'尺度修正只在固定診斷樣本上另外記錄，沒有放進 B-original 或 B-retain。'
+  :'尺度修正這次沒有分開跑完。';
+ return (scale.judgment?.reason||'沒有尺度判斷')+'。'+earlyText+fix+'均方誤差下降沒有拿來判定更新有效。';
+}
+export function answerStability(summary){
+ const retain=summary?.arms?.retain;
+ const original=summary?.arms?.original;
+ if(!retain?.endpoint||!original?.endpoint)return '兩個版本沒有同時跑到事先登記的終點，所以還不能判斷穩定措施有沒有保留能力。';
+ const originalNote=original.surpass?.ok?' B-original 的終點也達到超越 A 的開發標準。':'';
+ if(retain.endpoint?.summary?.mean>0.5&&!retain.surpass?.ok){
+  return 'B-retain 的終點種子平均高於 50%，但還沒有同時滿足種子數和相對 0 次更新的配對差下限。這還不算超越凍結 A，也不安排確認。'+originalNote;
+ }
+ if(retain.surpass?.ok){
+  const confirm=summary.confirm?.retain;
+  if(!confirm||confirm.low==null)return 'B-retain 在開發終點有超越凍結 A 的證據，但確認對局沒有跑完，所以還不能建議更完整的獨立驗證。'+originalNote;
+  if(confirm.low>0.5)return 'B-retain 在開發終點超越凍結 A，確認種子的區間下限也高於 50%。依這次的規則可以安排更完整的獨立驗證。這仍然不是正式晉級。'+originalNote;
+  return 'B-retain 在開發終點超越凍結 A，但確認種子的區間下限沒有高於 50%。現在還不夠安排更完整的獨立驗證。'+originalNote;
+ }
+ if(retain.mitigation?.mitigated)return 'B-retain 相對 B-original 減輕了退步，開發終點對 A 的種子平均沒有高於 50%。這不能稱為自主變強，也不安排新種子確認。'+originalNote;
+ if(retain.mitigation?.inconclusive)return 'B-retain 和 B-original 的終點差距不穩定，不能說穩定措施保留了能力，也不能說它產生了額外改善。'+originalNote;
+ return 'B-retain 沒有減輕退步，也沒有超越凍結 A。穩定措施沒有被證明保留既有能力。'+originalNote;
+}
+function deltaLine(delta){
+ if(delta?.mean==null)return 'n/a';
+ const band=delta.low==null?'沒有區間':(delta.low*100).toFixed(1)+' 到 '+(delta.high*100).toFixed(1);
+ return (delta.mean*100).toFixed(1)+' 個百分點（'+band+'，'+delta.seeds+' 個種子）';
+}
+function distributionLine(label,profile){
+ if(!profile)return '- '+label+'：沒有樣本。';
+ const side=item=>item?.p50==null?'n/a':item.p50.toFixed(3)+'（'+item.min.toFixed(3)+' 到 '+item.max.toFixed(3)+'）';
+ return '- '+label+'：輸出中位數 '+side(profile.q)+'，回報中位數 '+side(profile.target)+'，絕對差中位數 '+side(profile.absGap)+'。';
+}
+function rankLine(label,ranking){
+ if(!ranking?.agreement)return '- '+label+'：沒有保留示範。';
+ const agreement=ranking.agreement;
+ return '- '+label+'：完全一致 '+ratePct(agreement.exactRate)+'，已證明 uid 複本 '+ratePct(agreement.uidRate)+
+  '，不一致 '+ratePct(agreement.disagreeRate)+'，教師動作排名中位數 '+(ranking.rank?.p50??'n/a')+
+  '，對其他動作的分數差中位數 '+(ranking.margin?.p50==null?'n/a':ranking.margin.p50.toFixed(3))+'。';
+}
+export function renderRound3(summary){
+ const bench=summary.bench||{};
+ const scale=summary.scale||{};
+ const arms=summary.arms||{};
+ const rows=[
+  '# 白劍神經網路第三輪',
+  '',
+  '接受第二輪的結果：所選 B 在新測試種子上弱於凍結 A。20 場到 80 場的回升是相對第一個檢查點，不是超越未訓練的起點。這一輪保留同一個網路和 Deep Monte-Carlo，只檢查更新接法，並對照固定比例的模仿回放。正式 v2、Hard Search 2、規則和網站都沒有改。',
+  '',
+  '紀錄時間：'+taipei(summary.createdAt)+'。',
+  '',
+  '## 兩個問題',
+  '',
+  '退步是否來自更新接法：'+answerConnection(summary),
+  '',
+  '穩定措施能否保留既有能力並產生額外改善：'+answerStability(summary),
+  '',
+  '## 事先登記的規則',
+  '',
+  '- 複本：'+COPY_RULE,
+  '- 尺度：'+SCALE_RULE,
+  '- 最早更新：'+EARLY_RULE,
+  '- 兩個版本：'+ARM_RULE,
+  '- 解讀：'+READ_RULE,
+  '- 晉級：'+PROMOTION_RULE,
+  '',
+  '折扣係數 '+summary.gamma+'。自我對戰學習率 '+summary.monteLr+'。回放比例 '+summary.replayFraction+'。探索率 '+summary.explore+'。標籤平滑 '+summary.smooth+'。這些數字在看這一輪的勝率之前就寫在程式裡。B-retain 的回放步使用同一個自我對戰優化器，沒有另設學習率。',
+  '',
+  ...linesOf('測速與預算',[
+   '- 神經網路對局：'+ms(bench.nnGame?.ms)+'，'+((bench.nnGame?.steps)??'n/a')+' 步，結果 '+(bench.nnGame?.status||'n/a')+'。',
+   '- 正式 v2 鏡像：'+ms(bench.v2Game?.ms)+'，'+((bench.v2Game?.steps)??'n/a')+' 步，結果 '+(bench.v2Game?.status||'n/a')+'。'+(bench.v2Finished?' 有打完。':' 沒有在測速期限內打完。'),
+   '- 牆鐘 '+ms(summary.plan?.wallMs)+'，估計 '+ms(summary.plan?.estimatedMs)+'，實際 '+ms(summary.elapsedMs)+'。',
+   '- 計畫：模仿 '+(summary.plan?.imitate??0)+'、每個版本自我對戰 '+(summary.plan?.self??0)+'、開發種子 '+(summary.plan?.devSeeds??0)+'、診斷場 '+(summary.plan?.diagGames??0)+'、確認種子 '+(summary.plan?.confirmSeeds??0)+'。',
+   '- 檢查點：'+JSON.stringify(summary.plan?.checks||[])+'。',
+   '- 比較是否排得進牆鐘：'+(summary.plan?.fits?'是':'否')+'。',
+   summary.resourceGap?('- 資源缺口：'+summary.resourceGap):'- 執行時沒有因勝率補場或改超參數。'
+  ]),
+  ...linesOf('複本與對稱',[
+   '- 權重、分數和動作與凍結 A 一致：'+(summary.copy?.match?'是':'否')+'。',
+   '- 四種組合的對稱：'+(summary.symmetry?.ok?'成立':'不成立')+'。配對 '+((summary.symmetry?.pairs)??0)+'，勝者相同 '+((summary.symmetry?.winnerMatch)??0)+'，行動相同 '+((summary.symmetry?.actionMatch)??0)+'/'+((summary.symmetry?.actionCompared)??0)+'，互補勝場 '+((summary.symmetry?.learnerHalf)??0)+'/'+((summary.symmetry?.decisive)??0)+'。',
+   '- 0 次更新對 A：'+seedPct(summary.zero)+'。'
+  ]),
+  ...linesOf('尺度診斷（與兩個訓練版本分開）',[
+   distributionLine('更新前',scale.before?.output),
+   rankLine('更新前的保留示範',scale.before?.ranking),
+   ...(scale.original?.marks||[]).flatMap(mark=>[
+    distributionLine('原始更新 '+mark.games+' 場後',mark.output),
+    rankLine('原始更新 '+mark.games+' 場後的保留示範',mark.ranking)
+   ]),
+   ...(scale.bounded?.marks||[]).flatMap(mark=>[
+    distributionLine('尺度修正 '+mark.games+' 場後',mark.output),
+    rankLine('尺度修正 '+mark.games+' 場後的保留示範',mark.ranking)
+   ]),
+   '- 尺度修正對 A，只用診斷用的少數開發種子：'+seedPct(scale.boundedEval)+'。這不是版本選擇，也不是確認測試。',
+   '- 尺度判斷：'+(scale.judgment?.reason||'n/a')+'。'
+  ]),
+  ...linesOf('B-original',[
+   '| 自我對戰 | 樣本 | 更新 | 保留示範完全一致 | 種子平均對 A |',
+   '|---|---|---|---|---|',
+   ...(arms.original?.curve||[]).map(point=>'| '+point.gamesPlayed+' | '+point.samples+' | '+point.monteUpdates+' | '+ratePct(point.ranking?.agreement?.exactRate)+' | '+seedPct(point.summary)+' |'),
+   '- 終點判斷：'+(arms.original?.surpass?.reason||(arms.original?.surpass?.ok?'達到超越 A 的開發標準':'沒有終點'))+'。',
+   '- 相對 0 次更新的配對差：'+deltaLine(arms.original?.surpass?.delta)+'。',
+   '- 終點先手：'+seedPct(arms.original?.first)+'。後手：'+seedPct(arms.original?.second)+'。'
+  ]),
+  ...linesOf('B-retain',[
+   '| 自我對戰 | 樣本 | 更新 | 回放步 | 保留示範完全一致 | 種子平均對 A |',
+   '|---|---|---|---|---|---|',
+   ...(arms.retain?.curve||[]).map(point=>'| '+point.gamesPlayed+' | '+point.samples+' | '+point.monteUpdates+' | '+(point.replaySteps??0)+' | '+ratePct(point.ranking?.agreement?.exactRate)+' | '+seedPct(point.summary)+' |'),
+   '- 終點判斷：'+(arms.retain?.surpass?.reason||(arms.retain?.surpass?.ok?'達到超越 A 的開發標準':'沒有終點'))+'。',
+   '- 相對 B-original 的終點配對差：'+deltaLine(arms.retain?.mitigation?.delta)+'。',
+   '- 相對 0 次更新的配對差：'+deltaLine(arms.retain?.surpass?.delta)+'。',
+   '- 終點先手：'+seedPct(arms.retain?.first)+'。後手：'+seedPct(arms.retain?.second)+'。'
+  ]),
+  ...linesOf('確認種子',[
+   summary.confirm?.ran
+    ?'- 有跑確認。B-retain：'+seedPct(summary.confirm.retain)+'。B-original：'+seedPct(summary.confirm.original)+'。'
+    :'- 沒有跑確認。'+(summary.confirm?.reason||'開發終點沒有超越凍結 A。'),
+   '- 189400–189411 只出現在開發評估，沒有當作這一輪的確認種子。'
+  ]),
+  ...linesOf('異常與耗時',[
+   '- 實驗對局異常：'+JSON.stringify(summary.anomalies||{}),
+   '- 探索步：'+((summary.explored)??0)+'。',
+   '- 決策耗時：'+JSON.stringify(summary.decisionTiming||null)
+  ]),
+  '## 結論',
+  '',
+  answerConnection(summary),
+  '',
+  answerStability(summary),
+  '',
+  '跑完預算不等於檢定力已經夠。沒有通過也不表示這個方法不可行。正式預設仍是 hard-search-2。這次權重沒有部署，晉級門檻沒有放寬。',
   ''
  ];
  return rows.join('\n');

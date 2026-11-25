@@ -26,3 +26,14 @@ export const TRAIN_RESERVE_MS=3*60*1000;
 export const BENCH_V2_MS=150000;
 export const MEMORY_WORKER_RSS=1.5*1024*1024*1024;
 export const WORKER_CAP=2;
+// Round 3 locks these before its games. They are not retuned from a win rate.
+export const REPLAY_FRACTION=0.5;
+export const ROUND3_WALL_MS=20*60*1000;
+export const EARLY_GAMES=Object.freeze([1,4]);
+export const DIAG_GAMES=4;
+export const ROUND3_SELF_CAP=32;
+export const ROUND3_DEV_CAP=12;
+export const ROUND3_CONFIRM_CAP=12;
+export const SCALE_EVAL_SEEDS=4;
+export const AGREEMENT_DROP=0.10;
+export const SURPASS_SEEDS=8;
