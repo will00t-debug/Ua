@@ -568,9 +568,14 @@ export function judgeRound5({plannedGames,finishedGames,unfinished,seeds,complet
 export function answerKlFix(diagnosis){
  const base='修正的是量測，不是第 80 場的權重。更新過程的混合平均把同一輪裡逐筆 Adam 步驟、因此也是不同 Actor 版本的 KL 加在一起。固定 Actor 的整批 KL 先停住一份權重，對同一批觀測和當時的合法動作重算完整分布，再跟保存的行為策略分布計算 KL。第四輪紀錄只留下各輪混合平均和有沒有提前停止，沒有留下每一輪自己的 KL、更新途中的權重，或每筆樣本。';
  if(diagnosis?.accepted){
-  return base+' 重播的總步數、決策數和每一批樣本數與第四輪紀錄一致，所以下面的固定 Actor KL 是用原種子和原快照還原的診斷。它不是當時寫進紀錄的監控數字，也不是新的訓練或新的評估樣本。原始樣本張量仍然沒有留在第四輪檔案裡，這次對上的是步數、決策數和樣本數。';
+  const rows=(diagnosis.batches||[]).filter(batch=>batch.fixed&&Number.isFinite(batch.recordedKl));
+  const higher=rows.filter(batch=>batch.fixed.mean>batch.recordedKl).length;
+  const compared=rows.length
+   ?'還原的 '+rows.length+' 批裡，有 '+higher+' 批的固定 Actor 樣本平均高於第四輪留下的混合平均，單筆最大也高於該批平均。0.02 因此不是這些批次的硬上界。每一輪各自的 KL 和更新途中的權重仍然沒有留下。'
+   :'';
+  return base+'重播的總步數、決策數和每一批樣本數與第四輪紀錄一致，所以下面的固定 Actor KL 是用原種子和原快照還原的診斷。它不是當時寫進紀錄的監控數字，也不是新的訓練或新的評估樣本。原始樣本張量仍然沒有留在第四輪檔案裡，這次對上的是步數、決策數和樣本數。'+compared;
  }
- return base+' 重播沒有對上第四輪紀錄的步數或樣本數，所以歷史批次的固定 Actor KL 不能還原。對不上的重播沒有拿來填這個數字。';
+ return base+'重播沒有對上第四輪紀錄的步數或樣本數，所以歷史批次的固定 Actor KL 不能還原。對不上的重播沒有拿來填這個數字。';
 }
 export function answerRound5Strength(judgment){
  if(!judgment||judgment.kind==='incomplete')return '評估未完成。未完成的對局沒有被當成勝負，也沒有用其餘場次宣布優於 A。';
