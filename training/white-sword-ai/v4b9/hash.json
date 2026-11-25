@@ -1,0 +1,1053 @@
+{
+  "checked": 5721,
+  "mismatched": 236,
+  "structural": 0,
+  "line": {
+    "front": "play|BLC-4-070||front",
+    "energy": "play|BLC-4-070||energy",
+    "frontBin": 2,
+    "energyBin": 7
+  },
+  "weights": [
+    {
+      "name": "h0",
+      "index": 0,
+      "weight": 0.3905451784838105,
+      "points": 2.343271070902863
+    },
+    {
+      "name": "h1",
+      "index": 1,
+      "weight": 0.4215169491148886,
+      "points": 2.5291016946893317
+    },
+    {
+      "name": "h2",
+      "index": 2,
+      "weight": 2.506231914235914,
+      "points": 15.037391485415485
+    },
+    {
+      "name": "h3",
+      "index": 3,
+      "weight": -1.398911607761616,
+      "points": -8.393469646569695
+    },
+    {
+      "name": "h4",
+      "index": 4,
+      "weight": -2.6502198790250167,
+      "points": -15.9013192741501
+    },
+    {
+      "name": "h5",
+      "index": 5,
+      "weight": 0.18754658752419953,
+      "points": 1.1252795251451972
+    },
+    {
+      "name": "h6",
+      "index": 6,
+      "weight": 1.498906941809557,
+      "points": 8.993441650857342
+    },
+    {
+      "name": "h7",
+      "index": 7,
+      "weight": -0.9556160843817549,
+      "points": -5.73369650629053
+    }
+  ],
+  "bins": [
+    {
+      "name": "h0",
+      "weight": 0.3905451784838105,
+      "points": 2.343271070902863,
+      "observed": [
+        {
+          "text": "attack|BLC-1-072||",
+          "count": 103
+        },
+        {
+          "text": "event|BLC-4-080||",
+          "count": 95
+        },
+        {
+          "text": "attack|BLC-1-083||",
+          "count": 74
+        },
+        {
+          "text": "chooseHandLimit|BLC-2-069||",
+          "count": 49
+        },
+        {
+          "text": "chooseTopCard||top|",
+          "count": 38
+        },
+        {
+          "text": "chooseDiscardGate|BLC-4-060||",
+          "count": 37
+        },
+        {
+          "text": "event|BLC-2-073||",
+          "count": 34
+        },
+        {
+          "text": "activate|BLC-4-060|restTwoMove|",
+          "count": 23
+        },
+        {
+          "text": "chooseHandLimit|BLC-4-070||",
+          "count": 23
+        },
+        {
+          "text": "chooseBlock|BLC-3-009||",
+          "count": 17
+        },
+        {
+          "text": "chooseDiscardGate|BLC-1-072||",
+          "count": 15
+        },
+        {
+          "text": "chooseDiscardGate|BLC-1-083||",
+          "count": 15
+        },
+        {
+          "text": "chooseTrigger|BLC-1-085|special|",
+          "count": 9
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-1-085||",
+          "count": 8
+        },
+        {
+          "text": "attack|BLC-4-060||",
+          "count": 6
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-4-066||",
+          "count": 4
+        },
+        {
+          "text": "chooseTrigger|BLC-3-008|active|",
+          "count": 4
+        },
+        {
+          "text": "chooseTrigger|BLC-4-066|color|energy",
+          "count": 4
+        },
+        {
+          "text": "chooseRestLock|BLC-3-009||",
+          "count": 3
+        },
+        {
+          "text": "chooseRetireBp|BLC-1-072||",
+          "count": 2
+        },
+        {
+          "text": "chooseTrigger|BLC-1-070|special|",
+          "count": 2
+        },
+        {
+          "text": "chooseOutsideRecovery|||",
+          "count": 1
+        },
+        {
+          "text": "chooseRaidLeave|BLC-3-009|pay|",
+          "count": 1
+        },
+        {
+          "text": "chooseRetireBp|BLC-1-083||",
+          "count": 1
+        },
+        {
+          "text": "chooseRetireBp|BLC-4-060||",
+          "count": 1
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRetireBp（向量沒有可還原的卡號）",
+          "count": 7
+        },
+        {
+          "text": "chooseTrigger（向量沒有可還原的卡號）",
+          "count": 5
+        },
+        {
+          "text": "chooseRestLock（向量沒有可還原的卡號）",
+          "count": 4
+        }
+      ],
+      "space": [
+        "raid|BLC-3-009||",
+        "attack|BLC-4-060||",
+        "activate|BLC-2-069||",
+        "activate|BLC-4-070||",
+        "attack|BLC-1-072||",
+        "attack|BLC-1-083||",
+        "play|BLC-2-073||energy",
+        "play|BLC-4-080||energy"
+      ]
+    },
+    {
+      "name": "h1",
+      "weight": 0.4215169491148886,
+      "points": 2.5291016946893317,
+      "observed": [
+        {
+          "text": "chooseHandLimit|BLC-4-060||",
+          "count": 89
+        },
+        {
+          "text": "move|BLC-1-083||",
+          "count": 80
+        },
+        {
+          "text": "attack|BLC-2-069||",
+          "count": 70
+        },
+        {
+          "text": "extraDraw|||",
+          "count": 65
+        },
+        {
+          "text": "attack|BLC-4-070||",
+          "count": 63
+        },
+        {
+          "text": "play|BLC-3-009||front",
+          "count": 57
+        },
+        {
+          "text": "chooseHandLimit|BLC-3-009||",
+          "count": 56
+        },
+        {
+          "text": "play|BLC-1-072||front",
+          "count": 50
+        },
+        {
+          "text": "chooseHandLimit|BLC-1-072||",
+          "count": 45
+        },
+        {
+          "text": "play|BLC-2-067||energy",
+          "count": 41
+        },
+        {
+          "text": "chooseTrigger|BLC-1-083|color|front",
+          "count": 25
+        },
+        {
+          "text": "play|BLC-3-008||energy",
+          "count": 20
+        },
+        {
+          "text": "chooseLineMove|||",
+          "count": 17
+        },
+        {
+          "text": "chooseDiscardGate|BLC-2-069||",
+          "count": 14
+        },
+        {
+          "text": "chooseTrigger|BLC-4-066|active|",
+          "count": 13
+        },
+        {
+          "text": "chooseTrigger|BLC-2-069|color|energy",
+          "count": 10
+        },
+        {
+          "text": "chooseDiscardGate|BLC-4-070||",
+          "count": 9
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-2-067||",
+          "count": 4
+        },
+        {
+          "text": "chooseRestTwo|BLC-1-083||",
+          "count": 3
+        },
+        {
+          "text": "chooseRetireBp|BLC-4-070||",
+          "count": 3
+        },
+        {
+          "text": "chooseTrigger|BLC-4-070|color|energy",
+          "count": 2
+        },
+        {
+          "text": "chooseOutsideRecovery|BLC-1-083||",
+          "count": 1
+        },
+        {
+          "text": "chooseRaidLeave||decline|",
+          "count": 1
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-3-008||",
+          "count": 1
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRestLock（向量沒有可還原的卡號）",
+          "count": 32
+        },
+        {
+          "text": "chooseRetireBp（向量沒有可還原的卡號）",
+          "count": 2
+        }
+      ],
+      "space": [
+        "play|BLC-3-009||front",
+        "activate|BLC-3-009||",
+        "activate|BLC-4-060||",
+        "play|BLC-2-067||energy",
+        "attack|BLC-2-069||",
+        "attack|BLC-4-070||",
+        "play|BLC-1-072||front",
+        "activate|BLC-1-072||",
+        "move|BLC-1-083||",
+        "play|BLC-3-008||energy"
+      ]
+    },
+    {
+      "name": "h2",
+      "weight": 2.506231914235914,
+      "points": 15.037391485415485,
+      "observed": [
+        {
+          "text": "attack|BLC-1-085||",
+          "count": 243
+        },
+        {
+          "text": "play|BLC-1-083||energy",
+          "count": 159
+        },
+        {
+          "text": "chooseApRecovery|||",
+          "count": 121
+        },
+        {
+          "text": "play|BLC-4-060||energy",
+          "count": 121
+        },
+        {
+          "text": "raid|BLC-1-070||",
+          "count": 106
+        },
+        {
+          "text": "play|BLC-4-070||front",
+          "count": 86
+        },
+        {
+          "text": "attack|BLC-4-066||",
+          "count": 66
+        },
+        {
+          "text": "chooseTopCard||bottom|",
+          "count": 38
+        },
+        {
+          "text": "chooseDiscardGate|BLC-2-073||",
+          "count": 28
+        },
+        {
+          "text": "chooseTrigger|BLC-2-069|active|",
+          "count": 18
+        },
+        {
+          "text": "chooseHandLimit|BLC-2-067||",
+          "count": 16
+        },
+        {
+          "text": "chooseBlock|BLC-1-070||",
+          "count": 13
+        },
+        {
+          "text": "chooseLineMove|BLC-1-072||",
+          "count": 13
+        },
+        {
+          "text": "chooseLineMove|BLC-3-009||",
+          "count": 10
+        },
+        {
+          "text": "chooseRestLock|BLC-1-070||",
+          "count": 10
+        },
+        {
+          "text": "chooseDiscardGate|BLC-4-066||",
+          "count": 9
+        },
+        {
+          "text": "chooseTrigger|BLC-1-072|color|energy",
+          "count": 8
+        },
+        {
+          "text": "raid|BLC-1-070||energy",
+          "count": 8
+        },
+        {
+          "text": "chooseDiscardGate|BLC-1-085||",
+          "count": 5
+        },
+        {
+          "text": "chooseRetireBp|BLC-1-085||",
+          "count": 4
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-1-083||",
+          "count": 4
+        },
+        {
+          "text": "move|BLC-3-008||",
+          "count": 4
+        },
+        {
+          "text": "chooseRaidLeave|BLC-4-080|pay|",
+          "count": 2
+        },
+        {
+          "text": "chooseTrigger|BLC-1-072|special|",
+          "count": 2
+        },
+        {
+          "text": "chooseTrigger|BLC-4-070|active|",
+          "count": 2
+        },
+        {
+          "text": "chooseRestTwo|BLC-3-008||",
+          "count": 1
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRestLock（向量沒有可還原的卡號）",
+          "count": 39
+        },
+        {
+          "text": "chooseTrigger（向量沒有可還原的卡號）",
+          "count": 2
+        },
+        {
+          "text": "chooseRetireBp（向量沒有可還原的卡號）",
+          "count": 2
+        }
+      ],
+      "space": [
+        "play|BLC-4-060||energy",
+        "attack|BLC-4-066||",
+        "activate|BLC-2-067||",
+        "play|BLC-4-070||front",
+        "raid|BLC-1-070||",
+        "play|BLC-1-083||energy",
+        "attack|BLC-1-085||",
+        "move|BLC-3-008||",
+        "attack|BLC-2-073||",
+        "raid|BLC-4-080||"
+      ]
+    },
+    {
+      "name": "h3",
+      "weight": -1.398911607761616,
+      "points": -8.393469646569695,
+      "observed": [
+        {
+          "text": "play|BLC-2-069||energy",
+          "count": 95
+        },
+        {
+          "text": "move|BLC-4-066||",
+          "count": 84
+        },
+        {
+          "text": "raid|BLC-2-067||",
+          "count": 74
+        },
+        {
+          "text": "chooseHandLimit|BLC-1-070||",
+          "count": 19
+        },
+        {
+          "text": "chooseDiscardGate|||",
+          "count": 18
+        },
+        {
+          "text": "chooseBlock|BLC-2-067||",
+          "count": 16
+        },
+        {
+          "text": "chooseHandLimit|BLC-1-085||",
+          "count": 16
+        },
+        {
+          "text": "chooseLineMove|BLC-2-069||",
+          "count": 16
+        },
+        {
+          "text": "chooseBlock|BLC-3-008||",
+          "count": 14
+        },
+        {
+          "text": "chooseTrigger|BLC-4-060|active|",
+          "count": 14
+        },
+        {
+          "text": "chooseRestLock|BLC-2-067||",
+          "count": 11
+        },
+        {
+          "text": "chooseTrigger|BLC-3-009|active|",
+          "count": 11
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-4-070||",
+          "count": 9
+        },
+        {
+          "text": "chooseTrigger|BLC-1-072|active|",
+          "count": 9
+        },
+        {
+          "text": "chooseRetireBp|||",
+          "count": 7
+        },
+        {
+          "text": "chooseSelfFront|||",
+          "count": 6
+        },
+        {
+          "text": "chooseTrigger|BLC-4-066|color|front",
+          "count": 5
+        },
+        {
+          "text": "chooseRestLock|BLC-3-008||",
+          "count": 4
+        },
+        {
+          "text": "chooseRaidLeave|BLC-4-070|pay|",
+          "count": 2
+        },
+        {
+          "text": "chooseRestTwo|BLC-4-066||",
+          "count": 2
+        },
+        {
+          "text": "chooseTrigger|BLC-2-067|special|",
+          "count": 1
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRestLock（向量沒有可還原的卡號）",
+          "count": 13
+        },
+        {
+          "text": "chooseTrigger（向量沒有可還原的卡號）",
+          "count": 10
+        }
+      ],
+      "space": [
+        "move|BLC-4-066||",
+        "raid|BLC-2-067||",
+        "play|BLC-2-069||energy",
+        "activate|BLC-1-070||",
+        "activate|BLC-1-085||",
+        "raid|BLC-3-008||",
+        "play|BLC-2-073||front",
+        "move|BLC-2-073||",
+        "play|BLC-4-080||front",
+        "move|BLC-4-080||"
+      ]
+    },
+    {
+      "name": "h4",
+      "weight": -2.6502198790250167,
+      "points": -15.9013192741501,
+      "observed": [
+        {
+          "text": "next|||",
+          "count": 398
+        },
+        {
+          "text": "play|BLC-4-066||energy",
+          "count": 103
+        },
+        {
+          "text": "attack|BLC-3-009||",
+          "count": 75
+        },
+        {
+          "text": "chooseTrigger||get|",
+          "count": 55
+        },
+        {
+          "text": "move|BLC-2-069||",
+          "count": 43
+        },
+        {
+          "text": "chooseBlock|BLC-1-083||",
+          "count": 28
+        },
+        {
+          "text": "chooseDiscardGate|BLC-3-009||",
+          "count": 28
+        },
+        {
+          "text": "chooseLineMove|BLC-4-066||",
+          "count": 27
+        },
+        {
+          "text": "play|BLC-2-067||front",
+          "count": 27
+        },
+        {
+          "text": "chooseBlock|BLC-1-072||",
+          "count": 24
+        },
+        {
+          "text": "play|BLC-3-008||front",
+          "count": 23
+        },
+        {
+          "text": "move|BLC-4-070||",
+          "count": 20
+        },
+        {
+          "text": "chooseTrigger||raid|energy",
+          "count": 17
+        },
+        {
+          "text": "chooseTrigger|BLC-2-067|active|",
+          "count": 14
+        },
+        {
+          "text": "chooseRestLock|BLC-1-072||",
+          "count": 7
+        },
+        {
+          "text": "chooseRestLock|BLC-1-083||",
+          "count": 5
+        },
+        {
+          "text": "chooseTrigger|BLC-2-069|color|front",
+          "count": 5
+        },
+        {
+          "text": "chooseTrigger|BLC-4-070|color|front",
+          "count": 5
+        },
+        {
+          "text": "play|BLC-1-085||energy",
+          "count": 5
+        },
+        {
+          "text": "chooseBlock|BLC-4-060||",
+          "count": 3
+        },
+        {
+          "text": "chooseRestLock|BLC-4-060||",
+          "count": 3
+        },
+        {
+          "text": "chooseLineMove|BLC-1-085||",
+          "count": 1
+        },
+        {
+          "text": "chooseOutsideRecovery|BLC-2-069||",
+          "count": 1
+        },
+        {
+          "text": "chooseRaidLeave|BLC-1-083|pay|",
+          "count": 1
+        },
+        {
+          "text": "chooseRaidLeave|BLC-4-060|pay|",
+          "count": 1
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRestLock（向量沒有可還原的卡號）",
+          "count": 23
+        },
+        {
+          "text": "chooseTrigger（向量沒有可還原的卡號）",
+          "count": 19
+        }
+      ],
+      "space": [
+        "attack|BLC-3-009||",
+        "raid|BLC-4-060||",
+        "play|BLC-4-066||energy",
+        "play|BLC-2-067||front",
+        "move|BLC-2-069||",
+        "move|BLC-4-070||",
+        "play|BLC-1-070||energy",
+        "raid|BLC-1-072||",
+        "raid|BLC-1-083||",
+        "play|BLC-1-085||energy",
+        "play|BLC-3-008||front"
+      ]
+    },
+    {
+      "name": "h5",
+      "weight": 0.18754658752419953,
+      "points": 1.1252795251451972,
+      "observed": [
+        {
+          "text": "chooseTrigger||skip|",
+          "count": 81
+        },
+        {
+          "text": "move|BLC-1-072||",
+          "count": 51
+        },
+        {
+          "text": "move|BLC-3-009||",
+          "count": 33
+        },
+        {
+          "text": "chooseBlock|BLC-2-069||",
+          "count": 21
+        },
+        {
+          "text": "chooseTrigger|BLC-1-085|active|",
+          "count": 17
+        },
+        {
+          "text": "play|BLC-1-083||front",
+          "count": 16
+        },
+        {
+          "text": "chooseBlock|BLC-4-070||",
+          "count": 10
+        },
+        {
+          "text": "chooseHandLimit|BLC-1-083||",
+          "count": 9
+        },
+        {
+          "text": "chooseTrigger|BLC-1-072|color|front",
+          "count": 8
+        },
+        {
+          "text": "chooseTrigger|BLC-1-070|active|",
+          "count": 5
+        },
+        {
+          "text": "chooseTrigger|BLC-4-070|special|",
+          "count": 4
+        },
+        {
+          "text": "chooseRestLock|BLC-2-069||",
+          "count": 3
+        },
+        {
+          "text": "chooseLineMove|BLC-3-008||",
+          "count": 2
+        },
+        {
+          "text": "chooseRaidLeave|BLC-2-067|pay|",
+          "count": 2
+        },
+        {
+          "text": "chooseRestLock|BLC-4-070||",
+          "count": 2
+        },
+        {
+          "text": "chooseRestTwo|BLC-1-072||",
+          "count": 2
+        },
+        {
+          "text": "chooseTopFilteredMany|||",
+          "count": 2
+        },
+        {
+          "text": "chooseOutsideRecovery|BLC-3-009||",
+          "count": 1
+        },
+        {
+          "text": "chooseRestTwo|BLC-3-009||",
+          "count": 1
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRestLock（向量沒有可還原的卡號）",
+          "count": 24
+        },
+        {
+          "text": "chooseRetireBp（向量沒有可還原的卡號）",
+          "count": 10
+        },
+        {
+          "text": "chooseTrigger（向量沒有可還原的卡號）",
+          "count": 7
+        }
+      ],
+      "space": [
+        "move|BLC-3-009||",
+        "play|BLC-4-060||front",
+        "move|BLC-4-060||",
+        "raid|BLC-2-069||",
+        "raid|BLC-4-070||",
+        "move|BLC-1-072||",
+        "play|BLC-1-083||front",
+        "activate|BLC-1-083||"
+      ]
+    },
+    {
+      "name": "h6",
+      "weight": 1.498906941809557,
+      "points": 8.993441650857342,
+      "observed": [
+        {
+          "text": "raid|BLC-1-085||",
+          "count": 219
+        },
+        {
+          "text": "chooseLineSlot|||",
+          "count": 159
+        },
+        {
+          "text": "play|BLC-3-009||energy",
+          "count": 83
+        },
+        {
+          "text": "attack|BLC-1-070||",
+          "count": 72
+        },
+        {
+          "text": "play|BLC-1-072||energy",
+          "count": 71
+        },
+        {
+          "text": "chooseBlock|BLC-1-085||",
+          "count": 37
+        },
+        {
+          "text": "chooseDiscardGate|BLC-4-080||",
+          "count": 36
+        },
+        {
+          "text": "play|BLC-2-069||front",
+          "count": 33
+        },
+        {
+          "text": "chooseDiscardGate|BLC-1-070||",
+          "count": 23
+        },
+        {
+          "text": "chooseLineMove|BLC-1-083||",
+          "count": 23
+        },
+        {
+          "text": "chooseRestLock|BLC-1-085||",
+          "count": 21
+        },
+        {
+          "text": "chooseHandLimit|BLC-3-008||",
+          "count": 18
+        },
+        {
+          "text": "chooseBlock|BLC-4-066||",
+          "count": 17
+        },
+        {
+          "text": "chooseTrigger|BLC-1-083|color|energy",
+          "count": 10
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-1-072||",
+          "count": 8
+        },
+        {
+          "text": "move|BLC-2-067||",
+          "count": 7
+        },
+        {
+          "text": "chooseRestLock|BLC-4-066||",
+          "count": 6
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-3-009||",
+          "count": 6
+        },
+        {
+          "text": "raid|BLC-1-085||energy",
+          "count": 5
+        },
+        {
+          "text": "chooseRaidLeave|BLC-1-070|pay|",
+          "count": 4
+        },
+        {
+          "text": "chooseRetireBp|BLC-1-070||",
+          "count": 4
+        },
+        {
+          "text": "chooseTrigger|BLC-1-083|special|",
+          "count": 2
+        },
+        {
+          "text": "chooseRestTwo|BLC-2-067||",
+          "count": 1
+        },
+        {
+          "text": "chooseTrigger||draw|",
+          "count": 1
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRestLock（向量沒有可還原的卡號）",
+          "count": 18
+        },
+        {
+          "text": "chooseTrigger（向量沒有可還原的卡號）",
+          "count": 7
+        },
+        {
+          "text": "chooseRetireBp（向量沒有可還原的卡號）",
+          "count": 5
+        }
+      ],
+      "space": [
+        "play|BLC-3-009||energy",
+        "raid|BLC-4-066||",
+        "move|BLC-2-067||",
+        "play|BLC-2-069||front",
+        "attack|BLC-1-070||",
+        "play|BLC-1-072||energy",
+        "raid|BLC-1-085||",
+        "activate|BLC-3-008||",
+        "raid|BLC-2-073||",
+        "attack|BLC-4-080||"
+      ]
+    },
+    {
+      "name": "h7",
+      "weight": -0.9556160843817549,
+      "points": -5.73369650629053,
+      "observed": [
+        {
+          "text": "chooseTrigger||raid|front",
+          "count": 101
+        },
+        {
+          "text": "play|BLC-4-070||energy",
+          "count": 95
+        },
+        {
+          "text": "chooseBlock|||",
+          "count": 80
+        },
+        {
+          "text": "attack|BLC-2-067||",
+          "count": 52
+        },
+        {
+          "text": "chooseHandLimit|BLC-4-080||",
+          "count": 51
+        },
+        {
+          "text": "chooseRestLock|||",
+          "count": 48
+        },
+        {
+          "text": "chooseHandLimit|BLC-2-073||",
+          "count": 41
+        },
+        {
+          "text": "attack|BLC-3-008||",
+          "count": 32
+        },
+        {
+          "text": "chooseTrigger|BLC-1-083|active|",
+          "count": 14
+        },
+        {
+          "text": "chooseDiscardGate|BLC-3-008||",
+          "count": 10
+        },
+        {
+          "text": "chooseDiscardGate|BLC-2-067||",
+          "count": 9
+        },
+        {
+          "text": "chooseHandLimit|BLC-4-066||",
+          "count": 9
+        },
+        {
+          "text": "chooseLineMove|BLC-4-070||",
+          "count": 9
+        },
+        {
+          "text": "chooseRestTwo|BLC-1-085||",
+          "count": 9
+        },
+        {
+          "text": "play|BLC-1-085||front",
+          "count": 8
+        },
+        {
+          "text": "play|BLC-4-066||front",
+          "count": 7
+        },
+        {
+          "text": "chooseRestTwo|BLC-1-070||",
+          "count": 5
+        },
+        {
+          "text": "chooseTopFilteredMany|BLC-2-069||",
+          "count": 4
+        },
+        {
+          "text": "chooseRetireBp|BLC-2-067||",
+          "count": 2
+        },
+        {
+          "text": "chooseTrigger|BLC-3-008|special|",
+          "count": 2
+        },
+        {
+          "text": "play|BLC-1-070||front",
+          "count": 2
+        },
+        {
+          "text": "raid|BLC-2-067||energy",
+          "count": 2
+        }
+      ],
+      "unresolved": [
+        {
+          "text": "chooseRetireBp（向量沒有可還原的卡號）",
+          "count": 5
+        },
+        {
+          "text": "chooseTrigger（向量沒有可還原的卡號）",
+          "count": 2
+        }
+      ],
+      "space": [
+        "play|BLC-4-066||front",
+        "activate|BLC-4-066||",
+        "attack|BLC-2-067||",
+        "play|BLC-4-070||energy",
+        "play|BLC-1-070||front",
+        "move|BLC-1-070||",
+        "play|BLC-1-085||front",
+        "move|BLC-1-085||",
+        "attack|BLC-3-008||",
+        "activate|BLC-2-073||",
+        "activate|BLC-4-080||"
+      ]
+    }
+  ]
+}

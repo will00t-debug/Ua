@@ -1,0 +1,33 @@
+{
+  "kind": "position-action",
+  "keepsRaid": false,
+  "raidRequired": true,
+  "status": "safe",
+  "objective": 2.8881144562087853,
+  "weights": [
+    {
+      "name": "line_front",
+      "before": 3.111747446210022,
+      "after": 1.611747446210022,
+      "delta": -1.5
+    },
+    {
+      "name": "line_energy",
+      "before": 2.6640525838570013,
+      "after": 3.5569289448276944,
+      "delta": 0.8928763609706929
+    },
+    {
+      "name": "hand_short",
+      "before": 0,
+      "after": 0.4952380952380927,
+      "delta": 0.4952380952380927
+    }
+  ],
+  "changed": [],
+  "adopted": false,
+  "recommended": false,
+  "promoted": false,
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "codeVersion": "v4b9-1"
+}
