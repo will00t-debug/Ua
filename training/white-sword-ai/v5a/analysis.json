@@ -1,0 +1,315 @@
+{
+  "official": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "codeVersion": "v5a-1",
+  "fitted": false,
+  "adopted": false,
+  "positions": 2156,
+  "pressure": {
+    "decisions": 2156,
+    "comparable": 2156,
+    "hashLarger": 615,
+    "hashFlips": 374,
+    "linePairs": 57,
+    "lineDominant": 57,
+    "hashLargerShare": 0.2852504638218924,
+    "flipShare": 0.17346938775510204,
+    "medianHashShare": 0.42876076566254473,
+    "lineHashShare": 0.8330644677158139,
+    "lineDominantShare": 1,
+    "lineHashMean": 13.404887878644466,
+    "lineOtherMean": 2.6861691741181315
+  },
+  "occupancy": {
+    "eight": {
+      "bins": 8,
+      "plays": 26,
+      "counts": [
+        2,
+        4,
+        3,
+        3,
+        5,
+        2,
+        3,
+        4
+      ],
+      "max": 5,
+      "shared": 8
+    },
+    "thirtyTwo": {
+      "bins": 32,
+      "plays": 26,
+      "counts": [
+        1,
+        2,
+        0,
+        1,
+        0,
+        1,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0,
+        1,
+        2,
+        0,
+        1,
+        1,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "max": 2,
+      "shared": 5
+    }
+  },
+  "collisions": {
+    "eight": {
+      "bins": 8,
+      "signatures": 186,
+      "used": 8,
+      "max": 26,
+      "shared": 8
+    },
+    "thirtyTwo": {
+      "bins": 32,
+      "signatures": 186,
+      "used": 32,
+      "max": 8,
+      "shared": 32
+    }
+  },
+  "structural": 0,
+  "unresolved": 249,
+  "checked": 6163,
+  "lineBins": {
+    "front070": {
+      "text": "play|BLC-4-070||front",
+      "bin": 2
+    },
+    "energy070": {
+      "text": "play|BLC-4-070||energy",
+      "bin": 7
+    },
+    "front085": {
+      "text": "play|BLC-1-085||front",
+      "bin": 7
+    },
+    "energy009": {
+      "text": "play|BLC-3-009||energy",
+      "bin": 6
+    },
+    "samePair": false,
+    "shares070": true
+  },
+  "candidateNames": [
+    "line_front",
+    "line_energy",
+    "hand_short"
+  ],
+  "candidateMovesHash": false,
+  "evidence": {
+    "prior": 8,
+    "tiers": {
+      "confirmed-preference": {
+        "count": 4,
+        "role": "constraint",
+        "weight": 0
+      },
+      "paired-inconclusive": {
+        "count": 12,
+        "role": "soft",
+        "weight": 0.5378051878686035
+      },
+      "screen-only": {
+        "count": 74,
+        "role": "hold-out",
+        "weight": 0
+      },
+      "confirmed-harm": {
+        "count": 1,
+        "role": "constraint",
+        "weight": 0
+      },
+      "short-check": {
+        "count": 5,
+        "role": "hold-out",
+        "weight": 0
+      }
+    },
+    "records": 96
+  },
+  "feature": "play|BLC-4-070||energy",
+  "featureCount": 1,
+  "leads": [
+    {
+      "id": "d12a2d6f5ced1d88",
+      "text": "已確認應改打能量線",
+      "lead": 17.177257165824145,
+      "steps": 2,
+      "missing": false
+    },
+    {
+      "id": "b122fb89d72eec7e",
+      "text": "已確認應改打能量線",
+      "lead": 19.55725716582412,
+      "steps": 3,
+      "missing": false
+    },
+    {
+      "id": "01c85e5ddb31e7fa",
+      "text": "已確認應改打能量線",
+      "lead": 16.95725716582413,
+      "steps": 2,
+      "missing": false
+    }
+  ],
+  "accumulation": {
+    "need": 3,
+    "maxSteps": 4,
+    "points": 27,
+    "fits": true,
+    "exposed": 77,
+    "flips": 40,
+    "outside": 37,
+    "preserve": [
+      {
+        "id": "ee6cdd154ceeb4ce",
+        "text": "已確認結束行動較好；結束動作沒有卡號，這輪只要求選擇不變",
+        "flipped": false,
+        "missing": false
+      },
+      {
+        "id": "0d035ea8a0b2be16",
+        "text": "已確認改選會變差，選擇必須留在 v2",
+        "flipped": false,
+        "missing": false
+      },
+      {
+        "id": "1fbdc61d55fa7f09",
+        "text": "067 突襲必須留在 v2",
+        "flipped": false,
+        "missing": false
+      }
+    ],
+    "preference": [
+      {
+        "id": "d12a2d6f5ced1d88",
+        "cleared": true
+      },
+      {
+        "id": "b122fb89d72eec7e",
+        "cleared": true
+      },
+      {
+        "id": "01c85e5ddb31e7fa",
+        "cleared": true
+      }
+    ]
+  },
+  "softPairs": [
+    66,
+    66,
+    66,
+    66,
+    66,
+    66,
+    66,
+    66,
+    66,
+    66,
+    66,
+    66
+  ],
+  "uses": [
+    {
+      "id": "d12a2d6f5ced1d88",
+      "source": "v4b4",
+      "kind": "confirm",
+      "confirmed": true,
+      "harm": false,
+      "mean": -0.19696969696969696,
+      "decisive": 27,
+      "pairs": 66,
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "tier": "confirmed-preference",
+      "role": "constraint",
+      "weight": null
+    },
+    {
+      "id": "b122fb89d72eec7e",
+      "source": "v4b7",
+      "kind": "confirm",
+      "confirmed": true,
+      "harm": false,
+      "mean": -0.24242424242424243,
+      "decisive": null,
+      "pairs": 66,
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "tier": "confirmed-preference",
+      "role": "constraint",
+      "weight": null
+    },
+    {
+      "id": "01c85e5ddb31e7fa",
+      "source": "v4b8",
+      "kind": "confirm",
+      "confirmed": true,
+      "harm": false,
+      "mean": -0.18181818181818182,
+      "decisive": null,
+      "pairs": 66,
+      "labelA": "把 BLC-4-070 打出到前線",
+      "labelB": "把 BLC-4-070 打出到能量線",
+      "tier": "confirmed-preference",
+      "role": "constraint",
+      "weight": null
+    },
+    {
+      "id": "ee6cdd154ceeb4ce",
+      "source": "v4b8",
+      "kind": "confirm",
+      "confirmed": true,
+      "harm": false,
+      "mean": -0.30303030303030304,
+      "decisive": null,
+      "pairs": 66,
+      "labelA": "起動 BLC-4-060",
+      "labelB": "結束行動",
+      "tier": "confirmed-preference",
+      "role": "constraint",
+      "weight": null
+    },
+    {
+      "id": "0d035ea8a0b2be16",
+      "source": "v4b9",
+      "kind": "validation",
+      "confirmed": true,
+      "harm": true,
+      "mean": 0.2727272727272727,
+      "decisive": 22,
+      "pairs": 66,
+      "labelA": "把 BLC-1-085 打出到前線",
+      "labelB": "把 BLC-3-009 打出到能量線",
+      "tier": "confirmed-harm",
+      "role": "constraint",
+      "weight": null
+    }
+  ]
+}
