@@ -92,3 +92,9 @@ node scripts/white-sword-nn.mjs trial
 ```bash
 node scripts/white-sword-nn-round3.mjs trial
 ```
+
+第四輪沿用凍結 A，把選牌偏好和終局回報分成 Actor 與 Critic，做固定預算的 PPO-Clip 對照。結果寫在 `docs/white-sword-ai/NN-ROUND4.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round4.mjs trial
+```

@@ -16,6 +16,7 @@ import {GAMMA,HISTORY,LOOP_LIMIT,MAX_STEPS,V2_DECISION_MS,V2_FILE_HASH} from './
 import {encodeDecision,joinFeatures,publicHistoryStep,sameVector,visibleIndex} from './encode.mjs';
 import {assignReturns} from './learn.mjs';
 import {greedyIndex,scoreActions} from './net.mjs';
+import {buildPpoSample,categorical,criticValue,sampleCategorical} from './ppo.mjs';
 
 const RULES=matchRules('official');
 const V2_PATH=fileURLToPath(new URL('../white-sword-ai/weights/v2-capped.json',import.meta.url));
@@ -76,17 +77,27 @@ function revealedCardId(pack,state,viewer,action){
  const card=index.get(action?.uid)||index.get(action?.baseUid)||null;
  return card?.faceDown&&!card.cardId?'':(card?.cardId||'');
 }
-function chooseNn(pack,state,actor,legal,net,history,explore,rng){
+function chooseNn(pack,state,actor,legal,net,history,explore,rng,critic,policy){
  const observation=observeActor(pack,state,actor);
  const encoded=encodeDecision(observation,actor,legal,history);
  const scores=scoreActions(net,encoded.state,encoded.actions);
+ if(policy==='softmax'){
+  if(explore)throw Error('softmax policy does not use epsilon-greedy');
+  const dist=categorical(Array.from(scores));
+  const index=sampleCategorical(dist.probs,rng);
+  const value=critic?criticValue(critic,encoded.state):null;
+  return {
+   action:legal[index],index,encoded,explored:false,source:'nn',policy:'softmax',
+   logProbs:dist.logProbs,value
+  };
+ }
  let index=greedyIndex(scores,legal);
  let explored=false;
  if(explore>0&&legal.length>1&&rng()<explore){
   index=Math.floor(rng()*legal.length);
   explored=true;
  }
- return {action:legal[index],index,encoded,explored,source:'nn'};
+ return {action:legal[index],index,encoded,explored,source:'nn',policy:'greedy'};
 }
 function chooseV2(pack,state,actor,legal,spec,step){
  const picked=chooseWhiteSwordAction(pack,state,{
@@ -110,7 +121,7 @@ export function playMatch(spec){
   seats:spec.seats.map(seat=>({deckId:seat.deckId,kind:seat.kind})),
   status:'error',winner:null,endReason:null,error:null,steps:0,decisions:0,
   ms:0,anomalies:emptyAnomalies(),collisions:0,explored:0,scored:0,
-  legalTotal:0,decisionMs:[],imitate:[],monte:[],actions:[],publicHistory:[]
+  legalTotal:0,decisionMs:[],imitate:[],monte:[],ppo:[],actions:[],publicHistory:[]
  };
  try{
   if(!Array.isArray(spec.seats)||spec.seats.length!==2)throw Error('A match needs two seats');
@@ -160,7 +171,10 @@ export function playMatch(spec){
    let picked;
    try{
     if(seat.kind==='nn'){
-     picked=chooseNn(packs,state,actor,legal,spec.nets[actor],history,seat.explore||0,rng);
+     picked=chooseNn(
+      packs,state,actor,legal,spec.nets[actor],history,seat.explore||0,rng,
+      spec.critics?.[actor]||null,seat.policy||'greedy'
+     );
     }else if(seat.kind==='v2'){
      picked=chooseV2(packs,state,actor,legal,spec,game.steps);
     }else throw Error('Unknown seat kind '+seat.kind);
@@ -194,10 +208,24 @@ export function playMatch(spec){
     game.scored++;
     if(picked.explored)game.explored++;
     if(record.has(actor)&&legal.length>1){
-     game.monte.push({
-      index:game.decisions,seat:actor,
-      x:joinFeatures(picked.encoded.state,picked.encoded.actions[picked.index])
-     });
+     if(picked.policy==='softmax'){
+      game.ppo.push(buildPpoSample({
+       state:picked.encoded.state,
+       actions:picked.encoded.actions,
+       chosen:picked.index,
+       logProbs:picked.logProbs,
+       value:picked.value,
+       behaviorVersion:spec.behaviorVersion,
+       behaviorUpdates:spec.behaviorUpdates,
+       seat:actor,
+       index:game.decisions
+      }));
+     }else{
+      game.monte.push({
+       index:game.decisions,seat:actor,
+       x:joinFeatures(picked.encoded.state,picked.encoded.actions[picked.index])
+      });
+     }
     }
    }
    if(spec.mode==='imitate'&&seat.kind==='v2'&&picked.source==='blend'&&legal.length>1){
@@ -261,8 +289,10 @@ export function playMatch(spec){
  if(!trainable(game)){
   game.imitate=[];
   game.monte=[];
- }else if(game.monte.length){
-  game.monte=assignReturns(game.monte,game.winner,game.decisions,GAMMA);
+  game.ppo=[];
+ }else{
+  if(game.monte.length)game.monte=assignReturns(game.monte,game.winner,game.decisions,GAMMA);
+  if(game.ppo.length)game.ppo=assignReturns(game.ppo,game.winner,game.decisions,GAMMA);
  }
  return game;
 }
@@ -275,7 +305,7 @@ export function compactGame(game){
   seats:game.seats,status:game.status,winner:game.winner,endReason:game.endReason,
   error:game.error,steps:game.steps,decisions:game.decisions,ms:game.ms,
   anomalies:{...game.anomalies},collisions:game.collisions,explored:game.explored,
-  imitate:game.imitate.length,monte:game.monte.length,
+  imitate:game.imitate.length,monte:game.monte.length,ppo:(game.ppo||[]).length,
   legalMean:game.scored?game.legalTotal/game.scored:null,
   timing:{n:times.length,mean:times.length?times.reduce((sum,value)=>sum+value,0)/times.length:null,p50:at(0.5),p95:at(0.95),max:sorted.length?sorted[sorted.length-1]:null}
  };

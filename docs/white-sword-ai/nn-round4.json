@@ -1,0 +1,5033 @@
+{
+  "createdAt": "2026-11-25T11:03:01.588Z",
+  "round": 4,
+  "gamma": 0.995,
+  "actorLr": 0.0003,
+  "criticLr": 0.001,
+  "clip": 0.2,
+  "epochs": 4,
+  "entropy": 0.01,
+  "klLimit": 0.02,
+  "batchGames": 8,
+  "parameters": {
+    "actor": 40257,
+    "critic": 35009
+  },
+  "bench": {
+    "rollout": {
+      "seed": 188500,
+      "first": 0,
+      "mode": "train",
+      "learnerSeat": null,
+      "seats": [
+        {
+          "deckId": "white-sword",
+          "kind": "nn"
+        },
+        {
+          "deckId": "white-sword",
+          "kind": "nn"
+        }
+      ],
+      "status": "finished",
+      "winner": 1,
+      "endReason": "life-zero",
+      "error": null,
+      "steps": 133,
+      "decisions": 133,
+      "ms": 1170.328953,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0,
+        "unfinished": 0
+      },
+      "collisions": 122,
+      "explored": 0,
+      "imitate": 0,
+      "monte": 0,
+      "ppo": 97,
+      "legalMean": 5.293233082706767,
+      "timing": {
+        "n": 133,
+        "mean": 0.9539466842105341,
+        "p50": 0.8252359999999044,
+        "p95": 1.8180190000000493,
+        "max": 6.403596999999991
+      }
+    },
+    "eval": {
+      "seed": 188500,
+      "first": 1,
+      "mode": "eval",
+      "learnerSeat": null,
+      "seats": [
+        {
+          "deckId": "white-sword",
+          "kind": "nn"
+        },
+        {
+          "deckId": "white-sword",
+          "kind": "nn"
+        }
+      ],
+      "status": "finished",
+      "winner": 1,
+      "endReason": "life-zero",
+      "error": null,
+      "steps": 194,
+      "decisions": 194,
+      "ms": 437.8085580000002,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0,
+        "unfinished": 0
+      },
+      "collisions": 368,
+      "explored": 0,
+      "imitate": 0,
+      "monte": 0,
+      "ppo": 0,
+      "legalMean": 6.845360824742268,
+      "timing": {
+        "n": 194,
+        "mean": 0.6713904742268039,
+        "p50": 0.5942049999998744,
+        "p95": 1.3996369999999843,
+        "max": 1.9884700000000066
+      }
+    },
+    "v2": {
+      "seed": 188501,
+      "first": 0,
+      "mode": "train",
+      "learnerSeat": 0,
+      "seats": [
+        {
+          "deckId": "white-sword",
+          "kind": "nn"
+        },
+        {
+          "deckId": "white-sword",
+          "kind": "v2"
+        }
+      ],
+      "status": "finished",
+      "winner": 1,
+      "endReason": "life-zero",
+      "error": null,
+      "steps": 148,
+      "decisions": 148,
+      "ms": 3045.845917,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0,
+        "unfinished": 0
+      },
+      "collisions": 127,
+      "explored": 0,
+      "imitate": 0,
+      "monte": 0,
+      "ppo": 55,
+      "legalMean": 6.763888888888889,
+      "timing": {
+        "n": 148,
+        "mean": 18.874157310810805,
+        "p50": 0.8343860000004497,
+        "p95": 83.24116000000004,
+        "max": 107.73653099999956
+      }
+    },
+    "v2Finished": true,
+    "rolloutFinished": true,
+    "updateMs": 6953.197128,
+    "rssMb": 371,
+    "workers": 2
+  },
+  "plan": {
+    "batches": 12,
+    "batchGames": 8,
+    "games": 96,
+    "devSeeds": 12,
+    "confirmSeeds": 12,
+    "devGames": 48,
+    "confirmGames": 48,
+    "checks": [
+      0,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96
+    ],
+    "kinds": [
+      "self",
+      "self",
+      "v2",
+      "self",
+      "snapshot",
+      "v2",
+      "self",
+      "snapshot",
+      "v2",
+      "self",
+      "snapshot",
+      "v2"
+    ],
+    "workers": 2,
+    "wallMs": 1194416.792382,
+    "safety": 1.4,
+    "trainReserve": 180000,
+    "estimatedMs": 623416.5430688001,
+    "rolloutMs": 1170.328953,
+    "evalMs": 437.8085580000002,
+    "v2Ms": 3045.845917,
+    "updateMs": 6953.197128,
+    "v2Finished": true,
+    "fits": true
+  },
+  "checks": {
+    "copy": true,
+    "criticIsolated": true,
+    "valueNotInScores": true,
+    "ratioAtOne": true,
+    "symmetry": {
+      "pairs": 24,
+      "winnerMatch": 24,
+      "actionMatch": 24,
+      "actionCompared": 24,
+      "missing": 0,
+      "decisive": 24,
+      "learnerHalf": 24,
+      "ok": true,
+      "problems": []
+    }
+  },
+  "curve": [
+    {
+      "gamesPlayed": 0,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.5,
+        "low": 0.5,
+        "high": 0.5,
+        "se": 0
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.375,
+        "low": 0.23275679537720043,
+        "high": 0.5172432046227996,
+        "se": 0.06527912098338669
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.625,
+        "low": 0.4827567953772004,
+        "high": 0.7672432046227996,
+        "se": 0.06527912098338669
+      },
+      "unfinished": [],
+      "actorObjective": null,
+      "criticMse": null,
+      "kl": null,
+      "entropy": null,
+      "clippedRate": null,
+      "klStopped": false,
+      "actorUpdates": 0,
+      "criticUpdates": 0,
+      "distance": 0
+    },
+    {
+      "gamesPlayed": 8,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          }
+        ],
+        "mean": 0.4791666666666667,
+        "low": 0.4337708333333333,
+        "high": 0.5245625,
+        "se": 0.020833333333333332
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.375,
+        "low": 0.23275679537720043,
+        "high": 0.5172432046227996,
+        "se": 0.06527912098338669
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          }
+        ],
+        "mean": 0.5833333333333334,
+        "low": 0.40175000000000005,
+        "high": 0.7649166666666667,
+        "se": 0.08333333333333334
+      },
+      "unfinished": [],
+      "actorObjective": -0.018107612926357847,
+      "criticMse": 0.12498973516436106,
+      "kl": 0.020543747871645108,
+      "entropy": 0.8321670540052286,
+      "clippedRate": 0.08095238095238096,
+      "klStopped": true,
+      "epochs": 2,
+      "zeroVariance": false,
+      "actorUpdates": 1680,
+      "criticUpdates": 1680,
+      "distance": 0.706172030466138
+    },
+    {
+      "gamesPlayed": 16,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          }
+        ],
+        "mean": 0.4583333333333333,
+        "low": 0.36754166666666666,
+        "high": 0.549125,
+        "se": 0.041666666666666664
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.375,
+        "low": 0.23275679537720043,
+        "high": 0.5172432046227996,
+        "se": 0.06527912098338669
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          }
+        ],
+        "mean": 0.5416666666666666,
+        "low": 0.33139747179526213,
+        "high": 0.7519358615380711,
+        "se": 0.09649802426406816
+      },
+      "unfinished": [],
+      "actorObjective": -0.002774168472565933,
+      "criticMse": 0.04361770221421307,
+      "kl": 0.016922952393857174,
+      "entropy": 0.8593332371416946,
+      "clippedRate": 0.08521611001964638,
+      "klStopped": true,
+      "epochs": 4,
+      "zeroVariance": false,
+      "actorUpdates": 5752,
+      "criticUpdates": 5752,
+      "distance": 1.3484605877311207
+    },
+    {
+      "gamesPlayed": 24,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          }
+        ],
+        "mean": 0.4791666666666667,
+        "low": 0.3981911603021031,
+        "high": 0.5601421730312303,
+        "se": 0.0371617743756602
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.3333333333333333,
+        "low": 0.17847854635370827,
+        "high": 0.48818812031295833,
+        "se": 0.07106690545187015
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          }
+        ],
+        "mean": 0.625,
+        "low": 0.42950541427128364,
+        "high": 0.8204945857287164,
+        "se": 0.08971757032065918
+      },
+      "unfinished": [],
+      "actorObjective": -0.007260959901060142,
+      "criticMse": 0.05177453984671886,
+      "kl": 0.018928100496834653,
+      "entropy": 0.8629714040680161,
+      "clippedRate": 0.08029978586723768,
+      "klStopped": true,
+      "epochs": 2,
+      "zeroVariance": false,
+      "actorUpdates": 6686,
+      "criticUpdates": 6686,
+      "distance": 1.4408100813170919
+    },
+    {
+      "gamesPlayed": 32,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          }
+        ],
+        "mean": 0.5416666666666666,
+        "low": 0.45087499999999997,
+        "high": 0.6324583333333333,
+        "se": 0.041666666666666664
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          }
+        ],
+        "mean": 0.375,
+        "low": 0.17950541427128366,
+        "high": 0.5704945857287164,
+        "se": 0.08971757032065918
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.7083333333333334,
+        "low": 0.5463823206042062,
+        "high": 0.8702843460624605,
+        "se": 0.0743235487513204
+      },
+      "unfinished": [],
+      "actorObjective": -0.009631783964955381,
+      "criticMse": 0.10143775404201599,
+      "kl": 0.018965263475810117,
+      "entropy": 0.84447241533307,
+      "clippedRate": 0.09213917525773195,
+      "klStopped": true,
+      "epochs": 2,
+      "zeroVariance": false,
+      "actorUpdates": 8238,
+      "criticUpdates": 8238,
+      "distance": 1.6543870692327827
+    },
+    {
+      "gamesPlayed": 40,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.5,
+        "low": 0.38385890976528125,
+        "high": 0.6161410902347187,
+        "se": 0.053300179088902604
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          }
+        ],
+        "mean": 0.4583333333333333,
+        "low": 0.2963823206042062,
+        "high": 0.6202843460624604,
+        "se": 0.0743235487513204
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          }
+        ],
+        "mean": 0.5416666666666666,
+        "low": 0.33139747179526213,
+        "high": 0.7519358615380711,
+        "se": 0.09649802426406816
+      },
+      "unfinished": [],
+      "actorObjective": 0.008631213128404579,
+      "criticMse": 0.07019373620394675,
+      "kl": 0.017050347775091984,
+      "entropy": 0.825723366583969,
+      "clippedRate": 0.10029498525073748,
+      "klStopped": true,
+      "epochs": 3,
+      "zeroVariance": false,
+      "actorUpdates": 9594,
+      "criticUpdates": 9594,
+      "distance": 1.7488666251408838
+    },
+    {
+      "gamesPlayed": 48,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          }
+        ],
+        "mean": 0.4791666666666667,
+        "low": 0.3544688939321993,
+        "high": 0.603864439401134,
+        "se": 0.05722706412779594
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.4583333333333333,
+        "low": 0.36754166666666666,
+        "high": 0.549125,
+        "se": 0.04166666666666666
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          }
+        ],
+        "mean": 0.5,
+        "low": 0.3103423938362672,
+        "high": 0.6896576061637327,
+        "se": 0.08703882797784893
+      },
+      "unfinished": [],
+      "actorObjective": 0.01792933176713403,
+      "criticMse": 0.05392419609607455,
+      "kl": 0.015173987536680663,
+      "entropy": 0.9222659585105419,
+      "clippedRate": 0.11144278606965174,
+      "klStopped": true,
+      "epochs": 3,
+      "zeroVariance": false,
+      "actorUpdates": 10599,
+      "criticUpdates": 10599,
+      "distance": 1.9202679313035016
+    },
+    {
+      "gamesPlayed": 56,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          }
+        ],
+        "mean": 0.4791666666666667,
+        "low": 0.3544688939321993,
+        "high": 0.603864439401134,
+        "se": 0.05722706412779594
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          }
+        ],
+        "mean": 0.3333333333333333,
+        "low": 0.1284797054953479,
+        "high": 0.5381869611713187,
+        "se": 0.09401267913629437
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.625,
+        "low": 0.42950541427128364,
+        "high": 0.8204945857287164,
+        "se": 0.08971757032065918
+      },
+      "unfinished": [],
+      "actorObjective": -0.005740759534552028,
+      "criticMse": 0.055837798939323974,
+      "kl": 0.015457313764936816,
+      "entropy": 0.8364099608417512,
+      "clippedRate": 0.08582834331337326,
+      "klStopped": true,
+      "epochs": 3,
+      "zeroVariance": false,
+      "actorUpdates": 13104,
+      "criticUpdates": 13104,
+      "distance": 2.9806935090703397
+    },
+    {
+      "gamesPlayed": 64,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          }
+        ],
+        "mean": 0.4166666666666667,
+        "low": 0.29424320830771633,
+        "high": 0.539090125025617,
+        "se": 0.05618332187193683
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189403,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.2916666666666667,
+        "low": 0.12971565393753956,
+        "high": 0.4536176793957938,
+        "se": 0.0743235487513204
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          }
+        ],
+        "mean": 0.5416666666666666,
+        "low": 0.33139747179526213,
+        "high": 0.7519358615380711,
+        "se": 0.09649802426406817
+      },
+      "unfinished": [],
+      "actorObjective": -0.006139956497844324,
+      "criticMse": 0.0653858085943853,
+      "kl": 0.01981417159150548,
+      "entropy": 1.0371530775151894,
+      "clippedRate": 0.0944976076555024,
+      "klStopped": true,
+      "epochs": 2,
+      "zeroVariance": false,
+      "actorUpdates": 13940,
+      "criticUpdates": 13940,
+      "distance": 3.379511644783938
+    },
+    {
+      "gamesPlayed": 72,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189401,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          }
+        ],
+        "mean": 0.5208333333333334,
+        "low": 0.396135560598866,
+        "high": 0.6455311060678007,
+        "se": 0.05722706412779594
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189408,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          }
+        ],
+        "mean": 0.4583333333333333,
+        "low": 0.2963823206042062,
+        "high": 0.6202843460624604,
+        "se": 0.0743235487513204
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          }
+        ],
+        "mean": 0.5833333333333334,
+        "low": 0.40175000000000005,
+        "high": 0.7649166666666667,
+        "se": 0.08333333333333333
+      },
+      "unfinished": [],
+      "actorObjective": 0.013405274845486625,
+      "criticMse": 0.0365854778580049,
+      "kl": 0.018045483259273704,
+      "entropy": 1.001877726534784,
+      "clippedRate": 0.11605584642233857,
+      "klStopped": true,
+      "epochs": 3,
+      "zeroVariance": false,
+      "actorUpdates": 15086,
+      "criticUpdates": 15086,
+      "distance": 3.76130218340892
+    },
+    {
+      "gamesPlayed": 80,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.6041666666666666,
+        "low": 0.4475076853764889,
+        "high": 0.7608256479568444,
+        "se": 0.07189489733372086
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.5416666666666666,
+        "low": 0.33139747179526213,
+        "high": 0.7519358615380711,
+        "se": 0.09649802426406816
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.6666666666666666,
+        "low": 0.5118118796870416,
+        "high": 0.8215214536462917,
+        "se": 0.07106690545187015
+      },
+      "unfinished": [],
+      "actorObjective": -0.013698238500737628,
+      "criticMse": 0.08026907549253243,
+      "kl": 0.015550834166165357,
+      "entropy": 0.9585337730699441,
+      "clippedRate": 0.09216255442670537,
+      "klStopped": true,
+      "epochs": 2,
+      "zeroVariance": false,
+      "actorUpdates": 16464,
+      "criticUpdates": 16464,
+      "distance": 3.961231386231209
+    },
+    {
+      "gamesPlayed": 88,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          }
+        ],
+        "mean": 0.5416666666666666,
+        "low": 0.35399505875026044,
+        "high": 0.7293382745830728,
+        "se": 0.0861274015219854
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.5,
+        "low": 0.2677178195305625,
+        "high": 0.7322821804694375,
+        "se": 0.10660035817780521
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          }
+        ],
+        "mean": 0.5833333333333334,
+        "low": 0.3575956299421559,
+        "high": 0.8090710367245109,
+        "se": 0.10359692675134351
+      },
+      "unfinished": [],
+      "actorObjective": 0.004778239491651354,
+      "criticMse": 0.07976201476022637,
+      "kl": 0.014990761599068364,
+      "entropy": 0.992419351030439,
+      "clippedRate": 0.07084265473527218,
+      "klStopped": true,
+      "epochs": 3,
+      "zeroVariance": false,
+      "actorUpdates": 17805,
+      "criticUpdates": 17805,
+      "distance": 4.148924930068434
+    },
+    {
+      "gamesPlayed": 96,
+      "summary": {
+        "seeds": 12,
+        "games": 48,
+        "finished": 48,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189401,
+            "wins": 0,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189402,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189406,
+            "wins": 2,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.25
+          },
+          {
+            "seed": 189409,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          },
+          {
+            "seed": 189410,
+            "wins": 4,
+            "n": 4,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 3,
+            "n": 4,
+            "unfinished": 0,
+            "p": 0.75
+          }
+        ],
+        "mean": 0.5833333333333334,
+        "low": 0.3677845922436357,
+        "high": 0.798882074423031,
+        "se": 0.09892094588788329
+      },
+      "first": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189401,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189405,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189409,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          }
+        ],
+        "mean": 0.5416666666666666,
+        "low": 0.29227112119773196,
+        "high": 0.7910622121356012,
+        "se": 0.11445412825559187
+      },
+      "second": {
+        "seeds": 12,
+        "games": 24,
+        "finished": 24,
+        "rows": [
+          {
+            "seed": 189400,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189401,
+            "wins": 0,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0
+          },
+          {
+            "seed": 189402,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189403,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189404,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189405,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189406,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189407,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189408,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          },
+          {
+            "seed": 189409,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189410,
+            "wins": 2,
+            "n": 2,
+            "unfinished": 0,
+            "p": 1
+          },
+          {
+            "seed": 189411,
+            "wins": 1,
+            "n": 2,
+            "unfinished": 0,
+            "p": 0.5
+          }
+        ],
+        "mean": 0.625,
+        "low": 0.38792799229533403,
+        "high": 0.862072007704666,
+        "se": 0.10879853497231115
+      },
+      "unfinished": [],
+      "actorObjective": 0.007397209797773365,
+      "criticMse": 0.044966997068212305,
+      "kl": 0.016268125928165594,
+      "entropy": 1.0821046331158044,
+      "clippedRate": 0.10926365795724466,
+      "klStopped": true,
+      "epochs": 4,
+      "zeroVariance": false,
+      "actorUpdates": 19489,
+      "criticUpdates": 19489,
+      "distance": 4.3525302035392945
+    }
+  ],
+  "train": {
+    "steps": 14047,
+    "decisions": 14047,
+    "games": 96,
+    "finished": 96,
+    "unfinished": [],
+    "actorUpdates": 19489,
+    "criticUpdates": 19489,
+    "batches": [
+      {
+        "batch": 0,
+        "kind": "self",
+        "samples": 840,
+        "actorObjective": -0.018107612926357847,
+        "criticMse": 0.12498973516436106,
+        "kl": 0.020543747871645108,
+        "entropy": 0.8321670540052286,
+        "clippedRate": 0.08095238095238096,
+        "klStopped": true,
+        "epochs": 2,
+        "zeroVariance": false
+      },
+      {
+        "batch": 1,
+        "kind": "self",
+        "samples": 1018,
+        "actorObjective": -0.002774168472565933,
+        "criticMse": 0.04361770221421307,
+        "kl": 0.016922952393857174,
+        "entropy": 0.8593332371416946,
+        "clippedRate": 0.08521611001964638,
+        "klStopped": true,
+        "epochs": 4,
+        "zeroVariance": false
+      },
+      {
+        "batch": 2,
+        "kind": "v2",
+        "samples": 467,
+        "actorObjective": -0.007260959901060142,
+        "criticMse": 0.05177453984671886,
+        "kl": 0.018928100496834653,
+        "entropy": 0.8629714040680161,
+        "clippedRate": 0.08029978586723768,
+        "klStopped": true,
+        "epochs": 2,
+        "zeroVariance": false
+      },
+      {
+        "batch": 3,
+        "kind": "self",
+        "samples": 776,
+        "actorObjective": -0.009631783964955381,
+        "criticMse": 0.10143775404201599,
+        "kl": 0.018965263475810117,
+        "entropy": 0.84447241533307,
+        "clippedRate": 0.09213917525773195,
+        "klStopped": true,
+        "epochs": 2,
+        "zeroVariance": false
+      },
+      {
+        "batch": 4,
+        "kind": "snapshot",
+        "samples": 452,
+        "actorObjective": 0.008631213128404579,
+        "criticMse": 0.07019373620394675,
+        "kl": 0.017050347775091984,
+        "entropy": 0.825723366583969,
+        "clippedRate": 0.10029498525073748,
+        "klStopped": true,
+        "epochs": 3,
+        "zeroVariance": false
+      },
+      {
+        "batch": 5,
+        "kind": "v2",
+        "samples": 335,
+        "actorObjective": 0.01792933176713403,
+        "criticMse": 0.05392419609607455,
+        "kl": 0.015173987536680663,
+        "entropy": 0.9222659585105419,
+        "clippedRate": 0.11144278606965174,
+        "klStopped": true,
+        "epochs": 3,
+        "zeroVariance": false
+      },
+      {
+        "batch": 6,
+        "kind": "self",
+        "samples": 835,
+        "actorObjective": -0.005740759534552028,
+        "criticMse": 0.055837798939323974,
+        "kl": 0.015457313764936816,
+        "entropy": 0.8364099608417512,
+        "clippedRate": 0.08582834331337326,
+        "klStopped": true,
+        "epochs": 3,
+        "zeroVariance": false
+      },
+      {
+        "batch": 7,
+        "kind": "snapshot",
+        "samples": 418,
+        "actorObjective": -0.006139956497844324,
+        "criticMse": 0.0653858085943853,
+        "kl": 0.01981417159150548,
+        "entropy": 1.0371530775151894,
+        "clippedRate": 0.0944976076555024,
+        "klStopped": true,
+        "epochs": 2,
+        "zeroVariance": false
+      },
+      {
+        "batch": 8,
+        "kind": "v2",
+        "samples": 382,
+        "actorObjective": 0.013405274845486625,
+        "criticMse": 0.0365854778580049,
+        "kl": 0.018045483259273704,
+        "entropy": 1.001877726534784,
+        "clippedRate": 0.11605584642233857,
+        "klStopped": true,
+        "epochs": 3,
+        "zeroVariance": false
+      },
+      {
+        "batch": 9,
+        "kind": "self",
+        "samples": 689,
+        "actorObjective": -0.013698238500737628,
+        "criticMse": 0.08026907549253243,
+        "kl": 0.015550834166165357,
+        "entropy": 0.9585337730699441,
+        "clippedRate": 0.09216255442670537,
+        "klStopped": true,
+        "epochs": 2,
+        "zeroVariance": false
+      },
+      {
+        "batch": 10,
+        "kind": "snapshot",
+        "samples": 447,
+        "actorObjective": 0.004778239491651354,
+        "criticMse": 0.07976201476022637,
+        "kl": 0.014990761599068364,
+        "entropy": 0.992419351030439,
+        "clippedRate": 0.07084265473527218,
+        "klStopped": true,
+        "epochs": 3,
+        "zeroVariance": false
+      },
+      {
+        "batch": 11,
+        "kind": "v2",
+        "samples": 421,
+        "actorObjective": 0.007397209797773365,
+        "criticMse": 0.044966997068212305,
+        "kl": 0.016268125928165594,
+        "entropy": 1.0821046331158044,
+        "clippedRate": 0.10926365795724466,
+        "klStopped": true,
+        "epochs": 4,
+        "zeroVariance": false
+      }
+    ]
+  },
+  "evalUnfinished": [],
+  "selected": {
+    "gamesPlayed": 80,
+    "summary": {
+      "seeds": 12,
+      "games": 48,
+      "finished": 48,
+      "rows": [
+        {
+          "seed": 189400,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189401,
+          "wins": 1,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.25
+        },
+        {
+          "seed": 189402,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189403,
+          "wins": 4,
+          "n": 4,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189404,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189405,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189406,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189407,
+          "wins": 4,
+          "n": 4,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189408,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189409,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189410,
+          "wins": 4,
+          "n": 4,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189411,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        }
+      ],
+      "mean": 0.6041666666666666,
+      "low": 0.4475076853764889,
+      "high": 0.7608256479568444,
+      "se": 0.07189489733372086
+    },
+    "surpass": {
+      "ok": false,
+      "mean": 0.6041666666666666,
+      "seeds": 12,
+      "delta": {
+        "seeds": 12,
+        "mean": 0.10416666666666667,
+        "low": -0.05249231462351102,
+        "high": 0.2608256479568444,
+        "rows": [
+          {
+            "seed": 189400,
+            "delta": 0
+          },
+          {
+            "seed": 189401,
+            "delta": -0.25
+          },
+          {
+            "seed": 189402,
+            "delta": 0
+          },
+          {
+            "seed": 189403,
+            "delta": 0.5
+          },
+          {
+            "seed": 189404,
+            "delta": 0
+          },
+          {
+            "seed": 189405,
+            "delta": 0
+          },
+          {
+            "seed": 189406,
+            "delta": 0
+          },
+          {
+            "seed": 189407,
+            "delta": 0.5
+          },
+          {
+            "seed": 189408,
+            "delta": 0
+          },
+          {
+            "seed": 189409,
+            "delta": 0
+          },
+          {
+            "seed": 189410,
+            "delta": 0.5
+          },
+          {
+            "seed": 189411,
+            "delta": 0
+          }
+        ]
+      },
+      "reason": "終點沒有同時具備至少 8 個種子、種子平均高於 50%，以及相對 0 次更新的配對差下限高於 0"
+    }
+  },
+  "endpoint": {
+    "gamesPlayed": 96,
+    "summary": {
+      "seeds": 12,
+      "games": 48,
+      "finished": 48,
+      "rows": [
+        {
+          "seed": 189400,
+          "wins": 1,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.25
+        },
+        {
+          "seed": 189401,
+          "wins": 0,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0
+        },
+        {
+          "seed": 189402,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189403,
+          "wins": 4,
+          "n": 4,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189404,
+          "wins": 3,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.75
+        },
+        {
+          "seed": 189405,
+          "wins": 1,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.25
+        },
+        {
+          "seed": 189406,
+          "wins": 2,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189407,
+          "wins": 4,
+          "n": 4,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189408,
+          "wins": 1,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.25
+        },
+        {
+          "seed": 189409,
+          "wins": 3,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.75
+        },
+        {
+          "seed": 189410,
+          "wins": 4,
+          "n": 4,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189411,
+          "wins": 3,
+          "n": 4,
+          "unfinished": 0,
+          "p": 0.75
+        }
+      ],
+      "mean": 0.5833333333333334,
+      "low": 0.3677845922436357,
+      "high": 0.798882074423031,
+      "se": 0.09892094588788329
+    },
+    "first": {
+      "seeds": 12,
+      "games": 24,
+      "finished": 24,
+      "rows": [
+        {
+          "seed": 189400,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189401,
+          "wins": 0,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0
+        },
+        {
+          "seed": 189402,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189403,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189404,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189405,
+          "wins": 0,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0
+        },
+        {
+          "seed": 189406,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189407,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189408,
+          "wins": 0,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0
+        },
+        {
+          "seed": 189409,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189410,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189411,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        }
+      ],
+      "mean": 0.5416666666666666,
+      "low": 0.29227112119773196,
+      "high": 0.7910622121356012,
+      "se": 0.11445412825559187
+    },
+    "second": {
+      "seeds": 12,
+      "games": 24,
+      "finished": 24,
+      "rows": [
+        {
+          "seed": 189400,
+          "wins": 0,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0
+        },
+        {
+          "seed": 189401,
+          "wins": 0,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0
+        },
+        {
+          "seed": 189402,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189403,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189404,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189405,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189406,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189407,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189408,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        },
+        {
+          "seed": 189409,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189410,
+          "wins": 2,
+          "n": 2,
+          "unfinished": 0,
+          "p": 1
+        },
+        {
+          "seed": 189411,
+          "wins": 1,
+          "n": 2,
+          "unfinished": 0,
+          "p": 0.5
+        }
+      ],
+      "mean": 0.625,
+      "low": 0.38792799229533403,
+      "high": 0.862072007704666,
+      "se": 0.10879853497231115
+    },
+    "unfinished": [],
+    "actorObjective": 0.007397209797773365,
+    "criticMse": 0.044966997068212305,
+    "kl": 0.016268125928165594,
+    "entropy": 1.0821046331158044,
+    "clippedRate": 0.10926365795724466,
+    "klStopped": true,
+    "epochs": 4,
+    "zeroVariance": false,
+    "actorUpdates": 19489,
+    "criticUpdates": 19489,
+    "distance": 4.3525302035392945
+  },
+  "regression": {
+    "kind": "no-obvious-regression",
+    "mean": 0.5833333333333334,
+    "seeds": 12,
+    "delta": {
+      "seeds": 12,
+      "mean": 0.08333333333333333,
+      "low": -0.13221540775636437,
+      "high": 0.29888207442303105,
+      "rows": [
+        {
+          "seed": 189400,
+          "delta": -0.25
+        },
+        {
+          "seed": 189401,
+          "delta": -0.5
+        },
+        {
+          "seed": 189402,
+          "delta": 0
+        },
+        {
+          "seed": 189403,
+          "delta": 0.5
+        },
+        {
+          "seed": 189404,
+          "delta": 0.25
+        },
+        {
+          "seed": 189405,
+          "delta": -0.25
+        },
+        {
+          "seed": 189406,
+          "delta": 0
+        },
+        {
+          "seed": 189407,
+          "delta": 0.5
+        },
+        {
+          "seed": 189408,
+          "delta": -0.25
+        },
+        {
+          "seed": 189409,
+          "delta": 0.25
+        },
+        {
+          "seed": 189410,
+          "delta": 0.5
+        },
+        {
+          "seed": 189411,
+          "delta": 0.25
+        }
+      ]
+    },
+    "reason": "終點相對 0 次更新的配對差區間沒有整段低於 0，也沒有站上超越凍結 A 的門檻。"
+  },
+  "confirm": {
+    "ran": false,
+    "reason": "被選中的檢查點沒有達到確認門檻。"
+  },
+  "anomalies": {
+    "illegal": 0,
+    "timeout": 0,
+    "fallback": 0,
+    "deadLoop": 0,
+    "engineError": 0,
+    "leak": 0,
+    "opponentFallback": 0,
+    "unfinished": 0
+  },
+  "resourceGap": "",
+  "endpointFirst": {
+    "seeds": 12,
+    "games": 24,
+    "finished": 24,
+    "rows": [
+      {
+        "seed": 189400,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189401,
+        "wins": 0,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0
+      },
+      {
+        "seed": 189402,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189403,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189404,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189405,
+        "wins": 0,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0
+      },
+      {
+        "seed": 189406,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189407,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189408,
+        "wins": 0,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0
+      },
+      {
+        "seed": 189409,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189410,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189411,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      }
+    ],
+    "mean": 0.5416666666666666,
+    "low": 0.29227112119773196,
+    "high": 0.7910622121356012,
+    "se": 0.11445412825559187
+  },
+  "endpointSecond": {
+    "seeds": 12,
+    "games": 24,
+    "finished": 24,
+    "rows": [
+      {
+        "seed": 189400,
+        "wins": 0,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0
+      },
+      {
+        "seed": 189401,
+        "wins": 0,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0
+      },
+      {
+        "seed": 189402,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189403,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189404,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189405,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189406,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189407,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189408,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      },
+      {
+        "seed": 189409,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189410,
+        "wins": 2,
+        "n": 2,
+        "unfinished": 0,
+        "p": 1
+      },
+      {
+        "seed": 189411,
+        "wins": 1,
+        "n": 2,
+        "unfinished": 0,
+        "p": 0.5
+      }
+    ],
+    "mean": 0.625,
+    "low": 0.38792799229533403,
+    "high": 0.862072007704666,
+    "se": 0.10879853497231115
+  },
+  "decisionTiming": {
+    "n": 94750,
+    "mean": 1.500757078701864,
+    "p50": 0.505922999989707,
+    "p95": 1.221973000006983,
+    "max": 161.25906399999803
+  },
+  "elapsedMs": 253358.415572,
+  "separation": "策略和價值是兩組參數。0 次更新的 Actor 與凍結 A 的分數和貪心動作一致，只更新 Critic 時 Actor 不變，Critic 的預測也沒有加進選牌分數。初始複本在座位與先後手交換下保持對稱。",
+  "regressionAnswer": "沒有觀察到事先登記的退步。終點相對 0 次更新的配對差區間沒有整段低於 0。這只能稱為未觀察到明顯退步，不能稱為自主變強。",
+  "confirmationAnswer": "沒有。被選中的檢查點種子平均高於 50%，但相對 0 次更新的配對差下限沒有高於 0。這不夠格用全新種子確認，也不能稱為自主變強。"
+}

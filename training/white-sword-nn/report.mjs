@@ -1,8 +1,8 @@
 import {pairedDelta} from './cluster.mjs';
 import {AGREEMENT_DROP,SURPASS_SEEDS} from './constants.mjs';
 import {
- ARM_RULE,COPY_RULE,EARLY_RULE,FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PROMOTION_RULE,
- READ_RULE,SCALE_RULE,SELECTION_RULE,TREND_RULE
+ ARM_RULE,COPY_RULE,EARLY_RULE,FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PPO_RULE,PROMOTION_RULE,
+ READ_RULE,ROUND4_READ_RULE,ROUND4_SELECT_RULE,SCALE_RULE,SELECTION_RULE,TREND_RULE
 } from './protocol.mjs';
 
 function pct(rate){
@@ -418,6 +418,133 @@ export function renderRound3(summary){
   answerStability(summary),
   '',
   '跑完預算不等於檢定力已經夠。沒有通過也不表示這個方法不可行。正式預設仍是 hard-search-2。這次權重沒有部署，晉級門檻沒有放寬。',
+  ''
+ ];
+ return rows.join('\n');
+}
+export function judgePpoRegression(endpoint,zeroRows){
+ const delta=pairedDelta(zeroRows||[],endpoint?.summary?.rows||[]);
+ const mean=endpoint?.summary?.mean;
+ const seeds=endpoint?.summary?.seeds||0;
+ if(mean==null||delta.high==null)return {kind:'incomplete',mean,seeds,delta,reason:'終點沒有足夠的完成對局，不能判斷退步。'};
+ if(delta.high<0)return {kind:'regressed',mean,seeds,delta,reason:'終點相對 0 次更新的配對差區間整段低於 0。'};
+ if(seeds>=SURPASS_SEEDS&&mean>0.5&&delta.low>0){
+  return {kind:'improved',mean,seeds,delta,reason:'終點種子平均高於 50%，而且相對 0 次更新的配對差下限高於 0。'};
+ }
+ return {
+  kind:'no-obvious-regression',mean,seeds,delta,
+  reason:'終點相對 0 次更新的配對差區間沒有整段低於 0，也沒有站上超越凍結 A 的門檻。'
+ };
+}
+export function answerSeparation(checks){
+ if(!checks)return '沒有完成策略與價值的分離檢查。';
+ const ready=checks.copy&&checks.criticIsolated&&checks.valueNotInScores&&checks.symmetry?.ok;
+ if(!ready)return '分離檢查沒有全部成立，所以這一輪不能把後續對局解讀成 PPO 已經正確更新。';
+ return '策略和價值是兩組參數。0 次更新的 Actor 與凍結 A 的分數和貪心動作一致，只更新 Critic 時 Actor 不變，Critic 的預測也沒有加進選牌分數。初始複本在座位與先後手交換下保持對稱。';
+}
+export function answerRegression(summary){
+ const judged=summary?.regression;
+ if(!judged||judged.kind==='incomplete')return 'PPO 更新沒有跑到可比較的終點，所以還不能判斷它有沒有造成相對 A 的退步。';
+ if(judged.kind==='regressed')return '有。計畫終點相對 0 次更新的配對差區間整段低於 0，PPO 更新仍然造成退步。損失或 KL 沒有拿來推翻這個對局結果。';
+ if(judged.kind==='improved')return '沒有。計畫終點相對 0 次更新沒有退步，而且種子平均高於 50%。這還要經過事先登記的確認規則，不能只用損失或 KL 當作變強。';
+ return '沒有觀察到事先登記的退步。終點相對 0 次更新的配對差區間沒有整段低於 0。這只能稱為未觀察到明顯退步，不能稱為自主變強。';
+}
+export function answerConfirmation(summary){
+ const selected=summary?.selected;
+ if(!summary?.plan?.fits)return '預算沒有留下可訓練的批次，所以沒有安排確認種子。';
+ if(!selected?.surpass)return '沒有。沒有可選的開發檢查點，不值得用全新種子確認。';
+ if(!selected.surpass.ok){
+  const mean=selected.surpass.mean;
+  const seeds=selected.surpass.seeds||0;
+  const low=selected.surpass.delta?.low;
+  if(seeds>=SURPASS_SEEDS&&mean>0.5&&!(low>0)){
+   return '沒有。被選中的檢查點種子平均高於 50%，但相對 0 次更新的配對差下限沒有高於 0。這不夠格用全新種子確認，也不能稱為自主變強。';
+  }
+  return '沒有。被選中的檢查點沒有同時達到至少 '+SURPASS_SEEDS+' 個種子、種子平均高於 50%，以及相對 0 次更新的配對差下限高於 0。不值得用全新種子確認。';
+ }
+ if(!summary.confirm?.ran)return '開發檢查點達到確認門檻，但確認對局沒有跑完，所以還不能建議更完整的獨立驗證。';
+ if(summary.confirm.summary?.low>0.5)return '有。被選中的檢查點在開發資料上超越凍結 A，確認種子的區間下限也高於 50%。依這次的規則可以安排更完整的獨立驗證。這仍然不是正式晉級。';
+ return '開發檢查點達到確認門檻，但確認種子的區間下限沒有高於 50%。現在還不夠安排更完整的獨立驗證，也不能稱為已經自主變強。';
+}
+export function renderRound4(summary){
+ const curve=summary.curve||[];
+ const curveLines=curve.map(point=>{
+  const kl=point.kl==null?'n/a':point.kl.toFixed(4);
+  const stop=point.klStopped?'，該批有一輪 KL 超過 0.02，所以停掉後面的更新':'';
+  return '- '+point.gamesPlayed+' 場：對 A '+seedPct(point.summary)+
+   '。Actor 目標 '+(point.actorObjective==null?'n/a':point.actorObjective.toFixed(4))+
+   '，Critic 均方 '+(point.criticMse==null?'n/a':point.criticMse.toFixed(4))+
+   '，各輪平均 KL '+kl+stop+
+   '，熵 '+(point.entropy==null?'n/a':point.entropy.toFixed(4))+'。';
+ });
+ const rows=[
+  '# 白劍神經網路第四輪',
+  '',
+  '產生時間：'+taipei(summary.createdAt)+'。',
+  '',
+  '接受第三輪：原始 Monte-Carlo 更新造成退步，固定比例的模仿回放沒有證明能減輕退步或超越凍結 A。這一輪不重跑那個更新，改做一個小型 Actor–Critic／PPO-Clip 原型。PPO 不被當成已經有效的解法。正式 v2、Hard Search 2、規則和網站都沒有改。',
+  '',
+  ...linesOf('三個問題',[
+   '① '+answerSeparation(summary.checks),
+   '② '+answerRegression(summary),
+   '③ '+answerConfirmation(summary)
+  ]),
+  ...linesOf('固定規則',[
+   PPO_RULE,
+   '',
+   ROUND4_SELECT_RULE,
+   '',
+   ROUND4_READ_RULE,
+   '',
+   '計算牆鐘 20 分鐘。測速之後才固定批次、檢查點和模型選擇，之後不因勝率加場或改超參數。未完成對局不計入正常勝負。'
+  ]),
+  ...linesOf('分離檢查',[
+   '- 權重複本：'+(summary.checks?.copy?'一致':'不一致')+'。',
+   '- 只更新 Critic：'+(summary.checks?.criticIsolated?'Actor 不變':'Actor 被改動')+'。',
+   '- 分數不含 value：'+(summary.checks?.valueNotInScores?'成立':'不成立')+'。',
+   '- 更新前機率比：'+(summary.checks?.ratioAtOne?'為 1':'沒有成立')+'。',
+   '- 0 次更新的對稱：'+((summary.checks?.symmetry?.ok)?'成立':'不成立')+'。配對 '+((summary.checks?.symmetry?.pairs)??0)+'。'
+  ]),
+  ...linesOf('預算',[
+   '- 測速後的計畫：'+JSON.stringify(summary.plan||null),
+   '- 實際耗時：'+ms(summary.elapsedMs)+'。',
+   '- 環境步數：'+((summary.train?.steps)??0)+'。決策數：'+((summary.train?.decisions)??0)+'。',
+   '- 獨立對局：'+((summary.train?.games)??0)+'。完成：'+((summary.train?.finished)??0)+'。未完成：'+((summary.train?.unfinished?.length)??0)+'。',
+   '- Actor 更新次數：'+((summary.train?.actorUpdates)??0)+'。Critic 更新次數：'+((summary.train?.criticUpdates)??0)+'。',
+   summary.resourceGap?'- 資源落差：'+summary.resourceGap:'- 計畫內的批次有跑完。'
+  ]),
+  ...linesOf('學習曲線',curveLines.length?curveLines:['- 沒有檢查點。']),
+  ...linesOf('候選與確認',[
+   '- 選中的檢查點：'+((summary.selected?.gamesPlayed)??'n/a')+' 場。對 A '+seedPct(summary.selected?.summary)+'。',
+   '- 相對 0 次更新：'+deltaLine(summary.selected?.surpass?.delta)+'。',
+   '- 計畫終點：'+((summary.endpoint?.gamesPlayed)??'n/a')+' 場。對 A '+seedPct(summary.endpoint?.summary)+'。',
+   '- 終點先手：'+seedPct(summary.endpointFirst)+'。後手：'+seedPct(summary.endpointSecond)+'。',
+   '- 終點相對 0 次更新：'+deltaLine(summary.regression?.delta)+'。',
+   summary.confirm?.ran
+    ?'- 確認種子：'+seedPct(summary.confirm.summary)+'。'
+    :'- '+answerConfirmation(summary),
+   '- 189400–189411 只出現在開發評估。確認種子是 191400–191411，沒有拿來挑檢查點。'
+  ]),
+  ...linesOf('未完成對局',[
+   summary.train?.unfinished?.length
+    ?summary.train.unfinished.map(game=>'- 種子 '+(game.seed??'n/a')+'，'+game.status+'，'+(game.endReason||'無原因')+'，'+game.steps+' 步。').join('\n')
+    :'- 訓練沒有未完成對局。',
+   summary.evalUnfinished?.length
+    ?'- 評估另有 '+summary.evalUnfinished.length+' 場未完成，沒有計入勝率。'
+    :'- 評估沒有未完成對局。'
+  ]),
+  ...linesOf('異常',[
+   '- 實驗對局異常：'+JSON.stringify(summary.anomalies||{})
+  ]),
+  '## 結論',
+  '',
+  answerSeparation(summary.checks),
+  '',
+  answerRegression(summary),
+  '',
+  answerConfirmation(summary),
+  '',
+  '種子平均即使高於 50%，只要相對 0 次更新的配對差區間沒有整段高於 0，就只能稱為未觀察到明顯退步，不能稱為自主變強。損失下降、Critic 更準、KL 較小或權重有更新，都不能代替對局。這次權重沒有部署，也沒有合併到 main。晉級門檻沒有放寬。',
   ''
  ];
  return rows.join('\n');
