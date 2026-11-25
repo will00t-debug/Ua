@@ -25,7 +25,7 @@ function pick(packs,state,actor,seat,spec,model){
  }
  if(seat.residual){
   return decideResidual(packs,state,actor,model,spec.seed,seat.weight||0,seat.feature||null,{
-   columns:seat.columns,baselineColumns:seat.baselineColumns,rules:seat.rules
+   columns:seat.columns,baselineColumns:seat.baselineColumns,rules:seat.rules,valueModel:seat.valueModel||null
   });
  }
  return officialBlend(packs,state,actor,model,spec.seed);
