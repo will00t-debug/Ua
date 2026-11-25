@@ -68,6 +68,27 @@ test('ability modal lists every legal mode; only choosing one dispatches that ac
  assert.equal(overlay.removed,true);
 });
 
+test('a short first sentence becomes the choice title when results differ',()=>{
+ const root={children:[],querySelector:()=>null,append(node){this.children.push(node);}};
+ const ready='只活動自身。【主啟動】將此角色轉為活動。同名活動選項每回合一次。';
+ const both='活動自身並 BP＋1000。【主啟動】將此角色轉為活動，並選擇 1 張己方特徵「大グレン団」的角色，本回合 BP＋1000。';
+ const buff='只給「大グレン団」BP＋1000。【主啟動】選擇 1 張己方特徵「大グレン団」的角色，本回合 BP＋1000。';
+ const overlay=openFieldActivationPicker({el:fakeEl,root,cardName:'カミナ',
+  actions:[
+   {type:'activate',uid:'k',mode:'ready'},
+   {type:'activate',uid:'k',mode:'readyAndBuff'},
+   {type:'activate',uid:'k',mode:'buff'}
+  ],
+  labelOf:action=>({ready,readyAndBuff:both,buff}[action.mode]),
+  onChoose:()=>{}});
+ const options=overlay.children[0].children[1].children;
+ assert.deepEqual(options.map(node=>node.children[0].props.text),
+  ['只活動自身','活動自身並 BP＋1000','只給「大グレン団」BP＋1000']);
+ assert.match(options[0].children[1].props.text,/轉為活動/);
+ assert.doesNotMatch(options[2].children[1].props.text,/轉為活動/);
+ assert.match(options[2].props['aria-label'],/只給「大グレン団」BP＋1000/);
+});
+
 test('single legal activation still asks for confirmation',()=>{
  const root={children:[],querySelector:()=>null,append(x){this.children.push(x)}};
  let fired=0;

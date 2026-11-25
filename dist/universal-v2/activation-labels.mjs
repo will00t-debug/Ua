@@ -3,6 +3,7 @@
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
 import {universalBp} from './engine.mjs';
+import {cardHasName} from './field-conditions.mjs';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -488,12 +489,108 @@ export function activationLabelBanned(label){
  if(/\b(?:kmr|kmr2|csm|iys|kjn|aot2|mmm2):/i.test(text))return '未翻譯模式';
  return '';
 }
+// A button that stands for one physical card names that card and its place,
+// so two copies of the same printed name stay apart.
+function aimPlace(pack,state,uid){
+ if(typeof uid!=='string')return null;
+ const owner=Number(uid.split('-')[0]);
+ const player=state?.players?.[owner];
+ if(!player)return null;
+ const lines=[['前線',player.front],['能源',player.energy],['手牌',player.hand],['場外',player.outside],['移除',player.removed]];
+ for(const [line,zone] of lines){
+  if(!Array.isArray(zone))continue;
+  const index=zone.findIndex(card=>card?.uid===uid);
+  if(index<0)continue;
+  const printed=locate(pack,state,uid)?.printed;
+  const name=printed?.name||'';
+  if(!name)return null;
+  const where=line==='手牌'||line==='場外'||line==='移除'?`${line}〈${name}〉`:`${line}${index+1}〈${name}〉`;
+  return {name,where,printed};
+ }
+ return null;
+}
+// One printed MAIN can offer several different results. The button names the
+// result; the sentence after the first period keeps the printed condition.
+function aimedChoiceLabel(ability,action,pack,state){
+ const op=ability?.op||'';
+ const mode=action?.mode||'';
+ const target=aimPlace(pack,state,action?.targetUid);
+ const recover=aimPlace(pack,state,action?.recoverUid);
+ const rest=aimPlace(pack,state,action?.restUid);
+ const discarded=aimPlace(pack,state,action?.discardUid);
+ if(op==='frontOnceEnergyChoice'&&(mode==='frontEnergyBp'||mode==='frontEnergyImpact')){
+  const who=target?.where||'這張角色';
+  const amount=Number.isInteger(ability?.bp)?ability.bp:1000;
+  const impact=Number.isInteger(ability?.impact)?ability.impact:1;
+  const min=Number.isInteger(ability?.minEnergy)?ability.minEnergy:4;
+  if(mode==='frontEnergyImpact')
+   return `${who} 貫通 ${impact}。${polish(`前線，每回合一次，必要能源 ${min} 以上的其他角色，本回合獲得【貫通（${impact}）】。`)}`;
+  return `${who} BP＋${amount}。${polish(`前線，每回合一次，必要能源 ${min} 以上的其他角色，本回合 BP＋${amount}。`)}`;
+ }
+ if(op==='frontOnceNameBuff'&&mode==='nameScaledBuff'){
+  const who=target?.where||'這張角色';
+  const named=!!(target?.printed&&ability?.name&&cardHasName(target.printed,ability.name,false));
+  const amount=named?(ability?.namedBp??2000):(ability?.bp??1000);
+  const extra=named?'，並獲得【狙擊】':'';
+  return `${who} BP＋${amount}${named?' 並狙擊':''}。${polish(`前線，每回合一次，這張角色本回合 BP＋${amount}${extra}。`)}`;
+ }
+ if(op==='rukaFrontGrant'&&mode==='rukaGrant'){
+  const who=target?.where||'這張角色';
+  if(action?.grant==='block')
+   return `${who} 不被高 BP 阻擋。${polish('每回合一次，僅限前線，本回合不會被 BP 4000 以上的角色阻擋。')}`;
+  if(action?.grant==='eventImpact')
+   return `${who} BP＋1000。${polish('每回合一次，僅限前線，本回合 BP＋1000；若已使用事件，再獲得【貫通（1）】。')}`;
+ }
+ if(op==='frontOnceGrantBpRules'&&mode==='grantBpRules'){
+  const who=target?.where||'這張角色';
+  const echo=Number.isInteger(ability?.echoBp)?ability.echoBp:500;
+  return `${who} 受減再降。${polish(`前線，每回合一次，此角色本回合受到 BP 降低時再 BP－${echo}，BP 0 以下退場時改放進移除區。`)}`;
+ }
+ if(op==='frontOnceOppDownSelfUp'&&mode==='oppDownSelfUp'){
+  const who=target?.where||'這張角色';
+  const down=Number.isInteger(ability?.bp)?ability.bp:1000;
+  const up=Number.isInteger(ability?.selfBp)?ability.selfBp:1000;
+  return `${who} BP－${down}。${polish(`前線，每回合一次，該角色本回合 BP－${down}，此角色本回合 BP＋${up}。`)}`;
+ }
+ if(op==='restRetireRecoverTrait'&&mode==='restRetireTrait'&&recover)
+  return `回收${recover.where}。${polish(`休息並退場，從場外回收特徵「${ability?.trait||''}」。`)}`;
+ if(op==='restBuffMayDiscardActive'&&mode==='restBuffDiscard'){
+  const who=target?.where||'這張角色';
+  const amount=Number.isInteger(ability?.bp)?ability.bp:1000;
+  if(discarded)
+   return `支付${discarded.where}。${polish(`休息，${who}本回合 BP＋${amount}，並將其轉為活動。`)}`;
+  return `${who} 只加 BP。${polish(`休息，${who}本回合 BP＋${amount}，可以不棄牌。`)}`;
+ }
+ if(op==='restNamedFrontThenChoose'&&mode==='restNamedChoose'&&rest)
+  return `休息${rest.where}。${polish('休息前線的指定角色，然後必須選擇一項後續效果。')}`;
+ return '';
+}
+function raidTwoChoiceLabel(ability,action){
+ if(ability?.op!=='chooseTwoAfterOwnRaid')return '';
+ const trait=typeof ability.trait==='string'&&ability.trait?ability.trait:'符合條件';
+ const amount=Number.isInteger(ability.bp)?ability.bp:1000;
+ const once=ability.readyOncePerName?'同名活動選項每回合一次。':'';
+ const stand='將此角色轉為活動';
+ const boost=`選擇 1 張己方特徵「${trait}」的角色，本回合 BP＋${amount}`;
+ const gate='本回合自己有過突襲，且此角色在前線';
+ if(action?.mode==='ready')
+  return `只活動自身。${polish(`${gate}，${stand}。${once}`)}`;
+ if(action?.mode==='buff')
+  return `只給「${trait}」BP＋${amount}。${polish(`${gate}，${boost}。`)}`;
+ if(action?.mode==='readyAndBuff')
+  return `活動自身並 BP＋${amount}。${polish(`${gate}，${stand}，並${boost}。${once}`)}`;
+ return '';
+}
 export function describeActivation(action,{pack,state}={}){
  if(action?.type!=='activate')return '';
  const found=locate(pack,state,action.uid);
  const printed=found?.printed||null;
  const catalogue=printed?.id?BY_ID.get(printed.id):null;
  const ability=abilityFor(printed,action,pack,state);
+ const aimed=aimedChoiceLabel(ability,action,pack,state);
+ if(aimed)return aimed;
+ const choice=raidTwoChoiceLabel(ability,action);
+ if(choice)return choice;
  if(!printed&&!catalogue)return '';
  const clauses=chineseMainClauses(catalogue?.effect||'');
  const chosen=pickClause(clauses,action);
