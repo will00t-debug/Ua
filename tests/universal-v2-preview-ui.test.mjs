@@ -157,6 +157,30 @@ test('hand and deck prompts show private card art and leave the legal action unc
  assert.equal(pendingChoiceCaption('棄 指定卡片 支付成本',['更木 劍八']),'棄 指定卡片 支付成本');
 });
 
+test('a trait BP bonus is labeled as that bonus, and a REST choice is not labeled as leaving',()=>{
+ const s=fresh();
+ const self=s.players[0].hand[0];
+ const name=mine.pack.cards[self.cardId].name;
+ const buffState={...s,pending:{kind:'effect-buff-trait',bp:1000,player:0}};
+ const buff=uiActionLabel({type:'chooseTraitBuff',uid:self.uid},{pack:packs,state:buffState});
+ assert.equal(buff,'本回合使 '+name+' BP＋1000');
+ assert.equal(pendingChoiceCaption(buff,[name]),'本回合使 BP＋1000');
+ assert.equal(uiActionLabel({type:'chooseTraitBuff',uid:null},{pack:packs,state:buffState}),'不增加 BP');
+ const impact={...s,pending:{kind:'effect-buff-trait',impactPlus:1,player:0}};
+ assert.equal(uiActionLabel({type:'chooseTraitBuff',uid:self.uid},{pack:packs,state:impact}),
+  '本回合使 '+name+' 衝擊＋1');
+ const rest={...s,pending:{kind:'effect-rest-bp',player:0}};
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:self.uid},{pack:packs,state:rest}),
+  '使 '+name+' 休息');
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:null},{pack:packs,state:rest}),'不使角色休息');
+ const skipNext={...s,pending:{kind:'effect-rest-bp',restTarget:false,player:0}};
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:self.uid},{pack:packs,state:skipNext}),
+  '使 '+name+' 跳過下次活動');
+ assert.equal(uiActionLabel({type:'chooseRestBp',uid:null},{pack:packs,state:skipNext}),'不跳過下次活動');
+ assert.equal(uiActionLabel({type:'chooseRetireAtMost',uid:self.uid},{pack:packs,state:s}),
+  '使 '+name+' 退場');
+});
+
 test('inspected nonmatching cards are visible but disabled',()=>{
  const window={kind:'effect-top-filter-choice',inspected:[
   {uid:'top-a',cardId:'BLC-1-001',name:'甲'},

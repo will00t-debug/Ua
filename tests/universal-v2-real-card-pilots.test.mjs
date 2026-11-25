@@ -7,6 +7,7 @@ import {
  newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalBp,universalEnergyByColor,assertUniversalMatch,universalPublicView
 } from '../dist/universal-v2/engine.mjs';
+import {pendingChoiceCaption,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 // These real-card pilots remain incomplete; test-only filler is never an official 50-card V2 deck.
 // real deck. Filler is strictly TEST-ONLY, never exported from the pilot.
@@ -609,8 +610,16 @@ test('Kamina 045 as Raid base lets controller choose base-first; only own printe
   {type:'chooseRaidOrder',mode:'entryFirst'});
  const first=dispatchUniversalAction(packs,begun,{type:'chooseRaidOrder',mode:'baseFirst'},{actor:1});
  assert.equal(first.pending?.kind,'effect-buff-trait');
+ assert.equal(first.pending?.bp,1000);
  assert.equal(first.players[1].deck.length,deckBefore,'top entry draw must wait for base effect');
  const choices=legalUniversalActions(packs,first);
+ const buff=choices.find(a=>a.type==='chooseTraitBuff'&&a.uid===top.uid);
+ const topName=packs[1].cards[top.cardId].name;
+ const buffLabel=uiActionLabel(buff,{pack:packs,state:first});
+ assert.equal(buffLabel,'本回合使 '+topName+' BP＋1000');
+ assert.equal(pendingChoiceCaption(buffLabel,[topName]),'本回合使 BP＋1000');
+ assert.equal(uiActionLabel(choices.find(a=>a.type==='chooseTraitBuff'&&a.uid===null),
+  {pack:packs,state:first}),'不增加 BP');
  assert.ok(choices.some(a=>a.uid===null),'buff at most one may skip');
  assert.ok(choices.some(a=>a.uid===top.uid),'the new Raid has the 大グレン団 trait');
  assert.ok(!choices.some(a=>a.uid===low.uid||a.uid===high.uid),
@@ -621,6 +630,9 @@ test('Kamina 045 as Raid base lets controller choose base-first; only own printe
   'Raid 3500 + own turn 500 + base buff 1000');
  assert.equal(boosted.players[1].deck.length,deckBefore-1,'after base ability top onPlay draws one');
  assert.equal(boosted.pending?.kind,'effect-rest-bp');
+ const restLabel=uiActionLabel({type:'chooseRestBp',uid:low.uid},{pack:packs,state:boosted});
+ assert.match(restLabel,/休息/);
+ assert.equal(restLabel.includes('退場'),false);
  const afterRest=dispatchUniversalAction(packs,boosted,{type:'chooseRestBp',uid:low.uid},{actor:1});
  assert.equal(afterRest.players[0].front[0].ready,false);
  assert.equal(afterRest.players[1].front[0].stack[0].uid,base.uid);

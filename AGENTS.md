@@ -26,7 +26,7 @@ App version baseline: v9.1.1 (2026-10-12). This repository is meant for GitHub +
 
 ## Fixed V2 errors — check them before adding a card
 `docs/v2-handoff/V2-do-not-regress.md` is the gate for every new card
-(2026-10-14 through 2026-11-25, 292 corrected mistakes, including RNK-1-009,
+(2026-10-14 through 2026-11-25, 293 corrected mistakes, including RNK-1-009,
 the Hiko Raid, Eva and Toriko raid frames, Bakugo's empty-field discount,
 yellow and red zero energy, and the EVA-1-053 retire window). Match the printed text to the traps below and to every
 ledger row that uses the same mechanic. Reuse the corrected shared behavior.

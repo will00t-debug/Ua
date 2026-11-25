@@ -23,6 +23,6 @@ test('EVA battle uses its printed catalogue in hand, field and inspect art looku
 test('both V2 battle pages load the artwork-fixed module version',()=>{
  for(const name of ['universal-v2-battle.html','universal-v2-preview.html']){
   const html=readFileSync(new URL('../dist/'+name,import.meta.url),'utf8');
-  assert.match(html,/universal-v2-preview\.mjs\?v=20261122aiFast1evaYellow0/);
+  assert.match(html,/universal-v2-preview\.mjs\?v=20261125buffLabel1/);
  }
 });

@@ -1510,7 +1510,17 @@ export function uiActionLabel(action,{pack,state}={}){
    return action.uid===null?'不增加 BP':'本回合使 '+name()+' BP＋'+amount;
   }
   case 'chooseLockMove':return action.uid===null?'不限制移動':'到自己下次回合開始前，'+name()+' 不能移動';
-  case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseTraitBuff':{
+   if(action.uid===null)return '不增加 BP';
+   if(state?.pending?.impactPlus===1)return '本回合使 '+name()+' 衝擊＋1';
+   const amount=Number.isInteger(state?.pending?.bp)?state.pending.bp:0;
+   return '本回合使 '+name()+' BP＋'+amount;
+  }
+  case 'chooseRestBp':{
+   if(state?.pending?.restTarget===false)
+    return action.uid===null?'不跳過下次活動':'使 '+name()+' 跳過下次活動';
+   return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
+  }
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseRestOutsideEvents':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
