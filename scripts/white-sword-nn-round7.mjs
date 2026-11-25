@@ -19,7 +19,7 @@ import {splitOutcomes} from '../training/white-sword-nn/ppo.mjs';
 import {
  BENCH_NN_SEED,EVAL_CELLS,ROUND7_CONFIRM_SEEDS,ROUND7_RULE,assertExperimentSeed
 } from '../training/white-sword-nn/protocol.mjs';
-import {judgeRound7,renderRound7} from '../training/white-sword-nn/report.mjs';
+import {confirmationIntact,judgeRound7,renderRound7} from '../training/white-sword-nn/report.mjs';
 import {addAnomalies} from '../dist/universal-v2/white-sword-ai/stats.mjs';
 
 const FROZEN_FILE='training/white-sword-nn/weights/round2/a-frozen.json';
@@ -217,18 +217,21 @@ async function main(){
  const baselineAfter=identity(FROZEN_FILE);
  const candidateAfter=identity(CANDIDATE_FILE);
  const protectedAfter=git(['status','--porcelain','--',...PROTECTED]);
- const modelAnomaly=baselineAfter.sha256!==baseline.sha256||candidateAfter.sha256!==candidate.sha256||protectedAfter!==protectedBefore;
+ const hashesOk=confirmationIntact(baseline,baselineAfter,candidateInfo,candidateAfter);
+ const statusChanged=protectedAfter!==protectedBefore;
+ const modelAnomaly=!hashesOk;
  let judgment=judgeRound7({
   plannedSeeds:plan.seeds,plannedGames:plan.games,finishedGames:split.done.length,
   unfinished:split.unfinished.length,seeds:seeds.length,completeSeeds,delta:versusHalf
  });
  if(runError)judgment={kind:'incomplete',delta:versusHalf,reason:runError};
- if(modelAnomaly)judgment={kind:'incomplete',delta:versusHalf,reason:'權重或受保護紀錄在執行期間改變。'};
+ if(modelAnomaly)judgment={kind:'incomplete',delta:versusHalf,reason:'權重檔的雜湊或版本在執行期間改變。'};
  const record={
   createdAt:new Date().toISOString(),elapsedMs:performance.now()-started,codeCommit,
   baseline,candidate:candidateInfo,baselineAfter,candidateAfter,
   bench:{seed:BENCH_NN_SEED,finished:benchFinished,elapsedMs:benchMs,status:bench?.status||'missing'},
   plan,seeds,precision,resourceGap,retries,judgment,
+  statusBefore:protectedBefore,statusAfter:protectedAfter,statusChanged,
   summary,winInterval,versusHalf,
   first:seedSummary(split.done.filter(game=>game.learnerSeat===game.first),learnerWins),
   second:seedSummary(split.done.filter(game=>game.learnerSeat!==game.first),learnerWins),

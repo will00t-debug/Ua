@@ -830,6 +830,14 @@ export function renderRound6(summary){
  ];
  return rows.join('\n');
 }
+export function confirmationIntact(baseline,baselineAfter,candidate,candidateAfter){
+ return !!baseline?.sha256&&baseline.sha256===baselineAfter?.sha256
+  &&!!candidate?.sha256&&candidate.sha256===candidateAfter?.sha256
+  &&baseline.version===baselineAfter?.version
+  &&candidate.version===candidateAfter?.version
+  &&baseline.updates===baselineAfter?.updates
+  &&candidate.updates===candidateAfter?.updates;
+}
 export function judgeRound7({
  plannedGames,finishedGames,unfinished,seeds,completeSeeds,delta,plannedSeeds
 }={}){
@@ -914,7 +922,8 @@ export function renderRound7(summary){
    '- 基準：'+(summary.baseline?.file||'n/a')+'。版本 '+(summary.baseline?.version||'n/a')+'，更新次數 '+(summary.baseline?.updates??'n/a')+'，雜湊 '+(summary.baseline?.sha256||'n/a')+'，來源 commit '+(summary.baseline?.commit||'n/a')+'。',
    '- 候選：'+(summary.candidate?.file||'n/a')+'。版本 '+(summary.candidate?.version||'n/a')+'，更新次數 '+(summary.candidate?.updates??'n/a')+'，雜湊 '+(summary.candidate?.sha256||'n/a')+'，來源 commit '+(summary.candidate?.commit||'n/a')+'。',
    '- 執行後雜湊：基準 '+(summary.baselineAfter?.sha256===summary.baseline?.sha256?'未變':'已變')+'，候選 '+(summary.candidateAfter?.sha256===summary.candidate?.sha256?'未變':'已變')+'。',
-   '- 確認程式 commit：'+(summary.codeCommit||'n/a')+'。'
+   '- 確認程式 commit：'+(summary.codeCommit||'n/a')+'。',
+   summary.integrityNote?'- '+summary.integrityNote:null
   ]),
   ...linesOf('開打前的計畫',[
    '- 測速後的計畫：'+JSON.stringify(summary.plan||null),

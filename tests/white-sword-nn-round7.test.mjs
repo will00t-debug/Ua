@@ -15,7 +15,7 @@ import {
  allExperimentSeeds,assertExperimentSeed,reservedHit
 } from '../training/white-sword-nn/protocol.mjs';
 import {
- answerRound7Next,answerRound7Scope,answerRound7Strength,judgeRound7,renderRound7
+ answerRound7Next,answerRound7Scope,answerRound7Strength,confirmationIntact,judgeRound7,renderRound7
 } from '../training/white-sword-nn/report.mjs';
 
 test('round-7 confirmation seeds are new and ordered',()=>{
@@ -133,6 +133,43 @@ test('the confirmation reading is fixed before the games',()=>{
  assert.match(text,/不能確認/);
  assert.match(text,/191400/);
 });
+
+test('a matching file hash is the model check',()=>{
+ const before={sha256:'aa',version:'nn-a-r2',updates:9030};
+ const after={sha256:'aa',version:'nn-a-r2',updates:9030};
+ const candidate={sha256:'bb',version:ROUND7_CANDIDATE_VERSION,updates:ROUND7_CANDIDATE_UPDATES};
+ assert.equal(confirmationIntact(before,after,candidate,{...candidate}),true);
+ assert.equal(confirmationIntact(before,{...after,sha256:'cc'},candidate,{...candidate}),false);
+ assert.equal(confirmationIntact(before,after,candidate,{...candidate,updates:1}),false);
+});
+
+test('the stored confirmation keeps the pre-registered reading',()=>{
+ const report=JSON.parse(readFileSync(new URL('../docs/white-sword-ai/nn-round7.json',import.meta.url),'utf8'));
+ const plan=JSON.parse(readFileSync(new URL('../docs/white-sword-ai/nn-round7-plan.json',import.meta.url),'utf8'));
+ assert.equal(plan.plan.seeds,256);
+ assert.equal(plan.seeds.length,256);
+ assert.equal(plan.plan.fits,true);
+ assert.equal(report.plan.seeds,256);
+ assert.deepEqual(report.seeds,plan.seeds);
+ assert.equal(report.finishedGames,1024);
+ assert.equal(report.completeSeeds,256);
+ assert.equal(report.unfinished.length,0);
+ assert.equal(report.retries.fallbacks,0);
+ assert.equal(report.baseline.sha256,ROUND7_BASELINE_HASH);
+ assert.equal(report.baselineAfter.sha256,ROUND7_BASELINE_HASH);
+ assert.equal(report.candidate.sha256,ROUND7_CANDIDATE_HASH);
+ assert.equal(report.candidateAfter.sha256,ROUND7_CANDIDATE_HASH);
+ assert.equal(report.versusHalf.seeds,256);
+ assert.ok(report.versusHalf.low>0);
+ assert.equal(report.judgment.kind,'reproduced');
+ assert.equal(report.perSeed.length,256);
+ assert.equal(report.games.length,1024);
+ assert.equal(planTextHasNoResult(plan),true);
+});
+
+function planTextHasNoResult(plan){
+ return plan.bench.winner==null&&plan.precision.projection.plannedSeeds===256;
+}
 
 test('the frozen files match the registered hashes',()=>{
  const hash=file=>createHash('sha256').update(readFileSync(file)).digest('hex');
