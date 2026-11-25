@@ -383,3 +383,25 @@ export function summarizeMonitor(batches){
  }
  return {counts,epochs,stopped,maxOver,batches:(batches||[]).length};
 }
+// Compare the epochs that actually ran. A mixed exceed on the final allowed
+// epoch did not add a round. An early fixed-only stop skipped a later round
+// that was not run, so only the minimum and the cap-sized maximum are known.
+export function compareStop(batches,{cap=4}={}){
+ let extraBatches=0,extraEpochs=0,earlyBatches=0,earlyMin=0,earlyMax=0,sameBatches=0;
+ for(const batch of batches||[]){
+  const ran=batch.epochsRan||0;
+  const mixed=batch.mixedEpoch??null;
+  if(mixed!=null&&ran>mixed){
+   extraBatches++;
+   extraEpochs+=ran-mixed;
+  }else if(batch.relation==='fixed-only'&&ran<cap){
+   earlyBatches++;
+   earlyMin+=1;
+   earlyMax+=cap-ran;
+  }else sameBatches++;
+ }
+ return {
+  extraBatches,extraEpochs,earlyBatches,earlyMin,earlyMax,sameBatches,
+  batches:(batches||[]).length
+ };
+}

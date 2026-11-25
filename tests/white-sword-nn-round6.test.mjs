@@ -9,7 +9,7 @@ import {
 } from '../training/white-sword-nn/constants.mjs';
 import {createNet} from '../training/white-sword-nn/net.mjs';
 import {sampleFingerprint,thetaHash} from '../training/white-sword-nn/fingerprint.mjs';
-import {classifyMonitor,summarizeMonitor} from '../training/white-sword-nn/ppo.mjs';
+import {classifyMonitor,compareStop,summarizeMonitor} from '../training/white-sword-nn/ppo.mjs';
 import {
  ROUND4_CONFIRM_SEEDS,ROUND4_DEV_SEEDS,ROUND4_SELF_SEEDS,ROUND5_DEV_SEEDS,ROUND6_BLOCKED_SEEDS,
  ROUND6_DEV_SEEDS,ROUND6_RULE,ROUND6_TRAIN_SEEDS,TEST_SEEDS,allExperimentSeeds,assertExperimentSeed,reservedHit
@@ -150,6 +150,19 @@ test('fixed-actor and mixed KL are classified only on epochs that ran',()=>{
  assert.equal(summary.stopped,2);
  assert.equal(summary.maxOver,2);
  assert.equal(summary.counts['fixed-only'],1);
+ const compared=compareStop([
+  {relation:'mixed-earlier',epochsRan:3,mixedEpoch:2},
+  {relation:'mixed-only',epochsRan:4,mixedEpoch:4},
+  {relation:'fixed-only',epochsRan:1,mixedEpoch:null},
+  {relation:'fixed-only',epochsRan:4,mixedEpoch:null},
+  {relation:'same-epoch',epochsRan:2,mixedEpoch:2}
+ ],{cap:4});
+ assert.equal(compared.extraBatches,1);
+ assert.equal(compared.extraEpochs,1);
+ assert.equal(compared.earlyBatches,1);
+ assert.equal(compared.earlyMin,1);
+ assert.equal(compared.earlyMax,3);
+ assert.equal(compared.sameBatches,3);
 });
 
 test('a fingerprint changes when the stored behavior changes',()=>{

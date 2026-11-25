@@ -1,5 +1,6 @@
 import {pairedDelta} from './cluster.mjs';
-import {AGREEMENT_DROP,PPO_KL_LIMIT,ROUND5_DEV_COUNT,ROUND6_DEV_COUNT,SURPASS_SEEDS} from './constants.mjs';
+import {compareStop} from './ppo.mjs';
+import {AGREEMENT_DROP,PPO_EPOCHS,PPO_KL_LIMIT,ROUND5_DEV_COUNT,ROUND6_DEV_COUNT,SURPASS_SEEDS} from './constants.mjs';
 import {
  ARM_RULE,COPY_RULE,EARLY_RULE,FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PPO_RULE,PROMOTION_RULE,
  READ_RULE,ROUND4_READ_RULE,ROUND4_SELECT_RULE,ROUND5_EVAL_RULE,ROUND5_KL_RULE,ROUND6_RULE,SCALE_RULE,
@@ -701,12 +702,19 @@ export function answerRound6Monitor(summary){
  }
  const monitor=summary.monitor||{};
  const counts=monitor.counts||{};
- const extra=(counts['mixed-only']||0)+(counts['mixed-earlier']||0);
- const fixedOnly=counts['fixed-only']||0;
  const bound=monitor.maxOver>0
   ?'有 '+monitor.maxOver+' 輪的單筆最大 KL 高於 '+PPO_KL_LIMIT+'，所以樣本平均不是硬上界。'
   :'已跑輪次裡沒有單筆最大高於 '+PPO_KL_LIMIT+' 的紀錄；停止仍發生在該輪結束之後，所以平均門檻不是硬上界。';
- return '三條線合計跑了 '+(monitor.batches??0)+' 批、'+(monitor.epochs??0)+' 輪更新，其中 '+(monitor.stopped??0)+' 批因固定 Actor 的樣本平均超過 '+PPO_KL_LIMIT+' 而停止後續更新。在實際跑完的輪次裡，混合平均更早超過、因此新規則比舊的混合平均多跑後續輪的有 '+extra+' 批。固定平均先超過、而混合平均在已跑輪次裡沒有超過的有 '+fixedOnly+' 批；這幾批新規則更早停止，舊規則還會再跑幾輪沒有實測。兩者在同一輪一起超過的有 '+(counts['same-epoch']||0)+' 批。兩者都沒超過、跑滿輪數上限的有 '+(counts.neither||0)+' 批。'+(counts['fixed-earlier']?'固定平均比混合平均更早、且兩者都在已跑輪次裡超過的有 '+counts['fixed-earlier']+' 批。':'')+bound+'超限後停止不代表該輪更新之前的 KL 沒有超過門檻。這次沒有同條件的舊 KL 監控對照組，所以不能把終點棋力的變化完全歸因於這項修正。第四輪的輪數來自另一組種子，只是歷史紀錄。';
+ const batches=(summary.lines||[]).flatMap(line=>line.batches||[]);
+ const compared=batches.length?compareStop(batches,{cap:PPO_EPOCHS}):null;
+ const movement=(summary.lines||[]).filter(line=>Number.isFinite(line.distance));
+ const moved=movement.length
+  ?'三條終點相對 A 的權重距離是 '+movement.map(line=>line.distance.toFixed(3)).join('、')+'。這是這次觀察到的移動，不是和舊監控相減的差額。'
+  :'';
+ const detail=compared
+  ?'新規則實際多跑的是 '+compared.extraBatches+' 批、共 '+compared.extraEpochs+' 輪。有 '+compared.earlyBatches+' 批在還沒跑滿 '+PPO_EPOCHS+' 輪時就因固定平均停止，混合平均在已跑輪次裡沒有超過；舊規則至少還會再跑 '+compared.earlyMin+' 輪、最多 '+compared.earlyMax+' 輪，這些輪沒有實測。其餘 '+compared.sameBatches+' 批實際跑的輪數相同。'
+  :'固定平均先超過、而混合平均在已跑輪次裡沒有超過的有 '+(counts['fixed-only']||0)+' 批；這幾批新規則更早停止，舊規則還會再跑幾輪沒有實測。兩者在同一輪一起超過的有 '+(counts['same-epoch']||0)+' 批。';
+ return '三條線合計跑了 '+(monitor.batches??0)+' 批、'+(monitor.epochs??0)+' 輪更新，其中 '+(monitor.stopped??0)+' 批因固定 Actor 的樣本平均超過 '+PPO_KL_LIMIT+' 而在該輪結束後停止。'+detail+bound+'超限後停止不代表該輪更新之前的 KL 沒有超過門檻。這次沒有同條件的舊 KL 監控對照組，所以不能把終點棋力的變化完全歸因於這項修正。'+moved+'第四輪的輪數來自另一組種子，只是歷史紀錄。';
 }
 export function answerRound6Lines(summary){
  const judgment=summary?.judgment;
