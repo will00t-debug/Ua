@@ -27,9 +27,9 @@ const READY=[
  '112','113'
 ].map(n=>'MCR-1-'+n);
 const VOL2_READY=[
- '001','003','005','006','010','012','013','014','015','020','021','023','024','025','026','027','028','029','030',
- '031','032','033','034','037','038','039','040','041','043','044','046','047','048','050','051','055','056','057',
- '058','059','060','061','062','063','064','065','067','070','072','076','077'
+ '001','002','003','005','006','007','010','012','013','014','015','020','021','023','024','025','026','027','028','029','030',
+ '031','032','033','034','036','037','038','039','040','041','043','044','046','047','048','050','051','055','056','057',
+ '058','059','060','061','062','063','064','065','067','070','072','074','076','077'
 ].map(n=>'MCR-2-'+n);
 
 const pack=createMcrStagingPack();
@@ -1182,7 +1182,7 @@ test('099 lets the opponent choose the deck side unless Basara is on the field',
 test('Vol.2 exact prints enter and raid frames stay out',()=>{
  for(const cardId of VOL2_READY)
   assert.equal(mcrSharedProgram(mcrCatalog().byId.get(cardId)).ready,true);
- for(const cardId of ['MCR-2-004','MCR-2-008','MCR-2-016','MCR-2-036','MCR-2-045','MCR-2-052','MCR-2-053','MCR-2-054','MCR-2-069']){
+ for(const cardId of ['MCR-2-004','MCR-2-008','MCR-2-016','MCR-2-045','MCR-2-052','MCR-2-053','MCR-2-054','MCR-2-069']){
   assert.equal(mcrSharedProgram(mcrCatalog().byId.get(cardId)).ready,false);
   assert.equal(pack.cards[cardId],undefined);
  }
@@ -1711,4 +1711,161 @@ test('061 draws, then either bans an attack or strips a raid without entry or re
   state.targetUid===victim.uid&&state.until?.phase==='start'),true);
  assert.equal(assertUniversalMatch(packs,strip),true);
  assert.equal(assertUniversalMatch(packs,ban),true);
+});
+
+test('036 reduces a hand raid only with five Walkure names and buffs only while raiding',()=>{
+ const counts=deckOf({
+  'MCR-2-036':4,'MCR-2-050':4,'MCR-2-030':4,'MCR-2-034':4,'MCR-2-039':4,'MCR-2-041':4,'MCR-2-048':4
+ });
+ let cheap=reach(counts,81);
+ for(let i=0;i<3;i++)seat(cheap,0,'MCR-2-050','energy',i);
+ const names=['MCR-2-030','MCR-2-039','MCR-2-041','MCR-2-048'];
+ const base=seat(cheap,0,'MCR-2-034','front',0);
+ for(let i=0;i<3;i++)seat(cheap,0,names[i],'front',i+1);
+ seat(cheap,0,names[3],'energy',3);
+ for(const ap of cheap.players[0].apCards)ap.ready=false;
+ const raider=take(cheap,0,'MCR-2-036');
+ cheap.players[0].hand.push(raider);
+ assert.equal(legalUniversalActions(packs,cheap).some(a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid),true);
+ cheap.handZeroApUses.push({turn:cheap.turn,owner:0,uid:'0-forged',name:pack.cards['MCR-2-036'].name,raid:false});
+ assert.equal(legalUniversalActions(packs,cheap).some(a=>a.type==='raid'&&a.uid===raider.uid),true);
+ cheap.handZeroApUses.push({turn:cheap.turn,owner:0,uid:'0-raided',name:pack.cards['MCR-2-036'].name,raid:true});
+ assert.equal(legalUniversalActions(packs,cheap).some(a=>a.type==='raid'&&a.uid===raider.uid),false);
+ let short=reach(counts,82);
+ for(let i=0;i<3;i++)seat(short,0,'MCR-2-050','energy',i);
+ const shortBase=seat(short,0,'MCR-2-034','front',0);
+ for(const id of ['MCR-2-030','MCR-2-039','MCR-2-041'])seat(short,0,id,'front',['MCR-2-030','MCR-2-039','MCR-2-041'].indexOf(id)+1);
+ for(const ap of short.players[0].apCards)ap.ready=false;
+ const second=take(short,0,'MCR-2-036');
+ short.players[0].hand.push(second);
+ assert.equal(legalUniversalActions(packs,short).some(a=>a.type==='raid'&&a.uid===second.uid&&a.baseUid===shortBase.uid),false);
+ let quiet=reach(counts,83);
+ for(let i=0;i<3;i++)seat(quiet,0,'MCR-2-050','energy',i);
+ const plain=seat(quiet,0,'MCR-2-036','front',0);
+ seat(quiet,0,'MCR-2-030','front',1);
+ seat(quiet,0,'MCR-2-034','front',2);
+ for(let i=0;i<6&&quiet.phase!=='attack';i++)quiet=dispatchUniversalAction(packs,quiet,{type:'next'});
+ quiet=act(quiet,a=>a.type==='attack'&&a.uid===plain.uid);
+ const quietCard=quiet.players[0].front.find(card=>card?.uid===plain.uid);
+ assert.equal(universalBp(packs,quiet,quietCard),3500);
+ let live=reach(counts,84);
+ for(let i=0;i<3;i++)seat(live,0,'MCR-2-050','energy',i);
+ const host=seat(live,0,'MCR-2-034','front',0);
+ const ally=seat(live,0,'MCR-2-030','front',1);
+ seat(live,0,'MCR-2-039','front',2);
+ seat(live,0,'MCR-2-041','front',3);
+ const top=take(live,0,'MCR-2-036');
+ live.players[0].hand.push(top);
+ live=act(live,a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===host.uid);
+ assert.equal(live.players[0].front.some(card=>card?.uid===top.uid&&(card.stack||[]).some(under=>under.faceDown!==true)),true);
+ for(let i=0;i<6&&live.phase!=='attack';i++)live=dispatchUniversalAction(packs,live,{type:'next'});
+ live=act(live,a=>a.type==='attack'&&a.uid===top.uid);
+ const liveTop=live.players[0].front.find(card=>card?.uid===top.uid);
+ const liveAlly=live.players[0].front.find(card=>card?.uid===ally.uid);
+ assert.equal(universalBp(packs,live,liveTop),4500);
+ assert.equal(universalBp(packs,live,liveAlly),3000);
+ assert.equal(assertUniversalMatch(packs,quiet),true);
+ assert.equal(assertUniversalMatch(packs,live),true);
+});
+
+test('074 returns a beaten character to hand and its ready front main draws for the opponent',()=>{
+ const counts=deckOf({'MCR-2-074':4,'MCR-1-002':4,'MCR-1-083':4,'MCR-2-067':4});
+ let won=reach(counts,85);
+ const attacker=seat(won,0,'MCR-2-074','front',0);
+ const small=seat(won,1,'MCR-1-002','front',0);
+ const before=won.players[0].hand.length;
+ for(let i=0;i<6&&won.phase!=='attack';i++)won=dispatchUniversalAction(packs,won,{type:'next'});
+ won=act(won,a=>a.type==='attack'&&a.uid===attacker.uid);
+ won=dispatchUniversalAction(packs,won,{type:'chooseBlock',uid:small.uid},{actor:1});
+ assert.equal(won.players[0].front[0]?.uid,attacker.uid);
+ assert.ok(won.players[1].hand.some(card=>card.uid===small.uid));
+ assert.equal(won.players[0].hand.length,before+1);
+ let main=reach(counts,86);
+ const singer=seat(main,0,'MCR-2-074','front',0);
+ const other=seat(main,0,'MCR-1-083','energy',0);
+ other.ready=false;
+ const foe=main.players[1].hand.length;
+ assert.equal(legalUniversalActions(packs,main).some(a=>a.type==='activate'&&a.uid===singer.uid&&a.mode==='readyFront'),true);
+ singer.ready=false;
+ assert.equal(legalUniversalActions(packs,main).some(a=>a.type==='activate'&&a.uid===singer.uid),false);
+ singer.ready=true;
+ main.players[0].energy[1]=main.players[0].front[0];
+ main.players[0].front[0]=null;
+ assert.equal(legalUniversalActions(packs,main).some(a=>a.type==='activate'&&a.uid===singer.uid),false);
+ main.players[0].front[0]=main.players[0].energy[1];
+ main.players[0].energy[1]=null;
+ main=act(main,a=>a.type==='activate'&&a.uid===singer.uid&&a.mode==='readyFront');
+ assert.equal(main.players[1].hand.length,foe+1);
+ assert.equal(main.pending?.kind,'effect-active-own-other');
+ assert.deepEqual(main.pending.choices,[other.uid]);
+ main=dispatchUniversalAction(packs,main,{type:'chooseActiveOwnOther',uid:other.uid});
+ assert.equal(main.players[0].energy[0].ready,true);
+ assert.equal(main.players[0].front[0].ready,true);
+ assert.equal(legalUniversalActions(packs,main).some(a=>a.type==='activate'&&a.uid===singer.uid&&a.mode==='readyFront'),false);
+ assert.equal(assertUniversalMatch(packs,won),true);
+ assert.equal(assertUniversalMatch(packs,main),true);
+});
+
+test('007 activates once per name after a life card reaches hand and keeps BP+500',()=>{
+ const counts=deckOf({'MCR-2-007':4,'MCR-2-001':4});
+ let s=reach(counts,87);
+ const first=seat(s,0,'MCR-2-007','front',0);
+ first.ready=false;
+ const second=seat(s,0,'MCR-2-007','energy',0);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.mode==='nameOnceActive'),false);
+ const taken=s.players[0].life.pop();
+ s.players[0].hand.push(taken);
+ appendCompletedMove(s,{uid:taken.uid,cardId:taken.cardId,owner:0,controller:0,
+  from:'life',to:'hand',reason:'own-effect'});
+ assert.equal(legalUniversalActions(packs,s).filter(a=>a.mode==='nameOnceActive').length,2);
+ s=act(s,a=>a.type==='activate'&&a.uid===first.uid&&a.mode==='nameOnceActive');
+ const woke=s.players[0].front[0];
+ assert.equal(woke.ready,true);
+ assert.equal(universalBp(packs,s,woke),4500);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===second.uid&&a.mode==='nameOnceActive'),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('002 chooses life then draw-discard only on its entry turn',()=>{
+ const counts=deckOf({'MCR-2-002':4,'MCR-2-001':4});
+ let fresh=reach(counts,88);
+ const entered=seat(fresh,0,'MCR-2-002','energy',0);
+ const hidden=fresh.players[0].life[0];
+ const deck=fresh.players[0].deck.length;
+ fresh=act(fresh,a=>a.type==='activate'&&a.uid===entered.uid&&a.mode==='entryLife');
+ assert.equal(fresh.pending.kind,'effect-choice-mode');
+ assert.deepEqual(fresh.pending.options.map(option=>option.id),['life','again'].filter(id=>
+  fresh.pending.options.some(option=>option.id===id)));
+ assert.equal(fresh.pending.options.some(option=>option.id==='again'),false);
+ fresh=dispatchUniversalAction(packs,fresh,{type:'chooseEffectMode',mode:'life'});
+ assert.equal(fresh.pending.kind,'effect-life-to-hand');
+ assert.equal(universalPrivateChoices(packs,fresh,1),null);
+ assert.equal(JSON.stringify(universalPublicView(packs,fresh,1)).includes(JSON.stringify(hidden.uid)),false);
+ fresh=dispatchUniversalAction(packs,fresh,{type:'chooseLifeToHand',uid:hidden.uid});
+ assert.equal(fresh.players[0].hand.some(card=>card.uid===hidden.uid),true);
+ assert.equal(fresh.pending.kind,'effect-discard');
+ assert.equal(fresh.players[0].deck.length,deck-2);
+ const discard=fresh.players[0].hand[0];
+ fresh=dispatchUniversalAction(packs,fresh,{type:'chooseDiscard',uid:discard.uid});
+ assert.equal(fresh.players[0].outside.some(card=>card.uid===discard.uid),true);
+ assert.equal(fresh.pending,null);
+ assert.equal(legalUniversalActions(packs,fresh).some(a=>a.uid===entered.uid&&a.mode==='entryLife'),false);
+ let late=reach(counts,89);
+ const old=seat(late,0,'MCR-2-002','front',0);
+ old.entryTurn=late.turn-1;
+ assert.equal(legalUniversalActions(packs,late).some(a=>a.uid===old.uid&&a.mode==='entryLife'),false);
+ const taken=late.players[0].life.pop();
+ late.players[0].hand.push(taken);
+ appendCompletedMove(late,{uid:taken.uid,cardId:taken.cardId,owner:0,controller:0,
+  from:'life',to:'hand',reason:'own-effect'});
+ while(late.players[0].life.length)late.players[0].deck.push(late.players[0].life.pop());
+ const again=seat(late,0,'MCR-2-002','energy',1);
+ const before=late.players[0].hand.length;
+ late=act(late,a=>a.type==='activate'&&a.uid===again.uid&&a.mode==='entryLife');
+ assert.equal(late.pending.options.some(option=>option.id==='life'),false);
+ late=dispatchUniversalAction(packs,late,{type:'chooseEffectMode',mode:'again'});
+ assert.equal(late.players[0].hand.length,before+1);
+ assert.equal(late.pending,null);
+ assert.equal(assertUniversalMatch(packs,fresh),true);
+ assert.equal(assertUniversalMatch(packs,late),true);
 });

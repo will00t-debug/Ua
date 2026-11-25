@@ -2,8 +2,8 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs?v=20261125mcr8';
-import {cardHasName} from './field-conditions.mjs?v=20261125mcr8';
+import {universalBp} from './engine.mjs?v=20261125mcr9';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr9';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -276,6 +276,10 @@ function effectWords(ability,action){
   return `本回合 BP＋${bp??500}`;
  if(op==='lifeToHandOnce'||mode==='lifeToHand')
   return '將自己 1 張生命牌加入手牌';
+ if(op==='entryTurnLifeChoice'||mode==='entryLife')
+  return '本回合登場時，生命牌入手後抽 2 棄 1，或已入手過時抽 1';
+ if(op==='readyFrontProgram'||mode==='readyFront')
+  return `對手抽 1 張，可以讓其他 1 張「${ability?.then?.[1]?.trait||''}」變為活動`;
  if(op==='onceAbovePrintedKeywords'||mode==='abovePrinted')
   return `依自己場上 BP 高於原本 BP 的角色數量，此角色本回合獲得全部符合的效果：${ability?.damageAt??3} 張以上獲得【傷害（${ability?.damage??2}）】；${ability?.impactAt??5} 張以上再獲得【貫通（${ability?.impact??1}）】`;
  if(op==='restSelfBuffOther'||(mode==='selfRestBuff'&&bp!=null))
@@ -352,6 +356,8 @@ function effectWords(ability,action){
   return `公開 1 張 BP ${ability?.minPrintedBp||0} 以上的手牌放到牌庫底，本回合獲得【貫通（${ability?.impact||1}）】`;
  if(op==='onceGrantBlockImpact'||mode==='grantBlockImpact')
   return `直到下一個自己的回合開始，獲得【二回阻擋】與【貫通無效】`;
+ if(op==='nameOnceActive'&&ability?.bpUntilNext===500)
+  return '將此角色轉為活動，直到自己下回合開始 BP＋500';
  if(op==='nameOnceActive'||op==='activeSelfOnceByKey'||op==='cardOnceActive'||op==='cardOnceActiveIfBp'||op==='onceActiveIfOwnEffectRested'||op==='onceActiveSelfGate'||op==='printNameActive'||mode==='nameActive'||mode==='ready'||mode==='cardOnceActive'||mode==='ownRestActive'||mode==='onceActiveGate')
   return '將此角色轉為活動';
  if(op==='frontOnceActiveNamed'||mode==='nameOnceActive')

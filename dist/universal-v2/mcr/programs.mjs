@@ -291,6 +291,15 @@ export function mcrSharedProgram(card){
   return onPlay({op:'discardGate',optional:true,then:[{
    op:'recoverOutsideFiltered',optional:true,max:1,type:'character',excludeRaidKeyword:true
   }]});
+ if(card.type==='character'&&effect===norm(
+  'このカードを手札からレイドする際、自分の場に［特徴：ワルキューレ］のカード名が5種類以上ある場合、消費APを-1する。このターン中に他の〈フレイア・ヴィオン〉をAPを支払わずにレイドしているなら、この効果は無効になる。\n【レイド】〈フレイア・ヴィオン〉アクティブにし、フロントLに移動できる\n【アタック時】自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、自分の場のキャラ全ては、このターン中、BP+1000。'))
+  return raid('フレイア・ヴィオン',{raidHandApDiscount:{
+   amount:1,minDistinctTraitNames:5,trait:'ワルキューレ',
+   voidIfOtherZeroApHandName:true,voidRaidOnly:true
+  },effects:{onAttack:[{op:'ifLiveThen',when:walkureNames(3),then:[{
+   op:'buffOwnField',all:true,bp:1000,optional:false,excludeSelf:false,
+   filter:{field:'type',value:'character'}
+  }]}]}});
  if(effect.includes('【レイド】')||effect.includes('レイド以外'))return pending();
  if(EMPTY.has(effect)){
   if(card.type!=='character')return pending();
@@ -763,5 +772,25 @@ export function mcrSharedProgram(card){
      then:[{op:'stripOppRaidTop',optional:true}]}
    ]}
   ]}});
+ if(card.type==='character'&&effect===norm(
+  'このキャラがアタックしてバトルに勝利した時、カードを1枚引き、このバトルで敗北した相手のキャラは退場する代わりに、手札に戻る。\n【起動メイン】【フロントLにある場合】 【ターン1】このキャラがアクティブの場合のみ発動できる。相手はカードを1枚引く。自分の場の他の［特徴：Fire Bomber］を1枚まで選び、アクティブにする。'))
+  return dsl({attackWinDraw:{count:1},battleLoseToHand:true,mainAbility:{
+   op:'readyFrontProgram',oncePerTurn:true,frontOnly:true,requireReady:true,
+   then:[{op:'drawOpponent',count:1},{op:'activeOwnOther',optional:true,trait:'Fire Bomber'}]
+  }});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】このターン中に自分がライフを手札に加えている場合のみ発動できる。このキャラをアクティブにし、次の自分のターン開始時まで、このキャラはBP+500。〈ランカ・リー〉のこの効果は1ターンに1回のみ発動できる。'))
+  return dsl({mainAbility:{op:'nameOnceActive',scope:'name',bpUntilNext:500,
+   when:{kind:'ownLifeToHandThisTurn',turn:'own'}}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。以下から1つ選ぶ。\n・自分のライフを1枚手札に加える。そうした場合、カードを2枚引き、自分の手札を1枚場外に置く。\n・このターン中に自分がライフを手札に加えている場合、カードを1枚引く。'))
+  return dsl({triggerEffect:{op:'restOppFrontSkipNextActive'},mainAbility:{op:'entryTurnLifeChoice',oncePerTurn:true,entryTurnOnly:true,then:[{
+   op:'chooseOne',optional:false,options:[
+    {id:'life',turn:'any',label:'將 1 張生命牌加入手牌，然後抽 2 張並把 1 張手牌放到場外',
+     then:[{op:'optionalOwnLifeToHandThenDraw',optional:false,then:[
+      {op:'drawDiscard',count:2,discardCount:1}]}]},
+    {id:'again',turn:'any',label:'本回合已將生命牌加入手牌時，抽 1 張',
+     when:{kind:'ownLifeToHandThisTurn',turn:'own'},then:[{op:'draw',count:1}]}
+   ]}]}});
  return pending();
 }
