@@ -9,7 +9,7 @@ import {memoryUsage} from 'node:process';
 import {planRound8} from '../training/white-sword-nn/budget.mjs';
 import {pairedDelta} from '../training/white-sword-nn/cluster.mjs';
 import {
- MEMORY_WORKER_RSS,PLAN_SAFETY,ROUND8_CANDIDATE_HASH,ROUND8_CANDIDATE_UPDATES,
+ MEMORY_WORKER_RSS,PLAN_SAFETY,ROUND8_BENCH_SEED,ROUND8_CANDIDATE_HASH,ROUND8_CANDIDATE_UPDATES,
  ROUND8_CANDIDATE_VERSION,ROUND8_SEED_CAP,ROUND8_WALL_MS,V2_FILE_HASH,WORKER_CAP
 } from '../training/white-sword-nn/constants.mjs';
 import {loadNet,packNet,unpackNet} from '../training/white-sword-nn/net.mjs';
@@ -17,7 +17,7 @@ import {playMatch} from '../training/white-sword-nn/play.mjs';
 import {runPool} from '../training/white-sword-nn/pool.mjs';
 import {splitOutcomes} from '../training/white-sword-nn/ppo.mjs';
 import {
- EVAL_CELLS,ROUND8_BENCH_SEED,ROUND8_DECKS,ROUND8_EVAL_SEEDS,ROUND8_RULE,assertExperimentSeed,round8Schedule
+ EVAL_CELLS,ROUND8_DECKS,ROUND8_EVAL_SEEDS,ROUND8_RULE,assertExperimentSeed,round8Schedule
 } from '../training/white-sword-nn/protocol.mjs';
 import {
  answerRound8Champion,answerRound8Direct,answerRound8Next,answerRound8Paired,classifyChampion,
