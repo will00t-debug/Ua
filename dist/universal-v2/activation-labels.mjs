@@ -488,12 +488,32 @@ export function activationLabelBanned(label){
  if(/\b(?:kmr|kmr2|csm|iys|kjn|aot2|mmm2):/i.test(text))return '未翻譯模式';
  return '';
 }
+// One printed MAIN can offer several different results. The button names the
+// result; the sentence after the first period keeps the printed condition.
+function raidTwoChoiceLabel(ability,action){
+ if(ability?.op!=='chooseTwoAfterOwnRaid')return '';
+ const trait=typeof ability.trait==='string'&&ability.trait?ability.trait:'符合條件';
+ const amount=Number.isInteger(ability.bp)?ability.bp:1000;
+ const once=ability.readyOncePerName?'同名活動選項每回合一次。':'';
+ const stand='將此角色轉為活動';
+ const boost=`選擇 1 張己方特徵「${trait}」的角色，本回合 BP＋${amount}`;
+ const gate='本回合自己有過突襲，且此角色在前線';
+ if(action?.mode==='ready')
+  return `只活動自身。${polish(`${gate}，${stand}。${once}`)}`;
+ if(action?.mode==='buff')
+  return `只給「${trait}」BP＋${amount}。${polish(`${gate}，${boost}。`)}`;
+ if(action?.mode==='readyAndBuff')
+  return `活動自身並 BP＋${amount}。${polish(`${gate}，${stand}，並${boost}。${once}`)}`;
+ return '';
+}
 export function describeActivation(action,{pack,state}={}){
  if(action?.type!=='activate')return '';
  const found=locate(pack,state,action.uid);
  const printed=found?.printed||null;
  const catalogue=printed?.id?BY_ID.get(printed.id):null;
  const ability=abilityFor(printed,action,pack,state);
+ const choice=raidTwoChoiceLabel(ability,action);
+ if(choice)return choice;
  if(!printed&&!catalogue)return '';
  const clauses=chineseMainClauses(catalogue?.effect||'');
  const chosen=pickClause(clauses,action);

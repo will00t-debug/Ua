@@ -60,6 +60,7 @@ function modesOf(card){
   fieldRestMillOrOutsideEvent:'fieldMill',fieldRestTuckOrRelease:'fieldTuck',
   restChooseIfEventUsed:'eventRestBuff',gunmenModeSubset:'gunmenModes'
  };
+ if(op==='chooseTwoAfterOwnRaid')return ['ready','buff','readyAndBuff'];
  if(fixed[op])return op==='kurisuFrontDual'?['discount','restedBuff']:
   op==='frontDrawOrHandTrigger'?['frontDraw','handTrigger']:
   op==='characterDualMain'?['kindsActive','selfRestBuff']:
