@@ -1,0 +1,190 @@
+{
+  "positions": 200,
+  "disagreed": 12,
+  "rate": 0.06,
+  "bandPositions": 87,
+  "bandDisagreed": 12,
+  "bandRate": 0.13793103448275862,
+  "versusChampion": 0.06,
+  "pairwise": 0.020714285714285713,
+  "byPhase": {
+    "early-energy": {
+      "positions": 17,
+      "disagreed": 2,
+      "rate": 0.11764705882352941
+    },
+    "mid-entry": {
+      "positions": 59,
+      "disagreed": 3,
+      "rate": 0.05084745762711865
+    },
+    "line-move": {
+      "positions": 26,
+      "disagreed": 1,
+      "rate": 0.038461538461538464
+    },
+    "attack-defense": {
+      "positions": 23,
+      "disagreed": 0,
+      "rate": 0
+    },
+    "raid": {
+      "positions": 10,
+      "disagreed": 0,
+      "rate": 0
+    },
+    "ap": {
+      "positions": 2,
+      "disagreed": 0,
+      "rate": 0
+    },
+    "late-pressure": {
+      "positions": 63,
+      "disagreed": 6,
+      "rate": 0.09523809523809523
+    }
+  },
+  "byCandidate": {
+    "v4a-r0005-c0-80cae58a3ca0": {
+      "compared": 200,
+      "differed": 3,
+      "rate": 0.015
+    },
+    "v4a-r0005-c1-05d324d39cb3": {
+      "compared": 200,
+      "differed": 5,
+      "rate": 0.025
+    },
+    "v4a-r0005-c2-76528db87e22": {
+      "compared": 200,
+      "differed": 10,
+      "rate": 0.05
+    },
+    "v4a-r0005-c3-8a9347e92ec0": {
+      "compared": 200,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0005-c4-5807a92d20f8": {
+      "compared": 200,
+      "differed": 1,
+      "rate": 0.005
+    },
+    "v4a-r0005-c5-97f1953b57fc": {
+      "compared": 200,
+      "differed": 0,
+      "rate": 0
+    },
+    "v4a-r0005-c6-e08a035fd0bb": {
+      "compared": 200,
+      "differed": 1,
+      "rate": 0.005
+    },
+    "v4a-r0005-c7-dc23f498cd57": {
+      "compared": 200,
+      "differed": 0,
+      "rate": 0
+    }
+  },
+  "examples": [
+    {
+      "seed": 104000,
+      "step": 38,
+      "band": 2,
+      "bucket": "mid-entry",
+      "choices": {
+        "champion": "chooseLineMove",
+        "v4a-r0005-c0-80cae58a3ca0": "chooseLineMove",
+        "v4a-r0005-c1-05d324d39cb3": "chooseLineMove",
+        "v4a-r0005-c2-76528db87e22": "chooseLineMove",
+        "v4a-r0005-c3-8a9347e92ec0": "chooseLineMove",
+        "v4a-r0005-c4-5807a92d20f8": "chooseLineMove",
+        "v4a-r0005-c5-97f1953b57fc": "chooseLineMove",
+        "v4a-r0005-c6-e08a035fd0bb": "chooseLineMove",
+        "v4a-r0005-c7-dc23f498cd57": "chooseLineMove"
+      }
+    },
+    {
+      "seed": 104000,
+      "step": 125,
+      "band": 4,
+      "bucket": "late-pressure",
+      "choices": {
+        "champion": "chooseTrigger:special",
+        "v4a-r0005-c0-80cae58a3ca0": "chooseTrigger:special",
+        "v4a-r0005-c1-05d324d39cb3": "chooseTrigger:special",
+        "v4a-r0005-c2-76528db87e22": "chooseTrigger:special",
+        "v4a-r0005-c3-8a9347e92ec0": "chooseTrigger:special",
+        "v4a-r0005-c4-5807a92d20f8": "chooseTrigger:special",
+        "v4a-r0005-c5-97f1953b57fc": "chooseTrigger:special",
+        "v4a-r0005-c6-e08a035fd0bb": "chooseTrigger:special",
+        "v4a-r0005-c7-dc23f498cd57": "chooseTrigger:special"
+      }
+    },
+    {
+      "seed": 104001,
+      "step": 5,
+      "band": 4,
+      "bucket": "early-energy",
+      "choices": {
+        "champion": "chooseDiscardGate",
+        "v4a-r0005-c0-80cae58a3ca0": "chooseDiscardGate",
+        "v4a-r0005-c1-05d324d39cb3": "chooseDiscardGate",
+        "v4a-r0005-c2-76528db87e22": "chooseDiscardGate",
+        "v4a-r0005-c3-8a9347e92ec0": "chooseDiscardGate",
+        "v4a-r0005-c4-5807a92d20f8": "chooseDiscardGate",
+        "v4a-r0005-c5-97f1953b57fc": "chooseDiscardGate",
+        "v4a-r0005-c6-e08a035fd0bb": "chooseDiscardGate",
+        "v4a-r0005-c7-dc23f498cd57": "chooseDiscardGate"
+      }
+    },
+    {
+      "seed": 104001,
+      "step": 30,
+      "band": 3,
+      "bucket": "line-move",
+      "choices": {
+        "champion": "move",
+        "v4a-r0005-c0-80cae58a3ca0": "move",
+        "v4a-r0005-c1-05d324d39cb3": "move",
+        "v4a-r0005-c2-76528db87e22": "move",
+        "v4a-r0005-c3-8a9347e92ec0": "move",
+        "v4a-r0005-c4-5807a92d20f8": "move",
+        "v4a-r0005-c5-97f1953b57fc": "move",
+        "v4a-r0005-c6-e08a035fd0bb": "move",
+        "v4a-r0005-c7-dc23f498cd57": "move"
+      }
+    },
+    {
+      "seed": 104001,
+      "step": 34,
+      "band": 5,
+      "bucket": "mid-entry",
+      "choices": {
+        "champion": "chooseDiscardGate",
+        "v4a-r0005-c0-80cae58a3ca0": "chooseDiscardGate",
+        "v4a-r0005-c1-05d324d39cb3": "chooseDiscardGate",
+        "v4a-r0005-c2-76528db87e22": "chooseDiscardGate",
+        "v4a-r0005-c3-8a9347e92ec0": "chooseDiscardGate",
+        "v4a-r0005-c4-5807a92d20f8": "chooseDiscardGate",
+        "v4a-r0005-c5-97f1953b57fc": "chooseDiscardGate",
+        "v4a-r0005-c6-e08a035fd0bb": "chooseDiscardGate",
+        "v4a-r0005-c7-dc23f498cd57": "chooseDiscardGate"
+      }
+    }
+  ],
+  "walked": 4,
+  "steps": 522,
+  "fallbackIds": [],
+  "seeds": [
+    104000,
+    104001,
+    104002,
+    104003,
+    104004,
+    104005,
+    104006,
+    104007
+  ],
+  "regenerated": false
+}

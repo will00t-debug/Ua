@@ -82,10 +82,11 @@ export function acquireLock(root){
  mkdirSync(root,{recursive:true});
  const body={pid:process.pid,host:hostname(),at:new Date().toISOString()};
  const held=lock=>{
-  if(!lock||lock.host!==hostname())return false;
-  if(!Number.isFinite(Date.parse(lock.at)))return false;
+  if(!lock||!Number.isFinite(Date.parse(lock.at)))return false;
   if(Date.now()-Date.parse(lock.at)>6*60*60*1000)return false;
-  return alive(lock.pid)&&lock.pid!==process.pid;
+  if(lock.host===hostname()&&lock.pid===process.pid)return false;
+  if(lock.host===hostname())return alive(lock.pid);
+  return true;
  };
  try{
   writeFileSync(file,JSON.stringify(body),{flag:'wx'});
@@ -128,6 +129,20 @@ export function writeExperimentalChampion(root,candidate,judgment){
  writeJson(championFile(root),model);
  writeJson(join(root,'champions',candidate.id+'.json'),model);
  return model;
+}
+export function haltFile(root){
+ return join(root,'halt.json');
+}
+export function readHalt(root){
+ return readJson(haltFile(root));
+}
+export function writeHalt(root,reason,round){
+ writeJson(haltFile(root),{
+  reason,round:round??null,at:new Date().toISOString()
+ });
+}
+export function clearHalt(root){
+ rmSync(haltFile(root),{force:true});
 }
 export function roundNumbers(root){
  try{

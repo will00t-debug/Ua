@@ -3,7 +3,7 @@
 // Nothing here is imported by the live battle menu or the production index.
 import {BLEND_HARD_CAP,BLEND_SCALE} from '../../../../dist/universal-v2/white-sword-ai/constants.mjs';
 
-export const CODE_VERSION='v4a-1';
+export const CODE_VERSION='v4a1-1';
 export const CANDIDATE_COUNT=8;
 export const STEP_CAP=1.5;
 export const WEIGHT_CLIP=6;
@@ -41,7 +41,7 @@ export const METHOD_LABEL=Object.freeze({
  sparse:'稀疏變異',
  'top-magnitude':'較大權重變異',
  'mix-v1':'與 v1 策略混合',
- 'mix-v0':'與 v0 策略混合',
+ 'cross-elite':'與未晉級優秀候選交叉',
  group:'攻防與能量特徵變異'
 });
 
@@ -73,7 +73,7 @@ export const PROFILES=Object.freeze({
   stageA:Object.freeze({seedCount:1,opponents:Object.freeze(['champion','hard-white']),floor:false}),
   stageB:Object.freeze({keep:2,seedCount:1,opponents:Object.freeze(['hard-white'])}),
   stageC:null,
-  probe:Object.freeze({games:1,maxSteps:60,maxPositions:6})
+  probe:Object.freeze({games:1,maxSteps:60,maxPositions:6,minPositions:0})
  }),
  round:Object.freeze({
   name:'round',
@@ -85,8 +85,18 @@ export const PROFILES=Object.freeze({
    pairedSeeds:30,mirrorSeeds:30,
    decks:Object.freeze(['white-sword','reject-blue','renruki'])
   }),
-  probe:Object.freeze({games:3,maxSteps:180,maxPositions:12})
+  probe:Object.freeze({games:8,maxSteps:220,maxPositions:200,minPositions:200})
  })
+});
+
+// A dispatched sequence is one of these lengths. It is not an open-ended loop.
+export const SEQUENCE_COUNTS=Object.freeze([1,3,5]);
+export const MAX_WORKERS=4;
+export const ROUND_GAME_CAP=1320;
+export const SEQUENCE_WALL_MS=Object.freeze({
+ 1:80*60*1000,
+ 3:200*60*1000,
+ 5:320*60*1000
 });
 
 export function isReserved(seed){

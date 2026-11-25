@@ -18,15 +18,32 @@ export function anomalyReport(games){
  const totals={};
  for(const key of ANOMALY_KEYS)totals[key]=0;
  let unfinished=0;
+ const faults=[];
  for(const game of games||[]){
-  for(const key of ANOMALY_KEYS)totals[key]+=game.anomalies?.[key]||0;
-  if(game.status!=='finished'||(game.winner!==0&&game.winner!==1))unfinished++;
+  let marked=false;
+  for(const key of ANOMALY_KEYS){
+   const count=game.anomalies?.[key]||0;
+   totals[key]+=count;
+   if(count)marked=true;
+  }
+  if(game.status!=='finished'||(game.winner!==0&&game.winner!==1)){
+   unfinished++;
+   marked=true;
+  }
+  if(marked&&faults.length<30)faults.push({
+   seed:game.seed??null,stage:game.stage??null,opponent:game.opponentKind??null,
+   role:game.role??null,status:game.status??null,error:game.error??null
+  });
  }
  const bad=unfinished>0||ANOMALY_KEYS.some(key=>totals[key]>0);
- return {totals,unfinished,bad};
+ return {totals,unfinished,bad,faults};
 }
 function won(game){
  return game.status==='finished'&&game.winner===game.specialistSeat;
+}
+export function decisiveGame(game){
+ if(!game||game.status!=='finished'||(game.winner!==0&&game.winner!==1))return false;
+ return !anomalyReport([game]).bad;
 }
 export function screenCandidates(games,candidates,{floor=false}={}){
  const kept=[];
@@ -106,10 +123,19 @@ export function pairGames(challengerGames,baselineGames){
  const baseline=new Map(baselineGames.map(game=>[pairKey(game),game]));
  const pairs=[];
  const missing=[];
+ const incomplete=[];
  for(const game of challengerGames){
   const other=baseline.get(pairKey(game));
   if(!other){
    missing.push(pairKey(game));
+   continue;
+  }
+  if(!decisiveGame(game)||!decisiveGame(other)){
+   incomplete.push({
+    key:pairKey(game),seed:game.seed,deck:game.opponentDeck,
+    challengerStatus:game.status,baselineStatus:other.status,
+    challengerError:game.error||null,baselineError:other.error||null
+   });
    continue;
   }
   pairs.push({
@@ -117,7 +143,7 @@ export function pairGames(challengerGames,baselineGames){
    challengerWin:won(game),championWin:won(other)
   });
  }
- return {pairs,missing};
+ return {pairs,missing,incomplete};
 }
 function pairKey(game){
  return [game.seed,game.first,game.specialistSeat,game.opponentDeck].join('|');
@@ -127,6 +153,8 @@ export function judgeExperimental({profile,paired,mirror,decks,anomalies}){
  if(profile==='smoke')reasons.push('smoke 只檢查閉環，不晉級');
  if(!paired)reasons.push('沒有進入冠軍挑戰');
  else{
+  if((paired.incomplete||0)>0)reasons.push('有不完整配對，這些對局不計勝、負或平手');
+  if((paired.missing||0)>0)reasons.push('配對基準缺少對照對局');
   if(paired.n!==PROMOTION.pairedGames)reasons.push('配對驗證不是事先登記的 '+PROMOTION.pairedGames+' 場');
   if(!(paired.delta>=PROMOTION.pairedDelta))reasons.push('配對勝率差未達 +5 個百分點');
   if(!(paired.ci?.low>PROMOTION.ciLow))reasons.push('配對勝率差的 95% 信賴區間下限沒有大於 0');
@@ -158,9 +186,9 @@ export function judgeExperimental({profile,paired,mirror,decks,anomalies}){
  };
 }
 export function rateOf(games){
- const done=games.filter(game=>game.status==='finished'&&(game.winner===0||game.winner===1));
+ const done=games.filter(game=>decisiveGame(game));
  const wins=done.filter(won).length;
- return {...wilson(wins,done.length),games:games.length};
+ return {...wilson(wins,done.length),games:games.length,excluded:games.length-done.length};
 }
 export function meanTally(games){
  const keys=['energy','front','move','raid','attack','apSpent'];
