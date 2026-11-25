@@ -110,3 +110,9 @@ node scripts/white-sword-nn-round5.mjs trial
 ```bash
 node scripts/white-sword-nn-round6.mjs trial
 ```
+
+第七輪接受第六輪：只確認線 2 的 96 場終點，不重訓、不改參數。確認種子和判準在開打前寫進 `docs/white-sword-ai/nn-round7-plan.json`。結果寫在 `docs/white-sword-ai/NN-ROUND7.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round7.mjs trial
+```

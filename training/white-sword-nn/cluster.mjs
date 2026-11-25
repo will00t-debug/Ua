@@ -74,3 +74,31 @@ export function selectCheckpoint(points){
  }
  return best;
 }
+// Planning only. The confirmation test does not read this projection.
+export function seedDispersion(rates){
+ const values=(rates||[]).filter(value=>Number.isFinite(value));
+ const n=values.length;
+ if(!n)return {n:0,mean:null,sd:null,se:null};
+ const mean=values.reduce((sum,value)=>sum+value,0)/n;
+ if(n<2)return {n,mean,sd:null,se:null};
+ const variance=values.reduce((sum,value)=>sum+(value-mean)**2,0)/(n-1);
+ const sd=Math.sqrt(variance);
+ return {n,mean,sd,se:sd/Math.sqrt(n)};
+}
+export function projectedPrecision(dispersion,plannedSeeds){
+ const planned=plannedSeeds|0;
+ if(!(dispersion?.n>=2)||!(dispersion.sd>=0)||planned<2)return null;
+ const t=tCritical(planned);
+ const devT=tCritical(dispersion.n);
+ if(t==null||devT==null)return null;
+ const se=dispersion.sd/Math.sqrt(planned);
+ const half=t*se;
+ const devHalf=devT*dispersion.sd/Math.sqrt(dispersion.n);
+ const effect=dispersion.mean-0.5;
+ const devLower=effect-devHalf;
+ return {
+  plannedSeeds:planned,t,se,half,effect,devHalf,devLower,
+  pointClears:effect>half,lowerClears:devLower>half,
+  assumption:'開發集的平均和標準差被當成真實值，而且確認樣本的標準差不變。這只是規劃，不保證確認會顯著，也不進入確認的顯著性計算。'
+ };
+}

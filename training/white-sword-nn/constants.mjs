@@ -67,3 +67,13 @@ export const ROUND6_TRAIN_STARTS=Object.freeze([192200,192400,192600]);
 export const ROUND6_CRITIC_SEEDS=Object.freeze([188530,188531,188532]);
 export const ROUND6_SHUFFLE_SEEDS=Object.freeze([188540,188541,188542]);
 export const ROUND6_BENCH_SHUFFLE=188539;
+// Round 7 confirms one frozen actor. The 256-seed draft is registered before
+// any confirmation game. 191400–191411 stay first; the fresh block follows.
+export const ROUND7_WALL_MS=20*60*1000;
+export const ROUND7_CONFIRM_COUNT=256;
+export const ROUND7_FRESH_START=193000;
+export const ROUND7_FRESH_COUNT=244;
+export const ROUND7_CANDIDATE_VERSION='nn-ppo-actor-r6-l2';
+export const ROUND7_CANDIDATE_UPDATES=27546;
+export const ROUND7_CANDIDATE_HASH='a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236';
+export const ROUND7_BASELINE_HASH='542a774f6c42775e20ce1aa1a59235eb9cfe1909b6c8f92dde16a5b5fe90718e';

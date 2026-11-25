@@ -7,7 +7,7 @@ import {
  PPO_CRITIC_LR,PPO_ENTROPY,PPO_EPOCHS,PPO_KL_LIMIT,PPO_MAX_BATCHES,REPLAY_FRACTION,
  ROUND4_CONFIRM_CAP,ROUND4_SHUFFLE_SEED,ROUND5_DEV_COUNT,ROUND5_DEV_START,ROUND6_BENCH_SHUFFLE,
  ROUND6_CRITIC_SEEDS,ROUND6_DEV_COUNT,ROUND6_DEV_START,ROUND6_LINES,ROUND6_SHUFFLE_SEEDS,
- ROUND6_TRAIN_STARTS,SURPASS_SEEDS
+ ROUND6_TRAIN_STARTS,ROUND7_CONFIRM_COUNT,ROUND7_FRESH_COUNT,ROUND7_FRESH_START,SURPASS_SEEDS
 } from './constants.mjs';
 
 export const RESERVED=Object.freeze([
@@ -55,6 +55,10 @@ export const ROUND5_DEV_SEEDS=Object.freeze(range(ROUND5_DEV_START,ROUND5_DEV_CO
 export const ROUND6_TRAIN_COUNT=PPO_MAX_BATCHES*PPO_BATCH_GAMES;
 export const ROUND6_TRAIN_SEEDS=Object.freeze(ROUND6_TRAIN_STARTS.map(start=>Object.freeze(range(start,ROUND6_TRAIN_COUNT))));
 export const ROUND6_DEV_SEEDS=Object.freeze(range(ROUND6_DEV_START,ROUND6_DEV_COUNT));
+// Round 7 plays a new confirmation list. The unused 191400–191411 block stays
+// first. 193000–193243 has not been trained, scored, or reserved before.
+export const ROUND7_FRESH_SEEDS=Object.freeze(range(ROUND7_FRESH_START,ROUND7_FRESH_COUNT));
+export const ROUND7_CONFIRM_SEEDS=Object.freeze([...ROUND4_CONFIRM_SEEDS,...ROUND7_FRESH_SEEDS]);
 export const ROUND6_BLOCKED_SEEDS=Object.freeze([
  ROUND4_SHUFFLE_SEED,...ROUND6_CRITIC_SEEDS,...ROUND6_SHUFFLE_SEEDS,ROUND6_BENCH_SHUFFLE
 ]);
@@ -116,6 +120,20 @@ export const ROUND6_RULE=[
  '單條線沿用開發門檻：相對 50% 的差，區間下限高於 0 是正向證據，上限低於 0 是退步證據，區間包含 0 是尚無法分辨。點估計高於 50% 而區間仍包含 50%，仍是尚無法分辨。單條成功只支持該終點成為候選，不宣稱訓練方法已能穩定成長。沒有通過，也不直接外推成整個 PPO 方法不可行。損失、Critic 誤差或 KL 改善不能代替棋力。',
  '沒有同條件的舊 KL 監控對照組。同一批裡實際跑過的輪次可以比較混合平均和固定平均誰先超過門檻，這只說明停止規則差在哪裡，不能把棋力變化完全歸因於 KL 修正。第四輪的輪數是另一組種子的歷史紀錄，不是對照組。'
 ].join('\n');
+export const ROUND7_RULE=[
+ '接受第六輪：線 2 的計畫終點通過開發門檻，值得獨立確認。線 0 和線 1 有退步證據。這一輪只確認線 2 的 96 場 Actor，不重訓、不改參數、不換成其他線或中間檢查點。',
+ '候選檔案是 training/white-sword-nn/weights/round6/line-2/actor-after-96.json，版本 nn-ppo-actor-r6-l2。基準是 training/white-sword-nn/weights/round2/a-frozen.json。評估只讀這兩個檔，不覆寫權重。執行前後都核對檔案雜湊。',
+ '確認草案是 '+ROUND7_CONFIRM_COUNT+' 個種子，每個種子四種座位與先後手，共 '+(ROUND7_CONFIRM_COUNT*4)+' 場。名單先放尚未使用的 191400–191411，再放 '+ROUND7_FRESH_START+'–'+(ROUND7_FRESH_START+ROUND7_FRESH_COUNT-1)+'。不使用第六輪開發種子 192800–192863，也不使用其他已訓練、已診斷、已開發、已用來選模型或已測試的區塊。',
+ '這份 256 種子的確認規模是這一輪新登記的。它不回寫成先前實驗早已登記的計畫。',
+ '開打前用線 2 開發種子的樣本標準差估計確認樣本的種子層級標準誤。種子數大於 30 時，既有臨界值函式固定回傳 1.96，不是自由度 255 的 t 值。這只說明若開發集的平均和標準差就是真實值，區間大約會有多窄。它不保證顯著，也不併入確認的顯著性計算。',
+ '先用一場貪心對局測速。估計時間乘上 1.4 的安全係數後，若 1024 場放不進剩餘的 20 分鐘牆鐘，就把種子數改成放得下的前綴並先保存計畫。前綴維持上述順序。開打後不因勝率縮減或追加場次。',
+ '候選和 A 都用無探索的貪心選牌。規則引擎、觀測、動作編碼和合法動作集合不變。每個種子都跑完四種組合。不因暫時勝率停止，不換掉不利種子，不用確認結果改參數或改選候選，也不在這批資料上試其他模型。',
+ '每個種子先把四場平均成一個勝率，再對原始種子估計。1024 場不是 1024 個獨立樣本。標準誤是種子勝率的樣本標準差除以種子數的平方根。判斷用的 95% 區間不截斷到 [0,1]。畫面上的種子平均區間若被截斷，不拿來改判。',
+ '主要結果只用這一輪的確認資料，不與開發資料合併計算顯著性。先後手和座位只作描述。',
+ '完整完成鎖定的場數、而且沒有模型相關異常時：區間下限高於 50%，稱為這個凍結候選相對模仿起點 A 的改善在獨立確認資料上重現。區間上限低於 50%，確認資料支持候選弱於 A，停止推進這個候選。區間包含 50%，仍無法確認改善，不補抽，也不用開發集的 56.3% 代替。',
+ '即使下限高於 50%，也不表示 PPO 每次訓練都會變強，不表示已能穩定自主成長，不表示已超越正式 v2，也不表示已達晉級或部署標準。通過之後才值得規劃對正式 v2 與多種對手牌型的驗證。這一輪不做那項驗證。',
+ '任一場沒有正常終局，或鎖定的場數沒有全部完成，整份確認記為未完成。不用其餘場次宣布過關，也不換種子重試。'
+].join('\n');
 
 export function reservedHit(seed){
  return RESERVED.find(([low,high])=>seed>=low&&seed<=high)||null;
@@ -161,13 +179,23 @@ export function assertExperimentSeed(seed,role){
  if(role==='round6-train'&&ROUND6_DEV_SEEDS.includes(seed))throw Error('A round-6 dev seed cannot enter training');
  if(role==='round5-dev'&&(round6Train||ROUND6_DEV_SEEDS.includes(seed)))throw Error('A round-6 seed cannot be round-5 development');
  if(role==='round4-confirm'&&(round6Train||ROUND6_DEV_SEEDS.includes(seed)))throw Error('A round-6 seed cannot confirm round 4');
+ const round7=ROUND7_CONFIRM_SEEDS.includes(seed);
+ const round7Fresh=ROUND7_FRESH_SEEDS.includes(seed);
+ if(role==='round7-confirm'&&!round7)throw Error('Round-7 confirmation seed is outside the new confirmation list');
+ if(role==='round7-confirm'&&(round6Train||ROUND6_DEV_SEEDS.includes(seed)||ROUND5_DEV_SEEDS.includes(seed)||ROUND4_SELF_SEEDS.includes(seed)||ROUND4_DEV_SEEDS.includes(seed)||TEST_SEEDS.includes(seed))){
+  throw Error('A used training or development seed cannot confirm round 7');
+ }
+ if(role==='round6-dev'&&round7)throw Error('A round-7 confirmation seed cannot be round-6 development');
+ if(role==='round5-dev'&&round7Fresh)throw Error('A round-7 fresh seed cannot be round-5 development');
+ if(role==='round4-confirm'&&round7Fresh)throw Error('A round-7 fresh seed is not the old confirmation block');
+ if(role==='round6-train'&&round7Fresh)throw Error('A round-7 fresh seed cannot enter round-6 training');
  return seed;
 }
 export function allExperimentSeeds(){
  return [
   BENCH_NN_SEED,BENCH_V2_SEED,...IMITATE_SEEDS,...SELF_SEEDS,...DEV_SEEDS,...TEST_SEEDS,
   ...ROUND3_DIAG_SEEDS,...ROUND3_CONFIRM_SEEDS,...ROUND4_SELF_SEEDS,...ROUND4_CONFIRM_SEEDS,
-  ...ROUND5_DEV_SEEDS,...ROUND6_TRAIN_SEEDS.flat(),...ROUND6_DEV_SEEDS
+  ...ROUND5_DEV_SEEDS,...ROUND6_TRAIN_SEEDS.flat(),...ROUND6_DEV_SEEDS,...ROUND7_FRESH_SEEDS
  ];
 }
 export function holdoutSplit(seeds){
