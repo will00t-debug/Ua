@@ -894,5 +894,15 @@ export function mcrSharedProgram(card){
   '【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\nこのキャラがアタックしてバトルに勝利した時、カードを1枚引き、このバトルで敗北した相手のキャラは退場する代わりに、相手の山札の下に置かれる。\n【フロントLにある場合】自分の場のカード名に「バサラ」を含むキャラの効果に記載されている「退場する代わりに、手札に戻る。」は「退場する代わりに、相手の山札の下に置かれる。」に代わる。\n【登場時】自分と相手はカードを1枚引く。'))
   return dsl({impactNull:true,attackWinDraw:{count:1},battleLoseToOppDeckBottom:true,
    rewriteBasaraHandLoss:true,effects:{onPlay:[{op:'drawEach',count:1}]}});
+ // The official HTML spells Sheryl with U+FF70. The name box is U+30FC.
+ // The user confirmed they are the same card. The print stays unchanged.
+ if(card.type==='event'&&effect===norm(
+  '〈サヨナラノツバサ ～ the end of triangle〉は1ターンに1枚のみ使用できる。\n自分の場に〈シェリル・ノ\uFF70ム〉と〈ランカ・リー〉がある場合、手札のこのカードの消費APを-2する。\nBP1500以上の相手のフロントLのキャラ全ては、このターン中、BP-1000。カードを1枚引く。'))
+  return dsl({handUseOncePerName:true,
+   eventHandApWhileAllNames:{names:['シェリル・ノーム','ランカ・リー'],amount:2},
+   effects:{onPlay:[
+    {op:'enemyFrontAllBpDown',bp:1000,minBp:1500},
+    {op:'draw',count:1}
+   ]}});
  return pending();
 }

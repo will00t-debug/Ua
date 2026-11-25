@@ -28,7 +28,7 @@ const READY=[
  '112','113'
 ].map(n=>'MCR-1-'+n);
 const VOL2_READY=[
- '001','002','003','004','005','006','007','008','009','010','011','012','013','014','015','016','017','019','020','021','022','023','024','025','026','027','028','029','030',
+ '001','002','003','004','005','006','007','008','009','010','011','012','013','014','015','016','017','018','019','020','021','022','023','024','025','026','027','028','029','030',
  '031','032','033','034','035','036','037','038','039','040','041','042','043','044','045','046','047','048','049','050','051','052','053','054','055','056','057',
  '058','059','060','061','062','063','064','065','066','067','068','069','070','071','072','073','074','075','076','077'
 ].map(n=>'MCR-2-'+n);
@@ -1183,10 +1183,13 @@ test('099 lets the opponent choose the deck side unless Basara is on the field',
 test('Vol.2 exact prints enter and raid frames stay out',()=>{
  for(const cardId of VOL2_READY)
   assert.equal(mcrSharedProgram(mcrCatalog().byId.get(cardId)).ready,true);
- assert.equal(mcrSharedProgram(mcrCatalog().byId.get('MCR-2-018')).ready,false);
- assert.equal(pack.cards['MCR-2-018'],undefined);
+ assert.equal(mcrSharedProgram(mcrCatalog().byId.get('MCR-2-018')).ready,true);
+ assert.equal(pack.cards['MCR-2-018'].handUseOncePerName,true);
+ assert.deepEqual(pack.cards['MCR-2-018'].eventHandApWhileAllNames,
+  {names:['シェリル・ノーム','ランカ・リー'],amount:2});
  assert.equal(mcrCatalog().byId.get('MCR-2-018').effectJa.includes('シェリル・ノｰム'),true);
  assert.equal(pack.cards['MCR-2-001'].name.includes('ノｰム'),false);
+ assert.equal(pack.cards['MCR-2-001'].nameAliases,undefined);
  for(const [cardId,features] of [
   ['MCR-2-008',['onPlay','main']],['MCR-2-016',['attackEnd','onPlay','onRetire']],
   ['MCR-2-045',['passive','onAttack']],['MCR-2-052',['onPlay','onAttack','onRetire']],
@@ -2317,4 +2320,70 @@ test('016 may retire after its attack only while the raid frame is face-up',()=>
  assert.equal(live.pending?.kind+':'+live.pending?.mode,'effect-mcr-finish:retireSelf');
  assert.equal(assertUniversalMatch(packs,quiet),true);
  assert.equal(assertUniversalMatch(packs,live),true);
+});
+
+test('018 cuts two AP only while both face-up names are on the field',()=>{
+ const counts=deckOf({
+  'MCR-2-018':4,'MCR-2-011':4,'MCR-2-001':2,'MCR-2-005':2,
+  'MCR-2-019':2,'MCR-2-066':2,'MCR-2-050':2
+ });
+ const offered=(s,uid)=>legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===uid);
+ const setAp=(s,n)=>{
+  const cards=s.players[0].apCards;
+  for(const ap of cards)ap.ready=false;
+  for(let i=0;i<n;i++)cards[i].ready=true;
+ };
+ let closed=reach(counts,130);
+ for(let i=0;i<4;i++)seat(closed,0,'MCR-2-011','energy',i);
+ const sheryl=seat(closed,0,'MCR-2-001','front',0);
+ seat(closed,0,'MCR-2-005','front',1);
+ const low=seat(closed,1,'MCR-2-019','front',0);
+ const mid=seat(closed,1,'MCR-2-066','front',1);
+ const high=seat(closed,1,'MCR-2-050','front',2);
+ const song=take(closed,0,'MCR-2-018');
+ closed.players[0].hand.push(song);
+ setAp(closed,0);
+ sheryl.faceDown=true;
+ assert.equal(offered(closed,song.uid),false);
+ sheryl.faceDown=false;
+ const alone=closed.players[0].front[1];
+ closed.players[0].front[1]=null;
+ closed.players[0].hand.push(alone);
+ assert.equal(offered(closed,song.uid),false);
+ closed.players[0].front[1]=closed.players[0].hand.pop();
+ assert.equal(offered(closed,song.uid),true);
+ const before=closed.players[0].hand.length;
+ closed=act(closed,a=>a.type==='event'&&a.uid===song.uid);
+ assert.equal(closed.pending,null);
+ assert.equal(closed.players[0].apCards.filter(card=>card.ready).length,0);
+ assert.equal(closed.players[0].hand.length,before);
+ assert.equal(closed.players[0].outside.some(card=>card.uid===song.uid),true);
+ const liveBp=(uid)=>universalBp(packs,closed,closed.players[1].front.find(card=>card?.uid===uid));
+ assert.equal(liveBp(low.uid),1000);
+ assert.equal(liveBp(mid.uid),500);
+ assert.equal(liveBp(high.uid),3000);
+ let again=null;
+ for(const zone of ['deck','life','hand']){
+  const pile=closed.players[0][zone];
+  const index=pile.findIndex(card=>card.cardId==='MCR-2-018');
+  if(index<0)continue;
+  again=pile.splice(index,1)[0];
+  break;
+ }
+ assert.ok(again);
+ closed.players[0].hand.push(again);
+ assert.equal(offered(closed,again.uid),false);
+ let plain=reach(counts,131);
+ for(let i=0;i<4;i++)seat(plain,0,'MCR-2-011','energy',i);
+ const card=take(plain,0,'MCR-2-018');
+ plain.players[0].hand.push(card);
+ setAp(plain,1);
+ assert.equal(offered(plain,card.uid),false);
+ setAp(plain,2);
+ assert.equal(offered(plain,card.uid),true);
+ const readyBefore=plain.players[0].apCards.filter(ap=>ap.ready).length;
+ plain=act(plain,a=>a.type==='event'&&a.uid===card.uid);
+ assert.equal(plain.players[0].apCards.filter(ap=>ap.ready).length,readyBefore-2);
+ assert.equal(assertUniversalMatch(packs,closed),true);
+ assert.equal(assertUniversalMatch(packs,plain),true);
 });
