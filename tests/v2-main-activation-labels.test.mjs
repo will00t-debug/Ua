@@ -53,7 +53,14 @@ function modesOf(card){
  if(card.printedMains?.length)return card.printedMains.map(mode=>mode.id);
  const op=card.mainAbility?.op;
  const fixed={
-  onceAbovePrintedKeywords:'abovePrinted',kurisuFrontDual:'discount',
+  onceAbovePrintedKeywords:'abovePrinted',readyFrontProgram:'readyFront',
+  entryTurnLifeChoice:'entryLife',frontOnceLifeThen:'frontLife',
+  restDiscardNameDown:'restDiscardDown',restNameOnceChoose:'restNameOnce',
+  frontHandLifeMenu:'frontHandLife',restNamedOption:'restNamedOption',
+  frontChooseImpact:'frontChooseImpact',frontUidChoice:'frontUidChoice',
+  readyBpChoice:'readyBpChoice',restPrintedGrantBottom:'restPrintedGrant',
+  sniperIfImpact:'sniperIfImpact',
+  kurisuFrontDual:'discount',
   retireOwnFieldThen:'retireFieldThen',crowdFrontDown:'printCrowd',
   printReadyGate:'printReadyGate',gainSameLineMains:'gainLineMains',
   frontDrawOrHandTrigger:'frontDraw',characterDualMain:'kindsActive',

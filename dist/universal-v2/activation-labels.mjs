@@ -2,8 +2,8 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs?v=20261125mcr5';
-import {cardHasName} from './field-conditions.mjs';
+import {universalBp} from './engine.mjs?v=20261125mcr11';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr11';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -148,6 +148,11 @@ const STEP={
  drawHandTop:()=>'抽 1 張，並將 1 張手牌放到牌組上面',
  millTop:s=>`將牌庫頂 ${s.count||1} 張放到場外`,
  peekTopOrBottom:()=>'查看牌庫頂 1 張，放回牌庫上面或下面',
+ inspectTopArrange:s=>s.toOutside===false&&s.rest==='top'
+  ?`查看牌庫頂 ${s.count} 張，依任意順序放回牌庫上面`
+  :`查看牌庫頂 ${s.count} 張並安排順序`,
+ handBottomThenDraw:()=>'將 1 張手牌放到牌庫底，然後抽 1 張',
+ deployOwnHandRest:s=>`可以從手牌將最多 1 張需求能源 ${s.energy} 以下、消費 AP ${s.ap} 的角色以休息狀態登場`,
  activeSelf:()=>'將此角色轉為活動',
  activeOwnOne:()=>'將 1 張己方角色轉為活動',
  activeOwnOther:()=>'將其他最多 1 張角色轉為活動',
@@ -252,6 +257,12 @@ function gateWords(ability){
  if(Number.isInteger(ability?.minEnergy))words.push(`產生能源在 ${ability.minEnergy} 以上才能發動`);
  if(ability?.when?.kind==='ownEventUsedThisTurn')words.push('只有本回合已使用事件才能發動');
  if(ability?.when?.kind==='ownHandCountAtLeast')words.push(`只有手牌 ${ability.when.min} 張以上才能發動`);
+ if(ability?.when?.kind==='ownNamedCardsUsedThisTurn')
+  words.push(`只有本回合已使用〈${nameZh(ability.when.names?.[0]||'')}〉才能發動`);
+ if(ability?.when?.kind==='ownNameExists')
+  words.push(`只有自己場上有〈${nameZh(ability.when.name||'')}〉才能發動`);
+ if(ability?.when?.kind==='selfLiveBpAbovePrinted')
+  words.push('只有此角色目前 BP 高於原本 BP 才能發動');
  if(ability?.when?.kind==='ownTraitUsedThisTurn')words.push(`只有本回合已使用過特徵「${ability.when.trait}」才能發動`);
  return words;
 }
@@ -261,6 +272,34 @@ function effectWords(ability,action){
  const bp=Number.isInteger(ability?.bp)?ability.bp:null;
  const energy=ability?.extraEnergy;
  const named=name=>name?`〈${nameZh(name)}〉`:'';
+ if(op==='onceBuffSelfWhen'||mode==='onceBuffSelf')
+  return `本回合 BP＋${bp??500}`;
+ if(op==='lifeToHandOnce'||mode==='lifeToHand')
+  return '將自己 1 張生命牌加入手牌';
+ if(op==='frontOnceLifeThen'||mode==='frontLife')
+  return '將 1 張生命牌加入手牌，然後抽 1 張並讓下一張歌（雪兒）減 1 AP';
+ if(op==='restDiscardNameDown'||mode==='restDiscardDown')
+  return '休息並把 1 張手牌放到場外，對手前線全部 BP－1000';
+ if(op==='restNameOnceChoose'||mode==='restNameOnce')
+  return '休息後選擇抽 1 棄 1，或生命牌入手後抽 2 棄 1';
+ if(op==='frontHandLifeMenu'||mode==='frontHandLife')
+  return '把 1 張手牌放到場外後，選擇表向生命或禁止攻擊';
+ if(op==='restNamedOption'||mode==='restNamedOption')
+  return '休息後選擇 BP＋1000，或在真中在場時給予阻擋上限';
+ if(op==='frontChooseImpact'||mode==='frontChooseImpact')
+  return '選擇名稱含疾風的角色，抽 1 張並給予本回合貫通（1）';
+ if(op==='frontUidChoice'||mode==='frontUidChoice')
+  return '休息後選擇紫角色休息登場、BP＋2000 或對手 BP－1500';
+ if(op==='readyBpChoice'||mode==='readyBpChoice')
+  return 'BP 5000 以上時轉為活動，然後抽 1 張或其他角色 BP＋1000';
+ if(op==='restPrintedGrantBottom'||mode==='restPrintedGrant')
+  return '給予原本 BP 3500 以下的角色貫通或阻擋上限，自己置於牌庫底';
+ if(op==='sniperIfImpact'||mode==='sniperIfImpact')
+  return '持有貫通時，此角色本回合獲得狙擊';
+ if(op==='entryTurnLifeChoice'||mode==='entryLife')
+  return '本回合登場時，生命牌入手後抽 2 棄 1，或已入手過時抽 1';
+ if(op==='readyFrontProgram'||mode==='readyFront')
+  return `對手抽 1 張，可以讓其他 1 張「${ability?.then?.[1]?.trait||''}」變為活動`;
  if(op==='onceAbovePrintedKeywords'||mode==='abovePrinted')
   return `依自己場上 BP 高於原本 BP 的角色數量，此角色本回合獲得全部符合的效果：${ability?.damageAt??3} 張以上獲得【傷害（${ability?.damage??2}）】；${ability?.impactAt??5} 張以上再獲得【貫通（${ability?.impact??1}）】`;
  if(op==='restSelfBuffOther'||(mode==='selfRestBuff'&&bp!=null))
@@ -337,6 +376,8 @@ function effectWords(ability,action){
   return `公開 1 張 BP ${ability?.minPrintedBp||0} 以上的手牌放到牌庫底，本回合獲得【貫通（${ability?.impact||1}）】`;
  if(op==='onceGrantBlockImpact'||mode==='grantBlockImpact')
   return `直到下一個自己的回合開始，獲得【二回阻擋】與【貫通無效】`;
+ if(op==='nameOnceActive'&&ability?.bpUntilNext===500)
+  return '將此角色轉為活動，直到自己下回合開始 BP＋500';
  if(op==='nameOnceActive'||op==='activeSelfOnceByKey'||op==='cardOnceActive'||op==='cardOnceActiveIfBp'||op==='onceActiveIfOwnEffectRested'||op==='onceActiveSelfGate'||op==='printNameActive'||mode==='nameActive'||mode==='ready'||mode==='cardOnceActive'||mode==='ownRestActive'||mode==='onceActiveGate')
   return '將此角色轉為活動';
  if(op==='frontOnceActiveNamed'||mode==='nameOnceActive')

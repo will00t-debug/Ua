@@ -3,7 +3,7 @@
 // stays out until every framed keyword is listed in the raid box.
 const norm=text=>String(text??'').replace(/\s+/g,'');
 const EMPTY=new Set(['','-']);
-const INK={yellow:'黄',blue:'青',red:'赤'};
+const INK={yellow:'黄',blue:'青',red:'赤',purple:'紫'};
 const STANDARD=Object.freeze({
  '':null,
  '-':null,
@@ -18,6 +18,9 @@ const SPECIAL_EFFECT={op:'retireOppFront'};
 const COLOR_RETIRE=norm('【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。');
 const COLOR_BOUNCE=norm('【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。');
 const COLOR_REST=norm('【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。');
+const COLOR_OUTSIDE_PURPLE=norm('【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。');
+const SAYONARA='サヨナラノツバサ ～ the end of triangle';
+const IMPACT_LOOSE='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）';
 const IMPACT='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）';
 const DISCOUNT=Object.freeze({
  yellow:Object.freeze({
@@ -49,7 +52,8 @@ function triggerAllowed(card){
  const triggerText=norm(card.triggerTextJa);
  if(card.trigger==='raid')return triggerText===RAID_TRIGGER;
  if(card.trigger==='special')return triggerText===SPECIAL_TRIGGER;
- if(card.trigger==='color')return triggerText===COLOR_RETIRE||triggerText===COLOR_BOUNCE||triggerText===COLOR_REST;
+ if(card.trigger==='color')return triggerText===COLOR_RETIRE||triggerText===COLOR_BOUNCE||
+  triggerText===COLOR_REST||triggerText===COLOR_OUTSIDE_PURPLE;
  return Object.prototype.hasOwnProperty.call(STANDARD,triggerText)&&
   STANDARD[triggerText]===card.trigger;
 }
@@ -76,6 +80,16 @@ function outsideRaidSheryl(min){
 }
 function raid(name,extra){
  return dsl({raidName:name,...extra});
+}
+function walkureNames(min,turn='any'){
+ return {kind:'ownDistinctTraitNames',turn,min,zone:'field',excludeSelf:false,trait:'ワルキューレ'};
+}
+function usedSayonara(turn='any'){
+ return {kind:'ownNamedCardsUsedThisTurn',turn,names:[SAYONARA]};
+}
+function otherCharacterBuff(bp){
+ return {op:'buffOwnField',optional:true,bp,excludeSelf:true,
+  filter:{field:'type',value:'character'}};
 }
 
 export function mcrSharedProgram(card){
@@ -272,6 +286,63 @@ export function mcrSharedProgram(card){
     {op:'placeOppFrontOnTheirDeck',optional:true,bp:3000,bonusBp:4000,place:'bottom',
      bonusWhen:{kind:'ownHandCountAtLeast',turn:'any',min:5}}
    ]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から【レイド】を持たないキャラカードを1枚まで手札に加える。'))
+  return onPlay({op:'discardGate',optional:true,then:[{
+   op:'recoverOutsideFiltered',optional:true,max:1,type:'character',excludeRaidKeyword:true
+  }]});
+ if(card.type==='character'&&effect===norm(
+  'このカードを手札からレイドする際、自分の場に［特徴：ワルキューレ］のカード名が5種類以上ある場合、消費APを-1する。このターン中に他の〈フレイア・ヴィオン〉をAPを支払わずにレイドしているなら、この効果は無効になる。\n【レイド】〈フレイア・ヴィオン〉アクティブにし、フロントLに移動できる\n【アタック時】自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、自分の場のキャラ全ては、このターン中、BP+1000。'))
+  return raid('フレイア・ヴィオン',{raidHandApDiscount:{
+   amount:1,minDistinctTraitNames:5,trait:'ワルキューレ',
+   voidIfOtherZeroApHandName:true,voidRaidOnly:true
+  },effects:{onAttack:[{op:'ifLiveThen',when:walkureNames(3),then:[{
+   op:'buffOwnField',all:true,bp:1000,optional:false,excludeSelf:false,
+   filter:{field:'type',value:'character'}
+  }]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈シェリル・ノーム〉アクティブにし、フロントLに移動できる\n自分のフロントLに〈ランカ・リー〉がある場合、このキャラは以下の効果を全て得る。\n・【インパクト（1）】\n・【起動メイン】【フロントLにある場合】 【ターン1】自分のライフを1枚手札に加える。そうした場合、カードを1枚引き、このターン中、次に手札から使用する［特徴：歌（シェリル）］の消費APを-1する。'))
+  return raid('シェリル・ノーム',{passiveBonuses:[{
+   condition:exactField('ランカ・リー','front'),impact:1
+  }],mainAbility:{op:'frontOnceLifeThen',oncePerTurn:true,frontOnly:true,
+   requiresName:'ランカ・リー',then:[{op:'optionalOwnLifeToHandThenDraw',optional:false,then:[
+    {op:'draw',count:1},
+    {op:'nextEligibleHandPlayApDiscount',filter:{trait:'歌（シェリル）'}}
+   ]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈ランカ・リー〉アクティブにし、フロントLに移動できる\n【登場時】カードを1枚引く。\n【起動メイン】【フロントLにある場合】 【手札を1枚場外に置く】 【ターン1】このターン中に自分がライフを手札に加えている場合のみ発動できる。以下から1つ選ぶ。このターン中に自分の他の〈ランカ・リー〉が既に選んだ効果は選べない。\n・自分の山札の上から1枚を表向きで自分のライフエリアに置く。\n・相手のフロントLのキャラを1枚選び、次の自分のターン開始時まで、「このキャラはアタックできない。」を与える。'))
+  return raid('ランカ・リー',{effects:{onPlay:[{op:'draw',count:1}]},
+   mainAbility:{op:'frontHandLifeMenu',oncePerTurn:true,frontOnly:true,payHand:1,
+    nameLock:'ランカ・リー'}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈早乙女 アルト〉アクティブにし、フロントLに移動できる\nこのキャラのアタック終了時、自分のフロントLにアクティブのキャラがない場合、このキャラを退場させてもよい。\n【登場時】自分の場外から〈サヨナラノツバサ ～ the end of triangle〉を1枚まで手札に加える。\n【退場時】自分のターン中の場合、このキャラのレイド元のカードを1枚まで自分の場にアクティブで登場させ、そのキャラにこのターン中、「このキャラはBP3000以下のキャラにブロックされない。」を与える。'))
+  return raid('早乙女 アルト',{attackEndMayRetire:true,effects:{
+   onPlay:[{op:'recoverOutsideByName',name:SAYONARA,optional:true}],
+   onRetire:[{op:'deployBuriedBaseActive',bp:3000,relation:'atMost',ownTurn:true}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈美雲・ギンヌメール〉アクティブにし、フロントLに移動できる\n【自分のターン中】自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、このキャラは【インパクト（1）】を得る。\n【アタック時】以下から2つまで選ぶ。\n・自分の場外の［特徴：歌（ワルキューレ）］を1枚リムーブエリアに置く。そうした場合、カードを1枚引く。\n・自分の場に［特徴：ワルキューレ］のカード名が5種類以上ある場合、このキャラは次の自分のターン開始時まで、BP+1000。'))
+  return raid('美雲・ギンヌメール',{passiveBonuses:[{condition:walkureNames(3,'own'),impact:1}],
+   effects:{onAttack:[{op:'walkureAttackOptions'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈メッサー・イーレフェルト〉アクティブにし、フロントLに移動できる\n【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-2500。\n【アタック時】このキャラのBPが6000以上の場合、このキャラは次の自分のターン開始時まで、【ダメージ（2）】と【インパクト無効】を得る。\n【退場時】自分の山札の上から7枚見て、カード名に「メッサー」を含まず「VF」を含む［特徴：Δ小隊］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。'))
+  return raid('メッサー・イーレフェルト',{effects:{
+   onPlay:[{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}],
+   onAttack:[{op:'damageNullUntilNext',damage:2}],
+   onRetire:[{op:'searchNotNameIncludesTrait',count:7,excludeName:'メッサー',
+    nameIncludes:'VF',trait:'Δ小隊'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈ミラージュ・ファリーナ・ジーナス〉アクティブにし、フロントLに移動できる\n【起動メイン】【フロントLにある場合】 【ターン1】自分の場のカード名に「ハヤテ」を含むキャラを1枚選ぶ。そうした場合、カードを1枚引き、選んだキャラにこのターン中、【インパクト（1）】を与える。'))
+  return raid('ミラージュ・ファリーナ・ジーナス',{mainAbility:{op:'frontChooseImpact',
+   oncePerTurn:true,frontOnly:true,includes:'ハヤテ'}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈ハヤテ・インメルマン〉アクティブにし、フロントLに移動できる\n【フロントLにある場合】自分のメインフェイズ中に、自分の効果でカードを引いた時、このキャラをアクティブにする。\n【起動メイン】【フロントLにある場合】 【レストにする】以下から1つ選ぶ。このターン中に既に選んだこのキャラの効果は選べない。\n・自分の手札から必要エナジーが1以下の紫のキャラカードを1枚まで自分の場にレストで登場させる。\n・自分の場のキャラを1枚選び、このターン中、BP+2000。\n・相手のフロントLのキャラを1枚選び、このターン中、BP-1500。'))
+  return raid('ハヤテ・インメルマン',{effectDrawActive:{line:'front',phase:'main'},
+   mainAbility:{op:'frontUidChoice',frontOnly:true}});
+ if(card.type==='character'&&effect===norm(
+  '【レイド】〈工藤 シン〉アクティブにし、フロントLに移動できる\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【登場時】このキャラはこのターン中、BP+1000。\n【アタック時】【ターン1】自分の山札の下から1枚を場外に置く。場外に置いたカードが赤の〔〈サラ・ノーム〉か〈マオ・ノーム〉〕の場合、そのカードを自分の場にレストで登場させてもよい。場外に置いたカードが特徴を持たない場合、そのカードを手札に加えてもよい。'))
+  return raid('工藤 シン',{raidImpactNull:true,effects:{
+   onPlay:[{op:'buffSelf',bp:1000}],
+   onAttack:[{op:'bottomDeckFork'}]}});
  if(effect.includes('【レイド】')||effect.includes('レイド以外'))return pending();
  if(EMPTY.has(effect)){
   if(card.type!=='character')return pending();
@@ -288,7 +359,8 @@ export function mcrSharedProgram(card){
   return onPlay({op:'draw',count:1});
  if(card.type==='character'&&effect==='【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。')
   return onPlay({op:'bounceOwnOtherUnderEnergy',energy:1});
- if(card.type==='character'&&effect==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）')
+ if(card.type==='character'&&(effect==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）'||
+  effect==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）'))
   return dsl({impactNull:true});
  const discount=DISCOUNT[card.color];
  if(card.type==='character'&&discount&&effect===norm(discount.text))
@@ -331,8 +403,20 @@ export function mcrSharedProgram(card){
   '【起動メイン】【レストにする】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。'))
   return dsl({mainAbility:{op:'restSelfThen',frontOnly:false,then:[{op:'peekTopOrBottom'}]}});
  if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】自分の場の他のキャラを1枚選び、このターン中、BP+1000。'))
+  return dsl({mainAbility:{op:'restSelfThen',frontOnly:false,then:[{
+   op:'buffOwnField',optional:false,bp:1000,excludeSelf:true,
+   filter:{field:'type',value:'character'}
+  }]}});
+ if(card.type==='character'&&effect===norm(
   '【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。'))
   return onPlay({op:'peekTopOrBottom'});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から1枚見て、山札の上か下に置く。'))
+  return onPlay({op:'peekTopOrBottom'});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から1枚見て、山札の上か場外に置く。'))
+  return onPlay({op:'peekTopOrOutside'});
  if(card.type==='character'&&effect===norm(
   `【起動メイン】【レストにする】【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+【${ink}】。`))
   return dsl({mainAbility:{op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1}});
@@ -551,5 +635,264 @@ export function mcrSharedProgram(card){
   return dsl({outsideNameLeaveToHand:{includes:'ミハエル',once:'name',optional:true,name:'スナイパーライフル'},
    mainAbility:{op:'restRetireGrantImpact',trait:'S.M.S',amount:1,optional:true},
    effects:{onPlay:[{op:'activeSelfIfNameIncludes',includes:'ミハエル',zone:'field'}]}});
+ if(card.type==='event'&&effect===norm(
+  '自分の場のキャラを1枚まで選び、このターン中、BP+2000。自分の場外に黄の［特徴：歌（ランカ）］のカード名が3種類以上ある場合、カードを2枚引く。'))
+  return dsl({effects:{onPlay:[
+   {op:'buffOwnField',optional:true,bp:2000,excludeSelf:false,filter:{field:'type',value:'character'}},
+   {op:'ifLiveThen',when:songNames(),then:[{op:'draw',count:2}]}
+  ]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から2枚見て、カード名に「アルト」を含むカードか〈サヨナラノツバサ ～ the end of triangle〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。\n【起動メイン】【レストにする】このターン中に自分が〈サヨナラノツバサ ～ the end of triangle〉を使用している場合のみ発動できる。自分の山札の上から1枚見て、山札の上か下に置く。'))
+  return dsl({effects:{onPlay:[groups(2,[
+   {logic:'all',filters:[{field:'nameIncludes',value:'アルト'}]},
+   {logic:'all',filters:[{field:'name',value:SAYONARA}]}
+  ])]},mainAbility:{op:'restSelfThen',frontOnly:false,when:usedSayonara('own'),
+   then:[{op:'peekTopOrBottom'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から2枚見て、カード名に「アルト」を含むカードか〈サヨナラノツバサ ～ the end of triangle〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。\n【起動メイン】【レストにする】このターン中に自分が〈サヨナラノツバサ ～ the end of triangle〉を使用している場合のみ発動できる。自分の山札の上から3枚見て、望む順で山札の上に置く。'))
+  return dsl({effects:{onPlay:[groups(2,[
+   {logic:'all',filters:[{field:'nameIncludes',value:'アルト'}]},
+   {logic:'all',filters:[{field:'name',value:SAYONARA}]}
+  ])]},mainAbility:{op:'restSelfThen',frontOnly:false,when:usedSayonara('own'),
+   then:[{op:'inspectTopArrange',count:3,toOutside:false,rest:'top'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【フロントLにある場合】 【レストにする】 【このカードを退場させる】自分の場に〈ランカ・リー〉がある場合のみ発動できる。BP3000以下の相手のフロントLのキャラを1枚まで選び、退場させる。このターン中に自分が〈サヨナラノツバサ ～ the end of triangle〉を使用している場合、カードを1枚引く。'))
+  return dsl({mainAbility:{op:'restRetireThen',frontOnly:true,when:exactField('ランカ・リー'),then:[
+   {op:'retireOppFrontUnderBp',optional:true,bp:3000},
+   {op:'ifLiveThen',when:usedSayonara('own'),then:[{op:'draw',count:1}]}
+  ]}});
+ if(card.type==='character'&&effect===norm(
+  '【自分のターン中】自分の場に〈シェリル・ノーム〉と〈ランカ・リー〉がある場合、このキャラはBP+1000。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。'))
+  return dsl({passiveBonuses:[{bp:1000,condition:{logic:'all',turn:'own',checks:[
+   exactField('シェリル・ノーム'),exactField('ランカ・リー')
+  ]}}],effects:{onPlay:[{op:'drawDiscard',count:1}]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から3枚見て、［特徴：Δ小隊］か〈フレイア・ヴィオン〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'))
+  return onPlay(groups(3,[
+   {logic:'all',filters:[{field:'trait',value:'Δ小隊'}]},
+   {logic:'all',filters:[{field:'name',value:'フレイア・ヴィオン'}]}
+  ]));
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分のフロントLにカード名に「ミラージュ」を含まないレイド状態の［特徴：Δ小隊］がある場合、カードを1枚引く。'))
+  return onPlay({op:'ifLiveThen',when:{kind:'ownFrontRaidedTraitExceptName',turn:'any',
+   trait:'Δ小隊',nameExcludes:'ミラージュ'},then:[{op:'draw',count:1}]});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の手札から必要エナジーが2以下で消費APが1の紫の［特徴：ワルキューレ］を1枚まで自分の場にレストで登場させる。'))
+  return onPlay({op:'deployOwnHandRest',type:'character',color:'purple',energy:2,ap:1,max:1,
+   trait:'ワルキューレ'});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から3枚見て、［特徴：ワルキューレ］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'))
+  return onPlay({op:'searchTopOneBottomDiscard',count:3,filter:{field:'trait',value:'ワルキューレ'}});
+ if(card.type==='character'&&effect===norm(
+  '【自分のターン中】自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、このキャラはBP+1000。'))
+  return dsl({passiveBonuses:[{bp:1000,condition:walkureNames(3,'own')}]});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から5枚見て、カード名に「VF」を含む［特徴：Δ小隊］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'))
+  return onPlay({op:'searchTopOneBottomDiscard',count:5,logic:'all',filters:[
+   {field:'nameIncludes',value:'VF'},{field:'trait',value:'Δ小隊'}
+  ]});
+ if(card.type==='character'&&effect===norm(
+  IMPACT_LOOSE+'\n【登場時】自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、自分の場の他のキャラを1枚まで選び、このターン中、『BP+1000』。5種類以上ある場合、『BP+2000』に代わる。'))
+  return dsl({impactNull:true,effects:{onPlay:[{op:'ifLiveThen',when:walkureNames(5),
+   then:[otherCharacterBuff(2000)],
+   else:[{op:'ifLiveThen',when:walkureNames(3),then:[otherCharacterBuff(1000)]}]
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '自分のフロントLに［特徴：ワルキューレ］が2枚以上ある場合、このキャラの発生エナジー+【紫】。\n【登場時】自分の場に〈レイナ・プラウラー〉がある場合、自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。'))
+  return dsl({passiveBonuses:[{extraEnergy:1,condition:{kind:'ownCardTraitCount',turn:'any',min:2,
+   zone:'front',excludeSelf:false,trait:'ワルキューレ'}}],effects:{onPlay:[{
+   op:'ifLiveThen',when:exactField('レイナ・プラウラー'),
+   then:[{op:'inspectTopAnyOutside',count:2,rest:'top'}]
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から2枚見て、［特徴：ワルキューレ］を1枚まで場外に置き、残りを望む順で山札の上に置く。'))
+  return onPlay({op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1,
+   filter:{field:'trait',value:'ワルキューレ'}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、自分の場外の必要エナジーが2以下の［特徴：歌（ワルキューレ）］を1枚まで自分の山札の上に置く。'))
+  return onPlay({op:'ifLiveThen',when:walkureNames(3),then:[{
+   op:'outsideToDeckTop',optional:true,logic:'all',filters:[
+    {field:'trait',value:'歌（ワルキューレ）'},
+    {field:'printedRequiredEnergyAtMost',value:2}
+   ]
+  }]});
+ if(card.type==='character'&&effect===norm(
+  IMPACT_LOOSE+'\n自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、このキャラはBP+1000。'))
+  return dsl({impactNull:true,passiveBonuses:[{bp:1000,condition:walkureNames(3)}]});
+ if(card.type==='character'&&effect===norm(
+  'このキャラはアクティブで登場させる。\n【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-3000。'))
+  return dsl({enterAlwaysActive:true,effects:{onPlay:[{
+   op:'enemyBpDown',optional:true,bp:3000,zone:'front'
+  }]}});
+ if(card.type==='field'&&effect===norm(
+  '【起動メイン】【レストにする】 【このカードを退場させる】カードを1枚引く。自分の手札から必要エナジーが3以下で消費APが1の紫のキャラカードを1枚まで自分の場にレストで登場させる。'))
+  return dsl({mainAbility:{op:'restRetireThen',then:[
+   {op:'draw',count:1},
+   {op:'deployOwnHandRest',type:'character',color:'purple',energy:3,ap:1,max:1}
+  ]}});
+ if(card.type==='event'&&card.trigger==='special'&&effect===norm(
+  '『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場にカード名に「ハヤテ」を含むキャラがある場合、『BP5000以下』に代わる。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,effects:{onPlay:[{
+   op:'retireOppFrontUnderBp',bp:3000,bonusBp:5000,bonusNameIncludes:'ハヤテ',mandatory:true
+  }]}});
+ if(card.type==='event'&&effect===norm(
+  '自分の場の［特徴：Δ小隊］か［特徴：ワルキューレ］を1枚選び、このターン中、BP+2000。自分のAPカードを1枚アクティブにする。'))
+  return dsl({effects:{onPlay:[
+   {op:'buffOwnField',traitsAny:['Δ小隊','ワルキューレ'],bp:2000,optional:false,excludeSelf:false},
+   {op:'recoverAp',count:1,mandatory:true}
+  ]}});
+ if(card.type==='event'&&effect===norm(
+  '自分の山札の上から3枚見て、［特徴：ワルキューレ］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。このターン中、次に手札から使用する［特徴：ワルキューレ］の消費APを-1する。'))
+  return dsl({effects:{onPlay:[
+   {op:'searchTopOneBottomDiscard',count:3,filter:{field:'trait',value:'ワルキューレ'}},
+   {op:'nextEligibleHandPlayApDiscount',fromUsedEvent:true,filter:{trait:'ワルキューレ'}}
+  ]}});
+ if(card.type==='event'&&card.trigger==='special'&&effect===norm(
+  '『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に［特徴：ワルキューレ］のカード名が3種類以上ある場合、『BP5000以下』に代わる。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,effects:{onPlay:[{
+   op:'retireOppFrontUnderBp',bp:3000,bonusBp:5000,mandatory:true,
+   bonusDistinctTrait:{trait:'ワルキューレ',min:3}
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【フロントLにある場合】 【ターン1】このキャラがアクティブの場合のみ発動できる。自分の手札を1枚自分の山札の下に置く。そうした場合、カードを1枚引く。'))
+  return dsl({mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'handBottomThenDraw'}]}});
+ if(card.type==='character'&&card.trigger==='color'&&effect===norm(
+  '【登場時】自分の山札の上から4枚見て、元々のBPが3500以下の特徴を持たないキャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'))
+  return dsl({triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},effects:{onPlay:[{
+   op:'searchTopOneBottomDiscard',count:4,logic:'all',filters:[
+    {field:'printedBpAtMost',value:3500},{field:'traitlessCharacter',value:true}
+   ]
+  }]}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】以下から1つ選ぶ。\n・自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。\n・このキャラが自分の効果で登場していた場合、自分の場の元々のBPが3500以下の他のキャラを1枚まで選び、アクティブにする。'))
+  return onPlay({op:'chooseOne',optional:false,options:[
+   {id:'buff',label:'可以選擇其他角色，本回合 BP＋1000',turn:'any',then:[otherCharacterBuff(1000)]},
+   {id:'active',label:'因自己的效果登場時，可以將其他原本 BP 3500 以下的角色轉為活動',turn:'any',
+    when:{kind:'selfEnteredByOwnEffect',turn:'any'},
+    then:[{op:'activeOwnOther',optional:true,printedBpAtMost:3500}]}
+  ]});
+ if(card.type==='character'&&effect===norm(
+  '自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【赤×2】減らす。\n【起動メイン】【ターン1】このキャラのBPが元々のBPより高い場合のみ発動できる。このキャラはこのターン中、BP+500。'))
+  return dsl({emptyOwnFieldHandEnergyDiscount:2,mainAbility:{
+   op:'onceBuffSelfWhen',oncePerTurn:true,bp:500,
+   when:{kind:'selfLiveBpAbovePrinted',turn:'any'}
+  }});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが3以下の〈熱気 バサラ〉を1枚まで手札に加える。'))
+  return onPlay({op:'discardGate',optional:true,then:[{
+   op:'recoverOutsideNamedEnergy',name:'熱気 バサラ',maxEnergy:3,optional:true
+  }]});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から3枚見て、カード名に「ジーナス」を含むキャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'))
+  return onPlay({op:'searchTopOneBottomDiscard',count:3,logic:'all',filters:[
+   {field:'nameIncludes',value:'ジーナス'},{field:'type',value:'character'}
+  ]});
+ if(card.type==='character'&&effect===norm(
+  'このキャラはアクティブで登場させる。\n【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが2以下の紫の［特徴：ワルキューレ］を1枚まで自分の場にレストで登場させる。'))
+  return dsl({enterAlwaysActive:true,triggerEffect:{
+   op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true
+  },effects:{onPlay:[{op:'discardGate',optional:true,then:[{
+   op:'deployOutsideFiltered',trait:'ワルキューレ',count:1,ready:false,optional:true,
+   maxEnergy:2,color:'purple'
+  }]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n【自分のターン中】このターン中に自分がライフを手札に加えている場合、このキャラはBP+1000。\n【起動メイン】【ターン1】自分のライフを1枚手札に加える。'))
+  return dsl({impactNull:true,passiveBonuses:[{
+   condition:{kind:'ownLifeToHandThisTurn',turn:'own'},bp:1000
+  }],mainAbility:{op:'lifeToHandOnce',oncePerTurn:true}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の山札の上から3枚見て、［特徴：ワルキューレ］を1枚まで公開し山札の上に置く。残りを望む順で山札の下に置く。'))
+  return onPlay({op:'searchTopPlaceTop',count:3,filter:{field:'trait',value:'ワルキューレ'}});
+ if(card.type==='event'&&effect===norm(
+  'カードを1枚引く。その後、以下から1つ選ぶ。\n・相手のフロントLのキャラを1枚まで選び、次の自分のターン開始時まで、「このキャラはアタックできない。」を与える。\n・相手のフロントLのレイド状態のキャラを1枚まで選び、レイド状態の上のカードを1枚場外に置く。'))
+  return dsl({effects:{onPlay:[
+   {op:'draw',count:1},
+   {op:'chooseOne',optional:false,options:[
+    {id:'ban',turn:'any',label:'可以選擇對手前線 1 張角色，自己下回合開始前不能攻擊',
+     then:[{op:'forbidAttackOppFrontOne',optional:true,ownTurnOnly:true,until:'nextOwnTurnStart'}]},
+    {id:'strip',turn:'any',label:'可以選擇對手前線 1 張突襲狀態角色，將最上面的卡放到場外',
+     then:[{op:'stripOppRaidTop',optional:true}]}
+   ]}
+  ]}});
+ if(card.type==='character'&&effect===norm(
+  'このキャラがアタックしてバトルに勝利した時、カードを1枚引き、このバトルで敗北した相手のキャラは退場する代わりに、手札に戻る。\n【起動メイン】【フロントLにある場合】 【ターン1】このキャラがアクティブの場合のみ発動できる。相手はカードを1枚引く。自分の場の他の［特徴：Fire Bomber］を1枚まで選び、アクティブにする。'))
+  return dsl({attackWinDraw:{count:1},battleLoseToHand:true,mainAbility:{
+   op:'readyFrontProgram',oncePerTurn:true,frontOnly:true,requireReady:true,
+   then:[{op:'drawOpponent',count:1},{op:'activeOwnOther',optional:true,trait:'Fire Bomber'}]
+  }});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】このターン中に自分がライフを手札に加えている場合のみ発動できる。このキャラをアクティブにし、次の自分のターン開始時まで、このキャラはBP+500。〈ランカ・リー〉のこの効果は1ターンに1回のみ発動できる。'))
+  return dsl({mainAbility:{op:'nameOnceActive',scope:'name',bpUntilNext:500,
+   when:{kind:'ownLifeToHandThisTurn',turn:'own'}}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【ターン1】このキャラが登場したターン中のみ発動できる。以下から1つ選ぶ。\n・自分のライフを1枚手札に加える。そうした場合、カードを2枚引き、自分の手札を1枚場外に置く。\n・このターン中に自分がライフを手札に加えている場合、カードを1枚引く。'))
+  return dsl({triggerEffect:{op:'restOppFrontSkipNextActive'},mainAbility:{op:'entryTurnLifeChoice',oncePerTurn:true,entryTurnOnly:true,then:[{
+   op:'chooseOne',optional:false,options:[
+    {id:'life',turn:'any',label:'將 1 張生命牌加入手牌，然後抽 2 張並把 1 張手牌放到場外',
+     then:[{op:'optionalOwnLifeToHandThenDraw',optional:false,then:[
+      {op:'drawDiscard',count:2,discardCount:1}]}]},
+    {id:'again',turn:'any',label:'本回合已將生命牌加入手牌時，抽 1 張',
+     when:{kind:'ownLifeToHandThisTurn',turn:'own'},then:[{op:'draw',count:1}]}
+   ]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】 【手札を1枚場外に置く】自分のフロントLに［特徴：空中騎士団］がある場合のみ発動できる。相手のフロントLのキャラ全ては、このターン中、BP-1000。〈ハインツ・ネーリッヒ・ウィンダミア〉のこの効果は1ターンに1回のみ発動できる。'))
+  return dsl({mainAbility:{op:'restDiscardNameDown',once:'name',payHand:1,zone:'front',
+   trait:'空中騎士団',then:[{op:'enemyFrontAllBpDown',bp:1000}]}});
+ if(card.type==='character'&&effect===norm(
+  '【フロントLにある場合】このキャラが登場したターン以外の自分のメインフェイズ中に、自分の効果でカードを引いた時、このキャラをアクティブにする。\n【起動メイン】【フロントLにある場合】 【レストにする】このキャラはこのターン中、BP+1000。\n【アタック時】このキャラのBPが5000以上の場合、自分の山札の上から2枚見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。'))
+  return dsl({triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true},
+   effectDrawActive:{line:'front',phase:'main',notEntryTurn:true},
+   mainAbility:{op:'restSelfThen',frontOnly:true,then:[{op:'buffSelf',bp:1000}]},
+   effects:{onAttack:[{op:'ifLiveThen',when:{kind:'selfCurrentBpAtLeast',turn:'any',minBp:5000},
+    then:[{op:'inspectTopAnyOutside',count:2,rest:'top'}]}]}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】自分のフロントLにカード名に「ハヤテ」を含むキャラがある場合のみ発動できる。以下から1つ選ぶ。〈フレイア・ヴィオン〉のこの効果は1ターンに1回のみ発動できる。\n・カードを1枚引き、自分の手札を1枚場外に置く。\n・自分のライフを1枚手札に加える。そうした場合、カードを2枚引き、自分の手札を1枚場外に置く。'))
+  return dsl({mainAbility:{op:'restNameOnceChoose',once:'name',zone:'front',requiresIncludes:'ハヤテ',
+   choice:{op:'chooseOne',optional:false,options:[
+    {id:'draw',turn:'any',label:'抽 1 張，並把 1 張手牌放到場外',
+     then:[{op:'drawDiscard',count:1}]},
+    {id:'life',turn:'any',label:'將 1 張生命牌加入手牌，然後抽 2 張並把 1 張手牌放到場外',
+     then:[{op:'optionalOwnLifeToHandThenDraw',optional:false,then:[
+      {op:'drawDiscard',count:2,discardCount:1}]}]}
+   ]}}});
+ if(card.type==='event'&&effect===norm(
+  '以下から『1つ』まで選ぶ。このターン中に自分がライフを手札に加えている場合、『2つ』に代わる。\n・カードを2枚引く。\n・自分の場のキャラを1枚選び、このターン中、BP+3000。\n・自分のライフが1で、自分のリムーブエリアに〈オベリスク〉がない場合、自分の山札の上から1枚を表向きで自分のライフエリアに置く。このカードをリムーブエリアに置く。'))
+  return onPlay({op:'lifeSongOptions'});
+ if(card.type==='character'&&effect===norm(
+  '【フロントLにある場合】自分のアタックフェイズ終了時、カードを1枚引き、このキャラを自分の山札の下に置く。自分のエナジーLのカード名に「イサム」を含まないキャラを1枚まで選び、フロントLに移動させる。\n【登場時】【フロントLにある場合】このキャラをアクティブにする。〈VF-19EF/A イサム・スペシャル〉のこの効果は1ターンに1回のみ発動する。'))
+  return dsl({phaseEffects:[{phase:'attack',edge:'end',turn:'own',then:[
+   {op:'attackPhaseEndShift',excludeNameIncludes:'イサム'}]}],
+   effects:{onPlay:[{op:'frontNameOnceActive',name:'VF-19EF/A イサム・スペシャル'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【フロントLにある場合】自分の場のレイド状態の〈クァドラン・レア（クラン・クラン）〉が退場した時、そのキャラのレイド元のカードを1枚まで自分の場にアクティブで登場させる。\n【起動メイン】【ターン1】このキャラが【インパクト】を持つ場合のみ発動できる。このキャラはこのターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、その場合ブロックされない）を得る。'))
+  return dsl({raidLeaveWatch:{name:'クァドラン・レア（クラン・クラン）',mode:'deployActive'},
+   mainAbility:{op:'sniperIfImpact',oncePerTurn:true}});
+ if(card.type==='character'&&effect===norm(
+  'このキャラは相手のキャラの効果で選ばれない。\n【フロントLにある場合】 【ターン1】自分が一度に2ダメージ以上受ける場合、代わりに1ダメージにしてもよい。'))
+  return dsl({oppCharacterChooseImmune:true,mayReduceDamageToOne:true});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】以下から1つ選ぶ。\n・自分の場の他のキャラを1枚選び、このターン中、BP+1000。\n・自分の場に〈マキナ・中島〉がある場合、自分の場の他のキャラを1枚選び、このターン中、「このキャラはBP4000以上のキャラにブロックされない。」を与える。〈レイナ・プラウラー〉のこの効果は1ターンに1回のみ選べる。'))
+  return dsl({mainAbility:{op:'restNamedOption',nameLock:'レイナ・プラウラー',
+   requiresName:'マキナ・中島'}});
+ if(card.type==='character'&&effect===norm(
+  '【起動メイン】【レストにする】自分の場の元々のBPが3500以下の他のキャラを1枚まで選び、このターン中、【インパクト（1）】か「このキャラはBP4000以上のキャラにブロックされない。」を与える。このキャラを自分の山札の下に置く。'))
+  return dsl({mainAbility:{op:'restPrintedGrantBottom',maxPrintedBp:3500}});
+ if(card.type==='character'&&effect===norm(
+  '【登場時】自分の手札からBP3500以下で消費APが1の赤のキャラカードを1枚まで自分の場にレストで登場させるかレイドさせる。\n【起動メイン】【フロントLにある場合】 【ターン1】このキャラのBPが5000以上の場合のみ発動できる。このキャラをアクティブにする。以下から1つ選ぶ。\n・カードを1枚引く。\n・自分の場の他のキャラを1枚選び、このターン中、BP+1000。'))
+  return dsl({effects:{onPlay:[{op:'deployOwnHandRestOrRaid',type:'character',color:'red',
+   maxEnergy:null,ap:1,max:1,optional:true,names:null,maxPrintedBp:3500}]},
+   mainAbility:{op:'readyBpChoice',oncePerTurn:true,frontOnly:true,minBp:5000}});
+ if(card.type==='event'&&card.trigger==='special'&&effect===norm(
+  'このカードは自分の場にBP4000以上のキャラが2枚以上ある場合のみ使用できる。\nBP5000以下の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場の〈サラ・ノーム〉を1枚自分の山札の下に置いてもよい。そうした場合、カードを1枚引く。'))
+  return dsl({triggerEffect:SPECIAL_EFFECT,playMinLiveBp:{min:4000,count:2},effects:{onPlay:[
+   {op:'retireCapThenBottomName',maxBp:5000,optional:true,name:'サラ・ノーム'}]}});
+ if(card.type==='character'&&effect===norm(
+  '【フロントLにある場合】自分の場のレイド状態のカード名に「バサラ」を含むキャラが退場した時、アクティブのこのキャラをレストにしてもよい。そうした場合、退場したキャラのレイド元のカードを1枚まで手札に加える。'))
+  return dsl({raidLeaveWatch:{includes:'バサラ',mode:'restHand'}});
+ if(card.type==='character'&&effect===norm(
+  '【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\nこのキャラがアタックしてバトルに勝利した時、カードを1枚引き、このバトルで敗北した相手のキャラは退場する代わりに、相手の山札の下に置かれる。\n【フロントLにある場合】自分の場のカード名に「バサラ」を含むキャラの効果に記載されている「退場する代わりに、手札に戻る。」は「退場する代わりに、相手の山札の下に置かれる。」に代わる。\n【登場時】自分と相手はカードを1枚引く。'))
+  return dsl({impactNull:true,attackWinDraw:{count:1},battleLoseToOppDeckBottom:true,
+   rewriteBasaraHandLoss:true,effects:{onPlay:[{op:'drawEach',count:1}]}});
  return pending();
 }
