@@ -12,6 +12,7 @@ import {MCR_REPRINT_IDS,MCR_REPRINT_NUMBERS} from './reprint-ids.mjs?v=20261125m
 import {MCR2_CARDS_001_040} from './cards-ex14-001-040.mjs?v=20261125mcr12';
 import {MCR2_CARDS_041_077} from './cards-ex14-041-077.mjs?v=20261125mcr12';
 import {MCR2_AP_CARDS} from './cards-ex14-ap.mjs?v=20261125mcr12';
+import {mcrDisplayImage} from './art.mjs?v=20261126mcrart1';
 
 const COLORS=new Set(['yellow','blue','red']);
 const VOL2_COLORS=new Set(['yellow','blue','red','purple']);
@@ -165,5 +166,9 @@ export function mcrCatalog(){
 }
 
 export function mcrEditorCards(){
- return mcrCatalog().deck.map(card=>({...card,playable:false,battleReady:false,deckLegal:true}));
+ return mcrCatalog().deck.map(card=>{
+  const onlineImage=mcrDisplayImage(card);
+  if(!onlineImage)throw Error(card.id+' has no embeddable card image');
+  return {...card,onlineImage,playable:false,battleReady:false,deckLegal:true};
+ });
 }
