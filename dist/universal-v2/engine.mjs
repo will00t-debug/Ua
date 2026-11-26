@@ -31960,10 +31960,23 @@ export function assertUniversalMatch(pack,s){
     typed.filters.every((f,i)=>q.filters[i]?.field===f.field&&q.filters[i]?.value===f.value)&&
     same(q.choices,typedChoices)&&Object.keys(q).length===8&&
     Object.keys(q).every(k=>['kind','player','sourceUid','uids','choices','filters','logic','discard'].includes(k));
-   if(!(keepOk||readyOk||raidKeep||namesOk||typedOk||mixedOk)||!q.sourceUid.startsWith(q.player+'-')||
+   // 必要エナジーがN以下のキャラカード, with no hand discard. The character
+   // filter and the printed energy ceiling are both required.
+   const characterEnergy=(printed?.effects?.onPlay||[]).find(e=>e.op==='searchTopOneBottomDiscard'&&
+    e.discard===false&&e.logic==='all'&&Array.isArray(e.filters)&&e.filters.length===2&&
+    e.filters.some(f=>f.field==='type'&&f.value==='character')&&
+    e.filters.some(f=>f.field==='printedRequiredEnergyAtMost'));
+   const characterEnergyChoices=Array.isArray(q.filters)?window.filter(c=>
+    matchesSearch(pack,s,c,{filters:q.filters,logic:'all'})).map(c=>c.uid):[];
+   const characterEnergyOk=!!characterEnergy&&q.filter===undefined&&q.logic==='all'&&
+    Array.isArray(q.filters)&&q.filters.length===characterEnergy.filters.length&&
+    characterEnergy.filters.every((f,i)=>q.filters[i]?.field===f.field&&q.filters[i]?.value===f.value)&&
+    same(q.choices,characterEnergyChoices)&&Object.keys(q).length===8&&
+    Object.keys(q).every(k=>['kind','player','sourceUid','uids','choices','filters','logic','discard'].includes(k));
+   if(!(keepOk||readyOk||raidKeep||namesOk||typedOk||mixedOk||characterEnergyOk)||!q.sourceUid.startsWith(q.player+'-')||
     !Array.isArray(q.uids)||q.uids.length<1||q.uids.length>7||
     new Set(q.uids).size!==q.uids.length||!same(window.map(c=>c.uid),q.uids)||
-    !Array.isArray(q.choices)||!(mixedOk?same(q.choices,mixedChoices):typedOk?same(q.choices,typedChoices):namesOk?same(q.choices,nameChoices):same(q.choices,expected)))
+    !Array.isArray(q.choices)||!(mixedOk?same(q.choices,mixedChoices):typedOk?same(q.choices,typedChoices):characterEnergyOk?same(q.choices,characterEnergyChoices):namesOk?same(q.choices,nameChoices):same(q.choices,expected)))
     throw Error('Forged printed energy window');
   }
  }

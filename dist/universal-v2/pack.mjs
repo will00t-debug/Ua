@@ -1645,7 +1645,16 @@ function verifyProgram(program,path){
      f.field==='printedRequiredEnergyAtMost')&&
     e.excludeRaid===undefined&&e.noHandDiscard===undefined&&
     e.groups===undefined&&e.whenTriggers===undefined;
-   const keptNoDiscard=namesNoDiscard||nonCharacterNoDiscard||nameOrTraitNoDiscard;
+   // キャラカードで必要エナジーがN以下, and the print does not discard a hand card.
+   // A character compound that omits discard:false still discards after an add.
+   const characterEnergyNoDiscard=e.discard===false&&e.rest===undefined&&e.logic==='all'&&
+    e.filter===undefined&&Array.isArray(e.filters)&&e.filters.length===2&&
+    e.filters.every(isFilter)&&
+    e.filters.some(f=>f.field==='type'&&f.value==='character')&&
+    e.filters.some(f=>f.field==='printedRequiredEnergyAtMost')&&
+    e.excludeRaid===undefined&&e.noHandDiscard===undefined&&
+    e.groups===undefined&&e.whenTriggers===undefined;
+   const keptNoDiscard=namesNoDiscard||nonCharacterNoDiscard||nameOrTraitNoDiscard||characterEnergyNoDiscard;
    const compound=e.filter===undefined&&Array.isArray(e.filters)&&
     e.filters.length>=2&&e.filters.length<=5&&e.filters.every(isFilter)&&
     new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&

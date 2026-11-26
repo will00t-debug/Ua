@@ -23,6 +23,7 @@ export const LEGACY_DECK_KEYS=Object.freeze({
  rnk:['ua-rnk-draft-v1','ua-rnk-saved-v1'],
  eva:['ua-eva-draft-v1','ua-eva-saved-v1'],
  mcr:['ua-mcr-draft-v1','ua-mcr-saved-v1'],
+ gim:['ua-gim-draft-v1','ua-gim-saved-v1'],
  toriko:['ua-trk-draft-v1','ua-trk-saved-v1'],
  dgm:['ua-dgm-draft-v1','ua-dgm-saved-v1'],
  mgs:['ua-mgs-draft-v1','ua-mgs-saved-v1']
@@ -33,7 +34,7 @@ export function registeredPackForEditor(title){
  if(!titleCatalogue(title))return null;
  // Re:Zero stays outside the five-title census. All 73 regular EX17BT
  // cards share the set-1 battle pack. AP cards are not deck cards.
- if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha'||title==='rnk'||title==='eva'||title==='mcr'||title==='toriko'||title==='dgm'||title==='mgs')return officialV2Pack(title);
+ if(title==='rezero'||title==='steins-gate'||title==='madoka'||title==='inuyasha'||title==='kjn'||title==='csm'||title==='aot'||title==='kmr'||title==='imc'||title==='mha'||title==='rnk'||title==='eva'||title==='mcr'||title==='gim'||title==='toriko'||title==='dgm'||title==='mgs')return officialV2Pack(title);
  return registeredV2TitlePack(title);
 }
 export function normalizeEditorCounts(title,input){

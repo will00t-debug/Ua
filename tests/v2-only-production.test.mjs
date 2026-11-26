@@ -15,7 +15,10 @@ test('six-title production editor cannot load old battle engine or old app scrip
  for(const dependency of ['engine.mjs','match-runtime.mjs','ttg-core-match.mjs','solo-match.mjs','ai-v2.mjs'])
   assert.doesNotMatch(code,new RegExp("from ['\"][^'\"]*"+dependency.replace('.','\\.')+"['\"]"));
  assert.match(read('../vercel.json'),/online\.html/);
- assert.equal(TITLES.length,21);
+ assert.equal(TITLES.length,22);
+ assert.equal(TITLES.find(t=>t.id==='gim').cards.length,80);
+ assert.equal(TITLES.find(t=>t.id==='gim').playable,true);
+ assert.equal(TITLES.find(t=>t.id==='gim').label,'學園偶像大師');
  assert.equal(TITLES.find(t=>t.id==='dgm').cards.length,80);
  assert.equal(TITLES.find(t=>t.id==='mgs').cards.length,186);
  assert.equal(TITLES.find(t=>t.id==='mgs').playable,false);

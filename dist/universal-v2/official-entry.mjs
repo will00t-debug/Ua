@@ -26,6 +26,7 @@ import {createMgsV2Pack} from './mgs-pack.mjs?v=20261121mgs2';
 import {createRnkBcdBatchStagingPack} from './rnk-bcd-batch-pack.mjs';
 import {createEvaStagingPack} from './eva-staging-pack.mjs?v=20261122evaYellow0';
 import {createMcrStagingPack} from './mcr-staging-pack.mjs?v=20261125mcr12';
+import {createGimStagingPack} from './gim-staging-pack.mjs?v=20261126gim1';
 import {KMR_CARDS} from '../kmr-cards.mjs';
 import {kmrPointCardsFor} from '../kmr-point-cards.mjs';
 import {kmr2PackCards,kmrPrPackCards} from './kmr2-pack.mjs?v=20261104kmrport1';
@@ -80,6 +81,7 @@ export function officialV2Pack(title){
  if(title==='rnk')return createRnkBattlePack();
  if(title==='eva')return createEvaBattlePack();
  if(title==='mcr')return createMcrBattlePack();
+ if(title==='gim')return createGimBattlePack();
  if(title==='toriko')return createTorikoBattlePack();
  if(title==='dgm')return createDgmBattlePack();
  if(title==='mgs')return createMgsBattlePack();
@@ -272,6 +274,7 @@ export function imcPracticeDeck(){
 let rnkBattlePack=null;
 let evaBattlePack=null;
 let mcrBattlePack=null;
+let gimBattlePack=null;
 export function createEvaBattlePack(){
  if(evaBattlePack)return evaBattlePack;
  const pack=createEvaStagingPack();
@@ -286,6 +289,26 @@ export function createMcrBattlePack(){
  if(mcrBattlePack)return mcrBattlePack;
  mcrBattlePack=createMcrStagingPack();
  return mcrBattlePack;
+}
+
+// Landed Gakuen Idolmaster subset only. Catalog cards outside this pack stay
+// unplayable. The count is the shared-program subset, not the 80-card catalog.
+export function createGimBattlePack(){
+ if(gimBattlePack)return gimBattlePack;
+ gimBattlePack=createGimStagingPack();
+ return gimBattlePack;
+}
+
+export function gimPracticeDeck(){
+ const pack=createGimBattlePack();
+ const counts={
+  'GIM-1-041':4,'GIM-1-042':4,'GIM-1-045':4,'GIM-1-047':4,'GIM-1-049':4,
+  'GIM-1-050':4,'GIM-1-055':4,'GIM-1-056':4,'GIM-1-060':4,'GIM-1-061':4,
+  'GIM-1-064':4,'GIM-1-065':4,'GIM-1-069':2
+ };
+ const issues=validateUniversalDeck(pack,counts);
+ if(issues.length)throw Error('Gakuen Idolmaster red practice deck: '+issues.join('; '));
+ return {pack,counts:Object.freeze(counts)};
 }
 
 export function mcrPracticeDeck(){
