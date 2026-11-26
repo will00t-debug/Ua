@@ -20,7 +20,7 @@ import {imcEditorCards} from './imc/catalog.mjs';
 import {mhaEditorCards} from './mha/catalog.mjs?v=20261120mha011';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs?v=20261122evaYellow0';
-import {mcrEditorCards} from './mcr/catalog.mjs?v=20261125mcr12';
+import {mcrEditorCards} from './mcr/catalog.mjs?v=20261126mcrart1';
 import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261120mha011';
 import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261120mha011';
 import {DGM_CARDS} from './dgm-cards.mjs?v=20261120dgm2';
@@ -91,7 +91,7 @@ const allArt=Object.freeze({
  mha:new Map(mhaEditorCards().map(c=>[c.identity||c.id,c.image||c.printings?.[0]?.image||null])),
  rnk:new Map(rnkEditorCards().map(c=>[c.identity||c.id,c.image||null])),
  eva:new Map(evaEditorCards().map(c=>[c.identity||c.id,c.image||null])),
- mcr:new Map(mcrEditorCards().map(c=>[c.identity||c.id,c.image||null])),
+ mcr:new Map(mcrEditorCards().map(c=>[c.identity||c.id,c.onlineImage||c.image||null])),
  toriko:new Map([...TORIKO_CARDS,...TORIKO_PR_CARDS].map(c=>[c.id,c.image||null])),
  dgm:new Map(DGM_CARDS.map(c=>[c.id,c.image||null])),
  mgs:new Map([...MGS_CARDS,...MGS2_CARDS].map(c=>[c.id,c.image||null]))

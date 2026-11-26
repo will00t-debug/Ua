@@ -1,6 +1,6 @@
 // Production deck editor: catalogue, drafts and Universal V2 bridge only.
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
-import {TITLES} from './title-registry.mjs?v=20261125mcr12';
+import {TITLES} from './title-registry.mjs?v=20261126mcrart1';
 import {PRESETS} from './cards.mjs';
 import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261120dgm3effect1combat2summary3palette5pngmgs1rez065badges1';
 import {validDeckCoverId} from './deck-cover-selection.mjs';
