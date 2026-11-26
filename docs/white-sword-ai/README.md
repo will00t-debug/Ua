@@ -141,3 +141,9 @@ node scripts/white-sword-nn-round10.mjs
 ```bash
 node scripts/white-sword-nn-round11.mjs
 ```
+
+第十二輪接受第十一輪：該終點不採用。它只檢查學習器和第十一輪的抽樣順序，用同一份重建資料比較分層輪轉和全局洗牌。結果寫在 `docs/white-sword-ai/NN-ROUND12.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round12.mjs
+```
