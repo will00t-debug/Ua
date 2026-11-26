@@ -50,15 +50,7 @@
     <section class="matchup-side" aria-label="選擇自己的牌組">
      <div class="matchup-title"><span class="matchup-step">01</span><div><h3>你的牌組</h3><p>登入後，帳號儲存的牌組會排在選單最上方</p></div></div>
      <label class="matchup-select-label" for="my-title">選擇牌組</label>
-     <select id="my-title" class="matchup-select">
-      <option value="gurren-lagann-red">天元突破｜紅色</option>
-      <option value="bleach-purple">BLEACH｜紫色</option>
-      <option value="bleach-green">BLEACH｜綠色</option>
-      <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
-      <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
-      <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option>
-      <option value="mushoku-tensei-roxy-field">無職轉生｜洛琪希・迷宮都市拉潘</option>
-     </select>
+     <select id="my-title" class="matchup-select"></select>
      <div class="featured-decks" role="group" aria-label="快速選擇自己的 BLEACH 牌組">
       <button type="button" class="deck-quick-pick blue" data-deck-side="my-title" data-deck-key="reject-blue" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>藍 · 我拒絕</strong><small>50 張</small></span></button>
       <button type="button" class="deck-quick-pick green" data-deck-side="my-title" data-deck-key="white-sword" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>綠 · 白劍</strong><small>50 張</small></span></button>
@@ -68,17 +60,9 @@
     </section>
     <div class="matchup-vs" aria-hidden="true"><span>VS<small>ARENA</small></span></div>
     <section class="matchup-side" aria-label="選擇電腦牌組">
-     <div class="matchup-title"><span class="matchup-step">02</span><div><h3>電腦牌組</h3><p>可以選你的帳號牌組，或已驗證的作品牌組</p></div></div>
+     <div class="matchup-title"><span class="matchup-step">02</span><div><h3>電腦牌組</h3><p>可以選你的帳號牌組，或三副起始牌組</p></div></div>
      <label class="matchup-select-label" for="ai-title">選擇電腦使用的牌組</label>
-     <select id="ai-title" class="matchup-select">
-      <option value="bleach-purple">BLEACH｜紫色</option>
-      <option value="gurren-lagann-red">天元突破｜紅色</option>
-      <option value="bleach-green">BLEACH｜綠色</option>
-      <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
-      <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
-      <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option>
-      <option value="mushoku-tensei-roxy-field">無職轉生｜洛琪希・迷宮都市拉潘</option>
-     </select>
+     <select id="ai-title" class="matchup-select"></select>
      <div class="featured-decks" role="group" aria-label="快速選擇電腦的 BLEACH 牌組">
       <button type="button" class="deck-quick-pick blue" data-deck-side="ai-title" data-deck-key="reject-blue" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>藍 · 我拒絕</strong><small>50 張</small></span></button>
       <button type="button" class="deck-quick-pick green" data-deck-side="ai-title" data-deck-key="white-sword" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>綠 · 白劍</strong><small>50 張</small></span></button>
@@ -135,7 +119,7 @@
    <details class="designated-details"><summary>查看藍色「我拒絕」、綠色「白劍」、紫色「戀露」完整清單</summary>
     <div id="designated-decks" class="designated" aria-label="指定 BLEACH 牌組"></div>
    </details>
-   <p class="note">本頁只使用 Universal V2 引擎；不會載入舊版對戰核心。三副指定牌組、其他已完成 V2 效果的牌組，以及符合規則的個人收藏皆可用於對戰。尚未完成的牌組不能開局。</p>
+   <p class="note">本頁只使用 Universal V2 引擎；不會載入舊版對戰核心。選單只列出三副起始牌組，以及你儲存或從組卡頁帶來的牌組。尚未完成的牌組不能開局。</p>
   </section></main>
   <footer class="foot">
    <span>UNOFFICIAL FAN TEST · 日版 UNION ARENA 卡牌版權屬其權利人</span>
@@ -143,6 +127,6 @@
   </footer>
  </div>
  <link rel="stylesheet" href="coach.css?v=20261101reviewnav1">
- <script type="module" src="universal-v2-preview.mjs?v=20261126dropPractice1"></script>
+ <script type="module" src="universal-v2-preview.mjs?v=20261126starterOnly1"></script>
 </body>
 </html>

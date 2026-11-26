@@ -2311,9 +2311,15 @@ function renderDesignatedDecks(){
 if(!IS_BATTLE_PAGE)renderDesignatedDecks();
 // Import only source-registered, complete BLEACH lists; never pretend unsupported
 // classic cards gained official V2 profiles.
+function starterDeck(prefer){
+ if(designatedReady.has(prefer))return prefer;
+ for(const key of ['reject-blue','white-sword','renruki'])
+  if(designatedReady.has(key))return key;
+ return '';
+}
 function importClassicLobbyDecks(){
- $('my-title').value=designatedReady.has('reject-blue')?'reject-blue':'bleach-purple';
- $('ai-title').value=designatedReady.has('white-sword')?'white-sword':'bleach-green';
+ $('my-title').value=starterDeck('reject-blue');
+ $('ai-title').value=starterDeck('white-sword');
  let raw=null;
  try{
   raw=JSON.parse(sessionStorage.getItem('ua-v2-classic-entry-v1')||'null');
@@ -2339,9 +2345,6 @@ function importClassicLobbyDecks(){
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
 if(!IS_BATTLE_PAGE)importClassicLobbyDecks();
-function selectBuiltOpponent(title){
- if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
-}
 function importBuiltTitleDeck(){
  let raw=null;
  try{
@@ -2361,7 +2364,6 @@ function importBuiltTitleDeck(){
   $(id).append(el('option',{value,text:(id==='my-title'?'你的組卡｜':'同一組卡｜')+label}));
  }
  $('my-title').value=value;
- selectBuiltOpponent(raw.title);
  if(['easy','normal','hard','learned'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
 }
 if(!IS_BATTLE_PAGE)importBuiltTitleDeck();
@@ -2385,7 +2387,6 @@ function importV2EditorDeck(){
  designatedReady.set(value,{pack,counts:Object.freeze({...counts}),label:name});
  $('my-title').append(el('option',{value,text:'我的 V2 牌組｜'+name}));
  $('my-title').value=value;
- selectBuiltOpponent(raw.title);
  $('restart-notice').textContent='已載入 V2 組卡頁的 50 張牌組：'+name+'。可以直接開始與 AI 對戰。';
 }
 if(!IS_BATTLE_PAGE)importV2EditorDeck();
