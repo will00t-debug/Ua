@@ -102,6 +102,19 @@ function mark(s,paired,uid){
 function used(s,paired,uid){
  return (paired?s.altMainAbilityUsedUids:s.mainAbilityUsedUids).includes(uid);
 }
+// MGS-2-027's acquired 忍野扇 MAIN names 阿良々木暦, not an individual
+// physical card. A pre-fix saved match may already carry a UID-keyed use.
+const KOYOMI_READY_GRANT_KEY='阿良々木暦|readyGrant';
+function koyomiReadyGrantUsed(s,owner){
+ return s.onceEffectUses[owner].some(key=>key===KOYOMI_READY_GRANT_KEY||
+  /^\d+-\d+\|readyGrant$/.test(key));
+}
+function koyomiReadyGrantLegal(s,owner,card){
+ const grant=card.readyGrantUntil;
+ return !!(grant&&grant.stamp===card.fieldEntryStamp&&
+  s.players[owner].ownTurns<grant.untilOwnTurnStart&&!card.ready&&
+  !koyomiReadyGrantUsed(s,owner));
+}
 function apBanned(s,player){return s.players[player].apEffectReadyBanTurn===s.turn;}
 function readyAp(s,player){
  if(apBanned(s,player))return false;
@@ -962,9 +975,7 @@ export function legalSharedPrintVol2Activations(api,pack,s,player){
    pl.outside.some(item=>api.card(pack,item).color==='green'&&!api.card(pack,item).raidName&&
     named(api,pack,s,item,plain.name)))
    out.push({type:'activate',uid:card.uid,mode:'vol2:tuck'});
-  const grant=card.readyGrantUntil;
-  if(live&&grant&&grant.stamp===card.fieldEntryStamp&&pl.ownTurns<grant.untilOwnTurnStart&&
-   !card.ready&&!s.onceEffectUses[player].includes(card.uid+'|readyGrant'))
+  if(live&&koyomiReadyGrantLegal(s,player,card))
    out.push({type:'activate',uid:card.uid,mode:'vol2:readyGrant'});
  }
  for(const card of pl.outside){
@@ -1033,7 +1044,9 @@ export function activateSharedPrintVol2(api,pack,s,action){
   return true;
  }
  if(action.mode==='vol2:readyGrant'){
-  s.onceEffectUses[player].push(card.uid+'|readyGrant');
+  if(!fieldCard||api.originalEffectsDisabled(s,card)||!koyomiReadyGrantLegal(s,player,card))
+   throw Error('Same-name ready grant is no longer legal');
+  s.onceEffectUses[player].push(KOYOMI_READY_GRANT_KEY);
   api.attemptFieldActive(s,player,card);
   return true;
  }

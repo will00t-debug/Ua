@@ -894,6 +894,37 @@ test('MGS-2-035 actives on the energy line and draws after both peeks on its ent
  assert.equal(s.pending,null);
 });
 
+test('MGS-2-027 granted ACTIVE main is once per 阿良々木暦 name, not per physical card',()=>{
+ let s=open(218027,{'MGS-2-027':2,'MGS-2-033':3});
+ const first=sit(s,0,'MGS-2-027','front',{ready:false});
+ const second=sit(s,0,'MGS-2-027','front',{ready:false});
+ const removed=[take(s,0,'MGS-2-033'),take(s,0,'MGS-2-033'),take(s,0,'MGS-2-033')];
+ s.players[0].removed.push(...removed);
+ const actions=()=>legalUniversalActions(packs,s);
+ const activate=(uid,mode)=>{const a=actions().find(a=>a.type==='activate'&&a.uid===uid&&a.mode===mode);assert.ok(a,mode);s=act(s,a);};
+ const pick=uid=>{const a=actions().find(a=>a.type==='chooseVol2'&&a.uid===uid);assert.ok(a);s=act(s,a);};
+ // The grant itself is printed as a regular per-card MAIN; both may use it.
+ activate(first.uid,'vol2:bottom');
+ pick(removed[0].uid);pick(removed[1].uid);
+ assert.equal(s.pending,null);
+ activate(second.uid,'vol2:bottom');
+ pick(removed[2].uid);
+ assert.equal(s.pending,null);
+ const canReady=uid=>actions().some(a=>a.type==='activate'&&a.uid===uid&&a.mode==='vol2:readyGrant');
+ assert.ok(canReady(first.uid));assert.ok(canReady(second.uid));
+ const legacy=structuredClone(s);
+ legacy.onceEffectUses[0].push(first.uid+'|readyGrant');
+ assert.equal(legalUniversalActions(packs,legacy).some(a=>a.mode==='vol2:readyGrant'),false,
+  'a saved pre-fix UID-keyed use must also spend the shared limit');
+ activate(first.uid,'vol2:readyGrant');
+ assert.ok(s.onceEffectUses[0].includes('阿良々木暦|readyGrant'));
+ assert.equal(s.onceEffectUses[1].includes('阿良々木暦|readyGrant'),false);
+ assert.ok(s.players[0].front.find(c=>c?.uid===first.uid).ready);
+ assert.equal(canReady(second.uid),false,'second same-name copy cannot activate the granted MAIN this turn');
+ assert.throws(()=>act(s,{type:'activate',uid:second.uid,mode:'vol2:readyGrant'}));
+ assert.equal(s.players[0].front.find(c=>c?.uid===second.uid).ready,false);
+});
+
 test('MGS-2-054 actives the first 八九寺真宵 on play and can raise its attack buff to three',()=>{
  let s=open(218054,{'MGS-2-054':2});
  sit(s,0,'MGS-2-040','front');

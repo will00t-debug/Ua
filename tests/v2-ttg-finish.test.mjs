@@ -477,6 +477,118 @@ test('TTG-033 adds active energy and can tuck itself under an Arc Gurren Lagann 
  assertUniversalMatch(ttg,s);
 });
 
+// UA56BT/TTG-1-033: 同名每回合一次 is shared across all copies,
+// including witnesses earned by the very same Raid before any has resolved.
+function duplicateArcWitnessScene(seed){
+ let s=endTurn(fresh(seed));
+ fuel(s,1,2,40);
+ const first=place(s,1,'TTG-1-033','energy',2);
+ const second=place(s,1,'TTG-1-033','energy',3);
+ const base=place(s,1,'TTG-1-009','front',0);
+ const arc=hold(s,1,'TTG-1-027');
+ s=toPhase(s,'main');
+ const before=s.players[1].deck.length;
+ s=go(s,act(s,a=>a.type==='raid'&&a.uid===arc.uid&&a.baseUid===base.uid));
+ assert.equal(s.pending.kind,'effect-raid-witness-order');
+ assert.deepEqual(s.pending.witnesses.map(w=>w.uid),[first.uid,second.uid]);
+ return {s,first,second,arc,before};
+}
+for(const when of ['now','later']){
+ test('TTG-033 same-name witnesses share one use even when the second resolves '+when,()=>{
+  let {s,first,second,arc,before}=duplicateArcWitnessScene(90350);
+  s=go(s,act(s,a=>a.uid===first.uid&&a.when==='now'));
+  s=go(s,act(s,a=>a.uid===second.uid&&a.when===when));
+  assert.equal(s.pending.sourceUid,first.uid);
+  s=go(s,act(s,a=>a.mode==='move'));
+  assert.equal(s.pending.kind,'effect-facedown-scale','do not open a second same-name move choice');
+  s=go(s,act(s,a=>a.retireUid===null));
+  assert.equal(s.pending,null);
+  assert.equal(s.players[1].deck.length,before-2);
+  assert.deepEqual(live(s,1,arc.uid).under.map(c=>c.uid),[first.uid]);
+  assert.ok(live(s,1,second.uid),'unused copy remains on the field');
+  assert.deepEqual(s.onceEffectUses[1].filter(k=>k==='アークグレン|raidWitness'),['アークグレン|raidWitness']);
+  assertUniversalMatch(ttg,s);
+  // A distinct Raid in the same turn must not re-open the spent name.
+  let same=structuredClone(s);
+  const base=place(same,1,'TTG-1-009','front',1);
+  const arc2=hold(same,1,'TTG-1-027');
+  same=go(same,act(same,a=>a.type==='raid'&&a.uid===arc2.uid&&a.baseUid===base.uid));
+  assert.equal(same.pending,null);
+  assert.ok(live(same,1,second.uid));
+  assertUniversalMatch(ttg,same);
+  // The next turn clears the name restriction, permitting the unused copy.
+  s=endTurn(endTurn(s));
+  for(const c of s.players[1].energy)if(c)c.buffs=[{energy:40,untilTurn:s.turn}];
+  const base2=place(s,1,'TTG-1-009','front',1);
+  const nextArc=hold(s,1,'TTG-1-027');
+  s=toPhase(s,'main');
+  assert.equal(s.onceEffectUses[1].includes('アークグレン|raidWitness'),false);
+  s=go(s,act(s,a=>a.type==='raid'&&a.uid===nextArc.uid&&a.baseUid===base2.uid));
+  assert.equal(s.pending.kind,'effect-raid-witness-order');
+  s=go(s,act(s,a=>a.uid===second.uid&&a.when==='now'));
+  s=go(s,act(s,a=>a.mode==='move'));
+  assert.ok(live(s,1,nextArc.uid).under.some(c=>c.uid===second.uid));
+  s=go(s,act(s,a=>a.retireUid===null));
+  assertUniversalMatch(ttg,s);
+ });
+}
+test('TTG-033 declining the first move does not consume the name limit',()=>{
+ let {s,first,second,arc,before}=duplicateArcWitnessScene(90351);
+ s=go(s,act(s,a=>a.uid===first.uid&&a.when==='now'));
+ s=go(s,act(s,a=>a.uid===second.uid&&a.when==='now'));
+ s=go(s,act(s,a=>a.mode==='skip'));
+ assert.equal(s.onceEffectUses[1].includes('アークグレン|raidWitness'),false);
+ assert.equal(s.pending.kind,'effect-raid-witness-move');
+ assert.equal(s.pending.sourceUid,second.uid);
+ s=go(s,act(s,a=>a.mode==='move'));
+ assert.equal(s.players[1].deck.length,before-2);
+ assert.ok(live(s,1,first.uid));
+ assert.deepEqual(live(s,1,arc.uid).under.map(c=>c.uid),[second.uid]);
+ s=go(s,act(s,a=>a.retireUid===null));
+ assertUniversalMatch(ttg,s);
+});
+
+test('TTG-033 stale saved move choice cannot bypass an already spent name limit',()=>{
+ let {s,first,second,before}=duplicateArcWitnessScene(90352);
+ s=go(s,act(s,a=>a.uid===first.uid&&a.when==='skip'));
+ s=go(s,act(s,a=>a.uid===second.uid&&a.when==='now'));
+ assert.equal(s.pending.kind,'effect-raid-witness-move');
+ // An old saved match could already contain the duplicate prompt.
+ s.onceEffectUses[1].push('アークグレン|raidWitness');
+ assert.deepEqual(legalUniversalActions(ttg,s),[{type:'chooseRaidWitnessMove',mode:'skip'}]);
+ assert.throws(()=>dispatchUniversalAction(ttg,s,{type:'chooseRaidWitnessMove',mode:'move'}));
+ s=go(s,act(s,a=>a.mode==='skip'));
+ assert.ok(live(s,1,second.uid));
+ assert.equal(s.players[1].deck.length,before);
+ assertUniversalMatch(ttg,s);
+});
+
+test('TTG-004 uses the same name gate for duplicate attach witnesses',()=>{
+ let s=endTurn(fresh(90353));
+ fuel(s,1,2,40);
+ const base=place(s,1,'TTG-1-009','front',0);
+ const first=place(s,1,'TTG-1-004','front',1);
+ const second=place(s,1,'TTG-1-004','front',2);
+ const other=aside(s,1,'TTG-1-002');
+ const target=hold(s,1,'TTG-1-002');
+ assert.notEqual(target.uid,other.uid);
+ const arc=hold(s,1,'TTG-1-027');
+ s=toPhase(s,'main');
+ const before=s.players[1].deck.length;
+ s=go(s,act(s,a=>a.type==='raid'&&a.uid===arc.uid&&a.baseUid===base.uid));
+ assert.equal(s.pending.kind,'effect-raid-witness-order');
+ s=go(s,act(s,a=>a.uid===first.uid&&a.when==='now'));
+ s=go(s,act(s,a=>a.uid===second.uid&&a.when==='now'));
+ assert.equal(s.pending.kind,'effect-raid-attach');
+ s=go(s,act(s,a=>a.type==='chooseRaidAttach'&&a.uid===target.uid));
+ assert.equal(s.pending.kind,'effect-facedown-scale');
+ assert.equal(s.players[1].deck.length,before-1);
+ assert.ok(s.players[1].outside.some(c=>c.uid===other.uid));
+ assert.deepEqual(live(s,1,arc.uid).under.map(c=>c.uid),[target.uid]);
+ s=go(s,act(s,a=>a.retireUid===null));
+ assertUniversalMatch(ttg,s);
+});
+
 test('TTG-034 discounts a missing field, counts direct facedowns, captures a retirement, and returns buried cards',()=>{
  let s=fresh(9036);
  const hand=hold(s,0,'TTG-1-034');

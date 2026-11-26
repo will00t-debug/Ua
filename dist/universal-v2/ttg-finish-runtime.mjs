@@ -120,11 +120,20 @@ function queueRaidFollowup(s,owner,pending,nowJobs,laterJobs){
  else s.effectQueue.unshift(...pending.baseJobs,...pending.entryJobs,...pending.raidJobs);
  s.effectQueue.unshift(...nowJobs);
 }
+function witnessUsed(s,owner,witness){
+ return Boolean(witness.onceKey&&s.onceEffectUses[owner].includes(witness.onceKey));
+}
+function markWitnessUsed(s,owner,witness){
+ if(witness.onceKey&&!witnessUsed(s,owner,witness))
+  s.onceEffectUses[owner].push(witness.onceKey);
+}
 function openWitness(pack,s,owner,witness,raidUid){
  const pl=s.players[owner];
  const watcher=api.location(s,owner,witness.uid)?.c;
  const raider=api.location(s,owner,raidUid)?.c;
- if(!watcher||!raider||originalEffectsDisabled(s,watcher)){
+ // Several same-name witnesses may already be queued by one Raid.
+ // Recheck on resolution: a previous copy may have spent the shared name limit.
+ if(witnessUsed(s,owner,witness)||!watcher||!raider||originalEffectsDisabled(s,watcher)){
   api.continueEffectQueue(pack,s);return;
  }
  if(witness.kind==='attach'){
@@ -284,12 +293,13 @@ export function legalFinishPending(pack,s){
  }
  if(q.kind==='effect-raid-attach')return [
   {type:'chooseRaidAttach',uid:null},
-  ...q.choices.filter(uid=>p.hand.some(c=>c.uid===uid)||p.outside.some(c=>c.uid===uid))
+  ...(witnessUsed(s,q.player,q.witness)?[]:q.choices)
+   .filter(uid=>p.hand.some(c=>c.uid===uid)||p.outside.some(c=>c.uid===uid))
    .map(uid=>({type:'chooseRaidAttach',uid}))
  ];
  if(q.kind==='effect-raid-witness-move')return [
   {type:'chooseRaidWitnessMove',mode:'skip'},
-  {type:'chooseRaidWitnessMove',mode:'move'}
+  ...(witnessUsed(s,q.player,q.witness)?[]:[{type:'chooseRaidWitnessMove',mode:'move'}])
  ];
  if(q.kind==='effect-look-take'){
   if(q.phase==='take'){
@@ -405,10 +415,9 @@ export function resolveFinishChoice(pack,s,a){
    const raider=api.location(s,q.player,q.raidUid)?.c;
    if(index<0||!raider||card(pack,from==='hand'?p.hand[index]:p.outside[index]).name!==q.witness.want)
     throw Error('Raid attach target changed');
+   markWitnessUsed(s,q.player,q.witness);
    const physical=(from==='hand'?p.hand:p.outside).splice(index,1)[0];
    tuckUnder(pack,s,q.player,raider,physical,from,q.sourceUid);
-   if(!s.onceEffectUses[q.player].includes(q.witness.onceKey))
-    s.onceEffectUses[q.player].push(q.witness.onceKey);
    if(from==='hand'&&q.witness.drawIfHand)
     api.draw(pack,s,q.player,q.witness.drawIfHand,{reason:'own-effect',sourceUid:q.sourceUid});
   }
@@ -420,6 +429,7 @@ export function resolveFinishChoice(pack,s,a){
    const loc=api.location(s,q.player,q.witness.uid);
    const host=api.location(s,q.player,q.raidUid)?.c;
    if(!loc||!host||host.uid===loc.c.uid)throw Error('Raid witness source left the field');
+   markWitnessUsed(s,q.player,q.witness);
    if(q.witness.returnUnder){
     const buried=[];
     const take=c=>{for(const x of [...(c.under||[]),...(c.stack||[])]){buried.push(x);take(x);}};
@@ -435,8 +445,6 @@ export function resolveFinishChoice(pack,s,a){
    }
    p[loc.line][loc.slot]=null;
    tuckUnder(pack,s,q.player,host,loc.c,loc.line,q.sourceUid);
-   if(q.witness.onceKey&&!s.onceEffectUses[q.player].includes(q.witness.onceKey))
-    s.onceEffectUses[q.player].push(q.witness.onceKey);
    if(q.witness.draw)api.draw(pack,s,q.player,q.witness.draw,{reason:'own-effect',sourceUid:q.sourceUid});
   }
   api.continueEffectQueue(pack,s);return true;
