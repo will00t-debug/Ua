@@ -129,3 +129,9 @@ node scripts/white-sword-nn-round8.mjs trial
 node scripts/white-sword-nn-round9.mjs fixed
 node scripts/white-sword-nn-round9.mjs gaps
 ```
+
+第十輪接受第九輪的診斷。它凍結原 B，只用既有模仿損失對一個已核對的阻擋局面做一次事先寫死的修正，不用保留集挑終點。結果寫在 `docs/white-sword-ai/NN-ROUND10.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round10.mjs
+```
