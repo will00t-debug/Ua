@@ -24,11 +24,12 @@ export function matchesPrintedRequiredEnergyExact(definition,value){
 export const DISCOUNT_KIND='nextEligibleHandPlayApDiscount';
 export function validatePrintedPlayFilter(f){
  if(!f||typeof f!=='object'||Array.isArray(f)||!Object.keys(f).length||
-  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name','noRaid','anyOfTraitOrName','triggerNot','noSpecialFinal','color'].includes(k))||
+  Object.keys(f).some(k=>!['cardType','printedBp','printedBpAtMost','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name','noRaid','anyOfTraitOrName','triggerNot','noSpecialFinal','color'].includes(k))||
   (f.anyOfTraitOrName!==undefined&&f.anyOfTraitOrName!==true)||
   (f.anyOfTraitOrName===true&&(typeof f.trait!=='string'||typeof f.name!=='string'))||
   (f.cardType!==undefined&&!['character','field','event'].includes(f.cardType))||
   (f.printedBp!==undefined&&(!Number.isInteger(f.printedBp)||f.printedBp<0||f.printedBp>50000))||
+  (f.printedBpAtMost!==undefined&&(!Number.isInteger(f.printedBpAtMost)||f.printedBpAtMost<0||f.printedBpAtMost>50000))||
   (f.printedGenAtLeast!==undefined&&(!Number.isInteger(f.printedGenAtLeast)||f.printedGenAtLeast<0||f.printedGenAtLeast>50))||
   (f.printedRequiredEnergyAtMost!==undefined&&(!Number.isInteger(f.printedRequiredEnergyAtMost)||f.printedRequiredEnergyAtMost<0||f.printedRequiredEnergyAtMost>30))||
   (f.namesAny!==undefined&&(!Array.isArray(f.namesAny)||f.namesAny.length<2||f.namesAny.length>5||f.namesAny.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||new Set(f.namesAny).size!==f.namesAny.length))||
@@ -44,6 +45,7 @@ export function validatePrintedPlayFilter(f){
 export function matchesPrintedPlayFilter(d,f){
  return (f.cardType===undefined||d.type===f.cardType)&&
   (f.printedBp===undefined||d.bp===f.printedBp)&&
+  (f.printedBpAtMost===undefined||d.bp<=f.printedBpAtMost)&&
   (f.printedGenAtLeast===undefined||d.gen>=f.printedGenAtLeast)&&
   (f.printedRequiredEnergyAtMost===undefined||matchesPrintedRequiredEnergyAtMost(d,f.printedRequiredEnergyAtMost))&&
   (f.namesAny===undefined||f.namesAny.some(name=>cardHasName(d,name)))&&

@@ -6,7 +6,10 @@ import {gimSharedProgram} from './gim/programs.mjs?v=20261126gim1';
 const SHARED_KEYS=new Set([
  'ready','implementation','effects','mainAbility','activeExtraEnergy','impactNull',
  'triggerEffect','passiveBonuses','step','readyOnBlockCount',
- 'handApDiscountWhileAllNames'
+ 'handApDiscountWhileAllNames','blockRaidBp','ownTurnBp','printedImpact',
+ 'bpDownImmune','opponentRestImmune','opponentBounceImmune','blockBpRestriction',
+ 'emptyOwnFieldHandEnergyDiscount','frontLowBpShield','eventTurnBlockAtMost',
+ 'printedMains','raidName','raidBaseNames','raidFromRaid'
 ]);
 const PRINT_TYPES=new Set(['character','event','field']);
 const COLORS=new Set(['blue','red']);

@@ -1562,6 +1562,24 @@ export function uiActionLabel(action,{pack,state}={}){
    '將 '+name()+' 放回手牌';
   case 'choosePrintedRestRaid':return action.uid===null?'不登場':
    (action.mode==='raid'?'以突襲登場：':'以休息狀態登場：')+name()+suffix();
+  case 'chooseGim':{
+   if(action.mode==='skip'||action.uid===null)return action.mode==='skip'&&state?.pending?.mode==='names'?
+    '不加入手牌，其餘放到牌底':'不選擇';
+   if(action.mode==='draw')return '本回合攻擊時可以抽 1 張';
+   if(action.mode==='unblock')return '本回合不被 BP3000 以下的角色阻擋';
+   if(action.mode==='top')return '將 '+name()+' 放到牌組上面';
+   if(action.mode==='bottom')return '將 '+name()+' 放到牌底';
+   if(action.mode==='take')return '公開 '+name()+' 並加入手牌';
+   if(action.mode==='bounce')return '將 '+name()+' 放回手牌';
+   if(action.mode==='retire')return '使 '+name()+' 退場';
+   if(action.mode==='activeBuff')return '活動 '+name()+'，雙方本回合 BP+1500';
+   if(action.mode==='impact')return '給予 '+name()+' 本回合衝擊 1';
+   if(action.mode==='damage')return '給予 '+name()+' 本回合傷害 2';
+   if(action.mode==='active')return '活動 '+name();
+   if(action.mode==='buff'||action.mode==='damageBuff')return '選擇 '+name()+'，本回合 BP 增加';
+   if(action.mode==='duration')return '選擇 '+name()+'，BP+2000';
+   return '選擇 '+name();
+  }
   case 'chooseRemovedOkabeRaid':return '從移除區突襲：'+name();
   case 'chooseMayuriFork':return action.uid===null?'不指定對手角色':'指定 '+name();
   case 'chooseSuzuhaAttackEnd':return action.uid===null?'不將手牌放到場外':'將 '+name()+' 放到場外';

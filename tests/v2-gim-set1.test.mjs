@@ -1,6 +1,6 @@
 // Gakuen Idolmaster set 1 lands through the shared V2 pack. The catalog stays
 // unverified. A print enters only when its Japanese text matches a shared op.
-// Raid-frame cards stay out until every framed keyword is listed.
+// Raid-frame text is listed before the card enters, and it stays off an ordinary play.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {gimCatalog,GIM_BOOSTER_RARITIES,GIM_RAID_FRAME_NUMBERS} from '../dist/gim/catalog.mjs';
@@ -13,11 +13,7 @@ import {TITLES} from '../dist/title-registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 
-const READY=[
- '001','003','005','007','012','013','014','015','017','018','021','022','023','025','026',
- '030','031','032','034','038','041','042','043','045','046','047','049','050','052','055',
- '056','058','059','060','061','062','064','065','066','067','069','070','073','076','079'
-].map(n=>'GIM-1-'+n);
+const READY=Array.from({length:80},(_,i)=>'GIM-1-'+String(i+1).padStart(3,'0'));
 const pack=createGimStagingPack();
 
 function id(n){return 'GIM-1-'+n;}
@@ -117,7 +113,10 @@ test('only an exact shared print enters the battle pack',()=>{
  assert.deepEqual([...GIM_STAGING_IDS],READY);
  assert.equal(createGimBattlePack(),officialV2Pack('gim'));
  assert.equal(Object.keys(pack.cards).length,READY.length);
- for(const number of GIM_RAID_FRAME_NUMBERS)assert.equal(pack.cards[id(String(number).padStart(3,'0'))],undefined);
+ for(const number of GIM_RAID_FRAME_NUMBERS){
+  const raid=pack.cards[id(String(number).padStart(3,'0'))];
+  assert.equal(raid.raidName,raid.name);
+ }
  for(const card of gimCatalog().deck){
   const program=gimSharedProgram(card);
   assert.equal(program.ready,READY.includes(card.id));
@@ -125,7 +124,7 @@ test('only an exact shared print enters the battle pack',()=>{
  }
  const practice=gimPracticeDeck();
  assert.equal(editorV2Status('gim',practice.counts,practice.pack).ready,true);
- const mixed={...practice.counts,[id('006')]:1,[id('041')]:3};
+ const mixed={...practice.counts,'GIM-1-999':1,[id('041')]:3};
  assert.equal(editorV2Status('gim',mixed,practice.pack).ready,false);
 });
 
@@ -241,4 +240,87 @@ test('both printed names reduce this card in hand, and the event reduces only it
  assert.equal(legal.some(a=>a.type==='play'&&a.uid===kiyoka.uid),true);
  assert.equal(legal.some(a=>a.type==='play'&&a.uid===other.uid),false);
  assert.equal(assertUniversalMatch(pack,named),true);
+});
+
+test('an ordinary play does not run text inside the raid frame',()=>{
+ const counts=deckOf({[id('006')]:4,[id('001')]:4,[id('008')]:4,[id('014')]:4});
+ let s=reach(counts,61);
+ seat(s,0,id('001'),'energy',0);
+ seat(s,0,id('014'),'energy',1);
+ const low=seat(s,0,id('008'),'front',0);
+ s=play(s,id('006'),'front');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front.some(card=>card&&card.cardId===id('006')&&!(card.stack||[]).length),true);
+ assert.equal(low.ready,true);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('the three-card look shows every card and puts exactly one on top',()=>{
+ const counts=deckOf({[id('054')]:4,[id('056')]:4,[id('041')]:4,[id('064')]:4});
+ let s=reach(counts,71);
+ seat(s,0,id('056'),'energy',0);
+ const top=take(s,0,id('041'));
+ const mid=take(s,0,id('064'));
+ const end=take(s,0,id('056'));
+ s.players[0].deck.unshift(top,mid,end);
+ s=play(s,id('054'));
+ assert.equal(s.pending?.kind,'effect-gim-finish');
+ const own=universalPrivateChoices(pack,s,0);
+ assert.deepEqual(own.inspected.map(card=>card.uid),[top.uid,mid.uid,end.uid]);
+ assert.equal(universalPrivateChoices(pack,s,1),null);
+ assert.equal(JSON.stringify(universalPublicView(pack,s,1)).includes(mid.uid),false);
+ const first=legalUniversalActions(pack,s);
+ assert.equal(first.some(a=>a.uid===null),false);
+ assert.deepEqual(first.map(a=>a.uid).sort(),[top.uid,mid.uid,end.uid].sort());
+ const forged=structuredClone(s);
+ forged.pending={...forged.pending,sourceUid:top.uid};
+ assert.throws(()=>assertUniversalMatch(pack,forged),/Forged Gakuen Idolmaster window/);
+ s=dispatchUniversalAction(pack,s,{type:'chooseGim',mode:'top',uid:mid.uid});
+ s=dispatchUniversalAction(pack,s,{type:'chooseGim',mode:'bottom',uid:top.uid});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck[0].uid,mid.uid);
+ assert.deepEqual(s.players[0].deck.slice(-2).map(card=>card.uid),[top.uid,end.uid]);
+ assert.equal(assertUniversalMatch(pack,s),true);
+});
+
+test('a mandatory event with no legal target does not spend AP',()=>{
+ const counts=deckOf({[id('035')]:4,[id('001')]:4,[id('012')]:4});
+ let blocked=reach(counts,81);
+ seat(blocked,0,id('001'),'energy',0);
+ seat(blocked,0,id('012'),'energy',1);
+ const event=take(blocked,0,id('035'));
+ blocked.players[0].hand.push(event);
+ blocked.players[0].outside=[];
+ const before=blocked.players[0].apCards.filter(card=>card.ready).length;
+ assert.equal(legalUniversalActions(pack,blocked).some(a=>a.type==='event'&&a.uid===event.uid),false);
+ assert.equal(blocked.players[0].apCards.filter(card=>card.ready).length,before);
+ const guest=take(blocked,0,id('001'));
+ blocked.players[0].outside.push(guest);
+ assert.equal(legalUniversalActions(pack,blocked).some(a=>a.type==='event'&&a.uid===event.uid),true);
+ assert.equal(assertUniversalMatch(pack,blocked),true);
+});
+
+test('an empty field reduces the printed energy, and a raid entry stays REST only',()=>{
+ const counts=deckOf({[id('044')]:4,[id('072')]:4,[id('069')]:4,[id('064')]:4,[id('056')]:4,[id('046')]:4});
+ let empty=reach(counts,91);
+ for(const line of ['front','energy'])empty.players[0][line]=[null,null,null,null];
+ const mao=take(empty,0,id('044'));
+ empty.players[0].hand.push(mao);
+ assert.equal(legalUniversalActions(pack,empty).some(a=>a.type==='play'&&a.uid===mao.uid),true);
+ seat(empty,0,id('069'),'front',0);
+ assert.equal(legalUniversalActions(pack,empty).some(a=>a.type==='play'&&a.uid===mao.uid),false);
+ let raid=reach(counts,92);
+ seat(raid,0,id('056'),'energy',0);
+ seat(raid,0,id('046'),'energy',1);
+ const base=seat(raid,0,id('069'),'front',0);
+ const rider=take(raid,0,id('072'));
+ const ally=take(raid,0,id('064'));
+ raid.players[0].hand.push(rider,ally);
+ raid=dispatchUniversalAction(pack,raid,{type:'raid',uid:rider.uid,baseUid:base.uid,slot:0});
+ assert.equal(raid.pending?.kind,'effect-hand-rest');
+ const entry=legalUniversalActions(pack,raid);
+ assert.equal(entry.some(a=>a.uid===null),true);
+ assert.equal(entry.some(a=>a.uid===ally.uid&&(a.line==='front'||a.line==='energy')),true);
+ assert.equal(entry.some(a=>a.mode==='raid'),false);
+ assert.equal(assertUniversalMatch(pack,raid),true);
 });
