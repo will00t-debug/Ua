@@ -147,3 +147,9 @@ node scripts/white-sword-nn-round11.mjs
 ```bash
 node scripts/white-sword-nn-round12.mjs
 ```
+
+第十三輪接受第十二輪：抽樣順序對本次訓練有影響，但不能把原因單獨歸於最後 715 次 other。這一輪只對已提交的全局洗牌終點補齊離線評估，不重訓、不開打。結果寫在 `docs/white-sword-ai/NN-ROUND13.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round13.mjs
+```
