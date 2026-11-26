@@ -242,10 +242,16 @@ const RAID_BOX_FEATURES=Object.freeze({
  'KMR-2-079':["onRetire","blocked"],
  'KMR-2-089':["onPlay","main"],
  'KMR-2-094':["onPlay","onRetire"],
+ // UA54BT. Rugia HK span.raidBorder on 2026-11-26. The Raid permission
+ // line is inside the span and is not a separate keyword. 067 and 068 print
+ // the シルフィエット alias outside the frame. 008's unblocked draw and the
+ // once-per-turn battle loss are both inside. 032's two mains are inside
+ // with the on-play recover.
+ 'MST-1-008':["unblockedAttack","attackLose"],
  'MST-1-009':["onPlay"],
  'MST-1-025':["onPlay","main"],
  'MST-1-031':["onPlay","passive"],
- 'MST-1-032':["onPlay"],
+ 'MST-1-032':["onPlay","main"],
  'MST-1-054':["onPlay"],
  'MST-1-067':["onPlay","onRetire"],
  'MST-1-068':["onPlay","passive"],

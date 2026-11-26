@@ -113,6 +113,11 @@ function clearLife(s,set=packs){
 function skipOn(s,uid){
  return s.continuousStates.some(e=>e.kind==='skipNextActive'&&!e.consumed&&e.targetUid===uid);
 }
+function stackRaid(s,top,base){
+ top.stack=[base];
+ top.raidBaseUid=base.uid;
+ return top;
+}
 function fuel(s,p,ids){
  ids.forEach((id,i)=>put(s,p,id,'energy',i));
 }
@@ -152,8 +157,17 @@ test('Q2145 choosing Eris deploy spends that choice for the name; draw stays ope
 });
 
 test('Q2146 the unblocked draw opens after the block decision and before life damage',()=>{
+ let bare=attackPhase(fresh(21460));
+ const plain=put(bare,0,'MST-1-008','front',0);
+ put(bare,1,'MST-1-025','front',0);
+ bare=act(bare,'attack',{uid:plain.uid});
+ bare=act(bare,'chooseBlock',{uid:null});
+ assert.notEqual(bare.pending?.kind,'effect-may-then');
+
  let open=attackPhase(fresh(2146));
- const eris=put(open,0,'MST-1-008','front',0);
+ const base=put(open,0,'MST-1-007','front',0);
+ const eris=stackRaid(open,stamp(open,take(open,0,'MST-1-008')),base);
+ open.players[0].front[0]=eris;
  const wall=put(open,1,'MST-1-025','front',0);
  assert.ok(mst.cards[wall.cardId].bp>mst.cards[eris.cardId].bp);
  const life=open.players[1].life.length,hand=open.players[0].hand.length;
@@ -168,7 +182,9 @@ test('Q2146 the unblocked draw opens after the block decision and before life da
  assert.equal(assertUniversalMatch(packs,open),true);
 
  let blocked=attackPhase(fresh(21461));
- const attacker=put(blocked,0,'MST-1-008','front',0);
+ const under=put(blocked,0,'MST-1-007','front',0);
+ const attacker=stackRaid(blocked,stamp(blocked,take(blocked,0,'MST-1-008')),under);
+ blocked.players[0].front[0]=attacker;
  put(blocked,1,'MST-1-073','front',0);
  const before=blocked.players[0].hand.length;
  blocked=act(blocked,'attack',{uid:attacker.uid});
@@ -339,8 +355,12 @@ test('Q2152 and Q2161 a non-matching hand play does not spend the next discount'
 
 test('Q2153, Q2155 and Q2163 a full destination removes one card, then the move happens',()=>{
  let own=main(fresh(2153),0,2);
- const roxy=put(own,0,'MST-1-032','front',0);
+ const under=put(own,0,'MST-1-013','front',0);
+ const roxy=stackRaid(own,stamp(own,take(own,0,'MST-1-032')),under);
+ own.players[0].front[0]=roxy;
+ const plain=put(own,0,'MST-1-032','front',2);
  const rudeus=put(own,0,'MST-1-022','front',1);
+ assert.equal(legalUniversalActions(packs,own).some(a=>a.type==='activate'&&a.uid===plain.uid&&a.mode==='move'),false);
  const occupants=['MST-1-020','MST-1-013','MST-1-005','MST-1-010'].map((id,i)=>
   put(own,0,id,'energy',i));
  own=act(own,'activate',{uid:roxy.uid,mode:'move'});
