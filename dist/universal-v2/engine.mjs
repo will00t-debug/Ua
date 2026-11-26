@@ -11048,7 +11048,7 @@ function finishBlockedBattle(pack,s,attacker,blocker,blockerOwner,slot){
    const stay=card(pack,attacker).attackLoseStay;
    const stayKey='uid:'+attacker.uid+'|attackLoseStay';
    const stayOnce=!stay||s.onceEffectUses[s.active].includes(stayKey)||
-    originalEffectsDisabled(s,attacker);
+    originalEffectsDisabled(s,attacker)||!raidBoxTextLive(pack,attacker,'attackLose');
    if(stay&&!stayOnce){
     s.onceEffectUses[s.active].push(stayKey);
     attacker.ready=true;
@@ -18907,7 +18907,8 @@ function resolveChoice(s,a,pack){
   // Q761: a generic line move cannot lift a front-banned character.
   // A printed named move (MST-1-032) is the exception that places them
   // on the front with ownEffectFront.
-  const namedFrontMove=source&&(card(pack,source).printedMains||[]).some(m=>
+  const namedFrontMove=source&&raidBoxTextLive(pack,source,'main')&&
+   (card(pack,source).printedMains||[]).some(m=>
    m.op==='frontMoveNamed'&&typeof m.name==='string'&&
    cardHasName(card(pack,from.c),m.name,originalEffectsDisabled(s,from.c)));
   if(line==='front'&&from.line==='energy'&&card(pack,from.c).frontForbidden&&!namedFrontMove)
@@ -25057,7 +25058,7 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'eventRestBuff'});
     out.push({type:'activate',uid:c.uid,mode:'eventRestDraw'});
    }
-   if(!silenced)for(const mode of d.printedMains||[]){
+   if(!silenced&&raidBoxTextLive(pack,c,'main'))for(const mode of d.printedMains||[]){
     const key=c.uid+'|'+mode.id;
     if(s.mainAbilityUsedUids.includes(key))continue;
     if((mode.op==='discardHandThenActive'||mode.op==='discardHandBuff'||
@@ -26707,6 +26708,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    }
    const printed=(d.printedMains||[]).find(m=>m.id===action.mode);
    if(printed){
+    if(!raidBoxTextLive(pack,selected,'main'))
+     throw Error('Printed main is inside the raid frame');
     const key=selected.uid+'|'+printed.id;
     if(s.mainAbilityUsedUids.includes(key))throw Error('Printed main already used');
     if(printed.op==='restSelfBpImpact'||printed.op==='restSelfAttackDraw'){
