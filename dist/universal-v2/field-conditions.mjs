@@ -165,6 +165,20 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // エナジーLにある場合. Front generation does not satisfy an energy-line clause.
  if(condition.kind==='selfOnEnergy')
   return s.players[owner].energy.some(c=>c?.uid===sourceUid);
+ // 元々のBP. A facedown card does not supply its printed BP.
+ if(condition.kind==='ownOtherFrontPrintedBpAtMost')
+  return s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&c.faceDown!==true&&
+   printed(c).type==='character'&&printed(c).bp<=condition.maxPrintedBp);
+ if(condition.kind==='ownFrontPrintedBpAtMost')
+  return s.players[owner].front.some(c=>c&&c.faceDown!==true&&
+   printed(c).type==='character'&&printed(c).bp<=condition.maxPrintedBp);
+ if(condition.kind==='ownFrontLiveBpAtLeast')
+  return s.players[owner].front.some(c=>c&&c.faceDown!==true&&
+   printed(c).type==='character'&&cardBp(c)>=condition.minBp);
+ if(condition.kind==='ownFrontLiveExceptName')
+  return s.players[owner].front.some(c=>c&&c.faceDown!==true&&
+   printed(c).type==='character'&&!cardHasName(printed(c),condition.name)&&
+   cardBp(c)>=condition.minBp);
  // このターン中に相手がカードを引いている. Only draw() increments the counter.
  if(condition.kind==='opponentDrewThisTurn')
   return Array.isArray(s.drawnThisTurn)&&(s.drawnThisTurn[1-owner]||0)>=1;

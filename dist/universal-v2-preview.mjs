@@ -21,6 +21,7 @@ import {mhaEditorCards} from './mha/catalog.mjs?v=20261120mha011';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs?v=20261122evaYellow0';
 import {mcrEditorCards} from './mcr/catalog.mjs?v=20261126mcrart1';
+import {gimEditorCards} from './gim/catalog.mjs?v=20261126gim1';
 import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261120mha011';
 import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261120mha011';
 import {DGM_CARDS} from './dgm-cards.mjs?v=20261120dgm2';
@@ -92,6 +93,7 @@ const allArt=Object.freeze({
  rnk:new Map(rnkEditorCards().map(c=>[c.identity||c.id,c.image||null])),
  eva:new Map(evaEditorCards().map(c=>[c.identity||c.id,c.image||null])),
  mcr:new Map(mcrEditorCards().map(c=>[c.identity||c.id,c.onlineImage||c.image||null])),
+ gim:new Map(gimEditorCards().map(c=>[c.identity||c.id,c.onlineImage||c.image||null])),
  toriko:new Map([...TORIKO_CARDS,...TORIKO_PR_CARDS].map(c=>[c.id,c.image||null])),
  dgm:new Map(DGM_CARDS.map(c=>[c.id,c.image||null])),
  mgs:new Map([...MGS_CARDS,...MGS2_CARDS].map(c=>[c.id,c.image||null]))
@@ -124,6 +126,7 @@ const PRINTED_CATALOGUE={
  rnk:printedCatalogueMap(rnkEditorCards()),
  eva:printedCatalogueMap(evaEditorCards()),
  mcr:printedCatalogueMap(mcrEditorCards()),
+ gim:printedCatalogueMap(gimEditorCards()),
  toriko:printedCatalogueMap([...TORIKO_CARDS,...TORIKO_PR_CARDS]),
  dgm:printedCatalogueMap(DGM_CARDS),
  mgs:printedCatalogueMap([...MGS_CARDS,...MGS2_CARDS])
@@ -2375,7 +2378,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'||raw.title==='eva'||raw.title==='mcr'||raw.title==='toriko'||raw.title==='dgm'||raw.title==='mgs'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='csm'||raw.title==='aot'||raw.title==='kmr'||raw.title==='imc'||raw.title==='mha'||raw.title==='rnk'||raw.title==='eva'||raw.title==='mcr'||raw.title==='gim'||raw.title==='toriko'||raw.title==='dgm'||raw.title==='mgs'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}

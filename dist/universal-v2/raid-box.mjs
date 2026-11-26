@@ -310,7 +310,19 @@ const RAID_BOX_FEATURES=Object.freeze({
  'MCR-2-052':["onPlay","onAttack","onRetire"],
  'MCR-2-053':["main"],
  'MCR-2-054':["effectDraw","main"],
- 'MCR-2-069':["impactNull","onPlay","onAttack"]
+ 'MCR-2-069':["impactNull","onPlay","onAttack"],
+ // UA27BT. Rugia HK span.raidBorder encloses the whole print, including the
+ // raid permission line. The permission is the raid name, not a keyword.
+ // Only the timings inside that span are listed. An unlisted one would
+ // resolve on an ordinary play.
+ 'GIM-1-006':["onPlay","main"],
+ 'GIM-1-011':["frontLowBpShield","passive","onPlay"],
+ 'GIM-1-020':["printedImpact","onPlay","main"],
+ 'GIM-1-024':["ownTurnBp","onPlay","main"],
+ 'GIM-1-048':["onPlay","onAttack"],
+ 'GIM-1-053':["onPlay"],
+ 'GIM-1-063':["printedImpact","onAttack"],
+ 'GIM-1-072':["onPlay"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

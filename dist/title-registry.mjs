@@ -21,6 +21,7 @@ import {mhaEditorCards} from './mha/catalog.mjs?v=20261120mha011';
 import {rnkEditorCards} from './rnk/editor-cards.mjs';
 import {evaEditorCards} from './eva/catalog.mjs?v=20261122evaYellow0';
 import {mcrEditorCards} from './mcr/catalog.mjs?v=20261126mcrart1';
+import {gimEditorCards} from './gim/catalog.mjs?v=20261126gim1';
 import {TORIKO_CARDS} from './toriko-cards.mjs?v=20261120mha011';
 import {TORIKO_PR_CARDS} from './toriko-pr-cards.mjs?v=20261120mha011';
 import {DGM_CARDS} from './dgm-cards.mjs?v=20261121nea067068fix1doubleblock1abilitylabels2zhcomplete1';
@@ -46,6 +47,7 @@ export const TITLES=[
  {id:'rnk',label:'浪客劍心',cards:rnkEditorCards(),presets:[],playable:true},
  {id:'eva',label:'新世紀福音戰士新劇場版',cards:evaEditorCards(),presets:[],playable:true},
  {id:'mcr',label:'超時空要塞',cards:mcrEditorCards(),presets:[],playable:true},
+ {id:'gim',label:'學園偶像大師',cards:gimEditorCards(),presets:[],playable:true},
  {id:'toriko',label:'美食獵人',cards:[...TORIKO_CARDS,...TORIKO_PR_CARDS],presets:[],playable:false},
  {id:'dgm',label:'驅魔少年',cards:DGM_CARDS,presets:[],playable:false},
  {id:'mgs',label:'〈物語〉系列',cards:[...MGS_CARDS,...MGS2_CARDS],presets:[],playable:false}
