@@ -135,3 +135,9 @@ node scripts/white-sword-nn-round9.mjs gaps
 ```bash
 node scripts/white-sword-nn-round10.mjs
 ```
+
+第十一輪接受第十輪：局部修正未成立，該終點不採用。它從凍結 A 另建副本，用既有示範做一次事先鎖定的完整模仿。結果寫在 `docs/white-sword-ai/NN-ROUND11.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round11.mjs
+```

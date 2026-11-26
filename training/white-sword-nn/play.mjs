@@ -111,6 +111,26 @@ function chooseHard(pack,state,legal,spec){
   reason:exact?null:'no-legal'
  };
 }
+export function publicDecisionContext(observation,actor){
+ const visible=observation?.visible;
+ const me=visible?.players?.[actor];
+ const opp=visible?.players?.[actor===0?1:0];
+ if(!me||!opp)throw Error('Decision is missing a seat');
+ if(me.life||opp.life||opp.hand)throw Error('Hidden zone entered the decision');
+ const battle=visible.battle||null;
+ const front=(me.front||[]).filter(Boolean).map(card=>({
+  uid:card.uid,cardId:card.cardId||'',bp:Number.isFinite(card.bp)?card.bp:null,
+  ready:card.ready===true,raidDepth:card.raidDepth||0,restrictions:card.restrictions||[],
+  raidLayers:card.raidLayers||[],underLayers:card.underLayers||[]
+ }));
+ return {
+  learnerSeat:actor,pending:visible.pending?.kind||'',phase:visible.phase,turn:visible.turn,
+  active:visible.active,life:me.lifeCount??null,oppLife:opp.lifeCount??null,
+  hand:me.handCount??null,oppHand:opp.handCount??null,
+  damage:battle?.damage??null,impact:battle?.impact??null,attackerId:battle?.cardId||'',
+  attackerBp:Number.isFinite(battle?.bp)?battle.bp:null,attackerUid:battle?.uid||null,front
+ };
+}
 export function trainable(game){
  const anomalies=game?.anomalies||{};
  if(game?.status!=='finished'||(game.winner!==0&&game.winner!==1))return false;
@@ -257,13 +277,19 @@ export function playMatch(spec){
      break;
     }
     game.collisions+=collisions(encoded.actions);
-    game.imitate.push({
+    const sample={
      seed:spec.seed,
      rows:encoded.actions.map(action=>joinFeatures(encoded.state,action)),
      actions:legal.map(action=>JSON.parse(JSON.stringify(action))),
      identities:[...encoded.index].map(([uid,card])=>[uid,{cardId:card.cardId||'',faceDown:card.faceDown===true}]),
      chosen
+    };
+    if(spec.captureContext)Object.assign(sample,{
+     source:spec.source||'',first:spec.first,step:game.steps,
+     synthetic:false,labeledByUniversalRule:false,hiddenLifeUsed:false,lifeCards:null,
+     ...publicDecisionContext(observation,actor)
     });
+    game.imitate.push(sample);
    }
    if(spec.keepActions)game.actions.push(JSON.stringify(picked.action));
    let next;
