@@ -242,10 +242,16 @@ const RAID_BOX_FEATURES=Object.freeze({
  'KMR-2-079':["onRetire","blocked"],
  'KMR-2-089':["onPlay","main"],
  'KMR-2-094':["onPlay","onRetire"],
+ // UA54BT. Rugia HK span.raidBorder on 2026-11-26. The Raid permission
+ // line is inside the span and is not a separate keyword. 067 and 068 print
+ // the シルフィエット alias outside the frame. 008's unblocked draw and the
+ // once-per-turn battle loss are both inside. 032's two mains are inside
+ // with the on-play recover.
+ 'MST-1-008':["unblockedAttack","attackLose"],
  'MST-1-009':["onPlay"],
  'MST-1-025':["onPlay","main"],
  'MST-1-031':["onPlay","passive"],
- 'MST-1-032':["onPlay"],
+ 'MST-1-032':["onPlay","main"],
  'MST-1-054':["onPlay"],
  'MST-1-067':["onPlay","onRetire"],
  'MST-1-068':["onPlay","passive"],
@@ -271,7 +277,40 @@ const RAID_BOX_FEATURES=Object.freeze({
  'MGS-2-023':["phase","onPlay"],
  'MGS-2-026':["main"],
  'MGS-2-032':["passive","onPlay"],
- 'MGS-2-037':["onPlay"]
+ 'MGS-2-037':["onPlay"],
+ // UA36BT Macross. Rugia HK span.raidBorder. The Raid permission line is not
+ // a framed keyword. 022's 【ステップ】 sits above the frame and stays live
+ // on an ordinary play. Every other timing below is inside the frame.
+ 'MCR-1-009':["onPlay","main"],
+ 'MCR-1-010':["onPlay","main"],
+ 'MCR-1-011':["passive","onPlay"],
+ 'MCR-1-012':["passive","onPlay"],
+ 'MCR-1-022':["ownTurnBp","main"],
+ 'MCR-1-023':["onPlay","passive","unblockedAttack"],
+ 'MCR-1-043':["onPlay","onAttack"],
+ 'MCR-1-046':["onPlay","onAttack"],
+ 'MCR-1-091':["passive","onPlay"],
+ 'MCR-1-092':["onPlay","main","onAttack"],
+ 'MCR-1-107':["passive","onPlay"],
+ 'MCR-1-060':["ownTurnBp","unblockedAttack","onPlay"],
+ 'MCR-1-095':["onPlay","onAttack"],
+ 'MCR-1-044':["attackEnd","onRetire"],
+ 'MCR-1-045':["passive","onPlay"],
+ 'MCR-1-062':["passive","main","onBlock"],
+ 'MCR-1-063':["onPlay"],
+ 'MCR-1-079':["onPlay"],
+ 'MCR-1-093':["printedImpact","passive","attackWinDraw","battleLoseToHand","onPlay"],
+ // EX14BT. The Raid permission line is not a framed keyword. 036's hand-raid
+ // AP reduction sits above the frame and stays live on an ordinary raid.
+ 'MCR-2-004':["passive","main"],
+ 'MCR-2-008':["onPlay","main"],
+ 'MCR-2-016':["attackEnd","onPlay","onRetire"],
+ 'MCR-2-036':["onAttack"],
+ 'MCR-2-045':["passive","onAttack"],
+ 'MCR-2-052':["onPlay","onAttack","onRetire"],
+ 'MCR-2-053':["main"],
+ 'MCR-2-054':["effectDraw","main"],
+ 'MCR-2-069':["impactNull","onPlay","onAttack"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

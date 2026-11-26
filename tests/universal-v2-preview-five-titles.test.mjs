@@ -39,8 +39,8 @@ test('static private preview uses five-title V2 reducer instead of silently dele
  assert.ok(page.includes('noindex,nofollow,noarchive'));
  assert.ok(!index.includes('universal-v2-preview'));
  for(const option of ids){
-  assert.equal((page.match(new RegExp('value="'+option+'"','g'))||[]).length,2,
-   option+' must be available on both human and AI sides');
+  assert.equal((page.match(new RegExp('value="'+option+'"','g'))||[]).length,0,
+   option+' is an internal preset and must not be a lobby choice');
  }
  assert.match(script,/createAllV2PreviewRealDecks\(\)/);
  assert.match(script,/newUniversalMatch\(app\.packs,/);

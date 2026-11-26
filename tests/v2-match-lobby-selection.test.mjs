@@ -20,12 +20,17 @@ test('V2 lobby displays a human deck, AI deck, actual difficulty control and sam
   assert.ok(html.includes('data-ai-difficulty="'+difficulty+'"'));
  assert.ok(html.includes('選擇自己的牌組'));
  assert.ok(html.includes('選擇電腦牌組'));
+ assert.doesNotMatch(html,/練習組/);
+ for(const value of ['rezero-set1','steins-gate-blue','madoka-red','inuyasha-purple','kjn-purple','csm-purple','aot-red','kmr-yellow','imc-red','rnk-blue','toriko-blue','dgm-supported','mgs-supported','mcr-yellow','gurren-lagann-red','bleach-purple','bleach-green','solo-leveling','sword-art-online','mushoku-tensei','mushoku-tensei-roxy-field'])
+  assert.equal(html.includes('value="'+value+'"'),false,value);
+ assert.match(html,/三副起始牌組/);
  assert.ok(html.includes('開始 V2 對戰'));
  assert.match(html,/每場新對局都會自動重新洗牌/);
  assert.doesNotMatch(html,/id="match-seed"|牌序種子/);
  assert.ok(html.includes('牌組'));
  assert.match(read('../vercel.json'),/online\.html/);
  const js=read('../dist/universal-v2-preview.mjs');
+ assert.doesNotMatch(js,/rezero-set1|steins-gate-blue|mcr-yellow|練習組/);
  assert.ok(js.includes('newUniversalMatch(app.packs,'));
  assert.ok(js.includes('validateUniversalDeck(pack,counts)'));
  assert.ok(js.includes('syncMatchLobby()'));

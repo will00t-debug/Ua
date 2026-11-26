@@ -11,7 +11,7 @@ import {activationLabelBanned} from '../dist/universal-v2/activation-labels.mjs'
 import {renderCardEffectText} from '../dist/card-effect-display.mjs';
 import {fresh,rez,rezDeck,rezPacks,take,toPhase} from './helpers/rez-v2-match.mjs';
 
-const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr','csm','imc','mha','rnk','eva','toriko','dgm','mgs'];
+const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr','csm','imc','mha','rnk','eva','toriko','dgm','mgs','mcr'];
 const REGISTERED=new Set(['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei']);
 const WRONG='主要能力：先 ACTIVE 自己，再指定符合條件的角色 BP＋1000';
 
@@ -53,7 +53,14 @@ function modesOf(card){
  if(card.printedMains?.length)return card.printedMains.map(mode=>mode.id);
  const op=card.mainAbility?.op;
  const fixed={
-  onceAbovePrintedKeywords:'abovePrinted',kurisuFrontDual:'discount',
+  onceAbovePrintedKeywords:'abovePrinted',readyFrontProgram:'readyFront',
+  entryTurnLifeChoice:'entryLife',frontOnceLifeThen:'frontLife',
+  restDiscardNameDown:'restDiscardDown',restNameOnceChoose:'restNameOnce',
+  frontHandLifeMenu:'frontHandLife',restNamedOption:'restNamedOption',
+  frontChooseImpact:'frontChooseImpact',frontUidChoice:'frontUidChoice',
+  readyBpChoice:'readyBpChoice',restPrintedGrantBottom:'restPrintedGrant',
+  sniperIfImpact:'sniperIfImpact',
+  kurisuFrontDual:'discount',
   retireOwnFieldThen:'retireFieldThen',crowdFrontDown:'printCrowd',
   printReadyGate:'printReadyGate',gainSameLineMains:'gainLineMains',
   frontDrawOrHandTrigger:'frontDraw',characterDualMain:'kindsActive',
@@ -145,7 +152,7 @@ test('every implemented title main activation has a specific label',()=>{
     failures.push(card.id+' legal branches are not distinct');
   }
  }
- assert.equal(TITLES.length,20);
+ assert.equal(TITLES.length,21);
  assert.ok(cards>=488, 'checked '+cards+' main cards');
  assert.ok(legalCards>=250, 'legal activations covered '+legalCards+' cards');
  assert.ok(legalActions>=270);

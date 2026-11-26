@@ -2,8 +2,8 @@
 // parameters on the pack card. A Traditional Chinese catalogue clause is used
 // only when it still contains those parameters, so two cards that share a mode
 // do not inherit each other's effect.
-import {universalBp} from './engine.mjs';
-import {cardHasName} from './field-conditions.mjs';
+import {universalBp} from './engine.mjs?v=20261125mcr12';
+import {cardHasName} from './field-conditions.mjs?v=20261125mcr12';
 import {cleanCardEffectText} from '../card-effect-display.mjs';
 import {TITLES} from '../title-registry.mjs';
 
@@ -143,16 +143,23 @@ function qualifyingAbovePrinted(pack,state,uid){
 }
 const STEP={
  draw:s=>`抽 ${s.count||1} 張`,
- drawDiscard:s=>`抽 ${s.count||1} 張，再將 1 張手牌放到場外`,
+ buffOwnCurrentBp:s=>`${s.optional?'可以選擇':'選擇'}其他目前 BP ${s.minBp||0} 以上的角色，本回合 BP＋${s.bp}`,
+ bounceOppFrontOneUnderBp:s=>s.scale?`可以將場外指定顏色與特徵的不同卡名數量乘以 ${s.scale.per} 以下 BP 的對手前線角色返回手牌`:`可以將 BP ${s.bp} 以下的對手前線角色返回手牌`,
  drawHandTop:()=>'抽 1 張，並將 1 張手牌放到牌組上面',
  millTop:s=>`將牌庫頂 ${s.count||1} 張放到場外`,
  peekTopOrBottom:()=>'查看牌庫頂 1 張，放回牌庫上面或下面',
+ inspectTopArrange:s=>s.toOutside===false&&s.rest==='top'
+  ?`查看牌庫頂 ${s.count} 張，依任意順序放回牌庫上面`
+  :`查看牌庫頂 ${s.count} 張並安排順序`,
+ handBottomThenDraw:()=>'將 1 張手牌放到牌庫底，然後抽 1 張',
+ deployOwnHandRest:s=>`可以從手牌將最多 1 張需求能源 ${s.energy} 以下、消費 AP ${s.ap} 的角色以休息狀態登場`,
  activeSelf:()=>'將此角色轉為活動',
  activeOwnOne:()=>'將 1 張己方角色轉為活動',
  activeOwnOther:()=>'將其他最多 1 張角色轉為活動',
  buffSelf:s=>`此角色本回合 BP＋${s.bp}`,
  buffSelfUntilNextOwnStart:s=>`直到下一個自己的回合開始，BP＋${s.bp}`,
- buffOwnField:s=>`${s.excludeSelf?'選擇其他角色':'選擇角色'}，本回合 BP＋${s.bp}`,
+ buffOwnField:s=>s.all?`自己場上其他所有角色，本回合 BP＋${s.bp}`:`${s.excludeSelf?'選擇其他角色':'選擇角色'}，本回合 BP＋${s.bp}`,
+ drawDiscard:s=>`抽 ${s.count||1} 張，再將 ${s.discardCount||1} 張手牌放到場外`,
  buffAnyCharacter:s=>`${s.excludeSelf?'選擇其他 1 張角色':'選擇 1 張角色'}，本回合 BP＋${s.bp}`,
  buffEitherField:s=>`選擇最多 1 張場上角色，本回合 BP＋${s.bp||1000}`,
  enemyBpDown:s=>`選擇對手${s.zone==='front'?'前線':''} BP ${s.minBp||0} 以上的角色，本回合 BP－${s.bp}`,
@@ -249,6 +256,13 @@ function gateWords(ability){
  if(Number.isInteger(ability?.minBp))words.push(`此角色 BP 在 ${ability.minBp} 以上才能發動`);
  if(Number.isInteger(ability?.minEnergy))words.push(`產生能源在 ${ability.minEnergy} 以上才能發動`);
  if(ability?.when?.kind==='ownEventUsedThisTurn')words.push('只有本回合已使用事件才能發動');
+ if(ability?.when?.kind==='ownHandCountAtLeast')words.push(`只有手牌 ${ability.when.min} 張以上才能發動`);
+ if(ability?.when?.kind==='ownNamedCardsUsedThisTurn')
+  words.push(`只有本回合已使用〈${nameZh(ability.when.names?.[0]||'')}〉才能發動`);
+ if(ability?.when?.kind==='ownNameExists')
+  words.push(`只有自己場上有〈${nameZh(ability.when.name||'')}〉才能發動`);
+ if(ability?.when?.kind==='selfLiveBpAbovePrinted')
+  words.push('只有此角色目前 BP 高於原本 BP 才能發動');
  if(ability?.when?.kind==='ownTraitUsedThisTurn')words.push(`只有本回合已使用過特徵「${ability.when.trait}」才能發動`);
  return words;
 }
@@ -258,6 +272,34 @@ function effectWords(ability,action){
  const bp=Number.isInteger(ability?.bp)?ability.bp:null;
  const energy=ability?.extraEnergy;
  const named=name=>name?`〈${nameZh(name)}〉`:'';
+ if(op==='onceBuffSelfWhen'||mode==='onceBuffSelf')
+  return `本回合 BP＋${bp??500}`;
+ if(op==='lifeToHandOnce'||mode==='lifeToHand')
+  return '將自己 1 張生命牌加入手牌';
+ if(op==='frontOnceLifeThen'||mode==='frontLife')
+  return '將 1 張生命牌加入手牌，然後抽 1 張並讓下一張歌（雪兒）減 1 AP';
+ if(op==='restDiscardNameDown'||mode==='restDiscardDown')
+  return '休息並把 1 張手牌放到場外，對手前線全部 BP－1000';
+ if(op==='restNameOnceChoose'||mode==='restNameOnce')
+  return '休息後選擇抽 1 棄 1，或生命牌入手後抽 2 棄 1';
+ if(op==='frontHandLifeMenu'||mode==='frontHandLife')
+  return '把 1 張手牌放到場外後，選擇表向生命或禁止攻擊';
+ if(op==='restNamedOption'||mode==='restNamedOption')
+  return '休息後選擇 BP＋1000，或在真中在場時給予阻擋上限';
+ if(op==='frontChooseImpact'||mode==='frontChooseImpact')
+  return '選擇名稱含疾風的角色，抽 1 張並給予本回合貫通（1）';
+ if(op==='frontUidChoice'||mode==='frontUidChoice')
+  return '休息後選擇紫角色休息登場、BP＋2000 或對手 BP－1500';
+ if(op==='readyBpChoice'||mode==='readyBpChoice')
+  return 'BP 5000 以上時轉為活動，然後抽 1 張或其他角色 BP＋1000';
+ if(op==='restPrintedGrantBottom'||mode==='restPrintedGrant')
+  return '給予原本 BP 3500 以下的角色貫通或阻擋上限，自己置於牌庫底';
+ if(op==='sniperIfImpact'||mode==='sniperIfImpact')
+  return '持有貫通時，此角色本回合獲得狙擊';
+ if(op==='entryTurnLifeChoice'||mode==='entryLife')
+  return '本回合登場時，生命牌入手後抽 2 棄 1，或已入手過時抽 1';
+ if(op==='readyFrontProgram'||mode==='readyFront')
+  return `對手抽 1 張，可以讓其他 1 張「${ability?.then?.[1]?.trait||''}」變為活動`;
  if(op==='onceAbovePrintedKeywords'||mode==='abovePrinted')
   return `依自己場上 BP 高於原本 BP 的角色數量，此角色本回合獲得全部符合的效果：${ability?.damageAt??3} 張以上獲得【傷害（${ability?.damage??2}）】；${ability?.impactAt??5} 張以上再獲得【貫通（${ability?.impact??1}）】`;
  if(op==='restSelfBuffOther'||(mode==='selfRestBuff'&&bp!=null))
@@ -334,6 +376,8 @@ function effectWords(ability,action){
   return `公開 1 張 BP ${ability?.minPrintedBp||0} 以上的手牌放到牌庫底，本回合獲得【貫通（${ability?.impact||1}）】`;
  if(op==='onceGrantBlockImpact'||mode==='grantBlockImpact')
   return `直到下一個自己的回合開始，獲得【二回阻擋】與【貫通無效】`;
+ if(op==='nameOnceActive'&&ability?.bpUntilNext===500)
+  return '將此角色轉為活動，直到自己下回合開始 BP＋500';
  if(op==='nameOnceActive'||op==='activeSelfOnceByKey'||op==='cardOnceActive'||op==='cardOnceActiveIfBp'||op==='onceActiveIfOwnEffectRested'||op==='onceActiveSelfGate'||op==='printNameActive'||mode==='nameActive'||mode==='ready'||mode==='cardOnceActive'||mode==='ownRestActive'||mode==='onceActiveGate')
   return '將此角色轉為活動';
  if(op==='frontOnceActiveNamed'||mode==='nameOnceActive')
@@ -392,6 +436,8 @@ function effectWords(ability,action){
  if(op==='fieldRestSacrificeReplay'||mode==='fieldRestSacrificeReplay')return '休息此場域，使 1 張己方角色退場並重新發動其登場時';
  if(op==='fieldRestRetire'||mode==='fieldRestRetire')return '休息此場域並使此卡退場';
  if(op==='fieldRestRetireThen'||mode==='fieldRestTrueRetireDeploy'||mode==='fieldRestRetireDraw')
+  return '休息並退場。'+renderSequence(ability?.then);
+ if(op==='restRetireThen'||mode==='restRetireThen')
   return '休息並退場。'+renderSequence(ability?.then);
  if(op==='outsideDiscardTraitToHand'||mode==='outsideTraitHand')
   return `在場外，將 1 張特徵「${ability?.trait||''}」的手牌放到場外，並將此卡加入手牌`;

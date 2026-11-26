@@ -100,7 +100,8 @@ test('the remaining Mushoku Tensei prints are registered without FAQ certificati
 test('MST-1-008 stays and gains BP once when it loses a battle',()=>{
  const {packs,s:opened}=match();
  const before=count(opened.players[0]);
- const eris=place(opened,0,'MST-1-008','front',0);
+ const base=place(opened,0,'MST-1-002','front',0);
+ const eris=raidOnto(opened,0,'MST-1-008',base,'front',0);
  const wall=place(opened,1,'MST-1-025','front',0);
  let s=advance(packs,opened,x=>x.phase==='attack'&&x.active===0&&!x.pending);
  // No printed MST character beats the post-stay 5000 BP. Official Q34
@@ -136,7 +137,9 @@ test('MST-1-026 cannot be played to the front and draws on attack',()=>{
  let s=toMain(packs,opened);
  place(s,0,'MST-1-006','energy',0);
  place(s,0,'MST-1-010','energy',1);
- const roxy=place(s,0,'MST-1-032','front',0);
+ const base=place(s,0,'MST-1-022','front',0);
+ const roxy=raidOnto(s,0,'MST-1-032',base,'front',0);
+ const plain=place(s,0,'MST-1-032','front',1);
  const card=hold(s,0,'MST-1-026');
  const legal=legalUniversalActions(packs,s).filter(a=>a.uid===card.uid&&a.type==='play');
  assert.ok(legal.length);
@@ -144,6 +147,7 @@ test('MST-1-026 cannot be played to the front and draws on attack',()=>{
  const spot=legal.find(a=>a.line==='energy');
  s=dispatchUniversalAction(packs,s,spot);
  assert.ok(s.players[0].energy.some(c=>c?.uid===card.uid));
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===plain.uid&&a.mode==='move'),false);
  const mover=s.players[0].front.find(c=>c?.uid===roxy.uid);
  const act=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===mover.uid&&a.mode==='move');
  assert.ok(act);

@@ -85,7 +85,7 @@ export function grantHandDiscountFromUsedEvent(s,owner,source,filter){
  s.nextContinuousStateId++;validateHandDiscount(s,e);s.continuousStates.push(e);
 }
 // A payment plan only; spendAp remains the single AP payment implementation.
-export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false,frontNameOnField=false}={}){
+export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false,frontNameOnField=false,traitNameCount=null}={}){
  // A Makima aura makes other purple characters events as well as characters.
  // Test both identities without changing their printed card type.
  const alsoEvent=d.type==='character'&&csmCardCountsAsEvent(s,owner,d,
@@ -98,9 +98,16 @@ export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false,
  // the same name voids it. Effect entries are not recorded as hand uses.
  let raidCut=0;
  const rule=d.raidHandApDiscount;
- if(raid&&rule&&(s.effectApPaidColors?.[owner]||[]).includes(rule.requiresEffectApColor)){
+ const colorGate=!!(rule?.requiresEffectApColor&&
+  (s.effectApPaidColors?.[owner]||[]).includes(rule.requiresEffectApColor));
+ const nameGate=!!(rule&&Number.isInteger(rule.minDistinctTraitNames)&&
+  traitNameCount>=rule.minDistinctTraitNames);
+ if(raid&&rule&&(colorGate||nameGate)){
+  // A zero-AP hand raid of the same name voids the printed discount.
+  // Plays stay in the older ledger unless the print says レイド only.
   const voided=rule.voidIfOtherZeroApHandName&&(s.handZeroApUses||[]).some(e=>
-   e.turn===s.turn&&e.owner===owner&&e.uid!==uid&&cardHasName(d,e.name));
+   e.turn===s.turn&&e.owner===owner&&e.uid!==uid&&cardHasName(d,e.name)&&
+   (rule.voidRaidOnly!==true||e.raid===true));
   if(!voided)raidCut=rule.amount;
  }
  let nameCut=0;
@@ -119,6 +126,9 @@ export function definitionGrantsDiscount(value,filter){
   Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
  // REST, discard one, then the next matching trait play costs 1 less AP.
  // The discount is the printed follow-up of that main, so the card proves it.
+ if(value.op==='frontNameOnceApDiscount'&&value.filter&&
+  Object.keys(value.filter).length===Object.keys(filter).length&&
+  Object.keys(filter).every(k=>value.filter[k]===filter[k]))return true;
  if(value.op==='restDiscardNextTraitAp'&&value.amount===1&&
   typeof value.trait==='string'&&Object.keys(filter).length===1&&
   filter.trait===value.trait)return true;
