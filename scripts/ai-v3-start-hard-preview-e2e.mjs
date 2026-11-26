@@ -13,8 +13,7 @@ const log = value => writeSync(1, value + '\n');
 const types = {'.mjs': 'text/javascript', '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2'};
 const decks = [
  {id: 'white-sword', name: '白劍', exercise: true},
- {id: 'sword-art-online', name: '刀劍神域', exercise: false},
- {id: 'steins-gate-blue', name: '命運石之門', exercise: false}
+ {id: 'sword-art-online', name: '刀劍神域', exercise: false}
 ];
 const gameMs = Number(process.env.AI_V3_E2E_MS || 150000);
 const POLICY = 'hybrid-start-hard-v1';
@@ -504,7 +503,7 @@ try {
   const seen = key => report.games.concat(report.mobile, report.extra).some(game => Number(game.gestures?.[key] || 0) > 0);
   if (!seen('raidCommit')) await hunt('white-sword', () => seen('raidCommit'));
   if (!report.squeezeConfirms) await hunt('white-sword', () => report.squeezeConfirms > 0);
-  if (!seen('activateChoice')) await hunt('steins-gate-blue', () => seen('activateChoice'));
+  if (!seen('activateChoice')) await hunt('sword-art-online', () => seen('activateChoice'));
   const mobileActivated = () => report.mobile.concat(report.extra).some(game => game.mobile && Number(game.gestures?.activateChoice || 0) > 0);
   if (!mobileActivated()) {
    const deck = decks.find(item => item.id === 'white-sword');

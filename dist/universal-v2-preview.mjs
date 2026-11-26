@@ -2,7 +2,7 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,csmPracticeDeck,aotPracticeDeck,kmrPracticeDeck,imcPracticeDeck,rnkPracticeDeck,torikoPracticeDeck,dgmPracticeDeck,mgsPracticeDeck,mcrPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261125mcr12';
+import {officialV2Pack,v2DeckReport} from './universal-v2/official-entry.mjs?v=20261125mcr12';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
@@ -72,49 +72,7 @@ import {facedownInspectModel,facedownGallery,mountFacedownOverlay,closeFacedownO
  createFacedownBadge,createFacedownEdges,eventHitsFacedownBadge,findKnownLayer}
  from './universal-v2/facedown-inspect.mjs?v=20261104facedown1';
 
-const rezeroPractice=rezeroSet1PracticeDeck();
-const stgPractice=steinsGatePracticeDeck();
-const madokaPractice=madokaPracticeDeck();
-const inuyashaPractice=inuyashaPracticeDeck();
-const kjnPractice=kjnPracticeDeck();
-const csmPractice=csmPracticeDeck();
-const aotPractice=aotPracticeDeck();
-const kmrPractice=kmrPracticeDeck();
-const imcPractice=imcPracticeDeck();
-const rnkPractice=rnkPracticeDeck();
-const torikoPractice=torikoPracticeDeck();
-const dgmPractice=dgmPracticeDeck();
-const mgsPractice=mgsPracticeDeck();
-const mcrPractice=mcrPracticeDeck();
-const decks={...createAllV2PreviewRealDecks(),
- 'rezero-set1':{pack:rezeroPractice.pack,counts:rezeroPractice.counts,
-  label:'Re:Zero 第一彈｜黃色練習組'},
- 'steins-gate-blue':{pack:stgPractice.pack,counts:stgPractice.counts,
-  label:'命運石之門｜藍色練習組'},
- 'madoka-red':{pack:madokaPractice.pack,counts:madokaPractice.counts,
-  label:'魔法少女小圓｜紅色練習組'},
- 'inuyasha-purple':{pack:inuyashaPractice.pack,counts:inuyashaPractice.counts,
-  label:'犬夜叉｜紫色練習組'},
- 'kjn-purple':{pack:kjnPractice.pack,counts:kjnPractice.counts,
-  label:'我想成為影之強者！｜紫色練習組'},
- 'csm-purple':{pack:csmPractice.pack,counts:csmPractice.counts,
-  label:'鏈鋸人｜紫色練習組'},
- 'aot-red':{pack:aotPractice.pack,counts:aotPractice.counts,
-  label:'進擊的巨人｜紅色練習組'},
- 'kmr-yellow':{pack:kmrPractice.pack,counts:kmrPractice.counts,
-  label:'假面騎士｜黃色預組身份練習組'},
- 'imc-red':{pack:imcPractice.pack,counts:imcPractice.counts,
-  label:'偶像大師 灰姑娘女孩｜紅色練習組（非官方預組）'},
- 'rnk-blue':{pack:rnkPractice.pack,counts:rnkPractice.counts,
-  label:'浪客劍心｜藍色練習組'},
- 'toriko-blue':{pack:torikoPractice.pack,counts:torikoPractice.counts,
-  label:'美食獵人｜已支援藍色練習組'},
- 'dgm-supported':{pack:dgmPractice.pack,counts:dgmPractice.counts,
-  label:'驅魔少年｜已支援卡練習組'},
- 'mgs-supported':{pack:mgsPractice.pack,counts:mgsPractice.counts,
-  label:'〈物語〉系列｜已支援卡練習組'},
- 'mcr-yellow':{pack:mcrPractice.pack,counts:mcrPractice.counts,
-  label:'超時空要塞｜已支援黃色練習組'}};
+const decks={...createAllV2PreviewRealDecks()};
 const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
@@ -2382,20 +2340,6 @@ function importClassicLobbyDecks(){
 }
 if(!IS_BATTLE_PAGE)importClassicLobbyDecks();
 function selectBuiltOpponent(title){
- if(decks['rezero-set1']&&title==='rezero')$('ai-title').value='rezero-set1';
- if(decks['steins-gate-blue']&&title==='steins-gate')$('ai-title').value='steins-gate-blue';
- if(decks['madoka-red']&&title==='madoka')$('ai-title').value='madoka-red';
- if(decks['inuyasha-purple']&&title==='inuyasha')$('ai-title').value='inuyasha-purple';
- if(decks['kjn-purple']&&title==='kjn')$('ai-title').value='kjn-purple';
- if(decks['csm-purple']&&title==='csm')$('ai-title').value='csm-purple';
- if(decks['aot-red']&&title==='aot')$('ai-title').value='aot-red';
- if(decks['kmr-yellow']&&title==='kmr')$('ai-title').value='kmr-yellow';
- if(decks['imc-red']&&title==='imc')$('ai-title').value='imc-red';
- if(decks['rnk-blue']&&title==='rnk')$('ai-title').value='rnk-blue';
- if(decks['toriko-blue']&&title==='toriko')$('ai-title').value='toriko-blue';
- if(decks['dgm-supported']&&title==='dgm')$('ai-title').value='dgm-supported';
- if(decks['mgs-supported']&&title==='mgs')$('ai-title').value='mgs-supported';
- if(decks['mcr-yellow']&&title==='mcr')$('ai-title').value='mcr-yellow';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
 }
 function importBuiltTitleDeck(){
