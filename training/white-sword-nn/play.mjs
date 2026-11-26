@@ -17,6 +17,7 @@ import {GAMMA,HISTORY,LOOP_LIMIT,MAX_STEPS,V2_DECISION_MS,V2_FILE_HASH} from './
 import {encodeDecision,joinFeatures,publicHistoryStep,sameVector,visibleIndex} from './encode.mjs';
 import {assignReturns} from './learn.mjs';
 import {greedyIndex,scoreActions} from './net.mjs';
+import {legacyLoopKey,progressLoopKey} from './loop.mjs';
 import {buildPpoSample,categorical,criticValue,sampleCategorical} from './ppo.mjs';
 
 const RULES=matchRules('official');
@@ -47,15 +48,6 @@ function mulberry32(seed){
 }
 function same(left,right){
  return left===right||JSON.stringify(left)===JSON.stringify(right);
-}
-function loopKey(state){
- const pending=state.pending;
- const board=state.players.map(player=>[
-  player.life.length,player.hand.length,player.deck.length,
-  player.front.map(card=>card?card.uid+(card.ready?'a':'r'):'-').join('.'),
-  player.energy.map(card=>card?card.uid+(card.ready?'a':'r'):'-').join('.')
- ].join('/')).join('|');
- return [state.turn,state.phase,state.active,pending?.kind||'',pending?.player??'',board].join('#');
 }
 function collisions(actions){
  const seen=[];
@@ -171,9 +163,13 @@ export function playMatch(spec){
     game.endReason='illegal';
     break;
    }
-   const key=loopKey(state);
+   const legacyKey=legacyLoopKey(state);
+   const key=spec.detector==='legacy'?legacyKey:progressLoopKey(state);
    repeats=key===lastKey?repeats+1:0;
    lastKey=key;
+   if(typeof spec.observe==='function'){
+    spec.observe({when:'before',step:game.steps,actor,repeats,loopKey:key,legacyKey,state,legal,history});
+   }
    if(repeats>=LOOP_LIMIT){
     game.anomalies.deadLoop++;
     game.error='repeated position';
@@ -204,6 +200,9 @@ export function playMatch(spec){
    }
    game.decisionMs.push(performance.now()-t0);
    const source=picked.source||seat.kind;
+   if(typeof spec.observe==='function'){
+    spec.observe({when:'choice',step:game.steps,action:picked.action,source,reason:picked.reason||null});
+   }
    game.policies[source]=(game.policies[source]||0)+1;
    const ownFailure=seat.kind==='nn'||teachers.has(actor)||actor===spec.learnerSeat;
    if(picked.reason==='timeout')game.anomalies.timeout++;

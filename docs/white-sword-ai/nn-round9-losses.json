@@ -1,0 +1,107 @@
+{
+  "createdAt": "2026-11-26T00:22:02.289Z",
+  "source": "docs/white-sword-ai/nn-round8.json",
+  "plan": "docs/white-sword-ai/nn-round8-plan.json",
+  "note": "名單在重播敗局之前寫下。不因診斷結果改選。第八輪的 invalid 判定不改。",
+  "direct": {
+    "games": 36,
+    "finished": 36,
+    "wins": 7,
+    "losses": 29
+  },
+  "sharedCandidate": {
+    "games": 108,
+    "finished": 108,
+    "wins": 36
+  },
+  "cells": [
+    {
+      "learnerSeat": 0,
+      "first": 0,
+      "losses": [
+        {
+          "seed": 193501,
+          "learnerSeat": 0,
+          "first": 0,
+          "winner": 1,
+          "steps": 101,
+          "deck": "white-sword"
+        },
+        {
+          "seed": 193502,
+          "learnerSeat": 0,
+          "first": 0,
+          "winner": 1,
+          "steps": 105,
+          "deck": "white-sword"
+        }
+      ]
+    },
+    {
+      "learnerSeat": 0,
+      "first": 1,
+      "losses": [
+        {
+          "seed": 193501,
+          "learnerSeat": 0,
+          "first": 1,
+          "winner": 1,
+          "steps": 156,
+          "deck": "white-sword"
+        },
+        {
+          "seed": 193502,
+          "learnerSeat": 0,
+          "first": 1,
+          "winner": 1,
+          "steps": 172,
+          "deck": "white-sword"
+        }
+      ]
+    },
+    {
+      "learnerSeat": 1,
+      "first": 0,
+      "losses": [
+        {
+          "seed": 193500,
+          "learnerSeat": 1,
+          "first": 0,
+          "winner": 0,
+          "steps": 210,
+          "deck": "white-sword"
+        },
+        {
+          "seed": 193502,
+          "learnerSeat": 1,
+          "first": 0,
+          "winner": 0,
+          "steps": 120,
+          "deck": "white-sword"
+        }
+      ]
+    },
+    {
+      "learnerSeat": 1,
+      "first": 1,
+      "losses": [
+        {
+          "seed": 193500,
+          "learnerSeat": 1,
+          "first": 1,
+          "winner": 0,
+          "steps": 203,
+          "deck": "white-sword"
+        },
+        {
+          "seed": 193501,
+          "learnerSeat": 1,
+          "first": 1,
+          "winner": 0,
+          "steps": 107,
+          "deck": "white-sword"
+        }
+      ]
+    }
+  ]
+}

@@ -122,3 +122,10 @@ node scripts/white-sword-nn-round7.mjs trial
 ```bash
 node scripts/white-sword-nn-round8.mjs trial
 ```
+
+第九輪接受第八輪整輪執行無效。它只重播兩場控制組停局和八場已鎖定的直接對戰敗局，不新增訓練或正式驗證。結果寫在 `docs/white-sword-ai/NN-ROUND9.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round9.mjs fixed
+node scripts/white-sword-nn-round9.mjs gaps
+```
