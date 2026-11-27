@@ -1,6 +1,6 @@
 // Logos are genuine title wordmarks, not representative card art.
-// Attribution/source pages: Wikimedia Commons. Trademark ownership stays
-// with the respective series' rights holders. Files are loaded from Wikimedia
+// Attribution/source pages: Wikimedia Commons and official catalogue. Trademark ownership stays
+// with the respective series' rights holders. Files are loaded from their original sources
 // rather than copied into the card/engine data or serialized into decks.
 export const TITLE_LOGOS=Object.freeze({
  bleach:Object.freeze({
@@ -123,6 +123,39 @@ export const TITLE_LOGOS=Object.freeze({
   label:'新世紀福音戰士新劇場版',
   source:'https://commons.wikimedia.org/wiki/File:Evangelion_3.0%2B1.0_logo.svg',
   credit:'khara',
+  license:'PD text logo'
+ }),
+ // These titles use the official UNION ARENA catalogue wordmarks.
+ // Reference the source files directly; do not copy them into this repository.
+ mcr:Object.freeze({
+  image:'https://www.unionarena-tcg.com/tc/images/common/pages/img_thumbnail_mcr.png?v2',
+  label:'超時空要塞',
+  source:'https://www.unionarena-tcg.com/tc/products/?tags=MCR',
+  credit:'BIGWEST／各作品權利人',
+  license:'原權利人所有（外部圖片）',
+  format:'catalogue'
+ }),
+ toriko:Object.freeze({
+  image:'https://www.unionarena-tcg.com/tc/images/common/pages/img_thumbnail_trk.png?v2',
+  label:'美食獵人',
+  source:'https://www.unionarena-tcg.com/tc/products/?tags=TRK',
+  credit:'島袋光年／集英社・東映アニメーション',
+  license:'原權利人所有（外部圖片）',
+  format:'catalogue'
+ }),
+ dgm:Object.freeze({
+  image:'https://www.unionarena-tcg.com/tc/images/common/pages/img_thumbnail_dgm.png?v2',
+  label:'驅魔少年',
+  source:'https://www.unionarena-tcg.com/tc/products/?tags=DGM',
+  credit:'星野桂／集英社',
+  license:'原權利人所有（外部圖片）',
+  format:'catalogue'
+ }),
+ mgs:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/4/47/Monogatari_Series_Text_Logo_Full.svg',
+  label:'〈物語〉系列',
+  source:'https://commons.wikimedia.org/wiki/File:Monogatari_Series_Text_Logo_Full.svg',
+  credit:'Aniplex',
   license:'PD text logo'
  })
 });

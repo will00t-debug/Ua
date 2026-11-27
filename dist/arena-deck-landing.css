@@ -113,3 +113,8 @@ body.arena-site .vdb-logo-credits a:focus-visible{outline:2px solid #6bb5ff;outl
  body.arena-site .vdb-title-logo-fallback{font-size:13px}
  body.arena-site .vdb-logo-credits ul{grid-template-columns:1fr}
 }
+
+/* Official catalogue thumbnails have built-in white margins. Keep the wordmark
+   legible in the same plate without stretching or affecting editor card art. */
+body.arena-site .vdb-title-grid .vdb-tile-art .vdb-title-logo-plate[data-logo-format="catalogue"]{overflow:hidden}
+body.arena-site .vdb-title-grid .vdb-tile-art .vdb-title-logo-plate[data-logo-format="catalogue"] img.vdb-title-logo{width:auto;height:145%;max-height:none;max-width:100%;filter:none}
