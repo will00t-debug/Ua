@@ -1,6 +1,6 @@
 import {renderCardEffectText,cardEffectDisplayText} from './card-effect-display.mjs?v=20261121effect5pngonce1doubleblock1rez065badges1';
 import {renderDeckRecord} from './deck-records.mjs';
-import {titleLogo} from './title-logos.mjs?v=20261116rnk';
+import {titleLogo} from './title-logos.mjs?v=20261127all21';
 import {coverChoices,displayCoverCard,validDeckCoverId} from './deck-cover-selection.mjs';
 
 function vdbEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -106,7 +106,7 @@ function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,ene
  const model=makeVisualDeckModel({cards:title.cards,counts,search,type,color,energy,energies,generate,sort,titleName});
  const img=(card,cls='')=>`<img class="${cls}" src="${vdbEsc(vdbImage(card))}" alt="${vdbEsc(card?.nameZh||card?.name||card?.number||'卡片')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/mark.svg'">`;
  if(!ready){
- const titleGrid=`<div class="vdb-title-grid">${list.map(item=>{const pick=item.cards.find(card=>card.image||card.onlineImage)||item.cards[0];const logo=titleLogo(item.id);const art=logo?`<span class="vdb-title-logo-plate"><img class="vdb-title-logo" src="${vdbEsc(logo.image)}" alt="${vdbEsc(logo.label)} Logo" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.hidden=true;this.nextElementSibling.hidden=false"><span class="vdb-title-logo-fallback" hidden>${vdbEsc(logo.label)}</span></span>`:img(pick);return `<button type="button" class="vdb-title-tile${ready&&item.id===titleId?' is-selected':''}" data-title="${vdbEsc(item.id)}" aria-pressed="${ready&&item.id===titleId}"><span class="vdb-tile-art">${art}</span><span class="vdb-tile-info"><strong>${vdbEsc(TITLE_NAMES[item.id]||item.label)}</strong><small>${item.cards.length} 種已收錄卡牌</small></span></button>`;}).join('')}</div>`;
+ const titleGrid=`<div class="vdb-title-grid">${list.map(item=>{const pick=item.cards.find(card=>card.image||card.onlineImage)||item.cards[0];const logo=titleLogo(item.id);const art=logo?`<span class="vdb-title-logo-plate"${logo.format==='catalogue'?' data-logo-format="catalogue"':''}><img class="vdb-title-logo" src="${vdbEsc(logo.image)}" alt="${vdbEsc(logo.label)} Logo" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.hidden=true;this.nextElementSibling.hidden=false"><span class="vdb-title-logo-fallback" hidden>${vdbEsc(logo.label)}</span></span>`:img(pick);return `<button type="button" class="vdb-title-tile${ready&&item.id===titleId?' is-selected':''}" data-title="${vdbEsc(item.id)}" aria-pressed="${ready&&item.id===titleId}"><span class="vdb-tile-art">${art}</span><span class="vdb-tile-info"><strong>${vdbEsc(TITLE_NAMES[item.id]||item.label)}</strong><small>${item.cards.length} 種已收錄卡牌</small></span></button>`;}).join('')}</div>`;
  const logoCredits=list.filter(item=>titleLogo(item.id)).map(item=>{
   const logo=titleLogo(item.id);
   const license=logo.licenseUrl?` · <a href="${vdbEsc(logo.licenseUrl)}" target="_blank" rel="noopener noreferrer">${vdbEsc(logo.license)}</a>`:" · "+vdbEsc(logo.license);
