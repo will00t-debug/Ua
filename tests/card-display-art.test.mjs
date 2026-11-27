@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {fallbackCardArtUrl,installCardArtFallback} from '../dist/card-display-art.mjs';
+import {fallbackCardArtUrl,installCardArtFallback,resolvedCardArtUrl} from '../dist/card-display-art.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
 
 const JP='https://www.unionarena-tcg.com/jp/images/cardlist/card/';
@@ -41,7 +41,7 @@ test('capturing image error tries the alternative once before the existing place
  const doc={addEventListener(type,fn,capture){handlers.push({type,fn,capture});}};
  assert.equal(installCardArtFallback(doc),true);
  assert.equal(installCardArtFallback(doc),false);
- assert.equal(handlers.length,1);
+ assert.equal(handlers.length,2);
  assert.equal(handlers[0].type,'error');
  assert.equal(handlers[0].capture,true);
  const image={localName:'img',src:JP+'UA50BT_IYS-1-002.png',getAttribute(name){assert.equal(name,'src');return this.src;}};
@@ -99,4 +99,17 @@ test('every public card-rendering page installs the fallback before its UI modul
   const hook=html.indexOf('src="card-display-art.mjs?v=20261127cardart1"');
   assert.ok(hook>=0&&hook<html.indexOf('src="'+entry),page);
  }
+});
+
+test('successful fallback is remembered for newly rendered cards, not failed attempts',()=>{
+ const handlers={};
+ const doc={addEventListener(type,fn){handlers[type]=fn;}};
+ installCardArtFallback(doc);
+ const source=JP+'UA50BT_IYS-1-003.png';
+ const image={localName:'img',src:source,getAttribute(){return this.src;}};
+ handlers.error({target:image,stopImmediatePropagation(){}});
+ assert.equal(resolvedCardArtUrl(source),source);
+ handlers.load({target:image});
+ assert.equal(resolvedCardArtUrl(source),fallbackCardArtUrl(source));
+ assert.equal(resolvedCardArtUrl('assets/mark.svg'),'assets/mark.svg');
 });

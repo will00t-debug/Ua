@@ -14,6 +14,22 @@ export function fallbackCardArtUrl(source){
 }
 
 const installed=new WeakSet();
+const resolved=new Map();
+const pending=new WeakMap();
+
+export function resolvedCardArtUrl(source){
+ return resolved.get(source)||source;
+}
+
+function reuseImage(image){
+ if(image?.localName!=='img'||typeof image.getAttribute!=='function')return;
+ const source=image.getAttribute('src');
+ const replacement=resolvedCardArtUrl(source);
+ if(replacement&&replacement!==source){
+  pending.set(image,{source,replacement});
+  image.src=replacement;
+ }
+}
 
 // Image errors do not bubble, so capture runs before the existing per-image
 // lightning fallback. Only the exact official card-image route is intercepted.
@@ -27,8 +43,31 @@ export function installCardArtFallback(root=globalThis.document){
   const replacement=fallbackCardArtUrl(image.getAttribute('src'));
   if(!replacement)return;
   event.stopImmediatePropagation();
+  pending.set(image,{source:image.getAttribute('src'),replacement});
   image.src=replacement;
  },true);
+ root.addEventListener('load',event=>{
+  const image=event.target;
+  const attempt=pending.get(image);
+  if(attempt&&image.getAttribute('src')===attempt.replacement){
+   resolved.set(attempt.source,attempt.replacement);
+   pending.delete(image);
+  }
+ },true);
+ // New DOM nodes are processed before the next paint, including full hand redraws.
+ if(typeof globalThis.MutationObserver==='function'&&root.nodeType){
+  const observer=new globalThis.MutationObserver(records=>{
+   for(const record of records){
+    if(record.type==='attributes')reuseImage(record.target);
+    for(const node of record.addedNodes||[]){
+     reuseImage(node);
+     for(const image of node.querySelectorAll?.('img')||[])reuseImage(image);
+    }
+   }
+  });
+  observer.observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['src']});
+  for(const image of root.querySelectorAll?.('img')||[])reuseImage(image);
+ }
  installed.add(root);
  return true;
 }
