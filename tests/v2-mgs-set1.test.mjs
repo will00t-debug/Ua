@@ -88,7 +88,8 @@ test('UA42BT and UA42ST are one identity per number on the shared engine',()=>{
  assert.equal(title.label,'〈物語〉系列');
  assert.equal(title.playable,false);
  assert.equal(title.cards.length,MGS_CARDS.length+MGS2_CARDS.length);
- assert.equal(titleLogo('mgs'),null);
+ assert.equal(titleLogo('mgs')?.label,title.label);
+ assert.match(titleLogo('mgs')?.image,/Monogatari_Series_Text_Logo_Full\.svg$/);
 
  const reprint=byId.get('MGS-1-035');
  assert.deepEqual(reprint.sets,['UA42BT','UA42ST']);

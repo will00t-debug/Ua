@@ -6,40 +6,43 @@ import {TITLE_LOGOS,titleLogo} from '../dist/title-logos.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-// Commons has no Toriko wordmark. The tile uses catalogue art instead of an invented logo.
-const NO_WORDMARK=new Set(['toriko','dgm','mgs','mcr']);
+// Official catalogue uses a distinct product code for Toriko.
+const CATALOGUE_CODES={mcr:'mcr',toriko:'trk',dgm:'dgm'};
+
 const build=()=>renderVisualDeckBuilder({
  titles:TITLES.map(title=>({id:title.id,label:title.label,cards:[
   {id:title.id+'-sample',image:'assets/cards/example-card.png',name:'代表卡',type:'character',energy:0}
  ]})),titleId:'bleach',ready:false
 });
 
-test('every registered work displays its actual Wikimedia series wordmark, not a card thumbnail',()=>{
- assert.equal(Object.keys(TITLE_LOGOS).length,TITLES.length-NO_WORDMARK.size);
- assert.deepEqual(new Set(Object.keys(TITLE_LOGOS)),new Set(TITLES.map(t=>t.id).filter(id=>!NO_WORDMARK.has(id))));
+test('every registered work displays its actual series wordmark, not a card thumbnail',()=>{
+ assert.equal(Object.keys(TITLE_LOGOS).length,TITLES.length);
+ assert.deepEqual(new Set(Object.keys(TITLE_LOGOS)),new Set(TITLES.map(t=>t.id)));
  const markup=build();
  assert.equal((markup.match(/class="vdb-title-tile/g)||[]).length,TITLES.length);
- assert.equal((markup.match(/class="vdb-title-logo"/g)||[]).length,TITLES.length-NO_WORDMARK.size);
- assert.equal((markup.match(/src="assets\/cards\/example-card\.png"/g)||[]).length,NO_WORDMARK.size);
+ assert.equal((markup.match(/class="vdb-title-logo"/g)||[]).length,TITLES.length);
+ assert.equal((markup.match(/src="assets\/cards\/example-card\.png"/g)||[]).length,0);
  for(const title of TITLES){
-  if(NO_WORDMARK.has(title.id)){
-   assert.equal(titleLogo(title.id),null);
-   assert.ok(markup.includes('data-title="'+title.id+'"'));
-   continue;
-  }
   const logo=titleLogo(title.id);
   assert.ok(logo,'logo missing for '+title.id);
   const wordmark=title.id==='imc'||title.id==='rnk'
    ?/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[a-f0-9]\/[a-f0-9]{2}\/.+\.png$/
    :/^https:\/\/upload\.wikimedia\.org\/wikipedia\/commons\/[a-f0-9]\/[a-f0-9]{2}\/.+\.svg$/;
-  assert.match(logo.image,wordmark,title.id);
+  if(Object.hasOwn(CATALOGUE_CODES,title.id)){
+   const code=CATALOGUE_CODES[title.id];
+   assert.equal(logo.image,'https://www.unionarena-tcg.com/tc/images/common/pages/img_thumbnail_'+code+'.png?v2');
+   assert.equal(logo.source,'https://www.unionarena-tcg.com/tc/products/?tags='+code.toUpperCase());
+   assert.equal(logo.format,'catalogue');
+  }else{
+   assert.match(logo.image,wordmark,title.id);
+   assert.match(logo.source,/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+  }
   if(title.id==='imc'){
    assert.equal(logo.image,'https://upload.wikimedia.org/wikipedia/commons/b/b4/THE_IDOLM%40STER_CINDERELLA_GIRLS_Logo.png');
   }
   if(title.id==='rnk'){
    assert.equal(logo.image,'https://upload.wikimedia.org/wikipedia/commons/4/42/Rurouni_Kenshin_2023_Anime_Logo.png');
   }
-  assert.match(logo.source,/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
   assert.ok(markup.includes('data-title="'+title.id+'"'));
   assert.ok(markup.includes('src="'+logo.image.replaceAll('&','&amp;')+'"'));
   assert.ok(markup.includes('alt="'+logo.label+' Logo"'));
@@ -48,9 +51,10 @@ test('every registered work displays its actual Wikimedia series wordmark, not a
 
 test('logo errors show text fallback and attribution is accessible',()=>{
  const html=build();
- assert.equal((html.match(/this\.nextElementSibling\.hidden=false/g)||[]).length,TITLES.length-NO_WORDMARK.size);
- assert.equal((html.match(/class="vdb-title-logo-fallback" hidden/g)||[]).length,TITLES.length-NO_WORDMARK.size);
+ assert.equal((html.match(/this\.nextElementSibling\.hidden=false/g)||[]).length,TITLES.length);
+ assert.equal((html.match(/class="vdb-title-logo-fallback" hidden/g)||[]).length,TITLES.length);
  assert.match(html,/referrerpolicy="no-referrer"/);
+ assert.equal((html.match(/data-logo-format="catalogue"/g)||[]).length,3);
  assert.match(html,/loading="lazy" decoding="async"/);
  assert.match(html,/<summary>作品 Logo 來源與授權<\/summary>/);
  assert.match(html,/CC BY-SA 4\.0/);
