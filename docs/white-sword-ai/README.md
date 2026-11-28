@@ -74,3 +74,13 @@ node scripts/white-sword-v2-eval.mjs
 ```
 
 診斷與 20 個局面在 `docs/white-sword-ai/DIAGNOSIS.md`。新種子的結果在 `docs/white-sword-ai/REPORT-V2.md`。這條指令不會改對戰選單，也不會部署。
+
+## 神經網路實驗
+
+`training/white-sword-nn/` 是另外一條實驗。它自己從全部合法動作裡選，不經過 v2 的 Hard cap 7，也不把預測加進混合分。正式 v2 和網站預設都不會改。
+
+```bash
+node scripts/white-sword-nn.mjs trial
+```
+
+測速和試訓寫在 `docs/white-sword-ai/NN-PROTOTYPE.md`。原型跑通和自主學習是否變強，在報告裡分開寫。
