@@ -1,0 +1,5651 @@
+{
+  "createdAt": "2026-11-26T00:22:18.962Z",
+  "reports": [
+    {
+      "seed": 193502,
+      "learnerSeat": 1,
+      "first": 0,
+      "deck": "renruki",
+      "expectedSteps": 195,
+      "replay": {
+        "status": "playing",
+        "winner": null,
+        "endReason": "dead-loop",
+        "error": "repeated position",
+        "steps": 195,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 1,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "policies": {
+          "hard-search-2": 109,
+          "blend": 67,
+          "forced": 17,
+          "reference": 2
+        }
+      },
+      "matched": true,
+      "verdict": "false-stop",
+      "visits": 13,
+      "uniqueActions": 12,
+      "sameAction": false,
+      "actions": [
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-33",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-49",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-46",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-21",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-14",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-22",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-15",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-30",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-31",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-36",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-47",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-12",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        }
+      ],
+      "diffs": [
+        {
+          "from": 183,
+          "to": 184,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [],
+              "after": [
+                "0-33"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 184,
+          "to": 185,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33"
+              ],
+              "after": [
+                "0-33",
+                "0-49"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 185,
+          "to": 186,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 186,
+          "to": 187,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 187,
+          "to": 188,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 188,
+          "to": 189,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 189,
+          "to": 190,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 190,
+          "to": 191,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 191,
+          "to": 192,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30",
+                "0-31"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 192,
+          "to": 193,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30",
+                "0-31"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30",
+                "0-31",
+                "0-36"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 193,
+          "to": 194,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30",
+                "0-31",
+                "0-36"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30",
+                "0-31",
+                "0-36",
+                "0-47"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 194,
+          "to": 195,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30",
+                "0-31",
+                "0-36",
+                "0-47"
+              ],
+              "after": [
+                "0-33",
+                "0-49",
+                "0-46",
+                "0-21",
+                "0-14",
+                "0-22",
+                "0-15",
+                "0-30",
+                "0-31",
+                "0-36",
+                "0-47",
+                "0-12"
+              ]
+            }
+          ]
+        }
+      ],
+      "window": [
+        {
+          "step": 183,
+          "actor": 0,
+          "repeats": 0,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-33",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "skip",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-33",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-46",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-14",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-22",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-15",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 184,
+          "actor": 0,
+          "repeats": 1,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-49",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-46",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-14",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-22",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-15",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 185,
+          "actor": 0,
+          "repeats": 2,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-46",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-46",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-14",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-22",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-15",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 186,
+          "actor": 0,
+          "repeats": 3,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-21",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-14",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-22",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-15",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 187,
+          "actor": 0,
+          "repeats": 4,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-14",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-14",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-22",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-15",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 188,
+          "actor": 0,
+          "repeats": 5,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-22",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-22",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-15",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 189,
+          "actor": 0,
+          "repeats": 6,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-15",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-15",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 190,
+          "actor": 0,
+          "repeats": 7,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-30",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-30",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 191,
+          "actor": 0,
+          "repeats": 8,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-31",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 192,
+          "actor": 0,
+          "repeats": 9,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-36",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-36",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 193,
+          "actor": 0,
+          "repeats": 10,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-47",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 194,
+          "actor": 0,
+          "repeats": 11,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-12",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-12",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 195,
+          "actor": 0,
+          "repeats": 12,
+          "loopKey": "12#attack#1#effect-remove-outside#0#0/4/17/0-23a.0-26r.0-20a.0-27a/0-6a.0-7a.-.0-37a|1/4/23/1-38a.1-12a.1-24a.1-36r/1-8a.1-6a.1-7r.1-4a",
+          "positionKey": "12|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-6|||0-33,0-49,0-46,0-21,0-14,0-22,0-15,0-30,0-31,0-36,0-47,0-12,0-5,0-10,0-1,0-2,0-13||0-6|0|4|17|17|0|0|0|0-23r:,0-26t:,0-20r:,0-27r:|0-6r:,0-7r:,-,0-37r:|1|4|23|8|3|0|0|1-38r:,1-12r:,1-24r:,1-36t:|1-8r:,1-6r:,1-7t:,1-4r:",
+          "action": null,
+          "source": null,
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12",
+              "0-5",
+              "0-10",
+              "0-1",
+              "0-2",
+              "0-13"
+            ],
+            "count": 17,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-33",
+              "0-49",
+              "0-46",
+              "0-21",
+              "0-14",
+              "0-22",
+              "0-15",
+              "0-30",
+              "0-31",
+              "0-36",
+              "0-47",
+              "0-12"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-6",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 107,
+              "effectScope": 26,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-6"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-5",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-10",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-1",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-2",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-13",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 193504,
+      "learnerSeat": 1,
+      "first": 1,
+      "deck": "renruki",
+      "expectedSteps": 168,
+      "replay": {
+        "status": "playing",
+        "winner": null,
+        "endReason": "dead-loop",
+        "error": "repeated position",
+        "steps": 168,
+        "anomalies": {
+          "illegal": 0,
+          "timeout": 0,
+          "fallback": 0,
+          "deadLoop": 1,
+          "engineError": 0,
+          "leak": 0,
+          "opponentFallback": 0,
+          "unfinished": 0
+        },
+        "policies": {
+          "blend": 51,
+          "hard-search-2": 97,
+          "forced": 18,
+          "reference": 2
+        }
+      },
+      "matched": true,
+      "verdict": "false-stop",
+      "visits": 13,
+      "uniqueActions": 12,
+      "sameAction": false,
+      "actions": [
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-42",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-24",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-43",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-38",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-25",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-21",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-6",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-41",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-44",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-49",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-47",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        },
+        {
+          "type": "chooseRemoveOutside",
+          "mode": "pick",
+          "line": null,
+          "uid": "0-31",
+          "baseUid": null,
+          "targetUid": null,
+          "slot": null,
+          "cardId": null,
+          "index": null
+        }
+      ],
+      "diffs": [
+        {
+          "from": 156,
+          "to": 157,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [],
+              "after": [
+                "0-42"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 157,
+          "to": 158,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42"
+              ],
+              "after": [
+                "0-42",
+                "0-24"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 158,
+          "to": 159,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 159,
+          "to": 160,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 160,
+          "to": 161,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 161,
+          "to": 162,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 162,
+          "to": 163,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 163,
+          "to": 164,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 164,
+          "to": 165,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41",
+                "0-44"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 165,
+          "to": 166,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41",
+                "0-44"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41",
+                "0-44",
+                "0-49"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 166,
+          "to": 167,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41",
+                "0-44",
+                "0-49"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41",
+                "0-44",
+                "0-49",
+                "0-47"
+              ]
+            }
+          ]
+        },
+        {
+          "from": 167,
+          "to": 168,
+          "paths": [
+            "$.pending.selected"
+          ],
+          "counterOnly": false,
+          "sample": [
+            {
+              "path": "$.pending.selected",
+              "before": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41",
+                "0-44",
+                "0-49",
+                "0-47"
+              ],
+              "after": [
+                "0-42",
+                "0-24",
+                "0-43",
+                "0-38",
+                "0-25",
+                "0-21",
+                "0-6",
+                "0-41",
+                "0-44",
+                "0-49",
+                "0-47",
+                "0-31"
+              ]
+            }
+          ]
+        }
+      ],
+      "window": [
+        {
+          "step": 156,
+          "actor": 0,
+          "repeats": 0,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-42",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "skip",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-42",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-24",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-43",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-38",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-25",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-6",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 157,
+          "actor": 0,
+          "repeats": 1,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-24",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-24",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-43",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-38",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-25",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-6",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 158,
+          "actor": 0,
+          "repeats": 2,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-43",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-43",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-38",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-25",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-6",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 159,
+          "actor": 0,
+          "repeats": 3,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-38",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-38",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-25",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-6",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 160,
+          "actor": 0,
+          "repeats": 4,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-25",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-25",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-6",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 161,
+          "actor": 0,
+          "repeats": 5,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-21",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-21",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-6",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 162,
+          "actor": 0,
+          "repeats": 6,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-6",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-6",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 163,
+          "actor": 0,
+          "repeats": 7,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-41",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-41",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 164,
+          "actor": 0,
+          "repeats": 8,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-44",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-44",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 165,
+          "actor": 0,
+          "repeats": 9,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-49",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-49",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 166,
+          "actor": 0,
+          "repeats": 10,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-47",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-47",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 167,
+          "actor": 0,
+          "repeats": 11,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": {
+            "type": "chooseRemoveOutside",
+            "mode": "pick",
+            "line": null,
+            "uid": "0-31",
+            "baseUid": null,
+            "targetUid": null,
+            "slot": null,
+            "cardId": null,
+            "index": null
+          },
+          "source": "hard-search-2",
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-31",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        },
+        {
+          "step": 168,
+          "actor": 0,
+          "repeats": 12,
+          "loopKey": "11#attack#1#effect-remove-outside#0#0/6/14/0-20a.0-27a.0-10a.0-7a/0-4a.0-12a.0-36a.0-29a|3/9/23/1-38r.1-25a.1-39r.-/1-5a.-.-.1-2a",
+          "positionKey": "11|attack|effect-remove-outside|1|1|sourceResolutionBoundary|0-4|||0-42,0-24,0-43,0-38,0-25,0-21,0-6,0-41,0-44,0-49,0-47,0-31,0-11||0-4|0|6|14|13|4|0|2|0-20r:,0-27r:,0-10r:,0-7r:|0-4r:,0-12r:,0-36r:,0-29r:|3|9|23|8|0|0|2|1-38t:,1-25r:,1-39t:,-|1-5r:,-,-,1-2r:",
+          "action": null,
+          "source": null,
+          "pending": {
+            "any": true,
+            "cardType": "any",
+            "choices": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31",
+              "0-11"
+            ],
+            "count": 13,
+            "kind": "effect-remove-outside",
+            "optional": true,
+            "player": 0,
+            "scalePer": 500,
+            "selected": [
+              "0-42",
+              "0-24",
+              "0-43",
+              "0-38",
+              "0-25",
+              "0-21",
+              "0-6",
+              "0-41",
+              "0-44",
+              "0-49",
+              "0-47",
+              "0-31"
+            ],
+            "short": false,
+            "sourceName": "黒崎 一護",
+            "sourceUid": "0-4",
+            "then": []
+          },
+          "queue": [
+            {
+              "afterOrder": 92,
+              "effectScope": 20,
+              "op": "sourceResolutionBoundary",
+              "owner": 0,
+              "sourceUid": "0-4"
+            }
+          ],
+          "legal": [
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "done",
+              "line": null,
+              "uid": null,
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            },
+            {
+              "type": "chooseRemoveOutside",
+              "mode": "pick",
+              "line": null,
+              "uid": "0-11",
+              "baseUid": null,
+              "targetUid": null,
+              "slot": null,
+              "cardId": null,
+              "index": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

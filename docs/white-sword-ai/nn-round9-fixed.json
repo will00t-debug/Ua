@@ -1,0 +1,66 @@
+{
+  "createdAt": "2026-11-26T00:26:18.063Z",
+  "note": "修正偵測後的重播。不是新的驗證對局，不改第八輪的 invalid 判定，也不覆寫 nn-round9-loops.json。",
+  "reports": [
+    {
+      "seed": 193502,
+      "learnerSeat": 1,
+      "first": 0,
+      "originalStop": 195,
+      "legacyWouldStopAt": 195,
+      "continuedPastLegacyStop": true,
+      "status": "finished",
+      "winner": 1,
+      "endReason": "life-zero",
+      "error": null,
+      "steps": 202,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0,
+        "unfinished": 0
+      },
+      "policies": {
+        "hard-search-2": 116,
+        "blend": 67,
+        "forced": 17,
+        "reference": 2
+      },
+      "evaluation": false
+    },
+    {
+      "seed": 193504,
+      "learnerSeat": 1,
+      "first": 1,
+      "originalStop": 168,
+      "legacyWouldStopAt": 168,
+      "continuedPastLegacyStop": true,
+      "status": "finished",
+      "winner": 1,
+      "endReason": "life-zero",
+      "error": null,
+      "steps": 171,
+      "anomalies": {
+        "illegal": 0,
+        "timeout": 0,
+        "fallback": 0,
+        "deadLoop": 0,
+        "engineError": 0,
+        "leak": 0,
+        "opponentFallback": 0,
+        "unfinished": 0
+      },
+      "policies": {
+        "blend": 51,
+        "hard-search-2": 100,
+        "forced": 18,
+        "reference": 2
+      },
+      "evaluation": false
+    }
+  ]
+}
