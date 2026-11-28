@@ -4,7 +4,7 @@ import {AGREEMENT_DROP,PPO_EPOCHS,PPO_KL_LIMIT,ROUND5_DEV_COUNT,ROUND6_DEV_COUNT
 import {
  ARM_RULE,COPY_RULE,EARLY_RULE,FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PPO_RULE,PROMOTION_RULE,
  READ_RULE,ROUND4_READ_RULE,ROUND4_SELECT_RULE,ROUND5_EVAL_RULE,ROUND5_KL_RULE,ROUND6_RULE,ROUND7_RULE,
- SCALE_RULE,SELECTION_RULE,TREND_RULE
+ ROUND8_RULE,SCALE_RULE,SELECTION_RULE,TREND_RULE
 } from './protocol.mjs';
 
 function pct(rate){
@@ -957,4 +957,167 @@ export function renderRound7(summary){
   ''
  ];
  return rows.join('\n');
+}
+export function seedValueInterval(rows){
+ const ready=(rows||[]).filter(row=>row&&Number.isFinite(row.value));
+ const delta=pairedDelta(ready.map(row=>({seed:row.seed,p:0})),ready.map(row=>({seed:row.seed,p:row.value})));
+ return {seeds:delta.seeds,mean:delta.mean,low:delta.low,high:delta.high};
+}
+export function equalDeckDiff(deckDiffs){
+ const values=deckDiffs||[];
+ if(values.length!==3||values.some(value=>!Number.isFinite(value)))return null;
+ return values.reduce((sum,value)=>sum+value,0)/values.length;
+}
+export function judgeDirect(interval){
+ if(interval?.low==null||interval?.high==null)return {kind:'incomplete',interval:interval||null};
+ if(interval.low>0.5)return {kind:'better',interval};
+ if(interval.high<0.5)return {kind:'worse',interval};
+ return {kind:'not-confirmed',interval};
+}
+export function judgePaired(interval){
+ if(interval?.low==null||interval?.high==null)return {kind:'incomplete',interval:interval||null};
+ if(interval.low>0)return {kind:'better',interval};
+ if(interval.high<0)return {kind:'worse',interval};
+ return {kind:'not-confirmed',interval};
+}
+export function classifyChampion({promoted,reasons,overall,nonMirror,complete}={}){
+ if(!complete)return 'invalid';
+ if(promoted)return 'promoted';
+ const below60=!(overall?.p>=0.6);
+ const overallWorse=overall?.high!=null&&overall.high<0.5;
+ const mirrorWorse=nonMirror?.high!=null&&nonMirror.high<0.5;
+ if(below60||overallWorse||mirrorWorse)return 'strength';
+ if((reasons||[]).length)return 'evidence';
+ return 'evidence';
+}
+export function answerRound8Direct(judgment){
+ if(!judgment||judgment.kind==='incomplete')return '直接對戰的評估未完成。未完成的對局沒有被當成勝負。';
+ if(judgment.kind==='better')return '有優於正式 v2 的直接對戰證據。種子平均勝率的 95% 區間下限高於 50%。';
+ if(judgment.kind==='worse')return '沒有。直接對戰的區間上限低於 50%。確認資料支持候選弱於正式 v2。';
+ return '沒有超越證據。直接對戰的區間包含 50%。不追加場次，也不用對 A 的歷史勝率代替。';
+}
+export function answerRound8Paired(judgment){
+ if(!judgment||judgment.kind==='incomplete')return '共同對手的評估未完成。';
+ if(judgment.kind==='better')return '是。三種牌型等權後，候選相對正式 v2 的配對差，區間下限高於 0。';
+ if(judgment.kind==='worse')return '沒有。配對差的區間上限低於 0。候選在共同對手上弱於正式 v2。';
+ return '不能說更好。配對差的區間包含 0。證據不足，不追加場次。';
+}
+export function answerRound8Champion(championClass,champion){
+ if(championClass==='invalid')return '執行無效。既有晉級門檻沒有用未完成或異常的對局宣布通過。';
+ if(championClass==='promoted')return '滿足既有晉級門檻。通過共同對手門檻不等於直接打贏正式 v2。';
+ const reasons=(champion?.reasons||[]).join('；')||'沒有留下原因';
+ if(championClass==='strength')return '沒有滿足。棋力不足。'+reasons;
+ return '沒有滿足。證據不足。'+reasons;
+}
+export function answerRound8Next({complete,direct,paired,championClass}={}){
+ if(!complete)return '下一步先讓鎖定的對局完整結束，並排除非法、回退、逾時和程式變動。不從殘餘勝率決定改哪一種出牌，也不追加場次。';
+ const lines=[];
+ if(direct==='worse')lines.push('直接對戰弱於正式 v2，優先處理對正式 v2 的決策。');
+ else if(direct==='better')lines.push('直接對戰已有優於正式 v2 的證據。');
+ else lines.push('直接對戰證據不足。');
+ if(paired==='worse')lines.push('共同對手上弱於正式 v2，優先處理對 Hard Search 2 三種牌型的決策。');
+ else if(paired==='better')lines.push('共同對手的配對差已高於 0。');
+ else lines.push('共同對手證據不足。');
+ if(championClass==='promoted')lines.push('書面晉級門檻達到。這輪沒有部署。');
+ else if(championClass==='strength')lines.push('晉級的點估計或不利區間沒有達到既有門檻。');
+ else lines.push('晉級門檻因場數、覆蓋或區間寬度未過。');
+ lines.push('不把未顯著的結果解釋成應追加場次。');
+ return lines.join('');
+}
+function band(interval,unit='rate'){
+ const center=interval?.mean??interval?.p;
+ if(center==null)return 'n/a';
+ const num=value=>(value*100).toFixed(1);
+ const suffix=unit==='rate'?'%':' 個百分點';
+ if(interval.low==null)return num(center)+suffix;
+ return num(center)+suffix+'（'+num(interval.low)+'–'+num(interval.high)+suffix+'）';
+}
+export function renderRound8(summary){
+ const directRows=(summary.perSeed||[]).map(row=>{
+  const cells=(row.directCells||[]).map(cell=>cell.learnerSeat+'/'+cell.first+' '+cell.mark).join('，');
+  return '- '+row.seed+' 直接：'+cells+'。種子勝率 '+((row.direct==null)?'n/a':(row.direct*100).toFixed(1)+'%')+'。配對差 '+((row.paired==null)?'n/a':(row.paired*100).toFixed(1)+' 個百分點')+'。';
+ });
+ const unfinished=(summary.unfinished||[]).map(game=>'- '+game.comparison+' '+game.model+' 對 '+(game.deck||game.opponent)+'，種子 '+(game.seed??'n/a')+'，'+(game.status||'missing')+'，'+(game.endReason||'無原因')+'。');
+ const champion=summary.champion||{};
+ const rows=[
+  '# 白劍神經網路第八輪',
+  '',
+  '產生時間：'+taipei(summary.createdAt)+'。',
+  '',
+  '接受第七輪：線 2 相對 A 的改善已在獨立資料重現。這一輪只看正式 v2 和三種 Hard Search 2 對手，不重訓、不換模型、不調參。正式 v2、Hard Search 2、規則和網站都沒有改。對 A 的勝率不拿來代替對 v2 的勝率。',
+  '',
+  ...linesOf('四個問題',[
+   '① '+answerRound8Direct(summary.directJudgment),
+   '② '+answerRound8Paired(summary.pairedJudgment),
+   '③ '+answerRound8Champion(summary.championClass,champion),
+   '④ '+answerRound8Next({
+    complete:summary.execution==='complete',
+    direct:summary.directJudgment?.kind,
+    paired:summary.pairedJudgment?.kind,
+    championClass:summary.championClass
+   })
+  ]),
+  ...linesOf('固定規則',[ROUND8_RULE]),
+  ...linesOf('凍結檔案',[
+   '- 候選：'+(summary.candidate?.file||'n/a')+'。版本 '+(summary.candidate?.version||'n/a')+'，更新次數 '+(summary.candidate?.updates??'n/a')+'，雜湊 '+(summary.candidate?.sha256||'n/a')+'。',
+   '- 正式 v2：'+(summary.v2?.file||'n/a')+'。雜湊 '+(summary.v2?.sha256||'n/a')+'。',
+   '- 執行後雜湊：候選 '+(summary.candidateAfter?.sha256===summary.candidate?.sha256?'未變':'已變')+'，v2 '+(summary.v2After?.sha256===summary.v2?.sha256?'未變':'已變')+'。',
+   '- 受保護程式：'+JSON.stringify(summary.protectedHashes||{}),
+   '- 執行後程式：'+JSON.stringify(summary.protectedHashesAfter||{}),
+   '- 開打前工作區狀態已保存在計畫檔。結束後的新增路徑：'+JSON.stringify(summary.statusAdded||[]),
+   summary.integrityNote?'- '+summary.integrityNote:null,
+   '- 確認程式 commit：'+(summary.codeCommit||'n/a')+'。'
+  ]),
+  ...linesOf('開打前的計畫',[
+   '- 測速後的計畫：'+JSON.stringify(summary.plan||null),
+   '- 搜尋與逾時：'+JSON.stringify(summary.settings||null),
+   summary.resourceGap?'- 資源落差：'+summary.resourceGap:'- 鎖定的場數有排進牆鐘。'
+  ]),
+  ...linesOf('直接對戰',[
+   '- 種子平均：'+band(summary.directInterval)+'。',
+   '- 相對 50%：'+deltaLine(summary.directDelta)+'。',
+   '- 先手（描述）：'+band(summary.directFirst)+'。後手（描述）：'+band(summary.directSecond)+'。',
+   '- 座位 0（描述）：'+band(summary.directSeat0)+'。座位 1（描述）：'+band(summary.directSeat1)+'。'
+  ]),
+  ...linesOf('共同對手',[
+   '- 等權配對差：'+band(summary.pairedInterval,'diff')+'。',
+   '- 白劍（描述）：'+band(summary.pairedByDeck?.['white-sword'],'diff')+'。',
+   '- 我拒絕（描述）：'+band(summary.pairedByDeck?.['reject-blue'],'diff')+'。',
+   '- 戀露（描述）：'+band(summary.pairedByDeck?.renruki,'diff')+'。',
+   '- 候選對 Hard Search 2 的種子層級勝率（補充，不取代晉級判斷）：'+band(summary.candidateSeedInterval)+'。'
+  ]),
+  ...linesOf('既有晉級門檻',[
+   '- 判定：'+(summary.championClass||'n/a')+'。promoted='+String(champion.promoted===true)+'。',
+   '- 輸入完成場數：'+(champion.overall?.finished??champion.overall?.n??'n/a')+'。總勝率：'+band(champion.overall)+'。',
+   '- 非鏡像：'+band(champion.nonMirror)+'。',
+   '- 未通過原因：'+JSON.stringify(champion.reasons||[]),
+   '- Wilson 判斷維持原函式。上面的種子層級區間沒有改寫門檻。'
+  ]),
+  ...linesOf('執行',[
+   '- 計畫場數 '+(summary.plannedGames??0)+'。正常終局 '+(summary.finishedGames??0)+'。未完成 '+(summary.unfinished?.length??0)+'。',
+   '- 異常：'+JSON.stringify(summary.anomalies||{}),
+   '- 重試：'+(summary.retries?.fallbacks??0)+' 次整批回退。沒有為了改結果而重打單一場。',
+   '- 實際耗時：'+ms(summary.elapsedMs)+'。'
+  ]),
+  ...linesOf('逐種子結果',directRows.length?directRows:['- 沒有逐種子結果。']),
+  ...linesOf('未完成對局',unfinished.length?unfinished:['- 沒有未完成對局。']),
+  '## 結論',
+  '',
+  answerRound8Direct(summary.directJudgment),
+  '',
+  answerRound8Paired(summary.pairedJudgment),
+  '',
+  answerRound8Champion(summary.championClass,champion),
+  '',
+  answerRound8Next({
+   complete:summary.execution==='complete',
+   direct:summary.directJudgment?.kind,
+   paired:summary.pairedJudgment?.kind,
+   championClass:summary.championClass
+  }),
+  '',
+  '對 A 的確認沒有併入這次的場數或顯著性。這次沒有部署，也沒有合併到 main。晉級門檻沒有放寬。',
+  ''
+ ];
+ return rows.filter(row=>row!=null).join('\n');
 }

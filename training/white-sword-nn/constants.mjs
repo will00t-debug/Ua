@@ -77,3 +77,13 @@ export const ROUND7_CANDIDATE_VERSION='nn-ppo-actor-r6-l2';
 export const ROUND7_CANDIDATE_UPDATES=27546;
 export const ROUND7_CANDIDATE_HASH='a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236';
 export const ROUND7_BASELINE_HASH='542a774f6c42775e20ce1aa1a59235eb9cfe1909b6c8f92dde16a5b5fe90718e';
+// Round 8 does not train. 193400 is only the timing seed. 193500–193531 is
+// the full draft; a shorter wall uses the prefix and does not free the tail.
+export const ROUND8_WALL_MS=20*60*1000;
+export const ROUND8_SEED_CAP=32;
+export const ROUND8_BENCH_SEED=193400;
+export const ROUND8_EVAL_START=193500;
+export const ROUND8_EVAL_COUNT=32;
+export const ROUND8_CANDIDATE_VERSION='nn-ppo-actor-r6-l2';
+export const ROUND8_CANDIDATE_UPDATES=27546;
+export const ROUND8_CANDIDATE_HASH='a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236';

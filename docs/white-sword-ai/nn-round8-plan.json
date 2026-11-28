@@ -1,0 +1,2431 @@
+{
+  "createdAt": "2026-11-25T23:32:49.989Z",
+  "codeCommit": "dbc4aac82f4fd5c1161ece22ab327b65ef497f4c",
+  "statusBefore": "?? audit/v2-full-catalog-summary.json\n?? audit/v2-full-catalog.csv",
+  "candidate": {
+    "file": "training/white-sword-nn/weights/round6/line-2/actor-after-96.json",
+    "bytes": 835056,
+    "sha256": "a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236",
+    "version": "nn-ppo-actor-r6-l2",
+    "updates": 27546,
+    "seed": 188510
+  },
+  "v2": {
+    "file": "training/white-sword-ai/weights/v2-capped.json",
+    "bytes": 5876,
+    "sha256": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+    "version": "white-sword-specialist-v2-capped",
+    "updates": 5,
+    "seed": null
+  },
+  "protectedHashes": {
+    "training/white-sword-nn/weights/round6/line-2/actor-after-96.json": "a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236",
+    "training/white-sword-ai/weights/v2-capped.json": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+    "dist/universal-v2/hard-ai.mjs": "6479e5d424ff526949ca7656a461c64637763823d6e0508dc77645bee5595434",
+    "dist/universal-v2/white-sword-ai/choose.mjs": "1b28d09df0b979c946ac790d039b4d20d5f5284102e1295123c6f14e529f87d6",
+    "dist/universal-v2/white-sword-ai/constants.mjs": "8c0be3d7f480fedecd46f8cf78fe79a5f865b20b8305f686c21661a079c7148c",
+    "dist/universal-v2/engine.mjs": "1ddfa1ba892011dda264615e6b3fd563cb63b1ae6bc9799e636563ff2db2e4be",
+    "dist/universal-v2/ai-v3/opening.mjs": "95687363b787104cbd32c840be7800fae69d917cd4c23cc254ef16b4c0a9dc44",
+    "training/white-sword-nn/play.mjs": "bc425a151d3cc3c4ac4d460192cac1f324d480c523d238690ba7864510c82263"
+  },
+  "bench": {
+    "seed": 193400,
+    "games": 28,
+    "finished": 28,
+    "elapsedMs": 80108.253223,
+    "wired": true
+  },
+  "timing": {
+    "gameMs": 5722.0180873571435,
+    "workers": 2,
+    "wallMs": 1119861.496939,
+    "safety": 1.4
+  },
+  "plan": {
+    "seeds": 9,
+    "games": 252,
+    "gamesPerSeed": 28,
+    "workers": 2,
+    "wallMs": 1119861.496939,
+    "safety": 1.4,
+    "seedCap": 32,
+    "estimatedMs": 1009363.9906098,
+    "gameMs": 5722.0180873571435,
+    "fits": true
+  },
+  "seeds": [
+    193500,
+    193501,
+    193502,
+    193503,
+    193504,
+    193505,
+    193506,
+    193507,
+    193508
+  ],
+  "registeredSeeds": [
+    193500,
+    193501,
+    193502,
+    193503,
+    193504,
+    193505,
+    193506,
+    193507,
+    193508,
+    193509,
+    193510,
+    193511,
+    193512,
+    193513,
+    193514,
+    193515,
+    193516,
+    193517,
+    193518,
+    193519,
+    193520,
+    193521,
+    193522,
+    193523,
+    193524,
+    193525,
+    193526,
+    193527,
+    193528,
+    193529,
+    193530,
+    193531
+  ],
+  "schedule": [
+    {
+      "seed": 193500,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193500,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193501,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193502,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193503,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193504,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193505,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193506,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193507,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "direct",
+      "model": "candidate",
+      "opponent": "v2",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "white-sword",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "reject-blue",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 0,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 0
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "candidate",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    },
+    {
+      "seed": 193508,
+      "comparison": "shared",
+      "model": "v2",
+      "opponent": "hard",
+      "deck": "renruki",
+      "learnerSeat": 1,
+      "first": 1
+    }
+  ],
+  "settings": {
+    "hard": {
+      "policy": "hard-search-2",
+      "options": {
+        "nodes": 48
+      },
+      "clock": false
+    },
+    "v2": {
+      "file": "training/white-sword-ai/weights/v2-capped.json",
+      "mode": "blend",
+      "scale": 6,
+      "hardCap": 7,
+      "timeoutMs": 3000,
+      "explore": 0
+    },
+    "candidate": {
+      "policy": "greedy",
+      "explore": 0,
+      "hardCap": null,
+      "legal": "all"
+    },
+    "decks": [
+      {
+        "id": "white-sword",
+        "name": "白劍"
+      },
+      {
+        "id": "reject-blue",
+        "name": "我拒絕"
+      },
+      {
+        "id": "renruki",
+        "name": "戀露"
+      }
+    ],
+    "cells": [
+      {
+        "learnerSeat": 0,
+        "first": 0
+      },
+      {
+        "learnerSeat": 0,
+        "first": 1
+      },
+      {
+        "learnerSeat": 1,
+        "first": 0
+      },
+      {
+        "learnerSeat": 1,
+        "first": 1
+      }
+    ],
+    "safety": 1.4,
+    "wallMs": 1200000,
+    "critical": "tCritical：樣本數大於 30 回傳 1.96，否則用既有表。標準誤用 n-1。區間不截斷。"
+  },
+  "rule": "接受第七輪：線 2 相對凍結 A 的改善已在獨立資料重現。那次結果不是對正式 v2 的勝利，也不能用來湊這輪的場數。A 不是正式 v2。\n候選仍是 training/white-sword-nn/weights/round6/line-2/actor-after-96.json，版本 nn-ppo-actor-r6-l2，更新 27546。正式 v2 只讀 training/white-sword-ai/weights/v2-capped.json，選牌是既有 blend，scale 6、Hard cap 7。不載入其他實驗權重。候選維持無探索貪心，可選全部合法動作，不套用 Hard cap 7。\n兩種比較分開。直接對戰是候選白劍對正式 v2 白劍，每個種子四種座位與先後手。共同對手是候選和正式 v2 各自對上白劍、我拒絕、戀露，對手都是既有 Hard Search 2，nodes 48，不另加時鐘。兩種比較不合併成一個對 v2 勝率。\n我拒絕和戀露不走 v2 分支。v2 分支只呼叫白劍專屬模型。對手接在實驗 runner 的 hard 座位，呼叫既有 chooseStrengthenedHardAction 與 HARD_OPTIONS。不改搜尋演算法、難度或 node 預算。\n草案是 32 個新種子，每個種子 4 場直接對戰加 24 場共同對手，共 896 場。測速種子 193400 先跑完全部 28 種條件，不計入正式結果，之後也不得重用。正式種子是 193500–193531。不用既有訓練、開發、測試、確認或保留種子。\n測速後用 1.4 的安全係數檢查 20 分鐘牆鐘。放不下就鎖定順序前綴。開打前保存種子、逐場排程、模型與程式雜湊、搜尋與逾時、並行、樣本數和判準。開打後不因勝率增減場次，不換種子，不挑有利前綴。\n直接對戰先把每個種子的四場平均，再對原始種子估計。臨界值沿用 tCritical：樣本數大於 30 回傳 1.96，否則用既有表。標準誤用 n-1。判斷區間不截斷。只有勝率區間下限高於 50%，才稱為有優於正式 v2 的直接對戰證據。\n共同對手在同種子、同牌型、同座位與先後手下計算候選得分減正式 v2 得分。三種牌型事前等權，再對原始種子估計平均差。下限高於 0 才稱為共同對手上優於正式 v2。上限低於 0 是弱於正式 v2。區間包含 0 是證據不足。不把 28 場或三種牌型當成互相獨立的樣本。同一種子在策略分歧後的抽牌與血區不視為完全相同。\n各牌型、先後手和座位只作描述，不取代主要結果。區間過寬就回答證據不足，不事後追加場次。\n共同對手裡候選對 Hard Search 2 的對局另交既有 judgeChampion。門檻不放寬：至少 200 場完成、總勝率至少 60%、Wilson 下限高於 50%、至少三種牌型、先後手都有、非鏡像下限高於 50%、以及既有異常限制。另外附上原始種子層級區間，不拿它取代 Wilson 判斷。通過這個門檻也不等於直接打贏正式 v2。\n執行前後核對候選、v2、Hard Search 2、選牌、規則與實驗 runner 的雜湊，並保存工作區狀態字串。預期新增的只有這輪的計畫和報告。權重或受保護程式變動使評估失效。\n鎖定場數沒有全部正常結束，或出現非法、洩漏、引擎錯誤、死循環、模型回退、逾時或對手回退，整輪記為執行無效。不刪除不利或異常結果，也不用其餘場次宣布過關。\n執行完整時，既有晉級門檻的點估計未達 60%，或總勝率、非鏡像的 Wilson 上限低於 50%，記為棋力不足。直接對戰區間上限低於 50%，或共同對手配對差上限低於 0，各自記為該比較弱於正式 v2。只有場數、覆蓋或區間寬度擋下門檻，而且點估計沒有整段落在門檻外時，記為證據不足。下一步不得是把這次確認加長到顯著。",
+  "resourceGap": "牆鐘只容納前 9 個種子，已在開打前鎖定。"
+}

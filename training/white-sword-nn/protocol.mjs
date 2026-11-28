@@ -7,7 +7,8 @@ import {
  PPO_CRITIC_LR,PPO_ENTROPY,PPO_EPOCHS,PPO_KL_LIMIT,PPO_MAX_BATCHES,REPLAY_FRACTION,
  ROUND4_CONFIRM_CAP,ROUND4_SHUFFLE_SEED,ROUND5_DEV_COUNT,ROUND5_DEV_START,ROUND6_BENCH_SHUFFLE,
  ROUND6_CRITIC_SEEDS,ROUND6_DEV_COUNT,ROUND6_DEV_START,ROUND6_LINES,ROUND6_SHUFFLE_SEEDS,
- ROUND6_TRAIN_STARTS,ROUND7_CONFIRM_COUNT,ROUND7_FRESH_COUNT,ROUND7_FRESH_START,SURPASS_SEEDS
+ ROUND6_TRAIN_STARTS,ROUND7_CONFIRM_COUNT,ROUND7_FRESH_COUNT,ROUND7_FRESH_START,
+ ROUND8_BENCH_SEED,ROUND8_EVAL_COUNT,ROUND8_EVAL_START,ROUND8_SEED_CAP,SURPASS_SEEDS
 } from './constants.mjs';
 
 export const RESERVED=Object.freeze([
@@ -59,6 +60,15 @@ export const ROUND6_DEV_SEEDS=Object.freeze(range(ROUND6_DEV_START,ROUND6_DEV_CO
 // first. 193000–193243 has not been trained, scored, or reserved before.
 export const ROUND7_FRESH_SEEDS=Object.freeze(range(ROUND7_FRESH_START,ROUND7_FRESH_COUNT));
 export const ROUND7_CONFIRM_SEEDS=Object.freeze([...ROUND4_CONFIRM_SEEDS,...ROUND7_FRESH_SEEDS]);
+// Round 8 times one new seed, then evaluates a later block. The timing seed
+// is not an official result and cannot be reused as an evaluation seed.
+export const ROUND8_DECKS=Object.freeze([
+ Object.freeze({id:'white-sword',name:'白劍'}),
+ Object.freeze({id:'reject-blue',name:'我拒絕'}),
+ Object.freeze({id:'renruki',name:'戀露'})
+]);
+export const ROUND8_BENCH_SEEDS=Object.freeze([ROUND8_BENCH_SEED]);
+export const ROUND8_EVAL_SEEDS=Object.freeze(range(ROUND8_EVAL_START,ROUND8_EVAL_COUNT));
 export const ROUND6_BLOCKED_SEEDS=Object.freeze([
  ROUND4_SHUFFLE_SEED,...ROUND6_CRITIC_SEEDS,...ROUND6_SHUFFLE_SEEDS,ROUND6_BENCH_SHUFFLE
 ]);
@@ -134,6 +144,45 @@ export const ROUND7_RULE=[
  '即使下限高於 50%，也不表示 PPO 每次訓練都會變強，不表示已能穩定自主成長，不表示已超越正式 v2，也不表示已達晉級或部署標準。通過之後才值得規劃對正式 v2 與多種對手牌型的驗證。這一輪不做那項驗證。',
  '任一場沒有正常終局，或鎖定的場數沒有全部完成，整份確認記為未完成。不用其餘場次宣布過關，也不換種子重試。'
 ].join('\n');
+export const ROUND8_RULE=[
+ '接受第七輪：線 2 相對凍結 A 的改善已在獨立資料重現。那次結果不是對正式 v2 的勝利，也不能用來湊這輪的場數。A 不是正式 v2。',
+ '候選仍是 training/white-sword-nn/weights/round6/line-2/actor-after-96.json，版本 nn-ppo-actor-r6-l2，更新 27546。正式 v2 只讀 training/white-sword-ai/weights/v2-capped.json，選牌是既有 blend，scale 6、Hard cap 7。不載入其他實驗權重。候選維持無探索貪心，可選全部合法動作，不套用 Hard cap 7。',
+ '兩種比較分開。直接對戰是候選白劍對正式 v2 白劍，每個種子四種座位與先後手。共同對手是候選和正式 v2 各自對上白劍、我拒絕、戀露，對手都是既有 Hard Search 2，nodes 48，不另加時鐘。兩種比較不合併成一個對 v2 勝率。',
+ '我拒絕和戀露不走 v2 分支。v2 分支只呼叫白劍專屬模型。對手接在實驗 runner 的 hard 座位，呼叫既有 chooseStrengthenedHardAction 與 HARD_OPTIONS。不改搜尋演算法、難度或 node 預算。',
+ '草案是 '+ROUND8_SEED_CAP+' 個新種子，每個種子 4 場直接對戰加 24 場共同對手，共 '+(ROUND8_SEED_CAP*28)+' 場。測速種子 '+ROUND8_BENCH_SEED+' 先跑完全部 28 種條件，不計入正式結果，之後也不得重用。正式種子是 '+ROUND8_EVAL_START+'–'+(ROUND8_EVAL_START+ROUND8_EVAL_COUNT-1)+'。不用既有訓練、開發、測試、確認或保留種子。',
+ '測速後用 1.4 的安全係數檢查 20 分鐘牆鐘。放不下就鎖定順序前綴。開打前保存種子、逐場排程、模型與程式雜湊、搜尋與逾時、並行、樣本數和判準。開打後不因勝率增減場次，不換種子，不挑有利前綴。',
+ '直接對戰先把每個種子的四場平均，再對原始種子估計。臨界值沿用 tCritical：樣本數大於 30 回傳 1.96，否則用既有表。標準誤用 n-1。判斷區間不截斷。只有勝率區間下限高於 50%，才稱為有優於正式 v2 的直接對戰證據。',
+ '共同對手在同種子、同牌型、同座位與先後手下計算候選得分減正式 v2 得分。三種牌型事前等權，再對原始種子估計平均差。下限高於 0 才稱為共同對手上優於正式 v2。上限低於 0 是弱於正式 v2。區間包含 0 是證據不足。不把 28 場或三種牌型當成互相獨立的樣本。同一種子在策略分歧後的抽牌與血區不視為完全相同。',
+ '各牌型、先後手和座位只作描述，不取代主要結果。區間過寬就回答證據不足，不事後追加場次。',
+ '共同對手裡候選對 Hard Search 2 的對局另交既有 judgeChampion。門檻不放寬：至少 200 場完成、總勝率至少 60%、Wilson 下限高於 50%、至少三種牌型、先後手都有、非鏡像下限高於 50%、以及既有異常限制。另外附上原始種子層級區間，不拿它取代 Wilson 判斷。通過這個門檻也不等於直接打贏正式 v2。',
+ '執行前後核對候選、v2、Hard Search 2、選牌、規則與實驗 runner 的雜湊，並保存工作區狀態字串。預期新增的只有這輪的計畫和報告。權重或受保護程式變動使評估失效。',
+ '鎖定場數沒有全部正常結束，或出現非法、洩漏、引擎錯誤、死循環、模型回退、逾時或對手回退，整輪記為執行無效。不刪除不利或異常結果，也不用其餘場次宣布過關。',
+ '執行完整時，既有晉級門檻的點估計未達 60%，或總勝率、非鏡像的 Wilson 上限低於 50%，記為棋力不足。直接對戰區間上限低於 50%，或共同對手配對差上限低於 0，各自記為該比較弱於正式 v2。只有場數、覆蓋或區間寬度擋下門檻，而且點估計沒有整段落在門檻外時，記為證據不足。下一步不得是把這次確認加長到顯著。'
+].join('\n');
+export function round8Schedule(seeds){
+ const rows=[];
+ for(const seed of seeds){
+  for(const cell of EVAL_CELLS){
+   rows.push({
+    seed,comparison:'direct',model:'candidate',opponent:'v2',deck:'white-sword',
+    learnerSeat:cell.learnerSeat,first:cell.first
+   });
+  }
+  for(const deck of ROUND8_DECKS){
+   for(const cell of EVAL_CELLS){
+    rows.push({
+     seed,comparison:'shared',model:'candidate',opponent:'hard',deck:deck.id,
+     learnerSeat:cell.learnerSeat,first:cell.first
+    });
+    rows.push({
+     seed,comparison:'shared',model:'v2',opponent:'hard',deck:deck.id,
+     learnerSeat:cell.learnerSeat,first:cell.first
+    });
+   }
+  }
+ }
+ return Object.freeze(rows);
+}
 
 export function reservedHit(seed){
  return RESERVED.find(([low,high])=>seed>=low&&seed<=high)||null;
@@ -189,13 +238,23 @@ export function assertExperimentSeed(seed,role){
  if(role==='round5-dev'&&round7Fresh)throw Error('A round-7 fresh seed cannot be round-5 development');
  if(role==='round4-confirm'&&round7Fresh)throw Error('A round-7 fresh seed is not the old confirmation block');
  if(role==='round6-train'&&round7Fresh)throw Error('A round-7 fresh seed cannot enter round-6 training');
+ const round8Eval=ROUND8_EVAL_SEEDS.includes(seed);
+ const round8Bench=seed===ROUND8_BENCH_SEED;
+ if(role==='round8-bench'&&!round8Bench)throw Error('Round-8 timing seed is fixed');
+ if(role==='round8-eval'&&!round8Eval)throw Error('Round-8 evaluation seed is outside the new block');
+ if(role==='round8-eval'&&(round8Bench||round7||round6Train||ROUND6_DEV_SEEDS.includes(seed)||ROUND5_DEV_SEEDS.includes(seed)||ROUND4_SELF_SEEDS.includes(seed)||ROUND4_DEV_SEEDS.includes(seed)||TEST_SEEDS.includes(seed))){
+  throw Error('A used or timing seed cannot enter round 8');
+ }
+ if(role==='round7-confirm'&&(round8Eval||round8Bench))throw Error('A round-8 seed cannot confirm round 7');
+ if(role==='round8-bench'&&round8Eval)throw Error('The timing seed is not an evaluation seed');
  return seed;
 }
 export function allExperimentSeeds(){
  return [
   BENCH_NN_SEED,BENCH_V2_SEED,...IMITATE_SEEDS,...SELF_SEEDS,...DEV_SEEDS,...TEST_SEEDS,
   ...ROUND3_DIAG_SEEDS,...ROUND3_CONFIRM_SEEDS,...ROUND4_SELF_SEEDS,...ROUND4_CONFIRM_SEEDS,
-  ...ROUND5_DEV_SEEDS,...ROUND6_TRAIN_SEEDS.flat(),...ROUND6_DEV_SEEDS,...ROUND7_FRESH_SEEDS
+  ...ROUND5_DEV_SEEDS,...ROUND6_TRAIN_SEEDS.flat(),...ROUND6_DEV_SEEDS,...ROUND7_FRESH_SEEDS,
+  ...ROUND8_BENCH_SEEDS,...ROUND8_EVAL_SEEDS
  ];
 }
 export function holdoutSplit(seeds){

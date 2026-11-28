@@ -116,3 +116,9 @@ node scripts/white-sword-nn-round6.mjs trial
 ```bash
 node scripts/white-sword-nn-round7.mjs trial
 ```
+
+第八輪接受第七輪：線 2 對 A 的改善已在獨立資料重現。這一輪只拿同一個凍結終點對正式 v2，以及白劍、我拒絕、戀露的 Hard Search 2。計畫在開打前寫進 `docs/white-sword-ai/nn-round8-plan.json`。結果寫在 `docs/white-sword-ai/NN-ROUND8.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round8.mjs trial
+```
