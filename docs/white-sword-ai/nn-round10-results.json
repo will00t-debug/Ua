@@ -1,0 +1,850 @@
+{
+  "createdAt": "2026-11-26T00:58:11.612Z",
+  "createdAtText": "2026/11/26 08:58（台北時間）",
+  "verdict": "本輪局部學習修正未成立",
+  "passed": false,
+  "recommend": false,
+  "answers": {
+    "q1": "有。開發案例從「不阻擋」變成「阻擋 1-12」，這顆分數比不阻擋高 0.26。零更新副本的分數和動作與原 B 相同，原檔雜湊在更新前後都是 `a8163127…7da236`。推論仍對全部合法動作打分，沒有另加阻擋遮罩。兩張公開 BP 4000 的 `BLC-2-067` 特徵向量相同，網路給 1-12 和 1-15 的分數一樣；1-12 是既有的同分規則選出來的。計畫在更新前已把這兩張的公開快照記成等效。權重真正拉開的是「擋」和「不擋」。",
+    "q2": "不能。保留組有 27 個不同母局面、36 筆阻擋，其中 18 個母局面在更新前就沒有對上教師。終點沒有把任何一筆改成該局面事前記下的教師動作。保留阻擋的教師精確一致從 44.4%（16/36）降到 25.0%（9/36）：7 筆原本一致的選擇被改掉，0 筆新對上教師。另外 4 筆從「不擋」改成擋另一張卡，卡號和教師指定的不同，事先也沒有證明效果相同，所以不算遷移。",
+    "q3": "六筆三方都不擋的局面被改成阻擋。種子 193500、座位 1、後手：第 161 步和第 204 步，攻擊者公開 BP 4000，終點改擋 BP 同為 4000 的 1-13，平手時阻擋者離場；第 165 步攻擊者 BP 2000、生命 3，終點改擋 BP 4000 的 1-13；第 207 步生命 1、攻擊者 `BLC-1-085` BP 4000、impact 0，A、B 和 v2 都不擋，終點改擋同樣 BP 4000 的 1-13。種子 193502、座位 1、後手，是開發案例同一場裡的後續攻擊、不同母局面：第 111 步生命 3、攻擊者 BP 4000，終點改擋 1-12；第 115 步生命 2、攻擊者 impact 1、BP 4000，終點也改擋 1-12。第 137 步是另一場，B 與教師擋了 BP 同為 2000 的 0-2，A 原本不擋，終點改為不擋；生命 4，不在事先寫死的致死檢查裡。兩筆已保持的較高 BP 阻擋（第 77 步、第 87 步）沒有被改。一般示範裡，教師原本不擋的 188601 第 117 步被改成擋 1-13，教師拒絕的突襲離場 188603 第 205 步被改成支付 1-14。事先定義的明顯錯誤是 0 筆：那條只計算「在公開傷害不少於生命且 impact 為 0 時，放棄已保持的較高 BP 阻擋」。上面這些是被改掉的一致選擇，要單獨看，不能因為計數是 0 就說沒有犧牲。",
+    "q4": "這一輪只看到一個局面的教師行為被權重改動。保留組的教師一致下降。對局勝率、自主學習和超越 v2 都還沒有測量。損失從 1.337 降到 1.219，以及一般示範的精確一致從 50.3% 升到 51.7%，都不是棋力。",
+    "q5": "不值得。遷移沒有成立，而且若干原本三方都不擋的局面被改成阻擋。一般示範的精確一致率沒有跌過事先寫下的 0.05；不送的原因是這次局部修正沒有成立。"
+  },
+  "hashes": {
+    "before": "a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236",
+    "after": "a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236",
+    "zero": "11b65ccf494c1fb6be2842b2010df3bc89e0940f691712dc04c52ecbbdd2bfe3",
+    "endpoint": "97d593fb97c8f42f01981d9fa7da2a63c69285e3371ffdc248584b887c71aaa2"
+  },
+  "updates": {
+    "zero": 27546,
+    "endpoint": 27552
+  },
+  "distance": 0.13051743319095932,
+  "zeroMatchesB": true,
+  "scoreDivergences": 0,
+  "dev": {
+    "notes": [
+      "教師是凍結 v2 在這個局面選的動作，只稱為教師行為，不稱為已證明的最優。",
+      "最後一張生命的觸發沒有讀，也沒有用來標註。不阻擋會把未阻擋的生命傷害排進佇列；這不是已被證明的敗局。",
+      "阻擋會先把該角色轉為 REST。finishBlockedBattle 以攻擊者有效 BP 是否大於等於阻擋者有效 BP 決定攻擊者獲勝。這裡的 BP 是公開 bp()。",
+      "這個教師索引只寫給這一個局面。傷害不少於生命、impact 為 0、存在更高 BP 阻擋者，沒有被寫成其他局面的標籤。生命多於傷害也沒有被寫成必須不擋。",
+      "攻擊者 BLC-2-069 的印刷效果是登場時的棄牌與回收，沒有戰鬥修正。公開 impact 為 0。",
+      "合法阻擋 1-12 BLC-2-067 公開 BP 4000，突襲深度 0，框內效果未啟動。",
+      "合法阻擋 1-40 BLC-3-008 公開 BP 3000，突襲深度 0，框內效果未啟動。",
+      "合法阻擋 1-15 BLC-2-067 公開 BP 4000，突襲深度 0，框內效果未啟動。",
+      "公開快照相同、只有 uid 不同的阻擋索引：3",
+      "公開 BP 較高但不在合法清單：1-38 BLC-1-085 BP 4000。"
+    ],
+    "allowedUids": [
+      "1-12",
+      "1-15"
+    ],
+    "collisions": 1,
+    "before": {
+      "type": "chooseBlock",
+      "mode": null,
+      "line": null,
+      "uid": null,
+      "baseUid": null,
+      "targetUid": null,
+      "slot": null,
+      "cardId": null,
+      "index": null
+    },
+    "after": {
+      "type": "chooseBlock",
+      "mode": null,
+      "line": null,
+      "uid": "1-12",
+      "baseUid": null,
+      "targetUid": null,
+      "slot": null,
+      "cardId": null,
+      "index": null
+    },
+    "teacher": {
+      "type": "chooseBlock",
+      "mode": null,
+      "line": null,
+      "uid": "1-12",
+      "baseUid": null,
+      "targetUid": null,
+      "slot": null,
+      "cardId": null,
+      "index": null
+    },
+    "margin": 0.2632970745356573
+  },
+  "plan": {
+    "lr": 0.001,
+    "smooth": 0.05,
+    "replayFraction": 0.5,
+    "drawSeed": 188543,
+    "steps": [
+      {
+        "kind": "train",
+        "id": "round8-loss-replay:193502:1:0:118",
+        "epoch": 0
+      },
+      {
+        "kind": "replay",
+        "id": "imitate-prefix:188603:0:1:81",
+        "epoch": 0
+      },
+      {
+        "kind": "train",
+        "id": "round8-loss-replay:193502:1:0:118",
+        "epoch": 1
+      },
+      {
+        "kind": "replay",
+        "id": "imitate-prefix:188602:0:0:56",
+        "epoch": 1
+      },
+      {
+        "kind": "train",
+        "id": "round8-loss-replay:193502:1:0:118",
+        "epoch": 2
+      },
+      {
+        "kind": "replay",
+        "id": "imitate-prefix:188603:0:1:7",
+        "epoch": 2
+      }
+    ],
+    "criteria": [
+      "原案例改善：零更新副本在開發案例上的動作與 B 相同，終點對事前允許的教師動作分數嚴格高於其餘未證明等效的合法動作。",
+      "至少一個未進入更新、且與開發案例不同母局面的保留阻擋，終點改為該局面事前記下的教師動作。",
+      "保護案例沒有新增已核對的明顯錯誤。非法動作計為錯誤。已保持的較高 BP 阻擋，在公開傷害不少於生命且 impact 為 0 時，終點不得改成不擋，也不得改成公開 BP 不高於攻擊者的阻擋。三方都選擇不擋的局面只揭露。",
+      "一般示範的逐筆動作變化完整寫進結果。一致率下降不單獨構成學習失敗。",
+      "四條都成立只記為局部有教師修正。教師一致、損失下降和權重變動都不記為棋力提升。",
+      "另行登記對局評估，只在四條都成立且一般示範的精確一致率下降不超過 0.05 時建議。否則不送。"
+    ]
+  },
+  "splitText": "訓練 1 筆，是開發案例本身。同母局面、不計入遷移 0 筆。保留阻擋 36 筆，27 個母局面，種子 193501、193502、193500。其中原 B 尚未對上教師的母局面 18 個。八場敗局裡的其他決策 327 筆。原模仿示範 503 筆。三方都不擋 11 筆。B 與教師相同、且公開 BP 高於攻擊者的阻擋 2 筆。人工擺出的局面 0 筆。每一筆都來自引擎重播的合法動作。",
+  "games": {
+    "losses": [
+      {
+        "seed": 193501,
+        "learnerSeat": 0,
+        "first": 0,
+        "matched": true
+      },
+      {
+        "seed": 193502,
+        "learnerSeat": 0,
+        "first": 0,
+        "matched": true
+      },
+      {
+        "seed": 193501,
+        "learnerSeat": 0,
+        "first": 1,
+        "matched": true
+      },
+      {
+        "seed": 193502,
+        "learnerSeat": 0,
+        "first": 1,
+        "matched": true
+      },
+      {
+        "seed": 193500,
+        "learnerSeat": 1,
+        "first": 0,
+        "matched": true
+      },
+      {
+        "seed": 193502,
+        "learnerSeat": 1,
+        "first": 0,
+        "matched": true
+      },
+      {
+        "seed": 193500,
+        "learnerSeat": 1,
+        "first": 1,
+        "matched": true
+      },
+      {
+        "seed": 193501,
+        "learnerSeat": 1,
+        "first": 1,
+        "matched": true
+      }
+    ],
+    "demos": [
+      {
+        "seed": 188600,
+        "first": 0,
+        "clean": true,
+        "steps": 130,
+        "rows": 89
+      },
+      {
+        "seed": 188601,
+        "first": 1,
+        "clean": true,
+        "steps": 155,
+        "rows": 122
+      },
+      {
+        "seed": 188602,
+        "first": 0,
+        "clean": true,
+        "steps": 174,
+        "rows": 132
+      },
+      {
+        "seed": 188603,
+        "first": 1,
+        "clean": true,
+        "steps": 206,
+        "rows": 160
+      }
+    ]
+  },
+  "agreement": [
+    {
+      "role": "train",
+      "used": 1,
+      "before": 0,
+      "after": 1,
+      "beforeUid": 0,
+      "afterUid": 0
+    },
+    {
+      "role": "sibling",
+      "used": 0,
+      "before": null,
+      "after": null,
+      "beforeUid": null,
+      "afterUid": null
+    },
+    {
+      "role": "holdout",
+      "used": 36,
+      "before": 0.4444444444444444,
+      "after": 0.25,
+      "beforeUid": 0,
+      "afterUid": 0
+    },
+    {
+      "role": "context",
+      "used": 327,
+      "before": 0.47706422018348627,
+      "after": 0.4923547400611621,
+      "beforeUid": 0.0030581039755351682,
+      "afterUid": 0.0061162079510703364
+    },
+    {
+      "role": "demo",
+      "used": 503,
+      "before": 0.5029821073558648,
+      "after": 0.5168986083499006,
+      "beforeUid": 0.0019880715705765406,
+      "afterUid": 0.0019880715705765406
+    }
+  ],
+  "holdout": [
+    {
+      "parent": "193501:0:1:1-37",
+      "step": 118,
+      "life": 4,
+      "damage": 1,
+      "teacher": "阻擋 0-0",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193501:0:1:1-39",
+      "step": 121,
+      "life": 3,
+      "damage": 1,
+      "teacher": "阻擋 0-0",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193501:0:1:1-15",
+      "step": 150,
+      "life": 2,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "阻擋 0-39",
+      "after": "阻擋 0-39",
+      "improved": false
+    },
+    {
+      "parent": "193501:0:1:1-37",
+      "step": 154,
+      "life": 1,
+      "damage": 1,
+      "teacher": "阻擋 0-0",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-36",
+      "step": 52,
+      "life": 7,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "阻擋 0-2",
+      "after": "阻擋 0-2",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-28",
+      "step": 77,
+      "life": 7,
+      "damage": 1,
+      "teacher": "阻擋 0-37",
+      "before": "阻擋 0-37",
+      "after": "阻擋 0-37",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-24",
+      "step": 99,
+      "life": 7,
+      "damage": 1,
+      "teacher": "阻擋 0-31",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-0",
+      "step": 103,
+      "life": 6,
+      "damage": 1,
+      "teacher": "阻擋 0-37",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-1",
+      "step": 107,
+      "life": 5,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-1",
+      "step": 137,
+      "life": 4,
+      "damage": 1,
+      "teacher": "阻擋 0-2",
+      "before": "阻擋 0-2",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-36",
+      "step": 139,
+      "life": 4,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-37",
+      "step": 143,
+      "life": 3,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-24",
+      "step": 147,
+      "life": 2,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193502:0:1:1-1",
+      "step": 170,
+      "life": 1,
+      "damage": 1,
+      "teacher": "阻擋 0-9",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:0:0-26",
+      "step": 108,
+      "life": 7,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "阻擋 1-41",
+      "after": "阻擋 1-41",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:0:0-19",
+      "step": 124,
+      "life": 7,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "阻擋 1-13",
+      "after": "阻擋 1-13",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:0:0-40",
+      "step": 159,
+      "life": 4,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "阻擋 1-0",
+      "after": "阻擋 1-0",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:0:0-26",
+      "step": 161,
+      "life": 4,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:0:0-2",
+      "step": 165,
+      "life": 3,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:0:0-4",
+      "step": 204,
+      "life": 2,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:0:0-38",
+      "step": 207,
+      "life": 1,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "improved": false
+    },
+    {
+      "parent": "193502:1:0:0-30",
+      "step": 109,
+      "life": 3,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "阻擋 1-38",
+      "after": "阻擋 1-38",
+      "improved": false
+    },
+    {
+      "parent": "193502:1:0:0-37",
+      "step": 111,
+      "life": 3,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "阻擋 1-12",
+      "improved": false
+    },
+    {
+      "parent": "193502:1:0:0-12",
+      "step": 115,
+      "life": 2,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "阻擋 1-12",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-13",
+      "step": 56,
+      "life": 7,
+      "damage": 2,
+      "teacher": "不阻擋",
+      "before": "阻擋 1-29",
+      "after": "阻擋 1-29",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-36",
+      "step": 83,
+      "life": 6,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "不阻擋",
+      "after": "不阻擋",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-33",
+      "step": 87,
+      "life": 5,
+      "damage": 1,
+      "teacher": "阻擋 1-3",
+      "before": "阻擋 1-3",
+      "after": "阻擋 1-3",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-21",
+      "step": 105,
+      "life": 5,
+      "damage": 1,
+      "teacher": "不阻擋",
+      "before": "阻擋 1-36",
+      "after": "阻擋 1-36",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-15",
+      "step": 132,
+      "life": 5,
+      "damage": 2,
+      "teacher": "不阻擋",
+      "before": "阻擋 1-37",
+      "after": "阻擋 1-37",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-33",
+      "step": 141,
+      "life": 4,
+      "damage": 1,
+      "teacher": "阻擋 1-25",
+      "before": "阻擋 1-0",
+      "after": "阻擋 1-0",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-36",
+      "step": 143,
+      "life": 4,
+      "damage": 1,
+      "teacher": "阻擋 1-3",
+      "before": "阻擋 1-3",
+      "after": "阻擋 1-3",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-2",
+      "step": 145,
+      "life": 4,
+      "damage": 1,
+      "teacher": "阻擋 1-25",
+      "before": "不阻擋",
+      "after": "阻擋 1-15",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-40",
+      "step": 173,
+      "life": 3,
+      "damage": 1,
+      "teacher": "阻擋 1-0",
+      "before": "阻擋 1-0",
+      "after": "阻擋 1-0",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-28",
+      "step": 175,
+      "life": 3,
+      "damage": 1,
+      "teacher": "阻擋 1-25",
+      "before": "不阻擋",
+      "after": "阻擋 1-15",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-2",
+      "step": 179,
+      "life": 2,
+      "damage": 1,
+      "teacher": "阻擋 1-25",
+      "before": "不阻擋",
+      "after": "阻擋 1-15",
+      "improved": false
+    },
+    {
+      "parent": "193500:1:1:0-37",
+      "step": 200,
+      "life": 1,
+      "damage": 1,
+      "teacher": "阻擋 1-28",
+      "before": "不阻擋",
+      "after": "阻擋 1-15",
+      "improved": false
+    }
+  ],
+  "sacrificed": [
+    {
+      "id": "round8-loss-replay:193500:1:0:161",
+      "step": 161,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "agreed-pass"
+    },
+    {
+      "id": "round8-loss-replay:193500:1:0:165",
+      "step": 165,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "agreed-pass"
+    },
+    {
+      "id": "round8-loss-replay:193500:1:0:204",
+      "step": 204,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "agreed-pass"
+    },
+    {
+      "id": "round8-loss-replay:193500:1:0:207",
+      "step": 207,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "agreed-pass"
+    },
+    {
+      "id": "round8-loss-replay:193502:1:0:111",
+      "step": 111,
+      "before": "不阻擋",
+      "after": "阻擋 1-12",
+      "kind": "agreed-pass"
+    },
+    {
+      "id": "round8-loss-replay:193502:1:0:115",
+      "step": 115,
+      "before": "不阻擋",
+      "after": "阻擋 1-12",
+      "kind": "agreed-pass"
+    },
+    {
+      "id": "imitate-prefix:188601:1:1:117",
+      "step": 117,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "demo-teacher"
+    },
+    {
+      "id": "imitate-prefix:188603:1:1:205",
+      "step": 205,
+      "before": "chooseRaidLeave",
+      "after": "chooseRaidLeave 1-14",
+      "kind": "demo-teacher"
+    }
+  ],
+  "demoChanges": [
+    {
+      "id": "imitate-prefix:188600:1:0:99",
+      "step": 99,
+      "before": "play 1-35",
+      "after": "play 1-35",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188600:0:0:113",
+      "step": 113,
+      "before": "play 0-29",
+      "after": "play 0-29",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188601:1:1:48",
+      "step": 48,
+      "before": "chooseTrigger",
+      "after": "chooseTrigger 1-1",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188601:1:1:51",
+      "step": 51,
+      "before": "extraDraw",
+      "after": "next",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188601:1:1:78",
+      "step": 78,
+      "before": "阻擋 1-1",
+      "after": "阻擋 1-13",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188601:1:1:110",
+      "step": 110,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188601:1:1:115",
+      "step": 115,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188601:1:1:117",
+      "step": 117,
+      "before": "不阻擋",
+      "after": "阻擋 1-13",
+      "kind": "demo-teacher"
+    },
+    {
+      "id": "imitate-prefix:188602:1:0:41",
+      "step": 41,
+      "before": "play 1-30",
+      "after": "play 1-30",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188602:0:0:58",
+      "step": 58,
+      "before": "event 0-46",
+      "after": "play 0-1",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188602:0:0:80",
+      "step": 80,
+      "before": "event 0-43",
+      "after": "play 0-1",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188602:1:0:95",
+      "step": 95,
+      "before": "play 1-4",
+      "after": "play 1-4",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188602:0:0:100",
+      "step": 100,
+      "before": "阻擋 0-37",
+      "after": "不阻擋",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188602:0:0:108",
+      "step": 108,
+      "before": "play 0-38",
+      "after": "event 0-46",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188602:1:0:160",
+      "step": 160,
+      "before": "event 1-48",
+      "after": "play 1-13",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188603:0:1:81",
+      "step": 81,
+      "before": "阻擋 0-39",
+      "after": "不阻擋",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188603:0:1:127",
+      "step": 127,
+      "before": "move 0-37",
+      "after": "move 0-37",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188603:1:1:197",
+      "step": 197,
+      "before": "play 1-38",
+      "after": "play 1-20",
+      "kind": "demo"
+    },
+    {
+      "id": "imitate-prefix:188603:1:1:205",
+      "step": 205,
+      "before": "chooseRaidLeave",
+      "after": "chooseRaidLeave 1-14",
+      "kind": "demo-teacher"
+    }
+  ],
+  "trainLoss": {
+    "before": 1.33676711555961,
+    "after": 1.2189855002140502
+  },
+  "updateLog": [
+    {
+      "kind": "train",
+      "id": "round8-loss-replay:193502:1:0:118",
+      "epoch": 0,
+      "loss": 1.33676711555961
+    },
+    {
+      "kind": "replay",
+      "id": "imitate-prefix:188603:0:1:81",
+      "epoch": 0,
+      "loss": 0.9125870440979159
+    },
+    {
+      "kind": "train",
+      "id": "round8-loss-replay:193502:1:0:118",
+      "epoch": 1,
+      "loss": 1.2903470233588625
+    },
+    {
+      "kind": "replay",
+      "id": "imitate-prefix:188602:0:0:56",
+      "epoch": 1,
+      "loss": 3.413683444769258
+    },
+    {
+      "kind": "train",
+      "id": "round8-loss-replay:193502:1:0:118",
+      "epoch": 2,
+      "loss": 1.2535365437456476
+    },
+    {
+      "kind": "replay",
+      "id": "imitate-prefix:188603:0:1:7",
+      "epoch": 2,
+      "loss": 0.7141303971173193
+    }
+  ],
+  "transferParents": [],
+  "readOnlyRescore": "2026-11-26T01:01:51Z 只重讀已存權重，補上一般示範的線路與格位。沒有 adamStep。"
+}
