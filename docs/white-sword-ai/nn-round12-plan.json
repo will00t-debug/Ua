@@ -1,0 +1,72 @@
+{
+  "createdAt": "2026-11-26T02:19:02.448Z",
+  "createdAtText": "2026/11/26 10:19（台北時間）",
+  "writtenBeforeUpdates": true,
+  "ledgerMatched": true,
+  "distMatched": true,
+  "blockMatched": true,
+  "mismatches": [],
+  "isolated": 0,
+  "failed": 0,
+  "hashes": {
+    "train": "186e5f1279f52b8fa6709f837bab879fdda1631e8a5ef95c1d864191c6715a89",
+    "holdout": "87ff9e58547dfd37a00c4744ba52b2314efae55de57a8ab464361205eeeb3f4d",
+    "reserve": "e7e61b723099e1cf0529fcf08246f2eff0eb9bad52a1a6bfbef298cc8e8b1e05"
+  },
+  "counts": {
+    "train": 7162,
+    "holdout": 3395,
+    "reserve": 0,
+    "trainDist": {
+      "other": 2305,
+      "play": 1115,
+      "effect": 1591,
+      "attack": 978,
+      "trigger": 424,
+      "block": 749
+    }
+  },
+  "tail": {
+    "tail": 715,
+    "afterAttack": 2079,
+    "lastAttack": 5082
+  },
+  "groups": [
+    {
+      "name": "stratified",
+      "seed": 188544,
+      "order": "stratifiedEpoch"
+    },
+    {
+      "name": "shuffle",
+      "seed": 188545,
+      "order": "global-shuffle"
+    }
+  ],
+  "lr": 0.001,
+  "smooth": 0.05,
+  "epochs": 12,
+  "decay": 0.00001,
+  "fit": {
+    "passes": 48,
+    "ids": [
+      "replay-existing:188800:0:0:32",
+      "replay-existing:188800:1:0:138",
+      "replay-existing:188800:0:0:105",
+      "replay-existing:188800:0:0:109",
+      "replay-existing:188800:0:0:110",
+      "replay-existing:188800:0:0:0"
+    ]
+  },
+  "finiteDifference": {
+    "ids": [
+      "replay-existing:188800:0:0:122",
+      "replay-existing:188800:0:0:118"
+    ],
+    "eps": 0.00001,
+    "indexes": "every 200th parameter and the whole last layer"
+  },
+  "diagnostic": "all training samples",
+  "holdout": "endpoint comparison only",
+  "stopRule": "If finite differences fail, or frozen A already uses the exp or log guard, stop before either 12-epoch run."
+}

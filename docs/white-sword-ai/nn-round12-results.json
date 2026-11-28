@@ -1,0 +1,3419 @@
+{
+  "createdAt": "2026-11-26T02:26:02.792Z",
+  "createdAtText": "2026/11/26 10:26（台北時間）",
+  "verdict": "順序對照有差異",
+  "answers": {
+    "q1": "學習器、標籤和分數計算在這份資料上一致。有限差分通過，教師索引都在合法動作內，推論與訓練前向沒有選出不同動作。對數下限和 exp 截斷在初始化與第十一輪終點都沒有啟動。",
+    "q2": "可以。6 筆特徵可區分、標籤不一致的訓練樣本，在 48 輪後同批損失從 2.6686 降到 0.4438，精確一致從 0 增到 6。衝突標籤另列，沒有拿來當這個小測的失敗。",
+    "q3": "有。原順序在尾段前後，play 平均 -1.54 個百分點、block 平均 -0.19 個百分點、trigger 平均 -0.45 個百分點、effect 平均 -0.71 個百分點。攻擊尾段平均 -1.61 個百分點。第 0 輪在最後一段 other 之前，精確攻擊已從 723/978 降到 5/978，尾段再降到 0/978。多數後續輪次在尾段前已接近 0，所以攻擊的平均變化會被拉小。這仍不是把最後一段單獨當成原因。",
+    "q4": "可以改善這次的訓練損失和訓練集攻擊崩落。分層整批損失 1.4922，洗牌 1.0835。訓練集攻擊精確一致 0.0% 到 80.5%。這只比較兩組終點，沒有用保留組挑權重。",
+    "q5": "有對照支持這次順序會影響訓練損失和訓練集攻擊一致率。它只說明這組對照，不說明泛化、棋力或穩定自主成長。保留組數字不參與這個判斷。不能把原因縮成最後一段 other：第 0 輪的崩落在進入那段之前已經發生。這次沒有在最後一次 attack 更新當下再記檢查點，所以還分不開是 attack 更新本身，還是其後、尾段之前的更新先把攻擊忘掉。有對照的是整段分層順序。",
+    "verdict": "順序對照有差異",
+    "learnerOk": true,
+    "lossImproved": true,
+    "attackImproved": true
+  },
+  "ledgerMatched": true,
+  "distMatched": true,
+  "blockMatched": true,
+  "hashes": {
+    "train": "186e5f1279f52b8fa6709f837bab879fdda1631e8a5ef95c1d864191c6715a89",
+    "holdout": "87ff9e58547dfd37a00c4744ba52b2314efae55de57a8ab464361205eeeb3f4d",
+    "reserve": "e7e61b723099e1cf0529fcf08246f2eff0eb9bad52a1a6bfbef298cc8e8b1e05"
+  },
+  "distanceToRound11": 0,
+  "reproducedRound11": false,
+  "tail": {
+    "tail": 715,
+    "afterAttack": 2079,
+    "lastAttack": 5082
+  },
+  "round11Attacks": {
+    "n": 449,
+    "exact": 0,
+    "tie": 0,
+    "stop": 449,
+    "otherCharacter": 0,
+    "otherTarget": 0,
+    "unprovenCollision": 0,
+    "unprovenSameShape": 0,
+    "unprovenOther": 0,
+    "teacherNotAttack": 0,
+    "gapSum": -1294.434574148217,
+    "gapN": 449
+  },
+  "labels": {
+    "train": {
+      "invalid": 0,
+      "attackMismatch": 0,
+      "ok": true
+    },
+    "holdout": {
+      "invalid": 0,
+      "attackMismatch": 0,
+      "ok": true
+    },
+    "holdoutAttack": {
+      "invalid": 0,
+      "attackMismatch": 0,
+      "ok": true
+    }
+  },
+  "fit": {
+    "count": 6,
+    "ids": [
+      "replay-existing:188800:0:0:32",
+      "replay-existing:188800:1:0:138",
+      "replay-existing:188800:0:0:105",
+      "replay-existing:188800:0:0:109",
+      "replay-existing:188800:0:0:110",
+      "replay-existing:188800:0:0:0"
+    ],
+    "conflicts": 0,
+    "internal": 65,
+    "lossBefore": 2.6686416616526416,
+    "lossAfter": 0.44379351642609816,
+    "exactBefore": 0,
+    "exactAfter": 6,
+    "passed": true
+  },
+  "truncation": {
+    "init": {
+      "used": 10557,
+      "maxGap": 15.213633630317144,
+      "minProb": 2.3094906591369448e-7,
+      "over": 0,
+      "under": 0,
+      "inactive": true
+    },
+    "endpoint": {
+      "used": 10557,
+      "maxGap": 14.190934419783908,
+      "minProb": 2.234783493039827e-7,
+      "over": 0,
+      "under": 0,
+      "inactive": true
+    },
+    "initInactive": true,
+    "endpointInactive": true
+  },
+  "finiteDifference": {
+    "pass": true,
+    "rows": [
+      {
+        "id": "replay-existing:188800:0:0:122",
+        "kind": "attack",
+        "cosine": 1,
+        "medianRel": 1.7007433467766547e-9,
+        "maxRel": 6.164277369888795e-7,
+        "fraction": 1,
+        "checked": 235
+      },
+      {
+        "id": "replay-existing:188800:0:0:118",
+        "kind": "play",
+        "cosine": 1.0000000000000004,
+        "medianRel": 5.27633116917954e-10,
+        "maxRel": 1.3445970845988882e-8,
+        "fraction": 1,
+        "checked": 235
+      }
+    ]
+  },
+  "divergence": {
+    "init": {
+      "used": 449,
+      "greedy": 0,
+      "maxAbs": 0
+    },
+    "endpoint": {
+      "used": 449,
+      "greedy": 0,
+      "maxAbs": 0
+    },
+    "stratified": {
+      "used": 449,
+      "greedy": 0,
+      "maxAbs": 0
+    },
+    "shuffle": {
+      "used": 449,
+      "greedy": 0,
+      "maxAbs": 0
+    }
+  },
+  "initLoss": 1.325193912751991,
+  "stratified": {
+    "fullLoss": 1.4921959554389663,
+    "trainAttackRate": 0,
+    "curve": [
+      {
+        "point": "init",
+        "epoch": -1,
+        "updates": 9030,
+        "recent": {},
+        "loss": 1.325193912751991,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 539,
+            "loss": 1.9781164605585035,
+            "rate": 0.4834080717488789
+          },
+          "attack": {
+            "used": 978,
+            "exact": 723,
+            "loss": 0.7395860525052654,
+            "rate": 0.7392638036809815
+          },
+          "block": {
+            "used": 749,
+            "exact": 501,
+            "loss": 1.2006947478307515,
+            "rate": 0.6688918558077437
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 284,
+            "loss": 1.0519564690552063,
+            "rate": 0.6698113207547169
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1010,
+            "loss": 1.2175081823749534,
+            "rate": 0.6348208673790069
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1357,
+            "loss": 1.4228713071989982,
+            "rate": 0.5887201735357918
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 723,
+          "tie": 44,
+          "stop": 0,
+          "otherCharacter": 211,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3416.3760466867006,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 0,
+        "updates": 15477,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.456593334230646,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 317,
+            "loss": 2.5430571571605096,
+            "rate": 0.284304932735426
+          },
+          "attack": {
+            "used": 978,
+            "exact": 5,
+            "loss": 1.9973714869484902,
+            "rate": 0.005112474437627812
+          },
+          "block": {
+            "used": 749,
+            "exact": 382,
+            "loss": 1.1299564150829335,
+            "rate": 0.5100133511348465
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 282,
+            "loss": 0.9805686612803136,
+            "rate": 0.6650943396226415
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1094,
+            "loss": 1.1386749071592002,
+            "rate": 0.6876178504085481
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1536,
+            "loss": 1.1147302259089171,
+            "rate": 0.6663774403470716
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 5,
+          "tie": 2,
+          "stop": 971,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -1534.0430497578875,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 0,
+        "updates": 16192,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.641921632049587,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 237,
+            "loss": 2.8917659085785603,
+            "rate": 0.21255605381165918
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.107294721692255,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 383,
+            "loss": 1.1247463684403312,
+            "rate": 0.5113484646194927
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 273,
+            "loss": 1.0261545928054923,
+            "rate": 0.6438679245283019
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1084,
+            "loss": 1.1663491856356383,
+            "rate": 0.6813324952859836
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1548,
+            "loss": 1.0251641523650292,
+            "rate": 0.6715835140997831
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2944.4333290377226,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 1,
+        "updates": 22639,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.627981292952573,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 81,
+            "loss": 3.5286008404387603,
+            "rate": 0.0726457399103139
+          },
+          "attack": {
+            "used": 978,
+            "exact": 105,
+            "loss": 2.2007388926077533,
+            "rate": 0.10736196319018405
+          },
+          "block": {
+            "used": 749,
+            "exact": 505,
+            "loss": 0.9154178410907227,
+            "rate": 0.6742323097463284
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 266,
+            "loss": 0.9697435368593961,
+            "rate": 0.6273584905660378
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1105,
+            "loss": 1.1946407037197413,
+            "rate": 0.6945317410433689
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1511,
+            "loss": 1.117308834639154,
+            "rate": 0.6555314533622559
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 105,
+          "tie": 11,
+          "stop": 831,
+          "otherCharacter": 31,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -1764.1656522447852,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 1,
+        "updates": 23354,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.6493296373563853,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 109,
+            "loss": 2.937657989665895,
+            "rate": 0.09775784753363229
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 2.9617450289957414,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 504,
+            "loss": 0.9107521561528541,
+            "rate": 0.6728971962616822
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 273,
+            "loss": 0.9568426908377705,
+            "rate": 0.6438679245283019
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1099,
+            "loss": 1.2270075929037811,
+            "rate": 0.6907605279698303
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1551,
+            "loss": 1.128156104003259,
+            "rate": 0.672885032537961
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2773.8398008023996,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 2,
+        "updates": 29801,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.6393097616910892,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 201,
+            "loss": 3.139314624147225,
+            "rate": 0.18026905829596412
+          },
+          "attack": {
+            "used": 978,
+            "exact": 9,
+            "loss": 2.6099699312006277,
+            "rate": 0.009202453987730062
+          },
+          "block": {
+            "used": 749,
+            "exact": 537,
+            "loss": 0.9552270065505676,
+            "rate": 0.7169559412550067
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 283,
+            "loss": 1.1443180922705227,
+            "rate": 0.6674528301886793
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1132,
+            "loss": 1.1262861452277202,
+            "rate": 0.7115021998742929
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1559,
+            "loss": 1.1693158171396318,
+            "rate": 0.676355748373102
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 9,
+          "tie": 1,
+          "stop": 964,
+          "otherCharacter": 4,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2295.2610148528483,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 2,
+        "updates": 30516,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.7107321945094354,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 175,
+            "loss": 2.9035609213631934,
+            "rate": 0.15695067264573992
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.459098835696081,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 530,
+            "loss": 0.9417855410646437,
+            "rate": 0.7076101468624834
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 271,
+            "loss": 1.1163480945805002,
+            "rate": 0.6391509433962265
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1080,
+            "loss": 1.1720533717744996,
+            "rate": 0.6788183532369579
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1581,
+            "loss": 1.1229193108863407,
+            "rate": 0.6859002169197397
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3341.567888008766,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 3,
+        "updates": 36963,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.541473036635108,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 310,
+            "loss": 2.617146427660215,
+            "rate": 0.27802690582959644
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 2.9036790578148595,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 556,
+            "loss": 0.8922242174985971,
+            "rate": 0.7423230974632844
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 278,
+            "loss": 0.9410834808859685,
+            "rate": 0.6556603773584906
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1120,
+            "loss": 1.0989144418689187,
+            "rate": 0.7039597737272156
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1572,
+            "loss": 1.0700413410763991,
+            "rate": 0.6819956616052061
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2708.960960754501,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 3,
+        "updates": 37678,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.629847689254124,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 367,
+            "loss": 2.4658193720527213,
+            "rate": 0.3291479820627803
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.556799525855583,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 553,
+            "loss": 0.9224558252423979,
+            "rate": 0.7383177570093458
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 278,
+            "loss": 0.9744408394456529,
+            "rate": 0.6556603773584906
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1093,
+            "loss": 1.1692010088585711,
+            "rate": 0.6869893148962917
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1583,
+            "loss": 1.07624706298784,
+            "rate": 0.6867678958785249
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3438.4182341597934,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 4,
+        "updates": 44125,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.5533023658599507,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 222,
+            "loss": 2.7694130877558014,
+            "rate": 0.19910313901345292
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 2.881791221342162,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 541,
+            "loss": 0.9782600882024852,
+            "rate": 0.7222963951935915
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 275,
+            "loss": 0.9993773821789559,
+            "rate": 0.6485849056603774
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1126,
+            "loss": 1.0451993897205134,
+            "rate": 0.7077309868007542
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1590,
+            "loss": 1.0408239010046243,
+            "rate": 0.6898047722342733
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2696.926792801508,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 4,
+        "updates": 44840,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.6873167974631844,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 146,
+            "loss": 3.000443232252484,
+            "rate": 0.13094170403587443
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.5303648444916678,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 542,
+            "loss": 0.9468185089527297,
+            "rate": 0.7236315086782377
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 271,
+            "loss": 0.9876569636848085,
+            "rate": 0.6391509433962265
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1105,
+            "loss": 1.1100108663131594,
+            "rate": 0.6945317410433689
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1602,
+            "loss": 1.0379223329478642,
+            "rate": 0.6950108459869848
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3412.935829528805,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 5,
+        "updates": 51287,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.4912256438474871,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 254,
+            "loss": 2.7141802435139235,
+            "rate": 0.22780269058295965
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 2.4883690768301747,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 540,
+            "loss": 0.9384119629332389,
+            "rate": 0.7209612817089452
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 277,
+            "loss": 1.0300529665432854,
+            "rate": 0.6533018867924528
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1133,
+            "loss": 1.0484138797354845,
+            "rate": 0.7121307353865494
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1594,
+            "loss": 1.0466735930009863,
+            "rate": 0.6915401301518438
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2214.0750610099003,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 5,
+        "updates": 52002,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.591851750577535,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 196,
+            "loss": 2.8255867802022383,
+            "rate": 0.1757847533632287
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 2.935473605256707,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 537,
+            "loss": 0.9270660622857038,
+            "rate": 0.7169559412550067
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 273,
+            "loss": 1.101969758565814,
+            "rate": 0.6438679245283019
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1113,
+            "loss": 1.116826784716721,
+            "rate": 0.6995600251414205
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1642,
+            "loss": 1.0589764507599009,
+            "rate": 0.7123644251626898
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2752.560933726608,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 6,
+        "updates": 58449,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.6750469920108555,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 294,
+            "loss": 2.8364630048911583,
+            "rate": 0.26367713004484306
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.2828346034950373,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 523,
+            "loss": 1.1105761111637678,
+            "rate": 0.69826435246996
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 268,
+            "loss": 1.1086801646587765,
+            "rate": 0.6320754716981132
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1130,
+            "loss": 1.1132633806421115,
+            "rate": 0.71024512884978
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1624,
+            "loss": 1.1064269537663425,
+            "rate": 0.7045553145336225
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3115.4089970327464,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 6,
+        "updates": 59164,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.6420626572282597,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 255,
+            "loss": 2.8490159819200276,
+            "rate": 0.22869955156950672
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.241723202713233,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 511,
+            "loss": 1.1422486535374297,
+            "rate": 0.6822429906542056
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 266,
+            "loss": 1.094607568587227,
+            "rate": 0.6273584905660378
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1120,
+            "loss": 1.1062960898567373,
+            "rate": 0.7039597737272156
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1625,
+            "loss": 1.0124163598402658,
+            "rate": 0.7049891540130152
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3093.925582848136,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 7,
+        "updates": 65611,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.5711813255161255,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 316,
+            "loss": 2.49704504971329,
+            "rate": 0.28340807174887894
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.453762392768586,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 555,
+            "loss": 0.8670149063067113,
+            "rate": 0.7409879839786382
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 285,
+            "loss": 1.0514018205191076,
+            "rate": 0.6721698113207547
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1134,
+            "loss": 1.0455403665630438,
+            "rate": 0.7127592708988058
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1643,
+            "loss": 1.0117885218494045,
+            "rate": 0.7127982646420824
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3327.463495064711,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 7,
+        "updates": 66326,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.6632384069546267,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 156,
+            "loss": 2.6317886134975046,
+            "rate": 0.13991031390134528
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.982796638940331,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 565,
+            "loss": 0.8406485214171738,
+            "rate": 0.7543391188251002
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 279,
+            "loss": 1.0294640056845175,
+            "rate": 0.6580188679245284
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1119,
+            "loss": 1.1012772884606246,
+            "rate": 0.7033312382149591
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1620,
+            "loss": 0.9823095040273534,
+            "rate": 0.702819956616052
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3905.5724573264447,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 8,
+        "updates": 72773,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.6348409722392354,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 352,
+            "loss": 2.8028375585881684,
+            "rate": 0.31569506726457397
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.3525484624872304,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 543,
+            "loss": 1.0423399091978516,
+            "rate": 0.7249666221628839
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 285,
+            "loss": 1.1179320755948285,
+            "rate": 0.6721698113207547
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1131,
+            "loss": 1.0618083050714302,
+            "rate": 0.7108736643620365
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1599,
+            "loss": 1.0241743876915408,
+            "rate": 0.693709327548807
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3173.3119392259537,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 8,
+        "updates": 73488,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.5825560389845117,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 282,
+            "loss": 2.846949032023571,
+            "rate": 0.25291479820627805
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.145196918141418,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 570,
+            "loss": 0.8616844181166182,
+            "rate": 0.7610146862483311
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 286,
+            "loss": 1.1230471481620352,
+            "rate": 0.6745283018867925
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1134,
+            "loss": 1.0639711013685875,
+            "rate": 0.7127592708988058
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1641,
+            "loss": 0.9846264435102142,
+            "rate": 0.7119305856832971
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2974.735896805803,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 9,
+        "updates": 79935,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.5642960720544608,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 148,
+            "loss": 3.0548646803276593,
+            "rate": 0.13273542600896862
+          },
+          "attack": {
+            "used": 978,
+            "exact": 11,
+            "loss": 2.7509470214593406,
+            "rate": 0.011247443762781187
+          },
+          "block": {
+            "used": 749,
+            "exact": 549,
+            "loss": 1.0750260656143564,
+            "rate": 0.732977303070761
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 280,
+            "loss": 1.018706849273431,
+            "rate": 0.660377358490566
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1156,
+            "loss": 1.007606648425953,
+            "rate": 0.7265870521684475
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1636,
+            "loss": 0.9833664892055173,
+            "rate": 0.7097613882863341
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 11,
+          "tie": 0,
+          "stop": 967,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2517.8555697917504,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 9,
+        "updates": 80650,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.5336744190666873,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 218,
+            "loss": 2.6948809549757677,
+            "rate": 0.19551569506726457
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 2.7686286694084488,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 525,
+            "loss": 1.184389775183458,
+            "rate": 0.7009345794392523
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 285,
+            "loss": 1.0237592094897894,
+            "rate": 0.6721698113207547
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1155,
+            "loss": 1.0528248163178777,
+            "rate": 0.725958516656191
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1647,
+            "loss": 0.9871752523550251,
+            "rate": 0.7145336225596529
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2546.9889161389924,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 10,
+        "updates": 87097,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.6146282289690368,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 115,
+            "loss": 3.274268407460775,
+            "rate": 0.1031390134529148
+          },
+          "attack": {
+            "used": 978,
+            "exact": 59,
+            "loss": 2.6861393722516347,
+            "rate": 0.06032719836400818
+          },
+          "block": {
+            "used": 749,
+            "exact": 578,
+            "loss": 0.8873356158889821,
+            "rate": 0.7716955941255007
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 277,
+            "loss": 1.130472903673211,
+            "rate": 0.6533018867924528
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1153,
+            "loss": 1.0406806145830216,
+            "rate": 0.7247014456316782
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1621,
+            "loss": 1.0787227983668288,
+            "rate": 0.7032537960954447
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 59,
+          "tie": 7,
+          "stop": 900,
+          "otherCharacter": 12,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2381.1456014737064,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 10,
+        "updates": 87812,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.5993899779422158,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 198,
+            "loss": 2.905560920127232,
+            "rate": 0.17757847533632287
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.223098180183502,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 582,
+            "loss": 0.8534204935903731,
+            "rate": 0.7770360480640854
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 278,
+            "loss": 1.1095380424301013,
+            "rate": 0.6556603773584906
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1170,
+            "loss": 1.0323268751535597,
+            "rate": 0.7353865493400377
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1641,
+            "loss": 1.002539018569178,
+            "rate": 0.7119305856832971
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -3083.7644298330183,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 11,
+        "updates": 94259,
+        "recent": {
+          "other": 32,
+          "effect": 32
+        },
+        "loss": 1.6105980216624247,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 256,
+            "loss": 2.9114316490094954,
+            "rate": 0.2295964125560538
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.104490405609967,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 585,
+            "loss": 0.9168789513719569,
+            "rate": 0.7810413885180241
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 275,
+            "loss": 1.0909829565741738,
+            "rate": 0.6485849056603774
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1159,
+            "loss": 1.0222053319843436,
+            "rate": 0.7284726587052168
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1626,
+            "loss": 1.0746279108295085,
+            "rate": 0.7054229934924078
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2929.792695387405,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 11,
+        "updates": 94974,
+        "recent": {
+          "other": 64
+        },
+        "loss": 1.4921959554389663,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 321,
+            "loss": 2.4830720940684343,
+            "rate": 0.2878923766816143
+          },
+          "attack": {
+            "used": 978,
+            "exact": 0,
+            "loss": 3.0406353185934982,
+            "rate": 0
+          },
+          "block": {
+            "used": 749,
+            "exact": 575,
+            "loss": 0.8717048215623543,
+            "rate": 0.7676902536715621
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 275,
+            "loss": 1.0406405153358758,
+            "rate": 0.6485849056603774
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1165,
+            "loss": 1.019126734369467,
+            "rate": 0.7322438717787555
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1637,
+            "loss": 0.9671026386762122,
+            "rate": 0.7101952277657266
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 0,
+          "tie": 0,
+          "stop": 978,
+          "otherCharacter": 0,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": -2868.2889435558836,
+          "gapN": 978
+        }
+      }
+    ],
+    "updates": 94974
+  },
+  "shuffle": {
+    "fullLoss": 1.0835287481043536,
+    "trainAttackRate": 0.8047034764826176,
+    "curve": [
+      {
+        "point": "init",
+        "epoch": -1,
+        "updates": 9030,
+        "recent": {},
+        "loss": 1.325193912751991,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 539,
+            "loss": 1.9781164605585035,
+            "rate": 0.4834080717488789
+          },
+          "attack": {
+            "used": 978,
+            "exact": 723,
+            "loss": 0.7395860525052654,
+            "rate": 0.7392638036809815
+          },
+          "block": {
+            "used": 749,
+            "exact": 501,
+            "loss": 1.2006947478307515,
+            "rate": 0.6688918558077437
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 284,
+            "loss": 1.0519564690552063,
+            "rate": 0.6698113207547169
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1010,
+            "loss": 1.2175081823749534,
+            "rate": 0.6348208673790069
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1357,
+            "loss": 1.4228713071989982,
+            "rate": 0.5887201735357918
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 723,
+          "tie": 44,
+          "stop": 0,
+          "otherCharacter": 211,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3416.3760466867006,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 0,
+        "updates": 15477,
+        "recent": {
+          "trigger": 2,
+          "attack": 9,
+          "other": 21,
+          "effect": 16,
+          "play": 9,
+          "block": 7
+        },
+        "loss": 1.3179916614024136,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 634,
+            "loss": 1.8110432652742454,
+            "rate": 0.568609865470852
+          },
+          "attack": {
+            "used": 978,
+            "exact": 744,
+            "loss": 0.729133836717605,
+            "rate": 0.7607361963190185
+          },
+          "block": {
+            "used": 749,
+            "exact": 511,
+            "loss": 1.104327473107545,
+            "rate": 0.6822429906542056
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 286,
+            "loss": 1.1184712548478888,
+            "rate": 0.6745283018867925
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1091,
+            "loss": 1.2305458164782672,
+            "rate": 0.6857322438717788
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1342,
+            "loss": 1.4958258839234433,
+            "rate": 0.5822125813449024
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 744,
+          "tie": 47,
+          "stop": 0,
+          "otherCharacter": 187,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3123.2348531493744,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 0,
+        "updates": 16192,
+        "recent": {
+          "other": 20,
+          "effect": 16,
+          "trigger": 6,
+          "play": 6,
+          "attack": 12,
+          "block": 4
+        },
+        "loss": 1.344967875012426,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 666,
+            "loss": 1.8267682176517481,
+            "rate": 0.5973094170403588
+          },
+          "attack": {
+            "used": 978,
+            "exact": 766,
+            "loss": 0.7074667304905321,
+            "rate": 0.7832310838445807
+          },
+          "block": {
+            "used": 749,
+            "exact": 503,
+            "loss": 1.0185353738534006,
+            "rate": 0.671562082777036
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 290,
+            "loss": 1.1029465922264774,
+            "rate": 0.6839622641509434
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1106,
+            "loss": 1.2479067265793795,
+            "rate": 0.6951602765556254
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1316,
+            "loss": 1.5999821881255658,
+            "rate": 0.5709327548806942
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 766,
+          "tie": 44,
+          "stop": 7,
+          "otherCharacter": 161,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3797.9521838369947,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 1,
+        "updates": 22639,
+        "recent": {
+          "other": 20,
+          "attack": 6,
+          "play": 12,
+          "block": 8,
+          "effect": 14,
+          "trigger": 4
+        },
+        "loss": 1.2472069644147974,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 641,
+            "loss": 1.7144736219038812,
+            "rate": 0.5748878923766816
+          },
+          "attack": {
+            "used": 978,
+            "exact": 775,
+            "loss": 0.7100192173311946,
+            "rate": 0.7924335378323109
+          },
+          "block": {
+            "used": 749,
+            "exact": 513,
+            "loss": 1.21119330575719,
+            "rate": 0.684913217623498
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 289,
+            "loss": 1.0479662824524563,
+            "rate": 0.6816037735849056
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1095,
+            "loss": 1.124326302297155,
+            "rate": 0.6882463859208046
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1353,
+            "loss": 1.382271045309904,
+            "rate": 0.5869848156182212
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 775,
+          "tie": 42,
+          "stop": 4,
+          "otherCharacter": 157,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 2623.640627038698,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 1,
+        "updates": 23354,
+        "recent": {
+          "other": 23,
+          "effect": 13,
+          "block": 8,
+          "trigger": 5,
+          "attack": 4,
+          "play": 11
+        },
+        "loss": 1.2411503404314603,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 622,
+            "loss": 1.7016378312827944,
+            "rate": 0.557847533632287
+          },
+          "attack": {
+            "used": 978,
+            "exact": 752,
+            "loss": 0.7184288004404366,
+            "rate": 0.7689161554192229
+          },
+          "block": {
+            "used": 749,
+            "exact": 505,
+            "loss": 0.9898372663251256,
+            "rate": 0.6742323097463284
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 290,
+            "loss": 1.0377143269167142,
+            "rate": 0.6839622641509434
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1082,
+            "loss": 1.1773046615694398,
+            "rate": 0.6800754242614707
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1344,
+            "loss": 1.403339907076736,
+            "rate": 0.5830802603036876
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 752,
+          "tie": 47,
+          "stop": 0,
+          "otherCharacter": 179,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3427.853640093416,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 2,
+        "updates": 29801,
+        "recent": {
+          "effect": 20,
+          "block": 5,
+          "play": 7,
+          "other": 17,
+          "trigger": 3,
+          "attack": 12
+        },
+        "loss": 1.216892866368242,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 635,
+            "loss": 1.7220135043862053,
+            "rate": 0.5695067264573991
+          },
+          "attack": {
+            "used": 978,
+            "exact": 791,
+            "loss": 0.6752975953913133,
+            "rate": 0.8087934560327198
+          },
+          "block": {
+            "used": 749,
+            "exact": 529,
+            "loss": 0.9964848731098006,
+            "rate": 0.7062750333778371
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 281,
+            "loss": 0.9378709291035968,
+            "rate": 0.6627358490566038
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1094,
+            "loss": 1.1314832718002157,
+            "rate": 0.6876178504085481
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1364,
+            "loss": 1.3842456719794887,
+            "rate": 0.5917570498915401
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 791,
+          "tie": 39,
+          "stop": 0,
+          "otherCharacter": 148,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3620.3523441532707,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 2,
+        "updates": 30516,
+        "recent": {
+          "other": 27,
+          "effect": 15,
+          "play": 8,
+          "trigger": 4,
+          "attack": 5,
+          "block": 5
+        },
+        "loss": 1.1731999243443756,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 611,
+            "loss": 1.656665865145956,
+            "rate": 0.5479820627802691
+          },
+          "attack": {
+            "used": 978,
+            "exact": 786,
+            "loss": 0.6624269047506961,
+            "rate": 0.803680981595092
+          },
+          "block": {
+            "used": 749,
+            "exact": 530,
+            "loss": 0.9147457757286382,
+            "rate": 0.7076101468624834
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 291,
+            "loss": 0.983897022580243,
+            "rate": 0.6863207547169812
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1120,
+            "loss": 1.0926764971577214,
+            "rate": 0.7039597737272156
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1354,
+            "loss": 1.330436735400335,
+            "rate": 0.5874186550976139
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 786,
+          "tie": 40,
+          "stop": 0,
+          "otherCharacter": 152,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3506.9526002385965,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 3,
+        "updates": 36963,
+        "recent": {
+          "effect": 19,
+          "other": 20,
+          "block": 8,
+          "play": 9,
+          "attack": 2,
+          "trigger": 6
+        },
+        "loss": 1.1937790562366677,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 670,
+            "loss": 1.555785017860489,
+            "rate": 0.600896860986547
+          },
+          "attack": {
+            "used": 978,
+            "exact": 807,
+            "loss": 0.68252540631242,
+            "rate": 0.8251533742331288
+          },
+          "block": {
+            "used": 749,
+            "exact": 515,
+            "loss": 1.0574865305555468,
+            "rate": 0.6875834445927904
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 278,
+            "loss": 1.007298400966425,
+            "rate": 0.6556603773584906
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1103,
+            "loss": 1.1488649617911113,
+            "rate": 0.6932746700188561
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1334,
+            "loss": 1.345179770444013,
+            "rate": 0.5787418655097614
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 807,
+          "tie": 36,
+          "stop": 2,
+          "otherCharacter": 133,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3150.8669033389697,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 3,
+        "updates": 37678,
+        "recent": {
+          "attack": 5,
+          "play": 8,
+          "other": 25,
+          "effect": 11,
+          "trigger": 8,
+          "block": 7
+        },
+        "loss": 1.1601082770002529,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 665,
+            "loss": 1.5484359648501254,
+            "rate": 0.5964125560538116
+          },
+          "attack": {
+            "used": 978,
+            "exact": 750,
+            "loss": 0.7505372245065978,
+            "rate": 0.7668711656441718
+          },
+          "block": {
+            "used": 749,
+            "exact": 544,
+            "loss": 0.8906262848995732,
+            "rate": 0.7263017356475301
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 289,
+            "loss": 1.0270063734422568,
+            "rate": 0.6816037735849056
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1106,
+            "loss": 1.099888490209929,
+            "rate": 0.6951602765556254
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1357,
+            "loss": 1.2996579591527866,
+            "rate": 0.5887201735357918
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 750,
+          "tie": 48,
+          "stop": 13,
+          "otherCharacter": 167,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 2733.835939829887,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 4,
+        "updates": 44125,
+        "recent": {
+          "play": 7,
+          "other": 25,
+          "block": 10,
+          "effect": 12,
+          "trigger": 5,
+          "attack": 5
+        },
+        "loss": 1.1689039383344246,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 694,
+            "loss": 1.541836300593138,
+            "rate": 0.6224215246636772
+          },
+          "attack": {
+            "used": 978,
+            "exact": 756,
+            "loss": 0.748689314489875,
+            "rate": 0.7730061349693251
+          },
+          "block": {
+            "used": 749,
+            "exact": 558,
+            "loss": 0.937955336089571,
+            "rate": 0.7449933244325768
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 275,
+            "loss": 1.1461911885487182,
+            "rate": 0.6485849056603774
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1108,
+            "loss": 1.1008229083541712,
+            "rate": 0.6964173475801383
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1394,
+            "loss": 1.2930158454453158,
+            "rate": 0.6047722342733188
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 756,
+          "tie": 42,
+          "stop": 16,
+          "otherCharacter": 164,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 2828.3915555927415,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 4,
+        "updates": 44840,
+        "recent": {
+          "other": 23,
+          "block": 5,
+          "trigger": 5,
+          "effect": 15,
+          "play": 7,
+          "attack": 9
+        },
+        "loss": 1.1513765391554611,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 646,
+            "loss": 1.624623729160969,
+            "rate": 0.579372197309417
+          },
+          "attack": {
+            "used": 978,
+            "exact": 787,
+            "loss": 0.6634867492989527,
+            "rate": 0.8047034764826176
+          },
+          "block": {
+            "used": 749,
+            "exact": 547,
+            "loss": 0.9019340863251301,
+            "rate": 0.7303070761014686
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 297,
+            "loss": 1.0194438508256032,
+            "rate": 0.7004716981132075
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1114,
+            "loss": 1.0395520736990462,
+            "rate": 0.700188560653677
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1409,
+            "loss": 1.3119709769804047,
+            "rate": 0.6112798264642082
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 787,
+          "tie": 43,
+          "stop": 4,
+          "otherCharacter": 144,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3688.2285948370377,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 5,
+        "updates": 51287,
+        "recent": {
+          "attack": 12,
+          "play": 11,
+          "effect": 8,
+          "other": 23,
+          "block": 6,
+          "trigger": 4
+        },
+        "loss": 1.1863491348367319,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 692,
+            "loss": 1.6330728997236705,
+            "rate": 0.6206278026905829
+          },
+          "attack": {
+            "used": 978,
+            "exact": 777,
+            "loss": 0.7039467831925406,
+            "rate": 0.7944785276073619
+          },
+          "block": {
+            "used": 749,
+            "exact": 547,
+            "loss": 0.8466791081093566,
+            "rate": 0.7303070761014686
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 291,
+            "loss": 1.022905246858574,
+            "rate": 0.6863207547169812
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1115,
+            "loss": 1.1261900342721278,
+            "rate": 0.7008170961659334
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1379,
+            "loss": 1.356899542463174,
+            "rate": 0.5982646420824295
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 777,
+          "tie": 38,
+          "stop": 8,
+          "otherCharacter": 155,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3447.34606265082,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 5,
+        "updates": 52002,
+        "recent": {
+          "play": 9,
+          "effect": 15,
+          "other": 22,
+          "attack": 5,
+          "trigger": 4,
+          "block": 9
+        },
+        "loss": 1.1617489962556544,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 691,
+            "loss": 1.5396937313848924,
+            "rate": 0.6197309417040359
+          },
+          "attack": {
+            "used": 978,
+            "exact": 768,
+            "loss": 0.7079418537325308,
+            "rate": 0.7852760736196319
+          },
+          "block": {
+            "used": 749,
+            "exact": 559,
+            "loss": 0.9231652935444703,
+            "rate": 0.7463284379172229
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 293,
+            "loss": 1.0256118778560275,
+            "rate": 0.6910377358490566
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1121,
+            "loss": 1.0760452494210377,
+            "rate": 0.704588309239472
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1381,
+            "loss": 1.3331984532901426,
+            "rate": 0.5991323210412147
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 768,
+          "tie": 40,
+          "stop": 11,
+          "otherCharacter": 159,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3526.7028901859753,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 6,
+        "updates": 58449,
+        "recent": {
+          "other": 25,
+          "effect": 18,
+          "play": 9,
+          "attack": 7,
+          "block": 5
+        },
+        "loss": 1.1379920956754483,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 687,
+            "loss": 1.5433342569144604,
+            "rate": 0.6161434977578475
+          },
+          "attack": {
+            "used": 978,
+            "exact": 782,
+            "loss": 0.7054885581630369,
+            "rate": 0.7995910020449898
+          },
+          "block": {
+            "used": 749,
+            "exact": 560,
+            "loss": 0.9086432694038241,
+            "rate": 0.7476635514018691
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 297,
+            "loss": 1.0399738718750613,
+            "rate": 0.7004716981132075
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1129,
+            "loss": 1.0549640610210143,
+            "rate": 0.7096165933375236
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1432,
+            "loss": 1.2752899485212774,
+            "rate": 0.6212581344902386
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 782,
+          "tie": 42,
+          "stop": 12,
+          "otherCharacter": 142,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3195.0208880864025,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 6,
+        "updates": 59164,
+        "recent": {
+          "other": 19,
+          "attack": 9,
+          "effect": 14,
+          "block": 7,
+          "play": 11,
+          "trigger": 4
+        },
+        "loss": 1.099697898165946,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 681,
+            "loss": 1.4741490693999884,
+            "rate": 0.610762331838565
+          },
+          "attack": {
+            "used": 978,
+            "exact": 791,
+            "loss": 0.6779005128987103,
+            "rate": 0.8087934560327198
+          },
+          "block": {
+            "used": 749,
+            "exact": 569,
+            "loss": 0.8162817408530297,
+            "rate": 0.7596795727636849
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 288,
+            "loss": 0.9619899997305394,
+            "rate": 0.6792452830188679
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1128,
+            "loss": 1.0320013120890659,
+            "rate": 0.7089880578252671
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1382,
+            "loss": 1.2616835407159104,
+            "rate": 0.5995661605206074
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 791,
+          "tie": 42,
+          "stop": 2,
+          "otherCharacter": 143,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3239.133767340699,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 7,
+        "updates": 65611,
+        "recent": {
+          "effect": 14,
+          "other": 16,
+          "trigger": 5,
+          "play": 15,
+          "block": 7,
+          "attack": 7
+        },
+        "loss": 1.1167516100559007,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 692,
+            "loss": 1.4571741449908604,
+            "rate": 0.6206278026905829
+          },
+          "attack": {
+            "used": 978,
+            "exact": 774,
+            "loss": 0.7469166468091455,
+            "rate": 0.7914110429447853
+          },
+          "block": {
+            "used": 749,
+            "exact": 568,
+            "loss": 0.9000842994405241,
+            "rate": 0.7583444592790387
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 293,
+            "loss": 0.9108663911223365,
+            "rate": 0.6910377358490566
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1155,
+            "loss": 1.0796997475570826,
+            "rate": 0.725958516656191
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1438,
+            "loss": 1.2428497138811672,
+            "rate": 0.6238611713665944
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 774,
+          "tie": 42,
+          "stop": 7,
+          "otherCharacter": 155,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3334.4412446154147,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 7,
+        "updates": 66326,
+        "recent": {
+          "block": 5,
+          "effect": 17,
+          "attack": 13,
+          "play": 5,
+          "other": 18,
+          "trigger": 6
+        },
+        "loss": 1.1246486950539865,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 708,
+            "loss": 1.4876370703316624,
+            "rate": 0.6349775784753363
+          },
+          "attack": {
+            "used": 978,
+            "exact": 790,
+            "loss": 0.6735587270451527,
+            "rate": 0.8077709611451943
+          },
+          "block": {
+            "used": 749,
+            "exact": 556,
+            "loss": 0.9340215544148991,
+            "rate": 0.7423230974632844
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 301,
+            "loss": 1.0547842250964714,
+            "rate": 0.7099056603773585
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1148,
+            "loss": 1.0558699018463813,
+            "rate": 0.721558768070396
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1434,
+            "loss": 1.2627238681003916,
+            "rate": 0.6221258134490238
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 790,
+          "tie": 38,
+          "stop": 13,
+          "otherCharacter": 137,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3432.276752447888,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 8,
+        "updates": 72773,
+        "recent": {
+          "other": 21,
+          "effect": 19,
+          "play": 8,
+          "block": 5,
+          "trigger": 5,
+          "attack": 6
+        },
+        "loss": 1.10236939683221,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 697,
+            "loss": 1.4772549939934196,
+            "rate": 0.6251121076233184
+          },
+          "attack": {
+            "used": 978,
+            "exact": 795,
+            "loss": 0.6879413761294887,
+            "rate": 0.8128834355828221
+          },
+          "block": {
+            "used": 749,
+            "exact": 569,
+            "loss": 0.8321689747082536,
+            "rate": 0.7596795727636849
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 287,
+            "loss": 1.011463871332214,
+            "rate": 0.6768867924528302
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1166,
+            "loss": 1.0390312117841094,
+            "rate": 0.732872407291012
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1423,
+            "loss": 1.2451061754902883,
+            "rate": 0.617353579175705
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 795,
+          "tie": 39,
+          "stop": 3,
+          "otherCharacter": 141,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3272.5604683591323,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 8,
+        "updates": 73488,
+        "recent": {
+          "other": 19,
+          "attack": 10,
+          "play": 12,
+          "block": 8,
+          "effect": 15
+        },
+        "loss": 1.1386347140171194,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 630,
+            "loss": 1.6414208102624661,
+            "rate": 0.5650224215246636
+          },
+          "attack": {
+            "used": 978,
+            "exact": 771,
+            "loss": 0.7164418284245008,
+            "rate": 0.7883435582822086
+          },
+          "block": {
+            "used": 749,
+            "exact": 535,
+            "loss": 0.8816496950834839,
+            "rate": 0.7142857142857143
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 286,
+            "loss": 1.0195614501584118,
+            "rate": 0.6745283018867925
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1191,
+            "loss": 1.0192201868800543,
+            "rate": 0.748585795097423
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1431,
+            "loss": 1.26238981186028,
+            "rate": 0.620824295010846
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 771,
+          "tie": 44,
+          "stop": 0,
+          "otherCharacter": 163,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3824.5069050396096,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 9,
+        "updates": 79935,
+        "recent": {
+          "effect": 16,
+          "attack": 10,
+          "block": 8,
+          "trigger": 3,
+          "play": 6,
+          "other": 21
+        },
+        "loss": 1.0782600477681108,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 704,
+            "loss": 1.4910940661468461,
+            "rate": 0.6313901345291479
+          },
+          "attack": {
+            "used": 978,
+            "exact": 793,
+            "loss": 0.6823144898649769,
+            "rate": 0.810838445807771
+          },
+          "block": {
+            "used": 749,
+            "exact": 576,
+            "loss": 0.7912714826778632,
+            "rate": 0.7690253671562083
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 296,
+            "loss": 0.9820237648827557,
+            "rate": 0.6981132075471698
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1169,
+            "loss": 1.0224072440975163,
+            "rate": 0.7347580138277813
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1454,
+            "loss": 1.1960670998170821,
+            "rate": 0.6308026030368764
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 793,
+          "tie": 38,
+          "stop": 11,
+          "otherCharacter": 136,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3123.6188333238842,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 9,
+        "updates": 80650,
+        "recent": {
+          "play": 9,
+          "attack": 7,
+          "other": 25,
+          "effect": 11,
+          "block": 7,
+          "trigger": 5
+        },
+        "loss": 1.089186141995212,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 679,
+            "loss": 1.5786854752993515,
+            "rate": 0.6089686098654709
+          },
+          "attack": {
+            "used": 978,
+            "exact": 768,
+            "loss": 0.7145753672724022,
+            "rate": 0.7852760736196319
+          },
+          "block": {
+            "used": 749,
+            "exact": 563,
+            "loss": 0.8877029882734438,
+            "rate": 0.7516688918558078
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 287,
+            "loss": 1.0924142130938361,
+            "rate": 0.6768867924528302
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1185,
+            "loss": 1.014220306467179,
+            "rate": 0.7448145820238844
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1520,
+            "loss": 1.127967228920024,
+            "rate": 0.6594360086767896
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 768,
+          "tie": 36,
+          "stop": 46,
+          "otherCharacter": 128,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 2864.465434241445,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 10,
+        "updates": 87097,
+        "recent": {
+          "other": 18,
+          "effect": 14,
+          "attack": 10,
+          "trigger": 3,
+          "play": 16,
+          "block": 3
+        },
+        "loss": 1.0787348975955418,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 707,
+            "loss": 1.50478335113325,
+            "rate": 0.6340807174887892
+          },
+          "attack": {
+            "used": 978,
+            "exact": 798,
+            "loss": 0.671348059062511,
+            "rate": 0.8159509202453987
+          },
+          "block": {
+            "used": 749,
+            "exact": 553,
+            "loss": 0.9598257320425311,
+            "rate": 0.7383177570093458
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 297,
+            "loss": 1.044837302767956,
+            "rate": 0.7004716981132075
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1222,
+            "loss": 0.9538997961191052,
+            "rate": 0.7680703959773727
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1441,
+            "loss": 1.1765346780926693,
+            "rate": 0.6251626898047722
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 798,
+          "tie": 38,
+          "stop": 10,
+          "otherCharacter": 132,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3192.8788190088653,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 10,
+        "updates": 87812,
+        "recent": {
+          "play": 9,
+          "block": 6,
+          "other": 20,
+          "effect": 12,
+          "trigger": 2,
+          "attack": 15
+        },
+        "loss": 1.050193086288377,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 720,
+            "loss": 1.4023643293061159,
+            "rate": 0.6457399103139013
+          },
+          "attack": {
+            "used": 978,
+            "exact": 793,
+            "loss": 0.6893250568448517,
+            "rate": 0.810838445807771
+          },
+          "block": {
+            "used": 749,
+            "exact": 584,
+            "loss": 0.7813527486098876,
+            "rate": 0.7797062750333779
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 297,
+            "loss": 1.0493448301766006,
+            "rate": 0.7004716981132075
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1200,
+            "loss": 0.9719408855479744,
+            "rate": 0.754242614707731
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1471,
+            "loss": 1.1744786922413406,
+            "rate": 0.638177874186551
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 793,
+          "tie": 35,
+          "stop": 17,
+          "otherCharacter": 133,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3326.065063879948,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "before-tail",
+        "epoch": 11,
+        "updates": 94259,
+        "recent": {
+          "effect": 15,
+          "other": 24,
+          "attack": 8,
+          "play": 9,
+          "block": 6,
+          "trigger": 2
+        },
+        "loss": 1.0628052480209076,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 705,
+            "loss": 1.4847150223748555,
+            "rate": 0.6322869955156951
+          },
+          "attack": {
+            "used": 978,
+            "exact": 806,
+            "loss": 0.6610367993392421,
+            "rate": 0.8241308793456033
+          },
+          "block": {
+            "used": 749,
+            "exact": 569,
+            "loss": 0.8647350764878138,
+            "rate": 0.7596795727636849
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 289,
+            "loss": 1.0059039971020363,
+            "rate": 0.6816037735849056
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1185,
+            "loss": 0.9692667984365916,
+            "rate": 0.7448145820238844
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1490,
+            "loss": 1.1685755328636582,
+            "rate": 0.6464208242950108
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 806,
+          "tie": 37,
+          "stop": 7,
+          "otherCharacter": 128,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3305.997012990949,
+          "gapN": 978
+        }
+      },
+      {
+        "point": "epoch-end",
+        "epoch": 11,
+        "updates": 94974,
+        "recent": {
+          "effect": 11,
+          "attack": 11,
+          "play": 9,
+          "block": 6,
+          "other": 24,
+          "trigger": 3
+        },
+        "loss": 1.0835287481043536,
+        "kinds": {
+          "play": {
+            "used": 1115,
+            "exact": 716,
+            "loss": 1.4996797371497068,
+            "rate": 0.6421524663677131
+          },
+          "attack": {
+            "used": 978,
+            "exact": 787,
+            "loss": 0.7183939625469219,
+            "rate": 0.8047034764826176
+          },
+          "block": {
+            "used": 749,
+            "exact": 583,
+            "loss": 0.8173877844750033,
+            "rate": 0.7783711615487316
+          },
+          "trigger": {
+            "used": 424,
+            "exact": 298,
+            "loss": 0.9856479049291124,
+            "rate": 0.7028301886792453
+          },
+          "effect": {
+            "used": 1591,
+            "exact": 1202,
+            "loss": 1.008911493146224,
+            "rate": 0.7554996857322439
+          },
+          "other": {
+            "used": 2305,
+            "exact": 1501,
+            "loss": 1.1931385439363018,
+            "rate": 0.6511930585683298
+          }
+        },
+        "attacks": {
+          "n": 978,
+          "exact": 787,
+          "tie": 35,
+          "stop": 24,
+          "otherCharacter": 132,
+          "otherTarget": 0,
+          "unprovenCollision": 0,
+          "unprovenSameShape": 0,
+          "unprovenOther": 0,
+          "teacherNotAttack": 0,
+          "gapSum": 3641.237891476439,
+          "gapN": 978
+        }
+      }
+    ],
+    "updates": 94974
+  },
+  "holdout": {
+    "A": {
+      "exact": 0.6150220913107511,
+      "attack": 0.7193763919821826,
+      "stop": 0,
+      "otherCharacter": 114,
+      "attacks": {
+        "n": 449,
+        "exact": 323,
+        "tie": 12,
+        "stop": 0,
+        "otherCharacter": 114,
+        "otherTarget": 0,
+        "unprovenCollision": 0,
+        "unprovenSameShape": 0,
+        "unprovenOther": 0,
+        "teacherNotAttack": 0,
+        "gapSum": 1635.4326040231683,
+        "gapN": 449
+      }
+    },
+    "r11": {
+      "exact": 0.5325478645066274,
+      "attack": 0,
+      "stop": 449,
+      "otherCharacter": 0,
+      "attacks": {
+        "n": 449,
+        "exact": 0,
+        "tie": 0,
+        "stop": 449,
+        "otherCharacter": 0,
+        "otherTarget": 0,
+        "unprovenCollision": 0,
+        "unprovenSameShape": 0,
+        "unprovenOther": 0,
+        "teacherNotAttack": 0,
+        "gapSum": -1294.434574148217,
+        "gapN": 449
+      }
+    },
+    "stratified": {
+      "exact": 0.5325478645066274,
+      "attack": 0,
+      "stop": 449,
+      "otherCharacter": 0,
+      "attacks": {
+        "n": 449,
+        "exact": 0,
+        "tie": 0,
+        "stop": 449,
+        "otherCharacter": 0,
+        "otherTarget": 0,
+        "unprovenCollision": 0,
+        "unprovenSameShape": 0,
+        "unprovenOther": 0,
+        "teacherNotAttack": 0,
+        "gapSum": -1294.434574148217,
+        "gapN": 449
+      }
+    },
+    "shuffle": {
+      "exact": 0.658321060382916,
+      "attack": 0.7639198218262806,
+      "stop": 11,
+      "otherCharacter": 83,
+      "attacks": {
+        "n": 449,
+        "exact": 343,
+        "tie": 12,
+        "stop": 11,
+        "otherCharacter": 83,
+        "otherTarget": 0,
+        "unprovenCollision": 0,
+        "unprovenSameShape": 0,
+        "unprovenOther": 0,
+        "teacherNotAttack": 0,
+        "gapSum": 1697.2906433149906,
+        "gapN": 449
+      }
+    }
+  },
+  "elapsedSec": 764
+}

@@ -3,24 +3,43 @@
 import {GAMMA,GRAD_CLIP,LABEL_SMOOTH,REPLAY_FRACTION} from './constants.mjs';
 import {adamStep,backward,clipGrad,forwardTrain,zeroGrad} from './net.mjs';
 
-function softmax(scores){
- const max=Math.max(...scores);
- const exps=scores.map(score=>Math.exp(Math.max(-20,Math.min(20,score-max))));
- const sum=exps.reduce((total,value)=>total+value,0);
- return exps.map(value=>value/sum);
-}
-function crossEntropy(scores,chosen,smooth){
+function lossParts(scores,chosen,smooth){
  const width=scores.length;
- const probs=softmax(scores);
+ const max=Math.max(...scores);
+ const shifted=scores.map(score=>score-max);
+ const clamped=shifted.some(value=>value<-20);
+ const exps=shifted.map(value=>Math.exp(Math.max(-20,value)));
+ const sum=exps.reduce((total,value)=>total+value,0);
+ const probs=exps.map(value=>value/sum);
  const share=smooth/width;
  let loss=0;
+ let floored=false;
  const signals=[];
  for(let index=0;index<width;index++){
   const target=(index===chosen?1-smooth:0)+share;
-  loss-=target*Math.log(Math.max(1e-8,probs[index]));
-  signals.push(probs[index]-target);
+  const prob=probs[index];
+  if(prob<1e-8)floored=true;
+  loss-=target*Math.log(Math.max(1e-8,prob));
+  signals.push(prob-target);
  }
- return {loss,signals};
+ return {loss,signals,probs,clamped,floored};
+}
+function crossEntropy(scores,chosen,smooth){
+ const parts=lossParts(scores,chosen,smooth);
+ return {loss:parts.loss,signals:parts.signals};
+}
+export function inspectLoss(scores,chosen,smooth=LABEL_SMOOTH){
+ return lossParts(scores,chosen,smooth);
+}
+export function imitationGradient(net,sample,{smooth=LABEL_SMOOTH}={}){
+ if(!usable(sample))return null;
+ const caches=sample.rows.map(row=>forwardTrain(net,row));
+ const scored=crossEntropy(caches.map(cache=>cache.q),sample.chosen,smooth);
+ const grad=zeroGrad(net);
+ scored.signals.forEach((signal,index)=>{
+  if(signal)backward(net,caches[index],signal,grad);
+ });
+ return {loss:scored.loss,grad,signals:scored.signals,scores:caches.map(cache=>cache.q)};
 }
 function usable(sample){
  const width=sample?.rows?.length||0;
@@ -39,16 +58,11 @@ export function imitationLoss(net,samples,{smooth=LABEL_SMOOTH}={}){
 export function imitationPass(net,opt,samples,{smooth=LABEL_SMOOTH}={}){
  let loss=0,used=0;
  for(const sample of samples){
-  if(!usable(sample))continue;
-  const caches=sample.rows.map(row=>forwardTrain(net,row));
-  const scored=crossEntropy(caches.map(cache=>cache.q),sample.chosen,smooth);
-  const grad=zeroGrad(net);
-  scored.signals.forEach((signal,index)=>{
-   if(signal)backward(net,caches[index],signal,grad);
-  });
-  clipGrad(grad,GRAD_CLIP);
-  adamStep(net,opt,grad);
-  loss+=scored.loss;
+  const step=imitationGradient(net,sample,{smooth});
+  if(!step)continue;
+  clipGrad(step.grad,GRAD_CLIP);
+  adamStep(net,opt,step.grad);
+  loss+=step.loss;
   used++;
  }
  return {loss:used?loss/used:null,used};
