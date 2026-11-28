@@ -1,51 +1,66 @@
-// Turn measured game times into a fixed trial. The order is the priority:
-// one v2 demonstration, a little self-play, a dev comparison, then more of
-// each. Nothing here reads a win rate.
-export function planBudget({wallMs,nnMs,v2Ms,v2Finished,workers}){
+// Turn measured game times into one fixed round-2 trial.
+// The maxima are not the round-1 8/24/16/8 caps. Nothing here reads a win rate.
+import {CHECKPOINTS,PLAN_SAFETY,TRAIN_RESERVE_MS} from './constants.mjs';
+
+const CELLS=4;
+const CAPS={imitate:32,self:80,devSeeds:16,testSeeds:12};
+
+export function planBudget({
+ wallMs,nnMs,v2Ms,v2Finished,workers,
+ checkpoints=CHECKPOINTS,trainReserve=TRAIN_RESERVE_MS,safety=PLAN_SAFETY
+}={}){
  const nn=Math.max(1,Number(nnMs)||1);
  const v2=Math.max(1,Number(v2Ms)||1);
  const pool=Math.max(1,workers|0);
  const mirror=0.55*v2+0.45*nn;
- const selfCost=v2Finished?0.75*nn+0.25*mirror:nn;
- const testCost=v2Finished?mirror:v2;
- let imitate=0,self=0,dev=0,test=0;
- const estimate=state=>
-  Math.ceil(state.imitate/pool)*v2+
-  state.self*selfCost+
-  Math.ceil(state.dev/pool)*nn+
-  Math.ceil(state.test/pool)*testCost;
- const add=(key,count,cap)=>{
-  const next={imitate,self,dev,test,[key]:{imitate,self,dev,test}[key]+count};
-  if(next[key]>cap)return false;
-  if((key==='imitate'||key==='test')&&!v2Finished)return false;
+ const selfRaw=v2Finished?0.75*nn+0.25*mirror:nn;
+ const selfCost=selfRaw*safety;
+ const imitateWave=v2*safety;
+ const evalWave=nn*safety;
+ let imitate=0,self=0,devSeeds=0,testSeeds=0;
+ const estimate=state=>{
+  const devGames=state.devSeeds*CELLS;
+  const testGames=state.testSeeds*CELLS;
+  return Math.ceil(state.imitate/pool)*imitateWave+
+   state.self*selfCost+
+   checkpoints*Math.ceil(devGames/pool)*evalWave+
+   Math.ceil(testGames/pool)*evalWave+
+   trainReserve;
+ };
+ const add=(key,count)=>{
+  const current={imitate,self,devSeeds,testSeeds};
+  const next={...current,[key]:current[key]+count};
+  if(next[key]>CAPS[key])return false;
+  if(key==='imitate'&&!v2Finished)return false;
   if(estimate(next)>wallMs)return false;
   imitate=next.imitate;
   self=next.self;
-  dev=next.dev;
-  test=next.test;
+  devSeeds=next.devSeeds;
+  testSeeds=next.testSeeds;
   return true;
  };
  const steps=[
-  ['imitate',1,8],
-  ['self',4,24],
-  ['dev',4,16],
-  ['imitate',1,8],
-  ['self',4,24],
-  ['dev',4,16],
-  ['test',2,8],
-  ['self',4,24],
-  ['imitate',2,8],
-  ['dev',8,16],
-  ['self',8,24],
-  ['test',2,8],
-  ['test',4,8],
-  ['imitate',4,8],
-  ['self',4,24]
+  ['imitate',8],
+  ['self',16],
+  ['devSeeds',8],
+  ['testSeeds',8],
+  ['imitate',8],
+  ['self',16],
+  ['devSeeds',4],
+  ['self',16],
+  ['imitate',8],
+  ['devSeeds',4],
+  ['self',32],
+  ['imitate',8],
+  ['testSeeds',4]
  ];
- for(const [key,count,cap] of steps)add(key,count,cap);
+ for(const [key,count] of steps)add(key,count);
  return {
-  imitate,self,dev,test,workers:pool,wallMs,
-  estimatedMs:estimate({imitate,self,dev,test}),
-  nnMs:nn,v2Ms:v2,v2Finished:!!v2Finished,selfCost,testCost
+  imitate,self,devSeeds,testSeeds,checkpoints,workers:pool,wallMs,
+  devGames:devSeeds*CELLS,testGames:testSeeds*CELLS,
+  estimatedMs:estimate({imitate,self,devSeeds,testSeeds}),
+  nnMs:nn,v2Ms:v2,v2Finished:!!v2Finished,
+  selfCost,safety,trainReserve,
+  raw:{nn,v2,self:selfRaw}
  };
 }

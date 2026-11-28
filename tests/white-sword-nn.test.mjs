@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {existsSync,readFileSync} from 'node:fs';
 import test from 'node:test';
+import {classifyChoice,provenUidEquivalent} from '../training/white-sword-nn/agree.mjs';
 import {planBudget} from '../training/white-sword-nn/budget.mjs';
+import {pairedDelta,seedSummary,selectCheckpoint} from '../training/white-sword-nn/cluster.mjs';
 import {V2_FILE_HASH} from '../training/white-sword-nn/constants.mjs';
 import {
  ACTION_DIM,INPUT_DIM,STATE_DIM,encodeAction,encodeState,joinFeatures,publicHistoryStep,sameVector,visibleIndex
@@ -12,9 +14,10 @@ import {
  backward,createNet,createOptimizer,forwardTrain,greedyIndex,scoreActions
 } from '../training/white-sword-nn/net.mjs';
 import {
- BENCH_NN_SEED,BENCH_V2_SEED,DEV_SEEDS,IMITATE_SEEDS,SELF_SEEDS,TEST_SEEDS,allExperimentSeeds,assertExperimentSeed
+ BENCH_NN_SEED,BENCH_V2_SEED,DEV_SEEDS,EVAL_CELLS,IMITATE_SEEDS,PRIOR_TEST_SEEDS,SELF_SEEDS,TEST_SEEDS,
+ allExperimentSeeds,assertExperimentSeed,checkpointEnds,holdoutSplit
 } from '../training/white-sword-nn/protocol.mjs';
-import {judgeLearning,judgePrototype,renderReport} from '../training/white-sword-nn/report.mjs';
+import {answerFollowUp,answerInit,answerTrend,judgeFollowUp,judgeLearning,judgePrototype,judgeTrend,renderReport,renderRound2} from '../training/white-sword-nn/report.mjs';
 
 function player(){
  return {
@@ -42,21 +45,32 @@ test('experiment seeds stay out of the old splits',()=>{
  assert.throws(()=>assertExperimentSeed(BENCH_V2_SEED,'train'));
  assert.throws(()=>assertExperimentSeed(DEV_SEEDS[0],'train'));
  assert.throws(()=>assertExperimentSeed(TEST_SEEDS[0],'dev'));
+ assert.throws(()=>assertExperimentSeed(188100,'train'));
+ assert.throws(()=>assertExperimentSeed(PRIOR_TEST_SEEDS[0],'test'));
  const train=new Set([...IMITATE_SEEDS,...SELF_SEEDS]);
  for(const seed of [...DEV_SEEDS,...TEST_SEEDS,BENCH_NN_SEED,BENCH_V2_SEED])assert.equal(train.has(seed),false);
+ for(const seed of PRIOR_TEST_SEEDS)assert.equal(DEV_SEEDS.includes(seed),true);
+ for(const seed of [188000,188001,188100,188300,...PRIOR_TEST_SEEDS])assert.equal(TEST_SEEDS.includes(seed),false);
+ assert.equal(EVAL_CELLS.length,4);
+ assert.equal(new Set(EVAL_CELLS.map(cell=>cell.learnerSeat+':'+cell.first)).size,4);
+ const held=holdoutSplit(IMITATE_SEEDS.slice(0,16));
+ assert.deepEqual(held.holdout,IMITATE_SEEDS.slice(12,16));
+ assert.equal(held.train.some(seed=>held.holdout.includes(seed)),false);
+ assert.deepEqual(checkpointEnds(80),[20,40,60,80]);
 });
 
 test('the budget never spends a v2 game that the measurement did not finish',()=>{
  const open=planBudget({wallMs:1e15,nnMs:1000,v2Ms:1000,v2Finished:true,workers:2});
- assert.equal(open.imitate,8);
- assert.equal(open.self,24);
- assert.equal(open.dev,16);
- assert.equal(open.test,8);
+ assert.equal(open.imitate,32);
+ assert.equal(open.self,80);
+ assert.equal(open.devSeeds,16);
+ assert.equal(open.testSeeds,12);
+ assert.ok(open.imitate>8&&open.self>24&&open.devGames>16&&open.testGames>8);
  const blocked=planBudget({wallMs:1e15,nnMs:1000,v2Ms:1000,v2Finished:false,workers:1});
  assert.equal(blocked.imitate,0);
- assert.equal(blocked.test,0);
- assert.ok(blocked.self>0);
- assert.ok(blocked.dev>0);
+ assert.ok(blocked.testSeeds>0);
+ assert.ok(blocked.self>24);
+ assert.ok(blocked.devSeeds>0);
  const tight=planBudget({wallMs:1000,nnMs:5000,v2Ms:5000,v2Finished:true,workers:1});
  assert.equal(tight.imitate,0);
  assert.equal(tight.self,0);
@@ -76,6 +90,9 @@ test('action features use the visible card and ignore uid text',()=>{
  assert.equal(Object.keys(history).some(key=>/uid/i.test(key)),false);
  const revealed=publicHistoryStep(0,{type:'play',line:'front',slot:1},'BLC-2-067');
  assert.equal(revealed.cardId,'BLC-2-067');
+ const quiet=encodeState(view,0,[]);
+ const heard=encodeState(view,0,[revealed]);
+ assert.equal(sameVector(quiet,heard),false);
 });
 
 test('the state vector changes with the actor hand and not with a hidden label',()=>{
@@ -180,6 +197,82 @@ test('greedy tie break stays on a legal object',()=>{
  assert.equal(greedyIndex(scores,legal),0);
  scores[1]=2;
  assert.equal(legal[greedyIndex(scores,legal)],legal[1]);
+});
+
+test('uid copies are not treated as exact matches or as unproven collisions',()=>{
+ const sameCard=new Map([
+  ['0-1',{cardId:'BLC-2-067',faceDown:false}],
+  ['0-2',{cardId:'BLC-2-067',faceDown:false}],
+  ['0-4',{cardId:'BLC-1-085',faceDown:false}]
+ ]);
+ const copies=[
+  {type:'play',uid:'0-1',line:'front',slot:0},
+  {type:'play',uid:'0-2',line:'front',slot:0}
+ ];
+ assert.equal(provenUidEquivalent(sameCard,copies[0],copies[1]),true);
+ assert.equal(classifyChoice(0,1,sameCard,copies,null),'uid');
+ assert.equal(classifyChoice(0,0,sameCard,copies,null),'exact');
+ const hidden=new Map([['0-1',{cardId:'BLC-2-067',faceDown:false}]]);
+ assert.equal(provenUidEquivalent(hidden,copies[0],copies[1]),false);
+ const different=new Map([
+  ['0-1',{cardId:'BLC-2-067',faceDown:false}],
+  ['0-2',{cardId:'BLC-1-085',faceDown:false}]
+ ]);
+ assert.equal(classifyChoice(0,1,different,copies,null),'disagree');
+ const collided=[
+  {type:'play',uid:'0-1'},
+  {type:'activate',uid:'0-1',mode:'raid'}
+ ];
+ const rows=[Float64Array.from([1,0,0]),Float64Array.from([1,0,0])];
+ assert.equal(classifyChoice(0,1,sameCard,collided,rows),'unproven-collision');
+});
+
+test('seed clusters do not pretend four games are four samples',()=>{
+ const games=[];
+ for(let index=0;index<4;index++)games.push({seed:1,status:'finished',winner:0,learnerSeat:0,first:index%2});
+ for(let index=0;index<4;index++)games.push({seed:2,status:'finished',winner:1,learnerSeat:0,first:index%2});
+ const summary=seedSummary(games,game=>game.learnerSeat);
+ assert.equal(summary.seeds,2);
+ assert.equal(summary.finished,8);
+ assert.equal(summary.mean,0.5);
+ assert.equal(summary.low,0);
+ assert.equal(summary.high,1);
+ const rising=pairedDelta([{seed:1,p:0},{seed:2,p:0.25},{seed:3,p:0.5}],[{seed:1,p:1},{seed:2,p:1},{seed:3,p:1}]);
+ assert.equal(judgeTrend(rising).positive,true);
+ const flat=pairedDelta([{seed:1,p:0.5},{seed:2,p:0.5}],[{seed:1,p:1},{seed:2,p:0}]);
+ assert.equal(judgeTrend(flat).positive,false);
+ const picked=selectCheckpoint([
+  {gamesPlayed:20,summary:{seeds:8,mean:0.4}},
+  {gamesPlayed:40,summary:{seeds:8,mean:0.62}},
+  {gamesPlayed:80,summary:{seeds:2,mean:0.95}}
+ ]);
+ assert.equal(picked.gamesPlayed,40);
+ const follow=judgeFollowUp({devSeeds:8,pairedSeeds:8,deltaLow:0.1,selectedMean:0.6,finalLow:0.51});
+ assert.equal(follow.recommend,true);
+ const early=judgeFollowUp({devSeeds:8,pairedSeeds:8,deltaLow:0.1,selectedMean:0.6,finalLow:0.2});
+ assert.equal(early.recommend,false);
+});
+
+test('round-2 answers stay separate from a finished budget',()=>{
+ const text=renderRound2({
+  createdAt:'2026-11-25T08:00:00.000Z',gamma:0.995,imitateLr:0.001,monteLr:0.0005,smooth:0.05,explore:0.12,
+  parameters:10,bench:{forward:{},train:{},nnGame:{ms:1,steps:1,status:'finished'},v2Finished:true,rssMb:1},
+  plan:{wallMs:1,estimatedMs:1,workers:1,imitate:1,self:1,devSeeds:1,testSeeds:1,checkpoints:4},
+  elapsedMs:1,actual:{imitate:1,self:1,devSeeds:2,testSeeds:2,checkpoints:2},
+  initialization:{holdoutGames:0,agreement:{}},distance:{},resourceGap:'',
+  curve:[],selected:null,delta:{seeds:0,mean:null,low:null,high:null},
+  trend:{positive:false,reason:'檢查點不足，不能估計配對差'},
+  followUp:{recommend:false,reasons:['開發種子少於 8 個']},
+  finalTest:{seeds:0,mean:null},anomalies:{},explored:0,decisionTiming:null,
+  prototype:{running:true,reasons:[]}
+ });
+ assert.match(text,/修正後 A 的初始化品質/);
+ assert.match(text,/正向趨勢/);
+ assert.match(text,/更完整的獨立驗證/);
+ assert.match(text,/跑完這次預算不等於檢定力已經夠/);
+ assert.match(answerInit({initialization:{holdoutGames:0}}),/沒有整場保留示範/);
+ assert.match(answerTrend({trend:{positive:false,reason:'檢查點不足'},delta:{seeds:0}}),/沒有事先登記的正向趨勢/);
+ assert.match(answerFollowUp({followUp:{recommend:false,reasons:['配對差的區間下限沒有高於 0']}}),/方法不可行/);
 });
 
 test('learning and prototype verdicts stay separate',()=>{

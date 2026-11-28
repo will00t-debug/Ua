@@ -110,7 +110,7 @@ export function playMatch(spec){
   seats:spec.seats.map(seat=>({deckId:seat.deckId,kind:seat.kind})),
   status:'error',winner:null,endReason:null,error:null,steps:0,decisions:0,
   ms:0,anomalies:emptyAnomalies(),collisions:0,explored:0,scored:0,
-  legalTotal:0,decisionMs:[],imitate:[],monte:[],actions:[]
+  legalTotal:0,decisionMs:[],imitate:[],monte:[],actions:[],publicHistory:[]
  };
  try{
   if(!Array.isArray(spec.seats)||spec.seats.length!==2)throw Error('A match needs two seats');
@@ -118,7 +118,7 @@ export function playMatch(spec){
   const packs=[decks[0].pack,decks[1].pack];
   const counts=[decks[0].counts,decks[1].counts];
   let state=newComparedMatch(packs,counts,spec.seed,spec.first,RULES);
-  const history=[];
+  const history=game.publicHistory;
   const rng=mulberry32((spec.exploreSeed??spec.seed)>>>0);
   const record=new Set(spec.recordSeats||[]);
   const teachers=new Set(spec.teacherSeats||[]);
@@ -212,7 +212,10 @@ export function playMatch(spec){
     }
     game.collisions+=collisions(encoded.actions);
     game.imitate.push({
+     seed:spec.seed,
      rows:encoded.actions.map(action=>joinFeatures(encoded.state,action)),
+     actions:legal.map(action=>JSON.parse(JSON.stringify(action))),
+     identities:[...encoded.index].map(([uid,card])=>[uid,{cardId:card.cardId||'',faceDown:card.faceDown===true}]),
      chosen
     });
    }
@@ -225,24 +228,22 @@ export function playMatch(spec){
     game.endReason='engine';
     break;
    }
-   if(spec.mode!=='imitate'){
-    try{
-     const cardId=revealedCardId(packs,next,actor===0?1:0,picked.action);
-     history.push(publicHistoryStep(actor,picked.action,cardId));
-     if(history.length>HISTORY)history.shift();
-    }catch(error){
-     const message=String(error?.message||error);
-     if(message.includes('leaked')||message.includes('leak'))game.anomalies.leak++;
-     else game.anomalies.engineError++;
-     game.error=message;
-     game.endReason='history';
-     break;
-    }
+   try{
+    const cardId=revealedCardId(packs,next,actor===0?1:0,picked.action);
+    history.push(publicHistoryStep(actor,picked.action,cardId));
+    if(history.length>HISTORY)history.shift();
+   }catch(error){
+    const message=String(error?.message||error);
+    if(message.includes('leaked')||message.includes('leak'))game.anomalies.leak++;
+    else game.anomalies.engineError++;
+    game.error=message;
+    game.endReason='history';
+    break;
    }
    state=next;
    game.steps++;
    game.decisions++;
-   if(spec.progress&&game.steps%5===0)note(spec,'seed '+spec.seed+' step '+game.steps+' '+Math.round(performance.now()-started)+'ms');
+   if(spec.progress&&game.steps%25===0)note(spec,'seed '+spec.seed+' step '+game.steps+' '+Math.round(performance.now()-started)+'ms');
   }
   game.status=state.status;
   game.winner=state.winner;
