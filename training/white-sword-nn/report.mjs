@@ -1,8 +1,9 @@
 import {pairedDelta} from './cluster.mjs';
-import {AGREEMENT_DROP,SURPASS_SEEDS} from './constants.mjs';
+import {AGREEMENT_DROP,ROUND5_DEV_COUNT,SURPASS_SEEDS} from './constants.mjs';
 import {
  ARM_RULE,COPY_RULE,EARLY_RULE,FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PPO_RULE,PROMOTION_RULE,
- READ_RULE,ROUND4_READ_RULE,ROUND4_SELECT_RULE,SCALE_RULE,SELECTION_RULE,TREND_RULE
+ READ_RULE,ROUND4_READ_RULE,ROUND4_SELECT_RULE,ROUND5_EVAL_RULE,ROUND5_KL_RULE,SCALE_RULE,SELECTION_RULE,
+ TREND_RULE
 } from './protocol.mjs';
 
 function pct(rate){
@@ -545,6 +546,116 @@ export function renderRound4(summary){
   answerConfirmation(summary),
   '',
   '種子平均即使高於 50%，只要相對 0 次更新的配對差區間沒有整段高於 0，就只能稱為未觀察到明顯退步，不能稱為自主變強。損失下降、Critic 更準、KL 較小或權重有更新，都不能代替對局。這次權重沒有部署，也沒有合併到 main。晉級門檻沒有放寬。',
+  ''
+ ];
+ return rows.join('\n');
+}
+const ROUND5_GAMES=ROUND5_DEV_COUNT*4;
+export function judgeRound5({plannedGames,finishedGames,unfinished,seeds,completeSeeds,delta}={}){
+ const planned=plannedGames??0;
+ const finished=finishedGames??0;
+ const left=unfinished??0;
+ const ready=planned===ROUND5_GAMES&&finished===ROUND5_GAMES&&left===0&&
+  seeds===ROUND5_DEV_COUNT&&completeSeeds===ROUND5_DEV_COUNT&&
+  delta?.seeds===ROUND5_DEV_COUNT&&delta.low!=null&&delta.high!=null;
+ if(!ready){
+  return {kind:'incomplete',delta:delta||null,reason:'固定的 '+ROUND5_GAMES+' 場沒有全部正常結束，這份評估未完成。'};
+ }
+ if(delta.low>0)return {kind:'supports-better',delta,reason:'相對 50% 的差，區間下限高於 0。'};
+ if(delta.high<0)return {kind:'supports-weaker',delta,reason:'相對 50% 的差，區間上限低於 0。'};
+ return {kind:'not-confirmed',delta,reason:'相對 50% 的差，區間包含 0。'};
+}
+export function answerKlFix(diagnosis){
+ const base='修正的是量測，不是第 80 場的權重。更新過程的混合平均把同一輪裡逐筆 Adam 步驟、因此也是不同 Actor 版本的 KL 加在一起。固定 Actor 的整批 KL 先停住一份權重，對同一批觀測和當時的合法動作重算完整分布，再跟保存的行為策略分布計算 KL。第四輪紀錄只留下各輪混合平均和有沒有提前停止，沒有留下每一輪自己的 KL、更新途中的權重，或每筆樣本。';
+ if(diagnosis?.accepted){
+  const rows=(diagnosis.batches||[]).filter(batch=>batch.fixed&&Number.isFinite(batch.recordedKl));
+  const higher=rows.filter(batch=>batch.fixed.mean>batch.recordedKl).length;
+  const compared=rows.length
+   ?'還原的 '+rows.length+' 批裡，有 '+higher+' 批的固定 Actor 樣本平均高於第四輪留下的混合平均，單筆最大也高於該批平均。0.02 因此不是這些批次的硬上界。每一輪各自的 KL 和更新途中的權重仍然沒有留下。'
+   :'';
+  return base+'重播的總步數、決策數和每一批樣本數與第四輪紀錄一致，所以下面的固定 Actor KL 是用原種子和原快照還原的診斷。它不是當時寫進紀錄的監控數字，也不是新的訓練或新的評估樣本。原始樣本張量仍然沒有留在第四輪檔案裡，這次對上的是步數、決策數和樣本數。'+compared;
+ }
+ return base+'重播沒有對上第四輪紀錄的步數或樣本數，所以歷史批次的固定 Actor KL 不能還原。對不上的重播沒有拿來填這個數字。';
+}
+export function answerRound5Strength(judgment){
+ if(!judgment||judgment.kind==='incomplete')return '評估未完成。未完成的對局沒有被當成勝負，也沒有用其餘場次宣布優於 A。';
+ if(judgment.kind==='supports-better')return '有。這 64 個新開發種子上，相對 50% 的差，區間下限高於 0。這支持凍結的 80 場候選優於 A。它不回改第四輪沒有通過原門檻的結論。';
+ if(judgment.kind==='supports-weaker')return '沒有。區間上限低於 50%。這份新資料支持這個候選弱於 A。停止推進這個候選，但不把整個 PPO 方法說成不可行。';
+ return '不能確認。區間包含 50%。這次固定評估沒有確認改善。不補抽到過關，也不用第四輪的開發高點代替這個結果。';
+}
+export function answerRound5Confirm(judgment){
+ if(judgment?.kind==='supports-better'){
+  return '有足夠的新開發證據，建議另行安排獨立確認。本輪沒有啟動 191400–191411。這仍然不是超越正式 v2，也不是晉級。';
+ }
+ return '沒有。本輪不啟動預留確認種子 191400–191411。';
+}
+function klLine(point){
+ if(!point)return 'n/a';
+ const q=(point.quantiles||[]).map(item=>Math.round(item.p*100)+'% '+item.value.toFixed(6)).join('，');
+ return '樣本平均 '+point.mean.toFixed(6)+'，'+q+'，最大 '+point.max.toFixed(6)+'，n='+point.n;
+}
+export function renderRound5(summary){
+ const judgment=summary.judgment;
+ const diagnosis=summary.diagnosis||{};
+ const klRows=(diagnosis.batches||[]).map(batch=>{
+  const recorded='第四輪混合平均 '+(batch.recordedKl==null?'n/a':Number(batch.recordedKl).toFixed(6))+
+   '，當時輪數 '+(batch.recordedEpochs??'n/a')+'，提前停止 '+(batch.recordedStopped?'是':'否');
+  const fixed=diagnosis.accepted&&batch.fixed?'。固定 Actor '+klLine(batch.fixed):'';
+  return '- 第 '+(batch.gamesPlayed??batch.batch)+' 場結束，對手 '+batch.kind+'，樣本 '+(batch.samples??'n/a')+'。'+recorded+fixed+'。';
+ });
+ const seedRows=(summary.perSeed||[]).map(row=>{
+  const cells=(row.cells||[]).map(cell=>cell.learnerSeat+'/'+cell.first+' '+cell.mark).join('，');
+  return '- '+row.seed+'：'+cells+'。種子勝率 '+((row.p==null)?'n/a':(row.p*100).toFixed(1)+'%')+'。';
+ });
+ const unfinished=(summary.unfinished||[]).map(game=>'- 種子 '+(game.seed??'n/a')+'，座位 '+(game.learnerSeat??'n/a')+'，先手 '+(game.first??'n/a')+'，'+game.status+'，'+(game.endReason||'無原因')+'。');
+ const rows=[
+  '# 白劍神經網路第五輪',
+  '',
+  '產生時間：'+taipei(summary.createdAt)+'。',
+  '',
+  '接受第四輪：PPO 尚未證明自主變強，但選中的 80 場模型有正向點估計。這一輪不更換演算法、不新增訓練、不調整權重或超參數。正式 v2、Hard Search 2、規則和網站都沒有改。',
+  '',
+  ...linesOf('三個問題',[
+   '① '+answerKlFix(diagnosis),
+   '② '+answerRound5Strength(judgment),
+   '③ '+answerRound5Confirm(judgment)
+  ]),
+  ...linesOf('固定規則',[
+   ROUND5_KL_RULE,
+   '',
+   ROUND5_EVAL_RULE
+  ]),
+  ...linesOf('凍結檔案',[
+   '- 基準：'+(summary.baseline?.file||'n/a')+'。版本 '+(summary.baseline?.version||'n/a')+'，更新次數 '+(summary.baseline?.updates??'n/a')+'，雜湊 '+(summary.baseline?.sha256||'n/a')+'，來源 commit '+(summary.baseline?.commit||'n/a')+'。',
+   '- 候選：'+(summary.candidate?.file||'n/a')+'。版本 '+(summary.candidate?.version||'n/a')+'，更新次數 '+(summary.candidate?.updates??'n/a')+'，雜湊 '+(summary.candidate?.sha256||'n/a')+'，來源 commit '+(summary.candidate?.commit||'n/a')+'。',
+   '- 執行後雜湊：基準 '+(summary.baselineAfter?.sha256===summary.baseline?.sha256?'未變':'已變')+'，候選 '+(summary.candidateAfter?.sha256===summary.candidate?.sha256?'未變':'已變')+'。',
+   '- 評估程式 commit：'+(summary.codeCommit||'n/a')+'。'
+  ]),
+  ...linesOf('KL 診斷',klRows.length?klRows:[
+   '- 沒有可對照的第四輪批次。'
+  ]),
+  ...linesOf('新開發評估',[
+   '- 種子平均對 A：'+seedPct(summary.summary)+'。',
+   '- 相對 50%：'+deltaLine(summary.versusHalf)+'。',
+   '- 先手：'+seedPct(summary.first)+'。後手：'+seedPct(summary.second)+'。',
+   '- 座位 0：'+seedPct(summary.seat0)+'。座位 1：'+seedPct(summary.seat1)+'。',
+   '- 計畫場數 '+(summary.plannedGames??0)+'。正常終局 '+(summary.finishedGames??0)+'。未完成 '+(summary.unfinished?.length??0)+'。',
+   '- 實際耗時：'+ms(summary.elapsedMs)+'。'
+  ]),
+  ...linesOf('逐種子結果',seedRows.length?seedRows:['- 沒有逐種子結果。']),
+  ...linesOf('未完成對局',unfinished.length?unfinished:['- 沒有未完成對局。']),
+  ...linesOf('異常',[
+   '- 評估異常：'+JSON.stringify(summary.anomalies||{})
+  ]),
+  '## 結論',
+  '',
+  answerKlFix(diagnosis),
+  '',
+  answerRound5Strength(judgment),
+  '',
+  answerRound5Confirm(judgment),
+  '',
+  '第四輪沒有通過原確認門檻的結論維持不變。損失、KL 和權重距離都不是棋力。這次沒有部署，也沒有合併到 main。晉級門檻沒有放寬。',
   ''
  ];
  return rows.join('\n');

@@ -5,7 +5,7 @@ import {splitForSeed} from '../../dist/universal-v2/white-sword-ai/constants.mjs
 import {
  AGREEMENT_DROP,CRITIC_INIT_SEED,GAMMA,INIT_SEED,PPO_ACTOR_LR,PPO_BATCH_GAMES,PPO_CLIP,
  PPO_CRITIC_LR,PPO_ENTROPY,PPO_EPOCHS,PPO_KL_LIMIT,PPO_MAX_BATCHES,REPLAY_FRACTION,
- ROUND4_CONFIRM_CAP,SURPASS_SEEDS
+ ROUND4_CONFIRM_CAP,ROUND5_DEV_COUNT,ROUND5_DEV_START,SURPASS_SEEDS
 } from './constants.mjs';
 
 export const RESERVED=Object.freeze([
@@ -44,6 +44,10 @@ export const ROUND3_CONFIRM_SEEDS=Object.freeze(range(189800,12));
 export const ROUND4_SELF_SEEDS=Object.freeze(range(191200,PPO_MAX_BATCHES*PPO_BATCH_GAMES));
 export const ROUND4_DEV_SEEDS=ROUND3_DEV_SEEDS;
 export const ROUND4_CONFIRM_SEEDS=Object.freeze(range(191400,ROUND4_CONFIRM_CAP));
+// Round 5 does not train. 191600–191663 is the first 64-integer block that is
+// outside every reserved range and every earlier experiment block, including
+// the unused confirmation seeds 191400–191411.
+export const ROUND5_DEV_SEEDS=Object.freeze(range(ROUND5_DEV_START,ROUND5_DEV_COUNT));
 // Seat and first player are crossed. Four games per seed, not two bound pairs.
 export const EVAL_CELLS=Object.freeze([
  Object.freeze({learnerSeat:0,first:0}),
@@ -88,6 +92,8 @@ export const PPO_RULE=[
 ].join('\n');
 export const ROUND4_SELECT_RULE='檢查點包含 0 次更新，以及每一個實際跑完的批次。只在開發種子數最多的檢查點之間選候選：種子平均勝率最高，平手取較晚的。選完就凍結該檢查點的 Actor。確認對局的結果不用來改選檢查點、學習率或批次。';
 export const ROUND4_READ_RULE='計畫終點是最後一個實際跑完的檢查點。損失、Critic 誤差、KL 和權重距離都不是棋力。終點相對 0 次更新的配對差區間整段低於 0，記成 PPO 造成退步。沒有同時達到至少 '+SURPASS_SEEDS+' 個種子、種子平均高於 50%、以及相對 0 次更新的配對差下限高於 0 時，只稱為未觀察到明顯退步，不能稱為自主變強。只有被選中的檢查點同時達到這三項，才用全新確認種子再打，而且確認種子的區間下限也要高於 50%，才建議更完整的獨立驗證。189400–189411 只作開發。正式晉級門檻不使用這條規則，也不放寬。';
+export const ROUND5_KL_RULE='更新過程的混合平均，是同一輪裡逐筆 Adam 步驟當下的 KL 再取平均。那些步驟的 Actor 不是同一個版本，所以這個平均不能當成更新後那一個 Actor 對整批資料的 KL。固定 Actor 的整批 KL 先停住一份權重，對同一批觀測和當時的完整合法動作集合重算分布，再對保存下來的行為策略完整分布計算 KL。樣本平均、線性插值的 50%、90%、95% 分位數，以及最大值要分開記錄。後續訓練若用這個監控，提前停止只看固定 Actor 的樣本平均，門檻仍是 '+PPO_KL_LIMIT+'。分位數和最大值不拿來改門檻。量到超限才停止，不表示更新途中的 KL 從未超過門檻，也不把樣本平均當成硬上界。第四輪留下的混合平均不回寫成這個新量測，第 80 場候選也不因此重訓。';
+export const ROUND5_EVAL_RULE='候選是第四輪 80 場的 Actor，基準是第二輪凍結的 A。不重訓、不改權重、不改 softmax，評估仍是無探索的貪心選牌。開發種子是 '+ROUND5_DEV_START+'–'+(ROUND5_DEV_START+ROUND5_DEV_COUNT-1)+'，共 '+ROUND5_DEV_COUNT+' 個。每個種子跑四種座位與先後手，共 '+(ROUND5_DEV_COUNT*4)+' 場。不使用既有訓練種子、開發種子、已看過的測試種子、預留確認種子 191400–191411，或其他保留區塊。每個種子先把四場平均成一個勝率，再對 '+ROUND5_DEV_COUNT+' 個原始種子估計。相對 50% 的差，是這個種子勝率減去 0.5。區間用既有的種子 t 臨界值；種子數大於 30 時該函式固定回傳 1.96，標準誤是樣本標準差除以種子數的平方根，區間不截斷到 [0,1]。下限高於 0，才表示這份新開發資料支持這個凍結候選優於 A，並可建議另行安排獨立確認。上限低於 0，才表示新資料支持候選弱於 A，停止推進這個候選，不外推成整個 PPO 方法不可行。區間包含 0，則這次固定評估仍無法確認改善，不補抽、不換種子，也不用第四輪的開發高點代替。任一場沒有正常終局，整份評估記為未完成，不用其餘場次宣布過關，也不換種子。先後手和座位只作描述，不取代種子平均。本輪不啟動預留確認種子。即使下限高於 0，也不宣稱超越正式 v2，也不放寬晉級門檻。第四輪沒有通過原確認門檻的結論不回改。64 個種子不保證檢定力已經夠，仍按實際區間解讀。';
 
 export function reservedHit(seed){
  return RESERVED.find(([low,high])=>seed>=low&&seed<=high)||null;
@@ -117,12 +123,18 @@ export function assertExperimentSeed(seed,role){
  if(role==='round4-confirm'&&!ROUND4_CONFIRM_SEEDS.includes(seed))throw Error('Round-4 confirmation seed '+seed+' is outside the new confirmation block');
  if(role==='round4-confirm'&&ROUND4_DEV_SEEDS.includes(seed))throw Error('A round-4 dev seed cannot confirm round 4');
  if(role==='round4-train'&&ROUND4_DEV_SEEDS.includes(seed))throw Error('A development seed cannot enter round-4 rollouts');
+ if(role==='round5-dev'&&!ROUND5_DEV_SEEDS.includes(seed))throw Error('Round-5 dev seed '+seed+' is outside the new dev block');
+ if(role==='round5-dev'&&(ROUND4_DEV_SEEDS.includes(seed)||ROUND4_SELF_SEEDS.includes(seed)||ROUND4_CONFIRM_SEEDS.includes(seed))){
+  throw Error('A round-4 seed cannot be reused as round-5 development');
+ }
+ if(role==='round4-confirm'&&ROUND5_DEV_SEEDS.includes(seed))throw Error('A round-5 dev seed cannot confirm round 4');
  return seed;
 }
 export function allExperimentSeeds(){
  return [
   BENCH_NN_SEED,BENCH_V2_SEED,...IMITATE_SEEDS,...SELF_SEEDS,...DEV_SEEDS,...TEST_SEEDS,
-  ...ROUND3_DIAG_SEEDS,...ROUND3_CONFIRM_SEEDS,...ROUND4_SELF_SEEDS,...ROUND4_CONFIRM_SEEDS
+  ...ROUND3_DIAG_SEEDS,...ROUND3_CONFIRM_SEEDS,...ROUND4_SELF_SEEDS,...ROUND4_CONFIRM_SEEDS,
+  ...ROUND5_DEV_SEEDS
  ];
 }
 export function holdoutSplit(seeds){

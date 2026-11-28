@@ -1,7 +1,7 @@
 // Actor–Critic PPO-Clip for the white-sword experiment.
 // The actor is a copied preference. The critic is a separate value fit.
 // Nothing here reads a win rate or mixes in an old replay buffer.
-import {GRAD_CLIP,HIDDEN} from './constants.mjs';
+import {GRAD_CLIP,HIDDEN,KL_QUANTILES} from './constants.mjs';
 import {ACTION_DIM,STATE_DIM,joinFeatures} from './encode.mjs';
 import {shuffle} from './learn.mjs';
 import {
@@ -96,6 +96,51 @@ export function behaviorKl(oldLogProbs,newLogProbs){
   kl+=prob*(oldLogProbs[index]-newLogProbs[index]);
  }
  return kl;
+}
+// Linear interpolation on the sorted sample. Position (n-1)*p.
+// This is not the ceiling percentile used for decision timing.
+export function klQuantile(sorted,p){
+ if(!sorted?.length)throw Error('quantile needs samples');
+ if(!(p>=0&&p<=1))throw Error('quantile probability is outside [0,1]');
+ if(sorted.length===1)return sorted[0];
+ const pos=(sorted.length-1)*p;
+ const low=Math.floor(pos);
+ const high=Math.ceil(pos);
+ if(low===high)return sorted[low];
+ return sorted[low]*(high-pos)+sorted[high]*(pos-low);
+}
+// KL of one frozen actor against the stored behavior distribution on every
+// sample. The actor is not updated. This is not the average of KLs taken
+// while Adam was stepping through different actor versions.
+export function fixedBatchKl(actor,samples){
+ if(!samples?.length)throw Error('fixed KL needs the batch');
+ const updates=actor.updates;
+ const mark=actor.theta[0];
+ const values=[];
+ for(const sample of samples){
+  if(sample?.source!=='ppo')throw Error('fixed KL saw a sample that is not from the behavior policy');
+  if(!sample.oldLogProbs||sample.oldLogProbs.length!==sample.actions?.length){
+   throw Error('fixed KL is missing the full behavior distribution');
+  }
+  let mass=0;
+  for(const logProb of sample.oldLogProbs){
+   if(!Number.isFinite(logProb))throw Error('stored behavior log probability is not finite');
+   mass+=Math.exp(logProb);
+  }
+  if(Math.abs(mass-1)>1e-6)throw Error('behavior distribution is not the full legal set');
+  const scores=scoreActions(actor,sample.state,sample.actions);
+  const dist=categorical(Array.from(scores));
+  values.push(behaviorKl(sample.oldLogProbs,dist.logProbs));
+ }
+ if(actor.updates!==updates||actor.theta[0]!==mark)throw Error('fixed KL changed the actor');
+ const sorted=values.slice().sort((left,right)=>left-right);
+ const mean=values.reduce((sum,value)=>sum+value,0)/values.length;
+ return {
+  n:values.length,
+  mean,
+  max:sorted[sorted.length-1],
+  quantiles:KL_QUANTILES.map(p=>({p,value:klQuantile(sorted,p)}))
+ };
 }
 export function clippedObjective(ratio,advantage,epsilon){
  const clipped=Math.min(1+epsilon,Math.max(1-epsilon,ratio));
@@ -238,6 +283,7 @@ export function criticStep(critic,opt,state,target){
 export function ppoUpdate({actor,actorOpt,critic,criticOpt,behavior,samples,config}){
  if(!config?.rng)throw Error('PPO update needs the locked random stream');
  if(!(config.epochs>0)||!Number.isInteger(config.epochs))throw Error('PPO epochs were not fixed');
+ if(!samples?.length)throw Error('PPO update needs the batch');
  assertOnPolicy(samples,behavior);
  if(sameWeights(actor,behavior)){
   for(const sample of samples){
@@ -271,8 +317,15 @@ export function ppoUpdate({actor,actorOpt,critic,criticOpt,behavior,samples,conf
    kl:used?kl/used:null,
    clippedRate:used?clipped/used:null
   };
+  const fixed=fixedBatchKl(actor,samples);
+  row.mixedKl=row.kl;
+  row.fixedKl=fixed.mean;
+  row.fixedMax=fixed.max;
+  row.fixedQuantiles=fixed.quantiles;
   epochs.push(row);
-  if(row.kl>config.klLimit){
+  // Stop on the snapshot mean. The path inside this epoch was not measured,
+  // so stopping here is not a certificate that KL stayed under the limit.
+  if(fixed.mean>config.klLimit){
    stopped=true;
    break;
   }
