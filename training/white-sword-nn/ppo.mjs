@@ -353,3 +353,55 @@ export function splitOutcomes(games){
  }
  return {done,unfinished};
 }
+// Classify the epochs that actually ran. Stopping removes later epochs, so a
+// fixed-only batch does not reveal how many more epochs the mixed rule would
+// have run. Equality with the limit is not an exceed, matching ppoUpdate.
+export function classifyMonitor(rows,limit,epochsRan,stopped){
+ const list=rows||[];
+ let mixedEpoch=null,fixedEpoch=null;
+ list.forEach((row,index)=>{
+  if(mixedEpoch==null&&row.mixedKl>limit)mixedEpoch=index+1;
+  if(fixedEpoch==null&&row.fixedKl>limit)fixedEpoch=index+1;
+ });
+ let relation;
+ if(mixedEpoch==null&&fixedEpoch==null)relation='neither';
+ else if(mixedEpoch==null)relation='fixed-only';
+ else if(fixedEpoch==null)relation='mixed-only';
+ else if(mixedEpoch===fixedEpoch)relation='same-epoch';
+ else if(fixedEpoch<mixedEpoch)relation='fixed-earlier';
+ else relation='mixed-earlier';
+ return {mixedEpoch,fixedEpoch,relation,epochsRan,stopped:!!stopped,limit};
+}
+export function summarizeMonitor(batches){
+ const counts={neither:0,'fixed-only':0,'mixed-only':0,'same-epoch':0,'fixed-earlier':0,'mixed-earlier':0};
+ let epochs=0,stopped=0,maxOver=0;
+ for(const batch of batches||[]){
+  counts[batch.relation]=(counts[batch.relation]||0)+1;
+  epochs+=batch.epochsRan||0;
+  if(batch.stopped)stopped++;
+  for(const row of batch.rows||[])if(row.fixedMax>batch.limit)maxOver++;
+ }
+ return {counts,epochs,stopped,maxOver,batches:(batches||[]).length};
+}
+// Compare the epochs that actually ran. A mixed exceed on the final allowed
+// epoch did not add a round. An early fixed-only stop skipped a later round
+// that was not run, so only the minimum and the cap-sized maximum are known.
+export function compareStop(batches,{cap=4}={}){
+ let extraBatches=0,extraEpochs=0,earlyBatches=0,earlyMin=0,earlyMax=0,sameBatches=0;
+ for(const batch of batches||[]){
+  const ran=batch.epochsRan||0;
+  const mixed=batch.mixedEpoch??null;
+  if(mixed!=null&&ran>mixed){
+   extraBatches++;
+   extraEpochs+=ran-mixed;
+  }else if(batch.relation==='fixed-only'&&ran<cap){
+   earlyBatches++;
+   earlyMin+=1;
+   earlyMax+=cap-ran;
+  }else sameBatches++;
+ }
+ return {
+  extraBatches,extraEpochs,earlyBatches,earlyMin,earlyMax,sameBatches,
+  batches:(batches||[]).length
+ };
+}

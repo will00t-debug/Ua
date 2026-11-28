@@ -3,7 +3,7 @@
 import {
  CHECKPOINTS,DIAG_GAMES,EARLY_GAMES,PLAN_SAFETY,PPO_BATCH_GAMES,PPO_MAX_BATCHES,
  REPLAY_FRACTION,ROUND3_CONFIRM_CAP,ROUND3_DEV_CAP,ROUND3_SELF_CAP,ROUND4_CONFIRM_CAP,
- ROUND4_DEV_CAP,SCALE_EVAL_SEEDS,TRAIN_RESERVE_MS
+ ROUND4_DEV_CAP,ROUND6_DEV_COUNT,ROUND6_LINES,SCALE_EVAL_SEEDS,TRAIN_RESERVE_MS
 } from './constants.mjs';
 
 const CELLS=4;
@@ -214,5 +214,53 @@ export function planRound4({
   estimatedMs:estimate(batches),
   rolloutMs:rollout,evalMs:evalCost,v2Ms:v2,updateMs:update,v2Finished:!!v2Finished,
   fits:batches>0&&devSeeds>0&&estimate(batches)<=wallMs
+ };
+}
+
+// One batch count for every round-6 line. The eval is the shared endpoint
+// block, counted once per line. Confirmation is not reserved: this round does
+// not play it. Nothing here reads a win rate.
+export function planRound6({
+ wallMs,rolloutMs,evalMs,v2Ms,updateMs,v2Finished,workers,
+ safety=PLAN_SAFETY,lines=ROUND6_LINES,devCount=ROUND6_DEV_COUNT,
+ maxBatches=PPO_MAX_BATCHES
+}={}){
+ const rollout=Math.max(1,Number(rolloutMs)||1);
+ const evalCost=Math.max(1,Number(evalMs)||1);
+ const v2=Math.max(1,Number(v2Ms)||1);
+ const update=Math.max(0,Number(updateMs)||0);
+ const pool=Math.max(1,workers|0);
+ const lineCount=Math.max(1,lines|0);
+ const batch=PPO_BATCH_GAMES;
+ const devSeeds=devCount;
+ const cells=4;
+ const evalGames=devSeeds*cells;
+ const wave=games=>Math.ceil(games/pool);
+ const kindOf=batchIndex=>round4Opponent(batchIndex,{
+  v2Finished,snapshots:Array.from({length:batchIndex})
+ });
+ const estimate=batches=>{
+  let roll=0;
+  for(let index=0;index<batches;index++){
+   const ms=kindOf(index)==='v2'?v2:rollout;
+   roll+=wave(batch)*ms*safety;
+  }
+  return lineCount*(roll+batches*update*safety+wave(evalGames)*evalCost*safety);
+ };
+ let batches=0;
+ const cap=Math.max(0,maxBatches|0);
+ while(batches<cap&&estimate(batches+1)<=wallMs)batches++;
+ const checks=[0];
+ for(let index=1;index<=batches;index++)checks.push(index*batch);
+ const kinds=[];
+ for(let index=0;index<batches;index++)kinds.push(kindOf(index));
+ const gamesPerLine=batches*batch;
+ return {
+  lines:lineCount,batches,batchGames:batch,gamesPerLine,
+  trainGames:gamesPerLine*lineCount,devSeeds,evalGamesPerLine:evalGames,
+  evalGames:evalGames*lineCount,checks,kinds,workers:pool,wallMs,safety,
+  estimatedMs:estimate(batches),
+  rolloutMs:rollout,evalMs:evalCost,v2Ms:v2,updateMs:update,v2Finished:!!v2Finished,
+  fits:batches>0&&devSeeds>0&&estimate(batches)<=wallMs,endpointOnly:true
  };
 }

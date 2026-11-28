@@ -55,3 +55,15 @@ export const ROUND5_DEV_START=191600;
 export const ROUND5_DEV_COUNT=64;
 export const ROUND5_CANDIDATE_GAMES=80;
 export const KL_QUANTILES=Object.freeze([0.5,0.9,0.95]);
+// Round 4's critic stream is CRITIC_INIT_SEED+17. It stays blocked as a game seed.
+export const ROUND4_SHUFFLE_SEED=188537;
+// Round 6 locks three lines before any of its games. The blocks are the full
+// 12-batch draft. A shorter plan uses each line's prefix and does not free the tail.
+export const ROUND6_LINES=3;
+export const ROUND6_WALL_MS=20*60*1000;
+export const ROUND6_DEV_START=192800;
+export const ROUND6_DEV_COUNT=64;
+export const ROUND6_TRAIN_STARTS=Object.freeze([192200,192400,192600]);
+export const ROUND6_CRITIC_SEEDS=Object.freeze([188530,188531,188532]);
+export const ROUND6_SHUFFLE_SEEDS=Object.freeze([188540,188541,188542]);
+export const ROUND6_BENCH_SHUFFLE=188539;

@@ -104,3 +104,9 @@ node scripts/white-sword-nn-round4.mjs trial
 ```bash
 node scripts/white-sword-nn-round5.mjs trial
 ```
+
+第六輪接受第五輪：凍結的 80 場候選尚未確認優於 A。它從凍結 A 重新訓練三條獨立的 PPO 線，停止只看固定 Actor 的整批 KL，並只比較事先鎖定的終點。結果寫在 `docs/white-sword-ai/NN-ROUND6.md`。這不是正式晉級，也不部署。
+
+```bash
+node scripts/white-sword-nn-round6.mjs trial
+```

@@ -1,0 +1,140 @@
+{
+  "createdAt": "2026-11-25T13:01:11.484Z",
+  "codeCommit": "16ef412006c9dd02431a44b4f7f5fefe018cfbdb",
+  "baseline": {
+    "file": "training/white-sword-nn/weights/round2/a-frozen.json",
+    "bytes": 835141,
+    "sha256": "542a774f6c42775e20ce1aa1a59235eb9cfe1909b6c8f92dde16a5b5fe90718e",
+    "version": "nn-a-r2",
+    "updates": 9030,
+    "seed": 188510,
+    "format": "ua-white-sword-nn-v1",
+    "commit": "3b5d843db52a98d0d2fe9c629d30fbc830b2f467"
+  },
+  "probes": [
+    {
+      "copy": true,
+      "criticIsolated": true,
+      "greedySame": true,
+      "scoresSame": true
+    },
+    {
+      "copy": true,
+      "criticIsolated": true,
+      "greedySame": true,
+      "scoresSame": true
+    },
+    {
+      "copy": true,
+      "criticIsolated": true,
+      "greedySame": true,
+      "scoresSame": true
+    }
+  ],
+  "separated": true,
+  "bench": {
+    "rolloutMs": 1185.7932919999998,
+    "rolloutSteps": 133,
+    "rolloutStatus": "finished",
+    "evalMs": 422.59074599999985,
+    "v2Ms": 2857.3980730000003,
+    "v2Status": "finished",
+    "v2Finished": true,
+    "rolloutFinished": true,
+    "updateMs": 7482.875607999995,
+    "rssMb": 368,
+    "workers": 2
+  },
+  "plan": {
+    "lines": 3,
+    "batches": 12,
+    "batchGames": 8,
+    "gamesPerLine": 96,
+    "trainGames": 288,
+    "devSeeds": 64,
+    "evalGamesPerLine": 256,
+    "evalGames": 768,
+    "checks": [
+      0,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96
+    ],
+    "kinds": [
+      "self",
+      "self",
+      "v2",
+      "self",
+      "snapshot",
+      "v2",
+      "self",
+      "snapshot",
+      "v2",
+      "self",
+      "snapshot",
+      "v2"
+    ],
+    "workers": 2,
+    "wallMs": 1194501.948142,
+    "safety": 1.4,
+    "estimatedMs": 955709.4846431996,
+    "rolloutMs": 1185.7932919999998,
+    "evalMs": 422.59074599999985,
+    "v2Ms": 2857.3980730000003,
+    "updateMs": 7482.875607999995,
+    "v2Finished": true,
+    "fits": true,
+    "endpointOnly": true
+  },
+  "seeds": {
+    "critic": [
+      188530,
+      188531,
+      188532
+    ],
+    "shuffle": [
+      188540,
+      188541,
+      188542
+    ],
+    "train": [
+      [
+        192200,
+        192295
+      ],
+      [
+        192400,
+        192495
+      ],
+      [
+        192600,
+        192695
+      ]
+    ],
+    "dev": [
+      192800,
+      192863
+    ],
+    "devCount": 64
+  },
+  "hyperparameters": {
+    "gamma": 0.995,
+    "clip": 0.2,
+    "actorLr": 0.0003,
+    "criticLr": 0.001,
+    "epochs": 4,
+    "entropy": 0.01,
+    "klLimit": 0.02,
+    "batchGames": 8
+  },
+  "note": "這份計畫在任何訓練對局之前寫下。終點評估還沒有開始。"
+}
