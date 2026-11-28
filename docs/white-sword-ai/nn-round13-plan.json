@@ -1,0 +1,66 @@
+{
+  "createdAt": "2026-11-26T02:52:45.316Z",
+  "createdAtText": "2026/11/26 10:52（台北時間）",
+  "writtenBeforeScores": true,
+  "source": "round12-snapshot",
+  "hashMatched": true,
+  "ledgerMatched": true,
+  "distMatched": true,
+  "blockMatched": true,
+  "isolated": 0,
+  "failed": 0,
+  "dataHashes": {
+    "train": "186e5f1279f52b8fa6709f837bab879fdda1631e8a5ef95c1d864191c6715a89",
+    "holdout": "87ff9e58547dfd37a00c4744ba52b2314efae55de57a8ab464361205eeeb3f4d",
+    "reserve": "e7e61b723099e1cf0529fcf08246f2eff0eb9bad52a1a6bfbef298cc8e8b1e05"
+  },
+  "counts": {
+    "train": 7162,
+    "holdout": 3395,
+    "reserve": 3010,
+    "holdoutSeeds": 28
+  },
+  "endpoint": {
+    "file": "training/white-sword-nn/weights/round12/actor-shuffle.json",
+    "version": "nn-diag-r12-shuffle",
+    "updates": 94974,
+    "fileHash": "35fb34e17f1b6c2fdca54f9c1fd14f28569f94f69ae4d285c7c3554d384f00c2",
+    "parameterHash": "6c9307830f6f84848e32c31fa01134ef401b165fa83d95cd9379b384331cac23"
+  },
+  "models": {
+    "a": {
+      "version": "nn-a-r2",
+      "updates": 9030,
+      "parameters": "02a05d1ef93e849ea3b5af9e0f420d700c679b9646bde93921b903f2f6da594d"
+    },
+    "zero": {
+      "version": "nn-imitate-r11-0",
+      "updates": 9030,
+      "parameters": "02a05d1ef93e849ea3b5af9e0f420d700c679b9646bde93921b903f2f6da594d"
+    },
+    "b": {
+      "version": "nn-ppo-actor-r6-l2",
+      "updates": 27546,
+      "parameters": "da1c33c739c6b9bc6a48912bb740bbfecbe7f13d1b0714c00051b26309039a3b"
+    },
+    "endpoint": {
+      "version": "nn-diag-r12-shuffle",
+      "updates": 94974,
+      "parameters": "6c9307830f6f84848e32c31fa01134ef401b165fa83d95cd9379b384331cac23"
+    }
+  },
+  "stats": "保留組的每個原始種子先把該種子全部非強制決策的精確教師一致率算成一個比例，再減去 A 在同種子的比例。95% 區間沿用 pairedDelta：樣本標準差用 n-1，除以種子數的平方根，臨界值用 tCritical。種子數大於 30 時臨界值是 1.96。區間不截斷到 [0,1]。下限高於 0 才算整體改善。精確一致不把只差 uid、只差卡號，或沒有公開快照證明的動作算進去。",
+  "criteria": [
+    "保留資料的整體精確教師一致率相對 A 改善，配對差的 95% 區間下限高於 0。",
+    "阻擋的精確一致改善出現在至少兩個不同的原始種子，而且不能只靠第 118 步。",
+    "終點沒有新增已核對的明顯戰術錯誤。非法動作算錯誤。已保持的較高 BP 阻擋，在公開傷害不少於生命且 impact 為 0 時，終點不得改成不擋，也不得改成公開 BP 不高於攻擊者的阻擋。A 原本就有的同樣錯誤不算新增。",
+    "其他決策類型的退步逐類列出樣本數與一致率。列出本身是條件。退步不會被損失下降、訓練一致率或權重距離抵消。",
+    "四條都成立只支持模仿起點改善。它不證明對局變強，也不放寬晉級標準。"
+  ],
+  "recordedWeighted": {
+    "A": 0.6150220913107511,
+    "shuffle": 0.658321060382916,
+    "stop": 11
+  },
+  "note": "計分、保護重播和判定都在這個檔案之後。看完分數後不改這四條條件。"
+}
