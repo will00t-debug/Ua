@@ -86,3 +86,9 @@ node scripts/white-sword-nn.mjs trial
 第一輪的測速和試訓寫在 `docs/white-sword-ai/NN-PROTOTYPE.md`。原型有跑起來，學習沒有被證明。
 
 第二輪修正公開歷史在模仿和對戰之間的不一致，重新凍結 A，並用種子分組的開發曲線做固定預算試訓。結果寫在 `docs/white-sword-ai/NN-ROUND2.md`。正式預設、晉級門檻和網站都沒有改。
+
+第三輪沿用第二輪凍結的 A，檢查 Monte-Carlo 更新的尺度，並在同一預算下比較純 Monte-Carlo 和固定比例的模仿回放。結果寫在 `docs/white-sword-ai/NN-ROUND3.md`。
+
+```bash
+node scripts/white-sword-nn-round3.mjs trial
+```

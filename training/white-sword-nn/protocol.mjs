@@ -2,7 +2,7 @@
 // Round 1 already looked at 188000–188403. Those seeds stay out of the new
 // test. The four round-1 test seeds are development data in this round.
 import {splitForSeed} from '../../dist/universal-v2/white-sword-ai/constants.mjs';
-import {INIT_SEED} from './constants.mjs';
+import {AGREEMENT_DROP,INIT_SEED,REPLAY_FRACTION,SURPASS_SEEDS} from './constants.mjs';
 
 export const RESERVED=Object.freeze([
  [11000,12100],[19000,22000],[30000,31000],[41000,42000],[50000,51000],[80000,81000],
@@ -30,6 +30,11 @@ export const SELF_SEEDS=Object.freeze(range(188800,80));
 export const FRESH_DEV_SEEDS=Object.freeze(range(189200,12));
 export const DEV_SEEDS=Object.freeze([...PRIOR_TEST_SEEDS,...FRESH_DEV_SEEDS]);
 export const TEST_SEEDS=Object.freeze(range(189400,12));
+// Round 2 already evaluated 189400–189411. Round 3 may use them as development
+// data only. Confirmation needs a block neither round has trained or scored.
+export const ROUND3_DEV_SEEDS=TEST_SEEDS;
+export const ROUND3_DIAG_SEEDS=Object.freeze(range(189600,4));
+export const ROUND3_CONFIRM_SEEDS=Object.freeze(range(189800,12));
 // Seat and first player are crossed. Four games per seed, not two bound pairs.
 export const EVAL_CELLS=Object.freeze([
  Object.freeze({learnerSeat:0,first:0}),
@@ -56,6 +61,12 @@ export const FOLLOWUP_RULE='只有在被選中的檢查點至少有 8 個開發�
 export const PROMOTION_RULE='挑戰正式 v2 沿用既有冠軍門檻：至少 200 場已完成對局、總勝率至少 60%、95% 下限高於 50%、先後手都有、至少三種對手牌型、非鏡像下限也高於 50%，而且沒有非法、洩漏、死循環、引擎錯誤或回退。這次試訓不提交晉級樣本，也不放寬門檻。';
 export const LEARNING_RULE='上一輪的開發集 Wilson 規則只屬於上一輪。這一輪改看種子分組的開發曲線、配對差，以及凍結後的新種子測試。';
 
+export const COPY_RULE='0 次更新的檢查點是凍結 A 的複本。複本的權重、診斷動作的分數和貪心選擇都要和 A 逐位相同。同一複本在四種座位與先後手組合下，同一種子、同一先手的兩種座位標籤必須有相同勝者和相同行動序列。學習者勝場在這一對標籤裡互補。';
+export const SCALE_RULE='尺度診斷使用固定的自我對戰樣本，以及沒有參與回放的保留示範。原始更新把網路輸出直接拿去減終局回報。輸出和回報的絕對差中位數大於 1，而且回報仍在 [-1,1] 時，記成尺度接法錯誤。修正是先用 tanh 把輸出壓進同一個區間再求誤差。這項修正只在診斷裡使用，不進入 B-original，也不進入 B-retain。';
+export const EARLY_RULE='最早更新看第 1 場和第 4 場。固定診斷上記錄更新前後的輸出分布、回報分布、教師動作排名和模仿一致率。線上對 A 的勝負用同一組開發種子。均方誤差下降不當作更新有效。保留示範的完全一致率相對 0 次更新下降至少 '+(AGREEMENT_DROP*100)+' 個百分點，或對 A 的配對差區間整段低於 0，記成最早更新就退步。';
+export const ARM_RULE='只比較 B-original 和 B-retain。兩者從同一個凍結 A 出發，自我對戰場數、種子、對手順序和評估種子都相同。兩個版本各用一個學習率為自我對戰學習率的優化器。B-retain 在每個 Monte-Carlo 樣本之後接一個模仿回放樣本，回放步數和 Monte-Carlo 步數相等，比例 '+(REPLAY_FRACTION)+' 在跑之前就固定。回放只抽訓練示範，抽到保留場種子就中止。不因開發勝率改比例、學習率或場數。';
+export const READ_RULE='終點是計畫自我對戰場數的最後一個檢查點，不從曲線裡另挑高點。B-retain 的種子平均沒有高於 50% 時，即使高於 B-original，也只稱為減輕退步，不能稱為自主變強。只有終點種子至少 '+SURPASS_SEEDS+' 個、種子平均高於 50%，而且相對 0 次更新的配對差區間下限高於 0，才用全新確認種子再打該版本。確認種子的區間下限也要高於 50%，才建議更完整的獨立驗證。189400–189411 只當開發種子。正式晉級門檻不使用這條規則，也不放寬。';
+
 export function reservedHit(seed){
  return RESERVED.find(([low,high])=>seed>=low&&seed<=high)||null;
 }
@@ -75,10 +86,17 @@ export function assertExperimentSeed(seed,role){
  if(role==='dev'&&!DEV_SEEDS.includes(seed))throw Error('Dev seed '+seed+' is outside the dev block');
  if(role==='test'&&!TEST_SEEDS.includes(seed))throw Error('Test seed '+seed+' is outside the test block');
  if(role==='test'&&PRIOR_TEST_SEEDS.includes(seed))throw Error('Round-1 test seed '+seed+' is development data now');
+ if(role==='round3-dev'&&!ROUND3_DEV_SEEDS.includes(seed))throw Error('Round-3 dev seed '+seed+' is outside the reclassified block');
+ if(role==='round3-diag'&&!ROUND3_DIAG_SEEDS.includes(seed))throw Error('Diagnostic seed '+seed+' is outside the diagnostic block');
+ if(role==='round3-confirm'&&!ROUND3_CONFIRM_SEEDS.includes(seed))throw Error('Confirmation seed '+seed+' is outside the confirmation block');
+ if(role==='round3-confirm'&&ROUND3_DEV_SEEDS.includes(seed))throw Error('A round-2 test seed cannot confirm round 3');
  return seed;
 }
 export function allExperimentSeeds(){
- return [BENCH_NN_SEED,BENCH_V2_SEED,...IMITATE_SEEDS,...SELF_SEEDS,...DEV_SEEDS,...TEST_SEEDS];
+ return [
+  BENCH_NN_SEED,BENCH_V2_SEED,...IMITATE_SEEDS,...SELF_SEEDS,...DEV_SEEDS,...TEST_SEEDS,
+  ...ROUND3_DIAG_SEEDS,...ROUND3_CONFIRM_SEEDS
+ ];
 }
 export function holdoutSplit(seeds){
  const list=seeds.slice();
