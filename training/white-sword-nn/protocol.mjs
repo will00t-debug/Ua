@@ -2,7 +2,11 @@
 // Round 1 already looked at 188000–188403. Those seeds stay out of the new
 // test. The four round-1 test seeds are development data in this round.
 import {splitForSeed} from '../../dist/universal-v2/white-sword-ai/constants.mjs';
-import {AGREEMENT_DROP,INIT_SEED,REPLAY_FRACTION,SURPASS_SEEDS} from './constants.mjs';
+import {
+ AGREEMENT_DROP,CRITIC_INIT_SEED,GAMMA,INIT_SEED,PPO_ACTOR_LR,PPO_BATCH_GAMES,PPO_CLIP,
+ PPO_CRITIC_LR,PPO_ENTROPY,PPO_EPOCHS,PPO_KL_LIMIT,PPO_MAX_BATCHES,REPLAY_FRACTION,
+ ROUND4_CONFIRM_CAP,SURPASS_SEEDS
+} from './constants.mjs';
 
 export const RESERVED=Object.freeze([
  [11000,12100],[19000,22000],[30000,31000],[41000,42000],[50000,51000],[80000,81000],
@@ -35,6 +39,11 @@ export const TEST_SEEDS=Object.freeze(range(189400,12));
 export const ROUND3_DEV_SEEDS=TEST_SEEDS;
 export const ROUND3_DIAG_SEEDS=Object.freeze(range(189600,4));
 export const ROUND3_CONFIRM_SEEDS=Object.freeze(range(189800,12));
+// Round 4 trains on a new block. 189400–189411 were scored in rounds 2 and 3,
+// so they stay development data. Confirmation is a block neither round played.
+export const ROUND4_SELF_SEEDS=Object.freeze(range(191200,PPO_MAX_BATCHES*PPO_BATCH_GAMES));
+export const ROUND4_DEV_SEEDS=ROUND3_DEV_SEEDS;
+export const ROUND4_CONFIRM_SEEDS=Object.freeze(range(191400,ROUND4_CONFIRM_CAP));
 // Seat and first player are crossed. Four games per seed, not two bound pairs.
 export const EVAL_CELLS=Object.freeze([
  Object.freeze({learnerSeat:0,first:0}),
@@ -66,13 +75,26 @@ export const SCALE_RULE='尺度診斷使用固定的自我對戰樣本，以及�
 export const EARLY_RULE='最早更新看第 1 場和第 4 場。固定診斷上記錄更新前後的輸出分布、回報分布、教師動作排名和模仿一致率。線上對 A 的勝負用同一組開發種子。均方誤差下降不當作更新有效。保留示範的完全一致率相對 0 次更新下降至少 '+(AGREEMENT_DROP*100)+' 個百分點，或對 A 的配對差區間整段低於 0，記成最早更新就退步。';
 export const ARM_RULE='只比較 B-original 和 B-retain。兩者從同一個凍結 A 出發，自我對戰場數、種子、對手順序和評估種子都相同。兩個版本各用一個學習率為自我對戰學習率的優化器。B-retain 在每個 Monte-Carlo 樣本之後接一個模仿回放樣本，回放步數和 Monte-Carlo 步數相等，比例 '+(REPLAY_FRACTION)+' 在跑之前就固定。回放只抽訓練示範，抽到保留場種子就中止。不因開發勝率改比例、學習率或場數。';
 export const READ_RULE='終點是計畫自我對戰場數的最後一個檢查點，不從曲線裡另挑高點。B-retain 的種子平均沒有高於 50% 時，即使高於 B-original，也只稱為減輕退步，不能稱為自主變強。只有終點種子至少 '+SURPASS_SEEDS+' 個、種子平均高於 50%，而且相對 0 次更新的配對差區間下限高於 0，才用全新確認種子再打該版本。確認種子的區間下限也要高於 50%，才建議更完整的獨立驗證。189400–189411 只當開發種子。正式晉級門檻不使用這條規則，也不放寬。';
+export const PPO_RULE=[
+ 'Actor 從凍結 A 完整複製。動作分數只當目前合法動作上的 softmax logits，不再回歸終局回報，也不套 tanh。',
+ 'Critic 使用另一組權重，只接收行動者看得到的場面和歷史，預測該行動者的回報。Critic 的預測不加進選牌分數，也不更新 Actor 的參數。',
+ '每一批開始時凍結行為策略和 Critic。整批 rollout 都用這一版收集，不能邊收集邊更新。採樣來自合法動作的 softmax，不用 epsilon-greedy。',
+ '每筆資料保存行動者可見的狀態、當時全部合法動作、選中動作、行為策略實際選中的 log probability、凍結 Critic 的 value，以及行為版本。更新使用留下的舊機率，不用事後重算的新策略機率冒充。',
+ '不把模仿回放或上一輪自我對戰樣本混進這一批，也不把那種混合稱為 on-policy PPO。',
+ '優勢是回報減去凍結舊 Critic 的 value，並在該批更新前固定。若做優勢正規化，只用這一訓練批次的樣本標準差。樣本少於 2 或變異為 0 時，正規化後的優勢為 0。',
+ 'Actor 最大化標準 PPO-Clip。Critic 另以回報做回歸。clip '+PPO_CLIP+'，Actor 學習率 '+PPO_ACTOR_LR+'，Critic 學習率 '+PPO_CRITIC_LR+'，每批最多 '+PPO_EPOCHS+' 次更新，熵係數 '+PPO_ENTROPY+'。某一輪更新的樣本平均 KL 超過 '+PPO_KL_LIMIT+' 就不再做該批後續更新。這些數字在看勝率之前固定，不因開發勝率改動。',
+ '對手沿用自己、落後至少一批的歷史快照，以及正式 v2。一批之內對手版本不變。快照或 v2 不能用時，該批改為自己對自己。',
+ '回報沿用既有定義。折扣係數 '+GAMMA+'。終局結果以行動者視角為 +1 或 -1，沒有中途獎勵。時間單位是該決策之後的剩餘決策數，不是回合數。這一輪不改獎勵。'
+].join('\n');
+export const ROUND4_SELECT_RULE='檢查點包含 0 次更新，以及每一個實際跑完的批次。只在開發種子數最多的檢查點之間選候選：種子平均勝率最高，平手取較晚的。選完就凍結該檢查點的 Actor。確認對局的結果不用來改選檢查點、學習率或批次。';
+export const ROUND4_READ_RULE='計畫終點是最後一個實際跑完的檢查點。損失、Critic 誤差、KL 和權重距離都不是棋力。終點相對 0 次更新的配對差區間整段低於 0，記成 PPO 造成退步。沒有同時達到至少 '+SURPASS_SEEDS+' 個種子、種子平均高於 50%、以及相對 0 次更新的配對差下限高於 0 時，只稱為未觀察到明顯退步，不能稱為自主變強。只有被選中的檢查點同時達到這三項，才用全新確認種子再打，而且確認種子的區間下限也要高於 50%，才建議更完整的獨立驗證。189400–189411 只作開發。正式晉級門檻不使用這條規則，也不放寬。';
 
 export function reservedHit(seed){
  return RESERVED.find(([low,high])=>seed>=low&&seed<=high)||null;
 }
 export function assertExperimentSeed(seed,role){
  if(!Number.isInteger(seed))throw Error('Seed is not an integer');
- if(seed===INIT_SEED)throw Error('Initialization seed is not a game seed');
+ if(seed===INIT_SEED||seed===CRITIC_INIT_SEED)throw Error('Initialization seed is not a game seed');
  if(ROUND1_BLOCKED.has(seed))throw Error('Seed '+seed+' was already used in round 1');
  const split=splitForSeed(seed);
  if(split!=='unassigned')throw Error('Seed '+seed+' is already in the '+split+' split');
@@ -90,12 +112,17 @@ export function assertExperimentSeed(seed,role){
  if(role==='round3-diag'&&!ROUND3_DIAG_SEEDS.includes(seed))throw Error('Diagnostic seed '+seed+' is outside the diagnostic block');
  if(role==='round3-confirm'&&!ROUND3_CONFIRM_SEEDS.includes(seed))throw Error('Confirmation seed '+seed+' is outside the confirmation block');
  if(role==='round3-confirm'&&ROUND3_DEV_SEEDS.includes(seed))throw Error('A round-2 test seed cannot confirm round 3');
+ if(role==='round4-train'&&!ROUND4_SELF_SEEDS.includes(seed))throw Error('Round-4 training seed '+seed+' is outside the new self-play block');
+ if(role==='round4-dev'&&!ROUND4_DEV_SEEDS.includes(seed))throw Error('Round-4 dev seed '+seed+' is outside the reclassified block');
+ if(role==='round4-confirm'&&!ROUND4_CONFIRM_SEEDS.includes(seed))throw Error('Round-4 confirmation seed '+seed+' is outside the new confirmation block');
+ if(role==='round4-confirm'&&ROUND4_DEV_SEEDS.includes(seed))throw Error('A round-4 dev seed cannot confirm round 4');
+ if(role==='round4-train'&&ROUND4_DEV_SEEDS.includes(seed))throw Error('A development seed cannot enter round-4 rollouts');
  return seed;
 }
 export function allExperimentSeeds(){
  return [
   BENCH_NN_SEED,BENCH_V2_SEED,...IMITATE_SEEDS,...SELF_SEEDS,...DEV_SEEDS,...TEST_SEEDS,
-  ...ROUND3_DIAG_SEEDS,...ROUND3_CONFIRM_SEEDS
+  ...ROUND3_DIAG_SEEDS,...ROUND3_CONFIRM_SEEDS,...ROUND4_SELF_SEEDS,...ROUND4_CONFIRM_SEEDS
  ];
 }
 export function holdoutSplit(seeds){

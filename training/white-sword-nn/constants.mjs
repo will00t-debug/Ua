@@ -37,3 +37,16 @@ export const ROUND3_CONFIRM_CAP=12;
 export const SCALE_EVAL_SEEDS=4;
 export const AGREEMENT_DROP=0.10;
 export const SURPASS_SEEDS=8;
+// Round 4 locks these before any win rate. They are not a search over the dev curve.
+export const CRITIC_INIT_SEED=188520;
+export const PPO_CLIP=0.2;
+export const PPO_ACTOR_LR=3e-4;
+export const PPO_CRITIC_LR=1e-3;
+export const PPO_EPOCHS=4;
+export const PPO_ENTROPY=0.01;
+export const PPO_KL_LIMIT=0.02;
+export const PPO_BATCH_GAMES=8;
+export const PPO_MAX_BATCHES=12;
+export const ROUND4_WALL_MS=20*60*1000;
+export const ROUND4_DEV_CAP=12;
+export const ROUND4_CONFIRM_CAP=12;
