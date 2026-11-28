@@ -3,7 +3,7 @@
 import {
  CHECKPOINTS,DIAG_GAMES,EARLY_GAMES,PLAN_SAFETY,PPO_BATCH_GAMES,PPO_MAX_BATCHES,
  REPLAY_FRACTION,ROUND3_CONFIRM_CAP,ROUND3_DEV_CAP,ROUND3_SELF_CAP,ROUND4_CONFIRM_CAP,
- ROUND4_DEV_CAP,ROUND6_DEV_COUNT,ROUND6_LINES,SCALE_EVAL_SEEDS,TRAIN_RESERVE_MS
+ ROUND4_DEV_CAP,ROUND6_DEV_COUNT,ROUND6_LINES,ROUND7_CONFIRM_COUNT,SCALE_EVAL_SEEDS,TRAIN_RESERVE_MS
 } from './constants.mjs';
 
 const CELLS=4;
@@ -262,5 +262,25 @@ export function planRound6({
   estimatedMs:estimate(batches),
   rolloutMs:rollout,evalMs:evalCost,v2Ms:v2,updateMs:update,v2Finished:!!v2Finished,
   fits:batches>0&&devSeeds>0&&estimate(batches)<=wallMs,endpointOnly:true
+ };
+}
+
+// One confirmation sample. The seed cap is the registered draft. A shorter
+// prefix is chosen from the wall clock only. Nothing here reads a win rate.
+export function planRound7({
+ wallMs,evalMs,workers,safety=PLAN_SAFETY,seedCap=ROUND7_CONFIRM_COUNT
+}={}){
+ const evalCost=Math.max(1,Number(evalMs)||1);
+ const pool=Math.max(1,workers|0);
+ const cap=Math.max(0,seedCap|0);
+ const cells=4;
+ const wave=games=>Math.ceil(games/pool);
+ const estimate=seeds=>wave(seeds*cells)*evalCost*safety;
+ let seeds=0;
+ while(seeds<cap&&estimate(seeds+1)<=wallMs)seeds++;
+ return {
+  seeds,games:seeds*cells,cells,workers:pool,wallMs,safety,seedCap:cap,
+  estimatedMs:estimate(seeds),evalMs:evalCost,
+  fits:seeds>0&&estimate(seeds)<=wallMs
  };
 }

@@ -3,8 +3,8 @@ import {compareStop} from './ppo.mjs';
 import {AGREEMENT_DROP,PPO_EPOCHS,PPO_KL_LIMIT,ROUND5_DEV_COUNT,ROUND6_DEV_COUNT,SURPASS_SEEDS} from './constants.mjs';
 import {
  ARM_RULE,COPY_RULE,EARLY_RULE,FOLLOWUP_RULE,INIT_RULE,LEARNING_RULE,METHOD,PPO_RULE,PROMOTION_RULE,
- READ_RULE,ROUND4_READ_RULE,ROUND4_SELECT_RULE,ROUND5_EVAL_RULE,ROUND5_KL_RULE,ROUND6_RULE,SCALE_RULE,
- SELECTION_RULE,TREND_RULE
+ READ_RULE,ROUND4_READ_RULE,ROUND4_SELECT_RULE,ROUND5_EVAL_RULE,ROUND5_KL_RULE,ROUND6_RULE,ROUND7_RULE,
+ SCALE_RULE,SELECTION_RULE,TREND_RULE
 } from './protocol.mjs';
 
 function pct(rate){
@@ -826,6 +826,134 @@ export function renderRound6(summary){
   answerRound6Confirm(summary),
   '',
   '損失、Critic 誤差、KL 和權重距離都不是棋力。沒有同條件對照組時，不把棋力變化完全歸因於 KL 修正。這次權重沒有部署，也沒有合併到 main。晉級門檻沒有放寬。',
+  ''
+ ];
+ return rows.join('\n');
+}
+export function confirmationIntact(baseline,baselineAfter,candidate,candidateAfter){
+ return !!baseline?.sha256&&baseline.sha256===baselineAfter?.sha256
+  &&!!candidate?.sha256&&candidate.sha256===candidateAfter?.sha256
+  &&baseline.version===baselineAfter?.version
+  &&candidate.version===candidateAfter?.version
+  &&baseline.updates===baselineAfter?.updates
+  &&candidate.updates===candidateAfter?.updates;
+}
+export function judgeRound7({
+ plannedGames,finishedGames,unfinished,seeds,completeSeeds,delta,plannedSeeds
+}={}){
+ const planned=plannedSeeds??0;
+ const games=plannedGames??0;
+ const ready=planned>0&&games===planned*4&&finishedGames===games&&unfinished===0&&
+  seeds===planned&&completeSeeds===planned&&
+  delta?.seeds===planned&&delta.low!=null&&delta.high!=null;
+ if(!ready){
+  return {kind:'incomplete',delta:delta||null,reason:'鎖定的確認場數沒有全部正常結束。'};
+ }
+ if(delta.low>0)return {kind:'reproduced',delta,reason:'相對 50% 的差，區間下限高於 0。'};
+ if(delta.high<0)return {kind:'supports-weaker',delta,reason:'相對 50% 的差，區間上限低於 0。'};
+ return {kind:'not-confirmed',delta,reason:'相對 50% 的差，區間包含 0。'};
+}
+export function answerRound7Strength(judgment){
+ if(!judgment||judgment.kind==='incomplete')return '評估未完成。未完成的對局沒有被當成勝負，也沒有用其餘場次宣布過關。';
+ if(judgment.kind==='reproduced')return '有。獨立確認資料上，種子平均勝率的 95% 區間下限高於 50%。';
+ if(judgment.kind==='supports-weaker')return '沒有。區間上限低於 50%。確認資料支持這個凍結候選弱於 A。停止推進這個候選。';
+ return '不能確認。區間包含 50%。不補抽到過關，也不用開發集的 56.3% 代替這個確認結果。';
+}
+export function answerRound7Scope(judgment){
+ if(!judgment||judgment.kind==='incomplete')return '評估未完成，尚不能支持改善已經重現，也不能支持候選弱於 A。';
+ if(judgment.kind==='reproduced'){
+  return '支持的是：這個凍結候選相對模仿起點 A 的改善，在獨立確認資料上重現。尚不能支持 PPO 每次訓練都會變強、已能穩定自主成長、已超越正式 v2，或已達正式晉級與部署標準。';
+ }
+ if(judgment.kind==='supports-weaker')return '支持停止推進這個候選。尚不能支持整個 PPO 方法不可行，也不把開發集的 56.3% 當成確認結果。';
+ return '尚不能支持改善已經在獨立確認資料上重現。開發集的 56.3% 不是這次的確認結果。';
+}
+export function answerRound7Next(judgment){
+ if(judgment?.kind==='reproduced'){
+  return '值得規劃對正式 v2 與多種對手牌型的下一階段驗證。本輪沒有做那項驗證，也沒有晉級或部署。';
+ }
+ return '沒有。本輪不進入正式 v2 與多牌型驗證。';
+}
+function precisionLine(precision){
+ const plan=precision?.projection||precision?.draft;
+ if(!plan)return '- 沒有用開發資料估計精度。';
+ const dev=precision.dispersion;
+ const pct=value=>(value*100).toFixed(2);
+ const locked=!precision.projection
+  ?'- 確認沒有鎖定場次。上面的數字是草案，不是已開打的樣本。'
+  :precision.draft&&precision.draft.plannedSeeds!==plan.plannedSeeds
+  ?'- 草案 '+precision.draft.plannedSeeds+' 個種子的半寬約 '+(precision.draft.half*100).toFixed(2)+' 個百分點。實際鎖定的是上面的種子數。'
+  :'- 鎖定的種子數就是草案的 '+plan.plannedSeeds+' 個。';
+ return [
+  '- 線 2 開發種子 '+dev.n+' 個，平均 '+(dev.mean*100).toFixed(1)+'%，樣本標準差 '+(dev.sd*100).toFixed(2)+' 個百分點。',
+  '- 若標準差不變，'+plan.plannedSeeds+' 個種子的標準誤約 '+pct(plan.se)+' 個百分點，95% 半寬約 '+pct(plan.half)+' 個百分點。臨界值 '+plan.t+'。',
+  '- 若真實差距等於開發點估計 '+(plan.effect*100).toFixed(2)+' 個百分點，這個半寬'+(plan.pointClears?'容得下':'容不下')+'下限高於 0。',
+  '- 若真實差距只有開發區間下限 '+(plan.devLower*100).toFixed(2)+' 個百分點，這個半寬'+(plan.lowerClears?'容得下':'容不下')+'下限高於 0。',
+  '- '+plan.assumption,
+  locked
+ ].join('\n');
+}
+export function renderRound7(summary){
+ const judgment=summary.judgment;
+ const seedRows=(summary.perSeed||[]).map(row=>{
+  const cells=(row.cells||[]).map(cell=>cell.learnerSeat+'/'+cell.first+' '+cell.mark).join('，');
+  return '- '+row.seed+'：'+cells+'。種子勝率 '+((row.p==null)?'n/a':(row.p*100).toFixed(1)+'%')+'。';
+ });
+ const unfinished=(summary.unfinished||[]).map(game=>'- 種子 '+(game.seed??'n/a')+'，座位 '+(game.learnerSeat??'n/a')+'，先手 '+(game.first??'n/a')+'，'+game.status+'，'+(game.endReason||'無原因')+'。');
+ const win=summary.winInterval;
+ const winText=win?.mean==null?'n/a':win.low==null
+  ?(win.mean*100).toFixed(1)+'%（種子少於 2，沒有區間）'
+  :(win.mean*100).toFixed(1)+'%（未截斷 95% 區間 '+(win.low*100).toFixed(1)+'–'+(win.high*100).toFixed(1)+'）';
+ const rows=[
+  '# 白劍神經網路第七輪',
+  '',
+  '產生時間：'+taipei(summary.createdAt)+'。',
+  '',
+  '接受第六輪：線 2 值得獨立確認，線 0 和線 1 有退步證據。這一輪只確認線 2 的凍結終點，不重訓、不改參數、不重新挑選模型。正式 v2、Hard Search 2、規則和網站都沒有改。',
+  '',
+  ...linesOf('三個問題',[
+   '① '+answerRound7Strength(judgment),
+   '② '+answerRound7Scope(judgment),
+   '③ '+answerRound7Next(judgment)
+  ]),
+  ...linesOf('固定規則',[
+   ROUND7_RULE
+  ]),
+  ...linesOf('凍結檔案',[
+   '- 基準：'+(summary.baseline?.file||'n/a')+'。版本 '+(summary.baseline?.version||'n/a')+'，更新次數 '+(summary.baseline?.updates??'n/a')+'，雜湊 '+(summary.baseline?.sha256||'n/a')+'，來源 commit '+(summary.baseline?.commit||'n/a')+'。',
+   '- 候選：'+(summary.candidate?.file||'n/a')+'。版本 '+(summary.candidate?.version||'n/a')+'，更新次數 '+(summary.candidate?.updates??'n/a')+'，雜湊 '+(summary.candidate?.sha256||'n/a')+'，來源 commit '+(summary.candidate?.commit||'n/a')+'。',
+   '- 執行後雜湊：基準 '+(summary.baselineAfter?.sha256===summary.baseline?.sha256?'未變':'已變')+'，候選 '+(summary.candidateAfter?.sha256===summary.candidate?.sha256?'未變':'已變')+'。',
+   '- 確認程式 commit：'+(summary.codeCommit||'n/a')+'。',
+   summary.integrityNote?'- '+summary.integrityNote:null
+  ]),
+  ...linesOf('開打前的計畫',[
+   '- 測速後的計畫：'+JSON.stringify(summary.plan||null),
+   precisionLine(summary.precision),
+   summary.resourceGap?'- 資源落差：'+summary.resourceGap:'- 鎖定的確認場數有排進牆鐘。'
+  ]),
+  ...linesOf('確認結果',[
+   '- 判斷用的種子平均：'+winText+'。',
+   '- 種子平均的截斷區間：'+seedPct(summary.summary)+'。',
+   '- 相對 50%：'+deltaLine(summary.versusHalf)+'。',
+   '- 先手（描述）：'+seedPct(summary.first)+'。後手（描述）：'+seedPct(summary.second)+'。',
+   '- 座位 0（描述）：'+seedPct(summary.seat0)+'。座位 1（描述）：'+seedPct(summary.seat1)+'。',
+   '- 計畫場數 '+(summary.plannedGames??0)+'。正常終局 '+(summary.finishedGames??0)+'。未完成 '+(summary.unfinished?.length??0)+'。',
+   '- 重試：'+(summary.retries?.fallbacks??0)+' 次整批回退。沒有為了改結果而重打單一場。',
+   '- 實際耗時：'+ms(summary.elapsedMs)+'。'
+  ]),
+  ...linesOf('逐種子結果',seedRows.length?seedRows:['- 沒有逐種子結果。']),
+  ...linesOf('未完成對局',unfinished.length?unfinished:['- 沒有未完成對局。']),
+  ...linesOf('異常',[
+   '- 確認異常：'+JSON.stringify(summary.anomalies||{})
+  ]),
+  '## 結論',
+  '',
+  answerRound7Strength(judgment),
+  '',
+  answerRound7Scope(judgment),
+  '',
+  answerRound7Next(judgment),
+  '',
+  '開發集的勝率沒有併入這次的顯著性。損失和權重距離都不是棋力。這次沒有部署，也沒有合併到 main。晉級門檻沒有放寬。',
   ''
  ];
  return rows.join('\n');
