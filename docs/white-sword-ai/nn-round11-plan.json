@@ -1,0 +1,955 @@
+{
+  "createdAt": "2026-11-26T01:29:11.603Z",
+  "createdAtText": "2026/11/26 09:29（台北時間）",
+  "lr": 0.001,
+  "smooth": 0.05,
+  "epochs": 12,
+  "safety": 1.4,
+  "wallMs": 1200000,
+  "weights": {
+    "play": 1,
+    "attack": 1,
+    "block": 1,
+    "trigger": 1,
+    "effect": 1,
+    "other": 1
+  },
+  "stats": "保留組的每個原始種子先把該種子全部非強制決策的精確教師一致率算成一個比例，再減去 A 在同種子的比例。95% 區間沿用 pairedDelta：樣本標準差用 n-1，除以種子數的平方根，臨界值用 tCritical。種子數大於 30 時臨界值是 1.96。區間不截斷到 [0,1]。下限高於 0 才算整體改善。精確一致不把只差 uid、只差卡號，或沒有公開快照證明的動作算進去。",
+  "criteria": [
+    "保留資料的整體精確教師一致率相對 A 改善，配對差的 95% 區間下限高於 0。",
+    "阻擋的精確一致改善出現在至少兩個不同的原始種子，而且不能只靠第 118 步。",
+    "終點沒有新增已核對的明顯戰術錯誤。非法動作算錯誤。已保持的較高 BP 阻擋，在公開傷害不少於生命且 impact 為 0 時，終點不得改成不擋，也不得改成公開 BP 不高於攻擊者的阻擋。A 原本就有的同樣錯誤不算新增。",
+    "其他決策類型的退步逐類列出樣本數與一致率。列出本身是條件。退步不會被損失下降、訓練一致率或權重距離抵消。",
+    "四條都成立只支持模仿起點改善。它不證明對局變強，也不放寬晉級標準。"
+  ],
+  "drawSeed": 188544,
+  "benchSeed": 188501,
+  "extra": 80,
+  "extraSeeds": [
+    188800,
+    188801,
+    188802,
+    188803,
+    188804,
+    188805,
+    188806,
+    188807,
+    188808,
+    188809,
+    188810,
+    188811,
+    188812,
+    188813,
+    188814,
+    188815,
+    188816,
+    188817,
+    188818,
+    188819,
+    188820,
+    188821,
+    188822,
+    188823,
+    188824,
+    188825,
+    188826,
+    188827,
+    188828,
+    188829,
+    188830,
+    188831,
+    188832,
+    188833,
+    188834,
+    188835,
+    188836,
+    188837,
+    188838,
+    188839,
+    188840,
+    188841,
+    188842,
+    188843,
+    188844,
+    188845,
+    188846,
+    188847,
+    188848,
+    188849,
+    188850,
+    188851,
+    188852,
+    188853,
+    188854,
+    188855,
+    188856,
+    188857,
+    188858,
+    188859,
+    188860,
+    188861,
+    188862,
+    188863,
+    188864,
+    188865,
+    188866,
+    188867,
+    188868,
+    188869,
+    188870,
+    188871,
+    188872,
+    188873,
+    188874,
+    188875,
+    188876,
+    188877,
+    188878,
+    188879
+  ],
+  "extraTrain": [
+    188800,
+    188801,
+    188802,
+    188803,
+    188804,
+    188805,
+    188806,
+    188807,
+    188808,
+    188809,
+    188810,
+    188811,
+    188812,
+    188813,
+    188814,
+    188815,
+    188816,
+    188817,
+    188818,
+    188819,
+    188820,
+    188821,
+    188822,
+    188823,
+    188824,
+    188825,
+    188826,
+    188827,
+    188828,
+    188829,
+    188830,
+    188831,
+    188832,
+    188833,
+    188834,
+    188835,
+    188836,
+    188837,
+    188838,
+    188839,
+    188840,
+    188841,
+    188842,
+    188843,
+    188844,
+    188845,
+    188846,
+    188847,
+    188848,
+    188849,
+    188850,
+    188851,
+    188852,
+    188853,
+    188854,
+    188855,
+    188856,
+    188857,
+    188858,
+    188859
+  ],
+  "extraHoldout": [
+    188860,
+    188861,
+    188862,
+    188863,
+    188864,
+    188865,
+    188866,
+    188867,
+    188868,
+    188869,
+    188870,
+    188871,
+    188872,
+    188873,
+    188874,
+    188875,
+    188876,
+    188877,
+    188878,
+    188879
+  ],
+  "trainSource": "unseen-prefix",
+  "estimate": {
+    "epochs": 12,
+    "extra": 80,
+    "total": 869413.0333503996,
+    "replayMs": 626070.4797535999,
+    "trainMs": 153903.91363199978,
+    "protectionMs": 89438.6399648,
+    "trainSamples": 8280
+  },
+  "v2Ms": 7985.5928539999995,
+  "workers": 2,
+  "decisionMs": 1.106394594202897,
+  "decisionsPerGame": 138,
+  "protection": [
+    {
+      "seed": 193501,
+      "learnerSeat": 0,
+      "first": 0,
+      "winner": 1,
+      "steps": 101
+    },
+    {
+      "seed": 193502,
+      "learnerSeat": 0,
+      "first": 0,
+      "winner": 1,
+      "steps": 105
+    },
+    {
+      "seed": 193501,
+      "learnerSeat": 0,
+      "first": 1,
+      "winner": 1,
+      "steps": 156
+    },
+    {
+      "seed": 193502,
+      "learnerSeat": 0,
+      "first": 1,
+      "winner": 1,
+      "steps": 172
+    },
+    {
+      "seed": 193500,
+      "learnerSeat": 1,
+      "first": 0,
+      "winner": 0,
+      "steps": 210
+    },
+    {
+      "seed": 193502,
+      "learnerSeat": 1,
+      "first": 0,
+      "winner": 0,
+      "steps": 120
+    },
+    {
+      "seed": 193500,
+      "learnerSeat": 1,
+      "first": 1,
+      "winner": 0,
+      "steps": 203
+    },
+    {
+      "seed": 193501,
+      "learnerSeat": 1,
+      "first": 1,
+      "winner": 0,
+      "steps": 107
+    }
+  ],
+  "schedule": [
+    {
+      "seed": 188600,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188601,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188602,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188603,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188604,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188605,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188606,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188607,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188608,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188609,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188610,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188611,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188612,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188613,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188614,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188615,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188616,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188617,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188618,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188619,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188620,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188621,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188622,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188623,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "round-reserve"
+    },
+    {
+      "seed": 188624,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188625,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188626,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188627,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188628,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188629,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188630,
+      "first": 0,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188631,
+      "first": 1,
+      "source": "imitate-clean",
+      "role": "holdout"
+    },
+    {
+      "seed": 188800,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188801,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188802,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188803,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188804,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188805,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188806,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188807,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188808,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188809,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188810,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188811,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188812,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188813,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188814,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188815,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188816,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188817,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188818,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188819,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188820,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188821,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188822,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188823,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188824,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188825,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188826,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188827,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188828,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188829,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188830,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188831,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188832,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188833,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188834,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188835,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188836,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188837,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188838,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188839,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188840,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188841,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188842,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188843,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188844,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188845,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188846,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188847,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188848,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188849,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188850,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188851,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188852,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188853,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188854,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188855,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188856,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188857,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188858,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188859,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "train"
+    },
+    {
+      "seed": 188860,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188861,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188862,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188863,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188864,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188865,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188866,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188867,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188868,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188869,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188870,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188871,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188872,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188873,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188874,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188875,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188876,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188877,
+      "first": 0,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188878,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    },
+    {
+      "seed": 188879,
+      "first": 1,
+      "source": "replay-existing",
+      "role": "holdout"
+    }
+  ],
+  "bench": {
+    "seed": 188501,
+    "ms": 7985.5928539999995,
+    "steps": 177,
+    "decisions": 138,
+    "decisionMs": 1.106394594202897,
+    "workers": 2,
+    "rssMb": 381
+  },
+  "hashes": {
+    "a": "542a774f6c42775e20ce1aa1a59235eb9cfe1909b6c8f92dde16a5b5fe90718e",
+    "b": "a81631278ebd030fd4755369efe7da91add338459cfd0bd8b8e0c7b1e67da236",
+    "v2": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+    "r10": "97d593fb97c8f42f01981d9fa7da2a63c69285e3371ffdc248584b887c71aaa2"
+  }
+}
