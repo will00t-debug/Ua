@@ -1,0 +1,53 @@
+# Manual White Sword v4-A evolution.
+# GitHub runs a scheduled workflow only from the default branch, so this
+# experiment branch stays on workflow_dispatch. A later pull request can add
+# the schedule after review. That request must not change the live AI or deploy.
+name: White Sword v4-A evolution
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: round 跑完整輪，smoke 只檢查閉環
+        type: choice
+        options:
+          - round
+          - smoke
+        default: round
+      workers:
+        description: 平行對戰 worker 上限
+        type: string
+        default: '3'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: white-sword-v4a
+  cancel-in-progress: false
+
+jobs:
+  evolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: v4-A unit tests
+        run: node --test tests/white-sword-v4a.test.mjs
+      - name: Evolve one round
+        env:
+          PROFILE: ${{ inputs.profile }}
+          WS_WORKERS: ${{ inputs.workers }}
+        run: node scripts/white-sword-v4a.mjs "$PROFILE"
+      - name: Upload evolution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: white-sword-v4a-${{ inputs.profile }}-${{ github.run_id }}
+          path: |
+            training/white-sword-ai/v4a
+            docs/white-sword-ai/v4a
+          if-no-files-found: warn

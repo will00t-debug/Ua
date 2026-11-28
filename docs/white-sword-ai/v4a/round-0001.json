@@ -1,0 +1,431 @@
+{
+  "format": "ua-white-sword-v4a-report",
+  "codeVersion": "v4a-1",
+  "profile": "round",
+  "round": 1,
+  "status": "complete",
+  "games": 1320,
+  "candidateCount": 8,
+  "candidates": [
+    {
+      "id": "v4a-r0001-c0-40a819870388",
+      "index": 0,
+      "method": "gaussian-small",
+      "label": "小幅高斯變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "40a819870388",
+      "maxAbsDelta": 0.3310402095604811,
+      "changedWeights": 115,
+      "deltaL2": 1.3064985795043818,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.12,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0001-c1-12d7e2ec58aa",
+      "index": 1,
+      "method": "gaussian-mid",
+      "label": "中幅高斯變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "12d7e2ec58aa",
+      "maxAbsDelta": 1.0880289017377294,
+      "changedWeights": 115,
+      "deltaL2": 3.78955981454427,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.35,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0001-c2-4240a419cc27",
+      "index": 2,
+      "method": "gaussian-wide",
+      "label": "較寬高斯變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "4240a419cc27",
+      "maxAbsDelta": 1.5,
+      "changedWeights": 115,
+      "deltaL2": 7.5008636631299,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.7,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0001-c3-4f442d4770cd",
+      "index": 3,
+      "method": "sparse",
+      "label": "稀疏變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "4f442d4770cd",
+      "maxAbsDelta": 1.5,
+      "changedWeights": 31,
+      "deltaL2": 4.089656606409643,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.9,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0001-c4-2446b9abead9",
+      "index": 4,
+      "method": "top-magnitude",
+      "label": "較大權重變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "2446b9abead9",
+      "maxAbsDelta": 1.0500159749867528,
+      "changedWeights": 16,
+      "deltaL2": 1.9740552933005309,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.5,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0001-c5-8a94c99211ef",
+      "index": 5,
+      "method": "mix-v1",
+      "label": "與 v1 策略混合",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "8a94c99211ef",
+      "maxAbsDelta": 0.12114171439313307,
+      "changedWeights": 115,
+      "deltaL2": 0.47943984284282926,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.05,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0001-c6-da45c31035c9",
+      "index": 6,
+      "method": "mix-v0",
+      "label": "與 v0 策略混合",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "da45c31035c9",
+      "maxAbsDelta": 0.4289487470367548,
+      "changedWeights": 115,
+      "deltaL2": 1.2101311620553032,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.05,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    },
+    {
+      "id": "v4a-r0001-c7-10e855e58392",
+      "index": 7,
+      "method": "group",
+      "label": "攻防與能量特徵變異",
+      "parentId": "white-sword-specialist-v2-capped",
+      "policyHash": "10e855e58392",
+      "maxAbsDelta": 1.5,
+      "changedWeights": 17,
+      "deltaL2": 3.2250350931996006,
+      "hardCap": 7,
+      "scale": 6,
+      "explore": 0,
+      "sigma": 0.8,
+      "sigmaScale": 1,
+      "valueUntouched": true
+    }
+  ],
+  "screenKept": 3,
+  "challengerId": "v4a-r0001-c2-4240a419cc27",
+  "championLabel": "v2",
+  "paired": {
+    "n": 360,
+    "delta": 0.002777777777777778,
+    "ci": {
+      "low": -0.03333333333333333,
+      "high": 0.041666666666666664
+    },
+    "missing": 0,
+    "clusters": 30
+  },
+  "mirror": {
+    "wins": 55,
+    "n": 120,
+    "p": 0.4583333333333333,
+    "low": 0.371859770816446,
+    "high": 0.5473919184382149,
+    "games": 120
+  },
+  "decks": [
+    {
+      "id": "white-sword",
+      "n": 120,
+      "delta": 0.025
+    },
+    {
+      "id": "reject-blue",
+      "n": 120,
+      "delta": 0.008333333333333333
+    },
+    {
+      "id": "renruki",
+      "n": 120,
+      "delta": -0.025
+    }
+  ],
+  "seat": {
+    "first": {
+      "wins": 116,
+      "n": 179,
+      "p": 0.6480446927374302,
+      "low": 0.5756390545762656,
+      "high": 0.7142293342367835,
+      "games": 180
+    },
+    "second": {
+      "wins": 120,
+      "n": 180,
+      "p": 0.6666666666666666,
+      "low": 0.5949509727403892,
+      "high": 0.7314169439879248,
+      "games": 180
+    }
+  },
+  "tally": {
+    "energy": 8.019444444444444,
+    "front": 1.4805555555555556,
+    "move": 2.3555555555555556,
+    "raid": 1.9055555555555554,
+    "attack": 7.216666666666667,
+    "apSpent": 14.352777777777778,
+    "decisionMs": 37.89759357125211
+  },
+  "championTally": {
+    "energy": 7.816666666666666,
+    "front": 1.5277777777777777,
+    "move": 2.3055555555555554,
+    "raid": 1.8527777777777779,
+    "attack": 7.2,
+    "apSpent": 14.158333333333333,
+    "decisionMs": 37.67507175208361
+  },
+  "probe": {
+    "positions": 12,
+    "disagreed": 1,
+    "rate": 0.08333333333333333,
+    "regenerated": false,
+    "examples": [
+      {
+        "seed": 100000,
+        "step": 45,
+        "band": 2,
+        "choices": {
+          "champion": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c0-40a819870388": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c1-12d7e2ec58aa": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-11\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c2-4240a419cc27": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-11\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c3-4f442d4770cd": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c4-2446b9abead9": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c5-8a94c99211ef": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c6-da45c31035c9": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+          "v4a-r0001-c7-10e855e58392": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}"
+        }
+      }
+    ],
+    "fallbackIds": []
+  },
+  "seeds": {
+    "round": 1,
+    "profile": "round",
+    "codeVersion": "v4a-1",
+    "probe": [
+      100000,
+      100001,
+      100002
+    ],
+    "stageA": [
+      100100
+    ],
+    "stageB": [
+      100200,
+      100201,
+      100202,
+      100203
+    ],
+    "stageCPaired": [
+      100400,
+      100401,
+      100402,
+      100403,
+      100404,
+      100405,
+      100406,
+      100407,
+      100408,
+      100409,
+      100410,
+      100411,
+      100412,
+      100413,
+      100414,
+      100415,
+      100416,
+      100417,
+      100418,
+      100419,
+      100420,
+      100421,
+      100422,
+      100423,
+      100424,
+      100425,
+      100426,
+      100427,
+      100428,
+      100429
+    ],
+    "stageCMirror": [
+      100500,
+      100501,
+      100502,
+      100503,
+      100504,
+      100505,
+      100506,
+      100507,
+      100508,
+      100509,
+      100510,
+      100511,
+      100512,
+      100513,
+      100514,
+      100515,
+      100516,
+      100517,
+      100518,
+      100519,
+      100520,
+      100521,
+      100522,
+      100523,
+      100524,
+      100525,
+      100526,
+      100527,
+      100528,
+      100529
+    ]
+  },
+  "historicalNote": "歷代實驗冠軍尚未出現，或與現任權重相同。這組對戰併入冠軍對戰，不另計成新對手。",
+  "replay": {
+    "same": true,
+    "finished": true,
+    "anomalies": {
+      "illegal": 0,
+      "timeout": 0,
+      "fallback": 0,
+      "deadLoop": 0,
+      "engineError": 0,
+      "leak": 0,
+      "opponentFallback": 0
+    }
+  },
+  "harnessNote": "複選種子 100201、後手、白劍坐席 1 對 Hard Search 2 戀露有 3 場被舊的位置鍵誤判成死循環。凍結的 v2 在同一局面也會停住，原因是場外移除的 pending.selected 沒有進位置鍵。位置鍵已補上這個進度，這 3 場已重打，其餘 477 場沿用。卡牌規則沒有改。冠軍挑戰的種子 100423、後手、白劍坐席 1 對 Hard Search 2 戀露，挑戰者與 v2 都在第 60 步觸發引擎的 Forged blocker ceiling。這兩場沒有完成，所以晉級失敗。引擎沒有修改。",
+  "stageAGames": 192,
+  "stageBGames": 288,
+  "stageCGames": 840,
+  "officialV2": "a06d2f9fc209769741e7cb266b26e052e9326d975b392e324ab8bdcaca8c4ffa",
+  "production": false,
+  "deployed": false,
+  "startedAt": "2026-11-22T19:19:41.558Z",
+  "wallMs": 3294455,
+  "eliminated": [],
+  "byOpponent": {
+    "champion": {
+      "wins": 26,
+      "n": 48,
+      "p": 0.5416666666666666,
+      "low": 0.4029083309494732,
+      "high": 0.6742497814544648,
+      "games": 48
+    },
+    "historical": {
+      "wins": 26,
+      "n": 48,
+      "p": 0.5416666666666666,
+      "low": 0.4029083309494732,
+      "high": 0.6742497814544648,
+      "games": 48
+    },
+    "hard-white": {
+      "wins": 28,
+      "n": 48,
+      "p": 0.5833333333333334,
+      "low": 0.44281082215364653,
+      "high": 0.7115054026542299,
+      "games": 48
+    },
+    "hard-reject": {
+      "wins": 27,
+      "n": 48,
+      "p": 0.5625,
+      "low": 0.4227477150100165,
+      "high": 0.6929894535958907,
+      "games": 48
+    },
+    "hard-renruki": {
+      "wins": 29,
+      "n": 48,
+      "p": 0.6041666666666666,
+      "low": 0.4631015459693511,
+      "high": 0.7297937350404942,
+      "games": 48
+    },
+    "peer": {
+      "wins": 24,
+      "n": 48,
+      "p": 0.5,
+      "low": 0.36389098932037767,
+      "high": 0.6361090106796223,
+      "games": 48
+    }
+  },
+  "anomalies": {
+    "illegal": 0,
+    "timeout": 0,
+    "fallback": 0,
+    "deadLoop": 0,
+    "engineError": 2,
+    "leak": 0,
+    "opponentFallback": 0,
+    "unfinished": 2
+  },
+  "judgment": {
+    "promoted": false,
+    "experimentalOnly": true,
+    "production": false,
+    "deployed": false,
+    "reasons": [
+      "配對勝率差未達 +5 個百分點",
+      "配對勝率差的 95% 信賴區間下限沒有大於 0",
+      "直接鏡像勝率未達 55%",
+      "直接鏡像沒有統計上可信的優勢",
+      "出現引擎異常",
+      "有未完成對局"
+    ]
+  },
+  "promoted": false,
+  "nextDirection": "自動產生",
+  "cumulativeGames": 1338,
+  "diagnosis": "這一輪的部分候選在相同可見局面選擇了不同的合法行動。晉級門檻維持原訂數值。"
+}

@@ -1,0 +1,32 @@
+{
+  "positions": 12,
+  "disagreed": 1,
+  "rate": 0.08333333333333333,
+  "examples": [
+    {
+      "seed": 100000,
+      "step": 45,
+      "band": 2,
+      "choices": {
+        "champion": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c0-40a819870388": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c1-12d7e2ec58aa": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-11\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c2-4240a419cc27": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-11\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c3-4f442d4770cd": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c4-2446b9abead9": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c5-8a94c99211ef": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c6-da45c31035c9": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}",
+        "v4a-r0001-c7-10e855e58392": "{\"type\":\"attack\",\"mode\":null,\"line\":null,\"uid\":\"0-34\",\"baseUid\":null,\"targetUid\":null,\"slot\":null}"
+      }
+    }
+  ],
+  "walked": 1,
+  "steps": 76,
+  "fallbackIds": [],
+  "seeds": [
+    100000,
+    100001,
+    100002
+  ],
+  "regenerated": false
+}
